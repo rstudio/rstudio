@@ -1,7 +1,7 @@
 #
 # test-codetools.R
 #
-# Copyright (C) 2009-20 by RStudio, PBC
+# Copyright (C) 2020 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -13,6 +13,8 @@
 #
 #
 
+library(testthat)
+
 context("codetools")
 
 test_that(".rs.CRANDownloadOptionsString() generates a valid R expression", {
@@ -21,26 +23,41 @@ test_that(".rs.CRANDownloadOptionsString() generates a valid R expression", {
    op <- options()
    on.exit(options(op), add = TRUE)
    
+   # set up options used by download string
    options(
       repos = c(CRAN = "https://cran.rstudio.com"),
       download.file.method = "libcurl",
       download.file.extra = NULL,
       HTTPUserAgent = "dummy"
    )
+
+   # create a dummy environment that makes it easier for us
+   # to 'capture' the result of an options call
+   envir <- new.env(parent = globalenv())
+   envir[["options"]] <- base::list
    
-   actual <- .rs.CRANDownloadOptionsString()
-   expected <- "options(repos = c(CRAN = 'https://cran.rstudio.com'), download.file.method = 'libcurl', HTTPUserAgent = 'dummy')"
-   expect_equal(actual, expected)
+   # check that we construct the right kind of R object after parse
+   #
+   # NOTE: we don't depend on the exact representation of the string as the
+   # code returned by R's deparser might differ from version to version,
+   # but should still produce the same result after evaluation
+   string <- .rs.CRANDownloadOptionsString()
+   actual <- eval(parse(text = string), envir = envir)
+   for (item in c("repos", "download.file.method", "HTTPUserAgent"))
+      expect_equal(actual[[item]], getOption(item))
    
    # https://github.com/rstudio/rstudio/issues/6597
    options(download.file.extra = "embedded 'quotes'")
-   actual <- .rs.CRANDownloadOptionsString()
-   expected <- "options(repos = c(CRAN = 'https://cran.rstudio.com'), download.file.method = 'libcurl', download.file.extra = 'embedded \\'quotes\\'', HTTPUserAgent = 'dummy')"
-   expect_equal(actual, expected)
+   string <- .rs.CRANDownloadOptionsString()
+   actual <- eval(parse(text = string), envir = envir)
+   expect_equal(actual$download.file.extra, "embedded 'quotes'")
    
+   # NOTE: double-quotes are translated to single-quotes here as
+   # a workaround for issues with quotation of arguments when running
+   # commands on Windows
    options(download.file.extra = "embedded \"quotes\"")
-   actual <- .rs.CRANDownloadOptionsString()
-   expected <- "options(repos = c(CRAN = 'https://cran.rstudio.com'), download.file.method = 'libcurl', download.file.extra = 'embedded \\'quotes\\'', HTTPUserAgent = 'dummy')"
-   expect_equal(actual, expected)
+   string <- .rs.CRANDownloadOptionsString()
+   actual <- eval(parse(text = string), envir = envir)
+   expect_equal(actual$download.file.extra, "embedded 'quotes'")
    
 })

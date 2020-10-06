@@ -1,7 +1,7 @@
 /*
  * ViewerNavigateEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,32 +25,32 @@ public class ViewerNavigateEvent extends GwtEvent<ViewerNavigateEvent.Handler>
       protected Data()
       {
       }
-      
+
       public native final String getURL() /*-{
          return this.url;
       }-*/;
-      
+
       public native final int getHeight() /*-{
          return this.height;
       }-*/;
-      
+
       public native final boolean isHTMLWidget() /*-{
          return this.html_widget;
       }-*/;
-      
+
       public native final boolean hasNext() /*-{
          return this.has_next;
       }-*/;
-      
+
       public native final boolean hasPrevious() /*-{
          return this.has_previous;
       }-*/;
-      
+
       public native final boolean bringToFront() /*-{
          return this.bring_to_front;
       }-*/;
    }
-   
+
    public interface Handler extends EventHandler
    {
       void onViewerNavigate(ViewerNavigateEvent event);
@@ -60,37 +60,37 @@ public class ViewerNavigateEvent extends GwtEvent<ViewerNavigateEvent.Handler>
    {
       data_ = data;
    }
-   
+
    public String getURL()
    {
       return data_.getURL();
    }
-   
+
    public int getHeight()
    {
       return data_.getHeight();
    }
-   
+
    public boolean isHTMLWidget()
    {
       return data_.isHTMLWidget();
    }
-   
+
    public boolean getHasNext()
    {
       return data_.hasNext();
    }
-   
+
    public boolean getHasPrevious()
    {
       return data_.hasPrevious();
    }
-   
+
    public boolean getBringToFront()
    {
       return data_.bringToFront();
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -102,8 +102,8 @@ public class ViewerNavigateEvent extends GwtEvent<ViewerNavigateEvent.Handler>
    {
       handler.onViewerNavigate(this);
    }
-   
+
    private final Data data_;
-  
-   public static final Type<Handler> TYPE = new Type<Handler>();
+
+   public static final Type<Handler> TYPE = new Type<>();
 }

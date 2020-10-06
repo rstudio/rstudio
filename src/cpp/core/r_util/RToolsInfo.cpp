@@ -1,7 +1,7 @@
 /*
  * RToolsInfo.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -197,6 +197,11 @@ RToolsInfo::RToolsInfo(const std::string& name,
 
       // set BINPREF
       environmentVars.push_back({"BINPREF", "/mingw$(WIN)/bin/"});
+
+      // set RTOOLS40_HOME
+      std::string rtoolsPath = installPath.getAbsolutePath();
+      std::replace(rtoolsPath.begin(), rtoolsPath.end(), '/', '\\');
+      environmentVars.push_back({"RTOOLS40_HOME", rtoolsPath});
 
       // set clang args
 #ifdef _WIN64

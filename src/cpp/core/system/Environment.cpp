@@ -1,7 +1,7 @@
 /*
  * Environment.cpp
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -135,13 +135,13 @@ void addToPath(Options* pEnvironment,
 
 bool parseEnvVar(const std::string envVar, Option* pEnvVar)
 {
-   std::string::size_type pos = envVar.find("=") ;
+   std::string::size_type pos = envVar.find("=");
    if ( pos != std::string::npos )
    {
-      std::string key = envVar.substr(0, pos) ;
+      std::string key = envVar.substr(0, pos);
       std::string value;
       if ( (pos + 1) < envVar.size() )
-         value = envVar.substr(pos + 1) ;
+         value = envVar.substr(pos + 1);
       *pEnvVar = std::make_pair(key,value);
       return true;
    }

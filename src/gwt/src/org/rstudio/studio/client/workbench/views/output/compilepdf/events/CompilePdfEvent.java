@@ -1,7 +1,7 @@
 /*
  * CompilePdfEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,7 +28,7 @@ public class CompilePdfEvent extends CrossWindowEvent<CompilePdfEvent.Handler>
    {
       void onCompilePdf(CompilePdfEvent event);
    }
-   
+
    public CompilePdfEvent()
    {
    }
@@ -45,27 +45,27 @@ public class CompilePdfEvent extends CrossWindowEvent<CompilePdfEvent.Handler>
       completedAction_ = completedAction;
       useInternalPreview_ = useInternalPreview;
    }
-   
+
    public FileSystemItem getTargetFile()
    {
       return targetFile_;
    }
-   
+
    public String getEncoding()
    {
       return encoding_;
    }
-   
+
    public SourceLocation getSourceLocation()
    {
       return sourceLocation_;
    }
-   
+
    public String getCompletedAction()
    {
       return completedAction_;
    }
-   
+
    public boolean useInternalPreview()
    {
       return useInternalPreview_;
@@ -82,12 +82,12 @@ public class CompilePdfEvent extends CrossWindowEvent<CompilePdfEvent.Handler>
    {
       handler.onCompilePdf(this);
    }
-   
+
    private FileSystemItem targetFile_;
    private String encoding_;
    private SourceLocation sourceLocation_;
    private String completedAction_;
    private boolean useInternalPreview_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

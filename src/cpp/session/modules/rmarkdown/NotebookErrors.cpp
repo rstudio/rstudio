@@ -1,7 +1,7 @@
 /*
  * NotebookErrors.cpp
  *
- * Copyright (C) 2009-16 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -58,7 +58,7 @@ void ErrorCapture::disconnect()
 
 SEXP rs_recordNotebookError(SEXP errData)
 {
-   json::Value jsonErr; 
+   json::Value jsonErr;
    Error error = r::json::jsonValueFromList(errData, &jsonErr);
    if (error)
       LOG_ERROR(error);

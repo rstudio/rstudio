@@ -1,7 +1,7 @@
 /*
  * SessionClientEventService.hpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -64,11 +64,11 @@ private:
 
   
 private:
-   boost::mutex mutex_ ;
-   boost::thread serviceThread_ ;
+   boost::mutex mutex_;
+   boost::thread serviceThread_;
 
-   std::string clientId_ ;
-   core::json::Array clientEvents_ ;
+   std::string clientId_;
+   core::json::Array clientEvents_;
 };
    
   

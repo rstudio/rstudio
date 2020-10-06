@@ -1,7 +1,7 @@
 /*
  * ViewerPresenter.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * This program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
@@ -24,8 +24,8 @@ import org.rstudio.core.client.SingleShotTimer;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.URIConstants;
-import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.EnabledChangedEvent;
 import org.rstudio.core.client.command.EnabledChangedHandler;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.WindowEx;
@@ -63,7 +63,6 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.source.Source;
-import org.rstudio.studio.client.workbench.views.source.SourceShim;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerClearedEvent;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigateEvent;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerPreviewRmdEvent;
@@ -71,8 +70,8 @@ import org.rstudio.studio.client.workbench.views.viewer.export.CopyViewerPlotToC
 import org.rstudio.studio.client.workbench.views.viewer.export.SaveViewerPlotAsImageDesktopDialog;
 import org.rstudio.studio.client.workbench.views.viewer.model.ViewerServerOperations;
 
-public class ViewerPresenter extends BasePresenter 
-                             implements ViewerNavigateEvent.Handler, 
+public class ViewerPresenter extends BasePresenter
+                             implements ViewerNavigateEvent.Handler,
                                         ViewerPreviewRmdEvent.Handler,
                                         ViewerClearedEvent.Handler,
                                         ShinyApplicationStatusEvent.Handler,
@@ -81,7 +80,7 @@ public class ViewerPresenter extends BasePresenter
                                         ShinyDisconnectSource
 {
    public interface Binder extends CommandBinder<Commands, ViewerPresenter> {}
-   
+
    public interface Display extends WorkbenchView
    {
       void navigate(String url);
@@ -96,9 +95,9 @@ public class ViewerPresenter extends BasePresenter
       void refresh();
       Size getViewerFrameSize();
    }
-   
+
    @Inject
-   public ViewerPresenter(Display display, 
+   public ViewerPresenter(Display display,
                           EventBus eventBus,
                           GlobalDisplay globalDisplay,
                           WorkbenchContext workbenchContext,
@@ -108,7 +107,7 @@ public class ViewerPresenter extends BasePresenter
                           Commands commands,
                           Binder binder,
                           ViewerServerOperations server,
-                          SourceShim sourceShim,
+                          Source source,
                           Provider<UserPrefs> pUserPrefs,
                           Provider<UserState> pUserState,
                           HtmlMessageListener htmlMessageListener)
@@ -123,37 +122,37 @@ public class ViewerPresenter extends BasePresenter
       server_ = server;
       events_ = eventBus;
       globalDisplay_ = globalDisplay;
-      sourceShim_ = sourceShim;
+      source_ = source;
       pUserPrefs_ = pUserPrefs;
       pUserState_ = pUserState;
       htmlMessageListener_ = htmlMessageListener;
-      
+
       binder.bind(commands, this);
-      
+
       manageCommands(false);
-      
-      // show a stop button when the console is busy (the stop and 
+
+      // show a stop button when the console is busy (the stop and
       // clear commands are mutually exclusive)
       commands_.viewerStop().setVisible(commands_.interruptR().isEnabled());
       commands_.viewerClear().setVisible(!commands_.viewerStop().isVisible());
       commands_.interruptR().addEnabledChangedHandler(
                                                 new EnabledChangedHandler() {
          @Override
-         public void onEnabledChanged(AppCommand command)
+         public void onEnabledChanged(EnabledChangedEvent event)
          {
-            commands_.viewerStop().setVisible(command.isEnabled());
-            commands_.viewerClear().setVisible(!command.isEnabled());
-            commands_.viewerClearAll().setVisible(!command.isEnabled());
+            commands_.viewerStop().setVisible(event.getCommand().isEnabled());
+            commands_.viewerClear().setVisible(!event.getCommand().isEnabled());
+            commands_.viewerClearAll().setVisible(!event.getCommand().isEnabled());
          }
       });
-      
+
       eventBus.addHandler(ShinyApplicationStatusEvent.TYPE, this);
       eventBus.addHandler(PlumberAPIStatusEvent.TYPE, this);
       eventBus.addHandler(InterruptStatusEvent.TYPE, this);
 
       // listen for Shiny disconnection events
       shinyNotifier_ = new ShinyDisconnectNotifier(this);
-      
+
       if (BrowseCap.isFirefox())
       {
          display_.addLoadHandler((evt) ->
@@ -164,7 +163,7 @@ public class ViewerPresenter extends BasePresenter
          });
       }
    }
-   
+
 
    @Override
    public void onViewerCleared(ViewerClearedEvent event)
@@ -175,36 +174,36 @@ public class ViewerPresenter extends BasePresenter
 
    @Override
    public void onViewerNavigate(ViewerNavigateEvent event)
-   { 
+   {
       if (event.getURL().length() > 0)
       {
          manageCommands(true, event);
-         
+
          if (event.getBringToFront()) {
             display_.bringToFront();
             htmlMessageListener_.allowOpenOnLoad();
          }
-      
+
          // respect height request
          int ensureHeight = event.getHeight();
          if (ensureHeight < 0)
             display_.maximize();
          else if (ensureHeight > 0)
             display_.ensureHeight(ensureHeight);
-            
+
          navigate(event.getURL());
-         
+
          if (event.isHTMLWidget())
             updateZoomWindow(display_.getUrl());
       }
       else
       {
          manageCommands(false);
-         
+
          navigate(URIConstants.ABOUT_BLANK);
       }
    }
-   
+
    @Override
    public void onViewerPreviewRmd(ViewerPreviewRmdEvent event)
    {
@@ -217,7 +216,7 @@ public class ViewerPresenter extends BasePresenter
          Desktop.getFrame().setViewerUrl(StringUtil.notNull(event.getParams().getOutputUrl()));
       display_.previewRmd(event.getParams());
    }
-   
+
    @Override
    public void onShinyApplicationStatus(ShinyApplicationStatusEvent event)
    {
@@ -250,7 +249,7 @@ public class ViewerPresenter extends BasePresenter
          });
       }
    }
-   
+
    @Override
    public void onInterruptStatus(InterruptStatusEvent event)
    {
@@ -259,17 +258,17 @@ public class ViewerPresenter extends BasePresenter
          // Clear Plumber API from viewer pane when API stopped
          if (event.getStatus() != InterruptStatusEvent.INTERRUPT_COMPLETED)
             return;
-   
+
          onViewerClear();
       }
    }
- 
+
    @Override
    public String getShinyUrl()
    {
       return display_.getUrl();
    }
-   
+
    @Override
    public void onShinyDisconnect()
    {
@@ -285,7 +284,7 @@ public class ViewerPresenter extends BasePresenter
 
    @Handler
    public void onViewerRefresh()
-   { 
+   {
       if (BrowseCap.isFirefox() && !StringUtil.isNullOrEmpty(getShinyUrl()))
       {
          // Firefox allows Shiny's disconnection notification (a "disconnected"
@@ -296,19 +295,19 @@ public class ViewerPresenter extends BasePresenter
       }
       display_.refresh();
    }
-   
+
    @Handler
    public void onViewerBack()
-   {  
+   {
       server_.viewerBack(new VoidServerRequestCallback());
    }
-   
+
    @Handler
    public void onViewerForward()
    {
       server_.viewerForward(new VoidServerRequestCallback());
    }
-   
+
    @Handler
    public void onViewerZoom()
    {
@@ -330,20 +329,20 @@ public class ViewerPresenter extends BasePresenter
       String displayUrl = display_.getUrl().replaceAll(
          "capabilities=[^&]+",
          "no");
-      
+
       globalDisplay_.openMinimalWindow(displayUrl,
             false,
             windowSize.width,
             windowSize.height,
             options);
    }
-   
+
    @Handler
    public void onViewerSaveAsImage()
    {
       display_.bringToFront();
-      
-      final ProgressIndicator indicator = 
+
+      final ProgressIndicator indicator =
          globalDisplay_.getProgressIndicator("Error");
       indicator.onProgress("Preparing to export plot...");
 
@@ -376,10 +375,10 @@ public class ViewerPresenter extends BasePresenter
             public void onError(ServerError error)
             {
                indicator.onError(error.getUserMessage());
-            }           
+            }
          });
    }
-   
+
    @Handler
    public void onViewerSaveAsWebPage()
    {
@@ -388,17 +387,17 @@ public class ViewerPresenter extends BasePresenter
       if (saveAsWebPageDefaultPath_ == null)
          saveAsWebPageDefaultPath_ = workbenchContext_.getCurrentWorkingDir();
 
-      dependencyManager_.withRMarkdown("Saving standalone web pages", 
+      dependencyManager_.withRMarkdown("Saving standalone web pages",
                                        new Command() {
          @Override
          public void execute()
          {
             fileDialogs_.saveFile(
-                  "Save As Web Page", 
-                  fileSystemContext_, 
-                  saveAsWebPageDefaultPath_, 
+                  "Save As Web Page",
+                  fileSystemContext_,
+                  saveAsWebPageDefaultPath_,
                   ".html",
-                  false, 
+                  false,
                   new ProgressOperationWithInput<FileSystemItem>(){
 
                      @Override
@@ -414,38 +413,38 @@ public class ViewerPresenter extends BasePresenter
                         indicator.onProgress("Saving as web page...");
 
                         server_.viewerSaveAsWebPage(
-                              targetFile.getPath(), 
+                              targetFile.getPath(),
                               new VoidServerRequestCallback(indicator) {
                                  @Override
                                  public void onSuccess()
                                  {
-                                    saveAsWebPageDefaultPath_ = 
+                                    saveAsWebPageDefaultPath_ =
                                           targetFile.getParentPath();
                                  }
                               });
                      }
-                  }); 
-        }  
+                  });
+        }
       });
-   }   
-      
+   }
+
    @Handler
    public void onViewerCopyToClipboard()
    {
       new CopyViewerPlotToClipboardDesktopDialog(
-         display_.getUrl(), 
+         display_.getUrl(),
          ExportPlotOptions.adaptToSize(
                pUserState_.get().exportViewerOptions().getValue().cast(),
                display_.getViewerFrameSize()),
          saveExportOptionsOperation_
       ).showModal();
    }
-   
+
    @Handler
    public void onViewerSaveAllAndRefresh()
    {
-      sourceShim_.handleUnsavedChangesBeforeExit(
-         sourceShim_.getUnsavedChanges(Source.TYPE_FILE_BACKED),
+      source_.handleUnsavedChangesBeforeExit(
+         source_.getUnsavedChanges(Source.TYPE_FILE_BACKED),
          new Command() {
             @Override
             public void execute()
@@ -454,23 +453,23 @@ public class ViewerPresenter extends BasePresenter
             }
          });
    }
-   
-   @Handler 
+
+   @Handler
    public void onViewerClear()
    {
       stop(false);
    }
-   
-   @Handler 
+
+   @Handler
    public void onViewerClearAll()
    {
       // confirm
       globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
-            
+
          "Clear Viewer",
-         
+
          "Are you sure you want to clear all of the items in the history?",
-  
+
          new ProgressOperation() {
             public void execute(final ProgressIndicator indicator)
             {
@@ -478,25 +477,25 @@ public class ViewerPresenter extends BasePresenter
                stop(false, true, indicator);
             }
          },
-      
+
          true
-      
+
        );
    }
-   
+
    @Handler
    public void onViewerStop()
    {
       stop(true);
    }
-   
+
    private void navigate(String url)
    {
       if (Desktop.hasDesktopFrame())
          Desktop.getFrame().setViewerUrl(StringUtil.notNull(url));
       display_.navigate(url);
    }
-   
+
    private void updateZoomWindow(String url)
    {
       if (Desktop.hasDesktopFrame()) {
@@ -506,26 +505,26 @@ public class ViewerPresenter extends BasePresenter
          zoomWindow_.setLocationHref(url);
       }
    }
-   
+
    private void stop(boolean interruptR)
    {
       stop(interruptR, false, null);
    }
-   
-   private void stop(boolean interruptR, 
-                     boolean clearAll, 
+
+   private void stop(boolean interruptR,
+                     boolean clearAll,
                      ProgressIndicator indicator)
-   {      
+   {
       // check whether this was a static widget (determine what we do
       // visa-vi widget history clearing/restoration)
       boolean wasStaticWidget = commands_.viewerZoom().isEnabled();
-      
+
       manageCommands(false);
       navigate(URIConstants.ABOUT_BLANK);
       if (interruptR)
          commands_.interruptR().execute();
       server_.viewerStopped(new VoidServerRequestCallback());
-      
+
       // If we were viewing a Shiny application, let the rest of the app know
       // that the application has been stopped
       if (runningShinyAppParams_ != null)
@@ -535,7 +534,7 @@ public class ViewerPresenter extends BasePresenter
                runningShinyAppParams_));
       }
       runningShinyAppParams_ = null;
-      
+
       // Ditto for Plumber
       if (runningPlumberAPIParams_ != null)
       {
@@ -545,32 +544,32 @@ public class ViewerPresenter extends BasePresenter
       runningPlumberAPIParams_ = null;
 
       events_.fireEvent(new ViewerClearedEvent(true));
-      
+
       // if this was a static widget then clear the current widget
       if (clearAll)
          server_.viewerClearAll(new VoidServerRequestCallback(indicator));
       else if (wasStaticWidget)
-         server_.viewerClearCurrent(new VoidServerRequestCallback(indicator)); 
-      
+         server_.viewerClearCurrent(new VoidServerRequestCallback(indicator));
+
       // otherwise restore the last static widget
       else
          server_.viewerCurrent(new VoidServerRequestCallback());
    }
-   
+
    private void manageCommands(boolean enable)
    {
       manageCommands(enable, false, false, false);
    }
-   
+
    private void manageCommands(boolean enable, ViewerNavigateEvent event)
    {
-      manageCommands(enable, 
+      manageCommands(enable,
                      event.isHTMLWidget(),
                      event.getHasNext(),
                      event.getHasPrevious());
    }
-   
-   private void manageCommands(boolean enable, 
+
+   private void manageCommands(boolean enable,
                                boolean isHTMLWidget,
                                boolean hasNext,
                                boolean hasPrevious)
@@ -579,14 +578,14 @@ public class ViewerPresenter extends BasePresenter
       commands_.viewerRefresh().setEnabled(enable);
       commands_.viewerClear().setEnabled(enable);
       commands_.viewerClearAll().setEnabled(enable);
-      
+
       commands_.viewerBack().setEnabled(hasPrevious);
       commands_.viewerBack().setVisible(isHTMLWidget);
       commands_.viewerForward().setEnabled(hasNext);
       commands_.viewerForward().setVisible(isHTMLWidget);
       commands_.viewerZoom().setEnabled(enable);
       commands_.viewerZoom().setVisible(isHTMLWidget);
-      
+
       boolean canSnapshot = Desktop.hasDesktopFrame();
       commands_.viewerSaveAsImage().setEnabled(enable && canSnapshot);
       commands_.viewerSaveAsImage().setVisible(isHTMLWidget && canSnapshot);
@@ -594,12 +593,12 @@ public class ViewerPresenter extends BasePresenter
       commands_.viewerCopyToClipboard().setVisible(isHTMLWidget && canSnapshot);
       commands_.viewerSaveAsWebPage().setEnabled(enable);
       commands_.viewerSaveAsWebPage().setVisible(isHTMLWidget);
-      
+
       display_.setExportEnabled(isHTMLWidget);
    }
-   
+
    private OperationWithInput<ExportPlotOptions> saveExportOptionsOperation_ =
-         new OperationWithInput<ExportPlotOptions>() 
+         new OperationWithInput<ExportPlotOptions>()
          {
             public void execute(ExportPlotOptions options)
             {
@@ -613,7 +612,7 @@ public class ViewerPresenter extends BasePresenter
                }
             }
          };
-   
+
    private final Display display_;
    private final Commands commands_;
    private final GlobalDisplay globalDisplay_;
@@ -626,19 +625,19 @@ public class ViewerPresenter extends BasePresenter
    @SuppressWarnings("unused")
    private final Provider<UserPrefs> pUserPrefs_;
    private final Provider<UserState> pUserState_;
-   private final SourceShim sourceShim_; 
+   private final Source source_;
    private final ShinyDisconnectNotifier shinyNotifier_;
-   
+
    private FileSystemItem saveAsWebPageDefaultPath_ = null;
-   
+
    private ShinyApplicationParams runningShinyAppParams_;
    private PlumberAPIParams runningPlumberAPIParams_;
    @SuppressWarnings("unused")
    private RmdPreviewParams rmdPreviewParams_;
-   
+
    private WindowEx zoomWindow_ = null;
    private Size zoomWindowDefaultSize_ = null;
-   
+
    private HtmlMessageListener htmlMessageListener_;
 
 }

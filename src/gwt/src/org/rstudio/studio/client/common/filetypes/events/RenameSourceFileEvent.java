@@ -1,7 +1,7 @@
 /*
  * RenameFileEvent.java
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,16 +26,16 @@ public class RenameSourceFileEvent extends CrossWindowEvent<RenameSourceFileEven
    {
       void onRenameSourceFile(RenameSourceFileEvent event);
    }
-   
+
    public RenameSourceFileEvent(String path)
    {
       path_ = path;
    }
-   
+
    public RenameSourceFileEvent()
    {
    }
-   
+
    public String getPath()
    {
       return path_;
@@ -53,7 +53,7 @@ public class RenameSourceFileEvent extends CrossWindowEvent<RenameSourceFileEven
       return TYPE;
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
-   
+   public static final Type<Handler> TYPE = new Type<>();
+
    private String path_;
 }

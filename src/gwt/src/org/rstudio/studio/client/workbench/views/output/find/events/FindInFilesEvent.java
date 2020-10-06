@@ -1,7 +1,7 @@
 /*
  * FindInFilesEvent.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -34,16 +34,6 @@ public class FindInFilesEvent extends GwtEvent<FindInFilesEvent.Handler>
       return searchPattern_;
    }
 
-   public boolean isReplace()
-   {
-      return replace_;
-   }
-
-   public String getReplacePattern()
-   {
-      return replacePattern_;
-   }
-
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -57,8 +47,6 @@ public class FindInFilesEvent extends GwtEvent<FindInFilesEvent.Handler>
    }
 
    private final String searchPattern_;
-   private String replacePattern_;
-   private boolean replace_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

@@ -1,7 +1,7 @@
 /*
  * WindowOpenedEvent.java
  *
- * Copyright (C) 2009-14 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,18 +25,18 @@ public class WindowOpenedEvent extends GwtEvent<WindowOpenedEvent.Handler>
    {
       void onWindowOpened(WindowOpenedEvent event);
    }
-   
+
    public WindowOpenedEvent(String name, WindowEx window)
    {
       name_ = name;
       window_ = window;
    }
-   
+
    public String getName()
    {
       return name_;
    }
-   
+
    public WindowEx getWindow()
    {
       return window_;
@@ -53,9 +53,9 @@ public class WindowOpenedEvent extends GwtEvent<WindowOpenedEvent.Handler>
    {
       handler.onWindowOpened(this);
    }
-   
-   public static final Type<Handler> TYPE = new Type<Handler>();
-   
+
+   public static final Type<Handler> TYPE = new Type<>();
+
    private final String name_;
    private final WindowEx window_;
 }

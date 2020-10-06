@@ -1,7 +1,7 @@
 /*
  * NotebookPlots.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -370,7 +370,7 @@ core::Error PlotCapture::setGraphicsOption()
 
    // device dimensions
    setOption.addParam(height_);
-   setOption.addParam(width_); 
+   setOption.addParam(width_);
 
    // sizing behavior drives units -- user specified units are in inches but
    // we use pixels when scaling automatically
@@ -391,7 +391,13 @@ bool PlotCapture::isGraphicsDeviceActive()
    SEXP devlist = R_NilValue;
    Error error = r::exec::RFunction("dev.list").call(&devlist, &protect);
    if (error)
+   {
+      // We have seen AV crashes reading the contents of the devlist pointer, so if there's an error
+      // log it and presume the graphics device is not active. The result will be that we don't
+      // capture plots in this chunk since our graphics device doesn't appear to be engaged.
       LOG_ERROR(error);
+      return false;
+   }
    if (r::sexp::isNull(devlist))
       return false;
    return true;

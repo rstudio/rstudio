@@ -1,7 +1,7 @@
 /*
  * ConsoleProcess.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,7 +28,6 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
-import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
 import org.rstudio.studio.client.workbench.views.console.model.ProcessBufferChunk;
@@ -59,119 +58,116 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
          server_ = server;
          eventBus_ = eventBus;
 
-         eventBus_.addHandler(SessionInitEvent.TYPE, new SessionInitHandler()
+         // onSessionInit
+         eventBus_.addHandler(SessionInitEvent.TYPE, (SessionInitEvent sie) ->
          {
-            @Override
-            public void onSessionInit(SessionInitEvent sie)
+            JsArray<ConsoleProcessInfo> procs =
+                  session.getSessionInfo().getConsoleProcesses();
+
+            for (int i = 0; i < procs.length(); i++)
             {
-               JsArray<ConsoleProcessInfo> procs =
-                     session.getSessionInfo().getConsoleProcesses();
-
-               for (int i = 0; i < procs.length(); i++)
+               final ConsoleProcessInfo proc = procs.get(i);
+               if (proc.isTerminal())
                {
-                  final ConsoleProcessInfo proc = procs.get(i);
-                  if (proc.isTerminal())
-                  {
-                     // non-modal processes represent terminals and are handled
-                     // by the terminal UI
-                     continue;
-                  }
-                  
-                  server_.processTestExists(
-                        proc.getHandle(), 
-                        new ServerRequestCallback<Boolean>()
+                  // non-modal processes represent terminals and are handled
+                  // by the terminal UI
+                  continue;
+               }
+
+               server_.processTestExists(
+                     proc.getHandle(),
+                     new ServerRequestCallback<Boolean>()
+                     {
+
+                        @Override
+                        public void onResponseReceived(Boolean exists)
                         {
-
-                           @Override
-                           public void onResponseReceived(Boolean exists)
+                           if (exists)
                            {
-                              if (exists)
-                              {
 
-                                 connectToProcess(
-                                       proc,
-                                       new ServerRequestCallback<ConsoleProcess>()
+                              connectToProcess(
+                                    proc,
+                                    new ServerRequestCallback<ConsoleProcess>()
+                                    {
+                                       @Override
+                                       public void onResponseReceived(
+                                                                      final ConsoleProcess cproc)
                                        {
-                                          @Override
-                                          public void onResponseReceived(
-                                                                         final ConsoleProcess cproc)
+                                          // first determine whether to create and/or
+                                          // show the dialog immediately
+                                          boolean createDialog = false;
+                                          boolean showDialog = false;
+
+                                          // standard dialog -- always show it
+                                          if (!proc.getShowOnOutput())
                                           {
-                                             // first determine whether to create and/or
-                                             // show the dialog immediately
-                                             boolean createDialog = false;
-                                             boolean showDialog = false;
+                                             createDialog = true;
+                                             showDialog = true;
+                                          }
 
-                                             // standard dialog -- always show it
-                                             if (!proc.getShowOnOutput())
-                                             {
-                                                createDialog = true;
-                                                showDialog = true;
-                                             }
+                                          // showOnOutput dialog that already has
+                                          // output -- make sure the user sees it
+                                          //
+                                          // NOTE: we have to trim the  buffered output
+                                          // for the comparison because when the password
+                                          // manager provides a password the back-end
+                                          // process sometimes echos a newline back to us
+                                          //
+                                          else if (proc.getBufferedOutput().trim().length() > 0)
+                                          {
+                                             createDialog = true;
+                                             showDialog = true;
+                                          }
 
-                                             // showOnOutput dialog that already has 
-                                             // output -- make sure the user sees it
-                                             //
-                                             // NOTE: we have to trim the  buffered output
-                                             // for the comparison because when the password
-                                             // manager provides a password the back-end
-                                             // process sometimes echos a newline back to us
-                                             //
-                                             else if (proc.getBufferedOutput().trim().length() > 0)
-                                             {
-                                                createDialog = true;
-                                                showDialog = true;
-                                             }
+                                          // showOnOutput dialog that has exited
+                                          // and has no output -- reap it
+                                          else if (proc.getExitCode() != null)
+                                          {
+                                             cproc.reap(new VoidServerRequestCallback());
+                                          }
 
-                                             // showOnOutput dialog that has exited
-                                             // and has no output -- reap it
-                                             else if (proc.getExitCode() != null)
-                                             {
-                                                cproc.reap(new VoidServerRequestCallback());
-                                             }
+                                          // showOnOutput dialog with no output that is
+                                          // still running -- create but don't show yet
+                                          else
+                                          {
+                                             createDialog = true;
+                                          }
 
-                                             // showOnOutput dialog with no output that is
-                                             // still running -- create but don't show yet
+                                          // take indicated actions
+                                          if (createDialog)
+                                          {
+                                             ConsoleProgressDialog dlg = new ConsoleProgressDialog(
+                                                   proc.getCaption(),
+                                                   cproc,
+                                                   proc.getBufferedOutput(),
+                                                   proc.getExitCode(),
+                                                   cryptoServer);
+
+                                             if (showDialog)
+                                                dlg.showModal();
                                              else
-                                             {
-                                                createDialog = true;
-                                             }
-
-                                             // take indicated actions
-                                             if (createDialog)
-                                             {
-                                                ConsoleProgressDialog dlg = new ConsoleProgressDialog(
-                                                      proc.getCaption(),
-                                                      cproc,
-                                                      proc.getBufferedOutput(),
-                                                      proc.getExitCode(),
-                                                      cryptoServer);
-
-                                                if (showDialog)
-                                                   dlg.showModal();
-                                                else
-                                                   dlg.showOnOutput();
-                                             }
+                                                dlg.showOnOutput();
                                           }
+                                       }
 
-                                          @Override
-                                          public void onError(ServerError error)
-                                          {
-                                             Debug.logError(error);
-                                          }
-                                       });
-                              } // process handle exists
-                           } // process test response received
+                                       @Override
+                                       public void onError(ServerError error)
+                                       {
+                                          Debug.logError(error);
+                                       }
+                                    });
+                           } // process handle exists
+                        } // process test response received
 
-                           @Override
-                           public void onError(ServerError error)
-                           {
-                              // error testing if process exists
-                              Debug.logError(error);
-                           }
-                        });
-                  
-               } // looping through processes
-            } // onSessionInit
+                        @Override
+                        public void onError(ServerError error)
+                        {
+                           // error testing if process exists
+                           Debug.logError(error);
+                        }
+                     });
+
+            } // looping through processes
          });
 
          eventBus_.addHandler(
@@ -183,42 +179,42 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                      // calculate the current window name
                      String window = StringUtil.notNull(
                                           satellite.getSatelliteName());
-                     
+
                      // handle it if the target is us
                      if (window.equals(targetWindow))
                         return true;
-                     
+
                      // also handle if we are the main window and the specified
                      // satellite doesn't exist
                      if (!Satellite.isCurrentWindowSatellite() &&
                          !satelliteManager.satelliteWindowExists(targetWindow))
                         return true;
-                     
+
                      // otherwise don't handle
                      else
                         return false;
                   }
-                  
-                  
+
+
                   @Override
                   public void onConsoleProcessCreated(
                                     ConsoleProcessCreatedEvent event)
                   {
                      if (!handleEvent(event.getTargetWindow()))
                         return;
-                     
+
                      ConsoleProcessInfo procInfo = event.getProcessInfo();
-                     ConsoleProcess proc = new ConsoleProcess(server_, 
-                                                              eventBus_, 
+                     ConsoleProcess proc = new ConsoleProcess(server_,
+                                                              eventBus_,
                                                               procInfo);
-                     
+
                      ConsoleProgressDialog dlg = new ConsoleProgressDialog(
                                                procInfo.getCaption(),
                                                proc,
                                                procInfo.getBufferedOutput(),
                                                procInfo.getExitCode(),
                                                cryptoServer);
-                     
+
                      if (procInfo.getShowOnOutput())
                         dlg.showOnOutput();
                      else
@@ -268,7 +264,7 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
       {
          server_.processInterrupt(handle, requestCallback);
       }
-      
+
       /**
        * Reap process with given handle
        * @param handle process to reap
@@ -278,7 +274,7 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
       {
          server_.processReap(handle, requestCallback);
       }
-      
+
       private final ConsoleServerOperations server_;
       private final EventBus eventBus_;
    }
@@ -319,33 +315,33 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
             {
                @Override
                public void onServerProcessExit(ServerProcessExitEvent event)
-               {   
+               {
                   if (event.getProcessHandle() == procInfo.getHandle())
                   {
                      // no more events are coming
                      registrations_.removeHandler();
-                     
+
                      fireEvent(new ProcessExitEvent(event.getExitCode()));
                   }
                }
             }
       ));
    }
-   
+
 
    public ConsoleProcessInfo getProcessInfo()
    {
       return procInfo_;
    }
-   
+
    public int getChannelMode()
    {
       if (forceRpc_)
          return ConsoleProcessInfo.CHANNEL_RPC;
-      
-      return procInfo_.getChannelMode(); 
+
+      return procInfo_.getChannelMode();
    }
-   
+
    public void start(ServerRequestCallback<Void> requestCallback)
    {
       server_.processStart(procInfo_.getHandle(), requestCallback);
@@ -371,7 +367,7 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
    {
       server_.processGetBuffer(procInfo_.getHandle(), stripAnsiCodes, requestCallback);
    }
-    
+
    public void useRpcMode(ServerRequestCallback<Void> requestCallback)
    {
       forceRpc_ = true;
@@ -382,7 +378,7 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
    {
       server_.processInterrupt(procInfo_.getHandle(), requestCallback);
    }
-  
+
    public void reap(ServerRequestCallback<Void> requestCallback)
    {
       server_.processReap(procInfo_.getHandle(), requestCallback);
@@ -394,7 +390,7 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
    {
       return handlers_.addHandler(ConsoleOutputEvent.TYPE, handler);
    }
-   
+
    @Override
    public HandlerRegistration addConsolePromptHandler(
                                           ConsolePromptEvent.Handler handler)

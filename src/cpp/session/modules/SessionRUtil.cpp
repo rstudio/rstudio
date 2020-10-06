@@ -1,7 +1,7 @@
 /*
  * SessionRUtil.cpp
  *
- * Copyright (C) 2009-2015 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -69,19 +69,19 @@ Error extractRCode(const std::string& fileContents,
    using namespace source_database;
    Error error = Success();
    
-   if (documentType == SourceDocument::SourceDocumentTypeRSource)
+   if (documentType == kSourceDocumentTypeRSource)
       *pCode = fileContents;
-   else if (documentType == SourceDocument::SourceDocumentTypeRMarkdown)
+   else if (documentType == kSourceDocumentTypeRMarkdown)
       error = extractRCode(fileContents,
                            "^\\s*[`]{3}{\\s*[Rr](?:}|[\\s,].*})\\s*$",
                            "^\\s*[`]{3}\\s*$",
                            pCode);
-   else if (documentType == SourceDocument::SourceDocumentTypeSweave)
+   else if (documentType == kSourceDocumentTypeSweave)
       error = extractRCode(fileContents,
                            "^\\s*<<.*>>=\\s*$",
                            "^\\s*@\\s*$",
                            pCode);
-   else if (documentType == SourceDocument::SourceDocumentTypeCpp)
+   else if (documentType == kSourceDocumentTypeCpp)
       error = extractRCode(fileContents,
                            "^\\s*/[*]{3,}\\s*[rR]\\s*$",
                            "^\\s*[*]+/",

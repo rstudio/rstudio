@@ -1,7 +1,7 @@
 /*
  * SessionTcpIpHttpConnectionListener.hpp
  *
- * Copyright (C) 2009-11 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * This program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
@@ -20,7 +20,7 @@
 #include "SessionHttpConnectionUtils.hpp"
 #include "SessionHttpConnectionListenerImpl.hpp"
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {

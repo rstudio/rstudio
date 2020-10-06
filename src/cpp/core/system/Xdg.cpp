@@ -1,7 +1,7 @@
 /*
  * Xdg.cpp
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,7 @@
 #include <Windows.h>
 #include <ShlObj_core.h>
 #include <KnownFolders.h>
+#include <winsock2.h>
 #endif
 
 #include <core/Algorithm.hpp>
@@ -25,6 +26,7 @@
 #include <core/system/Environment.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Xdg.hpp>
+#include <core/Thread.hpp>
 
 namespace rstudio {
 namespace core {
@@ -32,7 +34,56 @@ namespace system {
 namespace xdg {
 namespace {
 
-FilePath resolveXdgDir(const std::string& envVar, 
+/**
+ * Returns the hostname from the operating system
+ */
+std::string getHostname()
+{
+   // Use a static string to store the hostname so we don't have to look it up
+   // multiple times
+   static std::string hostname;
+   static boost::mutex mutex;
+   std::string result;
+
+   // Lock to ensure that we don't try to read/write the hostname from two
+   // threads
+   LOCK_MUTEX(mutex)
+   {
+      if (hostname.empty())
+      {
+         char buffer[256];
+         int status = ::gethostname(buffer, 255);
+         if (status == 0)
+         {
+            // If successful, store the hostname for later; swallow errors here
+            // since they are not actionable
+            hostname = std::string(buffer);
+         }
+      }
+      result = hostname;
+   }
+   END_LOCK_MUTEX
+
+   return result;
+}
+
+/**
+ * Resolves an XDG directory based on the user and environment.
+ *
+ * @param rstudioEnvVer The RStudio-specific environment variable specifying
+ *   the directory (given precedence)
+ * @param xdgEnvVar The XDG standard environment variable
+ * @param defaultDir Fallback default directory if neither environment variable
+ *   is present
+ * @param windowsFolderId The ID of the Windows folder to resolve against
+ * @param user Optionally, the user to return a directory for; if omitted the
+ *   current user is used
+ * @param homeDir Optionally, the home directory to resolve against; if omitted
+ *   the current user's home directory is used
+ */
+FilePath resolveXdgDir(
+      const std::string& rstudioEnvVar,
+      const std::string& xdgEnvVar,
 #ifdef _WIN32
       const GUID windowsFolderId,
 #endif
@@ -41,7 +92,18 @@ FilePath resolveXdgDir(const std::string& envVar,
       const boost::optional<FilePath>& homeDir)
 {
    FilePath xdgHome;
-   std::string env = getenv(envVar);
+   bool finalPath = true;
+
+   // Look for the RStudio-specific environment variable
+   std::string env = getenv(rstudioEnvVar);
+   if (env.empty())
+   {
+      // The RStudio environment variable specifices the final path; if it isn't
+      // set we will need to append "rstudio" to the path later.
+      finalPath = false;
+      env = getenv(xdgEnvVar);
+   }
+
    if (env.empty())
    {
       // No root specified for xdg home; we will need to generate one.
@@ -84,18 +146,36 @@ FilePath resolveXdgDir(const std::string& envVar,
       xdgHome = FilePath(env);
    }
 
-   // expand HOME and USER if given
+   // expand HOME, USER, and HOSTNAME if given
    core::system::Options environment;
    core::system::setenv(&environment, "HOME",
                         homeDir ? homeDir->getAbsolutePath() :
                                   userHomePath().getAbsolutePath());
    core::system::setenv(&environment, "USER",
                         user ? *user : username());
+
+   // check for manually specified hostname in environment variable
+   std::string hostname = core::system::getenv("HOSTNAME");
+
+   // when omitted, look up the hostname using a system call
+   if (hostname.empty())
+   {
+      hostname = getHostname();
+   }
+   core::system::setenv(&environment, "HOSTNAME", hostname);
+
    std::string expanded = core::system::expandEnvVars(environment, xdgHome.getAbsolutePath());
 
    // resolve aliases in the path
    xdgHome = FilePath::resolveAliasedPath(expanded, homeDir ? *homeDir : userHomePath());
 
+   // If this is the final path, we can return it as-is
+   if (finalPath)
+   {
+      return xdgHome;
+   }
+
+   // Otherwise, it's a root folder in which we need to create our own subfolder
    return xdgHome.completePath(
 #ifdef _WIN32
       "RStudio"
@@ -111,7 +191,8 @@ FilePath userConfigDir(
         const boost::optional<std::string>& user,
         const boost::optional<FilePath>& homeDir)
 {
-   return resolveXdgDir("XDG_CONFIG_HOME", 
+   return resolveXdgDir("RSTUDIO_CONFIG_HOME",
+        "XDG_CONFIG_HOME",
 #ifdef _WIN32
          FOLDERID_RoamingAppData,
 #endif
@@ -125,7 +206,8 @@ FilePath userDataDir(
         const boost::optional<std::string>& user,
         const boost::optional<FilePath>& homeDir)
 {
-   return resolveXdgDir("XDG_DATA_HOME", 
+   return resolveXdgDir("RSTUDIO_DATA_HOME",
+         "XDG_DATA_HOME",
 #ifdef _WIN32
          FOLDERID_LocalAppData,
 #endif
@@ -138,24 +220,28 @@ FilePath userDataDir(
 FilePath systemConfigDir()
 {
 #ifndef _WIN32
-   // On POSIX operating systems, it's possible to specify multiple config directories.
-    // We have to select one, so read the list and take the first one that contains an
-    // "rstudio" folder.
-   std::string env = getenv("XDG_CONFIG_DIRS");
-   if (env.find_first_of(":") != std::string::npos)
+   if (getenv("RSTUDIO_CONFIG_DIR").empty())
    {
-      std::vector<std::string> dirs = algorithm::split(env, ":");
-      for (const std::string& dir: dirs)
+      // On POSIX operating systems, it's possible to specify multiple config
+      // directories. We have to select one, so read the list and take the first
+      // one that contains an "rstudio" folder.
+      std::string env = getenv("XDG_CONFIG_DIRS");
+      if (env.find_first_of(":") != std::string::npos)
       {
-         FilePath resolved = FilePath(dir).completePath("rstudio");
-         if (resolved.exists())
+         std::vector<std::string> dirs = algorithm::split(env, ":");
+         for (const std::string& dir: dirs)
          {
-            return resolved;
+            FilePath resolved = FilePath(dir).completePath("rstudio");
+            if (resolved.exists())
+            {
+               return resolved;
+            }
          }
       }
    }
 #endif
-   return resolveXdgDir("XDG_CONFIG_DIRS", 
+   return resolveXdgDir("RSTUDIO_CONFIG_DIR",
+         "XDG_CONFIG_DIRS",
 #ifdef _WIN32
          FOLDERID_ProgramData,
 #endif
@@ -171,19 +257,22 @@ FilePath systemConfigFile(const std::string& filename)
     // Passthrough on Windows
     return systemConfigDir().completeChildPath(filename);
 #else
-   // On POSIX, check for a search path.
-   std::string env = getenv("XDG_CONFIG_DIRS");
-   if (env.find_first_of(":") != std::string::npos)
+   if (getenv("RSTUDIO_CONFIG_DIR").empty())
    {
-      // This is a search path; check each element for the file.
-      std::vector<std::string> dirs = algorithm::split(env, ":");
-      for (const std::string& dir: dirs)
+      // On POSIX, check for a search path.
+      std::string env = getenv("XDG_CONFIG_DIRS");
+      if (env.find_first_of(":") != std::string::npos)
       {
-         FilePath resolved = FilePath(dir).completePath("rstudio")
-                 .completeChildPath(filename);
-         if (resolved.exists())
+         // This is a search path; check each element for the file.
+         std::vector<std::string> dirs = algorithm::split(env, ":");
+         for (const std::string& dir: dirs)
          {
-            return resolved;
+            FilePath resolved = FilePath(dir).completePath("rstudio")
+                  .completeChildPath(filename);
+            if (resolved.exists())
+            {
+               return resolved;
+            }
          }
       }
    }
@@ -197,8 +286,10 @@ FilePath systemConfigFile(const std::string& filename)
 void forwardXdgEnvVars(Options *pEnvironment)
 {
    // forward relevant XDG environment variables (i.e. all those we respect above)
-   for (auto&& xdgVar: {"XDG_CONFIG_HOME", "XDG_CONFIG_DIRS",
-                        "XDG_DATA_HOME",   "XDG_DATA_DIRS"})
+   for (auto&& xdgVar: {"RSTUDIO_CONFIG_HOME", "RSTUDIO_CONFIG_DIR",
+                        "RSTUDIO_DATA_HOME",   "RSTUDIO_DATA_DIR",
+                        "XDG_CONFIG_HOME",     "XDG_CONFIG_DIRS",
+                        "XDG_DATA_HOME",       "XDG_DATA_DIRS"})
    {
       // only forward value if non-empty; avoid overwriting a previously set
       // value with an empty one

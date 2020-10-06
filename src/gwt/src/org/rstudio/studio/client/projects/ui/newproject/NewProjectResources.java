@@ -1,7 +1,7 @@
 /*
  * NewProjectResources.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,8 +14,6 @@
  */
 package org.rstudio.studio.client.projects.ui.newproject;
 
-
-
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
@@ -24,9 +22,7 @@ import com.google.gwt.resources.client.ImageResource;
 
 public interface NewProjectResources extends ClientBundle
 {
-   static NewProjectResources INSTANCE = 
-                  (NewProjectResources)GWT.create(NewProjectResources.class);
-   
+   NewProjectResources INSTANCE = GWT.create(NewProjectResources.class);
    @Source("newProjectDirectoryIcon_2x.png")
    ImageResource newProjectDirectoryIcon2x();
 
@@ -56,7 +52,7 @@ public interface NewProjectResources extends ClientBundle
 
    @Source("projectFromRepositoryIconLarge_2x.png")
    ImageResource projectFromRepositoryIconLarge2x();
-   
+
    @Source("gitIcon_2x.png")
    ImageResource gitIcon2x();
 
@@ -68,14 +64,11 @@ public interface NewProjectResources extends ClientBundle
 
    @Source("svnIconLarge_2x.png")
    ImageResource svnIconLarge2x();
-   
+
    @Source("plumberAppIcon_2x.png")
    ImageResource plumberAppIcon2x();
 
-   @Source("plumberAppIconLarge_2x.png")
-   ImageResource plumberAppIconLarge2x();
-   
-   static interface Styles extends CssResource
+   interface Styles extends CssResource
    {
       String wizardWidget();
       String wizardMainColumn();
@@ -90,7 +83,7 @@ public interface NewProjectResources extends ClientBundle
       String codeFilesListBox();
       String invalidPkgName();
    }
-   
+
    @Source("NewProjectWizard.css")
    Styles styles();
 }

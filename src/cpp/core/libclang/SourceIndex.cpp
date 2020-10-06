@@ -1,7 +1,7 @@
 /*
  * SourceIndex.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,6 +23,7 @@
 #include <core/Log.hpp>
 #include <core/PerformanceTimer.hpp>
 
+#include <core/system/Environment.hpp>
 #include <core/system/ProcessArgs.hpp>
 
 #include <core/libclang/LibClang.hpp>
@@ -157,6 +158,22 @@ std::map<std::string,TranslationUnit>
 TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
                                                 bool alwaysReparse)
 {
+#ifdef __APPLE__
+
+   // ensure SDK_ROOT is set
+   boost::scoped_ptr<core::system::EnvironmentScope> sdkRootScope;
+   const char* sdkRootPath("/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk");
+   if (core::system::getenv("SDKROOT").empty() && FilePath(sdkRootPath).exists())
+      sdkRootScope.reset(new core::system::EnvironmentScope("SDKROOT", sdkRootPath));
+
+   // ensure DEVELOPER_DIR is set
+   boost::scoped_ptr<core::system::EnvironmentScope> developerDirScope;
+   const char* developerDirPath = "/Library/Developer/CommandLineTools";
+   if (core::system::getenv("DEVELOPER_DIR").empty() && FilePath(developerDirPath).exists())
+      developerDirScope.reset(new core::system::EnvironmentScope("DEVELOPER_DIR", developerDirPath));
+
+#endif
+   
    FilePath filePath(filename);
 
    boost::scoped_ptr<core::PerformanceTimer> pTimer;
@@ -250,11 +267,14 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
    core::system::ProcessArgs argsArray(args);
 
    if (verbose_ > 0)
+   {
       std::cerr << "  (Creating new index)" << std::endl;
-
+   }
+   
    // create a new translation unit from the file
    unsigned options = applyTranslationUnitOptions(
                            clang().defaultEditingTranslationUnitOptions());
+   
    CXTranslationUnit tu = clang().parseTranslationUnit(
                          index_,
                          filename.c_str(),

@@ -1,7 +1,7 @@
 /*
  * SessionPlots.cpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -107,7 +107,7 @@ Error refreshPlot(const json::JsonRpcRequest& request,
 
 json::Object boolObject(bool value)
 {
-   json::Object boolObject ;
+   json::Object boolObject;
    boolObject["value"] = value;
    return boolObject;
 }
@@ -497,7 +497,7 @@ void handleZoomRequest(const http::Request& request, http::Response* pResponse)
    // get the width and height parameters
    int width, height;
    if (!extractSizeParams(request, 100, MAX_FIG_SIZE, &width, &height, pResponse))
-     return ;
+     return;
 
    // fire off the plot zoom size changed event to notify the client
    // that a new default size should be established
@@ -564,7 +564,7 @@ void handleZoomPngRequest(const http::Request& request,
    // get the width and height parameters
    int width, height;
    if (!extractSizeParams(request, 100, MAX_FIG_SIZE, &width, &height, pResponse))
-     return ;
+     return;
 
    // generate the file
    using namespace rstudio::r::session::graphics;
@@ -596,7 +596,7 @@ void handlePngRequest(const http::Request& request,
    // get the width and height parameters
    int width, height;
    if (!extractSizeParams(request, 100, MAX_FIG_SIZE, &width, &height, pResponse))
-      return ;
+      return;
 
    // generate the image
    using namespace rstudio::r::session;
@@ -645,7 +645,7 @@ void handleGraphicsRequest(const http::Request& request,
       std::string errmsg = "invalid graphics uri: " + uri;
       LOG_ERROR_MESSAGE(errmsg);
       pResponse->setNotFoundError(request);
-      return ;
+      return;
    }
    std::string filename = uri.substr(lastSlashPos+1);
  
@@ -660,7 +660,7 @@ void handleGraphicsRequest(const http::Request& request,
       pResponse->setPrivateCacheForeverHeaders();
 
       // set the file
-      setImageFileResponse(imagePath, request, pResponse);   
+      setImageFileResponse(imagePath, request, pResponse);
    }
    else
    {
@@ -897,7 +897,7 @@ Error initialize()
    graphics::display().onShowManipulator().connect(bind(onShowManipulator));
    
    using namespace module_context;
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "next_plot", nextPlot))
       (bind(registerRpcMethod, "previous_plot", previousPlot))

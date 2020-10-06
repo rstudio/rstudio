@@ -1,7 +1,7 @@
 /*
  * TextEditorContainer.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,9 +17,9 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.patch.TextChange;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.IsHideableWidget;
-import org.rstudio.studio.client.panmirror.PanmirrorCode;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.LayoutPanel;
@@ -29,35 +29,30 @@ import com.google.gwt.user.client.ui.LayoutPanel;
 
 public class TextEditorContainer extends LayoutPanel implements CanFocus
 {     
-   public static class EditorCode
+   
+   
+   public static class Changes
    {
-      public EditorCode()
+      public Changes(TextChange[] changes, Navigator navigator)
       {
-         this.code = "";
+         this.changes = changes;
+         this.navigator = navigator;
       }
       
-      public EditorCode(PanmirrorCode editorCode)
-      {
-         this.code = editorCode.markdown;
-         this.cursorSentinel = editorCode.cursorSentinel;
-      }
-      
-      public PanmirrorCode toPanmirrorCode() 
-      {
-         PanmirrorCode editorCode =  new PanmirrorCode();
-         editorCode.markdown = this.code;
-         editorCode.cursorSentinel = this.cursorSentinel;
-         return editorCode;
-      }
-      
-      String code;
-      String cursorSentinel;
+      public final TextChange[] changes;
+      public final Navigator navigator;
+   }
+
+   public static interface Navigator
+   {
+      void onNavigate(DocDisplay docDisplay);
    }
    
    public static interface Editor extends IsHideableWidget
    {
       String getCode();
-      void setCode(EditorCode editorCode, boolean preserveCursorLocation, boolean activatingEditor);
+      void setCode(String code);
+      void applyChanges(Changes changes, boolean activatingEditor);
    }
    
    public TextEditorContainer(Editor editor)

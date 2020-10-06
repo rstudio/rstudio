@@ -1,7 +1,7 @@
 /*
  * ObjectExplorerEditingTargetWidget.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,6 +20,7 @@ import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
+import org.rstudio.studio.client.workbench.views.source.SourceColumn;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.model.ObjectExplorerHandle;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
@@ -47,13 +48,15 @@ import com.google.inject.Inject;
 public class ObjectExplorerEditingTargetWidget extends Composite
 {
    public ObjectExplorerEditingTargetWidget(ObjectExplorerHandle handle,
-                                            SourceDocument document)
+                                            SourceDocument document,
+                                            SourceColumn column)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       mainWidget_ = new DockLayoutPanel(Unit.PX);
       mainWidget_.addStyleName("ace_editor_theme");
-      toolbar_ = new EditingTargetToolbar(commands_, true);
+      column_ = column;
+      toolbar_ = new EditingTargetToolbar(commands_, true, column_);
       grid_ = new ObjectExplorerDataGrid(handle, document);
       resizePanel_ = new ResizeLayoutPanel();
       statusBar_ = new ObjectExplorerEditingTargetStatusBar(this, grid_);
@@ -171,7 +174,8 @@ public class ObjectExplorerEditingTargetWidget extends Composite
    {
       return handle_;
    }
-   
+
+   private SourceColumn column_;
    private final DockLayoutPanel mainWidget_;
    private final Toolbar toolbar_;
    private final ResizeLayoutPanel resizePanel_;

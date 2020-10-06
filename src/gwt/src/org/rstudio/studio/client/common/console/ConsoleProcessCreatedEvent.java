@@ -1,7 +1,7 @@
 /*
  * ConsoleProcessCreatedEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,16 +25,16 @@ public class ConsoleProcessCreatedEvent extends GwtEvent<Handler>
    {
       protected Data() {}
 
-      public native final ConsoleProcessInfo getProcessInfo() /*-{ 
-         return this.process_info; 
+      public native final ConsoleProcessInfo getProcessInfo() /*-{
+         return this.process_info;
          }-*/;
-      
-      public native final String getTargetWindow() /*-{ 
-         return this.target_window; 
+
+      public native final String getTargetWindow() /*-{
+         return this.target_window;
       }-*/;
 
    }
-   
+
    public interface Handler extends EventHandler
    {
       void onConsoleProcessCreated(ConsoleProcessCreatedEvent event);
@@ -50,7 +50,7 @@ public class ConsoleProcessCreatedEvent extends GwtEvent<Handler>
    {
       return processInfo_;
    }
-   
+
    public String getTargetWindow()
    {
       return targetWindow_;
@@ -71,5 +71,5 @@ public class ConsoleProcessCreatedEvent extends GwtEvent<Handler>
    private final ConsoleProcessInfo processInfo_;
    private final String targetWindow_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

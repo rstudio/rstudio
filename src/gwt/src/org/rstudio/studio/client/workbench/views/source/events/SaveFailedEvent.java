@@ -1,7 +1,7 @@
 /*
  * SaveFailedEvent.java
  *
- * Copyright (C) 2009-15 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,7 +28,8 @@ public class SaveFailedEvent extends GwtEvent<SaveFailedEvent.Handler>
    public static final GwtEvent.Type<SaveFailedEvent.Handler> TYPE =
       new GwtEvent.Type<SaveFailedEvent.Handler>();
    
-   public SaveFailedEvent(String path, String id)
+   public SaveFailedEvent(String path,
+                          String id)
    {
       path_ = path;
       id_ = id;

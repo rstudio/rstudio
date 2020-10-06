@@ -1,7 +1,8 @@
+
 /*
  * PanmirrorImageChooser.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,13 +22,18 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.panmirror.ui.PanmirrorUIContext;
+import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 
 public class PanmirrorImageChooser extends TextBoxWithButton {
 
-   public PanmirrorImageChooser(FileSystemItem documentDir)
+   
+   public PanmirrorImageChooser(PanmirrorUIContext uiContext, RMarkdownServerOperations server)
    {
       super("Image (File or URL):", "", "Browse...", null, TextBoxButtonId.CHOOSE_IMAGE, false, null);
       PanmirrorDialogsUtil.setFullWidthStyles(this);
@@ -37,10 +43,12 @@ public class PanmirrorImageChooser extends TextBoxWithButton {
          @Override
          public void onClick(ClickEvent event)
          {
+            FileSystemItem defaultDir = FileSystemItem.createDir(uiContext.getDefaultResourceDir.get());
+               
             RStudioGinjector.INSTANCE.getFileDialogs().openFile(
                "Choose Image",
                RStudioGinjector.INSTANCE.getRemoteFileSystemContext(),
-               documentDir,
+               defaultDir,
                new ProgressOperationWithInput<FileSystemItem>()
                {
                   public void execute(FileSystemItem input,
@@ -50,21 +58,32 @@ public class PanmirrorImageChooser extends TextBoxWithButton {
                         return;
 
                      // compute relative path
-                     String relativePath = input.getPathRelativeTo(documentDir);
-                     if (relativePath != null) 
+                     String mappedPath = uiContext.mapPathToResource.map(input.getPath());
+                     if (mappedPath != null) 
                      {
-                        setText(input.getPathRelativeTo(documentDir));
+                        setText(mappedPath);
+                        indicator.onCompleted();
                      }
                      else
                      {
-                        RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-                           "Image Location Error",
-                           "The selected image is not contained " +
-                           "within the document directory (" + documentDir.getPath() + ").\n\n" +
-                           "Please select only images within the document directory.");
+                        JsArrayString images = JsArrayString.createArray().cast();
+                        images.push(input.getPath());
+                        FileSystemItem defaultDir = FileSystemItem.createDir(uiContext.getDefaultResourceDir.get());
+                        String imagesDir = defaultDir.completePath("images");
+                        server.rmdImportImages(images, imagesDir, new SimpleRequestCallback<JsArrayString>() {
+                           @Override
+                           public void onResponseReceived(JsArrayString resolvedImages)
+                           {
+                              if (resolvedImages.length() > 0)
+                              {
+                                 String mappedPath = uiContext.mapPathToResource.map(resolvedImages.get(0));
+                                 setText(mappedPath);
+                              }
+                              indicator.onCompleted();
+                           }
+                        });
                      }
-                     indicator.onCompleted();
-                    
+
                   }
                });
          }

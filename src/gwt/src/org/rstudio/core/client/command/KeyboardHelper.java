@@ -1,7 +1,7 @@
 /*
  * KeyboardHelper.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,15 +25,15 @@ public class KeyboardHelper
    {
       if (KeyboardShortcut.getModifierValue(event) != KeyboardShortcut.NONE)
          return false;
-      
+
       return isHyphenKeycode(event.getKeyCode());
    }
-   
+
    public static boolean isHyphenKeycode(NativeEvent event)
    {
       return isHyphenKeycode(event.getKeyCode());
    }
-   
+
    public static boolean isHyphenKeycode(int keyCode)
    {
       if (BrowseCap.isFirefox())
@@ -41,7 +41,7 @@ public class KeyboardHelper
       else
          return keyCode == 189;
    }
-   
+
    public static boolean isNavigationalKeycode(int keycode)
    {
       return (keycode == KeyCodes.KEY_TAB ||
@@ -50,29 +50,29 @@ public class KeyboardHelper
               keycode == KeyCodes.KEY_HOME ||
               keycode == KeyCodes.KEY_END ||
               keycode == KeyCodes.KEY_RIGHT ||
-              keycode == KeyCodes.KEY_LEFT);  
+              keycode == KeyCodes.KEY_LEFT);
    }
-   
-   public static boolean isControlKeycode(int keycode) 
+
+   public static boolean isControlKeycode(int keycode)
    {
       return keycode < 32;
    }
-   
+
    public static boolean isUnderscore(NativeEvent event)
    {
       return event.getShiftKey() && isHyphenKeycode(event.getKeyCode());
    }
-   
+
    public static boolean isPeriod(NativeEvent event)
    {
       return !event.getShiftKey() && isPeriodKeycode(event.getKeyCode());
    }
-   
+
    public static boolean isPeriodKeycode(int keyCode)
    {
       return keyCode == 190;
    }
-   
+
    public static boolean isModifierKey(int keyCode)
    {
       switch (keyCode)
@@ -92,32 +92,32 @@ public class KeyboardHelper
          return false;
       }
    }
-   
+
    public static String keyNameFromKeyCode(int keyCode)
    {
       return keyNameFromKeyCode(keyCode, KEY_CODE_TO_KEY_NAME_MAP);
    }
-   
+
    private static final native String keyNameFromKeyCode(int keyCode, JavaScriptObject map)
    /*-{
       return map[keyCode] || String.fromCharCode(keyCode);
    }-*/;
-   
+
    public static int keyCodeFromKeyName(String keyName)
    {
       return keyCodeFromKeyName(keyName, KEY_NAME_TO_KEY_CODE_MAP);
    }
-   
+
    private static final native int keyCodeFromKeyName(String keyName, JavaScriptObject map)
    /*-{
       return map[keyName.toLowerCase()] || -1;
    }-*/;
-   
+
    private static final native JavaScriptObject makeKeyCodeToKeyNameMap()
    /*-{
       // Map array indices as key codes to corresponding name.
       var map = new Array(256);
-      
+
       map[8] = "Backspace";
       map[9] = "Tab";
       map[12] = "NumLock";
@@ -139,40 +139,41 @@ public class KeyboardHelper
       map[40] = "Down";
       map[45] = "Insert";
       map[46] = "Delete";
-      
+
       // Add in numbers 0-9
       for (var i = 48; i <= 57; i++)
          map[i] = "" + (i - 48);
-         
+
       // Add in letters
       for (var i = 65; i <= 90; i++)
          map[i] = String.fromCharCode(i);
-         
+
       // TODO: Treat these keys differently?
       map[91] = "Meta";
       map[92] = "Meta";
       map[93] = "Meta";
-      
+
       for (var i = 96; i <= 105; i++)
          map[i] = "NumPad" + (i - 96);
-      
+
       map[106] = "*";
       map[107] = "+";
       map[109] = "-";
-      
+
      // NOTE: This is actually 'decimal point' which is
      // distinct as a keycode from '.', but probably easier
      // to just treat them the same.
-      map[110] = "." 
-      
+      map[110] = "."
+
       map[111] = "/";
-      
+
       // Function keys (full Mac keyboard supports up to F19, some keyboard go up to F24)
       for (var i = 112; i <= 135; i++)
          map[i] = "F" + (i - 111);
-      
+
       map[144] = "NumLock";
       map[145] = "ScrollLock";
+      map[173] = "-";
       map[186] = ";";
       map[187] = "=";
       map[188] = ",";
@@ -184,27 +185,27 @@ public class KeyboardHelper
       map[220] = "\\";
       map[221] = "]";
       map[222] = "'";
-      
-      return map; 
+
+      return map;
    }-*/;
-   
+
    private static final native JavaScriptObject makeKeyNameToKeyCodeMap(JavaScriptObject map)
    /*-{
-      
+
       var result = {};
       for (var key in map) {
          var value = map[key];
          result[value.toLowerCase()] = parseInt(key);
       }
       return result;
-      
+
    }-*/;
-   
+
    private static final JavaScriptObject KEY_CODE_TO_KEY_NAME_MAP =
          makeKeyCodeToKeyNameMap();
-   
+
    private static final JavaScriptObject KEY_NAME_TO_KEY_CODE_MAP =
          makeKeyNameToKeyCodeMap(KEY_CODE_TO_KEY_NAME_MAP);
-   
+
    public static final int KEY_HYPHEN = BrowseCap.isFirefox() ? 173 : 189;
 }

@@ -1,7 +1,7 @@
 /*
  * RConsoleActions.hpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,7 +35,7 @@ namespace session {
    
 // singleton
 class ConsoleActions;
-ConsoleActions& consoleActions();   
+ConsoleActions& consoleActions();
    
 #define kConsoleActionPrompt        0
 #define kConsoleActionInput         1
@@ -49,7 +49,7 @@ private:
    friend ConsoleActions& consoleActions();
    
 public:
-   int capacity() const ;
+   int capacity() const;
    void setCapacity(int capacity);
 
    void add(int type, const std::string& data);

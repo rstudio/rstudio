@@ -1,7 +1,7 @@
 /*
  * Win32System.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -363,7 +363,7 @@ Error captureCommand(const std::string& command, std::string* pOutput)
       *pOutput += buffer;
 
    // check if an error terminated our output
-   Error error ;
+   Error error;
    if (::ferror(fp))
       error = systemError(boost::system::errc::io_error, ERROR_LOCATION);
 

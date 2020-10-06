@@ -1,7 +1,7 @@
 /*
  * SessionConnections.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -478,7 +478,7 @@ void connectionPreviewObject(const json::JsonRpcRequest& request,
                                  connectionId.type,
                                  connectionId.host,
                                  1000);
-   addObjectSpecifiers(objectSpecifier, &previewObject); 
+   addObjectSpecifiers(objectSpecifier, &previewObject);
    error = previewObject.call(&sexpResult, &rProtect);
 
    // send the response
@@ -716,7 +716,7 @@ Error initialize()
 
    using boost::bind;
    using namespace module_context;
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "remove_connection", removeConnection))
       (bind(registerRpcMethod, "connection_disconnect", connectionDisconnect))

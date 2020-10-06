@@ -1,7 +1,7 @@
 /*
  * python_highlight_rules.js
  *
- * Copyright (C) 2009-17 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * The Initial Developer of the Original Code is
  * Ajax.org B.V.
@@ -55,30 +55,30 @@
 define("mode/python_highlight_rules", ["require", "exports", "module"], function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
-var Utils = require("mode/utils");
 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
+var RainbowParenHighlightRules = require("mode/rainbow_paren_highlight_rules").RainbowParenHighlightRules;
 
 var PythonHighlightRules = function() {
 
+    // :r !python3 -c 'from keyword import kwlist; print("|".join(kwlist))'
     var keywords = (
-        "and|as|assert|break|class|continue|def|del|elif|else|except|exec|" +
-        "finally|for|from|global|if|import|in|is|lambda|nonlocal|not|or|pass|" +
-        "print|raise|return|try|while|with|yield"
+        "False|None|True|and|as|assert|async|await|break|class|continue|def|del|elif|else|except|finally|for|from|global|if|import|in|is|lambda|nonlocal|not|or|pass|raise|return|try|while|with|yield"
     );
 
     var builtinConstants = (
-        "True|False|None|NotImplemented|Ellipsis|__debug__"
+        "NotImplemented|Ellipsis|__debug__"
     );
 
+    // https://docs.python.org/3/library/functions.html
     var builtinFunctions = (
-        "abs|divmod|input|open|staticmethod|all|enumerate|int|ord|str|any|" +
-        "eval|isinstance|pow|sum|basestring|execfile|issubclass|print|super|" +
-        "binfile|iter|property|tuple|bool|filter|len|range|type|bytearray|" +
-        "float|list|raw_input|unichr|callable|format|locals|reduce|unicode|" +
-        "chr|frozenset|long|reload|vars|classmethod|getattr|map|repr|xrange|" +
-        "cmp|globals|max|reversed|zip|compile|hasattr|memoryview|round|" +
-        "__import__|complex|hash|min|set|apply|delattr|help|next|setattr|" +
-        "buffer|dict|hex|object|slice|coerce|dir|id|oct|sorted|intern"
+        "abs|all|any|ascii|basestring|bin|bool|breakpoint|bytearray|bytes|callable|" +
+        "chr|classmethod|cmp|compile|complex|delattr|dict|dir|divmod|eumerate|" +
+        "eval|execfile|exec|filter|float|format|frozenset|getattr|globals|hasattr|" +
+        "hash|help|hex|id|input|int|isinstance|issubclass|iter|len|list|" +
+        "locals|long|map|max|memoryview|min|next|object|oct|open|ord|pow|print|" +
+        "property|range|raw_input|reduce|reload|repr|reversed|round|set|setattr|slice|" +
+        "sorted|staticmethod|str|sum|super|tuple|type|unichr|unicode|vars|xrange|zip|" +
+        "__import__"
     );
 
     //var futureReserved = "";
@@ -90,7 +90,7 @@ var PythonHighlightRules = function() {
         "keyword": keywords
     }, "identifier");
 
-    var strPre = "(?:r|u|ur|R|U|UR|Ur|uR)?";
+    var strPre = "(?:b|B|br|Br|bR|BR|rb|rB|Rb|RB|r|u|R|U|f|F|fr|Fr|fR|FR|rf|rF|Rf|RF)?";
 
     var decimalInteger = "(?:(?:[1-9]\\d*)|(?:0))";
     var octInteger = "(?:0[oO]?[0-7]+)";
@@ -111,6 +111,10 @@ var PythonHighlightRules = function() {
         "start" : [ {
             token : "comment",
             regex : "#.*$"
+        }, {
+            // decorators
+            token : "constant.language",
+            regex : "@[a-zA-Z_][a-zA-Z0-9._]*\\b",
         }, {
             token : "string",           // multi line """ string start
             regex : strPre + '"{3}',
@@ -144,17 +148,11 @@ var PythonHighlightRules = function() {
             regex : "[a-zA-Z_][a-zA-Z0-9_]*\\b"
         }, {
             token : "keyword.operator",
-            regex : "//=|\\*\\*=|>>=|<<=|//|\\*\\*|==|!=|>=|<=|>>|<<|\\+=|-=|\\*=|/=|&=|%=|\\|=|\\^=|\\+|-|\\*|/|%|>|<|\\^|~|\\||&|=|:|\\.|;|,",
+            regex : "//=|\\*\\*=|>>=|<<=|//|\\*\\*|==|!=|>=|<=|:=|>>|<<|\\+=|-=|\\*=|/=|&=|%=|\\|=|\\^=|\\+|-|\\*|/|%|>|<|\\^|~|\\||&|=|:|\\.|;|,",
             merge : false
-        }, {
-            token : "paren.lparen.keyword.operator",
-            regex : "[\\[\\(\\{]",
-            merge : false
-        }, {
-            token : "paren.rparen.keyword.operator",
-            regex : "[\\]\\)\\}]",
-            merge : false
-        }, {
+        },
+        RainbowParenHighlightRules.getParenRule(),
+        {
             token : "text",
             regex : "\\s+"
         } ],

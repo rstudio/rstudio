@@ -1,7 +1,7 @@
 /*
  * CodeSearch.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.codesearch;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.FilePosition;
+import org.rstudio.core.client.XRef;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.SearchDisplay;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -24,9 +25,9 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
+import org.rstudio.studio.client.workbench.views.source.events.XRefNavigationEvent;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
@@ -74,6 +75,7 @@ public class CodeSearch
                      final EventBus eventBus)
    {
       display_ = display;
+      events_  = eventBus;
       
       final SearchDisplay searchDisplay = display_.getSearchDisplay();
       searchDisplay.setAutoSelectEnabled(true);
@@ -91,20 +93,26 @@ public class CodeSearch
             // create full file path and position
             String srcFile = target.getFile();
             final FileSystemItem srcItem = FileSystemItem.createFile(srcFile);
-            final FilePosition pos = target.getPosition();  
+            final FilePosition pos = target.getPosition();
+            final XRef xref = target.getXRef();
             
             // fire editing event (delayed so the Enter keystroke 
             // doesn't get routed into the source editor)
-            Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-               @Override
-               public void execute()
-               {
-                  display_.getSearchDisplay().clear();
-                  display_.getSearchOracle().clear();
+            Scheduler.get().scheduleDeferred(() ->
+            {
+               display_.getSearchDisplay().clear();
+               display_.getSearchOracle().clear();
 
-                  if (observer_ != null)
-                     observer_.onCompleted();
-                  
+               if (observer_ != null)
+                  observer_.onCompleted();
+
+               if (xref != null && xref.hasXRefString())
+               {
+                  events_.fireEvent(new XRefNavigationEvent(xref, srcItem, false));
+               }
+               else
+               {
+                  srcItem.setFocusOnNavigate(true);
                   fileTypeRegistry.editFile(srcItem, pos);
                }
             });
@@ -216,6 +224,8 @@ public class CodeSearch
    }
      
    private final Display display_;
+   private final EventBus events_;
+   
    private Observer observer_ = null;
    private ArrayList<HandlerRegistration> eventBusHandlers_ = 
                                  new ArrayList<HandlerRegistration>();

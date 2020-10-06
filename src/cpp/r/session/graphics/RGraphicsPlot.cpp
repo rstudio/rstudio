@@ -1,7 +1,7 @@
 /*
  * RGraphicsPlot.cpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,7 +28,7 @@
 #include <r/RExec.hpp>
 #include <r/session/RGraphics.hpp>
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace r {
@@ -173,7 +173,7 @@ Error Plot::renderFromDisplaySnapshot(SEXP snapshot)
                                     snapshot,
                                     string_utils::utf8ToSystem(snapshotFile.getAbsolutePath())).call();
    if (error)
-      return error ;
+      return error;
 
    //
    // we can't generate an image file at this point in the processing

@@ -1,7 +1,7 @@
 /*
  * HelpButton.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -34,28 +34,34 @@ import com.google.gwt.user.client.ui.Image;
 public class HelpButton extends FocusWidget
                         implements HasClickHandlers
 {
-   /**
-    * @param selectWidget
-    * @param rstudioLinkName
-    * @param title a11y name
-    */
+   private final static int kDefaultTopMargin = 3;
+   
    public static void addHelpButton(SelectWidget selectWidget,
                                     String rstudioLinkName,
                                     String title)
    {
-      selectWidget.addWidget(createHelpButton(rstudioLinkName, title));
+      addHelpButton(selectWidget, rstudioLinkName, title, kDefaultTopMargin);
+   }
+   
+   public static void addHelpButton(SelectWidget selectWidget,
+                                    String rstudioLinkName,
+                                    String title,
+                                    int marginTop)
+   {
+      selectWidget.addWidget(createHelpButton(rstudioLinkName, title, marginTop));
    }
 
-   /**
-    * @param rstudioLinkName
-    * @param title a11y name
-    * @return HelpButton
-    */
    public static HelpButton createHelpButton(String rstudioLinkName, String title)
    {
-      HelpButton helpButton = new HelpButton(rstudioLinkName, title);
+      return createHelpButton(rstudioLinkName, title, kDefaultTopMargin);
+   }
+   
+  
+   public static HelpButton createHelpButton(String rstudioLinkName, String title, int marginTop)
+   {
+      HelpButton helpButton = new HelpButton(rstudioLinkName, false, title);
       Style style = helpButton.getElement().getStyle();
-      style.setMarginTop(3, Unit.PX);
+      style.setMarginTop(marginTop, Unit.PX);
       style.setMarginLeft(4, Unit.PX);
       return helpButton;
    }

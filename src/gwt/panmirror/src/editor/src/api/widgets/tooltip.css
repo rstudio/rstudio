@@ -1,7 +1,7 @@
 /*
  * tooltip.css
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,7 +30,7 @@
   transition: opacity 0.4s;
   white-space: nowrap;
   box-shadow: 0 0.5rem 1rem -0.5rem black;
-  z-index: 1000;
+  z-index: 900;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 }

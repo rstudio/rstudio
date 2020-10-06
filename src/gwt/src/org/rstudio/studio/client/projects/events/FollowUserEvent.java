@@ -1,7 +1,7 @@
 /*
  * FollowUserEvent.java
  *
- * Copyright (C) 2009-15 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,20 +20,20 @@ import org.rstudio.studio.client.projects.model.ProjectUser;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class FollowUserEvent 
+public class FollowUserEvent
    extends GwtEvent<FollowUserEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
       void onFollowUser(FollowUserEvent event);
    }
-   
+
    public FollowUserEvent(ProjectUser user, boolean following)
    {
       user_ = user;
       following_ = following;
    }
-   
+
    public ProjectUser getUser()
    {
       return user_;
@@ -55,9 +55,9 @@ public class FollowUserEvent
    {
       handler.onFollowUser(this);
    }
-   
+
    private final ProjectUser user_;
    private final boolean following_;
-   
-   public static final Type<Handler> TYPE = new Type<Handler>();
+
+   public static final Type<Handler> TYPE = new Type<>();
 }

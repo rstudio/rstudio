@@ -1,7 +1,7 @@
 /*
  * RClientState.cpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -97,14 +97,14 @@ void commitState(const json::Object& stateContainer,
    for (const json::Object::Member& member : stateContainer)
    {
       // generate json
-      std::ostringstream ostr ;
+      std::ostringstream ostr;
       member.getValue().writeFormatted(ostr);
       
       // write to file
       FilePath stateFile = stateDir.completePath(member.getName() + fileExt);
       Error error = writeStringToFile(stateFile, ostr.str());
       if (error)
-         LOG_ERROR(error);   
+         LOG_ERROR(error);
    }
 }
    
@@ -112,7 +112,7 @@ void restoreState(const core::FilePath& stateFilePath,
                   json::Object* pStateContainer)
 {
    // read the contents of the file
-   std::string contents ;
+   std::string contents;
    Error error = readStringFromFile(stateFilePath, &contents);
    if (error)
    {
@@ -148,10 +148,10 @@ Error restoreStateFiles(const FilePath& sourceDir,
       return Success();
 
    // list the files
-   std::vector<FilePath> childPaths ;
+   std::vector<FilePath> childPaths;
    Error error = sourceDir.getChildren(childPaths);
    if (error)
-      return error ;
+      return error;
 
    // restore files
    std::for_each(childPaths.begin(), childPaths.end(), restoreFunc);
@@ -211,7 +211,7 @@ void ClientState::putTemporary(const std::string& scope,
                                const std::string& name,
                                const json::Value& value)
 {
-   json::Object stateContainer ;
+   json::Object stateContainer;
    putState(scope, name, value, &stateContainer);
    putTemporary(stateContainer);
 }

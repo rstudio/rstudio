@@ -1,7 +1,7 @@
 /*
  * PanmirrorOptions.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,7 +21,11 @@ import jsinterop.annotations.JsType;
 @JsType
 public class PanmirrorWriterOptions
 {    
+   public final static String kWrapNone = "none";
+   public final static String kWrapSentence = "sentence";
+   
    public boolean atxHeaders;
-   public int wrapColumn;
+   public String wrap;
+   public PanmirrorWriterReferencesOptions references;
    public int dpi;
 }

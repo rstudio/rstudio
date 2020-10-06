@@ -1,7 +1,7 @@
 /*
  * REmbeddedWin32.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -214,8 +214,8 @@ Error completeEmbeddedRInitialization(bool useInternet2)
       LOG_ERROR(error);
 
    using boost::bind;
-   using namespace r::function_hook ;
-   ExecBlock block ;
+   using namespace r::function_hook;
+   ExecBlock block;
    block.addFunctions()
       (bind(registerUnsupported, "bringToTop", "grDevices"))
       (bind(registerUnsupported, "winMenuAdd", "utils"))

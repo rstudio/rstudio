@@ -1,7 +1,7 @@
 /*
  * TerminalSession.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -73,19 +73,21 @@ public class TerminalSession extends XTermWidget
     * @param info terminal metadata
     * @param options terminal emulator options
     * @param tabMovesFocus does pressing tab key move focus out of terminal
+    * @param showWebLinks links detected and made clickable
     * @param createdByApi was this terminal just created by the rstudioapi
     */
    public TerminalSession(ConsoleProcessInfo info,
                           XTermOptions options,
                           boolean tabMovesFocus,
+                          boolean showWebLinks,
                           boolean createdByApi)
    {
-      super(options, tabMovesFocus);
+      super(options, tabMovesFocus, showWebLinks);
 
       RStudioGinjector.INSTANCE.injectMembers(this);
       procInfo_ = info;
       createdByApi_ = createdByApi;
-      hasChildProcs_ = new Value<>(info.getHasChildProcs());
+      hasChildProcs_ = new Value<>(!BrowseCap.isWindowsDesktop() && info.getHasChildProcs());
 
       setTitle(info.getTitle());
       socket_ = new TerminalSessionSocket(
@@ -169,23 +171,24 @@ public class TerminalSession extends XTermWidget
             addHandlerRegistration(addXTermTitleHandler(TerminalSession.this));
             addHandlerRegistration(eventBus_.addHandler(SessionSerializationEvent.TYPE, TerminalSession.this));
             addHandlerRegistration(eventBus_.addHandler(ThemeChangedEvent.TYPE, TerminalSession.this));
-            addHandlerRegistration(uiPrefs_.blinkingCursor().bind(arg -> updateBooleanOption("cursorBlink", arg)));
+            addHandlerRegistration(uiPrefs_.blinkingCursor().bind(arg -> updateOption("cursorBlink", arg)));
             addHandlerRegistration(uiPrefs_.tabKeyMoveFocus().bind(arg -> setTabMovesFocus(arg)));
             addHandlerRegistration(uiPrefs_.terminalBellStyle().bind(arg ->
             {
                // don't enable bell if we aren't done loading, don't want beeps if reloading
                // previous output containing '\a'
                if (haveLoadedBuffer_)
-                  updateStringOption("bellStyle", arg);
+                  updateOption("bellStyle", arg);
             }));
             addHandlerRegistration(uiPrefs_.terminalRenderer().bind(arg ->
             {
-               updateStringOption("rendererType", arg);
+               updateOption("rendererType", arg);
                onResize();
             }));
             addHandlerRegistration(uiPrefs_.fontSizePoints().bind(arg ->
             {
-               updateDoubleOption("fontSize", XTermTheme.adjustFontSize(arg));
+               updateOption("fontSize", XTermTheme.adjustFontSize(arg));
+               updateOption("lineHeight", XTermTheme.computeLineHeight());
                onResize();
             }));
 
@@ -326,7 +329,7 @@ public class TerminalSession extends XTermWidget
 
    public void receivedSendToTerminal(String input)
    {
-      // tweak line endings 
+      // tweak line endings
       String inputText = input;
       if (inputText != null && BrowseCap.isWindowsDesktop())
       {
@@ -473,13 +476,13 @@ public class TerminalSession extends XTermWidget
       //
       // There is a user-setting to totally disable local-echo.
       //
-      // Win32's pty implementation returns escape sequences even when 
-      // doing simple single-character input at a command-prompt. 
+      // Win32's pty implementation returns escape sequences even when
+      // doing simple single-character input at a command-prompt.
       //
       // Don't do local-echo when something is running (busy),
       // indicating we are likely not at a command-prompt.
       //
-      // Don't do local-echo if terminal is showing full screen buffer; 
+      // Don't do local-echo if terminal is showing full screen buffer;
       // indicates something like vim or tmux is running; usually caught
       // by "busy" but there can be a lag between starting a full-screen
       // program and it showing up as "busy".
@@ -611,7 +614,7 @@ public class TerminalSession extends XTermWidget
             {
                if (connected)
                {
-                  // Inform the terminal that there may have been a resize. This could 
+                  // Inform the terminal that there may have been a resize. This could
                   // happen on first display, or if the terminal was hidden behind other
                   // terminal sessions and there was a resize.
                   // A delay is needed to give the xterm.js implementation an
@@ -686,8 +689,8 @@ public class TerminalSession extends XTermWidget
          {
             Debug.logError(error);
 
-            // If we are in a state where the server doesn't know about the 
-            // terminal we are trying to kill and returned an error, 
+            // If we are in a state where the server doesn't know about the
+            // terminal we are trying to kill and returned an error,
             // eradicate it on the client so it goes away.
             cleanupAfterTerminate();
          }
@@ -696,8 +699,8 @@ public class TerminalSession extends XTermWidget
 
    private void cleanupAfterTerminate()
    {
-      // Forcefully kill this session on the client instead of waiting 
-      // for the ProcessExitEvent which we won't get in some scenarios 
+      // Forcefully kill this session on the client instead of waiting
+      // for the ProcessExitEvent which we won't get in some scenarios
       // such as issuing terminate while session was suspended, or if
       // something is just plain busted and the session isn't accepting
       // input.
@@ -931,7 +934,7 @@ public class TerminalSession extends XTermWidget
          @Override
          public void run()
          {
-            updateStringOption("bellStyle", uiPrefs_.terminalBellStyle().getValue());
+            updateOption("bellStyle", uiPrefs_.terminalBellStyle().getValue());
          }
       }.schedule(500);
       reloading_ = false;

@@ -1,7 +1,7 @@
 /*
  * Settings.cpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,9 +35,9 @@ Settings::~Settings()
 
 Error Settings::initialize(const FilePath& filePath) 
 {
-   settingsFile_ = filePath ;
-   settingsMap_.clear() ;
-   Error error = core::readStringMapFromFile(settingsFile_, &settingsMap_) ;
+   settingsFile_ = filePath;
+   settingsMap_.clear();
+   Error error = core::readStringMapFromFile(settingsFile_, &settingsMap_);
    if (error)
    {
       // we don't consider file-not-found and error because it is a 
@@ -45,22 +45,22 @@ Error Settings::initialize(const FilePath& filePath)
       if (error != systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation()))
       {
          error.addProperty("settings-file", settingsFile_);
-         return error ;
+         return error;
       }
    }
    
-   return Success() ;
+   return Success();
 }
 
 void Settings::set(const std::string& name, const std::string& value)
 {
    if (value != settingsMap_[name])
    {
-      settingsMap_[name] = value ;
+      settingsMap_[name] = value;
       isDirty_ = true;
       
       if (!updatePending_)
-         writeSettings() ;
+         writeSettings();
    }
 }
    
@@ -89,36 +89,36 @@ std::string Settings::get(const std::string& name,
                           const std::string& defaultValue) const
 {
    std::map<std::string,std::string>::const_iterator pos = 
-                                                   settingsMap_.find(name) ;
+                                                   settingsMap_.find(name);
    if (pos != settingsMap_.end())
-      return (*pos).second ;
+      return (*pos).second;
    else
-      return defaultValue ;
+      return defaultValue;
 }
    
 int Settings::getInt(const std::string& name, int defaultValue) const
 {
-   std::string value = get(name) ;
+   std::string value = get(name);
    if (value.empty())
-       return defaultValue ;
+       return defaultValue;
    else
        return safe_convert::stringTo<int>(value, defaultValue);
 }
 
 double Settings::getDouble(const std::string& name, double defaultValue) const
 {
-   std::string value = get(name) ;
+   std::string value = get(name);
    if (value.empty())
-       return defaultValue ;
+       return defaultValue;
    else
       return safe_convert::stringTo<double>(value, defaultValue);
 }
 
 bool Settings::getBool(const std::string& name, bool defaultValue) const
 {
-   std::string value = get(name) ;
+   std::string value = get(name);
    if (value.empty())
-      return defaultValue ;
+      return defaultValue;
    else
       return safe_convert::stringTo<bool>(value, defaultValue);
 }   
@@ -136,12 +136,12 @@ void Settings::forEach(const boost::function<void(const std::string&,
 
 void Settings::beginUpdate()
 {
-   updatePending_ = true ;
+   updatePending_ = true;
 }
 
 void Settings::endUpdate()
 {
-   updatePending_ = false ;
+   updatePending_ = false;
    if (isDirty_)
       writeSettings();
 }
@@ -149,7 +149,7 @@ void Settings::endUpdate()
 void Settings::writeSettings() 
 {
    isDirty_ = false;
-   Error error = core::writeStringMapToFile(settingsFile_, settingsMap_) ; 
+   Error error = core::writeStringMapToFile(settingsFile_, settingsMap_);
    if (error)
      LOG_ERROR(error);
 }

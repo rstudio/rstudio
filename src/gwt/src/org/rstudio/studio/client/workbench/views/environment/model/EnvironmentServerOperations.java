@@ -1,7 +1,7 @@
 /*
  * EnvironmentServerOperations.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -58,9 +58,12 @@ public interface EnvironmentServerOperations
                             ServerRequestCallback<Void> requestCallback);
 
    void getEnvironmentNames(
+              String language,
               ServerRequestCallback<JsArray<EnvironmentFrame>> requestCallback);
    
    void getEnvironmentState(
+              String language,
+              String environment,
               ServerRequestCallback<EnvironmentContextData> requestCallback);
    
    void setEnvironmentMonitoring(boolean monitoring,
@@ -71,4 +74,11 @@ public interface EnvironmentServerOperations
               ServerRequestCallback<ObjectContents> requestCallback);
    
    void requeryContext(ServerRequestCallback<Void> requestCallback);
+   
+   void environmentSetLanguage(String language,
+                               ServerRequestCallback<Void> requestCallback);
+   
+   void isFunctionMasked(String functionName,
+                         String packageName,
+                         ServerRequestCallback<Boolean> requestCallback);
 }

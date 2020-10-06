@@ -1,7 +1,7 @@
 /*
  * Preferences.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -190,7 +190,7 @@ core::Error Preferences::writeLayer(int layer, const core::json::Object& prefs)
    END_LOCK_MUTEX;
 
    // Emit change events for all the preferences we changed
-   for (const auto prefName: changed)
+   for (const auto& prefName: changed)
    {
       onChanged(layers_[layer]->layerName(), prefName);
    }
@@ -208,7 +208,7 @@ boost::optional<core::json::Value> Preferences::readValue(const std::string& nam
    // settings) and working towards the most general (basic defaults)
    RECURSIVE_LOCK_MUTEX(mutex_)
    {
-      for (const auto layer: boost::adaptors::reverse(layers_))
+      for (const auto& layer: boost::adaptors::reverse(layers_))
       {
          boost::optional<core::json::Value> val = layer->readValue(name);
          if (val)
@@ -231,7 +231,7 @@ boost::optional<core::json::Value> Preferences::readValue(const std::string& lay
 {
    RECURSIVE_LOCK_MUTEX(mutex_)
    {
-      for (const auto layer: layers_)
+      for (const auto& layer: layers_)
       {
          if (layer->layerName() == layerName)
          {

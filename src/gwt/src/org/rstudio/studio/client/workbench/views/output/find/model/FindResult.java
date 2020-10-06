@@ -1,7 +1,7 @@
 /*
  * FindResult.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -138,12 +138,12 @@ public class FindResult extends JavaScriptObject
          // retrieve match positions
          ArrayList<Integer> on = getMatchOns();
          ArrayList<Integer> off = getMatchOffs();
-         ArrayList<Pair<Boolean, Integer>> parts = new ArrayList<Pair<Boolean, Integer>>();
+         ArrayList<Pair<Boolean, Integer>> parts = new ArrayList<>();
    
          // replaceMatchOn/Offs exist only when previewing a regex replace
          ArrayList<Integer> replaceOn = getReplaceMatchOns();
          ArrayList<Integer> replaceOff = getReplaceMatchOffs();
-         ArrayList<Pair<Boolean, Integer>> replaceParts = new ArrayList<Pair<Boolean, Integer>>();
+         ArrayList<Pair<Boolean, Integer>> replaceParts = new ArrayList<>();
    
          // combine the match on and match off lists into paired array lists for ease of use
          int difference = 0;
@@ -157,9 +157,9 @@ public class FindResult extends JavaScriptObject
             int replaceOffVal = replaceOff.size() == 0 ? Integer.MAX_VALUE : replaceOff.get(0);
    
             if (onVal < offVal)
-               parts.add(new Pair<Boolean, Integer>(true, on.remove(0) + offset));
+               parts.add(new Pair<>(true, on.remove(0) + offset));
             else
-               parts.add(new Pair<Boolean, Integer>(false, off.remove(0) + offset));
+               parts.add(new Pair<>(false, off.remove(0) + offset));
    
             if (getRegexPreviewIndicator() &&
                 replaceOn.size() + replaceOff.size() > 0)
@@ -174,12 +174,12 @@ public class FindResult extends JavaScriptObject
                      Debug.logWarning("Unexpected value, offVal must be greater than onVal");
                   }
                   previousOnVal = replaceOn.get(0) + difference;
-                  replaceParts.add(new Pair<Boolean, Integer>(true, (replaceOn.remove(0) + difference)));
+                  replaceParts.add(new Pair<>(true, (replaceOn.remove(0) + difference)));
                }
                else
                {
                   offset += (replaceOffVal - previousOnVal);
-                  replaceParts.add(new Pair<Boolean, Integer>(false, (replaceOff.remove(0))));
+                  replaceParts.add(new Pair<>(false, (replaceOff.remove(0))));
                }
             }
          }
@@ -191,7 +191,7 @@ public class FindResult extends JavaScriptObject
          // Use a counter to ensure tags are balanced.
          int openRedTags = 0;
          int openInsTags = 0;
-         String redTag = new String("strong");
+         String redTag = "strong";
    
          for (int i = 0; i < line.length(); i++)
          {
@@ -261,7 +261,7 @@ public class FindResult extends JavaScriptObject
          ArrayList<Integer> onReplace = getReplaceMatchOns();
          ArrayList<Integer> offReplace = getReplaceMatchOffs();
    
-         ArrayList<Pair<Boolean, Integer>> parts = new ArrayList<Pair<Boolean, Integer>>();
+         ArrayList<Pair<Boolean, Integer>> parts = new ArrayList<>();
 
 
          // consolidate matches into one ArrayList
@@ -272,9 +272,9 @@ public class FindResult extends JavaScriptObject
             int onReplaceVal = onReplace.size() == 0 ? Integer.MAX_VALUE : onReplace.get(onIndex);
             int offReplaceVal = offReplace.size() == 0 ? Integer.MAX_VALUE : offReplace.get(offIndex);
             if (onReplaceVal < offReplaceVal)
-               parts.add(new Pair<Boolean, Integer>(true, onReplace.remove(onIndex)));
+               parts.add(new Pair<>(true, onReplace.remove(onIndex)));
             else
-               parts.add(new Pair<Boolean, Integer>(false, offReplace.remove(offIndex)));
+               parts.add(new Pair<>(false, offReplace.remove(offIndex)));
          }
    
          // create html for line
@@ -314,22 +314,16 @@ public class FindResult extends JavaScriptObject
 
    private SafeHtmlBuilder appendHtmlOpenTag(SafeHtmlBuilder out, String tag)
    {
-      StringBuilder tagBuilder = new StringBuilder();
-      tagBuilder.append("<");
-      tagBuilder.append(tag);
-      tagBuilder.append(">");
-      out.appendHtmlConstant(tagBuilder.toString());
+      String tagBuilder = "<" + tag + ">";
+      out.appendHtmlConstant(tagBuilder);
 
       return out;
    }
 
    private SafeHtmlBuilder appendHtmlCloseTag(SafeHtmlBuilder out, String tag)
    {
-      StringBuilder tagBuilder = new StringBuilder();
-      tagBuilder.append("</");
-      tagBuilder.append(tag);
-      tagBuilder.append(">");
-      out.appendHtmlConstant(tagBuilder.toString());
+      String tagBuilder = "</" + tag + ">";
+      out.appendHtmlConstant(tagBuilder);
 
       return out;
    }
@@ -353,7 +347,7 @@ public class FindResult extends JavaScriptObject
    private ArrayList<Integer> getJavaArray(String property)
    {
       JsArrayInteger array = getArray(property);
-      ArrayList<Integer> ints = new ArrayList<Integer>();
+      ArrayList<Integer> ints = new ArrayList<>();
       for (int i = 0; i < array.length(); i++)
          ints.add(array.get(i));
       return ints;
@@ -362,8 +356,7 @@ public class FindResult extends JavaScriptObject
    private String getJavaStringArray(String property)
    {
       JsArrayString array = getStringArray(property);
-      String string = array.toString();
-      return string;
+      return array.toString();
    }
 
    private native final JsArrayInteger getArray(String property) /*-{

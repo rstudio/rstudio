@@ -1,7 +1,7 @@
 /*
  * CreateKeyDialog.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -48,19 +48,19 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
                           final OperationWithInput<String> onCompleted)
    {
       super("Create RSA Key", Roles.getDialogRole(), new ProgressOperationWithInput<CreateKeyOptions>() {
-         
+
          @Override
          public void execute(final CreateKeyOptions input, 
                              final ProgressIndicator indicator)
          {
             final ProgressOperationWithInput<CreateKeyOptions> 
                                                       thisOperation = this;
-            
+
             indicator.onProgress("Creating RSA Key...");
-            
+
             RSAEncrypt.encrypt_ServerOnly(
-               server, 
-               input.getPassphrase(), 
+               server,
+               input.getPassphrase(),
                new RSAEncrypt.ResponseCallback() {
                   @Override
                   public void onSuccess(final String encryptedData)
@@ -71,66 +71,62 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
                                                          input.getType(),
                                                          encryptedData,
                                                          input.getOverwrite());
-                     
+
                      // call server to create the key
                      server.createSshKey(
                         options, 
                         new ServerRequestCallback<CreateKeyResult>() {
-   
+
                            @Override
                            public void onResponseReceived(CreateKeyResult res)
                            {
                               if (res.getFailedKeyExists())
                               {
                                  indicator.clearProgress();
-                                 
+
                                  confirmOverwriteKey(
-                                    input.getPath(), 
-                                    new Operation() 
+                                    input.getPath(),
+                                    () ->
                                     {
-                                       @Override
-                                       public void execute()
-                                       {
-                                          // re-execute with overwrite == true
-                                          thisOperation.execute(
-                                             CreateKeyOptions.create(
-                                                   options.getPath(),
-                                                   options.getType(),
-                                                   input.getPassphrase(),
-                                                   true),
-                                             indicator);
-                                       }  
-                                 });
-                               
+                                       // re-execute with overwrite == true
+                                       thisOperation.execute(
+                                          CreateKeyOptions.create(
+                                                options.getPath(),
+                                                options.getType(),
+                                                input.getPassphrase(),
+                                                true),
+                                          indicator);
+                                    });
+
                               }
                               else
                               {
                                  // close the dialog
                                  indicator.onCompleted();
-                              
+
                                  // update the key path 
                                  if (res.getExitStatus() == 0)
                                     onCompleted.execute(input.getPath());
-                                 
+
                                  else if (input.getOverwrite())
                                     onCompleted.execute(null);
-                                 
+
                                  // show the output
                                  new ShowContentDialog(
                                                 "Create RSA Key",
                                                 res.getOutput()).showModal();
                               }
                            }
-                           
+
                            @Override
                            public void onError(ServerError error)
                            {
-                              indicator.onError(error.getUserMessage());    
+                              indicator.onError(error.getUserMessage());
                            }
-                           
+
                         });
                   }
-                  
+
                   @Override
                   public void onFailure(ServerError error)
                   {
@@ -140,12 +136,12 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
             );
          }
       });
-      
+
       rsaSshKeyPath_ = FileSystemItem.createDir(rsaSshKeyPath);
-      
+
       setOkButtonCaption("Create");
    }
-   
+
    @Override
    protected CreateKeyOptions collectInput()
    {  
@@ -160,7 +156,7 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
 
    @Override
    protected boolean validate(CreateKeyOptions input)
-   {    
+   {
       if (input != null)
       {
          return true;
@@ -168,7 +164,7 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
       else
       {
          GlobalDisplay display = RStudioGinjector.INSTANCE.getGlobalDisplay();
-         
+
          if (getPassphrase() != getConfirmPassphrase())
          {
             display.showErrorMessage(
@@ -176,7 +172,7 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
                   "The passphrase and passphrase confirmation do not match.",
                   txtConfirmPassphrase_);
          }
-          
+
          return false;
       }
    }
@@ -185,13 +181,13 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
    protected Widget createMainWidget()
    {
       Styles styles = RESOURCES.styles();
-      
+
       VerticalPanel panel = new VerticalPanel();
       panel.addStyleName(styles.mainWidget());
-      
+
       VerticalPanel namePanel = new VerticalPanel();
       namePanel.setWidth("100%");
-     
+
       // path
       TextBox txtKeyPath = new TextBox();
       txtKeyPath.addStyleName(styles.keyPathTextBox());
@@ -207,22 +203,22 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
       pathCaption.setWidth("100%");
       namePanel.add(pathCaption);
       namePanel.add(txtKeyPath);
-      
+
       panel.add(namePanel);
-      
+
       HorizontalPanel passphrasePanel = new HorizontalPanel();
       passphrasePanel.addStyleName(styles.newSection());
-      
+
       VerticalPanel passphrasePanel1 = new VerticalPanel();
       txtPassphrase_ = new PasswordTextBox();
       txtPassphrase_.addStyleName(styles.passphrase());
       FormLabel passphraseLabel1 = new FormLabel("Passphrase (optional):", txtPassphrase_);
       passphraseLabel1.addStyleName(styles.entryLabel());
       passphrasePanel1.add(passphraseLabel1);
-      
+
       passphrasePanel1.add(txtPassphrase_);
       passphrasePanel.add(passphrasePanel1);
-      
+
       VerticalPanel passphrasePanel2 = new VerticalPanel();
       passphrasePanel2.addStyleName(styles.lastSection());
       txtConfirmPassphrase_ = new PasswordTextBox();
@@ -232,20 +228,18 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
       passphrasePanel2.add(passphraseLabel2);
       passphrasePanel2.add(txtConfirmPassphrase_);
       passphrasePanel.add(passphrasePanel2);
-      
+
       panel.add(passphrasePanel);
-      
-          
+
       return panel;
    }
-   
+
    @Override
    protected void focusInitialControl()
    {
       FocusHelper.setFocusDeferred(txtPassphrase_);
    }
-   
-   
+
    private static void confirmOverwriteKey(String path, Operation onConfirmed)
    {
       RStudioGinjector.INSTANCE.getGlobalDisplay().showYesNoMessage(
@@ -256,18 +250,18 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
             onConfirmed,
             false);
    }
-   
+
    private String getPassphrase()
    {
       return txtPassphrase_.getText().trim();
    }
-   
+
    private String getConfirmPassphrase()
    {
       return txtConfirmPassphrase_.getText().trim();
    }
-   
-   static interface Styles extends CssResource
+
+   interface Styles extends CssResource
    {
       String entryLabel();
       String keyPathTextBox();
@@ -277,14 +271,14 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
       String passphrase();
       String passphraseConfirm();
    }
-  
-   static interface Resources extends ClientBundle
+
+   interface Resources extends ClientBundle
    {
       @Source("CreateKeyDialog.css")
       Styles styles();
    }
-   
-   static Resources RESOURCES = (Resources)GWT.create(Resources.class);
+
+   static final Resources RESOURCES = GWT.create(Resources.class);
    public static void ensureStylesInjected()
    {
       RESOURCES.styles().ensureInjected();

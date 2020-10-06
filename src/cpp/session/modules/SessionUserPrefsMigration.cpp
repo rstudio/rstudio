@@ -1,7 +1,7 @@
 /*
  * SessionUserPrefsMigration.cpp
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -153,7 +153,7 @@ core::Error migratePrefs(const FilePath& src)
    json::Object destState;
 
    // Read the old settings file
-   Settings settings; 
+   Settings settings;
    Error err = settings.initialize(src);
    if (err)
       return err;
@@ -253,9 +253,6 @@ core::Error migratePrefs(const FilePath& src)
    std::string contextId = settings.get("contextIdentifier");
    if (!contextId.empty())
       destState[kContextId] = contextId;
-   std::string agreementHash = settings.get("agreedToHash");
-   if (!agreementHash.empty())
-      destState[kAgreementHash] = agreementHash;
    int handlerType = settings.getInt("errorHandlerType", 1);
    if (handlerType == 0)
       destState[kErrorHandlerType] = kErrorHandlerTypeMessage;
@@ -274,7 +271,7 @@ core::Error migratePrefs(const FilePath& src)
       LOG_ERROR(err);
 
    // Write the accumulated preferences to our user prefs layer
-   return userPrefs().writeLayer(PREF_LAYER_USER, destPrefs); 
+   return userPrefs().writeLayer(PREF_LAYER_USER, destPrefs);
 }
 
 } // namespace prefs

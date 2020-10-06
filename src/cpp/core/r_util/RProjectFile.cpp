@@ -1,7 +1,7 @@
 /*
  * RProjectFile.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,6 +30,7 @@
 #include <core/StringUtils.hpp>
 #include <core/YamlUtil.hpp>
 #include <core/text/DcfParser.hpp>
+#include <core/text/CsvParser.hpp>
 #include <core/system/Environment.hpp>
 
 #include <core/r_util/RPackageInfo.hpp>
@@ -51,6 +52,20 @@ const char * const kBuildTypePackage = "Package";
 const char * const kBuildTypeMakefile = "Makefile";
 const char * const kBuildTypeWebsite = "Website";
 const char * const kBuildTypeCustom = "Custom";
+
+const char * const kMarkdownWrapUseDefault = "Default";
+const char * const kMarkdownWrapNone = "None";
+const char * const kMarkdownWrapColumn = "Column";
+const char * const kMarkdownWrapSentence = "Sentence";
+
+const int kMarkdownWrapAtColumnDefault = 72;
+
+const char * const kMarkdownReferencesUseDefault = "Default";
+const char * const kMarkdownReferencesBlock = "Block";
+const char * const kMarkdownReferencesSection = "Section";
+const char * const kMarkdownReferencesDocument = "Document";
+
+const char * const kZoteroLibrariesAll = "All";
 
 namespace {
 
@@ -186,6 +201,69 @@ bool interpretLineEndingsValue(std::string value, int* pValue)
    }
 }
 
+bool interpretMarkdownWrapValue(const std::string& value, std::string* pValue)
+{
+   if (value == "" || value == kMarkdownWrapUseDefault)
+   {
+      *pValue = kMarkdownWrapUseDefault;
+      return true;
+   }
+   else if (value == kMarkdownWrapNone ||
+            value == kMarkdownWrapColumn ||
+            value == kMarkdownWrapSentence)
+   {
+      *pValue = value;
+      return true;
+   }
+   else
+   {
+      return false;
+   }
+}
+
+bool interpretMarkdownReferencesValue(const std::string& value, std::string *pValue)
+{
+   if (value == "" || value == kMarkdownReferencesUseDefault)
+   {
+      *pValue = kMarkdownReferencesUseDefault;
+      return true;
+   }
+   else if (value == kMarkdownReferencesBlock ||
+            value == kMarkdownReferencesSection ||
+            value == kMarkdownReferencesDocument)
+   {
+      *pValue = value;
+      return true;
+   }
+   else
+   {
+      return false;
+   }
+
+}
+
+void interpretZoteroLibraries(const std::string& value, boost::optional<std::vector<std::string>>* pValue)
+{
+   if (value == "")
+   {
+      pValue->reset(std::vector<std::string>());
+   }
+   else if (value == kZoteroLibrariesAll) // migration
+   {
+      pValue->reset(std::vector<std::string>( { "My Library" }));
+   }
+   else
+   {
+      std::vector<std::string> parsedLibraries;
+      text::parseCsvLine(value.begin(), value.end(), true, &parsedLibraries);
+      std::vector<std::string> libraries;
+      std::transform(parsedLibraries.begin(), parsedLibraries.end(), std::back_inserter(libraries), [](const std::string& str) {
+         return boost::algorithm::trim_copy(str);
+      });
+      pValue->reset(libraries);
+   }
+}
+
 
 bool interpretIntValue(const std::string& value, int* pValue)
 {
@@ -309,7 +387,7 @@ std::ostream& operator << (std::ostream& stream, const YesNoAskValue& val)
       break;
    }
 
-   return stream ;
+   return stream;
 }
 
 Error findProjectFile(FilePath filePath,
@@ -390,6 +468,9 @@ Error readProjectFile(const FilePath& projectFilePath,
                           &providedDefaults,
                           pUserErrMsg);
 }
+
+// TODO: add visual markdown options, e.g. see:
+// https://github.com/rstudio/rstudio/commit/35126fd3b7f1b2f78dcc8f9df6c77f1a1bd324dc#diff-87efb91b81672d3e9b3a9c9c6e46241c
 
 Error readProjectFile(const FilePath& projectFilePath,
                       const RProjectConfig& defaultConfig,
@@ -811,7 +892,91 @@ Error readProjectFile(const FilePath& projectFilePath,
    {
       pConfig->defaultTutorial = "";
    }
+
+   // extract markdown wrap
+   it = dcfFields.find("MarkdownWrap");
+   if (it != dcfFields.end())
+   {
+      if (!interpretMarkdownWrapValue(it->second, &(pConfig->markdownWrap)))
+         return requiredFieldError("MarkdownWrap", pUserErrMsg);
+   }
+   else
+   {
+      pConfig->markdownWrap = defaultConfig.markdownWrap;
+   }
+
+   // extract markdown wrap at column
+   it = dcfFields.find("MarkdownWrapAtColumn");
+   if (it != dcfFields.end())
+   {
+      if (!interpretIntValue(it->second, &(pConfig->markdownWrapAtColumn)))
+         return requiredFieldError("MarkdownWrapAtColumn", pUserErrMsg);
+   }
+   else
+   {
+      pConfig->markdownWrapAtColumn = defaultConfig.markdownWrapAtColumn;
+   }
+
+   // extract markdown references
+   it = dcfFields.find("MarkdownReferences");
+   if (it != dcfFields.end())
+   {
+      if (!interpretMarkdownReferencesValue(it->second, &(pConfig->markdownReferences)))
+         return requiredFieldError("MarkdownReferences", pUserErrMsg);
+   }
+   else
+   {
+      pConfig->markdownReferences = defaultConfig.markdownReferences;
+   }
+
+   // extract markdown canonical
+   it = dcfFields.find("MarkdownCanonical");
+   if (it != dcfFields.end())
+   {
+      if (!interpretYesNoAskValue(it->second, false, &(pConfig->markdownCanonical)))
+         return requiredFieldError("MarkdownCanonical", pUserErrMsg);
+   }
+   else
+   {
+      pConfig->markdownCanonical = defaultConfig.markdownCanonical;
+   }
+
+   // extract zotero libraries
+   it = dcfFields.find("ZoteroLibraries");
+   if (it != dcfFields.end())
+   {
+      interpretZoteroLibraries(it->second, &(pConfig->zoteroLibraries));
+   }
+   else
+   {
+      pConfig->zoteroLibraries = defaultConfig.zoteroLibraries;
+   }
    
+   // extract python fields
+   it = dcfFields.find("PythonType");
+   if (it != dcfFields.end())
+   {
+      pConfig->pythonType = it->second;
+   }
+   
+   it = dcfFields.find("PythonVersion");
+   if (it != dcfFields.end())
+   {
+      pConfig->pythonVersion = it->second;
+   }
+   
+   it = dcfFields.find("PythonPath");
+   if (it != dcfFields.end())
+   {
+      pConfig->pythonPath = it->second;
+   }
+
+   // extract spelling fields
+   it = dcfFields.find("SpellingDictionary");
+   if (it != dcfFields.end())
+   {
+      pConfig->spellingDictionary = it->second;
+   }
 
    return Success();
 }
@@ -1021,6 +1186,72 @@ Error writeProjectFile(const FilePath& projectFilePath,
    {
       boost::format docsFmt("\nDefaultTutorial: %1%\n");
       contents.append(boost::str(docsFmt % config.defaultTutorial));
+   }
+
+   // if any markdown configs deviate from the default then create a markdown section
+   if (config.markdownWrap != kMarkdownWrapUseDefault ||
+       config.markdownReferences != kMarkdownReferencesUseDefault ||
+       config.markdownCanonical != DefaultValue)
+   {
+      contents.append("\n");
+
+      if (config.markdownWrap != kMarkdownWrapUseDefault)
+      {
+         boost::format fmt("MarkdownWrap: %1%\n");
+         contents.append(boost::str(fmt % config.markdownWrap));
+         if (config.markdownWrap == kMarkdownWrapColumn)
+         {
+            boost::format fmt("MarkdownWrapAtColumn: %1%\n");
+            contents.append(boost::str(fmt % config.markdownWrapAtColumn));
+         }
+      }
+
+      if (config.markdownReferences != kMarkdownReferencesUseDefault)
+      {
+         boost::format fmt("MarkdownReferences: %1%\n");
+         contents.append(boost::str(fmt % config.markdownReferences));
+      }
+
+      if (config.markdownCanonical != DefaultValue)
+      {
+         boost::format fmt("MarkdownCanonical: %1%\n");
+         contents.append(boost::str(fmt % yesNoAskValueToString(config.markdownCanonical)));
+      }
+   }
+
+   // if we have zotero config create a zotero section
+   if (config.zoteroLibraries.has_value() && !config.zoteroLibraries.get().empty())
+   {
+      auto libraries = config.zoteroLibraries.get();
+      std::string librariesConfig = text::encodeCsvLine(libraries);
+      boost::format fmt("\nZoteroLibraries: %1%\n");
+      contents.append(boost::str(fmt % librariesConfig));
+   }
+   
+   // if any Python configs deviate from default, then create Python section
+   if (!config.pythonType.empty() ||
+       !config.pythonVersion.empty() ||
+       !config.pythonPath.empty())
+   {
+      boost::format fmt(
+               "\n"
+               "PythonType: %1%\n"
+               "PythonVersion: %2%\n"
+               "PythonPath: %3%\n");
+      
+      auto pythonConfig = fmt
+            % config.pythonType
+            % config.pythonVersion
+            % config.pythonPath;
+      
+      contents.append(boost::str(pythonConfig));
+   }
+
+   // add spelling dictioanry if present
+   if (!config.spellingDictionary.empty())
+   {
+      boost::format fmt("\nSpellingDictionary: %1%\n");
+      contents.append(boost::str(fmt % config.spellingDictionary));
    }
    
 

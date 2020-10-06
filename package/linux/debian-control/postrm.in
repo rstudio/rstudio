@@ -30,6 +30,7 @@ then
    systemctl stop rstudio-server.service 2>/dev/null
    systemctl disable rstudio-server.service 2>/dev/null
    rm -rf /lib/systemd/system/rstudio-server.service
+   rm -rf /usr/lib/systemd/system/rstudio-server.service
    systemctl daemon-reload
 fi
 

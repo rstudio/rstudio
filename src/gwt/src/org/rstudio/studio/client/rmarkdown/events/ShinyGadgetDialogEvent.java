@@ -1,7 +1,7 @@
 /*
  * RmdParamsEditEvent.java
  *
- * Copyright (C) 2009-14 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,31 +20,31 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class ShinyGadgetDialogEvent extends GwtEvent<ShinyGadgetDialogEvent.Handler>
-{  
-   
+{
+
    public static class Data extends JavaScriptObject
    {
       protected Data()
       {
       }
-      
+
       public final native String getCaption() /*-{
          return this.caption;
       }-*/;
-      
+
       public final native String getUrl() /*-{
          return this.url;
       }-*/;
-      
+
       public final native int getPreferredWidth() /*-{
          return this.width;
       }-*/;
-      
+
       public final native int getPreferredHeight() /*-{
          return this.height;
       }-*/;
    }
-   
+
    public interface Handler extends EventHandler
    {
       void onShinyGadgetDialog(ShinyGadgetDialogEvent event);
@@ -59,22 +59,22 @@ public class ShinyGadgetDialogEvent extends GwtEvent<ShinyGadgetDialogEvent.Hand
    {
       return data_.getCaption();
    }
-   
+
    public String getUrl()
    {
       return data_.getUrl();
    }
-   
+
    public int getPreferredWidth()
    {
       return data_.getPreferredWidth();
    }
-   
+
    public int getPreferredHeight()
    {
       return data_.getPreferredHeight();
    }
-    
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -86,8 +86,8 @@ public class ShinyGadgetDialogEvent extends GwtEvent<ShinyGadgetDialogEvent.Hand
    {
       handler.onShinyGadgetDialog(this);
    }
-   
+
    private final Data data_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

@@ -1,7 +1,7 @@
 /*
  * DataViewer.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -273,8 +273,8 @@ struct CachedFrame
       if (!isFilterSubset(workingSearch, newSearch))
          return false;
 
-      for (unsigned i = 0; 
-           i < std::min(newFilters.size(), workingFilters.size()); 
+      for (unsigned i = 0;
+           i < std::min(newFilters.size(), workingFilters.size());
            i++)
       {
          if (!isFilterSubset(workingFilters[i], newFilters[i]))
@@ -285,8 +285,8 @@ struct CachedFrame
    };
 
    // The current order column and direction
-   int workingOrderCol;
-   std::string workingOrderDir;
+   std::vector<int> workingOrderCols;
+   std::vector<std::string> workingOrderDirs;
 
    // NB: There's no protection on this SEXP and it may be a stale pointer!
    // Used only to test for changes.
@@ -322,7 +322,7 @@ SEXP findInNamedEnvir(const std::string& envir, const std::string& name)
       return nullptr;
 
    // find the SEXP directly in the environment; return null if unbound
-   SEXP obj = r::sexp::findVar(name, env); 
+   SEXP obj = r::sexp::findVar(name, env);
    return obj == R_UnboundValue ? nullptr : obj;
 }
 
@@ -336,7 +336,7 @@ json::Value makeDataItem(SEXP dataSEXP,
                          const std::string& cacheKey, int preview)
 {
    int nrow = safeDim(dataSEXP, DIM_ROWS);
-   int ncol = safeDim(dataSEXP, DIM_COLS); 
+   int ncol = safeDim(dataSEXP, DIM_COLS);
 
    // fire show data event
    json::Object dataItem;
@@ -483,14 +483,32 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
    int draw = http::util::fieldValue<int>(fields, "draw", 0);
    int start = http::util::fieldValue<int>(fields, "start", 0);
    int length = http::util::fieldValue<int>(fields, "length", 0);
-   int ordercol = http::util::fieldValue<int>(fields, "order[0][column]", 
-         -1);
-   std::string orderdir = http::util::fieldValue<std::string>(fields, 
-         "order[0][dir]", "asc");
    std::string search = http::util::urlDecode(
          http::util::fieldValue<std::string>(fields, "search[value]", ""));
    std::string cacheKey = http::util::urlDecode(
          http::util::fieldValue<std::string>(fields, "cache_key", ""));
+
+   // loop through sort columns
+   std::vector<int> ordercols;
+   std::vector<std::string> orderdirs;
+   int orderIdx = 0;
+   int ordercol = -1;
+   std::string orderdir;
+   do
+   {
+      std::string ordercolstr = "order[" + std::to_string(orderIdx) + "][column]";
+      std::string orderdirstr = "order[" + std::to_string(orderIdx) + "][dir]";
+      ordercol = http::util::fieldValue<int>(fields, ordercolstr,  -1);
+      orderdir = http::util::fieldValue<std::string>(fields, orderdirstr, "asc");
+
+      if (ordercol > 0)
+      {
+         ordercols.push_back(ordercol);
+         orderdirs.push_back(orderdir);
+      }
+
+      orderIdx++;
+   } while (ordercol > 0);
 
    // Parameters from the client to delimit the column slice to return
    int columnOffset = http::util::fieldValue<int>(fields, "column_offset", 0);
@@ -527,7 +545,7 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
       filters.push_back(filterVal);
    }
 
-   bool needsTransform = ordercol > 0 || hasFilter || !search.empty();
+   bool needsTransform = ordercols.size() > 0 || hasFilter || !search.empty();
    bool hasTransform = false;
 
    // check to see if we have an ordered/filtered view we can build from
@@ -546,15 +564,15 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
          {
             if (cachedFrame->second.workingSearch == search &&
                 cachedFrame->second.workingFilters == filters && 
-                cachedFrame->second.workingOrderDir == orderdir &&
-                cachedFrame->second.workingOrderCol == ordercol)
+                cachedFrame->second.workingOrderDirs == orderdirs &&
+                cachedFrame->second.workingOrderCols == ordercols)
             {
                // we have one with exactly the same parameters as requested;
                // use it exactly as is
                dataSEXP = workingDataSEXP;
                needsTransform = false;
                hasTransform = true;
-            } 
+            }
             else if (cachedFrame->second.isSupersetOf(search, filters))
             {
                // we have one that is a strict superset of the parameters
@@ -574,8 +592,8 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
       transform.addParam("x", dataSEXP);       // data to transform
       transform.addParam("filtered", filters); // which columns are filtered
       transform.addParam("search", search);    // global search (across cols)
-      transform.addParam("col", ordercol);     // which column to order on
-      transform.addParam("dir", orderdir);     // order direction ("asc"/"desc")
+      transform.addParam("cols", ordercols);     // which column to order on
+      transform.addParam("dirs", orderdirs);     // order direction ("asc"/"desc")
       transform.call(&dataSEXP, &protect);
       if (error)
          throw r::exec::RErrorException(error.getSummary());
@@ -595,8 +613,8 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
       {
          cachedFrame->second.workingSearch = search;
          cachedFrame->second.workingFilters = filters;
-         cachedFrame->second.workingOrderDir = orderdir;
-         cachedFrame->second.workingOrderCol = ordercol;
+         cachedFrame->second.workingOrderDirs = orderdirs;
+         cachedFrame->second.workingOrderCols = ordercols;
       }
    }
 
@@ -787,7 +805,7 @@ Error getGridData(const http::Request& request,
       json::Object err;
       err["error"] = e.message();
       result = err;
-      status = http::status::InternalServerError;
+      status = http::status::BadRequest;
    }
    CATCH_UNEXPECTED_EXCEPTION
 
@@ -1027,9 +1045,9 @@ Error initialize()
    addSuspendHandler(SuspendHandler(onSuspend, onResume));
 
    using boost::bind;
-   using namespace rstudio::r::function_hook ;
+   using namespace rstudio::r::function_hook;
    using namespace session::module_context;
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(sourceModuleRFile, "SessionDataViewer.R"))
       (bind(registerRpcMethod, "remove_cached_data", removeCachedData))

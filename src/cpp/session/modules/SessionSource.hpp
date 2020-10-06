@@ -1,7 +1,7 @@
 /*
  * SessionSource.hpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -36,7 +36,7 @@ namespace session {
 namespace modules { 
 namespace source {
    
-core::Error clientInitDocuments(core::json::Array* pJsonDocs) ;
+core::Error clientInitDocuments(core::json::Array* pJsonDocs);
 
 core::Error initialize();
                        

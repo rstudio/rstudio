@@ -1,7 +1,7 @@
 /*
  * ActiveConnectionsChangedEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,17 +21,17 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class ActiveConnectionsChangedEvent extends GwtEvent<ActiveConnectionsChangedEvent.Handler>
-{  
+{
    public interface Handler extends EventHandler
    {
       void onActiveConnectionsChanged(ActiveConnectionsChangedEvent event);
    }
-   
+
    public ActiveConnectionsChangedEvent(JsArray<ConnectionId> activeConnections)
    {
       activeConnections_ = activeConnections;
    }
-   
+
    public JsArray<ConnectionId> getActiveConnections()
    {
       return activeConnections_;
@@ -48,8 +48,8 @@ public class ActiveConnectionsChangedEvent extends GwtEvent<ActiveConnectionsCha
    {
       handler.onActiveConnectionsChanged(this);
    }
-   
+
    private final JsArray<ConnectionId> activeConnections_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

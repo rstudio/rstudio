@@ -1,7 +1,7 @@
 /*
  * AceAfterCommandExecutedEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,42 +24,42 @@ public class AceAfterCommandExecutedEvent extends GwtEvent<AceAfterCommandExecut
    {
       this(nullEvent());
    }
-   
+
    public AceAfterCommandExecutedEvent(JavaScriptObject event)
    {
       event_ = event;
    }
-   
+
    public JavaScriptObject getCommandData()
    {
       return event_;
    }
-   
+
    public boolean isChainEvent()
    {
       return isChainEvent(event_);
    }
-   
+
    private static final native boolean isChainEvent(JavaScriptObject event) /*-{
       if (event == null)
          return true;
       var command = event.command;
       return command === "null" || command === "chainKeys";
    }-*/;
-   
+
    private final JavaScriptObject event_;
-   
+
    private static native final JavaScriptObject nullEvent() /*-{
       return {command: "null"};
    }-*/;
-   
+
    // Boilerplate ----
-   
+
    public interface Handler extends EventHandler
    {
       void onAceAfterCommandExecuted(AceAfterCommandExecutedEvent event);
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -72,5 +72,5 @@ public class AceAfterCommandExecutedEvent extends GwtEvent<AceAfterCommandExecut
       handler.onAceAfterCommandExecuted(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

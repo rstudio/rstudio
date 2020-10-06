@@ -1,7 +1,7 @@
 /*
  * JobsPaneWidgets.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -96,7 +96,7 @@ public class JobsPaneWidgets implements JobsPaneOperations
    public void installMainToolbar()
    {
       toolbar_.removeAllWidgets();
-      toolbar_.addLeftWidget(commands_.startJob().createToolbarButton());
+      toolbar_.addLeftWidget(startButton_ = commands_.startJob().createToolbarButton());
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(commands_.clearJobs().createToolbarButton());
       progress_ = null;
@@ -220,14 +220,21 @@ public class JobsPaneWidgets implements JobsPaneOperations
    {
       return panel_;
    }
-   
+
+   @Override
+   public void focus()
+   {
+      startButton_.setFocus(true);
+   }
+
    // widgets
    private JobOutputPanel output_;
    private SlidingLayoutPanel panel_;
    private final Toolbar toolbar_;
    private final ToolbarButton allJobs_;
    private JobProgress progress_;
-   
+   private ToolbarButton startButton_;
+
    // internal state
    private String current_;
    

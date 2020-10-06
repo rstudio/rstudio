@@ -1,7 +1,7 @@
 /*
  * RGraphicsTypes.hpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -73,7 +73,7 @@ struct GraphicsDeviceFunctions
    boost::function<std::string()> imageFileExtension;
    boost::function<void()> close;
    boost::function<void()> onBeforeExecute;
-};  
+};
 
 
 } // namespace graphics

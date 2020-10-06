@@ -1,7 +1,7 @@
 #
 # NotebookAlternateEngines.R
 #
-# Copyright (C) 2009-17 by RStudio, PBC
+# Copyright (C) 2020 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -38,6 +38,10 @@
 .rs.addFunction("runUserDefinedEngine", function(engine, code, options)
 {
    Encoding(code) <- "UTF-8" 
+   
+   # trim common indent (this ensures that indented chunks of code can be run)
+   # https://github.com/rstudio/rstudio/issues/3731
+   code <- .rs.trimCommonIndent(code)
    
    # if we're using the python engine, attempt to load reticulate (this
    # will load the reticulate knitr engine and set it as the default engine)

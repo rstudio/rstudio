@@ -1,7 +1,7 @@
 /*
  * PackagesServerOperations.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,7 +22,6 @@ import com.google.gwt.core.client.JsArrayString;
 import org.rstudio.studio.client.packrat.model.PackratServerOperations;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallContext;
 
 public interface PackagesServerOperations extends PackratServerOperations
 {

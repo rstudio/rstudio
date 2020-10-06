@@ -1,7 +1,7 @@
 /*
  * PosixSystem.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,6 +23,7 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/range/as_array.hpp>
+#include <boost/bind.hpp>
 
 #include <signal.h>
 #include <fcntl.h>
@@ -34,9 +35,7 @@
 #include <pwd.h>
 #include <grp.h>
 #include <sys/types.h>
-#include <ifaddrs.h>
 #include <sys/socket.h>
-#include <netdb.h>
 
 #include <uuid/uuid.h>
 
@@ -332,7 +331,7 @@ struct SignalBlocker::Impl
          return systemError(result, ERROR_LOCATION);
       
       // set restore bit and return success
-      blocked = true; 
+      blocked = true;
       return Success();
    }
 };
@@ -651,7 +650,12 @@ Error closeChildFileDescriptorsFrom(pid_t childPid, int pipeFd, uint32_t fdStart
       }
    }
    else
-      LOG_ERROR(error);
+   {
+      // we simply log the error instead of returning it because this is generally benign and can
+      // happen in certain normal scenarios, such as if /proc/x/fd is only readable by root
+      // (if core dumps are turned off)
+      core::log::logErrorAsDebug(error);
+   }
 
    // write message close (-1) even if we failed to retrieve pids above
    // this prevents the child from being stuck in limbo or interpreting its
@@ -1876,46 +1880,10 @@ std::ostream& operator<<(std::ostream& os, const ProcessInfo& info)
    return os;
 }
 
-Error ipAddresses(std::vector<IpAddress>* pAddresses,
+Error ipAddresses(std::vector<posix::IpAddress>* pAddresses,
                   bool includeIPv6)
 {
-   // get addrs
-   struct ifaddrs* pAddrs;
-   if (::getifaddrs(&pAddrs) == -1)
-      return systemError(errno, ERROR_LOCATION);
-
-   // iterate through the linked list
-   for (struct ifaddrs* pAddr = pAddrs; pAddr != nullptr; pAddr = pAddr->ifa_next)
-   {
-      if (pAddr->ifa_addr == nullptr)
-         continue;
-
-      // filter out non-ip addresses
-      sa_family_t family = pAddr->ifa_addr->sa_family;
-      bool filterAddr = includeIPv6 ? (family != AF_INET && family != AF_INET6) : (family != AF_INET);
-      if (filterAddr)
-         continue;
-
-      char host[NI_MAXHOST];
-      if (::getnameinfo(pAddr->ifa_addr,
-                        (family == AF_INET) ? sizeof(struct sockaddr_in) :
-                                              sizeof(struct sockaddr_in6),
-                        host, NI_MAXHOST,
-                        nullptr, 0, NI_NUMERICHOST) != 0)
-      {
-         LOG_ERROR(systemError(errno, ERROR_LOCATION));
-         continue;
-      }
-
-      struct IpAddress addr;
-      addr.name = pAddr->ifa_name;
-      addr.addr = host;
-      pAddresses->push_back(addr);
-   }
-
-   // free them and return success
-   ::freeifaddrs(pAddrs);
-   return Success();
+    return posix::getIpAddresses(*pAddresses, includeIPv6);
 }
 
 

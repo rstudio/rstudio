@@ -1,7 +1,7 @@
 /*
  * link.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,13 @@
 
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { findChildren, findChildrenByType } from 'prosemirror-utils';
+
+export const kLinkTargetUrl = 0;
+export const kLinkTargetTitle = 1;
+
+export const kLinkAttr = 0;
+export const kLinkChildren = 1;
+export const kLinkTarget = 2;
 
 export enum LinkType {
   URL = 0,

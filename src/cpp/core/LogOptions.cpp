@@ -1,7 +1,7 @@
 /*
  * LogOptions.cpp
  *
- * Copyright (C) 2018-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,7 @@
 
 #include <vector>
 
+#include <core/system/Environment.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Xdg.hpp>
 
@@ -35,6 +36,7 @@ namespace log {
 #define kRotate            "rotate"
 #define kMaxSizeMb         "max-size-mb"
 #define kLogConfFile       "logging.conf"
+#define kLogConfEnvVar     "RS_LOG_CONF_FILE"
 
 #define kFileLogger        "file"
 #define kStdErrLogger      "stderr"
@@ -56,9 +58,7 @@ namespace {
 const FilePath kDefaultLogPath("/var/log/rstudio-server");
 #else
 // desktop - store logs under user dir
-const FilePath kDefaultLogPath = core::system::userSettingsPath(core::system::userHomePath(),
-                                                               "RStudio-Desktop",
-                                                                false).completePath("logs");
+const FilePath kDefaultLogPath = core::system::xdg::userDataDir().completePath("log");
 #endif
 
 std::string logLevelToString(LogLevel logLevel)
@@ -210,14 +210,19 @@ void LogOptions::initProfile()
 
 Error LogOptions::read()
 {
-#ifdef RSTUDIO_SERVER
-   FilePath optionsFile = core::system::xdg::systemConfigFile(kLogConfFile);
-#else
-   // desktop - read user file first, and only read admin file if the user file does not exist
-   FilePath optionsFile = core::system::xdg::userConfigDir().completeChildPath(kLogConfFile);
+   // first, look for config file in a specific environment variable
+   FilePath optionsFile(core::system::getenv(kLogConfEnvVar));
    if (!optionsFile.exists())
-         optionsFile = core::system::xdg::systemConfigFile(kLogConfFile);
-#endif
+   {
+   #ifdef RSTUDIO_SERVER
+      optionsFile = core::system::xdg::systemConfigFile(kLogConfFile);
+   #else
+      // desktop - read user file first, and only read admin file if the user file does not exist
+      optionsFile = core::system::xdg::userConfigDir().completeChildPath(kLogConfFile);
+      if (!optionsFile.exists())
+            optionsFile = core::system::xdg::systemConfigFile(kLogConfFile);
+   #endif
+   }
 
    // if the options file does not exist, that's fine - we'll just use default values
    if (!optionsFile.exists())

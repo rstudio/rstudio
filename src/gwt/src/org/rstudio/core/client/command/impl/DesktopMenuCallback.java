@@ -1,7 +1,7 @@
 /*
  * DesktopMenuCallback.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -61,12 +61,12 @@ public class DesktopMenuCallback implements MenuCallback
    public native final void endMainMenu() /*-{
       $wnd.desktopMenuCallback.endMainMenu();
    }-*/;
-   
+
    public static final void setCommandVisible(String commandId, boolean visible)
    {
       setCommandVisibleImpl(commandId, visible, MENU_CALLBACKS);
    }
-   
+
    private native static final void setCommandVisibleImpl(String commandId, boolean visible, JavaScriptObject callbacks)
    /*-{
       callbacks.setCommandVisible(commandId, visible);
@@ -76,7 +76,7 @@ public class DesktopMenuCallback implements MenuCallback
    {
       setCommandEnabledImpl(commandId, enabled, MENU_CALLBACKS);
    }
-   
+
    private native static final void setCommandEnabledImpl(String commandId, boolean enabled, JavaScriptObject callbacks)
    /*-{
       callbacks.setCommandEnabled(commandId, enabled);
@@ -86,7 +86,7 @@ public class DesktopMenuCallback implements MenuCallback
    {
       setCommandCheckedImpl(commandId, checked, MENU_CALLBACKS);
    }
-   
+
    private native static final void setCommandCheckedImpl(String commandId, boolean checked, JavaScriptObject callbacks)
    /*-{
       callbacks.setCommandChecked(commandId, checked);
@@ -102,19 +102,19 @@ public class DesktopMenuCallback implements MenuCallback
    {
       setCommandLabelImpl(commandId, label, MENU_CALLBACKS);
    }
-   
+
    private native static final void setCommandLabelImpl(String commandId, String label, JavaScriptObject callbacks)
    /*-{
       label = @org.rstudio.core.client.command.AppMenuItem::replaceMnemonics(Ljava/lang/String;Ljava/lang/String;)(label, "&");
       callbacks.setCommandLabel(commandId, label);
    }-*/;
-   
+
    private static final native JavaScriptObject menuCallbacks()
    /*-{
       for (var window = $wnd; window != null; window = window.opener)
          if (window.desktopMenuCallback)
             return window.desktopMenuCallback;
    }-*/;
-   
+
    private static final JavaScriptObject MENU_CALLBACKS = menuCallbacks();
 }

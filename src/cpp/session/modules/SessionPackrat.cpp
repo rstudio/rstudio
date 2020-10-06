@@ -1,7 +1,7 @@
 /*
  * SessionPackrat.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -503,7 +503,7 @@ bool getPendingActions(PackratActionType action, bool useCached,
    // queried for that action, serve cached state
    static std::string cachedLibraryHash[PACKRAT_ACTION_MAX];
    static std::string cachedLockfileHash[PACKRAT_ACTION_MAX];
-   static bool cachedResult[PACKRAT_ACTION_MAX]; 
+   static bool cachedResult[PACKRAT_ACTION_MAX];
    static json::Value cachedActions[PACKRAT_ACTION_MAX];
    if (libraryHash == cachedLibraryHash[action] &&
        lockfileHash == cachedLockfileHash[action] &&
@@ -573,7 +573,7 @@ void onLibraryUpdate(const std::string& oldHash, const std::string& newHash)
                     getHash(HASH_TYPE_LOCKFILE, HASH_STATE_OBSERVED) << 
                     " doesn't match resolved hash " <<
                     getHash(HASH_TYPE_LOCKFILE, HASH_STATE_RESOLVED) <<
-                    ", skipping auto snapshot"); 
+                    ", skipping auto snapshot");
    }
 
    // send the new state to the client if Packrat isn't busy

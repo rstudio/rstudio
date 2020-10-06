@@ -1,7 +1,7 @@
 /*
  * NativeKeyPressEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,13 +15,13 @@
 package org.rstudio.core.client.events;
 
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
-public class NativeKeyPressEvent extends GwtEvent<NativeKeyPressHandler>
+public class NativeKeyPressEvent extends GwtEvent<NativeKeyPressEvent.Handler>
 {
-   public static final GwtEvent.Type<NativeKeyPressHandler> TYPE =
-      new GwtEvent.Type<NativeKeyPressHandler>();
+   public static final GwtEvent.Type<Handler> TYPE = new GwtEvent.Type<>();
 
    protected NativeKeyPressEvent(NativeEvent event)
    {
@@ -61,13 +61,13 @@ public class NativeKeyPressEvent extends GwtEvent<NativeKeyPressHandler>
    }
 
    @Override
-   public Type<NativeKeyPressHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
 
    @Override
-   protected void dispatch(NativeKeyPressHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onKeyPress(this);
    }
@@ -75,6 +75,11 @@ public class NativeKeyPressEvent extends GwtEvent<NativeKeyPressHandler>
   private native char getCharCode(NativeEvent e)/*-{
     return e.charCode || e.keyCode;
   }-*/;
+
+   public interface Handler extends EventHandler
+   {
+      void onKeyPress(NativeKeyPressEvent event);
+   }
 
    private final NativeEvent event_;
    private boolean handled_;

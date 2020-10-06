@@ -1,7 +1,7 @@
 /*
  * ServerOffline.cpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -49,6 +49,7 @@ void handleOfflineRequest(const http::Request& request,
       std::ostringstream os;
       std::map<std::string, std::string> vars;
       vars["request_uri"] = string_utils::jsLiteralEscape(request.uri());
+      vars["base_uri"] = string_utils::jsLiteralEscape(request.baseUri(core::http::BaseUriUse::External));
 
       FilePath offlineTemplate = FilePath(options().wwwLocalPath()).completeChildPath("offline.htm");
       core::Error err = core::text::renderTemplate(offlineTemplate, vars, os);
@@ -85,13 +86,8 @@ Error httpServerAddHandlers()
    // alias options
    Options& options = server::options();
    
-   // use default gwt handling for image urls (required to render 
-   // embedded images in offline page)
-   bool useSecureCookies = options.authCookiesForceSecure() ||
-                           options.getOverlayOption("ssl-enabled") == "1" ;
    uri_handlers::addBlocking("/images",
                              gwt::fileHandlerFunction(options.wwwLocalPath(),
-                                                      useSecureCookies,
                                                       "/"));
    
    // default handler sends back offline page or json error as appropriate

@@ -1,7 +1,7 @@
 /*
  * RSession.hpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -32,7 +32,7 @@
 
 namespace rstudio {
 namespace core {
-   class Error ;
+   class Error;
    class Settings;
 } 
 }
@@ -48,9 +48,9 @@ struct RClientMetrics
         graphicsHeight(0), devicePixelRatio(1.0)
    {
    }
-   int consoleWidth ;
+   int consoleWidth;
    int buildConsoleWidth;
-   int graphicsWidth ;
+   int graphicsWidth;
    int graphicsHeight;
    double devicePixelRatio;
 };
@@ -59,7 +59,7 @@ struct ROptions
 {
    ROptions() :
          useInternet2(true),
-         rCompatibleGraphicsEngineVersion(12),
+         rCompatibleGraphicsEngineVersion(13),
          serverMode(false),
          autoReloadSource(false),
          restoreWorkspace(true),
@@ -88,7 +88,7 @@ struct ROptions
    bool useInternet2;
    int rCompatibleGraphicsEngineVersion;
    bool serverMode;
-   bool autoReloadSource ;
+   bool autoReloadSource;
    bool restoreWorkspace;
    SA_TYPE saveWorkspace;
    bool disableRProfileOnStart;
@@ -116,7 +116,7 @@ struct RConsoleInput
    explicit RConsoleInput(const std::string& console) : cancel(true), console(console) {}
    explicit RConsoleInput(const std::string& text, const std::string& console) : 
                           cancel(false), text(text), console(console) {}
-   bool cancel ;
+   bool cancel;
    std::string text;
    std::string console;
 };
@@ -136,7 +136,7 @@ extern const int kSerializationActionCompleted;
 struct RSuspendOptions;
 struct RCallbacks
 {
-   boost::function<core::Error(const RInitInfo&)> init ;
+   boost::function<core::Error(const RInitInfo&)> init;
    boost::function<bool(const std::string&,bool,RConsoleInput*)> consoleRead;
    boost::function<void(const std::string&)> browseURL;
    boost::function<void(const core::FilePath&)> browseFile;
@@ -147,7 +147,7 @@ struct RCallbacks
    boost::function<bool(double*,double*)> locator;
    boost::function<core::FilePath(bool)> chooseFile;
    boost::function<int(const std::string&)> editFile;
-   boost::function<void(const std::string&)> showMessage ;
+   boost::function<void(const std::string&)> showMessage;
    boost::function<void(bool)> busy;
    boost::function<void(bool)> deferredInit;
    boost::function<void(const r::session::RSuspendOptions& options)> suspended;

@@ -1,7 +1,7 @@
 /*
  * ProjectPackratPreferencesPane.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -89,10 +89,10 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
         );
         spaced(label);
         add(label);
-        
+
         PackratContext context = options.getPackratContext();
         RProjectPackratOptions packratOptions = options.getPackratOptions();
-                 
+
         chkUsePackrat_ = new CheckBox("Use packrat with this project");
         chkUsePackrat_.setValue(context.isPackified());
         chkUsePackrat_.addValueChangeHandler(
@@ -107,31 +107,31 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
                manageUI(false);
          }
         });
-       
+
         spaced(chkUsePackrat_);
         add(chkUsePackrat_);
-        
+
         chkAutoSnapshot_ = new CheckBox("Automatically snapshot local changes");
         chkAutoSnapshot_.setValue(packratOptions.getAutoSnapshot());
         lessSpaced(chkAutoSnapshot_);
         add(chkAutoSnapshot_);
-        
+
         String vcsName = session_.getSessionInfo().getVcsName();
-        chkVcsIgnoreLib_ = new CheckBox(vcsName + " ignore packrat library"); 
+        chkVcsIgnoreLib_ = new CheckBox(vcsName + " ignore packrat library");
         chkVcsIgnoreLib_.setValue(packratOptions.getVcsIgnoreLib());
         lessSpaced(chkVcsIgnoreLib_);
         add(chkVcsIgnoreLib_);
-        
+
         chkVcsIgnoreSrc_ = new CheckBox(vcsName + " ignore packrat sources");
         chkVcsIgnoreSrc_.setValue(packratOptions.getVcsIgnoreSrc());
         lessSpaced(chkVcsIgnoreSrc_);
         add(chkVcsIgnoreSrc_);
-        
+
         chkUseCache_ = new CheckBox("Use global cache for installed packages");
         chkUseCache_.setValue(packratOptions.getUseCache());
         spaced(chkUseCache_);
         add(chkUseCache_);
-        
+
         panelExternalPackages_ = new VerticalPanel();
         taExternalPackages_ = new FixedTextArea(3);
         taExternalPackages_.addStyleName(styles.externalPackages());
@@ -150,31 +150,31 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
             false, "Help on external packages", taExternalPackages_));
         panelExternalPackages_.add(taExternalPackages_);
         add(panelExternalPackages_);
-        
+
         widgetLocalRepos_ = new LocalRepositoriesWidget();
-        String[] localRepos = 
+        String[] localRepos =
               JsUtil.toStringArray(packratOptions.getLocalRepos());
         for (int i = 0; i < localRepos.length; ++i)
         {
            widgetLocalRepos_.addItem(localRepos[i]);
         }
         add(widgetLocalRepos_);
-        
+
         manageUI(context.isPackified());
 
-        HelpLink helpLink = new HelpLink("Learn more about Packrat", 
-                                         "packrat", 
+        HelpLink helpLink = new HelpLink("Learn more about Packrat",
+                                         "packrat",
                                          false);
         helpLink.getElement().getStyle().setMarginTop(15, Unit.PX);
         nudgeRight(helpLink);
         add(helpLink);
    }
-   
+
    private void manageUI(boolean packified)
    {
       boolean vcsActive = !StringUtil.isNullOrEmpty(
             session_.getSessionInfo().getVcsName());
-      
+
       chkAutoSnapshot_.setVisible(packified);
       chkUseCache_.setVisible(packified);
       panelExternalPackages_.setVisible(packified);
@@ -197,19 +197,19 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
                   getTextAreaValue(taExternalPackages_)));
       packratOptions.setLocalRepos(
             JsUtil.toJsArrayString(widgetLocalRepos_.getItems()));
-            
+
       return new RestartRequirement();
    }
-   
-   
+
+
    private ArrayList<String> getTextAreaValue(TextArea textArea)
    {
       // convert newline to comma
       String value = textArea.getValue().replace('\n', ',');
-      
+
       // normalize whitespace (for comparison with previous options)
       List<String> values = Arrays.asList(value.split("\\s*,\\s*"));
-      
+
       // remove entries that are only whitespace
       ArrayList<String> result = new ArrayList<String>();
       for (String s : values)
@@ -220,22 +220,22 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
          }
       }
       return result;
-      
+
    }
-  
+
    private void verifyPrerequisites()
    {
       final ProgressIndicator indicator = getProgressIndicator();
-      
+
       indicator.onProgress("Verifying prerequisites...");
-      
+
       server_.getPackratPrerequisites(
         new ServerRequestCallback<PackratPrerequisites>() {
            @Override
            public void onResponseReceived(PackratPrerequisites prereqs)
            {
               indicator.onCompleted();
-              
+
               if (prereqs.getBuildToolsAvailable())
               {
                  if (prereqs.getPackageAvailable())
@@ -245,13 +245,13 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
                  else
                  {
                     setUsePackrat(false);
-                    
+
                     // install packrat (with short delay to allow
                     // the progress indicator to clear)
                     new Timer() {
                      @Override
                      public void run()
-                     { 
+                     {
                         dependencyManager_.withPackrat(
                               "Managing packages with packrat",
                               new Command() {
@@ -261,16 +261,16 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
                                {
                                   setUsePackrat(true);
                                }
-                                 
+
                               });
-                     }   
+                     }
                     }.schedule(250);
                  }
               }
               else
-              {       
+              {
                  setUsePackrat(false);
-                 
+
                  // install build tools (with short delay to allow
                  // the progress indicator to clear)
                  new Timer() {
@@ -279,8 +279,8 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
                   {
                      server_.installBuildTools(
                            "Managing packages with Packrat",
-                           new SimpleRequestCallback<Boolean>() {});  
-                  }   
+                           new SimpleRequestCallback<Boolean>() {});
+                  }
                  }.schedule(250);
               }
            }
@@ -289,49 +289,49 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
          public void onError(ServerError error)
          {
             setUsePackrat(false);
-            
+
             indicator.onError(error.getUserMessage());
          }
-        });  
+        });
    }
-   
+
    private void setUsePackrat(boolean usePackrat)
    {
-      chkUsePackrat_.setValue(usePackrat, false); 
+      chkUsePackrat_.setValue(usePackrat, false);
       manageUI(usePackrat);
    }
-   
+
    interface Resources extends ClientBundle
    {
       @Source("ProjectPackratPreferencesPane.css")
       Styles styles();
    }
-   
+
    private static Resources RES = GWT.create(Resources.class);
-   
+
    public interface Styles extends CssResource
    {
       String externalPackages();
    }
-   
+
    static
    {
       RES.styles().ensureInjected();
    }
- 
+
    private final Session session_;
    private final PackratServerOperations server_;
    private final DependencyManager dependencyManager_;
-   
+
    private CheckBox chkUsePackrat_;
    private CheckBox chkAutoSnapshot_;
    private CheckBox chkUseCache_;
    private CheckBox chkVcsIgnoreLib_;
    private CheckBox chkVcsIgnoreSrc_;
-   
+
    private VerticalPanel panelExternalPackages_;
    private TextArea taExternalPackages_;
-   
+
    private LocalRepositoriesWidget widgetLocalRepos_;
-   
+
 }

@@ -1,7 +1,7 @@
 /*
  * MarkersChangedEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,16 +27,16 @@ public class MarkersChangedEvent extends GwtEvent<MarkersChangedEvent.Handler>
       protected Data()
       {
       }
-      
+
       public native final MarkersState getMarkersState() /*-{
          return this.markers_state;
       }-*/;
-      
+
       public native final int getAutoSelect() /*-{
          return this.auto_select;
       }-*/;
    }
-   
+
    public interface Handler extends EventHandler
    {
       void onMarkersChanged(MarkersChangedEvent event);
@@ -51,7 +51,7 @@ public class MarkersChangedEvent extends GwtEvent<MarkersChangedEvent.Handler>
    {
       return data_.getMarkersState();
    }
-   
+
    public int getAutoSelect()
    {
       return data_.getAutoSelect();
@@ -69,7 +69,7 @@ public class MarkersChangedEvent extends GwtEvent<MarkersChangedEvent.Handler>
       handler.onMarkersChanged(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
-   
+   public static final Type<Handler> TYPE = new Type<>();
+
    private final Data data_;
 }

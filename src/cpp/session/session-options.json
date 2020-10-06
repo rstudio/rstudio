@@ -1,0 +1,724 @@
+{
+   "metadata": {
+      "generatorType": "ProgramOptions",
+      "namespace": "rstudio::session",
+      "includeGuard": "SESSION_SESSION_OPTIONS_GEN_HPP",
+      "configFile": "rsession.conf",
+      "docDescription": "The following is a list of available options that can be specified in the `rsession.conf` configuration file, which controls behavior of the `rsession` process, allowing you to tune various R session parameters.",
+      "outputSourceFile": "session/include/session/SessionOptions.gen.hpp",
+      "outputDocFile": "/dev/null",
+      "additionalIncludes": [
+         "<core/system/Xdg.hpp>",
+         "<session/SessionConstants.hpp>",
+         "<core/http/Request.hpp>",
+         "<core/http/Cookie.hpp>"
+      ]
+   },
+   "options": {
+      "tests": [
+         {
+            "name": {"constant": "kRunTestsSessionOption", "value": "run-tests"},
+            "isHidden": true,
+            "memberName": "runTests_",
+            "type": "bool",
+            "defaultValue": false,
+            "implicitValue": true,
+            "description": "Runs unit tests and exits."
+         }
+      ],
+      "script": [
+         {
+            "name": {"constant": "kRunScriptSessionOption", "value": "run-script"},
+            "isHidden": true,
+            "memberName": "runScript_",
+            "type": "string",
+            "description": "Runs an R script and exits."
+         }
+      ],
+      "verify": [
+         {
+            "name": {"constant": "kVerifyInstallationSessionOption", "value": "verify-installation"},
+            "type": "bool",
+            "memberName": "verifyInstallation_",
+            "defaultValue": false,
+            "description": "Verifies that the session installation is working correctly and exits."
+         }
+      ],
+      "program": [
+         {
+            "name": {"constant": "kProgramModeSessionOption", "value": "program-mode"},
+            "isHidden": true,
+            "type": "string",
+            "memberName": "programMode_",
+            "defaultValue": "server",
+            "description": "The program mode the session is running in (desktop or server)."
+         }
+      ],
+      "log": [
+         {
+            "name": "log-stderr",
+            "isHidden": true,
+            "type": "bool",
+            "memberName": "logStderr_",
+            "defaultValue": false,
+            "description": "Writes log entries to stderr in addition to any other configured log destinations."
+         }
+      ],
+      "docs": [
+         {
+            "name": "docs-url",
+            "type": "string",
+            "memberName": "docsURL_",
+            "description": "If specified, overrides the URL to navigate to when a user clicks on the RStudio help link."
+         }
+      ],
+      "www": [
+         {
+            "name": "www-local-path",
+            "type": "string",
+            "defaultValue": "www",
+            "memberName": "wwwLocalPath_",
+            "description": "The relative path from the RStudio installation directory, or absolute path where web assets are stored."
+         },
+         {
+            "name": "www-symbol-maps-path",
+            "memberName": "wwwSymbolMapsPath_",
+            "type": "core::FilePath",
+            "defaultValue": "www-symbolmaps",
+            "description": "The relative path from the RStudio installation directory, or absolute path, where symbol maps are stored."
+         },
+         {
+            "name": {"constant": "kWwwPortSessionOption", "value": "www-port"},
+            "isHidden": true,
+            "type": "string",
+            "defaultValue": "8787",
+            "memberName": "wwwPort_",
+            "description": "The HTTP port to listen on for incoming connections. This is generally only used with Launcher sessions."
+         },
+         {
+            "name": {"constant": "kWwwAddressSessionOption", "value": "www-address"},
+            "isHidden": true,
+            "type": "string",
+            "defaultValue": "127.0.0.1",
+            "memberName": "wwwAddress_",
+            "description": "The address to listen on for incoming connections. This is generally only used with Launcher sessions."
+         },
+         {
+            "name": {"constant": "kStandaloneSessionOption", "value": "standalone"},
+            "isHidden": true,
+            "type": "bool",
+            "defaultValue": false,
+            "memberName": "standalone_",
+            "description": "Runs the session in standalone mode, indicating we should use HTTP communication. This is generally only used with Launcher sessions."
+         },
+         {
+            "name": {"constant": "kVerifySignaturesSessionOption", "value": "verify-signatures"},
+            "isHidden": true,
+            "type": "bool",
+            "defaultValue": false,
+            "memberName": "verifySignatures_",
+            "description": "Indicates whether or not to verify signatures on incoming requests. This is generally only used with Launcher sessions."
+         }
+      ],
+      "session": [
+         {
+            "name": {"constant": "kTimeoutSessionOption", "value": "session-timeout-minutes"},
+            "type": "int",
+            "memberName": "timeoutMinutes_",
+            "defaultValue": 120,
+            "description": "The amount of minutes before a session times out, at which point the session will either suspend or exit."
+         },
+         {
+            "name": {"constant": "kTimeoutSuspendSessionOption", "value": "session-timeout-suspend"},
+            "type": "bool",
+            "memberName": "timeoutSuspend_",
+            "defaultValue": true,
+            "description": "Indicates whether or not to suspend the session after the timeout has elapsed. Setting this to `false` will cause the session to quit instead of suspending to disk when the session times out."
+         },
+         {
+            "name": {"constant": "kDisconnectedTimeoutSessionOption", "value": "session-disconnected-timeout-minutes"},
+            "type": "int",
+            "memberName": "disconnectedTimeoutMinutes_",
+            "defaultValue": 0,
+            "description": "If set, causes the session to time out after not receiving any new connections within the specified minutes. This behavior is generally not needed, and you should instead use session-timeout-minutes"
+         },
+         {
+            "name": "session-preflight-script",
+            "type": "core::FilePath",
+            "memberName": "preflightScriptPath_",
+            "description": "Sets a script to be run on startup before any R initialization has occurred."
+         },
+         {
+            "name": "session-create-public-folder",
+            "type": "bool",
+            "memberName": "createPublicFolder_",
+            "defaultValue": false,
+            "description": "Indicates whether or not to create a `Public` folder for the user whenever the session starts. This folder will have global read permissions, and can be used as a simple means for users to share files. It is recommended you do not use this feature, and instead use the more advanced Project Sharing features."
+         },
+         {
+            "name": "session-create-profile",
+            "type": "bool",
+            "memberName": "createProfile_",
+            "defaultValue": false,
+            "description": "Indicates whether or not to create a default empty .Rprofile script within the user's home directory, which can be altered to perform any desired common startup tasks."
+         },
+         {
+            "name": "session-rprofile-on-resume-default",
+            "type": "bool",
+            "memberName": "rProfileOnResumeDefault_",
+            "defaultValue": false,
+            "description": "Specifies the default user setting for running the Rprofile when sessions are resumed."
+         },
+         {
+            "name": "session-save-action-default",
+            "tempType": "string",
+            "tempName": "pSaveActionDefault",
+            "type": "int",
+            "memberName": "saveActionDefault_",
+            "description": "Specifies the default save action (yes, no, or ask)."
+         },
+         {
+            "name": "session-default-working-dir",
+            "type": "string",
+            "memberName": "defaultWorkingDir_",
+            "description": "Specifies the default working directory to use for new sessions."
+         },
+         {
+            "name": "session-default-new-project-dir",
+            "type": "string",
+            "isDeprecated": true,
+            "memberName": "deprecatedDefaultProjectDir_",
+            "defaultValue": "~",
+            "description": "Specifies the default directory to use for new projects."
+         },
+         {
+            "name": "show-help-home",
+            "type": "bool",
+            "memberName": "showHelpHome_",
+            "defaultValue": false,
+            "description": "Indicates whether or not to show the help home page on startup."
+         },
+         {
+            "name": "session-default-console-term",
+            "type": "string",
+            "memberName": "defaultConsoleTerm_",
+            "defaultValue": "xterm-256color",
+            "description": "Specifies the default TERM setting for the R console."
+         },
+         {
+            "name": "session-default-clicolor-force",
+            "type": "bool",
+            "memberName": "defaultCliColorForce_",
+            "defaultValue": true,
+            "description": "Specifies the default CLICOLOR_FORCE setting for the R console."
+         },
+         {
+            "name": "session-quit-child-processes-on-exit",
+            "type": "bool",
+            "memberName": "quitChildProcessesOnExit_",
+            "defaultValue": false,
+            "description": "Indicates whether or not to quit child processes of the session on exit. If unset, child processes created by forking or parallel processing may continue to run in the background after the session is terminated."
+         },
+         {
+            "name": "session-first-project-template-path",
+            "type": "string",
+            "memberName": "firstProjectTemplatePath_",
+            "description": "Specifies the path to a first project template which will be copied into new users' home directories and opened the first time they run a session. The template can optionally be configured with `DefaultOpenDocs` to cause documents to automatically be opened for the first project."
+         },
+         {
+            "name": "default-rsconnect-server",
+            "type": "string",
+            "memberName": "defaultRSConnectServer_",
+            "description": "Specifies the default RStudio Connect server URL."
+         },
+         {
+            "name": {"constant": "kTerminalPortOption", "value": "terminal-port"},
+            "isHidden": true,
+            "type": "string",
+            "memberName": "terminalPort_",
+            "description": "If specified, sets the port to bind the terminal server to. This should generally only be set for containerized Launcher sessions, where the port must be known."
+         },
+         {
+            "name": {"constant": "kWebSocketPingInterval", "value": "websocket-ping-seconds"},
+            "type": "int",
+            "memberName": "webSocketPingSeconds_",
+            "accessorName": "webSocketPingInterval",
+            "defaultValue": 10,
+            "description": "Specifies the WebSocket keep-alive ping interval for session terminals."
+         },
+         {
+            "name": {"constant": "kWebSocketConnectTimeout", "value": "websocket-connect-timeout"},
+            "type": "int",
+            "memberName": "webSocketConnectTimeout_",
+            "defaultValue": 3,
+            "description": "Specifies the WebSocket initial connection timeout in seconds for session terminals."
+         },
+         {
+            "name": {"constant": "kWebSocketLogLevel", "value": "websocket-log-level"},
+            "type": "int",
+            "memberName": "webSocketLogLevel_",
+            "defaultValue": 0,
+            "description": "Specifies the WebSocket log level for session terminals ((0=none, 1=errors, 2=activity, 3=all)."
+         },
+         {
+            "name": {"constant": "kWebSocketHandshakeTimeout", "value": "websocket-handshake-timeout"},
+            "type": "int",
+            "memberName": "webSocketHandshakeTimeoutMs_",
+            "defaultValue": 5000,
+            "description": "Specifies the WebSocket protocol handshake timeout for session terminals in milliseconds."
+         },
+         {
+            "name": {"constant": "kPackageOutputInPackageFolder", "value": "package-output-to-package-folder"},
+            "type": "bool",
+            "memberName": "packageOutputToPackageFolder_",
+            "accessorName": "packageOutputInPackageFolder",
+            "defaultValue": false,
+            "description": "Specifies whether or not package builds output to the package project folder."
+         },
+         {
+            "name": {"constant": "kRootPathSessionOption", "value": "session-url-path-prefix"},
+            "memberName": "rootPath_",
+            "isHidden": true,
+            "type": "string",
+            "defaultValue": {"code": "kRequestDefaultRootPath", "description": "Assume the root path '/' if not defined."},
+            "description": "The path prefix added by a proxy to the incoming RStudio URL. This setting is used so RStudio Server knows what path it is being served from. If running RStudio Server behind a path-modifying proxy, this should be changed to match the base RStudio Server URL."
+         },
+         {
+            "name": {"constant": "kUseSecureCookiesSessionOption", "value": "session-use-secure-cookies"},
+            "type": "bool",
+            "isHidden": true,
+            "memberName": "useSecureCookies_",
+            "defaultValue": false,
+            "description": "Indicates whether or not to mark cookies as secure."
+         },
+         {
+            "name": {"constant": "kSameSiteSessionOption", "value": "session-same-site"},
+            "isHidden": true,
+            "memberName": "sameSite_",
+            "type": "rstudio::core::http::Cookie::SameSite",
+            "tempName": "wwwSameSite",
+            "tempType": "int",
+            "defaultValue": 0,
+            "description": "The value of the SameSite attribute used in cookie issued by the session."
+         },
+         {
+            "name": "restrict-directory-view",
+            "type": "bool",
+            "memberName": "restrictDirectoryView_",
+            "defaultValue": false,
+            "description": "Indicates whether or not to restrict the directories that can be viewed within the IDE."
+         },
+         {
+            "name": "directory-view-whitelist",
+            "type": "string",
+            "memberName": "directoryViewWhitelist_",
+            "description": "Specifies a list of directories exempt from directory view restrictions, separated by a colon character (:)."
+         },
+         {
+            "name": {"constant": "kSessionEnvVarSaveBlacklist", "value": "session-env-var-save-blacklist"},
+            "type": "string",
+            "memberName": "envVarSaveBlacklist_",
+            "description": "Specifies a list of environment variables that will not be saved when sessions suspend, separated by a colon character (:)."
+         }
+      ],
+      "allow": [
+         {
+            "name": "allow-vcs-executable-edit",
+            "type": "bool",
+            "memberName": "allowVcsExecutableEdit_",
+            "defaultValue": true,
+            "description": "Indicates whether or not to allow editing of VCS (Version Control Systems) executables."
+         },
+         {
+            "name": "allow-r-cran-repos-edit",
+            "type": "bool",
+            "memberName": "allowCRANReposEdit_",
+            "defaultValue": true,
+            "description": "Indicates whether or not to allow editing of CRAN repositories."
+         },
+         {
+            "name": "allow-vcs",
+            "type": "bool",
+            "memberName": "allowVcs_",
+            "defaultValue": true,
+            "description": "Indicates whether or not to allow the use of version control features."
+         },
+         {
+            "name": "allow-package-installation",
+            "type": "bool",
+            "memberName": "allowPackageInstallation_",
+            "defaultValue": true,
+            "description": "Indicates whether or not to allow installation of packages from the packages pane."
+         },
+         {
+            "name": "allow-shell",
+            "type": "bool",
+            "memberName": "allowShell_",
+            "defaultValue": true,
+            "description": "Indicates whether or not to allow access to the shell dialog."
+         },
+         {
+            "name": "allow-terminal-websockets",
+            "type": "bool",
+            "memberName": "allowTerminalWebsockets_",
+            "defaultValue": true,
+            "description": "Indicates whether or not to allow connections to terminal sessions with websockets."
+         },
+         {
+            "name": "allow-file-downloads",
+            "type": "bool",
+            "memberName": "allowFileDownloads_",
+            "defaultValue": true,
+            "description": "Indicates whether or not to allow file downloads from the files pane."
+         },
+         {
+            "name": "allow-file-uploads",
+            "type": "bool",
+            "memberName": "allowFileUploads_",
+            "defaultValue": true,
+            "description": "Indicates whether or not to allow file uploads from the files pane."
+         },
+         {
+            "name": "allow-remove-public-folder",
+            "type": "bool",
+            "memberName": "allowRemovePublicFolder_",
+            "defaultValue": true,
+            "description": "Indicates whether or not to allow removal of the user public folder."
+         },
+         {
+            "name": "allow-rpubs-publish",
+            "type": "bool",
+            "memberName": "allowRpubsPublish_",
+            "defaultValue": true,
+            "description": "Indicates whether or not to allow publishing of content to external services."
+         },
+         {
+            "name": "allow-external-publish",
+            "type": "bool",
+            "memberName": "allowExternalPublish_",
+            "defaultValue": true,
+            "description": "Indicates whether or not to allow publishing of content to external services."
+         },
+         {
+            "name": "allow-publish",
+            "type": "bool",
+            "memberName": "allowPublish_",
+            "defaultValue": true,
+            "description": "Indicates whether or not to allow publishing of content."
+         },
+         {
+            "name": "allow-presentation-commands",
+            "type": "bool",
+            "memberName": "allowPresentationCommands_",
+            "defaultValue": false,
+            "description": "Indicates whether or not to allow presentation commands."
+         },
+         {
+            "name": "allow-full-ui",
+            "type": "bool",
+            "memberName": "allowFullUI_",
+            "defaultValue": true,
+            "description": "Indicates whether or not to allow full standalone UI mode."
+         },
+         {
+            "name": "allow-launcher-jobs",
+            "type": "bool",
+            "memberName": "allowLauncherJobs_",
+            "defaultValue": true,
+            "description": "Indicates whether or not to allow running jobs via the Launcher."
+         }
+      ],
+      "r": [
+         {
+            "name": "r-core-source",
+            "type": "core::FilePath",
+            "memberName": "coreRSourcePath_",
+            "defaultValue": "R",
+            "description": "Specifies the Core R source path."
+         },
+         {
+            "name": "r-modules-source",
+            "type": "core::FilePath",
+            "memberName": "modulesRSourcePath_",
+            "defaultValue": "R/modules",
+            "description": "Specifies the Modules R source path."
+         },
+         {
+            "name": "r-session-library",
+            "type": "core::FilePath",
+            "memberName": "sessionLibraryPath_",
+            "defaultValue": "R/library",
+            "description": "Specifies the R library path.",
+            "isDeprecated": true
+         },
+         {
+            "name": "r-session-package-archives",
+            "type": "core::FilePath",
+            "memberName": "sessionPackageArchivesPath_",
+            "defaultValue": "R/packages",
+            "description": "Specifies the R package archives path."
+         },
+         {
+            "name": "r-libs-user",
+            "type": "string",
+            "memberName": "rLibsUser_",
+            "defaultValue": "",
+            "description": "Specifies the R user library path."
+         },
+         {
+            "name": "r-cran-repos",
+            "type": "string",
+            "memberName": "rCRANUrl_",
+            "defaultValue": "",
+            "description": "Specifies the default CRAN repository."
+         },
+         {
+            "name": "r-cran-repos-file",
+            "type": "string",
+            "memberName": "rCRANReposFile_",
+            "defaultValue": {"code": "core::system::xdg::systemConfigFile(\"repos.conf\").getAbsolutePath()", "description": "The first repos.conf file that is found within the XDG_CONFIG_DIRS environment, or /etc/rstudio/repos.conf if not XDG_CONFIG_DIRS are specified."},
+            "description": "Specifies the path to a configuration file which contains default CRAN repositories."
+         },
+         {
+            "name": "r-cran-repos-url",
+            "type": "string",
+            "memberName": "rCRANReposUrl_",
+            "defaultValue": "",
+            "description": "Specifies the URL to a configuration file which contains optional CRAN repositories."
+         },
+         {
+            "name": "r-auto-reload-source",
+            "type": "bool",
+            "memberName": "autoReloadSource_",
+            "defaultValue": false,
+            "description": "Indicates whether or not to automatically reload R source if it changes during the session."
+         },
+         {
+            "name": "r-compatible-graphics-engine-version",
+            "type": "int",
+            "memberName": "rCompatibleGraphicsEngineVersion_",
+            "defaultValue": 13,
+            "description": "Specifies the maximum graphics engine version that this version of RStudio is compatible with."
+         },
+         {
+            "name": "r-resources-path",
+            "type": "core::FilePath",
+            "memberName": "rResourcesPath_",
+            "defaultValue": "resources",
+            "description": "Specifies the directory containing external resources."
+         },
+         {
+            "name": "r-shell-escape",
+            "type": "bool",
+            "memberName": "deprecatedRShellEscape_",
+            "isDeprecated": true,
+            "defaultValue": false,
+            "description": "Indicates whether or not to support shell escape."
+         },
+         {
+            "name": "r-home-dir-override",
+            "type": "string",
+            "memberName": "rHomeDirOverride_",
+            "defaultValue": "",
+            "isHidden": true,
+            "description": "Specifies the override for R_HOME (used for debug configurations)."
+         },
+         {
+            "name": "r-doc-dir-override",
+            "type": "string",
+            "memberName": "rDocDirOverride_",
+            "defaultValue": "",
+            "description": "Specifies the override for R_DOC_DIR (used for debug configurations)."
+         },
+         {
+            "name": "r-restore-workspace",
+            "type": "int",
+            "memberName": "rRestoreWorkspace_",
+            "defaultValue": {"code": "kRestoreWorkspaceDefault", "description": "2 (Default)."},
+            "description": "If set, overrides the user/project restore workspace setting. Can be 0 (No), 1 (Yes), or 2 (Default)."
+         },
+         {
+            "name": "r-run-rprofile",
+            "type": "int",
+            "memberName": "rRunRprofile_",
+            "defaultValue": {"code": "kRunRprofileDefault", "description": "2 (Default)."},
+            "description": "If set, overrides the user/project .Rprofile run setting. Can be 0 (No), 1 (Yes), or 2 (Default)."
+         }
+      ],
+      "limits": [
+         {
+            "name": "limit-file-upload-size-mb",
+            "type": "int",
+            "memberName": "limitFileUploadSizeMb_",
+            "defaultValue": 0,
+            "description": "Sets a size limit in megabytes on files that are uploaded via the files pane."
+         },
+         {
+            "name": "limit-cpu-time-minutes",
+            "type": "int",
+            "memberName": "limitCpuTimeMinutes_",
+            "defaultValue": 0,
+            "description": "Sets a limit in minutes for the amount of time top level R computations may run before being interrupted."
+         },
+         {
+            "name": "limit-xfs-disk-quota",
+            "type": "bool",
+            "memberName": "limitXfsDiskQuota_",
+            "defaultValue": false,
+            "description": "Indicates whether or not XFS quotas should be enforced when performing file operations via the files pane."
+         }
+      ],
+      "external": [
+         {
+            "name": "external-rpostback-path",
+            "type": "core::FilePath",
+            "memberName": "rpostbackPath_",
+            "defaultValue": {"code": "kDefaultPostbackPath", "description": "bin/postback/rpostback"},
+            "description": "Specifies the path to the rpostback executable."
+         },
+         {
+            "name": "external-consoleio-path",
+            "type": "core::FilePath",
+            "memberName": "consoleIoPath_",
+            "defaultValue": "bin/consoleio.exe",
+            "description": "Specifies the path to the consoleio executable."
+         },
+         {
+            "name": "external-gnudiff-path",
+            "type": "core::FilePath",
+            "memberName": "gnudiffPath_",
+            "defaultValue": "bin/gnudiff",
+            "description": "Specifies the path to gnudiff utilities (Windows-only)."
+         },
+         {
+            "name": "external-gnugrep-path",
+            "type": "core::FilePath",
+            "memberName": "gnugrepPath_",
+            "defaultValue": "bin/gnugrep",
+            "description": "Specifies the path to gnugrep utilities (Windows-only)."
+         },
+         {
+            "name": "external-msysssh-path",
+            "type": "core::FilePath",
+            "memberName": "msysSshPath_",
+            "defaultValue": "bin/msys-ssh-1000-18",
+            "description": "Specifies the path to msys_ssh utilities (Windows-only)."
+         },
+         {
+            "name": "external-sumatra-path",
+            "type": "core::FilePath",
+            "memberName": "sumatraPath_",
+            "defaultValue": "bin/sumatra",
+            "description": "Specifies the path to SumatraPDF (Windows-only)."
+         },
+         {
+            "name": "external-winutils-path",
+            "type": "core::FilePath",
+            "memberName": "winutilsPath_",
+            "defaultValue": "bin/winutils",
+            "description": "Specifies the path to Hadoop Winutils (Windows-only)."
+         },
+         {
+            "name": "external-hunspell-dictionaries-path",
+            "type": "core::FilePath",
+            "memberName": "hunspellDictionariesPath_",
+            "defaultValue": "resources/dictionaries",
+            "description": "Specifies the path to hunspell dictionaries."
+         },
+         {
+            "name": "external-mathjax-path",
+            "type": "core::FilePath",
+            "memberName": "mathjaxPath_",
+            "defaultValue": "resources/mathjax-27",
+            "description": "Specifies the path to the mathjax library."
+         },
+         {
+            "name": "external-pandoc-path",
+            "type": "core::FilePath",
+            "memberName": "pandocPath_",
+            "defaultValue": {"code": "kDefaultPandocPath", "description": "bin/pandoc"},
+            "description": "Specifies the path to pandoc binaries."
+         },
+         {
+            "name": "external-libclang-path",
+            "type": "core::FilePath",
+            "memberName": "libclangPath_",
+            "defaultValue": {"code": "kDefaultRsclangPath", "description": "bin/rsclang"},
+            "description": "Specifies the path to the libclang shared library"
+         },
+         {
+            "name": "external-libclang-headers-path",
+            "type": "core::FilePath",
+            "memberName": "libclangHeadersPath_",
+            "defaultValue": "resources/libclang/builtin-headers",
+            "description": "Specifies the path to the libclang builtin headers."
+         },
+         {
+            "name": "external-winpty-path",
+            "type": "core::FilePath",
+            "memberName": "winptyPath_",
+            "defaultValue": "bin",
+            "description": "Specifies the path to winpty binaries."
+         }
+      ],
+      "git": [
+         {
+            "name": "git-commit-large-file-size",
+            "type": "int",
+            "memberName": "gitCommitLargeFileSize_",
+            "defaultValue": 5242880,
+            "description": "Warns when attempting to commit files larger than this size (in bytes; set 0 to disable)."
+         }
+      ],
+      "user": [
+         {
+            "name": {"constant": "kUserIdentitySessionOption", "value": "user-identity"},
+            "shortName": {"constant": "kUserIdentitySessionOptionShort", "value": "u"},
+            "memberName": "userIdentity_",
+            "type": "string",
+            "defaultValue": {"code": "core::system::username()", "description": "The username of the session process."},
+            "isHidden": true,
+            "description": "The user identity for the session."
+         },
+         {
+            "name": {"constant": "kShowUserIdentitySessionOption", "value": "show-user-identity"},
+            "type": "bool",
+            "memberName": "showUserIdentity_",
+            "defaultValue": true,
+            "description": "Indicates whether or not to show the user identity in the session UI."
+         },
+         {
+            "name": {"constant": "kProjectSessionOption", "value": "project"},
+            "shortName": {"constant": "kProjectSessionOptionShort", "value": "p"},
+            "memberName": "projectId_",
+            "type": "string",
+            "defaultValue": "",
+            "description": "Specifies the active project.",
+            "isHidden": true,
+            "skipAccessorGeneration": true
+         },
+         {
+            "name": {"constant": "kScopeSessionOption", "value": "scope"},
+            "shortName": {"constant": "kScopeSessionOptionShort", "value": "s"},
+            "type": "string",
+            "memberName": "scopeId_",
+            "defaultValue": "",
+            "description": "Specifies the session identifier.",
+            "isHidden": true,
+            "skipAccessorGeneration": true
+         },
+         {
+            "name": "launcher-token",
+            "type": "string",
+            "memberName": "launcherToken_",
+            "defaultValue": "",
+            "description": "Specifies the token identifying the session launcher.",
+            "isHidden": true
+         }
+      ],
+      "misc": [
+         
+      ]
+   }
+}
+

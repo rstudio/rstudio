@@ -1,7 +1,7 @@
 /*
  * SessionViewer.cpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -295,10 +295,9 @@ SEXP rs_viewer(SEXP urlSEXP, SEXP heightSEXP)
          if (error)
             LOG_ERROR(error);
 
-         // if it's in the temp dir and we're running R >= 2.14 then
-         // we can serve it via the help server, otherwise we need
-         // to show it in an external browser
-         if (filePath.isWithin(tempDir) && r::util::hasRequiredVersion("2.14"))
+         // if it's in the temp dir then we can serve it via the help server,
+         // otherwise we need to show it in an external browser
+         if (filePath.isWithin(tempDir))
          {
             // calculate the relative path
             std::string path = filePath.getRelativePath(tempDir);
@@ -400,7 +399,7 @@ Error initialize()
 
    // install rpc methods
    using boost::bind;
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "viewer_stopped", viewerStopped))
       (bind(registerRpcMethod, "viewer_current", viewerCurrent))

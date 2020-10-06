@@ -1,7 +1,7 @@
 /*
  * DataImport.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,6 +30,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
+import org.rstudio.studio.client.server.ErrorLoggingServerRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -493,14 +494,9 @@ public class DataImport extends Composite
    {
       if (localFiles_ != null)
       {
-         server_.previewDataImportClean(getOptions(), new ServerRequestCallback<Void>()
-         {
-            @Override
-            public void onError(ServerError error)
-            {
-               Debug.logError(error);
-            }
-         });
+         server_.previewDataImportClean(
+               getOptions(),
+               new ErrorLoggingServerRequestCallback<Void>());
       }
       
       localFiles_ = null;

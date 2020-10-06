@@ -1,7 +1,7 @@
 /*
  * SessionAskPass.cpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -34,7 +34,7 @@
 #endif
 
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
@@ -158,7 +158,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_askForPassword);
 
    // complete initialization
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (boost::bind(module_context::sourceModuleRFile, "SessionAskPass.R"));
    return initBlock.execute();

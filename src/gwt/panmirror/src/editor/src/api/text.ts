@@ -1,7 +1,7 @@
 /*
  * text.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,14 +22,14 @@ export interface TextWithPos {
 
 export function mergedTextNodes(
   doc: ProsemirrorNode,
-  filter?: (node: ProsemirrorNode, parentNode: ProsemirrorNode) => boolean,
+  filter?: (node: ProsemirrorNode, pos: number, parentNode: ProsemirrorNode) => boolean,
 ): TextWithPos[] {
   const textNodes: TextWithPos[] = [];
   let nodeIndex = 0;
   doc.descendants((node, pos, parentNode) => {
     if (node.isText) {
       // apply filter
-      if (filter && !filter(node, parentNode)) {
+      if (filter && !filter(node, pos, parentNode)) {
         return false;
       }
 
@@ -54,4 +54,8 @@ export function mergedTextNodes(
 
 export function stripQuotes(text: string) {
   return text.replace(/["']/g, '');
+}
+
+export function equalsIgnoreCase(str1: string, str2: string) {
+  return str1.localeCompare(str2, undefined, { sensitivity: 'accent' }) === 0;
 }

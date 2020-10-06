@@ -1,7 +1,7 @@
 /*
  * RmdOutput.java
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -65,7 +65,6 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedHandler;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
-import org.rstudio.studio.client.workbench.views.source.SourceBuildHelper;
 import org.rstudio.studio.client.workbench.views.source.events.NotebookRenderFinishedEvent;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -101,7 +100,6 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                     Session session,
                     GlobalDisplay globalDisplay,
                     FileTypeRegistry fileTypeRegistry,
-                    SourceBuildHelper sourceBuildHelper,
                     WorkbenchContext workbenchContext,
                     Provider<ViewFilePanel> pViewFilePanel,
                     Binder binder,
@@ -111,7 +109,6 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    {
       globalDisplay_ = globalDisplay;
       fileTypeRegistry_ = fileTypeRegistry;
-      sourceBuildHelper_ = sourceBuildHelper;
       workbenchContext_ = workbenchContext;
       pViewFilePanel_ = pViewFilePanel;
       prefs_ = prefs;
@@ -858,7 +855,6 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    private final Session session_;
    private final EventBus events_;
    private final Commands commands_;
-   private final SourceBuildHelper sourceBuildHelper_;
    private final WorkbenchContext workbenchContext_;
    private boolean restarting_ = false;
 

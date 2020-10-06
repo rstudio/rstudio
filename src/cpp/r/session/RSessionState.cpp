@@ -1,7 +1,7 @@
 /*
  * RSessionState.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -40,12 +40,12 @@
 #include "RSearchPath.hpp"
 #include "graphics/RGraphicsPlotManager.hpp"
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace r {
    
-using namespace exec ;  
+using namespace exec;
          
 namespace session {
 namespace state {
@@ -223,7 +223,7 @@ Error restoreWorkingDirectory(const FilePath& userHomePath,
 
    // restore working path if it exists (else revert to home)
    if (workingDirPath.exists())
-      return workingDirPath.makeCurrentPath() ;
+      return workingDirPath.makeCurrentPath();
    else
       return utils::userHomePath().makeCurrentPath();
 }
@@ -245,7 +245,7 @@ void reportError(const std::string& action,
       message += std::string(" (" + context + ")");
    
    // add context to error and log it
-   Error serializationError = error ;
+   Error serializationError = error;
    serializationError.addProperty("context", message);
    core::log::logError(serializationError, location);
    
@@ -269,7 +269,7 @@ struct ErrorRecorder
       pMessages_->operator+=(message);
    }
    
-   std::string* pMessages_ ;
+   std::string* pMessages_;
 };
 
 void saveDevMode(Settings* pSettings)
@@ -511,7 +511,7 @@ bool getBoolSetting(const core::FilePath& statePath,
                     const std::string& name,
                     bool defaultValue)
 {
-   Settings settings ;
+   Settings settings;
    Error error = settings.initialize(statePath.completePath(kSettingsFile));
    if (error)
    {
@@ -612,7 +612,7 @@ bool restore(const FilePath& statePath,
    s_isCompatibleSessionState = validateRestoredRVersion(statePath.completePath(kRVersion));
    
    // init session settings (used below)
-   Settings settings ;
+   Settings settings;
    error = settings.initialize(statePath.completePath(kSettingsFile));
    if (error)
       reportError(kRestoring, kSettingsFile, error, ERROR_LOCATION, er);

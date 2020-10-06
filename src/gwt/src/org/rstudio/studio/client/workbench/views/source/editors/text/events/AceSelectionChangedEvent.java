@@ -1,7 +1,7 @@
 /*
  * AceSelectionChangedEvent.java
  *
- * Copyright (C) 2009-17 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,7 +27,7 @@ public class AceSelectionChangedEvent extends GwtEvent<AceSelectionChangedEvent.
    public AceSelectionChangedEvent()
    {
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -40,5 +40,5 @@ public class AceSelectionChangedEvent extends GwtEvent<AceSelectionChangedEvent.
       handler.onSelectionChanged(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

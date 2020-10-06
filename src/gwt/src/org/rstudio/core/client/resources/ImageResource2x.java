@@ -1,7 +1,7 @@
 /*
  * ImageResource2x.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -42,7 +42,7 @@ public class ImageResource2x implements ImageResource
    {
       return getUse2xResolution() ? ref2x_ : ref_;
    }
-   
+
    @Override
    public String getName()
    {
@@ -101,9 +101,9 @@ public class ImageResource2x implements ImageResource
          sb.appendHtmlConstant("<img src=\"");
          sb.appendHtmlConstant(getSafeUri().asString());
          sb.appendHtmlConstant("\" width=\"");
-         sb.appendHtmlConstant(new Integer(getWidth()).toString());
+         sb.appendHtmlConstant(Integer.valueOf(getWidth()).toString());
          sb.appendHtmlConstant("\" height=\"");
-         sb.appendHtmlConstant(new Integer(getHeight()).toString());
+         sb.appendHtmlConstant(Integer.valueOf(getHeight()).toString());
          if (StringUtil.isNullOrEmpty(altText))
          {
             sb.appendHtmlConstant("\" alt");

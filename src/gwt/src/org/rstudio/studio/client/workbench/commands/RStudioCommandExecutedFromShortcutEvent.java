@@ -1,7 +1,7 @@
 /*
  * RStudioCommandExecutedFromShortcutEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,14 +20,14 @@ import com.google.gwt.event.shared.GwtEvent;
 public class RStudioCommandExecutedFromShortcutEvent extends GwtEvent<RStudioCommandExecutedFromShortcutEvent.Handler>
 {
    // TODO: Include what command was actually executed.
-   
+
    // Boilerplate ----
-   
+
    public interface Handler extends EventHandler
    {
       void onRStudioCommandExecutedFromShortcut(RStudioCommandExecutedFromShortcutEvent event);
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -40,5 +40,5 @@ public class RStudioCommandExecutedFromShortcutEvent extends GwtEvent<RStudioCom
       handler.onRStudioCommandExecutedFromShortcut(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

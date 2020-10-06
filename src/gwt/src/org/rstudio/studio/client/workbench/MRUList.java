@@ -1,7 +1,7 @@
 /*
  * MRUList.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,8 +20,6 @@ import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.AppMenuItem;
 import org.rstudio.core.client.command.CommandHandler;
 import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.studio.client.workbench.events.ListChangedEvent;
-import org.rstudio.studio.client.workbench.events.ListChangedHandler;
 
 import java.util.*;
 
@@ -40,11 +38,11 @@ public class MRUList
       hideClearOnEmpty_ = hideClearOnEmpty;
       includeExt_ = includeExt;
       operation_ = operation;
-     
+
 
       for (int i = 0; i < mruCmds_.length; i++)
          bindCommand(i);
-      
+
       clearCommand_.addHandler(new CommandHandler()
       {
          public void onCommand(AppCommand command)
@@ -52,16 +50,13 @@ public class MRUList
             clear();
          }
       });
-      
-      
-      mruList_.addListChangedHandler(new ListChangedHandler() {
-         @Override
-         public void onListChanged(ListChangedEvent event)
-         {
-            mruEntries_.clear();
-            mruEntries_.addAll(event.getList());
-            updateCommands();
-         }
+
+
+      mruList_.addListChangedHandler(listChangedEvent ->
+      {
+         mruEntries_.clear();
+         mruEntries_.addAll(listChangedEvent.getList());
+         updateCommands();
       });
    }
 
@@ -80,7 +75,7 @@ public class MRUList
    public void add(String entry)
    {
       assert entry.indexOf("\n") < 0;
-      
+
       mruList_.prepend(entry);
    }
 
@@ -93,15 +88,15 @@ public class MRUList
    {
       mruList_.clear();
    }
-   
+
    protected ArrayList<String> generateLabels(
          ArrayList<String> entries, boolean includeExt)
    {
       return DuplicateHelper.getPathLabels(entries, includeExt);
    }
-   
+
    public String getQualifiedLabel(String mruEntry)
-   { 
+   {
       // make a copy of the existing mru entries and prepend the specified
       // entry if it doesn't exist. we need to do this because at startup
       // the most recently loaded project may not be in the list yet
@@ -109,19 +104,19 @@ public class MRUList
       ArrayList<String> mruEntries = (ArrayList<String>)mruEntries_.clone();
       if (!mruEntries.contains(mruEntry))
          mruEntries.add(mruEntry);
-      
+
       // save the index of the entry
       int index = mruEntries.indexOf(mruEntry);
-      
+
       // transform paths
       for (int i=0; i<mruEntries.size(); i++)
          mruEntries.set(i, transformMruEntryPath(mruEntries.get(i)));
-      
+
       // generate labels
       mruEntries = generateLabels(mruEntries, includeExt_);
-      
+
       // return the label
-      return mruEntries.get(index);    
+      return mruEntries.get(index);
    }
 
    private void updateCommands()
@@ -134,14 +129,14 @@ public class MRUList
          clearCommand_.setVisible(clearCommand_.isEnabled());
       manageCommands(mruEntries_, mruCmds_);
    }
-   
+
    protected void manageCommands(List<String> entries, AppCommand[] commands)
    {
       // optionally transform paths
       ArrayList<String> transformed = new ArrayList<String>();
       for (String entry : entries)
          transformed.add(transformMruEntryPath(entry));
-      
+
       // generate labels
       ArrayList<String> labels = generateLabels(transformed, includeExt_);
 
@@ -163,12 +158,12 @@ public class MRUList
    {
       return entryPath;
    }
-   
+
    protected ArrayList<String> getMruEntries()
    {
       return mruEntries_;
    }
-   
+
    protected AppCommand[] getMruCommands()
    {
       return mruCmds_;

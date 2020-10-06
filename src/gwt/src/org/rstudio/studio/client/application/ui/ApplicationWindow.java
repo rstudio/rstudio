@@ -1,7 +1,7 @@
 /*
  * ApplicationWindow.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,6 +35,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.appended.ApplicationEndedPopupPanel;
 import org.rstudio.studio.client.application.ui.serializationprogress.ApplicationSerializationProgress;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.palette.CommandPaletteLauncher;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 @Singleton
@@ -50,7 +51,8 @@ public class ApplicationWindow extends Composite
                             EventBus events,
                             Provider<WarningBar> pWarningBar,
                             AriaLiveService ariaLive,
-                            CodeSearchLauncher launcher)
+                            CodeSearchLauncher launcher,
+                            CommandPaletteLauncher paletteLauncher)
    {
       globalDisplay_ = globalDisplay;
       events_ = events;
@@ -115,18 +117,6 @@ public class ApplicationWindow extends Composite
       applicationHeader_.focusToolbar();
    }
 
-   @Override
-   public void showApplicationAgreement(String title,
-                                        String contents,
-                                        Operation doNotAcceptOperation,
-                                        Operation acceptOperation)
-   {
-      new ApplicationAgreementDialog(title,
-                                   contents,
-                                   doNotAcceptOperation,
-                                   acceptOperation).showModal();
-   }
-   
    public Widget getWidget()
    {
       return this;

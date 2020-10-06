@@ -1,7 +1,7 @@
 /*
  * RStudioKeybindingsChangedEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,29 +29,29 @@ public class RStudioKeybindingsChangedEvent extends CrossWindowEvent<RStudioKeyb
    {
       bindings_ = JavaScriptObject.createObject();
    }
-   
+
    public RStudioKeybindingsChangedEvent(EditorKeyBindings bindings)
    {
       bindings_ = bindings.cast();
    }
-   
+
    public EditorKeyBindings getBindings()
    {
       return bindings_.cast();
    }
-   
+
    private final JavaScriptObject bindings_;
-   
+
    // Boilerplate ----
-   
+
    @Override
    public boolean forward() { return false; }
-   
+
    public interface Handler extends EventHandler
    {
       void onRStudioKeybindingsChanged(RStudioKeybindingsChangedEvent event);
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -64,5 +64,5 @@ public class RStudioKeybindingsChangedEvent extends CrossWindowEvent<RStudioKeyb
       handler.onRStudioKeybindingsChanged(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

@@ -1,7 +1,7 @@
 /*
  * SessionHistoryArchive.cpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -74,7 +74,7 @@ void writeEntry(double timestamp, const std::string& command, std::ostream* pOS)
 
 std::string migratedHistoryEntry(const std::string& command)
 {
-   std::ostringstream ostr ;
+   std::ostringstream ostr;
    writeEntry(0, command, &ostr);
    return ostr.str();
 }
@@ -102,7 +102,7 @@ ReadCollectionAction readHistoryEntry(const std::string& line,
 
    pEntry->index = (*pNextIndex)++;
    std::istringstream istr(line);
-   istr >> pEntry->timestamp ;
+   istr >> pEntry->timestamp;
    istr.ignore(1, ':');
    std::getline(istr, pEntry->command);
 
@@ -138,7 +138,7 @@ Error HistoryArchive::add(const std::string& command)
    rotateHistoryDatabase();
 
    // write the entry to the file
-   std::ostringstream ostrEntry ;
+   std::ostringstream ostrEntry;
    double currentTime = core::date_time::millisecondsSinceEpoch();
    writeEntry(currentTime, command, &ostrEntry);
    ostrEntry << std::endl;
@@ -209,7 +209,7 @@ void HistoryArchive::migrateRhistoryIfNecessary()
    // old .Rhistory file
    FilePath historyDBPath = historyDatabaseFilePath();
    if (!historyDBPath.exists())
-      attemptRhistoryMigration() ;
+      attemptRhistoryMigration();
 }
 
 

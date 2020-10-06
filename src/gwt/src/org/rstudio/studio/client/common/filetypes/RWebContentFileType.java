@@ -1,7 +1,7 @@
 /*
  * RWebContentFileType.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,7 @@ package org.rstudio.studio.client.common.filetypes;
 import com.google.gwt.resources.client.ImageResource;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
@@ -74,6 +75,12 @@ public class RWebContentFileType extends TextFileType
       result.add(commands.goToDefinition());
       result.add(commands.insertRoxygenSkeleton());
       return result;
+   }
+
+   @Override
+   public boolean getWordWrap()
+   {
+      return RStudioGinjector.INSTANCE.getUserPrefs().softWrapRmdFiles().getValue();
    }
 
    @Override

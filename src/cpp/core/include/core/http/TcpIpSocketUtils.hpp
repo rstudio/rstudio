@@ -1,7 +1,7 @@
 /*
  * TcpIpSocketUtils.hpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -32,7 +32,7 @@ Error connect(boost::asio::io_service& ioService,
               const std::string& port,
               SocketType* pSocket)
 {
-   using boost::asio::ip::tcp ;
+   using boost::asio::ip::tcp;
    
    // resolve the address
    tcp::resolver resolver(ioService);
@@ -52,20 +52,20 @@ Error connect(boost::asio::io_service& ioService,
       // subsequent connection
       Error closeError = closeSocket(*pSocket);
       if (closeError)
-         LOG_ERROR(closeError) ;
+         LOG_ERROR(closeError);
       
       // attempt to connect
       pSocket->connect(*endpointIterator++, ec);
    }
    if (ec)
-      return Error(ec, ERROR_LOCATION) ;
+      return Error(ec, ERROR_LOCATION);
    
    // set tcp nodelay (propagate any errors)
-   pSocket->set_option(tcp::no_delay(true), ec) ;
+   pSocket->set_option(tcp::no_delay(true), ec);
    if (ec)
-      return Error(ec, ERROR_LOCATION) ;
+      return Error(ec, ERROR_LOCATION);
    else
-      return Success() ;
+      return Success();
 }
                      
 
@@ -76,37 +76,37 @@ inline Error initTcpIpAcceptor(
 {
    using boost::asio::ip::tcp;
    
-   tcp::resolver resolver(acceptorService.ioService()) ;
-   tcp::resolver::query query(address, port) ;
+   tcp::resolver resolver(acceptorService.ioService());
+   tcp::resolver::query query(address, port);
    
-   boost::system::error_code ec ;
-   tcp::resolver::iterator entries = resolver.resolve(query,ec) ;
+   boost::system::error_code ec;
+   tcp::resolver::iterator entries = resolver.resolve(query,ec);
    if (ec)
-      return Error(ec, ERROR_LOCATION) ;
+      return Error(ec, ERROR_LOCATION);
    
    tcp::acceptor& acceptor = acceptorService.acceptor();
-   const tcp::endpoint& endpoint = *entries ;
-   acceptor.open(endpoint.protocol(), ec) ;
+   const tcp::endpoint& endpoint = *entries;
+   acceptor.open(endpoint.protocol(), ec);
    if (ec)
-      return Error(ec, ERROR_LOCATION) ;
+      return Error(ec, ERROR_LOCATION);
    
-   acceptor.set_option(tcp::acceptor::reuse_address(true), ec) ;
+   acceptor.set_option(tcp::acceptor::reuse_address(true), ec);
    if (ec)
-      return Error(ec, ERROR_LOCATION) ;
+      return Error(ec, ERROR_LOCATION);
    
-   acceptor.set_option(tcp::no_delay(true), ec) ;
+   acceptor.set_option(tcp::no_delay(true), ec);
    if (ec)
-      return Error(ec, ERROR_LOCATION) ;
+      return Error(ec, ERROR_LOCATION);
    
-   acceptor.bind(endpoint, ec) ;
+   acceptor.bind(endpoint, ec);
    if (ec)
-      return Error(ec, ERROR_LOCATION) ;
+      return Error(ec, ERROR_LOCATION);
    
-   acceptor.listen(boost::asio::socket_base::max_connections, ec) ;
+   acceptor.listen(boost::asio::socket_base::max_connections, ec);
    if (ec)
-      return Error(ec, ERROR_LOCATION) ;
+      return Error(ec, ERROR_LOCATION);
    
-   return Success() ;
+   return Success();
 }
    
 } // namespace http

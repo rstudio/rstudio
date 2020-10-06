@@ -1,7 +1,7 @@
 /*
  * image-util.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,7 +16,7 @@
 import { EditorView } from 'prosemirror-view';
 import { findParentNodeClosestToPos } from 'prosemirror-utils';
 
-import { ImageProps, attrPartitionKeyvalue } from '../../api/ui';
+import { ImageProps } from '../../api/ui-dialogs';
 import {
   imageSizePropWithUnit,
   isValidImageSizeUnit,
@@ -24,7 +24,7 @@ import {
   isNaturalAspectRatio,
   ImageDimensions,
 } from '../../api/image';
-import { kWidthAttrib, kHeightAttrib } from '../../api/pandoc_attr';
+import { kWidthAttrib, kHeightAttrib, attrPartitionKeyvalue } from '../../api/pandoc_attr';
 import { kPercentUnit, kPixelUnit } from '../../api/css';
 import { elementInnerDimensions } from '../../api/dom';
 

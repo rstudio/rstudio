@@ -3,7 +3,7 @@
 #
 # CMakeGlobals.txt
 #
-# Copyright (C) 2009-20 by RStudio, PBC
+# Copyright (C) 2020 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -39,8 +39,6 @@ else()
   set(CPACK_PACKAGE_VERSION_PATCH $ENV{RSTUDIO_VERSION_PATCH})
 endif()
 set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
-
-set(RSTUDIO_RELEASE_NAME "Wax Begonia")
 
 string(TIMESTAMP CPACK_COPYRIGHT_YEAR "%Y")
 string(TIMESTAMP CPACK_BUILD_DATE "%Y-%m-%d")
@@ -262,8 +260,8 @@ endfunction()
 macro(add_stripped_executable _target)
    add_executable(${_target} ${ARGN})
 
-   # only strip debug info in release builds
-   if(CMAKE_BUILD_TYPE STREQUAL RelWithDebInfo)
+   # only strip debug info in release package builds
+   if(RSTUDIO_PACKAGE_BUILD AND CMAKE_BUILD_TYPE STREQUAL RelWithDebInfo)
       if(UNIX AND NOT APPLE)
          # strip debug info
          add_custom_command(TARGET ${_target} POST_BUILD

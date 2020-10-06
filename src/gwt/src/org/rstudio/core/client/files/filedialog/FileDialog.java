@@ -1,7 +1,7 @@
 /*
  * FileDialog.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -109,7 +109,7 @@ public abstract class FileDialog extends FileSystemDialog
 
       boolean useExactFilename = browser_.getSelectedValue() != null
             && browser_.getSelectedValue() == filename;
-      
+
       if (!useExactFilename || getAlwaysMungeFilename())
       {
          browser_.setFilename(mungeFilename(filename));
@@ -170,7 +170,7 @@ public abstract class FileDialog extends FileSystemDialog
    {
       return filename;
    }
-   
+
    protected boolean getAlwaysMungeFilename()
    {
       return false;
@@ -206,7 +206,7 @@ public abstract class FileDialog extends FileSystemDialog
    public void onSelection(SelectionEvent<FileSystemItem> event)
    {
       super.onSelection(event);
-      
+
       FileSystemItem item = event.getSelectedItem();
       if (item != null && !item.isDirectory())
          browser_.setFilename(item.getName());

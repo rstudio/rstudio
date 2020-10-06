@@ -1,7 +1,7 @@
 /*
  * SessionRmdNotebook.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -106,7 +106,7 @@ Error refreshChunkOutput(const json::JsonRpcRequest& request,
       return error;
 
    json::Object result;
-   json::Array chunkDefs; 
+   json::Array chunkDefs;
 
    // use our own context ID if none supplied
    if (nbCtxId.empty())
@@ -129,14 +129,15 @@ Error refreshChunkOutput(const json::JsonRpcRequest& request,
 }
 
 void emitOutputFinished(const std::string& docId, const std::string& chunkId,
-      int scope)
+      const std::string& htmlCallback, int scope)
 {
    json::Object result;
-   result["doc_id"]     = docId;
-   result["request_id"] = "";
-   result["chunk_id"]   = chunkId;
-   result["type"]       = kFinishedInteractive;
-   result["scope"]      = scope;
+   result["doc_id"]        = docId;
+   result["request_id"]    = "";
+   result["chunk_id"]      = chunkId;
+   result["html_callback"] = htmlCallback;
+   result["type"]          = kFinishedInteractive;
+   result["scope"]         = scope;
    ClientEvent event(client_events::kChunkOutputFinished, result);
    module_context::enqueClientEvent(event);
 }
@@ -172,9 +173,51 @@ bool fixChunkFilename(int, const core::FilePath& path)
 
 void onChunkExecCompleted(const std::string& docId, 
                           const std::string& chunkId,
+                          const std::string& code,
+                          const std::string& label,
                           const std::string& nbCtxId)
 {
-   emitOutputFinished(docId, chunkId, ExecScopeChunk);
+   r::sexp::Protect rProtect;
+   SEXP resultSEXP = R_NilValue;
+   std::string callback;
+
+   std::string escapedLabel =
+      core::string_utils::jsLiteralEscape(
+        core::string_utils::htmlEscape(label, true));
+   std::string escapedCode =
+         core::string_utils::jsLiteralEscape(
+               core::string_utils::htmlEscape(code, true));
+   boost::algorithm::replace_all(escapedLabel, "-", "_");
+   boost::algorithm::replace_all(escapedCode, "-", "_");
+
+   r::exec::RFunction func(".rs.executeChunkCallback");
+   func.addParam(escapedLabel);
+   func.addParam(escapedCode);
+
+   core::Error error = func.call(&resultSEXP, &rProtect);
+   if (error)
+      LOG_ERROR(error);
+   else if (!r::sexp::isNull(resultSEXP))
+   {
+      json::Object results;
+      Error error = r::json::jsonValueFromList(resultSEXP, &results);
+      if (error)
+         LOG_ERROR(error);
+      else
+      {
+         if (results.hasMember("html"))
+         {
+            // assumes only one callback is returned
+            if (results["html"].isString())
+               callback = results["html"].getString();
+            else if (results["html"].isArray() &&
+                     results["html"].getArray().getValueAt(0).isString())
+               callback = results["html"].getArray().getValueAt(0).getString();
+         }
+      }
+   }
+
+   emitOutputFinished(docId, chunkId, callback, ExecScopeChunk);
 }
 
 void onDeferredInit(bool)

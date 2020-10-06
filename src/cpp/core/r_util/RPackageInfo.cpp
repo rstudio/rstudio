@@ -1,7 +1,7 @@
 /*
  * RPackageInfo.cpp
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -93,6 +93,7 @@ Error RPackageInfo::read(const FilePath& packageDir)
    readField(fields, "LinkingTo", &linkingTo_);
    readField(fields, "SystemRequirements", &systemRequirements_);
    readField(fields, "Type", &type_, kPackageType);
+   readField(fields, "RdMacros", &rdMacros_);
 
    return Success();
 }
@@ -138,7 +139,7 @@ std::string packageNameFromDirectory(const FilePath& dir)
          return "";
       }
 
-      return pkgInfo.name(); 
+      return pkgInfo.name();
    }
    else
    {

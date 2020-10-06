@@ -1,7 +1,7 @@
 /*
  * RGraphicsPlot.hpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -54,7 +54,7 @@ public:
         const std::string& storageUuid,
         const DisplaySize& renderedSize);
    
-   std::string storageUuid() const;  
+   std::string storageUuid() const;
    bool hasValidStorage() const;
    const DisplaySize& renderedSize() const { return renderedSize_; }
 
@@ -78,7 +78,7 @@ public:
 private:
    bool hasStorage() const;
 
-   core::FilePath snapshotFilePath() const ;
+   core::FilePath snapshotFilePath() const;
    core::FilePath snapshotFilePath(const std::string& storageUuid) const;
    core::FilePath imageFilePath(const std::string& storageUuid) const;
 
@@ -90,8 +90,8 @@ private:
 private:
    GraphicsDeviceFunctions graphicsDevice_;
    core::FilePath baseDirPath_;
-   std::string storageUuid_ ;
-   DisplaySize renderedSize_ ;
+   std::string storageUuid_;
+   DisplaySize renderedSize_;
    bool needsUpdate_;
 
    // manipulator and protection scope for it

@@ -1,7 +1,7 @@
 /*
  * AceEditorNative.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -647,6 +647,14 @@ public class AceEditorNative extends JavaScriptObject
    
    public final native void setIndentedSoftWrap(boolean softWrap) /*-{
       this.setOption("indentedSoftWrap", softWrap);
+   }-*/;
+
+   public final native void setMaxLines(int max) /*-{
+      this.setOption("maxLines", max);
+   }-*/;
+
+   public final native void setMinLines(int min) /*-{
+      this.setOption("minLines", min);
    }-*/;
 
    public final native void setTabMovesFocus(boolean movesFocus) /*-{

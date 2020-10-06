@@ -1,7 +1,7 @@
 /*
  * TabClosingEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,12 +14,12 @@
  */
 package org.rstudio.core.client.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class TabClosingEvent extends GwtEvent<TabClosingHandler>
+public class TabClosingEvent extends GwtEvent<TabClosingEvent.Handler>
 {
-   public static final GwtEvent.Type<TabClosingHandler> TYPE =
-      new GwtEvent.Type<TabClosingHandler>();
+   public static final GwtEvent.Type<Handler> TYPE = new GwtEvent.Type<>();
 
    public TabClosingEvent(int tabIndex)
    {
@@ -42,15 +42,20 @@ public class TabClosingEvent extends GwtEvent<TabClosingHandler>
    }
 
    @Override
-   protected void dispatch(TabClosingHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onTabClosing(this);
    }
 
    @Override
-   public GwtEvent.Type<TabClosingHandler> getAssociatedType()
+   public GwtEvent.Type<Handler> getAssociatedType()
    {
       return TYPE;
+   }
+
+   public interface Handler extends EventHandler
+   {
+      void onTabClosing(TabClosingEvent event);
    }
 
    private final int tabIndex_;

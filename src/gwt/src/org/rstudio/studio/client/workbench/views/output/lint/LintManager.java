@@ -1,7 +1,7 @@
 /*
  * LintPresenter.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -86,7 +86,7 @@ public class LintManager
       if (type.isC() || type.isCpp())
          return userPrefs_.showDiagnosticsCpp().getValue();
       
-      if (type.isR() || type.isRmd() || type.isRnw() || type.isRpres())
+      if (type.isR() || type.isRnw() || type.isRpres() || type.isMarkdown())
          return userPrefs_.showDiagnosticsR().getValue() || userPrefs_.realTimeSpellchecking().getValue();
       
       return false;
@@ -197,7 +197,7 @@ public class LintManager
 
       if (context.showMarkers)
       {
-         target_.saveThenExecute(null, new Command()
+         target_.saveThenExecute(null, false, new Command()
          {
             @Override
             public void execute()
@@ -208,7 +208,7 @@ public class LintManager
       }
       else
       {
-         target_.withSavedDoc(new Command()
+         target_.withSavedDocNoRetry(new Command()
          {
             @Override
             public void execute()

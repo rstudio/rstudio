@@ -1,7 +1,7 @@
 /*
  * ConsoleErrorFrame.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -48,16 +48,16 @@ public class ConsoleErrorFrame extends Composite
    public ConsoleErrorFrame(int number, ErrorFrame frame)
    {
       initWidget(uiBinder.createAndBindUi(this));
-      
+
       frame_ = frame;
-      
+
       boolean hasSource = !frame.getFileName().isEmpty();
       functionName.setText(frame.getFunctionName() + (hasSource ? " at" : ""));
-      frameNumber.setText((new Integer(number)).toString() + ".");
+      frameNumber.setText((Integer.valueOf(number)).toString() + ".");
       if (hasSource)
       {
          sourceLink.setText(
-               FileSystemItem.getNameFromPath(frame.getFileName()) + 
+               FileSystemItem.getNameFromPath(frame.getFileName()) +
                "#" + frame.getLineNumber());
          DOM.sinkEvents(sourceLink.getElement(), Event.ONCLICK);
          DOM.setEventListener(sourceLink.getElement(), new EventListener()
@@ -70,7 +70,7 @@ public class ConsoleErrorFrame extends Composite
                {
                   showSourceForFrame(frame_);
                }
-               
+
             }
          });
       }
@@ -88,7 +88,7 @@ public class ConsoleErrorFrame extends Composite
                              FileTypeRegistry.R,
                              NavigationMethods.HIGHLIGHT_LINE));
    }
-   
+
    @UiField
    Label functionName;
    @UiField

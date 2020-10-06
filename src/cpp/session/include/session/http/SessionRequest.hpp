@@ -1,7 +1,7 @@
 /*
  * SessionRequest.hpp
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -62,7 +62,6 @@ inline core::Error sendSessionRequest(const std::string& uri,
    std::string token = core::system::generateUuid();
    request.setHeader(kCSRFTokenHeader, token);
    request.addCookie(kCSRFTokenCookie, token);
-
    request.setBody(body);
 
    // first, attempt to send a plain old http request

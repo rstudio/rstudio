@@ -1,7 +1,7 @@
 /*
  * SelectionChangedEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,21 +14,26 @@
  */
 package org.rstudio.core.client.widget.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class SelectionChangedEvent extends GwtEvent<SelectionChangedHandler>
+public class SelectionChangedEvent extends GwtEvent<SelectionChangedEvent.Handler>
 {
-   public static final Type<SelectionChangedHandler> TYPE =
-         new Type<SelectionChangedHandler>();
-   
+   public static final Type<Handler> TYPE = new Type<>();
+
+   public interface Handler extends EventHandler
+   {
+      void onSelectionChanged(SelectionChangedEvent e);
+   }
+
    @Override
-   public Type<SelectionChangedHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
 
    @Override
-   protected void dispatch(SelectionChangedHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onSelectionChanged(this);
    }

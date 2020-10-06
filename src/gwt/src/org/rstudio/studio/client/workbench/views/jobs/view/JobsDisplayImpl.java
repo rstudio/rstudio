@@ -1,7 +1,7 @@
 /*
  * JobsDisplayImpl.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -217,6 +217,12 @@ public class JobsDisplayImpl implements JobsDisplay
    {
    }
    
+   @Override
+   public void setFocus()
+   {
+      widgets_.focus();
+   }
+
    // private state
    private final WorkbenchPane pane_;
    private final JobsPaneOperations widgets_;

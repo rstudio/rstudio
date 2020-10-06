@@ -1,7 +1,7 @@
 /*
  * RTokenizer.cpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -99,15 +99,35 @@ void updatePosition(std::wstring::const_iterator pos,
    }
 }
 
+Error tokenizeError(const std::string& reason, const ErrorLocation& location)
+{
+   Error error(boost::system::errc::invalid_argument, location);
+   error.addProperty("reason", reason);
+   return error;
+}
+
 } // anonymous namespace
 
 RToken RTokenizer::nextToken()
 {
   if (eol())
-     return RToken() ;
+     return RToken();
 
-  wchar_t c = peek() ;
+  wchar_t c = peek();
 
+  // check for raw string literals
+  if (c == L'r' || c == L'R')
+  {
+     wchar_t next = peek(1);
+     if (next == L'"' || next == L'\'')
+     {
+        RToken token;
+        Error error = matchRawStringLiteral(&token);
+        if (!error)
+           return token;
+     }
+  }
+  
   switch (c)
   {
   case L'(':
@@ -144,7 +164,7 @@ RToken RTokenizer::nextToken()
      if (braceStack_.empty()) // TODO: warn?
      {
         if (peek(1) == L']')
-           return consumeToken(RToken::RDBRACKET, 2) ;
+           return consumeToken(RToken::RDBRACKET, 2);
         else
            return consumeToken(RToken::RBRACKET, 1);
      }
@@ -166,9 +186,10 @@ RToken RTokenizer::nextToken()
         return token;
      }
   }
+     
   case L'"':
   case L'\'':
-     return matchStringLiteral() ;
+     return matchStringLiteral();
   case L'`':
      return matchQuotedIdentifier();
   case L'#':
@@ -177,17 +198,17 @@ RToken RTokenizer::nextToken()
      return matchUserOperator();
   case L' ': case L'\t': case L'\r': case L'\n':
   case L'\x00A0': case L'\x3000':
-     return matchWhitespace() ;
+     return matchWhitespace();
   }
 
-  wchar_t cNext = peek(1) ;
+  wchar_t cNext = peek(1);
 
   if ((c >= L'0' && c <= L'9')
         || (c == L'.' && cNext >= L'0' && cNext <= L'9'))
   {
-     RToken numberToken = matchNumber() ;
+     RToken numberToken = matchNumber();
      if (numberToken.length() > 0)
-        return numberToken ;
+        return numberToken;
   }
 
   if (string_utils::isalnum(c) || c == L'.')
@@ -199,15 +220,15 @@ RToken RTokenizer::nextToken()
      // Since we're not checking for either condition, we must
      // match on identifiers AFTER we have already tried to
      // match on number.
-     return matchIdentifier() ;
+     return matchIdentifier();
   }
 
-  RToken oper = matchOperator() ;
+  RToken oper = matchOperator();
   if (oper)
-     return oper ;
+     return oper;
 
   // Error!!
-  return consumeToken(RToken::ERR, 1) ;
+  return consumeToken(RToken::ERR, 1);
 }
 
 
@@ -217,29 +238,136 @@ RToken RTokenizer::matchWhitespace()
    return consumeToken(RToken::WHITESPACE, tokenLength(tokenPatterns().WHITESPACE));
 }
 
+Error RTokenizer::matchRawStringLiteral(RToken* pToken)
+{
+   auto start = pos_;
+   
+   // consume leading 'r' or 'R'
+   wchar_t firstChar = eat();
+   if (!(firstChar == L'r' || firstChar == L'R'))
+   {
+      pos_ = start;
+      return tokenizeError(
+               "expected 'r' or 'R' at start of raw string literal",
+               ERROR_LOCATION);
+   }
+   
+   // consume quote character
+   wchar_t quoteChar = eat();
+   if (!(quoteChar == L'"' || quoteChar == L'\''))
+   {
+      pos_ = start;
+      return tokenizeError(
+               "expected quote character at start of raw string literal",
+               ERROR_LOCATION);
+   }
+   
+   // consume an optional number of hyphens
+   int hyphenCount = 0;
+   wchar_t ch = eat();
+   while (ch == L'-')
+   {
+      hyphenCount++;
+      ch = eat();
+   }
+   
+   // okay, we're now sitting on open parenthesis
+   wchar_t lhs = ch;
+   
+   // form right boundary character based on consumed parenthesis.
+   // if it wasn't a parenthesis, just look for the associated closing quote
+   wchar_t rhs;
+   if (lhs == L'(')
+   {
+      rhs = L')';
+   }
+   else if (lhs == L'{')
+   {
+      rhs = L'}';
+   }
+   else if (lhs == L'[')
+   {
+      rhs = L']';
+   }
+   else
+   {
+      pos_ = start;
+      return tokenizeError(
+               "expected opening bracket at start of raw string literal",
+               ERROR_LOCATION);
+   }
+   
+   // start searching for the end of the raw string
+   bool valid = false;
+   
+   while (true)
+   {
+      // i know, i know -- a label!? we use that here just because
+      // we need to 'break' out of a nested loop below, and just
+      // using a simple goto is cleaner than having e.g. an extra
+      // boolean flag tracking whether we should 'continue'
+      LOOP:
+      
+      if (eol())
+         break;
+      
+      // find the boundary character
+      wchar_t ch = eat();
+      if (ch != rhs)
+         goto LOOP;
+      
+      // consume hyphens
+      for (int i = 0; i < hyphenCount; i++)
+      {
+         ch = eat();
+         if (ch != L'-')
+            goto LOOP;
+      }
+      
+      // consume quote character
+      ch = eat();
+      if (ch != quoteChar)
+         goto LOOP;
+      
+      // we're at the end of the string; break out of the loop
+      valid = true;
+      break;
+   }
+   
+   // update position
+   std::size_t row = row_;
+   std::size_t column = column_;
+   updatePosition(start, pos_ - start, &row_, &column_);
+ 
+   // set token and return success
+   auto type = valid ? RToken::STRING : RToken::ERR;
+   *pToken = RToken(type, start, pos_, start - data_.begin(), row, column);
+   return Success();
+}
+
 RToken RTokenizer::matchStringLiteral()
 {
-   std::wstring::const_iterator start = pos_ ;
-   wchar_t quot = eat() ;
+   std::wstring::const_iterator start = pos_;
+   wchar_t quot = eat();
 
    while (!eol())
    {
       eatUntil(tokenPatterns().UNTIL_END_QUOTE);
 
       if (eol())
-         break ;
+         break;
 
-      wchar_t c = eat() ;
+      wchar_t c = eat();
       if (c == quot)
       {
          // NOTE: this is where we used to set wellFormed = true
-         break ;
+         break;
       }
 
       if (c == L'\\')
       {
          if (!eol())
-            eat() ;
+            eat();
 
          // Actually the escape expression can be longer than
          // just the backslash plus one character--but we don't
@@ -251,7 +379,7 @@ RToken RTokenizer::matchStringLiteral()
    
    std::size_t row = row_;
    std::size_t column = column_;
-   updatePosition(start, pos_ - start, &row_, &column_); 
+   updatePosition(start, pos_ - start, &row_, &column_);
 
    // NOTE: the Java version of the tokenizer returns a special RStringToken
    // subclass which includes the wellFormed flag as an attribute. Our
@@ -277,7 +405,7 @@ RToken RTokenizer::matchNumber()
 
 RToken RTokenizer::matchIdentifier()
 {
-   std::wstring::const_iterator start = pos_ ;
+   std::wstring::const_iterator start = pos_;
    eat();
    while (string_utils::isalnum(peek()) || peek() == L'.' || peek() == L'_')
       eat();
@@ -320,7 +448,7 @@ RToken RTokenizer::matchUserOperator()
 
 RToken RTokenizer::matchOperator()
 {
-   wchar_t cNext = peek(1) ;
+   wchar_t cNext = peek(1);
    wchar_t cNextNext = peek(2);
 
    switch (peek())
@@ -346,7 +474,7 @@ RToken RTokenizer::matchOperator()
       else if (cNext == L'<')
       {
          if (cNextNext == L'-') // <<-
-            return consumeToken(RToken::OPER, 3); 
+            return consumeToken(RToken::OPER, 3);
       }
       else // plain old <
          return consumeToken(RToken::OPER, 1);
@@ -363,17 +491,17 @@ RToken RTokenizer::matchOperator()
    case L'+': case L'/': case L'?':
    case L'^': case L'~': case L'$': case L'@':
       // single-character operators
-      return consumeToken(RToken::OPER, 1) ;
+      return consumeToken(RToken::OPER, 1);
       
    case L'>': // also >=
-      return consumeToken(RToken::OPER, cNext == L'=' ? 2 : 1) ;
+      return consumeToken(RToken::OPER, cNext == L'=' ? 2 : 1);
       
    case L'=': // also ==
-      return consumeToken(RToken::OPER, cNext == L'=' ? 2 : 1) ;
+      return consumeToken(RToken::OPER, cNext == L'=' ? 2 : 1);
    case L'!': // also !=
-      return consumeToken(RToken::OPER, cNext == L'=' ? 2 : 1) ;
+      return consumeToken(RToken::OPER, cNext == L'=' ? 2 : 1);
    default:
-      return RToken() ;
+      return RToken();
    }
 }
 
@@ -384,22 +512,22 @@ bool RTokenizer::eol()
 
 wchar_t RTokenizer::peek()
 {
-   return peek(0) ;
+   return peek(0);
 }
 
 wchar_t RTokenizer::peek(std::size_t lookahead)
 {
    if ((pos_ + lookahead) >= data_.end())
-      return 0 ;
+      return 0;
    else
-      return *(pos_ + lookahead) ;
+      return *(pos_ + lookahead);
 }
 
 wchar_t RTokenizer::eat()
 {
    wchar_t result = *pos_;
-   pos_++ ;
-   return result ;
+   pos_++;
+   return result;
 }
 
 std::size_t RTokenizer::tokenLength(const boost::wregex& regex)
@@ -450,8 +578,8 @@ RToken RTokenizer::consumeToken(RToken::TokenType tokenType,
    // Update the row, column for the next token.
    updatePosition(pos_, length, &row_, &column_);
    
-   std::wstring::const_iterator start = pos_ ;
-   pos_ += length ;
+   std::wstring::const_iterator start = pos_;
+   pos_ += length;
    return RToken(tokenType,
                  start,
                  pos_,

@@ -1,7 +1,7 @@
 /*
  * smallcaps.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,6 +26,7 @@ const extension: Extension = {
     {
       name: 'smallcaps',
       spec: {
+        group: 'formatting',
         parseDOM: [
           { tag: "span[class*='smallcaps']" },
           { style: 'font-variant', getAttrs: (value: string | Node) => (value as string) === 'small-caps' && null },
@@ -42,7 +43,7 @@ const extension: Extension = {
           },
         ],
         writer: {
-          priority: 7,
+          priority: 8,
           write: (output: PandocOutput, _mark: Mark, parent: Fragment) => {
             output.writeMark(PandocTokenType.SmallCaps, parent);
           },

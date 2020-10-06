@@ -1,7 +1,7 @@
 /*
  * ConsoleResources.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,6 +31,7 @@ public interface ConsoleResources extends ClientBundle
       String input();
       String prompt();
       String output();
+      String outputChunk();
       String command();
       String completionPopup();
       String completionGrid();
@@ -49,6 +50,6 @@ public interface ConsoleResources extends ClientBundle
       String packageDescription();
       String truncatedLabel();
    }
-   
+
    public static final String KEYWORD_CLASS_NAME = " ace_keyword";
 }

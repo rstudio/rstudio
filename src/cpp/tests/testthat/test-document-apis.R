@@ -1,7 +1,7 @@
 #
 # test-document-apis.R
 #
-# Copyright (C) 2009-18 by RStudio, PBC
+# Copyright (C) 2020 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -15,8 +15,11 @@
 
 context("document API")
 
+# TODO: These rely on client WaitFor methods, and so cannot be tested
 test_that("insertText() handles various invocations", {
    
+   skip("NYI")
+
    # Replace current selection
    .rs.api.insertText("foo")
    .rs.api.insertText(text = "foo")

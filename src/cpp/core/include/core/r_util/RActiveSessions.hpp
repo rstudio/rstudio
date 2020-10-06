@@ -1,7 +1,7 @@
 /*
  * RActiveSessions.hpp
  *
- * Copyright (C) 2009-16 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -122,28 +122,12 @@ public:
 
    double lastUsed() const
    {
-      if (!empty())
-      {
-         std::string value = readProperty("last-used");
-         if (!value.empty())
-            return safe_convert::stringTo<double>(value, 0);
-         else
-            return 0;
-      }
-      else
-      {
-         return 0;
-      }
+      return timestampProperty("last-used");
    }
 
    void setLastUsed()
    {
-      if (!empty())
-      {
-         double now = date_time::millisecondsSinceEpoch();
-         std::string value = safe_convert::numberToString(now);
-         writeProperty("last-used", value);
-      }
+      setTimestampProperty("last-used");
    }
 
    bool executing() const
@@ -243,6 +227,7 @@ public:
       }
    }
 
+   // historical note: this will be displayed as the session name
    std::string label()
    {
       if (!empty())
@@ -251,6 +236,7 @@ public:
          return std::string();
    }
 
+   // historical note: this will be displayed as the session name
    void setLabel(const std::string& label)
    {
       if (!empty())
@@ -325,8 +311,75 @@ public:
       // validated!
       return true;
    }
+   
+   bool operator>(const ActiveSession& rhs) const
+   {
+      if (sortConditions_.executing_ == rhs.sortConditions_.executing_)
+      {
+         if (sortConditions_.running_ == rhs.sortConditions_.running_)
+         {
+            if (sortConditions_.lastUsed_ == rhs.sortConditions_.lastUsed_)
+               return id() > rhs.id();
 
-private:
+            return sortConditions_.lastUsed_ > rhs.sortConditions_.lastUsed_;
+         }
+
+         return sortConditions_.running_;
+      }
+      
+      return sortConditions_.executing_;
+   }
+
+ private:
+   struct SortConditions
+   {
+      SortConditions() :
+         executing_(false),
+         running_(false),
+         lastUsed_(0)
+      {
+         
+      }
+
+      bool executing_;
+      bool running_;
+      double lastUsed_;
+   };
+
+   void cacheSortConditions()
+   {
+      sortConditions_.executing_ = executing();
+      sortConditions_.running_ = running();
+      sortConditions_.lastUsed_ = lastUsed();
+   }
+ 
+
+   void setTimestampProperty(const std::string& property)
+   {
+      if (!empty())
+      {
+         double now = date_time::millisecondsSinceEpoch();
+         std::string value = safe_convert::numberToString(now);
+         writeProperty(property, value);
+      }
+   }
+
+   double timestampProperty(const std::string& property) const
+   {
+      if (!empty())
+      {
+         std::string value = readProperty(property);
+         if (!value.empty())
+            return safe_convert::stringTo<double>(value, 0);
+         else
+            return 0;
+      }
+      else
+      {
+         return 0;
+      }
+   }
+
 
    void setRunning(bool running)
    {
@@ -344,6 +397,7 @@ private:
    std::string id_;
    FilePath scratchPath_;
    FilePath propertiesPath_;
+   SortConditions sortConditions_;
 };
 
 

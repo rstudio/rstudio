@@ -1,7 +1,7 @@
 /*
  * PanmirrorTheme.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,6 +21,7 @@ import jsinterop.annotations.JsType;
 public class PanmirrorTheme
 {
    public boolean darkMode;
+   public boolean solarizedMode;
    public String cursorColor;
    public String selectionColor;
    public String nodeSelectionColor;
@@ -29,6 +30,8 @@ public class PanmirrorTheme
    public String chunkBackgroundColor;
    public String spanBackgroundColor;
    public String divBackgroundColor;
+   public String commentColor;
+   public String commentFontStyle;
    public String commentBackgroundColor;
    public String gutterBackgroundColor;
    public String gutterTextColor;
@@ -36,6 +39,8 @@ public class PanmirrorTheme
    public String surfaceWidgetTextColor;
    public String lightTextColor;
    public String linkTextColor;
+   public String placeholderTextColor;
+   public String invisibleTextColor;
    public String markupTextColor;
    public String findTextBackgroundColor;
    public String findTextBorderColor;

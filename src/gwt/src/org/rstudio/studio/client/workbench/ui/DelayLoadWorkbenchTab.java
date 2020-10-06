@@ -1,7 +1,7 @@
 /*
  * DelayLoadWorkbenchTab.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,11 +26,8 @@ import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.events.EnsureHiddenEvent;
-import org.rstudio.core.client.events.EnsureHiddenHandler;
 import org.rstudio.core.client.events.EnsureHeightEvent;
-import org.rstudio.core.client.events.EnsureHeightHandler;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
-import org.rstudio.core.client.events.EnsureVisibleHandler;
 
 public abstract class DelayLoadWorkbenchTab<T extends IsWidget>
       implements WorkbenchTab
@@ -87,6 +84,11 @@ public abstract class DelayLoadWorkbenchTab<T extends IsWidget>
       shimmed_.onSelected();
    }
 
+   public final void setFocus()
+   {
+      shimmed_.setFocus();
+   }
+
    public boolean isSuppressed()
    {
       return false;
@@ -97,7 +99,7 @@ public abstract class DelayLoadWorkbenchTab<T extends IsWidget>
    {
       return false;
    }
-   
+
    @Override
    public void confirmClose(Command onConfirmed)
    {
@@ -113,23 +115,23 @@ public abstract class DelayLoadWorkbenchTab<T extends IsWidget>
    {
       handlers_.fireEvent(new EnsureHiddenEvent());
    }
-   
+
    public void ensureHeight(int height)
    {
       handlers_.fireEvent(new EnsureHeightEvent(height));
    }
 
-   public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleHandler handler)
+   public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleEvent.Handler handler)
    {
       return handlers_.addHandler(EnsureVisibleEvent.TYPE, handler);
    }
 
-   public HandlerRegistration addEnsureHiddenHandler(EnsureHiddenHandler handler)
+   public HandlerRegistration addEnsureHiddenHandler(EnsureHiddenEvent.Handler handler)
    {
       return handlers_.addHandler(EnsureHiddenEvent.TYPE, handler);
    }
-   
-   public HandlerRegistration addEnsureHeightHandler(EnsureHeightHandler handler)
+
+   public HandlerRegistration addEnsureHeightHandler(EnsureHeightEvent.Handler handler)
    {
       return handlers_.addHandler(EnsureHeightEvent.TYPE, handler);
    }

@@ -32,6 +32,27 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="gwt" level="project" />
     <orderEntry type="library" name="gin" level="project" />
-    <orderEntry type="library" scope="TEST" name="junit-4.9b3" level="project" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/junit-4.9b3.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="file://$MODULE_DIR$/lib/elemental2" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="file://$MODULE_DIR$/lib/elemental2" />
+        </SOURCES>
+        <jarDirectory url="file://$MODULE_DIR$/lib/elemental2" recursive="false" />
+        <jarDirectory url="file://$MODULE_DIR$/lib/elemental2" recursive="false" type="SOURCES" />
+      </library>
+    </orderEntry>
   </component>
 </module>

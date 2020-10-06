@@ -1,7 +1,7 @@
 /*
  * RConsoleHistory.hpp
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,7 +26,7 @@
 
 namespace rstudio {
 namespace core {
-   class Error ;
+   class Error;
    class FilePath;
 }
 }
@@ -36,7 +36,7 @@ namespace r {
 namespace session {
 
 // singleton
-class ConsoleHistory ;
+class ConsoleHistory;
 ConsoleHistory& consoleHistory();
    
 class ConsoleHistory : boost::noncopyable
@@ -96,8 +96,8 @@ private:
    
 private:   
    bool removeDuplicates_;
-   boost::circular_buffer<std::string> historyBuffer_ ;
-   AddSignal onAdd_; 
+   boost::circular_buffer<std::string> historyBuffer_;
+   AddSignal onAdd_;
 };
    
 } // namespace session

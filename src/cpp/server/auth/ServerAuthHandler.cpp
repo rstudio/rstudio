@@ -1,7 +1,7 @@
 /*
  * ServerAuthHandler.cpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -298,6 +298,11 @@ bool shouldShowUserLicenseWarning()
    return false;
 }
 
+bool isUserAdmin()
+{
+   return false;
+}
+
 std::string getUserListCookieValue()
 {
    return "9c16856330a7400cbbbba228392a5d83";
@@ -313,6 +318,11 @@ json::Array getLicensedUsers()
    return json::Array();
 }
 
+json::Array getAllUsers()
+{
+   return json::Array();
+}
+
 Error lockUser(boost::asio::io_service& ioService,
                const std::string& username)
 {
@@ -321,6 +331,20 @@ Error lockUser(boost::asio::io_service& ioService,
 
 Error unlockUser(boost::asio::io_service& ioService,
                  const std::string& username)
+{
+   return Success();
+}
+
+Error setAdmin(boost::asio::io_service& ioService,
+               const std::string& username,
+               bool isAdmin)
+{
+   return Success();
+}
+
+Error addUser(boost::asio::io_service& ioService,
+              const std::string& username,
+              bool isAdmin)
 {
    return Success();
 }
@@ -345,13 +369,12 @@ RevokedCookie::RevokedCookie(const std::string& cookie)
 }
 
 std::string getUserIdentifier(const core::http::Request& request,
-                              bool requireUserListCookie,
-                              http::Response* pResponse)
+                              bool requireUserListCookie)
 {
    if (isCookieRevoked(request.cookieValue(kUserIdCookie)))
       return std::string();
 
-   std::string userIdentifier = s_handler.getUserIdentifier(request, pResponse);
+   std::string userIdentifier = s_handler.getUserIdentifier(request);
    if (userIdentifier.empty())
       return std::string();
 
@@ -477,7 +500,8 @@ void refreshAuthCookies(const std::string& userIdentifier,
       // clear any existing auth cookies first - this method can be invoked multiple
       // times depending on the handler type (for example, an upload handler)
       pResponse->clearCookies();
-      bool persist = request.cookieValue(kPersistAuthCookie) == "1" ? true : false;
+      std::string persistCookie = request.cookieValue(kPersistAuthCookie);
+      bool persist = persistCookie == "1" ? true : false;
       s_handler.refreshAuthCookies(request, userIdentifier, persist, pResponse);
    }
 }

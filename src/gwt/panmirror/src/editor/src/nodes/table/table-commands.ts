@@ -1,7 +1,7 @@
 /*
  * table-commands.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,6 +13,7 @@
  *
  */
 
+import { EditorView } from 'prosemirror-view';
 import { Node as ProsemirrorNode, Fragment } from 'prosemirror-model';
 import { EditorState, Transaction } from 'prosemirror-state';
 import { findParentNodeOfType, setTextSelection, findChildrenByType } from 'prosemirror-utils';
@@ -29,9 +30,9 @@ import {
 
 import { EditorUI } from '../../api/ui';
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
-import { EditorView } from 'prosemirror-view';
 import { canInsertNode } from '../../api/node';
 import { TableCapabilities } from '../../api/table';
+import { OmniInsertGroup } from '../../api/omni_insert';
 
 export function insertTable(capabilities: TableCapabilities, ui: EditorUI) {
   return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
@@ -96,6 +97,16 @@ export function insertTable(capabilities: TableCapabilities, ui: EditorUI) {
     asyncInsertTable();
 
     return true;
+  };
+}
+
+export function insertTableOmniInsert(ui: EditorUI) {
+  return {
+    name: ui.context.translateText('Table'),
+    description: ui.context.translateText('Content in rows and columns'),
+    group: OmniInsertGroup.Lists,
+    priority: 1,
+    image: () => (ui.prefs.darkMode() ? ui.images.omni_insert?.table_dark! : ui.images.omni_insert?.table!),
   };
 }
 
@@ -164,12 +175,34 @@ export function addRows(after: boolean) {
       return false;
     }
     if (dispatch) {
+      // add the rows
       let tr = state.tr;
       const rect = selectedRect(state);
       const rows = rect.bottom - rect.top;
       for (let i = 0; i < rows; i++) {
         tr = addRow(tr, rect, after ? rect.bottom : rect.top);
       }
+
+      // sync column alignments for table
+      const table = findParentNodeOfType(state.schema.nodes.table)(tr.selection);
+      if (table) {
+        const alignments = new Array<CssAlignment | null>(rect.map.width);
+        table.node.forEach((rowNode, rowOffset, rowIndex) => {
+          rowNode.forEach((cellNode, cellOffset, colIndex) => {
+            const cellPos = table.pos + 1 + rowOffset + 1 + cellOffset;
+            if (rowIndex === 0) {
+              const cell = tr.doc.nodeAt(cellPos);
+              alignments[colIndex] = cell?.attrs.align || null;
+            } else {
+              tr.setNodeMarkup(cellPos, cellNode.type, {
+                ...cellNode.attrs,
+                align: alignments[colIndex] || null,
+              });
+            }
+          });
+        });
+      }
+
       dispatch(tr);
     }
     return true;
@@ -292,7 +325,7 @@ export class TableColumnAlignmentCommand extends ProsemirrorCommand {
         const tr = state.tr;
         table.forEach((rowNode, rowOffset) => {
           rowNode.forEach((cellNode, cellOffset, i) => {
-            if (i >= left && i <= right) {
+            if (i >= left && i < right) {
               const cellPos = tableStart + 1 + rowOffset + cellOffset;
               tr.setNodeMarkup(cellPos, cellNode.type, {
                 ...cellNode.attrs,

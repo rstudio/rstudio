@@ -1,7 +1,7 @@
 #
 # SessionRmdNotebook.R
 #
-# Copyright (C) 2009-17 by RStudio, PBC
+# Copyright (C) 2020 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -84,7 +84,6 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    # Set up rnbData structure (if we have a cache, these entries will be filled)
    rnbData[["chunk_info"]] <- list()
    rnbData[["chunk_data"]] <- list()
-   rnbData[["lib"]] <- list()
    
    # early return if we have no cache
    if (!file.exists(cachePath))
@@ -111,33 +110,30 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
       # extract the contents from each regular file
       contents <- lapply(files, function(file) {
-         .rs.readFile(
-            file,
-            encoding = "UTF-8",
-            binary = .rs.endsWith(file, "png")  ||
-                     .rs.endsWith(file, "jpg")  ||
-                     .rs.endsWith(file, "jpeg") ||
-                     .rs.endsWith(file, "rdf")
+         
+         # ignore files that do not have a registered output handler
+         ext <- tools::file_ext(file)
+         if (!ext %in% names(.rs.rnb.outputHandlers))
+            return(NULL)
+         
+         # read other files (suppress warnings in case we attempt
+         # to read a text file that has NUL bytes and hence is truncated;
+         # if those are an issue they'll cause a louder down-stream error)
+         suppressWarnings(
+            .rs.readFile(
+               file     = file,
+               encoding = "UTF-8",
+               binary   = ext %in% c("webp", "png", "jpg", "jpeg", "rdf")
+            )
          )
+         
       })
+      
       names(contents) <- basename(files)
       contents
    })
    names(chunkData) <- basename(chunkDirs)
    rnbData[["chunk_data"]] <- chunkData
-   
-   # Read in the 'libs' directory.
-   rnbData[["lib"]] <- list()
-   
-   libDir <- file.path(cachePath, "lib")
-   if (file.exists(libDir)) {
-      owd <- setwd(libDir)
-      libFiles <- list.files(libDir, recursive = TRUE)
-      libData <- lapply(libFiles, .rs.readFile, encoding = "UTF-8")
-      names(libData) <- libFiles
-      rnbData[["lib"]] <- libData
-      setwd(owd)
-   }
    
    rnbData
 })
@@ -345,15 +341,6 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       chunkData <- .rs.coalesceCsvOutput(rnbData$chunk_data[[chunkId]])
       
       # map file extensions to handlers
-      outputHandlers <- list(
-         "png"  = .rs.rnb.outputSourcePng,
-         "jpg"  = .rs.rnb.outputSourceJpeg,
-         "jpeg" = .rs.rnb.outputSourceJpeg,
-         "csv"  = .rs.rnb.outputSourceConsole,
-         "html" = .rs.rnb.outputSourceHtml,
-         "rdf"  = .rs.rnb.outputSourceRdf
-      )
-
       outputList <- .rs.enumerate(chunkData, function(fileName, fileContents) {
          
          # read metadata sidecar if present
@@ -365,7 +352,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
          
          # find and execute handler for extension (return NULL if no handler defined)
          ext <- tools::file_ext(fileName)
-         handler <- outputHandlers[[ext]]
+         handler <- .rs.rnb.outputHandlers[[ext]]
          if (!is.function(handler))
             return(NULL)
          
@@ -1151,3 +1138,24 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    .rs.scalarListFromList(defaultOptions)
 })
 
+.rs.addFunction("executeChunkCallback", function(chunkName, chunkCode)
+{
+  if (exists(".rs.notebookChunkCallbacks", envir = .rs.toolsEnv()) &&
+      length(.rs.notebookChunkCallbacks) != 0)
+  {
+     handle <- ls(envir = .rs.notebookChunkCallbacks)
+     chunkCallback <- get(handle, envir = .rs.notebookChunkCallbacks)
+     return(chunkCallback(eval(chunkName), eval(chunkCode)))
+  }
+  NULL
+})
+
+# a list mapping file extensions to its associated output handler
+.rs.setVar("rnb.outputHandlers", list(
+   "png"  = .rs.rnb.outputSourcePng,
+   "jpg"  = .rs.rnb.outputSourceJpeg,
+   "jpeg" = .rs.rnb.outputSourceJpeg,
+   "csv"  = .rs.rnb.outputSourceConsole,
+   "html" = .rs.rnb.outputSourceHtml,
+   "rdf"  = .rs.rnb.outputSourceRdf
+))

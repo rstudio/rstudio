@@ -1,7 +1,7 @@
 /*
  * ChunkDefinition.java
  *
- * Copyright (C) 2009-16 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,6 +25,11 @@ public class ChunkDefinition extends JavaScriptObject
    
    protected ChunkDefinition()
    {
+   }
+   
+   public interface Provider
+   {
+      public JsArray<ChunkDefinition> getChunkDefs();
    }
    
    public static native final ChunkDefinition create(int row,

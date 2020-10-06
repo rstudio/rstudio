@@ -1,7 +1,7 @@
 /*
  * WorkbenchServerOperations.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,7 +28,7 @@ import org.rstudio.studio.client.common.synctex.model.SynctexServerOperations;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.common.vcs.SVNServerOperations;
 import org.rstudio.studio.client.packrat.model.PackratServerOperations;
-import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocServerOperations;
+import org.rstudio.studio.client.panmirror.server.PanmirrorServerOperations;
 import org.rstudio.studio.client.projects.model.ProjectTemplateServerOperations;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.renv.model.RenvServerOperations;
@@ -38,6 +38,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.addins.AddinsServerOperations;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.PrefsServerOperations;
+import org.rstudio.studio.client.workbench.prefs.views.PythonServerOperations;
 import org.rstudio.studio.client.workbench.snippets.SnippetServerOperations;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
 import org.rstudio.studio.client.workbench.views.choosefile.model.ChooseFileServerOperations;
@@ -96,7 +97,7 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    ViewerServerOperations,
                                                    ProfilerServerOperations,
                                                    RMarkdownServerOperations,
-                                                   PanmirrorPandocServerOperations,
+                                                   PanmirrorServerOperations,
                                                    DependencyServerOperations,
                                                    PackratServerOperations,
                                                    RenvServerOperations,
@@ -110,7 +111,8 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    JobsServerOperations,
                                                    SecondaryReposServerOperations,
                                                    ThemeServerOperations,
-                                                   TutorialServerOperations
+                                                   TutorialServerOperations,
+                                                   PythonServerOperations
 {   
    void initializeForMainWorkbench();
    void disconnect();

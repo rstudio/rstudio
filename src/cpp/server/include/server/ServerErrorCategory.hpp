@@ -1,7 +1,7 @@
 /*
  * ServerErrorCategory.hpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -48,7 +48,7 @@ struct is_error_code_enum<rstudio::server::errc::errc_t>
 namespace rstudio {
 namespace server {
 
-const boost::system::error_category& serverCategory() ;
+const boost::system::error_category& serverCategory();
 
 namespace errc {
 

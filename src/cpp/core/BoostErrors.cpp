@@ -1,7 +1,7 @@
 /*
  * BoostErrors.cpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,7 +27,7 @@
 #include <boost/interprocess/errors.hpp>
 #include <boost/interprocess/exceptions.hpp>
 
-using namespace boost::system ;
+using namespace boost::system;
 
 namespace RSTUDIO_BOOST_NAMESPACE {
 namespace interprocess {
@@ -36,23 +36,23 @@ class interprocess_error_category : public error_category
 {
 public:
    const char* name() const BOOST_NOEXCEPT;
-   std::string message(int ev) const ;
+   std::string message(int ev) const;
 };
 
 const error_category& interprocess_category()
 {
-   static interprocess_error_category interprocessCategoryConst ;
-   return interprocessCategoryConst ;
+   static interprocess_error_category interprocessCategoryConst;
+   return interprocessCategoryConst;
 }
 
 const char* interprocess_error_category::name() const BOOST_NOEXCEPT
 {
-   return "interprocess" ;
+   return "interprocess";
 }
 
 std::string interprocess_error_category::message(int ev) const 
 {
-   std::string message ;
+   std::string message;
    switch (ev)
    {
       case no_error:
@@ -88,7 +88,7 @@ std::string interprocess_error_category::message(int ev) const
          break;
 
       case busy_error:
-         message = "Busy error" ;
+         message = "Busy error";
          break;
 
       case already_exists_error:
@@ -112,45 +112,45 @@ std::string interprocess_error_category::message(int ev) const
          break;
 
       case out_of_resource_error:
-         message = "Out of resource error" ;
+         message = "Out of resource error";
          break;
 
       case lock_error:
-         message = "Lock error" ;
-         break ;
+         message = "Lock error";
+         break;
 
       case sem_error:
-         message = "Sem error" ;
-         break ;
+         message = "Sem error";
+         break;
 
       case mode_error:
-         message = "Mode error" ;
+         message = "Mode error";
          break;
 
       case size_error:
-         message = "Size error" ;
+         message = "Size error";
          break;
 
       case corrupted_error:
-         message = "Corrupted error" ;
-         break ;
+         message = "Corrupted error";
+         break;
 
       default:
-         message = "Unknown error" ;
+         message = "Unknown error";
          break;
    }
 
-   return message ;
+   return message;
 }
 
 
 
-boost::system::error_code ec_from_exception(const interprocess_exception& e) 
+boost::system::error_code ec_from_exception(const interprocess_exception& e)
 {
    if (e.get_error_code() == system_error)
-      return error_code(e.get_native_error(), system_category()) ;
+      return error_code(e.get_native_error(), system_category());
    else
-      return error_code(e.get_error_code(), interprocess_category()) ;
+      return error_code(e.get_error_code(), interprocess_category());
 }
 
 } // namespace interprocess
@@ -170,38 +170,38 @@ class thread_error_category : public error_category
 {
 public:
    const char* name() const BOOST_NOEXCEPT;
-   std::string message(int ev) const ;
+   std::string message(int ev) const;
 };
 
 const error_category& thread_category()
 {
-   static thread_error_category threadCategoryConst ;
-   return threadCategoryConst ;
+   static thread_error_category threadCategoryConst;
+   return threadCategoryConst;
 }
 
 const char* thread_error_category::name() const BOOST_NOEXCEPT
 {
-   return "thread" ;
+   return "thread";
 }
 
 std::string thread_error_category::message(int ev) const 
 {
-   std::string message ;
+   std::string message;
    switch (ev)
    {
       // only one error code for now
       case errc::thread_resource_error:
       default:
-         message = "Thread resource error" ;
-         break ;
+         message = "Thread resource error";
+         break;
    }
-   return message ;
+   return message;
 }
 
 boost::system::error_code ec_from_exception(
       const boost::thread_resource_error& e) 
 {
-   return error_code(errc::thread_resource_error, thread_category()) ;
+   return error_code(errc::thread_resource_error, thread_category());
 }
 
 } // namespace thread_error

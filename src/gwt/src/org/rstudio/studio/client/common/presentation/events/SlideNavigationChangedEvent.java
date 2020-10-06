@@ -1,7 +1,7 @@
 /*
  * SlideNavigationChangedEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,7 +20,7 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class SlideNavigationChangedEvent extends GwtEvent<SlideNavigationChangedEvent.Handler>
-{    
+{
    public interface Handler extends EventHandler
    {
       void onSlideNavigationChanged(SlideNavigationChangedEvent event);
@@ -30,12 +30,12 @@ public class SlideNavigationChangedEvent extends GwtEvent<SlideNavigationChanged
    {
       navigation_ = navigation;
    }
-    
+
    public SlideNavigation getNavigation()
    {
       return navigation_;
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -47,8 +47,8 @@ public class SlideNavigationChangedEvent extends GwtEvent<SlideNavigationChanged
    {
       handler.onSlideNavigationChanged(this);
    }
-   
+
    private final SlideNavigation navigation_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

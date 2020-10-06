@@ -1,7 +1,7 @@
 /*
  * SessionDiagnostics.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -532,7 +532,7 @@ void parseLintOptionGlobals(const std::string& text, FileLocalLintOptions* pOpti
    std::string::const_iterator end = text.end();
    
    ParsedCSVLine parsed = parseCsvLine(begin + 1, end, true);
-   for (const std::string element : parsed.first)
+   for (const std::string& element : parsed.first)
    {
       pOptions->globals.insert(string_utils::trimWhitespace(element));
    }
@@ -564,7 +564,7 @@ void parseLintOption(const std::string& text, FileLocalLintOptions* pOptions)
 FileLocalLintOptions parseLintOptions(const std::vector<std::string>& lintText)
 {
    FileLocalLintOptions options;
-   for (const std::string text : lintText)
+   for (const std::string& text : lintText)
    {
       parseLintOption(text, &options);
    }
@@ -614,7 +614,10 @@ void setFileLocalParseOptions(const std::wstring& rCode,
    {
       std::wstring::const_iterator matchBegin = match[0].second;
       std::wstring::const_iterator matchEnd   = std::find(matchBegin, end, L'\n');
-      std::string command = string_utils::trimWhitespace(std::string(matchBegin, matchEnd));
+      
+      std::string command = string_utils::trimWhitespace(
+               string_utils::wideToUtf8(
+                  std::wstring(matchBegin, matchEnd)));
       
       if (command == "off")
       {

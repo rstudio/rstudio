@@ -1,7 +1,7 @@
 /*
  * SubstringDiff.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client.patch;
 
+import java.util.ArrayList;
+
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.js.JsObject;
 
@@ -21,6 +23,8 @@ public class SubstringDiff
 {
    public SubstringDiff(String origVal, String newVal)
    {
+      origVal_ = origVal;
+      newVal_ = newVal;
       try
       {
          JsObject diff = diffImpl(origVal, newVal);
@@ -40,6 +44,34 @@ public class SubstringDiff
          valid_ = false;
       }
    }
+   
+   public TextChange[] asTextChanges() 
+   {
+      ArrayList<TextChange> changes = new ArrayList<TextChange>();
+      if (valid_)
+      {
+         if (offset_ > 0)
+            changes.add(new TextChange(TextChange.Type.Equal, origVal_.substring(0, offset_)));
+         
+         if (length_ > 0)
+            changes.add(new TextChange(TextChange.Type.Delete, origVal_.substring(offset_, offset_ + length_)));
+         
+         if (replacement_.length() > 0)
+            changes.add(new TextChange(TextChange.Type.Insert, replacement_));
+         
+         if (offset_ + length_ < origVal_.length())
+            changes.add(new TextChange(TextChange.Type.Equal, origVal_.substring(offset_ + length_)));
+      }
+      else
+      {
+         if (origVal_.length() > 0)
+            changes.add(new TextChange(TextChange.Type.Delete, origVal_));
+         if (newVal_.length() > 0)
+            changes.add(new TextChange(TextChange.Type.Insert, newVal_));
+      }
+      return changes.toArray(new TextChange[] {});      
+   }
+
    
    private static final native JsObject diffImpl(String origVal, String newVal)
    /*-{
@@ -74,13 +106,22 @@ public class SubstringDiff
       {
       }
       
+      // Early check for case with no diff.
+      if (olen === nlen && head === tail) {
+         return {
+            "replacement": "",
+            "offset": 0,
+            "length": 0
+         }
+      }
+      
       // Move head and tail to ensure we align on starts of UTF-8 characters.
       // UTF-8 continuation bytes match the byte sequence 10xxxxxx;
       // that is, are values in the range [128, 192). So we want to ensure
       // head + tail land on bytes not containing those values.
       while (head > 0)
       {
-         var ch = o[head];
+         var ch = o[head] || 0;
          if (ch < 128 || ch >= 192)
             break;
          head--;
@@ -88,7 +129,7 @@ public class SubstringDiff
       
       while (tail < olen)
       {
-         var ch = o[tail];
+         var ch = o[tail] || 0;
          if (ch < 128 || ch >= 192)
             break;
          tail++;
@@ -132,6 +173,9 @@ public class SubstringDiff
    {
       return valid_;
    }
+
+   private final String origVal_;
+   private final String newVal_;
 
    private int offset_;
    private int length_;

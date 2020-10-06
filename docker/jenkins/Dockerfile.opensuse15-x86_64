@@ -1,5 +1,7 @@
 FROM opensuse/leap:15.1
 
+ENV OPERATING_SYSTEM=opensus_leap15
+
 # needed to build RPMs
 RUN zypper --non-interactive addrepo http://download.opensuse.org/repositories/systemsmanagement:wbem:deps/openSUSE_Tumbleweed/systemsmanagement:wbem:deps.repo
 
@@ -14,6 +16,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     fakeroot \
     gcc \
     gcc-c++ \
+    gdb \
     git \
     java-1_8_0-openjdk-devel  \
     libacl-devel \
@@ -22,6 +25,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     libcurl-devel \
     libuser-devel \
     libuuid-devel \
+    libxml2-devel \
     libXcursor-devel \
     libXrandr-devel \
     lsof \

@@ -1,7 +1,7 @@
 /*
  * ColorUtils.cpp
  *
- * Copyright (C) 2009-16 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -83,7 +83,7 @@ rgb hsvToRGB(const hsv& in)
       out.b = q;
       break;
    }
-   return out;     
+   return out;
 }
 
 // given RGB values, convert to an HTML color string

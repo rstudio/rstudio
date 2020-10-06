@@ -1,6 +1,6 @@
 /* UserStateAccessor.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,10 +23,10 @@ import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.JsArray;
-import org.rstudio.core.client.JsArrayUtil;
 
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Accessor class for user state.

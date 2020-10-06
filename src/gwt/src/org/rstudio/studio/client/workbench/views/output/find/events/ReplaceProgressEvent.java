@@ -1,7 +1,7 @@
 /*
  * ReplaceProgressEvent.java
  *
- * Copyright (C) 2019 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -68,7 +68,7 @@ public class ReplaceProgressEvent extends GwtEvent<ReplaceProgressEvent.Handler>
       handler.onReplaceProgress(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
-   private int totalReplaceCount_;
-   private int replacedCount_;
+   public static final Type<Handler> TYPE = new Type<>();
+   private final int totalReplaceCount_;
+   private final int replacedCount_;
 }

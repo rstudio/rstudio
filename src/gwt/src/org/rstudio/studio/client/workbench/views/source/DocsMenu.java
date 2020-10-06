@@ -1,7 +1,7 @@
 /*
  * DocsMenu.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,8 +29,6 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabActivatedEvent;
-import org.rstudio.studio.client.workbench.views.source.events.DocTabsChangedEvent;
-import org.rstudio.studio.client.workbench.views.source.events.DocTabsChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.events.SwitchToDocEvent;
 
 import java.util.ArrayList;
@@ -50,17 +48,6 @@ public class DocsMenu extends AppMenuBar
    {
       assert events_ == null : "DocsMenu.initialize was called more than once";
       events_ = events;
-      events_.addHandler(
-            DocTabsChangedEvent.TYPE,
-            new DocTabsChangedHandler()
-            {
-               public void onDocTabsChanged(DocTabsChangedEvent event)
-               {
-                  setDocs(event.getIds(), event.getIcons(), event.getNames(), event.getPaths());
-                  refreshStyles(event.getActiveId());
-               }
-            });
-      
       events_.addHandler(
             DocTabActivatedEvent.TYPE,
             new DocTabActivatedEvent.Handler()
@@ -125,6 +112,16 @@ public class DocsMenu extends AppMenuBar
       {
          menuItems_.get(i).setVisible(shouldShow(criteria, names_.get(i)));
       }
+   }
+
+   public void updateDocs(String activeId,
+                          String[] ids,
+                          FileIcon[] icons,
+                          String[] names,
+                          String[] paths)
+   {
+      setDocs(ids, icons, names, paths);
+      refreshStyles(activeId);
    }
 
    private boolean shouldShow(String filterCriteria, String value)

@@ -1,7 +1,7 @@
 /*
  * RUtil.hpp
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -41,6 +41,8 @@ std::string expandFileName(const std::string& name);
 std::string fixPath(const std::string& path);
 
 bool hasRequiredVersion(const std::string& version);
+
+bool hasExactVersion(const std::string& version);
 
 bool hasCapability(const std::string& capability);
 

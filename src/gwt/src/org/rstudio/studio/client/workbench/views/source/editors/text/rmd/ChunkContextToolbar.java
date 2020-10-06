@@ -1,7 +1,7 @@
 /*
  * ChunkContextToolbar.java
  *
- * Copyright (C) 2009-16 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,8 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.ClassIds;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
@@ -106,6 +108,24 @@ public class ChunkContextToolbar extends Composite
       chunkTypeLabel_.setText(engine);
    }
    
+   public void setClassId(String value)
+   {
+      if (StringUtil.isNullOrEmpty(value))
+         value = ClassIds.CHUNK;
+      else if (!value.startsWith(ClassIds.CHUNK))
+         value = new String(ClassIds.CHUNK + "_" + ClassIds.idSafeString(value));
+
+      // The class ID will change if the Chunk's name changes so we need to remove any previous
+      // class id set here.
+      if (!StringUtil.equals(value, classId_))
+      {
+         if (!StringUtil.isNullOrEmpty(classId_))
+            ClassIds.removeClassId(this, classId_);
+         classId_ = value;
+         ClassIds.assignClassId(this, classId_);
+      }
+   }
+
    // Private methods ---------------------------------------------------------
    
    private void initOptions(boolean dark)
@@ -115,7 +135,8 @@ public class ChunkContextToolbar extends Composite
          RES.chunkOptionsLight2x()));
 
       options_.addStyleName("rstudio-themes-darkens");
-      
+      ClassIds.assignClassId(options_, ClassIds.MODIFY_CHUNK);
+
       DOM.sinkEvents(options_.getElement(), Event.ONCLICK);
       DOM.setEventListener(options_.getElement(), new EventListener()
       {
@@ -135,6 +156,8 @@ public class ChunkContextToolbar extends Composite
       setState(state_);
       run_.setTitle(RStudioGinjector.INSTANCE.getCommands()
                     .executeCurrentChunk().getMenuLabel(false));
+      ClassIds.assignClassId(run_, ClassIds.RUN_CHUNK);
+
       DOM.sinkEvents(run_.getElement(), Event.ONCLICK);
       DOM.setEventListener(run_.getElement(), new EventListener()
       {
@@ -167,6 +190,8 @@ public class ChunkContextToolbar extends Composite
       runPrevious_.setResource(new ImageResource2x(
          dark ? RES.runPreviousChunksDark2x() :
          RES.runPreviousChunksLight2x()));
+      ClassIds.assignClassId(runPrevious_, ClassIds.PREVIEW_CHUNK);
+
       DOM.sinkEvents(runPrevious_.getElement(), Event.ONCLICK);
       DOM.setEventListener(runPrevious_.getElement(), new EventListener()
       {
@@ -203,6 +228,7 @@ public class ChunkContextToolbar extends Composite
    private void initChangeChunkEngine(String engine)
    {
       chunkTypeLabel_.setText(engine);
+      chunkTypeLabel_.setStyleName("changeTypeLabel");
       DOM.sinkEvents(chunkTypePanel_.getElement(), Event.ONCLICK);
       DOM.setEventListener(chunkTypePanel_.getElement(), new EventListener()
       {
@@ -274,6 +300,7 @@ public class ChunkContextToolbar extends Composite
 
    private final Host host_;
    private int state_;
+   private String classId_;
    
    public final static int STATE_QUEUED    = 0;
    public final static int STATE_EXECUTING = 1;

@@ -1,7 +1,7 @@
 /*
  * EnvironmentObjectGrid.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -67,7 +67,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
       style_ = ((Resources)GWT.create(Resources.class)).style();
       style_.ensureInjected();
       selection_ = new MultiSelectionModel<>(RObjectEntry.KEY_PROVIDER);
-      
+
       createColumns();
       setTableBuilder(new EnvironmentObjectGridBuilder(this));
       setHeaderBuilder(new GridHeaderBuilder(this, false));
@@ -78,13 +78,13 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
       addStyleName("ace_editor_theme");
    }
 
-   // Returns the objects that should be considered selected. 
-   // - If one or more objects are manually selected, that set of objects is 
-   //   returned. 
+   // Returns the objects that should be considered selected.
+   // - If one or more objects are manually selected, that set of objects is
+   //   returned.
    // - If no objects are manually selected but the list is filtered, the
    //   the objects that match the filter are returned.
    // - If no selection or filter is present, an empty list is returned
-   //   (generally this causes operations to act on the whole list) 
+   //   (generally this causes operations to act on the whole list)
    @Override
    public List<String> getSelectedObjects()
    {
@@ -116,21 +116,21 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
       setSelectAll(false);
       redrawHeaders();
    }
-   
+
    @Override
    public void setEnvironmentName(String environmentName)
    {
-      // When the environment changes, we need to redraw the headers to 
+      // When the environment changes, we need to redraw the headers to
       // (possibly) adjust for the presence or absence of the selection
       // column.
       super.setEnvironmentName(environmentName);
-      if (columns_.size() > 0) 
+      if (columns_.size() > 0)
       {
          columns_.get(0).setWidth(selectionEnabled() ? 20 : 25);
       }
       setColumnWidths();
    }
-   
+
    // Private methods ---------------------------------------------------------
 
    private void createColumns()
@@ -166,7 +166,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
       });
 
       columns_.add(new ObjectGridColumn(
-              new ClickableTextCell(filterRenderer_), "Name", 
+              new ClickableTextCell(filterRenderer_), "Name",
               selectionEnabled() ? 20 : 25,
               ObjectGridColumn.COLUMN_NAME, host_)
               {
@@ -177,7 +177,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
                   }
               });
       columns_.add(new ObjectGridColumn(
-              new ClickableTextCell(), "Type", 15, 
+              new ClickableTextCell(), "Type", 15,
               ObjectGridColumn.COLUMN_TYPE, host_)
               {
                   @Override
@@ -187,17 +187,20 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
                   }
               });
       columns_.add(new ObjectGridColumn(
-              new ClickableTextCell(), "Length", 10, 
+              new ClickableTextCell(), "Length", 10,
               ObjectGridColumn.COLUMN_LENGTH, host_)
               {
                   @Override
                   public String getValue(RObjectEntry object)
                   {
-                     return (new Integer(object.rObject.getLength())).toString();
+                     int length = object.rObject.getLength();
+                     if (length < 0)
+                        return "<NA>";
+                     return Integer.toString(length);
                   }
               });
       columns_.add(new ObjectGridColumn(
-              new ClickableTextCell(), "Size", 12, 
+              new ClickableTextCell(), "Size", 12,
               ObjectGridColumn.COLUMN_SIZE, host_)
               {
                   @Override
@@ -207,8 +210,8 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
                   }
               });
       columns_.add(new ObjectGridColumn(
-              new ClickableTextCell(filterRenderer_), 
-              "Value", 38, 
+              new ClickableTextCell(filterRenderer_),
+              "Value", 38,
               ObjectGridColumn.COLUMN_VALUE, host_)
               {
                   @Override
@@ -227,7 +230,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
       }
       setColumnWidths();
    }
-   
+
    private void setSelectAll(boolean selected)
    {
       List<RObjectEntry> objects = getVisibleItems();
@@ -241,7 +244,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
       selectAll_ = selected;
    }
 
-   private class GridHeaderBuilder 
+   private class GridHeaderBuilder
            extends AbstractHeaderOrFooterBuilder<RObjectEntry>
    {
       public GridHeaderBuilder(AbstractCellTable<RObjectEntry> table,
@@ -256,7 +259,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
       {
          // Render the "select all" checkbox header cell
          TableRowBuilder row = startRow();
-         
+
          if (selectionEnabled())
          {
             TableCellBuilder selectAll = row.startTH();
@@ -266,12 +269,12 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
             renderHeader(selectAll, new Cell.Context(0, 0, null), checkHeader_);
             selectAll.end();
          }
-   
+
          // Render a header for each column
          for (int i = 0; i < columns_.size(); i++)
          {
-            String sortClassName = i == host_.getSortColumn() ? 
-              (host_.getAscendingSort() ? "dataGridSortedHeaderAscending" : "dataGridSortedHeaderDescending") : 
+            String sortClassName = i == host_.getSortColumn() ?
+              (host_.getAscendingSort() ? "dataGridSortedHeaderAscending" : "dataGridSortedHeaderDescending") :
               "";
 
             ObjectGridColumn col = columns_.get(i);
@@ -280,8 +283,8 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
                            "rstudio-themes-background" + " " +
                            sortClassName);
             Cell.Context context = new Cell.Context(0, i, null);
-            renderSortableHeader(cell, context, col.getHeader(), 
-                  i == host_.getSortColumn(), 
+            renderSortableHeader(cell, context, col.getHeader(),
+                  i == host_.getSortColumn(),
                   host_.getAscendingSort());
             cell.endTH();
          }
@@ -289,7 +292,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
          return true;
       }
    }
-   
+
    private void setColumnWidths()
    {
       int start = 0;
@@ -300,15 +303,15 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
       }
       else
       {
-         // Clear the width of the last column (it's going to go away entirely 
-         // if we're dropping the selection column). 
+         // Clear the width of the last column (it's going to go away entirely
+         // if we're dropping the selection column).
          clearColumnWidth(columns_.size());
       }
       for (int i = 0; i < columns_.size(); i++)
       {
          setColumnWidth(
                start + i,
-               new Integer(columns_.get(i).getWidth()).toString() + "%");
+               Integer.valueOf(columns_.get(i).getWidth()).toString() + "%");
       }
    }
 
@@ -354,7 +357,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
                if (isClickable)
                {
                   className += " " + style_.decoratedValueCol();
-                  
+
                   switch (rowValue.getCategory())
                   {
                   case Categories.Function:
@@ -369,7 +372,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
                   default:
                         // no styling
                   }
-                  
+
                   className += " " + ThemeStyles.INSTANCE.handCursor();
                }
                if (rowValue.isPromise())
@@ -386,11 +389,11 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
             renderCell(td, createContext(i+1), col, rowValue);
             td.endTD();
          }
-         
+
          row.end();
       }
    }
-   
+
    private Column<RObjectEntry, LabeledBoolean> checkColumn_;
    private Header<LabeledBoolean> checkHeader_;
    private ArrayList<ObjectGridColumn> columns_ = new ArrayList<>();

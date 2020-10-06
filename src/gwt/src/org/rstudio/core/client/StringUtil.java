@@ -1,7 +1,7 @@
 /*
  * StringUtil.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -46,7 +46,7 @@ public class StringUtil
       out.append(value);
       return out.toString();
    }
-   
+
    public static String create(String source)
    {
       if (source == null)
@@ -77,7 +77,7 @@ public class StringUtil
          return defaultValue;
       }
    }
-   
+
    public static String formatDate(Date date)
    {
       if (date == null)
@@ -85,12 +85,12 @@ public class StringUtil
 
       return DATE_FORMAT.format(date);
    }
-   
+
    /**
     * Formats a datetime object according to how long ago it occurred; recent
     * datetimes are just shown as times, and less recent times are shown with
     * more complete information.
-    * 
+    *
     * @param date The datetime to format.
     * @return A string representing the datetime object.
     */
@@ -99,7 +99,7 @@ public class StringUtil
       if (date == null)
          return "";
       Date now = new Date();
-      
+
       String format = "";
 
       if (DateTimeFormat.getFormat("MMM d").format(date) ==
@@ -119,15 +119,15 @@ public class StringUtil
          // happened last year, probably don't care about the time
          format = "MMM d, yyyy";
       }
-      
+
       return DateTimeFormat.getFormat(format).format(date);
    }
 
    public static String formatFileSize(long size)
    {
-      return formatFileSize(new Long(size).intValue());
+      return formatFileSize(Long.valueOf(size).intValue());
    }
-   
+
    // return a friendly (not precise) elapsed time
    public static String formatElapsedTime(int seconds)
    {
@@ -135,15 +135,15 @@ public class StringUtil
          return seconds + " second" + (seconds == 1 ? "" : "s");
       else if (seconds < 3600)
          return (seconds / 60) + " minute" + ((seconds / 60) == 1 ? "" : "s");
-      else 
+      else
          return (seconds / 3600) + " hour" + ((seconds / 3600) == 1 ? "" : "s");
    }
-   
+
    /**
-    * Concisely formats an elapsed time. Displays minutes and seconds by 
+    * Concisely formats an elapsed time. Displays minutes and seconds by
     * default; if hours or days are present, they will be displayed, too,
     * and subsequent units will be left-padded to two digits.
-    * 
+    *
     * @param seconds Number of seconds that have elapsed
     * @return String with formatted time
     */
@@ -176,8 +176,8 @@ public class StringUtil
       }
       return date.join("/") + " " + time.join(":");
    }-*/;
-    
-   // Given a raw size, convert it to a human-readable value 
+
+   // Given a raw size, convert it to a human-readable value
    // (e.g. 11580 -> "11.3 KB"). Note that this routine must generally avoid
    // implicit casts and use only ints; GWT's JavaScript compiler will truncate
    // values it believes to be ints to Int32 max/min (+/- 2 billion) during
@@ -194,14 +194,14 @@ public class StringUtil
 
       return FORMAT.format((double)size / divisor) + " " + LABELS[i];
    }
-   
+
    // Perform an integer division and return the result. GWT's division operator
-   // truncates the result to Int32 range. 
-   public static native int nativeDivide(int num, int denom) 
+   // truncates the result to Int32 range.
+   public static native int nativeDivide(int num, int denom)
    /*-{
       return num / denom;
    }-*/;
-   
+
    public static String prettyFormatNumber(double number)
    {
       return PRETTY_NUMBER_FORMAT.format(number);
@@ -214,12 +214,12 @@ public class StringUtil
          return val;
       return NumberFormat.getFormat("0,000").format(number);
    }
-   
+
    public static String formatPercent(double number)
    {
       return NumberFormat.getPercentFormat().format(number);
    }
-   
+
    public static Size characterExtent(String text)
    {
       // split into lines and find the maximum line width
@@ -231,7 +231,7 @@ public class StringUtil
          if (width > maxWidth)
             maxWidth = width;
       }
-      
+
       return new Size(maxWidth, lines.length);
    }
 
@@ -289,17 +289,17 @@ public class StringUtil
 
       return indent + str.replaceAll("\n", "\n" + indent);
    }
-   
+
    public static String join(String delimiter, String... strings)
    {
       return join(strings, delimiter);
    }
-   
+
    public static String join(String[] collection, String delim)
    {
       return join(Arrays.asList(collection), delim);
    }
-   
+
    public static String join(Collection<?> collection,
                              String delim)
    {
@@ -320,12 +320,12 @@ public class StringUtil
             return s;
       return null;
    }
-   
+
    public static String shortPathName(FileSystemItem item, int maxWidth)
    {
       return shortPathName(item, "gwt-Label", maxWidth);
    }
-   
+
    public static String shortPathName(FileSystemItem item,
                                       String styleName,
                                       int maxWidth)
@@ -339,9 +339,9 @@ public class StringUtil
          if (item.getParentPath() != null &&
                item.getParentPath().getParentPath() != null)
          {
-            path = ".../" + 
+            path = ".../" +
             item.getParentPath().getName() + "/" +
-            item.getName(); 
+            item.getName();
          }
       }
       return path;
@@ -463,7 +463,7 @@ public class StringUtil
          String line = notNull(lines[i]);
          if (line.trim().isEmpty() && skipWhitespaceOnlyLines)
             continue;
-         
+
          int len = whitespaceExpansionAllowed ? Math.max(prefix.length(), line.length()) :
                    allowPhantomWhitespace ? prefix.length() :
                    Math.min(prefix.length(), line.length());
@@ -528,8 +528,8 @@ public class StringUtil
    public static String joinStrings(List<String> strings, String separator)
    {
       String result = "";
-      // GWT's exposed Strings.join often makes the compiler barf; do this 
-      // manually 
+      // GWT's exposed Strings.join often makes the compiler barf; do this
+      // manually
       for (int i = 0; i < strings.size(); i++)
       {
          result += strings.get(i);
@@ -538,12 +538,12 @@ public class StringUtil
       }
       return result;
    }
-   
+
    /**
     * Given a URL, attempt to infer and return the authority (host name and
     * port) from the URL. The URL is always presumed to have a hostname (if it
     * doesn't, the first component of the path will be treated as the host name
-    * 
+    *
     * @param url URL to parse
     * @return The authority (host name and port), as a string.
     */
@@ -552,38 +552,38 @@ public class StringUtil
       // no work to do
       if (url.indexOf('/') == -1)
          return url;
-      
+
       // presume no protocol; if present, skip those slashes
       int slashes = 0;
       if (url.contains("://"))
          slashes += 2;
-      
+
       // split on slashes and return first component
       String[] parts = url.split("/");
       if (parts.length < slashes)
          return url;
       return parts[slashes];
    }
-   
+
    /**
     * Given a URL, attempt to return the host portion (not including the port).
-    * 
+    *
     * @param url URL to parse.
     * @return The host, as a string.
     */
    public static String getHostFromUrl(String url)
    {
       String authority = getAuthorityFromUrl(url);
-      
+
       // no port
       int idx = authority.indexOf(":");
       if (idx == -1)
          return authority;
-      
+
       // port, return only the portion preceding the port
       return authority.substring(0, idx);
    }
-    
+
    public static String ensureSurroundedWith(String string, char chr)
    {
       if (isNullOrEmpty(string))
@@ -595,14 +595,14 @@ public class StringUtil
          result += chr;
       return result;
    }
-   
+
    public static String capitalize(String input)
    {
       if (input == null || input.length() < 1)
          return input;
-      return input.substring(0, 1).toUpperCase() + input.substring(1); 
+      return input.substring(0, 1).toUpperCase() + input.substring(1);
    }
-   
+
    public static native String capitalizeAllWords(String input)
    /*-{
       return input.replace(
@@ -610,57 +610,57 @@ public class StringUtil
          function(x) { return x.toUpperCase(); }
       );
    }-*/;
-   
+
    public static int countMatches(String line, char chr)
    {
       return line.length() - line.replace(String.valueOf(chr), "").length();
    }
-   
+
    public static String stripRComment(String string)
    {
       boolean inSingleQuotes = false;
       boolean inDoubleQuotes = false;
       boolean inQuotes = false;
-      
+
       char currentChar = '\0';
       char previousChar = '\0';
-      
+
       int commentIndex = string.length();
-      
+
       for (int i = 0; i < string.length(); i++)
       {
          currentChar = string.charAt(i);
          inQuotes = inSingleQuotes || inDoubleQuotes;
-         
+
          if (i > 0)
          {
             previousChar = string.charAt(i - 1);
          }
-         
+
          if (currentChar == '#' && !inQuotes)
          {
             commentIndex = i;
             break;
          }
-         
+
          if (currentChar == '\'' && !inQuotes)
          {
             inSingleQuotes = true;
             continue;
          }
-         
+
          if (currentChar == '\'' && previousChar != '\\' && inSingleQuotes)
          {
             inSingleQuotes = false;
             continue;
          }
-         
+
          if (currentChar == '"' && !inQuotes)
          {
             inDoubleQuotes = true;
             continue;
          }
-         
+
          if (currentChar == '"' && previousChar != '\\' && inDoubleQuotes)
          {
             inDoubleQuotes = false;
@@ -669,15 +669,15 @@ public class StringUtil
       }
       return string.substring(0, commentIndex);
    }
-   
+
    public static String stripBalancedQuotes(String string)
    {
       if (string == null)
          return null;
-      
+
       if (string == "")
          return "";
-      
+
       boolean inSingleQuotes = false;
       boolean inDoubleQuotes = false;
       boolean inQuotes = false;
@@ -730,21 +730,21 @@ public class StringUtil
       result.append(string.substring(stringStart, string.length()));
       return result.toString();
    }
-   
+
    public static String maskStrings(String string)
    {
       return maskStrings(string, 'x');
    }
-   
+
    public static String maskStrings(String string,
                                     char ch)
    {
       if (string == null)
          return null;
-      
+
       if (string.length() == 0)
          return "";
-      
+
       boolean inSingleQuotes = false;
       boolean inDoubleQuotes = false;
       boolean inQuotes = false;
@@ -758,7 +758,7 @@ public class StringUtil
       {
          currentChar = string.charAt(i);
          inQuotes = inSingleQuotes || inDoubleQuotes;
-         
+
          if (i > 0)
          {
             previousChar = string.charAt(i - 1);
@@ -788,26 +788,26 @@ public class StringUtil
             result.append(currentChar);
             continue;
          }
-         
+
          if (inSingleQuotes || inDoubleQuotes)
             result.append(ch);
          else
             result.append(currentChar);
-         
+
       }
-      
+
       return result.toString();
    }
-   
-   
+
+
    public static boolean isEndOfLineInRStringState(String string)
    {
       if (string == null)
          return false;
-      
+
       if (string == "")
          return false;
-      
+
       boolean inSingleQuotes = false;
       boolean inDoubleQuotes = false;
       boolean inQuotes = false;
@@ -824,7 +824,7 @@ public class StringUtil
          {
             previousChar = string.charAt(i - 1);
          }
-         
+
          if (currentChar == '#' && !inQuotes)
          {
             return false;
@@ -854,10 +854,10 @@ public class StringUtil
             continue;
          }
       }
-      
+
       return inSingleQuotes || inDoubleQuotes;
    }
-   
+
    public static boolean isSubsequence(String self,
          String other,
          boolean caseInsensitive)
@@ -867,7 +867,7 @@ public class StringUtil
             isSubsequence(self, other)
       ;
    }
-   
+
    public static boolean isSubsequence(String self,
          String other)
    {
@@ -880,12 +880,12 @@ public class StringUtil
 
       int self_idx = 0;
       int other_idx = 0;
-         
+
       while (self_idx < self_n)
       {
          char selfChar = self.charAt(self_idx);
          char otherChar = other.charAt(other_idx);
-         
+
          if (otherChar == selfChar)
          {
             ++other_idx;
@@ -898,31 +898,31 @@ public class StringUtil
       }
       return false;
    }
-   
+
    public static List<Integer> subsequenceIndices(String sequence, String query)
    {
       List<Integer> result = new ArrayList<>();
       int querySize = query.length();
-      
+
       int prevMatchIndex = -1;
       for (int i = 0; i < querySize; i++)
       {
          int index = sequence.indexOf(query.charAt(i), prevMatchIndex + 1);
          if (index == -1)
             continue;
-         
+
          result.add(index);
          prevMatchIndex = index;
       }
-      
+
       return result;
    }
-   
+
    public static String getExtension(String string, int dots)
    {
       assert dots > 0;
       int lastDotIndex = -1;
-      
+
       if (dots == 1)
       {
          lastDotIndex = string.lastIndexOf('.');
@@ -936,17 +936,50 @@ public class StringUtil
          }
          lastDotIndex = string.length() - lastDotIndex;
       }
-      
+
       return lastDotIndex == -1 || lastDotIndex == string.length() - 1 ?
             "" :
             string.substring(lastDotIndex + 1, string.length());
    }
-   
+
    public static String getExtension(String string)
    {
       return getExtension(string, 1);
    }
-   
+
+   public static String getCssIdentifier(String string)
+   {
+      // Each character must be one of the following:
+      // alphanumeric, an ISO 10646 character U+00A0 or higher, a hyphen, or an underscore.
+      // Identifiers cannot start with a hyphen, two hyphens, or a hyphen followed by a digit.
+      // This implementation considers escaped characters invalid.
+      // If an invalid character is found, it is replaced with an underscore.
+
+
+      // return the string if it's already valid,
+      // otherwise replace invalid characters with '_'
+      Pattern pattern = Pattern.create("(^-?[a-zA-Z_][a-zA-Z0-9\\-_]+$)");
+      if (pattern.test(string))
+         return string;
+      else
+      {
+         StringBuilder builder = new StringBuilder();
+         for (int i = 0; i < string.length(); i++)
+         {
+            char c = string.charAt(i);
+            if (c == '_' ||
+                c > 0x00A0 ||
+                (c >= 'a' && c <= 'z') ||
+                (c >= 'A' && c <= 'Z') ||
+                (i > 0 && (c == '-' || (c >= '0' && c <= '9'))))
+               builder.append(c);
+            else
+               builder.append("_");
+         }
+         return builder.toString();
+      }
+   }
+
    public static String getToken(String string,
                                  int pos,
                                  String tokenRegex,
@@ -956,25 +989,25 @@ public class StringUtil
       if (backOverWhitespace)
          while (pos > 0 && string.substring(pos - 1, pos).matches("\\s"))
             --pos;
-      
+
       int startPos = Math.max(0, pos - 1);
       int endPos = Math.min(pos, string.length());
-      
+
       while (startPos >= 0 &&
             string.substring(startPos, startPos + 1).matches(tokenRegex))
          --startPos;
-      
+
       if (expandForward)
          while (endPos < string.length() &&
                string.substring(endPos, endPos + 1).matches(tokenRegex))
             ++endPos;
-      
+
       if (startPos >= endPos)
          return "";
-      
+
       return string.substring(startPos + 1, endPos);
    }
-   
+
    public static String repeat(String string, int times)
    {
       StringBuilder builder = new StringBuilder();
@@ -982,11 +1015,11 @@ public class StringUtil
          builder.append(string);
       return builder.toString();
    }
-   
+
    public static ArrayList<Integer> indicesOf(String string, char ch)
    {
       ArrayList<Integer> indices = new ArrayList<>();
-      
+
       int matchIndex = string.indexOf(ch);
       while (matchIndex != -1)
       {
@@ -995,7 +1028,7 @@ public class StringUtil
       }
       return indices;
    }
-   
+
    @SuppressWarnings("deprecation") // GWT emulation only provides isSpace
    public static boolean isWhitespace(String string)
    {
@@ -1004,7 +1037,7 @@ public class StringUtil
             return false;
       return true;
    }
-   
+
    private static final String[] LABELS = {
          "B",
          "KB",
@@ -1012,25 +1045,25 @@ public class StringUtil
          "GB",
          "TB"
    };
-   
+
    public static boolean isComplementOf(String self, String other)
    {
       return COMPLEMENTS.get(self) == other;
    }
-   
+
    private static HashMap<String, String> makeComplementsMap()
    {
       HashMap<String, String> map = new HashMap<>();
-      
+
       map.put("[", "]");
       map.put("]", "[");
-      
+
       map.put("<", ">");
       map.put(">", "<");
-      
+
       map.put("{", "}");
       map.put("}", "{");
-      
+
       map.put("(", ")");
       map.put(")", "(");
       return map;
@@ -1052,42 +1085,42 @@ public class StringUtil
       }
       return builder.toString();
    }
-   
+
    public static String prettyCamel(String string)
    {
       if (isNullOrEmpty(string))
          return string;
-      
+
       if (string.equals(string.toUpperCase()))
          return string;
-      
+
       String result = string.replaceAll("\\s*([A-Z])", " $1");
       return result.substring(0, 1).toUpperCase() +
              result.substring(1);
    }
-   
+
    public static native String escapeRegex(String regexString) /*-{
       var utils = $wnd.require("mode/utils");
       return utils.escapeRegExp(regexString);
    }-*/;
-   
+
    public static String getIndent(String line)
    {
       return RE_INDENT.match(line, 0).getGroup(0);
    }
-   
+
    public static String truncate(String string, int targetLength, String suffix)
    {
       if (string.length() <= targetLength)
          return string;
-      
+
       int truncatedSize = targetLength - suffix.length();
       if (truncatedSize < 0)
          return string;
-      
+
       return string.substring(0, truncatedSize) + suffix;
    }
-   
+
    public static boolean isOneOf(String string, String... candidates)
    {
       for (String candidate : candidates)
@@ -1095,7 +1128,7 @@ public class StringUtil
             return true;
       return false;
    }
-   
+
    public static boolean isOneOf(char ch, char... candidates)
    {
       for (char candidate : candidates)
@@ -1110,17 +1143,17 @@ public class StringUtil
     * @param c the character to check
     * @return whether the character represents an alphabetic symbol.
     */
-   public static boolean isLetter(char c) 
+   public static boolean isLetter(char c)
    {
       int val = (int) c;
 
-      return MathUtil.inRange(val, 65, 90)     || 
-             MathUtil.inRange(val, 97, 122)    || 
-             MathUtil.inRange(val, 192, 687)   || 
-             MathUtil.inRange(val, 900, 1159)  || 
-             MathUtil.inRange(val, 1162, 1315) || 
-             MathUtil.inRange(val, 1329, 1366) || 
-             MathUtil.inRange(val, 1377, 1415) || 
+      return MathUtil.inRange(val, 65, 90)     ||
+             MathUtil.inRange(val, 97, 122)    ||
+             MathUtil.inRange(val, 192, 687)   ||
+             MathUtil.inRange(val, 900, 1159)  ||
+             MathUtil.inRange(val, 1162, 1315) ||
+             MathUtil.inRange(val, 1329, 1366) ||
+             MathUtil.inRange(val, 1377, 1415) ||
              MathUtil.inRange(val, 1425, 1610);
    }
 
@@ -1134,17 +1167,17 @@ public class StringUtil
       }
       return id;
    }
-   
+
    public static String ensureQuoted(String string)
    {
       String[] quotes = new String[] { "\"", "'", "`" };
       for (String quote : quotes)
          if (string.startsWith(quote) && string.endsWith(quote))
             return string;
-      
+
       return "\"" + string.replaceAll("\"", "\\\\\"") + "\"";
    }
-   
+
    public static String stringValue(String string)
    {
       String[] quotes = new String[] { "\"", "'", "`" };
@@ -1156,19 +1189,19 @@ public class StringUtil
             return substring.replaceAll("\\\\" + quote, quote);
          }
       }
-      
+
       return string;
    }
-   
+
    public static native String encodeURI(String string) /*-{
       return $wnd.encodeURI(string);
    }-*/;
-   
+
    public static native String encodeURIComponent(String string) /*-{
       return $wnd.encodeURIComponent(string);
    }-*/;
-   
-   
+
+
    public static native String normalizeNewLines(String string) /*-{
       return string.replace(/\r\n|\n\r|\r/g, "\n");
    }-*/;
@@ -1180,26 +1213,26 @@ public class StringUtil
    public static native String normalizeNewLinesToCR(String string) /*-{
       return string.replace(/\r\n|\n\r|\n/g, "\r");
    }-*/;
-    
+
    public static native JsArrayString split(String string, String delimiter) /*-{
       return string.split(delimiter);
    }-*/;
-   
+
    public static final HashMap<String, String> COMPLEMENTS =
          makeComplementsMap();
-   
+
    /**
     * Computes a 32-bit CRC checksum from an arbitrary string.
-    * 
+    *
     * @param str The string on which to compute the checksum
     * @return The checksum value, as a hexadecimal string
     */
    public static native String crc32(String str)/*-{
       // based on: https://stackoverflow.com/questions/18638900/javascript-crc32
-      var genCrc32Table = function() 
+      var genCrc32Table = function()
       {
          var c, crcTable = [];
-         for (var n = 0; n < 256; n++) 
+         for (var n = 0; n < 256; n++)
          {
             c = n;
             for (var k = 0; k < 8; k++)
@@ -1214,7 +1247,7 @@ public class StringUtil
       var crcTable = $wnd.rs_crc32Table || ($wnd.rs_crc32Table = genCrc32Table());
       var crc = 0 ^ (-1);
 
-      for (var i = 0; i < str.length; i++ ) 
+      for (var i = 0; i < str.length; i++ )
       {
          crc = (crc >>> 8) ^ crcTable[(crc ^ str.charCodeAt(i)) & 0xFF];
       }
@@ -1226,7 +1259,7 @@ public class StringUtil
    public static native int newlineCount(String str) /*-{
       return (str.match(/\n/g)||[]).length;
    }-*/;
-   
+
    // Automatically detect the indent size within a document (for documents
    // indented with spaces). If the document appears to be use tabs for
    // indentation, this function will return -1.
@@ -1234,31 +1267,31 @@ public class StringUtil
    {
       // map indents -> counts
       SafeMap<Integer, Integer> indentMap = new SafeMap<>();
-      
+
       // use the first 1000 lines in the document
       int end = Math.min(lines.length() - 1, 1000);
-      
+
       // detect tab counts separately
       int indentedLineCount = 0;
       int tabIndentCount = 0;
-      
+
       for (int i = 0; i < end; i++)
       {
          String line = lines.get(i);
          String indent = StringUtil.getIndent(line);
-         
+
          // detect tab indent separately
          if (indent.startsWith("\t"))
          {
             tabIndentCount++;
             continue;
          }
-         
+
          // skip lines with no indent or unlikely indent
          int indentSize = indent.length();
          if (indentSize == 0 || indentSize > 8)
             continue;
-         
+
          // update indent count
          if (!indentMap.containsKey(indentSize))
             indentMap.put(indentSize, 0);
@@ -1266,18 +1299,18 @@ public class StringUtil
          indentMap.put(indentSize, count + 1);
          indentedLineCount++;
       }
-      
+
       // if we only saw a few lines were indented, assume we don't
       // have enough information to provide a guess
       if (indentedLineCount < 5)
          return -1;
-      
+
       // now, we want to try and detect what indentation pattern is most common.
       // for example, in a document with two-space indent, we should see indents
       // like '2, 4, 6, ...'; in a document with three-space indent, we should see
       // '3, 6, 9, ...'. note that we'll need to account for vertical alignment
       // in the detected indentation as well.
-      
+
       int detectedIndentSize = 0;
       int detectedIndentScore = 0;
       for (int potentialIndent : new int[] { 2, 3, 4, 8 })
@@ -1287,11 +1320,11 @@ public class StringUtil
          {
             int indentSize = entry.getKey();
             int indentCount = entry.getValue();
-            
+
             if ((indentSize % potentialIndent) == 0)
                score += indentCount;
          }
-         
+
          // record if this is the highest scoring indent
          if (score >= detectedIndentScore)
          {
@@ -1299,13 +1332,13 @@ public class StringUtil
             detectedIndentScore = score;
          }
       }
-      
+
       if (tabIndentCount > detectedIndentSize)
          return -1;
-      
+
       return detectedIndentSize;
    }
-    
+
    /**
     * Compare two strings, works if one or both strings are null.
     * @param str1
@@ -1315,7 +1348,7 @@ public class StringUtil
    public static native boolean equals(String str1, String str2) /*-{
       return str1 == str2;
    }-*/;
-   
+
    /**
     * Compare two strings, ignoring case. Works if one or both strings are null.
     *
@@ -1327,15 +1360,15 @@ public class StringUtil
    {
       if (str1 == null)
          return (str2 == null);
-      
+
       return str1.equalsIgnoreCase(str2);
    }
-   
+
    public static String dequote(String string)
    {
       return dequote(string, "\\\\");
    }
-   
+
    public static String dequote(String string, String escape)
    {
       for (String delimiter : new String[] { "\"", "'", "`" })
@@ -1343,7 +1376,7 @@ public class StringUtil
             return string
                   .substring(1, string.length() - 1)
                   .replaceAll(escape + delimiter, delimiter);
-      
+
       return string;
    }
 
@@ -1360,7 +1393,7 @@ public class StringUtil
    {
       if (StringUtil.isNullOrEmpty(path))
          return "";
-   
+
       String prefix = "";
       if (!encodeLeadingTilde && path.startsWith("~"))
       {
@@ -1370,7 +1403,7 @@ public class StringUtil
 
       return prefix + BASH_RESERVED_CHAR.replaceAll(path, match -> "\\" + match.getValue());
    }
-   
+
    /**
     * Checks if a character is at a given position in a string. Will not throw an exception
     * if attempting to look at an invalid index, or if the input string is null.
@@ -1383,10 +1416,10 @@ public class StringUtil
    {
       if (isNullOrEmpty(str))
          return false;
-      
+
       if (pos < 0 || pos >= str.length())
          return false;
-      
+
       return str.charAt(pos) == ch;
    }
 
@@ -1394,7 +1427,7 @@ public class StringUtil
     * Prior to GWT 2.8.2, the String.charAt method was not range-checked and would not
     * throw exceptions when invoked with an out-of-range position. We have code that assumes
     * this old behavior.
-    * 
+    *
     * Starting with 2.8.2 it will throw StringIndexOutOfBoundsException per Java standard.
     * In cases where it's not obvious how to safely switch to the new behavior, this method
     * can be substituted.
@@ -1403,7 +1436,7 @@ public class StringUtil
    {
       if (pos < 0 || pos >= str.length())
          return '\0';
-      
+
       return str.charAt(pos);
    }
 
@@ -1423,7 +1456,7 @@ public class StringUtil
       {
          strings.add(object.toString());
       }
-      
+
       String result = fmt;
       for (int i = 0; i < strings.size(); i += 2)
       {
@@ -1431,14 +1464,14 @@ public class StringUtil
          String replacement = strings.get(i + 1);
          result = result.replace(target, replacement);
       }
-      
+
       return result;
    }
-   
+
    /**
     * Perform a natural order comparison between two strings. Natural ordering
     * preserves ascending numbers, such that e.g. item10 comes after item9.
-    * 
+    *
     * @param str1 The source string
     * @param str2 The target string
     * @return
@@ -1449,7 +1482,7 @@ public class StringUtil
       var val2 = str2 ? str2 : "";
       return val1.localeCompare(val2, [], { "numeric": true });
    }-*/;
-   
+
    private static final NumberFormat FORMAT = NumberFormat.getFormat("0.#");
    private static final NumberFormat PRETTY_NUMBER_FORMAT = NumberFormat.getFormat("#,##0.#####");
    private static final DateTimeFormat DATE_FORMAT

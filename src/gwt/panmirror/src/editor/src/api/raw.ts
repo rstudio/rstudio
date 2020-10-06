@@ -1,7 +1,7 @@
 /*
  * raw.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,8 +19,8 @@ import { EditorView } from 'prosemirror-view';
 
 import { findParentNodeOfType, setTextSelection } from 'prosemirror-utils';
 
-import { canInsertNode } from './node';
 import { EditorUI } from './ui';
+import { setBlockType } from 'prosemirror-commands';
 
 export const kTexFormat = 'tex';
 export const kHTMLFormat = 'html';
@@ -37,7 +37,8 @@ export function editRawBlockCommand(ui: EditorUI, outputFormats: string[]) {
 
     // enable if we are either inside a raw block or we can insert a raw block
     const rawBlock = findParentNodeOfType(schema.nodes.raw_block)(state.selection);
-    if (!rawBlock && !canInsertNode(state, schema.nodes.raw_block)) {
+
+    if (!rawBlock && !setBlockType(schema.nodes.raw_block, { format: 'html' })(state)) {
       return false;
     }
 
@@ -93,6 +94,6 @@ function createRawNode(schema: Schema, format: string) {
 function insertRawNode(tr: Transaction, format: string) {
   const schema = tr.doc.type.schema;
   const prevSel = tr.selection;
-  tr.replaceSelectionWith(createRawNode(schema, format));
+  tr.replaceSelectionWith(createRawNode(schema, format), false);
   setTextSelection(tr.mapping.map(prevSel.from), -1)(tr);
 }

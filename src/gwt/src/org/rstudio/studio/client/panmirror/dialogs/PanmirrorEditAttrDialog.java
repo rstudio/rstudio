@@ -37,7 +37,8 @@ public class PanmirrorEditAttrDialog extends ModalDialog<PanmirrorAttrEditResult
 { 
    public PanmirrorEditAttrDialog(
                String caption,
-               boolean removeEnabled,
+               String removeButtonCaption,
+               String idHint,
                PanmirrorAttrProps attr,
                OperationWithInput<PanmirrorAttrEditResult> operation)
    {
@@ -47,11 +48,11 @@ public class PanmirrorEditAttrDialog extends ModalDialog<PanmirrorAttrEditResult
       });
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
        
-      editAttr_.setAttr(attr);
+      editAttr_.setAttr(attr, idHint);
       
-      if (removeEnabled)
+      if (removeButtonCaption != null)
       {
-         ThemedButton removeAttributesButton = new ThemedButton("Remove Attributes");
+         ThemedButton removeAttributesButton = new ThemedButton(removeButtonCaption);
          removeAttributesButton.addClickHandler((event) -> {
             PanmirrorAttrEditResult result = collectInput();
             result.action = "remove";
@@ -75,6 +76,12 @@ public class PanmirrorEditAttrDialog extends ModalDialog<PanmirrorAttrEditResult
    protected Widget createMainWidget()
    {
       return mainWidget_;
+   }
+   
+   @Override
+   protected void focusFirstControl()
+   {
+      editAttr_.setFocus();
    }
    
    @Override

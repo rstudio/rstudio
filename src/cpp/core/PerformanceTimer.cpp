@@ -1,7 +1,7 @@
 /*
  * PerformanceTimer.cpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -117,7 +117,7 @@ std::ostream& operator << (std::ostream& os, const PerformanceTimer& t)
          it = t.steps_.begin(); it != t.steps_.end(); ++it)
    {
       double ms = it->second.total_microseconds() * 0.001;
-      os << std::setprecision(ms < 10 ? 1 : 0);      
+      os << std::setprecision(ms < 10 ? 1 : 0);
       os << " " << ms << " ms (" << it->first << ")" << std::endl;
    }
    

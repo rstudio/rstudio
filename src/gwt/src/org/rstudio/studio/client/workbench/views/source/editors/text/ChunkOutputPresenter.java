@@ -1,7 +1,7 @@
 /*
  * ChunkOutputPresenter.java
  *
- * Copyright (C) 2009-16 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -50,7 +50,10 @@ public interface ChunkOutputPresenter extends IsWidget, EditorThemeListener
    // show that plots will be redrawn, or update a particular plot
    void setPlotPending(boolean pending, String pendingStyle);
    void updatePlot(String plotUrl, String pendingStyle);
-   
+
+   // Handles html that can be appended to end of the chunk.
+   void showCallbackHtml(String htmlOutput);
+
    // clear output or indicate that interactive output (or playback) is complete
    void clearOutput();
    void completeOutput();

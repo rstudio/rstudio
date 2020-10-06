@@ -1,7 +1,7 @@
 /*
  * SessionSVN.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -419,7 +419,7 @@ Error parseXml(const std::string strData,
       pDoc->parse<0>(&((*pDataBuffer)[0]));
       return Success();
    }
-   catch (rapidxml::parse_error)
+   catch (rapidxml::parse_error&)
    {
       return systemError(boost::system::errc::protocol_error,
                          "Could not parse XML",
@@ -1848,7 +1848,7 @@ Error initialize()
    // install rpc methods
    using boost::bind;
    using namespace module_context;
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "svn_add", svnAdd))
       (bind(registerRpcMethod, "svn_delete", svnDelete))

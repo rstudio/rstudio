@@ -1,7 +1,7 @@
 /*
  * dtstyles.css
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -41,7 +41,7 @@ table.dataTable tbody td {
 }
 
 th {
-    text-align: left; 
+    text-align: left;
 }
 
 th, td.first-child {
@@ -63,7 +63,7 @@ th, td.first-child {
 }
 
 td.first-child {
-    text-align: right; 
+    text-align: right;
 }
 
 table.dataTable thead th,
@@ -136,8 +136,8 @@ table.dataTable {
     white-space: nowrap;
     padding-left: 3px;
     padding-right: 3px;
-    padding-top: 2px; 
-    padding-bottom: 2px; 
+    padding-top: 2px;
+    padding-bottom: 2px;
     position: relative;
     font-weight: normal;
 }
@@ -310,7 +310,6 @@ th:focus {
 }
 
 .largeCell {
-    display: inline-block;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -324,7 +323,7 @@ th:focus {
 
 .autoSize .numberCell, .autoSize .textCell, 
 .autoSize .dataCell, .autoSize .listCell {
-    max-width: 300px; 
+    max-width: 300px;
 }
 
 .manualSize .numberCell, .manualSize .textCell, 
@@ -437,7 +436,7 @@ table.dataTable thead th.columnClickable .columnTypeHeader {
 
 .resizer {
     position: absolute;
-    height: 23px;   
+    height: 23px;
     top: -4px;
     width: 5px;
     cursor: ew-resize;

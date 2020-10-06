@@ -1,7 +1,7 @@
 /*
  * SynctexViewPdfEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,13 +25,13 @@ public class SynctexViewPdfEvent extends GwtEvent<SynctexViewPdfEvent.Handler>
    {
       void onSynctexViewPdf(SynctexViewPdfEvent event);
    }
-   
+
    public SynctexViewPdfEvent(PdfLocation pdfLocation)
    {
       pdfLocation_ = pdfLocation;
    }
-   
-   
+
+
    public PdfLocation getPdfLocation()
    {
       return pdfLocation_;
@@ -50,6 +50,6 @@ public class SynctexViewPdfEvent extends GwtEvent<SynctexViewPdfEvent.Handler>
    }
 
    private final PdfLocation pdfLocation_;
-   
-   public static final Type<Handler> TYPE = new Type<Handler>();
+
+   public static final Type<Handler> TYPE = new Type<>();
 }

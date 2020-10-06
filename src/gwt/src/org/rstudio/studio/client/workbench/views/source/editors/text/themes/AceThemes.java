@@ -1,7 +1,7 @@
 /*
  * AceThemes.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -73,7 +73,8 @@ public class AceThemes
       themeUrl.append(GWT.getHostPageBaseURL())
          .append(theme.getUrl())
          .append("?dark=")
-         .append(theme.isDark() ? "1" : "0");
+         .append(theme.isDark() ? "1" : "0")
+         .append("&refresh=1");
       
       LinkElement currentStyleEl = document.createLinkElement();
       currentStyleEl.setType("text/css");

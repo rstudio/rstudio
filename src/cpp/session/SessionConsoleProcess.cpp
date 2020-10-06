@@ -1,7 +1,7 @@
 /*
  * SessionConsoleProcess.cpp
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -90,7 +90,11 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
                                                     procInfo.getCwd();
    options.environment = shellEnv;
    options.smartTerminal = true;
+#ifdef _WIN32
+   options.reportHasSubprocs = false; // child process detection not supported on Windows
+#else
    options.reportHasSubprocs = true;
+#endif
    options.trackCwd = true;
    options.cols = procInfo.getCols();
    options.rows = procInfo.getRows();
@@ -551,7 +555,8 @@ void ConsoleProcess::enqueOutputEvent(const std::string &output)
    // truncate it to the amount that the client can show. Too much
    // output can overwhelm the client, making it unresponsive.
    std::string trimmedOutput = output;
-   string_utils::trimLeadingLines(procInfo_->getMaxOutputLines(), &trimmedOutput);
+   if (!prefs::userPrefs().limitVisibleConsole())
+      string_utils::trimLeadingLines(procInfo_->getMaxOutputLines(), &trimmedOutput);
 
    if (procInfo_->getChannelMode() == Websocket)
    {

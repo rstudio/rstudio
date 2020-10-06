@@ -1,7 +1,7 @@
 #
 # SessionShinyViewer.R
 #
-# Copyright (C) 2009-19 by RStudio, PBC
+# Copyright (C) 2020 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -15,19 +15,19 @@
 
 .rs.addFunction("invokeShinyTutorialViewer", function(url, meta) {
    invisible(.Call("rs_shinyviewer", url, getwd(), "tutorial", meta, PACKAGE = "(embedding)"))
-}, attrs = list(shinyViewerType = "tutorial"))
+}, attrs = list(shinyViewerType = "tutorial"), envir = baseenv())
 
 .rs.addFunction("invokeShinyPaneViewer", function(url) {
    invisible(.Call("rs_shinyviewer", url, getwd(), "pane", NULL, PACKAGE = "(embedding)"))
-}, attrs = list(shinyViewerType = "pane"))
+}, attrs = list(shinyViewerType = "pane"), envir = baseenv())
 
 .rs.addFunction("invokeShinyWindowViewer", function(url) {
    invisible(.Call("rs_shinyviewer", url, getwd(), "window", NULL, PACKAGE = "(embedding)"))
-}, attrs = list(shinyViewerType = "window"))
+}, attrs = list(shinyViewerType = "window"), envir = baseenv())
 
 .rs.addFunction("invokeShinyWindowExternal", function(url) {
    invisible(.Call("rs_shinyviewer", url, getwd(), "browser", NULL, PACKAGE = "(embedding)"))
-}, attrs = list(shinyViewerType = "browser"))
+}, attrs = list(shinyViewerType = "browser"), envir = baseenv())
 
 .rs.addFunction("setShinyViewerType", function(type) {
    if (identical(type, "none"))

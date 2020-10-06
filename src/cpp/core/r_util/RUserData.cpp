@@ -1,7 +1,7 @@
 /*
  * RUserData.cpp
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -65,6 +65,12 @@ Error migrateUserStateIfNecessary(SessionType sessionType)
        return Success();
    if (oldScratchPath.completeChildPath(kMigratedFile).exists())
        return Success();
+
+   // If the new and old folders are the same, no migration is necessary (this
+   // could happen if RSTUDIO_DATA_HOME is used to preserve the legacy folder
+   // location)
+   if (oldScratchPath.isEquivalentTo(newPath))
+      return Success();
 
    // Create the new folder if necessary so we can move content there.
    error = newPath.ensureDirectory();

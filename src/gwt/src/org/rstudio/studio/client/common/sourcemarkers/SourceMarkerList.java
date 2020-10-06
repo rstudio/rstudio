@@ -1,7 +1,7 @@
 /*
  * SourceMarkerList.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
-import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.widget.DoubleClickState;
 import org.rstudio.core.client.widget.FastSelectTable;
 
@@ -47,11 +46,11 @@ public class SourceMarkerList extends Composite
    public static final int AUTO_SELECT_NONE = 0;
    public static final int AUTO_SELECT_FIRST = 1;
    public static final int AUTO_SELECT_FIRST_ERROR = 2;
-   
+
    public SourceMarkerList()
    {
       codec_ = new SourceMarkerItemCodec(res_, false);
-      
+
       errorTable_ = new FastSelectTable<SourceMarker, CodeNavigationTarget, CodeNavigationTarget>(
             codec_,
             res_.styles().selectedRow(),
@@ -81,7 +80,7 @@ public class SourceMarkerList extends Composite
                fireSelectionCommittedEvent();
          }
       });
-      
+
       errorTable_.addMouseDownHandler(new MouseDownHandler()
       {
          public void onMouseDown(MouseDownEvent event)
@@ -100,22 +99,22 @@ public class SourceMarkerList extends Composite
             }
          }
       });
-      
-      
+
+
       ScrollPanel scrollPanel = new ScrollPanel(errorTable_);
       scrollPanel.addStyleName("ace_editor_theme");
       scrollPanel.setSize("100%", "100%");
       initWidget(scrollPanel);
    }
-   
+
    @Override
    public HandlerRegistration addSelectionCommitHandler(
-                     SelectionCommitHandler<CodeNavigationTarget> handler)
+                     SelectionCommitEvent.Handler<CodeNavigationTarget> handler)
    {
       return addHandler(handler, SelectionCommitEvent.getType());
    }
- 
-   public void showMarkers(String targetFile, 
+
+   public void showMarkers(String targetFile,
                            String basePath,
                            JsArray<SourceMarker> errors,
                            int autoSelect)
@@ -128,17 +127,17 @@ public class SourceMarkerList extends Composite
          SourceMarker error = errors.get(i);
          if (firstErrorIndex == -1 && error.getType() == SourceMarker.ERROR)
             firstErrorIndex = i;
-         
+
          if (error.getPath() != targetFile)
             showFileHeaders = true;
-         
+
          errorList.add(error);
       }
 
       codec_.setShowFileHeaders(showFileHeaders);
       codec_.setFileHeaderBasePath(basePath);
       errorTable_.addItems(errorList, false);
-      
+
       if (autoSelect == AUTO_SELECT_FIRST)
       {
          selectFirstItem();
@@ -149,30 +148,30 @@ public class SourceMarkerList extends Composite
             errorTable_.setSelected(firstErrorIndex, 1, true);
       }
    }
-   
+
    public void ensureSelection()
    {
       if (errorTable_.getSelectedRowIndexes().isEmpty())
          selectFirstItem();
    }
-   
+
    public void selectFirstItem()
    {
       if (errorTable_.getRowCount() > 0)
          errorTable_.setSelected(0, 1, true);
    }
-   
+
    public void focus()
    {
       errorTable_.focus();
    }
-   
+
    public void clear()
    {
       errorTable_.clear();
       setWidths();
    }
- 
+
    private void setWidths()
    {
       setColumnClasses(errorTable_.getElement().<TableElement>cast(),
@@ -193,14 +192,14 @@ public class SourceMarkerList extends Composite
       }
       table.appendChild(colGroupElement);
    }
-   
+
    private void fireSelectionCommittedEvent()
    {
       ArrayList<CodeNavigationTarget> values = errorTable_.getSelectedValues();
       if (values.size() == 1)
          fireSelectionCommitedEvent(values.get(0));
    }
-   
+
    private void fireSelectionCommitedEvent(CodeNavigationTarget target)
    {
       SelectionCommitEvent.fire(this, target);
@@ -208,5 +207,5 @@ public class SourceMarkerList extends Composite
 
    private final SourceMarkerItemCodec codec_;
    private final FastSelectTable<SourceMarker, CodeNavigationTarget, CodeNavigationTarget> errorTable_;
-   private final SourceMarkerListResources res_ = SourceMarkerListResources.INSTANCE;  
+   private final SourceMarkerListResources res_ = SourceMarkerListResources.INSTANCE;
 }

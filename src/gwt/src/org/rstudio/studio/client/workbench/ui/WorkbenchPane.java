@@ -1,7 +1,7 @@
 /*
  * WorkbenchPane.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,11 +14,17 @@
  */
 package org.rstudio.studio.client.workbench.ui;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Command;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.a11y.A11y;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.events.ActivatePaneEvent;
+
+import java.util.ArrayList;
 
 public abstract class WorkbenchPane extends ToolbarPane
                                  implements WorkbenchView,
@@ -58,6 +64,20 @@ public abstract class WorkbenchPane extends ToolbarPane
    }
 
    @Override
+   public void setFocus()
+   {
+      ArrayList<Element> focusableElements = DomUtils.getFocusableElements(getElement());
+      if (!focusableElements.isEmpty())
+      {
+         Element el = focusableElements.get(0);
+         el.focus();
+         A11y.showFocusOutline(el);
+      }
+      else
+         Debug.logWarning("Could not set focus, no focusable element on " + title_ + " pane");
+   }
+
+   @Override
    public boolean isSuppressed()
    {
       return false;
@@ -68,7 +88,7 @@ public abstract class WorkbenchPane extends ToolbarPane
    {
       return false;
    }
-   
+
    @Override
    public void confirmClose(Command onConfirmed)
    {
@@ -83,6 +103,6 @@ public abstract class WorkbenchPane extends ToolbarPane
       super.bringToFront();
    }
 
-   private String title_;
+   private final String title_;
    protected final EventBus events_;
 }

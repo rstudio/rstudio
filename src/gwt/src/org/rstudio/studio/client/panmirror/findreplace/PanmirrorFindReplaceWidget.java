@@ -1,7 +1,7 @@
 /*
  * PanmirrorFindReplaceWidget.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,7 @@
 
 package org.rstudio.studio.client.panmirror.findreplace;
 
+import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.widget.HasFindReplace;
@@ -92,14 +93,22 @@ public class PanmirrorFindReplaceWidget extends FindReplaceBar implements HasFin
    
    public void performFind()
    {
-      PanmirrorFindReplace find = container_.getFindReplace();
-      PanmirrorFindOptions options =  new PanmirrorFindOptions();
-      options.caseSensitive = getCaseSensitive().getValue();
-      options.regex = getRegex().getValue();
-      options.wrap = getWrapSearch().getValue();
-      find.find(getFindValue().getValue(), options);
-      find.selectCurrent();
+      timeBufferedFind_.nudge();
    }
+   
+   private TimeBufferedCommand timeBufferedFind_ = new TimeBufferedCommand(300) {
+      @Override
+      protected void performAction(boolean shouldReschedule)
+      {
+         PanmirrorFindReplace find = container_.getFindReplace();
+         PanmirrorFindOptions options =  new PanmirrorFindOptions();
+         options.caseSensitive = getCaseSensitive().getValue();
+         options.regex = getRegex().getValue();
+         options.wrap = getWrapSearch().getValue();
+         find.find(getFindValue().getValue(), options);
+         find.selectCurrent(); 
+      }
+   };
    
    
    @Override

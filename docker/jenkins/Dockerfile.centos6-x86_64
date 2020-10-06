@@ -1,5 +1,7 @@
 FROM centos:6
 
+ENV OPERATING_SYSTEM=centos_6
+
 RUN set -x \
     && yum install epel-release -y
 
@@ -20,6 +22,7 @@ RUN yum install -y \
     libcap-devel \ 
     libffi \
     libuuid-devel \
+    libxml2-devel \
     lsof \
     make \
     openssl-devel \

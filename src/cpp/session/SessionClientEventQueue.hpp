@@ -1,7 +1,7 @@
 /*
  * SessionClientEventQueue.hpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -40,7 +40,7 @@ ClientEventQueue& clientEventQueue();
 class ClientEventQueue : boost::noncopyable
 {   
 private:
-   ClientEventQueue() ;
+   ClientEventQueue();
    friend void initializeClientEventQueue();
    
 public:
@@ -79,13 +79,13 @@ private:
    // explicitly stop the queue and this sometimes results in mutex
    // destroy assertions if someone is waiting on the queue while
    // it is being destroyed
-   boost::mutex* pMutex_ ;
-   boost::condition* pWaitForEventCondition_ ;
+   boost::mutex* pMutex_;
+   boost::condition* pWaitForEventCondition_;
 
    // instance data
-   std::string pendingConsoleOutput_ ;
+   std::string pendingConsoleOutput_;
    std::string activeConsole_;
-   std::vector<ClientEvent> pendingEvents_ ; 
+   std::vector<ClientEvent> pendingEvents_;
    boost::posix_time::ptime lastEventAddTime_;
    
 

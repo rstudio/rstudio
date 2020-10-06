@@ -1,7 +1,7 @@
 /*
  * ErrorManager.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,11 +23,11 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.debugging.events.ErrorHandlerChangedEvent;
 import org.rstudio.studio.client.common.debugging.model.ErrorManagerState;
+import org.rstudio.studio.client.server.QuietServerRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
-import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
@@ -39,11 +39,11 @@ import com.google.inject.Singleton;
 public class ErrorManager
              implements DebugModeChangedEvent.Handler,
                         ErrorHandlerChangedEvent.Handler,
-                        SessionInitHandler
+                        SessionInitEvent.Handler
 {
    public interface Binder
    extends CommandBinder<Commands, ErrorManager> {}
-   
+
    private enum DebugHandlerState
    {
       None,
@@ -51,9 +51,9 @@ public class ErrorManager
    }
 
    @Inject
-   public ErrorManager(EventBus events, 
-                       Binder binder, 
-                       Commands commands, 
+   public ErrorManager(EventBus events,
+                       Binder binder,
+                       Commands commands,
                        DebuggingServerOperations server,
                        Session session)
    {
@@ -62,7 +62,7 @@ public class ErrorManager
       commands_ = commands;
       session_ = session;
       binder.bind(commands, this);
-      
+
       events_.addHandler(DebugModeChangedEvent.TYPE, this);
       events_.addHandler(ErrorHandlerChangedEvent.TYPE, this);
       events_.addHandler(SessionInitEvent.TYPE, this);
@@ -75,7 +75,7 @@ public class ErrorManager
    {
       // if we expected to go into debug mode, this is what we were waiting
       // for--change the error handler back to whatever it was formerly
-      if (event.debugging() && 
+      if (event.debugging() &&
           debugHandlerState_ == DebugHandlerState.Pending)
       {
          setErrorManagementType(previousHandlerType_);
@@ -98,19 +98,7 @@ public class ErrorManager
    public void onSessionInit(SessionInitEvent sie)
    {
       errorManagerState_ = session_.getSessionInfo().getErrorState();
-      if (session_.getSessionInfo().getHaveSrcrefAttribute())
-      {
-         syncHandlerCommandsCheckedState();
-      }
-      else
-      {
-         // If we don't have source references, disable the commands that 
-         // set error handlers (these generally work on user code only, and
-         // we can't reliably distinguish user code without source refs)
-         commands_.errorsMessage().setEnabled(false);
-         commands_.errorsTraceback().setEnabled(false);
-         commands_.errorsBreak().setEnabled(false);
-      }
+      syncHandlerCommandsCheckedState();
    }
 
    @Handler
@@ -118,28 +106,28 @@ public class ErrorManager
    {
       setErrorManagementTypeCommand(UserState.ERROR_HANDLER_TYPE_MESSAGE);
    }
-   
-   @Handler 
+
+   @Handler
    public void onErrorsTraceback()
    {
       setErrorManagementTypeCommand(UserState.ERROR_HANDLER_TYPE_TRACEBACK);
    }
 
-   @Handler 
+   @Handler
    public void onErrorsBreak()
    {
       setErrorManagementTypeCommand(UserState.ERROR_HANDLER_TYPE_BREAK);
    }
-   
+
    // Public methods ----------------------------------------------------------
 
    public void setDebugSessionHandlerType(
-         String type, 
+         String type,
          final ServerRequestCallback<Void> callback)
    {
       if (StringUtil.equals(type, errorManagerState_.getErrorHandlerType()))
          return;
-      
+
       setErrorManagementType(type, new ServerRequestCallback<Void>()
       {
          @Override
@@ -162,7 +150,7 @@ public class ErrorManager
    {
       return errorManagerState_.getErrorHandlerType();
    }
-   
+
    // Private methods ---------------------------------------------------------
 
    private void setErrorManagementTypeCommand(String type)
@@ -175,26 +163,17 @@ public class ErrorManager
    }
 
    private void setErrorManagementType(
-         String type, 
+         String type,
          ServerRequestCallback<Void> callback)
    {
       server_.setErrorManagementType(type, callback);
    }
-      
+
    private void setErrorManagementType(String type)
    {
-      setErrorManagementType(type, 
-            new ServerRequestCallback<Void>()
-      {         
-         @Override
-         public void onError(ServerError error)
-         {
-            // No action necessary--the server emits an event when the handler
-            // type changes
-         }
-      });
+      setErrorManagementType(type, new QuietServerRequestCallback<Void>());
    }
-   
+
    private void syncHandlerCommandsCheckedState()
    {
       String type = getErrorHandlerType();
@@ -212,6 +191,6 @@ public class ErrorManager
    private final Commands commands_;
 
    private DebugHandlerState debugHandlerState_ = DebugHandlerState.None;
-   private ErrorManagerState errorManagerState_; 
+   private ErrorManagerState errorManagerState_;
    private String previousHandlerType_;
 }

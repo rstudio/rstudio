@@ -1,7 +1,7 @@
 /*
  * ProjectUserChangedEvent.java
  *
- * Copyright (C) 2009-15 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,7 +22,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class ProjectUserChangedEvent 
+public class ProjectUserChangedEvent
    extends GwtEvent<ProjectUserChangedEvent.Handler>
 {
    public static class Data extends JavaScriptObject
@@ -30,11 +30,11 @@ public class ProjectUserChangedEvent
       protected Data()
       {
       }
-      
+
       public final native String getChangeType() /*-{
          return this.change_type;
       }-*/;
-      
+
       public final native JsArray<ProjectUser> getUsers() /*-{
          return this.users;
       }-*/;
@@ -44,12 +44,12 @@ public class ProjectUserChangedEvent
    {
       void onProjectUserChanged(ProjectUserChangedEvent event);
    }
-   
+
    public ProjectUserChangedEvent(Data data)
    {
       data_ = data;
    }
-   
+
    public String getChangeType()
    {
       return data_.getChangeType();
@@ -71,13 +71,13 @@ public class ProjectUserChangedEvent
    {
       handler.onProjectUserChanged(this);
    }
-   
+
    private final Data data_;
-   
+
    public static final String JOINED   = "joined";
    public static final String LEFT     = "left";
    public static final String REPLACED = "replaced";
    public static final String CHANGED  = "changed";
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

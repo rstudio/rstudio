@@ -1,7 +1,7 @@
 /*
  * raw_tex.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,26 +16,27 @@
 import { Node as ProsemirrorNode, Mark, Fragment, Schema } from 'prosemirror-model';
 import { DecorationSet } from 'prosemirror-view';
 import { Plugin, PluginKey, EditorState, Transaction, TextSelection } from 'prosemirror-state';
-import { toggleMark } from 'prosemirror-commands';
 import { InputRule, inputRules } from 'prosemirror-inputrules';
 
 import { setTextSelection } from 'prosemirror-utils';
 
-import { PandocExtensions, PandocToken, PandocTokenType, PandocOutput } from '../../api/pandoc';
-import { Extension } from '../../api/extension';
+import { PandocToken, PandocTokenType, PandocOutput } from '../../api/pandoc';
+import { Extension, ExtensionContext } from '../../api/extension';
 import { kTexFormat } from '../../api/raw';
-import { EditorUI } from '../../api/ui';
 import { markHighlightPlugin, markHighlightDecorations } from '../../api/mark-highlight';
 import { MarkTransaction } from '../../api/transaction';
 import { markIsActive, splitInvalidatedMarks } from '../../api/mark';
-import { EditorCommandId } from '../../api/command';
+import { EditorCommandId, toggleMarkType } from '../../api/command';
 import { texLength } from '../../api/tex';
+import { MarkInputRuleFilter } from '../../api/input_rule';
 
 import { kRawInlineFormat, kRawInlineContent, RawInlineInsertCommand } from './raw_inline';
 
 const kTexPlaceholder = 'tex';
 
-const extension = (pandocExtensions: PandocExtensions): Extension | null => {
+const extension = (context: ExtensionContext): Extension | null => {
+  const { pandocExtensions } = context;
+
   if (!pandocExtensions.raw_tex) {
     return null;
   }
@@ -45,9 +46,10 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
       {
         name: 'raw_tex',
         noInputRules: true,
+        noSpelling: true,
         spec: {
           inclusive: true,
-          excludes: '_',
+          excludes: 'formatting',
           attrs: {},
           parseDOM: [
             {
@@ -76,7 +78,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
             },
           ],
           writer: {
-            priority: 20,
+            priority: 1,
             write: (output: PandocOutput, _mark: Mark, parent: Fragment) => {
               output.writeRawMarkdown(parent);
             },
@@ -86,7 +88,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
     ],
 
     // insert command
-    commands: (schema: Schema, ui: EditorUI) => {
+    commands: (schema: Schema) => {
       return [new InsertInlineLatexCommand(schema)];
     },
 
@@ -102,8 +104,8 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
       ];
     },
 
-    inputRules: (schema: Schema) => {
-      return [texInputRule(schema)];
+    inputRules: (schema: Schema, filter: MarkInputRuleFilter) => {
+      return [texInputRule(schema, filter)];
     },
 
     // plugin to add highlighting decorations
@@ -142,11 +144,22 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
   };
 };
 
-function texInputRule(schema: Schema) {
+function texInputRule(schema: Schema, filter: MarkInputRuleFilter) {
   return new InputRule(/(^| )\\$/, (state: EditorState, match: string[], start: number, end: number) => {
     const rawTexMark = schema.marks.raw_tex;
 
-    if (state.selection.empty && toggleMark(rawTexMark)(state)) {
+    if (state.selection.empty && toggleMarkType(rawTexMark)(state)) {
+      // if there is no tex ahead of us or we don't pass the fitler (b/c marks that don't allow
+      // input rules are active) then bail
+      const $head = state.selection.$head;
+      const texText = '\\' + $head.parent.textContent.slice($head.parentOffset);
+      if (!texText.startsWith('\\ ')) {
+        const texMatchLength = texLength(texText);
+        if (texMatchLength === 0 || !filter(state, state.selection.from, state.selection.from + texMatchLength)) {
+          return null;
+        }
+      }
+
       // create transaction
       const tr = state.tr;
 
@@ -182,7 +195,7 @@ function texInputRule(schema: Schema) {
 
 class InsertInlineLatexCommand extends RawInlineInsertCommand {
   constructor(schema: Schema) {
-    super(EditorCommandId.TexInline, schema.marks.raw_tex, (tr: Transaction) => {
+    super(EditorCommandId.TexInline, [], schema.marks.raw_tex, (tr: Transaction) => {
       const mark = schema.marks.raw_tex.create();
       const tex = '\\' + kTexPlaceholder;
       const node = schema.text(tex, [mark]);
@@ -202,13 +215,10 @@ const key = new PluginKey<DecorationSet>('latex-highlight');
 
 export function latexHighlightingPlugin(schema: Schema) {
   const kLightTextClass = 'pm-light-text-color';
-  const delimiterRegex = /[{}[\]]/g;
-
   return markHighlightPlugin(key, schema.marks.raw_tex, (text, _attrs, markRange) => {
     const kIdClass = 'pm-markup-text-color';
-    const idRegEx = /\\[A-Za-z]+/g;
-    let decorations = markHighlightDecorations(markRange, text, idRegEx, kIdClass);
-    decorations = decorations.concat(markHighlightDecorations(markRange, text, delimiterRegex, kLightTextClass));
+    let decorations = markHighlightDecorations(markRange, text, /\\[A-Za-z]+/g, kIdClass);
+    decorations = decorations.concat(markHighlightDecorations(markRange, text, /[{}[\]]/g, kLightTextClass));
     return decorations;
   });
 }

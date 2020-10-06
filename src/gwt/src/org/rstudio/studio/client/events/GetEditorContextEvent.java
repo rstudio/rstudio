@@ -1,7 +1,7 @@
 /*
  * GetEditorContextEvent.java
  *
- * Copyright (C) 2009-13 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,15 +28,15 @@ public class GetEditorContextEvent extends CrossWindowEvent<GetEditorContextEven
    public static class Data extends JavaScriptObject
    {
       protected Data() {}
-      
+
       public static final native Data create() /*-{ return 0; }-*/;
       public final native int getType() /*-{ return this; }-*/;
    }
-   
+
    public static class DocumentSelection extends JavaScriptObject
    {
       protected DocumentSelection() {}
-      
+
       public static final native DocumentSelection create(Range range, String text)
       /*-{
          return {
@@ -45,11 +45,11 @@ public class GetEditorContextEvent extends CrossWindowEvent<GetEditorContextEven
          };
       }-*/;
    }
-   
+
    public static class SelectionData extends JavaScriptObject
    {
       protected SelectionData() {}
-      
+
       public static final native SelectionData create()
       /*-{
          return {
@@ -59,7 +59,7 @@ public class GetEditorContextEvent extends CrossWindowEvent<GetEditorContextEven
             "selection": []
          };
       }-*/;
-      
+
       public static final native SelectionData create(String id,
                                                       String path,
                                                       String contents,
@@ -72,41 +72,41 @@ public class GetEditorContextEvent extends CrossWindowEvent<GetEditorContextEven
             "selection": selection,
          };
       }-*/;
-      
+
       public final native String getId() /*-{ return this["id"]; }-*/;
       public final native String getPath() /*-{ return this["path"]; }-*/;
       public final native String getContents() /*-{ return this["contents"]; }-*/;
       public final native DocumentSelection getSelection() /*-{ return this["selection"]; }-*/;
    }
-   
+
    public GetEditorContextEvent()
    {
       this(Data.create());
    }
-   
+
    public GetEditorContextEvent(Data data)
    {
       data_ = data;
    }
-   
+
    public Data getData()
    {
       return data_;
    }
-   
+
    private final Data data_;
-   
+
    public static final int TYPE_ACTIVE_EDITOR  = 0;
    public static final int TYPE_CONSOLE_EDITOR = 1;
    public static final int TYPE_SOURCE_EDITOR  = 2;
-   
+
    // Boilerplate ----
-   
+
    public interface Handler extends EventHandler
    {
       void onGetEditorContext(GetEditorContextEvent event);
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -118,8 +118,8 @@ public class GetEditorContextEvent extends CrossWindowEvent<GetEditorContextEven
    {
       handler.onGetEditorContext(this);
    }
-   
-   public static final Type<Handler> TYPE = new Type<Handler>();
-   
+
+   public static final Type<Handler> TYPE = new Type<>();
+
 
 }

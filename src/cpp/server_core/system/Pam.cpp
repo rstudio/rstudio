@@ -1,7 +1,7 @@
 /*
  * Pam.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -164,11 +164,9 @@ PAM::~PAM()
    }
 }
 
-std::pair<int, const std::string> PAM::lastError()
+std::string PAM::lastError()
 {
-   return std::pair<int, const std::string>(
-         status_,
-         std::string(::pam_strerror(pamh_, status_)));
+   return std::string(::pam_strerror(pamh_, status_));
 }
 
 int PAM::login(const std::string& username,
@@ -185,7 +183,7 @@ int PAM::login(const std::string& username,
                          &pamh_);
    if (status_ != PAM_SUCCESS)
    {
-      LOG_ERROR_MESSAGE("pam_start failed: " + lastError().second);
+      LOG_ERROR_MESSAGE("pam_start failed: " + lastError());
       return status_;
    }
 
@@ -193,14 +191,14 @@ int PAM::login(const std::string& username,
    if (status_ != PAM_SUCCESS)
    {
       if (status_ != PAM_AUTH_ERR)
-         LOG_ERROR_MESSAGE("pam_authenticate failed: " + lastError().second);
+         LOG_ERROR_MESSAGE("pam_authenticate failed: " + lastError());
       return status_;
    }
 
    status_ = ::pam_acct_mgmt(pamh_, defaultFlags_);
    if (status_ != PAM_SUCCESS)
    {
-      LOG_ERROR_MESSAGE("pam_acct_mgmt failed: " + lastError().second);
+      LOG_ERROR_MESSAGE("pam_acct_mgmt failed: " + lastError());
       return status_;
    }
 

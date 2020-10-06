@@ -1,7 +1,7 @@
 /*
  * DesktopInfo.java
  *
- * Copyright (C) 2009-17 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,7 +18,6 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
-import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
@@ -36,85 +35,81 @@ public class DesktopInfo
       // do no work in server mode
       if (!Desktop.hasDesktopFrame())
          return;
-      
-      events.addHandler(SessionInitEvent.TYPE, new SessionInitHandler()
+
+      events.addHandler(SessionInitEvent.TYPE, (SessionInitEvent sie) ->
       {
-         @Override
-         public void onSessionInit(SessionInitEvent sie)
-         {
-            // disable devtools command when unavailable
-            boolean devtoolsEnabled = getChromiumDevtoolsPort() > 0;
-            commands.openDeveloperConsole().setEnabled(devtoolsEnabled);
-            commands.openDeveloperConsole().setVisible(devtoolsEnabled);
-            
-            if (Satellite.isCurrentWindowSatellite())
-               return;
-            
-            SessionInfo info = session.getSessionInfo();
-            if (info.getSumatraPdfExePath() != null)
-               setSumatraPdfExePath(info.getSumatraPdfExePath());
-         }
+         // disable devtools command when unavailable
+         boolean devtoolsEnabled = getChromiumDevtoolsPort() > 0;
+         commands.openDeveloperConsole().setEnabled(devtoolsEnabled);
+         commands.openDeveloperConsole().setVisible(devtoolsEnabled);
+
+         if (Satellite.isCurrentWindowSatellite())
+            return;
+
+         SessionInfo info = session.getSessionInfo();
+         if (info.getSumatraPdfExePath() != null)
+            setSumatraPdfExePath(info.getSumatraPdfExePath());
       });
    }
-   
+
    public static final native String getPlatform()
    /*-{
       return $wnd.desktopInfo.platform;
    }-*/;
-   
+
    public static final native String getVersion()
    /*-{
       return $wnd.desktopInfo.version;
    }-*/;
-   
+
    public static final native String getScrollingCompensationType()
    /*-{
       return $wnd.desktopInfo.scrollingCompensationType;
    }-*/;
-   
+
    public static final native String getFixedWidthFontList()
    /*-{
       return $wnd.desktopInfo.fixedWidthFontList;
    }-*/;
-   
+
    public static final native String getFixedWidthFont()
    /*-{
       return $wnd.desktopInfo.fixedWidthFont;
    }-*/;
-   
+
    public static final native String getProportionalFont()
    /*-{
       return $wnd.desktopInfo.proportionalFont;
    }-*/;
-   
+
    public static final native String getDesktopSynctexViewer()
    /*-{
       return $wnd.desktopInfo.desktopSynctexViewer;
    }-*/;
-   
+
    public static final native String getSumatraPdfExePath()
    /*-{
       return $wnd.desktopInfo.sumatraPdfExePath;
    }-*/;
-   
+
    public static final native void setSumatraPdfExePath(String path)
    /*-{
       $wnd.desktopInfo.sumatraPdfExePath = path;
    }-*/;
-   
+
    public static final native double getZoomLevel()
    /*-{
       return $wnd.desktopInfo.zoomLevel;
    }-*/;
-   
+
    public static final native void setZoomLevel(double zoomLevel)
    /*-{
       $wnd.desktopInfo.zoomLevel = zoomLevel;
    }-*/;
-   
+
    public static final native int getChromiumDevtoolsPort()
    /*-{
       return $wnd.desktopInfo.chromiumDevtoolsPort || 0;
    }-*/;
-   
+
 }

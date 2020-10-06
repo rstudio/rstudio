@@ -1,7 +1,7 @@
 /*
  * EditorCommandDispatchEvent.java
  *
- * Copyright (C) 2009-13 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,32 +26,32 @@ public class EditorCommandDispatchEvent extends CrossWindowEvent<EditorCommandDi
    {
       this(null);
    }
-   
+
    public EditorCommandDispatchEvent(EditorCommandEvent event)
    {
       event_ = event;
    }
-   
+
    public EditorCommandEvent getEvent()
    {
       return event_;
    }
-   
+
    @Override
    public boolean forward()
    {
       return false;
    }
-   
+
    private final EditorCommandEvent event_;
-   
+
    // Boilerplate ----
-   
+
    public interface Handler extends EventHandler
    {
       void onEditorCommandDispatch(EditorCommandDispatchEvent event);
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -63,7 +63,7 @@ public class EditorCommandDispatchEvent extends CrossWindowEvent<EditorCommandDi
    {
       handler.onEditorCommandDispatch(this);
    }
-   
-   public static final Type<Handler> TYPE = new Type<Handler>();
+
+   public static final Type<Handler> TYPE = new Type<>();
 
 }

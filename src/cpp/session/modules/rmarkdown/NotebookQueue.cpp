@@ -1,7 +1,7 @@
 /*
  * NotebookQueue.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -107,7 +107,7 @@ public:
 
       // defer if R is currently executing code (we'll initiate processing when
       // the console continues)
-      if (r::context::globalContext().nextcontext())
+      if (!module_context::isPythonReplActive() && r::context::globalContext().nextcontext())
          return Success();
 
       // if we have a currently executing unit, execute it; otherwise, pop the
@@ -181,7 +181,7 @@ public:
       const std::string& before)
    {
       // find the document queue corresponding to this unit
-      for (const boost::shared_ptr<NotebookDocQueue> queue : queue_)
+      for (const boost::shared_ptr<NotebookDocQueue>& queue : queue_)
       {
          if (queue->docId() == pUnit->docId())
          {
@@ -279,7 +279,7 @@ private:
          execContext_->onExprComplete();
          
       ExecRange range;
-      std::string code = execUnit_->popExecRange(&range, mode); 
+      std::string code = execUnit_->popExecRange(&range, mode);
       if (code.empty())
       {
          // no code to evaluate--skip this unit
@@ -287,8 +287,24 @@ private:
       }
       else 
       {
+         // if we're switching the console between languages, call the
+         // appropriate R code to make that happen
+         std::string prefix;
+
+         bool isPythonActive = module_context::isPythonReplActive();
+         if (isPythonActive && execContext_->engine() != "python")
+         {
+            // switching from Python -> R: deactivate the Python REPL
+            prefix = "quit\n";
+         }
+         else if (!isPythonActive && execContext_->engine() == "python")
+         {
+            // switching from R -> Python: activate the Python REPL
+            prefix = "reticulate::repl_python()\n";
+         }
+
          // send code to console 
-         sendConsoleInput(execUnit_->chunkId(), json::Value(code));
+         sendConsoleInput(execUnit_->chunkId(), json::Value(prefix + code));
 
          // let client know the range has been sent to R
          json::Object exec;
@@ -397,7 +413,7 @@ private:
       if (engine == "R")
          engine = "r";
 
-      if (engine == "r")
+      if (engine == "r" || engine == "python")
       {
          // establish execution context unless we're an inline chunk
          if (unit->execScope() != ExecScopeInline)
@@ -410,10 +426,11 @@ private:
             if (label != "setup")
                workingDir = docQueue->workingDir();
 
+            std::string codeString = string_utils::wideToUtf8(unit->code());
             execContext_ = boost::make_shared<ChunkExecContext>(
-               unit->docId(), unit->chunkId(), ctx, unit->execScope(), 
-               workingDir, options, docQueue->pixelWidth(), 
-               docQueue->charWidth());
+               unit->docId(), unit->chunkId(), codeString, label, ctx, engine,
+               unit->execScope(), workingDir, options,
+               docQueue->pixelWidth(), docQueue->charWidth());
             execContext_->connect();
 
             // if there was an error parsing the options for the chunk, display
@@ -445,7 +462,7 @@ private:
             // actually execute the chunk with the alternate engine; store the error separately
             // and log if necessary
             Error execError = executeAlternateEngineChunk(
-               unit->docId(), unit->chunkId(), ctx, docQueue->workingDir(),
+               unit->docId(), unit->chunkId(), label, ctx, docQueue->workingDir(),
                engine, innerCode, options, execUnit_->execScope(),
                docQueue->pixelWidth(), docQueue->charWidth());
             if (execError)
@@ -459,7 +476,7 @@ private:
       if (error)
          return skipUnit();
 
-      if (engine == "r")
+      if (engine == "r" || engine == "python")
       {
          error = executeCurrentUnit(ExprModeNew);
          if (error)
@@ -499,7 +516,7 @@ private:
             {
                std::stringstream oss;
                oss << "Received unexpected response when submitting console input: "
-                   << response; 
+                   << response;
                LOG_WARNING_MESSAGE(oss.str());
             }
          }
@@ -729,6 +746,10 @@ Error executeNotebookChunks(const json::JsonRpcRequest& request,
 
 void onConsolePrompt(const std::string& prompt)
 {
+   // Ignore debug prompts
+   if (r::context::inBrowseContext())
+      return;
+
    if (s_queue)
    {
       s_queue->onConsolePrompt(prompt);

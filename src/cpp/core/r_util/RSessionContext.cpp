@@ -1,7 +1,7 @@
 /*
  * RSessionContext.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -152,7 +152,7 @@ std::string SessionScope::workbench() const
    else if (isVSCode())
       return kWorkbenchVSCode;
    else
-      return kWorkbenchJupyterNotebook;
+      return kWorkbenchRStudio;
 }
 
 // This function is intended to tell us whether a given path corresponds to an

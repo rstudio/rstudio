@@ -1,7 +1,7 @@
 /*
  * ContextDepthChangedEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -39,12 +39,12 @@ public class ContextDepthChangedEvent extends
       contextData_ = data;
       serverInitiated_ = serverInitiated;
    }
-   
-   public int getContextDepth() 
+
+   public int getContextDepth()
    {
       return contextData_.contextDepth();
    }
-   
+
    public JsArray<RObject> getEnvironmentList()
    {
       return contextData_.environmentList();
@@ -59,42 +59,42 @@ public class ContextDepthChangedEvent extends
    {
       return contextData_.functionName();
    }
-   
+
    public String getFunctionCode()
    {
       return contextData_.functionCode();
    }
-   
+
    public boolean useProvidedSource()
    {
       return contextData_.useProvidedSource();
    }
-   
+
    public String getEnvironmentName()
    {
       return contextData_.environmentName();
    }
-   
+
    public String getFunctionEnvName()
    {
       return contextData_.functionEnvName();
    }
-   
+
    public boolean environmentIsLocal()
    {
       return contextData_.environmentIsLocal();
    }
-   
+
    public boolean environmentMonitoring()
    {
       return contextData_.environmentMonitoring();
    }
-   
+
    public boolean isServerInitiated()
    {
       return serverInitiated_;
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -106,8 +106,8 @@ public class ContextDepthChangedEvent extends
    {
       handler.onContextDepthChanged(this);
    }
-  
-   public static final Type<Handler> TYPE = new Type<Handler>();
+
+   public static final Type<Handler> TYPE = new Type<>();
    private final EnvironmentContextData contextData_;
    private final boolean serverInitiated_;
 }

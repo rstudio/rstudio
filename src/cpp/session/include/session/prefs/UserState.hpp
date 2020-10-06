@@ -1,7 +1,7 @@
 /*
  * SessionUserState.hpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,7 +16,8 @@
 #ifndef SESSION_USER_STATE_HPP
 #define SESSION_USER_STATE_HPP
 
-#define kUserStateFile "rstudio-state.json"
+#define kUserStateFileDesktop "rstudio-desktop.json"
+#define kUserStateFileServer "rstudio-server.json"
 #define kUserStateSchemaFile "user-state-schema.json"
 
 #include "UserStateValues.hpp"

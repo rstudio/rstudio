@@ -1,7 +1,7 @@
 /*
  * NotebookPaths.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -173,7 +173,7 @@ Error notebookPathToId(const core::FilePath& path, std::string *pId)
 
    // need to generate a new ID for this path; make sure we don't collide with
    // an existing ID
-   std::string id; 
+   std::string id;
    bool existing;
    do 
    {
@@ -187,7 +187,7 @@ Error notebookPathToId(const core::FilePath& path, std::string *pId)
             break;
          }
       }
-   } while (existing); 
+   } while (existing);
 
    // lock and update the cache
    PathLockGuard guard;

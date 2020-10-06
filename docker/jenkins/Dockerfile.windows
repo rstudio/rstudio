@@ -3,6 +3,8 @@
 # LTSC (Long Term Service Channel) release of Server Core 2019
 FROM mcr.microsoft.com/windows/servercore:ltsc2019
 
+ENV OPERATING_SYSTEM=windows_10
+
 # set RUN commands to use powershell
 SHELL ["powershell"]
 
@@ -20,11 +22,18 @@ RUN choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-o
   choco install -y -i ant; `
   choco install -y windows-sdk-10.1 --version 10.1.17134.12; `
   choco install -y 7zip; `
-  choco install -y nsis
+  choco install -y ninja --version "1.10.0"
+
+# install NSIS - we do not do this via Chocolatey because the hosting URL of the NSIS
+# executable has gone defunct
+RUN [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 ; `
+  Invoke-WebRequest $('https://rstudio-buildtools.s3.amazonaws.com/nsis-3.06.1-setup.exe') -OutFile 'C:\nsis-3.06.1-setup.exe' -UseBasicParsing ;`
+  Start-Process c:\nsis-3.06.1-setup.exe -Wait -ArgumentList '/S' ;`
+  Remove-Item c:\nsis-3.06.1-setup.exe -Force
   
 RUN choco install -y visualstudio2017buildtools --version 15.8.2.0; `
   choco install -y visualstudio2017-workload-vctools --version 1.3.0
-  
+
 # install aws cli
 RUN choco install -y awscli
 
@@ -43,11 +52,11 @@ RUN $env:path += ';C:\R\R-3.0.3\bin\i386\' ;`
   [Environment]::SetEnvironmentVariable('Path', $env:path, [System.EnvironmentVariableTarget]::Machine);
 
 # install qt (note that we are using the current directory's context)
-RUN [System.Net.ServicePointManager]::SecurityProtocol = 3072 -bor 768 -bor 192 -bor 48; ` 
+RUN [System.Net.ServicePointManager]::SecurityProtocol = 3072 -bor 768 -bor 192 -bor 48; `
   (New-Object System.Net.WebClient).DownloadFile('https://s3.amazonaws.com/rstudio-buildtools/Qt/QtSDK-5.12.8-msvc2017_64.7z', 'c:\QtSDK-5.12.8-msvc2017_64.7z'); `
   7z x c:\QtSDK-5.12.8-msvc2017_64.7z -oc:\ ; `
   Remove-Item c:\QtSDK-5.12.8-msvc2017_64.7z -Force
-    
+
 # cpack (an alias from chocolatey) and cmake's cpack conflict.
 RUN Remove-Item -Force 'C:\ProgramData\chocolatey\bin\cpack.exe'
 

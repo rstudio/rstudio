@@ -1,7 +1,7 @@
 /*
  * AppMenuBar.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -108,17 +108,17 @@ public class AppMenuBar extends BaseMenuBar
    {
       return super.getItems();
    }
-   
+
    public static HandlerRegistration addSubMenuVisibleChangedHandler(
          SubMenuVisibleChangedHandler handler)
    {
       return listeners_.addHandler(SubMenuVisibleChangedEvent.TYPE, handler);
    }
-   
+
    // used to hide the menu bar itself if every item in the menu is a command,
-   // and every command is not visible. 
+   // and every command is not visible.
    // (consider: with a little work this could be more generic, such that any
-   // menu subtree consisting entirely of invisible commands would be hidden, 
+   // menu subtree consisting entirely of invisible commands would be hidden,
    // but there are currently no cases where this is necessary.)
    public boolean allInvisibleCmds()
    {
@@ -129,7 +129,7 @@ public class AppMenuBar extends BaseMenuBar
             if (((AppMenuItem)item).cmdVisible())
                return false;
          }
-         else 
+         else
             return false;
       }
       return true;

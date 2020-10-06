@@ -1,7 +1,7 @@
 /*
  * SessionHttpMethods.hpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -621,7 +621,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                                            &saveWorkspace,
                                            &switchToProject,
                                            &switchToVersionJson,
-                                           &hostPageUrl) ;
+                                           &hostPageUrl);
             if (error)
                LOG_ERROR(error);
             
@@ -833,8 +833,10 @@ void registerGwtHandlers()
    std::string initJs = "window.program_mode = \"" + options.programMode() + "\";\n";
 
    // set default handler
-   s_defaultUriHandler = gwt::fileHandlerFunction(options.wwwLocalPath(), options.useSecureCookies(), "/",
-         http::UriFilterFunction(), initJs);
+   s_defaultUriHandler = gwt::fileHandlerFunction(options.wwwLocalPath(),
+                                                  "/",
+                                                  http::UriFilterFunction(),
+                                                  initJs);
 }
 
 std::string nextSessionUrl()

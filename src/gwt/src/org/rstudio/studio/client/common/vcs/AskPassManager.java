@@ -1,7 +1,7 @@
 /*
  * AskPassManager.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -81,10 +81,19 @@ public class AskPassManager
             
             String prompt = e.getPrompt();
             
+            // default to password prompt
             String title = "Password";
             int dialogType = MessageDisplay.INPUT_PASSWORD;
-            if (prompt.toLowerCase().indexOf("username") != -1)
+
+            if (prompt.toLowerCase().indexOf("password") != -1)
             {
+               // if password is mentioned in prompt, treat as password
+               title = "Password";
+               dialogType = MessageDisplay.INPUT_PASSWORD;
+            }
+            else if (prompt.toLowerCase().indexOf("username") != -1)
+            {
+               // if username is mentioned in prmopt, treat as username
                title = "Username";
                dialogType = MessageDisplay.INPUT_USERNAME;
             }

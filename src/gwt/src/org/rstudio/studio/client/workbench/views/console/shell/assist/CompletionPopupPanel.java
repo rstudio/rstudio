@@ -1,7 +1,7 @@
 /*
  * CompletionPopupPanel.java
  *
- * Copyright (C) 2009-17 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -42,7 +42,6 @@ import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.events.SelectionCommitEvent;
-import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.widget.ThemedPopupPanel;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
@@ -57,24 +56,24 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       super();
       autoConstrain_ = false;
       styles_ = ConsoleResources.INSTANCE.consoleStyles();
-      
+
       help_ = new HelpInfoPopupPanel();
       help_.setWidth("400px");
-      
+
       truncated_ = new Label("... Not all items shown");
       truncated_.setStylePrimaryName(styles_.truncatedLabel());
-      
+
       setStylePrimaryName(styles_.completionPopup());
-      
+
       addCloseHandler(new CloseHandler<PopupPanel>() {
-         
+
          @Override
          public void onClose(CloseEvent<PopupPanel> event)
          {
             hideAll();
          }
       });
-      
+
       WindowEx.addBlurHandler(new BlurHandler()
       {
          @Override
@@ -83,7 +82,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
             hideAll();
          }
       });
-      
+
       handler_ = new NativePreviewHandler()
       {
          @Override
@@ -102,19 +101,19 @@ public class CompletionPopupPanel extends ThemedPopupPanel
          }
       };
    }
-   
+
    private void hideAll()
    {
       hide();
       help_.hide();
    }
-   
+
    public void placeOffscreen()
    {
       setPopupPosition(-10000, -10000);
       help_.setPopupPosition(-10000, -10000);
    }
-   
+
    public boolean isOffscreen()
    {
       return getAbsoluteLeft() + getOffsetWidth() < 0 &&
@@ -126,13 +125,13 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       setText(progress);
       show(callback);
    }
-   
+
    public void showErrorMessage(String error, PositionCallback callback)
    {
       setText(error);
       show(callback);
    }
-   
+
    @Override
    public void clearCompletions()
    {
@@ -140,7 +139,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    }
 
    @Override
-   public void showCompletionValues(QualifiedName[] values, 
+   public void showCompletionValues(QualifiedName[] values,
                                     PositionCallback callback,
                                     boolean truncated)
    {
@@ -151,46 +150,44 @@ public class CompletionPopupPanel extends ThemedPopupPanel
                                        true,
                                        true);
 
-      list.addSelectionCommitHandler(new SelectionCommitHandler<QualifiedName>() {
-         public void onSelectionCommit(SelectionCommitEvent<QualifiedName> event)
-         {
-            lastSelectedValue_ = event.getSelectedItem();
-            SelectionCommitEvent.fire(CompletionPopupPanel.this, 
-                                      event.getSelectedItem());
-         }
+      list.addSelectionCommitHandler((SelectionCommitEvent<QualifiedName> event) ->
+      {
+         lastSelectedValue_ = event.getSelectedItem();
+         SelectionCommitEvent.fire(CompletionPopupPanel.this,
+                                   event.getSelectedItem());
       });
-      
+
       list.addSelectionHandler(new SelectionHandler<QualifiedName>() {
          public void onSelection(SelectionEvent<QualifiedName> event)
          {
             lastSelectedValue_ = event.getSelectedItem();
-            SelectionEvent.fire(CompletionPopupPanel.this, 
+            SelectionEvent.fire(CompletionPopupPanel.this,
                                 event.getSelectedItem());
          }
       });
-      
+
       list_ = list;
-      
+
       container_ = new VerticalPanel();
       container_.add(list_);
       if (truncated)
          container_.add(truncated_);
-      
+
       setWidget(container_);
-      
-      ElementIds.assignElementId(list_.getElement(), 
+
+      ElementIds.assignElementId(list_.getElement(),
             ElementIds.POPUP_COMPLETIONS);
-      
+
       show(callback);
    }
-   
+
    public boolean hasCompletions()
    {
       if (list_ == null)
          return false;
       return list_.getItemCount() > 0;
    }
-   
+
    public int numAvailableCompletions()
    {
       return list_.getItemCount();
@@ -199,20 +196,20 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    private void show(PositionCallback callback)
    {
       registerNativeHandler(handler_);
-      
+
       if (callback != null)
          setPopupPositionAndShow(callback);
       else
          show();
-      
-      
+
+
       // Fudge the completion width when the scrollbar is visible. This has
       // to be done before help is shown since the help display is offset
       // from the completion list. This also (implicitly) adds padding between
       // the completion item and the package name (if it exists)
       if (list_ != null && list_.getOffsetWidth() > list_.getElement().getClientWidth())
          list_.setWidth(list_.getOffsetWidth() + 30 + "px");
-      
+
       // Show help.
       if (help_ != null)
       {
@@ -222,7 +219,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
             help_.hide();
       }
    }
-   
+
    @Override
    public void hide()
    {
@@ -230,35 +227,35 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       unregisterNativeHandler();
       super.hide();
    }
-   
+
    public QualifiedName getSelectedValue()
    {
       if (list_ == null || !list_.isAttached())
          return null;
-      
+
       return list_.getSelectedItem();
    }
-   
+
    public QualifiedName getLastSelectedValue()
    {
       return lastSelectedValue_;
    }
-   
+
    public Rectangle getSelectionRect()
    {
       return list_.getSelectionRect();
    }
-   
+
    public boolean selectNext()
    {
       return list_.selectNext();
    }
-   
+
    public boolean selectPrev()
    {
       return list_.selectPrev();
    }
-   
+
    public boolean selectPrevPage()
    {
       return list_.selectPrevPage();
@@ -268,22 +265,22 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    {
       return list_.selectNextPage();
    }
-   
+
    public boolean selectFirst()
    {
       return list_.selectFirst();
    }
-   
+
    public boolean selectLast()
    {
       return list_.selectLast();
    }
-   
+
    public void setHelpVisible(boolean visible)
    {
       help_.setVisible(visible);
    }
-   
+
    private boolean completionListIsOnScreen()
    {
       return list_ != null && list_.isAttached() &&
@@ -295,45 +292,45 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    {
       if (!completionListIsOnScreen())
          return;
-      
+
       help_.displayHelp(help);
       resolveHelpPosition(help.hasInfo());
    }
-   
+
    @Override
    public void displayParameterHelp(Map<String, String> map, String parameterName)
    {
       if (!completionListIsOnScreen())
          return;
-      
+
       help_.displayParameterHelp(map, parameterName);
       resolveHelpPosition(map.get(parameterName) != null);
    }
-   
+
    @Override
    public void displayPackageHelp(ParsedInfo help)
    {
       if (!completionListIsOnScreen())
          return;
-      
+
       help_.displayPackageHelp(help);
       resolveHelpPosition(help.hasInfo());
-      
+
    }
-   
+
    private void resolveHelpPosition(boolean setVisible)
    {
       int top = getAbsoluteTop();
       int left = getAbsoluteLeft();
       int bottom = top + getOffsetHeight();
       int width = getOffsetWidth();
-      
+
       if (RStudioThemes.isFlat())
          bottom += 9;
-      
+
       if (!help_.isShowing())
          help_.show();
-      
+
       // If displaying the help with the top aligned to the completion list
       // would place the help offscreen, then re-align it so that the bottom of the
       // help is aligned with the completion popup.
@@ -341,10 +338,10 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       // NOTE: Help has not been positioned yet so what we're really asking is,
       // 'if we align the top of help with the top of the completion list, will
       // it flow offscreen?'
-      
+
       if (top + help_.getOffsetHeight() + 20 > Window.getClientHeight())
          top = bottom - help_.getOffsetHeight() - 9;
-      
+
       // It is also possible that the help could flow offscreen to the right,
       // e.g. if the user has decided to place the source / console windows on
       // the right. Check for this and position help to the left if it prevents
@@ -354,33 +351,33 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       // it's better than the alternative (having help overflow on the right)
       int destinationLeft = left + width - 4;
       int destinationTop = top + 3;
-      
+
       if (destinationLeft + help_.getOffsetWidth() > Window.getClientWidth())
       {
          int potentialLeft = left - help_.getOffsetWidth();
          if (potentialLeft > 0)
             destinationLeft = potentialLeft;
       }
-      
+
       help_.setPopupPosition(destinationLeft, destinationTop);
       help_.setVisible(setVisible);
    }
-   
+
    @Override
    public void displayDataHelp(ParsedInfo help)
    {
       displayPackageHelp(help);
    }
-   
+
    @Override
    public void displaySnippetHelp(String contents)
    {
       if (!completionListIsOnScreen())
          return;
-      
+
       help_.displaySnippetHelp(contents);
       resolveHelpPosition(!StringUtil.isNullOrEmpty(contents));
-      
+
    }
 
    public void clearHelp(boolean downloadOperationPending)
@@ -395,7 +392,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    }
 
    public HandlerRegistration addSelectionCommitHandler(
-         SelectionCommitHandler<QualifiedName> handler)
+         SelectionCommitEvent.Handler<QualifiedName> handler)
    {
       return addHandler(handler, SelectionCommitEvent.getType());
    }
@@ -404,13 +401,13 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    {
       return addDomHandler(handler, MouseDownEvent.getType());
    }
-   
+
    public boolean isHelpVisible()
    {
       return help_.isVisible() && help_.isShowing() &&
             !isOffscreen();
    }
-   
+
    private HTML setText(String text)
    {
       HTML contents = new HTML();
@@ -418,25 +415,25 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       setWidget(contents);
       return contents;
    }
-   
+
    public QualifiedName[] getItems()
    {
       return list_.getItems();
    }
-   
+
    private void registerNativeHandler(NativePreviewHandler handler)
    {
       if (handlerRegistration_ != null)
          handlerRegistration_.removeHandler();
       handlerRegistration_ = Event.addNativePreviewHandler(handler);
    }
-   
+
    private void unregisterNativeHandler()
    {
       if (handlerRegistration_ != null)
          handlerRegistration_.removeHandler();
    }
-   
+
    private void resetIgnoredKeysHandle()
    {
       if (handle_ != null)
@@ -445,7 +442,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
          handle_ = null;
       }
    }
-   
+
    private void registerIgnoredKeys()
    {
       resetIgnoredKeysHandle();
@@ -454,12 +451,12 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       keySet.add(new KeyCombination("p", KeyCodes.KEY_P, KeyboardShortcut.CTRL));
       handle_ = ShortcutManager.INSTANCE.addIgnoredKeys(keySet);
    }
-   
+
    private void unregisterIgnoredKeys()
    {
       resetIgnoredKeysHandle();
    }
-   
+
    private CompletionList<QualifiedName> list_;
    private HelpInfoPopupPanel help_;
    private final ConsoleResources.ConsoleStyles styles_;

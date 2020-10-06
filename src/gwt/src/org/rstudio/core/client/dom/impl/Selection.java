@@ -1,7 +1,7 @@
 /*
  * Selection.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,39 +27,39 @@ class Selection extends JavaScriptObject
    public static native Selection get() /*-{
       return $wnd.getSelection();
    }-*/;
-   
+
    public static native Selection get(NativeWindow window) /*-{
       return window.getSelection();
    }-*/;
-   
+
    public final native int getRangeCount() /*-{
       return this.rangeCount;
    }-*/;
-   
+
    public final native Range getRangeAt(int index) /*-{
       return this.getRangeAt(index);
    }-*/;
-   
+
    public final native void removeAllRanges() /*-{
       return this.removeAllRanges();
    }-*/;
-   
+
    public final native void addRange(Range range) /*-{
       return this.addRange(range);
    }-*/;
-   
+
    public final native Node getAnchorNode() /*-{
       return this.anchorNode;
    }-*/;
-   
+
    public final native int getAnchorOffset() /*-{
       return this.anchorOffset;
    }-*/;
-   
+
    public final native Node getFocusNode() /*-{
       return this.focusNode;
    }-*/;
-   
+
    public final native int getFocusOffset() /*-{
       return this.focusOffset;
    }-*/;

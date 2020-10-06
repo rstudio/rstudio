@@ -1,7 +1,7 @@
 /*
  * SessionRParser.cpp
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -87,15 +87,17 @@ Error safeEvaluateString(const std::string& string,
    // only evaluate strings that consist of identifiers + extraction
    // operators, e.g. 'foo$bar[[1]]'
    boost::regex reSafeEvaluation("^[a-zA-Z0-9_$@\\[\\]]+$");
-   if (regex_utils::search(string, reSafeEvaluation))
-   {
-      return r::exec::evaluateString(string, pSEXP, pProtect);
-   }
-   else
+   if (!regex_utils::search(string, reSafeEvaluation))
    {
       *pSEXP = R_NilValue;
       return Success();
    }
+   
+   return r::exec::evaluateString(
+            string,
+            pSEXP,
+            pProtect,
+            r::exec::EvalFlagsSuppressWarnings);
 }
 
 bool isDataTableSingleBracketCall(RTokenCursor& cursor)
@@ -1154,9 +1156,6 @@ FunctionInformation getInfoAssociatedWithFunctionAtCursor(
             &info,
             true,
             true);
-   
-   if (error)
-      LOG_ERROR(error);
    
    return info;
    

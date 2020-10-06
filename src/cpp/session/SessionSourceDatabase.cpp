@@ -1,7 +1,7 @@
 /*
  * SessionSourceDatabase.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -45,6 +45,9 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 
+#include <session/prefs/UserPrefs.hpp>
+#include <session/prefs/Preferences.hpp>
+
 #include "SessionSourceDatabaseSupervisor.hpp"
 
 #define kContentsSuffix "-contents"
@@ -65,20 +68,14 @@ namespace rstudio {
 namespace session {
 namespace source_database {
 
-// static members
-const char * const SourceDocument::SourceDocumentTypeSweave    = "sweave";
-const char * const SourceDocument::SourceDocumentTypeRSource   = "r_source";
-const char * const SourceDocument::SourceDocumentTypeRMarkdown = "r_markdown";
-const char * const SourceDocument::SourceDocumentTypeRHTML     = "r_html";
-const char * const SourceDocument::SourceDocumentTypeCpp       = "cpp";
-const char * const SourceDocument::SourceDocumentTypeJS        = "js";
-const char * const SourceDocument::SourceDocumentTypeSQL       = "sql";
-
 namespace {
 
 // cached mapping of document id to document path (facilitates efficient path
 // lookup)
 std::map<std::string, std::string> s_idToPath;
+
+// cached mapping of document last write times
+std::map<std::string, std::time_t> s_lastWriteTimes;
 
 struct PropertiesDatabase
 {
@@ -86,6 +83,20 @@ struct PropertiesDatabase
    FilePath indexFile;
    std::map<std::string,std::string> index;
 };
+
+void cacheLastWriteTime(const std::string& path, std::time_t lastWriteTime)
+{
+   s_lastWriteTimes[path] = lastWriteTime;
+}
+
+std::time_t getCachedLastWriteTime(const std::string& path)
+{
+   auto iter = s_lastWriteTimes.find(path);
+   if (iter != s_lastWriteTimes.end())
+      return iter->second;
+   else
+      return 0;
+}
 
 Error getPropertiesDatabase(PropertiesDatabase* pDatabase)
 {
@@ -158,7 +169,7 @@ Error getProperties(const std::string& path, json::Object* pProperties)
    }
 
    // read the properties file
-   std::string contents ;
+   std::string contents;
    FilePath propertiesFilePath = propertiesDB.path.completePath(propertiesFile);
    error = readStringFromFile(propertiesFilePath, &contents,
                               options().sourceLineEnding());
@@ -349,12 +360,18 @@ Error SourceDocument::setPathAndContents(const std::string& path,
                                                    allowSubstChars,
                                                    &contents);
    if (error)
-      return error ;
+      return error;
 
    // update path and contents
    path_ = path;
    setContents(contents);
+
+   // cache the lastKnownWriteTime on both the document object itself and the source database
+   // if we are unable to update changes to the source database after successfully writing new contents
+   // to the actual file, we want to ensure the lastWriteTime is cached so we can fallback on it - otherwise
+   // we will likely prompt the user to reload the changed file, even though it wasn't changed
    lastKnownWriteTime_ = docPath.getLastWriteTime();
+   cacheLastWriteTime(FilePath(path).getAbsolutePath(), lastKnownWriteTime_);
 
    // rewind the last content update to the file's write time
    lastContentUpdate_ = lastKnownWriteTime_;
@@ -491,10 +508,17 @@ Error SourceDocument::readFromJson(json::Object* pDocJson)
       json::Value properties = docJson["properties"];
       properties_ = !properties.isNull() ? properties.getValue<json::Object>() : json::Object();
 
+      // it's possible that we could have failed to update the source database with the correct lastKnownWriteTime
+      // but the actual file has been updated more recently - in that case, take the newer version that we have cached
       json::Value lastKnownWriteTime = docJson["lastKnownWriteTime"];
-      lastKnownWriteTime_ = !lastKnownWriteTime.isNull()
-                               ? lastKnownWriteTime.getInt64()
-                               : 0;
+      if (!lastKnownWriteTime.isNull())
+      {
+         int64_t val = lastKnownWriteTime.getInt64();
+         std::time_t cachedWriteTime = getCachedLastWriteTime(FilePath(path_).getAbsolutePath());
+         lastKnownWriteTime_ = cachedWriteTime > val ? cachedWriteTime : val;
+      }
+      else
+         lastKnownWriteTime_ = 0;
 
       json::Value encoding = docJson["encoding"];
       encoding_ = !encoding.isNull() ? encoding.getString() : std::string();
@@ -562,7 +586,7 @@ SEXP SourceDocument::toRObject(r::sexp::Protect* pProtect, bool includeContents)
    return r::sexp::create(object, pProtect);
 }
 
-Error SourceDocument::writeToFile(const FilePath& filePath, bool writeContents) const
+Error SourceDocument::writeToFile(const FilePath& filePath, bool writeContents, bool retryRewrite) const
 {
    // NOTE: in a previous implementation, the document properties and
    // document contents were encoded together in the same file -- we
@@ -571,11 +595,17 @@ Error SourceDocument::writeToFile(const FilePath& filePath, bool writeContents) 
    // allows newer versions of RStudio to remain backwards-compatible
    // with older formats for the source database
    
+   int saveTimeout = retryRewrite ? session::prefs::userPrefs().saveRetryTimeout() : 0;
+
    // write contents to file
    if (writeContents)
    {
       FilePath contentsPath(filePath.getAbsolutePath() + kContentsSuffix);
-      Error error = writeStringToFile(contentsPath, contents_);
+      Error error = writeStringToFile(contentsPath,
+                                      contents_,
+                                      string_utils::LineEndingPassthrough,
+                                      true,
+                                      saveTimeout);
       if (error)
          return error;
    }
@@ -585,7 +615,11 @@ Error SourceDocument::writeToFile(const FilePath& filePath, bool writeContents) 
    writeToJson(&jsonProperties, false);
    
    // write properties to file
-   Error error = writeStringToFile(filePath, jsonProperties.writeFormatted());
+   Error error = writeStringToFile(filePath,
+                                   jsonProperties.writeFormatted(),
+                                   string_utils::LineEndingPassthrough,
+                                   true,
+                                   saveTimeout);
    return error;
 }
 
@@ -787,17 +821,17 @@ bool isSafeSourceDocument(const FilePath& docDbPath,
 
 Error list(std::vector<boost::shared_ptr<SourceDocument> >* pDocs)
 {
-   std::vector<FilePath> files ;
+   std::vector<FilePath> files;
    Error error = source_database::path().getChildren(files);
    if (error)
-      return error ;
+      return error;
    
    for (FilePath& filePath : files)
    {
       if (isSourceDocument(filePath))
       {
          // get the source doc
-         boost::shared_ptr<SourceDocument> pDoc(new SourceDocument()) ;
+         boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
          Error error = source_database::get(filePath.getFilename(), pDoc);
          if (!error)
          {
@@ -831,13 +865,13 @@ Error list(std::vector<FilePath>* pPaths)
    return Success();
 }
    
-Error put(boost::shared_ptr<SourceDocument> pDoc, bool writeContents)
+Error put(boost::shared_ptr<SourceDocument> pDoc, bool writeContents, bool retryRewrite)
 {   
    // write to file
    FilePath filePath = source_database::path().completePath(pDoc->id());
-   Error error = pDoc->writeToFile(filePath, writeContents);
+   Error error = pDoc->writeToFile(filePath, writeContents, retryRewrite);
    if (error)
-      return error ;
+      return error;
 
    // write properties to durable storage (if there is a path)
    if (!pDoc->path().empty())
@@ -857,16 +891,16 @@ Error remove(const std::string& id)
    
 Error removeAll()
 {
-   std::vector<FilePath> files ;
+   std::vector<FilePath> files;
    Error error = source_database::path().getChildren(files);
    if (error)
-      return error ;
+      return error;
    
    for (FilePath& filePath : files)
    {
       Error error = filePath.remove();
       if (error)
-         return error ;
+         return error;
    }
    
    return Success();

@@ -1,7 +1,7 @@
 /*
  * RGraphicsErrorCategory.cpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,18 +31,18 @@ public:
 
 const boost::system::error_category& rGraphicsCategory()
 {
-   static RGraphicsErrorCategory rGraphicsErrorCategoryConst ;
-   return rGraphicsErrorCategoryConst ;
+   static RGraphicsErrorCategory rGraphicsErrorCategoryConst;
+   return rGraphicsErrorCategoryConst;
 }
 
 const char * RGraphicsErrorCategory::name() const BOOST_NOEXCEPT
 {
-   return "r-graphics" ;
+   return "r-graphics";
 }
 
 std::string RGraphicsErrorCategory::message( int ev ) const
 {
-   std::string message ;
+   std::string message;
    switch (ev)
    {
       case errc::IncompatibleGraphicsEngine:
@@ -74,11 +74,11 @@ std::string RGraphicsErrorCategory::message( int ev ) const
          break;
          
       default:
-         message = "Unknown error" ;
+         message = "Unknown error";
          break;
    }
 
-   return message ;
+   return message;
 }
    
 } // namespace graphics

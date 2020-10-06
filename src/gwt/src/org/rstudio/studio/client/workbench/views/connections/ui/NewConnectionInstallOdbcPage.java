@@ -1,7 +1,7 @@
 /*
  * NewConnectionInstallOdbcPage.java
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,8 +23,6 @@ import org.rstudio.core.client.widget.WizardIntermediatePage;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionInfo;
-import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionSnippetPage;
-
 import com.google.gwt.safehtml.shared.SafeUri;
 import com.google.gwt.user.client.ui.Widget;
 

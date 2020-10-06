@@ -1,7 +1,7 @@
 /*
  * Win32FileScanner.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -115,6 +115,10 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
    // iterate over entries
    for (const FileInfo& childFileInfo : childrenFileInfo)
    {
+      // check for interrupts
+      if (boost::this_thread::interruption_requested())
+         return core::systemError(boost::system::errc::interrupted, ERROR_LOCATION);
+
       // apply filter if we have one
       if (options.filter && !options.filter(childFileInfo))
          continue;

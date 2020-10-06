@@ -1,7 +1,7 @@
 /*
  * SessionPostback.cpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -51,7 +51,7 @@ To create a new postback handler for an action 'foo' do the following:
 
 #include <session/SessionOptions.hpp>
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {  
@@ -100,11 +100,11 @@ Error registerPostbackHandler(const std::string& name,
                     postback,
                     boost::bind(handlePostback, handlerFunction, _1, _2));
    if (error)
-      return error ;
+      return error;
                                                     
    // compute the shell command required to invoke this handler and return it
    Options& options = session::options();
-   *pShellCommand = options.rpostbackPath().getAbsolutePath() + "-" + name ;
+   *pShellCommand = options.rpostbackPath().getAbsolutePath() + "-" + name;
    
    // return success
    return Success();

@@ -1,7 +1,7 @@
 /*
  * ClientEventDispatcher.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -55,6 +55,8 @@ import org.rstudio.studio.client.common.synctex.events.SynctexEditFileEvent;
 import org.rstudio.studio.client.common.synctex.model.SourceLocation;
 import org.rstudio.studio.client.events.EditorCommandDispatchEvent;
 import org.rstudio.studio.client.events.EditorCommandEvent;
+import org.rstudio.studio.client.events.RStudioApiRequestEvent;
+import org.rstudio.studio.client.events.ReticulateEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewCompletedEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewOutputEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewStartedEvent;
@@ -100,10 +102,6 @@ import org.rstudio.studio.client.server.model.RequestDocumentSaveEvent;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.shiny.events.ShinyFrameNavigatedEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
-import org.rstudio.studio.client.tests.events.TestsCompletedEvent;
-import org.rstudio.studio.client.tests.events.TestsOutputEvent;
-import org.rstudio.studio.client.tests.events.TestsStartedEvent;
-import org.rstudio.studio.client.tests.model.TestsResult;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.addins.events.AddinRegistryUpdatedEvent;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
@@ -203,13 +201,13 @@ import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigateEve
 
 import java.util.ArrayList;
 
-public class ClientEventDispatcher 
+public class ClientEventDispatcher
 {
    public ClientEventDispatcher(EventBus eventBus)
    {
       eventBus_ = eventBus;
    }
-   
+
    public void enqueEventAsJso(JavaScriptObject event)
    {
       ClientEvent clientEvent = event.<ClientEvent>cast();
@@ -238,9 +236,9 @@ public class ClientEventDispatcher
          });
       }
    }
-   
-   private void dispatchEvent(ClientEvent event) 
-   { 
+
+   private void dispatchEvent(ClientEvent event)
+   {
       String type = event.getType();
       try
       {
@@ -364,7 +362,7 @@ public class ClientEventDispatcher
             eventBus_.dispatchEvent(new ShowDataEvent(data));
          }
          else if (type == ClientEvent.AbendWarning)
-         {            
+         {
             eventBus_.dispatchEvent(new SessionAbendWarningEvent());
          }
          else if (type == ClientEvent.ShowWarningBar)
@@ -571,7 +569,7 @@ public class ClientEventDispatcher
          {
             // NOTE: we don't explicitly stop listening for events here
             // for the reasons cited above in ClientEvent.Quit
-            
+
             // fire event
             String message = event.getData();
             eventBus_.dispatchEvent(new SuicideEvent(message));
@@ -590,6 +588,11 @@ public class ClientEventDispatcher
          {
             String objectName = event.getData();
             eventBus_.dispatchEvent(new EnvironmentObjectRemovedEvent(objectName));
+         }
+         else if (type == ClientEvent.EnvironmentChanged)
+         {
+            EnvironmentChangedEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new EnvironmentChangedEvent(data));
          }
          else if (type == ClientEvent.BrowserLineChanged)
          {
@@ -740,6 +743,11 @@ public class ClientEventDispatcher
          {
             SessionCountChangedEvent.Data data = event.getData();
             eventBus_.dispatchEvent(new SessionCountChangedEvent(data));
+         }
+         else if (type == ClientEvent.SessionLabelChanged)
+         {
+            SessionLabelChangedEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new SessionLabelChangedEvent(data));
          }
          else if (type == ClientEvent.CollabEditEnded)
          {
@@ -982,21 +990,6 @@ public class ClientEventDispatcher
             AskSecretEvent.Data data = event.getData();
             eventBus_.dispatchEvent(new AskSecretEvent(data));
          }
-         else if (type == ClientEvent.TestsStarted)
-         {
-            TestsStartedEvent.Data data = event.getData();
-            eventBus_.dispatchEvent(new TestsStartedEvent(data));
-         }
-         else if (type == ClientEvent.TestsOutput)
-         {
-            CompileOutput data = event.getData();
-            eventBus_.dispatchEvent(new TestsOutputEvent(data));
-         }
-         else if (type == ClientEvent.TestsCompleted)
-         {
-            TestsResult result = event.getData();
-            eventBus_.dispatchEvent(new TestsCompletedEvent(result));
-         }
          else if (type == ClientEvent.JobUpdated)
          {
             JobUpdate data = event.getData();
@@ -1061,6 +1054,16 @@ public class ClientEventDispatcher
             TutorialLaunchEvent.Data data = event.getData();
             eventBus_.dispatchEvent(new TutorialLaunchEvent(data));
          }
+         else if (type == ClientEvent.ReticulateEvent)
+         {
+            ReticulateEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new ReticulateEvent(data));
+         }
+         else if (type == ClientEvent.RStudioApiRequest)
+         {
+            RStudioApiRequestEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new RStudioApiRequestEvent(data));
+         }
          else
          {
             GWT.log("WARNING: Server event not dispatched: " + type, null);
@@ -1071,11 +1074,11 @@ public class ClientEventDispatcher
          GWT.log("WARNING: Exception occurred dispatching event: " + type, e);
       }
    }
-   
+
 
    private final EventBus eventBus_;
 
    private final ArrayList<ClientEvent> pendingEvents_ = new ArrayList<ClientEvent>();
-   
+
 
 }

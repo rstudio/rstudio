@@ -1,7 +1,7 @@
 /*
  * SocketUtils.hpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -52,15 +52,20 @@ Error closeSocket(SocketService& socket)
       // shutdown, but don't allow shutdown errors to prevent us from closing
       // (shutdown errors often occur b/c the other end of the socket has
       // already been closed)
-      boost::system::error_code ec ;
-      socket.shutdown(boost::asio::socket_base::shutdown_both, ec) ;
+      boost::system::error_code ec;
+      socket.shutdown(boost::asio::socket_base::shutdown_both, ec);
       
-      socket.close(ec) ;
+      socket.close(ec);
       if (ec)
-         return Error(ec, ERROR_LOCATION) ;
+         return Error(ec, ERROR_LOCATION);
    }
    
-   return Success() ; 
+   return Success();
+}
+
+inline bool isWrongProtocolTypeError(const core::Error& error)
+{
+   return error == systemError(boost::system::errc::wrong_protocol_type, ErrorLocation());
 }
 
 inline bool isConnectionTerminatedError(const core::Error& error)

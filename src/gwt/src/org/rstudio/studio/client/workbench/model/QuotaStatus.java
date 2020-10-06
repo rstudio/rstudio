@@ -1,7 +1,7 @@
 /*
  * QuotaStatus.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,16 +17,16 @@ package org.rstudio.studio.client.workbench.model;
 import com.google.gwt.core.client.JavaScriptObject;
 
 public class QuotaStatus extends JavaScriptObject
-{ 
+{
    protected QuotaStatus()
    {
    }
-   
-   public final long getUsed() 
+
+   public final long getUsed()
    {
       return getLongValue("used");
    }
-   
+
    public final long getQuota()
    {
       return getLongValue("quota");
@@ -36,41 +36,41 @@ public class QuotaStatus extends JavaScriptObject
    {
       return getLongValue("limit");
    }
-  
+
    public final boolean isNearQuota()
    {
       return isNear(getQuota());
    }
-   
+
    public final boolean isOverQuota()
    {
       return isOver(getQuota());
    }
-   
+
    public final boolean isNearLimit()
    {
      return isNear(getLimit());
    }
-      
+
    private final boolean isOver(double threshold)
    {
       return getUsed() > threshold;
    }
-   
+
    private final boolean isNear(double threshold)
    {
       // defend against dbz
       if (threshold == 0)
          return false;
-      
+
       return (getUsed() / threshold) > 0.90;
    }
-   
+
    private final long getLongValue(String value)
    {
-      return new Double(getValueNative(value)).longValue();
+      return Double.valueOf(getValueNative(value)).longValue();
    }
-   
+
    private final native double getValueNative(String value) /*-{
       return this[value];
    }-*/;

@@ -1,7 +1,7 @@
 /*
  * SourceControlPreferencesPane.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -69,16 +69,16 @@ public class SourceControlPreferencesPane extends PreferencesPane
          public void onValueChange(ValueChangeEvent<Boolean> event)
          {
             manageControlVisibility();
-            
+
             globalDisplay.showMessage(
                MessageDialog.INFO,
                (event.getValue() ? "Enable" : "Disable") + " Version Control",
                "You must restart RStudio for this change to take effect.");
          }
       });
-      
-      
-      // git exe path chooser  
+
+
+      // git exe path chooser
       Command onGitExePathChosen = new Command()
       {
          @Override
@@ -92,7 +92,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
                   String message = "The program '" + gitExePath + "'" +
                      " is unlikely to be a valid git executable.\n" +
                      "Please select a git executable called 'git.exe'.";
-                  
+
                   globalDisplay.showMessage(
                         GlobalDisplay.MSG_WARNING,
                         "Invalid Git Executable",
@@ -112,7 +112,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
       SessionInfo sessionInfo = session.getSessionInfo();
       if (sessionInfo.getAllowVcsExeEdit())
          addTextBoxChooser(gitExePathLabel_, gitExePathChooser_);
- 
+
       // svn exe path chooser
       svnExePathLabel_ = new FormLabel("SVN executable:");
       svnExePathChooser_ = new FileChooserTextBox(svnExePathLabel_,
@@ -123,29 +123,29 @@ public class SourceControlPreferencesPane extends PreferencesPane
                                                   null);
       if (sessionInfo.getAllowVcsExeEdit())
          addTextBoxChooser(svnExePathLabel_, svnExePathChooser_);
-      
+
       // terminal path
       terminalPathLabel_ = new FormLabel("Terminal executable:");
       terminalPathChooser_ = new FileChooserTextBox(terminalPathLabel_,
                                                     "(Not Found)",
                                                     ElementIds.TextBoxButtonId.VCS_TERMINAL,
                                                     false,
-                                                    null, 
+                                                    null,
                                                     null);
       if (haveTerminalPathPref())
          addTextBoxChooser(terminalPathLabel_, terminalPathChooser_);
-     
+
       // ssh key widget
       sshKeyWidget_ = new SshKeyWidget(server, "330px");
       sshKeyWidget_.addStyleName(res_.styles().sshKeyWidget());
       nudgeRight(sshKeyWidget_);
       add(sshKeyWidget_);
-            
+
       HelpLink vcsHelpLink = new VcsHelpLink();
-      nudgeRight(vcsHelpLink); 
-      vcsHelpLink.addStyleName(res_.styles().newSection()); 
+      nudgeRight(vcsHelpLink);
+      vcsHelpLink.addStyleName(res_.styles().newSection());
       add(vcsHelpLink);
-                                      
+
       chkVcsEnabled_.setEnabled(false);
       gitExePathChooser_.setEnabled(false);
       svnExePathChooser_.setEnabled(false);
@@ -164,7 +164,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
       gitExePathChooser_.setText(prefs.gitExePath().getValue());
       svnExePathChooser_.setText(prefs.svnExePath().getValue());
       terminalPathChooser_.setText(prefs.terminalPath().getValue());
-      
+
       sshKeyWidget_.setRsaSshKeyPath(prefs.rsaKeyPath().getValue(),
                                      prefs.haveRsaKey().getValue());
       sshKeyWidget_.setProgressIndicator(getProgressIndicator());
@@ -194,7 +194,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
    public RestartRequirement onApply(UserPrefs prefs)
    {
       RestartRequirement restartRequirement = super.onApply(prefs);
-      
+
       prefs.vcsEnabled().setGlobalValue(chkVcsEnabled_.getValue());
       prefs.gitExePath().setGlobalValue(gitExePathChooser_.getText());
       prefs.svnExePath().setGlobalValue(svnExePathChooser_.getText());
@@ -202,12 +202,12 @@ public class SourceControlPreferencesPane extends PreferencesPane
 
       return restartRequirement;
    }
-   
+
    private boolean haveTerminalPathPref()
    {
       return Desktop.isDesktop() && BrowseCap.isLinux();
    }
-   
+
    private void addTextBoxChooser(Label captionLabel, TextBoxWithButton chooser)
    {
       String textWidth = "250px";
@@ -240,11 +240,11 @@ public class SourceControlPreferencesPane extends PreferencesPane
       terminalPathChooser_.setVisible(vcsEnabled && haveTerminalPathPref());
       sshKeyWidget_.setVisible(vcsEnabled);
    }
-   
+
    private final PreferencesDialogResources res_;
 
    private final CheckBox chkVcsEnabled_;
-   
+
    private FormLabel svnExePathLabel_;
    private FormLabel gitExePathLabel_;
    private TextBoxWithButton gitExePathChooser_;

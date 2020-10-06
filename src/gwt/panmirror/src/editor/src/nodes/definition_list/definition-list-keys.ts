@@ -1,7 +1,7 @@
 /*
  * definition_list-keys.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -147,15 +147,14 @@ function termEnter(term: ContentNodeWithPos, state: EditorState, dispatch?: (tr:
     return false;
   }
 
-  // if we are empty then it's an exit (insert a paragraph below)
+  // if we are empty then it's an exit (delete the term)
   const isEmpty = term.node.textContent.length === 0;
   if (isEmpty) {
     if (dispatch) {
       const tr = state.tr;
-      const start = $head.start($head.depth) - 1;
-      const end = start + $head.node($head.depth).nodeSize;
-      tr.replaceRangeWith(start, end, schema.nodes.paragraph.create());
-      setTextSelection(start, 1)(tr).scrollIntoView();
+      tr.deleteRange(term.pos, term.pos + term.node.nodeSize);
+      tr.replaceSelectionWith(schema.nodes.paragraph.create());
+      setTextSelection(tr.mapping.map(state.selection.from), 1)(tr);
       dispatch(tr);
     }
     return true;

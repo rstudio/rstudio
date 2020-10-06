@@ -1,7 +1,7 @@
 /*
  * SessionOverlay.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,7 +17,7 @@
 
 #include <shared_core/Error.hpp>
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {  
@@ -49,8 +49,13 @@ int verifyInstallation()
    return EXIT_SUCCESS;
 }
 
-void initMonitorClient()
+void initMonitorClient(boost::asio::io_service& ioService)
 {
+}
+
+std::string sessionNode()
+{
+   return std::string();
 }
 
 } // namespace overlay

@@ -1,7 +1,7 @@
 /*
  * AsyncClient.hpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -50,7 +50,7 @@
    catch(const std::exception& e) \
    { \
       handleUnexpectedError(std::string("Unexpected exception: ") + \
-                            e.what(), ERROR_LOCATION) ;  \
+                            e.what(), ERROR_LOCATION);  \
    } \
    catch(...) \
    { \
@@ -128,6 +128,11 @@ public:
       errorHandler_ = errorHandler;
       if (chunkHandler)
          chunkHandler_ = chunkHandler;
+
+      // if the host header is not already set, make sure we stamp a default one
+      // this is required by the http standard
+      if (request_.host().empty())
+         request_.setHost(getDefaultHostHeader());
 
       // connect and write request (implmented in a protocol
       // specific manner by subclassees)
@@ -228,6 +233,24 @@ public:
       });
    }
 
+   virtual void setConnectHandler(const ConnectHandler& connectHandler)
+   {
+      // if we are already connected, don't bother saving the connect handler
+      // and just invoke it directly
+      bool invokeConnectHandler = false;
+      LOCK_MUTEX(socketMutex_)
+      {
+         if (!requestWritten_)
+            connectHandler_ = connectHandler;
+         else
+            invokeConnectHandler = true;
+      }
+      END_LOCK_MUTEX
+
+      if (invokeConnectHandler)
+         connectHandler();
+   }
+
 protected:
 
    boost::asio::io_service& ioService() { return ioService_; }
@@ -313,7 +336,7 @@ protected:
 private:
 
    virtual void connectAndWriteRequest() = 0;
-
+   virtual std::string getDefaultHostHeader() = 0;
 
    bool retryConnectionIfRequired(const Error& connectionError,
                                   Error* pOtherError)
@@ -406,24 +429,6 @@ private:
          }
       }
       CATCH_UNEXPECTED_ASYNC_CLIENT_EXCEPTION
-   }
-
-   virtual void setConnectHandler(const ConnectHandler& connectHandler)
-   {
-      // if we are already connected, don't bother saving the connect handler
-      // and just invoke it directly
-      bool invokeConnectHandler = false;
-      LOCK_MUTEX(socketMutex_)
-      {
-         if (!requestWritten_)
-            connectHandler_ = connectHandler;
-         else
-            invokeConnectHandler = true;
-      }
-      END_LOCK_MUTEX
-
-      if (invokeConnectHandler)
-         connectHandler();
    }
 
    void handleWrite(const boost::system::error_code& ec)

@@ -1,7 +1,7 @@
 /*
  * ProvidesBusy.java
  *
- * Copyright (C) 2009-14 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,11 +14,11 @@
  */
 package org.rstudio.core.client.widget.model;
 
-import org.rstudio.studio.client.workbench.events.BusyHandler;
+import org.rstudio.studio.client.workbench.events.BusyEvent;
 
 public interface ProvidesBusy
 {
    // Note that this doesn't return HandlerRegistration to avoid complications
-   // with busy sources that are async (i.e. tab shims) 
-   public void addBusyHandler(BusyHandler handler);
+   // with busy sources that are async (i.e. tab shims)
+   void addBusyHandler(BusyEvent.Handler handler);
 }

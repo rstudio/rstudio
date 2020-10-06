@@ -1,7 +1,7 @@
 /*
  * ActiveScopeChangedEvent.java
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,18 +25,18 @@ public class ActiveScopeChangedEvent extends GwtEvent<ActiveScopeChangedEvent.Ha
    {
       scope_ = scope;
    }
-   
+
    public Scope getScope() { return scope_; }
-   
+
    private final Scope scope_;
-   
+
    // Boilerplate ----
-   
+
    public interface Handler extends EventHandler
    {
       void onActiveScopeChanged(ActiveScopeChangedEvent event);
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -49,5 +49,5 @@ public class ActiveScopeChangedEvent extends GwtEvent<ActiveScopeChangedEvent.Ha
       handler.onActiveScopeChanged(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

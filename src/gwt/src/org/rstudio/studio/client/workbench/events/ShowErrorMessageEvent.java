@@ -1,7 +1,7 @@
 /*
  * ShowErrorMessageEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,35 +14,40 @@
  */
 package org.rstudio.studio.client.workbench.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import org.rstudio.studio.client.workbench.model.ErrorMessage;
 
-public class ShowErrorMessageEvent extends GwtEvent<ShowErrorMessageHandler>
+public class ShowErrorMessageEvent extends GwtEvent<ShowErrorMessageEvent.Handler>
 {
-   public static final GwtEvent.Type<ShowErrorMessageHandler> TYPE =
-      new GwtEvent.Type<ShowErrorMessageHandler>();
-   
+   public static final GwtEvent.Type<Handler> TYPE = new GwtEvent.Type<>();
+
+   public interface Handler extends EventHandler
+   {
+      void onShowErrorMessage(ShowErrorMessageEvent event);
+   }
+
    public ShowErrorMessageEvent(ErrorMessage message)
    {
       errorMessage_ = message;
    }
-   
+
    public ErrorMessage getErrorMessage()
    {
       return errorMessage_;
    }
-   
+
    @Override
-   protected void dispatch(ShowErrorMessageHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onShowErrorMessage(this);
    }
 
    @Override
-   public GwtEvent.Type<ShowErrorMessageHandler> getAssociatedType()
+   public GwtEvent.Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
-   
-   private ErrorMessage errorMessage_;
+
+   private final ErrorMessage errorMessage_;
 }

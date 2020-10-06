@@ -1,0 +1,405 @@
+{
+   "metadata": {
+      "generatorType": "ProgramOptions",
+      "namespace": "rstudio::server",
+      "includeGuard": "SERVER_SERVER_OPTIONS_GEN_HPP",
+      "configFile": "rserver.conf",
+      "docDescription": "The following is a list of available options that can be specified in the `rserver.conf` configuration file, which controls behavior of the `rserver` process, allowing you to tune HTTP, authorization options, and other settings that broadly affect RStudio Server.",
+      "outputSourceFile": "server/include/server/ServerOptions.gen.hpp",
+      "outputDocFile": "/dev/null",
+      "additionalIncludes": [
+         "<boost/regex.hpp>", 
+         "<boost/utility.hpp>",
+         "<core/system/PosixUser.hpp>",
+         "<core/system/PosixSystem.hpp>",
+         "<core/system/Xdg.hpp>",
+         "<monitor/MonitorConstants.hpp>",
+         "<core/http/Request.hpp>",
+         "<core/http/Cookie.hpp>"
+      ]
+   },
+   "options": {
+      "verify": [
+         {
+            "name": "verify-installation",
+            "memberName": "verifyInstallation_",
+            "type": "bool",
+            "defaultValue": false,
+            "description": "Runs verification mode to verify the current installation."
+         }
+      ],
+      "server": [
+         {
+            "name": "server-working-dir",
+            "memberName": "serverWorkingDir_",
+            "type": "string",
+            "defaultValue": "/",
+            "description": "The default working directory of the rserver process."
+         },
+         {
+            "name": "server-user",
+            "memberName": "serverUser_",
+            "type": "string",
+            "defaultValue": "rstudio-server",
+            "description": "The user account of the rserver process."
+         },
+         {
+            "name": "server-daemonize",
+            "memberName": "serverDaemonize_",
+            "type": "bool",
+            "defaultValue": {"code": "core::system::effectiveUserIsRoot()", "description": "1 (true) if rserver was run with root privilege, otherwise 0 (false)."},
+            "description": "Indicates whether or not the rserver process should run as a daemon."
+         },
+         {
+            "name": "server-pid-file",
+            "memberName": "serverPidFile_",
+            "type": "string",
+            "defaultValue": "/var/run/rstudio-server.pid",
+            "description": "The path to a file where the rserver daemon's pid is written."
+         },
+         {
+            "name": "server-app-armor-enabled",
+            "memberName": "deprecatedServerAppArmorEnabled_",
+            "isDeprecated": true,
+            "type": "bool",
+            "defaultValue": false,
+            "skipAccessorGeneration": true,
+            "description": "Indicates whether or not to enable AppArmor profiles for the rserver process."
+         },
+         {
+            "name": "server-set-umask",
+            "memberName": "serverSetUmask_",
+            "type": "bool",
+            "defaultValue": true,
+            "description": "If enabled, sets the rserver process umask to 022 on startup, which causes new files to have rw-r-r permissions."
+         },
+         {
+            "name": "secure-cookie-key-file",
+            "memberName": "secureCookieKeyFile_",
+            "type": "core::FilePath",
+            "defaultValue": "",
+            "description": "If set, overrides the default path of the secure-cookie-key file used for encrypting cookies."
+         },
+         {
+            "name": "server-data-dir",
+            "memberName": "serverDataDir_",
+            "type": "core::FilePath",
+            "defaultValue": "/var/run/rstudio-server",
+            "description": "Path to the data directory where RStudio Server will write run-time state."
+         },
+         {
+            "name": "server-add-header",
+            "memberName": "serverAddHeaders_",
+            "type": "stringList",
+            "isMultitoken": true,
+            "defaultValue": null,
+            "description": "Adds a header to all responses from RStudio Server. This option can be specified multiple times to add multiple headers."
+         }
+      ],
+      "www": [
+         {
+            "name": "www-address",
+            "memberName": "wwwAddress_",
+            "type": "string",
+            "defaultValue": "0.0.0.0",
+            "description": "The network address that RStudio Server will listen on for incoming connections."
+         },
+         {
+            "name": "www-port",
+            "memberName": "wwwPort_",
+            "type": "string",
+            "defaultValue": "",
+            "skipAccessorGeneration": true,
+            "description": "The port that RStudio Server will bind to while listening for incoming connections. If left empty, the port will be automatically determined based on your SSL settings (443 for SSL, 80 for no SSL)."
+         },
+         {
+            "name": "www-root-path",
+            "memberName": "wwwRootPath_",
+            "type": "string",
+            "defaultValue": {"code": "kRequestDefaultRootPath", "description": "Assume the root path '/' if not defined."},
+            "description": "The path prefix added by a proxy to the incoming RStudio URL. This setting is used so RStudio Server knows what path it is being served from. If running RStudio Server behind a path-modifying proxy, this should be changed to match the base RStudio Server URL."
+         },
+         {
+            "name": "www-local-path",
+            "memberName": "wwwLocalPath_",
+            "type": "string",
+            "defaultValue": "www",
+            "description": "The relative path from the RStudio installation directory, or absolute path where web assets are stored." 
+         },
+         {
+            "name": "www-symbol-maps-path",
+            "memberName": "wwwSymbolMapsPath_",
+            "type": "core::FilePath",
+            "defaultValue": "www-symbolmaps",
+            "description": "The relative path from the RStudio installation directory, or absolute path, where symbol maps are stored."
+         },
+         {
+            "name": "www-use-emulated-stack",
+            "memberName": "wwwUseEmulatedStack_",
+            "type": "bool",
+            "defaultValue": false,
+            "description": "Indicates whether or not to use GWT's emulated stack."
+         },
+         {
+            "name": "www-thread-pool-size",
+            "memberName": "wwwThreadPoolSize_",
+            "type": "int",
+            "defaultValue": 2,
+            "description": "The size of the threadpool from which requests will be serviced. This may be increased to enable more concurrency, but should only be done if the underlying hardware has more than 2 cores. It is recommended to use a value that is <= to the number of hardware cores, or <= to two times the number of hardware cores if the hardware utilizes hyperthreading."
+         },
+         {
+            "name": "www-proxy-localhost",
+            "memberName": "wwwProxyLocalhost_",
+            "type": "bool",
+            "defaultValue": true,
+            "description": "Indicates whether or not to proxy requests to localhost ports over the main server port. This should generally be enabled, and is used to proxy HTTP traffic within a session that belongs to code running within the session (e.g. Shiny or Plumber APIs)"
+         },
+         {
+            "name": "www-verify-user-agent",
+            "memberName": "wwwVerifyUserAgent_",
+            "type": "bool",
+            "defaultValue": true,
+            "description": "Indicates whether or not to verify connecting browser user agents to ensure they are compatible with RStudio Server."
+         },
+         {
+            "name": "www-same-site",
+            "memberName": "wwwSameSite_",
+            "type": "rstudio::core::http::Cookie::SameSite",
+            "tempName": "wwwSameSite",
+            "tempType": "string",
+            "defaultValue": "",
+            "description": "The value of the 'SameSite' attribute on the cookies issued by RStudio Server. Accepted values are 'none' or 'lax'. The value 'none' should be used only when RStudio is hosted into an iFrame. For compatibility with some browsers (i.e. Safari 12), duplicate cookies will be issued by RStudio Server when 'none' is used."
+         },
+         {
+            "name": "www-frame-origin",
+            "memberName": "wwwFrameOrigin_",
+            "type": "string",
+            "defaultValue": "none",
+            "description": "Specifies the allowed origin for the iFrame hosting RStudio if iFrame embedding is enabled."
+         },
+         {
+            "name": "www-enable-origin-check",
+            "memberName": "wwwEnableOriginCheck_",
+            "type": "bool",
+            "defaultValue": false,
+            "description": "If enabled, cause RStudio to enforce that incoming request origins are from the host domain. This can be added for additional security. See https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html#verifying-origin-with-standard-headers"
+         },
+         {
+            "name": "www-allow-origin",
+            "memberName": "wwwAllowedOrigins_",
+            "type": "std::vector<boost::regex>",
+            "tempName": "pWwwAllowedOrigins",
+            "tempType": "stringList",
+            "defaultValue": null,
+            "isMultitoken": true,
+            "description": "Specifies an additional origin that requests are allowed from, even if it does not match the host domain. Used if origin checking is enabled. May be specified multiple times for multiple origins."
+         }
+      ],
+      "rsession": [
+         {
+            "name": "rsession-which-r",
+            "memberName": "rsessionWhichR_",
+            "type": "string",
+            "defaultValue": "",
+            "description": "The path to the main R program (e.g. /usr/bin/R). This should be set if no versions are specified in /etc/rstudio/r-versions and the default R installation is not available on the system path."
+         },
+         {
+            "name": "rsession-path",
+            "memberName": "rsessionPath_",
+            "type": "string",
+            "defaultValue": "rsession",
+            "description": "The relative path from the RStudio installation directory, or absolute path to the rsession executable."
+         },
+         {
+            "name": "rldpath-path",
+            "memberName": "rldpathPath_",
+            "type": "string",
+            "defaultValue": "r-ldpath",
+            "description": "The path to the r-ldpath script which specifies extra library paths for R versions."
+         },
+         {
+            "name": "rsession-ld-library-path",
+            "memberName": "rsessionLdLibraryPath_",
+            "type": "string",
+            "defaultValue": "",
+            "description": "Specifies additional LD_LIBRARY_PATHs to use for R sessions."
+         },
+         {
+            "name": "rsession-config-file",
+            "memberName": "rsessionConfigFile_",
+            "type": "string",
+            "defaultValue": "",
+            "description": "If set, overrides the path to the /etc/rstudio/rsession.conf configuration file. The specified path may be a relative path from the RStudio installation directory, or an absolute path."
+         },
+         {
+            "name": "rsession-proxy-max-wait-secs",
+            "memberName": "rsessionProxyMaxWaitSeconds_",
+            "type": "int",
+            "defaultValue": 10,
+            "description": "The maximum time to wait in seconds for a successful response when proxying requests to rsession."
+         },
+         {
+            "name": "rsession-memory-limit-mb",
+            "memberName": "deprecatedMemoryLimitMb_",
+            "isDeprecated": true,
+            "type": "int",
+            "defaultValue": 0,
+            "skipAccessorGeneration": true,
+            "description": "The limit in MB that an rsession process may consume."
+         },
+         {
+            "name": "rsession-stack-limit-mb",
+            "memberName": "deprecatedStackLimitMb_",
+            "isDeprecated": true,
+            "type": "int",
+            "defaultValue": 0,
+            "skipAccessorGeneration": true,
+            "description": "The limit in MB that an rsession process may consume for its stack."
+         },
+         {
+            "name": "rsession-process-limit",
+            "memberName": "deprecatedUserProcessLimit_",
+            "isDeprecated": true,
+            "type": "int",
+            "defaultValue": 0,
+            "skipAccessorGeneration": true,
+            "description": "The maximum number of allowable rsession processes."
+         }
+      ],
+      "database": [
+         {
+            "name": "database-config-file",
+            "memberName": "databaseConfigFile_",
+            "type": "string",
+            "defaultValue": "",
+            "description": "If set, overrides the path to the /etc/rstudio/database.conf configuration file."
+         }
+      ],
+      "auth": [
+         {
+            "name": "auth-none",
+            "memberName": "authNone_",
+            "type": "bool",
+            "defaultValue": {"code": "!core::system::effectiveUserIsRoot()", "description": "1 (true) if rserver was run without root privilege, otherwise 0 (false)."},
+            "description": "If set, disables multi-user authentication."
+         },
+         {
+            "name": "auth-validate-users",
+            "memberName": "authValidateUsers_",
+            "type": "bool",
+            "defaultValue": {"code": "core::system::effectiveUserIsRoot()", "description": "1 (true) if rserver was run with root privilege, otherwise 0 (false)."},
+            "description": "Indicates whether or not to validate that authenticated users exist on the target system."
+         },
+         {
+            "name": "auth-stay-signed-in-days",
+            "memberName": "authStaySignedInDays_",
+            "type": "int",
+            "defaultValue": 30,
+            "description": "The number of days to keep a user signed in when using the \"Stay Signed In\" option. Will only take affect when auth-timeout-minutes is 0 (disabled)."  
+         },
+         {
+            "name": "auth-timeout-minutes",
+            "memberName": "authTimeoutMinutes_",
+            "type": "int",
+            "defaultValue": 60,
+            "description": "The number of minutes a user will stay logged in while idle before required to sign in again. Set this to 0 (disabled) to enable legacy timeout auth-stay-signed-in-days."
+         },
+         {
+            "name": "auth-encrypt-password",
+            "memberName": "authEncryptPassword_",
+            "type": "bool",
+            "defaultValue": true,
+            "description": "Indicates whether or not to encrypt the password sent from the login form. For security purposes, we strongly recommend you leave this enabled."
+         },
+         {
+            "name": "auth-login-page-html",
+            "tempName": "pAuthLoginPageHtml",
+            "tempType": "string",
+            "memberName": "authLoginPageHtml_",
+            "type": "string",
+            "defaultValue": "/etc/rstudio/login.html",
+            "description": "The path to a file containing additional HTML customization for the login page."
+         },
+         {
+            "name": "auth-rdp-login-page-html",
+            "tempName": "pAuthRdpLoginPageHtml",
+            "tempType": "string",
+            "memberName": "authRdpLoginPageHtml_",
+            "type": "string",
+            "defaultValue": "/etc/rstudio/rdplogin.html",
+            "description": "The path to a file containing additional HTML customization for the login page, as seen by RDP users."
+         },
+         {
+            "name": "auth-required-user-group",
+            "memberName": "authRequiredUserGroup_",
+            "type": "string",
+            "defaultValue": "",
+            "description": "Specifies a group that users must be in to be able to use RStudio."
+         },
+         {
+            "name": "auth-minimum-user-id",
+            "memberName": "authMinimumUserId_",
+            "type": "unsigned int",
+            "tempName": "pAuthMinimumUserId",
+            "tempType": "string",
+            "defaultValue": "auto",
+            "description": "Specifies a minimum user id value. Users with a uid lower than this value may not use RStudio."
+         },
+         {
+            "name": "auth-pam-helper-path",
+            "memberName": "authPamHelperPath_",
+            "type": "string",
+            "defaultValue": "rserver-pam",
+            "description": "The relative path from the RStudio installation directory, or absolute path where the PAM helper binary resides."
+         },
+         {
+            "name": "auth-pam-require-password-prompt",
+            "memberName": "authPamRequirePasswordPrompt_",
+            "type": "bool",
+            "defaultValue": true,
+            "description": "Indicates whether or not to require the \"Password: \" prompt before sending the password via PAM. In most cases, this should be enabled. If using a custom PAM password prompt, you may need to disable this setting if PAM logins do not work correctly." 
+         },
+         {
+            "name": "auth-pam-requires-priv",
+            "memberName": "deprecatedAuthPamRequiresPriv_",
+            "isDeprecated": true,
+            "type": "bool",
+            "defaultValue": true,
+            "skipAccessorGeneration": true,
+            "description": "Deprecated - will always be true."
+         },
+         {
+            "name": "auth-sign-in-throttle-seconds",
+            "memberName": "authSignInThrottleSeconds_",
+            "type": "int",
+            "defaultValue": 5,
+            "description": "The minimum amount of time a user must wait before attempting to sign in again after signing out."
+         },
+         {
+            "name": "auth-revocation-list-dir",
+            "memberName": "authRevocationListDir_",
+            "isDeprecated": true,
+            "type": "core::FilePath",
+            "defaultValue": "",
+            "description": "If set, overrides the path to the directory which contains the revocation list to be used for storing expired tokens. As of RStudio Server 1.4, this has been moved to database storage, and so this setting is deprecated, but will be used to port over any existing file-based expired tokens."
+         },
+         {
+            "name": "auth-cookies-force-secure",
+            "memberName": "authCookiesForceSecure_",
+            "type": "bool",
+            "defaultValue": false,
+            "description": "Indicates whether or not auth cookies should be forcefully marked as secure. This should be enabled if running an SSL terminator infront of RStudio Server. Otherwise, cookies will be marked secure if SSL is configured."
+         }
+      ],
+      "monitor": [
+         {
+            "name": {"constant": "kMonitorIntervalSeconds", "value": "monitor-interval-seconds"},
+            "memberName": "monitorIntervalSeconds_",
+            "type": "int",
+            "defaultValue": 60,
+            "description": "The interval in seconds at which the monitor is probed for new data."
+         }
+      ]
+   }
+}
+

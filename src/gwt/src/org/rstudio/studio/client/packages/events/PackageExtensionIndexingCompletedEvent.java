@@ -1,7 +1,7 @@
 /*
  * PackageExtensionIndexingCompletedEvent.java
  *
- * Copyright (C) 2009-17 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,21 +26,21 @@ public class PackageExtensionIndexingCompletedEvent
    {
       data_ = data;
    }
-   
+
    public PackageProvidedExtensions.Data getData()
    {
       return data_;
    }
-   
+
    private final PackageProvidedExtensions.Data data_;
-   
+
    // Boilerplate ----
-   
+
    public interface Handler extends EventHandler
    {
       void onPackageExtensionIndexingCompleted(PackageExtensionIndexingCompletedEvent event);
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -53,5 +53,5 @@ public class PackageExtensionIndexingCompletedEvent
       handler.onPackageExtensionIndexingCompleted(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

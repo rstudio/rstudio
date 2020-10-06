@@ -1,7 +1,7 @@
 /*
  * DesktopUtils.cpp
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -63,11 +63,7 @@ void reattachConsoleIfNecessary()
 // SessionOptions.hpp although the code path isn't exactly the same)
 FilePath userLogPath()
 {
-   FilePath userHomePath = core::system::userHomePath("R_USER|HOME");
-   FilePath logPath = core::system::userSettingsPath(
-      userHomePath,
-      "RStudio-Desktop").completeChildPath("log");
-   return logPath;
+   return core::system::xdg::userDataDir().completeChildPath("log");
 }
 
 FilePath userWebCachePath()

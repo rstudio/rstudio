@@ -1,7 +1,7 @@
 /*
  * HighlightEvent.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,42 +28,48 @@ public class HighlightEvent extends GwtEvent<HighlightEvent.Handler>
       {
       }
    }
-   
+
    public static class HighlightQuery extends JavaScriptObject
    {
       protected HighlightQuery()
       {
       }
-      
-      public static final native HighlightQuery create(String query, int parent)
+
+      public static final native HighlightQuery create(String query, int parent, String callback)
       /*-{
          return {
             query: query || "",
-            parent: parent || 0
+            parent: parent || 0,
+            callback: callback || ""
          }
       }-*/;
-      
+
       public final native String getQuery()
       /*-{
          return this.query || "";
       }-*/;
-      
+
       public final native int getParent()
       /*-{
          return this.parent || 0;
       }-*/;
+
+      public final native String getCallback()
+      /*-{
+         return this.callback || "";
+      }-*/;
    }
-   
+
    public interface Handler extends EventHandler
    {
       void onHighlight(HighlightEvent event);
    }
-   
+
    public HighlightEvent(Data data)
    {
       data_ = data;
    }
-   
+
    public Data getData()
    {
       return data_;
@@ -82,6 +88,6 @@ public class HighlightEvent extends GwtEvent<HighlightEvent.Handler>
    }
 
    private final Data data_;
-   
-   public static final Type<Handler> TYPE = new Type<Handler>();
+
+   public static final Type<Handler> TYPE = new Type<>();
 }

@@ -1,9 +1,14 @@
 
-@external gwt-CheckBox;
+@external gwt-CheckBox gwt-Label;
 
 .panelContainer {
    width: 570px;
-   height: 500px;
+   height: 535px;
+}
+
+.panelContainerNoChooser {
+   width: 448px;
+   height: 535px;
 }
 
 .sshKeyWidget {
@@ -22,14 +27,22 @@
    margin-bottom: 11px;
 }
 
+.paneLayoutTable {
+   height: 160px;
+}
+
 .paneLayoutTable td.paneLayoutTable {
    background-color: white;
-   height: 200px;
    vertical-align: top;
-   padding-top: 0px;
+   padding: 0px;
+   border: 0.5px solid #555555;
    -moz-border-radius: 6px;
    -webkit-border-radius: 6px;
    border-radius: 6px;
+}
+
+.paneLayoutTable .label {
+   padding: 5px 5px 0px 5px;
 }
 
 .paneLayoutTable .gwt-CheckBox {
@@ -40,8 +53,7 @@
 }
 
 .paneLayoutTable select {
-   width: 195px;
-   margin-bottom: 5px;
+   margin: 5px 5px 5px 5px;
 }
 
 .themeChooser select {
@@ -58,4 +70,22 @@
 
 .themeInfobarShowing {
    display: block;
+}
+
+.selectWidgetHelp {
+   margin-left: 8px;
+}
+
+.smallerText {
+   font-size: 0.9em;
+}
+
+.visualModeWrapSelectWidget .gwt-Label {
+   margin-bottom: 1px;
+}
+
+
+.userDictEditButton {
+   margin-left: 8px !important;
+   margin-top: 2px !important;
 }

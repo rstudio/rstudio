@@ -1636,7 +1636,8 @@
     if ( row.nTr === null )
     {
       nTr = nTrIn || document.createElement('tr');
-  
+      nTr.setAttribute("data-row", iRow + oSettings._iDisplayStart);
+
       row.nTr = nTr;
       row.anCells = cells;
   
@@ -2568,7 +2569,7 @@
     for ( i=0 ; i<columnCount ; i++ ) {
       column = columns[i];
       columnSearch = preColSearch[i];
-      dataProp = typeof column.mData=="function" ? 'function' : column.mData ;
+      dataProp = typeof column.mData=="function" ? 'function' : column.mData;
   
       d.columns.push( {
         data:       dataProp,
@@ -5123,7 +5124,26 @@
   function _fnBindAction( n, oData, fn )
   {
     $(n)
-      .bind( 'click.DT', oData, function (e) {
+      // we get a lot more control over these custom events on mousedown vs click 
+      // and functionally to the user it will feel a little more responsive
+      .bind( 'mousedown.DT', oData, function (e) {
+          // our resizer doesn't play nice with the custom jquery click
+          // events. catch when we click on a resizer immediately on
+          // mousedown and exit
+          if (!!e.target && e.target.className === "resizer") return;
+
+          // we also don't want to sort when the filter UI is clicked
+          if (!!e.target) {
+            if (e.target.className.indexOf("colFilter") !== -1)
+              return;
+
+            if (e.target.parentElement) {
+              var parEle = e.target.parentElement;
+              if (parEle.className.indexOf("colFilter") !== -1 || parEle.className.indexOf("filterValue") !== -1)
+                return;
+            }
+          }
+
           n.blur(); // Remove focus outline for mouse users
           fn(e);
         } )
@@ -8315,7 +8335,7 @@
   
   _api_registerPlural( 'columns().nodes()', 'column().nodes()', function () {
     return this.iterator( 'column-rows', function ( settings, column, i, j, rows ) {
-      return _pluck_order( settings.aoData, rows, 'anCells', column ) ;
+      return _pluck_order( settings.aoData, rows, 'anCells', column );
     }, 1 );
   } );
   

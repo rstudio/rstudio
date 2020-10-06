@@ -1,7 +1,7 @@
 /*
  * PythonCompletionManager.java
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,6 +26,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenIterator;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
 import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionContext;
 
 public class PythonCompletionManager extends CompletionManagerBase
@@ -93,6 +94,45 @@ public class PythonCompletionManager extends CompletionManagerBase
                   Debug.logError(error);
                }
             });
+   }
+   
+   @Override
+   public void showAdditionalHelp(QualifiedName completion)
+   {
+      final GlobalProgressDelayer progress = new GlobalProgressDelayer(
+            RStudioGinjector.INSTANCE.getGlobalDisplay(),
+            1000,
+            "Opening help...");
+      
+      String line;
+      int position;
+      
+      if (StringUtil.isNullOrEmpty(completion.source))
+      {
+         line = completion.name;
+         position = 0;
+      }
+      else
+      {
+         line = completion.source + "." + completion.name;
+         position = completion.source.length() + 2;
+      }
+      
+      server_.pythonGoToHelp(line, position, new ServerRequestCallback<Boolean>()
+      {
+         @Override
+         public void onResponseReceived(Boolean response)
+         {
+            progress.dismiss();
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            progress.dismiss();
+            Debug.logError(error);
+         }
+      });
    }
 
    @Override

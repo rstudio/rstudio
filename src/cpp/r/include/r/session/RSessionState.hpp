@@ -1,7 +1,7 @@
 /*
  * RSessionState.hpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -57,7 +57,7 @@ bool packratModeEnabled(const core::FilePath& statePath);
 bool restore(const core::FilePath& statePath, 
              bool serverMode,
              boost::function<core::Error()>* pDeferredRestoreAction,
-             std::string* pErrorMessages); 
+             std::string* pErrorMessages);
    
 bool destroy(const core::FilePath& statePath);
 

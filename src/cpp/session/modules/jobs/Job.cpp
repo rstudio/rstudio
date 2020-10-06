@@ -1,7 +1,7 @@
 /*
  * Job.cpp
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -140,7 +140,7 @@ int Job::max() const
 
 JobState Job::state() const
 {
-    return state_; 
+    return state_;
 }
 
 JobType Job::type() const

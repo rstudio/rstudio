@@ -1,7 +1,7 @@
 /*
  * ServerSessionProxy.cpp
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,6 +24,7 @@
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
+#include <boost/foreach.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/thread/thread_time.hpp>
@@ -48,6 +49,7 @@
 #include <core/http/ChunkProxy.hpp>
 #include <core/http/FormProxy.hpp>
 #include <core/system/PosixSystem.hpp>
+#include <core/system/PosixGroup.hpp>
 #include <core/system/PosixUser.hpp>
 #include <core/r_util/RSessionContext.hpp>
 
@@ -71,7 +73,7 @@
 
 #include <server/ServerConstants.hpp>
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace server {
@@ -169,10 +171,11 @@ void invokeRequestFilter(http::Request* pRequest)
 
 bool applyProxyFilter(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
-      const r_util::SessionContext& context)
+      const r_util::SessionContext& context,
+      const ClientHandler& clientHandler = ClientHandler())
 {
    if (s_proxyFilter)
-      return s_proxyFilter(ptrConnection, context);
+      return s_proxyFilter(ptrConnection, context, clientHandler);
    else
       return false;
 }
@@ -215,10 +218,27 @@ void rewriteLocalhostAddressHeader(const std::string& headerName,
                                    bool ipv6,
                                    http::Response* pResponse)
 {
+   // represents the port identifier in the URL
+   std::string portId(port);
+
+   auto portNum = safe_convert::stringTo<int>(portId);
+   if (portNum)
+   {
+      // for numeric ports, use the port token to translate them to opaque identifiers
+      std::string portToken = originalRequest.cookieValue(kPortTokenCookie);
+      if (portToken.empty())
+      {
+         // we'll try the default token if no token was supplied on the request
+         portToken = kDefaultPortToken;
+      }
+
+      portId = server_core::transformPort(portToken, *portNum);
+   }
+
    // get the address and the proxied address
    std::string address = pResponse->headerValue(headerName);
-   std::string proxiedAddress = "http://" + baseAddress + ":" + port;
-   std::string portPath = ipv6 ? ("/p6/" + port) : ("/p/" + port);
+   std::string proxiedAddress = "http://" + baseAddress + ":" + portId;
+   std::string portPath = ipv6 ? ("/p6/" + portId) : ("/p/" + portId);
 
    // relative address, just prepend port
    if (boost::algorithm::starts_with(address, "/"))
@@ -229,12 +249,12 @@ void rewriteLocalhostAddressHeader(const std::string& headerName,
    else if (boost::algorithm::starts_with(address, proxiedAddress))
    {
       // find the base url from the original request
-      std::string absoluteUri = originalRequest.absoluteUri();
-      std::string::size_type pos = absoluteUri.find(portPath);
+      std::string baseUri = originalRequest.baseUri();
+      std::string::size_type pos = baseUri.find(portPath);
       if (pos != std::string::npos) // precaution, should always be true
       {
           // substitute the base url for the proxied address
-         std::string baseUrl = absoluteUri.substr(0, pos + portPath.length());
+         std::string baseUrl = baseUri.substr(0, pos + portPath.length());
          address = baseUrl + address.substr(proxiedAddress.length());
       }
    }
@@ -358,6 +378,13 @@ void handleLocalhostResponse(
    }
 }
 
+bool handleLicenseError(
+      boost::shared_ptr<http::AsyncConnection> ptrConnection,
+      const Error& error)
+{
+   return false;
+}
+
 void handleLocalhostError(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
       const Error& error)
@@ -368,6 +395,12 @@ void handleLocalhostError(
    {
       http::Response& response = ptrConnection->response();
       response.setStatusCode(http::status::ServiceUnavailable);
+      ptrConnection->writeResponse();
+      return;
+   }
+
+   if (handleLicenseError(ptrConnection, error))
+   {
       ptrConnection->writeResponse();
    }
    else
@@ -452,9 +485,13 @@ void handleContentError(
 
       ptrConnection->writeResponse();
    }
-   // otherwise just forward the error
+   else if (handleLicenseError(ptrConnection, error))
+   {
+      ptrConnection->writeResponse();
+   }
    else
    {
+      // otherwise just forward the error
       ptrConnection->writeError(error);
    }
 }
@@ -493,7 +530,7 @@ void handleRpcError(
                error.getProperty("state"));
       clJson["project"] = context.scope.project();
       clJson["id"] = context.scope.id();
-      json::JsonRpcResponse jsonRpcResponse ;
+      json::JsonRpcResponse jsonRpcResponse;
       jsonRpcResponse.setError(json::errc::InvalidSession, clJson);
       json::setJsonRpcResponse(jsonRpcResponse, &(ptrConnection->response()));
       ptrConnection->writeResponse();
@@ -509,10 +546,10 @@ void handleRpcError(
       json::setJsonRpcError(Error(json::errc::ConnectionError, ERROR_LOCATION),
                             &(ptrConnection->response()));
    }
-   else
+   else if (!handleLicenseError(ptrConnection, error))
    {
       json::setJsonRpcError(Error(json::errc::TransmissionError, ERROR_LOCATION),
-                           &(ptrConnection->response())) ;
+                           &(ptrConnection->response()));
    }
 
    // write the response
@@ -547,13 +584,13 @@ void handleEventsError(
       json::setJsonRpcError(Error(json::errc::Unavailable, ERROR_LOCATION),
                            &(ptrConnection->response()));
    }
-   else
+   else if (!handleLicenseError(ptrConnection, error))
    {
       // log if not connection terminated
       logIfNotConnectionTerminated(error, ptrConnection->request());
 
       json::setJsonRpcError(Error(json::errc::TransmissionError, ERROR_LOCATION),
-                           &(ptrConnection->response())) ;
+                           &(ptrConnection->response()));
    }
 
    // write the response
@@ -582,8 +619,6 @@ Error userIdForUsername(const std::string& username, UidType* pUID)
    return Success();
 }
 
-
-
 void proxyRequest(
       int requestType,
       const r_util::SessionContext& context,
@@ -593,7 +628,7 @@ void proxyRequest(
       const ClientHandler& clientHandler = ClientHandler())
 {
    // apply optional proxy filter
-   if (applyProxyFilter(ptrConnection, context))
+   if (applyProxyFilter(ptrConnection, context, clientHandler))
       return;
 
    // modify request
@@ -720,12 +755,13 @@ bool shouldRefreshCredentials(const http::Request& request)
 http::Headers getAuthCookies(const http::Response& response)
 {
    http::Headers authCookies;
-   for (const http::Header& cookie : response.getCookies())
+   for (const http::Header& cookie : response.getCookies({ 
+      kCSRFTokenCookie,
+      kUserIdCookie,
+      kUserListCookie,
+      kPersistAuthCookie }))
    {
-      if ((cookie.value.find(kUserIdCookie) != std::string::npos) ||
-          (cookie.value.find(kPersistAuthCookie) != std::string::npos) ||
-          (cookie.value.find(kCSRFTokenCookie) != std::string::npos))
-         authCookies.push_back(cookie);
+      authCookies.push_back(cookie);
    }
    return authCookies;
 }
@@ -949,9 +985,10 @@ void proxyLocalhostRequest(
    // call request filter if we have one
    invokeRequestFilter(&request);
 
-   // extract the (scrambled) port, which consists of 8 hex digits
+   // extract the (scrambled) port, which consists of 8 or 9 hex digits 
+   // (an additional prefix digit may exist for server routing)
    std::string pMap = ipv6 ? "/p6/" : "/p/";
-   boost::regex re(pMap + "([a-fA-F0-9]{8})(/|$)");
+   boost::regex re(pMap + "([a-fA-F0-9]{8,9})(/|$)");
    boost::smatch match;
    if (!regex_utils::search(request.uri(), match, re))
    {
@@ -968,7 +1005,8 @@ void proxyLocalhostRequest(
    }
 
    // unscramble the port using the token
-   int portNum = server_core::detransformPort(portToken, match[1]);
+   bool server = false;
+   int portNum = server_core::detransformPort(portToken, match[1], server);
    if (portNum < 0)
    {
       // act as though there's no content here if we can't determine the correct port
@@ -1010,8 +1048,8 @@ void proxyLocalhostRequest(
          boost::bind(handleLocalhostResponse, ptrConnection, _3, port, _2, ipv6, _1);
    http::ErrorHandler onError = boost::bind(handleLocalhostError, ptrConnection, _1);
 
-   // see if the request should be handled by the overlay
-   if (overlay::proxyLocalhostRequest(request, port, context, ptrConnection, onResponse, onError))
+   // see if the request should be handled by the overlay (unless it should be handled by the server)
+   if (!server && overlay::proxyLocalhostRequest(request, port, context, ptrConnection, onResponse, onError))
    {
       // request handled by the overlay
       return;

@@ -1,7 +1,7 @@
 /*
  * JobManager.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,13 +27,11 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.ErrorLoggingServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
-import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobElapsedTickEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobExecuteActionEvent;
@@ -59,7 +57,7 @@ public class JobManager implements JobRefreshEvent.Handler,
                                    JobRunScriptEvent.Handler,
                                    JobRunSelectionEvent.Handler,
                                    JobExecuteActionEvent.Handler,
-                                   SessionInitHandler
+                                   SessionInitEvent.Handler
 {
    interface Binder extends CommandBinder<Commands, JobManager>
    {
@@ -90,9 +88,9 @@ public class JobManager implements JobRefreshEvent.Handler,
       events.addHandler(JobRunSelectionEvent.TYPE, this);
       events.addHandler(JobExecuteActionEvent.TYPE, this);
    }
-   
+
    // Event handlers ---------------------------------------------------------
-   
+
    @Override
    public void onSessionInit(SessionInitEvent sie)
    {
@@ -105,7 +103,7 @@ public class JobManager implements JobRefreshEvent.Handler,
    {
       setJobState(event.getData());
    }
-   
+
    @Override
    public void onJobUpdated(JobUpdatedEvent event)
    {
@@ -123,18 +121,18 @@ public class JobManager implements JobRefreshEvent.Handler,
          case JobConstants.JOB_UPDATED:
             state_.updateJob(job);
             break;
-            
+
          default:
             Debug.logWarning("Unrecognized job update type " + event.getData().type);
       }
-      
+
       // start timing jobs
       syncTimer();
-      
-      // update global status 
+
+      // update global status
       emitJobProgress();
    }
-   
+
    @Override
    public void onJobRunScript(JobRunScriptEvent event)
    {
@@ -157,12 +155,12 @@ public class JobManager implements JobRefreshEvent.Handler,
    @Override
    public void onJobExecuteAction(JobExecuteActionEvent event)
    {
-      server_.executeJobAction(event.id(), event.action(), 
+      server_.executeJobAction(event.id(), event.action(),
             new VoidServerRequestCallback());
    }
 
    // Command handlers -------------------------------------------------------
-   
+
    @Handler
    public void onStartJob()
    {
@@ -179,79 +177,79 @@ public class JobManager implements JobRefreshEvent.Handler,
 
       showJobLauncherDialog(FileSystemItem.createFile(script));
    }
-   
+
    @Handler
    public void onClearJobs()
    {
       display_.showYesNoMessage(
-            GlobalDisplay.MSG_QUESTION, 
+            GlobalDisplay.MSG_QUESTION,
             "Remove Completed Local Jobs",
             "Are you sure you want to remove completed local jobs from the list of jobs?\n\nOnce removed, local jobs cannot be recovered.",
             false, // include cancel
             () ->  server_.clearJobs(new VoidServerRequestCallback()),
             null,  // do nothing on No
             null,  // do nothing on Cancel
-            "Remove jobs", 
-            "Cancel", 
+            "Remove jobs",
+            "Cancel",
             false // yes is not default
             );
    }
-   
+
    /**
     * Creates a progress event summarizing progress for a given state.
-    * 
+    *
     * Decides which jobs to emit progress for by considering all of the jobs
     * with overlapping start/end times. This ensures that e.g. if you start
     * Job A, Job B, and Job C, then completing Job A (while B and C are still
     * running) won't suddenly cause your progress meter to go backwards when
     * Job A drops out of the list of running jobs.
-    * 
+    *
     * Some jobs may not have ranged progress; that is, they are simply running
     * or not running. In this case, the progress is reported in terms of the
     * number of jobs.
-    * 
+    *
     * @param state Job state to summarize
     * @return Progress of running jobs, or null if no progress.
-    * 
+    *
     */
    public static LocalJobProgress summarizeProgress(JobState state)
    {
       boolean running = false;
-      
+
       // flatten job list to an array while looking for a running job
       ArrayList<Job> jobs = new ArrayList<>();
       for (String id: state.iterableKeys())
       {
          Job job = state.getJob(id);
-         
+
          if (job.type != JobConstants.JOB_TYPE_SESSION)
             continue;
-         
+
          // push session jobs into array
          jobs.add(job);
-         
+
          // remember if we found a running job
          if (job.state == JobConstants.STATE_RUNNING)
             running = true;
       }
-      
-      // if we didn't find any running job, then we have no progress to report 
+
+      // if we didn't find any running job, then we have no progress to report
       if (!running)
       {
          return null;
       }
-      
+
       // Now we need to find all of the jobs that overlap with the first running
       // job. This is done as follows:
-      // 
+      //
       // 1. Sort all of the jobs by the time they started
       // 2. Find the currently running job that started first
       // 3. Work backwards (old jobs) until we find one that does not overlap
       // 4. Work forwards (new jobs) until we find one that does not overlap
-      
+
       // sort by start time
       jobs.sort(Comparator.comparingInt((Job j) -> j.started));
-      
+
       // find index of first running job
       int idxRunning;
       for (idxRunning = 0; idxRunning < jobs.size(); idxRunning++)
@@ -259,7 +257,7 @@ public class JobManager implements JobRefreshEvent.Handler,
          if (jobs.get(idxRunning).state == JobConstants.STATE_RUNNING)
             break;
       }
-      
+
       // starting at that index, we need to work backwards to find completed
       // jobs that overlap
       int idxFirst;
@@ -272,12 +270,12 @@ public class JobManager implements JobRefreshEvent.Handler,
          // set
          if (job.completed < jobs.get(idxFirst).started)
             break;
-         
+
          // if this job did not start, it is not in the set
          if (job.started == 0)
             break;
       }
-      
+
       // now we need to walk forwards to find other jobs that overlap
       int idxLast;
       for (idxLast = idxRunning; idxLast < jobs.size() - 1; idxLast++)
@@ -289,23 +287,23 @@ public class JobManager implements JobRefreshEvent.Handler,
          if (job.started == 0)
             break;
       }
-      
+
       int numJobs = (idxLast - idxFirst) + 1;
 
       // compute name; if only one job is running, it's the name of that job
       String name;
       if (idxFirst == idxLast)
          name = jobs.get(idxFirst).name;
-      else 
+      else
          name =  numJobs + " jobs";
-      
+
       // compute total progress units and longest running job
       int progress = 0;
       for (int i = idxFirst; i <= idxLast; i++)
       {
          Job job = jobs.get(i);
          int max = job.max;
-         
+
          // compute progress units
          if (max == 0)
          {
@@ -319,7 +317,7 @@ public class JobManager implements JobRefreshEvent.Handler,
             progress += (int)(((double)job.progress / (double)job.max) * (double)100);
          }
       }
-      
+
       // compute offset between client time and server time by sampling a
       // running job. we'd generally expect start time to be the time we receive
       // the job less the time elapsed since the start, any offset (which may be
@@ -328,16 +326,16 @@ public class JobManager implements JobRefreshEvent.Handler,
       Job sample = jobs.get(idxRunning);
       int offset = sample.started - (sample.received - sample.elapsed);
       int elapsed = sample.received - (jobs.get(idxFirst).started - offset);
-      
+
       return new LocalJobProgress(
             name,                         // title of progress
             progress,                     // number of units completed
-            numJobs * 100,                // total number of units, 100 per job 
+            numJobs * 100,                // total number of units, 100 per job
             elapsed,                      // time elapsed so far
             sample.received               // received time
       );
    }
-   
+
    public List<Job> getJobs()
    {
       List<Job> jobs = new ArrayList<>();
@@ -350,7 +348,7 @@ public class JobManager implements JobRefreshEvent.Handler,
    {
       return state_.getJob(id);
    }
-   
+
    public void promptForTermination(CommandWithArg<Boolean> onConfirmed)
    {
       // compute list of session jobs that are running
@@ -363,14 +361,14 @@ public class JobManager implements JobRefreshEvent.Handler,
             running.add(job);
          }
       }
-      
+
       // if no jobs are running, we're already done
       if (running.isEmpty())
       {
          onConfirmed.execute(true);
          return;
       }
-      
+
       JobQuitDialog dialog = new JobQuitDialog(running,
             onConfirmed::execute,
             () -> onConfirmed.execute(false));
@@ -378,7 +376,7 @@ public class JobManager implements JobRefreshEvent.Handler,
    }
 
    // Private methods ---------------------------------------------------------
-   
+
    private void showJobLauncherDialog(FileSystemItem path, FileSystemItem workingDir, String code)
    {
       JobLauncherDialog dialog = new JobLauncherDialog("Run Selection as Job",
@@ -388,18 +386,13 @@ public class JobManager implements JobRefreshEvent.Handler,
             code,
             spec ->
             {
-               server_.startJob(spec, new ServerRequestCallback<String>() {
-                  @Override
-                  public void onError(ServerError error)
-                  {
-                     Debug.logError(error);
-                  }
-               });
+               server_.startJob(spec, new ErrorLoggingServerRequestCallback<String>());
             }
       );
+      
       dialog.showModal();
    }
-   
+
    private void showJobLauncherDialog(FileSystemItem path)
    {
       JobLauncherDialog dialog = new JobLauncherDialog("Run Script as Local Job",
@@ -416,17 +409,12 @@ public class JobManager implements JobRefreshEvent.Handler,
                }
 
                // tell the server to start running this script
-               server_.startJob(spec, new ServerRequestCallback<String>() {
-                  @Override
-                  public void onError(ServerError error)
-                  {
-                     Debug.logError(error);
-                  }
-               });
+               server_.startJob(spec, new ErrorLoggingServerRequestCallback<String>());
             });
+      
       dialog.showModal();
    }
-   
+
    private void emitJobProgress()
    {
       LocalJobProgress progress = summarizeProgress(state_);
@@ -437,12 +425,12 @@ public class JobManager implements JobRefreshEvent.Handler,
    {
       state_ = state;
       events_.fireEvent(new JobInitEvent(state_));
-      
+
       // start timing jobs and emitting progress
       syncTimer();
       emitJobProgress();
    }
-   
+
    private void syncTimer()
    {
       // start or stop updating job elapsed times based on whether we have any

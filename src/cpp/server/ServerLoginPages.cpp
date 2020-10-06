@@ -1,7 +1,7 @@
 /*
  * ServerLoginPages.cpp
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,8 @@
  */
 
 #include "ServerLoginPages.hpp"
+
+#include <boost/format.hpp>
 
 #include <shared_core/SafeConvert.hpp>
 #include <shared_core/FilePath.hpp>
@@ -29,6 +31,8 @@
 const char * const kStaySignedInDisplay = "staySignedInDisplay";
 const char * const kAuthTimeoutMinutes = "authTimeoutMinutes";
 const char * const kAuthTimeoutMinutesDisplay = "authTimeoutMinutesDisplay";
+const char * const kIsRStudioProDesktop = "isRdp";
+const char * const kLogoHtml = "logoHtml";
 
 namespace rstudio {
 namespace server {
@@ -76,7 +80,25 @@ void fillLoginFields(const core::http::Request& request,
    variables[kAppUri] = request.queryParamValue(kAppUri);
 
    // include custom login page html
-   variables[kLoginPageHtml] = server::options().authLoginPageHtml();
+   bool isRdp = request.queryParamValue(kIsRStudioProDesktop) == "1";
+   boost::format logoImgHtmlFormat(R"DELIM(<img src="images/rstudio.png" width="78" height="27" alt="%1%"/>)DELIM");
+   if (!isRdp)
+   {
+      variables[kLoginPageHtml] = server::options().authLoginPageHtml();
+
+      // render logo with links
+      std::string logoImgHtml = boost::str(logoImgHtmlFormat % "RStudio Logo (goes to external site)");
+      variables[kLogoHtml] = R"DELIM(<a href="https://www.rstudio.com/">)DELIM" + logoImgHtml + "</a>";
+   }
+   else
+   {
+      variables[kLoginPageHtml] = server::options().authRdpLoginPageHtml();
+
+      // render logo without links - user should not be able
+      // to freely navigate in RDP
+      std::string logoImgHtml = boost::str(logoImgHtmlFormat % "RStudio Logo");
+      variables[kLogoHtml] = logoImgHtml;
+   }
 }
 
 void loadLoginPage(const core::http::Request& request,
@@ -86,7 +108,7 @@ void loadLoginPage(const core::http::Request& request,
                    std::map<std::string,std::string> variables)
 {
    // setup template variables
-   fillLoginFields(request, formAction, variables); 
+   fillLoginFields(request, formAction, variables);
 
    // get the path to the template file
    Options& options = server::options();
@@ -109,18 +131,18 @@ std::string generateLoginPath(const core::http::Request& request,
                               ErrorType error /*= kErrorNone*/)
 {
    // build fields
-   core::http::Fields fields ;
+   core::http::Fields fields;
    fields.push_back(std::make_pair(kAppUri, appUri));
    if (error != kErrorNone)
      fields.push_back(std::make_pair(kErrorParam, core::safe_convert::numberToString(error)));
 
    // build query string
-   std::string queryString ;
+   std::string queryString;
    if (!fields.empty())
      core::http::util::buildQueryString(fields, &queryString);
 
    // generate url
-   std::string signInPath = core::http::URL::uncomplete(request.uri(), auth::handler::kSignIn);
+   std::string signInPath = core::http::URL::uncomplete(request.baseUri(), auth::handler::kSignIn);
    if (!queryString.empty())
      signInPath += ("?" + queryString);
    return signInPath;

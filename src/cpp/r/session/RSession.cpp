@@ -1,7 +1,7 @@
 /*
  * RSession.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -178,7 +178,7 @@ SEXP rs_browseURL(SEXP urlSEXP)
       }
       else
       {
-         rCallbacks().browseURL(URL) ;
+         rCallbacks().browseURL(URL);
       }
    }
    CATCH_UNEXPECTED_EXCEPTION
@@ -244,7 +244,7 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
    setRCallbacks(callbacks);
    
    // set to default "C" numeric locale as-per R embedding docs
-   setlocale(LC_NUMERIC, "C") ;
+   setlocale(LC_NUMERIC, "C");
    
    // perform R discovery
    r::session::RLocations rLocations;
@@ -377,7 +377,7 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
                             stdInternalCallbacks());
 
    // keep compiler happy
-   return Success() ;
+   return Success();
 }
 
 namespace {

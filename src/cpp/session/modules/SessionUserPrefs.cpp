@@ -1,7 +1,7 @@
 /*
  * SessionUserPrefs.cpp
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -262,7 +262,7 @@ SEXP rs_allPrefs()
    // Sort preference keys alphabetically for convenience
    std::sort(keys.begin(), keys.end());
 
-   for (const auto key: keys) 
+   for (const auto& key : keys) 
    {
       std::string layer;
       auto val = userPrefs().readValue(key, &layer);

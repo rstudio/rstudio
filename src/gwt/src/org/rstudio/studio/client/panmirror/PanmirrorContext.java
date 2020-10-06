@@ -1,7 +1,7 @@
 /*
  * PanmirrorConfig.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,12 @@
 
 package org.rstudio.studio.client.panmirror;
 
-import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocEngine;
+import org.rstudio.studio.client.panmirror.server.PanmirrorServer;
+import org.rstudio.studio.client.panmirror.ui.PanmirrorUI;
+import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunks;
+import org.rstudio.studio.client.panmirror.ui.PanmirrorUIContext;
+import org.rstudio.studio.client.panmirror.ui.PanmirrorUIDisplay;
+import org.rstudio.studio.client.panmirror.ui.PanmirrorUISpelling;
 
 import elemental2.core.JsObject;
 import jsinterop.annotations.JsType;
@@ -23,13 +28,16 @@ import jsinterop.annotations.JsType;
 @JsType
 public class PanmirrorContext
 {  
-   public PanmirrorContext(PanmirrorUIContext uiContext)
+   public PanmirrorContext(PanmirrorUIContext uiContext, 
+                           PanmirrorUIDisplay uiDisplay,
+                           PanmirrorUIChunks uiChunks,
+                           PanmirrorUISpelling uiSpelling)
    {
-      ui = new PanmirrorUI(uiContext);
+      this.ui = new PanmirrorUI(uiContext, uiDisplay, uiChunks, uiSpelling); 
    }
    
    public PanmirrorUI ui;
-   public PanmirrorPandocEngine pandoc = new PanmirrorPandocEngine();
+   public PanmirrorServer server = new PanmirrorServer();
    public PanmirrorHooks hooks = new PanmirrorHooks();
    public JsObject[] extensions = null;
 }

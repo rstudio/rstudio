@@ -1,7 +1,7 @@
 /*
  * ProfilerEditingTargetWidget.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,11 +24,14 @@ import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.theme.ThemeColors;
 import org.rstudio.core.client.widget.RStudioThemedFrame;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.model.PublishHtmlSource;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
+import org.rstudio.studio.client.workbench.views.source.SourceColumn;
+import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 
 public class ProfilerEditingTargetWidget extends Composite
@@ -37,14 +40,18 @@ public class ProfilerEditingTargetWidget extends Composite
 {
    private RStudioThemedFrame profilePage_;
    
-   public ProfilerEditingTargetWidget(String title, Commands commands, PublishHtmlSource publishHtmlSource)
+   public ProfilerEditingTargetWidget(String title,
+                                      Commands commands,
+                                      PublishHtmlSource publishHtmlSource,
+                                      SourceColumn column)
    {
       VerticalPanel panel = new VerticalPanel();
       Roles.getTabpanelRole().set(panel.getElement());
       Roles.getTabpanelRole().setAriaLabelProperty(panel.getElement(), title + " Profile View");
 
+      column_ = column;
       PanelWithToolbars mainPanel = new PanelWithToolbars(
-                                          createToolbar(commands, publishHtmlSource), 
+                                          createToolbar(commands, publishHtmlSource),
                                           panel);
 
       profilePage_ = new RStudioThemedFrame(
@@ -148,14 +155,21 @@ public class ProfilerEditingTargetWidget extends Composite
       window.print();
    }
 
-   private Toolbar createToolbar(Commands commands, PublishHtmlSource publishHtmlSource)
+   private Toolbar createToolbar(Commands commands,
+                                 PublishHtmlSource publishHtmlSource)
    {
-      Toolbar toolbar = new EditingTargetToolbar(commands, true);
-      
-      toolbar.addLeftWidget(commands.gotoProfileSource().createToolbarButton());
-      toolbar.addLeftWidget(commands.saveProfileAs().createToolbarButton());
+      Toolbar toolbar = new EditingTargetToolbar(commands, true, column_);
+
+      // Buttons are unique to a source column so require SourceAppCommands
+      SourceColumnManager mgr = RStudioGinjector.INSTANCE.getSourceColumnManager();
+
+      toolbar.addLeftWidget(
+         mgr.getSourceCommand(commands.gotoProfileSource(), column_).createToolbarButton());
+      toolbar.addLeftWidget(
+         mgr.getSourceCommand(commands.saveProfileAs(), column_).createToolbarButton());
       toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands.openProfileInBrowser().createToolbarButton());
+      toolbar.addLeftWidget(
+         mgr.getSourceCommand(commands.openProfileInBrowser(), column_).createToolbarButton());
       
       toolbar.addRightWidget(
             publishButton_ = new RSConnectPublishButton(
@@ -184,4 +198,5 @@ public class ProfilerEditingTargetWidget extends Composite
    }
    
    private RSConnectPublishButton publishButton_;
+   private SourceColumn column_;
 }

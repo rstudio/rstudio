@@ -1,7 +1,7 @@
 /*
  * PasteEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,7 +20,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Past
 
 public class PasteEvent extends GwtEvent<Handler>
 {
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 
    public interface Handler extends EventHandler
    {

@@ -1,7 +1,7 @@
 #
 # SessionRMarkdown.R
 #
-# Copyright (C) 2009-12 by RStudio, PBC
+# Copyright (C) 2020 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -23,6 +23,36 @@
       return(.rs.markdown.getCompletionsHref(data))
 })
 
+.rs.addFunction("markdown.resolveCompletionRoot", function(path)
+{
+   # figure out working directory
+   props <- .rs.getSourceDocumentProperties(path)
+   workingDirProp <- props$properties$working_dir
+   
+   useProject <-
+      identical(workingDirProp, "project") &&
+      is.character(props$path) &&
+      is.character(props$project_path)
+   
+   if (useProject)
+   {
+      # path refers to the full path; project_path refers
+      # to the project-relative path. use that to infer
+      # the path to the project hosting the document
+      # (just in case the user is editing a document that
+      # belongs to an alternate project)
+      substring(props$path, 1L, nchar(props$path) - nchar(props$project_path) - 1L)
+   }
+   else if (identical(workingDirProp, "current"))
+   {
+      getwd()
+   }
+   else
+   {
+      dirname(path)
+   }
+})
+
 .rs.addFunction("markdown.getCompletionsHref", function(data)
 {
    # extract parameters
@@ -34,18 +64,7 @@
       return(.rs.emptyCompletions())
    
    # figure out working directory
-   props <- .rs.getSourceDocumentProperties(path)
-   workingDirProp <- props$properties$working_dir
-   workingDir <- if (identical(workingDirProp, "project"))
-      props$project_path
-   else if (identical(workingDirProp, "current"))
-      getwd()
-   
-   # check for NULL working dir (don't include as part of if-else check above
-   # since some documents may not have an associated project and yet could
-   # be configured to use a project directory)
-   if (is.null(workingDir))
-      workingDir <- dirname(path)
+   workingDir <- .rs.markdown.resolveCompletionRoot(path)
    
    # determine dirname, basename (need to handle trailing slashes properly
    # so can't just use dirname / basename)
@@ -449,7 +468,7 @@
       character()
 })
 
-.rs.addFunction("isBookdownWebsite", function(input_dir, encoding) {
+.rs.addFunction("isBookdownDir", function(input_dir, encoding) {
    index <- .rs.inputDirToIndexFile(input_dir)
    if (!is.null(index)) {
       
@@ -460,6 +479,36 @@
    }
    else
       FALSE
+})
+
+.rs.addFunction("bookdown.SourceFiles", function(input_dir) {
+   wd <- getwd()
+   on.exit(setwd(wd), add = TRUE)
+   setwd(input_dir)
+   bookdown:::source_files()
+})
+
+
+.rs.addFunction("bookdown.frontMatterValue", function(input_dir, value) {
+   wd <- getwd()
+   on.exit(setwd(wd), add = TRUE)
+   setwd(input_dir)
+   files <- bookdown:::source_files()
+   if (length(files) > 0)
+   {
+      index <- files[[1]]
+      front_matter <- rmarkdown::yaml_front_matter(index)
+      if (is.character(front_matter[[value]]))
+         front_matter[[value]]
+      else if (is.logical(front_matter[[value]]))
+         paste0("LOGICAL:",front_matter[[value]])
+      else
+         character()
+   }
+   else
+   {
+      character()
+   }
 })
 
 .rs.addFunction("isSiteProject", function(input_dir, encoding, site) {
@@ -495,24 +544,42 @@
    
    # NOTE: binary directory has a single arch-specific subdir;
    # rather than trying to hard-code the architecture we just
-   # infer it directly
+   # infer it directly.
+   #
+   # some users will end up with tinytex installations that
+   # 'exist', but are broken for some reason (no longer have
+   # a 'bin' directory). detect those cases properly
+   #
+   # https://github.com/rstudio/rstudio/issues/7615
    bin <- file.path(root, "bin")
+   if (!file.exists(bin))
+      return(NULL)
+
    subbin <- list.files(bin, full.names = TRUE)
+   if (length(subbin) == 0)
+      return(NULL)
+
    normalizePath(subbin[[1]], mustWork = TRUE)
 })
 
-.rs.addFunction("bookdown.renderedOutputPath", function(outputPath)
+.rs.addFunction("bookdown.renderedOutputPath", function(websiteDir, outputPath)
 {
-   # if this is a PDF, use it directly
+   # set encoding
+   Encoding(websiteDir) <- "UTF-8"
+   Encoding(outputPath) <- "UTF-8"
+   
+   # if we have a PDF for this file, use it
    if (tools::file_ext(outputPath) == "pdf")
       return(outputPath)
    
-   # if we have an index, prefer using that
-   index <- file.path(dirname(outputPath), "index.html")
+   # if that fails, use root index file
+   # note that this gets remapped as appropriate to knitted posts; see:
+   # https://github.com/rstudio/rstudio/issues/6945
+   index <- file.path(websiteDir, "index.html")
    if (file.exists(index))
       return(index)
    
-   # otherwise, return the rendered path directly
-   # (typically necessary for self-contained books)
+   # default to using output file path
+   # (necessary for self-contained books, which may not have an index)
    outputPath
 })

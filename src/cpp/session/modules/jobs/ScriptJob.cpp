@@ -1,7 +1,7 @@
 /*
  * ScriptJob.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -148,8 +148,7 @@ void ScriptJob::start()
             session::options().modulesRSourcePath()
                               .completePath("SourceWithProgress.R").getAbsolutePath())) +
                      "'); sourceWithProgress(script = '" +
-                     string_utils::utf8ToSystem(
-            string_utils::singleQuotedStrEscape(path)) + "', "
+            string_utils::singleQuotedStrEscape(path) + "', "
       "encoding = '" + encoding + "', "
       "con = stdout(), "
       "importRdata = " + importRdata + ", "

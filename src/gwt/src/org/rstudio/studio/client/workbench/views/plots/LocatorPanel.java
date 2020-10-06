@@ -1,7 +1,7 @@
 /*
  * LocatorPanel.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -47,7 +47,7 @@ public class LocatorPanel extends LayoutPanel
    public LocatorPanel()
    {
       setStylePrimaryName(ThemeStyles.INSTANCE.locatorPanel());
-          
+
       feedbackImage_ = new Image(new ImageResource2x(StandardIcons.INSTANCE.click_feedback2x()));
       feedbackImage_.setVisible(false);
       add(feedbackImage_);
@@ -76,22 +76,22 @@ public class LocatorPanel extends LayoutPanel
             SelectionEvent.fire(LocatorPanel.this, p);
          }
       });
-          
+
       // fill entire area of parent container
       setSize("100%", "100%");
    }
-   
+
    public void showLocator(Plots.Parent parent)
    {
-      // set parent 
+      // set parent
       parent_ = parent;
-      
+
       // add to parent
       parent_.add(this);
-      
+
       // add custom locator toolbar to parent
       installCustomToolbar();
-      
+
       // subscribe to ESC key browser-wide for dismissal of the Locator UI
       // (unhook any existing subscription first)
       unhookNativePreviewHandler();
@@ -106,22 +106,22 @@ public class LocatorPanel extends LayoutPanel
                SelectionEvent.fire(LocatorPanel.this, null);
             }
          }
-         
+
       });
    }
-   
+
    public void hideLocator()
    {
       // make sure we unsubscribe from events
       unhookNativePreviewHandler();
-      
+
       // ice custom toolbar
       parent_.removeCustomToolbar();
-      
+
       // remove from parent
       removeFromParent();
    }
-   
+
    public HandlerRegistration addSelectionHandler(
          SelectionHandler<Point> handler)
    {
@@ -134,14 +134,14 @@ public class LocatorPanel extends LayoutPanel
    {
       // make sure we unsubscribe from events
       unhookNativePreviewHandler();
-      
+
       // nix any existing feedback
       cancelFeedback();
-      
+
       // super
       super.onUnload();
    }
-   
+
    private void installCustomToolbar()
    {
       parent_.installCustomToolbar(new Customizer() {
@@ -149,14 +149,14 @@ public class LocatorPanel extends LayoutPanel
          {
             toolbar.addLeftWidget(
                new Label("Locator active (Esc to finish)"));
-            
-            SmallButton doneButton = new SmallButton("Finish"); 
+
+            SmallButton doneButton = new SmallButton("Finish");
             doneButton.addClickHandler(new ClickHandler() {
                public void onClick(ClickEvent event)
                {
                   SelectionEvent.fire(LocatorPanel.this, null);
-               }         
-            });   
+               }
+            });
             toolbar.addRightWidget(doneButton);
             toolbar.addRightWidget(new HTML("&nbsp;&nbsp;"));
          }
@@ -182,12 +182,12 @@ public class LocatorPanel extends LayoutPanel
             feedbackTimer_ = null;
             ArrayList<Widget> widgets = new ArrayList<Widget>();
             widgets.add(feedbackImage_);
-            feedbackAnimation_ = new FadeOutAnimation(widgets, 
+            feedbackAnimation_ = new FadeOutAnimation(widgets,
                                                       new Command() {
                public void execute()
                {
                   feedbackAnimation_ = null;
-               }      
+               }
             });
             feedbackAnimation_.run(300);
          }
@@ -208,7 +208,7 @@ public class LocatorPanel extends LayoutPanel
          feedbackAnimation_ = null;
       }
    }
-   
+
    private void unhookNativePreviewHandler()
    {
       if (escHandlerReg_ != null)
@@ -217,7 +217,7 @@ public class LocatorPanel extends LayoutPanel
          escHandlerReg_ = null;
       }
    }
-   
+
    private static class InputPanel extends SimplePanel
    {
       public HandlerRegistration addClickHandler(ClickHandler handler)
@@ -225,7 +225,7 @@ public class LocatorPanel extends LayoutPanel
          return addDomHandler(handler, ClickEvent.getType());
       }
    }
-   
+
    private Plots.Parent parent_;
    private Timer feedbackTimer_;
    private Animation feedbackAnimation_;

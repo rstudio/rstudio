@@ -1,7 +1,7 @@
 /*
  * NotebookPlotReplay.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -60,7 +60,7 @@ public:
       // create the text to send to the process (it'll be read on stdin
       // inside R)
       std::string input;
-      for (const FilePath snapshot : snapshotFiles)
+      for (const FilePath& snapshot : snapshotFiles)
       {
          input.append(string_utils::utf8ToSystem(snapshot.getAbsolutePath()));
          input.append("\n");
@@ -224,7 +224,7 @@ Error replayPlotOutput(const json::JsonRpcRequest& request,
 
    // look for snapshot files
    std::vector<FilePath> snapshotFiles;
-   for (const std::string chunkId : chunkIds)
+   for (const std::string& chunkId : chunkIds)
    {
       // find the storage location for this chunk output
       FilePath path = chunkOutputPath(docPath, docId, chunkId, notebookCtxId(),
@@ -240,7 +240,8 @@ Error replayPlotOutput(const json::JsonRpcRequest& request,
          LOG_ERROR(error);
          continue;
       }
-      for (const FilePath content : contents)
+      
+      for (const FilePath& content : contents)
       {
          if (content.hasExtensionLowerCase(kDisplayListExt))
             snapshotFiles.push_back(content);
@@ -302,7 +303,7 @@ Error replayChunkPlotOutput(const json::JsonRpcRequest& request,
       return Success();
    }
 
-   for (const FilePath content : contents)
+   for (const FilePath& content : contents)
    {
       if (content.hasExtensionLowerCase(kDisplayListExt))
          snapshotFiles.push_back(content);

@@ -1,7 +1,7 @@
 /*
  * FileUtils.cpp
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -63,7 +63,7 @@ bool copySourceFile(const FilePath& sourceDir,
 
 } // anonymous namespace
 
-FilePath uniqueFilePath(const FilePath& parent, const std::string& prefix)
+FilePath uniqueFilePath(const FilePath& parent, const std::string& prefix, const std::string& extension)
 {
    // try up to 100 times then fallback to a uuid
    for (int i=0; i<100; i++)
@@ -72,7 +72,7 @@ FilePath uniqueFilePath(const FilePath& parent, const std::string& prefix)
       std::string shortentedUuid = core::system::generateShortenedUuid();
 
       // form full path
-      FilePath uniqueDir = parent.completeChildPath(prefix + shortentedUuid);
+      FilePath uniqueDir = parent.completeChildPath(prefix + shortentedUuid + extension);
 
       // return if it doesn't exist
       if (!uniqueDir.exists())
@@ -80,7 +80,7 @@ FilePath uniqueFilePath(const FilePath& parent, const std::string& prefix)
    }
 
    // if we didn't succeed then return prefix + uuid
-   return parent.completeChildPath(prefix + core::system::generateUuid(false));
+   return parent.completeChildPath(prefix + core::system::generateUuid(false) + extension);
 }
 
 std::string readFile(const FilePath& filePath)
@@ -131,7 +131,7 @@ Error copyDirectory(const FilePath& sourceDirectory,
    // create the target directory
    Error error = targetDirectory.ensureDirectory();
    if (error)
-      return error ;
+      return error;
 
    // iterate over the source
    return sourceDirectory.getChildrenRecursive(

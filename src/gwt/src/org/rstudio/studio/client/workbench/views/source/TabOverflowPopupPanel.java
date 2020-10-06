@@ -1,7 +1,7 @@
 /*
  * TabOverflowPopupPanel.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -41,6 +41,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.ThemedPopupPanel;
+import org.rstudio.studio.client.common.filetypes.FileIcon;
 
 import java.util.ArrayList;
 
@@ -199,6 +200,15 @@ public class TabOverflowPopupPanel extends ThemedPopupPanel
    {
       String value = event.getValue();
       menu_.filter(value);
+   }
+
+   public void resetDocTabs(String activeId,
+                            String[] ids,
+                            FileIcon[] icons,
+                            String[] names,
+                            String[] paths)
+   {
+      menu_.updateDocs(activeId, ids, icons, names, paths);
    }
 
    @Override

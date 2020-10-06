@@ -1,7 +1,7 @@
 /*
  * EnvironmentMonitor.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -134,7 +134,7 @@ void EnvironmentMonitor::listEnv(std::vector<r::sexp::Variable>* pEnv)
 void EnvironmentMonitor::checkForChanges()
 {
    // information about the current environment
-   std::vector<r::sexp::Variable> currentEnv ;
+   std::vector<r::sexp::Variable> currentEnv;
    std::vector<r::sexp::Variable> currentPromises;
 
    // list of assigns/removes (includes both value changes and promise

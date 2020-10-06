@@ -1,7 +1,7 @@
 /*
  * c_cpp_highlight_rules.js
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * The Original Code is Ajax.org Code Editor (ACE).
  *
@@ -34,6 +34,7 @@ var DocCommentHighlightRules = require("mode/doc_comment_highlight_rules").DocCo
 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
 var TexHighlightRules = require("mode/tex_highlight_rules").TexHighlightRules;
 var RHighlightRules = require("mode/r_highlight_rules").RHighlightRules;
+var RainbowParenHighlightRules = require("mode/rainbow_paren_highlight_rules").RainbowParenHighlightRules;
 
 var c_cppHighlightRules = function() {
 
@@ -181,24 +182,16 @@ var c_cppHighlightRules = function() {
             token : "keyword.punctuation.operator",
             merge : false,
             regex : "\\?|\\:|\\,|\\;|\\.|\\\\"
-         }, {
-            // Obviously these are neither keywords nor operators, but
-            // labelling them as such was the easiest way to get them
-            // to be colored distinctly from regular text
-            token : "paren.keyword.operator",
-            merge : false,
-            regex : "[[({<]"
-         }, {
-            // Obviously these are neither keywords nor operators, but
-            // labelling them as such was the easiest way to get them
-            // to be colored distinctly from regular text
-            token : "paren.keyword.operator",
-            merge : false,
-            regex : "[\\])}>]"
-         }, {
-            token : "text",
-            regex : "\\s+"
-         }
+         },
+         RainbowParenHighlightRules.getParenRule(),
+         {
+             token : "paren.keyword.operator",
+             merge : false,
+             regex : "[<>]"
+          }, {
+             token : "text",
+             regex : "\\s+"
+          }
       ],
       "comment" : [
          {
@@ -292,8 +285,6 @@ var c_cppHighlightRules = function() {
       regex: "\\*\\/",
       next: "start"
    });
-
-
 };
 
 oop.inherits(c_cppHighlightRules, TextHighlightRules);

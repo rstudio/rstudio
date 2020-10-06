@@ -1,0 +1,20 @@
+@charset "UTF-8";
+
+.grid {
+   margin-top: 8px;
+}
+
+.grid td {
+  vertical-align: top;
+}
+
+.listBox {
+   margin-left: 6px;
+   margin-bottom: 6px;
+   width: 80px;
+}
+
+.wrapAtColumn {
+   margin-left: 8px;
+   margin-top: 4px;
+}

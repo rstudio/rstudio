@@ -1,7 +1,7 @@
 /*
  * ChunkPlotRefreshFinishedEvent.java
  *
- * Copyright (C) 2009-16 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,9 +19,9 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class ChunkPlotRefreshFinishedEvent 
+public class ChunkPlotRefreshFinishedEvent
              extends GwtEvent<ChunkPlotRefreshFinishedEvent.Handler>
-{  
+{
    public interface Handler extends EventHandler
    {
       void onChunkPlotRefreshFinished(ChunkPlotRefreshFinishedEvent event);
@@ -30,13 +30,13 @@ public class ChunkPlotRefreshFinishedEvent
    public static class Data extends JavaScriptObject
    {
       protected Data()
-      {  
+      {
       }
-      
+
       public final native String getDocId() /*-{
          return this.doc_id;
       }-*/;
-      
+
       public final native int getWidth() /*-{
          return this.width;
       }-*/;
@@ -45,7 +45,7 @@ public class ChunkPlotRefreshFinishedEvent
          return this.replay_id;
       }-*/;
    }
-   
+
 
    public ChunkPlotRefreshFinishedEvent(Data data)
    {
@@ -68,8 +68,8 @@ public class ChunkPlotRefreshFinishedEvent
    {
       handler.onChunkPlotRefreshFinished(this);
    }
-   
+
    private Data data_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

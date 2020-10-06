@@ -59,11 +59,9 @@ public class PanmirrorEditRawDialog extends ModalDialog<PanmirrorRawFormatResult
    
       rawFormatSelect_.setFormats(outputFormats, raw.format);
       rawFormatSelect_.setValue(StringUtil.notNull(raw.format));
-      rawFormatSelect_.getListBox().getElement().setId(ElementIds.VISUAL_MD_RAW_FORMAT_SELECT);
       
       rawContent_.setValue(raw.content);
       PanmirrorDialogsUtil.setFullWidthStyles(rawContent_);
-      rawContent_.getElement().setId(ElementIds.VISUAL_MD_RAW_FORMAT_CONTENT);
       
       if (!inline_)
       {
@@ -108,7 +106,7 @@ public class PanmirrorEditRawDialog extends ModalDialog<PanmirrorRawFormatResult
    }
    
    @Override
-   protected void focusFirstControl()
+   protected void focusInitialControl()
    {
       if (rawFormatSelect_.getValue().length() > 0)
       {

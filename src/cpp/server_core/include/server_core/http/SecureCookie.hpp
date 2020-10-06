@@ -1,7 +1,7 @@
 /*
  * SecureCookie.hpp
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,6 +20,8 @@
 #include <boost/optional.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
+#include <core/http/Cookie.hpp>
+
 namespace rstudio {
 namespace core {
    class Error;
@@ -27,7 +29,6 @@ namespace core {
    namespace http {
       class Request;
       class Response;
-      class Cookie;
    }
 }
 }
@@ -41,8 +42,9 @@ http::Cookie createSecureCookie(const std::string& name,
                                 const std::string& value,
                                 const core::http::Request& request,
                                 const boost::posix_time::time_duration& validDuration,
-                                const std::string& path,
-                                bool secure);
+                                const std::string& path = "/",
+                                bool secure = false,
+                                http::Cookie::SameSite sameSite = http::Cookie::SameSite::Undefined);
 
 std::string readSecureCookie(const core::http::Request& request,
                              const std::string& name);
@@ -55,33 +57,18 @@ void set(const std::string& name,
          const std::string& value,
          const http::Request& request,
          const boost::posix_time::time_duration& validDuration,
-         const std::string& path,
-         http::Response* pResponse,
-         bool secure);
-
-void set(const std::string& name,
-         const std::string& value,
-         const http::Request& request,
-         const boost::posix_time::time_duration& validDuration,
-         const boost::optional<boost::gregorian::days>& cookieExpiresDays,
-         const std::string& path,
-         http::Response* pResponse,
-         bool secure);
-
-void set(const std::string& name,
-         const std::string& value,
-         const http::Request& request,
-         const boost::posix_time::time_duration& validDuration,
          const boost::optional<boost::posix_time::time_duration>& expiresFromNow,
          const std::string& path,
          http::Response* pResponse,
-         bool secure);
+         bool secure,
+         http::Cookie::SameSite sameSite);
 
 void remove(const http::Request& request,
             const std::string& name,
             const std::string& path,
             core::http::Response* pResponse,
-            bool secure);
+            bool secure,
+            http::Cookie::SameSite sameSite);
 
 // initialize with default secure cookie key file
 core::Error initialize();

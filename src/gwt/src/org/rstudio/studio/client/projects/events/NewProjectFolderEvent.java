@@ -1,7 +1,7 @@
 /*
  * NewProjectFolderEvent.java
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -51,7 +51,7 @@ public class NewProjectFolderEvent extends GwtEvent<NewProjectFolderEvent.Handle
    {
       return createRepo_;
    }
-   
+
    /**
     * @return info about api call that triggered this event, or null if not triggered by api
     */
@@ -72,7 +72,7 @@ public class NewProjectFolderEvent extends GwtEvent<NewProjectFolderEvent.Handle
       handler.onNewProjectFolderEvent(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 
    private final String dirName_;
    private final String destDir_;

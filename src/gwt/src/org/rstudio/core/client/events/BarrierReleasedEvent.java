@@ -1,7 +1,7 @@
 /*
  * BarrierReleasedEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,21 +14,27 @@
  */
 package org.rstudio.core.client.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class BarrierReleasedEvent extends GwtEvent<BarrierReleasedHandler>
+public class BarrierReleasedEvent extends GwtEvent<BarrierReleasedEvent.Handler>
 {
    @Override
-   public Type<BarrierReleasedHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
 
    @Override
-   protected void dispatch(BarrierReleasedHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onBarrierReleased(this);
    }
 
-   public static final Type<BarrierReleasedHandler> TYPE = new Type<BarrierReleasedHandler>();
+   public interface Handler extends EventHandler
+   {
+      void onBarrierReleased(BarrierReleasedEvent event);
+   }
+
+   public static final Type<Handler> TYPE = new Type<>();
 }

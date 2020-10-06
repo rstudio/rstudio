@@ -1,7 +1,7 @@
 /*
  * FindInFilesDialog.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -338,10 +338,10 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       String includeFilePatterns =
             listPresetFilePatterns_.getValue(
                   listPresetFilePatterns_.getSelectedIndex());
-      if (includeFilePatterns == "custom")
+      if (StringUtil.equals(includeFilePatterns, "custom"))
          includeFilePatterns = txtFilePattern_.getText();
 
-      ArrayList<String> list = new ArrayList<String>();
+      ArrayList<String> list = new ArrayList<>();
       for (String pattern : includeFilePatterns.split(","))
       {
          String trimmedPattern = pattern.trim();
@@ -355,7 +355,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       if (StringUtil.equals(excludeFilePatterns, "custom"))
          excludeFilePatterns = txtExcludeFilePattern_.getText();
 
-      ArrayList<String> excludeList = new ArrayList<String>();
+      ArrayList<String> excludeList = new ArrayList<>();
       for (String pattern : excludeFilePatterns.split(","))
       {
          String trimmedPattern = pattern.trim();
@@ -364,18 +364,18 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       }
 
       return State.createState(txtSearchPattern_.getText(),
-                               getEffectivePath().getPath(),
+                               getEffectivePath(),
                                checkboxRegex_.getValue(),
                                checkboxCaseSensitive_.getValue(),
                                JsUtil.toJsArrayString(list),
                                JsUtil.toJsArrayString(excludeList));
    }
 
-   private FileSystemItem getEffectivePath()
+   private String getEffectivePath()
    {
       if (StringUtil.notNull(dirChooser_.getText()).trim().length() == 0)
          return null;
-      return FileSystemItem.createDir(dirChooser_.getText());
+      return FileSystemItem.createDir(dirChooser_.getText()).getPath();
    }
 
    @Override
@@ -498,7 +498,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
 
    private boolean gitStatus_;
    private boolean packageStatus_;
-   private Widget mainWidget_;
-   private GlobalDisplay globalDisplay_ = RStudioGinjector.INSTANCE.getGlobalDisplay();
-   private Session session_ = RStudioGinjector.INSTANCE.getSession();
+   private final Widget mainWidget_;
+   private final GlobalDisplay globalDisplay_ = RStudioGinjector.INSTANCE.getGlobalDisplay();
+   private final Session session_ = RStudioGinjector.INSTANCE.getSession();
 }

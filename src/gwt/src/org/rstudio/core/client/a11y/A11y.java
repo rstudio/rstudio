@@ -1,7 +1,7 @@
 /*
  * A11y.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -68,7 +68,7 @@ public class A11y
       else
          element.setAttribute("aria-current", value);
    }
-   
+
    /**
     * Set aria-current value on an element
     * @param widget widget to mark
@@ -125,10 +125,10 @@ public class A11y
    {
       el.removeClassName(ThemeStyles.INSTANCE.visuallyHidden());
    }
-   
+
    public static void setARIANotExpanded(Element el)
    {
-      // aria best-practices recommends not including aria-expanded property at all instead 
+      // aria best-practices recommends not including aria-expanded property at all instead
       // of setting it to false
       el.removeAttribute("aria-expanded");
    }
@@ -145,5 +145,25 @@ public class A11y
          setARIAVisible(el);
          el.removeAttribute("inert");
       }
+   }
+
+   public static void setARIAAutocomplete(Element el, String val)
+   {
+      el.setAttribute("aria-autocomplete", val);
+   }
+
+   public static void setARIAAutocomplete(Widget widget, String val)
+   {
+      setARIAAutocomplete(widget.getElement(), val);
+   }
+
+   /**
+    * Add a focus outline to the element; will be automatically removed when
+    * focus leaves the element. See the focus-visible.js polyfill for more details.
+    */
+   public static void showFocusOutline(Element el)
+   {
+      el.addClassName("focus-visible");
+      el.setAttribute("data-focus-visible-added", "");
    }
 }

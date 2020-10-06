@@ -1,7 +1,7 @@
 /*
  * JsonRpc.hpp
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,6 +25,9 @@
 
 namespace rstudio {
 namespace core {
+namespace system {
+   struct ProcessResult;
+}
 namespace json {
 namespace errc {
 
@@ -54,6 +57,9 @@ enum errc_t {
 
    // launcher session parameters not found and should be resent to implicitly resume the session
    LaunchParametersMissing = 17,
+
+   // profile errors - those imposed by limits in user profiles
+   LimitSessionsReached = 20,
 
    // Execution errors -- These errors occurred during execution of the method.
    // Application state is therefore known based on the expected behavior
@@ -96,7 +102,7 @@ struct is_error_code_enum<rstudio::core::json::errc::errc_t>
 namespace rstudio {
 namespace core {
 namespace http {
-   class Response ;
+   class Response;
 }
 }
 }
@@ -108,11 +114,11 @@ namespace json {
 // constants
 extern const char * const kRpcResult;
 extern const char * const kRpcError;
-extern const char * const kJsonContentType ;
+extern const char * const kJsonContentType;
 extern const char * const kRpcAsyncHandle;
 
 // jsonRpcCategory
-const boost::system::error_category& jsonRpcCategory() ;
+const boost::system::error_category& jsonRpcCategory();
 
 
 //
@@ -178,7 +184,7 @@ struct JsonRpcRequest
 // 
 // json request parsing
 //
-Error parseJsonRpcRequest(const std::string& input, JsonRpcRequest* pRequest) ;
+Error parseJsonRpcRequest(const std::string& input, JsonRpcRequest* pRequest);
 
 bool parseJsonRpcRequestForMethod(const std::string& input, 
                                   const std::string& method,
@@ -198,7 +204,7 @@ inline core::Error readParam(const Array& params,
    if (index >= params.getSize())
       return core::Error(json::errc::ParamMissing, ERROR_LOCATION);
    
-   *pValue = params[index] ;
+   *pValue = params[index];
    return Success();
 }
 
@@ -209,11 +215,11 @@ core::Error readParam(const Array& params, unsigned int index, T* pValue)
       return core::Error(json::errc::ParamMissing, ERROR_LOCATION);
 
    if (!isType<T>(params[index]))
-      return core::Error(json::errc::ParamTypeMismatch, ERROR_LOCATION) ;
+      return core::Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
 
    *pValue = params[index].getValue<T>();
 
-   return Success() ;
+   return Success();
 }
 
 template <typename T, typename... Args>
@@ -255,7 +261,7 @@ core::Error readParams(const Array& params, unsigned int index, T* pValue)
 template <typename T1>
 core::Error readParams(const json::Array& params, T1* pValue1)
 {
-   return readParam(params, 0, pValue1) ;
+   return readParam(params, 0, pValue1);
 }
 
 namespace errors {
@@ -277,7 +283,7 @@ inline Error typeMismatch(const Value& value,
    std::string description = std::string("expected ") +
          "'" + typeAsString(expectedType) + "'" +
          "; got " +
-         "'" + typeAsString(value.getType()) + "'";
+         "'" + typeAsString(value) + "'";
    error.addProperty("description", description);
    return error;
 }
@@ -346,7 +352,7 @@ public:
    JsonRpcResponse() : suppressDetectChanges_(false)
    {
       setResult(Value());
-   };
+   }
 
    // COPYING: via compiler (copyable members)
    
@@ -438,7 +444,7 @@ public:
    
 private:
    Object response_;
-   boost::function<void()> afterResponse_ ;
+   boost::function<void()> afterResponse_;
    bool suppressDetectChanges_;
 };
    
@@ -446,7 +452,7 @@ private:
 // convenience functions for sending json-rpc responses
    
 void setJsonRpcResponse(const JsonRpcResponse& jsonRpcResponse,
-                        http::Response* pResponse); 
+                        http::Response* pResponse);
 
 
 inline void setVoidJsonRpcResult(http::Response* pResponse)
@@ -459,7 +465,7 @@ inline void setVoidJsonRpcResult(http::Response* pResponse)
 template <typename T>
 void setJsonRpcResult(const T& result, http::Response* pResponse)
 {
-   JsonRpcResponse jsonRpcResponse ;
+   JsonRpcResponse jsonRpcResponse;
    jsonRpcResponse.setResult(result);
    setJsonRpcResponse(jsonRpcResponse, pResponse);
 }   
@@ -467,7 +473,7 @@ void setJsonRpcResult(const T& result, http::Response* pResponse)
 template <typename T>
 void setJsonRpcError(const T& error, core::http::Response* pResponse, bool includeErrorProperties = false)
 {   
-   JsonRpcResponse jsonRpcResponse ;
+   JsonRpcResponse jsonRpcResponse;
    jsonRpcResponse.setError(error, includeErrorProperties);
    setJsonRpcResponse(jsonRpcResponse, pResponse);
 }
@@ -482,12 +488,50 @@ void setJsonRpcRedirectError(const T& error,
    setJsonRpcResponse(jsonRpcResponse, pResponse);
 }
 
+// helpers for populating an existing response object with errors
+void setErrorResponse(const core::Error& error, core::json::JsonRpcResponse* pResponse);
+void setProcessErrorResponse(const core::system::ProcessResult& result,
+                             const core::ErrorLocation& location,
+                             core::json::JsonRpcResponse* pResponse);
+
+// helper for reading a json value (and setting an error response if it
+// doesn't parse or is of the wrong type)
+template <typename T>
+bool parseJsonForResponse(const std::string& output, T* pVal, json::JsonRpcResponse* pResponse)
+{
+   using namespace json;
+   T jsonValue;
+   Error error = jsonValue.parse(output);
+   if (error)
+   {
+      Error parseError(boost::system::errc::state_not_recoverable,
+                       errorMessage(error),
+                       ERROR_LOCATION);
+      json::setErrorResponse(parseError, pResponse);
+      return false;
+   }
+   else if (!isType<T>(jsonValue))
+   {
+      Error outputError(boost::system::errc::state_not_recoverable,
+                       "Unexpected JSON output from pandoc",
+                       ERROR_LOCATION);
+      json::setErrorResponse(outputError, pResponse);
+      return false;
+   }
+   else
+   {
+      *pVal = jsonValue;
+      return true;
+   }
+}
+
+
 
 // convenience typedefs for managing a map of json rpc functions
 typedef boost::function<core::Error(const JsonRpcRequest&, JsonRpcResponse*)>
-      JsonRpcFunction ;
+      JsonRpcFunction;
 typedef std::pair<std::string,JsonRpcFunction>
-      JsonRpcMethod ;
+      JsonRpcMethod;
 typedef boost::unordered_map<std::string,JsonRpcFunction>
       JsonRpcMethods;
 
@@ -502,9 +546,9 @@ typedef boost::unordered_map<std::string,JsonRpcFunction>
 // JsonRpcFunctionContinuation is what a JsonRpcAsyncFunction needs to call
 // when its work is complete
 typedef boost::function<void(const core::Error&, JsonRpcResponse*)>
-      JsonRpcFunctionContinuation ;
+      JsonRpcFunctionContinuation;
 typedef boost::function<void(const JsonRpcRequest&, const JsonRpcFunctionContinuation&)>
-      JsonRpcAsyncFunction ;
+      JsonRpcAsyncFunction;
 // The bool in the next two typedefs specifies whether the function wants the
 // HTTP connection to stay open until the method finishes executing (direct return),
 // or for the HTTP connection to immediate return with an "asyncHandle" value that
@@ -513,9 +557,9 @@ typedef boost::function<void(const JsonRpcRequest&, const JsonRpcFunctionContinu
 // return must be used for longer-running operations to prevent the browser from
 // being starved of available HTTP connections to the server.
 typedef std::pair<std::string,std::pair<bool, JsonRpcAsyncFunction> >
-      JsonRpcAsyncMethod ;
+      JsonRpcAsyncMethod;
 typedef boost::unordered_map<std::string,std::pair<bool, JsonRpcAsyncFunction> >
-      JsonRpcAsyncMethods ;
+      JsonRpcAsyncMethods;
 
 JsonRpcAsyncFunction adaptToAsync(JsonRpcFunction synchronousFunction);
 JsonRpcAsyncMethod adaptMethodToAsync(JsonRpcMethod synchronousMethod);

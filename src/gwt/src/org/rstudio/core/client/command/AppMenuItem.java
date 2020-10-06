@@ -1,7 +1,7 @@
 /*
  * AppMenuItem.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,6 +28,14 @@ public class AppMenuItem extends MenuItem
       cmd_ = cmd;
       mainMenu_ = mainMenu;
       setTitle(cmd_.getDesc());
+   }
+
+   public AppMenuItem(AppCommand cmd, boolean mainMenu, ScheduledCommand cmdWrapper)
+   {
+      super(cmd.getMenuHTML(mainMenu), true, cmd.getMenuRole(), cmd.isChecked(), cmdWrapper);
+      cmd_ = cmd;
+      mainMenu_ = mainMenu;
+      setTitle(cmd.getDesc());
    }
 
    @Override
@@ -79,7 +87,7 @@ public class AppMenuItem extends MenuItem
          }
       });
    }
-   
+
    public String getId()
    {
       return cmd_.getId();

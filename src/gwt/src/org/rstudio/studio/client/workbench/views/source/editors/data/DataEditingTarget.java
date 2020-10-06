@@ -1,7 +1,7 @@
 /*
  * DataEditingTarget.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,15 +18,14 @@ import com.google.gwt.aria.client.Roles;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
+import org.rstudio.studio.client.server.ErrorLoggingServerRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.editors.urlcontent.UrlContentEditingTarget;
@@ -112,6 +111,7 @@ public class DataEditingTarget extends UrlContentEditingTarget
    public void onActivate()
    {
       super.onActivate();
+      isActive_ = true;
       if (view_ != null)
       {
          // the data change while the window wasn't active, so refresh it,
@@ -154,7 +154,8 @@ public class DataEditingTarget extends UrlContentEditingTarget
             "Data Browser",
             commands_,
             events_,
-            getDataItem());
+            getDataItem(),
+            column_);
       view_.setSize("100%", "100%");
       progressPanel_.setWidget(view_);
    }
@@ -191,7 +192,7 @@ public class DataEditingTarget extends UrlContentEditingTarget
    @Override
    public void popoutDoc()
    {
-      events_.fireEvent(new PopoutDocEvent(getId(), null));
+      events_.fireEvent(new PopoutDocEvent(getId(), null, null));
    }
 
    @Override
@@ -225,14 +226,7 @@ public class DataEditingTarget extends UrlContentEditingTarget
                {
                   server_.removeCachedData(
                         oldCacheKey,
-                        new ServerRequestCallback<Void>() {
-
-                           @Override
-                           public void onError(ServerError error)
-                           {
-                              Debug.logError(error);
-                           }
-                        });
+                        new ErrorLoggingServerRequestCallback<Void>());
 
                   data.fillProperties(doc_.getProperties());
                   reloadDisplay();

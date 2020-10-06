@@ -3,7 +3,7 @@
 #
 # install-dependencies-osx
 #
-# Copyright (C) 2009-19 by RStudio, PBC
+# Copyright (C) 2020 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -29,7 +29,32 @@ if ! command -v brew &> /dev/null; then
 fi
 
 # install postgres, needed by SOCI
-brew install postgres
+if brew list | grep postgresql &> /dev/null; then
+   echo "postgresql already installed"
+else
+   brew install postgresql
+fi
+
+# coreutils needed for unit tests (specifically gtimeout)
+if ! command -v gtimeout &> /dev/null; then
+   brew install coreutils
+fi
+
+# openssl needed to run rsession  (including unit tests)
+if brew list | grep openssl@1.1 &> /dev/null; then
+   echo "openssl already installed"
+else
+   brew install openssl
+fi
+
+# pidof and gdb needed for analysis of hung unit tests
+if ! command -v pidof &> /dev/null; then
+   brew install pidof
+fi
+if ! command -v gdb &> /dev/null; then
+   brew install gdb
+   grep -qxF 'set startup-with-shell off' ~/.gdbinit || echo "set startup-with-shell off" >> ~/.gdbinit
+fi
 
 cd ../common
 ./install-common --install-crashpad-sudo

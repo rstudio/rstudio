@@ -1,7 +1,7 @@
 /*
  * SourceNavigationHistory.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -42,7 +42,7 @@ public class SourceNavigationHistory
    }
   
    public void add(SourceNavigation navigation)
-   {
+   {      
       // rewind the history to the current location
       while ( (history_.size() - 1) > currentLocation_)
          history_.removeLast();
@@ -95,7 +95,7 @@ public class SourceNavigationHistory
    }
    
    public SourceNavigation goBack()
-   {
+   {    
       if (!isBackEnabled())
          return null;
       
@@ -141,10 +141,10 @@ public class SourceNavigationHistory
    @SuppressWarnings("unused")
    private void debugPrintCurrentHistory()
    {
-      Debug.log("HISTORY (location=" + currentLocation_ + ")");
+      Debug.logToConsole("HISTORY (location=" + currentLocation_ + ")");
       for (int i=0; i<history_.size(); i++)
-         Debug.log(history_.get(i).toDebugString());
-      Debug.log("");
+         Debug.logToConsole(history_.get(i).toDebugString());
+      Debug.logToConsole("");
    }
   
    private final int maxItems_;

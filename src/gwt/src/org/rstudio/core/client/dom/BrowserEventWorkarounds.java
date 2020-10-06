@@ -1,7 +1,7 @@
 /*
  * BrowserEventWorkarounds.java
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,7 +35,7 @@ public class BrowserEventWorkarounds
       {
          boolean lastEventWasMouseEvent_;
          boolean isDispatchingSyntheticMouseOverEvent_;
-         
+
          private Element target_;
          private Element related_;
 
@@ -48,12 +48,12 @@ public class BrowserEventWorkarounds
          public void onPreviewNativeEvent(NativePreviewEvent preview)
          {
             int eventType = preview.getTypeInt();
-            
+
             // skip synthetic mouseover events (since this handler will be live
             // even when the mouseover event is later fired)
             if (isDispatchingSyntheticMouseOverEvent_)
                return;
-            
+
             // if we get a mouseover event targeting something in a GWT menu,
             // save the event target (we'll re-fire it if the user moves the
             // mouse later)
@@ -63,9 +63,9 @@ public class BrowserEventWorkarounds
                // allow the mouseover event to dispatch unimpeded
                if (lastEventWasMouseEvent_)
                   return;
-               
+
                NativeEvent event = preview.getNativeEvent();
-               
+
                // double-check that this event is occurring within a GWT menu
                Element target = Element.as(event.getEventTarget());
                Element gwtMenuItem = DomUtils.findParentElement(target, (Element parent) -> {
@@ -73,7 +73,7 @@ public class BrowserEventWorkarounds
                         parent.hasClassName("gwt-MenuItem") ||
                         parent.hasClassName("gwt-MenuBar");
                });
-               
+
                if (gwtMenuItem == null)
                   return;
 
@@ -93,10 +93,10 @@ public class BrowserEventWorkarounds
                screenY_ = event.getScreenY();
                clientX_ = event.getClientX();
                clientY_ = event.getClientY();
-               
+
                return;
             }
-            
+
             // track whether the last event was a user mouse event; e.g.
             // something that would only be triggered by the user moving the
             // mouse
@@ -108,7 +108,7 @@ public class BrowserEventWorkarounds
                      eventType == Event.ONMOUSEUP ||
                      eventType == Event.ONMOUSEWHEEL;
             }
-            
+
             // if we just had a mouse event, check to see if we have a deferred
             // mouseover event ready to fire; if so, fire away
             if (lastEventWasMouseEvent_)
@@ -116,23 +116,23 @@ public class BrowserEventWorkarounds
                if (target_ != null)
                {
                   Scheduler.get().scheduleFinally(() -> {
-                     
+
                      NativeEvent overEvent = Document.get().createMouseOverEvent(
                            0,
                            screenX_, screenY_,
                            clientX_, clientY_,
                            false, false, false, false,
                            0, related_);
-                     
+
                      isDispatchingSyntheticMouseOverEvent_ = true;
                      target_.dispatchEvent(overEvent);
                      target_ = null;
                      isDispatchingSyntheticMouseOverEvent_ = false;
-                     
+
                   });
                }
             }
-            
+
          }
       });
    }

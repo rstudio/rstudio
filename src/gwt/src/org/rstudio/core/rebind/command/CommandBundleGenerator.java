@@ -1,7 +1,7 @@
 /*
  * CommandBundleGenerator.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -86,6 +86,7 @@ class CommandBundleGeneratorHelper
       commandMethods_ = getMethods(true, false, false);
       menuMethods_ = getMethods(false, true, false);
       shortcutsMethods_ = getMethods(false, false, true);
+      commandProps_ = getCommandProperties();
       packageName_ = bundleType_.getPackage().getName();
    }
 
@@ -132,15 +133,12 @@ class CommandBundleGeneratorHelper
    }
 
    private void emitConstructor(SourceWriter writer, ImageResourceInfo images)
-         throws UnableToCompleteException
    {
       writer.println("public " + simpleName_ + "() {");
 
-      // Get additional properties from XML resource file, if exists
-      Map<String, Element> props = getCommandProperties();
       // Implement the methods for the commands
       for (JMethod method : commandMethods_)
-         emitCommandInitializers(writer, props, method, images);
+         emitCommandInitializers(writer, method, images);
 
       writer.println();
       writer.indentln("__registerShortcuts();");
@@ -149,7 +147,6 @@ class CommandBundleGeneratorHelper
    }
 
    private void emitCommandFields(SourceWriter writer)
-                             throws UnableToCompleteException
    {
       // Declare the fields for the commands
       for (JMethod method : commandMethods_)
@@ -180,6 +177,7 @@ class CommandBundleGeneratorHelper
          String menuClass = new MenuEmitter(logger_,
                                             context_,
                                             bundleType_,
+                                            commandProps_,
                                             (Element) nodes.item(0)).generate();
 
          writer.println("public void " + name + "(MenuCallback callback) {");
@@ -215,7 +213,7 @@ class CommandBundleGeneratorHelper
                                 boolean includeShortcuts)
          throws UnableToCompleteException
    {
-      ArrayList<JMethod> methods = new ArrayList<JMethod>();
+      ArrayList<JMethod> methods = new ArrayList<>();
       for (JMethod method : bundleType_.getMethods())
       {
          if (!method.isAbstract())
@@ -309,28 +307,27 @@ class CommandBundleGeneratorHelper
     * }
     */
    private void emitCommandInitializers(SourceWriter writer,
-                                  Map<String, Element> props,
                                   JMethod method,
                                   ImageResourceInfo images)
    {
       String name = method.getName();
       writer.println(name + "_ = new AppCommand();");
 
-      setProperty(writer, name, props.get(name), "id");
-      setProperty(writer, name, props.get(name), "desc");
-      setProperty(writer, name, props.get(name), "label");
-      setProperty(writer, name, props.get(name), "buttonLabel");
-      setProperty(writer, name, props.get(name), "menuLabel");
-      setProperty(writer, name, props.get(name), "windowMode");
-      setProperty(writer, name, props.get(name), "context");
+      setProperty(writer, name, commandProps_.get(name), "id");
+      setProperty(writer, name, commandProps_.get(name), "desc");
+      setProperty(writer, name, commandProps_.get(name), "label");
+      setProperty(writer, name, commandProps_.get(name), "buttonLabel");
+      setProperty(writer, name, commandProps_.get(name), "menuLabel");
+      setProperty(writer, name, commandProps_.get(name), "windowMode");
+      setProperty(writer, name, commandProps_.get(name), "context");
       // Any additional textual properties would be added here...
 
-      setPropertyBool(writer, name, props.get(name), "visible");
-      setPropertyBool(writer, name, props.get(name), "enabled");
-      setPropertyBool(writer, name, props.get(name), "checkable");
-      setPropertyBool(writer, name, props.get(name), "checked");
-      setPropertyBool(writer, name, props.get(name), "rebindable");
-      setPropertyBool(writer, name, props.get(name), "radio");
+      setPropertyBool(writer, name, commandProps_.get(name), "visible");
+      setPropertyBool(writer, name, commandProps_.get(name), "enabled");
+      setPropertyBool(writer, name, commandProps_.get(name), "checkable");
+      setPropertyBool(writer, name, commandProps_.get(name), "checked");
+      setPropertyBool(writer, name, commandProps_.get(name), "rebindable");
+      setPropertyBool(writer, name, commandProps_.get(name), "radio");
       
       if (images.hasImage(name))
       {
@@ -453,7 +450,7 @@ class CommandBundleGeneratorHelper
 
    public Map<String, Element> getCommandProperties() throws UnableToCompleteException
    {
-      Map<String, Element> properties = new HashMap<String, Element>();
+      Map<String, Element> properties = new HashMap<>();
 
       NodeList nodes = getConfigDoc("/commands/cmd");
 
@@ -499,6 +496,7 @@ class CommandBundleGeneratorHelper
    @SuppressWarnings("unused")
    private final JMethod[] shortcutsMethods_;
    private final String packageName_;
+   private final Map<String, Element> commandProps_;
    private String simpleName_;
 }
 
@@ -526,5 +524,5 @@ class ImageResourceInfo
    }
 
    private final String imagesRefPath_;
-   private final HashSet<String> imageIds_ = new HashSet<String>();
+   private final HashSet<String> imageIds_ = new HashSet<>();
 }

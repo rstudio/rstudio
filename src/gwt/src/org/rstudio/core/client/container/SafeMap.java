@@ -1,7 +1,7 @@
 /*
  * SafeMap.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,49 +27,49 @@ public class SafeMap<K, V>
    {
       data_ = new HashMap<K, V>();
    }
-   
+
    public V get(K key)
    {
       if (!data_.containsKey(key))
          return null;
       return data_.get(key);
    }
-   
+
    public void put(K key, V value)
    {
       data_.put(key, value);
    }
-   
+
    public void remove(K key)
    {
       data_.remove(key);
    }
-   
+
    public void clear()
    {
       data_.clear();
    }
-   
+
    public boolean isEmpty()
    {
       return data_.isEmpty();
    }
-   
+
    public int size()
    {
       return data_.size();
    }
-   
+
    public boolean containsKey(K key)
    {
       return data_.containsKey(key);
    }
-   
+
    public boolean containsValue(V value)
    {
       return data_.containsValue(value);
    }
-   
+
    public Set<Entry<K, V>> entrySet()
    {
       return data_.entrySet();

@@ -1,7 +1,7 @@
 /*
  * FindResultContext.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -65,7 +65,7 @@ public class FindResultContext
 
       private final String path_;
       private final ListDataProvider<Match> matchData_ =
-            new ListDataProvider<Match>(new ProvidesKey<Match>()
+            new ListDataProvider<>(new ProvidesKey<Match>()
             {
                @Override
                public Object getKey(Match item)
@@ -124,7 +124,7 @@ public class FindResultContext
 
    FindResultContext()
    {
-      findResults_ = new ArrayList<FindResult>();
+      findResults_ = new ArrayList<>();
    }
 
    private File getFile(String path)
@@ -191,7 +191,7 @@ public class FindResultContext
       return findResults_;
    }
 
-   private final ListDataProvider<File> data_ = new ListDataProvider<File>(new ProvidesKey<File>()
+   private final ListDataProvider<File> data_ = new ListDataProvider<>(new ProvidesKey<File>()
    {
       @Override
       public Object getKey(File item)
@@ -199,7 +199,7 @@ public class FindResultContext
          return item.getPath();
       }
    });
-   private ArrayList<FindResult> findResults_;
-   private final HashMap<String, File> filesByName_ = new HashMap<String, File>();
+   private final ArrayList<FindResult> findResults_;
+   private final HashMap<String, File> filesByName_ = new HashMap<>();
    private int maxLineWidth_;
 }

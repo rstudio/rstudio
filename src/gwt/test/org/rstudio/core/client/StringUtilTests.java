@@ -1,7 +1,7 @@
 /*
  * StringUtilTests.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,8 @@
 package org.rstudio.core.client;
 
 import java.util.Date;
+import java.util.List;
+import java.util.ArrayList;
 
 import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.junit.client.GWTTestCase;
@@ -238,6 +240,22 @@ public class StringUtilTests extends GWTTestCase
       assertEquals("2:02:01:01", days);
    }
   
+   public void testGetCssIdentifier()
+   {
+      List<Pair<String, String>> testList = new ArrayList<>();
+      testList.add(new Pair<>("4abc_bad",        "_abc_bad"));
+      testList.add(new Pair<>("--verybad",       "_-verybad"));
+      testList.add(new Pair<>("-2badagain?",     "_2badagain_"));
+      testList.add(new Pair<>("great342_-↲",     "great342_-↲"));
+      testList.add(new Pair<>("-_perfectlyfine", "-_perfectlyfine"));
+
+      for (Pair<String, String> td  : testList)
+      {
+         String result = StringUtil.getCssIdentifier(td.first);
+         assertTrue(StringUtil.equals(td.second, result));
+      }
+   }
+
    public void testEscapeBashPathNoSpecialChars()
    {
       String input = "NothingSpecialHere.129,._+@%/-";

@@ -1,7 +1,7 @@
 /*
  * PathBreadcrumbWidget.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,7 +26,6 @@ import com.google.inject.Provider;
 import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
-import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -48,9 +47,9 @@ public class PathBreadcrumbWidget
    public PathBreadcrumbWidget(FileSystemContext context)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
-      
+
       context_ = context;
-  
+
       pathPanel_ = new HorizontalPanel();
       pathPanel_.setStylePrimaryName(RES.styles().path());
 
@@ -85,30 +84,30 @@ public class PathBreadcrumbWidget
       Roles.getButtonRole().setAriaLabelProperty(browse.getElement(), buttonTitle);
       eastFrame_.add(browse);
       frame_.addEast(eastFrame_, 22);
-      
+
       frame_.add(outer_);
       frame_.setStyleName(STYLES.breadcrumbFrame());
       initWidget(frame_);
    }
-   
+
    @Inject
    public void initialize(Provider<Session> pSession)
    {
       pSession_ = pSession;
    }
-   
+
    private void maybeAddProjectIcon()
    {
       if (projectIconsAdded_)
          return;
-      
+
       if (pSession_ == null ||
           pSession_.get() == null)
          return;
-      
+
       final FileSystemItem projDir =
             pSession_.get().getSessionInfo().getActiveProjectDir();
-      
+
       if (projDir != null)
       {
          ImageButton projIcon = new ImageButton("Go to project directory", new ImageResource2x(RES.projectImage2x()));
@@ -126,7 +125,7 @@ public class PathBreadcrumbWidget
       }
    }
 
-   public void setDirectory(FileSystemItem[] pathElements, 
+   public void setDirectory(FileSystemItem[] pathElements,
          String lastBrowseable)
    {
       pathPanel_.clear();
@@ -136,9 +135,9 @@ public class PathBreadcrumbWidget
       for (FileSystemItem item : pathElements)
       {
          boolean browseable = true;
-         if (lastBrowseable != null) 
+         if (lastBrowseable != null)
             browseable = item.getPath().startsWith(lastBrowseable);
-         
+
          lastAnchor = addAnchor(item, browseable);
       }
 
@@ -209,7 +208,7 @@ public class PathBreadcrumbWidget
       {
          FileSystemContext tempContext =
                RStudioGinjector.INSTANCE.getRemoteFileSystemContext();
-         
+
          RStudioGinjector.INSTANCE.getFileDialogs().chooseFolder(
                "Go To Folder",
                tempContext,
@@ -229,9 +228,9 @@ public class PathBreadcrumbWidget
       else
       {
          context_.messageDisplay().promptForText(
-               "Go To Folder", 
+               "Go To Folder",
                "Path to folder (use ~ for home directory):",
-               "", 
+               "",
                new OperationWithInput<String>() {
 
                   @Override
@@ -239,17 +238,17 @@ public class PathBreadcrumbWidget
                   {
                      if (input == null)
                         return;
-                     
+
                      context_.cd(input);
                   }
-                  
+
                });
       }
-      
+
    }
 
    public HandlerRegistration addSelectionCommitHandler(
-         SelectionCommitHandler<FileSystemItem> handler)
+         SelectionCommitEvent.Handler<FileSystemItem> handler)
    {
       return addHandler(handler, SelectionCommitEvent.getType());
    }
@@ -270,6 +269,6 @@ public class PathBreadcrumbWidget
    private boolean projectIconsAdded_ = false;
    private final DockLayoutPanel frame_;
    private HTMLPanel fadeWrapper_;
-   
+
    private Provider<Session> pSession_;
 }

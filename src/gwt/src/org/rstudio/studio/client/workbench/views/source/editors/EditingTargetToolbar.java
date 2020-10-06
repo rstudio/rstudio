@@ -1,7 +1,7 @@
 /*
  * EditingTargetToolbar.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,8 +14,13 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.views.source.SourceColumn;
+import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 
 import com.google.gwt.dom.client.Style.Unit;
@@ -23,9 +28,20 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class EditingTargetToolbar extends Toolbar
 {
-   public EditingTargetToolbar(Commands commands, boolean includePopout)
+   public EditingTargetToolbar(Commands commands, boolean includePopout, SourceColumn column)
+   {
+      this(commands, includePopout, column, "");
+   }
+
+   public EditingTargetToolbar(Commands commands, boolean includePopout,
+                               SourceColumn column, String id)
    {
       super("Code Editor Tab");
+
+      // Buttons are unique to a source column so require SourceAppCommands
+      SourceColumnManager mgr = RStudioGinjector.INSTANCE.getSourceColumnManager();
+
+      id_ = id;
       addLeftWidget(commands.sourceNavigateBack().createToolbarButton());
       Widget forwardButton = commands.sourceNavigateForward().createToolbarButton();
       forwardButton.getElement().getStyle().setMarginLeft(-6, Unit.PX);
@@ -35,13 +51,47 @@ public class EditingTargetToolbar extends Toolbar
       {
          if (SourceWindowManager.isMainSourceWindow())
          {
-            addLeftWidget(commands.popoutDoc().createToolbarButton());
+            addLeftWidget(
+               mgr.getSourceCommand(commands.popoutDoc(), column).createToolbarButton());
          }
          else
          {
-            addLeftWidget(commands.returnDocToMain().createToolbarButton());
+            addLeftWidget(
+               mgr.getSourceCommand(commands.returnDocToMain(), column).createToolbarButton());
          }
          addLeftSeparator();
       }
    }
+
+   // wrapper methods to add the editing target's id to the class id
+
+   @Override
+   public <TWidget extends Widget> TWidget insertWidget(TWidget widget, TWidget beforeWidget)
+   {
+      widget = super.insertWidget(widget, beforeWidget);
+      return addClassId(widget);
+   }
+
+   @Override
+   public <TWidget extends Widget> TWidget addLeftWidget(TWidget widget)
+   {
+      widget = super.addLeftWidget(widget);
+      return addClassId(widget);
+   }
+
+   @Override
+   public <TWidget extends Widget> TWidget addRightWidget(TWidget widget)
+   {
+      widget = super.addRightWidget(widget);
+      return addClassId(widget);
+   }
+
+   public <TWidget extends Widget> TWidget addClassId(TWidget widget)
+   {
+      if (!StringUtil.isNullOrEmpty(id_) && widget instanceof ToolbarButton)
+         ((ToolbarButton) widget).setClassId(id_);
+      return widget;
+   }
+
+   private final String id_;
 }

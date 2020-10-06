@@ -1,0 +1,37 @@
+{
+  "$id": "http://rstudio.org/schemas/zotero-items.json",
+  "$schema": "http://json-schema.org/schema#",
+  "title": "Zotero Items Metadata Schema",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "key": {
+        "type": "string"
+      },
+      "version": {
+        "type": "number"
+      },
+      "library": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "id": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "csljson": {
+        "type": "object"
+      },
+      "data": {
+        "type": "object"
+      }
+    }
+  }
+}

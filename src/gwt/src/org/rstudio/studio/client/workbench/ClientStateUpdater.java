@@ -1,7 +1,7 @@
 /*
  * ClientStateUpdater.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -54,40 +54,31 @@ public class ClientStateUpdater extends TimeBufferedCommand
       events_ = events;
       server_ = server;
 
-      events_.addHandler(PushClientStateEvent.TYPE, new PushClientStateHandler()
-      {
-         public void onPushClientState(PushClientStateEvent event)
-         {
-            reschedule();
-         }
-      });
+      events_.addHandler(PushClientStateEvent.TYPE, pushClientStateEvent -> reschedule());
 
-      events_.addHandler(LastChanceSaveEvent.TYPE, new LastChanceSaveHandler()
+      events_.addHandler(LastChanceSaveEvent.TYPE, lastChanceSaveEvent ->
       {
-         public void onLastChanceSave(LastChanceSaveEvent event)
+         // We're quitting. Save client state one more time.
+         barrierToken_ = lastChanceSaveEvent.acquire();
+         try
          {
-            // We're quitting. Save client state one more time.
-            barrierToken_ = event.acquire();
-            try
-            {
-               nudge();
-            }
-            catch(Exception ex)
-            {
-               Debug.log("Exception on scheduling client state save for shutdown: ");
-               Debug.logException(ex);
-               if (barrierToken_ != null)
-                  barrierToken_.release();
-            }
+            nudge();
+         }
+         catch(Exception ex)
+         {
+            Debug.log("Exception on scheduling client state save for shutdown: ");
+            Debug.logException(ex);
+            if (barrierToken_ != null)
+               barrierToken_.release();
          }
       });
    }
-   
+
    public void pauseSendingUpdates()
    {
       pauseSendingUpdates_ = true;
    }
-   
+
    public void resumeSendingUpdates()
    {
       pauseSendingUpdates_ = false;
@@ -143,7 +134,7 @@ public class ClientStateUpdater extends TimeBufferedCommand
       {
          Debug.log("Exception updating client state: ");
          Debug.logException(ex);
-         
+
          // complete (ensure barrier token is released)
          onComplete(shouldSchedulePassive);
       }
@@ -153,7 +144,7 @@ public class ClientStateUpdater extends TimeBufferedCommand
    {
       if (barrierToken_ != null)
          barrierToken_.release();
-      
+
       if (shouldSchedulePassive)
          reschedule();
    }

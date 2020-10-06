@@ -1,7 +1,7 @@
 /*
  * Thread.hpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -36,6 +36,11 @@
    {                                                                           \
       boost::lock_guard<boost::recursive_mutex> lock(m);
 
+#define UNIQUE_LOCK_MUTEX(m, lockvar)                                          \
+   try                                                                         \
+   {                                                                           \
+      boost::unique_lock<boost::mutex> lockvar(m);                             \
+
 #define END_LOCK_MUTEX                                                         \
    }                                                                           \
    catch (const boost::thread_resource_error& e)                               \
@@ -45,6 +50,7 @@
       LOG_ERROR(threadError);                                                  \
    }                                                                           \
    CATCH_UNEXPECTED_EXCEPTION
+
 
 namespace rstudio {
 namespace core {
@@ -279,9 +285,9 @@ public:
       }
       catch(const thread_resource_error& e)
       {
-         Error waitError(boost::thread_error::ec_from_exception(e), ERROR_LOCATION) ;
+         Error waitError(boost::thread_error::ec_from_exception(e), ERROR_LOCATION);
          LOG_ERROR(waitError);
-         return false ;
+         return false;
       }
    }
 
@@ -291,12 +297,64 @@ private:
    // they are destroyed or not (boost has been known to crash if a mutex
    // is being destroyed while it is being waited on so sometimes it is
    // better to simply never delete these objects
-   boost::mutex* pMutex_ ;
-   boost::condition* pWaitCondition_ ;
+   boost::mutex* pMutex_;
+   boost::condition* pWaitCondition_;
 
    // instance data
    const bool freeSyncObjects_;
    std::queue<T> queue_;
+};
+
+template <typename T>
+class ThreadsafeSet
+{
+public:
+   bool contains(const T& value) const
+   {
+      LOCK_MUTEX(mutex_)
+      {
+         return set_.find(value) != set_.end();
+      }
+      END_LOCK_MUTEX
+
+      // This will only be hit if we had a problem acquiring the lock, which likely means we have bigger problems.
+      return false;
+   }
+
+   void insert(const T& value)
+   {
+      LOCK_MUTEX(mutex_)
+      {
+         set_.insert(value);
+      }
+      END_LOCK_MUTEX
+   }
+
+   void insert(T&& value)
+   {
+      LOCK_MUTEX(mutex_)
+      {
+         set_.insert(value);
+      }
+      END_LOCK_MUTEX
+   }
+
+   void remove(const T& value)
+   {
+      LOCK_MUTEX(mutex_)
+      {
+         auto itr = set_.find(value);
+         if (itr != set_.end())
+            set_.erase(value);
+      }
+      END_LOCK_MUTEX
+   }
+
+private:
+   // We need to supply the default std::set template argument values because there's a compiler bug pre MSVC 2019 16.6:
+   // https://developercommunity.visualstudio.com/content/problem/910615/c2976-during-function-template-argument-deduction.html
+   std::set<T, std::less<T>, std::allocator<T> > set_;
+   mutable boost::mutex mutex_;
 };
 
 void safeLaunchThread(boost::function<void()> threadMain,

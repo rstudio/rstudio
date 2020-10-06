@@ -1,7 +1,7 @@
 /*
  * RequestParserTests.cpp
  *
- * Copyright (C) 2019 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -58,7 +58,7 @@ std::string generateRandomBytes()
    // generate a large random payload
    uint32_t payloadSize = 1024*1024*2; // 2 MB
    std::vector<unsigned char> fileVector;
-   REQUIRE_FALSE(core::system::crypto::random(payloadSize, &fileVector));
+   REQUIRE_FALSE(core::system::crypto::random(payloadSize, fileVector));
 
    std::string fileBytes;
    std::copy(fileVector.begin(), fileVector.end(), std::back_inserter(fileBytes));

@@ -9,11 +9,6 @@
             "default": "",
             "description": "A unique identifier representing the user and machine."
         },
-        "agreement_hash": {
-            "type": "string",
-            "default": "",
-            "description": "Hash of the agreement that the user has accepted."
-        },
         "auto_created_profile": {
             "type": "boolean",
             "default": false,
@@ -205,6 +200,42 @@
             "type": "boolean",
             "default": false,
             "description": "Whether or not the MinGW compiler with GCC 4.9 is used."
+        },
+        "visual_mode_confirmed": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether or not the use of Visual Mode has been confirmed."
+        },
+        "bibliography_default_type": {
+            "type": "string",
+            "enum": ["bib", "yaml", "json"],
+            "default": "bib",
+            "description": "The default type for new bibliographies."
+        },
+        "zotero_connection_type": {
+            "type": "string",
+            "enum": ["auto", "none", "local", "web"],
+            "default": "auto",
+            "title": "Zotero connection type",
+            "description": "Zotero connection type (local or web)"
+        },
+        "zotero_use_better_bibtex": {
+            "type": "boolean",
+            "default": false,
+            "title": "Use Better BibTeX for citation keys and BibTeX export",
+            "description": "Whether to use Better BibTeX when suggesting citation keys and writing citations to BibTeX bibliographies"
+        },
+        "zotero_api_key": {
+            "type": "string",
+            "default": "",
+            "title": "Zotero API Key",
+            "description": "Key for making Zotero API calls"  
+        },
+        "zotero_data_dir": {
+            "type": "string",
+            "default": "",
+            "title": "Zotero Data Directory",
+            "description": "Directory containing Zotero data files" 
         }
     }
 }

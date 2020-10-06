@@ -1,7 +1,7 @@
 /*
  * RPackageInfo.hpp
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -55,6 +55,7 @@ public:
    const std::string& linkingTo() const { return linkingTo_; }
    const std::string& systemRequirements() const { return systemRequirements_; }
    const std::string& type() const { return type_; }
+   const std::string& rdMacros() const { return rdMacros_; }
 
    std::string sourcePackageFilename() const;
 
@@ -70,6 +71,7 @@ private:
    std::string linkingTo_;
    std::string systemRequirements_;
    std::string type_;
+   std::string rdMacros_;
 };
 
 bool isPackageDirectory(const FilePath& dir);

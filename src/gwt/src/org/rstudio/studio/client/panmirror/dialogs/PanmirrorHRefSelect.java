@@ -1,7 +1,7 @@
 /*
  * PanmirrorHRefSelect.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,8 +16,13 @@
 
 package org.rstudio.studio.client.panmirror.dialogs;
 
+import com.google.gwt.aria.client.Roles;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.FocusHelper;
+import org.rstudio.core.client.widget.FormLabel;
+import org.rstudio.core.client.widget.FormListBox;
+import org.rstudio.core.client.widget.FormTextBox;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorLinkCapabilities;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorLinkHeadingTarget;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorLinkTargets;
@@ -30,10 +35,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Focusable;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 
@@ -50,7 +52,8 @@ public class PanmirrorHRefSelect extends Composite implements CanFocus
       controls_ = new HorizontalPanel();
       controls_.setWidth("100%");
       
-      type_ = new ListBox();
+      type_ = new FormListBox();
+      type_.setElementId(ElementIds.getElementId(ElementIds.VISUAL_MD_LINK_TYPE));
       type_.addItem("URL", Integer.toString(PanmirrorLinkType.URL));
       
       if (capabilities.headings && targets.headings.length > 0)
@@ -66,10 +69,14 @@ public class PanmirrorHRefSelect extends Composite implements CanFocus
       controls_.add(hrefContainer_);
       controls_.setCellWidth(hrefContainer_, "100%");
       
-      href_ = new TextBox();
+      href_ = new FormTextBox();
+      href_.setElementId(ElementIds.getElementId(ElementIds.VISUAL_MD_LINK_HREF));
+      Roles.getTextboxRole().setAriaLabelProperty(href_.getElement(), "HRef");
       href_.setWidth("100%");
       
-      headings_ = new ListBox(); 
+      headings_ = new FormListBox(); 
+      headings_.setElementId(ElementIds.getElementId(ElementIds.VISUAL_MD_LINK_SELECT_HEADING));
+      Roles.getListboxRole().setAriaLabelProperty(headings_.getElement(), "Heading");
       headings_.setWidth("100%");
       for (PanmirrorLinkHeadingTarget target : targets_.headings)
       {
@@ -77,7 +84,9 @@ public class PanmirrorHRefSelect extends Composite implements CanFocus
             headings_.addItem(target.text);
       }
       
-      ids_ = new ListBox();
+      ids_ = new FormListBox();
+      ids_.setElementId(ElementIds.getElementId(ElementIds.VISUAL_MD_LINK_SELECT_ID));
+      Roles.getListboxRole().setAriaLabelProperty(ids_.getElement(), "IDs");
       ids_.setWidth("100%");
       for (String id : targets_.ids)
       {
@@ -90,7 +99,7 @@ public class PanmirrorHRefSelect extends Composite implements CanFocus
       });
       
       VerticalPanel container = new VerticalPanel();
-      container.add(new Label("Link To:"));
+      container.add(new FormLabel("Link To:", type_));
       container.add(controls_);
       
       initWidget(container);
@@ -99,7 +108,10 @@ public class PanmirrorHRefSelect extends Composite implements CanFocus
    
    public void setHRef(int type, String href)
    {
-      if (type == PanmirrorLinkType.Heading && !capabilities_.headings) {
+      // screen out sets of extended types if our capabilities don't support them
+      if (type == PanmirrorLinkType.ID && (!capabilities_.attributes || targets_.ids.length == 0)) {
+         type = PanmirrorLinkType.URL;
+      } else if (type == PanmirrorLinkType.Heading && (!capabilities_.headings || targets_.headings.length == 0)) {
          type = PanmirrorLinkType.URL;
       }
       
@@ -111,25 +123,33 @@ public class PanmirrorHRefSelect extends Composite implements CanFocus
          href_.setText(href);
       }
       else if (getType() == PanmirrorLinkType.Heading)
-      {
+      {   
          for (int i = 0; i<targets_.headings.length; i++)
          {
-            if (targets_.headings[i].text.equals(href))
+            if (targets_.headings[i].text.equalsIgnoreCase(href))
             {
                headings_.setSelectedIndex(i);
                break;
             }
+         }
+         if (!headings_.getSelectedValue().equalsIgnoreCase(href)) {
+            headings_.addItem(href);
+            headings_.setSelectedIndex(headings_.getItemCount() - 1); 
          }
       }
       else if (getType() == PanmirrorLinkType.ID)
       {
          for (int i = 0; i<targets_.ids.length; i++)
          {
-            if (targets_.ids[i].equals(href))
+            if (targets_.ids[i].equalsIgnoreCase(href))
             {
                ids_.setSelectedIndex(i);
                break;
             }
+         }
+         if (!ids_.getSelectedValue().equalsIgnoreCase(href)) {
+            ids_.addItem(href);
+            ids_.setSelectedIndex(ids_.getItemCount() - 1); 
          }
       }  
    }
@@ -196,9 +216,9 @@ public class PanmirrorHRefSelect extends Composite implements CanFocus
    
    private final HorizontalPanel controls_;
    private final SimplePanel hrefContainer_;
-   private final ListBox type_;
-   private final TextBox href_; 
-   private final ListBox headings_;
-   private final ListBox ids_;
+   private final FormListBox type_;
+   private final FormTextBox href_; 
+   private final FormListBox headings_;
+   private final FormListBox ids_;
    
 }

@@ -7,22 +7,26 @@
         "run_rprofile_on_resume": {
             "type": "boolean",
             "default": false,
+            "title": "Run .Rprofile on resume",
             "description": "Whether to run .Rprofile again after resuming a suspended R session."
         },
         "save_workspace": {
             "type": "string",
             "enum": ["always", "never", "ask"],
             "default": "ask",
-            "description": "Whether to save the workspace after the R session ends."
+            "title": "Save workspace on quit",
+            "description": "Whether to save the workspace to an .Rdata file after the R session ends."
         },
         "load_workspace": {
             "type": "boolean",
             "default": true,
+            "title": "Load workspace on start",
             "description": "Whether to load the workspace when the R session begins."
         },
         "initial_working_directory": {
             "type": "string",
             "default": "",
+            "title": "Initial working directory",
             "description": "The initial working directory for new R sessions."
         },
         "cran_mirror": {
@@ -76,65 +80,73 @@
         "always_save_history": {
             "type": "boolean",
             "default": true,
+            "title": "Save R console history",
             "description": "Whether to always save the R console history."
         },
         "remove_history_duplicates": {
             "type": "boolean",
             "default": false,
+            "title": "Remove duplicates from console history",
             "description": "Whether to remove duplicate entries from the R console history."
         },
         "show_last_dot_value": {
             "type": "boolean",
             "default": false,
+            "title": "Show .Last.value in Environment pane",
             "description": "Show the result of the last expression (.Last.value) in the Environment pane."
         },
         "line_ending_conversion": {
             "type": "string",
             "enum": ["default", "windows", "posix", "native", "passthrough"],
             "default": "native",
+            "title": "Line ending format",
             "description": "The line ending format to use when saving files."
         },
         "use_newlines_in_makefiles": {
             "type": "boolean",
             "default": true,
+            "title": "Use newlines in Makefiles",
             "description": "Whether to use newlines when saving Makefiles."
         },
         "windows_terminal_shell": {
             "type": "string",
             "enum": ["default", "win-git-bash", "win-wsl-bash", "win-cmd", "win-ps", "ps-core", "custom", "none"],
-            "default": "default", 
+            "default": "default",
             "description": "The terminal shell to use on Windows."
         },
         "posix_terminal_shell": {
             "type": "string",
             "enum": ["default", "bash", "zsh", "custom", "none"],
-            "default": "default", 
+            "default": "default",
             "description": "The terminal shell to use on POSIX operating systems (MacOS and Linux)."
         },
         "custom_shell_command": {
             "type": "string",
             "default": "",
-            "description": "The fully qualified path to the custom shell command to use in the Terminal tab."  
+            "description": "The fully qualified path to the custom shell command to use in the Terminal tab."
         },
         "custom_shell_options": {
             "type": "string",
             "default": "",
-            "description": "The command-line options to pass to the custom shell command."  
+            "description": "The command-line options to pass to the custom shell command."
         },
         "show_line_numbers": {
             "type": "boolean",
             "default": true,
-            "description": "Show line numbers in RStudio's code editor."  
+            "title": "Show line numbers in editor",
+            "description": "Show line numbers in RStudio's code editor."
         },
         "highlight_selected_word": {
             "type": "boolean",
             "default": true,
-            "description": "Highlight the selected word in RStudio's code editor."  
+            "title": "Highlight selected word in editor",
+            "description": "Highlight the selected word in RStudio's code editor."
         },
         "highlight_selected_line": {
             "type": "boolean",
             "default": false,
-            "description": "Highlight the selected line in RStudio's code editor."  
+            "title": "Highlight selected line in editor",
+            "description": "Highlight the selected line in RStudio's code editor."
         },
         "panes": {
             "type": "object",
@@ -175,66 +187,87 @@
                 "console_right_on_top": {
                     "type": "boolean",
                     "description": "Whether the console is on top when it is on the right side of the workbench."
+                },
+                "additional_source_columns": {
+                   "type": "integer",
+                   "default": 0,
+                   "description": "The number of columns of full source columns."
                 }
             },
             "default": {
                 "quadrants": [
-                    "Source", 
-                    "Console", 
+                    "Source",
+                    "Console",
                     "TabSet1",
                     "TabSet2",
                     "HiddenTabSet"],
-                "tabSet1": ["Environment", "History", "Connections", "Build", "VCS", "Presentation"],
+                "tabSet1": ["Environment", "History", "Connections", "Build", "VCS", "Tutorial", "Presentation"],
                 "tabSet2": ["Files", "Plots", "Packages", "Help", "Viewer"],
                 "hiddenTabSet": [],
                 "console_left_on_top": false,
-                "console_right_on_top": true
+                "console_right_on_top": true,
+                "additional_source_columns": 0
             },
             "description": "Layout of panes in the RStudio workbench."
+        },
+        "allow_source_columns": {
+            "type": "boolean",
+            "default": true,
+            "title": "Allow source columns",
+            "description": "Whether to enable the ability to add source columns to display."
         },
         "use_spaces_for_tab": {
             "type": "boolean",
             "default": true,
+            "title": "Insert spaces for Tab",
             "description": "Whether to insert spaces when pressing the Tab key."
         },
         "num_spaces_for_tab": {
             "type": "integer",
             "default": 2,
+            "title": "Number of spaces for Tab",
             "description": "The number of spaces to insert when pressing the Tab key."
         },
         "auto_detect_indentation": {
             "type": "boolean",
             "default": true,
+            "title": "Autodetect indentation in files",
             "description": "Whether to automatically detect indentation settings from file contents."
         },
         "show_margin": {
             "type": "boolean",
             "default": true,
+            "title": "Show margin in editor",
             "description": "Whether to show the margin guide in the RStudio code editor."
         },
         "blinking_cursor": {
             "type": "boolean",
             "default": true,
+            "title": "Use a blinking cursor",
             "description": "Whether to flash the cursor off and on."
         },
         "margin_column": {
             "type": "integer",
             "default": 80,
+            "title": "Margin column",
             "description": "The number of columns of text after which the margin is shown."
         },
         "show_invisibles": {
             "type": "boolean",
             "default": false,
+            "title": "Show invisible characters in editor",
             "description": "Whether to show invisible characters, such as spaces and tabs, in the RStudio code editor."
         },
         "show_indent_guides": {
             "type": "boolean",
             "default": false,
+            "title": "Show indentation guides",
             "description": "Whether to show indentation guides in the RStudio code editor."
         },
         "continue_comments_on_newline": {
             "type": "boolean",
             "default": false,
+            "title": "Continue comments after adding new line",
             "description": "Whether continue comments (by inserting the comment character) after adding a new line."
         },
         "highlight_web_link": {
@@ -246,545 +279,681 @@
             "type": "string",
             "enum": ["default", "vim", "emacs", "sublime"],
             "default": "default",
+            "title": "Keybinding set for editor",
             "description": "The keybindings to use in the RStudio code editor."
         },
         "insert_matching": {
             "type": "boolean",
             "default": true,
+            "title": "Auto-insert matching parentheses and brackets",
             "description": "Whether to insert matching pairs, such as () and [], when the first is typed."
         },
         "insert_spaces_around_equals": {
             "type": "boolean",
             "default": true,
+            "title": "Insert spaces around = in R code",
             "description": "Whether to insert spaces around the equals sign in R code."
         },
         "insert_parens_after_function_completion": {
             "type": "boolean",
             "default": true,
+            "title": "Insert parentheses after functions",
             "description": "Whether to insert parentheses after function completions."
         },
         "tab_multiline_completion": {
             "type": "boolean",
             "default": false,
+            "title": "Complete multi-line statements with Tab",
             "description": "Whether to attempt completion of multiple-line statements when pressing Tab."
         },
         "tab_completion": {
             "type": "boolean",
             "default": true,
+            "title": "Use Tab to trigger autocompletion",
             "description": "Whether to attempt completion of statements when pressing Tab."
         },
         "show_help_tooltip_on_idle": {
             "type": "boolean",
             "default": false,
+            "title": "Show function help tooltips on idle",
             "description": "Whether to show help tooltips for functions when the cursor has not been recently moved."
         },
         "surround_selection": {
             "type": "string",
             "enum": ["never", "quotes", "quotes_and_brackets"],
             "default": "quotes_and_brackets",
+            "title": "Surround selections with",
             "description": "Which kinds of delimiters can be used to surround the current selection."
         },
         "enable_snippets": {
             "type": "boolean",
             "default": true,
+            "title": "Enable code snippets",
             "description": "Whether to enable code snippets in the RStudio code editor."
         },
         "code_completion": {
             "type": "string",
             "enum": ["always", "never", "triggered", "manual"],
             "default": "always",
+            "title": "Use code completion for R",
             "description": "When to use auto-completion for R code in the RStudio code editor."
         },
         "code_completion_other": {
             "type": "string",
             "enum": ["always", "triggered", "manual"],
             "default": "always",
+            "title": "Use code completion for other languages",
             "description": "When to use auto-completion for other languages (such as JavaScript and SQL) in the RStudio code editor."
         },
         "console_code_completion": {
             "type": "boolean",
             "default": true,
+            "title": "Use code completion in the R console",
             "description": "Whether to always use code completion in the R console."
         },
         "code_completion_delay": {
             "type": "integer",
             "default": 250,
+            "title": "Delay before completing code (ms)",
             "description": "The number of milliseconds to wait before offering code suggestions."
         },
         "code_completion_characters": {
             "type": "integer",
             "default": 3,
+            "title": "Number of characters for code completion",
             "description": "The number of characters in a symbol that can be entered before completions are offered."
         },
         "show_function_signature_tooltips": {
             "type": "boolean",
             "default": true,
+            "title": "Show function signature tooltips",
             "description": "Whether to show function signature tooltips during autocompletion."
         },
         "show_diagnostics_r": {
             "type": "boolean",
             "default": true,
+            "title": "Show diagnostics in R code",
             "description": "Whether to show diagnostic messages (such as syntax and usage errors) for R code as you type."
         },
         "show_diagnostics_cpp": {
             "type": "boolean",
             "default": true,
+            "title": "Show diagnostics in C++ code",
             "description": "Whether to show diagnostic messages for C++ code as you type."
         },
         "show_diagnostics_other": {
             "type": "boolean",
             "default": true,
+            "title": "Show diagnostics in other languages",
             "description": "Whether to show diagnostic messages for other types of code (not R or C++)."
         },
         "style_diagnostics": {
             "type": "boolean",
             "default": false,
+            "title": "Show style diagnostics for R code",
             "description": "Whether to show style diagnostics (suggestions for improving R code style)"
         },
         "diagnostics_on_save": {
             "type": "boolean",
             "default": true,
+            "title": "Check code for problems when saving",
             "description": "Whether to check code for problems after saving it."
         },
         "background_diagnostics": {
             "type": "boolean",
             "default": true,
+            "title": "Run R code diagnostics in the background",
             "description": "Whether to run code diagnostics in the background, as you type."
         },
         "background_diagnostics_delay_ms": {
             "type": "integer",
             "default": 2000,
+            "title": "Run R code diagnostics after (ms)",
             "description": "The number of milliseconds to delay before running code diagnostics in the background."
         },
         "diagnostics_in_r_function_calls": {
             "type": "boolean",
             "default": true,
+            "title": "Run diagnostics on R function calls",
             "description": "Whether to run diagnostics in R function calls."
         },
         "check_arguments_to_r_function_calls": {
             "type": "boolean",
             "default": false,
+            "title": "Check arguments to R function calls",
             "description": "Whether to check arguments to R function calls."
         },
         "check_unexpected_assignment_in_function_call": {
             "type": "boolean",
             "default": false,
+            "title": "Check for unexpected assignments",
             "description": "Whether to check for unexpected variable assignments inside R function calls."
         },
         "warn_if_no_such_variable_in_scope": {
             "type": "boolean",
             "default": false,
+            "title": "Warn when R variable used but not defined",
             "description": "Whether to generate a warning if a variable is used without being defined in the current scope."
         },
         "warn_variable_defined_but_not_used": {
             "type": "boolean",
             "default": false,
+            "title": "Warn when R variable defined but not used",
             "description": "Whether to generate a warning if a variable is defined without being used in the current scope"
         },
         "auto_discover_package_dependencies": {
             "type": "boolean",
             "default": true,
+            "title": "Detect missing R packages in the editor",
             "description": "Whether to automatically discover and offer to install missing R package dependencies."
         },
         "auto_append_newline": {
             "type": "boolean",
             "default": false,
+            "title": "Ensure files end with a newline when saving",
             "description": "Whether to ensure that source files end with a newline character."
         },
         "strip_trailing_whitespace": {
             "type": "boolean",
             "default": false,
+            "title": "Strip trailing whitespace when saving",
             "description": "Whether to strip trailing whitespace from each line when saving."
         },
         "restore_source_document_cursor_position": {
             "type": "boolean",
             "default": true,
-            "description": "Whether to save the position of the cursor when a fille is closed, restore it when the file is opened."
+            "title": "Restore cursor position when reopening files",
+            "description": "Whether to save the position of the cursor when a file is closed, restore it when the file is opened."
         },
         "reindent_on_paste": {
             "type": "boolean",
             "default": true,
+            "title": "Re-indent code when pasting",
             "description": "Whether to automatically re-indent code when it's pasted into RStudio."
         },
         "vertically_align_arguments_indent": {
             "type": "boolean",
             "default": true,
+            "title": "Vertically align function arguments",
             "description": "Whether to vertically align arguments to R function calls during automatic indentation."
         },
         "soft_wrap_r_files": {
             "type": "boolean",
             "default": false,
+            "title": "Soft-wrap R source files",
             "description": "Whether to soft-wrap R source files, wrapping the text for display without inserting newline characters."
+        },
+        "soft_wrap_rmd_files": {
+            "type": "boolean",
+            "default": true,
+            "title": "Soft-wrap R Markdown files",
+            "description": "Whether to soft-wrap R Markdown files (and similar types such as R HTML and R Notebooks)"
         },
         "focus_console_after_exec": {
             "type": "boolean",
             "default": false,
+            "title": "Focus console after executing R code",
             "description": "Whether to focus the R console after executing an R command from a script."
         },
         "fold_style": {
             "type": "string",
             "enum": ["begin-only", "begin-and-end"],
             "default": "begin-and-end",
+            "title": "Fold style in editor",
             "description": "The style of folding to use."
         },
         "save_before_sourcing": {
             "type": "boolean",
             "default": true,
+            "title": "Save R scripts before sourcing",
             "description": "Whether to automatically save scripts before executing them."
         },
         "syntax_color_console": {
             "type": "boolean",
             "default": false,
+            "title": "Syntax highlighting in R console",
             "description": "Whether to use syntax highlighting in the R console."
+        },
+        "highlight_console_errors": {
+            "type": "boolean",
+            "default": true,
+            "title": "Different color for error output in R console",
+            "description": "Whether to display error, warning, and message output in a different color."
         },
         "scroll_past_end_of_document": {
             "type": "boolean",
             "default": false,
+            "title": "Scroll past end of file",
             "description": "Whether to allow scrolling past the end of a file."
         },
         "highlight_r_function_calls": {
             "type": "boolean",
             "default": false,
+            "title": "Highlight R function calls",
             "description": "Whether to highlight R function calls in the code editor."
+        },
+        "rainbow_parentheses": {
+            "type": "boolean",
+            "default": false,
+            "title": "Rainbow parentheses",
+            "description": "Whether to highlight parentheses in a variety of colors."
         },
         "console_line_length_limit": {
             "type": "integer",
             "default": 1000,
+            "title": "Maximum characters per line in R console",
             "description": "The maximum number of characters to display in a single line in the R console."
         },
         "console_max_lines": {
             "type": "integer",
             "default": 1000,
+            "title": "Maximum lines in R console",
             "description": "The maximum number of console actions to store and display in the console scrollback buffer."
         },
         "ansi_console_mode": {
             "type": "string",
             "enum": ["off", "on", "strip"],
             "default": "on",
+            "title": "ANSI escape codes in R console",
             "description": "How to treat ANSI escape codes in the console."
+        },
+        "limit_visible_console": {
+            "type": "boolean",
+            "default": false,
+            "title": "Limit visible console output",
+            "description": "Whether to only show a limited window of the total console output"
         },
         "show_inline_toolbar_for_r_code_chunks": {
             "type": "boolean",
             "default": true,
+            "title": "Show toolbar on R Markdown chunks",
             "description": "Whether to show a toolbar on code chunks in R Markdown documents."
         },
         "highlight_code_chunks": {
             "type": "boolean",
             "default": true,
+            "title": "Highlight code chunks in R Markdown files",
             "description": "Whether to highlight code chunks in R Markdown documents with a different background color."
         },
         "save_files_before_build": {
             "type": "boolean",
             "default": false,
+            "title": "Save files before building",
             "description": "Whether to save all open, unsaved files before building the project."
         },
         "font_size_points": {
             "type": "number",
             "default": 10.0,
+            "title": "Editor font size (points)",
             "description": "The default editor font size, in points."
         },
         "help_font_size_points": {
             "type": "number",
             "default": 10.0,
+            "title": "Help panel font size (points)",
             "description": "The help panel font size, in points."
         },
         "editor_theme": {
             "type": "string",
             "default": "Textmate (default)",
+            "title": "Theme",
             "description": "The name of the color theme to apply to the text editor in RStudio."
         },
         "server_editor_font_enabled": {
             "type": "boolean",
             "default": false,
+            "title": "Enable editor fonts on RStudio Server",
             "description": "Whether to use a custom editor font in RStudio Server."
         },
         "server_editor_font": {
             "type": "string",
             "default": "",
+            "title": "Editor font",
             "description": "The name of the fixed-width editor font to use with RStudio Server."
         },
         "default_encoding": {
             "type": "string",
             "default": "",
+            "title": "Default character encoding",
             "description": "The default character encoding to use when saving files."
         },
         "toolbar_visible": {
             "type": "boolean",
             "default": true,
+            "title": "Show top toolbar",
             "description": "Whether to show the toolbar at the top of the RStudio workbench."
         },
         "default_project_location": {
             "type": "string",
             "default": "",
+            "title": "Default new project location",
             "description": "The directory path under which to place new projects by default."
         },
         "source_with_echo": {
             "type": "boolean",
             "default": false,
+            "title": "Source with echo by default",
             "description": "Whether to echo R code when sourcing it."
         },
         "new_project_git_init": {
             "type": "boolean",
             "default": false,
+            "title": "Initialize new projects with Git",
             "description": "Whether to initialize new projects with a Git repo by default."
         },
         "default_sweave_engine": {
             "type": "string",
             "default": "Sweave",
+            "title": "Default Sweave engine",
             "description": "The default engine to use when processing Sweave documents."
         },
         "default_latex_program": {
             "type": "string",
             "default": "pdfLaTeX",
+            "title": "Default LaTeX program",
             "description": "The default program to use when processing LaTeX documents."
         },
         "use_roxygen": {
             "type": "boolean",
             "default": false,
+            "title": "Use Roxygen for documentation",
             "description": "Whether to use Roxygen for documentation."
         },
         "use_dataimport": {
             "type": "boolean",
             "default": true,
+            "title": "Enable data import",
             "description": "Whether to use RStudio's data import feature."
         },
         "pdf_previewer": {
             "type": "string",
             "enum": ["none", "default", "rstudio", "desktop-synctex", "system"],
             "default": "default",
+            "title": "PDF previewer",
             "description": "The program to use to preview PDF files after generation."
         },
         "always_enable_rnw_concordance": {
             "type": "boolean",
             "default": true,
+            "title": "Enable Rnw concordance",
             "description": "Whether to always enable the concordance for RNW files."
         },
         "insert_numbered_latex_sections": {
             "type": "boolean",
             "default": false,
+            "title": "Insert numbered LaTeX sections",
             "description": "Whether to insert numbered sections in LaTeX."
         },
         "spelling_dictionary_language": {
             "type": "string",
             "default": "en_US",
+            "title": "Spelling dictionary language",
             "description": "The language of the spelling dictionary to use for spell checking."
         },
         "spelling_custom_dictionaries": {
             "type": "array",
             "default": [],
+            "title": "Custom spelling dictionaries",
             "description": "The list of custom dictionaries to use when spell checking."
         },
         "document_load_lint_delay": {
             "type": "integer",
             "default": 5000,
+            "title": "Lint document after load (ms)",
             "description": "The number of milliseconds to wait before linting a document after it is loaded."
         },
         "ignore_uppercase_words": {
             "type": "boolean",
             "default": true,
+            "title": "Ignore uppercase words in spell check",
             "description": "Whether to ignore words in uppercase when spell checking."
         },
         "ignore_words_with_numbers": {
             "type": "boolean",
             "default": true,
+            "title": "Ignore words with numbers in spell check",
             "description": "Whether to ignore words with numbers in them when spell checking."
         },
         "max_spellcheck_words": {
             "type": "integer",
             "default": 500,
+            "title": "Maximum number of words to spell check",
             "description": "The maximum number of spelling words to check at once."
         },
         "max_spellcheck_prefetch": {
             "type": "integer",
             "default": 20,
+            "title": "Number of words to prefetch for spell check",
             "description": "The maximum number of spelling correction suggestions to prefetch."
         },
         "real_time_spellchecking": {
             "type": "boolean",
             "default": true,
+            "title": "Use real-time spellchecking",
             "description": "Whether to enable real-time spellchecking by default."
         },
         "navigate_to_build_error": {
             "type": "boolean",
             "default": true,
+            "title": "Navigate to build errors",
             "description": "Whether to navigate to build errors."
         },
         "packages_pane_enabled": {
             "type": "boolean",
             "default": true,
+            "title": "Enable the Packages pane",
             "description": "Whether to enable RStudio's Packages pane."
         },
         "use_rcpp_template": {
             "type": "boolean",
             "default": true,
+            "title": "Use RCpp file templates",
             "description": "Whether to use RCPP templates."
         },
         "restore_source_documents": {
             "type": "boolean",
             "default": true,
+            "title": "Restore last opened documents on startup",
             "description": "Whether to restore the last opened source documents when RStudio starts up."
         },
         "handle_errors_in_user_code_only": {
             "type": "boolean",
             "default": true,
+            "title": "Handle errors only when user code present",
             "description": "Whether to handle errors only when user code is on the stack."
         },
         "auto_expand_error_tracebacks": {
             "type": "boolean",
             "default": false,
+            "title": "Auto-expand error tracebacks",
             "description": "Whether to automatically expand tracebacks when an error occurs."
         },
         "check_for_updates": {
             "type": "boolean",
             "default": true,
+            "title": "Check for new version at startup",
             "description": "Whether to check for new versions of RStudio when RStudio starts."
         },
         "show_internal_functions": {
             "type": "boolean",
             "default": false,
+            "title": "Show internal functions when debugging",
             "description": "Whether to show functions without source references in the Traceback pane while debugging."
         },
         "shiny_viewer_type": {
             "type": "string",
             "enum": ["user", "none", "pane", "window", "browser"],
             "default": "window",
+            "title": "Run Shiny applications in",
             "description": "Where to display Shiny applications when they are run."
         },
         "shiny_background_jobs": {
             "type": "boolean",
             "default": false,
+            "title": "Run Shiny applications in the background",
             "description": "Whether to run Shiny applications as background jobs."
         },
         "plumber_viewer_type": {
             "type": "string",
             "enum": ["user", "none", "pane", "window", "browser"],
             "default": "window",
+            "title": "Run Plumber APIs in",
             "description": "Where to display Shiny applications when they are run."
         },
         "document_author": {
             "type": "string",
             "default": "",
+            "title": "Document author",
             "description": "The default name to use as the document author when creating new documents."
         },
         "rmd_preferred_template_path": {
             "type": "string",
             "default": "",
+            "title": "Path to preferred R Markdown template",
             "description": "The path to the preferred R Markdown template."
         },
         "rmd_viewer_type": {
             "type": "string",
             "enum": ["window", "pane", "none"],
             "default": "window",
+            "title": "Display R Markdown documents in",
             "description": "Where to display R Markdown documents when they have completed rendering."
         },
         "show_publish_diagnostics": {
             "type": "boolean",
             "default": false,
+            "title": "Show diagnostic info when publishing",
             "description": "Whether to show verbose diagnostic information when publishing content."
         },
         "publish_check_certificates": {
             "type": "boolean",
             "default": true,
+            "title": "Check SSL certificates when publishing",
             "description": "Whether to check remote server SSL certificates when publishing content."
         },
         "use_publish_ca_bundle": {
             "type": "boolean",
             "default": false,
+            "title": "Use custom CA bundle when publishing",
             "description": "Whether to use a custom certificate authority (CA) bundle when publishing content."
         },
         "publish_ca_bundle": {
             "type": "string",
             "default": "",
+            "title": "Path to custom CA bundle for publishing",
             "description": "The path to the custom certificate authority (CA) bundle to use when publishing content."
         },
         "rmd_chunk_output_inline": {
             "type": "boolean",
             "default": true,
+            "title": "Show chunk output inline in all documents",
             "description": "Whether to show chunk output inline for ordinary R Markdown documents."
         },
         "show_doc_outline_rmd": {
             "type": "boolean",
             "default": false,
+            "title": "Open document outline by default",
             "description": "Whether to show the document outline by default when opening R Markdown documents."
         },
         "auto_run_setup_chunk": {
             "type": "boolean",
             "default": true,
+            "title": "Automatically run Setup chunk when needed",
             "description": "Whether to automatically run an R Markdown document's Setup chunk before running other chunks."
         },
         "hide_console_on_chunk_execute": {
             "type": "boolean",
             "default": true,
+            "title": "Hide console when running R Markdown chunks",
             "description": "Whether to hide the R console when executing inline R Markdown chunks."
         },
         "execution_behavior": {
             "type": "string",
             "enum": ["line", "statement", "paragraph"],
             "default": "statement",
+            "title": "Unit of R code execution",
             "description": "The unit of R code to execute when the Execute command is invoked."
         },
         "show_terminal_tab": {
             "type": "boolean",
             "default": true,
+            "title": "Show the Terminal tab",
             "description": "Whether to show the Terminal tab."
         },
         "terminal_local_echo": {
             "type": "boolean",
             "default": true,
+            "title": "Use local echo in the Terminal",
             "description": "Whether to use local echo in the Terminal."
         },
         "terminal_websockets": {
             "type": "boolean",
             "default": true,
+            "title": "Use websockets in the Terminal",
             "description": "Whether to use websockets to communicate with the shell in the Terminal tab."
         },
         "terminal_close_behavior": {
             "type": "string",
             "enum": ["always", "clean", "never"],
             "default": "always",
+            "title": "Close Terminal pane after shell exit",
             "description": "Whether to close the terminal pane after the shell exits."
         },
         "terminal_track_environment": {
             "type": "boolean",
             "default": true,
+            "title": "Save and restore system environment in Terminal tab",
             "description": "Whether to track and save changes to system environment variables in the Terminal."
         },
         "terminal_bell_style": {
             "type": "string",
             "enum": ["none", "sound"],
             "default": "sound",
+            "title": "Terminal bell style",
             "description": "Terminal bell style"
         },
         "terminal_renderer": {
             "type": "string",
             "enum": ["canvas", "dom"],
             "default": "canvas",
+            "title": "Terminal tab rendering engine",
             "description": "Terminal rendering engine: canvas is faster, dom may be needed for some browsers or graphics cards"
         },
-        "show_rmd_render_command": {
+         "terminal_weblinks": {
+            "type": "boolean",
+            "default": true,
+            "title": "Make links in Terminal clickable",
+            "description": "Whether web links displayed in the Terminal tab are made clickable."
+        },
+       "show_rmd_render_command": {
             "type": "boolean",
             "default": false,
+            "title": "Show R Markdown render command",
             "description": "Whether to print the render command use to knit R Markdown documents in the R Markdown tab."
         },
         "enable_text_drag": {
             "type": "boolean",
             "default": true,
+            "title": "Enable dragging text in code editor",
             "description": "Whether to enable moving text on the editing surface by clicking and dragging it."
         },
         "show_hidden_files": {
             "type": "boolean",
             "default": false,
+            "title": "Show hidden files in Files pane",
             "description": "Whether to show hidden files in the Files pane."
         },
         "sort_file_names_naturally": {
             "type": "boolean",
             "default": true,
+            "title": "Sort file names naturally in Files pane",
             "description": "Whether to sort file names naturally, so that e.g., file10.R comes after file9.R"
         },
         "jobs_tab_visibility": {
             "type": "string",
             "enum": ["closed", "shown", "default"],
             "default": "default",
+            "title": "Jobs tab visibility",
             "description": "The visibility of the Jobs tab."
         },
         "show_launcher_jobs_tab": {
@@ -813,55 +982,65 @@
             "type": "string",
             "enum": ["default", "current", "project"],
             "default": "default",
+            "title": "Working directory for knitting",
             "description": "The working directory to use when knitting R Markdown documents."
         },
         "doc_outline_show": {
             "type": "string",
             "enum": ["sections_only", "sections_and_chunks", "all"],
             "default": "sections_only",
+            "title": "Show in Document Outline",
             "description": "Which objects to show in the document outline pane."
         },
         "latex_preview_on_cursor_idle": {
             "type": "string",
             "enum": ["never", "inline_only", "always"],
             "default": "always",
+            "title": "Preview LaTeX equations on idle",
             "description": "When to preview LaTeX mathematical equations when cursor has not moved recently."
         },
         "wrap_tab_navigation": {
             "type": "boolean",
             "default": true,
+            "title": "Wrap around when going to previous/next tab",
             "description": "Whether to wrap around when going to the previous or next editor tab."
         },
         "global_theme": {
             "type": "string",
             "default": "default",
             "enum": ["classic", "default", "alternate"],
+            "title": "Global theme",
             "description": "The theme to use for the main RStudio user interface."
         },
         "git_diff_ignore_whitespace": {
             "type": "boolean",
             "default": false,
+            "title": "Ignore whitespace in VCS diffs",
             "description": "Whether to ignore whitespace when generating diffs of version controlled files."
         },
         "console_double_click_select": {
             "type": "boolean",
             "default": false,
+            "title": "Double click to select in the Console",
             "description": "Whether double-clicking should select a word in the Console pane."
         },
         "new_proj_git_init": {
             "type": "boolean",
             "default": false,
+            "title": "Create a Git repo in new projects",
             "description": "Whether a git repo should be initialized inside new projects by default."
         },
         "root_document": {
             "type": "string",
             "default": "",
+            "title": "Root document for PDF compilation",
             "description": "The root document to use when compiling PDF documents."
         },
         "show_user_home_page": {
             "type": "string",
             "enum": ["always", "never", "sessions"],
             "default": "sessions",
+            "title": "Show user home page in RStudio Pro",
             "description": "When to show the server home page in RStudio Server Pro."
         },
         "reuse_sessions_for_project_links": {
@@ -872,21 +1051,25 @@
         "vcs_enabled": {
             "type": "boolean",
             "default": true,
+            "title": "Enable version control if available",
             "description": "Whether to enable RStudio's version control system interface."
         },
         "vcs_autorefresh": {
             "type": "boolean",
             "default": true,
+            "title": "Auto-refresh state from version control",
             "description": "Automatically refresh VCS status?"
         },
         "git_exe_path": {
             "type": "string",
             "default": "",
+            "title": "Path to Git executable",
             "description": "The path to the Git executable to use."
         },
         "svn_exe_path": {
             "type": "string",
             "default": "",
+            "title": "Path to Subversion executable",
             "description": "The path to the Subversion executable to use."
         },
         "terminal_path": {
@@ -902,6 +1085,7 @@
         "use_devtools": {
             "type": "boolean",
             "default": true,
+            "title": "Use the devtools R package if available",
             "description": "Whether to use the devtools R package."
         },
         "use_internet2": {
@@ -912,61 +1096,73 @@
         "use_secure_download": {
             "type": "boolean",
             "default": true,
+            "title": "Download R packages securely",
             "description": "Whether to use secure downloads when fetching R packages."
         },
         "cleanup_after_r_cmd_check": {
             "type": "boolean",
             "default": true,
+            "title": "Clean up temporary files after R CMD CHECK",
             "description": "Whether to clean up temporary files after running R CMD CHECK."
         },
         "view_dir_after_r_cmd_check": {
             "type": "boolean",
             "default": false,
+            "title": "View directory after R CMD CHECK",
             "description": "Whether to view the directory after running R CMD CHECK."
         },
         "hide_object_files": {
             "type": "boolean",
             "default": true,
+            "title": "Hide object files in the Files pane",
             "description": "Whether to hide object files in the Files pane."
         },
         "restore_last_project": {
             "type": "boolean",
             "default": true,
+            "title": "Restore last project when starting RStudio",
             "description": "Whether to restore the last project when starting RStudio."
         },
         "project_safe_startup_seconds": {
             "type": "integer",
             "default": 30,
+            "title": "Number of seconds for safe project startup",
             "description": "The number of seconds after which a project is deemed to have successfully started."
         },
         "use_tinytex": {
             "type": "boolean",
             "default": false,
+            "title": "Use tinytex to compile .tex files",
             "description": "Use tinytex to compile .tex files."
         },
         "clean_texi2dvi_output": {
             "type": "boolean",
             "default": true,
+            "title": "Clean output after running Texi2Dvi",
             "description": "Whether to clean output after running Texi2Dvi."
         },
         "latex_shell_escape": {
             "type": "boolean",
             "default": false,
+            "title": "Shell escape LaTeX documents",
             "description": "Whether to enable shell escaping with LaTeX documents."
         },
         "restore_project_r_version": {
             "type": "boolean",
             "default": true,
+            "title": "Restore project R version in RStudio Pro",
             "description": "Whether to restore the last version of R used by the project in RStudio Pro."
         },
         "clang_verbose": {
             "type": "integer",
             "default": 0,
+            "title": "Clang verbosity level (0 - 2)",
             "description": "The verbosity level to use with Clang (0 - 2)"
         },
         "submit_crash_reports": {
             "type": "boolean",
             "default": true,
+            "title": "Submit crash reports to RStudio",
             "description": "Whether to automatically submit crash reports to RStudio."
         },
         "default_r_version": {
@@ -990,84 +1186,158 @@
         "data_viewer_max_columns": {
             "type": "integer",
             "default": 50,
+            "title": "Maximum number of columns in data viewer",
             "description": "The maximum number of columns to show at once in the data viewer."
         },
         "enable_screen_reader": {
             "type": "boolean",
             "default": false,
+            "title": "Enable support for screen readers in RStudio Server",
             "description": "Support accessibility aids such as screen readers (RStudio Server)."
         },
         "typing_status_delay_ms": {
             "type": "integer",
             "default": 2000,
+            "title": "Seconds to wait before updating ARIA live region",
             "description": "Number of milliseconds to wait after last keystroke before updating live region."
-        },
-        "aria_application_role": {
-            "type": "boolean",
-            "default": false,
-            "description": "Whether to tell screen readers that the entire page is an application."
         },
         "reduced_motion": {
             "type": "boolean",
             "default": false,
+            "title": "Reduced animation/motion mode",
             "description": "Reduce use of animations in the user interface."
         },
         "tab_key_move_focus": {
             "type": "boolean",
             "default": false,
+            "title": "Tab key always moves focus",
             "description": "Tab key moves focus out of text editing controls instead of inserting tabs."
+        },
+        "show_focus_rectangles": {
+            "type": "boolean",
+            "default": true,
+            "title": "Always show focus outlines",
+            "description": "Control with keyboard focus displays a visual focus indicator."
+        },
+        "show_panel_focus_rectangle": {
+            "type": "boolean",
+            "default": false,
+            "title": "Show focus outline around focused panel",
+            "description": "Show which panel contains keyboard focus."
         },
         "auto_save_on_idle": {
             "type": "string",
             "enum": ["commit", "backup", "none"],
             "default": "backup",
+            "title": "Autosave mode on idle",
             "description": "How to deal with changes to documents on idle."
         },
         "auto_save_idle_ms": {
             "type": "integer",
             "default": 1000,
+            "title": "Idle period for document autosave (ms)",
             "description": "The idle period, in milliseconds, after which documents should be auto-saved."
         },
         "auto_save_on_blur": {
             "type": "boolean",
             "default": false,
+            "title": "Save documents when editor loses input focus",
             "description": "Whether to automatically save when the editor loses focus."
         },
         "terminal_initial_directory": {
             "type": "string",
             "enum": ["project", "current", "home"],
             "default": "project",
+            "title": "Initial working directory for new terminals",
             "description": "Initial directory for new terminals."
         },
         "full_project_path_in_window_title": {
             "type": "boolean",
             "default": false,
+            "title": "Show full path to project in RStudio Desktop windows",
             "description": "Whether to show the full path to project in desktop window title."
         },
-        "enable_visual_markdown_editing_mode": {
+        "visual_markdown_editing_is_default": {
             "type": "boolean",
             "default": false,
-            "description": "Whether to enable experimental visual markdown editing"
+            "title": "Use visual editing by default for new markdown documents",
+            "description": "Whether to enable visual editing by default for new markdown documents"
         },
-        "visual_markdown_editing_wrap_auto": {
-            "type": "boolean",
-            "default": false,
+        "visual_markdown_editing_list_spacing": {
+            "type": "string",
+            "enum": ["tight", "spaced"],
+            "default": "spaced",
+            "title": "Default list spacing in visual markdown editing mode",
+            "description": "Default spacing for lists created in the visual editor"
+        },
+        "visual_markdown_editing_wrap": {
+            "type": "string",
+            "enum": ["none", "column", "sentence"],
+            "default": "none",
+            "title": "Wrap text in visual markdown editing mode",
             "description": "Whether to automatically wrap text when writing markdown"
         },
-        "visual_markdown_editing_wrap_column": {
+        "visual_markdown_editing_wrap_at_column": {
             "type": "integer",
-            "default": 80,
+            "default": 72,
+            "title": "Wrap column for visual markdown editing mode",
             "description": "The column to wrap text at when writing markdown"
+        },
+        "visual_markdown_editing_references_location": {
+            "type": "string",
+            "enum": ["block", "section", "document"],
+            "default": "block",
+            "title": "Place visual markdown footnotes in",
+            "description": "Placement of footnotes within markdown output."
+        },
+        "visual_markdown_editing_canonical": {
+            "type": "boolean",
+            "default": false,
+            "title": "Write canonical visual mode markdown in source mode",
+            "description": "Whether to write canonical visual mode markdown when saving from source mode."
         },
         "visual_markdown_editing_max_content_width": {
             "type": "integer",
             "default": 700,
+            "title": "Max content width for visual markdown editor (px)",
             "description": "Maximum content width for visual editing mode, in pixels"
         },
+        "visual_markdown_editing_show_doc_outline": {
+            "type": "boolean",
+            "default": true,
+            "title": "Show document outline in visual markdown editing mode",
+            "description": "Whether to show the document outline by default when opening R Markdown documents in visual mode."
+        },
+        "visual_markdown_editing_show_margin": {
+            "type": "boolean",
+            "default": false,
+            "title": "Show margin in visual mode code blocks",
+            "description": "Whether to show the margin guide in the visual mode code blocks."
+        },
         "visual_markdown_editing_font_size_points": {
-          "type": "integer",
-          "default": 0,
-          "description": "The default visual editing mode font size, in points"
+            "type": "integer",
+            "default": 0,
+            "title": "Font size for visual editing mode",
+            "description": "The default visual editing mode font size, in points"
+        },
+        "visual_markdown_code_editor": {
+            "type": "string",
+            "enum": ["ace", "codemirror"],
+            "default": "ace",
+            "title": "Editor for code chunks in visual editing mode",
+            "description": "The name of the editor to use to provide code editing in visual mode"
+        },
+        "zotero_libraries": {
+            "type": "array",
+            "default": ["My Library"],
+            "title": "Zotero libraries",
+            "description": "Zotero libraries to insert citations from."
+        },
+        "emoji_skintone" : {
+          "type": "string",
+          "enum": ["(None)", "(Default)", "Light", "Medium-Light", "Medium", "Medium-Dark", "Dark"],
+          "default": "(None)",
+          "description": "Preferred emoji skintone"
         },
         "disabled_aria_live_announcements": {
             "type": "array",
@@ -1075,11 +1345,13 @@
                 "type": "string"
             },
             "default": [],
+            "title": "Disabled aria-live announcements",
             "description": "List of aria-live announcements to disable."
         },
         "screenreader_console_announce_limit": {
             "type": "integer",
             "default": 25,
+            "title": "Maximum number of console lines to announce",
             "description": "Maximum number of lines of console output announced after a command."
         },
         "file_monitor_ignored_components": {
@@ -1088,58 +1360,84 @@
                 "type": "string"
             },
             "default": [],
+            "title": "List of path components ignored by file monitor",
             "description": "List of path components; file monitor will ignore paths containing one or more of these components."
         },
         "install_pkg_deps_individually": {
             "type": "boolean",
             "default": true,
+            "title": "Install R package dependencies one at a time",
             "description": "Whether to install R package dependencies one at a time."
         },
         "graphics_backend": {
             "type": "string",
             "enum": ["default", "cairo", "cairo-png", "quartz", "windows", "ragg"],
             "default": "default",
+            "title": "R graphics backend",
             "description": "R graphics backend."
         },
         "graphics_antialiasing": {
             "type": "string",
             "enum": ["default", "none", "gray", "subpixel"],
             "default": "default",
+            "title": "R graphics antialiasing method",
             "description": "Type of anti-aliasing to be used for generated R plots."
         },
         "browser_fixed_width_fonts": {
             "type": "array",
             "description": "List of fixed-width fonts to check for browser support.",
+            "title": "Fixed-width font list for RStudio Server",
             "items": {
                 "type": "string"
             },
             "default": [
-                "Andale Mono", 
-                "Bitstream Vera Sans Mono", 
-                "Cascadia Code", 
-                "Consolas", 
-                "Courier New", 
-                "Courier", 
+                "Andale Mono",
+                "Bitstream Vera Sans Mono",
+                "Cascadia Code",
+                "Consolas",
+                "Courier New",
+                "Courier",
                 "DejaVu Sans Mono",
                 "Droid Sans Mono",
-                "Fira Code", 
-                "Hack", 
+                "Fira Code",
+                "Hack",
                 "IBM Plex Mono",
-                "Inconsolata", 
-                "JetBrains Mono", 
+                "Inconsolata",
+                "JetBrains Mono",
                 "Lucida Console",
                 "Lucida Sans Typewriter",
-                "Menlo", 
-                "Monaco", 
+                "Menlo",
+                "Monaco",
                 "Monoid",
                 "Operator Mono",
-                "Pragmata", 
+                "Pragmata",
                 "SF Mono",
                 "Source Code Pro",
-                "Vera Sans Mono", 
-                "Victor Mono", 
+                "Vera Sans Mono",
+                "Victor Mono",
                 "Ubuntu Mono"
             ]
+        },
+        "python_type": {
+            "description": "The Python type.",
+            "type": "string",
+            "default": ""
+        },
+        "python_version": {
+            "description": "The Python version.",
+            "type": "string",
+            "default": ""
+        },
+        "python_path": {
+            "description": "The path to the default Python interpreter.",
+            "type": "string",
+            "default": ""
+        },
+		"save_retry_timeout": {
+            "type": "integer",
+            "default": 15,
+            "title": "Save Retry Timeout",
+            "description": "The maximum amount of seconds of retry for save operations."
         }
     }
 }

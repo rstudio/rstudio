@@ -1,7 +1,7 @@
 /*
  * image-view.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,12 +15,14 @@
 
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { NodeView, EditorView } from 'prosemirror-view';
-import { NodeSelection } from 'prosemirror-state';
+import { NodeSelection, PluginKey, Plugin } from 'prosemirror-state';
 
-import { EditorUI, ImageType } from '../../api/ui';
+import { EditorUI } from '../../api/ui';
+import { ImageType } from '../../api/image';
 import { PandocExtensions, imageAttributesAvailable } from '../../api/pandoc';
 import { isElementVisible } from '../../api/dom';
-import { EditorEvents, EditorEvent } from '../../api/events';
+import { EditorEvents } from '../../api/events';
+import { ResizeEvent } from '../../api/event-types';
 
 import { imageDialog } from './image-dialog';
 import {
@@ -34,7 +36,27 @@ import { imageDimensionsFromImg, imageContainerWidth } from './image-util';
 
 import './image-styles.css';
 
-export class ImageNodeView implements NodeView {
+export function imageNodeViewPlugins(
+  type: string,
+  ui: EditorUI,
+  events: EditorEvents,
+  pandocExtensions: PandocExtensions,
+): Plugin[] {
+  return [
+    new Plugin({
+      key: new PluginKey(`${type}-node-view`),
+      props: {
+        nodeViews: {
+          [type]: (node: ProsemirrorNode, view: EditorView, getPos: boolean | (() => number)) => {
+            return new ImageNodeView(node, view, getPos as () => number, ui, events, pandocExtensions);
+          },
+        },
+      },
+    }),
+  ];
+}
+
+class ImageNodeView implements NodeView {
   // ProseMirror context
   private readonly type: ImageType;
   private node: ProsemirrorNode;
@@ -42,6 +64,7 @@ export class ImageNodeView implements NodeView {
   private readonly getPos: () => number;
   private readonly editorUI: EditorUI;
   private readonly imageAttributes: boolean;
+  private readonly implicitFigures: boolean;
 
   // DOM elements
   public readonly dom: HTMLElement;
@@ -56,6 +79,7 @@ export class ImageNodeView implements NodeView {
   private resizeUI: ResizeUI | null;
   private sizeOnVisibleTimer?: number;
   private unregisterOnResize: VoidFunction;
+  private unregisterWatchImg: VoidFunction | null = null;
 
   constructor(
     node: ProsemirrorNode,
@@ -74,6 +98,7 @@ export class ImageNodeView implements NodeView {
     this.view = view;
     this.getPos = getPos;
     this.imageAttributes = imageAttributesAvailable(pandocExtensions);
+    this.implicitFigures = pandocExtensions.implicit_figures;
     this.editorUI = editorUI;
     this.resizeUI = null;
     this.imgBroken = false;
@@ -106,6 +131,7 @@ export class ImageNodeView implements NodeView {
 
     // create the image (used by both image and figure node types)
     this.img = document.createElement('img');
+    this.img.classList.add('pm-img');
     this.img.onload = () => {
       this.imgBroken = false;
     };
@@ -119,6 +145,7 @@ export class ImageNodeView implements NodeView {
     if (this.type === ImageType.Figure) {
       // create figure wrapper
       this.dom = document.createElement('figure');
+      this.dom.classList.add('pm-figure');
 
       // create container
       const container = document.createElement('div');
@@ -138,13 +165,8 @@ export class ImageNodeView implements NodeView {
       this.contentDOM = this.figcaption;
       this.dom.append(this.figcaption);
 
-      // if there is no support for implicit_figures then hide the caption
-      if (!pandocExtensions.implicit_figures) {
-        this.figcaption.contentEditable = 'false';
-        this.figcaption.style.height = '0';
-        this.figcaption.style.minHeight = '0';
-        this.figcaption.style.margin = '0';
-      }
+      // manage visibility
+      this.manageFigcaption();
 
       // standard inline image
     } else {
@@ -174,12 +196,15 @@ export class ImageNodeView implements NodeView {
     this.updateSizeOnVisible();
 
     // update image size whenever the container is resized
-    this.unregisterOnResize = editorEvents.subscribe(EditorEvent.Resize, () => {
+    this.unregisterOnResize = editorEvents.subscribe(ResizeEvent, () => {
       this.updateImageSize();
     });
   }
 
   public destroy() {
+    if (this.unregisterWatchImg) {
+      this.unregisterWatchImg();
+    }
     this.unregisterOnResize();
     this.clearSizeOnVisibleTimer();
     this.detachResizeUI();
@@ -191,6 +216,9 @@ export class ImageNodeView implements NodeView {
     if (this.contentDOM || !this.node.type.spec.draggable) {
       this.dom.draggable = true;
     }
+
+    // manage figcaption
+    this.manageFigcaption();
 
     // attach resize UI
     this.attachResizeUI();
@@ -241,8 +269,21 @@ export class ImageNodeView implements NodeView {
 
   // map node to img tag
   private updateImg() {
+    // unsubscribe from any existing resource watcher
+    if (this.unregisterWatchImg) {
+      this.unregisterWatchImg();
+    }
+
     // map to path reachable within current editing frame
-    this.img.src = this.editorUI.context.mapResourcePath(this.node.attrs.src);
+    const src = this.node.attrs.src;
+    this.img.src = this.editorUI.context.mapResourceToURL(src);
+
+    // if this is a local resource then watch it and update when it changes
+    if (!src.match(/^\w+:\/\//)) {
+      this.unregisterWatchImg = this.editorUI.context.watchResource(src, () => {
+        this.img.src = this.editorUI.context.mapResourceToURL(src);
+      });
+    }
 
     // title/tooltip
     this.img.title = '';
@@ -252,6 +293,9 @@ export class ImageNodeView implements NodeView {
 
     // ensure alt attribute so that we get default browser broken image treatment
     this.img.alt = this.node.textContent || this.node.attrs.src;
+
+    // manage caption visibility
+    this.manageFigcaption();
 
     // update size
     this.updateImageSize();
@@ -305,5 +349,27 @@ export class ImageNodeView implements NodeView {
 
   private containerWidth() {
     return imageContainerWidth(this.getPos(), this.view);
+  }
+
+  private manageFigcaption() {
+    // hide the figcaption if appropriate
+    const noImplicitFigures = !this.implicitFigures;
+    const emptyFigcaption = this.figcaption && this.node.textContent.length === 0;
+    const selection = this.view.state.selection;
+    const selectionInFigcaption = selection.empty && selection.$head.node() === this.node;
+    const hide = noImplicitFigures || (emptyFigcaption && !selectionInFigcaption);
+
+    // hide or show if we have a figcaption
+    if (this.figcaption) {
+      if (noImplicitFigures) {
+        this.figcaption.style.display = 'none';
+        this.figcaption.contentEditable = 'false';
+      } else {
+        this.figcaption.contentEditable = hide ? 'false' : 'true';
+        this.figcaption.style.height = hide ? '0' : '';
+        this.figcaption.style.minHeight = hide ? '0' : '';
+        this.figcaption.style.margin = hide ? '0' : '';
+      }
+    }
   }
 }

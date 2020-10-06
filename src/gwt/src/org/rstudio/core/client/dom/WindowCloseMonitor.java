@@ -1,7 +1,7 @@
 /*
  * WindowCloseMonitor.java
  *
- * Copyright (C) 2009-15 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,7 +25,7 @@ public class WindowCloseMonitor
    // When a window is unloaded; it could be that the window is unloading for
    // refresh or closing for good. To distinguish between the two cases, we ping
    // the window for 5 seconds after receiving the unload.
-   public static void monitorSatelliteClosure(final String windowName, 
+   public static void monitorSatelliteClosure(final String windowName,
          final Command onClosed, final Command onOpen)
    {
       final SatelliteManager satelliteManager = RStudioGinjector.INSTANCE
@@ -38,7 +38,7 @@ public class WindowCloseMonitor
          public boolean execute()
          {
             if (window == null ||
-                window.isClosed() || 
+                window.isClosed() ||
                 satelliteManager.getSatelliteWindowObject(
                       windowName) == null)
             {
@@ -46,7 +46,7 @@ public class WindowCloseMonitor
                return false;
             }
             // retry up to 5 seconds (250ms per try)
-            if (retries_++ < 20) 
+            if (retries_++ < 20)
             {
                return true;
             }
@@ -57,9 +57,9 @@ public class WindowCloseMonitor
                return false;
             }
          }
-         
+
          private int retries_ = 0;
-         
+
       }, 250);
    }
 }

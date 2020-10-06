@@ -1,7 +1,7 @@
 /*
  * ShowPageViewerEvent.java
  *
- * Copyright (C) 2017 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,36 +14,41 @@
  */
 package org.rstudio.studio.client.htmlpreview.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewParams;
 
 import com.google.gwt.event.shared.GwtEvent;
 
-public class ShowPageViewerEvent extends GwtEvent<ShowPageViewerHandler>
-{ 
-   public static final GwtEvent.Type<ShowPageViewerHandler> TYPE =
-      new GwtEvent.Type<ShowPageViewerHandler>();
-   
+public class ShowPageViewerEvent extends GwtEvent<ShowPageViewerEvent.Handler>
+{
+   public static final GwtEvent.Type<Handler> TYPE = new GwtEvent.Type<>();
+
+   public interface Handler extends EventHandler
+   {
+      void onShowPageViewer(ShowPageViewerEvent event);
+   }
+
    public ShowPageViewerEvent(HTMLPreviewParams params)
    {
       params_ = params;
    }
-   
+
    public HTMLPreviewParams getParams()
    {
       return params_;
    }
-   
+
    @Override
-   protected void dispatch(ShowPageViewerHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onShowPageViewer(this);
    }
 
    @Override
-   public GwtEvent.Type<ShowPageViewerHandler> getAssociatedType()
+   public GwtEvent.Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
-   
-   private HTMLPreviewParams params_;
+
+   private final HTMLPreviewParams params_;
 }

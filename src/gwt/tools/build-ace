@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -e
 
 # Build and copy ace, ace-uncompressed to RStudio
 cd rstudio-ace

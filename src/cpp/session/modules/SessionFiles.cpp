@@ -1,7 +1,7 @@
 /*
  * SessionFiles.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -63,7 +63,7 @@
 #include "SessionFilesListingMonitor.hpp"
 #include "SessionGit.hpp"
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
@@ -123,18 +123,18 @@ Error extractFilePaths(const json::Array& files,
                        std::vector<FilePath>* pFilePaths)
 {   
    for(json::Array::Iterator
-         it = files.begin(); 
+         it = files.begin();
          it != files.end();
          ++it)
    {
       if ((*it).getType() != json::Type::STRING)
          return Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
 
-      std::string file = (*it).getString() ;
-      pFilePaths->push_back(module_context::resolveAliasedPath(file)) ;
+      std::string file = (*it).getString();
+      pFilePaths->push_back(module_context::resolveAliasedPath(file));
    }
 
-   return Success() ;
+   return Success();
 }
 
 core::Error stat(const json::JsonRpcRequest& request,
@@ -232,7 +232,7 @@ Error listFiles(const json::JsonRpcRequest& request, json::JsonRpcResponse* pRes
    Error error = json::readParams(request.params, &path, &monitor, &includeHidden);
    if (error)
       return error;
-   FilePath targetPath = module_context::resolveAliasedPath(path) ;
+   FilePath targetPath = module_context::resolveAliasedPath(path);
 
    json::Object result;
    
@@ -289,22 +289,22 @@ core::Error createFolder(const core::json::JsonRpcRequest& request,
    std::string path;
    Error error = json::readParam(request.params, 0, &path);
    if (error)
-      return error ;   
+      return error;
    
    // create the directory
-   FilePath folderPath = module_context::resolveAliasedPath(path) ;
+   FilePath folderPath = module_context::resolveAliasedPath(path);
    if (folderPath.exists())
    {
       return fileExistsError(ERROR_LOCATION);
    }
    else
    {
-      Error createError = folderPath.ensureDirectory() ;
+      Error createError = folderPath.ensureDirectory();
       if (createError)
-         return createError ;
+         return createError;
    }
 
-   return Success() ;
+   return Success();
 }
 
 
@@ -336,16 +336,16 @@ core::Error deleteFiles(const core::json::JsonRpcRequest& request,
    json::Array files;
    Error error = json::readParam(request.params, 0, &files);
    if (error)
-      return error ;
+      return error;
    
    // extract vector of FilePath
-   std::vector<FilePath> filePaths ;
-   Error extractError = extractFilePaths(files, &filePaths) ;
+   std::vector<FilePath> filePaths;
+   Error extractError = extractFilePaths(files, &filePaths);
    if (extractError)
-      return extractError ;
+      return extractError;
 
    // delete each file
-   Error deleteError ;
+   Error deleteError;
    for (std::vector<FilePath>::const_iterator 
          it = filePaths.begin();
          it != filePaths.end();
@@ -354,10 +354,10 @@ core::Error deleteFiles(const core::json::JsonRpcRequest& request,
       // attempt to send the file to the recycle bin
       deleteError = deleteFile(*it);
       if (deleteError)
-         return deleteError ;
+         return deleteError;
    }
 
-   return Success() ;
+   return Success();
 }
    
 
@@ -398,7 +398,7 @@ Error copyFile(const core::json::JsonRpcRequest& request,
    FilePath sourceFilePath = module_context::resolveAliasedPath(sourcePath);
    
    // copy directories recursively
-   Error copyError ;
+   Error copyError;
    if (sourceFilePath.isDirectory())
    {
       copyError = file_utils::copyDirectory(sourceFilePath, targetFilePath);
@@ -424,13 +424,13 @@ Error moveFiles(const core::json::JsonRpcRequest& request,
    std::string targetPath;
    Error error = json::readParams(request.params, &files, &targetPath);
    if (error)
-      return error ;
+      return error;
    
    // extract vector of FilePath
-   std::vector<FilePath> filePaths ;
-   Error extractError = extractFilePaths(files, &filePaths) ;
+   std::vector<FilePath> filePaths;
+   Error extractError = extractFilePaths(files, &filePaths);
    if (extractError)
-      return extractError ;
+      return extractError;
 
    // create FilePath for target directory
    FilePath targetDirPath = module_context::resolveAliasedPath(targetPath);
@@ -444,13 +444,13 @@ Error moveFiles(const core::json::JsonRpcRequest& request,
          ++it)
    {      
       // move the file
-      FilePath targetPath = targetDirPath.completeChildPath(it->getFilename()) ;
-      Error moveError = it->move(targetPath) ;
+      FilePath targetPath = targetDirPath.completeChildPath(it->getFilename());
+      Error moveError = it->move(targetPath);
       if (moveError)
-         return moveError ;
+         return moveError;
    }
 
-   return Success() ;
+   return Success();
 }
 
 // IN: String path, String targetPath
@@ -576,10 +576,10 @@ Error completeUpload(const core::json::JsonRpcRequest& request,
 {
    // read params
    json::Object token;
-   bool commit ;
+   bool commit;
    Error error = json::readParams(request.params, &token, &commit);
    if (error)
-      return error ;
+      return error;
    
    // parse fields out of token object
    std::string filename, uploadedTempFile, targetDirectory;
@@ -633,7 +633,7 @@ Error completeUpload(const core::json::JsonRpcRequest& request,
          
          // move the source to the destination, falling back to a copy
          // if the move cannot be completed
-         Error copyError = uploadedTempFilePath.move(targetPath);
+         Error copyError = uploadedTempFilePath.move(targetPath, FilePath::MoveCrossDevice, true);
          if (copyError)
             return copyError;
       }
@@ -1243,7 +1243,7 @@ SEXP rs_pathInfo(SEXP pathSEXP)
       r::sexp::Protect rProtect;
       return r::sexp::create(pathInfo, &rProtect);
    }
-   catch(r::exec::RErrorException e)
+   catch(r::exec::RErrorException& e)
    {
       r::exec::error(e.message());
    }
@@ -1307,7 +1307,7 @@ Error initialize()
 
    // install handlers
    using boost::bind;
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "stat", stat))
       (bind(registerRpcMethod, "is_text_file", isTextFile))

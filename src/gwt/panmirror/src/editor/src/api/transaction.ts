@@ -1,7 +1,7 @@
 /*
  * transaction.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,10 +20,14 @@ import { ReplaceStep, Step, Transform } from 'prosemirror-transform';
 
 import { sliceContentLength } from './slice';
 
+export const kPasteTransaction = 'paste';
 export const kSetMarkdownTransaction = 'setMarkdown';
 export const kAddToHistoryTransaction = 'addToHistory';
 export const kFixupTransaction = 'docFixup';
 export const kRestoreLocationTransaction = 'restoreLocation';
+export const kNavigationTransaction = 'navigationTransaction';
+export const kInsertSymbolTransaction = 'insertSymbol';
+export const kInsertCompletionTransaction = 'insertCompletion';
 
 export type TransactionsFilter = (transactions: Transaction[], oldState: EditorState, newState: EditorState) => boolean;
 
@@ -38,14 +42,13 @@ export interface AppendTransactionHandler {
   name: string;
   filter?: TransactionsFilter;
   nodeFilter?: TransactionNodeFilter;
-  append: (tr: Transaction) => void;
+  append: (tr: Transaction, transactions: Transaction[], oldState: EditorState, newState: EditorState) => void;
 }
 
-// wrapper for transaction that is guaranteed not to modify the position of any 
+// wrapper for transaction that is guaranteed not to modify the position of any
 // nodes in the document (useful for grouping many disparate handlers that arne't
 // aware of each other's actions onto the same trasaction)
 export class MarkTransaction {
-  
   private tr: Transaction;
 
   constructor(tr: Transaction) {
@@ -53,7 +56,7 @@ export class MarkTransaction {
   }
   get doc(): ProsemirrorNode {
     return this.tr.doc;
-  } 
+  }
   get selection(): Selection {
     return this.tr.selection;
   }
@@ -78,10 +81,10 @@ export class MarkTransaction {
 export interface AppendMarkTransactionHandler {
   name: string;
   filter: (node: ProsemirrorNode) => boolean;
-  append: (tr: MarkTransaction, node: ProsemirrorNode, pos: number) => void;
+  append: (tr: MarkTransaction, node: ProsemirrorNode, pos: number, state: EditorState) => void;
 }
 
-export function appendMarkTransactionsPlugin(handlers: AppendMarkTransactionHandler[]): Plugin {
+export function appendMarkTransactionsPlugin(handlers: readonly AppendMarkTransactionHandler[]): Plugin {
   return new Plugin({
     key: new PluginKey('appendMarkTransactions'),
 
@@ -108,21 +111,21 @@ export function appendMarkTransactionsPlugin(handlers: AppendMarkTransactionHand
 
             // call the handler
             if (handler.filter(node)) {
-              handler.append(markTr, node, pos);
+              handler.append(markTr, node, pos, newState);
             }
           }
         },
       );
 
       // return transaction
-      if (tr.docChanged || tr.selectionSet) {
+      if (tr.docChanged || tr.selectionSet || tr.storedMarksSet) {
         return tr;
       }
     },
   });
 }
 
-export function appendTransactionsPlugin(handlers: AppendTransactionHandler[]): Plugin {
+export function appendTransactionsPlugin(handlers: readonly AppendTransactionHandler[]): Plugin {
   return new Plugin({
     key: new PluginKey('appendTransactions'),
 
@@ -178,17 +181,17 @@ export function appendTransactionsPlugin(handlers: AppendTransactionHandler[]): 
 
           // run the handler if applicable
           if (haveChange) {
-            handler.append(tr);
+            handler.append(tr, transactions, oldState, newState);
           }
         }
 
         // run them all if this is a larger change
       } else {
-        handlers.forEach(handler => handler.append(tr));
+        handlers.forEach(handler => handler.append(tr, transactions, oldState, newState));
       }
 
       // return transaction
-      if (tr.docChanged || tr.selectionSet) {
+      if (tr.docChanged || tr.selectionSet || tr.storedMarksSet) {
         return tr;
       }
     },

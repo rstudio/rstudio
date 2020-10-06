@@ -1,7 +1,7 @@
 /*
  * RProjectConfig.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import org.rstudio.core.client.StringUtil;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
 
 public class RProjectConfig extends JavaScriptObject
 {
@@ -332,4 +333,89 @@ public class RProjectConfig extends JavaScriptObject
    public native final void setTutorialPath(String tutorialPath) /*-{
       this.tutorial_path = tutorialPath;
    }-*/;
+   
+   public static final String MARKDOWN_WRAP_DEFAULT = "Default";
+   public static final String MARKDOWN_WRAP_NONE = "None";
+   public static final String MARKDOWN_WRAP_COLUMN = "Column";
+   public static final String MARKDOWN_WRAP_SENTENCE = "Sentence";
+   
+   public native final String getMarkdownWrap() /*-{
+      return this.markdown_wrap;
+   }-*/;
+   
+   public native final void setMarkdownWrap(String wrap) /*-{
+      this.markdown_wrap = wrap;
+   }-*/;
+   
+   public native final int getMarkdownWrapAtColumn() /*-{
+      return this.markdown_wrap_at_column;
+   }-*/;
+   
+   public native final void setMarkdownWrapAtColumn(int column) /*-{
+      this.markdown_wrap_at_column = column;
+   }-*/;
+   
+   public static final String MARKDOWN_REFERENCES_DEFAULT = "Default";
+   public static final String MARKDOWN_REFERENCES_BLOCK = "Block";
+   public static final String MARKDOWN_REFERENCES_SECTION = "Section";
+   public static final String MARKDOWN_REFERENCES_DOCUMENT = "Document";
+   
+   public native final String getMarkdownReferences() /*-{
+      return this.markdown_references;
+   }-*/;
+   
+   public native final void setMarkdownReferences(String references) /*-{
+      this.markdown_references = references;
+   }-*/;
+   
+   public native final int getMarkdownCanonical() /*-{
+      return this.markdown_canonical;
+   }-*/;
+
+   public native final void setMarkdownCanonical(int canonical) /*-{
+      this.markdown_canonical = canonical;
+   }-*/;
+   
+   public native final String getPythonType() /*-{
+      return this.python_type;
+   }-*/;
+   
+   public native final void setPythonType(String type) /*-{
+      this.python_type = type;
+   }-*/;
+   
+   public native final String getPythonVersion() /*-{
+      return this.python_version;
+   }-*/;
+   
+   public native final void setPythonVersion(String version) /*-{
+      this.python_version = version;
+   }-*/;
+   
+   public native final String getPythonPath() /*-{
+      return this.python_path;
+   }-*/;
+   
+   public native final void setPythonPath(String path) /*-{
+      this.python_path = path;
+   }-*/;
+   
+   public native final String getSpellingDictionary() /*-{
+      return this.spelling_dictionary;
+   }-*/;
+   
+   public native final void setSpellingDictionary(String dictionary) /*-{
+      this.spelling_dictionary = dictionary;
+   }-*/;
+   
+   public native final JsArrayString getZoteroLibraries()  /*-{
+      return this.zotero_libraries || null;
+   }-*/;
+   
+   public native final void setZoteroLibraries(JsArrayString libraries) /*-{
+      this.zotero_libraries = libraries;
+   }-*/;
+   
+   
+   
 }

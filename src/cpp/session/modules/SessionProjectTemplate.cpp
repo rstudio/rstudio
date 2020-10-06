@@ -1,7 +1,7 @@
 /*
  * SessionProjectTemplate.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -414,7 +414,7 @@ std::vector<Error> validate(const ProjectTemplateDescription& description,
    if (description.title.empty())
       result.push_back(errors::missingField("Title", resourcePath, location));
    
-   for (const ProjectTemplateWidgetDescription widget : description.widgets)
+   for (const ProjectTemplateWidgetDescription& widget : description.widgets)
    {
       std::vector<Error> widgetErrors =
             validateWidget(widget, resourcePath, location);

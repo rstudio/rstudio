@@ -1,7 +1,7 @@
 /*
  * BusyEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,34 +14,39 @@
  */
 package org.rstudio.studio.client.workbench.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class BusyEvent extends GwtEvent<BusyHandler>
+public class BusyEvent extends GwtEvent<BusyEvent.Handler>
 {
-   public static final GwtEvent.Type<BusyHandler> TYPE =
-      new GwtEvent.Type<BusyHandler>();
-   
+   public static final GwtEvent.Type<Handler> TYPE = new GwtEvent.Type<>();
+
+   public interface Handler extends EventHandler
+   {
+      void onBusy(BusyEvent event);
+   }
+
    public BusyEvent(boolean isBusy)
    {
       isBusy_ = isBusy;
    }
-   
+
    public boolean isBusy()
    {
       return isBusy_;
    }
-   
+
    @Override
-   protected void dispatch(BusyHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onBusy(this);
    }
 
    @Override
-   public GwtEvent.Type<BusyHandler> getAssociatedType()
+   public GwtEvent.Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
-   
+
    private final boolean isBusy_;
 }

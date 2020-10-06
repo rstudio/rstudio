@@ -1,7 +1,7 @@
 /*
  * SynctexStatusChangedEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,23 +23,23 @@ public class SynctexStatusChangedEvent extends GwtEvent<SynctexStatusChangedEven
    {
       void onSynctexStatusChanged(SynctexStatusChangedEvent event);
    }
-   
+
    public SynctexStatusChangedEvent(String targetFile, String pdfPath)
    {
       targetFile_ = targetFile;
       pdfPath_ = pdfPath;
    }
-   
+
    public boolean isAvailable()
    {
       return getPdfPath() != null;
    }
-   
+
    public String getTargetFile()
    {
       return targetFile_;
    }
-   
+
    public String getPdfPath()
    {
       return pdfPath_;
@@ -59,6 +59,6 @@ public class SynctexStatusChangedEvent extends GwtEvent<SynctexStatusChangedEven
 
    private final String pdfPath_;
    private final String targetFile_;
-   
-   public static final Type<Handler> TYPE = new Type<Handler>();
+
+   public static final Type<Handler> TYPE = new Type<>();
 }

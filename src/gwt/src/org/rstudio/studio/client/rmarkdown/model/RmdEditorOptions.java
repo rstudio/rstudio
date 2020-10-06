@@ -1,7 +1,7 @@
 /*
  * RmdEditorOptions.java
  *
- * Copyright (C) 2009-17 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,8 +26,7 @@ public class RmdEditorOptions
       if (!value.isEmpty())
       {
          // there are lots of ways to say "true" in YAML...
-         return value == "y"    || value == "yes" || 
-                value == "true" || value == "on";
+         return YamlTree.isTrue(value);
       }
       return defaultValue;
    }
@@ -40,6 +39,33 @@ public class RmdEditorOptions
       if (value.isEmpty())
          return defaultValue;
       return value;
+   }
+   
+   public static String getMarkdownOption(String yaml, String option)
+   {
+      YamlTree yamlTree = new YamlTree(yaml);
+      return yamlTree.getGrandchildValue(EDITOR_OPTION_KEY, MARKDOWN_OPTION_KEY, option)
+                      .trim().toLowerCase();
+   }
+   
+   public static String setMarkdownOption(String yaml, String option, String value)
+   {
+      YamlTree yamlTree = new YamlTree(yaml);
+      
+      // add editor option key if not yet present
+      if (!yamlTree.containsKey(EDITOR_OPTION_KEY))
+         yamlTree.addYamlValue(null, EDITOR_OPTION_KEY, "");
+      
+      // add markdown option key if not yet present
+      if (!yamlTree.getChildKeys(EDITOR_OPTION_KEY).contains(MARKDOWN_OPTION_KEY))
+         yamlTree.addYamlValue(EDITOR_OPTION_KEY, MARKDOWN_OPTION_KEY, "");
+        
+         
+      // set value
+      yamlTree.setGrandchildValue(EDITOR_OPTION_KEY, MARKDOWN_OPTION_KEY, MARKDOWN_WRAP_OPTION, value);
+      
+      // return tree
+      return yamlTree.toString();
    }
    
    public static String set(String yaml, String option, String value)
@@ -57,6 +83,9 @@ public class RmdEditorOptions
    }
    
    private static String EDITOR_OPTION_KEY = "editor_options";
+   private static String MARKDOWN_OPTION_KEY = "markdown";
+   
+   public static String MARKDOWN_WRAP_OPTION = "wrap";
    
    public static String PREVIEW_IN        = "preview";
    public static String PREVIEW_IN_WINDOW = "window";

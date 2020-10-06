@@ -1,7 +1,7 @@
 /*
  * SessionInitEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,25 +14,30 @@
  */
 package org.rstudio.studio.client.workbench.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class SessionInitEvent extends GwtEvent<SessionInitHandler>
+public class SessionInitEvent extends GwtEvent<SessionInitEvent.Handler>
 {
-   public static final GwtEvent.Type<SessionInitHandler> TYPE =
-      new GwtEvent.Type<SessionInitHandler>();
-   
+   public static final GwtEvent.Type<Handler> TYPE = new GwtEvent.Type<>();
+
+   public interface Handler extends EventHandler
+   {
+      void onSessionInit(SessionInitEvent sie);
+   }
+
    public SessionInitEvent()
    {
    }
-   
+
    @Override
-   protected void dispatch(SessionInitHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onSessionInit(this);
    }
 
    @Override
-   public GwtEvent.Type<SessionInitHandler> getAssociatedType()
+   public GwtEvent.Type<Handler> getAssociatedType()
    {
       return TYPE;
    }

@@ -1,7 +1,7 @@
 /*
  * ServerSecureUriHandler.cpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -57,7 +57,7 @@ public:
    // provide http::UriHandlerFunction concept
    void operator()(const http::Request& request, http::Response *pResponse)
    {
-      std::string userIdentifier = handler::getUserIdentifier(request, requireUserListCookie_, pResponse);
+      std::string userIdentifier = handler::getUserIdentifier(request, requireUserListCookie_);
       if (userIdentifier.empty())
       {
          unauthorizedResponseFunction_(request, pResponse);
@@ -187,8 +187,7 @@ private:
       if (userIdentifier_.empty() || username_.empty())
       {
          userIdentifier_ = handler::getUserIdentifier(pConnection->request(),
-                                                      requireUserListCookie_,
-                                                      &pConnection->response());
+                                                      requireUserListCookie_);
          if (userIdentifier_.empty())
          {
             unauthorizedResponseFunction_(pConnection);

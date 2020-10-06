@@ -1,7 +1,7 @@
 /*
  * Packages.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -64,7 +64,6 @@ import org.rstudio.studio.client.workbench.projects.ProjectContext;
 import org.rstudio.studio.client.workbench.projects.RenvAction;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
-import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedEvent;
@@ -898,7 +897,7 @@ public class Packages
       removeConsolePromptHandler();
       
       consolePromptHandlerReg_ = events_.addHandler(ConsolePromptEvent.TYPE, 
-         new ConsolePromptHandler() {
+         new ConsolePromptEvent.Handler() {
             @Override
             public void onConsolePrompt(ConsolePromptEvent event)
             {  

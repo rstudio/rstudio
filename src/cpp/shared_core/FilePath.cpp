@@ -1,7 +1,7 @@
 /*
  * FilePath.cpp
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant to the terms of a commercial license agreement
  * with RStudio, then this program is licensed to you under the following terms:
@@ -83,6 +83,7 @@ MimeType s_mimeTypes[] =
       { "jpeg",         "image/jpeg" },
       { "jpe",          "image/jpeg" },
       { "png",          "image/png" },
+      { "webp",         "image/webp" },
       { "js",           "text/javascript" },
       { "pdf",          "application/pdf" },
       { "svg",          "image/svg+xml" },
@@ -105,6 +106,8 @@ MimeType s_mimeTypes[] =
       { "sql",          "text/x-sql" },
       { "stan",         "text/x-stan" },
       { "clj",          "text/x-clojure" },
+      { "ts",           "text/x-typescript"},
+      { "lua",          "text/x-lua"},
 
       // other types we are likely to serve
       { "xml",          "text/xml" },
@@ -202,8 +205,16 @@ MimeType s_mimeTypes[] =
       { nullptr,        nullptr }
    };
 
-const std::string s_homePathAlias = "~/";
-const std::string s_homePathLeafAlias = "~";
+const std::string& homePathAlias()
+{
+   static const std::string homePathAlias = "~/";
+   return homePathAlias;
+}
+const std::string& homePathLeafAlias()
+{
+   static const std::string homePathLeafAlias = "~";
+   return homePathLeafAlias;
+}
 
 // We use boost::filesystem in one of two ways:
 // - On Windows, we use Filesystem v3 with wide character paths. This is
@@ -305,14 +316,14 @@ inline Error changeFileModeImpl(const std::string& filePath, mode_t mode)
 #endif
 
 bool copySingleItem(const FilePath& from, const FilePath& to,
-                    const FilePath& path)
+                    const FilePath& path, bool overwrite)
 {
    std::string relativePath = path.getRelativePath(from);
    FilePath target = to.completePath(relativePath);
 
    Error error = path.isDirectory() ?
                  target.ensureDirectory() :
-                 path.copy(target);
+                 path.copy(target, overwrite);
    if (error)
       log::logError(error);
 
@@ -397,7 +408,7 @@ std::string FilePath::createAliasedPath(const FilePath& in_filePath, const FileP
 {
    // Special case for "~"
    if (in_filePath == in_userHomePath)
-      return s_homePathLeafAlias;
+      return homePathLeafAlias();
 
 #ifdef _WIN32
    // Also check for case where paths are identical
@@ -407,14 +418,14 @@ std::string FilePath::createAliasedPath(const FilePath& in_filePath, const FileP
        in_userHomePath.m_impl->Path.generic_path();
 
    if (samePath)
-      return s_homePathLeafAlias;
+      return homePathLeafAlias();
 #endif
 
    // if the path is contained within the home path then alias it
    if (in_filePath.isWithin(in_userHomePath))
    {
       std::string homeRelativePath = in_filePath.getRelativePath(in_userHomePath);
-      std::string aliasedPath = s_homePathAlias + homeRelativePath;
+      std::string aliasedPath = homePathAlias() + homeRelativePath;
       return aliasedPath;
    }
    else  // no aliasing
@@ -472,11 +483,11 @@ Error FilePath::makeCurrent(const std::string& in_filePath)
 FilePath FilePath::resolveAliasedPath(const std::string& in_aliasedPath, const FilePath& in_userHomePath)
 {
    // Special case for empty string or "~"
-   if (in_aliasedPath.empty() || (in_aliasedPath == s_homePathLeafAlias))
+   if (in_aliasedPath.empty() || (in_aliasedPath == homePathLeafAlias()))
       return in_userHomePath;
 
    // if the path starts with the home alias then substitute the home path
-   if (in_aliasedPath.find(s_homePathAlias) == 0)
+   if (in_aliasedPath.find(homePathAlias()) == 0)
    {
       std::string resolvedPath = in_userHomePath.getAbsolutePath() +
                                  in_aliasedPath.substr(1);
@@ -753,11 +764,14 @@ FilePath FilePath::completePath(const std::string& in_filePath) const
    }
 }
 
-Error FilePath::copy(const FilePath& in_targetPath) const
+Error FilePath::copy(const FilePath& in_targetPath, bool overwrite) const
 {
    try
    {
-      boost::filesystem::copy_file(m_impl->Path, in_targetPath.m_impl->Path);
+      boost::filesystem::copy_option::enum_type option = overwrite
+         ? boost::filesystem::copy_option::overwrite_if_exists
+         : boost::filesystem::copy_option::fail_if_exists;
+      boost::filesystem::copy_file(m_impl->Path, in_targetPath.m_impl->Path, option);
       return Success();
    }
    catch(const boost::filesystem::filesystem_error& e)
@@ -769,13 +783,13 @@ Error FilePath::copy(const FilePath& in_targetPath) const
    }
 }
 
-Error FilePath::copyDirectoryRecursive(const FilePath& in_targetPath) const
+Error FilePath::copyDirectoryRecursive(const FilePath& in_targetPath, bool overwrite) const
 {
    Error error = in_targetPath.ensureDirectory();
    if (error)
       return error;
 
-   return getChildrenRecursive(boost::bind(copySingleItem, *this, in_targetPath, _2));
+   return getChildrenRecursive(boost::bind(copySingleItem, *this, in_targetPath, _2, overwrite));
 }
 
 Error FilePath::createDirectory(const std::string& in_filePath) const
@@ -1330,7 +1344,7 @@ Error FilePath::makeCurrentPath(bool in_autoCreate) const
    }
 }
 
-Error FilePath::move(const FilePath& in_targetPath, MoveType in_type) const
+Error FilePath::move(const FilePath& in_targetPath, MoveType in_type, bool overwrite) const
 {
    try
    {
@@ -1344,7 +1358,7 @@ Error FilePath::move(const FilePath& in_targetPath, MoveType in_type) const
       {
          // this error implies that we're trying to move a file from one
          // device to another; in this case, fall back to copy/delete
-         return moveIndirect(in_targetPath);
+         return moveIndirect(in_targetPath, overwrite);
       }
       Error error(e.code(), ERROR_LOCATION);
       addErrorProperties(m_impl->Path, &error);
@@ -1353,7 +1367,7 @@ Error FilePath::move(const FilePath& in_targetPath, MoveType in_type) const
    }
 }
 
-Error FilePath::moveIndirect(const FilePath& in_targetPath) const
+Error FilePath::moveIndirect(const FilePath& in_targetPath, bool overwrite) const
 {
    // when target is a directory, moving has the effect of moving *into* the
    // directory (rather than *replacing* it); simulate that behavior here
@@ -1362,7 +1376,7 @@ Error FilePath::moveIndirect(const FilePath& in_targetPath) const
 
    // copy the file or directory to the new location
    Error error = isDirectory() ?
-                 copyDirectoryRecursive(target) : copy(target);
+                 copyDirectoryRecursive(target, overwrite) : copy(target, overwrite);
    if (error)
       return error;
 

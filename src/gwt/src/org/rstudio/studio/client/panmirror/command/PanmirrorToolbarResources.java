@@ -1,7 +1,7 @@
 /*
  * PanmirrorToolbarResources.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,6 +30,7 @@ public interface PanmirrorToolbarResources extends ClientBundle
    {
       String toolbarTextMenuButton();
       String toolbarPopupMenu();
+      String toolbarPopupSubmenu();
       String toolbarSeparator();
       String toolbarButton();
       String toolbarButtonLatched();
@@ -47,6 +48,12 @@ public interface PanmirrorToolbarResources extends ClientBundle
    @Source("blockquote_2x.png")
    ImageResource blockquote();
    
+   @Source("citation_2x.png")
+   ImageResource citation();
+   
+   @Source("citation_dm_2x.png")
+   ImageResource citation_dm();
+   
    @Source("code_2x.png")
    ImageResource code();
 
@@ -58,6 +65,9 @@ public interface PanmirrorToolbarResources extends ClientBundle
    
    @Source("italic_dm_2x.png")
    ImageResource italic_dm();
+   
+   @Source("omni_2x.png")
+   ImageResource omni();
    
    @Source("link_2x.png")
    ImageResource link();
@@ -77,11 +87,17 @@ public interface PanmirrorToolbarResources extends ClientBundle
    @Source("bullet_list_dm_2x.png")
    ImageResource bullet_list_dm();
    
-   @Source("rmd_chunk_2x.png")
-   ImageResource rmd_chunk();
-   
    @Source("table_2x.png")
    ImageResource table();
+   
+   @Source("clear_formatting_2x.png")
+   ImageResource clear_formatting();
+   
+   @Source("clear_formatting_dm_2x.png")
+   ImageResource clear_formatting_dm();
+   
+   @Source("comment_2x.png")
+   ImageResource comment();
    
    public static PanmirrorToolbarResources INSTANCE = 
       (PanmirrorToolbarResources)GWT.create(PanmirrorToolbarResources.class);

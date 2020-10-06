@@ -11,13 +11,13 @@
 	<classpathentry kind="lib" path="lib/gin/2.1.2/javax.inject.jar"/>
 	<classpathentry kind="lib" path="lib/junit-4.9b3.jar"/>
     <classpathentry kind="lib" path="lib/elemental2/base-1.0.0.jar"/>
-    <classpathentry kind="lib" path="lib/elemental2/elemental2-core-1.0.0-RC1.jar"/>
-    <classpathentry kind="lib" path="lib/elemental2/elemental2-promise-1.0.0-RC1.jar"/>
+    <classpathentry kind="lib" path="lib/elemental2/elemental2-core-1.0.0.jar"/>
+    <classpathentry kind="lib" path="lib/elemental2/elemental2-dom-1.0.0.jar"/>
+    <classpathentry kind="lib" path="lib/elemental2/elemental2-promise-1.0.0.jar"/>
 	<classpathentry kind="lib" path="lib/gwt/gwt-rstudio/gwt-api-checker.jar"/>
 	<classpathentry kind="lib" path="lib/gwt/gwt-rstudio/gwt-dev.jar"/>
 	<classpathentry kind="lib" path="lib/gwt/gwt-rstudio/gwt-user.jar"/>
 	<classpathentry kind="lib" path="lib/gwt/gwt-rstudio/validation-api-1.0.0.GA-sources.jar"/>
 	<classpathentry kind="lib" path="lib/gwt/gwt-rstudio/validation-api-1.0.0.GA.jar"/>
-	<classpathentry kind="lib" path="lib/gwt/gwt-rstudio/gwt-elemental.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

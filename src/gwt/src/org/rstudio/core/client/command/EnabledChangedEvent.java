@@ -1,7 +1,7 @@
 /*
  * EnabledChangedEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,9 +25,33 @@ public class EnabledChangedEvent extends GwtEvent<EnabledChangedHandler>
       command_ = command;
    }
 
+   public EnabledChangedEvent(AppCommand command, String columnName)
+   {
+      command_ = command;
+      columnName_ = columnName;
+      buttonEnabled_ = command.isEnabled();
+   }
+
+   public EnabledChangedEvent(AppCommand command, String columnName, boolean buttonEnabled)
+   {
+      command_ = command;
+      columnName_ = columnName;
+      buttonEnabled_ = buttonEnabled;
+   }
+
    public AppCommand getCommand()
    {
       return command_;
+   }
+
+   public String getColumnName()
+   {
+      return columnName_;
+   }
+
+   public boolean getButtonEnabled()
+   {
+      return buttonEnabled_;
    }
 
    @Override
@@ -39,8 +63,10 @@ public class EnabledChangedEvent extends GwtEvent<EnabledChangedHandler>
    @Override
    protected void dispatch(EnabledChangedHandler handler)
    {
-      handler.onEnabledChanged(command_);
+      handler.onEnabledChanged(this);
    }
 
    private final AppCommand command_;
+   private String columnName_;
+   private boolean buttonEnabled_;
 }

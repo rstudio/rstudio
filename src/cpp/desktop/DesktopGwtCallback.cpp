@@ -1,7 +1,7 @@
 /*
  * DesktopGwtCallback.cpp
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,6 +29,7 @@
 #include <QtPrintSupport/QPrintPreviewDialog>
 
 #include <shared_core/FilePath.hpp>
+#include <core/FileUtils.hpp>
 #include <core/DateTime.hpp>
 #include <shared_core/SafeConvert.hpp>
 #include <core/system/System.hpp>
@@ -260,13 +261,15 @@ QString GwtCallback::getOpenFileName(const QString& caption,
 
    dialog.setFileMode(mode);
    dialog.setLabelText(QFileDialog::Accept, label);
-#if QT_VERSION < QT_VERSION_CHECK(5, 13, 0)
-   dialog.setResolveSymlinks(false);
-#else
-   dialog.setOption(QFileDialog::DontResolveSymlinks, true);
-#endif
    dialog.setWindowModality(Qt::WindowModal);
 
+   // don't resolve links on non-Windows platforms
+   // https://github.com/rstudio/rstudio/issues/2476
+   // https://github.com/rstudio/rstudio/issues/7327
+#ifndef _WIN32
+   dialog.setOption(QFileDialog::DontResolveSymlinks, true);
+#endif
+   
    QString result;
    if (dialog.exec() == QDialog::Accepted)
       result = dialog.selectedFiles().value(0);
@@ -472,6 +475,41 @@ QString GwtCallback::getClipboardText()
 {
    QClipboard* pClipboard = QApplication::clipboard();
    return pClipboard->text(QClipboard::Clipboard);
+}
+
+QJsonArray GwtCallback::getClipboardUris()
+{
+   QJsonArray urisJson;
+   QClipboard* pClipboard = QApplication::clipboard();
+   if (pClipboard->mimeData()->hasUrls())
+   {
+      // build buffer of urls
+      auto urls = pClipboard->mimeData()->urls();
+      for (auto url : urls)
+      {
+         // append (converting file-based urls)
+         if (url.scheme() == QString::fromUtf8("file"))
+            urisJson.append(QJsonValue(createAliasedPath(url.toLocalFile())));
+         else
+            urisJson.append(QJsonValue(url.toString()));
+      }
+   }
+   return urisJson;
+}
+
+QString GwtCallback::getClipboardImage()
+{
+   QClipboard* pClipboard = QApplication::clipboard();
+   if (pClipboard->mimeData()->hasImage())
+   {
+      QImage image = qvariant_cast<QImage>(pClipboard->mimeData()->imageData());
+      FilePath tempDir = options().scratchTempDir();
+      FilePath imagePath = file_utils::uniqueFilePath(tempDir, "paste-", ".png");
+      QString imageFile = QString::fromStdString(imagePath.getAbsolutePath());
+      if (image.save(imageFile))
+         return imageFile;
+   }
+   return QString();
 }
 
 void GwtCallback::setGlobalMouseSelection(QString selection)

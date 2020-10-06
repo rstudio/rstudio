@@ -1,7 +1,7 @@
 /*
  * WebMenuCallback.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -32,13 +32,16 @@ public class WebMenuCallback implements MenuCallback
 {
    public void beginMainMenu()
    {
-      menuStack_.push(new AppMenuBar(false));
+      AppMenuBar mainMenu = new AppMenuBar(false);
+      mainMenu.setEscClosesAll(false);
+      menuStack_.push(mainMenu);
    }
 
    public void beginMenu(String label)
    {
       AppMenuBar newMenu = new AppMenuBar(true);
-      
+      newMenu.setEscClosesAll(false);
+
       // Adjust the z-index of the displayed sub-menu, so that it (and any
       // adorning contents) are rendered in front of their parents.
       final int depth = menuStack_.size();
@@ -50,24 +53,24 @@ public class WebMenuCallback implements MenuCallback
             ElementPredicate callback = (Element el) -> {
                return el.getParentElement().getTagName().toLowerCase().contentEquals("body");
             };
-            
+
             Element popupEl = DomUtils.findParentElement(newMenu.getElement(), callback);
             if (popupEl == null)
                return;
-            
+
             Style style = DomUtils.getComputedStyles(popupEl);
             int oldIndex = StringUtil.parseInt(style.getZIndex(), -1);
             if (oldIndex == -1)
                return;
-            
+
             int newIndex = oldIndex + depth;
             popupEl.getStyle().setZIndex(newIndex);
          }
       });
-      
+
       label = AppMenuItem.replaceMnemonics(label, "");
       head().addItem(label, newMenu);
-      
+
       menuStack_.push(newMenu);
    }
 

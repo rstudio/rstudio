@@ -1,7 +1,7 @@
 /*
  * StatusBar.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,33 +21,33 @@ import com.google.gwt.user.client.Event.NativePreviewEvent;
 
 public interface StatusBar
 {
-   public static interface HideMessageHandler
+   interface HideMessageHandler
    {
       // return 'true' to indicate message should be hidden
-      public boolean onNativePreviewEvent(NativePreviewEvent preview);
+      boolean onNativePreviewEvent(NativePreviewEvent preview);
    }
-   
-   public static final int SCOPE_FUNCTION   = 1;
-   public static final int SCOPE_CHUNK      = 2;
-   public static final int SCOPE_SECTION    = 3;
-   public static final int SCOPE_SLIDE      = 4;
-   public static final int SCOPE_CLASS      = 5;
-   public static final int SCOPE_NAMESPACE  = 6;
-   public static final int SCOPE_LAMBDA     = 7;
-   public static final int SCOPE_ANON       = 8;
-   public static final int SCOPE_TOP_LEVEL  = 9;
-   
+
+   int SCOPE_FUNCTION   = 1;
+   int SCOPE_CHUNK      = 2;
+   int SCOPE_SECTION    = 3;
+   int SCOPE_SLIDE      = 4;
+   int SCOPE_CLASS      = 5;
+   int SCOPE_NAMESPACE  = 6;
+   int SCOPE_LAMBDA     = 7;
+   int SCOPE_ANON       = 8;
+   int SCOPE_TOP_LEVEL  = 9;
+
    StatusBarElement getPosition();
    StatusBarElement getScope();
    StatusBarElement getLanguage();
    void setScopeVisible(boolean visible);
    void setScopeType(int type);
-   
+
    void showMessage(String message);
    void showMessage(String message, int timeMs);
    void showMessage(String message, HideMessageHandler handler);
    void hideMessage();
-   
+
    void showNotebookProgress(String label);
    void updateNotebookProgress(int percent);
    void hideNotebookProgress(boolean immediately);

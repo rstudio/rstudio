@@ -1,7 +1,7 @@
 /*
  * definition_list-insert.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -44,6 +44,9 @@ function joinDefinitionListsTransform(tr: Transform) {
   const nodeType = tr.doc.type.schema.nodes.definition_list;
   const lists = findChildrenByType(tr.doc, nodeType, true);
   for (const list of lists) {
+    // NOTE: no mapping (checking for deletion + getting the updated
+    // position) is required here because we only ever do one transform
+    // (see return after tr.join below)
     const listPos = tr.doc.resolve(list.pos + 1);
     const listIndex = listPos.index(listPos.depth - 1);
     const listParent = listPos.node(listPos.depth - 1);

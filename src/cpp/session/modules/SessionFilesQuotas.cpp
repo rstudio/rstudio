@@ -1,7 +1,7 @@
 /*
  * SessionFilesQuotas.cpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -32,7 +32,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
@@ -43,7 +43,7 @@ namespace quotas {
 namespace {
 
 // does the system have quotas?
-bool s_systemHasQuotas = false;   
+bool s_systemHasQuotas = false;
    
 struct QuotaInfo
 {

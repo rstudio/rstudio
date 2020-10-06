@@ -1,7 +1,7 @@
 /*
  * UserPrefsLayer.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -72,7 +72,7 @@ void UserPrefsLayer::onPrefsFileChanged()
    }
 
    // Figure out what prefs changed in the file
-   for (const auto key: UserPrefValues::allKeys())
+   for (const auto& key: UserPrefValues::allKeys())
    {
       const auto itOld = old.find(key);
       const auto itNew = cache_->find(key);

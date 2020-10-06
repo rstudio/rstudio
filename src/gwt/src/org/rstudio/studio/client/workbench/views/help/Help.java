@@ -1,7 +1,7 @@
 /*
  * Help.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,23 +30,23 @@ import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.ActivatePaneEvent;
-import org.rstudio.studio.client.workbench.events.ListChangedEvent;
-import org.rstudio.studio.client.workbench.events.ListChangedHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
-import org.rstudio.studio.client.workbench.views.help.events.*;
+import org.rstudio.studio.client.workbench.views.help.events.ActivateHelpEvent;
+import org.rstudio.studio.client.workbench.views.help.events.HasHelpNavigateHandlers;
+import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
 import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations;
 import org.rstudio.studio.client.workbench.views.help.model.Link;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 
-public class Help extends BasePresenter implements ShowHelpHandler
+public class Help extends BasePresenter implements ShowHelpEvent.Handler
 {
    public interface Binder extends CommandBinder<Commands, Help> {}
 
-   public interface Display extends WorkbenchView, 
-                                    HasHelpNavigateHandlers
+   public interface Display extends WorkbenchView,
+      HasHelpNavigateHandlers
    {
       String getUrl();
       String getDocTitle();
@@ -58,15 +58,15 @@ public class Help extends BasePresenter implements ShowHelpHandler
       void refresh();
       void focus();
       void focusSearchHelp();
-      
+
       LinkMenu getHistory();
 
       /**
-       * Returns true if this Help pane has ever been navigated. 
+       * Returns true if this Help pane has ever been navigated.
        */
       boolean navigated();
    }
-   
+
    public interface LinkMenu extends HasSelectionHandlers<String>
    {
       void addLink(Link link);
@@ -75,7 +75,7 @@ public class Help extends BasePresenter implements ShowHelpHandler
       void clearLinks();
       ArrayList<Link> getLinks();
    }
-   
+
    @Inject
    public Help(Display view,
                GlobalDisplay globalDisplay,
@@ -95,76 +95,71 @@ public class Help extends BasePresenter implements ShowHelpHandler
 
       binder.bind(commands, this);
 
-      view_.addHelpNavigateHandler(new HelpNavigateHandler() {
-         public void onNavigate(HelpNavigateEvent event)
-         {
-            if (!historyInitialized_)
-               return;
-            
-            CsvWriter csvWriter = new CsvWriter();
-            csvWriter.writeValue(getApplicationRelativeHelpUrl(event.getUrl()));
-            csvWriter.writeValue(event.getTitle());
-            helpHistoryList_.append(csvWriter.getValue());
+      view_.addHelpNavigateHandler(helpNavigateEvent ->
+      {
+         if (!historyInitialized_)
+            return;
 
-         }
+         CsvWriter csvWriter = new CsvWriter();
+         csvWriter.writeValue(getApplicationRelativeHelpUrl(helpNavigateEvent.getUrl()));
+         csvWriter.writeValue(helpNavigateEvent.getTitle());
+         helpHistoryList_.append(csvWriter.getValue());
+
       });
       SelectionHandler<String> navigator = new SelectionHandler<String>() {
-         public void onSelection(SelectionEvent<String> event)
+         public void onSelection(SelectionEvent<String> selectionEvent)
          {
-            showHelp(event.getSelectedItem());
+            showHelp(selectionEvent.getSelectedItem());
          }
       };
       view_.getHistory().addSelectionHandler(navigator);
 
       // initialize help history
-      helpHistoryList_.addListChangedHandler(new ListChangedHandler() {
-         @Override
-         public void onListChanged(ListChangedEvent event)
+      helpHistoryList_.addListChangedHandler(listChangedEvent ->
+      {
+         // clear existing
+         final LinkMenu history = view_.getHistory();
+         history.clearLinks();
+
+         // initialize from the list
+         ArrayList<String> list = listChangedEvent.getList();
+         for (String s : list)
          {
-            // clear existing
-            final LinkMenu history = view_.getHistory();
-            history.clearLinks();
-            
-            // initialize from the list
-            ArrayList<String> list = event.getList();
-            for (int i=0; i<list.size(); i++)
+            // parse the two fields out
+            CsvReader csvReader = new CsvReader(s);
+            Iterator<String[]> it = csvReader.iterator();
+            if (!it.hasNext())
+               continue;
+            String[] fields = it.next();
+            if (fields.length != 2)
+               continue;
+
+            // add the link
+            Link link = new Link(fields[0], fields[1]);
+            history.addLink(link);
+         }
+
+         // one time init
+         if (!historyInitialized_)
+         {
+            // mark us initialized
+            historyInitialized_ = true;
+
+            if (session.getSessionInfo().getShowHelpHome())
             {
-               // parse the two fields out
-               CsvReader csvReader = new CsvReader(list.get(i));
-               Iterator<String[]> it = csvReader.iterator();
-               if (!it.hasNext())
-                  continue;
-               String[] fields = it.next();
-               if (fields.length != 2)
-                  continue;
-            
-               // add the link
-               Link link = new Link(fields[0], fields[1]);
-               history.addLink(link);
+               home();
             }
-            
-            // one time init
-            if (!historyInitialized_)
+            else if (!view_.navigated())
             {
-               // mark us initialized
-               historyInitialized_ = true;
-               
-               if (session.getSessionInfo().getShowHelpHome())
-               {
+               ArrayList<Link> links = history.getLinks();
+               if (links.size() > 0)
+                  showHelp(links.get(0).getUrl());
+               else
                   home();
-               }
-               else if (!view_.navigated())
-               {
-                  ArrayList<Link> links = history.getLinks();
-                  if (links.size() > 0)
-                     showHelp(links.get(0).getUrl());
-                  else
-                     home();
-               }    
             }
-         }  
+         }
       });
-      
+
    }
 
    // Commands handled by Shim for activation from main menu context
@@ -181,7 +176,7 @@ public class Help extends BasePresenter implements ShowHelpHandler
    {
       if (!historyInitialized_)
          return;
-      
+
       helpHistoryList_.clear();
    }
 
@@ -190,33 +185,33 @@ public class Help extends BasePresenter implements ShowHelpHandler
       showHelp(event.getTopicUrl());
       bringToFront();
    }
-   
+
    public void onActivateHelp(ActivateHelpEvent event)
    {
       bringToFront();
       view_.focus();
    }
-   
+
    public void bringToFront()
    {
       events_.fireEvent(new ActivatePaneEvent("Help"));
    }
-   
+
    private void home()
    {
       showHelp("help/doc/home/");
    }
-   
+
    public Display getDisplay()
    {
       return view_;
    }
-   
+
    private void showHelp(String topicUrl)
    {
       view_.showHelp(server_.getApplicationURL(topicUrl));
    }
-   
+
    private String getApplicationRelativeHelpUrl(String helpUrl)
    {
       String appUrl = server_.getApplicationURL("");
@@ -225,82 +220,82 @@ public class Help extends BasePresenter implements ShowHelpHandler
       else
          return helpUrl;
    }
-   
+
    void onOpenRStudioIDECheatSheet()
    {
       openCheatSheet("ide_cheat_sheet");
    }
-   
+
    void onOpenDataImportCheatSheet()
    {
       openCheatSheet("data_import_cheat_sheet");
    }
-   
+
    void onOpenDataVisualizationCheatSheet()
    {
       openCheatSheet("data_visualization_cheat_sheet");
    }
-   
+
    void onOpenPackageDevelopmentCheatSheet()
    {
       openCheatSheet("package_development_cheat_sheet");
    }
-   
+
    void onOpenDataTransformationCheatSheet()
    {
       openCheatSheet("data_transformation_cheat_sheet");
    }
-   
+
    void onOpenDataWranglingCheatSheet()
    {
       openCheatSheet("data_wrangling_cheat_sheet");
    }
-   
+
    void onOpenRMarkdownCheatSheet()
    {
       openCheatSheet("r_markdown_cheat_sheet");
    }
-   
+
    void onOpenRMarkdownReferenceGuide()
    {
       openCheatSheet("r_markdown_reference_guide");
    }
-   
+
    void onOpenShinyCheatSheet()
    {
       openCheatSheet("shiny_cheat_sheet");
    }
-   
+
    void onOpenSparklyrCheatSheet()
    {
       openCheatSheet("sparklyr_cheat_sheet");
    }
-   
+
    void onOpenPurrrCheatSheet()
    {
       openCheatSheet("purrr_cheat_sheet");
    }
-   
+
    void onBrowseCheatSheets()
    {
       globalDisplay_.openWindow("https://www.rstudio.com/resources/cheatsheets/");
    }
-   
+
    private void openCheatSheet(String name)
    {
       globalDisplay_.openRStudioLink(name, false);
    }
-   
+
    void onOpenRoxygenQuickReference()
    {
       events_.fireEvent(new ShowHelpEvent("help/doc/roxygen_help.html"));
    }
-   
+
    void onDebugHelp()
    {
       globalDisplay_.openRStudioLink("visual_debugger");
    }
-   
+
    void onMarkdownHelp()
    {
       events_.fireEvent(new ShowHelpEvent("help/doc/markdown_help.html"));

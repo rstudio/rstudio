@@ -1,7 +1,7 @@
 /*
  * SessionErrors.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -51,11 +51,6 @@ Error setErrHandler(const std::string& type, bool inMyCode,
 {
    // when setting the error handler to "custom", just leave it as it was
    if (type == kErrorHandlerTypeCustom)
-      return Success();
-
-   // this feature requires the source reference attribute; don't try to set
-   // the error handler if we don't have that.
-   if (!breakpoints::haveSrcrefAttribute())
       return Success();
 
    Error error = r::exec::RFunction(

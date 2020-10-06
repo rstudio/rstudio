@@ -1,7 +1,7 @@
 /*
  * SessionProjectSharing.hpp
  *
- * Copyright (C) 2009-15 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,6 +28,9 @@
 #define kProjectEntryOwner      "project_owner"
 #define kProjectEntryUpdatedBy  "updated_by"
 #define kProjectEntrySharedWith "shared_with"
+#define kProjectEntryShareTimes "share_times"
+#define kProjectEntryShareUser  "user"
+#define kProjectEntryShareTime  "time"
 
 namespace rstudio {
 namespace session {

@@ -1,7 +1,7 @@
 /*
  * EditorThemeStyleChangedEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,23 +25,23 @@ public class EditorThemeStyleChangedEvent extends GwtEvent<EditorThemeStyleChang
    {
       void onEditorThemeStyleChanged(EditorThemeStyleChangedEvent event);
    }
-   
+
    public EditorThemeStyleChangedEvent(Element editorContent, Style style)
    {
       style_ = style;
       editorContent_ = editorContent;
    }
-   
+
    public Style getStyle()
    {
       return style_;
    }
-   
+
    public Element getEditorContent()
    {
       return editorContent_;
    }
-   
+
    private final Style style_;
    private final Element editorContent_;
 
@@ -57,5 +57,5 @@ public class EditorThemeStyleChangedEvent extends GwtEvent<EditorThemeStyleChang
       handler.onEditorThemeStyleChanged(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

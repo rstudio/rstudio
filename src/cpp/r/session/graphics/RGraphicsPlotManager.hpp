@@ -1,7 +1,7 @@
 /*
  * RGraphicsPlotManager.hpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -41,11 +41,11 @@ namespace graphics {
 
 // singleton
 class PlotManager;
-PlotManager& plotManager();   
+PlotManager& plotManager();
 
 struct GraphicsDeviceEvents
 {
-   RSTUDIO_BOOST_SIGNAL<void (SEXP)> onNewPage; 
+   RSTUDIO_BOOST_SIGNAL<void (SEXP)> onNewPage;
    RSTUDIO_BOOST_SIGNAL<void ()> onDrawing;
    RSTUDIO_BOOST_SIGNAL<void ()> onResized;
    RSTUDIO_BOOST_SIGNAL<void ()> onClosed;
@@ -71,7 +71,7 @@ public:
    virtual core::Error plotImageFilename(int index, 
                                          std::string* pImageFilename) const;
    virtual int activePlotIndex() const;
-   virtual core::Error setActivePlot(int index) ;
+   virtual core::Error setActivePlot(int index);
    virtual core::Error removePlot(int index);
    
    // actions on active plot
@@ -101,16 +101,16 @@ public:
    virtual bool hasChanges() const;
    virtual bool isActiveDevice() const;
    virtual boost::posix_time::ptime lastChange() const;
-   virtual void render(boost::function<void(DisplayState)> outputFunction); 
-   virtual std::string imageFilename() const ;
-   virtual void refresh() ;
+   virtual void render(boost::function<void(DisplayState)> outputFunction);
+   virtual std::string imageFilename() const;
+   virtual void refresh();
    
     // retrieve image path based on filename
    virtual core::FilePath imagePath(const std::string& imageFilename) const;
    
    virtual void clear();
 
-   virtual RSTUDIO_BOOST_SIGNAL<void ()>& onShowManipulator() ;
+   virtual RSTUDIO_BOOST_SIGNAL<void ()>& onShowManipulator();
    virtual void setPlotManipulatorValues(const core::json::Object& values);
    virtual void manipulatorPlotClicked(int x, int y);
 
@@ -130,7 +130,7 @@ private:
    friend class PlotManipulatorManager;
 
    // typedefs
-   typedef boost::shared_ptr<Plot> PtrPlot ;
+   typedef boost::shared_ptr<Plot> PtrPlot;
 
    // device events
    void onDeviceNewPage(SEXP previousPageSnapshot);
@@ -176,7 +176,7 @@ private:
    core::Error plotIndexError(int index, const core::ErrorLocation& location)
                                                                          const;
 
-   std::string emptyImageFilename() const ;
+   std::string emptyImageFilename() const;
 
 private:   
    friend class SuppressDeviceEventsScope;
@@ -186,7 +186,7 @@ private:
    core::FilePath graphicsPath_;
   
    // interface to graphics device
-   GraphicsDeviceFunctions graphicsDevice_ ;
+   GraphicsDeviceFunctions graphicsDevice_;
    
    // state
    bool displayHasChanges_;
@@ -194,7 +194,7 @@ private:
    bool suppressDeviceEvents_;
    
    int activePlot_;
-   boost::circular_buffer<PtrPlot> plots_ ;
+   boost::circular_buffer<PtrPlot> plots_;
    
    boost::regex plotInfoRegex_;
 };

@@ -1,7 +1,7 @@
 /*
  * ReplaceRangesEvent.java
  *
- * Copyright (C) 2009-13 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,28 +28,28 @@ public class ReplaceRangesEvent extends CrossWindowEvent<ReplaceRangesEvent.Hand
    public static class ReplacementData extends JavaScriptObject
    {
       protected ReplacementData() {}
-      
+
       public final native Range getRange() /*-{ return this["range"]; }-*/;
       public final native String getText() /*-{ return this["text"]; }-*/;
    }
-   
+
    public static class Data extends JavaScriptObject
    {
       protected Data() {}
-      
+
       public final native String getId() /*-{ return this["id"]; }-*/;
       public final native JsArray<ReplacementData> getReplacementData() /*-{
-         
+
          // return a cached result if available
          if (this["result"] != null)
             return this["result"];
-         
+
          // generate the array of replacement data
          var Range = $wnd.require("ace/range").Range;
-         
+
          var ranges = this["ranges"];
          var text = this["text"];
-         
+
          // an empty range implies we should replace the current selection
          // do this by propagating a null range, and let caller handle
          if (ranges.length == 0) {
@@ -58,11 +58,11 @@ public class ReplaceRangesEvent extends CrossWindowEvent<ReplaceRangesEvent.Hand
             this["result"] = result;
             return result;
          }
-         
+
          // text can either be passed as a length 1 array, or length n
          // array (where n should be the same as the number of ranges)
          var isTextScalar = text.length === 1;
-         
+
          var result = [];
          for (var i = 0; i < ranges.length; i++) {
             var range = ranges[i];
@@ -71,38 +71,38 @@ public class ReplaceRangesEvent extends CrossWindowEvent<ReplaceRangesEvent.Hand
                text: isTextScalar ? text[0] : text[i]
             });
          }
-         
+
          // cache result and return
          this["result"] = result;
          return result;
-      
+
       }-*/;
    }
-   
+
    public interface Handler extends EventHandler
    {
       void onReplaceRanges(ReplaceRangesEvent event);
    }
-   
+
    public ReplaceRangesEvent()
    {
       this(null);
    }
-   
+
    public ReplaceRangesEvent(Data data)
    {
       data_ = data;
    }
-   
+
    public Data getData()
    {
       return data_;
    }
-   
+
    private final Data data_;
-   
+
    // Boilerplate ----
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -114,7 +114,7 @@ public class ReplaceRangesEvent extends CrossWindowEvent<ReplaceRangesEvent.Hand
    {
       handler.onReplaceRanges(this);
    }
-   
-   public static final Type<Handler> TYPE = new Type<Handler>();
+
+   public static final Type<Handler> TYPE = new Type<>();
 
 }

@@ -1,7 +1,7 @@
 /*
  * TextFileType.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -456,6 +456,7 @@ public class TextFileType extends EditableFileType
       results.add(commands.sendToTerminal());
       results.add(commands.sendFilenameToTerminal());
       results.add(commands.openNewTerminalAtEditorLocation());
+      results.add(commands.toggleSoftWrapMode());
 
       return results;
    }
@@ -506,7 +507,7 @@ public class TextFileType extends EditableFileType
          {
             if (UnicodeLetters.isLetter(c))
                return CharClass.Word;
-            else if (c == '\'')
+            else if (c == '\'' || c == '’')
                return CharClass.Boundary;
             else
                return CharClass.NonWord;

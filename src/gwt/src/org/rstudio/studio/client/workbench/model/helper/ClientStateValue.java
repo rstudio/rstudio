@@ -1,7 +1,7 @@
 /*
  * ClientStateValue.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,7 +19,6 @@ import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.events.SaveClientStateEvent;
-import org.rstudio.studio.client.workbench.events.SaveClientStateHandler;
 import org.rstudio.studio.client.workbench.model.ClientInitState;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.ValueChangeTracker;
@@ -32,11 +31,11 @@ import org.rstudio.studio.client.workbench.model.ValueChangeTracker;
  * By default, getValue() will be called periodically to check for changes.
  * This will be called quite often so if it will be expensive and there's a
  * cheaper way to determine if the value changed, you can override hasChanged()
- * and have different logic. 
+ * and have different logic.
  *
  * @param <T>
  */
-public abstract class ClientStateValue<T> implements SaveClientStateHandler
+public abstract class ClientStateValue<T> implements SaveClientStateEvent.Handler
 {
    protected ClientStateValue(String group,
                               String name,
@@ -112,7 +111,7 @@ public abstract class ClientStateValue<T> implements SaveClientStateHandler
    }
 
    private ValueChangeTracker<T> valueTracker_;
-   private String group_;
-   private String name_;
-   private int persist_;
+   private final String group_;
+   private final String name_;
+   private final int persist_;
 }

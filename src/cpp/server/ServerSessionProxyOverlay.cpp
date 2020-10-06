@@ -1,7 +1,7 @@
 /*
  * ServerSessionProxyOverlay.cpp
  *
- * Copyright (C) 2018 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,7 +19,7 @@
 
 #include <server/ServerSessionProxy.hpp>
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace server {

@@ -1,7 +1,7 @@
 /*
  * LinuxFileMonitor.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -202,7 +202,7 @@ Error addWatch(const FileInfo& fileInfo,
    // about adding duplicate watches
 
    // define watch mask
-   uint32_t mask = 0 ;
+   uint32_t mask = 0;
    mask |= IN_CREATE;
    mask |= IN_DELETE;
    mask |= IN_MODIFY;
@@ -222,7 +222,15 @@ Error addWatch(const FileInfo& fileInfo,
    int wd = ::inotify_add_watch(fd, fileInfo.absolutePath().c_str(), mask);
    if (wd < 0)
    {
-      Error error = systemError(errno, ERROR_LOCATION);
+      // save errno
+      int errorNumber = errno;
+
+      // report more useful error message for ENOSPC
+      std::string message = (errorNumber == ENOSPC)
+         ? "No watches available"
+         : systemErrorMessage(errorNumber);
+
+      Error error = systemCallError("inotify_add_watch", errorNumber, message, ERROR_LOCATION);
       error.addProperty("path", fileInfo.absolutePath());
       return error;
    }
@@ -570,8 +578,14 @@ void run(const boost::function<void()>& checkForInput)
             if (len < 0)
             {
                // don't terminate for errors indicating no events available
+               // (silly ifdef here is to silence compiler warnings)
+#if EAGAIN == EWOULDBLOCK
+               if (errno == EAGAIN)
+                  break;
+#else
                if (errno == EAGAIN || errno == EWOULDBLOCK)
                   break;
+#endif
 
                // otherwise terminate this watch (notify user and break
                // out of the read loop for this context)

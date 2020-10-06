@@ -1,7 +1,7 @@
 /*
  * Files.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,6 +30,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.*;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -708,9 +709,16 @@ public class Files
    {
       // show the file in a new window if we can get a file url for it
       String fileURL = server_.getFileUrl(file);
-      if (fileURL !=  null)
+      if (fileURL != null)
       {
-         globalDisplay_.openWindow(fileURL);
+         if (!Desktop.isRemoteDesktop())
+         {
+            globalDisplay_.openWindow(fileURL);
+         }
+         else
+         {
+            Desktop.getFrame().browseUrl(fileURL);
+         }
       }
    }
    

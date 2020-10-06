@@ -1,7 +1,7 @@
 /*
  * SessionConsoleProcessInfo.hpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -217,7 +217,11 @@ private:
    bool showOnOutput_ = false;
    boost::circular_buffer<char> outputBuffer_ {kOutputBufferSize};
    boost::optional<int> exitCode_;
+#ifdef _WIN32
+   bool childProcs_ = false; // child process detection not supported on Windows
+#else
    bool childProcs_ = true;
+#endif
    bool altBufferActive_ = false;
    TerminalShell::ShellType shellType_ = TerminalShell::ShellType::Default;
    ChannelMode channelMode_ = Rpc;

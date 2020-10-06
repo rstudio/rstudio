@@ -1,7 +1,7 @@
 /*
  * DesktopWebView.hpp
  *
- * Copyright (C) 2009-17 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -47,10 +47,12 @@ public:
    void prepareForWindow(const PendingWindow& pendingWnd);
 
    bool event(QEvent* event) override;
+   void childEvent(QChildEvent *event) override;
 
    WebPage* webPage() const { return pWebPage_; }
 
    void contextMenuEvent(QContextMenuEvent* event) override;
+   void mouseNavigateButtonClick(QMouseEvent* pMouseEvent);
 
 Q_SIGNALS:
   void onCloseWindowShortcut();
@@ -63,6 +65,8 @@ protected:
                              QNetworkReply* pReply);
    void keyPressEvent(QKeyEvent* pEvent) override;
    void closeEvent(QCloseEvent* pEv) override;
+   void dragEnterEvent(QDragEnterEvent *e) override;
+   void dropEvent(QDropEvent *e) override;
 
 protected Q_SLOTS:
    void openFile(QString file);

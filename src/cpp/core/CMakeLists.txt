@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-19 by RStudio, PBC
+# Copyright (C) 2020 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -251,6 +251,7 @@ if (UNIX)
 
    if(APPLE)
       set(CORE_SOURCE_FILES ${CORE_SOURCE_FILES}
+         http/Keychain.mm
          system/file_monitor/MacFileMonitor.cpp
          system/recycle_bin/MacRecycleBin.cpp
       )
@@ -335,10 +336,9 @@ add_library(rstudio-core STATIC ${CORE_SOURCE_FILES} ${CORE_HEADER_FILES})
 define_source_file_names(rstudio-core)
 
 # link dependencies
-target_link_libraries(
-   rstudio-core
-   rstudio-core-hunspell
+target_link_libraries(rstudio-core
    rstudio-shared-core
+   rstudio-core-hunspell
    ${Boost_LIBRARIES}
    ${CRASHPAD_LIBRARIES}
    ${SOCI_LIBRARIES}
@@ -357,10 +357,10 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
    )
 
    target_link_libraries(rstudio-core-tests
+      rstudio-shared-core
       rstudio-core
       rstudio-core-synctex
       rstudio-core-hunspell
-      rstudio-shared-core
       ${Boost_LIBRARIES}
       ${SOCI_LIBRARIES}
       ${CORE_SYSTEM_LIBRARIES}

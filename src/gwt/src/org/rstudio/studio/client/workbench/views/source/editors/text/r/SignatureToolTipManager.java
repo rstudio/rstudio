@@ -1,7 +1,7 @@
 /*
  * SignatureToolTipManager.java
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,7 +28,6 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputEvent;
-import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
@@ -57,10 +56,14 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 import com.google.inject.Inject;
 
-public class SignatureToolTipManager
+public abstract class SignatureToolTipManager
 {
+   // Sub-classes should override this to indicate
+   // when the tooltip monitor is enabled / disabled.
+   protected abstract boolean isEnabled(Position position);
+   
    // Subclasses should override this for their own
-   // argument-retrieving behaviors
+   // argument-retrieving behaviors.
    protected void getFunctionArguments(final String name,
                                        final String source,
                                        final String helpHandler,
@@ -97,6 +100,16 @@ public class SignatureToolTipManager
          @Override
          public void run()
          {
+            // Bail if we don't have a lookup position
+            Position position = getLookupPosition();
+            if (position == null)
+               return;
+            
+            // Bail if this signature tooltip manager isn't relevant
+            // for this particular cursor position
+            if (!isEnabled(position))
+               return;
+            
             // Bail if we don't ever show tooltips
             if (!userPrefs_.showFunctionSignatureTooltips().getGlobalValue())
                return;
@@ -194,7 +207,7 @@ public class SignatureToolTipManager
          }
       }));
       
-      handlers_.add(events_.addHandler(ConsoleWriteInputEvent.TYPE, new ConsoleWriteInputHandler()
+      handlers_.add(events_.addHandler(ConsoleWriteInputEvent.TYPE, new ConsoleWriteInputEvent.Handler()
       {
          @Override
          public void onConsoleWriteInput(ConsoleWriteInputEvent event)

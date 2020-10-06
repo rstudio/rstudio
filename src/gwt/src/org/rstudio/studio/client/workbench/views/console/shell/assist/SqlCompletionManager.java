@@ -1,7 +1,7 @@
 /*
  * SqlCompletionManager.java
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,6 +20,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
 import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
@@ -42,11 +43,19 @@ public class SqlCompletionManager extends CompletionManagerBase
    @Override
    public void goToHelp()
    {
+      // NYI
    }
    
    @Override
    public void goToDefinition()
    {
+      // NYI
+   }
+   
+   @Override
+   public void showAdditionalHelp(QualifiedName completion)
+   {
+      // NYI
    }
    
    @Override

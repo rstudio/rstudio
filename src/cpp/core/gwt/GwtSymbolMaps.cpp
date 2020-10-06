@@ -1,7 +1,7 @@
 /*
  * GwtSymbolMaps.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -62,7 +62,7 @@ ReadCollectionAction parseSymbolMapLine(
       return ReadCollectionIgnoreLine;
 
    // HACK: workaround the fact that std::map uses const for the Key
-   std::string* pFirst = const_cast<std::string*>(&(pMapEntry->first)) ;
+   std::string* pFirst = const_cast<std::string*>(&(pMapEntry->first));
    *pFirst = line.substr(0, commaPos);
 
    pMapEntry->second = line.substr(commaPos+1);

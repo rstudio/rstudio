@@ -1,7 +1,7 @@
 /*
  * RRoutines.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,7 +23,7 @@ namespace r {
 namespace routines {
  
 namespace { 
-   std::vector<R_CallMethodDef> s_callMethods; 
+   std::vector<R_CallMethodDef> s_callMethods;
 }
    
 void addCallMethod(const R_CallMethodDef method)
@@ -48,15 +48,15 @@ void registerAll()
    R_CallMethodDef* pCallMethods = nullptr;
    if (s_callMethods.size() > 0)
    {
-      R_CallMethodDef nullMethodDef ;
-      nullMethodDef.name = nullptr ;
-      nullMethodDef.fun = nullptr ;
-      nullMethodDef.numArgs = 0 ;
+      R_CallMethodDef nullMethodDef;
+      nullMethodDef.name = nullptr;
+      nullMethodDef.fun = nullptr;
+      nullMethodDef.numArgs = 0;
       s_callMethods.push_back(nullMethodDef);
       pCallMethods = &s_callMethods[0];
    }
    
-   DllInfo *info = R_getEmbeddingDllInfo() ;
+   DllInfo *info = R_getEmbeddingDllInfo();
    R_registerRoutines(info, nullptr, pCallMethods, nullptr, nullptr);
 }
    

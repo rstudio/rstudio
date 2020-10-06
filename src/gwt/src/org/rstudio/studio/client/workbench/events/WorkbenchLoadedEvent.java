@@ -1,7 +1,7 @@
 /*
  * WorkbenchLoadedEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,21 +14,26 @@
  */
 package org.rstudio.studio.client.workbench.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class WorkbenchLoadedEvent extends GwtEvent<WorkbenchLoadedHandler>
+public class WorkbenchLoadedEvent extends GwtEvent<WorkbenchLoadedEvent.Handler>
 {
-   public static final GwtEvent.Type<WorkbenchLoadedHandler> TYPE =
-      new GwtEvent.Type<WorkbenchLoadedHandler>();
-     
+   public static final GwtEvent.Type<Handler> TYPE = new GwtEvent.Type<>();
+
+   public interface Handler extends EventHandler
+   {
+      void onWorkbenchLoaded(WorkbenchLoadedEvent event);
+   }
+
    @Override
-   protected void dispatch(WorkbenchLoadedHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onWorkbenchLoaded(this);
    }
 
    @Override
-   public GwtEvent.Type<WorkbenchLoadedHandler> getAssociatedType()
+   public GwtEvent.Type<Handler> getAssociatedType()
    {
       return TYPE;
    }

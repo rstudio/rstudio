@@ -1,7 +1,7 @@
 /*
  * clipboard.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,8 +16,11 @@
 import { Slice, Fragment, MarkType, Node as ProsemirrorNode } from 'prosemirror-model';
 
 // add marks to plain text pasted into the editor (e.g. urls become links)
+// https://github.com/ProseMirror/prosemirror/issues/90
 export function markPasteHandler(regexp: RegExp, type: MarkType, getAttrs: (s: string) => {}) {
   const handler = (fragment: Fragment) => {
+    regexp.lastIndex = 0;
+
     const nodes: ProsemirrorNode[] = [];
 
     fragment.forEach((child: ProsemirrorNode) => {
@@ -50,6 +53,8 @@ export function markPasteHandler(regexp: RegExp, type: MarkType, getAttrs: (s: s
         nodes.push(child.copy(handler(child.content)));
       }
     });
+
+    regexp.lastIndex = 0;
 
     return Fragment.fromArray(nodes);
   };

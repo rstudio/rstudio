@@ -1,7 +1,7 @@
 /*
  * AsyncServerImpl.hpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -213,7 +213,7 @@ public:
          core::system::SignalBlocker signalBlocker;
          Error error = signalBlocker.blockAll();
          if (error)
-            return error ;
+            return error;
       
          // create the threads
          for (std::size_t i=0; i < threadPoolSize; ++i)
@@ -224,7 +224,7 @@ public:
                               this));
             
             // add to list of threads
-            threads_.push_back(pThread);            
+            threads_.push_back(pThread);
          }
       }
       catch(const boost::thread_resource_error& e)
@@ -247,27 +247,42 @@ public:
       // stop the server 
       acceptorService_.ioService().stop();
 
-      // update state
+      std::set<boost::weak_ptr<AsyncConnectionImpl<typename ProtocolType::socket> >> connections;
+      boost::shared_ptr<AsyncConnectionImpl<typename ProtocolType::socket>> pendingConnection;
       RECURSIVE_LOCK_MUTEX(mutex_)
       {
          running_ = false;
-
-         // gracefully stop all open connections to ensure they are freed
-         // before our io service (socket acceptor) is freed - if this is
-         // not gauranteed, boost will crash when attempting to free socket objects
-         //
-         // note that we create a copy of the connections list here because as connections
-         // are closed, they will remove themselves from the list
-        auto connections = connections_;
-        for (const auto& connection : connections)
-        {
-           connection->close();
-        }
-
-        // the list should be empty now, but clear it to make sure
-        connections_.clear();
+         connections = connections_;
+         pendingConnection = ptrNextConnection_;
       }
       END_LOCK_MUTEX
+
+      // gracefully stop all open connections to ensure they are freed
+      // before our io service (socket acceptor) is freed - if this is
+      // not gauranteed, boost will crash when attempting to free socket objects
+      //
+      // note that we create a copy of the connections list here because as connections
+      // are closed, they will remove themselves from the list
+      //
+      // we do this outside of the lock to prevent potential deadlock
+      // since the connection mutex and the server mutex are intertwined here
+      for (const auto& connection : connections)
+      {
+         if (auto instance = connection.lock())
+            instance->close();
+      }
+
+      // the list should be empty now, but clear it to make sure
+      RECURSIVE_LOCK_MUTEX(mutex_)
+      {
+         connections_.clear();
+      }
+      END_LOCK_MUTEX
+
+      // ensure we "close" the empty connection that is always created to handle the next incoming connection
+      // if we do not specifically close it here, it will attempt to close itself when no shared_ptr to
+      // it is held by this server object, causing a bad_weak_ptr exception to be thrown
+      ptrNextConnection_->close();
    }
    
    virtual void waitUntilStopped()
@@ -306,8 +321,11 @@ private:
       CATCH_UNEXPECTED_EXCEPTION
    }
 
-   void addConnection(const boost::shared_ptr<AsyncConnectionImpl<typename ProtocolType::socket>>& connection)
+   void addConnection(const boost::weak_ptr<AsyncConnectionImpl<typename ProtocolType::socket>>& connection)
    {
+      // add connection to our map
+      // note that we only hold a weak_ptr to the connection so that it can go out of scope on its own
+      // if we didn't allow this, unused (finished) connections may never close
       RECURSIVE_LOCK_MUTEX(mutex_)
       {
          connections_.insert(connection);
@@ -315,7 +333,7 @@ private:
       END_LOCK_MUTEX
    }
 
-   void onConnectionClosed(const boost::shared_ptr<AsyncConnectionImpl<typename ProtocolType::socket>>& connection)
+   void onConnectionClosed(const boost::weak_ptr<AsyncConnectionImpl<typename ProtocolType::socket>>& connection)
    {
       RECURSIVE_LOCK_MUTEX(mutex_)
       {
@@ -356,8 +374,6 @@ private:
                      this, _1, _2)
       ));
 
-      addConnection(ptrNextConnection_);
-
       // wait for next connection
       acceptorService_.asyncAccept(
          ptrNextConnection_->socket(),
@@ -373,6 +389,8 @@ private:
       {
          if (!ec) 
          {
+            boost::weak_ptr<AsyncConnectionImpl<typename ProtocolType::socket>> weak(ptrNextConnection_);
+            addConnection(weak);
             ptrNextConnection_->startReading();
          }
          else
@@ -384,7 +402,7 @@ private:
                 ec != boost::asio::error::bad_descriptor)
             {
                // log the error
-               LOG_ERROR(Error(ec, ERROR_LOCATION)) ;
+               LOG_ERROR(Error(ec, ERROR_LOCATION));
                
                // check for resource exhaustion
                checkForResourceExhaustion(ec, ERROR_LOCATION);
@@ -404,7 +422,7 @@ private:
       // ALWAYS accept next connection
       try
       {
-         acceptNextConnection() ;
+         acceptNextConnection();
       }
       CATCH_UNEXPECTED_EXCEPTION
    }
@@ -462,6 +480,8 @@ private:
 
                // get the host header, which indicates the destination for the request
                // we check for proxy values first as any reverse proxies will modify the host header
+               // **Always use proxied URI:** the path may be a little off but the host here is always
+               // correct and that's what we need to use to confirm a cross-origin violation.
                std::string host = URL(pRequest->proxiedUri()).host();
 
                if (!originator.empty() && originator != host)
@@ -537,7 +557,7 @@ private:
          // call handler if we have one
          if (handlerFunc)
          {
-            visitHandler(handlerFunc.get(), pAsyncConnection) ;
+            visitHandler(handlerFunc.get(), pAsyncConnection);
          }
          else
          {
@@ -570,7 +590,7 @@ private:
          continuation(boost::shared_ptr<http::Response>());
    }
 
-   void connectionResponseFilter(const std::string& absoluteUri,
+   void connectionResponseFilter(const http::Request& originalRequest,
                                  http::Response* pResponse)
    {
       // set server header (evade ref-counting to defend against
@@ -584,7 +604,7 @@ private:
       }
 
       if (responseFilter_)
-         responseFilter_(absoluteUri, pResponse);
+         responseFilter_(originalRequest, pResponse);
    }
 
    void waitForScheduledCommandTimer()
@@ -721,8 +741,8 @@ private:
    Headers additionalResponseHeaders_;
    boost::shared_ptr<boost::asio::ssl::context> sslContext_;
    boost::shared_ptr<AsyncConnectionImpl<typename ProtocolType::socket> > ptrNextConnection_;
-   std::set<boost::shared_ptr<AsyncConnectionImpl<typename ProtocolType::socket> >> connections_;
-   AsyncUriHandlers uriHandlers_ ;
+   std::set<boost::weak_ptr<AsyncConnectionImpl<typename ProtocolType::socket> >> connections_;
+   AsyncUriHandlers uriHandlers_;
    AsyncUriHandlerFunction defaultHandler_;
    std::vector<boost::shared_ptr<boost::thread> > threads_;
    boost::posix_time::time_duration scheduledCommandInterval_;

@@ -1,7 +1,7 @@
 /*
  * ToolbarPane.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -84,7 +84,7 @@ public abstract class ToolbarPane extends LazyPanel implements RequiresResize,
       Widget child = getWidget();
       if (child != null && child instanceof RequiresResize)
       {
-         // there are DOM states where the child onResize throws 
+         // there are DOM states where the child onResize throws
          // an exception (related to windows splitter animation)
          // so we muffle exceptions here
          try
@@ -114,7 +114,7 @@ public abstract class ToolbarPane extends LazyPanel implements RequiresResize,
       return (mainToolbar_ != null ? mainToolbar_.getOffsetHeight() : 0)
             + (secondaryToolbar_ != null ? secondaryToolbar_.getOffsetHeight() : 0);
    }
-   
+
    protected void setProgressDelay(int delayMs)
    {
       progressDelayMs_ = delayMs;
@@ -131,17 +131,17 @@ public abstract class ToolbarPane extends LazyPanel implements RequiresResize,
       fireEvent(new EnsureVisibleEvent());
    }
 
-   public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleHandler handler)
+   public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleEvent.Handler handler)
    {
       return addHandler(handler, EnsureVisibleEvent.TYPE);
    }
 
-   public HandlerRegistration addEnsureHiddenHandler(EnsureHiddenHandler handler)
+   public HandlerRegistration addEnsureHiddenHandler(EnsureHiddenEvent.Handler handler)
    {
       return addHandler(handler, EnsureHiddenEvent.TYPE);
    }
-   
-   public HandlerRegistration addEnsureHeightHandler(EnsureHeightHandler handler)
+
+   public HandlerRegistration addEnsureHeightHandler(EnsureHeightEvent.Handler handler)
    {
       return addHandler(handler, EnsureHeightEvent.TYPE);
    }
@@ -155,12 +155,12 @@ public abstract class ToolbarPane extends LazyPanel implements RequiresResize,
    {
       fireEvent(new EnsureHiddenEvent());
    }
-   
+
    public void ensureHeight(int height)
    {
       fireEvent(new EnsureHeightEvent(height));
    }
-   
+
    public void maximize()
    {
       fireEvent(new EnsureHeightEvent(EnsureHeightEvent.MAXIMIZED));
@@ -175,7 +175,7 @@ public abstract class ToolbarPane extends LazyPanel implements RequiresResize,
    {
       setToolbarVisibility(visible, mainToolbar_);
    }
-   
+
    public void setSecondaryToolbarVisible(boolean visible)
    {
       if (secondaryToolbar_ != null)

@@ -1,7 +1,7 @@
 /*
  * ObjectExplorerDataGrid.java
  *
- * Copyright (C) 2009-17 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,7 +30,6 @@ import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
 import org.rstudio.core.client.widget.VirtualizedDataGrid;
 import org.rstudio.core.client.widget.events.SelectionChangedEvent;
-import org.rstudio.core.client.widget.events.SelectionChangedHandler;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.ResizableHeader;
 import org.rstudio.studio.client.application.Desktop;
@@ -115,13 +114,13 @@ public class ObjectExplorerDataGrid
    {
       public boolean accept(T data);
    }
-   
+
    public static class Data extends ObjectExplorerInspectionResult
    {
       protected Data()
       {
       }
-      
+
       public static final native Data createMorePlaceholder(Data parent)
       /*-{
          return {
@@ -129,46 +128,46 @@ public class ObjectExplorerDataGrid
             "placeholder": true
          };
       }-*/;
-      
+
       public final native boolean isMorePlaceholder()
       /*-{
          return !!this["placeholder"];
       }-*/;
-      
+
       public final boolean isAttributes()
       {
          return hasTag(TAG_ATTRIBUTES);
       }
-      
+
       // The number of child rows that should be shown
       // for this node.
       public final native void setMaximumChildRowsShown(int limit)
       /*-{
          this["maxChildRowsShown"] = limit;
       }-*/;
-      
+
       public final int getMaximumChildRowsShown()
       {
          return getMaximumChildRowsShownImpl(DEFAULT_ROW_LIMIT);
       }
-      
+
       private final native int getMaximumChildRowsShownImpl(int defaultLimit)
       /*-{
          return this["maxChildRowsShown"] || defaultLimit;
       }-*/;
-      
+
       // Whether this node is matched, according to the
       // current search query term.
       public final native void setMatched(boolean matched)
       /*-{
          this["matched"] = matched;
       }-*/;
-      
+
       public final native boolean isMatched()
       /*-{
          return !!this["matched"];
       }-*/;
-      
+
       // The current expansion state of this row.
       // Rows can either be expanded (children are visible),
       // or not expanded (children are hidden).
@@ -177,22 +176,22 @@ public class ObjectExplorerDataGrid
          String state = getExpansionStateImpl();
          return ExpansionState.valueOf(state.toUpperCase());
       }
-      
+
       private final native String getExpansionStateImpl()
       /*-{
          return this["expansion_state"] || "closed";
       }-*/;
-      
+
       public final void setExpansionState(ExpansionState state)
       {
          setExpansionStateImpl(state.name());
       }
-      
+
       private final native void setExpansionStateImpl(String state)
       /*-{
          this["expansion_state"] = state;
       }-*/;
-      
+
       // Whether a particular row is visible (that is, whether
       // the CellTable should draw this row).
       private final native boolean isVisible()
@@ -202,27 +201,27 @@ public class ObjectExplorerDataGrid
             return true;
          return visible;
       }-*/;
-      
+
       public final native void setVisible(boolean visible)
       /*-{
          this["visible"] = visible;
       }-*/;
-      
+
       // The parent data associated with a node.
       public final native Data getParentData()
       /*-{
          return this["parent"] || null;
       }-*/;
-      
+
       public final native void setParentData(Data data)
       /*-{
          this["parent"] = data;
       }-*/;
-      
+
       // Whether this node has the parent object 'data'.
       public final native boolean hasParentData(Data data)
       /*-{
-         
+
          for (var parent = this["parent"];
               parent != null;
               parent = parent["parent"])
@@ -230,16 +229,16 @@ public class ObjectExplorerDataGrid
             if (parent == data)
                return true;
          }
-         
+
          return false;
-         
+
       }-*/;
-      
+
       public final native JsArray<Data> getChildrenData()
       /*-{
          return this["children"] || null;
       }-*/;
-      
+
       public final native void addChildrenData(JsArray<Data> data)
       /*-{
          var children = this["children"] || [];
@@ -247,7 +246,7 @@ public class ObjectExplorerDataGrid
             children.push(data[i]);
          this["children"] = children;
       }-*/;
-      
+
       // Return the node's depth, or the number of parents.
       public final int getDepth()
       {
@@ -258,10 +257,10 @@ public class ObjectExplorerDataGrid
          {
             depth++;
          }
-         
+
          return depth;
       }
-      
+
       // Used to update ownership of children within the tree.
       // This is necessary as nodes received from the server
       // side will not have marked ownership (no known parent).
@@ -269,7 +268,7 @@ public class ObjectExplorerDataGrid
       {
          updateChildOwnership(getChildrenData(), this);
       }
-      
+
       private static final void updateChildOwnership(JsArray<Data> children,
                                                      Data parent)
       {
@@ -281,12 +280,12 @@ public class ObjectExplorerDataGrid
             // update parent data on this child
             Data child = children.get(i);
             child.setParentData(parent);
-            
+
             // recurse
             updateChildOwnership(child.getChildrenData(), child);
          }
       }
-      
+
       public final native void updateChildOwnershipImpl()
       /*-{
          var children = this["children"] || [];
@@ -295,22 +294,22 @@ public class ObjectExplorerDataGrid
             var child = children[i];
             child["parent"] = this;
          }
-         
+
       }-*/;
-      
+
       public enum ExpansionState
       {
          OPEN,
          CLOSED
       }
    }
-   
-   public static String generateExtractingRCode(Data data,
-                                                String finalReplacement)
+
+   public static String generateExtractingCode(Data data,
+                                               String finalReplacement)
    {
       if (data == null || data.isMorePlaceholder())
          return null;
-      
+
       // extract all access strings from data + parents
       List<String> accessors = new ArrayList<String>();
       while (data != null && data.getObjectAccess() != null)
@@ -318,28 +317,28 @@ public class ObjectExplorerDataGrid
          accessors.add(data.getObjectAccess());
          data = data.getParentData();
       }
-      
+
       int n = accessors.size();
       if (n == 0)
          return finalReplacement;
-      
+
       // start building up access string by repeatedly
       // substituting in accessors
       String code = accessors.get(0);
       for (int i = 1; i < n; i++)
-         code = code.replaceAll("#", accessors.get(i));
-      
+         code = code.replace("#", accessors.get(i));
+
       // finally, substitute in the original object
-      code = code.replaceAll("#", finalReplacement);
-      
+      code = code.replace("#", finalReplacement);
+
       return code;
    }
-   
-   private String generateExtractingRCode(Data data)
+
+   private String generateExtractingCode(Data data)
    {
-      return generateExtractingRCode(data, handle_.getTitle());
+      return generateExtractingCode(data, handle_.getTitle());
    }
-   
+
    private class NameCell extends AbstractCell<Data>
    {
       public NameCell()
@@ -348,7 +347,7 @@ public class ObjectExplorerDataGrid
          String moreButtonCell = "<td><input type='button' value='More...' data-action='open'></input></td>";
          moreButtonCellHtml_ = SafeHtmlUtils.fromTrustedString(moreButtonCell);
       }
-      
+
       @Override
       public void render(Context context,
                          Data data,
@@ -356,7 +355,7 @@ public class ObjectExplorerDataGrid
       {
          builder.append(TABLE_OPEN_TAG);
          builder.appendHtmlConstant("<tr>");
-         
+
          if (data == null || data.isMorePlaceholder())
          {
             onNotExpandable(builder);
@@ -368,27 +367,27 @@ public class ObjectExplorerDataGrid
             addExpandIcon(builder, data);
             addName(builder, data);
          }
-         
+
          builder.appendHtmlConstant("</tr>");
          builder.appendHtmlConstant("</table>");
       }
-      
+
       private final void addIndent(SafeHtmlBuilder builder, Data data)
       {
          int indentPx = data.getDepth() * 10;
          if (indentPx == 0)
             return;
-         
+
          String html = "<td style='width: " + indentPx + "px'></td>";
          builder.appendHtmlConstant(html);
       }
-      
+
       private final boolean onNotExpandable(SafeHtmlBuilder builder)
       {
          builder.appendHtmlConstant("<td style='width: 20px'></td>");
          return false;
       }
-      
+
       // Returns true if an icon was drawn; false if indent was drawn instead
       private final boolean addExpandIcon(final SafeHtmlBuilder builder,
                                           final Data data)
@@ -396,7 +395,7 @@ public class ObjectExplorerDataGrid
          // bail if this node is not expandable
          if (!data.isExpandable())
             return onNotExpandable(builder);
-         
+
          // bail if we're not showing attributes, but a child attributes
          // node is the only thing that exists
          if (!showAttributes_)
@@ -404,7 +403,7 @@ public class ObjectExplorerDataGrid
             // bail if the object is unnamed & atomic
             if (data.isAtomic() && !data.isNamed())
                return onNotExpandable(builder);
-            
+
             JsArray<Data> children = data.getChildrenData();
             if (children != null && children.length() == 1)
             {
@@ -413,7 +412,7 @@ public class ObjectExplorerDataGrid
                   return onNotExpandable(builder);
             }
          }
-         
+
          // add expand button
          builder.appendHtmlConstant("<td style='width: 20px;'>");
          switch (data.getExpansionState())
@@ -432,42 +431,42 @@ public class ObjectExplorerDataGrid
             break;
          }
          builder.appendHtmlConstant("</td>");
-         
+
          return true;
       }
-      
+
       private final void addName(SafeHtmlBuilder builder,
                                  Data data)
       {
          builder.appendHtmlConstant("<td>");
-         
+
          HtmlDivBuilder divBuilder = HtmlBuilderFactory.get().createDivBuilder();
          divBuilder.title(data.getDisplayName());
-         
+
          JsVectorString classes = JsVectorString.createVector();
          if (data.hasTag(TAG_VIRTUAL))
             classes.push(RES.dataGridStyle().virtual());
-         
+
          if (!classes.isEmpty())
             divBuilder.className(classes.join(" "));
-         
+
          String name = data.getDisplayName();
          if (name == null)
             name = "<unknown>";
          divBuilder.text(name);
          builder.append(divBuilder.asSafeHtml());
-         
+
          builder.appendHtmlConstant("</td>");
       }
-      
+
       private final void addViewMoreIcon(SafeHtmlBuilder builder)
       {
          builder.append(moreButtonCellHtml_);
       }
-      
+
       private final SafeHtml moreButtonCellHtml_;
    }
-   
+
    private static class TypeCell extends AbstractCell<Data>
    {
       @Override
@@ -477,15 +476,15 @@ public class ObjectExplorerDataGrid
       {
          if (data == null || data.isMorePlaceholder())
             return;
-         
+
          builder.append(SafeHtmlUtil.createDiv(
                "title", data.getDisplayType()));
          builder.appendEscaped(data.getDisplayType());
          builder.appendHtmlConstant("</div>");
       }
-      
+
    }
-   
+
    private static class ValueCell extends AbstractCell<Data>
    {
       @Override
@@ -495,10 +494,10 @@ public class ObjectExplorerDataGrid
       {
          if (data == null || data.isMorePlaceholder())
             return;
-         
+
          builder.append(TABLE_OPEN_TAG);
          builder.appendHtmlConstant("<tr>");
-         
+
          // add description
          builder.appendHtmlConstant("<td style='width: 100%;'>");
          builder.append(SafeHtmlUtil.createDiv(
@@ -507,7 +506,7 @@ public class ObjectExplorerDataGrid
          builder.appendEscaped(data.getDisplayDesc());
          builder.appendHtmlConstant("</div>");
          builder.appendHtmlConstant("</td>");
-         
+
          // for data.frames and functions, add a 'View' icon
          JsVectorString classes = data.getObjectClass().cast();
          for (String viewableClass : VIEWABLE_CLASSES)
@@ -520,16 +519,16 @@ public class ObjectExplorerDataGrid
                break;
             }
          }
-         
+
          // add extract icon
          builder.appendHtmlConstant("<td>");
          addExtractIcon(data, builder);
          builder.appendHtmlConstant("</td>");
-         
+
          builder.appendHtmlConstant("</tr>");
          builder.appendHtmlConstant("</table>");
       }
-      
+
       private void addExtractIcon(Data data,
                                   SafeHtmlBuilder builder)
       {
@@ -540,7 +539,7 @@ public class ObjectExplorerDataGrid
          builder.append(extractTag);
          builder.appendHtmlConstant("</div>");
       }
-      
+
       private void addViewIcon(Data data,
                                SafeHtmlBuilder builder)
       {
@@ -551,53 +550,53 @@ public class ObjectExplorerDataGrid
          builder.append(viewTag);
          builder.appendHtmlConstant("</div>");
       }
-      
-      private static final String CLASS = RES.dataGridStyle().clickableIcon();      
-      
+
+      private static final String CLASS = RES.dataGridStyle().clickableIcon();
+
       private static final String[] VIEWABLE_CLASSES = new String[] {
             "data.frame",
             "function"
       };
    }
-   
+
    public ObjectExplorerDataGrid(ObjectExplorerHandle handle,
                                  SourceDocument document)
    {
       super(RES);
       handle_ = handle;
       document_ = document;
-      
+
       RStudioGinjector.INSTANCE.injectMembers(this);
-      
+
       setSize("100%", "100%");
-      
+
       // add columns
       nameColumn_ = new IdentityColumn<Data>(new NameCell());
       addColumn(nameColumn_, new TextHeader("Name"));
-      
+
       typeColumn_ = new IdentityColumn<Data>(new TypeCell());
       addColumn(typeColumn_, new ResizableHeader(this, "Type"));
-      
+
       valueColumn_ = new IdentityColumn<Data>(new ValueCell());
       addColumn(valueColumn_, new ResizableHeader(this, "Value"));
-      
+
       initializeColumnWidths();
-      
+
       // set updater
       dataProvider_ = new ListDataProvider<Data>();
       dataProvider_.setList(new ArrayList<Data>());
       dataProvider_.addDataDisplay(this);
-      
+
       // register handlers
       setKeyboardSelectionHandler(this);
       addAttachHandler(this);
       addRowHoverHandler(this);
       addDomHandler(this, ClickEvent.getType());
-      
+
       // populate the view once initially
       initializeRoot();
    }
-   
+
    @Inject
    private void initialize(ObjectExplorerServerOperations server,
                            EventBus events)
@@ -605,44 +604,44 @@ public class ObjectExplorerDataGrid
       server_ = server;
       events_ = events;
    }
-   
+
    // Public methods ----
-   
+
    public void refresh()
    {
       initializeColumnWidths();
       initializeRoot();
    }
-   
+
    public void toggleShowAttributes(boolean showAttributes)
    {
       if (showAttributes == showAttributes_)
          return;
-      
+
       showAttributes_ = showAttributes;
       synchronize();
    }
-   
+
    public void setFilter(String filter)
    {
       filter_ = filter;
       synchronize();
    }
-   
-   public HandlerRegistration addSelectionChangedHandler(SelectionChangedHandler handler)
+
+   public HandlerRegistration addSelectionChangedHandler(SelectionChangedEvent.Handler handler)
    {
       return addHandler(handler, SelectionChangedEvent.TYPE);
    }
-   
+
    // Handlers ---
-   
+
    @Override
    public void onAttachOrDetach(AttachEvent event)
    {
       if (event.isAttached())
          return;
    }
-   
+
    @Override
    public void onClick(ClickEvent event)
    {
@@ -650,7 +649,7 @@ public class ObjectExplorerDataGrid
       Element targetEl = event.getNativeEvent().getEventTarget().cast();
       if (targetEl == null)
          return;
-      
+
       // determine action associated with this row
       Element dataEl = DomUtils.findParentElement(targetEl, true, new DomUtils.ElementPredicate()
       {
@@ -660,7 +659,7 @@ public class ObjectExplorerDataGrid
             return el.hasAttribute("data-action");
          }
       });
-      
+
       // find associated row index by looking up through the DOM
       Element rowEl = DomUtils.findParentElement(targetEl, new DomUtils.ElementPredicate()
       {
@@ -670,14 +669,14 @@ public class ObjectExplorerDataGrid
             return el.hasAttribute("__gwt_row");
          }
       });
-      
+
       if (rowEl == null)
          return;
-      
+
       int row = StringUtil.parseInt(rowEl.getAttribute("__gwt_row"), -1);
       if (row == -1)
          return;
-      
+
       // if the user has clicked on the expand button, handle that
       if (dataEl != null)
       {
@@ -686,17 +685,17 @@ public class ObjectExplorerDataGrid
          performAction(action, row);
          return;
       }
-      
+
       // otherwise, just select the row the user clicked on
       setKeyboardSelectedRow(row);
       setKeyboardSelectedColumn(0);
    }
-   
+
    private static final native boolean isRepeating(Event event)
    /*-{
       return event.repeat || false;
    }-*/;
-   
+
    @Override
    public void onCellPreview(CellPreviewEvent<Data> preview)
    {
@@ -706,7 +705,7 @@ public class ObjectExplorerDataGrid
       int type = event.getTypeInt();
       int row = getKeyboardSelectedRow();
       boolean eventHandled = false;
-      
+
       if (type == Event.ONKEYDOWN || type == Event.ONKEYPRESS)
       {
          // detect whether we've received a non-repeating keydown event
@@ -770,12 +769,12 @@ public class ObjectExplorerDataGrid
             }
          }
       }
-      
+
       else if (type == Event.ONBLUR)
       {
          didReceiveNonRepeatingKeyDownEvent_ = false;
       }
-      
+
       // eat any non-default handled events
       if (eventHandled)
       {
@@ -783,13 +782,13 @@ public class ObjectExplorerDataGrid
          event.stopPropagation();
          event.preventDefault();
       }
-      
+
       // report selection changes
       int eventType = event.getTypeInt();
       if (eventType == Event.ONCLICK || (eventType & Event.KEYEVENTS) != 0)
          fireEvent(new SelectionChangedEvent());
    }
-   
+
    @Override
    public void onRowHover(RowHoverEvent event)
    {
@@ -797,18 +796,18 @@ public class ObjectExplorerDataGrid
       Element[] buttonEls = DomUtils.getElementsByClassName(rowEl, RES.dataGridStyle().clickableIcon());
       if (buttonEls == null)
          return;
-      
+
       if (event.isUnHover())
       {
          for (Element el : buttonEls)
             el.getStyle().setVisibility(Visibility.HIDDEN);
-         
+
          // unset any element-specific maximum width that might've been set
          // on hover (see below)
          Element valueDescEl = DomUtils.getFirstElementWithClassName(rowEl, RES.dataGridStyle().valueDesc());
          if (valueDescEl != null)
             valueDescEl.getParentElement().getStyle().setWidth(100, Unit.PCT);
-         
+
          // unset hovered row
          hoveredRow_ = null;
       }
@@ -816,32 +815,32 @@ public class ObjectExplorerDataGrid
       {
          for (Element el : buttonEls)
             el.getStyle().setVisibility(Visibility.VISIBLE);
-         
+
          // set hovered row (so that we can respond to resize events)
         hoveredRow_ = rowEl;
         onResize();
       }
    }
-   
+
    @Override
    public void onResize()
    {
       super.onResize();
       updateHoverRowWidth();
    }
-   
+
    private void updateHoverRowWidth()
    {
       if (hoveredRow_ == null)
          return;
-      
+
       Element valueDescEl = DomUtils.getFirstElementWithClassName(
             hoveredRow_,
             RES.dataGridStyle().valueDesc());
-      
+
       if (valueDescEl == null)
          return;
-         
+
       // iterate through other table cells to compute width of
       // buttons available here
       Element containingRowEl = DomUtils.findParentElement(
@@ -854,10 +853,10 @@ public class ObjectExplorerDataGrid
                   return el.hasTagName("tr");
                }
             });
-      
+
       if (containingRowEl == null)
          return;
-      
+
       // compute the width of each table cell element minus last
       int otherWidth = 0;
       for (int i = 0, n = hoveredRow_.getChildCount() - 1; i < n; i++)
@@ -865,7 +864,7 @@ public class ObjectExplorerDataGrid
          Element childEl = hoveredRow_.getChild(i).cast();
          otherWidth += childEl.getScrollWidth();
       }
-      
+
       // TODO: do a better job of automatically computing these widths,
       // rather than hard-coding them
       int buttonWidth = 0;
@@ -877,38 +876,38 @@ public class ObjectExplorerDataGrid
 
       // add a bit of extra padding for the scroll bar
       buttonWidth += DomUtils.getScrollbarWidth();
-      
+
       int totalWidth = getOffsetWidth();
       int remainingWidth = totalWidth - otherWidth - buttonWidth - 20;
-      
+
       Element parentEl = valueDescEl.getParentElement();
       parentEl.getStyle().setPropertyPx("width", Math.max(0, remainingWidth));
    }
-   
+
    // Private Methods ----
-   
+
    private void selectRowRelative(int delta)
    {
       setKeyboardSelectedColumn(0);
       setKeyboardSelectedRow(getKeyboardSelectedRow() + delta);
    }
-   
+
    private void selectParentOrClose(int row)
    {
       Data data = getData().get(row);
-      
+
       // if this node has children and is currently expanded, close it
       if (data.isExpandable() && data.getExpansionState() == ExpansionState.OPEN)
       {
          closeRow(row);
          return;
       }
-      
+
       // otherwise, select the parent associated with this row (if any)
       Data parent = data.getParentData();
       if (parent == null)
          return;
-      
+
       List<Data> list = getData();
       for (int i = 0, n = row; i < n; i++)
       {
@@ -919,32 +918,32 @@ public class ObjectExplorerDataGrid
          }
       }
    }
-   
+
    private void selectChildOrOpen(int row)
    {
       Data data = getData().get(row);
-      
+
       if (data.isMorePlaceholder())
       {
          retrieveMore(row);
          return;
       }
-      
+
       // if this node has children but is not expanded, expand it
       if (data.isExpandable() && data.getExpansionState() == ExpansionState.CLOSED)
       {
          openRow(row);
          return;
       }
-      
+
       // otherwise, select the first child of this row (the next row)
       selectRowRelative(1);
    }
-   
+
    private void toggleExpansion(int row)
    {
       Data data = getData().get(row);
-      
+
       switch (data.getExpansionState())
       {
       case OPEN:
@@ -955,7 +954,7 @@ public class ObjectExplorerDataGrid
          break;
       }
    }
-   
+
    private void performAction(String action, int row)
    {
       if (action == ACTION_OPEN)
@@ -979,24 +978,24 @@ public class ObjectExplorerDataGrid
          assert false : "Unexpected action '" + action + "' on row " + row;
       }
    }
-   
+
    private void openRow(final int row)
    {
       final Data data = getData().get(row);
-      
+
       if (data.isMorePlaceholder())
       {
          retrieveMore(row);
          return;
       }
-      
+
       // bail if we've attempted to open something non-expandable
       if (!data.isExpandable())
          assert false: "Attempted to expand non-recursive row " + row;
-      
+
       // toggle expansion state
       data.setExpansionState(ExpansionState.OPEN);
-      
+
       // resolve children and show
       withChildren(data, false, new Command()
       {
@@ -1007,30 +1006,30 @@ public class ObjectExplorerDataGrid
             JsArray<Data> children = data.getChildrenData();
             for (int i = 0, n = children.length(); i < n; i++)
                children.get(i).setVisible(true);
-            
+
             // set attributes as visible if available
             Data attributes = data.getObjectAttributes().<Data>cast();
             if (attributes != null)
                attributes.setVisible(true);
-            
+
             // force update of data grid
             synchronize();
             setFocusDeferred(true);
          }
       });
    }
-   
+
    private void closeRow(int row)
    {
       final Data data = getData().get(row);
-      
+
       // bail if we've attempted to close something non-expandable
       if (!data.isExpandable())
          assert false: "Attempted to close non-recursive row " + row;
-      
+
       // toggle expansion state
       data.setExpansionState(ExpansionState.CLOSED);
-      
+
       // set direct children as non-visible
       withChildren(data, false, new Command()
       {
@@ -1041,19 +1040,19 @@ public class ObjectExplorerDataGrid
             JsArray<Data> children = data.getChildrenData();
             for (int i = 0, n = children.length(); i < n; i++)
                children.get(i).setVisible(false);
-            
+
             // set attributes as invisible if available
             Data attributes = data.getObjectAttributes().<Data>cast();
             if (attributes != null)
                attributes.setVisible(false);
-            
+
             // force update of data grid
             synchronize();
             setFocusDeferred(true);
          }
       });
    }
-   
+
    private void setFocusDeferred(final boolean focused)
    {
       Scheduler.get().scheduleFinally(new ScheduledCommand()
@@ -1066,35 +1065,37 @@ public class ObjectExplorerDataGrid
          }
       });
    }
-   
+
    private void extractCode(int row)
    {
       Data data = getData().get(row);
-      String code = generateExtractingRCode(data);
-      events_.fireEvent(new SendToConsoleEvent(code, false));
+      String code = generateExtractingCode(data);
+      String language = handle_.getLanguage();
+      events_.fireEvent(new SendToConsoleEvent(code, language, false));
    }
-   
+
    private void viewRow(int row)
    {
       Data data = getData().get(row);
-      String code = generateExtractingRCode(data);
+      String code = generateExtractingCode(data);
+      String language = handle_.getLanguage();
       code = "View(" + code + ")";
-      events_.fireEvent(new SendToConsoleEvent(code, true));
+      events_.fireEvent(new SendToConsoleEvent(code, language, true));
    }
-   
+
    private void retrieveMore(int row)
    {
       Data data = getData().get(row);
       Data parent = data.getParentData();
       if (parent == null)
          return;
-      
+
       // select the previous row (so that we don't end up scrolling all over the place)
       selectRowRelative(row);
-      
+
       // update the limit on the number of children we're showing
       parent.setMaximumChildRowsShown(parent.getMaximumChildRowsShown() + DEFAULT_ROW_LIMIT);
-      
+
       withChildren(parent, true, new Command()
       {
          @Override
@@ -1104,7 +1105,7 @@ public class ObjectExplorerDataGrid
          }
       });
    }
-   
+
    private void withChildren(final Data data,
                              final boolean forceRequest,
                              final Command command)
@@ -1117,9 +1118,9 @@ public class ObjectExplorerDataGrid
             command.execute();
          return;
       }
-      
+
       // no children; make a server RPC request and then call back
-      String extractingCode = generateExtractingRCode(data, "`__OBJECT__`");
+      String extractingCode = generateExtractingCode(data, "`__OBJECT__`");
       server_.explorerInspectObject(
             handle_.getId(),
             extractingCode,
@@ -1137,7 +1138,7 @@ public class ObjectExplorerDataGrid
                   data.addChildrenData(children);
                   for (int i = 0, n = children.length(); i < n; i++)
                      children.get(i).setParentData(data);
-                  
+
                   // set parent ownership for attributes
                   Data attributes = result.getObjectAttributes().<Data>cast();
                   if (attributes != null)
@@ -1145,12 +1146,12 @@ public class ObjectExplorerDataGrid
                      data.setObjectAttributes(attributes);
                      attributes.setParentData(data);
                   }
-                  
+
                   // execute command
                   if (command != null)
                      command.execute();
                }
-               
+
                @Override
                public void onError(ServerError error)
                {
@@ -1158,14 +1159,14 @@ public class ObjectExplorerDataGrid
                }
             });
    }
-   
+
    private void initializeColumnWidths()
    {
       setColumnWidth(nameColumn_, DEFAULT_NAME_COLUMN_WIDTH + "px");
       setColumnWidth(typeColumn_, DEFAULT_TYPE_COLUMN_WIDTH + "px");
       setColumnWidth(valueColumn_, null);
    }
-   
+
    private void initializeRoot()
    {
       server_.explorerBeginInspect(
@@ -1180,7 +1181,7 @@ public class ObjectExplorerDataGrid
                   root_.updateChildOwnership();
                   root_.setExpansionState(ExpansionState.OPEN);
                   synchronize();
-                  
+
                   Scheduler.get().scheduleDeferred(new ScheduledCommand()
                   {
                      @Override
@@ -1193,22 +1194,22 @@ public class ObjectExplorerDataGrid
                      }
                   });
                }
-               
+
                @Override
                public void onError(ServerError error)
                {
                   Debug.logError(error);
                }
             });
-      
+
    }
-   
+
    private void synchronize()
    {
       saveScrollPosition();
-      
+
       final String filter = StringUtil.notNull(filter_).trim();
-      
+
       // only include visible data in the table
       // TODO: we should consider how to better handle
       // piecewise updates to the table, rather than
@@ -1220,7 +1221,7 @@ public class ObjectExplorerDataGrid
          {
             // detect if this matches the current filter
             if (!filter.isEmpty())
-            { 
+            {
                data.setMatched(false);
                String[] fields = {
                      data.getDisplayName(),
@@ -1238,12 +1239,12 @@ public class ObjectExplorerDataGrid
                   }
                }
             }
-            
+
             // otherwise, check whether it's currently visible
             return data.isVisible();
          }
       });
-      
+
       // remove entries that don't match filter
       if (!filter.isEmpty())
       {
@@ -1259,22 +1260,22 @@ public class ObjectExplorerDataGrid
                   if (self.isMatched())
                      return true;
                }
-               
+
                return false;
             }
          });
       }
-      
+
       setData(data);
       redraw();
    }
-   
+
    @Override
    public int getRowHeight()
    {
       return 24;
    }
-   
+
    @Override
    public int getTotalNumberOfRows()
    {
@@ -1282,7 +1283,7 @@ public class ObjectExplorerDataGrid
          return 0;
       return getData().size();
    }
-   
+
    public Data getCurrentSelection()
    {
       int selectedRow = getKeyboardSelectedRow();
@@ -1290,25 +1291,25 @@ public class ObjectExplorerDataGrid
             ? null
             : getData().get(selectedRow);
    }
-   
+
    public List<Data> getData()
    {
       return dataProvider_.getList();
    }
-   
+
    private void setData(List<Data> data)
    {
       dataProvider_.setList(data);
    }
-   
+
    private final List<Data> flatten(Data data,
-                                    Filter<Data> filter) 
+                                    Filter<Data> filter)
    {
       List<Data> list = new ArrayList<Data>();
       flattenImpl(data, filter, list);
       return list;
    }
-   
+
    private final void flattenImpl(Data data,
                                   Filter<Data> filter,
                                   List<Data> output)
@@ -1316,28 +1317,28 @@ public class ObjectExplorerDataGrid
       // exit if we're not accepting data here
       if (filter != null && !filter.accept(data))
          return;
-      
+
       // add data
       output.add(data);
-      
+
       // recurse through children
       JsArray<Data> children = data.getChildrenData();
       if (children == null)
          return;
-      
+
       // only add children within the drawing limit to this list
       int n = Math.min(children.length(), data.getMaximumChildRowsShown());
       for (int i = 0; i < n; i++)
          flattenImpl(children.get(i), filter, output);
-      
+
       // add a dummy 'More...' element
-      boolean drawMore = 
+      boolean drawMore =
             data.getExpansionState() == ExpansionState.OPEN &&
             data.isMoreAvailable();
-      
+
       if (drawMore)
          output.add(Data.createMorePlaceholder(data));
-      
+
       // add attributes if relevant
       if (showAttributes_)
       {
@@ -1346,110 +1347,110 @@ public class ObjectExplorerDataGrid
             flattenImpl(data.getObjectAttributes().<Data>cast(), filter, output);
       }
    }
-   
+
    private void saveScrollPosition()
    {
       scrollPosition_ = getScrollPanel().getVerticalScrollPosition();
    }
-   
+
    private void restoreScrollPosition()
    {
       if (scrollPosition_ != -1)
          getScrollPanel().setVerticalScrollPosition(scrollPosition_);
       scrollPosition_ = -1;
    }
-   
+
    // Members ----
-   
+
    private final ObjectExplorerHandle handle_;
    private Data root_;
-   
+
    private final SourceDocument document_;
-   
+
    private final IdentityColumn<Data> nameColumn_;
    private final IdentityColumn<Data> typeColumn_;
    private final IdentityColumn<Data> valueColumn_;
-   
+
    private final ListDataProvider<Data> dataProvider_;
-   
+
    private int scrollPosition_ = -1;
    private TableRowElement hoveredRow_;
    private boolean showAttributes_;
    private String filter_;
    private boolean didReceiveNonRepeatingKeyDownEvent_ = false;
-   
+
    // Injected ----
    private ObjectExplorerServerOperations server_;
    private EventBus events_;
-   
+
    // Static Members ----
    private static final int DEFAULT_NAME_COLUMN_WIDTH = 180;
    private static final int DEFAULT_TYPE_COLUMN_WIDTH = 180;
-   
+
    // NOTE: this should be synchronized with '.rs.explorer.defaultRowLimit' in
    // SessionObjectExplorer.R
    private static final int DEFAULT_ROW_LIMIT = 1000;
-   
+
    private static final String ACTION_OPEN    = "open";
    private static final String ACTION_CLOSE   = "close";
    private static final String ACTION_EXTRACT = "extract";
    private static final String ACTION_VIEW    = "view";
-   
+
    private static final String TAG_ATTRIBUTES = "attributes";
    private static final String TAG_VIRTUAL    = "virtual";
-   
+
    // Resources, etc ----
    public interface Resources extends RStudioDataGridResources
    {
       @Source({RStudioDataGridStyle.RSTUDIO_DEFAULT_CSS, "ObjectExplorerDataGrid.css"})
       Styles dataGridStyle();
-      
+
       @Source("images/expandIcon.png")
       ImageResource expandIcon();
-      
+
       @Source("images/expandIcon_2x.png")
       ImageResource expandIcon2x();
-      
+
       @Source("images/collapseIcon.png")
       ImageResource collapseIcon();
-      
+
       @Source("images/collapseIcon_2x.png")
       ImageResource collapseIcon2x();
-      
+
       @Source("images/extractCode.png")
       ImageResource extractCode();
-      
+
       @Source("images/extractCode_2x.png")
       ImageResource extractCode2x();
-      
+
       @Source("images/viewObject.png")
       ImageResource viewObject();
-      
+
       @Source("images/viewObject_2x.png")
       ImageResource viewObject2x();
    }
-   
+
    public interface Styles extends RStudioDataGridStyle
    {
       String virtual();
       String verticalAlignHelper();
-      
+
       String spriteExpandIcon();
       String spriteCollapseIcon();
       String spriteExtractCodeIcon();
       String spriteViewObjectIcon();
-      
+
       String cellInnerTable();
       String valueDesc();
       String clickableIcon();
    }
-   
+
    private static final Resources RES = GWT.create(Resources.class);
 
    private static final SafeHtml TABLE_OPEN_TAG = SafeHtmlUtil.createOpenTag(
          "table",
          "class", RES.dataGridStyle().cellInnerTable());
-   
+
    static {
       RES.dataGridStyle().ensureInjected();
    }

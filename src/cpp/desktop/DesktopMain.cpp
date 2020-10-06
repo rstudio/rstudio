@@ -1,7 +1,7 @@
 /*
  * DesktopMain.cpp
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -781,6 +781,16 @@ int main(int argc, char* argv[])
          confPath = currentPath.completePath("conf/rdesktop-dev.conf");
          sessionPath = currentPath.completePath("session/rsession");
          scriptsPath = currentPath.completePath("desktop");
+         devMode = true;
+      }
+      // Sometimes boost is returning the wrong current path, which leads to not discovering the conf files correctly.
+      // This falls back to checking under the install path. If this file is present there, we probably want to be
+      // running in developer mode.
+      else if (installPath.completePath("conf/rdesktop-dev.conf").exists())
+      {
+         confPath = installPath.completePath("conf/rdesktop-dev.conf");
+         sessionPath = installPath.completePath("session/rsession");
+         scriptsPath = installPath.completePath("desktop");
          devMode = true;
       }
 

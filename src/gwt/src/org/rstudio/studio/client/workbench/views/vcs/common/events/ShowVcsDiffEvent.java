@@ -1,7 +1,7 @@
 /*
  * ShowVcsDiffEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,7 +27,7 @@ public class ShowVcsDiffEvent extends CrossWindowEvent<ShowVcsDiffEvent.Handler>
    {
       void onShowVcsDiff(ShowVcsDiffEvent event);
    }
-   
+
    public ShowVcsDiffEvent()
    {
    }
@@ -36,7 +36,7 @@ public class ShowVcsDiffEvent extends CrossWindowEvent<ShowVcsDiffEvent.Handler>
    {
       file_ = file;
    }
-   
+
    public FileSystemItem getFile()
    {
       return file_;
@@ -54,7 +54,7 @@ public class ShowVcsDiffEvent extends CrossWindowEvent<ShowVcsDiffEvent.Handler>
       handler.onShowVcsDiff(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
-   
+   public static final Type<Handler> TYPE = new Type<>();
+
    private FileSystemItem file_;
 }

@@ -1,7 +1,7 @@
 /*
  * DataTable.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -183,16 +183,11 @@ public class DataTable
       columnTextWidget_.setVisible(visible);
    }
 
-   private CommandWith2Args<Integer, Integer> getDataTableColumnCallback()
+   private CommandWith2Args<Double, Double> getDataTableColumnCallback()
    {
       return (offset, max) ->
       {
-         // This is super weird but the type coming in is throwing crazy exceptions if
-         // we treat it like a normal Integer. This cast-cleaning seems to fix it.
-         int off = Integer.parseInt("" + offset) + 1;
-         int mx = Integer.parseInt("" + max) + off - 1;
-         columnTextWidget_.setValue(off + " - " + mx);
-
+         columnTextWidget_.setValue(offset + " - " + max);
          setColumnControlVisibility(isLimitedColumnFrame());
       };
    }
@@ -226,12 +221,12 @@ public class DataTable
       return setFilterUIVisible(getWindow(), visible);
    }
    
-   public void setDataViewerCallback(CommandWith2Args<Integer, Integer> dataCallback)
+   public void setDataViewerCallback(CommandWith2Args<Double, Double> dataCallback)
    {
       setDataViewerCallback(getWindow(), dataCallback);
    }
    
-   public void setListViewerCallback(CommandWith2Args<Integer, Integer> listCallback)
+   public void setListViewerCallback(CommandWith2Args<Double, Double> listCallback)
    {
       setListViewerCallback(getWindow(), listCallback);
    }
@@ -349,29 +344,29 @@ public class DataTable
    }-*/;
    private static final native void setDataViewerCallback(
       WindowEx frame,
-      CommandWith2Args<Integer, Integer> dataCallback) /*-{
+      CommandWith2Args<Double, Double> dataCallback) /*-{
       frame.setOption(
          "dataViewerCallback", 
          $entry(function(row, col) {
-            dataCallback.@org.rstudio.core.client.CommandWith2Args::execute(Ljava/lang/Object;Ljava/lang/Object;)(row, col);
+            dataCallback.@org.rstudio.core.client.CommandWith2Args::execute(*)(row, col);
          }));
    }-*/;
    
    private static final native void setListViewerCallback(
       WindowEx frame,
-      CommandWith2Args<Integer, Integer> listCallback) /*-{
+      CommandWith2Args<Double, Double> listCallback) /*-{
       frame.setOption(
          "listViewerCallback", 
          $entry(function(row, col) {
-            listCallback.@org.rstudio.core.client.CommandWith2Args::execute(Ljava/lang/Object;Ljava/lang/Object;)(row, col);
+            listCallback.@org.rstudio.core.client.CommandWith2Args::execute(*)(row, col);
          }));
    }-*/;
 
-   private static final native void setColumnFrameCallback( WindowEx frame, CommandWith2Args<Integer, Integer> columnFrameCallback) /*-{
+   private static final native void setColumnFrameCallback(WindowEx frame, CommandWith2Args<Double, Double> columnFrameCallback) /*-{
       frame.setOption(
          "columnFrameCallback",
          $entry(function(offset, max) {
-            columnFrameCallback.@org.rstudio.core.client.CommandWith2Args::execute(Ljava/lang/Object;Ljava/lang/Object;)(offset, max);
+            columnFrameCallback.@org.rstudio.core.client.CommandWith2Args::execute(*)(offset, max);
          }));
    }-*/;
    private Host host_;

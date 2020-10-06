@@ -1,7 +1,7 @@
 /*
  * ModuleTabLayoutPanel.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -40,11 +40,10 @@ import org.rstudio.core.client.widget.DoubleClickState;
 import org.rstudio.core.client.widget.ProgressSpinner;
 import org.rstudio.core.client.widget.model.ProvidesBusy;
 import org.rstudio.studio.client.workbench.events.BusyEvent;
-import org.rstudio.studio.client.workbench.events.BusyHandler;
 
 public class ModuleTabLayoutPanel extends TabLayoutPanel
 {
-   public static class ModuleTab extends Composite implements BusyHandler
+   public static class ModuleTab extends Composite implements BusyEvent.Handler
    {
       public ModuleTab(String title, ThemeStyles styles, boolean canClose, boolean minimized)
       {
@@ -111,7 +110,7 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
       {
          setBusy(event.isBusy());
       }
-      
+
       private void setBusy(boolean isBusy)
       {
          if (isBusy)
@@ -119,14 +118,14 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
             if (busySpinner_ == null)
             {
                HorizontalPanel center = (HorizontalPanel)closeButton_.getParent();
-               
+
                busySpinner_ = new ProgressSpinner(center.getElement());
-               
+
                busySpinner_.setHeight("9px");
                busySpinner_.setWidth("9px");
                busySpinner_.getElement().getStyle().setMarginLeft(4, Unit.PX);
                busySpinner_.getElement().getStyle().setMarginTop(6, Unit.PX);
-               
+
                if (center != null)
                   center.add(busySpinner_);
             }
@@ -219,7 +218,7 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
 
       if (closeHandler != null)
          tab.addCloseButtonClickHandler(closeHandler);
-      
+
       if (providesBusy != null)
          providesBusy.addBusyHandler(tab);
    }

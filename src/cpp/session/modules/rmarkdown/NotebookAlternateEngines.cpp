@@ -1,7 +1,7 @@
 /*
  * NotebookAlternateEngines.cpp
  *
- * Copyright (C) 2009-16 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -46,8 +46,13 @@ class ChunkExecCompletedScope : boost::noncopyable
 {
 public:
    ChunkExecCompletedScope(const std::string& docId,
-                           const std::string& chunkId)
-      : docId_(docId), chunkId_(chunkId)
+                           const std::string& chunkId,
+                           const std::string& chunkCode,
+                           const std::string& chunkLabel)
+      : docId_(docId),
+        chunkId_(chunkId),
+        chunkCode_(chunkCode),
+        chunkLabel_(chunkLabel)
    {
    }
    
@@ -56,12 +61,16 @@ public:
       events().onChunkExecCompleted(
                docId_,
                chunkId_,
+               chunkCode_,
+               chunkLabel_,
                notebookCtxId());
    }
    
 private:
    std::string docId_;
    std::string chunkId_;
+   std::string chunkCode_;
+   std::string chunkLabel_;
 };
 
 class ChunkExecDisconnectScope : boost::noncopyable
@@ -148,6 +157,7 @@ void reportChunkExecutionError(const std::string& docId,
 
 Error executeRcppEngineChunk(const std::string& docId,
                              const std::string& chunkId,
+                             const std::string& chunkLabel,
                              const std::string& nbCtxId,
                              const std::string& code,
                              const std::map<std::string, std::string>& options)
@@ -156,7 +166,7 @@ Error executeRcppEngineChunk(const std::string& docId,
    Error error;
    
    // always ensure we emit a 'execution complete' event on exit
-   ChunkExecCompletedScope execScope(docId, chunkId);
+   ChunkExecCompletedScope execScope(docId, chunkId, code, chunkLabel);
    
    // prepare cache output file (use tempfile on failure)
    FilePath targetPath = module_context::tempFile("rcpp-cache-", "txt");
@@ -225,6 +235,7 @@ void reportStanExecutionError(const std::string& docId,
 
 Error executeStanEngineChunk(const std::string& docId,
                              const std::string& chunkId,
+                             const std::string& chunkLabel,
                              const std::string& nbCtxId,
                              const std::string& code,
                              const std::map<std::string, std::string>& options)
@@ -233,7 +244,7 @@ Error executeStanEngineChunk(const std::string& docId,
    Error error;
    
    // ensure we always emit an execution complete event on exit
-   ChunkExecCompletedScope execScope(docId, chunkId);
+   ChunkExecCompletedScope execScope(docId, chunkId, code, chunkLabel);
    
    // prepare console output file -- use tempfile on failure
    FilePath targetPath = module_context::tempFile("stan-cache-", "txt");
@@ -247,7 +258,7 @@ Error executeStanEngineChunk(const std::string& docId,
             boost::bind(chunkConsoleOutputHandler,
                         _1,
                         _2,
-                        targetPath)); 
+                        targetPath));
    
    // write code to file
    FilePath tempFile = module_context::tempFile("stan-", "stan");
@@ -378,6 +389,7 @@ Error executeStanEngineChunk(const std::string& docId,
 
 Error executeSqlEngineChunk(const std::string& docId,
                             const std::string& chunkId,
+                            const std::string& chunkLabel,
                             const std::string& nbCtxId,
                             const std::string& code,
                             const json::Object& options)
@@ -385,7 +397,7 @@ Error executeSqlEngineChunk(const std::string& docId,
    Error error;
    
    // ensure we always emit an execution complete event on exit
-   ChunkExecCompletedScope execScope(docId, chunkId);
+   ChunkExecCompletedScope execScope(docId, chunkId, code, chunkLabel);
 
    // prepare console output file -- use tempfile on failure
    FilePath consolePath = module_context::tempFile("data-console-", "txt");
@@ -399,7 +411,7 @@ Error executeSqlEngineChunk(const std::string& docId,
             boost::bind(chunkConsoleOutputHandler,
                         _1,
                         _2,
-                        consolePath)); 
+                        consolePath));
 
    FilePath parentPath = notebook::chunkOutputPath(
        docId, chunkId, nbCtxId, ContextSaved);
@@ -471,6 +483,7 @@ Error executeSqlEngineChunk(const std::string& docId,
 
 Error runUserDefinedEngine(const std::string& docId,
                            const std::string& chunkId,
+                           const std::string& chunkLabel,
                            const std::string& nbCtxId,
                            const std::string& engine,
                            const std::string& code,
@@ -482,7 +495,7 @@ Error runUserDefinedEngine(const std::string& docId,
    Error error;
    
    // always ensure we emit a 'execution complete' event on exit
-   ChunkExecCompletedScope execScope(docId, chunkId);
+   ChunkExecCompletedScope execScope(docId, chunkId, code, chunkLabel);
 
    // connect to capture html file output
    ChunkExecDisconnectScope chunkExecDisconnectScope(htmlCaptureContext);
@@ -628,7 +641,8 @@ Error runUserDefinedEngine(const std::string& docId,
    // generic engine output (as a single string of console output)
    if (isString(outputSEXP))
    {
-      emitText(asString(outputSEXP), kChunkConsoleOutput);
+      std::string text = asUtf8String(outputSEXP);
+      emitText(text, kChunkConsoleOutput);
    }
    else if (inherits(outputSEXP, "htmlwidget"))
    {
@@ -665,7 +679,8 @@ Error runUserDefinedEngine(const std::string& docId,
          else if (inherits(elSEXP, "knit_image_paths"))
          {
             // handle a plot provided by e.g. knitr::include_graphics()
-            Error error = emitImage(r::sexp::asString(elSEXP));
+            std::string path = asUtf8String(elSEXP);
+            Error error = emitImage(path);
             if (error)
             {
                LOG_ERROR(error);
@@ -694,7 +709,8 @@ Error runUserDefinedEngine(const std::string& docId,
          else if (isString(elSEXP) || isNumeric(elSEXP))
          {
             // plain old console text output -- emit as-is
-            Error error = emitText(asString(elSEXP), kChunkConsoleOutput);
+            std::string text = asUtf8String(elSEXP);
+            Error error = emitText(text, kChunkConsoleOutput);
             if (error)
             {
                LOG_ERROR(error);
@@ -740,6 +756,7 @@ Error interruptEngineChunk(const json::JsonRpcRequest& request,
 
 Error executeAlternateEngineChunk(const std::string& docId,
                                   const std::string& chunkId,
+                                  const std::string& label,
                                   const std::string& nbCtxId,
                                   const core::FilePath& workingDir,
                                   const std::string& engine,
@@ -768,11 +785,11 @@ Error executeAlternateEngineChunk(const std::string& docId,
    // handle some engines with their own custom routines
    Error error = Success();
    if (engine == "Rcpp")
-      error = executeRcppEngineChunk(docId, chunkId, nbCtxId, code, options);
+      error = executeRcppEngineChunk(docId, chunkId, label, nbCtxId, code, options);
    else if (engine == "stan")
-      error = executeStanEngineChunk(docId, chunkId, nbCtxId, code, options);
+      error = executeStanEngineChunk(docId, chunkId, label, nbCtxId, code, options);
    else if (engine == "sql")
-      error = executeSqlEngineChunk(docId, chunkId, nbCtxId, code, jsonChunkOptions);
+      error = executeSqlEngineChunk(docId, chunkId, label, nbCtxId, code, jsonChunkOptions);
    else
    {
       // check to see if this is a known interpreter; if so, we'll
@@ -788,17 +805,17 @@ Error executeAlternateEngineChunk(const std::string& docId,
       
       if (isSystemInterpreter)
       {
-         runChunk(docId, chunkId, nbCtxId, engine, code, options);
+         runChunk(docId, chunkId, label, nbCtxId, engine, code, options);
       }
       else
       {
          // connect to capture html file output
          ChunkExecContext htmlCaptureContext(
-            docId, chunkId, nbCtxId, execScope,
+            docId, chunkId, code, label, nbCtxId, engine, execScope,
             workingDir, chunkOptions, pixelWidth, charWidth);
          htmlCaptureContext.connect();
 
-         runUserDefinedEngine(docId, chunkId, nbCtxId, engine, code, jsonChunkOptions,
+         runUserDefinedEngine(docId, chunkId, label, nbCtxId, engine, code, jsonChunkOptions,
             htmlCaptureContext);
       }
    }

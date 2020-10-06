@@ -1,7 +1,7 @@
 /*
  * math.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,42 +18,31 @@ import { Plugin, PluginKey, EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { InputRule } from 'prosemirror-inputrules';
 
-import { Extension } from '../../api/extension';
-import { PandocTokenType, PandocToken, PandocOutput, PandocExtensions } from '../../api/pandoc';
+import { Extension, ExtensionContext } from '../../api/extension';
+import { PandocTokenType, PandocToken, PandocOutput } from '../../api/pandoc';
 import { BaseKey } from '../../api/basekeys';
 import { markIsActive, getMarkAttrs } from '../../api/mark';
-import { PandocCapabilities } from '../../api/pandoc_capabilities';
-import { EditorFormat } from '../../api/format';
-import { EditorUI } from '../../api/ui';
-
-import { kCodeText } from '../code';
+import { kCodeText } from '../../api/code';
+import { kMathContent, kMathType, delimiterForType, MathType } from '../../api/math';
+import { MarkInputRuleFilter } from '../../api/input_rule';
 
 import { InsertInlineMathCommand, InsertDisplayMathCommand, insertMath } from './math-commands';
 import { mathAppendMarkTransaction } from './math-transaction';
 import { mathHighlightPlugin } from './math-highlight';
+import { MathPopupPlugin } from './math-popup';
+import { mathViewPlugins } from './math-view';
 
 import './math-styles.css';
 
-const kInlineMathPattern = '\\$[^ ].*?[^\\ ]\\$';
+const kInlineMathPattern = '\\$[^ ].*?[^\\ ]?\\$';
 const kInlineMathRegex = new RegExp(kInlineMathPattern);
 
 const kSingleLineDisplayMathPattern = '\\$\\$[^\n]*?\\$\\$';
 const kSingleLineDisplayMathRegex = new RegExp(kSingleLineDisplayMathPattern);
 
-export enum MathType {
-  Inline = 'InlineMath',
-  Display = 'DisplayMath',
-}
+const extension = (context: ExtensionContext): Extension | null => {
+  const { pandocExtensions, ui, format, math, events } = context;
 
-const MATH_TYPE = 0;
-const MATH_CONTENT = 1;
-
-const extension = (
-  pandocExtensions: PandocExtensions,
-  _caps: PandocCapabilities,
-  _ui: EditorUI,
-  format: EditorFormat,
-): Extension | null => {
   if (!pandocExtensions.tex_math_dollars) {
     return null;
   }
@@ -67,12 +56,13 @@ const extension = (
       {
         name: 'math',
         noInputRules: true,
+        noSpelling: true,
         spec: {
           attrs: {
             type: {},
           },
           inclusive: false,
-          excludes: '_',
+          excludes: 'formatting',
           parseDOM: [
             {
               tag: "span[class*='math']",
@@ -104,12 +94,12 @@ const extension = (
               mark: 'math',
               getAttrs: (tok: PandocToken) => {
                 return {
-                  type: tok.c[MATH_TYPE].t,
+                  type: tok.c[kMathType].t,
                 };
               },
               getText: (tok: PandocToken) => {
-                const delimter = delimiterForType(tok.c[MATH_TYPE].t);
-                return delimter + tok.c[MATH_CONTENT] + delimter;
+                const delimter = delimiterForType(tok.c[kMathType].t);
+                return delimter + tok.c[kMathContent] + delimter;
               },
             },
             // extract math from backtick code for blogdown
@@ -136,35 +126,47 @@ const extension = (
               : []),
           ],
           writer: {
-            priority: 20,
+            priority: 1,
             write: (output: PandocOutput, mark: Mark, parent: Fragment) => {
               // collect math content
-              let math = '';
-              parent.forEach((node: ProsemirrorNode) => (math = math + node.textContent));
+              let mathText = '';
+              parent.forEach((node: ProsemirrorNode) => (mathText = mathText + node.textContent));
 
               // if this is blogdownMathInCode just write the content in a code mark
               if (blogdownMathInCode) {
                 output.writeToken(PandocTokenType.Code, () => {
                   output.writeAttr();
-                  output.write(math);
+                  output.write(mathText);
                 });
               } else {
-                // strip delimiter
+                // check for delimeter (if it's gone then write this w/o them math mark)
                 const delimiter = delimiterForType(mark.attrs.type);
-                math = math.substr(delimiter.length, math.length - 2 * delimiter.length);
+                if (mathText.startsWith(delimiter) && mathText.endsWith(delimiter)) {
+                  // remove delimiter
+                  mathText = mathText.substr(delimiter.length, mathText.length - 2 * delimiter.length);
 
-                // if it's just whitespace then it's not actually math (we allow this state
-                // in the editor because it's the natural starting place for new equations)
-                if (math.trim().length === 0) {
-                  output.writeText(delimiter + math + delimiter);
+                  // trim inline math
+                  if (mark.attrs.type === MathType.Inline) {
+                    mathText = mathText.trim();
+                  }
+
+                  // if it's just whitespace then it's not actually math (we allow this state
+                  // in the editor because it's the natural starting place for new equations)
+                  if (mathText.length === 0) {
+                    output.writeText(delimiter + mathText + delimiter);
+                  } else {
+                    output.writeToken(PandocTokenType.Math, () => {
+                      // write type
+                      output.writeToken(
+                        mark.attrs.type === MathType.Inline ? PandocTokenType.InlineMath : PandocTokenType.DisplayMath,
+                      );
+                      output.write(mathText);
+                    });
+                  }
                 } else {
-                  output.writeToken(PandocTokenType.Math, () => {
-                    // write type
-                    output.writeToken(
-                      mark.attrs.type === MathType.Inline ? PandocTokenType.InlineMath : PandocTokenType.DisplayMath,
-                    );
-                    output.write(math);
-                  });
+                  // user removed the delimiter so write the content literally. when it round trips
+                  // back into editor it will no longer be parsed by pandoc as math
+                  output.writeRawMarkdown(mathText);
                 }
               }
             },
@@ -181,36 +183,38 @@ const extension = (
       }
     },
 
-    inputRules: (schema: Schema) => {
+    inputRules: (schema: Schema, filter: MarkInputRuleFilter) => {
       return [
         // inline math
         new InputRule(
-          new RegExp(kInlineMathPattern + '$'),
+          new RegExp('(^|[^`])' + kInlineMathPattern + '$'),
           (state: EditorState, match: string[], start: number, end: number) => {
-            if (!markIsActive(state, schema.marks.math)) {
+            if (!markIsActive(state, schema.marks.math) && filter(state, start, end)) {
               const tr = state.tr;
               tr.insertText('$');
               const mark = schema.marks.math.create({ type: MathType.Inline });
-              tr.addMark(start, end + 1, mark);
+              tr.addMark(start + match[1].length, end + 1, mark);
               return tr;
             } else {
               return null;
             }
           },
         ),
-        new InputRule(/\$$/, (state: EditorState, match: string[], start: number, end: number) => {
+        new InputRule(/(?:^|[^`])\$$/, (state: EditorState, match: string[], start: number, end: number) => {
           if (!markIsActive(state, schema.marks.math)) {
             const { parent, parentOffset } = state.selection.$head;
             const text = '$' + parent.textContent.slice(parentOffset);
             if (text.length > 0) {
               const length = mathLength(text);
               if (length > 1) {
-                const tr = state.tr;
-                tr.insertText('$');
-                const startMath = tr.selection.from - 1;
-                const mark = schema.marks.math.create({ type: MathType.Inline });
-                tr.addMark(startMath, startMath + length, mark);
-                return tr;
+                if (filter(state, start, start + length)) {
+                  const tr = state.tr;
+                  tr.insertText('$');
+                  const startMath = tr.selection.from - 1;
+                  const mark = schema.marks.math.create({ type: MathType.Inline });
+                  tr.addMark(startMath, startMath + length, mark);
+                  return tr;
+                }
               }
             }
           }
@@ -218,16 +222,20 @@ const extension = (
         }),
         // display math
         new InputRule(/^\$\$$/, (state: EditorState, match: string[], start: number, end: number) => {
-          const tr = state.tr;
-          tr.delete(start, end);
-          insertMath(tr.selection, MathType.Display, !singleLineDisplayMath, tr);
-          return tr;
+          if (filter(state, start, end)) {
+            const tr = state.tr;
+            tr.delete(start, end);
+            insertMath(tr.selection, MathType.Display, !singleLineDisplayMath, tr);
+            return tr;
+          } else {
+            return null;
+          }
         }),
       ];
     },
 
     commands: (_schema: Schema) => {
-      return [new InsertInlineMathCommand(), new InsertDisplayMathCommand(!singleLineDisplayMath)];
+      return [new InsertInlineMathCommand(ui), new InsertDisplayMathCommand(ui, !singleLineDisplayMath)];
     },
 
     appendMarkTransaction: (_schema: Schema) => {
@@ -235,7 +243,7 @@ const extension = (
     },
 
     plugins: (schema: Schema) => {
-      return [
+      const plugins = [
         new Plugin({
           key: new PluginKey('math'),
           props: {
@@ -245,6 +253,11 @@ const extension = (
         }),
         mathHighlightPlugin(schema),
       ];
+      if (math) {
+        plugins.push(new MathPopupPlugin(ui, math, events, false));
+        plugins.push(...mathViewPlugins(schema, ui, math));
+      }
+      return plugins;
     },
   };
 };
@@ -263,6 +276,8 @@ function handlePasteIntoMath() {
     const schema = view.state.schema;
     if (markIsActive(view.state, schema.marks.math)) {
       const tr = view.state.tr;
+      tr.setMeta('paste', true);
+      tr.setMeta('uiEvent', 'paste');
       let math = '';
       slice.content.forEach((node: ProsemirrorNode) => (math = math + node.textContent));
       tr.replaceSelectionWith(schema.text(math));
@@ -299,14 +314,6 @@ function displayMathIsActive(state: EditorState) {
     markIsActive(state, schema.marks.math) &&
     getMarkAttrs(state.doc, state.selection, schema.marks.math).type === MathType.Display
   );
-}
-
-export function delimiterForType(type: string) {
-  if (type === MathType.Inline) {
-    return '$';
-  } else {
-    return '$$';
-  }
 }
 
 export default extension;

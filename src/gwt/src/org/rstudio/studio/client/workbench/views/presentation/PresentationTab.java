@@ -1,7 +1,7 @@
 /*
  * PresentationTab.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,7 +22,6 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
-import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
@@ -33,8 +32,8 @@ import org.rstudio.studio.client.workbench.views.presentation.model.Presentation
 public class PresentationTab extends DelayLoadWorkbenchTab<Presentation>
 {
    public interface Binder extends CommandBinder<Commands, Shim> {}
-   
-   public abstract static class Shim extends DelayLoadTabShim<Presentation, PresentationTab> 
+
+   public abstract static class Shim extends DelayLoadTabShim<Presentation, PresentationTab>
                                      implements ShowPresentationPaneEvent.Handler
    {
       abstract void initialize(PresentationState state);
@@ -43,7 +42,7 @@ public class PresentationTab extends DelayLoadWorkbenchTab<Presentation>
 
    @Inject
    public PresentationTab(final Shim shim,
-                          Binder binder, 
+                          Binder binder,
                           final Commands commands,
                           EventBus eventBus,
                           Session session)
@@ -52,33 +51,29 @@ public class PresentationTab extends DelayLoadWorkbenchTab<Presentation>
       binder.bind(commands, shim);
       shim_ = shim;
       session_ = session;
-     
-      eventBus.addHandler(SessionInitEvent.TYPE, new SessionInitHandler() {
-        
-         public void onSessionInit(SessionInitEvent sie)
-         {
-            PresentationState state = 
-                              session_.getSessionInfo().getPresentationState();
-            if (state.isActive())
-               shim.initialize(state);    
-         }
+
+      eventBus.addHandler(SessionInitEvent.TYPE, (SessionInitEvent sie) ->
+      {
+         PresentationState state = session_.getSessionInfo().getPresentationState();
+         if (state.isActive())
+            shim.initialize(state);
       });
-      
+
       eventBus.addHandler(ShowPresentationPaneEvent.TYPE, shim);
    }
-   
+
    @Override
    public boolean closeable()
    {
       return true;
    }
-   
+
    @Override
    public void confirmClose(Command onConfirmed)
    {
       shim_.confirmClose(onConfirmed);
    }
-   
+
    @Override
    public boolean isSuppressed()
    {

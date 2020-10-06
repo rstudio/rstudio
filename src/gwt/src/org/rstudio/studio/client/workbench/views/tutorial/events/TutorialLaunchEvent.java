@@ -1,7 +1,7 @@
 /*
  * TutorialLaunchEvent.java
  *
- * Copyright (C) 2009-17 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,23 +27,23 @@ public class TutorialLaunchEvent extends GwtEvent<TutorialLaunchEvent.Handler>
       protected Data()
       {
       }
-      
+
       public final native String getPackageName()  /*-{ return this["package"]; }-*/;
       public final native String getTutorialName() /*-{ return this["name"];    }-*/;
    }
-   
+
    public TutorialLaunchEvent(Data data)
    {
       tutorial_ = new Tutorial(
             data.getTutorialName(),
             data.getPackageName());
    }
-   
+
    public Tutorial getTutorial()
    {
       return tutorial_;
    }
-   
+
    private final Tutorial tutorial_;
 
    // Boilerplate ----
@@ -65,5 +65,5 @@ public class TutorialLaunchEvent extends GwtEvent<TutorialLaunchEvent.Handler>
       handler.onTutorialLaunch(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

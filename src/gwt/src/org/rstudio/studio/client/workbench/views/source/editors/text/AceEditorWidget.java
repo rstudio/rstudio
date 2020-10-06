@@ -1,7 +1,7 @@
 /*
  * AceEditorWidget.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -739,10 +739,10 @@ public class AceEditorWidget extends Composite
          if (state == ChunkRowExecState.LINE_QUEUED)
          {
             // queued state: introduce to the editor
-            final Value<ChunkRowExecState> execState = 
-                  new Value<ChunkRowExecState>(null);
+            final Value<ChunkRowAceExecState> execState = 
+                  new Value<ChunkRowAceExecState>(null);
             execState.setValue(
-                  new ChunkRowExecState(editor_, i, state, new Command()
+                  new ChunkRowAceExecState(editor_, i, state, new Command()
                         {
                            @Override
                            public void execute()
@@ -1268,7 +1268,7 @@ public class AceEditorWidget extends Composite
    private boolean isRendered_ = false;
    private ArrayList<Breakpoint> breakpoints_ = new ArrayList<>();
    private ArrayList<AnchoredAceAnnotation> annotations_ = new ArrayList<>();
-   private ArrayList<ChunkRowExecState> lineExecState_ = new ArrayList<>();
+   private ArrayList<ChunkRowAceExecState> lineExecState_ = new ArrayList<>();
    private LintResources.Styles lintStyles_ = LintResources.INSTANCE.styles();
    private static boolean hasEditHandlers_ = false;
    private boolean tabMovesFocus_ = false;

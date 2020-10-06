@@ -1,7 +1,7 @@
 /*
  * SessionPreview.cpp
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -46,7 +46,7 @@ namespace {
 std::string onDetectSourceType(
       boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
-   if ((pDoc->type() == source_database::SourceDocument::SourceDocumentTypeJS))
+   if ((pDoc->type() == kSourceDocumentTypeJS))
    {
       static const boost::regex rePreviewComment("^//\\s*!preview\\s+\\w+( |\\().*$");
       std::string contents = pDoc->contents();
@@ -56,7 +56,7 @@ std::string onDetectSourceType(
       }
    }
 
-   if ((pDoc->type() == source_database::SourceDocument::SourceDocumentTypeSQL))
+   if ((pDoc->type() == kSourceDocumentTypeSQL))
    {
       static const boost::regex rePreviewComment("^--\\s*!preview\\s+\\w+.*$");
       std::string contents = pDoc->contents();
@@ -77,7 +77,7 @@ Error initialize()
    module_context::events().onDetectSourceExtendedType
                                         .connect(onDetectSourceType);
 
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    return initBlock.execute();
 }
 

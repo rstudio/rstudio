@@ -1,7 +1,7 @@
 /*
  * NotebookRangeExecutedEvent.java
  *
- * Copyright (C) 2009-16 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,23 +21,23 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class NotebookRangeExecutedEvent 
+public class NotebookRangeExecutedEvent
              extends GwtEvent<NotebookRangeExecutedEvent.Handler>
-{  
+{
    public static class Data extends JavaScriptObject
    {
       protected Data()
-      {  
+      {
       }
-      
+
       public final native String getDocId() /*-{
          return this.doc_id;
       }-*/;
-      
+
       public final native String getChunkId() /*-{
          return this.chunk_id;
       }-*/;
-      
+
       public final native String getCode() /*-{
          return this.code;
       }-*/;
@@ -50,8 +50,8 @@ public class NotebookRangeExecutedEvent
          return this.expr_mode;
       }-*/;
    }
-   
-   
+
+
    public interface Handler extends EventHandler
    {
       void onNotebookRangeExecuted(NotebookRangeExecutedEvent event);
@@ -61,32 +61,32 @@ public class NotebookRangeExecutedEvent
    {
       data_ = data;
    }
-   
+
    public String getDocId()
    {
       return data_.getDocId();
    }
-   
+
    public String getChunkId()
    {
       return data_.getChunkId();
    }
-   
+
    public String getCode()
    {
       return data_.getCode();
    }
-   
+
    public NotebookExecRange getExecRange()
    {
       return data_.getExecRange();
    }
-   
+
    public int getExprMode()
    {
       return data_.getExprMode();
    }
- 
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -98,11 +98,11 @@ public class NotebookRangeExecutedEvent
    {
       handler.onNotebookRangeExecuted(this);
    }
-   
+
    private final Data data_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
-   
+   public static final Type<Handler> TYPE = new Type<>();
+
    public final static int EXPR_NEW          = 0;
    public final static int EXPR_CONTINUATION = 1;
 }

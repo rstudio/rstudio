@@ -1,7 +1,7 @@
 /*
  * CompletionList.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,11 +29,10 @@ import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
-import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 
-class CompletionList<TItem> extends Composite 
+class CompletionList<TItem> extends Composite
          implements HasSelectionCommitHandlers<TItem>,
                     HasSelectionHandlers<TItem>
 {
@@ -81,7 +80,7 @@ class CompletionList<TItem> extends Composite
       private boolean firstEvent_ = true;
       private Point lastMouseMoveCoordinates_;
    }
-   
+
    public CompletionList(TItem[] items,
                          int visibleItems,
                          boolean asHtml,
@@ -100,19 +99,19 @@ class CompletionList<TItem> extends Composite
       grid.addClickHandler(new GridMouseHandler());
       grid.addMouseMoveHandler(new GridMouseHandler());
       grid.setStylePrimaryName(styles_.completionGrid());
-      
+
       FontSizer.applyNormalFontSize(grid);
 
       scrollPanel_ = new ScrollPanel();
       scrollPanel_.getElement().getStyle().setProperty("overflowX", "hidden");
       scrollPanel_.add(grid);
       scrollPanel_.setHeight((visibleItems * 26) + "px");
-      
+
       initWidget(scrollPanel_);
       grid_ = grid;
       items_ = items;
    }
-   
+
    @Override
    protected void onLoad()
    {
@@ -139,7 +138,7 @@ class CompletionList<TItem> extends Composite
       else
          return 0;
    }
-   
+
    public TItem getSelectedItem()
    {
       int index = getSelectedIndex();
@@ -147,17 +146,17 @@ class CompletionList<TItem> extends Composite
          return null;
       return items_[index];
    }
-   
+
    public boolean selectNext()
    {
       return moveSelection(1, true);
    }
-   
+
    public boolean selectPrev()
    {
       return moveSelection(-1, true);
    }
-   
+
    public boolean selectNextPage()
    {
       return moveSelection(4, false);
@@ -167,12 +166,12 @@ class CompletionList<TItem> extends Composite
    {
       return moveSelection(-4, false);
    }
-   
+
    public boolean selectFirst()
    {
       return moveSelection(-getItemCount(), false);
    }
-   
+
    public boolean selectLast()
    {
       return moveSelection(getItemCount(), false);
@@ -182,7 +181,7 @@ class CompletionList<TItem> extends Composite
    {
       if (getItemCount() == 0)
          return false;
-      
+
       int index = getSelectedIndex() + offset;
       if (allowWrap)
          index = (index + getItemCount()) % getItemCount();
@@ -190,7 +189,7 @@ class CompletionList<TItem> extends Composite
          index = Math.min(getItemCount() - 1, Math.max(0, index));
 
       setSelectedIndex(index);
-      
+
       return true;
    }
 
@@ -199,23 +198,23 @@ class CompletionList<TItem> extends Composite
    {
       return addHandler(handler, SelectionEvent.getType());
    }
-   
+
    public HandlerRegistration addSelectionCommitHandler(
-         SelectionCommitHandler<TItem> handler)
+         SelectionCommitEvent.Handler<TItem> handler)
    {
       return addHandler(handler, SelectionCommitEvent.getType());
    }
-   
+
    public HTML getDetailedInfoPane()
    {
       return null;
    }
-   
+
    public int getSelectedIndex()
    {
       return selectedIndex_;
    }
-   
+
    public void setSelectedIndex(int index)
    {
       if (selectedIndex_ != index)
@@ -223,9 +222,9 @@ class CompletionList<TItem> extends Composite
          CellFormatter cf = grid_.getCellFormatter();
          if (selectedIndex_ >= 0)
             cf.removeStyleName(selectedIndex_, 0, styles_.selected());
-         
+
          selectedIndex_ = index;
-         
+
          if (index >= 0)
          {
             cf.addStyleName(selectedIndex_, 0, styles_.selected());
@@ -236,7 +235,7 @@ class CompletionList<TItem> extends Composite
          }
       }
    }
-   
+
    /**
     * Gets the rectangle of the selected row in absolute (document-relative)
     * coordinates, or null if nothing is selected.
@@ -246,27 +245,27 @@ class CompletionList<TItem> extends Composite
       int index = getSelectedIndex();
       if (index < 0)
          return null;
-      
+
       com.google.gwt.dom.client.Element el =
             DomUtils.getTableCell(grid_.getElement(), index, 0);
-      return new Rectangle(el.getAbsoluteLeft(), 
-                      el.getAbsoluteTop(), 
-                      el.getOffsetWidth(), 
+      return new Rectangle(el.getAbsoluteLeft(),
+                      el.getAbsoluteTop(),
+                      el.getOffsetWidth(),
                       el.getOffsetHeight());
    }
-   
+
    public void setMaxWidth(int maxWidthInPixels)
    {
       maxWidthInPixels_ = maxWidthInPixels;
    }
-   
+
    public TItem[] getItems()
    {
       return items_;
    }
 
    private int selectedIndex_ = -1;
-   
+
    private final GridEx grid_;
    private final TItem[] items_;
    private final ScrollPanel scrollPanel_;

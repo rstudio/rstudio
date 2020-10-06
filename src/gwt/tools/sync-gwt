@@ -10,6 +10,8 @@ BRANCH=rstudio/v1.4
 #   git checkout rstudio/v1.3
 #   git push --set-upstream origin rstudio/v1.3
 #
+# RStudio 1.4's GWT source is in rstudio/v1.4 branch.
+#
 # To take a new release of GWT, merge new tag (e.g. tags/2.9.0) into our branch and rebuild with
 # build-gwt (after resolving any merge conflicts). Once successful, be sure to make PR of changes
 # to rstudio/gwt as well as to rstudio itself.

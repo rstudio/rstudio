@@ -1,7 +1,7 @@
 /*
  * Job.hpp
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -115,7 +115,7 @@ public:
    core::Error executeAction(const std::string& name);
 
    // add and retrieve output
-   void addOutput(const std::string& output, bool error); 
+   void addOutput(const std::string& output, bool error);
    core::json::Array output(int position);
 
    // whether the job pane should should be shown at start

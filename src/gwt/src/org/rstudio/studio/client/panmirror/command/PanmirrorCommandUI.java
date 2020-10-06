@@ -1,7 +1,7 @@
 /*
  * PanmirrorCommandUI.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -44,20 +44,32 @@ public class PanmirrorCommandUI implements ScheduledCommand
       this.menuRole_ = role;
       this.image_ = image;
       this.shortcut_ = getShortcut(command);
+      this.keySequence_ = getKeySequence(command);
    }
    
+   public String getId()
+   {
+      return command_.id;
+   }
+
    public String getMenuText()
    {
-      int plural = command_ != null ? command_.plural() : 1;
-      if (plural > 1 && pluralMenuFormat_ != null) 
-         return pluralMenuFormat_.replaceAll("%d", Integer.toString(plural));
+      String menuText = getBaseMenuText();
+      String[] menuParts = menuText.split(":::", 2);
+      if (menuParts.length == 1)
+         return menuParts[0];
       else
-         return menuText_;
+         return menuParts[1];
+   }
+   
+   public String getFullMenuText()
+   {
+      return getBaseMenuText().replaceFirst(":::", " ");
    }
    
    public String getDesc()
    {
-      return menuText_;
+      return getFullMenuText();
    }
    
    public String getTooltip()
@@ -74,6 +86,11 @@ public class PanmirrorCommandUI implements ScheduledCommand
    public String getShortcut()
    {
       return shortcut_;
+   }
+
+   public KeySequence getKeySequence()
+   {
+      return keySequence_;
    }
    
    public MenuitemRole getMenuRole()
@@ -113,10 +130,19 @@ public class PanmirrorCommandUI implements ScheduledCommand
       if (command_ != null)
          command_.execute();
    }
-  
-   private static String getShortcut(PanmirrorCommand command)
-   {     
-      if (command != null && command.keymap.length > 0) 
+   
+   private String getBaseMenuText()
+   {
+      String menuText = menuText_;
+      int plural = command_ != null ? command_.plural() : 1;
+      if (plural > 1 && pluralMenuFormat_ != null) 
+         menuText = pluralMenuFormat_.replaceAll("%d", Integer.toString(plural));
+      return menuText;
+   }
+   
+   private static KeySequence getKeySequence(PanmirrorCommand command)
+   {
+      if (command != null && command.keymap.length > 0)
       {
          // normalize to RStudio shortcut string
          String key = command.keymap[0];
@@ -124,14 +150,21 @@ public class PanmirrorCommandUI implements ScheduledCommand
          key = key.replace("Mod", BrowseCap.isMacintosh() ? "Cmd" : "Ctrl");
          
          // capitalize the last 
-         KeySequence keySequence = KeySequence.fromShortcutString(key);
-         return keySequence.toString(true);
+         return KeySequence.fromShortcutString(key);
       }
       else
       {
          return null;
       }
-     
+   }
+  
+   private static String getShortcut(PanmirrorCommand command)
+   {     
+      KeySequence keySequence = getKeySequence(command);
+      if (keySequence != null)
+         return keySequence.toString(true);
+      else
+         return null;
    }
    
    private final PanmirrorCommand command_;
@@ -140,6 +173,7 @@ public class PanmirrorCommandUI implements ScheduledCommand
    private final MenuitemRole menuRole_;
    private final String image_;
    private final String shortcut_;
+   private final KeySequence keySequence_;
    
    private final static PanmirrorCommandIcons icons_ = PanmirrorCommandIcons.INSTANCE;
    

@@ -1,7 +1,7 @@
 /*
  * ServerConstants.hpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,11 +20,10 @@
 #define kServerLocalSocket            "rserver.socket"
 #define kServerLocalSocketPathEnvVar  "RS_SERVER_LOCAL_SOCKET_PATH"
 #define kServerTmpDir                 "rstudio-rserver"
-#define kUserIdCookie                 "user-id"
-#define kUserListCookie               "user-list-id"
-#define kPersistAuthCookie            "persist-auth"
 #define kServerDataDirEnvVar          "RS_SERVER_DATA_DIR"
 #define kServerTmpDirEnvVar           "RS_SERVER_TMP_DIR"
+
+#include <core/http/AuthCookies.hpp>
 
 #endif // SERVER_CONSTANTS_HPP
 

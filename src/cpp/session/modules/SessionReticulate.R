@@ -1,7 +1,7 @@
 #
 # SessionReticulate.R
 #
-# Copyright (C) 2009-18 by RStudio, PBC
+# Copyright (C) 2020 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -13,9 +13,13 @@
 #
 #
 
-options(reticulate.initialized = function() {
-   .Call("rs_reticulateInitialized", PACKAGE = "(embedding)")
-})
+# synchronize with ReticulateEvent.java
+.rs.setVar("reticulateEvents", list(
+   PYTHON_INITIALIZED = "python_initialized",
+   REPL_INITIALIZED   = "repl_initialized",
+   REPL_ITERATION     = "repl_iteration",
+   REPL_TEARDOWN      = "repl_teardown"
+))
 
 .rs.setVar("python.moduleCache", new.env(parent = emptyenv()))
 
@@ -83,6 +87,12 @@ options(reticulate.initialized = function() {
    return(TRUE)
 })
 
+.rs.addFunction("reticulate.enqueueClientEvent", function(type, data)
+{
+   data <- list(type = .rs.scalar(type), data = data)
+   .rs.enqueClientEvent("reticulate_event", data)
+})
+
 .rs.addFunction("reticulate.initialize", function()
 {
    # try to default to the tkAgg backend (note that we'll
@@ -90,6 +100,59 @@ options(reticulate.initialized = function() {
    engine <- tolower(Sys.getenv("MPLENGINE"))
    if (engine %in% c("", "qt5agg"))
       Sys.setenv(MPLENGINE = "tkAgg")
+})
+
+.rs.addFunction("reticulate.onPythonInitialized", function()
+{
+   builtins <- reticulate::import_builtins(convert = FALSE)
+   
+   # override help method (Python's interactive help does
+   # not play well with RStudio)
+   help <- builtins$help
+   .rs.setVar("reticulate.help", builtins$help)
+   builtins$help <- function(...) {
+      dots <- list(...)
+      if (length(dots) == 0) {
+         message("Error: Interactive Python help not available within RStudio")
+         return()
+      }
+      help(...)
+   }
+   
+   # define View hook (for data viewer, object explorer)
+   main <- reticulate::import_main(convert = FALSE)
+   reticulate::py_set_attr(main, "View", .rs.reticulate.viewHook)
+   
+   # ensure matplotlib hooks are injected on load
+   setHook("reticulate::matplotlib.pyplot::load", .rs.reticulate.matplotlib.onLoaded)
+})
+
+.rs.addFunction("reticulate.matplotlib.onLoaded", function(...)
+{
+   # install matplotlib hook if available
+   if (requireNamespace("png", quietly = TRUE) &&
+       reticulate::py_module_available("matplotlib"))
+   {
+      matplotlib <- reticulate::import("matplotlib", convert = TRUE)
+      
+      # force the "Agg" backend (this is necessary as other backends may
+      # fail with RStudio if requisite libraries are not available)
+      backend <- matplotlib$get_backend()
+      if (!identical(tolower(backend), "agg"))
+      {
+         sys <- reticulate::import("sys", convert = TRUE)
+         if ("matplotlib.backends" %in% names(sys$modules))
+            matplotlib$pyplot$switch_backend("agg")
+         else
+            matplotlib$use("agg", warn = FALSE, force = TRUE)
+      }
+      
+      # inject our hook
+      plt <- matplotlib$pyplot
+      .rs.setVar("reticulate.matplotlib.show", plt$show)
+      plt$show <- .rs.reticulate.matplotlib.showHook
+   }
+   
 })
 
 .rs.addFunction("reticulate.matplotlib.pyplot.loadHook", function(plt)
@@ -102,10 +165,13 @@ options(reticulate.initialized = function() {
 {
    # read device size
    size <- dev.size(units = "in")
-   width <- size[1]; height <- size[2]
+   width  <- size[1]
+   height <- size[2]
+   dpi    <- 92
    
-   # TODO: handle high-DPI displays
-   dpi <- 72L
+   # adjust for pixel ratio
+   ratio  <- .Call("rs_devicePixelRatio", PACKAGE = "(embedding)")
+   dpi    <- dpi * ratio
    
    # TODO: get device requested from matplotlib?
    # TODO: handle HTML content?
@@ -139,49 +205,25 @@ options(reticulate.initialized = function() {
 
 .rs.addFunction("reticulate.replInitialize", function()
 {
-   builtins <- reticulate::import_builtins(convert = FALSE)
-   
-   # override help method (Python's interactive help does
-   # not play well with RStudio)
-   help <- builtins$help
-   .rs.setVar("reticulate.help", builtins$help)
-   builtins$help <- function(...) {
-      dots <- list(...)
-      if (length(dots) == 0) {
-         message("Error: Interactive Python help not available within RStudio")
-         return()
-      }
-      help(...)
-   }
-   
-   # install matplotlib hook if available
-   if (requireNamespace("png", quietly = TRUE) &&
-       reticulate::py_module_available("matplotlib"))
-   {
-      matplotlib <- reticulate::import("matplotlib", convert = TRUE)
-      
-      # force the "Agg" backend (this is necessary as other backends may
-      # fail with RStudio if requisite libraries are not available)
-      backend <- matplotlib$get_backend()
-      if (!identical(tolower(backend), "agg"))
-      {
-         sys <- reticulate::import("sys", convert = TRUE)
-         if ("matplotlib.backends" %in% names(sys$modules))
-            matplotlib$pyplot$switch_backend("agg")
-         else
-            matplotlib$use("agg", warn = FALSE, force = TRUE)
-      }
-      
-      # inject our hook
-      plt <- matplotlib$pyplot
-      .rs.setVar("reticulate.matplotlib.show", plt$show)
-      plt$show <- .rs.reticulate.matplotlib.showHook
-   }
+   # signal a switch to Python context
+   .rs.reticulate.enqueueClientEvent(
+      .rs.reticulateEvents$REPL_INITIALIZED,
+      list()
+   )
    
 })
 
 .rs.addFunction("reticulate.replHook", function(buffer, contents, trimmed)
 {
+   # ensure we call repl_iteration hook on exit
+   on.exit(
+      .rs.reticulate.enqueueClientEvent(
+         .rs.reticulateEvents$REPL_ITERATION,
+         list()
+      ),
+      add = TRUE
+   )
+   
    # special handling for commands when buffer is currently empty
    if (buffer$empty())
    {
@@ -193,10 +235,10 @@ options(reticulate.initialized = function() {
          return(TRUE)
       }
       
-      reHelp <- "help\\((.*)\\)"
+      reHelp <- "help\\s*\\((.*)\\)"
       if (grepl(reHelp, trimmed))
       {
-         text <- gsub(reHelp, "\\1", trimmed)
+         text <- .rs.trimWhitespace(gsub(reHelp, "\\1", trimmed))
          .Call("rs_showPythonHelp", text, PACKAGE = "(embedding)")
          return(TRUE)
       }
@@ -220,6 +262,11 @@ options(reticulate.initialized = function() {
       plt$show <- show
    }
    
+   # client event
+   .rs.reticulate.enqueueClientEvent(
+      .rs.reticulateEvents$REPL_TEARDOWN,
+      list()
+   )
 })
 
 .rs.addFunction("reticulate.replIsActive", function()
@@ -236,10 +283,6 @@ options(reticulate.initialized = function() {
    
    active
 })
-
-options(reticulate.repl.initialize = .rs.reticulate.replInitialize)
-options(reticulate.repl.hook       = .rs.reticulate.replHook)
-options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
 
 .rs.addFunction("python.tokenizationRules", function() {
    
@@ -853,10 +896,16 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
    if (inherits(candidates, "error"))
       return(.rs.python.emptyCompletions())
    
+   # split string into source (module or sub-module providing object)
+   # and token
+   token <- tail(pieces, n = 1L)
+   source <- paste(head(pieces, n = -1L), collapse = ".")
+   
+   # build completions object
    completions <- .rs.python.completions(
-      token      = tail(pieces, n = 1L),
+      token      = token,
       candidates = candidates,
-      source     = head(pieces, n = -1L),
+      source     = source,
       type       = .rs.python.inferObjectTypes(object, candidates)
    )
    
@@ -1093,9 +1142,7 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
       # try to infer the completion type
       if (inherits(item, "python.builtin.module"))
          .rs.acCompletionTypes$ENVIRONMENT
-      else if (inherits(item, "python.builtin.builtin_function_or_method") ||
-               inherits(item, "python.builtin.function") ||
-               inherits(item, "python.builtin.instancemethod"))
+      else if (.rs.reticulate.isFunction(item))
          .rs.acCompletionTypes$FUNCTION
       else if (inherits(item, "pandas.core.frame.DataFrame"))
          .rs.acCompletionTypes$DATAFRAME
@@ -1411,3 +1458,488 @@ html.heading = _heading
    else
       item
 })
+
+#    > str(.rs.describeObject(globalenv(), "a"))
+# List of 10
+#  $ name             : 'rs.scalar' chr "a"
+#  $ type             : 'rs.scalar' chr "numeric"
+#  $ clazz            : chr [1:2] "numeric" "double"
+#  $ is_data          : 'rs.scalar' logi FALSE
+#  $ value            : 'rs.scalar' chr "1"
+#  $ description      : 'rs.scalar' chr " num 1"
+#  $ size             : 'rs.scalar' num 56
+#  $ length           : 'rs.scalar' int 1
+#  $ contents         : list()
+#  $ contents_deferred: 'rs.scalar' logi FALSE
+.rs.addFunction("reticulate.describeObject", function(name, parent)
+{
+   builtins <- reticulate::import_builtins(convert = TRUE)
+   
+   object <- if (inherits(parent, "python.builtin.dict"))
+      reticulate::py_get_item(parent, name)
+   else if (inherits(parent, "python.builtin.object"))
+      reticulate::py_get_attr(parent, name)
+   else
+      get(name, envir = parent)
+   
+   # is this object 'data'? consider non-callable, non-module objects as data
+   isData <- !(
+      grepl("^__.*__$", name) ||
+      reticulate:::py_is_callable(object) ||
+      reticulate:::py_is_module(object)
+   )
+   
+   # NOTE: there isn't really a distinction between an objects "type"
+   # and an objects "class" in Python 3; whereas R objects might have
+   # some internal type and multiple (S3, S4, R6) classes, depending
+   # on what form of OOP is used for dispatch
+   
+   # get object type, value
+   type <- if (.rs.reticulate.isFunction(object))
+      "function"
+   else
+      .rs.reticulate.describeObjectType(object)
+   
+   value <- .rs.reticulate.describeObjectValue(object)
+   
+   # get object size
+   sys <- reticulate::import("sys")
+   size <- sys$getsizeof(object)
+   
+   # get object length (note: not all objects in Python have a length)
+   length <- .rs.reticulate.describeObjectLength(object)
+   
+   # get object summary when appropriate
+   contents <- .rs.reticulate.describeObjectContents(object)
+   
+   list(
+      name              = .rs.scalar(name),
+      type              = .rs.scalar(type),
+      clazz             = type,
+      is_data           = .rs.scalar(isData),
+      value             = .rs.scalar(value),
+      description       = .rs.scalar(value),
+      size              = .rs.scalar(size),
+      length            = .rs.scalar(length),
+      contents          = contents,
+      contents_deferred = .rs.scalar(FALSE)
+   )
+
+})
+
+.rs.addFunction("reticulate.describeObjectType", function(object)
+{
+   builtins <- reticulate::import_builtins(convert = TRUE)
+   builtins$type(object)$`__name__`
+})
+
+.rs.addFunction("reticulate.describeObjectValue", function(object)
+{
+   if (inherits(object, "pandas.core.frame.DataFrame"))
+   {
+      builtins <- reticulate::import_builtins(convert = TRUE)
+      rows     <- builtins$len(object)
+      columns  <- builtins$len(object$columns) 
+      
+      fmt <- "DataFrame: [%i rows x %i columns]"
+      sprintf(fmt, rows, columns)
+   }
+   else if (inherits(object, "__main__.R"))
+   {
+      "[R interface object]"
+   }
+   else
+   {
+      pprint <- reticulate::import("pprint", convert = TRUE)
+      
+      printer <- pprint$PrettyPrinter(
+         indent = 1L,
+         width  = as.integer(getOption("width")),
+         depth  = 1L
+      )
+      
+      formatted <- printer$pformat(object)
+      .rs.truncate(formatted)
+   }
+   
+})
+
+.rs.addFunction("reticulate.describeObjectLength", function(object)
+{
+   builtins <- reticulate::import_builtins(convert = TRUE)
+   tryCatch(
+      builtins$len(object),
+      error = function(e) -1L
+   )
+})
+
+.rs.addFunction("reticulate.describeObjectContents", function(object)
+{
+   tryCatch(
+      .rs.reticulate.describeObjectContentsImpl(object),
+      error = function(e) warning
+   )
+})
+
+.rs.addFunction("reticulate.describeObjectContentsImpl", function(object)
+{
+   if (inherits(object, "pandas.core.frame.DataFrame"))
+   {
+      text <- reticulate::py_to_r(object$to_string(max_rows = 150L, show_dimensions = FALSE))
+      strsplit(text, "\n", fixed = TRUE)[[1]]
+   }
+   else
+   {
+      list()
+   }
+})
+
+.rs.addFunction("reticulate.resolveModule", function(module)
+{
+   # return module objects as-is
+   if (inherits(module, "python.builtin.object"))
+      return(module)
+   
+   # resolve modules by name otherwise
+   if (module %in% c("main", "__main__"))
+      reticulate::import_main(convert = FALSE)
+   else if (module %in% c("builtins", "__builtins__"))
+      reticulate::import_builtins(convert = FALSE)
+   else
+      reticulate::import(module, convert = FALSE)
+})
+
+#   "result": {
+#     "language": "r",
+#     "environment_monitoring": true,
+#     "environment_list": [],
+#     "context_depth": 0,
+#     "call_frames": [],
+#     "function_name": "",
+#     "environment_name": ".GlobalEnv",
+#     "environment_is_local": false,
+#     "use_provided_source": false,
+#     "function_code": ""
+#   }
+.rs.addFunction("reticulate.environmentState", function(module)
+{
+   # resolve the requested module
+   module <- .rs.reticulate.resolveModule(module)
+   
+   # list objects within the requested module
+   builtins <- reticulate::import_builtins()
+   objects <- builtins$dir(module)
+   
+   # don't include double-under (dunder; e.g __foo__) objects from main
+   name <- as.character(reticulate::py_get_attr(module, "__name__", silent = TRUE))
+   if (identical(name, "__main__"))
+      objects <- grep("^__.*__$", objects, perl = TRUE, value = TRUE, invert = TRUE)
+   
+   # obtain a description of each Python object, using the already-understood
+   # format used for R objects
+   descriptions <- lapply(objects, .rs.reticulate.describeObject, parent = module)
+   
+   # try to get the module name (if any)
+   name <- tryCatch(
+      as.character(reticulate::py_get_attr(module, "__name__")),
+      error = function(e) as.character(module)
+   )
+   
+   list(
+      language               = .rs.scalar("Python"),
+      environment_monitoring = .rs.scalar(TRUE),
+      environment_list       = descriptions,
+      
+      # included for compatibility with existing R environment list code
+      context_depth          = .rs.scalar(0L),
+      call_frames            = list(),
+      function_name          = .rs.scalar(""),
+      environment_name       = .rs.scalar(name),
+      environment_is_local   = .rs.scalar(FALSE),
+      use_provided_source    = .rs.scalar(FALSE),
+      function_code          = .rs.scalar("")
+   )
+   
+})
+
+# > str(.rs.environmentList(globalenv()))
+# List of 9
+#  $ :List of 3
+#   ..$ name : 'rs.scalar' chr "R_GlobalEnv"
+#   ..$ frame: 'rs.scalar' int 0
+#   ..$ local: 'rs.scalar' logi FALSE
+# < ... >
+.rs.addFunction("reticulate.listLoadedModules", function(includeBuiltins = FALSE)
+{
+   if (!requireNamespace("reticulate", quietly = TRUE))
+      return(list())
+   
+   # read available loaded modules
+   stack <- .rs.listBuilder()
+   
+   globals <- reticulate::py_run_string("globals()", convert = FALSE)
+   reticulate::iterate(globals, function(variable) {
+      
+      object <- reticulate::py_get_item(globals, variable, silent = TRUE)
+      if (!inherits(object, "python.builtin.module"))
+         return(FALSE)
+      
+      # take module name rather than binding name discovered in globals
+      name <- .rs.nullCoalesce(
+         reticulate::py_get_attr(object, "__name__", silent = TRUE),
+         variable
+      )
+      
+      # ignore builtins if requested
+      name <- as.character(name)
+      if (!includeBuiltins && name %in% c("builtins", "__builtins__"))
+         return(FALSE)
+      
+      stack$append(name)
+      TRUE
+      
+   })
+   
+   # retrieve modules
+   modules <- stack$data()
+   
+   # ensure main module is always included first
+   modules <- c("__main__", setdiff(modules, "__main__"))
+   
+   # return in format suitable for environment pane
+   lapply(modules, function(module) {
+      list(
+         name  = .rs.scalar(module),
+         frame = .rs.scalar(0L),
+         local = .rs.scalar(FALSE)
+      )
+   })
+   
+})
+
+.rs.addFunction("reticulate.detectChanges", function(moduleName)
+{
+   # resolve module
+   module <- .rs.reticulate.resolveModule(moduleName)
+   
+   # list objects within this module
+   newObjects <- reticulate::py_get_attr(module, "__dict__")
+   
+   # retrieve previously-cached objects in this module
+   oldObjects <- .rs.nullCoalesce(
+      .rs.getVar("reticulate.monitoredModuleObjects"),
+      newObjects
+   )
+   
+   # create copy of dictionary
+   copy <- reticulate::import("copy", convert = FALSE)
+   newObjects <- copy$copy(newObjects)
+   
+   # update cached globals
+   .rs.setVar("reticulate.monitoredModuleObjects", newObjects)
+   
+   # collect all vars
+   vars <- sort(union(names(oldObjects), names(newObjects)))
+   
+   # iterate and check for changes
+   changedObjects <- .rs.listBuilder()
+   removedObjects <- .rs.listBuilder()
+   
+   for (var in vars)
+   {
+      old <- reticulate::py_get_item(oldObjects, var, silent = TRUE)
+      new <- reticulate::py_get_item(newObjects, var, silent = TRUE)
+      
+      if (is.null(old) && is.null(new))
+      {
+         # shouldn't happen, but this implies no object before or after
+      }
+      else if (is.null(old))
+      {
+         # an object was added (treat as 'changed')
+         changedObjects$append(.rs.reticulate.describeObject(var, newObjects))
+      }
+      else if (is.null(new))
+      {
+         # an object was removed
+         removedObjects$append(var)
+      }
+      else if (!.rs.reticulate.objectsEqual(old, new))
+      {
+         # an object was changed
+         changedObjects$append(.rs.reticulate.describeObject(var, newObjects))
+      }
+   }
+   
+   # bail if nothing to report
+   if (changedObjects$empty() && removedObjects$empty())
+      return()
+   
+   # emit change event
+   .rs.enqueClientEvent("environment_changed", list(
+      changed = changedObjects$data(),
+      removed = as.character(removedObjects$data())
+   ))
+   
+})
+
+.rs.addFunction("reticulate.isPythonInitialized", function()
+{
+   "reticulate" %in% loadedNamespaces() &&
+      reticulate::py_available(initialize = FALSE)
+})
+
+.rs.addFunction("reticulate.objectsEqual", function(lhs, rhs)
+{
+   # compare Pandas DataFrame objects with special method
+   pandas <-
+      inherits(lhs, "pandas.core.frame.DataFrame") &&
+      inherits(rhs, "pandas.core.frame.DataFrame")
+   
+   if (pandas)
+   {
+      pandas <- reticulate::import("pandas", convert = TRUE)
+      return(pandas$DataFrame$equals(lhs, rhs))
+   }
+   
+   # default comparison method
+   # otherwise, fall back to default '!=' comparison method
+   tryCatch(
+      reticulate:::py_compare(lhs, rhs, "=="),
+      error = function(e) FALSE
+   )
+
+})
+
+.rs.addFunction("reticulate.isFunction", function(object)
+{
+   inherits(object, c(
+      "python.builtin.builtin_function_or_method",
+      "python.builtin.function",
+      "python.builtin.instancemethod"
+   ))
+})
+
+.rs.addFunction("reticulate.viewHook", function(object)
+{
+   # TODO: assign complex expressions to temporary variable before view
+   reticulate:::disable_conversion_scope(object)
+   
+   # extract variable name passed to Python object
+   sys <- reticulate::import("sys", convert = TRUE)
+   frame <- sys$`_getframe`(1L)
+   names <- frame$f_code$co_names
+   
+   # create dummy environment for this object
+   name <- names[[2L]]
+   envir <- new.env(parent = emptyenv())
+   assign(name, object, envir = envir)
+   
+   # convert Pandas DataFrames to R data.frames for now
+   # (consider adapting data viewer to arbitrary tabular data in future?)
+   if (inherits(object, "pandas.core.frame.DataFrame"))
+   {
+      object <- reticulate::py_to_r(object)
+      View(object)
+   }
+   else
+   {
+      .rs.explorer.viewObject(
+         object = object,
+         title  = names[[2L]],
+         envir  = envir
+      )
+   }
+   
+})
+
+.rs.addFunction("reticulate.isStructSeq", function(object)
+{
+   all(
+      reticulate::py_has_attr(object, "n_sequence_fields"),
+      reticulate::py_has_attr(object, "n_fields"),
+      reticulate::py_has_attr(object, "n_unnamed_fields")
+   )
+})
+
+.rs.addFunction("reticulate.listAttributes", function(object, includeDunderMethods = TRUE)
+{
+   attributes <- reticulate::py_list_attributes(object)
+   
+   # remove dunder methods if requested
+   if (!includeDunderMethods)
+      attributes <- grep("^__", attributes, value = TRUE, invert = TRUE)
+   
+   # sort so that dunder methods are shown last
+   indices <- order(
+      .rs.startsWith(attributes, "__"),
+      .rs.startsWith(attributes, "_")
+   )
+
+   # return sorted attributes
+   attributes[indices]
+   
+})
+
+.rs.addFunction("reticulate.explorerCache", function()
+{
+   key <- "reticulate.explorerCacheDictionary"
+   if (!.rs.hasVar(key))
+      .rs.setVar(key, reticulate::dict())
+   .rs.getVar(key)
+})
+
+.rs.addFunction("reticulate.usePython", function(python)
+{
+   # sanity check value of param
+   ok <-
+      is.character(python) &&
+      length(python) == 1 &&
+      file.exists(python)
+   
+   if (!ok)
+      return(FALSE)
+   
+   # no-op if Python has already been initialized
+   if (reticulate::py_available(initialize = FALSE))
+      return(FALSE)
+   
+   # ok, request use of Python
+   reticulate::use_python(python, required = TRUE)
+})
+
+# hook to be invoked when the Python session has been initialized by reticulate
+options(reticulate.initialized = function()
+{
+   # clear hook
+   options(reticulate.initialized = NULL)
+   
+   # call R hook
+   .rs.reticulate.onPythonInitialized()
+   
+   # notify client that Python is being initialized
+   .rs.reticulate.enqueueClientEvent(
+      .rs.reticulateEvents$PYTHON_INITIALIZED,
+      list()
+   )
+   
+   # invoke lower-level callbacks
+   .Call("rs_reticulateInitialized", PACKAGE = "(embedding)")
+   
+})
+
+options(reticulate.repl.initialize = function()
+{
+   .rs.reticulate.replInitialize()
+})
+
+options(reticulate.repl.hook = function(buffer, contents, trimmed)
+{
+   .rs.reticulate.replHook(buffer, contents, trimmed)
+})
+
+options(reticulate.repl.teardown = function()
+{
+   .rs.reticulate.replTeardown()
+})
+

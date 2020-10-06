@@ -1,7 +1,7 @@
 /*
  * Message.hpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,7 +25,7 @@
 
 namespace RSTUDIO_BOOST_NAMESPACE {
 namespace asio {
-   class const_buffer ;
+   class const_buffer;
 }
 }
 
@@ -57,38 +57,38 @@ public:
 public:
    int httpVersionMajor() const { return httpVersionMajor_; } 
    int httpVersionMinor() const { return httpVersionMinor_; }
-   void setHttpVersion(int httpVersionMajor, int httpVersionMinor) ;
+   void setHttpVersion(int httpVersionMajor, int httpVersionMinor);
    
    bool isHttp10() const 
    { 
-      return httpVersionMajor() == 1 && httpVersionMinor() == 0; 
+      return httpVersionMajor() == 1 && httpVersionMinor() == 0;
    }
 
-   std::string contentType() const ;
-   void setContentType(const std::string& contentType) ;
+   std::string contentType() const;
+   void setContentType(const std::string& contentType);
    
    uintmax_t contentLength() const;
    void setContentLength(uintmax_t contentLength);
   
-   bool containsHeader(const std::string& name) const ;
-   std::string headerValue(const std::string& name) const ;
+   bool containsHeader(const std::string& name) const;
+   std::string headerValue(const std::string& name) const;
 
    // add a header to the message
    void addHeader(const Header& header);
-   void addHeader(const std::string& name, const std::string& value) ; 
+   void addHeader(const std::string& name, const std::string& value);
    void addHeaders(const std::vector<Header>& headers);
    
    // replace the existing value of a header (won't ever insert a new header)
-   void replaceHeader(const std::string& name, const std::string& value) ;
+   void replaceHeader(const std::string& name, const std::string& value);
 
    // set the value of a header (replace existing, or add new if necessary
    void setHeaderLine(const std::string& line);
    void setHeader(const Header& header);
-   void setHeader(const std::string& name, const std::string& value) ;
+   void setHeader(const std::string& name, const std::string& value);
    void setHeader(const std::string& name, int value);
    void setHeader(const std::string& name, uintmax_t value);
 
-   void removeHeader(const std::string& name) ;
+   void removeHeader(const std::string& name);
 
    const Headers& headers() const  { return headers_; }
    
@@ -97,10 +97,10 @@ public:
    void reset();
    
    std::vector<boost::asio::const_buffer> toBuffers(
-                              const Header& overrideHeader = Header()) const ;
+                              const Header& overrideHeader = Header()) const;
 
    std::vector<boost::asio::const_buffer> headerBuffers(
-                              const Header& overrideHeader = Header()) const ;
+                              const Header& overrideHeader = Header()) const;
    
 protected:
    // body_ is protected so that sub-classes set it directly (facilitating the 
@@ -109,10 +109,10 @@ protected:
    std::string body_;
    
    void appendSpaceBuffer(
-         std::vector<boost::asio::const_buffer>& buffers) const ;
+         std::vector<boost::asio::const_buffer>& buffers) const;
    
    void appendHttpVersionBuffers(
-         std::vector<boost::asio::const_buffer>& buffers) const ;
+         std::vector<boost::asio::const_buffer>& buffers) const;
 
    void assign(const Message& message, const Headers& extraHeaders)
    {
@@ -155,10 +155,10 @@ private:
    
    // storage for override header (used by toBuffers to override a header
    // when asking for the message bytes)
-   mutable Header overrideHeader_ ;
+   mutable Header overrideHeader_;
    
    // string storage for integer members (need for to_buffers)
-   mutable std::string httpVersion_ ;
+   mutable std::string httpVersion_;
 
    // grant friendship to subclasses and parsers so they can 
    // direclty manipulate fields
@@ -168,7 +168,7 @@ private:
    friend class ResponseParser;
 };
 
-std::ostream& operator << (std::ostream& stream, const Message& m) ;
+std::ostream& operator << (std::ostream& stream, const Message& m);
 
 } // namespace http
 } // namespace core 

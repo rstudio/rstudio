@@ -1,7 +1,7 @@
 /*
  * StatusBarElementWidget.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,6 +31,7 @@ import com.google.gwt.user.client.ui.MenuItem;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.DecorativeImage;
 
@@ -45,32 +46,26 @@ public class StatusBarElementWidget extends FlowPanel
 
    public StatusBarElementWidget()
    {
-      options_ = new ArrayList<String>();
+      options_ = new ArrayList<>();
       label_ = new Label();
       add(label_);
 
-      addDomHandler(new MouseDownHandler()
+      addDomHandler(mouseDownEvent ->
       {
-         public void onMouseDown(MouseDownEvent event)
-         {
-            event.preventDefault();
-            event.stopPropagation();
+         mouseDownEvent.preventDefault();
+         mouseDownEvent.stopPropagation();
 
-            if (options_.size() == 0)
-               return;
+         if (options_.size() == 0)
+            return;
 
-            StatusBarPopupMenu menu = new StatusBarPopupMenu();
-            for (final String option : options_)
-               menu.addItem(new MenuItem(option, new Command()
-               {
-                  public void execute()
-                  {
-                     SelectionEvent.fire(StatusBarElementWidget.this, option);
-                  }
-               }));
-            menu.showRelativeToUpward(label_, 
-                  popupAlignment_ == POPUP_ALIGNMENT_RIGHT);
-         }
+         StatusBarPopupMenu menu = new StatusBarPopupMenu();
+         for (final String option : options_)
+            menu.addItem(new MenuItem(option, (Command) () ->
+            {
+               SelectionEvent.fire(StatusBarElementWidget.this, option);
+            }));
+         menu.showRelativeToUpward(label_,
+               StringUtil.equals(popupAlignment_, POPUP_ALIGNMENT_RIGHT));
       }, MouseDownEvent.getType());
    }
 
@@ -101,7 +96,7 @@ public class StatusBarElementWidget extends FlowPanel
                                                             false, false, 0);
       ClickEvent.fireNativeEvent(evt, this);
    }
-   
+
    public void setPopupAlignment(String alignment)
    {
       popupAlignment_ = alignment;
@@ -143,14 +138,10 @@ public class StatusBarElementWidget extends FlowPanel
 
    public HandlerRegistration addMouseDownHandler(final MouseDownHandler handler)
    {
-      return addDomHandler(new MouseDownHandler()
+      return addDomHandler(mouseDownEvent ->
       {
-         @Override
-         public void onMouseDown(MouseDownEvent event)
-         {
-            if (clicksEnabled_)
-               handler.onMouseDown(event);
-         }
+         if (clicksEnabled_)
+            handler.onMouseDown(mouseDownEvent);
       }, MouseDownEvent.getType());
    }
 
@@ -159,6 +150,11 @@ public class StatusBarElementWidget extends FlowPanel
       label_.setVisible(visible);
       if (arrows_ != null)
          arrows_.setVisible(visible);
+   }
+
+   public boolean getContentsVisible()
+   {
+      return label_.isVisible();
    }
 
    public void setClicksEnabled(boolean enabled)
@@ -171,7 +167,7 @@ public class StatusBarElementWidget extends FlowPanel
    private DecorativeImage arrows_;
    private boolean clicksEnabled_ = true;
    private String popupAlignment_ = POPUP_ALIGNMENT_LEFT;
-         
+
    public final static String POPUP_ALIGNMENT_LEFT = "left";
    public final static String POPUP_ALIGNMENT_RIGHT = "right";
 }

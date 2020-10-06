@@ -1,7 +1,7 @@
 /*
  * EnvironmentObjectList.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -515,18 +515,18 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
          for (int idx = 0; idx < contents.length(); idx++)
          {
             TableRowBuilder detail = startRow().className(style_.detailRow());
+            
             detail.startTD().endTD();
-            TableCellBuilder objectDetail = detail.startTD();
+            
             String content = contents.get(idx);
-            // remove known R indentation prefixes
-            if (content.startsWith(" $") || content.startsWith("  ")) 
-               content = content.substring(2, content.length());
-            content = content.trim();
+            
+            TableCellBuilder objectDetail = detail.startTD();
             objectDetail.colSpan(3)
                     .title(content)
                     .text(content)
                     .endTD();
             detail.endTR();
+            
          }
       }
    }

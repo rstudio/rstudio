@@ -1,7 +1,7 @@
 /*
  * TextBoxWithButton.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,6 +25,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.TextBox;
+
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -86,6 +87,11 @@ public class TextBoxWithButton extends Composite
       textBox_ = new TextBox();
       textBox_.setWidth("100%");
       textBox_.setReadOnly(readOnly);
+      
+      textBox_.addValueChangeHandler((ValueChangeEvent<String> event) ->
+      {
+         ValueChangeEvent.fire(TextBoxWithButton.this, getText());
+      });
 
       themedButton_ = new ThemedButton(action, handler);
 
@@ -154,21 +160,37 @@ public class TextBoxWithButton extends Composite
 
    public void setText(String text)
    {
-      text_ = text;
-
-      if (text_ == useDefaultValue_)
-         textBox_.setText("[Use Default] " + text);
+      String oldText = getText();
+      
+      if (StringUtil.equals(oldText, useDefaultValue_))
+      {
+         textBox_.setText(USE_DEFAULT_PREFIX + " " + text);
+      }
       else if (text.length() > 0)
+      {
          textBox_.setText(text);
+      }
       else
+      {
          textBox_.setText(emptyLabel_);
+      }
 
       ValueChangeEvent.fire(this, getText());
    }
 
    public String getText()
    {
-      return text_;
+      String text = textBox_.getText();
+      
+      if (StringUtil.equals(text, emptyLabel_))
+         return "";
+      
+      if (text.startsWith(USE_DEFAULT_PREFIX))
+      {
+         text = text.substring(USE_DEFAULT_PREFIX.length()).trim();
+      }
+      
+      return text;
    }
 
    public void setTextWidth(String width)
@@ -212,6 +234,11 @@ public class TextBoxWithButton extends Composite
    {
       textBox_.setFocus(true);
    }
+   
+   public void blur()
+   {
+      textBox_.setFocus(false);
+   }
 
    @Override
    protected void onAttach()
@@ -237,6 +264,7 @@ public class TextBoxWithButton extends Composite
    private final ThemedButton themedButton_;
    private final String emptyLabel_;
    private String useDefaultValue_;
-   private String text_ = "";
    private String uniqueId_;
+   
+   private static final String USE_DEFAULT_PREFIX = "[Use Default]";
 }

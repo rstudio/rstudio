@@ -29,7 +29,8 @@ namespace database {
 
 // initialize server database, optionally performing migration
 // to the latest database schema version
-core::Error initialize(bool updateSchema = false,
+core::Error initialize(const std::string& databaseConfigFile = std::string(),
+                       bool updateSchema = false,
                        const boost::optional<core::system::User>& databaseFileUser = boost::none);
 
 boost::shared_ptr<core::database::IConnection> getConnection();

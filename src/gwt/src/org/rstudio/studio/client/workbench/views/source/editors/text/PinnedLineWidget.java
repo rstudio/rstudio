@@ -1,7 +1,7 @@
 /*
  * PinnedLineWidget.java
  *
- * Copyright (C) 2009-16 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,10 +19,9 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FoldChangeEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -36,8 +35,7 @@ import com.google.gwt.user.client.ui.Widget;
  * - A notification is emitted to the host when Ace removes the LineWidget.
  */
 public class PinnedLineWidget
-             implements FoldChangeEvent.Handler,
-                        RenderFinishedEvent.Handler
+             implements FoldChangeEvent.Handler
 {
    public interface Host
    {
@@ -56,21 +54,18 @@ public class PinnedLineWidget
       moving_ = false;
       shiftPending_ = false;
       folded_ = folded();
-
+      
       lineWidget_ = LineWidget.create(type, row, widget_.getElement(), data);
       lineWidget_.setFixedWidth(true); 
 
-      // delay attaching the line widget to the editor surface until the next
-      // render pass
-      renderFinishedReg_ = display_.addRenderFinishedHandler(this);
+      renderLineWidget();
       
       // the Ace line widget manage emits a 'changeFold' event when a line
       // widget is destroyed; this is our only signal that it's been
       // removed, so when it happens, we need check to see if the widget
       // has been removed
       registrations_ = new HandlerRegistrations(
-         display_.addFoldChangeHandler(this),
-         renderFinishedReg_);
+         display_.addFoldChangeHandler(this));
 
       startAnchor_ = display_.createAnchor(Position.create(row, 0));
 
@@ -99,6 +94,13 @@ public class PinnedLineWidget
    public LineWidget getLineWidget()
    {
       return lineWidget_;
+   }
+   
+   public void reloadWidget()
+   {
+      parent_.setInnerHTML("");
+      widget_.getElement().removeFromParent();
+      parent_.appendChild(widget_.getElement());
    }
    
    // Event handlers ----------------------------------------------------------
@@ -130,16 +132,15 @@ public class PinnedLineWidget
       checkForRemove_ = true;
    }
 
-   @Override
-   public void onRenderFinished(RenderFinishedEvent event)
+   private void renderLineWidget()
    {
-      // add the widget to the document and notify the host
+      // add the widget to the document
       display_.addLineWidget(lineWidget_);
+      parent_ = lineWidget_.getElement().getParentElement();
+      
+      // notify host if available
       if (host_ != null)
          host_.onLineWidgetAdded(lineWidget_);
-
-      // remove the handler (single shot)
-      renderFinishedReg_.removeHandler();
    }
 
    // Private methods ---------------------------------------------------------
@@ -215,6 +216,7 @@ public class PinnedLineWidget
          display_.removeLineWidget(lineWidget_);
          lineWidget_.setRow(startAnchor_.getRow());
          display_.addLineWidget(lineWidget_);
+         parent_ = lineWidget_.getElement().getParentElement();
          createEndAnchor();
 
          // restore state
@@ -262,7 +264,7 @@ public class PinnedLineWidget
    private final Widget widget_;
    private final Host host_;
    private final HandlerRegistrations registrations_;
-   private final HandlerRegistration renderFinishedReg_;
+   private Element parent_;
    private int lastWidgetRow_;
 
    private Anchor endAnchor_;

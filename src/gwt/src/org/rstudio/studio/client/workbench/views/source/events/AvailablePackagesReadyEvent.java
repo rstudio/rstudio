@@ -1,7 +1,7 @@
 /*
  * AvailablePackagesReadyEvent.java
  *
- * Copyright (C) 2009-17 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,21 +26,21 @@ public class AvailablePackagesReadyEvent extends GwtEvent<AvailablePackagesReady
       protected Data()
       {
       }
-      
+
       public final native boolean isReady()           /*-{ return this["ready"];    }-*/;
       public final native JsArrayString getPackages() /*-{ return this["packages"]; }-*/;
    }
-   
+
    public AvailablePackagesReadyEvent(Data data)
    {
       data_ = data;
    }
-   
+
    public Data getData()
    {
       return data_;
    }
-   
+
    private final Data data_;
 
    // Boilerplate ----
@@ -62,6 +62,6 @@ public class AvailablePackagesReadyEvent extends GwtEvent<AvailablePackagesReady
       handler.onAvailablePackagesReady(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }
 

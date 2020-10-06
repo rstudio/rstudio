@@ -17,11 +17,14 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
-#include <boost/regex.hpp>
 
 #include <core/FileSerializer.hpp>
+#include <core/http/Util.hpp>
+#include <core/RegexUtils.hpp>
+
 #include <shared_core/Error.hpp>
 #include <shared_core/SafeConvert.hpp>
+#include <shared_core/system/Crypto.hpp>
 
 #include <soci/row-exchange.h>
 #include <soci/postgresql/soci-postgresql.h>
@@ -118,16 +121,25 @@ std::string DatabaseErrorCategory::message(int ev) const
 class ConnectVisitor : public boost::static_visitor<Error>
 {
 public:
-   ConnectVisitor(boost::shared_ptr<IConnection>* pPtrConnection) :
-      pPtrConnection_(pPtrConnection)
+   ConnectVisitor(bool validateOnly,
+                  boost::shared_ptr<IConnection>* pPtrConnection,
+                  std::string* pConnectionStr = nullptr) :
+      validateOnly_(validateOnly),
+      pPtrConnection_(pPtrConnection),
+      pConnectionStr_(pConnectionStr)
    {
    }
 
    Error operator()(const SqliteConnectionOptions& options) const
    {
+      // no validation for sqlite as it is not configurable
+      if (validateOnly_)
+         return Success();
+
       try
       {
-         boost::shared_ptr<IConnection> pConnection(new Connection(soci::sqlite3, "dbname=\"" + options.file + "\""));
+         std::string readonly = options.readonly ? " readonly=true" : "";
+         boost::shared_ptr<IConnection> pConnection(new Connection(soci::sqlite3, "shared_cache=true" + readonly + " dbname=\"" + options.file + "\""));
 
          // foreign keys must explicitly be enabled for sqlite
          Error error = pConnection->executeStr("PRAGMA foreign_keys = ON;");
@@ -147,15 +159,36 @@ public:
    {
       try
       {
-         boost::format fmt("host='%1%' port='%2%' dbname='%3%' user='%4%' password='%5%' connect_timeout='%6%'");
-         std::string connectionStr =
-               boost::str(fmt %
-                          options.host %
-                          options.port %
-                          options.database %
-                          options.user %
-                          options.password %
-                          safe_convert::numberToString(options.connectionTimeoutSeconds, "0"));
+         std::string connectionStr;
+
+         // prefer connection-uri
+         if (!options.connectionUri.empty())
+         {
+            Error error = parseConnectionUri(options.connectionUri, !options.password.empty(), &connectionStr);
+            if (error)
+               return error;
+         }
+         else
+         {
+            boost::format fmt("host='%1%' port='%2%' dbname='%3%' user='%4%' connect_timeout='%5%'");
+            connectionStr =
+                  boost::str(fmt %
+                             options.host %
+                             options.port %
+                             options.database %
+                             options.username %
+                             safe_convert::numberToString(options.connectionTimeoutSeconds, "0"));
+         }
+
+         Error error = addPassword(options, &connectionStr);
+         if (error)
+            return error;
+
+         if (pConnectionStr_)
+            *pConnectionStr_ = connectionStr;
+
+         if (validateOnly_)
+            return Success();
 
          boost::shared_ptr<IConnection> pConnection(new Connection(soci::postgresql, connectionStr));
          *pPtrConnection_ = pConnection;
@@ -167,8 +200,210 @@ public:
       }
    }
 
+   Error parseConnectionUri(const std::string& uri,
+                            bool skipPassword,
+                            std::string* pConnectionStr) const
+   {
+      boost::regex re("(postgres|postgresql)://([^/#?]+)(.*)", boost::regex::icase);
+      boost::cmatch matches;
+
+      std::string host, path;
+      if (regex_utils::match(uri.c_str(), matches, re))
+      {
+         host = matches[2];
+         path = matches[3];
+      }
+      else
+      {
+         return systemError(boost::system::errc::invalid_argument,
+                            "connection-uri specified is not a valid PostgreSQL connection URI",
+                            ERROR_LOCATION);
+      }
+
+      // extract user and password information
+      std::string user, password;
+      std::vector<std::string> hostParts;
+      boost::split(hostParts, host, boost::is_any_of("@"));
+
+      if (hostParts.size() == 2)
+      {
+         // user information included
+         std::vector<std::string> userParts;
+         boost::split(userParts, hostParts.at(0), boost::is_any_of(":"));
+
+         if (userParts.size() == 2)
+         {
+            user = userParts.at(0);
+            password = userParts.at(1);
+         }
+         else if (userParts.size() == 1)
+         {
+            user = userParts.at(0);
+         }
+         else
+         {
+            return systemError(boost::system::errc::invalid_argument,
+                               "connection-uri specified is not a valid PostgreSQL connection URI - "
+                                  "too many user : password specifications",
+                               ERROR_LOCATION);
+         }
+
+         host = hostParts.at(1);
+      }
+      else if (hostParts.size() > 2)
+      {
+         return systemError(boost::system::errc::invalid_argument,
+                            "connection-uri specified is not a valid PostgreSQL connection URI - "
+                               "too many user @ host specifications",
+                            ERROR_LOCATION);
+      }
+
+      // extract host and port information
+      std::string port;
+      hostParts.clear();
+
+      size_t squareBegin = host.find('[');
+      if (squareBegin != std::string::npos)
+      {
+         size_t squareEnd = host.find(']');
+         if (squareEnd == std::string::npos)
+         {
+            return systemError(boost::system::errc::invalid_argument,
+                               "connection-uri specified is not a valid PostgreSQL connection URI - "
+                                  "specified IPv6 address has no matching end bracket ']'",
+                               ERROR_LOCATION);
+         }
+
+         std::string ip6Host = host.substr(0, squareEnd + 1);
+         size_t colonPos = host.find(':', squareEnd + 1);
+         if (colonPos != std::string::npos)
+         {
+            port = host.substr(colonPos + 1);
+         }
+         host = ip6Host;
+      }
+      else
+      {
+         boost::split(hostParts, host, boost::is_any_of(":"));
+
+         if (hostParts.size() == 2)
+         {
+            host = hostParts.at(0);
+            port = hostParts.at(1);
+         }
+         else if (hostParts.size() > 2)
+         {
+            return systemError(boost::system::errc::invalid_argument,
+                               "connection-uri specified is not a valid PostgreSQL connection URI - "
+                                  "too many host : port specifications",
+                               ERROR_LOCATION);
+         }
+      }
+
+      // extract database name and params
+      std::string database;
+      std::vector<std::string> parameters;
+      size_t paramStart = path.find("?");
+      if (paramStart != std::string::npos)
+      {
+         std::string params = path.substr(paramStart + 1);
+         std::vector<std::string> paramParts;
+         boost::split(paramParts, params, boost::is_any_of("&"));
+
+         for (const std::string& param : paramParts)
+         {
+            parameters.push_back(param);
+         }
+
+         // skip over / in the path
+         database = path.substr(1, paramStart - 1);
+      }
+      else
+      {
+         // skip over / in the path
+         database = path.empty() ? path : path.substr(1);
+      }
+
+      // write out connection string
+      *pConnectionStr += "host='" + pgEncode(host) + "'";
+      if (!port.empty())
+         *pConnectionStr += " port='" + pgEncode(port) + "'";
+      if (!user.empty())
+         *pConnectionStr += " user='" + pgEncode(user) + "'";
+      if (!password.empty() && !skipPassword)
+         *pConnectionStr += " password='" + pgEncode(password) + "'";
+      if (!database.empty())
+         *pConnectionStr += " dbname='" + pgEncode(database) + "'";
+
+      for (const std::string& param : parameters)
+      {
+         size_t equalPos = param.find('=');
+         if (equalPos != std::string::npos)
+         {
+            std::string paramName = param.substr(0, equalPos);
+            std::string paramValue = param.substr(equalPos + 1);
+            *pConnectionStr += " " +  paramName + "='" + pgEncode(paramValue) + "'";
+         }
+         else
+         {
+            return systemError(boost::system::errc::invalid_argument,
+                               "connection-uri specified is not a valid PostgreSQL connection URI - "
+                                  "no parameter value specified for parameter " + param,
+                               ERROR_LOCATION);
+         }
+      }
+
+      return Success();
+   }
+
+   Error decryptPassword(const std::string& secureKey, std::string& password) const
+   {
+      return Success();
+   }
+
+   Error addPassword(const PostgresqlConnectionOptions& options, std::string* pConnectionStr) const
+   {
+      // if not using password authentication (or perhaps it is hardcoded into the connection uri), bail
+      if (options.password.empty())
+         return Success();
+
+      std::string password = options.password;
+
+      Error error = decryptPassword(options.secureKey, password);
+      if (error)
+      {
+         static bool warnOnce = false;
+         if (!warnOnce)
+         {
+            warnOnce = true;
+            LOG_DEBUG_MESSAGE(error.asString());
+            LOG_WARNING_MESSAGE("A plain text value is potentially being used for the PostgreSQL password. The RStudio Server documentation for PostgreSQL shows how to encrypt this value.");
+         }
+      }
+
+      password = pgEncode(password, false);
+
+      *pConnectionStr += " password='" + password + "'";
+      return Success();
+   }
+
+   std::string pgEncode(const std::string& str,
+                        bool isUrl = true) const
+   {
+      // ensure we first decode from URL string format
+      std::string val = isUrl ? http::util::urlDecode(str) : str;
+
+      // escape postgres special characters
+      boost::replace_all(val, "\\", "\\\\");
+      boost::replace_all(val, "'", "\\'");
+
+      return val;
+   }
+
 private:
+   bool validateOnly_;
    boost::shared_ptr<IConnection>* pPtrConnection_;
+   std::string* pConnectionStr_;
 };
 
 Query::Query(const std::string& sqlStatement,
@@ -630,10 +865,16 @@ Error SchemaUpdater::updateToVersion(const std::string& maxVersion)
    return Success();
 }
 
+Error validateOptions(const ConnectionOptions& options,
+                      std::string* pConnectionStr)
+{
+   return boost::apply_visitor(ConnectVisitor(true, nullptr, pConnectionStr), options);
+}
+
 Error connect(const ConnectionOptions& options,
               boost::shared_ptr<IConnection>* pPtrConnection)
 {
-   return boost::apply_visitor(ConnectVisitor(pPtrConnection), options);
+   return boost::apply_visitor(ConnectVisitor(false, pPtrConnection), options);
 }
 
 Error createConnectionPool(size_t poolSize,

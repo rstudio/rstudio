@@ -1,7 +1,7 @@
 /*
  * NotebookExec.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -84,22 +84,32 @@ core::Error copyLibDirForOutput(const core::FilePath& file,
    return error;
 }
 
-ChunkExecContext::ChunkExecContext(const std::string& docId, 
-      const std::string& chunkId, const std::string& nbCtxId, 
-      ExecScope execScope, const core::FilePath& workingDir, 
-      const ChunkOptions& options, int pixelWidth, int charWidth):
-   docId_(docId), 
-   chunkId_(chunkId),
-   nbCtxId_(nbCtxId),
-   workingDir_(workingDir),
-   options_(options),
-   pixelWidth_(pixelWidth),
-   charWidth_(charWidth),
-   prevCharWidth_(0),
-   lastOutputType_(kChunkConsoleInput),
-   execScope_(execScope),
-   hasOutput_(false),
-   hasErrors_(false)
+ChunkExecContext::ChunkExecContext(const std::string& docId,
+                                   const std::string& chunkId,
+                                   const std::string& chunkCode,
+                                   const std::string& chunkLabel,
+                                   const std::string& nbCtxId,
+                                   const std::string& engine,
+                                   ExecScope execScope,
+                                   const core::FilePath& workingDir,
+                                   const ChunkOptions& options,
+                                   int pixelWidth,
+                                   int charWidth)
+   : docId_(docId),
+     chunkId_(chunkId),
+     chunkCode_(chunkCode),
+     chunkLabel_(chunkLabel),
+     nbCtxId_(nbCtxId),
+     engine_(engine),
+     workingDir_(workingDir),
+     options_(options),
+     pixelWidth_(pixelWidth),
+     charWidth_(charWidth),
+     prevCharWidth_(0),
+     lastOutputType_(kChunkConsoleInput),
+     execScope_(execScope),
+     hasOutput_(false),
+     hasErrors_(false)
 {
 }
 
@@ -111,6 +121,11 @@ std::string ChunkExecContext::chunkId()
 std::string ChunkExecContext::docId()
 {
    return docId_;
+}
+
+std::string ChunkExecContext::engine()
+{
+   return engine_;
 }
 
 const ChunkOptions& ChunkExecContext::options() 
@@ -415,7 +430,7 @@ void ChunkExecContext::onConsoleText(int type, const std::string& output,
       return;
    }
 
-   std::vector<std::string> vals; 
+   std::vector<std::string> vals;
    vals.push_back(safe_convert::numberToString(type));
    vals.push_back(output);
    error = core::writeStringToFile(outputCsv, 
@@ -468,7 +483,7 @@ void ChunkExecContext::disconnect()
 
    NotebookCapture::disconnect();
 
-   events().onChunkExecCompleted(docId_, chunkId_, nbCtxId_);
+   events().onChunkExecCompleted(docId_, chunkId_, chunkCode_, chunkLabel_, nbCtxId_);
 }
 
 void ChunkExecContext::onConsoleOutput(module_context::ConsoleOutputType type, 

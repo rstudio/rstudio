@@ -1,7 +1,7 @@
 /*
  * ProfilerEditingTarget.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -35,10 +36,11 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
-import org.rstudio.core.client.events.EnsureHeightHandler;
-import org.rstudio.core.client.events.EnsureVisibleHandler;
+import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.events.EnsureHeightEvent;
+import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
-import org.rstudio.core.client.events.SelectionCommitHandler;
+import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.Operation;
@@ -56,6 +58,7 @@ import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.ProfilerType;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.rsconnect.model.PublishHtmlSource;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -63,8 +66,10 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
+import org.rstudio.studio.client.workbench.views.source.SourceColumn;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource.EditingTargetNameProvider;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfileOperationResponse;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerContents;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerServerOperations;
@@ -79,8 +84,10 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceNavigation;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 
 public class ProfilerEditingTarget implements EditingTarget,
                                               HasSelectionCommitHandlers<CodeNavigationTarget>
@@ -89,10 +96,10 @@ public class ProfilerEditingTarget implements EditingTarget,
    extends CommandBinder<Commands, ProfilerEditingTarget>
    {
    }
-   
+
    private static final MyCommandBinder commandBinder =
          GWT.create(MyCommandBinder.class);
-      
+
    @Inject
    public ProfilerEditingTarget(ProfilerPresenter presenter,
                                 Commands commands,
@@ -119,7 +126,7 @@ public class ProfilerEditingTarget implements EditingTarget,
       eventBus_ = eventBus;
       sourceServer_ = sourceServer;
       fileTypeRegistry_ = fileTypeRegistry;
-      
+
       if (!initializedEvents_)
       {
          initializedEvents_ = true;
@@ -162,7 +169,7 @@ public class ProfilerEditingTarget implements EditingTarget,
    {
       return FileIcon.PROFILER_ICON;
    }
-   
+
    @Override
    public FileType getFileType()
    {
@@ -190,28 +197,28 @@ public class ProfilerEditingTarget implements EditingTarget,
       commands.add(commands_.printSourceDoc());
       return commands;
    }
-   
+
    @Override
    public void manageCommands()
    {
    }
-   
+
    @Override
    public boolean canCompilePdf()
    {
       return false;
    }
-   
+
    @Override
    public void verifyCppPrerequisites()
    {
    }
-   
+
    @Override
    public void verifyPythonPrerequisites()
    {
    }
-   
+
    @Override
    public void verifyD3Prerequisites()
    {
@@ -238,20 +245,23 @@ public class ProfilerEditingTarget implements EditingTarget,
    public void forceLineHighlighting()
    {
    }
-   
+
    @Override
    public void setSourceOnSave(boolean sourceOnSave)
-   {  
+   {
    }
 
    public void focus()
    {
+      ArrayList<Element> focusableElements = DomUtils.getFocusableElements(asWidget().getElement());
+      if (!focusableElements.isEmpty())
+         focusableElements.get(0).focus();
    }
 
    public void onActivate()
    {
       activeProfilerEditingTarger_ = this;
-      
+
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
          public void execute()
@@ -259,20 +269,20 @@ public class ProfilerEditingTarget implements EditingTarget,
             commands_.gotoProfileSource().setEnabled(hasValidPath_);
          }
       });
-      
+
       final Operation activateOperation = new Operation()
       {
-         
+
          @Override
          public void execute()
          {
             if (!htmlPathInitialized_) {
                htmlPathInitialized_ = true;
-               
+
                htmlPath_ = getContents().getHtmlPath();
                htmlLocalPath_ = getContents().getHtmlLocalPath();
                isUserSaved_ = getContents().isUserSaved();
-               
+
                if (htmlPath_ == null)
                {
                   presenter_.buildHtmlPath(new OperationWithInput<ProfileOperationResponse>()
@@ -282,15 +292,15 @@ public class ProfilerEditingTarget implements EditingTarget,
                      {
                         htmlPath_ = response.getHtmlPath();
                         htmlLocalPath_ = response.getHtmlLocalPath();
-                        
+
                         persistDocumentProperty("htmlPath", htmlPath_);
                         persistDocumentProperty("htmlLocalPath", htmlLocalPath_);
-                        
+
                         view_.showProfilePage(htmlPath_);
-                        
+
                         pSourceWindowManager_.get().maximizeSourcePaneIfNecessary();
                      }
-                     
+
                   }, new Operation()
                   {
                      @Override
@@ -303,7 +313,7 @@ public class ProfilerEditingTarget implements EditingTarget,
                            {
                               commands_.closeSourceDoc().execute();
                            }
-                           
+
                            @Override
                            public void onError(ServerError error)
                            {
@@ -317,7 +327,7 @@ public class ProfilerEditingTarget implements EditingTarget,
                else
                {
                   view_.showProfilePage(htmlPath_);
-      
+
                   Scheduler.get().scheduleDeferred(new ScheduledCommand()
                   {
                      public void execute()
@@ -329,7 +339,7 @@ public class ProfilerEditingTarget implements EditingTarget,
             }
          }
       };
-      
+
       if (getId() != null && !SourceWindowManager.isMainSourceWindow()) {
          sourceServer_.getSourceDocument(getId(), new ServerRequestCallback<SourceDocument>()
          {
@@ -339,7 +349,7 @@ public class ProfilerEditingTarget implements EditingTarget,
                doc_ = document;
                activateOperation.execute();
             }
-            
+
             @Override
             public void onError(ServerError error)
             {
@@ -350,8 +360,8 @@ public class ProfilerEditingTarget implements EditingTarget,
       else {
          activateOperation.execute();
       }
-      
-      // If we're already hooked up for some reason, unhook. 
+
+      // If we're already hooked up for some reason, unhook.
       // This shouldn't happen though.
       if (commandHandlerReg_ != null)
       {
@@ -368,9 +378,9 @@ public class ProfilerEditingTarget implements EditingTarget,
       {
          activeProfilerEditingTarger_ = null;
       }
-      
+
       recordCurrentNavigationPosition();
-      
+
       commandHandlerReg_.removeHandler();
       commandHandlerReg_ = null;
    }
@@ -385,8 +395,8 @@ public class ProfilerEditingTarget implements EditingTarget,
    {
       events_.fireEvent(new SourceNavigationEvent(
             SourceNavigation.create(
-            getId(), 
-            getPath(), 
+            getId(),
+            getPath(),
             SourcePosition.create(0, 0))));
    }
 
@@ -395,11 +405,20 @@ public class ProfilerEditingTarget implements EditingTarget,
                                   boolean recordCurrent)
    {
    }
-   
+
    @Override
    public void navigateToPosition(SourcePosition position,
                                   boolean recordCurrent,
                                   boolean highlightLine)
+   {
+   }
+   
+   @Override
+   public void navigateToPosition(SourcePosition position,
+                                  boolean recordCurrent,
+                                  boolean highlightLine,
+                                  boolean moveCursor,
+                                  Command onNavigationCompleted)
    {
    }
 
@@ -489,7 +508,7 @@ public class ProfilerEditingTarget implements EditingTarget,
    {
       onCompleted.execute();
    }
-   
+
    @Handler
    void onPrintSourceDoc()
    {
@@ -501,35 +520,39 @@ public class ProfilerEditingTarget implements EditingTarget,
          }
       });
    }
-   
+
    private String getAndSetInitialName()
    {
       String name = getContents().getName();
       boolean createProfile = getContents().getCreateProfile();
-      
+
       if (!StringUtil.isNullOrEmpty(name)) {
          return name;
       }
-      else if (createProfile) {
-         String defaultName = defaultNameProvider_.get();
+      else if (createProfile)
+      {
+         String defaultName = defaultNameProvider_.defaultNamePrefix(this);
          persistDocumentProperty("name", defaultName);
          return defaultName;
       }
-      else {
+      else
+      {
          String nameFromFile = FileSystemItem.getNameFromPath(getPath());
          persistDocumentProperty("name", nameFromFile);
          return nameFromFile;
       }
    }
 
-   public void initialize(SourceDocument document,
+   public void initialize(SourceColumn column,
+                          SourceDocument document,
                           FileSystemContext fileContext,
                           FileType type,
-                          Provider<String> defaultNameProvider)
+                          EditingTargetNameProvider defaultNameProvider)
    {
       // initialize doc, view, and presenter
+      column_ = column;
       doc_ = document;
-      
+
       PublishHtmlSource publishHtmlSource = new PublishHtmlSource() {
 
          @Override
@@ -544,12 +567,12 @@ public class ProfilerEditingTarget implements EditingTarget,
             return "Profile";
          }
       };
-      
-      view_ = new ProfilerEditingTargetWidget("Profiler", commands_, publishHtmlSource);
+
+      view_ = new ProfilerEditingTargetWidget("Profiler", commands_, publishHtmlSource, column_);
       defaultNameProvider_ = defaultNameProvider;
-      
+
       getName().setValue(getAndSetInitialName());
-      
+
       presenter_.attach(doc_, view_);
    }
 
@@ -573,7 +596,7 @@ public class ProfilerEditingTarget implements EditingTarget,
       return view_.asWidget();
    }
 
-   public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleHandler handler)
+   public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleEvent.Handler handler)
    {
       return new HandlerRegistration()
       {
@@ -583,7 +606,7 @@ public class ProfilerEditingTarget implements EditingTarget,
       };
    }
 
-   public HandlerRegistration addEnsureHeightHandler(EnsureHeightHandler handler)
+   public HandlerRegistration addEnsureHeightHandler(EnsureHeightEvent.Handler handler)
    {
       return new HandlerRegistration()
       {
@@ -613,13 +636,13 @@ public class ProfilerEditingTarget implements EditingTarget,
    {
       return getContents().getPath();
    }
-   
+
    @Override
-   public HandlerRegistration addSelectionCommitHandler(SelectionCommitHandler<CodeNavigationTarget> handler)
+   public HandlerRegistration addSelectionCommitHandler(SelectionCommitEvent.Handler<CodeNavigationTarget> handler)
    {
       return null;
    }
-   
+
    @Handler
    void onSaveSourceDoc()
    {
@@ -631,7 +654,7 @@ public class ProfilerEditingTarget implements EditingTarget,
    {
       saveNewFile(isUserSaved_ ? getPath() : null);
    }
-   
+
    @Handler
    public void onGotoProfileSource()
    {
@@ -645,7 +668,7 @@ public class ProfilerEditingTarget implements EditingTarget,
    {
       globalDisplay_.showHtmlFile(htmlLocalPath_);
    }
-   
+
    public String getDefaultNamePrefix()
    {
       return "Profile";
@@ -662,7 +685,7 @@ public class ProfilerEditingTarget implements EditingTarget,
       String name = FileSystemItem.getNameFromPath(path);
       persistDocumentProperty("name", name);
       persistDocumentProperty("path", path);
-      
+
       getName().setValue(name, true);
       name_.fireChangeEvent();
    }
@@ -671,12 +694,12 @@ public class ProfilerEditingTarget implements EditingTarget,
    {
       return doc_.getProperties().cast();
    }
-   
+
    private void persistDocumentProperty(String property, String value)
    {
-      HashMap<String, String> props = new HashMap<String, String>();   
+      HashMap<String, String> props = new HashMap<String, String>();
       props.put(property, value);
-      
+
       sourceServer_.modifyDocumentProperties(
          doc_.getId(),
          props,
@@ -704,7 +727,7 @@ public class ProfilerEditingTarget implements EditingTarget,
          fsi = FileSystemItem.createFile(suggestedPath).getParentPath();
       else
          fsi = workbenchContext_.getDefaultFileDialogDir();
- 
+
       fileDialogs_.saveFile(
             "Save File - " + getName().getValue(),
             fileContext_,
@@ -721,7 +744,7 @@ public class ProfilerEditingTarget implements EditingTarget,
 
                   workbenchContext_.setDefaultFileDialogDir(
                         saveItem.getParentPath());
-                  
+
                   final String toPath = saveItem.getPath();
                   server_.copyProfile(
                      htmlLocalPath_,
@@ -731,10 +754,10 @@ public class ProfilerEditingTarget implements EditingTarget,
                         public void onResponseReceived(JavaScriptObject response)
                         {
                            savePropertiesWithPath(saveItem.getPath());
-                           
+
                            persistDocumentProperty("isUserSaved", "saved");
                            isUserSaved_ = true;
-                           
+
                            indicator.onCompleted();
                         }
 
@@ -760,7 +783,13 @@ public class ProfilerEditingTarget implements EditingTarget,
          }
       };
    }
-   
+
+   @Override
+   public List<CommandPaletteItem> getCommandPaletteItems()
+   {
+      return null;
+   }
+
    private void onMessage(final String message,
                           final String file,
                           final String normPath,
@@ -777,16 +806,16 @@ public class ProfilerEditingTarget implements EditingTarget,
                selectedLine_ = line;
                hasValidPath_ = !StringUtil.isNullOrEmpty(response);
                selectedPath_ = hasValidPath_ ? response : file;
-               
+
                commands_.gotoProfileSource().setEnabled(hasValidPath_);
-               
+
                if (details == "open")
                {
                   if (hasValidPath_)
                   {
                      FilePosition filePosition = FilePosition.create(line, 0);
                      CodeNavigationTarget navigationTarget = new CodeNavigationTarget(response, filePosition);
-                     
+
                      fileTypeRegistry_.editFile(
                            FileSystemItem.createFile(navigationTarget.getFile()),
                            filePosition);
@@ -799,7 +828,7 @@ public class ProfilerEditingTarget implements EditingTarget,
                   }
                }
             }
-            
+
             @Override
             public void onError(ServerError error)
             {
@@ -808,7 +837,7 @@ public class ProfilerEditingTarget implements EditingTarget,
          });
       }
    }
-   
+
    public static void onGlobalMessage(final String message,
                                 final String file,
                                 final String normPath,
@@ -817,7 +846,7 @@ public class ProfilerEditingTarget implements EditingTarget,
    {
       if (activeProfilerEditingTarger_ != null)
       {
-         
+
          activeProfilerEditingTarger_.onMessage(message, file, normPath, details, line);
       }
    }
@@ -825,7 +854,7 @@ public class ProfilerEditingTarget implements EditingTarget,
    @Handler
    void onPopoutDoc()
    {
-      events_.fireEvent(new PopoutDocEvent(getId(), currentPosition()));
+      events_.fireEvent(new PopoutDocEvent(getId(), currentPosition(), null));
    }
 
    @Handler
@@ -833,8 +862,8 @@ public class ProfilerEditingTarget implements EditingTarget,
    {
       events_.fireEventToMainWindow(new DocWindowChangedEvent(
             getId(), SourceWindowManager.getSourceWindowId(), "",
-            DocTabDragParams.create(getId(), currentPosition()),
-            null, 0));
+            DocTabDragParams.create(getId(), currentPosition(), null),
+            null, 0, -1));
    }
 
    private native static void initializeEvents() /*-{
@@ -845,7 +874,7 @@ public class ProfilerEditingTarget implements EditingTarget,
             return;
          if (e.data.source != "profvis")
             return;
-            
+
          @org.rstudio.studio.client.workbench.views.source.editors.profiler.ProfilerEditingTarget::onGlobalMessage(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)(
             e.data.message,
             e.data.file,
@@ -856,11 +885,12 @@ public class ProfilerEditingTarget implements EditingTarget,
       });
       $wnd.addEventListener("message", handler, true);
    }-*/;
-   
+
    private SourceDocument doc_;
+   private SourceColumn column_;
    private ProfilerEditingTargetWidget view_;
    private final ProfilerPresenter presenter_;
-   
+
    private final Value<Boolean> neverDirtyState_ = new Value<Boolean>(false);
 
    private final EventBus events_;
@@ -873,24 +903,24 @@ public class ProfilerEditingTarget implements EditingTarget,
    private final RemoteFileSystemContext fileContext_;
    private final WorkbenchContext workbenchContext_;
    private final EventBus eventBus_;
-   private Provider<String> defaultNameProvider_;
+   private EditingTargetNameProvider defaultNameProvider_;
    private final FileTypeRegistry fileTypeRegistry_;
-   
+
    private ProfilerType fileType_ = new ProfilerType();
-   
+
    private HandlerRegistration commandHandlerReg_;
-   
+
    private boolean htmlPathInitialized_;
-   
+
    private static boolean initializedEvents_;
-   
+
    private Value<String> name_ = new Value<String>(null);
    private String tempName_;
-   
+
    private String htmlPath_;
    private String htmlLocalPath_;
    private boolean isUserSaved_;
-   
+
    private static ProfilerEditingTarget activeProfilerEditingTarger_;
    private String selectedPath_;
    private int selectedLine_;

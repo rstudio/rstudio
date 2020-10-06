@@ -1,7 +1,7 @@
 /*
  * Settings.hpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,16 +27,16 @@
 namespace rstudio {
 namespace core {
 
-class Error ;
+class Error;
 
 class Settings : boost::noncopyable
 {
 public:
-   Settings() ;
-   virtual ~Settings() ;
+   Settings();
+   virtual ~Settings();
    // COPYING: boost::noncopyable
 
-   Error initialize(const FilePath& filePath) ;
+   Error initialize(const FilePath& filePath);
 
 public:
    void set(const std::string& name, const std::string& value);
@@ -60,12 +60,12 @@ public:
    const FilePath& filePath() const { return settingsFile_; }
 
 private:
-   void writeSettings() ;
+   void writeSettings();
 
 private:
-   FilePath settingsFile_ ;
-   std::map<std::string, std::string> settingsMap_ ;
-   bool updatePending_ ;
+   FilePath settingsFile_;
+   std::map<std::string, std::string> settingsMap_;
+   bool updatePending_;
    bool isDirty_;
 };
 

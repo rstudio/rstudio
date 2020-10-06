@@ -27,26 +27,7 @@
   </style>
 </head>
 <!--
-For Mac, no plus sign between keys, and use following characters. Use actual UTF-8 characters,
-no need to use the &#xxxx; sequences shown here for reference. Be sure to use ⌃ for Ctrl, NOT a 
-caret character (^) or it will be misread by screen readers.
-
 Standard listing order for Mac modifiers is Ctrl Option Shift Command whatever.
-
-  ←    Left        &#8592;
-  ↑    Up          &#8593;
-  →    Right       &#8594;
-  ↓    Down        &#8595;
-  ⇞    PgUp        &#8670;
-  ⇟    PgDn        &#8671;
-  ⇥    Tab         &#8677;
-  ⇧    Shift       &#8679;
-  ⌃    Ctrl        &#8963;
-  ⌘    Meta/Cmd    &#8984;
-  ⌥    Alt/Option  &#8997;
-  ⌦    Delete      &#8998;
-  ⌫    Backspace   &#9003;
-  ⎋    Esc         &#9099;
 
 References on default Ace shortcuts:
     https://github.com/ajaxorg/ace/wiki/Default-Keyboard-Shortcuts
@@ -66,27 +47,37 @@ References on default Ace shortcuts:
     <tr>
       <td>Toggle Screen Reader Support</td>
       <td>Alt+Shift+/</td>
-      <td>⌃⌥/</td>
+      <td>Ctrl+Option+/</td>
     </tr>
     <tr>
       <td>Speak Text Editor Location</td>
       <td>Alt+Shift+1</td>
-      <td>⌃⌥1</td>
+      <td>Ctrl+Option+1</td>
     </tr>
     <tr>
       <td>Focus Console Output</td>
-      <td>Alt+Shift+2</td>
-      <td>⌃⌥2</td>
+      <td>Ctrl+` or Alt+Shift+2</td>
+      <td>Ctrl+` or Ctrl+Option+2</td>
     </tr>
     <tr>
       <td>Toggle Tab Key Always Moves Focus</td>
       <td>Alt+Shift+[</td>
-      <td>⌃⌥[</td>
+      <td>Ctrl+Option+[</td>
+    </tr>
+    <tr>
+      <td>Focus Next Pane</td>
+      <td>F6</td>
+      <td>F6</td>
+    </tr>
+    <tr>
+      <td>Focus Previous Pane</td>
+      <td>Shift+F6</td>
+      <td>Shift+F6</td>
     </tr>
     <tr>
       <td>Focus Main Toolbar</td>
       <td>Alt+Shift+Y</td>
-      <td>⌃⌥Y</td>
+      <td>Ctrl+Option+Y</td>
     </tr>
     </tbody>
   </table>
@@ -99,42 +90,42 @@ References on default Ace shortcuts:
     <tr>
       <td>Move cursor to Console</td>
       <td>Ctrl+2</td>
-      <td>⌃2</td>
+      <td>Ctrl+2</td>
     </tr>
     <tr>
       <td>Clear console</td>
       <td>Ctrl+L</td>
-      <td>⌃L</td>
+      <td>Ctrl+L</td>
     </tr>
     <tr>
       <td>Move cursor to beginning of line</td>
       <td>Home</td>
-      <td>⌘←</td>
+      <td>Command+Left</td>
     </tr>
     <tr>
       <td>Move cursor to end of line</td>
       <td>End</td>
-      <td>⌘→</td>
+      <td>Command+Right</td>
     </tr>
     <tr>
       <td>Navigate command history</td>
       <td>Up/Down</td>
-      <td>↑ or ↓</td>
+      <td>Up/Down</td>
     </tr>
     <tr>
       <td>Popup command history</td>
       <td>Ctrl+Up</td>
-      <td>⌘↑</td>
+      <td>Command+Up</td>
     </tr>
     <tr>
       <td>Interrupt currently executing command</td>
       <td>Esc</td>
-      <td>⎋</td>
+      <td>Esc</td>
     </tr>
     <tr>
       <td>Change working directory</td>
       <td>Ctrl+Shift+H</td>
-      <td>⌃⇧H</td>
+      <td>Ctrl+Shift+H</td>
     </tr>
     </tbody>
   </table>
@@ -147,382 +138,387 @@ References on default Ace shortcuts:
     <tr>
       <td>Go to File/Function</td>
       <td>Ctrl+. [period]</td>
-      <td>⌃. [period]</td>
+      <td>Ctrl+. [period]</td>
     </tr>
     <tr>
       <td>Move cursor to Source Editor</td>
       <td>Ctrl+1</td>
-      <td>⌃1</td>
+      <td>Ctrl+1</td>
     </tr>
     <tr>
       <td>Toggle document outline</td>
       <td>Ctrl+Shift+O</td>
-      <td>⇧⌘O</td>
+      <td>Shift+Command+O</td>
+    </tr>
+    <tr>
+      <td>Toggle visual markdown editor</td>
+      <td>Ctrl+Shift+F8</td>
+      <td>Ctrl+Shift+F8</td>
     </tr>
     <tr>
       <td>New document (except on Chrome/Windows)</td>
       <td>Ctrl+Shift+N</td>
-      <td>⇧⌘N</td>
+      <td>Shift+Command+N</td>
     </tr>
     <tr>
       <td>New document (Chrome only)</td>
       <td>Ctrl+Alt+Shift+N</td>
-      <td>⌥⇧⌘N</td>
+      <td>Option+Shift+Command+N</td>
     </tr>
     <tr>
       <td>Open document</td>
       <td>Ctrl+O</td>
-      <td>⌘O</td>
+      <td>Command+O</td>
     </tr>
     <tr>
       <td>Save active document</td>
       <td>Ctrl+S</td>
-      <td>⌘S</td>
+      <td>Command+S</td>
     </tr>
     <tr>
       <td>Save all documents</td>
       <td>Ctrl+Alt+S</td>
-      <td>⌃⌥S</td>
+      <td>Command+Option+S</td>
     </tr>
     <tr>
       <td>Close active document (except on Chrome)</td>
       <td>Ctrl+W</td>
-      <td>⌘W</td>
+      <td>Command+W</td>
     </tr>
     <tr>
       <td>Close active document (Chrome only)</td>
       <td>Ctrl+Alt+W</td>
-      <td>⌥⌘W</td>
+      <td>Option+Command+W</td>
     </tr>
     <tr>
       <td>Close all open documents</td>
       <td>Ctrl+Shift+W</td>
-      <td>⇧⌘W</td>
+      <td>Shift+Command+W</td>
     </tr>
     <tr>
       <td>Close other documents</td>
       <td>Ctrl+Shift+Alt+W</td>
-      <td>⌥⇧⌘W</td>
+      <td>Option+Shift+Command+W</td>
     </tr>
     <tr>
       <td>Preview HTML (Markdown and HTML)</td>
       <td>Ctrl+Shift+K</td>
-      <td>⇧⌘K</td>
+      <td>Shift+Command+K</td>
     </tr>
     <tr>
       <td>Knit Document (knitr)</td>
       <td>Ctrl+Shift+K</td>
-      <td>⇧⌘K</td>
+      <td>Shift+Command+K</td>
     </tr>
     <tr>
       <td>Compile Notebook</td>
       <td>Ctrl+Shift+K</td>
-      <td>⇧⌘K</td>
+      <td>Shift+Command+K</td>
     </tr>
     <tr>
       <td>Compile PDF (TeX and Sweave)</td>
       <td>Ctrl+Shift+K</td>
-      <td>⇧⌘K</td>
+      <td>Shift+Command+K</td>
     </tr>
     <tr>
       <td>Insert chunk (Sweave and Knitr)</td>
       <td>Ctrl+Alt+I</td>
-      <td>⌥⌘I</td>
+      <td>Option+Command+I</td>
     </tr>
     <tr>
       <td>Insert code section</td>
       <td>Ctrl+Shift+R</td>
-      <td>⇧⌘R or ⌃⇧R</td>
+      <td>Shift+Command+R or Ctrl+Shift+R</td>
     </tr>
     <tr>
       <td>Run current line/selection</td>
       <td>Ctrl+Enter</td>
-      <td>⌘Return</td>
+      <td>Command+Return</td>
     </tr>
     <tr>
       <td>Run current line/selection (retain cursor position)</td>
       <td>Alt+Enter</td>
-      <td>⌥Return</td>
+      <td>Option+Return</td>
     </tr>
     <tr>
       <td>Re-run previous region</td>
-      <td>Ctrl+Shift+P</td>
-      <td>⇧⌘P</td>
+      <td>Ctrl+Alt+P</td>
+      <td>Option+Command+P</td>
     </tr>
     <tr>
       <td>Run current document</td>
       <td>Ctrl+Alt+R</td>
-      <td>⌥⌘R</td>
+      <td>Option+Command+R</td>
     </tr>
     <tr>
       <td>Run from document beginning to current line</td>
       <td>Ctrl+Alt+B</td>
-      <td>⌥⌘B</td>
+      <td>Option+Command+B</td>
     </tr>
     <tr>
       <td>Run from current line to document end</td>
       <td>Ctrl+Alt+E</td>
-      <td>⌥⌘E</td>
+      <td>Option+Command+E</td>
     </tr>
     <tr>
       <td>Run the current function definition</td>
       <td>Ctrl+Alt+F</td>
-      <td>⌥⌘F</td>
+      <td>Option+Command+F</td>
     </tr>
     <tr>
       <td>Run the current code section</td>
       <td>Ctrl+Alt+T</td>
-      <td>⌥⌘T</td>
+      <td>Option+Command+T</td>
     </tr>
     <tr>
       <td>Run previous Sweave/Rmd code</td>
-      <td>Ctrl+Alt+P</td>
-      <td>⌥⌘P</td>
+      <td>Ctrl+Alt+Shift+P</td>
+      <td>Option+Shift+Command+P</td>
     </tr>
     <tr>
       <td>Run the current Sweave/Rmd chunk</td>
       <td>Ctrl+Alt+C</td>
-      <td>⌥⌘C</td>
+      <td>Option+Command+C</td>
     </tr>
     <tr>
       <td>Run the next Sweave/Rmd chunk</td>
       <td>Ctrl+Alt+N</td>
-      <td>⌥⌘N</td>
+      <td>Option+Command+N</td>
     </tr>
     <tr>
       <td>Source a file</td>
       <td>Ctrl+Alt+G</td>
-      <td>⌃⌥G</td>
+      <td>Ctrl+Option+G</td>
     </tr>
     <tr>
       <td>Source the current document</td>
       <td>Ctrl+Shift+S</td>
-      <td>⇧⌘S</td>
+      <td>Shift+Command+S</td>
     </tr>
     <tr>
       <td>Source the current document (with echo)</td>
       <td>Ctrl+Shift+Enter</td>
-      <td>⇧⌘Return</td>
+      <td>Shift+Command+Return</td>
     </tr>
     <tr>
       <td>Send current line/selection to terminal</td>
       <td>Ctrl+Alt+Enter</td>
-      <td>⌥⌘Return</td>
+      <td>Option+Command+Return</td>
     </tr>
     <tr>
       <td>Fold Selected</td>
       <td>Alt+L</td>
-      <td>⌥⌘L</td>
+      <td>Option+Command+L</td>
     </tr>
     <tr>
       <td>Unfold Selected</td>
       <td>Shift+Alt+L</td>
-      <td>⌥⇧⌘L</td>
+      <td>Option+Shift+Command+L</td>
     </tr>
     <tr>
       <td>Fold All</td>
       <td>Alt+O</td>
-      <td>⌥⌘O</td>
+      <td>Option+Command+O</td>
     </tr>
     <tr>
       <td>Unfold All</td>
       <td>Shift+Alt+O</td>
-      <td>⌥⇧⌘O</td>
+      <td>Option+Shift+Command+O</td>
     </tr>
     <tr>
       <td>Go to line</td>
       <td>Shift+Alt+G</td>
-      <td>⌥⇧⌘G</td>
+      <td>Option+Shift+Command+G</td>
     </tr>
     <tr>
       <td>Jump to</td>
       <td>Shift+Alt+J</td>
-      <td>⌥⇧⌘J</td>
+      <td>Option+Shift+Command+J</td>
     </tr>
     <tr>
       <td>Expand selection</td>
       <td>Ctrl+Shift+Up</td>
-      <td>⌃⌥⇧↑</td>
+      <td>Ctrl+Option+Shift+Up</td>
     </tr>
     <tr>
       <td>Shrink selection</td>
       <td>Ctrl+Shift+Down</td>
-      <td>⌃⌥⇧↓</td>
+      <td>Ctrl+Option+Shift+Down</td>
     </tr>
     <tr>
       <td>Next section</td>
-      <td>Ctrl+PgDown</td>
-      <td>⌘⇟</td>
+      <td>Ctrl+PageDown</td>
+      <td>Command+PageDown</td>
     </tr>
     <tr>
       <td>Previous section</td>
-      <td>Ctrl+PgUp</td>
-      <td>⌘⇞</td>
+      <td>Ctrl+PageUp</td>
+      <td>Command+PageUp</td>
     </tr>
     <tr>
       <td>Split into lines</td>
       <td>Ctrl+Alt+A</td>
-      <td>⌃⌥A</td>
+      <td>Ctrl+Option+A</td>
     </tr>
     <tr>
       <td>Edit lines from start</td>
       <td>Ctrl+Alt+Shift+A</td>
-      <td>⌃⌥⇧A</td>
+      <td>Ctrl+Option+Shift+A</td>
     </tr>
     <tr>
       <td>Switch to tab</td>
       <td>Ctrl+Shift+. [period]</td>
-      <td>⌃⇧. [period]</td>
+      <td>Ctrl+Shift+. [period]</td>
     </tr>
     <tr>
       <td>Previous tab</td>
       <td>Ctrl+F11 or Ctrl+Alt+Left</td>
-      <td>⌃F11 or ⌃⌥←</td>
+      <td>Ctrl+F11 or Ctrl+Option+Left</td>
     </tr>
     <tr>
       <td>Previous tab (desktop only)</td>
       <td>Ctrl+Shift+Tab</td>
-      <td>⌃⇧⇥</td>
+      <td>Ctrl+Shift+Tab</td>
     </tr>
     <tr>
       <td>Next tab</td>
       <td>Ctrl+F12 or Ctrl+Alt+Right</td>
-      <td>⌃F12 or ⌃⌥→</td>
+      <td>Ctrl+F12 or Ctrl+Option+Right</td>
     </tr>
     <tr>
       <td>Next tab (desktop only)</td>
       <td>Ctrl+Tab</td>
-      <td>⌃⇥</td>
+      <td>Ctrl+Tab</td>
     </tr>
     <tr>
       <td>First tab</td>
       <td>Ctrl+Shift+F11 or Ctrl+Alt+Shift+Left</td>
-      <td>⌃⇧F11 or ⌃⌥⇧←</td>
+      <td>Ctrl+Shift+F11 or Ctrl+Option+Shift+Left</td>
     </tr>
     <tr>
       <td>Last tab</td>
       <td>Ctrl+Shift+F12 or Ctrl+Alt+Shift+Right</td>
-      <td>⌃⇧F12 or ⌃⌥⇧→</td>
+      <td>Ctrl+Shift+F12 or Ctrl+Option+Shift+Right</td>
     </tr>
     <tr>
       <td>Navigate back</td>
       <td>Ctrl+F9</td>
-      <td>⌘F9</td>
+      <td>Command+F9</td>
     </tr>
     <tr>
       <td>Navigate forward</td>
       <td>Ctrl+F10</td>
-      <td>⌘F10</td>
+      <td>Command+F10</td>
     </tr>
     <tr>
       <td>Extract function from selection</td>
       <td>Ctrl+Alt+X</td>
-      <td>⌥⌘X</td>
+      <td>Option+Command+X</td>
     </tr>
     <tr>
       <td>Extract variable from selection</td>
       <td>Ctrl+Alt+V</td>
-      <td>⌥⌘V</td>
+      <td>Option+Command+V</td>
     </tr>
     <tr>
       <td>Reindent lines</td>
       <td>Ctrl+I</td>
-      <td>⌘I</td>
+      <td>Command+I</td>
     </tr>
     <tr>
       <td>Comment/uncomment current line/selection</td>
       <td>Ctrl+Shift+C</td>
-      <td>⇧⌘C</td>
+      <td>Shift+Command+C</td>
     </tr>
     <tr>
       <td>Reflow Comment</td>
       <td>Ctrl+Shift+/</td>
-      <td>⌃⇧/</td>
+      <td>Ctrl+Shift+/</td>
     </tr>
     <tr>
       <td>Reformat Selection</td>
       <td>Ctrl+Shift+A</td>
-      <td>⇧⌘A</td>
+      <td>Shift+Command+A</td>
     </tr>
     <tr>
       <td>Show Diagnostics for Current Project</td>
       <td>Ctrl+Shift+Alt+D</td>
-      <td>⌥⇧⌘D</td>
+      <td>Option+Shift+Command+D</td>
     </tr>
     <tr>
       <td>Transpose Letters</td>
       <td>No shortcut</td>
-      <td>⌃T</td>
+      <td>Ctrl+T</td>
     </tr>
     <tr>
       <td>Move Lines Up/Down</td>
       <td>Alt+Up/Down</td>
-      <td>⌥↑ or ↓</td>
+      <td>Option+Up or Down</td>
     </tr>
     <tr>
       <td>Copy Lines Up/Down</td>
       <td>Shift+Alt+Up/Down</td>
-      <td>⌥⌘↑ or ↓</td>
+      <td>Option+Command+Up or Down</td>
     </tr>
     <tr>
       <td>Jump to Matching Brace/Paren</td>
       <td>Ctrl+P</td>
-      <td>⌃P</td>
+      <td>Ctrl+P</td>
     </tr>
     <tr>
       <td>Expand to Matching Brace/Paren</td>
       <td>Ctrl+Shift+Alt+E</td>
-      <td>⌃⇧E</td>
+      <td>Ctrl+Shift+E</td>
     </tr>
     <tr>
       <td>Add Cursor Above Current Cursor</td>
       <td>Ctrl+Alt+Up</td>
-      <td>⌃⌥↑</td>
+      <td>Ctrl+Option+Up</td>
     </tr>
     <tr>
       <td>Add Cursor Below Current Cursor</td>
       <td>Ctrl+Alt+Down</td>
-      <td>⌃⌥↓</td>
+      <td>Ctrl+Option+Down</td>
     </tr>
     <tr>
       <td>Move Active Cursor Up</td>
       <td>Ctrl+Alt+Shift+Up</td>
-      <td>⌃⌥⇧↑</td>
+      <td>Ctrl+Option+Shift+Up</td>
     </tr>
     <tr>
       <td>Move Active Cursor Down</td>
       <td>Ctrl+Alt+Shift+Down</td>
-      <td>⌃⌥⇧↓</td>
+      <td>Ctrl+Option+Shift+Down</td>
     </tr>
     <tr>
       <td>Find and Replace</td>
       <td>Ctrl+F</td>
-      <td>⌘F</td>
+      <td>Command+F</td>
     </tr>
     <tr>
       <td>Find Next</td>
       <td>Win: F3, Linux: Ctrl+G</td>
-      <td>⌘G</td>
+      <td>Command+G</td>
     </tr>
     <tr>
       <td>Find Previous</td>
       <td>Win: Shift+F3, Linux: Ctrl+Shift+G</td>
-      <td>⇧⌘G</td>
+      <td>Shift+Command+G</td>
     </tr>
     <tr>
       <td>Use Selection for Find</td>
       <td>Ctrl+F3</td>
-      <td>⌘E</td>
+      <td>Command+E</td>
     </tr>
     <tr>
       <td>Replace and Find</td>
       <td>Ctrl+Shift+J</td>
-      <td>⇧⌘J</td>
+      <td>Shift+Command+J</td>
     </tr>
     <tr>
       <td>Find in Files</td>
       <td>Ctrl+Shift+F</td>
-      <td>⇧⌘F</td>
+      <td>Shift+Command+F</td>
     </tr>
     <tr>
       <td>Check Spelling</td>
@@ -532,12 +528,12 @@ References on default Ace shortcuts:
     <tr>
       <td>Rename Symbol in Scope</td>
       <td>Ctrl+Alt+Shift+M</td>
-      <td>⌥⇧⌘M</td>
+      <td>Option+Shift+Command+M</td>
     </tr>
     <tr>
       <td>Insert Roxygen Skeleton</td>
       <td>Ctrl+Shift+Alt+R</td>
-      <td>⌥⇧⌘R</td>
+      <td>Option+Shift+Command+R</td>
     </tr>
     </tbody>
   </table>
@@ -550,132 +546,132 @@ References on default Ace shortcuts:
     <tr>
       <td>Undo</td>
       <td>Ctrl+Z</td>
-      <td>⌘Z</td>
+      <td>Command+Z</td>
     </tr>
     <tr>
       <td>Redo</td>
       <td>Ctrl+Shift+Z</td>
-      <td>⇧⌘Z</td>
+      <td>Shift+Command+Z</td>
     </tr>
     <tr>
       <td>Cut</td>
       <td>Ctrl+X</td>
-      <td>⌘X</td>
+      <td>Command+X</td>
     </tr>
     <tr>
       <td>Copy</td>
       <td>Ctrl+C</td>
-      <td>⌘C</td>
+      <td>Command+C</td>
     </tr>
     <tr>
       <td>Paste</td>
       <td>Ctrl+V</td>
-      <td>⌘V</td>
+      <td>Command+V</td>
     </tr>
     <tr>
       <td>Select All</td>
       <td>Ctrl+A</td>
-      <td>⌘A</td>
+      <td>Command+A</td>
     </tr>
     <tr>
       <td>Jump to Word</td>
       <td>Ctrl+Left/Right</td>
-      <td>⌥← or →</td>
+      <td>Option+Left or Right</td>
     </tr>
     <tr>
       <td>Jump to Start/End</td>
       <td>Ctrl+Home/End or Ctrl+Up/Down</td>
-      <td>⌘↑ or ↓</td>
+      <td>Command+Up or Down</td>
     </tr>
     <tr>
       <td>Delete Line</td>
       <td>Ctrl+D</td>
-      <td>⌘D</td>
+      <td>Command+D</td>
     </tr>
     <tr>
       <td>Select</td>
       <td>Shift+[Arrow]</td>
-      <td>⇧[Arrow]</td>
+      <td>Shift+[Arrow]</td>
     </tr>
     <tr>
       <td>Select Word</td>
       <td>Ctrl+Shift+Left/Right</td>
-      <td>⌥⇧← or →</td>
+      <td>Option+Shift+Left or Right</td>
     </tr>
     <tr>
       <td>Select to Line Start</td>
       <td>Alt+Shift+Left</td>
-      <td>⇧⌘←</td>
+      <td>Shift+Command+Left</td>
     </tr>
     <tr>
       <td>Select to Line End</td>
       <td>Alt+Shift+Right</td>
-      <td>⇧⌘→</td>
+      <td>Shift+Command+Right</td>
     </tr>
     <tr>
       <td>Select Page Up/Down</td>
       <td>Shift+PageUp/PageDown</td>
-      <td>⇧⇞ or ⇟</td>
+      <td>Shift+PageUp or PageDown</td>
     </tr>
     <tr>
       <td>Select to Start/End</td>
       <td>Ctrl+Shift+Home/End or Shift+Alt+Up/Down</td>
-      <td>⇧⌘↑ or ↓</td>
+      <td>Shift+Command+Up or Down</td>
     </tr>
     <tr>
       <td>Delete Word Left</td>
       <td>Ctrl+Backspace</td>
-      <td>⌥⌫ or ⌃⌥⌫</td>
+      <td>Option+Backspace or Ctrl+Option+Backspace</td>
     </tr>
     <tr>
       <td>Delete Word Right</td>
       <td>No shortcut</td>
-      <td>⌥⌦</td>
+      <td>Option+Delete</td>
     </tr>
     <tr>
       <td>Delete to Line End</td>
       <td>No shortcut</td>
-      <td>⌃K</td>
+      <td>Ctrl+K</td>
     </tr>
     <tr>
       <td>Delete to Line Start</td>
       <td>No shortcut</td>
-      <td>⌥⌫</td>
+      <td>Option+Backspace</td>
     </tr>
     <tr>
       <td>Indent</td>
       <td>Tab (at beginning of line)</td>
-      <td>⇥ (at beginning of line)</td>
+      <td>Tab (at beginning of line)</td>
     </tr>
     <tr>
       <td>Outdent</td>
       <td>Shift+Tab</td>
-      <td>⇧⇥</td>
+      <td>Shift+Tab</td>
     </tr>
     <tr>
       <td>Yank line up to cursor</td>
       <td>Ctrl+U</td>
-      <td>⌃U</td>
+      <td>Ctrl+U</td>
     </tr>
     <tr>
       <td>Yank line after cursor</td>
       <td>Ctrl+K</td>
-      <td>⌃K</td>
+      <td>Ctrl+K</td>
     </tr>
     <tr>
       <td>Insert currently yanked text</td>
       <td>Ctrl+Y</td>
-      <td>⌃Y</td>
+      <td>Ctrl+Y</td>
     </tr>
     <tr>
       <td>Insert assignment operator</td>
       <td>Alt+-</td>
-      <td>⌥-</td>
+      <td>Option+-</td>
     </tr>
     <tr>
       <td>Insert pipe operator</td>
       <td>Ctrl+Shift+M</td>
-      <td>⇧⌘M</td>
+      <td>Shift+Command+M</td>
     </tr>
     <tr>
       <td>Show help for function at cursor</td>
@@ -690,7 +686,7 @@ References on default Ace shortcuts:
     <tr>
       <td>Find usages for symbol at cursor (C++)</td>
       <td>Ctrl+Alt+U</td>
-      <td>⌥⌘U</td>
+      <td>Option+Command+U</td>
     </tr>
     </tbody>
   </table>
@@ -703,22 +699,22 @@ References on default Ace shortcuts:
     <tr>
       <td>Attempt completion</td>
       <td>Tab or Ctrl+Space</td>
-      <td>⇥ or ⌘Space</td>
+      <td>Tab or Command+Space</td>
     </tr>
     <tr>
       <td>Navigate candidates</td>
       <td>Up/Down</td>
-      <td>↑ or ↓</td>
+      <td>Up or Down</td>
     </tr>
     <tr>
       <td>Accept selected candidate</td>
       <td>Enter, Tab, or Right</td>
-      <td>Return, ⇥, or →</td>
+      <td>Return, Tab, or Right</td>
     </tr>
     <tr>
       <td>Dismiss completion popup</td>
       <td>Esc</td>
-      <td>⎋</td>
+      <td>Esc</td>
     </tr>
     </tbody>
   </table>
@@ -731,161 +727,171 @@ References on default Ace shortcuts:
     <tr>
       <td>Move focus to Source Editor</td>
       <td>Ctrl+1</td>
-      <td>⌃1</td>
+      <td>Ctrl+1</td>
     </tr>
     <tr>
       <td>Zoom Source Editor</td>
       <td>Ctrl+Shift+1</td>
-      <td>⌃⇧1</td>
+      <td>Ctrl+Shift+1</td>
     </tr>
     <tr>
       <td>Move focus to Console</td>
       <td>Ctrl+2</td>
-      <td>⌃2</td>
+      <td>Ctrl+2</td>
     </tr>
     <tr>
       <td>Zoom Console</td>
       <td>Ctrl+Shift+2</td>
-      <td>⌃⇧2</td>
+      <td>Ctrl+Shift+2</td>
     </tr>
     <tr>
       <td>Move focus to Help</td>
       <td>Ctrl+3</td>
-      <td>⌃3</td>
+      <td>Ctrl+3</td>
     </tr>
     <tr>
       <td>Zoom Help</td>
       <td>Ctrl+Shift+3</td>
-      <td>⌃⇧3</td>
+      <td>Ctrl+Shift+3</td>
     </tr>
     <tr>
       <td>Move Focus to Terminal</td>
-      <td>Alt+Shift+T</td>
-      <td>⌥⇧T</td>
+      <td>Alt+Shift+M</td>
+      <td>Option+Shift+M</td>
     </tr>
     <tr>
       <td>Show History</td>
       <td>Ctrl+4</td>
-      <td>⌃4</td>
+      <td>Ctrl+4</td>
     </tr>
     <tr>
       <td>Zoom History</td>
       <td>Ctrl+Shift+4</td>
-      <td>⌃⇧4</td>
+      <td>Ctrl+Shift+4</td>
     </tr>
     <tr>
       <td>Show Files</td>
       <td>Ctrl+5</td>
-      <td>⌃5</td>
+      <td>Ctrl+5</td>
     </tr>
     <tr>
       <td>Zoom Files</td>
       <td>Ctrl+Shift+5</td>
-      <td>⌃⇧5</td>
+      <td>Ctrl+Shift+5</td>
     </tr>
     <tr>
       <td>Show Plots</td>
       <td>Ctrl+6</td>
-      <td>⌃6</td>
+      <td>Ctrl+6</td>
     </tr>
     <tr>
       <td>Zoom Plots</td>
       <td>Ctrl+Shift+6</td>
-      <td>⌃⇧6</td>
+      <td>Ctrl+Shift+6</td>
     </tr>
     <tr>
       <td>Show Packages</td>
       <td>Ctrl+7</td>
-      <td>⌃7</td>
+      <td>Ctrl+7</td>
     </tr>
     <tr>
       <td>Zoom Packages</td>
       <td>Ctrl+Shift+7</td>
-      <td>⌃⇧7</td>
+      <td>Ctrl+Shift+7</td>
     </tr>
     <tr>
       <td>Show Environment</td>
       <td>Ctrl+8</td>
-      <td>⌃8</td>
+      <td>Ctrl+8</td>
     </tr>
     <tr>
       <td>Zoom Environment</td>
       <td>Ctrl+Shift+8</td>
-      <td>⌃⇧8</td>
+      <td>Ctrl+Shift+8</td>
     </tr>
     <tr>
       <td>Show Viewer</td>
       <td>Ctrl+9</td>
-      <td>⌃9</td>
+      <td>Ctrl+9</td>
     </tr>
     <tr>
       <td>Zoom Viewer</td>
       <td>Ctrl+Shift+9</td>
-      <td>⌃⇧9</td>
+      <td>Ctrl+Shift+9</td>
     </tr>
     <tr>
       <td>Show Git/SVN</td>
       <td>Ctrl+F1</td>
-      <td>⌃F1</td>
+      <td>Ctrl+F1</td>
     </tr>
     <tr>
       <td>Zoom Git/SVN</td>
       <td>Ctrl+Shift+F1</td>
-      <td>⌃⇧F1</td>
+      <td>Ctrl+Shift+F1</td>
     <tr>
       <td>Show Build</td>
       <td>Ctrl+F2</td>
-      <td>⌃F2</td>
+      <td>Ctrl+F2</td>
     </tr>
     <tr>
       <td>Zoom Build</td>
       <td>Ctrl+Shift+F2</td>
-      <td>⌃⇧F2</td>
+      <td>Ctrl+Shift+F2</td>
     </tr>
     <tr>
       <td>Show Connections</td>
       <td>Ctrl+F5</td>
-      <td>⌃F5</td>
+      <td>Ctrl+F5</td>
     </tr>
     <tr>
       <td>Zoom Connections</td>
       <td>Ctrl+Shift+F5</td>
-      <td>⌃⇧F5</td>
+      <td>Ctrl+Shift+F5</td>
     </tr>
     <tr>
       <td>Zoom Tutorial</td>
       <td>Ctrl+Shift+F6</td>
-      <td>⌃⇧F6</td>
+      <td>Ctrl+Shift+F6</td>
     </tr>
     <tr>
       <td>Show Find in Files Results</td>
       <td>Ctrl+F6</td>
-      <td>⌃F6</td>
+      <td>Ctrl+F6</td>
     </tr>
     <tr>
       <td>Sync Editor &amp; PDF Preview</td>
       <td>Ctrl+F8</td>
-      <td>⌘F8</td>
+      <td>Command+F8</td>
     </tr>
     <tr>
       <td>Zoom left column</td>
       <td>Ctrl+Alt+Shift+F12</td>
-      <td>⌃⌥⇧F12</td>
+      <td>Ctrl+Option+Shift+F12</td>
     </tr>
     <tr>
       <td>Zoom right column</td>
       <td>Ctrl+Alt+Shift+F11</td>
-      <td>⌃⌥⇧F11</td>
+      <td>Ctrl+Option+Shift+F11</td>
+    </tr>
+    <tr>
+      <td>Show all panes</td>
+      <td>Ctrl+Alt+Shift+0</td>
+      <td>Ctrl+Alt+0</td>
+    </tr>
+    <tr>
+      <td>Add source column</td>
+      <td>Ctrl+F7</td>
+      <td>Ctrl+F7</td>
     </tr>
     <tr>
       <td>Global Options</td>
       <td>No shortcut</td>
-      <td>⌘, [comma] (Chrome, Desktop) ⌥⌘, [comma] (Safari, Firefox)</td>
+      <td>Command+, [comma] (Chrome, Desktop) Option+Command+, [comma] (Safari, Firefox)</td>
     </tr>
     <tr>
       <td>Project Options</td>
       <td>No shortcut</td>
-      <td>⇧⌘, [comma]</td>
+      <td>Shift+Command+, [comma]</td>
     </tr>
     </tbody>
   </table>
@@ -896,29 +902,34 @@ References on default Ace shortcuts:
     </thead>
     <tbody>
     <tr>
+      <td>Show Command Palette</td>
+      <td>Ctrl+Shift+P, Ctrl+Alt+Shift+P (Firefox)</td>
+      <td>Shift+Command+P</td>
+    </tr>
+    <tr>
       <td>Show Keyboard Shortcut Reference</td>
       <td>Alt+Shift+K</td>
-      <td>⌥⇧K</td>
+      <td>Option+Shift+K</td>
     </tr>
     <tr>
       <td>Search R Help</td>
       <td>Ctrl+Alt+F1</td>
-      <td>⌃⌥F1</td>
+      <td>Ctrl+Option+F1</td>
     </tr>
     <tr>
       <td>Find in Help Topic</td>
       <td>Ctrl+F</td>
-      <td>⌘F</td>
+      <td>Command+F</td>
     </tr>
     <tr>
       <td>Previous Help Topic</td>
       <td>Shift+Alt+F2</td>
-      <td>⌥⇧F2</td>
+      <td>Option+Shift+F2</td>
     </tr>
     <tr>
       <td>Next Help Topic</td>
       <td>Shift+Alt+F3</td>
-      <td>⌥⇧F3</td>
+      <td>Option+Shift+F3</td>
     </tr>
     </tbody>
   </table>
@@ -931,32 +942,32 @@ References on default Ace shortcuts:
     <tr>
       <td>Install and Restart</td>
       <td>Ctrl+Shift+B</td>
-      <td>⇧⌘B</td>
+      <td>Shift+Command+B</td>
     </tr>
     <tr>
       <td>Load All (devtools)</td>
       <td>Ctrl+Shift+L</td>
-      <td>⇧⌘L</td>
+      <td>Shift+Command+L</td>
     </tr>
     <tr>
       <td>Test Package (Desktop)</td>
       <td>Ctrl+Shift+T</td>
-      <td>⇧⌘T</td>
+      <td>Shift+Command+T</td>
     </tr>
     <tr>
       <td>Test Package (Web)</td>
       <td>Ctrl+Alt+F7</td>
-      <td>⌥⌘F7</td>
+      <td>Option+Command+F7</td>
     </tr>
     <tr>
       <td>Check Package</td>
       <td>Ctrl+Shift+E</td>
-      <td>⇧⌘E</td>
+      <td>Shift+Command+E</td>
     </tr>
     <tr>
       <td>Document Package</td>
       <td>Ctrl+Shift+D</td>
-      <td>⇧⌘D</td>
+      <td>Shift+Command+D</td>
     </tr>
     </tbody>
   </table>
@@ -969,7 +980,7 @@ References on default Ace shortcuts:
     <tr>
       <td>Toggle Breakpoint</td>
       <td>Shift+F9</td>
-      <td>⇧F9</td>
+      <td>Shift+F9</td>
     </tr>
     <tr>
       <td>Execute Next Line</td>
@@ -979,27 +990,22 @@ References on default Ace shortcuts:
     <tr>
       <td>Step Into Function</td>
       <td>Shift+F4</td>
-      <td>⇧F4</td>
+      <td>Shift+F4</td>
     </tr>
     <tr>
       <td>Finish Function/Loop</td>
-      <td>Shift+F6</td>
-      <td>⇧F6</td>
+      <td>Shift+F7</td>
+      <td>Shift+F7</td>
     </tr>
     <tr>
       <td>Continue</td>
       <td>Shift+F5</td>
-      <td>⇧F5</td>
+      <td>Shift+F5</td>
     </tr>
     <tr>
       <td>Stop Debugging</td>
       <td>Shift+F8</td>
-      <td>⇧F8</td>
-    </tr>
-    <tr>
-      <td>Profile selected lines</td>
-      <td>Ctrl+Alt+Shift+P</td>
-      <td>⌃⌥⇧P</td>
+      <td>Shift+F8</td>
     </tr>
     </tbody>
   </table>
@@ -1012,12 +1018,12 @@ References on default Ace shortcuts:
     <tr>
       <td>Previous plot</td>
       <td>Ctrl+Alt+F11 or Ctrl+Shift+PageUp</td>
-      <td>⌥⌘F11 or ⇧⌘⇞</td>
+      <td>Option+Command+F11 or Shift+Command+PageUp</td>
     </tr>
     <tr>
       <td>Next plot</td>
       <td>Ctrl+Alt+F12 or Ctrl+Shift+PageDown</td>
-      <td>⌥⌘F12 or ⇧⌘⇟</td>
+      <td>Option+Command+F12 or Shift+Command+PageDown</td>
     </tr>
     </tbody>
   </table>
@@ -1030,17 +1036,17 @@ References on default Ace shortcuts:
     <tr>
       <td>Diff active source document</td>
       <td>Ctrl+Alt+D</td>
-      <td>⌃⌥D</td>
+      <td>Ctrl+Option+D</td>
     </tr>
     <tr>
       <td>Commit changes</td>
       <td>Ctrl+Alt+M</td>
-      <td>⌃⌥M</td>
+      <td>Ctrl+Option+M</td>
     </tr>
     <tr>
       <td>Scroll diff view</td>
       <td>Ctrl+Up/Down</td>
-      <td>⌃↑ or ↓</td>
+      <td>Ctrl+Up or Down</td>
     </tr>
     <tr>
       <td>Stage/Unstage (Git)</td>
@@ -1063,12 +1069,12 @@ References on default Ace shortcuts:
     <tr>
       <td>Quit Session (desktop only)</td>
       <td>Ctrl+Q</td>
-      <td>⌘Q</td>
+      <td>Command+Q</td>
     </tr>
     <tr>
       <td>Restart R Session</td>
       <td>Ctrl+Shift+F10</td>
-      <td>⇧⌘F10</td>
+      <td>Shift+Command+F10</td>
     </tr>
     </tbody>
   </table>
@@ -1081,22 +1087,22 @@ References on default Ace shortcuts:
     <tr>
       <td>New Terminal</td>
       <td>Shift+Alt+R</td>
-      <td>⌥⇧R</td>
+      <td>Option+Shift+R</td>
     </tr>
     <tr>
       <td>Move Focus to Terminal</td>
-      <td>Shift+Alt+T</td>
-      <td>⌥⇧T</td>
+      <td>Shift+Alt+M</td>
+      <td>Option+Shift+M</td>
     </tr>
     <tr>
       <td>Previous Terminal</td>
       <td>Shift+Alt+F11</td>
-      <td>⌥⇧F11</td>
+      <td>Option+Shift+F11</td>
     </tr>
     <tr>
       <td>Next Terminal</td>
       <td>Shift+Alt+F12</td>
-      <td>⌥⇧F12</td>
+      <td>Option+Shift+F12</td>
     </tr>
     </tbody>
   </table>
@@ -1109,57 +1115,57 @@ References on default Ace shortcuts:
     <tr>
       <td>File Menu</td>
       <td>Alt+Shift+F</td>
-      <td>⌃⌥F</td>
+      <td>Ctrl+Option+F</td>
     </tr>
     <tr>
       <td>Edit Menu</td>
       <td>Alt+Shift+E</td>
-      <td>⌃⌥I</td>
+      <td>Ctrl+Option+I</td>
     </tr>
     <tr>
       <td>Code Menu</td>
       <td>Alt+Shift+C</td>
-      <td>⌃⌥C</td>
+      <td>Ctrl+Option+C</td>
     </tr>
     <tr>
       <td>View Menu</td>
       <td>Alt+Shift+V</td>
-      <td>⌃⌥V</td>
+      <td>Ctrl+Option+V</td>
     </tr>
     <tr>
       <td>Plots Menu</td>
       <td>Alt+Shift+P</td>
-      <td>⌃⌥P</td>
+      <td>Ctrl+Option+P</td>
     </tr>
     <tr>
       <td>Session Menu</td>
-      <td>Ctrl+Alt+Shift+S</td>
-      <td>⌃⌥⇧S</td>
+      <td>Alt+Shift+S</td>
+      <td>Ctrl+Option+S</td>
     </tr>
     <tr>
       <td>Build Menu</td>
       <td>Alt+Shift+B</td>
-      <td>⌃⌥B</td>
+      <td>Ctrl+Option+B</td>
     </tr>
     <tr>
       <td>Debug Menu</td>
       <td>Alt+Shift+U</td>
-      <td>⌃⌥U</td>
+      <td>Ctrl+Option+U</td>
     </tr>
     <tr>
       <td>Profile Menu</td>
       <td>Alt+Shift+I</td>
-      <td>⌃⌥O</td>
+      <td>Ctrl+Option+O</td>
     </tr>
     <tr>
       <td>Tools Menu</td>
-      <td>Alt+Shift+S</td>
-      <td>⌃⌥L</td>
+      <td>Alt+Shift+T</td>
+      <td>Ctrl+Option+T</td>
     </tr>
     <tr>
       <td>Help Menu</td>
       <td>Alt+Shift+H</td>
-      <td>⌃⌥H</td>
+      <td>Ctrl+Option+H</td>
     </tr>
     </tbody>
   </table>

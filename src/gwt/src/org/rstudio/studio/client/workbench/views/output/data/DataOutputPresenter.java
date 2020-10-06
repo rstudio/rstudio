@@ -1,7 +1,7 @@
 /*
  * DataOutputPresenter.java
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,12 +18,12 @@ package org.rstudio.studio.client.workbench.views.output.data;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.events.HasEnsureHiddenHandlers;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.output.data.events.DataOutputCompletedEvent;
 
@@ -34,18 +34,21 @@ public class DataOutputPresenter extends BasePresenter
    {
       void ensureVisible(boolean activate);
    }
-   
+   public interface Binder extends CommandBinder<Commands, DataOutputPresenter>
+   {}
+
    @Inject
-   public DataOutputPresenter(GlobalDisplay globalDisplay,
-                              PaneManager paneManager,
+   public DataOutputPresenter(Binder binder,
                               Commands commands,
                               EventBus events,
                               Display view)
    {
       super(view);
       view_ = (DataOutputPane) view;
+      commands_ = commands;
+      binder.bind(commands, this);
    }
-   
+
    public void initialize()
    {
    }
@@ -62,6 +65,15 @@ public class DataOutputPresenter extends BasePresenter
 
       view_.outputCompleted(event);
    }
-   
+
+   @Handler
+   public void onActivateSQLResults()
+   {
+      // Ensure that console pane is not minimized
+      commands_.activateConsolePane().execute();
+      view_.bringToFront();
+   }
+
    private final DataOutputPane view_;
+   private final Commands commands_;
 }

@@ -1,0 +1,103 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui"
+    xmlns:rw='urn:import:org.rstudio.core.client.widget'>
+	<ui:style field="styles_" type="org.rstudio.studio.client.palette.ui.CommandPaletteEntry.Styles">
+		@external editor_dark;
+		@eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
+		
+		div.entry {
+			width: 100%;
+			font-family: proportionalFont;
+			font-size: 10pt;
+			padding-top: 6px;
+			padding-bottom: 6px;
+			padding-left: 10px;
+			padding-right: 6px;
+			position: relative;
+			display: flex;
+			flex-direction: row;
+			box-sizing: border-box;
+		}
+		
+		div.entry.clickable {
+			cursor: pointer;
+		}
+		
+		.entry:hover {
+			background-color: rgba(190, 190, 255, 0.2);
+		}
+		
+		.selected {
+			background-color: rgba(190, 190, 255, 0.4);
+		}
+		
+		.keyboard {
+			border: 1px solid #a0a0a0;
+			border-radius: 3px;
+			padding: 3px;
+			margin-left: 3px;
+			margin-right: 3px;
+			font-size: 8pt;
+		}
+		
+		.shortcut {
+			display: inline-block;
+			margin-left: -10px;
+		}
+		
+		.searchMatch {
+			font-weight: bold;
+			color: #000000;
+		}
+		
+		.editor_dark .searchMatch {
+			color: #ffffff;
+		}
+		
+		.context {
+			background-color: #f0f0f0;
+			font-size: 8pt;
+			margin-right: 5px;
+			padding: 3px;
+			border-radius: 4px;
+			padding-right: 5px;
+			padding-left: 5px;
+			display: flex;
+			flex-direction: row;
+		}
+		
+		.editor_dark .context {
+			background-color: rgba(255, 255, 255, 0.1);
+		}
+		
+		.disabled .name {
+			opacity: 0.5;
+		}
+		
+		.name {
+			flex-grow: 1;
+		}
+		
+		.invoker {
+			text-align: right;
+		}
+		
+		.plugin {
+			width: 9px;
+			height: 9px;
+			margin-top: 1px;
+			margin-right: 4px;
+		}
+	</ui:style>
+    <ui:image src="plugin.png" width="9" height="9" field="plugin"></ui:image>
+	<g:HTMLPanel styleName="{styles_.entry}">
+		<g:HTMLPanel ui:field="contextPanel_" styleName="{styles_.context}">
+        	<rw:DecorativeImage resource="{plugin}" ui:field="plugin_" styleName="{styles_.plugin}"/>
+			<g:Label ui:field="context_"></g:Label>
+		</g:HTMLPanel>
+		<g:Label styleName="{styles_.name}" ui:field="name_"></g:Label>
+		<g:HTMLPanel styleName="{styles_.invoker}" ui:field="invoker_">
+		</g:HTMLPanel>
+	</g:HTMLPanel>
+</ui:UiBinder> 

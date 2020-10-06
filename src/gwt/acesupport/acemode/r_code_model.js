@@ -1,7 +1,7 @@
 /*
  * r_code_model.js
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,6 +35,15 @@ function isOneOf(object, array)
       if (object === array[i])
          return true;
    return false;
+}
+
+function isControlFlowFunctionKeyword(value)
+{
+   return value === "if" ||
+          value === "for" ||
+          value === "while" ||
+          value === "repeat" ||
+          value === "function";
 }
 
 var ScopeManager = require("mode/r_scope_tree").ScopeManager;
@@ -813,7 +822,7 @@ var RCodeModel = function(session, tokenizer,
          position = iterator.getCurrentTokenPosition();
 
          // Skip roxygen comments.
-         var state = this.$session.getState(position.row);
+         var state = Utils.getPrimaryState(this.$session, position.row);
          if (state === "rd-start") {
             iterator.moveToEndOfRow();
             continue;
@@ -825,7 +834,7 @@ var RCodeModel = function(session, tokenizer,
          // create a scope when encountered within a chunk.
          var isInRMode = true;
          if (this.$codeBeginPattern)
-            isInRMode = /^r-/.test(this.$session.getState(iterator.$row));
+            isInRMode = /^r-/.test(state);
 
          // Add Markdown headers.
          //
@@ -1756,15 +1765,31 @@ var RCodeModel = function(session, tokenizer,
                          clone.bwdToMatchingToken() &&
                          clone.moveToPreviousToken())
                      {
-                        var currentValue = clone.currentValue();
-                        if (contains(
-                           ["if", "for", "while", "repeat", "else"],
-                           currentValue
-                        ))
+                        if (isControlFlowFunctionKeyword(clone.currentValue()))
                         {
-                           return this.$getIndent(
-                              this.$doc.getLine(clone.$row)
-                           ) + continuationIndent + continuationIndent;
+                           var line = this.$doc.getLine(clone.$row);
+
+                           // Look beyond nested control flow statements,
+                           // to handle cases like:
+                           //
+                           //    if (foo)
+                           //      if (bar)
+                           //        x <- 1
+                           //    |
+                           //
+                           if (!startedOnOperator)
+                           {
+                              while (clone.moveToPreviousToken() &&
+                                     clone.currentValue() === ")" &&
+                                     clone.bwdToMatchingToken() &&
+                                     clone.moveToPreviousToken() &&
+                                     isControlFlowFunctionKeyword(clone.currentValue()))
+                              {
+                                 line = this.$doc.getLine(clone.$row);
+                              }
+                           }
+
+                           return this.$getIndent(line) + continuationIndent + continuationIndent;
                         }
                      }
                   }

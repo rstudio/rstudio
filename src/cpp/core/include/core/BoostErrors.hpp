@@ -1,7 +1,7 @@
 /*
  * BoostErrors.hpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,21 +23,21 @@ namespace RSTUDIO_BOOST_NAMESPACE {
 
 namespace interprocess {
 
-const boost::system::error_category& interprocess_category() ;
+const boost::system::error_category& interprocess_category();
 
-class interprocess_exception ;
-boost::system::error_code ec_from_exception(const interprocess_exception& e) ;
+class interprocess_exception;
+boost::system::error_code ec_from_exception(const interprocess_exception& e);
 
 } // namespace interprocess
 
-class thread_resource_error ;
+class thread_resource_error;
 
 namespace thread_error {
 
-const boost::system::error_category& thread_category() ;
+const boost::system::error_category& thread_category();
 
 boost::system::error_code ec_from_exception(
-      const boost::thread_resource_error& e) ;
+      const boost::thread_resource_error& e);
 
 } // namespace thread_error
 

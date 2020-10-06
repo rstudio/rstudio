@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-20 by RStudio, PBC
+# Copyright (C) 2020 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -100,6 +100,7 @@ endif()
 set(RSTUDIO_PACKAGE_SUFFIX "-")
 
 if(RSTUDIO_SERVER)
+   # add rhel to package name for redhat enterprise linux builds
    if(IS_RHEL) 
       set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}rhel-")
    endif()

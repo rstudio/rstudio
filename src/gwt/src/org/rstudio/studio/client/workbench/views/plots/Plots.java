@@ -1,7 +1,7 @@
 /*
  * Plots.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -54,11 +54,8 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
-import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
 import org.rstudio.studio.client.workbench.views.plots.events.LocatorEvent;
-import org.rstudio.studio.client.workbench.views.plots.events.LocatorHandler;
 import org.rstudio.studio.client.workbench.views.plots.events.PlotsChangedEvent;
-import org.rstudio.studio.client.workbench.views.plots.events.PlotsChangedHandler;
 import org.rstudio.studio.client.workbench.views.plots.events.PlotsZoomSizeChangedEvent;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsState;
@@ -67,31 +64,30 @@ import org.rstudio.studio.client.workbench.views.plots.ui.export.ExportPlot;
 import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorChangedHandler;
 import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorManager;
 
-public class Plots extends BasePresenter implements PlotsChangedHandler,
-                                                    LocatorHandler,
-                                                    ConsolePromptHandler,
+public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
+                                                    LocatorEvent.Handler,
+                                                    ConsolePromptEvent.Handler,
                                                     DeferredInitCompletedEvent.Handler,
                                                     PlotsZoomSizeChangedEvent.Handler
 {
    public interface Parent extends HasWidgets, HasCustomizableToolbar
    {
    }
-   
-  
+
    public interface Display extends WorkbenchView, HasResizeHandlers
    {
       void showEmptyPlot();
       void showPlot(String plotUrl);
       String getPlotUrl();
-      
+
       void refresh();
-   
+
       PlotsSurface getPlotsSurface();
-      
+
       Parent getPlotsParent();
       Size getPlotFrameSize();
    }
-      
+
 
    @Inject
    public Plots(final Display view,
@@ -113,7 +109,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       exportPlot_ = GWT.create(ExportPlot.class);
       zoomWindow_ = null;
       zoomWindowDefaultSize_ = null;
-      
+
       locator_ = new Locator(view.getPlotsParent());
       locator_.addSelectionHandler(new SelectionHandler<Point>()
       {
@@ -126,7 +122,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
                      e.getSelectedItem().getX(),
                      e.getSelectedItem().getY()
                );
-               
+
                // re-scale points for OS X Quartz
                if (BrowseCap.isMacintoshDesktop())
                {
@@ -134,9 +130,9 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
                         p.getX() * (72.0 / 96.0),
                         p.getY() * (72.0 / 96.0));
                }
-               
+
             }
-            
+
             server.locatorCompleted(p, new SimpleRequestCallback<Void>());
          }
       });
@@ -145,81 +141,81 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       manipulatorManager_ = new ManipulatorManager(
          view_.getPlotsSurface(),
          commands,
-        
+
          new ManipulatorChangedHandler()
-         { 
+         {
             @Override
             public void onManipulatorChanged(JSONObject values)
-            { 
-               server_.setManipulatorValues(values, 
-                                            new ManipulatorRequestCallback()); 
-            }           
+            {
+               server_.setManipulatorValues(values,
+                                            new ManipulatorRequestCallback());
+            }
          },
-         
-         new ClickHandler() 
+
+         new ClickHandler()
          {
             @Override
             public void onClick(ClickEvent event)
             {
-               int x = new Double(event.getX()).intValue();
-               int y = new Double(event.getY()).intValue();
-               
+               int x = Double.valueOf(event.getX()).intValue();
+               int y = Double.valueOf(event.getY()).intValue();
+
                // Re-scale for OSX Quartz
                if (BrowseCap.isMacintoshDesktop())
                {
                   x *= (72.0 / 96.0);
                   y *= (72.0 / 96.0);
                }
-               
+
                server_.manipulatorPlotClicked(x, y, new ManipulatorRequestCallback());
-            }   
+            }
          }
       );
-      
+
       events.addHandler(DeferredInitCompletedEvent.TYPE, this);
       events.addHandler(PlotsZoomSizeChangedEvent.TYPE, this);
 }
-   
+
    public void onPlotsChanged(PlotsChangedEvent event)
    {
       // get the event
       PlotsState plotsState = event.getPlotsState();
-        
-      // clear progress 
+
+      // clear progress
       view_.setProgress(false);
       manipulatorManager_.setProgress(false);
-      
+
       // if this is the empty plot then clear the display
       // NOTE: we currently return a zero byte PNG as our "empty.png" from
       // the server. this is shown as a blank pane by Webkit, however
       // firefox shows the full URI of the empty.png rather than a blank
-      // pane. therefore, we put in this workaround. 
+      // pane. therefore, we put in this workaround.
       if (plotsState.getFilename().startsWith("empty."))
       {
-         view_.showEmptyPlot(); 
+         view_.showEmptyPlot();
       }
       else
       {
          String url = server_.getGraphicsUrl(plotsState.getFilename());
          view_.showPlot(url);
       }
-      
+
       // activate the plots tab if requested
       if (plotsState.getActivatePlots())
          view_.bringToFront();
-      
+
       // update plot size
       plotSize_ = new Size(plotsState.getWidth(), plotsState.getHeight());
 
       // manipulator
       manipulatorManager_.setManipulator(plotsState.getManipulator(),
                                          plotsState.getShowManipulator());
-      
+
       // locator
       if (locator_.isActive())
          locate();
-      
-      
+
+
       // reload zoom window if we have one
       if (Desktop.hasDesktopFrame())
          Desktop.getFrame().reloadZoomWindow();
@@ -240,19 +236,19 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       setChangePlotProgress();
       server_.previousPlot(new PlotRequestCallback());
    }
-   
+
    void onRemovePlot()
    {
       // delete plot gesture indicates we are done with locator
       safeClearLocator();
-      
+
       // confirm
       globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
-            
+
          "Remove Plot",
-         
+
          "Are you sure you want to remove the current plot?",
-  
+
          new ProgressOperation() {
             public void execute(final ProgressIndicator indicator)
             {
@@ -260,26 +256,26 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
                server_.removePlot(new VoidServerRequestCallback(indicator));
             }
          },
-      
+
          true
-      
+
        );
-      
+
       view_.bringToFront();
    }
 
    void onClearPlots()
-   {      
+   {
       // clear plots gesture indicates we are done with locator
       safeClearLocator();
-      
+
       // confirm
       globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
-            
+
          "Clear Plots",
-         
+
          "Are you sure you want to clear all of the plots in the history?",
-  
+
          new ProgressOperation() {
             public void execute(final ProgressIndicator indicator)
             {
@@ -287,18 +283,18 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
                server_.clearPlots(new VoidServerRequestCallback(indicator));
             }
          },
-      
+
          true
-      
+
        );
     }
 
-   
+
    void onSavePlotAsImage()
    {
       view_.bringToFront();
-      
-      final ProgressIndicator indicator = 
+
+      final ProgressIndicator indicator =
          globalDisplay_.getProgressIndicator("Error");
       indicator.onProgress("Preparing to export plot...");
 
@@ -317,27 +313,27 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
                indicator.onCompleted();
 
                exportPlot_.savePlotAsImage(globalDisplay_,
-                     server_, 
-                     context, 
+                     server_,
+                     context,
                      ExportPlotOptions.adaptToSize(
                            userState_.get().exportPlotOptions().getValue().cast(),
                            getPlotSize()),
-                     saveExportOptionsOperation_);  
+                     saveExportOptionsOperation_);
             }
 
             @Override
             public void onError(ServerError error)
             {
                indicator.onError(error.getUserMessage());
-            }           
+            }
          });
    }
-   
+
    void onSavePlotAsPdf()
    {
       view_.bringToFront();
-      
-      final ProgressIndicator indicator = 
+
+      final ProgressIndicator indicator =
          globalDisplay_.getProgressIndicator("Error");
       indicator.onProgress("Preparing to export plot...");
 
@@ -356,16 +352,16 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
                indicator.onCompleted();
 
                Size size = getPlotSize();
-               final SavePlotAsPdfOptions currentOptions = 
+               final SavePlotAsPdfOptions currentOptions =
                          userState_.get().savePlotAsPdfOptions().getValue().cast();
-               
+
                exportPlot_.savePlotAsPdf(
                  globalDisplay_,
-                 server_, 
+                 server_,
                  session_.getSessionInfo(),
                  defaultDir,
                  stem,
-                 currentOptions, 
+                 currentOptions,
                  pixelsToInches(size.width),
                  pixelsToInches(size.height),
                  new OperationWithInput<SavePlotAsPdfOptions>() {
@@ -388,31 +384,31 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
             public void onError(ServerError error)
             {
                indicator.onError(error.getUserMessage());
-            }           
+            }
          });
    }
-      
-   
-   
+
+
+
    void onCopyPlotToClipboard()
    {
       view_.bringToFront();
-      
+
       exportPlot_.copyPlotToClipboard(
-                              server_, 
+                              server_,
                               ExportPlotOptions.adaptToSize(
                                     userState_.get().exportPlotOptions().getValue().cast(),
                                     getPlotSize()),
-                              saveExportOptionsOperation_);    
+                              saveExportOptionsOperation_);
    }
-   
+
    private double pixelsToInches(int pixels)
    {
       return (double)pixels / 96.0;
    }
-   
+
    private OperationWithInput<ExportPlotOptions> saveExportOptionsOperation_ =
-      new OperationWithInput<ExportPlotOptions>() 
+      new OperationWithInput<ExportPlotOptions>()
       {
          public void execute(ExportPlotOptions options)
          {
@@ -426,19 +422,19 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
             }
          }
       };
-   
-   
+
+
    void onZoomPlot()
    {
       Size windowSize = ZoomUtils.getZoomWindowSize(
                               view_.getPlotFrameSize(), zoomWindowDefaultSize_);
-      
+
       // determine whether we should scale (see comment in ImageFrame.onLoad
       // for why we wouldn't want to scale)
       int scale = 1;
       if (Desktop.hasDesktopFrame() && BrowseCap.isMacintosh())
          scale = 0;
-      
+
       // compose url string
       String url = server_.getGraphicsUrl("plot_zoom?" +
                                           "width=" + windowSize.width + "&" +
@@ -447,9 +443,9 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
 
       // open the window
       ZoomUtils.openZoomWindow(
-         "_rstudio_zoom", 
-         url, 
-         windowSize, 
+         "_rstudio_zoom",
+         url,
+         windowSize,
          new OperationWithInput<WindowEx>() {
             @Override
             public void execute(WindowEx input)
@@ -466,13 +462,13 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       view_.setProgress(true);
       server_.refreshPlot(new PlotRequestCallback());
    }
-   
+
    @Override
    public void onDeferredInitCompleted(DeferredInitCompletedEvent event)
    {
       server_.refreshPlot(new PlotRequestCallback(false));
    }
-   
+
    void onShowManipulator()
    {
       manipulatorManager_.showManipulator();
@@ -482,7 +478,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    {
       return view_;
    }
-   
+
    private void safeClearLocator()
    {
       if (locator_.isActive())
@@ -502,25 +498,25 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
          });
       }
    }
-   
+
    private void setChangePlotProgress()
    {
       if (!Desktop.isDesktop())
          view_.setProgress(true);
    }
-   
+
    private class PlotRequestCallback extends ServerRequestCallback<Void>
    {
       public PlotRequestCallback()
       {
          this(true);
       }
-      
+
       public PlotRequestCallback(boolean showErrors)
       {
          showErrors_ = showErrors;
       }
-      
+
       @Override
       public void onResponseReceived(Void response)
       {
@@ -533,14 +529,14 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       public void onError(ServerError error)
       {
          view_.setProgress(false);
-         
+
          if (showErrors_)
          {
-            globalDisplay_.showErrorMessage("Server Error", 
+            globalDisplay_.showErrorMessage("Server Error",
                                             error.getUserMessage());
          }
       }
-      
+
       private final boolean showErrors_;
    }
 
@@ -559,34 +555,34 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    {
       locator_.clearDisplay();
    }
-   
+
    @Override
    public void onPlotsZoomSizeChanged(PlotsZoomSizeChangedEvent event)
    {
       zoomWindowDefaultSize_ = new Size(event.getWidth(), event.getHeight());
    }
-   
+
    private Size getPlotSize()
    {
       // NOTE: the reason we capture the plotSize_ from the PlotChangedEvent
       // is that the server can actually change the size of the plot
       // (e.g. for CairoSVG the width and height must be multiples of 4)
-      // in order for locator to work properly we need to use this size 
+      // in order for locator to work properly we need to use this size
       // rather than size of our current plot frame
-      
+
       if (plotSize_ != null) // first try to use the last size reported
          return plotSize_;
       else                   // then fallback to frame size
          return view_.getPlotFrameSize();
    }
-   
+
    private class ManipulatorRequestCallback extends ServerRequestCallback<Void>
    {
       public ManipulatorRequestCallback()
       {
          manipulatorManager_.setProgress(true);
       }
-      
+
       @Override
       public void onResponseReceived(Void response)
       {
@@ -599,11 +595,11 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       public void onError(ServerError error)
       {
          manipulatorManager_.setProgress(false);
-         globalDisplay_.showErrorMessage("Server Error", 
+         globalDisplay_.showErrorMessage("Server Error",
                                          error.getUserMessage());
-         
+
       }
-      
+
    }
 
    private final Display view_;
@@ -616,10 +612,10 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    private final ManipulatorManager manipulatorManager_;
    private WindowEx zoomWindow_;
    private Size zoomWindowDefaultSize_;
-   
+
    // export plot impl
    private final ExportPlot exportPlot_;
-   
+
    // size of most recently rendered plot
    Size plotSize_ = null;
 }

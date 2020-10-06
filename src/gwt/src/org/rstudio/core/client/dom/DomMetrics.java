@@ -1,7 +1,7 @@
 /*
  * DomMetrics.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,7 +22,7 @@ import org.rstudio.core.client.Size;
 import org.rstudio.core.client.widget.FontSizer;
 
 public class DomMetrics
-{ 
+{
    public static Size measureHTML(String html)
    {
       return measureHTML(html, "gwt-Label");
@@ -34,38 +34,38 @@ public class DomMetrics
       measureHTML.setStyleName(styleName);
       measureHTML.getElement().getStyle().setFloat(Style.Float.LEFT);
       measureHTML.setWordWrap(false);
-      
+
       // add it to the dom (hidden)
       RootPanel.get().add(measureHTML, -2000, -2000);
-      
+
       // insert the text (preformatted) and measure it
       measureHTML.setHTML(html);
-      Size textSize = new Size(measureHTML.getOffsetWidth(), 
+      Size textSize = new Size(measureHTML.getOffsetWidth(),
                                measureHTML.getOffsetHeight());
       RootPanel.get().remove(measureHTML);
-      
+
       // return the size
-      return textSize; 
+      return textSize;
    }
-   
+
    public static Size measureCode(String code)
    {
       return DomMetrics.measureHTML(
             "<pre>" + DomUtils.textToPreHtml(code) + "</pre>",
             "ace_editor " + FontSizer.getNormalFontSizeClass());
    }
-   
+
    public static Size adjustedElementSizeToDefaultMax()
    {
       Size size = new Size(Window.getClientWidth(), Window.getClientHeight());
-      size = DomMetrics.adjustedElementSize(size, 
-                                            null, 
+      size = DomMetrics.adjustedElementSize(size,
+                                            null,
                                             70,   // pad
                                             100); // client margin
       return size;
    }
-   
-   public static Size adjustedElementSize(Size contentSize, 
+
+   public static Size adjustedElementSize(Size contentSize,
                                           Size minimumSize,
                                           int contentPad,
                                           int clientMargin)
@@ -73,14 +73,14 @@ public class DomMetrics
       // add the padding
       contentSize = new Size(contentSize.width + contentPad,
                              contentSize.height + contentPad);
-      
+
       // enforce the minimum (if specified)
       if (minimumSize != null)
       {
          contentSize = new Size(Math.max(contentSize.width, minimumSize.width),
                                 Math.max(contentSize.height, minimumSize.height));
       }
-      
+
       // maximum is client area - (margin * 2)
       Size maximumSize = new Size(Window.getClientWidth() - (clientMargin*2),
                                   Window.getClientHeight() - (clientMargin*2));
@@ -88,7 +88,7 @@ public class DomMetrics
       int height = Math.min(contentSize.height, maximumSize.height);
       return new Size(width, height);
    }
-   
+
    public static Size adjustedCodeElementSize(String code,
                                               int contentPad,
                                               int clientMargin)

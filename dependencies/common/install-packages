@@ -3,7 +3,7 @@
 #
 # install-packages
 #
-# Copyright (C) 2009-19 by RStudio, PBC
+# Copyright (C) 2020 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -82,14 +82,24 @@ mv $PACKAGE_ARCHIVE $PACKAGE_ARCHIVE_SHA1
 # install rsconnect master rstudio
 # install renv master rstudio
 
-RHOME=$(Rscript -e 'Sys.getenv("R_HOME")')
-if [[ ! -w $RHOME ]]; then
-  echo "$RHOME is not writable. Creating user R library directory."
-  mkdir -p $(Rscript -e 'cat(path.expand(Sys.getenv("R_LIBS_USER")))')
+# ascertain the site library. this is somewhat tricky since this script must
+# run on a variety of Linux distributions early in the Docker build process.
+# the lookup order is as follows:
+# 1. the first .Library.site, if defined; otherwise
+# 2. the last element of .libPaths()
+RPKGLIB=$(Rscript -e 'cat(if(length(.Library.site) > 0) { .Library.site[[1]] } else { tail(.libPaths(), n = 1) })')
+if [[ ! -w $RPKGLIB ]]; then
+  echo "$RPKGLIB is not writable. Creating user R library directory."
+  RPKGLIB=$(Rscript -e 'cat(path.expand(Sys.getenv("R_LIBS_USER")))')
+  mkdir -p "$RPKGLIB"
 fi
 
-# Packages needed to run tests
-Rscript -e "if("'!'"require(testthat, quietly = TRUE)) { install.packages('testthat', repos='https://cran.rstudio.com/') }"
+# install packages needed to run tests
+for RPKG in rmarkdown renv testthat xml2 yaml; do
+    RINSTALLCMD="if("'!'"require($RPKG, quietly = TRUE)) { install.packages('$RPKG', lib='$RPKGLIB', repos='https://cran.rstudio.com/') }"
+    echo "> $RINSTALLCMD"
+    Rscript -e "$RINSTALLCMD"
+done
 
 # back to install-dir
 cd $INSTALL_DIR

@@ -1,7 +1,7 @@
 /*
  * NotebookQueueUnit.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -69,7 +69,7 @@ Error fillExecRange(const json::Array& in, std::list<ExecRange>* pOut)
 
 void fillJsonRange(const std::list<ExecRange>& in, json::Array* pOut)
 {
-   for (const ExecRange range : in)
+   for (const ExecRange& range : in)
    {
       pOut->push_back(range.toJson());
    }
@@ -182,8 +182,9 @@ Error NotebookQueueUnit::parseOptions(json::Object* pOptions)
 
 Error NotebookQueueUnit::innerCode(std::string* pCode)
 {
-   return r::exec::RFunction(".rs.extractChunkInnerCode", 
-         string_utils::wideToUtf8(code_)).call(pCode);
+   return r::exec::RFunction(".rs.extractChunkInnerCode")
+       .addParam(string_utils::wideToUtf8(code_))
+       .callUtf8(pCode);
 }
 
 bool NotebookQueueUnit::hasPendingRanges()
@@ -198,7 +199,7 @@ void NotebookQueueUnit::updateFrom(const NotebookQueueUnit& other)
 
    // we don't support removing or changing executable ranges, so process only
    // additions
-   std::list<ExecRange>::iterator i = pending_.begin(); 
+   std::list<ExecRange>::iterator i = pending_.begin();
    for (std::list<ExecRange>::const_iterator o = other.pending_.begin();
         o != other.pending_.end();
         o ++)

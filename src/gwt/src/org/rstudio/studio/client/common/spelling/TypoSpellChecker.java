@@ -1,7 +1,7 @@
 /*
  * SpellChecker.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.common.spelling;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -34,19 +35,16 @@ import org.rstudio.core.client.Mutable;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.jsonrpc.RequestLog;
 import org.rstudio.core.client.jsonrpc.RequestLogEntry;
-import org.rstudio.core.client.regex.Match;
-import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.spelling.model.SpellCheckerResult;
+import org.rstudio.studio.client.common.spelling.model.SpellingLanguage;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchList;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.events.ListChangedEvent;
+import org.rstudio.studio.client.workbench.prefs.model.SpellingPrefsContext;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
-import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
-import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
-import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.SpellingDoc;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -169,8 +167,7 @@ public class TypoSpellChecker
       void writeDictionary(ArrayList<String> words);
 
       void invalidateAllWords();
-      void invalidateMisspelledWords();
-      void invalidateWord(String word);
+      void invalidateWord(String word, boolean userDictionary);
 
       void releaseOnDismiss(HandlerRegistration handler);
    }
@@ -215,6 +212,7 @@ public class TypoSpellChecker
    @Inject
    void initialize(SpellingService spellingService, WorkbenchListManager workbenchListManager, UserPrefs uiPrefs)
    {
+      spellingService_ = spellingService;
       userDictionary_ = workbenchListManager.getUserDictionaryList();
       userPrefs_ = uiPrefs;
 
@@ -245,6 +243,13 @@ public class TypoSpellChecker
       if (customDictionaries.length() > 0)
          loadCustomDictionaries(customDictionaries);
    }
+   
+   public boolean realtimeSpellcheckEnabled()
+   {
+      return userPrefs_.realTimeSpellchecking().getValue() &&
+             typoNative_ != null && loadedDict_ != null &&
+             canRealtimeSpellcheckDict(loadedDict_);
+   }
 
    // Check the spelling of a single word, directly returning an
    // array of suggestions for corrections. The array is empty if the
@@ -274,6 +279,16 @@ public class TypoSpellChecker
 
    public void checkSpelling(List<String> words, final ServerRequestCallback<SpellCheckerResult> callback)
    {
+      // If realtime is turned off call the backend spellchecker because we haven't loaded a
+      // dictionary on the frontend. Ideally we DO load the frontend dictionary but currently
+      // Typo.js isn't compatible with some of our dictionaries (see: TypoSpellChecker.realtimeBlacklist)
+      // so we need to keep the legacy call for now.
+      if (!userPrefs_.realTimeSpellchecking().getValue())
+      {
+         spellingService_.checkSpelling(words, callback);
+         return;
+      }
+
       // allocate results
       final SpellCheckerResult spellCheckerResult = new SpellCheckerResult();
 
@@ -292,7 +307,7 @@ public class TypoSpellChecker
          }
          else
          {
-            if (typoNative_.check(word))
+            if (typoNative_.check(word) || checkCustomDicts(word))
             {
                spellCheckerResult.getCorrect().add(word);
             }
@@ -307,16 +322,49 @@ public class TypoSpellChecker
 
    public void addToUserDictionary(final String word)
    {
+      // append to user dictionary (this is async so the in-memory list of 
+      // ignored words won't update immediately)
       userDictionary_.append(word);
-      context_.invalidateWord(word);
+      
+      // add the words to the ignore list (necessary for contexts that 
+      // rely on the word being on the ignore list for correct handling)
+      // (note that allIgnoredWords_ will soon be overwritten after the
+      // userDictioanry_ list changed handler is invoked)
+      allIgnoredWords_.add(word);
+      
+      // invalidate the context
+      context_.invalidateWord(word, true);
+   }
+   
+   public boolean isIgnoredWord(String word)
+   {
+      return contextDictionary_.contains(word);
    }
 
    public void addIgnoredWord(String word)
    {
       contextDictionary_.add(word);
+      writeContextDictionary(word);
+   }
+   
+   public void removeIgnoredWord(String word)
+   {
+      contextDictionary_.remove(word);
+      writeContextDictionary(word);
+   }
+   
+   private void writeContextDictionary(String affectedWord)
+   {
       context_.writeDictionary(contextDictionary_);
       updateIgnoredWordsIndex();
-      context_.invalidateWord(word);
+      context_.invalidateWord(affectedWord, false);
+   }
+
+   /* Support old style async suggestion calls for blacklisted dictionaries */
+   public void legacySuggestionList(String word,
+                              ServerRequestCallback<JsArrayString> callback)
+   {
+      spellingService_.suggestionList(word, callback);
    }
 
    public String[] suggestionList(String word)
@@ -330,7 +378,8 @@ public class TypoSpellChecker
    }
    private boolean isWordIgnored(String word)
    {
-      return (allIgnoredWords_.contains(word) ||
+      return (domainSpecificWords_.contains(word.toLowerCase()) ||
+              allIgnoredWords_.contains(word) ||
               ignoreUppercaseWord(word) ||
               ignoreWordWithNumbers(word));
    }
@@ -370,9 +419,29 @@ public class TypoSpellChecker
 
    private void loadDictionary()
    {
-      final String language = userPrefs_.spellingDictionaryLanguage().getValue();
+      String language = userPrefs_.spellingDictionaryLanguage().getValue();
 
-      if (!userPrefs_.realTimeSpellchecking().getValue() || typoLoaded_ && loadedDict_.equals(language))
+      // validate that the language is available
+      SpellingPrefsContext context = userPrefs_.spellingPrefsContext().getValue();
+      JsArray<SpellingLanguage> availableLanguages = context.getAvailableLanguages();
+      boolean isValid = false;
+      for (int i=0; i<availableLanguages.length(); i++)
+      {
+         if (language.equals(availableLanguages.get(i).getId()))
+         {
+            isValid = true;
+            break;
+         }
+      }
+      
+      // if the language isn't available then fall back to en_US
+      if (!isValid)
+      {
+         language = "en_US";
+      }
+      
+      if (!userPrefs_.realTimeSpellchecking().getValue() ||
+           typoLoaded_ && loadedDict_.equals(language))
          return;
 
       // See canRealtimeSpellcheckDict comment, temporary stop gap
@@ -421,39 +490,25 @@ public class TypoSpellChecker
       }
    }
 
-   public boolean shouldCheckSpelling(DocDisplay dd, Range r)
+   public boolean shouldCheckSpelling(SpellingDoc spellingDoc, SpellingDoc.WordRange wordRange)
    {
-      String word = dd.getTextForRange(r);
+      String word = spellingDoc.getText(wordRange);
+      if (!shouldCheckWord(word))
+         return false;
+        
+      // source-specific knowledge of whether to check
+      return spellingDoc.shouldCheck(wordRange);
+   }
+   
+   public boolean shouldCheckWord(String word)
+   {
       // Don't worry about pathologically long words
-      if (r.getEnd().getColumn() - r.getStart().getColumn() > 250)
+      if (word.length() > 250)
          return false;
 
       if (isWordIgnored(word))
          return false;
-
-      // Don't spellcheck yaml
-      Scope s = ((AceEditor)dd).getScopeAtPosition(r.getStart());
-      if (s != null && s.isYaml())
-         return false;
-
-      // This will capture all braced text in a way that the
-      // highlight rules don't and shouldn't.
-      int start = r.getStart().getColumn();
-      int end = start + word.length();
-      String line = dd.getLine(r.getStart().getRow());
-      Pattern p =  Pattern.create("\\{[^\\{\\}]*" + word + "[^\\{\\}]*\\}");
-      Match m = p.match(line, 0);
-      while (m != null)
-      {
-         // ensure that the match is the specific word we're looking
-         // at to fix edge cases such as {asdf}asdf
-         if (m.getIndex() < start &&
-             (m.getIndex() + m.getValue().length()) > end)
-            return false;
-
-         m = m.nextMatch();
-      }
-
+      
       return true;
    }
 
@@ -462,7 +517,7 @@ public class TypoSpellChecker
       severe issues with. This is being tracked to be fixed in issue #6041 as
       soon as possible so this can then be removed.
     */
-   private static String[] realtimeDictBlacklist = {"cs_CZ", "de_DE_neu", "lt_LT", "pt_BR", "it_IT"};
+   private final static String[] realtimeDictBlacklist = {"lt_LT", "lt_LT_new", "pt_BR", "it_IT"};
    public static boolean canRealtimeSpellcheckDict(String dict)
    {
       boolean exists = false;
@@ -499,6 +554,7 @@ public class TypoSpellChecker
    private final ExternalJavaScriptLoader typoLoader_ =
          new ExternalJavaScriptLoader(TypoResources.INSTANCE.typojs().getSafeUri().asString());
 
+   private SpellingService spellingService_;
    private UserPrefs userPrefs_;
 }
 

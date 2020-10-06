@@ -1,7 +1,7 @@
 /*
  * Logger.cpp
  * 
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant to the terms of a commercial license agreement
  * with RStudio, then this program is licensed to you under the following terms:
@@ -23,13 +23,14 @@
 
 #include <shared_core/Logger.hpp>
 
+#include <cassert>
+#include <sstream>
+
 #include <boost/noncopyable.hpp>
 #include <boost/optional.hpp>
 
-#include <sstream>
-
-#include <shared_core/Error.hpp>
 #include <shared_core/DateTime.hpp>
+#include <shared_core/Error.hpp>
 #include <shared_core/ILogDestination.hpp>
 #include <shared_core/ReaderWriterMutex.hpp>
 
@@ -286,27 +287,32 @@ std::string cleanDelimiters(const std::string& in_str)
 
 void logError(const Error& in_error)
 {
-   logger().writeMessageToDestinations(LogLevel::ERR, in_error.asString());
+   if (!in_error.isExpected())
+      logger().writeMessageToDestinations(LogLevel::ERR, in_error.asString());
 }
 
 void logError(const Error& in_error, const ErrorLocation& in_location)
 {
-   logger().writeMessageToDestinations(LogLevel::ERR, in_error.asString(), "", in_location);
+   if (!in_error.isExpected())
+      logger().writeMessageToDestinations(LogLevel::ERR, in_error.asString(), "", in_location);
 }
 
 void logErrorAsWarning(const Error& in_error)
 {
-   logger().writeMessageToDestinations(LogLevel::WARN, in_error.asString());
+   if (!in_error.isExpected())
+      logger().writeMessageToDestinations(LogLevel::WARN, in_error.asString());
 }
 
 void logErrorAsInfo(const Error& in_error)
 {
-   logger().writeMessageToDestinations(LogLevel::INFO, in_error.asString());
+   if (!in_error.isExpected())
+      logger().writeMessageToDestinations(LogLevel::INFO, in_error.asString());
 }
 
 void logErrorAsDebug(const Error& in_error)
 {
-   logger().writeMessageToDestinations(LogLevel::DEBUG, in_error.asString());
+   if (!in_error.isExpected())
+      logger().writeMessageToDestinations(LogLevel::DEBUG, in_error.asString());
 }
 
 void logErrorMessage(const std::string& in_message, const std::string& in_section)

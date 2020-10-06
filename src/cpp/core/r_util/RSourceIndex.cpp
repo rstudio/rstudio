@@ -1,7 +1,7 @@
 /*
  * RSourceIndex.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -219,57 +219,91 @@ bool isMethodOrClassDefinition(const RToken& token)
 
 class IndexStatus
 {
+   
 public:
    
-   IndexStatus()
-      : braceLevel_(0),
-        parenLevel_(0),
-        bracketLevel_(0),
-        doubleBracketLevel_(0)
-   {}
+   IndexStatus(const RTokens& tokens)
+      : tokens_(tokens)
+   {
+   }
    
+   // The indexer maintains a vector of indices, recording
+   // the indices at which brackets were discovered. Tokens
+   // are popped off the stack as right brackets are discovered.
    void update(const RTokenCursor& cursor)
    {
       switch (cursor.type())
       {
       
-      case RToken::LBRACE: ++braceLevel_; break;
-      case RToken::LPAREN: ++parenLevel_; break;
-      case RToken::LBRACKET: ++bracketLevel_; break;
-      case RToken::LDBRACKET: ++doubleBracketLevel_; break;
+      // Left brackets
+      case RToken::LPAREN:
+      case RToken::LBRACE:
+      case RToken::LBRACKET:
+      case RToken::LDBRACKET:
+      {
+         // push offset of bracket position
+         stack_.push_back(cursor.offset());
+         break;
+      }
+      
+      // Right brackets
+      case RToken::RBRACE:
+      case RToken::RPAREN:
+      case RToken::RBRACKET:
+      case RToken::RDBRACKET:
+      {
+         // only pop if this is a matching bracket
+         std::size_t n = stack_.size();
+         if (n > 0)
+         {
+            // get the token at the recorded offset
+            auto offset = stack_[n - 1];
+            const RToken& token = tokens_.atUnsafe(offset);
+            
+            // check for matching types
+            auto lhsType = token.type();
+            auto rhsType = cursor.type();
+            if (token_utils::typeComplement(lhsType) == rhsType)
+               stack_.pop_back();
+         }
          
-      case RToken::RBRACE: --braceLevel_; break;
-      case RToken::RPAREN: --parenLevel_; break;
-      case RToken::RBRACKET: --bracketLevel_; break;
-      case RToken::RDBRACKET: --doubleBracketLevel_; break;
+         break;
+      }
          
-      default:
-         ; // no-op
+      // appease compiler
+      default: break;
          
       }
    }
    
    bool isAtTopLevel() const
    {
-      return braceLevel_ == 0 &&
-             parenLevel_ == 0 &&
-             bracketLevel_ == 0 &&
-             doubleBracketLevel_ == 0;
+      return stack_.empty();
    }
    
-   int braceLevel() const { return braceLevel_; }
-   int parenLevel() const { return parenLevel_; }
-   int bracketLevel() const { return bracketLevel_; }
-   int doubleBracketLevel() const { return doubleBracketLevel_; }
+   int count(RToken::TokenType type) const
+   {
+      return std::count_if(stack_.begin(), stack_.end(), [&](std::size_t index)
+      {
+         const RToken& token = tokens_.at(index);
+         return token.type() == type;
+      });
+   }
+   
+   const RTokens& tokens() const
+   {
+      return tokens_;
+   }
+   
+   const std::vector<std::size_t> stack() const
+   {
+      return stack_;
+   }
    
 private:
+   const RTokens& tokens_;
+   std::vector<std::size_t> stack_;
    
-   // NOTE: We use 'int' here to accomodate documents
-   // where we might have more closing than opening parens.
-   int braceLevel_;            // '{'
-   int parenLevel_;            // '('
-   int bracketLevel_;          // '['
-   int doubleBracketLevel_;    // '[['
 };
 
 void addSourceItem(RSourceItem::Type type,
@@ -282,7 +316,7 @@ void addSourceItem(RSourceItem::Type type,
                             type,
                             string_utils::strippedOfQuotes(token.contentAsUtf8()),
                             signature,
-                            status.braceLevel(),
+                            status.count(RToken::LBRACE),
                             token.row() + 1,
                             token.column() + 1));
 }
@@ -301,7 +335,9 @@ void addSourceItem(RSourceItem::Type type,
 
 typedef boost::function<void(const RTokenCursor&, const IndexStatus&, RSourceIndex*)> Indexer;
 
-void libraryCallIndexer(const RTokenCursor& cursor, const IndexStatus& status, RSourceIndex* pIndex)
+void libraryCallIndexer(const RTokenCursor& cursor,
+                        const IndexStatus& status,
+                        RSourceIndex* pIndex)
 {
    if (!cursor.isType(RToken::ID))
       return;
@@ -337,7 +373,9 @@ void libraryCallIndexer(const RTokenCursor& cursor, const IndexStatus& status, R
    }
 }
 
-void s4MethodIndexer(const RTokenCursor& cursor, const IndexStatus& status, RSourceIndex* pIndex)
+void s4MethodIndexer(const RTokenCursor& cursor,
+                     const IndexStatus& status,
+                     RSourceIndex* pIndex)
 {
    if (isMethodOrClassDefinition(cursor))
    {
@@ -394,36 +432,119 @@ void s4MethodIndexer(const RTokenCursor& cursor, const IndexStatus& status, RSou
    }
 }
 
-void variableAssignmentIndexer(const RTokenCursor& cursor, const IndexStatus& status, RSourceIndex* pIndex)
+bool isVariableIndexable(const RTokenCursor& cursor,
+                         const IndexStatus& status,
+                         RSourceIndex* pIndex)
 {
-   if (status.isAtTopLevel() && isLeftAssign(cursor) && cursor.offset() >= 1)
+   // can't index if this is the first token
+   if (cursor.offset() == 0)
+      return false;
+   
+   // check that cursor is currently on assignment operator
+   if (!isLeftAssign(cursor))
+      return false;
+   
+   // allow indexing at top level
+   auto&& stack = status.stack();
+   if (stack.empty())
+      return true;
+   
+   // allow indexing within an R6Class definition
+   for (auto&& index : stack)
    {
-      const RToken& nextToken = cursor.nextToken();
-      RSourceItem::Type type =
-            nextToken.contentEquals(L"function") ?
-            RSourceItem::Function :
-            RSourceItem::Variable;
+      // create token cursor and move to idnex
+      RTokenCursor clone = cursor.clone();
+      clone.setOffset(index);
       
-      const RToken& prevToken = cursor.previousToken();
-      bool isExpectedType =
-            prevToken.isType(RToken::ID) ||
-            prevToken.isType(RToken::STRING);
+      // try moving to previous token
+      if (!clone.moveToPreviousSignificantToken())
+         continue;
       
-      if (isExpectedType)
-      {
-         if (cursor.offset() >= 2)
-         {
-            const RToken& prevPrevToken = cursor.previousToken(2);
-            if (isBinaryOp(prevPrevToken))
-               return;
-         }
-         
-         addSourceItem(type,
-                       prevToken,
-                       status,
-                       pIndex);
-      }
+      // check that it's an R6Class
+      if (clone.contentEquals(L"R6Class"))
+         return true;
    }
+   
+   // disallow indexing otherwise
+   return false;
+   
+}
+
+void variableAssignmentIndexer(const RTokenCursor& cursor,
+                               const IndexStatus& status,
+                               RSourceIndex* pIndex)
+{
+   // check for indexable location
+   bool canIndex = isVariableIndexable(cursor, status, pIndex);
+   if (!canIndex)
+      return;
+
+   // validate that the previous token is a symbol / string
+   // (valid target for assignment)
+   const RToken& prevToken = cursor.previousToken();
+   bool isExpectedType =
+         prevToken.isType(RToken::ID) ||
+         prevToken.isType(RToken::STRING);
+
+   if (!isExpectedType)
+      return;
+ 
+   // validate that this isn't the assignment into
+   // a sub-member of some object; e.g. 'foo$bar <- 1'
+   if (cursor.offset() >= 2)
+   {
+      const RToken& prevPrevToken = cursor.previousToken(2);
+      if (isBinaryOp(prevPrevToken))
+         return;
+   }
+   
+   // determine index type (function or variable?)
+   const RToken& nextToken = cursor.nextToken();
+   RSourceItem::Type type = nextToken.contentEquals(L"function")
+         ? RSourceItem::Function
+         : RSourceItem::Variable;
+   
+   // determine content for display in finder
+   std::string text = string_utils::strippedOfQuotes(prevToken.contentAsUtf8());
+   
+   // add prefix for R6Class functions
+   auto&& tokens = status.tokens();
+   auto&& stack = status.stack();
+   
+   for (auto&& index : stack)
+   {
+      RTokenCursor cursor(tokens, index);
+      
+      // check for R6Class definition
+      bool isR6Definition =
+            cursor.previousSignificantToken().contentEquals(L"R6Class") &&
+            cursor.nextSignificantToken().isType(RToken::STRING);
+      
+      if (!isR6Definition)
+         continue;
+      
+      // don't index non-function things within an R6Class
+      // (otherwise we can end up indexing the `public = list(...)`
+      // defintiions, which are not useful)
+      if (type != RSourceItem::Function)
+         return;
+    
+      // okay, now construct the display text
+      std::string className = cursor.nextSignificantToken().contentAsUtf8();
+      text = string_utils::strippedOfQuotes(className) + "$" + text;
+   }
+
+   // all done -- add source item
+   RSourceItem item(
+            type,
+            text,
+            std::vector<RS4MethodParam>(),
+            status.count(RToken::LBRACE),
+            prevToken.row() + 1,
+            prevToken.column() + 1);
+   
+   pIndex->addSourceItem(item);
+   
 }
 
 std::vector<Indexer> makeIndexers()
@@ -456,16 +577,18 @@ RSourceIndex::RSourceIndex(const std::string& context, const std::string& code)
    RTokenCursor cursor(rTokens);
    
    // run over tokens and apply indexers
-   IndexStatus status;
+   IndexStatus status(rTokens);
    
    do
    {
       status.update(cursor);
+      
       for (const Indexer& indexer : indexers)
       {
          indexer(cursor, status, this);
       }
-   } while (cursor.moveToNextToken());
+   }
+   while (cursor.moveToNextToken());
    
 }
 

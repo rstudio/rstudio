@@ -1,7 +1,7 @@
 /*
  * FindOutputTab.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,7 +21,6 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
-import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
@@ -52,20 +51,15 @@ public class FindOutputTab extends DelayLoadWorkbenchTab<FindOutputPresenter>
       super("Find in Files", shim);
       shim_ = shim;
 
-      events.addHandler(SessionInitEvent.TYPE, new SessionInitHandler()
+      events.addHandler(SessionInitEvent.TYPE, (SessionInitEvent sie) ->
       {
-         @Override
-         public void onSessionInit(SessionInitEvent sie)
-         {
-            FindInFilesState state =
-                                 session.getSessionInfo().getFindInFilesState();
-            if (state.isTabVisible())
-               shim.initialize(state);
-         }
+         FindInFilesState state = session.getSessionInfo().getFindInFilesState();
+         if (state.isTabVisible())
+            shim.initialize(state);
       });
 
       GWT.<Binder>create(Binder.class).bind(commands, shim);
-      
+
       events.addHandler(FindInFilesEvent.TYPE, shim);
    }
 

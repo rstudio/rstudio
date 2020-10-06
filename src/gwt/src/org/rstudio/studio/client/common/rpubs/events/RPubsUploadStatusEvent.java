@@ -1,7 +1,7 @@
 /*
  * RPubsUploadStatusEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,31 +19,31 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class RPubsUploadStatusEvent extends GwtEvent<RPubsUploadStatusEvent.Handler>
-{  
+{
    public static class Status extends JavaScriptObject
    {
       protected Status()
       {
       }
-      
+
       public final native String getContextId() /*-{
          return this.contextId;
       }-*/;
-      
+
       public final native String getId() /*-{
          return this.id;
       }-*/;
-   
+
       public final native String getContinueUrl() /*-{
          return this.continueUrl;
       }-*/;
-   
+
       public final native String getError() /*-{
          return this.error;
       }-*/;
 
    }
-   
+
    public interface Handler extends EventHandler
    {
       void onRPubsPublishStatus(RPubsUploadStatusEvent event);
@@ -53,12 +53,12 @@ public class RPubsUploadStatusEvent extends GwtEvent<RPubsUploadStatusEvent.Hand
    {
       status_ = status;
    }
-    
+
    public Status getStatus()
    {
       return status_;
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -70,8 +70,8 @@ public class RPubsUploadStatusEvent extends GwtEvent<RPubsUploadStatusEvent.Hand
    {
       handler.onRPubsPublishStatus(this);
    }
-   
+
    private final Status status_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

@@ -1,7 +1,7 @@
 /*
  * SessionWorkbench.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -172,7 +172,7 @@ Error setClientState(const json::JsonRpcRequest& request,
                                   &persistentState,
                                   &projPersistentState);
    if (error)
-      return error ;
+      return error;
    
    // set state
    r::session::ClientState& clientState = r::session::clientState();
@@ -190,7 +190,7 @@ Error setWorkbenchMetrics(const json::JsonRpcRequest& request,
                           json::JsonRpcResponse* /*pResponse*/)
 {
    // extract fields
-   r::session::RClientMetrics metrics ;
+   r::session::RClientMetrics metrics;
    Error error = json::readObjectParam(request.params, 0,
                                  "consoleWidth", &(metrics.consoleWidth),
                                  "buildConsoleWidth", &(metrics.buildConsoleWidth),
@@ -215,54 +215,7 @@ Error adaptToLanguage(const json::JsonRpcRequest& request,
    if (error)
       return error;
    
-   // check to see what language is active in main console
-   using namespace r::exec;
-   
-   // check to see what language is currently active (but default to r)
-   std::string activeLanguage = "R";
-   if (reticulate::isReplActive())
-      activeLanguage = "Python";
-   
-   // now, detect if we are transitioning languages
-   if (language != activeLanguage)
-   {
-      // since it may take some time for the console input to be processed,
-      // we screen out consecutive transition attempts (otherwise we can
-      // get multiple interleaved attempts to launch the REPL with console
-      // input)
-      static RSTUDIO_BOOST_CONNECTION conn;
-      if (conn.connected())
-         return Success();
-      
-      // establish the connection, and then simply disconnect once we
-      // receive the signal
-      conn = module_context::events().onConsolePrompt.connect([&](const std::string&) {
-         conn.disconnect();
-      });
-      
-      if (activeLanguage == "R")
-      {
-         if (language == "Python")
-         {
-            // r -> python: activate the reticulate REPL
-            Error error =
-                  module_context::enqueueConsoleInput("reticulate::repl_python()");
-            if (error)
-               LOG_ERROR(error);
-         }
-      }
-      else if (activeLanguage == "Python")
-      {
-         if (language == "R")
-         {
-            // python -> r: deactivate the reticulate REPL
-            Error error =
-                  module_context::enqueueConsoleInput("quit");
-         }
-      }
-   }
-   
-   return Success();
+   return module_context::adaptToLanguage(language);
 }
 
 Error executeCode(const json::JsonRpcRequest& request,
@@ -418,7 +371,7 @@ void editFilePostback(const std::string& file,
    ClientEvent editEvent = session::showEditorEvent(fileContents, false, true);
 
    // wait for edit_completed
-   json::JsonRpcRequest request ;
+   json::JsonRpcRequest request;
    bool succeeded = s_waitForEditCompleted(&request, editEvent);
 
    // cancelled or otherwise didn't succeed
@@ -474,7 +427,6 @@ void handleFileShow(const http::Request& request, http::Response* pResponse)
    }
 
    // send it back
-   pResponse->setCacheWithRevalidationHeaders();
    pResponse->setCacheableFile(filePath, request);
 }
 
@@ -531,17 +483,17 @@ Error initialize()
    // register postback handler for viewPDF (server-only)
    if (session::options().programMode() == kSessionProgramModeServer)
    {
-      std::string pdfShellCommand ;
+      std::string pdfShellCommand;
       Error error = module_context::registerPostbackHandler("pdfviewer",
                                                             viewPdfPostback,
                                                             &pdfShellCommand);
       if (error)
-         return error ;
+         return error;
 
       // set pdfviewer option
       error = r::options::setOption("pdfviewer", pdfShellCommand);
       if (error)
-         return error ;
+         return error;
 
 
       // register editfile handler and save its path
@@ -565,7 +517,7 @@ Error initialize()
    // complete initialization
    using boost::bind;
    using namespace module_context;
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerUriHandler, "/file_show", handleFileShow))
       (bind(registerRpcMethod, "set_client_state", setClientState))

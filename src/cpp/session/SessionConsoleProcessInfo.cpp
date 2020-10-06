@@ -1,7 +1,7 @@
 /*
  * SessionConsoleProcessInfo.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -208,7 +208,7 @@ core::json::Object ConsoleProcessInfo::toJson(SerializationMode serialMode) cons
    result["allow_restart"] = allowRestart_;
    result["title"] = title_;
    result["child_procs"] = childProcs_;
-   result["shell_type"] = TerminalShell::getShellId(shellType_); 
+   result["shell_type"] = TerminalShell::getShellId(shellType_);
    result["channel_mode"] = static_cast<int>(channelMode_);
    result["channel_id"] = channelId_;
    result["alt_buffer"] = altBufferActive_;
@@ -379,12 +379,11 @@ AutoCloseMode ConsoleProcessInfo::closeModeFromPref(std::string prefValue)
 {
    if (prefValue == kTerminalCloseBehaviorAlways)
       return AlwaysAutoClose;
-   else if (prefValue == kTerminalCloseBehaviorClean)
+   if (prefValue == kTerminalCloseBehaviorClean)
       return CleanExitAutoClose;
-   else if (prefValue == kTerminalCloseBehaviorNever)
+   if (prefValue == kTerminalCloseBehaviorNever)
       return NeverAutoClose;
-   else
-      return NeverAutoClose;
+   return NeverAutoClose;
 }
 
 } // namespace console_process_info

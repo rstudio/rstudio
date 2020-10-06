@@ -1,7 +1,7 @@
 /*
  * LinkColumn.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -39,21 +39,21 @@ public abstract class LinkColumn<T> extends Column<T, String>
    {
       this(dataProvider, onClicked, false);
    }
-   
+
    public LinkColumn(final ListDataProvider<T> dataProvider,
                      final OperationWithInput<T> onClicked,
                      final boolean alwaysUnderline)
    {
       super(new ClickableTextCell(){
-         
+
          // render anchor using custom styles. detect selection and
          // add selected style to invert text color
          @Override
-         protected void render(Context context, 
-                               SafeHtml value, 
-                               SafeHtmlBuilder sb) 
-         {   
-            if (value != null) 
+         protected void render(Context context,
+                               SafeHtml value,
+                               SafeHtmlBuilder sb)
+         {
+            if (value != null)
             {
               Styles styles = RESOURCES.styles();
               StringBuilder div = new StringBuilder();
@@ -63,29 +63,29 @@ public abstract class LinkColumn<T> extends Column<T, String>
               if (alwaysUnderline)
                  div.append(" " + styles.linkUnderlined());
               div.append("\" title=\"" + value.asString() + "\">");
-              
+
               sb.appendHtmlConstant(div.toString());
               sb.append(value);
               sb.appendHtmlConstant("</div>");
             }
           }
-         
+
          // click event which occurs on the actual package link div
          // results in showing help for that package
          @Override
-         public void onBrowserEvent(Context context, Element parent, 
-                                    String value, NativeEvent event, 
-                                    ValueUpdater<String> valueUpdater) 
+         public void onBrowserEvent(Context context, Element parent,
+                                    String value, NativeEvent event,
+                                    ValueUpdater<String> valueUpdater)
          {
            super.onBrowserEvent(context, parent, value, event, valueUpdater);
            if ("click".equals(event.getType()))
-           {  
+           {
               // verify that the click was on the package link
               JavaScriptObject evTarget = event.getEventTarget().cast();
               if (Element.is(evTarget) &&
                   Element.as(evTarget).getClassName().startsWith(
                                      RESOURCES.styles().link()))
-              {  
+              {
                  int idx = context.getIndex();
                  if (idx >= 0 && idx < dataProvider.getList().size())
                     onClicked.execute(dataProvider.getList().get(idx));
@@ -94,19 +94,19 @@ public abstract class LinkColumn<T> extends Column<T, String>
          }
       });
    }
-   
+
    static interface Styles extends CssResource
    {
       String link();
       String linkUnderlined();
    }
-  
+
    interface Resources extends ClientBundle
    {
       @Source("LinkColumn.css")
       Styles styles();
    }
-   
+
    static Resources RESOURCES = (Resources)GWT.create(Resources.class);
    public static void ensureStylesInjected()
    {

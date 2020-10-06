@@ -1,7 +1,7 @@
 /*
  * rstudio.css
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * This program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
@@ -25,6 +25,21 @@ body, td {
   padding: 8px;
   -moz-border-radius: 5px;
   -webkit-border-radius: 5px;
+  overflow: hidden;
+}
+#logo {
+  width: 50%;
+  float: left;
+}
+#licensed-to {
+  width: 50%;
+  float: right;
+  margin-top: 0.5em;
+  text-align: right;
+}
+#license-prefix {
+  opacity: 0.6;
+  font-weight: normal;
 }
 #border {
   width: 300px;
@@ -108,4 +123,99 @@ a img {
     margin: -1px;
     overflow: hidden;
     padding: 0;
+}
+
+.signin-spinner-holder {
+  width: 300px;
+  text-align: center;
+  margin: 0 auto;
+  padding-top: 10px;
+}
+
+/**
+* Modified from https://loading.io/css/.
+* Released under the CC0 License.
+*/
+
+.signin-spinner {
+  color: white;
+  display: inline-block;
+  position: relative;
+  width: 20px;
+  height: 20px;
+  text-align: center;
+}
+.signin-spinner div {
+  transform-origin: 10px 10px;
+  animation: signin-spinner 1.2s linear infinite;
+}
+.signin-spinner div:after {
+  content: " ";
+  display: inline;
+  position: absolute;
+  top: 0px;
+  left: 9px;
+  width: 2px;
+  height: 5px;
+  background: black;
+}
+.signin-spinner div:nth-child(1) {
+  transform: rotate(0deg);
+  animation-delay: -1.1s;
+}
+.signin-spinner div:nth-child(2) {
+  transform: rotate(30deg);
+  animation-delay: -1s;
+}
+.signin-spinner div:nth-child(3) {
+  transform: rotate(60deg);
+  animation-delay: -0.9s;
+}
+.signin-spinner div:nth-child(4) {
+  transform: rotate(90deg);
+  animation-delay: -0.8s;
+}
+.signin-spinner div:nth-child(5) {
+  transform: rotate(120deg);
+  animation-delay: -0.7s;
+}
+.signin-spinner div:nth-child(6) {
+  transform: rotate(150deg);
+  animation-delay: -0.6s;
+}
+.signin-spinner div:nth-child(7) {
+  transform: rotate(180deg);
+  animation-delay: -0.5s;
+}
+.signin-spinner div:nth-child(8) {
+  transform: rotate(210deg);
+  animation-delay: -0.4s;
+}
+.signin-spinner div:nth-child(9) {
+  transform: rotate(240deg);
+  animation-delay: -0.3s;
+}
+.signin-spinner div:nth-child(10) {
+  transform: rotate(270deg);
+  animation-delay: -0.2s;
+}
+.signin-spinner div:nth-child(11) {
+  transform: rotate(300deg);
+  animation-delay: -0.1s;
+}
+.signin-spinner div:nth-child(12) {
+  transform: rotate(330deg);
+  animation-delay: 0s;
+}
+@keyframes signin-spinner {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.signin-hidden {
+  display: none;
 }

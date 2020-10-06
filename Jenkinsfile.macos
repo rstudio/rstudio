@@ -50,7 +50,8 @@ pipeline {
         script {
           try {
             // attempt to run cpp unit tests
-            // disable known broken tests for now (Jenkins cannot handle the parallel load these induce)
+            // problems with rsession finding openssl, so those tests
+            // are disabled until we solve it (#6890)
             sh "cd package/osx/build/src/cpp && ./rstudio-tests --scope core"
           } catch(err) {
              currentBuild.result = "UNSTABLE"

@@ -1,7 +1,7 @@
 /*
  * EditorCommandManager.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,6 +30,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ResetEditorCommandsEvent;
 import org.rstudio.studio.client.application.events.SetEditorCommandBindingsEvent;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommand;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommandManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedEvent;
@@ -51,28 +52,28 @@ public class EditorCommandManager
       {
          return JavaScriptObject.createObject().cast();
       }
-      
+
       public final EditorKeyBinding get(String key)
       {
          return getObject(key).cast();
       }
-      
+
       public final void setBindings(String key, List<KeySequence> ksList)
       {
          List<String> bindings = new ArrayList<String>();
          for (KeySequence ks : ksList)
             bindings.add(ks.toString());
-         
+
          setString(key, StringUtil.join(bindings, "|"));
       }
-      
+
       protected EditorKeyBindings() {}
    }
-   
+
    public static class EditorKeyBinding extends JavaScriptObject
    {
       protected EditorKeyBinding() {}
-      
+
       public final List<KeySequence> getKeyBindings()
       {
          JsArrayString bindings = getBindingsInternal();
@@ -85,12 +86,12 @@ public class EditorCommandManager
                keys.add(KeySequence.fromShortcutString(item));
             }
          }
-         
+
          List<KeySequence> keyList = new ArrayList<KeySequence>();
          keyList.addAll(keys);
          return keyList;
       }
-      
+
       private final native JsArrayString getBindingsInternal()
       /*-{
          var result = this;
@@ -99,19 +100,24 @@ public class EditorCommandManager
          return result;
       }-*/;
    }
-   
+
    public EditorCommandManager()
    {
+      AceEditor.load(() -> finishInit());
+   }
+
+   private void finishInit()
+   {
       RStudioGinjector.INSTANCE.injectMembers(this);
-      
+
       manager_ = AceCommandManager.create();
-      
+
       bindings_ = new ConfigFileBacked<EditorKeyBindings>(
             files_,
             KEYBINDINGS_PATH,
             false,
             EditorKeyBindings.create());
-      
+
       events_.addHandler(
             EditorLoadedEvent.TYPE,
             new EditorLoadedHandler()
@@ -122,7 +128,7 @@ public class EditorCommandManager
                   loadBindings();
                }
             });
-      
+
       events_.addHandler(
             EditorKeybindingsChangedEvent.TYPE,
             new EditorKeybindingsChangedEvent.Handler()
@@ -133,9 +139,9 @@ public class EditorCommandManager
                   loadBindings(event.getBindings(), null);
                }
             });
-      
+
    }
-   
+
    @Inject
    private void initialize(EventBus events,
                            FilesServerOperations files)
@@ -143,27 +149,27 @@ public class EditorCommandManager
       events_ = events;
       files_ = files;
    }
-   
+
    public static final native JsArray<AceCommand> getDefaultAceCommands() /*-{
       return $wnd.require("ace/commands/default_commands").commands;
    }-*/;
-   
+
    public boolean hasBinding(KeySequence keys)
    {
       return manager_.hasBinding(keys);
    }
-   
+
    public boolean hasPrefix(KeySequence keys)
    {
       return manager_.hasPrefix(keys);
    }
-   
+
    public void rebindCommand(String id, List<KeySequence> keys)
    {
       manager_.rebindCommand(id, keys);
       events_.fireEvent(new SetEditorCommandBindingsEvent(id, keys));
    }
-   
+
    public void addBindingsAndSave(final EditorKeyBindings newBindings,
                                   final CommandWithArg<EditorKeyBindings> onLoad)
    {
@@ -184,12 +190,12 @@ public class EditorCommandManager
          }
       });
    }
-   
+
    public void loadBindings()
    {
       loadBindings(null);
    }
-   
+
    public void loadBindings(final CommandWithArg<EditorKeyBindings> afterLoad)
    {
       bindings_.execute(new CommandWithArg<EditorKeyBindings>()
@@ -201,7 +207,7 @@ public class EditorCommandManager
          }
       });
    }
-   
+
    private void loadBindings(final EditorKeyBindings bindings,
                              final CommandWithArg<EditorKeyBindings> afterLoad)
    {
@@ -218,12 +224,12 @@ public class EditorCommandManager
       if (afterLoad != null)
          afterLoad.execute(bindings);
    }
-   
+
    public void resetBindings()
    {
       resetBindings(null);
    }
-   
+
    public void resetBindings(final Command afterReset)
    {
       bindings_.set(EditorKeyBindings.create(), new Command()
@@ -233,25 +239,25 @@ public class EditorCommandManager
          {
             manager_ = AceCommandManager.create();
             events_.fireEvent(new ResetEditorCommandsEvent());
-            
+
             if (afterReset != null)
                afterReset.execute();
          }
       });
    }
-   
+
    public JsArray<AceCommand> getCommands()
    {
       return manager_.getRelevantCommands();
    }
-   
-   private final ConfigFileBacked<EditorKeyBindings> bindings_;
+
+   private ConfigFileBacked<EditorKeyBindings> bindings_;
    private AceCommandManager manager_;
-   
+
    private boolean isBindingsLoaded_ = false;
    public static final String KEYBINDINGS_PATH =
          "keybindings/editor_bindings.json";
-   
+
    // Injected ----
    private EventBus events_;
    private FilesServerOperations files_;

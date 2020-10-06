@@ -1,7 +1,7 @@
 /*
  * SessionThemes.cpp
  *
- * Copyright (C) 2018-2019 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -563,6 +563,13 @@ void onDeferredInit(bool)
    s_deferredInitComplete = true;
 }
 
+void setCacheableFile(const FilePath& filePath,
+                      const http::Request& request,
+                      http::Response* pResponse)
+{
+   pResponse->setCacheableFile(filePath, request);
+}
+
 } // anonymous namespace
 
 /**
@@ -576,7 +583,7 @@ void handleDefaultThemeRequest(const http::Request& request,
 {
    std::string prefix = "/" + kDefaultThemeLocation;
    std::string fileName = http::util::pathAfterPrefix(request, prefix);
-   pResponse->setCacheableFile(getDefaultThemePath().completeChildPath(fileName), request);
+   setCacheableFile(getDefaultThemePath().completeChildPath(fileName), request, pResponse);
 }
 
 /**
@@ -593,9 +600,10 @@ void handleGlobalCustomThemeRequest(const http::Request& request,
    std::string prefix = "/" + kGlobalCustomThemeLocation;
    std::string fileName = http::util::pathAfterPrefix(request, prefix);
    FilePath requestedTheme = getGlobalCustomThemePath().completeChildPath(fileName);
-   pResponse->setCacheableFile(
+   setCacheableFile(
       requestedTheme.exists() ? requestedTheme : getDefaultTheme(request),
-      request);
+      request,
+      pResponse);
 }
 
 /**
@@ -613,10 +621,10 @@ void handleLocalCustomThemeRequest(const http::Request& request,
    std::string fileName = http::util::pathAfterPrefix(request, prefix);
 
    FilePath requestedTheme = getLocalCustomTheme(fileName);
-
-   pResponse->setCacheableFile(
+   setCacheableFile(
       requestedTheme.exists() ? requestedTheme : getDefaultTheme(request),
-      request);
+      request,
+      pResponse);
 }
 
 Error syncThemePrefs()
@@ -624,7 +632,7 @@ Error syncThemePrefs()
    // Determine whether the preference storing the theme is out of sync with the theme details in
    // user state.
    Error err;
-   std::string prefTheme = prefs::userPrefs().editorTheme(); 
+   std::string prefTheme = prefs::userPrefs().editorTheme();
    json::Object stateTheme = prefs::userState().theme();
    auto themeName = stateTheme.find(kThemeName);
    if (themeName != stateTheme.end() &&

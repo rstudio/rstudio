@@ -1,7 +1,7 @@
 /*
  * footnote.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,7 +13,7 @@
  *
  */
 
-import { Node as ProsemirrorNode, Schema, Fragment, NodeType } from 'prosemirror-model';
+import { Node as ProsemirrorNode, Schema, Fragment, NodeType, DOMOutputSpec } from 'prosemirror-model';
 import { Plugin, PluginKey, EditorState, Transaction, TextSelection, Selection } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import {
@@ -24,11 +24,13 @@ import {
   findChildren,
 } from 'prosemirror-utils';
 
-import { Extension, extensionIfEnabled } from '../../api/extension';
+import { ExtensionContext } from '../../api/extension';
 import { uuidv4 } from '../../api/util';
 import { PandocOutput, PandocTokenType, ProsemirrorWriter, PandocToken } from '../../api/pandoc';
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 import { canInsertNode } from '../../api/node';
+import { EditorUI } from '../../api/ui';
+import { OmniInsertGroup } from '../../api/omni_insert';
 
 import {
   footnoteEditorKeyDownHandler,
@@ -45,80 +47,90 @@ import './footnote-styles.css';
 
 const plugin = new PluginKey('footnote');
 
-const extension: Extension = {
-  nodes: [
-    {
-      name: 'footnote',
-      spec: {
-        inline: true,
-        attrs: {
-          number: { default: 1 },
-          ref: {},
-          content: { default: '' },
-        },
-        group: 'inline',
-        // atom: true,
-        parseDOM: [
-          {
-            tag: "span[class*='footnote']",
-            getAttrs(dom: Node | string) {
-              const el = dom as Element;
-              return {
-                ref: el.getAttribute('data-ref'),
-                content: el.getAttribute('data-content'),
-              };
+const extension = (context: ExtensionContext) => {
+  const { pandocExtensions, ui } = context;
+
+  if (!pandocExtensions.footnotes) {
+    return null;
+  }
+
+  return {
+    nodes: [
+      {
+        name: 'footnote',
+        spec: {
+          inline: true,
+          attrs: {
+            number: { default: 1 },
+            ref: {},
+            content: { default: '' },
+          },
+          group: 'inline',
+          // atom: true,
+          parseDOM: [
+            {
+              tag: "span[class*='footnote']",
+              getAttrs(dom: Node | string) {
+                const el = dom as Element;
+                return {
+                  ref: el.getAttribute('data-ref'),
+                  content: el.getAttribute('data-content'),
+                };
+              },
             },
+          ],
+          toDOM(node: ProsemirrorNode): DOMOutputSpec {
+            return [
+              'span',
+              { class: 'footnote pm-footnote', 'data-ref': node.attrs.ref, 'data-content': node.attrs.content },
+              node.attrs.number.toString(),
+            ];
           },
-        ],
-        toDOM(node: ProsemirrorNode) {
-          return [
-            'span',
-            { class: 'footnote pm-footnote', 'data-ref': node.attrs.ref, 'data-content': node.attrs.content },
-            node.attrs.number.toString(),
-          ];
+        },
+        pandoc: {
+          readers: [
+            {
+              token: PandocTokenType.Note,
+              handler: writePandocNote,
+            },
+          ],
+          writer: (output: PandocOutput, node: ProsemirrorNode) => {
+            output.writeNote(node);
+          },
         },
       },
-      pandoc: {
-        readers: [
-          {
-            token: PandocTokenType.Note,
-            handler: writePandocNote,
-          },
-        ],
-        writer: (output: PandocOutput, node: ProsemirrorNode) => {
-          output.writeNote(node);
-        },
-      },
+    ],
+
+    appendTransaction: (_schema: Schema) => {
+      return [footnoteAppendTransaction()];
     },
-  ],
 
-  appendTransaction: (_schema: Schema) => {
-    return [footnoteAppendTransaction()];
-  },
+    plugins: (_schema: Schema) => {
+      return [
+        footnoteEditorActivationPlugin(),
 
-  plugins: (_schema: Schema) => {
-    return [
-      footnoteEditorActivationPlugin(),
+        new Plugin({
+          key: plugin,
 
-      new Plugin({
-        key: plugin,
+          // footnote editor
+          props: {
+            handleKeyDown: footnoteEditorKeyDownHandler(),
+            nodeViews: footnoteEditorNodeViews(),
+          },
 
-        // footnote editor
-        props: {
-          handleKeyDown: footnoteEditorKeyDownHandler(),
-          nodeViews: footnoteEditorNodeViews(),
-        },
+          // footnote transactions (fixups, etc.)
+          filterTransaction: footnoteFilterTransaction(),
+          appendTransaction: footnoteSelectNoteAppendTransaction(),
+        }),
+      ];
+    },
 
-        // footnote transactions (fixups, etc.)
-        filterTransaction: footnoteFilterTransaction(),
-        appendTransaction: footnoteSelectNoteAppendTransaction(),
-      }),
-    ];
-  },
-
-  commands: (_schema: Schema) => {
-    return [new ProsemirrorCommand(EditorCommandId.Footnote, ['Mod-Shift-F7'], footnoteCommandFn())];
-  },
+    commands: () => {
+      return [
+        new ProsemirrorCommand(EditorCommandId.Footnote, ['Shift-Mod-F7'], footnoteCommandFn(), footnoteOmniInsert(ui)),
+      ];
+    },
+  };
 };
 
 function writePandocNote(schema: Schema) {
@@ -155,6 +167,16 @@ function footnoteCommandFn() {
   };
 }
 
+function footnoteOmniInsert(ui: EditorUI) {
+  return {
+    name: ui.context.translateText('Footnote'),
+    description: ui.context.translateText('Note placed at the bottom of the page'),
+    group: OmniInsertGroup.References,
+    priority: 2,
+    image: () => (ui.prefs.darkMode() ? ui.images.omni_insert?.footnote_dark! : ui.images.omni_insert?.footnote!),
+  };
+}
+
 function canInsertFootnote(state: EditorState) {
   return (
     canInsertNode(state, state.schema.nodes.footnote) && !findParentNodeOfType(state.schema.nodes.note)(state.selection)
@@ -182,13 +204,13 @@ function insertFootnote(
 
   // insert footnote linked to note
   const footnote = schema.nodes.footnote.create({ ref });
-  tr.replaceSelectionWith(footnote);
+  tr.replaceSelectionWith(footnote, false);
 
   // open note editor
   if (edit) {
     const noteNode = findNoteNode(tr.doc, ref);
     if (noteNode) {
-      tr.setSelection(TextSelection.near(tr.doc.resolve(noteNode.pos)));
+      tr.setSelection(TextSelection.create(tr.doc, noteNode.pos + 1));
     }
   }
 
@@ -223,4 +245,4 @@ function findNodeOfTypeWithRef(doc: ProsemirrorNode, type: NodeType, ref: string
   }
 }
 
-export default extensionIfEnabled(extension, 'footnotes');
+export default extension;

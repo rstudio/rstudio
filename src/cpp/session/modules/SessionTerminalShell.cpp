@@ -1,7 +1,7 @@
 /*
  * SessionTerminalShell.cpp
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -293,8 +293,16 @@ core::FilePath getGitBashShell()
    core::FilePath gitExePath = modules::git::detectedGitExePath();
    if (!gitExePath.isEmpty())
    {
-      core::FilePath gitBashPath =
-            gitExePath.getParent().getParent().completePath("usr/bin/bash.exe");
+      // Prefer git-for-windows bash wrapper; it does some setup before it invokes MSYS2's
+      // usr/bin/bash.exe; not using this wrapper causes problems if other Cygwin-based
+      // Posix environments are on path (such as those in RTools4)
+      core::FilePath gitBashPath = gitExePath.getParent().completePath("bash.exe");
+      if (gitBashPath.exists())
+         return gitBashPath;
+
+      // fall back to old detection behavior in case there's an older version that only
+      // has this installation pattern
+      gitBashPath = gitExePath.getParent().getParent().completePath("usr/bin/bash.exe");
       if (gitBashPath.exists())
          return gitBashPath;
       else

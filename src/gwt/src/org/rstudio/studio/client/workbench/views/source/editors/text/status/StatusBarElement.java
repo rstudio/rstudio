@@ -1,7 +1,7 @@
 /*
  * StatusBarElement.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,8 +20,8 @@ import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 public interface StatusBarElement extends HasSelectionHandlers<String>,
                                           HasMouseDownHandlers
 {
-   public void setValue(String value);
-   public String getValue();
+   void setValue(String value);
+   String getValue();
 
    void addOptionValue(String label);
    void clearOptions();

@@ -1,7 +1,7 @@
 /*
  * RProjectFile.hpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -44,6 +44,19 @@ extern const char * const kBuildTypePackage;
 extern const char * const kBuildTypeMakefile;
 extern const char * const kBuildTypeWebsite;
 extern const char * const kBuildTypeCustom;
+
+extern const char * const kMarkdownWrapUseDefault;
+extern const char * const kMarkdownWrapNone;
+extern const char * const kMarkdownWrapColumn;
+extern const char * const kMarkdownWrapSentence;
+
+extern const int kMarkdownWrapAtColumnDefault;
+
+extern const char * const kMarkdownReferencesUseDefault;
+extern const char * const kMarkdownReferencesBlock;
+extern const char * const kMarkdownReferencesSection;
+extern const char * const kMarkdownReferencesDocument;
+
 
 std::ostream& operator << (std::ostream& stream, const YesNoAskValue& val);
 
@@ -89,7 +102,16 @@ struct RProjectConfig
         quitChildProcessesOnExit(DefaultValue),
         disableExecuteRprofile(false),
         defaultOpenDocs(),
-        defaultTutorial()
+        defaultTutorial(),
+        markdownWrap(kMarkdownWrapUseDefault),
+        markdownWrapAtColumn(kMarkdownWrapAtColumnDefault),
+        markdownReferences(kMarkdownReferencesUseDefault),
+        markdownCanonical(DefaultValue),
+        zoteroLibraries(),
+        pythonType(),
+        pythonVersion(),
+        pythonPath(),
+        spellingDictionary()
    {
    }
 
@@ -124,6 +146,15 @@ struct RProjectConfig
    bool disableExecuteRprofile;
    std::string defaultOpenDocs;
    std::string defaultTutorial;
+   std::string markdownWrap;
+   int markdownWrapAtColumn;
+   std::string markdownReferences;
+   int markdownCanonical;
+   boost::optional<std::vector<std::string>> zoteroLibraries;
+   std::string pythonType;
+   std::string pythonVersion;
+   std::string pythonPath;
+   std::string spellingDictionary;
 };
 
 Error findProjectFile(FilePath filePath,

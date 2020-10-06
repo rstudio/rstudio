@@ -1,7 +1,7 @@
 #
 # SessionBuild.R
 #
-# Copyright (C) 2009-12 by RStudio, PBC
+# Copyright (C) 2020 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -13,55 +13,71 @@
 #
 #
 
-setHook("sourceCpp.onBuild", function(file, fromCode, showOutput) {
-   .Call("rs_sourceCppOnBuild", file, fromCode, showOutput)
+setHook("sourceCpp.onBuild", function(file, fromCode, showOutput)
+{
+   .Call("rs_sourceCppOnBuild", file, fromCode, showOutput, PACKAGE = "(embedding)")
 })
 
-setHook("sourceCpp.onBuildComplete", function(succeeded, output) {
-   .Call("rs_sourceCppOnBuildComplete", succeeded, output)
+setHook("sourceCpp.onBuildComplete", function(succeeded, output)
+{
+   .Call("rs_sourceCppOnBuildComplete", succeeded, output, PACKAGE = "(embedding)")
 })
 
-.rs.addFunction("installBuildTools", function(action) {
+.rs.addFunction("installBuildTools", function(action)
+{
+   fmt <- .rs.trimWhitespace("
+%s requires installation of additional build tools.
+
+Do you want to install the additional tools now?
+")
+   
    response <- .rs.userPrompt(
       "question",
       "Install Build Tools",
-      paste(action, " requires installation of additional build tools.\n\n",
-      "Do you want to install the additional tools now?", sep = ""))
-   if (identical(response, "yes")) {
-      .Call("rs_installBuildTools")
-      return(TRUE)
-   } else {
+      sprintf(fmt, action)
+   )
+   
+   if (!identical(response, "yes"))
       return(FALSE)
-   }
+   
+   .Call("rs_installBuildTools", PACKAGE = "(embedding)")
+   return(TRUE)
+   
 })
 
-.rs.addFunction("checkBuildTools", function(action) {
-
-   if (identical(.Platform$pkgType, "mac.binary.mavericks")) {
-      # this will auto-prompt to install on mavericks
-      .Call("rs_canBuildCpp")
-   } else {
-      if (!.Call("rs_canBuildCpp")) {
-        .rs.installBuildTools(action)
-        FALSE
-      }
-      else {
-        TRUE;
-      }
-   }
+.rs.addFunction("checkBuildTools", function(action)
+{
+   # TODO: should this check for other flavors of mac.binary?
+   if (identical(.Platform$pkgType, "mac.binary.mavericks"))
+      return(.Call("rs_canBuildCpp", PACKAGE = "(embedding)"))
+   
+   ok <- .Call("rs_canBuildCpp", PACKAGE = "(embedding)")
+   if (ok)
+      return(TRUE)
+   
+   .rs.installBuildTools(action)
+   FALSE
 })
 
-.rs.addFunction("withBuildTools", function(code) {
+.rs.addFunction("withBuildTools", function(code)
+{
     .rs.addRToolsToPath()
     on.exit(.rs.restorePreviousPath(), add = TRUE)
     force(code)
 })
 
-options(buildtools.check = .rs.checkBuildTools)
-options(buildtools.with = .rs.withBuildTools)
+options(buildtools.check = function(action)
+{
+   .rs.checkBuildTools(action)
+})
 
+options(buildtools.with = function(code)
+{
+   .rs.withBuildTools(code)
+})
 
-.rs.addFunction("websiteOutputDir", function(siteDir) {
+.rs.addFunction("websiteOutputDir", function(siteDir)
+{
    siteGenerator <- rmarkdown::site_generator(siteDir)
    if (!is.null(siteGenerator))
       if (siteGenerator$output_dir != ".")
@@ -72,24 +88,34 @@ options(buildtools.with = .rs.withBuildTools)
       siteDir
 })
 
-.rs.addFunction("builtWithRtoolsGcc493", function() {
+.rs.addFunction("builtWithRtoolsGcc493", function()
+{
    identical(.Platform$OS.type, "windows") &&
-   getRversion() >= "3.3" && 
-   .rs.haveRequiredRSvnRev(70462)
+      getRversion() >= "3.3" && 
+      .rs.haveRequiredRSvnRev(70462)
 })
 
-.rs.addFunction("readShinytestResultRds", function(rdsPath) {
+.rs.addFunction("readShinytestResultRds", function(rdsPath)
+{
    failures <- Filter(function(e) !identical(e$pass, TRUE), readRDS(rdsPath)$results)
    sapply(failures, function(e) e$name)
 })
 
-.rs.addFunction("findShinyTestsDir", function(appDir) {
-   if (exists("findTestsDir", where = asNamespace("shinytest"))) {
-      # Newer versions of shinytest can report their own test directories.
-      shinytest:::findTestsDir(appDir = appDir, mustExist = FALSE, quiet = TRUE)
-   } else {
-      # Older versions require us to know.
-      file.path(appDir, "tests")
-   }
+.rs.addFunction("findShinyTestsDir", function(appDir)
+{
+   tryCatch(
+      
+      expr = shinytest:::findTestsDir(
+         appDir = appDir,
+         mustExit = FALSE,
+         quiet = TRUE
+      ),
+      
+      error = function(e) {
+         file.path(appDir, "tests")
+      }
+      
+   )
+   
 })
 

@@ -1,7 +1,7 @@
 /*
  * yaml_metadata-title.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,11 +13,15 @@
  *
  */
 
-import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { Plugin, PluginKey, Transaction, EditorState } from 'prosemirror-state';
 
-import { findTopLevelBodyNodes } from '../../api/node';
 import { transactionsAreTypingChange, transactionsHaveChange } from '../../api/transaction';
+import {
+  isYamlMetadataNode,
+  yamlMetadataNodes,
+  kYamlMetadataTitleRegex,
+  titleFromYamlMetadataNode,
+} from '../../api/yaml';
 
 const plugin = new PluginKey<string>('yaml-metadata-title');
 
@@ -78,9 +82,9 @@ export function setTitle(state: EditorState, title: string) {
   const yamlNodes = yamlMetadataNodes(tr.doc);
   let foundTitle = false;
   for (const yaml of yamlNodes) {
-    const titleMatch = yaml.node.textContent.match(kTitleRegex);
+    const titleMatch = yaml.node.textContent.match(kYamlMetadataTitleRegex);
     if (titleMatch) {
-      const updatedMetadata = yaml.node.textContent.replace(kTitleRegex, titleLine);
+      const updatedMetadata = yaml.node.textContent.replace(kYamlMetadataTitleRegex, titleLine);
       const updatedNode = schema.nodes.yaml_metadata.createAndFill({}, schema.text(updatedMetadata));
       tr.replaceRangeWith(yaml.pos, yaml.pos + yaml.node.nodeSize, updatedNode);
       foundTitle = true;
@@ -99,27 +103,13 @@ export function setTitle(state: EditorState, title: string) {
   return tr;
 }
 
-const kTitleRegex = /\ntitle:(.*)\n/;
-
 function titleFromState(state: EditorState) {
   const yamlNodes = yamlMetadataNodes(state.doc);
   for (const yaml of yamlNodes) {
-    const titleMatch = yaml.node.textContent.match(kTitleRegex);
-    if (titleMatch) {
-      let title = titleMatch[1].trim();
-      title = title.replace(/^["']|["']$/g, '');
-      title = title.replace(/\\"/g, '"');
-      title = title.replace(/''/g, "'");
+    const title = titleFromYamlMetadataNode(yaml.node);
+    if (title) {
       return title;
     }
   }
   return '';
-}
-
-function yamlMetadataNodes(doc: ProsemirrorNode) {
-  return findTopLevelBodyNodes(doc, isYamlMetadataNode);
-}
-
-function isYamlMetadataNode(node: ProsemirrorNode) {
-  return node.type === node.type.schema.nodes.yaml_metadata;
 }

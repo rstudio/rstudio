@@ -1,7 +1,7 @@
 /*
  * ChunkSatelliteCacheEditorStyleEvent.java
  *
- * Copyright (C) 2009-16 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,9 +21,9 @@ import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import com.google.gwt.event.shared.EventHandler;
 
 @JavaScriptSerializable
-public class ChunkSatelliteCacheEditorStyleEvent 
+public class ChunkSatelliteCacheEditorStyleEvent
              extends CrossWindowEvent<ChunkSatelliteCacheEditorStyleEvent.Handler>
-{  
+{
    public interface Handler extends EventHandler
    {
       void onChunkSatelliteCacheEditorStyle(ChunkSatelliteCacheEditorStyleEvent event);
@@ -50,17 +50,17 @@ public class ChunkSatelliteCacheEditorStyleEvent
    {
       return docId_;
    }
-   
+
    public String getBackgroundColor()
    {
       return backgroundColor_;
    }
-   
+
    public String getForegroundColor()
    {
       return foregroundColor_;
    }
-   
+
    public String getAceEditorColor()
    {
       return aceEditorColor_;
@@ -89,5 +89,5 @@ public class ChunkSatelliteCacheEditorStyleEvent
    private String backgroundColor_;
    private String aceEditorColor_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

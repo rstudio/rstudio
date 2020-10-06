@@ -1,7 +1,7 @@
 /*
  * PosixProcess.cpp
  *
- * Copyright (C) 2017-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -58,7 +58,7 @@ struct AsioProcessSupervisor::Impl
          }
          END_LOCK_MUTEX
 
-         return error;      
+         return error;
       }
 
       // success

@@ -1,7 +1,7 @@
 /*
  * OpenProfileEvent.java
  *
- * Copyright (C) 2009-16 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,7 +24,7 @@ public class OpenProfileEvent extends GwtEvent<OpenProfileEvent.Handler>
    {
       void onOpenProfileEvent(OpenProfileEvent event);
    }
-   
+
    public OpenProfileEvent(String filePath,
                            String htmlPath,
                            String htmlLocalPath,
@@ -37,7 +37,7 @@ public class OpenProfileEvent extends GwtEvent<OpenProfileEvent.Handler>
       createProfile_ = createProfile;
       docId_ = docId;
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -49,7 +49,7 @@ public class OpenProfileEvent extends GwtEvent<OpenProfileEvent.Handler>
    {
       handler.onOpenProfileEvent(this);
    }
-   
+
    public String getFilePath()
    {
       return filePath_;
@@ -59,23 +59,23 @@ public class OpenProfileEvent extends GwtEvent<OpenProfileEvent.Handler>
    {
       return htmlPath_;
    }
-   
+
    public String getHtmlLocalPath()
    {
       return htmlLocalPath_;
    }
-   
+
    public boolean getCreateProfile()
    {
       return createProfile_;
    }
-   
+
    public String getDocId()
    {
       return docId_;
    }
-   
-   public static final Type<Handler> TYPE = new Type<Handler>();
+
+   public static final Type<Handler> TYPE = new Type<>();
    private String filePath_;
    private String htmlPath_;
    private String htmlLocalPath_;

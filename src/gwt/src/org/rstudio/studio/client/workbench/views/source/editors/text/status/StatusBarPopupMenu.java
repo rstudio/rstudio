@@ -1,7 +1,7 @@
 /*
  * StatusBarPopupMenu.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,28 +23,26 @@ public class StatusBarPopupMenu extends ScrollableToolbarPopupMenu
    public StatusBarPopupMenu()
    {
       super();
+      setReceivesFocus(ReceivesFocus.NO);
       addStyleName(ThemeStyles.INSTANCE.statusBarMenu());
    }
 
-   public void showRelativeToUpward(final UIObject target, 
+   public void showRelativeToUpward(final UIObject target,
          final boolean alignRight)
    {
-      setPopupPositionAndShow(new PositionCallback()
+      setPopupPositionAndShow((offsetWidth, offsetHeight) ->
       {
-         public void setPosition(int offsetWidth, int offsetHeight)
-         {
-            // position left-aligned by default
-            int left = target.getAbsoluteLeft();
-            
-            // if right-aligned, move popup to the left by the difference in
-            // widths (add 10px to account for chrome)
-            if (alignRight)
-               left -= ((offsetWidth - target.getOffsetWidth()) - 10);
-            setPopupPosition(left, target.getAbsoluteTop() - offsetHeight);
-         }
+         // position left-aligned by default
+         int left = target.getAbsoluteLeft();
+
+         // if right-aligned, move popup to the left by the difference in
+         // widths (add 10px to account for chrome)
+         if (alignRight)
+            left -= ((offsetWidth - target.getOffsetWidth()) - 10);
+         setPopupPosition(left, target.getAbsoluteTop() - offsetHeight);
       });
    }
-   
+
    @Override
    protected int getMaxHeight()
    {

@@ -1,7 +1,7 @@
 #
 # SessionProjectTemplate.R
 #
-# Copyright (C) 2009-16 by RStudio, PBC
+# Copyright (C) 2020 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,7 @@
 
 .rs.addFunction("getProjectTemplateRegistry", function()
 {
-   .Call("rs_getProjectTemplateRegistry")
+   .Call("rs_getProjectTemplateRegistry", PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("initializeProjectFromTemplate", function(projectFilePath,
@@ -72,7 +72,11 @@
       grep(regex, projectFiles, value = TRUE)
    }))
    
+   # compute scratch path
+   scratchPaths <- .Call("rs_computeScratchPaths", projectFilePath, PACKAGE = "(embedding)")
+   scratchPath <- scratchPaths$scratch_path
+   
    # add these as first-run documents
-   .Call("rs_addFirstRunDoc", projectFilePath, files)
+   .Call("rs_addFirstRunDoc", scratchPath, files, PACKAGE = "(embedding)")
 })
 

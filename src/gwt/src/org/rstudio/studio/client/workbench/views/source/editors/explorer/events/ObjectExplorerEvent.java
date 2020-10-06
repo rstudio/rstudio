@@ -1,7 +1,7 @@
 /*
  * ObjectExplorerEvent.java
  *
- * Copyright (C) 2009-17 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,54 +29,54 @@ public class ObjectExplorerEvent extends GwtEvent<ObjectExplorerEvent.Handler>
    {
       // unknown event type (not normally used)
       UNKNOWN,
-      
+
       // create a new object explorer tab
       NEW,
-      
+
       // open a node
       OPEN_NODE,
-      
+
       // close a node
       CLOSE_NODE
    }
-   
+
    public static class Data extends JavaScriptObject
    {
       protected Data()
       {
       }
-      
+
       public final native String getType()
       /*-{
          return this.type;
       }-*/;
-      
+
       public final native ObjectExplorerHandle getHandle()
       /*-{
          return this.data;
       }-*/;
    }
-   
+
    public ObjectExplorerEvent(Data data)
    {
       data_ = data;
       type_ = valueOf(data.getType());
    }
-   
+
    public Data getData()
    {
       return data_;
    }
-   
+
    public EventType getType()
    {
       return type_;
    }
-   
+
    private EventType valueOf(String value)
    {
       EventType type = EventType.UNKNOWN;
-      
+
       try
       {
          type = EventType.valueOf(value.toUpperCase());
@@ -85,20 +85,20 @@ public class ObjectExplorerEvent extends GwtEvent<ObjectExplorerEvent.Handler>
       {
          Debug.logException(e);
       }
-      
+
       return type;
    }
-   
+
    private final Data data_;
    private final EventType type_;
-   
+
    // Boilerplate ----
-   
+
    public interface Handler extends EventHandler
    {
       void onObjectExplorerEvent(ObjectExplorerEvent event);
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -110,6 +110,6 @@ public class ObjectExplorerEvent extends GwtEvent<ObjectExplorerEvent.Handler>
    {
       handler.onObjectExplorerEvent(this);
    }
-   
-   public static final Type<Handler> TYPE = new Type<Handler>();
+
+   public static final Type<Handler> TYPE = new Type<>();
 }

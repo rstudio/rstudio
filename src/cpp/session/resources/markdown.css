@@ -10,27 +10,27 @@ tt, code, pre {
 }
 
 h1 { 
-   font-size:2.2em; 
+   font-size:2.2em;
 }
 
 h2 { 
-   font-size:1.8em; 
+   font-size:1.8em;
 }
 
 h3 { 
-   font-size:1.4em; 
+   font-size:1.4em;
 }
 
 h4 { 
-   font-size:1.0em; 
+   font-size:1.0em;
 }
 
 h5 { 
-   font-size:0.9em; 
+   font-size:0.9em;
 }
 
 h6 { 
-   font-size:0.8em; 
+   font-size:0.8em;
 }
 
 a:visited {
@@ -73,19 +73,19 @@ hr {
 
 @media print {
    * { 
-      background: transparent !important; 
-      color: black !important; 
-      filter:none !important; 
-      -ms-filter: none !important; 
+      background: transparent !important;
+      color: black !important;
+      filter:none !important;
+      -ms-filter: none !important;
    }
 
    body { 
-      font-size:12pt; 
-      max-width:100%; 
+      font-size:12pt;
+      max-width:100%;
    }
        
    a, a:visited { 
-      text-decoration: underline; 
+      text-decoration: underline;
    }
 
    hr { 
@@ -94,31 +94,31 @@ hr {
    }
 
    pre, blockquote { 
-      padding-right: 1em; 
-      page-break-inside: avoid; 
+      padding-right: 1em;
+      page-break-inside: avoid;
    }
 
    tr, img { 
-      page-break-inside: avoid; 
+      page-break-inside: avoid;
    }
 
    img { 
-      max-width: 100% !important; 
+      max-width: 100% !important;
    }
 
    @page :left { 
-      margin: 15mm 20mm 15mm 10mm; 
+      margin: 15mm 20mm 15mm 10mm;
    }
      
    @page :right { 
-      margin: 15mm 10mm 15mm 20mm; 
+      margin: 15mm 10mm 15mm 20mm;
    }
 
    p, h2, h3 { 
-      orphans: 3; widows: 3; 
+      orphans: 3; widows: 3;
    }
 
    h2, h3 { 
-      page-break-after: avoid; 
+      page-break-after: avoid;
    }
 }

@@ -1,7 +1,7 @@
 /*
  * rmd_chunk-styles.css
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,7 +13,9 @@
  *
  */
 
-.ProseMirror .CodeMirror.rmd-chunk-mode .CodeMirror-lines {
-  padding-top: 0;
+.pm-image-preview img.pm-image-centered {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
 }
 

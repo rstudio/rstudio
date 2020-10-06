@@ -1,7 +1,7 @@
 /*
  * HelpNavigateEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,19 +14,19 @@
  */
 package org.rstudio.studio.client.workbench.views.help.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class HelpNavigateEvent extends GwtEvent<HelpNavigateHandler>
+public class HelpNavigateEvent extends GwtEvent<HelpNavigateEvent.Handler>
 {
-   public static final GwtEvent.Type<HelpNavigateHandler> TYPE =
-      new GwtEvent.Type<HelpNavigateHandler>();
-   
+   public static final GwtEvent.Type<Handler> TYPE = new GwtEvent.Type<>();
+
    public HelpNavigateEvent(String url, String title)
    {
       url_ = url;
       title_ = title;
    }
-   
+
    public String getUrl()
    {
       return url_;
@@ -38,17 +38,22 @@ public class HelpNavigateEvent extends GwtEvent<HelpNavigateHandler>
    }
 
    @Override
-   protected void dispatch(HelpNavigateHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onNavigate(this);
    }
 
    @Override
-   public GwtEvent.Type<HelpNavigateHandler> getAssociatedType()
+   public GwtEvent.Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
-   
+
+   public interface Handler extends EventHandler
+   {
+      void onNavigate(HelpNavigateEvent event);
+   }
+
    private final String url_;
    private final String title_;
 }

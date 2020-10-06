@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-20 by RStudio, PBC
+# Copyright (C) 2020 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -34,7 +34,7 @@ if(NOT WIN32)
            set(QT_COMPILER "gcc")
          endif()
       endif()
-         
+
       set(QT_CANDIDATES 5.12.8)
 
       # find the newest installed Qt version among the versions we build
@@ -315,9 +315,6 @@ if(WIN32)
       add_subdirectory(synctex/rsinverse)
    endif()
 
-   set(
-      CMAKE_EXE_LINKER_FLAGS
-      "${CMAKE_EXE_LINKER_FLAGS} /subsystem:windows")
 endif(WIN32)
 
 
@@ -356,6 +353,14 @@ if(UNIX AND NOT APPLE)
 )
 endif()
 
+# configure launch settings (for Visual Studio on Windows)
+if(WIN32)
+   configure_file(
+      "${CMAKE_CURRENT_SOURCE_DIR}/launch.vs.json.in"
+      "${CMAKE_CURRENT_BINARY_DIR}/launch.vs.json"
+      @ONLY)
+endif()
+
 # define executable (Windows & Linux)
 if(NOT APPLE)
 
@@ -365,6 +370,10 @@ if(NOT APPLE)
       ${DESKTOP_RESOURCES_SOURCES}
       ${DESKTOP_UI_SOURCES}
    )
+
+   if(WIN32)
+      set_target_properties(rstudio PROPERTIES WIN32_EXECUTABLE YES)
+   endif()
 
    # These cause issues with macdeployqt due to missing dependencies; suspect we don't need
    # these on any platform.
@@ -548,7 +557,7 @@ if(RSTUDIO_BUNDLE_QT)
          "${CMAKE_CURRENT_BINARY_DIR}/install/LinuxInstallQt.sh")
 
    endif()
-          
+
 endif(RSTUDIO_BUNDLE_QT)
 
 # install HTML templates

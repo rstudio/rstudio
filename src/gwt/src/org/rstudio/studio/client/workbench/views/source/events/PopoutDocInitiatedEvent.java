@@ -1,7 +1,7 @@
 /*
  * PopoutDocInitiatedEvent.java
  *
- * Copyright (C) 2009-15 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,25 +21,25 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 @JavaScriptSerializable
-public class PopoutDocInitiatedEvent 
+public class PopoutDocInitiatedEvent
              extends GwtEvent<PopoutDocInitiatedEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
       void onPopoutDocInitiated(PopoutDocInitiatedEvent e);
    }
-   
+
    public PopoutDocInitiatedEvent()
    {
       posX_ = 0;
       posY_ = 0;
    }
-   
+
    public PopoutDocInitiatedEvent(String docId, Point position)
    {
       docId_ = docId;
       if (position != null)
-      { 
+      {
          posX_ = position.getX();
          posY_ = position.getY();
       }
@@ -49,14 +49,14 @@ public class PopoutDocInitiatedEvent
    {
       return docId_;
    }
-   
+
    public Point getPosition()
    {
       if (posX_ == 0 && posY_ == 0)
          return null;
       return Point.create(posX_, posY_);
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -68,10 +68,10 @@ public class PopoutDocInitiatedEvent
    {
       handler.onPopoutDocInitiated(this);
    }
-   
+
    private String docId_;
    private int posX_;
    private int posY_;
-   
-   public static final Type<Handler> TYPE = new Type<Handler>();
+
+   public static final Type<Handler> TYPE = new Type<>();
 }

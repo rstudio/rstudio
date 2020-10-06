@@ -1,7 +1,7 @@
 /*
  * ThemeStyles.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -47,7 +47,7 @@ public interface ThemeStyles extends CssResource
    String docTabPanel();
    String docTabIcon();
    String docMenuScroll();
-          
+
    String closeTabButton();
 
    String visuallyHidden();
@@ -75,12 +75,12 @@ public interface ThemeStyles extends CssResource
    String menuItemSubtitle();
 
    String menuRightImage();
-   
+
    String scrollableMenuBar();
 
    String moduleTabPanel();
    String minimized();
-          
+
    String firstTabSelected();
 
    String toolbarSeparator();
@@ -92,10 +92,10 @@ public interface ThemeStyles extends CssResource
    String toolbarButtonLeftImage();
    String toolbarButtonRightImage();
    String toolbarFileLabel();
-   
+
    String toolbarButtonLatched();
    String toolbarButtonLatchable();
-   
+
    String windowFrameToolbarButton();
 
    String statusBarMenu();
@@ -122,11 +122,11 @@ public interface ThemeStyles extends CssResource
    String clearSearch();
 
    String dialogBottomPanel();
-   
+
    String dialogMessage();
    String sessionAbendMessage();
    String applicationHeaderStrong();
-   
+
    String environmentHierarchicalCol();
    String environmentDataFrameCol();
    String environmentFunctionCol();
@@ -134,15 +134,16 @@ public interface ThemeStyles extends CssResource
    String filterMatch();
 
    String odd();
-   
+
    String showFile();
    String showFileFixed();
-   
+   String showFilePreFixed();
+
    String fileUploadPanel();
    String fileUploadField();
    String fileUploadLabel();
    String fileUploadTipLabel();
-   
+
    String fileList();
 
    String locatorPanel();
@@ -150,40 +151,41 @@ public interface ThemeStyles extends CssResource
    String multiPodUtilityArea();
    String rstheme_multiPodUtilityTabArea();
 
-   String tabOverflowPopup();   
-   
+   String tabOverflowPopup();
+
    String miniDialogPopupPanel();
    String miniDialogContainer();
    String miniDialogCaption();
    String miniDialogTools();
-   
+
    String selectWidget();
    String textBoxWithButton();
-   
+
    String selectableText();
    String forceMacScrollbars();
-   
+
    String adornedText();
-   
+
    String fullscreenCaptionIcon();
    String fullscreenCaptionLabel();
-   
+
    String presentationNavigatorLabel();
-   
+
    String notResizable();
-   
+
    String dialogTabPanel();
-   
+
    String handCursor();
-   
+
    String borderedIFrame();
-   
+
    String toolbarInfoLabel();
-   
+
    String displayNone();
    String logoAnchor();
 
    String windowFrameObject();
+   String focusedWindowFrameObject();
    String rstheme_minimizedWindowObject();
    String windowFrameWidget();
 
@@ -200,6 +202,7 @@ public interface ThemeStyles extends CssResource
 
    String progressPanel();
 
+   String clearBuildButton();
    String consoleClearButton();
    String terminalClearButton();
    String refreshToolbarButton();
@@ -207,10 +210,10 @@ public interface ThemeStyles extends CssResource
    String dataTableColumnWidget();
 
    String tabIcon();
-   
+
    String menuCheckable();
-   
+
    String noLogo();
-   
+
    String launcherJobRunButton();
 }

@@ -1,7 +1,7 @@
 /*
  * AddinCommandBinding.java
  *
- * Copyright (C) 2009-17 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,7 +26,7 @@ public class AddinCommandBinding implements CommandBinding
       addin_ = addin;
       executor_ = new AddinExecutor();
    }
-   
+
    @Override
    public String getId()
    {
@@ -44,13 +44,13 @@ public class AddinCommandBinding implements CommandBinding
    {
       return true;
    }
-   
+
    @Override
    public boolean isUserDefinedBinding()
    {
       return true;
    }
-   
+
    @Override
    public Context getContext()
    {

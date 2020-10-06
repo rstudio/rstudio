@@ -1,7 +1,7 @@
 /*
  * strong.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,15 +18,21 @@ import { Schema, Mark, Fragment } from 'prosemirror-model';
 import { MarkCommand, EditorCommandId } from '../api/command';
 import { Extension } from '../api/extension';
 import { PandocOutput, PandocTokenType } from '../api/pandoc';
-import { delimiterMarkInputRule } from '../api/mark';
+import { delimiterMarkInputRule, MarkInputRuleFilter } from '../api/input_rule';
 
 const extension: Extension = {
   marks: [
     {
       name: 'strong',
       spec: {
+        group: 'formatting',
         parseDOM: [
-          { tag: 'b' },
+          // This works around a Google Docs misbehavior where pasted content will be inexplicably wrapped in `<b>`
+          // tags with a font-weight normal.
+          {
+            tag: 'b',
+            getAttrs: (value: string | Node) => (value as HTMLElement).style.fontWeight !== 'normal' && null,
+          },
           { tag: 'strong' },
           {
             style: 'font-weight',
@@ -45,9 +51,9 @@ const extension: Extension = {
           },
         ],
         writer: {
-          priority: 1,
+          priority: 3,
           write: (output: PandocOutput, _mark: Mark, parent: Fragment) => {
-            output.writeMark(PandocTokenType.Strong, parent, true);
+            output.writeMark(PandocTokenType.Strong, parent);
           },
         },
       },
@@ -58,8 +64,11 @@ const extension: Extension = {
     return [new MarkCommand(EditorCommandId.Strong, ['Mod-b'], schema.marks.strong)];
   },
 
-  inputRules: (schema: Schema) => {
-    return [delimiterMarkInputRule('\\*\\*', schema.marks.strong)];
+  inputRules: (schema: Schema, filter: MarkInputRuleFilter) => {
+    return [
+      delimiterMarkInputRule('\\*\\*', schema.marks.strong, filter, '`', true),
+      delimiterMarkInputRule('__', schema.marks.strong, filter, '\\w`', true),
+    ];
   },
 };
 

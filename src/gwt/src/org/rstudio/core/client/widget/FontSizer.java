@@ -1,7 +1,7 @@
 /*
  * FontSizer.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,6 +23,7 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.UIObject;
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.studio.client.application.Desktop;
 
 
 public class FontSizer
@@ -74,7 +75,7 @@ public class FontSizer
       // our resource class
       if (document == null || styles == null)
          return;
-      
+
       size = size + BrowseCap.getFontSkew();
 
       final String STYLE_EL_ID = "__rstudio_normal_size";
@@ -98,5 +99,39 @@ public class FontSizer
          oldStyle.removeFromParent();
 
       style.setId(STYLE_EL_ID);
+   }
+
+   /**
+    * Needs to match the size computed in FontSizer.css; used by xterm.js which is not
+    * styled with css but via API calls
+    *
+    * @return css line_height scaling (no units)
+    */
+   public static double getNormalLineHeight()
+   {
+      double lineHeight = 1.25;
+
+      if (BrowseCap.isMacintosh())
+         lineHeight = 1.45;
+
+      if (Desktop.isDesktop())
+      {
+         if (BrowseCap.isWindows())
+            lineHeight = 1.2;
+      }
+      else if (BrowseCap.isFirefox())
+      {
+         if (BrowseCap.isWindows())
+            lineHeight = 1.2;
+      }
+      else if (BrowseCap.isWindows())
+         lineHeight = 1.1;
+
+      if (Document.get().getBody().hasClassName("ubuntu_mono_firefox"))
+         lineHeight = 1.1;
+      else if (Document.get().getBody().hasClassName("ubuntu_mono"))
+         lineHeight = 1.2;
+
+      return lineHeight;
    }
 }

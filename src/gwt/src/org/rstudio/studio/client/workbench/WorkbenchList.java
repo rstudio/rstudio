@@ -1,7 +1,7 @@
 /*
  * WorkbenchList.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,14 +16,14 @@ package org.rstudio.studio.client.workbench;
 
 import java.util.ArrayList;
 
-import org.rstudio.studio.client.workbench.events.ListChangedHandler;
+import org.rstudio.studio.client.workbench.events.ListChangedEvent;
 
 import com.google.gwt.event.shared.HandlerRegistration;
 
 /*
  * Interface to workbench lists. The contract is that the mutating functions
- * call the server and then an updated copy of the list is (eventually) 
- * returned via the ListChangedHandler
+ * call the server and then an updated copy of the list is (eventually)
+ * returned via the ListChangedEvent.Handler
  */
 public interface WorkbenchList
 {
@@ -33,7 +33,7 @@ public interface WorkbenchList
    void prepend(String item);
    void remove(String item);
    void clear();
-   
+
    // change handler
-   HandlerRegistration addListChangedHandler(ListChangedHandler handler);
+   HandlerRegistration addListChangedHandler(ListChangedEvent.Handler handler);
 }

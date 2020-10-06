@@ -1,7 +1,7 @@
 /*
  * DateTime.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -40,7 +40,7 @@ double secondsSinceEpoch(std::time_t time)
 double millisecondsSinceEpoch()
 {
    return millisecondsSinceEpoch(
-                     boost::posix_time::microsec_clock::universal_time());  
+                     boost::posix_time::microsec_clock::universal_time());
 }
    
 double millisecondsSinceEpoch(const boost::posix_time::ptime& time)

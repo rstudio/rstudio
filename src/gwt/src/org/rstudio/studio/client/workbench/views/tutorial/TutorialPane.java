@@ -1,7 +1,7 @@
 /*
  * TutorialPane.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * This program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
@@ -39,7 +39,6 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
-import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.tutorial.TutorialPresenter.Tutorial;
 import org.rstudio.studio.client.workbench.views.tutorial.events.TutorialNavigateEvent;
@@ -399,7 +398,7 @@ public class TutorialPane
          {
             // double-check that we were able to successfully install learnr
             progress_ = globalDisplay_.getProgressIndicator(errorCaption);
-            handler_ = events_.addHandler(ConsolePromptEvent.TYPE, new ConsolePromptHandler()
+            handler_ = events_.addHandler(ConsolePromptEvent.TYPE, new ConsolePromptEvent.Handler()
             {
                @Override
                public void onConsolePrompt(ConsolePromptEvent event)

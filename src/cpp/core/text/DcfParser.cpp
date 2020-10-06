@@ -1,7 +1,7 @@
 /*
  * DcfParser.cpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -207,7 +207,7 @@ Error parseDcfFile(const std::string& dcfFileContents,
 
 Error parseMultiDcfFile(const std::string& dcfFileContents,
                         bool preserveKeyCase,
-                        const boost::function<Error (const std::map<std::string, std::string> &)>& handleEntry)
+                        const boost::function<Error (int, const std::map<std::string, std::string> &)>& handleEntry)
 {
    // split out multiple DCF entries one at a time
    // entries are separated by a blank line
@@ -218,6 +218,7 @@ Error parseMultiDcfFile(const std::string& dcfFileContents,
                                      -1);
    boost::sregex_token_iterator end;
 
+   size_t lineCount = 1;
    for (; iter != end; ++iter)
    {
       // split dcf chunk into separate lines (delineated by newline character)
@@ -248,10 +249,12 @@ Error parseMultiDcfFile(const std::string& dcfFileContents,
          if (error)
             return error;
 
-         error = handleEntry(fields);
+         error = handleEntry(lineCount, fields);
          if (error)
             return error;
       }
+
+      lineCount += entryLines.size() + 1; // each entry separated by a blank line
    }
 
    return Success();
@@ -259,7 +262,7 @@ Error parseMultiDcfFile(const std::string& dcfFileContents,
 
 Error parseMultiDcfFile(const FilePath& dcfFilePath,
                         bool preserveKeyCase,
-                        const boost::function<Error(const std::map<std::string, std::string>&)>& handleEntry)
+                        const boost::function<Error(int, const std::map<std::string, std::string>&)>& handleEntry)
 {
    std::string contents;
    Error error = readStringFromFile(dcfFilePath,

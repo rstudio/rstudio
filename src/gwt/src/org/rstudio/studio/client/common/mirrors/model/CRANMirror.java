@@ -1,7 +1,7 @@
 /*
  * CRANMirror.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -91,7 +91,14 @@ public class CRANMirror extends UserPrefs.CranMirror
    {
       ArrayList<CRANMirror> repos = new ArrayList<CRANMirror>();
 
-      String[] entries = getSecondary().split("\\|");
+      String secondary = getSecondary();
+      if (StringUtil.isNullOrEmpty(secondary))
+      {
+         // Return empty list of secondary repos if none were defined.
+         return repos;
+      }
+      
+      String[] entries = secondary.split("\\|");
       for (int i = 0; i < entries.length / 2; i++)
       {
          CRANMirror repo = CRANMirror.empty();

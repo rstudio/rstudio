@@ -1,7 +1,7 @@
 /*
  * PreferencesDialogPaneBase.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,11 +17,12 @@ package org.rstudio.core.client.prefs;
 import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
-import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
+import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.ProgressIndicator;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Unit;
@@ -30,6 +31,7 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -55,19 +57,16 @@ public abstract class PreferencesDialogPaneBase<T> extends VerticalPanel
 
    public abstract RestartRequirement onApply(T prefs);
 
-   public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleHandler handler)
+   public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleEvent.Handler handler)
    {
       return addHandler(handler, EnsureVisibleEvent.TYPE);
    }
 
    public void registerEnsureVisibleHandler(HasEnsureVisibleHandlers widget)
    {
-      widget.addEnsureVisibleHandler(new EnsureVisibleHandler()
+      widget.addEnsureVisibleHandler(event ->
       {
-         public void onEnsureVisible(EnsureVisibleEvent event)
-         {
-            fireEvent(new EnsureVisibleEvent());
-         }
+         fireEvent(new EnsureVisibleEvent());
       });
    }
 
@@ -80,7 +79,7 @@ public abstract class PreferencesDialogPaneBase<T> extends VerticalPanel
    {
       return progressIndicator_;
    }
-   
+
 
    protected Widget indent(Widget widget)
    {
@@ -93,7 +92,7 @@ public abstract class PreferencesDialogPaneBase<T> extends VerticalPanel
       widget.addStyleName(res_.styles().tight());
       return widget;
    }
-   
+
    protected Widget lessSpaced(Widget widget)
    {
       if (!BrowseCap.isLinuxDesktop())
@@ -106,7 +105,7 @@ public abstract class PreferencesDialogPaneBase<T> extends VerticalPanel
          return widget;
       }
    }
-   
+
    protected Widget spacedBefore(Widget widget)
    {
       widget.addStyleName(res_.styles().spacedBefore());
@@ -118,25 +117,25 @@ public abstract class PreferencesDialogPaneBase<T> extends VerticalPanel
       widget.addStyleName(res_.styles().spaced());
       return widget;
    }
-   
+
    protected Widget mediumSpaced(Widget widget)
    {
       widget.addStyleName(res_.styles().mediumSpaced());
       return widget;
    }
-   
+
    protected Widget extraSpaced(Widget widget)
    {
       widget.addStyleName(res_.styles().extraSpaced());
       return widget;
    }
-   
+
    protected Widget nudgeRight(Widget widget)
    {
       widget.addStyleName(res_.styles().nudgeRight());
       return widget;
    }
-   
+
    protected Widget nudgeRightPlus(Widget widget)
    {
       widget.addStyleName(res_.styles().nudgeRightPlus());
@@ -149,6 +148,27 @@ public abstract class PreferencesDialogPaneBase<T> extends VerticalPanel
       return widget;
    }
    
+   protected Label headerLabel(String caption)
+   {
+      Label headerLabel = new Label(caption);
+      headerLabel.addStyleName(res().styles().headerLabel());
+      nudgeRight(headerLabel);
+      return headerLabel;
+   }
+
+   protected FormLabel headerLabel(String caption, Widget labeledWidget)
+   {
+      return headerLabel(caption, labeledWidget.getElement());
+   }
+
+   protected FormLabel headerLabel(String caption, Element labeledElement)
+   {
+      FormLabel headerLabel = new FormLabel(caption, labeledElement);
+      headerLabel.addStyleName(res().styles().headerLabel());
+      nudgeRight(headerLabel);
+      return headerLabel;
+   }
+
    protected HorizontalPanel checkBoxWithHelp(CheckBox checkBox, String topic, String title)
    {
       HorizontalPanel panel = new HorizontalPanel();
@@ -160,38 +180,38 @@ public abstract class PreferencesDialogPaneBase<T> extends VerticalPanel
       panel.add(helpButton);
       return panel;
    }
-   
+
    protected void forceClosed(Command onClosed)
    {
       dialog_.forceClosed(onClosed);
    }
-   
+
    protected void setEnterDisabled(boolean enterDisabled)
    {
       dialog_.setEnterDisabled(enterDisabled);
    }
-   
-   protected PreferencesDialogBaseResources res() 
+
+   protected PreferencesDialogBaseResources res()
    {
       return res_;
    }
-   
+
    void setDialog(PreferencesDialogBase<T> dialog)
    {
       dialog_ = dialog;
    }
-   
-   void setPaneVisible(boolean visible)
+
+   protected void setPaneVisible(boolean visible)
    {
       getElement().getStyle().setDisplay(visible
                                               ? Display.BLOCK
                                               : Display.NONE);
 
    }
-   
+
    private ProgressIndicator progressIndicator_;
    private final PreferencesDialogBaseResources res_ =
                                  PreferencesDialogBaseResources.INSTANCE;
-   
+
    private PreferencesDialogBase<T> dialog_;
 }

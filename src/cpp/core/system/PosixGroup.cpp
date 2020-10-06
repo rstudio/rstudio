@@ -1,7 +1,7 @@
 /*
  * PosixGroup.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -109,10 +109,6 @@ Error userGroups(const std::string& userName, std::vector<Group>* pGroups)
    if (error)
       return error;
 
-   // get the groups for the user - we start with 100 groups which should be enough for most cases
-   // if it is not, resize the buffer with the correct amount of groups and try again
-   int numGroups = 100;
-
    // define a different gid type if we are on Mac vs Linux
    // BSD expects int values, but Linux expects unsigned ints
 #ifndef __APPLE__
@@ -121,13 +117,12 @@ Error userGroups(const std::string& userName, std::vector<Group>* pGroups)
    typedef int GIDTYPE;
 #endif
 
-   boost::shared_ptr<GIDTYPE> pGids(new GIDTYPE[100]);
-   while (!getgrouplist(userName.c_str(), user.getGroupId(), pGids.get(), &numGroups))
+   // get the groups for the user - we start with 100 groups which should be enough for most cases
+   // if it is not, resize the buffer with the correct amount of groups and try again
+   int numGroups = 100;
+   boost::shared_ptr<GIDTYPE> pGids(new GIDTYPE[numGroups]);
+   while (getgrouplist(userName.c_str(), user.getGroupId(), pGids.get(), &numGroups) == -1)
    {
-      // defensive break out in case the OS somehow returns 0 groups for the user
-      if (numGroups == 0)
-         break;
-
       pGids.reset(new GIDTYPE[numGroups]);
    }
 

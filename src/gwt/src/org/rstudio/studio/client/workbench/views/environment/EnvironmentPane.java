@@ -1,7 +1,7 @@
 /*
  * EnvironmentPane.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.environment;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.DebugFilePosition;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
@@ -36,12 +37,17 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.ImageMenuItem;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.Value;
+import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.icons.StandardIcons;
+import org.rstudio.studio.client.events.ReticulateEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
@@ -63,14 +69,17 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
-public class EnvironmentPane extends WorkbenchPane 
+public class EnvironmentPane extends WorkbenchPane
                              implements EnvironmentPresenter.Display,
-                                        EnvironmentObjectsObserver
+                                        EnvironmentObjectsObserver,
+                                        SessionInitEvent.Handler,
+                                        ReticulateEvent.Handler
 {
    @Inject
    public EnvironmentPane(Commands commands,
@@ -78,28 +87,42 @@ public class EnvironmentPane extends WorkbenchPane
                           GlobalDisplay globalDisplay,
                           EnvironmentServerOperations serverOperations,
                           Session session,
-                          UserPrefs prefs)
+                          UserPrefs prefs,
+                          DependencyManager dependencyManager)
    {
       super("Environment", events);
-      
+
       commands_ = commands;
       server_ = serverOperations;
       globalDisplay_ = globalDisplay;
+      session_ = session;
       prefs_ = prefs;
+      dependencyManager_ = dependencyManager;
 
       expandedObjects_ = new ArrayList<String>();
       scrollPosition_ = 0;
       isClientStateDirty_ = false;
       environments_ = null;
-      EnvironmentContextData environmentState = 
-            session.getSessionInfo().getEnvironmentState();
+
+      EnvironmentContextData environmentState = session.getSessionInfo().getEnvironmentState();
       environmentName_ = environmentState.environmentName();
       environmentIsLocal_ = environmentState.environmentIsLocal();
-      
       environmentMonitoring_ = new Value<Boolean>(environmentState.environmentMonitoring());
 
       EnvironmentPaneResources.INSTANCE.environmentPaneStyle().ensureInjected();
-      
+
+      refreshTimer_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            commands_.refreshEnvironment().execute();
+         }
+      };
+
+      events.addHandler(SessionInitEvent.TYPE, this);
+      events.addHandler(ReticulateEvent.TYPE, this);
+
       ensureWidget();
    }
 
@@ -115,7 +138,7 @@ public class EnvironmentPane extends WorkbenchPane
       toolbar.addLeftWidget(createImportMenu());
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.clearWorkspace().createToolbarButton());
-       
+
       ToolbarPopupMenu menu = new ToolbarPopupMenu();
       menu.addItem(createViewMenuItem(EnvironmentObjects.OBJECT_LIST_VIEW));
       menu.addItem(createViewMenuItem(EnvironmentObjects.OBJECT_GRID_VIEW));
@@ -126,13 +149,13 @@ public class EnvironmentPane extends WorkbenchPane
             menu);
       ElementIds.assignElementId(viewButton_, ElementIds.MB_OBJECT_LIST_VIEW);
       toolbar.addRightWidget(viewButton_);
-      
+
       toolbar.addRightSeparator();
 
       refreshButton_ = commands_.refreshEnvironment().createToolbarButton();
       refreshButton_.addStyleName(ThemeStyles.INSTANCE.refreshToolbarButton());
       toolbar.addRightWidget(refreshButton_);
-      
+
       ToolbarPopupMenu refreshMenu = new ToolbarPopupMenu();
       refreshMenu.addItem(new EnvironmentMonitoringMenuItem(true));
       refreshMenu.addItem(new EnvironmentMonitoringMenuItem(false));
@@ -151,8 +174,37 @@ public class EnvironmentPane extends WorkbenchPane
    @Override
    protected SecondaryToolbar createSecondaryToolbar()
    {
+      initSecondaryToolbar();
+      return secondaryToolbar_;
+   }
+
+   private void initSecondaryToolbar()
+   {
       SecondaryToolbar toolbar = new SecondaryToolbar("Environment Tab Second");
-      
+
+      languageMenu_ = new ToolbarPopupMenu();
+
+      MenuItem rMenuItem = new MenuItem("R", () -> setActiveLanguage("R", true));
+      languageMenu_.addItem(rMenuItem);
+
+      MenuItem pyMenuItem = new MenuItem("Python", () ->
+      {
+         dependencyManager_.withReticulate(
+               "Viewing Python Objects",
+               "Viewing Python objects",
+               () -> setActiveLanguage("Python", true));
+      });
+      languageMenu_.addItem(pyMenuItem);
+
+      languageButton_ = new ToolbarMenuButton(
+            "R",
+            ToolbarButton.NoTitle,
+            (ImageResource) null,
+            languageMenu_);
+
+      toolbar.addLeftWidget(languageButton_);
+      toolbar.addLeftSeparator();
+
       environmentMenu_ = new EnvironmentPopupMenu();
       environmentButton_ = new ToolbarMenuButton(
             friendlyEnvironmentName(),
@@ -164,7 +216,7 @@ public class EnvironmentPane extends WorkbenchPane
 
       ThemeStyles styles = ThemeStyles.INSTANCE;
       toolbar.getWrapper().addStyleName(styles.tallerToolbarWrapper());
-      
+
       SearchWidget searchWidget = new SearchWidget("Search environment", new SuggestOracle() {
          @Override
          public void requestSuggestions(Request request, Callback callback)
@@ -175,7 +227,7 @@ public class EnvironmentPane extends WorkbenchPane
                   new Response(new ArrayList<Suggestion>()));
          }
       });
-      
+
       ElementIds.assignElementId(searchWidget, ElementIds.SW_ENVIRONMENT);
       searchWidget.addValueChangeHandler(new ValueChangeHandler<String>() {
          @Override
@@ -191,13 +243,21 @@ public class EnvironmentPane extends WorkbenchPane
 
       toolbar.addRightWidget(searchWidget);
 
-      return toolbar;
+      secondaryToolbar_ = toolbar;
    }
 
    @Override
    protected Widget createMainWidget()
    {
       objects_ = new EnvironmentObjects(this);
+
+      EnvironmentContextData data = session_.getSessionInfo().getEnvironmentState();
+      if (StringUtil.equals(data.language(), "Python"))
+      {
+         setPythonEnabled(true);
+         setActiveLanguage("Python", false);
+      }
+
       return objects_;
    }
 
@@ -214,13 +274,13 @@ public class EnvironmentPane extends WorkbenchPane
    {
       objects_.addObjects(objects);
    }
-   
+
    @Override
    public void removeObject(String objectName)
    {
       objects_.removeObject(objectName);
    }
-   
+
    @Override
    public void setContextDepth(int contextDepth)
    {
@@ -250,11 +310,12 @@ public class EnvironmentPane extends WorkbenchPane
    {
       environmentName_ = environmentName;
       environmentButton_.setText(friendlyEnvironmentName());
-      environmentButton_.setLeftImage(imageOfEnvironment(environmentName, 
-                                                         local));
-      objects_.setEnvironmentName(friendlyEnvironmentName());
-      if (environmentName.equals(".GlobalEnv"))
-         commands_.clearWorkspace().setEnabled(true); 
+      environmentButton_.setLeftImage(imageOfEnvironment(environmentName, local));
+
+      String friendlyName = friendlyEnvironmentName();
+      objects_.setEnvironmentName(friendlyName);
+      if (friendlyName.equals(GLOBAL_ENVIRONMENT_NAME))
+         commands_.clearWorkspace().setEnabled(true);
       else
          commands_.clearWorkspace().setEnabled(false);
    }
@@ -323,14 +384,9 @@ public class EnvironmentPane extends WorkbenchPane
    @Override
    public void changeContextDepth(int newDepth)
    {
-      server_.setContextDepth(newDepth, new ServerRequestCallback<Void>()
-      {
-         @Override
-         public void onError(ServerError error)
-         {
-            globalDisplay_.showErrorMessage("Error opening call frame", error.getUserMessage());
-         }
-      });
+      server_.setContextDepth(
+            newDepth,
+            new SimpleRequestCallback<Void>("Error opening call frame"));
    }
 
    public boolean clientStateDirty()
@@ -362,13 +418,13 @@ public class EnvironmentPane extends WorkbenchPane
       viewButton_.setLeftImage(imageOfViewType(type));
       objects_.setObjectDisplay(type);
    }
-   
+
    @Override
    public int getObjectDisplayType()
    {
       return objects_.getObjectDisplay();
    }
-   
+
    @Override
    public int getSortColumn()
    {
@@ -417,7 +473,7 @@ public class EnvironmentPane extends WorkbenchPane
    {
       executeFunctionForObject(action, objectName);
    }
-   
+
    @Override
    public boolean getShowInternalFunctions()
    {
@@ -430,10 +486,10 @@ public class EnvironmentPane extends WorkbenchPane
       prefs_.showInternalFunctions().setProjectValue(show);
    }
 
-   public void fillObjectContents(final RObject object, 
+   public void fillObjectContents(final RObject object,
                                   final Operation onCompleted)
    {
-      server_.getObjectContents(object.getName(), 
+      server_.getObjectContents(object.getName(),
             new ServerRequestCallback<ObjectContents>()
       {
          @Override
@@ -450,14 +506,15 @@ public class EnvironmentPane extends WorkbenchPane
          }
       });
    }
-   
+
    // Private methods ---------------------------------------------------------
 
    private void executeFunctionForObject(String function, String objectName)
    {
       String editCode =
               function + "(" + StringUtil.toRSymbolName(objectName) + ")";
-      SendToConsoleEvent event = new SendToConsoleEvent(editCode, true);
+
+      SendToConsoleEvent event = new SendToConsoleEvent(editCode, activeLanguage_, true);
       events_.fireEvent(event);
    }
 
@@ -465,7 +522,7 @@ public class EnvironmentPane extends WorkbenchPane
    {
       ToolbarPopupMenu menu = new ToolbarPopupMenu();
       menu.setAutoOpen(true);
-   
+
       menu.addItem(commands_.importDatasetFromFile().createMenuItem(false));
       menu.addItem(commands_.importDatasetFromURL().createMenuItem(false));
       menu.addItem(commands_.importDatasetFromCsvUsingBase().createMenuItem(false));
@@ -482,27 +539,42 @@ public class EnvironmentPane extends WorkbenchPane
               ToolbarButton.NoTitle,
               new ImageResource2x(StandardIcons.INSTANCE.import_dataset2x()),
               menu);
-      
+
       ElementIds.assignElementId(dataImportButton_, ElementIds.MB_IMPORT_DATASET);
       return dataImportButton_;
 
    }
-   
+
    private String friendlyEnvironmentName()
    {
       return friendlyNameOfEnvironment(environmentName_);
    }
-   
+
    private String friendlyNameOfEnvironment(String name)
    {
-      if (name == ".GlobalEnv" || name == "R_GlobalEnv")
+      boolean isGlobalEnv =
+            StringUtil.equals(name, ".GlobalEnv") ||
+            StringUtil.equals(name, "R_GlobalEnv");
+
+      if (isGlobalEnv)
          return GLOBAL_ENVIRONMENT_NAME;
-      else if (name == "base")
+
+      boolean isBase =
+            StringUtil.equals(name, "base");
+
+      if (isBase)
          return "package:base";
-      else 
-         return name;
+
+      boolean isPythonMain =
+            StringUtil.equals(name, "main") ||
+            StringUtil.equals(name, "__main__");
+
+      if (isPythonMain)
+         return "Main Module";
+
+      return name;
    }
-   
+
    private ImageResource imageOfEnvironment(String name, boolean local)
    {
       if (name.endsWith("()"))
@@ -510,19 +582,19 @@ public class EnvironmentPane extends WorkbenchPane
       else if (name.equals(".GlobalEnv") || name.equals("R_GlobalEnv"))
          return new ImageResource2x(EnvironmentResources.INSTANCE.globalEnvironment2x());
       else if (name.startsWith("package:") ||
-               name.equals("base") || 
+               name.equals("base") ||
                local)
          return new ImageResource2x(EnvironmentResources.INSTANCE.packageEnvironment2x());
-      else 
+      else
          return new ImageResource2x(EnvironmentResources.INSTANCE.attachedEnvironment2x());
    }
-   
+
    private void setEnvironments(JsArray<EnvironmentFrame> environments)
    {
       environments_ = environments;
       rebuildEnvironmentMenu();
    }
-   
+
    private void rebuildEnvironmentMenu()
    {
       environmentMenu_.clearItems();
@@ -533,10 +605,10 @@ public class EnvironmentPane extends WorkbenchPane
       for (int i = 0; i < environments_.length(); i++)
       {
          final EnvironmentFrame frame = environments_.get(i);
-         ImageResource img = imageOfEnvironment(frame.getName(), 
+         ImageResource img = imageOfEnvironment(frame.getName(),
                                                 frame.isLocal());
-         environmentMenu_.addItem(ImageMenuItem.create(img, 
-                  friendlyNameOfEnvironment(frame.getName()), 
+         environmentMenu_.addItem(ImageMenuItem.create(img,
+                  friendlyNameOfEnvironment(frame.getName()),
                   new Scheduler.ScheduledCommand()
                   {
                      @Override
@@ -547,8 +619,8 @@ public class EnvironmentPane extends WorkbenchPane
                   }, 2));
       }
    }
-   
-   // Called to load a new environment into the environment pane. 
+
+   // Called to load a new environment into the environment pane.
    private void loadEnvironmentFrame(final EnvironmentFrame frame)
    {
       ServerRequestCallback<Void> callback = new ServerRequestCallback<Void>()
@@ -562,17 +634,23 @@ public class EnvironmentPane extends WorkbenchPane
          @Override
          public void onError(ServerError error)
          {
-            
+
          }
       };
-      // If the frame's an active call frame, set it by its index 
+
       if (frame.getFrame() > 0)
+      {
+         // If the frame's an active call frame, set it by its index
          server_.setEnvironmentFrame(frame.getFrame(), callback);
-      // Otherwise, set it by its name
+      }
       else
+      {
+         // Otherwise, set it by its name
+         setEnvironmentName(frame.getName(), frame.isLocal());
          server_.setEnvironment(frame.getName(), callback);
+      }
    }
-   
+
    private String nameOfViewType(int type)
    {
       if (type == EnvironmentObjects.OBJECT_LIST_VIEW)
@@ -581,7 +659,7 @@ public class EnvironmentPane extends WorkbenchPane
          return "Grid";
       return "";
    }
-   
+
    private ImageResource imageOfViewType(int type)
    {
       if (type == EnvironmentObjects.OBJECT_LIST_VIEW)
@@ -590,7 +668,7 @@ public class EnvironmentPane extends WorkbenchPane
          return new ImageResource2x(EnvironmentResources.INSTANCE.objectGridView2x());
       return null;
    }
-   
+
    private MenuItem createViewMenuItem(final int type)
    {
       return ImageMenuItem.create(
@@ -605,16 +683,43 @@ public class EnvironmentPane extends WorkbenchPane
                }
             }, -1);
    }
-   
+
+   @Override
+   public void onSessionInit(SessionInitEvent sie)
+   {
+      boolean initialized = session_.getSessionInfo().getPythonInitialized();
+      setPythonEnabled(initialized);
+   }
+
+   @Override
+   public void onReticulate(ReticulateEvent event)
+   {
+      String type = event.getType();
+
+      if (StringUtil.equals(type, ReticulateEvent.TYPE_PYTHON_INITIALIZED))
+      {
+         setPythonEnabled(true);
+      }
+      else if (StringUtil.equals(type, ReticulateEvent.TYPE_REPL_INITIALIZED))
+      {
+         setActiveLanguage("Python", true);
+      }
+      else if (StringUtil.equals(type, ReticulateEvent.TYPE_REPL_TEARDOWN))
+      {
+         setActiveLanguage("R", true);
+      }
+   }
+
    // An extension of the toolbar popup menu that gets environment names from
-   // the server when the menu is invoked. 
+   // the server when the menu is invoked.
    private class EnvironmentPopupMenu extends ToolbarPopupMenu
    {
       @Override
-      public void getDynamicPopupMenu 
+      public void getDynamicPopupMenu
          (final ToolbarPopupMenu.DynamicPopupMenuCallback callback)
       {
          server_.getEnvironmentNames(
+               activeLanguage_,
                new ServerRequestCallback<JsArray<EnvironmentFrame>>()
                {
                   @Override
@@ -623,7 +728,7 @@ public class EnvironmentPane extends WorkbenchPane
                      setEnvironments(response);
                      callback.onPopupMenu(environmentMenu_);
                   }
-         
+
                   @Override
                   public void onError(ServerError error)
                   {
@@ -633,7 +738,7 @@ public class EnvironmentPane extends WorkbenchPane
                });
       }
    }
-   
+
    private class EnvironmentMonitoringMenuItem extends MonitoringMenuItem
    {
       public EnvironmentMonitoringMenuItem(boolean monitoredValue)
@@ -655,7 +760,7 @@ public class EnvironmentPane extends WorkbenchPane
             {
                environmentMonitoring_.setValue(monitoredValue_, true);
             }
-         
+
             @Override
             public void onError(ServerError error)
             {
@@ -664,23 +769,94 @@ public class EnvironmentPane extends WorkbenchPane
                      error.getMessage());
             }
          });
- 
+
       }
    }
-   
+
+   public void setPythonEnabled(boolean enabled)
+   {
+      languageButton_.setEnabled(enabled);
+      languageButton_.setVisible(enabled);
+      secondaryToolbar_.manageSeparators();
+   }
+
+   // NOTE: 'syncWithSession = false' should only be used
+   // for cases where the front-end is synchronizing based
+   // on the state of the session; 'syncWithSession = true'
+   // is normally done to reflect a user action that should
+   // then update the session state as well
+   public void setActiveLanguage(String language,
+                                 boolean syncWithSession)
+   {
+      if (!syncWithSession)
+      {
+         setActiveLanguageImpl(language);
+         return;
+      }
+
+      server_.environmentSetLanguage(
+            language,
+            new VoidServerRequestCallback()
+            {
+               @Override
+               public void onResponseReceived(Void response)
+               {
+                  setActiveLanguageImpl(language);
+               }
+            });
+   }
+
+   private void setActiveLanguageImpl(String language)
+   {
+      languageButton_.setText(language);
+      activeLanguage_ = language;
+
+      if (StringUtil.equals(language, "R"))
+      {
+         setEnvironmentName("R_GlobalEnv", false);
+      }
+      else if (StringUtil.equals(language, "Python"))
+      {
+         setEnvironmentName("__main__", false);
+      }
+      else
+      {
+         Debug.logWarning("Unknown language '" + language + "'");
+      }
+
+      Scheduler.get().scheduleDeferred(() -> commands_.refreshEnvironment().execute());
+   }
+
+   public String getActiveLanguage()
+   {
+      return activeLanguage_;
+   }
+
+   public String getMonitoredEnvironment()
+   {
+      return environmentName_;
+   }
+
    public static final String GLOBAL_ENVIRONMENT_NAME = "Global Environment";
 
    private final Commands commands_;
    private final GlobalDisplay globalDisplay_;
    private final EnvironmentServerOperations server_;
+   private final Session session_;
    private final UserPrefs prefs_;
+   private final DependencyManager dependencyManager_;
    private final Value<Boolean> environmentMonitoring_;
+   @SuppressWarnings("unused")
+   private final Timer refreshTimer_;
 
+   private SecondaryToolbar secondaryToolbar_;
+   private ToolbarMenuButton languageButton_;
+   private ToolbarPopupMenu languageMenu_;
    private ToolbarMenuButton dataImportButton_;
    private ToolbarPopupMenu environmentMenu_;
    private ToolbarMenuButton environmentButton_;
    private ToolbarMenuButton viewButton_;
-   private ToolbarButton refreshButton_; 
+   private ToolbarButton refreshButton_;
    private EnvironmentObjects objects_;
 
    private ArrayList<String> expandedObjects_;
@@ -689,4 +865,5 @@ public class EnvironmentPane extends WorkbenchPane
    private JsArray<EnvironmentFrame> environments_;
    private String environmentName_;
    private boolean environmentIsLocal_;
+   private String activeLanguage_ = "R";
 }

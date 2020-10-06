@@ -1,7 +1,7 @@
 /*
  * SessionFind.hpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,8 @@
 
 #ifndef SESSION_FIND_HPP
 #define SESSION_FIND_HPP
+
+#include <core/StringUtils.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/json/Json.hpp>
@@ -39,46 +41,64 @@ boost::regex getColorEncodingRegex(bool isGitGrep);
 class Replacer : public boost::noncopyable
 {
 public:
-   explicit Replacer(bool ignoreCase) :
+   explicit Replacer(bool ignoreCase,
+                     std::string encoding = "") :
+      encoding_(encoding),
       ignoreCase_(ignoreCase)
    {
    }
 
+   core::Error replacePreview(const size_t dMatchOn, const size_t dMatchOff,
+                              size_t eMatchOn, size_t eMatchOff,
+                              std::string* pEncodedLine, std::string* pDecodedLine,
+                              size_t* pReplaceMatchOff) const;
+
    void replaceLiteral(size_t matchOn, size_t matchOff,
                        const std::string& replaceLiteral, std::string* pLine,
-                       size_t* pReplaceMatchOff)
+                       size_t* pReplaceMatchOff) const
    {
       *pLine = pLine->replace(matchOn, (matchOff - matchOn), replaceLiteral);
       *pReplaceMatchOff = matchOn + replaceLiteral.size();
+
+      std::string matchOffString = pLine->substr(0, *pReplaceMatchOff);
+      core::string_utils::utf8Distance(matchOffString.begin(),
+                                       matchOffString.end(),
+                                       pReplaceMatchOff);
    }
 
    core::Error replaceRegex(size_t matchOn, size_t matchOff,
                             const std::string& findRegex, const std::string& replaceRegex,
-                            std::string* pLine, size_t* pReplaceMatchOff)
-  {
-     core::Error error;
-     if (ignoreCase_)
-        error = replaceRegexIgnoreCase(matchOn, matchOff, findRegex, replaceRegex, pLine,
-                                       pReplaceMatchOff);
-     else
-        error = replaceRegexWithCase(matchOn, matchOff, findRegex, replaceRegex, pLine,
-                                     pReplaceMatchOff);
-     return error;
-  }
+                            std::string* pLine, size_t* pReplaceMatchOff) const
+   {
+      core::Error error;
+      if (ignoreCase_)
+         error = replaceRegexIgnoreCase(matchOn, matchOff, findRegex, replaceRegex, pLine,
+                                        pReplaceMatchOff);
+      else
+         error = replaceRegexWithCase(matchOn, matchOff, findRegex, replaceRegex, pLine,
+                                      pReplaceMatchOff);
+      return error;
+   }
+   std::string decode(const std::string& encoded) const;
+
+   static std::string decode(const std::string& encoded, const std::string& encoding,
+                             bool& firstDecodeError);
+
 
 private:
+   std::string encoding_;
    bool ignoreCase_;
    core::Error completeReplace(const boost::regex& searchRegex, const std::string& replaceRegex,
                                size_t matchOn, size_t matchOff, std::string* pLine,
-                               size_t* pReplaceMatchOff);
+                               size_t* pReplaceMatchOff) const;
 
    core::Error replaceRegexIgnoreCase(size_t matchOn, size_t matchOff,
                                       const std::string& findRegex, const std::string& replaceRegex,
-                                      std::string* pLine, size_t* pReplaceMatchOff);
+                                      std::string* pLine, size_t* pReplaceMatchOff) const;
 
    core::Error replaceRegexWithCase(size_t matchOn, size_t matchOff,
                                     const std::string& findRegex, const std::string& replaceRegex,
-                                    std::string* pLine, size_t* pReplaceMatchOff);
+                                    std::string* pLine, size_t* pReplaceMatchOff) const;
 };
 
 } // namespace find

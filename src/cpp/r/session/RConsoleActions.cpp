@@ -1,7 +1,7 @@
 /*
  * RConsoleActions.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,7 +28,7 @@
 
 #include <r/ROptions.hpp>
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace r {
@@ -167,10 +167,10 @@ Error ConsoleActions::loadFromFile(const FilePath& filePath)
       if (filePath.exists())
       {
          // read from file
-         std::string actionsJson ;
+         std::string actionsJson;
          Error error = readStringFromFile(filePath, &actionsJson);
          if (error)
-            return error ;
+            return error;
 
          // parse json and confirm it contains an object
          json::Value value;
@@ -179,7 +179,7 @@ Error ConsoleActions::loadFromFile(const FilePath& filePath)
          {
             json::Object actions = value.getObject();
 
-            json::Value typeValue = actions[kActionType] ;
+            json::Value typeValue = actions[kActionType];
             if (typeValue.getType() == json::Type::ARRAY)
             {
                const json::Array& actionsType = typeValue.getArray();
@@ -192,7 +192,7 @@ Error ConsoleActions::loadFromFile(const FilePath& filePath)
                LOG_WARNING_MESSAGE("unexpected json type in: " + actionsJson);
             }
 
-            json::Value dataValue = actions[kActionData] ;
+            json::Value dataValue = actions[kActionData];
             if ( dataValue.getType() == json::Type::ARRAY )
             {
                const json::Array& actionsData = dataValue.getArray();
@@ -221,7 +221,7 @@ Error ConsoleActions::saveToFile(const core::FilePath& filePath) const
    // write actions
    json::Object actionsObject;
    asJson(&actionsObject);
-   std::ostringstream ostr ;
+   std::ostringstream ostr;
    actionsObject.writeFormatted(ostr);
    
    // write to file

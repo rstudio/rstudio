@@ -1,7 +1,7 @@
 /*
  * ResponseParser.hpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -46,21 +46,21 @@ public:
       responseStream >> httpVersion >> std::ws;
 
       // status code
-      int statusCode ;
+      int statusCode;
       responseStream >> statusCode >> std::ws;
-      pResponse->setStatusCode(statusCode) ;
+      pResponse->setStatusCode(statusCode);
 
       // status message
-      std::string statusMessage ;
+      std::string statusMessage;
       std::getline(responseStream, statusMessage);
       boost::algorithm::trim(statusMessage);
-      pResponse->setStatusMessage(statusMessage) ;
+      pResponse->setStatusMessage(statusMessage);
 
       // validate that all elements required were in the response
       if ( !responseStream )
       {
          return systemError(boost::system::errc::protocol_error,
-                            ERROR_LOCATION) ;
+                            ERROR_LOCATION);
       }
 
       // validate that the http version was specified correctly
@@ -68,7 +68,7 @@ public:
       {
          return systemError(boost::system::errc::protocol_error,
                             "Bad http version: " + httpVersion,
-                            ERROR_LOCATION) ;
+                            ERROR_LOCATION);
 
       }
 
@@ -86,7 +86,7 @@ public:
    {
       std::istream responseStream(pResponseBuffer);
 
-      Headers headers ;
+      Headers headers;
       http::parseHeaders(responseStream, &headers);
       std::for_each(headers.begin(),
                     headers.end(),
@@ -96,7 +96,7 @@ public:
    static void appendToBody(boost::asio::streambuf* pResponseBuffer,
                             Response* pResponse)
    {
-      std::ostringstream bodyStream ;
+      std::ostringstream bodyStream;
       if (pResponseBuffer->size() > 0)
          bodyStream << pResponseBuffer;
       pResponse->body_ += bodyStream.str();
@@ -112,13 +112,13 @@ public:
    static Error parseFromStream(SyncReadStream& stream, Response* pResponse)
    {
       // declarations
-      boost::system::error_code ec ;
+      boost::system::error_code ec;
       boost::asio::streambuf response;
 
       // read the status line
       boost::asio::read_until(stream, response, "\r\n", ec);
       if (ec)
-         return Error(ec, ERROR_LOCATION) ;
+         return Error(ec, ERROR_LOCATION);
 
       // parse the status line
       Error error = ResponseParser::parseStatusLine(&response, pResponse);
@@ -128,7 +128,7 @@ public:
       // read the headers
       boost::asio::read_until(stream, response, "\r\n\r\n", ec);
       if (ec)
-         return Error(ec, ERROR_LOCATION) ;
+         return Error(ec, ERROR_LOCATION);
 
       // parse the headers
       ResponseParser::parseHeaders(&response, pResponse);
@@ -146,7 +146,7 @@ public:
       }
 
       if (ec != boost::asio::error::eof)
-         return Error(ec, ERROR_LOCATION) ;
+         return Error(ec, ERROR_LOCATION);
 
       return Success();
    }

@@ -1,7 +1,7 @@
 /*
  * SourceVimCommands.java
  *
- * Copyright (C) 2009-15 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,29 +16,31 @@ package org.rstudio.studio.client.workbench.views.source;
 
 import org.rstudio.core.client.command.ShortcutViewer;
 
+import com.google.gwt.user.client.Command;
+
 public class SourceVimCommands
 {
-   public final native void save(Source source) /*-{
+   public final native void save(SourceColumnManager source) /*-{
       $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("write", "w",
          $entry(function(cm, params) {
-            source.@org.rstudio.studio.client.workbench.views.source.Source::saveActiveSourceDoc()();
+            source.@org.rstudio.studio.client.workbench.views.source.SourceColumnManager::saveActiveSourceDoc()();
          })
       );
    }-*/;
    
-   public native final void selectTabIndex(Source source) /*-{
+   public native final void selectTabIndex(SourceColumnManager source) /*-{
       
       var Vim = $wnd.require("ace/keyboard/vim").CodeMirror.Vim;
       for (var i = 1; i <= 100; i++) {
          (function(i) {
             Vim.defineEx("b" + i, "b" + i, $entry(function(cm, params) {
-               source.@org.rstudio.studio.client.workbench.views.source.Source::vimSetTabIndex(I)(i - 1);
+               source.@org.rstudio.studio.client.workbench.views.source.SourceColumnManager::vimSetTabIndex(I)(i - 1);
             }));
          })(i);
       }
       
       var nextTab = $entry(function(cm, args, vim) {
-         source.@org.rstudio.studio.client.workbench.views.source.Source::nextTabWithWrap()();
+         source.@org.rstudio.studio.client.workbench.views.source.SourceColumnManager::nextTabWithWrap()();
       });
      
       Vim.defineAction("selectNextTab", nextTab);
@@ -51,7 +53,7 @@ public class SourceVimCommands
       });
 
       var prevTab = $entry(function(cm, args, vim) {
-         source.@org.rstudio.studio.client.workbench.views.source.Source::prevTabWithWrap()();
+         source.@org.rstudio.studio.client.workbench.views.source.SourceColumnManager::prevTabWithWrap()();
       });
      
       Vim.defineAction("selectPreviousTab", prevTab);
@@ -64,61 +66,61 @@ public class SourceVimCommands
       });
    }-*/;
    
-   public native final void selectNextTab(Source source) /*-{
+   public native final void selectNextTab(SourceColumnManager source) /*-{
       $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("bnext", "bn",
          $entry(function(cm, params) {
-            source.@org.rstudio.studio.client.workbench.views.source.Source::onNextTab()();
+            source.@org.rstudio.studio.client.workbench.views.source.SourceColumnManager::onNextTab()();
          })
       );
    }-*/;
    
-   public native final void selectPreviousTab(Source source) /*-{
+   public native final void selectPreviousTab(SourceColumnManager source) /*-{
       $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("bprev", "bp",
          $entry(function(cm, params) {
-            source.@org.rstudio.studio.client.workbench.views.source.Source::onPreviousTab()();
+            source.@org.rstudio.studio.client.workbench.views.source.SourceColumnManager::onPreviousTab()();
          })
       );
    }-*/;
    
-   public native final void closeActiveTab(Source source) /*-{
+   public native final void closeActiveTab(SourceColumnManager source) /*-{
       var callback = $entry(function(cm, params) {
       
          var interactive = true;
          if (params.argString && params.argString === "!")
             interactive = false;
          
-         source.@org.rstudio.studio.client.workbench.views.source.Source::closeSourceDoc(Z)(interactive);
+         source.@org.rstudio.studio.client.workbench.views.source.SourceColumnManager::closeSourceDoc(Z)(interactive);
       });
        
       $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("bdelete", "bd", callback);
       $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("quit", "q", callback);
    }-*/;
    
-   public native final void closeAllTabs(Source source) /*-{
+   public native final void closeAllTabs(SourceColumnManager source, Command onCompleted) /*-{
       var callback = $entry(function(cm, params) {
       
          var interactive = true;
          if (params.argString && params.argString === "!")
             interactive = false;
          
-         source.@org.rstudio.studio.client.workbench.views.source.Source::closeAllTabs(Z)(interactive);
+         source.@org.rstudio.studio.client.workbench.views.source.SourceColumnManager::closeAllTabs(ZZLcom/google/gwt/user/client/Command;)(interactive, false, onCompleted);
       });
        
       $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("qall", "qa", callback);
    }-*/;
    
-   public native final void createNewDocument(Source source) /*-{
+   public native final void createNewDocument(SourceColumnManager source) /*-{
    
       var callback = $entry(function(cm, params) {
          
          // Handle 'e!'
          if (params.argString && params.argString === "!")
-            source.@org.rstudio.studio.client.workbench.views.source.Source::revertActiveDocument()();
+            source.@org.rstudio.studio.client.workbench.views.source.SourceColumnManager::revertActiveDocument()();
             
          // Handle other editing targets
          else if (params.args) {
             if (params.args.length === 1) {
-               source.@org.rstudio.studio.client.workbench.views.source.Source::editFile(Ljava/lang/String;)(params.args[0]);
+               source.getColumnManager()().@org.rstudio.studio.client.workbench.views.source.SourceColumnManager::vimEditFile(Ljava/lang/String;)(params.args[0]);
             }
             // TODO: on error?
          } else {
@@ -132,21 +134,21 @@ public class SourceVimCommands
       
    }-*/;
    
-   public native final void saveAndCloseActiveTab(Source source) /*-{
+   public native final void saveAndCloseActiveTab(SourceColumnManager source) /*-{
    
       var callback = $entry(function(cm, params) {
-         source.@org.rstudio.studio.client.workbench.views.source.Source::saveAndCloseActiveSourceDoc()();
+         source.@org.rstudio.studio.client.workbench.views.source.SourceColumnManager::saveAndCloseActiveSourceDoc()();
       });
       
       $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("wq", "wq", callback);
       
    }-*/;
    
-   public native final void readFile(Source source, String encoding) /*-{
+   public native final void readFile(SourceColumnManager source, String encoding) /*-{
    
       var callback = $entry(function(cm, params) {
          if (params.args && params.args.length === 1) {
-            source.@org.rstudio.studio.client.workbench.views.source.Source::pasteFileContentsAtCursor(Ljava/lang/String;Ljava/lang/String;)(params.args[0], encoding);
+            source.@org.rstudio.studio.client.workbench.views.source.SourceColumnManager::pasteFileContentsAtCursor(Ljava/lang/String;Ljava/lang/String;)(params.args[0], encoding);
          }
       });
       
@@ -154,11 +156,12 @@ public class SourceVimCommands
    
    }-*/;
    
-   public native final void runRScript(Source source) /*-{
+   public native final void runRScript(SourceColumnManager source) /*-{
       
       var callback = $entry(function(cm, params) {
          if (params.args) {
-            source.@org.rstudio.studio.client.workbench.views.source.Source::pasteRCodeExecutionResult(Ljava/lang/String;)(params.argString);
+            source.@org.rstudio.studio.client.workbench.views.source.SourceColumnManager::pasteRCodeExecutionResult(Ljava/lang/String;)(params
+                .argString);
          }
       });
       
@@ -166,12 +169,12 @@ public class SourceVimCommands
    
    }-*/;
    
-   public native final void reflowText(Source source) /*-{
+   public native final void reflowText(SourceColumnManager source) /*-{
    
      var Vim = $wnd.require("ace/keyboard/vim").CodeMirror.Vim;
      
      var callback = $entry(function(cm, args, vim) {
-        source.@org.rstudio.studio.client.workbench.views.source.Source::reflowText()();
+        source.@org.rstudio.studio.client.workbench.views.source.SourceColumnManager::reflowText()();
         if (vim.visualMode)
            Vim.exitVisualMode(cm, false);
      });
@@ -193,11 +196,11 @@ public class SourceVimCommands
      });
    }-*/;
    
-   public native final void reindent(Source source) /*-{
+   public native final void reindent(SourceColumnManager source) /*-{
       
       var Vim = $wnd.require("ace/keyboard/vim").CodeMirror.Vim;
       var callback = $entry(function(cm, args, vim) {
-         source.@org.rstudio.studio.client.workbench.views.source.Source::reindent()();
+         source.@org.rstudio.studio.client.workbench.views.source.SourceColumnManager::reindent()();
          if (vim.visualMode)
             Vim.exitVisualMode(cm, false);
       });
@@ -222,11 +225,11 @@ public class SourceVimCommands
       
    }-*/;
    
-   public native final void showHelpAtCursor(Source source) /*-{
+   public native final void showHelpAtCursor(SourceColumnManager source) /*-{
      var Vim = $wnd.require("ace/keyboard/vim").CodeMirror.Vim;
      
      var callback = $entry(function(cm, args, vim) {
-        source.@org.rstudio.studio.client.workbench.views.source.Source::showHelpAtCursor()();
+        source.@org.rstudio.studio.client.workbench.views.source.SourceColumnManager::showHelpAtCursor()();
      });
      
      Vim.defineAction("showHelpAtCursor", callback);
@@ -248,7 +251,7 @@ public class SourceVimCommands
       $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("help", "help", callback);
    }-*/;
    
-   public native final void expandShrinkSelection(Source source) /*-{
+   public native final void expandShrinkSelection(SourceColumnManager source) /*-{
       
       var Vim = $wnd.require("ace/keyboard/vim").CodeMirror.Vim;
       
@@ -289,7 +292,7 @@ public class SourceVimCommands
    
    }-*/;
    
-   public native final void openNextFile(Source source) /*-{
+   public native final void openNextFile(SourceColumnManager source) /*-{
       
       var Vim = $wnd.require("ace/keyboard/vim").CodeMirror.Vim;
       var callback = $entry(function(cm, args, vim) {
@@ -313,7 +316,7 @@ public class SourceVimCommands
       
    }-*/;
    
-   public native final void openPreviousFile(Source source) /*-{
+   public native final void openPreviousFile(SourceColumnManager source) /*-{
       
       var Vim = $wnd.require("ace/keyboard/vim").CodeMirror.Vim;
       var callback = $entry(function(cm, args, vim) {

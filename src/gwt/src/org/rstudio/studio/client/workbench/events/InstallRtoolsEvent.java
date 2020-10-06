@@ -1,7 +1,7 @@
 /*
  * InstallRtoolsEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,21 +22,20 @@ import com.google.gwt.event.shared.GwtEvent;
 public class InstallRtoolsEvent extends GwtEvent<InstallRtoolsEvent.Handler>
 {
    public static class Data extends JavaScriptObject
-   { 
+   {
       protected Data()
       {
       }
-      
+
       public final native String getVersion() /*-{
          return this.version;
       }-*/;
-      
+
       public final native String getInstallerPath() /*-{
          return this.installer_path;
       }-*/;
    }
 
-   
    public interface Handler extends EventHandler
    {
       void onInstallRtools(InstallRtoolsEvent event);
@@ -46,12 +45,12 @@ public class InstallRtoolsEvent extends GwtEvent<InstallRtoolsEvent.Handler>
    {
       data_ = data;
    }
-   
+
    public String getVersion()
    {
       return data_.getVersion();
    }
-   
+
    public String getInstallerPath()
    {
       return data_.getInstallerPath();
@@ -68,8 +67,8 @@ public class InstallRtoolsEvent extends GwtEvent<InstallRtoolsEvent.Handler>
    {
       handler.onInstallRtools(this);
    }
-   
-   private Data data_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   private final Data data_;
+
+   public static final Type<Handler> TYPE = new Type<>();
 }

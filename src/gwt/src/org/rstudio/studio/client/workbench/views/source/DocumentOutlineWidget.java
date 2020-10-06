@@ -1,7 +1,7 @@
 /*
  * DocumentOutlineWidget.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source;
 
 import com.google.gwt.aria.client.OrientationValue;
 import com.google.gwt.aria.client.Roles;
+import org.rstudio.core.client.ClassIds;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Counter;
 import org.rstudio.core.client.HandlerRegistrations;
@@ -238,6 +239,7 @@ public class DocumentOutlineWidget extends Composite
       
       container_ = new DockLayoutPanel(Unit.PX);
       container_.addStyleName(RES.styles().container());
+      ClassIds.assignClassId(container_, ClassIds.DOC_OUTLINE_CONTAINER);
       target_ = target;
       
       separator_ = new VerticalSeparator();

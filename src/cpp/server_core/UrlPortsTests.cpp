@@ -1,7 +1,7 @@
 /*
  * UrlPortsTests.cpp
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,14 +27,26 @@ test_context("URL Port Transformation")
       expect_equal(transformPort(token, 4991), "1235cc15");
       expect_equal(transformPort(token, 5990), "1a2be938");
       expect_equal(transformPort(token, 5252), "d4167a28");
+      expect_equal(transformPort(token, 6600), "f2094b4e");
+      expect_equal(transformPort(token, 6600, true), "9f2094b4e");
    }
 
    test_that("ports are detransformed")
    {
       std::string token("fb7559983669");
-      expect_equal(detransformPort(token, "1235cc15"), 4991);
-      expect_equal(detransformPort(token, "1a2be938"), 5990);
-      expect_equal(detransformPort(token, "d4167a28"), 5252);
+      bool server;
+      expect_equal(detransformPort(token, "1235cc15", server), 4991);
+      expect_equal(server, false);
+      expect_equal(detransformPort(token, "1a2be938", server), 5990);
+      expect_equal(server, false);
+      expect_equal(detransformPort(token, "d4167a28", server), 5252);
+      expect_equal(server, false);
+      expect_equal(detransformPort(token, "f2094b4e", server), 6600);
+      expect_equal(server, false);
+      expect_equal(detransformPort(token, "9f2094b4e", server), 6600);
+      expect_equal(server, true);
+      expect_equal(detransformPort(token, "1f2094b4e", server), -1);
+      expect_equal(detransformPort(token, "nonsense", server), -1);
    }
 
    test_that("unique tokens are generated")

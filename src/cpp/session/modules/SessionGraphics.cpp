@@ -1,7 +1,7 @@
 /*
  * SessionGraphics.cpp
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,8 +20,10 @@
 #include <r/RExec.hpp>
 #include <r/RJson.hpp>
 #include <r/ROptions.hpp>
+#include <r/RRoutines.hpp>
 
 #include <r/session/RGraphicsConstants.h>
+#include <r/session/RGraphics.hpp>
 
 #include <session/prefs/UserPrefs.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -49,6 +51,13 @@ void syncWithPrefs()
 void onPreferencesSaved()
 {
    syncWithPrefs();
+}
+
+SEXP rs_devicePixelRatio()
+{
+   double ratio = r::session::graphics::device::devicePixelRatio();
+   r::sexp::Protect protect;
+   return r::sexp::create(ratio, &protect);
 }
 
 } // end anonymous namespace
@@ -82,6 +91,8 @@ core::Error initialize()
    events().onPreferencesSaved.connect(onPreferencesSaved);
    
    syncWithPrefs();
+   
+   RS_REGISTER_CALL_METHOD(rs_devicePixelRatio);
    
    using boost::bind;
    ExecBlock initBlock;

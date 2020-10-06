@@ -1,7 +1,7 @@
 /*
  * RSConnectPublishButton.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,7 +21,9 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.command.EnabledChangedEvent;
 import org.rstudio.core.client.command.EnabledChangedHandler;
+import org.rstudio.core.client.command.VisibleChangedEvent;
 import org.rstudio.core.client.command.VisibleChangedHandler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -162,7 +164,7 @@ public class RSConnectPublishButton extends Composite
                new VisibleChangedHandler()
          {
             @Override
-            public void onVisibleChanged(AppCommand command)
+            public void onVisibleChanged(VisibleChangedEvent event)
             {
                applyVisibility();
             }
@@ -172,7 +174,7 @@ public class RSConnectPublishButton extends Composite
                new EnabledChangedHandler()
          {
             @Override
-            public void onEnabledChanged(AppCommand command)
+            public void onEnabledChanged(EnabledChangedEvent event)
             {
                applyVisibility();
             }

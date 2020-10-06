@@ -5,7 +5,20 @@
    
    <ui:with field="res" type="org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget.Resources"/>
 
+   <ui:data field="collapseChunkIcon2x" src="CollapseChunkIcon_2x.png"/>
+   <ui:data field="collapseChunkIconDark2x" src="CollapseChunkIconDark_2x.png"/>
+   <ui:data field="removeChunkIcon2x" src="RemoveChunkIcon_2x.png"/>
+   <ui:data field="removeChunkIconDark2x" src="RemoveChunkIconDark_2x.png"/>
+
    <ui:style type="org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget.ChunkStyle">
+   
+   @external editor_dark;
+
+   @url COLLAPSE_LIGHT collapseChunkIcon2x;
+   @url COLLAPSE_DARK collapseChunkIconDark2x;
+   @url REMOVE_LIGHT removeChunkIcon2x;
+   @url REMOVE_DARK removeChunkIconDark2x;
+   
    .fullsize
    {
       padding: 0;
@@ -25,6 +38,33 @@
       z-index: 25;
    }
 
+   .clearIcon, .expandIcon
+   {
+      background-size: 100%;
+      width: 11px;
+      height: 10px;
+   }
+   
+   .clearIcon
+   {
+	  background-image: REMOVE_LIGHT;
+   }
+   
+   .editor_dark .clearIcon
+   {
+	  background-image: REMOVE_DARK;
+   }
+ 
+   .expandIcon
+   {
+	  background-image: COLLAPSE_LIGHT;
+   }
+   
+   .editor_dark .expandIcon
+   {
+	  background-image: COLLAPSE_DARK;
+   }
+ 
    .expand
    {
       width: 11px !important;
@@ -95,12 +135,25 @@
    {
       right: 71px;
    }
-
+   
+   .embedded {
+	  line-height: 0;
+	  top: 3px;
+   }
+   
+   .embedded .frame {
+	  border: none;
+   }
+   
    .frame
    {
       border: 1px solid #e5e5e5;
       padding-top: 10px;
       overflow: hidden;
+   }
+   
+   .embedded .root {
+      line-height: normal;
    }
 
    .fullsize .frame
@@ -195,6 +248,7 @@
       opacity: 0.5;
       transition: opacity 400ms ease;
    }
+   
    </ui:style>
    <g:HTMLPanel styleName="{style.outer}">
       <g:HTMLPanel styleName="{style.expander}"
@@ -204,14 +258,16 @@
                  resource="{res.popoutIcon2x}"
                  title="Show in New Window"
                  ui:field="popout_"></g:Image>
-        <g:Image styleName="{style.clear}"
+        <g:HTMLPanel styleName="{style.clear}"
                  ui:field="clear_"
-                 resource="{res.removeChunkIcon2x}"
-                 title="Clear Output"></g:Image>
-        <g:Image styleName="{style.expand}" 
-                 resource="{res.collapseChunkIcon2x}"
+                 title="Clear Output">
+          <g:HTMLPanel styleName="{style.clearIcon}"></g:HTMLPanel>
+        </g:HTMLPanel>
+        <g:HTMLPanel styleName="{style.expand}" 
                  title="Expand/Collapse Output"
-                 ui:field="expand_"></g:Image>
+                 ui:field="expand_">
+          <g:HTMLPanel styleName="{style.expandIcon}"></g:HTMLPanel>
+        </g:HTMLPanel>
         <g:SimplePanel styleName="{style.root}" ui:field="root_">
         </g:SimplePanel>
       </g:HTMLPanel>

@@ -1,7 +1,7 @@
 /*
  * UriHandler.hpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,18 +31,18 @@ namespace http {
 
 class Request;
 
-typedef boost::function<void(Response*)> UriHandlerFunctionContinuation ;
+typedef boost::function<void(Response*)> UriHandlerFunctionContinuation;
 
 // UriHandlerFunction concept
 typedef boost::function<void(const Request&,const UriHandlerFunctionContinuation&)>
-                                                UriAsyncHandlerFunction ;
+                                                UriAsyncHandlerFunction;
 
 // UriHandlerFunction concept
-typedef boost::function<void(const Request&,Response*)> UriHandlerFunction ;
+typedef boost::function<void(const Request&,Response*)> UriHandlerFunction;
 
 // UriFilterFunction concept - return true if the filter handled the request
 typedef boost::function<bool(const http::Request&, http::Response*)> 
-                                                         UriFilterFunction; 
+                                                         UriFilterFunction;
 
 typedef boost::function<bool(const Request&,
                              const std::string&,
@@ -76,7 +76,7 @@ public:
    
 private:
    std::string prefix_;
-   UriAsyncHandlerFunctionVariant function_ ;
+   UriAsyncHandlerFunctionVariant function_;
 };
 
 class UriHandlers

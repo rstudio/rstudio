@@ -1,7 +1,7 @@
 /*
  * SessionOptions.cpp
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -47,15 +47,12 @@
 
 #include "session-config.h"
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {  
 
 namespace {
-const char* const kDefaultPandocPath = "bin/pandoc";
-const char* const kDefaultPostbackPath = "bin/postback/rpostback";
-const char* const kDefaultRsclangPath = "bin/rsclang";
 
 void ensureDefaultDirectory(std::string* pDirectory,
                             const std::string& userHomePath)
@@ -77,13 +74,13 @@ void ensureDefaultDirectory(std::string* pDirectory,
 
 Options& options()
 {
-   static Options instance ;
-   return instance ;
+   static Options instance;
+   return instance;
 }
-   
+
 core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& osWarnings)
 {
-   using namespace boost::program_options ;
+   using namespace boost::program_options;
    
    // get the shared secret
    monitorSharedSecret_ = core::system::getenv(kMonitorSharedSecretEnvVar);
@@ -110,371 +107,38 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
       resourcePath_ = resourcePath_.getParent();
    }
 #endif
-   
-   // run tests flag
+
+   // build options
    options_description runTests("tests");
-   runTests.add_options()
-         (kRunTestsSessionOption,
-          value<bool>(&runTests_)->default_value(false)->implicit_value(true),
-          "run unit tests");
-
-   // run an R script
    options_description runScript("script");
-   runScript.add_options()
-     (kRunScriptSessionOption,
-      value<std::string>(&runScript_)->default_value(""),
-      "run an R script");
-
-   // verify installation flag
    options_description verify("verify");
-   verify.add_options()
-     (kVerifyInstallationSessionOption,
-     value<bool>(&verifyInstallation_)->default_value(false),
-     "verify the current installation");
-
-   // program - name and execution
    options_description program("program");
-   program.add_options()
-      (kProgramModeSessionOption,
-         value<std::string>(&programMode_)->default_value("server"),
-         "program mode (desktop or server");
-   
-   // log -- logging options
    options_description log("log");
-   log.add_options()
-      ("log-stderr",
-      value<bool>(&logStderr_)->default_value(false),
-      "write log entries to stderr");
-
-   // agreement
-   options_description agreement("agreement");
-   agreement.add_options()
-      ("agreement-file",
-      value<std::string>(&agreementFilePath_)->default_value(""),
-      "agreement file");
-
-   // docs url
    options_description docs("docs");
-   docs.add_options()
-      ("docs-url",
-       value<std::string>(&docsURL_)->default_value(""),
-       "custom docs url");
-
-   // www options
-   options_description www("www") ;
-   www.add_options()
-      ("www-local-path",
-         value<std::string>(&wwwLocalPath_)->default_value("www"),
-         "www local path")
-      ("www-symbol-maps-path",
-         value<std::string>(&wwwSymbolMapsPath_)->default_value(
-                                                         "www-symbolmaps"),
-         "www symbol maps path")
-      (kWwwPortSessionOption,
-         value<std::string>(&wwwPort_)->default_value("8787"),
-         "port to listen on")
-      (kWwwAddressSessionOption,
-         value<std::string>(&wwwAddress_)->default_value("127.0.0.1"),
-         "address to listen on")
-      (kStandaloneSessionOption,
-         value<bool>(&standalone_)->default_value(false),
-         "run standalone")
-      (kVerifySignaturesSessionOption,
-         value<bool>(&verifySignatures_)->default_value(false),
-         "verify signatures on incoming requests");
-
-   // session options
-   std::string saveActionDefault;
-   options_description session("session") ;
-   session.add_options()
-      (kTimeoutSessionOption,
-         value<int>(&timeoutMinutes_)->default_value(120),
-         "session timeout (minutes)" )
-      (kTimeoutSuspendSessionOption,
-         value<bool>(&timeoutSuspend_)->default_value(true),
-         "whether to suspend on session timeout")
-      (kDisconnectedTimeoutSessionOption,
-         value<int>(&disconnectedTimeoutMinutes_)->default_value(0),
-         "session disconnected timeout (minutes)" )
-      ("session-preflight-script",
-         value<std::string>(&preflightScript_)->default_value(""),
-         "session preflight script")
-      ("session-create-public-folder",
-         value<bool>(&createPublicFolder_)->default_value(false),
-         "automatically create public folder")
-      ("session-create-profile",
-         value<bool>(&createProfile_)->default_value(false),
-         "automatically create .Rprofile")
-      ("session-rprofile-on-resume-default",
-          value<bool>(&rProfileOnResumeDefault_)->default_value(false),
-          "default user setting for running Rprofile on resume")
-      ("session-save-action-default",
-       value<std::string>(&saveActionDefault)->default_value(""),
-         "default save action (yes, no, or ask)")
-      ("session-default-working-dir",
-       value<std::string>(&defaultWorkingDir_)->default_value("~"),
-       "default working directory for new sessions")
-      ("session-default-new-project-dir",
-       value<std::string>(&defaultProjectDir_)->default_value("~"),
-       "default directory for new projects")
-      ("show-help-home",
-       value<bool>(&showHelpHome_)->default_value(false),
-         "show help home page at startup")
-      ("session-default-console-term",
-       value<std::string>(&defaultConsoleTerm_)->default_value("xterm-256color"),
-       "default TERM setting for R console")
-      ("session-default-clicolor-force",
-       value<bool>(&defaultCliColorForce_)->default_value(true),
-       "default CLICOLOR_FORCE setting for R console")
-      ("session-quit-child-processes-on-exit",
-       value<bool>(&quitChildProcessesOnExit_)->default_value(false),
-       "quit child processes on session exit")
-      ("session-first-project-template-path",
-       value<std::string>(&firstProjectTemplatePath_)->default_value(""),
-       "first project template path")
-      ("default-rsconnect-server",
-       value<std::string>(&defaultRSConnectServer_)->default_value(""),
-       "default RStudio Connect server URL")
-      (kTerminalPortOption,
-       value<std::string>(&terminalPort_)->default_value(""),
-       "port to bind the terminal server to")
-      (kWebSocketPingInterval,
-       value<int>(&webSocketPingSeconds_)->default_value(10),
-       "WebSocket keep-alive ping interval (seconds)")
-      (kWebSocketConnectTimeout,
-       value<int>(&webSocketConnectTimeout_)->default_value(3),
-       "WebSocket initial connection timeout (seconds)")
-      (kWebSocketLogLevel,
-       value<int>(&webSocketLogLevel_)->default_value(0),
-       "WebSocket log level (0=none, 1=errors, 2=activity, 3=all)")
-      (kWebSocketHandshakeTimeout,
-       value<int>(&webSocketHandshakeTimeoutMs_)->default_value(5000),
-       "WebSocket protocol handshake timeout (ms)")
-      (kPackageOutputInPackageFolder,
-       value<bool>(&packageOutputToPackageFolder_)->default_value(false),
-       "devtools check and devtools build output to package project folder")
-      (kUseSecureCookiesSessionOption,
-       value<bool>(&useSecureCookies_)->default_value(false),
-       "whether to mark cookies as secure")
-      ("restrict-directory-view",
-       value<bool>(&restrictDirectoryView_)->default_value(false),
-       "whether to restrict the directories that can be viewed in the IDE")
-      ("directory-view-whitelist",
-       value<std::string>(&directoryViewWhitelist_)->default_value(""),
-       "list of directories exempt from directory view restrictions, separated by :")
-      (kSessionEnvVarSaveBlacklist,
-       value<std::string>(&envVarSaveBlacklist_)->default_value(""),
-       "list of environment variables not saved on session suspend, separated by :");
-
-   // allow options
+   options_description www("www");
+   options_description session("session");
    options_description allow("allow");
-   allow.add_options()
-      ("allow-vcs-executable-edit",
-         value<bool>(&allowVcsExecutableEdit_)->default_value(true),
-         "allow editing of vcs executables")
-      ("allow-r-cran-repos-edit",
-         value<bool>(&allowCRANReposEdit_)->default_value(true),
-         "Allow editing of CRAN repository")
-      ("allow-vcs",
-         value<bool>(&allowVcs_)->default_value(true),
-         "allow use of version control features")
-      ("allow-package-installation",
-         value<bool>(&allowPackageInstallation_)->default_value(true),
-         "allow installation of packages from the packages pane")
-      ("allow-shell",
-         value<bool>(&allowShell_)->default_value(true),
-         "allow access to shell dialog")
-      ("allow-terminal-websockets",
-         value<bool>(&allowTerminalWebsockets_)->default_value(true),
-         "allow connection to terminal sessions with websockets")
-      ("allow-file-downloads",
-         value<bool>(&allowFileDownloads_)->default_value(true),
-         "allow file downloads from the files pane")
-      ("allow-file-uploads",
-         value<bool>(&allowFileUploads_)->default_value(true),
-         "allow file uploads from the files pane")
-      ("allow-remove-public-folder",
-         value<bool>(&allowRemovePublicFolder_)->default_value(true),
-         "allow removal of the user public folder")
-      ("allow-rpubs-publish",
-         value<bool>(&allowRpubsPublish_)->default_value(true),
-        "allow publishing content to external services")
-      ("allow-external-publish",
-         value<bool>(&allowExternalPublish_)->default_value(true),
-        "allow publishing content to external services")
-      ("allow-publish",
-         value<bool>(&allowPublish_)->default_value(true),
-        "allow publishing content")
-      ("allow-presentation-commands",
-         value<bool>(&allowPresentationCommands_)->default_value(false),
-       "allow presentation commands")
-      ("allow-full-ui",
-         value<bool>(&allowFullUI_)->default_value(true),
-       "allow full standalone ui mode")
-      ("allow-launcher-jobs",
-         value<bool>(&allowLauncherJobs_)->default_value(true),
-         "allow running jobs via launcher");
-
-   // r options
-   bool rShellEscape; // no longer works but don't want to break any
-                      // config files which formerly used it
-                      // TODO: eliminate this option entirely
-   options_description r("r") ;
-   r.add_options()
-      ("r-core-source",
-         value<std::string>(&coreRSourcePath_)->default_value("R"),
-         "Core R source path")
-      ("r-modules-source", 
-         value<std::string>(&modulesRSourcePath_)->default_value("R/modules"),
-         "Modules R source path")
-      ("r-session-library",
-         value<std::string>(&sessionLibraryPath_)->default_value("R/library"),
-         "R library path")
-      ("r-session-package-archives",
-          value<std::string>(&sessionPackageArchivesPath_)->default_value("R/packages"),
-         "R package archives path")
-      ("r-libs-user",
-         value<std::string>(&rLibsUser_)->default_value(""),
-         "R user library path")
-      ("r-cran-repos",
-         value<std::string>(&rCRANUrl_)->default_value(""),
-         "Default CRAN repository")
-      ("r-cran-repos-file",
-         value<std::string>(&rCRANReposFile_)->default_value(
-           core::system::xdg::systemConfigFile("repos.conf").getAbsolutePath()),
-         "Path to configuration file with default CRAN repositories")
-      ("r-cran-repos-url",
-         value<std::string>(&rCRANReposUrl_)->default_value(""),
-         "URL to configuration file with optional CRAN repositories")
-      ("r-auto-reload-source",
-         value<bool>(&autoReloadSource_)->default_value(false),
-         "Reload R source if it changes during the session")
-      ("r-compatible-graphics-engine-version",
-         value<int>(&rCompatibleGraphicsEngineVersion_)->default_value(12),
-         "Maximum graphics engine version we are compatible with")
-      ("r-resources-path",
-         value<std::string>(&rResourcesPath_)->default_value("resources"),
-         "Directory containing external resources")
-      ("r-shell-escape",
-         value<bool>(&rShellEscape)->default_value(false),
-         "Support shell escape (deprecated, no longer works)")
-      ("r-home-dir-override",
-         value<std::string>(&rHomeDirOverride_)->default_value(""),
-         "Override for R_HOME (used for debug configurations)")
-      ("r-doc-dir-override",
-         value<std::string>(&rDocDirOverride_)->default_value(""),
-         "Override for R_DOC_DIR (used for debug configurations)")
-      ("r-restore-workspace",
-         value<int>(&rRestoreWorkspace_)->default_value(kRestoreWorkspaceDefault),
-         "Override user/project restore workspace setting")
-      ("r-run-rprofile",
-         value<int>(&rRunRprofile_)->default_value(kRunRprofileDefault),
-         "Override user/project .Rprofile run setting");
-
-   // limits options
+   options_description r("r");
    options_description limits("limits");
-   limits.add_options()
-      ("limit-file-upload-size-mb",
-       value<int>(&limitFileUploadSizeMb_)->default_value(0),
-       "limit of file upload size")
-      ("limit-cpu-time-minutes",
-       value<int>(&limitCpuTimeMinutes_)->default_value(0),
-       "limit on time of top level computations")
-      ("limit-xfs-disk-quota",
-       value<bool>(&limitXfsDiskQuota_)->default_value(false),
-       "limit xfs disk quota");
-   
-   // external options
    options_description external("external");
-   external.add_options()
-      ("external-rpostback-path", 
-       value<std::string>(&rpostbackPath_)->default_value(kDefaultPostbackPath),
-       "Path to rpostback executable")
-      ("external-consoleio-path",
-       value<std::string>(&consoleIoPath_)->default_value("bin/consoleio.exe"),
-       "Path to consoleio executable")
-      ("external-gnudiff-path",
-       value<std::string>(&gnudiffPath_)->default_value("bin/gnudiff"),
-       "Path to gnudiff utilities (windows-only)")
-      ("external-gnugrep-path",
-       value<std::string>(&gnugrepPath_)->default_value("bin/gnugrep"),
-       "Path to gnugrep utilities (windows-only)")
-      ("external-msysssh-path",
-       value<std::string>(&msysSshPath_)->default_value("bin/msys-ssh-1000-18"),
-       "Path to msys_ssh utilities (windows-only)")
-      ("external-sumatra-path",
-       value<std::string>(&sumatraPath_)->default_value("bin/sumatra"),
-       "Path to SumatraPDF (windows-only)")
-      ("external-winutils-path",
-       value<std::string>(&winutilsPath_)->default_value("bin/winutils"),
-       "Path to Hadoop Winutils (windows-only)")
-      ("external-hunspell-dictionaries-path",
-       value<std::string>(&hunspellDictionariesPath_)->default_value("resources/dictionaries"),
-       "Path to hunspell dictionaries")
-      ("external-mathjax-path",
-        value<std::string>(&mathjaxPath_)->default_value("resources/mathjax-27"),
-        "Path to mathjax library")
-      ("external-pandoc-path",
-        value<std::string>(&pandocPath_)->default_value(kDefaultPandocPath),
-        "Path to pandoc binaries")
-      ("external-libclang-path",
-        value<std::string>(&libclangPath_)->default_value(kDefaultRsclangPath),
-        "Path to libclang shared library")
-      ("external-libclang-headers-path",
-        value<std::string>(&libclangHeadersPath_)->default_value(
-                                       "resources/libclang/builtin-headers"),
-        "Path to libclang builtin headers")
-      ("external-winpty-path",
-        value<std::string>(&winptyPath_)->default_value("bin"),
-         "Path to winpty binaries");
-   
-   // git options
    options_description git("git");
-   git.add_options()
-         ("git-commit-large-file-size",
-          value<int>(&gitCommitLargeFileSize_)->default_value(5 * 1024 * 1024),
-          "warn when attempting to commit files larger than this size (in bytes; set 0 to disable)");
+   options_description user("user");
+   options_description misc("misc");
+   std::string saveActionDefault;
+   int sameSite;
 
-   // user options (default user identity to current username)
-   std::string currentUsername = core::system::username();
-   std::string project, scopeId;
-   options_description user("user") ;
-   user.add_options()
-      (kUserIdentitySessionOption "," kUserIdentitySessionOptionShort,
-       value<std::string>(&userIdentity_)->default_value(currentUsername),
-       "user identity" )
-      (kShowUserIdentitySessionOption,
-       value<bool>(&showUserIdentity_)->default_value(true),
-       "show the user identity")
-      (kProjectSessionOption "," kProjectSessionOptionShort,
-       value<std::string>(&project)->default_value(""),
-       "active project" )
-      (kScopeSessionOption "," kScopeSessionOptionShort,
-        value<std::string>(&scopeId)->default_value(""),
-       "session scope id")
-      ("launcher-token",
-       value<std::string>(&launcherToken_)->default_value(""),
-       "token identifying session launcher");
+   program_options::OptionsDescription optionsDesc =
+         buildOptions(&runTests, &runScript, &verify, &program, &log, &docs, &www,
+                      &session, &allow, &r, &limits, &external, &git, &user, &misc,
+                      &saveActionDefault, &sameSite);
 
-   // overlay options
-   options_description overlay("overlay");
-   addOverlayOptions(&overlay);
-
-   // define program options
-   FilePath defaultConfigPath = core::system::xdg::systemConfigFile("rsession.conf");
-   std::string configFile = defaultConfigPath.exists() ?
-                            defaultConfigPath.getAbsolutePath() : "";
-   if (!configFile.empty())
-       LOG_INFO_MESSAGE("Reading session configuration from " + configFile);
-   core::program_options::OptionsDescription optionsDesc("rsession",
-                                                         configFile);
+   addOverlayOptions(&misc);
 
    optionsDesc.commandLine.add(verify);
    optionsDesc.commandLine.add(runTests);
    optionsDesc.commandLine.add(runScript);
    optionsDesc.commandLine.add(program);
    optionsDesc.commandLine.add(log);
-   optionsDesc.commandLine.add(agreement);
    optionsDesc.commandLine.add(docs);
    optionsDesc.commandLine.add(www);
    optionsDesc.commandLine.add(session);
@@ -484,12 +148,11 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    optionsDesc.commandLine.add(external);
    optionsDesc.commandLine.add(git);
    optionsDesc.commandLine.add(user);
-   optionsDesc.commandLine.add(overlay);
+   optionsDesc.commandLine.add(misc);
 
    // define groups included in config-file processing
    optionsDesc.configFile.add(program);
    optionsDesc.configFile.add(log);
-   optionsDesc.configFile.add(agreement);
    optionsDesc.configFile.add(docs);
    optionsDesc.configFile.add(www);
    optionsDesc.configFile.add(session);
@@ -498,7 +161,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    optionsDesc.configFile.add(limits);
    optionsDesc.configFile.add(external);
    optionsDesc.configFile.add(user);
-   optionsDesc.configFile.add(overlay);
+   optionsDesc.configFile.add(misc);
 
    // read configuration
    ProgramStatus status = core::program_options::read(optionsDesc, argc,argv);
@@ -514,8 +177,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    }
 
    // resolve scope
-   scope_ = r_util::SessionScope::fromProjectId(project, scopeId);
+   scope_ = r_util::SessionScope::fromProjectId(projectId_, scopeId_);
    scopeState_ = core::r_util::ScopeValid;
+
+   sameSite_ = static_cast<rstudio::core::http::Cookie::SameSite>(sameSite);
 
    // call overlay hooks
    resolveOverlayOptions();
@@ -575,7 +240,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
 
    // ensure that default working dir and default project dir exist
    ensureDefaultDirectory(&defaultWorkingDir_, userHomePath_);
-   ensureDefaultDirectory(&defaultProjectDir_, userHomePath_);
+   ensureDefaultDirectory(&deprecatedDefaultProjectDir_, userHomePath_);
 
    // session timeout seconds is always -1 in desktop mode
    if (programMode_ == kSessionProgramModeDesktop)
@@ -599,7 +264,6 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    
    // convert relative paths by completing from the app resource path
    resolvePath(resourcePath_, &rResourcesPath_);
-   resolvePath(resourcePath_, &agreementFilePath_);
    resolvePath(resourcePath_, &wwwLocalPath_);
    resolvePath(resourcePath_, &wwwSymbolMapsPath_);
    resolvePath(resourcePath_, &coreRSourcePath_);

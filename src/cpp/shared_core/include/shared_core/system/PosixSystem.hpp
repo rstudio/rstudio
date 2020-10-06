@@ -1,7 +1,7 @@
 /*
  * PosixSystem.hpp
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant to the terms of a commercial license agreement
  * with RStudio, then this program is licensed to you under the following terms:
@@ -49,11 +49,42 @@ namespace posix {
  */
 
 /**
+ * @brief Represents an IP address.
+ */
+struct IpAddress
+{
+   /** The name of the IP address. */
+   std::string Name;
+
+   /** The address of the IP address. */
+   std::string Address;
+};
+
+/**
  * @brief Enables core dumps for this process.
  *
  * @return Success if core dumps could be enabled; Error otherwise.
  */
 Error enableCoreDumps();
+
+/**
+ * @brief Gets an environment variable from the system.
+ *
+ * @param in_name   The name of the environment variable.
+ *
+ * @return The value of the environment variable, if it exists; empty string otherwise.
+ */
+std::string getEnvironmentVariable(const std::string& in_name);
+
+/**
+ * @brief Gets the IP addresses of the machine running this process.
+ *
+ * @param out_addresses         The IP addresses of the machine running this process.
+ * @param in_includeIPv6        Whether or not to include IPv6 addresses. Default: false.
+ *
+ * @return Success if the IP addresses could be retrieved; Error otherwise.
+ */
+core::Error getIpAddresses(std::vector<IpAddress>& out_addresses, bool in_includeIPv6 = false);
 
 /**
  * @brief Ignores a particular signal for this process.

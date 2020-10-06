@@ -1,7 +1,7 @@
 /*
  * CommandClickEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,27 +26,27 @@ public class CommandClickEvent extends GwtEvent<CommandClickEvent.Handler>
    {
       event_ = event;
    }
-   
+
    public AceClickEvent getEvent()
    {
       return event_;
    }
-   
+
    public NativeEvent getNativeEvent()
    {
       return event_.getNativeEvent();
    }
-   
+
    private final AceClickEvent event_;
-   
+
    // Boilerplate ----
-   
+
    public interface Handler extends EventHandler
    {
       void onCommandClick(CommandClickEvent event);
    }
-   
-   public static final Type<Handler> TYPE = new Type<Handler>();
+
+   public static final Type<Handler> TYPE = new Type<>();
 
    @Override
    public Type<Handler> getAssociatedType()

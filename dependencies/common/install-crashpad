@@ -3,7 +3,7 @@
 #
 # install-crashpad
 #
-# Copyright (C) 2019 by RStudio, PBC
+# Copyright (C) 2020 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -24,7 +24,7 @@ if [ "$RSTUDIO_DISABLE_CRASHPAD" == "1" ]; then
    exit 0
 fi
 
-# install dir 
+# install dir
 INSTALL_DIR=`pwd`
 
 # vars
@@ -33,7 +33,7 @@ DEPOT_TOOLS_DIR=$RSTUDIO_TOOLS_DIR/depot_tools
 LLVM_VERSION=4.0.0
 LLVM_SOURCE_URL=https://s3.amazonaws.com/rstudio-buildtools/llvm-$LLVM_VERSION.src.tar.xz
 CLANG_SOURCE_URL=https://s3.amazonaws.com/rstudio-buildtools/cfe-$LLVM_VERSION.src.tar.xz
-CRASHPAD_PRE_BUILT_ROOT_URL=https://s3.amazonaws.com/rstudio-buildtools/crashpad-bin/linux
+CRASHPAD_PRE_BUILT_ROOT_URL=https://s3.amazonaws.com/rstudio-buildtools/crashpad-bin
 LLVM_DIR=$RSTUDIO_TOOLS_DIR/llvm-$LLVM_VERSION
 LLVM_BIN_DIR=$LLVM_DIR/build/bin
 CRASHPAD_DIR=$RSTUDIO_TOOLS_DIR/crashpad
@@ -46,14 +46,23 @@ then
    if ! test -e $CRASHPAD_BIN_DIR/crashpad_handler
    then
       echo "Installing pre-built Crashpad binaries for $1"
+      if [[ "$1" == "osx" ]]; then
+        ARCHIVE_EXT=.zip
+        ARCHIVE_FOLDER=osx
+      else
+        ARCHIVE_EXT=.tar.gz
+        ARCHIVE_FOLDER=linux
+      fi
+
       cd $RSTUDIO_TOOLS_DIR
-      wget "$CRASHPAD_PRE_BUILT_ROOT_URL/crashpad-$1.tar.gz"
-      tar xvf "crashpad-$1.tar.gz"
+      wget "$CRASHPAD_PRE_BUILT_ROOT_URL/$ARCHIVE_FOLDER/crashpad-$1$ARCHIVE_EXT"
+      tar xvf "crashpad-$1$ARCHIVE_EXT"
       if ! test -e $CRASHPAD_BIN_DIR/crashpad_handler
       then
          echo "An error occured installing pre-built Crashpad binaries - $CRASHPAD_BIN_DIR/crashpad_handler does not exist"
          exit 1
       else
+         rm "./crashpad-$1$ARCHIVE_EXT"
          echo "Successfully installed pre-built Crashpad binaries"
          exit 0
       fi
@@ -105,7 +114,7 @@ if [[ "$OSTYPE" != "darwin"* ]]; then
          mv llvm-$LLVM_VERSION.src llvm-$LLVM_VERSION
          mv cfe-$LLVM_VERSION.src llvm-$LLVM_VERSION/tools/clang
       fi
-      		
+
       cd $LLVM_DIR
       mkdir -p build && cd build
       cmake ../ -DLLVM_BUILD_TYPE=Release
@@ -141,7 +150,7 @@ then
    git fetch rstudio
    git checkout rstudio || true
    git pull
-   
+
    if ! $use_system_clang; then
       # add custom built clang to path so it can be picked up by crashpad build
       export PATH=$LLVM_BIN_DIR:$PATH

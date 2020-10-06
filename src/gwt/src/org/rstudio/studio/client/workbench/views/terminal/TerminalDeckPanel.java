@@ -1,7 +1,7 @@
 /*
  * TerminalDeckPanel.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -37,10 +37,11 @@ public class TerminalDeckPanel extends DeckLayoutPanel
          ConsoleProcessInfo procInfo,
          XTermOptions options,
          boolean tabMovesFocus,
+         boolean showWebLinks,
          boolean createdByApi,
          CommandWithArg<TerminalSession> callback)
    {
-      TerminalSession session = new TerminalSession(procInfo, options, tabMovesFocus, createdByApi);
+      TerminalSession session = new TerminalSession(procInfo, options, tabMovesFocus, showWebLinks, createdByApi);
       add(session);
       showWidget(session);
       Scheduler.get().scheduleDeferred(() ->  callback.execute(session));

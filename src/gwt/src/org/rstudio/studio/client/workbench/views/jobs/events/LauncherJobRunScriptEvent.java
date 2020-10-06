@@ -1,7 +1,7 @@
 /*
  * LauncherJobRunScriptEvent.java
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,7 +31,7 @@ public class LauncherJobRunScriptEvent extends CrossWindowEvent<LauncherJobRunSc
    {
       path_ = "";
    }
-   
+
    public LauncherJobRunScriptEvent(String path)
    {
       path_ = path;
@@ -41,7 +41,7 @@ public class LauncherJobRunScriptEvent extends CrossWindowEvent<LauncherJobRunSc
    {
       return path_;
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -56,5 +56,5 @@ public class LauncherJobRunScriptEvent extends CrossWindowEvent<LauncherJobRunSc
 
    private final String path_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

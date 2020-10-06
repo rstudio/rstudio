@@ -1,7 +1,7 @@
 /*
  * Message.cpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -38,18 +38,18 @@ const char * const kChunkedTransferEncoding = "chunked";
 
 void Message::setHttpVersion(int httpVersionMajor, int httpVersionMinor) 
 {
-   httpVersionMajor_ = httpVersionMajor ;
-   httpVersionMinor_ = httpVersionMinor ;
+   httpVersionMajor_ = httpVersionMajor;
+   httpVersionMinor_ = httpVersionMinor;
 }
 
 void Message::setContentType(const std::string& contentType) 
 {
-   setHeader("Content-Type", contentType) ;
+   setHeader("Content-Type", contentType);
 }
 
 std::string Message::contentType() const 
 {
-   return headerValue("Content-Type") ;
+   return headerValue("Content-Type");
 }
 
 uintmax_t Message::contentLength() const
@@ -68,9 +68,9 @@ void Message::setContentLength(uintmax_t contentLength)
    
 void Message::addHeader(const std::string& name, const std::string& value) 
 {
-   Header header ;
-   header.name = name ;
-   header.value = value ;
+   Header header;
+   header.name = name;
+   header.value = value;
    addHeader(header);
 }
    
@@ -113,14 +113,14 @@ void Message::setHeader(const std::string& name, const std::string& value)
                                        HeaderNamePredicate(name));
    if ( it != headers_.end() )
    {
-      Header hdr ;
-      hdr.name = name ;
-      hdr.value = value ;
-      *it = hdr ;
+      Header hdr;
+      hdr.name = name;
+      hdr.value = value;
+      *it = hdr;
    }
    else
    {
-      addHeader(name, value) ;
+      addHeader(name, value);
    }
 }
    
@@ -136,13 +136,13 @@ void Message::setHeader(const std::string& name, uintmax_t value)
 
 void Message::replaceHeader(const std::string& name, const std::string& value) 
 {
-   Header hdr ;
-   hdr.name = name ;
-   hdr.value = value ; 
+   Header hdr;
+   hdr.name = name;
+   hdr.value = value;
    std::replace_if(headers_.begin(), 
                    headers_.end(), 
                    HeaderNamePredicate(name), 
-                   hdr) ;
+                   hdr);
 }
 
 
@@ -151,33 +151,33 @@ void Message::removeHeader(const std::string& name)
    headers_.erase(std::remove_if(headers_.begin(), 
                                  headers_.end(),
                                  HeaderNamePredicate(name)), 
-                  headers_.end())  ;
+                  headers_.end());
 }
  
    
 void Message::reset() 
 {
-   setHttpVersion(1,1) ;
-   httpVersion_.clear() ;
-   headers_.clear() ;
-   body_.clear() ;
+   setHttpVersion(1,1);
+   httpVersion_.clear();
+   headers_.clear();
+   body_.clear();
    
    // allow additional reseting by subclasses
-   resetMembers() ;
+   resetMembers();
 }
 
 namespace { 
-const char Space[] = { ' ' } ;
-const char HeaderSeparator[] = { ':', ' ' } ;
-const char CrLf[] = { '\r', '\n' } ;
+const char Space[] = { ' ' };
+const char HeaderSeparator[] = { ':', ' ' };
+const char CrLf[] = { '\r', '\n' };
    
 void appendHeader(const Header& header,
                   std::vector<boost::asio::const_buffer>* pBuffers)
 {
-   pBuffers->push_back(boost::asio::buffer(header.name)) ;
-   pBuffers->push_back(boost::asio::buffer(HeaderSeparator)) ;
-   pBuffers->push_back(boost::asio::buffer(header.value)) ;
-   pBuffers->push_back(boost::asio::buffer(CrLf)) ;   
+   pBuffers->push_back(boost::asio::buffer(header.name));
+   pBuffers->push_back(boost::asio::buffer(HeaderSeparator));
+   pBuffers->push_back(boost::asio::buffer(header.value));
+   pBuffers->push_back(boost::asio::buffer(CrLf));
 }
 
 }
@@ -186,7 +186,7 @@ std::vector<boost::asio::const_buffer> Message::toBuffers(
                                           const Header& overrideHeader) const
 {  
    // buffers to return
-   std::vector<boost::asio::const_buffer> buffers ;
+   std::vector<boost::asio::const_buffer> buffers;
 
    // headers
    std::vector<boost::asio::const_buffer> headerBuffs =
@@ -194,21 +194,21 @@ std::vector<boost::asio::const_buffer> Message::toBuffers(
    buffers.insert(buffers.end(), headerBuffs.begin(), headerBuffs.end());
 
    // body
-   buffers.push_back(boost::asio::buffer(body_)) ;
+   buffers.push_back(boost::asio::buffer(body_));
 
    // return the buffers
-   return buffers ;
+   return buffers;
 }
 
 std::vector<boost::asio::const_buffer> Message::headerBuffers(
                                           const Header& overrideHeader) const
 {
    // buffers to return
-   std::vector<boost::asio::const_buffer> buffers ;
+   std::vector<boost::asio::const_buffer> buffers;
 
    // call subclass to append first line
-   appendFirstLineBuffers(buffers) ;
-   buffers.push_back(boost::asio::buffer(CrLf)) ;
+   appendFirstLineBuffers(buffers);
+   buffers.push_back(boost::asio::buffer(CrLf));
 
    // copy override header (for stable storage)
    overrideHeader_ = overrideHeader;
@@ -227,26 +227,26 @@ std::vector<boost::asio::const_buffer> Message::headerBuffers(
       appendHeader(overrideHeader_, &buffers);
 
    // empty line
-   buffers.push_back(boost::asio::buffer(CrLf)) ;
+   buffers.push_back(boost::asio::buffer(CrLf));
 
    // return the buffers
-   return buffers ;
+   return buffers;
 }
 
    
 void Message::appendSpaceBuffer(
                      std::vector<boost::asio::const_buffer>& buffers) const
 {
-   buffers.push_back(boost::asio::buffer(Space)) ;
+   buffers.push_back(boost::asio::buffer(Space));
 }
 
 void Message::appendHttpVersionBuffers(
       std::vector<boost::asio::const_buffer>& buffers) const
 {
    std::ostringstream httpVersionStream;
-   httpVersionStream << "HTTP/" << httpVersionMajor_ << "." << httpVersionMinor_ ;
-   httpVersion_ = httpVersionStream.str() ;
-   buffers.push_back(boost::asio::buffer(httpVersion_)) ;
+   httpVersionStream << "HTTP/" << httpVersionMajor_ << "." << httpVersionMinor_;
+   httpVersion_ = httpVersionStream.str();
+   buffers.push_back(boost::asio::buffer(httpVersion_));
 }
 
 
@@ -256,16 +256,16 @@ std::ostream& operator << (std::ostream& stream, const Message& m)
    for (Headers::const_iterator it = 
          m.headers().begin(); it != m.headers().end(); ++ it)
    {
-      stream << it->name << ": " << it->value << std::endl ;
+      stream << it->name << ": " << it->value << std::endl;
    }
 
    // empty line
-   stream << std::endl ;
+   stream << std::endl;
 
    // body
-   stream << m.body() << std::endl ;
+   stream << m.body() << std::endl;
 
-   return stream ;
+   return stream;
 }
 
 

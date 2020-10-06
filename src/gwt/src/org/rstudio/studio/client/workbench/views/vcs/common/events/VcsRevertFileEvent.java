@@ -1,7 +1,7 @@
 /*
  * VcsRevertFileEvent.java
  *
- * Copyright (C) 2009-15 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,14 +21,14 @@ import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import com.google.gwt.event.shared.EventHandler;
 
 @JavaScriptSerializable
-public class VcsRevertFileEvent 
+public class VcsRevertFileEvent
              extends CrossWindowEvent<VcsRevertFileEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
       void onVcsRevertFile(VcsRevertFileEvent event);
    }
-   
+
    public VcsRevertFileEvent()
    {
    }
@@ -37,7 +37,7 @@ public class VcsRevertFileEvent
    {
       file_ = file;
    }
-   
+
    public FileSystemItem getFile()
    {
       return file_;
@@ -55,7 +55,7 @@ public class VcsRevertFileEvent
       handler.onVcsRevertFile(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
-   
+   public static final Type<Handler> TYPE = new Type<>();
+
    private FileSystemItem file_;
 }

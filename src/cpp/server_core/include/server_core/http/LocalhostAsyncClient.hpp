@@ -1,7 +1,7 @@
 /*
  * LocalhostAsyncClient.hpp
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -82,8 +82,8 @@ public:
    LocalhostAsyncClientSsl(boost::asio::io_service& ioService,
                            const std::string& address,
                            const std::string& port,
-                           bool verify)
-      : core::http::TcpIpAsyncClientSsl(ioService, address, port, verify)
+                           bool verifySslCerts)
+      : core::http::TcpIpAsyncClientSsl(ioService, address, port, verifySslCerts)
    {
    }
 

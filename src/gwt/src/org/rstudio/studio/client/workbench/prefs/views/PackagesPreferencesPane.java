@@ -1,7 +1,7 @@
 /*
  * PackagesPreferencesPane.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -131,12 +131,12 @@ public class PackagesPreferencesPane extends PreferencesPane
                secondaryReposWidget_.getLabeledWidget());
          secondaryReposLabel.getElement().getStyle().setMarginLeft(2, Unit.PX);
          secondaryReposLabel.getElement().getStyle().setMarginBottom(2, Unit.PX);
-         
+
          management.add(spacedBefore(secondaryReposLabel));
          management.add(secondaryReposWidget_);
       }
 
-      CheckBox chkEnablePackages = checkboxPref("Enable packages pane", 
+      CheckBox chkEnablePackages = checkboxPref("Enable packages pane",
          uiPrefs.packagesPaneEnabled());
 
       chkEnablePackages.addValueChangeHandler(event -> reloadRequired_ = true);
@@ -169,7 +169,7 @@ public class PackagesPreferencesPane extends PreferencesPane
       }
 
       management.add(spacedBefore(new HelpLink("Managing Packages", "managing_packages")));
-      
+
       development.add(headerLabel("Package Development"));
 
       useDevtools_ = new CheckBox("Use devtools package functions if available");
@@ -199,19 +199,19 @@ public class PackagesPreferencesPane extends PreferencesPane
 
       HelpLink packagesHelpLink = new PackagesHelpLink();
       packagesHelpLink.getElement().getStyle().setMarginTop(12, Unit.PX);
-      nudgeRight(packagesHelpLink); 
+      nudgeRight(packagesHelpLink);
       development.add(packagesHelpLink);
 
       cranMirrorTextBox_.setEnabled(false);
       useInternet2_.setEnabled(false);
       cleanupAfterCheckSuccess_.setEnabled(false);
-      viewDirAfterCheckFailure_.setEnabled(false); 
+      viewDirAfterCheckFailure_.setEnabled(false);
       hideObjectFiles_.setEnabled(false);
       useDevtools_.setEnabled(false);
       useSecurePackageDownload_.setEnabled(false);
 
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("Packages");
-      tabPanel.setSize("435px", "498px");
+      tabPanel.setSize("435px", "533px");
       tabPanel.add(management, "Management", management.getBasePanelId());
       tabPanel.add(development, "Development", development.getBasePanelId());
       tabPanel.selectTab(0);
@@ -293,7 +293,7 @@ public class PackagesPreferencesPane extends PreferencesPane
 
       server_.getCRANActives(
          new SimpleRequestCallback<JsArray<CRANMirror>>() {
-            @Override 
+            @Override
             public void onResponseReceived(JsArray<CRANMirror> mirrors)
             {
                boolean cranDiffers = false;
@@ -364,7 +364,7 @@ public class PackagesPreferencesPane extends PreferencesPane
       String mirrorTextValue = cranMirrorTextBox_.getTextBox().getText();
 
       boolean cranRepoChanged = !mirrorTextValue.equals(cranMirrorStored_);
-      boolean cranRepoChangedToUrl = cranRepoChanged && 
+      boolean cranRepoChangedToUrl = cranRepoChanged &&
                                       mirrorTextValue.startsWith("http");
 
       if (cranRepoChanged || secondaryReposHasChanged())

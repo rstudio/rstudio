@@ -1,7 +1,7 @@
 /*
  * PreferencesPane.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,15 +15,11 @@
 package org.rstudio.studio.client.workbench.prefs.views;
 
 
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.Label;
 
-import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.prefs.PreferencesDialogPaneBase;
 import org.rstudio.core.client.prefs.RestartRequirement;
-import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.PrefValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -31,7 +27,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import java.util.ArrayList;
 
 public abstract class PreferencesPane extends PreferencesDialogPaneBase<UserPrefs>
-{ 
+{
    @Override
    public RestartRequirement onApply(UserPrefs rPrefs)
    {
@@ -39,7 +35,7 @@ public abstract class PreferencesPane extends PreferencesDialogPaneBase<UserPref
          cmd.execute();
       return new RestartRequirement();
    }
-   
+
    /**
     * Create a checkbox bound to a user preference with `lessSpaced` margin style.
     * @param label checkbox label
@@ -66,7 +62,7 @@ public abstract class PreferencesPane extends PreferencesDialogPaneBase<UserPref
    {
       return checkboxPref(label, prefValue, null /*title*/, defaultSpaced);
    }
-    
+
    /**
     * Create a checkbox bound to a user preference with `lessSpaced` margin style.
     * @param label checkbox label
@@ -80,7 +76,7 @@ public abstract class PreferencesPane extends PreferencesDialogPaneBase<UserPref
    {
       return checkboxPref(label, prefValue, title, true /*defaultSpaced*/);
    }
-  
+
    /**
     * Create a checkbox bound to a user preference.
     * @param label checkbox label
@@ -121,7 +117,7 @@ public abstract class PreferencesPane extends PreferencesDialogPaneBase<UserPref
             NumericValueWidget.NoMaximum,
             prefValue);
    }
-   
+
    protected NumericValueWidget numericPref(String label,
                                             Integer minValue,
                                             Integer maxValue,
@@ -132,7 +128,7 @@ public abstract class PreferencesPane extends PreferencesDialogPaneBase<UserPref
 
    /**
     * Prompt for integer preference value in range [min, max]
-    * 
+    *
     * @param label
     * @param minValue minimum value or NumericValueWidget.ZeroMinimum
     * @param maxValue maximum value or NumericValueWidget.NoMaximum
@@ -167,27 +163,6 @@ public abstract class PreferencesPane extends PreferencesDialogPaneBase<UserPref
          }
       });
       return widget;
-   }
-   
-   protected Label headerLabel(String caption) 
-   {
-      Label headerLabel = new Label(caption);
-      headerLabel.addStyleName(res().styles().headerLabel());
-      nudgeRight(headerLabel);
-      return headerLabel;
-   }
-
-   protected FormLabel headerLabel(String caption, Widget labeledWidget)
-   {
-      return headerLabel(caption, labeledWidget.getElement());
-   }
-
-   protected FormLabel headerLabel(String caption, Element labeledElement)
-   {
-      FormLabel headerLabel = new FormLabel(caption, labeledElement);
-      headerLabel.addStyleName(res().styles().headerLabel());
-      nudgeRight(headerLabel);
-      return headerLabel;
    }
 
    protected final ArrayList<Command> onApplyCommands_ = new ArrayList<>();

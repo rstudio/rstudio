@@ -1,7 +1,7 @@
 /*
  * PageClickEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,7 +25,7 @@ public class LookupSynctexSourceEvent extends GwtEvent<LookupSynctexSourceEvent.
       void onLookupSynctexSource(LookupSynctexSourceEvent event);
    }
 
-   public LookupSynctexSourceEvent(SyncTexCoordinates coordinates, 
+   public LookupSynctexSourceEvent(SyncTexCoordinates coordinates,
                          boolean fromClick)
    {
       coordinates_ = coordinates;
@@ -36,7 +36,7 @@ public class LookupSynctexSourceEvent extends GwtEvent<LookupSynctexSourceEvent.
    {
       return coordinates_;
    }
-   
+
    public boolean fromClick()
    {
       return fromClick_;
@@ -57,5 +57,5 @@ public class LookupSynctexSourceEvent extends GwtEvent<LookupSynctexSourceEvent.
    private final SyncTexCoordinates coordinates_;
    private final boolean fromClick_;
 
-   public static Type<Handler> TYPE = new Type<Handler>();
+   public static Type<Handler> TYPE = new Type<>();
 }

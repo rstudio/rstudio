@@ -1,7 +1,7 @@
 /*
  * CryptoTests.cpp
  *
- * Copyright (C) 2017 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,9 +31,9 @@ test_context("CryptoTests")
       // generate a random 128-bit key and IV
       std::vector<unsigned char> key;
       std::vector<unsigned char> iv;
-      Error error = core::system::crypto::random(16, &key);
+      Error error = core::system::crypto::random(16, key);
       REQUIRE_FALSE(error);
-      error = core::system::crypto::random(16, &iv);
+      error = core::system::crypto::random(16, iv);
       REQUIRE_FALSE(error);
 
       // construct the data to encrypt
@@ -43,12 +43,12 @@ test_context("CryptoTests")
 
       // encrypt the data
       std::vector<unsigned char> encryptedData;
-      error = core::system::crypto::aesEncrypt(data, key, iv, &encryptedData);
+      error = core::system::crypto::aesEncrypt(data, key, iv, encryptedData);
       REQUIRE_FALSE(error);
 
       // decrypt the encrypted data
       std::vector<unsigned char> decryptedData;
-      error = core::system::crypto::aesDecrypt(encryptedData, key, iv, &decryptedData);
+      error = core::system::crypto::aesDecrypt(encryptedData, key, iv, decryptedData);
       REQUIRE_FALSE(error);
 
       // verify that the decryption gives us back the original data

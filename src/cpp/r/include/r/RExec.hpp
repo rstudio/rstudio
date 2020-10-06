@@ -1,7 +1,7 @@
 /*
  * RExec.hpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -43,7 +43,7 @@ namespace core {
 namespace rstudio {
 namespace r {
 namespace exec {
-   
+
 // safe (no r error longjump) execution of abritrary nullary function
 core::Error executeSafely(boost::function<void()> function);
 
@@ -60,8 +60,8 @@ public:
    void operator()() { *pReturn_ = function_(); }
      
 private:
-   boost::function<T()> function_ ;
-   T* pReturn_ ;
+   boost::function<T()> function_;
+   T* pReturn_;
 };
  
 // safe (no r error longjump) execution of abritrary nullary function w/ return
@@ -72,7 +72,19 @@ core::Error executeSafely(boost::function<T()> function, T* pReturn)
    return executeSafely(target);
 }
 
-   
+// flags that can be set during evaluation
+enum EvalFlags
+{
+   EvalFlagsNone             = 0,
+   EvalFlagsSuppressWarnings = 1,
+   EvalFlagsSuppressMessages = 2
+};
+
+inline EvalFlags operator|(EvalFlags lhs, EvalFlags rhs)
+{
+   return static_cast<EvalFlags>(static_cast<int>(lhs) | static_cast<int>(rhs));
+}
+
 // parse and evaluate expressions  
 core::Error executeStringUnsafe(const std::string& str, 
                                 SEXP* pSEXP, 
@@ -83,17 +95,19 @@ core::Error executeStringUnsafe(const std::string& str,
                                 sexp::Protect* pProtect);
 
 core::Error executeString(const std::string& str);
-core::Error evaluateString(const std::string& str, 
-                           SEXP* pSEXP, 
-                           sexp::Protect* pProtect);
+core::Error evaluateString(const std::string& str,
+                           SEXP* pSEXP,
+                           sexp::Protect* pProtect,
+                           EvalFlags flags = EvalFlagsNone);
+
 template <typename T>
 core::Error evaluateString(const std::string& str, T* pValue)
 {
    sexp::Protect rProtect;
-   SEXP valueSEXP ;
+   SEXP valueSEXP;
    core::Error error = evaluateString(str, &valueSEXP, &rProtect);
    if (error)
-      return error ;
+      return error;
 
    return sexp::extract(valueSEXP, pValue);
 }
@@ -177,7 +191,7 @@ public:
    
    explicit RFunction(SEXP functionSEXP);
    
-   virtual ~RFunction() ;
+   virtual ~RFunction();
    
    // COPYING: boost::noncopyable
    
@@ -229,13 +243,13 @@ public:
    {
       // call the function
       sexp::Protect rProtect;
-      SEXP resultSEXP ;
-      core::Error error = call(evalNS, &resultSEXP, &rProtect);  
+      SEXP resultSEXP;
+      core::Error error = call(evalNS, &resultSEXP, &rProtect);
       if (error)
-         return error ;
+         return error;
       
       // convert result to c++ accessible type
-      return sexp::extract(resultSEXP, pValue) ;
+      return sexp::extract(resultSEXP, pValue);
    }
 
    template <typename T>
@@ -243,10 +257,10 @@ public:
    {
       // call the function
       sexp::Protect rProtect;
-      SEXP resultSEXP ;
+      SEXP resultSEXP;
       core::Error error = call(R_GlobalEnv, &resultSEXP, &rProtect);
       if (error)
-         return error ;
+         return error;
 
       // convert result to c++ accessible type
       return sexp::extract(resultSEXP, pValue, true);
@@ -272,10 +286,10 @@ private:
          : name(name), valueSEXP(valueSEXP)
       {
       }
-      std::string name ;
-      SEXP valueSEXP ;
+      std::string name;
+      SEXP valueSEXP;
    };
-   std::vector<Param> params_ ;
+   std::vector<Param> params_;
 };
 
 void warning(const std::string& warning);
@@ -313,7 +327,7 @@ void errorCall(SEXP call, const std::string& message);
 std::string getErrorMessage();
 
 bool interruptsPending();
-void setInterruptsPending(bool pending); 
+void setInterruptsPending(bool pending);
 void checkUserInterrupt();
 
    
@@ -323,7 +337,7 @@ public:
    IgnoreInterruptsScope();
    virtual ~IgnoreInterruptsScope();
 private:
-   bool previousInterruptsSuspended_ ;
+   bool previousInterruptsSuspended_;
    boost::scoped_ptr<core::system::SignalBlocker> pSignalBlocker_;
 };
 

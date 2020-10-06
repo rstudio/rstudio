@@ -1,7 +1,7 @@
 /*
  * MarkersOutputPane.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -120,7 +120,13 @@ public class MarkersOutputPane extends WorkbenchPane
       markerList_.focus();
       markerList_.ensureSelection();
    }
-   
+
+   @Override
+   public void setFocus()
+   {
+      onSelected();
+   }
+
    private SourceMarkerList markerList_;
    private MarkerSetsToolbarButton markerSetsToolbarButton_;
    private ToolbarButton clearButton_;

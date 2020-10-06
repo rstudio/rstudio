@@ -1,7 +1,7 @@
 /*
  * OpenSourceFileEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -45,24 +45,34 @@ public class OpenSourceFileEvent extends CrossWindowEvent<OpenSourceFileHandler>
    {
       this(file, position, fileType, NavigationMethods.DEFAULT);
    }
-   
-   public OpenSourceFileEvent(FileSystemItem file, 
-                              FilePosition position, 
+
+   public OpenSourceFileEvent(FileSystemItem file,
+                              FilePosition position,
                               TextFileType fileType,
+                              int navMethod)
+   {
+      this(file, position, fileType, true, navMethod);
+   }
+
+   public OpenSourceFileEvent(FileSystemItem file,
+                              FilePosition position,
+                              TextFileType fileType,
+                              boolean moveCursor,
                               int navMethod)
    {
       file_ = file;
       position_ = position;
-      fileType_ = fileType;  
+      fileType_ = fileType;
+      moveCursor_ = moveCursor;
       navigationMethod_ = navMethod;
    }
-   
+
    @Override
    public boolean forward()
    {
       return false;
    }
-   
+
    public FileSystemItem getFile()
    {
       return file_;
@@ -80,12 +90,17 @@ public class OpenSourceFileEvent extends CrossWindowEvent<OpenSourceFileHandler>
          return fileType_;
       }
    }
-   
+
+   public boolean getMoveCursor()
+   {
+      return moveCursor_;
+   }
+
    public FilePosition getPosition()
    {
       return position_;
    }
-   
+
    public int getNavigationMethod()
    {
       return navigationMethod_;
@@ -102,9 +117,10 @@ public class OpenSourceFileEvent extends CrossWindowEvent<OpenSourceFileHandler>
    {
       return TYPE;
    }
-   
+
    private FileSystemItem file_;
    private FilePosition position_;
    private TextFileType fileType_;
+   private boolean moveCursor_;
    private int navigationMethod_;
 }

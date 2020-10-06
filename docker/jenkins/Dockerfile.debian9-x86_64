@@ -1,5 +1,7 @@
 FROM debian:stretch
 
+ENV OPERATING_SYSTEM=debian_9
+
 # update apt repository to cloudfront's mirror
 RUN set -x \
     && sed -i "s/deb.debian.org/cloudfront.debian.net/" /etc/apt/sources.list \
@@ -31,6 +33,7 @@ RUN apt-get update -y && apt-get install -y \
     libffi-dev \
     libpq-dev \
     libsqlite3-dev \
+    libxml2-dev \
     procps \
     uuid-dev \
     make \

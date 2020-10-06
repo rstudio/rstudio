@@ -1,7 +1,7 @@
 /*
  * ProjectPreferencesDialogResources.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,9 +21,10 @@ import com.google.gwt.resources.client.ImageResource;
 
 public interface ProjectPreferencesDialogResources extends ClientBundle
 {
-   static interface Styles extends CssResource
+   interface Styles extends CssResource
    {
       String panelContainer();
+      String panelContainerNoChooser();
       String buildToolsPanel();
       String workspaceGrid();
       String enableCodeIndexing();
@@ -45,10 +46,10 @@ public interface ProjectPreferencesDialogResources extends ClientBundle
       String websiteOutputFormat();
       String infoLabel();
    }
-  
+
    @Source("ProjectPreferencesDialog.css")
    Styles styles();
-  
+
    @Source("iconBuild_2x.png")
    ImageResource iconBuild2x();
 
@@ -57,9 +58,12 @@ public interface ProjectPreferencesDialogResources extends ClientBundle
 
    @Source("iconRenv_2x.png")
    ImageResource iconRenv2x();
-   
+
    @Source("iconShare_2x.png")
    ImageResource iconShare2x();
    
-   static ProjectPreferencesDialogResources INSTANCE = (ProjectPreferencesDialogResources)GWT.create(ProjectPreferencesDialogResources.class);
+   @Source("iconRMarkdown_2x.png")
+   ImageResource iconRMarkdown2x();
+
+   ProjectPreferencesDialogResources INSTANCE = GWT.create(ProjectPreferencesDialogResources.class);
 }

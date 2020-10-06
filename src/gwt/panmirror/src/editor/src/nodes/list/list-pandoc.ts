@@ -1,7 +1,7 @@
 /*
  * list-pandoc.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -144,10 +144,19 @@ interface ListNodeOptions {
 }
 
 function listNodeOptions(node: ProsemirrorNode, capabilities: ListCapabilities): ListNodeOptions {
-  return {
+  const options = {
     tight: node.attrs.tight,
     example: capabilities.example ? node.attrs.number_style === ListNumberStyle.Example : false,
   };
+
+  // if it's tight see if we need to override b/c of multiple blocks
+  node.forEach(item => {
+    if (options.tight && item.childCount > 1) {
+      options.tight = false;
+    }
+  });
+
+  return options;
 }
 
 function writePandocListItem(output: PandocOutput, options: ListNodeOptions, node: ProsemirrorNode) {

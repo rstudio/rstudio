@@ -1,7 +1,7 @@
 /*
  * SessionBreakpoints.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -601,11 +601,6 @@ Error removeAllBreakpoints(const json::JsonRpcRequest&,
 
 } // anonymous namespace
 
-bool haveSrcrefAttribute()
-{
-   return true;
-}
-
 bool haveAdvancedStepCommands()
 {
    bool haveCommands = false;
@@ -621,7 +616,7 @@ Error initialize()
    using boost::bind;
    using namespace module_context;
 
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "get_function_state", getFunctionState))
       (bind(registerRpcMethod, "set_function_breakpoints", setBreakpoints))

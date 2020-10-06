@@ -1,7 +1,7 @@
 /*
  * MathJaxRenderQueue.java
  *
- * Copyright (C) 2009-16 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,7 +18,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
-import org.rstudio.studio.client.common.mathjax.MathJax.MathJaxTypesetCallback;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 
 public class MathJaxRenderQueue
@@ -28,7 +27,7 @@ public class MathJaxRenderQueue
       mathjax_ = mathjax;
       
       ranges_ = new LinkedList<Range>();
-      callback_ = new MathJaxTypesetCallback()
+      callback_ = new MathJaxTypeset.Callback()
       {
          @Override
          public void onMathJaxTypesetComplete(boolean error)
@@ -74,7 +73,7 @@ public class MathJaxRenderQueue
    private final MathJax mathjax_;
    
    private final Queue<Range> ranges_;
-   private final MathJaxTypesetCallback callback_;
+   private final MathJaxTypeset.Callback callback_;
    private boolean isRunning_;
 
 }

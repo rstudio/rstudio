@@ -1,7 +1,7 @@
 /*
  * SearchWidget.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -53,7 +53,6 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.SelectionCommitEvent;
-import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 
@@ -68,19 +67,19 @@ public class SearchWidget extends Composite implements SearchDisplay
       {
          super(oracle);
       }
-    
+
       FocusSuggestBox(SuggestOracle oracle, TextBoxBase textBox)
       {
          super(oracle, textBox);
       }
-      
-      FocusSuggestBox(SuggestOracle oracle, 
-                      TextBoxBase textBox, 
+
+      FocusSuggestBox(SuggestOracle oracle,
+                      TextBoxBase textBox,
                       SuggestionDisplay suggestDisplay)
       {
          super(oracle, textBox, suggestDisplay);
       }
-      
+
       public HandlerRegistration addBlurHandler(BlurHandler handler)
       {
          return addDomHandler(handler, BlurEvent.getType());
@@ -91,7 +90,7 @@ public class SearchWidget extends Composite implements SearchDisplay
          return addDomHandler(handler, FocusEvent.getType());
       }
    }
-  
+
    public SearchWidget(String label)
    {
       this(label, new SuggestOracle()
@@ -108,17 +107,17 @@ public class SearchWidget extends Composite implements SearchDisplay
    {
       this(label, oracle, null);
    }
-   
+
    public SearchWidget(String label,
                        SuggestOracle oracle,
                        SuggestionDisplay suggestDisplay)
    {
       this(label, oracle, new TextBox(), suggestDisplay);
    }
-   
+
    public SearchWidget(String label,
-                       SuggestOracle oracle, 
-                       TextBoxBase textBox, 
+                       SuggestOracle oracle,
+                       TextBoxBase textBox,
                        SuggestionDisplay suggestDisplay)
    {
       this(label, oracle, textBox, suggestDisplay, true);
@@ -131,12 +130,12 @@ public class SearchWidget extends Composite implements SearchDisplay
                        boolean continuousSearch)
    {
       DomUtils.disableSpellcheck(textBox);
-      
+
       if (suggestDisplay != null)
          suggestBox_ = new FocusSuggestBox(oracle, textBox, suggestDisplay);
-      else 
+      else
          suggestBox_ = new FocusSuggestBox(oracle, textBox);
-      
+
       initWidget(uiBinder.createAndBindUi(this));
       clearFilter_.setVisible(false);
       clearFilter_.setDescription("Clear text");
@@ -150,7 +149,7 @@ public class SearchWidget extends Composite implements SearchDisplay
          A11y.setARIAHidden(hiddenLabel_);
       }
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
-      
+
       suggestBox_.setStylePrimaryName(styles.searchBox());
       suggestBox_.setAutoSelectEnabled(false);
       addKeyDownHandler(new KeyDownHandler() {
@@ -162,16 +161,16 @@ public class SearchWidget extends Composite implements SearchDisplay
                Scheduler.get().scheduleDeferred(new ScheduledCommand() {
                   public void execute()
                   {
-                     SelectionCommitEvent.fire(SearchWidget.this, 
+                     SelectionCommitEvent.fire(SearchWidget.this,
                                                suggestBox_.getText());
                   }
                });
                break;
             case KeyCodes.KEY_ESCAPE:
-               
+
                event.preventDefault();
                event.stopPropagation();
-               
+
                // defer the handling of ESC so that it doesn't end up
                // inside other UI (the editor) if/when the parent search
                // ui is dismissed
@@ -181,7 +180,7 @@ public class SearchWidget extends Composite implements SearchDisplay
                   public void execute()
                   {
                      if (getSuggestionDisplay().isSuggestionListShowing())
-                     {  
+                     {
                         getSuggestionDisplay().hideSuggestions();
                         setText("", true);
                      }
@@ -189,9 +188,9 @@ public class SearchWidget extends Composite implements SearchDisplay
                      {
                         CloseEvent.fire(SearchWidget.this, SearchWidget.this);
                      }
-                  }   
+                  }
                });
-                   
+
                break;
             }
          }
@@ -230,10 +229,10 @@ public class SearchWidget extends Composite implements SearchDisplay
          ValueChangeEvent.fire(suggestBox_, "");
          focus();
       });
-      
+
       focusTracker_ = new FocusTracker(suggestBox_);
    }
-   
+
    public HandlerRegistration addFocusHandler(FocusHandler handler)
    {
       return suggestBox_.addFocusHandler(handler);
@@ -249,7 +248,7 @@ public class SearchWidget extends Composite implements SearchDisplay
       return addHandler(handler, ValueChangeEvent.getType());
    }
 
-   public HandlerRegistration addSelectionCommitHandler(SelectionCommitHandler<String> handler)
+   public HandlerRegistration addSelectionCommitHandler(SelectionCommitEvent.Handler<String> handler)
    {
       return addHandler(handler, SelectionCommitEvent.getType());
    }
@@ -269,19 +268,19 @@ public class SearchWidget extends Composite implements SearchDisplay
    {
       return suggestBox_.addSelectionHandler(handler);
    }
-   
+
    public HandlerRegistration addCloseHandler(CloseHandler<SearchDisplay> handler)
    {
       return addHandler(handler, CloseEvent.getType());
    }
-   
+
    @Override
    public void setAutoSelectEnabled(boolean selectsFirstItem)
    {
       suggestBox_.setAutoSelectEnabled(selectsFirstItem);
-      
+
    }
-   
+
    public String getText()
    {
       return suggestBox_.getText();
@@ -296,7 +295,7 @@ public class SearchWidget extends Composite implements SearchDisplay
    {
       suggestBox_.setValue(text, fireEvents);
    }
-   
+
    @Override
    public String getValue()
    {
@@ -319,50 +318,50 @@ public class SearchWidget extends Composite implements SearchDisplay
    {
       icon_.setResource(image);
    }
-   
+
    public void focus()
    {
       suggestBox_.setFocus(true);
    }
-   
+
    public void clear()
    {
       setText("", true);
       clearFilter_.setVisible(false);
    }
-   
+
    // NOTE: only works if you are using the default display!
    public DefaultSuggestionDisplay getSuggestionDisplay()
    {
       return (DefaultSuggestionDisplay) suggestBox_.getSuggestionDisplay();
    }
-   
+
    protected ValueBoxBase<String> getTextBox()
    {
       return suggestBox_.getValueBox();
    }
-   
+
    private void updateLastValue(String value)
    {
       lastValueSent_ = value;
       clearFilter_.setVisible(lastValueSent_.length() > 0);
    }
-   
+
    public String getLastValue()
    {
       return lastValueSent_;
    }
-   
+
    public void setPlaceholderText(String value)
    {
       DomUtils.setPlaceholder(suggestBox_.getElement(), value);
    }
-   
+
    public boolean isFocused()
    {
       return focusTracker_.isFocused();
    }
-   
+
    public Element getInputElement()
    {
       Element searchEl = getElement();

@@ -1,7 +1,7 @@
 /*
  * ProjectRenvPreferencesPane.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -65,7 +65,7 @@ public class ProjectRenvPreferencesPane extends ProjectPreferencesPane
             "RStudio uses the renv package to give your projects their " +
             "own privately-managed package library, making your R code " +
             "more isolated, portable, and reproducible.";
-            
+
       Label label = new Label(labelText);
       spaced(label);
       add(label);
@@ -75,7 +75,7 @@ public class ProjectRenvPreferencesPane extends ProjectPreferencesPane
       chkUseRenv_ = new CheckBox("Use renv with this project");
       chkUseRenv_.setValue(context.active);
       chkUseRenv_.addValueChangeHandler((ValueChangeEvent<Boolean> event) -> {
-         
+
          if (event.getValue())
          {
             dependencyManager_.withRenv("Using renv", (Boolean success) -> manageUI(success));
@@ -84,14 +84,14 @@ public class ProjectRenvPreferencesPane extends ProjectPreferencesPane
          {
             manageUI(false);
          }
-         
+
       });
 
       spaced(chkUseRenv_);
       add(chkUseRenv_);
 
       // TODO: UI for other renv options / settings
-      
+
       manageUI(context.active);
 
       HelpLink helpLink = new HelpLink("Learn more about renv", "renv", false);
@@ -99,7 +99,7 @@ public class ProjectRenvPreferencesPane extends ProjectPreferencesPane
       nudgeRight(helpLink);
       add(helpLink);
    }
-   
+
    private void manageUI(boolean enabled)
    {
       // TODO: manage visibility of UI components based on whether renv is enabled
@@ -109,39 +109,39 @@ public class ProjectRenvPreferencesPane extends ProjectPreferencesPane
    public RestartRequirement onApply(RProjectOptions options)
    {
       RProjectRenvOptions renvOptions = options.getRenvOptions();
-      
+
       renvOptions.useRenv = chkUseRenv_.getValue();
-      
+
       return new RestartRequirement();
    }
-   
-   
+
+
    interface Resources extends ClientBundle
    {
       @Source("ProjectRenvPreferencesPane.css")
       Styles styles();
    }
-   
+
    private static Resources RES = GWT.create(Resources.class);
-   
+
    public interface Styles extends CssResource
    {
    }
-   
+
    static
    {
       RES.styles().ensureInjected();
    }
- 
+
    private CheckBox chkUseRenv_;
-   
+
    // Injected ----
    @SuppressWarnings("unused")
    private final Session session_;
    @SuppressWarnings("unused")
    private final RenvServerOperations server_;
    private final DependencyManager dependencyManager_;
-   
-   
-   
+
+
+
 }

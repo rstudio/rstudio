@@ -1,7 +1,7 @@
 /*
  * table.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,8 +13,43 @@
  *
  */
 
+import { EditorCommandId } from './command';
+import { EditorUI } from './ui';
+
 export interface TableCapabilities {
   captions: boolean;
   headerOptional: boolean;
   multiline: boolean;
+}
+
+export function tableMenu(insert: boolean, ui: EditorUI) {
+  return [
+    ...(insert ? [{ command: EditorCommandId.TableInsertTable }] : []),
+    { command: EditorCommandId.TableAddRowBefore },
+    { command: EditorCommandId.TableAddRowAfter },
+    { separator: true },
+    { command: EditorCommandId.TableAddColumnBefore },
+    { command: EditorCommandId.TableAddColumnAfter },
+    { separator: true },
+    { command: EditorCommandId.TableDeleteRow },
+    { command: EditorCommandId.TableDeleteColumn },
+    { separator: true },
+    { command: EditorCommandId.TableDeleteTable },
+    { separator: true },
+    {
+      text: ui.context.translateText('Align Column'),
+      subMenu: {
+        items: [
+          { command: EditorCommandId.TableAlignColumnLeft },
+          { command: EditorCommandId.TableAlignColumnCenter },
+          { command: EditorCommandId.TableAlignColumnRight },
+          { separator: true },
+          { command: EditorCommandId.TableAlignColumnDefault },
+        ],
+      },
+    },
+    { separator: true },
+    { command: EditorCommandId.TableToggleHeader },
+    { command: EditorCommandId.TableToggleCaption },
+  ];
 }

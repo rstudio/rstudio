@@ -1,7 +1,7 @@
 /*
  * SessionConsoleProcessApi.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -964,7 +964,7 @@ Error initializeApi()
    RS_REGISTER_CALL_METHOD(rs_terminalExecute, 4);
    RS_REGISTER_CALL_METHOD(rs_terminalExitCode, 1);
 
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "process_start", procStart))
       (bind(registerRpcMethod, "process_interrupt", procInterrupt))

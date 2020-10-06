@@ -1,7 +1,7 @@
 /*
  * PlotsSurface.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,7 +24,7 @@ public class PlotsSurface extends FlowPanel
    {
       parent_ = parent;
    }
-   
+
    public void enableSurface()
    {
       setSize("100%", "100%");
@@ -32,7 +32,7 @@ public class PlotsSurface extends FlowPanel
       parent_.setWidgetTopBottom(this, 0, Unit.PX, 0, Unit.PX);
       parent_.setWidgetLeftRight(this, 0, Unit.PX, 0, Unit.PX);
    }
-   
+
    public void disableSurface()
    {
       setSize("0%", "0%");
@@ -40,6 +40,6 @@ public class PlotsSurface extends FlowPanel
       parent_.setWidgetTopBottom(this, 0, Unit.PX, 100, Unit.PCT);
       parent_.setWidgetLeftRight(this, 0, Unit.PX, 100, Unit.PCT);
    }
-   
+
    private final LayoutPanel parent_;
 }

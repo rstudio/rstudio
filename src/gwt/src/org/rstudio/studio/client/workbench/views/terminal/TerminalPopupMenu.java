@@ -1,7 +1,7 @@
 /*
  * TerminalPopupMenu.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,6 @@
 
 package org.rstudio.studio.client.workbench.views.terminal;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
@@ -28,8 +27,7 @@ import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTerminalEvent;
-import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.ErrorLoggingServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 
 import com.google.gwt.core.client.Scheduler;
@@ -148,14 +146,9 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
       updateTerminalCommands();
 
       // inform server of the selection
-      server_.processNotifyVisible(activeTerminalHandle_, new ServerRequestCallback<Void>() {
-
-         @Override
-         public void onError(ServerError error)
-         {
-            Debug.logError(error);
-         }
-      });
+      server_.processNotifyVisible(
+            activeTerminalHandle_,
+            new ErrorLoggingServerRequestCallback<Void>());
    }
 
    /**

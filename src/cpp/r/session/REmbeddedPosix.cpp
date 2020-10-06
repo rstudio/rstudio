@@ -1,7 +1,7 @@
 /*
  * REmbeddedPosix.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -76,7 +76,7 @@ void runEmbeddedR(const core::FilePath& /*rHome*/,    // ignored on posix
    R_SignalHandlers = 0;
 
    // set message callback early so we can see initialization error messages
-   ptr_R_ShowMessage = callbacks.showMessage ;
+   ptr_R_ShowMessage = callbacks.showMessage;
 
    // running as main program (affects location of R_CStackStart on platforms
    // without HAVE_LIBC_STACK_END or HAVE_KERN_USRSTACK). see also discussion
@@ -105,35 +105,35 @@ void runEmbeddedR(const core::FilePath& /*rHome*/,    // ignored on posix
    //
    structRstart rp;
    Rstart Rp = &rp;
-   R_DefParams(Rp) ;
+   R_DefParams(Rp);
 #if R_VERSION < R_Version(4, 0, 0)
    Rp->R_Slave = FALSE;
 #else
    Rp->R_NoEcho = FALSE;
 #endif
    Rp->R_Quiet = quiet ? TRUE : FALSE;
-   Rp->R_Interactive = TRUE ;
-   Rp->SaveAction = defaultSaveAction ;
+   Rp->R_Interactive = TRUE;
+   Rp->SaveAction = defaultSaveAction;
    Rp->RestoreAction = SA_NORESTORE; // handled within initialize()
    Rp->LoadInitFile = loadInitFile ? TRUE : FALSE;
-   R_SetParams(Rp) ;
+   R_SetParams(Rp);
 
    // redirect console
    R_Interactive = TRUE; // should have also been set by call to Rf_initialize_R
    R_Consolefile = nullptr;
    R_Outputfile = nullptr;
-   ptr_R_ReadConsole = callbacks.readConsole ;
+   ptr_R_ReadConsole = callbacks.readConsole;
    ptr_R_WriteConsole = nullptr; // must set this to NULL for Ex to be called
-   ptr_R_WriteConsoleEx = callbacks.writeConsoleEx ;
-   ptr_R_EditFile = callbacks.editFile ;
+   ptr_R_WriteConsoleEx = callbacks.writeConsoleEx;
+   ptr_R_EditFile = callbacks.editFile;
    ptr_R_Busy = callbacks.busy;
 
    // hook messages (in case Rf_initialize_R overwrites previously set hook)
-   ptr_R_ShowMessage = callbacks.showMessage ;
+   ptr_R_ShowMessage = callbacks.showMessage;
 
    // hook file handling
-   ptr_R_ChooseFile = callbacks.chooseFile ;
-   ptr_R_ShowFiles = callbacks.showFiles ;
+   ptr_R_ChooseFile = callbacks.chooseFile;
+   ptr_R_ShowFiles = callbacks.showFiles;
 
    // hook history
    ptr_R_loadhistory = callbacks.loadhistory;
@@ -146,7 +146,7 @@ void runEmbeddedR(const core::FilePath& /*rHome*/,    // ignored on posix
 
    // hook clean up, but save reference to internal clean up so can forward
    pInternal->cleanUp = ptr_R_CleanUp;
-   ptr_R_CleanUp = callbacks.cleanUp ;
+   ptr_R_CleanUp = callbacks.cleanUp;
 
    // NOTE: we do not hook the following callbacks because they are targeted
    // at clients that have a stdio-based console

@@ -1,7 +1,7 @@
 /*
  * heading.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,32 +13,32 @@
  *
  */
 
-import { textblockTypeInputRule } from 'prosemirror-inputrules';
+import { textblockTypeInputRule, InputRule } from 'prosemirror-inputrules';
 import { Node as ProsemirrorNode, Schema, NodeType, Fragment } from 'prosemirror-model';
 import { EditorState } from 'prosemirror-state';
-import { findParentNode } from 'prosemirror-utils';
+import { findParentNode, findParentNodeOfType } from 'prosemirror-utils';
 
-import { PandocOutput, PandocToken, PandocTokenType, PandocExtensions } from '../api/pandoc';
-import { BlockCommand, EditorCommandId } from '../api/command';
-import { Extension } from '../api/extension';
-import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr, pandocAttrReadAST } from '../api/pandoc_attr';
+import { PandocOutput, PandocToken, PandocTokenType } from '../api/pandoc';
+import { EditorCommandId, toggleBlockType, ProsemirrorCommand } from '../api/command';
+import { Extension, ExtensionContext } from '../api/extension';
+import {
+  pandocAttrSpec,
+  pandocAttrParseDom,
+  pandocAttrToDomAttr,
+  pandocAttrReadAST,
+  pandocAttrParseText,
+} from '../api/pandoc_attr';
 import { uuidv4 } from '../api/util';
-import { PandocCapabilities } from '../api/pandoc_capabilities';
 import { EditorUI } from '../api/ui';
-import { EditorFormat } from '../api/format';
-
-const HEADING_LEVEL = 0;
-const HEADING_ATTR = 1;
-const HEADING_CHILDREN = 2;
+import { OmniInsert, OmniInsertGroup } from '../api/omni_insert';
+import { emptyNodePlaceholderPlugin } from '../api/placeholder';
+import { kHeadingLevel, kHeadingAttr, kHeadingChildren } from '../api/heading';
 
 const kHeadingLevels = [1, 2, 3, 4, 5, 6];
 
-const extension = (
-  pandocExtensions: PandocExtensions,
-  _caps: PandocCapabilities,
-  _ui: EditorUI,
-  format: EditorFormat,
-): Extension => {
+const extension = (context: ExtensionContext): Extension => {
+  const { pandocExtensions, format, ui } = context;
+
   const headingAttr = pandocExtensions.header_attributes || pandocExtensions.mmd_header_identifiers;
 
   return {
@@ -56,12 +56,12 @@ const extension = (
           group: 'block',
           defining: true,
           parseDOM: [
-            { tag: 'h1', getAttrs: getHeadingAttrs(1, headingAttr) },
-            { tag: 'h2', getAttrs: getHeadingAttrs(2, headingAttr) },
-            { tag: 'h3', getAttrs: getHeadingAttrs(3, headingAttr) },
-            { tag: 'h4', getAttrs: getHeadingAttrs(4, headingAttr) },
-            { tag: 'h5', getAttrs: getHeadingAttrs(5, headingAttr) },
-            { tag: 'h6', getAttrs: getHeadingAttrs(6, headingAttr) },
+            { tag: 'h1', getAttrs: headingAttrs(1, headingAttr) },
+            { tag: 'h2', getAttrs: headingAttrs(2, headingAttr) },
+            { tag: 'h3', getAttrs: headingAttrs(3, headingAttr) },
+            { tag: 'h4', getAttrs: headingAttrs(4, headingAttr) },
+            { tag: 'h5', getAttrs: headingAttrs(5, headingAttr) },
+            { tag: 'h6', getAttrs: headingAttrs(6, headingAttr) },
           ],
           toDOM(node) {
             const attr = headingAttr ? pandocAttrToDomAttr(node.attrs) : {};
@@ -82,7 +82,10 @@ const extension = (
           if (headingAttr) {
             return {
               type: (schema: Schema) => schema.nodes.heading,
-              offset: 8,
+              offset: {
+                top: 5,
+                right: 5,
+              },
             };
           } else {
             return null;
@@ -95,11 +98,11 @@ const extension = (
               token: PandocTokenType.Header,
               block: 'heading',
               getAttrs: (tok: PandocToken) => ({
-                level: tok.c[HEADING_LEVEL],
+                level: tok.c[kHeadingLevel],
                 navigation_id: uuidv4(),
-                ...(headingAttr ? pandocAttrReadAST(tok, HEADING_ATTR) : {}),
+                ...(headingAttr ? pandocAttrReadAST(tok, kHeadingAttr) : {}),
               }),
-              getChildren: (tok: PandocToken) => tok.c[HEADING_CHILDREN],
+              getChildren: (tok: PandocToken) => tok.c[kHeadingChildren],
             },
           ],
           writer: (output: PandocOutput, node: ProsemirrorNode) => {
@@ -125,35 +128,70 @@ const extension = (
 
     commands: (schema: Schema) => {
       return [
-        new HeadingCommand(schema, EditorCommandId.Heading1, 1),
-        new HeadingCommand(schema, EditorCommandId.Heading2, 2),
-        new HeadingCommand(schema, EditorCommandId.Heading3, 3),
-        new HeadingCommand(schema, EditorCommandId.Heading4, 4),
+        new HeadingCommand(schema, EditorCommandId.Heading1, 1, heading1OmniInsert(ui)),
+        new HeadingCommand(schema, EditorCommandId.Heading2, 2, heading2OmniInsert(ui)),
+        new HeadingCommand(schema, EditorCommandId.Heading3, 3, heading3OmniInsert(ui)),
+        new HeadingCommand(schema, EditorCommandId.Heading4, 4, heading4OmniInsert(ui)),
         new HeadingCommand(schema, EditorCommandId.Heading5, 5),
         new HeadingCommand(schema, EditorCommandId.Heading6, 6),
       ];
     },
 
     inputRules: (schema: Schema) => {
-      return [
+      const rules = [
         textblockTypeInputRule(
           new RegExp('^(#{1,' + kHeadingLevels.length + '})\\s$'),
           schema.nodes.heading,
           match => ({
             level: match[1].length,
+            navigation_id: uuidv4(),
           }),
         ),
       ];
+
+      if (headingAttr) {
+        rules.push(headingAttributeInputRule(schema));
+      }
+
+      return rules;
+    },
+
+    plugins: (schema: Schema) => {
+      return [emptyHeadingPlaceholderPlugin(schema.nodes.heading, ui)];
     },
   };
 };
 
-class HeadingCommand extends BlockCommand {
+function headingAttributeInputRule(schema: Schema) {
+  return new InputRule(/ {([^}]+)}$/, (state: EditorState, match: string[], start: number, end: number) => {
+    // only fire in headings
+    const heading = findParentNodeOfType(schema.nodes.heading)(state.selection);
+    if (heading) {
+      // try to parse the attributes
+      const attrs = pandocAttrParseText(match[1]);
+      if (attrs) {
+        const tr = state.tr;
+        tr.setNodeMarkup(heading.pos, undefined, {
+          ...heading.node.attrs,
+          ...attrs,
+        });
+        tr.deleteRange(start + 1, end);
+        return tr;
+      } else {
+        return null;
+      }
+    } else {
+      return null;
+    }
+  });
+}
+
+class HeadingCommand extends ProsemirrorCommand {
   public readonly nodeType: NodeType;
   public readonly level: number;
 
-  constructor(schema: Schema, id: EditorCommandId, level: number) {
-    super(id, ['Shift-Ctrl-' + level], schema.nodes.heading, schema.nodes.paragraph, { level });
+  constructor(schema: Schema, id: EditorCommandId, level: number, omniInsert?: OmniInsert) {
+    super(id, ['Mod-Alt-' + level], headingCommandFn(schema, level), omniInsert);
     this.nodeType = schema.nodes.heading;
     this.level = level;
   }
@@ -165,8 +203,54 @@ class HeadingCommand extends BlockCommand {
   }
 }
 
+function heading1OmniInsert(ui: EditorUI) {
+  return headingOmniInsert(ui, 1, ui.context.translateText('Top level heading'), [
+    ui.images.omni_insert?.heading1!,
+    ui.images.omni_insert?.heading1_dark!,
+  ]);
+}
+
+function heading2OmniInsert(ui: EditorUI) {
+  return headingOmniInsert(ui, 2, ui.context.translateText('Section heading'), [
+    ui.images.omni_insert?.heading2!,
+    ui.images.omni_insert?.heading2_dark!,
+  ]);
+}
+
+function heading3OmniInsert(ui: EditorUI) {
+  return headingOmniInsert(ui, 3, ui.context.translateText('Sub-section heading'), [
+    ui.images.omni_insert?.heading3!,
+    ui.images.omni_insert?.heading3_dark!,
+  ]);
+}
+
+function heading4OmniInsert(ui: EditorUI) {
+  return headingOmniInsert(ui, 4, ui.context.translateText('Smaller heading'), [
+    ui.images.omni_insert?.heading4!,
+    ui.images.omni_insert?.heading4_dark!,
+  ]);
+}
+
+function headingOmniInsert(ui: EditorUI, level: number, description: string, images: [string, string]): OmniInsert {
+  return {
+    name: headingName(ui, level),
+    description,
+    group: OmniInsertGroup.Headings,
+    image: () => (ui.prefs.darkMode() ? images[1] : images[0]),
+  };
+}
+
+function headingName(ui: EditorUI, level: number) {
+  const kHeadingPrefix = ui.context.translateText('Heading');
+  return `${kHeadingPrefix} ${level}`;
+}
+
+function headingCommandFn(schema: Schema, level: number) {
+  return toggleBlockType(schema.nodes.heading, schema.nodes.paragraph, { level });
+}
+
 // function for getting attrs
-function getHeadingAttrs(level: number, pandocAttrSupported: boolean) {
+function headingAttrs(level: number, pandocAttrSupported: boolean) {
   return (dom: Node | string) => {
     const el = dom as Element;
     return {
@@ -175,6 +259,10 @@ function getHeadingAttrs(level: number, pandocAttrSupported: boolean) {
       ...(pandocAttrSupported ? pandocAttrParseDom(el, {}) : {}),
     };
   };
+}
+
+function emptyHeadingPlaceholderPlugin(nodeType: NodeType, ui: EditorUI) {
+  return emptyNodePlaceholderPlugin(nodeType, node => headingName(ui, node.attrs.level));
 }
 
 // write a bookdown (PART) H1 w/o spurious \

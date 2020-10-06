@@ -1,7 +1,7 @@
 /*
  * BuildErrorsEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,15 +24,15 @@ import com.google.gwt.event.shared.GwtEvent;
 public class BuildErrorsEvent extends GwtEvent<BuildErrorsEvent.Handler>
 {
    public static class Data extends JavaScriptObject
-   { 
+   {
       protected Data()
       {
       }
-      
+
       public final native String getBaseDirectory() /*-{
          return this.base_dir;
       }-*/;
-      
+
       public final native JsArray<SourceMarker> getErrors() /*-{
          return this.errors;
       }-*/;
@@ -46,7 +46,7 @@ public class BuildErrorsEvent extends GwtEvent<BuildErrorsEvent.Handler>
       }-*/;
    }
 
-   
+
    public interface Handler extends EventHandler
    {
       void onBuildErrors(BuildErrorsEvent event);
@@ -56,7 +56,7 @@ public class BuildErrorsEvent extends GwtEvent<BuildErrorsEvent.Handler>
    {
       data_ = data;
    }
-   
+
    public String getBaseDirectory()
    {
       return data_.getBaseDirectory();
@@ -71,7 +71,7 @@ public class BuildErrorsEvent extends GwtEvent<BuildErrorsEvent.Handler>
    {
       return data_.type();
    }
-   
+
    public JsArray<SourceMarker> getErrors()
    {
       return data_.getErrors();
@@ -88,8 +88,8 @@ public class BuildErrorsEvent extends GwtEvent<BuildErrorsEvent.Handler>
    {
       handler.onBuildErrors(this);
    }
-   
+
    private Data data_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

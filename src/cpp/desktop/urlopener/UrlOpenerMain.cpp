@@ -1,7 +1,7 @@
 /*
  * UrlOpenerMain.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -81,7 +81,7 @@ int main(int argc, char** argv)
    CATCH_UNEXPECTED_EXCEPTION
 
    // if we got this far we had an unexpected exception
-   return EXIT_FAILURE ;
+   return EXIT_FAILURE;
 }
 
 #ifdef _WIN32

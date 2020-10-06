@@ -1,7 +1,7 @@
 /*
  * PosixSystem.cpp
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant to the terms of a commercial license agreement
  * with RStudio, then this program is licensed to you under the following terms:
@@ -25,7 +25,9 @@
 
 #include <csignal>
 #include <grp.h>
+#include <ifaddrs.h>
 #include <memory.h>
+#include <netdb.h>
 #include <pwd.h>
 
 #ifndef __APPLE__
@@ -85,6 +87,56 @@ Error enableCoreDumps()
 #endif
 
    return Success();
+}
+
+std::string getEnvironmentVariable(const std::string& in_name)
+{
+   char* value = ::getenv(in_name.c_str());
+   if (value)
+      return std::string(value);
+
+   return std::string();
+}
+
+Error getIpAddresses(std::vector<IpAddress>& out_addresses, bool in_includeIPv6)
+{
+    // get addrs
+    struct ifaddrs* pAddrs;
+    if (::getifaddrs(&pAddrs) == -1)
+        return systemError(errno, ERROR_LOCATION);
+
+    // iterate through the linked list
+    for (struct ifaddrs* pAddr = pAddrs; pAddr != nullptr; pAddr = pAddr->ifa_next)
+    {
+        if (pAddr->ifa_addr == nullptr)
+            continue;
+
+        // filter out non-ip addresses
+        sa_family_t family = pAddr->ifa_addr->sa_family;
+        bool filterAddr = in_includeIPv6 ? (family != AF_INET && family != AF_INET6) : (family != AF_INET);
+        if (filterAddr)
+            continue;
+
+        char host[NI_MAXHOST];
+        if (::getnameinfo(pAddr->ifa_addr,
+                          (family == AF_INET) ? sizeof(struct sockaddr_in) :
+                          sizeof(struct sockaddr_in6),
+                          host, NI_MAXHOST,
+                          nullptr, 0, NI_NUMERICHOST) != 0)
+        {
+            log::logError(systemError(errno, ERROR_LOCATION));
+            continue;
+        }
+
+        struct IpAddress addr;
+        addr.Name = pAddr->ifa_name;
+        addr.Address = host;
+        out_addresses.push_back(addr);
+    }
+
+    // free them and return success
+    ::freeifaddrs(pAddrs);
+    return Success();
 }
 
 Error ignoreSignal(int in_signal)

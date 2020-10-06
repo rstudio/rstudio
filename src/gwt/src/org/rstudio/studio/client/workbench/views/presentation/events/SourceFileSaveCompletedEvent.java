@@ -1,7 +1,7 @@
 /*
  * SourceFileSaveCompletedEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,7 +27,7 @@ public class SourceFileSaveCompletedEvent extends GwtEvent<SourceFileSaveComplet
       void onSourceFileSaveCompleted(SourceFileSaveCompletedEvent event);
    }
 
-   public SourceFileSaveCompletedEvent(FileSystemItem sourceFile, 
+   public SourceFileSaveCompletedEvent(FileSystemItem sourceFile,
                                        String contents,
                                        Position cursorPos)
    {
@@ -40,12 +40,12 @@ public class SourceFileSaveCompletedEvent extends GwtEvent<SourceFileSaveComplet
    {
       return sourceFile_;
    }
-   
+
    public String getContents()
    {
       return contents_;
    }
-   
+
    public Position getCursorPos()
    {
       return cursorPos_;
@@ -67,5 +67,5 @@ public class SourceFileSaveCompletedEvent extends GwtEvent<SourceFileSaveComplet
    private final String contents_;
    private final Position cursorPos_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

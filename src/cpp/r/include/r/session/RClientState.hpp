@@ -1,7 +1,7 @@
 /*
  * RClientState.hpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -63,7 +63,7 @@ public:
                       const std::string& name,
                       const core::json::Value& value);
    
-   void putPersistent(const core::json::Object& persistentState); 
+   void putPersistent(const core::json::Object& persistentState);
 
    void putProjectPersistent(const std::string& scope,
                              const std::string& name,

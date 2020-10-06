@@ -1,5 +1,7 @@
 FROM opensuse/leap:42.3
 
+ENV OPERATING_SYSTEM=opensuse_leap42
+
 # needed to build RPMs
 RUN zypper --non-interactive addrepo http://download.opensuse.org/repositories/systemsmanagement:wbem:deps/openSUSE_Leap_42.3/systemsmanagement:wbem:deps.repo
 
@@ -20,6 +22,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     libcap-devel \
     libuser-devel \
     libuuid-devel \
+    libxml2-devel \
     libXcursor-devel \
     libXrandr-devel \
     lsof \

@@ -1,7 +1,7 @@
 /*
  * GlassVisibilityEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,12 +14,17 @@
  */
 package org.rstudio.core.client.widget.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class GlassVisibilityEvent extends GwtEvent<GlassVisibilityHandler>
+public class GlassVisibilityEvent extends GwtEvent<GlassVisibilityEvent.Handler>
 {
-   public static final Type<GlassVisibilityHandler> TYPE =
-         new Type<GlassVisibilityHandler>();
+   public static final Type<Handler> TYPE = new Type<>();
+
+   public interface Handler extends EventHandler
+   {
+      void onGlass(GlassVisibilityEvent event);
+   }
 
    public GlassVisibilityEvent(boolean show)
    {
@@ -32,13 +37,13 @@ public class GlassVisibilityEvent extends GwtEvent<GlassVisibilityHandler>
    }
 
    @Override
-   public Type<GlassVisibilityHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
 
    @Override
-   protected void dispatch(GlassVisibilityHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onGlass(this);
    }

@@ -1,7 +1,7 @@
 /*
  * SessionHttpConnectionQueue.cpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,7 +21,7 @@
 
 #include <core/http/Request.hpp>
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
@@ -119,9 +119,9 @@ bool HttpConnectionQueue::waitForConnection(
    }
    catch(const thread_resource_error& e)
    {
-      Error waitError(boost::thread_error::ec_from_exception(e), ERROR_LOCATION) ;
+      Error waitError(boost::thread_error::ec_from_exception(e), ERROR_LOCATION);
       LOG_ERROR(waitError);
-      return false ;
+      return false;
    }
 }
 

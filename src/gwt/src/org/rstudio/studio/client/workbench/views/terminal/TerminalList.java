@@ -1,7 +1,7 @@
 /*
  * TerminalList.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.terminal;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -337,6 +338,9 @@ public class TerminalList implements Iterable<String>,
     */
    public boolean getHasSubprocs(String handle)
    {
+      if (BrowseCap.isWindowsDesktop())
+         return false;
+
       ConsoleProcessInfo data = getMetadataForHandle(handle);
       if (data == null)
       {
@@ -350,6 +354,9 @@ public class TerminalList implements Iterable<String>,
     */
    public boolean haveSubprocs()
    {
+      if (BrowseCap.isWindowsDesktop())
+         return false;
+
       for (final TerminalListData item : terminals_.values())
       {
          if (item.getCPI().getHasChildProcs())

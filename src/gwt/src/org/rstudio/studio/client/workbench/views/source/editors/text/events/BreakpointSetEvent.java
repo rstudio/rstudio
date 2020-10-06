@@ -1,7 +1,7 @@
 /*
  * BreakpointSetEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,17 +30,17 @@ public class BreakpointSetEvent extends GwtEvent<BreakpointSetEvent.Handler>
       breakpointId_ = breakpointId;
       set_ = set;
    }
-   
+
    public int getLineNumber()
    {
       return lineNumber_;
    }
-   
+
    public int getBreakpointId()
    {
       return breakpointId_;
    }
-      
+
    public boolean isSet()
    {
       return set_;
@@ -58,9 +58,9 @@ public class BreakpointSetEvent extends GwtEvent<BreakpointSetEvent.Handler>
       handler.onBreakpointSet(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
    public static final int UNSET_BREAKPOINT_ID = -1;
-   
+
    private int lineNumber_;
    private int breakpointId_;
    private boolean set_;

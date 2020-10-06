@@ -1,7 +1,7 @@
 /*
  * RTokenizerTests.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -41,14 +41,14 @@ public:
 
    void verify(const std::wstring& value)
    {
-      verify(defaultTokenType_, value) ;
+      verify(defaultTokenType_, value);
    }
 
    void verify(wchar_t tokenType, const std::wstring& value)
    {
 
-      RTokenizer rt(prefix_ + value + suffix_) ;
-      RToken t ;
+      RTokenizer rt(prefix_ + value + suffix_);
+      RToken t;
       while ((t = rt.nextToken()))
       {
          if (t.offset() == prefix_.length())
@@ -60,7 +60,7 @@ public:
             expect_true(tokenType == t.type());
             expect_true(value.length() == t.length());
             expect_true(value == t.content());
-            return ;
+            return;
          }
       }
 
@@ -78,44 +78,44 @@ public:
    }
 
 private:
-   const wchar_t defaultTokenType_ ;
-   const std::wstring prefix_ ;
-   const std::wstring suffix_ ;
+   const wchar_t defaultTokenType_;
+   const std::wstring prefix_;
+   const std::wstring suffix_;
 
 };
 
 
 void testVoid()
 {
-   RTokenizer rt(L"") ;
+   RTokenizer rt(L"");
    expect_true(!rt.nextToken());
 }
 
 void testSimple()
 {
-   Verifier v(RToken::ERR, L" ", L" ") ;
-   v.verify(RToken::LPAREN, L"(") ;
-   v.verify(RToken::RPAREN, L")") ;
-   v.verify(RToken::LBRACKET, L"[") ;
-   v.verify(RToken::RBRACKET, L"]") ;
-   v.verify(RToken::LBRACE, L"{") ;
-   v.verify(RToken::RBRACE, L"}") ;
-   v.verify(RToken::COMMA, L",") ;
-   v.verify(RToken::SEMI, L";") ;
+   Verifier v(RToken::ERR, L" ", L" ");
+   v.verify(RToken::LPAREN, L"(");
+   v.verify(RToken::RPAREN, L")");
+   v.verify(RToken::LBRACKET, L"[");
+   v.verify(RToken::RBRACKET, L"]");
+   v.verify(RToken::LBRACE, L"{");
+   v.verify(RToken::RBRACE, L"}");
+   v.verify(RToken::COMMA, L",");
+   v.verify(RToken::SEMI, L";");
 }
 
 void testError()
 {
-   Verifier v(RToken::ERR, L" ", L" ") ;
+   Verifier v(RToken::ERR, L" ", L" ");
 }
 
 void testComment()
 {
-   Verifier v(RToken::COMMENT, L" ", L"\n") ;
+   Verifier v(RToken::COMMENT, L" ", L"\n");
    v.verify(L"#");
    v.verify(L"# foo #");
 
-   Verifier v2(RToken::COMMENT, L" ", L"\r\n") ;
+   Verifier v2(RToken::COMMENT, L" ", L"\r\n");
    v2.verify(L"#");
    v2.verify(L"# foo #");
 }
@@ -123,7 +123,7 @@ void testComment()
 
 void testNumbers()
 {
-   Verifier v(RToken::NUMBER, L" ", L" ") ;
+   Verifier v(RToken::NUMBER, L" ", L" ");
    v.verify(L"1");
    v.verify(L"10");
    v.verify(L"0.1");
@@ -151,7 +151,7 @@ void testNumbers()
 
 void testOperators()
 {
-   Verifier v(RToken::OPER, L" ", L" ") ;
+   Verifier v(RToken::OPER, L" ", L" ");
    v.verify(L"+");
    v.verify(L"-");
    v.verify(L"*");
@@ -179,27 +179,27 @@ void testOperators()
 
 void testUOperators()
 {
-   Verifier v(RToken::UOPER, L" ", L" ") ;
+   Verifier v(RToken::UOPER, L" ", L" ");
    v.verify(L"%%");
    v.verify(L"%test test%");
 }
 
 void testStrings()
 {
-   Verifier v(RToken::STRING, L" ", L" ") ;
-   v.verify(L"\"test\"") ;
-   v.verify(L"\" '$\t\r\n\\\"\"") ;
-   v.verify(L"\"\"") ;
-   v.verify(L"''") ;
-   v.verify(L"'\"'") ;
-   v.verify(L"'\\\"'") ;
-   v.verify(L"'\n'") ;
-   v.verify(L"'foo bar \\U654'") ;
+   Verifier v(RToken::STRING, L" ", L" ");
+   v.verify(L"\"test\"");
+   v.verify(L"\" '$\t\r\n\\\"\"");
+   v.verify(L"\"\"");
+   v.verify(L"''");
+   v.verify(L"'\"'");
+   v.verify(L"'\\\"'");
+   v.verify(L"'\n'");
+   v.verify(L"'foo bar \\U654'");
 }
 
 void testIdentifiers()
 {
-   Verifier v(RToken::ID, L" ", L" ") ;
+   Verifier v(RToken::ID, L" ", L" ");
    v.verify(L".");
    v.verify(L"...");
    v.verify(L"..1");
@@ -219,13 +219,13 @@ void testIdentifiers()
 
 void testWhitespace()
 {
-   Verifier v(RToken::WHITESPACE, L"a", L"z") ;
+   Verifier v(RToken::WHITESPACE, L"a", L"z");
    v.verify(L" ");
    v.verify(L"      ");
    v.verify(L"\t\n");
-   v.verify(L"\x00A0") ;
-   v.verify(L"  \x3000  ") ;
-   v.verify(L" \x00A0\t\x3000\r  ") ;
+   v.verify(L"\x00A0");
+   v.verify(L"  \x3000  ");
+   v.verify(L" \x00A0\t\x3000\r  ");
 }
 
 
@@ -267,6 +267,42 @@ test_context("RTokenizer")
       expect_true(rTokens.at(2).isType(RToken::OPER));
       expect_true(rTokens.at(2).contentEquals(L"**"));
    }
+   
+   test_that("plain raw strings are tokenized properly")
+   {
+      auto lines = {
+         L"r\"(abc)\"",
+         L"R\"(abc)\"",
+         L"r\"{abc}\"",
+         L"r'[abc]'",
+         L"R'{abc}'"
+      };
+      
+      for (auto line : lines)
+      {
+         RTokens rTokens(line);
+         expect_true(rTokens.size() == 1);
+         expect_true(rTokens.at(0).isType(RToken::STRING));
+      }
+   }
+   
+   test_that("unclosed raw strings are tokenized as errors")
+   {
+      RTokens rTokens(L"r'(abc");
+      expect_true(rTokens.size() == 1);
+      expect_true(rTokens.at(0).isType(RToken::ERR));
+   }
+   
+   test_that("the raw string tokenizer restores iterator state if no raw string consumed")
+   {
+      RTokens rTokens(L"rep('.')");
+      expect_true(rTokens.size() == 4);
+      expect_true(rTokens.at(0).isType(RToken::ID));
+      expect_true(rTokens.at(1).isType(RToken::LPAREN));
+      expect_true(rTokens.at(2).isType(RToken::STRING));
+      expect_true(rTokens.at(3).isType(RToken::RPAREN));
+   }
+   
 }
 
 } // namespace r_util

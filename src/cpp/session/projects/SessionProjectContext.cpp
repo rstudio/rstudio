@@ -1,7 +1,7 @@
 /*
  * SessionProjectContext.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -85,7 +85,8 @@ void onProjectFilesChanged(const std::vector<core::system::FileChangeEvent>& eve
 
 
 Error computeScratchPaths(const FilePath& projectFile, 
-      FilePath* pScratchPath, FilePath* pSharedScratchPath)
+                          FilePath* pScratchPath,
+                          FilePath* pSharedScratchPath)
 {
    // ensure project user dir
    FilePath projectUserDir = projectFile.getParent().completePath(".Rproj.user");
@@ -168,7 +169,7 @@ FilePath ProjectContext::fileUnderWebsitePath(const core::FilePath& file) const
    
    // otherwise see if this file is under a website project
    if (!websitePath().isEmpty() && file.isWithin(websitePath()))
-      return websitePath();            
+      return websitePath();
    
    return FilePath();
 }
@@ -397,12 +398,37 @@ SEXP rs_hasFileMonitor()
    return r::sexp::create(projectContext().hasFileMonitor(), &protect);
 }
 
+SEXP rs_computeScratchPaths(SEXP projectFileSEXP)
+{
+   std::string projectFile = r::sexp::asString(projectFileSEXP);
+   
+   FilePath scratchPath;
+   FilePath sharedScratchPath;
+   Error error = computeScratchPaths(
+            module_context::resolveAliasedPath(projectFile),
+            &scratchPath,
+            &sharedScratchPath);
+   
+   if (error)
+   {
+      LOG_ERROR(error);
+      return R_NilValue;
+   }
+   
+   r::sexp::Protect protect;
+   r::sexp::ListBuilder builder(&protect);
+   builder.add("scratch_path", scratchPath.getAbsolutePath());
+   builder.add("shared_scratch_path", sharedScratchPath.getAbsolutePath());
+   return r::sexp::create(builder, &protect);
+}
+
 Error ProjectContext::initialize()
 {
    using namespace module_context;
 
    RS_REGISTER_CALL_METHOD(rs_getProjectDirectory);
    RS_REGISTER_CALL_METHOD(rs_hasFileMonitor);
+   RS_REGISTER_CALL_METHOD(rs_computeScratchPaths);
 
    std::string projectId(kProjectNone);
 
@@ -444,6 +470,9 @@ Error ProjectContext::initialize()
       // compute project ID
       projectId = projectToProjectId(module_context::userScratchPath(), FilePath(),
                                      directory().getAbsolutePath()).id();
+
+      // add default open docs if we have them
+      addDefaultOpenDocs();
    }
    else
    {
@@ -705,6 +734,8 @@ void ProjectContext::updatePackageInfo()
 
 json::Object ProjectContext::uiPrefs() const
 {
+   using namespace r_util;
+
    json::Object uiPrefs;
    uiPrefs[kUseSpacesForTab] = config_.useSpacesForTab;
    uiPrefs[kNumSpacesForTab] = config_.numSpacesForTab;
@@ -715,13 +746,46 @@ json::Object ProjectContext::uiPrefs() const
    uiPrefs[kDefaultLatexProgram] = config_.defaultLatexProgram;
    uiPrefs[kRootDocument] = config_.rootDocument;
    uiPrefs[kUseRoxygen] = !config_.packageRoxygenize.empty();
+   
+   // python prefs -- only activate when non-empty
+   if (!config_.pythonType.empty() ||
+       !config_.pythonVersion.empty() ||
+       !config_.pythonPath.empty())
+   {
+      uiPrefs[kPythonType] = config_.pythonType;
+      uiPrefs[kPythonVersion] = config_.pythonVersion;
+      uiPrefs[kPythonPath] = config_.pythonPath;
+   }
+
+   // markdown prefs -- all have 'use default' option so write them conditionally
+   if (config_.markdownWrap != kMarkdownWrapUseDefault)
+   {
+      uiPrefs[kVisualMarkdownEditingWrap] = boost::algorithm::to_lower_copy(config_.markdownWrap);
+      if (config_.markdownWrap == kMarkdownWrapColumn)
+         uiPrefs[kVisualMarkdownEditingWrapAtColumn] = config_.markdownWrapAtColumn;
+   }
+   
+   if (config_.markdownReferences != kMarkdownReferencesUseDefault)
+      uiPrefs[kVisualMarkdownEditingReferencesLocation] = boost::algorithm::to_lower_copy(config_.markdownReferences);
+   
+   if (config_.markdownCanonical != DefaultValue)
+      uiPrefs[kVisualMarkdownEditingCanonical] = config_.markdownCanonical == YesValue;
+
+   // zotero prefs (only activate when non-empty)
+   if (config_.zoteroLibraries.has_value())
+      uiPrefs[kZoteroLibraries] = json::toJsonArray(config_.zoteroLibraries.get());
+
+   // spelling prefs (only activate when non-empty)
+   if (!config_.spellingDictionary.empty())
+      uiPrefs[kSpellingDictionaryLanguage] = config_.spellingDictionary;
+
    return uiPrefs;
 }
 
 json::Array ProjectContext::openDocs() const
 {
    json::Array openDocsJson;
-   std::vector<std::string> docs = projects::collectFirstRunDocs(file());
+   std::vector<std::string> docs = projects::collectFirstRunDocs(scratchPath());
    for (const std::string& doc : docs)
    {
       FilePath docPath = directory().completeChildPath(doc);
@@ -913,6 +977,27 @@ bool ProjectContext::parentBrowseable()
    }
    return browse;
 #endif
+}
+
+void ProjectContext::addDefaultOpenDocs()
+{
+   std::string defaultOpenDocs = config().defaultOpenDocs;
+   if (!defaultOpenDocs.empty() && isNewProject())
+   {
+      std::vector<std::string> docs;
+      boost::algorithm::split(docs, defaultOpenDocs, boost::is_any_of(":"));
+
+      for (std::string& doc : docs)
+      {
+         boost::algorithm::trim(doc);
+
+         FilePath docPath = directory().completePath(doc);
+         if (docPath.exists())
+         {
+            addFirstRunDoc(scratchPath(), doc);
+         }
+      }
+   }
 }
 
 } // namespace projects

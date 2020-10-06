@@ -1,7 +1,7 @@
 /*
  * System.hpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -178,7 +178,7 @@ int exitFailure(const std::string& errMsg,
 // signals 
    
 // ignore selected signals
-Error ignoreTerminalSignals(); 
+Error ignoreTerminalSignals();
 Error ignoreChildExits();
    
 // reap children (better way to handle child exits than ignoreChildExits
@@ -221,7 +221,7 @@ private:
 core::Error clearSignalMask();
 
 core::Error handleSignal(SignalType signal, void (*handler)(int));
-core::Error ignoreSignal(SignalType signal);   
+core::Error ignoreSignal(SignalType signal);
 core::Error useDefaultSignalHandler(SignalType signal);
 
 void sendSignalToSelf(SignalType signal);
@@ -257,8 +257,8 @@ log::LoggerType loggerType(const std::string& logSection = "");
 log::LogLevel lowestLogLevel();
 
 // filesystem
-bool isHiddenFile(const FilePath& filePath) ;
-bool isHiddenFile(const FileInfo& fileInfo) ;
+bool isHiddenFile(const FilePath& filePath);
+bool isHiddenFile(const FileInfo& fileInfo);
 bool isReadOnly(const FilePath& filePath);
    
 // terminals

@@ -1,7 +1,7 @@
 /*
  * PreviewReplaceEvent.java
  *
- * Copyright (C) 2019 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -48,5 +48,5 @@ public class PreviewReplaceEvent extends GwtEvent<PreviewReplaceEvent.Handler>
 
    private final String searchPattern_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

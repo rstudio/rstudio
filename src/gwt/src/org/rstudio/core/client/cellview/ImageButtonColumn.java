@@ -1,7 +1,7 @@
 /*
  * ImageButtonColumn.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -37,24 +37,24 @@ public class ImageButtonColumn<T> extends Column<T, T>
    {
       String get(U object);
    }
-   
+
    public interface RenderTemplates extends SafeHtmlTemplates
    {
       @Template("<span title=\"{1}\" style=\"cursor: pointer;\">{0}</span>")
       SafeHtml render(SafeHtml image, String title);
    }
-   
+
    private static class ImageButtonCell<U> extends AbstractCell<U>
    {
       public ImageButtonCell(final ImageResource2x image,
                              final TitleProvider<U> titleProvider)
       {
          super(CLICK, KEYDOWN);
-         
+
          image_ = image;
          titleProvider_ = titleProvider;
       }
-      
+
       @Override
       public void render(Context context,
                          U value,
@@ -65,7 +65,7 @@ public class ImageButtonColumn<T> extends Column<T, T>
             sb.append(TEMPLATES.render(image_.getSafeHtml(titleProvider_.get(value)), titleProvider_.get(value)));
          }
       }
-      
+
       @Override
       public void onBrowserEvent(Context context,
                                  Element parent,
@@ -74,20 +74,20 @@ public class ImageButtonColumn<T> extends Column<T, T>
                                  ValueUpdater<U> valueUpdater)
       {
          super.onBrowserEvent(context, parent, value, event, valueUpdater);
-         
+
          if (CLICK.equals(event.getType()))
          {
             EventTarget eventTarget = event.getEventTarget();
             if (!Element.is(eventTarget))
                return;
-            
+
             if (parent.getFirstChildElement().isOrHasChild(Element.as(eventTarget))) {
                // Ignore clicks that occur outside of the main element.
                onEnterKeyDown(context, parent, value, event, valueUpdater);
             }
          }
       }
-      
+
       @Override
       protected void onEnterKeyDown(Context context,
                                     Element Parent,
@@ -98,11 +98,11 @@ public class ImageButtonColumn<T> extends Column<T, T>
          if (valueUpdater != null)
             valueUpdater.update(value);
       }
-      
+
       private final ImageResource2x image_;
       private final TitleProvider<U> titleProvider_;
    }
-   
+
    public ImageButtonColumn(final ImageResource2x image,
                             final OperationWithInput<T> onClick,
                             final TitleProvider<T> titleProvider)
@@ -114,7 +114,7 @@ public class ImageButtonColumn<T> extends Column<T, T>
             onClick.execute(object);
       });
    }
-   
+
    public ImageButtonColumn(final ImageResource2x image,
                             final OperationWithInput<T> onClick,
                             final String title)
@@ -130,11 +130,11 @@ public class ImageButtonColumn<T> extends Column<T, T>
       else
          return null;
    }
-   
+
    protected boolean showButton(T object)
    {
       return true;
    }
-   
+
    private static final RenderTemplates TEMPLATES = GWT.create(RenderTemplates.class);
 }

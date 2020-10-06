@@ -1,7 +1,7 @@
 /*
  * SessionFindTests.cpp
  *
- * Copyright (C) 2019 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -39,6 +39,8 @@ const size_t matchOff = 16;
 const std::string kRegexLine("aba OOOkkk okab AAOO aaabbb aa abab");
 const size_t rMatchOn = 4;
 const size_t rMatchOff = 10;
+const size_t caseMatchOn = 21;
+const size_t caseMatchOff = 27;
 
 const std::string kFindRegex("\\([a-z]\\)\\1\\{2\\}\\([a-z]\\)\\2\\{2\\}");
 const std::string kReplaceRegex("\\1\\2\\1\\2");
@@ -67,10 +69,10 @@ TEST_CASE("SessionFind")
       size_t replaceMatchOff;
 
       Replacer replacer(false);
-      replacer.replaceRegex(rMatchOn, rMatchOff,
+      replacer.replaceRegex(caseMatchOn, caseMatchOff,
          kFindRegex, kReplaceString, &line, &replaceMatchOff);
       CHECK(line.compare("aba OOOkkk okab AAOO awesome aa abab") == 0);
-      CHECK(replaceMatchOff == 36);
+      CHECK(replaceMatchOff == 28);
    }
 
    SECTION("Replace regex ignore case")
@@ -98,10 +100,43 @@ TEST_CASE("SessionFind")
       size_t replaceMatchOff;
 
       Replacer replacer(false);
-      replacer.replaceRegex(rMatchOn, rMatchOff, kFindRegex, kReplaceRegex, &line,
+      replacer.replaceRegex(caseMatchOn, caseMatchOff, kFindRegex, kReplaceRegex, &line,
          &replaceMatchOff);
       CHECK(line.compare("aba OOOkkk okab AAOO abab aa abab") == 0);
-      CHECK(replaceMatchOff == 33);
+      CHECK(replaceMatchOff == 25);
+   }
+
+   SECTION("Replace ASCII encoding")
+   {
+      std::string line("äSCII ìs ƒun");
+      std::string find("ƒun");
+      std::string replace("Ök");
+
+      size_t matchOn = 11;
+      size_t matchOff = 15;
+      size_t replaceMatchOff;
+
+      Replacer replacer(false, "ASCII");
+      replacer.replaceRegex(matchOn, matchOff, find, replace, &line, &replaceMatchOff);
+      CHECK(line.compare("äSCII ìs Ök") == 0);
+      CHECK(replaceMatchOff == 14);
+   }
+
+   SECTION("Replace BIG5 encoding")
+   {
+      std::string line("´sπƒ∆GƒßµM");
+      std::string find("∆G");
+      std::string replace("…@");
+
+      size_t matchOn = 7;
+      size_t matchOff = 11;
+      size_t replaceMatchOff;
+
+      Replacer replacer(false, "BIG5");
+      replacer.replaceRegex(matchOn, matchOff, find, replace, &line, &replaceMatchOff);
+      CHECK(line.compare("´sπƒ…@ƒßµM") == 0);
+      CHECK(replaceMatchOff == 11);
+
    }
 
    SECTION("Attempt replace without valid match")
@@ -111,7 +146,7 @@ TEST_CASE("SessionFind")
 
       Replacer replacer(true);
       Error error = replacer.replaceRegex(rMatchOn, rMatchOff, kFindRegex, kReplaceRegex,
-         &line, &replaceMatchOff); 
+         &line, &replaceMatchOff);
       CHECK(line.compare(kLine) == 0);
    }
 
@@ -130,13 +165,13 @@ TEST_CASE("SessionFind")
 
       on = 5;
       off = 10;
-      replacer.replaceLiteral(on, off, replacePattern, &line, &replaceMatchOff);
+      replacer.replaceRegex(on, off, "hello", replacePattern, &line, &replaceMatchOff);
       CHECK(line.compare("hellohello worldhello world") == 0);
       CHECK(replaceMatchOff == 16);
 
       on = 0;
       off = 5;
-      replacer.replaceLiteral(on, off, replacePattern, &line, &replaceMatchOff);
+      replacer.replaceRegex(on, off, "hello", replacePattern, &line, &replaceMatchOff);
       CHECK(line.compare("hello worldhello worldhello world") == 0);
       CHECK(replaceMatchOff == 11);
    }
@@ -210,6 +245,7 @@ TEST_CASE("SessionFind")
       CHECK(regex_utils::search(kGitGrepPattern.c_str(), match, regex));
       CHECK(match[2].str().compare("1") == 0);
    }
+
 }
 
 } // end namespace tests

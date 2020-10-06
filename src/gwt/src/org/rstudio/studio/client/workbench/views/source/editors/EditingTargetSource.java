@@ -1,7 +1,7 @@
 /*
  * EditingTargetSource.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,7 @@ import com.google.inject.Provider;
 import org.rstudio.core.client.Debug;
 import org.rstudio.studio.client.common.filetypes.*;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
+import org.rstudio.studio.client.workbench.views.source.SourceColumn;
 import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.CodeBrowserEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.data.DataEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.ObjectExplorerEditingTarget;
@@ -29,11 +30,28 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 public interface EditingTargetSource
 {
+   public interface EditingTargetNameProvider
+   {
+      public String defaultNamePrefix(EditingTarget target);
+   }
+
    EditingTarget getEditingTarget(FileType fileType);
-   EditingTarget getEditingTarget(SourceDocument document,
+   EditingTarget getEditingTarget(SourceColumn column,
+                                  SourceDocument document,
                                   RemoteFileSystemContext fileContext,
-                                  Provider<String> defaultNameProvider);
-   String getDefaultNamePrefix(SourceDocument doc);
+                                  EditingTargetNameProvider defaultNameProvider);
+   
+   public static FileType getTypeFromDocument(FileTypeRegistry registry, SourceDocument document)
+   {
+      FileType type = registry.getTypeByTypeName(document.getType());
+      if (type == null)
+      {
+         Debug.log("Unknown document type: " + document.getType());
+         type = FileTypeRegistry.TEXT;
+      }
+      
+      return type;
+   }
 
    public static class Impl implements EditingTargetSource
    {
@@ -73,40 +91,21 @@ public interface EditingTargetSource
             return null;
       }
 
-      public EditingTarget getEditingTarget(final SourceDocument document,
-                                   final RemoteFileSystemContext fileContext,
-                                   final Provider<String> defaultNameProvider)
+      public EditingTarget getEditingTarget(SourceColumn column,
+                                            final SourceDocument document,
+                                            final RemoteFileSystemContext fileContext,
+                                            final EditingTargetNameProvider defaultNameProvider)
       {
-         FileType type = getTypeFromDocument(document);
-         
-         final FileType finalType = type;
+         final FileType type = getTypeFromDocument(registry_, document);
          EditingTarget target = getEditingTarget(type);
-         target.initialize(document,
+         target.initialize(column,
+                           document,
                            fileContext,
-                           finalType,
+                           type,
                            defaultNameProvider);
          return target;
       }
       
-      public String getDefaultNamePrefix(SourceDocument document)
-      {
-         FileType type = getTypeFromDocument(document);
-         EditingTarget target = getEditingTarget(type);
-         
-         return target.getDefaultNamePrefix();
-      }
-      
-      private FileType getTypeFromDocument(SourceDocument document)
-      {
-         FileType type = registry_.getTypeByTypeName(document.getType());
-         if (type == null)
-         {
-            Debug.log("Unknown document type: " + document.getType());
-            type = FileTypeRegistry.TEXT;
-         }
-         
-         return type;
-      }
 
       private final FileTypeRegistry registry_;
       private final Provider<TextEditingTarget> pTextEditingTarget_;

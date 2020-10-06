@@ -1,7 +1,7 @@
 /*
  * InterruptChunkEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,21 +23,21 @@ public class InterruptChunkEvent extends GwtEvent<InterruptChunkEvent.Handler>
    {
       row_ = row;
    }
-   
+
    public int getRow()
    {
       return row_;
    }
-   
+
    private final int row_;
-   
+
    // Boilerplate ----
-   
+
    public interface Handler extends EventHandler
    {
       void onInterruptChunk(InterruptChunkEvent event);
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -50,5 +50,5 @@ public class InterruptChunkEvent extends GwtEvent<InterruptChunkEvent.Handler>
       handler.onInterruptChunk(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

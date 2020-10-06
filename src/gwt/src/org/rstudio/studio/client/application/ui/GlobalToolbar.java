@@ -1,7 +1,7 @@
 /*
  * GlobalToolbar.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,8 @@
 package org.rstudio.studio.client.application.ui;
 
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.CanFocus;
@@ -39,17 +41,17 @@ import com.google.inject.Provider;
 
 public class GlobalToolbar extends Toolbar
 {
-   public GlobalToolbar(Commands commands, 
+   public GlobalToolbar(Commands commands,
                         Provider<CodeSearch> pCodeSearch)
    {
       super("Main");
-      
+
       commands_ = commands;
       pCodeSearch_ = pCodeSearch;
       ThemeResources res = ThemeResources.INSTANCE;
       addStyleName(res.themeStyles().globalToolbar());
-      
-      
+
+
       // add new source doc commands
       newMenu_ = new ToolbarPopupMenu();
       newMenu_.addItem(commands.newSourceDoc().createMenuItem(false));
@@ -71,7 +73,7 @@ public class GlobalToolbar extends Toolbar
       newMenu_.addItem(commands.newRHTMLDoc().createMenuItem(false));
       newMenu_.addItem(commands.newRPresentationDoc().createMenuItem(false));
       newMenu_.addItem(commands.newRDocumentationDoc().createMenuItem(false));
-      
+
       // create and add new menu
       StandardIcons icons = StandardIcons.INSTANCE;
       newButton_ = new ToolbarMenuButton(ToolbarButton.NoText,
@@ -81,13 +83,13 @@ public class GlobalToolbar extends Toolbar
       ElementIds.assignElementId(newButton_, ElementIds.NEW_FILE_MENUBUTTON);
       addLeftWidget(newButton_);
       addLeftSeparator();
-      
+
       addLeftWidget(commands.newProject().createToolbarButton());
       addLeftSeparator();
-      
+
       // open button + mru
       addLeftWidget(commands.openSourceDoc().createToolbarButton());
-      
+
       ToolbarPopupMenu mruMenu = new ToolbarPopupMenu();
       mruMenu.addItem(commands.mru0().createMenuItem(false));
       mruMenu.addItem(commands.mru1().createMenuItem(false));
@@ -106,10 +108,10 @@ public class GlobalToolbar extends Toolbar
       mruMenu.addItem(commands.mru14().createMenuItem(false));
       mruMenu.addSeparator();
       mruMenu.addItem(commands.clearRecentFiles().createMenuItem(false));
-      
-      ToolbarMenuButton mruButton = new ToolbarMenuButton(ToolbarButton.NoText, 
-                                                          "Open recent files", 
-                                                          mruMenu, 
+
+      ToolbarMenuButton mruButton = new ToolbarMenuButton(ToolbarButton.NoText,
+                                                          "Open recent files",
+                                                          mruMenu,
                                                           false);
       ElementIds.assignElementId(mruButton, ElementIds.OPEN_MRU_MENUBUTTON);
       addLeftWidget(mruButton);
@@ -118,9 +120,9 @@ public class GlobalToolbar extends Toolbar
       addLeftWidget(commands.saveSourceDoc().createToolbarButton());
       addLeftWidget(commands.saveAllSourceDocs().createToolbarButton());
       addLeftSeparator();
-      
+
       addLeftWidget(commands.printSourceDoc().createToolbarButton());
-      
+
       addLeftSeparator();
       CodeSearch codeSearch = pCodeSearch_.get();
       codeSearch.setObserver(new CodeSearch.Observer()
@@ -131,32 +133,32 @@ public class GlobalToolbar extends Toolbar
             // Experimental workaround for crashes observed on El Capitan
             Scheduler.get().scheduleFinally(() -> codeSearchFocusContext_.restore());
          }
-         
+
          @Override
          public void onCompleted()
          {
             Scheduler.get().scheduleFinally(() -> codeSearchFocusContext_.clear());
          }
-         
+
          @Override
          public String getCueText()
          {
             return null;
          }
       });
-      
+
       searchWidget_ = codeSearch.getSearchWidget();
-      addLeftWidget(searchWidget_); 
+      addLeftWidget(searchWidget_);
    }
-   
+
    public void completeInitialization(SessionInfo sessionInfo)
-   { 
+   {
       StandardIcons icons = StandardIcons.INSTANCE;
-      
+
       if (sessionInfo.isVcsEnabled())
       {
          addLeftSeparator();
-      
+
          ToolbarPopupMenu vcsMenu = new ToolbarPopupMenu();
          vcsMenu.addItem(commands_.vcsFileDiff().createMenuItem(false));
          vcsMenu.addItem(commands_.vcsFileLog().createMenuItem(false));
@@ -174,27 +176,27 @@ public class GlobalToolbar extends Toolbar
          vcsMenu.addItem(commands_.vcsShowHistory().createMenuItem(false));
          vcsMenu.addSeparator();
          vcsMenu.addItem(commands_.versionControlProjectSetup().createMenuItem(false));
-      
+
          ImageResource vcsIcon = null;
-         if (sessionInfo.getVcsName() == VCSConstants.GIT_ID)
+         if (StringUtil.equals(sessionInfo.getVcsName(), VCSConstants.GIT_ID))
             vcsIcon = new ImageResource2x(icons.git2x());
-         else if (sessionInfo.getVcsName() == VCSConstants.SVN_ID)
+         else if (StringUtil.equals(sessionInfo.getVcsName(), VCSConstants.SVN_ID))
             vcsIcon = new ImageResource2x(icons.svn2x());
-         
+
          ToolbarMenuButton vcsButton = new ToolbarMenuButton(
                ToolbarButton.NoText,
                "Version control",
-               vcsIcon, 
+               vcsIcon,
                vcsMenu);
          ElementIds.assignElementId(vcsButton, ElementIds.VCS_MENUBUTTON);
          addLeftWidget(vcsButton);
       }
-      
+
       // zoom button
       addLeftSeparator();
-      
+
       ToolbarPopupMenu paneLayoutMenu = new ToolbarPopupMenu();
-      
+
       paneLayoutMenu.addItem(commands_.layoutEndZoom().createMenuItem(false));
       paneLayoutMenu.addSeparator();
       paneLayoutMenu.addItem(commands_.layoutConsoleOnLeft().createMenuItem(false));
@@ -215,7 +217,7 @@ public class GlobalToolbar extends Toolbar
       paneLayoutMenu.addItem(commands_.layoutZoomVcs().createMenuItem(false));
       paneLayoutMenu.addItem(commands_.layoutZoomBuild().createMenuItem(false));
       paneLayoutMenu.addItem(commands_.layoutZoomConnections().createMenuItem(false));
-      
+
       ImageResource paneLayoutIcon = new ImageResource2x(ThemeResources.INSTANCE.paneLayoutIcon2x());
       ToolbarMenuButton paneLayoutButton = new ToolbarMenuButton(
             ToolbarButton.NoText,
@@ -224,10 +226,10 @@ public class GlobalToolbar extends Toolbar
             paneLayoutMenu);
       ElementIds.assignElementId(paneLayoutButton, ElementIds.PANELAYOUT_MENUBUTTON);
       addLeftWidget(paneLayoutButton);
-      
+
       // addins menu
       addLeftWidget(new AddinsToolbarButton());
-      
+
       // project popup menu
       if (sessionInfo.getAllowFullUI())
       {
@@ -236,24 +238,28 @@ public class GlobalToolbar extends Toolbar
          addRightWidget(projectMenu.getToolbarButton());
       }
    }
-   
+
    @Override
    public int getHeight()
    {
       return 27;
    }
-   
+
    public void focusGoToFunction()
    {
       codeSearchFocusContext_.record();
       FocusHelper.setFocusDeferred((CanFocus)searchWidget_);
    }
-     
+
    public void setFocus()
    {
-      Scheduler.get().scheduleDeferred(() -> newButton_.setFocus(true));
+      Scheduler.get().scheduleDeferred(() ->
+      {
+         newButton_.setFocus(true);
+         A11y.showFocusOutline(newButton_.getElement());
+      });
    }
-   
+
    private final Commands commands_;
    private final ToolbarPopupMenu newMenu_;
    private final ToolbarMenuButton newButton_;

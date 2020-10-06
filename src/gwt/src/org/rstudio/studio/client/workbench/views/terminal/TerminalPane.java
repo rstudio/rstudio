@@ -1,7 +1,7 @@
 /*
  * TerminalPane.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -79,7 +79,7 @@ public class TerminalPane extends WorkbenchPane
                                      ServerProcessExitEvent.Handler,
                                      SwitchToTerminalEvent.Handler,
                                      TerminalTitleEvent.Handler,
-   SessionSerializationEvent.Handler,
+                                     SessionSerializationEvent.Handler,
                                      TerminalSubprocEvent.Handler
 {
    @Inject
@@ -233,6 +233,13 @@ public class TerminalPane extends WorkbenchPane
    }
 
    @Override
+   public void setFocus()
+   {
+      // Terminal Pane automatically directs focus to xterm.js so this method is intentionally
+      // left blank
+   }
+
+   @Override
    public void onBeforeUnselected()
    {
       // terminal tab being unselected
@@ -327,6 +334,7 @@ public class TerminalPane extends WorkbenchPane
             initialDirectory == null ? "" : initialDirectory);
       terminalSessionsPanel_.addNewTerminalPanel(info, defaultTerminalOptions(),
                                                  uiPrefs_.tabKeyMoveFocus().getValue(),
+                                                 uiPrefs_.terminalWeblinks().getValue(),
                                                  false /*createdByApi*/, session ->
       {
          terminals_.startTerminal(session, new ResultCallback<Boolean, String>()
@@ -374,8 +382,7 @@ public class TerminalPane extends WorkbenchPane
       boolean didCloseCurrent = false;
       TerminalSession visibleTerminalWidget = getSelectedTerminal();
       TerminalSession killedTerminalWidget = loadedTerminalWithHandle(handle);
-      if (visibleTerminalWidget != null && killedTerminalWidget != null &&
-            (visibleTerminalWidget == killedTerminalWidget))
+      if (killedTerminalWidget != null && (visibleTerminalWidget == killedTerminalWidget))
       {
          didCloseCurrent = true;
          newTerminalHandle = terminalToShowWhenClosing(handle);
@@ -756,11 +763,11 @@ public class TerminalPane extends WorkbenchPane
          {
             // map default to current user preference setting
             String autoCloseSetting = uiPrefs_.terminalCloseBehavior().getValue();
-            if (autoCloseSetting == UserPrefs.TERMINAL_CLOSE_BEHAVIOR_ALWAYS)
+            if (StringUtil.equals(autoCloseSetting, UserPrefs.TERMINAL_CLOSE_BEHAVIOR_ALWAYS))
                autoCloseMode = ConsoleProcessInfo.AUTOCLOSE_ALWAYS;
-            else if (autoCloseSetting == UserPrefs.TERMINAL_CLOSE_BEHAVIOR_NEVER)
+            else if (StringUtil.equals(autoCloseSetting, UserPrefs.TERMINAL_CLOSE_BEHAVIOR_NEVER))
                autoCloseMode = ConsoleProcessInfo.AUTOCLOSE_NEVER;
-            else if (autoCloseSetting == UserPrefs.TERMINAL_CLOSE_BEHAVIOR_CLEAN)
+            else if (StringUtil.equals(autoCloseSetting, UserPrefs.TERMINAL_CLOSE_BEHAVIOR_CLEAN))
                autoCloseMode = ConsoleProcessInfo.AUTOCLOSE_CLEAN_EXIT;
             else
                autoCloseMode = ConsoleProcessInfo.AUTOCLOSE_NEVER;
@@ -869,6 +876,7 @@ public class TerminalPane extends WorkbenchPane
 
       terminalSessionsPanel_.addNewTerminalPanel(existing, defaultTerminalOptions(),
                                                  uiPrefs_.tabKeyMoveFocus().getValue(),
+                                                 uiPrefs_.terminalWeblinks().getValue(),
                                                  event.createdByApi(), session ->
       {
          terminals_.startTerminal(session, new ResultCallback<Boolean, String>()
@@ -1131,12 +1139,13 @@ public class TerminalPane extends WorkbenchPane
       return XTermOptions.create(
             UserPrefsAccessor.TERMINAL_BELL_STYLE_NONE,
             uiPrefs_.blinkingCursor().getValue(),
-            uiPrefs_.getScreenReaderEnabled(),
+            uiPrefs_.enableScreenReader().getValue(),
             uiPrefs_.terminalRenderer().getValue(),
             BrowseCap.isWindowsDesktop(),
             XTermTheme.terminalThemeFromEditorTheme(),
             XTermTheme.getFontFamily(),
-            XTermTheme.adjustFontSize(pFontSizeManager_.get().getSize()));
+            XTermTheme.adjustFontSize(pFontSizeManager_.get().getSize()),
+            XTermTheme.computeLineHeight());
    }
 
    private TerminalDeckPanel terminalSessionsPanel_;

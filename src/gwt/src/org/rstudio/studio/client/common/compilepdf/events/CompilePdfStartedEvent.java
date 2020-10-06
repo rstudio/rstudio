@@ -1,7 +1,7 @@
 /*
  * CompilePdfStartedEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,22 +19,22 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class CompilePdfStartedEvent extends GwtEvent<CompilePdfStartedEvent.Handler>
-{  
+{
    public static class Data extends JavaScriptObject
    {
       protected Data()
-      {  
+      {
       }
-      
+
       public final native String getTargetFile() /*-{
          return this.target_file;
       }-*/;
-   
+
       public final native String getPdfPath() /*-{
          return this.pdf_path;
       }-*/;
    }
-   
+
    public interface Handler extends EventHandler
    {
       void onCompilePdfStarted(CompilePdfStartedEvent event);
@@ -49,12 +49,12 @@ public class CompilePdfStartedEvent extends GwtEvent<CompilePdfStartedEvent.Hand
    {
       return data_.getTargetFile();
    }
-   
+
    public String getPdfPath()
    {
       return data_.getPdfPath();
    }
-    
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -66,8 +66,8 @@ public class CompilePdfStartedEvent extends GwtEvent<CompilePdfStartedEvent.Hand
    {
       handler.onCompilePdfStarted(this);
    }
-   
+
    private final Data data_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

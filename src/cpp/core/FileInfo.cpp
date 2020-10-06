@@ -1,7 +1,7 @@
 /*
  * FileInfo.cpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -65,12 +65,9 @@ FileInfo::FileInfo(const std::string& absolutePath,
 std::ostream& operator << (std::ostream& stream, const FileInfo& fileInfo)
 {
    stream << fileInfo.absolutePath();
-   return stream ;
+   return stream;
 }
-   
-   
 
-   
 } // namespace core 
 } // namespace rstudio
 

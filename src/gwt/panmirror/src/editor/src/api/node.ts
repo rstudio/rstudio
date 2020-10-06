@@ -1,7 +1,7 @@
 /*
  * node.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,7 +13,7 @@
  *
  */
 
-import { Node as ProsemirrorNode, NodeSpec, NodeType, ResolvedPos } from 'prosemirror-model';
+import { Node as ProsemirrorNode, NodeSpec, NodeType, ResolvedPos, Slice } from 'prosemirror-model';
 import { EditorState, Selection, NodeSelection } from 'prosemirror-state';
 import {
   findParentNode,
@@ -33,11 +33,14 @@ import {
   PandocNodeWriterFn,
   PandocPreprocessorFn,
   PandocBlockReaderFn,
-  PandocCodeBlockFilter,
   PandocInlineHTMLReaderFn,
+  PandocTokensFilterFn,
 } from './pandoc';
+import { PandocBlockCapsuleFilter } from './pandoc_capsule';
 
 import { AttrEditOptions } from './attr_edit';
+import { CommandFn } from './command';
+import { ExecuteRmdChunkFn } from './rmd';
 
 export interface PandocNode {
   readonly name: string;
@@ -48,20 +51,23 @@ export interface PandocNode {
     readonly readers?: readonly PandocTokenReader[];
     readonly writer?: PandocNodeWriterFn;
     readonly preprocessor?: PandocPreprocessorFn;
+    readonly tokensFilter?: PandocTokensFilterFn;
     readonly blockReader?: PandocBlockReaderFn;
     readonly inlineHTMLReader?: PandocInlineHTMLReaderFn;
-    readonly codeBlockFilter?: PandocCodeBlockFilter;
+    readonly blockCapsuleFilter?: PandocBlockCapsuleFilter;
   };
 }
 
 export interface CodeViewOptions {
   lang: (node: ProsemirrorNode, content: string) => string | null;
+  attrEditFn?: CommandFn;
+  createFromPastePattern?: RegExp;
   classes?: string[];
   borderColorClass?: string;
   firstLineMeta?: boolean;
   lineNumbers?: boolean;
   bookdownTheorems?: boolean;
-  lineNumberFormatter?: (line: number) => string;
+  lineNumberFormatter?: (lineNumber: number, lineCount?: number, line?: string) => string;
 }
 
 export type NodeTraversalFn = (
@@ -124,15 +130,25 @@ export function nodeIsActive(state: EditorState, type: NodeType, attrs = {}) {
   return node.node.hasMarkup(type, attrs);
 }
 
-export function canInsertNode(state: EditorState, nodeType: NodeType) {
-  const $from = state.selection.$from;
-  for (let d = $from.depth; d >= 0; d--) {
-    const index = $from.index(d);
-    if ($from.node(d).canReplaceWith(index, index, nodeType)) {
+export function canInsertNode(context: EditorState | Selection, nodeType: NodeType) {
+  const selection = asSelection(context);
+  const $from = selection.$from;
+  return canInsertNodeAtPos($from, nodeType);
+}
+
+export function canInsertNodeAtPos($pos: ResolvedPos, nodeType: NodeType) {
+  for (let d = $pos.depth; d >= 0; d--) {
+    const index = $pos.index(d);
+    if ($pos.node(d).canReplaceWith(index, index, nodeType)) {
       return true;
     }
   }
   return false;
+}
+
+export function canInsertTextNode(context: EditorState | Selection) {
+  const selection = asSelection(context);
+  return canInsertNode(selection, selection.$head.parent.type.schema.nodes.text);
 }
 
 export function insertAndSelectNode(view: EditorView, node: ProsemirrorNode) {
@@ -143,9 +159,13 @@ export function insertAndSelectNode(view: EditorView, node: ProsemirrorNode) {
   tr.ensureMarks(node.marks);
   tr.replaceSelectionWith(node);
 
-  // set selection to inserted node
+  // set selection to inserted node (or don't if our selection calculate was off,
+  // as can happen when we insert into a list bullet)
   const selectionPos = tr.doc.resolve(tr.mapping.map(view.state.selection.from, -1));
-  tr.setSelection(new NodeSelection(selectionPos));
+  const selectionNode = tr.doc.nodeAt(selectionPos.pos);
+  if (selectionNode && selectionNode.type === node.type) {
+    tr.setSelection(new NodeSelection(selectionPos));
+  }
 
   // dispatch transaction
   view.dispatch(tr);
@@ -172,4 +192,8 @@ export function editingRootScrollContainerElement(view: EditorView) {
   } else {
     return undefined;
   }
+}
+
+function asSelection(context: EditorState | Selection) {
+  return context instanceof EditorState ? context.selection : context;
 }

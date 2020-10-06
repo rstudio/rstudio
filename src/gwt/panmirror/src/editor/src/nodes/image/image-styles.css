@@ -1,7 +1,7 @@
 /*
  * image-styles.css
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,12 +13,13 @@
  *
  */
 
-.ProseMirror img {
-  max-width: 100%;
-}
 
 .ProseMirror .pm-image-resize-container.pm-image-resize-active {
   outline: 2px solid;
+}
+
+.ProseMirror .pm-image-text-selection {
+  outline: 1px solid;
 }
 
 .ProseMirror .pm-image-resize-handle {

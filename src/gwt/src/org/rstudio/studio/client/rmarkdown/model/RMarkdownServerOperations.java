@@ -1,7 +1,7 @@
 /*
  * RMarkdownServerOperations.java
  *
- * Copyright (C) 2009-16 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,6 +22,7 @@ import org.rstudio.studio.client.server.Void;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 
 public interface RMarkdownServerOperations extends CryptoServerOperations
 {
@@ -112,4 +113,10 @@ public interface RMarkdownServerOperations extends CryptoServerOperations
    void interruptChunk(String docId,
                        String chunkId,
                        ServerRequestCallback<Void> requestCallback);
+   
+   
+   void rmdImportImages(JsArrayString images,
+                        String imagesDir,
+                        ServerRequestCallback<JsArrayString> requestCallback);
+   
 }

@@ -1,7 +1,7 @@
 /*
  * EventBus.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.application.events;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JavaScriptSerializer;
 import org.rstudio.studio.client.application.Desktop;
@@ -61,6 +62,11 @@ public class EventBus extends HandlerManager implements FireEvents
    
    private void fireEvent(GwtEvent<?> event, boolean fromOtherWindow)
    {
+      // // uncomment this if you want to see a stream of dispatched client
+      // // events logged into the JavaScript debug console
+      //
+      // debugLogEvents(event);
+      
       // if this is a cross-window event that originated in this satellite 
       // window (and wasn't itself forwarded from somewhere else), pass it to
       // the main window
@@ -171,6 +177,11 @@ public class EventBus extends HandlerManager implements FireEvents
          WindowEx target) /*-{
       target.fireRStudioEventExternal(data, "");
    }-*/;
+   
+   private void debugLogEvents(GwtEvent<?> event)
+   {
+      Debug.logObject(event);
+   }
    
    private Provider<Satellite> pSatellite_;
    private Provider<SatelliteManager> pManager_;

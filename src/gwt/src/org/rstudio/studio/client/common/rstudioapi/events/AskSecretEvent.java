@@ -1,7 +1,7 @@
 /*
  * AskSecretEvent.java
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -36,7 +36,7 @@ public class AskSecretEvent extends GwtEvent<AskSecretEvent.Handler>
       public native final String getPrompt() /*-{
          return this.prompt;
       }-*/;
-      
+
       public native final String getWindow() /*-{
          return this.window;
       }-*/;
@@ -68,7 +68,7 @@ public class AskSecretEvent extends GwtEvent<AskSecretEvent.Handler>
    {
       return prompt_;
    }
-   
+
    public String getWindow()
    {
       return window_;
@@ -102,5 +102,5 @@ public class AskSecretEvent extends GwtEvent<AskSecretEvent.Handler>
    private final boolean canRemember_;
    private final boolean hasSecret_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

@@ -1,7 +1,7 @@
 /*
  * NumericValueWidget.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,7 +19,6 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
-import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 import org.rstudio.studio.client.RStudioGinjector;
 
@@ -35,10 +34,10 @@ public class NumericValueWidget extends Composite
    {
       this("", ZeroMinimum, NoMaximum);
    }
-   
+
    /**
     * Prompt for an integer in the range [min, max]
-    * 
+    *
     * @param label
     * @param minValue minimum, if null (ZeroMinimum), zero assumed
     * @param maxValue maximum, if null (NoMaximum), no maximum assumed
@@ -57,12 +56,12 @@ public class NumericValueWidget extends Composite
 
       initWidget(flowPanel);
    }
-   
+
    public String getLabel()
    {
       return textBoxLabel_.getText();
    }
-   
+
    public void setLabel(String text)
    {
       label_ = text;
@@ -83,7 +82,7 @@ public class NumericValueWidget extends Composite
    {
       textBox_.setValue(value, fireEvents);
    }
-   
+
    public void setLimits(Integer minValue, Integer maxValue)
    {
       minValue_ = minValue;
@@ -95,12 +94,12 @@ public class NumericValueWidget extends Composite
       if (maxValue != NoMaximum)
          textBox_.setMax(maxValue);
    }
-   
+
    public void setWidth(String width)
    {
       textBox_.setWidth(width);
    }
-   
+
    public void setEnabled(boolean enabled)
    {
       textBox_.setEnabled(enabled);
@@ -151,16 +150,17 @@ public class NumericValueWidget extends Composite
       return true;
    }
 
-   public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleHandler handler)
+   public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleEvent.Handler handler)
    {
       return addHandler(handler, EnsureVisibleEvent.TYPE);
    }
-   
+
 
    @Override
    public void setElementId(String id)
    {
-      textBox_.getElement().setId(id);      
+      textBox_.getElement().setId(id);
+      textBoxLabel_.setFor(id);
    }
 
    private final SpanLabel textBoxLabel_;

@@ -1,7 +1,7 @@
 /*
  * math-highlight.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,8 +18,7 @@ import { DecorationSet, Decoration } from 'prosemirror-view';
 import { Schema } from 'prosemirror-model';
 
 import { markHighlightPlugin } from '../../api/mark-highlight';
-
-import { delimiterForType } from './math';
+import { delimiterForType } from '../../api/math';
 
 const key = new PluginKey<DecorationSet>('math-highlight');
 

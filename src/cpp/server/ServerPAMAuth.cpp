@@ -1,7 +1,7 @@
 /*
  * ServerPAMAuth.cpp
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,6 +13,7 @@
  *
  */
 #include "ServerPAMAuth.hpp"
+#include "ServerPAMAuthOverlay.hpp"
 
 #include <core/Thread.hpp>
 #include <core/system/Process.hpp>
@@ -39,12 +40,6 @@ namespace server {
 namespace pam_auth {
 
 using namespace rstudio::core;
-
-bool canSetSignInCookies();
-void onUserAuthenticated(const std::string& username,
-                         const std::string& password);
-void onUserUnauthenticated(const std::string& username,
-                           bool signedOut = false);
 
 namespace {
 
@@ -74,10 +69,7 @@ const char * const kFormAction = "formAction";
 
 std::string getUserIdentifier(const core::http::Request& request)
 {
-   if (server::options().authNone())
-      return core::system::username();
-   else
-      return auth::common::getUserIdentifier(request);
+   return auth::common::getUserIdentifier(request);
 }
 
 std::string userIdentifierToLocalUsername(const std::string& userIdentifier)
@@ -120,13 +112,20 @@ std::string userIdentifierToLocalUsername(const std::string& userIdentifier)
 void signIn(const http::Request& request,
             http::Response* pResponse)
 {
+   if (server::options().authNone())
+   {
+      auth::handler::setSignInCookies(request, core::system::username(), false, pResponse);
+      pResponse->setMovedTemporarily(request, "./");
+      return;
+   }
+
    std::map<std::string,std::string> variables;
    variables["publicKeyUrl"] = http::URL::uncomplete(request.uri(), kPublicKey);
    if (server::options().authEncryptPassword())
       variables[kFormAction] = "action=\"javascript:void\" "
                                "onsubmit=\"submitRealForm();return false\"";
    else
-      variables[kFormAction] = "action=\"" + variables["action"] + "\" "
+      variables[kFormAction] = "action=\"" + core::http::URL::uncomplete(request.uri(), kDoSignIn) + "\" "
                                "onsubmit=\"return verifyMe()\"";
    const std::string& templatePath = "templates/encrypted-sign-in.htm";
    auth::common::signIn(request, pResponse, templatePath, kDoSignIn, variables);
@@ -146,6 +145,11 @@ void doSignIn(const http::Request& request,
               http::Response* pResponse)
 {
    std::string appUri = request.formFieldValue(kAppUri);
+   if (!auth::common::validateSignIn(request, pResponse))
+   {
+      redirectToLoginPage(request, pResponse, kAppUri, kErrorServer);
+      return;
+   }
 
    bool persist = false;
    std::string username, password;
@@ -185,19 +189,19 @@ void doSignIn(const http::Request& request,
    // tranform to local username
    username = auth::handler::userIdentifierToLocalUsername(username);
 
-   onUserUnauthenticated(username);
+   overlay::onUserPasswordUnavailable(username);
 
    bool authenticated = pamLogin(username, password);
    if (!auth::common::doSignIn(request,
-                             pResponse,
-                             username,
-                             appUri,
-                             persist,
-                             authenticated))
+                               pResponse,
+                               username,
+                               appUri,
+                               persist,
+                               authenticated))
    {
       return;
    }
-   onUserAuthenticated(username, password);
+   overlay::onUserPasswordAvailable(username, password);
 }
 
 void signOut(const http::Request& request,
@@ -206,7 +210,7 @@ void signOut(const http::Request& request,
    std::string username = auth::common::signOut(request, pResponse, getUserIdentifier, auth::handler::kSignIn);
    if (!username.empty())
    {
-      onUserUnauthenticated(username, true);
+      overlay::onUserPasswordUnavailable(username, true);
    }
 }
 
@@ -269,8 +273,8 @@ Error initialize()
                                 userIdentifierToLocalUsername,
                                 getUserIdentifier);
    pamHandler.signOut = signOut;
-   if (canSetSignInCookies())
-      pamHandler.setSignInCookies = boost::bind(auth::common::setSignInCookies, _1, _2, _3, _4, false);
+   if (overlay::canSetSignInCookies())
+      pamHandler.setSignInCookies = boost::bind(auth::common::setSignInCookies, _1, _2, _3, _4);
    auth::handler::registerHandler(pamHandler);
 
    // add pam-specific auth handlers

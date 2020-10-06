@@ -1,7 +1,7 @@
 /*
  * EnvironmentObjects.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -62,15 +62,15 @@ public class EnvironmentObjects extends ResizeComposite
             // silently drop exceptions as they are noisy + not actionable
          }
       }
-      
+
       public void setRow(int row)
       {
          row_ = row;
       }
-      
+
       private int row_ = 0;
    }
-   
+
    // Public interfaces -------------------------------------------------------
 
    public interface Binder extends UiBinder<Widget, EnvironmentObjects>
@@ -88,7 +88,7 @@ public class EnvironmentObjects extends ResizeComposite
       objectDisplayType_ = OBJECT_LIST_VIEW;
       objectDataProvider_ = new ListDataProvider<RObjectEntry>();
       objectSort_ = new RObjectEntrySort();
-      
+
       // timer used to scroll table element into view
       // a timer is required as we need to wait until table elements are
       // rendered and visible before we can scroll into view; otherwise
@@ -104,9 +104,9 @@ public class EnvironmentObjects extends ResizeComposite
 
       splitPanel.addSouth(callFramePanel_, 150);
       splitPanel.setWidgetMinSize(callFramePanel_, style.headerRowHeight());
-      
+
       setObjectDisplay(objectDisplayType_);
-      
+
       FontSizer.applyNormalFontSize(this);
    }
 
@@ -121,7 +121,7 @@ public class EnvironmentObjects extends ResizeComposite
          autoSizeCallFramePanel();
       }
    }
-   
+
    public void setContextDepth(int contextDepth)
    {
       if (contextDepth > 0)
@@ -151,7 +151,7 @@ public class EnvironmentObjects extends ResizeComposite
          if (oldEntry.rObject.getType() == obj.getType())
          {
             // type hasn't changed
-            if (oldEntry.expanded && 
+            if (oldEntry.expanded &&
                 newEntry.contentsAreDeferred)
             {
                // we're replacing an object that has server-deferred contents--
@@ -173,7 +173,7 @@ public class EnvironmentObjects extends ResizeComposite
             // types did change, do a full add/remove
             objectDataProvider_.getList().remove(idx);
          }
-         
+
       }
       if (!added)
       {
@@ -182,7 +182,7 @@ public class EnvironmentObjects extends ResizeComposite
          objectDataProvider_.getList().add(idx, entry);
       }
       updateCategoryLeaders(true);
-      
+
       // scroll into view
       scrollTimer_.setRow(idx);
       scrollTimer_.schedule(100);
@@ -198,12 +198,12 @@ public class EnvironmentObjects extends ResizeComposite
 
       updateCategoryLeaders(true);
    }
-   
+
    public void clearObjects()
    {
       objectDataProvider_.getList().clear();
    }
-   
+
    public void clearSelection()
    {
       objectDisplay_.clearSelection();
@@ -231,7 +231,7 @@ public class EnvironmentObjects extends ResizeComposite
          setDeferredState();
       }
    }
-   
+
    public List<String> getSelectedObjects()
    {
       return objectDisplay_.getSelectedObjects();
@@ -240,18 +240,18 @@ public class EnvironmentObjects extends ResizeComposite
    public void setCallFrames(JsArray<CallFrame> frameList, boolean autoSize)
    {
       callFramePanel_.setCallFrames(frameList, contextDepth_);
-      
+
       // if not auto-sizing we're done
       if (!autoSize)
          return;
 
       // if the parent panel has layout information, auto-size the call frame
-      // panel (let GWT go first so the call frame panel visibility has 
-      // taken effect) 
+      // panel (let GWT go first so the call frame panel visibility has
+      // taken effect)
       if (splitPanel.getOffsetHeight() > 0)
       {
          Scheduler.get().scheduleDeferred(new ScheduledCommand()
-         {            
+         {
             @Override
             public void execute()
             {
@@ -261,12 +261,12 @@ public class EnvironmentObjects extends ResizeComposite
       }
       else
       {
-         // wait until the split panel has layout information to compute the 
+         // wait until the split panel has layout information to compute the
          // correct size of the call frame panel
          pendingCallFramePanelSize_ = true;
       }
    }
-   
+
    public void setEnvironmentName(String environmentName)
    {
       environmentName_ = environmentName;
@@ -293,12 +293,12 @@ public class EnvironmentObjects extends ResizeComposite
    {
       callFramePanel_.updateLineNumber(newLineNumber);
    }
-   
+
    public void setFilterText (String filterText)
    {
       filterText_ = filterText.toLowerCase();
 
-      // Iterate over each entry in the list, and toggle its visibility based 
+      // Iterate over each entry in the list, and toggle its visibility based
       // on whether it matches the current filter text.
       List<RObjectEntry> objects = objectDataProvider_.getList();
       for (int i = 0; i < objects.size(); i++)
@@ -316,7 +316,7 @@ public class EnvironmentObjects extends ResizeComposite
 
       updateCategoryLeaders(true);
    }
-   
+
    public int getObjectDisplay()
    {
       return objectDisplayType_;
@@ -326,7 +326,7 @@ public class EnvironmentObjects extends ResizeComposite
    // of an apparent timing bug triggered by superdevmode (see case 3745).
    public void setObjectDisplay(int type)
    {
-      deferredObjectDisplayType_ = new Integer(type);
+      deferredObjectDisplayType_ = type;
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
          @Override
@@ -337,29 +337,29 @@ public class EnvironmentObjects extends ResizeComposite
       });
    }
 
-   private void setDeferredObjectDisplay() 
+   private void setDeferredObjectDisplay()
    {
-      if (deferredObjectDisplayType_ == null) 
+      if (deferredObjectDisplayType_ == null)
       {
          return;
       }
 
       final int type = deferredObjectDisplayType_;
-      
+
       // if we already have an active display of this type, do nothing
-      if (type == objectDisplayType_ && 
+      if (type == objectDisplayType_ &&
           objectDisplay_ != null)
       {
          return;
       }
-      
+
       // clean up previous object display, if we had one
       if (objectDisplay_ != null)
       {
          objectDataProvider_.removeDataDisplay(objectDisplay_);
          splitPanel.remove(objectDisplay_);
       }
-      
+
       try
       {
          // create the new object display and wire it to the data source
@@ -391,7 +391,7 @@ public class EnvironmentObjects extends ResizeComposite
                Debug.log("WARNING: Failed to render environment pane data grid");
             }
             gridRenderRetryCount_++;
-            Debug.log("WARNING: Retrying environment data grid render (" + 
+            Debug.log("WARNING: Retrying environment data grid render (" +
                       gridRenderRetryCount_ + ")");
             Timer t = new Timer() {
                @Override
@@ -466,7 +466,7 @@ public class EnvironmentObjects extends ResizeComposite
    {
       return contextDepth_ < 2;
    }
-   
+
    // we currently only set and/or get persisted state at the root context
    // level.
    @Override
@@ -474,19 +474,19 @@ public class EnvironmentObjects extends ResizeComposite
    {
       return environmentName_ == EnvironmentPane.GLOBAL_ENVIRONMENT_NAME;
    }
-   
+
    @Override
    public String getFilterText()
    {
       return filterText_;
    }
-   
+
    @Override
    public int getSortColumn()
    {
       return objectSort_.getSortColumn();
    }
-   
+
    @Override
    public void setSortColumn(int col)
    {
@@ -494,26 +494,26 @@ public class EnvironmentObjects extends ResizeComposite
       observer_.setViewDirty();
       Collections.sort(objectDataProvider_.getList(), objectSort_);
    }
-   
+
    @Override
    public void toggleAscendingSort()
    {
       setAscendingSort(!objectSort_.getAscending());
    }
-   
+
    @Override
    public boolean getAscendingSort()
    {
       return objectSort_.getAscending();
    }
-   
+
    public void setAscendingSort(boolean ascending)
    {
       objectSort_.setAscending(ascending);
       observer_.setViewDirty();
       Collections.sort(objectDataProvider_.getList(), objectSort_);
    }
-   
+
    public void setSort(int column, boolean ascending)
    {
       objectSort_.setSortColumn(column);
@@ -522,8 +522,8 @@ public class EnvironmentObjects extends ResizeComposite
    }
 
    @Override
-   public void fillEntryContents(final RObjectEntry entry, 
-                                 final int idx, 
+   public void fillEntryContents(final RObjectEntry entry,
+                                 final int idx,
                                  boolean drawProgress)
    {
       entry.expanded = false;
@@ -583,11 +583,11 @@ public class EnvironmentObjects extends ResizeComposite
    // after adds or removes, we need to tag the new category-leading objects
    private void updateCategoryLeaders(boolean redrawUpdatedRows)
    {
-      // no need to do these model updates if we're not in the mode that 
+      // no need to do these model updates if we're not in the mode that
       // displays them
       if (objectDisplayType_ != OBJECT_LIST_VIEW)
          return;
-      
+
       List<RObjectEntry> objects = objectDataProvider_.getList();
 
       // whether or not we've found a leader for each category
@@ -650,20 +650,20 @@ public class EnvironmentObjects extends ResizeComposite
 
    private void autoSizeCallFramePanel()
    {
-      // after setting the frames, resize the call frame panel to neatly 
-      // wrap the new list, up to a maximum of 2/3 of the height of the 
+      // after setting the frames, resize the call frame panel to neatly
+      // wrap the new list, up to a maximum of 2/3 of the height of the
       // split panel.
-      int desiredCallFramePanelSize = 
+      int desiredCallFramePanelSize =
             callFramePanel_.getDesiredPanelHeight();
-      
+
       if (splitPanel.getOffsetHeight() > 0)
       {
          desiredCallFramePanelSize = Math.min(
                  desiredCallFramePanelSize,
                  (int)(0.66 * splitPanel.getOffsetHeight()));
       }
-                  
-      // if the panel is minimized, just update the cached height so it'll 
+
+      // if the panel is minimized, just update the cached height so it'll
       // get set to what we want when/if the panel is restored
       if (callFramePanel_.isMinimized())
       {
@@ -677,7 +677,7 @@ public class EnvironmentObjects extends ResizeComposite
          if (objectDisplay_ != null)
             objectDisplay_.onResize();
       }
-      
+
       pendingCallFramePanelSize_ = false;
    }
 
@@ -692,7 +692,7 @@ public class EnvironmentObjects extends ResizeComposite
          public void execute()
          {
             if (deferredExpandedObjects_ != null)
-            { 
+            {
                // loop through the objects in the list and check to see if each
                // is marked expanded in the persisted list of expanded objects
                List<RObjectEntry> objects = objectDataProvider_.getList();
@@ -727,12 +727,12 @@ public class EnvironmentObjects extends ResizeComposite
       return obj.getName().toLowerCase().contains(filterText_) ||
              obj.getValue().toLowerCase().contains(filterText_);
    }
-   
+
    private RObjectEntry entryFromRObject(RObject obj)
    {
       return new RObjectEntry(obj, matchesFilter(obj));
    }
-   
+
    // for very large environments, the number of objects may exceed the number
    // of physical rows; avoid redrawing rows outside the bounds of the
    // container's physical limit
@@ -744,10 +744,10 @@ public class EnvironmentObjects extends ResizeComposite
 
       if (oob)
          return;
-            
+
       objectDisplay_.redrawRow(idx);
    }
-   
+
    private final static String EMPTY_ENVIRONMENT_MESSAGE =
            "Environment is empty";
 
@@ -768,17 +768,17 @@ public class EnvironmentObjects extends ResizeComposite
    private int contextDepth_;
    private int callFramePanelHeight_;
    private int objectDisplayType_ = OBJECT_LIST_VIEW;
-   private String filterText_ = ""; 
+   private String filterText_ = "";
    private String environmentName_;
-   
+
    private ScrollIntoViewTimer scrollTimer_;
 
    // deferred settings--set on load but not applied until we have data.
    private int deferredScrollPosition_ = 0;
    private JsArrayString deferredExpandedObjects_;
    private boolean pendingCallFramePanelSize_ = false;
-   private Integer deferredObjectDisplayType_ = new Integer(OBJECT_LIST_VIEW);
+   private Integer deferredObjectDisplayType_ = OBJECT_LIST_VIEW;
    private int gridRenderRetryCount_ = 0;
-   
+
    public final static int MAX_ENVIRONMENT_OBJECTS = 1024;
 }

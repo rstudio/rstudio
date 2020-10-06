@@ -1,7 +1,7 @@
 /*
  * LastSourceDocClosedEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,6 +21,18 @@ public class LastSourceDocClosedEvent extends GwtEvent<LastSourceDocClosedHandle
    public static final Type<LastSourceDocClosedHandler> TYPE =
       new Type<LastSourceDocClosedHandler>();
 
+   public LastSourceDocClosedEvent() {}
+
+   public LastSourceDocClosedEvent(String name)
+   {
+      name_ = name;
+   }
+
+   public String getName()
+   {
+      return name_;
+   }
+
    @Override
    protected void dispatch(LastSourceDocClosedHandler handler)
    {
@@ -32,4 +44,6 @@ public class LastSourceDocClosedEvent extends GwtEvent<LastSourceDocClosedHandle
    {
       return TYPE;
    }
+
+   String name_;
 }

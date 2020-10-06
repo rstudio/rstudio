@@ -1,7 +1,7 @@
 /*
  * SimpleRequestCallback.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -39,6 +39,11 @@ public class SimpleRequestCallback<T> extends ServerRequestCallback<T>
    {
       caption_ = caption;
       useClientInfoMsg_ = useClientInfoMsg;
+   }
+   
+   @Override
+   public void onResponseReceived(T response)
+   {
    }
 
    @Override

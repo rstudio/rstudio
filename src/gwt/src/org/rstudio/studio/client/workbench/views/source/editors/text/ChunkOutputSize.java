@@ -1,7 +1,7 @@
 /*
  * ChunkOutputSize.java
  *
- * Copyright (C) 2009-16 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,9 +14,13 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
-public enum ChunkOutputSize {
-   // an ordinary chunk output
+public enum ChunkOutputSize
+{
+   // an ordinary chunk output, manually sized
    Default,
+   
+   // a chunk output which is sized naturally
+   Natural,
    
    // a chunk output which is not associated with a code chunk
    Bare,

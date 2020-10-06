@@ -1,7 +1,7 @@
 #
 # Tools.R
 #
-# Copyright (C) 2009-11 by RStudio, PBC
+# Copyright (C) 2020 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -27,22 +27,35 @@ assign(".rs.toolsEnv", function()
    .rs.Env
 }, envir = .rs.Env)
 
-# add a function to the tools:rstudio environment
-assign(".rs.addFunction", function(name, FN, attrs = list())
+#' Add a function to the 'tools:rstudio' environment.
+#' 
+#' This environment is placed on the search path, and so is accessible and
+#' readable during regular evaluation in an R session.
+#'
+#' @param name The name of the R function. The prefix '.rs.' will be pre-pended
+#'   to the supplied function name.
+#'
+#' @param FN The \R function to be added.
+#' 
+#' @param attrs An optional list of attributes, to be set on the function.
+#' 
+#' @param envir An optional environment, to be set as the enclosing environment
+#'   for the function `f`. By default, newly-defined functions use the
+#'   'tools:rstudio' environment as the parent function. For functions which
+#'   might be exposed to users (e.g. via options), you may want to instead use
+#'   the base environment to avoid issues with serialization.
+assign(".rs.addFunction", function(name, FN, attrs = list(), envir = .rs.toolsEnv())
 { 
    # add optional attributes
    for (attrib in names(attrs))
       attr(FN, attrib) <- attrs[[attrib]]
    
-   # get tools env
-   envir <- .rs.toolsEnv()
-   
-   # ensure function evaluates in tools env
+   # ensure function evaluates in requested environment
    environment(FN) <- envir
    
    # assign in tools env
    fullName <- paste(".rs.", name, sep = "")
-   assign(fullName, FN, envir = envir)
+   assign(fullName, FN, envir = .rs.toolsEnv())
    
 }, envir = .rs.Env)
 
@@ -69,7 +82,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 .rs.addFunction("addApiFunction", function(name, FN)
 {
    fullName <- paste("api.", name, sep = "")
-   .rs.addFunction(fullName, FN)
+   .rs.addFunction(fullName, FN, envir = globalenv())
 })
 
 .rs.addFunction("setVar", function(name, var)
@@ -101,9 +114,33 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    exists(fullName, envir = envir)
 })
 
-.rs.addFunction( "evalInGlobalEnv", function(code)
+.rs.addFunction("setOption", function(name, value)
 {
-   eval(parse(text=code), envir=globalenv())
+   data <- list(value)
+   names(data) <- name
+   options(data)
+})
+
+.rs.addFunction("setOptionDefault", function(name, value)
+{
+   # if the option is already set, nothing to do
+   if (!is.null(getOption(name)))
+      return(FALSE)
+   
+   # otherwise, set it
+   data <- list(value)
+   names(data) <- name
+   options(data)
+   
+   TRUE
+})
+
+.rs.addFunction("evalInGlobalEnv", function(code)
+{
+   eval(
+      parse(text = code),
+      envir = globalenv()
+   )
 })
 
 # attempts to restore the global environment from a file
@@ -435,37 +472,45 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 
 
 # hook an internal R function
-.rs.addFunction( "registerHook", function(name, package, hookFactory, namespace = FALSE)
+.rs.addFunction("registerHook", function(name,
+                                         package,
+                                         hookFactory,
+                                         namespace = FALSE)
 {
-   # get the original function  
-   packageName = paste("package:", package, sep="")
-   original <- base::get(name, packageName, mode="function")
+   # ensure the package is loaded and attached (since we need to modify
+   # the version of the function normally placed on the search path)
+   library(package, character.only = TRUE, quietly = TRUE)
    
-   # install the hook
-   if (!is.null(original))
-   {
-      # new function definition
-      new <- hookFactory(original)
-      
-      # re-map function 
-      packageEnv = as.environment(packageName)
-      unlockBinding(name, packageEnv)
-      assign(name, new, packageName)
-      lockBinding(name, packageEnv)
-
-      if (namespace && package %in% loadedNamespaces()) {
-         ns <- asNamespace(package)
-         if (exists(name, envir = ns, mode="function")) {
-            unlockBinding(name, ns)
-            assign(name, new, envir = ns)
-            lockBinding(name, ns)
-         }
+   # construct search path environment name for package
+   packageName <- paste("package", package, sep = ":")
+   
+   # get original version of function (bail if it doesn't exist)
+   original <- base::get(name, packageName, mode = "function")
+   if (is.null(original)) {
+      fmt <- "internal error: function %s not found"
+      msg <- sprintf(fmt, shQuote(name))
+      stop(msg, call. = FALSE)
+   }
+   
+   # new function definition
+   new <- hookFactory(original)
+   
+   # re-map function 
+   packageEnv <- as.environment(packageName)
+   unlockBinding(name, packageEnv)
+   assign(name, new, packageName)
+   lockBinding(name, packageEnv)
+   
+   # remap in function namespace if requested as well
+   if (namespace) {
+      ns <- asNamespace(package)
+      if (exists(name, envir = ns, mode = "function")) {
+         unlockBinding(name, ns)
+         assign(name, new, envir = ns)
+         lockBinding(name, ns)
       }
    }
-   else
-   {
-      stop(cat("function", name, "not found\n"))
-   }
+   
 })
 
 .rs.addFunction( "callAs", function(name, f, ...)
@@ -1089,3 +1134,33 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    cap <- capabilities(what)
    length(cap) && cap
 })
+
+# NOTE: registered hooks will be run immediately if the
+# package has already been loaded.
+.rs.addFunction("registerPackageLoadHook", function(package, hook)
+{
+   if (package %in% loadedNamespaces())
+      return(hook())
+   
+   setHook(
+      hookName = packageEvent(package, "onLoad"),
+      value    = hook,
+      action   = "append"
+   )
+      
+})
+
+.rs.addFunction("initTools", function()
+{
+   ostype <- .Platform$OS.type
+   info <- Sys.info()
+   envir <- .rs.toolsEnv()
+   
+   assign(".rs.platform.isUnix",    ostype == "unix",              envir = envir)
+   assign(".rs.platform.isWindows", ostype == "windows",           envir = envir)
+   assign(".rs.platform.isLinux",   info[["sysname"]] == "Linux",  envir = envir)
+   assign(".rs.platform.isMacos",   info[["sysname"]] == "Darwin", envir = envir)
+   
+})
+
+.rs.initTools()

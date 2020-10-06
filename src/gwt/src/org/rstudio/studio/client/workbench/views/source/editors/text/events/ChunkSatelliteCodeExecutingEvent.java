@@ -1,7 +1,7 @@
 /*
  * ChunkSatelliteCodeExecutingEvent.java
  *
- * Copyright (C) 2009-16 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,9 +21,9 @@ import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import com.google.gwt.event.shared.EventHandler;
 
 @JavaScriptSerializable
-public class ChunkSatelliteCodeExecutingEvent 
+public class ChunkSatelliteCodeExecutingEvent
              extends CrossWindowEvent<ChunkSatelliteCodeExecutingEvent.Handler>
-{  
+{
    public interface Handler extends EventHandler
    {
       void onChunkSatelliteCodeExecuting(ChunkSatelliteCodeExecutingEvent event);
@@ -32,7 +32,7 @@ public class ChunkSatelliteCodeExecutingEvent
    public ChunkSatelliteCodeExecutingEvent()
    {
    }
-   
+
    public ChunkSatelliteCodeExecutingEvent(
       String docId, String chunkId, int mode, int scope
    )
@@ -47,12 +47,12 @@ public class ChunkSatelliteCodeExecutingEvent
    {
       return docId_;
    }
-   
+
    public String getChunkId()
    {
       return chunkId_;
    }
-   
+
    public int getMode()
    {
       return mode_;
@@ -86,5 +86,5 @@ public class ChunkSatelliteCodeExecutingEvent
    private int mode_;
    private int scope_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

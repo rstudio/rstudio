@@ -1,7 +1,7 @@
 /*
  * ServerOptionsOverlay.cpp
  *
- * Copyright (C) 2009-17 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,7 @@
 
 #include <server/ServerOptions.hpp>
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace server {
@@ -25,6 +25,7 @@ void Options::addOverlayOptions(
                        boost::program_options::options_description* pServer,
                        boost::program_options::options_description* pWWW,
                        boost::program_options::options_description* pRSession,
+                       boost::program_options::options_description* pDatabase,
                        boost::program_options::options_description* pAuth,
                        boost::program_options::options_description* pMonitor)
 {
@@ -48,6 +49,11 @@ std::string Options::gwtPrefix() const
 void sessionProcessConfigOverlay(core::system::Options* pArgs,
                                  core::system::Options* pEnvironment)
 {
+}
+
+std::string Options::rsessionExecutable() const
+{
+   return "rsession";
 }
 
 } // namespace server

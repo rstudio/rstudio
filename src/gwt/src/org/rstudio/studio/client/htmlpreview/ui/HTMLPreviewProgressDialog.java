@@ -1,7 +1,7 @@
 /*
  * HTMLPreviewProgressDialog.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -40,37 +40,37 @@ public class HTMLPreviewProgressDialog extends ProgressDialog
    {
       this(caption, -1);
    }
-   
+
    public HTMLPreviewProgressDialog(String caption, int maxHeight)
    {
-      super(caption, Roles.getDialogRole(), new Integer(maxHeight));
+      super(caption, Roles.getDialogRole(), maxHeight);
    }
-   
+
    @Override
    public HandlerRegistration addClickHandler(ClickHandler handler)
    {
       return stopButton().addClickHandler(handler);
-   }  
-   
+   }
+
    public void setCaption(String caption)
    {
       setLabel(caption);
    }
-  
+
    public void showOutput(String output)
    {
       if (!isShowing())
          showModal();
-      
-      output_.append(output);  
+
+      output_.append(output);
    }
-   
+
    public void stopProgress()
    {
       hideProgress();
       stopButton().setText("Close");
    }
-   
+
    public void dismiss()
    {
       closeDialog();
@@ -85,7 +85,7 @@ public class HTMLPreviewProgressDialog extends ProgressDialog
       if (maxHeight != -1)
          height = Math.min(maxHeight, height);
       panel.getElement().getStyle().setHeight(height, Unit.PX);
-           
+
       output_ = new CompileOutputBuffer();
       panel.setWidget(output_);
       return panel;

@@ -1,7 +1,7 @@
 /*
  * PostMessageEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,7 +20,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 public class PostMessageEvent extends JavaScriptObject
 {
    protected PostMessageEvent() {}
-   
+
    public final native <T> T getData() /*-{
       return this.data;
    }-*/;

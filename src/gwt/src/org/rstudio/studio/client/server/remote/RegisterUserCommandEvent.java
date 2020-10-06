@@ -1,7 +1,7 @@
 /*
  * RegisterUserCommandEvent.java
  *
- * Copyright (C) 2009-13 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,31 +25,31 @@ public class RegisterUserCommandEvent
    public static class Data extends JavaScriptObject
    {
       protected Data() {}
-      
+
       public final native String getName() /*-{
          return this.name;
       }-*/;
-      
+
       public final native JsArrayString getShortcuts() /*-{
          return this.shortcuts;
       }-*/;
    }
-   
+
    public interface Handler extends EventHandler
    {
       void onRegisterUserCommand(RegisterUserCommandEvent event);
    }
-   
+
    public RegisterUserCommandEvent(Data data)
    {
       data_ = data;
    }
-   
+
    public Data getData()
    {
       return data_;
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -61,9 +61,9 @@ public class RegisterUserCommandEvent
    {
       handler.onRegisterUserCommand(this);
    }
-   
+
    private final Data data_;
-   public static final Type<Handler> TYPE = new Type<Handler>();
-   
+   public static final Type<Handler> TYPE = new Type<>();
+
 
 }

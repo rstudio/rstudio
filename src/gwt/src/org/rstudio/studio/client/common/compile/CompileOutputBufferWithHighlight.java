@@ -1,7 +1,7 @@
 /*
  * CompileOutputBufferWithHighlight.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -38,6 +38,7 @@ public class CompileOutputBufferWithHighlight extends Composite
       output_.addStyleName(styles_.paddedOutput());
       FontSizer.applyNormalFontSize(output_);
       console_ = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(output_.getElement());
+      console_.setVirtualizedDisableOverride(true); // disable virtualization of scroller
     
       scrollPanel_ = new BottomScrollPanel();
       scrollPanel_.setSize("100%", "100%");

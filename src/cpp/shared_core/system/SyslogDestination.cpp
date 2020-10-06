@@ -1,7 +1,7 @@
 /*
  * SyslogDestination.cpp
  * 
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant to the terms of a commercial license agreement
  * with RStudio, then this program is licensed to you under the following terms:
@@ -120,7 +120,7 @@ void SyslogDestination::writeLog(
 
    // Don't allow newlines in syslog messages since they delimit distinct log entries. Strip trailing whitespace first.
    std::string forSyslog = boost::algorithm::trim_right_copy(in_message);
-   boost::algorithm::replace_all_copy(forSyslog, "\n", "|||");
+   boost::algorithm::replace_all(forSyslog, "\n", "|||");
 
    // Also remove the leading date and program ID, since those are set by syslog directly.
    forSyslog = boost::regex_replace(forSyslog, boost::regex("^[^\\]]*\\]\\s"), "");

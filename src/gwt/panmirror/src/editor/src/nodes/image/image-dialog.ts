@@ -1,7 +1,7 @@
 /*
  * image-dialog.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,9 +17,10 @@ import { Node as ProsemirrorNode, NodeType, Fragment, Mark } from 'prosemirror-m
 import { EditorView } from 'prosemirror-view';
 
 import { insertAndSelectNode } from '../../api/node';
-import { ImageProps, ImageType, EditorUI } from '../../api/ui';
+import { EditorUI } from '../../api/ui';
+import { ImageProps } from '../../api/ui-dialogs';
 import { extractSizeStyles, kPercentUnit, kPixelUnit } from '../../api/css';
-import { ImageDimensions, isNaturalAspectRatio } from '../../api/image';
+import { ImageType, ImageDimensions, isNaturalAspectRatio } from '../../api/image';
 import { kWidthAttrib, kHeightAttrib } from '../../api/pandoc_attr';
 
 import { imagePropsWithSizes, hasPercentWidth } from './image-util';
@@ -44,7 +45,7 @@ export async function imageDialog(
     // base attributess
     image = {
       ...(node.attrs as ImageProps),
-      alt: node.textContent || node.attrs.alt,
+      alt: nodeType === schema.nodes.figure ? node.textContent : node.attrs.alt,
     };
 
     // move width and height out of style and into keyvalue if necessary
@@ -77,7 +78,7 @@ export async function imageDialog(
   const type = nodeType === view.state.schema.nodes.image ? ImageType.Image : ImageType.Figure;
 
   // edit the image
-  const result = await editorUI.dialogs.editImage(image, dims, editorUI.context.getResourceDir(), imageAttributes);
+  const result = await editorUI.dialogs.editImage(image, dims, imageAttributes);
   if (result) {
     // figures treat 'alt' as their content (the caption), but since captions support
     // inline formatting (and the dialog doesn't) we only want to update the

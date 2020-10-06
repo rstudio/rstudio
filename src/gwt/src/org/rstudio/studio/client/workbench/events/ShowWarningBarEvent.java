@@ -1,7 +1,7 @@
 /*
  * ShowWarningBarEvent.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -34,12 +34,12 @@ public class ShowWarningBarEvent extends GwtEvent<ShowWarningBarEvent.Handler>
    {
       data_ = message;
    }
-   
+
    public interface Handler extends EventHandler
    {
       void onShowWarningBar(ShowWarningBarEvent event);
    }
-   
+
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
    public static class Data
    {
@@ -51,12 +51,12 @@ public class ShowWarningBarEvent extends GwtEvent<ShowWarningBarEvent.Handler>
    {
       return data_.severe;
    }
-   
+
    public String getMessage()
    {
       return data_.message;
    }
-   
+
    @Override
    protected void dispatch(Handler handler)
    {
@@ -68,8 +68,8 @@ public class ShowWarningBarEvent extends GwtEvent<ShowWarningBarEvent.Handler>
    {
       return TYPE;
    }
-   
+
    public static final GwtEvent.Type<Handler> TYPE = new GwtEvent.Type<>();
 
-   private Data data_;
+   private final Data data_;
 }

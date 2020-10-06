@@ -2,7 +2,7 @@
 # for those that don't, see here:
 # http://editorconfig.org/
 
-# for most language files, use Unix line endings, 3-space tabs, and wrap at 80
+# for most language files, use Unix line endings, 3-space tabs, and wrap at 100
 # characters
 [*.{cpp,hpp,js,ts,tsx,R,mm}]
 indent_style = space

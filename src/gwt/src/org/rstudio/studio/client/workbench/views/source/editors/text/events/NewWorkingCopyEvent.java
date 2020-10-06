@@ -1,7 +1,7 @@
 /*
  * NewWorkingCopyEvent.java
  *
- * Copyright (C) 2009-15 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,29 +27,29 @@ public class NewWorkingCopyEvent extends GwtEvent<NewWorkingCopyEvent.Handler>
       void onNewWorkingCopy(NewWorkingCopyEvent event);
    }
 
-   public NewWorkingCopyEvent(EditableFileType type, String path, 
+   public NewWorkingCopyEvent(EditableFileType type, String path,
          String contents)
    {
       type_ = type;
       path_ = path;
       contents_ = contents;
    }
-   
+
    public EditableFileType getType()
    {
       return type_;
    }
-   
+
    public String getPath()
    {
       return path_;
    }
-   
+
    public String getContents()
    {
       return contents_;
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -62,7 +62,7 @@ public class NewWorkingCopyEvent extends GwtEvent<NewWorkingCopyEvent.Handler>
       handler.onNewWorkingCopy(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 
    private final EditableFileType type_;
    private final String path_;

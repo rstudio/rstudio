@@ -2,7 +2,7 @@
 #
 # generate-prefs.R
 #
-# Copyright (C) 2009-19 by RStudio, PBC
+# Copyright (C) 2020 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -32,6 +32,8 @@ cat("Generating preferences...")
 capitalize <- function(s) {
    paste0(toupper(substring(s, 1, 1)), substring(s, 2))
 }
+
+`%||%` <- function(x, y) if (is.null(x)) y else x
 
 # Builds "enum" values in Java (really just named constants)
 javaenum <- function(def, pref, type, indent) {
@@ -87,6 +89,10 @@ generate <- function (schemaPath, className) {
 
    # A Java function that syncs every pref
    javasync <- "   public void syncPrefs(String layer, JsObject source)\n   {\n"
+
+   # A Java function that lists every pref
+   javalist <- paste0("   public List<PrefValue<?>> allPrefs()\n   {\n",
+               "      ArrayList<PrefValue<?>> prefs = new ArrayList<PrefValue<?>>();\n");
    
    # C++ string constants for preference names
    cppstrings <- ""
@@ -128,7 +134,7 @@ generate <- function (schemaPath, className) {
          preftype <- "integer"
          cpptype <- "int"
       } else if (identical(preftype, "string")) {
-         preftype <- "string"
+         preftype <- if (!is.null(def[["enum"]])) "enumeration" else "string"
          cpptype <- "std::string"
       } else if (identical(preftype, "object")) {
          preftype <- "object"
@@ -173,15 +179,36 @@ generate <- function (schemaPath, className) {
          "    */\n")
       
       # Add a Java accessor for the preference, and an entry for syncing it with another copy
+      prefTitle <- if (is.null(def[["title"]])) "" else def[["title"]]
       java <- paste0(java,
          comment,
          "   public PrefValue<", type, "> ", camel, "()\n",
          "   {\n",
-         "      return ", preftype, "(\"", pref, "\", ", defaultval, ");\n",
-         "   }\n\n")
+         "      return ", preftype, "(\n         \"", pref, "\",\n",
+                       "         \"", prefTitle, "\", \n", 
+                       "         \"", def[["description"]], "\", \n")
+      if (!is.null(def[["enum"]]))
+      {
+          java <- paste0(java, "         new String[] {\n",
+             paste(lapply(def[["enum"]], function(enumval) {
+                    toupper(paste0("            ",
+                                   pref, 
+                                   "_", 
+                                   gsub("[^A-Za-z0-9_]", "_", enumval)))
+                   }), collapse = ",\n"),
+             "\n         },\n")
+      }
+      java <- paste0(java, 
+                       "         ", defaultval, ");\n",
+                       "   }\n\n")
+      synctype <- if (identical(preftype, "enumeration")) "String" else capitalize(preftype)
       javasync <- paste0(javasync,
          "      if (source.hasKey(\"", pref, "\"))\n",
-         "         ", camel, "().setValue(layer, source.get", capitalize(preftype), "(\"", pref, "\"));\n")
+         "         ", camel, "().setValue(layer, source.get", synctype, "(\"", 
+                pref, "\"));\n")
+      javalist <- paste0(javalist,
+         "      prefs.add(", camel, "());\n")
+
       
       # Add C++ header and implementation accessors for the preferences
       hpp <- paste0(hpp, comment,
@@ -209,11 +236,18 @@ generate <- function (schemaPath, className) {
             "      protected ", type, "() {} \n\n")
          props <- def[["properties"]]
          for (prop in names(props)) {
+            
             propdef <- props[[prop]]
             propname <- gsub("(^|_)(.)", "\\U\\2\\E", prop, perl = TRUE)
             proptype <- propdef[["type"]]
+            
+            default <- propdef[["default"]] %||% def[["default"]][[prop]]
+            if (!is.null(default))
+               default <- paste(" ||", jsonlite::toJSON(default, auto_unbox = TRUE))
+            
             if (identical(proptype, "array")) {
                proptype <- "JsArrayString"
+               default <- default %||% " || []"
                if (!is.null(propdef[["items"]])) {
                   enumtype <- capitalize(propdef[["items"]][["type"]])
                   java <- paste0(java, javaenum(propdef[["items"]], propname, 
@@ -221,12 +255,19 @@ generate <- function (schemaPath, className) {
                }
             } else if (identical(proptype, "string")) {
                proptype <- "String"
+               default <- default %||% " || \"\""
             } else if (identical(proptype, "integer")) {
                proptype <- "int"
+               default <- default %||% " || 0"
+            } else if (identical(proptype, "boolean")) {
+               default <- default %||% " || false"
+            } else {
+               default <- ""
             }
+            
             java <- paste0(java,
               "      public final native ", proptype, " get",  propname, "() /*-{\n",
-              "         return this.", prop, ";\n",
+              "         return this && this.", prop, default, ";\n",
               "      }-*/;\n\n")
             cppstrings <- paste0(cppstrings,
                                  "#define k", capitalize(camel), propname, " \"", prop, "\"\n")
@@ -250,6 +291,8 @@ generate <- function (schemaPath, className) {
                  "};\n")
    javasync <- paste0(javasync, "   }\n")
    java <- paste0(java, javasync)
+   javalist <- paste0(javalist, "      return prefs;\n   }\n")
+   java <- paste0(java, javalist)
    
    # Return computed Java and C++ code
    list(

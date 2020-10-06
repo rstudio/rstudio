@@ -2,7 +2,7 @@
 /*
  * PanmirrorCommandIcons.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,13 +30,16 @@ public class PanmirrorCommandIcons
    public final String BLOCKQUOTE = "blockquote";
    public final String BOLD = "bold";
    public final String BULLET_LIST = "bullet_list";
+   public final String CITATION = "citation";
    public final String CODE = "code";
    public final String IMAGE = "image";
    public final String ITALIC = "italic";
+   public final String OMNI = "omni";
    public final String LINK = "link";
    public final String NUMBERED_LIST = "numbered_list";
-   public final String RMD_CHUNK = "rmd_chunk";
    public final String TABLE = "table";
+   public final String CLEAR_FORMATTING = "clear_formatting";
+   public final String COMMENT = "comment";
    
    private PanmirrorCommandIcons()
    {
@@ -46,16 +49,21 @@ public class PanmirrorCommandIcons
       icons_.put(dm(BOLD), res.bold_dm());
       icons_.put(BULLET_LIST, res.bullet_list());
       icons_.put(dm(BULLET_LIST), res.bullet_list_dm());
+      icons_.put(CITATION, res.citation());
+      icons_.put(dm(CITATION), res.citation_dm());
       icons_.put(CODE, res.code());
       icons_.put(dm(CODE), res.code_dm());
       icons_.put(IMAGE, res.image());
       icons_.put(ITALIC, res.italic());
       icons_.put(dm(ITALIC), res.italic_dm());
+      icons_.put(OMNI, res.omni());
       icons_.put(LINK, res.link());
       icons_.put(NUMBERED_LIST, res.numbered_list());
       icons_.put(dm(NUMBERED_LIST), res.numbered_list_dm());
-      icons_.put(RMD_CHUNK, res.rmd_chunk());
       icons_.put(TABLE, res.table());
+      icons_.put(CLEAR_FORMATTING, res.clear_formatting());
+      icons_.put(dm(CLEAR_FORMATTING), res.clear_formatting_dm());
+      icons_.put(COMMENT, res.comment());
    }
    
    public ImageResource get(String name)

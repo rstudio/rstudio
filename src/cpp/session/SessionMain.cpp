@@ -1,7 +1,7 @@
 /*
  * SessionMain.cpp
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,7 @@
 // required to avoid Win64 winsock order of include
 // compilation problem
 #include <boost/asio/io_service.hpp>
+#include <boost/scope_exit.hpp>
 
 #ifndef _WIN32
 #include <sys/types.h>
@@ -120,7 +121,6 @@
 
 #include "modules/RStudioAPI.hpp"
 #include "modules/SessionAbout.hpp"
-#include "modules/SessionAgreement.hpp"
 #include "modules/SessionAskPass.hpp"
 #include "modules/SessionAskSecret.hpp"
 #include "modules/SessionAuthoring.hpp"
@@ -178,6 +178,7 @@
 #include "modules/rmarkdown/RMarkdownTemplates.hpp"
 #include "modules/rmarkdown/SessionRMarkdown.hpp"
 #include "modules/rmarkdown/SessionRmdNotebook.hpp"
+#include "modules/rmarkdown/SessionBookdown.hpp"
 #include "modules/shiny/SessionShiny.hpp"
 #include "modules/sql/SessionSql.hpp"
 #include "modules/stan/SessionStan.hpp"
@@ -189,9 +190,11 @@
 #include "modules/SessionRAddins.hpp"
 #include "modules/mathjax/SessionMathJax.hpp"
 #include "modules/panmirror/SessionPanmirror.hpp"
+#include "modules/zotero/SessionZotero.hpp"
 #include "modules/SessionLibPathsIndexer.hpp"
 #include "modules/SessionObjectExplorer.hpp"
 #include "modules/SessionReticulate.hpp"
+#include "modules/SessionPythonEnvironments.hpp"
 #include "modules/SessionCrashHandler.hpp"
 #include "modules/SessionRVersions.hpp"
 #include "modules/SessionTerminal.hpp"
@@ -432,8 +435,12 @@ Error runPreflightScript()
    return Success();
 }
 
+// implemented below
+void stopMonitorWorkerThread();
+
 void exitEarly(int status)
 {
+   stopMonitorWorkerThread();
    FileLock::cleanUp();
    ::exit(status);
 }
@@ -455,7 +462,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    using boost::bind;
    using namespace rstudio::core::system;
    using namespace rsession::module_context;
-   ExecBlock initialize ;
+   ExecBlock initialize;
    initialize.addFunctions()
    
       // client event service
@@ -511,7 +518,6 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::limits::initialize)
       (modules::ppe::initialize)
       (modules::ask_pass::initialize)
-      (modules::agreement::initialize)
       (modules::console::initialize)
 #ifdef RSTUDIO_SERVER
       (modules::crypto::initialize)
@@ -538,6 +544,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::rmarkdown::initialize)
       (modules::rmarkdown::notebook::initialize)
       (modules::rmarkdown::templates::initialize)
+      (modules::rmarkdown::bookdown::initialize)
       (modules::rpubs::initialize)
       (modules::shiny::initialize)
       (modules::sql::initialize)
@@ -569,11 +576,13 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::projects::templates::initialize)
       (modules::mathjax::initialize)
       (modules::panmirror::initialize)
+      (modules::zotero::initialize)
       (modules::rstudioapi::initialize)
       (modules::libpaths::initialize)
       (modules::explorer::initialize)
       (modules::ask_secret::initialize)
       (modules::reticulate::initialize)
+      (modules::python_environments::initialize)
       (modules::tests::initialize)
       (modules::jobs::initialize)
       (modules::themes::initialize)
@@ -637,11 +646,12 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    }
    
    // register all of the json rpc methods implemented in R
-   json::JsonRpcMethods rMethods ;
+   json::JsonRpcMethods rMethods;
    error = rstudio::r::json::getRpcMethods(&rMethods);
    if (error)
-      return error ;
-   for (const json::JsonRpcMethod& method : rMethods)
+      return error;
+   
+   for (json::JsonRpcMethod method : rMethods)
    {
       registerRpcMethod(json::adaptMethodToAsync(method));
    }
@@ -785,7 +795,7 @@ int rEditFile(const std::string& file)
    rsession::clientEventQueue().add(editEvent);
 
    // wait for edit_completed 
-   json::JsonRpcRequest request ;
+   json::JsonRpcRequest request;
    bool succeeded = http_methods::waitForMethod(kEditCompleted,
                                         editEvent,
                                         suspend::disallowSuspend,
@@ -822,7 +832,7 @@ int rEditFile(const std::string& file)
       }
       
       // success!
-      return 0 ;
+      return 0;
    }
 }
    
@@ -834,7 +844,7 @@ FilePath rChooseFile(bool newFile)
    rsession::clientEventQueue().add(chooseFileEvent);
    
    // wait for choose_file_completed 
-   json::JsonRpcRequest request ;
+   json::JsonRpcRequest request;
    bool succeeded = http_methods::waitForMethod(kChooseFileCompleted,
                                         chooseFileEvent,
                                         suspend::disallowSuspend,
@@ -914,7 +924,7 @@ bool rLocator(double* x, double* y)
    rsession::clientEventQueue().add(locatorEvent);
    
    // wait for locator_completed 
-   json::JsonRpcRequest request ;
+   json::JsonRpcRequest request;
    bool succeeded = http_methods::waitForMethod(kLocatorCompleted,
                                         locatorEvent,
                                         suspend::disallowSuspend,
@@ -1000,7 +1010,7 @@ void rBrowseURL(const std::string& url)
 {
    // first see if any of our handlers want to take it
    for (std::vector<module_context::RBrowseUrlHandler>::const_iterator 
-            it = s_rBrowseUrlHandlers.begin(); 
+            it = s_rBrowseUrlHandlers.begin();
             it != s_rBrowseUrlHandlers.end();
             ++it)
    {
@@ -1016,7 +1026,7 @@ void rBrowseFile(const core::FilePath& filePath)
 {
    // see if any of our handlers want to take it
    for (std::vector<module_context::RBrowseFileHandler>::const_iterator 
-            it = s_rBrowseFileHandlers.begin(); 
+            it = s_rBrowseFileHandlers.begin();
             it != s_rBrowseFileHandlers.end();
             ++it)
    {
@@ -1215,6 +1225,9 @@ void rCleanup(bool terminatedNormally)
       // https://github.com/rstudio/rstudio/issues/5222
       system::file_monitor::stop();
 
+      // stop the monitor thread
+      stopMonitorWorkerThread();
+
       // cause graceful exit of clientEventService (ensures delivery
       // of any pending events prior to process termination). wait a
       // very brief interval first to allow the quit or other termination
@@ -1246,7 +1259,7 @@ void rCleanup(bool terminatedNormally)
    
 void rSerialization(int action, const FilePath& targetPath)
 {
-   json::Object serializationActionObject ;
+   json::Object serializationActionObject;
    serializationActionObject["type"] = action;
    if (!targetPath.isEmpty())
    {
@@ -1500,7 +1513,7 @@ UserPrompt::Response showUserPrompt(const UserPrompt& userPrompt)
    rsession::clientEventQueue().add(userPromptEvent);
 
    // wait for user_prompt_completed
-   json::JsonRpcRequest request ;
+   json::JsonRpcRequest request;
    http_methods::waitForMethod(kUserPromptCompleted,
                        userPromptEvent,
                        suspend::disallowSuspend,
@@ -1582,9 +1595,8 @@ namespace {
 int sessionExitFailure(const core::Error& error,
                        const core::ErrorLocation& location)
 {
-   if (!error.isExpected())
+   if (error)
       core::log::logError(error, location);
-
    return EXIT_FAILURE;
 }
 
@@ -1664,17 +1676,38 @@ bool ensureUtf8Charset()
 #endif
 }
 
+// io_service for performing monitor work on the thread
+boost::asio::io_service s_monitorIoService;
+
+void monitorWorkerThreadFunc()
+{
+   boost::asio::io_service::work work(s_monitorIoService);
+   s_monitorIoService.run();
+}
+
+void stopMonitorWorkerThread()
+{
+   s_monitorIoService.stop();
+}
+
 void initMonitorClient()
 {
    if (!options().getBoolOverlayOption(kLauncherSessionOption))
    {
       monitor::initializeMonitorClient(core::system::getenv(kMonitorSocketPathEnvVar),
-                                       options().monitorSharedSecret());
+                                       options().monitorSharedSecret(),
+                                       s_monitorIoService);
    }
    else
    {
-      modules::overlay::initMonitorClient();
+      modules::overlay::initMonitorClient(s_monitorIoService);
    }
+
+   // start the monitor work thread
+   // we handle monitor calls in a separate thread to ensure that calls
+   // to the monitor (which are likely across machines and thus very expensive)
+   // do not hamper the liveliness of the session as a whole
+   core::thread::safeLaunchThread(monitorWorkerThreadFunc);
 }
 
 } // anonymous namespace
@@ -1735,14 +1768,14 @@ int main (int argc, char * const argv[])
       // read program options
       std::ostringstream osWarnings;
       Options& options = rsession::options();
-      ProgramStatus status = options.read(argc, argv, osWarnings) ;
+      ProgramStatus status = options.read(argc, argv, osWarnings);
       std::string optionsWarnings = osWarnings.str();
 
       if (!optionsWarnings.empty())
          program_options::reportWarnings(optionsWarnings, ERROR_LOCATION);
 
       if (status.exit())
-         return status.exitCode() ;
+         return status.exitCode();
 
       // convenience flags for server and desktop mode
       bool desktopMode = options.programMode() == kSessionProgramModeDesktop;
@@ -1765,11 +1798,16 @@ int main (int argc, char * const argv[])
          log::addLogDestination(
             std::shared_ptr<log::ILogDestination>(new log::StderrLogDestination(log::LogLevel::WARN)));
 
-      // initialize monitor
+      // initialize monitor but stop its thread on exit
       initMonitorClient();
+      BOOST_SCOPE_EXIT(void)
+      {
+         stopMonitorWorkerThread();
+      }
+      BOOST_SCOPE_EXIT_END
 
-      // register monitor log writer (but not in standalone mode)
-      if (!options.standalone())
+      // register monitor log writer (but not in standalone or verify installation mode)
+      if (!options.standalone() && !options.verifyInstallation())
       {
          core::log::addLogDestination(
             monitor::client().createLogDestination(log::LogLevel::WARN, options.programIdentity()));
@@ -1877,53 +1915,56 @@ int main (int argc, char * const argv[])
             "RS_RPOSTBACK_PATH",
             string_utils::utf8ToSystem(rpostback.getAbsolutePath()));
 
-      // determine if this is a new user and get the first project path if so
       std::string firstProjectPath = "";
-      bool newUser = false;
-
-      FilePath userScratchPath = options.userScratchPath();
-      if (userScratchPath.exists())
+      if (!options.verifyInstallation())
       {
-         std::vector<FilePath> scratchChildren;
-         userScratchPath.getChildren(scratchChildren);
+         // determine if this is a new user and get the first project path if so
+         bool newUser = false;
 
-         if (scratchChildren.size() == 0)
-            newUser = true;
-      }
-      else
-      {
-         // create the scratch path
-         error = userScratchPath.ensureDirectory();
-         if (error)
-            return sessionExitFailure(error, ERROR_LOCATION);
-
-         newUser = true;
-      }
-
-      if (newUser)
-      {
-         // this is a brand new user
-         // check to see if there is a first project template
-         if (!options.firstProjectTemplatePath().empty())
+         FilePath userScratchPath = options.userScratchPath();
+         if (userScratchPath.exists())
          {
-            // copy the project template to the user's home dir
-            FilePath templatePath = FilePath(options.firstProjectTemplatePath());
-            if (templatePath.exists())
+            // if the lists directory has not yet been created,
+            // this is a new user
+            FilePath listsPath = userScratchPath.completeChildPath("monitored/lists");
+            if (!listsPath.exists())
+               newUser = true;
+         }
+         else
+         {
+            // create the scratch path
+            error = userScratchPath.ensureDirectory();
+            if (error)
+               return sessionExitFailure(error, ERROR_LOCATION);
+
+            newUser = true;
+         }
+
+         if (newUser)
+         {
+            // this is a brand new user
+            // check to see if there is a first project template
+            if (!options.firstProjectTemplatePath().empty())
             {
-               error = templatePath.copyDirectoryRecursive(
-                  options.userHomePath().completeChildPath(
-                     templatePath.getFilename()));
-               if (error)
-                  LOG_ERROR(error);
-               else
+               // copy the project template to the user's home dir
+               FilePath templatePath = FilePath(options.firstProjectTemplatePath());
+               if (templatePath.exists())
                {
-                  FilePath firstProjPath = options.userHomePath().completeChildPath(templatePath.getFilename())
-                                                  .completeChildPath(templatePath.getFilename() + ".Rproj");
-                  if (firstProjPath.exists())
-                     firstProjectPath = firstProjPath.getAbsolutePath();
+                  error = templatePath.copyDirectoryRecursive(
+                     options.userHomePath().completeChildPath(
+                        templatePath.getFilename()));
+                  if (error)
+                     LOG_ERROR(error);
                   else
-                     LOG_WARNING_MESSAGE("Could not find first project path " + firstProjPath.getAbsolutePath() +
-                                         ". Please ensure the template contains an Rproj file.");
+                  {
+                     FilePath firstProjPath = options.userHomePath().completeChildPath(templatePath.getFilename())
+                                                     .completeChildPath(templatePath.getFilename() + ".Rproj");
+                     if (firstProjPath.exists())
+                        firstProjectPath = firstProjPath.getAbsolutePath();
+                     else
+                        LOG_WARNING_MESSAGE("Could not find first project path " + firstProjPath.getAbsolutePath() +
+                                            ". Please ensure the template contains an Rproj file.");
+                  }
                }
             }
          }
@@ -1944,7 +1985,7 @@ int main (int argc, char * const argv[])
       // initialize persistent state
       error = rsession::persistentState().initialize();
       if (error)
-         return sessionExitFailure(error, ERROR_LOCATION) ;
+         return sessionExitFailure(error, ERROR_LOCATION);
 
       // set working directory
       FilePath workingDir = dirs::getInitialWorkingDirectory();
@@ -1998,9 +2039,9 @@ int main (int argc, char * const argv[])
       modules::console::syncConsoleColorEnv();
 
       // r options
-      rstudio::r::session::ROptions rOptions ;
+      rstudio::r::session::ROptions rOptions;
       rOptions.userHomePath = options.userHomePath();
-      rOptions.userScratchPath = userScratchPath;
+      rOptions.userScratchPath = options.userScratchPath();
       rOptions.scopedScratchPath = module_context::scopedScratchPath();
       rOptions.sessionScratchPath = module_context::sessionScratchPath();
       rOptions.logPath = options.userLogPath();
@@ -2110,7 +2151,7 @@ int main (int argc, char * const argv[])
       rCallbacks.handleUnsavedChanges = rHandleUnsavedChanges;
       rCallbacks.quit = rQuit;
       rCallbacks.suicide = rSuicide;
-      rCallbacks.cleanup = rCleanup ;
+      rCallbacks.cleanup = rCleanup;
       rCallbacks.browseURL = rBrowseURL;
       rCallbacks.browseFile = rBrowseFile;
       rCallbacks.showHelp = rShowHelp;
@@ -2118,7 +2159,7 @@ int main (int argc, char * const argv[])
       rCallbacks.serialization = rSerialization;
 
       // run r (does not return, terminates process using exit)
-      error = rstudio::r::session::run(rOptions, rCallbacks) ;
+      error = rstudio::r::session::run(rOptions, rCallbacks);
       if (error)
       {
           // this is logically equivilant to R_Suicide
@@ -2134,7 +2175,7 @@ int main (int argc, char * const argv[])
    CATCH_UNEXPECTED_EXCEPTION
    
    // if we got this far we had an unexpected exception
-   return EXIT_FAILURE ;
+   return EXIT_FAILURE;
 }
 
 

@@ -1,7 +1,7 @@
 /*
  * FindOutputCodec.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,7 @@ import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableRowElement;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.FilePosition;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.HeaderBreaksItemCodec;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputResources.Styles;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindResult;
@@ -74,7 +75,7 @@ public class FindOutputCodec
          return false;
 
       return prevRow == null ||
-             prevRow.getAttribute(DATA_FILE) != row.getAttribute(DATA_FILE);
+             !StringUtil.equals(prevRow.getAttribute(DATA_FILE), row.getAttribute(DATA_FILE));
    }
 
    @Override
@@ -119,7 +120,7 @@ public class FindOutputCodec
       return true;
    }
 
-   private Styles styles_;
+   private final Styles styles_;
 
    private static final String DATA_FILE = "data-file";
    private static final String DATA_LINE = "data-line";

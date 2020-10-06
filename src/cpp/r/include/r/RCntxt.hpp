@@ -1,7 +1,7 @@
 /*
  * RCntxt.hpp
  *
- * Copyright (C) 2009-16 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -51,7 +51,7 @@ public:
    static void unspecified_bool_true() {};
    operator unspecified_bool_type() const 
    { 
-      return pCntxt_ ? unspecified_bool_true : 0; 
+      return pCntxt_ ? unspecified_bool_true : 0;
    }
    bool operator!() const
    {

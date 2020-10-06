@@ -1,7 +1,7 @@
 /*
  * CompilePdfErrorsEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,7 +31,7 @@ public class CompilePdfErrorsEvent extends GwtEvent<CompilePdfErrorsEvent.Handle
    {
       errors_ = errors;
    }
-   
+
    public JsArray<SourceMarker> getErrors()
    {
       return errors_;
@@ -48,8 +48,8 @@ public class CompilePdfErrorsEvent extends GwtEvent<CompilePdfErrorsEvent.Handle
    {
       handler.onCompilePdfErrors(this);
    }
-   
+
    private JsArray<SourceMarker> errors_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

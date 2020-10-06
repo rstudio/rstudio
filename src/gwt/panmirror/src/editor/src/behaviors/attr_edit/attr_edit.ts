@@ -1,7 +1,7 @@
 /*
  * attr_edit.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,16 +16,39 @@
 import { Schema } from 'prosemirror-model';
 
 import { EditorUI } from '../../api/ui';
-import { extensionIfPandocAttrEnabled } from '../../api/pandoc_attr';
+import { pandocAttrEnabled } from '../../api/pandoc_attr';
 
 import { AttrEditCommand } from './attr_edit-command';
+import { AttrEditOptions } from '../../api/attr_edit';
+import { PandocExtensions } from '../../api/pandoc';
+import { AttrEditDecorationPlugin } from './attr_edit-decoration';
+import { Extension } from '../../api/extension';
+import { hasFencedCodeBlocks } from '../../api/pandoc_format';
 
 export const kEditAttrShortcut = 'F4';
 
-const extension = {
-  commands: (_schema: Schema, ui: EditorUI) => {
-    return [new AttrEditCommand(ui)];
-  },
-};
+export function attrEditExtension(
+  pandocExtensions: PandocExtensions,
+  ui: EditorUI,
+  editors: AttrEditOptions[],
+): Extension {
+  const hasAttr = pandocAttrEnabled(pandocExtensions) || hasFencedCodeBlocks(pandocExtensions);
 
-export default extensionIfPandocAttrEnabled(extension);
+  return {
+    commands: (_schema: Schema) => {
+      if (hasAttr) {
+        return [new AttrEditCommand(ui, pandocExtensions, editors)];
+      } else {
+        return [];
+      }
+    },
+
+    plugins: (_schema: Schema) => {
+      if (hasAttr) {
+        return [new AttrEditDecorationPlugin(ui, pandocExtensions, editors)];
+      } else {
+        return [];
+      }
+    },
+  };
+}

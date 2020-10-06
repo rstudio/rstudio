@@ -1,5 +1,7 @@
 FROM ubuntu:xenial
 
+ENV OPERATING_SYSTEM=ubuntu_xenial
+
 ARG AWS_REGION=us-east-1
 
 # install needed packages. replace httpredir apt source with cloudfront
@@ -43,6 +45,7 @@ RUN apt-get update && \
     libssl-dev \
     libuser1-dev \
     libxslt1-dev \
+    libxml2-dev \
     lsof \
     openjdk-8-jdk \
     p7zip-full \

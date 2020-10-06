@@ -1,7 +1,7 @@
 /*
  * EditorModeChangedEvent.java
  *
- * Copyright (C) 2009-16 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,17 +23,17 @@ public class EditorModeChangedEvent extends GwtEvent<EditorModeChangedEvent.Hand
    {
       void onEditorModeChanged(EditorModeChangedEvent event);
    }
-   
+
    public EditorModeChangedEvent(String modeName)
    {
       modeName_ = modeName;
    }
-   
+
    public String getMode()
    {
       return modeName_;
    }
-   
+
    private final String modeName_;
 
    @Override
@@ -48,5 +48,5 @@ public class EditorModeChangedEvent extends GwtEvent<EditorModeChangedEvent.Hand
       handler.onEditorModeChanged(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

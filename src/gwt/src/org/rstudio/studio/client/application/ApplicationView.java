@@ -1,7 +1,7 @@
 /*
  * ApplicationView.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,17 +17,10 @@ package org.rstudio.studio.client.application;
 
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.widget.AriaLiveStatusReporter;
-import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
 
 public interface ApplicationView extends AriaLiveStatusReporter
-{       
-   // show application agreement
-   void showApplicationAgreement(String title,
-                             String contents, 
-                             Operation doNotAcceptOperation,
-                             Operation acceptOperation);
-   
+{
    // set current main view for application
    void showWorkbenchView(Widget widget);
    

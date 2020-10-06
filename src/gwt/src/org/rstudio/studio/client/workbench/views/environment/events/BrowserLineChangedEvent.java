@@ -1,7 +1,7 @@
 /*
  * BrowserLineChangedEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -37,7 +37,7 @@ public class BrowserLineChangedEvent
    {
       return lineData_.getLineNumber();
    }
-   
+
    public int getEndLineNumber()
    {
       return lineData_.getEndLineNumber();
@@ -47,21 +47,21 @@ public class BrowserLineChangedEvent
    {
       return lineData_.getCharacterNumber();
    }
-   
+
    public int getEndCharacterNumber()
    {
       return lineData_.getEndCharacterNumber();
    }
-   
+
    public DebugFilePosition getRange()
    {
       return DebugFilePosition.create(
-            getLineNumber(), 
-            getEndLineNumber(), 
-            getCharacterNumber(), 
+            getLineNumber(),
+            getEndLineNumber(),
+            getCharacterNumber(),
             getEndCharacterNumber());
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -74,6 +74,6 @@ public class BrowserLineChangedEvent
       handler.onBrowserLineChanged(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
    private final LineData lineData_;
 }

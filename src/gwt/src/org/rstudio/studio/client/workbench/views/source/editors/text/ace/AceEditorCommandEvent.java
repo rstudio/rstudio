@@ -1,7 +1,7 @@
 /*
  * AceEditorCommandEvent.java
  *
- * Copyright (C) 2009-16 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -45,42 +45,42 @@ public class AceEditorCommandEvent extends CrossWindowEvent<AceEditorCommandEven
    public static final int BLOCK_INDENT               = 21;
    public static final int BLOCK_OUTDENT              = 22;
    public static final int REINDENT                   = 23;
-   
+
    public static final int EXECUTION_POLICY_FOCUSED = 1;
    public static final int EXECUTION_POLICY_ALWAYS  = 2;
-   
+
    // Required for '@JavaScriptSerializable' but is otherwise unused
    public AceEditorCommandEvent()
    {
       this(-1, -1);
    }
-   
+
    public AceEditorCommandEvent(int command, int policy)
    {
       command_ = command;
       policy_ = policy;
    }
-   
+
    public final int getCommand()
    {
       return command_;
    }
-   
+
    public final int getExecutionPolicy()
    {
       return policy_;
    }
-   
+
    private final int command_;
    private final int policy_;
-   
+
    // Boilerplate ----
-   
+
    public interface Handler extends EventHandler
    {
       void onEditorCommand(AceEditorCommandEvent event);
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -92,7 +92,7 @@ public class AceEditorCommandEvent extends CrossWindowEvent<AceEditorCommandEven
    {
       handler.onEditorCommand(this);
    }
-   
-   public static final Type<Handler> TYPE = new Type<Handler>();
+
+   public static final Type<Handler> TYPE = new Type<>();
 
 }

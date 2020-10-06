@@ -1,7 +1,7 @@
 /*
  * code.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,15 +16,16 @@
 import { Fragment, Mark, Node as ProsemirrorNode, Schema } from 'prosemirror-model';
 
 import { MarkCommand, EditorCommandId } from '../api/command';
-import { Extension } from '../api/extension';
+import { Extension, ExtensionContext } from '../api/extension';
 import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr, pandocAttrReadAST } from '../api/pandoc_attr';
-import { PandocToken, PandocOutput, PandocTokenType, PandocExtensions } from '../api/pandoc';
-import { delimiterMarkInputRule } from '../api/mark';
+import { PandocToken, PandocOutput, PandocTokenType } from '../api/pandoc';
 
-export const kCodeAttr = 0;
-export const kCodeText = 1;
+import { kCodeText, kCodeAttr } from '../api/code';
+import { delimiterMarkInputRule, MarkInputRuleFilter } from '../api/input_rule';
 
-const extension = (pandocExtensions: PandocExtensions): Extension => {
+const extension = (context: ExtensionContext): Extension => {
+  const { pandocExtensions } = context;
+
   const codeAttrs = pandocExtensions.inline_code_attributes;
 
   return {
@@ -32,7 +33,9 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
       {
         name: 'code',
         noInputRules: true,
+        noSpelling: true,
         spec: {
+          group: 'formatting',
           attrs: codeAttrs ? pandocAttrSpec : {},
           parseDOM: [
             {
@@ -47,7 +50,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
             },
           ],
           toDOM(mark: Mark) {
-            const fontClass = 'pm-fixedwidth-font';
+            const fontClass = 'pm-code pm-fixedwidth-font pm-chunk-background-color pm-block-border-color';
             const attrs = codeAttrs
               ? pandocAttrToDomAttr({
                   ...mark.attrs,
@@ -75,18 +78,24 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
             },
           ],
           writer: {
-            priority: 20,
+            // lowest possible mark priority since it doesn't call writeInlines
+            // (so will 'eat' any other marks on the stack)
+            priority: 0,
             write: (output: PandocOutput, mark: Mark, parent: Fragment) => {
-              output.writeToken(PandocTokenType.Code, () => {
-                if (codeAttrs) {
-                  output.writeAttr(mark.attrs.id, mark.attrs.classes, mark.attrs.keyvalue);
-                } else {
-                  output.writeAttr();
-                }
-                let code = '';
-                parent.forEach((node: ProsemirrorNode) => (code = code + node.textContent));
-                output.write(code);
-              });
+              // collect code and trim it (pandoc will do this on parse anyway)
+              let code = '';
+              parent.forEach((node: ProsemirrorNode) => (code = code + node.textContent));
+              code = code.trim();
+              if (code.length > 0) {
+                output.writeToken(PandocTokenType.Code, () => {
+                  if (codeAttrs) {
+                    output.writeAttr(mark.attrs.id, mark.attrs.classes, mark.attrs.keyvalue);
+                  } else {
+                    output.writeAttr();
+                  }
+                  output.write(code);
+                });
+              }
             },
           },
         },
@@ -97,8 +106,8 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
       return [new MarkCommand(EditorCommandId.Code, ['Mod-d'], schema.marks.code)];
     },
 
-    inputRules: (schema: Schema) => {
-      return [delimiterMarkInputRule('`', schema.marks.code)];
+    inputRules: (schema: Schema, filter: MarkInputRuleFilter) => {
+      return [delimiterMarkInputRule('`', schema.marks.code, filter)];
     },
   };
 };

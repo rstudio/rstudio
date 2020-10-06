@@ -1,7 +1,7 @@
 /*
  * AriaLabeledCheckboxCell.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,7 +27,7 @@ import org.rstudio.core.client.StringUtil;
 
 /**
  * A Cell used to render a checkbox. The value of the checkbox may be
- * toggled using the ENTER key as well as via mouse click. The checkbox is 
+ * toggled using the ENTER key as well as via mouse click. The checkbox is
  * identified to screen readers using the supplied text string.
  */
 public class AriaLabeledCheckboxCell extends AbstractEditableCell<LabeledBoolean, LabeledBoolean>

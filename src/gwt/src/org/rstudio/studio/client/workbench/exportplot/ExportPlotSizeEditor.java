@@ -1,7 +1,7 @@
 /*
  * ExportPlotSizeEditor.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -492,6 +492,15 @@ public class ExportPlotSizeEditor extends Composite
    {
       panel.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
       panel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
+   }
+   
+   @Override
+   protected void onAttach()
+   {
+      super.onAttach();
+      
+      // ensure image preview is updated after dialog is shown
+      updatePreview();
    }
    
    private static final int IMAGE_INSET = 6;

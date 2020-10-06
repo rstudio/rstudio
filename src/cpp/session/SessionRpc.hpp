@@ -1,7 +1,7 @@
 /*
  * SessionRpc.hpp
  *
- * Copyright (C) 2009-16 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,7 +24,6 @@
 
 namespace rstudio {
 namespace session {
-
 namespace rpc {
 
 void formatRpcRequest(SEXP name,
@@ -36,6 +35,8 @@ void raiseJsonRpcResponseError(core::json::JsonRpcResponse& response);
 void handleRpcRequest(const core::json::JsonRpcRequest& request,
                       boost::shared_ptr<HttpConnection> ptrConnection,
                       http_methods::ConnectionType connectionType);
+
+void setRpcDelay(int delayMs);
 
 core::Error initialize();
 

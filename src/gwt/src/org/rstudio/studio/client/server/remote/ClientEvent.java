@@ -1,7 +1,7 @@
 /*
  * ClientEvent.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,7 +17,7 @@ package org.rstudio.studio.client.server.remote;
 import com.google.gwt.core.client.JavaScriptObject;
 
 class ClientEvent extends JavaScriptObject
-{   
+{
    public static final String Busy = "busy";
    public static final String ConsolePrompt = "console_prompt";
    public static final String ConsoleOutput = "console_output";
@@ -90,6 +90,7 @@ class ClientEvent extends JavaScriptObject
    public static final String ContextDepthChanged = "context_depth_changed";
    public static final String EnvironmentAssigned = "environment_assigned";
    public static final String EnvironmentRemoved = "environment_removed";
+   public static final String EnvironmentChanged = "environment_changed";
    public static final String BrowserLineChanged = "browser_line_changed";
    public static final String PackageLoaded = "package_loaded";
    public static final String PackageUnloaded = "package_unloaded";
@@ -124,6 +125,7 @@ class ClientEvent extends JavaScriptObject
    public static final String JumpToFunction = "jump_to_function";
    public static final String CollabEditStarted = "collab_edit_started";
    public static final String SessionCountChanged = "session_count_changed";
+   public static final String SessionLabelChanged = "session_label_changed";
    public static final String CollabEditEnded = "collab_edit_ended";
    public static final String ProjectUsersChanged = "project_users_changed";
    public static final String RVersionsChanged = "r_versions_changed";
@@ -175,9 +177,6 @@ class ClientEvent extends JavaScriptObject
    public static final String OpenFileDialog = "open_file_dialog";
    public static final String ShowPageViewer = "show_page_viewer";
    public static final String AskSecret = "ask_secret";
-   public static final String TestsStarted = "tests_started";
-   public static final String TestsOutput = "tests_output";
-   public static final String TestsCompleted = "tests_completed";
    public static final String JobUpdated = "job_updated";
    public static final String JobRefresh = "job_refresh";
    public static final String JobOutput = "job_output";
@@ -191,19 +190,21 @@ class ClientEvent extends JavaScriptObject
    public static final String HighlightUi = "highlight_ui";
    public static final String TutorialCommand = "tutorial_command";
    public static final String TutorialLaunch = "tutorial_launch";
+   public static final String ReticulateEvent = "reticulate_event";
+   public static final String RStudioApiRequest = "rstudioapi_request";
 
    protected ClientEvent()
    {
    }
-   
+
    public final native int getId() /*-{
       return this.id;
    }-*/;
-   
+
    public final native String getType() /*-{
       return this.type;
    }-*/;
-   
+
    public final native <T> T getData() /*-{
       return this.data;
    }-*/;

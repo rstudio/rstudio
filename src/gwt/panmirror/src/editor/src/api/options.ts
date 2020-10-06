@@ -1,7 +1,7 @@
 /*
  * options.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,8 +16,9 @@
 export interface EditorOptions {
   readonly autoFocus?: boolean;
   readonly spellCheck?: boolean;
-  readonly codemirror?: boolean;
+  readonly codeEditor?: string;
   readonly rmdImagePreview?: boolean;
+  readonly rmdExampleHighlight?: boolean;
   readonly hideFormatComment?: boolean;
   readonly className?: string;
 }

@@ -1,7 +1,7 @@
 /*
  * UrlPorts.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -33,7 +33,7 @@
  *    e.g. port-token=a433e59dc087 => multiplier a433, key e59dc087
  *
  * 2. To build an obscured port (for constructing a URL), the 6 bytes of the token are mixed with
- *    the 2 byte port value to create an obscured 4-byte port value, as follows:
+ *    the 2 byte port value to create an obscured 4-byte (plus server nibble) port value, as follows:
  *
  *    a. The port number is sent through a modular multiplicative inverse. This doesn't add any
  *       security; it just obscures common ports in 2-byte space. 
@@ -42,7 +42,10 @@
  *
  *    c. The 4 byte value is XOR'ed with the key to form the final 4-byte obscured value.
  *
- *    d. A URL is formed using a hex-encoded version of the value, e.g. /p/58fab3e4.
+ *    d. If the port to be obscured is a server port (as opposed to a session port), an
+ *       additional nibble based on the first digit of the key is prefixed to the obscured value.
+ * 
+ *    e. A URL is formed using a hex-encoded version of the value, e.g. /p/58fab3e4.
  *
  * 3. When processing portmapped URLs, the value from the port-token cookie is used to run the
  *    algorithm above in reverse to recover the raw port value.
@@ -78,7 +81,7 @@ bool splitToken(const std::string& token, uint32_t* pMultiplier, uint64_t* pKey)
 
 } // anonymous namespace
 
-std::string transformPort(const std::string& token, int port)
+std::string transformPort(const std::string& token, int port, bool server)
 {
    uint32_t multiplier;
    uint64_t key;
@@ -86,6 +89,15 @@ std::string transformPort(const std::string& token, int port)
    {
       // transform, multiply, xor, and return
       uint64_t result = ((TRANSFORM_PORT(port) * multiplier) ^ key);
+      if (server)
+      {
+         // obtain the lower 4 bits (nibble) of the key's 1st byte
+         // if zero, assume it to be at least one - otherwise when
+         // formatted a leading zero wouldn't show up!
+         // use this 9th digit to indicate server routing
+         uint64_t nibble = ((key << 8) & 0xF00000000);
+         result |= std::max(uint64_t(0x100000000), nibble);
+      }
       return (boost::format("%08x") % result).str();
    }
    else
@@ -97,7 +109,7 @@ std::string transformPort(const std::string& token, int port)
    return std::string();
 }
 
-int detransformPort(const std::string& token, const std::string& port)
+int detransformPort(const std::string& token, const std::string& port, bool& server)
 {
    uint32_t multiplier;
    uint64_t key;
@@ -106,7 +118,29 @@ int detransformPort(const std::string& token, const std::string& port)
       try
       {
          // xor, divide, de-transform, and return
-         return DETRANSFORM_PORT((std::stoul(port, nullptr, 16) ^ key) / multiplier);
+         uint64_t result = std::stoull(port, nullptr, 16);
+
+         // a value over 8 hex digits long indicate a server routing
+         server = result > 0xFFFFFFFF;
+         if (server)
+         {
+            // the 9th digit (prefix) should be the lower
+            // 4 bits of the key's 1st byte. If zero, it
+            // should be at least one (to show up in the
+            // formatted port string).
+            uint64_t nibble = (key & 0x0F000000);
+            if (nibble == 0)
+               nibble = 0x01000000;
+
+            // fails if the incoming value prefix doesn't match the key
+            if (nibble != ((result & 0xF00000000) >> 8))
+            {
+               LOG_ERROR_MESSAGE("Invalid indicator on port token '" + token + "'.");
+               return -1;
+            }
+            result &= 0xFFFFFFFF;
+         }
+         return DETRANSFORM_PORT((result ^ key) / multiplier);
       }
       CATCH_UNEXPECTED_EXCEPTION
    }

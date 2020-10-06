@@ -1,7 +1,7 @@
 /*
  * StringUtils.cpp
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -399,7 +399,7 @@ std::string htmlEscape(const std::string& str, bool isAttributeValue)
 {
    std::string escapes = isAttributeValue ?
                          "<>&'\"/\r\n" :
-                         "<>&'\"/" ;
+                         "<>&'\"/";
 
    std::map<char, std::string> subs;
    subs['<'] = "&lt;";

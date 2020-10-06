@@ -1,7 +1,7 @@
 /*
  * Response.hpp
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -51,7 +51,7 @@ namespace http {
 // uri not found handler
 typedef boost::function<void(const Request&, Response*)> NotFoundHandler;
 
-class Cookie ;
+class Cookie;
    
 namespace status {
 enum Code {
@@ -87,7 +87,7 @@ public:
    {
       // this class exists only as a "null" tag for the setBody Filter
       // argument -- it should never actually be used as a filter!
-      BOOST_ASSERT(false); 
+      BOOST_ASSERT(false);
       return boost::iostreams::write(dest, s, n);
    }   
 };
@@ -139,8 +139,8 @@ public:
    int statusCode() const { return statusCode_; }
    void setStatusCode(int statusCode) { statusCode_ = statusCode; }
    
-   const std::string& statusMessage() const; 
-   void setStatusMessage(const std::string& statusMessage) ;
+   const std::string& statusMessage() const;
+   void setStatusMessage(const std::string& statusMessage);
       
    std::string contentEncoding() const;
    void setContentEncoding(const std::string& encoding);
@@ -156,7 +156,7 @@ public:
 
    void addCookie(const Cookie& cookie);
    void clearCookies();
-   Headers getCookies() const;
+   Headers getCookies(const std::vector<std::string>& names = {}) const;
    
    Error setBody(const std::string& content);
    
@@ -217,7 +217,7 @@ public:
          is.exceptions(std::istream::failbit | std::istream::badbit);
          
          // setup filtering stream for writing body
-         boost::iostreams::filtering_ostream filteringStream ;
+         boost::iostreams::filtering_ostream filteringStream;
          
          // don't bother adding the filter if it is the NullOutputFilter
          if ( !boost::is_same<Filter, NullOutputFilter>::value )
@@ -338,16 +338,65 @@ public:
              filePath.getMimeContentType() == "text/html";
    }
    
+   /**
+    * Sets the given file as the response to the request. Allows the file to be cached by the
+    * browser, but ensures that the browser will check for new copies of the file every time (using
+    * revalidation headers).
+    *
+    * @param filePath  The file to set as the response.
+    * @param request   The HTTP request from the browser.
+    */
    void setCacheableFile(const FilePath& filePath, const Request& request)
    {
-      NullOutputFilter nullFilter;
-      setCacheableFile(filePath, request, nullFilter);
+      setCacheWithRevalidationHeaders();
+      setIndefiniteCacheableFile(filePath, request);
    }
-   
+
+   /**
+    * Sets the given file as the response to the request, filtering the file's contents through the
+    * given output filter before returning the response. Allows the result to be cached by the
+    * browser, but ensures that the browser will check for new copies of the file every time (using
+    * revalidation headers).
+    *
+    * @param filePath  The file to set as the response.
+    * @param request   The HTTP request from the browser.
+    * @param filter    An output filter through which to process the file contents.
+    */
    template <typename Filter>
    void setCacheableFile(const FilePath& filePath, 
                          const Request& request, 
                          const Filter& filter)
+   {
+      setCacheWithRevalidationHeaders();
+      setIndefiniteCacheableFile(filePath, request, filter);
+   }
+
+   /**
+    * Sets the given file as the response to the request. Allows the file to be cached by the
+    * browser indefinitely. 
+    *
+    * @param filePath  The file to set as the response.
+    * @param request   The HTTP request from the browser.
+    */
+   void setIndefiniteCacheableFile(const FilePath& filePath, const Request& request)
+   {
+      NullOutputFilter nullFilter;
+      setIndefiniteCacheableFile(filePath, request, nullFilter);
+   }
+   
+   /**
+    * Sets the given file as the response to the request, filtering the file's contents through the
+    * given output filter before returning the response. Allows the result to be cached by the
+    * browser indefinitely. 
+    *
+    * @param filePath  The file to set as the response.
+    * @param request   The HTTP request from the browser.
+    * @param filter    An output filter through which to process the file contents.
+    */
+   template <typename Filter>
+   void setIndefiniteCacheableFile(const FilePath& filePath, 
+                                   const Request& request, 
+                                   const Filter& filter)
    {
       // ensure that the file exists
       if (!filePath.exists())
@@ -372,7 +421,6 @@ public:
          setFile(filePath, request, filter);
       }
    }
-
    void setRangeableFile(const FilePath& filePath, const Request& request);
 
    void setRangeableFile(const std::string& contents,
@@ -411,12 +459,12 @@ public:
 
 private:
    virtual void appendFirstLineBuffers(
-         std::vector<boost::asio::const_buffer>& buffers) const ;
+         std::vector<boost::asio::const_buffer>& buffers) const;
 
    virtual void resetMembers();
       
 private:
-   void ensureStatusMessage() const ;
+   void ensureStatusMessage() const;
    void removeCachingHeaders();
    void setCacheForeverHeaders(bool publicAccessiblity);
    std::string eTagForContent(const std::string& content);
@@ -427,18 +475,18 @@ private:
    // the implementation of the assign method!!!!!
 
 
-   int statusCode_ ;
-   mutable std::string statusMessage_ ;
+   int statusCode_;
+   mutable std::string statusMessage_;
 
    // string storage for integer members (need for toBuffers)
-   mutable std::string statusCodeStr_ ;
+   mutable std::string statusCodeStr_;
 
    NotFoundHandler notFoundHandler_;
 
    boost::shared_ptr<StreamResponse> streamResponse_;
 };
 
-std::ostream& operator << (std::ostream& stream, const Response& r) ;
+std::ostream& operator << (std::ostream& stream, const Response& r);
 
 } // namespace http
 } // namespace core

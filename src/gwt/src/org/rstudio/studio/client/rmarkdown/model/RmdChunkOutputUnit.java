@@ -1,7 +1,7 @@
 /*
  * RmdChunkOutputUnit.java
  *
- * Copyright (C) 2009-16 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -46,7 +46,7 @@ public class RmdChunkOutputUnit extends JavaScriptObject
       return this.output_ordinal;
    }-*/;
 
-   public final native JavaScriptObject getOuputObject() /*-{
+   public final native JavaScriptObject getOutputObject() /*-{
       return this.output_val;
    }-*/;
    

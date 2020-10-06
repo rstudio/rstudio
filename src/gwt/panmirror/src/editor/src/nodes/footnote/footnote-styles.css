@@ -1,7 +1,7 @@
 /*
  * footnote-styles.css
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,7 +25,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  overflow-y: scroll;
+  overflow-y: auto;
 }
 
 .ProseMirror .body {
@@ -37,12 +37,12 @@
 }
 
 .ProseMirror .body.editing-footnote {
-  bottom: 100px;
+  bottom: 160px;
   border-bottom: 1px solid;
 }
 
 .ProseMirror .notes.editing-footnote {
-  height: 90px;
+  height: 150px;
   padding-top: 10px;
   z-index: 5;
 }

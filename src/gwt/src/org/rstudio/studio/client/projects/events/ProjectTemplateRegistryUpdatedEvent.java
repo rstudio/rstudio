@@ -1,7 +1,7 @@
 /*
  * ProjectTemplateRegistryUpdatedEvent.java
  *
- * Copyright (C) 2009-16 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,21 +26,21 @@ public class ProjectTemplateRegistryUpdatedEvent
    {
       data_ = data;
    }
-   
+
    public ProjectTemplateRegistry getData()
    {
       return data_;
    }
-   
+
    private final ProjectTemplateRegistry data_;
-   
+
    // Boilerplate ----
-   
+
    public interface Handler extends EventHandler
    {
       void onProjectTemplateRegistryUpdated(ProjectTemplateRegistryUpdatedEvent event);
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -53,6 +53,6 @@ public class ProjectTemplateRegistryUpdatedEvent
       handler.onProjectTemplateRegistryUpdated(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 
 }

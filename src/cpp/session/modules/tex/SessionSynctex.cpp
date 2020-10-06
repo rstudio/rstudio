@@ -1,7 +1,7 @@
 /*
  * SessionSynctex.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -354,14 +354,14 @@ Error initialize()
                                                          rsinversePostback,
                                                          &ignoredCommand);
    if (error)
-      return error ;
+      return error;
 
 #endif
 
    // install rpc methods
    using boost::bind;
    using namespace module_context;
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "apply_forward_concordance", rpcApplyForwardConcordance))
       (bind(registerRpcMethod, "apply_inverse_concordance", rpcApplyInverseConcordance))

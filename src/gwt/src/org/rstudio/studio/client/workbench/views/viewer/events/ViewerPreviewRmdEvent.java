@@ -1,7 +1,7 @@
 /*
  * ViewerPreviewRmdEvent.java
  *
- * Copyright (C) 2009-14 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,17 +31,17 @@ public class ViewerPreviewRmdEvent extends GwtEvent<ViewerPreviewRmdEvent.Handle
       params_ = params;
       maximize_ = maximize;
    }
-   
+
    public RmdPreviewParams getParams()
    {
       return params_;
    }
-   
+
    public boolean getMaximize()
    {
       return params_.getResult().getForceMaximize() || maximize_;
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -53,9 +53,9 @@ public class ViewerPreviewRmdEvent extends GwtEvent<ViewerPreviewRmdEvent.Handle
    {
       handler.onViewerPreviewRmd(this);
    }
-   
+
    private final RmdPreviewParams params_;
    private final boolean maximize_;
-  
-   public static final Type<Handler> TYPE = new Type<Handler>();
+
+   public static final Type<Handler> TYPE = new Type<>();
 }

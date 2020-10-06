@@ -1,7 +1,7 @@
 /*
  * DocumentChangedEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,21 +25,21 @@ public class DocumentChangedEvent extends GwtEvent<DocumentChangedEvent.Handler>
    {
       event_ = event;
    }
-   
+
    public AceDocumentChangeEventNative getEvent()
    {
       return event_;
    }
-   
+
    private final AceDocumentChangeEventNative event_;
-   
+
    // Boilerplate ----
-   
+
    public interface Handler extends EventHandler
    {
       void onDocumentChanged(DocumentChangedEvent event);
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -52,5 +52,5 @@ public class DocumentChangedEvent extends GwtEvent<DocumentChangedEvent.Handler>
       handler.onDocumentChanged(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

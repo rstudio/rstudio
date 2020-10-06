@@ -1,7 +1,7 @@
 /*
  * mark-highlight.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,6 +35,7 @@ export function markHighlightDecorations(
   className: string,
 ) {
   const decorations: Decoration[] = [];
+  re.lastIndex = 0;
   let match = re.exec(text);
   while (match) {
     decorations.push(
@@ -42,6 +43,7 @@ export function markHighlightDecorations(
     );
     match = re.exec(text);
   }
+  re.lastIndex = 0;
   return decorations;
 }
 
@@ -118,7 +120,7 @@ export function markHighlightPlugin(key: PluginKey<DecorationSet>, markType: Mar
       },
     },
     props: {
-      decorations(state) {
+      decorations(state: EditorState) {
         return key.getState(state);
       },
     },

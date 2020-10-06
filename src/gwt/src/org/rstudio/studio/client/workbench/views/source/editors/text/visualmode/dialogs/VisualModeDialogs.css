@@ -1,0 +1,31 @@
+
+.confirmDialog {
+   width: 450px;
+   padding: 7px;
+}
+
+.confirmLineWrappingDialog {
+   width: 435px;
+   padding: 7px;
+}
+
+.confirmLineWrappingDialog ul {
+   margin-block-start: 10px;
+   margin-block-end: 15px;
+   padding-inline-start: 24px;
+}
+
+.lineWrappingRadio {
+   display: inline-block;
+   margin-top: 10px;
+}
+
+.lineWrappingHelp {
+   margin-top: 20px;
+   margin-bottom: 12px;
+}
+
+.wrapAtColumn {
+   margin-top: 10px;
+   margin-left: 24px;
+}

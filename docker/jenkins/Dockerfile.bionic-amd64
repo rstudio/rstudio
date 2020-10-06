@@ -1,5 +1,7 @@
 FROM ubuntu:bionic
 
+ENV OPERATING_SYSTEM=ubuntu_bionic
+
 ARG AWS_REGION=us-east-1
 
 # install needed packages. replace httpredir apt source with cloudfront
@@ -44,6 +46,7 @@ RUN apt-get update && \
     libsqlite3-dev \
     libuser1-dev \
     libssl-dev \
+    libxml2-dev \
     libxslt1-dev \
     lsof \
     openjdk-8-jdk \

@@ -1,7 +1,7 @@
 /*
  * LauncherJobRunSelectionEvent.java
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -32,7 +32,7 @@ public class LauncherJobRunSelectionEvent extends CrossWindowEvent<LauncherJobRu
       code_ = "";
       path_ = "";
    }
-   
+
    public LauncherJobRunSelectionEvent(String path, String code)
    {
       path_ = path;
@@ -43,12 +43,12 @@ public class LauncherJobRunSelectionEvent extends CrossWindowEvent<LauncherJobRu
    {
       return code_;
    }
-   
+
    public String path()
    {
       return path_;
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -64,5 +64,5 @@ public class LauncherJobRunSelectionEvent extends CrossWindowEvent<LauncherJobRu
    private final String code_;
    private final String path_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

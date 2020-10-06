@@ -1,7 +1,7 @@
 /*
  * SnippetsChangedEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,7 +24,7 @@ public class SnippetsChangedEvent extends GwtEvent<SnippetsChangedEvent.Handler>
    {
       protected Data() {}
    }
-   
+
    public interface Handler extends EventHandler
    {
       void onSnippetsChanged(SnippetsChangedEvent event);
@@ -34,7 +34,7 @@ public class SnippetsChangedEvent extends GwtEvent<SnippetsChangedEvent.Handler>
    {
       data_ = data;
    }
-   
+
    public JsArray<SnippetData> getData()
    {
       return data_;
@@ -52,7 +52,7 @@ public class SnippetsChangedEvent extends GwtEvent<SnippetsChangedEvent.Handler>
       handler.onSnippetsChanged(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
-   
+   public static final Type<Handler> TYPE = new Type<>();
+
    private final Data data_;
 }

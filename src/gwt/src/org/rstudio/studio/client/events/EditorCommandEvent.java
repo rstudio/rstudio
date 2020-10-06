@@ -1,7 +1,7 @@
 /*
  * EditorCommandEvent.java
  *
- * Copyright (C) 2009-16 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,45 +29,45 @@ public class EditorCommandEvent extends CrossWindowEvent<EditorCommandEvent.Hand
       public final native String getType() /*-{ return this["type"]; }-*/;
       public final native JavaScriptObject getData() /*-{ return this["data"]; }-*/;
    }
-   
+
    public EditorCommandEvent()
    {
       type_ = "";
       data_ = JavaScriptObject.createObject();
    }
-   
+
    public EditorCommandEvent(Data data)
    {
       type_ = data.getType();
       data_ = data.getData();
    }
-   
+
    public final String getType()
    {
       return type_;
    }
-   
+
    @SuppressWarnings("unchecked")
    public final <T extends JavaScriptObject> T getData()
    {
       T casted = (T) data_;
       return casted;
    }
-   
+
    private final String type_;
    private final JavaScriptObject data_;
-   
+
    public static final String TYPE_REPLACE_RANGES = "replace_ranges";
    public static final String TYPE_SET_SELECTION_RANGES = "set_selection_ranges";
    public static final String TYPE_EDITOR_CONTEXT = "editor_context";
-   
+
    // Boilerplate ----
-   
+
    public interface Handler extends EventHandler
    {
       void onEditorCommand(EditorCommandEvent event);
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -79,7 +79,7 @@ public class EditorCommandEvent extends CrossWindowEvent<EditorCommandEvent.Hand
    {
       handler.onEditorCommand(this);
    }
-   
-   public static final Type<Handler> TYPE = new Type<Handler>();
+
+   public static final Type<Handler> TYPE = new Type<>();
 
 }

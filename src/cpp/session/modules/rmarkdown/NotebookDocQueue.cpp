@@ -1,7 +1,7 @@
 /*
  * NotebookDocQueue.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -93,7 +93,7 @@ json::Object NotebookDocQueue::toJson() const
 {
    // serialize all the queue units 
    json::Array units;
-   for (const boost::shared_ptr<NotebookQueueUnit> unit : queue_)
+   for (const boost::shared_ptr<NotebookQueueUnit>& unit : queue_)
    {
       units.push_back(unit->toJson());
    }
@@ -117,7 +117,7 @@ core::Error NotebookDocQueue::fromJson(const core::json::Object& source,
    boost::shared_ptr<NotebookDocQueue>* pQueue)
 {
    // extract contained unit for manipulation
-   json::Array units; 
+   json::Array units;
    int commitMode = 0, pixelWidth = 0, charWidth = 0, maxUnits = 0;
    std::string docId, jobDesc, workingDir;
    Error error = json::readObject(source, 

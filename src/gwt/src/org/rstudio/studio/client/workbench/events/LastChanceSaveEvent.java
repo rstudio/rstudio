@@ -1,7 +1,7 @@
 /*
  * LastChanceSaveEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import org.rstudio.core.client.Barrier;
 import org.rstudio.core.client.Barrier.Token;
@@ -29,11 +30,16 @@ import org.rstudio.core.client.Barrier.Token;
  *
  * IMPORTANT NOTE: You MUST call release on the token eventually--this
  * mechanism is not intended to provide quit cancellation functionality,
- * but only to momentarily delay quitting while state is saved! 
+ * but only to momentarily delay quitting while state is saved!
  */
-public class LastChanceSaveEvent extends GwtEvent<LastChanceSaveHandler>
+public class LastChanceSaveEvent extends GwtEvent<LastChanceSaveEvent.Handler>
 {
-   public static final Type<LastChanceSaveHandler> TYPE = new Type<LastChanceSaveHandler>();
+   public static final Type<Handler> TYPE = new Type<>();
+
+   public interface Handler extends EventHandler
+   {
+      void onLastChanceSave(LastChanceSaveEvent event);
+   }
 
    public LastChanceSaveEvent(Barrier barrier)
    {
@@ -49,13 +55,13 @@ public class LastChanceSaveEvent extends GwtEvent<LastChanceSaveHandler>
    }
 
    @Override
-   public Type<LastChanceSaveHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
 
    @Override
-   protected void dispatch(LastChanceSaveHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onLastChanceSave(this);
    }

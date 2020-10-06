@@ -1,7 +1,7 @@
 /*
  * link-headings.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,7 @@ import { findChildrenByType, findChildrenByMark } from 'prosemirror-utils';
 
 import { getMarkRange, getMarkAttrs } from '../../api/mark';
 import { Transaction } from 'prosemirror-state';
+import { equalsIgnoreCase } from '../../api/text';
 
 // detect links to headings within the doc read from pandoc and update the doc
 // to note those headings in the link attributes
@@ -35,11 +36,7 @@ export function linkHeadingsPostprocessor(doc: ProsemirrorNode) {
       const attrs = getMarkAttrs(doc, markRange, schema.marks.link);
       const linkText = doc.textBetween(markRange.from, markRange.to);
       const matchedHeading = headings.find(heading => {
-        return (
-          heading.node.textContent.localeCompare(linkText, undefined, { sensitivity: 'accent' }) === 0 &&
-          !attrs.title &&
-          (attrs.href === '#' || attrs.href.substr(1) === heading.node.attrs.id)
-        );
+        return equalsIgnoreCase(heading.node.textContent, linkText) && !attrs.title && attrs.href === '#';
       });
       if (matchedHeading) {
         // point the link mark at this heading by name
@@ -77,7 +74,7 @@ export function syncHeadingLinksAppendTransaction() {
         if (range) {
           const attrs = getMarkAttrs(tr.doc, range, schema.marks.link);
           const linkText = tr.doc.textBetween(range.from, range.to);
-          if (attrs.heading && attrs.heading !== linkText) {
+          if (attrs.heading && !equalsIgnoreCase(attrs.heading, linkText)) {
             tr.removeMark(range.from, range.to, schema.marks.link);
             tr.addMark(range.from, range.to, schema.marks.link.create({ ...attrs, heading: linkText }));
           }
@@ -90,7 +87,7 @@ export function syncHeadingLinksAppendTransaction() {
         const headingText = heading.node.textContent;
         const headingLink = heading.node.attrs.link;
 
-        if (headingLink && headingLink !== headingText && headingText.length > 0) {
+        if (headingLink && !equalsIgnoreCase(headingLink, headingText) && headingText.length > 0) {
           // set the heading link text
           tr.setNodeMarkup(headingPos, schema.nodes.heading, {
             ...heading.node.attrs,
@@ -103,7 +100,7 @@ export function syncHeadingLinksAppendTransaction() {
             const range = getMarkRange(tr.doc.resolve(linkPos), schema.marks.link);
             if (range) {
               const attrs = getMarkAttrs(tr.doc, range, schema.marks.link);
-              if (attrs.heading === headingLink) {
+              if (equalsIgnoreCase(attrs.heading, headingLink)) {
                 tr.insertText(headingText, range.from, range.to);
                 tr.addMark(
                   range.from,

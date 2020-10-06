@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+
+set -e
+
+echo "About to delete all per-user RStudio state and settings, proceed with caution!"
+echo "(Does not delete Project-specific state in .Rproj.user or global machine state)"
+read -p "Press [enter] to continue or Ctrl+C"
+
+PLATFORM=`uname`
+
+# r state
+rm -f ~/.RData
+rm -f ~/.Rhistory
+
+# global options
+rm -rf ~/.config/rstudio
+rm -rf ~/.r/rstudio
+
+# settings and session state
+rm -rf ~/.rstudio
+
+# open files and tabs
+rm -rf ~/.local/share/rstudio
+
+# desktop state
+rm -rf ~/.rstudio-desktop
+
+# crash handler state
+rm -f ~/.r/crash-handler-permission
+rm -f ~/.r/crash-handler.conf
+
+if [ "${PLATFORM}" = "Darwin" ]; then
+  # macOS desktop settings
+  defaults delete com.rstudio.desktop > /dev/null 2>&1 || true
+  defaults delete com.RStudio.desktop > /dev/null 2>&1 || true
+  defaults delete org.rstudio.RStudio > /dev/null 2>&1 || true
+else
+  # Linux desktop settings
+  rm -rf ~/.config/RStudio
+fi
+
+echo Done cleaning RStudio settings and state

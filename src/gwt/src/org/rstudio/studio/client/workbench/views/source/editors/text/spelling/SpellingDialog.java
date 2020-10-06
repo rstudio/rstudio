@@ -1,7 +1,7 @@
 /*
  * SpellingDialog.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -44,7 +44,7 @@ public class SpellingDialog extends ModalDialogBase implements CheckSpelling.Dis
 
       btnAdd_ = new ThemedButton("Add");
       btnAdd_.setTitle("Add word to user dictionary");
-      btnSkip_ = new ThemedButton("Ignore");
+      btnSkip_ = new ThemedButton("Skip");
       btnIgnoreAll_ = new ThemedButton("Ignore All");
       btnChange_ = new ThemedButton("Change");
       btnChangeAll_ = new ThemedButton("Change All");

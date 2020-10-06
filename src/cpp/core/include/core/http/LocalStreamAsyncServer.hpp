@@ -1,7 +1,7 @@
 /*
  * LocalStreamAsyncServer.hpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -33,7 +33,7 @@ class LocalStreamAsyncServer
 public:
    LocalStreamAsyncServer(const std::string& serverName,
                           const std::string& baseUri,
-                          core::system::FileMode fileMode,
+                          core::FileMode fileMode,
                           bool disableOriginCheck = true,
                           const std::vector<boost::regex>& allowedOrigins = std::vector<boost::regex>(),
                           const Headers& additionalHeaders = Headers())
@@ -52,8 +52,8 @@ public:
          // a stream created by root and then torn down after yielding
          // privilege to a different user)
          if (error && (
-                error.code() != boost::system::errc::permission_denied &&
-                error.code() != boost::system::errc::operation_not_permitted
+                error.getCode() != boost::system::errc::permission_denied &&
+                error.getCode() != boost::system::errc::operation_not_permitted
             ))
             LOG_ERROR(error);
       }
@@ -72,10 +72,10 @@ public:
       // remove any existing stream
       Error error = removeLocalStream();
       if (error)
-         return error ;
+         return error;
       
       // initialize stream dir
-      error = initializeStreamDir(localStreamPath_.parent());
+      error = initializeStreamDir(localStreamPath_.getParent());
       if (error)
          return error;
 
@@ -118,7 +118,7 @@ private:
    }
    
 private:
-   core::system::FileMode fileMode_;
+   core::FileMode fileMode_;
    core::FilePath localStreamPath_;
 
 };

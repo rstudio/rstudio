@@ -14,9 +14,80 @@ checkRUnitTestFailure() {
     fi
 }
 
+findLibSegFault()
+{
+   # if the libsegfault location has not explicitly been set
+   # try to find it in common distribution locations
+   if [[ -z "$${EMPTY}{RSESSION_DIAGNOSTICS_LIBSEGFAULT}" ]]; then
+      if [[ -e /lib/x86_64-linux-gnu/libSegFault.so ]]; then
+         RSESSION_DIAGNOSTICS_LIBSEGFAULT=/lib/x86_64-linux-gnu/libSegFault.so
+      elif [[ -e /lib/i386-linux-gnu/libSegFault.so ]]; then
+         RSESSION_DIAGNOSTICS_LIBSEGFAULT=/lib/i386-linux-gnu/libSegFault.so
+      elif [[ -e /lib64/libSegFault.so ]]; then
+         RSESSION_DIAGNOSTICS_LIBSEGFAULT=/lib64/libSegFault.so
+      elif [[ -e /lib/libSegFault.so ]]; then
+         RSESSION_DIAGNOSTICS_LIBSEGFAULT=/lib/libSegFault.so
+      fi
+   fi
+}
+
+runWatchdogProcess()
+{
+   if [[ "$OSTYPE" == "darwin"* ]]; then
+      # requires brew install coreutils
+      TIMEOUT_CMD=gtimeout
+   else
+      TIMEOUT_CMD=timeout
+   fi
+   timeout=$1
+   privileged=$2
+   command=$3
+   arg1=$4
+   arg2=$5
+   arg3=$6
+   arg4=$7
+   arg5=$8
+
+   # centos6 doesn't support the --foreground option for timeout
+   if [ "$OPERATING_SYSTEM" = "centos_6" ]; then
+      if [ "$privileged" = true ]; then
+         sudo /bin/bash -c "env SEGFAULT_SIGNALS='abrt segv' LD_PRELOAD=$RSESSION_DIAGNOSTICS_LIBSEGFAULT $VALGRIND $command $arg1 $arg2 $arg3 $arg4 $arg5;exit"
+      else
+         /bin/bash -c "env SEGFAULT_SIGNALS='abrt segv' LD_PRELOAD=$RSESSION_DIAGNOSTICS_LIBSEGFAULT $VALGRIND $command $arg1 $arg2 $arg3 $arg4 $arg5;exit"
+      fi
+   else
+      if [ "$privileged" = true ]; then
+         sudo $TIMEOUT_CMD --foreground $timeout /bin/bash -c "env SEGFAULT_SIGNALS='abrt segv' LD_PRELOAD=$RSESSION_DIAGNOSTICS_LIBSEGFAULT $VALGRIND $command $arg1 $arg2 $arg3 $arg4 $arg5;exit"
+      else
+         $TIMEOUT_CMD --foreground $timeout /bin/bash -c "env SEGFAULT_SIGNALS='abrt segv' LD_PRELOAD=$RSESSION_DIAGNOSTICS_LIBSEGFAULT $VALGRIND $command $arg1 $arg2 $arg3 $arg4 $arg5;exit"
+      fi
+   fi
+
+   RETCODE=$?
+   if [ $RETCODE == 124 ]; then
+      # process is hanging - use gdb to collect a stack trace to find out why
+      echo "Hang detected. Dumping backtrace..."
+      if [[ "$OSTYPE" == "darwin"* ]]; then
+         # pidof on Mac doesn't support fully qualified process names
+         commandbase="$(basename $command)"
+      else
+         commandbase=$command
+      fi
+      sudo gdb -q -batch -ex 'thread apply all backtrace' -p "$(pidof $commandbase)"
+      sudo kill -9 "$(pidof $commandbase)"
+      UNIT_TEST_FAILURE=true
+   elif [ $RETCODE != 0 ]; then
+      UNIT_TEST_FAILURE=true
+   else
+      UNIT_TEST_FAILURE=false
+   fi
+}
+
+findLibSegFault
+
 TEST_SCOPE=
-if [ "$1" == "--scope" ]; then 
-   if [ "$#" == 1 ]; then 
+if [ "$1" == "--scope" ]; then
+   if [ "$#" == 1 ]; then
       printf "Specify scope (core, rsession, or r).\n"
       exit 1
    fi
@@ -33,7 +104,7 @@ elif [ "$1" == "--filter" ]; then
    TEST_FILTER="$2"
    shift 2
 
-elif [ "$1" == "--help" ]; then 
+elif [ "$1" == "--help" ]; then
    printf "%s\n\n" "Runs RStudio unit tests. Available flags: "
    printf "%s\n" "--help    Show this help"
    printf "%s\n" "--scope   Run only tests with the given scope (core, rsession, or r)"
@@ -49,7 +120,7 @@ else
    VALGRIND="valgrind --dsymutil=yes $@"
 fi
 
-## On a Debug Mac IDE build via xcodebuild, the executables 
+## On a Debug Mac IDE build via xcodebuild, the executables
 ## will be in a Debug folder
 if [ ! -e "${CMAKE_CURRENT_BINARY_DIR}/core/rstudio-core-tests" ]
 then
@@ -69,34 +140,29 @@ if [ -z "$TEST_SCOPE" ] || [ "$TEST_SCOPE" == "core" ]; then
     if [ -e ${CMAKE_CURRENT_BINARY_DIR}/server_core/rstudio-server-core-tests ]
     then
         echo Running 'server_core' tests...
-        $VALGRIND ${CMAKE_CURRENT_BINARY_DIR}/server_core/rstudio-server-core-tests
-        checkUnitTestFailure
+        runWatchdogProcess 5m false "${CMAKE_CURRENT_BINARY_DIR}/server_core/rstudio-server-core-tests"
     fi
 fi
 
 # Setup for rsession tests
-if [ -e ${CMAKE_CURRENT_BINARY_DIR}/conf/rdesktop-dev.conf ]; then
-   SESSION_CONF_FILE=${CMAKE_CURRENT_BINARY_DIR}/conf/rdesktop-dev.conf
-else
+if [ -e ${CMAKE_CURRENT_BINARY_DIR}/conf/rsession-dev.conf ]; then
    # set R environment variables needed by rsession tests
    export R_HOME=$(R --slave --vanilla -e "cat(paste(R.home('home'),sep=':'))")
    export R_DOC_DIR=$(R --slave --vanilla -e "cat(paste(R.home('doc'),sep=':'))")
 
    SESSION_CONF_FILE=${CMAKE_CURRENT_BINARY_DIR}/conf/rsession-dev.conf
+else
+   SESSION_CONF_FILE=${CMAKE_CURRENT_BINARY_DIR}/conf/rdesktop-dev.conf
 fi
-
 
 if [ -z "$TEST_SCOPE" ] || [ "$TEST_SCOPE" == "rsession" ]; then
     echo Running 'rsession' tests...
 
-    RS_CRASH_HANDLER_PATH="${CMAKE_CURRENT_BINARY_DIR}/server/crash-handler-proxy/crash-handler-proxy" \
-           RS_CRASHPAD_HANDLER_PATH="/opt/rstudio-tools/crashpad/crashpad/out/Default/crashpad_handler" \
-    $VALGRIND ${CMAKE_CURRENT_BINARY_DIR}/session/$RSTUDIO_SESSION_BIN \
-       --run-tests \
-       --config-file="$SESSION_CONF_FILE"
-    checkUnitTestFailure
+    export RS_CRASH_HANDLER_PATH="${CMAKE_CURRENT_BINARY_DIR}/server/crash-handler-proxy/crash-handler-proxy"
+    export RS_CRASHPAD_HANDLER_PATH="/opt/rstudio-tools/crashpad/crashpad/out/Default/crashpad_handler"
+    runWatchdogProcess 5m false "${CMAKE_CURRENT_BINARY_DIR}/session/$RSTUDIO_SESSION_BIN" --run-tests --config-file="$SESSION_CONF_FILE"
 fi
-   
+
 if [ -z "$TEST_SCOPE" ] || [ "$TEST_SCOPE" == "r" ]; then
     echo Running 'r' tests...
 
@@ -104,12 +170,11 @@ if [ -z "$TEST_SCOPE" ] || [ "$TEST_SCOPE" == "r" ]; then
         TESTTHAT_FILTER=", filter = '$TEST_FILTER'"
     fi
 
-    RS_CRASH_HANDLER_PATH="${CMAKE_CURRENT_BINARY_DIR}/server/crash-handler-proxy/crash-handler-proxy" \
-       RS_CRASHPAD_HANDLER_PATH="/opt/rstudio-tools/crashpad/crashpad/out/Default/crashpad_handler" \
-    "${CMAKE_CURRENT_BINARY_DIR}/session/$RSTUDIO_SESSION_BIN" \
-        --run-script "source('${CMAKE_CURRENT_SOURCE_DIR}/tests/testthat/run-tests.R'); runAllTests('${CMAKE_CURRENT_SOURCE_DIR}', '${CMAKE_CURRENT_BINARY_DIR}'$TESTTHAT_FILTER)" \
+    export RS_CRASH_HANDLER_PATH="${CMAKE_CURRENT_BINARY_DIR}/server/crash-handler-proxy/crash-handler-proxy"
+    export RS_CRASHPAD_HANDLER_PATH="/opt/rstudio-tools/crashpad/crashpad/out/Default/crashpad_handler"
+    runWatchdogProcess 5m false "${CMAKE_CURRENT_BINARY_DIR}/session/$RSTUDIO_SESSION_BIN" \
+        --run-script "\"source('${CMAKE_CURRENT_SOURCE_DIR}/tests/testthat/run-tests.R'); runAllTests('${CMAKE_CURRENT_SOURCE_DIR}', '${CMAKE_CURRENT_BINARY_DIR}'$TESTTHAT_FILTER)\"" \
         --config-file="$SESSION_CONF_FILE"
-    checkRUnitTestFailure
 fi
 
 # return an error exit code if any unit tests failed

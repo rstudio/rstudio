@@ -1,7 +1,7 @@
 /*
  * PreferencesDialog.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,10 +16,13 @@ package org.rstudio.studio.client.workbench.prefs.views;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.prefs.PreferencesDialogBase;
+import org.rstudio.core.client.prefs.PreferencesDialogPaneBase;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -37,60 +40,72 @@ import org.rstudio.studio.client.workbench.prefs.model.UserState;
 
 public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
 {
+   /**
+    * Implementation note, when adding a new PreferencesPane, also add a
+    * command for directly showing that pane from the Command Palette. See
+    * WorkbenchScreen.onShowCodeOptions() for an example.
+    */
    @Inject
    public PreferencesDialog(WorkbenchServerOperations server,
                             Session session,
                             PreferencesDialogResources res,
-                            Provider<GeneralPreferencesPane> pR,
+                            GeneralPreferencesPane general,
                             EditingPreferencesPane source,
+                            ConsolePreferencesPane console,
                             RMarkdownPreferencesPane rmarkdown,
                             CompilePdfPreferencesPane compilePdf,
                             AppearancePreferencesPane appearance,
                             PaneLayoutPreferencesPane paneLayout,
                             PackagesPreferencesPane packages,
                             SourceControlPreferencesPane sourceControl,
-                            SpellingPreferencesPane spelling, 
+                            SpellingPreferencesPane spelling,
                             PublishingPreferencesPane publishing,
                             TerminalPreferencesPane terminal,
                             AccessibilityPreferencesPane accessibility,
+                            PythonPreferencesPane python,
                             ApplicationQuit quit,
                             GlobalDisplay globalDisplay,
                             UserPrefs userPrefs,
                             UserState userState)
    {
-      super("Options", 
+      super("Options",
             res.styles().panelContainer(),
+            res.styles().panelContainerNoChooser(),
             true,
-            new PreferencesPane[] {pR.get(),
-                                   source, 
-                                   appearance, 
-                                   paneLayout,
-                                   packages,
-                                   rmarkdown,
-                                   compilePdf,
-                                   spelling,
-                                   sourceControl, 
-                                   publishing,
-                                   terminal,
-                                   accessibility});
+            panes(
+                  general,
+                  source,
+                  console,
+                  appearance,
+                  paneLayout,
+                  packages,
+                  rmarkdown,
+                  compilePdf,
+                  spelling,
+                  sourceControl,
+                  publishing,
+                  terminal,
+                  accessibility,
+                  python));
+      
       session_ = session;
       server_ = server;
       state_ = userState;
       quit_ = quit;
       globalDisplay_ = globalDisplay;
-      
+
       if (!session.getSessionInfo().getAllowVcs())
          hidePane(SourceControlPreferencesPane.class);
-      
+
       if (!session.getSessionInfo().getAllowPublish())
          hidePane(PublishingPreferencesPane.class);
-      
+
       else if (!session.getSessionInfo().getAllowExternalPublish() &&
                !userState.enableRsconnectPublishUi().getValue())
       {
          hidePane(PublishingPreferencesPane.class);
       }
-      
+
       if (!session.getSessionInfo().getAllowShell())
       {
          hidePane(TerminalPreferencesPane.class);
@@ -104,7 +119,7 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
    {
       return RStudioGinjector.INSTANCE.getUserPrefs();
    }
-  
+
    @Override
    protected void doSaveChanges(final UserPrefs rPrefs,
                                 final Operation onCompleted,
@@ -123,12 +138,15 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
                state_.writeState();
 
                progressIndicator.onCompleted();
+               
                if (onCompleted != null)
                   onCompleted.execute();
-               if (restartRequirement.getDesktopRestartRequired())
-                  restart(globalDisplay_, quit_, session_);
-               if (restartRequirement.getUiReloadRequired())
-                  reload();
+               
+               handleRestart(
+                     globalDisplay_,
+                     quit_,
+                     session_,
+                     restartRequirement);
             }
 
             @Override
@@ -137,16 +155,27 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
                progressIndicator.onError(error.getUserMessage());
             }
          });
-      
+
       // broadcast UI pref changes to satellites
       RStudioGinjector.INSTANCE.getSatelliteManager().dispatchCrossWindowEvent(
                      new UserPrefsChangedEvent(session_.getSessionInfo().getUserPrefLayer()));
    }
-  
+
    public static void ensureStylesInjected()
    {
       GWT.<PreferencesDialogResources>create(PreferencesDialogResources.class).styles().ensureInjected();
    }
+   
+   @SafeVarargs
+   private static final List<PreferencesDialogPaneBase<UserPrefs>> panes(
+      PreferencesDialogPaneBase<UserPrefs>... paneList)
+   {
+      List<PreferencesDialogPaneBase<UserPrefs>> allPanes = new ArrayList<>();
+      for (PreferencesDialogPaneBase<UserPrefs> pane : paneList)
+         allPanes.add(pane);
+      return allPanes;
+   }
+   
 
    private final WorkbenchServerOperations server_;
    private final Session session_;

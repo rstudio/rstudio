@@ -2,12 +2,16 @@
 
 @eval THEME_DARKGREY_MENU_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyMenuBorder;
 
-
 .dialog {
    width: 380px;
    margin-bottom: 10px;
    position: relative;
 }
+
+.dialogWide {
+   width: 425px !important;
+}
+
 	   
 .dialog label,
 .dialog .gwt-Label {
@@ -29,13 +33,18 @@
    margin-top: 5px;
 }
 
+.dialog .inlineInfoLabel {
+   margin-left: 6px;
+   color: rgb(96,96,96);
+}
+
 .dialog .heightAuto {
-	color: #606060;
-	margin-right: 7px;
+   color: #606060;
+   margin-right: 7px;
 }
 
 .lockRatioCheckbox {
-	 margin-left: 3px;
+    margin-left: 3px;
 }
 
 .dialog .fullWidth {
@@ -43,11 +52,25 @@
 }
 
 .dialog .fullWidth select {
+   width: 100%;
+}
+
+.dialog .fullWidthSelect {
+   width: 100%;
+}
+
+.dialog .fullWidthTable {
 	width: 100%;
 }
 
 .spaced {
    margin-bottom: 10px;
+}
+
+.listBox {
+	border: solid 1px #a3a8b2;
+	border-radius: 2px;
+	height: 22px;
 }
 
 .dialog .checkBox  input[type="checkbox"] {
@@ -74,8 +97,8 @@
 }
 
 .imageDialogTabs {
-	width: 380px;
-	height: 295px;
+   width: 380px;
+   height: 295px;
 }
 
 .hrefSelect {
@@ -106,5 +129,33 @@
    overflow: hidden;
    text-overflow: ellipsis;
 }
+
+.flexTablePreview {
+   -moz-box-sizing: border-box;
+   -webkit-box-sizing: border-box;
+   box-sizing: border-box;
+   border: 1px solid #c3c5c7;
+   border-radius: 4px;
+   resize: none;
+   width: 100%;
+   padding: 2px;
+}
+
+.flexTablePreviewName {
+   vertical-align: top;
+   font-weight: 600;
+   padding-right: 8px;
+   padding-bottom: 4px;
+}
+
+.flexTablePreviewValue {
+   font-weight: 500;
+   padding-bottom: 4px;
+}
+
+.disabled label {
+   color: rgba(0, 0, 0, 0.6);
+}
+
 
 

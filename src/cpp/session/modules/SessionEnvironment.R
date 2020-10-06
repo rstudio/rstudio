@@ -1,7 +1,7 @@
 #
 # SessionEnvironment.R
 #
-# Copyright (C) 2009-16 by RStudio, PBC
+# Copyright (C) 2020 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -12,6 +12,35 @@
 # AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
 #
 #
+
+.rs.addJsonRpcHandler("is_function_masked", function(functionName,
+                                                     packageName)
+{
+   result <- tryCatch(
+      .rs.isFunctionMasked(functionName, packageName),
+      error = function(e) FALSE
+   )
+   
+   .rs.scalar(result)
+})
+
+.rs.addFunction("isFunctionMasked", function(functionName,
+                                             packageName)
+{
+   globalValue  <- get(
+      x = functionName,
+      envir = globalenv(),
+      mode = "function"
+   )
+   
+   packageValue <- get(
+      x = functionName,
+      envir = asNamespace(packageName),
+      mode = "function"
+   )
+   
+   !identical(globalValue, packageValue)
+})
 
 .rs.addFunction("valueFromStr", function(val)
 {
@@ -24,99 +53,146 @@
 .rs.addFunction("valueAsString", function(val)
 {
    tryCatch(
-   {
-      is.scalarOrVector <- function (x) {
-         if (is.null(attributes(x)))
-         {
-            !is.na(c(NULL=TRUE,
-                     logical=TRUE,
-                     double=TRUE,
-                     integer=TRUE,
-                     complex=TRUE,
-                     character=TRUE)[typeof(x)])
-         }
-         else
-         {
-            FALSE
-         }
-      }
+      .rs.valueAsStringImpl(val),
+      error = function(e) "NO_VALUE"
+   )
+})
 
-      if (is.scalarOrVector(val))
+.rs.addFunction("valueAsStringImpl", function(val)
+{
+   if (is.null(val))
+   {
+      "NULL"
+   }
+   else if (is.character(val) && !is.object(val))
+   {
+      # for plain character variables, we 'mock' the behavior of str()
+      # while avoiding the potential for re-encoding (as this could mangle
+      # UTF-8 characters on Windows)
+      n <- length(val)
+      if (n == 0)
       {
-         if (length(val) == 0)
-            return (paste(.rs.getSingleClass(val), " (empty)"))
-         if (length(val) == 1)
-         {
-            quotedVal <- deparse(val)
-            if (nchar(quotedVal) < 1024)
-                return (quotedVal)
-            else
-                return (paste(substr(quotedVal, 1, 1024), " ..."))
-         }
-         else if (length(val) > 1)
-            return (.rs.valueFromStr(val))
-         else
-            return ("NO_VALUE")
+         "character (empty)"
       }
-      else if (is(val, "python.builtin.object")) {
-         return (.rs.valueFromStr(val))
-      }
-      else if (.rs.isFunction(val))
-         return (.rs.getSignature(val))
-      else if (is(val, "Date") || is(val, "POSIXct") || is(val, "POSIXlt")) {
-         if (length(val) == 1)
-           return (format(val))
-         else
-           return (.rs.valueFromStr(val))
+      else if (n == 1)
+      {
+         encodeString(val, quote = "\"", na.encode = FALSE)
       }
       else
-         return ("NO_VALUE")
-   },
-   error = function(e) 
-   { 
-      # Don't print errors--they'll appear in the R console. Instead, let the
-      # client deal with errors by handling the special value NO_VALUE.
-   })
-
-   return ("NO_VALUE")
+      {
+         encoded <- encodeString(
+            head(val, n = 128L),
+            quote = "\"",
+            na.encode = FALSE
+         )
+         
+         fmt <- "chr [1:%i] %s"
+         txt <- sprintf(fmt, n, paste(encoded, collapse = " "))
+         .rs.truncate(txt)
+      }
+   }
+   else if (is.raw(val))
+   {
+      if (length(val) == 0)
+      {
+         "raw (empty)"
+      }
+      else
+      {
+         .rs.valueFromStr(val)
+      }
+   }
+   else if (is.atomic(val) && is.null(attributes(val)))
+   {
+      n <- length(val)
+      if (n == 0)
+      {
+         paste(.rs.getSingleClass(val), " (empty)")
+      }
+      else if (n == 1)
+      {
+         .rs.truncate(.rs.deparse(val), 1024L)
+      }
+      else
+      {
+         .rs.valueFromStr(val)
+      }
+   }
+   else if (inherits(val, "python.builtin.object"))
+   {
+      .rs.valueFromStr(val)
+   }
+   else if (.rs.isFunction(val))
+   {
+      .rs.getSignature(val)
+   }
+   else if (inherits(val, c("Date", "POSIXct", "POSIXlt")))
+   {
+      if (length(val) == 1)
+      {
+         format(val, usetz = TRUE)
+      }
+      else
+      {
+         .rs.valueFromStr(val)
+      }
+   }
+   else
+   {
+      "NO_VALUE"
+   }
 })
 
 .rs.addFunction("valueContents", function(val)
 {
    tryCatch(
+      .rs.valueContentsImpl(val),
+      error = function(e) "NO_VALUE"
+   )
+})
+
+.rs.addFunction("valueContentsImpl", function(val)
+{
+   if (inherits(val, "ore.frame"))
    {
       # for Oracle R frames, show the query if it exists
-      if (is(val, "ore.frame")) 
-      {
-        query <- attr(val, "dataQry", exact = TRUE) 
-
-        # no query, show empty
-        if (is.null(query))
-          return("NO_VALUE") 
-
-        # query, display it
-        attributes(query) <- NULL
-        return(paste("   Query:", query))
-      }
-
+      query <- attr(val, "dataQry", exact = TRUE)
+      
+      # no query, show empty
+      if (is.null(query))
+         return("NO_VALUE") 
+      
+      # query, display it
+      attributes(query) <- NULL
+      paste("   Query:", query)
+   }
+   else if (inherits(val, "pandas.core.frame.DataFrame"))
+   {
+      output <- reticulate::py_to_r(val$to_string(max_rows = 150L))
+      strsplit(output, "\n", fixed = TRUE)[[1]]
+   }
+   else
+   {
+      output <- .rs.valueFromStr(val)
+      
+      n <- length(output)
+      
       # only return the first 150 lines of detail (generally columns)--any more
       # won't be very presentable in the environment pane. the first line
       # generally contains descriptive text, so don't return that.
-      output <- .rs.valueFromStr(val)
-      lines <- length(output)
-      if (lines > 150) {
-        output <- c(output[2:150], 
-                    paste("  [... ", lines - 150, " lines omitted]", 
-                          sep = ""))
-      } 
-      else if (lines > 1) {
+      if (n > 150)
+      {
+         fmt <- "  [... %i lines omitted]"
+         tail <- sprintf(fmt, n - 150)
+         output <- c(output[2:150], tail)
+      }
+      else if (n > 1)
+      {
         output <- output[-1]
       }
-      return(output)
-   },
-   error = function(e) { })
-
-   return ("NO_VALUE")
+      
+      output
+   }
 })
 
 .rs.addFunction("isFunction", function(val)
@@ -405,15 +481,16 @@
 
 .rs.addFunction("getSingleClass", function(obj)
 {
-   className <- "(unknown)"
-   tryCatch(className <- class(obj)[1],
-            error = function(e) print(e))
-   return (className)
+   class(obj)[[1L]]
 })
 
 .rs.addFunction("describeObject", function(env, objName, computeSize = TRUE)
 {
    obj <- get(objName, env)
+   
+   if (inherits(obj, "python.builtin.object"))
+      return(.rs.reticulate.describeObject(objName, env))
+   
    # objects containing null external pointers can crash when
    # evaluated--display generically (see case 4092)
    hasNullPtr <- .Call("rs_hasExternalPointer", obj, TRUE, PACKAGE = "(embedding)")
@@ -434,9 +511,11 @@
       size <- if (computeSize) object.size(obj) else 0
       len <- length(obj)
    }
+   
    class <- .rs.getSingleClass(obj)
    contents <- list()
    contents_deferred <- FALSE
+   
    # for language objects, don't evaluate, just show the expression
    if (is.language(obj) || is.symbol(obj))
    {
@@ -449,10 +528,15 @@
       # copied, which is slow for large objects.
       if (size > 524288)
       {
-         len_desc <- if (len > 1) 
-                   paste(len, " elements, ", sep="")
-                else 
-                   ""
+         len_desc <- if (len > 1)
+         {
+            paste(len, " elements, ", sep = "")
+         }
+         else
+         {
+            ""
+         }
+         
          # data frames are likely to be large, but a summary is still helpful
          if (is.data.frame(obj))
          {
@@ -461,8 +545,8 @@
          }
          else
          {
-            val <- paste("Large ", class, " (", len_desc, 
-                         format(size, units="auto", standard="SI"), ")", sep="")
+            fmt <- "Large %s (%s %s)"
+            val <- sprintf(fmt, class, len_desc, format(size, units = "auto", standard = "SI"))
          }
          contents_deferred <- TRUE
       }
@@ -472,14 +556,8 @@
          desc <- .rs.valueDescription(obj)
 
          # expandable object--supply contents 
-         if (class == "data.table" ||
-             class == "ore.frame" ||
-             class == "cast_df" ||
-             class == "xts" ||
-             class == "DataFrame" ||
-             is.list(obj) || 
-             is.data.frame(obj) ||
-             isS4(obj))
+         if (is.list(obj) ||  is.data.frame(obj) || isS4(obj) ||
+             inherits(obj, c("data.table", "ore.frame", "cast_df", "xts", "DataFrame")))
          {
             if (computeSize)
             {
@@ -495,17 +573,20 @@
          }
       }
    }
+   
    list(
-      name = .rs.scalar(objName),
-      type = .rs.scalar(class),
-      clazz = c(class(obj), typeof(obj)),
-      is_data = .rs.scalar(is.data.frame(obj)),
-      value = .rs.scalar(val),
-      description = .rs.scalar(desc),
-      size = .rs.scalar(size),
-      length = .rs.scalar(len),
-      contents = contents,
-      contents_deferred = .rs.scalar(contents_deferred))
+      name              = .rs.scalar(objName),
+      type              = .rs.scalar(class),
+      clazz             = c(class(obj), typeof(obj)),
+      is_data           = .rs.scalar(is.data.frame(obj)),
+      value             = .rs.scalar(val),
+      description       = .rs.scalar(desc),
+      size              = .rs.scalar(size),
+      length            = .rs.scalar(len),
+      contents          = contents,
+      contents_deferred = .rs.scalar(contents_deferred)
+   )
+   
 })
 
 # returns the name and frame number of an environment from a call frame
@@ -567,7 +648,7 @@
       # resolve namespaces
       if ((result %in% loadedNamespaces()) && 
           identical(asNamespace(result), env))
-         paste("namespace:", result, sep="")
+         paste("namespace:", result, sep = "")
       else
          result
    }
@@ -590,12 +671,14 @@
          # if this frame is from the callstack, store it and proceed
          if (frame$frame > 0)
          {
-            envs[[length(envs)+1]] <- frame 
+            envs[[length(envs) + 1]] <- frame
             env <- parent.env(env)
          }
          # otherwise, stop here and get names normally
          else
+         {
             break
+         }
       }
    }
    # we're now past the call-frame portion of the stack; proceed normally
@@ -611,14 +694,13 @@
 
       # hide the RStudio internal tools environment and the autoloads
       # environment, and any environment that doesn't have a name
-      if (nchar(envName) > 0 &&
-          envName != "tools:rstudio" &&
-          envName != "Autoloads")
+      if (nzchar(envName) && !envName %in% c("tools:rstudio", "Autoloads"))
       {
-         envs[[length(envs)+1]] <-
-                        list (name = .rs.scalar(envName),
-                              frame = .rs.scalar(0L),
-                              local = .rs.scalar(local))
+         envs[[length(envs) + 1]] <- list(
+            name = .rs.scalar(envName),
+            frame = .rs.scalar(0L),
+            local = .rs.scalar(local)
+         )
       }
       env <- parent.env(env)
    }
@@ -627,26 +709,29 @@
 
 .rs.addFunction("removeObjects", function(objNames, env)
 {
-   remove(list=unlist(objNames), envir=env)
+   objects <- unlist(objNames)
+   rm(list = objects, envir = env)
 })
 
 .rs.addFunction("removeAllObjects", function(includeHidden, env)
 {
-   rm(list=ls(envir=env, all.names=includeHidden), envir=env)
+   objects <- ls(envir = env, all.names = includeHidden)
+   rm(list = objects, envir = env)
 })
 
 .rs.addFunction("getObjectContents", function(objName, env)
 {
-   .rs.valueContents(get(objName, env));
+   object <- get(objName, envir = env)
+   .rs.valueContents(object)
 })
 
 .rs.addFunction("isAltrep", function(var)
 {
-   .Call("rs_isAltrep", var, PACKAGE="(embedding)")
+   .Call("rs_isAltrep", var, PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("hasAltrep", function(var)
 {
-   .Call("rs_hasAltrep", var, PACKAGE="(embedding)")
+   .Call("rs_hasAltrep", var, PACKAGE = "(embedding)")
 })
 

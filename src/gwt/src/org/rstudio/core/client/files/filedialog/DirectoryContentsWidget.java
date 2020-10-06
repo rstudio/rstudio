@@ -1,7 +1,7 @@
 /*
  * DirectoryContentsWidget.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -37,7 +37,6 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
-import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.CanFocus;
@@ -98,7 +97,7 @@ public class DirectoryContentsWidget
 
       progressPanel_ = new SimplePanelWithProgress();
       progressPanel_.setWidget(null);
-      
+
       buffer_ = new StringBuilder();
       bufferTimer_ = new Timer()
       {
@@ -124,7 +123,7 @@ public class DirectoryContentsWidget
          {
             event.preventDefault();
             event.stopPropagation();
-            
+
             // IE10: focusing the the table element causes the scroll panel to
             // snap it to the top, scrolling the event target offscreen. Set
             // and restore the position after focus.
@@ -164,7 +163,7 @@ public class DirectoryContentsWidget
          {
             bufferTimer_.schedule(700);
             int keyCode = event.getNativeKeyCode();
-            
+
             if (keyCode >= 'A' && keyCode <= 'Z' ||
                 keyCode >= '0' && keyCode <= '9' ||
                 keyCode == '.' || keyCode == '_' || keyCode == '-')
@@ -172,12 +171,12 @@ public class DirectoryContentsWidget
                char ch = (char) keyCode;
                if (keyCode >= 'A' && keyCode <= 'Z' && !event.isShiftKeyDown())
                   ch = Character.toLowerCase(ch);
-               
+
                buffer_.append(ch);
                selectBufferMatch();
                return;
             }
-            
+
             switch (keyCode)
             {
                case KeyCodes.KEY_DOWN:
@@ -242,42 +241,42 @@ public class DirectoryContentsWidget
          }
       });
    }
-   
+
    private void commitSelection(FileSystemItem item)
    {
       buffer_.setLength(0);
       SelectionCommitEvent.fire(DirectoryContentsWidget.this, item);
    }
-   
+
    private void onBackspace()
    {
       if (!items_.containsKey(".."))
          return;
-      
+
       FileSystemItem item = items_.get("..");
       commitSelection(item);
    }
-   
+
    private interface StringTransformer
    {
       public String transform(String string);
    }
-   
+
    private static class IdentityStringTransformer implements StringTransformer
    {
       public String transform(String string) { return string; }
    }
-   
+
    private static class LowerCaseStringTransformer implements StringTransformer
    {
       public String transform(String string) { return string.toLowerCase(); }
    }
-   
+
    private boolean selectBufferMatchImpl(String buffer, StringTransformer transformer)
    {
       String string = transformer.transform(buffer);
       int i = 0;
-      
+
       for (Map.Entry<String, FileSystemItem> entry : items_.entrySet())
       {
          String fileName = transformer.transform(entry.getKey());
@@ -286,22 +285,22 @@ public class DirectoryContentsWidget
             setSelectedRow(i);
             return true;
          }
-         
+
          i++;
       }
-      
+
       return false;
    }
-   
+
    private void selectBufferMatch()
    {
       if (buffer_.length() == 0)
          return;
-      
+
       String buffer = buffer_.toString();
       if (selectBufferMatchImpl(buffer, new IdentityStringTransformer()))
          return;
-      
+
       if (selectBufferMatchImpl(buffer, new LowerCaseStringTransformer()))
          return;
    }
@@ -410,7 +409,7 @@ public class DirectoryContentsWidget
          customIcon = context_.getIcon(item);
 
       items_.put(customName, item);
-      
+
       int newRow = table_.insertRow(table_.getRowCount());
       Element tr = table_.getRowFormatter().getElement(newRow);
       Roles.getOptionRole().set(tr);
@@ -433,7 +432,7 @@ public class DirectoryContentsWidget
          table_.setText(newRow,
                         COL_SIZE,
                         StringUtil.formatFileSize(item.getLength()));
-         
+
          table_.setText(newRow,
                         COL_TIMESTAMP,
                         StringUtil.formatDate(item.getLastModified()));
@@ -473,7 +472,7 @@ public class DirectoryContentsWidget
    }
 
    public HandlerRegistration addSelectionCommitHandler(
-         SelectionCommitHandler<FileSystemItem> handler)
+         SelectionCommitEvent.Handler<FileSystemItem> handler)
    {
       return addHandler(handler, SelectionCommitEvent.getType());
    }
@@ -506,12 +505,12 @@ public class DirectoryContentsWidget
       else
          focusImpl_.blur(table_.getElement());
    }
-   
+
    public void focus()
    {
       setFocus(true);
    }
-   
+
    private Map<String, FileSystemItem> items_ = new LinkedHashMap<>();
    private final DoubleClickState doubleClick_ = new DoubleClickState();
    private Integer selectedRow_;

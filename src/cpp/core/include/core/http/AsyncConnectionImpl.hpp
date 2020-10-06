@@ -1,7 +1,7 @@
 /*
  * AsyncConnectionImpl.hpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -104,7 +104,7 @@ public:
          http::Request*)> Handler;
 
     typedef boost::function<void(
-         boost::shared_ptr<AsyncConnectionImpl<SocketType>>)> ClosedHandler;
+         boost::weak_ptr<AsyncConnectionImpl<SocketType>>)> ClosedHandler;
 
    typedef boost::function<bool(
          boost::shared_ptr<AsyncConnectionImpl<SocketType> >,
@@ -147,7 +147,13 @@ public:
 
    virtual ~AsyncConnectionImpl()
    {
-      close();
+      try
+      {
+         close();
+      }
+      catch(...)
+      {
+      }
    }
 
    SocketType& socket()
@@ -197,7 +203,7 @@ public:
 
       // call the response filter if we have one
       if (responseFilter_)
-         responseFilter_(absoluteUri_, &response_);
+         responseFilter_(originalRequest_, &response_);
 
       if (response_.isStreamResponse())
       {
@@ -285,6 +291,7 @@ public:
    {
       // ensure the socket is only closed once - boost considers
       // multiple closes an error, and this can lead to a segfault
+      ClosedHandler closedHandler;
       RECURSIVE_LOCK_MUTEX(mutex_)
       {
          if (!closed_)
@@ -294,15 +301,18 @@ public:
                LOG_ERROR(error);
 
             closed_ = true;
+            closedHandler = onClosed_;
 
             // cleanup any associated data with the connection
             connectionData_.clear();
-
-            // notify that we have closed the connection
-            onClosed_(AsyncConnectionImpl<SocketType>::shared_from_this());
          }
       }
       END_LOCK_MUTEX;
+
+      // notify that we have closed the connection
+      // we do this after giving up the mutex to prevent potential deadlock
+      if (closedHandler)
+         closedHandler(AsyncConnectionImpl<SocketType>::weak_from_this());
    }
 
    void setUploadHandler(const AsyncUriUploadHandlerFunction& handler)
@@ -386,8 +396,8 @@ private:
             // headers parsed - body parsing has not yet begun
             else if (status == RequestParser::headers_parsed)
             {
-               // record the original uri
-               absoluteUri_ = request_.absoluteUri();
+               // record the original request
+               originalRequest_.assign(request_);
 
                // call the request filter if we have one
                if (requestFilter_)
@@ -505,8 +515,11 @@ private:
          {
             // log the error if it wasn't connection terminated
             Error error(e, ERROR_LOCATION);
-            if (!http::isConnectionTerminatedError(error))
+            if (!http::isConnectionTerminatedError(error) &&
+                !http::isWrongProtocolTypeError((error)))
+            {
                LOG_ERROR(error);
+            }
          }
          
          // close the socket
@@ -580,9 +593,9 @@ private:
    FormHandler formHandler_;
    RequestFilter requestFilter_;
    ResponseFilter responseFilter_;
-   boost::array<char, 8192> buffer_ ;
-   RequestParser requestParser_ ;
-   std::string absoluteUri_;
+   boost::array<char, 8192> buffer_;
+   RequestParser requestParser_;
+   Request originalRequest_;
    http::Request request_;
    http::Response response_;
 

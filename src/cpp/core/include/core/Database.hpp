@@ -32,7 +32,10 @@ namespace database {
 
 struct SqliteConnectionOptions
 {
+   SqliteConnectionOptions(const std::string& file) : file(file), readonly(false) {}
+   SqliteConnectionOptions() : readonly(false) {}
    std::string file;
+   bool readonly;
 };
 
 struct PostgresqlConnectionOptions
@@ -40,9 +43,11 @@ struct PostgresqlConnectionOptions
    std::string database;
    std::string host;
    std::string port;
-   std::string user;
+   std::string username;
    std::string password;
+   std::string connectionUri;
    int connectionTimeoutSeconds;
+   std::string secureKey;
 };
 
 enum class Driver
@@ -287,6 +292,10 @@ private:
    boost::shared_ptr<IConnection> connection_;
    FilePath migrationsPath_;
 };
+
+// validates connection options - used for test purposes only
+Error validateOptions(const ConnectionOptions& options,
+                      std::string* pConnectionStr);
 
 // connect to the database with the specified connection options
 Error connect(const ConnectionOptions& options,

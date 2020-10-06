@@ -1,7 +1,7 @@
 /*
  * SessionBuild.cpp
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -1200,10 +1200,11 @@ private:
       if (type == kTestShinyFile) {
         shinyTestName = shinyPath.getFilename();
         shinyPath = shinyPath.getParent();
-        if (shinyPath.getFilename() == "shinytests")
+        if (shinyPath.getFilename() == "shinytests" ||
+            shinyPath.getFilename() == "shinytest")
         {
-           // In newer versions of shinytest, tests are stored in a "shinytests" folder under the
-           // "tests" folder.
+           // In newer versions of shinytest, tests are stored in a "shinytest" or "shinytests"
+           // folder under the "tests" folder.
            shinyPath = shinyPath.getParent();
         }
         if (shinyPath.getFilename() == "tests")
@@ -2187,7 +2188,7 @@ Error initialize()
    // install rpc methods
    using boost::bind;
    using namespace module_context;
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "start_build", startBuild))
       (bind(registerRpcMethod, "terminate_build", terminateBuild))

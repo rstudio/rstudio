@@ -1,7 +1,7 @@
 /*
  * SessionConsoleInput.cpp
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -74,8 +74,8 @@ void consolePrompt(const std::string& prompt, bool addToHistory)
    s_lastPrompt = prompt;
 
    // enque the event
-   json::Object data ;
-   data["prompt"] = prompt ;
+   json::Object data;
+   data["prompt"] = prompt;
    data["history"] = addToHistory;
    bool isDefaultPrompt = 
       prompt == rstudio::r::options::getOption<std::string>("prompt");
@@ -86,7 +86,7 @@ void consolePrompt(const std::string& prompt, bool addToHistory)
    clientEventQueue().add(consolePromptEvent);
    
    // allow modules to detect changes after execution of previous REPL
-   module_context::events().onDetectChanges(module_context::ChangeSourceREPL);   
+   module_context::events().onDetectChanges(module_context::ChangeSourceREPL);
 
    // call prompt hook
    module_context::events().onConsolePrompt(prompt);
@@ -194,6 +194,9 @@ void fixupPendingConsoleInput()
    // NOTE: should consider using tokenizer here
    boost::regex reBlockStart(":\\s*(?:#|$)");
    
+   // used to detect whitespace-only lines
+   boost::regex reWhitespace("^\\s*$");
+   
    // keep track of the indentation used for the current block
    // of Python code (default to no indent)
    std::string blockIndent;
@@ -209,7 +212,9 @@ void fixupPendingConsoleInput()
       if (pyReplActive)
       {
          // if the line is empty, then replace it with the appropriate indent
-         if (line.empty())
+         // (exclude last line in selection so that users submitting a whole
+         // 'block' will see that block 'closed')
+         if (line.empty() && i != n - 1)
          {
             line = blockIndent;
          }
@@ -224,12 +229,22 @@ void fixupPendingConsoleInput()
          // if it looks like we're starting a new Python block,
          // then update our indent. perform a lookahead for the
          // next non-blank line, and use that line's indent
-         else if (boost::regex_search(line, reBlockStart))
+         else if (regex_utils::search(line, reBlockStart))
          {
             for (std::size_t j = i + 1; j < n; j++)
             {
                const std::string& lookahead = lines[j];
-               if (lookahead.empty())
+               
+               // skip blank / whitespace-only lines, to allow
+               // for cases like:
+               //
+               //    def foo():
+               //
+               //        x = 1
+               //
+               // where there might be empty whitespace between
+               // the function definition and the start of its body
+               if (regex_utils::match(lookahead, reWhitespace))
                   continue;
                
                blockIndent = string_utils::extractIndent(lookahead);
@@ -246,7 +261,7 @@ void fixupPendingConsoleInput()
          //    "foo"         <--
          //
          // so update the indent in that case
-         else
+         else if (!regex_utils::match(line, reWhitespace))
          {
             std::string lineIndent = string_utils::extractIndent(line);
             if (lineIndent.length() < blockIndent.length())
@@ -309,7 +324,7 @@ bool rConsoleRead(const std::string& prompt,
          consolePrompt(prompt, addToHistory);
 
       // wait for console_input
-      json::JsonRpcRequest request ;
+      json::JsonRpcRequest request;
       bool succeeded = http_methods::waitForMethod(
                         kConsoleInput,
                         boost::bind(consolePrompt, prompt, addToHistory),
@@ -329,8 +344,10 @@ bool rConsoleRead(const std::string& prompt,
          LOG_ERROR(error);
          *pConsoleInput = rstudio::r::session::RConsoleInput("", "");
       }
-      
-      popConsoleInput(pConsoleInput);
+      else
+      {
+         popConsoleInput(pConsoleInput);
+      }
    }
 
    // fire onBeforeExecute and onConsoleInput events if this isn't a cancel

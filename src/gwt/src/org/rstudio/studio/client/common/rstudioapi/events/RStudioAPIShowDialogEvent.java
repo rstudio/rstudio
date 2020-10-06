@@ -1,7 +1,7 @@
 /*
  * RStudioAPIShowDialogEvent.java
  *
- * Copyright (C) 2009-16 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,9 +24,9 @@ public class RStudioAPIShowDialogEvent extends GwtEvent<RStudioAPIShowDialogEven
    public static class Data extends JavaScriptObject
    {
       protected Data()
-      {  
+      {
       }
-      
+
       public final native String getMessage() /*-{
          return this.message;
       }-*/;
@@ -69,7 +69,7 @@ public class RStudioAPIShowDialogEvent extends GwtEvent<RStudioAPIShowDialogEven
    {
       data_ = data;
    }
-   
+
    public String getMessage()
    {
       return data_.getMessage();
@@ -109,7 +109,7 @@ public class RStudioAPIShowDialogEvent extends GwtEvent<RStudioAPIShowDialogEven
    {
       return data_.getUrl();
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -121,8 +121,8 @@ public class RStudioAPIShowDialogEvent extends GwtEvent<RStudioAPIShowDialogEven
    {
       handler.onRStudioAPIShowDialogEvent(this);
    }
-   
+
    private final Data data_;
-  
-   public static final Type<Handler> TYPE = new Type<Handler>();
+
+   public static final Type<Handler> TYPE = new Type<>();
 }

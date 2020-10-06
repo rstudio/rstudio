@@ -1,7 +1,7 @@
 /*
  * AceTheme.java
  *
- * Copyright (C) 2009-2019 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -55,6 +55,10 @@ public class AceTheme extends UserStateAccessor.Theme
    public native final Boolean isDark()
    /*-{
       return this.isDark;
+   }-*/;
+   
+   public native final Boolean isSolarizedLight() /*-{
+      return this.url.indexOf('solarized_light.rstheme') !== -1;
    }-*/;
    
    public final Boolean isDefaultTheme()

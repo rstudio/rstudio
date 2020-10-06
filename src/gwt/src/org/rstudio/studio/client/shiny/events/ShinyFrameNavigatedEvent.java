@@ -1,7 +1,7 @@
 /*
  * ShinyFrameNavigatedEvent.java
  *
- * Copyright (C) 2009-16 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,9 +23,9 @@ public class ShinyFrameNavigatedEvent extends GwtEvent<ShinyFrameNavigatedEvent.
    public static class Data extends JavaScriptObject
    {
       protected Data()
-      {  
+      {
       }
-      
+
       public final native String getUrl() /*-{
          return this.url;
       }-*/;
@@ -40,12 +40,12 @@ public class ShinyFrameNavigatedEvent extends GwtEvent<ShinyFrameNavigatedEvent.
    {
       data_ = data;
    }
-   
+
    public String getURL()
    {
       return data_.getUrl();
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -57,8 +57,8 @@ public class ShinyFrameNavigatedEvent extends GwtEvent<ShinyFrameNavigatedEvent.
    {
       handler.onShinyFrameNavigated(this);
    }
-   
+
    private final Data data_;
-  
-   public static final Type<Handler> TYPE = new Type<Handler>();
+
+   public static final Type<Handler> TYPE = new Type<>();
 }

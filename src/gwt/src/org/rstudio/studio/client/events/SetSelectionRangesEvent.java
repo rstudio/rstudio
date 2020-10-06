@@ -1,7 +1,7 @@
 /*
  * SetSelectionRangesEvent.java
  *
- * Copyright (C) 2009-13 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,52 +28,52 @@ public class SetSelectionRangesEvent extends CrossWindowEvent<SetSelectionRanges
    public static class Data extends JavaScriptObject
    {
       protected Data() {}
-      
+
       public final native String getId() /*-{ return this["id"]; }-*/;
       public final native JsArray<Range> getRanges() /*-{
-         
+
          if (this["$ranges"])
             return this["$ranges"];
-         
+
          var result = [];
          var Range = $wnd.require("ace/range").Range;
-         
+
          var ranges = this["ranges"];
          for (var i = 0; i < ranges.length; i++) {
             var range = ranges[i];
             result.push(new Range(range[0], range[1], range[2], range[3]));
          }
-         
+
          this["$ranges"] = result;
          return result;
-         
+
       }-*/;
    }
-   
+
    public interface Handler extends EventHandler
    {
       void onSetSelectionRanges(SetSelectionRangesEvent event);
    }
-   
+
    public SetSelectionRangesEvent()
    {
       this(null);
    }
-   
+
    public SetSelectionRangesEvent(Data data)
    {
       data_ = data;
    }
-   
+
    public Data getData()
    {
       return data_;
    }
-   
+
    private final Data data_;
-   
+
    // Boilerplate ----
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -85,7 +85,7 @@ public class SetSelectionRangesEvent extends CrossWindowEvent<SetSelectionRanges
    {
       handler.onSetSelectionRanges(this);
    }
-   
-   public static final Type<Handler> TYPE = new Type<Handler>();
+
+   public static final Type<Handler> TYPE = new Type<>();
 
 }

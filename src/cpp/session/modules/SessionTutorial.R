@@ -1,7 +1,7 @@
 #
 # SessionTutorial.R
 #
-# Copyright (C) 2009-20 by RStudio, PBC
+# Copyright (C) 2020 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -247,7 +247,23 @@
    
    tutorialFile <- tutorialFiles[[1]]
    contents <- readLines(tutorialFile, encoding = "UTF-8", warn = FALSE)
-   yaml <- rmarkdown:::parse_yaml_front_matter(contents)
+   
+   # find YAML header (if any). note that we avoid using rmarkdown here
+   # just because we want to avoid loading the package and all its
+   # recursive dependencies, as this could introduce issues for users
+   # who need to update packages
+   reYamlSeparator <- "^\\s*(?:---|[.][.][.])\\s*$"
+   yamlSeparators <- grep(reYamlSeparator, contents)
+   if (length(yamlSeparators) == 0)
+      return(NULL)
+
+   yamlRange <- seq.int(
+      from       = yamlSeparators[[1]] + 1,
+      length.out = yamlSeparators[[2]] - yamlSeparators[[1]] - 1
+   )
+   
+   yamlCode <- contents[yamlRange]
+   yaml <- yaml::yaml.load(paste(yamlCode, collapse = "\n"))
    
    title <- .rs.nullCoalesce(yaml$title, "")
    desc  <- .rs.nullCoalesce(yaml$description, "")

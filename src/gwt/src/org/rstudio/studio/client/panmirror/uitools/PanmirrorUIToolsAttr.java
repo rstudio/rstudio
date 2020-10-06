@@ -1,7 +1,7 @@
 /*
  * PanmirrorUIToolsAttr.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,5 +26,6 @@ public class PanmirrorUIToolsAttr
 {
    public native PanmirrorAttrEditInput propsToInput(PanmirrorAttrProps attr);
    public native PanmirrorAttrProps inputToProps(PanmirrorAttrEditInput input);
+   public native String pandocAutoIdentifier(String text);
 }
 

@@ -1,7 +1,7 @@
 /*
  * TutorialCommandEvent.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,47 +29,47 @@ public class TutorialCommandEvent extends CrossWindowEvent<TutorialCommandEvent.
       public final native String getType()           /*-{ return this["type"]; }-*/;
       public final native JavaScriptObject getData() /*-{ return this["data"]; }-*/;
    }
-   
+
    public TutorialCommandEvent()
    {
       type_ = "";
       data_ = JavaScriptObject.createObject();
    }
-   
+
    public TutorialCommandEvent(Data data)
    {
       type_ = data.getType();
       data_ = data.getData();
    }
-   
+
    public TutorialCommandEvent(String type, JavaScriptObject data)
    {
       type_ = type;
       data_ = data;
    }
-   
+
    public final String getType()
    {
       return type_;
    }
-   
+
    @SuppressWarnings("unchecked")
    public final <T extends JavaScriptObject> T getData()
    {
       T casted = (T) data_;
       return casted;
    }
-   
+
    private final String type_;
    private final JavaScriptObject data_;
-   
+
    // Boilerplate ----
-   
+
    public interface Handler extends EventHandler
    {
       void onTutorialCommand(TutorialCommandEvent event);
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -81,9 +81,9 @@ public class TutorialCommandEvent extends CrossWindowEvent<TutorialCommandEvent.
    {
       handler.onTutorialCommand(this);
    }
-   
-   public static final Type<Handler> TYPE = new Type<Handler>();
-   
+
+   public static final Type<Handler> TYPE = new Type<>();
+
    public static final String TYPE_STARTED = "started";
    public static final String TYPE_STOP = "stop";
    public static final String TYPE_NAVIGATE = "navigate";

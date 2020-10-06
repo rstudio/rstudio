@@ -1,7 +1,7 @@
 /*
  * Util.hpp
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -48,18 +48,18 @@ public:
    }
    bool operator()(const Field& field) 
    { 
-      return name_.compare(field.first) == 0; 
+      return name_.compare(field.first) == 0;
    }
 private:
-   std::string name_ ;
-};     
+   std::string name_;
+};
    
 struct File
 {
    bool empty() const { return name.empty(); }
    std::string name;
    std::string contentType;
-   std::string contents;   
+   std::string contents;
 };
 
 typedef std::map<std::string,File> Files;
@@ -128,7 +128,7 @@ void parseFields(const std::string& fields,
                  const char* fieldDelim, 
                  const char* valueDelim, 
                  Fields* pFields, 
-                 FieldDecodeType fieldDecode) ;
+                 FieldDecodeType fieldDecode);
    
 void parseForm(const std::string& body, Fields* pFields);
    

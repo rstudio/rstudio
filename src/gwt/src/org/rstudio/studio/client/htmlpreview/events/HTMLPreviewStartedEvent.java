@@ -1,7 +1,7 @@
 /*
  * HTMLPreviewStartedEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,18 +19,18 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class HTMLPreviewStartedEvent extends GwtEvent<HTMLPreviewStartedEvent.Handler>
-{  
+{
    public static class Data extends JavaScriptObject
    {
       protected Data()
-      {  
+      {
       }
-      
+
       public final native String getTargetFile() /*-{
          return this.target_file;
       }-*/;
    }
-   
+
    public interface Handler extends EventHandler
    {
       void onHTMLPreviewStarted(HTMLPreviewStartedEvent event);
@@ -45,7 +45,7 @@ public class HTMLPreviewStartedEvent extends GwtEvent<HTMLPreviewStartedEvent.Ha
    {
       return data_.getTargetFile();
    }
-    
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -57,8 +57,8 @@ public class HTMLPreviewStartedEvent extends GwtEvent<HTMLPreviewStartedEvent.Ha
    {
       handler.onHTMLPreviewStarted(this);
    }
-   
+
    private final Data data_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

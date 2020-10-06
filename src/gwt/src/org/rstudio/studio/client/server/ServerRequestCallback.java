@@ -1,7 +1,7 @@
 /*
  * ServerRequestCallback.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,17 +19,14 @@ import org.rstudio.core.client.jsonrpc.RpcRequest;
 
 public abstract class ServerRequestCallback<T>
 { 
+   public abstract void onResponseReceived(T response);
+   public abstract void onError(ServerError error);
+   
    public void onRequestInitiated(RpcRequest request)
    {
       request_ = request;
    }
 
-   public void onResponseReceived(T response)
-   {
-   }
-   
-   public abstract void onError(ServerError error);
-   
    public void cancel()
    {
       if (request_ != null)

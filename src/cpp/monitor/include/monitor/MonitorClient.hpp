@@ -1,7 +1,7 @@
 /*
  * MonitorClient.hpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -56,12 +56,14 @@ protected:
    Client(const std::string& tcpAddress,
           const std::string& tcpPort,
           bool useSsl,
+          bool verifySslCerts,
           const std::string& prefixUri,
           const std::string& auth,
           bool useSharedSecret)
       : address_(tcpAddress),
         port_(tcpPort),
         useSsl_(useSsl),
+        verifySslCerts_(verifySslCerts),
         prefixUri_(prefixUri),
         auth_(auth),
         useSharedSecret_(useSharedSecret)
@@ -92,6 +94,7 @@ public:
    const std::string& tcpAddress() const { return address_; }
    const std::string& tcpPort() const { return port_; }
    bool useSsl() const { return useSsl_; }
+   bool verifySslCerts() const { return verifySslCerts_; }
    const std::string& prefixUri() const { return prefixUri_; }
 
    bool useSharedSecret() const { return useSharedSecret_; }
@@ -105,6 +108,7 @@ private:
    std::string address_;
    std::string port_;
    bool useSsl_;
+   bool verifySslCerts_;
    std::string prefixUri_;
 
    std::string auth_;
@@ -123,6 +127,7 @@ void initializeMonitorClient(const std::string& metricsSocket,
 void initializeMonitorClient(const std::string& tcpAddress,
                              const std::string& tcpPort,
                              bool useSsl,
+                             bool verifySslCerts,
                              const std::string& prefixUri,
                              const std::string& auth,
                              bool useSharedSecret = false);
@@ -130,6 +135,7 @@ void initializeMonitorClient(const std::string& tcpAddress,
 void initializeMonitorClient(const std::string& tcpAddress,
                              const std::string& tcpPort,
                              bool useSsl,
+                             bool verifySslCerts,
                              const std::string& prefixUri,
                              const std::string& auth,
                              boost::asio::io_service& ioService,

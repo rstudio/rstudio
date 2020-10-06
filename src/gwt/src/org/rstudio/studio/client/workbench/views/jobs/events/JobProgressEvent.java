@@ -1,7 +1,7 @@
 /*
  * JobProgressEvent.java
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,23 +25,23 @@ public class JobProgressEvent extends GwtEvent<JobProgressEvent.Handler>
    {
       void onJobProgress(JobProgressEvent event);
    }
-   
+
    // constructor used when there's no progress
    public JobProgressEvent()
    {
       progress_ = null;
    }
-   
+
    public JobProgressEvent(LocalJobProgress progress)
    {
       progress_ = progress;
    }
-   
+
    public boolean hasProgress()
    {
       return progress_ != null;
    }
-   
+
    public LocalJobProgress progress()
    {
       return progress_;
@@ -58,8 +58,8 @@ public class JobProgressEvent extends GwtEvent<JobProgressEvent.Handler>
    {
       handler.onJobProgress(this);
    }
-   
+
    private final LocalJobProgress progress_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

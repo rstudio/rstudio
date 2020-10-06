@@ -1,7 +1,7 @@
 /*
  * RmdRenderCompletedEvent.java
  *
- * Copyright (C) 2009-14 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,7 +21,7 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class RmdRenderCompletedEvent extends GwtEvent<RmdRenderCompletedEvent.Handler>
-{  
+{
    public interface Handler extends EventHandler
    {
       void onRmdRenderCompleted(RmdRenderCompletedEvent event);
@@ -36,7 +36,7 @@ public class RmdRenderCompletedEvent extends GwtEvent<RmdRenderCompletedEvent.Ha
    {
       return result_;
    }
-    
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -48,8 +48,8 @@ public class RmdRenderCompletedEvent extends GwtEvent<RmdRenderCompletedEvent.Ha
    {
       handler.onRmdRenderCompleted(this);
    }
-   
+
    private final RmdRenderResult result_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

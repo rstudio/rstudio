@@ -1,7 +1,7 @@
 /*
  * dom.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -36,4 +36,17 @@ export function elementInnerDimensions(el: HTMLElement) {
     width: el.offsetWidth - paddingX - borderX,
     height: el.offsetHeight - paddingY - borderY,
   };
+}
+
+export function onElementRemoved(container: Node, el: HTMLElement, onRemoved: VoidFunction) {
+  const observer = new MutationObserver(mutationsList => {
+    mutationsList.forEach(mutation => {
+      mutation.removedNodes.forEach(node => {
+        if (node === el) {
+          onRemoved();
+        }
+      });
+    });
+  });
+  observer.observe(container, { attributes: false, childList: true, subtree: true });
 }

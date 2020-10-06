@@ -1,7 +1,7 @@
 /*
  * math-styles.css
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,6 +13,25 @@
  *
  */
 
+.ProseMirror .math {
+  display: inline-block;
+}
+
 .ProseMirror .math[data-type='DisplayMath'] {
   white-space: pre-wrap;  
+  margin: 0.5em;
+}
+
+.ProseMirror .math[data-type='DisplayMath'],
+.ProseMirror .math[data-type='DisplayMath'] .pm-math-mathjax  {
+  width: 100%; 
+}
+
+.pm-math-mathjax {
+  display: inline-block;
+  cursor: text;
+}
+
+.pm-math-mathjax .MJXc-display {
+  margin: 0;
 }

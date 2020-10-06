@@ -1,7 +1,7 @@
 /*
  * MenuEmitter.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,12 +25,91 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 
 public class MenuEmitter
 {
+   private class AccessKeyTracker
+   {
+      public AccessKeyTracker(String menuName)
+      {
+         menuName_ = menuName;
+         Character[] alphabet = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
+            'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'};
+         availableKeys_ = new LinkedHashSet<>(Arrays.asList(alphabet));
+      }
+
+      public void processMenu(String menuText)
+      {
+         int index = menuText.indexOf('_');
+         if (index < 0 || index == menuText.length() - 1)
+         {
+            missingKeys_.add("SUBMENU: " + menuText);
+            return;
+         }
+
+         char accessKey = Character.toLowerCase(menuText.charAt(index + 1));
+         availableKeys_.remove(accessKey);
+      }
+
+      public void processCommand(String commandId) throws UnableToCompleteException
+      {
+         // special handling for the "mru" commands; these have no default menu labels
+         if (commandId.matches("mru[0-9]+") ||
+             commandId.matches("projectMru[0-9]+"))
+            return;
+
+         String menuText = commandProps_.get(commandId).getAttribute("menuLabel");
+         if (menuText == null || menuText.isEmpty())
+            menuText = commandProps_.get(commandId).getAttribute("label");
+         if (menuText == null || menuText.isEmpty())
+         {
+            logger_.log(TreeLogger.Type.ERROR, "No menuLabel or label for " + commandId);
+            throw new UnableToCompleteException();
+         }
+         int index = menuText.indexOf('_');
+         if (index < 0 || index == menuText.length() - 1)
+         {
+            missingKeys_.add(commandId);
+            return;
+         }
+
+         char accessKey = Character.toLowerCase(menuText.charAt(index + 1));
+         availableKeys_.remove(accessKey);
+      }
+
+      public void report() throws UnableToCompleteException
+      {
+         if (missingKeys_.isEmpty())
+            return;
+
+         logger_.log(TreeLogger.Type.ERROR, "Menu [" + menuName_ + "]");
+         for (String commandId : missingKeys_)
+            logger_.log(TreeLogger.Type.ERROR, "   [" + commandId + "] has no access key");
+
+         StringBuilder message = new StringBuilder("   Available keys are: [");
+         for (char ch : availableKeys_)
+         {
+            message.append(ch);
+         }
+         message.append("]");
+         logger_.log(TreeLogger.Type.ERROR, message.toString());
+         throw new UnableToCompleteException();
+      }
+
+      private final List<String> missingKeys_ = new ArrayList<>();
+      private final LinkedHashSet<Character> availableKeys_;
+      private final String menuName_;
+   }
+
    public MenuEmitter(TreeLogger logger,
                       GeneratorContext context,
                       JClassType bundleType,
+                      Map<String, Element> commandProps,
                       Element menuEl) throws UnableToCompleteException
    {
       logger_ = logger;
@@ -38,6 +117,7 @@ public class MenuEmitter
       bundleType_ = bundleType;
       menuEl_ = menuEl;
       menuId_ = menuEl.getAttribute("id");
+      commandProps_ = commandProps;
       if (menuId_.length() == 0)
       {
          logger.log(TreeLogger.Type.ERROR, "Menu must have an id attribute");
@@ -94,15 +174,16 @@ public class MenuEmitter
 
       writer.println("callback.beginMainMenu();");
       // Vertical defaults to true
-      emitMenu(writer, menuEl_);
+      emitMenu(writer, menuEl_, "main");
       writer.println("callback.endMainMenu();");
 
       writer.outdent();
       writer.println("}");
    }
 
-   private void emitMenu(SourceWriter writer, Element el) throws UnableToCompleteException
+   private void emitMenu(SourceWriter writer, Element el, String menuName) throws UnableToCompleteException
    {
+      AccessKeyTracker accessKeys = new AccessKeyTracker(menuName);
       for (Node n = el.getFirstChild(); n != null; n = n.getNextSibling())
       {
          if (n.getNodeType() != Node.ELEMENT_NODE)
@@ -116,6 +197,7 @@ public class MenuEmitter
             writer.print("callback.addCommand(");
             writer.print("\"" + Generator.escape(cmdId) + "\", ");
             writer.println("this.cmds." + cmdId + "());");
+            accessKeys.processCommand(cmdId);
          }
          else if (child.getTagName().equals("separator"))
          {
@@ -127,8 +209,9 @@ public class MenuEmitter
             writer.println("callback.beginMenu(\"" +
                            Generator.escape(label) +
                            "\");");
-            emitMenu(writer, child);
+            emitMenu(writer, child, label);
             writer.println("callback.endMenu();");
+            accessKeys.processMenu(label);
          }
          else if (child.getTagName().equals("dynamic"))
          {
@@ -142,6 +225,7 @@ public class MenuEmitter
             throw new UnableToCompleteException();
          }
       }
+      accessKeys.report();
    }
 
    private final TreeLogger logger_;
@@ -150,4 +234,5 @@ public class MenuEmitter
    private final String menuId_;
    private final Element menuEl_;
    private final String packageName_;
+   private final Map<String, Element> commandProps_;
 }

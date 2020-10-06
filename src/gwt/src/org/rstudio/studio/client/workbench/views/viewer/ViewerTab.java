@@ -1,7 +1,7 @@
 /*
  * ViewerTab.java
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * This program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
@@ -26,7 +26,7 @@ import org.rstudio.studio.client.workbench.views.viewer.events.ViewerPreviewRmdE
 
 public class ViewerTab extends DelayLoadWorkbenchTab<ViewerPresenter>
 {
-   public abstract static class Shim 
+   public abstract static class Shim
         extends DelayLoadTabShim<ViewerPresenter, ViewerTab>
         implements ViewerNavigateEvent.Handler,
                    ViewerPreviewRmdEvent.Handler,
@@ -39,14 +39,14 @@ public class ViewerTab extends DelayLoadWorkbenchTab<ViewerPresenter>
    {
       super("Viewer", shim);
       session_ = session;
-      
+
       eventBus.addHandler(ViewerNavigateEvent.TYPE, shim);
       eventBus.addHandler(ViewerPreviewRmdEvent.TYPE, shim);
       eventBus.addHandler(ViewerClearedEvent.TYPE, shim);
       eventBus.addHandler(ShinyApplicationStatusEvent.TYPE, shim);
       eventBus.addHandler(PlumberAPIStatusEvent.TYPE, shim);
    }
-   
+
    @SuppressWarnings("unused")
    private Session session_;
 }

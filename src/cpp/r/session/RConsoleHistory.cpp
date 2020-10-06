@@ -1,7 +1,7 @@
 /*
  * RConsoleHistory.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,8 +35,8 @@ namespace session {
    
 ConsoleHistory& consoleHistory()
 {
-   static ConsoleHistory instance ;
-   return instance ;
+   static ConsoleHistory instance;
+   return instance;
 }
    
 ConsoleHistory::ConsoleHistory()
@@ -72,7 +72,7 @@ void ConsoleHistory::add(const std::string& command)
       boost::char_separator<char> lineSep("\n");
       boost::tokenizer<boost::char_separator<char> > lines(command, lineSep);
       for (boost::tokenizer<boost::char_separator<char> >::iterator 
-           lineIter = lines.begin(); 
+           lineIter = lines.begin();
            lineIter != lines.end();
            ++lineIter)
       {

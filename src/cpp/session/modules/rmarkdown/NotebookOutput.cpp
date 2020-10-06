@@ -1,7 +1,7 @@
 /*
  * NotebookOutput.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -306,9 +306,9 @@ Error handleChunkOutputRequest(const http::Request& request,
       // in server mode, or if a reference to the chunk library folder, we can
       // reuse the contents (let the browser cache the file)
       if (isHtml)
-         pResponse->setCacheableFile(target, request, HtmlWidgetFilter());
+         pResponse->setIndefiniteCacheableFile(target, request, HtmlWidgetFilter());
       else
-         pResponse->setCacheableFile(target, request);
+         pResponse->setIndefiniteCacheableFile(target, request);
    }
    else
    {

@@ -1,7 +1,7 @@
 /*
  * PreferencesDialogBase.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,6 +23,8 @@ import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 
+import java.util.List;
+
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.Operation;
@@ -38,34 +40,37 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
 {
    protected PreferencesDialogBase(String caption,
                                    String panelContainerStyle,
+                                   String panelContainerStyleNoChooser,
                                    boolean showApplyButton,
-                                   PreferencesDialogPaneBase<T>[] panes)
+                                   List<PreferencesDialogPaneBase<T>> panes)
    {
       super(Roles.getDialogRole());
       setText(caption);
+      
       panes_ = panes;
-      
-      PreferencesDialogBaseResources res = 
-                                   PreferencesDialogBaseResources.INSTANCE;
-      
+      panelContainerStyle_ = panelContainerStyle;
+      panelContainerStyleNoChooser_ = panelContainerStyleNoChooser;
+
+      PreferencesDialogBaseResources res = PreferencesDialogBaseResources.INSTANCE;
+
       sectionChooser_ = new SectionChooser(caption);
-      
+
       ThemedButton okButton = new ThemedButton(
             "OK",
             clickEvent -> attemptSaveChanges(() -> closeDialog()));
       addOkButton(okButton, ElementIds.PREFERENCES_CONFIRM);
       addCancelButton();
-      
+
       if (showApplyButton)
       {
          addButton(new ThemedButton("Apply",
                                     clickEvent -> attemptSaveChanges()),
                                     ElementIds.DIALOG_APPLY_BUTTON);
       }
-      
+
       progressIndicator_ = addProgressIndicator(false);
       panel_ = new DockLayoutPanel(Unit.PX);
-      panel_.setStyleName(panelContainerStyle);
+      panel_.setStyleName(panelContainerStyle_);
       container_ = new FlowPanel();
       container_.getElement().getStyle().setPaddingLeft(10, Unit.PX);
 
@@ -100,17 +105,17 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
             refreshFocusableElements();
 
          if (currentIndex_ != null)
-            setPaneVisibility(panes_[currentIndex_], false);
+            setPaneVisibility(panes_.get(currentIndex_), false);
 
          currentIndex_ = index;
 
          if (currentIndex_ != null)
-            setPaneVisibility(panes_[currentIndex_], true);
+            setPaneVisibility(panes_.get(currentIndex_), true);
       });
 
       sectionChooser_.select(0);
    }
-   
+
    public void initialize(T prefs)
    {
       for (PreferencesDialogPaneBase<T> pane : panes_)
@@ -118,24 +123,39 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
          pane.initialize(prefs);
       }
    }
-   
+
    public void activatePane(int index)
    {
       sectionChooser_.select(index);
    }
-   
+
    public void activatePane(Class<?> clazz)
    {
-      for (int i = 0; i < panes_.length; i++)
+      for (int i = 0; i < panes_.size(); i++)
       {
-         if (panes_[i].getClass() == clazz)
+         if (panes_.get(i).getClass() == clazz)
          {
             activatePane(i);
             break;
          }
       }
    }
-   
+
+   public void setShowPaneChooser(boolean showPaneChooser)
+   {
+      panel_.setWidgetHidden(sectionChooser_, !showPaneChooser);
+      if (showPaneChooser)
+      {
+         panel_.removeStyleName(panelContainerStyleNoChooser_);
+         panel_.addStyleName(panelContainerStyle_);
+      }
+      else
+      {
+         panel_.removeStyleName(panelContainerStyle_);
+         panel_.addStyleName(panelContainerStyleNoChooser_);
+      }
+   }
+
    private void setPaneVisibility(PreferencesDialogPaneBase<T> pane, boolean visible)
    {
       pane.setPaneVisible(visible);
@@ -151,24 +171,24 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
    {
       sectionChooser_.hideSection(index);
    }
-   
+
    protected void hidePane(Class<?> clazz)
    {
-      for (int i = 0; i < panes_.length; i++)
+      for (int i = 0; i < panes_.size(); i++)
       {
-         if (panes_[i].getClass() == clazz)
+         if (panes_.get(i).getClass() == clazz)
          {
             hidePane(i);
             break;
          }
       }
    }
-   
+
    protected void attemptSaveChanges()
    {
       attemptSaveChanges(null);
    }
-   
+
    private void attemptSaveChanges(final Operation onCompleted)
    {
       if (validate())
@@ -186,28 +206,78 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
          doSaveChanges(prefs, onCompleted, progressIndicator_, restartRequirement);
       }
    }
-   
+
    protected abstract T createEmptyPrefs();
-   
+
    protected abstract void doSaveChanges(T prefs,
                                          Operation onCompleted,
                                          ProgressIndicator progressIndicator,
                                          RestartRequirement restartRequirement);
+   
+   protected void handleRestart(GlobalDisplay display,
+                                ApplicationQuit quit,
+                                Session session,
+                                RestartRequirement requirement)
+   {
+      boolean restartIde =
+            requirement.getDesktopRestartRequired() ||
+            (requirement.getUiReloadRequired() &&
+             requirement.getSessionRestartRequired());
+      
+      if (restartIde)
+      {
+         restart(display, quit, session);
+      }
+      else if (requirement.getUiReloadRequired())
+      {
+         reload();
+      }
+      else if (requirement.getSessionRestartRequired())
+      {
+         restartSession(display);
+      }
+   }
 
    protected void reload()
    {
       RStudioGinjector.INSTANCE.getEventBus().fireEvent(new ReloadEvent());
    }
 
-   protected void restart(GlobalDisplay globalDisplay, ApplicationQuit quit, Session session)
+   protected void restart(GlobalDisplay globalDisplay,
+                          ApplicationQuit quit,
+                          Session session)
    {
       globalDisplay.showYesNoMessage(
             GlobalDisplay.MSG_QUESTION,
             "Restart Required",
             "You need to restart RStudio in order for these changes to take effect. " +
                   "Do you want to do this now?",
-            () -> forceClosed(() -> quit.doRestart(session)),
+            () -> onRestart(quit, session),
             true);
+   }
+   
+   private void onRestart(ApplicationQuit quit,
+                          Session session)
+   {
+      closeDialog();
+      quit.doRestart(session);
+   }
+   
+   protected void restartSession(GlobalDisplay display)
+   {
+      display.showYesNoMessage(
+            GlobalDisplay.MSG_QUESTION,
+            "Restart Required",
+            "You need to restart the R session in order for these changes to take effect. " +
+            "Do you want to do this now?",
+            () -> onRestartSession(),
+            true);
+   }
+   
+   private void onRestartSession()
+   {
+      closeDialog();
+      RStudioGinjector.INSTANCE.getCommands().restartR().execute();
    }
 
    void forceClosed(final Command onClosed)
@@ -218,7 +288,7 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
          onClosed.execute();
       });
    }
-   
+
    private boolean validate()
    {
       for (PreferencesDialogPaneBase<T> pane : panes_)
@@ -228,9 +298,11 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
    }
 
    private DockLayoutPanel panel_;
-   private PreferencesDialogPaneBase<T>[] panes_;
+   private List<PreferencesDialogPaneBase<T>> panes_;
    private FlowPanel container_;
    private Integer currentIndex_;
    private final ProgressIndicator progressIndicator_;
    private final SectionChooser sectionChooser_;
+   private final String panelContainerStyle_;
+   private final String panelContainerStyleNoChooser_;
 }

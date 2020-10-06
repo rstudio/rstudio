@@ -1,7 +1,7 @@
 /*
  * PanmirrorOutlineWidget.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,7 +18,6 @@ package org.rstudio.studio.client.panmirror.outline;
 
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 
 import org.rstudio.core.client.StringUtil;
@@ -27,7 +26,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.panmirror.PanmirrorSelection;
-import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineNavigationEvent;
+import org.rstudio.studio.client.panmirror.events.PanmirrorOutlineNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
 
 import com.google.gwt.aria.client.Roles;
@@ -48,6 +47,8 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
 import com.google.gwt.user.client.ui.Widget;
+
+import jsinterop.base.Js;
 
 public class PanmirrorOutlineWidget extends Composite
    implements PanmirrorOutlineNavigationEvent.HasPanmirrorOutlineNavigationHandlers
@@ -127,9 +128,12 @@ public class PanmirrorOutlineWidget extends Composite
       
       // determine the minimum level
       outlineMinLevel_ = Integer.MAX_VALUE;
-      outline_.forEach(item -> {
+      for (int i=0; i<outline_.size(); i++)
+      {
+         PanmirrorOutlineItem item = Js.uncheckedCast(outline_.get(i));
          outlineMinLevel_ = Math.min(outlineMinLevel_, item.level);
-      });
+      }
+     
       if (outlineMinLevel_ == Integer.MAX_VALUE)
          outlineMinLevel_ = 1;
      
@@ -138,17 +142,21 @@ public class PanmirrorOutlineWidget extends Composite
       if (outline_.size() != tree_.getItemCount())
       {
          tree_.clear();
-         outline_.forEach(item -> {
+         for (int i=0; i<outline_.size(); i++)
+         {
+            PanmirrorOutlineItem item = Js.uncheckedCast(outline_.get(i));
             addToTree(item);
-         });
+         }
       }
       else // otherwise update items
       {
          Iterator<TreeItem> treeIter = tree_.treeItemIterator();
-         outline_.forEach(item -> {
+         for (int i=0; i<outline_.size(); i++)
+         {
+            PanmirrorOutlineItem item = Js.uncheckedCast(outline_.get(i));
             OutlineTreeItem outlineTreeItem = (OutlineTreeItem)treeIter.next();
             outlineTreeItem.getEntry().update(item);
-         });
+         }
       }
    }
    
@@ -169,13 +177,16 @@ public class PanmirrorOutlineWidget extends Composite
    
    private void doFlattenOutline(PanmirrorOutlineItem[] items,  ArrayList<PanmirrorOutlineItem> flattenedItems)
    {
-      Arrays.stream(items).forEach(item -> {
-         if (item.type == PanmirrorOutlineItemType.Heading)
+      for (int i=0; i<items.length; i++)
+      {
+         PanmirrorOutlineItem item = items[i];
+         if (item.type == PanmirrorOutlineItemType.Heading && 
+               !StringUtil.isNullOrEmpty(item.title))
          {
             flattenedItems.add(item);
             doFlattenOutline(item.children, flattenedItems);
          }
-      });
+      }
    }
    
    private void setActiveWidget(Widget widget)
@@ -216,17 +227,11 @@ public class PanmirrorOutlineWidget extends Composite
       {
          OutlineTreeItem treeItem = (OutlineTreeItem)tree_.getItem(i);
          PanmirrorOutlineItem item = treeItem.getEntry().getItem();
-         
-         if (item.pos >= selection_.from)
+         if (item.navigation_id.equals(selection_.navigation_id)) 
          {
-            if (activeItem_ == null)
-               activeItem_ = item;
+            activeItem_ = item;
             break;
-         }
-         
-         
-         activeItem_ = item;
-         
+         } 
       }
         
       resetTreeStyles();

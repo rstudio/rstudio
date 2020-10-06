@@ -1,7 +1,7 @@
 /*
  * DcfParserTests.cpp
  *
- * Copyright (C) 2019 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -46,7 +46,7 @@ TEST_CASE("DcfParser")
       std::string input = "A: Apple\nB: Banana\nC: Car";
 
       REQUIRE_FALSE(text::parseMultiDcfFile(input, true,
-       [&](const std::map<std::string, std::string>& fields) -> Error
+       [&](int lineNumber, const std::map<std::string, std::string>& fields) -> Error
        {
           auto copy = fields;
 
@@ -66,7 +66,7 @@ TEST_CASE("DcfParser")
 
       int i = 0;
       REQUIRE_FALSE(text::parseMultiDcfFile(input, true,
-       [&](const std::map<std::string, std::string>& fields) -> Error
+       [&](int lineNumber, const std::map<std::string, std::string>& fields) -> Error
        {
           auto copy = fields;
 
@@ -74,6 +74,7 @@ TEST_CASE("DcfParser")
           CHECK(copy["A"] == (i == 0 ? "Apple" : "Account"));
           CHECK(copy["B"] == (i == 0 ? "Banana" : "Banker"));
           CHECK(copy["C"] == (i == 0 ? "Car" : "Cash"));
+          CHECK(lineNumber == (i == 0 ? 1 : 5));
 
           ++i;
           return Success();
@@ -87,7 +88,7 @@ TEST_CASE("DcfParser")
 
       int i = 0;
       REQUIRE_FALSE(text::parseMultiDcfFile(input, true,
-       [&](const std::map<std::string, std::string>& fields) -> Error
+       [&](int lineNumber, const std::map<std::string, std::string>& fields) -> Error
        {
           auto copy = fields;
 
@@ -95,6 +96,7 @@ TEST_CASE("DcfParser")
           CHECK(copy["A"] == (i == 0 ? "Apple" : "Account"));
           CHECK(copy["B"] == (i == 0 ? "Banana" : "Banker"));
           CHECK(copy["C"] == (i == 0 ? "Car" : "Cash"));
+          CHECK(lineNumber == (i == 0 ? 1 : 5));
 
           ++i;
           return Success();
@@ -113,7 +115,7 @@ TEST_CASE("DcfParser")
 
       int i = 0;
       REQUIRE_FALSE(text::parseMultiDcfFile(input, true,
-       [&](const std::map<std::string, std::string>& fields) -> Error
+       [&](int lineNumber, const std::map<std::string, std::string>& fields) -> Error
        {
           auto copy = fields;
 
@@ -121,6 +123,7 @@ TEST_CASE("DcfParser")
           CHECK(copy["A"] == (i == 0 ? "Apple" : i == 1 ? "Account" : "This is a long paragraph\nthat has indentation. It is supposed to concat\ntogether"));
           CHECK(copy["B"] == (i == 0 ? "Banana" : i == 1 ? "Banker" : std::string()));
           CHECK(copy["C"] == (i == 0 ? "Car" : i == 1 ? "Cash" : "Cat"));
+          CHECK(lineNumber == (i == 0 ? 1 : i == 1 ? 5 : 9));
 
           ++i;
           return Success();

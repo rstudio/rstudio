@@ -1,7 +1,7 @@
 /*
  * ProjectsServerOperations.java
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -57,6 +57,9 @@ public interface ProjectsServerOperations extends PrefsServerOperations,
    
    void writeProjectOptions(RProjectOptions options,
                             ServerRequestCallback<Void> callback);
+   
+   void writeProjectConfig(RProjectConfig config,
+                           ServerRequestCallback<Void> callback);
    
    void writeProjectVcsOptions(RProjectVcsOptions options,
                                ServerRequestCallback<Void> callback);

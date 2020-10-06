@@ -1,7 +1,7 @@
 /*
  * AutoGlassPanel.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,14 +17,13 @@ package org.rstudio.studio.client.common;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.widget.GlassPanel;
 import org.rstudio.core.client.widget.events.GlassVisibilityEvent;
-import org.rstudio.core.client.widget.events.GlassVisibilityHandler;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 
 /**
  * Automatically glasses over the child element in response to the global
  * GlassVisibilityEvent event. Use this to prevent splitters from losing their
- * draggability over iframes. 
+ * draggability over iframes.
  */
 public class AutoGlassPanel extends GlassPanel
 {
@@ -33,12 +32,9 @@ public class AutoGlassPanel extends GlassPanel
       super(child);
 
       EventBus eventBus = RStudioGinjector.INSTANCE.getEventBus();
-      eventBus.addHandler(GlassVisibilityEvent.TYPE, new GlassVisibilityHandler()
+      eventBus.addHandler(GlassVisibilityEvent.TYPE, glassVisibilityEvent ->
       {
-         public void onGlass(GlassVisibilityEvent event)
-         {
-            setGlass(event.isShow());
-         }
+         setGlass(glassVisibilityEvent.isShow());
       });
       setGlass(false);
    }

@@ -1,7 +1,7 @@
 /*
  * HasTabClosingHandlers.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,5 +18,5 @@ import com.google.gwt.event.shared.HandlerRegistration;
 
 public interface HasTabClosingHandlers
 {
-   HandlerRegistration addTabClosingHandler(TabClosingHandler handler);
+   HandlerRegistration addTabClosingHandler(TabClosingEvent.Handler handler);
 }

@@ -1,7 +1,7 @@
 /*
  * ShowEditorEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,49 +14,54 @@
  */
 package org.rstudio.studio.client.workbench.views.edit.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import org.rstudio.studio.client.workbench.views.edit.model.ShowEditorData;
 
 import com.google.gwt.event.shared.GwtEvent;
 
-public class ShowEditorEvent extends GwtEvent<ShowEditorHandler>
+public class ShowEditorEvent extends GwtEvent<ShowEditorEvent.Handler>
 {
-   public static final GwtEvent.Type<ShowEditorHandler> TYPE =
-      new GwtEvent.Type<ShowEditorHandler>();
-   
+   public static final Type<Handler> TYPE = new Type<>();
+
+   public interface Handler extends EventHandler
+   {
+      void onShowEditor(ShowEditorEvent event);
+   }
+
    public ShowEditorEvent(ShowEditorData data)
    {
       content_ = data.getContent();
       isRCode_ = data.isRCode();
       lineWrapping_ = data.getLineWrapping();
    }
-   
+
    public String getContent()
    {
       return content_;
    }
-   
+
    public boolean isRCode()
    {
       return isRCode_;
    }
-   
+
    public boolean getLineWrapping()
    {
       return lineWrapping_;
    }
-   
+
    @Override
-   protected void dispatch(ShowEditorHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onShowEditor(this);
    }
 
    @Override
-   public GwtEvent.Type<ShowEditorHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
-   
+
    private final String content_;
    private final boolean isRCode_;
    private final boolean lineWrapping_;

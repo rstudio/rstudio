@@ -1,7 +1,7 @@
 /*
  * TerminalInfoDialog.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -32,7 +32,6 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermOptions;
 
 public class TerminalInfoDialog extends ModalDialogBase
 {
@@ -67,7 +66,8 @@ public class TerminalInfoDialog extends ModalDialogBase
          diagnostics.append("Handle:      '").append(cpi.getHandle()).append("'\n");
          diagnostics.append("Sequence:    '").append(cpi.getTerminalSequence()).append("'\n");
          diagnostics.append("Restarted:   '").append(cpi.getRestarted()).append("\n");
-         diagnostics.append("Busy:        '").append(cpi.getHasChildProcs()).append("'\n");
+         if (!BrowseCap.isWindowsDesktop())
+            diagnostics.append("Busy:        '").append(cpi.getHasChildProcs()).append("'\n");
          diagnostics.append("Exit Code:   '").append(cpi.getExitCode()).append("'\n");
          diagnostics.append("Full screen: 'client=").append(session.xtermAltBufferActive()).append("/server=").append(cpi.getAltBufferActive()).append("'\n");
          diagnostics.append("Zombie:      '").append(cpi.getZombie()).append("'\n");
@@ -76,14 +76,6 @@ public class TerminalInfoDialog extends ModalDialogBase
          diagnostics.append("Working Dir: '").append(cwd).append("'\n");
          diagnostics.append("Interactive: '").append(cpi.getInteractionModeName()).append("'\n");
          diagnostics.append("WebSockets:  '").append(userPrefs_.terminalWebsockets().getValue()).append("'\n");
-
-         diagnostics.append("\nCurrent Terminal Emulator Settings\n------------------------------------\n");
-         for (String optionName : XTermOptions.stringOptions)
-            diagnostics.append(optionName).append(": ").append(session.getStringOption(optionName)).append("\n");
-         for (String optionName : XTermOptions.boolOptions)
-            diagnostics.append(optionName).append(": ").append(session.getBoolOption(optionName)).append("\n");
-         for (String optionName : XTermOptions.numberOptions)
-            diagnostics.append(optionName).append(": ").append(session.getNumberOption(optionName)).append("\n");
 
          diagnostics.append("\nSystem Information\n------------------\n");
          diagnostics.append("Desktop:    '").append(Desktop.isDesktop()).append("'\n");

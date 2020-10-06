@@ -1,7 +1,7 @@
 /*
  * HelpSearch.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,12 +16,10 @@ package org.rstudio.studio.client.workbench.views.help.search;
 
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.logical.shared.SelectionEvent;
-import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.events.SelectionCommitEvent;
-import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.widget.SearchDisplay;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -30,11 +28,11 @@ import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations
 
 public class HelpSearch
 {
-   public interface Display 
+   public interface Display
    {
       SearchDisplay getSearchDisplay();
    }
-   
+
    @Inject
    public HelpSearch(Display display,
                      HelpServerOperations server,
@@ -43,23 +41,15 @@ public class HelpSearch
       display_ = display;
       eventBus_ = eventBus;
       server_ = server;
-      
-      display_.getSearchDisplay().addSelectionHandler(
-                                       new SelectionHandler<Suggestion>() {
 
-         @Override
-         public void onSelection(SelectionEvent<Suggestion> event)
-         {
-            fireShowHelpEvent(event.getSelectedItem().getDisplayString());
-         }
+      display_.getSearchDisplay().addSelectionHandler((SelectionEvent<Suggestion> event) ->
+      {
+         fireShowHelpEvent(event.getSelectedItem().getDisplayString());
       });
-      
-      display_.getSearchDisplay().addSelectionCommitHandler(
-                                 new SelectionCommitHandler<String>() {
-         public void onSelectionCommit(SelectionCommitEvent<String> event)
-         {       
-            fireShowHelpEvent(event.getSelectedItem());
-         }
+
+      display_.getSearchDisplay().addSelectionCommitHandler((SelectionCommitEvent<String> event) ->
+      {
+         fireShowHelpEvent(event.getSelectedItem());
       });
    }
 
@@ -67,7 +57,7 @@ public class HelpSearch
    {
       return display_.getSearchDisplay();
    }
-   
+
    private void fireShowHelpEvent(String topic)
    {
       server_.search(topic, new SimpleRequestCallback<JsArrayString>() {
@@ -78,7 +68,7 @@ public class HelpSearch
          }
          });
    }
-   
+
    private final HelpServerOperations server_;
    private final EventBus eventBus_;
    private final Display display_;

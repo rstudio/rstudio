@@ -1,7 +1,7 @@
 /*
  * ApplicationCommandManager.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -41,13 +41,13 @@ public class ApplicationCommandManager
    public ApplicationCommandManager()
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
-      
+
       bindings_ = new ConfigFileBacked<EditorKeyBindings>(
             server_,
             KEYBINDINGS_PATH,
             false,
             EditorKeyBindings.create());
-      
+
       events_.addHandler(
             EditorLoadedEvent.TYPE,
             new EditorLoadedHandler()
@@ -58,7 +58,7 @@ public class ApplicationCommandManager
                   loadBindings();
                }
             });
-      
+
       // This event should only be received by satellites.
       events_.addHandler(
             RStudioKeybindingsChangedEvent.TYPE,
@@ -76,11 +76,11 @@ public class ApplicationCommandManager
          AppCommand command = commands_.getCommandById(evt.getData().command());
          if (command == null && !evt.getData().quiet())
          {
-            RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage("Invalid Command", 
+            RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage("Invalid Command",
                   "The command '" + evt.getData().command() + "' does not exist.");
             return;
          }
-         if (Satellite.isCurrentWindowSatellite() && 
+         if (Satellite.isCurrentWindowSatellite() &&
              command.getWindowMode() != AppCommand.WINDOW_MODE_ANY)
          {
             // If this command doesn't want to run in satellites, attempting to
@@ -92,9 +92,9 @@ public class ApplicationCommandManager
          command.execute();
          return;
       });
-      
+
    }
-   
+
    @Inject
    private void initialize(EventBus events, FilesServerOperations server, Commands commands)
    {
@@ -102,7 +102,7 @@ public class ApplicationCommandManager
       server_ = server;
       commands_ = commands;
    }
-   
+
    public void addBindingsAndSave(final EditorKeyBindings newBindings,
                                   final CommandWithArg<EditorKeyBindings> onLoad)
    {
@@ -123,12 +123,12 @@ public class ApplicationCommandManager
          }
       });
    }
-   
+
    public void loadBindings()
    {
       loadBindings(null);
    }
-   
+
    public void loadBindings(final CommandWithArg<EditorKeyBindings> afterLoad)
    {
       bindings_.execute(new CommandWithArg<EditorKeyBindings>()
@@ -140,13 +140,13 @@ public class ApplicationCommandManager
          }
       });
    }
-   
+
    private void loadBindings(EditorKeyBindings bindings,
                              final CommandWithArg<EditorKeyBindings> afterLoad)
    {
       List<Pair<List<KeySequence>, AppCommand>> resolvedBindings;
       resolvedBindings = new ArrayList<Pair<List<KeySequence>, AppCommand>>();
-      
+
       for (String id : bindings.iterableKeys())
       {
          AppCommand command = commands_.getCommandById(id);
@@ -155,7 +155,7 @@ public class ApplicationCommandManager
          List<KeySequence> keys = bindings.get(id).getKeyBindings();
          resolvedBindings.add(new Pair<List<KeySequence>, AppCommand>(keys, command));
       }
-      
+
       KeyMap map = ShortcutManager.INSTANCE.getKeyMap(KeyMapType.APPLICATION);
       for (int i = 0; i < resolvedBindings.size(); i++)
       {
@@ -165,18 +165,18 @@ public class ApplicationCommandManager
                resolvedBindings.get(i).first,
                new AppCommandBinding(resolvedBindings.get(i).second, "", true));
       }
-      
+
       // TODO: Set the bindings in the AppCommand keymap, removing any
       // previously registered bindings.
       if (afterLoad != null)
          afterLoad.execute(bindings);
    }
-   
+
    public void resetBindings()
    {
       resetBindings(null);
    }
-   
+
    public void resetBindings(final CommandWithArg<EditorKeyBindings> afterReset)
    {
       bindings_.set(EditorKeyBindings.create(), new Command()
@@ -188,12 +188,12 @@ public class ApplicationCommandManager
          }
       });
    }
-   
+
    private final ConfigFileBacked<EditorKeyBindings> bindings_;
-   
+
    public static final String KEYBINDINGS_PATH =
          "keybindings/rstudio_bindings.json";
-   
+
    // Injected ----
    private EventBus events_;
    private FilesServerOperations server_;

@@ -1,6 +1,6 @@
 /* UserPrefsComputed.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,11 +27,11 @@ public class UserPrefsComputed extends UserPrefsAccessor
    
    public PrefValue<Boolean> haveRsaKey()
    {
-      return bool("have_rsa_key", false);
+      return bool("have_rsa_key", "Has RSA Key", "Whether the user has an RSA key", false);
    }
    
    public PrefValue<SpellingPrefsContext> spellingPrefsContext()
    {
-      return object("spelling", null);
+      return object("spelling", "Spelling Prefs", "The context for the user's spelling preferences", null);
    }
 }

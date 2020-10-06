@@ -1,5 +1,7 @@
 FROM centos:7
 
+ENV OPERATING_SYSTEM=centos_7
+
 RUN set -x \
     && yum install epel-release -y
 
@@ -14,6 +16,7 @@ RUN yum install -y \
     gcc \
     gcc-c++ \
     git \
+    gdb \
     gpg \
     gtk3 \
     java-1.8.0-openjdk \
@@ -23,6 +26,7 @@ RUN yum install -y \
     libcap-devel \ 
     libffi \
     libuuid-devel \
+    libxml2-devel \
     libXcursor-devel \
     libXrandr-devel \
     libXScrnSaver-devel \
@@ -56,10 +60,10 @@ RUN yum install -y \
     devtoolset-3-gcc-c++
 
 # update environment to use new compiler
-ENV PATH="/opt/rh/devtoolset-3/root/usr/bin:${PATH}"
-ENV CC="/opt/rh/devtoolset-3/root/usr/bin/gcc"
-ENV CXX="/opt/rh/devtoolset-3/root/usr/bin/c++"
-ENV CPP="/opt/rh/devtoolset-3/root/usr/bin/cpp"
+ENV PATH="/opt/rh/devtoolset-7/root/usr/bin:${PATH}"
+ENV CC="/opt/rh/devtoolset-7/root/usr/bin/gcc"
+ENV CXX="/opt/rh/devtoolset-7/root/usr/bin/c++"
+ENV CPP="/opt/rh/devtoolset-7/root/usr/bin/cpp"
 
 # sudo defaults to requiretty on centos7
 RUN sed -i  's/Defaults    requiretty/Defaults !requiretty/' /etc/sudoers
@@ -69,9 +73,10 @@ RUN sed -i  's/Defaults    requiretty/Defaults !requiretty/' /etc/sudoers
 COPY dependencies/common/install-boost /tmp/
 RUN bash /tmp/install-boost || bash /tmp/install-boost
 
-# install cmake
+# install cmake; do this with the system compiler by temporarily clearing CC/CXX since cmake
+# can't find the devtoolset compiler in /opt/rh on this platform 
 COPY package/linux/install-dependencies /tmp/
-RUN bash /tmp/install-dependencies
+RUN scl enable llvm-toolset-7 "/bin/bash /tmp/install-dependencies"
 
 # install crashpad and its dependencies
 COPY dependencies/common/install-crashpad /tmp/

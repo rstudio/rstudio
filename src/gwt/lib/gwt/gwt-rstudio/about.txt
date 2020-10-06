@@ -1,5 +1,5 @@
-GWT 2.8.2
-(git revision c99af9efe)
+GWT 2.9.0
+(git revision 115659954)
 Copyright (c) Google, Inc. 2009.  All rights reserved.
 Visit http://www.gwtproject.org.
 

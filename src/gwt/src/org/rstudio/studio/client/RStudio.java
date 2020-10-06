@@ -1,7 +1,7 @@
 /*
  * RStudio.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -92,6 +92,7 @@ import org.rstudio.studio.client.vcs.VCSApplication;
 import org.rstudio.studio.client.workbench.codesearch.ui.CodeSearchResources;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotResources;
 import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialog;
+import org.rstudio.studio.client.workbench.prefs.views.zotero.ZoteroResources;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.buildtools.ui.BuildPaneResources;
 import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionShinyHost;
@@ -112,6 +113,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkSatellite;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionResources;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
+import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.dialogs.VisualModeDialogsResources;
 import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTableView;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.DiffFrame;
@@ -125,7 +127,7 @@ public class RStudio implements EntryPoint
       maybeSetWindowName("rstudio-" + StringUtil.makeRandomId(16));
       maybeDelayLoadApplication(this);
    }
-   
+
    private Command showProgress(Widget progressAction)
    {
       final Label background = new Label();
@@ -171,13 +173,13 @@ public class RStudio implements EntryPoint
          statusPanel.add(progressAction);
          statusPanel.setCellHorizontalAlignment(progressAction, VerticalPanel.ALIGN_CENTER);
       }
-      
+
       if (ApplicationAction.isLauncherSession())
       {
          sessionStatus_ = new LauncherSessionStatus();
          sessionStatus_.setVisible(false);
          statusPanel.add(sessionStatus_);
-         
+
          // Wait a bit to keep things uncluttered for typical load,
          // then show message so they know things are happening, including
          // a link back to the home page
@@ -206,7 +208,7 @@ public class RStudio implements EntryPoint
       }
 
       rootPanel.add(statusPanel);
-      
+
       return () ->
       {
          try
@@ -225,12 +227,12 @@ public class RStudio implements EntryPoint
          }
       };
    }
-   
+
    private static final native void maybeSetWindowName(String name)
    /*-{
       $wnd.name = $wnd.name || name;
    }-*/;
-   
+
    private static final native void maybeDelayLoadApplication(RStudio rstudio)
    /*-{
       if ($wnd.qt)
@@ -249,17 +251,17 @@ public class RStudio implements EntryPoint
             $wnd.rstudioDelayLoadApplication = $entry(function() {
                rstudio.@org.rstudio.studio.client.RStudio::delayLoadApplication()();
             });
-            
+
             // set a timeout and attempt load just in case something goes wrong with
             // Qt initialization (we don't want to just leave the user with a blank
             // window)
             setTimeout(function() {
                if (typeof $wnd.rstudioDelayLoadApplication == "function") {
-                  
+
                   // let the user know things might go wrong
                   var msg = "WARNING: RStudio launched before desktop initialization known to be complete!";
                   @org.rstudio.core.client.Debug::log(Ljava/lang/String;)(msg);
-                  
+
                   // begin load
                   $wnd.rstudioDelayLoadApplication();
                   $wnd.rstudioDelayLoadApplication = null;
@@ -272,14 +274,14 @@ public class RStudio implements EntryPoint
          // server and satellites can load as usual
          rstudio.@org.rstudio.studio.client.RStudio::delayLoadApplication()();
       }
-      
+
    }-*/;
-   
+
    private void delayLoadApplication()
    {
-      // if we are loading the main window, and we're not a launcher session, 
+      // if we are loading the main window, and we're not a launcher session,
       // add buttons for bailing out
-      String view = Window.Location.getParameter("view");
+      String view = getSatelliteView();
       if (StringUtil.isNullOrEmpty(view) && !ApplicationAction.isLauncherSession())
       {
          rTimeoutOptions_ = new RTimeoutOptions();
@@ -308,10 +310,10 @@ public class RStudio implements EntryPoint
 
       // ensure Ace is loaded up front
       queue.addCommand(continuation -> AceEditor.load(continuation));
-      
+
       // load the requested page
       queue.addCommand(continuation -> onDelayLoadApplication());
-      
+
       GWT.runAsync(new RunAsyncCallback()
       {
          @Override
@@ -319,7 +321,7 @@ public class RStudio implements EntryPoint
          {
             queue.run();
          }
-         
+
          @Override
          public void onFailure(Throwable reason)
          {
@@ -328,7 +330,7 @@ public class RStudio implements EntryPoint
          }
       });
    }
-   
+
    private void onDelayLoadApplication()
    {
       ensureStylesInjected();
@@ -349,28 +351,28 @@ public class RStudio implements EntryPoint
       else if (view != null && view.startsWith(
             ShinyApplicationSatellite.NAME_PREFIX))
       {
-         ShinyApplicationSatellite satellite = 
+         ShinyApplicationSatellite satellite =
                new ShinyApplicationSatellite(view);
          satellite.go(RootLayoutPanel.get(), dismissProgressAnimation_);
       }
       else if (RmdOutputSatellite.NAME.equals(view))
       {
          RStudioGinjector.INSTANCE.getRmdOutputSatellite().go(
-               RootLayoutPanel.get(), 
+               RootLayoutPanel.get(),
                dismissProgressAnimation_);
       }
-      else if (view != null && 
+      else if (view != null &&
             view.startsWith(SourceSatellite.NAME_PREFIX))
       {
          SourceSatellite satellite = new SourceSatellite(view);
-         satellite.go(RootLayoutPanel.get(), 
+         satellite.go(RootLayoutPanel.get(),
                dismissProgressAnimation_);
       }
-      else if (view != null && 
+      else if (view != null &&
             view.startsWith(ChunkSatellite.NAME_PREFIX))
       {
          ChunkSatellite satellite = new ChunkSatellite(view);
-         satellite.go(RootLayoutPanel.get(), 
+         satellite.go(RootLayoutPanel.get(),
                dismissProgressAnimation_);
       }
       else if (PlumberAPISatellite.NAME.equals(view))
@@ -404,7 +406,7 @@ public class RStudio implements EntryPoint
                connectionStatusCallback);
       }
    }
-   
+
    private void ensureStylesInjected()
    {
       ThemeResources.INSTANCE.themeStyles().ensureInjected();
@@ -420,7 +422,7 @@ public class RStudio implements EntryPoint
       SourceMarkerListResources.INSTANCE.styles().ensureInjected();
       BuildPaneResources.INSTANCE.styles().ensureInjected();
       PanmirrorToolbarResources.INSTANCE.styles().ensureInjected();
-      
+
       ProgressDialog.ensureStylesInjected();
       SlideLabel.ensureStylesInjected();
       ThemedButton.ensureStylesInjected();
@@ -464,16 +466,18 @@ public class RStudio implements EntryPoint
       NewConnectionShinyHost.ensureStylesInjected();
       NewConnectionSnippetHost.ensureStylesInjected();
       NewConnectionSnippetDialog.ensureStylesInjected();
-      PanmirrorResources.ensureStylesInjected();
-      PanmirrorDialogsResources.ensureStylesInjected();
+      PanmirrorResources.INSTANCE.styles().ensureInjected();
+      PanmirrorDialogsResources.INSTANCE.styles().ensureInjected();
+      ZoteroResources.ensureStylesInjected();
       NewConnectionWizard.ensureStylesInjected();
       SecondaryReposWidget.ensureStylesInjected();
       SecondaryReposDialog.ensureStylesInjected();
-      
+      VisualModeDialogsResources.ensureStylesInjected();
+
       StyleInjector.inject(
             "button::-moz-focus-inner {border:0}");
    }
-   
+
    /**
     * Make an element visually hidden (aka screen reader only). Don't use our shared
     * function A11y.setVisuallyHidden during boot screen because it relies on styles
@@ -490,6 +494,11 @@ public class RStudio implements EntryPoint
       el.getStyle().setMargin(-1.0, Unit.PX);
       el.getStyle().setOverflow(Overflow.HIDDEN);
       el.getStyle().setPadding(0.0, Unit.PX);
+   }
+
+   public final static String getSatelliteView()
+   {
+      return Window.Location.getParameter("view");
    }
 
    private Command dismissProgressAnimation_;

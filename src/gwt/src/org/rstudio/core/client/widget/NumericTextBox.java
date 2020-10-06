@@ -1,7 +1,7 @@
 /*
  * NumericTextBox.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,7 @@ package org.rstudio.core.client.widget;
 import com.google.gwt.user.client.ui.TextBox;
 
 public class NumericTextBox extends TextBox
+                                    implements CanSetControlId
 {
    public NumericTextBox()
    {
@@ -32,5 +33,11 @@ public class NumericTextBox extends TextBox
    public void setMin(int min)
    {
       getElement().setAttribute("min", String.valueOf(min));
+   }
+
+   @Override
+   public void setElementId(String id)
+   {
+      getElement().setId(id);
    }
 }

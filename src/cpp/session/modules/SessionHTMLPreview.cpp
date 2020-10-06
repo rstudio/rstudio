@@ -1,7 +1,7 @@
 /*
  * SessionHTMLPreview.cpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -871,7 +871,7 @@ void handleInternalMarkdownPreviewRequest(
       std::istringstream previewInputStream(previewTemplate);
       std::stringstream previewStrStream;
       previewStrStream.exceptions(std::istream::failbit | std::istream::badbit);
-      boost::iostreams::filtering_ostream previewOutputStream ;
+      boost::iostreams::filtering_ostream previewOutputStream;
       previewOutputStream.push(templateFilter);
       previewOutputStream.push(imageFilter);
       previewOutputStream.push(previewStrStream);
@@ -1077,7 +1077,7 @@ SEXP rs_showPageViewer(SEXP urlSEXP, SEXP titleSEXP, SEXP selfContainedSEXP)
       else
          return r::sexp::create(url, &rProtect);
    }
-   catch(r::exec::RErrorException e)
+   catch(r::exec::RErrorException& e)
    {
       r::exec::error(e.message());
    }
@@ -1144,7 +1144,7 @@ Error initialize()
 
    using boost::bind;
    using namespace module_context;
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(sourceModuleRFile, "SessionHTMLPreview.R"))
       (bind(registerRpcMethod, "preview_html", previewHTML))

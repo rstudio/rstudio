@@ -1,7 +1,7 @@
 /*
  * Metric.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -34,7 +34,6 @@ json::Object metricBaseToJson(const MetricBase& metric)
 {
    json::Object metricJson;
    metricJson["scope"] = metric.scope();
-   metricJson["interval"] = metric.intervalSeconds();
    metricJson["type"] = metric.type();
    metricJson["unit"] = metric.unit();
    metricJson["ts"] = date_time::secondsSinceEpoch(metric.timestamp());
@@ -43,17 +42,15 @@ json::Object metricBaseToJson(const MetricBase& metric)
 
 Error metricBaseFromJson(const json::Object& metricJson,
                          std::string* pScope,
-                         int* pIntervalSeconds,
                          std::string* pType,
                          std::string* pUnit,
                          double* pTimestamp)
 {
    return json::readObject(metricJson,
-                          "scope", pScope,
-                          "interval", pIntervalSeconds,
-                          "type", pType,
-                          "unit", pUnit,
-                          "ts", pTimestamp);
+                          "scope", *pScope,
+                          "type", *pType,
+                          "unit", *pUnit,
+                          "ts", *pTimestamp);
 }
 
 json::Value toMetricDataJson(const MetricData& data)
@@ -80,10 +77,8 @@ Error metricFromJson(const json::Object& metricJson, Metric* pMetric)
    // read the fields
    std::string scope, name, type, unit;
    double value, ts;
-   int intervalSeconds;
    Error error = metricBaseFromJson(metricJson,
                                     &scope,
-                                    &intervalSeconds,
                                     &type,
                                     &unit,
                                     &ts);
@@ -97,7 +92,6 @@ Error metricFromJson(const json::Object& metricJson, Metric* pMetric)
       return error;
 
    *pMetric = Metric(scope,
-                     intervalSeconds,
                      MetricData(name, value),
                      type,
                      unit,
@@ -126,10 +120,8 @@ Error metricFromJson(const json::Object& multiMetricJson,
    // read the fields
    std::string scope, type, unit;
    double ts;
-   int intervalSeconds;
    Error error = metricBaseFromJson(multiMetricJson,
                                     &scope,
-                                    &intervalSeconds,
                                     &type,
                                     &unit,
                                     &ts);
@@ -161,7 +153,6 @@ Error metricFromJson(const json::Object& multiMetricJson,
    }
 
    *pMultiMetric = MultiMetric(scope,
-                               intervalSeconds,
                                data,
                                type,
                                unit,

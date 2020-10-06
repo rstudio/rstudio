@@ -1,7 +1,7 @@
 /*
  * PosixSystem.hpp
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,9 +18,10 @@
 
 #include <boost/date_time.hpp>
 
+#include <core/system/PosixSched.hpp>
 #include <core/system/System.hpp>
 
-#include <core/system/PosixSched.hpp>
+#include <shared_core/system/PosixSystem.hpp>
 
 // typedefs (in case we need indirection on these for porting)
 #include <sys/resource.h>
@@ -108,13 +109,8 @@ bool isProcessRunning(pid_t pid);
 
 std::ostream& operator<<(std::ostream& os, const ProcessInfo& info);
 
-struct IpAddress
-{
-   std::string name;
-   std::string addr;
-};
 
-core::Error ipAddresses(std::vector<IpAddress>* pAddresses, bool includeIPv6 = false);
+core::Error ipAddresses(std::vector<posix::IpAddress>* pAddresses, bool includeIPv6 = false);
 
 // core dump restriction
 core::Error restrictCoreDumps();
@@ -180,7 +176,7 @@ core::Error launchChildProcess(std::string path,
                                std::string runAsUser,
                                ProcessConfig config,
                                ProcessConfigFilter configFilter,
-                               PidType* pProcessId ) ;
+                               PidType* pProcessId );
 
 // runs a process, replacing the current process's image with that of the target
 // note, this does not create a child process, but replaces the currently running one
@@ -218,8 +214,9 @@ core::Error userBelongsToGroup(const User& user,
 // query priv state
 bool realUserIsRoot();
 
-// privilege management (not thread safe, call from main thread at app startup
-// or just after fork() prior to exec() for new processes)
+// privilege management - not thread safe
+// call from main thread at app startup or just after fork() prior to exec() for new processes
+// do not call after a fork in a multithreaded process, as this can cause deadlock!
 core::Error temporarilyDropPriv(const std::string& newUsername);
 core::Error permanentlyDropPriv(const std::string& newUsername);
 core::Error restorePriv();

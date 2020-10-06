@@ -1,7 +1,7 @@
 /*
  * sh_highlight_rules.js
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * The Initial Developer of the Original Code is
  * Ajax.org B.V.

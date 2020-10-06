@@ -1,7 +1,7 @@
 /*
  * ProjectSourceControlPreferencesPane.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -56,24 +56,24 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
       session_ = session;
       globalDisplay_ = globalDisplay;
       server_ = server;
-      
-      vcsSelect_ = new SelectWidget("Version control system:", new String[]{}); 
+
+      vcsSelect_ = new SelectWidget("Version control system:", new String[]{});
       spaced(vcsSelect_);
       add(vcsSelect_);
       vcsSelect_.addChangeHandler(new ChangeHandler() {
          @Override
          public void onChange(ChangeEvent event)
-         {  
+         {
             updateOriginLabel();
-            
+
             if (vcsSelect_.getValue() == VCSConstants.GIT_ID)
             {
                confirmGitRepo(new Command() {
                   @Override
                   public void execute()
                   {
-                     promptToRestart(); 
-                  }       
+                     promptToRestart();
+                  }
                });
             }
             else
@@ -82,17 +82,17 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
             }
          }
       });
-      
+
       lblOrigin_ = new OriginLabel();
       lblOrigin_.addStyleName(RES.styles().vcsOriginLabel());
       lblOrigin_.addStyleName(ThemeStyles.INSTANCE.selectableText());
       extraSpaced(lblOrigin_);
       add(lblOrigin_);
-      
+
       HelpLink vcsHelpLink = new VcsHelpLink();
       nudgeRight(vcsHelpLink);
       add(vcsHelpLink);
-     
+
    }
 
    @Override
@@ -112,7 +112,7 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
    {
       // save the context
       vcsContext_ = options.getVcsContext();
-      
+
       // populate the vcs selections list
       String[] vcsSelections = new String[] { NONE };
       JsArrayString applicableVcs = vcsContext_.getApplicableVcs();
@@ -124,7 +124,7 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
             vcsSelections[i+1] = applicableVcs.get(i);
       }
       vcsSelect_.setChoices(vcsSelections);
-    
+
       // set override or default
       RProjectVcsOptions vcsOptions = options.getVcsOptions();
       if (vcsOptions.getActiveVcsOverride().length() > 0)
@@ -140,7 +140,7 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
       setVcsOptions(vcsOptions);
       return new RestartRequirement();
    }
-   
+
    private void setVcsOptions(RProjectVcsOptions vcsOptions)
    {
       String vcsSelection = getVcsSelection();
@@ -150,7 +150,7 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
          vcsOptions.setActiveVcsOverride("");
    }
 
-   
+
    private String getVcsSelection()
    {
       String value = vcsSelect_.getValue();
@@ -159,7 +159,7 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
       else
          return value;
    }
-   
+
    private void setVcsSelection(String vcs)
    {
       // set value
@@ -168,13 +168,13 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
       else if (!vcsSelect_.setValue(vcs))
       {
          vcsSelect_.setValue(NONE);
-      }      
-      
+      }
+
       updateOriginLabel();
-      
-      
+
+
    }
-   
+
    private void updateOriginLabel()
    {
       String vcs = getVcsSelection();
@@ -188,11 +188,11 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
          lblOrigin_.setOrigin("Origin:", originUrl);
          lblOrigin_.setVisible(true);
          vcsSelect_.removeStyleName(RES.styles().vcsSelectExtraSpaced());
-         
+
       }
       else if (vcs == VCSConstants.SVN_ID)
       {
-         lblOrigin_.setOrigin("Repo:", 
+         lblOrigin_.setOrigin("Repo:",
                               vcsContext_.getSvnRepositoryRoot());
          lblOrigin_.setVisible(true);
          vcsSelect_.removeStyleName(RES.styles().vcsSelectExtraSpaced());
@@ -204,23 +204,23 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
          vcsSelect_.addStyleName(RES.styles().vcsSelectExtraSpaced());
       }
    }
-   
-   
+
+
    private void confirmGitRepo(final Command onConfirmed)
    {
       final ProgressIndicator indicator = getProgressIndicator();
       indicator.onProgress("Checking for git repository...");
-      
-      final String projDir = 
+
+      final String projDir =
                session_.getSessionInfo().getActiveProjectDir().getPath();
-      
+
       server_.gitHasRepo(projDir, new ServerRequestCallback<Boolean>() {
 
          @Override
          public void onResponseReceived(Boolean result)
          {
             indicator.onCompleted();
-            
+
             if (result)
             {
                onConfirmed.execute();
@@ -228,10 +228,10 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
             else
             {
                globalDisplay_.showYesNoMessage(
-                  MessageDialog.QUESTION, 
-                  "Confirm New Git Repository", 
+                  MessageDialog.QUESTION,
+                  "Confirm New Git Repository",
                   "Do you want to initialize a new git repository " +
-                  "for this project?", 
+                  "for this project?",
                   false,
                   new Operation() {
                      @Override
@@ -245,15 +245,15 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
                              {
                                 onConfirmed.execute();
                              }
-                             @Override 
+                             @Override
                              public void onFailure()
                              {
                                 setVcsSelection(VCSConstants.NO_ID);
                              }
                           });
-                        
+
                      }
-                  }, 
+                  },
                   new Operation() {
                      @Override
                      public void execute()
@@ -261,23 +261,23 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
                         setVcsSelection(VCSConstants.NO_ID);
                         indicator.onCompleted();
                      }
-                     
+
                   },
                   true);
             }
          }
-         
+
          @Override
          public void onError(ServerError error)
          {
             setVcsSelection(VCSConstants.NO_ID);
-            indicator.onError(error.getUserMessage());  
+            indicator.onError(error.getUserMessage());
          }
-         
+
       });
-      
+
    }
-      
+
    private class OriginLabel extends Composite
    {
       public OriginLabel()
@@ -285,43 +285,43 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
          HorizontalPanel panel = new HorizontalPanel();
          lblCaption_ = new Label();
          panel.add(lblCaption_);
-         
+
          lblOrigin_ = new Label();
          lblOrigin_.addStyleName(RES.styles().vcsOriginUrl());
          panel.add(lblOrigin_);
-         
+
          initWidget(panel);
-         
-         
+
+
       }
-      
+
       public void setOrigin(String caption, String origin)
       {
          lblCaption_.setText(caption);
          lblOrigin_.setText(origin);
-         
+
          if (origin == NO_REMOTE_ORIGIN)
             lblOrigin_.addStyleName(RES.styles().vcsNoOriginUrl());
          else
             lblOrigin_.removeStyleName(RES.styles().vcsNoOriginUrl());
       }
-        
+
       private Label lblCaption_;
       private Label lblOrigin_;
    }
-   
+
    private final Session session_;
    private final GlobalDisplay globalDisplay_;
    private final GitServerOperations server_;
-   
+
    private SelectWidget vcsSelect_;
    private OriginLabel lblOrigin_;
    private RProjectVcsContext vcsContext_;
-   
+
    private static final String NONE = "(None)";
-   
+
    private static final String NO_REMOTE_ORIGIN  ="None";
-   
-   private static final ProjectPreferencesDialogResources RES = 
+
+   private static final ProjectPreferencesDialogResources RES =
                                     ProjectPreferencesDialogResources.INSTANCE;
 }

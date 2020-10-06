@@ -1,7 +1,7 @@
 /*
  * ZoomPaneEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,7 +23,7 @@ public class ZoomPaneEvent extends GwtEvent<ZoomPaneEvent.Handler>
    {
       void onZoomPane(ZoomPaneEvent event);
    }
-   
+
    public ZoomPaneEvent(String pane, String tab)
    {
       pane_ = pane;
@@ -34,20 +34,20 @@ public class ZoomPaneEvent extends GwtEvent<ZoomPaneEvent.Handler>
    {
       this(pane, pane);
    }
-   
+
    public String getPane()
    {
       return pane_;
    }
-   
+
    public String getTab()
    {
       return tab_;
    }
-   
+
    private final String pane_;
    private final String tab_;
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -60,5 +60,5 @@ public class ZoomPaneEvent extends GwtEvent<ZoomPaneEvent.Handler>
       handler.onZoomPane(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

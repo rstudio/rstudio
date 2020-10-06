@@ -1,7 +1,7 @@
 /*
  * Exec.hpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,12 +23,12 @@
 namespace rstudio {
 namespace core {
 
-class Error ;   
+class Error;
    
 class ExecBlock
 {
 public:
-   typedef boost::function<core::Error()> Function ; 
+   typedef boost::function<core::Error()> Function;
 
 public:
    ExecBlock() {}
@@ -36,7 +36,7 @@ public:
     // COPYING: via compiler (copyable members)
    
    // add to the block
-   ExecBlock& add(Function function) ;
+   ExecBlock& add(Function function);
    
    // easy init style (based on idiom in boost::program_options)
    class EasyInit;
@@ -60,10 +60,10 @@ public:
          return *this;
       }
    private:
-      ExecBlock* pExecBlock_ ;
+      ExecBlock* pExecBlock_;
    };
 private:
-   std::vector<Function> functions_ ;
+   std::vector<Function> functions_;
 };
    
 

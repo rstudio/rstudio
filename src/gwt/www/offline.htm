@@ -3,7 +3,7 @@
 #
 # offline.htm
 #
-# Copyright (C) 2009-19 by RStudio, PBC
+# Copyright (C) 2020 by RStudio, PBC
 #
 # This program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
@@ -73,10 +73,15 @@ body, td {
 <script>
    function getBaseUri()
    {
-      var index = window.location.href.lastIndexOf("#!request_uri#");
+      var baseUri = "#!base_uri#";
+      if (!baseUri)
+      {
+        baseUri = window.location.href;
+      }
+      var index = baseUri.lastIndexOf("#!request_uri#");
       if (index > 0)
       {
-         return window.location.href.substring(0, index);
+        return baseUri.substring(0, index);
       }
       return "/";
    }

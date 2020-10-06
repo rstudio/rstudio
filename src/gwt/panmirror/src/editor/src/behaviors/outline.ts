@@ -1,7 +1,7 @@
 /*
  * oultine.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,13 +15,24 @@
 
 import { Plugin, PluginKey, EditorState, Transaction } from 'prosemirror-state';
 import { Schema, Node as ProsemirrorNode } from 'prosemirror-model';
+import { EditorView } from 'prosemirror-view';
+
 import { NodeWithPos } from 'prosemirror-utils';
 
 import { Extension } from '../api/extension';
 import { transactionsHaveChange, kSetMarkdownTransaction } from '../api/transaction';
 import { findTopLevelBodyNodes } from '../api/node';
 import { uuidv4 } from '../api/util';
-import { EditorOutlineItem, EditorOutlineItemType, EditorOutline } from '../api/outline';
+import {
+  EditorOutlineItem,
+  EditorOutlineItemType,
+  EditorOutline,
+  isOutlineNode,
+  getEditingOutlineLocation,
+  getDocumentOutline,
+} from '../api/outline';
+import { navigateToPos } from '../api/navigation';
+import { ProsemirrorCommand, EditorCommandId } from '../api/command';
 
 const kOutlineIdsTransaction = 'OutlineIds';
 
@@ -63,6 +74,13 @@ const extension: Extension = {
     ];
   },
 
+  commands: () => {
+    return [
+      new ProsemirrorCommand(EditorCommandId.GoToNextSection, ['Mod-PageDown'], goToSectionCommand('next')),
+      new ProsemirrorCommand(EditorCommandId.GoToPreviousSection, ['Mod-PageUp'], goToSectionCommand('previous')),
+    ];
+  },
+
   plugins: (schema: Schema) => {
     return [
       new Plugin<EditorOutline>({
@@ -77,7 +95,7 @@ const extension: Extension = {
             if (transactionsAffectOutline([tr], oldState, newState)) {
               return editorOutline(newState);
             } else {
-              return value;
+              return value; // don't need to map b/c there are no positions in the data structure
             }
           },
         },
@@ -85,6 +103,28 @@ const extension: Extension = {
     ];
   },
 };
+
+export function goToSectionCommand(dir: 'next' | 'previous') {
+  return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
+    if (dispatch && view) {
+      let outline = getDocumentOutline(state);
+      if (dir === 'previous') {
+        outline = outline.reverse();
+      }
+      const target = outline.find(nodeWithPos => {
+        if (dir === 'next') {
+          return nodeWithPos.pos > state.selection.head;
+        } else {
+          return nodeWithPos.pos < state.selection.head - 1;
+        }
+      });
+      if (target) {
+        navigateToPos(view, target.pos, false);
+      }
+    }
+    return true;
+  };
+}
 
 function editorOutline(state: EditorState): EditorOutline {
   // get all of the headings (bail if there are none)
@@ -100,7 +140,6 @@ function editorOutline(state: EditorState): EditorOutline {
     type: nodeWithPos.node.type.name as EditorOutlineItemType,
     level: nodeWithPos.node.attrs.level || defaultLevel,
     title: nodeWithPos.node.type.spec.code ? nodeWithPos.node.type.name : nodeWithPos.node.textContent,
-    pos: nodeWithPos.pos,
     children: [],
   });
 
@@ -110,7 +149,6 @@ function editorOutline(state: EditorState): EditorOutline {
     type: '' as EditorOutlineItemType,
     level: 0,
     title: '',
-    pos: 0,
     children: [],
   };
   const containers: EditorOutlineItem[] = [];
@@ -142,14 +180,6 @@ function hasOutlineIdsTransaction(transactions: Transaction[]) {
   return transactions.some(tr => tr.getMeta(kOutlineIdsTransaction));
 }
 
-function isOutlineNode(node: ProsemirrorNode) {
-  if (node.type.spec.attrs) {
-    return node.type.spec.attrs.hasOwnProperty('navigation_id');
-  } else {
-    return false;
-  }
-}
-
 function transactionsAffectOutline(transactions: Transaction[], oldState: EditorState, newState: EditorState) {
   return (
     transactions.some(tr => tr.getMeta(kSetMarkdownTransaction)) ||
@@ -159,7 +189,7 @@ function transactionsAffectOutline(transactions: Transaction[], oldState: Editor
 }
 
 export function getOutline(state: EditorState): EditorOutline {
-  return plugin.getState(state);
+  return plugin.getState(state)!;
 }
 
 export default extension;

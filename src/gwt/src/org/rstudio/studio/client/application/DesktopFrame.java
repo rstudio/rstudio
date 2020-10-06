@@ -1,7 +1,7 @@
 /*
  * DesktopFrame.java
  *
- * Copyright (C) 2009-17 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,6 +22,7 @@ import org.rstudio.core.client.js.JavaScriptPassthrough;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayInteger;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.user.client.Command;
 
 /**
@@ -66,6 +67,8 @@ public interface DesktopFrame extends JavaScriptPassthrough
    
    void setClipboardText(String text);
    void getClipboardText(CommandWithArg<String> callback);
+   void getClipboardUris(CommandWithArg<JsArrayString> callback);
+   void getClipboardImage(CommandWithArg<String> callback);
    
    void setGlobalMouseSelection(String selection);
    void getGlobalMouseSelection(CommandWithArg<String> callback);
@@ -110,7 +113,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
                        String buttons,
                        int defaultButton,
                        int cancelButton,
-                       CommandWithArg<String> callback);
+                       CommandWithArg<Double> callback);
 
    void promptForText(String title,
                       String label,
@@ -226,7 +229,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void controlLauncherJob(String jobId, String operation);
    void getJobContainerUser();
    void validateJobsConfig();
-   void getProxyPortNumber(CommandWithArg<Integer> callback);
+   void getProxyPortNumber(CommandWithArg<Double> callback);
 
    void signOut();
 }

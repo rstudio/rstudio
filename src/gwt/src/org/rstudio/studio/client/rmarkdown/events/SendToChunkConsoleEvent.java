@@ -1,7 +1,7 @@
 /*
  * SendToChunkConsoleEvent.java
  *
- * Copyright (C) 2009-14 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,14 +22,14 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class SendToChunkConsoleEvent 
+public class SendToChunkConsoleEvent
              extends GwtEvent<SendToChunkConsoleEvent.Handler>
-{  
+{
    public interface Handler extends EventHandler
    {
       void onSendToChunkConsole(SendToChunkConsoleEvent event);
    }
-   
+
    public SendToChunkConsoleEvent(String docId, Scope scope, Range range)
    {
       this(docId, scope, range, null);
@@ -40,7 +40,7 @@ public class SendToChunkConsoleEvent
       docId_ = docId;
       scope_ = scope;
       range_ = range;
-      
+
       if (execScope == null)
       {
          execScope_ = range == null
@@ -57,22 +57,22 @@ public class SendToChunkConsoleEvent
    {
       return docId_;
    }
-   
-   public int getRow() 
+
+   public int getRow()
    {
       return scope_.getEnd().getRow();
    }
-   
+
    public Scope getScope()
    {
       return scope_;
    }
-   
+
    public Range getRange()
    {
       return range_;
    }
-   
+
    public int getExecScope()
    {
       return execScope_;
@@ -89,11 +89,11 @@ public class SendToChunkConsoleEvent
    {
       handler.onSendToChunkConsole(this);
    }
-   
+
    private final String docId_;
    private Scope scope_;
    private final Range range_;
    private final int execScope_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

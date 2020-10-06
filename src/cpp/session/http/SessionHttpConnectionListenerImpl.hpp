@@ -1,7 +1,7 @@
 /*
  * SessionHttpConnectionListenerImpl.hpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -85,7 +85,7 @@ public:
       // cleanup any existing networking state
       core::Error error = cleanup();
       if (error)
-         return error ;
+         return error;
 
       // initialize acceptor
       error = initializeAcceptor(&acceptorService_);
@@ -103,7 +103,7 @@ public:
       core::system::SignalBlocker signalBlocker;
       error = signalBlocker.blockAll();
       if (error)
-         return error ;
+         return error;
 
       // launch the listener thread
       try
@@ -136,7 +136,7 @@ public:
       }
 
       // close acceptor
-      boost::system::error_code ec ;
+      boost::system::error_code ec;
       acceptorService_.closeAcceptor(ec);
       if (ec)
          LOG_ERROR(core::Error(ec, ERROR_LOCATION));
@@ -188,7 +188,7 @@ private:
    virtual bool validateConnection(
       boost::shared_ptr<HttpConnectionImpl<ProtocolType> > ptrConnection) = 0;
 
-   virtual core::Error cleanup() = 0 ;
+   virtual core::Error cleanup() = 0;
 
 private:
    boost::asio::io_service& ioService() { return acceptorService_.ioService(); }
@@ -241,7 +241,7 @@ private:
             // for errors, log and continue,but don't log errors caused
             // by normal course of socket shutdown
             if (!core::isShutdownError(ec))
-               LOG_ERROR(core::Error(ec, ERROR_LOCATION)) ;
+               LOG_ERROR(core::Error(ec, ERROR_LOCATION));
          }
       }
       catch(const boost::system::system_error& e)
@@ -253,7 +253,7 @@ private:
       // ALWAYS accept next connection
       try
       {
-         acceptNextConnection() ;
+         acceptNextConnection();
       }
       CATCH_UNEXPECTED_EXCEPTION
    }
@@ -339,7 +339,7 @@ private:
    HttpConnectionQueue eventsConnectionQueue_;
 
    // listener thread
-   boost::thread listenerThread_ ;
+   boost::thread listenerThread_;
 
    // flag indicating we've started
    bool started_;

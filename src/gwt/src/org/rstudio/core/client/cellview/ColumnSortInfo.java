@@ -1,7 +1,7 @@
 /*
  * ColumnSortInfo.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,9 +23,9 @@ import com.google.gwt.user.cellview.client.ColumnSortList;
 public class ColumnSortInfo extends JavaScriptObject
 {
    protected ColumnSortInfo()
-   {  
+   {
    }
-   
+
    public static native ColumnSortInfo create(int columnIndex,
                                               boolean ascending) /*-{
       var sortInfo = new Object();
@@ -33,11 +33,11 @@ public class ColumnSortInfo extends JavaScriptObject
       sortInfo.ascending = ascending;
       return sortInfo;
    }-*/;
-   
+
    public final native int getColumnIndex() /*-{
       return this.columnIndex;
    }-*/;
-   
+
    public final native boolean getAscending() /*-{
       return this.ascending;
    }-*/;

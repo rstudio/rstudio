@@ -1,7 +1,7 @@
 /*
  * HasSelectionCommitHandlers.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,5 +19,5 @@ import com.google.gwt.event.shared.HasHandlers;
 
 public interface HasSelectionCommitHandlers<I> extends HasHandlers
 {
-   HandlerRegistration addSelectionCommitHandler(SelectionCommitHandler<I> handler);
+   HandlerRegistration addSelectionCommitHandler(SelectionCommitEvent.Handler<I> handler);
 }

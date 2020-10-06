@@ -1,7 +1,7 @@
 /*
  * ObjectExplorerEditingTarget.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -131,7 +131,7 @@ public class ObjectExplorerEditingTarget
    @Override
    public void popoutDoc()
    {
-      events_.fireEvent(new PopoutDocEvent(getId(), null));
+      events_.fireEvent(new PopoutDocEvent(getId(), null, null));
    }
    
    @Override
@@ -168,7 +168,7 @@ public class ObjectExplorerEditingTarget
          view_ = null;
       }
       
-      view_ = new ObjectExplorerEditingTargetWidget(getHandle(), doc_);
+      view_ = new ObjectExplorerEditingTargetWidget(getHandle(), doc_, column_);
       view_.setSize("100%", "100%");
       progressPanel_.setWidget(view_);
    }

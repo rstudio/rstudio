@@ -2,7 +2,7 @@
 /*
  * DataOutputTab.java
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,17 +16,21 @@
 
 package org.rstudio.studio.client.workbench.views.output.data;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 import org.rstudio.studio.client.workbench.views.output.data.events.DataOutputCompletedEvent;
 
-public class DataOutputTab 
-   extends DelayLoadWorkbenchTab<DataOutputPresenter> 
+public class DataOutputTab
+   extends DelayLoadWorkbenchTab<DataOutputPresenter>
 {
    public abstract static class Shim extends
                 DelayLoadTabShim<DataOutputPresenter, DataOutputTab>
@@ -34,16 +38,21 @@ public class DataOutputTab
    {
       abstract void initialize();
       abstract void confirmClose(Command onConfirmed);
+      @Handler abstract void onActivateSQLResults();
    }
+
+   interface Binder extends CommandBinder<Commands, Shim> {}
 
    @Inject
    public DataOutputTab(Shim shim,
                         EventBus events,
+                        Commands commands,
                         final Session session)
    {
       super("SQL Results", shim);
       shim_ = shim;
 
+      GWT.<Binder>create(Binder.class).bind(commands, shim);
       events.addHandler(DataOutputCompletedEvent.TYPE, shim);
    }
 
@@ -52,12 +61,12 @@ public class DataOutputTab
    {
       return true;
    }
-   
+
    @Override
    public void confirmClose(Command onConfirmed)
    {
       shim_.confirmClose(onConfirmed);
    }
-   
-   private Shim shim_;
+
+   private final Shim shim_;
 }

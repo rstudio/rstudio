@@ -1,7 +1,7 @@
 /*
  * ApplicationVisibility.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,7 +21,6 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
-import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 
 import com.google.gwt.user.client.Timer;
@@ -29,7 +28,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 @Singleton
-public class ApplicationVisibility 
+public class ApplicationVisibility
 {
    @Inject
    public ApplicationVisibility(ApplicationServerOperations server,
@@ -40,51 +39,48 @@ public class ApplicationVisibility
       server_ = server;
       eventBus_ = eventBus;
       satelliteManager_ = satelliteManager;
-      
+
       // don't register for visibility changed events in desktop mode
       if (Desktop.hasDesktopFrame())
          return;
-     
+
       // initialize after we have session info
-      eventBus_.addHandler(SessionInitEvent.TYPE, new SessionInitHandler() {
-         @Override
-         public void onSessionInit(SessionInitEvent sie)
+      eventBus_.addHandler(SessionInitEvent.TYPE, (SessionInitEvent sie) ->
+      {
+         // check for multi session
+         isMultiSession_ = session.getSessionInfo().getMultiSession();
+
+         // don't allow exceptions to escape (this code is being added
+         // late in the release cycle and will run at workbench startup
+         // so we need to make sure that unexpected errors don't bring
+         // the entire ide down with them
+         try
          {
-            // check for multi session
-            isMultiSession_ = session.getSessionInfo().getMultiSession();
-            
-            // don't allow exceptions to escape (this code is being added 
-            // late in the release cycle and will run at workbench startup 
-            // so we need to make sure that unexpected errors don't bring 
-            // the entire ide down with them
-            try
-            {
-               // register for page visibility changed events
-               registerPageVisibilityChangedHandler();  
-               
-               // check for being hidden 5 seconds after startup
-               // and stop the event listener if we are (handles 
-               // cases where we never get visibility events because
-               // a browser tab was "restored" or opened as part of 
-               // an "open all sessions" command
-               new Timer() {
-                  @Override
-                  public void run()
-                  {
-                     if (isHidden())
-                        handleApplicationVisibilityChanged();
-                  }
-               }.schedule(5000);
-            }
-            catch(Exception e)
-            {
-               Debug.logException(e);
-            }
-            
-         }   
+            // register for page visibility changed events
+            registerPageVisibilityChangedHandler();
+
+            // check for being hidden 5 seconds after startup
+            // and stop the event listener if we are (handles
+            // cases where we never get visibility events because
+            // a browser tab was "restored" or opened as part of
+            // an "open all sessions" command
+            new Timer() {
+               @Override
+               public void run()
+               {
+                  if (isHidden())
+                     handleApplicationVisibilityChanged();
+               }
+            }.schedule(5000);
+         }
+         catch(Exception e)
+         {
+            Debug.logException(e);
+         }
+
       });
    }
-   
+
    private native final boolean isHidden() /*-{
       if (typeof $wnd.document.hidden !== "undefined")
          return $wnd.document.hidden;
@@ -97,8 +93,8 @@ public class ApplicationVisibility
       else
          return false;
    }-*/;
-   
-    
+
+
    private native final void registerPageVisibilityChangedHandler() /*-{
       // determine name of visibilityChange event
       var visibilityChange;
@@ -112,21 +108,21 @@ public class ApplicationVisibility
          visibilityChange = "webkitvisibilitychange";
       else
          visibilityChange = null;
-         
+
       // add the event listener if we can
-      if (typeof $wnd.document.addEventListener !== "undefined" || 
-          visibilityChange !== null) 
+      if (typeof $wnd.document.addEventListener !== "undefined" ||
+          visibilityChange !== null)
       {
-         var thiz = this; 
+         var thiz = this;
          $wnd.document.addEventListener(
-            visibilityChange, 
+            visibilityChange,
             $entry(function(e) {
                thiz.@org.rstudio.studio.client.application.ApplicationVisibility::handleApplicationVisibilityChanged()();
-            }), 
+            }),
             false);
       }
    }-*/;
-   
+
    private void handleApplicationVisibilityChanged()
    {
       // if we are multi session then manage the event listener
@@ -134,30 +130,30 @@ public class ApplicationVisibility
       // opened to the server)
       if (isMultiSession_)
          manageEventListener();
-      
+
       // fire visibility changed event
       eventBus_.fireEvent(new ApplicationVisibilityChangedEvent(isHidden()));
    }
-   
+
    private void manageEventListener()
    {
       try
       {
          if (shouldStopEventListener())
          {
-            // Stop the event listener but do it on a delay to provide the 
+            // Stop the event listener but do it on a delay to provide the
             // system the time to confirm receipt of existing events.
             // This is necessary because some events (like browseURL) can
             // actually cause the de-activation of the window. If we stop
             // the event listener right away then the next get_events call
             // which acknowledges receipt of the event (e.g. browseURL) is
-            // actually aborted before it can acknowledge receipt. The 
+            // actually aborted before it can acknowledge receipt. The
             // subsequent call to start() then resets the lastEventId to -1
-            // causing a re-delivery of the original event. 
+            // causing a re-delivery of the original event.
             //
             // Note that the specified delay (5 seconds) is somewhat arbitrary
-            // The reason that we stop in the first place is to avoid 
-            // saturation of per-domain request limits so the stop needs to 
+            // The reason that we stop in the first place is to avoid
+            // saturation of per-domain request limits so the stop needs to
             // occur reasonably soon but not right away.
             if (stopTimer_.isRunning())
                stopTimer_.cancel();
@@ -165,7 +161,7 @@ public class ApplicationVisibility
          }
          else
          {
-            server_.ensureEventListener();   
+            server_.ensureEventListener();
          }
       }
       catch(Exception e)
@@ -173,21 +169,21 @@ public class ApplicationVisibility
          Debug.logException(e);
       }
    }
-   
+
    private boolean shouldStopEventListener()
    {
       return isHidden() && !satelliteManager_.getSatellitesOpen();
    }
-   
+
    private final Timer stopTimer_ = new Timer() {
       @Override
-      public void run() 
+      public void run()
       {
          if (shouldStopEventListener())
-            server_.stopEventListener();    
-      } 
+            server_.stopEventListener();
+      }
    };
-   
+
    private final ApplicationServerOperations server_;
    private final EventBus eventBus_;
    private final SatelliteManager satelliteManager_;

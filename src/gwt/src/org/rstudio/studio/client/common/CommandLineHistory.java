@@ -1,7 +1,7 @@
 /*
  * CommandLineHistory.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -67,7 +67,7 @@ public class CommandLineHistory
             "");
       historyPos_ = newPos;
    }
-   
+
    public String getHistoryEntry(int offset)
    {
       int pos = getPositionAtOffset(offset);
@@ -79,7 +79,7 @@ public class CommandLineHistory
       historyPos_ = history_.size();
       historyTail_ = "";
    }
-   
+
    private int getPositionAtOffset(int offset)
    {
       int pos = historyPos_ + offset;

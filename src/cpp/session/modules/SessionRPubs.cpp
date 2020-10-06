@@ -1,7 +1,7 @@
 /*
  * SessionRPubs.cpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -38,7 +38,7 @@
 
 #include <session/projects/SessionProjects.hpp>
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
@@ -424,7 +424,7 @@ Error initialize()
 {
    using boost::bind;
    using namespace module_context;
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "rpubs_is_published", rpubsIsPublished))
       (bind(registerRpcMethod, "rpubs_upload", rpubsUpload))

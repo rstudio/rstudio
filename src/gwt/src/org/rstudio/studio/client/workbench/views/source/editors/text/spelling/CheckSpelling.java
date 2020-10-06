@@ -1,7 +1,7 @@
 /*
  * CheckSpelling.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.spelling;
 
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.CloseEvent;
@@ -23,16 +24,16 @@ import com.google.gwt.user.client.ui.PopupPanel;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.ResultCallback;
+import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.spelling.TypoSpellChecker;
 import org.rstudio.studio.client.common.spelling.model.SpellCheckerResult;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
-import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -75,19 +76,19 @@ public class CheckSpelling
    }
 
    public CheckSpelling(TypoSpellChecker spellChecker,
-                        DocDisplay docDisplay,
+                        SpellingDoc spellingDoc,
                         Display view,
                         ProgressDisplay progressDisplay,
                         ResultCallback<Void, Exception> callback)
    {
       typoSpellChecker_ = spellChecker;
-      docDisplay_ = docDisplay;
+      spellingDoc_ = spellingDoc;
       view_ = view;
       progressDisplay_ = progressDisplay;
       callback_ = callback;
 
-      currentPos_ = docDisplay_.getSelectionStart();
-      initialCursorPos_ = docDisplay_.createAnchor(currentPos_);
+      currentPos_ = spellingDoc_.getSelectionStart();
+      initialCursorPos_ = spellingDoc_.createAnchor(currentPos_);
       wrapped_ = false;
 
       view_.getChangeButton().addClickHandler((ClickEvent event) ->
@@ -109,21 +110,21 @@ public class CheckSpelling
 
       view_.getSkipButton().addClickHandler((ClickEvent event) ->
       {
-         currentPos_ = docDisplay_.getCursorPosition();
+         currentPos_ = spellingDoc_.getCursorPosition() + 1;
          findNextMisspelling();
       });
 
       view_.getIgnoreAllButton().addClickHandler((ClickEvent event) ->
       {
          typoSpellChecker_.addIgnoredWord(view_.getMisspelledWord().getText());
-         currentPos_ = docDisplay_.getCursorPosition();
+         currentPos_ = spellingDoc_.getCursorPosition() + 1;
          findNextMisspelling();
       });
 
       view_.getAddButton().addClickHandler((ClickEvent event) ->
       {
          typoSpellChecker_.addToUserDictionary(view_.getMisspelledWord().getText());
-         currentPos_ = docDisplay_.getCursorPosition();
+         currentPos_ = spellingDoc_.getCursorPosition() + 1;
          findNextMisspelling();
       });
 
@@ -147,14 +148,15 @@ public class CheckSpelling
 
    private void cancel()
    {
+      spellingDoc_.dispose();
       canceled_ = true;
       callback_.onCancelled();
    }
 
    private void doReplacement(String replacement)
    {
-      docDisplay_.replaceSelection(replacement);
-      currentPos_ = docDisplay_.getSelectionEnd();
+      spellingDoc_.replaceSelection(replacement);
+      currentPos_ = spellingDoc_.getSelectionEnd() + 1;
    }
 
    private void findNextMisspelling()
@@ -166,30 +168,34 @@ public class CheckSpelling
 
          showProgress();
 
-         Iterable<Range> wordSource = docDisplay_.getWords(
-               docDisplay_.getFileType().getSpellCheckTokenPredicate(),
-               docDisplay_.getFileType().getCharPredicate(),
+         Iterable<SpellingDoc.WordRange> wordSource = spellingDoc_.getWords(
                currentPos_,
-               wrapped_ ? initialCursorPos_.getPosition() : null);
+               wrapped_ ? initialCursorPos_.getPosition() : -1);
 
          final ArrayList<String> words = new ArrayList<String>();
-         final ArrayList<Range> wordRanges = new ArrayList<Range>();
+         final ArrayList<SpellingDoc.WordRange> checkWords = new ArrayList<SpellingDoc.WordRange>();
 
-         for (Range r : wordSource)
+         SpellingDoc.WordRange lastWord = null;
+         for (SpellingDoc.WordRange w : wordSource)
          {
-            if (!typoSpellChecker_.shouldCheckSpelling(docDisplay_, r))
+            // update last (so that whenever the loop terminates we know the location
+            // of the last word that we iterated over)
+            lastWord = w;
+          
+            if (!typoSpellChecker_.shouldCheckSpelling(spellingDoc_, w))
                continue;
 
-            wordRanges.add(r);
-            words.add(docDisplay_.getTextForRange(r));
+            checkWords.add(w);
+            words.add(spellingDoc_.getText(w));
 
             // Check a maximum of N words at a time
-            if (wordRanges.size() == 100)
+            if (checkWords.size() == 100)
                break;
          }
 
-         if (wordRanges.size() > 0)
+         if (checkWords.size() > 0)
          {
+            final int endCheckedPos = lastWord.end;
             typoSpellChecker_.checkSpelling(words, new SimpleRequestCallback<SpellCheckerResult>()
             {
                @Override
@@ -202,14 +208,21 @@ public class CheckSpelling
                   {
                      if (response.getIncorrect().contains(words.get(i)))
                      {
-                        handleMisspelledWord(wordRanges.get(i));
+                        handleMisspelledWord(checkWords.get(i));
                         return;
                      }
                   }
 
-                  currentPos_ = wordRanges.get(wordRanges.size()-1).getEnd();
-                  // Everything spelled correctly, continue
-                  Scheduler.get().scheduleDeferred(() -> findNextMisspelling());
+                  int initialCursorPos = initialCursorPos_.getPosition();
+                  if (wrapped_ && (endCheckedPos >= initialCursorPos))
+                  {
+                     onSpellingComplete();
+                  }
+                  else
+                  {
+                     currentPos_ = endCheckedPos + 1;
+                     Scheduler.get().scheduleDeferred(() -> findNextMisspelling());
+                  }
                }
             });
          }
@@ -218,17 +231,12 @@ public class CheckSpelling
             // No misspellings
             if (wrapped_)
             {
-               close();
-               RStudioGinjector.INSTANCE.getGlobalDisplay().showMessage(
-                     GlobalDisplay.MSG_INFO,
-                     "Check Spelling",
-                     "Spell check is complete.");
-               callback_.onSuccess(Void.create());
+               onSpellingComplete();
             }
             else
             {
                wrapped_ = true;
-               currentPos_ = Position.create(0, 0);
+               currentPos_ = 0;
                findNextMisspelling();
             }
          }
@@ -242,6 +250,16 @@ public class CheckSpelling
                "An error has occurred:\n\n" + e.getMessage());
          callback_.onFailure(e);
       }
+   }
+   
+   private void onSpellingComplete()
+   {
+      close();
+      RStudioGinjector.INSTANCE.getGlobalDisplay().showMessage(
+            GlobalDisplay.MSG_INFO,
+            "Check Spelling",
+            "Spell check is complete.");
+      callback_.onSuccess(Void.create());
    }
 
    private void close()
@@ -272,16 +290,16 @@ public class CheckSpelling
       view_.hideProgress();
    }
 
-   private void handleMisspelledWord(Range range)
+   private void handleMisspelledWord(SpellingDoc.WordRange misspelledWord)
    {
       try
       {
-         docDisplay_.setSelectionRange(range);
-         docDisplay_.moveCursorNearTop();
+         spellingDoc_.setSelection(misspelledWord);
+         spellingDoc_.moveCursorNearTop();
          view_.clearSuggestions();
          view_.getReplacement().setText("");
 
-         final String word = docDisplay_.getTextForRange(range);
+         final String word = spellingDoc_.getText(misspelledWord);
 
          if (changeAll_.containsKey(word))
          {
@@ -299,16 +317,46 @@ public class CheckSpelling
          // meaning we'll be avoiding a completely incorrect region.
          Scheduler.get().scheduleFixedDelay(() ->
          {
-            showDialog(docDisplay_.getCursorBounds());
+            showDialog(spellingDoc_.getCursorBounds());
 
             view_.focusReplacement();
 
-            String[] suggestions = typoSpellChecker_.suggestionList(word);
-            view_.setSuggestions(suggestions);
-            if (suggestions.length > 0)
+            // If Typo isn't loaded or isn't able to load (blacklisted dictionary)
+            // just defer to the async backend dictionary. Once we can load all dictionaries
+            // the legacy code can be removed.
+            if (TypoSpellChecker.isLoaded())
             {
-               view_.getReplacement().setText(suggestions[0]);
-               view_.focusReplacement();
+               String[] suggestions = typoSpellChecker_.suggestionList(word);
+               view_.setSuggestions(suggestions);
+               if (suggestions.length > 0)
+               {
+                  view_.getReplacement().setText(suggestions[0]);
+                  view_.focusReplacement();
+               }
+            }
+            else
+            {
+               typoSpellChecker_.legacySuggestionList(word, new ServerRequestCallback<JsArrayString>()
+               {
+                  @Override
+                  public void onResponseReceived(
+                     JsArrayString response)
+                  {
+                     String[] suggestions = JsUtil.toStringArray(response);
+                     view_.setSuggestions(suggestions);
+                     if (suggestions.length > 0)
+                     {
+                        view_.getReplacement().setText(suggestions[0]);
+                        view_.focusReplacement();
+                     }
+                  }
+
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     Debug.logError(error);
+                  }
+               });
             }
 
             return false;
@@ -326,15 +374,15 @@ public class CheckSpelling
    }
 
    private final TypoSpellChecker typoSpellChecker_;
-   private final DocDisplay docDisplay_;
+   private final SpellingDoc spellingDoc_;
    private final Display view_;
    private final ProgressDisplay progressDisplay_;
    private final ResultCallback<org.rstudio.studio.client.server.Void, Exception> callback_;
-   private final Anchor initialCursorPos_;
+   private final SpellingDoc.Anchor initialCursorPos_;
 
    private final HashMap<String, String> changeAll_ = new HashMap<>();
 
-   private Position currentPos_;
+   private int currentPos_;
 
    private boolean wrapped_;
    private boolean canceled_;

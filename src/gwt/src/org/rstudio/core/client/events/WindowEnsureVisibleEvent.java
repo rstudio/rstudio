@@ -1,7 +1,7 @@
 /*
  * WindowEnsureVisibleEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,17 +25,17 @@ public class WindowEnsureVisibleEvent extends GwtEvent<WindowEnsureVisibleEvent.
    {
       void onWindowEnsureVisible(WindowEnsureVisibleEvent event);
    }
-   
+
    public WindowEnsureVisibleEvent(WindowFrame windowFrame)
    {
       windowFrame_ = windowFrame;
    }
-   
+
    public WindowFrame getWindowFrame()
    {
       return windowFrame_;
    }
-   
+
    private final WindowFrame windowFrame_;
 
    @Override
@@ -49,6 +49,6 @@ public class WindowEnsureVisibleEvent extends GwtEvent<WindowEnsureVisibleEvent.
    {
       handler.onWindowEnsureVisible(this);
    }
-   
-   public static final Type<Handler> TYPE = new Type<Handler>();
+
+   public static final Type<Handler> TYPE = new Type<>();
 }

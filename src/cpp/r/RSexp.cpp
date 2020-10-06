@@ -1,7 +1,7 @@
 /*
  * RSexp.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -42,7 +42,7 @@
 #undef TRUE
 #undef FALSE
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace r {
@@ -138,17 +138,50 @@ std::string translate(SEXP charSEXP, bool asUtf8 = false)
    }
 }
 
+std::string asStringImpl(SEXP objectSEXP, bool asUtf8)
+{
+   switch (TYPEOF(objectSEXP))
+   {
+   
+   case CHARSXP:
+      return translate(objectSEXP, asUtf8);
+      
+   case STRSXP:
+      if (length(objectSEXP) == 0)
+      {
+         return std::string();
+      }
+      else
+      {
+         SEXP charSEXP = STRING_ELT(objectSEXP, 0);
+         return translate(charSEXP, asUtf8);
+      }
+      
+   default:
+      Protect protect;
+      SEXP charSEXP;
+      protect.add(charSEXP = Rf_asChar(objectSEXP));
+      return translate(charSEXP, asUtf8);
+      
+   }
+}
+
 } // anonymous namespace
    
 std::string asString(SEXP object) 
 {
-   return translate(Rf_asChar(object));
+   return asStringImpl(object, false);
+}
+
+std::string asUtf8String(SEXP object)
+{
+   return asStringImpl(object, true);
 }
    
 std::string safeAsString(SEXP object, const std::string& defValue)
 {
    if (object != R_NilValue)
-      return asString(object);
+      return asStringImpl(object, false);
    else 
       return defValue;
 }
@@ -176,7 +209,11 @@ bool fillVectorString(SEXP object, std::vector<std::string>* pVector)
    int n = Rf_length(object);
    pVector->reserve(pVector->size() + n);
    for (int i = 0; i < n; i++)
-      pVector->push_back(std::string(CHAR(STRING_ELT(object, i))));
+   {
+      SEXP charSEXP = STRING_ELT(object, i);
+      pVector->push_back(
+               std::string(CHAR(charSEXP), LENGTH(charSEXP)));
+   }
    
    return true;
 }
@@ -188,7 +225,11 @@ bool fillSetString(SEXP object, std::set<std::string>* pSet)
    
    int n = Rf_length(object);
    for (int i = 0; i < n; i++)
-      pSet->insert(std::string(CHAR(STRING_ELT(object, i))));
+   {
+      SEXP charSEXP = STRING_ELT(object, i);
+      pSet->insert(
+               std::string(CHAR(charSEXP), LENGTH(charSEXP)));
+   }
    
    return true;
 }
@@ -222,30 +263,25 @@ namespace {
 
 bool ensureNamespaceLoaded(const std::string& ns)
 {
-   if (ns.empty()) return false;
+   if (ns.empty())
+      return false;
+   
    SEXP nsSEXP = findNamespace(ns);
-   if (nsSEXP == R_UnboundValue)
-   {
-      r::exec::RFunction requireNamespace("base:::requireNamespace");
-      requireNamespace.addParam("package", ns);
-      requireNamespace.addParam("quietly", true);
-      Error error = requireNamespace.call();
-      if (error) return false;
-   }
+   if (nsSEXP != R_UnboundValue)
+      return true;
+   
+   Error error = r::exec::RFunction("base:::requireNamespace")
+         .addParam("package", ns)
+         .addParam("quietly", true)
+         .call();
+   
+   if (error)
+      return false;
+   
    return true;
 }
 
 } // anonymous namespace
-
-std::vector<std::string> getLoadedNamespaces()
-{
-   std::vector<std::string> result;
-   r::exec::RFunction loadedNamespaces("loadedNamespaces", "base");
-   Error error = loadedNamespaces.call(&result);
-   if (error)
-      LOG_ERROR(error);
-   return result;
-}
 
 SEXP asNamespace(const std::string& name)
 {
@@ -398,7 +434,7 @@ void listNamedAttributes(SEXP obj, Protect *pProtect, std::vector<Variable>* pVa
    r::sexp::getNames(attrs, &names);
    
    // loop over the attributes and fill in the variable vector
-   SEXP attr = R_NilValue; 
+   SEXP attr = R_NilValue;
    SEXP nextAttr = R_NilValue;
    size_t i = 0;
    for (nextAttr = attrs; nextAttr != R_NilValue; attr = CAR(nextAttr), nextAttr = CDR(nextAttr)) 
@@ -590,7 +626,7 @@ SEXP findFunction(const std::string& name, const std::string& ns)
    
 std::string typeAsString(SEXP object)
 {
-   return Rf_type2char(TYPEOF(object));  
+   return Rf_type2char(TYPEOF(object));
 }
 
 std::string classOf(SEXP objectSEXP)
@@ -801,7 +837,7 @@ Error extract(SEXP valueSEXP, int* pInt)
    if (Rf_length(valueSEXP) < 1)
       return Error(errc::NoDataAvailableError, ERROR_LOCATION);
       
-   *pInt = INTEGER(valueSEXP)[0] ;
+   *pInt = INTEGER(valueSEXP)[0];
    return Success();
 }
    
@@ -813,7 +849,7 @@ Error extract(SEXP valueSEXP, bool* pBool)
    if (Rf_length(valueSEXP) < 1)
       return Error(errc::NoDataAvailableError, ERROR_LOCATION);
    
-   *pBool = LOGICAL(valueSEXP)[0] == TRUE ? true : false ;
+   *pBool = LOGICAL(valueSEXP)[0] == TRUE ? true : false;
    return Success();
    
 }
@@ -839,7 +875,7 @@ Error extract(SEXP valueSEXP, std::vector<int>* pVector)
    for (int i=0; i<Rf_length(valueSEXP); i++)
       pVector->push_back(INTEGER(valueSEXP)[i]);
    
-   return Success(); 
+   return Success();
 }
 
 Error extract(SEXP valueSEXP, std::string* pString, bool asUtf8)
@@ -1001,9 +1037,13 @@ SEXP create(const char* value, Protect* pProtect)
 
 SEXP create(const std::string& value, Protect* pProtect)
 {
+   SEXP charSEXP;
+   pProtect->add(charSEXP = Rf_mkCharLenCE(value.c_str(), value.size(), CE_UTF8));
+   
    SEXP valueSEXP;
    pProtect->add(valueSEXP = Rf_allocVector(STRSXP, 1));
-   SET_STRING_ELT(valueSEXP, 0, Rf_mkChar(value.c_str()));
+   
+   SET_STRING_ELT(valueSEXP, 0, charSEXP);
    return valueSEXP;
 }
    
@@ -1011,7 +1051,7 @@ SEXP create(int value, Protect* pProtect)
 {
    SEXP valueSEXP;
    pProtect->add(valueSEXP = Rf_allocVector(INTSXP, 1));
-   INTEGER(valueSEXP)[0] = value ;
+   INTEGER(valueSEXP)[0] = value;
    return valueSEXP;
 }
    
@@ -1019,7 +1059,7 @@ SEXP create(double value, Protect* pProtect)
 {
    SEXP valueSEXP;
    pProtect->add(valueSEXP = Rf_allocVector(REALSXP, 1));
-   REAL(valueSEXP)[0] = value ;
+   REAL(valueSEXP)[0] = value;
    return valueSEXP;
 }
 
@@ -1027,7 +1067,7 @@ SEXP create(bool value, Protect* pProtect)
 {
    SEXP valueSEXP;
    pProtect->add(valueSEXP = Rf_allocVector(LGLSXP, 1));
-   LOGICAL(valueSEXP)[0] = value ;
+   LOGICAL(valueSEXP)[0] = value;
    return valueSEXP;
 }
 
@@ -1049,11 +1089,11 @@ SEXP create(const core::json::Array& value, Protect* pProtect)
 SEXP create(const core::json::Object& value, Protect* pProtect)
 {
    // create the list
-   SEXP listSEXP ;
+   SEXP listSEXP;
    pProtect->add(listSEXP = Rf_allocVector(VECSXP, value.getSize()));
    
    // build list of names
-   SEXP namesSEXP ;
+   SEXP namesSEXP;
    pProtect->add(namesSEXP = Rf_allocVector(STRSXP, value.getSize()));
    
    // add each object field to it
@@ -1099,7 +1139,7 @@ SEXP create(const std::vector<int>& value, Protect *pProtect)
    pProtect->add(valueSEXP = Rf_allocVector(INTSXP, value.size()));
    
    for (std::size_t i = 0; i < value.size(); ++i) 
-      INTEGER(valueSEXP)[i] = value[i] ;
+      INTEGER(valueSEXP)[i] = value[i];
    
    return valueSEXP;
 }
@@ -1110,7 +1150,7 @@ SEXP create(const std::vector<double>& value, Protect *pProtect)
    pProtect->add(valueSEXP = Rf_allocVector(REALSXP, value.size()));
    
    for (std::size_t i = 0; i < value.size(); ++i) 
-      REAL(valueSEXP)[i] = value[i] ;
+      REAL(valueSEXP)[i] = value[i];
    
    return valueSEXP;
 }
@@ -1121,7 +1161,7 @@ SEXP create(const std::vector<bool>& value, Protect *pProtect)
    pProtect->add(valueSEXP = Rf_allocVector(LGLSXP, value.size()));
    
    for (std::size_t i = 0; i < value.size(); ++i) 
-      LOGICAL(valueSEXP)[i] = value[i] ;
+      LOGICAL(valueSEXP)[i] = value[i];
    
    return valueSEXP;
 }
@@ -1136,7 +1176,7 @@ SEXP create(const std::vector<boost::posix_time::ptime>& value,
             Protect* pProtect)
 {
    // first create a vector of doubles containing seconds since epoch
-   std::vector<int> seconds ;
+   std::vector<int> seconds;
    std::transform(value.begin(), 
                   value.end(),
                   std::back_inserter(seconds),
@@ -1144,7 +1184,7 @@ SEXP create(const std::vector<boost::posix_time::ptime>& value,
    
    // now turn this into an R vector and call as.POSIXct
    SEXP secondsSEXP = create(seconds, pProtect);
-   SEXP posixCtSEXP = R_NilValue;           
+   SEXP posixCtSEXP = R_NilValue;
    r::exec::RFunction asPOSIXct("as.POSIXct", secondsSEXP);
    asPOSIXct.addParam("tz", "GMT");
    asPOSIXct.addParam("origin", "1970-01-01");
@@ -1224,7 +1264,7 @@ SEXP create(const std::vector<std::pair<std::string,std::string> >& value,
    Rf_setAttrib(charSEXP, R_NamesSymbol, namesSEXP);
    
    // return the vector
-   return charSEXP;   
+   return charSEXP;
 }
 
 SEXP create(const std::set<std::string> &value, Protect *pProtect)
@@ -1352,7 +1392,7 @@ PreservedSEXP::PreservedSEXP(SEXP sexp)
 void PreservedSEXP::set(SEXP sexp)
 {
    releaseNow();
-   sexp_ = sexp ;
+   sexp_ = sexp;
    if (sexp_ != R_NilValue)
       ::R_PreserveObject(sexp_);
 }
@@ -1454,6 +1494,9 @@ bool isCallToNSEFunction(SEXP nodeSEXP,
                          const std::set<std::string>& nsePrimitives,
                          bool* pResult)
 {
+   if (nodeSEXP == nullptr)
+      return false;
+   
    if (TYPEOF(nodeSEXP) == LANGSXP)
    {
       SEXP headSEXP = CAR(nodeSEXP);

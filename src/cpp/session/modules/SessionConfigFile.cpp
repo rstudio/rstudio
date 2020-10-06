@@ -1,7 +1,7 @@
 /*
  * SessionConfigFile.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -194,11 +194,18 @@ Error readConfigJSON(const core::json::JsonRpcRequest& request,
                return error;
             }
          }
-         else if (systemJson.getType() == json::Type::OBJECT &&
-                  configJson.getType() == json::Type::OBJECT)
+         else if (systemJson.getType() == json::Type::OBJECT)
          {
-            // If we have successfully read two config sources, merge them
-            configJson = json::Object::mergeObjects(configJson.getObject(), systemJson.getObject());
+            if (configJson.getType() == json::Type::OBJECT)
+            {
+               // We have successfully read two config sources; merge them
+               configJson = json::Object::mergeObjects(configJson.getObject(), systemJson.getObject());
+            }
+            else
+            {
+               // We only have one config source (the system); use it
+               configJson = systemJson;
+            }
          }
       }
    }
@@ -213,7 +220,7 @@ Error initialize()
 {
    using boost::bind;
    using namespace module_context;
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "write_config_json", writeConfigJSON))
       (bind(registerRpcMethod, "read_config_json", readConfigJSON));

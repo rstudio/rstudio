@@ -1,7 +1,7 @@
 /*
  * CompletionListPopupPanel.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,7 +17,7 @@ package org.rstudio.studio.client.workbench.views.console.shell.assist;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.HTML;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
-import org.rstudio.core.client.events.SelectionCommitHandler;
+import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.widget.ThemedPopupPanel;
 
 public class CompletionListPopupPanel<TItem> extends ThemedPopupPanel
@@ -31,7 +31,7 @@ public class CompletionListPopupPanel<TItem> extends ThemedPopupPanel
    }
 
    public HandlerRegistration addSelectionCommitHandler(
-         SelectionCommitHandler<TItem> handler)
+         SelectionCommitEvent.Handler<TItem> handler)
    {
       return list_.addSelectionCommitHandler(handler);
    }
@@ -73,7 +73,7 @@ public class CompletionListPopupPanel<TItem> extends ThemedPopupPanel
    {
       return list_.selectLast();
    }
-   
+
    public void selectIndex(int idx)
    {
       list_.setSelectedIndex(idx);

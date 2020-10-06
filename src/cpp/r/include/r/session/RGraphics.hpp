@@ -1,7 +1,7 @@
 /*
  * RGraphics.hpp
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -124,7 +124,7 @@ public:
    virtual ~Display() {}
    
    // plot list
-   virtual int plotCount() const = 0 ;
+   virtual int plotCount() const = 0;
    virtual core::Error plotImageFilename(int index, 
                                          std::string* pImageFilename) const = 0;
    virtual int activePlotIndex() const = 0;
@@ -154,12 +154,12 @@ public:
                                           int heightPx) = 0;
       
    // display
-   virtual bool hasOutput() const = 0 ;
-   virtual bool hasChanges() const = 0 ;
+   virtual bool hasOutput() const = 0;
+   virtual bool hasChanges() const = 0;
    virtual bool isActiveDevice() const = 0;
    virtual boost::posix_time::ptime lastChange() const = 0;
    virtual void render(boost::function<void(DisplayState)> outputFunction)=0;
-   virtual std::string imageFilename() const = 0 ;
+   virtual std::string imageFilename() const = 0;
    virtual void refresh() = 0;
 
    // retrieve image path based on filename
@@ -182,7 +182,7 @@ public:
 // singleton
 Display& display();
 
-const boost::system::error_category& rGraphicsCategory() ;
+const boost::system::error_category& rGraphicsCategory();
 
 std::string extraBitmapParams();
 

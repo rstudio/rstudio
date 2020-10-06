@@ -1,7 +1,7 @@
 /*
  * DcfParser.hpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -56,11 +56,11 @@ Error parseDcfFile(const FilePath& dcfFilePath,
 
 Error parseMultiDcfFile(const std::string& dcfFileContents,
                         bool preserveKeyCase,
-                        const boost::function<Error(const std::map<std::string, std::string>&)>& handleEntry);
+                        const boost::function<Error(int, const std::map<std::string, std::string>&)>& handleEntry);
 
 Error parseMultiDcfFile(const FilePath& dcfFilePath,
                         bool preserveKeyCase,
-                        const boost::function<Error(const std::map<std::string, std::string>&)>& handleEntry);
+                        const boost::function<Error(int, const std::map<std::string, std::string>&)>& handleEntry);
 
 std::string dcfMultilineAsFolded(const std::string& line);
 

@@ -1,7 +1,7 @@
 /*
  * RJson.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -58,7 +58,7 @@
 #include <r/RSexp.hpp>
 #include <r/RErrorCategory.hpp>
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace r {
@@ -105,14 +105,14 @@ Error jsonValueFromVectorElement(SEXP vectorSEXP,
       }   
       case INTSXP:
       {
-         int value = INTEGER(vectorSEXP)[i] ;
+         int value = INTEGER(vectorSEXP)[i];
          if (value != NA_INTEGER)
             *pValue = value;
          break;
       }
       case REALSXP:
       {
-         double value = REAL(vectorSEXP)[i] ;
+         double value = REAL(vectorSEXP)[i];
          if (!ISNAN(value))
             *pValue = value;
          break;
@@ -133,7 +133,7 @@ Error jsonValueFromVectorElement(SEXP vectorSEXP,
          double imaginary = COMPLEX(vectorSEXP)[i].i;
          if ( !ISNAN(real) && !ISNAN(imaginary))
          {
-            core::json::Object jsonComplex ;
+            core::json::Object jsonComplex;
             jsonComplex["r"] = real;
             jsonComplex["i"] = imaginary;
             *pValue = jsonComplex;
@@ -168,7 +168,7 @@ Error jsonValueArrayFromList(SEXP listSEXP, core::json::Value* pValue)
       SEXP valueSEXP = VECTOR_ELT(listSEXP, i);
       
       // extract the value
-      core::json::Value jsonValue ;
+      core::json::Value jsonValue;
       Error error = jsonValueFromObject(valueSEXP, &jsonValue);
       if (error)
          return error;
@@ -193,15 +193,15 @@ bool isNamedList(SEXP listSEXP)
       return false;
    
    // must have a name for each element
-   std::vector<std::string> fieldNames ;
+   std::vector<std::string> fieldNames;
    Error error = sexp::getNames(listSEXP, &fieldNames);
    if (error)
-      return false ;
+      return false;
    int nameCount = gsl::narrow_cast<int>(std::count_if(fieldNames.begin(),
                                          fieldNames.end(),
                                          &core::string_utils::stringNotEmpty));
    if (nameCount != listLength)
-      return false;   
+      return false;
    
    // passed all the tests!
    return true;
@@ -216,14 +216,14 @@ Error jsonObjectFromListElement(SEXP listSEXP,
    int listLength = Rf_length(listSEXP);
    
    // compose an object by iterating through the fields
-   core::json::Object jsonObject ;
+   core::json::Object jsonObject;
    for (int f=0; f<listLength; f++)
    {
       // get the field
       SEXP fieldSEXP = VECTOR_ELT(listSEXP, f);
       
       // extract the value
-      core::json::Value fieldValue ;
+      core::json::Value fieldValue;
       switch(TYPEOF(fieldSEXP))
       {
          case VECSXP:
@@ -263,22 +263,22 @@ Error jsonObjectFromListElement(SEXP listSEXP,
 Error jsonObjectFromList(SEXP listSEXP, core::json::Value* pValue)  
 {
    // get the names of the list elements
-   std::vector<std::string> fieldNames ;
+   std::vector<std::string> fieldNames;
    Error error = sexp::getNames(listSEXP, &fieldNames);
    if (error)
       return error;
    
    // compose object
-   core::json::Object object ;
+   core::json::Object object;
    int fields = Rf_length(listSEXP);
    for (int i=0; i<fields; i++)
    {
       SEXP fieldSEXP = VECTOR_ELT(listSEXP, i);
       
-      core::json::Value objectValue ;
+      core::json::Value objectValue;
       error = jsonValueFromObject(fieldSEXP, &objectValue);
       if (error)
-         return error ;
+         return error;
       
       object[fieldNames[i]] = objectValue;
    }
@@ -302,22 +302,22 @@ Error jsonObjectArrayFromDataFrame(SEXP listSEXP, core::json::Value* pValue)
    }
    
    // get the names of the list elements
-   std::vector<std::string> fieldNames ;
+   std::vector<std::string> fieldNames;
    Error error = sexp::getNames(listSEXP, &fieldNames);
    if (error)
       return error;
    
    // object array to return
-   core::json::Array jsonObjectArray ;
+   core::json::Array jsonObjectArray;
    
    // iterate through the values
    int values = Rf_length(VECTOR_ELT(listSEXP, 0));
    for (int v=0; v<values; v++)
    {
-      core::json::Value objectValue ;
+      core::json::Value objectValue;
       error = jsonObjectFromListElement(listSEXP, fieldNames, v, &objectValue);
       if (error)
-         return error ;
+         return error;
       
       jsonObjectArray.push_back(objectValue);
    }
@@ -356,10 +356,10 @@ Error jsonValueFromVector(SEXP vectorSEXP, core::json::Value* pValue)
       }
    }
 
-   core::json::Array vectorValues ;
+   core::json::Array vectorValues;
    for (int i=0; i<vectorLength; i++)
    {
-      core::json::Value elementValue ;
+      core::json::Value elementValue;
       Error error = jsonValueFromVectorElement(vectorSEXP, i, &elementValue);
       if (error)
          return error;

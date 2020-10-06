@@ -1,7 +1,7 @@
 /*
  * RequestDocumentCloseEvent.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,7 +26,7 @@ public class RequestDocumentCloseEvent extends GwtEvent<RequestDocumentCloseEven
       protected Data()
       {
       }
-      
+
       public native final JsArrayString getDocumentIds()
       /*-{
          return this["ids"];
@@ -37,24 +37,24 @@ public class RequestDocumentCloseEvent extends GwtEvent<RequestDocumentCloseEven
          return this["save"];
       }-*/;
    }
-   
+
    public RequestDocumentCloseEvent(Data data)
    {
       data_ = data;
    }
-   
+
    public JsArrayString getDocumentIds()
    {
       return data_.getDocumentIds();
    }
-   
+
    public boolean getSave()
    {
       return data_.getSave();
    }
-   
+
    private final Data data_;
-   
+
    // Boilerplate ----
 
    public interface Handler extends EventHandler
@@ -74,5 +74,5 @@ public class RequestDocumentCloseEvent extends GwtEvent<RequestDocumentCloseEven
       handler.onRequestDocumentClose(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

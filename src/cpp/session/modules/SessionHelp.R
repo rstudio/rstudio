@@ -1,7 +1,7 @@
 #
 # SessionHelp.R
 #
-# Copyright (C) 2009-12 by RStudio, PBC
+# Copyright (C) 2020 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -146,7 +146,7 @@ options(help_type = "html")
       namespace <- "base"
    else if (is.function(object))
    {
-      envString <- capture.output(environment(object))[1]
+      envString <- .rs.format(environment(object))[[1L]]
       
       # Strip out the irrelevant bits of the package name. We'd like
       # to just use 'regexpr' but its output is funky with older versions

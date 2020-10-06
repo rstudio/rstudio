@@ -1,7 +1,7 @@
 /*
  * fuse.js
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -34,10 +34,10 @@ context(
         target: "browser@es6",
         globals: { default: kLibraryName },
         output: path.join(outputDir, "$name.js"),
-        sourceMaps: { inline: true , project: true, vendor: vendorSrcMap && !this.isProduction },
+        sourceMaps: { inline: true, project: true, vendor: vendorSrcMap && !this.isProduction },
         plugins: [
           webIndex && WebIndexPlugin({ template: "dev/index.html" }),
-          [ CSSResourcePlugin({ inline: true }), CSSPlugin() ],
+          [CSSResourcePlugin({ inline: true }), CSSPlugin()],
           ImageBase64Plugin(),
           this.isProduction && QuantumPlugin({ uglify: { es6: true }, bakeApiIntoBundle: true, containedAPI: true }),
         ],
@@ -49,8 +49,18 @@ context(
 const bundle = (fuse) => {
   return fuse
     .bundle(kLibraryNameLower)
-    .instructions("> editor.ts")
-} 
+    .instructions("> index.ts")
+}
+
+const copyDevTools = (outputDir) => {
+  // copy prosemirror-devtools
+  const devtools = 'prosemirror-dev-tools.min.js';
+  const nodeModules = fs.existsSync(kGlobalNodeModulesPath) ? kGlobalNodeModulesPath : './node_modules';
+  fs.copyFileSync(
+    path.join(nodeModules + '/prosemirror-dev-tools/dist/umd', devtools),
+    path.join(outputDir, devtools)
+  );
+}
 
 const watch = (fuse, hmrReload) => {
   return fuse
@@ -59,19 +69,15 @@ const watch = (fuse, hmrReload) => {
 }
 
 const dev = (context, webIndex, watchChanges, hmrReload, outputDir) => {
-  
+
   // setup fuse for development
   const fuse = context.getConfig(outputDir, webIndex, true);
   const bdl = bundle(fuse)
   if (watchChanges)
     watch(bdl, hmrReload)
-  
+
   // copy prosemirror-devtools
-  const devtools = 'prosemirror-dev-tools.min.js';
-  fs.copyFileSync(
-    path.join('./node_modules/prosemirror-dev-tools/dist/umd', devtools),
-    path.join(outputDir, devtools)
-  );
+  copyDevTools(outputDir)
 
   return fuse;
 }
@@ -80,6 +86,7 @@ const dist = (context, outputDir) => {
   context.isProduction = true;
   const fuse = context.getConfig(outputDir);
   bundle(fuse);
+  copyDevTools(outputDir)
   return fuse;
 }
 
@@ -93,7 +100,7 @@ task("ide-dev-watch", async context => {
   await fuse.run();
 })
 
-task("ide-dist",async context => {
+task("ide-dist", async context => {
   await dist(context, kIdeOutputDir).run();
 });
 

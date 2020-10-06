@@ -1,7 +1,7 @@
 /*
  * find.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,11 +17,9 @@ import { Extension } from '../api/extension';
 import { Plugin, PluginKey, EditorState, Transaction, TextSelection } from 'prosemirror-state';
 import { DecorationSet, Decoration, EditorView } from 'prosemirror-view';
 
-import zenscroll from 'zenscroll';
-
 import { mergedTextNodes } from '../api/text';
-import { editingRootNode } from '../api/node';
 import { kAddToHistoryTransaction } from '../api/transaction';
+import { scrollIntoView } from '../api/scroll';
 
 const key = new PluginKey<DecorationSet>('find-plugin');
 
@@ -72,12 +70,12 @@ class FindPlugin extends Plugin<DecorationSet> {
   }
 
   public matchCount(state: EditorState) {
-    return key.getState(state).find().length;
+    return key.getState(state)!.find().length;
   }
 
   public selectFirst() {
     return (state: EditorState<any>, dispatch?: (tr: Transaction<any>) => void) => {
-      const decorations: Decoration[] = key.getState(state).find(0);
+      const decorations: Decoration[] = key.getState(state)!.find(0);
       if (decorations.length === 0) {
         return false;
       }
@@ -107,7 +105,7 @@ class FindPlugin extends Plugin<DecorationSet> {
           : state.selection.to
         : state.selection.from;
 
-      const decorationSet = key.getState(state);
+      const decorationSet = key.getState(state)!;
       let decorations: Decoration[] = decorationSet.find(searchFrom);
       if (decorations.length === 0) {
         // check for wrapping
@@ -141,7 +139,7 @@ class FindPlugin extends Plugin<DecorationSet> {
       const searchTo = this.matchesTerm(selectedText) ? state.selection.from - 1 : state.selection.from;
 
       // get all decorations up to the current selection
-      const decorationSet = key.getState(state);
+      const decorationSet = key.getState(state)!;
       let decorations: Decoration[] = decorationSet.find(0, searchTo);
       if (decorations.length === 0) {
         // handle wrapping
@@ -186,7 +184,8 @@ class FindPlugin extends Plugin<DecorationSet> {
 
       if (dispatch) {
         const tr = state.tr;
-        tr.insertText(text, tr.selection.from, tr.selection.to);
+        const selectionMarks = tr.selection.$from.marks();
+        tr.replaceSelectionWith(state.schema.text(text, selectionMarks), false);
         this.withResultUpdates(() => {
           dispatch(tr);
         });
@@ -205,7 +204,7 @@ class FindPlugin extends Plugin<DecorationSet> {
       if (dispatch) {
         const tr = state.tr;
 
-        const decorationSet = key.getState(state);
+        const decorationSet = key.getState(state)!;
 
         const decorations: Decoration[] = decorationSet.find(0);
         decorations.forEach(decoration => {
@@ -250,11 +249,8 @@ class FindPlugin extends Plugin<DecorationSet> {
     // decorations to return
     const decorations: Decoration[] = [];
 
-    // perform search and populate results (don't search code blocks because
-    // we currently can't highlight results inside codemirror blocks)
-    const textNodes = mergedTextNodes(tr.doc, (node, parent) => {
-      return !node.type.spec.code && !parent.type.spec.code;
-    });
+    // merge text nodes
+    const textNodes = mergedTextNodes(tr.doc);
 
     textNodes.forEach(textNode => {
       const search = this.findRegEx();
@@ -272,7 +268,7 @@ class FindPlugin extends Plugin<DecorationSet> {
         const to = textNode.pos + m.index + m[0].length;
         const classes = ['pm-find-text'];
         if (from === tr.selection.from && to === tr.selection.to) {
-          classes.push('pm-find-text-selected');
+          classes.push('pm-selected-text');
         }
         decorations.push(Decoration.inline(from, to, { class: classes.join(' ') }));
       }
@@ -303,19 +299,7 @@ class FindPlugin extends Plugin<DecorationSet> {
   }
 
   private scrollToSelectedResult(view: EditorView) {
-    const selection = view.state.selection;
-    const editingRoot = editingRootNode(selection);
-    if (editingRoot) {
-      const container = view.nodeDOM(editingRoot.pos) as HTMLElement;
-      const node = view.nodeDOM(view.state.doc.resolve(selection.from).before()) as HTMLElement;
-      if (container && node) {
-        const rect = node.getBoundingClientRect();
-        if (rect.top < 0 || rect.bottom > container.clientHeight) {
-          const scroller = zenscroll.createScroller(container);
-          scroller.center(node, 350, 50);
-        }
-      }
-    }
+    scrollIntoView(view, view.state.selection.from, true, 350, 100);
   }
 
   private hasTerm() {
@@ -390,6 +374,10 @@ export function replaceAll(view: EditorView, text: string) {
 
 export function clear(view: EditorView): boolean {
   return findPlugin(view).clear()(view.state, view.dispatch);
+}
+
+export function findPluginState(state: EditorState): DecorationSet | null | undefined {
+  return key.getState(state);
 }
 
 function findPlugin(view: EditorView): FindPlugin {

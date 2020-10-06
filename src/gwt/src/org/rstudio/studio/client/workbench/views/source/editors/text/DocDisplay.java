@@ -1,7 +1,7 @@
 /*
  * DocDisplay.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,6 +22,7 @@ import java.util.List;
 
 import org.rstudio.core.client.events.HasContextMenuHandlers;
 import org.rstudio.core.client.js.JsMap;
+import org.rstudio.core.client.patch.TextChange;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.Void;
@@ -62,6 +63,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Past
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.UndoRedoHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
+import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.SpellingDoc;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 import org.rstudio.studio.client.workbench.views.source.events.SaveFileHandler;
 
@@ -116,6 +118,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    JsArrayString getLines(int startRow, int endRow);
    void setCode(String code, boolean preserveCursorPosition);
    void insertCode(String code, boolean blockMode);
+   void applyChanges(TextChange[] changes);
+   void applyChanges(TextChange[] changes, boolean preserveCursorPosition);
    void focus();
    boolean isFocused();
    void print();
@@ -181,6 +185,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setShowLineNumbers(boolean on);
    void setUseSoftTabs(boolean on);
    void setUseWrapMode(boolean on);
+   boolean getUseWrapMode();
    void setTabSize(int tabSize);
    void autoDetectIndentation(boolean on);
    void setShowPrintMargin(boolean on);
@@ -190,7 +195,9 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setBlinkingCursor(boolean blinking);
    void setScrollPastEndOfDocument(boolean enable);
    void setHighlightRFunctionCalls(boolean highlight);
-   
+   void setRainbowParentheses(boolean rainbow);
+   boolean getRainbowParentheses();
+
    void setScrollLeft(int x);
    void setScrollTop(int y);
    void scrollTo(int x, int y);
@@ -220,6 +227,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setMarks(JsMap<Position> marks);
    
    void toggleCommentLines();
+   
+   SpellingDoc getSpellingDoc();
    
    AceCommandManager getCommandManager();
    void setEditorCommandBinding(String id, List<KeySequence> keys);
@@ -285,9 +294,11 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    Scope getCurrentScope();
    Scope getCurrentChunk();
-   Scope getCurrentChunk(Position position);
-   ScopeFunction getCurrentFunction(boolean allowAnonymous);
    Scope getCurrentSection();
+   ScopeFunction getCurrentFunction(boolean allowAnonymous);
+   
+   Scope getScopeAtPosition(Position position);
+   Scope getChunkAtPosition(Position position);
    ScopeFunction getFunctionAtPosition(Position position, boolean allowAnonymous);
    Scope getSectionAtPosition(Position position);
    boolean hasCodeModelScopeTree();
@@ -321,6 +332,9 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    int getRowCount();
    String getLine(int row);
    int getPixelWidth();
+   
+   Position positionFromIndex(int index);
+   int indexFromPosition(Position position);
    
    char getCharacterAtCursor();
    char getCharacterBeforeCursor();

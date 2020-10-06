@@ -1,7 +1,7 @@
 /*
  * RSessionLaunchProfile.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,9 @@
 #include <shared_core/SafeConvert.hpp>
 
 #include <core/system/PosixSched.hpp>
+#include <shared_core/system/Crypto.hpp>
+
+#include <core/Algorithm.hpp>
 
 #include <core/json/JsonRpc.hpp>
 
@@ -88,6 +91,8 @@ json::Object sessionLaunchProfileToJson(const SessionLaunchProfile& profile)
    json::Object profileJson;
    profileJson["context"] = contextAsJson(profile.context);
    profileJson["password"] = profile.password;
+   if (!profile.encryptionKey.empty())
+      profileJson["encryptionKey"] = profile.encryptionKey;
    profileJson["executablePath"] = profile.executablePath;
    json::Object configJson;
    configJson["args"] = json::Array(profile.config.args);
@@ -106,8 +111,7 @@ json::Object sessionLaunchProfileToJson(const SessionLaunchProfile& profile)
    return profileJson;
 }
 
-SessionLaunchProfile sessionLaunchProfileFromJson(
-                                           const json::Object& jsonProfile)
+SessionLaunchProfile sessionLaunchProfileFromJson(const json::Object& jsonProfile)
 {
    SessionLaunchProfile profile;
 
@@ -121,6 +125,12 @@ SessionLaunchProfile sessionLaunchProfileFromJson(
    if (error)
       LOG_ERROR(error);
 
+   std::string statusMessage;
+   error = json::getOptionalParam(jsonProfile, "encryptionKey", std::string(), &profile.encryptionKey);
+   if (error)
+   {
+      LOG_ERROR(error);
+   }
 
    // read context object
    error = contextFromJson(contextJson, &(profile.context));
@@ -182,8 +192,6 @@ SessionLaunchProfile sessionLaunchProfileFromJson(
    // return profile
    return profile;
 }
-
-
 
 } // namespace r_util
 } // namespace core 

@@ -1,7 +1,7 @@
 /*
  * ImagePreviewer.java
  *
- * Copyright (C) 2009-16 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -497,7 +497,8 @@ public class ImagePreviewer
           href.endsWith(".jpg")  ||
           href.endsWith(".jpeg") ||
           href.endsWith(".gif")  ||
-          href.endsWith(".svg");
+          href.endsWith(".svg")  ||
+          href.endsWith(".webp");
    }
    
    public static String imgSrcPathFromHref(DocUpdateSentinel sentinel, String href)

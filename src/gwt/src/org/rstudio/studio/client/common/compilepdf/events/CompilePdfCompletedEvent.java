@@ -1,7 +1,7 @@
 /*
  * CompilePdfCompletedEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,7 +20,7 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class CompilePdfCompletedEvent extends GwtEvent<CompilePdfCompletedEvent.Handler>
-{  
+{
    public interface Handler extends EventHandler
    {
       void onCompilePdfCompleted(CompilePdfCompletedEvent event);
@@ -30,12 +30,12 @@ public class CompilePdfCompletedEvent extends GwtEvent<CompilePdfCompletedEvent.
    {
       result_ = result;
    }
-    
+
    public CompilePdfResult getResult()
    {
       return result_;
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -47,8 +47,8 @@ public class CompilePdfCompletedEvent extends GwtEvent<CompilePdfCompletedEvent.
    {
       handler.onCompilePdfCompleted(this);
    }
-   
+
    private final CompilePdfResult result_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

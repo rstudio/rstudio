@@ -1,7 +1,7 @@
 /*
  * SessionModuleContext.hpp
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  *
  * Unless you have received this program directly from RStudio pursuant
@@ -215,7 +215,7 @@ typedef boost::function<void(const std::string&, const PostbackHandlerContinuati
 core::Error registerPostbackHandler(
                               const std::string& name,
                               const PostbackHandlerFunction& handlerFunction,
-                              std::string* pShellCommand); 
+                              std::string* pShellCommand);
                         
 // register an async rpc method
 core::Error registerAsyncRpcMethod(
@@ -418,7 +418,7 @@ core::Error convertToUtf8(const std::string& encodedContent,
                           std::string* pDecodedContent);
 
 // source R files
-core::Error sourceModuleRFile(const std::string& rSourceFile);   
+core::Error sourceModuleRFile(const std::string& rSourceFile);
 core::Error sourceModuleRFileWithResult(const std::string& rSourceFile,
                                         const core::FilePath& workingDir,
                                         core::system::ProcessResult* pResult);
@@ -451,7 +451,7 @@ core::Error enqueueConsoleInput(const std::string& input);
 
 // write output to the console (convenience wrapper for enquing a 
 // kConsoleWriteOutput event)
-void consoleWriteOutput(const std::string& output);   
+void consoleWriteOutput(const std::string& output);
    
 // write an error to the console (convenience wrapper for enquing a 
 // kConsoleWriteOutput event)
@@ -613,7 +613,7 @@ struct UserPrompt
                  yesIsDefault);
    }
 
-   int type ;
+   int type;
    std::string caption;
    std::string message;
    std::string yesLabel;
@@ -763,6 +763,11 @@ core::Error uniqueSaveStem(const core::FilePath& directoryPath,
                            const std::string& base,
                            std::string* pStem);
 
+core::Error uniqueSaveStem(const core::FilePath& directoryPath,
+                           const std::string& base,
+                           const std::string& delimiter,
+                           std::string* pStem);
+
 core::json::Object plotExportFormat(const std::string& name,
                                     const std::string& extension);
 
@@ -846,9 +851,15 @@ bool usingMingwGcc49();
 
 bool isWebsiteProject();
 bool isBookdownWebsite();
+bool isBookdownProject();
 bool isBlogdownProject();
 bool isDistillProject();
 std::string websiteOutputDir();
+std::vector<core::FilePath> bookdownBibliographies();
+std::vector<std::string> bookdownBibliographiesRelative();
+std::vector<std::string> bookdownZoteroCollections();
+core::json::Value bookdownXRefIndex();
+core::FilePath bookdownCSL();
 
 core::FilePath extractOutputFileCreated(const core::FilePath& inputFile,
                                         const std::string& output);
@@ -858,6 +869,29 @@ bool isPathViewAllowed(const core::FilePath& path);
 void onBackgroundProcessing(bool isIdle);
 
 void initializeConsoleCtrlHandler();
+
+bool isPythonReplActive();
+
+std::string getActiveLanguage();
+core::Error adaptToLanguage(const std::string& language);
+
+// paths to pandoc and pandoc-citeproc suitable for passing to the shell
+// (string_utils::utf8ToSystem has been called on them)
+std::string pandocPath();
+std::string pandocCiteprocPath();
+
+core::Error runPandoc(const std::vector<std::string>& args,
+                      const std::string& input,
+                      core::system::ProcessResult* pResult);
+
+core::Error runPandocAsync(const std::vector<std::string>& args,
+                           const std::string& input,
+                           const boost::function<void(const core::system::ProcessResult&)>& onCompleted);
+
+core::Error runPandocCiteproc(const std::vector<std::string>& args, core::system::ProcessResult* pResult);
+
+core::Error runPandocCiteprocAsync(const std::vector<std::string>& args,
+                                   const boost::function<void(const core::system::ProcessResult&)>& onCompleted);
 
 } // namespace module_context
 } // namespace session

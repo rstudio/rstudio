@@ -1,7 +1,7 @@
 /*
  * Json.hpp
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant to the terms of a commercial license agreement
  * with RStudio, then this program is licensed to you under the following terms:
@@ -1790,7 +1790,7 @@ template <typename T>
 inline Value toJsonValue(const std::vector<T>& in_vector)
 {
    Array results;
-   for (const T& val : in_vector)
+   for (auto&& val : in_vector)
    {
       results.push_back(val);
    }

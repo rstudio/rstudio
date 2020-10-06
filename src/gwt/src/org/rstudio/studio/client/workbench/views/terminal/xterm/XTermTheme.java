@@ -1,7 +1,7 @@
 /*
  * XTermTheme.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,28 +14,53 @@
  */
 package org.rstudio.studio.client.workbench.views.terminal.xterm;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
+import jsinterop.annotations.JsOverlay;
+import jsinterop.annotations.JsPackage;
+import jsinterop.annotations.JsType;
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ColorUtil;
 import org.rstudio.core.client.MathUtil;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.widget.FontSizer;
 
 /**
- * xterm.js ITheme
+ * Contains colors to theme the terminal with (ITheme).
+ * https://github.com/xtermjs/xterm.js/blob/4.7.0/typings/xterm.d.ts
  */
-public class XTermTheme extends JavaScriptObject
+@JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+public class XTermTheme
 {
-   public static double XTERM_SELECTION_ALPHA = 0.3;
+   @JsOverlay public static double XTERM_SELECTION_ALPHA = 0.3;
 
-   // Required by JavaScriptObject subclasses
-   protected XTermTheme() {}
+   public String foreground;
+   public String background;
+   public String cursor;
+   public String cursorAccent;
+   public String selection;
+   public String black;
+   public String red;
+   public String green;
+   public String yellow;
+   public String blue;
+   public String magenta;
+   public String cyan;
+   public String white;
+   public String brightBlack;
+   public String brightRed;
+   public String brightGreen;
+   public String brightYellow;
+   public String brightBlue;
+   public String brightMagenta;
+   public String brightCyan;
+   public String brightWhite;
 
    /**
     * Create a terminal theme matching current editor theme. Unlike xterm 2.x,
     * xterm 3.x does not directly use css for styling, so we must sync the theme
     * with the css.
     */
-   public final static XTermTheme terminalThemeFromEditorTheme()
+   @JsOverlay public static XTermTheme terminalThemeFromEditorTheme()
    {
       // extract terminal selection color from existing theme, and add alpha
       JsArrayString classes = JsArrayString.createArray().cast();
@@ -79,18 +104,20 @@ public class XTermTheme extends JavaScriptObject
       );
    }
 
-   public static String getFontFamily()
+   @JsOverlay public static String getFontFamily()
    {
       return DomUtils.extractCssValue("ace_editor", "font-family");
    }
 
-   private static boolean doubleEqualish(double d1, double d2)
+   @JsOverlay private static boolean doubleEqualish(double d1, double d2)
    {
       return MathUtil.isEqual(d1, d2, 0.0001);
    }
 
-   public static double adjustFontSize(double size)
+   @JsOverlay public static double adjustFontSize(double size)
    {
+      size += BrowseCap.getFontSkew();
+
       // standard values for sizes we expose in preferences
       if (doubleEqualish(size, 7.0))
          return 9.0;
@@ -120,7 +147,16 @@ public class XTermTheme extends JavaScriptObject
          return Math.round(size * 1.3333333);
    }
 
-   public final native static XTermTheme create(
+   @JsOverlay public static double computeLineHeight()
+   {
+      double lineHeight = FontSizer.getNormalLineHeight();
+
+      // due to units oddity, have to scale down before passing to xterm.js
+      // (pixels vs. pts); don't go below 1.0 as lines will begin to overlap
+      return Math.max(lineHeight > 1.0 ? lineHeight * 0.75 : 1.0, 1.0);
+   }
+
+   @JsOverlay public static XTermTheme create(
          String background, // default background color
          String foreground, // default foreground color
          String cursor, // cursor color
@@ -141,31 +177,32 @@ public class XTermTheme extends JavaScriptObject
          String brightBlue, // ANSI bright blue: \x1b[1;34m (xtermColor12)
          String brightMagenta, // ANSI bright magenta: \x1b[1;35m (xtermColor13)
          String brightCyan, // ANSI bright cyan: \x1b[1;36m (xtermColor14)
-         String brightWhite // ANSI bright white: \x1b[1;37m (xtermColor15)
+         String brightWhite) // ANSI bright white: \x1b[1;37m (xtermColor15)
+   {
+      XTermTheme theme = new XTermTheme();
 
-   ) /*-{
-      return {
-         "background": background,
-         "black": black,
-         "blue": blue,
-         "brightBlack": brightBlack,
-         "brightBlue": brightBlue,
-         "brightCyan": brightCyan,
-         "brightGreen": brightGreen,
-         "brightMagenta": brightMagenta,
-         "brightRed": brightRed,
-         "brightWhite": brightWhite,
-         "brightYellow": brightYellow,
-         "cursor": cursor,
-         "cursorAccent": cursorAccent,
-         "cyan": cyan,
-         "foreground": foreground,
-         "green": green,
-         "magenta": magenta,
-         "red": red,
-         "selection": selection,
-         "white": white,
-         "yellow": yellow
-     };
-   }-*/;
+      theme.background = background;
+      theme.black = black;
+      theme.blue = blue;
+      theme.brightBlack = brightBlack;
+      theme.brightBlue = brightBlue;
+      theme.brightCyan = brightCyan;
+      theme.brightGreen = brightGreen;
+      theme.brightMagenta = brightMagenta;
+      theme.brightRed = brightRed;
+      theme.brightWhite = brightWhite;
+      theme.brightYellow = brightYellow;
+      theme.cursor = cursor;
+      theme.cursorAccent = cursorAccent;
+      theme.cyan = cyan;
+      theme.foreground = foreground;
+      theme.green = green;
+      theme.magenta = magenta;
+      theme.red = red;
+      theme.selection = selection;
+      theme.white = white;
+      theme.yellow = yellow;
+
+      return theme;
+   }
 }

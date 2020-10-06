@@ -1,7 +1,7 @@
 /*
  * ShowHelpEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,17 +14,17 @@
  */
 package org.rstudio.studio.client.workbench.views.help.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import org.rstudio.core.client.js.JavaScriptSerializable;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 
 import com.google.gwt.event.shared.GwtEvent;
 
 @JavaScriptSerializable
-public class ShowHelpEvent extends CrossWindowEvent<ShowHelpHandler>
+public class ShowHelpEvent extends CrossWindowEvent<ShowHelpEvent.Handler>
 {
-   public static final GwtEvent.Type<ShowHelpHandler> TYPE =
-      new GwtEvent.Type<ShowHelpHandler>();
-   
+   public static final GwtEvent.Type<Handler> TYPE = new GwtEvent.Type<>();
+
    public ShowHelpEvent()
    {
    }
@@ -33,29 +33,34 @@ public class ShowHelpEvent extends CrossWindowEvent<ShowHelpHandler>
    {
       topicUrl_ = topicUrl;
    }
-   
+
    public String getTopicUrl()
    {
       return topicUrl_;
    }
-   
+
    @Override
    public int focusMode()
    {
       return CrossWindowEvent.MODE_AUXILIARY;
    }
-   
+
    @Override
-   protected void dispatch(ShowHelpHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onShowHelp(this);
    }
 
    @Override
-   public GwtEvent.Type<ShowHelpHandler> getAssociatedType()
+   public GwtEvent.Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
-   
+
+   public interface Handler extends EventHandler
+   {
+      void onShowHelp(ShowHelpEvent event);
+   }
+
    private String topicUrl_;
 }

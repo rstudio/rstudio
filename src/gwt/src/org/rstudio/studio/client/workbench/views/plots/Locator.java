@@ -1,7 +1,7 @@
 /*
  * Locator.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,7 +24,7 @@ import org.rstudio.core.client.Point;
 import org.rstudio.core.client.Size;
 
 public class Locator implements HasSelectionHandlers<Point>
-{  
+{
    public interface Display extends HasSelectionHandlers<Point>
    {
       void showLocator(Plots.Parent parent);
@@ -34,7 +34,7 @@ public class Locator implements HasSelectionHandlers<Point>
 
    public Locator(Plots.Parent parent)
    {
-      parent_ = parent; 
+      parent_ = parent;
    }
 
    public HandlerRegistration addSelectionHandler(
@@ -55,8 +55,8 @@ public class Locator implements HasSelectionHandlers<Point>
 
    public void locate(String url, Size size)
    {
-      if (currentUrl_ == null || !currentUrl_.equals(url) || 
-          currentSize_ == null || !currentSize_.equals(size) || 
+      if (currentUrl_ == null || !currentUrl_.equals(url) ||
+          currentSize_ == null || !currentSize_.equals(size) ||
           display_ == null || !display_.isVisible())
       {
          clearDisplay();
@@ -92,11 +92,10 @@ public class Locator implements HasSelectionHandlers<Point>
          hreg_ = null;
       }
    }
-   
- 
+
    private HandlerRegistration hreg_;
    private Display display_;
-   private Plots.Parent parent_;
+   private final Plots.Parent parent_;
    private String currentUrl_;
    private Size currentSize_;
    private final HandlerManager handlers_ = new HandlerManager(null);

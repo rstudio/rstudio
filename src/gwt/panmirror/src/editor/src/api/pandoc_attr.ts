@@ -1,7 +1,7 @@
 /*
  * pandoc_attr.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,12 +15,12 @@
 
 import { NodeSpec, MarkSpec } from 'prosemirror-model';
 
-import { PandocToken } from './pandoc';
-import { extensionIfEnabled, Extension } from './extension';
+import { PandocToken, PandocExtensions } from './pandoc';
+import { extensionEnabled, extensionIfEnabled, Extension } from './extension';
 
-const PANDOC_ATTR_ID = 0;
-const PANDOC_ATTR_CLASSES = 1;
-const PANDOC_ATTR_KEYVAULE = 2;
+export const kPandocAttrId = 0;
+export const kPandocAttrClasses = 1;
+export const kPandocAttrKeyvalue = 2;
 
 const kDataPmPandocAttr = 'data-pm-pandoc-attr';
 
@@ -29,10 +29,16 @@ export const kHeightAttrib = 'height';
 export const kStyleAttrib = 'style';
 export const kAlignAttrib = 'align';
 
+export const kCodeBlockAttr = 0;
+export const kCodeBlockText = 1;
+
+export const kSpanAttr = 0;
+export const kSpanChildren = 1;
+
 export interface PandocAttr {
   id: string;
   classes: string[];
-  keyvalue: string[];
+  keyvalue: Array<[string, string]>;
 }
 
 export const pandocAttrSpec = {
@@ -68,9 +74,9 @@ export function pandocAttrInSpec(spec: NodeSpec | MarkSpec) {
 export function pandocAttrReadAST(tok: PandocToken, index: number) {
   const pandocAttr = tok.c[index];
   return {
-    id: pandocAttr[PANDOC_ATTR_ID] || undefined,
-    classes: pandocAttr[PANDOC_ATTR_CLASSES],
-    keyvalue: pandocAttr[PANDOC_ATTR_KEYVAULE],
+    id: pandocAttr[kPandocAttrId] || undefined,
+    classes: pandocAttr[kPandocAttrClasses],
+    keyvalue: pandocAttr[kPandocAttrKeyvalue],
   };
 }
 
@@ -94,7 +100,6 @@ export function pandocAttrToDomAttr(attrs: any, marker = true) {
     domAttr[kDataPmPandocAttr] = '1';
   }
 
-  // return domAttr
   return domAttr;
 }
 
@@ -102,9 +107,10 @@ export function pandocAttrParseDom(el: Element, attrs: { [key: string]: string |
   // exclude any keys passed to us
   const excludedNames = Object.keys(attrs);
 
-  // if this isn't from a prosemirror pandoc node then exclude id, style, and classes
+  // if this isn't from a prosemirror pandoc node then include only src and alt
+  const includedNames: string[] = [];
   if (!forceAttrs && !el.hasAttribute(kDataPmPandocAttr)) {
-    excludedNames.push('id', 'class', 'style');
+    includedNames.push('src', 'alt');
   }
 
   // read attributes
@@ -115,29 +121,153 @@ export function pandocAttrParseDom(el: Element, attrs: { [key: string]: string |
     const value: string = el.getAttribute(name) as string;
     // exclude attributes already parsed and prosemirror internal attributes
     if (excludedNames.indexOf(name) === -1 && !name.startsWith('data-pm')) {
-      if (name === 'id') {
-        attr.id = value;
-      } else if (name === 'class') {
-        attr.classes = value.split(/\s+/).filter(val => !val.startsWith('pm-'));
-      } else {
-        attr.keyvalue.push([name, value]);
+      // if we have an include filter then use it
+      if (!includedNames.length || includedNames.includes(name)) {
+        if (name === 'id') {
+          attr.id = value;
+        } else if (name === 'class') {
+          attr.classes = value
+            .split(/\s+/)
+            .filter(val => !!val.length)
+            .filter(val => !val.startsWith('pm-'));
+        } else {
+          attr.keyvalue.push([name, value]);
+        }
       }
     }
   });
   return attr;
 }
 
-export function extensionIfPandocAttrEnabled(extension: Extension) {
-  return extensionIfEnabled(extension, [
-    'link_attributes',
-    'mmd_link_attributes',
-    'mmd_header_identifiers',
-    'header_attributes',
-    'fenced_code_attributes',
-    'inline_code_attributes',
-    'bracketed_spans',
-    'native_spans',
-    'fenced_divs',
-    'native_divs',
-  ]);
+export function pandocAttrParseText(attr: string): PandocAttr | null {
+  attr = attr.trim();
+
+  let id = '';
+  const classes: string[] = [];
+  let remainder = '';
+
+  let current = '';
+  const resolveCurrent = () => {
+    const resolve = current;
+    current = '';
+
+    if (resolve.length === 0) {
+      return true;
+    } else if (resolve.startsWith('#')) {
+      if (id.length === 0 && resolve.length > 1) {
+        id = resolve.substr(1);
+        return true;
+      } else {
+        return false;
+      }
+    } else if (resolve.startsWith('.')) {
+      if (resolve.length > 1) {
+        classes.push(resolve.substr(1));
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+      remainder = resolve;
+      return true;
+    }
+  };
+
+  for (let i = 0; i < attr.length; i++) {
+    let inQuotes = false;
+    const ch = attr[i];
+    inQuotes = ch === '"' ? !inQuotes : inQuotes;
+    if (ch !== ' ' && !inQuotes) {
+      current += ch;
+    } else if (resolveCurrent()) {
+      // if we have a remainder then the rest of the string is the remainder
+      if (remainder.length > 0) {
+        remainder = remainder + attr.substr(i);
+        break;
+      }
+    } else {
+      return null;
+    }
+  }
+
+  if (resolveCurrent()) {
+    if (id.length === 0 && classes.length === 0) {
+      remainder = attr;
+    }
+    return {
+      id,
+      classes,
+      keyvalue: remainder.length > 0 ? pandocAttrKeyvalueFromText(remainder, ' ') : [],
+    };
+  } else {
+    return null;
+  }
 }
+
+export function pandocAttrKeyvalueFromText(text: string, separator: ' ' | '\n'): Array<[string, string]> {
+  // if the separator is a space then convert unquoted spaces to newline
+  if (separator === ' ') {
+    let convertedText = '';
+    let inQuotes = false;
+    for (let i = 0; i < text.length; i++) {
+      let ch = text.charAt(i);
+      if (ch === '"') {
+        inQuotes = !inQuotes;
+      } else if (ch === ' ' && !inQuotes) {
+        ch = '\n';
+      }
+      convertedText += ch;
+    }
+    text = convertedText;
+  }
+
+  const lines = text.trim().split('\n');
+  return lines.map(line => {
+    const parts = line.trim().split('=');
+    return [parts[0], (parts[1] || '').replace(/^"/, '').replace(/"$/, '')];
+  });
+}
+
+export interface AttrKeyvaluePartitioned {
+  base: Array<[string, string]>;
+  partitioned: Array<[string, string]>;
+}
+
+export function attrPartitionKeyvalue(partition: string[], keyvalue: Array<[string, string]>): AttrKeyvaluePartitioned {
+  const base = new Array<[string, string]>();
+  const partitioned = new Array<[string, string]>();
+
+  keyvalue.forEach(kv => {
+    if (partition.includes(kv[0])) {
+      partitioned.push(kv);
+    } else {
+      base.push(kv);
+    }
+  });
+
+  return {
+    base,
+    partitioned,
+  };
+}
+
+export function extensionIfPandocAttrEnabled(extension: Extension) {
+  return extensionIfEnabled(extension, kPandocAttrExtensions);
+}
+
+export function pandocAttrEnabled(pandocExtensions: PandocExtensions) {
+  return extensionEnabled(pandocExtensions, kPandocAttrExtensions);
+}
+
+const kPandocAttrExtensions = [
+  'link_attributes',
+  'mmd_link_attributes',
+  'mmd_header_identifiers',
+  'header_attributes',
+  'fenced_code_attributes',
+  'inline_code_attributes',
+  'bracketed_spans',
+  'native_spans',
+  'fenced_divs',
+  'native_divs',
+];

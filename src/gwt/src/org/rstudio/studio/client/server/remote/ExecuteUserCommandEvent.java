@@ -1,7 +1,7 @@
 /*
  * ExecuteUserCommandEvent.java
  *
- * Copyright (C) 2009-13 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,17 +24,17 @@ public class ExecuteUserCommandEvent
    {
       void onExecuteUserCommand(ExecuteUserCommandEvent event);
    }
-   
+
    public ExecuteUserCommandEvent(String commandName)
    {
       name_ = commandName;
    }
-   
+
    public String getCommandName()
    {
       return name_;
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -46,9 +46,9 @@ public class ExecuteUserCommandEvent
    {
       handler.onExecuteUserCommand(this);
    }
-   
+
    private final String name_;
-   public static final Type<Handler> TYPE = new Type<Handler>();
-   
+   public static final Type<Handler> TYPE = new Type<>();
+
 
 }

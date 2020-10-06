@@ -1,7 +1,7 @@
 /*
  * markdown.js
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * The Initial Developer of the Original Code is
  * Ajax.org B.V.
@@ -32,6 +32,7 @@ var CppMatchingBraceOutdent = require("mode/c_cpp_matching_brace_outdent").CppMa
 
 var RCodeModel = require("mode/r_code_model").RCodeModel;
 var CppCodeModel = require("mode/cpp_code_model").CppCodeModel;
+var PythonMode = require("mode/python").Mode;
 
 var RMarkdownFoldMode = require("rstudio/folding/rmarkdown").FoldMode;
 var CFoldMode = require("ace/mode/folding/cstyle").FoldMode;
@@ -65,6 +66,8 @@ var Mode = function(suppressHighlighting, session) {
       new RegExp(RMarkdownHighlightRules.prototype.$reChunkEndString)
    );
    this.$cpp_outdent = new CppMatchingBraceOutdent(this.cpp_codeModel);
+
+   this.$python = new PythonMode();
 
    var rMarkdownFoldingRules = new RMarkdownFoldMode();
    var cFoldingRules = new CFoldMode();
@@ -156,6 +159,8 @@ oop.inherits(Mode, MarkdownMode);
          return this.cpp_codeModel.getNextLineIndent(state, line, tab, row, dontSubset);
       else if (mode === "yaml")
          return this.$getIndent(this.$session.getLine(row + 1));
+      else if (mode === "python")
+         return this.$python.getNextLineIndent(state, line, tab, row);
       else
          return this.$getNextLineIndent(state, line, tab);
    };
@@ -182,6 +187,8 @@ oop.inherits(Mode, MarkdownMode);
          return this.$cpp_outdent.autoOutdent(state, session, row);
       else if (mode === "yaml")
          return;
+      else if (mode === "python")
+         return this.$python.autoOutdent(state, session, row);
       else
          return this.$outdent.autoOutdent(session, row);
    };
@@ -192,6 +199,8 @@ oop.inherits(Mode, MarkdownMode);
          return this.transformActionCpp(state, action, editor, session, text);
       else if (mode === "yaml")
          return this.transformActionYaml(state, action, editor, session, text);
+      else if (mode === "python")
+         return this.$python.transformAction(state, action, editor, session, text);
       else
          return false;
    };

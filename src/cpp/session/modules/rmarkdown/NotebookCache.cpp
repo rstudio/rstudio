@@ -1,7 +1,7 @@
 /*
  * NotebookCache.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -73,7 +73,7 @@ void cleanUnusedCaches()
    }
 
    std::string nbCtxId = notebookCtxId();
-   for (const FilePath cache : caches)
+   for (const FilePath& cache : caches)
    {
       // make sure this looks like a notebook cache
       if (!cache.isDirectory())
@@ -121,7 +121,7 @@ void cleanUnusedCaches()
          continue;
       }
 
-      for (const FilePath context : contexts)
+      for (const FilePath& context : contexts)
       {
          // skip if not our context or the saved context
          if (context.getFilename() != kSavedCtx &&
@@ -431,7 +431,7 @@ void onDocSaved(FilePath path)
       LOG_ERROR(error);
       return;
    }
-   for (const FilePath source : children)
+   for (const FilePath& source : children)
    {
       // compute the target path 
       FilePath target = saved.completePath(source.getFilename());
@@ -575,7 +575,7 @@ Error extractRmdFromNotebook(const json::JsonRpcRequest& request,
       using namespace source_database;
 
       boost::shared_ptr<SourceDocument> pDoc(
-            new SourceDocument(SourceDocument::SourceDocumentTypeRMarkdown));
+            new SourceDocument(kSourceDocumentTypeRMarkdown));
       pDoc->setContents(nbRmdContents);
       error = put(pDoc);
       if (error)

@@ -1,7 +1,7 @@
 /*
  * KeyCombination.java
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 package org.rstudio.core.client.command;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.Version;
 import org.rstudio.core.client.dom.EventProperty;
 
 import com.google.gwt.dom.client.NativeEvent;
@@ -24,9 +25,27 @@ public class KeyCombination
 {
    public KeyCombination(NativeEvent event)
    {
-      key_ = EventProperty.key(event);
-      keyCode_ = event.getKeyCode();
-      modifiers_ = KeyboardShortcut.getModifierValue(event);
+      String key = EventProperty.key(event);
+      int keyCode = event.getKeyCode();
+      int modifiers = KeyboardShortcut.getModifierValue(event);
+
+      // Unfortunately, the 'key' event property is corrupt with
+      // certain versions of Qt. We need to check that we've received
+      // a valid 'key' entry; if it's not valid, then we infer the correct
+      // key based on the keycode. Note that this inference may be incorrect
+      // for alternate keyboard layouts.
+      //
+      // https://github.com/rstudio/rstudio/issues/6129
+      // https://bugreports.qt.io/browse/QTBUG-81783
+      if (requiresQtWebEngineWorkaround())
+      {
+         key = KeyboardHelper.keyNameFromKeyCode(keyCode);
+      }
+
+      key_ = key;
+      keyCode_ = normalizeKeyCode(keyCode);
+      modifiers_ = modifiers;
+
    }
 
    public KeyCombination(String key,
@@ -34,7 +53,7 @@ public class KeyCombination
                          int modifiers)
    {
       key_ = key;
-      keyCode_ = keyCode;
+      keyCode_ = normalizeKeyCode(keyCode);
       modifiers_ = modifiers;
    }
 
@@ -99,7 +118,7 @@ public class KeyCombination
       }
    }
 
-   private String getKeyName(boolean pretty)
+   public String getKeyName(boolean pretty)
    {
       boolean macStyle = BrowseCap.hasMetaKey() && pretty;
 
@@ -121,6 +140,8 @@ public class KeyCombination
          return pretty ? "PgDn" : "PageDown";
       else if (keyCode_ == 8)
          return macStyle ? "&#9003;" : "Backspace";
+      else if (keyCode_ == KeyCodes.KEY_SPACE)
+         return macStyle? "&#9250" : "Space";
 
       if (key_ != null)
          return key_;
@@ -147,7 +168,43 @@ public class KeyCombination
             modifiers_ == other.modifiers_;
    }
 
+   private static boolean requiresQtWebEngineWorkaround()
+   {
+      if (REQUIRES_QT_WEBENGINE_WORKAROUND == null)
+      {
+         REQUIRES_QT_WEBENGINE_WORKAROUND = requiresQtWebEngineWorkaroundImpl();
+      }
+
+      return REQUIRES_QT_WEBENGINE_WORKAROUND;
+   }
+
+   private static boolean requiresQtWebEngineWorkaroundImpl()
+   {
+      if (!BrowseCap.isQtWebEngine())
+         return false;
+
+      String version = BrowseCap.qtWebEngineVersion();
+      return Version.compare(version, "5.15.0") < 0;
+   }
+
+   private static int normalizeKeyCode(int keyCode)
+   {
+      switch (keyCode)
+      {
+
+      case 109: // NumPad minus
+      case 173: // Firefox hyphen
+         return 189;
+
+      default:
+         return keyCode;
+
+      }
+   }
+
    private final String key_;
    private final int keyCode_;
    private final int modifiers_;
+
+   private static Boolean REQUIRES_QT_WEBENGINE_WORKAROUND = null;
 }

@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-19 by RStudio, PBC
+# Copyright (C) 2020 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -16,8 +16,13 @@
 # set minimum version
 cmake_minimum_required(VERSION 3.4.3)
 
-project (RSTUDIO_CPP)
+# read release name
+include("${CMAKE_CURRENT_SOURCE_DIR}/../../CMakeRelease.txt")
 
+# set project name
+project("RStudio [${RSTUDIO_RELEASE_NAME}]")
+
+# tools for reading executable file pre-requisites
 include(GetPrerequisites)
 
 # set compiler
@@ -30,6 +35,7 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/../../CMakeGlobals.txt")
 
 # global directives
 add_definitions(-DBOOST_ENABLE_ASSERT_HANDLER)
+add_definitions(-DBOOST_BIND_GLOBAL_PLACEHOLDERS)
 
 # explicitly do not use new c++ 11 features for websocketpp
 # they currently do not work with our source
@@ -69,7 +75,7 @@ if(UNIX)
    include(CheckSymbolExists REQUIRED)
 
    # compiler flags
-   add_definitions(-Wall -pthread)
+   add_definitions(-Wall -pthread -Werror=return-type)
 
    if(RSTUDIO_ASAN)
       message(STATUS "Compiling with Address Sanitizer (ASAN) support")
@@ -288,73 +294,77 @@ add_definitions(-DRSTUDIO_BOOST_SIGNALS_VERSION=${RSTUDIO_BOOST_SIGNALS_VERSION}
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 
 # Crashpad
-if(UNIX)
-   set(RSTUDIO_TOOLS_CRASHPAD "/opt/rstudio-tools/crashpad")
-   set(CRASHPAD_INCLUDE_DIR "${RSTUDIO_TOOLS_CRASHPAD}")
-   set(CRASHPAD_INNER_DIR "${RSTUDIO_TOOLS_CRASHPAD}/crashpad")
-   include_directories(SYSTEM ${CRASHPAD_INCLUDE_DIR})
-   include_directories(SYSTEM ${CRASHPAD_INNER_DIR})
-   include_directories(SYSTEM "${CRASHPAD_INNER_DIR}/third_party/mini_chromium/mini_chromium")
-   set(CRASHPAD_OUTPUT_DIR "${CRASHPAD_INNER_DIR}/out/Default")
-   set(CRASHPAD_LIBRARY_DIR "${CRASHPAD_OUTPUT_DIR}/obj")
-else()
-   if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-      set(RSTUDIO_TOOLS_CRASHPAD "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/crashpad-debug")
-   else()
-      set(RSTUDIO_TOOLS_CRASHPAD "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/crashpad-release")
-   endif()
-   if(RSTUDIO_SESSION_WIN32)
-      set(CRASHPAD_ARCH "x86")
-   else()
-      set(CRASHPAD_ARCH "x64")
-   endif()
-   set(CRASHPAD_INCLUDE_DIR "${RSTUDIO_TOOLS_CRASHPAD}/include")
-   include_directories(SYSTEM ${CRASHPAD_INCLUDE_DIR})
-   include_directories(SYSTEM "${CRASHPAD_INCLUDE_DIR}/crashpad")
-   include_directories(SYSTEM "${CRASHPAD_INCLUDE_DIR}/mini_chromium")
-   set(CRASHPAD_OUTPUT_DIR "${RSTUDIO_TOOLS_CRASHPAD}/bin")
-   set(CRASHPAD_LIBRARY_DIR "${RSTUDIO_TOOLS_CRASHPAD}/${CRASHPAD_ARCH}/lib_md")
-endif()
-
-# find crashpad libraries, ensuring the correct link order
-if(UNIX)
-   file(GLOB_RECURSE CRASHPAD_LIBCLIENT "${CRASHPAD_LIBRARY_DIR}/*libclient.a")
-   file(GLOB_RECURSE CRASHPAD_LIBUTIL   "${CRASHPAD_LIBRARY_DIR}/*libutil.a")
-   file(GLOB_RECURSE CRASHPAD_LIBBASE   "${CRASHPAD_LIBRARY_DIR}/*libbase.a")
-   list (APPEND CRASHPAD_LIBRARIES ${CRASHPAD_LIBCLIENT} ${CRASHPAD_LIBUTIL} ${CRASHPAD_LIBBASE})
-
-   if(APPLE)
-      # add necessary macos frameworks so crashpad applications can link correctly
-      list(APPEND CRASHPAD_LIBRARIES ${APPLICATION_SERVICES_LIBRARY})
-      list(APPEND CRASHPAD_LIBRARIES ${CORE_FOUNDATION_LIBRARY})
-      list(APPEND CRASHPAD_LIBRARIES ${FOUNDATION_LIBRARY})
-      list(APPEND CRASHPAD_LIBRARIES ${IOKIT_LIBRARY})
-      list(APPEND CRASHPAD_LIBRARIES ${SECURITY_LIBRARY})
-      list(APPEND CRASHPAD_LIBRARIES ${BSM_LIBRARY})
-   endif()
-else()
-   file(GLOB_RECURSE CRASHPAD_LIBCLIENT "${CRASHPAD_LIBRARY_DIR}/*client.lib")
-   file(GLOB_RECURSE CRASHPAD_LIBUTIL   "${CRASHPAD_LIBRARY_DIR}/*util.lib")
-   file(GLOB_RECURSE CRASHPAD_LIBBASE   "${CRASHPAD_LIBRARY_DIR}/*base.lib")
-   list (APPEND CRASHPAD_LIBRARIES ${CRASHPAD_LIBCLIENT} ${CRASHPAD_LIBUTIL} ${CRASHPAD_LIBBASE})
-endif()
-list(LENGTH CRASHPAD_LIBRARIES CRASHPAD_LIB_COUNT)
-
-if (CRASHPAD_LIB_COUNT EQUAL 0)
-   message(STATUS "No Crashpad libraries found under ${CRASHPAD_LIBRARY_DIR}. Crashpad integration disabled.")
-else()
-   message(STATUS "Crashpad libraries found under ${CRASHPAD_LIBRARY_DIR}. Crashpad integration enabled.")
-   add_definitions(-DRSTUDIO_CRASHPAD_ENABLED=1)
-
-   # ensure the desired crashpad binaries are installed with the installation package
+if (NOT DEFINED RSTUDIO_CRASHPAD_ENABLED OR RSTUDIO_CRASHPAD_ENABLED)
    if(UNIX)
-      install(PROGRAMS "${CRASHPAD_OUTPUT_DIR}/crashpad_handler" DESTINATION ${RSTUDIO_INSTALL_BIN})
-      install(PROGRAMS "${CRASHPAD_OUTPUT_DIR}/crashpad_http_upload" DESTINATION ${RSTUDIO_INSTALL_BIN})
-   elseif(NOT RSTUDIO_SESSION_WIN32)
-      install(PROGRAMS "${CRASHPAD_OUTPUT_DIR}/crashpad_handler.com" DESTINATION ${RSTUDIO_INSTALL_BIN})
-      install(PROGRAMS "${CRASHPAD_OUTPUT_DIR}/crashpad_handler.exe" DESTINATION ${RSTUDIO_INSTALL_BIN})
-      install(PROGRAMS "${CRASHPAD_OUTPUT_DIR}/crashpad_http_upload.exe" DESTINATION ${RSTUDIO_INSTALL_BIN})
+      set(RSTUDIO_TOOLS_CRASHPAD "/opt/rstudio-tools/crashpad")
+      set(CRASHPAD_INCLUDE_DIR "${RSTUDIO_TOOLS_CRASHPAD}")
+      set(CRASHPAD_INNER_DIR "${RSTUDIO_TOOLS_CRASHPAD}/crashpad")
+      include_directories(SYSTEM ${CRASHPAD_INCLUDE_DIR})
+      include_directories(SYSTEM ${CRASHPAD_INNER_DIR})
+      include_directories(SYSTEM "${CRASHPAD_INNER_DIR}/third_party/mini_chromium/mini_chromium")
+      set(CRASHPAD_OUTPUT_DIR "${CRASHPAD_INNER_DIR}/out/Default")
+      set(CRASHPAD_LIBRARY_DIR "${CRASHPAD_OUTPUT_DIR}/obj")
+   else()
+      if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+         set(RSTUDIO_TOOLS_CRASHPAD "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/crashpad-debug")
+      else()
+         set(RSTUDIO_TOOLS_CRASHPAD "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/crashpad-release")
+      endif()
+      if(RSTUDIO_SESSION_WIN32)
+         set(CRASHPAD_ARCH "x86")
+      else()
+         set(CRASHPAD_ARCH "x64")
+      endif()
+      set(CRASHPAD_INCLUDE_DIR "${RSTUDIO_TOOLS_CRASHPAD}/include")
+      include_directories(SYSTEM ${CRASHPAD_INCLUDE_DIR})
+      include_directories(SYSTEM "${CRASHPAD_INCLUDE_DIR}/crashpad")
+      include_directories(SYSTEM "${CRASHPAD_INCLUDE_DIR}/mini_chromium")
+      set(CRASHPAD_OUTPUT_DIR "${RSTUDIO_TOOLS_CRASHPAD}/bin")
+      set(CRASHPAD_LIBRARY_DIR "${RSTUDIO_TOOLS_CRASHPAD}/${CRASHPAD_ARCH}/lib_md")
    endif()
+
+   # find crashpad libraries, ensuring the correct link order
+   if(UNIX)
+      file(GLOB_RECURSE CRASHPAD_LIBCLIENT "${CRASHPAD_LIBRARY_DIR}/*libclient.a")
+      file(GLOB_RECURSE CRASHPAD_LIBUTIL   "${CRASHPAD_LIBRARY_DIR}/*libutil.a")
+      file(GLOB_RECURSE CRASHPAD_LIBBASE   "${CRASHPAD_LIBRARY_DIR}/*libbase.a")
+      list (APPEND CRASHPAD_LIBRARIES ${CRASHPAD_LIBCLIENT} ${CRASHPAD_LIBUTIL} ${CRASHPAD_LIBBASE})
+
+      if(APPLE)
+         # add necessary macos frameworks so crashpad applications can link correctly
+         list(APPEND CRASHPAD_LIBRARIES ${APPLICATION_SERVICES_LIBRARY})
+         list(APPEND CRASHPAD_LIBRARIES ${CORE_FOUNDATION_LIBRARY})
+         list(APPEND CRASHPAD_LIBRARIES ${FOUNDATION_LIBRARY})
+         list(APPEND CRASHPAD_LIBRARIES ${IOKIT_LIBRARY})
+         list(APPEND CRASHPAD_LIBRARIES ${SECURITY_LIBRARY})
+         list(APPEND CRASHPAD_LIBRARIES ${BSM_LIBRARY})
+      endif()
+   else()
+      file(GLOB_RECURSE CRASHPAD_LIBCLIENT "${CRASHPAD_LIBRARY_DIR}/*client.lib")
+      file(GLOB_RECURSE CRASHPAD_LIBUTIL   "${CRASHPAD_LIBRARY_DIR}/*util.lib")
+      file(GLOB_RECURSE CRASHPAD_LIBBASE   "${CRASHPAD_LIBRARY_DIR}/*base.lib")
+      list (APPEND CRASHPAD_LIBRARIES ${CRASHPAD_LIBCLIENT} ${CRASHPAD_LIBUTIL} ${CRASHPAD_LIBBASE})
+   endif()
+   list(LENGTH CRASHPAD_LIBRARIES CRASHPAD_LIB_COUNT)
+
+   if (CRASHPAD_LIB_COUNT EQUAL 0)
+      message(STATUS "No Crashpad libraries found under ${CRASHPAD_LIBRARY_DIR}. Crashpad integration disabled.")
+   else()
+      message(STATUS "Crashpad libraries found under ${CRASHPAD_LIBRARY_DIR}. Crashpad integration enabled.")
+      add_definitions(-DRSTUDIO_CRASHPAD_ENABLED=1)
+
+      # ensure the desired crashpad binaries are installed with the installation package
+      if(UNIX)
+         install(PROGRAMS "${CRASHPAD_OUTPUT_DIR}/crashpad_handler" DESTINATION ${RSTUDIO_INSTALL_BIN})
+         install(PROGRAMS "${CRASHPAD_OUTPUT_DIR}/crashpad_http_upload" DESTINATION ${RSTUDIO_INSTALL_BIN})
+      elseif(NOT RSTUDIO_SESSION_WIN32)
+         install(PROGRAMS "${CRASHPAD_OUTPUT_DIR}/crashpad_handler.com" DESTINATION ${RSTUDIO_INSTALL_BIN})
+         install(PROGRAMS "${CRASHPAD_OUTPUT_DIR}/crashpad_handler.exe" DESTINATION ${RSTUDIO_INSTALL_BIN})
+         install(PROGRAMS "${CRASHPAD_OUTPUT_DIR}/crashpad_http_upload.exe" DESTINATION ${RSTUDIO_INSTALL_BIN})
+      endif()
+   endif()
+else()
+   message(STATUS "Crashpad integration disabled via build parameters")
 endif()
 
 # SOCI
@@ -404,7 +414,10 @@ if(UNIX)
    find_library(SOCI_POSTGRESQL_LIB NAMES "libsoci_postgresql.a" "soci_postgresql" PATHS "${SOCI_LIBRARY_DIR}" NO_DEFAULT_PATH)
    find_library(DL_LIB "dl")
    find_library(SQLITE_LIB "sqlite3")
+   get_filename_component(SQLITE_LIB "${SQLITE_LIB}" REALPATH)
    find_library(PQ_LIB "pq")
+   get_filename_component(PQ_LIB "${PQ_LIB}" REALPATH)
+   list(APPEND SOCI_DEPENDENCIES ${SQLITE_LIB} ${PQ_LIB})
    list(APPEND SOCI_LIBRARIES ${SOCI_SQLITE_LIB} ${SOCI_POSTGRESQL_LIB} ${SQLITE_LIB} ${PQ_LIB} ${SOCI_CORE_LIB} ${DL_LIB})
 else()
    set(SOCI_LIBRARY_DIR "${RSTUDIO_TOOLS_SOCI}/build/${SOCI_ARCH}/lib")
@@ -598,7 +611,7 @@ else()
          configure_file(rserver-dev.in ${CMAKE_CURRENT_BINARY_DIR}/rserver-dev)
          configure_file(conf/rserver-dev.conf ${CMAKE_CURRENT_BINARY_DIR}/conf/rserver-dev.conf)
          configure_file(conf/rsession-dev.conf ${CMAKE_CURRENT_BINARY_DIR}/conf/rsession-dev.conf)
-
+         configure_file(conf/database-dev.conf ${CMAKE_CURRENT_BINARY_DIR}/conf/database-dev.conf)
       endif()
    endif()
 

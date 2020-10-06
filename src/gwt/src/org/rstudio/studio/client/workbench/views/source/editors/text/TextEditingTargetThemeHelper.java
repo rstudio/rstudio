@@ -1,7 +1,7 @@
 /*
  * TextEditingTargetThemeHelper.java
  *
- * Copyright (C) 2009-17 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -79,8 +79,20 @@ public class TextEditingTargetThemeHelper
             DomUtils.getElementsByClassName(editorContainer, "ace_scroller");
       
       int n = aceContentElements.length;
-      assert n == 1
-            : "Expected a single editor instance; found " + n;
+      if (editingTarget.isVisualModeActivated())
+      {
+         // In visual mode, we may have no editors, or we may have multiple
+         // editors. We need to read computed styles from an editor, so skip if
+         // none are present.
+         if (n < 1)
+            return;
+      }
+      else
+      {
+         // Otherwise, we expect a single editor instance.
+         assert n == 1
+               : "Expected a single editor instance; found " + n;
+      }
       
       Element content = aceContentElements[0];
       currentStyle_ = DomUtils.getComputedStyles(content);

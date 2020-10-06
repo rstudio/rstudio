@@ -1,7 +1,7 @@
 /*
  * widgets.css
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -38,10 +38,43 @@
   height: 18px;
 }
 
-
-.pm-dark-mode .pm-input-text {
+.pm-text-button {
   border-width: 1px;
   border-style: solid;
+  border-radius: 3px;
+  padding: 4px;
 }
 
+.pm-outline-button {
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 3px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  opacity: .6;
+}
 
+.pm-input-text,
+.pm-input-select {
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 3px;
+}
+
+.pm-input-select {
+  height: 27px;
+}
+
+@media
+only screen and (-webkit-min-device-pixel-ratio: 2),
+only screen and (   min--moz-device-pixel-ratio: 2),
+only screen and (     -o-min-device-pixel-ratio: 2/1),
+only screen and (        min-device-pixel-ratio: 2),
+only screen and (                min-resolution: 192dpi),
+only screen and (                min-resolution: 2dppx) { 
+
+  span.emoji {
+    font-size: 1.2em;
+    margin-right: -3px;
+  } 
+}

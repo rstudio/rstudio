@@ -1,7 +1,7 @@
 /*
  * SshKeyWidget.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,7 +18,6 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.core.client.widget.NullProgressIndicator;
-import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.studio.client.server.ServerError;
@@ -34,15 +33,14 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.TextBox;
 
 public class SshKeyWidget extends Composite
-{   
+{
    public SshKeyWidget(GitServerOperations server, String textWidth)
-                       
    {
       server_ = server;
       progressIndicator_ = new NullProgressIndicator();
-      
+
       FlowPanel panel = new FlowPanel();
-           
+
       // chooser
       txtSshKeyPath_ = new TextBox();
       txtSshKeyPath_.addStyleName(RES.styles().keyPath());
@@ -70,25 +68,24 @@ public class SshKeyWidget extends Composite
 
       panel.add(captionPanel);
       panel.add(txtSshKeyPath_);
-      
-    
+
       // ssh key path action buttons
       HorizontalPanel sshButtonPanel = new HorizontalPanel();
       sshButtonPanel.addStyleName(RES.styles().sshButtonPanel());
-      createKeyButton_ = new SmallButton();
-      createKeyButton_.setText("Create RSA Key...");
-      createKeyButton_.addClickHandler(event -> showCreateKeyDialog());
-      sshButtonPanel.add(createKeyButton_);
+      SmallButton createKeyButton = new SmallButton();
+      createKeyButton.setText("Create RSA Key...");
+      createKeyButton.addClickHandler(event -> showCreateKeyDialog());
+      sshButtonPanel.add(createKeyButton);
       panel.add(sshButtonPanel);
-           
+
       initWidget(panel);
    }
-   
+
    public void setProgressIndicator(ProgressIndicator progressIndicator)
    {
       progressIndicator_ = progressIndicator;
    }
-      
+
    public void setRsaSshKeyPath(String rsaSshKeyPath,
                                 boolean haveRsaSshKey)
    {
@@ -98,7 +95,7 @@ public class SshKeyWidget extends Composite
       else
          setSshKey(NONE);
    }
-   
+
    private void setSshKey(String keyPath)
    {
       txtSshKeyPath_.setText(keyPath);
@@ -113,45 +110,40 @@ public class SshKeyWidget extends Composite
          txtSshKeyPath_.removeStyleName(RES.styles().keyPathNone());
       }
    }
-   
+
    private void showCreateKeyDialog()
    {
       new CreateKeyDialog(
          rsaSshKeyPath_,
          server_,
-         new OperationWithInput<String>() 
+         keyPath ->
          {
-            @Override
-            public void execute(String keyPath)
-            {
-               if (keyPath != null)
-                  setSshKey(keyPath);
-               else
-                  setSshKey(NONE);
-            }
-         }).showModal();     
+            if (keyPath != null)
+               setSshKey(keyPath);
+            else
+               setSshKey(NONE);
+         }).showModal();
    }
 
-   
    private void viewPublicKey()
    {
       progressIndicator_.onProgress("Reading public key...");
-      
+
       // compute path to public key
       FileSystemItem privKey = 
                FileSystemItem.createFile(txtSshKeyPath_.getText());
       FileSystemItem keyDir = privKey.getParentPath();
       final String keyPath = keyDir.completePath(privKey.getStem() + ".pub");
-      
+
       server_.gitSshPublicKey(keyPath,
                               new ServerRequestCallback<String> () {
-         
+
          @Override
          public void onResponseReceived(String publicKeyContents)
          {
             progressIndicator_.onCompleted();
             
-            new ShowPublicKeyDialog("Public Key", 
+            new ShowPublicKeyDialog("Public Key",
                                     publicKeyContents).showModal();
          }
 
@@ -161,12 +153,11 @@ public class SshKeyWidget extends Composite
             String msg = "Error attempting to read key '" + keyPath + "' (" +
                          error.getUserMessage() + ")";
             progressIndicator_.onError(msg);
-         } 
-      }); 
+         }
+      });
    }
-   
-   
-   static interface Styles extends CssResource
+
+   interface Styles extends CssResource
    {
       String viewPublicKeyLink();
       String captionPanel();
@@ -174,26 +165,25 @@ public class SshKeyWidget extends Composite
       String keyPath();
       String keyPathNone();
    }
-  
-   static interface Resources extends ClientBundle
+
+   interface Resources extends ClientBundle
    {
       @Source("SshKeyWidget.css")
       Styles styles();
    }
-   
-   static Resources RES = (Resources)GWT.create(Resources.class);
+
+   static final Resources RES = GWT.create(Resources.class);
    public static void ensureStylesInjected()
    {
       RES.styles().ensureInjected();
    }
-   
-   private HyperlinkLabel publicKeyLink_;
-   private TextBox txtSshKeyPath_;
-   private SmallButton createKeyButton_;
-   
+
+   private final HyperlinkLabel publicKeyLink_;
+   private final TextBox txtSshKeyPath_;
+
    private final GitServerOperations server_;
    private ProgressIndicator progressIndicator_;
    private String rsaSshKeyPath_;
-   
+
    private static final String NONE = "(None)";
 }

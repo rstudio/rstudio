@@ -1,7 +1,7 @@
 /*
  * PopoutDocEvent.java
  *
- * Copyright (C) 2009-15 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source.events;
 
 import org.rstudio.core.client.js.JavaScriptSerializable;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
+import org.rstudio.studio.client.workbench.views.source.SourceColumn;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 import com.google.gwt.event.shared.EventHandler;
@@ -27,38 +28,44 @@ public class PopoutDocEvent extends CrossWindowEvent<PopoutDocEvent.Handler>
    {
       void onPopoutDoc(PopoutDocEvent e);
    }
-   
+
    public PopoutDocEvent()
    {
    }
-   
-   public PopoutDocEvent(String docId, SourcePosition sourcePosition)
+
+   public PopoutDocEvent(String docId, SourcePosition sourcePosition, SourceColumn column)
    {
-      this(new PopoutDocInitiatedEvent(docId, null), sourcePosition);
+      this(new PopoutDocInitiatedEvent(docId, null), sourcePosition, column);
    }
-   
+
    public PopoutDocEvent(PopoutDocInitiatedEvent originator,
-         SourcePosition sourcePosition)
+         SourcePosition sourcePosition, SourceColumn column)
    {
       originator_ = originator;
       sourcePosition_ = sourcePosition;
+      column_ = column;
    }
-   
+
    public PopoutDocInitiatedEvent getOriginator()
    {
       return originator_;
    }
-   
+
    public SourcePosition getSourcePosition()
    {
       return sourcePosition_;
    }
-   
+
+   public SourceColumn getColumn()
+   {
+      return column_;
+   }
+
    public String getDocId()
    {
       return originator_.getDocId();
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -70,7 +77,7 @@ public class PopoutDocEvent extends CrossWindowEvent<PopoutDocEvent.Handler>
    {
       handler.onPopoutDoc(this);
    }
-   
+
    @Override
    public boolean forward()
    {
@@ -78,7 +85,8 @@ public class PopoutDocEvent extends CrossWindowEvent<PopoutDocEvent.Handler>
    }
 
    private SourcePosition sourcePosition_;
+   private SourceColumn column_;
    private PopoutDocInitiatedEvent originator_;
-   
-   public static final Type<Handler> TYPE = new Type<Handler>();
+
+   public static final Type<Handler> TYPE = new Type<>();
 }

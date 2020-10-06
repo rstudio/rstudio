@@ -1,7 +1,7 @@
 /*
  * RClientMetrics.cpp
  *
- * Copyright (C) 2009-17 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,7 +24,7 @@
 
 #include "graphics/RGraphicsDevice.hpp"
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace r {
@@ -42,7 +42,7 @@ const char * const kDevicePixelRatio = "r.session.client_metrics.device-pixel-ra
    
 RClientMetrics get()
 {
-   RClientMetrics metrics ;
+   RClientMetrics metrics;
    metrics.consoleWidth = r::options::getOptionWidth();
    metrics.buildConsoleWidth = r::options::getBuildOptionWidth();
    metrics.graphicsWidth = graphics::device::getWidth();
@@ -101,7 +101,7 @@ void save(Settings* pSettings)
 void restore(const Settings& settings)
 {
    // read the client metrics (specify defaults to be defensive)
-   RClientMetrics metrics ;
+   RClientMetrics metrics;
    metrics.consoleWidth = settings.getInt(kConsoleWidth, 
                                           r::options::kDefaultWidth);
    metrics.buildConsoleWidth = settings.getInt(kBuildConsoleWidth,

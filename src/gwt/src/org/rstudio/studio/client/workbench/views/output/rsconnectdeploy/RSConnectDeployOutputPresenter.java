@@ -1,7 +1,7 @@
 /*
  * RSConnectDeployOutputPresenter.java
  *
- * Copyright (C) 2009-14 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,8 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -26,23 +28,29 @@ import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentCancelledEv
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentCompletedEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentOutputEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentStartedEvent;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BusyPresenter;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleActivateEvent;
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneDisplay;
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneFactory;
 
 public class RSConnectDeployOutputPresenter extends BusyPresenter
-   implements RSConnectDeploymentStartedEvent.Handler, 
+   implements RSConnectDeploymentStartedEvent.Handler,
               RSConnectDeploymentOutputEvent.Handler,
               RSConnectDeploymentCompletedEvent.Handler,
               RestartStatusEvent.Handler
 {
+   public interface Binder extends CommandBinder<Commands, RSConnectDeployOutputPresenter> {}
+
    @Inject
    public RSConnectDeployOutputPresenter(CompileOutputPaneFactory outputFactory,
                                    GlobalDisplay globalDisplay,
+                                   Commands commands,
+                                   Binder binder,
                                    EventBus events)
    {
       super(outputFactory.create("Deploy", ""));
+      binder.bind(commands, this);
       view_ = (CompileOutputPaneDisplay) getView();
       view_.setHasLogs(false);
       view_.setCanStop(true);
@@ -50,8 +58,9 @@ public class RSConnectDeployOutputPresenter extends BusyPresenter
          events.fireEvent(new RSConnectDeploymentCancelledEvent());
       });
       events_ = events;
+      commands_ = commands;
    }
-   
+
    public void initialize()
    {
    }
@@ -66,16 +75,16 @@ public class RSConnectDeployOutputPresenter extends BusyPresenter
    {
       switchToConsoleAfterDeploy_ = !view_.isEffectivelyVisible();
       view_.ensureVisible(true);
-      
-      // show the filename in the deployment tab, unless we're deploying an 
+
+      // show the filename in the deployment tab, unless we're deploying an
       // HTML file for which we know the title--this may very well be a
       // temporary file
       String title = event.getPath();
       if (title == null)
          title = "";
-      
+
       if ((title.isEmpty() ||
-           title.toLowerCase().endsWith(".htm") || 
+           title.toLowerCase().endsWith(".htm") ||
            title.toLowerCase().endsWith(".html") &&
            !StringUtil.isNullOrEmpty(event.getTitle())))
       {
@@ -91,7 +100,7 @@ public class RSConnectDeployOutputPresenter extends BusyPresenter
    {
       view_.showOutput(event.getOutput(), true);
    }
-   
+
    @Override
    public void onRSConnectDeploymentCompleted(
          RSConnectDeploymentCompletedEvent event)
@@ -100,7 +109,7 @@ public class RSConnectDeployOutputPresenter extends BusyPresenter
       setIsBusy(false);
       if (switchToConsoleAfterDeploy_ && event.succeeded())
       {
-         events_.fireEvent(new ConsoleActivateEvent(false)); 
+         events_.fireEvent(new ConsoleActivateEvent(false));
       }
    }
 
@@ -117,12 +126,21 @@ public class RSConnectDeployOutputPresenter extends BusyPresenter
       setIsBusy(false);
       if (switchToConsoleAfterDeploy_)
       {
-         events_.fireEvent(new ConsoleActivateEvent(false)); 
+         events_.fireEvent(new ConsoleActivateEvent(false));
       }
+   }
+
+   @Handler
+   public void onActivateDeployContent()
+   {
+      // Ensure that console pane is not minimized
+      commands_.activateConsolePane().execute();
+      view_.bringToFront();
    }
 
    private final CompileOutputPaneDisplay view_;
    private final EventBus events_;
-   
+   private final Commands commands_;
+
    private boolean switchToConsoleAfterDeploy_ = false;
 }

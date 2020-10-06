@@ -1,7 +1,7 @@
 /*
  * ToolbarMenuButton.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -36,11 +36,11 @@ public class ToolbarMenuButton extends ToolbarButton
             new ImageResource2x(ThemeResources.INSTANCE.menuDownArrow2x()),
             (ImageResource) null,
             (ClickHandler) null);
-      
+
       leftImageWidget_.addStyleName("rstudio-themes-inverts");
-      
+
       addMenuHandlers(menu, rightAlignMenu);
-      
+
       addStyleName(styles_.toolbarButtonMenu());
       addStyleName(styles_.toolbarButtonMenuOnly());
    }
@@ -70,7 +70,7 @@ public class ToolbarMenuButton extends ToolbarButton
       this(text,
            title,
            new SimpleImageResourceProvider(leftImage),
-           menu, 
+           menu,
            rightAlignMenu);
    }
 
@@ -81,7 +81,7 @@ public class ToolbarMenuButton extends ToolbarButton
                              boolean rightAlignMenu)
    {
       super(text, title, leftImage, new ImageResource2x(ThemeResources.INSTANCE.menuDownArrow2x()), null);
-      
+
       rightImageWidget_.addStyleName("rstudio-themes-inverts");
       addMenuHandlers(menu, rightAlignMenu);
       addStyleName(styles_.toolbarButtonMenu());
@@ -93,7 +93,7 @@ public class ToolbarMenuButton extends ToolbarButton
          Roles.getMenuRole().setAriaExpandedState(getElement(), ExpandedValue.TRUE);
       else
          A11y.setARIANotExpanded(getElement());
-         
+
       menuShowing_ = showing;
    }
 
@@ -142,7 +142,7 @@ public class ToolbarMenuButton extends ToolbarButton
    private void menuClick()
    {
       addStyleName(styles_.toolbarButtonPushed());
-      // Some menus are rebuilt on every invocation. Ask the menu for 
+      // Some menus are rebuilt on every invocation. Ask the menu for
       // the most up-to-date version before proceeding.
       menu_.getDynamicPopupMenu(menu ->
       {

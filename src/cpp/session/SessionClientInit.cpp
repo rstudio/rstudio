@@ -1,7 +1,7 @@
 /*
  * SessionClientInit.hpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,9 +19,10 @@
 #include "SessionHttpMethods.hpp"
 #include "SessionDirs.hpp"
 
-#include "modules/SessionAgreement.hpp"
 #include "modules/SessionAuthoring.hpp"
 #include "modules/rmarkdown/SessionRMarkdown.hpp"
+#include "modules/rmarkdown/SessionBlogdown.hpp"
+#include "modules/rmarkdown/SessionBookdown.hpp"
 #include "modules/connections/SessionConnections.hpp"
 #include "modules/SessionBreakpoints.hpp"
 #include "modules/SessionDependencyList.hpp"
@@ -88,9 +89,18 @@ namespace session {
 namespace client_init {
 namespace {
 
+std::string userIdentityDisplay(const http::Request& request)
+{
+   std::string userIdentity = request.headerValue(kRStudioUserIdentityDisplay);
+   if (!userIdentity.empty())
+      return userIdentity;
+   else
+      return session::options().userIdentity();
+}
+
 #ifdef RSTUDIO_SERVER
 Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection, 
-      boost::shared_ptr<http::Cookie>* pCookie)
+      http::Response& response)
 {
    // extract the base URL
    json::JsonRpcRequest request;
@@ -109,25 +119,28 @@ Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection,
    // generate a new port token
    persistentState().setPortToken(server_core::generateNewPortToken());
 
+   std::string path = ptrConnection->request().rootPath();
+
    // compute the cookie path; find the first / after the http(s):// preamble. we make the cookie
    // specific to this session's URL since it's possible for different sessions (paths) to use
-   // different tokens on the same server.
+   // different tokens on the same server. This won't be done if the path was passed by the server
    std::size_t pos = baseURL.find('/', 9);
-   std::string path = "/";
-   if (pos != std::string::npos)
+   if (pos != std::string::npos && path == kRequestDefaultRootPath)
    {
       path = baseURL.substr(pos);
    }
 
    // create the cookie; don't set an expiry date as this will be a session cookie
-   *pCookie = boost::make_shared<http::Cookie>(
+   http::Cookie cookie(
             ptrConnection->request(), 
             kPortTokenCookie, 
             persistentState().portToken(), 
-            path,  
+            path,
+            options().sameSite(),
             true, // HTTP only -- client doesn't get to read this token
-            baseURL.substr(0, 5) == "https" // secure if using HTTPS
+            options().useSecureCookies()
          );
+   response.addCookie(cookie);
 
    return Success();
 }
@@ -167,15 +180,20 @@ void handleClientInit(const boost::function<void()>& initFunction,
    // the InvalidClientId error.
    clientEventService().setClientId(clientId, clearEvents);
 
-   // set RSTUDIO_HTTP_REFERER environment variable based on Referer
    if (options.programMode() == kSessionProgramModeServer)
    {
+      // set RSTUDIO_HTTP_REFERER environment variable based on Referer
       std::string referer = ptrConnection->request().headerValue("referer");
       core::system::setenv("RSTUDIO_HTTP_REFERER", referer);
+
+      // set RSTUDIO_USER_IDENTITY_DISPLAY environment variable based on
+      // header value (complements RSTUDIO_USER_IDENTITY)
+      core::system::setenv("RSTUDIO_USER_IDENTITY_DISPLAY", 
+            userIdentityDisplay(ptrConnection->request()));
    }
 
    // prepare session info 
-   json::Object sessionInfo ;
+   json::Object sessionInfo;
    sessionInfo["clientId"] = clientId;
    sessionInfo["mode"] = options.programMode();
 
@@ -185,7 +203,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    initOptions["run_rprofile"] = options.rRunRprofile();
    sessionInfo["init_options"] = initOptions;
    
-   sessionInfo["userIdentity"] = options.userIdentity();
+   sessionInfo["userIdentity"] = userIdentityDisplay(ptrConnection->request());
    sessionInfo["systemUsername"] = core::system::username();
 
    // only send log_dir and scratch_dir if we are in desktop mode
@@ -226,22 +244,24 @@ void handleClientInit(const boost::function<void()>& initFunction,
       LOG_ERROR(error);
    sessionInfo["source_documents"] = jsonDocs;
    
-   // agreement
-   sessionInfo["hasAgreement"] = modules::agreement::hasAgreement();
-   sessionInfo["pendingAgreement"] = modules::agreement::pendingAgreement();
-
    // docs url
    sessionInfo["docsURL"] = session::options().docsURL();
 
    // get alias to console_actions and get limit
    rstudio::r::session::ConsoleActions& consoleActions = rstudio::r::session::consoleActions();
    sessionInfo["console_actions_limit"] = consoleActions.capacity();
+ 
+   // check if reticulate's Python session has been initialized
+   sessionInfo["python_initialized"] = modules::reticulate::isPythonInitialized();
+   
+   // propagate RETICULATE_PYTHON if set
+   sessionInfo["reticulate_python"] = core::system::getenv("RETICULATE_PYTHON");
    
    // get current console language
    sessionInfo["console_language"] = modules::reticulate::isReplActive() ? "Python" : "R";
 
    // resumed
-   sessionInfo["resumed"] = resumed; 
+   sessionInfo["resumed"] = resumed;
    if (resumed)
    {
       // console actions
@@ -292,7 +312,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["default_working_dir"] = defaultWorkingDir;
 
    // default project dir
-   sessionInfo["default_project_dir"] = options.defaultProjectDir();
+   sessionInfo["default_project_dir"] = options.deprecatedDefaultProjectDir();
 
    // active project file
    if (projects::projectContext().hasProject())
@@ -382,7 +402,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
       sessionInfo["has_pkg_vig"] = false;
    }
 
-   sessionInfo["is_blogdown_project"] = module_context::isBlogdownProject();
+   sessionInfo["blogdown_config"] = modules::rmarkdown::blogdown::blogdownConfig();
+   sessionInfo["is_bookdown_project"] = module_context::isBookdownProject();
    sessionInfo["is_distill_project"] = module_context::isDistillProject();
    
    sessionInfo["graphics_backends"] = modules::graphics::supportedBackends();
@@ -396,9 +417,6 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["build_state"] = modules::build::buildStateAsJson();
    sessionInfo["devtools_installed"] = module_context::isMinimumDevtoolsInstalled();
    sessionInfo["have_cairo_pdf"] = modules::plots::haveCairoPdf();
-
-   sessionInfo["have_srcref_attribute"] =
-         modules::breakpoints::haveSrcrefAttribute();
 
    // console history -- we do this at the end because
    // restoreBuildRestartContext may have reset it
@@ -443,6 +461,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
          core::system::getenv(kRStudioDisableProjectSharing).empty() &&
          !options.getOverlayOption(kSessionSharedStoragePath).empty();
 
+   sessionInfo["project_sharing_enumerate_server_users"] = true;
    sessionInfo["launcher_session"] = false;
 
    sessionInfo["environment_state"] = modules::environment::environmentStateAsJson();
@@ -495,6 +514,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["active_connections"] = modules::connections::activeConnectionsAsJson();
 
    sessionInfo["session_id"] = module_context::activeSession().id();
+   sessionInfo["session_label"] = module_context::activeSession().label();
 
    sessionInfo["drivers_support_licensing"] = options.supportsDriversLicensing();
 
@@ -532,6 +552,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
             "Please obtain an updated license to continue using the product.";
    }
 
+   // session route for load balanced sessions
+   sessionInfo["session_node"] = session::modules::overlay::sessionNode();
+
    module_context::events().onSessionInfo(&sessionInfo);
 
    // create response  (we always set kEventsPending to false so that the client
@@ -547,15 +570,10 @@ void handleClientInit(const boost::function<void()>& initFunction,
 #ifdef RSTUDIO_SERVER
    if (options.programMode() == kSessionProgramModeServer)
    {
-      boost::shared_ptr<http::Cookie> pCookie;
-      Error error = makePortTokenCookie(ptrConnection, &pCookie);
+      Error error = makePortTokenCookie(ptrConnection, response);
       if (error)
       {
          LOG_ERROR(error);
-      }
-      else if (pCookie)
-      {
-         response.addCookie(*pCookie);
       }
    }
 #endif

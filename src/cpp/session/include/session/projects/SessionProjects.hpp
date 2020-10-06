@@ -1,7 +1,7 @@
 /*
  * SessionProjects.hpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -235,6 +235,10 @@ private:
    void updatePackageInfo();
 
    void augmentRbuildignore();
+
+   // adds default open docs if specified in the project and it has
+   // never been opened before
+   void addDefaultOpenDocs();
 
 private:
    core::FilePath file_;

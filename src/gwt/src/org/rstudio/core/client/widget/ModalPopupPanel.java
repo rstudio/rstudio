@@ -1,7 +1,7 @@
 /*
  * ModalPopupPanel.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,11 +27,12 @@ public class ModalPopupPanel extends PopupPanel
 {
    public ModalPopupPanel(boolean autoHide,
                           boolean modal,
+                          boolean glass,
                           boolean closeOnEscape)
    {
       super(autoHide, modal);
       closeOnEscape_ = closeOnEscape;
-      setGlassEnabled(true);
+      setGlassEnabled(glass);
    }
 
    @Override

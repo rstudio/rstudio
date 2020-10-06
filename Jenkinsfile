@@ -29,7 +29,7 @@ def compile_package(os, type, flavor, variant) {
 
   // currently our nodes have access to 4 cores, so spread out the compile job
   // a little (currently using up all 4 cores causes problems)
-  env = "${env} MAKEFLAGS=-j3"
+  env = "${env} MAKEFLAGS=-j2"
 
   // perform the compilation
   sh "cd package/linux && ${env} ./make-${flavor}-package ${type} clean ${variant} && cd ../.."
@@ -53,7 +53,6 @@ def run_tests(type, flavor, variant) {
   
   try {
     // attempt to run cpp unit tests
-    // disable known broken tests for now (Jenkins cannot handle the parallel load these induce)
     sh "cd package/linux/build-${flavor.capitalize()}-${type}/src/cpp && ./rstudio-tests"
   } catch(err) {
     currentBuild.result = "UNSTABLE"
@@ -82,19 +81,31 @@ def s3_upload(type, flavor, os, arch) {
 
   // add installer-less tarball if desktop
   if (flavor == "desktop") {
-      sh "aws s3 cp ${buildFolder}/_CPack_Packages/Linux/${type}/*.tar.gz s3://rstudio-ide-build/${flavor}/${os}/${arch}/"
+    def tarballFile = sh (
+      script: "basename `ls ${buildFolder}/_CPack_Packages/Linux/${type}/*.tar.gz`",
+      returnStdout: true
+    ).trim()
+    
+    def renamedTarballFile = sh (
+      script: "echo ${tarballFile} | sed 's/-relwithdebinfo//'",
+      returnStdout: true
+    ).trim()
+
+    sh "mv ${buildFolder}/_CPack_Packages/Linux/${type}/${tarballFile} ${buildFolder}/_CPack_Packages/Linux/${type}/${renamedTarballFile}"
+    tarballFile = renamedTarballFile
+    
+    sh "aws s3 cp ${buildFolder}/_CPack_Packages/Linux/${type}/${tarballFile} s3://rstudio-ide-build/${flavor}/${os}/${arch}/"
   }
 
-  // update daily build redirect; currently disabled for 1.3
-  // 
-  // withCredentials([file(credentialsId: 'www-rstudio-org-pem', variable: 'wwwRstudioOrgPem')]) {
-  //   sh "docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${arch}/${packageFile} ${wwwRstudioOrgPem}"
-  // }
+  // update daily build redirect
+  withCredentials([file(credentialsId: 'www-rstudio-org-pem', variable: 'wwwRstudioOrgPem')]) {
+    sh "docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${arch}/${packageFile} ${wwwRstudioOrgPem}"
+  }
 }
 
 def sentry_upload(type, flavor) {
   withCredentials([string(credentialsId: 'ide-sentry-api-key', variable: 'SENTRY_API_KEY')]){
-    sh "cd package/linux/build-${flavor.capitalize()}-${type}/src/cpp && /usr/local/bin/sentry-cli --auth-token ${SENTRY_API_KEY} upload-dif --org rstudio --project ide-backend -t elf ."
+    sh "cd package/linux/build-${flavor.capitalize()}-${type}/src/cpp && ../../../../../docker/jenkins/sentry-upload.sh ${SENTRY_API_KEY}"
   }
 }
 
@@ -220,7 +231,7 @@ try {
             if (!parallel_images.keySet().contains(image_tag)) {
                 parallel_images[image_tag] = {
                     node('docker') {
-                        stage('prepare container') {
+                        stage('prepare Linux container') {
                             prepareWorkspace()
                             withCredentials([usernameColonPassword(credentialsId: 'github-rstudio-jenkins', variable: "github_login")]) {
                               def github_args = "--build-arg GITHUB_LOGIN=${github_login}"
@@ -234,10 +245,48 @@ try {
                 }
             }
         }
+
+        // prepare container for windows builder
+        parallel_images["windows"] = {
+          node('windows') {
+            stage('prepare Windows container') {
+              checkout scm
+              withCredentials([usernameColonPassword(credentialsId: 'github-rstudio-jenkins', variable: "github_login")]) {
+                def github_args = "--build-arg GITHUB_LOGIN=${github_login}"
+                def dockerfile = "-f docker/jenkins/Dockerfile.windows"
+                def container
+                // the following is adapted from pullBuildPush with the
+                // omission of Unix-isms
+                docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:jenkins-aws') {
+                  def image_cache
+                  def image_name = "jenkins/ide"
+                  def image_tag = "windows-${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}"
+                  def cache_tag = image_tag
+                  def build_args = github_args
+                  def docker_context = '.'
+                  try {
+                    image_cache = docker.image(image_name + ':' + cache_tag)
+                    image_cache.pull()
+                  } catch(e) { // docker.image throws a generic exception.
+                    echo 'Windows container image not found; expect build to take a bit longer.'
+                  }
+
+                  echo 'Building Windows container image'
+                  container = docker.build(image_name + ':' + image_tag, "--cache-from ${image_cache.imageName()} ${build_args} ${dockerfile} ${docker_context}")
+
+                  echo 'Pushing Windows container'
+                  container.push()
+                }
+              }
+            }
+          }
+        }
+
         parallel parallel_images
 
-        // build each variant in parallel
         def parallel_containers = [:]
+
+        // build each variant in parallel
         for (int i = 0; i < containers.size(); i++) {
             def index = i
             parallel_containers["${containers[i].os}-${containers[i].arch}-${containers[i].flavor}-${containers[i].variant}"] = {
@@ -250,7 +299,7 @@ try {
                           def image_tag = "${current_container.os}-${current_container.arch}-${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}"
                           current_image = docker.image("jenkins/ide:" + image_tag)
                         }
-                        current_image.inside() {
+                        current_image.inside("--privileged") {
                             stage('compile package') {
                                 compile_package(current_container.package_os, get_type_from_os(current_container.os), current_container.flavor, current_container.variant)
                             }
@@ -268,16 +317,76 @@ try {
                 }
             }
         }
-        // trigger desktop builds if we're in open-source repo
+
+        parallel_containers["windows"] = {
+          node('windows') {
+            stage('prepare container') {
+               checkout scm
+               docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:jenkins-aws') {
+                 def image_tag = "windows-${rstudioVersionMajor}.${rstudioVersionMinor}"
+                 windows_image = docker.image("jenkins/ide:" + image_tag)
+               }
+            }
+            windows_image.inside() {
+              stage('dependencies') {
+                  withCredentials([usernameColonPassword(credentialsId: 'github-rstudio-jenkins', variable: "GITHUB_LOGIN")]) {
+                    bat 'cd dependencies/windows && set RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN && set RSTUDIO_SKIP_QT=1 && install-dependencies.cmd && cd ../..'
+                }
+              }
+              stage('build'){
+                def env = "set \"RSTUDIO_VERSION_MAJOR=${rstudioVersionMajor}\" && set \"RSTUDIO_VERSION_MINOR=${rstudioVersionMinor}\" && set \"RSTUDIO_VERSION_PATCH=${rstudioVersionPatch}\""
+                bat "cd package/win32 && ${env} && set \"PACKAGE_OS=Windows\" && make-package.bat clean && cd ../.."
+              }
+              stage('tests'){
+                try {
+                  bat 'cd package/win32/build/src/cpp && rstudio-tests.bat --scope core'
+                }
+                catch(err){
+                  currentBuild.result = "UNSTABLE"
+                }
+              }
+              stage('sign') {
+                withCredentials([file(credentialsId: 'ide-windows-signing-pfx', variable: 'pfx-file'), string(credentialsId: 'ide-pfx-passphrase', variable: 'pfx-passphrase')]) {
+                  bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.17134.0\\x86\\signtool\" sign /f %pfx-file% /p %pfx-passphrase% /v /ac package\\win32\\cert\\After_10-10-10_MSCV-VSClass3.cer /n \"RStudio, Inc.\" /t http://timestamp.VeriSign.com/scripts/timstamp.dll  package\\win32\\build\\RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}-RelWithDebInfo.exe"
+                  bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.17134.0\\x86\\signtool\" verify /v /kp package\\win32\\build\\RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}-RelWithDebInfo.exe"
+                }
+              }
+              stage('upload debug symbols') {
+                // convert the PDB symbols to breakpad format (PDB not supported by Sentry)
+                bat '''
+                  cd package\\win32\\build
+                  FOR /F %%G IN ('dir /s /b *.pdb') DO (..\\..\\..\\dependencies\\windows\\breakpad-tools-windows\\dump_syms %%G > %%G.sym)
+                '''
+                
+                // upload the breakpad symbols
+                withCredentials([string(credentialsId: 'ide-sentry-api-key', variable: 'SENTRY_API_KEY')]){
+                  bat "cd package\\win32\\build\\src\\cpp && ..\\..\\..\\..\\..\\dependencies\\windows\\sentry-cli.exe --auth-token %SENTRY_API_KEY% upload-dif --org rstudio --project ide-backend -t breakpad ."
+                }
+              }
+              stage('upload') {
+                // windows docker container cannot reach instance-metadata endpoint. supply credentials at upload.
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'jenkins-aws']]) {
+                  bat "aws s3 cp package\\win32\\build\\RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}-RelWithDebInfo.exe s3://rstudio-ide-build/desktop/windows/RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}.exe"
+                  bat "aws s3 cp package\\win32\\build\\RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}-RelWithDebInfo.zip s3://rstudio-ide-build/desktop/windows/RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}.zip"
+                }
+              }
+            }
+          }
+        }
+
+        // trigger macos build if we're in open-source repo
         if (env.JOB_NAME == 'IDE/open-source-pipeline/master') {
           trigger_external_build('IDE/macos-v1.4')
-          trigger_external_build('IDE/windows-v1.4')
         }
+
         else if (env.JOB_NAME == 'IDE/open-source-pipeline/v1.3') {
           trigger_external_build('IDE/macos-v1.3')
-          trigger_external_build('IDE/windows-v1.3')
         }
         parallel parallel_containers
+
+        if (env.JOB_NAME == 'IDE/open-source-pipeline/master') {
+          trigger_external_build('IDE/qa-opensource-automation')
+        }
 
         // trigger downstream pro artifact builds if we're finished building
         // the pro variants

@@ -1,7 +1,7 @@
 /*
  * JobInitEvent.java
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,7 +25,7 @@ public class JobInitEvent extends GwtEvent<JobInitEvent.Handler>
    {
       void onJobInit(JobInitEvent event);
    }
-   
+
    public JobInitEvent(JobState state)
    {
       state.recordReceived();
@@ -36,7 +36,7 @@ public class JobInitEvent extends GwtEvent<JobInitEvent.Handler>
    {
       return state_;
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -51,5 +51,5 @@ public class JobInitEvent extends GwtEvent<JobInitEvent.Handler>
 
    private final JobState state_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

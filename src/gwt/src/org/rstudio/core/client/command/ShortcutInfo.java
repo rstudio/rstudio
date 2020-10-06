@@ -1,7 +1,7 @@
 /*
  * ShortcutInfo.java
  *
- * Copyright (C) 2009-13 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,14 +22,14 @@ public class ShortcutInfo
 {
    public ShortcutInfo (KeyboardShortcut shortcut, AppCommand command)
    {
-      shortcuts_ = new ArrayList<String>(); 
+      shortcuts_ = new ArrayList<String>();
       description_ = shortcut.getTitle().length() > 0 ?
                         shortcut.getTitle() :
-                        command != null ? 
+                        command != null ?
                            command.getMenuLabel(false) :
                            "";
       groupName_ = shortcut.getGroupName();
-      isActive_ = command != null ? 
+      isActive_ = command != null ?
                      (command.isEnabled() && command.isVisible()) :
                      true;
       order_ = shortcut.getOrder();
@@ -46,33 +46,33 @@ public class ShortcutInfo
    {
       return shortcuts_;
    }
-   
+
    public void addShortcut(KeyboardShortcut shortcut)
    {
       shortcuts_.clear();
       shortcuts_.add(shortcut.toString(true));
    }
-   
+
    public String getGroupName()
    {
       return groupName_;
    }
-   
+
    public boolean isActive()
    {
       return isActive_;
    }
-   
+
    public int getOrder()
    {
       return order_;
    }
-   
+
    public int getDisableModes()
    {
       return disableModes_;
    }
-   
+
    private List<String> shortcuts_;
    private String description_;
    private String groupName_;

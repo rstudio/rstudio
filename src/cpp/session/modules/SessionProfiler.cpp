@@ -1,7 +1,7 @@
 /*
  * SessionProfiler.cpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -66,7 +66,8 @@ void handleProfilerResReq(const http::Request& request,
    core::FilePath profilesPath = core::FilePath(profilesCacheDir());
    core::FilePath profileResource = profilesPath.completeChildPath(resourceName);
 
-   pResponse->setCacheableFile(profileResource, request);
+   // cache indefinitely (the cache dir is ephemeral)
+   pResponse->setIndefiniteCacheableFile(profileResource, request);
 }
 
 void handleProfilerResourceResReq(const http::Request& request,
@@ -102,16 +103,20 @@ void onDocPendingRemove(
 
 Error initialize()
 {  
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    
    source_database::events().onDocPendingRemove.connect(onDocPendingRemove);
 
+   RS_REGISTER_CALL_METHOD(rs_profilesPath);
+   
+   r::options::setOptionDefault(
+            "profvis.prof_output",
+            string_utils::utf8ToSystem(profilesCacheDir()));
+   
    initBlock.addFunctions()
       (boost::bind(module_context::sourceModuleRFile, "SessionProfiler.R"))
       (boost::bind(module_context::registerUriHandler, "/" kProfilesUrlPath "/", handleProfilerResReq))
       (boost::bind(module_context::registerUriHandler, kProfilerResourceLocation, handleProfilerResourceResReq));
-
-   RS_REGISTER_CALL_METHOD(rs_profilesPath, 0);
 
    return initBlock.execute();
 }

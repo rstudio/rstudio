@@ -1,7 +1,7 @@
 /*
  * FileSystemDialog.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,7 +29,6 @@ import java.util.List;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.events.SelectionCommitEvent;
-import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Match;
@@ -41,7 +40,7 @@ import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 
 public abstract class FileSystemDialog extends ModalDialogBase
-      implements SelectionCommitHandler<FileSystemItem>, 
+      implements SelectionCommitEvent.Handler<FileSystemItem>,
                  SelectionHandler<FileSystemItem>,
                  ProgressIndicator,
                  FileSystemContext.Callbacks,
@@ -66,12 +65,12 @@ public abstract class FileSystemDialog extends ModalDialogBase
             {
                onProgress(message, null);
             }
-            
+
             public void onProgress(String message, Operation onCancel)
             {
                progress.onProgress(message, onCancel);
             }
-            
+
             public void clearProgress()
             {
                progress.clearProgress();
@@ -123,8 +122,8 @@ public abstract class FileSystemDialog extends ModalDialogBase
       ThemedButton okButton = new ThemedButton(buttonName, event -> maybeAccept());
       addOkButton(okButton,
             ElementIds.FILE_ACCEPT_BUTTON + "_" + ElementIds.idSafeString(buttonName));
-      
-      ThemedButton cancelButton = 
+
+      ThemedButton cancelButton =
          new ThemedButton("Cancel",
          event -> {
             if (invokeOperationEvenOnCancel_)
@@ -191,7 +190,7 @@ public abstract class FileSystemDialog extends ModalDialogBase
    {
       accept(getSelectedItem());
    }
-   
+
    protected void accept(FileSystemItem item)
    {
       operation_.execute(item, this);
@@ -225,13 +224,13 @@ public abstract class FileSystemDialog extends ModalDialogBase
       else
          initialFilename_ = filename;
    }
-   
+
    @Override
    public void onNavigated()
    {
       browser_.onNavigated();
    }
-   
+
    @Override
    public void onDirectoryCreated(FileSystemItem directory)
    {
@@ -258,12 +257,12 @@ public abstract class FileSystemDialog extends ModalDialogBase
    {
       onProgress(message, null);
    }
-   
+
    public void onProgress(String message, Operation onCancel)
    {
       progress_.onProgress(message);
    }
-   
+
    public void clearProgress()
    {
       progress_.clearProgress();
@@ -294,7 +293,7 @@ public abstract class FileSystemDialog extends ModalDialogBase
    {
       invokeOperationEvenOnCancel_ = invoke;
    }
-   
+
    @Override
    public Widget createMainWidget()
    {
@@ -309,7 +308,7 @@ public abstract class FileSystemDialog extends ModalDialogBase
    {
       return listFilesWithExtensions(context_, filterExtensions_);
    }
-   
+
    public static FileSystemItem[] listFilesWithExtension(
          FileSystemContext context, String extension)
    {
@@ -318,14 +317,14 @@ public abstract class FileSystemDialog extends ModalDialogBase
          filterExtensions.add(extension);
       return listFilesWithExtensions(context, filterExtensions);
    }
-   
+
    private static FileSystemItem[] listFilesWithExtensions(
          FileSystemContext context, List<String> filterExtensions)
    {
       FileSystemItem[] items = context.ls();
       if (items == null)
          return new FileSystemItem[0];
-      
+
       ArrayList<FileSystemItem> filtered = new ArrayList<FileSystemItem>();
       for (int i = 0; i < items.length; i++)
       {
@@ -336,7 +335,7 @@ public abstract class FileSystemDialog extends ModalDialogBase
          else if (extensionMatchesFilters(items[i].getExtension(), filterExtensions))
             filtered.add(items[i]);
       }
-       
+
       Collections.sort(filtered, (o1, o2) -> o1.compareTo(o2));
       FileSystemItem[] clone = new FileSystemItem[filtered.size()];
       return filtered.toArray(clone);
@@ -344,7 +343,7 @@ public abstract class FileSystemDialog extends ModalDialogBase
 
    // NOTE: web mode only supports a single one-extension filter (whereas
    // desktop mode supports full multi-filetype, multi-extension filtering).
-   // to support more sophisticated filtering we'd need to both add the 
+   // to support more sophisticated filtering we'd need to both add the
    // UI as well as update this function to extract a list of filters
    private List<String> extractFilterExtensions(String filter)
    {
@@ -372,11 +371,11 @@ public abstract class FileSystemDialog extends ModalDialogBase
    {
       if (filterExtensions.isEmpty())
          return true;
-      
+
       for (String filter: filterExtensions)
          if (filter.equalsIgnoreCase(extension))
             return true;
-      
+
       return false;
    }
 

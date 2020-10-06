@@ -1,7 +1,7 @@
 /*
  * ExploreConnectionEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,17 +20,17 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class ExploreConnectionEvent extends GwtEvent<ExploreConnectionEvent.Handler>
-{  
+{
    public interface Handler extends EventHandler
    {
       void onExploreConnection(ExploreConnectionEvent event);
    }
-   
+
    public ExploreConnectionEvent(Connection connection)
    {
       connection_ = connection;
    }
-   
+
    public Connection getConnection()
    {
       return connection_;
@@ -47,8 +47,8 @@ public class ExploreConnectionEvent extends GwtEvent<ExploreConnectionEvent.Hand
    {
       handler.onExploreConnection(this);
    }
-   
+
    private final Connection connection_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

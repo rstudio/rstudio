@@ -2,7 +2,7 @@
 /*
  * ChunkInlineOutput.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,9 +20,7 @@ import org.rstudio.core.client.widget.MiniPopupPanel;
 import org.rstudio.core.client.widget.PreWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteErrorEvent;
-import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteErrorHandler;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutputEvent;
-import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutputHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 
@@ -34,8 +32,8 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.PopupPanel;
 
 public class ChunkInlineOutput extends MiniPopupPanel
-                               implements ConsoleWriteOutputHandler,
-                                          ConsoleWriteErrorHandler
+                               implements ConsoleWriteOutputEvent.Handler,
+                                          ConsoleWriteErrorEvent.Handler
 {
    public enum State
    {

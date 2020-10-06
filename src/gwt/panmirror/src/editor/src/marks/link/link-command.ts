@@ -1,7 +1,7 @@
 /*
  * link-command.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,7 +14,8 @@
  */
 
 import { MarkType } from 'prosemirror-model';
-import { LinkEditorFn, LinkProps } from '../../api/ui';
+import { EditorUI } from '../../api/ui';
+import { LinkEditorFn, LinkProps } from '../../api/ui-dialogs';
 import { EditorState, Transaction, TextSelection } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { findChildren } from 'prosemirror-utils';
@@ -22,6 +23,8 @@ import { findChildren } from 'prosemirror-utils';
 import { markIsActive, getMarkAttrs, getSelectionMarkRange, getMarkRange } from '../../api/mark';
 
 import { linkTargets, LinkCapabilities, LinkType } from '../../api/link';
+import { OmniInsertGroup } from '../../api/omni_insert';
+import { equalsIgnoreCase } from '../../api/text';
 
 export function linkCommand(markType: MarkType, onEditLink: LinkEditorFn, capabilities: LinkCapabilities) {
   return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
@@ -55,6 +58,11 @@ export function linkCommand(markType: MarkType, onEditLink: LinkEditorFn, capabi
             ...link,
             ...getMarkAttrs(state.doc, range, markType),
           };
+        } else {
+          // if the link text is a URL then make it the default
+          if (link.text && link.text.match(/^https?:\/\/.*$/)) {
+            link.href = link.text;
+          }
         }
 
         // determine type
@@ -92,7 +100,9 @@ export function linkCommand(markType: MarkType, onEditLink: LinkEditorFn, capabi
             if (result.link.type === LinkType.Heading) {
               const heading = findChildren(
                 tr.doc,
-                node => node.type === state.schema.nodes.heading && node.textContent === result.link.heading,
+                node =>
+                  node.type === state.schema.nodes.heading &&
+                  equalsIgnoreCase(node.textContent, result.link.heading || ''),
               );
               if (heading.length > 0) {
                 tr.setNodeMarkup(heading[0].pos, state.schema.nodes.heading, {
@@ -112,6 +122,16 @@ export function linkCommand(markType: MarkType, onEditLink: LinkEditorFn, capabi
     asyncEditLink();
 
     return true;
+  };
+}
+
+export function linkOmniInsert(ui: EditorUI) {
+  return {
+    name: ui.context.translateText('Link...'),
+    description: ui.context.translateText('Link to another location'),
+    group: OmniInsertGroup.Content,
+    priority: 8,
+    image: () => (ui.prefs.darkMode() ? ui.images.omni_insert?.link_dark! : ui.images.omni_insert?.link!),
   };
 }
 

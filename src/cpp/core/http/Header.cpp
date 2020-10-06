@@ -1,7 +1,7 @@
 /*
  * Header.cpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,7 +26,7 @@ namespace http {
    
 bool HeaderNamePredicate::operator()(const Header& header) const
 { 
-   return boost::iequals(name_, header.name); 
+   return boost::iequals(name_, header.name);
 }
    
 bool containsHeader(const Headers& headers, const std::string& name)
@@ -46,25 +46,25 @@ std::string headerValue(const Headers& headers, const std::string& name)
 {
    Headers::const_iterator it = std::find_if(headers.begin(), 
                                              headers.end(), 
-                                             HeaderNamePredicate(name))  ;
+                                             HeaderNamePredicate(name));
    
    if ( it != headers.end() )
-      return (*it).value ;
+      return (*it).value;
    else
-      return std::string() ;
+      return std::string();
 }
 
    
 bool parseHeader(const std::string& line, Header* pHeader)
 {
    // parse the name and value out of the header
-   std::string::size_type pos = line.find(": ") ;
+   std::string::size_type pos = line.find(": ");
    if ( pos != std::string::npos )
    {
-      pHeader->name = line.substr(0, pos) ;
-      pHeader->value = line.substr(pos + 2) ;
+      pHeader->name = line.substr(0, pos);
+      pHeader->value = line.substr(pos + 2);
       boost::algorithm::trim(pHeader->name);
-      boost::algorithm::trim(pHeader->value) ;
+      boost::algorithm::trim(pHeader->value);
       return true;
    }
    else

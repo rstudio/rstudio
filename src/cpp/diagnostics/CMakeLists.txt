@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-19 by RStudio, PBC
+# Copyright (C) 2020 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -82,11 +82,10 @@ if(APPLE AND RSTUDIO_PACKAGE_BUILD)
    endforeach()
 
    # do something similar to the above to fix paths to SOCI libraries
-   foreach(lib ${SOCI_SYMLINK_LIBRARIES})
-      get_filename_component(LIB_PATH "${lib}" ABSOLUTE)
-      get_filename_component(LIB_FILE "${LIB_PATH}" NAME)
+   foreach(lib ${SOCI_DEPENDENCIES})
+      get_filename_component(LIB_NAME "${lib}" NAME_WE)
       add_custom_command (TARGET diagnostics POST_BUILD
-         COMMAND install_name_tool -change `otool -L ${CMAKE_CURRENT_BINARY_DIR}/diagnostics | grep ${LIB_FILE} | awk '{ print $$1 }'` @executable_path/../Frameworks/${LIB_FILE} ${CMAKE_CURRENT_BINARY_DIR}/diagnostics)
+          COMMAND install_name_tool -change `otool -L ${CMAKE_CURRENT_BINARY_DIR}/diagnostics | grep ${LIB_NAME} | awk '{ print $$1 }'` @executable_path/../Frameworks/$$\(otool -L ${CMAKE_CURRENT_BINARY_DIR}/diagnostics | grep ${LIB_NAME} | awk '{ print $$1 }' | xargs basename\) ${CMAKE_CURRENT_BINARY_DIR}/diagnostics)
    endforeach()
 
 endif()
