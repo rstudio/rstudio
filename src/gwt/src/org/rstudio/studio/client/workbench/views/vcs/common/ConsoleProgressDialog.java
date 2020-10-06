@@ -280,7 +280,8 @@ public class ConsoleProgressDialog extends ProgressDialog
    {
       if (running_)
       {
-         consoleProcess_.interrupt(new SimpleRequestCallback<Void>() {
+         consoleProcess_.interrupt(new SimpleRequestCallback<Void>()
+         {
             @Override
             public void onResponseReceived(Void response)
             {
@@ -294,6 +295,7 @@ public class ConsoleProgressDialog extends ProgressDialog
                super.onError(error);
             }
          });
+         
          stopButton().setEnabled(false);
       }
       else

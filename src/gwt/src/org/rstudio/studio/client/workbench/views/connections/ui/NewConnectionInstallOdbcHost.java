@@ -125,21 +125,24 @@ public class NewConnectionInstallOdbcHost extends Composite
    }
 
    private void terminateOdbcInstall(final Operation operation) {
-      if (consoleProcess_ != null) {
-         consoleProcess_.interrupt(new VoidServerRequestCallback() {
-            @Override
-            public void onSuccess()
-            {
-               reapOdbcInstall(operation);
-            }
-            
-            @Override
-            public void onFailure()
-            {
-               reapOdbcInstall(operation);
-            }
-         });
-      }
+      
+      if (consoleProcess_ == null)
+         return;
+      
+      consoleProcess_.interrupt(new VoidServerRequestCallback()
+      {
+         @Override
+         public void onSuccess()
+         {
+            reapOdbcInstall(operation);
+         }
+
+         @Override
+         public void onFailure()
+         {
+            reapOdbcInstall(operation);
+         }
+      });
    }
 
    protected void addHandlerRegistration(HandlerRegistration reg)

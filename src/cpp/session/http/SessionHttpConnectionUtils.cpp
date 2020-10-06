@@ -41,6 +41,16 @@
 
 namespace rstudio {
 namespace session {
+namespace console_input {
+
+bool executing();
+
+}
+}
+}
+
+namespace rstudio {
+namespace session {
 
 void HttpConnection::sendJsonRpcError(const core::Error& error)
 {
@@ -248,11 +258,17 @@ bool checkForInterrupt(boost::shared_ptr<HttpConnection> ptrConnection)
       // to ensure that the R session always receives an interrupt, we explicitly
       // set the interrupt flag even though the normal interrupt handler would do
       // the same.
-      r::exec::setInterruptsPending(true);
-      core::system::interrupt();
+      bool busy = session::console_input::executing();
+      if (busy)
+      {
+         r::exec::setInterruptsPending(true);
+         core::system::interrupt();
+      }
 
-      // acknowledge request
-      ptrConnection->sendJsonRpcResponse();
+      // send response
+      json::JsonRpcResponse response;
+      response.setResult(busy);
+      ptrConnection->sendJsonRpcResponse(response);
    }
 
    return true;

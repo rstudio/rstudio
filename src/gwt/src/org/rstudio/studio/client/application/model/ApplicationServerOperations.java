@@ -34,7 +34,7 @@ public interface ApplicationServerOperations extends PrefsServerOperations
    void getJobConnectionStatus(ServerRequestCallback<String> requestCallback);
 
    // interrupt the current session
-   void interrupt(ServerRequestCallback<Void> requestCallback);
+   void interrupt(ServerRequestCallback<Boolean> requestCallback);
    
    // abort the current session
    void abort(String nextSessionProject,
