@@ -527,6 +527,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether web links in comments are clickable.
+    */
+   public PrefValue<Boolean> highlightWebLink()
+   {
+      return bool(
+         "highlight_web_link",
+         "", 
+         "Whether web links in comments are clickable.", 
+         true);
+   }
+
+   /**
     * The keybindings to use in the RStudio code editor.
     */
    public PrefValue<String> editorKeybindings()
@@ -3101,6 +3113,8 @@ public class UserPrefsAccessor extends Prefs
          showIndentGuides().setValue(layer, source.getBool("show_indent_guides"));
       if (source.hasKey("continue_comments_on_newline"))
          continueCommentsOnNewline().setValue(layer, source.getBool("continue_comments_on_newline"));
+      if (source.hasKey("highlight_web_link"))
+         highlightWebLink().setValue(layer, source.getBool("highlight_web_link"));
       if (source.hasKey("editor_keybindings"))
          editorKeybindings().setValue(layer, source.getString("editor_keybindings"));
       if (source.hasKey("insert_matching"))
@@ -3501,6 +3515,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(showInvisibles());
       prefs.add(showIndentGuides());
       prefs.add(continueCommentsOnNewline());
+      prefs.add(highlightWebLink());
       prefs.add(editorKeybindings());
       prefs.add(insertMatching());
       prefs.add(insertSpacesAroundEquals());

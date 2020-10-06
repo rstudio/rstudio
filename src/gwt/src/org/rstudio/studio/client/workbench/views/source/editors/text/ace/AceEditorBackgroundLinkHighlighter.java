@@ -25,6 +25,7 @@ import org.rstudio.core.client.MapUtil.ForEachCommand;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.ListUtil.FilterPredicate;
 import org.rstudio.core.client.MouseTracker;
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.container.SafeMap;
 import org.rstudio.core.client.dom.DomUtils;
@@ -42,6 +43,8 @@ import org.rstudio.studio.client.common.filetypes.events.OpenFileInBrowserEvent;
 import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.DocumentChangedEvent;
@@ -67,6 +70,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 public class AceEditorBackgroundLinkHighlighter
       implements
@@ -88,13 +92,15 @@ public class AceEditorBackgroundLinkHighlighter
                            FileTypeRegistry fileTypeRegistry,
                            EventBus events,
                            FilesServerOperations server,
-                           MouseTracker mouseTracker)
+                           MouseTracker mouseTracker,
+                           Provider<UserPrefs> pUserPrefs)
    {
       globalDisplay_ = globalDisplay;
       fileTypeRegistry_ = fileTypeRegistry;
       events_ = events;
       server_ = server;
       mouseTracker_ = mouseTracker;
+      pUserPrefs_ = pUserPrefs;
    }
    
    public AceEditorBackgroundLinkHighlighter(AceEditor editor)
@@ -147,7 +153,18 @@ public class AceEditorBackgroundLinkHighlighter
          {
             TextFileType fileType = editor_.getFileType();
             highlighters_.clear();
-            highlighters_.add(webLinkHighlighter());
+	        pUserPrefs_.get().highlightWebLink().bind(
+		    new CommandWithArg<Boolean>() {
+		       public void execute(Boolean arg) {
+			      if (arg)
+			      {
+				     highlighters_.add(webLinkHighlighter());
+			      }
+			      else
+	  		      {
+				     highlighters_.remove(webLinkHighlighter());
+			      }
+		       }});
             if (fileType != null && (fileType.isMarkdown() || fileType.isRmd()))
                highlighters_.add(markdownLinkHighlighter());
             nextHighlightStart_ = 0;
@@ -802,4 +819,5 @@ public class AceEditorBackgroundLinkHighlighter
    private EventBus events_;
    private FilesServerOperations server_;
    private MouseTracker mouseTracker_;
+   private Provider<UserPrefs> pUserPrefs_;
 }
