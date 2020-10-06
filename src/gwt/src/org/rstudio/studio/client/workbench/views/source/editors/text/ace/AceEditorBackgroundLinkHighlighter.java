@@ -153,21 +153,17 @@ public class AceEditorBackgroundLinkHighlighter
          {
             TextFileType fileType = editor_.getFileType();
             highlighters_.clear();
-            if (pUserPrefs_.get().highlightWebLink().getValue())
-	    {
-               highlighters_.add(webLinkHighlighter());
-	    }
-	    pUserPrefs_.get().highlightWebLink().bind(
+	        pUserPrefs_.get().highlightWebLink().bind(
 		    new CommandWithArg<Boolean>() {
 		       public void execute(Boolean arg) {
-			  if (arg)
-			  {
-				highlighters_.add(webLinkHighlighter());
-			  }
-			  else
-	  		  {
-				highlighters_.remove(webLinkHighlighter());
-			  }
+			      if (arg)
+			      {
+				     highlighters_.add(webLinkHighlighter());
+			      }
+			      else
+	  		      {
+				     highlighters_.remove(webLinkHighlighter());
+			      }
 		       }});
             if (fileType != null && (fileType.isMarkdown() || fileType.isRmd()))
                highlighters_.add(markdownLinkHighlighter());
