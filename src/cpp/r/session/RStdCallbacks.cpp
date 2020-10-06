@@ -76,9 +76,6 @@ InternalCallbacks s_internalCallbacks;
 // temporarily suppress output
 bool s_suppressOutput = false;
 
-// temporarily suppress interrupt output
-bool s_suppressNextInterruptOutput = false;
-
 class JumpToTopException
 {
 };
@@ -392,7 +389,6 @@ int RReadConsole (const char *pmt,
       // handle the interrupt as we noticed calling Rf_onintr() in that
       // environment could cause a crash
 #ifndef _WIN32
-      s_suppressNextInterruptOutput = true;
       Rf_onintr();
 #endif
 
@@ -433,15 +429,6 @@ void RWriteConsoleEx (const char *buf, int buflen, int otype)
          // get output
          std::string output = std::string(buf, buflen);
          output = util::rconsole2utf8(output);
-         
-         // ignore newline from interrupt if requested
-         if (s_suppressNextInterruptOutput &&
-             output == "\n" &&
-             otype == 1)
-         {
-            s_suppressNextInterruptOutput = false;
-            return;
-         }
          
          // add to console actions
          int type = otype == 1 ? kConsoleActionOutputError :
