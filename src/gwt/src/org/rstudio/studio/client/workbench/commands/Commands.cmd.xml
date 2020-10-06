@@ -76,6 +76,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="newProject"/>
          <separator/>
          <cmd refid="openSourceDoc"/>
+         <cmd refid="openSourceDocNewColumn"/>
          <cmd refid="reopenSourceDocWithEncoding"/>
          <menu label="_Recent Files">
             <cmd refid="mru0"/>
@@ -777,6 +778,10 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="openSourceDoc" value="Ctrl+O" disableModes="emacs"/>
          <shortcut refid="openSourceDoc" value="Meta+O" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
 
+         <shortcut refid="openSourceDocNewColumn" value="Ctrl+X Ctrl+O C" disableModes="default,vim,sublime"/>
+         <shortcut refid="openSourceDocNewColumn" value="Ctrl+Shift+O" disableModes="emacs"/>
+         <shortcut refid="openSourceDocNewColumn" value="Meta+C" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+
          <shortcut refid="closeSourceDoc" value="Ctrl+X K" disableModes="default,vim,sublime"/>
          <shortcut refid="closeSourceDoc" value="Ctrl+W" disableModes="emacs"/>
          <shortcut refid="closeSourceDoc" value="Meta+W" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
@@ -1109,6 +1114,12 @@ well as menu structures (for main menu and popup menus).
         buttonLabel=""
         desc="Open an existing file"/>
 
+   <cmd id="openSourceDocNewColumn"
+        label="Open File in New Column..."
+        menuLabel="Open File in New C_olumn..."
+        buttonLabel=""
+        desc="Open an existing file in a new column"/>
+   
    <cmd id="reopenSourceDocWithEncoding"
         label="Reopen Current Document with Encoding..."
         menuLabel="Reopen with _Encoding..."

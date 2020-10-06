@@ -328,17 +328,12 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       return add(display, false);
    }
 
-   public ColumnName add(Source.Display display)
-   {
-      return add(display, false);
-   }
-
    public ColumnName add(String name, boolean updateState)
    {
       return add(name, false, updateState);
    }
 
-   public ColumnName add (String name, boolean activate, boolean updateState)
+   public ColumnName add(String name, boolean activate, boolean updateState)
    {
       Source.Display display = GWT.create(SourcePane.class);
       return add(name, computeAccessibleName(), display, activate, updateState);
@@ -516,9 +511,9 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    public SourceColumn getActive()
    {
       if (activeColumn_ != null &&
-         (!columnList_.get(0).asWidget().isAttached() ||
-          activeColumn_.asWidget().isAttached() &&
-          activeColumn_.asWidget().getOffsetWidth() > 0))
+         (columnList_.get(0).asWidget().getOffsetWidth() == 0 ||
+          (activeColumn_.asWidget().isAttached() &&
+           activeColumn_.asWidget().getOffsetWidth() > 0)))
          return activeColumn_;
       setActive(MAIN_SOURCE_NAME);
 

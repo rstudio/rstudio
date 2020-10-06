@@ -72,6 +72,7 @@ import org.rstudio.studio.client.workbench.views.output.markers.MarkersOutputTab
 import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.SourceColumn;
 import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
+import org.rstudio.studio.client.workbench.views.source.SourceColumnManager.ColumnName;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
@@ -674,18 +675,51 @@ public class PaneManager
    }
 
    @Handler
-    public void onNewSourceColumn()
-    {
-       if (!userPrefs_.allowSourceColumns().getValue())
-          pGlobalDisplay_.get().showMessage(GlobalDisplay.MSG_INFO, "Cannot Add Column",
-             "Allow Source Columns preference is disabled.");
-       else if (additionalSourceCount_ >= MAX_COLUMN_COUNT)
-          pGlobalDisplay_.get().showMessage(GlobalDisplay.MSG_INFO, "Cannot Add Column",
-             "You can't add more than " + MAX_COLUMN_COUNT + " columns.");
-       else
-          createSourceColumn();
-    }
+   public void onNewSourceColumn()
+   {
+      if (validateNewColumnRequest())
+         createAndDisplaySourceColumn();
+   }
+   
+   @Handler
+   public void onOpenSourceDocNewColumn()
+   {
+      if (validateNewColumnRequest())
+      {
+         ColumnName name = createSourceColumn();
+         SourceColumn column = sourceColumnManager_.getByName(name.getName());
+         column.incrementNewTabPending();
+         panel_.addLeftWidget(
+            createSourceColumnWindow(name.getName(),
+               name.getAccessibleName()));
+         sourceColumnManager_.setActive(column);
+         Command onCancelled = () ->
+         {
+            column.decrementNewTabPending();
+            closeSourceWindow(name.getName());
+         };
+         Command onCompleted = () -> column.decrementNewTabPending();
+         source_.openSourceDoc(onCancelled, onCompleted);
+      }
+   }
 
+   private boolean validateNewColumnRequest()
+   {
+      if (!userPrefs_.allowSourceColumns().getValue())
+      {
+         pGlobalDisplay_.get().showMessage(GlobalDisplay.MSG_INFO, "Cannot Add Column",
+            "Allow Source Columns preference is disabled.");
+         return false;
+      }
+      else if (additionalSourceCount_ >= MAX_COLUMN_COUNT)
+      {
+         pGlobalDisplay_.get().showMessage(GlobalDisplay.MSG_INFO, "Cannot Add Column",
+            "You can't add more than " + MAX_COLUMN_COUNT + " columns.");
+         return false;
+      }
+      return true;
+   }
+   
    private String getAdjacentWindow(LogicalWindow window, boolean before)
    {
       if (window.getNormal() == null)
@@ -1478,7 +1512,7 @@ public class PaneManager
          for (int i = 0; i < difference; i++)
          {
             if (refreshDisplay)
-               createSourceColumn();
+               createAndDisplaySourceColumn();
             else
                sourceColumnManager_.add();
          }
@@ -1496,14 +1530,19 @@ public class PaneManager
       return additionalSourceCount_;
    }
 
-   private void createSourceColumn()
+   private void createAndDisplaySourceColumn()
    {
-      PaneConfig.addSourcePane();
-      SourceColumnManager.ColumnName name = sourceColumnManager_.add();
-      additionalSourceCount_ = sourceColumnManager_.getSize() - 1;
-
+      ColumnName name = createSourceColumn();
       Widget panel = createSourceColumnWindow(name.getName(), name.getAccessibleName());
       panel_.addLeftWidget(panel);
+   }
+   
+   private ColumnName createSourceColumn()
+   {
+      PaneConfig.addSourcePane();
+      ColumnName name = sourceColumnManager_.add();
+      additionalSourceCount_ = sourceColumnManager_.getSize() - 1;
+      return name;
    }
 
    private Widget createSourceColumnWindow(String name, String accessibleName)
@@ -1524,15 +1563,6 @@ public class PaneManager
       userPrefs_.writeUserPrefs();
 
       return panesByName_.get(name).getNormal();
-   }
-
-   public int closeAllAdditionalColumns()
-   {
-      ArrayList<String> columnNames = sourceColumnManager_.getNames(true);
-      for (String name : columnNames)
-         closeSourceWindow(name);
-
-      return additionalSourceCount_;
    }
 
    public void closeSourceWindow(String name)
