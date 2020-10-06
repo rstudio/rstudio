@@ -124,8 +124,8 @@ public class NewConnectionInstallOdbcHost extends Composite
       }
    }
 
-   private void terminateOdbcInstall(final Operation operation) {
-      
+   private void terminateOdbcInstall(final Operation operation)
+   {
       if (consoleProcess_ == null)
          return;
       
