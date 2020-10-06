@@ -365,6 +365,10 @@ private:
 
 class InterruptException {};
 
+// track whether the session was interrupted
+bool getWasInterrupted();
+void setWasInterrupted(bool wasInterrupted);
+
 } // namespace exec   
 } // namespace r
 } // namespace rstudio

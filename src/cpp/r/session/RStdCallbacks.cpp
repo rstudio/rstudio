@@ -426,6 +426,18 @@ void RWriteConsoleEx (const char *buf, int buflen, int otype)
    {
       if (!s_suppressOutput)
       {
+         bool isInterruptOutput =
+               r::exec::getWasInterrupted() &&
+               otype == 1 &&
+               buflen == 1 &&
+               buf[0] == '\n';
+         
+         if (isInterruptOutput)
+         {
+            r::exec::setWasInterrupted(false);
+            return;
+         }
+         
          // get output
          std::string output = std::string(buf, buflen);
          output = util::rconsole2utf8(output);
