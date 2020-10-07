@@ -515,14 +515,22 @@ options(help_type = "html")
    query <- paste("/library/", pkgname, "/html/", basename(file), ".html", sep = "")
    html <- suppressWarnings(tools:::httpd(query, NULL, NULL))$payload
    
-   match = suppressWarnings(regexpr('<body>.*</body>', html))
-   if (match < 0)
+   match <- suppressWarnings(regexpr('<body>.*</body>', html))
+   if (match >= 0)
    {
       html = NULL
    }
    else
    {
-      html = substring(html, match + 6, match + attr(match, 'match.length') - 1 - 7)
+      # first, assume that HTML documentation is in native encoding;
+      # if that fails, then try again with UTF-8 encoding
+      html <- tryCatch(
+         substring(html, match + 6, match + attr(match, 'match.length') - 1 - 7),
+         error = function(e) {
+            Encoding(html) <- "UTF-8"
+            substring(html, match + 6, match + attr(match, 'match.length') - 1 - 7)
+         }
+      )
       
       if (subset)
       {   
