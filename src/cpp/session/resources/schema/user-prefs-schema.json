@@ -383,7 +383,7 @@
         },
         "show_diagnostics_other": {
             "type": "boolean",
-            "default": true,
+            "default": false,
             "title": "Show diagnostics in other languages",
             "description": "Whether to show diagnostic messages for other types of code (not R or C++)."
         },
