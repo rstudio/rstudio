@@ -307,10 +307,14 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
          else
             srcContext = *context;
 
+         // extract source reference associated with source context
+         SEXP srcref = srcContext.contextSourceRefs();
+         
          // mark this as a source-equivalent function if it's evaluating user
          // code into the global environment
-         varFrame["is_source_equiv"] = context->cloenv() == R_GlobalEnv &&
-            isValidSrcref(srcContext.contextSourceRefs());
+         varFrame["is_source_equiv"] =
+               context->cloenv() == R_GlobalEnv &&
+               isValidSrcref(srcref);
 
          std::string filename;
          error = srcContext.fileName(&filename);
@@ -321,7 +325,6 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
          varFrame["aliased_file_name"] =
                module_context::createAliasedPath(FilePath(filename));
 
-         SEXP srcref = srcContext.contextSourceRefs();
          if (isValidSrcref(srcref))
          {
             varFrame["real_sourceref"] = true;
