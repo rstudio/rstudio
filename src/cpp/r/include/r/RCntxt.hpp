@@ -63,6 +63,7 @@ public:
    bool isDebugHidden() const;
    bool isErrorHandler() const;
 
+   SEXP contextSourceRefs() const;
    SEXP sourceRefs() const;
    SEXP originalFunctionCall() const;
 
@@ -73,6 +74,9 @@ public:
    core::Error callSummary(std::string* pCallSummary) const;
 
    // implemented by R version specific internal context classes
+   //
+   // NOTE: 'srcref()' attribute may be set to <in-bc-interp>
+   // symbol for contexts associated with bytecode evaluation!
    bool isNull() const;
    SEXP callfun() const;
    int callflag() const;

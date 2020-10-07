@@ -275,8 +275,7 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
       // debugging in the environment of the callee. note that there may be
       // multiple srcrefs on the stack for a given closure; in this case we
       // always want to take the first one as it's the most current/specific.
-      if (!r::context::isByteCodeContext(*context) &&
-          isValidSrcref(context->srcref()) &&
+      if (isValidSrcref(context->contextSourceRefs()) &&
           !context->nextcontext().isNull())
       {
          SEXP env = context->nextcontext().cloenv();
@@ -311,17 +310,18 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
          // mark this as a source-equivalent function if it's evaluating user
          // code into the global environment
          varFrame["is_source_equiv"] = context->cloenv() == R_GlobalEnv &&
-            isValidSrcref(srcContext.srcref());
+            isValidSrcref(srcContext.contextSourceRefs());
 
          std::string filename;
          error = srcContext.fileName(&filename);
          if (error)
             LOG_ERROR(error);
+         
          varFrame["file_name"] = filename;
          varFrame["aliased_file_name"] =
                module_context::createAliasedPath(FilePath(filename));
 
-         SEXP srcref = srcContext.srcref();
+         SEXP srcref = srcContext.contextSourceRefs();
          if (isValidSrcref(srcref))
          {
             varFrame["real_sourceref"] = true;

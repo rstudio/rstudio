@@ -735,3 +735,18 @@
    .Call("rs_hasAltrep", var, PACKAGE = "(embedding)")
 })
 
+.rs.addFunction("resolveContextSourceRefs", function(info)
+{
+   calls <- sys.calls()
+   
+   for (i in seq_along(calls))
+   {
+      fn <- sys.function(i)
+      if (identical(fn, info$callfun))
+         return(attr(calls[[i]], "srcref"))
+   }
+   
+   NULL
+   
+})
+

@@ -81,6 +81,34 @@ bool RCntxt::hasSourceRefs() const
    return refs && TYPEOF(refs) != NILSXP;
 }
 
+SEXP RCntxt::contextSourceRefs() const
+{
+   // check for a 'plain' source reference
+   SEXP ref = srcref();
+   if (!isByteCodeSrcRef(ref))
+      return ref;
+   
+   // otherwise, try to resolve the source reference
+   // from the associated call. note that we stuff all
+   // the parameters into a list to protect calls from
+   // early evaluation
+   r::sexp::Protect protect;
+   
+   r::sexp::ListBuilder builder(&protect);
+   builder.add("call", call());
+   builder.add("callflag", callflag());
+   builder.add("callfun", callfun());
+   builder.add("srcref", srcref());
+   builder.add("cloenv", cloenv());
+   SEXP info = r::sexp::create(builder, &protect);
+   
+   r::exec::RFunction(".rs.resolveContextSourceRefs")
+         .addParam(info)
+         .call(&ref, &protect);
+   
+   return ref;
+}
+
 SEXP RCntxt::sourceRefs() const
 {
    return r::sexp::getAttrib(originalFunctionCall(), "srcref");
@@ -114,16 +142,7 @@ SEXP RCntxt::originalFunctionCall() const
 
 Error RCntxt::fileName(std::string* pFileName) const
 {
-   // skip over bytecode srcrefs
-   RCntxt context = *this;
-   SEXP ref = context.srcref();
-   while (ref && isByteCodeSrcRef(ref))
-   {
-      context = context.nextcontext();
-      if (context.isNull())
-         break;
-      ref = context.srcref();
-   }
+   SEXP ref = contextSourceRefs();
    
    if (ref && TYPEOF(ref) != NILSXP)
    {
