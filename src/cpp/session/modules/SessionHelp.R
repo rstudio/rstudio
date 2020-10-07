@@ -507,7 +507,7 @@ options(help_type = "html")
    if (length(helpfiles) <= 0)
       return ()
    
-   file = helpfiles[[1]]
+   file <- helpfiles[[1]]
    path <- dirname(file)
    dirpath <- dirname(path)
    pkgname <- basename(dirpath)
@@ -516,18 +516,19 @@ options(help_type = "html")
    html <- suppressWarnings(tools:::httpd(query, NULL, NULL))$payload
    
    match <- suppressWarnings(regexpr('<body>.*</body>', html))
-   if (match >= 0)
+   if (match < 0)
    {
-      html = NULL
+      html <- NULL
    }
    else
    {
-      # first, assume that HTML documentation is in native encoding;
-      # if that fails, then try again with UTF-8 encoding
+      # assume UTF-8 encoding, and then fall back to native encoding
+      # if parsing in that encoding fails
+      Encoding(html) <- "UTF-8"
       html <- tryCatch(
          substring(html, match + 6, match + attr(match, 'match.length') - 1 - 7),
          error = function(e) {
-            Encoding(html) <- "UTF-8"
+            Encoding(html) <- "unknown"
             substring(html, match + 6, match + attr(match, 'match.length') - 1 - 7)
          }
       )
