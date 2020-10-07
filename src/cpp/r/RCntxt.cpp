@@ -83,28 +83,35 @@ bool RCntxt::hasSourceRefs() const
 
 SEXP RCntxt::contextSourceRefs() const
 {
-   // check for a 'plain' source reference
+   // retrieve the source reference tagged on the context
    SEXP ref = srcref();
-   if (!isByteCodeSrcRef(ref))
-      return ref;
    
-   // otherwise, try to resolve the source reference
-   // from the associated call. note that we stuff all
-   // the parameters into a list to protect calls from
-   // early evaluation
-   r::sexp::Protect protect;
+   // if this is a byte-code context, we need to do some
+   // extra work to resolve the "real" source reference (if any)
+   if (isByteCodeSrcRef(ref))
+   {
+      r::sexp::Protect protect;
    
-   r::sexp::ListBuilder builder(&protect);
-   builder.add("call", call());
-   builder.add("callflag", callflag());
-   builder.add("callfun", callfun());
-   builder.add("srcref", srcref());
-   builder.add("cloenv", cloenv());
-   SEXP info = r::sexp::create(builder, &protect);
+      // stuff context parameters into a list to avoid accidentally
+      // evaluating call objects prematurely
+      r::sexp::ListBuilder builder(&protect);
+      builder.add("call", call());
+      builder.add("callflag", callflag());
+      builder.add("callfun", callfun());
+      builder.add("srcref", srcref());
+      builder.add("cloenv", cloenv());
+      SEXP info = r::sexp::create(builder, &protect);
    
-   r::exec::RFunction(".rs.resolveContextSourceRefs")
-         .addParam(info)
-         .call(&ref, &protect);
+      // attempt to resolve context
+      Error error = r::exec::RFunction(".rs.resolveContextSourceRefs")
+            .addParam(info)
+            .call(&ref, &protect);
+      
+      // errors are somewhat expected here, so don't log them and
+      // instead just set the source references to NULL
+      if (error)
+         ref = R_NilValue;
+   }
    
    return ref;
 }
