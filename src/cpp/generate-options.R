@@ -778,7 +778,11 @@ main <- function () {
       generate(optionsFile)
    }
 
-   cat("Options generated successfully\n")
+   cat("Options generated successfully, verifying resulting options...\n")
+   cat("Press [enter] to continue or CTRL+C to skip")
+   a <- readLines("stdin",n=1);
+
+   system("./report-options.sh")
 }
 
 main()

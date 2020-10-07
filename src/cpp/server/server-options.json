@@ -63,6 +63,7 @@
             "isDeprecated": true,
             "type": "bool",
             "defaultValue": false,
+            "isHidden": true,
             "skipAccessorGeneration": true,
             "description": "Indicates whether or not to enable AppArmor profiles for the rserver process."
          },
@@ -124,6 +125,7 @@
             "memberName": "wwwLocalPath_",
             "type": "string",
             "defaultValue": "www",
+            "isHidden": true,
             "description": "The relative path from the RStudio installation directory, or absolute path where web assets are stored." 
          },
          {
@@ -131,6 +133,7 @@
             "memberName": "wwwSymbolMapsPath_",
             "type": "core::FilePath",
             "defaultValue": "www-symbolmaps",
+            "isHidden": true,
             "description": "The relative path from the RStudio installation directory, or absolute path, where symbol maps are stored."
          },
          {
@@ -138,6 +141,7 @@
             "memberName": "wwwUseEmulatedStack_",
             "type": "bool",
             "defaultValue": false,
+            "isHidden": true,
             "description": "Indicates whether or not to use GWT's emulated stack."
          },
          {
@@ -245,6 +249,7 @@
             "type": "int",
             "defaultValue": 0,
             "skipAccessorGeneration": true,
+            "isHidden": true,
             "description": "The limit in MB that an rsession process may consume."
          },
          {
@@ -253,6 +258,7 @@
             "isDeprecated": true,
             "type": "int",
             "defaultValue": 0,
+            "isHidden": true,
             "skipAccessorGeneration": true,
             "description": "The limit in MB that an rsession process may consume for its stack."
          },
@@ -262,6 +268,7 @@
             "isDeprecated": true,
             "type": "int",
             "defaultValue": 0,
+            "isHidden": true,
             "skipAccessorGeneration": true,
             "description": "The maximum number of allowable rsession processes."
          }
@@ -281,14 +288,14 @@
             "memberName": "authNone_",
             "type": "bool",
             "defaultValue": {"code": "!core::system::effectiveUserIsRoot()", "description": "1 (true) if rserver was run without root privilege, otherwise 0 (false)."},
-            "description": "If set, disables multi-user authentication."
+            "description": "If set, disables multi-user authentication. Pro features may not work in this mode."
          },
          {
             "name": "auth-validate-users",
             "memberName": "authValidateUsers_",
             "type": "bool",
             "defaultValue": {"code": "core::system::effectiveUserIsRoot()", "description": "1 (true) if rserver was run with root privilege, otherwise 0 (false)."},
-            "description": "Indicates whether or not to validate that authenticated users exist on the target system."
+            "description": "Indicates whether or not to validate that authenticated users exist on the target system. Disabling this option may cause issues to start or to run a session."
          },
          {
             "name": "auth-stay-signed-in-days",
@@ -350,6 +357,7 @@
             "memberName": "authPamHelperPath_",
             "type": "string",
             "defaultValue": "rserver-pam",
+            "isHidden": true,
             "description": "The relative path from the RStudio installation directory, or absolute path where the PAM helper binary resides."
          },
          {
@@ -363,6 +371,7 @@
             "name": "auth-pam-requires-priv",
             "memberName": "deprecatedAuthPamRequiresPriv_",
             "isDeprecated": true,
+            "isHidden": true,
             "type": "bool",
             "defaultValue": true,
             "skipAccessorGeneration": true,
@@ -402,4 +411,3 @@
       ]
    }
 }
-
