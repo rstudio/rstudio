@@ -1029,6 +1029,7 @@ Error svnCommit(const json::JsonRpcRequest& request,
 
    ShellArgs args;
    args << "commit" << globalArgs();
+   args << "--encoding" << "UTF-8";
    args << "-F" << tempFile;
 
    args << "--";
