@@ -78,7 +78,7 @@
 * Changed the command to retrieve Slurm resource utilization to be run as the current user rather than the `slurm-service-user` (Pro #1527)
 * Reduced supurflous log messages in the Slurm Launcher Plugin log file about non-RStudio jobs in Slurm (Pro #1528)
 * Allow administrators to disabile the ability to set resource reqeusts on jobs launched through the Slurm Launcher Plugin (Pro #1948)
-* **DEPRECATED:** The option `auth-proxy-require-hmac` is no longer operational and a warning will be issued to the logs if used. See the documentation on proxy authentication for alternatives. (Pro #2029)
+* **REMOVED:** The option `auth-proxy-require-hmac` is no longer operational and RStudio will not run if present. See the documentation on [Proxied Authentication] for alternatives to secure RStudio. (Pro #2029)
 
 ### Bugfixes
 
@@ -122,4 +122,3 @@
 * Added option for clickable links in Terminal pane (#6621)
 * Fixed issue where R scripts containing non-ASCII characters in their path could not be sourced as a local job on Windows (#6701)
 * Fixed issue where French (AZERTY) keyboards inserted '/' rather than ':' in some cases (#7932)
-
