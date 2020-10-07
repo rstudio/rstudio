@@ -173,10 +173,10 @@ protected:
    pAuth->add_options()
       ("auth-none",
       value<bool>(&authNone_)->default_value(!core::system::effectiveUserIsRoot()),
-      "If set, disables multi-user authentication.")
+      "If set, disables multi-user authentication. Pro features may not work in this mode.")
       ("auth-validate-users",
       value<bool>(&authValidateUsers_)->default_value(core::system::effectiveUserIsRoot()),
-      "Indicates whether or not to validate that authenticated users exist on the target system.")
+      "Indicates whether or not to validate that authenticated users exist on the target system. Disabling this option may cause issues to start or to run a session.")
       ("auth-stay-signed-in-days",
       value<int>(&authStaySignedInDays_)->default_value(30),
       "The number of days to keep a user signed in when using the \"Stay Signed In\" option. Will only take affect when auth-timeout-minutes is 0 (disabled).")

@@ -12,6 +12,49 @@ To generate for all options file, simply invoke the script `./generate-options.R
 
 *Note: When merging new open source options to Pro, you will need to rerun the generation script to ensure the documentation is generated, as the documentation only exists in the Pro repo.*
 
+# Verifying options
+
+An option can be:
+- Public
+- Internal (hidden)
+- Deprecated
+
+The following conditions are accepted for options in the different states:
+
+- In general, a deprecated option should not be present in the server docs.
+- A deprecated option can also be hidden to not be listed by `generate-options.R` in the server docs _appendix_.
+- A deprecated option may no longer be used in the code but we keep the option around to not break existing customers.
+- A public option most likely needs to be in the server docs.
+- A public option which is obscure or rarely used can only be listed in the server docs _appendix_ and have no other mention in the server docs.
+- A hidden option **must not** be in the server docs. Also, `generate-options.R` does not list a hidden option in the server docs _appendix_.
+- A hidden or public option that's not deprecated must be used in the code. Otherwise, it's a dead option.
+
+In order to make it easier to evaluate these conditions, you can run the `./report-options.sh` script.
+
+This script will report the following conditions about each server or session option:
+
+- `<server|session>: <option> -- MISSING IN DOCS, ADD IT TO DOCS, MAKE IT HIDDEN OR DEPRECATED`
+- `<server|session>: <option> -- isHidden BUT SHOWN IN <doc files>, MAKE IT VISIBLE OR REMOVE IT FROM DOCS`
+- `<server|session>: <option> -- isDeprecated BUT SHOWN IN <doc files>, MAKE IT HIDDEN OR REMOVE IT FROM DOCS`
+- `<server|session>: <option> -- NOT IN CODE, MAKE IT DEPRECATED AND HIDDEN`
+
+Based on the results of the command, you can take actions to correct the found conditions if necessary.
+
+To see all options, including the ones in good shape, run `./report-options.sh all`.
+
+You will additional output like:
+
+- `<server|session>: <option> -- IN DOCS <doc files>, OK`
+- `<server|session>: <option> -- isHidden AND NOT IN DOCS, OK`
+- `<server|session>: <option> -- isDeprecated AND NOT IN DOCS, OK`
+
+In this mode, some options that may exist with the same name as both server and session options will show as:
+
+- `session: <option> -- isHidden IN SESSION BUT ALSO IN SERVER, SHOWN IN <doc files>, PLEASE CHECK`
+- `session: <option> -- isDeprecated IN SESSION BUT ALSO IN SERVER, SHOWN IN <doc files>, PLEASE CHECK`
+
+In most case, there's no action to be taken here. The server option is just being forwarded to the session.
+
 ## Options JSON documentation
 The following sections list all of the properties that can be specified within an options json file.
 
