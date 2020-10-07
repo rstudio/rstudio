@@ -1215,6 +1215,31 @@ SEXP rs_isBrowserActive()
    return r::sexp::create(s_browserActive, &protect);
 }
 
+SEXP rs_dumpContexts()
+{
+   using namespace r::context;
+   
+   r::sexp::Protect protect;
+   r::sexp::ListBuilder contextList(&protect);
+   
+   for (auto it = RCntxt::begin();
+        it != RCntxt::end();
+        ++it)
+   {
+      r::sexp::ListBuilder builder(&protect);
+      builder.add("callfun", it->callfun());
+      builder.add("callflag", it->callflag());
+      builder.add("call", it->call());
+      builder.add("srcref", it->srcref());
+      builder.add("cloenv", it->cloenv());
+      
+      SEXP elt = r::sexp::create(builder, &protect);
+      contextList.add(elt);
+   }
+   
+   return r::sexp::create(contextList, &protect);
+}
+
 bool isSuspendable()
 {
    // suppress suspension if any object has a live external pointer; these can't be restored
@@ -1246,6 +1271,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_hasExternalPointer);
    RS_REGISTER_CALL_METHOD(rs_hasAltrep);
    RS_REGISTER_CALL_METHOD(rs_isAltrep);
+   RS_REGISTER_CALL_METHOD(rs_dumpContexts);
 
    // subscribe to events
    using boost::bind;
