@@ -791,7 +791,7 @@ public class UserPrefsAccessor extends Prefs
          "show_diagnostics_other",
          "Show diagnostics in other languages", 
          "Whether to show diagnostic messages for other types of code (not R or C++).", 
-         true);
+         false);
    }
 
    /**
