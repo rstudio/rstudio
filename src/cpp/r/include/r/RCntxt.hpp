@@ -63,8 +63,16 @@ public:
    bool isDebugHidden() const;
    bool isErrorHandler() const;
 
+   // retrieve the source references associated with the context
+   // (the source reference where this context originated)
    SEXP contextSourceRefs() const;
-   SEXP sourceRefs() const;
+   
+   // retrieve source references associated with the calling function
+   // (where that calling function was actually defined in source)
+   SEXP callFunSourceRefs() const;
+   
+   // for traced functions, the 'real' function will be replaced by
+   // a wrapper function -- use this to find the original function
    SEXP originalFunctionCall() const;
 
    std::string shinyFunctionLabel() const;

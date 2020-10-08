@@ -582,7 +582,7 @@ bool functionIsOutOfSync(const r::context::RCntxt& context,
       return true;
    }
 
-   return functionDiffersFromSource(context.sourceRefs(), *pFunctionCode);
+   return functionDiffersFromSource(context.callFunSourceRefs(), *pFunctionCode);
 }
 
 // Returns a JSON array containing the names and associated call frame numbers

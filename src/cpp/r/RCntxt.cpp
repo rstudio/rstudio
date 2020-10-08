@@ -77,7 +77,7 @@ bool RCntxt::isErrorHandler() const
 
 bool RCntxt::hasSourceRefs() const
 {
-   SEXP refs = sourceRefs();
+   SEXP refs = callFunSourceRefs();
    return refs && TYPEOF(refs) != NILSXP;
 }
 
@@ -92,19 +92,9 @@ SEXP RCntxt::contextSourceRefs() const
    {
       r::sexp::Protect protect;
    
-      // stuff context parameters into a list to avoid accidentally
-      // evaluating call objects prematurely
-      r::sexp::ListBuilder builder(&protect);
-      builder.add("call", call());
-      builder.add("callflag", callflag());
-      builder.add("callfun", callfun());
-      builder.add("srcref", srcref());
-      builder.add("cloenv", cloenv());
-      SEXP info = r::sexp::create(builder, &protect);
-   
       // attempt to resolve context
       Error error = r::exec::RFunction(".rs.resolveContextSourceRefs")
-            .addParam(info)
+            .addParam(callfun())
             .call(&ref, &protect);
       
       // errors are somewhat expected here, so don't log them and
@@ -116,7 +106,7 @@ SEXP RCntxt::contextSourceRefs() const
    return ref;
 }
 
-SEXP RCntxt::sourceRefs() const
+SEXP RCntxt::callFunSourceRefs() const
 {
    return r::sexp::getAttrib(originalFunctionCall(), "srcref");
 }
