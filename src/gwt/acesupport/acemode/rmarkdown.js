@@ -195,21 +195,17 @@ oop.inherits(Mode, MarkdownMode);
 
    this.transformAction = function(state, action, editor, session, text)
    {
-      var result = false;
-
       var mode = activeMode(state);
       if (mode === "markdown")
-         result = this.transformActionMarkdown(state, action, editor, session, text);
+         return this.transformActionMarkdown(state, action, editor, session, text);
       else if (mode === "r-cpp")
-         result = this.transformActionCpp(state, action, editor, session, text);
+         return this.transformActionCpp(state, action, editor, session, text);
       else if (mode === "yaml")
-         result = this.transformActionYaml(state, action, editor, session, text);
+         return this.transformActionYaml(state, action, editor, session, text);
       else if (mode === "python")
-         result = this.$python.transformAction(state, action, editor, session, text);
-
-      this.$lastInsertedText = text;
-
-      return result;
+         return this.$python.transformAction(state, action, editor, session, text);
+      else
+         return false;
    };
 
    this.transformActionMarkdown = function(state, action, editor, session, text) {
@@ -217,14 +213,21 @@ oop.inherits(Mode, MarkdownMode);
       if (action === "insertion")
       {
          // if the user is typing '`r', complete the closing backtick
-         if (text === "r" && this.$lastInsertedText === "`")
+         if (text === "r")
          {
             var pos = editor.getCursorPosition();
+            var line = session.getLine(pos.row);
+            var token = session.getTokenAt(pos.row, pos.column - 1);
 
-            return {
-               text: "r `",
-               selection: [0, pos.column + 2, 0, pos.column + 2]
-            };
+            if (token !== null &&
+                token.type.indexOf("support.function") === -1 &&
+                line[pos.column - 1] === "`")
+            {
+               return {
+                  text: "r`",
+                  selection: [0, pos.column + 1, 0, pos.column + 1]
+               };
+            }
          }
 
          // skip over '`' if it ends an inline R chunk

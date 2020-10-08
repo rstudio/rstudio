@@ -66,7 +66,7 @@ var RMarkdownHighlightRules = function() {
    Utils.embedRules(
       this,
       RHighlightRules,
-      "r",
+      "r-inline",
       "`r",
       "`",
       ["start", "listblock", "allowBlock"]
