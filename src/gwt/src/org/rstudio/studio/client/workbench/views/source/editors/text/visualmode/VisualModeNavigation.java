@@ -73,6 +73,11 @@ public class VisualModeNavigation
    {
       context_.panmirror().navigate(PanmirrorNavigationType.XRef, xref, recordCurrentPosition);
    }
+
+   public void navigateToId(String id, boolean recordCurrentPosition)
+   {
+      context_.panmirror().navigate(PanmirrorNavigationType.Id, id, recordCurrentPosition);
+   }
    
    public void recordCurrentNavigationPosition()
    {

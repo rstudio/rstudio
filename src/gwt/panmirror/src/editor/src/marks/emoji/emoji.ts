@@ -172,11 +172,12 @@ const extension = (context: ExtensionContext): Extension | null => {
             const possibleMarks = new Map<number, Array<{ to: number; emoji: Emoji }>>();
             for (const emoji of emojis(ui.prefs.emojiSkinTone())) {
               emojiForAllSkinTones(emoji).forEach(skinToneEmoji => {
-                const charLoc = textNode.text.indexOf(skinToneEmoji.emoji);
-                if (charLoc !== -1) {
+                let charLoc = textNode.text.indexOf(skinToneEmoji.emoji);
+                while (charLoc !== -1) {
                   const from = textNode.pos + charLoc;
                   const to = from + skinToneEmoji.emoji.length;
                   possibleMarks.set(from, (possibleMarks.get(from) || []).concat({ to, emoji: skinToneEmoji }));
+                  charLoc = textNode.text.indexOf(skinToneEmoji.emoji, charLoc + 1);
                 }
               });
             }

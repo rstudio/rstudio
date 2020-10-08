@@ -78,6 +78,7 @@
             "type": "string",
             "defaultValue": "www",
             "memberName": "wwwLocalPath_",
+            "isHidden": true,
             "description": "The relative path from the RStudio installation directory, or absolute path where web assets are stored."
          },
          {
@@ -85,6 +86,7 @@
             "memberName": "wwwSymbolMapsPath_",
             "type": "core::FilePath",
             "defaultValue": "www-symbolmaps",
+            "isHidden": true,
             "description": "The relative path from the RStudio installation directory, or absolute path, where symbol maps are stored."
          },
          {
@@ -449,6 +451,7 @@
             "memberName": "sessionLibraryPath_",
             "defaultValue": "R/library",
             "description": "Specifies the R library path.",
+            "isHidden": true,
             "isDeprecated": true
          },
          {
@@ -512,6 +515,7 @@
             "type": "bool",
             "memberName": "deprecatedRShellEscape_",
             "isDeprecated": true,
+            "isHidden": true,
             "defaultValue": false,
             "description": "Indicates whether or not to support shell escape."
          },
@@ -574,6 +578,7 @@
             "type": "core::FilePath",
             "memberName": "rpostbackPath_",
             "defaultValue": {"code": "kDefaultPostbackPath", "description": "bin/postback/rpostback"},
+            "isHidden": true,
             "description": "Specifies the path to the rpostback executable."
          },
          {
@@ -581,7 +586,7 @@
             "type": "core::FilePath",
             "memberName": "consoleIoPath_",
             "defaultValue": "bin/consoleio.exe",
-            "description": "Specifies the path to the consoleio executable."
+            "description": "Specifies the path to the consoleio executable (Windows-only)."
          },
          {
             "name": "external-gnudiff-path",
@@ -721,4 +726,3 @@
       ]
    }
 }
-

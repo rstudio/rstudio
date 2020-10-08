@@ -120,5 +120,6 @@
 * Fixed issue causing C++ diagnostics to fail when Xcode developer tools were active (#7824)
 * Added option for clickable links in Terminal pane (#6621)
 * Fixed issue where R scripts containing non-ASCII characters in their path could not be sourced as a local job on Windows (#6701)
+* Fixed issue where non-ASCII characters in Subversion commit comments were incorrect encoded on Windows (#7959)
 * Fixed issue where French (AZERTY) keyboards inserted '/' rather than ':' in some cases (#7932)
 

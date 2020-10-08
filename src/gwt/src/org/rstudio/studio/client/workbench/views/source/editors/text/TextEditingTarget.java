@@ -2205,9 +2205,6 @@ public class TextEditingTarget implements
          {
             // Unlike the other status bar elements, the function outliner
             // needs its menu built on demand
-            JsArray<Scope> tree = docDisplay_.getScopeTree();
-            final StatusBarPopupMenu menu = new StatusBarPopupMenu();
-            MenuItem defaultItem = null;
             if (fileType_.isRpres())
             {
                String path = docUpdateSentinel_.getPath();
@@ -2227,9 +2224,15 @@ public class TextEditingTarget implements
                      });
                }
             }
+            else if (isVisualEditorActive())
+            {
+               showStatusBarPopupMenu(visualMode_.getStatusBarPopup());
+            }
             else
             {
-               defaultItem = addFunctionsToMenu(
+               final StatusBarPopupMenu menu = new StatusBarPopupMenu();
+               JsArray<Scope> tree = docDisplay_.getScopeTree();
+               MenuItem defaultItem = addFunctionsToMenu(
                   menu, tree, "", docDisplay_.getCurrentScope(), true);
 
                showStatusBarPopupMenu(new StatusBarPopupRequest(menu,
@@ -2364,7 +2367,7 @@ public class TextEditingTarget implements
    private void updateStatusBarLanguage()
    {
       statusBar_.getLanguage().setValue(fileType_.getLabel());
-      boolean canShowScope = fileType_.canShowScopeTree() && !isVisualModeActivated();
+      boolean canShowScope = fileType_.canShowScopeTree();
       statusBar_.setScopeVisible(canShowScope);
    }
 
@@ -2374,10 +2377,18 @@ public class TextEditingTarget implements
       statusBar_.getPosition().setValue((pos.getRow() + 1) + ":" +
                                         (pos.getColumn() + 1));
    }
+   
+   public void updateStatusBarLocation(String title, int type)
+   {
+      statusBar_.setScopeType(type);
+      statusBar_.getScope().setValue(title);
+   }
 
    private void updateCurrentScope()
    {
-      if (fileType_ == null || !fileType_.canShowScopeTree())
+      // don't sync scope if we can't show a scope tree or in visual mode (which
+      // is responsible for updating the scope visualization itself)
+      if (fileType_ == null || !fileType_.canShowScopeTree() || isVisualModeActivated())
          return;
 
       // special handing for presentations since we extract
