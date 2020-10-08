@@ -219,6 +219,9 @@ oop.inherits(Mode, MarkdownMode);
             var line = session.getLine(pos.row);
             var token = session.getTokenAt(pos.row, pos.column - 1);
 
+            // validate that we're not already working within an inline chunk --
+            // check the token at cursor position for 'support.function' type
+            // to confirm
             if (token !== null &&
                 token.type.indexOf("support.function") === -1 &&
                 line[pos.column - 1] === "`")
@@ -236,6 +239,8 @@ oop.inherits(Mode, MarkdownMode);
             var pos = editor.getCursorPosition();
             var token = session.getTokenAt(pos.row, pos.column + 1);
 
+            // validate that we are working within an inline chunk --
+            // only skip '`' if that appears to be the case
             if (token != null &&
                 token.value === "`" &&
                 token.type.indexOf("support.function") !== -1)
