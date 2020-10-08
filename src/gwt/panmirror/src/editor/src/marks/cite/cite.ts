@@ -13,7 +13,7 @@
  *
  */
 
-import { Mark, Schema, Fragment, Node as ProsemirrorNode, Slice } from 'prosemirror-model';
+import { Mark, Schema, Fragment, Node as ProsemirrorNode, Slice, ResolvedPos } from 'prosemirror-model';
 import { InputRule } from 'prosemirror-inputrules';
 import { EditorState, Transaction, Plugin, PluginKey, Selection } from 'prosemirror-state';
 import { setTextSelection } from 'prosemirror-utils';
@@ -55,6 +55,7 @@ const kBeginCitePattern = `(.* ${kCiteIdPrefixPattern}|${kCiteIdPrefixPattern})`
 const kEditingFullCiteRegEx = new RegExp(`\\[${kBeginCitePattern}${kCiteIdOptionalCharsPattern}.*\\]`);
 
 const kCiteIdRegEx = new RegExp(kCiteIdPattern);
+const kInTextCiteWithSuffixRegEx = new RegExp(`^${kCiteIdPrefixPattern}${kCiteIdCharsPattern}.*?\\[.*?\\]$`);
 const kCiteRegEx = new RegExp(`${kBeginCitePattern}${kCiteIdCharsPattern}.*`);
 
 export const kEditingCiteIdRegEx = new RegExp(
@@ -161,23 +162,72 @@ const extension = (context: ExtensionContext): Extension | null => {
           writer: {
             priority: 14,
             write: (output: PandocOutput, _mark: Mark, parent: Fragment) => {
-              // divide out delimiters from body
-              const openCite = parent.cut(0, 1);
-              const cite = parent.cut(1, parent.size - 1);
-              const closeCite = parent.cut(parent.size - 1, parent.size);
 
-              // proceed if the citation is still valid
-              if (
-                fragmentText(openCite) === '[' &&
-                fragmentText(closeCite) === ']' &&
-                fragmentText(cite).match(kCiteRegEx)
-              ) {
-                output.writeRawMarkdown('[');
-                output.writeInlines(cite);
-                output.writeRawMarkdown(']');
-              } else {
+              // extract parentText for inspection
+              const parentText = fragmentText(parent);
+
+              // if it's just a cite id then write it straight up
+              if (fragmentText(parent).match(kCiteIdRegEx)) {
+
                 output.writeInlines(parent);
+
+              } else {
+
+                // divide out delimiters from body
+                const openCite = parent.cut(0, 1);
+                const cite = parent.cut(1, parent.size - 1);
+                const closeCite = parent.cut(parent.size - 1, parent.size);
+
+                // check for fully enclosed in brackets
+                if (
+                  fragmentText(openCite) === '[' &&
+                  fragmentText(closeCite) === ']' &&
+                  fragmentText(cite).match(kCiteRegEx)
+                ) {
+                  output.writeRawMarkdown('[');
+                  output.writeInlines(cite);
+                  output.writeRawMarkdown(']');
+                
+                
+                // if it starts with a valid cite id prefix and ends with a close
+                // bracket then it might be an in-text citation with a suffix
+                } else if (parentText.match(kInTextCiteWithSuffixRegEx)) {
+
+                  // find the position of the begin bracket that matches the end bracket
+                  let beginBracketPos = -1;
+                  let bracketLevel = 0;
+                  for (let i = parentText.length - 2; i >= 0; i--) {
+                    const char = parentText.charAt(i);
+                    if (char === ']') {
+                      bracketLevel++;
+                    } else if (char === '[') {
+                      if (bracketLevel > 0) {
+                        bracketLevel--;
+                      } else {
+                        beginBracketPos = i;
+                        break;
+                      }
+                    }
+                  }
+
+                  // if we found one then cut as approrpriate
+                  if (beginBracketPos) {
+                    output.writeInlines(parent.cut(0, beginBracketPos));
+                    output.writeRawMarkdown('[');
+                    output.writeInlines(parent.cut(beginBracketPos + 1, parentText.length));
+                    output.writeRawMarkdown(']');
+
+                  } else {
+                    output.writeInlines(parent);
+                  }
+
+                } else {
+                  output.writeInlines(parent);
+                }
+
               }
+
+
             },
           },
         },
@@ -196,7 +246,7 @@ const extension = (context: ExtensionContext): Extension | null => {
           name: 'remove-cite-marks',
           filter: (node: ProsemirrorNode) => node.isTextblock && node.type.allowsMarkType(schema.marks.cite),
           append: (tr: MarkTransaction, node: ProsemirrorNode, pos: number) => {
-            splitInvalidatedMarks(tr, node, pos, editingCiteLength, schema.marks.cite, (from: number, to: number) => {
+            splitInvalidatedMarks(tr, node, pos, validCiteLength, schema.marks.cite, (from: number, to: number) => {
               tr.removeMark(from, to, schema.marks.cite);
               tr.removeMark(from, to, schema.marks.cite_id);
             });
@@ -368,7 +418,7 @@ function citeEndBracketInputRule(schema: Schema) {
     // only apply if we aren't already in a cite
     if (!markIsActive(state, schema.marks.cite)) {
       // look backwards for balanced begin bracket
-      const beginCite = findCiteBeginBracket(state.selection);
+      const beginCite = findCiteBeginBracket(state.selection.$head);
       if (beginCite !== -1) {
         // check whether // it's actually valid citation text
         const citeText = state.doc.textBetween(beginCite, state.selection.head) + ']';
@@ -406,7 +456,7 @@ function citeIdInputRule(schema: Schema) {
       if (prefixChar !== '@') {
         const tr = state.tr;
         tr.insertText(match[1]);
-        const beginCite = findCiteBeginBracket(tr.selection);
+        const beginCite = findCiteBeginBracket(tr.selection.$head);
         const endCite = findCiteEndBracket(tr.selection);
         if (beginCite >= 0 && endCite >= 0) {
           const citeText = tr.doc.textBetween(beginCite, endCite + 1);
@@ -427,16 +477,13 @@ function citeIdInputRule(schema: Schema) {
 // read pandoc citation, creating requisite cite and cite_id marks as we go
 function readPandocCite(schema: Schema) {
   return (writer: ProsemirrorWriter, tok: PandocToken) => {
+    
+    // create and open the mark
     const citeMark = schema.marks.cite.create();
     writer.openMark(citeMark);
-    writer.writeText('[');
-    const citations: Citation[] = tok.c[kCiteCitationsIndex];
-    citations.forEach((citation: Citation, index: number) => {
-      // add delimiter
-      if (index !== 0) {
-        writer.writeText('; ');
-      }
 
+    // helper to write a citation
+    const writeCitation = (citation: Citation) => {
       // prefix
       writer.writeTokens(citation.citationPrefix);
       if (citation.citationPrefix.length) {
@@ -451,23 +498,45 @@ function readPandocCite(schema: Schema) {
       writer.closeMark(citeIdMark);
 
       // suffix
-      if (citation.citationMode.t === CitationMode.AuthorInText && citation.citationSuffix.length) {
-        writer.writeText(' ');
+      const inTextSuffix = citation.citationMode.t === CitationMode.AuthorInText && citation.citationSuffix.length;
+      if (inTextSuffix) {
+        writer.writeText(' [');
       }
       writer.writeTokens(citation.citationSuffix);
-    });
+      if (inTextSuffix) {
+        writer.writeText(']');
+      }
+    };
 
-    writer.writeText(']');
+    // get all of the citations
+    const citations: Citation[] = tok.c[kCiteCitationsIndex];
+
+    // look for a single in-text citation
+    if (citations.length === 1 && citations[0].citationMode.t === CitationMode.AuthorInText) {
+      writeCitation(citations[0]);
+    // non-in text and/or multiple citations
+    } else {
+      writer.writeText('[');
+      citations.forEach((citation: Citation, index: number) => {
+        // add delimiter
+        if (index !== 0) {
+          writer.writeText('; ');
+        }
+        writeCitation(citation);
+      });
+      writer.writeText(']');
+    }
+
     writer.closeMark(citeMark);
   };
 }
 
 // look backwards for balanced begin bracket
-function findCiteBeginBracket(selection: Selection) {
-  const { $head } = selection;
+function findCiteBeginBracket($pos: ResolvedPos) {
+ 
   let beginCite = -1;
   let bracketLevel = 0;
-  const { parent, parentOffset } = $head;
+  const { parent, parentOffset } = $pos;
   const text = parent.textContent;
   for (let i = parentOffset - 1; i >= 0; i--) {
     const char = text.charAt(i);
@@ -486,7 +555,7 @@ function findCiteBeginBracket(selection: Selection) {
     }
   }
   if (beginCite !== -1) {
-    return $head.start($head.depth) + beginCite;
+    return $pos.start($pos.depth) + beginCite;
   } else {
     return -1;
   }
@@ -541,6 +610,16 @@ function encloseInCiteMark(tr: Transaction, start: number, end: number) {
   }
   kCitationIdRegex.lastIndex = 0;
   return tr;
+}
+
+function validCiteLength(text: string) {
+  if (text.match(kEditingFullCiteRegEx) ||
+      text.match(kCiteIdRegEx) ||
+      text.match(kInTextCiteWithSuffixRegEx)) {
+    return text.length;
+  } else {
+    return 0;
+  }
 }
 
 // validate that the cite is still valid (just return 0 or the whole length of the string)
