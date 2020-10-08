@@ -366,8 +366,8 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
          // use this to compute the source location as an offset into the
          // function rather than as an absolute file position (useful when
          // we need to debug a copy of the function rather than the real deal).
-         SEXP srcRef = context->sourceRefs();
-         if (isValidSrcref(srcRef))
+         SEXP srcRef = context->callFunSourceRefs();
+         if (isValidSrcref(srcRef) && TYPEOF(srcRef) == INTSXP)
          {
             varFrame["function_line_number"] = INTEGER(srcRef)[0];
          }
