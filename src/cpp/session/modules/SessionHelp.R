@@ -13,14 +13,15 @@
 #
 #
 
-# use html help 
+# use html help
 options(help_type = "html")
 
-.rs.addFunction( "httpdPortIsFunction", function() {
+.rs.addFunction("httpdPortIsFunction", function()
+{
    is.function(tools:::httpdPort)
 })
 
-.rs.addFunction( "httpdPort", function()
+.rs.addFunction("httpdPort", function()
 {
    if (.rs.httpdPortIsFunction())
       as.character(tools:::httpdPort())
@@ -450,6 +451,29 @@ options(help_type = "html")
                    PACKAGE = package))
 })
 
+.rs.addFunction("packageHelpEncoding", function(packagePath)
+{
+   tryCatch(
+      .rs.packageHelpEncodingImpl(packagePath),
+      error = function(e) .rs.packageHelpEncodingDefault()
+   )
+})
+
+.rs.addFunction("packageHelpEncodingImpl", function(packagePath)
+{
+   if (!is.character(packagePath) || !file.exists(packagePath))
+      return(.rs.packageHelpEncodingDefault())
+   
+   desc <- .rs.readPackageDescription(packagePath)
+   .rs.nullCoalesce(desc$Encoding, .rs.packageHelpEncodingDefault())
+})
+
+.rs.addFunction("packageHelpEncodingDefault", function()
+{
+   pref <- .rs.readUiPref("default_encoding")
+   .rs.nullCoalesce(pref, "UTF-8")
+})
+
 .rs.addFunction("getHelp", function(topic,
                                     package = "",
                                     sig = NULL,
@@ -515,23 +539,22 @@ options(help_type = "html")
    query <- paste("/library/", pkgname, "/html/", basename(file), ".html", sep = "")
    html <- suppressWarnings(tools:::httpd(query, NULL, NULL))$payload
    
+   # try to figure out the encoding for the provided HTML
+   packagePath <- system.file(package = package)
+   encoding <- .rs.packageHelpEncoding(packagePath)
+   if (identical(encoding, "UTF-8"))
+      Encoding(html) <- "UTF-8"
+   
+   # try to extract HTML body
    match <- suppressWarnings(regexpr('<body>.*</body>', html))
+   
    if (match < 0)
    {
       html <- NULL
    }
    else
    {
-      # assume UTF-8 encoding, and then fall back to native encoding
-      # if parsing in that encoding fails
-      Encoding(html) <- "UTF-8"
-      html <- tryCatch(
-         substring(html, match + 6, match + attr(match, 'match.length') - 1 - 7),
-         error = function(e) {
-            Encoding(html) <- "unknown"
-            substring(html, match + 6, match + attr(match, 'match.length') - 1 - 7)
-         }
-      )
+      html <- substring(html, match + 6, match + attr(match, 'match.length') - 1 - 7)
       
       if (subset)
       {   
