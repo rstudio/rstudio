@@ -16,6 +16,9 @@
 # use html help
 options(help_type = "html")
 
+# cached encoding of help files for installed packages
+.rs.setVar("packageHelpEncodingEnv", new.env(parent = emptyenv()))
+
 .rs.addFunction("httpdPortIsFunction", function()
 {
    is.function(tools:::httpdPort)
@@ -453,17 +456,24 @@ options(help_type = "html")
 
 .rs.addFunction("packageHelpEncoding", function(packagePath)
 {
-   tryCatch(
+   if (!is.character(packagePath) || !file.exists(packagePath))
+      return(.rs.packageHelpEncodingDefault())
+   
+   if (exists(packagePath, envir = .rs.packageHelpEncodingEnv))
+      return(get(packagePath, envir = .rs.packageHelpEncodingEnv))
+   
+   encoding <- tryCatch(
       .rs.packageHelpEncodingImpl(packagePath),
       error = function(e) .rs.packageHelpEncodingDefault()
    )
+   
+   assign(packagePath, encoding, envir = .rs.packageHelpEncodingEnv)
+   encoding
+   
 })
 
 .rs.addFunction("packageHelpEncodingImpl", function(packagePath)
 {
-   if (!is.character(packagePath) || !file.exists(packagePath))
-      return(.rs.packageHelpEncodingDefault())
-   
    desc <- .rs.readPackageDescription(packagePath)
    .rs.nullCoalesce(desc$Encoding, .rs.packageHelpEncodingDefault())
 })
