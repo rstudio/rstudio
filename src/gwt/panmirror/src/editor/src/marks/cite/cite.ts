@@ -43,6 +43,19 @@ import { doiFromSlice } from './cite-doi';
 import { citePopupPlugin } from './cite-popup';
 import { InsertCitationCommand } from './cite-commands';
 
+// we will only track cite_id in realtime:
+//   - we will create them via input rule that looks for -@foo
+//   - we will remove them via global regex transaction handler
+
+// right before we save, we need to find all valid cite forms and mark them as cites
+// (that will make sure we get correct escaping)
+//
+// we could also highlight the brackets via decorator (or in realtime)
+// OR
+// this actually just reduces to make the marks and they can't be undone
+
+
+
 const kCiteCitationsIndex = 0;
 
 export const kCiteIdPrefixPattern = '-?@';
