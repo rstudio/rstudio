@@ -68,6 +68,7 @@ import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
+import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindInFilesEvent;
@@ -240,6 +241,23 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
             // tab gets focus
             commands_.activateSource().execute();
          }
+      });
+
+      userPrefs.allowSourceColumns().addValueChangeHandler(event ->
+      {
+         // PaneManager helps manage these commands so when modifying this code, update 
+         // the change handler there as well.
+         boolean enabled = userPrefs.allowSourceColumns().getValue();
+         boolean visible = enabled && columnList_.size() <= PaneManager.MAX_COLUMN_COUNT + 1;
+
+         commands_.newSourceColumn().setEnabled(enabled);
+         commands_.newSourceColumn().setVisible(visible);
+           
+         commands_.openSourceDocNewColumn().setEnabled(enabled);
+         commands_.openSourceDocNewColumn().setVisible(visible);
+         
+         commands_.focusSourceColumnSeparator().setEnabled(enabled);
+         commands_.focusSourceColumnSeparator().setVisible(visible);
       });
 
       sourceNavigationHistory_.addChangeHandler(event -> manageSourceNavigationCommands());

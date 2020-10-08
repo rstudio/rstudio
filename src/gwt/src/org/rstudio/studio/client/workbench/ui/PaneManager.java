@@ -382,6 +382,14 @@ public class PaneManager
          hiddenTabs_ = tabNamesToTabs(evt.getValue().getHiddenTabSet());
          populateTabPanel(hiddenTabs_, hiddenTabSetTabPanel_, hiddenTabSetMinPanel_);
 
+         // manage source column commands
+         boolean visible = userPrefs.allowSourceColumns().getValue() &&
+            (userPrefs.panes().getValue().getAdditionalSourceColumns() < MAX_COLUMN_COUNT);
+         
+         commands_.newSourceColumn().setVisible(visible);
+         commands_.openSourceDocNewColumn().setVisible(visible);
+         commands_.focusSourceColumnSeparator().setVisible(visible);
+
          manageLayoutCommands();
       });
 
@@ -705,13 +713,7 @@ public class PaneManager
 
    private boolean validateNewColumnRequest()
    {
-      if (!userPrefs_.allowSourceColumns().getValue())
-      {
-         pGlobalDisplay_.get().showMessage(GlobalDisplay.MSG_INFO, "Cannot Add Column",
-            "Allow Source Columns preference is disabled.");
-         return false;
-      }
-      else if (additionalSourceCount_ >= MAX_COLUMN_COUNT)
+      if (additionalSourceCount_ >= MAX_COLUMN_COUNT)
       {
          pGlobalDisplay_.get().showMessage(GlobalDisplay.MSG_INFO, "Cannot Add Column",
             "You can't add more than " + MAX_COLUMN_COUNT + " columns.");
