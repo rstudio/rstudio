@@ -193,17 +193,59 @@ oop.inherits(Mode, MarkdownMode);
          return this.$outdent.autoOutdent(session, row);
    };
 
-   this.transformAction = function(state, action, editor, session, text) {
+   this.transformAction = function(state, action, editor, session, text)
+   {
+      var result = false;
+
       var mode = activeMode(state);
-      if (mode === "r-cpp")
-         return this.transformActionCpp(state, action, editor, session, text);
+      if (mode === "markdown")
+         result = this.transformActionMarkdown(state, action, editor, session, text);
+      else if (mode === "r-cpp")
+         result = this.transformActionCpp(state, action, editor, session, text);
       else if (mode === "yaml")
-         return this.transformActionYaml(state, action, editor, session, text);
+         result = this.transformActionYaml(state, action, editor, session, text);
       else if (mode === "python")
-         return this.$python.transformAction(state, action, editor, session, text);
-      else
-         return false;
+         result = this.$python.transformAction(state, action, editor, session, text);
+
+      this.$lastInsertedText = text;
+
+      return result;
    };
+
+   this.transformActionMarkdown = function(state, action, editor, session, text) {
+
+      if (action === "insertion")
+      {
+         // if the user is typing '`r', complete the closing backtick
+         if (text === "r" && this.$lastInsertedText === "`")
+         {
+            var pos = editor.getCursorPosition();
+
+            return {
+               text: "r `",
+               selection: [0, pos.column + 2, 0, pos.column + 2]
+            };
+         }
+
+         // skip over '`' if it ends an inline R chunk
+         else if (text === "`")
+         {
+            var pos = editor.getCursorPosition();
+            var token = session.getTokenAt(pos.row, pos.column + 1);
+
+            if (token != null &&
+                token.value === "`" &&
+                token.type.indexOf("support.function") !== -1)
+            {
+               return {
+                  text: "",
+                  selection: [0, pos.column + 1, 0, pos.column + 1]
+               };
+            }
+         }
+      }
+
+   }
 
    this.transformActionCpp = function(state, action, editor, session, text) {
 
