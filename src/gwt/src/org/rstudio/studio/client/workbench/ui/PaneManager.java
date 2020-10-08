@@ -388,7 +388,6 @@ public class PaneManager
          
          commands_.newSourceColumn().setVisible(visible);
          commands_.openSourceDocNewColumn().setVisible(visible);
-         commands_.focusSourceColumnSeparator().setVisible(visible);
 
          manageLayoutCommands();
       });

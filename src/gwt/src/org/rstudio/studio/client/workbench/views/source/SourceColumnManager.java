@@ -245,9 +245,13 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
       userPrefs.allowSourceColumns().addValueChangeHandler(event ->
       {
-         // PaneManager helps manage these commands so when modifying this code, update 
-         // the change handler there as well.
          boolean enabled = userPrefs.allowSourceColumns().getValue();
+         commands_.focusSourceColumnSeparator().setEnabled(enabled);
+         commands_.focusSourceColumnSeparator().setVisible(enabled);
+
+         // The visibility of the following commands is in part determined by if we've reached 
+         // the max number of source columns allowed. PaneManager helps manage these commands so
+         // when modifying this code, update the change handler there as well.
          boolean visible = enabled && columnList_.size() <= PaneManager.MAX_COLUMN_COUNT + 1;
 
          commands_.newSourceColumn().setEnabled(enabled);
@@ -256,8 +260,6 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          commands_.openSourceDocNewColumn().setEnabled(enabled);
          commands_.openSourceDocNewColumn().setVisible(visible);
          
-         commands_.focusSourceColumnSeparator().setEnabled(enabled);
-         commands_.focusSourceColumnSeparator().setVisible(visible);
       });
 
       sourceNavigationHistory_.addChangeHandler(event -> manageSourceNavigationCommands());
