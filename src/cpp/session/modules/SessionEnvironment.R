@@ -743,7 +743,10 @@
    {
       fn <- sys.function(i)
       if (identical(fn, callfun))
-         return(attr(calls[[i]], "srcref"))
+      {
+         srcref <- attr(calls[[i]], "srcref", exact = TRUE)
+         return(srcref)
+      }
    }
    
    NULL
