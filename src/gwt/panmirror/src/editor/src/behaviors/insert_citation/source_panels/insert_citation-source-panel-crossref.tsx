@@ -15,7 +15,6 @@
 
 import React from 'react';
 
-import { BibliographyManager } from '../../../api/bibliography/bibliography';
 import { suggestCiteId, formatAuthors, formatIssuedDate } from '../../../api/cite';
 import { CrossrefWork, imageForCrossrefType, CrossrefServer, prettyType } from '../../../api/crossref';
 import { sanitizeForCiteproc, CSL } from '../../../api/csl';
@@ -35,7 +34,6 @@ import { CitationSourceLatentSearchPanel } from './insert_citation-source-panel-
 
 export function crossrefSourcePanel(
   ui: EditorUI,
-  bibliographyManager: BibliographyManager,
   server: CrossrefServer,
   doiServer: DOIServer,
 ): CitationSourcePanelProvider {

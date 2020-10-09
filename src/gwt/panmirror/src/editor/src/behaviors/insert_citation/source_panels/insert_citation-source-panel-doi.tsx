@@ -16,7 +16,6 @@ import React from 'react';
 
 import { EditorUI } from '../../../api/ui';
 
-import { BibliographyManager } from '../../../api/bibliography/bibliography';
 import { suggestCiteId, formatAuthors, formatIssuedDate } from '../../../api/cite';
 import { CSL, imageForType } from '../../../api/csl';
 import { DOIServer } from '../../../api/doi';
@@ -38,7 +37,6 @@ const kDOIType = 'DOI Search';
 
 export function doiSourcePanel(
   ui: EditorUI,
-  bibliographyManager: BibliographyManager,
   server: DOIServer,
 ): CitationSourcePanelProvider {
   return {

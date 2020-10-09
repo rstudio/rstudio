@@ -107,10 +107,10 @@ export async function showInsertCitationDialog(
         return writable
           ? [
               bibliographySourcePanel(doc, ui, bibliographyManager),
-              doiSourcePanel(ui, bibliographyManager, server.doi),
-              crossrefSourcePanel(ui, bibliographyManager, server.crossref, server.doi),
-              dataciteSourcePanel(ui, bibliographyManager, server.datacite, server.doi),
-              pubmedSourcePanel(ui, bibliographyManager, server.pubmed, server.doi),
+              doiSourcePanel(ui, server.doi),
+              crossrefSourcePanel(ui, server.crossref, server.doi),
+              dataciteSourcePanel(ui, server.datacite, server.doi),
+              pubmedSourcePanel(ui, server.pubmed, server.doi),
             ]
           : [bibliographySourcePanel(doc, ui, bibliographyManager)];
       };
