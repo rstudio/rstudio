@@ -275,8 +275,7 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
       // debugging in the environment of the callee. note that there may be
       // multiple srcrefs on the stack for a given closure; in this case we
       // always want to take the first one as it's the most current/specific.
-      if (!r::context::isByteCodeContext(*context) &&
-          isValidSrcref(context->srcref()) &&
+      if (isValidSrcref(context->contextSourceRefs()) &&
           !context->nextcontext().isNull())
       {
          SEXP env = context->nextcontext().cloenv();
@@ -308,20 +307,24 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
          else
             srcContext = *context;
 
+         // extract source reference associated with source context
+         SEXP srcref = srcContext.contextSourceRefs();
+         
          // mark this as a source-equivalent function if it's evaluating user
          // code into the global environment
-         varFrame["is_source_equiv"] = context->cloenv() == R_GlobalEnv &&
-            isValidSrcref(srcContext.srcref());
+         varFrame["is_source_equiv"] =
+               context->cloenv() == R_GlobalEnv &&
+               isValidSrcref(srcref);
 
          std::string filename;
          error = srcContext.fileName(&filename);
          if (error)
             LOG_ERROR(error);
+         
          varFrame["file_name"] = filename;
          varFrame["aliased_file_name"] =
                module_context::createAliasedPath(FilePath(filename));
 
-         SEXP srcref = srcContext.srcref();
          if (isValidSrcref(srcref))
          {
             varFrame["real_sourceref"] = true;
@@ -363,8 +366,8 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
          // use this to compute the source location as an offset into the
          // function rather than as an absolute file position (useful when
          // we need to debug a copy of the function rather than the real deal).
-         SEXP srcRef = context->sourceRefs();
-         if (isValidSrcref(srcRef))
+         SEXP srcRef = context->callFunSourceRefs();
+         if (isValidSrcref(srcRef) && TYPEOF(srcRef) == INTSXP)
          {
             varFrame["function_line_number"] = INTEGER(srcRef)[0];
          }
@@ -579,7 +582,7 @@ bool functionIsOutOfSync(const r::context::RCntxt& context,
       return true;
    }
 
-   return functionDiffersFromSource(context.sourceRefs(), *pFunctionCode);
+   return functionDiffersFromSource(context.callFunSourceRefs(), *pFunctionCode);
 }
 
 // Returns a JSON array containing the names and associated call frame numbers
@@ -1215,6 +1218,31 @@ SEXP rs_isBrowserActive()
    return r::sexp::create(s_browserActive, &protect);
 }
 
+SEXP rs_dumpContexts()
+{
+   using namespace r::context;
+   
+   r::sexp::Protect protect;
+   r::sexp::ListBuilder contextList(&protect);
+   
+   for (auto it = RCntxt::begin();
+        it != RCntxt::end();
+        ++it)
+   {
+      r::sexp::ListBuilder builder(&protect);
+      builder.add("callfun", it->callfun());
+      builder.add("callflag", it->callflag());
+      builder.add("call", it->call());
+      builder.add("srcref", it->srcref());
+      builder.add("cloenv", it->cloenv());
+      
+      SEXP elt = r::sexp::create(builder, &protect);
+      contextList.add(elt);
+   }
+   
+   return r::sexp::create(contextList, &protect);
+}
+
 bool isSuspendable()
 {
    // suppress suspension if any object has a live external pointer; these can't be restored
@@ -1246,6 +1274,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_hasExternalPointer);
    RS_REGISTER_CALL_METHOD(rs_hasAltrep);
    RS_REGISTER_CALL_METHOD(rs_isAltrep);
+   RS_REGISTER_CALL_METHOD(rs_dumpContexts);
 
    // subscribe to events
    using boost::bind;

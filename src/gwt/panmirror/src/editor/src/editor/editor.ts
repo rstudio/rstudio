@@ -50,6 +50,7 @@ import {
   FocusEvent,
   DispatchEvent,
   NavigateEvent,
+  BlurEvent,
 } from '../api/event-types';
 import {
   PandocFormat,
@@ -897,6 +898,10 @@ export class Editor {
       key: new PluginKey('domevents'),
       props: {
         handleDOMEvents: {
+          blur: (view: EditorView, event: Event) => {
+            this.emitEvent(BlurEvent);
+            return false;
+          },
           focus: (view: EditorView, event: Event) => {
             this.emitEvent(FocusEvent, view.state.doc);
             return false;

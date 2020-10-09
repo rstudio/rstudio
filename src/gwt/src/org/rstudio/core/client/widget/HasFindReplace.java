@@ -21,6 +21,7 @@ public interface HasFindReplace
    boolean isFindReplaceShowing();
    void showFindReplace(boolean defaultForward);
    void hideFindReplace();
+   void findFromSelection(String text);
    void findNext();
    void findPrevious();
    void replaceAndFind();

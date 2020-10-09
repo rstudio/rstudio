@@ -13,14 +13,18 @@
 #
 #
 
-# use html help 
+# use html help
 options(help_type = "html")
 
-.rs.addFunction( "httpdPortIsFunction", function() {
+# cached encoding of help files for installed packages
+.rs.setVar("packageHelpEncodingEnv", new.env(parent = emptyenv()))
+
+.rs.addFunction("httpdPortIsFunction", function()
+{
    is.function(tools:::httpdPort)
 })
 
-.rs.addFunction( "httpdPort", function()
+.rs.addFunction("httpdPort", function()
 {
    if (.rs.httpdPortIsFunction())
       as.character(tools:::httpdPort())
@@ -450,6 +454,36 @@ options(help_type = "html")
                    PACKAGE = package))
 })
 
+.rs.addFunction("packageHelpEncoding", function(packagePath)
+{
+   if (!is.character(packagePath) || !file.exists(packagePath))
+      return(.rs.packageHelpEncodingDefault())
+   
+   if (exists(packagePath, envir = .rs.packageHelpEncodingEnv))
+      return(get(packagePath, envir = .rs.packageHelpEncodingEnv))
+   
+   encoding <- tryCatch(
+      .rs.packageHelpEncodingImpl(packagePath),
+      error = function(e) .rs.packageHelpEncodingDefault()
+   )
+   
+   assign(packagePath, encoding, envir = .rs.packageHelpEncodingEnv)
+   encoding
+   
+})
+
+.rs.addFunction("packageHelpEncodingImpl", function(packagePath)
+{
+   desc <- .rs.readPackageDescription(packagePath)
+   .rs.nullCoalesce(desc$Encoding, .rs.packageHelpEncodingDefault())
+})
+
+.rs.addFunction("packageHelpEncodingDefault", function()
+{
+   pref <- .rs.readUiPref("default_encoding")
+   .rs.nullCoalesce(pref, "UTF-8")
+})
+
 .rs.addFunction("getHelp", function(topic,
                                     package = "",
                                     sig = NULL,
@@ -507,7 +541,7 @@ options(help_type = "html")
    if (length(helpfiles) <= 0)
       return ()
    
-   file = helpfiles[[1]]
+   file <- helpfiles[[1]]
    path <- dirname(file)
    dirpath <- dirname(path)
    pkgname <- basename(dirpath)
@@ -515,14 +549,22 @@ options(help_type = "html")
    query <- paste("/library/", pkgname, "/html/", basename(file), ".html", sep = "")
    html <- suppressWarnings(tools:::httpd(query, NULL, NULL))$payload
    
-   match = suppressWarnings(regexpr('<body>.*</body>', html))
+   # try to figure out the encoding for the provided HTML
+   packagePath <- system.file(package = package)
+   encoding <- .rs.packageHelpEncoding(packagePath)
+   if (identical(encoding, "UTF-8"))
+      Encoding(html) <- "UTF-8"
+   
+   # try to extract HTML body
+   match <- suppressWarnings(regexpr('<body>.*</body>', html))
+   
    if (match < 0)
    {
-      html = NULL
+      html <- NULL
    }
    else
    {
-      html = substring(html, match + 6, match + attr(match, 'match.length') - 1 - 7)
+      html <- substring(html, match + 6, match + attr(match, 'match.length') - 1 - 7)
       
       if (subset)
       {   
