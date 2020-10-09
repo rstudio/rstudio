@@ -217,7 +217,7 @@ const extension = (context: ExtensionContext): Extension | null => {
                   if (beginBracketPos) {
                     output.writeInlines(parent.cut(0, beginBracketPos));
                     output.writeRawMarkdown('[');
-                    output.writeInlines(parent.cut(beginBracketPos + 1, parentText.length));
+                    output.writeInlines(parent.cut(beginBracketPos + 1, parentText.length - 1));
                     output.writeRawMarkdown(']');
 
                   } else {
