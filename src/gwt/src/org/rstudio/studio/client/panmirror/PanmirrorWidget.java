@@ -41,6 +41,7 @@ import org.rstudio.studio.client.panmirror.command.PanmirrorToolbarCommands;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbarMenu;
 import org.rstudio.studio.client.panmirror.events.PanmirrorOutlineNavigationEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorOutlineVisibleEvent;
+import org.rstudio.studio.client.panmirror.events.PanmirrorBlurEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorFindReplaceVisibleEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorFindReplaceVisibleEvent.Handler;
 import org.rstudio.studio.client.panmirror.events.PanmirrorOutlineWidthEvent;
@@ -100,6 +101,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    PanmirrorOutlineWidthEvent.HasPanmirrorOutlineWidthHandlers,
    PanmirrorFindReplaceVisibleEvent.HasPanmirrorFindReplaceVisibleHandlers,
    PanmirrorNavigationEvent.HasPanmirrorNavigationHandlers,
+   PanmirrorBlurEvent.HasPanmirrorBlurHandlers,
    PanmirrorFocusEvent.HasPanmirrorFocusHandlers
    
 {
@@ -311,6 +313,10 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          
          PanmirrorNavigation nav = Js.uncheckedCast(data);
          fireEvent(new PanmirrorNavigationEvent(nav));  
+      }));
+      
+      editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvent.Blur, (data) -> {
+         fireEvent(new PanmirrorBlurEvent());
       }));
       
       editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvent.Focus, (data) -> {
@@ -650,6 +656,12 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    public HandlerRegistration addPanmirrorNavigationHandler(PanmirrorNavigationEvent.Handler handler)
    {
       return handlers_.addHandler(PanmirrorNavigationEvent.getType(), handler);
+   }
+   
+   @Override
+   public HandlerRegistration addPanmirrorBlurHandler(org.rstudio.studio.client.panmirror.events.PanmirrorBlurEvent.Handler handler)
+   {
+      return handlers_.addHandler(PanmirrorBlurEvent.getType(), handler);
    }
    
    @Override

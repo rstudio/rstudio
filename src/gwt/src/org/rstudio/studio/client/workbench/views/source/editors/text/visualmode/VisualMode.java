@@ -48,6 +48,7 @@ import org.rstudio.studio.client.panmirror.PanmirrorOptions;
 import org.rstudio.studio.client.panmirror.PanmirrorSetMarkdownResult;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommands;
+import org.rstudio.studio.client.panmirror.events.PanmirrorBlurEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorFocusEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorNavigationEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorStateChangeEvent;
@@ -1423,6 +1424,17 @@ public class VisualMode implements VisualModeEditorSync,
                   visualModeNavigation_.onNavigated(event.getNavigation());
                }
             });
+            
+            // propagate blur to text editing target
+            panmirror_.addPanmirrorBlurHandler(new PanmirrorBlurEvent.Handler()
+            {
+               @Override
+               public void onPanmirrorBlur(PanmirrorBlurEvent event)
+               {
+                  target_.onVisualEditorBlur();
+               }
+            });
+            
             
             // check for external edit on focus
             panmirror_.addPanmirrorFocusHandler(new PanmirrorFocusEvent.Handler()
