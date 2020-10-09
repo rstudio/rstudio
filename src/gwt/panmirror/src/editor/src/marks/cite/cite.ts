@@ -16,7 +16,6 @@
 import { Mark, Schema, Fragment, Node as ProsemirrorNode, Slice, ResolvedPos } from 'prosemirror-model';
 import { InputRule } from 'prosemirror-inputrules';
 import { EditorState, Transaction, Plugin, PluginKey, Selection } from 'prosemirror-state';
-import { setTextSelection } from 'prosemirror-utils';
 import { EditorView } from 'prosemirror-view';
 
 import uniqby from 'lodash.uniqby';
@@ -24,7 +23,7 @@ import uniqby from 'lodash.uniqby';
 import { FocusEvent } from '../../api/event-types';
 import { PandocTokenType, PandocToken, PandocOutput, ProsemirrorWriter, PandocServer } from '../../api/pandoc';
 import { fragmentText } from '../../api/fragment';
-import { markIsActive, splitInvalidatedMarks, getMarkRange } from '../../api/mark';
+import { markIsActive, splitInvalidatedMarks, getMarkRange, detectAndApplyMarks } from '../../api/mark';
 import { MarkTransaction } from '../../api/transaction';
 import { BibliographyManager, BibliographyFile, BibliographySource } from '../../api/bibliography/bibliography';
 import { EditorUI } from '../../api/ui';
@@ -43,17 +42,6 @@ import { doiFromSlice } from './cite-doi';
 import { citePopupPlugin } from './cite-popup';
 import { InsertCitationCommand } from './cite-commands';
 
-// we will only track cite_id in realtime:
-//   - we will create them via input rule that looks for -@foo
-//   - we will remove them via global regex transaction handler
-
-// right before we save, we need to find all valid cite forms and mark them as cites
-// (that will make sure we get correct escaping)
-//
-// we could also highlight the brackets via decorator (or in realtime)
-// OR
-// this actually just reduces to make the marks and they can't be undone
-
 
 
 const kCiteCitationsIndex = 0;
@@ -68,7 +56,8 @@ const kBeginCitePattern = `(.* ${kCiteIdPrefixPattern}|${kCiteIdPrefixPattern})`
 const kEditingFullCiteRegEx = new RegExp(`\\[${kBeginCitePattern}${kCiteIdOptionalCharsPattern}.*\\]`);
 
 const kCiteIdRegEx = new RegExp(kCiteIdPattern);
-const kInTextCiteWithSuffixRegEx = new RegExp(`^${kCiteIdPrefixPattern}${kCiteIdCharsPattern}.*?\\[.*?\\]$`);
+const kInTextCiteWithSuffixPattern = `${kCiteIdPrefixPattern}${kCiteIdCharsPattern}.*?\\[.*?\\]`;
+const kInTextCiteWithSuffixRegEx = new RegExp(`^${kInTextCiteWithSuffixPattern}$`);
 const kCiteRegEx = new RegExp(`${kBeginCitePattern}${kCiteIdCharsPattern}.*`);
 
 export const kEditingCiteIdRegEx = new RegExp(
@@ -251,18 +240,59 @@ const extension = (context: ExtensionContext): Extension | null => {
       return [new InsertCitationCommand(ui, context.events, bibliographyManager, context.server)];
     },
 
+    appendTransaction: (schema: Schema) => {
+      return [{
+        name: 'cite-id-join',
+        append: (tr: Transaction) => {
+          const range = getMarkRange(tr.doc.resolve(tr.selection.head-1), schema.marks.cite_id);
+          if (range) {
+            const text = tr.doc.textBetween(range.from, tr.selection.$head.after());
+            const citeIdLength = editingCiteIdLength(text);
+            const markLength = range.to - range.from;
+            if (citeIdLength > markLength) {
+              tr.addMark(range.from, range.from + citeIdLength, schema.marks.cite_id.create());
+            }
+          }
+          return tr;
+        },
+      }];
+    },
+
     appendMarkTransaction: (schema: Schema) => {
+
+      const kInTextCiteRegex = new RegExp(`${kCiteIdPrefixPattern}${kCiteIdCharsPattern}`, 'g');
+      const kFullCiteRegex = new RegExp(kEditingFullCiteRegEx.source, 'g');
+      const kInTextCiteWithSuffixRegex = new RegExp(kInTextCiteWithSuffixPattern, 'g');
+
       return [
         {
           // 'break' cite marks if they are no longer valid. note that this will still preserve
           // the mark up to the length that it is valid
-          name: 'remove-cite-marks',
-          filter: (node: ProsemirrorNode) => node.isTextblock && node.type.allowsMarkType(schema.marks.cite),
+          name: 'cite-marks',
+          filter: (node: ProsemirrorNode) => 
+             node.isTextblock && node.type.allowsMarkType(schema.marks.cite),
           append: (tr: MarkTransaction, node: ProsemirrorNode, pos: number) => {
             splitInvalidatedMarks(tr, node, pos, validCiteLength, schema.marks.cite, (from: number, to: number) => {
               tr.removeMark(from, to, schema.marks.cite);
-              tr.removeMark(from, to, schema.marks.cite_id);
             });
+            // match all valid forms of mark
+            if (node.textContent.indexOf('@') !== -1) {
+              [kInTextCiteRegex, kFullCiteRegex, kInTextCiteWithSuffixRegex].forEach(re => {
+                detectAndApplyMarks(
+                  tr,
+                  tr.doc.nodeAt(pos)!,
+                  pos,
+                  re,
+                  schema.marks.cite,
+                  () => ({}),
+                  (from: number, to: number) => {
+                    return tr.doc.rangeHasMark(from, to, schema.marks.cite_id);
+                  }
+                );
+              });
+            }
+           
+            
           },
         },
         {
@@ -281,10 +311,8 @@ const extension = (context: ExtensionContext): Extension | null => {
 
     inputRules: (schema: Schema) => {
       return [
-        insertCiteInputRule(schema),
-        citeBeginBracketInputRule(schema),
-        citeEndBracketInputRule(schema),
         citeIdInputRule(schema),
+        citeIdDashInputRule(schema),
       ];
     },
 
@@ -355,137 +383,41 @@ function handlePaste(ui: EditorUI, bibManager: BibliographyManager, server: Pand
   };
 }
 
-// automatically create a citation given certain input
-function insertCiteInputRule(schema: Schema) {
-  return new InputRule(
-    new RegExp(`(^|[^\`])\\[${kBeginCitePattern}$`),
-    (state: EditorState, match: string[], start: number, end: number) => {
-      // only apply if we aren't already in a cite and the preceding text doesn't include an end cite (']')
-      const citeMatch = match[0].substr(match[1].length);
-      if (!markIsActive(state, schema.marks.cite) && !citeMatch.includes(']')) {
-        // determine if we already have an end bracket
-        const suffix = findCiteEndBracket(state.selection) === -1 ? ']' : '';
-
-        // create transaction
-        const tr = state.tr;
-
-        // insert the @
-        tr.insertText('@');
-
-        const startCite = tr.selection.from - citeMatch.length;
-
-        // determine beginning and end
-
-        let endCite = findCiteEndBracket(tr.selection);
-
-        // insert end bracket if we need to
-        if (endCite === -1) {
-          tr.insertText(']');
-          endCite = tr.selection.from;
-          setTextSelection(endCite - 1)(tr);
-        }
-
-        encloseInCiteMark(tr, startCite, endCite + 1);
-
-        return tr;
-      } else {
-        return null;
-      }
-    },
-  );
-}
-
-function citeBeginBracketInputRule(schema: Schema) {
-  return new InputRule(new RegExp(`\\[$`), (state: EditorState, _match: string[], start: number, end: number) => {
-    // only apply if we aren't already in a cite
-    if (!markIsActive(state, schema.marks.cite)) {
-      // find an end ciation bracket in the current text block
-      const endCite = findCiteEndBracket(state.selection);
-      if (endCite !== -1) {
-        const citeText = '[' + state.doc.textBetween(state.selection.head, endCite + 1);
-
-        // validate that the text range is actually a citation
-        if (editingCiteLength(citeText) > 0) {
-          // insert the begin bracket then calculate the cite start and end
-          const tr = state.tr;
-          tr.insertText('[');
-          const citeStart = tr.selection.head - 1;
-          const citeEnd = citeStart + citeText.length;
-
-          // enclose in cite mark
-          encloseInCiteMark(tr, citeStart, citeEnd + 1);
-
-          return tr;
-        }
-      }
-
-      return null;
-    } else {
-      return null;
-    }
-  });
-}
-
-function citeEndBracketInputRule(schema: Schema) {
-  return new InputRule(new RegExp(`\\]$`), (state: EditorState, _match: string[], start: number, end: number) => {
-    // only apply if we aren't already in a cite
-    if (!markIsActive(state, schema.marks.cite)) {
-      // look backwards for balanced begin bracket
-      const beginCite = findCiteBeginBracket(state.selection.$head);
-      if (beginCite !== -1) {
-        // check whether // it's actually valid citation text
-        const citeText = state.doc.textBetween(beginCite, state.selection.head) + ']';
-        if (editingCiteLength(citeText) > 0) {
-          // create the transaction
-          const tr = state.tr;
-
-          // insert the end bracket then calculate the cite start and end
-          tr.insertText(']');
-          const citeStart = tr.selection.head - citeText.length;
-          const citeEnd = tr.selection.head;
-
-          // enclose in cite mark
-          encloseInCiteMark(tr, citeStart, citeEnd);
-
-          // return the transaction
-          return tr;
-        }
-      }
-      return null;
-    } else {
-      return null;
-    }
-  });
-}
 
 // create a cite_id within a citation when the @ sign is typed
 function citeIdInputRule(schema: Schema) {
-  return new InputRule(new RegExp(`(-|@)$`), (state: EditorState, match: string[], start: number, end: number) => {
-    // only operate within a cite mark
-    if (markIsActive(state, schema.marks.cite)) {
-      // if we already have an @ 1 character before then this is a backspace
-      // (in that case don't insert the match)
-      const prefixChar = state.doc.textBetween(state.selection.from - 2, state.selection.from - 1);
-      if (prefixChar !== '@') {
-        const tr = state.tr;
-        tr.insertText(match[1]);
-        const beginCite = findCiteBeginBracket(tr.selection.$head);
-        const endCite = findCiteEndBracket(tr.selection);
-        if (beginCite >= 0 && endCite >= 0) {
-          const citeText = tr.doc.textBetween(beginCite, endCite + 1);
-          if (editingCiteLength(citeText) > 0) {
-            encloseInCiteMark(tr, beginCite, endCite + 1);
-          }
-        }
-        return tr;
-      } else {
-        return null;
+  return new InputRule(new RegExp(`-?(@)$`), (state: EditorState, match: string[], start: number, end: number) => {
+    if (!markIsActive(state, schema.marks.cite_id)) {
+      const { parent, parentOffset } = state.selection.$head;
+      const text = match[0] + parent.textContent.slice(parentOffset);
+      const citeIdLength = editingCiteIdLength(text);
+
+      const tr = state.tr;
+      tr.insertText(match[1]); 
+     
+      if (citeIdLength) {
+        const citeEnd = start + citeIdLength ;
+        tr.addMark(start, citeEnd, schema.marks.cite_id.create());
       }
-    } else {
-      return null;
-    }
+      return tr;
+    } 
+    return null;
   });
 }
+
+
+function citeIdDashInputRule(schema: Schema) {
+  return new InputRule(new RegExp(`-$`), (state: EditorState, match: string[], start: number, end: number) => {
+    if (state.doc.rangeHasMark(start + 1, end + 2, schema.marks.cite_id)) {
+      const tr = state.tr;
+      tr.insertText(match[0]);
+      tr.addMark(start, start + 1, schema.marks.cite_id.create());
+      return tr;
+    }
+    return null;
+  });
+}
+
 
 // read pandoc citation, creating requisite cite and cite_id marks as we go
 function readPandocCite(schema: Schema) {

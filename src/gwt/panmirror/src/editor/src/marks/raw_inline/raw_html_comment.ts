@@ -116,6 +116,7 @@ const extension = (context: ExtensionContext): Extension | null => {
               kHTMLCommentMarkRegEx,
               markType,
               match => commentMarkAttribs(match[1]),
+              () => true,
               match => match[1],
             );
           },
