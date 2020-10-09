@@ -662,6 +662,7 @@ public class FileTypeRegistry
       FileIcon icon = iconsByFilename_.get(filename.toLowerCase());
       if (icon != null)
          return icon;
+      
       String ext = FileSystemItem.getExtensionFromPath(filename);
       icon = iconsByFileExtension_.get(ext.toLowerCase());
       if (icon != null)
