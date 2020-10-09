@@ -50,6 +50,7 @@
 * Show correct symbol for Return key in Mac menus (#6524)
 * Added command and button for clearing Build pane output (#6636)
 * Added option to disable clickable hyperlinks in the editor (#6689, thanks to Paul Kaefer)
+* Added basic editor support for Dockerfiles (#5141)
 
 ### RStudio Server
 
