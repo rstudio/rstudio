@@ -63,6 +63,16 @@ var RMarkdownHighlightRules = function() {
       ["start", "listblock", "allowBlock"]
    );
 
+   Utils.embedRules(
+      this,
+      RHighlightRules,
+      "r-inline",
+      "`r",
+      "`",
+      ["start", "listblock", "allowBlock"]
+   );
+
+
    // Embed C++ highlight rules
    Utils.embedRules(
       this,
