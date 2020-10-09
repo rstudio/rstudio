@@ -128,7 +128,6 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
@@ -698,23 +697,7 @@ public class TextEditingTarget implements
 
       docDisplay_.addEditorBlurHandler((BlurEvent evt) ->
       {
-         // When the editor loses focus, perform an autosave if enabled, the
-         // buffer is dirty, and we have a file to save to
-         if (prefs.autoSaveOnBlur().getValue() &&
-             dirtyState_.getValue() &&
-             getPath() != null &&
-             !docDisplay_.hasActiveCollabSession())
-         {
-            try
-            {
-               save();
-            }
-            catch(Exception e)
-            {
-               // Autosave exceptions are logged rather than displayed
-               Debug.logException(e);
-            }
-         }
+         maybeAutoSaveOnBlur();
       });
 
       events_.addHandler(
@@ -1165,6 +1148,11 @@ public class TextEditingTarget implements
    public void ensureVisualModeActive(Command command)
    {
       visualMode_.activate(command);
+   }
+   
+   public void onVisualEditorBlur()
+   {
+      maybeAutoSaveOnBlur();
    }
    
    public void navigateToXRef(String xref)
@@ -3230,6 +3218,26 @@ public class TextEditingTarget implements
       else
       {
          onComplete.execute();
+      }
+   }
+   
+   // When the editor loses focus, perform an autosave if enabled, the
+   // buffer is dirty, and we have a file to save to
+   private void maybeAutoSaveOnBlur() {
+      if (prefs_.autoSaveOnBlur().getValue() &&
+          dirtyState_.getValue() &&
+          getPath() != null &&
+          !docDisplay_.hasActiveCollabSession())
+      {
+         try
+         {
+            save();
+         }
+         catch(Exception e)
+         {
+            // Autosave exceptions are logged rather than displayed
+            Debug.logException(e);
+         }
       }
    }
 
@@ -6938,11 +6946,18 @@ public class TextEditingTarget implements
    @Handler
    void onFindFromSelection()
    {
-      withActiveEditor((disp) ->
-      {
-         view_.findFromSelection(disp.getSelectionValue());
-         disp.focus();
-      });
+      if (visualMode_.isActivated()) {
+         ensureVisualModeActive(() -> {
+            visualMode_.getFindReplace().findFromSelection(visualMode_.getSelectedText());
+         });
+      } else {
+         withActiveEditor((disp) ->
+         {
+            view_.findFromSelection(disp.getSelectionValue());
+            disp.focus();
+         });
+      }
+     
    }
 
    @Handler

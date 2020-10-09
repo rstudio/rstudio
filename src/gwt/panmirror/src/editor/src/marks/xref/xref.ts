@@ -108,6 +108,7 @@ const extension = (context: ExtensionContext): Extension | null => {
                 kRefRegExDetectAndApply,
                 markType,
                 () => ({}),
+                () => true,
                 match => match[1],
               );
             });
@@ -135,6 +136,7 @@ const extension = (context: ExtensionContext): Extension | null => {
               kRefRegExDetectAndApply,
               node.type.schema.marks.xref,
               () => ({}),
+              () => true,
               match => match[1],
             );
           },

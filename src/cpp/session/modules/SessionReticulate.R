@@ -1626,6 +1626,9 @@ html.heading = _heading
    # resolve the requested module
    module <- .rs.reticulate.resolveModule(module)
    
+   # update detect changes cache
+   .rs.reticulate.detectChanges(module, cacheOnly = TRUE)
+   
    # list objects within the requested module
    builtins <- reticulate::import_builtins()
    objects <- builtins$dir(module)
@@ -1717,7 +1720,8 @@ html.heading = _heading
    
 })
 
-.rs.addFunction("reticulate.detectChanges", function(moduleName)
+.rs.addFunction("reticulate.detectChanges", function(moduleName,
+                                                     cacheOnly = FALSE)
 {
    # resolve module
    module <- .rs.reticulate.resolveModule(moduleName)
@@ -1737,6 +1741,10 @@ html.heading = _heading
    
    # update cached globals
    .rs.setVar("reticulate.monitoredModuleObjects", newObjects)
+   
+   # if we're only updating the cache, bail now
+   if (cacheOnly)
+      return()
    
    # collect all vars
    vars <- sort(union(names(oldObjects), names(newObjects)))

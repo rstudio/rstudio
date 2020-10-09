@@ -48,6 +48,8 @@ namespace exec {
    
 namespace {
 
+bool s_wasInterrupted;
+
 // create a scope for disabling any installed error handlers (e.g. recover)
 // we need to do this so that recover isn't invoked while we are running
 // R code within an r::exec scope -- when the user presses 0 to exit
@@ -531,6 +533,8 @@ bool interruptsPending()
    
 void setInterruptsPending(bool pending)
 {
+   setWasInterrupted(pending);
+   
 #ifdef _WIN32
    UserBreak = pending ? 1 : 0;
 #else
@@ -609,6 +613,15 @@ DisableDebugScope::~DisableDebugScope()
    }
 }
 
+bool getWasInterrupted()
+{
+   return s_wasInterrupted;
+}
+
+void setWasInterrupted(bool wasInterrupted)
+{
+   s_wasInterrupted = wasInterrupted;
+}
 
 } // namespace exec   
 } // namespace r
