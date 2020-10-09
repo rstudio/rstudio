@@ -56,7 +56,6 @@ const kNavigationTreeIndent = 8;
 // like you would use to navigate a hierarchical file system.
 export const NavigationTree: React.FC<NavigationTreeProps> = props => {
   const style: CSSProperties = {
-    overflowY: 'scroll',
     height: props.height + 'px',
     ...props.style,
   };
