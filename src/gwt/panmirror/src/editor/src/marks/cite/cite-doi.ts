@@ -23,6 +23,7 @@ import { parseCitation, ParsedCitation } from './cite';
 // Parses the transation or state to determine whether the current position
 // represents a citation containing a DOI
 export function doiFromEditingContext(context: EditorState | Transaction): ParsedCitation | undefined {
+  
   const parsedCitation = parseCitation(context);
   if (parsedCitation) {
     const doi = findDOI(parsedCitation.token);

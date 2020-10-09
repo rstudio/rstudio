@@ -392,6 +392,13 @@ function citeIdInputRule(schema: Schema) {
       const { parent, parentOffset } = state.selection.$head;
       const text = match[0] + parent.textContent.slice(parentOffset);
       const textBefore = parent.textContent.slice(0, parentOffset);
+      
+      // reject unless the right prefix is there
+      if (textBefore.length && !textBefore.match(/[\xA0 \t\-\[]$/)) {
+        return null;
+      }
+
+      // get cite id length
       const citeIdLength = editingCiteIdLength(text);
 
       // insert the @
@@ -547,26 +554,29 @@ const kCompletionCiteIdRegEx = new RegExp(
 );
 
 export function parseCitation(context: EditorState | Transaction): ParsedCitation | null {
+
   // return completions only if we are inside a cite (this allows for completions across
   // cite_id marks and spaces after them (necesary to allow spaces in completion queries)
   const markType = context.doc.type.schema.marks.cite;
-  if (!markIsActive(context, markType)) {
-    return null;
-  }
-
-  // get the range of the full cite mark
   const range = getMarkRange(context.doc.resolve(context.selection.head - 1), markType);
   if (range) {
     // examine text up to the cursor
     const citeText = context.doc.textBetween(range.from, context.selection.head);
-    // look for a cite id that terminates at the cursor (including spaces/text after the id,
-    // but before any semicolon delimiter)
-    const match = citeText.match(kCompletionCiteIdRegEx);
-    if (match) {
-      const token = match[2];
-      const pos = range.from + match.index! + match[1].length;
-      return { token, pos, offset: -match[1].length };
+
+    // make sure there is no text directly ahead (except bracket, space, semicolon)
+    const nextChar = context.doc.textBetween(context.selection.head, context.selection.head + 1);
+    if (!nextChar || [';', ' ', ']'].includes(nextChar) ) {
+      // look for a cite id that terminates at the cursor (including spaces/text after the id,
+      // but before any semicolon delimiter)
+      const match = citeText.match(kCompletionCiteIdRegEx);
+      if (match) {
+        const token = match[2];
+        const pos = range.from + match.index! + match[1].length;
+        return { token, pos, offset: -match[1].length };
+      }
     }
+
+    
   }
 
   return null;

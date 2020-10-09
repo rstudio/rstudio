@@ -150,6 +150,7 @@ function filterCitations(token: string, manager: BibliographyManager, entries: B
 
 function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
   return (_text: string, context: EditorState | Transaction): CompletionResult<BibliographyEntry> | null => {
+
     const parsed = parseCitation(context);
     if (parsed) {
       return {
