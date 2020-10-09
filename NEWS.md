@@ -81,6 +81,7 @@
 
 ### Bugfixes
 
+* Fixed issue where debugger contexts were not displayed correctly for byte-compiled functions. (#6922)
 * UTF-8 character vectors are now properly displayed within the Environment pane. (#6877)
 * Fixed issue where diagnostics system surface "Unknown or uninitialized column" warnings in some cases. (#7372)
 * Fixed issue where hovering mouse cursor over C++ completion popup would steal focus. (#5941)
