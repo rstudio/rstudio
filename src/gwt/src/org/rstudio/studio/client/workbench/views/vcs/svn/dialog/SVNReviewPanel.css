@@ -51,6 +51,14 @@
    border: none;
 }
 
+.diffToolbarInnerWrapper {
+   float: right;
+}
+
+.diffContextLines {
+   padding-top: 4px;
+}
+
 .rstudio-themes-flat .diffToolbarInnerWrapper {
    border: none;
 }

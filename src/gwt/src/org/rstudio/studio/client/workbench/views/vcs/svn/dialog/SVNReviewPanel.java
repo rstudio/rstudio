@@ -98,6 +98,7 @@ public class SVNReviewPanel extends ResizeComposite implements Display
       String contextLabel();
       String diffToolbar();
       String diffViewOptions();
+      String diffContextLines();
    }
 
    @SuppressWarnings("unused")
@@ -266,6 +267,7 @@ public class SVNReviewPanel extends ResizeComposite implements Display
       discardAllButton_ = diffToolbar_.addLeftWidget(new ToolbarButton(
             "Discard All", ToolbarButton.NoTitle,  new ImageResource2x(RES.discard2x())));
 
+      contextLines_.addStyleName(RES.styles().diffContextLines());
       lblContext_.setFor(contextLines_);
       listBoxAdapter_ = new ListBoxAdapter(contextLines_);
 
