@@ -208,4 +208,7 @@ public interface FileIconResources extends ClientBundle
    
    @Source("iconObjectExplorer_2x.png")
    ImageResource iconObjectExplorer2x();
+   
+   @Source("iconDockerfile_2x.png")
+   ImageResource iconDockerfile2x();
 }
