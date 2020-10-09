@@ -28,7 +28,7 @@ public interface ConsoleServerOperations extends CodeToolsServerOperations,
                         ServerRequestCallback<Void> requestCallback);
    
    // interrupt the current session
-   void interrupt(ServerRequestCallback<Void> requestCallback);
+   void interrupt(ServerRequestCallback<Boolean> requestCallback);
 
    // send console input
    void consoleInput(String consoleInput, 

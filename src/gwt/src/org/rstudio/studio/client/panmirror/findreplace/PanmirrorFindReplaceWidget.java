@@ -93,6 +93,13 @@ public class PanmirrorFindReplaceWidget extends FindReplaceBar implements HasFin
    
    public void performFind()
    {
+      performFind(null);
+   }
+   
+   public void performFind(String term)
+   {
+      if (term != null)
+         getFindValue().setValue(term);
       timeBufferedFind_.nudge();
    }
    
@@ -134,6 +141,14 @@ public class PanmirrorFindReplaceWidget extends FindReplaceBar implements HasFin
    {
       container_.showFindReplace(false);
    }
+   
+   @Override
+   public void findFromSelection(String term)
+   {
+      showFindReplace(true);
+      performFind(term);
+   }
+
 
    @Override
    public void findNext()

@@ -825,7 +825,7 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, PROCESS_NOTIFY_VISIBLE, params, requestCallback);
    }
 
-   public void interrupt(ServerRequestCallback<Void> requestCallback)
+   public void interrupt(ServerRequestCallback<Boolean> requestCallback)
    {
       sendRequest(RPC_SCOPE, INTERRUPT, requestCallback);
    }

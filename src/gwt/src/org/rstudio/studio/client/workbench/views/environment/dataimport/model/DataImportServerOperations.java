@@ -34,7 +34,7 @@ public interface DataImportServerOperations
                                int maxFactors,
                                ServerRequestCallback<DataImportPreviewResponse> requestCallback);
    
-   void interrupt(ServerRequestCallback<Void> requestCallback);
+   void interrupt(ServerRequestCallback<Boolean> requestCallback);
    
    void previewDataImportAsyncAbort(ServerRequestCallback<Void> requestCallback);
    
