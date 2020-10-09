@@ -82,6 +82,7 @@ namespace prefs {
 #define kBibliographyDefaultTypeBib "bib"
 #define kBibliographyDefaultTypeYaml "yaml"
 #define kBibliographyDefaultTypeJson "json"
+#define kCitationDefaultInText "citation_default_in_text"
 #define kZoteroConnectionType "zotero_connection_type"
 #define kZoteroConnectionTypeAuto "auto"
 #define kZoteroConnectionTypeNone "none"
@@ -208,6 +209,12 @@ public:
     */
    std::string bibliographyDefaultType();
    core::Error setBibliographyDefaultType(std::string val);
+
+   /**
+    * The default style for inserting citations.
+    */
+   bool citationDefaultInText();
+   core::Error setCitationDefaultInText(bool val);
 
    /**
     * Zotero connection type (local or web)
