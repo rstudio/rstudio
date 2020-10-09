@@ -17,6 +17,7 @@ package org.rstudio.studio.client.panmirror;
 
 import jsinterop.annotations.JsType;
 
+import org.rstudio.core.client.jsinterop.JsConsumerFunction;
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
 import org.rstudio.studio.client.panmirror.command.PanmirrorMenus;
@@ -26,6 +27,7 @@ import org.rstudio.studio.client.panmirror.location.PanmirrorEditingLocation;
 import org.rstudio.studio.client.panmirror.location.PanmirrorEditingOutlineLocation;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineItem;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocFormat;
+import org.rstudio.studio.client.panmirror.spelling.PanmirrorSpellingDoc;
 import org.rstudio.studio.client.panmirror.theme.PanmirrorTheme;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorPandocFormatConfig;
 
@@ -56,11 +58,14 @@ public class PanmirrorEditor
    
    public native boolean isInitialDoc();
    
-   public native JsVoidFunction subscribe(String event, JsVoidFunction handler);
+   public native JsVoidFunction subscribe(String event, JsConsumerFunction handler);
    
    public native PanmirrorCommand[] commands();
    
    public native String getHTML();
+   
+   public native String getSelectedText();
+   public native void replaceSelection(String value);
    
    public native PanmirrorSelection getSelection();
    
@@ -70,6 +75,10 @@ public class PanmirrorEditor
    
    public native PanmirrorFindReplace getFindReplace();
    
+   public native PanmirrorSpellingDoc getSpellingDoc();
+   public native void spellingInvalidateAllWords();
+   public native void spellingInvalidateWord(String word);
+   
    public native PanmirrorEditingLocation getEditingLocation();
    
    public native void setEditingLocation(
@@ -77,12 +86,17 @@ public class PanmirrorEditor
       PanmirrorEditingLocation previousLocation
    );
    
+   public native String getYamlFrontMatter();
+   public native void applyYamlFrontMatter(String yaml);
+   
    public native void focus();
    public native void blur();
    
    public native void resize();
    
-   public native void navigate(String id);
+   public native void insertChunk(String chunkPlaceholder, int rowOffset, int colOffset);
+   
+   public native void navigate(String type, String location, boolean recordCurrent);
 
    public native void applyTheme(PanmirrorTheme theme);
    
@@ -90,6 +104,7 @@ public class PanmirrorEditor
    
    public native void setKeybindings(PanmirrorKeybindings keybindings);
    
+   public native PanmirrorFormat getEditorFormat();
    public native PanmirrorPandocFormat getPandocFormat();
    public native PanmirrorPandocFormatConfig getPandocFormatConfig(boolean isRmd);
    

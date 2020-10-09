@@ -57,6 +57,11 @@ import com.google.inject.Inject;
 public abstract class CompletionManagerBase
       implements CompletionRequestContext.Host
 {
+   public abstract void goToHelp();
+   public abstract void goToDefinition();
+   public abstract void showAdditionalHelp(QualifiedName completion);
+   public abstract boolean getCompletions(String line, CompletionRequestContext context);
+   
    public interface Callback
    {
       public void onToken(TokenIterator it, Token token);
@@ -116,6 +121,17 @@ public abstract class CompletionManagerBase
    public void onCompletionResponseReceived(CompletionRequestContext.Data data,
                                             Completions completions)
    {
+      // if the cursor has moved to a different line, discard this completion request
+      boolean positionChanged =
+            docDisplay_.getCursorPosition().getRow() !=
+            data.getPosition().getRow();
+      
+      if (positionChanged)
+         return;
+      
+      // cache context data (to be used by popup during active completion session)
+      contextData_ = data;
+      
       String line = data.getLine();
       if (completions.isCacheable())
          completionCache_.store(line, completions);
@@ -231,7 +247,7 @@ public abstract class CompletionManagerBase
    @Override
    public void onCompletionRequestError(String message)
    {
-      
+      contextData_ = null;
    }
    
    public void onCompletionCommit()
@@ -277,14 +293,15 @@ public abstract class CompletionManagerBase
       
       CompletionRequestContext.Data data = new CompletionRequestContext.Data(
             line,
+            docDisplay_.getCursorPosition(),
             isTabTriggered,
             canAutoAccept);
             
-      context_ = new CompletionRequestContext(this, data);
-      if (completionCache_.satisfyRequest(line, context_))
+      CompletionRequestContext context = new CompletionRequestContext(this, data);
+      if (completionCache_.satisfyRequest(line, context))
          return true;
       
-      boolean canComplete = getCompletions(line, context_);
+      boolean canComplete = getCompletions(line, context);
       
       // if tab was used to trigger the completion, but no completions
       // are available in that context, then insert a literal tab
@@ -318,10 +335,6 @@ public abstract class CompletionManagerBase
       if (flushCache)
          completionCache_.flush();
    }
-   
-   public abstract void goToHelp();
-   public abstract void goToDefinition();
-   public abstract boolean getCompletions(String line, CompletionRequestContext context);
    
    // Subclasses should override this to provide extra (e.g. context) completions.
    protected void addExtraCompletions(String token, List<QualifiedName> completions)
@@ -392,12 +405,12 @@ public abstract class CompletionManagerBase
    
    public void onPaste(PasteEvent event)
    {
-      popup_.hide();
+      invalidatePendingRequests();
    }
    
    public void close()
    {
-      popup_.hide();
+      invalidatePendingRequests();
    }
    
    public void detach()
@@ -405,8 +418,7 @@ public abstract class CompletionManagerBase
       removeHandlers();
       suggestTimer_.cancel();
       snippets_.detach();
-      invalidation_.invalidate();
-      popup_.hide();
+      invalidatePendingRequests();
    }
    
    public boolean previewKeyDown(NativeEvent event)
@@ -423,6 +435,16 @@ public abstract class CompletionManagerBase
       
       if (popup_.isShowing())
       {
+         // attempts to move the cursor left or right should be treated
+         // as requests to cancel the current completion session
+         switch (keyCode)
+         {
+         case KeyCodes.KEY_LEFT:
+         case KeyCodes.KEY_RIGHT:
+            invalidatePendingRequests();
+            return false;
+         }
+         
          switch (modifier)
          {
          
@@ -441,26 +463,52 @@ public abstract class CompletionManagerBase
          {
             switch (keyCode)
             {
-            case KeyCodes.KEY_UP:        popup_.selectPrev();         return true;
-            case KeyCodes.KEY_DOWN:      popup_.selectNext();         return true;
-            case KeyCodes.KEY_PAGEUP:    popup_.selectPrevPage();     return true;
-            case KeyCodes.KEY_PAGEDOWN:  popup_.selectNextPage();     return true;
-            case KeyCodes.KEY_HOME:      popup_.selectFirst();        return true;
-            case KeyCodes.KEY_END:       popup_.selectLast();         return true;
-            case KeyCodes.KEY_ESCAPE:    invalidatePendingRequests(); return true;
+            case KeyCodes.KEY_UP:        popup_.selectPrev();               return true;
+            case KeyCodes.KEY_DOWN:      popup_.selectNext();               return true;
+            case KeyCodes.KEY_PAGEUP:    popup_.selectPrevPage();           return true;
+            case KeyCodes.KEY_PAGEDOWN:  popup_.selectNextPage();           return true;
+            case KeyCodes.KEY_HOME:      popup_.selectFirst();              return true;
+            case KeyCodes.KEY_END:       popup_.selectLast();               return true;
+            case KeyCodes.KEY_ESCAPE:    invalidatePendingRequests();       return true;
             case KeyCodes.KEY_ENTER:     return onPopupEnter();
             case KeyCodes.KEY_TAB:       return onPopupTab();
+            case KeyCodes.KEY_F1:        return onPopupAdditionalHelp();
+            }
+            
+            // cancel the current completion session if the cursor
+            // has been moved before the completion start position,
+            // or to a new line. this ensures that backspace can
+            if (contextData_ != null)
+            {
+               Position cursorPos = docDisplay_.getCursorPosition();
+               Position completionPos = contextData_.getPosition();
+
+               boolean dismiss =
+                     cursorPos.getRow() != completionPos.getRow() ||
+                     cursorPos.getColumn() < completionPos.getColumn();
+
+               if (dismiss)
+               {
+                  invalidatePendingRequests();
+                  return false;
+               }
+            }
+            
+            // handle backspace specially -- allow it to continue
+            // the current completion session after taking its
+            // associated action
+            if (keyCode == KeyCodes.KEY_BACKSPACE)
+            {
+               Scheduler.get().scheduleDeferred(() ->
+               {
+                  beginSuggest(false, false, false);
+               });
+               
+               return false;
             }
             
             break;
          }
-         }
-         
-         switch (keyCode)
-         {
-         case KeyCodes.KEY_LEFT:
-         case KeyCodes.KEY_RIGHT:
-            invalidatePendingRequests();
          }
          
          return false;
@@ -529,7 +577,10 @@ public abstract class CompletionManagerBase
       else
       {
          if (canAutoPopup(charCode, userPrefs_.codeCompletionCharacters().getValue() - 1))
+         {
+            invalidatePendingRequests();
             suggestTimer_.schedule(true, false);
+         }
       }
       
       return false;
@@ -621,9 +672,9 @@ public abstract class CompletionManagerBase
    private void onSelection(String completionToken,
                             QualifiedName completion)
    {
+      invalidatePendingRequests();
       suggestTimer_.cancel();
       
-      popup_.hide();
       popup_.clearHelp(false);
       popup_.setHelpVisible(false);
       
@@ -635,11 +686,26 @@ public abstract class CompletionManagerBase
       else
       {
          String value = onCompletionSelected(completion);
+         
+         // compute an appropriate offset for completion --
+         // this is necessary in case the user has typed in the interval
+         // between when completions were requested, and the completion
+         // RPC response was received.
+         int offset = 0;
+         if (contextData_ != null)
+         {
+            Position cursorPos = docDisplay_.getCursorPosition();
+            Position completionPos = contextData_.getPosition();
+            offset =
+                  completionToken.length() +
+                  cursorPos.getColumn() -
+                  completionPos.getColumn();
+         }
 
          Range[] ranges = docDisplay_.getNativeSelection().getAllRanges();
          for (Range range : ranges)
          {
-            Position replaceStart = range.getEnd().movedLeft(completionToken.length());
+            Position replaceStart = range.getEnd().movedLeft(offset);
             Position replaceEnd = range.getEnd();
             docDisplay_.replaceRange(Range.fromPoints(replaceStart, replaceEnd), value);
          }
@@ -680,6 +746,19 @@ public abstract class CompletionManagerBase
       
       onPopupSelectionCommit(completion);
       return true;
+   }
+   
+   private boolean onPopupAdditionalHelp()
+   {
+      if (popup_.isOffscreen())
+         return false;
+      
+      QualifiedName completion = popup_.getSelectedValue();
+      if (completion == null)
+         return false;
+      
+      showAdditionalHelp(completion);
+      return false;
    }
    
    private void onDocumentChanged(DocumentChangedEvent event)
@@ -917,7 +996,7 @@ public abstract class CompletionManagerBase
    private String snippetToken_;
    private boolean ignoreNextBlur_;
    
-   private CompletionRequestContext context_;
+   private CompletionRequestContext.Data contextData_;
    private HelpStrategy helpStrategy_;
    
    protected EventBus events_;

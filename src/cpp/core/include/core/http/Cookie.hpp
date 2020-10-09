@@ -28,7 +28,6 @@ class Request;
 
 #define kLegacyCookieSuffix "-legacy"
 
-
 class Cookie
 {
 public:
@@ -39,16 +38,6 @@ public:
       Lax,
       Strict
    };
-
-   static SameSite selectSameSite(bool legacy, bool iFramed)
-   {
-      // select between legacy and iframe behaviors for the cookie
-      return iFramed
-               ? SameSite::None
-               : (legacy
-                     ? SameSite::Undefined
-                     : SameSite::Lax);
-   }
 
    Cookie(const Request& request,
           const std::string& name,
@@ -74,7 +63,7 @@ public:
    const std::string& path() const { return path_; }
 
    void setExpires(const boost::posix_time::time_duration& expiresFromNow);
-   void setExpiresDelete() ;
+   void setExpiresDelete();
    const boost::posix_time::ptime& expires() const { return expires_; }
    
    void setHttpOnly();
@@ -86,14 +75,14 @@ public:
    void setSameSite(SameSite sameSite);
    SameSite sameSite() const { return sameSite_; }
 
-   std::string cookieHeaderValue() const ;
+   std::string cookieHeaderValue() const;
 
 private:
-   std::string name_ ;
-   std::string value_ ;
-   std::string domain_ ;
-   std::string path_ ;
-   boost::posix_time::ptime expires_ ;
+   std::string name_;
+   std::string value_;
+   std::string domain_;
+   std::string path_;
+   boost::posix_time::ptime expires_;
    SameSite sameSite_;
    bool httpOnly_;
    bool secure_;

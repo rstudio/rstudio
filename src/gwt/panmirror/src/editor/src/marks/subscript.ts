@@ -25,6 +25,7 @@ const extension: Extension = {
     {
       name: 'subscript',
       spec: {
+        group: 'formatting',
         parseDOM: [{ tag: 'sub' }],
         toDOM() {
           return ['sub'];
@@ -38,7 +39,7 @@ const extension: Extension = {
           },
         ],
         writer: {
-          priority: 9,
+          priority: 15,
           write: (output: PandocOutput, _mark: Mark, parent: Fragment) => {
             output.writeMark(PandocTokenType.Subscript, parent);
           },
@@ -52,7 +53,7 @@ const extension: Extension = {
   },
 
   inputRules: (schema: Schema, filter: MarkInputRuleFilter) => {
-    return [delimiterMarkInputRule('\\~', schema.marks.subscript, filter, '\\~-', true)];
+    return [delimiterMarkInputRule('\\~', schema.marks.subscript, filter, '`\\~-', true)];
   },
 };
 

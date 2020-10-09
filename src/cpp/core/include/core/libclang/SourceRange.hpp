@@ -72,8 +72,8 @@ public:
 
    FileRange getFileRange() const;
 
-   bool operator==(const SourceRange& other) const ;
-   bool operator!=(const SourceRange& other) const ;
+   bool operator==(const SourceRange& other) const;
+   bool operator!=(const SourceRange& other) const;
 
 private:
    CXSourceRange range_;

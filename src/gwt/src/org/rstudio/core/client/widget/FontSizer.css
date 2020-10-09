@@ -1,5 +1,7 @@
 @external windows, macintosh, linux, ubuntu_mono, ubuntu_mono_firefox;
 
+/* keep computed value in sync with FontSizer.getNormalLineHeight() */
+
 .macintosh .normalSize, .macintosh .normalSize td, .macintosh .normalSize pre {
    line-height: 1.45;
 }

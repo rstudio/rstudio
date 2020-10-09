@@ -148,8 +148,7 @@ void ScriptJob::start()
             session::options().modulesRSourcePath()
                               .completePath("SourceWithProgress.R").getAbsolutePath())) +
                      "'); sourceWithProgress(script = '" +
-                     string_utils::utf8ToSystem(
-            string_utils::singleQuotedStrEscape(path)) + "', "
+            string_utils::singleQuotedStrEscape(path) + "', "
       "encoding = '" + encoding + "', "
       "con = stdout(), "
       "importRdata = " + importRdata + ", "

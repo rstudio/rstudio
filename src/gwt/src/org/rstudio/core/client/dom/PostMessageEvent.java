@@ -20,7 +20,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 public class PostMessageEvent extends JavaScriptObject
 {
    protected PostMessageEvent() {}
-   
+
    public final native <T> T getData() /*-{
       return this.data;
    }-*/;

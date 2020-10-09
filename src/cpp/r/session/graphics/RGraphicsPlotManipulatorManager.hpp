@@ -52,7 +52,7 @@ public:
 public:
    core::Error initialize(const UnitConversionFunctions& convert);
 
-   RSTUDIO_BOOST_SIGNAL<void ()>& onShowManipulator() ;
+   RSTUDIO_BOOST_SIGNAL<void ()>& onShowManipulator();
    void setPlotManipulatorValues(const core::json::Object& values);
    void manipulatorPlotClicked(int x, int y);
    

@@ -25,21 +25,21 @@ public class AddinRegistryUpdatedEvent extends GwtEvent<AddinRegistryUpdatedEven
    {
       data_ = data;
    }
-   
+
    public RAddins getData()
    {
       return data_;
    }
-   
+
    private final RAddins data_;
-   
+
    // Boilerplate ----
-   
+
    public interface Handler extends EventHandler
    {
       void onAddinRegistryUpdated(AddinRegistryUpdatedEvent event);
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -52,5 +52,5 @@ public class AddinRegistryUpdatedEvent extends GwtEvent<AddinRegistryUpdatedEven
       handler.onAddinRegistryUpdated(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

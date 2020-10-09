@@ -219,6 +219,10 @@ void MenuCallback::addCommand(QString commandId,
    // on macOS, replace instances of 'Ctrl' with 'Meta'; QKeySequence renders "Ctrl" using the
    // macOS command symbol, but we want the menu to show the literal Ctrl symbol (^)
    shortcut.replace(QStringLiteral("Ctrl"), QStringLiteral("Meta"));
+
+   // on Mac the enter key and return keys have different symbols
+   // https://github.com/rstudio/rstudio/issues/6524
+   shortcut.replace(QStringLiteral("Enter"), QStringLiteral("Return"));
 #endif
 
    // replace instances of 'Cmd' with 'Ctrl' -- note that on macOS

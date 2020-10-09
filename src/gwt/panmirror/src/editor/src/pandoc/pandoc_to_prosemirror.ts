@@ -22,8 +22,20 @@ import {
   ProsemirrorWriter,
   PandocBlockReaderFn,
   PandocInlineHTMLReaderFn,
+  PandocTokensFilterFn,
+  PandocTokenType,
+  mapTokens,
+  stringifyTokens,
+  PandocExtensions,
+  forEachToken,
 } from '../api/pandoc';
-import { pandocAttrReadAST, kCodeBlockAttr, kCodeBlockText } from '../api/pandoc_attr';
+import {
+  pandocAttrReadAST,
+  kCodeBlockAttr,
+  kCodeBlockText,
+  kPandocAttrClasses,
+  kPandocAttrKeyvalue,
+} from '../api/pandoc_attr';
 import {
   PandocBlockCapsuleFilter,
   parsePandocBlockCapsule,
@@ -31,41 +43,62 @@ import {
   decodeBlockCapsuleText,
 } from '../api/pandoc_capsule';
 
-import { PandocToProsemirrorResult } from './pandoc_converter';
+import { PandocToProsemirrorResult, PandocLineWrapping } from './pandoc_converter';
+import { kLinkTarget, kLinkTargetUrl, kLinkChildren, kLinkAttr, kLinkTargetTitle } from '../api/link';
+import { kHeadingAttr, kHeadingLevel, kHeadingChildren } from '../api/heading';
+import { pandocAutoIdentifier, gfmAutoIdentifier } from '../api/pandoc_id';
+import { equalsIgnoreCase } from '../api/text';
+import { hasShortcutHeadingLinks } from '../api/pandoc_format';
 
 export function pandocToProsemirror(
   ast: PandocAst,
   schema: Schema,
+  extensions: PandocExtensions,
   readers: readonly PandocTokenReader[],
+  tokensFilters: readonly PandocTokensFilterFn[],
   blockReaders: readonly PandocBlockReaderFn[],
   inlineHTMLReaders: readonly PandocInlineHTMLReaderFn[],
   blockCapsuleFilters: readonly PandocBlockCapsuleFilter[],
 ): PandocToProsemirrorResult {
-  const parser = new Parser(schema, readers, blockReaders, inlineHTMLReaders, blockCapsuleFilters);
+  const parser = new Parser(
+    schema,
+    extensions,
+    readers,
+    tokensFilters,
+    blockReaders,
+    inlineHTMLReaders,
+    blockCapsuleFilters,
+  );
   return parser.parse(ast);
 }
 
 class Parser {
   private readonly schema: Schema;
+  private readonly extensions: PandocExtensions;
+  private readonly tokensFilters: readonly PandocTokensFilterFn[];
   private readonly inlineHTMLReaders: readonly PandocInlineHTMLReaderFn[];
   private readonly blockCapsuleFilters: readonly PandocBlockCapsuleFilter[];
   private readonly handlers: { [token: string]: ParserTokenHandlerCandidate[] };
 
   constructor(
     schema: Schema,
+    extensions: PandocExtensions,
     readers: readonly PandocTokenReader[],
+    tokensFilters: readonly PandocTokensFilterFn[],
     blockReaders: readonly PandocBlockReaderFn[],
     inlineHTMLReaders: readonly PandocInlineHTMLReaderFn[],
     blockCapsuleFilters: readonly PandocBlockCapsuleFilter[],
   ) {
     this.schema = schema;
+    this.extensions = extensions;
+    this.tokensFilters = tokensFilters;
     this.inlineHTMLReaders = inlineHTMLReaders;
-    // apply filters in reverse order
+    // apply block capsule filters in reverse order
     this.blockCapsuleFilters = blockCapsuleFilters.slice().reverse();
     this.handlers = this.createHandlers(readers, blockReaders);
   }
 
-  public parse(ast: any) {
+  public parse(ast: PandocAst) {
     // create state
     const state: ParserState = new ParserState(this.schema);
     // create writer (compose state w/ writeTokens function)
@@ -78,33 +111,52 @@ class Parser {
       openMark: state.openMark.bind(state),
       closeMark: state.closeMark.bind(state),
       writeText: state.writeText.bind(state),
+      hasInlineHTMLWriter(html: string) {
+        return parser.hasInlineHTMLWriter(html);
+      },
       writeInlineHTML(html: string) {
-        parser.writeInlineHTML(this, html);
+        return parser.writeInlineHTML(this, html);
       },
       writeTokens(tokens: PandocToken[]) {
         parser.writeTokens(this, tokens);
       },
-      logUnrecognized(type: string) {
-        state.logUnrecognized(type);
-      },
+      logUnrecognized: state.logUnrecognized.bind(state),
       isNodeOpen: state.isNodeOpen.bind(state),
     };
 
     // process raw text capsules
-    const astBlocks = resolvePandocBlockCapsuleText(ast.blocks, this.blockCapsuleFilters);
+    let targetAst = {
+      ...ast,
+      blocks: resolvePandocBlockCapsuleText(ast.blocks, this.blockCapsuleFilters),
+    };
+
+    // detect line wrapping
+    const lineWrapping = detectLineWrapping(targetAst);
+
+    // resolve heading ids
+    targetAst = resolveHeadingIds(targetAst, this.extensions);
 
     // write all tokens
-    writer.writeTokens(astBlocks);
+    writer.writeTokens(targetAst.blocks);
 
     // return
     return {
       doc: state.doc(),
+      line_wrapping: lineWrapping,
       unrecognized: state.unrecognized(),
+      unparsed_meta: ast.meta,
     };
   }
 
   private writeTokens(writer: ProsemirrorWriter, tokens: PandocToken[]) {
-    tokens.forEach(tok => this.writeToken(writer, tok));
+    // pass through tokens filters
+    let targetTokens = tokens;
+    this.tokensFilters.forEach(filter => {
+      targetTokens = filter(targetTokens, writer);
+    });
+
+    // process tokens
+    targetTokens.forEach(tok => this.writeToken(writer, tok));
   }
 
   private writeToken(writer: ProsemirrorWriter, tok: PandocToken) {
@@ -144,19 +196,21 @@ class Parser {
     writer.logUnrecognized(tok.t);
   }
 
+  private hasInlineHTMLWriter(html: string) {
+    for (const reader of this.inlineHTMLReaders) {
+      if (reader(this.schema, html)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private writeInlineHTML(writer: ProsemirrorWriter, html: string) {
-    // see if any of our readers want to take it
     for (const reader of this.inlineHTMLReaders) {
       if (reader(this.schema, html, writer)) {
         return;
       }
     }
-
-    // otherwise just write it
-    const mark = this.schema.marks.raw_html.create();
-    writer.openMark(mark);
-    writer.writeText(html);
-    writer.closeMark(mark);
   }
 
   // create parser token handler functions based on the passed readers
@@ -376,6 +430,109 @@ class ParserState {
       return undefined;
     }
   }
+}
+
+// determine what sort of line wrapping is used within the file
+function detectLineWrapping(ast: PandocAst): PandocLineWrapping {
+  // look for soft breaks and classify them as column or sentence breaks
+  let columnBreaks = 0;
+  let sentenceBreaks = 0;
+  let prevTok: PandocToken = { t: PandocTokenType.Null };
+  forEachToken(ast.blocks, tok => {
+    if (tok.t === PandocTokenType.SoftBreak) {
+      if (
+        prevTok.t === PandocTokenType.Str &&
+        typeof prevTok.c === 'string' &&
+        ['.', '?', '!'].includes(prevTok.c.charAt(prevTok.c.length - 1))
+      ) {
+        sentenceBreaks++;
+      } else {
+        columnBreaks++;
+      }
+    }
+    prevTok = tok;
+  });
+
+  // need to have > 5 line breaks or more line breaks than blocks to trigger detection
+  // (prevents 'over-detection' if there are stray few soft breaks)
+  const lineBreaks = columnBreaks + sentenceBreaks;
+  if (lineBreaks > 5 || lineBreaks > ast.blocks.length) {
+    if (sentenceBreaks > columnBreaks) {
+      return 'sentence';
+    } else {
+      return 'column';
+    }
+  } else {
+    return 'none';
+  }
+}
+
+// determine which heading ids are valid based on explicit headings contained in the
+// document and any headings targeted by links. remove any heading ids not so identified
+function resolveHeadingIds(ast: PandocAst, extensions: PandocExtensions) {
+  // determine function we will use to create auto-identifiers
+  const autoIdentifier = extensions.gfm_auto_identifiers ? gfmAutoIdentifier : pandocAutoIdentifier;
+
+  // start with ids we know are valid (i.e. ones the user added to the doc)
+  const headingIds = new Set<string>((ast.heading_ids || []).map(id => id.toLocaleLowerCase()));
+
+  // find ids referenced in links
+  let astBlocks = mapTokens(ast.blocks, tok => {
+    if (tok.t === PandocTokenType.Link) {
+      const target = tok.c[kLinkTarget];
+      const href = target[kLinkTargetUrl] as string;
+      if (href.startsWith('#')) {
+        // if we have support for implicit header references and shortcut reference links,
+        // also check to see whether the link text resolves to the target (in that case
+        // we don't need the explicit id). note that if that heading has an explicit
+        // id defined then we also leave it alone.
+        const text = stringifyTokens(tok.c[kLinkChildren], extensions.gfm_auto_identifiers);
+        if (
+          hasShortcutHeadingLinks(extensions) &&
+          equalsIgnoreCase('#' + autoIdentifier(text, extensions.ascii_identifiers), href) &&
+          !headingIds.has(href.toLocaleLowerCase())
+        ) {
+          // return a version of the link w/o the target
+          return {
+            t: PandocTokenType.Link,
+            c: [tok.c[kLinkAttr], tok.c[kLinkChildren], ['#', tok.c[kLinkTarget][kLinkTargetTitle]]],
+          };
+
+          // otherwise note that it's a valid id
+        } else {
+          headingIds.add(href.toLocaleLowerCase());
+        }
+      }
+    }
+    // default to return token unmodified
+    return tok;
+  });
+
+  // remove any heading ids not created by the user or required by a link
+  astBlocks = mapTokens(ast.blocks, tok => {
+    if (tok.t === PandocTokenType.Header) {
+      const attr = pandocAttrReadAST(tok, kHeadingAttr);
+      if (attr.id && !headingIds.has('#' + attr.id.toLocaleLowerCase())) {
+        return {
+          t: PandocTokenType.Header,
+          c: [
+            tok.c[kHeadingLevel],
+            ['', tok.c[kHeadingAttr][kPandocAttrClasses], tok.c[kHeadingAttr][kPandocAttrKeyvalue]],
+            tok.c[kHeadingChildren],
+          ],
+        };
+      }
+    }
+    // default to just reflecting back the token
+    return tok;
+  });
+
+  // return the ast
+  return {
+    ...ast,
+    blocks: astBlocks,
+    heading_ids: undefined,
+  };
 }
 
 interface ParserStackElement {

@@ -65,6 +65,16 @@ core::Error UserStateLayer::writePrefs(const core::json::Object &prefs)
       return fileNotFoundError(ERROR_LOCATION);
    }
 
+   // ensure state file can only be read/written by this user
+#ifndef _WIN32
+   if (stateFile_.exists())
+   {
+      Error error = stateFile_.changeFileMode(FileMode::USER_READ_WRITE);
+      if (error)
+         LOG_ERROR(error);
+   }
+#endif
+
    RECURSIVE_LOCK_MUTEX(mutex_)
    {
       *cache_ = prefs;

@@ -13,12 +13,24 @@
  *
  */
 
-import { Node as ProsemirrorNode } from 'prosemirror-model';
-import { EditorState } from 'prosemirror-state';
+import { Node as ProsemirrorNode, NodeType } from 'prosemirror-model';
+import { EditorState, Transaction } from 'prosemirror-state';
+import { EditorView } from 'prosemirror-view';
+import { GapCursor } from 'prosemirror-gapcursor';
 
-import { findParentNodeOfType, findChildrenByType, findChildren, findChildrenByMark } from 'prosemirror-utils';
+import {
+  findParentNodeOfType,
+  findChildrenByType,
+  findChildren,
+  findChildrenByMark,
+  setTextSelection,
+} from 'prosemirror-utils';
 
 import { getMarkRange } from './mark';
+import { precedingListItemInsertPos, precedingListItemInsert } from './list';
+import { toggleBlockType } from './command';
+import { selectionIsBodyTopLevel } from './selection';
+import { uuidv4 } from './util';
 
 export interface EditorRmdChunk {
   lang: string;
@@ -27,6 +39,70 @@ export interface EditorRmdChunk {
 }
 
 export type ExecuteRmdChunkFn = (chunk: EditorRmdChunk) => void;
+
+export function canInsertRmdChunk(state: EditorState) {
+  // must either be at the body top level, within a list item, within a div, or within a
+  // blockquote (and never within a table)
+  const schema = state.schema;
+  const within = (nodeType: NodeType) => !!findParentNodeOfType(nodeType)(state.selection);
+  if (within(schema.nodes.table)) {
+    return false;
+  }
+  if (
+    !selectionIsBodyTopLevel(state.selection) &&
+    !within(schema.nodes.list_item) &&
+    !within(schema.nodes.blockquote) &&
+    schema.nodes.div && !within(schema.nodes.div)
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+export function insertRmdChunk(chunkPlaceholder: string, rowOffset = 0, colOffset = 0) {
+  return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
+    const schema = state.schema;
+
+    if (
+      !(state.selection instanceof GapCursor) &&
+      !toggleBlockType(schema.nodes.rmd_chunk, schema.nodes.paragraph)(state) &&
+      !precedingListItemInsertPos(state.doc, state.selection)
+    ) {
+      return false;
+    }
+
+    // must either be at the body top level, within a list item, within a div, or within a
+    // blockquote (and never within a table)
+    if (!canInsertRmdChunk(state)) {
+      return false;
+    }
+
+    if (dispatch) {
+      // compute offset
+      const lines = chunkPlaceholder.split(/\r?\n/);
+      const lineChars = lines.slice(0, rowOffset).reduce((count, line) => count + line.length + 1, 1);
+      const offsetChars = lineChars + colOffset;
+
+      // perform insert
+      const tr = state.tr;
+      const rmdText = schema.text(chunkPlaceholder);
+      const rmdNode = schema.nodes.rmd_chunk.create({ navigation_id: uuidv4() }, rmdText);
+      const prevListItemPos = precedingListItemInsertPos(tr.doc, tr.selection);
+      if (prevListItemPos) {
+        precedingListItemInsert(tr, prevListItemPos, rmdNode);
+      } else {
+        tr.replaceSelectionWith(rmdNode);
+        const selPos = tr.selection.from - rmdNode.nodeSize - 1 + offsetChars - 1;
+        setTextSelection(selPos)(tr);
+      }
+
+      dispatch(tr);
+    }
+
+    return true;
+  };
+}
 
 export function activeRmdChunk(state: EditorState): EditorRmdChunk | null {
   if (state.schema.nodes.rmd_chunk) {
@@ -71,15 +147,21 @@ export function previousRmdChunks(state: EditorState, pos: number, filter?: (chu
 }
 
 export function rmdChunk(code: string): EditorRmdChunk | null {
-  const lines = code.split('\n');
+  const lines = code.trimLeft().split('\n');
   if (lines.length > 0) {
-    const meta = lines[0].replace(/^.*?\{([^}]*)\}.*?$/, '$1');
+    const meta = lines[0].replace(/^[\s`\{]*(.*?)\}?\s*$/, '$1');
     const matchLang = meta.match(/\w+/);
     const lang = matchLang ? matchLang[0] : '';
+
+    // a completely empty chunk (no second line) should be returned
+    // as such. if it's not completely empty then append a newline
+    // to the result of split (so that the chunk ends w/ a newline)
+    const chunkCode = lines.length > 1 ? lines.slice(1).join('\n') + '\n' : '';
+
     return {
       lang,
       meta,
-      code: lines.slice(1).join('\n'),
+      code: chunkCode,
     };
   } else {
     return null;
@@ -95,6 +177,32 @@ export function mergeRmdChunks(chunks: EditorRmdChunk[]) {
     };
     chunks.forEach(chunk => (merged.code += chunk.code + '\n'));
     return merged;
+  } else {
+    return null;
+  }
+}
+
+/**
+ * Attempts to extract the engine name and label from a chunk header.
+ * 
+ * @param text The chunk header, e.g. {r foo}
+ * @returns An object with `engine` and `label` properties, or null.
+ */
+export function rmdChunkEngineAndLabel(text: string) {
+  // Match the engine and label with a regex
+  const match = text.match(/^\{([a-zA-Z0-9_]+)[\s,]+([a-zA-Z0-9/._='"-]+)/);
+  if (match) {
+    // The second capturing group in the regex matches the first string after
+    // the engine. This might be a label (e.g., {r label}), but could also be
+    // a chunk option (e.g., {r echo=FALSE}). If it has an =, presume that it's
+    // an option.
+    if (match[2].indexOf("=") !== -1) {
+      return null;
+    }
+    return {
+      engine: match[1],
+      label: match[2],
+    };
   } else {
     return null;
   }

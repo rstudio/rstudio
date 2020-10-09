@@ -1,12 +1,18 @@
 {
-	"folders": [
-		{
-			"path": "."
-		}
-	],
-	"settings": {
+  "folders": [
+    {
+      "path": "."
+    }
+  ],
+  "settings": {
     "editor.tabSize": 2,
     "editor.insertSpaces": true,
-		"editor.detectIndentation": false
-	}
+    "editor.detectIndentation": false,
+    "typescript.tsserver.log": "terse",
+    // "editor.formatOnSave": true,
+    "typescript.tsdk": "./node_modules/typescript/lib",
+    "prettier.configPath": ".prettierrc",
+    "prettier.packageManager": "yarn",
+    "prettier.singleQuote": true
+  }
 }

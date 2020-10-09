@@ -29,6 +29,7 @@ public interface WorkbenchTab extends IsWidget,
    void onBeforeUnselected();
    void onBeforeSelected();
    void onSelected();
+   void setFocus();
    void prefetch(Command continuation);
    boolean isSuppressed();
 

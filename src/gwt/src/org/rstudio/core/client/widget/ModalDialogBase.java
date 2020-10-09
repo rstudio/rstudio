@@ -19,15 +19,14 @@ import com.google.gwt.aria.client.DialogRole;
 import com.google.gwt.aria.client.Id;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.Command;
@@ -57,14 +56,30 @@ import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.Timers;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public abstract class ModalDialogBase extends DialogBox
                                       implements AriaLiveStatusReporter
 {
-   private static final String firstFocusClass = "__rstudio_modal_first_focus";
-   private static final String lastFocusClass = "__rstudio_modal_last_focus";
 
-   protected static final String allowEnterKeyClass = "__rstudio_modal_allow_enter_key";
+   public interface ReturnFocusHandler
+   {
+      boolean returnFocus(Element el);
+   }
+
+   public static HandlerRegistration registerReturnFocusHandler(final ReturnFocusHandler handler)
+   {
+      FOCUS_HANDLERS.add(handler);
+
+      return new HandlerRegistration()
+      {
+         @Override
+         public void removeHandler()
+         {
+            FOCUS_HANDLERS.remove(handler);
+         }
+      };
+   }
 
    protected ModalDialogBase(DialogRole role)
    {
@@ -84,6 +99,7 @@ public abstract class ModalDialogBase extends DialogBox
       // a11y
       role_ = role;
       role_.set(getElement());
+      focus_ = new FocusHelper(getElement());
 
       // main panel used to host UI
       mainPanel_ = new VerticalPanel();
@@ -117,8 +133,19 @@ public abstract class ModalDialogBase extends DialogBox
       {
          // Is this too aggressive? Alternatively we could only filter out
          // keycodes that are known to be problematic (pgup/pgdown)
-         event.stopPropagation();
+         if (handleKeyDownEvent(event)) {
+            event.stopPropagation();
+         }
       }, KeyDownEvent.getType());
+   }
+   
+   protected void hideButtons()
+   {
+     buttonPanel_.setVisible(false);
+   }
+   
+   protected boolean handleKeyDownEvent(KeyDownEvent event) {
+      return true;
    }
 
    @Override
@@ -184,6 +211,11 @@ public abstract class ModalDialogBase extends DialogBox
       enterDisabled_ = enterDisabled;
    }
 
+   public void setRestoreFocusOnClose(boolean restoreFocus)
+   {
+      restoreFocus_ = restoreFocus;
+   }
+
    public void showModal()
    {
       showModal(true);
@@ -199,6 +231,8 @@ public abstract class ModalDialogBase extends DialogBox
          mainWidget_.getElement().getStyle().setMarginRight(2, Unit.PX);
          mainPanel_.insert(mainWidget_, 0);
       }
+
+      restoreFocus_ = restoreFocus;
 
       if (restoreFocus)
       {
@@ -502,28 +536,59 @@ public abstract class ModalDialogBase extends DialogBox
       hide();
       removeFromParent();
 
+      // nothing to do if we don't have an element to return focus to
+      if (originallyActiveElement_ == null)
+         return;
+
       try
       {
-         if (originallyActiveElement_ != null
-               && !originallyActiveElement_.getTagName().equalsIgnoreCase("body"))
-         {
-            Document doc = originallyActiveElement_.getOwnerDocument();
-            if (doc != null)
-            {
-               originallyActiveElement_.focus();
-            }
-         }
+         if (restoreFocus_)
+            restoreFocus();
       }
       catch (Exception e)
       {
-         // focus() fail if the element is no longer visible. It's
-         // easier to just catch this than try to detect it.
-
-         // Also originallyActiveElement_.getTagName() can fail with:
-         // "Permission denied to access property 'tagName' from a non-chrome context"
-         // possibly due to Firefox "anonymous div" issue.
+         // intentionally swallow exceptions (as they can occur
+         // for a multitude of reasons and generally are not actionable)
       }
-      originallyActiveElement_ = null;
+      finally
+      {
+         originallyActiveElement_ = null;
+      }
+   }
+
+   private void restoreFocus()
+   {
+      // iterate over focus handlers (in reverse order so
+      // most recently added handlers are executed first)
+      // and see if a registered handler can fire
+      for (int i = 0, n = FOCUS_HANDLERS.size(); i < n; i++)
+      {
+         try
+         {
+            // first, try running a registered focus handler
+            ReturnFocusHandler handler = FOCUS_HANDLERS.get(n - i - 1);
+            if (handler.returnFocus(originallyActiveElement_))
+               return;
+
+         }
+         catch (Exception e)
+         {
+            // swallow exceptions (attempts to focus an element can
+            // fail for a multitude of reasons and those reasons are
+            // usually not actionable by the user)
+         }
+      }
+
+      try
+      {
+         // if no registered handler fired, then just focus element
+         originallyActiveElement_.focus();
+      }
+      catch (Exception e)
+      {
+         // swallow exceptions
+      }
+
    }
 
    protected SimplePanel getContainerPanel()
@@ -560,9 +625,10 @@ public abstract class ModalDialogBase extends DialogBox
 
             // allow Enter on textareas, buttons, or anchors (including custom links)
             Element e = DomUtils.getActiveElement();
-            if (e.hasTagName("TEXTAREA") || e.hasTagName("A") ||
+            if (e.hasTagName("TEXTAREA") ||
+                  e.hasTagName("A") ||
                   e.hasTagName("BUTTON") ||
-                  e.hasClassName(allowEnterKeyClass) ||
+                  e.hasClassName(ALLOW_ENTER_KEY_CLASS) ||
                   (e.hasAttribute("role") && StringUtil.equals(e.getAttribute("role"), "link")))
                return;
 
@@ -584,14 +650,14 @@ public abstract class ModalDialogBase extends DialogBox
             break;
 
          case KeyCodes.KEY_TAB:
-            if (nativeEvent.getShiftKey() && DomUtils.getActiveElement().hasClassName(firstFocusClass))
+            if (nativeEvent.getShiftKey() && focus_.isFirst(DomUtils.getActiveElement()))
             {
                nativeEvent.preventDefault();
                nativeEvent.stopPropagation();
                event.cancel();
                focusLastControl();
             }
-            else if (!nativeEvent.getShiftKey() && DomUtils.getActiveElement().hasClassName(lastFocusClass))
+            else if (!nativeEvent.getShiftKey() && focus_.isLast(DomUtils.getActiveElement()))
             {
                nativeEvent.preventDefault();
                nativeEvent.stopPropagation();
@@ -692,13 +758,17 @@ public abstract class ModalDialogBase extends DialogBox
 
    /**
     * Set focus on first keyboard focusable element in dialog, as set by
-    * <code>refreshFocusableElements</code> or <code>setFirstFocusableElement</code>.
+    * refreshFocusableElements or setFirstFocusableElement.
+    *
+    * Invoked when Tabbing off the last control in the modal dialog to set focus back to
+    * the first control, and by default to set initial focus when the dialog is shown.
+    *
+    * To set focus on a different control when the dialog is displayed, override
+    * focusInitialControl, instead.
     */
    protected void focusFirstControl()
    {
-      Element first = getByClass(firstFocusClass);
-      if (first != null)
-         first.focus();
+      focus_.focusFirstControl();
    }
 
     /**
@@ -707,9 +777,7 @@ public abstract class ModalDialogBase extends DialogBox
     */
    protected void focusLastControl()
    {
-      Element last = getByClass(lastFocusClass);
-      if (last != null)
-         last.focus();
+      focus_.focusLastControl();
    }
 
    /**
@@ -722,49 +790,11 @@ public abstract class ModalDialogBase extends DialogBox
    }
 
    /**
-    * @param element first keyboard focusable element in the dialog
-    */
-   private void setFirstFocusableElement(Element element)
-   {
-      removeExisting(firstFocusClass);
-      element.addClassName(firstFocusClass);
-   }
-
-   /**
-    * @param element last keyboard focusable element in the dialog
-    */
-   private void setLastFocusableElement(Element element)
-   {
-      removeExisting(lastFocusClass);
-      element.addClassName(lastFocusClass);
-   }
-
-   /**
     * Gets an ordered list of keyboard-focusable elements in the dialog.
     */
    public ArrayList<Element> getFocusableElements()
    {
-      // css selector from https://github.com/scottaohara/accessible_modal_window
-      String focusableElements =
-            "button:not([hidden]):not([disabled]), [href]:not([hidden]), " +
-            "input:not([hidden]):not([type=\"hidden\"]):not([disabled]), " +
-            "select:not([hidden]):not([disabled]), textarea:not([hidden]):not([disabled]), " +
-            "[tabindex=\"0\"]:not([hidden]):not([disabled]), summary:not([hidden]), " +
-            "[contenteditable]:not([hidden]), audio[controls]:not([hidden]), " +
-            "video[controls]:not([hidden])";
-      NodeList<Element> potentiallyFocusable = DomUtils.querySelectorAll(getElement(), focusableElements);
-
-      ArrayList<Element> focusable = new ArrayList<>();
-      for (int i = 0; i < potentiallyFocusable.getLength(); i++)
-      {
-         // only include items taking up space
-         if (potentiallyFocusable.getItem(i).getOffsetWidth() > 0 &&
-               potentiallyFocusable.getItem(i).getOffsetHeight() > 0)
-         {
-            focusable.add(potentiallyFocusable.getItem(i));
-         }
-      }
-      return focusable;
+      return DomUtils.getFocusableElements(getElement());
    }
 
    /**
@@ -778,14 +808,17 @@ public abstract class ModalDialogBase extends DialogBox
     */
    public void refreshFocusableElements()
    {
+      if (!DomUtils.isEffectivelyVisible(getElement()))
+         return;
+
       ArrayList<Element> focusable = getFocusableElements();
       if (focusable.size() == 0)
       {
          Debug.logWarning("No potentially focusable controls found in modal dialog");
          return;
       }
-      setFirstFocusableElement(focusable.get(0));
-      setLastFocusableElement(focusable.get(focusable.size() - 1));
+      focus_.setFirst(focusable.get(0));
+      focus_.setLast(focusable.get(focusable.size() - 1));
    }
 
    /**
@@ -798,28 +831,6 @@ public abstract class ModalDialogBase extends DialogBox
          refreshFocusableElements();
          focusInitialControl();
       });
-   }
-
-   private void removeExisting(String classname)
-   {
-      Element current = getByClass(classname);
-      if (current != null)
-         current.removeClassName(classname);
-   }
-
-   private Element getByClass(String classname)
-   {
-      NodeList<Element> current = DomUtils.querySelectorAll(getElement(), "." + classname);
-      if (current.getLength() > 1)
-      {
-         Debug.logWarning("Multiple controls found with class: " + classname);
-         return null;
-      }
-      if (current.getLength() == 1)
-      {
-         return current.getItem(0);
-      }
-      return null;
    }
 
    public interface Styles extends CssResource
@@ -859,8 +870,13 @@ public abstract class ModalDialogBase extends DialogBox
    private ThemedButton defaultOverrideButton_;
    private final ArrayList<ThemedButton> allButtons_ = new ArrayList<>();
    private Widget mainWidget_;
-   private com.google.gwt.dom.client.Element originallyActiveElement_;
+   private boolean restoreFocus_;
+   private Element originallyActiveElement_;
    private Animation currentAnimation_ = null;
    private final DialogRole role_;
    private final AriaLiveStatusWidget ariaLiveStatusWidget_;
+   private final FocusHelper focus_;
+   private static final List<ReturnFocusHandler> FOCUS_HANDLERS = new ArrayList<>();
+   
+   public static final String ALLOW_ENTER_KEY_CLASS = "__rstudio_modal_allow_enter_key";
 }

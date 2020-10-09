@@ -24,7 +24,7 @@ public class SnippetsChangedEvent extends GwtEvent<SnippetsChangedEvent.Handler>
    {
       protected Data() {}
    }
-   
+
    public interface Handler extends EventHandler
    {
       void onSnippetsChanged(SnippetsChangedEvent event);
@@ -34,7 +34,7 @@ public class SnippetsChangedEvent extends GwtEvent<SnippetsChangedEvent.Handler>
    {
       data_ = data;
    }
-   
+
    public JsArray<SnippetData> getData()
    {
       return data_;
@@ -52,7 +52,7 @@ public class SnippetsChangedEvent extends GwtEvent<SnippetsChangedEvent.Handler>
       handler.onSnippetsChanged(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
-   
+   public static final Type<Handler> TYPE = new Type<>();
+
    private final Data data_;
 }

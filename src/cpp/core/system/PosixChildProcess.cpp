@@ -794,7 +794,7 @@ Error ChildProcess::run()
       else
       {
          // execute
-         ::execv(exe_.c_str(), pProcessArgs->args()) ;
+         ::execv(exe_.c_str(), pProcessArgs->args());
       }
 
       if (!options_.threadSafe)
@@ -1012,7 +1012,7 @@ void AsyncChildProcess::poll()
       if (options().pseudoterminal)
          pAsyncImpl_->finishedStderr_ = true;
       else
-         setPipeNonBlocking(pImpl_->fdStderr);         
+         setPipeNonBlocking(pImpl_->fdStderr);
 
       // setup for subprocess polling
       pAsyncImpl_->pSubprocPoll_.reset(new ChildProcessSubprocPoll(

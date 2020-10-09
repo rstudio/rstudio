@@ -15,32 +15,29 @@
 
 import { Mark, Schema, Fragment } from 'prosemirror-model';
 import { InputRule } from 'prosemirror-inputrules';
-import { toggleMark } from 'prosemirror-commands';
 import { EditorState } from 'prosemirror-state';
 
 import { setTextSelection } from 'prosemirror-utils';
 
-import { PandocExtensions, PandocTokenType, PandocToken, ProsemirrorWriter, PandocOutput } from '../../api/pandoc';
-import { Extension } from '../../api/extension';
-import { isRawHTMLFormat, kHTMLFormat } from '../../api/raw';
-import { EditorUI } from '../../api/ui';
-import { EditorCommandId } from '../../api/command';
-import { PandocCapabilities } from '../../api/pandoc_capabilities';
+import { PandocTokenType, PandocToken, ProsemirrorWriter, PandocOutput } from '../../api/pandoc';
+import { Extension, ExtensionContext } from '../../api/extension';
+import { isRawHTMLFormat } from '../../api/raw';
 import { MarkInputRuleFilter } from '../../api/input_rule';
 
-import { kRawInlineFormat, kRawInlineContent, RawInlineCommand } from './raw_inline';
+import { kRawInlineFormat, kRawInlineContent } from './raw_inline';
+import { toggleMarkType } from '../../api/command';
 
-import { InsertHTMLCommentCommand } from './raw_html_comment';
-import { fancyQuotesToSimple } from '../../api/quote';
-const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: PandocCapabilities): Extension | null => {
+const extension = (context: ExtensionContext): Extension | null => {
+  const { pandocExtensions } = context;
   return {
     marks: [
       {
         name: 'raw_html',
         noInputRules: true,
+        noSpelling: true,
         spec: {
           inclusive: false,
-          excludes: '_',
+          excludes: 'formatting',
           parseDOM: [
             {
               tag: "span[class*='raw-html']",
@@ -64,16 +61,29 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
                 const format = tok.c[kRawInlineFormat];
                 return isRawHTMLFormat(format);
               },
-              handler: (_schema: Schema) => {
+              handler: (schema: Schema) => {
                 return (writer: ProsemirrorWriter, tok: PandocToken) => {
-                  const text = tok.c[kRawInlineContent];
-                  writer.writeInlineHTML(text);
+                  const html = tok.c[kRawInlineContent];
+                  if (writer.hasInlineHTMLWriter(html)) {
+                    writer.writeInlineHTML(html);
+                  } else {
+                    writeInlneHTML(schema, html, writer);
+                  }
                 };
               },
             },
           ],
+
+          inlineHTMLReader: (schema: Schema, html: string, writer?: ProsemirrorWriter) => {
+            // read single tags as inline html
+            const isSingleTag = tagStartLoc(html, html.length - 2) === 0;
+            if (isSingleTag && writer) {
+              writeInlneHTML(schema, html, writer);
+            }
+            return isSingleTag;
+          },
           writer: {
-            priority: 20,
+            priority: 1,
             write: (output: PandocOutput, _mark: Mark, parent: Fragment) => {
               output.writeRawMarkdown(parent);
             },
@@ -81,17 +91,6 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
         },
       },
     ],
-
-    // insert command
-    commands: (schema: Schema, ui: EditorUI) => {
-      const commands = [new InsertHTMLCommentCommand(schema)];
-      if (pandocExtensions.raw_html) {
-        commands.push(
-          new RawInlineCommand(EditorCommandId.HTMLInline, kHTMLFormat, ui, pandocCapabilities.output_formats),
-        );
-      }
-      return commands;
-    },
 
     // input rules
     inputRules: (schema: Schema, filter: MarkInputRuleFilter) => {
@@ -104,12 +103,19 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
   };
 };
 
+function writeInlneHTML(schema: Schema, html: string, writer: ProsemirrorWriter) {
+  const mark = schema.marks.raw_html.create();
+  writer.openMark(mark);
+  writer.writeText(html);
+  writer.closeMark(mark);
+}
+
 export function rawHtmlInputRule(schema: Schema, filter: MarkInputRuleFilter) {
   return new InputRule(/>$/, (state: EditorState, match: string[], start: number, end: number) => {
     const rawhtmlMark = state.schema.marks.raw_html;
 
     // ensure we pass all conditions for html input
-    if (state.selection.empty && toggleMark(rawhtmlMark)(state) && filter(state, start, end)) {
+    if (state.selection.empty && toggleMarkType(rawhtmlMark)(state) && filter(state, start, end)) {
       // get tag info
       const { parent, parentOffset } = state.selection.$head;
       const text = parent.textContent;
@@ -149,6 +155,11 @@ export function rawHtmlInputRule(schema: Schema, filter: MarkInputRuleFilter) {
 function tagInfo(text: string, endLoc: number) {
   const startLoc = tagStartLoc(text, endLoc);
   if (startLoc !== -1) {
+    // don't match if preceding character is a backtick
+    // (user is attempting to write an html tag in code)
+    if (text.charAt(startLoc - 1) === '`') {
+      return null;
+    }
     const tagText = text.substring(startLoc, endLoc + 1);
     const match = tagText.match(/<(\/?)(\w+)/);
     if (match) {
@@ -168,9 +179,6 @@ function tagInfo(text: string, endLoc: number) {
 }
 
 function tagStartLoc(text: string, endLoc: number) {
-  // might be smart quotes
-  text = fancyQuotesToSimple(text);
-
   let inSingleQuote = false;
   let inDoubleQuote = false;
   let i;

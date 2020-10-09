@@ -17,9 +17,8 @@ import { Node as ProsemirrorNode, Schema, DOMOutputSpec } from 'prosemirror-mode
 import { EditorState, NodeSelection, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
-import { PandocCapabilities } from '../../api/pandoc_capabilities';
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
-import { Extension } from '../../api/extension';
+import { Extension, ExtensionContext } from '../../api/extension';
 import { canInsertNode } from '../../api/node';
 import { selectionIsImageNode, selectionIsEmptyParagraph } from '../../api/selection';
 import {
@@ -34,19 +33,17 @@ import {
   PandocTokenType,
   ProsemirrorWriter,
   PandocToken,
-  tokensCollectText,
-  PandocExtensions,
+  stringifyTokens,
   imageAttributesAvailable,
 } from '../../api/pandoc';
 import { EditorUI } from '../../api/ui';
 import { ImageDimensions } from '../../api/image';
 import { asHTMLTag } from '../../api/html';
-import { EditorOptions } from '../../api/options';
-import { EditorEvents } from '../../api/events';
-import { EditorFormat } from '../../api/format';
+import { OmniInsertGroup } from '../../api/omni_insert';
 
 import { imageDialog } from './image-dialog';
-import { imageDimensionsFromImg, imageContainerWidth, inlineHTMLIsImage } from './image-util';import { imageTextSelectionPlugin } from './image-textsel';
+import { imageDimensionsFromImg, imageContainerWidth, inlineHTMLIsImage } from './image-util';
+import { imageTextSelectionPlugin } from './image-textsel';
 import { posHasProhibitedFigureParent } from './figure';
 import { imageEventsPlugin } from './image-events';
 import { imageNodeViewPlugins } from './image-view';
@@ -58,14 +55,9 @@ const IMAGE_ATTR = 0;
 const IMAGE_ALT = 1;
 const IMAGE_TARGET = 2;
 
-const extension = (
-  pandocExtensions: PandocExtensions,
-  _pandocCapabilities: PandocCapabilities,
-  ui: EditorUI,
-  _format: EditorFormat,
-  _options: EditorOptions,
-  events: EditorEvents,
-): Extension => {
+const extension = (context: ExtensionContext): Extension => {
+  const { pandocExtensions, ui, events } = context;
+
   const imageAttr = imageAttributesAvailable(pandocExtensions);
 
   return {
@@ -99,18 +91,31 @@ const extension = (
           inlineHTMLReader: pandocExtensions.raw_html ? imageInlineHTMLReader : undefined,
           writer: imagePandocOutputWriter(false, ui),
         },
+
+        attr_edit: () => ({
+          type: (schema: Schema) => schema.nodes.image,
+          noDecorator: true,
+          editFn: () => imageCommand(ui, imageAttr),
+        }),
       },
     ],
 
     commands: (_schema: Schema) => {
-      return [new ProsemirrorCommand(EditorCommandId.Image, ['Shift-Mod-i'], imageCommand(ui, imageAttr))];
+      return [
+        new ProsemirrorCommand(
+          EditorCommandId.Image,
+          ['Shift-Mod-i'],
+          imageCommand(ui, imageAttr),
+          imageOmniInsert(ui),
+        ),
+      ];
     },
 
     plugins: (schema: Schema) => {
       return [
         imageTextSelectionPlugin(),
-        imageEventsPlugin(),
-        ...imageNodeViewPlugins('image', false, ui, events, pandocExtensions)
+        imageEventsPlugin(ui),
+        ...imageNodeViewPlugins('image', ui, events, pandocExtensions),
       ];
     },
   };
@@ -121,7 +126,7 @@ export function pandocImageHandler(figure: boolean, imageAttributes: boolean) {
     // get attributes
     const target = tok.c[IMAGE_TARGET];
     const attrs = {
-      src: target[TARGET_URL],
+      src: decodeURI(target[TARGET_URL]),
       title: readPandocTitle(target[TARGET_TITLE]),
       alt: '',
       ...(imageAttributes ? pandocAttrReadAST(tok, IMAGE_ATTR) : {}),
@@ -129,7 +134,7 @@ export function pandocImageHandler(figure: boolean, imageAttributes: boolean) {
 
     // add alt as plain text if it's not a figure
     if (!figure) {
-      attrs.alt = tokensCollectText(tok.c[IMAGE_ALT]);
+      attrs.alt = stringifyTokens(tok.c[IMAGE_ALT]);
     }
 
     // read image and (if appropriate) children
@@ -163,13 +168,13 @@ export function imagePandocOutputWriter(figure: boolean, ui: EditorUI) {
     };
 
     // see if we need to write raw html
-    const writeHTML =
+    const requireHTML =
       pandocAttrAvailable(node.attrs) && // attribs need to be written
       !output.extensions.link_attributes && // markdown attribs not supported
       output.extensions.raw_html; // raw html is supported
 
     // if we do, then substitute a raw html writer
-    if (writeHTML) {
+    if (node.attrs.raw || requireHTML) {
       writer = () => {
         const imgAttr = imageDOMAttributes(node, true, false);
         const html = asHTMLTag('img', imgAttr, true, true);
@@ -193,18 +198,23 @@ export function imagePandocOutputWriter(figure: boolean, ui: EditorUI) {
 }
 
 // parse inline html with <img> as image node
-function imageInlineHTMLReader(schema: Schema, html: string, writer: ProsemirrorWriter) {
-  if (inlineHTMLIsImage(html)) {
+function imageInlineHTMLReader(schema: Schema, html: string, writer?: ProsemirrorWriter) {
+  const isImage = inlineHTMLIsImage(html);
+  if (!isImage) {
+    return false;
+  }
+
+  if (writer) {
     const attrs = imageAttrsFromHTML(html);
     if (attrs) {
+      attrs.raw = true;
       writer.addNode(schema.nodes.image, attrs, []);
-      return true;
     } else {
       return false;
     }
-  } else {
-    return false;
   }
+
+  return isImage;
 }
 
 export function imageDOMOutputSpec(node: ProsemirrorNode, imageAttributes: boolean): DOMOutputSpec {
@@ -239,6 +249,7 @@ export function imageNodeAttrsSpec(linkTo: boolean, imageAttributes: boolean) {
     src: {},
     title: { default: null },
     alt: { default: null },
+    raw: { default: false },
     ...(linkTo ? { linkTo: { default: null } } : {}),
     ...(imageAttributes ? pandocAttrSpec : {}),
   };
@@ -266,7 +277,7 @@ export function imageAttrsFromHTML(html: string) {
   }
 }
 
-function imageCommand(editorUI: EditorUI, imageAttributes: boolean) {
+export function imageCommand(editorUI: EditorUI, imageAttributes: boolean) {
   return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
     const schema = state.schema;
 
@@ -309,6 +320,16 @@ function imageCommand(editorUI: EditorUI, imageAttributes: boolean) {
     }
 
     return true;
+  };
+}
+
+function imageOmniInsert(ui: EditorUI) {
+  return {
+    name: ui.context.translateText('Image...'),
+    description: ui.context.translateText('Figure or inline image'),
+    group: OmniInsertGroup.Content,
+    priority: 10,
+    image: () => (ui.prefs.darkMode() ? ui.images.omni_insert?.image_dark! : ui.images.omni_insert?.image!),
   };
 }
 

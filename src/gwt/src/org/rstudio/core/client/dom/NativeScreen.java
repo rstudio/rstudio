@@ -20,11 +20,11 @@ import com.google.gwt.core.client.JavaScriptObject;
 public class NativeScreen extends JavaScriptObject
 {
    protected NativeScreen() {}
-   
+
    public static native NativeScreen get() /*-{
       return $wnd.screen;
    }-*/;
-   
+
    public final native int getAvailHeight() /*-{
       return this.availHeight;
    }-*/;

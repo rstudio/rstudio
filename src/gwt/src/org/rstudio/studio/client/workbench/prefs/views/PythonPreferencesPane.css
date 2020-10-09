@@ -1,0 +1,13 @@
+@charset "UTF-8";
+
+.overrideLabel {
+	font-style: oblique;
+	font-size: 11px;
+}
+
+.interpreterDescription {
+	margin-bottom: 12px;
+}
+
+.mismatchBar {
+}

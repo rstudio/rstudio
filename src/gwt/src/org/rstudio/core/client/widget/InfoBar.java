@@ -16,7 +16,6 @@ package org.rstudio.core.client.widget;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.dom.client.Style.TextDecoration;
 import com.google.gwt.dom.client.Style.Unit;
@@ -40,6 +39,7 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.AriaLiveService;
+import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.model.Session;
 
@@ -98,15 +98,19 @@ public class InfoBar extends Composite
    public void setText(String text)
    {
       label_.setText(text);
-      Scheduler.get().scheduleDeferred(() -> {
-         live_.setText(text);
-      });
+      Timers.singleShot(AriaLiveService.UI_ANNOUNCEMENT_DELAY, () -> live_.setText(text));
       labelRight_.clear();
    }
 
    public int getHeight()
    {
       return 19;
+   }
+   
+   public void setTextWithAction(String text, String actionLabel, Command command)
+   {
+      setText(text);
+      labelRight_.add(label(actionLabel, command));
    }
    
    public void showRequiredPackagesMissingWarning(List<String> packages,

@@ -399,7 +399,7 @@ Error initialize()
 
    // install rpc methods
    using boost::bind;
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "viewer_stopped", viewerStopped))
       (bind(registerRpcMethod, "viewer_current", viewerCurrent))

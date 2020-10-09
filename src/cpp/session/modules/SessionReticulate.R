@@ -21,19 +21,6 @@
    REPL_TEARDOWN      = "repl_teardown"
 ))
 
-# hook to be invoked when the Python session has been initialized by reticulate
-options(reticulate.initialized = function() {
-   
-   # notify client that Python is being initialized
-   .rs.reticulate.enqueueClientEvent(
-      .rs.reticulateEvents$PYTHON_INITIALIZED,
-      list()
-   )
-   
-   .Call("rs_reticulateInitialized", PACKAGE = "(embedding)")
-   
-})
-
 .rs.setVar("python.moduleCache", new.env(parent = emptyenv()))
 
 .rs.addJsonRpcHandler("python_get_completions", function(line, ctx)
@@ -115,6 +102,59 @@ options(reticulate.initialized = function() {
       Sys.setenv(MPLENGINE = "tkAgg")
 })
 
+.rs.addFunction("reticulate.onPythonInitialized", function()
+{
+   builtins <- reticulate::import_builtins(convert = FALSE)
+   
+   # override help method (Python's interactive help does
+   # not play well with RStudio)
+   help <- builtins$help
+   .rs.setVar("reticulate.help", builtins$help)
+   builtins$help <- function(...) {
+      dots <- list(...)
+      if (length(dots) == 0) {
+         message("Error: Interactive Python help not available within RStudio")
+         return()
+      }
+      help(...)
+   }
+   
+   # define View hook (for data viewer, object explorer)
+   main <- reticulate::import_main(convert = FALSE)
+   reticulate::py_set_attr(main, "View", .rs.reticulate.viewHook)
+   
+   # ensure matplotlib hooks are injected on load
+   setHook("reticulate::matplotlib.pyplot::load", .rs.reticulate.matplotlib.onLoaded)
+})
+
+.rs.addFunction("reticulate.matplotlib.onLoaded", function(...)
+{
+   # install matplotlib hook if available
+   if (requireNamespace("png", quietly = TRUE) &&
+       reticulate::py_module_available("matplotlib"))
+   {
+      matplotlib <- reticulate::import("matplotlib", convert = TRUE)
+      
+      # force the "Agg" backend (this is necessary as other backends may
+      # fail with RStudio if requisite libraries are not available)
+      backend <- matplotlib$get_backend()
+      if (!identical(tolower(backend), "agg"))
+      {
+         sys <- reticulate::import("sys", convert = TRUE)
+         if ("matplotlib.backends" %in% names(sys$modules))
+            matplotlib$pyplot$switch_backend("agg")
+         else
+            matplotlib$use("agg", warn = FALSE, force = TRUE)
+      }
+      
+      # inject our hook
+      plt <- matplotlib$pyplot
+      .rs.setVar("reticulate.matplotlib.show", plt$show)
+      plt$show <- .rs.reticulate.matplotlib.showHook
+   }
+   
+})
+
 .rs.addFunction("reticulate.matplotlib.pyplot.loadHook", function(plt)
 {
    .rs.setVar("reticulate.matplotlib.show", plt$show)
@@ -125,10 +165,13 @@ options(reticulate.initialized = function() {
 {
    # read device size
    size <- dev.size(units = "in")
-   width <- size[1]; height <- size[2]
+   width  <- size[1]
+   height <- size[2]
+   dpi    <- 92
    
-   # TODO: handle high-DPI displays
-   dpi <- 72L
+   # adjust for pixel ratio
+   ratio  <- .Call("rs_devicePixelRatio", PACKAGE = "(embedding)")
+   dpi    <- dpi * ratio
    
    # TODO: get device requested from matplotlib?
    # TODO: handle HTML content?
@@ -162,49 +205,6 @@ options(reticulate.initialized = function() {
 
 .rs.addFunction("reticulate.replInitialize", function()
 {
-   builtins <- reticulate::import_builtins(convert = FALSE)
-   
-   # override help method (Python's interactive help does
-   # not play well with RStudio)
-   help <- builtins$help
-   .rs.setVar("reticulate.help", builtins$help)
-   builtins$help <- function(...) {
-      dots <- list(...)
-      if (length(dots) == 0) {
-         message("Error: Interactive Python help not available within RStudio")
-         return()
-      }
-      help(...)
-   }
-   
-   # install matplotlib hook if available
-   if (requireNamespace("png", quietly = TRUE) &&
-       reticulate::py_module_available("matplotlib"))
-   {
-      matplotlib <- reticulate::import("matplotlib", convert = TRUE)
-      
-      # force the "Agg" backend (this is necessary as other backends may
-      # fail with RStudio if requisite libraries are not available)
-      backend <- matplotlib$get_backend()
-      if (!identical(tolower(backend), "agg"))
-      {
-         sys <- reticulate::import("sys", convert = TRUE)
-         if ("matplotlib.backends" %in% names(sys$modules))
-            matplotlib$pyplot$switch_backend("agg")
-         else
-            matplotlib$use("agg", warn = FALSE, force = TRUE)
-      }
-      
-      # inject our hook
-      plt <- matplotlib$pyplot
-      .rs.setVar("reticulate.matplotlib.show", plt$show)
-      plt$show <- .rs.reticulate.matplotlib.showHook
-   }
-   
-   # define View hook (for data viewer, object explorer)
-   main <- reticulate::import_main(convert = FALSE)
-   reticulate::py_set_attr(main, "View", .rs.reticulate.viewHook)
-   
    # signal a switch to Python context
    .rs.reticulate.enqueueClientEvent(
       .rs.reticulateEvents$REPL_INITIALIZED,
@@ -283,10 +283,6 @@ options(reticulate.initialized = function() {
    
    active
 })
-
-options(reticulate.repl.initialize = .rs.reticulate.replInitialize)
-options(reticulate.repl.hook       = .rs.reticulate.replHook)
-options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
 
 .rs.addFunction("python.tokenizationRules", function() {
    
@@ -1478,10 +1474,13 @@ html.heading = _heading
 .rs.addFunction("reticulate.describeObject", function(name, parent)
 {
    builtins <- reticulate::import_builtins(convert = TRUE)
+   
    object <- if (inherits(parent, "python.builtin.dict"))
       reticulate::py_get_item(parent, name)
-   else
+   else if (inherits(parent, "python.builtin.object"))
       reticulate::py_get_attr(parent, name)
+   else
+      get(name, envir = parent)
    
    # is this object 'data'? consider non-callable, non-module objects as data
    isData <- !(
@@ -1510,6 +1509,9 @@ html.heading = _heading
    # get object length (note: not all objects in Python have a length)
    length <- .rs.reticulate.describeObjectLength(object)
    
+   # get object summary when appropriate
+   contents <- .rs.reticulate.describeObjectContents(object)
+   
    list(
       name              = .rs.scalar(name),
       type              = .rs.scalar(type),
@@ -1519,7 +1521,7 @@ html.heading = _heading
       description       = .rs.scalar(value),
       size              = .rs.scalar(size),
       length            = .rs.scalar(length),
-      contents          = list(),
+      contents          = contents,
       contents_deferred = .rs.scalar(FALSE)
    )
 
@@ -1571,6 +1573,27 @@ html.heading = _heading
    )
 })
 
+.rs.addFunction("reticulate.describeObjectContents", function(object)
+{
+   tryCatch(
+      .rs.reticulate.describeObjectContentsImpl(object),
+      error = function(e) warning
+   )
+})
+
+.rs.addFunction("reticulate.describeObjectContentsImpl", function(object)
+{
+   if (inherits(object, "pandas.core.frame.DataFrame"))
+   {
+      text <- reticulate::py_to_r(object$to_string(max_rows = 150L, show_dimensions = FALSE))
+      strsplit(text, "\n", fixed = TRUE)[[1]]
+   }
+   else
+   {
+      list()
+   }
+})
+
 .rs.addFunction("reticulate.resolveModule", function(module)
 {
    # return module objects as-is
@@ -1602,6 +1625,9 @@ html.heading = _heading
 {
    # resolve the requested module
    module <- .rs.reticulate.resolveModule(module)
+   
+   # update detect changes cache
+   .rs.reticulate.detectChanges(module, cacheOnly = TRUE)
    
    # list objects within the requested module
    builtins <- reticulate::import_builtins()
@@ -1694,7 +1720,8 @@ html.heading = _heading
    
 })
 
-.rs.addFunction("reticulate.detectChanges", function(moduleName)
+.rs.addFunction("reticulate.detectChanges", function(moduleName,
+                                                     cacheOnly = FALSE)
 {
    # resolve module
    module <- .rs.reticulate.resolveModule(moduleName)
@@ -1714,6 +1741,10 @@ html.heading = _heading
    
    # update cached globals
    .rs.setVar("reticulate.monitoredModuleObjects", newObjects)
+   
+   # if we're only updating the cache, bail now
+   if (cacheOnly)
+      return()
    
    # collect all vars
    vars <- sort(union(names(oldObjects), names(newObjects)))
@@ -1865,3 +1896,58 @@ html.heading = _heading
       .rs.setVar(key, reticulate::dict())
    .rs.getVar(key)
 })
+
+.rs.addFunction("reticulate.usePython", function(python)
+{
+   # sanity check value of param
+   ok <-
+      is.character(python) &&
+      length(python) == 1 &&
+      file.exists(python)
+   
+   if (!ok)
+      return(FALSE)
+   
+   # no-op if Python has already been initialized
+   if (reticulate::py_available(initialize = FALSE))
+      return(FALSE)
+   
+   # ok, request use of Python
+   reticulate::use_python(python, required = TRUE)
+})
+
+# hook to be invoked when the Python session has been initialized by reticulate
+options(reticulate.initialized = function()
+{
+   # clear hook
+   options(reticulate.initialized = NULL)
+   
+   # call R hook
+   .rs.reticulate.onPythonInitialized()
+   
+   # notify client that Python is being initialized
+   .rs.reticulate.enqueueClientEvent(
+      .rs.reticulateEvents$PYTHON_INITIALIZED,
+      list()
+   )
+   
+   # invoke lower-level callbacks
+   .Call("rs_reticulateInitialized", PACKAGE = "(embedding)")
+   
+})
+
+options(reticulate.repl.initialize = function()
+{
+   .rs.reticulate.replInitialize()
+})
+
+options(reticulate.repl.hook = function(buffer, contents, trimmed)
+{
+   .rs.reticulate.replHook(buffer, contents, trimmed)
+})
+
+options(reticulate.repl.teardown = function()
+{
+   .rs.reticulate.replTeardown()
+})
+

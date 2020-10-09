@@ -964,7 +964,7 @@ Error initializeApi()
    RS_REGISTER_CALL_METHOD(rs_terminalExecute, 4);
    RS_REGISTER_CALL_METHOD(rs_terminalExitCode, 1);
 
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "process_start", procStart))
       (bind(registerRpcMethod, "process_interrupt", procInterrupt))

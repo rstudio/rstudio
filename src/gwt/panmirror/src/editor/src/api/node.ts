@@ -13,7 +13,7 @@
  *
  */
 
-import { Node as ProsemirrorNode, NodeSpec, NodeType, ResolvedPos } from 'prosemirror-model';
+import { Node as ProsemirrorNode, NodeSpec, NodeType, ResolvedPos, Slice } from 'prosemirror-model';
 import { EditorState, Selection, NodeSelection } from 'prosemirror-state';
 import {
   findParentNode,
@@ -34,6 +34,7 @@ import {
   PandocPreprocessorFn,
   PandocBlockReaderFn,
   PandocInlineHTMLReaderFn,
+  PandocTokensFilterFn,
 } from './pandoc';
 import { PandocBlockCapsuleFilter } from './pandoc_capsule';
 
@@ -50,6 +51,7 @@ export interface PandocNode {
     readonly readers?: readonly PandocTokenReader[];
     readonly writer?: PandocNodeWriterFn;
     readonly preprocessor?: PandocPreprocessorFn;
+    readonly tokensFilter?: PandocTokensFilterFn;
     readonly blockReader?: PandocBlockReaderFn;
     readonly inlineHTMLReader?: PandocInlineHTMLReaderFn;
     readonly blockCapsuleFilter?: PandocBlockCapsuleFilter;
@@ -59,7 +61,7 @@ export interface PandocNode {
 export interface CodeViewOptions {
   lang: (node: ProsemirrorNode, content: string) => string | null;
   attrEditFn?: CommandFn;
-  executeRmdChunkFn?: ExecuteRmdChunkFn;
+  createFromPastePattern?: RegExp;
   classes?: string[];
   borderColorClass?: string;
   firstLineMeta?: boolean;
@@ -128,15 +130,25 @@ export function nodeIsActive(state: EditorState, type: NodeType, attrs = {}) {
   return node.node.hasMarkup(type, attrs);
 }
 
-export function canInsertNode(state: EditorState, nodeType: NodeType) {
-  const $from = state.selection.$from;
-  for (let d = $from.depth; d >= 0; d--) {
-    const index = $from.index(d);
-    if ($from.node(d).canReplaceWith(index, index, nodeType)) {
+export function canInsertNode(context: EditorState | Selection, nodeType: NodeType) {
+  const selection = asSelection(context);
+  const $from = selection.$from;
+  return canInsertNodeAtPos($from, nodeType);
+}
+
+export function canInsertNodeAtPos($pos: ResolvedPos, nodeType: NodeType) {
+  for (let d = $pos.depth; d >= 0; d--) {
+    const index = $pos.index(d);
+    if ($pos.node(d).canReplaceWith(index, index, nodeType)) {
       return true;
     }
   }
   return false;
+}
+
+export function canInsertTextNode(context: EditorState | Selection) {
+  const selection = asSelection(context);
+  return canInsertNode(selection, selection.$head.parent.type.schema.nodes.text);
 }
 
 export function insertAndSelectNode(view: EditorView, node: ProsemirrorNode) {
@@ -180,4 +192,8 @@ export function editingRootScrollContainerElement(view: EditorView) {
   } else {
     return undefined;
   }
+}
+
+function asSelection(context: EditorState | Selection) {
+  return context instanceof EditorState ? context.selection : context;
 }

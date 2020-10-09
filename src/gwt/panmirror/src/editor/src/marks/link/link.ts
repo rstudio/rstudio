@@ -17,7 +17,7 @@ import { Fragment, Mark, Schema } from 'prosemirror-model';
 import { PluginKey, Plugin } from 'prosemirror-state';
 
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
-import { PandocToken, PandocOutput, PandocTokenType, PandocExtensions } from '../../api/pandoc';
+import { PandocToken, PandocOutput, PandocTokenType } from '../../api/pandoc';
 import {
   pandocAttrSpec,
   pandocAttrParseDom,
@@ -25,33 +25,28 @@ import {
   pandocAttrReadAST,
   PandocAttr,
 } from '../../api/pandoc_attr';
-import { EditorUI } from '../../api/ui';
-import { Extension } from '../../api/extension';
-import { PandocCapabilities } from '../../api/pandoc_capabilities';
+import { Extension, ExtensionContext } from '../../api/extension';
+import { kLinkTarget, kLinkTargetUrl, kLinkTargetTitle, kLinkAttr, kLinkChildren } from '../../api/link';
+import { hasShortcutHeadingLinks } from '../../api/pandoc_format';
 
-import { linkCommand, removeLinkCommand } from './link-command';
+import { linkCommand, removeLinkCommand, linkOmniInsert } from './link-command';
 import { linkInputRules, linkPasteHandler } from './link-auto';
 import { linkHeadingsPostprocessor, syncHeadingLinksAppendTransaction } from './link-headings';
-import { LinkPopupPlugin } from './link-popup';
+import { linkPopupPlugin } from './link-popup';
 
 import './link-styles.css';
 
-const TARGET_URL = 0;
-const TARGET_TITLE = 1;
+const extension = (context: ExtensionContext): Extension => {
+  const { pandocExtensions, ui, navigation } = context;
 
-const LINK_ATTR = 0;
-const LINK_CHILDREN = 1;
-const LINK_TARGET = 2;
-
-const extension = (pandocExtensions: PandocExtensions, _caps: PandocCapabilities, ui: EditorUI): Extension | null => {
   const capabilities = {
-    headings: pandocExtensions.implicit_header_references,
+    headings: hasShortcutHeadingLinks(pandocExtensions),
     attributes: pandocExtensions.link_attributes,
     text: true,
   };
   const linkAttr = pandocExtensions.link_attributes;
   const autoLink = pandocExtensions.autolink_bare_uris;
-  const headingLink = pandocExtensions.implicit_header_references;
+  const headingLink = hasShortcutHeadingLinks(pandocExtensions);
 
   return {
     marks: [
@@ -112,25 +107,25 @@ const extension = (pandocExtensions: PandocExtensions, _caps: PandocCapabilities
               token: PandocTokenType.Link,
               mark: 'link',
               getAttrs: (tok: PandocToken) => {
-                const target = tok.c[LINK_TARGET];
+                const target = tok.c[kLinkTarget];
                 return {
-                  href: target[TARGET_URL],
-                  title: target[TARGET_TITLE] || null,
-                  ...(linkAttr ? pandocAttrReadAST(tok, LINK_ATTR) : {}),
+                  href: target[kLinkTargetUrl],
+                  title: target[kLinkTargetTitle] || null,
+                  ...(linkAttr ? pandocAttrReadAST(tok, kLinkAttr) : {}),
                 };
               },
-              getChildren: (tok: PandocToken) => tok.c[LINK_CHILDREN],
+              getChildren: (tok: PandocToken) => tok.c[kLinkChildren],
 
-              postprocessor: pandocExtensions.implicit_header_references ? linkHeadingsPostprocessor : undefined,
+              postprocessor: hasShortcutHeadingLinks(pandocExtensions) ? linkHeadingsPostprocessor : undefined,
             },
           ],
 
           writer: {
-            priority: 15,
+            priority: 12,
             write: (output: PandocOutput, mark: Mark, parent: Fragment) => {
               if (mark.attrs.heading) {
                 output.writeRawMarkdown('[');
-                output.writeText(mark.attrs.heading);
+                output.writeInlines(parent);
                 output.writeRawMarkdown(']');
               } else {
                 output.writeLink(
@@ -154,6 +149,7 @@ const extension = (pandocExtensions: PandocExtensions, _caps: PandocCapabilities
           EditorCommandId.Link,
           ['Mod-k'],
           linkCommand(schema.marks.link, ui.dialogs.editLink, capabilities),
+          linkOmniInsert(ui),
         ),
         new ProsemirrorCommand(EditorCommandId.RemoveLink, [], removeLinkCommand(schema.marks.link)),
       ];
@@ -166,8 +162,10 @@ const extension = (pandocExtensions: PandocExtensions, _caps: PandocCapabilities
 
     plugins: (schema: Schema) => {
       const plugins = [
-        new LinkPopupPlugin(
+        linkPopupPlugin(
+          schema,
           ui,
+          navigation,
           linkCommand(schema.marks.link, ui.dialogs.editLink, capabilities),
           removeLinkCommand(schema.marks.link),
         ),

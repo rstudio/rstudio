@@ -37,7 +37,7 @@ namespace session {
 namespace {
 
 // session state path
-FilePath s_suspendedSessionPath ; 
+FilePath s_suspendedSessionPath;
 
 // client-state paths
 FilePath s_clientStatePath;

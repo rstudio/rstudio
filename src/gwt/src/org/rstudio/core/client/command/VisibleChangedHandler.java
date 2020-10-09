@@ -18,5 +18,5 @@ import com.google.gwt.event.shared.EventHandler;
 
 public interface VisibleChangedHandler extends EventHandler
 {
-   void onVisibleChanged(AppCommand command);
+   void onVisibleChanged(VisibleChangedEvent event);
 }

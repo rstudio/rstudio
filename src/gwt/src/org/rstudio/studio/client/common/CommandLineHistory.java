@@ -67,7 +67,7 @@ public class CommandLineHistory
             "");
       historyPos_ = newPos;
    }
-   
+
    public String getHistoryEntry(int offset)
    {
       int pos = getPositionAtOffset(offset);
@@ -79,7 +79,7 @@ public class CommandLineHistory
       historyPos_ = history_.size();
       historyTail_ = "";
    }
-   
+
    private int getPositionAtOffset(int offset)
    {
       int pos = historyPos_ + offset;

@@ -15,15 +15,14 @@
 
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { NodeView, EditorView } from 'prosemirror-view';
-import { NodeSelection, PluginKey, Plugin, EditorState, Transaction, Selection } from 'prosemirror-state';
-import { keymap } from 'prosemirror-keymap';
+import { NodeSelection, PluginKey, Plugin } from 'prosemirror-state';
 
-import { findParentNodeOfTypeClosestToPos } from 'prosemirror-utils';
-
-import { EditorUI, ImageType } from '../../api/ui';
+import { EditorUI } from '../../api/ui';
+import { ImageType } from '../../api/image';
 import { PandocExtensions, imageAttributesAvailable } from '../../api/pandoc';
 import { isElementVisible } from '../../api/dom';
-import { EditorEvents, EditorEvent } from '../../api/events';
+import { EditorEvents } from '../../api/events';
+import { ResizeEvent } from '../../api/event-types';
 
 import { imageDialog } from './image-dialog';
 import {
@@ -37,8 +36,12 @@ import { imageDimensionsFromImg, imageContainerWidth } from './image-util';
 
 import './image-styles.css';
 
-
-export function imageNodeViewPlugins(type: string, arrowKeys: boolean, ui: EditorUI, events: EditorEvents, pandocExtensions: PandocExtensions) : Plugin[] {
+export function imageNodeViewPlugins(
+  type: string,
+  ui: EditorUI,
+  events: EditorEvents,
+  pandocExtensions: PandocExtensions,
+): Plugin[] {
   return [
     new Plugin({
       key: new PluginKey(`${type}-node-view`),
@@ -50,14 +53,6 @@ export function imageNodeViewPlugins(type: string, arrowKeys: boolean, ui: Edito
         },
       },
     }),
-    ...(arrowKeys ? [
-      keymap({
-        ArrowLeft: arrowHandler(type, 'left'),
-        ArrowRight: arrowHandler(type, 'right'),
-        ArrowUp: arrowHandler(type, 'up'),
-        ArrowDown: arrowHandler(type, 'down'),
-      }),
-    ] : [])
   ];
 }
 
@@ -84,6 +79,7 @@ class ImageNodeView implements NodeView {
   private resizeUI: ResizeUI | null;
   private sizeOnVisibleTimer?: number;
   private unregisterOnResize: VoidFunction;
+  private unregisterWatchImg: VoidFunction | null = null;
 
   constructor(
     node: ProsemirrorNode,
@@ -200,12 +196,15 @@ class ImageNodeView implements NodeView {
     this.updateSizeOnVisible();
 
     // update image size whenever the container is resized
-    this.unregisterOnResize = editorEvents.subscribe(EditorEvent.Resize, () => {
+    this.unregisterOnResize = editorEvents.subscribe(ResizeEvent, () => {
       this.updateImageSize();
     });
   }
 
   public destroy() {
+    if (this.unregisterWatchImg) {
+      this.unregisterWatchImg();
+    }
     this.unregisterOnResize();
     this.clearSizeOnVisibleTimer();
     this.detachResizeUI();
@@ -270,8 +269,21 @@ class ImageNodeView implements NodeView {
 
   // map node to img tag
   private updateImg() {
+    // unsubscribe from any existing resource watcher
+    if (this.unregisterWatchImg) {
+      this.unregisterWatchImg();
+    }
+
     // map to path reachable within current editing frame
-    this.img.src = this.editorUI.context.mapResourceToURL(this.node.attrs.src);
+    const src = this.node.attrs.src;
+    this.img.src = this.editorUI.context.mapResourceToURL(src);
+
+    // if this is a local resource then watch it and update when it changes
+    if (!src.match(/^\w+:\/\//)) {
+      this.unregisterWatchImg = this.editorUI.context.watchResource(src, () => {
+        this.img.src = this.editorUI.context.mapResourceToURL(src);
+      });
+    }
 
     // title/tooltip
     this.img.title = '';
@@ -360,35 +372,4 @@ class ImageNodeView implements NodeView {
       }
     }
   }
-}
-
-function arrowHandler(type: string, dir: 'up' | 'down' | 'left' | 'right' | 'forward' | 'backward') {
-  return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
-
-    if (state.selection.empty && view && view.endOfTextblock(dir)) {
-      
-      // compute side offset
-      const side = dir === 'left' || dir === 'up' ? -1 : 1;
-
-      // get selection head
-      const selection = state.selection;
-      const { $head } = selection;
-
-      // see if this would traverse our type
-      const nextPos = Selection.near(state.doc.resolve(side > 0 ? $head.after() : $head.before()), side);
-      if (nextPos.$head && nextPos.$head.parent.type.name === type) {
-        const figure = findParentNodeOfTypeClosestToPos(nextPos.$head, state.schema.nodes[type]);
-        if (figure && figure.node.textContent.length === 0) {
-          if (dispatch) {
-            const tr = state.tr;
-            const figureSelection = NodeSelection.create(state.doc, figure.pos);
-            tr.setSelection(figureSelection);
-            dispatch(tr);
-          }
-          return true;
-        }
-      }
-    }
-    return false;
-  };
 }

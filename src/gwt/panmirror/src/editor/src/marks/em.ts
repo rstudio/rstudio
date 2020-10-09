@@ -25,6 +25,7 @@ const extension: Extension = {
     {
       name: 'em',
       spec: {
+        group: 'formatting',
         parseDOM: [
           { tag: 'i' },
           { tag: 'em' },
@@ -42,7 +43,7 @@ const extension: Extension = {
           },
         ],
         writer: {
-          priority: 2,
+          priority: 4,
           write: (output: PandocOutput, _mark: Mark, parent: Fragment) => {
             output.writeMark(PandocTokenType.Emph, parent);
           },
@@ -57,8 +58,8 @@ const extension: Extension = {
 
   inputRules: (schema: Schema, filter: MarkInputRuleFilter) => {
     return [
-      delimiterMarkInputRule('\\*', schema.marks.em, filter, '\\*-', true),
-      delimiterMarkInputRule('_', schema.marks.em, filter, '_-', true),
+      delimiterMarkInputRule('\\*', schema.marks.em, filter, '\\*-`', true),
+      delimiterMarkInputRule('_', schema.marks.em, filter, '\\w_`', true),
     ];
   },
 };

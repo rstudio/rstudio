@@ -40,6 +40,22 @@ if ! command -v gtimeout &> /dev/null; then
    brew install coreutils
 fi
 
+# openssl needed to run rsession  (including unit tests)
+if brew list | grep openssl@1.1 &> /dev/null; then
+   echo "openssl already installed"
+else
+   brew install openssl
+fi
+
+# pidof and gdb needed for analysis of hung unit tests
+if ! command -v pidof &> /dev/null; then
+   brew install pidof
+fi
+if ! command -v gdb &> /dev/null; then
+   brew install gdb
+   grep -qxF 'set startup-with-shell off' ~/.gdbinit || echo "set startup-with-shell off" >> ~/.gdbinit
+fi
+
 cd ../common
 ./install-common --install-crashpad-sudo
 cd ../osx

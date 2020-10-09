@@ -155,6 +155,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Scop
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.UndoRedoHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
+import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.SpellingDoc;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionEvent;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionHandler;
@@ -166,6 +167,7 @@ import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionConte
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -190,6 +192,19 @@ public class AceEditor implements DocDisplay,
       }
 
       private String type;
+   }
+   
+   public enum EditorBehavior
+   {
+      // Behave like a typical (top-level) editor
+      AceBehaviorDefault,
+
+      // Behave like an embedded (code chunk) editor; used in embedded Ace
+      // instances in visual mode
+      AceBehaviorEmbedded,
+      
+      // Behave like the R console
+      AceBehaviorConsole
    }
 
    private class Filter implements InitCompletionFilter
@@ -327,6 +342,7 @@ public class AceEditor implements DocDisplay,
       editorEventListeners_ = new ArrayList<>();
       mixins_ = new AceEditorMixins(this);
       editLines_ = new AceEditorEditLinesHelper(this);
+      behavior_ = EditorBehavior.AceBehaviorDefault;
 
       completionManager_ = new NullCompletionManager();
       diagnosticsBgPopup_ = new DiagnosticsBackgroundPopup(this);
@@ -695,7 +711,7 @@ public class AceEditor implements DocDisplay,
    {
       getWidget().getEditor().getCommandManager().rebindCommand(id, keys);
    }
-   
+
    public void resetCommands()
    {
       AceCommandManager manager = AceCommandManager.create();
@@ -746,10 +762,35 @@ public class AceEditor implements DocDisplay,
       updateLanguage(completionManager, null);
    }
 
+   public void setEditorBehavior(EditorBehavior behavior)
+   {
+      behavior_ = behavior;
+   }
+   
    @Override
    public void setRnwCompletionContext(RnwCompletionContext rnwContext)
    {
       rnwContext_ = rnwContext;
+   }
+   
+   private RnwCompletionContext getActiveRnwCompletionContext()
+   {
+      // In embedded chunk editors, allow chunk completion behavior even in
+      // non-chunk file types (so e.g., completion of chunk options can happen
+      // in R code chunks)
+      if (behavior_ == EditorBehavior.AceBehaviorEmbedded)
+      {
+         return rnwContext_;
+      }
+
+      // In other types of editors, restrict this behavior to file types that
+      // can execute chunks
+      if (!fileType_.canExecuteChunks())
+      {
+         return null;
+      }
+
+      return rnwContext_;
    }
 
    @Override
@@ -793,9 +834,9 @@ public class AceEditor implements DocDisplay,
                         server_,
                         new Filter(),
                         context_,
-                        fileType_.canExecuteChunks() ? rnwContext_ : null,
-                           editor,
-                           false));
+                        getActiveRnwCompletionContext(),
+                        editor,
+                        behavior_));
                }
                
                // Markdown completion manager
@@ -1238,6 +1279,28 @@ public class AceEditor implements DocDisplay,
       return Position.create(row, col);
    }
    
+   @Override
+   public Position positionFromIndex(int index)
+   {
+      EditSession session = widget_.getEditor().getSession();
+      return advancePosition(session, Position.create(0,0), index);
+   }
+   
+   @Override
+   public int indexFromPosition(Position position)
+   {
+      EditSession session = widget_.getEditor().getSession();
+      int index = 0;
+      int row = 0;
+      while (row < position.getRow())
+      {
+         index += (session.getLine(row).length() + 1); // +1 for newline
+         row++;
+      }
+      index += position.getColumn();
+      return index;
+   }
+   
 
    public String getCode(Position start, Position end)
    {
@@ -1489,6 +1552,8 @@ public class AceEditor implements DocDisplay,
       setSelectionRange(ranges.get(0));
       for (int i = 1; i < n; i++)
          getNativeSelection().addRange(ranges.get(i), false);
+      
+      scrollCursorIntoViewIfNecessary();
    }
    
    public int getLength(int row)
@@ -1570,6 +1635,177 @@ public class AceEditor implements DocDisplay,
                               start,
                               end);
    }
+   
+   @Override
+   public SpellingDoc getSpellingDoc()
+   {
+      // detach anchors on dispose
+      ArrayList<org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor> 
+        anchors = new ArrayList<org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor>();
+      
+      return new SpellingDoc() {
+
+         
+         @Override
+         public Iterable<WordRange> getWords(int start, int end)
+         {
+            return new Iterable<WordRange>() {
+
+               @Override
+               public Iterator<WordRange> iterator()
+               {
+                  // get underlying iterator
+                  Iterator<Range> ranges = AceEditor.this.getWords(
+                        fileType_.getSpellCheckTokenPredicate(),
+                        fileType_.getCharPredicate(),
+                        positionFromIndex(start),
+                        end != -1 ? positionFromIndex(end) : null).iterator();
+                  
+                  // shim it on to spelling doc iterator
+                  return new Iterator<WordRange>() {
+                     
+                     @Override
+                     public boolean hasNext()
+                     {
+                        return ranges.hasNext();
+                     }
+
+                     @Override
+                     public WordRange next()
+                     {
+                        Range range = ranges.next(); 
+                        return new WordRange(
+                           indexFromPosition(range.getStart()),
+                           indexFromPosition(range.getEnd())
+                        ); 
+                     }
+                  };
+               }
+            };
+         }
+
+         @Override
+         public Anchor createAnchor(int position)
+         {
+            // create ace anchor
+            org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor anchor =
+              AceEditor.this.createAnchor(positionFromIndex(position));
+            
+            // track anchors for disposal
+            anchors.add(anchor);
+            
+            // shim on spelling doc anchor
+            return new Anchor() {
+               @Override
+               public int getPosition()
+               {
+                  return indexFromPosition(anchor.getPosition());
+               }
+            };
+         }
+         
+         @Override
+         public boolean shouldCheck(WordRange wordRange)
+         {
+            Range range = toAceRange(wordRange);
+            
+            // Don't spellcheck yaml
+            Scope s = getScopeAtPosition(range.getStart());
+            if (s != null && s.isYaml())
+               return false;
+
+            // This will capture all braced text in a way that the
+            // highlight rules don't and shouldn't.
+            String word = getTextForRange(range);
+            int start = range.getStart().getColumn();
+            int end = start + word.length();
+            String line = getLine(range.getStart().getRow());
+            Pattern p =  Pattern.create("\\{[^\\{\\}]*" + word + "[^\\{\\}]*\\}");
+            Match m = p.match(line, 0);
+            while (m != null)
+            {
+               // ensure that the match is the specific word we're looking
+               // at to fix edge cases such as {asdf}asdf
+               if (m.getIndex() < start &&
+                   (m.getIndex() + m.getValue().length()) > end)
+                  return false;
+
+               m = m.nextMatch();
+            }
+
+            return true;
+         }
+
+         @Override
+         public void setSelection(WordRange wordRange)
+         {
+            setSelectionRange(toAceRange(wordRange)); 
+         }
+
+         @Override
+         public String getText(WordRange wordRange)
+         {
+            return getTextForRange(toAceRange(wordRange));
+         }
+
+         @Override
+         public int getCursorPosition()
+         {
+            return indexFromPosition(AceEditor.this.getCursorPosition());
+         }
+
+         @Override
+         public void replaceSelection(String text)
+         {
+            AceEditor.this.replaceSelection(text);
+         }
+
+         @Override
+         public int getSelectionStart()
+         {
+            return indexFromPosition(AceEditor.this.getSelectionStart());
+         }
+
+         @Override
+         public int getSelectionEnd()
+         {
+            return indexFromPosition(AceEditor.this.getSelectionEnd());
+         }
+
+         @Override
+         public Rectangle getCursorBounds()
+         {
+            return AceEditor.this.getCursorBounds();
+         }
+
+         @Override
+         public void moveCursorNearTop()
+         {
+            AceEditor.this.moveCursorNearTop();
+         }
+         
+         private Range toAceRange(WordRange wordRange)
+         {
+            Position startPos = positionFromIndex(wordRange.start);
+            Position endPos = positionFromIndex(wordRange.end);
+            return Range.create(
+               startPos.getRow(), 
+               startPos.getColumn(), 
+               endPos.getRow(), 
+               endPos.getColumn()
+            );
+         }
+
+         @Override
+         public void dispose()
+         {
+            anchors.forEach((anchor) -> { anchor.detach(); });
+         }
+      };
+   }
+   
+ 
+
 
    @Override
    public String getTextForRange(Range range)
@@ -2189,7 +2425,18 @@ public class AceEditor implements DocDisplay,
       _setHighlightRFunctionCallsImpl(highlight);
       widget_.getEditor().retokenizeDocument();
    }
-   
+
+   public void setRainbowParentheses(boolean rainbow)
+   {
+      _setRainbowParenthesesImpl(rainbow);
+      widget_.getEditor().retokenizeDocument();
+   }
+
+   public boolean getRainbowParentheses()
+   {
+      return _getRainbowParenthesesImpl();
+   }
+
    public void setScrollLeft(int x)
    {
       getSession().setScrollLeft(x);
@@ -2211,7 +2458,19 @@ public class AceEditor implements DocDisplay,
       var Mode = $wnd.require("mode/r_highlight_rules");
       Mode.setHighlightRFunctionCalls(highlight);
    }-*/;
-   
+
+   private native final void _setRainbowParenthesesImpl(boolean rainbow)
+   /*-{
+      var Mode = $wnd.require("mode/rainbow_paren_highlight_rules");
+      Mode.setRainbowParentheses(rainbow);
+   }-*/;
+
+   private native final boolean _getRainbowParenthesesImpl()
+   /*-{
+     var Mode = $wnd.require("mode/rainbow_paren_highlight_rules");
+     return Mode.getRainbowParentheses();
+   }-*/;
+
    public void enableSearchHighlight()
    {
       widget_.getEditor().enableSearchHighlight();
@@ -2229,7 +2488,7 @@ public class AceEditor implements DocDisplay,
    {
       getSession().setUseWrapMode(useWrapMode);
    }
-   
+
    /**
     * Gets whether or not the editor is using soft wrapping
     */
@@ -2472,13 +2731,14 @@ public class AceEditor implements DocDisplay,
             row);
    }
 
+   @Override
    public Scope getCurrentChunk()
    {
-      return getCurrentChunk(getCursorPosition());
+      return getChunkAtPosition(getCursorPosition());
    }
 
    @Override
-   public Scope getCurrentChunk(Position position)
+   public Scope getChunkAtPosition(Position position)
    {
       return getSession().getMode().getCodeModel().getCurrentChunk(position);
    }
@@ -2844,18 +3104,19 @@ public class AceEditor implements DocDisplay,
    public void navigateToPosition(SourcePosition position,
                                   boolean recordCurrent)
    {
-      navigateToPosition(position, recordCurrent, false);
+      navigateToPosition(position, recordCurrent, false, false);
    }
 
    @Override
    public void navigateToPosition(SourcePosition position,
                                   boolean recordCurrent,
-                                  boolean highlightLine)
+                                  boolean highlightLine,
+                                  boolean restoreCursorPosition)
    {
       if (recordCurrent)
          recordCurrentNavigationPosition();
 
-      navigate(position, true, highlightLine);
+      navigate(position, true, highlightLine, restoreCursorPosition);
    }
 
    @Override
@@ -2957,12 +3218,13 @@ public class AceEditor implements DocDisplay,
 
    private void navigate(SourcePosition srcPosition, boolean addToHistory)
    {
-      navigate(srcPosition, addToHistory, false);
+      navigate(srcPosition, addToHistory, false, false);
    }
 
    private void navigate(SourcePosition srcPosition,
                          boolean addToHistory,
-                         boolean highlightLine)
+                         boolean highlightLine,
+                         boolean restoreCursorPosition)
    {
       // get existing cursor position
       Position previousCursorPos = getCursorPosition();
@@ -2990,8 +3252,11 @@ public class AceEditor implements DocDisplay,
       else
          ensureCursorVisible();
 
-      // set focus
-      focus();
+      // restore original cursor position or set focus
+      if (restoreCursorPosition)
+         setCursorPosition(previousCursorPos);
+      else
+         focus();
 
       if (highlightLine)
          applyLineHighlight(position.getRow());
@@ -3426,7 +3691,7 @@ public class AceEditor implements DocDisplay,
       return cursor.getRow();
    }
    
-   private boolean rowEndsInBinaryOp(int row)
+   private boolean rowEndsInBinaryOperatorOrOpenParen(int row)
    {
       // move to the last interesting token on this line 
       JsArray<Token> tokens = getSession().getTokens(row);
@@ -3437,7 +3702,8 @@ public class AceEditor implements DocDisplay,
             continue;
          if (t.getType()  == "keyword.operator" ||
              t.getType()  == "keyword.operator.infix" ||
-             t.getValue() == ",")
+             t.getValue() == "," ||
+             t.getValue() == "(")
             return true;
          break;
       } 
@@ -3613,7 +3879,36 @@ public class AceEditor implements DocDisplay,
             }
          }
          
-      } while (false);
+      }
+      while (false);
+      
+      // check for binary operator on start line
+      if (rowEndsInBinaryOperatorOrOpenParen(startRow))
+      {
+         // move token cursor to that row
+         c.moveToEndOfRow(startRow);
+
+         // skip comments, operators, etc.
+         while (c.hasType("text", "comment", "virtual-comment", "keyword.operator"))
+         {
+            if (c.isRightBracket())
+               break;
+
+            if (!c.moveToPreviousToken())
+               break;
+         }
+
+         // if we landed on a closing bracket, look for its match
+         // and then continue search from that row. otherwise,
+         // just look back a single row
+         if (c.valueEquals(")") || c.valueEquals("]"))
+         {
+            if (c.bwdToMatchingToken())
+            {
+               startRow = c.getRow();
+            }
+         }
+      }
       
       // discover start of current statement
       while (startRow >= startRowLimit)
@@ -3622,7 +3917,7 @@ public class AceEditor implements DocDisplay,
          if (startRow <= 0)
             break;
          
-         // if the row starts with an open bracket, expand to its match
+         // if the row starts with a closing bracket, expand to its match
          if (rowStartsWithClosingBracket(startRow))
          {
             c.moveToStartOfRow(startRow);
@@ -3633,15 +3928,50 @@ public class AceEditor implements DocDisplay,
             }
          }
          
-         // keep going if the line is empty or previous ends w/binary op
-         if (rowEndsInBinaryOp(startRow - 1) || rowIsEmptyOrComment(startRow - 1))
+         // check for binary operator on previous line
+         int prevRow = startRow - 1;
+         if (rowEndsInBinaryOperatorOrOpenParen(prevRow))
+         {
+            // move token cursor to that row
+            c.moveToEndOfRow(prevRow);
+            
+            // skip comments, operators, etc.
+            while (c.hasType("text", "comment", "virtual-comment", "keyword.operator"))
+            {
+               if (c.isRightBracket())
+                  break;
+                  
+               if (!c.moveToPreviousToken())
+                  break;
+            }
+          
+            // if we landed on a closing bracket, look for its match
+            // and then continue search from that row. otherwise,
+            // just look back a single row
+            if (c.valueEquals(")") || c.valueEquals("]"))
+            {
+               if (c.bwdToMatchingToken())
+               {
+                  startRow = c.getRow();
+                  continue;
+               }
+            }
+            else
+            {
+               startRow--;
+               continue;
+            }
+         }
+         
+         // keep going over blank, commented lines
+         if (rowIsEmptyOrComment(prevRow))
          {
             startRow--;
             continue;
          }
          
          // keep going if we're in a multiline string
-         String state = getSession().getState(startRow - 1);
+         String state = getSession().getState(prevRow);
          if (state == "qstring" || state == "qqstring")
          {
             startRow--;
@@ -3692,7 +4022,7 @@ public class AceEditor implements DocDisplay,
          }
          
          // continue search if line ends with binary operator
-         if (rowEndsInBinaryOp(endRow) || rowIsEmptyOrComment(endRow))
+         if (rowEndsInBinaryOperatorOrOpenParen(endRow) || rowIsEmptyOrComment(endRow))
          {
             endRow++;
             continue;
@@ -3920,6 +4250,7 @@ public class AceEditor implements DocDisplay,
       it.moveToPosition(position);
       return it;
    }
+ 
 
    @Override
    public void beginCollabSession(CollabEditStartParams params, 
@@ -4153,6 +4484,16 @@ public class AceEditor implements DocDisplay,
       AceEditor.this.fireEvent(new LineWidgetsChangedEvent());
    }
    
+   public static AceEditor getLastFocusedEditor()
+   {
+      return s_lastFocusedEditor;
+   }
+   
+   public static void clearLastFocusedEditor()
+   {
+      s_lastFocusedEditor = null;
+   }
+   
    private static class BackgroundTokenizer
    {
       public BackgroundTokenizer(final AceEditor editor)
@@ -4284,6 +4625,7 @@ public class AceEditor implements DocDisplay,
    private HandlerRegistration scrollCompleteReg_;
    private final AceEditorMixins mixins_;
    private final AceEditorEditLinesHelper editLines_;
+   private EditorBehavior behavior_;
    
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release)
    {
@@ -4332,4 +4674,5 @@ public class AceEditor implements DocDisplay,
    private static AceEditor s_lastFocusedEditor = null;
    
    private final List<HandlerRegistration> editorEventListeners_;
+
 }

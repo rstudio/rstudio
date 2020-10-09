@@ -16,14 +16,16 @@
 import { Fragment, Mark, Node as ProsemirrorNode, Schema } from 'prosemirror-model';
 
 import { MarkCommand, EditorCommandId } from '../api/command';
-import { Extension } from '../api/extension';
+import { Extension, ExtensionContext } from '../api/extension';
 import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr, pandocAttrReadAST } from '../api/pandoc_attr';
-import { PandocToken, PandocOutput, PandocTokenType, PandocExtensions } from '../api/pandoc';
+import { PandocToken, PandocOutput, PandocTokenType } from '../api/pandoc';
 
 import { kCodeText, kCodeAttr } from '../api/code';
 import { delimiterMarkInputRule, MarkInputRuleFilter } from '../api/input_rule';
 
-const extension = (pandocExtensions: PandocExtensions): Extension => {
+const extension = (context: ExtensionContext): Extension => {
+  const { pandocExtensions } = context;
+
   const codeAttrs = pandocExtensions.inline_code_attributes;
 
   return {
@@ -31,7 +33,9 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
       {
         name: 'code',
         noInputRules: true,
+        noSpelling: true,
         spec: {
+          group: 'formatting',
           attrs: codeAttrs ? pandocAttrSpec : {},
           parseDOM: [
             {
@@ -74,7 +78,9 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
             },
           ],
           writer: {
-            priority: 20,
+            // lowest possible mark priority since it doesn't call writeInlines
+            // (so will 'eat' any other marks on the stack)
+            priority: 0,
             write: (output: PandocOutput, mark: Mark, parent: Fragment) => {
               // collect code and trim it (pandoc will do this on parse anyway)
               let code = '';

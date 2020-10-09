@@ -16,11 +16,18 @@
 package org.rstudio.studio.client.panmirror;
 
 
+import elemental2.core.JsObject;
 import jsinterop.annotations.JsType;
 
 @JsType
 public class PanmirrorSetMarkdownResult
 {    
    public String canonical;
+   public String line_wrapping;
    public String[] unrecognized;
+   public JsObject unparsed_meta;
+   
+   public static final String kLineWrappingNone = "none";
+   public static final String kLineWrappingColumn= "column";
+   public static final String kLineWrappingSentence = "sentence";
 }

@@ -69,7 +69,7 @@
 
 using namespace rstudio;
 using namespace rstudio::core;
-using namespace server;
+using namespace rstudio::server;
 
 // forward-declare overlay methods
 namespace rstudio {
@@ -106,13 +106,8 @@ http::UriHandlerFunction blockingFileHandler()
    // determine initJs (none for now)
    std::string initJs;
 
-   bool secure = options.authCookiesForceSecure() ||
-                 options.getOverlayOption("ssl-enabled") == "1";
-
    // return file
    return gwt::fileHandlerFunction(options.wwwLocalPath(),
-                                   secure,
-                                   options.wwwIFrameLegacyCookies(),
                                    "/",
                                    mainPageFilter,
                                    initJs,
@@ -179,7 +174,7 @@ Error httpServerInit()
                                     boost::posix_time::milliseconds(500));
 
    // initialize
-   return server::httpServerInit(s_pHttpServer.get());
+   return rstudio::server::httpServerInit(s_pHttpServer.get());
 }
 
 void pageNotFoundHandler(const http::Request& request,
@@ -188,6 +183,7 @@ void pageNotFoundHandler(const http::Request& request,
    std::ostringstream os;
    std::map<std::string, std::string> vars;
    vars["request_uri"] = string_utils::jsLiteralEscape(request.uri());
+   vars["base_uri"] = string_utils::jsLiteralEscape(request.baseUri(core::http::BaseUriUse::External));
 
    FilePath notFoundTemplate = FilePath(options().wwwLocalPath()).completeChildPath("404.htm");
    core::Error err = core::text::renderTemplate(notFoundTemplate, vars, os);
@@ -207,6 +203,18 @@ void pageNotFoundHandler(const http::Request& request,
 
    // set 404 status even if there was an error showing the proper not found page
    pResponse->setStatusCode(core::http::status::NotFound);
+}
+
+void rootPathRequestFilter(
+            boost::asio::io_service& ioService,
+            http::Request* pRequest,
+            http::RequestFilterContinuation continuation)
+{
+   // for all requests, be sure to inject the configured root path
+   // this way proxied requests will redirect correctly and cookies
+   // will have the correct path
+   pRequest->setRootPath(options().wwwRootPath());
+   continuation(boost::shared_ptr<http::Response>());
 }
 
 void httpServerAddHandlers()
@@ -247,7 +255,7 @@ void httpServerAddHandlers()
    uri_handlers::add("/rmd_output", secureAsyncHttpHandler(proxyContentRequest, true));
    uri_handlers::add("/grid_data", secureAsyncHttpHandler(proxyContentRequest, true));
    uri_handlers::add("/grid_resource", secureAsyncHttpHandler(proxyContentRequest, true));
-   uri_handlers::add("/chunk_output", secureAsyncHttpHandler(proxyContentRequest, true)); 
+   uri_handlers::add("/chunk_output", secureAsyncHttpHandler(proxyContentRequest, true));
    uri_handlers::add("/profiles", secureAsyncHttpHandler(proxyContentRequest, true));
    uri_handlers::add("/rmd_data", secureAsyncHttpHandler(proxyContentRequest, true));
    uri_handlers::add("/profiler_resource", secureAsyncHttpHandler(proxyContentRequest, true));
@@ -519,7 +527,7 @@ int main(int argc, char * const argv[])
          if (!optionsWarnings.empty())
             program_options::reportWarnings(optionsWarnings, ERROR_LOCATION);
 
-         return status.exitCode() ;
+         return status.exitCode();
       }
       
       // daemonize if requested
@@ -669,6 +677,13 @@ int main(int argc, char * const argv[])
             monitor::client().createLogDestination(core::log::LogLevel::WARN, kProgramIdentity));
       }
 
+      // overlay may replace this
+      if (server::options().wwwRootPath() != kRequestDefaultRootPath) 
+      {
+         // inject the path prefix as the root path for all requests
+         uri_handlers::setRequestFilter(rootPathRequestFilter);
+      }
+
       // call overlay initialize
       error = overlay::initialize();
       if (error)
@@ -762,7 +777,5 @@ int main(int argc, char * const argv[])
    CATCH_UNEXPECTED_EXCEPTION
    
    // if we got this far we had an unexpected exception
-   return EXIT_FAILURE ;
+   return EXIT_FAILURE;
 }
-
-

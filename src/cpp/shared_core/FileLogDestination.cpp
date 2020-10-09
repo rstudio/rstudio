@@ -155,11 +155,20 @@ struct FileLogDestination::Impl
                return false;
 
             // Now re-open the log file.
-            openLogFile();
+            if (!openLogFile())
+               return false;
          }
-      }
 
-      return LogFile.getSize() < maxSize;
+         // we only sucessfully rotated (and thus are safe to log) if the
+         // file size is now lower than the limit
+         return LogFile.getSize() < maxSize;
+      }
+      else
+      {
+         // we are configured not to rotate logs, which means the log file can grow unboundedly large
+         // thus, we are safe to log
+         return true;
+      }
    }
 
    FileLogOptions LogOptions;
@@ -205,8 +214,10 @@ void FileLogDestination::writeLog(LogLevel in_logLevel, const std::string& in_me
    if (!m_impl->LogOutputStream && !m_impl->openLogFile())
       return;
 
-   // Rotate the log file if necessary.
-   m_impl->rotateLogFile();
+   // Rotate the log file if necessary. If it fails to rotate, log nothing.
+   if (!m_impl->rotateLogFile())
+      return;
+
    (*m_impl->LogOutputStream) << in_message;
    m_impl->LogOutputStream->flush();
 }

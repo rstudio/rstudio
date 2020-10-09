@@ -206,7 +206,7 @@
             "source": false
         },
         "reticulate": {
-            "version": "1.10",
+            "version": "1.16",
             "location": "cran",
             "source": false
         },

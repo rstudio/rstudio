@@ -25,13 +25,13 @@ public class SynctexEditFileEvent extends GwtEvent<SynctexEditFileEvent.Handler>
    {
       void onSynctexEditFile(SynctexEditFileEvent event);
    }
-   
+
    public SynctexEditFileEvent(SourceLocation sourceLocation)
    {
       sourceLocation_ = sourceLocation;
    }
-   
-   
+
+
    public SourceLocation getSourceLocation()
    {
       return sourceLocation_;
@@ -50,6 +50,6 @@ public class SynctexEditFileEvent extends GwtEvent<SynctexEditFileEvent.Handler>
    }
 
    private final SourceLocation sourceLocation_;
-   
-   public static final Type<Handler> TYPE = new Type<Handler>();
+
+   public static final Type<Handler> TYPE = new Type<>();
 }

@@ -45,7 +45,7 @@
 #include "CodeCompletion.hpp"
 #include "RSourceIndex.hpp"
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 using namespace rstudio::core::libclang;
 
 namespace rstudio {

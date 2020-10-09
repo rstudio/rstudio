@@ -26,10 +26,13 @@ public interface PanmirrorDialogsResources extends ClientBundle
    public interface Styles extends CssResource
    {
       String dialog();
+      String dialogWide();
       String spaced();
       String textArea();
       String checkBox();
       String fullWidth();
+      String fullWidthSelect();
+      String fullWidthTable();
       String infoLabel();
       String imageDialogTabs();
       String linkDialogTabs();
@@ -42,6 +45,11 @@ public interface PanmirrorDialogsResources extends ClientBundle
       String lockRatioCheckbox();
       String heightAuto();
       String langSuggestionDisplay();
+      String flexTablePreview();
+      String flexTablePreviewName();
+      String flexTablePreviewValue();
+      String disabled();
+      String listBox();
    }
 
    @Source("PanmirrorDialogsStyles.css")
@@ -53,11 +61,5 @@ public interface PanmirrorDialogsResources extends ClientBundle
    @Source("edit_link_2x.png")
    ImageResource edit_link();
    
-   public static PanmirrorDialogsResources INSTANCE = (PanmirrorDialogsResources)GWT.create(PanmirrorDialogsResources.class);
-   
-
-   public static void ensureStylesInjected()
-   {
-      INSTANCE.styles().ensureInjected();
-   }
+   public static PanmirrorDialogsResources INSTANCE = GWT.create(PanmirrorDialogsResources.class);
 }

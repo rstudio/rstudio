@@ -41,7 +41,7 @@ core::database::PostgresqlConnectionOptions postgresConnectionOptions()
    options.connectionTimeoutSeconds = 10;
    options.database = "rstudio-test";
    options.host = "localhost";
-   options.user = "postgres";
+   options.username = "postgres";
    options.password = "postgres";
 
    return options;
@@ -464,6 +464,63 @@ TEST_CASE("Database", "[.database]")
          REQUIRE(row.get<std::string>(1) == vals[i][1]);
          ++i;
       }
+   }
+
+   test_that("Can correctly parse postgresql connection URIs")
+   {
+      PostgresqlConnectionOptions options;
+      options.connectionUri = "bogus://not-a-uri";
+      CHECK(validateOptions(options, nullptr));
+
+      options.connectionUri = "postgresql://";
+      CHECK(validateOptions(options, nullptr));
+
+      std::string connectionStr;
+      options.connectionUri = "postgres://localhost";
+      CHECK_FALSE(validateOptions(options, &connectionStr));
+      CHECK(connectionStr == "host='localhost'");
+
+      options.connectionUri = "postgres://joe@myhost/";
+      CHECK_FALSE(validateOptions(options, &connectionStr));
+      CHECK(connectionStr == "host='myhost' user='joe'");
+
+      options.connectionUri = "postgres://joe:mypass@myhost";
+      CHECK_FALSE(validateOptions(options, &connectionStr));
+      CHECK(connectionStr == "host='myhost' user='joe' password='mypass'");
+
+      options.connectionUri = "postgres://joe@myhost/rstudio-test";
+      CHECK_FALSE(validateOptions(options, &connectionStr));
+      CHECK(connectionStr == "host='myhost' user='joe' dbname='rstudio-test'");
+
+      options.connectionUri = "postgres://joe@myhost/rstudio-test";
+      options.password = "abc123";
+      CHECK_FALSE(validateOptions(options, &connectionStr));
+      CHECK(connectionStr == "host='myhost' user='joe' dbname='rstudio-test' password='abc123'");
+
+      options.connectionUri = "postgres://joe@myhost/rstudio-test";
+      options.password = "abc'\\123";
+      CHECK_FALSE(validateOptions(options, &connectionStr));
+      CHECK(connectionStr == "host='myhost' user='joe' dbname='rstudio-test' password='abc\\'\\\\123'");
+
+      options.connectionUri = "postgres://joe@myhost/rstudio-test?sslmode=disable";
+      options.password = "abc123";
+      CHECK_FALSE(validateOptions(options, &connectionStr));
+      CHECK(connectionStr == "host='myhost' user='joe' dbname='rstudio-test' sslmode='disable' password='abc123'");
+
+      options.connectionUri = "postgres://joe@myhost:3342/rstudio-test?sslmode=disable&options=-csearch_path=public";
+      options.password = "abc123";
+      CHECK_FALSE(validateOptions(options, &connectionStr));
+      CHECK(connectionStr == "host='myhost' port='3342' user='joe' dbname='rstudio-test' sslmode='disable' options='-csearch_path=public' password='abc123'");
+
+      options.connectionUri = "postgres://joe@myhost/rstudio-test?sslmode=disable&options=-csearch_path=public&random-value=something%20with%20spaces";
+      options.password = "abc123";
+      CHECK_FALSE(validateOptions(options, &connectionStr));
+      CHECK(connectionStr == "host='myhost' user='joe' dbname='rstudio-test' sslmode='disable' options='-csearch_path=public' random-value='something with spaces' password='abc123'");
+
+      options.connectionUri = "postgres://joe@[fd9a:3b89:ca91:43a2:0:0:0:0]:2345/rstudio-test";
+      options.password = "12345";
+      CHECK_FALSE(validateOptions(options, &connectionStr));
+      CHECK(connectionStr == "host='[fd9a:3b89:ca91:43a2:0:0:0:0]' port='2345' user='joe' dbname='rstudio-test' password='12345'");
    }
 }
 

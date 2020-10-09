@@ -21,14 +21,14 @@ import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import com.google.gwt.event.shared.EventHandler;
 
 @JavaScriptSerializable
-public class ShowVcsHistoryEvent 
+public class ShowVcsHistoryEvent
              extends CrossWindowEvent<ShowVcsHistoryEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
       void onShowVcsHistory(ShowVcsHistoryEvent event);
    }
-   
+
    public ShowVcsHistoryEvent()
    {
    }
@@ -37,7 +37,7 @@ public class ShowVcsHistoryEvent
    {
       fileFilter_ = fileFilter;
    }
-   
+
    public FileSystemItem getFileFilter()
    {
       return fileFilter_;
@@ -55,7 +55,7 @@ public class ShowVcsHistoryEvent
       handler.onShowVcsHistory(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
-   
+   public static final Type<Handler> TYPE = new Type<>();
+
    private FileSystemItem fileFilter_;
 }

@@ -22,6 +22,7 @@ import { findChildrenByType, setTextSelection } from 'prosemirror-utils';
 import { transactionsAreTypingChange, transactionsHaveChange } from '../../api/transaction';
 import { EditorUIContext } from '../../api/ui';
 import { stripQuotes } from '../../api/text';
+import { onElementRemoved } from '../../api/dom';
 
 const key = new PluginKey<DecorationSet>('rmd-chunk-image-preview');
 
@@ -99,7 +100,15 @@ function imagePreviewDecorations(state: EditorState, uiContext: EditorUIContext)
           if (alignCenter) {
             img.classList.add('pm-image-centered');
           }
+
           img.src = uiContext.mapResourceToURL(imagePath);
+
+          // watch for changes to the file
+          const unsubscribe = uiContext.watchResource(imagePath, () => {
+            img.src = uiContext.mapResourceToURL(imagePath);
+          });
+          onElementRemoved(view.dom, container, unsubscribe);
+
           if (width) {
             img.setAttribute('width', width);
           }

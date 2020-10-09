@@ -39,6 +39,10 @@
 {
    Encoding(code) <- "UTF-8" 
    
+   # trim common indent (this ensures that indented chunks of code can be run)
+   # https://github.com/rstudio/rstudio/issues/3731
+   code <- .rs.trimCommonIndent(code)
+   
    # if we're using the python engine, attempt to load reticulate (this
    # will load the reticulate knitr engine and set it as the default engine)
    useReticulate <-

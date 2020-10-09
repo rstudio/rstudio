@@ -1,5 +1,9 @@
 print_progress <- function(fmt, ..., prefix) {
-   cat(sprintf(paste(prefix, fmt, "\n", sep = ""), ...))
+   tryCatch({
+     cat(sprintf(paste(prefix, fmt, "\n", sep = ""), ...))
+   }, error = function(e) {
+     cat(paste(prefix, fmt, ..., "\n"))
+   })
 }
 
 section  <- function(fmt, ...) print_progress(fmt, ..., prefix = "--> ")
@@ -9,7 +13,11 @@ fatal <- function(fmt, ...) {
    if (interactive()) {
       stop(sprintf(fmt, ...), "\n", call. = FALSE)
    } else {
-      message("FATAL: ", sprintf(fmt, ...))
+      err <- paste(fmt, ...) 
+      err <- try({
+        sprintf(fmt, ...)
+      }, silent = TRUE)
+      message("FATAL: ", err)
       quit(save = "no", status = 1, runLast = TRUE)
    }  
 }
@@ -28,7 +36,11 @@ download <- function(url, destfile, ...) {
 
 
 printf <- function(fmt, ...) {
-   cat(sprintf(fmt, ...))
+   tryCatch({
+     cat(sprintf(fmt, ...))
+   }, error = function(e) {
+     cat(fmt, ...)
+   })
 }
 
 PATH <- (function() {
@@ -72,7 +84,7 @@ exec <- function(command,
 {
    # construct path to logfile
    if (is.null(output)) {
-      prefix <- sprintf("%s-output-", basename(command))
+      prefix <- paste0(basename(command), "-output-")
       output <- paste(tempfile(prefix, dir), "txt", sep = ".")
    }
    
@@ -95,9 +107,10 @@ exec <- function(command,
    
    # report status
    if (status) {
-      msg <- sprintf("Command exited with status %i.", as.integer(status))
+      msg <- paste0("Command exited with status ", as.integer(status), ".")
       if (is.character(output) && file.exists(output)) {
-         logmsg <- sprintf("Logs written to %s.", output)
+         logmsg <- paste0("Logs written to ", output, ":\n")
+         logmsg <- paste0(logmsg, paste(readLines(output), collapse = "\n"), "\n")
          msg <- paste(msg, logmsg, sep = "\n")
       }
       fatal(msg)

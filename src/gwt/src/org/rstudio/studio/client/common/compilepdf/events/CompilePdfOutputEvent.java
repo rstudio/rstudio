@@ -30,7 +30,7 @@ public class CompilePdfOutputEvent extends GwtEvent<CompilePdfOutputEvent.Handle
    {
       output_ = output;
    }
-   
+
    public CompileOutput getOutput()
    {
       return output_;
@@ -47,8 +47,8 @@ public class CompilePdfOutputEvent extends GwtEvent<CompilePdfOutputEvent.Handle
    {
       handler.onCompilePdfOutput(this);
    }
-   
+
    private CompileOutput output_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

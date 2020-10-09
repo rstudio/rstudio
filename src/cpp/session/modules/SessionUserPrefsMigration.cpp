@@ -153,7 +153,7 @@ core::Error migratePrefs(const FilePath& src)
    json::Object destState;
 
    // Read the old settings file
-   Settings settings; 
+   Settings settings;
    Error err = settings.initialize(src);
    if (err)
       return err;
@@ -271,7 +271,7 @@ core::Error migratePrefs(const FilePath& src)
       LOG_ERROR(err);
 
    // Write the accumulated preferences to our user prefs layer
-   return userPrefs().writeLayer(PREF_LAYER_USER, destPrefs); 
+   return userPrefs().writeLayer(PREF_LAYER_USER, destPrefs);
 }
 
 } // namespace prefs

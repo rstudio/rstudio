@@ -17,6 +17,7 @@
 
 package org.rstudio.studio.client.panmirror.findreplace;
 
+import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.widget.HasFindReplace;
@@ -92,14 +93,29 @@ public class PanmirrorFindReplaceWidget extends FindReplaceBar implements HasFin
    
    public void performFind()
    {
-      PanmirrorFindReplace find = container_.getFindReplace();
-      PanmirrorFindOptions options =  new PanmirrorFindOptions();
-      options.caseSensitive = getCaseSensitive().getValue();
-      options.regex = getRegex().getValue();
-      options.wrap = getWrapSearch().getValue();
-      find.find(getFindValue().getValue(), options);
-      find.selectCurrent();
+      performFind(null);
    }
+   
+   public void performFind(String term)
+   {
+      if (term != null)
+         getFindValue().setValue(term);
+      timeBufferedFind_.nudge();
+   }
+   
+   private TimeBufferedCommand timeBufferedFind_ = new TimeBufferedCommand(300) {
+      @Override
+      protected void performAction(boolean shouldReschedule)
+      {
+         PanmirrorFindReplace find = container_.getFindReplace();
+         PanmirrorFindOptions options =  new PanmirrorFindOptions();
+         options.caseSensitive = getCaseSensitive().getValue();
+         options.regex = getRegex().getValue();
+         options.wrap = getWrapSearch().getValue();
+         find.find(getFindValue().getValue(), options);
+         find.selectCurrent(); 
+      }
+   };
    
    
    @Override
@@ -125,6 +141,14 @@ public class PanmirrorFindReplaceWidget extends FindReplaceBar implements HasFin
    {
       container_.showFindReplace(false);
    }
+   
+   @Override
+   public void findFromSelection(String term)
+   {
+      showFindReplace(true);
+      performFind(term);
+   }
+
 
    @Override
    public void findNext()

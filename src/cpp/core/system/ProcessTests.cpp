@@ -277,6 +277,7 @@ test_context("ProcessTests")
 
       // wait for processes to exit
       bool success = supervisor.wait();
+      CHECK(success);
 
       // verify correct exit statuses and outputs
       for (int i = 0; i < 10; ++i)
@@ -292,15 +293,15 @@ test_context("ProcessTests")
 
       std::string asioType;
       #if defined(BOOST_ASIO_HAS_IOCP)
-        asioType = "iocp" ;
+        asioType = "iocp";
       #elif defined(BOOST_ASIO_HAS_EPOLL)
-        asioType = "epoll" ;
+        asioType = "epoll";
       #elif defined(BOOST_ASIO_HAS_KQUEUE)
-        asioType = "kqueue" ;
+        asioType = "kqueue";
       #elif defined(BOOST_ASIO_HAS_DEV_POLL)
-        asioType = "/dev/poll" ;
+        asioType = "/dev/poll";
       #else
-        asioType = "select" ;
+        asioType = "select";
       #endif
       std::cout << "Using asio type: " << asioType << std::endl;
 

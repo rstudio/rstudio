@@ -214,8 +214,8 @@ Error completeEmbeddedRInitialization(bool useInternet2)
       LOG_ERROR(error);
 
    using boost::bind;
-   using namespace r::function_hook ;
-   ExecBlock block ;
+   using namespace r::function_hook;
+   ExecBlock block;
    block.addFunctions()
       (bind(registerUnsupported, "bringToTop", "grDevices"))
       (bind(registerUnsupported, "winMenuAdd", "utils"))

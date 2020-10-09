@@ -19,6 +19,8 @@ import 'prosemirror-gapcursor/style/gapcursor.css';
 
 import { Extension } from '../api/extension';
 
+import './cursor.css';
+
 const extension: Extension = {
   plugins: () => {
     return [gapCursor(), dropCursor()];

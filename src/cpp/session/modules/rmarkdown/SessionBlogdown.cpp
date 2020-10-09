@@ -18,6 +18,8 @@
 #include <shared_core/Error.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/ShellUtils.hpp>
+#include <core/FileSerializer.hpp>
+#include <core/StringUtils.hpp>
 
 #include <core/RegexUtils.hpp>
 #include <core/ConfigUtils.hpp>
@@ -82,6 +84,39 @@ std::string runHugo(const Args& args, bool logErrors = true)
    }
 }
 
+std::string hugoConfigStr(std::string value)
+{
+   core::string_utils::stripQuotes(&value);
+   return value;
+}
+
+bool usingTexMathDollarsInCode(const FilePath& hugoRootPath,
+                               std::map<std::string,std::string> hugoConfig)
+{
+   const std::string themeDir = hugoConfigStr(hugoConfig["themesdir"]);
+   const std::string theme = hugoConfigStr(hugoConfig["theme"]);
+   const FilePath footerMathjax = hugoRootPath
+      .completePath(themeDir)
+      .completePath(theme)
+      .completePath("layouts")
+      .completePath("partials")
+      .completePath("footer_mathjax.html");
+
+   if (footerMathjax.exists())
+   {
+      std::string footer;
+      Error error = core::readStringFromFile(footerMathjax, &footer);
+      if (error)
+         LOG_ERROR(error);
+      return footer.find("math-code.js") != std::string::npos;
+   }
+   else
+   {
+      return false;
+   }
+
+}
+
 
 } // anonymous namespace
 
@@ -96,6 +131,8 @@ core::json::Object blogdownConfig()
    const char* const kMarkdownEngineGoldmark = "goldmark";
    const char* const kMarkdownEngineBlackfriday = "blackfriday";
    const char* const kMarkdownExtensions = "markdown_extensions";
+   const char* const kRmdExtensions = "rmd_extensions";
+   const char* const kRmdTexMathDollarsInCode = "tex_math_dollars_in_code";
 
    json::Object config;
 
@@ -159,6 +196,7 @@ core::json::Object blogdownConfig()
       // set defaults to start with
       std::string markdownEngine = defaultMarkdownEngine;
       std::string markdownExtensions = "";
+      std::string rmdExtensions = "";
 
       // get the hugo config
       std::string hugoConfig = runHugo("config");
@@ -235,11 +273,16 @@ core::json::Object blogdownConfig()
             }
             config[kStaticDirs] = staticDirs;
          }
+
+         // see if we are using the math-code.js hack
+         if (usingTexMathDollarsInCode(hugoRootPath(), variables))
+            rmdExtensions += ("+" + std::string(kRmdTexMathDollarsInCode));
       }
 
       // populate config
       config[kMarkdownEngine] = markdownEngine;
       config[kMarkdownExtensions] = markdownExtensions;
+      config[kRmdExtensions] = rmdExtensions;
    }
    else
    {

@@ -15,6 +15,7 @@
 
 export interface EditorTheme {
   darkMode: boolean;
+  solarizedMode: boolean;
   cursorColor: string;
   selectionColor: string;
   nodeSelectionColor: string;
@@ -29,6 +30,8 @@ export interface EditorTheme {
   gutterTextColor: string;
   textColor: string;
   lightTextColor: string;
+  placeholderTextColor: string;
+  invisibleTextColor: string;
   linkTextColor: string;
   surfaceWidgetTextColor: string;
   markupTextColor: string;
@@ -67,6 +70,7 @@ export interface CodeTheme {
 export function defaultTheme(): EditorTheme {
   return {
     darkMode: false,
+    solarizedMode: false,
     cursorColor: 'black',
     selectionColor: '#8cf',
     nodeSelectionColor: 'rgb(102,155,243)',
@@ -82,13 +86,15 @@ export function defaultTheme(): EditorTheme {
     textColor: 'black',
     surfaceWidgetTextColor: 'rgba(0,0,0,0.5)',
     lightTextColor: 'rgb(60, 76, 114)',
-    linkTextColor: ' #106ba3',
+    linkTextColor: '#106ba3',
+    placeholderTextColor: 'gray',
+    invisibleTextColor: 'rgb(191, 191, 191)',
     markupTextColor: 'rgb(185, 6, 144)',
     findTextBackgroundColor: 'rgb(250, 250, 255)',
     findTextBorderColor: 'rgb(200, 200, 250)',
     borderBackgroundColor: '#ddd',
     blockBorderColor: '#ddd',
-    focusOutlineColor: '#ddd',
+    focusOutlineColor: '#5d84cd',
     paneBorderColor: 'silver',
     fixedWidthFont: 'monospace, monospace',
     fixedWidthFontSizePt: 9,
@@ -129,6 +135,59 @@ export function applyTheme(theme: EditorTheme) {
 
   // generate theme css
   const themeCss = `
+    .pm-default-theme .pm-background-color {
+      background-color: ${defaults.backgroundColor} !important;
+    }
+    .pm-default-theme .pm-text-color {
+      color: ${defaults.textColor} !important;
+    }
+    .pm-default-theme .pm-border-background-color {
+      background-color: ${defaults.borderBackgroundColor} !important;
+    }
+    .pm-default-theme .pm-input-text {
+      border-color: ${defaults.paneBorderColor} !important
+    }
+    .pm-default-theme .pm-block-border-color {
+      border-color: ${defaults.blockBorderColor} !important;
+    }
+    .pm-default-theme .pm-input-outline-button {
+      color: ${defaults.textColor};
+      border-color: ${defaults.textColor};
+      background-color: ${defaults.backgroundColor};
+    }
+    .pm-default-theme .pm-selected-navigation-tree-item {
+      background-color: ${defaults.findTextBackgroundColor} !important;
+      border-color: ${defaults.findTextBorderColor} !important;
+    }
+    .pm-default-theme .pm-navigation-tree-item {
+      border-color: ${defaults.backgroundColor} !important;
+    }
+    .pm-default-theme .pm-block-border-color {
+      border-color: ${defaults.blockBorderColor} !important;
+    }
+    .pm-default-theme .pm-focus-outline-color {
+      border-color: ${defaults.focusOutlineColor} !important;
+    }
+    .pm-default-theme .pm-input-button {
+      border-color: ${defaults.borderBackgroundColor};
+      background-color: ${defaults.backgroundColor};
+    }
+    .pm-default-theme .pm-placeholder-text-color {
+      color: ${defaults.placeholderTextColor} !important;
+    }
+    .pm-default-theme .pm-background-color *::selection {
+      background-color: ${defaults.selectionColor} !important;
+    }
+    .pm-default-theme .pm-find-text,
+    .pm-default-theme .pm-list-item-selected,
+    .pm-default-theme .pm-grid-item-selected {
+      background-color: ${defaults.findTextBackgroundColor} !important;
+      box-shadow: 0 0 0 1px ${defaults.findTextBorderColor}; 
+      border-radius: 3px;
+    }
+    .pm-default-theme .pm-rstudio-button {
+      border-color: DarkGray !important;
+    }
     .pm-cursor-color {
       caret-color: ${theme.cursorColor}
     }
@@ -147,6 +206,9 @@ export function applyTheme(theme: EditorTheme) {
     .pm-div-background-color {
       background-color: ${theme.divBackgroundColor} !important;
     }
+    .pm-nbsp-background-color {
+      background-color: ${theme.spanBackgroundColor} !important;
+    }
     .pm-comment-color {
       color: ${theme.commentColor} !important;
     }
@@ -162,18 +224,49 @@ export function applyTheme(theme: EditorTheme) {
     .pm-light-text-color {
       color: ${theme.lightTextColor} !important;
     }
+    .pm-placeholder-text-color {
+      color: ${theme.placeholderTextColor} !important;
+    }
+    .pm-invisible-text-color {
+      color: ${theme.invisibleTextColor} !important;
+    }
     .pm-link-text-color {
       color: ${theme.linkTextColor} !important;
     }
     .pm-markup-text-color {
       color: ${theme.markupTextColor} !important;
     }
-    .pm-find-text {
+    .pm-find-text,
+    .pm-list-item-selected,
+    .pm-grid-item-selected {
       background-color: ${theme.findTextBackgroundColor} !important;
-      outline: 1px solid ${theme.findTextBorderColor} !important;
+      box-shadow: 0 0 0 1px ${theme.findTextBorderColor}; 
+      border-radius: 3px;
     }
-    .pm-find-text-selected {
+    .pm-selected-text {
       background-color: ${theme.selectionColor} !important;
+    }
+    .pm-selected-list-item {
+      background-color: ${theme.findTextBackgroundColor} !important;
+      border: 1px solid ${theme.findTextBorderColor} !important;
+      border-radius: 3px;
+    }
+    .pm-dark-mode .pm-selected-list-item {
+      background-color: ${theme.chunkBackgroundColor} !important;
+      border: 1px solid transparent !important;
+    }
+    .pm-navigation-tree-item {
+      border: 1px solid ${theme.backgroundColor} !important;
+      border-radius: 3px;
+      margin-left: 2px;
+      margin-right: 2px;
+    }
+    .pm-selected-navigation-tree-item {
+      background-color: ${theme.findTextBackgroundColor} !important;
+      border: 1px solid ${theme.findTextBorderColor} !important;
+      border-radius: 3px;
+      margin-left: 2px;
+      margin-right: 2px;
     }
     .pm-border-background-color {
       background-color: ${theme.borderBackgroundColor}!important;
@@ -182,7 +275,7 @@ export function applyTheme(theme: EditorTheme) {
       border-color: ${theme.blockBorderColor} !important;
     }
     .pm-focus-outline-color {
-      outline-color: ${theme.focusOutlineColor} !important;
+      border-color: ${theme.focusOutlineColor} !important;
     }
     .pm-pane-border-color {
       border-color: ${theme.paneBorderColor} !important;
@@ -194,7 +287,7 @@ export function applyTheme(theme: EditorTheme) {
       border-color: ${theme.markupTextColor} !important;
     }
     .pm-popup {
-      box-shadow: 0 1px 3px ${theme.paneBorderColor} !important;
+      box-shadow: 0 1px 3px ${theme.blockBorderColor} !important;
     }
     .pm-selected-node-outline-color,
     .ProseMirror-selectednode {
@@ -216,9 +309,6 @@ export function applyTheme(theme: EditorTheme) {
     .pm-background-color *::-moz-selection {
       background-color: ${theme.selectionColor} !important;
     }
-    .ProseMirror .CodeMirror .CodeMirror-selectedtext  { 
-      background: none !important;
-    }
     .pm-fixedwidth-font {
       font-family: ${theme.fixedWidthFont} !important;
       font-size: ${theme.fixedWidthFontSizePt}pt !important;
@@ -227,47 +317,25 @@ export function applyTheme(theme: EditorTheme) {
       font-family: ${theme.proportionalFont} !important;
       font-size: ${theme.proportionalFontSizePt}pt !important;
     }
-    .CodeMirror,
-    .CodeMirror pre.CodeMirror-line, .CodeMirror pre.CodeMirror-line-like {
-      font-family: ${theme.fixedWidthFont};
-      font-size: ${theme.fixedWidthFontSizePt}pt !important;
+    .pm-input-text {
+      border-color: ${theme.paneBorderColor};
     }
-    .CodeMirror {
-      background: ${theme.backgroundColor};
+    .pm-input-button {
+      border-color: ${theme.borderBackgroundColor};
+      background-color: ${theme.backgroundColor};
     }
-    .CodeMirror-selected { background: none  ; }
-    .CodeMirror-focused .CodeMirror-selected { background: ${theme.selectionColor}  ; }
-    .CodeMirror-line::selection, .CodeMirror-line > span::selection, .CodeMirror-line > span > span::selection { background: ${theme.selectionColor}  ; }
-    .CodeMirror-line::-moz-selection, .CodeMirror-line > span::-moz-selection, .CodeMirror-line > span > span::-moz-selection { background: ${theme.selectionColor}  ; }
-    .CodeMirror-cursor { border-left-color: ${theme.cursorColor}; }
-    .CodeMirror pre.CodeMirror-line, .CodeMirror pre.CodeMirror-line-like  { color: ${theme.textColor}; }
-    .CodeMirror-gutters { 
-      border-right-color: ${theme.blockBorderColor} !important;
-      background-color: ${theme.gutterBackgroundColor} !important; 
+    .pm-input-outline-button {
+      color: ${theme.textColor};
+      border-color: ${theme.textColor};
+      background-color: ${theme.backgroundColor};
     }
-    .CodeMirror-linenumber { color: ${theme.gutterTextColor} !important; }
-    .cm-s-default .cm-keyword {color: ${theme.code.keywordColor};}
-    .cm-s-default .cm-atom {color: ${theme.code.atomColor};}
-    .cm-s-default .cm-number {color: ${theme.code.numberColor};}
-    .cm-s-default .cm-def {color: ${theme.code.defColor};}
-    .cm-s-default .cm-variable { color: ${theme.textColor}; }
-    .cm-s-default .cm-punctuation,
-    .cm-s-default .cm-property,
-    .cm-s-default .cm-operator {color: ${theme.code.operatorColor};}
-    .cm-s-default .cm-variable-2 { color: ${theme.textColor}; }
-    .cm-s-default .cm-variable-3, .cm-s-default .cm-type { color: ${theme.textColor}; }
-    .cm-s-default .cm-comment {color: ${theme.code.commentColor};}
-    .cm-s-default .cm-string {color: ${theme.code.stringColor};}
-    .cm-s-default .cm-string-2 {color: ${theme.code.stringColor};}
-    .cm-s-default .cm-meta {color: ${theme.code.metaColor};}
-    .cm-s-default .cm-qualifier {color:${theme.code.metaColor};}
-    .cm-s-default .cm-builtin {color: ${theme.code.builtinColor};}
-    .cm-s-default .cm-bracket {color: ${theme.code.bracketColor};}
-    .cm-s-default .cm-tag {color: ${theme.code.tagColor};}
-    .cm-s-default .cm-attribute {color: ${theme.code.attributeColor};}
-    .cm-s-default .cm-hr {color: ${theme.code.hrColor};}
-    .cm-s-default .cm-link {color:${theme.code.linkColor};}
-    .cm-s-default .cm-error {color: ${theme.code.errorColor};}
+    .pm-ace-first-line-meta .ace_text-layer .ace_line_group:first-child,
+    .pm-ace-first-line-meta .ace_text-layer .ace_line_group:first-child span {
+      color: ${theme.lightTextColor} !important;
+    }
+    .ProseMirror-gapcursor:after {
+      border-top: 1px solid ${theme.textColor};
+    }
   `;
 
   // set style

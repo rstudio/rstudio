@@ -25,7 +25,8 @@ namespace core {
 namespace file_utils {
 
 FilePath uniqueFilePath(const core::FilePath& parent,
-                        const std::string& prefix = "");
+                        const std::string& prefix = "",
+                        const std::string& extension = "");
 
 std::string readFile(const core::FilePath& filePath);
 

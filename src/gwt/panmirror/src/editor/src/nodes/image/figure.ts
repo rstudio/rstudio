@@ -14,18 +14,12 @@
  */
 
 import { Node as ProsemirrorNode, Schema, Fragment, ResolvedPos } from 'prosemirror-model';
-import { Plugin, PluginKey, EditorState, Transaction, NodeSelection } from 'prosemirror-state';
-import { EditorView } from 'prosemirror-view';
+import { Transaction } from 'prosemirror-state';
 import { Transform } from 'prosemirror-transform';
 
 import { findChildrenByType, findParentNodeClosestToPos } from 'prosemirror-utils';
 
-import { Extension } from '../../api/extension';
-import { EditorUI } from '../../api/ui';
-import { BaseKey } from '../../api/basekeys';
-import { exitNode } from '../../api/command';
-import { EditorOptions } from '../../api/options';
-import { EditorEvents } from '../../api/events';
+import { Extension, ExtensionContext } from '../../api/extension';
 import { FixupContext } from '../../api/fixup';
 import { isSingleLineHTML } from '../../api/html';
 import { getMarkAttrs } from '../../api/mark';
@@ -33,14 +27,11 @@ import {
   PandocToken,
   PandocTokenType,
   ProsemirrorWriter,
-  PandocExtensions,
   kRawBlockContent,
   kRawBlockFormat,
   imageAttributesAvailable,
 } from '../../api/pandoc';
-import { PandocCapabilities } from '../../api/pandoc_capabilities';
 import { trTransform } from '../../api/transaction';
-import { EditorFormat } from '../../api/format';
 
 import {
   imageAttrsFromDOM,
@@ -49,20 +40,15 @@ import {
   imagePandocOutputWriter,
   pandocImageHandler,
   imageAttrsFromHTML,
+  imageCommand,
 } from './image';
 import { inlineHTMLIsImage } from './image-util';
 import { imageNodeViewPlugins } from './image-view';
+import { figureKeys } from './figure-keys';
 
-const plugin = new PluginKey('figure');
+const extension = (context: ExtensionContext): Extension => {
+  const { pandocExtensions, ui, events } = context;
 
-const extension = (
-  pandocExtensions: PandocExtensions,
-  _pandocCapabilities: PandocCapabilities,
-  ui: EditorUI,
-  _format: EditorFormat,
-  _options: EditorOptions,
-  events: EditorEvents,
-): Extension | null => {
   const imageAttr = imageAttributesAvailable(pandocExtensions);
 
   return {
@@ -107,6 +93,7 @@ const extension = (
             const handleHTMLImage = (html: string) => {
               const attrs = imageAttrsFromHTML(html);
               if (attrs) {
+                attrs.raw = true;
                 writer.addNode(schema.nodes.figure, attrs, []);
                 return true;
               } else {
@@ -127,13 +114,18 @@ const extension = (
             }
           },
         },
+
+        attr_edit: () => ({
+          type: (schema: Schema) => schema.nodes.figure,
+          editFn: () => imageCommand(ui, imageAttr),
+        }),
       },
     ],
 
     fixups: (_schema: Schema) => {
       return [
-        (tr: Transaction, context: FixupContext) => {
-          if (context === FixupContext.Load) {
+        (tr: Transaction, fixupContext: FixupContext) => {
+          if (fixupContext === FixupContext.Load) {
             return convertImagesToFigure(tr);
           } else {
             return tr;
@@ -152,75 +144,13 @@ const extension = (
       ];
     },
 
-    baseKeys: (schema: Schema) => {
-      return [
-        { key: BaseKey.Enter, command: exitNode(schema.nodes.figure, -1, false) },
-        { key: BaseKey.Backspace, command: backspaceEmptyCaption() },
-        { key: BaseKey.Backspace, command: backspaceAfterFigure() }
-      ];
-    },
+    baseKeys: figureKeys,
 
-    plugins: (_schema: Schema) => imageNodeViewPlugins('figure', true, ui, events, pandocExtensions)
+    plugins: (schema: Schema) => {
+      return [...imageNodeViewPlugins('figure', ui, events, pandocExtensions)];
+    },
   };
 };
-
-export function backspaceEmptyCaption() {
-  return (state: EditorState, dispatch?: (tr: Transaction) => void) => {
-    // must be a selection within an empty caption
-    const schema = state.schema;
-    const { $head } = state.selection;
-    if ($head.parent.type !== schema.nodes.figure || $head.parent.childCount !== 0) {
-      return false;
-    }
-
-    if (dispatch) {
-      // set a node selection for the figure
-      const tr = state.tr;
-      tr.setSelection(NodeSelection.create(tr.doc, $head.pos - 1));
-      dispatch(tr);
-    }
-
-    return true;
-  };
-}
-
-export function backspaceAfterFigure() {
-  return (state: EditorState, dispatch?: (tr: Transaction) => void) => {
-
-    // must be an empty selection
-    const selection = state.selection;
-    if (!selection.empty) {
-      return false;
-    }
-
-    // must be a selection at the beginning of it's parent
-    const schema = state.schema;
-    const { $head } = state.selection;
-    const { parentOffset } = $head;
-    if (parentOffset !== 0) {
-      return false;
-    }
-
-    // check if the previous node is a figure
-    const parent = $head.node($head.depth - 1);
-    const parentIndex = $head.index($head.depth - 1);
-    if (parentIndex > 0) {
-      const previousNode = parent.child(parentIndex - 1);
-      if (previousNode.type === schema.nodes.figure) {
-        if (dispatch) {
-          const tr = state.tr;
-          const nodePos = selection.head - previousNode.nodeSize - 1;
-          const figureSelection = NodeSelection.create(state.doc, nodePos);
-          tr.setSelection(figureSelection);
-          dispatch(tr);
-        }
-        return true;
-      }
-    }
-  
-    return false;
-  };
-}
 
 export function posHasProhibitedFigureParent(schema: Schema, $pos: ResolvedPos) {
   return prohibitedFigureParents(schema).some(type => {

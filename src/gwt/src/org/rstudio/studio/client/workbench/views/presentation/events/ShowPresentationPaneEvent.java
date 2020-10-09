@@ -50,5 +50,5 @@ public class ShowPresentationPaneEvent extends GwtEvent<ShowPresentationPaneEven
 
    private final PresentationState presentationState_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

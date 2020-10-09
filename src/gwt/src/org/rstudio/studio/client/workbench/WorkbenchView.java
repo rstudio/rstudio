@@ -24,4 +24,5 @@ public interface WorkbenchView
    void onBeforeUnselected();
    void onBeforeSelected();
    void onSelected();
+   void setFocus();
 }

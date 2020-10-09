@@ -1,0 +1,25 @@
+{
+  "$id": "http://rstudio.org/schemas/zotero-groups.json",
+  "$schema": "http://json-schema.org/schema#",
+  "title": "Zotero Groups Metadata Schema",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "number"
+      },
+      "version": {
+        "type": "number"
+      },
+      "data": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

@@ -24,17 +24,17 @@ public class ExecuteUserCommandEvent
    {
       void onExecuteUserCommand(ExecuteUserCommandEvent event);
    }
-   
+
    public ExecuteUserCommandEvent(String commandName)
    {
       name_ = commandName;
    }
-   
+
    public String getCommandName()
    {
       return name_;
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -46,9 +46,9 @@ public class ExecuteUserCommandEvent
    {
       handler.onExecuteUserCommand(this);
    }
-   
+
    private final String name_;
-   public static final Type<Handler> TYPE = new Type<Handler>();
-   
+   public static final Type<Handler> TYPE = new Type<>();
+
 
 }

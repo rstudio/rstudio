@@ -131,7 +131,7 @@ public class ObjectExplorerEditingTarget
    @Override
    public void popoutDoc()
    {
-      events_.fireEvent(new PopoutDocEvent(getId(), null));
+      events_.fireEvent(new PopoutDocEvent(getId(), null, null));
    }
    
    @Override
@@ -168,7 +168,7 @@ public class ObjectExplorerEditingTarget
          view_ = null;
       }
       
-      view_ = new ObjectExplorerEditingTargetWidget(getHandle(), doc_);
+      view_ = new ObjectExplorerEditingTargetWidget(getHandle(), doc_, column_);
       view_.setSize("100%", "100%");
       progressPanel_.setWidget(view_);
    }

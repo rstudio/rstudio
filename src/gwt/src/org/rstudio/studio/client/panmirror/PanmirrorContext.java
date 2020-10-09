@@ -15,11 +15,12 @@
 
 package org.rstudio.studio.client.panmirror;
 
-import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocEngine;
+import org.rstudio.studio.client.panmirror.server.PanmirrorServer;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUI;
+import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunks;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIContext;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIDisplay;
-import org.rstudio.studio.client.panmirror.ui.PanmirrorUIExecute;
+import org.rstudio.studio.client.panmirror.ui.PanmirrorUISpelling;
 
 import elemental2.core.JsObject;
 import jsinterop.annotations.JsType;
@@ -29,13 +30,14 @@ public class PanmirrorContext
 {  
    public PanmirrorContext(PanmirrorUIContext uiContext, 
                            PanmirrorUIDisplay uiDisplay,
-                           PanmirrorUIExecute uiExecute)
+                           PanmirrorUIChunks uiChunks,
+                           PanmirrorUISpelling uiSpelling)
    {
-      ui = new PanmirrorUI(uiContext, uiDisplay, uiExecute);
+      this.ui = new PanmirrorUI(uiContext, uiDisplay, uiChunks, uiSpelling); 
    }
    
    public PanmirrorUI ui;
-   public PanmirrorPandocEngine pandoc = new PanmirrorPandocEngine();
+   public PanmirrorServer server = new PanmirrorServer();
    public PanmirrorHooks hooks = new PanmirrorHooks();
    public JsObject[] extensions = null;
 }

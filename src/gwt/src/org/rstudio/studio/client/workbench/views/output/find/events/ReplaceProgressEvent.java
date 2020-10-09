@@ -68,7 +68,7 @@ public class ReplaceProgressEvent extends GwtEvent<ReplaceProgressEvent.Handler>
       handler.onReplaceProgress(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
-   private int totalReplaceCount_;
-   private int replacedCount_;
+   public static final Type<Handler> TYPE = new Type<>();
+   private final int totalReplaceCount_;
+   private final int replacedCount_;
 }

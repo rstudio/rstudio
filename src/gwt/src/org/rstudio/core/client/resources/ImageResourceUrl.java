@@ -27,7 +27,7 @@ public class ImageResourceUrl implements ImageResource
       width_ = width;
       height_ = height;
    }
-   
+
    @Override
    public String getName()
    {
@@ -84,9 +84,9 @@ public class ImageResourceUrl implements ImageResource
       sb.appendHtmlConstant("<img src=\"");
       sb.appendHtmlConstant(getSafeUri().asString());
       sb.appendHtmlConstant("\" width=\"");
-      sb.appendHtmlConstant(new Integer(getWidth()).toString());
+      sb.appendHtmlConstant(Integer.valueOf(getWidth()).toString());
       sb.appendHtmlConstant("\" height=\"");
-      sb.appendHtmlConstant(new Integer(getHeight()).toString());
+      sb.appendHtmlConstant(Integer.valueOf(getHeight()).toString());
       sb.appendHtmlConstant("\">");
 
       return sb.toSafeHtml();

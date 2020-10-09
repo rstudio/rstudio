@@ -50,7 +50,12 @@ public class LauncherJobsPaneWidgets implements JobsPaneOperations
    public void removeProgressWidget()
    {
    }
-   
+
+   @Override
+   public void focus()
+   {
+   }
+
    @Override
    public String getCurrent()
    {

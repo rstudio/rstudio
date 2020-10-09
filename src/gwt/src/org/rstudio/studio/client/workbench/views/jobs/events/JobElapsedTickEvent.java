@@ -23,7 +23,7 @@ public class JobElapsedTickEvent extends GwtEvent<JobElapsedTickEvent.Handler>
    {
       void onJobElapsedTick(JobElapsedTickEvent event);
    }
-   
+
    public JobElapsedTickEvent(int timestamp)
    {
       timestamp_ = timestamp;
@@ -33,7 +33,7 @@ public class JobElapsedTickEvent extends GwtEvent<JobElapsedTickEvent.Handler>
    {
       return timestamp_;
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -48,5 +48,5 @@ public class JobElapsedTickEvent extends GwtEvent<JobElapsedTickEvent.Handler>
 
    private final int timestamp_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

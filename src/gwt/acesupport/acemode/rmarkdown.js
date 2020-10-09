@@ -32,6 +32,7 @@ var CppMatchingBraceOutdent = require("mode/c_cpp_matching_brace_outdent").CppMa
 
 var RCodeModel = require("mode/r_code_model").RCodeModel;
 var CppCodeModel = require("mode/cpp_code_model").CppCodeModel;
+var PythonMode = require("mode/python").Mode;
 
 var RMarkdownFoldMode = require("rstudio/folding/rmarkdown").FoldMode;
 var CFoldMode = require("ace/mode/folding/cstyle").FoldMode;
@@ -65,6 +66,8 @@ var Mode = function(suppressHighlighting, session) {
       new RegExp(RMarkdownHighlightRules.prototype.$reChunkEndString)
    );
    this.$cpp_outdent = new CppMatchingBraceOutdent(this.cpp_codeModel);
+
+   this.$python = new PythonMode();
 
    var rMarkdownFoldingRules = new RMarkdownFoldMode();
    var cFoldingRules = new CFoldMode();
@@ -156,6 +159,8 @@ oop.inherits(Mode, MarkdownMode);
          return this.cpp_codeModel.getNextLineIndent(state, line, tab, row, dontSubset);
       else if (mode === "yaml")
          return this.$getIndent(this.$session.getLine(row + 1));
+      else if (mode === "python")
+         return this.$python.getNextLineIndent(state, line, tab, row);
       else
          return this.$getNextLineIndent(state, line, tab);
    };
@@ -182,19 +187,73 @@ oop.inherits(Mode, MarkdownMode);
          return this.$cpp_outdent.autoOutdent(state, session, row);
       else if (mode === "yaml")
          return;
+      else if (mode === "python")
+         return this.$python.autoOutdent(state, session, row);
       else
          return this.$outdent.autoOutdent(session, row);
    };
 
-   this.transformAction = function(state, action, editor, session, text) {
+   this.transformAction = function(state, action, editor, session, text)
+   {
       var mode = activeMode(state);
-      if (mode === "r-cpp")
+      if (mode === "markdown")
+         return this.transformActionMarkdown(state, action, editor, session, text);
+      else if (mode === "r-cpp")
          return this.transformActionCpp(state, action, editor, session, text);
       else if (mode === "yaml")
          return this.transformActionYaml(state, action, editor, session, text);
+      else if (mode === "python")
+         return this.$python.transformAction(state, action, editor, session, text);
       else
          return false;
    };
+
+   this.transformActionMarkdown = function(state, action, editor, session, text) {
+
+      if (action === "insertion")
+      {
+         // if the user is typing '`r', complete the closing backtick
+         if (text === "r")
+         {
+            var pos = editor.getCursorPosition();
+            var line = session.getLine(pos.row);
+            var token = session.getTokenAt(pos.row, pos.column - 1);
+
+            // validate that we're not already working within an inline chunk --
+            // check the token at cursor position for 'support.function' type
+            // to confirm
+            if (token !== null &&
+                token.type.indexOf("support.function") === -1 &&
+                line[pos.column - 1] === "`")
+            {
+               return {
+                  text: "r`",
+                  selection: [0, pos.column + 1, 0, pos.column + 1]
+               };
+            }
+         }
+
+         // skip over '`' if it ends an inline R chunk
+         else if (text === "`")
+         {
+            var pos = editor.getCursorPosition();
+            var token = session.getTokenAt(pos.row, pos.column + 1);
+
+            // validate that we are working within an inline chunk --
+            // only skip '`' if that appears to be the case
+            if (token != null &&
+                token.value === "`" &&
+                token.type.indexOf("support.function") !== -1)
+            {
+               return {
+                  text: "",
+                  selection: [0, pos.column + 1, 0, pos.column + 1]
+               };
+            }
+         }
+      }
+
+   }
 
    this.transformActionCpp = function(state, action, editor, session, text) {
 

@@ -18,6 +18,11 @@ Installation of Qt SDK
 To build RStudio Desktop, install Qt from https://qt.io. Include the
 QtWebEngine component.
 
+If the required version isn't showing up when installing via the Qt online
+installer click the "Archive" checkbox on the "Select Components" screen, then 
+the Filter button. The list of available versions will expand to include older 
+versions.
+
 Installing Dependencies for Debian/Ubuntu, Fedora, RedHat/CentOS, or OpenSUSE
 =============================================================================
 

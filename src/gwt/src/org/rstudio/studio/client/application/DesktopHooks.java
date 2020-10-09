@@ -20,6 +20,9 @@ import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.rstudio.core.client.SerializedCommand;
 import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.StringUtil;
@@ -31,6 +34,7 @@ import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.LauncherServerEvent;
+import org.rstudio.studio.client.application.events.MouseNavigateSourceHistoryEvent;
 import org.rstudio.studio.client.application.events.SaveActionChangedEvent;
 import org.rstudio.studio.client.application.events.SuicideEvent;
 import org.rstudio.studio.client.application.model.ProductEditionInfo;
@@ -44,7 +48,6 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
-import org.rstudio.studio.client.workbench.views.source.Source;
 
 /**
  * Any methods on this class are automatically made available to the
@@ -66,7 +69,6 @@ public class DesktopHooks
                        Server server,
                        FileTypeRegistry fileTypeRegistry,
                        WorkbenchContext workbenchContext,
-                       Source source,
                        ProductEditionInfo editionInfo)
    {
       commands_ = commands;
@@ -77,7 +79,6 @@ public class DesktopHooks
       server_ = server;
       fileTypeRegistry_ = fileTypeRegistry;
       workbenchContext_ = workbenchContext;
-      source_ = source;
       editionInfo_ = editionInfo;
       
       events_.addHandler(SaveActionChangedEvent.TYPE, saveActionChangedEvent ->
@@ -254,6 +255,23 @@ public class DesktopHooks
       events_.fireEvent(new LauncherServerEvent(type, details));
    }
 
+   void mouseNavigateButtonClick(boolean forward, int x, int y)
+   {
+      events_.fireEvent(new MouseNavigateSourceHistoryEvent(forward, x, y));
+   }
+   
+   void onDragStart()
+   {
+      workbenchContext_.setDroppedUrls(null);
+   }
+   
+   void onUrlsDropped(String droppedUrls)
+   {   
+      final String kUrlSeparator = "26D63FFA-995F-4E9A-B4AA-04DA9F93B538";
+      List<String> urls = Arrays.asList(droppedUrls.split(kUrlSeparator));
+      workbenchContext_.setDroppedUrls(urls); 
+   }
+
    private final Commands commands_;
    private final EventBus events_;
    private final Session session_;
@@ -262,7 +280,6 @@ public class DesktopHooks
    private final Server server_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final WorkbenchContext workbenchContext_;
-   private final Source source_;
    private final SerializedCommandQueue commandQueue_ = 
                                          new SerializedCommandQueue();
    private final ProductEditionInfo editionInfo_;

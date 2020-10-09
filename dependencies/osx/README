@@ -22,6 +22,11 @@ the macOS and QtWebEngine components.
 
 - https://www.qt.io/
 
+If required version isn't showing up when installing via the Qt online 
+installer click the "Archive" checkbox on the "Select Components" screen, 
+then the Filter button. The list of available versions will expand to include 
+older versions.
+
 
 Satisfy Additional Dependencies
 =============================================================================

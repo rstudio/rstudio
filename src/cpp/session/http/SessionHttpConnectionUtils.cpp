@@ -41,6 +41,16 @@
 
 namespace rstudio {
 namespace session {
+namespace console_input {
+
+bool executing();
+
+}
+}
+}
+
+namespace rstudio {
+namespace session {
 
 void HttpConnection::sendJsonRpcError(const core::Error& error)
 {
@@ -51,7 +61,7 @@ void HttpConnection::sendJsonRpcError(const core::Error& error)
 
 void HttpConnection::sendJsonRpcResponse()
 {
-   core::json::JsonRpcResponse jsonRpcResponse ;
+   core::json::JsonRpcResponse jsonRpcResponse;
    sendJsonRpcResponse(jsonRpcResponse);
 }
 
@@ -59,7 +69,7 @@ void HttpConnection::sendJsonRpcResponse(
                      const core::json::JsonRpcResponse& jsonRpcResponse)
 {
    // setup response
-   core::http::Response response ;
+   core::http::Response response;
 
    // automagic gzip support
    if (request().acceptsEncoding(core::http::kGzipEncoding))
@@ -248,11 +258,24 @@ bool checkForInterrupt(boost::shared_ptr<HttpConnection> ptrConnection)
       // to ensure that the R session always receives an interrupt, we explicitly
       // set the interrupt flag even though the normal interrupt handler would do
       // the same.
-      r::exec::setInterruptsPending(true);
-      core::system::interrupt();
+      //
+      // NOTE: if the R session is currently waiting for input via stdin, then
+      // a plain interrupt will not be sufficient to stop the read. it's not
+      // immediately clear why this is the case, but if we detect this case then
+      // we avoid sending an interrupt, and instead tell the client that R is not
+      // busy and it should instead send an explicit request to canncel the current
+      // console read request.
+      bool busy = session::console_input::executing();
+      if (busy)
+      {
+         r::exec::setInterruptsPending(true);
+         core::system::interrupt();
+      }
 
-      // acknowledge request
-      ptrConnection->sendJsonRpcResponse();
+      // send response
+      json::JsonRpcResponse response;
+      response.setResult(busy);
+      ptrConnection->sendJsonRpcResponse(response);
    }
 
    return true;

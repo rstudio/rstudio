@@ -16,22 +16,42 @@
 import { inputRules } from 'prosemirror-inputrules';
 import { keydownHandler } from 'prosemirror-keymap';
 import { Node as ProsemirrorNode, Schema, DOMParser, ParseOptions } from 'prosemirror-model';
-import { EditorState, Plugin, PluginKey, Transaction } from 'prosemirror-state';
+import { EditorState, Plugin, PluginKey, TextSelection, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import 'prosemirror-view/style/prosemirror.css';
 
-import { setTextSelection, findChildrenByType } from 'prosemirror-utils';
+import { setTextSelection } from 'prosemirror-utils';
 
+import { citeUI } from '../api/cite';
 import { EditorOptions } from '../api/options';
 import { ProsemirrorCommand, CommandFn, EditorCommand } from '../api/command';
-import { findTopLevelBodyNodes } from '../api/node';
-import { EditorUI, attrPropsToInput, attrInputToProps, AttrProps, AttrEditInput } from '../api/ui';
+import { EditorUI } from '../api/ui';
+import {
+  attrPropsToInput,
+  attrInputToProps,
+  AttrProps,
+  AttrEditInput,
+  InsertCiteProps,
+  InsertCiteUI,
+} from '../api/ui-dialogs';
+
 import { Extension } from '../api/extension';
-import { ExtensionManager, initExtensions } from './editor-extensions';
-import { PandocEngine, PandocWriterOptions } from '../api/pandoc';
+import { PandocWriterOptions } from '../api/pandoc';
 import { PandocCapabilities, getPandocCapabilities } from '../api/pandoc_capabilities';
 import { fragmentToHTML } from '../api/html';
-import { EditorEvent } from '../api/events';
+import { DOMEditorEvents, EventType, EventHandler } from '../api/events';
+import {
+  ScrollEvent,
+  UpdateEvent,
+  OutlineChangeEvent,
+  StateChangeEvent,
+  ResizeEvent,
+  LayoutEvent,
+  FocusEvent,
+  DispatchEvent,
+  NavigateEvent,
+  BlurEvent,
+} from '../api/event-types';
 import {
   PandocFormat,
   resolvePandocFormat,
@@ -47,18 +67,25 @@ import {
   kAddToHistoryTransaction,
   kSetMarkdownTransaction,
 } from '../api/transaction';
-import { EditorOutline, outlineNodes } from '../api/outline';
-import { EditingLocation, getEditingLocation, EditingOutlineLocation, setEditingLocation } from '../api/location';
-import { navigateTo } from '../api/navigation';
+import { EditorOutline, getOutlineNodes, EditingOutlineLocation, getEditingOutlineLocation } from '../api/outline';
+import { EditingLocation, getEditingLocation, setEditingLocation } from '../api/location';
+import { navigateTo, NavigationType } from '../api/navigation';
 import { FixupContext } from '../api/fixup';
 import { unitToPixels, pixelsToUnit, roundUnit, kValidUnits } from '../api/image';
 import { kPercentUnit } from '../api/css';
 import { EditorFormat } from '../api/format';
 import { diffChars, EditorChange } from '../api/change';
 import { markInputRuleFilter } from '../api/input_rule';
+import { editorMath } from '../api/math';
+import { EditorEvents } from '../api/events';
+import { insertRmdChunk } from '../api/rmd';
+import { EditorServer } from '../api/server';
+import { pandocAutoIdentifier } from '../api/pandoc_id';
+import { wrapSentences } from '../api/wrap';
+import { yamlFrontMatter, applyYamlFrontMatter } from '../api/yaml';
+import { EditorSpellingDoc } from '../api/spelling';
 
 import { getTitle, setTitle } from '../nodes/yaml_metadata/yaml_metadata-title';
-
 import { getOutline } from '../behaviors/outline';
 import {
   FindOptions,
@@ -73,32 +100,46 @@ import {
   selectCurrent,
 } from '../behaviors/find';
 
-import { PandocConverter } from '../pandoc/pandoc_converter';
+import { omniInsertExtension } from '../behaviors/omni_insert/omni_insert';
+import { completionExtension } from '../behaviors/completion/completion';
 
+import { getSpellingDoc } from '../behaviors/spelling/spelling-interactive';
+import { realtimeSpellingPlugin, invalidateAllWords, invalidateWord } from '../behaviors/spelling/spelling-realtime';
+
+import { PandocConverter, PandocLineWrapping } from '../pandoc/pandoc_converter';
+
+import { ExtensionManager, initExtensions } from './editor-extensions';
 import { defaultTheme, EditorTheme, applyTheme, applyPadding } from './editor-theme';
 import { defaultEditorUIImages } from './editor-images';
 import { editorMenus, EditorMenus } from './editor-menus';
 import { editorSchema } from './editor-schema';
 
-// import styles
+// import styles before extensions so they can be overriden by extensions
 import './styles/frame.css';
 import './styles/styles.css';
 
 export interface EditorCode {
   code: string;
-  cursor?: { row: number; column: number };
+  selection_only: boolean;
+  location: EditingOutlineLocation;
 }
 
 export interface EditorSetMarkdownResult {
   // editor view of markdown (as it will be persisted)
   canonical: string;
 
+  // line wrapping
+  line_wrapping: PandocLineWrapping;
+
   // unrecoginized pandoc tokens
   unrecognized: string[];
+
+  // unparsed meta
+  unparsed_meta: { [key: string]: any };
 }
 
 export interface EditorContext {
-  readonly pandoc: PandocEngine;
+  readonly server: EditorServer;
   readonly ui: EditorUI;
   readonly hooks?: EditorHooks;
   readonly extensions?: readonly Extension[];
@@ -135,6 +176,7 @@ export { EditorCommandId as EditorCommands } from '../api/command';
 export interface UIToolsAttr {
   propsToInput(attr: AttrProps): AttrEditInput;
   inputToProps(input: AttrEditInput): AttrProps;
+  pandocAutoIdentifier(text: string): string;
 }
 
 export interface UIToolsImage {
@@ -153,16 +195,22 @@ export interface UIToolsSource {
   diffChars(from: string, to: string, timeout: number): EditorChange[];
 }
 
+export interface UIToolsCitation {
+  citeUI(citeProps: InsertCiteProps): InsertCiteUI;
+}
+
 export class UITools {
   public readonly attr: UIToolsAttr;
   public readonly image: UIToolsImage;
   public readonly format: UIToolsFormat;
   public readonly source: UIToolsSource;
+  public readonly citation: UIToolsCitation;
 
   constructor() {
     this.attr = {
       propsToInput: attrPropsToInput,
       inputToProps: attrInputToProps,
+      pandocAutoIdentifier: (text: string) => pandocAutoIdentifier(text, false),
     };
 
     this.image = {
@@ -180,6 +228,10 @@ export class UITools {
     this.source = {
       diffChars,
     };
+
+    this.citation = {
+      citeUI,
+    };
   }
 }
 
@@ -189,6 +241,7 @@ export class Editor {
   // core context passed from client
   private readonly parent: HTMLElement;
   private readonly context: EditorContext;
+  private readonly events: EditorEvents;
 
   // options (derived from defaults + config)
   private readonly options: EditorOptions;
@@ -217,11 +270,7 @@ export class Editor {
   private minContentPadding = 0;
 
   // keep track of whether the last transaction was selection-only
-  // (indicates that we should use a cursorSentinel when going to source mode)
   private lastTrSelectionOnly = false;
-
-  // event sinks
-  private readonly events: ReadonlyMap<string, Event>;
 
   // create the editor -- note that the markdown argument does not substitute for calling
   // setMarkdown, rather it's used to read the format comment to determine how to
@@ -236,7 +285,7 @@ export class Editor {
     options = {
       autoFocus: false,
       spellCheck: false,
-      codemirror: false,
+      codeEditor: 'codemirror',
       rmdImagePreview: false,
       hideFormatComment: false,
       className: '',
@@ -245,8 +294,8 @@ export class Editor {
 
     // provide format defaults
     format = {
-      pandocMode: 'markdown',
-      pandocExtensions: '',
+      pandocMode: format.pandocMode || 'markdown',
+      pandocExtensions: format.pandocExtensions || '',
       rmdExtensions: {
         codeChunks: false,
         bookdownXRef: false,
@@ -259,27 +308,35 @@ export class Editor {
         shortcodes: false,
         ...format.hugoExtensions,
       },
-      docTypes: [],
-      ...format,
+      docTypes: format.docTypes || [],
     };
 
     // provide context defaults
+    const defaultImages = defaultEditorUIImages();
     context = {
       ...context,
       ui: {
         ...context.ui,
         images: {
-          ...defaultEditorUIImages(),
+          ...defaultImages,
           ...context.ui.images,
+          omni_insert: {
+            ...defaultImages.omni_insert,
+            ...context.ui.images,
+          },
+          citations: {
+            ...defaultImages.citations,
+            ...context.ui.images,
+          },
         },
       },
     };
 
     // resolve the format
-    const pandocFmt = await resolvePandocFormat(context.pandoc, format);
+    const pandocFmt = await resolvePandocFormat(context.server.pandoc, format);
 
     // get pandoc capabilities
-    const pandocCapabilities = await getPandocCapabilities(context.pandoc);
+    const pandocCapabilities = await getPandocCapabilities(context.server.pandoc);
 
     // create editor
     const editor = new Editor(parent, context, options, format, pandocFmt, pandocCapabilities);
@@ -298,6 +355,7 @@ export class Editor {
   ) {
     // initialize references
     this.parent = parent;
+    this.events = new DOMEditorEvents(parent);
     this.context = context;
     this.options = options;
     this.format = format;
@@ -305,14 +363,21 @@ export class Editor {
     this.pandocFormat = pandocFormat;
     this.pandocCapabilities = pandocCapabilities;
 
-    // initialize custom events
-    this.events = this.initEvents();
-
-    // create extensions
+    // create core extensions
     this.extensions = this.initExtensions();
 
     // create schema
     this.schema = editorSchema(this.extensions);
+
+    // register completion handlers (done in a separate step b/c omni insert
+    // completion handlers require access to the initializezd commands that
+    // carry omni insert info)
+    this.registerCompletionExtension();
+
+    // register realtime spellchecking (done in a separate step b/c it
+    // requires access to PandocMark definitions to determine which
+    // marks to exclude from spellchecking)
+    this.registerRealtimeSpelling();
 
     // create state
     this.state = EditorState.create({
@@ -352,7 +417,12 @@ export class Editor {
     this.applyTheme(defaultTheme());
 
     // create pandoc translator
-    this.pandocConverter = new PandocConverter(this.schema, this.extensions, context.pandoc, this.pandocCapabilities);
+    this.pandocConverter = new PandocConverter(
+      this.schema,
+      this.extensions,
+      context.server.pandoc,
+      this.pandocCapabilities,
+    );
 
     // focus editor immediately if requested
     if (this.options.autoFocus) {
@@ -375,7 +445,7 @@ export class Editor {
         () => {
           if (!ticking) {
             window.requestAnimationFrame(() => {
-              this.emitEvent(EditorEvent.Scroll);
+              this.emitEvent(ScrollEvent);
               ticking = false;
             });
             ticking = true;
@@ -390,15 +460,12 @@ export class Editor {
     this.view.destroy();
   }
 
-  public subscribe(event: EditorEvent, handler: VoidFunction): VoidFunction {
-    if (!this.events.has(event)) {
-      const valid = Array.from(this.events.keys()).join(', ');
-      throw new Error(`Unknown event ${event}. Valid events are ${valid}`);
+  public subscribe<TDetail>(event: EventType<TDetail> | string, handler: EventHandler<TDetail>): VoidFunction {
+    if (typeof event === 'string') {
+      return this.events.subscribe({ eventName: event }, handler);
+    } else {
+      return this.events.subscribe(event, handler);
     }
-    this.parent.addEventListener(event, handler);
-    return () => {
-      this.parent.removeEventListener(event, handler);
-    };
   }
 
   public setTitle(title: string) {
@@ -414,11 +481,11 @@ export class Editor {
     emitUpdate: boolean,
   ): Promise<EditorSetMarkdownResult> {
     // get the result
-    const result = await this.pandocConverter.toProsemirror(markdown, this.pandocFormat.fullName);
-    const { doc, unrecognized } = result;
+    const result = await this.pandocConverter.toProsemirror(markdown, this.pandocFormat);
+    const { doc, line_wrapping, unrecognized, unparsed_meta } = result;
 
     // if we are preserving history but the existing doc is empty then create a new state
-    // (resets the undo stack so that the intial setting of the document can't be undone)
+    // (resets the undo stack so that the initial setting of the document can't be undone)
     if (this.isInitialDoc()) {
       this.state = EditorState.create({
         schema: this.state.schema,
@@ -427,6 +494,9 @@ export class Editor {
       });
       this.view.updateState(this.state);
     } else {
+      // note current editing location
+      const location = this.getEditingLocation();
+
       // replace the top level nodes in the doc
       const tr = this.state.tr;
       tr.setMeta(kSetMarkdownTransaction, true);
@@ -437,9 +507,10 @@ export class Editor {
         i++;
         return false;
       });
-      // set selection to the beginning of the doc
-      const bodyNode = findChildrenByType(tr.doc, this.schema.nodes.body)[0];
-      setTextSelection(bodyNode.pos)(tr);
+      // set selection to previous location if it's still valid
+      if (location.pos < tr.doc.nodeSize) {
+        setTextSelection(location.pos)(tr);
+      }
       // dispatch
       this.view.dispatch(tr);
     }
@@ -449,19 +520,22 @@ export class Editor {
 
     // notify listeners if requested
     if (emitUpdate) {
-      this.emitEvent(EditorEvent.Update);
-      this.emitEvent(EditorEvent.OutlineChange);
-      this.emitEvent(EditorEvent.SelectionChange);
+      this.emitEvent(UpdateEvent);
+      this.emitEvent(OutlineChangeEvent);
+      this.emitEvent(StateChangeEvent);
     }
 
     // return our current markdown representation (so the caller know what our
     // current 'view' of the doc as markdown looks like
-    const canonical = await this.getMarkdownCode(this.state.doc, options);
+    const getMarkdownTr = this.state.tr;
+    const canonical = await this.getMarkdownCode(getMarkdownTr, options);
 
     // return
     return {
       canonical,
+      line_wrapping,
       unrecognized,
+      unparsed_meta,
     };
   }
 
@@ -473,17 +547,16 @@ export class Editor {
   }
 
   public async getMarkdown(options: PandocWriterOptions): Promise<EditorCode> {
-    // do we need the cursor sentinel?
-    const useCursorSentinel = this.lastTrSelectionOnly;
-
-    // insert cursor sentinel if appropriate
-    const target = useCursorSentinel ? docWithCursorSentinel(this.state) : { doc: this.state.doc, sentinel: null };
-
     // get the code
-    const code = await this.getMarkdownCode(target.doc, options);
+    const tr = this.state.tr;
+    const code = await this.getMarkdownCode(tr, options);
 
-    // return
-    return codeWithCursor(code, target.sentinel);
+    // return code + perhaps outline location
+    return {
+      code,
+      selection_only: this.lastTrSelectionOnly,
+      location: getEditingOutlineLocation(this.state),
+    };
   }
 
   public getHTML(): string {
@@ -512,7 +585,7 @@ export class Editor {
   }
 
   public getOutline(): EditorOutline {
-    return getOutline(this.state);
+    return getOutline(this.state) || [];
   }
 
   public getFindReplace(): EditorFindReplace {
@@ -529,12 +602,24 @@ export class Editor {
     };
   }
 
+  public getSpellingDoc(): EditorSpellingDoc {
+    return getSpellingDoc(this.view, this.extensions.pandocMarks(), this.context.ui.spelling);
+  }
+
+  public spellingInvalidateAllWords() {
+    invalidateAllWords(this.view);
+  }
+
+  public spellingInvalidateWord(word: string) {
+    invalidateWord(this.view, word);
+  }
+
   // get a canonical version of the passed markdown. this method doesn't mutate the
   // visual editor's state/view (it's provided as a performance optimiation for when
   // source mode is configured to save a canonical version of markdown)
   public async getCanonical(markdown: string, options: PandocWriterOptions): Promise<string> {
     // convert to prosemirror doc
-    const result = await this.pandocConverter.toProsemirror(markdown, this.pandocFormat.fullName);
+    const result = await this.pandocConverter.toProsemirror(markdown, this.pandocFormat);
 
     // create a state for this doc
     const state = EditorState.create({
@@ -548,7 +633,44 @@ export class Editor {
     this.extensionFixups(tr, FixupContext.Load);
 
     // return markdown (will apply save fixups)
-    return this.getMarkdownCode(tr.doc, options);
+    return this.getMarkdownCode(tr, options);
+  }
+
+  public getSelectedText(): string {
+    return this.state.doc.textBetween(this.state.selection.from, this.state.selection.to);
+  }
+
+  public replaceSelection(value: string): void {
+    // retrieve properties we need from selection
+    const { from, empty } = this.view.state.selection;
+
+    // retrieve selection marks
+    const marks = this.view.state.selection.$from.marks();
+
+    // insert text
+    const tr = this.view.state.tr.replaceSelectionWith(this.view.state.schema.text(value, marks), false);
+    this.view.dispatch(tr);
+
+    // update selection if necessary
+    if (!empty) {
+      const sel = TextSelection.create(this.view.state.doc, from, from + value.length);
+      const trSetSel = this.view.state.tr.setSelection(sel);
+      this.view.dispatch(trSetSel);
+    }
+  }
+
+  public getYamlFrontMatter() {
+    if (this.schema.nodes.yaml_metadata) {
+      return yamlFrontMatter(this.view.state.doc);
+    } else {
+      return '';
+    }
+  }
+
+  public applyYamlFrontMatter(yaml: string) {
+    if (this.schema.nodes.yaml_metadata) {
+      applyYamlFrontMatter(this.view, yaml);
+    }
   }
 
   public focus() {
@@ -559,14 +681,29 @@ export class Editor {
     (this.view.dom as HTMLElement).blur();
   }
 
-  public navigate(id: string) {
-    navigateTo(this.view, node => id === node.attrs.navigation_id, false);
+  public insertChunk(chunkPlaceholder: string, rowOffset: number, colOffset: number) {
+    const insertCmd = insertRmdChunk(chunkPlaceholder, rowOffset, colOffset);
+    insertCmd(this.view.state, this.view.dispatch, this.view);
+    this.focus();
+  }
+
+  public navigate(type: NavigationType, location: string, recordCurrent = true, animate = false) {
+    // perform navigation
+    const nav = navigateTo(this.view, type, location, animate);
+
+    // emit event
+    if (nav !== null) {
+      if (!recordCurrent) {
+        nav.prevPos = -1;
+      }
+      this.emitEvent(NavigateEvent, nav);
+    }
   }
 
   public resize() {
     this.syncContentWidth();
     this.applyFixupsOnResize();
-    this.emitEvent(EditorEvent.Resize);
+    this.emitEvent(ResizeEvent);
   }
 
   public enableDevTools(initFn: (view: EditorView, stateClass: any) => void) {
@@ -581,7 +718,7 @@ export class Editor {
     // get keybindings (merge user + default)
     const commandKeys = this.commandKeys();
 
-    return this.extensions.commands(this.schema, this.context.ui).map((command: ProsemirrorCommand) => {
+    return this.extensions.commands(this.schema).map((command: ProsemirrorCommand) => {
       return {
         id: command.id,
         keymap: commandKeys[command.id],
@@ -599,8 +736,9 @@ export class Editor {
   }
 
   public applyTheme(theme: EditorTheme) {
-    // set global dark mode class
+    // set global mode classes
     this.parent.classList.toggle('pm-dark-mode', !!theme.darkMode);
+    this.parent.classList.toggle('pm-solarized-mode', !!theme.solarizedMode);
     // apply the rest of the theme
     applyTheme(theme);
   }
@@ -619,6 +757,10 @@ export class Editor {
       schema: this.state.schema,
       plugins: this.createPlugins(),
     });
+  }
+
+  public getEditorFormat() {
+    return this.format;
   }
 
   public getPandocFormat() {
@@ -640,53 +782,72 @@ export class Editor {
     this.state = this.state.apply(tr);
     this.view.updateState(this.state);
 
-    // notify listeners of selection change
-    this.emitEvent(EditorEvent.SelectionChange);
+    // notify listeners of state change
+    this.emitEvent(StateChangeEvent);
 
     // notify listeners of updates
     if (tr.docChanged || tr.storedMarksSet) {
       // fire updated (unless this was a fixup)
       if (!tr.getMeta(kFixupTransaction)) {
-        this.emitEvent(EditorEvent.Update);
+        this.emitEvent(UpdateEvent);
       }
 
       // fire outline changed if necessary
       if (getOutline(this.state) !== previousOutline) {
-        this.emitEvent(EditorEvent.OutlineChange);
+        this.emitEvent(OutlineChangeEvent);
       }
     }
 
-    this.emitEvent(EditorEvent.Layout);
+    this.emitEvent(DispatchEvent, tr);
+
+    this.emitEvent(LayoutEvent);
   }
 
-  private emitEvent(name: string) {
-    const event = this.events.get(name);
-    if (event) {
-      this.parent.dispatchEvent(event);
-    }
-  }
-
-  private initEvents(): ReadonlyMap<string, Event> {
-    const events = new Map<string, Event>();
-    events.set(EditorEvent.Update, new Event(EditorEvent.Update));
-    events.set(EditorEvent.OutlineChange, new Event(EditorEvent.OutlineChange));
-    events.set(EditorEvent.SelectionChange, new Event(EditorEvent.SelectionChange));
-    events.set(EditorEvent.Resize, new Event(EditorEvent.Resize));
-    events.set(EditorEvent.Layout, new Event(EditorEvent.Layout));
-    events.set(EditorEvent.Scroll, new Event(EditorEvent.Scroll));
-    events.set(EditorEvent.Focus, new Event(EditorEvent.Focus));
-    return events;
+  private emitEvent<TDetail>(eventType: EventType<TDetail>, detail?: TDetail) {
+    this.events.emit(eventType, detail);
   }
 
   private initExtensions() {
     return initExtensions(
-      this.format,
-      this.options,
-      this.context.ui,
-      { subscribe: this.subscribe.bind(this), emit: this.emitEvent.bind(this) },
+      {
+        format: this.format,
+        options: this.options,
+        ui: this.context.ui,
+        math: this.context.ui.math.typeset ? editorMath(this.context.ui) : undefined,
+        events: {
+          subscribe: this.subscribe.bind(this),
+          emit: this.emitEvent.bind(this),
+        },
+        pandocExtensions: this.pandocFormat.extensions,
+        pandocCapabilities: this.pandocCapabilities,
+        server: this.context.server,
+        navigation: {
+          navigate: this.navigate.bind(this),
+        },
+      },
       this.context.extensions,
-      this.pandocFormat.extensions,
-      this.pandocCapabilities,
+    );
+  }
+
+  private registerCompletionExtension() {
+    // mark filter used to screen completions from noInputRules marks
+    const markFilter = markInputRuleFilter(this.schema, this.extensions.pandocMarks());
+
+    // register omni insert extension
+    this.extensions.register([
+      omniInsertExtension(this.extensions.omniInserters(this.schema), markFilter, this.context.ui),
+    ]);
+
+    // register completion extension
+    this.extensions.register([
+      completionExtension(this.extensions.completionHandlers(), markFilter, this.context.ui, this.events),
+    ]);
+  }
+
+  private registerRealtimeSpelling() {
+    this.extensions.registerPlugins(
+      [realtimeSpellingPlugin(this.schema, this.extensions.pandocMarks(), this.context.ui, this.events)],
+      true,
     );
   }
 
@@ -696,7 +857,7 @@ export class Editor {
       this.keybindingsPlugin(),
       appendTransactionsPlugin(this.extensions.appendTransactions(this.schema)),
       appendMarkTransactionsPlugin(this.extensions.appendMarkTransactions(this.schema)),
-      ...this.extensions.plugins(this.schema, this.context.ui),
+      ...this.extensions.plugins(this.schema),
       this.inputRulesPlugin(),
       this.editablePlugin(),
       this.domEventsPlugin(),
@@ -737,9 +898,21 @@ export class Editor {
       key: new PluginKey('domevents'),
       props: {
         handleDOMEvents: {
-          focus: (view: EditorView, event: Event) => {
-            this.emitEvent(EditorEvent.Focus);
+          blur: (view: EditorView, event: Event) => {
+            this.emitEvent(BlurEvent);
             return false;
+          },
+          focus: (view: EditorView, event: Event) => {
+            this.emitEvent(FocusEvent, view.state.doc);
+            return false;
+          },
+          keydown: (view: EditorView, event: Event) => {
+            const kbEvent = event as KeyboardEvent;
+            if (kbEvent.key === 'Tab' && this.context.ui.prefs.tabKeyMoveFocus()) {
+              return true;
+            } else {
+              return false;
+            }
           },
         },
       },
@@ -752,7 +925,7 @@ export class Editor {
 
     // command keys from extensions
     const pluginKeys: { [key: string]: CommandFn } = {};
-    const commands = this.extensions.commands(this.schema, this.context.ui);
+    const commands = this.extensions.commands(this.schema);
     commands.forEach((command: ProsemirrorCommand) => {
       const keys = commandKeys[command.id];
       if (keys) {
@@ -762,18 +935,48 @@ export class Editor {
       }
     });
 
+    // for windows desktop, build a list of control key handlers b/c qtwebengine
+    // ends up corrupting ctrl+ keys so they don't hit the ace keybinding
+    // (see: https://github.com/rstudio/rstudio/issues/7142)
+    const ctrlKeyCodes: { [key: string]: CommandFn } = {};
+    Object.keys(pluginKeys).forEach(keyCombo => {
+      const match = keyCombo.match(/^Mod-([a-z\\])$/);
+      if (match) {
+        const key = match[1];
+        const keyCode = key === '\\' ? 'Backslash' : `Key${key.toUpperCase()}`;
+        ctrlKeyCodes[keyCode] = pluginKeys[keyCombo];
+      }
+    });
+
+    // create default prosemirror handler
+    const prosemirrorKeydownHandler = keydownHandler(pluginKeys);
+
     // return plugin
     return new Plugin({
       key: keybindingsPlugin,
       props: {
-        handleKeyDown: keydownHandler(pluginKeys),
+        handleKeyDown: (view: EditorView, event: KeyboardEvent) => {
+          // workaround for Ctrl+ keys on windows desktop
+          if (this.context.ui.context.isWindowsDesktop()) {
+            const keyEvent = event as KeyboardEvent;
+            if (keyEvent.ctrlKey) {
+              const keyCommand = ctrlKeyCodes[keyEvent.code];
+              if (keyCommand && keyCommand(this.view.state)) {
+                keyCommand(this.view.state, this.view.dispatch, this.view);
+                return true;
+              }
+            }
+          }
+          // default handling
+          return prosemirrorKeydownHandler(view, event);
+        },
       },
     });
   }
 
   private commandKeys(): { [key: string]: readonly string[] } {
     // start with keys provided within command definitions
-    const commands = this.extensions.commands(this.schema, this.context.ui);
+    const commands = this.extensions.commands(this.schema);
     const defaultKeys = commands.reduce((keys: { [key: string]: readonly string[] }, command: ProsemirrorCommand) => {
       keys[command.id] = command.keymap;
       return keys;
@@ -804,7 +1007,7 @@ export class Editor {
     if (!docChanged) {
       // If applyFixupsOnResize returns true, then layout has already
       // been fired; if it hasn't, we must do so now
-      this.emitEvent(EditorEvent.Layout);
+      this.emitEvent(LayoutEvent);
     }
   }
 
@@ -840,87 +1043,28 @@ export class Editor {
     });
   }
 
-  private async getMarkdownCode(doc: ProsemirrorNode, options: PandocWriterOptions) {
-    // apply layout fixups
-    this.applyFixups(FixupContext.Save);
+  private async getMarkdownCode(tr: Transaction, options: PandocWriterOptions) {
+    // apply save fixups
+    this.extensionFixups(tr, FixupContext.Save);
+
+    // apply sentence wrapping if requested
+    if (options.wrap === 'sentence') {
+      wrapSentences(tr);
+    }
 
     // get code
-    return this.pandocConverter.fromProsemirror(doc, this.pandocFormat, options);
+    return this.pandocConverter.fromProsemirror(tr.doc, this.pandocFormat, options);
   }
 }
 
 function navigationIdForSelection(state: EditorState): string | null {
-  const outline = outlineNodes(state.doc);
+  const outline = getOutlineNodes(state.doc);
   const outlineNode = outline.reverse().find(node => node.pos < state.selection.from);
   if (outlineNode) {
     return outlineNode.node.attrs.navigation_id;
   } else {
     return null;
   }
-}
-
-function docWithCursorSentinel(state: EditorState) {
-  // transaction for inserting the sentinel (won't actually commit since it will
-  // have the sentinel in it but rather will use the computed tr.doc)
-  const tr = state.tr;
-
-  // cursorSentinel to return
-  let sentinel: string | null = null;
-
-  // find the anchor of the current selection
-  const { anchor } = tr.selection;
-
-  // find the closest top-level text block that isn't an Rmd chunk (their
-  // first line gets special processing so we can't put the sentinel there)
-  const topLevelTextBlocks = findTopLevelBodyNodes(tr.doc, node => {
-    return node.isTextblock && node.type !== state.doc.type.schema.nodes.rmd_chunk;
-  });
-  const textBlock = topLevelTextBlocks.reverse().find(block => block.pos < anchor);
-  if (textBlock) {
-    sentinel = 'CursorSentinel-CAFB04C4-080D-4074-898C-F670CAACB8AF';
-    let pos = textBlock.pos;
-    if (textBlock.pos + textBlock.node.nodeSize < anchor) {
-      pos = textBlock.pos + textBlock.node.nodeSize - 1;
-    }
-    setTextSelection(pos)(tr);
-    tr.insertText(sentinel);
-  }
-
-  // return the doc and sentinel (if any)
-  return {
-    doc: tr.doc,
-    sentinel,
-  };
-}
-
-// get editor code + cursor location and jsdiff changes from previousCode
-function codeWithCursor(code: string, cursorSentinel: string | null) {
-  // determine the cursor row and column using the sentinel (remove the sentinel from the code)
-  let newCode = code;
-  let cursor: { row: number; column: number } | undefined;
-  if (cursorSentinel) {
-    newCode = code
-      .split(/\r?\n/)
-      .map((line, index) => {
-        if (!cursor) {
-          const sentinelLoc = line.indexOf(cursorSentinel);
-          if (sentinelLoc !== -1) {
-            line = line.replace(cursorSentinel, '');
-            cursor = {
-              row: index,
-              column: sentinelLoc,
-            };
-          }
-        }
-        return line;
-      })
-      .join('\n');
-  }
-
-  return {
-    code: newCode,
-    cursor,
-  };
 }
 
 // custom DOMParser that preserves all whitespace (required by display math marks)

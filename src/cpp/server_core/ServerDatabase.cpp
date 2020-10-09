@@ -14,6 +14,8 @@
  */
 
 #include <server_core/ServerDatabase.hpp>
+#include <server_core/ServerKeyObfuscation.hpp>
+#include <server_core/http/SecureCookie.hpp>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/thread.hpp>
@@ -41,13 +43,16 @@ constexpr const char* kSqliteDatabaseDirectory = "directory";
 constexpr const char* kDefaultSqliteDatabaseDirectory = "/var/lib/rstudio-server";
 constexpr const char* kDatabaseHost = "host";
 constexpr const char* kDefaultDatabaseHost = "localhost";
+constexpr const char* kDatabaseName = "database";
+constexpr const char* kDefaultDatabaseName = "rstudio";
 constexpr const char* kDatabasePort = "port";
 constexpr const char* kDefaultPostgresqlDatabasePort = "5432";
-constexpr const char* kDatabaseUser = "user";
-constexpr const char* kDefaultPostgresqlDatabaseUser = "postgres";
+constexpr const char* kDatabaseUsername = "username";
+constexpr const char* kDefaultPostgresqlDatabaseUsername = "postgres";
 constexpr const char* kDatabasePassword = "password";
 constexpr const char* kPostgresqlDatabaseConnectionTimeoutSeconds = "connnection-timeout-seconds";
 constexpr const int   kDefaultPostgresqlDatabaseConnectionTimeoutSeconds = 10;
+constexpr const char* kPostgresqlDatabaseConnectionUri = "connection-uri";
 
 // environment variables
 constexpr const char* kDatabaseMigrationsPathEnvVar = "RS_DB_MIGRATIONS_PATH";
@@ -106,15 +111,37 @@ Error readOptions(const std::string& databaseConfigFile,
    else if (boost::iequals(databaseProvider, kDatabaseProviderPostgresql))
    {
       PostgresqlConnectionOptions options;
-      options.database = "rstudio";
+      options.database = settings.get(kDatabaseName, kDefaultDatabaseName);
       options.host = settings.get(kDatabaseHost, kDefaultDatabaseHost);
-      options.user = settings.get(kDatabaseUser, kDefaultPostgresqlDatabaseUser);
+      options.username = settings.get(kDatabaseUsername, kDefaultPostgresqlDatabaseUsername);
       options.password = settings.get(kDatabasePassword, std::string());
       options.port = settings.get(kDatabasePort, kDefaultPostgresqlDatabasePort);
       options.connectionTimeoutSeconds = settings.getInt(kPostgresqlDatabaseConnectionTimeoutSeconds,
                                                          kDefaultPostgresqlDatabaseConnectionTimeoutSeconds);
+      options.connectionUri = settings.get(kPostgresqlDatabaseConnectionUri, std::string());
+      std::string secureKey = core::http::secure_cookie::getKey();
+      OBFUSCATE_KEY(secureKey);
+      options.secureKey = secureKey;
       *pOptions = options;
-      LOG_INFO_MESSAGE("Connecting to Postgres database " + options.user + "@" + options.host);
+
+      if (!options.connectionUri.empty() &&
+          (options.database != kDefaultDatabaseName ||
+           options.host != kDefaultDatabaseHost ||
+           options.username != kDefaultPostgresqlDatabaseUsername ||
+           options.port != kDefaultPostgresqlDatabasePort ||
+           options.connectionTimeoutSeconds != kDefaultPostgresqlDatabaseConnectionTimeoutSeconds))
+      {
+         LOG_WARNING_MESSAGE("A " + std::string(kPostgresqlDatabaseConnectionUri) +
+                                " was specified for Postgres database connection"
+                                " in addition to other connection parameters. Only the " +
+                                std::string(kPostgresqlDatabaseConnectionUri) +
+                                " and password settings will be used.");
+      }
+
+      if (options.connectionUri.empty())
+         LOG_INFO_MESSAGE("Connecting to Postgres database " + options.username + "@" + options.host + ":" + options.port + "/" + options.database);
+      else
+         LOG_INFO_MESSAGE("Connecting to Postgres database: " + options.connectionUri);
 
       checkConfFilePermissions = true;
    }

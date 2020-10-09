@@ -1,5 +1,5 @@
 /*
- * rmd.ts
+ * scroll.ts
  *
  * Copyright (C) 2019-20 by RStudio, PBC
  *
@@ -18,7 +18,7 @@ import { findParentNodeOfTypeClosestToPos } from 'prosemirror-utils';
 
 import zenscroll from 'zenscroll';
 
-import { editingRootNodeClosestToPos } from './node';
+import { editingRootNodeClosestToPos, editingRootNode } from './node';
 
 export function scrollIntoView(
   view: EditorView,
@@ -37,7 +37,8 @@ export function scrollIntoView(
     const schema = view.state.schema;
     const containerEl = view.nodeDOM(container.pos) as HTMLElement;
     const parentList = findParentNodeOfTypeClosestToPos($pos, [schema.nodes.ordered_list, schema.nodes.bullet_list]);
-    const resultPos = parentList ? parentList.pos : $pos.before();
+    const parentDiv = schema.nodes.div ? findParentNodeOfTypeClosestToPos($pos, schema.nodes.div) : undefined;
+    const resultPos = parentList || parentDiv ? $pos.before(2) : $pos.before();
     const resultNode = view.nodeDOM(resultPos) as HTMLElement;
     if (container && resultNode) {
       const scroller = zenscroll.createScroller(containerEl, duration, offset);
@@ -46,6 +47,20 @@ export function scrollIntoView(
       } else {
         scroller.intoView(resultNode, duration, onDone);
       }
+    }
+  }
+}
+
+export function scrollToPos(view: EditorView, pos: number, duration?: number, offset?: number, onDone?: VoidFunction) {
+  const node = view.nodeDOM(pos);
+  if (node instanceof HTMLElement) {
+    const editingRoot = editingRootNode(view.state.selection)!;
+    const container = view.nodeDOM(editingRoot.pos) as HTMLElement;
+    const scroller = zenscroll.createScroller(container, duration, offset);
+    if (duration) {
+      scroller.to(node, duration, onDone);
+    } else {
+      scroller.to(node, 0, onDone);
     }
   }
 }

@@ -18,5 +18,5 @@ import com.google.gwt.event.shared.HandlerRegistration;
 
 public interface HasEnsureVisibleHandlers
 {
-   HandlerRegistration addEnsureVisibleHandler(EnsureVisibleHandler handler);
+   HandlerRegistration addEnsureVisibleHandler(EnsureVisibleEvent.Handler handler);
 }

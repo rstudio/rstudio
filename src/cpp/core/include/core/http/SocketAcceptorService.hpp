@@ -33,7 +33,7 @@ namespace core {
 namespace http {
 
 typedef boost::function<void(const boost::system::error_code& ec)> 
-                                                               AcceptHandler ;
+                                                               AcceptHandler;
 
 template <typename ProtocolType>
 class SocketAcceptorService : boost::noncopyable
@@ -58,7 +58,7 @@ public:
       {
          if (acceptor_.is_open())
          {
-            boost::system::error_code ec ;
+            boost::system::error_code ec;
             closeAcceptor(ec);
             if (ec && (ec.value() != boost::system::errc::bad_file_descriptor))
                LOG_ERROR(Error(ec, ERROR_LOCATION));
@@ -75,7 +75,7 @@ public:
 
    boost::asio::io_service& ioService()
    {
-      return ioService_ ;
+      return ioService_;
    }
    
    typename ProtocolType::acceptor& acceptor()

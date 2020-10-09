@@ -19,7 +19,7 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class RmdRenderPendingEvent extends GwtEvent<RmdRenderPendingEvent.Handler>
-{  
+{
    public interface Handler extends EventHandler
    {
       void onRmdRenderPending(RmdRenderPendingEvent event);
@@ -29,13 +29,13 @@ public class RmdRenderPendingEvent extends GwtEvent<RmdRenderPendingEvent.Handle
    {
       docId_ = docId;
    }
-    
+
    @Override
    public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
-   
+
    public String getDocId()
    {
       return docId_;
@@ -48,6 +48,6 @@ public class RmdRenderPendingEvent extends GwtEvent<RmdRenderPendingEvent.Handle
    }
 
    public final String docId_;
-   
-   public static final Type<Handler> TYPE = new Type<Handler>();
+
+   public static final Type<Handler> TYPE = new Type<>();
 }

@@ -31,7 +31,6 @@ public class PlotsZoomSizeChangedEvent extends GwtEvent<PlotsZoomSizeChangedEven
       {
       }
 
-
       public native final int getWidth() /*-{
          return this.width;
       }-*/;
@@ -55,7 +54,7 @@ public class PlotsZoomSizeChangedEvent extends GwtEvent<PlotsZoomSizeChangedEven
    {
       return data_.getHeight();
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -70,5 +69,5 @@ public class PlotsZoomSizeChangedEvent extends GwtEvent<PlotsZoomSizeChangedEven
 
    private final Data data_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

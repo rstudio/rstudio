@@ -23,7 +23,7 @@ public class JobExecuteActionEvent extends GwtEvent<JobExecuteActionEvent.Handle
    {
       void onJobExecuteAction(JobExecuteActionEvent event);
    }
-   
+
    public JobExecuteActionEvent(String id, String action)
    {
       id_ = id;
@@ -34,12 +34,12 @@ public class JobExecuteActionEvent extends GwtEvent<JobExecuteActionEvent.Handle
    {
       return id_;
    }
-   
+
    public String action()
    {
       return action_;
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -55,5 +55,5 @@ public class JobExecuteActionEvent extends GwtEvent<JobExecuteActionEvent.Handle
    private final String id_;
    private final String action_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

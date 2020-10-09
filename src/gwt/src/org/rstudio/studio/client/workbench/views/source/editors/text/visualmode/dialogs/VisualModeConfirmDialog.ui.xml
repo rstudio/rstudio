@@ -1,0 +1,46 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+   xmlns:g="urn:import:com.google.gwt.user.client.ui"
+   xmlns:rw="urn:import:org.rstudio.core.client.widget"
+   xmlns:rc="urn:import:org.rstudio.studio.client.common">
+   <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
+   <ui:style>
+          
+      .confirmDialog a:visited {
+	      color: #00a;
+	   }
+      
+      .lastParagraph {
+	      margin-bottom: 12px;
+	   }
+     
+   </ui:style>
+   
+   <g:HTMLPanel>
+   
+   <g:Label>You are activating R Markdown visual editing mode. 
+   This mode enables you to compose markdown using a familiar word processor
+   style interface.</g:Label>
+   
+   <p>
+    You can switch between visual and source mode at any time (editing location 
+    and undo/redo state will be preserved when you switch).
+   </p>
+   
+   <p>
+     <rc:HelpLink caption="Learn more about R Markdown visual editing mode" 
+                  link="visual_markdown_editing"
+                  withVersionInfo="false">
+     </rc:HelpLink> 
+   </p>  
+     
+   <p styleName="{style.lastParagraph}">Visual mode will re-write your markdown source code using Pandoc's default markdown writer.
+   Click here to learn more about <a href="https://www.rstudio.org/links/visual_markdown_editing-markdown-output" target="_blank">
+   markdown output</a> from visual mode. 
+   </p>
+   
+ 
+         
+   </g:HTMLPanel>
+
+</ui:UiBinder> 

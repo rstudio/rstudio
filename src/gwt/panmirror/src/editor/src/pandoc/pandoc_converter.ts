@@ -16,7 +16,7 @@
 import { Schema, Node as ProsemirrorNode } from 'prosemirror-model';
 
 import {
-  PandocEngine,
+  PandocServer,
   PandocTokenReader,
   PandocNodeWriter,
   PandocMarkWriter,
@@ -25,6 +25,7 @@ import {
   PandocPostprocessorFn,
   PandocInlineHTMLReaderFn,
   PandocWriterOptions,
+  PandocTokensFilterFn,
 } from '../api/pandoc';
 
 import { haveTableCellsWithInlineRcode } from '../api/rmd';
@@ -38,9 +39,13 @@ import { ExtensionManager } from '../editor/editor-extensions';
 import { pandocToProsemirror } from './pandoc_to_prosemirror';
 import { pandocFromProsemirror } from './pandoc_from_prosemirror';
 
+export type PandocLineWrapping = 'none' | 'column' | 'sentence';
+
 export interface PandocToProsemirrorResult {
   doc: ProsemirrorNode;
+  line_wrapping: PandocLineWrapping;
   unrecognized: string[];
+  unparsed_meta: { [key: string]: any };
 }
 
 export class PandocConverter {
@@ -48,18 +53,19 @@ export class PandocConverter {
   private readonly preprocessors: readonly PandocPreprocessorFn[];
   private readonly postprocessors: readonly PandocPostprocessorFn[];
   private readonly readers: readonly PandocTokenReader[];
+  private readonly tokensFilters: readonly PandocTokensFilterFn[];
   private readonly blockReaders: readonly PandocBlockReaderFn[];
   private readonly inlineHTMLReaders: readonly PandocInlineHTMLReaderFn[];
   private readonly blockCapsuleFilters: readonly PandocBlockCapsuleFilter[];
   private readonly nodeWriters: readonly PandocNodeWriter[];
   private readonly markWriters: readonly PandocMarkWriter[];
-  private readonly pandoc: PandocEngine;
+  private readonly pandoc: PandocServer;
   private readonly pandocCapabilities: PandocCapabilities;
 
   constructor(
     schema: Schema,
     extensions: ExtensionManager,
-    pandoc: PandocEngine,
+    pandoc: PandocServer,
     pandocCapabilities: PandocCapabilities,
   ) {
     this.schema = schema;
@@ -67,6 +73,7 @@ export class PandocConverter {
     this.preprocessors = extensions.pandocPreprocessors();
     this.postprocessors = extensions.pandocPostprocessors();
     this.readers = extensions.pandocReaders();
+    this.tokensFilters = extensions.pandocTokensFilters();
     this.blockReaders = extensions.pandocBlockReaders();
     this.inlineHTMLReaders = extensions.pandocInlineHTMLReaders();
     this.blockCapsuleFilters = extensions.pandocBlockCapsuleFilters();
@@ -77,10 +84,26 @@ export class PandocConverter {
     this.pandocCapabilities = pandocCapabilities;
   }
 
-  public async toProsemirror(markdown: string, format: string): Promise<PandocToProsemirrorResult> {
+  public async toProsemirror(markdown: string, format: PandocFormat): Promise<PandocToProsemirrorResult> {
+    // save original markdown (for aligning capsule positions)
+    const original = markdown;
+
     // adjust format. we always need to *read* raw_html, raw_attribute, and backtick_code_blocks b/c
     // that's how preprocessors hoist content through pandoc into our prosemirror token parser.
-    format = adjustedFormat(format, ['raw_html', 'raw_attribute', 'backtick_code_blocks']);
+    // we always need to read with auto_identifiers so we can catch any auto-generated ids
+    // required to fulfill links inside the document (we will strip out heading ids that
+    // aren't explicit or a link target using the heading_ids returned with the ast). we also
+    // disable 'smart' b/c that causes pandoc to insert non-breaking spaces before selected
+    // abbreviations like e.g. rather, we do our own implementation of 'smart' when we read
+    // PandocTokenType.Str from the ast
+
+    // determine type of auto_ids
+    const autoIds = format.extensions.gfm_auto_identifiers ? 'gfm_auto_identifiers' : 'auto_identifiers';
+    const targetFormat = adjustedFormat(
+      format.fullName,
+      ['raw_html', 'raw_attribute', 'backtick_code_blocks', autoIds],
+      ['smart'],
+    );
 
     // run preprocessors
     this.preprocessors.forEach(preprocessor => {
@@ -89,14 +112,16 @@ export class PandocConverter {
 
     // create source capsules
     this.blockCapsuleFilters.forEach(filter => {
-      markdown = pandocMarkdownWithBlockCapsules(markdown, filter);
+      markdown = pandocMarkdownWithBlockCapsules(original, markdown, filter);
     });
 
-    const ast = await this.pandoc.markdownToAst(markdown, format, []);
+    const ast = await this.pandoc.markdownToAst(markdown, targetFormat, []);
     const result = pandocToProsemirror(
       ast,
       this.schema,
+      format.extensions,
       this.readers,
+      this.tokensFilters,
       this.blockReaders,
       this.inlineHTMLReaders,
       this.blockCapsuleFilters,
@@ -110,6 +135,13 @@ export class PandocConverter {
     // return the doc
     return result;
   }
+
+  // NOTE: For a plain markdown file, this is the closest we can come to cannonicalizing w/ just pandoc:
+  //
+  //   pandoc MANUAL.md --to markdown-auto_identifiers-smart -o MANUAL.md --self-contained --atx-headers --wrap=none
+  //
+  // For R Mardown files, we would need to pull out the Rmd chunks before sending to pandoc.
+  //
 
   public async fromProsemirror(
     doc: ProsemirrorNode,
@@ -128,8 +160,15 @@ export class PandocConverter {
     // adjust format. we always need to be able to write raw_attribute b/c that's how preprocessors
     // hoist content through pandoc into our prosemirror token parser. since we open this door when
     // reading, users could end up writing raw inlines, and in that case we want them to echo back
-    // to the source document just the way they came in.
-    let format = adjustedFormat(pandocFormat.fullName, ['raw_html', 'raw_attribute']);
+    // to the source document just the way they came in. for writing markdown from pm we don't
+    // ever want to generate auto identifiers so we disable them here. we also disable smart b/c
+    // we do this manually above in pandocFromProsemirror (so we can avoid pandoc's insertion of
+    // nbsp's after abbreviations, which is more approriate for final output than editing)
+    let format = adjustedFormat(
+      pandocFormat.fullName,
+      ['raw_html', 'raw_attribute'], // always enable
+      ['auto_identifiers', 'gfm_auto_identifiers', 'smart'],
+    ); // always disable
 
     // disable selected format options
     format = pandocFormatWith(format, disabledFormatOptions(format, doc), '');
@@ -143,13 +182,21 @@ export class PandocConverter {
       pandocOptions.push('--dpi');
     }
     // default to block level references (validate known types)
-    const references = ['block', 'section', 'document'].includes(options.references || '')
-      ? options.references
-      : 'block';
-    pandocOptions.push(`--reference-location=${references}`);
+    let referenceLocation = 'block';
+    if (options.references?.location) {
+      referenceLocation = ['block', 'section', 'document'].includes(options.references.location)
+        ? options.references.location
+        : 'block';
+    }
+    pandocOptions.push(`--reference-location=${referenceLocation}`);
 
-    // provide wrapColumn options
-    pandocOptions = pandocOptions.concat(wrapColumnOptions(options));
+    // references prefix (if any)
+    if (options.references?.prefix) {
+      pandocOptions.push('--id-prefix', options.references.prefix);
+    }
+
+    // provide wrap options
+    pandocOptions = pandocOptions.concat(wrapOptions(options));
 
     // render to markdown
     const markdown = await this.pandoc.astToMarkdown(output.ast, format, pandocOptions);
@@ -159,11 +206,13 @@ export class PandocConverter {
   }
 }
 
-// adjust the specified format (remove options that are never applicable
-// to editing scenarios)
-function adjustedFormat(format: string, extensions: string[]) {
-  const kDisabledFormatOptions = '-auto_identifiers-gfm_auto_identifiers';
-  let newFormat = pandocFormatWith(format, '', extensions.map(ext => `+${ext}`).join('') + kDisabledFormatOptions);
+// adjust the specified format
+function adjustedFormat(format: string, extensions: string[], disabled: string[]) {
+  let newFormat = pandocFormatWith(
+    format,
+    '',
+    extensions.map(ext => `+${ext}`).join('') + disabled.map(ext => `-${ext}`).join(''),
+  );
 
   // any extension specified needs to not have a - anywhere in the format
   extensions.forEach(ext => {
@@ -196,11 +245,20 @@ function disabledFormatOptions(format: string, doc: ProsemirrorNode) {
   return disabledTableTypes;
 }
 
-function wrapColumnOptions(options: PandocWriterOptions) {
+function wrapOptions(options: PandocWriterOptions) {
   const pandocOptions: string[] = [];
-  if (options.wrapColumn) {
-    pandocOptions.push('--wrap=auto');
-    pandocOptions.push(`--columns=${options.wrapColumn}`);
+  if (options.wrap) {
+    if (options.wrap === 'none' || options.wrap === 'sentence') {
+      pandocOptions.push('--wrap=none');
+    } else {
+      const column = parseInt(options.wrap, 10);
+      if (column) {
+        pandocOptions.push('--wrap=auto');
+        pandocOptions.push(`--columns=${column}`);
+      } else {
+        pandocOptions.push('--wrap=none');
+      }
+    }
   } else {
     pandocOptions.push('--wrap=none');
   }

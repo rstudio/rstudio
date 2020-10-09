@@ -298,6 +298,11 @@ bool shouldShowUserLicenseWarning()
    return false;
 }
 
+bool isUserAdmin()
+{
+   return false;
+}
+
 std::string getUserListCookieValue()
 {
    return "9c16856330a7400cbbbba228392a5d83";
@@ -313,6 +318,11 @@ json::Array getLicensedUsers()
    return json::Array();
 }
 
+json::Array getAllUsers()
+{
+   return json::Array();
+}
+
 Error lockUser(boost::asio::io_service& ioService,
                const std::string& username)
 {
@@ -321,6 +331,20 @@ Error lockUser(boost::asio::io_service& ioService,
 
 Error unlockUser(boost::asio::io_service& ioService,
                  const std::string& username)
+{
+   return Success();
+}
+
+Error setAdmin(boost::asio::io_service& ioService,
+               const std::string& username,
+               bool isAdmin)
+{
+   return Success();
+}
+
+Error addUser(boost::asio::io_service& ioService,
+              const std::string& username,
+              bool isAdmin)
 {
    return Success();
 }
@@ -345,19 +369,18 @@ RevokedCookie::RevokedCookie(const std::string& cookie)
 }
 
 std::string getUserIdentifier(const core::http::Request& request,
-                              bool requireUserListCookie,
-                              http::Response* pResponse)
+                              bool requireUserListCookie)
 {
-   if (isCookieRevoked(request.cookieValue(kUserIdCookie, options().wwwIFrameLegacyCookies())))
+   if (isCookieRevoked(request.cookieValue(kUserIdCookie)))
       return std::string();
 
-   std::string userIdentifier = s_handler.getUserIdentifier(request, pResponse);
+   std::string userIdentifier = s_handler.getUserIdentifier(request);
    if (userIdentifier.empty())
       return std::string();
 
    if (requireUserListCookie)
    {
-      if (!overlay::isUserListCookieValid(request.cookieValue(kUserListCookie, options().wwwIFrameLegacyCookies())))
+      if (!overlay::isUserListCookieValid(request.cookieValue(kUserListCookie)))
          return std::string();
    }
 
@@ -477,7 +500,7 @@ void refreshAuthCookies(const std::string& userIdentifier,
       // clear any existing auth cookies first - this method can be invoked multiple
       // times depending on the handler type (for example, an upload handler)
       pResponse->clearCookies();
-      std::string persistCookie = request.cookieValue(kPersistAuthCookie, options().wwwIFrameLegacyCookies());
+      std::string persistCookie = request.cookieValue(kPersistAuthCookie);
       bool persist = persistCookie == "1" ? true : false;
       s_handler.refreshAuthCookies(request, userIdentifier, persist, pResponse);
    }

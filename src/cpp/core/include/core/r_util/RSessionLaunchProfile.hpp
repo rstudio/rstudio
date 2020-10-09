@@ -32,14 +32,14 @@ struct SessionLaunchProfile
 {
    SessionContext context;
    std::string password;
+   std::string encryptionKey;
    std::string executablePath;
    core::system::ProcessConfig config;
 };
 
 json::Object sessionLaunchProfileToJson(const SessionLaunchProfile& profile);
 
-SessionLaunchProfile sessionLaunchProfileFromJson(
-                                           const json::Object& jsonProfile);
+SessionLaunchProfile sessionLaunchProfileFromJson(const json::Object& jsonProfile);
 
 } // namespace r_util
 } // namespace core 

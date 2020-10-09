@@ -6,6 +6,7 @@
 
 @external rstudio-themes-flat;
 @external rstudio-themes-dark-menus;
+@external js-focus-visible, focus-visible;
 
 @eval THEME_DARKGREY_MENU_SELECTED org.rstudio.core.client.theme.ThemeColors.darkGreyMenuSelected;
 
@@ -38,6 +39,17 @@
    user-select: text
 }
 .output .command, .input {
+}
+
+.outputChunk {
+   outline: none;
+}
+
+/* .console needed to increase specificity so it wins over focus-visible.css */
+/* !important needed because .focus-visible uses it as well */
+.js-focus-visible .console .output.focus-visible,
+.js-focus-visible .console .outputChunk.focus-visible {
+   outline-style: none !important;
 }
 
 .error {}

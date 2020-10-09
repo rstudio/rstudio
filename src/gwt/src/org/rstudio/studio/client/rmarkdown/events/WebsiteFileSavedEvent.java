@@ -30,7 +30,7 @@ public class WebsiteFileSavedEvent extends GwtEvent<WebsiteFileSavedEvent.Handle
    {
      fsi_ = fsi;
    }
-   
+
    public FileSystemItem getFileSystemItem()
    {
       return fsi_;
@@ -47,8 +47,8 @@ public class WebsiteFileSavedEvent extends GwtEvent<WebsiteFileSavedEvent.Handle
    {
       handler.onWebsiteFileSaved(this);
    }
-   
+
    private FileSystemItem fsi_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

@@ -22,13 +22,16 @@ then
    exit 1
 fi
 
-# set build type( if necessary) and build dir
-if test -z "$CMAKE_BUILD_TYPE"
+if test -z "$BUILD_DIR"
 then
-   CMAKE_BUILD_TYPE=RelWithDebInfo
-   BUILD_DIR=build-$1-$2
-else
-   BUILD_DIR=build-$1-$2-$CMAKE_BUILD_TYPE
+   # set build type( if necessary) and build dir
+   if test -z "$CMAKE_BUILD_TYPE"
+   then
+      CMAKE_BUILD_TYPE=RelWithDebInfo
+      BUILD_DIR=build-$1-$2
+   else
+      BUILD_DIR=build-$1-$2-$CMAKE_BUILD_TYPE
+   fi
 fi
 
 # make build directory absolute
@@ -61,10 +64,17 @@ fi
 PKG_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 echo $PKG_DIR
 
+GWT_BUILD="yes"
 mkdir -p $BUILD_DIR/gwt
 cd $BUILD_DIR
-rm -f CMakeCache.txt
-rm -rf $BUILD_DIR/_CPack_Packages
+if test -z "$NO_REBUILD"
+then
+   rm -f CMakeCache.txt
+   rm -rf $BUILD_DIR/_CPack_Packages
+else
+   GWT_BUILD="no"
+fi
+
 cmake -G"${CMAKE_GENERATOR}"                           \
       -DRSTUDIO_TARGET=$1                              \
       -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE             \
@@ -73,6 +83,7 @@ cmake -G"${CMAKE_GENERATOR}"                           \
       -DGWT_BIN_DIR="$BUILD_DIR/gwt/bin"               \
       -DGWT_WWW_DIR="$BUILD_DIR/gwt/www"               \
       -DGWT_EXTRAS_DIR="$BUILD_DIR/gwt/extras"         \
+      -DGWT_BUILD="$GWT_BUILD"                         \
       $PKG_DIR/../..
 
 cmake --build . --target all

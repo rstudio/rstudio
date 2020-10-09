@@ -11,7 +11,7 @@ features include:
 - Execute code directly from the source editor (line, selection, or file).
 - Full support for authoring Sweave and TeX documents.
 - Runs on Windows, Mac, and Linux, and has a community-maintained 
-  [FreeBSD port](https://www.freshports.org/devel/RStudio/)
+  [FreeBSD port](https://www.freshports.org/devel/RStudio/).
 - Can also be run as a server, enabling multiple users to access the RStudio
   IDE using a web browser.
 

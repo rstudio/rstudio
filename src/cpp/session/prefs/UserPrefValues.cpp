@@ -37,7 +37,7 @@ core::Error UserPrefValues::setRunRprofileOnResume(bool val)
 }
 
 /**
- * Whether to save the workspace after the R session ends.
+ * Whether to save the workspace to an .Rdata file after the R session ends.
  */
 std::string UserPrefValues::saveWorkspace()
 {
@@ -284,6 +284,19 @@ core::Error UserPrefValues::setPanes(core::json::Object val)
 }
 
 /**
+ * Whether to enable the ability to add source columns to display.
+ */
+bool UserPrefValues::allowSourceColumns()
+{
+   return readPref<bool>("allow_source_columns");
+}
+
+core::Error UserPrefValues::setAllowSourceColumns(bool val)
+{
+   return writePref("allow_source_columns", val);
+}
+
+/**
  * Whether to insert spaces when pressing the Tab key.
  */
 bool UserPrefValues::useSpacesForTab()
@@ -398,6 +411,19 @@ bool UserPrefValues::continueCommentsOnNewline()
 core::Error UserPrefValues::setContinueCommentsOnNewline(bool val)
 {
    return writePref("continue_comments_on_newline", val);
+}
+
+/**
+ * Whether web links in comments are clickable.
+ */
+bool UserPrefValues::highlightWebLink()
+{
+   return readPref<bool>("highlight_web_link");
+}
+
+core::Error UserPrefValues::setHighlightWebLink(bool val)
+{
+   return writePref("highlight_web_link", val);
 }
 
 /**
@@ -791,7 +817,7 @@ core::Error UserPrefValues::setStripTrailingWhitespace(bool val)
 }
 
 /**
- * Whether to save the position of the cursor when a fille is closed, restore it when the file is opened.
+ * Whether to save the position of the cursor when a file is closed, restore it when the file is opened.
  */
 bool UserPrefValues::restoreSourceDocumentCursorPosition()
 {
@@ -908,6 +934,19 @@ core::Error UserPrefValues::setSyntaxColorConsole(bool val)
 }
 
 /**
+ * Whether to display error, warning, and message output in a different color.
+ */
+bool UserPrefValues::highlightConsoleErrors()
+{
+   return readPref<bool>("highlight_console_errors");
+}
+
+core::Error UserPrefValues::setHighlightConsoleErrors(bool val)
+{
+   return writePref("highlight_console_errors", val);
+}
+
+/**
  * Whether to allow scrolling past the end of a file.
  */
 bool UserPrefValues::scrollPastEndOfDocument()
@@ -931,6 +970,19 @@ bool UserPrefValues::highlightRFunctionCalls()
 core::Error UserPrefValues::setHighlightRFunctionCalls(bool val)
 {
    return writePref("highlight_r_function_calls", val);
+}
+
+/**
+ * Whether to highlight parentheses in a variety of colors.
+ */
+bool UserPrefValues::rainbowParentheses()
+{
+   return readPref<bool>("rainbow_parentheses");
+}
+
+core::Error UserPrefValues::setRainbowParentheses(bool val)
+{
+   return writePref("rainbow_parentheses", val);
 }
 
 /**
@@ -970,6 +1022,19 @@ std::string UserPrefValues::ansiConsoleMode()
 core::Error UserPrefValues::setAnsiConsoleMode(std::string val)
 {
    return writePref("ansi_console_mode", val);
+}
+
+/**
+ * Whether to only show a limited window of the total console output
+ */
+bool UserPrefValues::limitVisibleConsole()
+{
+   return readPref<bool>("limit_visible_console");
+}
+
+core::Error UserPrefValues::setLimitVisibleConsole(bool val)
+{
+   return writePref("limit_visible_console", val);
 }
 
 /**
@@ -1727,6 +1792,19 @@ core::Error UserPrefValues::setTerminalRenderer(std::string val)
 }
 
 /**
+ * Whether web links displayed in the Terminal tab are made clickable.
+ */
+bool UserPrefValues::terminalWeblinks()
+{
+   return readPref<bool>("terminal_weblinks");
+}
+
+core::Error UserPrefValues::setTerminalWeblinks(bool val)
+{
+   return writePref("terminal_weblinks", val);
+}
+
+/**
  * Whether to print the render command use to knit R Markdown documents in the R Markdown tab.
  */
 bool UserPrefValues::showRmdRenderCommand()
@@ -2325,6 +2403,32 @@ core::Error UserPrefValues::setTabKeyMoveFocus(bool val)
 }
 
 /**
+ * Control with keyboard focus displays a visual focus indicator.
+ */
+bool UserPrefValues::showFocusRectangles()
+{
+   return readPref<bool>("show_focus_rectangles");
+}
+
+core::Error UserPrefValues::setShowFocusRectangles(bool val)
+{
+   return writePref("show_focus_rectangles", val);
+}
+
+/**
+ * Show which panel contains keyboard focus.
+ */
+bool UserPrefValues::showPanelFocusRectangle()
+{
+   return readPref<bool>("show_panel_focus_rectangle");
+}
+
+core::Error UserPrefValues::setShowPanelFocusRectangle(bool val)
+{
+   return writePref("show_panel_focus_rectangle", val);
+}
+
+/**
  * How to deal with changes to documents on idle.
  */
 std::string UserPrefValues::autoSaveOnIdle()
@@ -2390,42 +2494,55 @@ core::Error UserPrefValues::setFullProjectPathInWindowTitle(bool val)
 }
 
 /**
- * Whether to enable experimental visual markdown editing
+ * Whether to enable visual editing by default for new markdown documents
  */
-bool UserPrefValues::enableVisualMarkdownEditingMode()
+bool UserPrefValues::visualMarkdownEditingIsDefault()
 {
-   return readPref<bool>("enable_visual_markdown_editing_mode");
+   return readPref<bool>("visual_markdown_editing_is_default");
 }
 
-core::Error UserPrefValues::setEnableVisualMarkdownEditingMode(bool val)
+core::Error UserPrefValues::setVisualMarkdownEditingIsDefault(bool val)
 {
-   return writePref("enable_visual_markdown_editing_mode", val);
+   return writePref("visual_markdown_editing_is_default", val);
+}
+
+/**
+ * Default spacing for lists created in the visual editor
+ */
+std::string UserPrefValues::visualMarkdownEditingListSpacing()
+{
+   return readPref<std::string>("visual_markdown_editing_list_spacing");
+}
+
+core::Error UserPrefValues::setVisualMarkdownEditingListSpacing(std::string val)
+{
+   return writePref("visual_markdown_editing_list_spacing", val);
 }
 
 /**
  * Whether to automatically wrap text when writing markdown
  */
-bool UserPrefValues::visualMarkdownEditingWrapAuto()
+std::string UserPrefValues::visualMarkdownEditingWrap()
 {
-   return readPref<bool>("visual_markdown_editing_wrap_auto");
+   return readPref<std::string>("visual_markdown_editing_wrap");
 }
 
-core::Error UserPrefValues::setVisualMarkdownEditingWrapAuto(bool val)
+core::Error UserPrefValues::setVisualMarkdownEditingWrap(std::string val)
 {
-   return writePref("visual_markdown_editing_wrap_auto", val);
+   return writePref("visual_markdown_editing_wrap", val);
 }
 
 /**
  * The column to wrap text at when writing markdown
  */
-int UserPrefValues::visualMarkdownEditingWrapColumn()
+int UserPrefValues::visualMarkdownEditingWrapAtColumn()
 {
-   return readPref<int>("visual_markdown_editing_wrap_column");
+   return readPref<int>("visual_markdown_editing_wrap_at_column");
 }
 
-core::Error UserPrefValues::setVisualMarkdownEditingWrapColumn(int val)
+core::Error UserPrefValues::setVisualMarkdownEditingWrapAtColumn(int val)
 {
-   return writePref("visual_markdown_editing_wrap_column", val);
+   return writePref("visual_markdown_editing_wrap_at_column", val);
 }
 
 /**
@@ -2439,6 +2556,19 @@ std::string UserPrefValues::visualMarkdownEditingReferencesLocation()
 core::Error UserPrefValues::setVisualMarkdownEditingReferencesLocation(std::string val)
 {
    return writePref("visual_markdown_editing_references_location", val);
+}
+
+/**
+ * Whether to write canonical visual mode markdown when saving from source mode.
+ */
+bool UserPrefValues::visualMarkdownEditingCanonical()
+{
+   return readPref<bool>("visual_markdown_editing_canonical");
+}
+
+core::Error UserPrefValues::setVisualMarkdownEditingCanonical(bool val)
+{
+   return writePref("visual_markdown_editing_canonical", val);
 }
 
 /**
@@ -2468,6 +2598,19 @@ core::Error UserPrefValues::setVisualMarkdownEditingShowDocOutline(bool val)
 }
 
 /**
+ * Whether to show the margin guide in the visual mode code blocks.
+ */
+bool UserPrefValues::visualMarkdownEditingShowMargin()
+{
+   return readPref<bool>("visual_markdown_editing_show_margin");
+}
+
+core::Error UserPrefValues::setVisualMarkdownEditingShowMargin(bool val)
+{
+   return writePref("visual_markdown_editing_show_margin", val);
+}
+
+/**
  * The default visual editing mode font size, in points
  */
 int UserPrefValues::visualMarkdownEditingFontSizePoints()
@@ -2478,6 +2621,45 @@ int UserPrefValues::visualMarkdownEditingFontSizePoints()
 core::Error UserPrefValues::setVisualMarkdownEditingFontSizePoints(int val)
 {
    return writePref("visual_markdown_editing_font_size_points", val);
+}
+
+/**
+ * The name of the editor to use to provide code editing in visual mode
+ */
+std::string UserPrefValues::visualMarkdownCodeEditor()
+{
+   return readPref<std::string>("visual_markdown_code_editor");
+}
+
+core::Error UserPrefValues::setVisualMarkdownCodeEditor(std::string val)
+{
+   return writePref("visual_markdown_code_editor", val);
+}
+
+/**
+ * Zotero libraries to insert citations from.
+ */
+core::json::Array UserPrefValues::zoteroLibraries()
+{
+   return readPref<core::json::Array>("zotero_libraries");
+}
+
+core::Error UserPrefValues::setZoteroLibraries(core::json::Array val)
+{
+   return writePref("zotero_libraries", val);
+}
+
+/**
+ * Preferred emoji skintone
+ */
+std::string UserPrefValues::emojiSkintone()
+{
+   return readPref<std::string>("emoji_skintone");
+}
+
+core::Error UserPrefValues::setEmojiSkintone(std::string val)
+{
+   return writePref("emoji_skintone", val);
 }
 
 /**
@@ -2571,6 +2753,58 @@ core::Error UserPrefValues::setBrowserFixedWidthFonts(core::json::Array val)
    return writePref("browser_fixed_width_fonts", val);
 }
 
+/**
+ * The Python type.
+ */
+std::string UserPrefValues::pythonType()
+{
+   return readPref<std::string>("python_type");
+}
+
+core::Error UserPrefValues::setPythonType(std::string val)
+{
+   return writePref("python_type", val);
+}
+
+/**
+ * The Python version.
+ */
+std::string UserPrefValues::pythonVersion()
+{
+   return readPref<std::string>("python_version");
+}
+
+core::Error UserPrefValues::setPythonVersion(std::string val)
+{
+   return writePref("python_version", val);
+}
+
+/**
+ * The path to the default Python interpreter.
+ */
+std::string UserPrefValues::pythonPath()
+{
+   return readPref<std::string>("python_path");
+}
+
+core::Error UserPrefValues::setPythonPath(std::string val)
+{
+   return writePref("python_path", val);
+}
+
+/**
+ * The maximum amount of seconds of retry for save operations.
+ */
+int UserPrefValues::saveRetryTimeout()
+{
+   return readPref<int>("save_retry_timeout");
+}
+
+core::Error UserPrefValues::setSaveRetryTimeout(int val)
+{
+   return writePref("save_retry_timeout", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -2594,6 +2828,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kHighlightSelectedWord,
       kHighlightSelectedLine,
       kPanes,
+      kAllowSourceColumns,
       kUseSpacesForTab,
       kNumSpacesForTab,
       kAutoDetectIndentation,
@@ -2603,6 +2838,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kShowInvisibles,
       kShowIndentGuides,
       kContinueCommentsOnNewline,
+      kHighlightWebLink,
       kEditorKeybindings,
       kInsertMatching,
       kInsertSpacesAroundEquals,
@@ -2642,11 +2878,14 @@ std::vector<std::string> UserPrefValues::allKeys()
       kFoldStyle,
       kSaveBeforeSourcing,
       kSyntaxColorConsole,
+      kHighlightConsoleErrors,
       kScrollPastEndOfDocument,
       kHighlightRFunctionCalls,
+      kRainbowParentheses,
       kConsoleLineLengthLimit,
       kConsoleMaxLines,
       kAnsiConsoleMode,
+      kLimitVisibleConsole,
       kShowInlineToolbarForRCodeChunks,
       kHighlightCodeChunks,
       kSaveFilesBeforeBuild,
@@ -2705,6 +2944,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kTerminalTrackEnvironment,
       kTerminalBellStyle,
       kTerminalRenderer,
+      kTerminalWeblinks,
       kShowRmdRenderCommand,
       kEnableTextDrag,
       kShowHiddenFiles,
@@ -2751,18 +2991,26 @@ std::vector<std::string> UserPrefValues::allKeys()
       kTypingStatusDelayMs,
       kReducedMotion,
       kTabKeyMoveFocus,
+      kShowFocusRectangles,
+      kShowPanelFocusRectangle,
       kAutoSaveOnIdle,
       kAutoSaveIdleMs,
       kAutoSaveOnBlur,
       kTerminalInitialDirectory,
       kFullProjectPathInWindowTitle,
-      kEnableVisualMarkdownEditingMode,
-      kVisualMarkdownEditingWrapAuto,
-      kVisualMarkdownEditingWrapColumn,
+      kVisualMarkdownEditingIsDefault,
+      kVisualMarkdownEditingListSpacing,
+      kVisualMarkdownEditingWrap,
+      kVisualMarkdownEditingWrapAtColumn,
       kVisualMarkdownEditingReferencesLocation,
+      kVisualMarkdownEditingCanonical,
       kVisualMarkdownEditingMaxContentWidth,
       kVisualMarkdownEditingShowDocOutline,
+      kVisualMarkdownEditingShowMargin,
       kVisualMarkdownEditingFontSizePoints,
+      kVisualMarkdownCodeEditor,
+      kZoteroLibraries,
+      kEmojiSkintone,
       kDisabledAriaLiveAnnouncements,
       kScreenreaderConsoleAnnounceLimit,
       kFileMonitorIgnoredComponents,
@@ -2770,6 +3018,10 @@ std::vector<std::string> UserPrefValues::allKeys()
       kGraphicsBackend,
       kGraphicsAntialiasing,
       kBrowserFixedWidthFonts,
+      kPythonType,
+      kPythonVersion,
+      kPythonPath,
+      kSaveRetryTimeout,
    });
 }
    

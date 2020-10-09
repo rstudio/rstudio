@@ -17,7 +17,6 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 
-#include <core/http/Cookie.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 
@@ -34,9 +33,7 @@ std::string setCSRFTokenCookie(const http::Request& request,
                                const std::string& token,
                                const std::string& path,
                                bool secure,
-                               bool iFrameEmbedding,
-                               bool legacyCookies,
-                               bool iFrameLegacyCookies,
+                               http::Cookie::SameSite sameSite,
                                http::Response* pResponse)
 {
    // generate UUID for token if unspecified
@@ -50,7 +47,7 @@ std::string setCSRFTokenCookie(const http::Request& request,
             kCSRFTokenCookie,
             csrfToken,
             path,
-            Cookie::selectSameSite(legacyCookies, iFrameEmbedding),
+            sameSite,
             true, // HTTP only
             secure);
 
@@ -58,16 +55,15 @@ std::string setCSRFTokenCookie(const http::Request& request,
    if (expiresFromNow.is_initialized())
       cookie.setExpires(*expiresFromNow);
 
-   pResponse->addCookie(cookie, iFrameLegacyCookies);
+   pResponse->addCookie(cookie);
    return csrfToken;
 }
 
 bool validateCSRFForm(const http::Request& request, 
-                      http::Response* pResponse,
-                      bool iFrameLegacyCookies)
+                      http::Response* pResponse)
 {
    // extract token from HTTP cookie (set above)
-   std::string headerToken = request.cookieValue(kCSRFTokenCookie, iFrameLegacyCookies);
+   std::string headerToken = request.cookieValue(kCSRFTokenCookie);
    http::Fields fields;
 
    // parse the form and check for a matching token
@@ -87,10 +83,10 @@ bool validateCSRFForm(const http::Request& request,
    return true;
 }
 
-bool validateCSRFHeaders(const http::Request& request, bool iFrameLegacyCookies)
+bool validateCSRFHeaders(const http::Request& request)
 {
    std::string headerToken = request.headerValue(kCSRFTokenHeader);
-   std::string cookieToken = request.cookieValue(kCSRFTokenCookie, iFrameLegacyCookies);
+   std::string cookieToken = request.cookieValue(kCSRFTokenCookie);
    if (headerToken.empty() || headerToken != cookieToken)
    {
       return false;

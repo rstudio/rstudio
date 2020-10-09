@@ -19,7 +19,7 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class RmdParamsReadyEvent extends GwtEvent<RmdParamsReadyEvent.Handler>
-{  
+{
    public interface Handler extends EventHandler
    {
       void onRmdParamsReady(RmdParamsReadyEvent event);
@@ -34,7 +34,7 @@ public class RmdParamsReadyEvent extends GwtEvent<RmdParamsReadyEvent.Handler>
    {
       return paramsFile_;
    }
-    
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -46,8 +46,8 @@ public class RmdParamsReadyEvent extends GwtEvent<RmdParamsReadyEvent.Handler>
    {
       handler.onRmdParamsReady(this);
    }
-   
+
    private final String paramsFile_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

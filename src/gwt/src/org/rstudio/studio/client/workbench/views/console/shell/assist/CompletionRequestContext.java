@@ -18,16 +18,19 @@ import org.rstudio.core.client.Invalidation;
 import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 
 public class CompletionRequestContext extends ServerRequestCallback<Completions>
 {
    public static class Data
    {
       public Data(String line,
+                  Position position,
                   boolean isTabTriggeredCompletion,
                   boolean autoAcceptSingleCompletionResult)
       {
          line_ = line;
+         position_ = position;
          isTabTriggeredCompletion_ = isTabTriggeredCompletion;
          autoAcceptSingleCompletionResult_ = autoAcceptSingleCompletionResult;
       }
@@ -35,6 +38,11 @@ public class CompletionRequestContext extends ServerRequestCallback<Completions>
       public String getLine()
       {
          return line_;
+      }
+      
+      public Position getPosition()
+      {
+         return position_;
       }
       
       public boolean isTabTriggeredCompletion()
@@ -48,6 +56,7 @@ public class CompletionRequestContext extends ServerRequestCallback<Completions>
       }
       
       private final String line_;
+      private final Position position_;
       private final boolean isTabTriggeredCompletion_;
       private final boolean autoAcceptSingleCompletionResult_;
    }
@@ -64,6 +73,11 @@ public class CompletionRequestContext extends ServerRequestCallback<Completions>
       host_ = host;
       token_ = host.getInvalidationToken();
       data_ = data;
+   }
+   
+   public Data getData()
+   {
+      return data_;
    }
 
    @Override

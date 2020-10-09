@@ -15,24 +15,23 @@ daemonCmd() {
 }
 
 testConfig() {
- `${CMAKE_INSTALL_PREFIX}/bin/rserver --test-config`
+  `${CMAKE_INSTALL_PREFIX}/bin/rserver --test-config`
 }
 
 verifyInstallation() {
- ${CMAKE_INSTALL_PREFIX}/bin/rserver --verify-installation=1 --server-daemonize=0 $1 $2 $3 $4 $5 $6 $7 $8
+  ${CMAKE_INSTALL_PREFIX}/bin/rserver --verify-installation=1 --server-daemonize=0 $1 $2 $3 $4 $5 $6 $7 $8
 }
 
 isServerRunning() {
  pgrep -x rserver &> /dev/null
 }
 
-
 case "$1" in
-    
+
     status)
         daemonCmd "status"
         ;;
-    
+
     start)
         testConfig || exit $?
         daemonCmd "start"
@@ -72,42 +71,45 @@ case "$1" in
         if [ -n "$2" ]; then
            kill -s USR1 $3 $4 $5 $6 $7 $8 $9 $2
         else
-           echo "Must specify PID of session to suspend"
+           argType="PID"
+           echo "Must specify $argType of session to suspend"
            exit 1
         fi
         ;;
 
     suspend-all)
-        if (pidof rsession >/dev/null); then killall -s USR1 $2 $3 $4 $5 $6 $7 $8 $9 rsession; fi
         if (pidof rworkspaces >/dev/null); then killall -s USR1 $2 $3 $4 $5 $6 $7 $8 $9 rworkspaces; fi
+        if (pidof rsession >/dev/null); then killall -s USR1 $2 $3 $4 $5 $6 $7 $8 $9 rsession; fi
         ;;
 
     force-suspend-session)
         if [ -n "$2" ]; then
            kill -s USR2 $3 $4 $5 $6 $7 $8 $9 $2
         else
-           echo "Must specify PID of session to force suspend"
+           argType="PID"
+           echo "Must specify $argType of session to force suspend"
            exit 1
         fi
         ;;
 
     force-suspend-all)
-        if (pidof rsession >/dev/null); then killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9 rsession; fi
         if (pidof rworkspaces >/dev/null); then killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9 rworkspaces; fi
+        if (pidof rsession >/dev/null); then killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9 rsession; fi
         ;;
 
     kill-session)
         if [ -n "$2" ]; then
            kill -s KILL $3 $4 $5 $6 $7 $8 $9 $2
         else
-           echo "Must specify PID of session to kill"
+           argType="PID"
+           echo "Must specify $argType of session to kill"
            exit 1
         fi
         ;;
 
     kill-all)
-        if (pidof rsession >/dev/null); then killall -s KILL $2 $3 $4 $5 $6 $7 $8 $9 rsession; fi
         if (pidof rworkspaces >/dev/null); then killall -s KILL $2 $3 $4 $5 $6 $7 $8 $9 rworkspaces; fi
+        if (pidof rsession >/dev/null); then killall -s KILL $2 $3 $4 $5 $6 $7 $8 $9 rsession; fi
         ;;
 
     offline)
@@ -141,6 +143,5 @@ case "$1" in
         echo $"Usage: rstudio-server {status|start|stop|restart|test-config|verify-installation|suspend-session|suspend-all|force-suspend-session|force-suspend-all|kill-session|kill-all|offline|online|active-sessions|version}"
         exit 2
 esac
-
 
 

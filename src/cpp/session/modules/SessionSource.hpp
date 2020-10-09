@@ -36,7 +36,7 @@ namespace session {
 namespace modules { 
 namespace source {
    
-core::Error clientInitDocuments(core::json::Array* pJsonDocs) ;
+core::Error clientInitDocuments(core::json::Array* pJsonDocs);
 
 core::Error initialize();
                        

@@ -37,8 +37,8 @@ export function tableMenu(insert: boolean, ui: EditorUI) {
     { command: EditorCommandId.TableDeleteTable },
     { separator: true },
     {
+      text: ui.context.translateText('Align Column'),
       subMenu: {
-        text: ui.context.translateText('Align Column'),
         items: [
           { command: EditorCommandId.TableAlignColumnLeft },
           { command: EditorCommandId.TableAlignColumnCenter },

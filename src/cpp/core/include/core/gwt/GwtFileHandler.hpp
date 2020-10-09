@@ -24,8 +24,6 @@ namespace gwt {
       
 http::UriHandlerFunction fileHandlerFunction(
       const std::string& wwwLocalPath,
-      bool useSecureCookies,
-      bool iFrameLegacyCookies,
       const std::string& baseUri = std::string(),
       http::UriFilterFunction mainPageFilter = http::UriFilterFunction(),
       const std::string& initJs = std::string(),

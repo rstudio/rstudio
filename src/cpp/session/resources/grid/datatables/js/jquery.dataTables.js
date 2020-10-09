@@ -2569,7 +2569,7 @@
     for ( i=0 ; i<columnCount ; i++ ) {
       column = columns[i];
       columnSearch = preColSearch[i];
-      dataProp = typeof column.mData=="function" ? 'function' : column.mData ;
+      dataProp = typeof column.mData=="function" ? 'function' : column.mData;
   
       d.columns.push( {
         data:       dataProp,
@@ -5131,6 +5131,18 @@
           // events. catch when we click on a resizer immediately on
           // mousedown and exit
           if (!!e.target && e.target.className === "resizer") return;
+
+          // we also don't want to sort when the filter UI is clicked
+          if (!!e.target) {
+            if (e.target.className.indexOf("colFilter") !== -1)
+              return;
+
+            if (e.target.parentElement) {
+              var parEle = e.target.parentElement;
+              if (parEle.className.indexOf("colFilter") !== -1 || parEle.className.indexOf("filterValue") !== -1)
+                return;
+            }
+          }
 
           n.blur(); // Remove focus outline for mouse users
           fn(e);
@@ -8323,7 +8335,7 @@
   
   _api_registerPlural( 'columns().nodes()', 'column().nodes()', function () {
     return this.iterator( 'column-rows', function ( settings, column, i, j, rows ) {
-      return _pluck_order( settings.aoData, rows, 'anCells', column ) ;
+      return _pluck_order( settings.aoData, rows, 'anCells', column );
     }, 1 );
   } );
   

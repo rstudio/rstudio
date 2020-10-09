@@ -67,5 +67,5 @@ public class ServerConsolePromptEvent
    private final String procHandle_;
    private final String prompt_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

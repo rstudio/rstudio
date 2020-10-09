@@ -18,11 +18,21 @@ import { Transaction, Selection } from 'prosemirror-state';
 
 import { findParentNodeOfType, setTextSelection } from 'prosemirror-utils';
 
+export enum ListType {
+  Ordered = 'OrderedList',
+  Bullet = 'BulletList',
+}
+
 export interface ListCapabilities {
   tasks: boolean;
   fancy: boolean;
   example: boolean;
   order: boolean;
+}
+
+export function isList(node: ProsemirrorNode) {
+  const schema = node.type.schema;
+  return node.type === schema.nodes.bullet_list || node.type === schema.nodes.ordered_list;
 }
 
 export function precedingListItemInsertPos(doc: ProsemirrorNode, selection: Selection) {

@@ -19,22 +19,18 @@ import { InputRule } from 'prosemirror-inputrules';
 import { setTextSelection } from 'prosemirror-utils';
 
 import { PandocExtensions } from '../api/pandoc';
-import { PandocCapabilities } from '../api/pandoc_capabilities';
-import { EditorUI } from '../api/ui';
 import { EditorFormat } from '../api/format';
-import { Extension } from '../api/extension';
+import { Extension, ExtensionContext } from '../api/extension';
 import { precedingListItemInsertPos, precedingListItemInsert } from '../api/list';
 import { pandocAttrFrom } from '../api/pandoc_attr';
 import { BaseKey } from '../api/basekeys';
-import { fancyQuotesToSimple } from '../api/quote';
-import { markIsActive } from '../api/mark';
 
-const extension = (
-  pandocExtensions: PandocExtensions,
-  _caps: PandocCapabilities,
-  _ui: EditorUI,
-  format: EditorFormat,
-): Extension | null => {
+import { markIsActive } from '../api/mark';
+import { canInsertRmdChunk } from '../api/rmd';
+
+const extension = (context: ExtensionContext): Extension => {
+  const { pandocExtensions, format } = context;
+
   const fencedAttributes = pandocExtensions.fenced_code_attributes || !!format.rmdExtensions.codeChunks;
 
   return {
@@ -90,13 +86,19 @@ function codeBlockInputRuleEnter(pandocExtensions: PandocExtensions, fencedAttri
       return false;
     }
 
+    // determine nature of insert
+    const fenced = fencedAttributes && !!match[2];
+    const langAttrib = fenced ? match[2] : match[1] || '';
+    const rawBlock = fenced && pandocExtensions.raw_attribute && langAttrib.match(/^=\w.*$/);
+    const rmdChunk = fenced && !!format.rmdExtensions.codeChunks && langAttrib.match(/^\w.*$/);
+
+    // if it's an rmd chunk then apply further validation
+    if (rmdChunk && !canInsertRmdChunk(state)) {
+      return false;
+    }
+
     // execute
     if (dispatch) {
-      // determine nature of insert
-      const fenced = fencedAttributes && !!match[2];
-      const langAttrib = fenced ? match[2] : match[1] || '';
-      const rawBlock = fenced && pandocExtensions.raw_attribute && langAttrib.match(/^=\w.*$/);
-      const rmdChunk = fenced && !!format.rmdExtensions.codeChunks && langAttrib.match(/^\w.*$/);
       // eslint-disable-next-line no-useless-escape
       const lang = langAttrib.replace(/^[\.=]/, '');
 
@@ -108,7 +110,7 @@ function codeBlockInputRuleEnter(pandocExtensions: PandocExtensions, fencedAttri
 
       // determine type and attrs
       const type = rawBlock ? schema.nodes.raw_block : rmdChunk ? schema.nodes.rmd_chunk : schema.nodes.code_block;
-      const content = rmdChunk ? schema.text(`{${fancyQuotesToSimple(match[2])}}\n`) : Fragment.empty;
+      const content = rmdChunk ? schema.text(`{${match[2]}}\n`) : Fragment.empty;
       const attrs = rawBlock ? { format: lang } : !rmdChunk && lang.length ? pandocAttrFrom({ classes: [lang] }) : {};
 
       // see if this should go into a preceding list item

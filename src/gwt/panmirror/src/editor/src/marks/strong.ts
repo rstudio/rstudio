@@ -25,6 +25,7 @@ const extension: Extension = {
     {
       name: 'strong',
       spec: {
+        group: 'formatting',
         parseDOM: [
           // This works around a Google Docs misbehavior where pasted content will be inexplicably wrapped in `<b>`
           // tags with a font-weight normal.
@@ -50,7 +51,7 @@ const extension: Extension = {
           },
         ],
         writer: {
-          priority: 1,
+          priority: 3,
           write: (output: PandocOutput, _mark: Mark, parent: Fragment) => {
             output.writeMark(PandocTokenType.Strong, parent);
           },
@@ -65,8 +66,8 @@ const extension: Extension = {
 
   inputRules: (schema: Schema, filter: MarkInputRuleFilter) => {
     return [
-      delimiterMarkInputRule('\\*\\*', schema.marks.strong, filter, undefined, true),
-      delimiterMarkInputRule('__', schema.marks.strong, filter, undefined, true),
+      delimiterMarkInputRule('\\*\\*', schema.marks.strong, filter, '`', true),
+      delimiterMarkInputRule('__', schema.marks.strong, filter, '\\w`', true),
     ];
   },
 };

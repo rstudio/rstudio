@@ -30,7 +30,6 @@ namespace modules {
 namespace breakpoints {
 
 core::Error initialize();
-bool haveSrcrefAttribute();
 bool haveAdvancedStepCommands();
 
 } // namespace breakpoints

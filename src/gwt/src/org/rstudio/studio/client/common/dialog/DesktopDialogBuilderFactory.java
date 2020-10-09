@@ -59,7 +59,7 @@ public class DesktopDialogBuilderFactory implements DialogBuilderFactory
                buttons_.size() - 1,
                result ->
                {
-                  Builder.this.execute(result);
+                  Builder.this.execute(String.valueOf(result));
                });
       }
       

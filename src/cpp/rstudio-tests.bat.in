@@ -1,16 +1,11 @@
 @echo off
 set "PATH=@LIBR_BIN_DIR@;%PATH%"
 
-IF "@RSTUDIO_PACKAGE_BUILD@"=="1" (
-set "SUBPATH=@CMAKE_BUILD_TYPE@/"
-)
-
 echo Running 'core' tests...
-"@CMAKE_CURRENT_BINARY_DIR@/core/%SUBPATH%rstudio-core-tests.exe"
+"@CMAKE_CURRENT_BINARY_DIR@/core/rstudio-core-tests.exe"
 
 echo Running 'rsession' tests...
 set "RS_CRASH_HANDLER_PATH=@CMAKE_SOURCE_DIR@/../../dependencies/windows/crashpad-release/bin/crashpad_handler.com"
-"@CMAKE_CURRENT_BINARY_DIR@/session/%SUBPATH%rsession.exe" ^
+"@CMAKE_CURRENT_BINARY_DIR@/session/rsession.exe" ^
     --run-tests ^
     --config-file="@CMAKE_CURRENT_BINARY_DIR@/conf/rdesktop-dev.conf"
-

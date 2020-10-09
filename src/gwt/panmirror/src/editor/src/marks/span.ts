@@ -13,79 +13,92 @@
  *
  */
 
-import { Mark, Fragment, Schema } from 'prosemirror-model';
+import { Mark, Fragment, Schema, DOMOutputSpec } from 'prosemirror-model';
 import { EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
-import { Extension, extensionIfEnabled } from '../api/extension';
+import { ExtensionContext } from '../api/extension';
 import { ProsemirrorCommand, EditorCommandId } from '../api/command';
 import { EditorUI } from '../api/ui';
 import { markIsActive, getMarkAttrs, getSelectionMarkRange } from '../api/mark';
 import { PandocOutput, PandocTokenType, PandocToken } from '../api/pandoc';
-import { pandocAttrSpec, pandocAttrReadAST, pandocAttrParseDom, pandocAttrToDomAttr } from '../api/pandoc_attr';
+import {
+  pandocAttrSpec,
+  pandocAttrReadAST,
+  pandocAttrParseDom,
+  pandocAttrToDomAttr,
+  kSpanAttr,
+  kSpanChildren,
+} from '../api/pandoc_attr';
 
-const SPAN_ATTR = 0;
-const SPAN_CHILDREN = 1;
+const extension = (context: ExtensionContext) => {
+  const { pandocExtensions, ui } = context;
 
-const extension: Extension = {
-  marks: [
-    {
-      name: 'span',
-      spec: {
-        attrs: pandocAttrSpec,
-        inclusive: false,
-        parseDOM: [
-          {
-            tag: 'span[data-span="1"]',
-            getAttrs(dom: Node | string) {
-              const attrs: {} = { 'data-span': 1 };
-              return {
-                ...attrs,
-                ...pandocAttrParseDom(dom as Element, attrs),
-              };
+  if (!pandocExtensions.bracketed_spans && !pandocExtensions.native_spans) {
+    return null;
+  }
+
+  return {
+    marks: [
+      {
+        name: 'span',
+        spec: {
+          group: 'formatting',
+          attrs: pandocAttrSpec,
+          inclusive: false,
+          parseDOM: [
+            {
+              tag: 'span[data-span="1"]',
+              getAttrs(dom: Node | string) {
+                const attrs: {} = { 'data-span': 1 };
+                return {
+                  ...attrs,
+                  ...pandocAttrParseDom(dom as Element, attrs),
+                };
+              },
             },
+          ],
+          toDOM(mark: Mark): DOMOutputSpec {
+            const attr = {
+              'data-span': '1',
+              ...pandocAttrToDomAttr({
+                ...mark.attrs,
+                classes: [...mark.attrs.classes, 'pm-span pm-span-background-color'],
+              }),
+            };
+            return ['span', attr];
           },
-        ],
-        toDOM(mark: Mark) {
-          const attr = {
-            'data-span': '1',
-            ...pandocAttrToDomAttr({
-              ...mark.attrs,
-              classes: [...mark.attrs.classes, 'pm-span pm-span-background-color'],
-            }),
-          };
-          return ['span', attr];
         },
-      },
-      pandoc: {
-        readers: [
-          {
-            token: PandocTokenType.Span,
-            mark: 'span',
-            getAttrs: (tok: PandocToken) => {
-              return pandocAttrReadAST(tok, SPAN_ATTR);
+        pandoc: {
+          readers: [
+            {
+              token: PandocTokenType.Span,
+              mark: 'span',
+              getAttrs: (tok: PandocToken) => {
+                return pandocAttrReadAST(tok, kSpanAttr);
+              },
+              getChildren: (tok: PandocToken) => tok.c[kSpanChildren],
             },
-            getChildren: (tok: PandocToken) => tok.c[SPAN_CHILDREN],
-          },
-        ],
-        writer: {
-          priority: 11,
-          write: (output: PandocOutput, mark: Mark, parent: Fragment) => {
-            output.writeToken(PandocTokenType.Span, () => {
-              output.writeAttr(mark.attrs.id, mark.attrs.classes, mark.attrs.keyvalue);
-              output.writeArray(() => {
-                output.writeInlines(parent);
+          ],
+          writer: {
+            priority: 11,
+            write: (output: PandocOutput, mark: Mark, parent: Fragment) => {
+              output.writeToken(PandocTokenType.Span, () => {
+                output.writeAttr(mark.attrs.id, mark.attrs.classes, mark.attrs.keyvalue);
+                output.writeArray(() => {
+                  output.writeInlines(parent);
+                });
               });
-            });
+            },
           },
         },
       },
-    },
-  ],
+    ],
 
-  commands: (_schema: Schema, ui: EditorUI) => {
-    return [new SpanCommand(ui)];
-  },
+    commands: (_schema: Schema) => {
+      return [new SpanCommand(ui)];
+    },
+  };
 };
 
 class SpanCommand extends ProsemirrorCommand {
@@ -133,4 +146,4 @@ class SpanCommand extends ProsemirrorCommand {
   }
 }
 
-export default extensionIfEnabled(extension, ['bracketed_spans', 'native_spans']);
+export default extension;

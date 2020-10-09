@@ -21,25 +21,22 @@ import { EditorView } from 'prosemirror-view';
 import { findParentNodeOfType } from 'prosemirror-utils';
 
 import { BlockCommand, EditorCommandId, ProsemirrorCommand, toggleBlockType } from '../api/command';
-import { Extension } from '../api/extension';
+import { Extension, ExtensionContext } from '../api/extension';
 import { BaseKey } from '../api/basekeys';
 import { codeNodeSpec } from '../api/code';
 import { PandocOutput, PandocTokenType, PandocExtensions } from '../api/pandoc';
 import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr } from '../api/pandoc_attr';
 import { PandocCapabilities } from '../api/pandoc_capabilities';
-import { EditorUI, CodeBlockProps } from '../api/ui';
+import { EditorUI } from '../api/ui';
+import { CodeBlockProps } from '../api/ui-dialogs';
 import { hasFencedCodeBlocks } from '../api/pandoc_format';
 import { precedingListItemInsertPos, precedingListItemInsert } from '../api/list';
-import { EditorFormat } from '../api/format';
 import { EditorOptions } from '../api/options';
+import { OmniInsertGroup } from '../api/omni_insert';
 
-const extension = (
-  pandocExtensions: PandocExtensions,
-  pandocCapabilities: PandocCapabilities,
-  ui: EditorUI,
-  _format: EditorFormat,
-  options: EditorOptions,
-): Extension => {
+const extension = (context: ExtensionContext): Extension => {
+  const { pandocExtensions, pandocCapabilities, ui, options } = context;
+
   const hasAttr = hasFencedCodeBlocks(pandocExtensions);
 
   return {
@@ -132,7 +129,19 @@ const extension = (
 
 class CodeBlockFormatCommand extends ProsemirrorCommand {
   constructor(pandocExtensions: PandocExtensions, ui: EditorUI, languages: string[]) {
-    super(EditorCommandId.CodeBlockFormat, ['Shift-Mod-\\'], codeBlockFormatCommandFn(pandocExtensions, ui, languages));
+    super(
+      EditorCommandId.CodeBlockFormat,
+      ['Shift-Mod-\\'],
+      codeBlockFormatCommandFn(pandocExtensions, ui, languages),
+      {
+        name: ui.context.translateText('Code Block...'),
+        description: ui.context.translateText('Source code display'),
+        group: OmniInsertGroup.Blocks,
+        priority: 7,
+        image: () =>
+          ui.prefs.darkMode() ? ui.images.omni_insert?.code_block_dark! : ui.images.omni_insert?.code_block!,
+      },
+    );
   }
 }
 
@@ -255,6 +264,10 @@ function codeBlockAttrEdit(pandocExtensions: PandocExtensions, pandocCapabilitie
             }
           }
           return tags;
+        },
+        offset: {
+          top: 3,
+          right: 0,
         },
         editFn: () => codeBlockFormatCommandFn(pandocExtensions, ui, pandocCapabilities.highlight_languages),
       };

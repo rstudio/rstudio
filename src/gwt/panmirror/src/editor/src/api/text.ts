@@ -22,14 +22,14 @@ export interface TextWithPos {
 
 export function mergedTextNodes(
   doc: ProsemirrorNode,
-  filter?: (node: ProsemirrorNode, parentNode: ProsemirrorNode) => boolean,
+  filter?: (node: ProsemirrorNode, pos: number, parentNode: ProsemirrorNode) => boolean,
 ): TextWithPos[] {
   const textNodes: TextWithPos[] = [];
   let nodeIndex = 0;
   doc.descendants((node, pos, parentNode) => {
     if (node.isText) {
       // apply filter
-      if (filter && !filter(node, parentNode)) {
+      if (filter && !filter(node, pos, parentNode)) {
         return false;
       }
 
@@ -54,4 +54,8 @@ export function mergedTextNodes(
 
 export function stripQuotes(text: string) {
   return text.replace(/["']/g, '');
+}
+
+export function equalsIgnoreCase(str1: string, str2: string) {
+  return str1.localeCompare(str2, undefined, { sensitivity: 'accent' }) === 0;
 }

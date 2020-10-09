@@ -20,7 +20,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Past
 
 public class PasteEvent extends GwtEvent<Handler>
 {
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 
    public interface Handler extends EventHandler
    {

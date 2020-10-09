@@ -30,4 +30,5 @@ public interface JobsDisplay extends WorkbenchView
    void hideJobOutput(String id, boolean animate);
    void syncElapsedTime(int timestamp);
    void setShowTabPref(boolean show);
+   void setFocus();
 }

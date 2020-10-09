@@ -114,7 +114,7 @@ bool parseAndValidateJsonRpcConnection(
 
    // check for valid CSRF headers in server mode 
    if (options().programMode() == kSessionProgramModeServer && 
-       !core::http::validateCSRFHeaders(ptrConnection->request(), options().iFrameLegacyCookies()))
+       !core::http::validateCSRFHeaders(ptrConnection->request()))
    {
       ptrConnection->sendJsonRpcError(Error(json::errc::Unauthorized, ERROR_LOCATION));
       return false;
@@ -621,7 +621,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                                            &saveWorkspace,
                                            &switchToProject,
                                            &switchToVersionJson,
-                                           &hostPageUrl) ;
+                                           &hostPageUrl);
             if (error)
                LOG_ERROR(error);
             
@@ -834,8 +834,6 @@ void registerGwtHandlers()
 
    // set default handler
    s_defaultUriHandler = gwt::fileHandlerFunction(options.wwwLocalPath(),
-                                                  options.useSecureCookies(),
-                                                  options.iFrameLegacyCookies(),
                                                   "/",
                                                   http::UriFilterFunction(),
                                                   initJs);

@@ -18,13 +18,13 @@ package org.rstudio.studio.client.workbench.views.console.shell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
@@ -63,29 +63,32 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.Completion
 import org.rstudio.studio.client.workbench.views.console.shell.assist.HistoryCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
+import org.rstudio.studio.client.workbench.views.console.shell.events.SuppressNextShellFocusEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.SourceSatellite;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor.EditorBehavior;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 
 import java.util.ArrayList;
 
 public class Shell implements ConsoleHistoryAddedEvent.Handler,
-                              ConsoleInputHandler,
-                              ConsoleWriteOutputHandler,
-                              ConsoleWriteErrorHandler,
-                              ConsoleWritePromptHandler,
-                              ConsoleWriteInputHandler,
-                              ConsolePromptHandler,
-                              ConsoleResetHistoryHandler,
+                              ConsoleInputEvent.Handler,
+                              ConsoleWriteOutputEvent.Handler,
+                              ConsoleWriteErrorEvent.Handler,
+                              ConsoleWritePromptEvent.Handler,
+                              ConsoleWriteInputEvent.Handler,
+                              ConsolePromptEvent.Handler,
+                              ConsoleResetHistoryEvent.Handler,
                               ConsoleRestartRCompletedEvent.Handler,
                               ConsoleExecutePendingInputEvent.Handler,
-                              SendToConsoleHandler,
+                              SendToConsoleEvent.Handler,
                               DebugModeChangedEvent.Handler,
                               RunCommandWithDebugEvent.Handler,
-                              UnhandledErrorEvent.Handler
+                              UnhandledErrorEvent.Handler,
+                              SuppressNextShellFocusEvent.Handler
 {
    static interface Binder extends CommandBinder<Commands, Shell>
    {
@@ -97,15 +100,15 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       void onBeforeSelected();
       void onSelected();
    }
-   
+
    @Inject
-   public Shell(ConsoleServerOperations server, 
+   public Shell(ConsoleServerOperations server,
                 EventBus eventBus,
                 AriaLiveService ariaLive,
                 Display display,
                 Session session,
                 Commands commands,
-                UserPrefs uiPrefs, 
+                UserPrefs uiPrefs,
                 ErrorManager errorManager,
                 DependencyManager dependencyManager,
                 ConsoleEditorProvider editorProvider,
@@ -114,7 +117,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       super();
 
       ((Binder)GWT.create(Binder.class)).bind(commands, this);
-      
+
       server_ = server;
       eventBus_ = eventBus;
       ariaLive_ = ariaLive;
@@ -127,11 +130,11 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       browseHistoryManager_ = new CommandLineHistory(input_);
       prefs_ = uiPrefs;
       languageTracker_ = languageTracker;
-      
+
       editorProvider.setConsoleEditor(input_);
-      
+
       configureLiveAnnouncements();
-     
+
       prefs_.surroundSelection().bind(new CommandWithArg<String>()
       {
          @Override
@@ -142,7 +145,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       });
 
       inputAnimator_ = new ShellInputAnimator(view_.getInputEditorDisplay());
-      
+
       view_.setMaxOutputLines(session.getSessionInfo().getConsoleActionsLimit());
 
       keyDownPreviewHandlers_ = new ArrayList<>();
@@ -155,9 +158,9 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       view_.addCapturingKeyDownHandler(handler);
       view_.addKeyPressHandler(handler);
       view_.addCapturingKeyUpHandler(handler);
-      
+
       eventBus.addHandler(ConsoleHistoryAddedEvent.TYPE, this);
-      eventBus.addHandler(ConsoleInputEvent.TYPE, this); 
+      eventBus.addHandler(ConsoleInputEvent.TYPE, this);
       eventBus.addHandler(ConsoleWriteOutputEvent.TYPE, this);
       eventBus.addHandler(ConsoleWriteErrorEvent.TYPE, this);
       eventBus.addHandler(ConsoleWritePromptEvent.TYPE, this);
@@ -170,24 +173,25 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       eventBus.addHandler(DebugModeChangedEvent.TYPE, this);
       eventBus.addHandler(RunCommandWithDebugEvent.TYPE, this);
       eventBus.addHandler(UnhandledErrorEvent.TYPE, this);
-      
+      eventBus.addHandler(SuppressNextShellFocusEvent.TYPE, this);
+
       final CompletionManager completionManager
                   = new RCompletionManager(view_.getInputEditorDisplay(),
                                           null,
-                                          new CompletionPopupPanel(), 
-                                          server, 
+                                          new CompletionPopupPanel(),
+                                          server,
                                           null,
                                           null,
                                           null,
                                           (DocDisplay) view_.getInputEditorDisplay(),
-                                          true);
+                                          EditorBehavior.AceBehaviorConsole);
       addKeyDownPreviewHandler(completionManager);
       addKeyPressPreviewHandler(completionManager);
-      
+
       historyCompletion_ = new HistoryCompletionManager(
             view_.getInputEditorDisplay(), server);
       addKeyDownPreviewHandler(historyCompletion_);
-      
+
       // we need to explicitly connect a paste handler on Desktop
       // to ensure the completion popup is dismissed in shell on paste
       if (Desktop.isDesktop())
@@ -201,12 +205,12 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
             }
          });
       }
-      
+
       AceEditorNative.syncUiPrefs(uiPrefs);
 
       sessionInit(session);
    }
-   
+
    private void sessionInit(Session session)
    {
       SessionInfo sessionInfo = session.getSessionInfo();
@@ -238,7 +242,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       if (sessionInfo.getResumed())
       {
          // no special UI for this (resuming session with all console
-         // history and other UI state preserved deemed adequate feedback) 
+         // history and other UI state preserved deemed adequate feedback)
       }
    }
 
@@ -252,26 +256,29 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    {
       // clear output
       view_.clearOutput();
-      
+
       ariaLive_.announce(AriaLiveService.CONSOLE_CLEARED, "Console cleared",
             Timing.IMMEDIATE, Severity.STATUS);
 
       // notify server
       server_.resetConsoleActions(new VoidServerRequestCallback());
-      
+
       // if we don't bounce setFocus the menu retains focus
-      Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-         public void execute()
-         {
-            view_.getInputEditorDisplay().setFocus(true);
-         }
-      });
+      Scheduler.get().scheduleDeferred(() -> view_.getInputEditorDisplay().setFocus(true));
 
    }
 
    @Handler
    void onFocusConsoleOutputEnd()
    {
+      if (prefs_.limitVisibleConsole().getValue())
+      {
+         ariaLive_.announce(AriaLiveService.INACCESSIBLE_FEATURE,
+            "Warning: Focus console output command unavailable when " +
+               prefs_.limitVisibleConsole().getTitle() + " option is enabled.",
+            Timing.IMMEDIATE, Severity.STATUS);
+         return;
+      }
       view_.getConsoleOutputWriter().focusEnd();
    }
 
@@ -279,20 +286,26 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    {
       keyDownPreviewHandlers_.add(handler);
    }
-   
+
    public void addKeyPressPreviewHandler(KeyPressPreviewHandler handler)
    {
       keyPressPreviewHandlers_.add(handler);
    }
-   
+
    public void onConsoleInput(final ConsoleInputEvent event)
    {
       view_.clearLiveRegion();
-      server_.consoleInput(event.getInput(), 
+      server_.consoleInput(event.getInput(),
                            event.getConsole(),
-                           new ServerRequestCallback<Void>() {
+                           new ServerRequestCallback<Void>()
+      {
          @Override
-         public void onError(ServerError error) 
+         public void onResponseReceived(Void response)
+         {
+         }
+
+         @Override
+         public void onError(ServerError error)
          {
             // show the error in the console then re-prompt
             view_.consoleWriteError("Error: " + error.getUserMessage() + "\n");
@@ -311,19 +324,19 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    {
       view_.consoleWriteError(event.getError());
    }
-   
+
    public void onUnhandledError(UnhandledErrorEvent event)
    {
       if (!debugging_)
       {
          view_.consoleWriteExtendedError(
                event.getError().getErrorMessage(),
-               event.getError(), 
+               event.getError(),
                prefs_.autoExpandErrorTracebacks().getValue(),
                getHistoryEntry(0));
       }
    }
-   
+
    public void onConsoleWriteInput(ConsoleWriteInputEvent event)
    {
       view_.consoleWriteInput(event.getInput(), event.getConsole());
@@ -363,28 +376,28 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
          view_.getInputEditorDisplay().setFocus(true);
       }
    }
-   
+
    public void onConsoleResetHistory(ConsoleResetHistoryEvent event)
    {
       setHistory(event.getHistory());
    }
-   
+
    @Override
    public void onRestartRCompleted(ConsoleRestartRCompletedEvent event)
    {
       if (view_.isPromptEmpty())
          eventBus_.fireEvent(new SendToConsoleEvent("", true));
-         
+
       focus();
    }
-   
+
    private void processCommandEntry()
    {
       String commandText = view_.processCommandEntry();
       if (addToHistory_ && (commandText.length() > 0))
          eventBus_.fireEvent(new ConsoleHistoryAddedEvent(commandText));
 
-      // fire event 
+      // fire event
       eventBus_.fireEvent(new ConsoleInputEvent(commandText, ""));
    }
 
@@ -404,7 +417,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
          onSendToConsoleImpl(event);
       }
    }
-   
+
    private void onSendToConsoleImpl(final SendToConsoleEvent event)
    {
       languageTracker_.adaptToLanguage(
@@ -412,14 +425,14 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
             () -> { sendToConsoleImpl(event); }
             );
    }
-   
+
    private void sendToConsoleImpl(final SendToConsoleEvent event)
    {
       final InputEditorDisplay display = view_.getInputEditorDisplay();
-      
+
       // get anything already at the console
       final String previousInput = StringUtil.notNull(display.getText());
-      
+
       // define code block we execute at finish
       Command finishSendToConsole = new Command() {
          @Override
@@ -431,20 +444,20 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
                if (previousInput.length() > 0)
                   display.setText(previousInput);
             }
-            
+
             if (!event.shouldExecute() || event.shouldFocus())
             {
                display.setFocus(true);
                display.collapseSelection(false);
-            }  
+            }
          }
       };
-      
+
       // do standard finish if we aren't animating
       if (!event.shouldAnimate())
       {
          display.clear();
-         display.setText(event.getCode()); 
+         display.setText(event.getCode());
          finishSendToConsole.execute();
       }
       else
@@ -452,7 +465,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
          inputAnimator_.enque(event.getCode(), finishSendToConsole);
       }
    }
-   
+
    @Override
    public void onExecutePendingInput(ConsoleExecutePendingInputEvent event)
    {
@@ -461,25 +474,25 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       if (view_.getInputEditorDisplay().isFocused() &&
          (view_.getInputEditorDisplay().getText().length() > 0))
       {
-         processCommandEntry();  
+         processCommandEntry();
       }
       // otherwise delegate back to the source view. we do this via
       // executing a command which is a bit of hack but it's a clean
       // way to call code within the "current editor" (an event would
-      // go to all editors). another alternative would be to 
+      // go to all editors). another alternative would be to
       // call a method on the SourceShim
       else
       {
          AppCommand command = commands_.getCommandById(event.getCommandId());
-         
+
          // the current editor may be in another window; if one of our source
          // windows was last focused, use that one instead
-         SourceWindowManager manager = 
+         SourceWindowManager manager =
                RStudioGinjector.INSTANCE.getSourceWindowManager();
          if (!StringUtil.isNullOrEmpty(manager.getLastFocusedSourceWindowId()))
          {
             RStudioGinjector.INSTANCE.getSatelliteManager().dispatchCommand(
-                  command, SourceSatellite.NAME_PREFIX + 
+                  command, SourceSatellite.NAME_PREFIX +
                            manager.getLastFocusedSourceWindowId());
          }
          else
@@ -488,7 +501,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
          }
       }
    }
-   
+
    @Override
    public void onDebugModeChanged(DebugModeChangedEvent event)
    {
@@ -498,7 +511,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       }
       debugging_ = event.debugging();
    }
-   
+
    @Override
    public void onRunCommandWithDebug(final RunCommandWithDebugEvent event)
    {
@@ -513,13 +526,13 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
                   eventBus_.fireEvent(new SendToConsoleEvent(
                         event.getCommand(), true));
                }
-               
+
                @Override
                public void onError(ServerError error)
                {
                   // if we failed to set debug mode, don't rerun the command
                }
-            }); 
+            });
    }
 
    @Override
@@ -544,7 +557,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
          // this behavior is suppressed when we're incrementally searching the
          // history so we don't stack two kinds of completion popups
          ArrayList<KeyDownPreviewHandler> handlers = keyDownPreviewHandlers_;
-         if (historyCompletion_.getMode() == 
+         if (historyCompletion_.getMode() ==
                HistoryCompletionManager.PopupMode.PopupIncremental)
          {
             handlers = new ArrayList<>();
@@ -620,21 +633,28 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
 
             if (input_.getText().length() == 0)
             {
-               // view_.isPromptEmpty() is to check for cases where the
-               // server is prompting but not at the top level. Escape
-               // needs to send null in those cases.
-               // For example, try "scan()" function
-               if (view_.isPromptEmpty())
+               // interrupt server
+               server_.interrupt(new ServerRequestCallback<Boolean>()
                {
-                  // interrupt server
-                  server_.interrupt(new VoidServerRequestCallback());
-               }
-               else
-               {
-                  // if the input is already empty then send a console reset
-                  // which will jump us back to the main prompt
-                  eventBus_.fireEvent(new ConsoleInputEvent(null, ""));
-               }
+
+                  @Override
+                  public void onResponseReceived(Boolean busy)
+                  {
+                     // if the session was not busy, then we should
+                     // send a console cancel
+                     if (!busy)
+                     {
+                        eventBus_.fireEvent(new ConsoleInputEvent(null, ""));
+                     }
+                        
+                  }
+
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     Debug.logError(error);
+                  }
+               });
             }
 
             input_.clear();
@@ -662,7 +682,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
          // this behavior is suppressed when we're incrementally searching the
          // history so we don't stack two kinds of completion popups
          ArrayList<KeyPressPreviewHandler> handlers = keyPressPreviewHandlers_;
-         if (historyCompletion_.getMode() == 
+         if (historyCompletion_.getMode() ==
                HistoryCompletionManager.PopupMode.PopupIncremental)
          {
             handlers = new ArrayList<>();
@@ -687,7 +707,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
             return;
          if (KeyCodeEvent.isArrow(event.getNativeKeyCode()))
             return;
-         if (historyCompletion_.getMode() == 
+         if (historyCompletion_.getMode() ==
                HistoryCompletionManager.PopupMode.PopupIncremental)
          {
             historyCompletion_.beginSearch();
@@ -698,17 +718,23 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       private boolean lastKeyCodeWasZero_;
    }
    
+   @Override
+   public void onSuppressNextShellFocus(SuppressNextShellFocusEvent event)
+   {
+      restoreFocus_ = false;
+   }
+
    private boolean isBrowsePrompt()
    {
       return lastPromptText_ != null && (lastPromptText_.startsWith("Browse"));
    }
-   
+
    private void resetHistoryPosition()
    {
       historyManager_.resetPosition();
       browseHistoryManager_.resetPosition();
    }
-   
+
    private String getHistoryEntry(int offset)
    {
       if (isBrowsePrompt())
@@ -728,7 +754,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
          else
             historyCompletion_.navigatePrefix(offset);
       }
-      
+
       view_.ensureInputVisible();
    }
 
@@ -736,7 +762,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    {
       input_.setFocus(true);
    }
-   
+
    private void setHistory(JsArrayString history)
    {
       ArrayList<String> historyList = new ArrayList<>(history.length());
@@ -760,7 +786,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    {
       view_.onSelected();
    }
-   
+
    private void configureLiveAnnouncements()
    {
       if (prefs_.enableScreenReader().getValue() &&
@@ -770,6 +796,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
          view_.enableLiveReporting();
       }
    }
+   
 
    private final ConsoleServerOperations server_;
    private final EventBus eventBus_;
@@ -782,17 +809,17 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    private final ArrayList<KeyDownPreviewHandler> keyDownPreviewHandlers_;
    private final ArrayList<KeyPressPreviewHandler> keyPressPreviewHandlers_;
    private final HistoryCompletionManager historyCompletion_;
-   
+
    // indicates whether the next command should be added to history
    private boolean addToHistory_;
    private String lastPromptText_;
    private final UserPrefs prefs_;
-   
+
    private final ConsoleLanguageTracker languageTracker_;
-   
+
    private final CommandLineHistory historyManager_;
    private final CommandLineHistory browseHistoryManager_;
-   
+
    private final ShellInputAnimator inputAnimator_;
 
    private String initialInput_;

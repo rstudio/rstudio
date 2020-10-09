@@ -40,6 +40,7 @@ import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputFinishedEvent;
 import org.rstudio.studio.client.rmarkdown.model.NotebookQueueUnit;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
+import org.rstudio.studio.client.server.QuietServerRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -143,14 +144,7 @@ public class ChunkSatelliteWindow extends SatelliteWindow
             server_.cleanReplayNotebookChunkPlots(
                chunkWindowParams_.getDocId(), 
                chunkWindowParams_.getChunkId(),
-                  new ServerRequestCallback<Void>()
-                  {
-                     @Override
-                     public void onError(ServerError error)
-                     {
-                     }
-                  }
-            );
+               new QuietServerRequestCallback<Void>());
          }
       });
 

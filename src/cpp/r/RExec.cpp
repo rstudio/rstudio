@@ -39,7 +39,7 @@ LibExtern int UserBreak;
 #endif
 }
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace r {
@@ -47,6 +47,8 @@ namespace r {
 namespace exec {
    
 namespace {
+
+bool s_wasInterrupted;
 
 // create a scope for disabling any installed error handlers (e.g. recover)
 // we need to do this so that recover isn't invoked while we are running
@@ -106,7 +108,7 @@ Error parseString(const std::string& str, SEXP* pSEXP, sexp::Protect* pProtect)
    {
       Error error(errc::ExpressionParsingError, ERROR_LOCATION);
       error.addProperty("code", str);
-      return error;      
+      return error;
    }
    else
    {
@@ -214,8 +216,8 @@ void topLevelExec(void *data)
 struct SEXPTopLevelExecContext
 {
    boost::function<SEXP()> function;
-   SEXP* pReturnSEXP ;
-};  
+   SEXP* pReturnSEXP;
+};
    
 void SEXPTopLevelExec(void *data)
 {
@@ -248,9 +250,9 @@ core::Error executeSafely(boost::function<SEXP()> function, SEXP* pSEXP)
    DisableErrorHandlerScope disableErrorHandler;
    DisableDebugScope disableStepInto(R_GlobalEnv);
 
-   SEXPTopLevelExecContext context ;
-   context.function = function ;
-   context.pReturnSEXP = pSEXP ;
+   SEXPTopLevelExecContext context;
+   context.function = function;
+   context.pReturnSEXP = pSEXP;
    Rboolean success = R_ToplevelExec(SEXPTopLevelExec, (void*)&context);
    if (!success)
    {
@@ -285,19 +287,27 @@ Error executeStringUnsafe(const std::string& str,
 Error executeString(const std::string& str)
 {
    sexp::Protect rProtect;
-   SEXP ignoredSEXP ;
+   SEXP ignoredSEXP;
    return evaluateString(str, &ignoredSEXP, &rProtect);
 }
    
 Error evaluateString(const std::string& str, 
                      SEXP* pSEXP, 
-                     sexp::Protect* pProtect)
+                     sexp::Protect* pProtect,
+                     EvalFlags flags)
 {
    // refresh source if necessary (no-op in production)
    r::sourceManager().reloadIfNecessary();
    
-   // surrond the string with try in silent mode so we can capture error text
-   std::string rCode = "base::try(" + str + ", TRUE)";
+   // surround the string with try in silent mode so we can capture error text
+   std::string rCode = "base::try(" + str + ", silent = TRUE)";
+   
+   // suppress warnings if requested
+   if (flags & EvalFlagsSuppressWarnings)
+      rCode = "base::suppressWarnings(" + rCode + ")";
+   
+   if (flags & EvalFlagsSuppressMessages)
+      rCode = "base::suppressMessages(" + rCode + ")";
 
    // parse expression
    SEXP ps;
@@ -318,7 +328,7 @@ Error evaluateString(const std::string& str,
    {
       // get error message (merely log on failure so we can continue
       // and return the real error)
-      std::string errorMsg ;
+      std::string errorMsg;
       Error extractError = sexp::extract(*pSEXP, &errorMsg);
       if (extractError)
          LOG_ERROR(extractError);
@@ -366,7 +376,7 @@ void RFunction::commonInit(const std::string& functionName)
    }
    else
    {
-      name = functionName_; 
+      name = functionName_;
    }
    
    // lookup function
@@ -383,7 +393,7 @@ Error RFunction::callUnsafe()
 Error RFunction::call(SEXP evalNS, bool safely)
 {
    sexp::Protect rProtect;
-   SEXP ignoredResultSEXP ;
+   SEXP ignoredResultSEXP;
    return call(evalNS, safely, &ignoredResultSEXP, &rProtect);
 }
 
@@ -411,7 +421,7 @@ Error RFunction::call(SEXP evalNS, bool safely, SEXP* pResultSEXP,
    }
    
    // create the call object (LANGSXP) with the correct number of elements
-   SEXP callSEXP ;
+   SEXP callSEXP;
    pProtect->add(callSEXP = Rf_allocVector(LANGSXP, 1 + params_.size()));
    SET_TAG(callSEXP, R_NilValue); // just like do_ascall() does 
    
@@ -492,10 +502,10 @@ void errorCall(SEXP call, const std::string& message)
    
 std::string getErrorMessage()
 {
-   std::string errMessage ;
+   std::string errMessage;
    Error callError = RFunction("geterrmessage").call(&errMessage);
    if (callError)
-      LOG_ERROR(callError);   
+      LOG_ERROR(callError);
    return errMessage;
 }
    
@@ -523,6 +533,8 @@ bool interruptsPending()
    
 void setInterruptsPending(bool pending)
 {
+   setWasInterrupted(pending);
+   
 #ifdef _WIN32
    UserBreak = pending ? 1 : 0;
 #else
@@ -532,7 +544,7 @@ void setInterruptsPending(bool pending)
 
 void checkUserInterrupt()
 {   
-   R_CheckUserInterrupt();  
+   R_CheckUserInterrupt();
 }
    
 IgnoreInterruptsScope::IgnoreInterruptsScope()
@@ -601,6 +613,15 @@ DisableDebugScope::~DisableDebugScope()
    }
 }
 
+bool getWasInterrupted()
+{
+   return s_wasInterrupted;
+}
+
+void setWasInterrupted(bool wasInterrupted)
+{
+   s_wasInterrupted = wasInterrupted;
+}
 
 } // namespace exec   
 } // namespace r

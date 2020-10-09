@@ -13,38 +13,27 @@
  *
  */
 
-import { Node as ProsemirrorNode, Schema, NodeType } from 'prosemirror-model';
-import { EditorState, Transaction } from 'prosemirror-state';
-import { EditorView } from 'prosemirror-view';
-import { setTextSelection, findParentNodeOfType } from 'prosemirror-utils';
+import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
 
-import { Extension } from '../../api/extension';
-import { EditorOptions } from '../../api/options';
-import { PandocOutput, PandocTokenType, PandocExtensions } from '../../api/pandoc';
+import { Extension, ExtensionContext } from '../../api/extension';
+import { PandocOutput, PandocTokenType } from '../../api/pandoc';
 
 import { codeNodeSpec } from '../../api/code';
-import { ProsemirrorCommand, EditorCommandId, toggleBlockType } from '../../api/command';
-import { selectionIsBodyTopLevel } from '../../api/selection';
-import { precedingListItemInsertPos, precedingListItemInsert } from '../../api/list';
+import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 
 import { EditorUI } from '../../api/ui';
-import { PandocCapabilities } from '../../api/pandoc_capabilities';
-import { EditorFormat, kBookdownDocType } from '../../api/format';
-import { rmdChunk, EditorRmdChunk } from '../../api/rmd';
+import { kBookdownDocType } from '../../api/format';
+import { rmdChunk, insertRmdChunk } from '../../api/rmd';
+import { OmniInsertGroup } from '../../api/omni_insert';
 
 import { RmdChunkImagePreviewPlugin } from './rmd_chunk-image';
-import { ExecuteCurrentRmdChunkCommand, ExecutePreviousRmdChunksCommand } from './rmd_chunk-commands';
 import { rmdChunkBlockCapsuleFilter } from './rmd_chunk-capsule';
 
 import './rmd_chunk-styles.css';
 
-const extension = (
-  _pandocExtensions: PandocExtensions,
-  _pandocCapabilities: PandocCapabilities,
-  ui: EditorUI,
-  format: EditorFormat,
-  options: EditorOptions,
-): Extension | null => {
+const extension = (context: ExtensionContext): Extension | null => {
+  const { ui, options, format } = context;
+
   if (!format.rmdExtensions.codeChunks) {
     return null;
   }
@@ -57,6 +46,7 @@ const extension = (
           ...codeNodeSpec(),
           attrs: {
             navigation_id: { default: null },
+            md_index: { default: 0 },
           },
           parseDOM: [
             {
@@ -89,9 +79,7 @@ const extension = (
               return null;
             }
           },
-          executeRmdChunkFn: ui.execute.executeRmdChunk
-            ? (chunk: EditorRmdChunk) => ui.execute.executeRmdChunk!(chunk)
-            : undefined,
+          createFromPastePattern: /^\{([a-zA-Z0-9_]+).*}.*?\n/m,
         },
 
         pandoc: {
@@ -101,8 +89,7 @@ const extension = (
             output.writeToken(PandocTokenType.Para, () => {
               const parts = rmdChunk(node.textContent);
               if (parts) {
-                const code = parts.code ? parts.code + '\n' : '';
-                output.writeRawMarkdown('```{' + parts.meta + '}\n' + code + '```\n');
+                output.writeRawMarkdown('```{' + parts.meta + '}\n' + parts.code + '```\n');
               }
             });
           },
@@ -111,10 +98,15 @@ const extension = (
     ],
 
     commands: (_schema: Schema) => {
-      const commands = [new RmdChunkCommand()];
-      if (ui.execute.executeRmdChunk) {
-        commands.push(new ExecuteCurrentRmdChunkCommand(ui), new ExecutePreviousRmdChunksCommand(ui));
-      }
+      const commands = [
+        new RChunkCommand(ui),
+        new PythonChunkCommand(ui),
+        new BashChunkCommand(ui),
+        new RcppChunkCommand(ui),
+        new SQLChunkCommand(ui),
+        new D3ChunkCommand(ui),
+        new StanChunkCommand(ui),
+      ];
       return commands;
     },
 
@@ -129,52 +121,101 @@ const extension = (
 };
 
 class RmdChunkCommand extends ProsemirrorCommand {
-  constructor() {
+  constructor(
+    ui: EditorUI,
+    id: EditorCommandId,
+    keymap: string[],
+    priority: number,
+    lang: string,
+    placeholder: string,
+    image: () => string,
+    rowOffset = 1,
+    colOffset = 0,
+    selectionOffset?: number,
+  ) {
+    super(id, keymap, insertRmdChunk(placeholder, rowOffset, colOffset), {
+      name: `${lang} ${ui.context.translateText('Code Chunk')}`,
+      description: `${ui.context.translateText('Executable')} ${lang} ${ui.context.translateText('chunk')}`,
+      group: OmniInsertGroup.Chunks,
+      priority,
+      selectionOffset: selectionOffset || colOffset || placeholder.length,
+      image,
+    });
+  }
+}
+
+class RChunkCommand extends RmdChunkCommand {
+  constructor(ui: EditorUI) {
+    super(ui, EditorCommandId.RCodeChunk, ['Mod-Alt-i'], 10, 'R', '{r}\n', () =>
+      ui.prefs.darkMode() ? ui.images.omni_insert!.r_chunk_dark! : ui.images.omni_insert!.r_chunk!,
+    );
+  }
+}
+
+class PythonChunkCommand extends RmdChunkCommand {
+  constructor(ui: EditorUI) {
     super(
-      EditorCommandId.RmdChunk,
-      ['Mod-Alt-i'],
-      (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
-        const schema = state.schema;
+      ui,
+      EditorCommandId.PythonCodeChunk,
+      [],
+      8,
+      'Python',
+      '{python}\n',
+      () => ui.images.omni_insert!.python_chunk!,
+    );
+  }
+}
 
-        if (
-          !toggleBlockType(schema.nodes.rmd_chunk, schema.nodes.paragraph)(state) &&
-          !precedingListItemInsertPos(state.doc, state.selection)
-        ) {
-          return false;
-        }
+class BashChunkCommand extends RmdChunkCommand {
+  constructor(ui: EditorUI) {
+    super(ui, EditorCommandId.BashCodeChunk, [], 7, 'Bash', '{bash}\n', () =>
+      ui.prefs.darkMode() ? ui.images.omni_insert!.bash_chunk_dark! : ui.images.omni_insert!.bash_chunk!,
+    );
+  }
+}
 
-        // must either be at the body top level, within a list item, or within a
-        // blockquote (and never within a table)
-        const within = (nodeType: NodeType) => !!findParentNodeOfType(nodeType)(state.selection);
-        if (within(schema.nodes.table)) {
-          return false;
-        }
-        if (
-          !selectionIsBodyTopLevel(state.selection) &&
-          !within(schema.nodes.list_item) &&
-          !within(schema.nodes.blockquote)
-        ) {
-          return false;
-        }
+class RcppChunkCommand extends RmdChunkCommand {
+  constructor(ui: EditorUI) {
+    super(ui, EditorCommandId.RcppCodeChunk, [], 6, 'Rcpp', '{Rcpp}\n', () =>
+      ui.prefs.darkMode() ? ui.images.omni_insert!.rcpp_chunk_dark! : ui.images.omni_insert!.rcpp_chunk!,
+    );
+  }
+}
 
-        // create chunk text
-        if (dispatch) {
-          const tr = state.tr;
-          const kRmdText = '{r}\n';
-          const rmdText = schema.text(kRmdText);
-          const rmdNode = schema.nodes.rmd_chunk.create({}, rmdText);
-          const prevListItemPos = precedingListItemInsertPos(tr.doc, tr.selection);
-          if (prevListItemPos) {
-            precedingListItemInsert(tr, prevListItemPos, rmdNode);
-          } else {
-            tr.replaceSelectionWith(rmdNode);
-            setTextSelection(tr.mapping.map(state.selection.from) - 1)(tr);
-          }
-          dispatch(tr);
-        }
+class SQLChunkCommand extends RmdChunkCommand {
+  constructor(ui: EditorUI) {
+    super(
+      ui,
+      EditorCommandId.SQLCodeChunk,
+      [],
+      5,
+      'SQL',
+      '{sql connection=}\n',
+      () => ui.images.omni_insert!.sql_chunk!,
+      0,
+      16,
+    );
+  }
+}
 
-        return true;
-      },
+class D3ChunkCommand extends RmdChunkCommand {
+  constructor(ui: EditorUI) {
+    super(ui, EditorCommandId.D3CodeChunk, [], 4, 'D3', '{d3 data=}\n', () => ui.images.omni_insert!.d3_chunk!, 0, 9);
+  }
+}
+
+class StanChunkCommand extends RmdChunkCommand {
+  constructor(ui: EditorUI) {
+    super(
+      ui,
+      EditorCommandId.StanCodeChunk,
+      [],
+      7,
+      'Stan',
+      '{stan output.var=}\n',
+      () => ui.images.omni_insert!.stan_chunk!,
+      0,
+      17,
     );
   }
 }

@@ -27,7 +27,7 @@ public class RenderFinishedEvent extends GwtEvent<RenderFinishedEvent.Handler>
    public RenderFinishedEvent()
    {
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -40,5 +40,5 @@ public class RenderFinishedEvent extends GwtEvent<RenderFinishedEvent.Handler>
       handler.onRenderFinished(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

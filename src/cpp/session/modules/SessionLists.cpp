@@ -45,7 +45,6 @@ const char * const kProjectMru = kProjectMruList;
 const char * const kHelpHistory = "help_history_links";
 const char * const kUserDictioanry = "user_dictionary";
 const char * const kPlotPublishMru = "plot_publish_mru";
-const char * const kAddinsMru = "addins_mru";
 
 // path to lists dir
 FilePath s_listsPath;
@@ -298,7 +297,6 @@ Error initialize()
    s_lists[kHelpHistory] = 15;
    s_lists[kPlotPublishMru] = 15;
    s_lists[kUserDictioanry] = 10000;
-   s_lists[kAddinsMru] = 15;
 
    // monitor the lists directory
    s_listsPath = module_context::registerMonitoredUserScratchDir(
@@ -307,7 +305,7 @@ Error initialize()
 
    using boost::bind;
    using namespace module_context;
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "list_get", listGet))
       (bind(registerRpcMethod, "list_set_contents", listSetContents))

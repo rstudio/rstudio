@@ -27,7 +27,7 @@ public interface DomUtilsImpl
    boolean isSelectionCollapsed();
 
    boolean isSelectionInElement(Element element);
-   
+
    boolean selectionExists();
 
    Rectangle getCursorBounds(Document doc);

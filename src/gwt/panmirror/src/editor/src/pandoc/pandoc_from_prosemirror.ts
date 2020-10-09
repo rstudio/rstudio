@@ -26,11 +26,13 @@ import {
   PandocTokenType,
   PandocOutputOption,
   PandocExtensions,
+  marksByPriority,
 } from '../api/pandoc';
 
 import { PandocFormat, kGfmFormat } from '../api/pandoc_format';
 import { PandocAttr } from '../api/pandoc_attr';
 import { fragmentText } from '../api/fragment';
+import { fancyQuotesToSimple } from '../api/quote';
 
 export function pandocFromProsemirror(
   doc: ProsemirrorNode,
@@ -59,6 +61,7 @@ class PandocWriter implements PandocOutput {
   public readonly extensions: PandocExtensions;
 
   private readonly escapeCharacters: string[] = [];
+  private readonly manualEscapeCharacters: Map<string, string> = new Map<string, string>();
   private readonly preventEscapeCharacters: string[] = [];
 
   constructor(
@@ -201,7 +204,7 @@ class PandocWriter implements PandocOutput {
     this.write(arr);
   }
 
-  public writeAttr(id?: string, classes?: string[], keyvalue?: [[string, string]]) {
+  public writeAttr(id?: string, classes?: string[], keyvalue?: Array<[string, string]>) {
     this.write([id || '', classes || [], keyvalue || []]);
   }
 
@@ -213,28 +216,48 @@ class PandocWriter implements PandocOutput {
       let textRun = '';
       const flushTextRun = () => {
         if (textRun) {
+          // if this is a line block, convert leading nbsp to regular space,
+          if (!this.options.writeSpaces) {
+            textRun = textRun.replace(/(^|\n)+(\u00A0+)/g, (_match, p1, p2) => {
+              return p1 + Array(p2.length + 1).join(' ');
+            });
+          }
+
+          // reverse smart punctuation. pandoc does this autmoatically for markdown
+          // writing w/ +smart, however this also results in nbsp's being inserted
+          // after selected abbreviations like e.g. and Mr., and we don't want that
+          // to happen for editing (b/c the nbsp's weren't put there by the user
+          // and are not obviously visible)
+          if (this.extensions.smart) {
+            textRun = textRun
+              .replace(/—/g, '---')
+              .replace(/–/g, '--')
+              .replace(/…/g, '...');
+          }
+
+          // we explicitly don't want fancy quotes in the editor
+          textRun = fancyQuotesToSimple(textRun);
+
           this.writeToken(PandocTokenType.Str, textRun);
           textRun = '';
         }
       };
       for (let i = 0; i < text.length; i++) {
-        let ch = text.charAt(i);
-        if (ch.charCodeAt(0) === 160) {
-          ch = ' '; // convert &nbsp; to ' '
-        }
+        const ch = text.charAt(i);
         if (this.options.writeSpaces && ch === ' ') {
           flushTextRun();
           this.writeToken(PandocTokenType.Space);
         } else if (preventEscapeCharacters.includes(ch)) {
           flushTextRun();
           this.writeRawMarkdown(ch);
+        } else if (this.manualEscapeCharacters.has(ch)) {
+          flushTextRun();
+          this.writeRawMarkdown(this.manualEscapeCharacters.get(ch)!);
         } else {
           textRun += ch;
         }
       }
-      if (textRun) {
-        this.writeToken(PandocTokenType.Str, textRun);
-      }
+      flushTextRun();
     }
   }
 
@@ -279,19 +302,8 @@ class PandocWriter implements PandocOutput {
   public writeInlines(fragment: Fragment) {
     // get the marks from a node that are not already on the stack of active marks
     const nodeMarks = (node: ProsemirrorNode) => {
-      // get marks -- order marks by priority (code lowest so that we never include
-      // other markup inside code)
-      let marks: Mark[] = node.marks.sort((a: Mark, b: Mark) => {
-        const aPriority = this.markWriters[a.type.name].priority;
-        const bPriority = this.markWriters[b.type.name].priority;
-        if (aPriority < bPriority) {
-          return -1;
-        } else if (bPriority < aPriority) {
-          return 1;
-        } else {
-          return 0;
-        }
-      });
+      // get marks ordered by writer priority
+      let marks = marksByPriority(node.marks, this.markWriters);
 
       // remove active marks
       for (const activeMark of this.activeMarks) {
@@ -405,6 +417,17 @@ class PandocWriter implements PandocOutput {
 
     // filter standard escape characters w/ preventEscapeCharacters
     const allEscapeCharacters = ['\\', '`', '*', '_', '{', '}', '[', ']', '(', ')', '>', '#', '+', '-', '.', '!'];
+    if (this.format.extensions.angle_brackets_escapable) {
+      allEscapeCharacters.push('<');
+    }
     this.escapeCharacters.push(...allEscapeCharacters.filter(ch => !this.preventEscapeCharacters.includes(ch)));
+
+    // Manual escape characters are ones we can't rely on pandoc to automatically escape (b/c
+    // they represent valid syntax for a markdown extension, e.g. '@' for citations).
+    // For '@', since we already do special writing for spans we know are citation ids, we can
+    // globally prescribe escaping behavior and never stomp over a citation. We also check
+    // that '@' can be escaped in the current markdown format, and if not use an html escape.
+    const atEscape = this.extensions.all_symbols_escapable ? '\\@' : '&#x0040;';
+    this.manualEscapeCharacters.set('@', atEscape);
   }
 }

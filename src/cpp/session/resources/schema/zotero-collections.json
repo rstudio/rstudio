@@ -1,0 +1,48 @@
+{
+  "$id": "http://rstudio.org/schemas/zotero-collections.json",
+  "$schema": "http://json-schema.org/schema#",
+  "title": "Zotero Collections Metadata Schema",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "key": {
+        "type": "string"
+      },
+      "version": {
+        "type": "number"
+      },
+      "library": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "id": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "data": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "parentCollection": {
+            "type": ["string", "boolean"]
+          },
+          "version": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

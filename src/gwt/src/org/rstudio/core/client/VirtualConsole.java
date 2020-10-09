@@ -27,6 +27,7 @@ import com.google.inject.Provider;
 import com.google.inject.assistedinject.Assisted;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.core.client.virtualscroller.VirtualScrollerManager;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.core.client.JsArrayString;
@@ -47,6 +48,7 @@ public class VirtualConsole
       int truncateLongLinesInConsoleHistory();
       String consoleAnsiMode();
       boolean screenReaderEnabled();
+      boolean limitConsoleVisible();
    }
 
    public static class PreferencesImpl extends UserPrefsSubset
@@ -75,6 +77,12 @@ public class VirtualConsole
       {
          return getUserPrefs().enableScreenReader().getValue();
       }
+
+      @Override
+      public boolean limitConsoleVisible()
+      {
+         return getUserPrefs().limitVisibleConsole().getValue();
+      }
    }
 
    @Inject
@@ -82,11 +90,36 @@ public class VirtualConsole
    {
       prefs_ = prefs;
       parent_ = parent;
+
+      VirtualScrollerManager.init();
    }
-    
+
    public void clear()
    {
-      formfeed();
+      if (isVirtualized())
+         clearVirtualScroller();
+      else
+         formfeed();
+   }
+
+   public boolean isLimitConsoleVisible() { return prefs_.limitConsoleVisible(); }
+
+   public void setVirtualizedDisableOverride(boolean override)
+   {
+      virtualizedDisableOverride_ = override;
+   }
+
+   public boolean isVirtualized()
+   {
+      return !virtualizedDisableOverride_ && prefs_.limitConsoleVisible() && parent_ != null;
+   }
+
+   public void clearVirtualScroller()
+   {
+      if (isVirtualized())
+      {
+         VirtualScrollerManager.clear(parent_.getParentElement());
+      }
    }
 
    private void backspace()
@@ -124,7 +157,7 @@ public class VirtualConsole
       if (parent_ != null)
          parent_.setInnerHTML("");
    }
-   
+
    private void clearPartialAnsiCode()
    {
       partialAnsiCode_ = null;
@@ -159,16 +192,16 @@ public class VirtualConsole
          }
       Debug.logToConsole("Done dumping " + name);
    }
-   
+
    @Override
    public String toString()
    {
       String output = output_.toString();
-      
+
       int maxLength = prefs_.truncateLongLinesInConsoleHistory();
       if (maxLength == 0)
          return output;
-      
+
       JsArrayString splat = StringUtil.split(output, "\n");
       for (int i = 0; i < splat.length(); i++)
       {
@@ -182,20 +215,20 @@ public class VirtualConsole
 
       return splat.join("\n");
    }
-   
+
    public int getLength()
    {
       return output_.length();
    }
-   
+
    public Element getParent()
    {
       return parent_;
    }
-   
+
    /**
     * Appends text to the end of the virtual console.
-    * 
+    *
     * @param text The text to append
     * @param clazz Style of the text to append
     * @param forceNewRange start a new output range even if last range had same
@@ -203,8 +236,9 @@ public class VirtualConsole
     */
    private void appendText(String text, String clazz, boolean forceNewRange)
    {
-      Entry <Integer, ClassRange> last = class_.lastEntry();
+      Entry<Integer, ClassRange> last = class_.lastEntry();
       ClassRange range = last.getValue();
+
       if (!forceNewRange && StringUtil.equals(range.clazz, clazz))
       {
          // just append to the existing output stream
@@ -214,21 +248,21 @@ public class VirtualConsole
       {
          // create a new output range with this class
          final ClassRange newRange = new ClassRange(cursor_, clazz, text);
-         parent_.appendChild(newRange.element);
+         appendChild(newRange.element);
          class_.put(cursor_, newRange);
       }
    }
 
    /**
     * Inserts text which overlaps existing text in the virtual console.
-    * 
+    *
     * @param range
     */
    private void insertText(ClassRange range)
    {
       int start = range.start;
       int end = start + range.length;
-      
+
       Entry<Integer, ClassRange> left = class_.floorEntry(start);
       Entry<Integer, ClassRange> right = class_.floorEntry(end);
 
@@ -247,7 +281,7 @@ public class VirtualConsole
       {
          class_.put(start, range);
          if (parent_ != null)
-            parent_.appendChild(range.element);
+            appendChild(range.element);
          return;
       }
 
@@ -266,7 +300,7 @@ public class VirtualConsole
          int l = entry.getKey();
          int r = l + overlap.length;
          boolean matches = StringUtil.equals(range.clazz, overlap.clazz);
-         if (start >= l && start < r && end >= r) 
+         if (start >= l && start < r && end >= r)
          {
             // overlapping on the left side of the new range
             int delta = r - start;
@@ -295,17 +329,27 @@ public class VirtualConsole
                // extend the original range
                overlap.appendLeft(range.text(), delta);
 
-               // If we previously inserted the new range (i.e. overlapped a prior
-               // range that had a different clazz) then undo that and use the one
-               // we found with the same clazz.
-               range.clearText();
-               if (haveInsertedRange)
+               // if the original range becomes empty, then delete it
+               if (overlap.length == 0)
                {
-                  insertions.remove(range);
-                  haveInsertedRange = false;
+                  deletions.add(l);
+                  if (overlap.element.getParentElement() != null)
+                     overlap.element.removeFromParent();
                }
+               else
+               {
+                  // If we previously inserted the new range (i.e. overlapped a prior
+                  // range that had a different clazz) then undo that and use the one
+                  // we found with the same clazz.
+                  range.clearText();
+                  if (haveInsertedRange)
+                  {
+                     insertions.remove(range);
+                     haveInsertedRange = false;
+                  }
 
-               moves.put(l, start);
+                  moves.put(l, overlap.start);
+               }
             }
             else
             {
@@ -320,7 +364,7 @@ public class VirtualConsole
 
                if (parent_ != null && !range.text().isEmpty())
                   parent_.insertBefore(range.element, overlap.element);
-              
+
             }
          }
          else if (l > start && r < end)
@@ -328,7 +372,7 @@ public class VirtualConsole
             // this range is fully overwritten, just delete it
             deletions.add(l);
             if (parent_ != null)
-               parent_.removeChild(overlap.element);
+               overlap.element.removeFromParent();
          }
          else if (start > l && end < r)
          {
@@ -345,12 +389,12 @@ public class VirtualConsole
                // trim the original range
                int amountTrimmed = overlap.length - (start - l);
                overlap.trimRight(amountTrimmed);
-               
+
                // insert the new range
                insertions.add(range);
                if (parent_ != null)
                   parent_.insertAfter(range.element, overlap.element);
-               
+
                // add back the remainder
                ClassRange remainder = new ClassRange(
                      end,
@@ -362,7 +406,7 @@ public class VirtualConsole
             }
          }
       }
-      
+
       // process accumulated actions
       for (Integer key: deletions)
       {
@@ -381,7 +425,19 @@ public class VirtualConsole
          class_.put(val.start, val);
       }
    }
-   
+
+   /**
+    * Add a child to the parent or the virtual scroller, depending on preference
+    * @param element to add
+    */
+   private void appendChild(Element element)
+   {
+      if (isVirtualized())
+         VirtualScrollerManager.append(parent_.getParentElement(), element);
+      else
+         parent_.appendChild(element);
+   }
+
    /**
     * Write text to DOM
     * @param text text to write
@@ -396,7 +452,7 @@ public class VirtualConsole
 
       int start = cursor_;
       int end = cursor_ + text.length();
-      
+
       // real-time output if we have a parent
       if (parent_ != null)
       {
@@ -410,7 +466,7 @@ public class VirtualConsole
       output_.replace(start, end, text);
       cursor_ += text.length();
    }
-   
+
    public void submit(String data)
    {
       submit(data, null);
@@ -432,7 +488,7 @@ public class VirtualConsole
    public void submit(String data, String clazz, boolean forceNewRange, boolean ariaLiveAnnounce)
    {
       // Only capture new elements when dealing with error output, which
-      // is only place that sets forceNewRange to true. This is just an 
+      // is the only place that sets forceNewRange to true. This is just an
       // optimization to avoid unnecessary overhead for large (non-error)
       // output.
       captureNewElements_ = forceNewRange;
@@ -448,7 +504,7 @@ public class VirtualConsole
          data = partialAnsiCode_ + data;
          partialAnsiCode_ = null;
       }
-     
+
       String currentClazz = clazz;
 
       String ansiColorMode = prefs_.consoleAnsiMode();
@@ -477,7 +533,7 @@ public class VirtualConsole
          text(data, currentClazz, forceNewRange);
          return;
       }
-      
+
       int tail = 0;
       while (match != null)
       {
@@ -488,12 +544,12 @@ public class VirtualConsole
          if (tail != pos)
          {
             text(data.substring(tail, pos), currentClazz, forceNewRange);
-            
+
             // once we've started a new range, rest of output for this submit
             // call should share that range (e.g. a multi-line error message)
             forceNewRange = false;
          }
-         
+
          tail = pos + 1;
 
          switch (data.charAt(pos))
@@ -512,12 +568,12 @@ public class VirtualConsole
                break;
             case '\033':
             case '\233':
-               
+
                // VirtualConsole only supports ANSI SGR codes (colors, font, etc).
                // We want to identify and act on these codes, while discarding the codes
                // we don't support. Tricky part is we might get codes split across
                // submit calls.
-               
+
                // match complete SGR codes
                Match sgrMatch = AnsiCode.SGR_ESCAPE_PATTERN.match(data, pos);
                if (sgrMatch == null)
@@ -529,7 +585,7 @@ public class VirtualConsole
                      partialAnsiCode_ = data.substring(pos);
                      return;
                   }
-                  
+
                   // potentially an incomplete SGR code
                   Match partialMatch = AnsiCode.SGR_PARTIAL_ESCAPE_PATTERN.match(data, pos);
                   if (partialMatch != null)
@@ -540,7 +596,7 @@ public class VirtualConsole
                      partialAnsiCode_ = data.substring(pos);
                      return;
                   }
-                  
+
                   // how about an unsupported ANSI code?
                   Match ansiMatch = AnsiCode.ANSI_ESCAPE_PATTERN.match(data, pos);
                   if (ansiMatch != null)
@@ -591,6 +647,13 @@ public class VirtualConsole
          match = match.nextMatch();
       }
 
+      Entry<Integer, ClassRange> last = class_.lastEntry();
+      if (last != null)
+      {
+         ClassRange range = last.getValue();
+         if (isVirtualized()) VirtualScrollerManager.prune(parent_.getParentElement(), range.element);
+      }
+
       // If there was any plain text after the last control character, add it
       if (tail < data.length())
          text(data.substring(tail), currentClazz, forceNewRange);
@@ -621,35 +684,33 @@ public class VirtualConsole
          if (className != null)
             element.addClassName(clazz);
          element.setInnerText(text);
-         
+
          if (captureNewElements_)
-         {
             newElements_.add(element);
-         }
       }
-      
+
       public void trimLeft(int delta)
       {
          length -= delta;
          start += delta;
          element.setInnerText(element.getInnerText().substring(delta));
       }
-      
+
       public void trimRight(int delta)
       {
          length -= delta;
          String text = element.getInnerText();
          element.setInnerText(text.substring(0, text.length() - delta));
       }
-      
+
       public void appendLeft(String content, int delta)
       {
          length += content.length() - delta;
          start -= (content.length() - delta);
-         element.setInnerText(content + 
+         element.setInnerText(content +
                element.getInnerText().substring(delta));
       }
-      
+
       public void appendRight(String content, int delta)
       {
          length += content.length() - delta;
@@ -657,7 +718,7 @@ public class VirtualConsole
          element.setInnerText(text.substring(0,
                text.length() - delta) + content);
       }
-      
+
       public void overwrite(String content, int pos)
       {
          String text = element.getInnerText();
@@ -665,12 +726,12 @@ public class VirtualConsole
                text.substring(0, pos) + content +
                text.substring(pos + content.length()));
       }
-      
+
       public String text()
       {
          return element.getInnerText();
       }
-      
+
       public void clearText()
       {
          element.setInnerText("");
@@ -689,20 +750,24 @@ public class VirtualConsole
    }
 
    private static final Pattern CONTROL = Pattern.create("[\r\b\f\n]");
-   
+
+   // some panels might want to never virtualize the scrolling based
+   // on how they use the VirtualConsole (e.g. Build Pane)
+   private boolean virtualizedDisableOverride_ = false;
+
    private final StringBuilder output_ = new StringBuilder();
    private final TreeMap<Integer, ClassRange> class_ = new TreeMap<>();
    private final Element parent_;
-   
+
    private int cursor_ = 0;
    private AnsiCode ansi_;
    private String partialAnsiCode_;
    private AnsiCode.AnsiClazzes ansiCodeStyles_ = new AnsiCode.AnsiClazzes();
-   
+
    // Elements added by last submit call (only if forceNewRange was true)
    private boolean captureNewElements_ = false;
    private final List<Element> newElements_ = new ArrayList<>();
-   
+
    private StringBuilder newText_;
 
    // Injected ----

@@ -1,7 +1,7 @@
 /*
  * PanmirrorToolbar.java
  *
- * Copyright (C) 2009-20 byRStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -75,8 +75,9 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       );
       
       insertWidgets_ = addWidgetGroup(
-         addLeftButton(PanmirrorCommands.RmdChunk),
          addLeftButton(PanmirrorCommands.Link),
+         addLeftButton(PanmirrorCommands.Citation),
+         addLeftSeparator(),
          addLeftButton(PanmirrorCommands.Image),
          addLeftSeparator()
       );
@@ -97,12 +98,6 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
          addLeftTextMenu(new ToolbarMenuButton("Table", "Table", null, tableMenu, false));
       }
              
-      if (haveAnyOf(PanmirrorCommands.HTMLComment))
-      {
-         addLeftSeparator();
-         addLeftButton(PanmirrorCommands.HTMLComment);
-      }
-     
       if (findReplace != null)
       {
          addLeftSeparator();

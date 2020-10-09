@@ -16,22 +16,26 @@
 
 package org.rstudio.studio.client.workbench.views.output.renderrmd;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.widget.model.ProvidesBusy;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderOutputEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderStartedEvent;
-import org.rstudio.studio.client.workbench.events.BusyHandler;
+import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.BusyEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 
-public class RenderRmdOutputTab 
-   extends DelayLoadWorkbenchTab<RenderRmdOutputPresenter> 
+public class RenderRmdOutputTab
+   extends DelayLoadWorkbenchTab<RenderRmdOutputPresenter>
    implements ProvidesBusy
 {
    public abstract static class Shim extends
@@ -43,15 +47,21 @@ public class RenderRmdOutputTab
                  ProvidesBusy
    {
       abstract void confirmClose(Command onConfirmed);
+      @Handler public abstract void onActivateRMarkdown();
    }
+
+   interface Binder extends CommandBinder<Commands, Shim> {}
 
    @Inject
    public RenderRmdOutputTab(Shim shim,
                              EventBus events,
+                             Commands commands,
                              final Session session)
    {
       super("R Markdown", shim);
       shim_ = shim;
+
+      GWT.<Binder>create(Binder.class).bind(commands, shim_);
 
       events.addHandler(RmdRenderStartedEvent.TYPE, shim);
       events.addHandler(RmdRenderOutputEvent.TYPE, shim);
@@ -64,18 +74,18 @@ public class RenderRmdOutputTab
    {
       return true;
    }
-   
+
    @Override
    public void confirmClose(Command onConfirmed)
    {
       shim_.confirmClose(onConfirmed);
    }
-   
+
    @Override
-   public void addBusyHandler(BusyHandler handler)
+   public void addBusyHandler(BusyEvent.Handler handler)
    {
       shim_.addBusyHandler(handler);
    }
-   
-   private Shim shim_;
+
+   private final Shim shim_;
 }

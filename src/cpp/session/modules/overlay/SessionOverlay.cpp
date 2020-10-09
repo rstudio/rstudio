@@ -17,7 +17,7 @@
 
 #include <shared_core/Error.hpp>
 
-using namespace rstudio::core ;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {  
@@ -51,6 +51,11 @@ int verifyInstallation()
 
 void initMonitorClient(boost::asio::io_service& ioService)
 {
+}
+
+std::string sessionNode()
+{
+   return std::string();
 }
 
 } // namespace overlay

@@ -1,0 +1,41 @@
+@charset "UTF-8";
+
+@external gwt-Label;
+
+.connection .gwt-Label {
+   margin-left: 2px !important;
+}
+
+.apiKey {
+   font-family: monospace !important;
+   margin-right: 6px;
+}
+
+.apiKeyPanel {
+	margin-top: 4px;
+}
+
+.librariesWidget {
+	margin-top: 4px;
+   margin-left: 4px;
+}
+
+.librariesLabel {
+ 
+}
+
+.librariesList {
+   width: 255px;
+   height: 140px;
+}
+
+.librariesSelect {
+	margin-bottom: 6px;
+}
+
+.librariesSelect .gwt-Label {
+	margin-left: 0;
+	margin-bottom: 0;
+}
+
+

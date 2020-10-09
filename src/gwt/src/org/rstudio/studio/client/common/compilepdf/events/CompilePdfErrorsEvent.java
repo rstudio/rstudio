@@ -31,7 +31,7 @@ public class CompilePdfErrorsEvent extends GwtEvent<CompilePdfErrorsEvent.Handle
    {
       errors_ = errors;
    }
-   
+
    public JsArray<SourceMarker> getErrors()
    {
       return errors_;
@@ -48,8 +48,8 @@ public class CompilePdfErrorsEvent extends GwtEvent<CompilePdfErrorsEvent.Handle
    {
       handler.onCompilePdfErrors(this);
    }
-   
+
    private JsArray<SourceMarker> errors_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

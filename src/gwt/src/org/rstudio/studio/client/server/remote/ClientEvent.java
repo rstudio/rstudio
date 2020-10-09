@@ -17,7 +17,7 @@ package org.rstudio.studio.client.server.remote;
 import com.google.gwt.core.client.JavaScriptObject;
 
 class ClientEvent extends JavaScriptObject
-{   
+{
    public static final String Busy = "busy";
    public static final String ConsolePrompt = "console_prompt";
    public static final String ConsoleOutput = "console_output";
@@ -177,9 +177,6 @@ class ClientEvent extends JavaScriptObject
    public static final String OpenFileDialog = "open_file_dialog";
    public static final String ShowPageViewer = "show_page_viewer";
    public static final String AskSecret = "ask_secret";
-   public static final String TestsStarted = "tests_started";
-   public static final String TestsOutput = "tests_output";
-   public static final String TestsCompleted = "tests_completed";
    public static final String JobUpdated = "job_updated";
    public static final String JobRefresh = "job_refresh";
    public static final String JobOutput = "job_output";
@@ -194,19 +191,20 @@ class ClientEvent extends JavaScriptObject
    public static final String TutorialCommand = "tutorial_command";
    public static final String TutorialLaunch = "tutorial_launch";
    public static final String ReticulateEvent = "reticulate_event";
+   public static final String RStudioApiRequest = "rstudioapi_request";
 
    protected ClientEvent()
    {
    }
-   
+
    public final native int getId() /*-{
       return this.id;
    }-*/;
-   
+
    public final native String getType() /*-{
       return this.type;
    }-*/;
-   
+
    public final native <T> T getData() /*-{
       return this.data;
    }-*/;

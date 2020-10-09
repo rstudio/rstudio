@@ -2,6 +2,9 @@
 build_*/
 build-*/
 *-build/
+*_build/
+*-build-*/
+*_build_*/
 qtcreator-build
 .DS_Store
 src/gwt/www/js/acesupport.js
@@ -37,4 +40,5 @@ GPATH
 GRTAGS
 GSYMS
 GTAGS
+TODO-INTERNAL
 

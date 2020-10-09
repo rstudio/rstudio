@@ -34,13 +34,13 @@ if(NOT WIN32)
            set(QT_COMPILER "gcc")
          endif()
       endif()
-         
+
       set(QT_CANDIDATES 5.14.2)
 
       # find the newest installed Qt version among the versions we build
       # against
       foreach(QT_CANDIDATE ${QT_CANDIDATES})
-         
+
          set(QT_VERSION_SUBDIR "${QT_CANDIDATE}")
 
          set(QMAKE_QT50_SDK "/opt/RStudio-QtSDK/Qt${QT_CANDIDATE}/${QT_VERSION_SUBDIR}/${QT_COMPILER}")
@@ -69,7 +69,7 @@ if(NOT WIN32)
 else()
    # Windows
    set(QT_VERSION "5.14.2")
-   set(QT_VERSION_SUBDIR "${QT_VERSION}")   
+   set(QT_VERSION_SUBDIR "${QT_VERSION}")
    if(NOT QT_QMAKE_EXECUTABLE)
 
       set(QMAKE_QT50_SDK "C:\\Qt\\Qt${QT_VERSION}\\${QT_VERSION_SUBDIR}\\msvc2017_64")
@@ -315,9 +315,6 @@ if(WIN32)
       add_subdirectory(synctex/rsinverse)
    endif()
 
-   set(
-      CMAKE_EXE_LINKER_FLAGS
-      "${CMAKE_EXE_LINKER_FLAGS} /subsystem:windows")
 endif(WIN32)
 
 
@@ -356,6 +353,14 @@ if(UNIX AND NOT APPLE)
 )
 endif()
 
+# configure launch settings (for Visual Studio on Windows)
+if(WIN32)
+   configure_file(
+      "${CMAKE_CURRENT_SOURCE_DIR}/launch.vs.json.in"
+      "${CMAKE_CURRENT_BINARY_DIR}/launch.vs.json"
+      @ONLY)
+endif()
+
 # define executable (Windows & Linux)
 if(NOT APPLE)
 
@@ -365,6 +370,10 @@ if(NOT APPLE)
       ${DESKTOP_RESOURCES_SOURCES}
       ${DESKTOP_UI_SOURCES}
    )
+
+   if(WIN32)
+      set_target_properties(rstudio PROPERTIES WIN32_EXECUTABLE YES)
+   endif()
 
    # These cause issues with macdeployqt due to missing dependencies; suspect we don't need
    # these on any platform.
@@ -548,7 +557,7 @@ if(RSTUDIO_BUNDLE_QT)
          "${CMAKE_CURRENT_BINARY_DIR}/install/LinuxInstallQt.sh")
 
    endif()
-          
+
 endif(RSTUDIO_BUNDLE_QT)
 
 # install HTML templates

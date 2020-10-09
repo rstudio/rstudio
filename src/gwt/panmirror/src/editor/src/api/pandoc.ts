@@ -15,21 +15,45 @@
 
 import { Fragment, Mark, Node as ProsemirrorNode, Schema, NodeType } from 'prosemirror-model';
 
-import { PandocAttr } from './pandoc_attr';
+import { PandocAttr, pandocAttrReadAST, kSpanChildren, kSpanAttr } from './pandoc_attr';
 import { PandocCapabilitiesResult } from './pandoc_capabilities';
 import { kQuoteType, kQuoteChildren, QuoteType } from './quote';
+import { BibliographyResult } from './bibliography/bibliography-provider_local';
 
-export interface PandocEngine {
+import { stringifyMath } from './math';
+import { kCodeText } from './code';
+import { kLinkChildren } from './link';
+
+export interface PandocServer {
   getCapabilities(): Promise<PandocCapabilitiesResult>;
   markdownToAst(markdown: string, format: string, options: string[]): Promise<PandocAst>;
   astToMarkdown(ast: PandocAst, format: string, options: string[]): Promise<string>;
   listExtensions(format: string): Promise<string>;
+  getBibliography(
+    file: string | null,
+    bibliography: string[],
+    refBlock: string | null,
+    etag: string | null,
+  ): Promise<BibliographyResult>;
+  addToBibliography(
+    bibliography: string,
+    project: boolean,
+    id: string,
+    sourceAsJson: string,
+    sourceAsBibTeX: string,
+  ): Promise<boolean>;
+  citationHTML(file: string | null, sourceAsJson: string, csl: string | null): Promise<string>;
+}
+
+export interface PandocWriterReferencesOptions {
+  location?: string; // block | section | document
+  prefix?: string;
 }
 
 export interface PandocWriterOptions {
   atxHeaders?: boolean;
-  references?: string; // block | section | document
-  wrapColumn?: boolean | number;
+  references?: PandocWriterReferencesOptions;
+  wrap?: string;
   dpi?: number;
 }
 
@@ -123,6 +147,7 @@ export interface PandocAst {
   blocks: PandocToken[];
   'pandoc-api-version': PandocApiVersion;
   meta: any;
+  heading_ids?: string[]; // used only for reading not writing
 }
 
 export type PandocApiVersion = number[];
@@ -208,11 +233,14 @@ export interface PandocTokenReader {
 export const kRawBlockFormat = 0;
 export const kRawBlockContent = 1;
 
+// filter sequences of tokens (e.g. for reducing some adjacent tokens to a single token)
+export type PandocTokensFilterFn = (tokens: PandocToken[], writer: ProsemirrorWriter) => PandocToken[];
+
 // special reader that gets a first shot at blocks (i.e. to convert a para w/ a single image into a figure)
 export type PandocBlockReaderFn = (schema: Schema, tok: PandocToken, writer: ProsemirrorWriter) => boolean;
 
 // reader that gets a first shot at inline html (e.g. image node parsing an <img> tag)
-export type PandocInlineHTMLReaderFn = (schema: Schema, html: string, writer: ProsemirrorWriter) => boolean;
+export type PandocInlineHTMLReaderFn = (schema: Schema, html: string, writer?: ProsemirrorWriter) => boolean;
 
 export interface ProsemirrorWriter {
   // open (then close) a node container
@@ -232,11 +260,12 @@ export interface ProsemirrorWriter {
   // add text to the current node using the current mark set
   writeText(text: string): void;
 
-  // write inlne html to the current node
-  writeInlineHTML(html: string): void;
-
   // write tokens into the current node
   writeTokens(tokens: PandocToken[]): void;
+
+  // see if any inline HTML readers want to handle this html
+  hasInlineHTMLWriter(html: string): boolean;
+  writeInlineHTML(html: string): void;
 
   // log an unrecoginzed token type
   logUnrecognized(token: string): void;
@@ -296,19 +325,37 @@ export interface PandocOutput {
 // elements (ignores marks, useful for ast elements
 // that support marks but whose prosemirror equivalent
 // does not, e.g. image alt text)
-export function tokensCollectText(c: PandocToken[]): string {
+// https://github.com/jgm/pandoc/blob/83880b0dbc318703babfbb6905b1046fa48f1216/src/Text/Pandoc/Shared.hs#L439
+export function stringifyTokens(c: PandocToken[], unemoji = false): string {
   return c
     .map(elem => {
       if (elem.t === PandocTokenType.Str) {
         return elem.c;
-      } else if (elem.t === PandocTokenType.Space || elem.t === PandocTokenType.SoftBreak) {
+      } else if (
+        elem.t === PandocTokenType.Space ||
+        elem.t === PandocTokenType.SoftBreak ||
+        elem.t === PandocTokenType.LineBreak
+      ) {
         return ' ';
+      } else if (elem.t === PandocTokenType.Link) {
+        return stringifyTokens(elem.c[kLinkChildren]);
+      } else if (elem.t === PandocTokenType.Span) {
+        const attr = pandocAttrReadAST(elem, kSpanAttr);
+        if (unemoji && attr.classes && attr.classes[0] === 'emoji') {
+          return attr.keyvalue[0][1];
+        } else {
+          return stringifyTokens(elem.c[kSpanChildren]);
+        }
       } else if (elem.t === PandocTokenType.Quoted) {
         const type = elem.c[kQuoteType].t;
         const quote = type === QuoteType.SingleQuote ? "'" : '"';
-        return quote + tokensCollectText(elem.c[kQuoteChildren]) + quote;
+        return quote + stringifyTokens(elem.c[kQuoteChildren]) + quote;
+      } else if (elem.t === PandocTokenType.Math) {
+        return stringifyMath(elem);
+      } else if (elem.t === PandocTokenType.Code) {
+        return elem.c[kCodeText];
       } else if (elem.c) {
-        return tokensCollectText(elem.c);
+        return stringifyTokens(elem.c);
       } else {
         return '';
       }
@@ -359,4 +406,19 @@ export function mapTokens(tokens: PandocToken[], f: (tok: PandocToken) => Pandoc
 
 export function tokenTextEscaped(t: PandocToken) {
   return t.c.replace(/\\/g, `\\\\`);
+}
+
+// sort marks by priority (in descending order)
+export function marksByPriority(marks: Mark[], markWriters: { [key: string]: PandocMarkWriter }) {
+  return marks.sort((a: Mark, b: Mark) => {
+    const aPriority = markWriters[a.type.name].priority;
+    const bPriority = markWriters[b.type.name].priority;
+    if (aPriority < bPriority) {
+      return 1;
+    } else if (bPriority < aPriority) {
+      return -1;
+    } else {
+      return 0;
+    }
+  });
 }

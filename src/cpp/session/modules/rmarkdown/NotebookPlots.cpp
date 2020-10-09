@@ -370,7 +370,7 @@ core::Error PlotCapture::setGraphicsOption()
 
    // device dimensions
    setOption.addParam(height_);
-   setOption.addParam(width_); 
+   setOption.addParam(width_);
 
    // sizing behavior drives units -- user specified units are in inches but
    // we use pixels when scaling automatically

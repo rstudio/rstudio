@@ -4,28 +4,23 @@ set -e
 
 command -v npm >/dev/null 2>&1 || { echo >&2 "npm required but not found: exiting."; exit 1; }
 
-# minified js using closure
-minify () {
-  echo "Minifying $1 to $2"
-  CC_OPTS="--compilation_level SIMPLE --language_in ECMASCRIPT6 --language_out ECMASCRIPT5 --warning_level QUIET"
-  java -Xmx128M -jar "../compiler/compiler.jar" $CC_OPTS --js $1 --js_output_file $2
-}
-
 if [ -d "./xterm.js" ]; then
   rm -rf xterm.js
 fi
 
 mkdir xterm.js
 cd xterm.js
+npm install xterm@4.9.0
+npm install xterm-addon-fit@0.4.0
+npm install xterm-addon-web-links@0.4.0
 
-npm install xterm@3.14.5
-
-XTERM_DIST_DIR=./node_modules/xterm/dist
-XTERM_ADDONS_DIR=${XTERM_DIST_DIR}/addons
 XTERM_TARGET_DIR=../../src/org/rstudio/studio/client/workbench/views/terminal/xterm
 
-cp ${XTERM_DIST_DIR}/xterm.css ${XTERM_TARGET_DIR}/xterm.css
-minify ${XTERM_DIST_DIR}/xterm.js ${XTERM_TARGET_DIR}/xterm.js
-minify ${XTERM_ADDONS_DIR}/fit/fit.js ${XTERM_TARGET_DIR}/fit.js
+cp ./node_modules/xterm/css/xterm.css ${XTERM_TARGET_DIR}/xterm.css
+
+# Strip source-map references since they don't work via ClientBundle
+sed '/^\/\/# sourceMappingURL=/d' ./node_modules/xterm/lib/xterm.js > ${XTERM_TARGET_DIR}/xterm.js
+sed '/^\/\/# sourceMappingURL=/d' ./node_modules/xterm-addon-fit/lib/xterm-addon-fit.js > ${XTERM_TARGET_DIR}/fit.js
+sed '/^\/\/# sourceMappingURL=/d' ./node_modules/xterm-addon-web-links/lib/xterm-addon-web-links.js > ${XTERM_TARGET_DIR}/web-links.js
 
 echo Done!

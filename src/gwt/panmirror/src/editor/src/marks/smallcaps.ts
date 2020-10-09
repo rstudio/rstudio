@@ -26,6 +26,7 @@ const extension: Extension = {
     {
       name: 'smallcaps',
       spec: {
+        group: 'formatting',
         parseDOM: [
           { tag: "span[class*='smallcaps']" },
           { style: 'font-variant', getAttrs: (value: string | Node) => (value as string) === 'small-caps' && null },
@@ -42,7 +43,7 @@ const extension: Extension = {
           },
         ],
         writer: {
-          priority: 7,
+          priority: 8,
           write: (output: PandocOutput, _mark: Mark, parent: Fragment) => {
             output.writeMark(PandocTokenType.SmallCaps, parent);
           },

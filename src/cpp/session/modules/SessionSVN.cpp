@@ -419,7 +419,7 @@ Error parseXml(const std::string strData,
       pDoc->parse<0>(&((*pDataBuffer)[0]));
       return Success();
    }
-   catch (rapidxml::parse_error)
+   catch (rapidxml::parse_error&)
    {
       return systemError(boost::system::errc::protocol_error,
                          "Could not parse XML",
@@ -1029,6 +1029,7 @@ Error svnCommit(const json::JsonRpcRequest& request,
 
    ShellArgs args;
    args << "commit" << globalArgs();
+   args << "--encoding" << "UTF-8";
    args << "-F" << tempFile;
 
    args << "--";
@@ -1848,7 +1849,7 @@ Error initialize()
    // install rpc methods
    using boost::bind;
    using namespace module_context;
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "svn_add", svnAdd))
       (bind(registerRpcMethod, "svn_delete", svnDelete))

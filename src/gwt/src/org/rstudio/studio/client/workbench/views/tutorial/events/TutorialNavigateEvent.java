@@ -19,7 +19,7 @@ import com.google.gwt.event.shared.GwtEvent;
 
 public class TutorialNavigateEvent extends GwtEvent<TutorialNavigateEvent.Handler>
 {
-   
+
 
    // Boilerplate ----
 
@@ -40,6 +40,6 @@ public class TutorialNavigateEvent extends GwtEvent<TutorialNavigateEvent.Handle
       handler.onTutorialNavigate(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }
 

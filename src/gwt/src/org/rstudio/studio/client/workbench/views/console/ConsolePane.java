@@ -187,6 +187,12 @@ public class ConsolePane extends WorkbenchPane
    }
 
    @Override
+   public void setFocus()
+   {
+      focus();
+   }
+
+   @Override
    public void enterMode(ConsoleMode mode)
    {
       // ignore if this mode is already in the stack

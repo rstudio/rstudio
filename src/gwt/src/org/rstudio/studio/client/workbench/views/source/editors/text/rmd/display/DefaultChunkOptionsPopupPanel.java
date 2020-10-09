@@ -118,6 +118,8 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
          return new Pair<String, String>("<!--", "");
       else if (modeId == "mode/c_cpp")
          return new Pair<String, String>("/***", "");
+      else if (modeId == "mode/r")  // Used in visual mode for embedded chunk editor
+         return new Pair<String, String>("{", "}");
       
       return null;
    }
@@ -153,6 +155,8 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
          pattern = RegexUtil.RE_SWEAVE_CHUNK_BEGIN;
       else if (modeId == "mode/rhtml")
          pattern = RegexUtil.RE_RHTML_CHUNK_BEGIN;
+      else if (modeId == "mode/r")
+         pattern = RegexUtil.RE_EMBEDDED_R_CHUNK_BEGIN;
       
       if (pattern == null) return;
       

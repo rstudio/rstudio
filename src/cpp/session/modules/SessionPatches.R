@@ -13,24 +13,30 @@
 #
 #
 
-setHook(
-   packageEvent("rstudioapi", "onLoad"),
-   function(...) {
-
-      # bail if we're not version 0.7
-      if (packageVersion("rstudioapi") != "0.7")
-         return()
-
-      # re-assign the 'selectDirectory()' function
-      rstudioapi <- asNamespace("rstudioapi")
-      override <- function(caption = "Select Directory",
-                           label = "Select",
-                           path = rstudioapi::getActiveProject())
-      {
-         callFun("selectDirectory", caption, label, path)
-      }
-      environment(override) <- rstudioapi
-
-      .rs.replaceBinding("selectDirectory", "rstudioapi", override)
+.rs.registerPackageLoadHook("rstudioapi", function(...)
+{
+   # bail if we're not version 0.7
+   if (packageVersion("rstudioapi") != "0.7")
+      return()
+   
+   # re-assign the 'selectDirectory()' function
+   rstudioapi <- asNamespace("rstudioapi")
+   override <- function(caption = "Select Directory",
+                        label = "Select",
+                        path = rstudioapi::getActiveProject())
+   {
+      callFun("selectDirectory", caption, label, path)
    }
-)
+   environment(override) <- rstudioapi
+   
+   .rs.replaceBinding("selectDirectory", "rstudioapi", override)
+})
+
+.rs.registerPackageLoadHook("parallel", function(...)
+{
+   # enforce sequential setup of cluster on macOS
+   # https://github.com/rstudio/rstudio/issues/6692
+   if (Sys.info()[["sysname"]] == "Darwin")
+      parallel:::setDefaultClusterOptions(setup_strategy = "sequential")
+})
+

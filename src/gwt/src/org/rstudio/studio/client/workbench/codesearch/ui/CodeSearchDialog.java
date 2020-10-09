@@ -20,7 +20,6 @@ import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -58,16 +57,11 @@ public class CodeSearchDialog extends ModalDialogBase
    @Override
    protected void positionAndShowDialog(final Command onCompleted)
    {
-      setPopupPositionAndShow(new PositionCallback() {
-         @Override
-         public void setPosition(int offsetWidth, int offsetHeight)
-         {
-            int left = (Window.getClientWidth()/2) - (offsetWidth/2);
-            setPopupPosition(left, 15);
-            onCompleted.execute();
-            
-         }
-         
+      setPopupPositionAndShow((int offsetWidth, int offsetHeight) ->
+      {
+         int left = (Window.getClientWidth() / 2) - (offsetWidth / 2);
+         setPopupPosition(left, 15);
+         onCompleted.execute();
       });
    }
    
@@ -88,6 +82,7 @@ public class CodeSearchDialog extends ModalDialogBase
    @Override
    public void onCompleted()
    {
+      setRestoreFocusOnClose(false);
       closeDialog();  
    }
    
@@ -95,14 +90,7 @@ public class CodeSearchDialog extends ModalDialogBase
    public void onCancel()
    {
       // delay to prevent ESC key from ever getting into the editor
-      Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-         @Override
-         public void execute()
-         {
-            closeDialog(); 
-         }      
-      });
-    
+      Scheduler.get().scheduleDeferred(() -> closeDialog());
    }
    
    @Override

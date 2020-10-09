@@ -31,33 +31,42 @@ import { EditorEvents } from './events';
 import { PandocCapabilities } from './pandoc_capabilities';
 import { EditorFormat } from './format';
 import { MarkInputRuleFilter } from './input_rule';
+import { CompletionHandler } from './completion';
+import { EditorNavigation } from './navigation';
+import { EditorMath } from './math';
+import { EditorServer } from './server';
 
 export interface Extension {
   marks?: PandocMark[];
   nodes?: PandocNode[];
   baseKeys?: (schema: Schema) => readonly BaseKeyBinding[];
   inputRules?: (schema: Schema, markFilter: MarkInputRuleFilter) => readonly InputRule[];
-  commands?: (schema: Schema, ui: EditorUI) => readonly ProsemirrorCommand[];
-  plugins?: (schema: Schema, ui: EditorUI) => readonly Plugin[];
+  commands?: (schema: Schema) => readonly ProsemirrorCommand[];
+  plugins?: (schema: Schema) => readonly Plugin[];
   appendTransaction?: (schema: Schema) => readonly AppendTransactionHandler[];
   appendMarkTransaction?: (schema: Schema) => readonly AppendMarkTransactionHandler[];
   fixups?: (schema: Schema, view: EditorView) => Readonly<FixupFn[]>;
+  completionHandlers?: () => readonly CompletionHandler[];
 }
 
-// return an extension conditional on the active EditorOptions
-export type ExtensionFn = (
-  pandocExtensions: PandocExtensions,
-  pandocCapabilities: PandocCapabilities,
-  ui: EditorUI,
-  format: EditorFormat,
-  options: EditorOptions,
-  events: EditorEvents,
-) => Extension | null;
+export interface ExtensionContext {
+  pandocExtensions: PandocExtensions;
+  pandocCapabilities: PandocCapabilities;
+  server: EditorServer;
+  ui: EditorUI;
+  math?: EditorMath;
+  format: EditorFormat;
+  options: EditorOptions;
+  events: EditorEvents;
+  navigation: EditorNavigation;
+}
+
+export type ExtensionFn = (context: ExtensionContext) => Extension | null;
 
 // create an ExtensionFn for a given extension and format option that must be enabled
 export function extensionIfEnabled(extension: Extension, name: string | string[]) {
-  return (pandocExtensions: PandocExtensions) => {
-    if (extensionEnabled(pandocExtensions, name)) {
+  return (context: ExtensionContext) => {
+    if (extensionEnabled(context.pandocExtensions, name)) {
       return extension;
     } else {
       return null;

@@ -8,10 +8,15 @@
    <script>
       function getBaseUri()
       {
-         var index = window.location.href.lastIndexOf("#!request_uri#");
+         var baseUri = "#!base_uri#";
+         if (!baseUri)
+         {
+            baseUri = window.location.href;
+         }
+         var index = baseUri.lastIndexOf("#!request_uri#");
          if (index > 0)
          {
-            return window.location.href.substring(0, index);
+            return baseUri.substring(0, index);
          }
          return "/";
       }

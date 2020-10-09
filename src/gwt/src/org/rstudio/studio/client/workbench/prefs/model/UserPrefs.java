@@ -21,6 +21,7 @@ import com.google.inject.Singleton;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.WindowEx;
@@ -47,7 +48,7 @@ import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedHandler;
 import org.rstudio.studio.client.common.GlobalDisplay;
 
 @Singleton
-public class UserPrefs extends UserPrefsComputed 
+public class UserPrefs extends UserPrefsComputed
    implements UserPrefsChangedHandler, DeferredInitCompletedEvent.Handler
 {
    public interface Binder
@@ -65,7 +66,7 @@ public class UserPrefs extends UserPrefsComputed
                     ApplicationQuit quit)
    {
       super(session.getSessionInfo(),
-            (session.getSessionInfo() == null ? 
+            (session.getSessionInfo() == null ?
                JsArray.createArray().cast() :
                session.getSessionInfo().getPrefs()));
 
@@ -78,7 +79,7 @@ public class UserPrefs extends UserPrefsComputed
       reloadAfterInit_ = false;
       ariaLive_ = ariaLive;
       quit_ = quit;
-      
+
       binder.bind(commands_, this);
 
       eventBus.addHandler(UserPrefsChangedEvent.TYPE, this);
@@ -90,7 +91,7 @@ public class UserPrefs extends UserPrefsComputed
          syncToggleTabKeyMovesFocusState();
       });
    }
-   
+
    public void writeUserPrefs()
    {
       writeUserPrefs(null);
@@ -101,7 +102,7 @@ public class UserPrefs extends UserPrefsComputed
       updatePrefs(session_.getSessionInfo().getPrefs());
       server_.setUserPrefs(
          session_.getSessionInfo().getUserPrefs(),
-         new ServerRequestCallback<Void>() 
+         new ServerRequestCallback<Void>()
          {
             @Override
             public void onResponseReceived(Void v)
@@ -119,7 +120,7 @@ public class UserPrefs extends UserPrefsComputed
                   // let satellites know prefs have changed
                   satelliteManager_.dispatchCrossWindowEvent(event);
                }
-               
+
                if (onCompleted != null)
                {
                   onCompleted.execute(true);
@@ -136,24 +137,24 @@ public class UserPrefs extends UserPrefsComputed
             }
          });
    }
-   
+
    /**
     * Indicates whether autosave is enabled, via any pref that turns it on.
-    * 
+    *
     * @return Whether auto save is enabled.
     */
    public boolean autoSaveEnabled()
    {
-      return autoSaveOnBlur().getValue() || 
-             autoSaveOnIdle().getValue() == AUTO_SAVE_ON_IDLE_COMMIT;
+      return autoSaveOnBlur().getValue() ||
+             StringUtil.equals(autoSaveOnIdle().getValue(), AUTO_SAVE_ON_IDLE_COMMIT);
    }
-   
+
    /**
     * Indicates the number of milliseconds after which to autosave. Won't return
     * a value less than 500 since autosaves typically require a network call and
     * other synchronization.
-    * 
-    * @return The number of milliseconds. 
+    *
+    * @return The number of milliseconds.
     */
    public int autoSaveMs()
    {
@@ -162,13 +163,13 @@ public class UserPrefs extends UserPrefsComputed
          return 500;
       return ms;
    }
-   
+
    @Override
    public void onUserPrefsChanged(UserPrefsChangedEvent e)
    {
       syncPrefs(e.getName(), e.getValues());
    }
-   
+
    @Handler
    public void onEditUserPrefs()
    {
@@ -231,7 +232,7 @@ public class UserPrefs extends UserPrefsComputed
          WindowEx.get().reload();
       }
    }
-   
+
    @Handler
    public void onViewAllPrefs()
    {
@@ -269,11 +270,15 @@ public class UserPrefs extends UserPrefsComputed
          Desktop.getFrame().setEnableAccessibility(enabled);
       enableScreenReader().setGlobalValue(enabled);
 
-      // When screen-reader is enabled, reduce UI animations as they serve no purpose 
+      // When screen-reader is enabled, reduce UI animations as they serve no purpose
       // other than to potentially confuse the screen reader; turn animations back
       // on when screen-reader support is disabled as that is the normal default and most
       // users will never touch it.
       RStudioGinjector.INSTANCE.getUserPrefs().reducedMotion().setGlobalValue(enabled);
+
+      // Disable virtual scrolling when screen reader is enabled
+      if (enabled)
+         RStudioGinjector.INSTANCE.getUserPrefs().limitVisibleConsole().setGlobalValue(false);
    }
 
    @Handler

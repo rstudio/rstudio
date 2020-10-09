@@ -16,7 +16,7 @@
 import { Node as ProsemirrorNode, Schema, Fragment, NodeType } from 'prosemirror-model';
 import { NodeView, EditorView } from 'prosemirror-view';
 import { EditorState, Transaction } from 'prosemirror-state';
-import { findParentNodeOfType, NodeWithPos } from 'prosemirror-utils';
+import { findParentNodeOfType, NodeWithPos, setTextSelection } from 'prosemirror-utils';
 import { InputRule, wrappingInputRule } from 'prosemirror-inputrules';
 
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
@@ -66,6 +66,7 @@ export class CheckedListItemNodeView implements NodeView {
           ...node.attrs,
           checked: (ev.target as HTMLInputElement).checked,
         });
+        setTextSelection(getPos() + 1)(tr);
         view.dispatch(tr);
       });
       container.appendChild(input);

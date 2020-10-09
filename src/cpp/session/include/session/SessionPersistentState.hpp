@@ -27,7 +27,7 @@ namespace session {
 
 // singleton
 class PersistentState;
-PersistentState& persistentState();   
+PersistentState& persistentState();
    
 class PersistentState : boost::noncopyable
 {

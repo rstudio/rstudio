@@ -13,21 +13,24 @@
  *
  */
 
-import { wrappingInputRule } from 'prosemirror-inputrules';
 import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
 import { liftListItem, sinkListItem, splitListItem } from 'prosemirror-schema-list';
-import { Plugin, PluginKey } from 'prosemirror-state';
+import { Plugin, PluginKey, EditorState } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
-import { Extension } from '../../api/extension';
+import { findParentNodeOfType } from 'prosemirror-utils';
+
+import { Extension, ExtensionContext } from '../../api/extension';
 import { BaseKey } from '../../api/basekeys';
-import { EditorUI } from '../../api/ui';
+import { EditorUI, kListSpacingTight } from '../../api/ui';
 import { ListCapabilities } from '../../api/list';
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
-import { PandocTokenType, PandocExtensions } from '../../api/pandoc';
+import { PandocTokenType } from '../../api/pandoc';
 import { kPlatformMac } from '../../api/platform';
+import { OmniInsertGroup } from '../../api/omni_insert';
+import { conditionalWrappingInputRule } from '../../api/input_rule';
 
-import { ListCommand, TightListCommand, OrderedListEditCommand } from './list-commands';
+import { ListCommand, TightListCommand, EditListPropertiesCommand, editListPropertiesCommandFn } from './list-commands';
 
 import {
   CheckedListItemNodeView,
@@ -63,7 +66,9 @@ export enum ListNumberDelim {
 
 const plugin = new PluginKey('list');
 
-const extension = (pandocExtensions: PandocExtensions): Extension => {
+const extension = (context: ExtensionContext): Extension => {
+  const { pandocExtensions, ui } = context;
+
   // determine list capabilities based on active format options
   const capabilities: ListCapabilities = {
     tasks: pandocExtensions.task_lists,
@@ -120,7 +125,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
           content: 'list_item+',
           group: 'block',
           attrs: {
-            tight: { default: true },
+            tight: { default: false },
           },
           parseDOM: [
             {
@@ -153,6 +158,8 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
           ],
           writer: writePandocBulletList(capabilities),
         },
+
+        attr_edit: listAttrEdit('bullet_list', capabilities, ui),
       },
       {
         name: 'ordered_list',
@@ -160,7 +167,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
           content: 'list_item+',
           group: 'block',
           attrs: {
-            tight: { default: true },
+            tight: { default: false },
             order: { default: 1 },
             number_style: { default: ListNumberStyle.DefaultStyle },
             number_delim: { default: ListNumberDelim.DefaultDelim },
@@ -232,6 +239,8 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
           ],
           writer: writePandocOrderedList(capabilities),
         },
+
+        attr_edit: listAttrEdit('ordered_list', capabilities, ui),
       },
     ],
 
@@ -254,19 +263,23 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
       return plugins;
     },
 
-    commands: (schema: Schema, ui: EditorUI) => {
+    commands: (schema: Schema) => {
       const commands = [
         new ListCommand(
           EditorCommandId.BulletList,
-          kPlatformMac ? ['Shift-Mod-7'] : [],
+          kPlatformMac ? ['Shift-Mod-8'] : [],
           schema.nodes.bullet_list,
           schema.nodes.list_item,
+          bulletListOmniInsert(ui),
+          ui.prefs,
         ),
         new ListCommand(
           EditorCommandId.OrderedList,
-          kPlatformMac ? ['Shift-Mod-8'] : [],
+          kPlatformMac ? ['Shift-Mod-7'] : [],
           schema.nodes.ordered_list,
           schema.nodes.list_item,
+          orderedListOmniInsert(ui),
+          ui.prefs,
         ),
         new ProsemirrorCommand(EditorCommandId.ListItemSink, ['Tab'], sinkListItem(schema.nodes.list_item)),
         new ProsemirrorCommand(EditorCommandId.ListItemLift, ['Shift-Tab'], liftListItem(schema.nodes.list_item)),
@@ -274,7 +287,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
         new TightListCommand(),
       ];
       if (capabilities.fancy) {
-        commands.push(new OrderedListEditCommand(ui, capabilities));
+        commands.push(new EditListPropertiesCommand(ui, capabilities));
       }
       if (capabilities.tasks) {
         commands.push(
@@ -294,12 +307,24 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
     },
 
     inputRules: (schema: Schema) => {
+      // reflect tight pref
+      const tightFn = () => {
+        return {
+          tight: ui.prefs.listSpacing() === kListSpacingTight,
+        };
+      };
+
+      const isNotInHeading = (state: EditorState) => {
+        return !findParentNodeOfType(schema.nodes.heading)(state.selection);
+      };
+
       const rules = [
-        wrappingInputRule(/^\s*([-+*])\s$/, schema.nodes.bullet_list),
-        wrappingInputRule(
+        conditionalWrappingInputRule(/^\s*([-+*])\s$/, schema.nodes.bullet_list, isNotInHeading, tightFn),
+        conditionalWrappingInputRule(
           /^(\d+)\.\s$/,
           schema.nodes.ordered_list,
-          match => ({ order: +match[1] }),
+          isNotInHeading,
+          match => ({ order: +match[1], tight: tightFn() }),
           (match, node) => node.childCount + node.attrs.order === +match[1],
         ),
       ];
@@ -310,6 +335,19 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
     },
   };
 };
+
+function listAttrEdit(type: string, capabilities: ListCapabilities, ui: EditorUI) {
+  return () => {
+    return {
+      type: (schema: Schema) => schema.nodes[type],
+      editFn: () => editListPropertiesCommandFn(ui, capabilities),
+      offset: {
+        top: 10,
+        right: 5,
+      },
+    };
+  };
+}
 
 function numberStyleToType(style: ListNumberStyle): string | null {
   switch (style) {
@@ -345,6 +383,27 @@ function typeToNumberStyle(type: string | null): ListNumberStyle {
     default:
       return ListNumberStyle.Decimal;
   }
+}
+
+function bulletListOmniInsert(ui: EditorUI) {
+  return {
+    name: ui.context.translateText('Bullet List'),
+    description: ui.context.translateText('List using bullets for items'),
+    group: OmniInsertGroup.Lists,
+    priority: 5,
+    image: () => (ui.prefs.darkMode() ? ui.images.omni_insert?.bullet_list_dark! : ui.images.omni_insert?.bullet_list!),
+  };
+}
+
+function orderedListOmniInsert(ui: EditorUI) {
+  return {
+    name: ui.context.translateText('Numbered List'),
+    description: ui.context.translateText('List using numbers for items'),
+    group: OmniInsertGroup.Lists,
+    priority: 4,
+    image: () =>
+      ui.prefs.darkMode() ? ui.images.omni_insert?.ordered_list_dark! : ui.images.omni_insert?.ordered_list!,
+  };
 }
 
 export default extension;

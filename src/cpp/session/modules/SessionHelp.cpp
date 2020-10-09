@@ -284,7 +284,7 @@ const char * const kJsCallbacks =
 class HelpFontSizeFilter : public boost::iostreams::aggregate_filter<char>
 {
 public:
-   typedef std::vector<char> Characters ;
+   typedef std::vector<char> Characters;
 
    void do_filter(const Characters& src, Characters& dest)
    {
@@ -299,7 +299,7 @@ public:
 class HelpContentsFilter : public boost::iostreams::aggregate_filter<char>
 {
 public:
-   typedef std::vector<char> Characters ;
+   typedef std::vector<char> Characters;
 
    HelpContentsFilter(const http::Request& request)
    {
@@ -412,7 +412,7 @@ void handleHttpdResult(SEXP httpdSEXP,
    // if present, second element is content type
    if (LENGTH(httpdSEXP) > 1) 
    {
-      SEXP ctSEXP = VECTOR_ELT(httpdSEXP, 1);     
+      SEXP ctSEXP = VECTOR_ELT(httpdSEXP, 1);
       if (TYPEOF(ctSEXP) == STRSXP && LENGTH(ctSEXP) > 0)
          contentType = CHAR(STRING_ELT(ctSEXP, 0));
    }
@@ -467,7 +467,7 @@ void handleHttpdResult(SEXP httpdSEXP,
          content = normalizeHttpdSearchContent(content);
       
       // check for special file returns
-      std::string fileName ;
+      std::string fileName;
       if (TYPEOF(namesSEXP) == STRSXP && LENGTH(namesSEXP) > 0 &&
           !std::strcmp(CHAR(STRING_ELT(namesSEXP, 0)), "file"))
       {
@@ -722,16 +722,28 @@ void handleRdPreviewRequest(const http::Request& request,
       pResponse->setError(error);
       return;
    }
+   
    shell_utils::ShellCommand rCmd = module_context::rCmd(rHomeBinDir);
    rCmd << "Rdconv";
    rCmd << "--type=html";
+   
+   // add in package-specific information if available
    r_util::RPackageInfo pkgInfo = packageInfoForRd(filePath);
    if (!pkgInfo.empty())
-      rCmd << "--package=" + pkgInfo.name();
+   {
+      if (!pkgInfo.name().empty())
+         rCmd << "--package=" + pkgInfo.name();
+      
+      std::string macros = pkgInfo.name();
+      if (!pkgInfo.rdMacros().empty())
+         macros = macros + "," + pkgInfo.rdMacros();
+      
+      rCmd << "--RdMacros=" + macros;
+   }
 
    rCmd << filePath;
 
-   // run the converstion and return it
+   // run the conversion and return it
    core::system::ProcessOptions options;
    core::system::ProcessResult result;
    error = core::system::runCommand(rCmd, options, &result);
@@ -741,7 +753,8 @@ void handleRdPreviewRequest(const http::Request& request,
    }
    else if (result.exitStatus != EXIT_SUCCESS)
    {
-      pResponse->setError(http::status::InternalServerError, result.stdErr);
+      LOG_ERROR_MESSAGE("Rd preview error: " + result.stdErr);
+      pResponse->setError(http::status::InternalServerError, "Internal Server Error");
    }
    else
    {
@@ -839,8 +852,9 @@ void handleHttpdRequest(const std::string& location,
    // error returned explicitly by httpd
    else if (TYPEOF(httpdSEXP) == STRSXP && LENGTH(httpdSEXP) > 0)
    {
+      LOG_ERROR_MESSAGE("Handle httpd request error: " + r::sexp::asString(httpdSEXP));
       pResponse->setError(http::status::InternalServerError, 
-                          r::sexp::asString(httpdSEXP));
+                          "Internal Server Error");
    }
    
    // content returned from httpd
@@ -931,7 +945,6 @@ void handleSessionRequest(const http::Request& request, http::Response* pRespons
    FilePath tempFilePath = r::session::utils::tempDir().completeChildPath(uri);
 
    // return the file
-   pResponse->setCacheWithRevalidationHeaders();
    pResponse->setCacheableFile(tempFilePath, request);
 }
 
@@ -1008,8 +1021,8 @@ Error initialize()
    using boost::bind;
    using core::http::UriHandler;
    using namespace module_context;
-   using namespace rstudio::r::function_hook ;
-   ExecBlock initBlock ;
+   using namespace rstudio::r::function_hook;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRBrowseUrlHandler, handleLocalHttpUrl))
       (bind(registerRBrowseFileHandler, handleRShowDocFile))
@@ -1029,12 +1042,12 @@ Error initialize()
       LOG_ERROR(error);
 
 #ifdef _WIN32
-   // we also need to handle custom session URLs on Windows for R > 4.0
+   // R's help server handler has issues with R 4.0.0; disable it explicitly
+   // when that version of R is in use.
    // (see comments in module_context::sessionTempDirUrl)
-
-   if (!s_handleCustom)
+   if (r::util::hasExactVersion("4.0.0"))
    {
-      s_handleCustom = r::util::hasRequiredVersion("4.0");
+      s_handleCustom = false;
    }
 #endif
 

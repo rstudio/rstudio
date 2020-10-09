@@ -95,6 +95,7 @@ public class DocPropMenuItem extends CheckableMenuItem
          public void onCompleted()
          {
             onStateChanged();
+            onUpdateComplete();
          }
          
          @Override
@@ -112,6 +113,10 @@ public class DocPropMenuItem extends CheckableMenuItem
          {
          }
       });
+   }
+   
+   protected void onUpdateComplete()
+   {
    }
    
    private DocUpdateSentinel docUpdate_;

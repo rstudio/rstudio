@@ -19,6 +19,7 @@
 
 .pm-content {
   position: relative;
+  padding-bottom: 100px;
 }
 
 .pm-content p {
@@ -198,7 +199,7 @@ h4.pm-heading {
   margin-block-end: 1em;
 }
 .pm-popup {
-  border-radius: 3px;
+  border-radius: 4px;
   border-style: solid;
   border-width: 1px;
   padding: 10px;
@@ -206,4 +207,43 @@ h4.pm-heading {
 
 p.ProseMirror-selectednode {
   outline: none;
+}
+
+.pm-input-text {
+  border: 1px;
+  border-style: solid;
+  border-radius: 3px;
+}
+
+.pm-placeholder-icon {
+  height: 12px;
+  width: 12px;
+  padding-left: 4px;
+  padding-right: 3px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.pm-placeholder-text {
+  padding-right: 4px;
+  font-size: 9pt;
+}
+
+.pm-spelling-error {
+  border-bottom: 1px dotted #e51400;
+}
+
+.pm-solarized-mode .pm-spelling-error {
+  border-color: #d27600;
+}
+
+.pm-dark-mode .pm-spelling-error {
+  border-color: #f48771;
+}
+
+
+.pm-nbsp::before {
+  content: '·';
+  position: relative;
+  left: 2px;
 }

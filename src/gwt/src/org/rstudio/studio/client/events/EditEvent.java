@@ -24,20 +24,20 @@ public class EditEvent extends GwtEvent<EditEvent.Handler>
       before_ = before;
       type_ = type;
    }
-   
+
    public boolean isBeforeEdit()
    {
       return before_;
    }
-   
+
    public int getType()
    {
       return type_;
    }
-   
+
    private final boolean before_;
    private final int type_;
-   
+
    public static final int TYPE_NONE              = 0;
    public static final int TYPE_CUT               = 1;
    public static final int TYPE_COPY              = 2;
@@ -62,5 +62,5 @@ public class EditEvent extends GwtEvent<EditEvent.Handler>
       handler.onEdit(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

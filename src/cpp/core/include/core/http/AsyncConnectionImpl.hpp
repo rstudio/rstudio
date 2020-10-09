@@ -203,7 +203,7 @@ public:
 
       // call the response filter if we have one
       if (responseFilter_)
-         responseFilter_(absoluteUri_, &response_);
+         responseFilter_(originalRequest_, &response_);
 
       if (response_.isStreamResponse())
       {
@@ -396,8 +396,8 @@ private:
             // headers parsed - body parsing has not yet begun
             else if (status == RequestParser::headers_parsed)
             {
-               // record the original uri
-               absoluteUri_ = request_.absoluteUri();
+               // record the original request
+               originalRequest_.assign(request_);
 
                // call the request filter if we have one
                if (requestFilter_)
@@ -515,8 +515,11 @@ private:
          {
             // log the error if it wasn't connection terminated
             Error error(e, ERROR_LOCATION);
-            if (!http::isConnectionTerminatedError(error))
+            if (!http::isConnectionTerminatedError(error) &&
+                !http::isWrongProtocolTypeError((error)))
+            {
                LOG_ERROR(error);
+            }
          }
          
          // close the socket
@@ -590,9 +593,9 @@ private:
    FormHandler formHandler_;
    RequestFilter requestFilter_;
    ResponseFilter responseFilter_;
-   boost::array<char, 8192> buffer_ ;
-   RequestParser requestParser_ ;
-   std::string absoluteUri_;
+   boost::array<char, 8192> buffer_;
+   RequestParser requestParser_;
+   Request originalRequest_;
    http::Request request_;
    http::Response response_;
 

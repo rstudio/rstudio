@@ -16,6 +16,7 @@
 
 package org.rstudio.studio.client.panmirror.ui;
 
+import org.rstudio.core.client.XRef;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.panmirror.command.PanmirrorMenuItem;
@@ -43,6 +44,14 @@ public class PanmirrorUIDisplay {
    public void openURL(String url) 
    {
       globalDisplay_.openWindow(url);
+   }
+   
+   public NavigateToXRef navigateToXRef;
+   
+   @JsFunction
+   public interface NavigateToXRef
+   {
+      void navigate(String file, XRef xref);
    }
 
    public ShowContextMenu showContextMenu;   

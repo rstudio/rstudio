@@ -14,11 +14,11 @@
  */
 package org.rstudio.core.client.widget.model;
 
-import org.rstudio.studio.client.workbench.events.BusyHandler;
+import org.rstudio.studio.client.workbench.events.BusyEvent;
 
 public interface ProvidesBusy
 {
    // Note that this doesn't return HandlerRegistration to avoid complications
-   // with busy sources that are async (i.e. tab shims) 
-   public void addBusyHandler(BusyHandler handler);
+   // with busy sources that are async (i.e. tab shims)
+   void addBusyHandler(BusyEvent.Handler handler);
 }

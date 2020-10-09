@@ -33,7 +33,6 @@ import org.rstudio.core.client.theme.VerticalTabPanel;
 import org.rstudio.core.client.widget.CheckBoxList;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.studio.client.application.AriaLiveService;
-import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
@@ -67,7 +66,10 @@ public class AccessibilityPreferencesPane extends PreferencesPane
       displayLabel.getElement().getStyle().setMarginTop(8, Style.Unit.PX);
       generalPanel.add(checkboxPref("Reduce user interface animations", prefs.reducedMotion()));
       chkTabMovesFocus_ = new CheckBox("Tab key always moves focus");
-      generalPanel.add(chkTabMovesFocus_);
+      generalPanel.add(lessSpaced(chkTabMovesFocus_));
+      chkShowFocusRectangles_ = new CheckBox("Always show focus outlines (requires restart)");
+      generalPanel.add(lessSpaced(chkShowFocusRectangles_));
+      generalPanel.add(checkboxPref("Highlight focused panel", prefs.showPanelFocusRectangle()));
 
       HelpLink helpLink = new HelpLink("RStudio accessibility help", "rstudio_a11y", false);
       nudgeRight(helpLink);
@@ -88,7 +90,7 @@ public class AccessibilityPreferencesPane extends PreferencesPane
       announcements_.getElement().getStyle().setMarginLeft(3, Unit.PX);
 
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("Accessibility");
-      tabPanel.setSize("435px", "498px");
+      tabPanel.setSize("435px", "533px");
       tabPanel.add(generalPanel, "General", generalPanel.getBasePanelId());
       tabPanel.add(announcementsPanel, "Announcements", announcementsPanel.getBasePanelId());
       tabPanel.selectTab(0);
@@ -111,7 +113,9 @@ public class AccessibilityPreferencesPane extends PreferencesPane
    protected void initialize(UserPrefs prefs)
    {
       initialScreenReaderEnabled_ = prefs.enableScreenReader().getValue();
+      initialShowFocusRectangles_ = prefs.showFocusRectangles().getValue();
       chkScreenReaderEnabled_.setValue(initialScreenReaderEnabled_);
+      chkShowFocusRectangles_.setValue(initialShowFocusRectangles_);
       chkTabMovesFocus_.setValue(prefs.tabKeyMoveFocus().getValue());
       populateAnnouncementList();
    }
@@ -126,10 +130,14 @@ public class AccessibilityPreferencesPane extends PreferencesPane
       {
          initialScreenReaderEnabled_ = screenReaderEnabledSetting;
          prefs.setScreenReaderEnabled(screenReaderEnabledSetting);
-         if (Desktop.isDesktop())
-            restartRequirement.setDesktopRestartRequired(true);
-         else
-            restartRequirement.setUiReloadRequired(true);
+         restartRequirement.setRestartRequired();
+      }
+
+      if (chkShowFocusRectangles_.getValue() != initialShowFocusRectangles_)
+      {
+         initialShowFocusRectangles_ = chkShowFocusRectangles_.getValue();
+         prefs.showFocusRectangles().setGlobalValue(chkShowFocusRectangles_.getValue());
+         restartRequirement.setRestartRequired();
       }
 
       prefs.tabKeyMoveFocus().setGlobalValue(chkTabMovesFocus_.getValue());
@@ -156,7 +164,7 @@ public class AccessibilityPreferencesPane extends PreferencesPane
          CheckBox checkBox = new CheckBox(entry.getValue());
          checkBox.setFormValue(entry.getKey());
          announcements_.addItem(checkBox);
-         
+
          // The preference tracks disabled announcements, but the UI shows enabled announcements.
          // Having the UI show disabled announcements is counter-intuitive, but tracking
          // disabled items in the preferences causes newly added announcements to be enabled
@@ -178,7 +186,7 @@ public class AccessibilityPreferencesPane extends PreferencesPane
          CheckBox chk = announcements_.getItemAtIdx(i);
          if (!chk.getValue()) // preference tracks disabled, UI tracks enabled
             settings.push(chk.getFormValue());
-         
+
          if (StringUtil.equals(chk.getFormValue(), AriaLiveService.CONSOLE_LOG) &&
                origConsoleLog == chk.getValue())
          {
@@ -190,12 +198,13 @@ public class AccessibilityPreferencesPane extends PreferencesPane
             restartNeeded = true;
          }
       }
-      
+
       prefs.disabledAriaLiveAnnouncements().setGlobalValue(settings);
       return restartNeeded;
    }
 
    private final CheckBox chkScreenReaderEnabled_;
+   private final CheckBox chkShowFocusRectangles_;
    private final NumericValueWidget typingStatusDelay_;
    private final NumericValueWidget maxOutput_;
    private final CheckBox chkTabMovesFocus_;
@@ -203,6 +212,7 @@ public class AccessibilityPreferencesPane extends PreferencesPane
 
    // initial values of prefs that can trigger reloads (to avoid unnecessary reloads)
    private boolean initialScreenReaderEnabled_;
+   private boolean initialShowFocusRectangles_;
 
    private final PreferencesDialogResources res_;
    private final AriaLiveService ariaLive_;

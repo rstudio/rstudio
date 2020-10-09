@@ -58,6 +58,7 @@ file(GLOB_RECURSE SESSION_HEADER_FILES "*.h*")
 # source files
 set (SESSION_SOURCE_FILES
    SessionAsyncRProcess.cpp
+   SessionAsyncDownloadFile.cpp
    SessionClientEvent.cpp
    SessionClientEventQueue.cpp
    SessionClientEventService.cpp
@@ -81,6 +82,7 @@ set (SESSION_SOURCE_FILES
    SessionModuleContext.cpp
    SessionOptions.cpp
    SessionOptionsOverlay.cpp
+   SessionPandoc.cpp
    SessionPasswordManager.cpp
    SessionPersistentState.cpp
    SessionPostback.cpp
@@ -137,6 +139,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionPlumberViewer.cpp
    modules/SessionProfiler.cpp
    modules/SessionProjectTemplate.cpp
+   modules/SessionPythonEnvironments.cpp
    modules/SessionRAddins.cpp
    modules/SessionRCompletions.cpp
    modules/SessionRenv.cpp
@@ -192,6 +195,13 @@ set (SESSION_SOURCE_FILES
    modules/jobs/JobsApi.cpp
    modules/mathjax/SessionMathJax.cpp
    modules/panmirror/SessionPanmirror.cpp
+   modules/panmirror/SessionPanmirrorBibliography.cpp
+   modules/panmirror/SessionPanmirrorCrossref.cpp
+   modules/panmirror/SessionPanmirrorDataCite.cpp
+   modules/panmirror/SessionPanmirrorDOI.cpp
+   modules/panmirror/SessionPanmirrorPandoc.cpp
+   modules/panmirror/SessionPanmirrorPubMed.cpp
+   modules/panmirror/SessionPanmirrorUtils.cpp
    modules/overlay/SessionOverlay.cpp
    modules/plumber/SessionPlumber.cpp
    modules/presentation/SessionPresentation.cpp
@@ -205,6 +215,8 @@ set (SESSION_SOURCE_FILES
    modules/presentation/SlideRequestHandler.cpp
    modules/preview/SessionPreview.cpp
    modules/rmarkdown/SessionBlogdown.cpp
+   modules/rmarkdown/SessionBookdown.cpp
+   modules/rmarkdown/SessionBookdownXRefs.cpp
    modules/rmarkdown/SessionRMarkdown.cpp
    modules/rmarkdown/SessionRmdNotebook.cpp
    modules/rmarkdown/SessionExecuteChunkOperation.cpp
@@ -244,6 +256,13 @@ set (SESSION_SOURCE_FILES
    modules/vcs/SessionVCSUtils.cpp
    modules/viewer/SessionViewer.cpp
    modules/viewer/ViewerHistory.cpp
+   modules/zotero/ZoteroBetterBibTeX.cpp
+   modules/zotero/ZoteroCollections.cpp
+   modules/zotero/ZoteroCollectionsWeb.cpp
+   modules/zotero/ZoteroCollectionsLocal.cpp
+   modules/zotero/ZoteroCSL.cpp
+   modules/zotero/ZoteroUtil.cpp
+   modules/zotero/SessionZotero.cpp
    prefs/PrefLayer.cpp
    prefs/Preferences.cpp
    prefs/UserPrefValues.cpp
@@ -475,6 +494,14 @@ if (NOT RSTUDIO_SESSION_WIN32)
    # JS resources
    file(GLOB JS_RESOURCE_FILES "resources/*.js")
    install(FILES ${JS_RESOURCE_FILES}
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
+   # Lua resources
+   file(GLOB LUA_RESOURCE_FILES "resources/*.lua")
+   install(FILES ${LUA_RESOURCE_FILES}
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
+   # CSL resources
+   file(GLOB CSL_RESOURCE_FILES "resources/*.csl")
+   install(FILES ${CSL_RESOURCE_FILES}
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
    # presentation
    install(DIRECTORY "resources/presentation"
