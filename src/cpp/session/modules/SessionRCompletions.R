@@ -714,6 +714,8 @@ assign(x = ".rs.acCompletionTypes",
    
 })
 
+# Get completions appropriate within a particular function call.
+# This typically implies retrieving the function formals.
 .rs.addFunction("getCompletionsFunction", function(token,
                                                    string,
                                                    functionCall,
@@ -826,8 +828,13 @@ assign(x = ".rs.acCompletionTypes",
                                        envir)
       }
       
+      # If we have formals, quote them as appropriate and append ' = '.
       if (length(formals$formals))
-         formals$formals <- paste(formals$formals, "= ")
+      {
+         formals$formals <- vapply(formals$formals, function(fml) {
+            paste(deparse(as.name(fml), backtick = TRUE), "= ")
+         }, FUN.VALUE = character(1))
+      }
       
       # If we're getting completions for the `base::c` function, just discard
       # the argument completions, since other context completions are more
@@ -3207,6 +3214,12 @@ assign(x = ".rs.acCompletionTypes",
    
 })
 
+# Get relevant completions for a particular argument, e.g. in
+#
+#   library(package = |)
+#
+# That is, if we're completing an argument called 'package', then infer
+# that package names are an appropriate completion result.
 .rs.addFunction("getCompletionsArgument", function(token,
                                                    activeArg,
                                                    functionCall = NULL,
@@ -3298,12 +3311,14 @@ assign(x = ".rs.acCompletionTypes",
    
    # Get package names for completions
    if (activeArg %in% c("pkg", "package"))
+   {
       completions <- .rs.appendCompletions(
          completions,
          .rs.getCompletionsPackages(token = token,
                                     appendColons = FALSE,
                                     excludeOtherCompletions = FALSE)
       )
+   }
    
    completions
 })

@@ -693,7 +693,7 @@ public class CompletionRequester
                   rnwContext_ == null ? null : rnwContext_.getActiveRnwWeave());
 
             String[] pkgNames = new String[result.completions.length()];
-            Arrays.fill(pkgNames, "`chunk-option`");
+            Arrays.fill(pkgNames, "<chunk-option>");
 
             Completions response = Completions.createCompletions(
                   result.token,
