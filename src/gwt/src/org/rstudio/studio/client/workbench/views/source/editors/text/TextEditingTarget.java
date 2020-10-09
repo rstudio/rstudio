@@ -6946,11 +6946,18 @@ public class TextEditingTarget implements
    @Handler
    void onFindFromSelection()
    {
-      withActiveEditor((disp) ->
-      {
-         view_.findFromSelection(disp.getSelectionValue());
-         disp.focus();
-      });
+      if (visualMode_.isActivated()) {
+         ensureVisualModeActive(() -> {
+            visualMode_.getFindReplace().findFromSelection(visualMode_.getSelectedText());
+         });
+      } else {
+         withActiveEditor((disp) ->
+         {
+            view_.findFromSelection(disp.getSelectionValue());
+            disp.focus();
+         });
+      }
+     
    }
 
    @Handler

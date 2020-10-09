@@ -800,6 +800,7 @@ public class VisualMode implements VisualModeEditorSync,
             public boolean isFindReplaceShowing() { return false; }
             public void showFindReplace(boolean defaultForward) {}
             public void hideFindReplace() {}
+            public void findFromSelection(String text) {}
             public void findNext() {}
             public void findPrevious() {}
             public void replaceAndFind() {}
