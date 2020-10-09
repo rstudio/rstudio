@@ -201,6 +201,11 @@ public class FileTypeRegistry
                false, false, false, false, false, false, false, false);
 
 
+   public static final TextFileType DOCKERFILE =
+         new TextFileType("dockerfile", "Dockerfile", EditorLanguage.LANG_DOCKERFILE, "Dockerfile", new ImageResource2x(ICONS.iconDockerfile2x()),
+               false, false, false, false, false,
+               false, false, false, false, false, false, false, false);
+   
    public static final TextFileType GITIGNORE =
          new TextFileType("gitignore", "Gitignore", EditorLanguage.LANG_GITIGNORE, ".gitignore", new ImageResource2x(ICONS.iconGitignore2x()),
                false, false, false, false, false,
@@ -330,6 +335,7 @@ public class FileTypeRegistry
       register("LICENSE", TEXT, new ImageResource2x(icons.iconText2x()));
       register("LICENCE", TEXT, new ImageResource2x(icons.iconText2x()));
       register("CITATION", TEXT, new ImageResource2x(icons.iconText2x()));
+      register("Dockerfile", DOCKERFILE, new ImageResource2x(icons.iconDockerfile2x()));
       register("MD5", TEXT, new ImageResource2x(icons.iconText2x()));
       register("NEWS", TEXT, new ImageResource2x(icons.iconText2x()));
       register("PORTING", TEXT, new ImageResource2x(icons.iconText2x()));
@@ -656,6 +662,7 @@ public class FileTypeRegistry
       FileIcon icon = iconsByFilename_.get(filename.toLowerCase());
       if (icon != null)
          return icon;
+      
       String ext = FileSystemItem.getExtensionFromPath(filename);
       icon = iconsByFileExtension_.get(ext.toLowerCase());
       if (icon != null)
