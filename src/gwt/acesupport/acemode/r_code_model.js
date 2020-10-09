@@ -932,10 +932,20 @@ var RCodeModel = function(session, tokenizer,
             var match = /^\s*([#]+)\s*\w/.exec(value);
             if (match != null)
             {
-               var labelStartPos = {row: position.row, column: 0};
-               var labelEndPos = {row: position.row, column: Infinity};
+               // compute depth -- if the depth seems unlikely / large,
+               // then treat it as just a plain section (similar to how
+               // HTML only provides <h1> through <h6>)
                var depth = match[1].length;
-               this.$scopes.onMarkdownHead(label, labelStartPos, labelEndPos, depth, false);
+               if (depth > 6)
+               {
+                  this.$scopes.onSectionStart(label, position);
+               }
+               else
+               {
+                  var labelStartPos = {row: position.row, column: 0};
+                  var labelEndPos = {row: position.row, column: Infinity};
+                  this.$scopes.onMarkdownHead(label, labelStartPos, labelEndPos, depth, false);
+               }
             }
             else
             {
