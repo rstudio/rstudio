@@ -225,11 +225,6 @@
             "location": "cran",
             "source": false
         },
-        "rprojroot": {
-            "version": "1.0",
-            "location": "cran",
-            "source": false
-        },
         "rsconnect": {
             "version": "0.8.16",
             "location": "cran",
@@ -361,7 +356,6 @@
         "rmarkdown": {
             "description": "R Markdown",
             "packages": [
-                "Rcpp",
                 "base64enc",
                 "digest",
                 "evaluate",
@@ -374,7 +368,6 @@
                 "markdown",
                 "mime",
                 "rmarkdown",
-                "rprojroot",
                 "stringi",
                 "stringr",
                 "tinytex",
