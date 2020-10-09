@@ -896,7 +896,7 @@ var RCodeModel = function(session, tokenizer,
             var reBraces = /{.*}\s*$/;
             label = label.replace(reBraces, "");
 
-            this.$scopes.onMarkdownHead(label, labelStartPos, labelEndPos, depth);
+            this.$scopes.onMarkdownHead(label, labelStartPos, labelEndPos, depth, true);
          }
 
          // Add R-comment sections; e.g.
@@ -924,7 +924,24 @@ var RCodeModel = function(session, tokenizer,
                label = label.replace(/\s*[#=-]+\s*$/, "");
             }
 
-            this.$scopes.onSectionStart(label, position);
+            // Detect Markdown-style headers, of the form
+            // 
+            //   ## Header 2 ----
+            //
+            // When we have such a header, we can provide a depth.
+            var match = /^\s*([#]+)\s*\w/.exec(value);
+            if (match != null)
+            {
+               var labelStartPos = {row: position.row, column: 0};
+               var labelEndPos = {row: position.row, column: Infinity};
+               var depth = match[1].length;
+               this.$scopes.onMarkdownHead(label, labelStartPos, labelEndPos, depth, false);
+            }
+            else
+            {
+               this.$scopes.onSectionStart(label, position);
+            }
+
          }
 
          // Sweave
@@ -965,7 +982,7 @@ var RCodeModel = function(session, tokenizer,
             var labelStartPos = {row: position.row, column: 0};
             var labelEndPos = {row: position.row, column: Infinity};
 
-            this.$scopes.onMarkdownHead(label, labelStartPos, labelEndPos, depth);
+            this.$scopes.onMarkdownHead(label, labelStartPos, labelEndPos, depth, true);
          }
 
          // Check specifically for YAML header boundaries ('---')
