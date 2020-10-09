@@ -23,6 +23,6 @@ const key = new PluginKey<DecorationSet>('cite-highlight');
 
 export function citeHighlightPlugin(schema: Schema) {
   return markHighlightPlugin(key, schema.marks.cite, (text, _attrs, markRange) => {
-    return markHighlightDecorations(markRange, text, /([\[\]])/g, 'pm-markup-text-color pm-fixedwidth-font');
+    return markHighlightDecorations(markRange, text, /([\[\]])/g, 'pm-link-text-color pm-fixedwidth-font');
   });
 }

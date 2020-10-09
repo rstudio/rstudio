@@ -109,7 +109,7 @@ const extension = (context: ExtensionContext): Extension | null => {
             },
           ],
           toDOM(mark: Mark) {
-            return ['span', { class: 'cite-id pm-markup-text-color pm-fixedwidth-font' }];
+            return ['span', { class: 'cite-id pm-link-text-color pm-fixedwidth-font' }];
           },
         },
         pandoc: {
