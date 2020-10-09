@@ -54,6 +54,9 @@ export class InsertCitationCommand extends ProsemirrorCommand {
                 // Remember the last tree node that was selected
                 this.initialSelectionKey = result.selectionKey;
 
+                // Remember whether the citation is intext for the future
+                ui.prefs.setCitationDefaultInText(result.intextCitationStyle);
+
                 // The citations that we should insert
                 const bibliographySources = result.bibliographySources;
 
@@ -80,11 +83,17 @@ export class InsertCitationCommand extends ProsemirrorCommand {
                   const start = tr.selection.from;
 
                   // Insert the cite mark and text
-                  const wrapperText = schema.text(`[]`, []);
-                  tr.insert(tr.selection.from, wrapperText);
 
-                  // move the selection into the wrapper
-                  setTextSelection(tr.selection.from - 1)(tr);
+                  // Insert the wrapping [] if the user wants that style citation
+                  // Note that if the use is inserting more than one citation, we ignore this and just
+                  // always perform a 'note' style citation insert
+                  if (!result.intextCitationStyle || result.bibliographySources.length > 1) {
+                    const wrapperText = schema.text(`[]`, []);
+                    tr.insert(tr.selection.from, wrapperText);
+
+                    // move the selection into the wrapper
+                    setTextSelection(tr.selection.from - 1)(tr);
+                  } 
 
                   // insert the CiteId marks and text
                   bibliographySources.forEach((citation, i) => {

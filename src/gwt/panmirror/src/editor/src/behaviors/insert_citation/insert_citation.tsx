@@ -50,12 +50,14 @@ import { CitationBibliographyPicker } from './insert_citation-bibliography-picke
 
 import './insert_citation.css';
 import debounce from 'lodash.debounce';
+import { CheckboxInput } from '../../api/widgets/checkbox-input';
 
 // When the dialog has completed, it will return this result
 // If the dialog is canceled no result will be returned
 export interface InsertCitationDialogResult {
   bibliographySources: BibliographySource[];
   bibliography: BibliographyFile;
+  intextCitationStyle: boolean;
   selectionKey?: string;
 }
 
@@ -140,7 +142,9 @@ export async function showInsertCitationDialog(
         bibliographySourceProviders: BibliographySourceProvider[],
         bibliography: BibliographyFile,
         selectedNode: NavigationTreeNode,
+        intextCitationStyle: boolean
       ) => {
+
         // Look through the items and see whether any will be slow
         // If some are slow, show progress
         const requiresProgress = bibliographySourceProviders.some(
@@ -163,6 +167,7 @@ export async function showInsertCitationDialog(
         result = {
           bibliographySources,
           bibliography,
+          intextCitationStyle,
           selectionKey: selectedNode.key,
         };
 
@@ -240,6 +245,7 @@ interface InsertCitationPanelProps extends WidgetProps {
     bibliographySourceProviders: BibliographySourceProvider[],
     bibliography: BibliographyFile,
     selectedNode: NavigationTreeNode,
+    intextCitationStyle: boolean
   ) => void;
   onCancel: () => void;
 }
@@ -254,6 +260,7 @@ interface InsertCitationPanelState {
   statusMessage: string;
   existingBibliographyFile: BibliographyFile;
   createBibliographyFile: BibliographyFile;
+  intextCitationStyle: boolean;
 }
 
 interface InsertCitationPanelUpdateState {
@@ -266,6 +273,7 @@ interface InsertCitationPanelUpdateState {
   statusMessage?: string;
   existingBibliographyFile?: BibliographyFile;
   createBibliographyFile?: BibliographyFile;
+  intextCitationStyle?: boolean;
 }
 
 export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => {
@@ -300,6 +308,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
       ),
       props.ui,
     ),
+    intextCitationStyle: props.ui.prefs.citationDefaultInText()
   });
 
   // Core method to update dialog state
@@ -402,8 +411,9 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
   const onOk = () => {
     props.onOk(
       mergedCitationsToAdd,
-      insertCitationPanelState.existingBibliographyFile || insertCitationPanelState.createBibliographyFile,
+      insertCitationPanelState.existingBibliographyFile || insertCitationPanelState.createBibliographyFile,      
       insertCitationPanelState.selectedNode,
+      insertCitationPanelState.intextCitationStyle
     );
   };
 
@@ -554,6 +564,12 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
     updateState({ createBibliographyFile: bibliographyFileForPath(fileName, props.ui) });
   };
 
+  const onCitationStyleChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
+    updateState({
+      intextCitationStyle: e.target.checked
+    });
+  };
+
   // Support keyboard shortcuts for dismissing dialog
   const onKeyPress = (event: React.KeyboardEvent) => {
     if (event.key === 'Enter') {
@@ -570,6 +586,9 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
       props.onCancel();
     }
   };
+
+  const totalCitationCount = insertCitationPanelState.citationsToAdd.length + (insertCitationPanelState.selectedIndex > -1 ? 1 : 0);
+  
 
   // Create the panel that should be displayed for the selected node of the tree
   const panelToDisplay = selectedPanelProvider
@@ -603,7 +622,8 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
           placeholder={props.ui.context.translateText('Selected Citation Keys')}
         />
       </div>
-      <div className="pm-cite-panel-select-bibliography">
+      <div className="pm-cite-panel-insert-inputs">
+        <div className="pm-cite-panel-insert-options">
         {// Only show the picker if there are either no bibliographies specified, or if there are writable bibliographies
         insertCitationConfiguration.bibliographyFiles.length === 0 ||
         insertCitationConfiguration.bibliographyFiles.some(bibFile => bibFile?.writable) ? (
@@ -618,6 +638,22 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
         ) : (
           <div />
         )}
+                {
+          totalCitationCount <= 1  ? (
+          <div className='pm-cite-panel-checkbox-group'>
+            <CheckboxInput 
+              id='intextStyleCheckbox'
+              checked={insertCitationPanelState.intextCitationStyle} 
+              className='pm-cite-panel-checkbox' 
+              onChange={onCitationStyleChanged}/>
+            <label htmlFor='intextStyleCheckbox' className='pm-cite-panel-checkbox-label'>{props.ui.context.translateText('Use in-text citation')}</label>
+          </div>
+        ) : (
+          <div/>
+        )}
+
+        </div>
+
         <DialogButtons
           okLabel={props.ui.context.translateText('Insert')}
           cancelLabel={props.ui.context.translateText('Cancel')}
