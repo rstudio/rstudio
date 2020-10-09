@@ -41,13 +41,14 @@ import { citationDoiCompletionHandler } from './cite-completion_doi';
 import { doiFromSlice } from './cite-doi';
 import { citePopupPlugin } from './cite-popup';
 import { InsertCitationCommand } from './cite-commands';
+import { setTextSelection } from 'prosemirror-utils';
 
 
 
 const kCiteCitationsIndex = 0;
 
 export const kCiteIdPrefixPattern = '-?@';
-const kCiteIdOptionalCharsPattern = '[^@;\\[\\]\\s]*';
+const kCiteIdOptionalCharsPattern = '[^@;\\[\\]\\-\\s]*';
 
 const kCiteIdCharsPattern = `${kCiteIdOptionalCharsPattern}`;
 const kCiteIdPattern = `^${kCiteIdPrefixPattern}${kCiteIdCharsPattern}$`;
@@ -386,19 +387,31 @@ function handlePaste(ui: EditorUI, bibManager: BibliographyManager, server: Pand
 
 // create a cite_id within a citation when the @ sign is typed
 function citeIdInputRule(schema: Schema) {
-  return new InputRule(new RegExp(`-?(@)$`), (state: EditorState, match: string[], start: number, end: number) => {
+  return new InputRule(/@$/, (state: EditorState, match: string[], start: number, end: number) => {
     if (!markIsActive(state, schema.marks.cite_id)) {
       const { parent, parentOffset } = state.selection.$head;
       const text = match[0] + parent.textContent.slice(parentOffset);
+      const textBefore = parent.textContent.slice(0, parentOffset);
       const citeIdLength = editingCiteIdLength(text);
 
+      // insert the @
       const tr = state.tr;
-      tr.insertText(match[1]); 
+      tr.insertText(match[0]); 
+
+      // insert a pairing end bracket if we started with [
+      if (citeIdLength === 1 && textBefore.match(/\[-?$/) && text[1] !== ']') {
+        tr.insertText(']');
+        setTextSelection(tr.selection.head - 1)(tr);
+      }
      
       if (citeIdLength) {
-        const citeEnd = start + citeIdLength ;
-        tr.addMark(start, citeEnd, schema.marks.cite_id.create());
+        // offset mark for incidence of '-' prefix
+        const offset = textBefore.endsWith('-') ? 1 : 0;
+        const citeStart = start - offset;
+        const citeEnd = citeStart + citeIdLength + offset ;
+        tr.addMark(citeStart, citeEnd, schema.marks.cite_id.create());
       }
+
       return tr;
     } 
     return null;
@@ -476,63 +489,6 @@ function readPandocCite(schema: Schema) {
   };
 }
 
-// look backwards for balanced begin bracket
-function findCiteBeginBracket($pos: ResolvedPos) {
- 
-  let beginCite = -1;
-  let bracketLevel = 0;
-  const { parent, parentOffset } = $pos;
-  const text = parent.textContent;
-  for (let i = parentOffset - 1; i >= 0; i--) {
-    const char = text.charAt(i);
-    if (char === ']') {
-      bracketLevel++;
-    } else if (char === '[') {
-      if (bracketLevel > 0) {
-        bracketLevel--;
-        // backtick disqualifies us
-      } else if (i > 0 && text.charAt(i - 1) === '`') {
-        return -1;
-      } else {
-        beginCite = i;
-        break;
-      }
-    }
-  }
-  if (beginCite !== -1) {
-    return $pos.start($pos.depth) + beginCite;
-  } else {
-    return -1;
-  }
-}
-
-// look forwards for balanced end bracket
-function findCiteEndBracket(selection: Selection) {
-  const { $head } = selection;
-  let endCite = -1;
-  let bracketLevel = 0;
-  const { parent, parentOffset } = $head;
-  const text = parent.textContent;
-  for (let i = parentOffset; i < text.length; i++) {
-    const char = text.charAt(i);
-    if (char === '[') {
-      bracketLevel++;
-    } else if (char === ']') {
-      if (bracketLevel > 0) {
-        bracketLevel--;
-      } else {
-        endCite = i;
-        break;
-      }
-    }
-  }
-  if (endCite !== -1) {
-    return $head.start($head.depth) + endCite;
-  } else {
-    return -1;
-  }
-}
-
 const kCitationIdRegex = new RegExp(`(^\\[| )(${kCiteIdPrefixPattern}${kCiteIdOptionalCharsPattern})`, 'g');
 
 function encloseInCiteMark(tr: Transaction, start: number, end: number) {
@@ -565,11 +521,6 @@ function validCiteLength(text: string) {
   } else {
     return 0;
   }
-}
-
-// validate that the cite is still valid (just return 0 or the whole length of the string)
-function editingCiteLength(text: string) {
-  return text.match(kEditingFullCiteRegEx) ? text.length : 0;
 }
 
 // up to how many characters of the passed text constitute a valid cite_id in the editor
