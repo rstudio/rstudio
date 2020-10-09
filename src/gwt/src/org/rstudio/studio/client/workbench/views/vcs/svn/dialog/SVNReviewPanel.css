@@ -51,12 +51,20 @@
    border: none;
 }
 
+.diffToolbarInnerWrapper {
+   float: right;
+}
+
+.diffContextLines {
+   padding-top: 4px;
+}
+
 .rstudio-themes-flat .diffToolbarInnerWrapper {
    border: none;
 }
 
 .rstudio-themes-flat .diffToolbarWrapper {
-   height: 28px; 
+   height: 28px;
 }
 
 .rstudio-themes-flat .splitPanel .gwt-SplitLayoutPanel-VDragger {
