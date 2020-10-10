@@ -174,6 +174,7 @@ function editorOutline(state: EditorState): EditorOutline {
     navigation_id: '',
     type: '' as EditorOutlineItemType,
     level: 0,
+    sequence: 0,
     title: '',
     children: [],
   };

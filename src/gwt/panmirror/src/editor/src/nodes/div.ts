@@ -22,7 +22,7 @@ import { GapCursor } from 'prosemirror-gapcursor';
 import { liftTarget } from 'prosemirror-transform';
 import { keymap } from 'prosemirror-keymap';
 
-import { ExtensionContext } from '../api/extension';
+import { ExtensionContext, Extension } from '../api/extension';
 import {
   pandocAttrSpec,
   pandocAttrToDomAttr,
@@ -45,7 +45,7 @@ import './div-styles.css';
 const DIV_ATTR = 0;
 const DIV_CHILDREN = 1;
 
-const extension = (context: ExtensionContext) => {
+const extension = (context: ExtensionContext) : Extension | null => {
   const { pandocExtensions, ui } = context;
 
   if (!pandocExtensions.fenced_divs && !pandocExtensions.native_divs) {
