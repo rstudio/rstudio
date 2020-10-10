@@ -17,7 +17,10 @@ import { Schema } from 'prosemirror-model';
 import { Transaction, EditorState, Selection } from 'prosemirror-state';
 import { ReplaceStep, ReplaceAroundStep } from 'prosemirror-transform';
 
+import { findParentNodeOfType } from 'prosemirror-utils';
+
 import { Extension } from '../api/extension';
+import { isList } from '../api/list';
 
 const extension: Extension = {
   appendTransaction: (schema: Schema) => {
@@ -25,14 +28,29 @@ const extension: Extension = {
       {
         name: 'remove_section',
         append: (tr: Transaction, transactions: Transaction[], oldState: EditorState, _newState: EditorState) => {
-          // if we are left with an empty selection in an empty heading block this may
-          // have been the removal of a section (more than 1 textBlock). in that case
-          // remove the empty heading node
-          if (isEmptyHeadingSelection(tr.selection) && isSectionRemoval(transactions, oldState)) {
-            const $head = tr.selection.$head;
-            const start = $head.start();
-            const end = start + 2;
-            tr.deleteRange(start, end);
+
+          if (isSectionRemoval(transactions, oldState)) {
+
+            // if we had selected the entire contents of a div then prosemirror will remove
+            // the div entirely -- we actually want to leave an empty div in place
+            const fullySelectedDiv = fullySelectedDivSection(oldState); 
+            if (fullySelectedDiv) {
+              tr.replaceSelectionWith(
+                schema.nodes.div.create(fullySelectedDiv.node.attrs,
+                                        schema.nodes.paragraph.create()));
+              
+            }
+
+
+            // if we are left with an empty selection in an empty heading block this may
+            // have been the removal of a section (more than 1 textBlock). in that case
+            // remove the empty heading node
+            else if (isEmptyHeadingSelection(tr.selection)) {
+              const $head = tr.selection.$head;
+              const start = $head.start();
+              const end = start + 2;
+              tr.deleteRange(start, end);
+            }
           }
         },
       },
@@ -40,13 +58,47 @@ const extension: Extension = {
   },
 };
 
+function fullySelectedDivSection(state: EditorState) {
+
+  if (!state.selection.empty && state.schema.nodes.div) {
+
+    const div = findParentNodeOfType(state.schema.nodes.div)(state.selection);
+    if (div) {
+     
+      // calculate the inner selection of the div (accounting for container position offsets)
+      let divSelFrom = div.start + 1; // offset to get to beginning first block text
+      let divSelTo = div.pos + div.node.nodeSize - 2; // offset to end of last block text
+     
+      // if the div's first child is a list we need to push in 2 more
+      if (isList(div.node.firstChild)) {
+        divSelFrom += 2;
+      }
+      // if the div's last child is a list we need to push in 2 more
+      if (isList(div.node.lastChild)) {
+        divSelTo -=2;
+      }
+
+      // does the selection span the entire div?
+      if (state.selection.from === divSelFrom && state.selection.to === divSelTo) {
+        return div;
+      } else {
+        return false;
+      }
+    }
+  }
+
+  return false;
+
+}
+
+
 function isEmptyHeadingSelection(selection: Selection) {
   const parent = selection.$head.parent;
   const schema = parent.type.schema;
   return selection.empty && parent.type === schema.nodes.heading && parent.content.size === 0;
 }
 
-function isSectionRemoval(transactions: Transaction[], state: EditorState) {
+function isSectionRemoval(transactions: Transaction[], oldState: EditorState) {
   // was this the removal of a section?
   let isRemoval = false;
   if (transactions.length === 1 && transactions[0].steps.length === 1) {
@@ -63,11 +115,14 @@ function isSectionRemoval(transactions: Transaction[], state: EditorState) {
     // if it's a delete step then see if we removed multiple text blocks
     let numBlocks = 0;
     const { from, to } = step as any;
-    state.doc.nodesBetween(from, to, node => {
+    oldState.doc.nodesBetween(from, to, node => {
       if (isRemoval) {
         return false;
       }
-      if (node.isTextblock) {
+      if (isList(node)) {
+        isRemoval = true;
+        return false;
+      } else if (node.isTextblock) {
         if (numBlocks++ >= 1) {
           isRemoval = true;
           return false;
