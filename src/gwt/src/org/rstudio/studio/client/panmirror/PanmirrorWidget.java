@@ -240,8 +240,8 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       events_ = events;
    }
    
-   private void attachEditor(PanmirrorEditor editor) {
-      
+   private void attachEditor(PanmirrorEditor editor)
+   {
       editor_ = editor;
        
       // initialize css
@@ -352,30 +352,21 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       );   
    }
    
-   
-   @Override
-   public void onDetach()
+   public void destroy()
    {
-      try 
+      // detach registrations (outline events)
+      registrations_.removeHandler();
+      
+      if (editor_ != null) 
       {
-         // detach registrations (outline events)
-         registrations_.removeHandler();
-         
-         if (editor_ != null) 
-         {
-            // unsubscribe from editor events
-            for (JsVoidFunction unsubscribe : editorEventUnsubscribe_) 
-               unsubscribe.call();
-            editorEventUnsubscribe_.clear();
-              
-            // destroy editor
-            editor_.destroy();
-            editor_ = null;
-         }
-      }
-      finally
-      {
-         super.onDetach();
+         // unsubscribe from editor events
+         for (JsVoidFunction unsubscribe : editorEventUnsubscribe_) 
+            unsubscribe.call();
+         editorEventUnsubscribe_.clear();
+           
+         // destroy editor
+         editor_.destroy();
+         editor_ = null;
       }
    }
    
@@ -388,8 +379,6 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    {
       return editor_.getTitle();
    }
-   
-  
    
    public void setMarkdown(String code, 
                            PanmirrorWriterOptions options, 

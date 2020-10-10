@@ -689,6 +689,7 @@ public class VisualMode implements VisualModeEditorSync,
    public void unmanageCommands()
    {
       restoreDisabledForVisualMode();
+      setCodeCommandsEnabled(true);
    }
    
    public void insertChunk(String chunkPlaceholder, int rowOffset, int colOffset)
@@ -925,6 +926,7 @@ public class VisualMode implements VisualModeEditorSync,
          syncOnIdle_.suspend();
       if (saveLocationOnIdle_ != null)
          saveLocationOnIdle_.suspend();
+      panmirror_.destroy();
    }
    
    public VisualModeChunk getChunkAtRow(int row)
