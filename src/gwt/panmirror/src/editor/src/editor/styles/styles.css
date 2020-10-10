@@ -29,8 +29,8 @@
 }
 
 .pm-content > p:first-child,
-.pm-content > .pm-div:first-child {
-  margin-top: 10px;
+.pm-content > .pm-div:nth-child(2) {
+  margin-top: 1em;
 }
 
 h3.pm-heading {
