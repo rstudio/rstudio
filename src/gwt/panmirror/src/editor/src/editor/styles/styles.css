@@ -89,7 +89,11 @@ h4.pm-heading {
 }
 
 .pm-div *:last-child {
-  margin-bottom: 0;
+  margin-bottom: 0.2em;
+}
+
+.pm-div ul:last-child {
+  margin-bottom: 0.4em;
 }
 
 .pm-div .pm-div {
