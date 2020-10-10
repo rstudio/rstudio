@@ -84,7 +84,7 @@ const extension = (context: ExtensionContext): Extension => {
               type: (schema: Schema) => schema.nodes.heading,
               offset: {
                 top: 5,
-                right: 5,
+                right: 10,
               },
             };
           } else {

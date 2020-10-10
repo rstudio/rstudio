@@ -333,7 +333,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
                   toolbar_.sync(true);
                   syncEditorTheme(event.getTheme());
                }
-            }.schedule(150);
+            }.schedule(500);
       }));
       
       registrations_.add(events_.addHandler(ChangeFontSizeEvent.TYPE, (event) -> {

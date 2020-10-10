@@ -29,7 +29,7 @@
   border-radius: 3px;  
 }
 
-.pm-cite-panel-select-bibliography {
+.pm-cite-panel-insert-inputs {
   width: 100%;
   display: flex;
   justify-content: space-between;
@@ -37,6 +37,19 @@
   align-items: flex-end;
 }
 
+.pm-cite-panel-insert-options {
+  display: flex;
+}
+
 .pm-cite-panel-button-panel {
   display: flex;
+}
+
+.pm-cite-panel-checkbox-group {
+  padding-left: 16px;
+  padding-top: 6px;
+}
+
+.pm-cite-panel-checkbox-label {
+  padding-left: 4px;
 }
