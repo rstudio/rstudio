@@ -14,20 +14,27 @@
  */
 
 import { Schema } from 'prosemirror-model';
-import { Transaction, EditorState, Selection } from 'prosemirror-state';
+import { Transaction, EditorState, Selection, Plugin, PluginKey } from 'prosemirror-state';
 import { ReplaceStep, ReplaceAroundStep } from 'prosemirror-transform';
 
 import { findParentNodeOfType } from 'prosemirror-utils';
 
 import { Extension } from '../api/extension';
 import { isList } from '../api/list';
+import { transactionsDocChanged } from '../api/transaction';
 
 const extension: Extension = {
-  appendTransaction: (schema: Schema) => {
+
+  plugins: (schema: Schema) => {
     return [
-      {
-        name: 'remove_section',
-        append: (tr: Transaction, transactions: Transaction[], oldState: EditorState, _newState: EditorState) => {
+      new Plugin({
+        key: new PluginKey('remove-section'),
+        appendTransaction: (transactions: Transaction[], oldState: EditorState, newState: EditorState) => {
+          
+          // skip for selection-only changes
+          if (!transactionsDocChanged(transactions)) {
+            return;
+          }
 
           if (isSectionRemoval(transactions, oldState)) {
 
@@ -35,68 +42,34 @@ const extension: Extension = {
             // the div entirely -- we actually want to leave an empty div in place
             const fullySelectedDiv = fullySelectedDivSection(oldState); 
             if (fullySelectedDiv) {
+              const tr = newState.tr;
               tr.replaceSelectionWith(
                 schema.nodes.div.create(fullySelectedDiv.node.attrs,
                                         schema.nodes.paragraph.create()));
-              
+              return tr;
             }
-
-
+      
+      
             // if we are left with an empty selection in an empty heading block this may
             // have been the removal of a section (more than 1 textBlock). in that case
             // remove the empty heading node
-            else if (isEmptyHeadingSelection(tr.selection)) {
+            else if (isEmptyHeadingSelection(newState.selection)) {
+              const tr = newState.tr;
               const $head = tr.selection.$head;
               const start = $head.start();
               const end = start + 2;
               tr.deleteRange(start, end);
+              return tr;
             }
           }
-        },
-      },
+
+
+        }
+      })
     ];
   },
 };
 
-function fullySelectedDivSection(state: EditorState) {
-
-  if (!state.selection.empty && state.schema.nodes.div) {
-
-    const div = findParentNodeOfType(state.schema.nodes.div)(state.selection);
-    if (div) {
-     
-      // calculate the inner selection of the div (accounting for container position offsets)
-      let divSelFrom = div.start + 1; // offset to get to beginning first block text
-      let divSelTo = div.pos + div.node.nodeSize - 2; // offset to end of last block text
-     
-      // if the div's first child is a list we need to push in 2 more
-      if (isList(div.node.firstChild)) {
-        divSelFrom += 2;
-      }
-      // if the div's last child is a list we need to push in 2 more
-      if (isList(div.node.lastChild)) {
-        divSelTo -=2;
-      }
-
-      // does the selection span the entire div?
-      if (state.selection.from === divSelFrom && state.selection.to === divSelTo) {
-        return div;
-      } else {
-        return false;
-      }
-    }
-  }
-
-  return false;
-
-}
-
-
-function isEmptyHeadingSelection(selection: Selection) {
-  const parent = selection.$head.parent;
-  const schema = parent.type.schema;
-  return selection.empty && parent.type === schema.nodes.heading && parent.content.size === 0;
-}
 
 function isSectionRemoval(transactions: Transaction[], oldState: EditorState) {
   // was this the removal of a section?
@@ -133,5 +106,46 @@ function isSectionRemoval(transactions: Transaction[], oldState: EditorState) {
 
   return isRemoval;
 }
+
+
+function fullySelectedDivSection(state: EditorState) {
+
+  if (!state.selection.empty && state.schema.nodes.div) {
+
+    const div = findParentNodeOfType(state.schema.nodes.div)(state.selection);
+    if (div) {
+     
+      // calculate the inner selection of the div (accounting for container position offsets)
+      let divSelFrom = div.start + 1; // offset to get to beginning first block text
+      let divSelTo = div.pos + div.node.nodeSize - 2; // offset to end of last block text
+     
+      // if the div's first child is a list we need to push in 2 more
+      if (isList(div.node.firstChild)) {
+        divSelFrom += 2;
+      }
+      // if the div's last child is a list we need to push in 2 more
+      if (isList(div.node.lastChild)) {
+        divSelTo -=2;
+      }
+
+      // does the selection span the entire div?
+      if (state.selection.from === divSelFrom && state.selection.to === divSelTo) {
+        return div;
+      } else {
+        return false;
+      }
+    }
+  }
+
+  return false;
+}
+
+
+function isEmptyHeadingSelection(selection: Selection) {
+  const parent = selection.$head.parent;
+  const schema = parent.type.schema;
+  return selection.empty && parent.type === schema.nodes.heading && parent.content.size === 0;
+}
+
 
 export default extension;
