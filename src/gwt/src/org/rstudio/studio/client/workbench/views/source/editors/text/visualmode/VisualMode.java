@@ -689,6 +689,7 @@ public class VisualMode implements VisualModeEditorSync,
    public void unmanageCommands()
    {
       restoreDisabledForVisualMode();
+      setCodeCommandsEnabled(true);
    }
    
    public void insertChunk(String chunkPlaceholder, int rowOffset, int colOffset)
