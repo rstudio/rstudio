@@ -14,12 +14,13 @@
  */
 
 import { Node as ProsemirrorNode, Schema, DOMOutputSpec, ResolvedPos } from 'prosemirror-model';
-import { EditorState, Transaction } from 'prosemirror-state';
+import { EditorState, Transaction, PluginKey, Plugin } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
-import { findParentNodeOfType, ContentNodeWithPos } from 'prosemirror-utils';
-import { wrapIn, lift } from 'prosemirror-commands';
+import { findParentNodeOfType, ContentNodeWithPos, findParentNodeOfTypeClosestToPos } from 'prosemirror-utils';
+import { wrapIn } from 'prosemirror-commands';
 import { GapCursor } from 'prosemirror-gapcursor';
 import { liftTarget } from 'prosemirror-transform';
+import { keymap } from 'prosemirror-keymap';
 
 import { ExtensionContext } from '../api/extension';
 import {
@@ -121,9 +122,24 @@ const extension = (context: ExtensionContext) => {
     baseKeys: () => {
       return [
         { key: BaseKey.Enter, command: divInputRuleEnter() },
-        { key: BaseKey.ArrowLeft, command: arrowHandler('left') },
-        { key: BaseKey.ArrowUp, command: arrowHandler('up') },
       ];
+    },
+
+    plugins: (schema: Schema) => {
+      return [
+        new Plugin({
+          key: new PluginKey('div-gap-cursor'),
+          props: {
+            handleDOMEvents: {
+              click: clickHandler,
+            },
+          },
+        }),
+        keymap({
+          ArrowLeft: arrowHandler('left'),
+          ArrowUp: arrowHandler('up')
+        }),
+      ];  
     },
 
     commands: () => {
@@ -143,6 +159,40 @@ const extension = (context: ExtensionContext) => {
     },
   };
 };
+
+function clickHandler(view: EditorView, event: Event): boolean {
+
+  const mouseEvent = event as MouseEvent;
+  const clickPos = view.posAtCoords({ left: mouseEvent.clientX, top: mouseEvent.clientY } );
+
+  if (clickPos) {
+
+    const div = findParentNodeOfTypeClosestToPos(
+      view.state.doc.resolve(clickPos.pos), view.state.schema.nodes.div
+    );
+    if (div && div.pos === clickPos.inside) {
+      
+      // focus the view
+      view.focus();
+      
+      // create the gap cursor
+      const tr = view.state.tr;
+      const $gapPos = tr.doc.resolve(clickPos.pos);
+      const gapCursor = new GapCursor($gapPos, $gapPos); 
+      tr.setSelection(gapCursor);
+      view.dispatch(tr);
+      
+      // prevent default event handling
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      return true;
+    }
+    
+
+  }
+
+  return false;
+}
 
 function arrowHandler(_dir: 'up' | 'left') {
   return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
