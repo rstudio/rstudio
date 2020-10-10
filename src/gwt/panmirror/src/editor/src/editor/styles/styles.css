@@ -29,6 +29,7 @@
 }
 
 .pm-content > p:first-child,
+.pm-content > p:nth-child(2), 
 .pm-content > .pm-div:nth-child(1),
 .pm-content > .pm-div:nth-child(2) {
   margin-top: 1em;
