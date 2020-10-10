@@ -89,6 +89,10 @@ const extension = (context: ExtensionContext) => {
         attr_edit: () => ({
           type: (schema: Schema) => schema.nodes.div,
           editFn: () => divCommand(ui, true),
+          offset: {
+            top: 3,
+            right: 0
+          }
         }),
 
         pandoc: {
