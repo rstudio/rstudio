@@ -24,6 +24,7 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.ProgressSpinner;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -594,11 +595,13 @@ public class ChunkOutputWidget extends Composite
       if (embedded)
       {
          addStyleName(style.embedded());
+         addStyleName(FontSizer.getNormalFontSizeClass());
          chunkOutputSize_ = ChunkOutputSize.Natural;
       }
       else
       {
          removeStyleName(style.embedded());
+         removeStyleName(FontSizer.getNormalFontSizeClass());
       }
    }
 
