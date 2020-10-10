@@ -152,11 +152,30 @@ function arrowHandler(_dir: 'up' | 'left') {
       return false;
     }
 
-    // if we are at the top of the document then create a gap cursor
+   
+    // determine whether we need to create a gap cursor
+    let createGapCursor = false;
+    let gapCursorOffset = 0;
     const $pos = state.doc.resolve(div.pos);
+
+    // if we are at the top of the document then create a gap cursor
     if (!$pos.nodeBefore && $pos.depth === 1) {
+      createGapCursor = true;
+    }
+
+    // if we are at the very top of a div then create a gap cursor
+    else if ($pos.pos === div.pos && !(state.selection instanceof GapCursor)) {
+      createGapCursor = true;
+      gapCursorOffset = 1;
+    } 
+
+    if (createGapCursor) {
       if (dispatch) {
-        const gapCursor = new GapCursor($pos, $pos);
+        let $gapPos = $pos;
+        if (gapCursorOffset) {
+          $gapPos = state.doc.resolve($pos.pos + gapCursorOffset);
+        }
+        const gapCursor = new GapCursor($gapPos, $gapPos);
         const tr = state.tr;
         tr.setSelection(gapCursor);
         dispatch(tr);
