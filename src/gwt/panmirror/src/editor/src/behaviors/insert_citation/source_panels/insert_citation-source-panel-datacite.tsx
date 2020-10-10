@@ -15,7 +15,6 @@
 
 import React from 'react';
 
-import { BibliographyManager } from '../../../api/bibliography/bibliography';
 import { createUniqueCiteId } from '../../../api/cite';
 import { CSL, imageForType } from '../../../api/csl';
 import { DataCiteServer, DataCiteRecord, suggestCiteId, DataCiteCreator } from '../../../api/datacite';
@@ -35,7 +34,6 @@ import { CitationSourceLatentSearchPanel } from './insert_citation-source-panel-
 
 export function dataciteSourcePanel(
   ui: EditorUI,
-  bibliographyManager: BibliographyManager,
   server: DataCiteServer,
   doiServer: DOIServer,
 ): CitationSourcePanelProvider {

@@ -271,6 +271,19 @@ core::Error UserStateValues::setBibliographyDefaultType(std::string val)
 }
 
 /**
+ * The default style for inserting citations.
+ */
+bool UserStateValues::citationDefaultInText()
+{
+   return readPref<bool>("citation_default_in_text");
+}
+
+core::Error UserStateValues::setCitationDefaultInText(bool val)
+{
+   return writePref("citation_default_in_text", val);
+}
+
+/**
  * Zotero connection type (local or web)
  */
 std::string UserStateValues::zoteroConnectionType()
@@ -344,6 +357,7 @@ std::vector<std::string> UserStateValues::allKeys()
       kUsingMingwGcc49,
       kVisualModeConfirmed,
       kBibliographyDefaultType,
+      kCitationDefaultInText,
       kZoteroConnectionType,
       kZoteroUseBetterBibtex,
       kZoteroApiKey,
