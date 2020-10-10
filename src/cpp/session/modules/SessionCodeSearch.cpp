@@ -920,6 +920,7 @@ private:
                ext == ".toml" || ext == ".scala" ||
                ext == ".css" || ext == ".scss" || ext == ".sass" ||
                filename == "DESCRIPTION" ||
+               filename == "Dockerfile" || 
                filename == "NAMESPACE" ||
                filename == "README" ||
                filename == "NEWS" ||

@@ -34,7 +34,6 @@ import { CitationSourceLatentSearchPanel } from './insert_citation-source-panel-
 
 export function pubmedSourcePanel(
   ui: EditorUI,
-  bibliographyManager: BibliographyManager,
   server: PubMedServer,
   doiServer: DOIServer,
 ): CitationSourcePanelProvider {
