@@ -80,6 +80,17 @@ public class PanmirrorUIPrefs {
       pUserState_.get().writeState();
    }
    
+   public boolean citationDefaultInText()
+   {
+      return pUserState_.get().citationDefaultInText().getValue();
+   }
+   
+   public void setCitationDefaultInText(boolean value) 
+   {
+      pUserState_.get().citationDefaultInText().setGlobalValue(value);
+      pUserState_.get().writeState();
+   }
+   
    public double emojiSkinTone() 
    {
 	   String emojiSkinTone = pUIPrefs_.get().emojiSkintone().getValue();

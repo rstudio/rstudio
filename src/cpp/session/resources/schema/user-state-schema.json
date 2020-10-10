@@ -212,6 +212,11 @@
             "default": "bib",
             "description": "The default type for new bibliographies."
         },
+        "citation_default_in_text": {
+            "type": "boolean",
+            "default": false,
+            "description": "The default style for inserting citations."
+        },
         "zotero_connection_type": {
             "type": "string",
             "enum": ["auto", "none", "local", "web"],
