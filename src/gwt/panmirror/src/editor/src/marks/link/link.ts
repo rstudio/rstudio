@@ -47,6 +47,9 @@ const extension = (context: ExtensionContext): Extension => {
   const linkAttr = pandocExtensions.link_attributes;
   const autoLink = pandocExtensions.autolink_bare_uris;
   const headingLink = hasShortcutHeadingLinks(pandocExtensions);
+  const citations = pandocExtensions.citations;
+
+  const excludes = citations ? { excludes: 'cite_id' } : {};
 
   return {
     marks: [
@@ -60,7 +63,7 @@ const extension = (context: ExtensionContext): Extension => {
             ...(linkAttr ? pandocAttrSpec : {}),
           },
           inclusive: false,
-          excludes: 'cite_id',
+          ...excludes,
           parseDOM: [
             {
               tag: 'a[href]',
