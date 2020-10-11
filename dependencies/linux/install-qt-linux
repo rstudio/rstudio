@@ -45,6 +45,7 @@ mkdir -p ${QT_SDK_DIR}
     icu \
     qttranslations \
     qtwayland \
+    qtwaylandcompositor \
     qtwebsockets \
     qtimageformats \
 
