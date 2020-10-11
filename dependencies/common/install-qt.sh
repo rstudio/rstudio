@@ -261,7 +261,12 @@ function compute_url(){
                 # https://github.com/rstudio/rstudio/issues/6782
                 REMOTE_PATH="$(${CURL} ${BASE_URL}/${REMOTE_BASE}/ | grep -o -E "5\.12\.8\-0\-20200405[[:alnum:]_.\-]*7z" | grep "${COMPONENT}" | tail -1)"
             else
-                REMOTE_PATH="$(${CURL} ${BASE_URL}/${REMOTE_BASE}/ | grep -o -E "[[:alnum:]_.\-]*7z" | grep "${COMPONENT}" | tail -1)"
+                COMPNAME="${COMPONENT}"
+                if [[ "${COMPONENT}" == "qtwaylandcompositor" ]]; then
+                    # Qt 5.13+ has a mismatch between folder name and archive name of qtwaylandcompositor
+                    COMPNAME="qtwayland-compositor"
+                fi
+                REMOTE_PATH="$(${CURL} ${BASE_URL}/${REMOTE_BASE}/ | grep -o -E "[[:alnum:]_.\-]*7z" | grep "${COMPNAME}" | tail -1)"
             fi
             if [ ! -z "${REMOTE_PATH}" ]; then
                 echo "${BASE_URL}/${REMOTE_BASE}/${REMOTE_PATH}"
