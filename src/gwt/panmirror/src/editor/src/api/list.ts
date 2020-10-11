@@ -30,9 +30,13 @@ export interface ListCapabilities {
   order: boolean;
 }
 
-export function isList(node: ProsemirrorNode) {
-  const schema = node.type.schema;
-  return node.type === schema.nodes.bullet_list || node.type === schema.nodes.ordered_list;
+export function isList(node: ProsemirrorNode | null | undefined) {
+  if (node) {
+    const schema = node.type.schema;
+    return node.type === schema.nodes.bullet_list || node.type === schema.nodes.ordered_list;
+  } else {
+    return false;
+  }
 }
 
 export function precedingListItemInsertPos(doc: ProsemirrorNode, selection: Selection) {

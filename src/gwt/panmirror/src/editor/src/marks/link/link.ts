@@ -60,6 +60,7 @@ const extension = (context: ExtensionContext): Extension => {
             ...(linkAttr ? pandocAttrSpec : {}),
           },
           inclusive: false,
+          excludes: 'cite_id',
           parseDOM: [
             {
               tag: 'a[href]',
