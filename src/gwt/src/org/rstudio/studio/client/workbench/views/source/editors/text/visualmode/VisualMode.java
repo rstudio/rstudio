@@ -924,9 +924,12 @@ public class VisualMode implements VisualModeEditorSync,
    {
       if (syncOnIdle_ != null)
          syncOnIdle_.suspend();
+
       if (saveLocationOnIdle_ != null)
          saveLocationOnIdle_.suspend();
-      panmirror_.destroy();
+
+      if (panmirror_ != null)
+         panmirror_.destroy();
    }
    
    public VisualModeChunk getChunkAtRow(int row)
