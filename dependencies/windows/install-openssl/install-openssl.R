@@ -11,11 +11,11 @@ perl <- head(Filter(file.exists, c("C:/Perl64/bin", "C:/Perl/bin")), n = 1)
 if (length(perl) == 0)
    fatal("No perl installation detected (please install ActiveState Perl via 'choco install activeperl')")
 
-# try to find MSVC 2017
-msvc <- head(Filter(file.exists, c("C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Auxiliary/Build",
-                                   "C:/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools/VC/Auxiliary/Build")), n = 1)
+# try to find MSVC 2019
+msvc <- head(Filter(file.exists, c("C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build",
+                                   "C:/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/VC/Auxiliary/Build")), n = 1)
 if (length(msvc) == 0)
-   fatal("No MSVC 2017 installation detected (please install Visual Studio 2017 using 'Install-RStudio-Prereqs.ps1')")
+   fatal("No MSVC 2019 installation detected (please install Visual Studio 2019 using 'Install-RStudio-Prereqs.ps1')")
 
 PATH$prepend("../tools")
 PATH$prepend(msvc)
