@@ -121,8 +121,6 @@ const extension = (context: ExtensionContext) : Extension | null => {
     baseKeys: () => {
       return [
         { key: BaseKey.Enter, command: divInputRuleEnter() },
-        { key: BaseKey.ArrowLeft, command: arrowHandler('left') },
-        { key: BaseKey.ArrowUp, command: arrowHandler('up') }
       ];
     },
 
@@ -144,49 +142,6 @@ const extension = (context: ExtensionContext) : Extension | null => {
   };
 };
 
-
-function arrowHandler(_dir: 'up' | 'left') {
-  return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
-    // only applies within divs
-    const div = findParentNodeOfType(state.schema.nodes.div)(state.selection);
-    if (!div) {
-      return false;
-    }
-
-   
-    // determine whether we need to create a gap cursor
-    let createGapCursor = false;
-    let gapCursorOffset = 0;
-    const $pos = state.doc.resolve(div.pos);
-
-    // if we are at the top of the document then create a gap cursor
-    if (!$pos.nodeBefore && $pos.depth === 1) {
-      createGapCursor = true;
-    }
-
-    // if we are at the very top of a div then create a gap cursor
-    else if ($pos.pos === div.pos && !(state.selection instanceof GapCursor)) {
-      createGapCursor = true;
-      gapCursorOffset = 1;
-    } 
-
-    if (createGapCursor) {
-      if (dispatch) {
-        let $gapPos = $pos;
-        if (gapCursorOffset) {
-          $gapPos = state.doc.resolve($pos.pos + gapCursorOffset);
-        }
-        const gapCursor = new GapCursor($gapPos, $gapPos);
-        const tr = state.tr;
-        tr.setSelection(gapCursor);
-        dispatch(tr);
-      }
-      return true;
-    }
-
-    return false;
-  };
-}
 
 function divCommand(ui: EditorUI, allowEdit: boolean) {
   return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
