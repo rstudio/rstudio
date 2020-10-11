@@ -79,7 +79,7 @@ if (!file.exists(normalizePath(file.path(soci_build_dir, "x64\\lib\\Release\\lib
 
    # run CMAKE for each platform (x86, x64) and each configuration (Debug, Release)
    setwd("x86")
-   cmake_args <- paste0("-G \"Visual Studio 15 2017\" ",
+   cmake_args <- paste0("-G \"Visual Studio 15 2019\" ",
                         "-A Win32 ",
                         "-DCMAKE_VERBOSE_MAKEFILE=ON ",
                         "-DCMAKE_INCLUDE_PATH=\"", file.path(boost_dir, "include"), "\" ",

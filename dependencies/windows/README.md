@@ -16,7 +16,7 @@ Install Qt SDK
 Install Qt 5.15.1 SDK for Windows from https://qt.io, selecting 
 following components:
 
-- MSVC 2017 64-bit
+- MSVC 2019 64-bit
 - QtWebEngine
 
 If this version isn't showing up when installing via the Qt online installer
