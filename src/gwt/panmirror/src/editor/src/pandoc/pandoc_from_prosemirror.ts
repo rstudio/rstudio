@@ -118,7 +118,7 @@ class PandocWriter implements PandocOutput {
     const token: PandocToken = {
       t: type,
     };
-    if (content) {
+    if (content !== undefined) {
       if (typeof content === 'function') {
         token.c = [];
         this.fill(token.c, content);
