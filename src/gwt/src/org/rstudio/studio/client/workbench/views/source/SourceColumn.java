@@ -413,16 +413,6 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       return editors_.size() > 0;
    }
 
-   public boolean hasDirtyDoc()
-   {
-      for (EditingTarget editor : editors_)
-      {
-         if (editor.dirtyState().getValue())
-            return true;
-      }
-      return false;
-   }
-
    public boolean isSaveCommandActive()
    {
       for (EditingTarget target : editors_)
