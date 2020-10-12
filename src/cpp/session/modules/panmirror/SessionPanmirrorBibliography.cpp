@@ -376,6 +376,7 @@ void refBlockToJsonCompleted(bool isProjectFile,
             std::vector<std::string> args;
             for (auto biblioFile : biblioFiles)
                args.push_back(string_utils::utf8ToSystem(biblioFile.absolutePath()));
+            args.push_back("--standalone");
             args.push_back("--to");
             args.push_back("csljson");
 
@@ -506,6 +507,7 @@ void pandocGetBibliography(const json::JsonRpcRequest& request,
       args.push_back(string_utils::utf8ToSystem(tempYaml.getAbsolutePath()));
       args.push_back("--from");
       args.push_back("markdown");
+      args.push_back("--standalone");
       args.push_back("--to");
       args.push_back("csljson");
 
@@ -523,6 +525,7 @@ void pandocGetBibliography(const json::JsonRpcRequest& request,
          if (FilePath::exists(biblioFile.absolutePath()))
             args.push_back(string_utils::utf8ToSystem(biblioFile.absolutePath()));
       }
+      args.push_back("--standalone");
       args.push_back("--to");
       args.push_back("csljson");
 
@@ -740,16 +743,12 @@ Error pandocAddToBibliography(const json::JsonRpcRequest& request, json::JsonRpc
    if (isYAML || isJSON)
    {
       std::vector<std::string> formatArgs;
+      formatArgs.push_back("--standalone");
       formatArgs.push_back("--to");
       if (isYAML)
-      {
          formatArgs.push_back("markdown");
-         formatArgs.push_back("--standalone");
-      }
       else
-      {
         formatArgs.push_back("csljson");
-      }
       std::string biblio;
       Error error = pandocGenerateBibliography(sourceAsJson, formatArgs, &biblio);
       if (error)
@@ -868,6 +867,7 @@ void updateProjectBibliography()
       if (FilePath::exists(biblioFile.absolutePath()))
          args.push_back(string_utils::utf8ToSystem(biblioFile.absolutePath()));
    }
+   args.push_back("--standalone");
    args.push_back("--to");
    args.push_back("csljson");
    Error error = module_context::runPandocAsync(args, "", boost::bind(indexProjectCompleted, biblioFiles, _1));
