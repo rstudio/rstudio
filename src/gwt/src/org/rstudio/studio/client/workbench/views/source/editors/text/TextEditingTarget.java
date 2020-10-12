@@ -2604,7 +2604,15 @@ public class TextEditingTarget implements
       {
          ensureTextEditorActive(() ->
          {
-            docDisplay_.replaceSelection(value);
+            if (docDisplay_.hasSelection())
+            {
+               docDisplay_.replaceSelection(value);
+            }
+            else
+            {
+               docDisplay_.insertCode(value);
+            }
+            
             callback.execute();
          });
       }

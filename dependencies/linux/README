@@ -19,18 +19,18 @@ To build RStudio Desktop, install Qt from https://qt.io. Include the
 QtWebEngine component.
 
 If the required version isn't showing up when installing via the Qt online
-installer click the "Archive" checkbox on the "Select Components" screen, then 
-the Filter button. The list of available versions will expand to include older 
+installer click the "Archive" checkbox on the "Select Components" screen, then
+the Filter button. The list of available versions will expand to include older
 versions.
 
 Installing Dependencies for Debian/Ubuntu, Fedora, RedHat/CentOS, or OpenSUSE
 =============================================================================
 
-1) R installation - building RStudio requires that a version of R be 
+1) R installation - building RStudio requires that a version of R be
 previously installed within a location where the R executable can be run from
 the system shell (e.g. /usr/bin or /usr/local/bin). Building R from source
 and then executing 'make install' will conform to this requirement as will
-installing it using the system standard package management tools (apt-get, 
+installing it using the system standard package management tools (apt-get,
 yum, etc).
 
 2) Run the install-dependencies script appropriate to your platform's
@@ -40,9 +40,9 @@ SDK be sure to specify the --exclude-qt-sdk flag as described above).
    ./install-dependencies-debian
    ./install-dependencies-yum
    ./install-dependencies-zypper
-   
+
 Note that this script will install Boost 1.69 in the /opt/rstudio-tools/boost
-directory (the /opt/rstudio-tools directory is used to insure that this 
+directory (the /opt/rstudio-tools directory is used to insure that this
 installation of boost doesn't conflict with other versions of boost installed
 on the system). This part of the installation will take a few minutes since
 it requires that boost be built from source for your system.
@@ -55,16 +55,16 @@ If the system you are installing on is either older than the minimum required
 versions listed above or another Linux distribution entirely, then you should
 do the following to make sure you have fulfilled all dependencies:
 
-1) The Dockerfiles in the docker/jenkins folder contain the definitive 
-dependency requirements for the platforms that RStudio is built on and can 
+1) The Dockerfiles in the docker/jenkins folder contain the definitive
+dependency requirements for the platforms that RStudio is built on and can
 serve as a guide in determining which referenced libraries must be available
 on your system.
 
-2) Run the install-common script from dependencies/common (which will 
-install Google Web Toolkit, Hunspell dictionaries, MathJax, Boost 1.69, and 
+2) Run the install-common script from dependencies/common (which will
+install Google Web Toolkit, Hunspell dictionaries, MathJax, Boost 1.69, and
 other dependencies):
 
-NOTE: To build without crashpad support, define RSTUDIO_DISABLE_CRASHPAD=1 
+NOTE: To build without crashpad support, define RSTUDIO_DISABLE_CRASHPAD=1
 before running the script; otherwise, pass the --install-crashpad-sudo
 option so crashpad can be installed to opt/rstudio-tools/crashpad.
 
@@ -74,11 +74,11 @@ OR
 
    RSTUDIO_DISABLE_CRASHPAD=1 ./install-common
 
-3) Optionally install the Qt SDK, including QtWebEngine, from 
-https://qt.io. You should do this if you are building the Desktop version 
+3) Optionally install the Qt SDK, including QtWebEngine, from
+https://qt.io. You should do this if you are building the Desktop version
 and don't have Qt and QtWebEngine installed on the system:
 
-4) If your system doesn't meet the minimum version requirements for CMake 
+4) If your system doesn't meet the minimum version requirements for CMake
 (3.4.3) you can download a Linux binary of the latest version of CMake here:
 
   - https://cmake.org/download/
