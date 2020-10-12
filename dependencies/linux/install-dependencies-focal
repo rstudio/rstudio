@@ -55,6 +55,7 @@ sudo apt-get -y install \
   libssl-dev \
   libuser1-dev \
   libxslt1-dev \
+  libxcb-xinerama0 \
   lsof \
   ninja-build \
   patchelf \

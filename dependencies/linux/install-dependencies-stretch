@@ -54,6 +54,7 @@ sudo apt-get -y install \
   libssl1.0-dev \
   libuser1-dev \
   libxml-commons-external-java \
+  libxcb-xinerama0 \
   lsof \
   make \
   mesa-common-dev \
