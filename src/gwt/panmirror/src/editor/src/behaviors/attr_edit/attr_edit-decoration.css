@@ -21,6 +21,13 @@
   font-size: 10px;
 }
 
+.pm-div .pm-attr-edit-decoration {
+  margin-top: 10px;
+  right: 10px;
+}
+
+
+
 .pm-attr-edit-decoration .attr-edit-widget {
   padding: 2px;
   height: 18px;

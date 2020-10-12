@@ -193,9 +193,12 @@ oop.inherits(Mode, MarkdownMode);
          return this.$outdent.autoOutdent(session, row);
    };
 
-   this.transformAction = function(state, action, editor, session, text) {
+   this.transformAction = function(state, action, editor, session, text)
+   {
       var mode = activeMode(state);
-      if (mode === "r-cpp")
+      if (mode === "markdown")
+         return this.transformActionMarkdown(state, action, editor, session, text);
+      else if (mode === "r-cpp")
          return this.transformActionCpp(state, action, editor, session, text);
       else if (mode === "yaml")
          return this.transformActionYaml(state, action, editor, session, text);
@@ -204,6 +207,53 @@ oop.inherits(Mode, MarkdownMode);
       else
          return false;
    };
+
+   this.transformActionMarkdown = function(state, action, editor, session, text) {
+
+      if (action === "insertion")
+      {
+         // if the user is typing '`r', complete the closing backtick
+         if (text === "r")
+         {
+            var pos = editor.getCursorPosition();
+            var line = session.getLine(pos.row);
+            var token = session.getTokenAt(pos.row, pos.column - 1);
+
+            // validate that we're not already working within an inline chunk --
+            // check the token at cursor position for 'support.function' type
+            // to confirm
+            if (token !== null &&
+                token.type.indexOf("support.function") === -1 &&
+                line[pos.column - 1] === "`")
+            {
+               return {
+                  text: "r`",
+                  selection: [0, pos.column + 1, 0, pos.column + 1]
+               };
+            }
+         }
+
+         // skip over '`' if it ends an inline R chunk
+         else if (text === "`")
+         {
+            var pos = editor.getCursorPosition();
+            var token = session.getTokenAt(pos.row, pos.column + 1);
+
+            // validate that we are working within an inline chunk --
+            // only skip '`' if that appears to be the case
+            if (token != null &&
+                token.value === "`" &&
+                token.type.indexOf("support.function") !== -1)
+            {
+               return {
+                  text: "",
+                  selection: [0, pos.column + 1, 0, pos.column + 1]
+               };
+            }
+         }
+      }
+
+   }
 
    this.transformActionCpp = function(state, action, editor, session, text) {
 

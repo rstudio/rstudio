@@ -45,10 +45,13 @@
 * Add support for navigating source history with mouse forward/back buttons (#7272)
 * Add ability to go directly to various Global Option panes via Command Palette (#7678)
 * R6Class method definitions are now indexed and accessible by the fuzzy finder (Ctrl + .)
-* The 'Preview' command for R documentation files now passes along RdMacros declared from the package DESCRIPTION file. (#6871)
+* The 'Preview' command for R documentation files now passes along RdMacros declared from the package DESCRIPTION file (#6871)
 * Some panes didn't have commands for making them visible, now they do (#5775)
 * Show correct symbol for Return key in Mac menus (#6524)
 * Added command and button for clearing Build pane output (#6636)
+* Added option to disable clickable hyperlinks in the editor (#6689, thanks to Paul Kaefer)
+* Added basic editor support for Dockerfiles (#5141)
+* Markdown-style sub-sections are now rendered as nested sections in the document outline for R documents (#4124)
 
 ### RStudio Server
 
@@ -82,6 +85,7 @@
 
 ### Bugfixes
 
+* Fixed issue where debugger contexts were not displayed correctly for byte-compiled functions. (#6922)
 * UTF-8 character vectors are now properly displayed within the Environment pane. (#6877)
 * Fixed issue where diagnostics system surface "Unknown or uninitialized column" warnings in some cases. (#7372)
 * Fixed issue where hovering mouse cursor over C++ completion popup would steal focus. (#5941)
@@ -121,4 +125,7 @@
 * Fixed issue causing C++ diagnostics to fail when Xcode developer tools were active (#7824)
 * Added option for clickable links in Terminal pane (#6621)
 * Fixed issue where R scripts containing non-ASCII characters in their path could not be sourced as a local job on Windows (#6701)
+* Fixed issue where non-ASCII characters in Subversion commit comments were incorrect encoded on Windows (#7959)
+* Prevent Discard button from being hidden in Subversion diff viewer (#6031)
 * Fixed issue where French (AZERTY) keyboards inserted '/' rather than ':' in some cases (#7932)
+* `readline()` and `readLines()` can now be interrupted, even when reading from `stdin()`. (#3448)

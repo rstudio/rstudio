@@ -443,6 +443,18 @@ public class UserStateAccessor extends Prefs
    public final static String BIBLIOGRAPHY_DEFAULT_TYPE_JSON = "json";
 
    /**
+    * The default style for inserting citations.
+    */
+   public PrefValue<Boolean> citationDefaultInText()
+   {
+      return bool(
+         "citation_default_in_text",
+         "", 
+         "The default style for inserting citations.", 
+         false);
+   }
+
+   /**
     * Zotero connection type (local or web)
     */
    public PrefValue<String> zoteroConnectionType()
@@ -541,6 +553,8 @@ public class UserStateAccessor extends Prefs
          visualModeConfirmed().setValue(layer, source.getBool("visual_mode_confirmed"));
       if (source.hasKey("bibliography_default_type"))
          bibliographyDefaultType().setValue(layer, source.getString("bibliography_default_type"));
+      if (source.hasKey("citation_default_in_text"))
+         citationDefaultInText().setValue(layer, source.getBool("citation_default_in_text"));
       if (source.hasKey("zotero_connection_type"))
          zoteroConnectionType().setValue(layer, source.getString("zotero_connection_type"));
       if (source.hasKey("zotero_use_better_bibtex"))
@@ -572,6 +586,7 @@ public class UserStateAccessor extends Prefs
       prefs.add(usingMingwGcc49());
       prefs.add(visualModeConfirmed());
       prefs.add(bibliographyDefaultType());
+      prefs.add(citationDefaultInText());
       prefs.add(zoteroConnectionType());
       prefs.add(zoteroUseBetterBibtex());
       prefs.add(zoteroApiKey());

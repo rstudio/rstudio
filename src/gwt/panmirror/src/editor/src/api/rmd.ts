@@ -16,6 +16,7 @@
 import { Node as ProsemirrorNode, NodeType } from 'prosemirror-model';
 import { EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
+import { GapCursor } from 'prosemirror-gapcursor';
 
 import {
   findParentNodeOfType,
@@ -64,6 +65,7 @@ export function insertRmdChunk(chunkPlaceholder: string, rowOffset = 0, colOffse
     const schema = state.schema;
 
     if (
+      !(state.selection instanceof GapCursor) &&
       !toggleBlockType(schema.nodes.rmd_chunk, schema.nodes.paragraph)(state) &&
       !precedingListItemInsertPos(state.doc, state.selection)
     ) {
@@ -180,9 +182,23 @@ export function mergeRmdChunks(chunks: EditorRmdChunk[]) {
   }
 }
 
+/**
+ * Attempts to extract the engine name and label from a chunk header.
+ * 
+ * @param text The chunk header, e.g. {r foo}
+ * @returns An object with `engine` and `label` properties, or null.
+ */
 export function rmdChunkEngineAndLabel(text: string) {
-  const match = text.match(/^\{([a-zA-Z0-9_]+)[\s,]+([a-zA-Z0-9/-]+)/);
+  // Match the engine and label with a regex
+  const match = text.match(/^\{([a-zA-Z0-9_]+)[\s,]+([a-zA-Z0-9/._='"-]+)/);
   if (match) {
+    // The second capturing group in the regex matches the first string after
+    // the engine. This might be a label (e.g., {r label}), but could also be
+    // a chunk option (e.g., {r echo=FALSE}). If it has an =, presume that it's
+    // an option.
+    if (match[2].indexOf("=") !== -1) {
+      return null;
+    }
     return {
       engine: match[1],
       label: match[2],

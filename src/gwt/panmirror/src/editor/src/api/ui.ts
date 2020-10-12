@@ -131,4 +131,6 @@ export interface EditorUIPrefs {
   zoteroUseBetterBibtex: () => boolean;
   setBibliographyDefaultType: (type: string) => void;
   bibliographyDefaultType: () => string;
+  citationDefaultInText: () => boolean;
+  setCitationDefaultInText: (value: boolean) => void;
 }

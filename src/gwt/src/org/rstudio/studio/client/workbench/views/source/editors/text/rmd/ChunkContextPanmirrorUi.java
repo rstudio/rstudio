@@ -38,7 +38,7 @@ public class ChunkContextPanmirrorUi extends ChunkContextUi
 
       // Position toolbar at top right of chunk
       Style style = toolbar_.getElement().getStyle();
-      style.setTop(20, Unit.PX);
+      style.setTop(15, Unit.PX);
       style.setRight(0, Unit.PX);
       style.setWidth(100, Unit.PX);
    }

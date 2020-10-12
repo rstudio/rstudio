@@ -24,6 +24,7 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
@@ -632,21 +633,28 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
 
             if (input_.getText().length() == 0)
             {
-               // view_.isPromptEmpty() is to check for cases where the
-               // server is prompting but not at the top level. Escape
-               // needs to send null in those cases.
-               // For example, try "scan()" function
-               if (view_.isPromptEmpty())
+               // interrupt server
+               server_.interrupt(new ServerRequestCallback<Boolean>()
                {
-                  // interrupt server
-                  server_.interrupt(new VoidServerRequestCallback());
-               }
-               else
-               {
-                  // if the input is already empty then send a console reset
-                  // which will jump us back to the main prompt
-                  eventBus_.fireEvent(new ConsoleInputEvent(null, ""));
-               }
+
+                  @Override
+                  public void onResponseReceived(Boolean busy)
+                  {
+                     // if the session was not busy, then we should
+                     // send a console cancel
+                     if (!busy)
+                     {
+                        eventBus_.fireEvent(new ConsoleInputEvent(null, ""));
+                     }
+                        
+                  }
+
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     Debug.logError(error);
+                  }
+               });
             }
 
             input_.clear();

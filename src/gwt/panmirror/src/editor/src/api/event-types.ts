@@ -25,6 +25,7 @@ export const StateChangeEvent = makeEventType('StateChange');
 export const ResizeEvent = makeEventType('Resize');
 export const LayoutEvent = makeEventType('Layout');
 export const ScrollEvent = makeEventType('Scroll');
+export const BlurEvent = makeEventType('Blur');
 export const FocusEvent = makeEventType<ProsemirrorNode>('Focus');
 export const DispatchEvent = makeEventType<Transaction>('Dispatch');
 export const NavigateEvent = makeEventType<Navigation>('Navigate');

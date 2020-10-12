@@ -26,6 +26,7 @@ export interface EditorOutlineItem {
   navigation_id: string;
   type: EditorOutlineItemType;
   level: number;
+  sequence: number;
   title: string;
   children: EditorOutlineItem[];
 }
@@ -103,7 +104,7 @@ export function getEditingOutlineLocation(state: EditorState): EditingOutlineLoc
 //  - yaml metadata blocks
 //  - top-level headings
 //  - rmd chunks at the top level or within a top-level list
-export function getDocumentOutline(state: EditorState) {
+export function getDocumentOutline(state: EditorState): NodeWithPos[] {
   // get top level body nodes
   const schema = state.schema;
   const bodyNodes = findTopLevelBodyNodes(state.doc, node => {

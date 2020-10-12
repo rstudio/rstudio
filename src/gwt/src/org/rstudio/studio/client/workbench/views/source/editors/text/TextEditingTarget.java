@@ -697,23 +697,7 @@ public class TextEditingTarget implements
 
       docDisplay_.addEditorBlurHandler((BlurEvent evt) ->
       {
-         // When the editor loses focus, perform an autosave if enabled, the
-         // buffer is dirty, and we have a file to save to
-         if (prefs.autoSaveOnBlur().getValue() &&
-             dirtyState_.getValue() &&
-             getPath() != null &&
-             !docDisplay_.hasActiveCollabSession())
-         {
-            try
-            {
-               save();
-            }
-            catch(Exception e)
-            {
-               // Autosave exceptions are logged rather than displayed
-               Debug.logException(e);
-            }
-         }
+         maybeAutoSaveOnBlur();
       });
 
       events_.addHandler(
@@ -1164,6 +1148,11 @@ public class TextEditingTarget implements
    public void ensureVisualModeActive(Command command)
    {
       visualMode_.activate(command);
+   }
+   
+   public void onVisualEditorBlur()
+   {
+      maybeAutoSaveOnBlur();
    }
    
    public void navigateToXRef(String xref)
@@ -2204,9 +2193,6 @@ public class TextEditingTarget implements
          {
             // Unlike the other status bar elements, the function outliner
             // needs its menu built on demand
-            JsArray<Scope> tree = docDisplay_.getScopeTree();
-            final StatusBarPopupMenu menu = new StatusBarPopupMenu();
-            MenuItem defaultItem = null;
             if (fileType_.isRpres())
             {
                String path = docUpdateSentinel_.getPath();
@@ -2226,9 +2212,15 @@ public class TextEditingTarget implements
                      });
                }
             }
+            else if (isVisualEditorActive())
+            {
+               showStatusBarPopupMenu(visualMode_.getStatusBarPopup());
+            }
             else
             {
-               defaultItem = addFunctionsToMenu(
+               final StatusBarPopupMenu menu = new StatusBarPopupMenu();
+               JsArray<Scope> tree = docDisplay_.getScopeTree();
+               MenuItem defaultItem = addFunctionsToMenu(
                   menu, tree, "", docDisplay_.getCurrentScope(), true);
 
                showStatusBarPopupMenu(new StatusBarPopupRequest(menu,
@@ -2363,7 +2355,7 @@ public class TextEditingTarget implements
    private void updateStatusBarLanguage()
    {
       statusBar_.getLanguage().setValue(fileType_.getLabel());
-      boolean canShowScope = fileType_.canShowScopeTree() && !isVisualModeActivated();
+      boolean canShowScope = fileType_.canShowScopeTree();
       statusBar_.setScopeVisible(canShowScope);
    }
 
@@ -2373,10 +2365,18 @@ public class TextEditingTarget implements
       statusBar_.getPosition().setValue((pos.getRow() + 1) + ":" +
                                         (pos.getColumn() + 1));
    }
+   
+   public void updateStatusBarLocation(String title, int type)
+   {
+      statusBar_.setScopeType(type);
+      statusBar_.getScope().setValue(title);
+   }
 
    private void updateCurrentScope()
    {
-      if (fileType_ == null || !fileType_.canShowScopeTree())
+      // don't sync scope if we can't show a scope tree or in visual mode (which
+      // is responsible for updating the scope visualization itself)
+      if (fileType_ == null || !fileType_.canShowScopeTree() || isVisualModeActivated())
          return;
 
       // special handing for presentations since we extract
@@ -2604,7 +2604,15 @@ public class TextEditingTarget implements
       {
          ensureTextEditorActive(() ->
          {
-            docDisplay_.replaceSelection(value);
+            if (docDisplay_.hasSelection())
+            {
+               docDisplay_.replaceSelection(value);
+            }
+            else
+            {
+               docDisplay_.insertCode(value);
+            }
+            
             callback.execute();
          });
       }
@@ -3218,6 +3226,26 @@ public class TextEditingTarget implements
       else
       {
          onComplete.execute();
+      }
+   }
+   
+   // When the editor loses focus, perform an autosave if enabled, the
+   // buffer is dirty, and we have a file to save to
+   private void maybeAutoSaveOnBlur() {
+      if (prefs_.autoSaveOnBlur().getValue() &&
+          dirtyState_.getValue() &&
+          getPath() != null &&
+          !docDisplay_.hasActiveCollabSession())
+      {
+         try
+         {
+            save();
+         }
+         catch(Exception e)
+         {
+            // Autosave exceptions are logged rather than displayed
+            Debug.logException(e);
+         }
       }
    }
 
@@ -4794,8 +4822,7 @@ public class TextEditingTarget implements
       final WordWrapCursorTracker wwct = new WordWrapCursorTracker(
                                                 cursorRowIndex, cursorColIndex);
 
-      int maxLineLength =
-                        prefs_.marginColumn().getValue() - prefix.length();
+      int maxLineLength = prefs_.marginColumn().getValue() - prefix.length();
 
       WordWrap wordWrap = new WordWrap(maxLineLength, false)
       {
@@ -6927,11 +6954,18 @@ public class TextEditingTarget implements
    @Handler
    void onFindFromSelection()
    {
-      withActiveEditor((disp) ->
-      {
-         view_.findFromSelection(disp.getSelectionValue());
-         disp.focus();
-      });
+      if (visualMode_.isActivated()) {
+         ensureVisualModeActive(() -> {
+            visualMode_.getFindReplace().findFromSelection(visualMode_.getSelectedText());
+         });
+      } else {
+         withActiveEditor((disp) ->
+         {
+            view_.findFromSelection(disp.getSelectionValue());
+            disp.focus();
+         });
+      }
+     
    }
 
    @Handler
@@ -8146,7 +8180,12 @@ public class TextEditingTarget implements
             if (activeEditor == null)
             {
                GetEditorContextEvent.SelectionData data =
-                     GetEditorContextEvent.SelectionData.create();
+                     GetEditorContextEvent.SelectionData.create(
+                           StringUtil.notNull(getId()),
+                           StringUtil.notNull(getPath()),
+                           "",
+                           JavaScriptObject.createArray().cast());
+
                server_.getEditorContextCompleted(data, new VoidServerRequestCallback());
                return;
             }

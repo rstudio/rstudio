@@ -312,7 +312,7 @@ protected:
       "Specifies the path to the rpostback executable.")
       ("external-consoleio-path",
       value<std::string>(&consoleIoPath_)->default_value("bin/consoleio.exe"),
-      "Specifies the path to the consoleio executable.")
+      "Specifies the path to the consoleio executable (Windows-only).")
       ("external-gnudiff-path",
       value<std::string>(&gnudiffPath_)->default_value("bin/gnudiff"),
       "Specifies the path to gnudiff utilities (Windows-only).")

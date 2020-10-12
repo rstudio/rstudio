@@ -23,6 +23,7 @@ import org.rstudio.core.client.XRef;
 import org.rstudio.core.client.container.SafeMap;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.common.icons.code.CodeIcons;
@@ -175,9 +176,9 @@ class CodeSearchSuggestion implements Suggestion
    
    public void setFileDisplayString(String file, String displayString)
    {
-      // compute display string
-      ImageResource image =
-            fileTypeRegistry_.getIconForFilename(file).getImageResource();
+      String fileName = FileSystemItem.createFile(file).getName();
+      FileIcon icon = fileTypeRegistry_.getIconForFilename(fileName);
+      ImageResource image = icon.getImageResource();
       
       displayString_ = createDisplayString(
             image, RES.styles().fileImage(),

@@ -85,7 +85,8 @@ void onProjectFilesChanged(const std::vector<core::system::FileChangeEvent>& eve
 
 
 Error computeScratchPaths(const FilePath& projectFile, 
-      FilePath* pScratchPath, FilePath* pSharedScratchPath)
+                          FilePath* pScratchPath,
+                          FilePath* pSharedScratchPath)
 {
    // ensure project user dir
    FilePath projectUserDir = projectFile.getParent().completePath(".Rproj.user");
@@ -397,12 +398,37 @@ SEXP rs_hasFileMonitor()
    return r::sexp::create(projectContext().hasFileMonitor(), &protect);
 }
 
+SEXP rs_computeScratchPaths(SEXP projectFileSEXP)
+{
+   std::string projectFile = r::sexp::asString(projectFileSEXP);
+   
+   FilePath scratchPath;
+   FilePath sharedScratchPath;
+   Error error = computeScratchPaths(
+            module_context::resolveAliasedPath(projectFile),
+            &scratchPath,
+            &sharedScratchPath);
+   
+   if (error)
+   {
+      LOG_ERROR(error);
+      return R_NilValue;
+   }
+   
+   r::sexp::Protect protect;
+   r::sexp::ListBuilder builder(&protect);
+   builder.add("scratch_path", scratchPath.getAbsolutePath());
+   builder.add("shared_scratch_path", sharedScratchPath.getAbsolutePath());
+   return r::sexp::create(builder, &protect);
+}
+
 Error ProjectContext::initialize()
 {
    using namespace module_context;
 
    RS_REGISTER_CALL_METHOD(rs_getProjectDirectory);
    RS_REGISTER_CALL_METHOD(rs_hasFileMonitor);
+   RS_REGISTER_CALL_METHOD(rs_computeScratchPaths);
 
    std::string projectId(kProjectNone);
 

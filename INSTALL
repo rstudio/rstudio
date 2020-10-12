@@ -22,7 +22,7 @@ within the following directories
 Please see the README file contained within the root of each platform's
 directory for specific instructions.
 
- 
+
 2) Configuring the Build Environment
 ----------------------------------------------------------------------------
 
@@ -37,7 +37,7 @@ b) Configure the build using cmake as appropriate, e.g.
 
    cmake .. -DRSTUDIO_TARGET=Server -DCMAKE_BUILD_TYPE=Release
    cmake .. -DRSTUDIO_TARGET=Desktop -DRSTUDIO_PACKAGE_BUILD=1
-   
+
    Variables that control configuration include:
 
    RSTUDIO_TARGET        Desktop or Server
@@ -49,23 +49,23 @@ b) Configure the build using cmake as appropriate, e.g.
    CMAKE_BUILD_TYPE      Debug, Release, RelMinSize, or RelWithDebInfo
 
    CMAKE_INSTALL_PREFIX  Defaults:
-                           Linux (Desktop):     /usr/local/lib/rstudio 
+                           Linux (Desktop):     /usr/local/lib/rstudio
                            Linux (Server):      /usr/local/lib/rstudio-server
                            macOS:               /Applications/RStudio
                            Windows:             C:\Program Files\RStudio
-           
-             
-c) There are additional considerations on Windows. First, RStudio Server 
-   is not supported on Windows so the configuration always defaults to 
-   Desktop. Second, you need to add an extra -G parameter to specify the 
+
+
+c) There are additional considerations on Windows. First, RStudio Server
+   is not supported on Windows so the configuration always defaults to
+   Desktop. Second, you need to add an extra -G parameter to specify the
    correct build toolchain, for example:
 
    cmake .. -G "Visual Studio 15 2017 Win64" -DCMAKE_BUILD_TYPE=Release
 
    To build on Windows:
-   
+
    cmake --build . --config Release
-   
+
 
 3) Building and Installing
 ----------------------------------------------------------------------------
@@ -83,7 +83,7 @@ b) Change to the build directory where you configured RStudio
 c) Run the "make install" command:
 
    Linux & macOS:  sudo make install        OR
-   Windows:        cmake --build . --config Release --target install 
+   Windows:        cmake --build . --config Release --target install
 
    NOTE: For RStudio Desktop on Linux, make install automatically creates
    an entry in the Applications -> Programming menu for RStudio.
@@ -99,19 +99,19 @@ d) If you are installing RStudio Server some additional configuration
 
 If you have installed RStudio Server from source there are a number of other
 steps (some required, some optional) you should take to complete your
-installation. Note that these steps are taken automatically by the DEB 
+installation. Note that these steps are taken automatically by the DEB
 and RPM pre-built binary distributions of RStudio Server.
 
 a) Create an rstudio-server system user account (RStudio will automatically
    run under this account if it is present). You can do this with:
 
    sudo useradd -r rstudio-server
- 
-   
-b) RStudio Server uses PAM to authenticate users. Some Unix systems (such 
+
+
+b) RStudio Server uses PAM to authenticate users. Some Unix systems (such
    as Debian and Ubuntu) use default PAM settings for applications which
    aren't explicitly registered with PAM, so don't require additional PAM
-   configuration. If however your system requires explicit registration 
+   configuration. If however your system requires explicit registration
    (i.e. Redhat, Fedora, openSUSE) then you need to add an
    /etc/pam.d/rstudio file to your configuration. You can find a default
    version of this file at:
@@ -121,7 +121,7 @@ b) RStudio Server uses PAM to authenticate users. Some Unix systems (such
          rstudio
 
 
-c) Register RStudio as a daemon using an init.d (for most systems) or 
+c) Register RStudio as a daemon using an init.d (for most systems) or
    systemd(for Ubuntu from 15.04, RHEL from 7) or upstart (for Ubuntu
    before 15.04) or launchd plist (for Mac OSX) script appropriate to your system.
    The rstudio/server/extras directory contains the following scripts:
@@ -153,15 +153,15 @@ c) Register RStudio as a daemon using an init.d (for most systems) or
 
 
 d) Create a soft link in /usr/sbin to the server administrative script
-  
+
    sudo ln -f -s /usr/local/lib/rstudio-server/bin/rstudio-server /usr/sbin/rstudio-server
 
    Assuming you have previously installed an init.d or upstart script (as
    described above) then you should now be able start the server with the
    following command:
-   
+
    sudo rstudio-server start
-  
+
    Additional commands include stop, restart, offline, online, and others
 
 e) Create /var directories required for RStudio to run. This can be done with:
