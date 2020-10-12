@@ -42,6 +42,10 @@ COMPONENTS=(
 	plugins/platforms
 	plugins/platformthemes
 	plugins/printsupport
+	plugins/wayland-decoration-client
+	plugins/wayland-graphics-integration-client
+	plugins/wayland-graphics-integration-server
+	plugins/wayland-shell-integration
 	plugins/xcbglintegrations
 
 	resources/icudtl.dat
