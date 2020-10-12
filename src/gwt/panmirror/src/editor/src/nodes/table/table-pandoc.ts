@@ -69,13 +69,13 @@ export function readPandocTable(schema: Schema) {
     const colpercents = columnPercents(tok);
 
     // helper function to parse a table row
-    const parseRow = (row: PandocToken, cellType: NodeType) => {
-      const cells: PandocToken[] = row.c[kTableRowCells];
+    const parseRow = (row: any[], cellType: NodeType) => {
+      const cells: any[] = row[kTableRowCells];
       if (cells.length) {
         writer.openNode(schema.nodes.table_row, {});
-        cells.forEach((cell: PandocToken, i) => {
+        cells.forEach((cell: any[], i) => {
           writer.openNode(cellType, { align: alignments[i] });
-          writer.writeTokens(cell.c[KTableCellContents]);
+          writer.writeTokens(cell[KTableCellContents]);
           writer.closeNode();
         });
         writer.closeNode();
@@ -89,15 +89,15 @@ export function readPandocTable(schema: Schema) {
     writer.openNode(schema.nodes.table, { colpercents });
 
     // parse column headers
-    const head = tok.c[kTableHead] as PandocToken;
-    const firstRow = head.c[kTableHeadRows][0];
-    if (firstRow && firstRow.c[kTableRowCells].some((cell: PandocToken) => cell.c[KTableCellContents].length > 0)) {
+    const head = tok.c[kTableHead] as any[];
+    const firstRow = head[kTableHeadRows][0];
+    if (firstRow && firstRow[kTableRowCells].some((cell: any[]) => cell[KTableCellContents].length > 0)) {
       parseRow(firstRow, schema.nodes.table_header);
     }
 
     // parse table rows
-    const body = tok.c[kTableBody][0] as PandocToken;
-    body.c[kTableBodyRows].forEach((row: PandocToken) => {
+    const body = tok.c[kTableBody][0] as any[];
+    body[kTableBodyRows].forEach((row: any[]) => {
       parseRow(row, schema.nodes.table_cell);
     });
 
