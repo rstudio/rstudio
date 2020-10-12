@@ -74,12 +74,6 @@ std::string pandocPath()
    return pandocBinary("pandoc");
 }
 
-std::string pandocCiteprocPath()
-{
-   return pandocBinary("pandoc-citeproc");
-}
-
-
 Error runPandoc(const std::vector<std::string>& args, const std::string& input, core::system::ProcessResult* pResult)
 {
    return core::system::runProgram(
@@ -98,22 +92,6 @@ Error runPandocAsync(const std::vector<std::string>& args,
    return runAsync(pandocPath(), args, input, onCompleted);
 }
 
-Error runPandocCiteproc(const std::vector<std::string>& args, core::system::ProcessResult* pResult)
-{
-   return core::system::runProgram(
-      pandocCiteprocPath(),
-      args,
-      "",
-      pandocOptions(),
-      pResult
-   );
-}
-
-Error runPandocCiteprocAsync(const std::vector<std::string>& args,
-                             const boost::function<void(const core::system::ProcessResult&)>& onCompleted)
-{
-   return runAsync(pandocCiteprocPath(), args, "", onCompleted);
-}
 
 } // end namespace module_context
 } // end namespace session
