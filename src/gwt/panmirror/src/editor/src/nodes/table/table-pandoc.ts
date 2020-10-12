@@ -105,7 +105,7 @@ export function readPandocTable(schema: Schema) {
     writer.closeNode();
 
     // read caption
-    const caption = tok.c[kTableCaption].c[kTableCaptionFull];
+    const caption = tok.c[kTableCaption][kTableCaptionFull];
     const captionBlock: PandocToken[] = caption.length ? caption[0].c : [];
     writer.openNode(schema.nodes.table_caption, { inactive: captionBlock.length === 0 });
     writer.writeTokens(captionBlock);
@@ -158,7 +158,7 @@ export function writePandocTable(output: PandocOutput, node: ProsemirrorNode) {
 
   // write header row if necessary
   const headerCut = firstRow.firstChild!.type === node.type.schema.nodes.table_header ? 1 : 0;
-  output.writeToken(PandocTokenType.TableHead, () => {
+  output.writeArray(() => {
     output.writeAttr();
     output.writeArray(() => {
       writePandocTableRow(output, firstRow, headerCut === 0);
@@ -167,9 +167,9 @@ export function writePandocTable(output: PandocOutput, node: ProsemirrorNode) {
 
   // write table body
   output.writeArray(() => {
-    output.writeToken(PandocTokenType.TableBody, () => {
+    output.writeArray(() => {
       output.writeAttr();
-      output.writeToken(PandocTokenType.RowHeadColumns, 0);
+      output.write(0);
       output.writeArray(() => { /* */ });
       // write rows
       output.writeArray(() => {
@@ -181,7 +181,7 @@ export function writePandocTable(output: PandocOutput, node: ProsemirrorNode) {
   });
 
   // write table footer
-  output.writeToken(PandocTokenType.TableFoot, () => {
+  output.writeArray(() => {
     output.writeAttr();
     output.writeArray(() => { /* */ });
   });
@@ -190,7 +190,7 @@ export function writePandocTable(output: PandocOutput, node: ProsemirrorNode) {
 }
 
 export function writePandocTableCaption(output: PandocOutput, node: ProsemirrorNode) {
-  output.writeToken(PandocTokenType.Caption, () => {
+  output.writeArray(() => {
     output.write(null);
     output.writeArray(() => {
       if (!node.attrs.inactive && node.childCount > 0) {
@@ -223,15 +223,15 @@ export function writePandocTableHeaderNodes(output: PandocOutput, node: Prosemir
 }
 
 function writePandocTableRow(output: PandocOutput, node: ProsemirrorNode, empty = false) {
-  output.writeToken(PandocTokenType.Row, () => {
+  output.writeArray(() => {
     output.writeAttr();
     output.writeArray(() => {
       node.forEach((cellNode) => {
-        output.writeToken(PandocTokenType.Cell, () => {
+        output.writeArray(() => {
           output.writeAttr();
           output.writeToken(PandocTokenType.AlignDefault);
-          output.writeToken(PandocTokenType.RowSpan, 1);
-          output.writeToken(PandocTokenType.ColSpan, 1);
+          output.write(1);
+          output.write(1);
           if (!empty) {
             output.writeNode(cellNode);
           } else {
