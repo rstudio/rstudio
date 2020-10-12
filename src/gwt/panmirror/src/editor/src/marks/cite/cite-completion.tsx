@@ -120,6 +120,11 @@ function filterCitations(token: string, manager: BibliographyManager, entries: B
     return entries;
   }
 
+  // Filter an exact match - if its exact, skip completion
+  if (manager.allSources().find(source => source.id === token)) {
+    return [];
+  }
+
   const search = (str: string) => {
     const results = uniqby(manager.searchAllSources(str, kMaxCitationCompletions), source => source.id).map(entry =>
       entryForSource(entry, ui),
