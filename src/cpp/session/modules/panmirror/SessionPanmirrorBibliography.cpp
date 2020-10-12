@@ -694,9 +694,9 @@ Error appendToJSONBibliography(const FilePath& bibliographyFile, const std::stri
    if (biblioJson.getSize() > 0)
    {
       json::Object entryJson;
-      entryJson["id"] = id;
       for (json::Object::Member member : biblioJson[0].getObject())
          entryJson[member.getName()] = member.getValue();
+      entryJson["id"] = id;
       biblioJson[0] = entryJson;
    }
 
