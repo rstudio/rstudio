@@ -68,6 +68,7 @@ import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
+import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindInFilesEvent;
@@ -242,6 +243,25 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          }
       });
 
+      userPrefs.allowSourceColumns().addValueChangeHandler(event ->
+      {
+         boolean enabled = userPrefs.allowSourceColumns().getValue();
+         commands_.focusSourceColumnSeparator().setEnabled(enabled);
+         commands_.focusSourceColumnSeparator().setVisible(enabled);
+
+         // The visibility of the following commands is in part determined by if we've reached 
+         // the max number of source columns allowed. PaneManager helps manage these commands so
+         // when modifying this code, update the change handler there as well.
+         boolean visible = enabled && columnList_.size() <= PaneManager.MAX_COLUMN_COUNT + 1;
+
+         commands_.newSourceColumn().setEnabled(enabled);
+         commands_.newSourceColumn().setVisible(visible);
+           
+         commands_.openSourceDocNewColumn().setEnabled(enabled);
+         commands_.openSourceDocNewColumn().setVisible(visible);
+         
+      });
+
       sourceNavigationHistory_.addChangeHandler(event -> manageSourceNavigationCommands());
 
       SourceColumn column = GWT.create(SourceColumn.class);
@@ -328,17 +348,12 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       return add(display, false);
    }
 
-   public ColumnName add(Source.Display display)
-   {
-      return add(display, false);
-   }
-
    public ColumnName add(String name, boolean updateState)
    {
       return add(name, false, updateState);
    }
 
-   public ColumnName add (String name, boolean activate, boolean updateState)
+   public ColumnName add(String name, boolean activate, boolean updateState)
    {
       Source.Display display = GWT.create(SourcePane.class);
       return add(name, computeAccessibleName(), display, activate, updateState);
@@ -516,9 +531,9 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    public SourceColumn getActive()
    {
       if (activeColumn_ != null &&
-         (!columnList_.get(0).asWidget().isAttached() ||
-          activeColumn_.asWidget().isAttached() &&
-          activeColumn_.asWidget().getOffsetWidth() > 0))
+         (columnList_.get(0).asWidget().getOffsetWidth() == 0 ||
+          (activeColumn_.asWidget().isAttached() &&
+           activeColumn_.asWidget().getOffsetWidth() > 0)))
          return activeColumn_;
       setActive(MAIN_SOURCE_NAME);
 
