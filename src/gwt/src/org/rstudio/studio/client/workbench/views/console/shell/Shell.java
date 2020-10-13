@@ -36,7 +36,9 @@ import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
+import org.rstudio.studio.client.application.events.DeferredInitCompletedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.CommandLineHistory;
 import org.rstudio.studio.client.common.debugging.ErrorManager;
 import org.rstudio.studio.client.common.debugging.events.UnhandledErrorEvent;
@@ -48,6 +50,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.ConsoleEditorProvider;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.ClientInitState;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.ConsoleAction;
@@ -88,7 +91,9 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
                               DebugModeChangedEvent.Handler,
                               RunCommandWithDebugEvent.Handler,
                               UnhandledErrorEvent.Handler,
-                              SuppressNextShellFocusEvent.Handler
+                              SuppressNextShellFocusEvent.Handler,
+                              RestartStatusEvent.Handler
+                              
 {
    static interface Binder extends CommandBinder<Commands, Shell>
    {
@@ -120,6 +125,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
 
       server_ = server;
       eventBus_ = eventBus;
+      session_ = session;
       ariaLive_ = ariaLive;
       view_ = display;
       commands_ = commands;
@@ -174,6 +180,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       eventBus.addHandler(RunCommandWithDebugEvent.TYPE, this);
       eventBus.addHandler(UnhandledErrorEvent.TYPE, this);
       eventBus.addHandler(SuppressNextShellFocusEvent.TYPE, this);
+      eventBus.addHandler(RestartStatusEvent.TYPE, this);
 
       final CompletionManager completionManager
                   = new RCompletionManager(view_.getInputEditorDisplay(),
@@ -723,6 +730,17 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    {
       restoreFocus_ = false;
    }
+   
+   @Override
+   public void onRestartStatus(RestartStatusEvent event)
+   {
+      if (event.getStatus() == RestartStatusEvent.RESTART_COMPLETED)
+      {
+         SessionInfo info = session_.getSessionInfo();
+         String prompt = info.getPrompt();
+         consolePrompt(prompt, false);
+      }
+   }
 
    private boolean isBrowsePrompt()
    {
@@ -800,6 +818,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
 
    private final ConsoleServerOperations server_;
    private final EventBus eventBus_;
+   private final Session session_;
    private final AriaLiveService ariaLive_;
    private final Display view_;
    private final Commands commands_;
