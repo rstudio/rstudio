@@ -1837,24 +1837,29 @@ html.heading = _heading
    sys <- reticulate::import("sys", convert = TRUE)
    frame <- sys$`_getframe`(1L)
    names <- frame$f_code$co_names
-   
-   # create dummy environment for this object
-   name <- names[[2L]]
-   envir <- new.env(parent = emptyenv())
-   assign(name, object, envir = envir)
+   name <- names[[length(names)]]
    
    # convert Pandas DataFrames to R data.frames for now
    # (consider adapting data viewer to arbitrary tabular data in future?)
    if (inherits(object, "pandas.core.frame.DataFrame"))
    {
+      # create object
       object <- reticulate::py_to_r(object)
-      View(object)
+      
+      # assign as 'name', then view that
+      assign(name, object, envir = environment())
+      eval(call("View", as.name(name)), envir = environment())
    }
    else
    {
+      # create dummy environment for this object
+      envir <- new.env(parent = emptyenv())
+      assign(name, object, envir = envir)
+      
+      # view object
       .rs.explorer.viewObject(
          object = object,
-         title  = names[[2L]],
+         title  = name,
          envir  = envir
       )
    }
