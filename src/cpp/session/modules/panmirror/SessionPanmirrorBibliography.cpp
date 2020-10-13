@@ -376,11 +376,13 @@ void refBlockToJsonCompleted(bool isProjectFile,
             std::vector<std::string> args;
             for (auto biblioFile : biblioFiles)
                args.push_back(string_utils::utf8ToSystem(biblioFile.absolutePath()));
-            args.push_back("--bib2json");
+            args.push_back("--standalone");
+            args.push_back("--to");
+            args.push_back("csljson");
 
-            // run pandoc-citeproc
-            Error error = module_context::runPandocCiteprocAsync(
-               args, boost::bind(getBibliographyCompleted, isProjectFile, biblioFiles, refBlock, jsonCitations, cont, _1)
+            // run pandoc
+            Error error = module_context::runPandocAsync(
+               args, "", boost::bind(getBibliographyCompleted, isProjectFile, biblioFiles, refBlock, jsonCitations, cont, _1)
             );
             // if error call continuation with it
             if (error)
@@ -503,11 +505,15 @@ void pandocGetBibliography(const json::JsonRpcRequest& request,
          LOG_ERROR(error);
       std::vector<std::string> args;
       args.push_back(string_utils::utf8ToSystem(tempYaml.getAbsolutePath()));
-      args.push_back("--bib2json");
+      args.push_back("--from");
+      args.push_back("markdown");
+      args.push_back("--standalone");
+      args.push_back("--to");
+      args.push_back("csljson");
 
       // run pandoc-citeproc
-      error = module_context::runPandocCiteprocAsync(
-         args, boost::bind(refBlockToJsonCompleted, isProjectFile, biblioFiles, refBlock, cont, _1)
+      error = module_context::runPandocAsync(
+         args, "", boost::bind(refBlockToJsonCompleted, isProjectFile, biblioFiles, refBlock, cont, _1)
       );
    }
    else if (biblioFiles.size() > 0)
@@ -519,11 +525,13 @@ void pandocGetBibliography(const json::JsonRpcRequest& request,
          if (FilePath::exists(biblioFile.absolutePath()))
             args.push_back(string_utils::utf8ToSystem(biblioFile.absolutePath()));
       }
-      args.push_back("--bib2json");
+      args.push_back("--standalone");
+      args.push_back("--to");
+      args.push_back("csljson");
 
-      // run pandoc-citeproc
-      error = module_context::runPandocCiteprocAsync(
-         args, boost::bind(getBibliographyCompleted, isProjectFile, biblioFiles, refBlock, json::Array(), cont, _1)
+      // run pandoc
+      error = module_context::runPandocAsync(
+         args, "", boost::bind(getBibliographyCompleted, isProjectFile, biblioFiles, refBlock, json::Array(), cont, _1)
       );
    }
    else
@@ -533,7 +541,7 @@ void pandocGetBibliography(const json::JsonRpcRequest& request,
       cont(Success(), &response);
    }
 
-   // error launching citeproc results in error response
+   // error launching pandoc results in error response
    if (error)
    {
       json::setErrorResponse(error, &response);
@@ -541,9 +549,9 @@ void pandocGetBibliography(const json::JsonRpcRequest& request,
    }
 }
 
-Error pandocCiteprocGenerateBibliography(const std::string& biblioJson,
-                                         const std::string& formatArg,
-                                         std::string* pBiblio)
+Error pandocGenerateBibliography(const std::string& biblioJson,
+                                 const std::vector<std::string>& formatArgs,
+                                 std::string* pBiblio)
 {
    // write the json to a temp file
    FilePath jsonBiblioPath = module_context::tempFile("biblio", "json");
@@ -551,12 +559,14 @@ Error pandocCiteprocGenerateBibliography(const std::string& biblioJson,
    if (error)
       return error;
 
-   // run citeproc
+   // run pandoc
    std::vector<std::string> args;
    args.push_back(string_utils::utf8ToSystem(jsonBiblioPath.getAbsolutePath()));
-   args.push_back(formatArg);
+   args.push_back("--from");
+   args.push_back("csljson");
+   std::copy(formatArgs.begin(), formatArgs.end(), std::back_inserter(args));
    core::system::ProcessResult result;
-   error = module_context::runPandocCiteproc(args, &result);
+   error = module_context::runPandoc(args, "", &result);
    if (error)
    {
       LOG_ERROR(error);
@@ -606,8 +616,7 @@ Error pandocGenerateBibliography(const std::string& biblioJson,
    std::vector<std::string> args;
    args.push_back("--from");
    args.push_back("markdown");
-   args.push_back("--filter");
-   args.push_back(module_context::pandocCiteprocPath());
+   args.push_back("--citeproc");
    std::copy(extraArgs.begin(), extraArgs.end(), std::back_inserter(args));
 
    core::system::ProcessResult result;
@@ -634,7 +643,7 @@ Error pandocGenerateBibliography(const std::string& biblioJson,
 
 std::string stripYAMLEnvelope(const std::string& yaml)
 {
-   boost::regex regex("^---\\s*\nreferences:([\\S\\s]+)(\\.\\.\\.|---)\\s*$");
+   boost::regex regex("^---.*?\nreferences:([\\S\\s]+)(\\.\\.\\.|---)\\s*$");
    boost::smatch match;
    if (boost::regex_search(yaml, match, regex))
    {
@@ -694,9 +703,9 @@ Error appendToJSONBibliography(const FilePath& bibliographyFile, const std::stri
    if (biblioJson.getSize() > 0)
    {
       json::Object entryJson;
-      entryJson["id"] = id;
       for (json::Object::Member member : biblioJson[0].getObject())
          entryJson[member.getName()] = member.getValue();
+      entryJson["id"] = id;
       biblioJson[0] = entryJson;
    }
 
@@ -733,9 +742,15 @@ Error pandocAddToBibliography(const json::JsonRpcRequest& request, json::JsonRpc
    bool isJSON = bibliographyPath.getExtensionLowerCase() == ".json";
    if (isYAML || isJSON)
    {
-      std::string formatArg = isYAML ? "--bib2yaml" : "--bib2json";
+      std::vector<std::string> formatArgs;
+      formatArgs.push_back("--standalone");
+      formatArgs.push_back("--to");
+      if (isYAML)
+         formatArgs.push_back("markdown");
+      else
+        formatArgs.push_back("csljson");
       std::string biblio;
-      Error error = pandocCiteprocGenerateBibliography(sourceAsJson, formatArg, &biblio);
+      Error error = pandocGenerateBibliography(sourceAsJson, formatArgs, &biblio);
       if (error)
          return error;
 
@@ -852,8 +867,10 @@ void updateProjectBibliography()
       if (FilePath::exists(biblioFile.absolutePath()))
          args.push_back(string_utils::utf8ToSystem(biblioFile.absolutePath()));
    }
-   args.push_back("--bib2json");
-   Error error = module_context::runPandocCiteprocAsync(args, boost::bind(indexProjectCompleted, biblioFiles, _1));
+   args.push_back("--standalone");
+   args.push_back("--to");
+   args.push_back("csljson");
+   Error error = module_context::runPandocAsync(args, "", boost::bind(indexProjectCompleted, biblioFiles, _1));
    if (error)
       LOG_ERROR(error);
 }

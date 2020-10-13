@@ -66,6 +66,12 @@ public interface PanmirrorToolbarResources extends ClientBundle
    @Source("italic_dm_2x.png")
    ImageResource italic_dm();
    
+   @Source("underline_2x.png")
+   ImageResource underline();
+   
+   @Source("underline_dm_2x.png")
+   ImageResource underline_dm();
+   
    @Source("omni_2x.png")
    ImageResource omni();
    
