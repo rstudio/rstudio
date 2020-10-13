@@ -170,28 +170,59 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 })
 
 # save current state of options() to file
-.rs.addFunction( "saveOptions", function(filename)
+.rs.addFunction("saveOptions", function(filename)
 {
-   opt = options();
-   suppressWarnings(save(opt, file=filename))
+   # get reference to current options
+   opt <- options()
+   
+   # don't attempt to serialize cpp11 preserve env as it may
+   # contain recursive R objects which cause crashes when serialized
+   #
+   # https://github.com/rstudio/rstudio-pro/issues/2052
+   opt$cpp11_preserve_env <- NULL
+   
+   # first write to sidecar file, and then rename that file
+   # (don't let failed serialization leave behind broken workspace)
+   sidecarFile <- paste(filename, "incomplete", sep = ".")
+   
+   # remove an old sidecar file if any -- these would be leftover from
+   # a previously-failed attempt to save the session
+   unlink(sidecarFile)
+   
+   status <- tryCatch(
+      suppressWarnings(save(opt, file = sidecarFile)),
+      error = identity
+   )
+
+   # if we manage to catch the error (might not be possible for stack overflow)
+   # then clean up the sidecar file and re-propagate the error (caller will take
+   # care of reporting further errors to user)
+   if (inherits(status, "error"))
+   {
+      unlink(sidecarFile)
+      stop(status)
+   }
+
+   # save completed successfully -- rename sidecar file to final location
+   file.rename(sidecarFile, filename)
 })
 
 # restore options() from file
-.rs.addFunction( "restoreOptions", function(filename)
+.rs.addFunction("restoreOptions", function(filename)
 {
    load(filename)
    options(opt)
 })
 
 # save current state of .libPaths() to file
-.rs.addFunction( "saveLibPaths", function(filename)
+.rs.addFunction("saveLibPaths", function(filename)
 {
-  libPaths = .libPaths();
-  save(libPaths, file=filename)
+  libPaths <- .libPaths()
+  save(libPaths, file = filename)
 })
 
 # restore .libPaths() from file
-.rs.addFunction( "restoreLibPaths", function(filename)
+.rs.addFunction("restoreLibPaths", function(filename)
 {
   load(filename)
   .libPaths(libPaths)
