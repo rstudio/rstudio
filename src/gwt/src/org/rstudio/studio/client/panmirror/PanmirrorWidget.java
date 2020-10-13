@@ -240,6 +240,11 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       events_ = events;
    }
    
+   public boolean isEditorAttached()
+   {
+      return super.isAttached() && editor_ != null;
+   }
+   
    private void attachEditor(PanmirrorEditor editor)
    {
       editor_ = editor;
