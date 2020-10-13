@@ -108,6 +108,7 @@ function detectAndCreateShortcodes(schema: Schema, tr: MarkTransaction, pos: num
     kShortcodeRegEx,
     schema.marks.shortcode,
     () => ({}),
+    () => true,
     match => match[1],
   );
 }
