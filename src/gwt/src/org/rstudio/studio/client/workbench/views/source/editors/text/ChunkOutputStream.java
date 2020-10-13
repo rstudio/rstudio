@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.google.gwt.user.client.Timer;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DomUtils;
@@ -447,15 +448,27 @@ public class ChunkOutputStream extends FlowPanel
          public void execute()
          {
             DomUtils.fillIFrame(frame.getIFrame(), htmlOutput);
+            
             int contentHeight = frame.getWindow().getDocument().getDocumentElement().getOffsetHeight();
             frame.getElement().getStyle().setHeight(contentHeight, Unit.PX);
             frame.getElement().getStyle().setWidth(100, Unit.PCT);
             onHeightChanged();
 
             Command handler = () -> {
-               int newHeight = frame.getWindow().getDocument().getDocumentElement().getOffsetHeight();
-               frame.getElement().getStyle().setHeight(newHeight, Unit.PX);
-               onHeightChanged();
+               // reset height so we can shrink it if necessary
+               frame.getElement().getStyle().setHeight(0, Unit.PX);
+  
+               // delay calculating the height so any images can load
+               new Timer()
+               {
+                  @Override
+                  public void run()
+                  {
+                     int newHeight = frame.getWindow().getDocument().getDocumentElement().getOffsetHeight();
+                     frame.getElement().getStyle().setHeight(newHeight, Unit.PX);
+                     onHeightChanged();
+                  }
+               }.schedule(50);
             };
             
             MutationObserver.Builder builder = new MutationObserver.Builder(handler);
