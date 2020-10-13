@@ -87,7 +87,7 @@ public class VisualModeNavigation
    public SourcePosition getSourcePosition()
    {
       PanmirrorWidget panmirror = context_.panmirror();
-      if (panmirror != null && panmirror.isAttached())
+      if (panmirror != null && panmirror.isEditorAttached())
       {
          PanmirrorEditingLocation editingLocation = panmirror.getEditingLocation();
          return createSourcePosition(editingLocation.pos);

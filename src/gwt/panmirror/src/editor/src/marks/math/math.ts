@@ -33,6 +33,7 @@ import { MathPopupPlugin } from './math-popup';
 import { mathViewPlugins } from './math-view';
 
 import './math-styles.css';
+import { kPasteTransaction } from '../../api/transaction';
 
 const kInlineMathPattern = '\\$[^ ].*?[^\\ ]?\\$';
 const kInlineMathRegex = new RegExp(kInlineMathPattern);
@@ -276,7 +277,7 @@ function handlePasteIntoMath() {
     const schema = view.state.schema;
     if (markIsActive(view.state, schema.marks.math)) {
       const tr = view.state.tr;
-      tr.setMeta('paste', true);
+      tr.setMeta(kPasteTransaction, true);
       tr.setMeta('uiEvent', 'paste');
       let math = '';
       slice.content.forEach((node: ProsemirrorNode) => (math = math + node.textContent));
