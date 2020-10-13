@@ -50,10 +50,12 @@ git checkout $PACKAGE_VERSION
 # append GitHub fields to DESCRIPTION
 PACKAGE_SHA1=`git rev-parse $PACKAGE_VERSION`
 cat <<EOF >> DESCRIPTION
-GithubRepo: $PACKAGE
-GithubUsername: rstudio
-GithubRef: $PACKAGE_VERSION
-GithubSHA1: $PACKAGE_SHA1
+RemoteType: github
+RemoteHost: api.github.com
+RemoteRepo: $PACKAGE
+RemoteUsername: rstudio
+RemoteRef: $PACKAGE_VERSION
+RemoteSha: $PACKAGE_SHA1
 Origin: RStudioIDE
 EOF
 

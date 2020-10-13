@@ -45,10 +45,12 @@ REM append GitHub fields to DESCRIPTION
 git rev-parse "%PACKAGE_VERSION%" > PACKAGE_SHA1
 set /p PACKAGE_SHA1= < PACKAGE_SHA1
 del PACKAGE_SHA1
-echo GithubRepo: %PACKAGE% >> DESCRIPTION
-echo GithubUsername: rstudio >> DESCRIPTION
-echo GithubRef: %PACKAGE_VERSION% >> DESCRIPTION
-echo GithubSHA1: %PACKAGE_SHA1% >> DESCRIPTION
+echo RemoteType: github >> DESCRIPTION
+echo RemoteHost: api.github.com >> DESCRIPTION
+echo RemoteRepo: %PACKAGE% >> DESCRIPTION
+echo RemoteUsername: rstudio >> DESCRIPTION
+echo RemoteRef: %PACKAGE_VERSION% >> DESCRIPTION
+echo RemoteSha: %PACKAGE_SHA1% >> DESCRIPTION
 echo Origin: RStudioIDE >> DESCRIPTION
 
 REM create source package
