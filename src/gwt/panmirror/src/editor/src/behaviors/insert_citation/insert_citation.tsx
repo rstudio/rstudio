@@ -540,9 +540,18 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
   };
 
   const onTagChanged = (key: string, text: string) => {
+    // Edit any matching entries in the citation basket
     const targetSource = insertCitationPanelState.citationsToAdd.find(source => source.id === key);
     if (targetSource) {
       targetSource.id = text;
+    }
+
+    // Edit the currently selected item
+    if (insertCitationPanelState.selectedIndex > -1) {
+      const currentlySelectedCitation = insertCitationPanelState.citations[insertCitationPanelState.selectedIndex];
+      if (currentlySelectedCitation && currentlySelectedCitation.id === key) {
+        currentlySelectedCitation.id = text;
+      }
     }
   };
 
@@ -620,6 +629,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
           onTagValidate={onTagValidate}
           ui={props.ui}
           placeholder={props.ui.context.translateText('Selected Citation Keys')}
+          maxDisplayCharacters={50}
         />
       </div>
       <div className="pm-cite-panel-insert-inputs">
