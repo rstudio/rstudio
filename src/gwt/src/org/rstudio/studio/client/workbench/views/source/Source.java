@@ -1667,6 +1667,11 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onOpenSourceDoc()
    {
+      openSourceDoc(null, null);
+   }
+   
+   public void openSourceDoc(Command onCancelled, Command onCompleted)
+   {
       fileDialogs_.openFile(
             "Open File",
             fileContext_,
@@ -1677,7 +1682,11 @@ public class Source implements InsertSourceHandler,
                                    ProgressIndicator indicator)
                {
                   if (input == null)
+                  {
+                     if (onCancelled != null)
+                        onCancelled.execute();
                      return;
+                  }
 
                   workbenchContext_.setDefaultFileDialogDir(
                                                    input.getParentPath());
@@ -1688,6 +1697,8 @@ public class Source implements InsertSourceHandler,
                      public void execute()
                      {
                         fileTypeRegistry_.openFile(input);
+                        if (onCompleted != null)
+                           onCompleted.execute();
                      }
                   });
                }

@@ -52,6 +52,7 @@ public abstract class
    public abstract AppCommand newSqlDoc();
    public abstract AppCommand newRPlumberDoc();
    public abstract AppCommand openSourceDoc();
+   public abstract AppCommand openSourceDocNewColumn();
    public abstract AppCommand reopenSourceDocWithEncoding();
    public abstract AppCommand saveSourceDoc();
    public abstract AppCommand saveSourceDocAs();

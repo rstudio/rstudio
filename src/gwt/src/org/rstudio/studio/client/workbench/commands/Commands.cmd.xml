@@ -76,6 +76,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="newProject"/>
          <separator/>
          <cmd refid="openSourceDoc"/>
+         <cmd refid="openSourceDocNewColumn"/>
          <cmd refid="reopenSourceDocWithEncoding"/>
          <menu label="_Recent Files">
             <cmd refid="mru0"/>
@@ -1109,6 +1110,12 @@ well as menu structures (for main menu and popup menus).
         buttonLabel=""
         desc="Open an existing file"/>
 
+   <cmd id="openSourceDocNewColumn"
+        label="Open File in New Column..."
+        menuLabel="Open File in New C_olumn..."
+        buttonLabel=""
+        desc="Open an existing file in a new column"/>
+   
    <cmd id="reopenSourceDocWithEncoding"
         label="Reopen Current Document with Encoding..."
         menuLabel="Reopen with _Encoding..."
