@@ -42,6 +42,7 @@ import { doiFromSlice } from './cite-doi';
 import { citePopupPlugin } from './cite-popup';
 import { InsertCitationCommand } from './cite-commands';
 import { setTextSelection } from 'prosemirror-utils';
+import { AddMarkStep } from 'prosemirror-transform';
 
 const kCiteCitationsIndex = 0;
 
@@ -236,14 +237,10 @@ const extension = (context: ExtensionContext): Extension | null => {
                   } else {
                     output.writeInlines(parent);
                   }
-
                 } else {
                   output.writeInlines(parent);
                 }
-
               }
-
-
             },
           },
         },
@@ -281,10 +278,25 @@ const extension = (context: ExtensionContext): Extension | null => {
       return [
         {
           // 'break' cite marks if they are no longer valid. note that this will still preserve
-          // the mark up to the length that it is valid
+          // the mark up to the length that it is valid. 
           name: 'cite-marks',
-          filter: (node: ProsemirrorNode) => 
-             node.isTextblock && node.type.allowsMarkType(schema.marks.cite),
+          filter: (node: ProsemirrorNode, transactions: Transaction[]) =>  {
+
+            // if the transaction added any cite id marks then we need to lay off
+            // (mostly so that input rules can be reversed)
+            if (transactions.some(trans => trans.steps.some(step => {
+              if (step instanceof AddMarkStep) {
+                return (step as any).mark.type === schema.marks.cite_id;
+              }
+            }))) {
+              return false;
+
+            /// otherwise proceed if this node is a textblock that allows cites
+            } else {
+          
+              return node.isTextblock && node.type.allowsMarkType(schema.marks.cite);
+            }
+          },
           append: (tr: MarkTransaction, node: ProsemirrorNode, pos: number) => {
             splitInvalidatedMarks(tr, node, pos, citeLength, schema.marks.cite, (from: number, to: number) => {
               tr.removeMark(from, to, schema.marks.cite);
