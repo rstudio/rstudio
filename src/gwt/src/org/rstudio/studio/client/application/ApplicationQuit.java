@@ -514,7 +514,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
       if (suspendingAndRestarting_) return;
       
       // set restart pending for desktop
-      setPendinqQuit(DesktopFrame.PENDING_QUIT_AND_RESTART);
+      setPendingQuit(DesktopFrame.PENDING_QUIT_AND_RESTART);
       
       final TimedProgressIndicator progress = new TimedProgressIndicator(
             globalDisplay_.getProgressIndicator("Error"));
@@ -536,11 +536,11 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
             onRestartComplete.execute();
          }, () -> { // failure
             onRestartComplete.execute();
-            setPendinqQuit(DesktopFrame.PENDING_QUIT_NONE);
+            setPendingQuit(DesktopFrame.PENDING_QUIT_NONE);
          });
    }
    
-   private void setPendinqQuit(int pendingQuit)
+   private void setPendingQuit(int pendingQuit)
    {
       if (Desktop.hasDesktopFrame())
          Desktop.getFrame().setPendingQuit(pendingQuit);

@@ -659,51 +659,55 @@ FilePath defaultProfileDir()
    // read the lines
    FilePath profilesDir = zoteroProfilesDir();
    FilePath profileIni = profilesDir.getParent().completeChildPath("profiles.ini");
-   std::vector<std::string> lines;
-   Error error = core::readStringVectorFromFile(profileIni, &lines);
-   if (error)
+   if (profileIni.exists())
    {
-      LOG_ERROR(error);
-      return FilePath();
-   }
 
-   // find the default profile
-   boost::regex regex("^\\[.*?\\]$");
-   boost::regex valueRegex("^(.*)=(.*)$");
-   std::string sectionPath;
-   bool sectionPathIsRelative = false;
-   bool sectionIsDefault = false;
-   for (auto line : lines)
-   {
-      boost::smatch match;
-      if (boost::regex_search(line, match, regex))
-      {
-         sectionPath = "";
-         sectionPathIsRelative = false;
-         sectionIsDefault = false;
-      }
-      else if (boost::regex_search(line, match, valueRegex))
-      {
-         std::string key = string_utils::toLower(boost::algorithm::trim_copy(std::string(match[1])));
-         std::string value = boost::algorithm::trim_copy(std::string(match[2]));
-         if (key == "path")
-            sectionPath = value;
-         else if (key == "isrelative")
-            sectionPathIsRelative = value == "1";
-         else if (key == "default")
-            sectionIsDefault = value == "1";
-      }
+       std::vector<std::string> lines;
+       Error error = core::readStringVectorFromFile(profileIni, &lines);
+       if (error)
+       {
+          LOG_ERROR(error);
+          return FilePath();
+       }
 
-      if (sectionIsDefault && !sectionPath.empty())
-      {
-         if (sectionPathIsRelative)
-            return profilesDir.getParent().completeChildPath(sectionPath);
-         else
-            return FilePath(sectionPath);
-      }
-   }
+       // find the default profile
+       boost::regex regex("^\\[.*?\\]$");
+       boost::regex valueRegex("^(.*)=(.*)$");
+       std::string sectionPath;
+       bool sectionPathIsRelative = false;
+       bool sectionIsDefault = false;
+       for (auto line : lines)
+       {
+          boost::smatch match;
+          if (boost::regex_search(line, match, regex))
+          {
+             sectionPath = "";
+             sectionPathIsRelative = false;
+             sectionIsDefault = false;
+          }
+          else if (boost::regex_search(line, match, valueRegex))
+          {
+             std::string key = string_utils::toLower(boost::algorithm::trim_copy(std::string(match[1])));
+             std::string value = boost::algorithm::trim_copy(std::string(match[2]));
+             if (key == "path")
+                sectionPath = value;
+             else if (key == "isrelative")
+                sectionPathIsRelative = value == "1";
+             else if (key == "default")
+                sectionIsDefault = value == "1";
+          }
 
-   return FilePath();
+          if (sectionIsDefault && !sectionPath.empty())
+          {
+             if (sectionPathIsRelative)
+                return profilesDir.getParent().completeChildPath(sectionPath);
+             else
+                return FilePath(sectionPath);
+          }
+       }
+
+    }
+    return FilePath();
 
 }
 
