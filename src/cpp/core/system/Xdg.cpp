@@ -142,11 +142,8 @@ void verifyUserDirs(
 {
    auto testDir = [](const FilePath& dir, const ErrorLocation& errorLoc)
    {
-      Error permError;
-      Error error = dir.ensureDirectory();
-      if (error)
-         error.addOrUpdateProperty("path", dir.getAbsolutePath());
-      else
+      Error error, permError;
+      if (dir.exists())
       {
          error = dir.testWritePermissions();
          if (error)
