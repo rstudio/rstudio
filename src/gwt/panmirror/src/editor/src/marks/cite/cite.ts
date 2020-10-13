@@ -50,12 +50,12 @@ const kCiteCitationsIndex = 0;
 // Follow the pandoc rules for citations
 // Each citation must have a key, composed of ‘@’ + the citation identifier from the database, 
 // and may optionally have a prefix, a locator, and a suffix. The citation key must begin with a letter, 
-// digit, or _, and may contain alphanumerics, _, and internal punctuation characters (:.#$%&-+?<>~/).
-// We don't permit the citation to end in a . or ? character (which are allowed in the cite identifier)
+// digit, or _, and may contain alphanumerics (UNICODE), _, and internal punctuation characters (:.#$%&-+?<>~/).
+// In addition, we don't permit the citation to include a . or ? character (which are allowed in the cite identifier)
 // This is only because when writing in text citations, it will be common to follow a citation with 
 // punctuation, and we should be smart enough to filter that punctuation out of the citation itself.
 const kCiteIdPrefixPattern = '-?@';
-const kCiteIdCharsPattern = '(\\w?[\\w:\\.#\\$%&\\-\\+\\?<>~\\/]*[\\w:#\\$%&\\-\\+<>~\\/])?';
+const kCiteIdCharsPattern = '[^@;\\[\\]\\s\\!\\,]*';
 const kCiteIdBasePattern = `${kCiteIdPrefixPattern}${kCiteIdCharsPattern}`;
 
 // Completions examine all the text inside the citation mark, so they need to only be interested
