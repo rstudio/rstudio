@@ -692,6 +692,7 @@ export async function insertCitation(
         view.dispatch(tr);
       }
     }
+    view.focus();
   }
 }
 
