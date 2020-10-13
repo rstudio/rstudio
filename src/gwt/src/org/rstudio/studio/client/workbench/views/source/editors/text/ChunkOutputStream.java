@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.user.client.Timer;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.VirtualConsole;
@@ -425,8 +426,10 @@ public class ChunkOutputStream extends FlowPanel
       }
    }
 
+   
+
    @Override
-   public void showCallbackHtml(String htmlOutput)
+   public void showCallbackHtml(String htmlOutput, Element parentElement)
    {
       // flush any queued errors
       initializeOutput(RmdChunkOutputUnit.TYPE_HTML);
@@ -448,7 +451,9 @@ public class ChunkOutputStream extends FlowPanel
          public void execute()
          {
             DomUtils.fillIFrame(frame.getIFrame(), htmlOutput);
+            DomUtils.forwardWheelEvent(frame.getIFrame().getContentDocument(), parentElement);
             
+            Document anotherDoc = frame.getWindow().getDocument().getOwnerDocument();
             int contentHeight = frame.getWindow().getDocument().getDocumentElement().getOffsetHeight();
             frame.getElement().getStyle().setHeight(contentHeight, Unit.PX);
             frame.getElement().getStyle().setWidth(100, Unit.PCT);

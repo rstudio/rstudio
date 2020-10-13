@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.ColorUtil;
@@ -193,7 +194,7 @@ public class ChunkOutputGallery extends Composite
    }
 
    @Override
-   public void showCallbackHtml(String htmlOutput)
+   public void showCallbackHtml(String htmlOutput, Element parentElement)
    {
       VerticalPanel callbackContent = new VerticalPanel();
       callback_.add(callbackContent);
@@ -213,6 +214,7 @@ public class ChunkOutputGallery extends Composite
          public void execute()
          {
             DomUtils.fillIFrame(frame.getIFrame(), htmlOutput);
+            DomUtils.forwardWheelEvent(frame.getIFrame().getContentDocument(), parentElement);
             int contentHeight = frame.getWindow().getDocument().getDocumentElement().getOffsetHeight();
             callbackContent.setHeight(contentHeight + "px");
             callbackContent.setWidth("100%");

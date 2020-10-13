@@ -263,11 +263,11 @@ public class ChunkOutputWidget extends Composite
       return expansionState_.addValueChangeHandler(handler);
    }
 
-   public void renderHtml(String htmlOutput)
+   public void renderHtml(String htmlOutput, Element parentElement)
    {
       if (StringUtil.isNullOrEmpty(htmlOutput))
          return;
-      presenter_.showCallbackHtml(htmlOutput);
+      presenter_.showCallbackHtml(htmlOutput, parentElement);
    }
 
    public void showChunkOutput(RmdChunkOutput output, int mode, int scope,

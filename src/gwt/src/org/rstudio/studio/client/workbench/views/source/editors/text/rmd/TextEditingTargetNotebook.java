@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import com.google.gwt.dom.client.Element;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
@@ -811,7 +812,8 @@ public class TextEditingTargetNotebook
       if (chunkHasOutput(data.getChunkId()) &&
           !StringUtil.isNullOrEmpty(data.getHtmlCallback()))
       {
-         outputs().get(data.getChunkId()).getOutputWidget().renderHtml(data.getHtmlCallback());
+         outputs().get(data.getChunkId()).getOutputWidget().renderHtml(data.getHtmlCallback(),
+            docDisplay_.asWidget().getElement());
       }
    }
 
