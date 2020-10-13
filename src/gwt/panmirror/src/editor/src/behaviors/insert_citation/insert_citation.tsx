@@ -620,6 +620,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
           onTagValidate={onTagValidate}
           ui={props.ui}
           placeholder={props.ui.context.translateText('Selected Citation Keys')}
+          maxDisplayCharacters={50}
         />
       </div>
       <div className="pm-cite-panel-insert-inputs">

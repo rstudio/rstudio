@@ -40,6 +40,7 @@ interface TagInputProps extends WidgetProps {
   onTagValidate?: (key: string, text: string) => string | null;
   ui: EditorUI;
   placeholder?: string;
+  maxDisplayCharacters?: number;
 }
 
 export const TagInput = React.forwardRef<HTMLDivElement, TagInputProps>((props, ref) => {
@@ -60,6 +61,7 @@ export const TagInput = React.forwardRef<HTMLDivElement, TagInputProps>((props, 
           onTagChanged={props.onTagChanged}
           onTagValidate={props.onTagValidate}
           ui={props.ui}
+          maxDisplayCharacters={props.maxDisplayCharacters}
         />
       ))}
     </div>
@@ -72,6 +74,7 @@ interface TagProps extends WidgetProps {
   onTagChanged: (key: string, text: string) => void;
   onTagValidate?: (key: string, text: string) => string | null;
   ui: EditorUI;
+  maxDisplayCharacters?: number;
 }
 
 const Tag: React.FC<TagProps> = props => {
@@ -223,11 +226,16 @@ const Tag: React.FC<TagProps> = props => {
         {!editing ? (
           <div onClick={onEditClick} className="pm-tag-input-text-raw pm-text-color">
             {props.tag.displayPrefix}
-            {displayText}
+            {props.maxDisplayCharacters ? 
+              displayText.length > props.maxDisplayCharacters ? displayText.substr(0, props.maxDisplayCharacters - 1) + '…' : displayText: 
+              displayText}
           </div>
         ) : (
           <TextInput
-            width={`${editingText.length}ch`}
+            width={props.maxDisplayCharacters ? 
+                 `${Math.min(props.maxDisplayCharacters, editingText.length)}ch` :
+                 `${editingText.length}ch`
+                }
             ref={editTextInput}
             className="pm-tag-input-text-edit"
             value={editingText}
