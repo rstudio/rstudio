@@ -265,6 +265,15 @@ public class PythonCompletionManager extends CompletionManagerBase
       }
    }
    
+   private String singleLineCompletion()
+   {
+      PythonEditorContext context = new PythonEditorContext(docDisplay_);
+      
+      String line = context.getLine();
+      int position = context.getPosition();
+      return line.substring(0, position);
+   }
+   
    // this routine is primarily used to provide some extra context
    // for argument completions and import completions; e.g. when
    // the document contains:
@@ -286,14 +295,14 @@ public class PythonCompletionManager extends CompletionManagerBase
       TokenIterator it = docDisplay_.createTokenIterator();
       Token token = it.moveToPosition(docDisplay_.getCursorPosition());
       if (token == null)
-         return docDisplay_.getCurrentLineUpToCursor();
+         return singleLineCompletion();
       
       // move off of comments, text
       while (token.hasType("text", "comment"))
       {
          token = it.stepBackward();
          if (token == null)
-            return docDisplay_.getCurrentLineUpToCursor();
+            return singleLineCompletion();
       }
       
       // if we're on a ',' or a '(', assume that we may be
@@ -309,13 +318,13 @@ public class PythonCompletionManager extends CompletionManagerBase
          
          Token peek = clone.stepBackward();
          if (peek == null)
-            return docDisplay_.getCurrentLineUpToCursor();
+            return singleLineCompletion();
          
          while (peek.hasType("text", "comment"))
          {
             peek = clone.stepBackward();
             if (peek == null)
-               return docDisplay_.getCurrentLineUpToCursor();
+               return singleLineCompletion();
          }
          
          maybeArgument =
@@ -323,7 +332,7 @@ public class PythonCompletionManager extends CompletionManagerBase
                peek.valueEquals(",");
          
          if (!maybeArgument)
-            return docDisplay_.getCurrentLineUpToCursor();
+            return singleLineCompletion();
       }
       
       // start walking backwards until we see an 'anchor'
