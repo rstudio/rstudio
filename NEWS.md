@@ -52,6 +52,7 @@
 * Added option to disable clickable hyperlinks in the editor (#6689, thanks to Paul Kaefer)
 * Added basic editor support for Dockerfiles (#5141)
 * Markdown-style sub-sections are now rendered as nested sections in the document outline for R documents (#4124)
+* Update to Pandoc 2.11 (#7696)
 
 ### RStudio Server
 
