@@ -2,12 +2,12 @@
 setlocal enableextensions enabledelayedexpansion
 
 :: Script to build RStudio Desktop for Windows using Docker
-:: 
+::
 :: Requires a Windows machine, with Docker installed and set to use Windows
 :: containers, and the RStudio repo cloned onto the machine. Then simply execute
 :: this script from a command prompt in rstudio\docker directory.
 ::
-:: For best reproduction of an official build use a pristine repo containing no 
+:: For best reproduction of an official build use a pristine repo containing no
 :: previous local builds or installed dependencies. For example you could use
 :: git clean -ffdx.
 ::
@@ -66,26 +66,8 @@ docker rm %CONTAINER_ID%
 
 for %%A in ("%cd%") do set HOSTPATH=%%~sA
 
-echo Creating container %CONTAINER_ID%...
-docker create -m 6GB -i --name %CONTAINER_ID% %REPO%:%IMAGE% cmd.exe
-
-:: Copy sources into the container; a volume mount doesn't work due to problems with the 
-:: MSVC toolchain used by RStudio: https://github.com/docker/for-win/issues/829
-::
-:: This issue is apparently fixed in latest MSVC 2019 so can reevaluate this approach when
-:: we update to newer toolchain and use -v %HOSTPATH%:c:/src instead of copying repo.
-:: 
-:: A volume mount does work when using "--isolation process" but this mode of operation
-:: requires a close Windows version match between the base image and the host operating
-:: system (largely defeating the whole point of containerization).
-::
-:: https://docs.microsoft.com/en-us/virtualization/windowscontainers/deploy-containers/version-compatibility
-::
-echo Copying repo into container...
-docker cp %HOSTPATH% %CONTAINER_ID%:/src
-
-echo Starting container...
-docker start %CONTAINER_ID%
+echo Running container %CONTAINER_ID%...
+docker run -m 6GB -it --name %CONTAINER_ID% -v %HOSTPATH%:c:/src %REPO%:%IMAGE% cmd.exe
 
 echo Installing dependencies...
 docker exec %CONTAINER_ID% cmd.exe /C "cd \src\dependencies\windows && set RSTUDIO_SKIP_QT=1 && install-dependencies.cmd"
