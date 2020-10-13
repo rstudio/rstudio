@@ -52,6 +52,9 @@ export function getWords(
 
     // find end of word
     const endWordPos = findEndWord(state, currentPos, spelling.classifyCharacter);
+    if (endWordPos === currentPos) {
+      break;
+    }
 
     // add word if it doesn't have an excluded type
     if (!excludeWord(state.doc, currentPos, endWordPos, excluded)) {
