@@ -66,8 +66,11 @@ docker rm %CONTAINER_ID%
 
 for %%A in ("%cd%") do set HOSTPATH=%%~sA
 
-echo Running container %CONTAINER_ID%...
-docker run -m 6GB -it --name %CONTAINER_ID% -v %HOSTPATH%:c:/src %REPO%:%IMAGE% cmd.exe
+echo Creating container %CONTAINER_ID%...
+docker create -m 6GB -i --name %CONTAINER_ID% -v %HOSTPATH%:c:/src %REPO%:%IMAGE% cmd.exe
+
+echo Starting container...
+docker start %CONTAINER_ID%
 
 echo Installing dependencies...
 docker exec %CONTAINER_ID% cmd.exe /C "cd \src\dependencies\windows && set RSTUDIO_SKIP_QT=1 && install-dependencies.cmd"
