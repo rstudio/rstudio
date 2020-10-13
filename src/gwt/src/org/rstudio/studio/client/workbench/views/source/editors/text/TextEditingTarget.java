@@ -3353,9 +3353,15 @@ public class TextEditingTarget implements
       // hasn't changed as the path may have changed
       syncPublishPath(docUpdateSentinel_.getPath());
 
-      // ignore if unchanged
-      if (StringUtil.equals(extendedType, extendedType_))
+      // if autosaves are enabled and the extended type hasn't changed, then
+      // don't do any further work as adapting to the extended type can cause
+      // disruptive side effects during autosave (e.g., knocking down
+      // autocomplete dialogs, resetting vim mode)
+      if (StringUtil.equals(extendedType, extendedType_) &&
+          prefs_.autoSaveEnabled())
+      {
          return;
+      }
 
       view_.adaptToExtendedFileType(extendedType);
       if (extendedType.startsWith(SourceDocument.XT_RMARKDOWN_PREFIX))
