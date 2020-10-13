@@ -61,6 +61,7 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       formatWidgets_ = addWidgetGroup(
          addLeftButton(PanmirrorCommands.Strong),
          addLeftButton(PanmirrorCommands.Em),
+         addLeftButton(PanmirrorCommands.Underline),
          addLeftButton(PanmirrorCommands.Code),
          addLeftSeparator(),
          addLeftButton(PanmirrorCommands.ClearFormatting),

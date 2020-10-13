@@ -36,6 +36,7 @@ function formatMenu(ui: EditorUI, commands: EditorCommand[]) {
   return [
     { command: EditorCommandId.Strong },
     { command: EditorCommandId.Em },
+    { command: EditorCommandId.Underline },
     { command: EditorCommandId.Code },
     {
       text: ui.context.translateText('Text'),
