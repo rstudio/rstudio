@@ -181,9 +181,15 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    # first write to sidecar file, and then rename that file
    # (don't let failed serialization leave behind broken workspace)
    sidecarFile <- paste(filename, "incomplete", sep = ".")
+   
+   # remove an old sidecar file if any -- these would be leftover from
+   # a previously-failed attempt to save the session
+   unlink(sidecarFile)
+   
+   # now, attempt to save
    suppressWarnings(save(opt, file = sidecarFile))
    
-   # now, try to rename it
+   # save completed -- rename sidecar file to final location
    file.rename(sidecarFile, filename)
 })
 
