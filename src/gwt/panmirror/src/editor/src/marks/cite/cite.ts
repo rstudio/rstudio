@@ -24,7 +24,7 @@ import { FocusEvent } from '../../api/event-types';
 import { PandocTokenType, PandocToken, PandocOutput, ProsemirrorWriter, PandocServer } from '../../api/pandoc';
 import { fragmentText } from '../../api/fragment';
 import { markIsActive, splitInvalidatedMarks, getMarkRange, detectAndApplyMarks } from '../../api/mark';
-import { MarkTransaction } from '../../api/transaction';
+import { MarkTransaction, kPasteTransaction } from '../../api/transaction';
 import { BibliographyManager, BibliographyFile, BibliographySource } from '../../api/bibliography/bibliography';
 import { EditorUI } from '../../api/ui';
 import { joinPaths, getExtension } from '../../api/path';
@@ -350,7 +350,7 @@ function handlePaste(ui: EditorUI, bibManager: BibliographyManager, server: Pand
 
         // Insert the DOI text as a placeholder
         const tr = view.state.tr;
-        tr.setMeta('paste', true);
+        tr.setMeta(kPasteTransaction, true);
         tr.setMeta('uiEvent', 'paste');
 
         const doiText = schema.text(parsedDOI.token);
@@ -367,7 +367,7 @@ function handlePaste(ui: EditorUI, bibManager: BibliographyManager, server: Pand
         slice.content.forEach((node: ProsemirrorNode) => (text = text + node.textContent));
         if (text.length > 0) {
           const tr = view.state.tr;
-          tr.setMeta('paste', true);
+          tr.setMeta(kPasteTransaction, true);
           tr.setMeta('uiEvent', 'paste');
           tr.replaceSelectionWith(schema.text(text));
           view.dispatch(tr);

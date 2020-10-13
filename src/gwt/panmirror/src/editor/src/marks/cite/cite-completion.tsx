@@ -29,7 +29,6 @@ import { CompletionItemView } from '../../api/widgets/completion';
 
 import { PandocServer } from '../../api/pandoc';
 import { EditorEvents } from '../../api/events';
-import { FocusEvent } from '../../api/event-types';
 
 import { BibliographyEntry, entryForSource } from './cite-bibliography_entry';
 import { parseCitation, insertCitation as insertSingleCitation, performCiteCompletionReplacement } from './cite';
