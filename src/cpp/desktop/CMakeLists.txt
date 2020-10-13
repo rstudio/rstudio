@@ -40,7 +40,7 @@ if(NOT WIN32)
       # find the newest installed Qt version among the versions we build
       # against
       foreach(QT_CANDIDATE ${QT_CANDIDATES})
-         
+
          set(QT_VERSION_SUBDIR "${QT_CANDIDATE}")
 
          set(QMAKE_QT50_SDK "/opt/RStudio-QtSDK/Qt${QT_CANDIDATE}/${QT_VERSION_SUBDIR}/${QT_COMPILER}")
@@ -114,6 +114,7 @@ find_package(Qt5Gui REQUIRED)
 find_package(Qt5Network REQUIRED)
 find_package(Qt5WebChannel REQUIRED)
 find_package(Qt5WebEngine REQUIRED)
+find_package(Qt5WebEngineCore REQUIRED)
 find_package(Qt5WebEngineWidgets REQUIRED)
 find_package(Qt5PrintSupport REQUIRED)
 find_package(Qt5Quick REQUIRED)
@@ -335,6 +336,7 @@ set(RSTUDIO_QTMODULES
     Qt5::Network
     Qt5::WebChannel
     Qt5::WebEngine
+    Qt5::WebEngineCore
     Qt5::WebEngineWidgets
     Qt5::PrintSupport
     Qt5::Quick
@@ -519,7 +521,18 @@ if(RSTUDIO_BUNDLE_QT)
       # this copies over the frameworks and plugins
       install(CODE "execute_process(COMMAND \"${MACDEPLOYQT_COMMAND}\" \"${APPS}\" -verbose=1 -always-overwrite -no-strip)")
 
-      # fixups needed after running macdeployqt
+      # Copy over the QtWebEngineProcess.app, supposed to be done by macdeployqt
+      # but broken in Qt 5.15.1: https://bugreports.qt.io/browse/QTBUG-86759
+      # evaluate backing this out with Qt 5.15.2
+      set(QTWEBENGINE_HELPERS_DIR "${Qt5WebEngine_DIR}/../../QtWebEngineCore.framework/Versions/5/Helpers")
+      set(QTWEBENGINE_CORE_FRAMEWORK_DEST_DIR "${QTPLUGINS_DEST_DIR}/Frameworks/QtWebEngineCore.framework")
+      install(DIRECTORY "${QTWEBENGINE_HELPERS_DIR}"
+            DESTINATION "${QTWEBENGINE_CORE_FRAMEWORK_DEST_DIR}/Versions/5" USE_SOURCE_PERMISSIONS)
+      set(QTWEBENGINE_LOCALES_DIR "${Qt5WebEngine_DIR}/../../QtWebEngineCore.framework/Versions/5/Resources/qtwebengine_locales")
+      install(DIRECTORY "${QTWEBENGINE_LOCALES_DIR}"
+            DESTINATION "${QTWEBENGINE_CORE_FRAMEWORK_DEST_DIR}/Versions/5/Resources" USE_SOURCE_PERMISSIONS)
+
+      # fixups needed after running macdeployqt and manual copying
       install(CODE "execute_process(COMMAND install_name_tool -add_rpath \"@executable_path/../Frameworks\" \"${RSTUDIO_APP_BIN}\")")
 
       # figure out where the system libcrypto lives
