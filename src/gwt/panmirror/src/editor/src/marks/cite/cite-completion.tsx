@@ -120,7 +120,10 @@ function filterCitations(token: string, manager: BibliographyManager, entries: B
   }
 
   // Filter an exact match - if its exact, skip completion
-  if (manager.allSources().find(source => source.id === token)) {
+  // Ignore any punctuation at the end of the token
+  const tokenWithoutEndPunctuation = token.match(/.*[^\,\!\?\.\:]/);
+  const completionId = tokenWithoutEndPunctuation ? tokenWithoutEndPunctuation[0] : token;
+  if (manager.localSources().find(source => source.id === completionId)) {
     return [];
   }
 
