@@ -80,7 +80,7 @@ export class MarkTransaction {
 
 export interface AppendMarkTransactionHandler {
   name: string;
-  filter: (node: ProsemirrorNode) => boolean;
+  filter: (node: ProsemirrorNode, transactions: Transaction[]) => boolean;
   append: (tr: MarkTransaction, node: ProsemirrorNode, pos: number, state: EditorState) => void;
 }
 
@@ -110,7 +110,7 @@ export function appendMarkTransactionsPlugin(handlers: readonly AppendMarkTransa
             node = tr.doc.nodeAt(pos)!;
 
             // call the handler
-            if (handler.filter(node)) {
+            if (handler.filter(node, transactions)) {
               handler.append(markTr, node, pos, newState);
             }
           }
