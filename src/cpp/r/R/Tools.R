@@ -175,7 +175,10 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    # get reference to current options
    opt <- options()
    
-   # don't attempt to serialize cpp11 preserve env
+   # don't attempt to serialize cpp11 preserve env as it may
+   # contain recursive R objects which cause crashes when serialized
+   #
+   # https://github.com/rstudio/rstudio-pro/issues/2052
    opt$cpp11_preserve_env <- NULL
    
    # first write to sidecar file, and then rename that file
@@ -186,10 +189,21 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    # a previously-failed attempt to save the session
    unlink(sidecarFile)
    
-   # now, attempt to save
-   suppressWarnings(save(opt, file = sidecarFile))
-   
-   # save completed -- rename sidecar file to final location
+   status <- tryCatch(
+      suppressWarnings(save(opt, file = sidecarFile)),
+      error = identity
+   )
+
+   # if we manage to catch the error (might not be possible for stack overflow)
+   # then clean up the sidecar file and re-propagate the error (caller will take
+   # care of reporting further errors to user)
+   if (inherits(status, "error"))
+   {
+      unlink(sidecarFile)
+      stop(status)
+   }
+
+   # save completed successfully -- rename sidecar file to final location
    file.rename(sidecarFile, filename)
 })
 
