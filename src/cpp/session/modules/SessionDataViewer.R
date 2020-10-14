@@ -171,7 +171,7 @@
                # create histogram for brushing -- suppress warnings as in rare cases
                # an otherwise benign integer overflow can occurs; see
                # https://github.com/rstudio/rstudio/issues/3232
-               h <- suppressWarnings(hist(hist_vals, plot = FALSE))
+               h <- suppressWarnings(graphics::hist(hist_vals, plot = FALSE))
                col_breaks <- h$breaks
                col_counts <- h$counts
                
