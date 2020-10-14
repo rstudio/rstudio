@@ -199,7 +199,7 @@ oop.inherits(RMarkdownHighlightRules, TextHighlightRules);
    this.$reChunkEndString =
       "^(?:[ ]{4})?`{3,}\\s*$";
 
-   this.$reCppChunkStartString        = engineRegex("(?:[rR][cC]pp|[cC](?:pp)?)");
+   this.$reCppChunkStartString        = engineRegex("(?:[rR][cC]pp|[cC](?:pp)?)\\d*");
    this.$reMarkdownChunkStartString   = engineRegex("block");
    this.$rePerlChunkStartString       = engineRegex("perl");
    this.$rePythonChunkStartString     = engineRegex("python");
