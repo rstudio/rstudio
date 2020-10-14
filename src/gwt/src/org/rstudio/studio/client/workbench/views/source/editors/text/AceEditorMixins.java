@@ -24,6 +24,7 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.AceSelectionChangedEvent;
 
+import com.google.gwt.core.client.Scheduler;
 import com.google.inject.Inject;
 
 public class AceEditorMixins
@@ -46,7 +47,12 @@ public class AceEditorMixins
             {
                String selection = editor_.getSelectedText();
                if (!StringUtil.isNullOrEmpty(selection))
-                  Desktop.getFrame().setGlobalMouseSelection(selection);
+               {
+                  Scheduler.get().scheduleDeferred(() ->
+                  {
+                     Desktop.getFrame().setGlobalMouseSelection(selection);
+                  });
+               }
             }
          });
       }
