@@ -67,7 +67,7 @@ var RMarkdownHighlightRules = function() {
       this,
       RHighlightRules,
       "r-inline",
-      "`r",
+      "`r ",
       "`",
       ["start", "listblock", "allowBlock"]
    );
