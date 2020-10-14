@@ -155,13 +155,17 @@ function gapClickHandler(view: EditorView, event: Event): boolean {
     }
 
     // handle clicks above body
+    // Take this out for now b/c it was interfering with other mouse 
+    // gestures (e.g. clicking on attr editor). keyboard gestures still
+    // work to get to the top of the body
+    /*
     if ($clickPos.parent.type === schema.nodes.body &&
         $clickPos.start() === $clickPos.pos) {
       
       return createGapCursor();
 
     }
-    
+    */
   }
 
   return false;
