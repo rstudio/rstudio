@@ -158,7 +158,7 @@ void WebPage::init()
    settings()->setAttribute(QWebEngineSettings::WebGLEnabled, true);
    
 #ifdef __APPLE__
-   settings()->setFontFamily(QWebEngineSettings::FixedFont,     QStringLiteral("Courier"));
+   settings()->setFontFamily(QWebEngineSettings::FixedFont,     QStringLiteral("Monaco"));
    settings()->setFontFamily(QWebEngineSettings::SansSerifFont, QStringLiteral("Helvetica"));
 #endif
 
