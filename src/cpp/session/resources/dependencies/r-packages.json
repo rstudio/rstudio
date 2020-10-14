@@ -276,7 +276,7 @@
             "source": false
         },
         "xfun": {
-            "version": "0.3",
+            "version": "0.15",
             "location": "cran",
             "source": false
         },
@@ -291,7 +291,7 @@
             "source": false
         },
         "yaml": {
-            "version": "2.1.5",
+            "version": "2.1.19",
             "location": "cran",
             "source": false
         }

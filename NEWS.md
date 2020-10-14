@@ -1,4 +1,4 @@
-## v1.4 - Release Notes
+[##](##) v1.4 - Release Notes
 
 ### Python
 
@@ -130,3 +130,5 @@
 * Prevent Discard button from being hidden in Subversion diff viewer (#6031)
 * Fixed issue where French (AZERTY) keyboards inserted '/' rather than ':' in some cases (#7932)
 * `readline()` and `readLines()` can now be interrupted, even when reading from `stdin()`. (#3448)
+* Fixed issue causing Knit button to show old formats after editing the YAML header (#7833)
+* Fixed issue wherein the Python prompt would continue to be shown after an R restart (#8011)
