@@ -119,10 +119,6 @@
       help(...)
    }
    
-   # define View hook (for data viewer, object explorer)
-   main <- reticulate::import_main(convert = FALSE)
-   reticulate::py_set_attr(main, "View", .rs.reticulate.viewHook)
-   
    # ensure matplotlib hooks are injected on load
    setHook("reticulate::matplotlib.pyplot::load", .rs.reticulate.matplotlib.onLoaded)
 })
@@ -240,6 +236,17 @@
       {
          text <- .rs.trimWhitespace(gsub(reHelp, "\\1", trimmed))
          .Call("rs_showPythonHelp", text, PACKAGE = "(embedding)")
+         return(TRUE)
+      }
+      
+      # detect View calls, and use View hook instead
+      pattern <- "^View\\s*\\((.*)\\)$"
+      matches <- regmatches(trimmed, regexec(pattern, trimmed))
+      if (length(matches) && length(matches[[1]]) == 2)
+      {
+         name <- gsub("^\\s*|\\s*$", "", matches[[1]][[2]])
+         object <- reticulate::py_eval(name, convert = FALSE)
+         .rs.reticulate.viewHook(object, name)
          return(TRUE)
       }
    }
@@ -1828,16 +1835,10 @@ html.heading = _heading
    ))
 })
 
-.rs.addFunction("reticulate.viewHook", function(object)
+.rs.addFunction("reticulate.viewHook", function(object, name)
 {
    # TODO: assign complex expressions to temporary variable before view
    reticulate:::disable_conversion_scope(object)
-   
-   # extract variable name passed to Python object
-   sys <- reticulate::import("sys", convert = TRUE)
-   frame <- sys$`_getframe`(1L)
-   names <- frame$f_code$co_names
-   name <- names[[length(names)]]
    
    # convert Pandas DataFrames to R data.frames for now
    # (consider adapting data viewer to arbitrary tabular data in future?)
