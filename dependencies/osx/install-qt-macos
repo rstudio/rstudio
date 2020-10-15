@@ -41,7 +41,7 @@ then
    echo ----------------------------------------------------------------------
    echo " The minimal Qt installer should only be used on a build machine. For"
    echo " a developer machine use the Qt online installer from qt.io or"
-   echo " MaintenanceTool.app from existing Qt folder toinstall $QT_VERSION."
+   echo " MaintenanceTool.app from existing Qt folder to install $QT_VERSION."
    echo ----------------------------------------------------------------------
    echo " Pausing for 15 seconds... (Ctrl+C to interrupt)"
    echo ----------------------------------------------------------------------
