@@ -63,14 +63,17 @@ var RMarkdownHighlightRules = function() {
       ["start", "listblock", "allowBlock"]
    );
 
-   Utils.embedRules(
-      this,
-      RHighlightRules,
-      "r-inline",
-      "`r",
-      "`",
-      ["start", "listblock", "allowBlock"]
-   );
+   // Embed R highlight rules for inline chunks
+   // NOTE: disabled for now as we need to do more work to ensure
+   // such inline chunks are properly disambiguated from regular chunks
+   // Utils.embedRules(
+   //    this,
+   //    RHighlightRules,
+   //    "r-inline",
+   //    "`r ",
+   //    "`",
+   //    ["start", "listblock", "allowBlock"]
+   // );
 
 
    // Embed C++ highlight rules
