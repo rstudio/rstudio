@@ -242,8 +242,7 @@ oop.inherits(Mode, MarkdownMode);
             // validate that we are working within an inline chunk --
             // only skip '`' if that appears to be the case
             if (token != null &&
-                token.value === "`" &&
-                token.type.indexOf("support.function") !== -1)
+                token.type === "support.function.inline_r_chunk")
             {
                return {
                   text: "",
