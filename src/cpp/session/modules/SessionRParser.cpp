@@ -959,7 +959,7 @@ void extractFormal(
    std::wstring::const_iterator defaultValueStart;
    
    if (cursor.isType(RToken::ID))
-      formalName = cursor.contentAsUtf8();
+      formalName = getSymbolName(cursor);
    
    if (!cursor.moveToNextSignificantToken())
       return;
