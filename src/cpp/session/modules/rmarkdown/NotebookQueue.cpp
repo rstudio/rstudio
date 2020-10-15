@@ -292,12 +292,12 @@ private:
          std::string prefix;
 
          bool isPythonActive = module_context::isPythonReplActive();
-         if (isPythonActive && execContext_->engine() != "python")
+         if (isPythonActive && (execContext_ == nullptr || execContext_->engine() != "python"))
          {
             // switching from Python -> R: deactivate the Python REPL
             prefix = "quit\n";
          }
-         else if (!isPythonActive && execContext_->engine() == "python")
+         else if (!isPythonActive && execContext_ && execContext_->engine() == "python")
          {
             // switching from R -> Python: activate the Python REPL
             prefix = "reticulate::repl_python()\n";
