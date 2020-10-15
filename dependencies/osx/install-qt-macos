@@ -39,7 +39,7 @@ then
    echo ----------------------------------------------------------------------
    echo "                            *** Important ***"
    echo ----------------------------------------------------------------------
-   echo " The mininal Qt installer should only be used on a build machine. For"
+   echo " The minimal Qt installer should only be used on a build machine. For"
    echo " a developer machine use the Qt online installer from qt.io or"
    echo " MaintenanceTool.app from existing Qt folder toinstall $QT_VERSION."
    echo ----------------------------------------------------------------------
