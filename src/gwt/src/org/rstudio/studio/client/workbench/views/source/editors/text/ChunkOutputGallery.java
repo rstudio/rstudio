@@ -16,6 +16,8 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
 
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.ColorUtil;
 import org.rstudio.core.client.StringUtil;
@@ -192,7 +194,7 @@ public class ChunkOutputGallery extends Composite
    }
 
    @Override
-   public void showCallbackHtml(String htmlOutput)
+   public void showCallbackHtml(String htmlOutput, Element parentElement)
    {
       VerticalPanel callbackContent = new VerticalPanel();
       callback_.add(callbackContent);
@@ -212,6 +214,7 @@ public class ChunkOutputGallery extends Composite
          public void execute()
          {
             DomUtils.fillIFrame(frame.getIFrame(), htmlOutput);
+            DomUtils.forwardWheelEvent(frame.getIFrame().getContentDocument(), parentElement);
             int contentHeight = frame.getWindow().getDocument().getDocumentElement().getOffsetHeight();
             callbackContent.setHeight(contentHeight + "px");
             callbackContent.setWidth("100%");
@@ -220,10 +223,21 @@ public class ChunkOutputGallery extends Composite
             host_.notifyHeightChanged();
             
             Command heightHandler = () -> {
-               int newHeight = frame.getWindow().getDocument().getDocumentElement().getOffsetHeight();
-               callbackContent.setHeight(newHeight + "px");
-               frame.getElement().getStyle().setHeight(newHeight, Unit.PX);
-               host_.notifyHeightChanged();
+               // reset height so we can shrink it if necessary
+               frame.getElement().getStyle().setHeight(0, Unit.PX);
+
+               // delay calculating the height so any images can load
+               new Timer()
+               {
+                  @Override
+                  public void run()
+                  {
+                     int newHeight = frame.getWindow().getDocument().getDocumentElement().getOffsetHeight();
+                     callbackContent.setHeight(newHeight + "px");
+                     frame.getElement().getStyle().setHeight(newHeight, Unit.PX);
+                     host_.notifyHeightChanged();
+                  }
+               }.schedule(50);
             };
 
             MutationObserver.Builder builder = new MutationObserver.Builder(heightHandler);
