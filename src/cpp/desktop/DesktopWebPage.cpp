@@ -162,6 +162,11 @@ void WebPage::init()
    settings()->setFontFamily(QWebEngineSettings::SansSerifFont, QStringLiteral("Helvetica"));
 #endif
 
+#ifdef _WIN32
+   settings()->setFontFamily(QWebEngineSettings::FixedFont, QStringLiteral("Lucida Console"));
+   settings()->setFontFamily(QWebEngineSettings::SansSerifFont, QStringLiteral("Segoe UI"));
+#endif
+
    defaultSaveDir_ = QDir::home();
    connect(this, SIGNAL(windowCloseRequested()), SLOT(closeRequested()));
    connect(this, &QWebEnginePage::linkHovered, onLinkHovered);
