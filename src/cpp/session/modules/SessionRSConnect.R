@@ -327,7 +327,7 @@
   
   # check to see if the target has "runtime: shiny/prerendred", if so then
   # return a full directory deploy list
-  if (is.list(yaml) && identical(yaml$runtime, "shiny_prerendered")) {
+  if (is.list(yaml) && (identical(yaml$runtime, "shiny_prerendered") || identical(yaml$runtime, "shinyrmd"))) {
     return(rsconnect::listBundleFiles(appDir = dirname(target)))
   }
 
@@ -469,7 +469,7 @@
 
   # if this is runtime: shiny_prerendered then is_multi_rmd is FALSE
   if (is.list(frontMatter) &&
-      identical(frontMatter$runtime, "shiny_prerendered")) {
+      (identical(frontMatter$runtime, "shiny_prerendered") || identical(frontMatter$runtime, "shinyrmd"))) {
     is_multi_rmd <- FALSE
   } else {
     # check for multiple R Markdown documents in the directory

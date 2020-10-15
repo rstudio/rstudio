@@ -2225,6 +2225,7 @@
 
          # check for runtime: shiny or parameters (requires the Shiny R package)
          if (identical(front$runtime, "shiny") || 
+             identical(front$runtime, "shinyrmd") ||
              identical(front$runtime, "shiny_prerendered") ||
              !is.null(front$params))
          {
