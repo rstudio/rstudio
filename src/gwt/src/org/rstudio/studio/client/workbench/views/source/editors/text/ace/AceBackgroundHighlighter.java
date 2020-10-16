@@ -277,6 +277,18 @@ public class AceBackgroundHighlighter
             documentChangedHandler_ = null;
          }
       }
+      else
+      {
+         handlers_ = new HandlerRegistrations(
+            editor_.addEditorModeChangedHandler(this),
+            editor_.addAttachHandler(this));
+         
+         if (!highlightPatterns_.isEmpty())
+         {
+            documentChangedHandler_ = editor_.addDocumentChangedHandler(this);
+            synchronizeFrom(0);
+         }
+      }
    }
    
    // Private Methods ----
@@ -452,7 +464,7 @@ public class AceBackgroundHighlighter
    private final AceEditor editor_;
    private final EditSession session_;
    private final List<HighlightPattern> highlightPatterns_;
-   private final HandlerRegistrations handlers_;
+   private HandlerRegistrations handlers_;
    
    private HighlightPattern activeHighlightPattern_;
    private String activeModeId_;
