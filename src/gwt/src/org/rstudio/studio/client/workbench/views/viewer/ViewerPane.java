@@ -261,9 +261,16 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    @Override
    public void refresh()
    {
-      String url = frame_.getUrl();
-      if (url != null)
-         frame_.setUrl(url);
+      try
+      {
+         frame_.getWindow().reload();
+      }
+      catch (Exception e)
+      {
+         String url = frame_.getUrl();
+         if (url != null)
+            frame_.setUrl(url);
+      }
    }
 
 
