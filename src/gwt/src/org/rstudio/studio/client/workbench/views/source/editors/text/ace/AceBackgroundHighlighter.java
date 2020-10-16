@@ -268,9 +268,9 @@ public class AceBackgroundHighlighter
    @Override
    public void onAttachOrDetach(AttachEvent event)
    {
+      handlers_.removeHandler();
       if (!event.isAttached())
       {
-         handlers_.removeHandler();
          if (documentChangedHandler_ != null)
          {
             documentChangedHandler_.removeHandler();
