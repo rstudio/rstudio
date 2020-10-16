@@ -41,6 +41,11 @@ public:
    {
       return pCntxt_->callflag;
    }
+   
+   int evaldepth() const
+   {
+      return pCntxt_->evaldepth;
+   }
 
    SEXP call() const
    {

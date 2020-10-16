@@ -21,10 +21,11 @@
 
 namespace rstudio {
 namespace r {
-   namespace session {
-      struct RConsoleInput;
-   }
+namespace session {
+struct RConsoleInput;
 }
+}
+
 namespace session {
 namespace console_input {
 

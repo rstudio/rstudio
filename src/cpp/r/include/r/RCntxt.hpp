@@ -88,6 +88,7 @@ public:
    bool isNull() const;
    SEXP callfun() const;
    int callflag() const;
+   int evaldepth() const;
    SEXP call() const;
    SEXP srcref() const;
    SEXP cloenv() const;

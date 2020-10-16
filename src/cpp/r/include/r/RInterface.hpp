@@ -241,16 +241,5 @@ enum {
     CTXT_BUILTIN  = 64
 };
 
-namespace rstudio {
-namespace r {
-
-inline void* getGlobalContext()
-{
-   return R_GlobalContext;
-}
-
-} // namespace r
-} // namespace rstudio
-
 #endif // R_INTERFACE_HPP
 
