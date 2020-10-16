@@ -45,13 +45,17 @@ export function precedingListItemInsertPos(doc: ProsemirrorNode, selection: Sele
     return null;
   }
 
-  // check for insert position in preceding list item
+  // check for insert position in preceding list item (only trigger when
+  // the user is at the very beginning of a new bullet)
   const schema = doc.type.schema;
+  const $head = selection.$head;
   const parentListItem = findParentNodeOfType(schema.nodes.list_item)(selection);
   if (parentListItem) {
     const $liPos = doc.resolve(parentListItem.pos);
     const listIndex = $liPos.index();
-    if (listIndex > 0) {
+    const parentIndex = $head.index($head.depth - 1);
+    const parentOffset = $head.parentOffset;
+    if (listIndex > 0 && parentIndex === 0 && parentOffset === 0) {
       const pos = $liPos.pos - 1;
       return pos;
     } else {
