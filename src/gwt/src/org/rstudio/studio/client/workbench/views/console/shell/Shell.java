@@ -672,22 +672,19 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
                   modifiers == KeyboardShortcut.CTRL &&
                   input_.getText().length() == 0)
          {
+            event.stopPropagation();
+            event.preventDefault();
+            
             eventBus_.fireEvent(
                   new ConsoleInputEvent(ConsoleInputEvent.FLAG_EOF));
          }
-         else
+         else if (keyCode == KeyCodes.KEY_L &&
+                  modifiers == KeyboardShortcut.CTRL)
          {
-            int mod = KeyboardShortcut.getModifierValue(event.getNativeEvent());
-            if (mod == KeyboardShortcut.CTRL)
-            {
-               switch (keyCode)
-               {
-                  case 'L':
-                     Shell.this.onConsoleClear();
-                     event.preventDefault();
-                     break;
-               }
-            }
+            event.stopPropagation();
+            event.preventDefault();
+            
+            Shell.this.onConsoleClear();
          }
       }
 
