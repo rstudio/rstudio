@@ -108,6 +108,7 @@ public class RStudioApiRequestEvent extends GwtEvent<RStudioApiRequestEvent.Hand
    public static final int TYPE_DOCUMENT_ID          = 3;
    public static final int TYPE_DOCUMENT_OPEN        = 4;
    public static final int TYPE_DOCUMENT_NEW         = 5;
+   public static final int TYPE_FILES_PANE_NAVIGATE  = 6;
    
    // list of potential event targets (keep in sync with Api.R)
    public static final int TARGET_UNKNOWN       = 0;
@@ -162,6 +163,15 @@ public class RStudioApiRequestEvent extends GwtEvent<RStudioApiRequestEvent.Hand
       public final native int     getRow()        /*-{ return this["row"];     }-*/;
       public final native int     getColumn()     /*-{ return this["column"];  }-*/;
       public final native boolean getExecute()    /*-{ return this["execute"]; }-*/;
+   }
+   
+   public static class FilesPaneNavigateData extends JavaScriptObject
+   {
+      protected FilesPaneNavigateData()
+      {
+      }
+      
+      public final native String getPath() /*-{ return this["path"]; }-*/;
    }
    
    

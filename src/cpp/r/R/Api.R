@@ -23,7 +23,8 @@
    TYPE_SET_EDITOR_SELECTION = 2L,
    TYPE_DOCUMENT_ID          = 3L,
    TYPE_DOCUMENT_OPEN        = 4L,
-   TYPE_DOCUMENT_NEW         = 5L
+   TYPE_DOCUMENT_NEW         = 5L,
+   TYPE_FILES_PANE_NAVIGATE  = 6L
 ))
 
 # list of potential event targets
@@ -1104,4 +1105,27 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
    
    # fire away
    .rs.api.sendRequest(request)
+})
+
+.rs.addApiFunction("filesPaneNavigate", function(path)
+{
+   info <- file.info(path, extra_cols = FALSE)
+   if (is.na(info$isdir))
+      stop("'", path, "' does not exist")
+   else if (identical(info$isdir, FALSE))
+      path <- dirname(path)
+   
+   payload <- list(
+      path  = .rs.scalar(.rs.createAliasedPath(path))
+   )
+   
+   request <- .rs.api.createRequest(
+      type    = .rs.api.eventTypes$TYPE_FILES_PANE_NAVIGATE,
+      sync    = FALSE,
+      target  = .rs.api.eventTargets$TYPE_UNKNOWN,
+      payload = payload
+   )
+   
+   .rs.api.sendRequest(request)
+   invisible(path)
 })

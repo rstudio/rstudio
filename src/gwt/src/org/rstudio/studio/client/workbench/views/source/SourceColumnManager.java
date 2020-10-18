@@ -1517,10 +1517,19 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          dirtyTargets.addAll(sourceColumn.getDirtyEditors(excludeEditor));
 
       // create a command used to close all tabs
-      final Command closeAllTabsCommand = sourceColumn == null
-            ? () -> closeAllTabs(excludeActive, false, null)
-            : () -> closeAllTabs(sourceColumn, excludeActive, false, null);
+      final Command closeAllTabsCommand = () ->
+      {
+         // The active editor may have been changed during the save process so may need to be 
+         // reset so it isn't closed
+         if (excludeEditor != activeColumn_.getActiveEditor())
+            setActive(excludeEditor);
 
+         if (sourceColumn == null) 
+            closeAllTabs(excludeActive, false, null);
+         else
+            closeAllTabs(sourceColumn, excludeActive, false, null);
+      };
+      
       saveEditingTargetsWithPrompt(caption,
          dirtyTargets,
          CommandUtil.join(closeAllTabsCommand, onCompleted),

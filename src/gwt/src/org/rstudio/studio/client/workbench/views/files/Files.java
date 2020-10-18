@@ -39,6 +39,8 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.events.OpenFileInBrowserEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenFileInBrowserHandler;
 import org.rstudio.studio.client.common.filetypes.events.RenameSourceFileEvent;
+import org.rstudio.studio.client.common.rstudioapi.model.RStudioAPIServerOperations;
+import org.rstudio.studio.client.events.RStudioApiRequestEvent;
 import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
@@ -68,7 +70,8 @@ public class Files
       implements FileChangeHandler, 
                  OpenFileInBrowserHandler,
                  DirectoryNavigateHandler,
-                 RenameSourceFileEvent.Handler
+                 RenameSourceFileEvent.Handler,
+                 RStudioApiRequestEvent.Handler
 {
    interface Binder extends CommandBinder<Commands, Files> {}
  
@@ -175,6 +178,7 @@ public class Files
       
       eventBus_.addHandler(FileChangeEvent.TYPE, this);
       eventBus_.addHandler(RenameSourceFileEvent.TYPE, this);
+      eventBus_.addHandler(RStudioApiRequestEvent.TYPE, this);
 
       initSession();
    }
@@ -632,6 +636,20 @@ public class Files
    public void onRenameSourceFile(RenameSourceFileEvent event)
    {
       renameFile(FileSystemItem.createFile(event.getPath()));
+   }
+   
+   @Override
+   public void onRStudioApiRequest(RStudioApiRequestEvent requestEvent)
+   {
+      RStudioApiRequestEvent.Data requestData = requestEvent.getData();
+      
+      if (requestData.getType() == RStudioApiRequestEvent.TYPE_FILES_PANE_NAVIGATE)
+      {
+         RStudioApiRequestEvent.FilesPaneNavigateData data = requestData.getPayload().cast();
+         String path = data.getPath();
+         navigateToDirectory(FileSystemItem.createDir(path));
+      }
+      
    }
 
    private void navigateToDirectory(FileSystemItem directoryEntry)
