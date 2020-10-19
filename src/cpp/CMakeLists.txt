@@ -416,6 +416,8 @@ if(UNIX)
    find_library(SQLITE_LIB "sqlite3")
    get_filename_component(SQLITE_LIB "${SQLITE_LIB}" REALPATH)
    if (APPLE)
+      # macdeployqt will only bundle dylibs, and find_library may resolve an xcode library spec file
+      # which won't get included in the bundle; hardcode path to ensure this doesn't happen
       set(PQ_LIB "/usr/local/lib/libpq.dylib")
     else()
       find_library(PQ_LIB "pq")
