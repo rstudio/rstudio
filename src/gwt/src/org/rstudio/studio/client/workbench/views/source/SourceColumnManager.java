@@ -1344,16 +1344,17 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       getActive().newDoc(fileType, contents, resultCallback);
    }
 
+   
    public void disownDoc(String docId)
    {
       SourceColumn column = findByDocument(docId);
-      column.closeDoc(docId);
+      disownDoc(docId, column, false);
    }
 
    // When dragging between columns/windows, we need to be specific about which column we're
    // removing the document from as it may exist in more than one column. If the column is null,
    // it is assumed that we are a satellite window and do not have multiple displays.
-   public void disownDocOnDrag(String docId, SourceColumn column)
+   public void disownDoc(String docId, SourceColumn column, boolean isDrag)
    {
       if (column == null)
       {
@@ -1366,7 +1367,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          setNewActiveEditor = true;
       
       column.closeDoc(docId);
-      column.cancelTabDrag();
+      if (isDrag)
+         column.cancelTabDrag();
       if (setNewActiveEditor)
          column.setActiveEditor();
    }
