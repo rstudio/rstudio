@@ -1521,7 +1521,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       {
          // The active editor may have been changed during the save process so may need to be 
          // reset so it isn't closed
-         if (excludeEditor != activeColumn_.getActiveEditor())
+         if (excludeEditor != null &&
+             excludeEditor != activeColumn_.getActiveEditor())
             setActive(excludeEditor);
 
          if (sourceColumn == null) 
