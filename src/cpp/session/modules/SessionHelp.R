@@ -539,7 +539,7 @@ options(help_type = "html")
    }
    
    if (length(helpfiles) <= 0)
-      return ()
+      return()
    
    file <- helpfiles[[1]]
    path <- dirname(file)
@@ -549,11 +549,38 @@ options(help_type = "html")
    query <- paste("/library/", pkgname, "/html/", basename(file), ".html", sep = "")
    html <- suppressWarnings(tools:::httpd(query, NULL, NULL))$payload
    
+   # resolve associated package from helpfile path -- note that help file
+   # paths have the format:
+   #
+   #    <libpath>/<package>/help/<...>
+   #
+   # so we look for the 'help' component and parse from there
+   if (!length(package))
+   {
+      parts <- strsplit(file, "/", fixed = TRUE)[[1L]]
+      
+      index <- 0L
+      for (i in rev(seq_along(parts)))
+      {
+         if (identical(parts[[i]], "help"))
+         {
+            index <- i - 1L
+            break
+         }
+      }
+      
+      if (index > 0)
+         package <- parts[[index]]
+   }
+   
    # try to figure out the encoding for the provided HTML
-   packagePath <- system.file(package = package)
-   encoding <- .rs.packageHelpEncoding(packagePath)
-   if (identical(encoding, "UTF-8"))
-      Encoding(html) <- "UTF-8"
+   if (length(package))
+   {
+      packagePath <- system.file(package = package)
+      encoding <- .rs.packageHelpEncoding(packagePath)
+      if (identical(encoding, "UTF-8"))
+         Encoding(html) <- "UTF-8"
+   }
    
    # try to extract HTML body
    match <- suppressWarnings(regexpr('<body>.*</body>', html))
