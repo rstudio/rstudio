@@ -1459,7 +1459,7 @@ public class Source implements InsertSourceHandler,
       }
       if (e.getOldWindowId().equals(SourceWindowManager.getSourceWindowId()))
       {
-         columnManager_.disownDocOnDrag(e.getDocId(), oldDisplay);
+         columnManager_.disownDoc(e.getDocId(), oldDisplay, true);
       }
    }
 
