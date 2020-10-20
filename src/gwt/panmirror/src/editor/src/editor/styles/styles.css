@@ -253,3 +253,22 @@ p.ProseMirror-selectednode {
   position: relative;
   left: 2px;
 }
+
+.macos-bigsur .pm-content .emoji {
+  position: relative;
+}
+
+.macos-bigsur .pm-content .emoji::before {
+  content: '?';
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: inline-block;
+  font-size: 10pt;
+  text-align: center;
+  width: 1.5em;
+  box-sizing: border-box;
+  border: 1px solid gray;
+  border-radius: 3px;
+  margin-top: -1px;
+}

@@ -86,9 +86,13 @@ public class BrowseCap
    public static boolean isMacintoshDesktopMojave()
    {
       return isMacintoshDesktop() && isUserAgent("mac os x 10_14");
-            
    }
-  
+
+   public static boolean isMacintoshDesktopBigSur()
+   {
+      return isMacintoshDesktop() && isUserAgent("mac os x 10_16");
+   }
+
    public static boolean isWindows()
    {
       return OPERATING_SYSTEM.equals("windows");
@@ -258,6 +262,12 @@ public class BrowseCap
    static
    {
       Document.get().getBody().addClassName(OPERATING_SYSTEM);
+
+      // Support for scoping styles for macOS BigSur (10.16)
+      if (isMacintoshDesktopBigSur())
+      {
+         Document.get().getBody().addClassName("macos-bigsur");
+      }
 
       if (isWindowsDesktop())
       {
