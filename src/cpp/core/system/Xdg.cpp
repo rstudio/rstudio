@@ -21,12 +21,13 @@
 #endif
 
 #include <core/Algorithm.hpp>
-#include <shared_core/SafeConvert.hpp>
-
 #include <core/system/Environment.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Xdg.hpp>
 #include <core/Thread.hpp>
+
+#include <shared_core/SafeConvert.hpp>
+#include <shared_core/system/User.hpp>
 
 namespace rstudio {
 namespace core {
@@ -188,8 +189,8 @@ FilePath resolveXdgDir(
 } // anonymous namespace
 
 FilePath userConfigDir(
-        const boost::optional<std::string>& user,
-        const boost::optional<FilePath>& homeDir)
+   const boost::optional<std::string>& user,
+   const boost::optional<FilePath>& homeDir)
 {
    return resolveXdgDir("RSTUDIO_CONFIG_HOME",
         "XDG_CONFIG_HOME",
@@ -215,6 +216,52 @@ FilePath userDataDir(
          user,
          homeDir
    );
+}
+
+void verifyUserDirs(
+   const boost::optional<std::string>& user,
+   const boost::optional<FilePath>& homeDir)
+{
+   auto testDir = [](const FilePath& dir, const ErrorLocation& errorLoc)
+   {
+      Error error, permError;
+      if (dir.exists())
+      {
+         error = dir.testWritePermissions();
+         if (error)
+         {
+            permError = Error(
+               error.getName(),
+               error.getCode(),
+               "Missing write permissions to " + dir.getAbsolutePath() + ". Some features may not work correctly.",
+               ERROR_LOCATION);
+
+
+            // It is unlikely that we'll be able to correct the permissions on the folder given that we don't have write
+            // permissions to it, but it doesn't hurt to try.
+            system::User currUser;
+            error = system::User::getUserFromIdentifier(system::username(), currUser);
+            if (!error)
+               error = dir.changeOwnership(currUser, true);
+         }
+      }
+
+      if (error)
+      {
+         std::string message;
+         message.append("Unable to access \"")
+            .append(dir.getAbsolutePath())
+            .append("\":\n  ")
+            .append(error.asString());
+         if (permError)
+            message.append("\n  ").append(permError.asString());
+
+         log::logWarningMessage(message, ERROR_LOCATION);
+      }
+   };
+
+   testDir(userConfigDir(user, homeDir), ERROR_LOCATION);
+   testDir(userDataDir(user, homeDir), ERROR_LOCATION);
 }
 
 FilePath systemConfigDir()
@@ -317,4 +364,3 @@ void forwardXdgEnvVars(Options *pEnvironment)
 } // namespace system
 } // namespace core
 } // namespace rstudio
-
