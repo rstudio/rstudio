@@ -341,9 +341,11 @@ try {
         }
 
         // trigger macos build if we're in open-source repo
-        if (env.JOB_NAME == 'IDE/open-source-pipeline/master') {
+        if (env.JOB_NAME == 'IDE/open-source-pipeline/qt-5-15') {
           trigger_external_build('IDE/macos-qt-5.15')
         }
+
+        parallel parallel_containers
 
         // trigger downstream pro artifact builds if we're finished building
         // the pro variants
