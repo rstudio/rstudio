@@ -154,6 +154,9 @@ void verifyUserDirs(
                "Missing write permissions to " + dir.getAbsolutePath() + ". Some features may not work correctly.",
                ERROR_LOCATION);
 
+
+            // It is unlikely that we'll be able to correct the permissions on the folder given that we don't have write
+            // permissions to it, but it doesn't hurt to try.
             system::User currUser;
             error = system::User::getUserFromIdentifier(system::username(), currUser);
             if (!error)
