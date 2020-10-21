@@ -3208,11 +3208,15 @@ public class TextEditingTarget implements
          {
             String code = docDisplay_.getCode();
             visualMode_.getCanonicalChanges(code, (changes) -> {
-               if (changes.changes != null)
-                  docDisplay_.applyChanges(changes.changes, true);
-               else if (changes.code != null)
-                  docDisplay_.setCode(changes.code, true);
-               onComplete.execute();
+               // null changes means an error occurred (user has already been shown an alert)
+               if (changes != null)
+               {
+                  if (changes.changes != null)
+                     docDisplay_.applyChanges(changes.changes, true);
+                  else if (changes.code != null)
+                     docDisplay_.setCode(changes.code, true);
+                  onComplete.execute();
+               }
             });
          }
 
