@@ -222,6 +222,7 @@ void verifyUserDirs(
    const boost::optional<std::string>& user,
    const boost::optional<FilePath>& homeDir)
 {
+#ifndef _WIN32
    auto testDir = [](const FilePath& dir, const ErrorLocation& errorLoc)
    {
       Error error, permError;
@@ -262,6 +263,7 @@ void verifyUserDirs(
 
    testDir(userConfigDir(user, homeDir), ERROR_LOCATION);
    testDir(userDataDir(user, homeDir), ERROR_LOCATION);
+#endif
 }
 
 FilePath systemConfigDir()
