@@ -9,8 +9,7 @@ set "PATH=C:\Program Files (x86)\Git\bin;%PATH%"
 
 set PATH=%PATH%;%CD%\tools
 
-call:install rmarkdown master rstudio --no-build-vignettes
-
+REM call:install rmarkdown master rstudio --no-build-vignettes
 REM call:install rsconnect master rstudio --no-build-vignettes
 REM call:install renv master rstudio --no-build-vignettes
 

@@ -216,8 +216,8 @@
             "source": false
         },
         "rmarkdown": {
-            "version": "0.0.0",
-            "location": "embedded",
+            "version": "2.5",
+            "location": "cran",
             "source": true
         },
         "roxygen2": {
