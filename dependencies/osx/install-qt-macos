@@ -21,7 +21,7 @@
 set -e
 
 if [ -z "$QT_VERSION" ]; then
-    QT_VERSION=5.12.8
+    QT_VERSION=5.15.1
 fi
 if [ -z "$QT_SDK_DIR" ]; then
 
@@ -36,6 +36,16 @@ fi
 if [ ! -e "$QT_SDK_DIR" ] && [ ! -e "$QT_SDK_DIR2" ] && [ ! -e "$QT_SDK_DIR3" ]
 then
    command -v 7z >/dev/null 2>&1 || { echo >&2 "7z command required to install Qt but not found (brew install p7zip)."; exit 1; }
+   echo ----------------------------------------------------------------------
+   echo "                            *** Important ***"
+   echo ----------------------------------------------------------------------
+   echo " The minimal Qt installer should only be used on a build machine. For"
+   echo " a developer machine use the Qt online installer from qt.io or"
+   echo " MaintenanceTool.app from existing Qt folder to install $QT_VERSION."
+   echo ----------------------------------------------------------------------
+   echo " Pausing for 15 seconds... (Ctrl+C to interrupt)"
+   echo ----------------------------------------------------------------------
+   sleep 15
    echo "Installing minimal Qt $QT_VERSION SDK"
    ../common/install-qt.sh --version $QT_VERSION --directory ${QT_SDK_DIR} \
       qtbase \
