@@ -136,6 +136,9 @@ export interface EditorSetMarkdownResult {
 
   // unparsed meta
   unparsed_meta: { [key: string]: any };
+
+  // updated outline 
+  location: EditingOutlineLocation;
 }
 
 export interface EditorContext {
@@ -529,6 +532,7 @@ export class Editor {
     // current 'view' of the doc as markdown looks like
     const getMarkdownTr = this.state.tr;
     const canonical = await this.getMarkdownCode(getMarkdownTr, options);
+    const location = getEditingOutlineLocation(this.state);
 
     // return
     return {
@@ -536,6 +540,7 @@ export class Editor {
       line_wrapping,
       unrecognized,
       unparsed_meta,
+      location
     };
   }
 
