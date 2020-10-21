@@ -272,7 +272,7 @@ public:
    Error checkSpelling(const std::string& word, bool *pCorrect)
    {
       std::string encoded;
-      Error error = iconvstrFunc_(word,"UTF-8",encoding_,false,&encoded);
+      Error error = iconvstrFunc_(word, "UTF-8", encoding_, false, &encoded);
       if (error)
          return error;
 
@@ -283,19 +283,22 @@ public:
    Error suggestionList(const std::string& word, std::vector<std::string>* pSug)
    {
       std::string encoded;
-      Error error = iconvstrFunc_(word,"UTF-8",encoding_,false,&encoded);
+      Error error = iconvstrFunc_(word, "UTF-8", encoding_, false, &encoded);
       if (error)
          return error;
 
-      char ** wlst;
-      int ns = pHunspell_->suggest(&wlst,encoded.c_str());
-      copyAndFreeHunspellVector(pSug,wlst,ns);
+      char** wlst;
+      int ns = pHunspell_->suggest(&wlst, encoded.c_str());
+      copyAndFreeHunspellVector(pSug, wlst, ns);
 
-      for (std::string& sug : *pSug)
+      for (auto it = pSug->begin(); it != pSug->end(); it++)
       {
-         error = iconvstrFunc_(sug, encoding_, "UTF-8", true, &sug);
+         std::string encoded;
+         error = iconvstrFunc_(*it, encoding_, "UTF-8", true, &encoded);
          if (error)
             return error;
+
+         (*it) = encoded;
       }
 
       return Success();
@@ -304,7 +307,7 @@ public:
    Error addWord(const std::string& word, bool *pAdded)
    {
       std::string encoded;
-      Error error = iconvstrFunc_(word,"UTF-8",encoding_,false,&encoded);
+      Error error = iconvstrFunc_(word, "UTF-8", encoding_, false, &encoded);
       if (error)
          return error;
 

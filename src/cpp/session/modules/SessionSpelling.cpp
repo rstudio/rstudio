@@ -54,7 +54,7 @@ boost::scoped_ptr<core::spelling::SpellingEngine> s_pSpellingEngine;
 // R function for testing & debugging
 SEXP rs_checkSpelling(SEXP wordSEXP)
 {
-   bool isCorrect;
+   bool isCorrect = false;
    std::string word = r::sexp::asString(wordSEXP);
 
    Error error = s_pSpellingEngine->checkSpelling(word, &isCorrect);

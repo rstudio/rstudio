@@ -49,3 +49,8 @@
    # remove the archive
    file.remove(allDictsTemp)   
 })
+
+.rs.addFunction("checkSpelling", function(word)
+{
+   .Call("rs_checkSpelling", enc2utf8(word), PACKAGE = "(embedding)")
+})
