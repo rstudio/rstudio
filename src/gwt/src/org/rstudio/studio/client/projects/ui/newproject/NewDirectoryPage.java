@@ -16,6 +16,7 @@ package org.rstudio.studio.client.projects.ui.newproject;
 
 import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -203,8 +204,12 @@ public class NewDirectoryPage extends NewProjectWizardPage
    protected void initialize(NewProjectInput input)
    {
       super.initialize(input);
-          
-      newProjectParent_.setText(input.getDefaultNewProjectLocation().getPath());
+      
+      String path = input.getDefaultNewProjectLocation().getPath();
+      if (StringUtil.isNullOrEmpty(path))
+         path = "~";
+      
+      newProjectParent_.setText(path);
    }
 
 

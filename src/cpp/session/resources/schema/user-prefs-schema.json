@@ -25,7 +25,7 @@
         },
         "initial_working_directory": {
             "type": "string",
-            "default": "",
+            "default": "~",
             "title": "Initial working directory",
             "description": "The initial working directory for new R sessions."
         },
@@ -625,7 +625,7 @@
         },
         "default_project_location": {
             "type": "string",
-            "default": "",
+            "default": "~",
             "title": "Default new project location",
             "description": "The directory path under which to place new projects by default."
         },

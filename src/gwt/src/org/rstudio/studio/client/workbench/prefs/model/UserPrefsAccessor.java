@@ -96,7 +96,7 @@ public class UserPrefsAccessor extends Prefs
          "initial_working_directory",
          "Initial working directory", 
          "The initial working directory for new R sessions.", 
-         "");
+         "~");
    }
 
    /**
@@ -1287,7 +1287,7 @@ public class UserPrefsAccessor extends Prefs
          "default_project_location",
          "Default new project location", 
          "The directory path under which to place new projects by default.", 
-         "");
+         "~");
    }
 
    /**
