@@ -3215,8 +3215,10 @@ public class TextEditingTarget implements
                      docDisplay_.applyChanges(changes.changes, true);
                   else if (changes.code != null)
                      docDisplay_.setCode(changes.code, true);
-                  onComplete.execute();
                }
+               // need to continue in order to not permanetly break save
+               // (user has seen an error message so will still likely report)
+               onComplete.execute();
             });
          }
 
