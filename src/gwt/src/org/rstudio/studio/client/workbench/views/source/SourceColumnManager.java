@@ -35,7 +35,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.js.JsUtil;
-import org.rstudio.core.client.widget.ModalDialogBase;
+import org.rstudio.core.client.widget.ModalReturnFocus;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -324,7 +324,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
       // register custom focus handler for case where ProseMirror
       // instance (or element within) had focus
-      ModalDialogBase.registerReturnFocusHandler((Element el) ->
+      ModalReturnFocus.registerReturnFocusHandler((Element el) ->
       {
          final String sourceClass = ClassIds.getClassId(ClassIds.SOURCE_PANEL);
          Element sourceEl = DomUtils.findParentElement(el, (Element parent) ->
