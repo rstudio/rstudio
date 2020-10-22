@@ -266,7 +266,20 @@ QString Options::proportionalFont() const
    // quotes; e.g. "sans-serif" is a signal to look for a font called sans-serif
    // rather than use the default sans-serif font!
    if (selectedFont == sansSerif)
+   {
+#if defined(__APPLE__)
+      // Qt 5.15 has a known issue in which it does not match any fonts (so we can't tell if any of
+      // our preferred fonts are installed).
+      //
+      // https://bugreports.qt.io/browse/QTBUG-87267
+      //
+      // Fall back to Lucida Grande in that case as it's almost certainly installed and the
+      // sans-serif default (Helvetica) doesn't line up very nicely with our UI elements.
+      return QStringLiteral("\"Lucida Grande\"");
+#else
       return sansSerif;
+#endif
+   }
    else
       return QStringLiteral("\"%1\"").arg(selectedFont);
 }
