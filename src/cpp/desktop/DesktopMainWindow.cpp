@@ -64,7 +64,8 @@ MainWindow::MainWindow(QUrl url,
       pSessionLauncher_(nullptr),
       pRemoteSessionLauncher_(nullptr),
       pLauncher_(new JobLauncher(this)),
-      pCurrentSessionProcess_(nullptr)
+      pCurrentSessionProcess_(nullptr),
+      isErrorDisplayed_(false)
 {
    RCommandEvaluator::setMainWindow(this);
    pToolbar_->setVisible(false);
@@ -321,6 +322,15 @@ void MainWindow::launchRemoteRStudioProject(const QString& projectUrl)
 bool MainWindow::workbenchInitialized()
 {
     return workbenchInitialized_;
+}
+
+void MainWindow::setErrorDisplayed()
+{
+   LOCK_MUTEX(mutex_)
+   {
+      isErrorDisplayed_ = true;
+   }
+   END_LOCK_MUTEX
 }
 
 void MainWindow::onWorkbenchInitialized()
@@ -663,10 +673,15 @@ void MainWindow::onLoadFinished(bool ok)
    std::ostringstream oss;
    Error error = text::renderTemplate(options().resourcesPath().completePath("html/connect.html"),
                                       vars, oss);
-   if (error)
-      LOG_ERROR(error);
-   else
-      loadHtml(QString::fromStdString(oss.str()));
+
+   LOCK_MUTEX(mutex_)
+   {
+      if (error)
+         LOG_ERROR(error);
+      else if (!isErrorDisplayed_)
+         loadHtml(QString::fromStdString(oss.str()));
+   }
+   END_LOCK_MUTEX
 }
 
 WebView* MainWindow::getWebView()
