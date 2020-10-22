@@ -85,7 +85,7 @@ public class ModalPopupPanel extends PopupPanel
       super.onUnload();
 
       if (originallyFocused_ != null)
-         originallyFocused_.focus();
+         ModalReturnFocus.returnFocus(originallyFocused_);
    }
 
    private Handle shortcutDisableHandle_;

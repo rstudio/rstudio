@@ -272,6 +272,8 @@
 	<string>Rstd</string>
 	<key>CFBundleVersion</key>
 	<string>${CPACK_PACKAGE_VERSION}</string>
+  	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.developer-tools</string>
 	<key>CSResourcesFileMapped</key>
 	<true/>
 	<key>LSRequiresCarbon</key>
