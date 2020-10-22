@@ -18,6 +18,7 @@ package org.rstudio.studio.client.panmirror;
 
 import elemental2.core.JsObject;
 import jsinterop.annotations.JsType;
+import org.rstudio.studio.client.panmirror.location.PanmirrorEditingOutlineLocation;
 
 @JsType
 public class PanmirrorSetMarkdownResult
@@ -26,6 +27,7 @@ public class PanmirrorSetMarkdownResult
    public String line_wrapping;
    public String[] unrecognized;
    public JsObject unparsed_meta;
+   public PanmirrorEditingOutlineLocation location;
    
    public static final String kLineWrappingNone = "none";
    public static final String kLineWrappingColumn= "column";

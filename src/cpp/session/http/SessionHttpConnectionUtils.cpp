@@ -241,6 +241,7 @@ bool checkForInterrupt(boost::shared_ptr<HttpConnection> ptrConnection)
    Error error = parseJsonRpcRequest(
             ptrConnection->request().body(),
             &request);
+   
    if (error)
    {
       ptrConnection->sendJsonRpcError(error);

@@ -576,7 +576,8 @@ private:
             error = setPermissions(tempReplaceFile_.getAbsolutePath(), filePermissions_);
 #endif
             if (!error)
-               error = tempReplaceFile_.move(FilePath(currentFile_));
+               error = tempReplaceFile_.move(FilePath(currentFile_), FilePath::MoveType::MoveCrossDevice, true);
+
             currentFile_.clear();
             if (error)
             {

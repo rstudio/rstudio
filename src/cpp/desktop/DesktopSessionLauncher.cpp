@@ -311,7 +311,10 @@ void SessionLauncher::showLaunchErrorPage()
    if (error)
        LOG_ERROR(error);
    else
+   {
+      pMainWindow_->setErrorDisplayed();
       pMainWindow_->loadHtml(QString::fromStdString(oss.str()));
+   }
 }
 
 void SessionLauncher::onRSessionExited(int, QProcess::ExitStatus)
