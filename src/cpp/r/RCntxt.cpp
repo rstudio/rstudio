@@ -219,6 +219,11 @@ SEXP RCntxt::call() const
    return pCntxt_ ? pCntxt_->call() : R_NilValue;
 }
 
+int RCntxt::evaldepth() const
+{
+   return pCntxt_ ? pCntxt_->evaldepth() : 0;
+}
+
 SEXP RCntxt::srcref() const
 {
    return pCntxt_ ? pCntxt_->srcref() : R_NilValue;

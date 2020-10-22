@@ -53,6 +53,7 @@
 * Added basic editor support for Dockerfiles (#5141)
 * Markdown-style sub-sections are now rendered as nested sections in the document outline for R documents (#4124)
 * Update to Pandoc 2.11 (#7696)
+* `Ctrl + D` can now be used to send EOF when reading user input via `readLines()` (#3448)
 
 ### RStudio Server
 

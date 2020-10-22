@@ -16,8 +16,9 @@
 #ifndef SESSION_CONSOLE_HPP
 #define SESSION_CONSOLE_HPP
 
-#define kConsoleText "text"
-#define kConsoleId   "console"
+#define kConsoleText  "text"
+#define kConsoleId    "console"
+#define kConsoleFlags "flags"
 
 namespace rstudio {
 namespace core {

@@ -304,6 +304,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       view_.clearLiveRegion();
       server_.consoleInput(event.getInput(),
                            event.getConsole(),
+                           event.getFlags(),
                            new ServerRequestCallback<Void>()
       {
          @Override
@@ -651,7 +652,8 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
                      // send a console cancel
                      if (!busy)
                      {
-                        eventBus_.fireEvent(new ConsoleInputEvent(null, ""));
+                        eventBus_.fireEvent(
+                              new ConsoleInputEvent(ConsoleInputEvent.FLAG_CANCEL));
                      }
                         
                   }
@@ -666,19 +668,23 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
 
             input_.clear();
          }
-         else
+         else if (keyCode == KeyCodes.KEY_D &&
+                  modifiers == KeyboardShortcut.CTRL &&
+                  input_.getText().length() == 0)
          {
-            int mod = KeyboardShortcut.getModifierValue(event.getNativeEvent());
-            if (mod == KeyboardShortcut.CTRL)
-            {
-               switch (keyCode)
-               {
-                  case 'L':
-                     Shell.this.onConsoleClear();
-                     event.preventDefault();
-                     break;
-               }
-            }
+            event.stopPropagation();
+            event.preventDefault();
+            
+            eventBus_.fireEvent(
+                  new ConsoleInputEvent(ConsoleInputEvent.FLAG_EOF));
+         }
+         else if (keyCode == KeyCodes.KEY_L &&
+                  modifiers == KeyboardShortcut.CTRL)
+         {
+            event.stopPropagation();
+            event.preventDefault();
+            
+            Shell.this.onConsoleClear();
          }
       }
 

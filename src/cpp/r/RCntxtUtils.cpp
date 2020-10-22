@@ -48,7 +48,7 @@ RCntxtVersion contextVersion()
 
 RCntxt globalContext()
 {
-   return RCntxt(getGlobalContext());
+   return RCntxt(R_GlobalContext);
 }
 
 RCntxt firstFunctionContext()
