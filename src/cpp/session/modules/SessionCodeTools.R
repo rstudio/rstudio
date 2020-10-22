@@ -2183,12 +2183,13 @@
             strsplit(x = contents, split = "\n", fixed = TRUE)[[1]])
 
       # did we find some front matter?
-      if (!is.null(partitions$front_matter))
+      front_matter <- partitions[["front_matter"]]
+      if (!is.null(front_matter))
       {
          front <- NULL
 
          tryCatch({
-            front <- yaml::read_yaml(text = partitions$front_matter)
+            front <- yaml::read_yaml(text = front_matter)
          }, error = function(e) {
             # ignore errors when reading YAML; it's very possible that the document's YAML will not
             # be correct at all times (e.g. during editing) 
@@ -2197,20 +2198,20 @@
          # start with an empty output
          output <- NULL
 
-         if (!is.null(names(front$output)))
+         if (!is.null(names(front[["output"]])))
          {
             # if the output key has children, it will appear as a list name
             # output:
             #   pkg_name::out_fmt:
             #     foo: bar
-            output <- names(front$output)[[1]]
+            output <- names(front[["output"]])[[1]]
          }
-         else if (is.character(front$output))
+         else if (is.character(front[["output"]]))
          {
             # if the output key doesn't have children, it will appear as a plain character
             #
             # output: pkg_name::out_fmt
-            output <- front$output
+            output <- front[["output"]]
          }
 
          # check for references to an R package in output format
@@ -2224,10 +2225,12 @@
          }
 
          # check for runtime: shiny or parameters (requires the Shiny R package)
-         if (identical(front$runtime, "shiny") || 
-             identical(front$runtime, "shinyrmd") ||
-             identical(front$runtime, "shiny_prerendered") ||
-             !is.null(front$params))
+         runtime <- front[["runtime"]]
+         params  <- front[["params"]]
+         if (identical(runtime, "shiny") || 
+             identical(runtime, "shinyrmd") ||
+             identical(runtime, "shiny_prerendered") ||
+             !is.null(params))
          {
             discoveries[["shiny"]] <- TRUE
          }
