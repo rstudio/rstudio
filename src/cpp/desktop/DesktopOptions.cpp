@@ -268,11 +268,14 @@ QString Options::proportionalFont() const
    if (selectedFont == sansSerif)
    {
 #if defined(__APPLE__)
-      // Qt 5.15 has a known issue on MacOS in which it can't detect any fonts; if this happens,
-      // fall back to Lucida Grande in that case as it's almost certainly installed and the
-      // sans-serif default (Helvetica) doesn't line up as nicely with our UI elements.
+      // Qt 5.15 has a known issue in which it does not match any fonts (so we can't tell if any of
+      // our preferred fonts are installed).
+      //
+      // https://bugreports.qt.io/browse/QTBUG-87267
+      //
+      // Fall back to Lucida Grande in that case as it's almost certainly installed and the
+      // sans-serif default (Helvetica) doesn't line up very nicely with our UI elements.
       return QStringLiteral("\"Lucida Grande\"");
-
 #else
       return sansSerif;
 #endif
