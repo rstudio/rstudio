@@ -17,6 +17,8 @@
 
 #include <gsl/gsl>
 
+#include <iostream>
+
 #include <boost/function.hpp>
 #include <boost/regex.hpp>
 
@@ -624,6 +626,9 @@ void Raddhistory(SEXP call, SEXP op, SEXP args, SEXP env)
 // NOTE: Win32 doesn't receive this callback
 void RSuicide(const char* s)
 {
+   // We need to write this to stderr so the parent process (rstudio) can pick up the error message and display it 
+   // to the user in case the session log file is not accessbile.
+   std::cerr << s << std::endl;
    s_callbacks.suicide(s);
    s_internalCallbacks.suicide(s);
 }
