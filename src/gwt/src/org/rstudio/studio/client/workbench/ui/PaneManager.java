@@ -450,11 +450,6 @@ public class PaneManager
          @Override
          public void onUserPrefsChanged(UserPrefsChangedEvent e)
          {
-            if (additionalSourceCount_ != userPrefs_.panes().getGlobalValue().getAdditionalSourceColumns())
-            {
-               syncAdditionalColumnCount(
-                  userPrefs_.panes().getGlobalValue().getAdditionalSourceColumns(), true);
-            }
             if (!userPrefs_.showPanelFocusRectangle().getValue())
             {
                clearFocusIndicator();
