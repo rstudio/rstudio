@@ -663,22 +663,22 @@ void MainWindow::onUrlChanged(QUrl url)
 
 void MainWindow::onLoadFinished(bool ok)
 {
-   if (ok || pRemoteSessionLauncher_)
-      return;
-
-   RS_CALL_ONCE();
-   
-   std::map<std::string,std::string> vars;
-   vars["url"] = webView()->url().url().toStdString();
-   std::ostringstream oss;
-   Error error = text::renderTemplate(options().resourcesPath().completePath("html/connect.html"),
-                                      vars, oss);
-
    LOCK_MUTEX(mutex_)
    {
+      if (ok || pRemoteSessionLauncher_ || isErrorDisplayed_)
+         return;
+
+      RS_CALL_ONCE();
+      
+      std::map<std::string,std::string> vars;
+      vars["url"] = webView()->url().url().toStdString();
+      std::ostringstream oss;
+      Error error = text::renderTemplate(options().resourcesPath().completePath("html/connect.html"),
+                                       vars, oss);
+
       if (error)
          LOG_ERROR(error);
-      else if (!isErrorDisplayed_)
+      else
          loadHtml(QString::fromStdString(oss.str()));
    }
    END_LOCK_MUTEX
