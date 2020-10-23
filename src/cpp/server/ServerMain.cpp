@@ -541,6 +541,9 @@ int main(int argc, char * const argv[])
          if (error)
             return core::system::exitFailure(error, ERROR_LOCATION);
 
+         // Reload the loggers after succesful daemonize to clear out old FDs.
+         core::log::reloadAllLogDestinations();
+
          // set file creation mask to 022 (might have inherted 0 from init)
          if (options.serverSetUmask())
             setUMask(core::system::OthersNoWriteMask);

@@ -110,6 +110,13 @@ unsigned int SyslogDestination::getId() const
    return getSyslogId();
 }
 
+void SyslogDestination::reload()
+{
+   // Close and re-open the log.
+   ::closelog();
+   ::openlog(m_impl->ProgramId.c_str(), LOG_CONS | LOG_PID, LOG_USER);
+}
+
 void SyslogDestination::writeLog(
    log::LogLevel in_logLevel,
    const std::string& in_message)
