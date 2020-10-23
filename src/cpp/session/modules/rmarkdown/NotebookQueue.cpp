@@ -326,6 +326,7 @@ private:
       ExecRange range(0, 0);
       arr.push_back(input);
       arr.push_back(chunkId);
+      arr.push_back(0); // console input type (not cancel/eof)
 
       // formulate request body
       json::Object rpc;
