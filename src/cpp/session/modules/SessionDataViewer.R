@@ -638,13 +638,21 @@
       # check the source refs to see if we can open the file itself instead of
       # opening a read-only source viewer
       srcref <- .rs.getSrcref(x)
-      if (!is.null(srcref)) {
+      if (!is.null(srcref))
+      {
          srcfile <- attr(srcref, "srcfile", exact = TRUE)
-         if (!is.null(srcfile) && !is.null(srcfile$filename) && 
-             file.exists(srcfile$filename)) {
+         filename <- .rs.nullCoalesce(srcfile$filename, "")
+         if (!identical(filename, "~/.active-rstudio-document") &&
+             file.exists(filename))
+         {
             # the srcref points to a valid file--go there 
-            invisible(.Call("rs_jumpToFunction", normalizePath(srcfile$filename), 
-                            srcref[[1]], srcref[[5]]))
+            .Call("rs_jumpToFunction",
+                  normalizePath(filename, winslash = "/"),
+                  srcref[[1]],
+                  srcref[[5]],
+                  TRUE,
+                  PACKAGE = "(embedding)")
+            
             return(invisible(NULL))
          }
       }
@@ -662,7 +670,7 @@
          namespace <- "viewing"
       else if (identical(namespace, "R_GlobalEnv"))
          namespace <- ".GlobalEnv"
-      invisible(.Call("rs_viewFunction", x, title, namespace))
+      invisible(.Call("rs_viewFunction", x, title, namespace, PACKAGE = "(embedding)"))
       return(invisible(NULL))
    }
    else if (inherits(x, "vignette"))
