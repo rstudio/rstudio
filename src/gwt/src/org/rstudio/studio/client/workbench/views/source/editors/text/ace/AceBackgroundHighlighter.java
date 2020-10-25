@@ -268,25 +268,13 @@ public class AceBackgroundHighlighter
    @Override
    public void onAttachOrDetach(AttachEvent event)
    {
-      handlers_.removeHandler();
       if (!event.isAttached())
       {
+         handlers_.removeHandler();
          if (documentChangedHandler_ != null)
          {
             documentChangedHandler_.removeHandler();
             documentChangedHandler_ = null;
-         }
-      }
-      else
-      {
-         handlers_ = new HandlerRegistrations(
-            editor_.addEditorModeChangedHandler(this),
-            editor_.addAttachHandler(this));
-         
-         if (!highlightPatterns_.isEmpty())
-         {
-            documentChangedHandler_ = editor_.addDocumentChangedHandler(this);
-            synchronizeFrom(0);
          }
       }
    }
@@ -464,7 +452,7 @@ public class AceBackgroundHighlighter
    private final AceEditor editor_;
    private final EditSession session_;
    private final List<HighlightPattern> highlightPatterns_;
-   private HandlerRegistrations handlers_;
+   private final HandlerRegistrations handlers_;
    
    private HighlightPattern activeHighlightPattern_;
    private String activeModeId_;
