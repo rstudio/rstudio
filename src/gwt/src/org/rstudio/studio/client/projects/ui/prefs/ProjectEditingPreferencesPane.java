@@ -135,7 +135,7 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       numSpacesForTab_.setValue(initialConfig_.getNumSpacesForTab() + "");
       chkAutoAppendNewline_.setValue(initialConfig_.getAutoAppendNewline());
       chkStripTrailingWhitespace_.setValue(initialConfig_.getStripTrailingWhitespace());
-      lineEndings_.setIntValue(initialConfig_.getLineEndings());
+      lineEndings_.setValue(ProjectPrefs.prefFromLineEndings(initialConfig_.getLineEndings()));
       setEncoding(initialConfig_.getEncoding());
    }
 
