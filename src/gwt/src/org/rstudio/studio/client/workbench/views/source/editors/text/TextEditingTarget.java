@@ -3015,8 +3015,12 @@ public class TextEditingTarget implements
                public void execute(final FileSystemItem saveItem,
                                    ProgressIndicator indicator)
                {
+                  // null here implies the user cancelled the save
                   if (saveItem == null)
+                  {
+                     isSaving_ = false;
                      return;
+                  }
 
                   try
                   {
