@@ -31,7 +31,7 @@ namespace connections {
 namespace {
 
 
-bool isConnection(const ConnectionId& id, json::Value valueJson)
+bool isConnection(const ConnectionId& id, const json::Value& valueJson)
 {
    if (!json::isType<json::Object>(valueJson))
    {
