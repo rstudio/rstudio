@@ -392,7 +392,7 @@ bool isSafeHost(const std::string& host)
 //
 // so we avoid querying it here.
 bool WebPage::acceptNavigationRequest(const QUrl &url,
-                                      NavigationType /* navType*/,
+                                      NavigationType navType,
                                       bool isMainFrame)
 {
    if (url.toString() == QStringLiteral("about:blank"))
