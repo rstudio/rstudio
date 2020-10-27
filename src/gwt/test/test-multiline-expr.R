@@ -79,7 +79,8 @@ x <- f(a = 1,
        # d = 4
 )
 
-# 12: data.table style
+# 12: data.table style (note: two separate statements)
+dt <- data.table(mtcars)
 dt[ , sequence := seq_len( nrow( dt ) )
 
     ][ , normal := rnorm( nrow( dt ) )
