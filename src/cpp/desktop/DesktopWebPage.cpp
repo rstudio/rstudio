@@ -470,6 +470,14 @@ bool WebPage::acceptNavigationRequest(const QUrl &url,
       {
          return true;
       }
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+      else if (navType == NavigationTypeRedirect)
+      {
+         return
+               this->url().authority() == url.authority() ||
+               isSafeHost(host);
+      }
+#endif
       else
       {
          // when not allowing external navigation, open an external browser
