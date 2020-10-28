@@ -32,6 +32,7 @@ import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 import org.rstudio.studio.client.projects.model.NewShinyAppOptions;
 import org.rstudio.studio.client.projects.model.ProjectTemplateOptions;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
@@ -67,8 +68,10 @@ public class NewDirectoryPage extends NewProjectWizardPage
    }
 
    @Inject
-   private void initialize(DependencyManager dependencyManager)
+   private void initialize(Session session,
+                           DependencyManager dependencyManager)
    {
+      session_ = session;
       dependencyManager_ = dependencyManager;
    }
 
@@ -207,7 +210,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
       
       String path = input.getDefaultNewProjectLocation().getPath();
       if (StringUtil.isNullOrEmpty(path))
-         path = "~";
+         path = session_.getSessionInfo().getDefaultProjectDir();
       
       newProjectParent_.setText(path);
    }
@@ -281,6 +284,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
    private DirectoryChooserTextBox newProjectParent_;
    
    // Injected ----
+   private Session session_;
    private DependencyManager dependencyManager_;
 
 }

@@ -416,7 +416,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       
       String workingDir = prefs.initialWorkingDirectory().getValue();
       if (StringUtil.isNullOrEmpty(workingDir))
-         workingDir = "~";
+         workingDir = session_.getSessionInfo().getInitialWorkingDir();
       
       dirChooser_.setText(workingDir);
 
