@@ -157,6 +157,10 @@ void WebPage::init()
    settings()->setAttribute(QWebEngineSettings::LocalStorageEnabled, true);
    settings()->setAttribute(QWebEngineSettings::WebGLEnabled, true);
    
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+   settings()->setAttribute(QWebEngineSettings::PdfViewerEnabled, false);
+#endif
+   
 #ifdef __APPLE__
 #if QT_VERSION < QT_VERSION_CHECK(5, 13, 0)
    settings()->setFontFamily(QWebEngineSettings::FixedFont,     QStringLiteral("Courier"));
