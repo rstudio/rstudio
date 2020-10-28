@@ -292,7 +292,7 @@
    # then use a separate API (this allows the API to work regardless of
    # whether we're in source or visual mode)
    if (identical(line, -1L) && identical(col, -1L))
-      return(file.edit(filePath))
+      return(invisible(.Call("rs_fileEdit", filePath, PACKAGE = "(embedding)")))
 
    # send event to client
    .rs.enqueClientEvent("jump_to_function", list(
