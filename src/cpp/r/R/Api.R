@@ -65,11 +65,14 @@
    # attempt to initialize a project within that directory
    .rs.ensureDirectory(path)
    
-   # check to see if a .Rproj file already exists in that directory;
-   # if so, then we don't need to re-initialize
-   rProjFiles <- list.files(path, 
-                            pattern = "[.]Rproj$",
-                            full.names = TRUE)
+   # NOTE: list.files() will fail on Windows for paths containing
+   # characters not representable in the current locale, so we instead
+   # change to the requested directory, list files, and then build the
+   # full paths
+   owd <- setwd(path)
+   rProjFiles <- list.files(pattern = "[.]Rproj$")
+   rProjFiles <- normalizePath(rProjFiles, winslash = "/", mustWork = TRUE)
+   setwd(owd)
    
    # if we already have a .Rproj file, just return that
    if (length(rProjFiles))
