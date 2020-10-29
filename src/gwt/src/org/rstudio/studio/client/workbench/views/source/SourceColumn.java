@@ -982,7 +982,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
                   // toggle save commands after the editor has been opened,
                   // in case this action has created and focused a new editor
-                  if (activeEditor_ != null)
+                  if (SourceColumn.this == manager_.getActive())
                   {
                      target.forceSaveCommandActive();
                      manageSaveCommands(true);
