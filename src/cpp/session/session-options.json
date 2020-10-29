@@ -278,7 +278,7 @@
             "description": "Specifies whether or not package builds output to the package project folder."
          },
          {
-            "name": {"constant": "kRootPathSessionOption", "value": "session-url-path-prefix"},
+            "name": {"constant": "kRootPathSessionOption", "value": "session-root-path"},
             "memberName": "rootPath_",
             "isHidden": true,
             "type": "string",

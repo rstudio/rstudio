@@ -55,6 +55,7 @@
 #include <core/CrashHandler.hpp>
 #include <shared_core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
+#include <core/http/URL.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 #include <core/http/Cookie.hpp>
@@ -128,6 +129,16 @@ Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection,
    if (pos != std::string::npos && path == kRequestDefaultRootPath)
    {
       path = baseURL.substr(pos);
+   }
+   // the root path was defined and we compute the cookie path more securely using internal assumptions
+   // instead of using the URL from the JSON input. In this case, we use the server's perceived current
+   // URI with the last part (/client_init) removed. The result is the session path, same as above.
+   else
+   {
+      path = ptrConnection->request().proxiedUri();
+      boost::algorithm::replace_all(path, ptrConnection->request().uri(), "");
+      http::URL completePath(path);
+      path = completePath.path();
    }
 
    // create the cookie; don't set an expiry date as this will be a session cookie
