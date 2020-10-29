@@ -132,6 +132,12 @@ public class StatusBarWidget extends Composite
       scopeIcon_.setVisible(visible);
    }
 
+   public void setPositionVisible(boolean visible)
+   {
+      position_.setClicksEnabled(visible);
+      position_.setVisible(visible);
+   }
+
    public void setScopeType(int type)
    {
       scopeType_ = type;
