@@ -58,6 +58,8 @@ public class PlumberAPIPresenter implements
       
       binder.bind(commands, this);  
       
+      satellite_.addCloseHandler(event -> onClose());
+
       initializeEvents();
    }     
 

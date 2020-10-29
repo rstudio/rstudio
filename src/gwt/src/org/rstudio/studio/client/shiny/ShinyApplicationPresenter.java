@@ -77,6 +77,8 @@ public class ShinyApplicationPresenter implements
          }
       };
 
+      satellite_.addCloseHandler(event -> onClose());
+
       binder.bind(commands, this);  
       
       initializeEvents();
