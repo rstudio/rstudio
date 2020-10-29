@@ -69,10 +69,16 @@
    # characters not representable in the current locale, so we instead
    # change to the requested directory, list files, and then build the
    # full paths
-   owd <- setwd(path)
-   rProjFiles <- list.files(pattern = "[.]Rproj$")
-   rProjFiles <- normalizePath(rProjFiles, winslash = "/", mustWork = TRUE)
-   setwd(owd)
+   rProjFiles <- (function() {
+      
+      # move to project path
+      owd <- setwd(path)
+      on.exit(setwd(owd), add = TRUE)
+      
+      # list files in path
+      file.path(path, list.files(pattern = "[.]Rproj$"))
+
+   })()
    
    # if we already have a .Rproj file, just return that
    if (length(rProjFiles))
