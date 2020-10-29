@@ -67,7 +67,6 @@
 #include <session/SessionHttpConnection.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
-#include <session/SessionOptionsOverlay.hpp>
 #include <session/SessionPackageProvidedExtension.hpp>
 #include <session/SessionPersistentState.hpp>
 #include <session/projects/SessionProjectSharing.hpp>
