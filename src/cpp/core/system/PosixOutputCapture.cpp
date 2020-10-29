@@ -88,14 +88,12 @@ void standardStreamCaptureThread(
                 // mark that we should skip the write, and only log this error once
                 *pSkipWrite = true;
 
-                Error error = systemError(errno, ERROR_LOCATION);
                 std::string cause = errno == EBADF ? " closed" : "'s pipe read end closed";
                 std::string description =
                       descriptorType + " descriptor " + core::safe_convert::numberToString(dupFd) +
                       cause + ". Output will no longer be redirected.";
-                error.addProperty("description", description);
 
-                LOG_ERROR(systemError(errno, ERROR_LOCATION));
+                LOG_ERROR(systemError(errno, description, ERROR_LOCATION));
              }
              else if (errno != EAGAIN && errno != EINTR)
                 LOG_ERROR(systemError(errno, ERROR_LOCATION));
