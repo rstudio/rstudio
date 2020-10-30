@@ -965,7 +965,6 @@ public class SourceColumn implements BeforeShowEvent.Handler,
                       final ResultCallback<EditingTarget, ServerError> resultCallback)
    {
       ensureVisible(false);
-      boolean active = activeEditor_ != null;
       server_.newDocument(
             fileType.getTypeId(),
             contents,
@@ -979,13 +978,14 @@ public class SourceColumn implements BeforeShowEvent.Handler,
                   // apply (dynamic) doc property defaults
                   SourceColumn.applyDocPropertyDefaults(newDoc, true, userPrefs_);
 
-                  EditingTarget target =
-                     addTab(newDoc, Source.OPEN_INTERACTIVE);
+                  EditingTarget target = addTab(newDoc, Source.OPEN_INTERACTIVE);
 
-                  if (contents != null)
+                  // toggle save commands after the editor has been opened,
+                  // in case this action has created and focused a new editor
+                  if (SourceColumn.this == manager_.getActive())
                   {
                      target.forceSaveCommandActive();
-                     manageSaveCommands(active);
+                     manageSaveCommands(true);
                   }
 
                   if (resultCallback != null)
