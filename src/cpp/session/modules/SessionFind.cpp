@@ -65,7 +65,7 @@ namespace {
 // This must be the same as MAX_COUNT in FindOutputPane.java
 const size_t MAX_COUNT = 1000;
 
-const size_t MAX_LINE_LENGTH = 1000;
+const size_t MAX_LINE_LENGTH = 3000;
 
 // Reflects the estimated current progress made in performing a replace
 class LocalProgress : public boost::noncopyable
@@ -1028,7 +1028,7 @@ private:
                                   &replaceMatchOn, &replaceMatchOff,
                                   &errorMessage);
                   lineInfo.decodedPreview = lineInfo.decodedContents;
-                  adjustForPreview(&lineInfo.decodedPreview, &matchOn, &matchOff);
+                  adjustForPreview(&lineInfo.decodedPreview, &replaceMatchOn, &replaceMatchOff);
                }
             }
 
