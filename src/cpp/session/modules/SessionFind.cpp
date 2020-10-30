@@ -517,7 +517,13 @@ private:
       {
          if (firstMatchOn > maxPreviewLength)
          {
-            *contents = contents->erase(0, firstMatchOn - 30);
+            std::string::iterator pos = contents->begin();
+            Error error = string_utils::utf8Advance(contents->begin(),
+                                                    firstMatchOn - 30,
+                                                    contents->end(),
+                                                    &pos);
+
+            contents->assign(&*pos);
             contents->insert(0, "...");
             int leadingCharactersErased = gsl::narrow_cast<int>(firstMatchOn - 33);
             json::Array newMatchOnArray;
