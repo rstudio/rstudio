@@ -16,6 +16,8 @@ package org.rstudio.studio.client.workbench.views.source;
 
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.Command;
@@ -24,10 +26,12 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
+import org.rstudio.core.client.Mutable;
 import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
@@ -35,6 +39,7 @@ import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.theme.DocTabSelectionEvent;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.EditableFileType;
@@ -120,11 +125,10 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       display_.addTabClosedHandler(this);
       display_.addTabReorderHandler(this);
 
-      // these handlers cannot be added earlier because they rely on manager_
       events_.addHandler(FileTypeChangedEvent.TYPE, event -> manageCommands(false));
-      boolean active = this == manager_.getActive();
-      events_.addHandler(SourceOnSaveChangedEvent.TYPE, event -> manageSaveCommands(active));
-      events_.addHandler(SynctexStatusChangedEvent.TYPE, event -> manageSaveCommands(active));
+      events_.addHandler(SourceOnSaveChangedEvent.TYPE, event -> manageSaveCommands(isActive()));
+      events_.addHandler(SynctexStatusChangedEvent.TYPE, event -> manageSaveCommands(isActive()));
+      
       initialized_ = true;
    }
 
@@ -814,8 +818,21 @@ public class SourceColumn implements BeforeShowEvent.Handler,
    {
       boolean saveEnabled = getNextActiveEditor() != null &&
                             getNextActiveEditor().isSaveCommandActive();
-      getSourceCommand(commands_.saveSourceDoc())
-         .setEnabled(active, active && saveEnabled, saveEnabled);
+      
+      AppCommand[] saveCommands = new AppCommand[] {
+            commands_.saveSourceDoc(),
+            commands_.saveSourceDocAs()
+      };
+      
+      for (AppCommand command : saveCommands)
+      {
+         SourceAppCommand appCommand = getSourceCommand(command);
+         appCommand.setEnabled(
+               active,
+               active && saveEnabled,
+               saveEnabled,
+               true);
+      }
    }
 
    private void manageRSConnectCommands(boolean active)
@@ -982,7 +999,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
                   // toggle save commands after the editor has been opened,
                   // in case this action has created and focused a new editor
-                  if (SourceColumn.this == manager_.getActive())
+                  if (isActive())
                   {
                      target.forceSaveCommandActive();
                      manageSaveCommands(true);
@@ -1221,6 +1238,11 @@ public class SourceColumn implements BeforeShowEvent.Handler,
          manager_.clearSourceNavigationHistory();
          events_.fireEvent(new LastSourceDocClosedEvent(name_));
       }
+   }
+   
+   private boolean isActive()
+   {
+	   return manager_.getActive() == this;
    }
 
    private Commands commands_;
