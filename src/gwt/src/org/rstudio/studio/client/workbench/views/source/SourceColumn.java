@@ -824,6 +824,24 @@ public class SourceColumn implements BeforeShowEvent.Handler,
             commands_.saveSourceDocAs()
       };
       
+      // NOTE: The save commands themselves are global, but multiple
+      // different SourceColumns may want to manage the state of those
+      // commands. The general idea here is that:
+      //
+      //    1. Only the active source column should be able to toggle the
+      //       Save command's enabled-ness itself;
+      //
+      //    2. Other source columns should be able to enabled / disable
+      //       their save buttons regardless, since the associated Save
+      //       command would become "active" immediately after click.
+      //
+      // In addition, as per https://github.com/rstudio/rstudio/issues/6475,
+      // in some cases the client-side + desktop-side state for these commands
+      // can get out-of-sync in some cases (notably, when popping out windows).
+      //
+      // We did not have time to explore the underlying issue in time for the
+      // 1.4 release, so the safer fix here was to just set 'force = true' to
+      // ensure that save command state is synchronized with desktop.
       for (AppCommand command : saveCommands)
       {
          SourceAppCommand appCommand = getSourceCommand(command);
@@ -831,7 +849,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
                active,
                active && saveEnabled,
                saveEnabled,
-               true);
+               Desktop.isDesktop());
       }
    }
 
