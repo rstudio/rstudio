@@ -555,7 +555,7 @@ options(help_type = "html")
    #    <libpath>/<package>/help/<...>
    #
    # so we look for the 'help' component and parse from there
-   if (!length(package))
+   if (!length(package) || package == "")
    {
       parts <- strsplit(file, "/", fixed = TRUE)[[1L]]
       
@@ -574,12 +574,15 @@ options(help_type = "html")
    }
    
    # try to figure out the encoding for the provided HTML
-   if (length(package))
+   if (length(package) && nzchar(package))
    {
       packagePath <- system.file(package = package)
-      encoding <- .rs.packageHelpEncoding(packagePath)
-      if (identical(encoding, "UTF-8"))
-         Encoding(html) <- "UTF-8"
+      if (file.exists(packagePath))
+      {
+         encoding <- .rs.packageHelpEncoding(packagePath)
+         if (identical(encoding, "UTF-8"))
+            Encoding(html) <- "UTF-8"
+      }
    }
    
    # try to extract HTML body
