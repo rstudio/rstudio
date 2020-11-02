@@ -50,6 +50,28 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    Sys.setenv(TAR = "/usr/bin/tar")
 }
 
+.rs.addFunction("beforePackageUnloaded", function(package)
+{
+   # force any promises associated with package's registered S3 methods --
+   # this is necessary as otherwise the lazy-load database may become corrupt
+   # if a new version of this package is later installed as the old promises
+   # will now have invalid pointers to the old lazy-load database.
+   #
+   # note that we iterate over all loaded packages here because loading a
+   # package might entail registering S3 methods in the method owner's namespace
+   #
+   # https://bugs.r-project.org/bugzilla/show_bug.cgi?id=16644
+   # https://github.com/rstudio/rstudio/issues/8265
+   for (namespaceName in loadedNamespaces())
+   {
+      .rs.tryCatch({
+         ns <- asNamespace(namespaceName)
+         table <- ns[[".__S3MethodsTable__."]]
+         as.list(table)
+      })
+   }
+})
+
 .rs.addFunction( "updatePackageEvents", function()
 {
    reportPackageStatus <- function(status)
@@ -73,6 +95,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
    notifyPackageUnloaded <- function(pkgname, ...)
    {
+      .rs.beforePackageUnloaded(pkgname)
       .Call("rs_packageUnloaded", pkgname, PACKAGE = "(embedding)")
    }
    
@@ -246,22 +269,35 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    .rs.isPackageLoaded(packageName, libName)
 })
 
-.rs.addFunction("forceUnloadPackage", function(name)
+.rs.addFunction("forceUnloadPackage", function(package)
 {
-  if (name %in% .packages())
-  {
-    fullName <- paste("package:", name, sep="")
-    suppressWarnings(detach(fullName, 
-                            character.only=TRUE, 
-                            unload=TRUE, 
-                            force=TRUE))
-    
-    pkgDLL <- getLoadedDLLs()[[name]]
-    if (!is.null(pkgDLL)) {
-      suppressWarnings(library.dynam.unload(name, 
-                                            system.file(package=name)))
-    }
-  }
+   tryCatch(
+      withCallingHandlers(
+         .rs.forceUnloadPackageImpl(package),
+         warning = function(w) invokeRestart("muffleWarning")
+      ),
+      error = warning
+   )
+})
+
+.rs.addFunction("forceUnloadPackageImpl", function(package)
+{
+   .rs.beforePackageUnloaded(package)
+   
+   searchPathName <- paste("package", package, sep = ":")
+   if (searchPathName %in% search())
+   {
+      detach(
+         name = searchPathName,
+         unload = TRUE,
+         character.only = TRUE,
+         force = TRUE
+      )
+   }
+   else if (package %in% loadedNamespaces())
+   {
+      unloadNamespace(package)
+   }
 })
 
 .rs.addFunction("packageVersion", function(name, libPath, pkgs)
