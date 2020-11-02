@@ -58,7 +58,8 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    # will now have invalid pointers to the old lazy-load database.
    #
    # note that we iterate over all loaded packages here because loading a
-   # package might entail registering S3 methods in the method owner's namespace
+   # package might entail registering S3 methods in the namespace of the
+   # package owning the generic, which typically is a separate package
    #
    # https://bugs.r-project.org/bugzilla/show_bug.cgi?id=16644
    # https://github.com/rstudio/rstudio/issues/8265
