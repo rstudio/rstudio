@@ -563,6 +563,42 @@ std::string PooledConnection::driverName() const
    return connection_->driverName();
 }
 
+ConnectionPool::ConnectionPool(const ConnectionOptions& options) :
+   connectionOptions_(options)
+{
+}
+
+void ConnectionPool::testAndReconnect(boost::shared_ptr<Connection>& connection)
+{
+   // do not test Sqlite connections - there is no backend system to connect to in this case
+   // so any errors on the file handle itself we do not want to gracefully recover from, as they would
+   // indicate a very serious programming error
+   if (connection->driver() == Driver::Sqlite)
+      return;
+
+   // it is possible for connections to go stale (such as if the upstream connection is closed)
+   // which will prevent it from being usable - we test for this by running a very efficient query
+   // and checking to make sure that no error has occurred
+   Error error = connection->executeStr("SELECT 1");
+   if (!error)
+      return;
+
+   // a connection error has occurred - attempt to reopen the connection by throwing this one away
+   // and replacing it with a new one
+   boost::shared_ptr<IConnection> newConnection;
+   error = connect(connectionOptions_, &newConnection);
+   if (error)
+   {
+      // could not re-establish connection - simply log an error
+      // future attempts to use this connection will be responsible for further attempts
+      error.addProperty("description", "Could not re-establish database connection");
+      LOG_ERROR(error);
+      return;
+   }
+
+   connection = boost::static_pointer_cast<Connection>(newConnection);
+}
+
 boost::shared_ptr<IConnection> ConnectionPool::getConnection()
 {
    // block until a connection is available, but log an error
@@ -574,6 +610,9 @@ boost::shared_ptr<IConnection> ConnectionPool::getConnection()
    {
       if (connections_.deque(&connection, boost::posix_time::seconds(30)))
       {
+         // test connection to ensure it is still alive
+         testAndReconnect(connection);
+
          // create wrapper PooledConnection around retrieved Connection
          return boost::shared_ptr<IConnection>(new PooledConnection(shared_from_this(), connection));
       }
@@ -591,6 +630,9 @@ bool ConnectionPool::getConnection(const boost::posix_time::time_duration& maxWa
    boost::shared_ptr<Connection> connection;
    if (!connections_.deque(&connection, maxWait))
       return false;
+
+   // test connection to ensure it is still alive
+   testAndReconnect(connection);
 
    pConnection->reset(new PooledConnection(shared_from_this(), connection));
    return true;
@@ -881,7 +923,7 @@ Error createConnectionPool(size_t poolSize,
                            const ConnectionOptions& options,
                            boost::shared_ptr<ConnectionPool>* pPool)
 {
-   pPool->reset(new ConnectionPool());
+   pPool->reset(new ConnectionPool(options));
 
    for (size_t i = 0; i < poolSize; ++i)
    {
