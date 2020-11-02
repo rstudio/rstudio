@@ -577,7 +577,7 @@ options(help_type = "html")
    if (length(package) && nzchar(package))
    {
       packagePath <- system.file(package = package)
-      if (file.exists(packagePath))
+      if (nzchar(packagePath))
       {
          encoding <- .rs.packageHelpEncoding(packagePath)
          if (identical(encoding, "UTF-8"))
