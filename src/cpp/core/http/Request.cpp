@@ -106,12 +106,12 @@ std::string Request::proxiedUri() const
 
    std::string root = rootPath();
 
-   // multi-session includes additional path elements in the URL
-   // this should show up only on internal requests
-   std::string sessionContextHeader = headerValue("X-RStudio-SessionContext");
-   if (sessionContextHeader != "")
+   // some internal requests may contain a virtual path any attempt to
+   // compose the same address as seen in browser must be include this path
+   std::string vPath = virtualPath();
+   if (vPath != "")
    {
-      root += sessionContextHeader;
+      root += vPath;
    }
 
    // might be using new Forwarded header
