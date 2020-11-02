@@ -19,7 +19,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.JsVector;
 import org.rstudio.core.client.JsVectorInteger;
 import org.rstudio.core.client.ListUtil;
@@ -32,7 +31,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Docu
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorModeChangedEvent;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -41,8 +39,7 @@ import com.google.inject.Inject;
 
 public class AceBackgroundHighlighter
       implements EditorModeChangedEvent.Handler,
-                 DocumentChangedEvent.Handler,
-                 AttachEvent.Handler
+                 DocumentChangedEvent.Handler
 {
    private static class HighlightPattern
    {
@@ -55,7 +52,7 @@ public class AceBackgroundHighlighter
       public Pattern begin;
       public Pattern end;
    }
-   
+  
    private class Worker
    {
       public Worker()
@@ -165,9 +162,7 @@ public class AceBackgroundHighlighter
       session_ = editor.getSession();
       
       highlightPatterns_ = new ArrayList<HighlightPattern>();
-      handlers_ = new HandlerRegistrations(
-            editor.addEditorModeChangedHandler(this),
-            editor.addAttachHandler(this));
+      editor.addEditorModeChangedHandler(this);
       
       int n = editor.getRowCount();
       rowStates_ = JavaScriptObject.createArray(n).cast();
@@ -263,32 +258,6 @@ public class AceBackgroundHighlighter
       }
       
       synchronizeFrom(startRow);
-   }
-   
-   @Override
-   public void onAttachOrDetach(AttachEvent event)
-   {
-      handlers_.removeHandler();
-      if (!event.isAttached())
-      {
-         if (documentChangedHandler_ != null)
-         {
-            documentChangedHandler_.removeHandler();
-            documentChangedHandler_ = null;
-         }
-      }
-      else
-      {
-         handlers_ = new HandlerRegistrations(
-            editor_.addEditorModeChangedHandler(this),
-            editor_.addAttachHandler(this));
-         
-         if (!highlightPatterns_.isEmpty())
-         {
-            documentChangedHandler_ = editor_.addDocumentChangedHandler(this);
-            synchronizeFrom(0);
-         }
-      }
    }
    
    // Private Methods ----
@@ -464,7 +433,6 @@ public class AceBackgroundHighlighter
    private final AceEditor editor_;
    private final EditSession session_;
    private final List<HighlightPattern> highlightPatterns_;
-   private HandlerRegistrations handlers_;
    
    private HighlightPattern activeHighlightPattern_;
    private String activeModeId_;

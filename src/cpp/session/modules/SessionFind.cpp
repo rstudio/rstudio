@@ -65,7 +65,7 @@ namespace {
 // This must be the same as MAX_COUNT in FindOutputPane.java
 const size_t MAX_COUNT = 1000;
 
-const size_t MAX_LINE_LENGTH = 1000;
+const size_t MAX_LINE_LENGTH = 3000;
 
 // Reflects the estimated current progress made in performing a replace
 class LocalProgress : public boost::noncopyable
@@ -517,7 +517,13 @@ private:
       {
          if (firstMatchOn > maxPreviewLength)
          {
-            *contents = contents->erase(0, firstMatchOn - 30);
+            std::string::iterator pos = contents->begin();
+            Error error = string_utils::utf8Advance(contents->begin(),
+                                                    firstMatchOn - 30,
+                                                    contents->end(),
+                                                    &pos);
+
+            contents->assign(&*pos);
             contents->insert(0, "...");
             int leadingCharactersErased = gsl::narrow_cast<int>(firstMatchOn - 33);
             json::Array newMatchOnArray;
@@ -1028,7 +1034,7 @@ private:
                                   &replaceMatchOn, &replaceMatchOff,
                                   &errorMessage);
                   lineInfo.decodedPreview = lineInfo.decodedContents;
-                  adjustForPreview(&lineInfo.decodedPreview, &matchOn, &matchOff);
+                  adjustForPreview(&lineInfo.decodedPreview, &replaceMatchOn, &replaceMatchOff);
                }
             }
 

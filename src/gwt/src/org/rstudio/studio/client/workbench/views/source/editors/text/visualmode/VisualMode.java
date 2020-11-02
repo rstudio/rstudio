@@ -1138,6 +1138,12 @@ public class VisualMode implements VisualModeEditorSync,
                
                // update status bar widget with current position
                syncStatusBarLocation();
+
+               // hide cursor position widget (doesn't update in visual mode)
+               if (target_.getStatusBar() != null)
+               {
+                  target_.getStatusBar().setPositionVisible(false);
+               }
                
                // (re)inject notebook output from the editor
                target_.getNotebook().migrateCodeModeOutput();
@@ -1194,7 +1200,13 @@ public class VisualMode implements VisualModeEditorSync,
             
             // move notebook outputs from visual mode
             target_.getNotebook().migrateVisualModeOutput();
-            
+
+            // bring the cursor position indicator back
+            if (target_.getStatusBar() != null)
+            {
+               target_.getStatusBar().setPositionVisible(true);
+            }
+
             // execute completed hook
             Scheduler.get().scheduleDeferred(completed);
          };

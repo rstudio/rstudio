@@ -1920,13 +1920,6 @@ public class TextEditingTarget implements
          docDisplay_.addOrUpdateBreakpoint(breakpoint);
       }
       
-      if (extendedType_.startsWith(SourceDocument.XT_RMARKDOWN_PREFIX))
-      {
-         // populate the popup menu with a list of available formats
-         updateRmdFormatList();
-         setRMarkdownBehaviorEnabled(true);
-      }
-
       view_.addRmdFormatChangedHandler(new RmdOutputFormatChangedEvent.Handler()
       {
          @Override
@@ -1977,6 +1970,13 @@ public class TextEditingTarget implements
          events_,
          releaseOnDismiss_
       );
+
+      // populate the popup menu with a list of available formats
+      if (extendedType_.startsWith(SourceDocument.XT_RMARKDOWN_PREFIX))
+      {
+         updateRmdFormatList();
+         setRMarkdownBehaviorEnabled(true);
+      }
 
       // provide find replace button to view
       view_.addVisualModeFindReplaceButton(visualMode_.getFindReplaceButton());
@@ -3015,8 +3015,12 @@ public class TextEditingTarget implements
                public void execute(final FileSystemItem saveItem,
                                    ProgressIndicator indicator)
                {
+                  // null here implies the user cancelled the save
                   if (saveItem == null)
+                  {
+                     isSaving_ = false;
                      return;
+                  }
 
                   try
                   {

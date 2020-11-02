@@ -65,11 +65,20 @@
    # attempt to initialize a project within that directory
    .rs.ensureDirectory(path)
    
-   # check to see if a .Rproj file already exists in that directory;
-   # if so, then we don't need to re-initialize
-   rProjFiles <- list.files(path, 
-                            pattern = "[.]Rproj$",
-                            full.names = TRUE)
+   # NOTE: list.files() will fail on Windows for paths containing
+   # characters not representable in the current locale, so we instead
+   # change to the requested directory, list files, and then build the
+   # full paths
+   rProjFiles <- (function() {
+      
+      # move to project path
+      owd <- setwd(path)
+      on.exit(setwd(owd), add = TRUE)
+      
+      # list files in path
+      file.path(path, list.files(pattern = "[.]Rproj$"))
+
+   })()
    
    # if we already have a .Rproj file, just return that
    if (length(rProjFiles))
@@ -292,7 +301,7 @@
    # then use a separate API (this allows the API to work regardless of
    # whether we're in source or visual mode)
    if (identical(line, -1L) && identical(col, -1L))
-      return(file.edit(filePath))
+      return(invisible(.Call("rs_fileEdit", filePath, PACKAGE = "(embedding)")))
 
    # send event to client
    .rs.enqueClientEvent("jump_to_function", list(

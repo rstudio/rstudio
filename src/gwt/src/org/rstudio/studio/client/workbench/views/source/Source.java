@@ -1350,7 +1350,7 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onActivateSource()
    {
-      onActivateSource(SourceColumnManager.MAIN_SOURCE_NAME, null);
+      onActivateSource(columnManager_.getActive().getName(), null);
    }
 
    public void onActivateSource(String columnName, final Command afterActivation)

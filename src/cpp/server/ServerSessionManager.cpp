@@ -73,7 +73,8 @@ void readRequestArgs(const core::http::Request& request, core::system::Options *
 
 core::system::ProcessConfig sessionProcessConfig(
          r_util::SessionContext context,
-         const core::system::Options& extraArgs = core::system::Options())
+         const core::system::Options& extraArgs = core::system::Options(),
+         bool requestIsSecure = false)
 {
    // prepare command line arguments
    server::Options& options = server::options();
@@ -105,11 +106,13 @@ core::system::ProcessConfig sessionProcessConfig(
 
    // ensure cookies are marked secure if applicable
    bool useSecureCookies = options.authCookiesForceSecure() ||
-                           options.getOverlayOption("ssl-enabled") == "1";
+                           options.getOverlayOption("ssl-enabled") == "1" ||
+                           requestIsSecure;
+   args.push_back(std::make_pair("--" kUseSecureCookiesSessionOption, 
+         useSecureCookies ? "1" : "0"));
+
    args.push_back(std::make_pair("--" kRootPathSessionOption,
                                  options.wwwRootPath()));
-   args.push_back(std::make_pair("--" kUseSecureCookiesSessionOption,
-                                 useSecureCookies ? "1" : "0"));
    args.push_back(std::make_pair("--" kSameSiteSessionOption,
                                  safe_convert::numberToString(static_cast<int>(options.wwwSameSite()))));
 
@@ -265,7 +268,7 @@ Error SessionManager::launchSession(boost::asio::io_service& ioService,
    r_util::SessionLaunchProfile profile;
    profile.context = context;
    profile.executablePath = server::options().rsessionPath();
-   profile.config = sessionProcessConfig(context, args);
+   profile.config = sessionProcessConfig(context, args, request.isSecure());
 
    // pass the profile to any filters we have
    for (SessionLaunchProfileFilter f : sessionLaunchProfileFilters_)

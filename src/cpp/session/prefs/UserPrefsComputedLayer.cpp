@@ -76,9 +76,15 @@ Error UserPrefsComputedLayer::readPrefs()
    layer[kDefaultRVersion] = defaultRVersionJson;
 
    // Synctex viewer ----------------------------------------------------------
-
-   layer[kPdfPreviewer] =  session::options().programMode() == kSessionProgramModeDesktop ?
-      kPdfPreviewerDesktopSynctex : kPdfPreviewerRstudio;
+#ifdef __APPLE__
+# define kDefaultDesktopPdfPreviewer kPdfPreviewerRstudio
+#else
+# define kDefaultDesktopPdfPreviewer kPdfPreviewerDesktopSynctex
+#endif
+   
+   layer[kPdfPreviewer] = (session::options().programMode() == kSessionProgramModeDesktop)
+         ? kDefaultDesktopPdfPreviewer
+         : kPdfPreviewerRstudio;
 
    // Spelling ----------------------------------------------------------------
    layer["spelling"] =

@@ -219,7 +219,12 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
 
    public void setEnabled(boolean enabled)
    {
-      if (enabled != enabled_)
+      setEnabled(enabled, false);
+   }
+   
+   public void setEnabled(boolean enabled, boolean force)
+   {
+      if (force || enabled != enabled_)
       {
          enabled_ = enabled;
          handlers_.fireEvent(new EnabledChangedEvent(this));

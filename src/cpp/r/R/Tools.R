@@ -179,7 +179,8 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    # contain recursive R objects which cause crashes when serialized
    #
    # https://github.com/rstudio/rstudio-pro/issues/2052
-   opt$cpp11_preserve_env <- NULL
+   opt$cpp11_preserve_env  <- NULL
+   opt$cpp11_preserve_xptr <- NULL
    
    # first write to sidecar file, and then rename that file
    # (don't let failed serialization leave behind broken workspace)

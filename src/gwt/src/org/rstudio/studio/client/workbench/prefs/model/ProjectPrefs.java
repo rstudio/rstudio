@@ -22,6 +22,25 @@ public class ProjectPrefs
    public static final int LINEENDINGS_NATIVE = 2;
    public static final int LINEENDINGS_PASSTHROUGH = 3;
    
+   public static final String prefFromLineEndings(int prefValue)
+   {
+      switch (prefValue)
+      {
+      case LINEENDINGS_DEFAULT:
+         return UserPrefs.LINE_ENDING_CONVERSION_DEFAULT;
+      case LINEENDINGS_WINDOWS:
+         return UserPrefs.LINE_ENDING_CONVERSION_WINDOWS;
+      case LINEENDINGS_POSIX:
+         return UserPrefs.LINE_ENDING_CONVERSION_POSIX;
+      case LINEENDINGS_NATIVE:
+         return UserPrefs.LINE_ENDING_CONVERSION_NATIVE;
+      case LINEENDINGS_PASSTHROUGH:
+         return UserPrefs.LINE_ENDING_CONVERSION_PASSTHROUGH;
+      default:
+         return UserPrefs.LINE_ENDING_CONVERSION_DEFAULT;
+      }
+   }
+   
    public static final int lineEndingsFromPref(String pref)
    {
       switch(pref)
