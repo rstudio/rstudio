@@ -87,9 +87,11 @@ public:
    std::string rootPath() const;
    void setRootPath(const std::string& path) { rootPath_ = path; }
    
-   // Virtual path of the request as seen by the browsers, by default emtpy
+   // Virtual path of the request as seen by the browsers, by default empty
    // This path can be used for separating distinct contexts under a sub path
    // Note: Affects the proxied URI or the base URI (when root path is set)
+   // For example, if the virtual path is `/s/1234567890` and RStudio is served on
+   // `example.com` then the proxied URI could be `http://example.com/s/1234567890`
    // Implemented as a header so it carries over when proxied downstream
    std::string virtualPath() const { return headerValue(kVirtualPathHeader); }
    void setVirtualPath(const std::string& path) { setHeader(kVirtualPathHeader, path); }

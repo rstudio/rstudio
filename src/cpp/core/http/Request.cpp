@@ -109,7 +109,7 @@ std::string Request::proxiedUri() const
    // some internal requests may contain a virtual path any attempt to
    // compose the same address as seen in browser must be include this path
    std::string vPath = virtualPath();
-   if (vPath != "")
+   if (!vPath.empty())
    {
       root += vPath;
    }
@@ -413,4 +413,3 @@ std::ostream& operator << (std::ostream& stream, const Request& r)
 } // namespacce http
 } // namespace core
 } // namespace rstudio
-
