@@ -1329,6 +1329,18 @@ SEXP create(const std::map<std::string, std::string>& map, Protect* pProtect)
    return listSEXP;
 }
 
+SEXP createUtf8(const std::string& data, Protect* pProtect)
+{
+   SEXP strSEXP;
+   pProtect->add(strSEXP = Rf_allocVector(STRSXP, 1));
+
+   SEXP charSEXP;
+   pProtect->add(charSEXP = Rf_mkCharLenCE(data.c_str(), data.size(), CE_UTF8));
+
+   SET_STRING_ELT(strSEXP, 0, charSEXP);
+   return strSEXP;
+}
+
 SEXP createRawVector(const std::string& data, Protect* pProtect)
 {
    SEXP rawSEXP;
