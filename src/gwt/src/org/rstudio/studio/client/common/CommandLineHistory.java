@@ -15,6 +15,8 @@
 package org.rstudio.studio.client.common;
 
 import com.google.gwt.user.client.ui.HasText;
+
+import org.rstudio.core.client.MathUtil;
 import org.rstudio.core.client.StringUtil;
 
 import java.util.ArrayList;
@@ -70,7 +72,7 @@ public class CommandLineHistory
 
    public String getHistoryEntry(int offset)
    {
-      int pos = getPositionAtOffset(offset);
+      int pos = MathUtil.clamp(getPositionAtOffset(offset), 0, history_.size() - 1);
       return history_.get(pos);
    }
 
