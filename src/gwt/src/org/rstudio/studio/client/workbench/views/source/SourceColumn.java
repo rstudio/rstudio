@@ -16,8 +16,6 @@ package org.rstudio.studio.client.workbench.views.source;
 
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.event.dom.client.FocusEvent;
-import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.Command;
@@ -26,7 +24,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
-import org.rstudio.core.client.Mutable;
 import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
@@ -816,14 +813,6 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
    public void manageSaveCommands(boolean active)
    {
-      boolean saveEnabled = getNextActiveEditor() != null &&
-                            getNextActiveEditor().isSaveCommandActive();
-      
-      AppCommand[] saveCommands = new AppCommand[] {
-            commands_.saveSourceDoc(),
-            commands_.saveSourceDocAs()
-      };
-      
       // NOTE: The save commands themselves are global, but multiple
       // different SourceColumns may want to manage the state of those
       // commands. The general idea here is that:
@@ -842,15 +831,21 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       // We did not have time to explore the underlying issue in time for the
       // 1.4 release, so the safer fix here was to just set 'force = true' to
       // ensure that save command state is synchronized with desktop.
-      for (AppCommand command : saveCommands)
-      {
-         SourceAppCommand appCommand = getSourceCommand(command);
-         appCommand.setEnabled(
-               active,
-               active && saveEnabled,
-               saveEnabled,
-               Desktop.isDesktop());
-      }
+      boolean saveEnabled = getNextActiveEditor() != null &&
+            getNextActiveEditor().isSaveCommandActive();
+      getSourceCommand(commands_.saveSourceDoc()).setEnabled(
+            active,
+            active && saveEnabled,
+            saveEnabled,
+            Desktop.isDesktop());
+
+      boolean saveAsEnabled =  getNextActiveEditor() != null &&
+            getNextActiveEditor().getSupportedCommands().contains(commands_.saveSourceDocAs());
+      getSourceCommand(commands_.saveSourceDocAs()).setEnabled(
+            active,
+            active && saveAsEnabled,
+            saveAsEnabled,
+            Desktop.isDesktop());
    }
 
    private void manageRSConnectCommands(boolean active)
