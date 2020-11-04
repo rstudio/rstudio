@@ -583,6 +583,9 @@ void ConnectionPool::testAndReconnect(boost::shared_ptr<Connection>& connection)
    if (!error)
       return;
 
+   error.addProperty("description", "Connection check query failed when getting connection from the pool");
+   LOG_ERROR(error);
+
    // a connection error has occurred - attempt to reopen the connection by throwing this one away
    // and replacing it with a new one
    boost::shared_ptr<IConnection> newConnection;
