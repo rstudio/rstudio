@@ -69,6 +69,11 @@ public:
    unsigned int getId() const override;
 
    /**
+    * @brief Reloads the log destintation. Ensures that the log does not have any stale file handles.
+    */
+   void reload() override;
+
+   /**
     * @brief Writes a message to syslog.
     *
     * @param in_logLevel    The log level of the message to write. Filtering is done prior to this call. This is for
