@@ -6453,9 +6453,10 @@ public class TextEditingTarget implements
             String viewerType = RmdEditorOptions.getString(
                   getRmdFrontMatter(), RmdEditorOptions.PREVIEW_IN, null);
 
-            // if visual mode is active, move the cursor in source mode to match the its position in visual mode
-            // so that we pass the correct line number hint to render below
-            if (visualMode_.isVisualEditorActive())
+            // if visual mode is active, move the cursor in source mode to
+            // match its position in visual mode, so that we pass the correct
+            // line number hint to render below
+            if (isVisualEditorActive())
             {
                visualMode_.syncSourceOutlineLocation();
             }
