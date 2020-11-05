@@ -14,8 +14,6 @@
  */
 package org.rstudio.studio.client.common.filetypes;
 
-import java.util.ArrayList;
-
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -77,33 +75,31 @@ public class FileTypeCommands
    
    public TextFileType[] statusBarFileTypes()
    {
-      ArrayList<TextFileType> types = new ArrayList<TextFileType>();
-      types.add(FileTypeRegistry.R);
-      types.add(FileTypeRegistry.RMARKDOWN);
-      types.add(FileTypeRegistry.SWEAVE);
-      types.add(FileTypeRegistry.RHTML);
-      types.add(FileTypeRegistry.RPRESENTATION);
-      types.add(FileTypeRegistry.RD);
-      types.add(FileTypeRegistry.TEXT);
-      types.add(FileTypeRegistry.TEX);
-      types.add(FileTypeRegistry.MARKDOWN);
-      types.add(FileTypeRegistry.XML);
-      types.add(FileTypeRegistry.YAML);
-      types.add(FileTypeRegistry.DCF);
-      types.add(FileTypeRegistry.SH);
-      types.add(FileTypeRegistry.HTML);
-      types.add(FileTypeRegistry.CSS);
-      types.add(FileTypeRegistry.SASS);
-      types.add(FileTypeRegistry.SCSS);
-      types.add(FileTypeRegistry.JS);
-      types.add(FileTypeRegistry.JSON);
-      types.add(FileTypeRegistry.CPP);
-      types.add(FileTypeRegistry.PYTHON);
-      types.add(FileTypeRegistry.SQL);
-      types.add(FileTypeRegistry.STAN);
-
-      
-      return (TextFileType[])types.toArray(new TextFileType[0]);
+      return new TextFileType[] {
+            FileTypeRegistry.R,
+            FileTypeRegistry.RMARKDOWN,
+            FileTypeRegistry.SWEAVE,
+            FileTypeRegistry.RHTML,
+            FileTypeRegistry.RPRESENTATION,
+            FileTypeRegistry.RD,
+            FileTypeRegistry.TEXT,
+            FileTypeRegistry.TEX,
+            FileTypeRegistry.MARKDOWN,
+            FileTypeRegistry.XML,
+            FileTypeRegistry.YAML,
+            FileTypeRegistry.DCF,
+            FileTypeRegistry.SH,
+            FileTypeRegistry.HTML,
+            FileTypeRegistry.CSS,
+            FileTypeRegistry.SASS,
+            FileTypeRegistry.SCSS,
+            FileTypeRegistry.JS,
+            FileTypeRegistry.JSON,
+            FileTypeRegistry.CPP,
+            FileTypeRegistry.PYTHON,
+            FileTypeRegistry.SQL,
+            FileTypeRegistry.STAN
+      };
    }
    
    public HTMLCapabilities getHTMLCapabiliites()
