@@ -218,6 +218,8 @@ private:
 class ConnectionPool : public boost::enable_shared_from_this<ConnectionPool>
 {
 public:
+   ConnectionPool(const ConnectionOptions& options);
+
    // get a connection from the connection pool, blocking until one becomes available
    boost::shared_ptr<IConnection> getConnection();
 
@@ -234,8 +236,10 @@ private:
                                      boost::shared_ptr<ConnectionPool>* pPool);
 
    void returnConnection(const boost::shared_ptr<Connection>& connection);
+   void testAndReconnect(boost::shared_ptr<Connection>& connection);
 
    thread::ThreadsafeQueue<boost::shared_ptr<Connection>> connections_;
+   ConnectionOptions connectionOptions_;
 };
 
 class Transaction
