@@ -1218,7 +1218,11 @@ public class TextEditingTargetWidget
       syncWrapMode();
       syncRainbowParenMode();
 
-      Scheduler.get().scheduleDeferred(() -> manageToolbarSizes());
+      Scheduler.get().scheduleDeferred(() ->
+      {
+         manageToolbarSizes();
+      });
+         
    }
 
    public void setFontSize(double size)

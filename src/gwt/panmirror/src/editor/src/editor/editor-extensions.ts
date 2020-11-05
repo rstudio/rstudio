@@ -61,6 +61,7 @@ import behaviorCursor from '../behaviors/cursor';
 import behaviorFind from '../behaviors/find';
 import behaviorSpellingInteractive from '../behaviors/spelling/spelling-interactive';
 import behaviorClearFormatting from '../behaviors/clear_formatting';
+import behaviorScroll from '../behaviors/scroll'
 
 // behaviors
 import behaviorSmarty from '../behaviors/smarty';
@@ -140,6 +141,7 @@ export function initExtensions(context: ExtensionContext, extensions?: readonly 
     behaviorFind,
     behaviorSpellingInteractive,
     behaviorClearFormatting,
+    behaviorScroll
   ]);
 
   // optional extensions
