@@ -69,8 +69,10 @@ std::string Request::baseUri(BaseUriUse use /*= BaseUriUse::Internal*/) const
 
 std::string Request::internalUri() const
 {
-   // ignore the proxy for the most part except by the scheme
-   std::string scheme = URL(proxiedUri()).protocol();
+   // reports the protocol as defined internally
+   std::string scheme = headerValue("X-RStudio-Proto");
+   if (scheme.empty())
+      scheme = "http";
    return scheme + "://" + host() + uri();
 }
 
@@ -133,11 +135,15 @@ std::string Request::proxiedUri() const
    }
 
    // get the protocol that was specified in the request
-   // it might have been specified by rserver-http w/ ssl-enabled=1
+   // the proxy definition prevails over rstudio's internal one
    std::string protocol = headerValue("X-Forwarded-Proto");
    if (protocol.empty())
    {
-      protocol = "http";
+      std::string rstudioProtocol = headerValue("X-RStudio-Proto");
+      if (rstudioProtocol.empty())
+         protocol = "http";
+      else
+         protocol = rstudioProtocol;
    }
 
    // might be using the legacy X-Forwarded headers
@@ -162,7 +168,7 @@ std::string Request::proxiedUri() const
       return URL::complete(protocol + "://" + forwardedHost, root + '/' + uri());
    }
 
-   // use the protocol that may have been set by X-Forwarded-Proto
+   // use the protocol that may have been set above
    return URL::complete(protocol + "://" + host(), root + '/' + uri());
 }
 
