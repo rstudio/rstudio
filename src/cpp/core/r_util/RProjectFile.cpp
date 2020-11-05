@@ -985,7 +985,7 @@ Error readProjectFile(const FilePath& projectFilePath,
 Error writeProjectFile(const FilePath& projectFilePath,
                        const RProjectBuildDefaults& buildDefaults,
                        const RProjectConfig& config)
-{  
+{
    // build version field if necessary
    std::string rVersion;
    if (!config.rVersion.isDefault())

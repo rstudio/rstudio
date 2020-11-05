@@ -163,7 +163,7 @@ export function imagePandocOutputWriter(figure: boolean, ui: EditorUI) {
             output.writeText(node.attrs.alt);
           }
         });
-        output.write([node.attrs.src, node.attrs.title || '']);
+        output.write([encodeURI(node.attrs.src), node.attrs.title || '']);
       });
     };
 

@@ -1350,7 +1350,7 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onActivateSource()
    {
-      onActivateSource(SourceColumnManager.MAIN_SOURCE_NAME, null);
+      onActivateSource(columnManager_.getActive().getName(), null);
    }
 
    public void onActivateSource(String columnName, final Command afterActivation)
@@ -1459,7 +1459,7 @@ public class Source implements InsertSourceHandler,
       }
       if (e.getOldWindowId().equals(SourceWindowManager.getSourceWindowId()))
       {
-         columnManager_.disownDocOnDrag(e.getDocId(), oldDisplay);
+         columnManager_.disownDoc(e.getDocId(), oldDisplay, true);
       }
    }
 

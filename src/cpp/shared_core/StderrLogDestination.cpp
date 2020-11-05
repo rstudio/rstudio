@@ -39,6 +39,11 @@ unsigned int StderrLogDestination::getId() const
    return 0;
 }
 
+void StderrLogDestination::reload()
+{
+   // No action necessary.
+}
+
 void StderrLogDestination::writeLog(LogLevel in_logLevel, const std::string& in_message)
 {
    // Don't write logs that are more detailed than the configured maximum

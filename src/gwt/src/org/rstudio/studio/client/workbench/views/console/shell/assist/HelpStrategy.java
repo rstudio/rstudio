@@ -71,6 +71,10 @@ public class HelpStrategy
          case RCompletionType.OPTION:
             showParameterHelp(item, display);
             break;
+         case RCompletionType.FILE:
+         case RCompletionType.DIRECTORY:
+         case RCompletionType.STRING:
+            break;
          default:
             showDefaultHelp(item, display);
             break;

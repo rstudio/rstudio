@@ -1,19 +1,19 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-  <!script type="text/javascript" src="../tools/ace/build_support/mini_require.js"></script>
-  <script type="text/javascript" src="../tools/ace/build/src/ace.js"></script>
+  <script type="text/javascript" src="../tools/rstudio-ace/build_support/mini_require.js"></script>
+  <script type="text/javascript" src="../tools/rstudio-ace/build/src/ace.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/utils.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/auto_brace_insert.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/doc_comment_highlight_rules.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/tex_highlight_rules.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/token_cursor.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/token_utils.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/rainbow_paren_highlight_rules.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/r_highlight_rules.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/r_matching_brace_outdent.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/r_scope_tree.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/r_code_model.js"></script>
-  <script type="text/javascript" src="../acesupport/acemode/background_highlighter.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/cpp_scope_tree.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/cpp_code_model.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/c_cpp_fold_mode.js"></script>
@@ -116,7 +116,7 @@ template &lt;
     inline void foo() { return foo_; }
 </pre></li>
 
-<li><pre data-expected="8">
+<li><pre data-expected="8" open-brace-skip>
 void SomeFunction(
 </pre></li>
 
@@ -193,12 +193,12 @@ int foo
 struct bar{};
 </pre></li>
 
-<li><pre data-expected="2" open-brace-skip="true">
+<li><pre data-expected="2" open-brace-skip>
 class foo :
   A,
 </pre></li>
 
-<li><pre data-expected="4" data-expected-vertical-args="12" open-brace-skip="true">
+<li><pre data-expected="4" data-expected-vertical-args="12" open-brace-skip>
 class foo : A,
 </pre></li>
 
@@ -499,7 +499,7 @@ Foo(int a, int b):
     {
 </pre></li>
 
-<li><pre data-expected="4" data-expected-vertical-args="13">
+<li><pre data-expected="4" data-expected-vertical-args="13" open-brace-skip>
 std::find_if(x.begin(),
 </pre></li>
 
@@ -642,7 +642,7 @@ else {
 Param::Param(const std::string& paramText)
 </pre></li>
 
-<li><pre data-expected="8" data-expected-open-brace="4">
+<li><pre data-expected="4" data-expected-open-brace="4">
 class Foo {
 public:
     int foo(int a,
@@ -757,7 +757,6 @@ function doIndentTest(el, state) {
   );
 
   // Insert text + a newline (the editor will auto-insert after the newline)
-
   testEditor.insert((el.innerText || el.textContext).trimRight());
   testEditor.insert("\n");
 
@@ -773,38 +772,38 @@ function doIndentTest(el, state) {
   var symbol = state === "open-brace" ? "{" : "|";
 
   el.appendChild(document.createTextNode(indent + symbol));
-  var attrName = "data-expected"; 
-  if (state.length > 0 && 
-      el.getAttribute(attrName + "-" + state)) 
-  {
-    attrName += ("-" + state);
-  }
 
-  var skip = el.getAttribute(state + "-skip") !== null;
+  var attrName = "data-expected";
+  var override = "data-expected-" + state;
+  if (el.hasAttribute(override))
+    attrName = override;
+
+  var skipState = state + "-skip";
+  var skip = el.getAttribute(skipState) !== null;
   if (skip) {
     el.style.backgroundColor = "#DDD";
     return true;
-  } else {
+  }
     
-    var expected = el.getAttribute(attrName);
-    if (expected == indent.length + "")
-    {
-      el.style.backgroundColor = '#BFB';
-      return true;
-    }
-    else
-    {
-      el.style.backgroundColor = 'pink';
-      return false;
-    }
-
+  var expected = el.getAttribute(attrName);
+  if (expected == indent.length + "")
+  {
+    el.style.backgroundColor = '#BFB';
+    el.parentElement.appendChild(document.createTextNode("[PASS]"));
+    return true;
+  }
+  else
+  {
+    el.style.backgroundColor = 'pink';
+    el.parentElement.appendChild(document.createTextNode("[FAIL]"));
+    return false;
   }
 }
 
 var test = document.getElementById("runme");
 var container = document.getElementById("testcontainer");
 var passed = 0, failed = 0;
-var states = [ "", "vertical-args" , "open-brace"];
+var states = ["regular-indent", "vertical-args" , "open-brace"];
 for (var i = 0; i < states.length; i++) 
 {
 
@@ -815,10 +814,7 @@ for (var i = 0; i < states.length; i++)
   // Clone the tests for the new state
   var testnode = container.cloneNode(true);
   var header = document.createElement("h2");
-  header.innerText = "Test " + (i + 1) + (
-    states[i].length > 0 ? 
-                                          ": " + states[i] : 
-                                          "");
+  header.innerText = "Test " + (i + 1) + ": " + states[i];
   container.parentNode.appendChild(header);
   container.parentNode.appendChild(testnode);
   testnode.style.display = "block";

@@ -18,7 +18,10 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Command;
@@ -32,10 +35,11 @@ import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.js.JsUtil;
-import org.rstudio.core.client.widget.ModalDialogBase;
+import org.rstudio.core.client.widget.ModalReturnFocus;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -204,6 +208,18 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       events_.addHandler(SourceExtendedTypeDetectedEvent.TYPE, this);
       events_.addHandler(DebugModeChangedEvent.TYPE, this);
 
+      WindowEx.addFocusHandler(new FocusHandler()
+      {
+         @Override
+         public void onFocus(FocusEvent event)
+         {
+            Scheduler.get().scheduleDeferred(() ->
+            {
+               getActive().manageSaveCommands(true);
+            });
+         }
+      });
+
       events_.addHandler(EditingTargetSelectedEvent.TYPE,
          new EditingTargetSelectedEvent.Handler()
          {
@@ -324,7 +340,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
       // register custom focus handler for case where ProseMirror
       // instance (or element within) had focus
-      ModalDialogBase.registerReturnFocusHandler((Element el) ->
+      ModalReturnFocus.registerReturnFocusHandler((Element el) ->
       {
          final String sourceClass = ClassIds.getClassId(ClassIds.SOURCE_PANEL);
          Element sourceEl = DomUtils.findParentElement(el, (Element parent) ->
@@ -1344,16 +1360,17 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       getActive().newDoc(fileType, contents, resultCallback);
    }
 
+   
    public void disownDoc(String docId)
    {
       SourceColumn column = findByDocument(docId);
-      column.closeDoc(docId);
+      disownDoc(docId, column, false);
    }
 
    // When dragging between columns/windows, we need to be specific about which column we're
    // removing the document from as it may exist in more than one column. If the column is null,
    // it is assumed that we are a satellite window and do not have multiple displays.
-   public void disownDocOnDrag(String docId, SourceColumn column)
+   public void disownDoc(String docId, SourceColumn column, boolean isDrag)
    {
       if (column == null)
       {
@@ -1366,7 +1383,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          setNewActiveEditor = true;
       
       column.closeDoc(docId);
-      column.cancelTabDrag();
+      if (isDrag)
+         column.cancelTabDrag();
       if (setNewActiveEditor)
          column.setActiveEditor();
    }
@@ -1521,7 +1539,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       {
          // The active editor may have been changed during the save process so may need to be 
          // reset so it isn't closed
-         if (excludeEditor != activeColumn_.getActiveEditor())
+         if (excludeEditor != null &&
+             excludeEditor != activeColumn_.getActiveEditor())
             setActive(excludeEditor);
 
          if (sourceColumn == null) 

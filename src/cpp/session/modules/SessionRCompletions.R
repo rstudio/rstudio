@@ -591,14 +591,13 @@ assign(x = ".rs.acCompletionTypes",
          next
       
       # ok, we found a method -- return it
-      data <- list(
-         formals = .rs.getFunctionArgumentNames(method),
-         methods = rep.int(
-            paste(functionName, class, sep = "."),
-            length(formals)
-         )
+      formals <- .rs.getFunctionArgumentNames(method)
+      methods <- rep.int(
+         paste(functionName, class, sep = "."),
+         length(formals)
       )
       
+      data <- list(formals = formals, methods = methods)
       return(data)
    }
    

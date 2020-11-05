@@ -304,6 +304,11 @@ void logInfoMessage(const std::string& in_message, const ErrorLocation& in_logge
 void logInfoMessage(const std::string& in_message, const std::string& in_section, const ErrorLocation& in_loggedFrom);
 
 /**
+ * @brief Reloads all log destinations. May be used after fork to prevent stale file handles.
+ */
+void reloadAllLogDestinations();
+
+/**
  * @brief Removes a log destination from the logger.
  *
  * If a log destination does not exist with the given ID, no destination will be removed.

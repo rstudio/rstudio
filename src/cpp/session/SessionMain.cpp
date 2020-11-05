@@ -65,6 +65,7 @@
 #include <core/system/Process.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/ParentProcessMonitor.hpp>
+#include <core/system/Xdg.hpp>
 
 #include <core/system/FileMonitor.hpp>
 #include <core/text/TemplateFilter.hpp>
@@ -1913,6 +1914,9 @@ int main (int argc, char * const argv[])
       std::string firstProjectPath = "";
       if (!options.verifyInstallation())
       {
+         // Validate the config and data directories.
+         core::system::xdg::verifyUserDirs();
+
          // determine if this is a new user and get the first project path if so
          bool newUser = false;
 

@@ -117,11 +117,11 @@ export interface BibliographySourceWithCollections extends BibliographySource {
 // when searching bibliographic sources
 const kFields: Fuse.FuseOptionKeyObject[] = [
   { name: 'id', weight: 30 },
-  { name: 'author.family', weight: 40 },
-  { name: 'author.literal', weight: 40 },
-  { name: 'author.given', weight: 10 },
-  { name: 'title', weight: 10 },
+  { name: 'author.family', weight: 15 },
+  { name: 'author.literal', weight: 15 },
   { name: 'issued', weight: 15 },
+  { name: 'title', weight: 15 },
+  { name: 'author.given', weight: 10 },
   { name: 'providerKey', weight: 0.01 },
   { name: 'collectionKeys', weight: 0.01 },
 ];

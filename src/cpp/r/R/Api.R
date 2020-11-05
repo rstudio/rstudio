@@ -23,7 +23,8 @@
    TYPE_SET_EDITOR_SELECTION = 2L,
    TYPE_DOCUMENT_ID          = 3L,
    TYPE_DOCUMENT_OPEN        = 4L,
-   TYPE_DOCUMENT_NEW         = 5L
+   TYPE_DOCUMENT_NEW         = 5L,
+   TYPE_FILES_PANE_NAVIGATE  = 6L
 ))
 
 # list of potential event targets
@@ -64,11 +65,20 @@
    # attempt to initialize a project within that directory
    .rs.ensureDirectory(path)
    
-   # check to see if a .Rproj file already exists in that directory;
-   # if so, then we don't need to re-initialize
-   rProjFiles <- list.files(path, 
-                            pattern = "[.]Rproj$",
-                            full.names = TRUE)
+   # NOTE: list.files() will fail on Windows for paths containing
+   # characters not representable in the current locale, so we instead
+   # change to the requested directory, list files, and then build the
+   # full paths
+   rProjFiles <- (function() {
+      
+      # move to project path
+      owd <- setwd(path)
+      on.exit(setwd(owd), add = TRUE)
+      
+      # list files in path
+      file.path(path, list.files(pattern = "[.]Rproj$"))
+
+   })()
    
    # if we already have a .Rproj file, just return that
    if (length(rProjFiles))
@@ -291,7 +301,7 @@
    # then use a separate API (this allows the API to work regardless of
    # whether we're in source or visual mode)
    if (identical(line, -1L) && identical(col, -1L))
-      return(file.edit(filePath))
+      return(invisible(.Call("rs_fileEdit", filePath, PACKAGE = "(embedding)")))
 
    # send event to client
    .rs.enqueClientEvent("jump_to_function", list(
@@ -1104,4 +1114,27 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
    
    # fire away
    .rs.api.sendRequest(request)
+})
+
+.rs.addApiFunction("filesPaneNavigate", function(path)
+{
+   info <- file.info(path, extra_cols = FALSE)
+   if (is.na(info$isdir))
+      stop("'", path, "' does not exist")
+   else if (identical(info$isdir, FALSE))
+      path <- dirname(path)
+   
+   payload <- list(
+      path  = .rs.scalar(.rs.createAliasedPath(path))
+   )
+   
+   request <- .rs.api.createRequest(
+      type    = .rs.api.eventTypes$TYPE_FILES_PANE_NAVIGATE,
+      sync    = FALSE,
+      target  = .rs.api.eventTargets$TYPE_UNKNOWN,
+      payload = payload
+   )
+   
+   .rs.api.sendRequest(request)
+   invisible(path)
 })

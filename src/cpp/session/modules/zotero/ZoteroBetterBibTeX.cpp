@@ -57,7 +57,7 @@ bool betterBibtexJsonRpcRequest(const std::string& method, const json::Array& pa
    request.setBody(rpcRequest.writeFormatted());
 
    http::Response response;
-   Error error = http::sendRequest("localhost", "23119", boost::posix_time::milliseconds(1000), request, &response);
+   Error error = http::sendRequest("localhost", "23119", boost::posix_time::milliseconds(10000), request, &response);
    if (!error)
    {
       if (response.statusCode() == http::status::Ok)

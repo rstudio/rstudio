@@ -257,7 +257,21 @@ public class VisualModePanmirrorFormat
    
    private boolean isGitHubDocument()
    {
-      return getOutputFormats().contains("github_document");
+      return getOutputFormats().contains("github_document") || isGitREADME();
+   }
+   
+   private boolean isGitREADME()
+   {
+      String path = docUpdateSentinel_.getPath();
+      if (path != null && isGitRepo())
+         return FileSystemItem.createFile(path).getStem().equalsIgnoreCase("README");
+      else
+         return false;
+   }
+   
+   private boolean isGitRepo()
+   {
+      return sessionInfo_.getVcsName().equalsIgnoreCase("git");
    }
    
    private boolean isDistillDocument()

@@ -163,6 +163,9 @@ SEXP create(const std::map<std::string, std::string>& value, Protect* pProtect);
 SEXP create(const std::map<std::string, SEXP> &value,
             Protect *pProtect);
 
+// Create a UTF-8 encoded character vector
+SEXP createUtf8(const std::string& data, Protect* pProtect);
+
 // Create a raw vector (binary data)
 SEXP createRawVector(const std::string& data, Protect* pProtect);
 

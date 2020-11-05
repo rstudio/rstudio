@@ -19,17 +19,29 @@ import com.google.gwt.event.shared.GwtEvent;
 
 public class ConsoleInputEvent extends GwtEvent<ConsoleInputEvent.Handler>
 {
-   public static final Type<Handler> TYPE = new Type<>();
-
-   public interface Handler extends EventHandler
-   {
-      void onConsoleInput(ConsoleInputEvent event);
-   }
-
-   public ConsoleInputEvent(String input, String console)
+   public static final int FLAG_CANCEL = 1;
+   public static final int FLAG_EOF    = 2;
+   
+   public ConsoleInputEvent(String input,
+                            String console,
+                            int flags)
    {
       input_ = input;
       console_ = console;
+      flags_ = flags;
+   }
+   
+   public ConsoleInputEvent(String input,
+                            String console)
+   {
+      input_ = input;
+      console_ = console;
+      flags_ = 0;
+   }
+   
+   public ConsoleInputEvent(int flags)
+   {
+      this("", "", flags);
    }
    
    public String getInput()
@@ -41,6 +53,15 @@ public class ConsoleInputEvent extends GwtEvent<ConsoleInputEvent.Handler>
    {
       return console_;
    }
+   
+   public int getFlags()
+   {
+      return flags_;
+   }
+   
+   private final String input_;
+   private final String console_;
+   private final int flags_;
    
    @Override
    protected void dispatch(Handler handler)
@@ -54,6 +75,11 @@ public class ConsoleInputEvent extends GwtEvent<ConsoleInputEvent.Handler>
       return TYPE;
    }
    
-   private final String input_;
-   private final String console_;
+   public interface Handler extends EventHandler
+   {
+      void onConsoleInput(ConsoleInputEvent event);
+   }
+
+   public static final Type<Handler> TYPE = new Type<>();
+
 }

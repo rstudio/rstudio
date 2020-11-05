@@ -446,7 +446,7 @@
 {
    # if 'name' is missing, we're likely being invoked by
    # 'utils::file.edit()', so just edit the requested file
-   if (missing(name))
+   if (missing(name) || is.null(name))
       return(.Call("rs_editFile", file, PACKAGE = "(embedding)"))
    
    # otherwise, we're more likely being invoked by 'edit()', which

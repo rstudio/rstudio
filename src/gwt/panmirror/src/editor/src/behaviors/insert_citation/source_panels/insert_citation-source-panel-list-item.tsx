@@ -51,8 +51,12 @@ export const CitationSourcePanelListItem = (props: ListChildComponentProps) => {
     }
   };
 
-  const onItemClick = () => {
-    citationListData.onSelectedIndexChanged(props.index);
+  const onItemClick = (e: React.MouseEvent) => {
+    if (e.shiftKey) {
+      citationListData.onAddCitation(citationEntry);
+    } else {
+      citationListData.onSelectedIndexChanged(props.index);
+    }
   };
 
   const onDoubleClick = () => {

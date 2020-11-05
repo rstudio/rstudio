@@ -28,6 +28,7 @@ import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
@@ -35,6 +36,7 @@ import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.theme.DocTabSelectionEvent;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.EditableFileType;
@@ -120,11 +122,10 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       display_.addTabClosedHandler(this);
       display_.addTabReorderHandler(this);
 
-      // these handlers cannot be added earlier because they rely on manager_
       events_.addHandler(FileTypeChangedEvent.TYPE, event -> manageCommands(false));
-      boolean active = this == manager_.getActive();
-      events_.addHandler(SourceOnSaveChangedEvent.TYPE, event -> manageSaveCommands(active));
-      events_.addHandler(SynctexStatusChangedEvent.TYPE, event -> manageSaveCommands(active));
+      events_.addHandler(SourceOnSaveChangedEvent.TYPE, event -> manageSaveCommands(isActive()));
+      events_.addHandler(SynctexStatusChangedEvent.TYPE, event -> manageSaveCommands(isActive()));
+      
       initialized_ = true;
    }
 
@@ -812,10 +813,39 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
    public void manageSaveCommands(boolean active)
    {
+      // NOTE: The save commands themselves are global, but multiple
+      // different SourceColumns may want to manage the state of those
+      // commands. The general idea here is that:
+      //
+      //    1. Only the active source column should be able to toggle the
+      //       Save command's enabled-ness itself;
+      //
+      //    2. Other source columns should be able to enabled / disable
+      //       their save buttons regardless, since the associated Save
+      //       command would become "active" immediately after click.
+      //
+      // In addition, as per https://github.com/rstudio/rstudio/issues/6475,
+      // in some cases the client-side + desktop-side state for these commands
+      // can get out-of-sync in some cases (notably, when popping out windows).
+      //
+      // We did not have time to explore the underlying issue in time for the
+      // 1.4 release, so the safer fix here was to just set 'force = true' to
+      // ensure that save command state is synchronized with desktop.
       boolean saveEnabled = getNextActiveEditor() != null &&
-                            getNextActiveEditor().isSaveCommandActive();
-      getSourceCommand(commands_.saveSourceDoc())
-         .setEnabled(active, active && saveEnabled, saveEnabled);
+            getNextActiveEditor().isSaveCommandActive();
+      getSourceCommand(commands_.saveSourceDoc()).setEnabled(
+            active,
+            active && saveEnabled,
+            saveEnabled,
+            Desktop.isDesktop());
+
+      boolean saveAsEnabled =  getNextActiveEditor() != null &&
+            getNextActiveEditor().getSupportedCommands().contains(commands_.saveSourceDocAs());
+      getSourceCommand(commands_.saveSourceDocAs()).setEnabled(
+            active,
+            active && saveAsEnabled,
+            saveAsEnabled,
+            Desktop.isDesktop());
    }
 
    private void manageRSConnectCommands(boolean active)
@@ -965,7 +995,6 @@ public class SourceColumn implements BeforeShowEvent.Handler,
                       final ResultCallback<EditingTarget, ServerError> resultCallback)
    {
       ensureVisible(false);
-      boolean active = activeEditor_ != null;
       server_.newDocument(
             fileType.getTypeId(),
             contents,
@@ -979,13 +1008,14 @@ public class SourceColumn implements BeforeShowEvent.Handler,
                   // apply (dynamic) doc property defaults
                   SourceColumn.applyDocPropertyDefaults(newDoc, true, userPrefs_);
 
-                  EditingTarget target =
-                     addTab(newDoc, Source.OPEN_INTERACTIVE);
+                  EditingTarget target = addTab(newDoc, Source.OPEN_INTERACTIVE);
 
-                  if (contents != null)
+                  // toggle save commands after the editor has been opened,
+                  // in case this action has created and focused a new editor
+                  if (isActive())
                   {
                      target.forceSaveCommandActive();
-                     manageSaveCommands(active);
+                     manageSaveCommands(true);
                   }
 
                   if (resultCallback != null)
@@ -1221,6 +1251,11 @@ public class SourceColumn implements BeforeShowEvent.Handler,
          manager_.clearSourceNavigationHistory();
          events_.fireEvent(new LastSourceDocClosedEvent(name_));
       }
+   }
+   
+   private boolean isActive()
+   {
+	   return manager_.getActive() == this;
    }
 
    private Commands commands_;
