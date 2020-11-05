@@ -41,21 +41,9 @@ export function getWords(
   const beginPos = findBeginWord(state, start, spelling.classifyCharacter);
   const endPos = findEndWord(state, end, spelling.classifyCharacter);
 
-  // create some termination protection for this loop (some reports of 
-  // freezing beahvior late in the v1.4 cycle and we have already fixed
-  // one instance of this loop not terminating). if e.g. advanceToWord()
-  // kept returning currentPos then we wouldn't terminate
-  let currentIteration = 0;
-
   const words: EditorWordRange[] = [];
   let currentPos = beginPos;
   while (currentPos <= endPos) {
-
-    // termination protection
-    if (currentIteration++ > (endPos - beginPos)) {
-      break;
-    }
-
     // advance until we find a word
     currentPos = advanceToWord(state, currentPos, spelling.classifyCharacter);
     if (currentPos >= endPos) {
