@@ -96,6 +96,7 @@ public class FileTypeCommands
       types.add(FileTypeRegistry.SASS);
       types.add(FileTypeRegistry.SCSS);
       types.add(FileTypeRegistry.JS);
+      types.add(FileTypeRegistry.JSON);
       types.add(FileTypeRegistry.CPP);
       types.add(FileTypeRegistry.PYTHON);
       types.add(FileTypeRegistry.SQL);
