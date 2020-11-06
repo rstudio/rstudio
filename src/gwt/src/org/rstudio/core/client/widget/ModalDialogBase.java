@@ -26,7 +26,6 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.MouseDownEvent;
-import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.Command;
@@ -56,31 +55,10 @@ import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.Timers;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public abstract class ModalDialogBase extends DialogBox
                                       implements AriaLiveStatusReporter
 {
-
-   public interface ReturnFocusHandler
-   {
-      boolean returnFocus(Element el);
-   }
-
-   public static HandlerRegistration registerReturnFocusHandler(final ReturnFocusHandler handler)
-   {
-      FOCUS_HANDLERS.add(handler);
-
-      return new HandlerRegistration()
-      {
-         @Override
-         public void removeHandler()
-         {
-            FOCUS_HANDLERS.remove(handler);
-         }
-      };
-   }
-
    protected ModalDialogBase(DialogRole role)
    {
       this(null, role);
@@ -555,40 +533,11 @@ public abstract class ModalDialogBase extends DialogBox
          originallyActiveElement_ = null;
       }
    }
-
+   
    private void restoreFocus()
    {
-      // iterate over focus handlers (in reverse order so
-      // most recently added handlers are executed first)
-      // and see if a registered handler can fire
-      for (int i = 0, n = FOCUS_HANDLERS.size(); i < n; i++)
-      {
-         try
-         {
-            // first, try running a registered focus handler
-            ReturnFocusHandler handler = FOCUS_HANDLERS.get(n - i - 1);
-            if (handler.returnFocus(originallyActiveElement_))
-               return;
-
-         }
-         catch (Exception e)
-         {
-            // swallow exceptions (attempts to focus an element can
-            // fail for a multitude of reasons and those reasons are
-            // usually not actionable by the user)
-         }
-      }
-
-      try
-      {
-         // if no registered handler fired, then just focus element
-         originallyActiveElement_.focus();
-      }
-      catch (Exception e)
-      {
-         // swallow exceptions
-      }
-
+      if(originallyActiveElement_ != null)
+         ModalReturnFocus.returnFocus(originallyActiveElement_);
    }
 
    protected SimplePanel getContainerPanel()
@@ -876,7 +825,6 @@ public abstract class ModalDialogBase extends DialogBox
    private final DialogRole role_;
    private final AriaLiveStatusWidget ariaLiveStatusWidget_;
    private final FocusHelper focus_;
-   private static final List<ReturnFocusHandler> FOCUS_HANDLERS = new ArrayList<>();
    
    public static final String ALLOW_ENTER_KEY_CLASS = "__rstudio_modal_allow_enter_key";
 }

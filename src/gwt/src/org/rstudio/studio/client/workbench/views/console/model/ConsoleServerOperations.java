@@ -33,6 +33,7 @@ public interface ConsoleServerOperations extends CodeToolsServerOperations,
    // send console input
    void consoleInput(String consoleInput, 
                      String consoleId,
+                     int flags,
                      ServerRequestCallback<Void> requestCallback);
    
    void resetConsoleActions(ServerRequestCallback<Void> requestCallback);

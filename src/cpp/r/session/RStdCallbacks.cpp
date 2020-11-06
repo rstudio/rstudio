@@ -17,6 +17,8 @@
 
 #include <gsl/gsl>
 
+#include <iostream>
+
 #include <boost/function.hpp>
 #include <boost/regex.hpp>
 
@@ -24,6 +26,7 @@
 #include <r/ROptions.hpp>
 #include <r/RSourceManager.hpp>
 #include <r/RUtil.hpp>
+#include <r/RCntxtUtils.hpp>
 #include <r/session/RClientState.hpp>
 #include <r/session/RConsoleActions.hpp>
 #include <r/session/RConsoleHistory.hpp>
@@ -312,15 +315,15 @@ int RReadConsole (const char *pmt,
 
       // get the next input
       bool addToHistory = (hist == 1);
-      RConsoleInput consoleInput("");
-      if (s_callbacks.consoleRead(promptString, addToHistory, &consoleInput) )
+      RConsoleInput consoleInput(kConsoleInputCancel);
+      if (s_callbacks.consoleRead(promptString, addToHistory, &consoleInput))
       {
          // add prompt to console actions (we do this after consoleRead
          // completes so that we don't send both a console prompt event
          // AND include the same prompt in the actions history)
          consoleActions().add(kConsoleActionPrompt, prompt);
 
-         if (consoleInput.cancel)
+         if (consoleInput.isCancel())
          {
             // notify of interrupt
             consoleActions().notifyInterrupt();
@@ -329,10 +332,20 @@ int RReadConsole (const char *pmt,
             // c++ stack unwinding to occur before jumping
             throw r::exec::InterruptException();
          }
+         
+         // handle EOF. note that we only want to return 0 here if we
+         // know that the session is waiting for input; otherwise we'll
+         // end up quitting R altogether! this effectively implies that
+         // EOF is a no-op at the top level, which seems to be fine
+         else if (consoleInput.isEof() &&
+                  r::context::globalContext().evaldepth() != 0)
+         {
+            return 0;
+         }
          else
          {
             // determine the input to return to R
-            std::string rInput = consoleInput.text;
+            std::string rInput(consoleInput.text);
 
             // refresh source if necessary (no-op in production)
             r::sourceManager().reloadIfNecessary();
@@ -356,9 +369,9 @@ int RReadConsole (const char *pmt,
                throw r::exec::InterruptException();
 
             // copy to buffer and add terminators
-            rInput.copy( (char*)buf, maxLen);
+            rInput.copy((char*)buf, maxLen);
             buf[inputLen] = '\n';
-            buf[inputLen+1] = '\0';
+            buf[inputLen + 1] = '\0';
          }
 
          return 1;
@@ -613,6 +626,9 @@ void Raddhistory(SEXP call, SEXP op, SEXP args, SEXP env)
 // NOTE: Win32 doesn't receive this callback
 void RSuicide(const char* s)
 {
+   // We need to write this to stderr so the parent process (rstudio) can pick up the error message and display it 
+   // to the user in case the session log file is not accessbile.
+   std::cerr << s << std::endl;
    s_callbacks.suicide(s);
    s_internalCallbacks.suicide(s);
 }

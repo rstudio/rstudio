@@ -1,5 +1,5 @@
 /*
- * UserPrefsUtils.java
+ * UserPrefUtils.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *

@@ -217,7 +217,8 @@ export class AceRenderQueue {
     // accumulate when NodeViews are added to the render queue but replaced
     // (by a document rebuild) before they have a chance to render.
     let view: AceNodeView | undefined;
-    while (view === null || view === undefined || view.getPos() === undefined) {
+    while ((view === null || view === undefined || view.getPos() === undefined) &&
+           this.renderQueue.length > 0) {
       view = this.renderQueue.shift();
     }
 
@@ -277,6 +278,11 @@ export class AceRenderQueue {
   private destroy() {
     // Cancel any pending renders
     this.cancelTimer();
+
+    // Clear any pending update timer
+    if (this.updateTimer !== 0) {
+      window.clearTimeout(this.updateTimer);
+    }
 
     // Remove event subscriptions
     this.subscriptions.forEach(unsub => unsub());

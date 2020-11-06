@@ -62,6 +62,12 @@ FilePath userConfigDir(const boost::optional<std::string>& user = boost::none,
 // On Windows, this is 'FOLDERID_LocalAppData' (typically 'AppData/Local').
 FilePath userDataDir(const boost::optional<std::string>& user = boost::none,
                      const boost::optional<FilePath>& homeDir = boost::none);
+                     
+// This function verifies that the userConfigDir() and userDataDir() exist and are owned by the running user.
+// 
+// It should be invoked once. Any issues with these directories will be emitted to the session log.
+void verifyUserDirs(const boost::optional<std::string>& user = boost::none,
+                    const boost::optional<FilePath>& homeDir = boost::none);
 
 // Returns the RStudio XDG system config directory.
 //

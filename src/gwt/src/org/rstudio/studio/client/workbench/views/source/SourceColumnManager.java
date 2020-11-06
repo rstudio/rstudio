@@ -18,7 +18,10 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Command;
@@ -32,10 +35,11 @@ import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.js.JsUtil;
-import org.rstudio.core.client.widget.ModalDialogBase;
+import org.rstudio.core.client.widget.ModalReturnFocus;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -204,6 +208,18 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       events_.addHandler(SourceExtendedTypeDetectedEvent.TYPE, this);
       events_.addHandler(DebugModeChangedEvent.TYPE, this);
 
+      WindowEx.addFocusHandler(new FocusHandler()
+      {
+         @Override
+         public void onFocus(FocusEvent event)
+         {
+            Scheduler.get().scheduleDeferred(() ->
+            {
+               getActive().manageSaveCommands(true);
+            });
+         }
+      });
+
       events_.addHandler(EditingTargetSelectedEvent.TYPE,
          new EditingTargetSelectedEvent.Handler()
          {
@@ -324,7 +340,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
       // register custom focus handler for case where ProseMirror
       // instance (or element within) had focus
-      ModalDialogBase.registerReturnFocusHandler((Element el) ->
+      ModalReturnFocus.registerReturnFocusHandler((Element el) ->
       {
          final String sourceClass = ClassIds.getClassId(ClassIds.SOURCE_PANEL);
          Element sourceEl = DomUtils.findParentElement(el, (Element parent) ->

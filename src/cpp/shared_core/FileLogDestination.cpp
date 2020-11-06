@@ -201,6 +201,11 @@ unsigned int FileLogDestination::getId() const
    return m_impl->Id;
 }
 
+void FileLogDestination::reload()
+{
+   m_impl->closeLogFile();
+}
+
 void FileLogDestination::writeLog(LogLevel in_logLevel, const std::string& in_message)
 {
    // Don't write logs that are more detailed than the configured maximum.

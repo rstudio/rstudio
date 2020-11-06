@@ -22,6 +22,8 @@
 #include <QtGui>
 #include <QSessionManager>
 
+#include <core/Thread.hpp>
+
 #include "DesktopInfo.hpp"
 #include "DesktopGwtCallback.hpp"
 #include "DesktopGwtWindow.hpp"
@@ -57,6 +59,8 @@ public:
    QWebEngineProfile* getPageProfile();
    WebView* getWebView();
    bool workbenchInitialized();
+
+   void setErrorDisplayed();
 
 public Q_SLOTS:
    void quit();
@@ -132,6 +136,9 @@ private:
    boost::shared_ptr<JobLauncher> pLauncher_;
    ApplicationLaunch *pAppLauncher_;
    QProcess* pCurrentSessionProcess_;
+
+   boost::mutex mutex_;
+   bool isErrorDisplayed_;
 
 #ifdef _WIN32
    HWINEVENTHOOK eventHook_;

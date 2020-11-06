@@ -40,6 +40,7 @@ public interface StatusBar
    StatusBarElement getPosition();
    StatusBarElement getScope();
    StatusBarElement getLanguage();
+   void setPositionVisible(boolean visible);
    void setScopeVisible(boolean visible);
    void setScopeType(int type);
 

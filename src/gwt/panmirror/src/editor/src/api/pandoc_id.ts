@@ -102,7 +102,6 @@ export function pandocAsciify(text: string) {
 
       case 200:
       case 201:
-      case 201:
       case 203:
       case 274:
       case 276:
@@ -261,9 +260,6 @@ export function pandocAsciify(text: string) {
       case 218:
       case 219:
       case 220:
-      case 340:
-      case 342:
-      case 344:
       case 360:
       case 362:
       case 364:

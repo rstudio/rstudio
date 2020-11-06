@@ -20,12 +20,16 @@
 
 #include <boost/function.hpp>
 
+#include <shared_core/json/Json.hpp>
 #include <shared_core/FilePath.hpp>
 
 #include <core/r_util/RSessionContext.hpp>
 
 #include <R_ext/RStartup.h>
 #include <r/session/RSessionUtils.hpp>
+
+#define kConsoleInputCancel 1
+#define kConsoleInputEof    2
 
 #define EX_CONTINUE 100
 #define EX_FORCE    101
@@ -113,12 +117,48 @@ struct RInitInfo
       
 struct RConsoleInput
 {
-   explicit RConsoleInput(const std::string& console) : cancel(true), console(console) {}
-   explicit RConsoleInput(const std::string& text, const std::string& console) : 
-                          cancel(false), text(text), console(console) {}
-   bool cancel;
+   explicit RConsoleInput()
+      : flags(0)
+   {
+   }
+   
+   explicit RConsoleInput(int flags)
+      : flags(flags)
+   {
+   }
+   
+   explicit RConsoleInput(const std::string& text,
+                          const std::string& console = "",
+                          int flags = 0)
+      : text(text),
+        console(console),
+        flags(flags)
+   {
+   }
+   
+   bool isCancel()
+   {
+      return (flags & kConsoleInputCancel) != 0;
+   }
+   
+   bool isEof()
+   {
+      return (flags & kConsoleInputEof) != 0;
+   }
+   
+   // typically used for hand-constructed RPC requests
+   core::json::Array toJsonArray()
+   {
+      core::json::Array jsonArray;
+      jsonArray.push_back(text);
+      jsonArray.push_back(console);
+      jsonArray.push_back(flags);
+      return jsonArray;
+   }
+   
    std::string text;
    std::string console;
+   int flags;
 };
 
 // forward declare DisplayState

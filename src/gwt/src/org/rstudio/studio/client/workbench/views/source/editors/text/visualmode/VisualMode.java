@@ -334,19 +334,14 @@ public class VisualMode implements VisualModeEditorSync,
                         // note that ready.execute() is never called in the error case
                         return;
                      }
-                     
+
                      // we are about to mutate the document, so create a single
                      // shot handler that will adjust the known position of
                      // items in the outline (we do this opportunistically
                      // unless executing code)
                      if (markdown.location != null && syncType != SyncType.SyncTypeExecution)
                      {
-                        final Value<HandlerRegistration> handler = new Value<HandlerRegistration>(null);
-                        handler.setValue(docDisplay_.addScopeTreeReadyHandler((evt) ->
-                        {
-                           alignScopeOutline(markdown.location);
-                           handler.getValue().removeHandler();
-                        }));
+                         alignScopeTreeAfterUpdate(markdown.location);
                      }
                      
                      // apply diffs unless the wrap column changed (too expensive)
@@ -540,8 +535,10 @@ public class VisualMode implements VisualModeEditorSync,
                            // so that diffs are efficient)
                            if (result.canonical != editorCode)
                            {
-                              getSourceEditor().setCode(result.canonical);
-                              markDirty();
+                               // ensure we realign the scope tree after changing the code
+                               alignScopeTreeAfterUpdate(result.location);
+                               getSourceEditor().setCode(result.canonical);
+                               markDirty();
                            }
                            
                            // completed
@@ -1141,6 +1138,12 @@ public class VisualMode implements VisualModeEditorSync,
                
                // update status bar widget with current position
                syncStatusBarLocation();
+
+               // hide cursor position widget (doesn't update in visual mode)
+               if (target_.getStatusBar() != null)
+               {
+                  target_.getStatusBar().setPositionVisible(false);
+               }
                
                // (re)inject notebook output from the editor
                target_.getNotebook().migrateCodeModeOutput();
@@ -1197,7 +1200,13 @@ public class VisualMode implements VisualModeEditorSync,
             
             // move notebook outputs from visual mode
             target_.getNotebook().migrateVisualModeOutput();
-            
+
+            // bring the cursor position indicator back
+            if (target_.getStatusBar() != null)
+            {
+               target_.getStatusBar().setPositionVisible(true);
+            }
+
             // execute completed hook
             Scheduler.get().scheduleDeferred(completed);
          };
@@ -1715,7 +1724,26 @@ public class VisualMode implements VisualModeEditorSync,
          chunk.setScope(chunkScopes.get(k));
       }
    }
-   
+
+   /**
+    * Aligns the scope tree with chunks in visual mode; intended to be called when code
+    * has been mutated in the editor.
+    *
+    * @param location An outline of editing locations
+    */
+   private void alignScopeTreeAfterUpdate(PanmirrorEditingOutlineLocation location)
+   {
+      final Value<HandlerRegistration> handler = new Value<HandlerRegistration>(null);
+      handler.setValue(docDisplay_.addScopeTreeReadyHandler((evt) ->
+      {
+         if (location != null)
+         {
+            alignScopeOutline(location);
+         }
+         handler.getValue().removeHandler();
+      }));
+   }
+
    private Commands commands_;
    private UserPrefs prefs_;
    private SourceServerOperations source_;

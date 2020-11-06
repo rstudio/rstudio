@@ -352,10 +352,10 @@ public class HistoryPresenter
                @Override
                public void onResponseReceived(String response)
                {
-                  super.onResponseReceived(response);
                   if (token.isInvalid())
                      return;
 
+                  super.onResponseReceived(response);
                   DiffParser parser = strategy_.createParserForCommit(response);
                   view_.getCommitDetail().setDetails(
                                       parser, !strategy_.isShowFileSupported());
@@ -365,6 +365,9 @@ public class HistoryPresenter
                @Override
                public void onError(ServerError error)
                {
+                  if (token.isInvalid())
+                     return;
+                  
                   commitShowing_ = null;
 
                   JSONNumber size = error.getClientInfo().isNumber();
