@@ -20,7 +20,6 @@ import org.rstudio.core.client.command.KeySequence;
 
 import java.util.List;
 
-import org.rstudio.core.client.events.HasContextMenuHandlers;
 import org.rstudio.core.client.js.JsMap;
 import org.rstudio.core.client.patch.TextChange;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
@@ -72,6 +71,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.FocusHandler;
+import com.google.gwt.event.dom.client.HasContextMenuHandlers;
 import com.google.gwt.event.dom.client.HasFocusHandlers;
 import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.event.logical.shared.AttachEvent;
