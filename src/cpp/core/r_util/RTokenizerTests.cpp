@@ -303,6 +303,13 @@ test_context("RTokenizer")
       expect_true(rTokens.at(3).isType(RToken::RPAREN));
    }
    
+   test_that("multiline strings are tokenized as strings")
+   {
+      RTokens rTokens(L"'abc\ndef'");
+      expect_true(rTokens.size() == 1);
+      expect_true(rTokens.at(0).isType(RToken::STRING));
+   }
+   
 }
 
 } // namespace r_util

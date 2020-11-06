@@ -283,6 +283,8 @@ test_context("Diagnostics")
       EXPECT_ERRORS("local({ if (TRUE) })");
 
       EXPECT_NO_ERRORS("phi = function(`arg 1`) 1 + 1\nph(`arg 1` = 1)");
+      EXPECT_NO_ERRORS("'a\nb' <- 1");
+      EXPECT_NO_ERRORS("`a\nb` <- 1");
    }
    
    lintRStudioRFiles();

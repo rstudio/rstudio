@@ -2430,7 +2430,12 @@ START:
          // parses with '-' as a binary operator.
          if (isBinaryOp(next))
          {
-            if (!status.isInParentheticalScope() && (next.row() > cursor.row()))
+            // handle '\n' within the token
+            int row =
+                  cursor.row() +
+                  std::count(cursor.begin(), cursor.end(), '\n');
+            
+            if (!status.isInParentheticalScope() && next.row() > row)
             {
                DEBUG("----- Not binding binary operator to statement" << next);
                MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
