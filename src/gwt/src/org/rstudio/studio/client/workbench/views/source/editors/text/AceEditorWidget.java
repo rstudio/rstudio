@@ -43,7 +43,6 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.events.HasContextMenuHandlers;
 import org.rstudio.core.client.widget.CanSetControlId;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.RStudioGinjector;
