@@ -28,7 +28,6 @@ import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
-import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
@@ -311,7 +310,10 @@ public class SourceColumn implements BeforeShowEvent.Handler,
        // set and active editor
        activeEditor_ = target;
        if (activeEditor_ != null)
+       {
           activeEditor_.onActivate();
+          display_.selectTab(activeEditor_.asWidget());
+       }
    }
 
    void setActiveEditor()
