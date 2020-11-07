@@ -20,6 +20,8 @@ import { DecorationSet, Decoration, EditorView } from 'prosemirror-view';
 import { mergedTextNodes } from '../api/text';
 import { kAddToHistoryTransaction } from '../api/transaction';
 import { scrollIntoView } from '../api/scroll';
+import { editingRootNode } from '../api/node';
+import { nodeDecoration } from '../api/decoration';
 
 const key = new PluginKey<DecorationSet>('find-plugin');
 
@@ -27,6 +29,8 @@ class FindPlugin extends Plugin<DecorationSet> {
   private term: string = '';
   private options: FindOptions = {};
   private updating: boolean = false;
+  private scrollPending: boolean = false;
+  private resultElement: HTMLElement|null = null;
 
   constructor() {
     super({
@@ -298,8 +302,64 @@ class FindPlugin extends Plugin<DecorationSet> {
     }
   }
 
+  private watchForSelectedResult(view: EditorView) {
+    const resultObserver = new MutationObserver((records: MutationRecord[], observer: MutationObserver) => {
+      console.log("-- mutation observed --");
+      const isResultNode = (node: Node): boolean => {
+        if (node.nodeType !== node.ELEMENT_NODE) {
+          return false;
+        }
+        console.log(node);
+        const ele = node as HTMLElement;
+        return ele.classList.contains('pm-find-text') && 
+               ele.classList.contains('pm-selected-text');
+      };
+      records.forEach((mutation) => {
+        switch(mutation.type) {
+          case 'childList':
+            mutation.addedNodes.forEach((node) => {
+              if (isResultNode(node)) {
+                this.resultElement = node as HTMLElement;
+              }
+            });
+            break;
+          case 'attributes':
+            if (isResultNode(mutation.target)) {
+              this.resultElement = mutation.target as HTMLElement;
+            }
+            break;
+        }
+      });
+      if (this.resultElement) {
+        console.log("found search result at " + this.resultElement.offsetTop);
+        if (this.scrollPending) {
+          this.scrollToSelectedResult(view);
+        }
+        observer.disconnect();
+      }
+    });
+    const editingRoot = editingRootNode(view.state.selection);
+    if (editingRoot) {
+      const container = view.nodeDOM(editingRoot.pos) as HTMLElement;
+      resultObserver.observe(container, {
+        subtree: true,
+        childList: true,
+        attributeFilter: ['class']
+      });
+    }
+  }
+
   private scrollToSelectedResult(view: EditorView) {
-    scrollIntoView(view, view.state.selection.from, true, 350, 100);
+    if (this.resultElement === null) {
+      this.scrollPending = true;
+      return;
+    }
+    const editingRoot = editingRootNode(view.state.selection);
+    if (editingRoot) {
+      const container = view.nodeDOM(editingRoot.pos) as HTMLElement;
+      scrollIntoView(view, view.state.selection.from, true, 350, searchResult!.offsetTop + 100);
+      this.scrollPending = false;
+    }
   }
 
   private hasTerm() {
