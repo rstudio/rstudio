@@ -710,6 +710,16 @@ public class VisualMode implements VisualModeEditorSync,
       // Perform the command in the active code editor, if any.
       visualModeChunks_.performWithSelection(command);
    }
+
+   /**
+    * Moves the cursor in source mode to the currently active outline item in visual mode.
+    */
+   public void syncSourceOutlineLocation()
+   {
+      visualModeLocation_.setSourceOutlineLocation(
+              panmirror_.getEditingOutlineLocation());
+   }
+
    
    public DocDisplay getActiveEditor()
    {

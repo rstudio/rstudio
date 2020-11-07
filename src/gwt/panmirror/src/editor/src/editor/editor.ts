@@ -564,6 +564,10 @@ export class Editor {
     };
   }
 
+  public getEditingOutlineLocation(): EditingOutlineLocation {
+    return getEditingOutlineLocation(this.state);
+  }
+
   public getHTML(): string {
     return fragmentToHTML(this.state.schema, this.state.doc.content);
   }
