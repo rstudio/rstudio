@@ -128,7 +128,7 @@ export function toYamlCode(obj: any): string | null {
 }
 
 export function stripYamlDelimeters(yamlCode: string) {
-  return yamlCode.replace(/^[\s-]+/, '').replace(/[\s-\.]+$/, '');
+  return yamlCode.replace(/^[ \t-]+\n/, '').replace(/\n[ \t-\.]+$/, '');
 }
 
 export interface ParsedYaml {
