@@ -20,6 +20,28 @@ import zenscroll from 'zenscroll';
 
 import { editingRootNodeClosestToPos, editingRootNode } from './node';
 
+export function scrollSelectedTextIntoView(
+  view: EditorView,
+  center = true,
+  duration?: number,
+  offset?: number,
+  onDone?: VoidFunction
+) {
+  // first try to find a node with 'pm-selected-text' and use that as the target
+  // (this is used to show selection for find, spelling, and ace)
+  const pmSelectedTextEl = view.dom.getElementsByClassName('pm-selected-text');
+  if (pmSelectedTextEl.length > 0) {
+    const container = editingRootNode(view.state.selection);
+    if (container) {
+      const containerEl = view.nodeDOM(container.pos) as HTMLElement;
+      scrollToElement(containerEl, pmSelectedTextEl.item(0) as HTMLElement, center, duration, offset, onDone);
+    }
+  } else {
+    scrollIntoView(view, view.state.selection.from, center, duration, offset, onDone);
+  }
+
+}
+
 export function scrollIntoView(
   view: EditorView,
   pos: number,
@@ -41,12 +63,7 @@ export function scrollIntoView(
     const resultPos = parentList || parentDiv ? $pos.before(2) : $pos.before();
     const resultNode = view.nodeDOM(resultPos) as HTMLElement;
     if (container && resultNode) {
-      const scroller = zenscroll.createScroller(containerEl, duration, offset);
-      if (center) {
-        scroller.center(resultNode, duration, offset, onDone);
-      } else {
-        scroller.intoView(resultNode, duration, onDone);
-      }
+      scrollToElement(containerEl, resultNode, center, duration, offset, onDone);
     }
   }
 }
@@ -64,3 +81,19 @@ export function scrollToPos(view: EditorView, pos: number, duration?: number, of
     }
   }
 }
+
+
+function scrollToElement(
+  containerEl: HTMLElement, 
+  scrollToEl: HTMLElement, 
+  center = true,
+  duration?: number,
+  offset?: number,
+  onDone?: VoidFunction) {
+    const scroller = zenscroll.createScroller(containerEl, duration, offset);
+    if (center) {
+      scroller.center(scrollToEl, duration, offset, onDone);
+    } else {
+      scroller.intoView(scrollToEl, duration, onDone);
+    }
+  }

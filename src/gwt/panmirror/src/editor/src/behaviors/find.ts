@@ -19,7 +19,7 @@ import { DecorationSet, Decoration, EditorView } from 'prosemirror-view';
 
 import { mergedTextNodes } from '../api/text';
 import { kAddToHistoryTransaction } from '../api/transaction';
-import { scrollIntoView } from '../api/scroll';
+import { scrollSelectedTextIntoView } from '../api/scroll';
 
 const key = new PluginKey<DecorationSet>('find-plugin');
 
@@ -299,7 +299,7 @@ class FindPlugin extends Plugin<DecorationSet> {
   }
 
   private scrollToSelectedResult(view: EditorView) {
-    scrollIntoView(view, view.state.selection.from, true, 350, 100);
+    scrollSelectedTextIntoView(view, true, 350, 100);
   }
 
   private hasTerm() {

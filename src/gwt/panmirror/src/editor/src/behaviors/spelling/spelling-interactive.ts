@@ -27,7 +27,7 @@ import {
   EditorRect,
   EditorUISpelling,
 } from '../../api/spelling';
-import { scrollIntoView } from '../../api/scroll';
+import { scrollSelectedTextIntoView } from '../../api/scroll';
 
 import { excludedMarks, getWords, spellcheckerWord } from './spelling';
 
@@ -103,7 +103,7 @@ export function getSpellingDoc(
     },
 
     moveCursorNearTop: () => {
-      scrollIntoView(view, view.state.selection.from, false, undefined, 100);
+      scrollSelectedTextIntoView(view, false, undefined, 100);
     },
 
     dispose: () => {
