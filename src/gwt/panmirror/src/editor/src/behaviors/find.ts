@@ -19,9 +19,8 @@ import { DecorationSet, Decoration, EditorView } from 'prosemirror-view';
 
 import { mergedTextNodes } from '../api/text';
 import { kAddToHistoryTransaction } from '../api/transaction';
-import { scrollIntoView } from '../api/scroll';
 import { editingRootNode } from '../api/node';
-import { nodeDecoration } from '../api/decoration';
+import zenscroll from 'zenscroll';
 
 const key = new PluginKey<DecorationSet>('find-plugin');
 
@@ -29,8 +28,15 @@ class FindPlugin extends Plugin<DecorationSet> {
   private term: string = '';
   private options: FindOptions = {};
   private updating: boolean = false;
-  private scrollPending: boolean = false;
+
+  // The HTML element containing the last known selected search result
   private resultElement: HTMLElement|null = null;
+
+  // A DOM mutation observer that watches for search results to be rendered
+  private resultObserver: MutationObserver|null = null;
+
+  // The ID for a timer that ensures the resultObserver completes quickly
+  private resultObserverTimer: number = 0;
 
   constructor() {
     super({
@@ -49,8 +55,12 @@ class FindPlugin extends Plugin<DecorationSet> {
       },
       view: () => ({
         update: (view: EditorView, prevState: EditorState) => {
+          // Clear any previous search result observer
+          this.clearResultObserver();
+
+          // If there is a search result selected, navigate to it
           if (this.isResultSelected(view.state)) {
-            this.scrollToSelectedResult(view);
+            this.scrollToSelectedResult(view, null);
           }
         },
       }),
@@ -302,63 +312,147 @@ class FindPlugin extends Plugin<DecorationSet> {
     }
   }
 
+  /**
+   * Watch for a search result to appear in the DOM. When it does, scroll it
+   * into view.
+   * 
+   * @param view The current EditorView 
+   */
   private watchForSelectedResult(view: EditorView) {
-    const resultObserver = new MutationObserver((records: MutationRecord[], observer: MutationObserver) => {
-      console.log("-- mutation observed --");
+    // Clear any previous result observer
+    this.clearResultObserver();
+
+    // Create a new result observer to watch for results to be rendered
+    this.resultObserver = new MutationObserver((records: MutationRecord[], observer: MutationObserver) => {
+      let resultElement:HTMLElement|null = null;
+
+      // Predicate for testing a node to see if it looks like the active search result
       const isResultNode = (node: Node): boolean => {
         if (node.nodeType !== node.ELEMENT_NODE) {
           return false;
         }
-        console.log(node);
         const ele = node as HTMLElement;
         return ele.classList.contains('pm-find-text') && 
                ele.classList.contains('pm-selected-text');
       };
+
+      // Examine each mutation record to see if it's the one we're looking for
       records.forEach((mutation) => {
         switch(mutation.type) {
           case 'childList':
+            // Case 1: a new search result node was added to the DOM
             mutation.addedNodes.forEach((node) => {
               if (isResultNode(node)) {
-                this.resultElement = node as HTMLElement;
+                resultElement = node as HTMLElement;
               }
             });
             break;
           case 'attributes':
+            // Case 2: an existing node gained a "class" attribute and is now an
+            // active search result
             if (isResultNode(mutation.target)) {
-              this.resultElement = mutation.target as HTMLElement;
+              resultElement = mutation.target as HTMLElement;
             }
             break;
         }
       });
-      if (this.resultElement) {
-        console.log("found search result at " + this.resultElement.offsetTop);
-        if (this.scrollPending) {
-          this.scrollToSelectedResult(view);
-        }
-        observer.disconnect();
+
+      // If we found a result element, scroll it into view and turn off the DOM
+      // observer. (If we didn't find one, it may be an irrelevant DOM mutation,
+      // so ignore it.)
+      if (resultElement) {
+        this.scrollToSelectedResult(view, resultElement);
+        this.clearResultObserver();
       }
     });
+
     const editingRoot = editingRootNode(view.state.selection);
     if (editingRoot) {
       const container = view.nodeDOM(editingRoot.pos) as HTMLElement;
-      resultObserver.observe(container, {
+
+      // Begin observing the editing surface for DOM mutations
+      this.resultObserver.observe(container, {
         subtree: true,
         childList: true,
-        attributeFilter: ['class']
+        attributeFilter: ['class']  // Only interested in changes to the "class" attribute
       });
+
+      // The search results should appear quickly (we're really just waiting for
+      // a render loop). If the observer runs for longer than 1s, just cancel
+      // it, as it consumes resources and anything observed is likely to be
+      // spurious.
+      this.resultObserverTimer = window.setTimeout(() => {
+        this.clearResultObserver();
+      }, 1000);
     }
   }
 
-  private scrollToSelectedResult(view: EditorView) {
-    if (this.resultElement === null) {
-      this.scrollPending = true;
-      return;
+  /**
+   * Cleans all state related to the search result DOM observer
+   */
+  private clearResultObserver() {
+    // Disconnect the result observer if running
+    if (this.resultObserver !== null) {
+      this.resultObserver.disconnect();
+      this.resultObserver = null;
     }
+
+    // Remove the result observer timer if running
+    if (this.resultObserverTimer !== 0) {
+      window.clearTimeout(this.resultObserverTimer);
+      this.resultObserverTimer = 0;
+    }
+  }
+
+  /**
+   * Scrolls the selected search result into view.
+   * 
+   * @param view The EditorView on which to act
+   * @param resultElement The HTML element containing the search result, if known
+   */
+  private scrollToSelectedResult(view: EditorView, resultElement: HTMLElement|null) {
     const editingRoot = editingRootNode(view.state.selection);
     if (editingRoot) {
       const container = view.nodeDOM(editingRoot.pos) as HTMLElement;
-      scrollIntoView(view, view.state.selection.from, true, 350, searchResult!.offsetTop + 100);
-      this.scrollPending = false;
+
+      if (resultElement === null) {
+        // Attempt to find a result element to scroll to if we weren't given one
+        resultElement = container.querySelector(".pm-find-text.pm-selected-text");
+      }
+
+      if (resultElement === null || resultElement === this.resultElement) {
+        // If we didn't find a result element, or if we found a stale one
+        // (hasn't changed), defer scrolling until it has been rendered. This is
+        // most common when the search result is inside an Ace editor chunk,
+        // which puts the result in the DOM on a deferred render loop.
+        this.watchForSelectedResult(view);
+        return;
+      } 
+
+      this.resultElement = resultElement;
+
+      // Starting offset for scroll position 
+      let offset = 100;
+
+      // Zenscroll can only scroll to a direct child element of the scroll
+      // container, but the element containing the search result may be deeply
+      // nested in the container. Walk up the DOM tree, summing the offsets,
+      // until we get to an element that's actually a child of the scroll
+      // container. 
+      let scrollElement = resultElement;
+      while (scrollElement.offsetParent?.parentElement !== container) {
+        offset += scrollElement.offsetTop;
+        const nextParent = scrollElement.offsetParent;
+        if (nextParent === null) {
+          break;
+        } 
+        scrollElement = nextParent as HTMLElement;
+      }
+
+      // Perform the scroll to the element's container plus its offset inside
+      // the container.
+      const scroller = zenscroll.createScroller(container);
+      scroller.center(scrollElement, 350, offset);
     }
   }
 
