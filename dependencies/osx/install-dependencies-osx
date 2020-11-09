@@ -29,7 +29,7 @@ if ! command -v brew &> /dev/null; then
 fi
 
 # install postgres, needed by SOCI
-if brew list | grep postgresql &> /dev/null; then
+if brew list --formula | grep postgresql &> /dev/null; then
    echo "postgresql already installed"
 else
    brew install postgresql
@@ -41,7 +41,7 @@ if ! command -v gtimeout &> /dev/null; then
 fi
 
 # openssl needed to run rsession  (including unit tests)
-if brew list | grep openssl@1.1 &> /dev/null; then
+if brew list --formula | grep openssl@1.1 &> /dev/null; then
    echo "openssl already installed"
 else
    brew install openssl
