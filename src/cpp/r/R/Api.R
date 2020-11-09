@@ -724,7 +724,7 @@
 # with older preferences not migrated to the newer string version
 .rs.addApiFunction("getConsoleHasColor", function(name) {
    mode <- .rs.readUiPref("ansi_console_mode")
-   mode %in% list(1L, "on")
+   !is.null(mode) && mode %in% list(1L, "on")
 })
 
 .rs.addApiFunction("terminalSend", function(id, text) {
