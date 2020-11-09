@@ -148,6 +148,8 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 # the error message
 .rs.addFunction("restoreGlobalEnvFromFile", function(path)
 {
+   Encoding(path) <- "UTF-8"
+
    status <- try(load(path, envir = .GlobalEnv), silent = TRUE)
    if (!inherits(status, "try-error"))
       return("")
