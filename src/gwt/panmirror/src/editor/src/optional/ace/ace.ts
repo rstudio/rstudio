@@ -725,6 +725,10 @@ export class AceNodeView implements NodeView {
     this.dom.addEventListener("mouseup", (evt) => {
       this.mouseDown = false;
     });
+    this.dom.addEventListener("mouseleave", (evt) => {
+      // Treat mouse exit as an up since it will cause us to miss the up event
+      this.mouseDown = false;
+    });
   }
 
   /**
