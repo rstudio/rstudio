@@ -5,6 +5,7 @@
 ### Misc
 
 * Improve detection for crashes that occur early in session initialization (#7983)
+* The mouse back / forward buttons can now be used to navigate within the Help pane (#8338)
 
 ### RStudio Server
 
