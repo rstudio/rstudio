@@ -29,6 +29,7 @@ import {
   CitationListEntry,
   CitationSourceListStatus,
   errorForStatus,
+  matchExistingSourceCitationListEntry,
 } from './insert_citation-source-panel';
 import { CitationSourceLatentSearchPanel } from './insert_citation-source-panel-latent-search';
 
@@ -36,6 +37,7 @@ export function pubmedSourcePanel(
   ui: EditorUI,
   server: PubMedServer,
   doiServer: DOIServer,
+  bibliographyManager: BibliographyManager
 ): CitationSourcePanelProvider {
   const kPubmedType = 'Pubmed';
   return {
@@ -72,8 +74,8 @@ export function pubmedSourcePanel(
 
               // Create Citation List Entries for these PubMed docs
               const citationEntries = docs.map(doc => {
-                const citationEntry = toCitationListEntry(doc, dedupeCitationIds, ui, doiServer);
-                if (citationEntry) {
+                const citationEntry = matchExistingSourceCitationListEntry(doc.doi, dedupeCitationIds, ui, bibliographyManager) || toCitationListEntry(doc, dedupeCitationIds, ui, doiServer);
+                if (citationEntry && citationEntry.id) {
                   // Add this id to the list of existing Ids so future ids will de-duplicate against this one
                   dedupeCitationIds.push(citationEntry.id);
                 }
@@ -148,7 +150,7 @@ function toCitationListEntry(
   doiServer: DOIServer,
 ): CitationListEntry {
   const id = createUniqueCiteId(existingIds, suggestCiteId(doc));
-  const providerKey = 'crossref';
+  const providerKey = 'pubmed';
   return {
     id,
     isIdEditable: true,
