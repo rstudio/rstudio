@@ -5,7 +5,7 @@ Wants=network-online.target
 
 [Service]
 Type=forking
-PIDFile=/var/run/rstudio-server.pid
+PIDFile=/run/rstudio-server.pid
 ExecStart=${CMAKE_INSTALL_PREFIX}/bin/rserver
 ExecStop=/usr/bin/killall -TERM rserver
 KillMode=none
