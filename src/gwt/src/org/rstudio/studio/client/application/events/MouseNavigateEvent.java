@@ -17,9 +17,9 @@ package org.rstudio.studio.client.application.events;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class MouseNavigateSourceHistoryEvent extends GwtEvent<MouseNavigateSourceHistoryEvent.Handler>
+public class MouseNavigateEvent extends GwtEvent<MouseNavigateEvent.Handler>
 {
-   public MouseNavigateSourceHistoryEvent(boolean forward, int mouseX, int mouseY)
+   public MouseNavigateEvent(boolean forward, int mouseX, int mouseY)
    {
       forward_ = forward;
       mouseX_ = mouseX;
@@ -28,7 +28,7 @@ public class MouseNavigateSourceHistoryEvent extends GwtEvent<MouseNavigateSourc
 
    public interface Handler extends EventHandler
    {
-      void onMouseNavigateSourceHistory(MouseNavigateSourceHistoryEvent event);
+      void onMouseNavigate(MouseNavigateEvent event);
    }
 
    @Override
@@ -40,7 +40,7 @@ public class MouseNavigateSourceHistoryEvent extends GwtEvent<MouseNavigateSourc
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onMouseNavigateSourceHistory(this);
+      handler.onMouseNavigate(this);
    }
 
    public boolean getForward()
