@@ -17,6 +17,12 @@ package org.rstudio.studio.client.application.events;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
+// This event is primarily used to paper over issues with QtWebEngine;
+// it appears that Qt 5.12.x does not propagate side mouse buttons to the
+// associated WebEngine view, and so we are instead forced to synthesize
+// a synthetic navigation event that gets handled specially on the GWT side.
+//
+// https://github.com/rstudio/rstudio/pull/7272
 public class MouseNavigateEvent extends GwtEvent<MouseNavigateEvent.Handler>
 {
    public MouseNavigateEvent(boolean forward, int mouseX, int mouseY)
