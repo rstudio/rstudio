@@ -79,7 +79,7 @@ import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.application.events.MouseNavigateSourceHistoryEvent;
+import org.rstudio.studio.client.application.events.MouseNavigateEvent;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
@@ -220,7 +220,7 @@ public class Source implements InsertSourceHandler,
                                EditPresentationSourceEvent.Handler,
                                XRefNavigationEvent.Handler,
                                NewDocumentWithCodeEvent.Handler,
-                               MouseNavigateSourceHistoryEvent.Handler,
+                               MouseNavigateEvent.Handler,
                                RStudioApiRequestEvent.Handler
 {
    interface Binder extends CommandBinder<Commands, Source>
@@ -336,7 +336,7 @@ public class Source implements InsertSourceHandler,
       events_.addHandler(NewDocumentWithCodeEvent.TYPE, this);
       events_.addHandler(XRefNavigationEvent.TYPE, this);
       if (Desktop.hasDesktopFrame())
-         events_.addHandler(MouseNavigateSourceHistoryEvent.TYPE, this);
+         events_.addHandler(MouseNavigateEvent.TYPE, this);
 
       events_.addHandler(SourcePathChangedEvent.TYPE,
             new SourcePathChangedEvent.Handler()
@@ -1800,7 +1800,7 @@ public class Source implements InsertSourceHandler,
    }
 
    @Override
-   public void onMouseNavigateSourceHistory(MouseNavigateSourceHistoryEvent event)
+   public void onMouseNavigate(MouseNavigateEvent event)
    {
       if (isPointInSourcePane(event.getMouseX(), event.getMouseY()))
       {

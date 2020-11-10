@@ -44,7 +44,6 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.StringUtil;
@@ -69,6 +68,7 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.MouseNavigateEvent;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -152,11 +152,18 @@ public class HelpPane extends WorkbenchPane
          }
       };
 
-      prefs_.helpFontSizePoints().bind(new CommandWithArg<Double>()
+      prefs_.helpFontSizePoints().bind((Double value) -> refresh());
+      
+      events_.addHandler(MouseNavigateEvent.TYPE, (MouseNavigateEvent event) ->
       {
-         public void execute(Double value)
+         // check to see if we're targeting the Help pane
+         Element el = DomUtils.elementFromPoint(event.getMouseX(), event.getMouseY());
+         if (StringUtil.equals(el.getId(), ElementIds.getElementId(ElementIds.HELP_FRAME)))
          {
-            refresh();
+            if (event.getForward())
+               forward();
+            else
+               back();
          }
       });
 
