@@ -117,6 +117,16 @@ Error migrateUserStateIfNecessary(SessionType sessionType)
    std::vector<std::string> failures;
    for (const auto& f: files)
    {
+      // RStudio Desktop Pro encourages users to install ODBC drivers to the user scratch folder
+      // e.g., ~/.rstudio-desktop/odbc/drivers (in RStudio 1.3 and prior); see
+      // .rs.connectionOdbcInstallerPath for details. These driver paths then become part of user
+      // content such as R scripts, so they can't be moved without breaking user code. Skip this
+      // directory when migrating to avoid this breakage.
+      if (f.isDirectory() && f.getFilename() == "odbc")
+      {
+         continue;
+      }
+
       FilePath target = newPath.completeChildPath(f.getFilename());
       Error moveError = f.move(target);
       if (moveError)

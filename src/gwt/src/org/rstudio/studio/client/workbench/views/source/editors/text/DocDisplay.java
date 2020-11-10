@@ -20,7 +20,6 @@ import org.rstudio.core.client.command.KeySequence;
 
 import java.util.List;
 
-import org.rstudio.core.client.events.HasContextMenuHandlers;
 import org.rstudio.core.client.js.JsMap;
 import org.rstudio.core.client.patch.TextChange;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
@@ -72,6 +71,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.FocusHandler;
+import com.google.gwt.event.dom.client.HasContextMenuHandlers;
 import com.google.gwt.event.dom.client.HasFocusHandlers;
 import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.event.logical.shared.AttachEvent;
@@ -134,28 +134,28 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    // "TeX". Use SweaveFileType constants to test for these values.
    String getLanguageMode(Position position);
    String getModeId();
-   
+
    boolean inMultiSelectMode();
    void exitMultiSelectMode();
-   
+
    void quickAddNext();
 
    void yankBeforeCursor();
    void yankAfterCursor();
    void pasteLastYank();
-   
+
    void clearSelection();
    void replaceSelection(String code);
    void replaceRange(Range range, String text);
    boolean moveSelectionToNextLine(boolean skipBlankLines);
-   boolean moveSelectionToBlankLine(); 
-   
+   boolean moveSelectionToBlankLine();
+
    void expandSelection();
    void shrinkSelection();
    void clearSelectionHistory();
-   
+
    void expandRaggedSelection();
-   
+
    void reindent();
    void reindent(Range range);
    ChangeTracker getChangeTracker();
@@ -170,7 +170,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
 
    void fitSelectionToLines(boolean expand);
    int getSelectionOffset(boolean start);
-   
+
    // Fix bug 964
    void onActivate();
 
@@ -201,18 +201,18 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setScrollLeft(int x);
    void setScrollTop(int y);
    void scrollTo(int x, int y);
-   
+
    void enableSearchHighlight();
    void disableSearchHighlight();
-   
+
    void setUseEmacsKeybindings(boolean use);
    boolean isEmacsModeOn();
    void clearEmacsMark();
-   
+
    void setUseVimMode(boolean use);
    boolean isVimModeOn();
    boolean isVimInInsertMode();
-   
+
    boolean isRendered();
 
    JsArray<AceFold> getFolds();
@@ -222,14 +222,14 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void unfold(AceFold fold);
    void unfold(int row);
    void unfold(Range range);
-   
+
    JsMap<Position> getMarks();
    void setMarks(JsMap<Position> marks);
-   
+
    void toggleCommentLines();
-   
+
    SpellingDoc getSpellingDoc();
-   
+
    AceCommandManager getCommandManager();
    void setEditorCommandBinding(String id, List<KeySequence> keys);
    void resetCommands();
@@ -247,29 +247,29 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    boolean isScopeTreeReady(int row);
    HandlerRegistration addScopeTreeReadyHandler(ScopeTreeReadyEvent.Handler handler);
    HandlerRegistration addActiveScopeChangedHandler(ActiveScopeChangedEvent.Handler handler);
-   
+
    Position getCursorPosition();
    void setCursorPosition(Position position);
-   
+
    Position getCursorPositionScreen();
-   
+
    void moveCursorBackward();
    void moveCursorBackward(int characters);
    void moveCursorForward();
    void moveCursorForward(int characters);
-   
+
    void moveCursorNearTop();
    void moveCursorNearTop(int rowOffset);
    void ensureCursorVisible();
    void scrollCursorIntoViewIfNecessary();
    void scrollCursorIntoViewIfNecessary(int rowsAround);
    boolean isCursorInSingleLineString();
-   
+
    void gotoPageDown();
    void gotoPageUp();
-   
+
    void ensureRowVisible(int row);
-   
+
    InputEditorSelection search(String needle,
                                boolean backwards,
                                boolean wrap,
@@ -278,25 +278,25 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
                                Position start,
                                Range range,
                                boolean regexpModex);
-   
+
    void insertCode(InputEditorPosition position, String code);
-   
+
    int getScrollLeft();
    void scrollToX(int x);
-   
+
    int getScrollTop();
    void scrollToY(int y, int animateMs);
-   
+
    void scrollToLine(int row, boolean center);
-   
+
    void alignCursor(Position position, double ratio);
    void centerSelection();
-   
+
    Scope getCurrentScope();
    Scope getCurrentChunk();
    Scope getCurrentSection();
    ScopeFunction getCurrentFunction(boolean allowAnonymous);
-   
+
    Scope getScopeAtPosition(Position position);
    Scope getChunkAtPosition(Position position);
    ScopeFunction getFunctionAtPosition(Position position, boolean allowAnonymous);
@@ -309,11 +309,11 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void unfoldAll();
    void toggleFold();
    void setFoldStyle(String style); // see FoldStyle constants
-   
+
    void jumpToMatching();
    void selectToMatching();
    void expandToMatching();
-   
+
    void addCursorAbove();
    void addCursorBelow();
    void editLinesFromStart();
@@ -327,27 +327,27 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    Position getSelectionEnd();
    Range getSelectionRange();
    void setSelectionRange(Range range);
-   
+
    int getLength(int row);
    int getRowCount();
    String getLine(int row);
    int getPixelWidth();
-   
+
    Position positionFromIndex(int index);
    int indexFromPosition(Position position);
-   
+
    char getCharacterAtCursor();
    char getCharacterBeforeCursor();
-   
+
    String debug_getDocumentDump();
    void debug_setSessionValueDirectly(String s);
 
    // HACK: This should not use Ace-specific data structures
    InputEditorSelection createSelection(Position pos1, Position pos2);
-   
+
    // HACK: InputEditorPosition should just become AceInputEditorPosition
    Position selectionToPosition(InputEditorPosition pos);
-   
+
    InputEditorPosition createInputEditorPosition(Position pos);
 
    Iterable<Range> getWords(TokenPredicate tokenPredicate,
@@ -356,30 +356,30 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
                             Position end);
 
    String getTextForRange(Range range);
-   
+
    void tokenizeDocument();
    void retokenizeDocument();
    Token getTokenAt(int row, int column);
    Token getTokenAt(Position position);
    JsArray<Token> getTokens(int row);
-   
+
    TokenIterator createTokenIterator();
    TokenIterator createTokenIterator(Position position);
 
    Anchor createAnchor(Position pos);
-   
+
    int getStartOfCurrentStatement();
    int getEndOfCurrentStatement();
 
    Range getMultiLineExpr(Position pos, int startRow, int endRow);
    Range getParagraph(Position pos, int startRow, int endRow);
-   
+
    void highlightDebugLocation(
          SourcePosition startPos,
          SourcePosition endPos,
          boolean executing);
    void endDebugHighlighting();
-   
+
    HandlerRegistration addBreakpointSetHandler
       (BreakpointSetEvent.Handler handler);
    HandlerRegistration addBreakpointMoveHandler
@@ -391,7 +391,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void removeAllBreakpoints();
    void toggleBreakpointAtCursor();
    boolean hasBreakpoints();
-   
+
    void setAnnotations(JsArray<AceAnnotation> annotations);
    void showLint(JsArray<LintItem> lint);
    void clearLint();
@@ -399,7 +399,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void removeMarkersOnCursorLine();
    void removeMarkers(BiPredicate<AceAnnotation, Marker> predicate);
    void removeMarkersAtWord(String word);
-   
+
    void beginCollabSession(CollabEditStartParams params, DirtyState dirtyState);
    boolean hasActiveCollabSession();
    boolean hasFollowingCollabSession();
@@ -408,13 +408,13 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setPopupVisible(boolean visible);
    boolean isPopupVisible();
    void selectAll(String needle);
-   
+
    int getTabSize();
    void insertRoxygenSkeleton();
-   
+
    long getLastModifiedTime();
    long getLastCursorChangedTime();
-   
+
    void moveLinesUp();
    void moveLinesDown();
    void expandToLine();
@@ -425,50 +425,50 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void blockIndent();
    void blockOutdent();
    void splitIntoLines();
-   
+
    int getFirstFullyVisibleRow();
-   
+
    Rectangle getPositionBounds(Position position);
    Rectangle getRangeBounds(Range range);
-   
+
    Position toDocumentPosition(ScreenCoordinates coordinates);
    ScreenCoordinates documentPositionToScreenCoordinates(Position position);
    Position screenCoordinatesToDocumentPosition(int pageX, int pageY);
-   
+
    void forceImmediateRender();
    boolean isPositionVisible(Position position);
 
    int getFirstVisibleRow();
    int getLastVisibleRow();
-   
+
    void showInfoBar(String message);
-   
+
    void setDragEnabled(boolean enabled);
-   
+
    boolean isSnippetsTabStopManagerActive();
 
    void addLineWidget(LineWidget widget);
    void removeLineWidget(LineWidget widget);
    void removeAllLineWidgets();
-   void onLineWidgetChanged(LineWidget widget); 
-   
+   void onLineWidgetChanged(LineWidget widget);
+
    boolean hasLineWidgets();
    JsArray<LineWidget> getLineWidgets();
    LineWidget getLineWidgetForRow(int row);
-   
+
    boolean showChunkOutputInline();
    void setShowChunkOutputInline(boolean show);
    JsArray<ChunkDefinition> getChunkDefs();
    void setChunkLineExecState(int start, int end, int state);
 
    Position getDocumentEnd();
-   
+
    void setInsertMatching(boolean value);
    void setSurroundSelectionPref(String value);
-   
+
    void goToLineStart();
    void goToLineEnd();
-   
+
    void toggleTokenInfo();
    void setTextInputAriaLabel(String label);
 }

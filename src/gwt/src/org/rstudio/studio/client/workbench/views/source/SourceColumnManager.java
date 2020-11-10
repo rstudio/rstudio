@@ -1429,11 +1429,11 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                             boolean excludeMain,
                             Command onCompleted)
    {
-      columnList_.forEach((column) ->
-      {
-         closeAllTabs(column, excludeActive, excludeMain, onCompleted);
-      });
-         
+      // Columns may be deleted when all of their tabs are closed, so we iterate over the current
+      // names rather than the column list
+      ArrayList<String> columnNames = new ArrayList<>(getNames(false));
+      for (String name : columnNames)
+         closeAllTabs(getByName(name), excludeActive, excludeMain, onCompleted);
    }
 
    public void closeAllTabs(SourceColumn column,

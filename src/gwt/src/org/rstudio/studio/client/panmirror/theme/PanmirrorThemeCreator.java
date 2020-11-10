@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.panmirror.theme;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.ColorUtil.RGBColor;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.ThemeColors;
 import org.rstudio.core.client.theme.ThemeFonts;
@@ -126,6 +127,16 @@ public class PanmirrorThemeCreator
       code.linkColor = theme.linkTextColor;
       code.errorColor = DomUtils.extractCssValue(AceTheme.getThemeErrorClass(aceTheme), "color"); 
       theme.code = code;
+      
+      // in dark mode, derive theh find text background color from an alpha of the
+      // string highlight color (w/o that it tends to be hard to pick up, especially
+      // with other text (e.g. inline code) having it's down background highlight)
+      if (aceTheme.isDark())
+      {
+         RGBColor rgbString = RGBColor.fromCss(code.stringColor);
+         theme.findTextBackgroundColor = rgbString.withAlpha(0.1).asRgb();
+         theme.findTextBorderColor = rgbString.withAlpha(0.5).asRgb();
+      }
       
       return theme;
    }

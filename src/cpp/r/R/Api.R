@@ -720,9 +720,11 @@
    
 })
 
+# NOTE: we allow '1L' just in case for backwards compatibility
+# with older preferences not migrated to the newer string version
 .rs.addApiFunction("getConsoleHasColor", function(name) {
-   value <- .rs.readUiPref("ansi_console_mode")
-   if (is.null(value) || value != 1) FALSE else TRUE
+   mode <- .rs.readUiPref("ansi_console_mode")
+   !is.null(mode) && mode %in% list(1L, "on")
 })
 
 .rs.addApiFunction("terminalSend", function(id, text) {

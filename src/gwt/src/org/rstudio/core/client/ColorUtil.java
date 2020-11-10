@@ -95,6 +95,11 @@ public class ColorUtil
                mix(alpha_, other.alpha_, ratio, 1));
       }
       
+      public RGBColor withAlpha(double alpha)
+      {
+         return new RGBColor(red_, green_, blue_, alpha);
+      }
+      
       public static RGBColor fromHex(String hexString)
       {
          // validate
