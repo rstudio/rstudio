@@ -121,7 +121,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
          updateDescription();
       });
       
-      tbPythonInterpreter_.addDomHandler((KeyDownEvent event) ->
+      tbPythonInterpreter_.getTextBox().addDomHandler((KeyDownEvent event) ->
       {
          if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER)
          {
