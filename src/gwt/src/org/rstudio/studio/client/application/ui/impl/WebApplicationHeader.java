@@ -18,11 +18,13 @@ package org.rstudio.studio.client.application.ui.impl;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.ImageElement;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.TextDecoration;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
@@ -533,15 +535,21 @@ public class WebApplicationHeader extends Composite
    // keystrokes (e.g. Help in Chrome)
    static
    {
-      Event.addNativePreviewHandler(event ->
+      Event.addNativePreviewHandler(preview ->
       {
-         if (event.getTypeInt() == Event.ONKEYDOWN)
+         if (preview.getTypeInt() == Event.ONKEYDOWN)
          {
-            int keyCode = event.getNativeEvent().getKeyCode();
-            int modifier = KeyboardShortcut.getModifierValue(event.getNativeEvent());
-            if (modifier == KeyboardShortcut.NONE && (keyCode == 112 || keyCode == 113))
+            NativeEvent event = preview.getNativeEvent();
+            int keyCode = event.getKeyCode();
+            int modifier = KeyboardShortcut.getModifierValue(event);
+            
+            if (modifier == KeyboardShortcut.NONE)
             {
-              event.getNativeEvent().preventDefault();
+               if (keyCode == KeyCodes.KEY_F1 ||
+                   keyCode == KeyCodes.KEY_F2)
+               {
+                  event.preventDefault();
+               }
             }
          }
       });
