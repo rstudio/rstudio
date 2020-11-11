@@ -124,6 +124,9 @@ Error migrateUserStateIfNecessary(SessionType sessionType)
       // directory when migrating to avoid this breakage.
       if (f.isDirectory() && f.getFilename() == "odbc")
       {
+         // Log as a failure so we don't clean up the ~/.rstudio-desktop folder (will generate an
+         // ignorable but accurate warning in the logs)
+         failures.push_back(f.getFilename());
          continue;
       }
 
