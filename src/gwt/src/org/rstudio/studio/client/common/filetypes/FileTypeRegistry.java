@@ -389,6 +389,7 @@ public class FileTypeRegistry
       register("*.nb.html", RNOTEBOOK, new ImageResource2x(icons.iconRnotebook2x()));
       register("*.rpres", RPRESENTATION, new ImageResource2x(icons.iconRpresentation2x()));
       register("*.md", MARKDOWN, new ImageResource2x(icons.iconMarkdown2x()));
+      register("*.jmd", MARKDOWN, new ImageResource2x(icons.iconMarkdown2x()));
       register("*.mdtxt", MARKDOWN, new ImageResource2x(icons.iconMarkdown2x()));
       register("*.markdown*", MARKDOWN, new ImageResource2x(icons.iconMarkdown2x()));
       register("*.bib", TEXT, new ImageResource2x(icons.iconText2x()));
