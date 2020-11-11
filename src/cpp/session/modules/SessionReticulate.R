@@ -45,6 +45,12 @@
 
 .rs.addJsonRpcHandler("python_go_to_definition", function(line, offset)
 {
+   result <- .rs.python.goToDefinition(line, offset)
+   .rs.scalar(result)
+})
+
+.rs.addFunction("python.goToDefinition", function(line, offset)
+{
    # extract the line providing the object definition we're looking for
    text <- .rs.python.extractCurrentExpression(line, offset)
    if (!nzchar(text))
@@ -78,6 +84,12 @@
 })
 
 .rs.addJsonRpcHandler("python_go_to_help", function(line, offset)
+{
+   result <- .rs.python.goToHelp(line, offset)
+   .rs.scalar(result)
+})
+
+.rs.addFunction("python.goToHelp", function(line, offset)
 {
    text <- .rs.python.extractCurrentExpression(line, offset)
    if (!nzchar(text))
