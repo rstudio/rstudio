@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.console.shell;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -32,7 +33,8 @@ import com.google.inject.Singleton;
 @Singleton
 public class ConsoleLanguageTracker
       implements SessionInitEvent.Handler,
-                 ConsolePromptEvent.Handler
+                 ConsolePromptEvent.Handler,
+                 RestartStatusEvent.Handler
 {
    @Inject
    public ConsoleLanguageTracker(Session session,
@@ -80,6 +82,7 @@ public class ConsoleLanguageTracker
    {
       events_.addHandler(SessionInitEvent.TYPE, this);
       events_.addHandler(ConsolePromptEvent.TYPE, this);
+      events_.addHandler(RestartStatusEvent.TYPE, this);
    }
 
    @Override
@@ -92,6 +95,16 @@ public class ConsoleLanguageTracker
    public void onConsolePrompt(ConsolePromptEvent event)
    {
       language_ = event.getPrompt().getLanguage();
+   }
+   
+   @Override
+   public void onRestartStatus(RestartStatusEvent event)
+   {
+      // on session restart, the console will return to R mode
+      if (event.getStatus() == RestartStatusEvent.RESTART_COMPLETED)
+      {
+         language_ = LANGUAGE_R;
+      }
    }
 
    public static final String LANGUAGE_R      = "R";
