@@ -192,7 +192,9 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       additionalColumnCount_ = paneConfig.getAdditionalSourceColumns();
 
       add(new Label("Choose the layout of the panels in RStudio by selecting from the controls in" +
-         " each panel. Add up to three additional Source Columns to the left side of the layout.",
+         " each panel. Add up to three additional Source Columns to the left side of the layout. " +
+         "When a column is removed, all saved files within the column are closed and any unsaved " +
+         "files are moved to the main Source Pane.",
          true));
 
       Toolbar columnToolbar = new Toolbar("Manage Column Display");
