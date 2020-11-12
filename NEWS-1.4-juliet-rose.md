@@ -16,4 +16,5 @@
 * Fixed issue where reinstalling an already-loaded package could cause errors (#8265)
 * Fixed issue where right-assignment with multi-line strings gave false-positive diagnostic errors (#8307)
 * Fixed issue where restoring R workspace could fail when project path contained non-ASCII characters (#8321)
+* Fixed issue where forked R sessions could hang after a package was loaded or unloaded (#8361)
 
