@@ -291,7 +291,7 @@ public class SourceWindow implements LastSourceDocClosedHandler,
    private void closeAllDocs(String caption, Command onCompleted)
    {
       if (source_ != null)
-         source_.closeAllSourceDocs(caption, onCompleted, false);
+         source_.closeAllSourceDocs(caption, onCompleted, false, null);
    }
    
    private JsArray<UnsavedChangesItem> getUnsavedChanges()

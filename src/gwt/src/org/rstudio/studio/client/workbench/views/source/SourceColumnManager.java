@@ -1426,6 +1426,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    }
    
    public void closeAllTabs(boolean excludeActive,
+                            String excludeDocId,
                             boolean excludeMain,
                             Command onCompleted)
    {
@@ -1433,11 +1434,12 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       // names rather than the column list
       ArrayList<String> columnNames = new ArrayList<>(getNames(false));
       for (String name : columnNames)
-         closeAllTabs(getByName(name), excludeActive, excludeMain, onCompleted);
+         closeAllTabs(getByName(name), excludeActive, excludeDocId, excludeMain, onCompleted);
    }
 
    public void closeAllTabs(SourceColumn column,
                             boolean excludeActive,
+                            String excludeDocId,
                             boolean excludeMain,
                             Command onCompleted)
    {
@@ -1449,7 +1451,11 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                   (hasActiveEditor() && target == activeColumn_.getActiveEditor()))
             {
                continuation.execute();
-               return;
+            }
+            else if (!StringUtil.isNullOrEmpty(excludeDocId) &&
+                  target == activeColumn_.getDoc(excludeDocId))
+            {
+               continuation.execute();
             }
             else
             {
@@ -1516,10 +1522,20 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       );
    }
 
+   /**
+    * Close all source documents
+    * 
+    * @param caption caption of command triggering this action
+    * @param sourceColumn source column to operate on or null to operate on all columns
+    * @param onCompleted callback when done or null
+    * @param excludeActive leave currently active document open (or false to close all)
+    * @param excludeDocId docId of document to keep open and activate (or null to close all)
+    */
    public void closeAllLocalSourceDocs(String caption,
                                        SourceColumn sourceColumn,
                                        Command onCompleted,
-                                       final boolean excludeActive)
+                                       final boolean excludeActive,
+                                       final String excludeDocId)
    {
       // save active editor for exclusion (it changes as we close tabs)
       final EditingTarget excludeEditor = (excludeActive) ? activeColumn_.getActiveEditor() :
@@ -1530,9 +1546,9 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       // if sourceColumn is not provided, assume we are closing editors for every column
       if (sourceColumn == null)
          columnList_.forEach((column) ->
-           dirtyTargets.addAll(column.getDirtyEditors(excludeEditor)));
+           dirtyTargets.addAll(column.getDirtyEditors(excludeEditor, excludeDocId)));
       else
-         dirtyTargets.addAll(sourceColumn.getDirtyEditors(excludeEditor));
+         dirtyTargets.addAll(sourceColumn.getDirtyEditors(excludeEditor, excludeDocId));
 
       // create a command used to close all tabs
       final Command closeAllTabsCommand = () ->
@@ -1544,9 +1560,9 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
             setActive(excludeEditor);
 
          if (sourceColumn == null) 
-            closeAllTabs(excludeActive, false, null);
+            closeAllTabs(excludeActive, excludeDocId, false, null);
          else
-            closeAllTabs(sourceColumn, excludeActive, false, null);
+            closeAllTabs(sourceColumn, excludeActive, excludeDocId, false, null);
       };
       
       saveEditingTargetsWithPrompt(caption,

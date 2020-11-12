@@ -103,7 +103,7 @@ public class SourceVimCommands
          if (params.argString && params.argString === "!")
             interactive = false;
          
-         source.@org.rstudio.studio.client.workbench.views.source.SourceColumnManager::closeAllTabs(ZZLcom/google/gwt/user/client/Command;)(interactive, false, onCompleted);
+         source.@org.rstudio.studio.client.workbench.views.source.SourceColumnManager::closeAllTabs(ZLjava/lang/String;ZLcom/google/gwt/user/client/Command;)(interactive, null, false, onCompleted);
       });
        
       $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("qall", "qa", callback);
