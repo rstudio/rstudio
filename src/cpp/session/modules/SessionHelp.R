@@ -377,10 +377,21 @@ options(help_type = "html")
 
 .rs.addJsonRpcHandler("show_custom_help_topic", function(helpHandler, topic, source) {
    
-   helpHandlerFunc <- tryCatch(eval(parse(text = helpHandler)), 
-                               error = function(e) NULL)
+   helpHandlerFunc <- tryCatch(
+      eval(parse(text = helpHandler)), 
+      error = function(e) NULL
+   )
+   
    if (!is.function(helpHandlerFunc))
       return()
+   
+   # workaround for broken help in reticulate 1.18
+   if (identical(helpHandler, "reticulate:::help_handler"))
+   {
+      text <- paste(source, topic, sep = ".")
+      .Call("rs_showPythonHelp", text, PACKAGE = "(embedding)")
+      return()
+   }
    
    url <- helpHandlerFunc("url", topic, source)
    if (!is.null(url) && nzchar(url)) # handlers return "" for no help topic
