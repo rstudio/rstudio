@@ -100,6 +100,9 @@ while true; do
         if [ "$ERROR_CODE" -eq "1519" ]; then
             # Error code 1519 = "Could not find the RequestUUID."
             echo "Notarization request UUID not ready. Waiting 30s to try again."
+        elif [ "$ERROR_CODE" -eq "-1011" ]; then
+            # Error code -1011 = "Unable to get notarization info."
+            echo "Temporarily unable to look up notarization info. Waiting 30s to try again."
         else 
             # Some other error, which is not something we know how to handle
             # and should consequently result in termination.
