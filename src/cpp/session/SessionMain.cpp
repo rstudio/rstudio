@@ -712,6 +712,11 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       }
    }
 
+   // set flag indicating we had an abnormal end (if this doesn't get
+   // unset by the time we launch again then we didn't terminate normally
+   // i.e. either the process dying unexpectedly or a call to R_Suicide)
+   rsession::persistentState().setAbend(true);
+
    // begin session
    using namespace module_context;
    activeSession().beginSession(rVersion(), rHomeDir(), rVersionLabel());
@@ -2156,11 +2161,6 @@ int main (int argc, char * const argv[])
       rCallbacks.showHelp = rShowHelp;
       rCallbacks.showMessage = rShowMessage;
       rCallbacks.serialization = rSerialization;
-
-      // set flag indicating we had an abnormal end (if this doesn't get
-      // unset by the time we launch again then we didn't terminate normally
-      // i.e. either the process dying unexpectedly or a call to R_Suicide)
-      rsession::persistentState().setAbend(true);
 
       // run r (does not return, terminates process using exit)
       error = rstudio::r::session::run(rOptions, rCallbacks);
