@@ -28,6 +28,7 @@ import { BibliographyManager } from '../../api/bibliography/bibliography';
 
 import { ensureSourcesInBibliography } from './cite';
 import { showInsertCitationDialog, InsertCitationDialogResult } from '../../behaviors/insert_citation/insert_citation';
+import { markIsActive } from '../../api/mark';
 
 export class InsertCitationCommand extends ProsemirrorCommand {
   private initialSelectionKey: string | undefined;
@@ -82,18 +83,21 @@ export class InsertCitationCommand extends ProsemirrorCommand {
                   // The starting location of this transaction
                   const start = tr.selection.from;
 
-                  // Insert the cite mark and text
+                  // See if we are already inside an active cite mark
+                  const alreadyInCite = markIsActive(tr, schema.marks.cite);
+                  const includeWrapper = !result.intextCitationStyle || result.bibliographySources.length > 1;
 
                   // Insert the wrapping [] if the user wants that style citation
                   // Note that if the use is inserting more than one citation, we ignore this and just
                   // always perform a 'note' style citation insert
-                  if (!result.intextCitationStyle || result.bibliographySources.length > 1) {
+                  // If we're already inside a cite including [], don't bother inserting wrapper
+                  if (!alreadyInCite && includeWrapper) {
                     const wrapperText = schema.text(`[]`, []);
                     tr.insert(tr.selection.from, wrapperText);
 
                     // move the selection into the wrapper
                     setTextSelection(tr.selection.from - 1)(tr);
-                  } 
+                  }
 
                   // insert the CiteId marks and text
                   bibliographySources.forEach((citation, i) => {
@@ -105,13 +109,13 @@ export class InsertCitationCommand extends ProsemirrorCommand {
                     }
                   });
 
-                  // Enclose wrapper in the cite mark
-                  const endOfWrapper = tr.selection.from + 1;
-                  const citeMark = schema.marks.cite.create();
-                  tr.addMark(start, endOfWrapper, citeMark);
-
-                  // Move selection to the end of the inserted content
-                  setTextSelection(endOfWrapper)(tr);
+                  // Enclose wrapper in the cite mark (if not already in a cite)
+                  if (!alreadyInCite) {
+                    const endOfWrapper = includeWrapper ? tr.selection.from + 1 : tr.selection.from;
+                    const citeMark = schema.marks.cite.create();
+                    tr.addMark(start, endOfWrapper, citeMark);
+                    setTextSelection(endOfWrapper)(tr);
+                  }
                 }
 
                 // commit the transaction

@@ -170,7 +170,7 @@ export interface EditorFindReplace {
   selectNext: () => boolean;
   selectPrevious: () => boolean;
   replace: (text: string) => boolean;
-  replaceAll: (text: string) => boolean;
+  replaceAll: (text: string) => number;
   clear: () => boolean;
 }
 

@@ -106,12 +106,12 @@ export async function showInsertCitationDialog(
       const providersForBibliography = (writable: boolean) => {
         return writable
           ? [
-              bibliographySourcePanel(doc, ui, bibliographyManager),
-              doiSourcePanel(ui, server.doi),
-              crossrefSourcePanel(ui, server.crossref, server.doi),
-              dataciteSourcePanel(ui, server.datacite, server.doi),
-              pubmedSourcePanel(ui, server.pubmed, server.doi),
-            ]
+            bibliographySourcePanel(doc, ui, bibliographyManager),
+            doiSourcePanel(ui, server.doi, bibliographyManager),
+            crossrefSourcePanel(ui, server.crossref, server.doi, bibliographyManager),
+            dataciteSourcePanel(ui, server.datacite, server.doi, bibliographyManager),
+            pubmedSourcePanel(ui, server.pubmed, server.doi, bibliographyManager),
+          ]
           : [bibliographySourcePanel(doc, ui, bibliographyManager)];
       };
 

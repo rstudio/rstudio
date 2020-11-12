@@ -5,7 +5,9 @@ import { WidgetProps } from '../../../api/widgets/react';
 import { EditorUI } from '../../../api/ui';
 
 import { NavigationTreeNode } from '../../../api/widgets/navigation-tree';
-import { BibliographySource } from '../../../api/bibliography/bibliography';
+import { BibliographySource, BibliographyManager } from '../../../api/bibliography/bibliography';
+import { CSL, imageForType } from '../../../api/csl';
+import { suggestCiteId, formatIssuedDate, formatAuthors } from '../../../api/cite';
 
 // citations and add them
 export interface CitationSourcePanelProps extends WidgetProps {
@@ -91,4 +93,40 @@ export function errorForStatus(ui: EditorUI, status: string, providerName: strin
   return status === 'nohost'
     ? ui.context.translateText(`Unable to search ${providerName}. Please check your network connection and try again.`)
     : ui.context.translateText(`An error occurred while searching ${providerName}.`);
+}
+
+
+export function matchExistingSourceCitationListEntry(doi: string, existingIds: string[], ui: EditorUI, bibliographyManager: BibliographyManager) {
+
+  const localSources = bibliographyManager.localSources();
+  const existingSource = localSources.find(source => {
+    if (source.DOI?.toLowerCase() === doi.toLowerCase()) {
+      return source;
+    }
+  });
+  if (existingSource) {
+    return existingSourceToCitationListEntry(existingSource, existingIds, ui);
+  }
+}
+
+function existingSourceToCitationListEntry(csl: CSL, existingIds: string[], ui: EditorUI): CitationListEntry {
+  const providerKey = 'pubmed';
+  return {
+    id: csl.id || suggestCiteId(existingIds, csl),
+    isIdEditable: false,
+    title: csl.title || '',
+    doi: csl.DOI,
+    type: '',
+    date: formatIssuedDate(csl.issued) || '',
+    journal: csl["container-title"],
+    authors: (length: number) => {
+      return formatAuthors(csl.author || [], length);
+    },
+    image: imageForType(ui.images, csl.type)[0],
+    toBibliographySource: async (finalId: string) => {
+      // Generate CSL using the DOI
+      return { ...csl, id: finalId, providerKey };
+    },
+    isSlowGeneratingBibliographySource: true,
+  };
 }
