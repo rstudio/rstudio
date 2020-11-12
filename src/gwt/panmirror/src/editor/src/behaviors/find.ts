@@ -211,8 +211,11 @@ class FindPlugin extends Plugin<DecorationSet> {
 
   public replaceAll(text: string) {
     return (state: EditorState<any>, dispatch?: (tr: Transaction<any>) => void) => {
+      
+      let replaced = 0;
+
       if (!this.hasTerm()) {
-        return false;
+        return replaced;
       }
 
       if (dispatch) {
@@ -225,13 +228,14 @@ class FindPlugin extends Plugin<DecorationSet> {
           const from = tr.mapping.map(decoration.from);
           const to = tr.mapping.map(decoration.to);
           tr.insertText(text, from, to);
+          replaced += 1;
         });
         this.withResultUpdates(() => {
           dispatch(tr);
         });
       }
 
-      return true;
+      return replaced;
     };
   }
 

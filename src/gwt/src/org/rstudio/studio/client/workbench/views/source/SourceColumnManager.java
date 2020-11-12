@@ -1602,6 +1602,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                      public void onResponseReceived(final SourceDocument doc)
                      {
                         mainColumn.addTab(doc, Source.OPEN_INTERACTIVE);
+                        mainColumn.ensureVisible(true);
                      }
 
                      @Override
