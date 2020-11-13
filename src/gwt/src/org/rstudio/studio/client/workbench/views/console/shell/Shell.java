@@ -36,7 +36,6 @@ import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
-import org.rstudio.studio.client.application.events.DeferredInitCompletedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.CommandLineHistory;
@@ -50,7 +49,6 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.ConsoleEditorProvider;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.ClientInitState;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.ConsoleAction;
@@ -182,16 +180,17 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       eventBus.addHandler(SuppressNextShellFocusEvent.TYPE, this);
       eventBus.addHandler(RestartStatusEvent.TYPE, this);
 
-      final CompletionManager completionManager
-                  = new RCompletionManager(view_.getInputEditorDisplay(),
-                                          null,
-                                          new CompletionPopupPanel(),
-                                          server,
-                                          null,
-                                          null,
-                                          null,
-                                          (DocDisplay) view_.getInputEditorDisplay(),
-                                          EditorBehavior.AceBehaviorConsole);
+      final CompletionManager completionManager = new RCompletionManager(
+            view_.getInputEditorDisplay(),
+            null,
+            new CompletionPopupPanel(),
+            server,
+            null,
+            null,
+            null,
+            (DocDisplay) view_.getInputEditorDisplay(),
+            EditorBehavior.AceBehaviorConsole);
+      
       addKeyDownPreviewHandler(completionManager);
       addKeyPressPreviewHandler(completionManager);
 
