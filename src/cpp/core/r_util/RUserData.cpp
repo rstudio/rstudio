@@ -26,6 +26,8 @@
 #define kMigratedFile  "rs-14-migrated"
 #define kMigrationLock "rs-14-migration.lock"
 
+#define LICENSE_FILE_EXT ".lic"
+
 namespace rstudio {
 namespace core {
 namespace r_util {
@@ -126,6 +128,19 @@ Error migrateUserStateIfNecessary(SessionType sessionType)
       {
          // Log as a failure so we don't clean up the ~/.rstudio-desktop folder (will generate an
          // ignorable but accurate warning in the logs)
+         failures.push_back(f.getFilename());
+         continue;
+      }
+
+      // RStudio Desktop Pro stores information about user license in these files; leave as-is
+      // using same technique as the "odbc" files above.
+      if (!f.isDirectory() && f.getFilename() == "verify")
+      {
+         failures.push_back(f.getFilename());
+         continue;
+      }
+      if (!f.isDirectory() && f.hasExtensionLowerCase(LICENSE_FILE_EXT))
+      {
          failures.push_back(f.getFilename());
          continue;
       }
