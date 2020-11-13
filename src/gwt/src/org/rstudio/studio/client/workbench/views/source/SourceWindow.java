@@ -222,8 +222,8 @@ public class SourceWindow implements LastSourceDocClosedHandler,
 
    private final native void exportFromSatellite() /*-{
       var satellite = this;
-      $wnd.rstudioCloseAllDocs = $entry(function(caption, onCompleted) {
-         satellite.@org.rstudio.studio.client.workbench.views.source.SourceWindow::closeAllDocs(Ljava/lang/String;Lcom/google/gwt/user/client/Command;)(caption, onCompleted);
+      $wnd.rstudioCloseAllDocs = $entry(function(caption, excludeDocId, onCompleted) {
+         satellite.@org.rstudio.studio.client.workbench.views.source.SourceWindow::closeAllDocs(Ljava/lang/String;Ljava/lang/String;Lcom/google/gwt/user/client/Command;)(caption, excludeDocId, onCompleted);
       });
       
       $wnd.rstudioGetUnsavedChanges = $entry(function() {
@@ -288,10 +288,10 @@ public class SourceWindow implements LastSourceDocClosedHandler,
       source_.handleUnsavedChangesBeforeExit(targets, onCompleted);
    }
    
-   private void closeAllDocs(String caption, Command onCompleted)
+   private void closeAllDocs(String caption, String excludeDocId, Command onCompleted)
    {
       if (source_ != null)
-         source_.closeAllSourceDocs(caption, onCompleted, false, null);
+         source_.closeAllSourceDocs(caption, onCompleted, false, excludeDocId);
    }
    
    private JsArray<UnsavedChangesItem> getUnsavedChanges()

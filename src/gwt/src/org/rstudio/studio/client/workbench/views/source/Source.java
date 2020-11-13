@@ -1554,7 +1554,7 @@ public class Source implements InsertSourceHandler,
       if (SourceWindowManager.isMainSourceWindow() && !excludeActive)
       {
          // if this is the main window, close docs in the satellites first
-         pWindowManager_.get().closeAllSatelliteDocs(caption, new Command()
+         pWindowManager_.get().closeAllSatelliteDocs(caption, excludeDocId, new Command()
          {
             @Override
             public void execute()
