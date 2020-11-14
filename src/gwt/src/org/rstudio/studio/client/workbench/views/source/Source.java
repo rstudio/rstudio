@@ -1948,8 +1948,11 @@ public class Source implements InsertSourceHandler,
             // helper command to focus after navigation has completed
             final Command onNavigationCompleted = () ->
             {
-               events_.fireEvent(new SuppressNextShellFocusEvent());
-               target.focus();
+               if (file.focusOnNavigate())
+               {
+                  events_.fireEvent(new SuppressNextShellFocusEvent());
+                  target.focus();
+               }
             };
 
 
