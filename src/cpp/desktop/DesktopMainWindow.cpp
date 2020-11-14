@@ -669,11 +669,28 @@ void MainWindow::onLoadFinished(bool ok)
 {
    LOCK_MUTEX(mutex_)
    {
-      loadTimer_->start(1000);
-      
       if (ok)
       {
+         // if this was a successful load, we're done
+         loadTimer_->stop();
          loadedSuccessfully_ = true;
+      }
+      else if (loadedSuccessfully_)
+      {
+         // if the load was purportedly not successful, even
+         // though a prior load was successful, then ignore
+         // that (assume that this was a spurious / incorrect
+         // signal from Qt)
+         LOG_DEBUG_MESSAGE(
+                  "Discarding onLoadFinished(false) signal as we have "
+                  "already received onLoadFinished(true)");
+      }
+      else
+      {
+         // schedule our load timer and allow a 1s buffer for
+         // incoming loadFinished() events which might report
+         // that the load was actually successful
+         loadTimer_->start(1000);
       }
    }
    END_LOCK_MUTEX
