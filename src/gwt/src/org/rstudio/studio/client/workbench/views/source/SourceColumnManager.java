@@ -1425,8 +1425,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          target.asWidget(), interactive, onClosed);
    }
    
-   public void closeAllTabs(boolean excludeActive,
-                            String excludeDocId,
+   public void closeAllTabs(String excludeDocId,
                             boolean excludeMain,
                             Command onCompleted)
    {
@@ -1434,11 +1433,10 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       // names rather than the column list
       ArrayList<String> columnNames = new ArrayList<>(getNames(false));
       for (String name : columnNames)
-         closeAllTabs(getByName(name), excludeActive, excludeDocId, excludeMain, onCompleted);
+         closeAllTabs(getByName(name), excludeDocId, excludeMain, onCompleted);
    }
 
    public void closeAllTabs(SourceColumn column,
-                            boolean excludeActive,
                             String excludeDocId,
                             boolean excludeMain,
                             Command onCompleted)
@@ -1447,13 +1445,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       {
          final CPSEditingTargetCommand command = (EditingTarget target, Command continuation) ->
          {
-            if (excludeActive &&
-                  (hasActiveEditor() && target == activeColumn_.getActiveEditor()))
-            {
-               continuation.execute();
-            }
-            else if (!StringUtil.isNullOrEmpty(excludeDocId) &&
-                  target == activeColumn_.getDoc(excludeDocId))
+            if (!StringUtil.isNullOrEmpty(excludeDocId) && target == activeColumn_.getDoc(excludeDocId))
             {
                continuation.execute();
             }
@@ -1528,41 +1520,29 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
     * @param caption caption of command triggering this action
     * @param sourceColumn source column to operate on or null to operate on all columns
     * @param onCompleted callback when done or null
-    * @param excludeActive leave currently active document open (or false to close all)
     * @param excludeDocId docId of document to keep open and activate (or null to close all)
     */
    public void closeAllLocalSourceDocs(String caption,
                                        SourceColumn sourceColumn,
                                        Command onCompleted,
-                                       final boolean excludeActive,
                                        final String excludeDocId)
    {
-      // save active editor for exclusion (it changes as we close tabs)
-      final EditingTarget excludeEditor = (excludeActive) ? activeColumn_.getActiveEditor() :
-         null;
-
       // collect up a list of dirty documents
       ArrayList<EditingTarget> dirtyTargets = new ArrayList<>();
       // if sourceColumn is not provided, assume we are closing editors for every column
       if (sourceColumn == null)
          columnList_.forEach((column) ->
-           dirtyTargets.addAll(column.getDirtyEditors(excludeEditor, excludeDocId)));
+           dirtyTargets.addAll(column.getDirtyEditors(excludeDocId)));
       else
-         dirtyTargets.addAll(sourceColumn.getDirtyEditors(excludeEditor, excludeDocId));
+         dirtyTargets.addAll(sourceColumn.getDirtyEditors(excludeDocId));
 
       // create a command used to close all tabs
       final Command closeAllTabsCommand = () ->
       {
-         // The active editor may have been changed during the save process so may need to be 
-         // reset so it isn't closed
-         if (excludeEditor != null &&
-             excludeEditor != activeColumn_.getActiveEditor())
-            setActive(excludeEditor);
-
          if (sourceColumn == null) 
-            closeAllTabs(excludeActive, excludeDocId, false, null);
+            closeAllTabs(excludeDocId, false, null);
          else
-            closeAllTabs(sourceColumn, excludeActive, excludeDocId, false, null);
+            closeAllTabs(sourceColumn, excludeDocId, false, null);
       };
       
       saveEditingTargetsWithPrompt(caption,

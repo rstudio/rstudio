@@ -163,7 +163,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
          {
             pSource_.get().closeAllSourceDocs(caption,
                   () -> handleUnfinishedWork(caption, allowCancel, forceSaveAll, quitContext),
-                  false, null);
+                  null);
          }
          else
          {

@@ -1531,13 +1531,13 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onCloseAllSourceDocs()
    {
-      closeAllSourceDocs("Close All", null, false, null);
+      closeAllSourceDocs("Close All", null, null);
    }
 
    @Handler
    public void onCloseOtherSourceDocs()
    {
-      closeAllSourceDocs("Close Other", null, true, null);
+      closeAllSourceDocs("Close Other", null, columnManager_.getActiveDocId());
    }
 
    /**
@@ -1545,31 +1545,24 @@ public class Source implements InsertSourceHandler,
     * 
     * @param caption caption of command triggering this action
     * @param onCompleted callback when done, may be null
-    * @param excludeActive leave currently active document open (or false to close all)
     * @param excludeDocId docId of document to keep open and activate (or null to close all)
     */
    public void closeAllSourceDocs(final String caption,
-         final Command onCompleted, final boolean excludeActive, String excludeDocId)
+         final Command onCompleted, final String excludeDocId)
    {
-      if (SourceWindowManager.isMainSourceWindow() && !excludeActive)
+      if (SourceWindowManager.isMainSourceWindow())
       {
          // if this is the main window, close docs in the satellites first
-         pWindowManager_.get().closeAllSatelliteDocs(caption, excludeDocId, new Command()
+         pWindowManager_.get().closeAllSatelliteDocs(caption, excludeDocId, () ->
          {
-            @Override
-            public void execute()
-            {
-               columnManager_.closeAllLocalSourceDocs(caption, null, onCompleted, 
-                                                      excludeActive, excludeDocId);
-            }
+            columnManager_.closeAllLocalSourceDocs(caption, null, onCompleted, excludeDocId);
          });
       }
       else
       {
          // this is a satellite (or we don't need to query satellites)--just
          // close our own tabs
-         columnManager_.closeAllLocalSourceDocs(caption, null, onCompleted,
-                                                excludeActive, excludeDocId);
+         columnManager_.closeAllLocalSourceDocs(caption, null, onCompleted, excludeDocId);
       }
    }
 
@@ -2946,7 +2939,7 @@ public class Source implements InsertSourceHandler,
    @Override
    public void onCloseAllSourceDocsExcept(CloseAllSourceDocsExceptEvent closeAllExceptEvent)
    {
-      closeAllSourceDocs("Close All Others", null, false, closeAllExceptEvent.getKeepDocId());
+      closeAllSourceDocs("Close All Others", null, closeAllExceptEvent.getKeepDocId());
    }
 
    private void onRStudioApiRequestImpl(RStudioApiRequestEvent requestEvent)
