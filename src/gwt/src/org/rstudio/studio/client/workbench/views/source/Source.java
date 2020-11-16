@@ -1951,7 +1951,23 @@ public class Source implements InsertSourceHandler,
                if (file.focusOnNavigate())
                {
                   events_.fireEvent(new SuppressNextShellFocusEvent());
-                  target.focus();
+                  
+                  if (target instanceof TextEditingTarget)
+                  {
+                     TextEditingTarget textTarget = (TextEditingTarget) target;
+                     if (textTarget.isVisualModeActivated())
+                     {
+                        Scheduler.get().scheduleDeferred(() -> target.focus());
+                     }
+                     else
+                     {
+                        target.focus();
+                     }
+                  }
+                  else
+                  {
+                     target.focus();
+                  }
                }
             };
 
