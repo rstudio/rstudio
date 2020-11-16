@@ -360,7 +360,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       boolean addToHistory = event.getPrompt().getAddToHistory();
       consolePrompt(prompt, addToHistory);
    }
-
+   
    private void consolePrompt(String prompt, boolean addToHistory)
    {
       view_.consolePrompt(prompt, true);
@@ -743,7 +743,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       {
          SessionInfo info = session_.getSessionInfo();
          String prompt = info.getPrompt();
-         consolePrompt(prompt, false);
+         consolePrompt(prompt, true);
       }
    }
 
