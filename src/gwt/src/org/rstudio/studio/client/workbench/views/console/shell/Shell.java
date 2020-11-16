@@ -361,6 +361,10 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       consolePrompt(prompt, addToHistory);
    }
    
+   // NOTE: 'addToHistory()' flag controls whether the next-processed
+   // command entry should be added to the console history; normally,
+   // it's only set to false for commands synthesized by the IDE (and
+   // so not explicitly entered by the user)
    private void consolePrompt(String prompt, boolean addToHistory)
    {
       view_.consolePrompt(prompt, true);
