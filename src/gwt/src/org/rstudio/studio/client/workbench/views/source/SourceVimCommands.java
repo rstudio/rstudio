@@ -101,7 +101,7 @@ public class SourceVimCommands
       
          var interactive = true;
          if (params.argString && params.argString === "!")
-            interactive = false; // Temporarily unused until merge fix for: https://github.com/rstudio/rstudio/issues/8388
+            interactive = false; // close unsaved files without saving them (or prompting)
          
          source.@org.rstudio.studio.client.workbench.views.source.SourceColumnManager::closeAllTabs(Ljava/lang/String;ZLcom/google/gwt/user/client/Command;)(null, false, onCompleted);
       });

@@ -156,7 +156,9 @@
     }
   )
 
-  if (is.character(yamlFrontMatter[["knit"]]))
+  if (.rs.endsWith(file, ".md") && !is.null(yamlFrontMatter[["jupyter"]]))
+    "quarto render"
+  else if (is.character(yamlFrontMatter[["knit"]]))
     yamlFrontMatter[["knit"]][[1]]
   else if (!is.null(yamlFrontMatter$runtime) &&
            grepl('^shiny', yamlFrontMatter$runtime)) {

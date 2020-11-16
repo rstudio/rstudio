@@ -205,7 +205,7 @@ function referenceBlockFromYaml(parsedYamls: ParsedYaml[]): string {
   if (refBlockParsedYamls.length > 0) {
     const lastReferenceParsedYaml = refBlockParsedYamls[refBlockParsedYamls.length - 1];
     if (lastReferenceParsedYaml) {
-      return lastReferenceParsedYaml.yamlCode;
+      return `---\n${lastReferenceParsedYaml.yamlCode}\n---\n`;
     }
   }
 

@@ -1424,7 +1424,21 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       findByDocument(target.getId()).closeTab(
          target.asWidget(), interactive, onClosed);
    }
-   
+
+   private void closeAllTabs(boolean interactive, Command onCompleted)
+   {
+      if (interactive)
+      {
+         // call into the interactive tab closer
+         commands_.closeAllSourceDocs().execute();
+      }
+      else
+      {
+         // revert unsaved targets and close tabs
+         revertUnsavedTargets(() -> closeAllTabs(false, onCompleted));
+      }
+   }
+
    public void closeAllTabs(String excludeDocId,
                             boolean excludeMain,
                             Command onCompleted)
