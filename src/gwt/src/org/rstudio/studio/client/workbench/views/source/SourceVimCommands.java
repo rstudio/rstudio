@@ -101,9 +101,9 @@ public class SourceVimCommands
       
          var interactive = true;
          if (params.argString && params.argString === "!")
-            interactive = false;
+            interactive = false; // close unsaved files without saving them (or prompting)
          
-         source.@org.rstudio.studio.client.workbench.views.source.SourceColumnManager::closeAllTabs(ZZLcom/google/gwt/user/client/Command;)(interactive, false, onCompleted);
+         source.@org.rstudio.studio.client.workbench.views.source.SourceColumnManager::closeAllTabs(ZLcom/google/gwt/user/client/Command;)(interactive, onCompleted);
       });
        
       $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("qall", "qa", callback);
