@@ -736,7 +736,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="activateBuild" value="Meta+F2" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="activateBuild" value="Ctrl+F2" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          
-         <!-- Not using Cmd+F5 on Mac, it is the standard shortcut for toggling VoiceOver -->
+         <!-- Not using Cmd+F5 (aka Meta+F5) on Mac, it is the standard shortcut for toggling VoiceOver -->
          <shortcut refid="activateConnections" value="Ctrl+F5" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          
          <shortcut refid="activateFindInFiles" value="Meta+F6" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
