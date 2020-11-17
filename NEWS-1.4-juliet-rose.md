@@ -18,4 +18,4 @@
 * Fixed issue where right-assignment with multi-line strings gave false-positive diagnostic errors (#8307)
 * Fixed issue where restoring R workspace could fail when project path contained non-ASCII characters (#8321)
 * Fixed issue where forked R sessions could hang after a package was loaded or unloaded (#8361)
-
+* Fixed issue where attempting to profile lines ending in comment would fail (#8407)
