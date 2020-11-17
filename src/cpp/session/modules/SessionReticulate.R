@@ -269,18 +269,6 @@
 
 .rs.addFunction("reticulate.replTeardown", function()
 {
-   # restore old help method
-   builtins <- reticulate::import_builtins(convert = FALSE)
-   builtins$help <- .rs.getVar("reticulate.help")
-   
-   # restore matplotlib method
-   show <- .rs.getVar("reticulate.matplotlib.show")
-   if (!is.null(show)) {
-      matplotlib <- reticulate::import("matplotlib", convert = TRUE)
-      plt <- matplotlib$pyplot
-      plt$show <- show
-   }
-   
    # client event
    .rs.reticulate.enqueueClientEvent(
       .rs.reticulateEvents$REPL_TEARDOWN,
