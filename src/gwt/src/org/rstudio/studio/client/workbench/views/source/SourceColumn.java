@@ -1045,10 +1045,31 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       // All columns aside from the main column should open with a document
       if (getTabCount() == 0 && newTabPending_ == 0)
       {
+         newTabPending_++;
+         
          // Avoid scenarios where the Source tab comes up but no tabs are
          // in it. (But also avoid creating an extra source tab when there
          // were already new tabs about to be created!)
-         newDoc(FileTypeRegistry.R, null);
+         newDoc(FileTypeRegistry.R, new ResultCallback<EditingTarget, ServerError>()
+         {
+            @Override
+            public void onSuccess(EditingTarget result)
+            {
+               newTabPending_--;
+            }
+
+            @Override
+            public void onFailure(ServerError info)
+            {
+               newTabPending_--;
+            }
+
+            @Override
+            public void onCancelled()
+            {
+               newTabPending_--;
+            }
+         });
       }
    }
 
