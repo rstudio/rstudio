@@ -360,7 +360,11 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       boolean addToHistory = event.getPrompt().getAddToHistory();
       consolePrompt(prompt, addToHistory);
    }
-
+   
+   // NOTE: 'addToHistory()' flag controls whether the next-processed
+   // command entry should be added to the console history; normally,
+   // it's only set to false for commands synthesized by the IDE (and
+   // so not explicitly entered by the user)
    private void consolePrompt(String prompt, boolean addToHistory)
    {
       view_.consolePrompt(prompt, true);
@@ -743,7 +747,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       {
          SessionInfo info = session_.getSessionInfo();
          String prompt = info.getPrompt();
-         consolePrompt(prompt, false);
+         consolePrompt(prompt, true);
       }
    }
 
