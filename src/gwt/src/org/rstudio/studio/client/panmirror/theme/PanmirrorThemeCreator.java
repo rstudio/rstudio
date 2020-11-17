@@ -17,6 +17,7 @@ package org.rstudio.studio.client.panmirror.theme;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ColorUtil.RGBColor;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.ThemeColors;
 import org.rstudio.core.client.theme.ThemeFonts;
@@ -37,7 +38,12 @@ public class PanmirrorThemeCreator
       theme.darkMode = aceTheme.isDark();
       theme.solarizedMode = aceTheme.isSolarizedLight();
       
-      theme.cursorColor = DomUtils.extractCssValue("ace_cursor", "color");
+      // get cursor color (guard against themes that don't set ace_cursor color)
+      String defaultCursorColor = aceTheme.isDark() ? "white" : "black";
+      String cursorColor = DomUtils.extractCssValue("ace_cursor", "color");
+      theme.cursorColor = StringUtil.isNullOrEmpty(cursorColor)
+            ? cursorColor
+            : defaultCursorColor;
       
       // selection color
       if (aceTheme.isDark())
