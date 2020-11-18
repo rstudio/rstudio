@@ -720,6 +720,10 @@
    
 })
 
+.rs.addApiFunction("closeAllSourceBuffersWithoutSaving", function() {
+   .Call("rs_documentCloseAllNoSave", PACKAGE = "(embedding)")
+})
+
 # NOTE: we allow '1L' just in case for backwards compatibility
 # with older preferences not migrated to the newer string version
 .rs.addApiFunction("getConsoleHasColor", function(name) {
