@@ -665,11 +665,11 @@ assign(x = ".rs.acCompletionTypes",
       stripped <- .rs.stripSurrounding(string)
       envir <- .rs.resolveEnvironment(envir)
       
-      if (!grepl("(", string, fixed = TRUE))
+      if (!grepl("(", stripped, fixed = TRUE))
       {
          object <- .rs.tryCatch(
-            eval(
-               expr = parse(text = string),
+            .rs.getAnywhere(
+               name  = stripped,
                envir = envir
             )
          )
