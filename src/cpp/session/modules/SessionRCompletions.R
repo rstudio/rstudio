@@ -664,7 +664,16 @@ assign(x = ".rs.acCompletionTypes",
    {
       stripped <- .rs.stripSurrounding(string)
       envir <- .rs.resolveEnvironment(envir)
-      object <- .rs.tryCatch(get(stripped, envir = envir, mode = "function"))
+      
+      if (!grepl("(", string, fixed = TRUE))
+      {
+         object <- .rs.tryCatch(
+            eval(
+               expr = parse(text = string),
+               envir = envir
+            )
+         )
+      }
    }
    else if (length(splat) == 2)
    {
