@@ -159,7 +159,23 @@ public:
       params_.push_back(Param(name, paramSEXP));
       return *this;
    }
-                        
+   
+   template <typename T>
+   RFunction& addUtf8Param(const T& param)
+   {
+      return addUtf8Param(std::string(), param);
+   }
+   
+   template <typename T>
+   RFunction& addUtf8Param(const std::string& name, const T& param)
+   {
+      r::sexp::Protect protect;
+      SEXP paramSEXP = sexp::createUtf8(param, &protect);
+      preserver_.add(paramSEXP);
+      params_.push_back(Param(name, paramSEXP));
+      return *this;
+   }
+   
    core::Error call(SEXP evalNS = R_GlobalEnv, bool safely = true);
    core::Error callUnsafe();
 
