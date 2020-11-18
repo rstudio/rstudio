@@ -1341,6 +1341,11 @@ SEXP createUtf8(const std::string& data, Protect* pProtect)
    return strSEXP;
 }
 
+SEXP createUtf8(const FilePath& filePath, Protect* pProtect)
+{
+   return createUtf8(filePath.getAbsolutePath(), pProtect);
+}
+
 SEXP createRawVector(const std::string& data, Protect* pProtect)
 {
    SEXP rawSEXP;
