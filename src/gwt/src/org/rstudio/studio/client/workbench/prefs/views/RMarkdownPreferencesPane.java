@@ -27,6 +27,7 @@ import jsinterop.base.Js;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
@@ -34,7 +35,9 @@ import org.rstudio.core.client.theme.VerticalTabPanel;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.NumericValueWidget;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.SelectWidget;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.panmirror.server.PanmirrorZoteroLocalConfig;
@@ -322,6 +325,30 @@ public class RMarkdownPreferencesPane extends PreferencesPane
             false);
       spaced(visualModeCanonical);
       visualModeOptions.add(visualModeCanonical);
+      visualModeCanonical.addValueChangeHandler(value -> {
+         if (value.getValue())
+         {
+            RStudioGinjector.INSTANCE.getGlobalDisplay().showYesNoMessage(
+               MessageDisplay.MSG_WARNING, 
+               "Visual Mode Preferences", 
+               "Are you sure you want to write canonical markdown from source mode for all R Markdown files?\n\n" +
+               "This preference should generally only be used at a project level (to prevent " +
+               "re-writing of markdown source that you or others don't intend to use with visual mode).\n\n" +
+               "Change this preference now?",
+               false, 
+               new Operation() {
+                  @Override
+                  public void execute()
+                  {
+                     
+                  }
+               },
+               () -> {
+                  visualModeCanonical.setValue(false);
+               },
+               false);
+         }
+      });
       
       // help on per-file markdown options
       HelpLink markdownPerFileOptions = new HelpLink(

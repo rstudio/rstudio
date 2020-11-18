@@ -63,6 +63,7 @@ import org.rstudio.studio.client.server.ErrorLoggingServerRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.server.model.DocumentCloseAllNoSaveEvent;
 import org.rstudio.studio.client.workbench.FileMRUList;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ClientState;
@@ -100,6 +101,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Singleton
 public class SourceColumnManager implements CommandPaletteEntrySource,
                                             SourceExtendedTypeDetectedEvent.Handler,
+                                            DocumentCloseAllNoSaveEvent.Handler,
                                             DebugModeChangedEvent.Handler
 {
    public interface CPSEditingTargetCommand
@@ -207,6 +209,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
       events_.addHandler(SourceExtendedTypeDetectedEvent.TYPE, this);
       events_.addHandler(DebugModeChangedEvent.TYPE, this);
+      events_.addHandler(DocumentCloseAllNoSaveEvent.TYPE, this);
 
       WindowEx.addFocusHandler(new FocusHandler()
       {
@@ -1094,6 +1097,12 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       EditingTarget target = findEditor(e.getDocId());
       if (target != null)
          target.adaptToExtendedFileType(e.getExtendedType());
+   }
+
+   @Override
+   public void onDocumentCloseAllNoSave(DocumentCloseAllNoSaveEvent event)
+   {
+      revertUnsavedTargets(() -> commands_.closeAllSourceDocs().execute());
    }
 
    public void nextTabWithWrap()
