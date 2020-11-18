@@ -148,9 +148,12 @@ function gapClickHandler(view: EditorView, event: Event): boolean {
         view.state.doc.resolve(clickPos.pos), schema.nodes.div
       );
       if (div && div.pos === clickPos.inside) {
-        
-        return createGapCursor();
-      
+        const divNode = view.nodeDOM(div.start);
+        if (divNode instanceof HTMLElement) {
+          if (Math.abs(mouseEvent.clientX - divNode.getBoundingClientRect().left) < 150) {
+            return createGapCursor();
+          }
+        }
       }
     }
 
