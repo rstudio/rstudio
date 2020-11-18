@@ -1059,14 +1059,17 @@ public class SourceColumn implements BeforeShowEvent.Handler,
             }
 
             @Override
-            public void onFailure(ServerError info)
+            public void onCancelled()
             {
+               super.onCancelled();
                newTabPending_--;
             }
 
             @Override
-            public void onCancelled()
+            public void onFailure(ServerError info)
             {
+               super.onFailure(info);
+               Debug.logError(info);
                newTabPending_--;
             }
          });
