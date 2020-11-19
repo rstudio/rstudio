@@ -132,10 +132,18 @@
    }
    
    # ensure matplotlib hooks are injected on load
-   setHook("reticulate::matplotlib.pyplot::load", .rs.reticulate.matplotlib.onLoaded)
+   setHook(
+      "reticulate::matplotlib.pyplot::load",
+      function(...) .rs.reticulate.matplotlib.onLoaded("matplotlib.pyplot")
+   )
+   
+   setHook(
+      "reticulate::matplotlib.pylab::load",
+      function(...) .rs.reticulate.matplotlib.onLoaded("matplotlib.pylab")
+   )
 })
 
-.rs.addFunction("reticulate.matplotlib.onLoaded", function(...)
+.rs.addFunction("reticulate.matplotlib.onLoaded", function(module)
 {
    # install matplotlib hook if available
    if (requireNamespace("png", quietly = TRUE) &&
@@ -156,9 +164,8 @@
       }
       
       # inject our hook
-      plt <- matplotlib$pyplot
-      .rs.setVar("reticulate.matplotlib.show", plt$show)
-      plt$show <- .rs.reticulate.matplotlib.showHook
+      module <- reticulate::import(module, convert = TRUE)
+      module$show <- .rs.reticulate.matplotlib.showHook
    }
    
 })
