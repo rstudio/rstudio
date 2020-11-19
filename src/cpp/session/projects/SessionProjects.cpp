@@ -1081,14 +1081,16 @@ json::Array websiteOutputFormatsJson()
    json::Array formatsJson;
    if (projectContext().config().buildType == r_util::kBuildTypeWebsite)
    {
-      r::exec::RFunction getFormats(".rs.getAllOutputFormats");
-      getFormats.addParam(string_utils::utf8ToSystem(
-         projectContext().buildTargetPath().getAbsolutePath()));
-      getFormats.addParam(projectContext().defaultEncoding());
       std::vector<std::string> formats;
-      Error error = getFormats.call(&formats);
+      
+      Error error = r::exec::RFunction(".rs.getAllOutputFormats")
+            .addUtf8Param(projectContext().buildTargetPath())
+            .addParam(projectContext().defaultEncoding())
+            .call(&formats);
+      
       if (error)
          LOG_ERROR(error);
+      
       formatsJson = json::toJsonArray(formats);
    }
    return formatsJson;

@@ -45,11 +45,6 @@ FilePath explorerCacheDir()
    return module_context::sessionScratchPath().completeChildPath(kExplorerCacheDir);
 }
 
-std::string explorerCacheDirSystem()
-{
-   return string_utils::utf8ToSystem(explorerCacheDir().getAbsolutePath());
-}
-
 void removeOrphanedCacheItems()
 {
    Error error;
@@ -125,7 +120,7 @@ void onShutdown(bool terminatedNormally)
    
    using namespace r::exec;
    Error error = RFunction(".rs.explorer.saveCache")
-         .addParam(explorerCacheDirSystem())
+         .addUtf8Param(explorerCacheDir())
          .call();
    
    if (error)
@@ -185,7 +180,7 @@ void onDeferredInit(bool)
    
    using namespace r::exec;
    error = RFunction(".rs.explorer.restoreCache")
-         .addParam(explorerCacheDirSystem())
+         .addUtf8Param(explorerCacheDir())
          .call();
    
    if (error)
@@ -254,7 +249,7 @@ SEXP rs_objectAttributes(SEXP objectSEXP)
 SEXP rs_explorerCacheDir()
 {
    r::sexp::Protect protect;
-   return r::sexp::create(explorerCacheDirSystem(), &protect);
+   return r::sexp::createUtf8(explorerCacheDir(), &protect);
 }
 
 } // end anonymous namespace

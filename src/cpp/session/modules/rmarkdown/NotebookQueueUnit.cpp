@@ -154,8 +154,9 @@ Error NotebookQueueUnit::parseOptions(json::Object* pOptions)
    // evaluate this chunk's options in R
    r::sexp::Protect protect;
    SEXP sexpOptions = R_NilValue;
-   Error error = r::exec::RFunction(".rs.evaluateChunkOptions", 
-               string_utils::wideToUtf8(code_)).call(&sexpOptions, &protect);
+   Error error = r::exec::RFunction(".rs.evaluateChunkOptions")
+         .addUtf8Param(string_utils::wideToUtf8(code_))
+         .call(&sexpOptions, &protect);
    if (error)
       return error;
 
@@ -183,7 +184,7 @@ Error NotebookQueueUnit::parseOptions(json::Object* pOptions)
 Error NotebookQueueUnit::innerCode(std::string* pCode)
 {
    return r::exec::RFunction(".rs.extractChunkInnerCode")
-       .addParam(string_utils::wideToUtf8(code_))
+       .addUtf8Param(string_utils::wideToUtf8(code_))
        .callUtf8(pCode);
 }
 
