@@ -1035,10 +1035,18 @@ SEXP create(const char* value, Protect* pProtect)
    return create(std::string(value), pProtect);
 }
 
+// NOTE: by default, we create strings in the _native_ encoding,
+// not as UTF-8 strings. this is primarily because in a number of
+// places we explicitly convert strings from UTF-8 to the native
+// encoding, and so those code paths rely on the 'value' parameter
+// here really being in the native encoding. we should change this
+// to CE_UTF8 in the future but that will require auditing all
+// usages of create(), of which there are many (especially through
+// e.g. the RFunction class)
 SEXP create(const std::string& value, Protect* pProtect)
 {
    SEXP charSEXP;
-   pProtect->add(charSEXP = Rf_mkCharLenCE(value.c_str(), value.size(), CE_UTF8));
+   pProtect->add(charSEXP = Rf_mkCharLenCE(value.c_str(), value.size(), CE_NATIVE));
    
    SEXP valueSEXP;
    pProtect->add(valueSEXP = Rf_allocVector(STRSXP, 1));
