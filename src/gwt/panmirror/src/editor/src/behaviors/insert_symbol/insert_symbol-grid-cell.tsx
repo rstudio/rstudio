@@ -61,9 +61,9 @@ export const SymbolCharacterCell = (props: GridChildComponentProps) => {
         onMouseEnter={handleMouseEnter}
       >
         <div
-          className={`pm-symbol-grid-cell pm-grid-item ${
+          className={`pm-symbol-grid-cell pm-grid-item pm-emoji-font ${
             characterGridCellItemData.selectedIndex === itemIndex ? characterGridCellItemData.selectedItemClassName : ''
-          }`}
+            }`}
         >
           {ch.value || ''}
         </div>

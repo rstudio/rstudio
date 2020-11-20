@@ -93,7 +93,7 @@ function emojiCompletions(ui: EditorUI) {
 
 const EmojiView: React.FC<Emoji> = emoji => {
   return (
-    <div className={'pm-completion-list-item-text'}>
+    <div className={'pm-completion-list-item-text pm-emoji-font'}>
       {emoji.emoji}&nbsp;:{emoji.aliases[0]}:
     </div>
   );

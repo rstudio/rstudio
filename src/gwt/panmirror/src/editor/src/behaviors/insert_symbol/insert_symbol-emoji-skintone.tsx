@@ -154,7 +154,7 @@ export const SymbolEmojiPreferencesPanel = React.forwardRef<any, SymbolPreferenc
   };
 
   return (
-    <div className="pm-emoji-skintone-picker-container" onKeyDown={handleKeyDown} tabIndex={0} ref={ref}>
+    <div className="pm-emoji-skintone-picker-container pm-emoji-font" onKeyDown={handleKeyDown} tabIndex={0} ref={ref}>
       {selectSkinTone ? skinTonePicker() : currentSkinToneButton()}
     </div>
   );
