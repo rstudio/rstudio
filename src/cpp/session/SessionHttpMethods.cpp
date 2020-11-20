@@ -190,7 +190,12 @@ Error startHttpConnectionListener()
 
       // set the standalone port so rpostback and others know how to
       // connect back into the session process
-      core::system::setenv(kRSessionStandalonePortNumber, safe_convert::numberToString(endpoint.port()));
+      std::string port = safe_convert::numberToString(endpoint.port());
+      core::system::setenv(kRSessionStandalonePortNumber, port);
+
+      // save the standalone port for possible session relaunches - launcher sessions
+      // need to rebind to the same port
+      persistentState().setReusedStandalonePort(port);
    }
 
    return Success();

@@ -120,6 +120,14 @@
             "defaultValue": false,
             "memberName": "verifySignatures_",
             "description": "Indicates whether or not to verify signatures on incoming requests. This is generally only used with Launcher sessions."
+         },
+         {
+            "name": {"constant": "kWwwResusePorts", "value": "www-reuse-ports"},
+            "memberName": "wwwReusePorts_",
+            "type": "bool",
+            "defaultValue": false,
+            "isHidden": true,
+            "description": "Whether or not to reuse last used bound ports when restarting a Launcher session."
          }
       ],
       "session": [

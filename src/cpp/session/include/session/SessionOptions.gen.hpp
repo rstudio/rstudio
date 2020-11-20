@@ -110,7 +110,10 @@ protected:
       "Runs the session in standalone mode, indicating we should use HTTP communication. This is generally only used with Launcher sessions.")
       (kVerifySignaturesSessionOption,
       value<bool>(&verifySignatures_)->default_value(false),
-      "Indicates whether or not to verify signatures on incoming requests. This is generally only used with Launcher sessions.");
+      "Indicates whether or not to verify signatures on incoming requests. This is generally only used with Launcher sessions.")
+      (kWwwResusePorts,
+      value<bool>(&wwwReusePorts_)->default_value(false),
+      "Whether or not to reuse last used bound ports when restarting a Launcher session.");
 
    pSession->add_options()
       (kTimeoutSessionOption,
@@ -393,6 +396,7 @@ public:
    std::string wwwAddress() const { return wwwAddress_; }
    bool standalone() const { return standalone_; }
    bool verifySignatures() const { return verifySignatures_; }
+   bool wwwReusePorts() const { return wwwReusePorts_; }
    int timeoutMinutes() const { return timeoutMinutes_; }
    bool timeoutSuspend() const { return timeoutSuspend_; }
    int disconnectedTimeoutMinutes() const { return disconnectedTimeoutMinutes_; }
@@ -487,6 +491,7 @@ protected:
    std::string wwwAddress_;
    bool standalone_;
    bool verifySignatures_;
+   bool wwwReusePorts_;
    int timeoutMinutes_;
    bool timeoutSuspend_;
    int disconnectedTimeoutMinutes_;
