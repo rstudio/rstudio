@@ -789,6 +789,9 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
                                                    sourceFiles,
                                                    usingRcpp)
 {
+   # mark encoding
+   Encoding(packageDirectory) <- "UTF-8"
+
    # sourceFiles is passed in as a list -- convert back to
    # character vector
    sourceFiles <- as.character(sourceFiles)
