@@ -317,6 +317,9 @@ export function applyTheme(theme: EditorTheme) {
       font-family: ${theme.proportionalFont} !important;
       font-size: ${theme.proportionalFontSizePt}pt !important;
     }
+    .pm-emoji-font {
+      font-family: ${theme.fixedWidthFont} !important;
+    }
     .pm-input-text {
       border-color: ${theme.paneBorderColor};
     }
