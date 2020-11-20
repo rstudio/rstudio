@@ -141,7 +141,9 @@ public class KeyCombination
       else if (keyCode_ == 8)
          return macStyle ? "&#9003;" : "Backspace";
       else if (keyCode_ == KeyCodes.KEY_SPACE)
-         return macStyle? "&#9250" : "Space";
+         // Mac spacebar shortcut character looks too much like a 'b'
+         // return macStyle? "&#9250" : "Space";
+         return "Space";
 
       if (key_ != null)
          return key_;
