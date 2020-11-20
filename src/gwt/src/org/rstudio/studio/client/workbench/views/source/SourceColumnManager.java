@@ -1102,7 +1102,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    @Override
    public void onDocumentCloseAllNoSave(DocumentCloseAllNoSaveEvent event)
    {
-      revertUnsavedTargets(() -> closeAllTabs(false, false, null));
+      revertUnsavedTargets(() -> closeAllTabs(null, false, null));
    }
 
    public void nextTabWithWrap()
