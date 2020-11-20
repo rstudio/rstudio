@@ -178,6 +178,14 @@ const excludedEmoji = [
   'mouse_trap',
   'headstone',
   'placard',
+  'man_in_tuxedo',
+  'woman_in_tuxedo',
+  'man_with_veil',
+  'woman_with_veil',
+  'woman_feeding_baby',
+  'man_feeding_baby',
+  'person_feeding_baby',
+  'black_cat',
 ];
 
 // These emoji do support skintone, but the default font we use doesn't render
