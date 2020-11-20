@@ -175,8 +175,8 @@ export class PandocConverter {
 
     // prepare pandoc options
     let pandocOptions: string[] = [];
-    if (options.atxHeaders) {
-      pandocOptions.push('--atx-headers');
+    if (!options.atxHeaders) {
+      pandocOptions.push('--markdown-headings=setext');
     }
     if (options.dpi) {
       pandocOptions.push('--dpi');
