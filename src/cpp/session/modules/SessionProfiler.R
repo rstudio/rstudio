@@ -85,16 +85,20 @@
       resources <- .rs.profileResources()
       htmlFile <- normalizePath(tempfile(fileext = ".html", tmpdir = resources$tempPath), winslash = "/", mustWork = FALSE)
 
-      if (identical(profilerOptions$profvis, NULL)) {
-         if (identical(tools::file_ext(profilerOptions$fileName), "Rprof")) {
+      if (identical(profilerOptions$profvis, NULL))
+      {
+         if (identical(tools::file_ext(profilerOptions$fileName), "Rprof"))
+         {
             profvis <- profvis::profvis(prof_input = profilerOptions$fileName, split = "h")
             htmlwidgets::saveWidget(profvis, htmlFile, selfcontained = TRUE)
          }
-         else {
+         else
+         {
             .rs.rpc.copy_profile(profilerOptions$fileName, htmlFile)
          }
       }
-      else {
+      else
+      {
          profvis <- profilerOptions$profvis
          htmlwidgets::saveWidget(profvis, htmlFile, selfcontained = TRUE)
       }
