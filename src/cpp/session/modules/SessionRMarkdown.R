@@ -160,9 +160,15 @@
     nzchar(Sys.which("quarto"))
   }
   
+  haveJupyterConfig <- function() {
+    !is.null(yamlFrontMatter[["jupyter"]])
+  }
+  
   isQuartoDoc <- function() {
+     # jmd file
+     .rs.endsWith(tolower(file), ".jmd") ||
      # plain markdown file w/ "jupyter" metdata
-     (.rs.endsWith(file, ".md") && !is.null(yamlFrontMatter[["jupyter"]])) ||
+     (.rs.endsWith(tolower(file), ".md") && haveJupyterConfig()) ||
      # file with "format" yaml and no "output" yaml
      (is.null(yamlFrontMatter[["output"]]) && !is.null(yamlFrontMatter[["format"]]))
   }
