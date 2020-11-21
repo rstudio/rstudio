@@ -58,5 +58,5 @@ export function linkInputRules(autoLink: boolean, headingLink: boolean) {
 }
 
 export function linkPasteHandler(schema: Schema) {
-  return markPasteHandler(/[a-z]+:\/\/[^\s]+/g, schema.marks.link, url => ({ href: url }));
+  return markPasteHandler(/(?:<)?([a-z]+:\/\/[^\s>]+)(?:>)?/g, schema.marks.link, url => ({ href: url }));
 }
