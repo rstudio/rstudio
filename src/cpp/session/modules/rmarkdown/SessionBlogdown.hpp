@@ -29,7 +29,9 @@ namespace modules {
 namespace rmarkdown {
 namespace blogdown {
 
-core::json::Object blogdownConfig();
+bool isHugoProject();
+
+core::json::Object blogdownConfig(bool refresh = true);
 
 } // namespace blogdown
 } // namespace rmarkdown
