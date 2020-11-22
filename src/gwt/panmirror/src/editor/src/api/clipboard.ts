@@ -34,14 +34,12 @@ export function markPasteHandler(regexp: RegExp, type: MarkType, getAttrs: (s: s
           if (match) {
             const start = match.index;
             const end = start + match[0].length;
-            const attrs = getAttrs instanceof Function ? getAttrs(match[0]) : getAttrs;
-
+            const matchText = match.length > 1 ? match[1] : match[0];
+            const attrs = getAttrs instanceof Function ? getAttrs(matchText) : getAttrs;
             if (start > 0) {
               nodes.push(child.cut(pos, start));
             }
-
-            nodes.push(child.cut(start, end).mark(type.create(attrs).addToSet(child.marks)));
-
+            nodes.push(type.schema.text(matchText).mark(type.create(attrs).addToSet(child.marks)));
             pos = end;
           }
         } while (match);

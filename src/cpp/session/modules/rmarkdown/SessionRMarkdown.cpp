@@ -54,6 +54,7 @@
 #include <session/projects/SessionProjects.hpp>
 #include <session/prefs/UserPrefs.hpp>
 
+#include "SessionBlogdown.hpp"
 #include "RMarkdownPresentation.hpp"
 
 #define kRmdOutput "rmd_output"
@@ -202,7 +203,18 @@ FilePath extractOutputFileCreated(const FilePath& inputFile,
 
             // if the path looks absolute, use it as-is; otherwise, presume
             // it to be in the same directory as the input file
-            return inputFile.getParent().completePath(fileName);
+            FilePath outputFile = inputFile.getParent().completePath(fileName);
+
+            // if it's a plain .md file and we are in a Hugo project then
+            // don't preview it (as the user is likely running a Hugo preview)
+            if (outputFile.getExtensionLowerCase() == ".md" &&
+                session::modules::rmarkdown::blogdown::isHugoProject())
+            {
+               return FilePath();
+            }
+
+            // return the output file
+            return outputFile;
          }
       }
    }

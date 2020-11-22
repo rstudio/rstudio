@@ -31,8 +31,9 @@
 #define kConsoleInputCancel 1
 #define kConsoleInputEof    2
 
-#define EX_CONTINUE 100
-#define EX_FORCE    101
+#define EX_CONTINUE                         100
+#define EX_FORCE                            101
+#define EX_SUSPEND_RESTART_LAUNCHER_SESSION 102
 
 namespace rstudio {
 namespace core {
