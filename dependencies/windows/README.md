@@ -13,7 +13,7 @@ Bootstrap
 
 Install Qt SDK
 =============================================================================
-Install Qt 5.12.8 SDK for Windows from https://qt.io, selecting 
+Install Qt 5.12.10 SDK for Windows from https://qt.io, selecting 
 following components:
 
 - MSVC 2017 64-bit
@@ -26,7 +26,7 @@ to include older versions.
 
 Alternatively, the offline installer may be used:
 
-http://download.qt.io/official_releases/qt/5.12/5.12.8/qt-opensource-windows-x86-5.12.8.exe
+http://download.qt.io/official_releases/qt/5.12/5.12.10/qt-opensource-windows-x86-5.12.10.exe
 
 Clone the Repo and Run Batch File
 =============================================================================

@@ -35,7 +35,7 @@ if(NOT WIN32)
          endif()
       endif()
 
-      set(QT_CANDIDATES 5.12.8)
+      set(QT_CANDIDATES 5.12.10)
 
       # find the newest installed Qt version among the versions we build
       # against
@@ -68,7 +68,7 @@ if(NOT WIN32)
    endif()
 else()
    # Windows
-   set(QT_VERSION "5.12.8")
+   set(QT_VERSION "5.12.10")
    set(QT_VERSION_SUBDIR "${QT_VERSION}")   
    if(NOT QT_QMAKE_EXECUTABLE)
 
