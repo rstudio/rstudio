@@ -45,6 +45,12 @@
 
 .rs.addJsonRpcHandler("python_go_to_definition", function(line, offset)
 {
+   result <- .rs.python.goToDefinition(line, offset)
+   .rs.scalar(result)
+})
+
+.rs.addFunction("python.goToDefinition", function(line, offset)
+{
    # extract the line providing the object definition we're looking for
    text <- .rs.python.extractCurrentExpression(line, offset)
    if (!nzchar(text))
@@ -78,6 +84,12 @@
 })
 
 .rs.addJsonRpcHandler("python_go_to_help", function(line, offset)
+{
+   result <- .rs.python.goToHelp(line, offset)
+   .rs.scalar(result)
+})
+
+.rs.addFunction("python.goToHelp", function(line, offset)
 {
    text <- .rs.python.extractCurrentExpression(line, offset)
    if (!nzchar(text))
@@ -120,10 +132,18 @@
    }
    
    # ensure matplotlib hooks are injected on load
-   setHook("reticulate::matplotlib.pyplot::load", .rs.reticulate.matplotlib.onLoaded)
+   setHook(
+      "reticulate::matplotlib.pyplot::load",
+      function(...) .rs.reticulate.matplotlib.onLoaded("matplotlib.pyplot")
+   )
+   
+   setHook(
+      "reticulate::matplotlib.pylab::load",
+      function(...) .rs.reticulate.matplotlib.onLoaded("matplotlib.pylab")
+   )
 })
 
-.rs.addFunction("reticulate.matplotlib.onLoaded", function(...)
+.rs.addFunction("reticulate.matplotlib.onLoaded", function(module)
 {
    # install matplotlib hook if available
    if (requireNamespace("png", quietly = TRUE) &&
@@ -144,9 +164,8 @@
       }
       
       # inject our hook
-      plt <- matplotlib$pyplot
-      .rs.setVar("reticulate.matplotlib.show", plt$show)
-      plt$show <- .rs.reticulate.matplotlib.showHook
+      module <- reticulate::import(module, convert = TRUE)
+      module$show <- .rs.reticulate.matplotlib.showHook
    }
    
 })
@@ -257,18 +276,6 @@
 
 .rs.addFunction("reticulate.replTeardown", function()
 {
-   # restore old help method
-   builtins <- reticulate::import_builtins(convert = FALSE)
-   builtins$help <- .rs.getVar("reticulate.help")
-   
-   # restore matplotlib method
-   show <- .rs.getVar("reticulate.matplotlib.show")
-   if (!is.null(show)) {
-      matplotlib <- reticulate::import("matplotlib", convert = TRUE)
-      plt <- matplotlib$pyplot
-      plt$show <- show
-   }
-   
    # client event
    .rs.reticulate.enqueueClientEvent(
       .rs.reticulateEvents$REPL_TEARDOWN,

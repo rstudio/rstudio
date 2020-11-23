@@ -18,7 +18,10 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Command;
@@ -32,6 +35,7 @@ import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.js.JsUtil;
@@ -59,6 +63,7 @@ import org.rstudio.studio.client.server.ErrorLoggingServerRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.server.model.DocumentCloseAllNoSaveEvent;
 import org.rstudio.studio.client.workbench.FileMRUList;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ClientState;
@@ -96,6 +101,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Singleton
 public class SourceColumnManager implements CommandPaletteEntrySource,
                                             SourceExtendedTypeDetectedEvent.Handler,
+                                            DocumentCloseAllNoSaveEvent.Handler,
                                             DebugModeChangedEvent.Handler
 {
    public interface CPSEditingTargetCommand
@@ -203,6 +209,19 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
       events_.addHandler(SourceExtendedTypeDetectedEvent.TYPE, this);
       events_.addHandler(DebugModeChangedEvent.TYPE, this);
+      events_.addHandler(DocumentCloseAllNoSaveEvent.TYPE, this);
+
+      WindowEx.addFocusHandler(new FocusHandler()
+      {
+         @Override
+         public void onFocus(FocusEvent event)
+         {
+            Scheduler.get().scheduleDeferred(() ->
+            {
+               getActive().manageSaveCommands(true);
+            });
+         }
+      });
 
       events_.addHandler(EditingTargetSelectedEvent.TYPE,
          new EditingTargetSelectedEvent.Handler()
@@ -1080,6 +1099,12 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          target.adaptToExtendedFileType(e.getExtendedType());
    }
 
+   @Override
+   public void onDocumentCloseAllNoSave(DocumentCloseAllNoSaveEvent event)
+   {
+      revertUnsavedTargets(() -> closeAllTabs(false, false, null));
+   }
+
    public void nextTabWithWrap()
    {
       switchToTab(1, true);
@@ -1408,16 +1433,30 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       findByDocument(target.getId()).closeTab(
          target.asWidget(), interactive, onClosed);
    }
-   
+
+   private void closeAllTabs(boolean interactive, Command onCompleted)
+   {
+      if (interactive)
+      {
+         // call into the interactive tab closer
+         commands_.closeAllSourceDocs().execute();
+      }
+      else
+      {
+         // revert unsaved targets and close tabs
+         revertUnsavedTargets(() -> closeAllTabs(false, false, onCompleted));
+      }
+   }
+
    public void closeAllTabs(boolean excludeActive,
                             boolean excludeMain,
                             Command onCompleted)
    {
-      columnList_.forEach((column) ->
-      {
-         closeAllTabs(column, excludeActive, excludeMain, onCompleted);
-      });
-         
+      // Columns may be deleted when all of their tabs are closed, so we iterate over the current
+      // names rather than the column list
+      ArrayList<String> columnNames = new ArrayList<>(getNames(false));
+      for (String name : columnNames)
+         closeAllTabs(getByName(name), excludeActive, excludeMain, onCompleted);
    }
 
    public void closeAllTabs(SourceColumn column,
@@ -1586,6 +1625,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                      public void onResponseReceived(final SourceDocument doc)
                      {
                         mainColumn.addTab(doc, Source.OPEN_INTERACTIVE);
+                        mainColumn.ensureVisible(true);
                      }
 
                      @Override

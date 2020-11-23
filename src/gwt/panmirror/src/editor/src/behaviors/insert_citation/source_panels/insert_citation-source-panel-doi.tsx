@@ -28,16 +28,19 @@ import {
   CitationListEntry,
   CitationSourceListStatus,
   errorForStatus,
+  matchExistingSourceCitationListEntry,
 } from './insert_citation-source-panel';
 import { CitationSourceLatentSearchPanel } from './insert_citation-source-panel-latent-search';
 
 import './insert_citation-source-panel-doi.css';
+import { BibliographyManager } from '../../../api/bibliography/bibliography';
 
 const kDOIType = 'DOI Search';
 
 export function doiSourcePanel(
   ui: EditorUI,
   server: DOIServer,
+  bibliographyManager: BibliographyManager
 ): CitationSourcePanelProvider {
   return {
     key: '76561E2A-8FB7-4D4B-B235-9DD8B8270EA1',
@@ -61,9 +64,11 @@ export function doiSourcePanel(
       try {
         const result = await server.fetchCSL(searchTerm, 1000);
         if (result.status === 'ok') {
+
           // Form the entry
+          const doi = searchTerm;
           const csl = result.message;
-          const citation = toCitationListEntry(csl, existingCitationIds, ui);
+          const citation = matchExistingSourceCitationListEntry(doi, existingCitationIds, ui, bibliographyManager) || toCitationListEntry(csl, existingCitationIds, ui);
 
           return Promise.resolve({
             citations: citation ? [citation] : [],

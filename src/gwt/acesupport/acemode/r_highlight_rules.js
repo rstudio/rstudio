@@ -253,13 +253,12 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
           
           // initialize stack
           stack = stack || [];
-          stack.length = 2;
 
           // save current state in stack
           stack[0] = state;
 
           // save the expected suffix for exit
-          stack[1] =
+          stack[2] =
             $complements[value[value.length - 1]] +
             value.substring(2, value.length - 1) +
             value[1];
@@ -464,7 +463,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
         token : "string",
         regex : "[\\]})][-]*['\"]",
         onMatch: function(value, state, stack, line) {
-          this.next = (value === stack[1]) ? stack[0] : "rawstring";
+          this.next = (value === stack[2]) ? stack[0] : "rawstring";
           return this.token;
         }
       },

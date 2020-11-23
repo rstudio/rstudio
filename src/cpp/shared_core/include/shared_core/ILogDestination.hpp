@@ -63,6 +63,11 @@ public:
    virtual unsigned int getId() const = 0;
 
    /**
+    * @brief Reloads the log destintation. Ensures that the log does not have any stale file handles.
+    */
+   virtual void reload() = 0;
+
+   /**
     * @brief Gets the maximum level of logs that will be written to this log destination.
     *
     * @return This log destination's maximum log level.

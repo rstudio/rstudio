@@ -201,6 +201,7 @@ const int kTutorialLaunch = 186;
 const int kReticulateEvent = 187;
 const int kEnvironmentChanged = 188;
 const int kRStudioApiRequest = 189;
+const int kDocumentCloseAllNoSave = 190;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -558,6 +559,8 @@ std::string ClientEvent::typeName() const
          return "environment_changed";
       case client_events::kRStudioApiRequest:
          return "rstudioapi_request";
+      case client_events::kDocumentCloseAllNoSave:
+         return "document_close_all_no_save";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " +
                              safe_convert::numberToString(type_));

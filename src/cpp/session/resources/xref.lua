@@ -137,6 +137,14 @@ function DisplayMath(s)
   end
 end
 
+function RawBlock(format, str)
+  if format == "tex" then
+     return DisplayMath(str)
+  else
+     return ''
+  end
+end
+
 -- echo body
 function Doc(body, metadata, variables)
   return body
@@ -265,10 +273,6 @@ end
 
 function DefinitionList(items)
   return '' 
-end
-
-function RawBlock(format, str)
-  return ''
 end
 
 function Div(s, attr)

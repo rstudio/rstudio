@@ -552,6 +552,11 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    {
       return editor_.getEditingLocation();
    }
+
+   public PanmirrorEditingOutlineLocation getEditingOutlineLocation()
+   {
+      return editor_.getEditingOutlineLocation();
+   }
    
    public PanmirrorOutlineItem[] getOutline()
    {

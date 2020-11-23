@@ -377,10 +377,21 @@ options(help_type = "html")
 
 .rs.addJsonRpcHandler("show_custom_help_topic", function(helpHandler, topic, source) {
    
-   helpHandlerFunc <- tryCatch(eval(parse(text = helpHandler)), 
-                               error = function(e) NULL)
+   helpHandlerFunc <- tryCatch(
+      eval(parse(text = helpHandler)), 
+      error = function(e) NULL
+   )
+   
    if (!is.function(helpHandlerFunc))
       return()
+   
+   # workaround for broken help in reticulate 1.18
+   if (identical(helpHandler, "reticulate:::help_handler"))
+   {
+      text <- paste(source, topic, sep = ".")
+      .Call("rs_showPythonHelp", text, PACKAGE = "(embedding)")
+      return()
+   }
    
    url <- helpHandlerFunc("url", topic, source)
    if (!is.null(url) && nzchar(url)) # handlers return "" for no help topic
@@ -555,7 +566,7 @@ options(help_type = "html")
    #    <libpath>/<package>/help/<...>
    #
    # so we look for the 'help' component and parse from there
-   if (!length(package))
+   if (!length(package) || package == "")
    {
       parts <- strsplit(file, "/", fixed = TRUE)[[1L]]
       
@@ -574,12 +585,15 @@ options(help_type = "html")
    }
    
    # try to figure out the encoding for the provided HTML
-   if (length(package))
+   if (length(package) && nzchar(package))
    {
       packagePath <- system.file(package = package)
-      encoding <- .rs.packageHelpEncoding(packagePath)
-      if (identical(encoding, "UTF-8"))
-         Encoding(html) <- "UTF-8"
+      if (nzchar(packagePath))
+      {
+         encoding <- .rs.packageHelpEncoding(packagePath)
+         if (identical(encoding, "UTF-8"))
+            Encoding(html) <- "UTF-8"
+      }
    }
    
    # try to extract HTML body

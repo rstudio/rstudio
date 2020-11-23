@@ -65,6 +65,7 @@ MainWindow::MainWindow(QUrl url,
       pRemoteSessionLauncher_(nullptr),
       pLauncher_(new JobLauncher(this)),
       pCurrentSessionProcess_(nullptr),
+      loadTimer_(new QTimer(this)),
       isErrorDisplayed_(false)
 {
    RCommandEvaluator::setMainWindow(this);
@@ -110,6 +111,9 @@ MainWindow::MainWindow(QUrl url,
    pMainMenuStub->addMenu(QString::fromUtf8("Help"));
    setMenuBar(pMainMenuStub);
 #endif
+   
+   connect(loadTimer_, &QTimer::timeout,
+           this, &MainWindow::onLoadFinishedImpl);
    
    connect(&menuCallback_, SIGNAL(menuBarCompleted(QMenuBar*)),
            this, SLOT(setMenuBar(QMenuBar*)));
@@ -665,21 +669,59 @@ void MainWindow::onLoadFinished(bool ok)
 {
    LOCK_MUTEX(mutex_)
    {
-      if (ok || pRemoteSessionLauncher_ || isErrorDisplayed_)
+      if (ok)
+      {
+         // if this was a successful load, we're done
+         loadTimer_->stop();
+         loadedSuccessfully_ = true;
+      }
+      else if (loadedSuccessfully_)
+      {
+         // if the load was purportedly not successful, even
+         // though a prior load was successful, then ignore
+         // that (assume that this was a spurious / incorrect
+         // signal from Qt)
+         LOG_DEBUG_MESSAGE(
+                  "Discarding onLoadFinished(false) signal as we have "
+                  "already received onLoadFinished(true)");
+      }
+      else
+      {
+         // schedule our load timer and allow a 1s buffer for
+         // incoming loadFinished() events which might report
+         // that the load was actually successful
+         loadTimer_->start(1000);
+      }
+   }
+   END_LOCK_MUTEX
+}
+
+void MainWindow::onLoadFinishedImpl()
+{
+   LOCK_MUTEX(mutex_)
+   {
+      if (loadedSuccessfully_ || pRemoteSessionLauncher_ || isErrorDisplayed_)
          return;
 
       RS_CALL_ONCE();
+
+      std::map<std::string, std::string> vars = {
+         { "url",  webView()->url().url().toStdString() }
+      };
       
-      std::map<std::string,std::string> vars;
-      vars["url"] = webView()->url().url().toStdString();
       std::ostringstream oss;
-      Error error = text::renderTemplate(options().resourcesPath().completePath("html/connect.html"),
-                                       vars, oss);
+      Error error = text::renderTemplate(
+               options().resourcesPath().completePath("html/connect.html"),
+               vars,
+               oss);
 
       if (error)
+      {
          LOG_ERROR(error);
-      else
-         loadHtml(QString::fromStdString(oss.str()));
+         return;
+      }
+      
+      loadHtml(QString::fromStdString(oss.str()));
    }
    END_LOCK_MUTEX
 }

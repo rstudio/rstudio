@@ -65,11 +65,20 @@
    # attempt to initialize a project within that directory
    .rs.ensureDirectory(path)
    
-   # check to see if a .Rproj file already exists in that directory;
-   # if so, then we don't need to re-initialize
-   rProjFiles <- list.files(path, 
-                            pattern = "[.]Rproj$",
-                            full.names = TRUE)
+   # NOTE: list.files() will fail on Windows for paths containing
+   # characters not representable in the current locale, so we instead
+   # change to the requested directory, list files, and then build the
+   # full paths
+   rProjFiles <- (function() {
+      
+      # move to project path
+      owd <- setwd(path)
+      on.exit(setwd(owd), add = TRUE)
+      
+      # list files in path
+      file.path(path, list.files(pattern = "[.]Rproj$"))
+
+   })()
    
    # if we already have a .Rproj file, just return that
    if (length(rProjFiles))
@@ -711,9 +720,15 @@
    
 })
 
+.rs.addApiFunction("closeAllSourceBuffersWithoutSaving", function() {
+   .Call("rs_documentCloseAllNoSave", PACKAGE = "(embedding)")
+})
+
+# NOTE: we allow '1L' just in case for backwards compatibility
+# with older preferences not migrated to the newer string version
 .rs.addApiFunction("getConsoleHasColor", function(name) {
-   value <- .rs.readUiPref("ansi_console_mode")
-   if (is.null(value) || value != 1) FALSE else TRUE
+   mode <- .rs.readUiPref("ansi_console_mode")
+   !is.null(mode) && mode %in% list(1L, "on")
 })
 
 .rs.addApiFunction("terminalSend", function(id, text) {

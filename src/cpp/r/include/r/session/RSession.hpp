@@ -20,6 +20,7 @@
 
 #include <boost/function.hpp>
 
+#include <shared_core/json/Json.hpp>
 #include <shared_core/FilePath.hpp>
 
 #include <core/r_util/RSessionContext.hpp>
@@ -30,8 +31,9 @@
 #define kConsoleInputCancel 1
 #define kConsoleInputEof    2
 
-#define EX_CONTINUE 100
-#define EX_FORCE    101
+#define EX_CONTINUE                         100
+#define EX_FORCE                            101
+#define EX_SUSPEND_RESTART_LAUNCHER_SESSION 102
 
 namespace rstudio {
 namespace core {
@@ -62,7 +64,7 @@ struct ROptions
 {
    ROptions() :
          useInternet2(true),
-         rCompatibleGraphicsEngineVersion(13),
+         rCompatibleGraphicsEngineVersion(14),
          serverMode(false),
          autoReloadSource(false),
          restoreWorkspace(true),
@@ -127,16 +129,8 @@ struct RConsoleInput
    }
    
    explicit RConsoleInput(const std::string& text,
-                          const std::string& console)
-      : text(text),
-        console(console),
-        flags(0)
-   {
-   }
-   
-   explicit RConsoleInput(const std::string& text,
-                          const std::string& console,
-                          int flags)
+                          const std::string& console = "",
+                          int flags = 0)
       : text(text),
         console(console),
         flags(flags)
@@ -151,6 +145,16 @@ struct RConsoleInput
    bool isEof()
    {
       return (flags & kConsoleInputEof) != 0;
+   }
+   
+   // typically used for hand-constructed RPC requests
+   core::json::Array toJsonArray()
+   {
+      core::json::Array jsonArray;
+      jsonArray.push_back(text);
+      jsonArray.push_back(console);
+      jsonArray.push_back(flags);
+      return jsonArray;
    }
    
    std::string text;

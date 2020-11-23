@@ -15,37 +15,42 @@
 
 .rs.addFunction("downloadAllDictionaries", function(targetDir, secure)
 {
-   # archive we are downloading
-   allDicts <- "all-dictionaries.zip"
+   # form url to dictionaries
+   fmt <- "%s://s3.amazonaws.com/rstudio-buildtools/dictionaries/%s"
+   protocol <- if (secure) "https" else "http"
+   archive <- "all-dictionaries.zip"
+   url <- sprintf(fmt, protocol, archive)
    
-   # remove existing archive if necessary
-   allDictsTemp <- paste(tempdir(), allDicts, sep="/")
-   if (file.exists(allDictsTemp))
-      file.remove(allDictsTemp)
+   # form path to downloaded dictionaries in tempdir
+   archivePath <- file.path(tempdir(), archive)
+   if (file.exists(archivePath))
+      file.remove(archivePath)
    
    # download the dictionary
-   download.file(paste(ifelse(secure, "https", "http"),
-                       "://s3.amazonaws.com/rstudio-dictionaries/",
-                       allDicts, sep=""),
-                 destfile=allDictsTemp,
-                 cacheOK = FALSE,
-                 quiet = TRUE)
-      
-   # define function to remove the existing dictionaries then call it
-   removeExisting <- function() {
-      suppressWarnings({
-         file.remove(paste(targetDir, list.files(targetDir), sep="/"))
-         unlink(targetDir)
-      })
-   }
-   removeExisting()
+   download.file(
+      url = url,
+      destfile = archivePath,
+      cacheOK = FALSE,
+      quiet = TRUE
+   )
    
-   # unzip downloaded dictionaires into target -- if this fails for any
+   # remove existing dictionaries if they exist
+   unlink(targetDir, recursive = TRUE)
+   dir.create(targetDir, showWarnings = FALSE, recursive = TRUE)
+   
+   # unzip downloaded dictionaries into target -- if this fails for any
    # reason then remove any files that were unpacked (because we don't 
    # know if the partially unzipped archive is valid)
-   tryCatch(unzip(allDictsTemp, exdir=targetDir),
-            error = function(e) { removeExisting(); stop(e); })
+   tryCatch(
+      unzip(archivePath, exdir = targetDir),
+      error = function(e) {
+         unlink(targetDir, recursive = TRUE)
+         stop(e)
+      }
+   )
    
-   # remove the archive
-   file.remove(allDictsTemp)   
+   # remove the downloaded archive
+   unlink(archivePath)
+   
+   invisible(targetDir)
 })

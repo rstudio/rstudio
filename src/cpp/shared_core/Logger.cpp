@@ -379,6 +379,24 @@ void logInfoMessage(const std::string& in_message, const std::string& in_section
    logger().writeMessageToDestinations(LogLevel::INFO, in_message, in_section, in_loggedFrom);
 }
 
+void reloadAllLogDestinations()
+{
+   Logger& log = logger();
+
+   WRITE_LOCK_BEGIN(log.Mutex)
+   {
+      for (auto& dest : log.DefaultLogDestinations)
+         dest.second->reload();
+
+      for (auto& section : log.SectionedLogDestinations)
+      {
+         for (auto& dest : section.second)
+            dest.second->reload();
+      }
+   }
+   RW_LOCK_END(false);
+}
+
 void removeLogDestination(unsigned int in_destinationId, const std::string& in_section)
 {
    Logger& log = logger();

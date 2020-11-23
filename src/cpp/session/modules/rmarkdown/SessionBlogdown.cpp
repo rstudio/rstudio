@@ -117,14 +117,23 @@ bool usingTexMathDollarsInCode(const FilePath& hugoRootPath,
 
 }
 
+const char* const kIsBlogdownProject = "is_blogdown_project";
+const char* const kIsHugoProject = "is_hugo_project";
 
 } // anonymous namespace
 
-core::json::Object blogdownConfig()
+bool isHugoProject()
 {
+   json::Object config = blogdownConfig(false);
+   return config[kIsHugoProject].isBool() && config[kIsHugoProject].getBool();
+}
 
-   const char* const kIsBlogdownProject = "is_blogdown_project";
-   const char* const kIsHugoProject = "is_hugo_project";
+core::json::Object blogdownConfig(bool refresh)
+{
+   static core::json::Object lastConfig;
+   if (!refresh && lastConfig.getSize() > 0)
+      return lastConfig;
+
    const char* const kSiteDir = "site_dir";
    const char* const kStaticDirs = "static_dirs";
    const char* const kMarkdownEngine = "markdown_engine";
@@ -289,6 +298,10 @@ core::json::Object blogdownConfig()
       config[kIsBlogdownProject] = false;
    }
 
+   // cache for callers that don't want to refresh
+   lastConfig = config;
+
+   // return config
    return config;
 }
 

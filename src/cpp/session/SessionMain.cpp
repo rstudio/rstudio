@@ -292,6 +292,7 @@ void terminateAllChildProcesses()
 
 namespace overlay {
 Error initialize();
+Error initializeSessionProxy();
 } // namespace overlay
 } // namespace session
 } // namespace rstudio
@@ -341,7 +342,14 @@ void doSuspendForRestart(const rstudio::r::session::RSuspendOptions& options)
 Error suspendForRestart(const core::json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
-   rstudio::r::session::RSuspendOptions options(EX_CONTINUE);
+   // when launcher sessions restart, they need to set a special exit code
+   // to ensure that the rsession-run script restarts the rsession process
+   // instead of having to submit an entirely new launcher session
+   int exitStatus = options().getBoolOverlayOption(kLauncherSessionOption) ?
+            EX_SUSPEND_RESTART_LAUNCHER_SESSION :
+            EX_CONTINUE;
+
+   rstudio::r::session::RSuspendOptions options(exitStatus);
    Error error = json::readObjectParam(
                                request.params, 0,
                                "save_minimal", &(options.saveMinimal),
@@ -2006,6 +2014,12 @@ int main (int argc, char * const argv[])
       // start http connection listener
       error = waitWithTimeout(
             http_methods::startHttpConnectionListenerWithTimeout, 0, 100, 1);
+      if (error)
+         return sessionExitFailure(error, ERROR_LOCATION);
+
+      // start session proxy to route traffic to localhost-listening applications (like Shiny)
+      // this has to come after regular overlay initialization as it depends on persistent state
+      error = overlay::initializeSessionProxy();
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION);
 

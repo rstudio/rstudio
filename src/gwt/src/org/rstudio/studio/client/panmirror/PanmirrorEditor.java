@@ -72,6 +72,8 @@ public class PanmirrorEditor
    public native PanmirrorMenus getMenus();
    
    public native PanmirrorOutlineItem[] getOutline();
+
+   public native PanmirrorEditingOutlineLocation getEditingOutlineLocation();
    
    public native PanmirrorFindReplace getFindReplace();
    

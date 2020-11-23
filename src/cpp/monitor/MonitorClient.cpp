@@ -42,6 +42,11 @@ public:
       return 56;
    }
 
+   void reload() override
+   {
+      // Nothing to do.
+   }
+
    void writeLog(core::log::LogLevel logLevel, const std::string& message) override
    {
       // Don't log messages which are more detailed than the configured maximum.

@@ -72,6 +72,7 @@
 #define kStandaloneSessionOption          "standalone"
 #define kWwwAddressSessionOption          "www-address"
 #define kWwwPortSessionOption             "www-port"
+#define kWwwResusePorts                   "www-reuse-ports"
 #define kTerminalPortOption               "terminal-port"
 
 #define kLauncherSessionOption            "launcher-session"

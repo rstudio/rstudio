@@ -35,6 +35,7 @@
 #include <r/RExec.hpp>
 #include <r/RJson.hpp>
 #include <r/RSexp.hpp>
+#include <r/session/RSession.hpp>
 
 #include <core/Exec.hpp>
 #include <core/Thread.hpp>
@@ -320,13 +321,15 @@ private:
       return Success();
    }
 
-   void sendConsoleInput(const std::string& chunkId, const json::Value& input)
+   void sendConsoleInput(const std::string& chunkId, const json::Value& jsonInput)
    {
-      json::Array arr;
-      ExecRange range(0, 0);
-      arr.push_back(input);
-      arr.push_back(chunkId);
-      arr.push_back(0); // console input type (not cancel/eof)
+      using namespace r::session;
+      
+      std::string input = jsonInput.isString()
+            ? jsonInput.getString()
+            : std::string();
+      
+      json::Array arr = RConsoleInput(input, chunkId).toJsonArray();
 
       // formulate request body
       json::Object rpc;

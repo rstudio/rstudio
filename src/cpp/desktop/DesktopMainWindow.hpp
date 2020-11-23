@@ -75,6 +75,7 @@ public Q_SLOTS:
    void onPdfViewerSyncSource(QString srcFile, int line, int column);
    void onLicenseLost(QString licenseMessage);
    void onUpdateLicenseWarningBar(QString message);
+   void onLoadFinishedImpl();
 
    bool isRemoteDesktop() const;
 
@@ -129,6 +130,7 @@ private:
    bool quitConfirmed_ = false;
    bool geometrySaved_ = false;
    bool workbenchInitialized_ = false;
+   bool loadedSuccessfully_ = false;
    MenuCallback menuCallback_;
    GwtCallback gwtCallback_;
    SessionLauncher* pSessionLauncher_;
@@ -136,6 +138,7 @@ private:
    boost::shared_ptr<JobLauncher> pLauncher_;
    ApplicationLaunch *pAppLauncher_;
    QProcess* pCurrentSessionProcess_;
+   QTimer* loadTimer_;
 
    boost::mutex mutex_;
    bool isErrorDisplayed_;

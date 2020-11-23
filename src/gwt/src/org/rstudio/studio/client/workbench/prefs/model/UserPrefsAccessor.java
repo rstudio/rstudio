@@ -1155,7 +1155,7 @@ public class UserPrefsAccessor extends Prefs
          "limit_visible_console",
          "Limit visible console output", 
          "Whether to only show a limited window of the total console output", 
-         false);
+         true);
    }
 
    /**

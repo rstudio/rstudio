@@ -26,6 +26,11 @@ Error initialize()
    return Success();
 }
 
+Error initializeSessionProxy()
+{
+   return Success();
+}
+
 } // namespace overlay
 } // namespace session
 } // namespace rstudio

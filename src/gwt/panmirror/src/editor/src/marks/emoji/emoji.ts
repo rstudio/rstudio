@@ -69,7 +69,7 @@ const extension = (context: ExtensionContext): Extension | null => {
             return [
               'span',
               {
-                class: 'emoji',
+                class: 'emoji pm-emoji-font',
                 title: ':' + mark.attrs.emojihint + ':',
                 'data-emojihint': mark.attrs.emojihint,
                 'data-emojiprompt': mark.attrs.prompt,
