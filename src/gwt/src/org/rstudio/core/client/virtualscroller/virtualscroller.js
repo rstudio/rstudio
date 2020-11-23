@@ -87,7 +87,12 @@ var VirtualScroller;
       }
 
       // jump to latest button
-      if (this.scrollerEle.parentElement.getElementsByClassName("jump-to-latest-console").length < 1) {
+      var hasJumpToConsoleBtn =
+        this.scrollerEle &&
+        this.scrollerEle.parentElement &&
+        this.scrollerEle.parentElement.getElementsByClassName("jump-to-latest-console").length < 1;
+
+      if (hasJumpToConsoleBtn) {
         this.jumpToLatestButton = document.createElement("div");
         this.jumpToLatestButton.classList.add("jump-to-latest-console");
         this.jumpToLatestButton.innerText = "Latest";
