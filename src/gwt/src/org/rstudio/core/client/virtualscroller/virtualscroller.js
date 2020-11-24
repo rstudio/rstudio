@@ -86,13 +86,13 @@ var VirtualScroller;
         }
       }
 
-      // jump to latest button
-      var hasJumpToConsoleBtn =
-        this.scrollerEle &&
-        this.scrollerEle.parentElement &&
-        this.scrollerEle.parentElement.getElementsByClassName("jump-to-latest-console").length < 1;
+      // validate that we've successfully found ace_scroller
+      if (self.scrollerEle == null) {
+        throw "internal error: virtual scroller could not find ace_scroller element";
+      }
 
-      if (hasJumpToConsoleBtn) {
+      // jump to latest button
+      if (this.scrollerEle.parentElement.getElementsByClassName("jump-to-latest-console").length < 1) {
         this.jumpToLatestButton = document.createElement("div");
         this.jumpToLatestButton.classList.add("jump-to-latest-console");
         this.jumpToLatestButton.innerText = "Latest";
