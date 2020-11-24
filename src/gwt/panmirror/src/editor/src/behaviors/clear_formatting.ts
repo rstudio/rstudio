@@ -21,7 +21,7 @@ import { ProsemirrorCommand, EditorCommandId } from '../api/command';
 import { liftTarget } from 'prosemirror-transform';
 
 // marks included in clear formatting
-const kFormattingMarks = ['code', 'em', 'smallcaps', 'span', 'strikeout', 'strong', 'superscript', 'subscript'];
+const kFormattingMarks = ['code', 'em', 'underline', 'smallcaps', 'span', 'strikeout', 'strong', 'superscript', 'subscript'];
 
 // for nodes, all nodes with isTextblock === true will be converted to paragraph, and all
 // nodes in this list will be lifted
