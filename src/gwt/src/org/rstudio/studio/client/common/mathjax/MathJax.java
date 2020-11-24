@@ -218,6 +218,9 @@ public class MathJax
                            final boolean background,
                            final MathJaxTypeset.Callback callback)
    {
+      // always clean up any ongoing renders before starting a new one
+      endRender();
+
       MathJaxLoader.withMathJaxLoaded(new MathJaxLoader.Callback()
       {
          @Override
