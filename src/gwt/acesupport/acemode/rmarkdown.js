@@ -233,16 +233,16 @@ oop.inherits(Mode, MarkdownMode);
             }
          }
 
-         // skip over '`' if it ends an inline R chunk
+         // skip over '`' if it ends an inline code block
          else if (text === "`")
          {
             var pos = editor.getCursorPosition();
+            var line = session.getLine(pos.row);
             var token = session.getTokenAt(pos.row, pos.column + 1);
 
-            // validate that we are working within an inline chunk --
-            // only skip '`' if that appears to be the case
-            if (token != null &&
-                token.type === "support.function.inline_r_chunk")
+            if (token !== null &&
+                token.type.indexOf("support.function") !== -1 &&
+                line[pos.column] === "`")
             {
                return {
                   text: "",
