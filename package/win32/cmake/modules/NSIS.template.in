@@ -7,6 +7,8 @@
   !define PATCH  "@CPACK_PACKAGE_VERSION_PATCH@"
   !define INST_DIR "@CPACK_TEMPORARY_DIRECTORY@"
 
+  Unicode true
+
 ;--------------------------------
 ;Variables
 
