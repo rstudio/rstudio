@@ -63,6 +63,7 @@ import org.rstudio.studio.client.server.ErrorLoggingServerRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.server.model.DocumentCloseAllNoSaveEvent;
 import org.rstudio.studio.client.workbench.FileMRUList;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ClientState;
@@ -100,6 +101,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Singleton
 public class SourceColumnManager implements CommandPaletteEntrySource,
                                             SourceExtendedTypeDetectedEvent.Handler,
+                                            DocumentCloseAllNoSaveEvent.Handler,
                                             DebugModeChangedEvent.Handler
 {
    public interface CPSEditingTargetCommand
@@ -207,6 +209,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
       events_.addHandler(SourceExtendedTypeDetectedEvent.TYPE, this);
       events_.addHandler(DebugModeChangedEvent.TYPE, this);
+      events_.addHandler(DocumentCloseAllNoSaveEvent.TYPE, this);
 
       WindowEx.addFocusHandler(new FocusHandler()
       {
@@ -1096,6 +1099,12 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          target.adaptToExtendedFileType(e.getExtendedType());
    }
 
+   @Override
+   public void onDocumentCloseAllNoSave(DocumentCloseAllNoSaveEvent event)
+   {
+      revertUnsavedTargets(() -> closeAllTabs(false, false, null));
+   }
+
    public void nextTabWithWrap()
    {
       switchToTab(1, true);
@@ -1424,16 +1433,30 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       findByDocument(target.getId()).closeTab(
          target.asWidget(), interactive, onClosed);
    }
-   
+
+   private void closeAllTabs(boolean interactive, Command onCompleted)
+   {
+      if (interactive)
+      {
+         // call into the interactive tab closer
+         commands_.closeAllSourceDocs().execute();
+      }
+      else
+      {
+         // revert unsaved targets and close tabs
+         revertUnsavedTargets(() -> closeAllTabs(false, false, onCompleted));
+      }
+   }
+
    public void closeAllTabs(boolean excludeActive,
                             boolean excludeMain,
                             Command onCompleted)
    {
-      columnList_.forEach((column) ->
-      {
-         closeAllTabs(column, excludeActive, excludeMain, onCompleted);
-      });
-         
+      // Columns may be deleted when all of their tabs are closed, so we iterate over the current
+      // names rather than the column list
+      ArrayList<String> columnNames = new ArrayList<>(getNames(false));
+      for (String name : columnNames)
+         closeAllTabs(getByName(name), excludeActive, excludeMain, onCompleted);
    }
 
    public void closeAllTabs(SourceColumn column,
@@ -1602,6 +1625,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                      public void onResponseReceived(final SourceDocument doc)
                      {
                         mainColumn.addTab(doc, Source.OPEN_INTERACTIVE);
+                        mainColumn.ensureVisible(true);
                      }
 
                      @Override

@@ -19,7 +19,7 @@ import { Transform } from 'prosemirror-transform';
 import { split } from 'sentence-splitter';
 
 import { trTransform } from './transaction';
-import { findChildrenByType } from 'prosemirror-utils';
+import { findChildrenByType, findParentNodeOfTypeClosestToPos } from 'prosemirror-utils';
 
 export function wrapSentences(tr: Transaction) {
   trTransform(tr, wrapSentencesTransform);
@@ -36,6 +36,11 @@ function wrapSentencesTransform(tr: Transform) {
     const $pos = tr.doc.resolve(paragraph.pos);
     const parent = $pos.node($pos.depth);
     if (parent.type === schema.nodes.list_item && $pos.node($pos.depth - 1).attrs.tight) {
+      return;
+    }
+
+    // don't break sentences inside tables
+    if (schema.nodes.table && findParentNodeOfTypeClosestToPos($pos, schema.nodes.table)) {
       return;
     }
 

@@ -22,7 +22,6 @@ import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Rectangle;
@@ -448,13 +447,13 @@ public class RCompletionManager implements CompletionManager
          {
             return snippets_.attemptSnippetInsertion(true);
          }
-         else if (keycode == 112 // F1
+         else if (keycode == KeyCodes.KEY_F1
                   && modifier == KeyboardShortcut.NONE)
          {
             goToHelp();
             return true;
          }
-         else if (keycode == 113 // F2
+         else if (keycode == KeyCodes.KEY_F2
                   && modifier == KeyboardShortcut.NONE)
          {
             goToDefinition();
@@ -533,12 +532,12 @@ public class RCompletionManager implements CompletionManager
                else if (keycode == KeyCodes.KEY_END)
                   return popup_.selectLast();
                
-               if (keycode == 112) // F1
+               if (keycode == KeyCodes.KEY_F1)
                {
                   context_.showHelpTopic();
                   return true;
                }
-               else if (keycode == 113) // F2
+               else if (keycode == KeyCodes.KEY_F2)
                {
                   goToDefinition();
                   return true;

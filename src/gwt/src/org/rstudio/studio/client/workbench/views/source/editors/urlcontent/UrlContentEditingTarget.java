@@ -239,7 +239,7 @@ public class UrlContentEditingTarget implements EditingTarget
    public void focus()
    {
       ArrayList<Element> focusableElements = DomUtils.getFocusableElements(asWidget().getElement());
-      if (!focusableElements.isEmpty());
+      if (!focusableElements.isEmpty())
          focusableElements.get(0).focus();
    }
 

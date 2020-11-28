@@ -703,7 +703,7 @@ public class CompletionRequester
                   JsUtil.toJsArrayInteger(new ArrayList<>(result.completions.length())),
                   JsUtil.toJsArrayString(new ArrayList<>(result.completions.length())),
                   "",
-                  false,
+                  true,
                   false,
                   true,
                   null,

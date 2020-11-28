@@ -22,7 +22,7 @@ import { forChangedNodes } from '../api/transaction';
 import { mergedTextNodes } from '../api/text';
 
 const kNbsp = '\u00A0';
-const kNbspRegEx = /\xA0+/g;
+const kNbspRegEx = /\xA0/g;
 
 const extension = {
   commands: () => {

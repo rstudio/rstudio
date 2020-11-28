@@ -15,6 +15,7 @@
 
 * The default renderer used for the RStudio graphics device can now be customized. (#2142)
 * The AGG renderer (as provided by the ragg package) is now a supported backend. (#6539)
+* Version 14 of the R Graphics Engine, which will be introduced in R 4.1, is now supported. (#8383)
 
 ### Workbench
 

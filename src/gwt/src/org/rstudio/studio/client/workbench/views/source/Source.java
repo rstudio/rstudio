@@ -1748,8 +1748,7 @@ public class Source implements InsertSourceHandler,
 
                   SourcePosition position = event.getCursorPosition();
                   if (position != null &&
-                      position.getRow() > 0 ||
-                      position.getColumn() > 0)
+                      (position.getRow() > 0 || position.getColumn() > 0))
                   {
                      editingTarget.navigateToPosition(position, false);
                   }
@@ -1950,10 +1949,24 @@ public class Source implements InsertSourceHandler,
             {
                if (file.focusOnNavigate())
                {
-                  Scheduler.get().scheduleDeferred(() ->
+                  events_.fireEvent(new SuppressNextShellFocusEvent());
+                  
+                  if (target instanceof TextEditingTarget)
+                  {
+                     TextEditingTarget textTarget = (TextEditingTarget) target;
+                     if (textTarget.isVisualModeActivated())
+                     {
+                        Scheduler.get().scheduleDeferred(() -> target.focus());
+                     }
+                     else
+                     {
+                        target.focus();
+                     }
+                  }
+                  else
                   {
                      target.focus();
-                  });
+                  }
                }
             };
 
@@ -2197,7 +2210,9 @@ public class Source implements InsertSourceHandler,
    {
       if (SourceWindowManager.isMainSourceWindow())
       {
-         fileTypeRegistry_.editFile(event.getFile());
+         FileSystemItem file = event.getFile();
+         file.setFocusOnNavigate(true);
+         fileTypeRegistry_.editFile(file);
       }
    }
 

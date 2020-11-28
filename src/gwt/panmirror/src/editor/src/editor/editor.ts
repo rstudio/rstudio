@@ -170,7 +170,7 @@ export interface EditorFindReplace {
   selectNext: () => boolean;
   selectPrevious: () => boolean;
   replace: (text: string) => boolean;
-  replaceAll: (text: string) => boolean;
+  replaceAll: (text: string) => number;
   clear: () => boolean;
 }
 
@@ -562,6 +562,10 @@ export class Editor {
       selection_only: this.lastTrSelectionOnly,
       location: getEditingOutlineLocation(this.state),
     };
+  }
+
+  public getEditingOutlineLocation(): EditingOutlineLocation {
+    return getEditingOutlineLocation(this.state);
   }
 
   public getHTML(): string {

@@ -27,6 +27,6 @@ public class PanmirrorFindReplace
    public native boolean selectNext();
    public native boolean selectPrevious();
    public native boolean replace(String term);
-   public native boolean replaceAll(String term);
+   public native int replaceAll(String term);
    public native boolean clear();
 }

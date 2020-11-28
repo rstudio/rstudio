@@ -69,6 +69,14 @@ public:
    std::string portToken() const;
    void setPortToken(const std::string& token);
 
+   // reused standalone port (for launcher session restarts)
+   std::string reusedStandalonePort() const;
+   void setReusedStandalonePort(const std::string& port);
+
+   // reused session proxy port (for launcher session restarts)
+   std::string reusedSessionProxyPort() const;
+   void setReusedSessionProxyPort(const std::string& port);
+
    // get underlying settings
    core::Settings& settings() { return settings_; }
 

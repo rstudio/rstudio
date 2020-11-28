@@ -304,7 +304,7 @@
         args <- args[names(args) == ""]
 
       # call rstudio fileEdit function
-      invisible(.Call("rs_fileEdit", args))
+      invisible(.Call("rs_fileEdit", args, PACKAGE = "(embedding)"))
    })
 })
 

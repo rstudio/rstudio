@@ -138,6 +138,7 @@ h4.pm-heading {
   border: 1px solid;
   margin-block-end: 1.5em;
   margin-top: 10px;
+  clear: both;
 }
 
 .pm-definition-list {

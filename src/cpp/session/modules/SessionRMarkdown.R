@@ -155,9 +155,22 @@
       list()
     }
   )
+  
+  haveQuarto <- function() {
+    nzchar(Sys.which("quarto"))
+  }
+  
+  isQuartoDoc <- function() {
+     # plain markdown file w/ "jupyter" metdata
+     (.rs.endsWith(file, ".md") && !is.null(yamlFrontMatter[["jupyter"]])) ||
+     # file with "format" yaml and no "output" yaml
+     (is.null(yamlFrontMatter[["output"]]) && !is.null(yamlFrontMatter[["format"]]))
+  }
 
   if (is.character(yamlFrontMatter[["knit"]]))
     yamlFrontMatter[["knit"]][[1]]
+  else if (isQuartoDoc() && haveQuarto())
+     "quarto render"
   else if (!is.null(yamlFrontMatter$runtime) &&
            grepl('^shiny', yamlFrontMatter$runtime)) {
     # use run as a wrapper for render when the doc requires the Shiny runtime,
@@ -445,17 +458,16 @@
   return(.rs.getRmdOutputInfo(target))
 })
 
-.rs.addFunction("inputDirToIndexFile", function(input_dir) {
-   index <- file.path(input_dir, "index.Rmd")
-   if (file.exists(index))
-      index
-   else {
-      index <- file.path(input_dir, "index.md")
-      if (file.exists(index))
-         index
-      else
-         NULL
-   }
+.rs.addFunction("inputDirToIndexFile", function(input_dir)
+{
+   paths <- c(
+      file.path(input_dir, "index.Rmd"),
+      file.path(input_dir, "index.md")
+   )
+   
+   for (path in paths)
+      if (file.exists(path))
+         return(path)
 })
 
 .rs.addFunction("getAllOutputFormats", function(input_dir, encoding) {
@@ -564,10 +576,6 @@
 
 .rs.addFunction("bookdown.renderedOutputPath", function(websiteDir, outputPath)
 {
-   # set encoding
-   Encoding(websiteDir) <- "UTF-8"
-   Encoding(outputPath) <- "UTF-8"
-   
    # if we have a PDF for this file, use it
    if (tools::file_ext(outputPath) == "pdf")
       return(outputPath)

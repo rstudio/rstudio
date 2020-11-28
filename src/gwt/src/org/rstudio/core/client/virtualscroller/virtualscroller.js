@@ -86,6 +86,11 @@ var VirtualScroller;
         }
       }
 
+      // validate that we've successfully found ace_scroller
+      if (self.scrollerEle == null) {
+        throw "internal error: virtual scroller could not find ace_scroller element";
+      }
+
       // jump to latest button
       if (this.scrollerEle.parentElement.getElementsByClassName("jump-to-latest-console").length < 1) {
         this.jumpToLatestButton = document.createElement("div");
