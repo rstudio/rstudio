@@ -41,10 +41,12 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
+import org.rstudio.studio.client.common.filetypes.events.RenameSourceFileEvent;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.server.model.RequestDocumentCloseEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
+import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.events.CloseAllSourceDocsExceptEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragInitiatedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
@@ -201,6 +203,17 @@ public class DocTabLayoutPanel
          {
             final ToolbarPopupMenu menu = new ToolbarPopupMenu();
             final NativeEvent nativeEvent = contextMenuEvent.getNativeEvent();
+
+            EditingTarget target = RStudioGinjector.INSTANCE.getSourceColumnManager().findEditor(docId);
+            if (target != null && target.getExtendedFileType() != null && target.getPath() != null)
+            {
+               final String filePath = target.getPath();
+               menu.addItem(new MenuItem("Rename", () ->
+               {
+                  events_.fireEvent(new RenameSourceFileEvent(filePath));
+               }));
+               menu.addSeparator();
+            }
 
             menu.addItem(new MenuItem("Close", () ->
             {
