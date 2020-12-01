@@ -110,6 +110,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
                 AriaLiveService ariaLive,
                 Display display,
                 Session session,
+                EventBus events,
                 Commands commands,
                 UserPrefs uiPrefs,
                 ErrorManager errorManager,
@@ -195,7 +196,9 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       addKeyPressPreviewHandler(completionManager);
 
       historyCompletion_ = new HistoryCompletionManager(
-            view_.getInputEditorDisplay(), server);
+            view_.getInputEditorDisplay(),
+            server);
+      
       addKeyDownPreviewHandler(historyCompletion_);
 
       // we need to explicitly connect a paste handler on Desktop
@@ -356,6 +359,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
 
    public void onConsolePrompt(ConsolePromptEvent event)
    {
+      historyCompletion_.resetOffset();
       String prompt = event.getPrompt().getPromptText();
       boolean addToHistory = event.getPrompt().getAddToHistory();
       consolePrompt(prompt, addToHistory);

@@ -61,6 +61,11 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
       // Current offset when navigating through search results
       offset_ = -1;
    }
+   
+   public void resetOffset()
+   {
+      offset_ = -1;
+   }
 
    public boolean previewKeyDown(NativeEvent event)
    {
@@ -229,13 +234,8 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
    {
       public HistoryCallback(String text, PopupMode desiredMode)
       {
-         // clear offset if initiating empty search, or if the new search
-         // text doesn't match the last search text
-         boolean resetOffset =
-               StringUtil.isNullOrEmpty(text) ||
-               !StringUtil.equals(text, lastSearch_);
-         
-         if (resetOffset)
+         // reset offset if initiating a new search
+         if (!StringUtil.equals(text, lastSearch_))
             offset_ = -1;
          
          // set associated class members
