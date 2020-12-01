@@ -84,6 +84,9 @@
 * Changed the command to retrieve Slurm resource utilization to be run as the current user rather than the `slurm-service-user` (Pro #1527)
 * Reduced supurflous log messages in the Slurm Launcher Plugin log file about non-RStudio jobs in Slurm (Pro #1528)
 * Allow administrators to disable the ability to set resource reqeusts on jobs launched through the Slurm Launcher Plugin (Pro #1948)
+* Add support for setting GPU and GRES requests on jobs launched through the Slurm Launcher Plugin (Pro #1390)
+* Allow administrators to enable Slurm job requeueing for jobs launched through the Slurm Launcher Plugin (Pro #2025)
+* Update the version of Slurm supported by the Slurm Launcher Plugin to 20.02 (Pro #2192) 
 * **RETIRED:** The option `auth-proxy-require-hmac` is has been retired and it is no longer operational. RStudio will not start if enabled. See the documentation on [Proxy Security Considerations] for alternatives to secure RStudio. (Pro #2029)
 
 ### Bugfixes
@@ -123,6 +126,7 @@
 * Fixed issue where Job Launcher streams could remain open longer than expected when viewing the job details page (Pro #1855)
 * Fixed issue where `rstudioapi::askForPassword()` did not mask user input in some cases.
 * Fixed issue where Job Launcher admin users would have `gid=0` in Slurm Launcher Sessions (Pro #1935)
+* Fixed issue where Slurm Job Launcher jobs would not post updated resource utilization without browser refresh (Pro #2177)
 * Fixed issue causing script errors when reloading Shiny applications from the editor toolbar (#7762)
 * Fixed issue where saving a file or project located in a backed up directory (such as with Dropbox or Google Drive) would frequently fail and display an error prompt (#7131)
 * Fixed issue causing C++ diagnostics to fail when Xcode developer tools were active (#7824)
