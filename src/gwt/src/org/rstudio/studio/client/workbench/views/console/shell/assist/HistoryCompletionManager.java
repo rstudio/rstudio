@@ -229,16 +229,21 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
    {
       public HistoryCallback(String text, PopupMode desiredMode)
       {
+         // clear offset if initiating empty search, or if the new search
+         // text doesn't match the last search text
+         boolean resetOffset =
+               StringUtil.isNullOrEmpty(text) ||
+               !StringUtil.equals(text, lastSearch_);
+         
+         if (resetOffset)
+            offset_ = -1;
+         
+         // set associated class members
          historyRequestInvalidation_.invalidate();
          token_ = historyRequestInvalidation_.getInvalidationToken();
          text_ = text;
          lastSearch_ = text;
          desiredMode_ = desiredMode;
-
-         // If we aren't re-initiating a previous search, clear the offset
-         // selection
-         if (lastSearch_ != text)
-            offset_ = -1;
       }
 
       @Override
