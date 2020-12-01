@@ -83,7 +83,7 @@
 * Update embedded nginx to v1.19.2 (Pro #1719)
 * Changed the command to retrieve Slurm resource utilization to be run as the current user rather than the `slurm-service-user` (Pro #1527)
 * Reduced supurflous log messages in the Slurm Launcher Plugin log file about non-RStudio jobs in Slurm (Pro #1528)
-* Allow administrators to disabile the ability to set resource reqeusts on jobs launched through the Slurm Launcher Plugin (Pro #1948)
+* Allow administrators to disable the ability to set resource reqeusts on jobs launched through the Slurm Launcher Plugin (Pro #1948)
 * **RETIRED:** The option `auth-proxy-require-hmac` is has been retired and it is no longer operational. RStudio will not start if enabled. See the documentation on [Proxy Security Considerations] for alternatives to secure RStudio. (Pro #2029)
 
 ### Bugfixes
