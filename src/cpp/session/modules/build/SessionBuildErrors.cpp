@@ -33,7 +33,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 
-#define kAnsiEscapeRegex "(?:\033\\[[0-9]+m)*"
+#define kAnsiEscapeRegex "(?:\033\\[\\d+m)*"
 
 using namespace rstudio::core;
 
@@ -298,7 +298,7 @@ std::vector<module_context::SourceMarker> parseTestThatErrors(
                   "\\)"            // closing paren
                   ":"              // colon separator
                   "\\s+"           // separating space
-                  "([^\033\\n]*)"  // error message       (5)
+                  "([:print:]+)"   // error message       (5)
                   kAnsiEscapeRegex // color
                   );
       }
@@ -313,7 +313,7 @@ std::vector<module_context::SourceMarker> parseTestThatErrors(
                   "([^:\\n]+)"     // error type          (3)
                   kAnsiEscapeRegex // color
                   ":\\s*"          // spaces
-                  "([^\033\\n]*)"  // error message       (4)
+                  "([:print:]+)"   // error message       (4)
                   kAnsiEscapeRegex // color
                   );
       }
