@@ -424,7 +424,7 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
          for (var i = children.length - 1; i >= 0; i--)
          {
             var child = children[i];
-            if (child.isFunction())
+            if (child.isFunction() || child.isChunk())
                return;
 
             if (child.isSection() && child.attributes.depth >= depth)

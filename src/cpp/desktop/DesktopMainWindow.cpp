@@ -687,10 +687,10 @@ void MainWindow::onLoadFinished(bool ok)
       }
       else
       {
-         // schedule our load timer and allow a 1s buffer for
+         // schedule our load timer and allow a small buffer for
          // incoming loadFinished() events which might report
          // that the load was actually successful
-         loadTimer_->start(1000);
+         loadTimer_->start(5000);
       }
    }
    END_LOCK_MUTEX

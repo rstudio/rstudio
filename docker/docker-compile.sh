@@ -139,8 +139,24 @@ CONTAINER_ID="build-$REPO-$IMAGE"
 echo "Cleaning up container $CONTAINER_ID if it exists..."
 docker rm "$CONTAINER_ID" || true
 
-# run compile step
-docker run --name "$CONTAINER_ID" -v "$(pwd):/src" "$REPO:$IMAGE" bash -c "mkdir /package && cd /package && $ENV /src/package/linux/make-package ${FLAVOR^} $PACKAGE clean && echo build-${FLAVOR^}-$PACKAGE/*.${PACKAGE,,} && ls build-${FLAVOR^}-$PACKAGE$FLAVOR_SUFFIX/*.${PACKAGE,,}"
+# form build command ---
+
+# create and enter package build directory
+CMD="mkdir /package &&"
+CMD="${CMD} cd /package &&"
+
+# perform the actual compile step w/ clean
+CMD="${CMD} $ENV /src/package/linux/make-package ${FLAVOR^} ${PACKAGE} clean &&"
+
+# output the name of the built package (will be captured later)
+CMD="${CMD} echo build-${FLAVOR^}-${PACKAGE}/*.${PACKAGE,,} &&"
+CMD="${CMD} ls build-${FLAVOR^}-${PACKAGE}${FLAVOR_SUFFIX}/*.${PACKAGE,,}"
+
+echo "Running build command:"
+echo "${CMD}"
+
+# run compile step!
+docker run --name "$CONTAINER_ID" -v "$(pwd):/src" "$REPO:$IMAGE" bash -c "${CMD}"
 
 # extract logs to get filename (should be on the last line)
 PKG_FILENAME=$(docker logs --tail 1 "$CONTAINER_ID")
