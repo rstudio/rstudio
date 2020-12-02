@@ -550,11 +550,23 @@ public class VisualMode implements VisualModeEditorSync,
                               // case sync our editing location to what it is in source 
                               if (focus)
                               { 
-                                 panmirror_.focus();
-                                 panmirror_.setEditingLocation(
-                                       visualModeLocation_.getSourceOutlineLocation(), 
-                                       visualModeLocation_.savedEditingLocation()
-                                       ); 
+                                 // catch exceptions which occur here (can result from attempting to restore
+                                 // an invalid position). generally we'd like to diagnose and fix instances
+                                 // of this error in a more targeted fashion, however we are now at the point
+                                 // of v1.4 release and the error results in an inability to switch to visual
+                                 // mode, so we do more coarse grained error handling here
+                                 try
+                                 {
+                                    panmirror_.focus();
+                                    panmirror_.setEditingLocation(
+                                          visualModeLocation_.getSourceOutlineLocation(), 
+                                          visualModeLocation_.savedEditingLocation()
+                                          ); 
+                                 }
+                                 catch(Exception e)
+                                 {
+                                    Debug.logException(e);
+                                 }
                               }
                               
                               // show any warnings

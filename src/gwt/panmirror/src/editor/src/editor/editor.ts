@@ -498,7 +498,7 @@ export class Editor {
       this.view.updateState(this.state);
     } else {
       // note current editing location
-      const location = this.getEditingLocation();
+      const loc = this.getEditingLocation();
 
       // replace the top level nodes in the doc
       const tr = this.state.tr;
@@ -511,8 +511,14 @@ export class Editor {
         return false;
       });
       // set selection to previous location if it's still valid
-      if (location.pos < tr.doc.nodeSize) {
-        setTextSelection(location.pos)(tr);
+      if (loc.pos < tr.doc.nodeSize) {
+        // eat exceptions that might result from an invalid position
+        try {
+          setTextSelection(loc.pos)(tr);
+        } catch(e) {
+          // do-nothing, this error can happen and shouldn't result in 
+          // a failure to setMarkdown
+        }
       }
       // dispatch
       this.view.dispatch(tr);
