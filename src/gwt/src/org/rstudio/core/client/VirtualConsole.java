@@ -23,6 +23,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import com.google.gwt.dom.client.Node;
 import com.google.inject.Provider;
 import com.google.inject.assistedinject.Assisted;
 import org.rstudio.core.client.regex.Match;
@@ -363,7 +364,7 @@ public class VirtualConsole
                moves.put(l, overlap.start);
 
                if (parent_ != null && !range.text().isEmpty())
-                  parent_.insertBefore(range.element, overlap.element);
+                  overlap.element.getParentElement().insertBefore(range.element, overlap.element);
 
             }
          }
@@ -647,13 +648,6 @@ public class VirtualConsole
          match = match.nextMatch();
       }
 
-      Entry<Integer, ClassRange> last = class_.lastEntry();
-      if (last != null)
-      {
-         ClassRange range = last.getValue();
-         if (isVirtualized()) VirtualScrollerManager.prune(parent_.getParentElement(), range.element);
-      }
-
       // If there was any plain text after the last control character, add it
       if (tail < data.length())
          text(data.substring(tail), currentClazz, forceNewRange);
@@ -673,6 +667,19 @@ public class VirtualConsole
       return newText_ == null ? "" : newText_.toString();
    }
 
+   public void ensureStartingOnNewLine()
+   {
+      if (isVirtualized())
+         VirtualScrollerManager.ensureStartingOnNewLine(parent_.getParentElement());
+      else
+      {
+         Node child = getParent().getLastChild();
+         if (child != null &&
+                 child.getNodeType() == Node.ELEMENT_NODE &&
+                 !Element.as(child).getInnerText().endsWith("\n"))
+            submit("\n");
+      }
+   }
    private class ClassRange
    {
       public ClassRange(int pos, String className, String text)
