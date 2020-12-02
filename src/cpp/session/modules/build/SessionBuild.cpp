@@ -671,8 +671,8 @@ private:
       type_ = type;
 
       // add testthat and shinytest result parsers
-      std::string testthatVersionString = module_context::packageVersion("testthat");
-      core::Version testthatVersion(testthatVersionString);
+      core::Version testthatVersion;
+      module_context::packageVersion("testthat", &testthatVersion);
       
       if (type == kTestFile)
       {
