@@ -24,12 +24,16 @@
 
 #include <shared_core/Error.hpp>
 #include <shared_core/SafeConvert.hpp>
+
 #include <core/FileSerializer.hpp>
+#include <core/Version.hpp>
 
 #include <r/RExec.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
+
+#define kAnsiEscapeRegex "(?:\033\\[[0-9]+m)*"
 
 using namespace rstudio::core;
 
@@ -39,7 +43,6 @@ namespace modules {
 namespace build {
 
 namespace {
-
 
 bool isRSourceFile(const FilePath& filePath)
 {
@@ -258,8 +261,9 @@ std::vector<module_context::SourceMarker> parseGccErrors(
 }
 
 std::vector<module_context::SourceMarker> parseTestThatErrors(
-                                           const FilePath& basePath,
-                                           const std::string& output)
+      const FilePath& basePath,
+      const std::string& output,
+      core::Version testthatVersion)
 {
    using namespace module_context;
    std::vector<SourceMarker> errors;
@@ -268,35 +272,88 @@ std::vector<module_context::SourceMarker> parseTestThatErrors(
    {
       FilePath basePathResolved = module_context::resolveAliasedPath(basePath.getAbsolutePath());
 
-      boost::regex re("\\[[0-9]+m([^:\\n]+):([0-9]+): ?([^:\\n]+): ([^\\n]*)\\[[0-9]+m");
-
+      // Error output formats for different testthat versions:
+      //
+      // # testthat (>= 3.0.0)
+      // Failure (test-hello.R:2:3): multiplication works
+      //
+      // # testthat (< 3.0.0)
+      // test-hello.R:2: failure: multiplication works
+      //
+      // Note that ANSI escapes are also used.
+      boost::regex re;
+      if (testthatVersion.versionMajor() >= 3)
+      {
+         re = (
+                  kAnsiEscapeRegex // color
+                  "([^\\s]+)"      // error type          (1)
+                  kAnsiEscapeRegex // color
+                  "\\s+"           // separating space
+                  "\\("            // opening paren
+                  "([^:\\n]+)"     // file name           (2)
+                  ":"              // colon separator
+                  "([0-9]+)"       // file line           (3)
+                  ":"              // colon separator
+                  "([0-9]+)"       // file column         (4)
+                  "\\)"            // closing paren
+                  ":"              // colon separator
+                  "\\s+"           // separating space
+                  "([^\033\\n]*)"  // error message       (5)
+                  kAnsiEscapeRegex // color
+                  );
+      }
+      else
+      {
+         re = (
+                  kAnsiEscapeRegex // color
+                  "([^:\\n]+):"    // file name           (1)
+                  "([0-9]+):"      // file line           (2)
+                  "\\s*"           // spaces
+                  kAnsiEscapeRegex // color
+                  "([^:\\n]+)"     // error type          (3)
+                  kAnsiEscapeRegex // color
+                  ":\\s*"          // spaces
+                  "([^\033\\n]*)"  // error message       (4)
+                  kAnsiEscapeRegex // color
+                  );
+      }
+      
       boost::sregex_iterator iter(output.begin(), output.end(), re);
       boost::sregex_iterator end;
       for (; iter != end; iter++)
       {
          boost::smatch match = *iter;
-         BOOST_ASSERT(match.size() == 5);
 
-         std::string file, line, type, message, marker;
+         std::string file, line, column, type, message, marker;
          
-         file = match[1];
-         line = match[2];
-         type = match[3];
-
-         if (type.find("error") != std::string::npos) {
+         if (testthatVersion.versionMajor() >= 3)
+         {
+            type    = match[1];
+            file    = match[2];
+            line    = match[3];
+            column  = match[4];
+            message = match[5];
+         }
+         else
+         {
+            file    = match[1];
+            line    = match[2];
+            type    = match[3];
+            message = match[4];
+         }
+         
+         std::string ltype = string_utils::toLower(type);
+         if (ltype.find("error") != std::string::npos) {
             marker = "error";
-         } else if (type.find("failure") != std::string::npos) {
+         } else if (ltype.find("failure") != std::string::npos) {
             marker = "error";
-         } else if (type.find("warning") != std::string::npos) {
+         } else if (ltype.find("warning") != std::string::npos) {
             marker = "warning";
          } else {
             marker = "info";
          }
 
-         message = match[4];
          FilePath testFilePath = basePathResolved.completePath(file);
-
-         std::string column = "0";
          SourceMarker err(module_context::sourceMarkerTypeFromString(marker),
                           testFilePath,
                           core::safe_convert::stringTo<int>(line, 1),
@@ -374,9 +431,10 @@ CompileErrorParser rErrorParser(const FilePath& basePath)
    return boost::bind(parseRErrors, basePath, _1);
 }
 
-CompileErrorParser testthatErrorParser(const FilePath& basePath)
+CompileErrorParser testthatErrorParser(const FilePath& basePath,
+                                       const core::Version& testthatVersion)
 {
-   return boost::bind(parseTestThatErrors, basePath, _1);
+   return boost::bind(parseTestThatErrors, basePath, _1, testthatVersion);
 }
 
 CompileErrorParser shinytestErrorParser(const FilePath& basePath, const FilePath& rdsPath)
