@@ -124,7 +124,7 @@
 * Reduced difference in font size and spacing between Terminal and Console (#6382)
 * Fixed issue where path autocompletion in R Markdown documents did not respect Knit Directory preference (#5412)
 * Fixed issue where Job Launcher streams could remain open longer than expected when viewing the job details page (Pro #1855)
-* Fixed issue where `rstudioapi::askForPassword()` did not mask user input in some cases.
+* Fixed issue where `rstudioapi::askForPassword()` did not mask user input in some cases
 * Fixed issue where Job Launcher admin users would have `gid=0` in Slurm Launcher Sessions (Pro #1935)
 * Fixed issue where Slurm Job Launcher jobs would not post updated resource utilization without browser refresh (Pro #2177)
 * Fixed issue causing script errors when reloading Shiny applications from the editor toolbar (#7762)
@@ -135,6 +135,8 @@
 * Fixed issue where non-ASCII characters in Subversion commit comments were incorrect encoded on Windows (#7959)
 * Prevent Discard button from being hidden in Subversion diff viewer (#6031)
 * Fixed issue where French (AZERTY) keyboards inserted '/' rather than ':' in some cases (#7932)
-* `readline()` and `readLines()` can now be interrupted, even when reading from `stdin()`. (#3448)
+* `readline()` and `readLines()` can now be interrupted, even when reading from `stdin()` (#3448)
 * Fixed issue causing Knit button to show old formats after editing the YAML header (#7833)
 * Fixed issue wherein the Python prompt would continue to be shown after an R restart (#8011)
+* Fixed issue where searches in the console history could inappropriately preserve search position (#7682)
+
