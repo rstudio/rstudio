@@ -87,6 +87,7 @@
 * Add support for setting GPU and GRES requests on jobs launched through the Slurm Launcher Plugin (Pro #1390)
 * Allow administrators to enable Slurm job requeueing for jobs launched through the Slurm Launcher Plugin (Pro #2025)
 * Update the version of Slurm supported by the Slurm Launcher Plugin to 20.02 (Pro #2192) 
+* Project Sharing can now use raw UIDs as security principals, for compatibility with nodes that cannot resolve domains (Pro #2104)
 * **RETIRED:** The option `auth-proxy-require-hmac` is has been retired and it is no longer operational. RStudio will not start if enabled. See the documentation on [Proxy Security Considerations] for alternatives to secure RStudio. (Pro #2029)
 
 ### Bugfixes
@@ -139,4 +140,5 @@
 * Fixed issue causing Knit button to show old formats after editing the YAML header (#7833)
 * Fixed issue wherein the Python prompt would continue to be shown after an R restart (#8011)
 * Fixed issue where searches in the console history could inappropriately preserve search position (#7682)
+* Fixed issue wherein sharing a project on some NFSv4 filesystems could result in damage to owner permissions (Pro #2188)
 
