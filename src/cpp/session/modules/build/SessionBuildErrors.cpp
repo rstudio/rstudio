@@ -298,7 +298,7 @@ std::vector<module_context::SourceMarker> parseTestThatErrors(
                   "\\)"            // closing paren
                   ":"              // colon separator
                   "\\s+"           // separating space
-                  "([^\033\\n]*)"  // error message       (5)
+                  "([[:print:]]*)" // error message       (5)
                   kAnsiEscapeRegex // color
                   );
       }
@@ -312,8 +312,9 @@ std::vector<module_context::SourceMarker> parseTestThatErrors(
                   kAnsiEscapeRegex // color
                   "([^:\\n]+)"     // error type          (3)
                   kAnsiEscapeRegex // color
-                  ":\\s*"          // spaces
-                  "([^\033\\n]*)"  // error message       (4)
+                  ":"              // separating colon
+                  "\\s*"           // spaces
+                  "([[:print:]]*)" // error message       (4)
                   kAnsiEscapeRegex // color
                   );
       }
