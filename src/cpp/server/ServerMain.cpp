@@ -516,6 +516,17 @@ int main(int argc, char * const argv[])
       // ignore SIGPIPE (don't log error because we should never call
       // syslog prior to daemonizing)
       core::system::ignoreSignal(core::system::SigPipe);
+      
+#ifdef __APPLE__
+      // warn if the rstudio pam profile does not exist
+      // (note that this only effects macOS development configurations)
+      FilePath pamProfilePath("/etc/pam.d/rstudio");
+      if (!pamProfilePath.exists())
+      {
+         std::cerr << "WARNING: /etc/pam.d/rstudio does not exist; authentication may fail!" << std::endl;
+         std::cerr << "Run 'sudo cp /etc/pam.d/cups /etc/pam.d/rstudio' to set a default PAM profile for RStudio." << std::endl;
+      }
+#endif
 
       // read program options 
       std::ostringstream osWarnings;
