@@ -57,6 +57,7 @@
 * `Ctrl + D` can now be used to send EOF when reading user input via `readLines()` (#3448)
 * External files with spaces in their path or filename are now openable on Big Sur from Files pane (#8506)
 * PDF files opened from Files pane on macOS will open in registered application, not always Preview.app (#8506)
+* RStudio Server is no longer supported on RedHat Enterprise Linux 6 or CentOS 6, as these platforms have reached the vendors' End of Life (EOL) dates (Pro #2203)
 
 ### RStudio Server
 
