@@ -7,6 +7,7 @@
 * Improve detection for crashes that occur early in session initialization (#7983)
 * The mouse back / forward buttons can now be used to navigate within the Help pane (#8338)
 * Right-click on document tab provides menu with close, close all, close others (#1664)
+* Rename File added to document tab context menu (#8374)
 * Preliminary compatibility with UCRT builds of R-devel (#8461)
 
 ### RStudio Server
