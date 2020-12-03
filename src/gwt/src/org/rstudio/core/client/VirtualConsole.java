@@ -23,6 +23,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import com.google.gwt.dom.client.Node;
 import com.google.inject.Provider;
 import com.google.inject.assistedinject.Assisted;
 import org.rstudio.core.client.regex.Match;
@@ -317,7 +318,7 @@ public class VirtualConsole
                insertions.add(range);
                haveInsertedRange = true;
                if (parent_ != null)
-                  parent_.insertAfter(range.element, overlap.element);
+                  overlap.element.getParentElement().insertAfter(range.element, overlap.element);
             }
          }
          else if (start <= l && end <= r && end > l)
@@ -333,6 +334,7 @@ public class VirtualConsole
                if (overlap.length == 0)
                {
                   deletions.add(l);
+
                   if (overlap.element.getParentElement() != null)
                      overlap.element.removeFromParent();
                }
@@ -363,7 +365,7 @@ public class VirtualConsole
                moves.put(l, overlap.start);
 
                if (parent_ != null && !range.text().isEmpty())
-                  parent_.insertBefore(range.element, overlap.element);
+                  overlap.element.getParentElement().insertBefore(range.element, overlap.element);
 
             }
          }
@@ -393,7 +395,7 @@ public class VirtualConsole
                // insert the new range
                insertions.add(range);
                if (parent_ != null)
-                  parent_.insertAfter(range.element, overlap.element);
+                  overlap.element.getParentElement().insertAfter(range.element, overlap.element);
 
                // add back the remainder
                ClassRange remainder = new ClassRange(
@@ -402,7 +404,7 @@ public class VirtualConsole
                      text.substring((text.length() - (amountTrimmed - range.length))));
                insertions.add(remainder);
                if (parent_ != null)
-                  parent_.insertAfter(remainder.element, range.element);
+                  range.element.getParentElement().insertAfter(remainder.element, range.element);
             }
          }
       }
@@ -647,13 +649,6 @@ public class VirtualConsole
          match = match.nextMatch();
       }
 
-      Entry<Integer, ClassRange> last = class_.lastEntry();
-      if (last != null)
-      {
-         ClassRange range = last.getValue();
-         if (isVirtualized()) VirtualScrollerManager.prune(parent_.getParentElement(), range.element);
-      }
-
       // If there was any plain text after the last control character, add it
       if (tail < data.length())
          text(data.substring(tail), currentClazz, forceNewRange);
@@ -673,6 +668,19 @@ public class VirtualConsole
       return newText_ == null ? "" : newText_.toString();
    }
 
+   public void ensureStartingOnNewLine()
+   {
+      if (isVirtualized())
+         VirtualScrollerManager.ensureStartingOnNewLine(parent_.getParentElement());
+      else
+      {
+         Node child = getParent().getLastChild();
+         if (child != null &&
+                 child.getNodeType() == Node.ELEMENT_NODE &&
+                 !Element.as(child).getInnerText().endsWith("\n"))
+            submit("\n");
+      }
+   }
    private class ClassRange
    {
       public ClassRange(int pos, String className, String text)

@@ -28,5 +28,6 @@ public class VirtualScrollerNative
    public native Element getCurBucket();
    public native void clear();
    public native void prune(Element ele);
+   public native void ensureStartingOnNewLine();
 }
 

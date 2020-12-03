@@ -1023,13 +1023,12 @@ public class Packages
    
    private void restartForInstallWithConfirmation(final String installCmd)
    {
-      String msg = "One or more of the packages that will be updated by this " +
-                   "installation are currently loaded. Restarting R prior " +
-                   "to updating these packages is strongly recommended.\n\n" +
-                   "RStudio can restart R and then automatically continue " +
-                   "the installation after restarting (all work and " +
-                   "data will be preserved during the restart).\n\n" +
-                   "Do you want to restart R prior to installing?";
+      String msg = 
+            "One or more of the packages to be updated are currently loaded. " +
+            "Restarting R prior to install is highly recommended.\n\n" +
+            "RStudio can restart R before installing the requested packages. " +
+            "All work and data will be preserved during restart.\n\n" +
+            "Do you want to restart R prior to install?";
                   
       final boolean haveInstallCmd = installCmd.startsWith("install.packages");
       
@@ -1038,13 +1037,12 @@ public class Packages
             "Updating Loaded Packages",
             msg,
             true,
-            new Operation() { public void execute()
+            () ->
             {
                events_.fireEvent(new SuspendAndRestartEvent(
                       SuspendOptions.createSaveAll(true), installCmd));  
-                  
-            }},
-            new Operation() { public void execute()
+            },
+            () ->
             {
                server_.ignoreNextLoadedPackageCheck(
                                             new VoidServerRequestCallback() {
@@ -1055,7 +1053,7 @@ public class Packages
                         executePkgCommand(installCmd);
                   }
                });
-            }},
+            },
             true);   
    }
 
