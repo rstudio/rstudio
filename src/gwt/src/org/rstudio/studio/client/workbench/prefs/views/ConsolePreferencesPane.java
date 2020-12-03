@@ -38,7 +38,7 @@ public class ConsolePreferencesPane extends PreferencesPane
       add(headerLabel("Display"));
       add(checkboxPref("Show syntax highlighting in console input", prefs_.syntaxColorConsole()));
       add(checkboxPref("Different color for error or message output (requires restart)", prefs_.highlightConsoleErrors()));
-      add(checkboxPref("Limit console display to a subset of total content (requires restart)", prefs_.limitVisibleConsole()));
+      add(checkboxPref("Limit visible console output (requires restart)", prefs_.limitVisibleConsole()));
       NumericValueWidget limitLengthPref =
          numericPref("Limit output line length to:", prefs_.consoleLineLengthLimit());
       add(nudgeRightPlus(limitLengthPref));
