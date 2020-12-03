@@ -1028,7 +1028,7 @@ public class Packages
             "Restarting R prior to install is highly recommended.\n\n" +
             "RStudio can restart R before installing the requested packages. " +
             "All work and data will be preserved during restart.\n\n" +
-            "Do you want to restart R?";
+            "Do you want to restart R prior to install?";
                   
       final boolean haveInstallCmd = installCmd.startsWith("install.packages");
       
