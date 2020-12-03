@@ -101,9 +101,9 @@ export class InsertCitationCommand extends ProsemirrorCommand {
 
                   // If the previous character is a part of a cite_id, advance to the end of the mark,
                   // insert a separator, and then proceed
-                  const citeIdRange = getMarkRange(tr.doc.resolve(start - 1), schema.marks.cite_id);
-                  if (citeIdRange) {
-                    setTextSelection(citeIdRange.to)(tr);
+                  const preCiteIdRange = getMarkRange(tr.doc.resolve(start - 1), schema.marks.cite_id);
+                  if (preCiteIdRange) {
+                    setTextSelection(preCiteIdRange.to)(tr);
                     const wrapperText = schema.text(`; `, []);
                     tr.insert(tr.selection.from, wrapperText);
                   }
@@ -117,6 +117,13 @@ export class InsertCitationCommand extends ProsemirrorCommand {
                       tr.insert(tr.selection.from, schema.text('; ', []));
                     }
                   });
+
+                  // If the next character is a part of a cite_id, insert a separator (that will appear after the current citeId)
+                  const postCiteIdRange = getMarkRange(tr.doc.resolve(tr.selection.from + 1), schema.marks.cite_id);
+                  if (postCiteIdRange) {
+                    const wrapperText = schema.text(`; `, []);
+                    tr.insert(tr.selection.from, wrapperText);
+                  }
 
                   // Enclose wrapper in the cite mark (if not already in a cite)
                   if (!alreadyInCite) {
