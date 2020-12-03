@@ -151,7 +151,7 @@ const toBibtex = (entries: Entry[]): string => {
     bibTexStr = bibTexStr + `@${entry.type}{${entry.key}`;
 
     // The fields for this item
-    if (entry.values) {
+    if (entry.values && Object.keys(entry.values).length > 0) {
       sortedKeys(entry.values).forEach(key => {
         if (entry.values) {
           const rawValue = entry.values[key];
@@ -163,6 +163,10 @@ const toBibtex = (entries: Entry[]): string => {
           bibTexStr = bibTexStr + `,\n\t${key} = ${value}`;
         }
       });
+    } else {
+      // There are no values, we need to minimally place a ',' at the end of the id
+      // If we omit this, pandoc cannot parse the bibliography
+      bibTexStr = bibTexStr + ",";
     }
 
     // Close the entry

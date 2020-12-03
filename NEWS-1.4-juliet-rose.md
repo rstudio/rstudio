@@ -21,3 +21,4 @@
 * Fixed issue where restoring R workspace could fail when project path contained non-ASCII characters (#8321)
 * Fixed issue where forked R sessions could hang after a package was loaded or unloaded (#8361)
 * Fixed issue where attempting to profile lines ending in comment would fail (#8407)
+* Improved checks for non-writable R library paths on startup (Pro #2184)

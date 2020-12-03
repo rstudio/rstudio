@@ -82,6 +82,10 @@ export function baseKeysPlugin(keys: readonly BaseKeyBinding[]): Plugin {
     { key: BaseKey.Backspace, command: joinBackward },
     { key: BaseKey.Backspace, command: deleteSelection },
 
+    // base tab key behavior (ignore)
+    { key: BaseKey.Tab, command: ignoreKey },
+    { key: BaseKey.ShiftTab, command: ignoreKey },
+
     // base delete key behaviors
     { key: BaseKey.Delete, command: selectNodeForward },
     { key: BaseKey.Delete, command: joinForward },
@@ -152,6 +156,10 @@ interface Coords {
   right: number;
   top: number;
   bottom: number;
+}
+
+function ignoreKey(state: EditorState, dispatch?: (tr: Transaction) => void) {
+  return true;
 }
 
 function homeKey(state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) {
