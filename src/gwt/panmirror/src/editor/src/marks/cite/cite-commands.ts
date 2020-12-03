@@ -28,7 +28,7 @@ import { BibliographyManager } from '../../api/bibliography/bibliography';
 
 import { ensureSourcesInBibliography } from './cite';
 import { showInsertCitationDialog, InsertCitationDialogResult } from '../../behaviors/insert_citation/insert_citation';
-import { markIsActive } from '../../api/mark';
+import { markIsActive, getMarkRange } from '../../api/mark';
 
 export class InsertCitationCommand extends ProsemirrorCommand {
   private initialSelectionKey: string | undefined;
@@ -97,6 +97,15 @@ export class InsertCitationCommand extends ProsemirrorCommand {
 
                     // move the selection into the wrapper
                     setTextSelection(tr.selection.from - 1)(tr);
+                  }
+
+                  // If the previous character is a part of a cite_id, advance to the end of the mark,
+                  // insert a separator, and then proceed
+                  const citeIdRange = getMarkRange(tr.doc.resolve(start - 1), schema.marks.cite_id);
+                  if (citeIdRange) {
+                    setTextSelection(citeIdRange.to)(tr);
+                    const wrapperText = schema.text(`; `, []);
+                    tr.insert(tr.selection.from, wrapperText);
                   }
 
                   // insert the CiteId marks and text
