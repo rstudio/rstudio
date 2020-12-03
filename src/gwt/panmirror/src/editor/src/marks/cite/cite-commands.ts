@@ -92,7 +92,7 @@ export class InsertCitationCommand extends ProsemirrorCommand {
                   // always perform a 'note' style citation insert
                   // If we're already inside a cite including [], don't bother inserting wrapper
                   if (!alreadyInCite && includeWrapper) {
-                    const wrapperText = schema.text(`[]`, []);
+                    const wrapperText = schema.text('[]');
                     tr.insert(tr.selection.from, wrapperText);
 
                     // move the selection into the wrapper
@@ -104,8 +104,8 @@ export class InsertCitationCommand extends ProsemirrorCommand {
                   const preCiteIdRange = getMarkRange(tr.doc.resolve(start - 1), schema.marks.cite_id);
                   if (preCiteIdRange) {
                     setTextSelection(preCiteIdRange.to)(tr);
-                    const wrapperText = schema.text(`; `, []);
-                    tr.insert(tr.selection.from, wrapperText);
+                    const separator = schema.text('; ');
+                    tr.insert(tr.selection.from, separator);
                   }
 
                   // insert the CiteId marks and text
@@ -121,8 +121,8 @@ export class InsertCitationCommand extends ProsemirrorCommand {
                   // If the next character is a part of a cite_id, insert a separator (that will appear after the current citeId)
                   const postCiteIdRange = getMarkRange(tr.doc.resolve(tr.selection.from + 1), schema.marks.cite_id);
                   if (postCiteIdRange) {
-                    const wrapperText = schema.text(`; `, []);
-                    tr.insert(tr.selection.from, wrapperText);
+                    const separator = schema.text('; ');
+                    tr.insert(tr.selection.from, separator);
                   }
 
                   // Enclose wrapper in the cite mark (if not already in a cite)
