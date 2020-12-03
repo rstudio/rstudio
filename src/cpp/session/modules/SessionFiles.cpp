@@ -639,6 +639,10 @@ Error completeUpload(const core::json::JsonRpcRequest& request,
          Error copyError = uploadedTempFilePath.move(targetPath, FilePath::MoveCrossDevice, true);
          if (copyError)
             return copyError;
+
+         // update permissions (handles case where an uploaded file does not inherit shared project
+         // permissions correctly in Server Pro)
+         module_context::events().onPermissionsChanged(targetPath);
       }
       
       // check quota after uploads
