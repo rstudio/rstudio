@@ -318,7 +318,7 @@ public class VirtualConsole
                insertions.add(range);
                haveInsertedRange = true;
                if (parent_ != null)
-                  parent_.insertAfter(range.element, overlap.element);
+                  overlap.element.getParentElement().insertAfter(range.element, overlap.element);
             }
          }
          else if (start <= l && end <= r && end > l)
@@ -334,6 +334,7 @@ public class VirtualConsole
                if (overlap.length == 0)
                {
                   deletions.add(l);
+
                   if (overlap.element.getParentElement() != null)
                      overlap.element.removeFromParent();
                }
@@ -394,7 +395,7 @@ public class VirtualConsole
                // insert the new range
                insertions.add(range);
                if (parent_ != null)
-                  parent_.insertAfter(range.element, overlap.element);
+                  overlap.element.getParentElement().insertAfter(range.element, overlap.element);
 
                // add back the remainder
                ClassRange remainder = new ClassRange(
@@ -403,7 +404,7 @@ public class VirtualConsole
                      text.substring((text.length() - (amountTrimmed - range.length))));
                insertions.add(remainder);
                if (parent_ != null)
-                  parent_.insertAfter(remainder.element, range.element);
+                  range.element.getParentElement().insertAfter(remainder.element, range.element);
             }
          }
       }
