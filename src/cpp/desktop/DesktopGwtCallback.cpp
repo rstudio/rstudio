@@ -204,36 +204,6 @@ void GwtCallback::printFinished(int result)
 void GwtCallback::browseUrl(QString url)
 {
    QUrl qurl = QUrl::fromEncoded(url.toUtf8());
-
-#ifdef Q_OS_MAC
-   if (qurl.scheme() == QString::fromUtf8("file"))
-   {
-      QProcess open;
-      QStringList args;
-      // force use of Preview for PDFs (Adobe Reader 10.01 crashes)
-      if (url.toLower().endsWith(QString::fromUtf8(".pdf")))
-      {
-         args.append(QString::fromUtf8("-a"));
-         args.append(QString::fromUtf8("Preview"));
-         args.append(url);
-      }
-      else
-      {
-         args.append(url);
-      }
-      open.start(QString::fromUtf8("open"), args);
-      open.waitForFinished(5000);
-      if (open.exitCode() != 0)
-      {
-         // Probably means that the file doesn't have a registered
-         // application or something.
-         QProcess reveal;
-         reveal.startDetached(QString::fromUtf8("open"), QStringList() << QString::fromUtf8("-R") << url);
-      }
-      return;
-   }
-#endif
-
    desktop::openUrl(qurl);
 }
 
