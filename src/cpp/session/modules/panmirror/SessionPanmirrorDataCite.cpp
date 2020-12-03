@@ -42,9 +42,6 @@ const char * const kDataCiteApiHost = "https://api.datacite.org";
 // convert json returned by API to json record expected by the client
 json::Object asDataCiteRecord(const json::Object resultJson)
 {
-   resultJson.writeFormatted(std::cerr);
-
-
    // get attributes object
    json::Object attributesJson;
    json::readObject(resultJson, "attributes", attributesJson);
