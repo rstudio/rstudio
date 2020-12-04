@@ -207,6 +207,16 @@ public class AceEditorNative extends JavaScriptObject
    }-*/;
 
    /**
+    * Forces the use of browser focus scrolling. This is the default on Chrome, but on other
+    * browsers, a complicated hack involving setting the 'ace_nocontext' attribute on all parent
+    * elements is used instead to avoid scroll jitter. This is not necessary in embedded editors,
+    * and causes ProseMirror to go nuts (see issue 8518), so this hook allows us to turn it off.
+    */
+   public final native void useBrowserInputFocus() /*-{
+      this.textInput.$focusScroll = "browser";
+   }-*/;
+
+   /**
     * Set an aria-label on the input element
     * @param label
     */
