@@ -4,6 +4,7 @@
 
 ### Misc
 
+* Added support for the `|>` pipe operator, and `\(x)` function shorthand syntax (#8543)
 * Improve detection for crashes that occur early in session initialization (#7983)
 * The mouse back / forward buttons can now be used to navigate within the Help pane (#8338)
 * Right-click on document tab provides menu with close, close all, close others (#1664)
