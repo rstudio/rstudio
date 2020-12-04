@@ -143,5 +143,8 @@
 * Fixed issue causing Knit button to show old formats after editing the YAML header (#7833)
 * Fixed issue wherein the Python prompt would continue to be shown after an R restart (#8011)
 * Fixed issue where searches in the console history could inappropriately preserve search position (#7682)
-* Fixed issue wherein sharing a project on some NFSv4 filesystems could result in damage to owner permissions (Pro #2188)
-
+* Fixed issue where `auth-pam-session-use-password` would not work when multiple Server nodes are used behind an external load balancer (Pro #2158)
+* Fixed issue where project sharing configured it `server-project-sharing-root-dir` would fail to share when the path contain mixed ACL support (Pro #2061)
+* Fixed issue where project sharing would fail to share when the path contain mixed NFS ACL support (Pro #2103)
+* Fixed issue where in sharing a project on some NFSv4 filesystems could result in damage to owner permissions (Pro #2188)
+* Fixed issue where the project sharing would not work behind a HTTPS proxy (Pro #2088)
