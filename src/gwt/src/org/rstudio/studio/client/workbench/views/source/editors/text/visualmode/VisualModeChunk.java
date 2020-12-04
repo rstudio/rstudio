@@ -231,6 +231,9 @@ public class VisualModeChunk
       // Prevent tab from advancing into editor
       chunkEditor.getTextInputElement().setTabIndex(-1);
 
+      // Force the use of browser APIs to set focus to the input element
+      chunkEditor.useBrowserInputFocus();
+
       // Allow the editor's size to be determined by its content (these
       // settings trigger an auto-growing behavior), up to a max of 1000
       // lines.
