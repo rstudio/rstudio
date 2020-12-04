@@ -67,6 +67,7 @@ bool prepareEnvironment(Options& options)
    if (!rLdScriptPath.exists())
       rLdScriptPath = supportingFilePath.completePath("session/r-ldpath");
 #endif
+   
    // attempt to detect R environment
    std::string rScriptPath, rVersion, errMsg;
    r_util::EnvironmentVars rEnvVars;

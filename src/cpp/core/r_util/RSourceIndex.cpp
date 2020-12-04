@@ -321,18 +321,6 @@ void addSourceItem(RSourceItem::Type type,
                             token.column() + 1));
 }
 
-void addSourceItem(RSourceItem::Type type,
-                   const RToken& token,
-                   const IndexStatus& status,
-                   RSourceIndex* pIndex)
-{
-   addSourceItem(type,
-                 std::vector<RS4MethodParam>(),
-                 token,
-                 status,
-                 pIndex);
-}
-
 typedef boost::function<void(const RTokenCursor&, const IndexStatus&, RSourceIndex*)> Indexer;
 
 void libraryCallIndexer(const RTokenCursor& cursor,
@@ -500,7 +488,7 @@ void variableAssignmentIndexer(const RTokenCursor& cursor,
    
    // determine index type (function or variable?)
    const RToken& nextToken = cursor.nextToken();
-   RSourceItem::Type type = nextToken.contentEquals(L"function")
+   RSourceItem::Type type = token_utils::isFunctionKeyword(nextToken)
          ? RSourceItem::Function
          : RSourceItem::Variable;
    
