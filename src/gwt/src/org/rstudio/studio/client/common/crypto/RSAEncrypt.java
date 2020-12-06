@@ -35,9 +35,9 @@ public class RSAEncrypt
          final String input,
          final ResponseCallback callback)
    {
-      if (Desktop.hasDesktopFrame())
+      if (Desktop.isDesktop())
       {
-         // Don't encrypt for desktop, Windows can't decrypt it.
+         // Don't encrypt for desktop sessions, Windows can't decrypt it.
          callback.onSuccess(input);
          return;
       }
