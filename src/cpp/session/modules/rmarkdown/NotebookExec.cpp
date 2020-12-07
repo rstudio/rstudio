@@ -29,6 +29,7 @@
 #include <core/FileSerializer.hpp>
 
 #include <r/ROptions.hpp>
+#include <r/RUtil.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -293,17 +294,33 @@ bool ChunkExecContext::onCondition(Condition condition,
       return false;
    }
 
+   // condition messages are typically converted to the native
+   // encoding so we'll have to convert back to UTF-8 here.
+   //
+   // note that systemToUtf8() is not appropriate here as
+   // the configured locale + language used for translations
+   // does not necessarily match the active system codepage!
+   std::string utf8Message = message;
+
+#ifdef _WIN32
+   Error error = r::util::nativeToUtf8(message, true, &utf8Message);
+   if (error)
+   {
+      LOG_ERROR(error);
+      utf8Message = message;
+   }
+#endif
+
    // give each capturing module a chance to handle the condition
    for (boost::shared_ptr<NotebookCapture> pCapture : captures_)
    {
-      if (pCapture->onCondition(condition, message))
+      if (pCapture->onCondition(condition, utf8Message))
          return true;
    }
 
-   // none of them did; treat it as ordinary output
-   onConsoleOutput(module_context::ConsoleOutputError, message);
+   onConsoleOutput(module_context::ConsoleOutputError, utf8Message);
    module_context::enqueClientEvent(
-      ClientEvent(client_events::kConsoleWriteError, message));
+      ClientEvent(client_events::kConsoleWriteError, utf8Message));
 
    return true;
 }
@@ -421,8 +438,7 @@ void ChunkExecContext::onConsoleText(int type, const std::string& output,
    }
 
    // determine output filename and ensure it exists
-   FilePath outputCsv = chunkOutputFile(docId_, chunkId_, nbCtxId_, 
-         ChunkOutputText);
+   FilePath outputCsv = chunkOutputFile(docId_, chunkId_, nbCtxId_, ChunkOutputText);
    Error error = outputCsv.ensureFile();
    if (error)
    {
@@ -430,12 +446,15 @@ void ChunkExecContext::onConsoleText(int type, const std::string& output,
       return;
    }
 
+   // write out as csv
    std::vector<std::string> vals;
    vals.push_back(safe_convert::numberToString(type));
    vals.push_back(output);
-   error = core::writeStringToFile(outputCsv, 
-         text::encodeCsvLine(vals) + "\n", 
-         string_utils::LineEndingPassthrough, truncate);
+   error = core::writeStringToFile(
+            outputCsv,
+            text::encodeCsvLine(vals) + "\n",
+            string_utils::LineEndingPassthrough,
+            truncate);
    if (error)
    {
       LOG_ERROR(error);
