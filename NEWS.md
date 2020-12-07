@@ -92,6 +92,8 @@
 * Update the version of Slurm supported by the Slurm Launcher Plugin to 20.02 (Pro #2192) 
 * Project Sharing can now use raw UIDs as security principals, for compatibility with nodes that cannot resolve domains (Pro #2104)
 * **RETIRED:** The option `auth-proxy-require-hmac` is has been retired and it is no longer operational. RStudio will not start if enabled. See the documentation on [Proxy Security Considerations] for alternatives to secure RStudio. (Pro #2029)
+* Fix GetPass not working in remote sessions from Rstudio Desktop Pro (Pro #2218)
+* Fix issue with creating RSA key from remote sessions in RStudio Desktop Pro (Pro #2219)
 
 ### Bugfixes
 
