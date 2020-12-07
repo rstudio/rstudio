@@ -694,7 +694,7 @@ void MainWindow::onLoadFinished(bool ok)
          // a brief wait. note that we'll re-receive the onLoadFinished()
          // signal after the webview has finished reloading
          s_reloadCount += 1;
-         reloadTimer_->start(100);
+         reloadTimer_->start(200);
       }
       else
       {
