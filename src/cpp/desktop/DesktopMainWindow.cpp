@@ -46,7 +46,7 @@ namespace {
 int s_reloadCount = 0;
 
 // the maximum number of times we'll attempt to reload the page
-static const int s_maxReloadTries = 5;
+const int s_maxReloadTries = 5;
 
 #ifdef _WIN32
 
