@@ -27,6 +27,11 @@ namespace rstudio {
 namespace server_core {
 namespace database {
 
+// get the configured driver
+// this method can be called before initialization to peak to see
+// which type of database would be used after initialization
+core::database::Driver getConfiguredDriver(const std::string& databaseConfigFile = std::string());
+
 // initialize server database, optionally performing migration
 // to the latest database schema version
 core::Error initialize(const std::string& databaseConfigFile = std::string(),

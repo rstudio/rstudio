@@ -62,6 +62,19 @@ constexpr const size_t kDefaultConnectionPoolSize = 4;
 
 boost::shared_ptr<ConnectionPool> s_connectionPool;
 
+struct ConfiguredDriverVisitor : boost::static_visitor<Driver>
+{
+   Driver operator()(const SqliteConnectionOptions& options)
+   {
+      return Driver::Sqlite;
+   }
+
+   Driver operator()(const PostgresqlConnectionOptions& options)
+   {
+      return Driver::Postgresql;
+   }
+};
+
 Error readOptions(const std::string& databaseConfigFile,
                   const boost::optional<system::User>& databaseFileUser,
                   ConnectionOptions* pOptions,
@@ -205,6 +218,20 @@ Error migrationsDir(FilePath* pMigrationsDir)
 }
 
 } // anonymous namespace
+
+core::database::Driver getConfiguredDriver(const std::string& databaseConfigFile)
+{
+   ConnectionOptions options;
+   Error error = readOptions(databaseConfigFile, boost::optional<system::User>(), &options);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return core::database::Driver::Unknown;
+   }
+
+   ConfiguredDriverVisitor visitor;
+   return boost::apply_visitor(visitor, options);
+}
 
 Error initialize(const std::string& databaseConfigFile,
                  bool updateSchema,
