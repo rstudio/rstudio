@@ -89,11 +89,11 @@ void onDocPendingRemove(
    if (htmlLocalPath.empty() && path.empty())
       return;
 
-   r::exec::RFunction rFunction(".rs.rpc.clear_profile");
-   rFunction.addParam(path);
-   rFunction.addParam(htmlLocalPath);
+   Error error = r::exec::RFunction(".rs.rpc.clear_profile")
+         .addUtf8Param(path)
+         .addUtf8Param(htmlLocalPath)
+         .call();
 
-   Error error = rFunction.call();
    if (error)
    {
       LOG_ERROR(error);
