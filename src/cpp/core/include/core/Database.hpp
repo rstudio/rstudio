@@ -299,7 +299,8 @@ private:
 
 // validates connection options - used for test purposes only
 Error validateOptions(const ConnectionOptions& options,
-                      std::string* pConnectionStr);
+                      std::string* pConnectionStr,
+                      std::string* pPassword = nullptr);
 
 // connect to the database with the specified connection options
 Error connect(const ConnectionOptions& options,

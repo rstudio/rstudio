@@ -280,6 +280,13 @@
             "type": "string",
             "defaultValue": "",
             "description": "If set, overrides the path to the /etc/rstudio/database.conf configuration file."
+         },
+         {
+            "name": "db-command",
+            "type": "string",
+            "isHidden": true,
+            "memberName": "dbCommand_",
+            "description": "Executes the shell command specified injecting the current database configuration in the command."
          }
       ],
       "auth": [
