@@ -52,7 +52,7 @@
    ))
    
    envir <- as.environment("tools:rstudio")
-   assign(".rs.notebook.handlerStack", handlers, envir = envir)
+   assign(".rs.notebookConditions.handlerStack", handlers, envir = envir)
    
    handlers
 })
@@ -65,7 +65,7 @@
 .rs.addFunction("notebookConditions.disconnectImpl", function()
 {
    envir <- as.environment("tools:rstudio")
-   handlers <- get(".rs.notebook.handlerStack", envir = envir)
-   rm(".rs.notebook.handlerStack", envir = envir)
+   handlers <- get(".rs.notebookConditions.handlerStack", envir = envir)
+   rm(".rs.notebookConditions.handlerStack", envir = envir)
    .Internal(.resetCondHands(handlers))
 })
