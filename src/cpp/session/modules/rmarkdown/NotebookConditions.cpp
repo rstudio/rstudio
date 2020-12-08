@@ -18,9 +18,13 @@
 
 #include <shared_core/SafeConvert.hpp>
 
+#include <core/Exec.hpp>
+
 #include <r/RExec.hpp>
 #include <r/RSexp.hpp>
 #include <r/RRoutines.hpp>
+
+#include <session/SessionModuleContext.hpp>
 
 using namespace rstudio::core;
 
@@ -49,44 +53,24 @@ SEXP rs_signalNotebookCondition(SEXP condition, SEXP message)
 
 void ConditionCapture::connect()
 {
-   // create a parsed expression which will disable messages; this is 
-   // effectively identical to suppressConditions() but we need to evaluate it
-   // at the top level so we can influence the global handler stack.
    r::sexp::Protect protect;
-   SEXP retSEXP = R_NilValue;
-   Error error = r::exec::executeStringUnsafe(
-         ".Internal(.addCondHands(c(\"warning\", \"message\"), "
-         " list(warning = function(m) { "
-         "   .Call(\"rs_signalNotebookCondition\", " +
-                      safe_convert::numberToString(ConditionWarning) + "L, "
-         "          m$message, PACKAGE = '(embedding)'); "
-         "   invokeRestart(\"muffleWarning\") "
-         " }, message = function(m) { "
-         "   .Call(\"rs_signalNotebookCondition\", " +
-                      safe_convert::numberToString(ConditionMessage) + "L, "
-         "          m$message, PACKAGE = '(embedding)'); "
-         "   invokeRestart(\"muffleMessage\") "
-         " } "
-         "), .GlobalEnv, NULL, TRUE))", R_BaseNamespace, &retSEXP, &protect);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return;
-   }
-
-   // we save the old handler stack into the tools environment for easy
-   // restoration later
-   r::exec::RFunction assign("assign");
-   assign.addParam("x", "_rs_handlerStack");
-   assign.addParam("value", retSEXP);
-   assign.addParam("envir", r::sexp::asEnvironment("tools:rstudio"));
-   error = assign.call();
+   
+   SEXP connectCall = R_NilValue;
+   Error error = r::exec::RFunction(".rs.notebookConditions.connectCall").call(&connectCall, &protect);
    if (error)
    {
       LOG_ERROR(error);
       return;
    }
    
+   SEXP resultSEXP;
+   error = r::exec::executeCallUnsafe(connectCall, R_GlobalEnv, &resultSEXP, &protect);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
    NotebookCapture::connect();
 }
 
@@ -94,32 +78,23 @@ void ConditionCapture::disconnect()
 {
    if (connected())
    {
-      // restore the previous handler stack by extracting from the tools
-      // environment
-      r::sexp::Protect protect;
-      SEXP retSEXP = R_NilValue;
-      Error error = r::exec::executeStringUnsafe(
-            ".Internal(.resetCondHands(get(\"_rs_handlerStack\", "
-            "   envir = as.environment(\"tools:rstudio\")))) ",
-            R_BaseNamespace, &retSEXP, &protect);
-      if (error)
-         LOG_ERROR(error);
-
-      // clean up the variable holding the previous handler stack
-      error = r::exec::executeStringUnsafe(
-            "rm(\"_rs_handlerStack\", "
-            "   envir = as.environment(\"tools:rstudio\"))",
-            R_BaseNamespace, &retSEXP, &protect);
+      Error error = r::exec::RFunction(".rs.notebookConditions.disconnect").call();
       if (error)
          LOG_ERROR(error);
    }
+   
    NotebookCapture::disconnect();
 }
 
 core::Error initConditions()
 {
-   RS_REGISTER_CALL_METHOD(rs_signalNotebookCondition, 2);
-   return Success();
+   RS_REGISTER_CALL_METHOD(rs_signalNotebookCondition);  
+   
+   ExecBlock initBlock;
+   initBlock.addFunctions()
+      (boost::bind(module_context::sourceModuleRFile, "NotebookConditions.R"));
+   
+   return initBlock.execute();
 }
 
 } // namespace notebook

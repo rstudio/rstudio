@@ -40,6 +40,9 @@ SourceManager& sourceManager()
    
 Error SourceManager::sourceTools(const core::FilePath& filePath)
 {
+   if (!filePath.exists())
+      return fileNotFoundError(filePath, ERROR_LOCATION);
+   
    Error error = sourceLocal(filePath);
    if (error)
       return error;

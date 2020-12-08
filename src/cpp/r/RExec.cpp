@@ -264,6 +264,18 @@ core::Error executeSafely(boost::function<SEXP()> function, SEXP* pSEXP)
    }
 }
 
+Error executeCallUnsafe(SEXP callSEXP,
+                        SEXP envirSEXP,
+                        SEXP *pResultSEXP,
+                        sexp::Protect *pProtect)
+{
+   return evaluateExpressionsUnsafe(callSEXP,
+                                    envirSEXP,
+                                    pResultSEXP,
+                                    pProtect,
+                                    EvalDirect);
+}
+
 Error executeStringUnsafe(const std::string& str,
                           SEXP envirSEXP,
                           SEXP* pSEXP, 
