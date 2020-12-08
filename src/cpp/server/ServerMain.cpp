@@ -542,7 +542,7 @@ int main(int argc, char * const argv[])
       }
       
       // daemonize if requested
-      if (options.serverDaemonize())
+      if (options.serverDaemonize() && options.dbCommand().empty())
       {
          Error error = core::system::daemonize(options.serverPidFile());
          if (error)
@@ -656,6 +656,16 @@ int main(int argc, char * const argv[])
       error = core::http::secure_cookie::initialize(options.secureCookieKeyFile());
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
+
+      // execute any database commands if passed
+      if (!options.dbCommand().empty())
+      {
+         Error error = server_core::database::execute(options.databaseConfigFile(), serverUser, options.dbCommand());
+         if (error)
+            return core::system::exitFailure(error, ERROR_LOCATION);
+
+         return EXIT_SUCCESS;
+      }
 
       // initialize database connectivity
       error = server_core::database::initialize(options.databaseConfigFile(), true, serverUser);

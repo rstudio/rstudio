@@ -44,8 +44,14 @@ function wrapSentencesTransform(tr: Transform) {
       return;
     }
 
+    // don't break bookdown text references
+    const textContent = paragraph.node.textContent;
+    if (/^\(ref\:[^\s]+\)\s+[^\s]/.test(textContent)) {
+      return;
+    }
+
     // break sentences in text
-    const parts = split(paragraph.node.textContent);
+    const parts = split(textContent);
     parts
       .reverse()
       .filter(part => part.type === 'Sentence')

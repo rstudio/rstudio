@@ -62,9 +62,23 @@ constexpr const size_t kDefaultConnectionPoolSize = 4;
 
 boost::shared_ptr<ConnectionPool> s_connectionPool;
 
+struct ConfiguredDriverVisitor : boost::static_visitor<Driver>
+{
+   Driver operator()(const SqliteConnectionOptions& options)
+   {
+      return Driver::Sqlite;
+   }
+
+   Driver operator()(const PostgresqlConnectionOptions& options)
+   {
+      return Driver::Postgresql;
+   }
+};
+
 Error readOptions(const std::string& databaseConfigFile,
                   const boost::optional<system::User>& databaseFileUser,
-                  ConnectionOptions* pOptions)
+                  ConnectionOptions* pOptions,
+                  const std::string forceDatabaseProvider = "")
 {
    // read the options from the specified configuration file
    // if not specified, fall back to system configuration
@@ -78,6 +92,9 @@ Error readOptions(const std::string& databaseConfigFile,
       return error;
 
    std::string databaseProvider = settings.get(kDatabaseProvider, kDatabaseProviderSqlite);
+   if (!forceDatabaseProvider.empty())
+      databaseProvider = forceDatabaseProvider;
+
    bool checkConfFilePermissions = false;
 
    if (boost::iequals(databaseProvider, kDatabaseProviderSqlite))
@@ -202,6 +219,20 @@ Error migrationsDir(FilePath* pMigrationsDir)
 
 } // anonymous namespace
 
+core::database::Driver getConfiguredDriver(const std::string& databaseConfigFile)
+{
+   ConnectionOptions options;
+   Error error = readOptions(databaseConfigFile, boost::optional<system::User>(), &options);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return core::database::Driver::Unknown;
+   }
+
+   ConfiguredDriverVisitor visitor;
+   return boost::apply_visitor(visitor, options);
+}
+
 Error initialize(const std::string& databaseConfigFile,
                  bool updateSchema,
                  const boost::optional<system::User>& databaseFileUser)
@@ -240,6 +271,13 @@ Error initialize(const std::string& databaseConfigFile,
       }
    }
 
+   return Success();
+}
+
+Error execute(const std::string& databaseConfigFile,
+              const boost::optional<system::User>& databaseFileUser,
+              std::string command)
+{
    return Success();
 }
 

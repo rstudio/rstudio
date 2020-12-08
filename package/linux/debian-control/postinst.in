@@ -7,7 +7,8 @@ set +e
 useradd -r -U rstudio-server
 
 # create softlink to admin script in /usr/sbin
-ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/rstudio-server /usr/sbin/rstudio-server
+RSERVER_ADMIN_SCRIPT=/usr/sbin/rstudio-server
+ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/rstudio-server $RSERVER_ADMIN_SCRIPT
 
 # create config directory and default config files
 mkdir -p /etc/rstudio
@@ -101,7 +102,8 @@ then
   
    systemctl daemon-reload
    systemctl enable rstudio-server.service
-   systemctl start rstudio-server.service
+   $RSERVER_ADMIN_SCRIPT start
+
    sleep 1
    systemctl --no-pager status rstudio-server.service
 elif test $LSB_RELEASE = "Ubuntu" && test "$INIT_SYSTEM" = "upstart"
@@ -109,13 +111,13 @@ then
    cp ${CMAKE_INSTALL_PREFIX}/extras/upstart/rstudio-server.conf /etc/init/
    initctl reload-configuration
    initctl stop rstudio-server 2>/dev/null
-   initctl start rstudio-server
+   $RSERVER_ADMIN_SCRIPT start
 else
    cp ${CMAKE_INSTALL_PREFIX}/extras/init.d/debian/rstudio-server /etc/init.d/
    chmod +x /etc/init.d/rstudio-server
    update-rc.d rstudio-server defaults
-   /etc/init.d/rstudio-server stop  2>/dev/null
-   /etc/init.d/rstudio-server start
+   /etc/init.d/rstudio-server stop 2>/dev/null
+   $RSERVER_ADMIN_SCRIPT start
 fi
 
 # clear error termination state
