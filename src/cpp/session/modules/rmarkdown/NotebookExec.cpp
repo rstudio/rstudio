@@ -294,33 +294,16 @@ bool ChunkExecContext::onCondition(Condition condition,
       return false;
    }
 
-   // condition messages are typically converted to the native
-   // encoding so we'll have to convert back to UTF-8 here.
-   //
-   // note that systemToUtf8() is not appropriate here as
-   // the configured locale + language used for translations
-   // does not necessarily match the active system codepage!
-   std::string utf8Message = message;
-
-#ifdef _WIN32
-   Error error = r::util::nativeToUtf8(message, true, &utf8Message);
-   if (error)
-   {
-      LOG_ERROR(error);
-      utf8Message = message;
-   }
-#endif
-
    // give each capturing module a chance to handle the condition
    for (boost::shared_ptr<NotebookCapture> pCapture : captures_)
    {
-      if (pCapture->onCondition(condition, utf8Message))
+      if (pCapture->onCondition(condition, message))
          return true;
    }
 
-   onConsoleOutput(module_context::ConsoleOutputError, utf8Message);
+   onConsoleOutput(module_context::ConsoleOutputError, message);
    module_context::enqueClientEvent(
-      ClientEvent(client_events::kConsoleWriteError, utf8Message));
+      ClientEvent(client_events::kConsoleWriteError, message));
 
    return true;
 }

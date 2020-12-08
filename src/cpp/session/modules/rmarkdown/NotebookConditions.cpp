@@ -34,7 +34,7 @@ namespace {
 SEXP rs_signalNotebookCondition(SEXP condition, SEXP message)
 {
    // extract message (make sure we got one)
-   std::string msg = r::sexp::safeAsString(message, "");
+   std::string msg = r::sexp::asUtf8String(message);
    if (msg.empty())
       return R_NilValue;
 
@@ -51,18 +51,18 @@ void ConditionCapture::connect()
 {
    // create a parsed expression which will disable messages; this is 
    // effectively identical to suppressConditions() but we need to evaluate it
-   // at the top level so we can influence the global handler stack.   
+   // at the top level so we can influence the global handler stack.
    r::sexp::Protect protect;
    SEXP retSEXP = R_NilValue;
    Error error = r::exec::executeStringUnsafe(
          ".Internal(.addCondHands(c(\"warning\", \"message\"), "
          " list(warning = function(m) { "
-         "   .Call(\"rs_signalNotebookCondition\", " + 
+         "   .Call(\"rs_signalNotebookCondition\", " +
                       safe_convert::numberToString(ConditionWarning) + "L, "
          "          m$message, PACKAGE = '(embedding)'); "
          "   invokeRestart(\"muffleWarning\") "
          " }, message = function(m) { "
-         "   .Call(\"rs_signalNotebookCondition\", " + 
+         "   .Call(\"rs_signalNotebookCondition\", " +
                       safe_convert::numberToString(ConditionMessage) + "L, "
          "          m$message, PACKAGE = '(embedding)'); "
          "   invokeRestart(\"muffleMessage\") "
