@@ -63,7 +63,7 @@ void ConditionCapture::connect()
       return;
    }
    
-   SEXP resultSEXP;
+   SEXP resultSEXP = R_NilValue;
    error = r::exec::executeCallUnsafe(connectCall, R_GlobalEnv, &resultSEXP, &protect);
    if (error)
    {
@@ -78,7 +78,15 @@ void ConditionCapture::disconnect()
 {
    if (connected())
    {
-      Error error = r::exec::RFunction(".rs.notebookConditions.disconnect").call();
+      r::sexp::Protect protect;
+      
+      SEXP disconnectCall = R_NilValue;
+      Error error = r::exec::RFunction(".rs.notebookConditions.disconnectCall").call(&disconnectCall, &protect);
+      if (error)
+         LOG_ERROR(error);
+      
+      SEXP resultSEXP = R_NilValue;
+      error = r::exec::executeCallUnsafe(disconnectCall, R_GlobalEnv, &resultSEXP, &protect);
       if (error)
          LOG_ERROR(error);
    }
