@@ -140,25 +140,14 @@ std::string rconsole2utf8(const std::string& encoded)
 #endif
 }
 
-core::Error iconvstr(const std::string& value,
-                     const std::string& from,
-                     const std::string& to,
-                     bool allowSubstitution,
-                     std::string* pResult)
+namespace {
+
+core::Error iconvstrImpl(const std::string& value,
+                         const std::string& from,
+                         const std::string& to,
+                         bool allowSubstitution,
+                         std::string* pResult)
 {
-   std::string effectiveFrom = from;
-   if (effectiveFrom.empty())
-      effectiveFrom = "UTF-8";
-   std::string effectiveTo = to;
-   if (effectiveTo.empty())
-      effectiveTo = "UTF-8";
-
-   if (effectiveFrom == effectiveTo)
-   {
-      *pResult = value;
-      return Success();
-   }
-
    std::vector<char> output;
    output.reserve(value.length());
 
@@ -209,6 +198,46 @@ core::Error iconvstr(const std::string& value,
    *pResult = std::string(output.begin(), output.end());
    return Success();
 }
+
+} // end anonymous namespace
+
+core::Error nativeToUtf8(const std::string& value,
+                         bool allowSubstitution,
+                         std::string *pResult)
+{
+   return iconvstrImpl(value, "", "UTF-8", allowSubstitution, pResult);
+}
+
+core::Error utf8ToNative(const std::string& value,
+                         bool allowSubstitution,
+                         std::string* pResult)
+{
+   return iconvstrImpl(value, "UTF-8", "", allowSubstitution, pResult);
+}
+
+core::Error iconvstr(const std::string& value,
+                     const std::string& from,
+                     const std::string& to,
+                     bool allowSubstitution,
+                     std::string* pResult)
+{
+   std::string effectiveFrom = from;
+   if (effectiveFrom.empty())
+      effectiveFrom = "UTF-8";
+
+   std::string effectiveTo = to;
+   if (effectiveTo.empty())
+      effectiveTo = "UTF-8";
+
+   if (effectiveFrom == effectiveTo)
+   {
+      *pResult = value;
+      return Success();
+   }
+
+   return iconvstrImpl(value, from, to, allowSubstitution, pResult);
+}
+
 
 std::set<std::string> makeRKeywords()
 {

@@ -29,6 +29,7 @@
 #include <core/FileSerializer.hpp>
 
 #include <r/ROptions.hpp>
+#include <r/RUtil.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -300,7 +301,6 @@ bool ChunkExecContext::onCondition(Condition condition,
          return true;
    }
 
-   // none of them did; treat it as ordinary output
    onConsoleOutput(module_context::ConsoleOutputError, message);
    module_context::enqueClientEvent(
       ClientEvent(client_events::kConsoleWriteError, message));
@@ -421,8 +421,7 @@ void ChunkExecContext::onConsoleText(int type, const std::string& output,
    }
 
    // determine output filename and ensure it exists
-   FilePath outputCsv = chunkOutputFile(docId_, chunkId_, nbCtxId_, 
-         ChunkOutputText);
+   FilePath outputCsv = chunkOutputFile(docId_, chunkId_, nbCtxId_, ChunkOutputText);
    Error error = outputCsv.ensureFile();
    if (error)
    {
@@ -430,12 +429,15 @@ void ChunkExecContext::onConsoleText(int type, const std::string& output,
       return;
    }
 
+   // write out as csv
    std::vector<std::string> vals;
    vals.push_back(safe_convert::numberToString(type));
    vals.push_back(output);
-   error = core::writeStringToFile(outputCsv, 
-         text::encodeCsvLine(vals) + "\n", 
-         string_utils::LineEndingPassthrough, truncate);
+   error = core::writeStringToFile(
+            outputCsv,
+            text::encodeCsvLine(vals) + "\n",
+            string_utils::LineEndingPassthrough,
+            truncate);
    if (error)
    {
       LOG_ERROR(error);

@@ -25,6 +25,7 @@
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
 #include <r/RSexp.hpp>
+#include <r/RUtil.hpp>
 
 #include <session/SessionAsyncRProcess.hpp>
 #include <session/SessionModuleContext.hpp>
