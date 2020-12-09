@@ -24,5 +24,6 @@
 * Fixed issue where forked R sessions could hang after a package was loaded or unloaded (#8361)
 * Fixed issue where attempting to profile lines ending in comment would fail (#8407)
 * Fixed issue where warnings + messages were mis-encoded in chunk outputs on Windows (#8565)
+* Fixed issue where C++ compilation database was not invalidated when compiler was updated (#8588)
 * Improved checks for non-writable R library paths on startup (Pro #2184)
 
