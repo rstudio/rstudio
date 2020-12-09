@@ -31,8 +31,10 @@
 
 # NOTE: we need to add condition handlers to the top level, but cannot
 # actually do so if there is an R function context on the stack.
-# To circumvent this, we use R funcitons to just provide the call object
-# that needs to be executed, and then execute that call at the top level.
+#
+# To circumvent this, we define R functions with the code we need to run,
+# but explicitly extract the body of that function, and then execute that
+# at the top level.
 .rs.addFunction("notebookConditions.connectCall", function()
 {
    body(.rs.notebookConditions.connectImpl)
