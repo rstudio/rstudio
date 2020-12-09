@@ -9,6 +9,7 @@
 * The mouse back / forward buttons can now be used to navigate within the Help pane (#8338)
 * Right-click on document tab provides menu with close, close all, close others (#1664)
 * Rename File added to document tab context menu (#8374)
+* Compilation of Sweave documents now uses tinytex when requested (#2788)
 * Preliminary compatibility with UCRT builds of R-devel (#8461)
 
 ### RStudio Server
