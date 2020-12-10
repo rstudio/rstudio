@@ -27,4 +27,6 @@
 * Fixed issue where warnings + messages were mis-encoded in chunk outputs on Windows (#8565)
 * Fixed issue where C++ compilation database was not invalidated when compiler was updated (#8588)
 * Improved checks for non-writable R library paths on startup (Pro #2184)
+* Code chunks in the visual editor now respect the "Tab Key Always Moves Focus" accessibility setting (#8584)
+
 
