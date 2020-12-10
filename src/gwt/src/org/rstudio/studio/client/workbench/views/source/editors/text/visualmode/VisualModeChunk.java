@@ -19,9 +19,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.studio.client.RStudio;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
@@ -126,17 +128,27 @@ public class VisualModeChunk
       editor_.setUseWrapMode(true);
       
       // Track activation state and notify visual mode
-      editor_.addFocusHandler((evt) -> 
+      releaseOnDismiss_.add(editor_.addFocusHandler((evt) ->
       { 
          active_ = true; 
          target_.getVisualMode().setActiveEditor(editor_);
-      });
-      editor_.addBlurHandler((evt) ->
+      }));
+      releaseOnDismiss_.add(editor_.addBlurHandler((evt) ->
       {
          active_ = false;
          target_.getVisualMode().setActiveEditor(null);
-      });
-       
+      }));
+
+      // Track UI pref for tab behavior. Note that this can't be a lambda because Ace has trouble with lambda bindings.
+      releaseOnDismiss_.add(RStudioGinjector.INSTANCE.getUserPrefs().tabKeyMoveFocus().bind(
+         new CommandWithArg<Boolean>()
+         {
+            @Override
+            public void execute(Boolean movesFocus)
+            {
+               chunkEditor.setTabMovesFocus(movesFocus);
+            }
+         }));
 
       // Provide the editor's container element
       host_ = Document.get().createDivElement();
