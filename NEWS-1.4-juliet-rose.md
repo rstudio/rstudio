@@ -11,6 +11,7 @@
 * Rename File added to document tab context menu (#8374)
 * Compilation of Sweave documents now uses tinytex when requested (#2788)
 * Preliminary compatibility with UCRT builds of R-devel (#8461)
+* Update Windows Desktop to openSSL 1.1.1i (#8574)
 
 ### RStudio Server
 
