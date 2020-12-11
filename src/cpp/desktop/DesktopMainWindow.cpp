@@ -42,12 +42,6 @@ namespace desktop {
 
 namespace {
 
-// the number of times we've attempted to reload the main window
-int s_reloadCount = 0;
-
-// the maximum number of times we'll attempt to reload the page
-const int s_maxReloadTries = 5;
-
 #ifdef _WIN32
 
 void CALLBACK onDialogStart(HWINEVENTHOOK hook, DWORD event, HWND hwnd,
@@ -71,7 +65,7 @@ MainWindow::MainWindow(QUrl url,
       pRemoteSessionLauncher_(nullptr),
       pLauncher_(new JobLauncher(this)),
       pCurrentSessionProcess_(nullptr),
-      reloadTimer_(new QTimer(this)),
+      loadTimer_(new QTimer(this)),
       isErrorDisplayed_(false)
 {
    RCommandEvaluator::setMainWindow(this);
@@ -118,8 +112,8 @@ MainWindow::MainWindow(QUrl url,
    setMenuBar(pMainMenuStub);
 #endif
    
-   connect(reloadTimer_, &QTimer::timeout,
-           this, &MainWindow::onReloadPage);
+   connect(loadTimer_, &QTimer::timeout,
+           this, &MainWindow::onLoadFinishedImpl);
    
    connect(&menuCallback_, SIGNAL(menuBarCompleted(QMenuBar*)),
            this, SLOT(setMenuBar(QMenuBar*)));
@@ -474,11 +468,6 @@ void MainWindow::onSessionQuit()
    }
 }
 
-void MainWindow::onReloadPage()
-{
-   webView()->reload();
-}
-
 void MainWindow::closeEvent(QCloseEvent* pEvent)
 {
 #ifdef _WIN32
@@ -682,35 +671,36 @@ void MainWindow::onLoadFinished(bool ok)
    {
       if (ok)
       {
-         // we've loaded successfully; reset the reload count
-         // and stop the reload timer if it happens to be running
-         reloadTimer_->stop();
-         s_reloadCount = 0;
+         // if this was a successful load, we're done
+         loadTimer_->stop();
+         loadedSuccessfully_ = true;
       }
-      else if (s_reloadCount < s_maxReloadTries)
+      else if (loadedSuccessfully_)
       {
-         // we failed to load; however, this load failure might be
-         // an intermittent failure. try again a couple times after
-         // a brief wait. note that we'll re-receive the onLoadFinished()
-         // signal after the webview has finished reloading
-         s_reloadCount += 1;
-         reloadTimer_->start(200);
+         // if the load was purportedly not successful, even
+         // though a prior load was successful, then ignore
+         // that (assume that this was a spurious / incorrect
+         // signal from Qt)
+         LOG_DEBUG_MESSAGE(
+                  "Discarding onLoadFinished(false) signal as we have "
+                  "already received onLoadFinished(true)");
       }
       else
       {
-         // we've failed too many times; give up and show an error page
-         reloadTimer_->stop();
-         onLoadFailed();
+         // schedule our load timer and allow a small buffer for
+         // incoming loadFinished() events which might report
+         // that the load was actually successful
+         loadTimer_->start(5000);
       }
    }
    END_LOCK_MUTEX
 }
 
-void MainWindow::onLoadFailed()
+void MainWindow::onLoadFinishedImpl()
 {
    LOCK_MUTEX(mutex_)
    {
-      if (pRemoteSessionLauncher_ || isErrorDisplayed_)
+      if (loadedSuccessfully_ || pRemoteSessionLauncher_ || isErrorDisplayed_)
          return;
 
       RS_CALL_ONCE();
@@ -718,7 +708,7 @@ void MainWindow::onLoadFailed()
       std::map<std::string, std::string> vars = {
          { "url",  webView()->url().url().toStdString() }
       };
-
+      
       std::ostringstream oss;
       Error error = text::renderTemplate(
                options().resourcesPath().completePath("html/connect.html"),
@@ -730,7 +720,7 @@ void MainWindow::onLoadFailed()
          LOG_ERROR(error);
          return;
       }
-
+      
       loadHtml(QString::fromStdString(oss.str()));
    }
    END_LOCK_MUTEX
