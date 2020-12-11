@@ -5001,11 +5001,33 @@ public class TextEditingTarget implements
    
    /**
     * Performs a command after synchronizing the document and selection state
-    * from visual mode (useful for executing code)
+    * from visual mode (useful for executing code). The command is not executed
+    * there is no active code editor in visual mode (e.g., the cursor is outside
+    * a code chunk)
     * 
     * @param command The command to perform
     */
-   void withVisualModeSelection(Command command)
+   private void withVisualModeSelection(Command command)
+   {
+      if (isVisualEditorActive())
+      {
+         visualMode_.performWithSelection((pos) -> command.execute());
+      }
+      else
+      {
+         command.execute();
+      }
+   }
+
+   /**
+    * Performs a command after synchronizing the document and selection state
+    * from visual mode. The command will be passed the current position of the
+    * cursor after synchronizing, or null if the cursor in visual mode has no
+    * corresponding location in source mode.
+    *
+    * @param command The command to perform.
+    */
+   private void withVisualModeSelection(CommandWithArg<Position> command)
    {
       if (isVisualEditorActive())
       {
@@ -5013,7 +5035,7 @@ public class TextEditingTarget implements
       }
       else
       {
-         command.execute();
+         command.execute(docDisplay_.getCursorPosition());
       }
    }
 
@@ -5623,14 +5645,25 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteNextChunk()
    {
-      withVisualModeSelection(() ->
+      withVisualModeSelection((pos) ->
       {
-         // HACK: This is just to force the entire function tree to be built.
-         // It's the easiest way to make sure getCurrentScope() returns
-         // a Scope with an end.
-         docDisplay_.getScopeTree();
+         Scope nextChunk = null;
+         if (pos == null)
+         {
+            // We are outside a chunk in visual mode, so
+            nextChunk = visualMode_.getNearestChunkScope(TextEditingTargetScopeHelper.FOLLOWING_CHUNKS);
+            if (nextChunk == null)
+            {
+               // No next chunk to execute
+               return;
+            }
+         }
+         else
+         {
+            docDisplay_.getScopeTree();
+            nextChunk = scopeHelper_.getNextSweaveChunk();
+         }
 
-         Scope nextChunk = scopeHelper_.getNextSweaveChunk();
          executeSweaveChunk(nextChunk, NotebookQueueUnit.EXEC_MODE_SINGLE,
                true);
          docDisplay_.setCursorPosition(nextChunk.getBodyStart());
@@ -5641,18 +5674,37 @@ public class TextEditingTarget implements
    @Handler
    void onExecutePreviousChunks()
    {
-      withVisualModeSelection(() ->
-      {
-         executeChunks(null, TextEditingTargetScopeHelper.PREVIOUS_CHUNKS);
-      });
+      executeScopedChunks(TextEditingTargetScopeHelper.PREVIOUS_CHUNKS);
    }
 
    @Handler
    void onExecuteSubsequentChunks()
    {
-      withVisualModeSelection(() ->
+      executeScopedChunks(TextEditingTargetScopeHelper.FOLLOWING_CHUNKS);
+   }
+
+   /**
+    * Executes all chunks in the given direction (previous or following)
+    *
+    * @param dir The direction in which to execute
+    */
+   private void executeScopedChunks(int dir)
+   {
+      withVisualModeSelection((pos) ->
       {
-         executeChunks(null, TextEditingTargetScopeHelper.FOLLOWING_CHUNKS);
+         if (pos == null)
+         {
+            // No active chunk position; look for the nearest chunk in the given direction
+            Scope scope = visualMode_.getNearestChunkScope(dir);
+            if (scope == null)
+            {
+               // No suitable chunks found; do nothing (expected if there just aren't
+               // any previous/next chunks to run)
+               return;
+            }
+            pos = scope.getBodyStart();
+         }
+         executeChunks(pos, dir);
       });
    }
 

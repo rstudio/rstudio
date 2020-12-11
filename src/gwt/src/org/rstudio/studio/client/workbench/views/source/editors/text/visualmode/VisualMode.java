@@ -72,6 +72,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeList;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditorContainer;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
@@ -708,12 +709,13 @@ public class VisualMode implements VisualModeEditorSync,
 
    /**
     * Perform a command after synchronizing the selection state of the visual
-    * editor. Note that the command will not be performed unless focus is in a
-    * code editor (as otherwise we can't map selection 1-1).
-    * 
-    * @param command
+    * editor. Note that the command will be passed a null position if focus is
+    * not in a code editor (outside a code editor we can't map selection 1-1).
+    *
+    * @param command The command to perform; will be passed the exact cursor
+    *    position if available.
     */
-   public void performWithSelection(Command command)
+   public void performWithSelection(CommandWithArg<Position> command)
    {
       // Drive focus to the editing surface. This is necessary so we correctly
       // identify the active (focused) editor on which to perform the command.
@@ -967,6 +969,25 @@ public class VisualMode implements VisualModeEditorSync,
       if (chunk == null)
          return null;
       return chunk.getDefinition();
+   }
+
+
+   /**
+    * Gets the Scope of the nearest visual mode chunk.
+    *
+    * @param dir The direction in which to look
+    *
+    * @return The scope of the nearest chunk, or null if no chunk was found.
+    */
+   public Scope getNearestChunkScope(int dir)
+   {
+      int pos = panmirror_.getEditingLocation().pos;
+      VisualModeChunk chunk = visualModeChunks_.getNearestChunk(pos, dir);
+      if (chunk == null)
+      {
+         return null;
+      }
+      return chunk.getScope();
    }
    
    /**

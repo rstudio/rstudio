@@ -23,7 +23,6 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Pattern;
-import org.rstudio.studio.client.RStudio;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
@@ -562,7 +561,7 @@ public class VisualModeChunk
     */
    public void executeSelection()
    {
-      performWithSelection(() ->
+      performWithSelection((pos) ->
       {
          codeExecution_.executeSelection(false);
       });
@@ -572,9 +571,10 @@ public class VisualModeChunk
     * Performs an arbitrary command after synchronizing the selection state of
     * the child editor to the parent.
     * 
-    * @param command The command to perform.
+    * @param command The command to perform. The new position of the cursor in
+    *    source mode is passed as an argument.
     */
-   public void performWithSelection(Command command)
+   public void performWithSelection(CommandWithArg<Position> command)
    {
       sync_.syncToEditor(SyncType.SyncTypeExecution, () ->
       {
@@ -582,7 +582,7 @@ public class VisualModeChunk
       });
    }
    
-   private void performWithSyncedSelection(Command command)
+   private void performWithSyncedSelection(CommandWithArg<Position> command)
    {
       // Ensure we have a scope. This should always exist since we sync the
       // scope outline prior to executing code.
@@ -611,7 +611,7 @@ public class VisualModeChunk
       // Execute selection in the parent
       parent_.setSelectionRange(selectionRange);
 
-      command.execute();
+      command.execute(selectionRange.getStart());
       
       // After the event loop, forward the parent selection back to the child if
       // it's changed (this allows us to advance the cursor after running a line)
