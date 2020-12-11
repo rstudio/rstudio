@@ -3051,6 +3051,18 @@ public class UserPrefsAccessor extends Prefs
          15);
    }
 
+   /**
+    * Whether the Insert Pipe Operator command should insert the native R pipe operator, |>
+    */
+   public PrefValue<Boolean> insertNativePipeOperator()
+   {
+      return bool(
+         "insert_native_pipe_operator",
+         "Use R's native pipe operator, |>", 
+         "Whether the Insert Pipe Operator command should insert the native R pipe operator, |>", 
+         false);
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -3481,6 +3493,8 @@ public class UserPrefsAccessor extends Prefs
          pythonPath().setValue(layer, source.getString("python_path"));
       if (source.hasKey("save_retry_timeout"))
          saveRetryTimeout().setValue(layer, source.getInteger("save_retry_timeout"));
+      if (source.hasKey("insert_native_pipe_operator"))
+         insertNativePipeOperator().setValue(layer, source.getBool("insert_native_pipe_operator"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -3699,6 +3713,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(pythonVersion());
       prefs.add(pythonPath());
       prefs.add(saveRetryTimeout());
+      prefs.add(insertNativePipeOperator());
       return prefs;
    }
    

@@ -659,11 +659,14 @@ public class AceEditor implements DocDisplay,
       boolean hasWhitespaceBefore =
             Character.isSpace(getCharacterBeforeCursor()) ||
             (!hasSelection() && getCursorPosition().getColumn() == 0);
-      
+
+      // Use magrittr style pipes unless user has opted into new native pipe syntax in R 4.1+
+      String pipe = userPrefs_.insertNativePipeOperator().getValue() ? "|>" : "%>%";
+
       if (hasWhitespaceBefore)
-         insertCode("%>% ", false);
+         insertCode(pipe + " ", false);
       else
-         insertCode(" %>% ", false);
+         insertCode(" " + pipe + " ", false);
    }
    
    private boolean shouldIndentOnPaste()
