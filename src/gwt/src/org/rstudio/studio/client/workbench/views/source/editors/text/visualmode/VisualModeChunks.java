@@ -165,7 +165,8 @@ public class VisualModeChunks implements ChunkDefinition.Provider
     * Performs an arbitrary command after synchronizing the selection state of
     * the child editor to the parent.
     * 
-    * @param command The command to perform.
+    * @param command The command to perform. The new position of the cursor in
+    *    source mode is passed as an argument.
     */
    public void performWithSelection(CommandWithArg<Position> command)
    {

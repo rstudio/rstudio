@@ -5001,7 +5001,7 @@ public class TextEditingTarget implements
    
    /**
     * Performs a command after synchronizing the document and selection state
-    * from visual mode (useful for executing code). The command is not executed
+    * from visual mode (useful for executing code). The command is not executed if
     * there is no active code editor in visual mode (e.g., the cursor is outside
     * a code chunk)
     * 
@@ -5011,7 +5011,14 @@ public class TextEditingTarget implements
    {
       if (isVisualEditorActive())
       {
-         visualMode_.performWithSelection((pos) -> command.execute());
+         visualMode_.performWithSelection((pos) ->
+         {
+            // A null position indicates that the cursor is outside a code chunk.
+            if (pos != null)
+            {
+               command.execute();
+            }
+         });
       }
       else
       {
@@ -5650,7 +5657,7 @@ public class TextEditingTarget implements
          Scope nextChunk = null;
          if (pos == null)
          {
-            // We are outside a chunk in visual mode, so
+            // We are outside a chunk in visual mode, so get the nearest chunk below
             nextChunk = visualMode_.getNearestChunkScope(TextEditingTargetScopeHelper.FOLLOWING_CHUNKS);
             if (nextChunk == null)
             {
@@ -5660,6 +5667,7 @@ public class TextEditingTarget implements
          }
          else
          {
+            // Force scope tree rebuild and get chunk from source mode
             docDisplay_.getScopeTree();
             nextChunk = scopeHelper_.getNextSweaveChunk();
          }
