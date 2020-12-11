@@ -53,6 +53,7 @@ import org.rstudio.studio.client.panmirror.events.PanmirrorFocusEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorNavigationEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorStateChangeEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorUpdatedEvent;
+import org.rstudio.studio.client.panmirror.location.PanmirrorEditingLocation;
 import org.rstudio.studio.client.panmirror.location.PanmirrorEditingOutlineLocation;
 import org.rstudio.studio.client.panmirror.location.PanmirrorEditingOutlineLocationItem;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineItem;
@@ -981,10 +982,16 @@ public class VisualMode implements VisualModeEditorSync,
     */
    public Scope getNearestChunkScope(int dir)
    {
-      int pos = panmirror_.getEditingLocation().pos;
-      VisualModeChunk chunk = visualModeChunks_.getNearestChunk(pos, dir);
+      PanmirrorEditingLocation loc = panmirror_.getEditingLocation();
+      if (loc == null)
+      {
+         // No current location, so can't find nearest chunk
+         return null;
+      }
+      VisualModeChunk chunk = visualModeChunks_.getNearestChunk(loc.pos, dir);
       if (chunk == null)
       {
+         // No nearest chunk
          return null;
       }
       return chunk.getScope();

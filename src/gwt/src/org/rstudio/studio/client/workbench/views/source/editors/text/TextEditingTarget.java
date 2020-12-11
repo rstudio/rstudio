@@ -5710,7 +5710,23 @@ public class TextEditingTarget implements
                // any previous/next chunks to run)
                return;
             }
-            pos = scope.getBodyStart();
+            if (dir == TextEditingTargetScopeHelper.FOLLOWING_CHUNKS)
+            {
+               // Going down: start at beginning of next chunk
+               pos = scope.getBodyStart();
+            }
+            else
+            {
+               // Going up: start *just beneath* chunk if we can (so chunk itself is included)
+
+               // Clone position so we can update it without affecting the chunk scope
+               pos = Position.create(scope.getEnd().getRow(), scope.getEnd().getColumn());
+               if (pos.getRow() < docDisplay_.getRowCount())
+               {
+                  pos.setRow(pos.getRow() + 1);
+                  pos.setColumn(1);
+               }
+            }
          }
          executeChunks(pos, dir);
       });
