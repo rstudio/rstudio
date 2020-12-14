@@ -17,6 +17,7 @@
 
 #include <QToolBar>
 #include <QWebChannel>
+#include <QWebEngineSettings>
 
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
@@ -53,6 +54,15 @@ void CALLBACK onDialogStart(HWINEVENTHOOK hook, DWORD event, HWND hwnd,
 
 #endif
 
+// number of times we've tried to reload in startup
+int s_reloadCount = 0;
+
+// maximum number of times to try reloading
+const int s_maxReloadCount = 10;
+
+// amount of time to wait before each reload, in milliseconds
+const int s_reloadWaitDuration = 200;
+
 } // end anonymous namespace
 
 MainWindow::MainWindow(QUrl url,
@@ -65,7 +75,6 @@ MainWindow::MainWindow(QUrl url,
       pRemoteSessionLauncher_(nullptr),
       pLauncher_(new JobLauncher(this)),
       pCurrentSessionProcess_(nullptr),
-      loadTimer_(new QTimer(this)),
       isErrorDisplayed_(false)
 {
    RCommandEvaluator::setMainWindow(this);
@@ -92,6 +101,10 @@ MainWindow::MainWindow(QUrl url,
       channel->registerObject(QStringLiteral("remoteDesktop"), &gwtCallback_);
    }
    channel->registerObject(QStringLiteral("desktopMenuCallback"), &menuCallback_);
+   
+   // disable error page on main window -- we don't want to show the default 404 page
+   // on failure as we show our own error / loading page instead
+   webPage()->settings()->setAttribute(QWebEngineSettings::ErrorPageEnabled, false);
 
    // Dummy menu bar to deal with the fact that
    // the real menu bar isn't ready until well
@@ -111,9 +124,6 @@ MainWindow::MainWindow(QUrl url,
    pMainMenuStub->addMenu(QString::fromUtf8("Help"));
    setMenuBar(pMainMenuStub);
 #endif
-   
-   connect(loadTimer_, &QTimer::timeout,
-           this, &MainWindow::onLoadFinishedImpl);
    
    connect(&menuCallback_, SIGNAL(menuBarCompleted(QMenuBar*)),
            this, SLOT(setMenuBar(QMenuBar*)));
@@ -136,7 +146,7 @@ MainWindow::MainWindow(QUrl url,
 
    connect(webView(), &WebView::urlChanged,
            this, &MainWindow::onUrlChanged);
-
+   
    connect(webView(), &WebView::loadFinished,
            this, &MainWindow::onLoadFinished);
 
@@ -665,65 +675,81 @@ void MainWindow::onUrlChanged(QUrl url)
    urlChanged(url);
 }
 
+void MainWindow::reload()
+{
+   s_reloadCount++;
+   loadUrl(webView()->baseUrl());
+}
+
 void MainWindow::onLoadFinished(bool ok)
 {
    LOCK_MUTEX(mutex_)
    {
       if (ok)
       {
-         // if this was a successful load, we're done
-         loadTimer_->stop();
-         loadedSuccessfully_ = true;
+         // we've successfully loaded!
       }
-      else if (loadedSuccessfully_)
+      else if (isErrorDisplayed_)
       {
-         // if the load was purportedly not successful, even
-         // though a prior load was successful, then ignore
-         // that (assume that this was a spurious / incorrect
-         // signal from Qt)
-         LOG_DEBUG_MESSAGE(
-                  "Discarding onLoadFinished(false) signal as we have "
-                  "already received onLoadFinished(true)");
+         // the session failed to launch and we're already showing
+         // an error page to the user; nothing else to do here.
       }
       else
       {
-         // schedule our load timer and allow a small buffer for
-         // incoming loadFinished() events which might report
-         // that the load was actually successful
-         loadTimer_->start(5000);
+         if (s_reloadCount < s_maxReloadCount)
+         {
+            // the load failed, but we haven't yet received word that the
+            // session has failed to load. let the user know that the R
+            // session is still initializing, and then reload the page.
+            std::map<std::string, std::string> vars = {};
+
+            std::ostringstream oss;
+            Error error = text::renderTemplate(
+                     options().resourcesPath().completePath("html/loading.html"),
+                     vars,
+                     oss);
+
+            if (error)
+               LOG_ERROR(error);
+
+            loadHtml(QString::fromStdString(oss.str()));
+
+            QTimer::singleShot(
+                     s_reloadWaitDuration * s_reloadCount,
+                     [&]() { reload(); });
+         }
+         else
+         {
+            s_reloadCount = 0;
+            onLoadFailed();
+         }
       }
    }
    END_LOCK_MUTEX
 }
 
-void MainWindow::onLoadFinishedImpl()
+void MainWindow::onLoadFailed()
 {
-   LOCK_MUTEX(mutex_)
+   if (pRemoteSessionLauncher_ || isErrorDisplayed_)
+      return;
+
+   std::map<std::string, std::string> vars = {
+      { "url",  webView()->baseUrl().toString().toStdString() }
+   };
+
+   std::ostringstream oss;
+   Error error = text::renderTemplate(
+            options().resourcesPath().completePath("html/connect.html"),
+            vars,
+            oss);
+
+   if (error)
    {
-      if (loadedSuccessfully_ || pRemoteSessionLauncher_ || isErrorDisplayed_)
-         return;
-
-      RS_CALL_ONCE();
-
-      std::map<std::string, std::string> vars = {
-         { "url",  webView()->url().url().toStdString() }
-      };
-      
-      std::ostringstream oss;
-      Error error = text::renderTemplate(
-               options().resourcesPath().completePath("html/connect.html"),
-               vars,
-               oss);
-
-      if (error)
-      {
-         LOG_ERROR(error);
-         return;
-      }
-      
-      loadHtml(QString::fromStdString(oss.str()));
+      LOG_ERROR(error);
+      return;
    }
-   END_LOCK_MUTEX
+
+   loadHtml(QString::fromStdString(oss.str()));
 }
 
 WebView* MainWindow::getWebView()

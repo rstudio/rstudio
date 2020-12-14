@@ -444,7 +444,7 @@ target_link_libraries(rsession
    ${CRASHPAD_LIBRARIES}
 )
 
-if(RSTUDIO_PACKAGE_BUILD AND APPLE)
+if(APPLE)
    target_link_libraries(rsession "-undefined dynamic_lookup")
 else()
    target_link_libraries(rsession "${LIBR_LIBRARIES}")

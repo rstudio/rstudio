@@ -68,9 +68,11 @@ void launchProcess(const std::string& absPath,
    if (rLib.exists())
    {
       QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
+      
       environment.insert(
                QStringLiteral("DYLD_INSERT_LIBRARIES"),
                QString::fromStdString(rLib.getAbsolutePathNative()));
+      
       process->setProcessEnvironment(environment);
    }
 #endif
@@ -135,6 +137,7 @@ Error SessionLauncher::launchFirstSession()
    logEnvVar("R_LIBS");
    logEnvVar("R_LIBS_USER");
    logEnvVar("DYLD_LIBRARY_PATH");
+   logEnvVar("DYLD_FALLBACK_LIBRARY_PATH");
    logEnvVar("LD_LIBRARY_PATH");
    logEnvVar("PATH");
    logEnvVar("HOME");
@@ -201,6 +204,7 @@ Error SessionLauncher::launchFirstSession()
       pAppLaunch_->activateWindow();
       pMainWindow_->loadUrl(url);
    }
+   
    qApp->setQuitOnLastWindowClosed(true);
    return Success();
 }

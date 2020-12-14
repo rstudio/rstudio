@@ -1726,6 +1726,17 @@ int main (int argc, char * const argv[])
 {
    try
    {
+      // sleep on startup if requested (mainly for debugging)
+      std::string sleepOnStartup = core::system::getenv("RSTUDIO_SESSION_SLEEP_ON_STARTUP");
+      if (!sleepOnStartup.empty())
+      {
+         int sleepDuration = core::safe_convert::stringTo<int>(sleepOnStartup, 0);
+         if (sleepDuration > 0)
+         {
+            boost::this_thread::sleep(boost::posix_time::seconds(sleepDuration));
+         }
+      }
+      
       // initialize log so we capture all errors including ones which occur
       // reading the config file (if we are in desktop mode then the log
       // will get re-initialized below)

@@ -149,4 +149,5 @@
 * Fixed issue where project sharing configured it `server-project-sharing-root-dir` would fail to share when the path contain mixed ACL support (Pro #2061)
 * Fixed issue where project sharing would fail to share when the path contain mixed NFS ACL support (Pro #2103)
 * Fixed issue where in sharing a project on some NFSv4 filesystems could result in damage to owner permissions (Pro #2188)
+* Fixed issue where file permissions were not corrected after uploading a file to a shared project (Pro #2208)
 * Fixed issue where the project sharing would not work behind a HTTPS proxy (Pro #2088)
