@@ -118,6 +118,7 @@ private:
    void onActivated() override;
 
    void onUrlChanged(QUrl url);
+   void reload();
    void onLoadFinished(bool ok);
    void onLoadFailed();
 

@@ -58,7 +58,7 @@ void CALLBACK onDialogStart(HWINEVENTHOOK hook, DWORD event, HWND hwnd,
 int s_reloadCount = 0;
 
 // maximum number of times to try reloading
-const int s_maxReloadCount = 5;
+const int s_maxReloadCount = 10;
 
 // amount of time to wait before each reload, in milliseconds
 const int s_reloadWaitDuration = 200;
@@ -675,14 +675,19 @@ void MainWindow::onUrlChanged(QUrl url)
    urlChanged(url);
 }
 
+void MainWindow::reload()
+{
+   s_reloadCount++;
+   loadUrl(webView()->baseUrl());
+}
+
 void MainWindow::onLoadFinished(bool ok)
 {
    LOCK_MUTEX(mutex_)
    {
       if (ok)
       {
-         // hurray!
-         s_reloadCount = 0;
+         // we've successfully loaded!
       }
       else if (isErrorDisplayed_)
       {
@@ -691,28 +696,27 @@ void MainWindow::onLoadFinished(bool ok)
       }
       else
       {
-         // the load failed, but we haven't yet received word that the
-         // session has failed to load. let the user know that the R
-         // session is still initializing, and then reload the page.
-         std::map<std::string, std::string> vars = {};
-
-         std::ostringstream oss;
-         Error error = text::renderTemplate(
-                  options().resourcesPath().completePath("html/loading.html"),
-                  vars,
-                  oss);
-
-         if (error)
-            LOG_ERROR(error);
-
-         loadHtml(QString::fromStdString(oss.str()));
-
          if (s_reloadCount < s_maxReloadCount)
          {
-            s_reloadCount++;
+            // the load failed, but we haven't yet received word that the
+            // session has failed to load. let the user know that the R
+            // session is still initializing, and then reload the page.
+            std::map<std::string, std::string> vars = {};
+
+            std::ostringstream oss;
+            Error error = text::renderTemplate(
+                     options().resourcesPath().completePath("html/loading.html"),
+                     vars,
+                     oss);
+
+            if (error)
+               LOG_ERROR(error);
+
+            loadHtml(QString::fromStdString(oss.str()));
+
             QTimer::singleShot(
                      s_reloadWaitDuration * s_reloadCount,
-                     [&]() { loadUrl(webView()->baseUrl()); });
+                     [&]() { reload(); });
          }
          else
          {
@@ -729,10 +733,8 @@ void MainWindow::onLoadFailed()
    if (pRemoteSessionLauncher_ || isErrorDisplayed_)
       return;
 
-   RS_CALL_ONCE();
-
    std::map<std::string, std::string> vars = {
-      { "url",  webView()->url().url().toStdString() }
+      { "url",  webView()->baseUrl().toString().toStdString() }
    };
 
    std::ostringstream oss;
