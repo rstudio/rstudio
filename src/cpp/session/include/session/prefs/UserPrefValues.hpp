@@ -380,6 +380,7 @@ namespace prefs {
 #define kPythonVersion "python_version"
 #define kPythonPath "python_path"
 #define kSaveRetryTimeout "save_retry_timeout"
+#define kInsertNativePipeOperator "insert_native_pipe_operator"
 
 class UserPrefValues: public Preferences
 {
@@ -1668,6 +1669,12 @@ public:
     */
    int saveRetryTimeout();
    core::Error setSaveRetryTimeout(int val);
+
+   /**
+    * Whether the Insert Pipe Operator command should insert the native R pipe operator, |>
+    */
+   bool insertNativePipeOperator();
+   core::Error setInsertNativePipeOperator(bool val);
 
 };
 

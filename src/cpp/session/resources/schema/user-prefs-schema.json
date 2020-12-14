@@ -1438,6 +1438,12 @@
             "default": 15,
             "title": "Save Retry Timeout",
             "description": "The maximum amount of seconds of retry for save operations."
+        },
+        "insert_native_pipe_operator": {
+            "description": "Whether the Insert Pipe Operator command should insert the native R pipe operator, |>",
+            "title": "Use R's native pipe operator, |>",
+            "type": "boolean",
+            "default": false 
         }
     }
 }
