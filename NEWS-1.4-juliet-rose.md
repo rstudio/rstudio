@@ -30,5 +30,7 @@
 * Fixed issue where C++ compilation database was not invalidated when compiler was updated (#8588)
 * Improved checks for non-writable R library paths on startup (Pro #2184)
 * Code chunks in the visual editor now respect the "Tab Key Always Moves Focus" accessibility setting (#8584)
+* The commands "Execute Previous Chunks" and "Execute Subsequent Chunks" now work when the cursor is outside a code chunk in the visual editor (#8500)
+
 
 

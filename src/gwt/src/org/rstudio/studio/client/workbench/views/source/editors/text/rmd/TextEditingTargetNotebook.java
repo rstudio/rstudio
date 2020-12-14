@@ -1341,6 +1341,8 @@ public class TextEditingTargetNotebook
    
    public static boolean isSetupChunkScope(Scope scope)
    {
+      if (scope == null)
+         return false;
       if (!scope.isChunk())
          return false;
       if (scope.getChunkLabel() == null)
