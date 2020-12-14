@@ -1732,7 +1732,9 @@ int main (int argc, char * const argv[])
       {
          int sleepDuration = core::safe_convert::stringTo<int>(sleepOnStartup, 0);
          if (sleepDuration > 0)
-            ::sleep(sleepDuration);
+         {
+            boost::this_thread::sleep(boost::posix_time::seconds(sleepDuration));
+         }
       }
       
       // initialize log so we capture all errors including ones which occur
