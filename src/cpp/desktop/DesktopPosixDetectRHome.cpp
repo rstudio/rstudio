@@ -51,6 +51,7 @@ bool prepareEnvironment(Options& options)
       rWhichRPath = FilePath(whichROverride);
 
 #ifdef Q_OS_MAC
+# ifdef RSTUDIO_PACKAGE_BUILD
    FilePath rLdScriptPath = options.scriptsPath().completePath("session/r-ldpath");
    if (!rLdScriptPath.exists())
    {
@@ -60,6 +61,9 @@ bool prepareEnvironment(Options& options)
          LOG_ERROR(error);
       rLdScriptPath = executablePath.getParent().completePath("r-ldpath");
    }
+# else
+   FilePath rLdScriptPath = options.scriptsPath().completePath("../session/r-ldpath");
+# endif
 #else
    // determine rLdPaths script location
    FilePath supportingFilePath = options.supportingFilePath();

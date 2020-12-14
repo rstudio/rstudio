@@ -96,7 +96,7 @@ define_source_file_names(rstudio-r)
 # link dependencies
 target_link_libraries(rstudio-r rstudio-core)
 
-if(RSTUDIO_PACKAGE_BUILD AND APPLE)
+if(APPLE)
    target_link_libraries(rstudio-r "-undefined dynamic_lookup")
 else()
    target_link_libraries(rstudio-r "${LIBR_LIBRARIES}")
