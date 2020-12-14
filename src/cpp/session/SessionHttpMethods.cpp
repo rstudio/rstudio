@@ -442,13 +442,13 @@ bool waitForMethod(const std::string& method,
                                    boost::posix_time::milliseconds(50);
 
    // wait until we get the method we are looking for
-   while(true)
+   while (true)
    {
       // suspend if necessary (does not return if a suspend occurs)
       suspend::suspendIfRequested(allowSuspend);
 
       // check for timeout
-      if ( isTimedOut(timeoutTime) )
+      if (isTimedOut(timeoutTime))
       {
          if (allowSuspend())
          {
@@ -509,13 +509,13 @@ bool waitForMethod(const std::string& method,
          }
 
          // check for client_init
-         if ( isMethod(ptrConnection, kClientInit) )
+         if (isMethod(ptrConnection, kClientInit))
          {
             client_init::handleClientInit(initFunction, ptrConnection);
          }
 
          // check for the method we are waiting on
-         else if ( isMethod(ptrConnection, method) )
+         else if (isMethod(ptrConnection, method))
          {
             // parse and validate request then proceed
             if (parseAndValidateJsonRpcConnection(ptrConnection, pRequest))
