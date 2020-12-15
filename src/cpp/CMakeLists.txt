@@ -571,7 +571,7 @@ else()
              COMMAND "${LIBR_EXECUTABLE}" "--vanilla" "--slave" "-e" "cat(as.character(getRversion()))"
              OUTPUT_VARIABLE LIBR_VERSION)
          if (LIBR_VERSION VERSION_LESS "3.0.1")
-            message(FATAL_ERROR "Minimum R version (${RSTUDIO_R_MAJOR_VERSION_REQUIRED}.${RSTUDIO_R_MINOR_VERSION_REQUIRED}.${RSTUDIO_R_PATCH_VERSION_REQUIRED}) not found.")
+            message(FATAL_ERROR "Minimum R version (${RSTUDIO_R_MAJOR_VERSION_REQUIRED}.${RSTUDIO_R_MINOR_VERSION_REQUIRED}.${RSTUDIO_R_PATCH_VERSION_REQUIRED}) not found; detected version is ${LIBR_VERSION}")
          endif()
       endif()
 
