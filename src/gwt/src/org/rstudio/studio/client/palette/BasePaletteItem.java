@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.palette;
 
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.palette.events.PaletteItemExecutedEvent;
 import org.rstudio.studio.client.palette.events.PaletteItemInvokedEvent;
 import org.rstudio.studio.client.palette.events.PaletteItemInvokedEvent.Handler;
 import org.rstudio.studio.client.palette.model.CommandPaletteItem;
@@ -72,7 +74,7 @@ public abstract class BasePaletteItem<T extends Widget> implements CommandPalett
       return handlers_.addHandler(PaletteItemInvokedEvent.TYPE, handler);
    }
 
-   protected boolean labelMatchesSearch(String label, String[] keywords)
+  protected boolean labelMatchesSearch(String label, String[] keywords)
    {
       String hay = label.toLowerCase();
       for (String needle: keywords)

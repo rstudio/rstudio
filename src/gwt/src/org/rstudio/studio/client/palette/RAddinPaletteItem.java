@@ -19,6 +19,8 @@ import java.util.List;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeySequence;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.palette.events.PaletteItemExecutedEvent;
 import org.rstudio.studio.client.palette.ui.RAddinCommandPaletteEntry;
 import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
@@ -49,6 +51,10 @@ public class RAddinPaletteItem extends BasePaletteItem<RAddinCommandPaletteEntry
    public void invoke(InvocationSource source)
    {
       executor_.execute(addin_);
+
+      // Record execution of command (used to populate recent commands)
+      RStudioGinjector.INSTANCE.getEventBus().fireEvent(new PaletteItemExecutedEvent(
+         widget_.getScope(), widget_.getId()));
    }
 
    @Override

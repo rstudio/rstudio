@@ -25,6 +25,7 @@ import org.rstudio.core.client.command.KeySequence;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
 import org.rstudio.studio.client.palette.model.CommandPaletteItem;
+import org.rstudio.studio.client.palette.ui.CommandPalette;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
 public class AppCommandPaletteSource implements CommandPaletteEntrySource

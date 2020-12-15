@@ -21,6 +21,7 @@ import java.util.List;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
 import org.rstudio.studio.client.palette.model.CommandPaletteItem;
+import org.rstudio.studio.client.palette.ui.CommandPalette;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.PrefValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 

@@ -43,8 +43,9 @@ using namespace collection;
 const char * const kFileMru = "file_mru";
 const char * const kProjectMru = kProjectMruList;
 const char * const kHelpHistory = "help_history_links";
-const char * const kUserDictioanry = "user_dictionary";
+const char * const kUserDictionary = "user_dictionary";
 const char * const kPlotPublishMru = "plot_publish_mru";
+const char * const kCommandPaletteMru = "command_palette_mru";
 
 // path to lists dir
 FilePath s_listsPath;
@@ -296,7 +297,8 @@ Error initialize()
    s_lists[kProjectMru] = 15;
    s_lists[kHelpHistory] = 15;
    s_lists[kPlotPublishMru] = 15;
-   s_lists[kUserDictioanry] = 10000;
+   s_lists[kCommandPaletteMru] = 10;
+   s_lists[kUserDictionary] = 10000;
 
    // monitor the lists directory
    s_listsPath = module_context::registerMonitoredUserScratchDir(

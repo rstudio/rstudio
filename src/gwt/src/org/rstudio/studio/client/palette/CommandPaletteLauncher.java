@@ -22,8 +22,12 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.widget.ModalPopupPanel;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.palette.events.PaletteItemExecutedEvent;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
+import org.rstudio.studio.client.palette.model.CommandPaletteMruEntry;
 import org.rstudio.studio.client.palette.ui.CommandPalette;
+import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -51,17 +55,27 @@ public class CommandPaletteLauncher implements CommandPalette.Host
    
    @Inject 
    public CommandPaletteLauncher(Commands commands,
-         AddinsCommandManager addins,
-         Provider<Source> pSource,
-         Provider<UserPrefs> pPrefs,
-         Binder binder)
+                                 AddinsCommandManager addins,
+                                 Provider<Source> pSource,
+                                 Provider<UserPrefs> pPrefs,
+                                 Provider<WorkbenchListManager> pWorkbenchLists,
+                                 EventBus events,
+                                 Binder binder)
    {
       binder.bind(commands, this);
       addins_ = addins;
       commands_ = commands;
       pSource_ = pSource;
       pPrefs_ = pPrefs;
+      pWorkbenchLists_ = pWorkbenchLists;
       state_ = State.Hidden;
+
+      // Listen for item executions; when they occur, update the MRU accordingly
+      events.addHandler(PaletteItemExecutedEvent.TYPE, (evt) ->
+      {
+         pWorkbenchLists_.get().getCommandPaletteMruList().prepend(
+            evt.getMruEntry().toString());
+      });
    }
    
    @Handler
@@ -95,8 +109,28 @@ public class CommandPaletteLauncher implements CommandPalette.Host
       sources.add(new RAddinPaletteSource(addins_.getRAddins(), ShortcutManager.INSTANCE));
       sources.add(new UserPrefPaletteSource(pPrefs_.get()));
 
+      // Populate the MRU on first show
+      if (mru_ == null)
+      {
+         pWorkbenchLists_.get().getCommandPaletteMruList().addListChangedHandler((evt) ->
+         {
+            ArrayList<String> mru = evt.getList();
+
+            // After the first time the palette is shown, the MRU is updated by this event handler.
+            mru_ = new ArrayList<CommandPaletteMruEntry>();
+            for (String entry: mru)
+            {
+               CommandPaletteMruEntry mruEntry = CommandPaletteMruEntry.fromString(entry);
+               if (mruEntry != null)
+               {
+                  mru_.add(mruEntry);
+               }
+            }
+         });
+      }
+
       // Create the command palette widget
-      palette_ = new CommandPalette(sources, this);
+      palette_ = new CommandPalette(sources, mru_, this);
       
       panel_ = new ModalPopupPanel(
             true,  // Auto hide
@@ -161,9 +195,11 @@ public class CommandPaletteLauncher implements CommandPalette.Host
    private ModalPopupPanel panel_;
    private CommandPalette palette_;
    private State state_;
+   private ArrayList<CommandPaletteMruEntry> mru_;
 
    private final Commands commands_;
    private final AddinsCommandManager addins_;
    private final Provider<Source> pSource_;
    private final Provider<UserPrefs> pPrefs_;
+   private final Provider<WorkbenchListManager> pWorkbenchLists_;
 }

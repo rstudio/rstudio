@@ -45,6 +45,7 @@ import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.studio.client.palette.model.CommandPaletteMruEntry;
 
 /**
  * CommandPalette is a widget that displays all available RStudio commands in a
@@ -75,7 +76,14 @@ public class CommandPalette extends Composite
       String commandPanel();
    }
 
-   public CommandPalette(List<CommandPaletteEntrySource> sources, Host host)
+   /**
+    * Constructs a new Command Palette widget.
+    *
+    * @param sources A list of sources from which to draw commands for the palette
+    * @param mru A list of the most recently used commands
+    * @param host The object hosting the Command Palette
+    */
+   public CommandPalette(List<CommandPaletteEntrySource> sources, List<CommandPaletteMruEntry> mru, Host host)
    {
       initWidget(uiBinder.createAndBindUi(this));
 
@@ -511,6 +519,15 @@ public class CommandPalette extends Composite
    private int renderedItem_; // The index of the last rendered item
    private int renderedSource_ = 0; // The index of the last rendered data source
    private final int RENDER_PAGE_SIZE = 50;
+
+   // These scopes serve two purposes: they ensure IDs are unique across different
+   // kinds of commands, and they serve as a key to look up MRU entries
+   public final static String SCOPE_APP_COMMAND = "command";
+   public final static String SCOPE_R_ADDIN = "r_addin";
+   public final static String SCOPE_USER_PREFS = "user_pref";
+
+   // The delimiter that separates the entry's scope from its ID in the MRU list
+   public final static String SCOPE_MRU_DELIMITER = "|";
 
    DebouncedCommand applyFilter_ = new DebouncedCommand(100)
    {

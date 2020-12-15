@@ -23,6 +23,7 @@ import org.rstudio.core.client.command.KeySequence;
 import org.rstudio.core.client.command.AppCommand.Context;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.palette.events.PaletteItemExecutedEvent;
 import org.rstudio.studio.client.palette.ui.AppCommandPaletteEntry;
 
 public class AppCommandPaletteItem extends BasePaletteItem<AppCommandPaletteEntry>
@@ -85,6 +86,10 @@ public class AppCommandPaletteItem extends BasePaletteItem<AppCommandPaletteEntr
             Debug.logException(e);
          }
       }
+
+      // Record execution of command (used to populate recent commands)
+      RStudioGinjector.INSTANCE.getEventBus().fireEvent(new PaletteItemExecutedEvent(
+         widget_.getScope(), widget_.getId()));
    }
    
    @Override

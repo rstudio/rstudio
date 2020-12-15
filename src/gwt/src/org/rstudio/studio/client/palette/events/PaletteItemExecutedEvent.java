@@ -1,5 +1,5 @@
 /*
- * PaletteItemInvokedEvent.java
+ * PaletteItemExecutedEvent.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -14,30 +14,29 @@
  */
 package org.rstudio.studio.client.palette.events;
 
-import org.rstudio.studio.client.palette.model.CommandPaletteItem;
-
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
+import org.rstudio.studio.client.palette.model.CommandPaletteMruEntry;
 
 /**
- * Event internal to the command palette, emitted when an item in the palette is invoked via clicking
+ * An event emitted the
  */
-public class PaletteItemInvokedEvent
-      extends GwtEvent<PaletteItemInvokedEvent.Handler>
+public class PaletteItemExecutedEvent
+   extends GwtEvent<PaletteItemExecutedEvent.Handler>
 {
-   public PaletteItemInvokedEvent(CommandPaletteItem item)
+   public PaletteItemExecutedEvent(String scope, String id)
    {
-      item_ = item;
+      entry_ = new CommandPaletteMruEntry(scope, id);
    }
 
-   public CommandPaletteItem getItem()
+   public CommandPaletteMruEntry getMruEntry()
    {
-      return item_;
+      return entry_;
    }
 
    public interface Handler extends EventHandler
    {
-      void onPaletteItemInvoked(PaletteItemInvokedEvent event);
+      void onPaletteItemExecuted(PaletteItemExecutedEvent event);
    }
 
    @Override
@@ -49,10 +48,10 @@ public class PaletteItemInvokedEvent
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onPaletteItemInvoked(this);
+      handler.onPaletteItemExecuted(this);
    }
 
-   private final CommandPaletteItem item_;
+   private final CommandPaletteMruEntry entry_;
 
    public static final Type<Handler> TYPE = new Type<>();
 }

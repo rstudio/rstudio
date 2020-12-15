@@ -43,6 +43,12 @@ public class RAddinCommandPaletteEntry extends CommandPaletteCommand
    }
 
    @Override
+   public String getScope()
+   {
+      return CommandPalette.SCOPE_R_ADDIN;
+   }
+
+   @Override
    public String getContext()
    {
       return addin_.getPackage();
