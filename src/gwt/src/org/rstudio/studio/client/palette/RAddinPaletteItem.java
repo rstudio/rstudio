@@ -80,7 +80,13 @@ public class RAddinPaletteItem extends BasePaletteItem<RAddinCommandPaletteEntry
    {
       widget_.setSelected(selected);
    }
-   
+
+   @Override
+   public String getId()
+   {
+      return addin_.getId();
+   }
+
    private String label_;
    
    private final RAddin addin_;

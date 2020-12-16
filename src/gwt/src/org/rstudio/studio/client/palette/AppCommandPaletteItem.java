@@ -125,6 +125,12 @@ public class AppCommandPaletteItem extends BasePaletteItem<AppCommandPaletteEntr
       widget_.setSelected(selected);
    }
 
+   @Override
+   public String getId()
+   {
+      return command_.getId();
+   }
+
    private final List<KeySequence> keys_;
    private final AppCommand command_;
 

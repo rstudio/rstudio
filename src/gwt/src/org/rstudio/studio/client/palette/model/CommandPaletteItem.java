@@ -1,5 +1,5 @@
 /*
- * CommandPaletteEntrySource.java
+ * CommandPaletteItem.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -83,4 +83,11 @@ public interface CommandPaletteItem extends IsWidget, HasHandlers
     * @param selected Whether to draw the entry as selected
     */
    public void setSelected(boolean selected);
+
+   /**
+    * Gets the ID of the item from the underlying provider
+    *
+    * @return The item's ID
+    */
+   public String getId();
 }

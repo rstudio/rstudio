@@ -97,6 +97,7 @@ public class CommandPalette extends Composite
       needles_ = new String[0];
       registrations_ = new HandlerRegistrations();
       styles_.ensureInjected();
+      mru_ = mru;
       
       Element searchBox = searchBox_.getElement();
       searchBox.setAttribute("spellcheck", "false");
@@ -414,6 +415,30 @@ public class CommandPalette extends Composite
     */
    private void renderNextPage()
    {
+      // If we have no items yet, start with MRU items
+      if (renderedItem_ == 0 && mru_ != null)
+      {
+         for (CommandPaletteMruEntry mru: mru_)
+         {
+            // Look for the entry provider from which this MRU entry originated
+            for (CommandPaletteEntryProvider provider: sources_)
+            {
+               if (StringUtil.equals(provider.getProviderScope(), mru.getScope()))
+               {
+                  // Found the entry provider; ask it to supply the command.
+                  CommandPaletteItem item = provider.getCommandPaletteItem(mru.getId());
+                  if (item != null)
+                  {
+                     items_.add(item);
+                  }
+
+                  // Command found; no need to look at other providers
+                  break;
+               }
+            }
+         }
+      }
+
       // If we haven't already pulled items from all our sources and we have
       // less than a page of data left, pull in data from the next source.
       if (renderedSource_ < sources_.size() &&
@@ -428,10 +453,28 @@ public class CommandPalette extends Composite
             if (provider != null)
             {
                items = provider.getCommandPaletteItems();
+
+               // Remove any items already present in the MRU
+               if (mru_ != null)
+               {
+                  items.removeIf((item) ->
+                  {
+                     for (CommandPaletteMruEntry entry : mru_)
+                     {
+                        if (StringUtil.equals(entry.getScope(), provider.getProviderScope()) &&
+                            StringUtil.equals(entry.getId(), item.getId()))
+                        {
+                           // Item already present in MRU
+                           return true;
+                        }
+                     }
+                     return false;
+                  });
+               }
             }
             renderedSource_++;
          } while (items == null);
-            
+
          items_.addAll(items);
       }
       
@@ -514,6 +557,7 @@ public class CommandPalette extends Composite
    private final List<CommandPaletteEntryProvider> sources_;
    private final List<CommandPaletteItem> items_;
    private final List<CommandPaletteItem> visible_;
+   private final List<CommandPaletteMruEntry> mru_;
    private final HandlerRegistrations registrations_;
    private int selected_;
    private String searchText_;

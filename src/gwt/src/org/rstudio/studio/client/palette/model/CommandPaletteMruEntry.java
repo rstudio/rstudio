@@ -31,6 +31,26 @@ public class CommandPaletteMruEntry
    }
 
    /**
+    * Returns the scope (source) of this MRU entry
+    *
+    * @return The entry's scope
+    */
+   public String getScope()
+   {
+      return scope_;
+   }
+
+   /**
+    * Returns the ID of this MRU entry; only unique when combined with the scope
+    *
+    * @return The entry's ID
+    */
+   public String getId()
+   {
+      return id_;
+   }
+
+   /**
     * Constructs a new MRU entry from a raw string
     *
     * @param entry The entry as a string; must be in the format "scope|id"
