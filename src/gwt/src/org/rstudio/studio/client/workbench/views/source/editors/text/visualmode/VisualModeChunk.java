@@ -112,8 +112,9 @@ public class VisualModeChunk
       final AceEditorNative chunkEditor = editor_.getWidget().getEditor();
       chunk.editor = Js.uncheckedCast(chunkEditor);
 
-      // Forward the R completion context from the parent editing session
+      // Forward the R and C++ completion contexts from the parent editing session
       editor_.setRCompletionContext(target_.getRCompletionContext());
+      editor_.setCppCompletionContext(target_.getCppCompletionContext());
       
       // Forward the Rnw completion context with a wrapper to adjust for the
       // position in our display; this is what allows the completion engine to
