@@ -14,8 +14,6 @@
  */
 package org.rstudio.core.client.widget;
 
-import com.google.gwt.event.dom.client.ScrollEvent;
-import com.google.gwt.event.dom.client.ScrollHandler;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -44,27 +42,48 @@ public class BottomScrollPanel extends ScrollPanel
          }
       };
       
+      addScrollHandler((event) -> updateScrollHeight());
+   }
+
+   // Constructor for a BottomScrollPanel without the timer autoscroll
+   public BottomScrollPanel(boolean useTimer)
+   {
+      scrolling_ = false;
+      if (useTimer)
+      {
+         // use a timer to help debounce scroll events
+         scrollTimer_ = new Timer()
+         {
+            @Override
+            public void run()
+            {
+               scrollToBottom();
+            }
+         };
+      } else
+         scrollTimer_ = null;
+
+      addScrollHandler((event) -> updateScrollHeight());
+   }
+
+   public void updateScrollHeight()
+   {
       // Provide a close-enough zone for determining if scrolled
       // to the bottom; allows for small rounding errors that have
       // been seen on zoomed high-DPI displays.
       final int vFudge = 4;
-      addScrollHandler(new ScrollHandler()
-      {
-         public void onScroll(ScrollEvent event)
-         {
-            // short circuit if we initiated this scroll
-            if (scrolling_)
-               return;
-            
-            scrolledToBottom_ = 
-             
-             (Math.abs(getVerticalScrollPosition() - 
-                       getMaximumVerticalScrollPosition()) <= vFudge) || 
-              
-             (Math.abs((getVerticalScrollPosition() + getOffsetHeight()) - 
-                        getElement().getScrollHeight()) <= vFudge);
-         }
-      });
+
+      // short circuit if we initiated this scroll
+      if (scrolling_)
+         return;
+
+      scrolledToBottom_ =
+
+              (Math.abs(getVerticalScrollPosition() -
+                      getMaximumVerticalScrollPosition()) <= vFudge) ||
+
+              (Math.abs((getVerticalScrollPosition() + getOffsetHeight()) -
+                      getElement().getScrollHeight()) <= vFudge);
    }
 
    public BottomScrollPanel(Widget widget)
@@ -88,8 +107,11 @@ public class BottomScrollPanel extends ScrollPanel
    @Override
    public void onResize()
    {
+      updateScrollHeight();
+
       if (scrolledToBottom_)
          scrollToBottom();
+
       super.onResize();
    }
 
@@ -117,7 +139,7 @@ public class BottomScrollPanel extends ScrollPanel
       
       // allow an existing timer to continue running (ensures
       // that we attempt a scroll every few ticks as appropriate)
-      if (scrollTimer_.isRunning())
+      if (scrollTimer_ == null || scrollTimer_.isRunning())
          return;
 
       // schedule a new scroll if we haven't done this yet
