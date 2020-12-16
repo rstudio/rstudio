@@ -327,7 +327,7 @@ Error SessionManager::launchAndTrackSession(
    
    // on macOS, we need to forward DYLD_INSERT_LIBRARIES
 #if __APPLE__
-   std::string rPath = server::options().rsessionWhichR();
+   std::string rPath = server::r_environment::rScriptPathOverride();
    
    core::system::ProcessOptions options;
    core::system::ProcessResult result;

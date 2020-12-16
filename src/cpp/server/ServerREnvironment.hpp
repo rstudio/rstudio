@@ -38,6 +38,7 @@ void setFallbackVersion(const core::r_util::RVersion& version);
 
 bool initialize(std::string* pErrMsg);
 
+std::string rScriptPathOverride();
 core::r_util::RVersion rVersion();
 void setRVersion(const core::r_util::RVersion& version);
 

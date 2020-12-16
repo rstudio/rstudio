@@ -47,7 +47,7 @@ void initializeScanner()
 {
    s_scanner.reset(
             new RVersionsScanner(true,
-                                 options().rsessionWhichR(),
+                                 rScriptPathOverride(),
                                  options().rldpathPath(),
                                  options().rsessionLdLibraryPath()));
 }
@@ -68,6 +68,23 @@ bool initialize(std::string* pErrMsg)
    // detect it ourselves
    bool detected = s_scanner->detectSystemRVersion(&s_rVersion, pErrMsg);
    return detected;
+}
+
+std::string rScriptPathOverride()
+{
+   // allow RSTUDIO_WHICH_R environment variable to take precedence
+   // currently macOS only; intended to allow development builds of
+   // RStudio Server to bind to arbitrary R versions without having
+   // to recompile the application. might be worth doing something
+   // similar for Linux as well?
+#ifdef __APPLE__
+   std::string rstudioWhichR = core::system::getenv("RSTUDIO_WHICH_R");
+   if (!rstudioWhichR.empty())
+      return rstudioWhichR;
+#endif
+   
+   // default to version specified via server options
+   return options().rsessionWhichR();
 }
 
 core::r_util::RVersion rVersion()
