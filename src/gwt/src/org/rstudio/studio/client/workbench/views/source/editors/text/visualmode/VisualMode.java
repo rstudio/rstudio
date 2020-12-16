@@ -518,6 +518,16 @@ public class VisualMode implements VisualModeEditorSync,
                         allDone.execute(false);
                         return;
                      }
+                     
+                     // if we failed to extract a source capsule then don't switch (as the user will have lost data)
+                     // (note that this constant is also defined in rmd_chunk-capsule.ts)
+                     final String kRmdBlockCapsuleType = "f3175f2a-e8a0-4436-be12-b33925b6d220".toLowerCase();
+                     if (result.canonical.contains(kRmdBlockCapsuleType))
+                     {
+                        view_.showWarningBar("Unable to activate visual mode (error parsing code chunks out of document)");
+                        allDone.execute(false);
+                        return;
+                     }
 
                      // clear progress (for possible dialog overlays created by confirmation)
                      progress_.endProgressOperation();
