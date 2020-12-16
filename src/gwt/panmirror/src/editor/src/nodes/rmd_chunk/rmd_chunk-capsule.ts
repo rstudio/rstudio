@@ -21,6 +21,7 @@ import { pandocAttrReadAST, kCodeBlockAttr, PandocAttr, kCodeBlockText } from '.
 import { uuidv4 } from '../../api/util';
 
 export function rmdChunkBlockCapsuleFilter() {
+  // (note that this constant is also defined in VisualMode.java)
   const kBlockCapsuleType = 'F3175F2A-E8A0-4436-BE12-B33925B6D220'.toLowerCase();
   const kBlockCapsuleTextRegEx = new RegExp('```' + kBlockCapsuleType + '\\n[ \\t>]*([^`]+)\\n[ \\t>]*```', 'g');
 
