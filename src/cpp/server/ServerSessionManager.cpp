@@ -20,6 +20,7 @@
 #include <boost/format.hpp>
 
 #include <shared_core/SafeConvert.hpp>
+#include <core/system/Process.hpp>
 #include <core/system/PosixUser.hpp>
 #include <core/system/Environment.hpp>
 #include <core/json/JsonRpc.hpp>
@@ -320,12 +321,36 @@ Error SessionManager::launchAndTrackSession(
       configFilter = s_processConfigFilter;
    }
    END_LOCK_MUTEX
-
+         
+   // retrieve profile config
+   auto config = profile.config;
+   
+   // on macOS, we need to forward DYLD_INSERT_LIBRARIES
+#if __APPLE__
+   std::string rPath = server::options().rsessionWhichR();
+   
+   core::system::ProcessOptions options;
+   core::system::ProcessResult result;
+   Error rError = core::system::runCommand(
+            rPath + " --vanilla -s -e \"cat(R.home('lib/libR.dylib'))\"",
+            options,
+            &result);
+   
+   if (rError)
+      LOG_ERROR(rError);
+   
+   std::string rLibPath = result.stdOut;
+   core::system::setenv(
+            &config.environment,
+            "DYLD_INSERT_LIBRARIES",
+            rLibPath);
+#endif
+         
    // launch the session
    PidType pid = 0;
    Error error = launchChildProcess(profile.executablePath,
                                     runAsUser,
-                                    profile.config,
+                                    config,
                                     configFilter,
                                     &pid);
    if (error)

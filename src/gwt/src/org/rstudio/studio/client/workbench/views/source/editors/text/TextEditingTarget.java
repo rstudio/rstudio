@@ -7696,7 +7696,12 @@ public class TextEditingTarget implements
    {
       return rContext_;
    }
-   
+
+   public CppCompletionContext getCppCompletionContext()
+   {
+      return cppCompletionContext_;
+   }
+
    public RnwCompletionContext getRnwCompletionContext()
    {
       return compilePdfHelper_;
