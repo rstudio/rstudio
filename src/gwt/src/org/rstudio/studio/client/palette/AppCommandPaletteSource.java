@@ -17,18 +17,19 @@ package org.rstudio.studio.client.palette;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.KeyMap;
 import org.rstudio.core.client.command.KeyMap.KeyMapType;
 import org.rstudio.core.client.command.KeySequence;
 import org.rstudio.core.client.command.ShortcutManager;
-import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
+import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.palette.ui.CommandPalette;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
-public class AppCommandPaletteSource implements CommandPaletteEntrySource
+public class AppCommandPaletteSource implements CommandPaletteEntryProvider
 {
    public AppCommandPaletteSource(ShortcutManager shortcuts, Commands commands)
    {
@@ -73,6 +74,30 @@ public class AppCommandPaletteSource implements CommandPaletteEntrySource
       }
       
       return items;
+   }
+
+   @Override
+   public CommandPaletteItem getCommandPaletteItem(String id)
+   {
+      if (StringUtil.isNullOrEmpty(id))
+      {
+         return null;
+      }
+
+      AppCommand command = commands_.getCommandById(id);
+      if (command == null)
+      {
+         Debug.logWarning("Unknown command ID requested by command palette: '" + id + "'");
+         return null;
+      }
+
+      return new AppCommandPaletteItem(command, map_.getBindings(id));
+   }
+
+   @Override
+   public String getProviderScope()
+   {
+      return CommandPalette.SCOPE_APP_COMMAND;
    }
 
    private final KeyMap map_;

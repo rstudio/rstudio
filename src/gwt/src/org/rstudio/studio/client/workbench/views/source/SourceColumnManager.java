@@ -53,6 +53,7 @@ import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.filetypes.*;
 import org.rstudio.studio.client.common.synctex.Synctex;
 import org.rstudio.studio.client.events.GetEditorContextEvent;
+import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
 import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.rmarkdown.model.RmdChosenTemplate;
@@ -590,12 +591,12 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    // see if there are additional command palette items made available
    // by the active editor
-   public List<CommandPaletteItem> getCommandPaletteItems()
+   public CommandPaletteEntryProvider getPaletteEntryProvider()
    {
       if (!hasActiveEditor())
          return null;
 
-      return activeColumn_.getActiveEditor().getCommandPaletteItems();
+      return activeColumn_.getActiveEditor().getPaletteEntryProvider();
    }
 
    public int getTabCount()

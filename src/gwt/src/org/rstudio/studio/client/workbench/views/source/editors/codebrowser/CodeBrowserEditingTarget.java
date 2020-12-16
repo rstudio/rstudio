@@ -46,6 +46,7 @@ import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
@@ -796,7 +797,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    }
 
    @Override
-   public List<CommandPaletteItem> getCommandPaletteItems()
+   public CommandPaletteEntryProvider getPaletteEntryProvider()
    {
       return null;
    }

@@ -38,6 +38,7 @@ import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.Value;
+import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
 import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.panmirror.PanmirrorChanges;
@@ -1083,9 +1084,9 @@ public class VisualMode implements VisualModeEditorSync,
    }
 
    @Override
-   public List<CommandPaletteItem> getCommandPaletteItems()
+   public CommandPaletteEntryProvider getPaletteEntryProvider()
    {
-      return panmirror_.getCommandPaletteItems();
+      return panmirror_.getPaletteEntryProvider();
    }
 
    public void focus(Command onComplete)

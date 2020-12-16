@@ -14,14 +14,12 @@
  */
 package org.rstudio.studio.client.palette.model;
 
-import java.util.List;
-
 public interface CommandPaletteEntrySource
-{ 
+{
    /**
-    * A list of all of the elements to be rendered as entries in the palette.
-    * 
-    * @return A list of elements. 
+    * Returns an object that provides command palette entries
+    *
+    * @return The palette entry provider, or null if no provider is available
     */
-   List<CommandPaletteItem> getCommandPaletteItems();
+   CommandPaletteEntryProvider getPaletteEntryProvider();
 }

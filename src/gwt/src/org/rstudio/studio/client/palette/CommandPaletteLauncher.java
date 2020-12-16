@@ -24,7 +24,7 @@ import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.widget.ModalPopupPanel;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.palette.events.PaletteItemExecutedEvent;
-import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
+import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.palette.model.CommandPaletteMruEntry;
 import org.rstudio.studio.client.palette.ui.CommandPalette;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
@@ -101,13 +101,13 @@ public class CommandPaletteLauncher implements CommandPalette.Host
    private void createPanel()
    {
       // Extra sources (currently only the source tab)
-      List<CommandPaletteEntrySource> sources = new ArrayList<CommandPaletteEntrySource>();
+      List<CommandPaletteEntryProvider> providers = new ArrayList<CommandPaletteEntryProvider>();
       
       // Create sources
-      sources.add(new AppCommandPaletteSource(ShortcutManager.INSTANCE, commands_));
-      sources.add(pSource_.get());
-      sources.add(new RAddinPaletteSource(addins_.getRAddins(), ShortcutManager.INSTANCE));
-      sources.add(new UserPrefPaletteSource(pPrefs_.get()));
+      providers.add(new AppCommandPaletteSource(ShortcutManager.INSTANCE, commands_));
+      providers.add(pSource_.get().getPaletteEntryProvider());
+      providers.add(new RAddinPaletteSource(addins_.getRAddins(), ShortcutManager.INSTANCE));
+      providers.add(new UserPrefPaletteSource(pPrefs_.get()));
 
       // Populate the MRU on first show
       if (mru_ == null)
@@ -130,8 +130,8 @@ public class CommandPaletteLauncher implements CommandPalette.Host
       }
 
       // Create the command palette widget
-      palette_ = new CommandPalette(sources, mru_, this);
-      
+      palette_ = new CommandPalette(providers, mru_, this);
+
       panel_ = new ModalPopupPanel(
             true,  // Auto hide
             true,  // Modal

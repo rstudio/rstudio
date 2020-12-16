@@ -26,7 +26,7 @@ import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.widget.AriaLiveStatusWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
-import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
+import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.palette.model.CommandPaletteItem.InvocationSource;
 
@@ -83,7 +83,7 @@ public class CommandPalette extends Composite
     * @param mru A list of the most recently used commands
     * @param host The object hosting the Command Palette
     */
-   public CommandPalette(List<CommandPaletteEntrySource> sources, List<CommandPaletteMruEntry> mru, Host host)
+   public CommandPalette(List<CommandPaletteEntryProvider> sources, List<CommandPaletteMruEntry> mru, Host host)
    {
       initWidget(uiBinder.createAndBindUi(this));
 
@@ -423,7 +423,8 @@ public class CommandPalette extends Composite
          List<CommandPaletteItem> items = null;
          do
          {
-            items = sources_.get(renderedSource_).getCommandPaletteItems();
+            items = null;
+            sources_.get(renderedSource_).getCommandPaletteItems();
             renderedSource_++;
          } while (items == null);
             
@@ -506,7 +507,7 @@ public class CommandPalette extends Composite
    }
    
    private final Host host_;
-   private final List<CommandPaletteEntrySource> sources_;
+   private final List<CommandPaletteEntryProvider> sources_;
    private final List<CommandPaletteItem> items_;
    private final List<CommandPaletteItem> visible_;
    private final HandlerRegistrations registrations_;
@@ -525,6 +526,7 @@ public class CommandPalette extends Composite
    public final static String SCOPE_APP_COMMAND = "command";
    public final static String SCOPE_R_ADDIN = "r_addin";
    public final static String SCOPE_USER_PREFS = "user_pref";
+   public final static String SCOPE_VISUAL_EDITOR = "visual_editor";
 
    // The delimiter that separates the entry's scope from its ID in the MRU list
    public final static String SCOPE_MRU_DELIMITER = "|";

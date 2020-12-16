@@ -14,8 +14,6 @@
  */
 package org.rstudio.studio.client.palette;
 
-import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.palette.events.PaletteItemExecutedEvent;
 import org.rstudio.studio.client.palette.events.PaletteItemInvokedEvent;
 import org.rstudio.studio.client.palette.events.PaletteItemInvokedEvent.Handler;
 import org.rstudio.studio.client.palette.model.CommandPaletteItem;
