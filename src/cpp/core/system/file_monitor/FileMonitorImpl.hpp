@@ -20,7 +20,7 @@
 #include <algorithm>
 #include <list>
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <shared_core/FilePath.hpp>
 #include <core/collection/Tree.hpp>
@@ -28,6 +28,8 @@
 #include <core/system/FileChangeEvent.hpp>
 
 #include <core/system/FileMonitor.hpp>
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace core {   

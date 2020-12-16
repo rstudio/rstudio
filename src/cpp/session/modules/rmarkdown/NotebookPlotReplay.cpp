@@ -20,7 +20,7 @@
 #include "NotebookOutput.hpp"
 
 #include <boost/algorithm/string.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <core/StringUtils.hpp>
 #include <core/Exec.hpp>
@@ -35,6 +35,7 @@
 
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

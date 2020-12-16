@@ -20,7 +20,7 @@
 #include <core/system/Process.hpp>
 #include <core/system/Environment.hpp>
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -31,6 +31,7 @@
 #include "session-config.h"
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

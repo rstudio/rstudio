@@ -91,13 +91,15 @@ struct is_error_code_enum<rstudio::core::json::errc::errc_t>
 
 #include <string>
 
-#include <boost/bind.hpp>
 #include <boost/function.hpp>
 #include <boost/optional.hpp>
 #include <boost/unordered_map.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/json/Json.hpp>
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace core {

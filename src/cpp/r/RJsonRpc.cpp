@@ -47,7 +47,7 @@
 #define R_INTERNAL_FUNCTIONS
 #include <r/RJsonRpc.hpp>
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
@@ -58,6 +58,7 @@
 #include <r/RJson.hpp>
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace r {

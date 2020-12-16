@@ -17,10 +17,10 @@
 
 #include <algorithm>
 
-#include <boost/bind.hpp>
 #include <boost/regex.hpp>
 #include <boost/format.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/SafeConvert.hpp>
@@ -32,6 +32,7 @@
 #include <session/projects/SessionProjects.hpp>
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {  

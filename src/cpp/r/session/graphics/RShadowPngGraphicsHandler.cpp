@@ -18,8 +18,8 @@
 #include <iostream>
 #include <gsl/gsl>
 
-#include <boost/bind.hpp>
 #include <boost/format.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <core/system/System.hpp>
 #include <core/StringUtils.hpp>
@@ -38,6 +38,7 @@
 #include <Rembedded.h>
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace r {

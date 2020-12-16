@@ -22,12 +22,12 @@
 #include <gsl/gsl>
 
 #include <boost/utility.hpp>
-#include <boost/bind.hpp>
 #include <boost/function.hpp>
 #include <boost/format.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
@@ -45,6 +45,7 @@
 #include "SessionHistoryArchive.hpp"
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

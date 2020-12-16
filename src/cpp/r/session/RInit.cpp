@@ -13,7 +13,7 @@
  *
  */
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <core/system/Environment.hpp>
 
@@ -37,6 +37,7 @@
 #define kGraphicsPath "graphics"
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace r {

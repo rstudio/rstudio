@@ -17,15 +17,16 @@
 
 #include <iostream>
 
-#include <boost/bind.hpp>
 #include <boost/format.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <shared_core/SafeConvert.hpp>
 #include <core/RegexUtils.hpp>
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

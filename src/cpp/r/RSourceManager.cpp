@@ -17,8 +17,8 @@
 
 #include <algorithm>
 
-#include <boost/bind.hpp>
 #include <boost/algorithm/string/replace.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
@@ -27,6 +27,7 @@
 #include <r/RExec.hpp>
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace r {

@@ -15,7 +15,7 @@
 
 #include "SessionAskSecret.hpp"
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <core/Exec.hpp>
 #include <core/Log.hpp>
@@ -36,6 +36,7 @@
 
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

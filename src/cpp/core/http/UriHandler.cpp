@@ -17,10 +17,12 @@
 
 #include <algorithm>
 
-#include <boost/bind.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <core/http/Request.hpp>
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace core {

@@ -15,12 +15,12 @@
 
 #include "SessionThemes.hpp"
 
+#include <boost/lexical_cast.hpp>
+#include <boost/regex.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/algorithm.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/bind.hpp>
-#include <boost/regex.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
@@ -45,6 +45,7 @@
 #include <string>
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {
