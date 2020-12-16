@@ -25,10 +25,12 @@
 #include <core/FileUtils.hpp>
 
 #include <boost/algorithm/string.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <session/SessionOptions.hpp>
 #include "SessionRParser.hpp"
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

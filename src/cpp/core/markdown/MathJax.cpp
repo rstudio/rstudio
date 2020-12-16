@@ -17,12 +17,14 @@
 
 #include <algorithm>
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/function.hpp>
 #include <boost/algorithm/string.hpp>
 
 #include <core/RegexUtils.hpp>
 #include <core/system/System.hpp>
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace core {

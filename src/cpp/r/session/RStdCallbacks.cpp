@@ -21,6 +21,7 @@
 
 #include <boost/function.hpp>
 #include <boost/regex.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <r/RExec.hpp>
 #include <r/ROptions.hpp>
@@ -60,6 +61,7 @@ __declspec(dllimport) SA_TYPE SaveAction;
 }
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace r {

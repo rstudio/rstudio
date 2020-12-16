@@ -27,9 +27,12 @@
 #include <core/system/Xdg.hpp>
 
 #include <boost/algorithm/string.hpp>
+#include <boost/bind/bind.hpp>
 
 // borrowed from SessionConstants.hpp
 #define kRStudioSessionRoute "RSTUDIO_SESSION_ROUTE"
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace core {

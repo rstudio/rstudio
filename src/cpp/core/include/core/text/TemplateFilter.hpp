@@ -21,12 +21,14 @@
 #include <string>
 #include <map>
 
-#include <boost/bind.hpp>
 #include <boost/function.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <boost/iostreams/filter/regex.hpp>
 
 #include <core/StringUtils.hpp>
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace core {

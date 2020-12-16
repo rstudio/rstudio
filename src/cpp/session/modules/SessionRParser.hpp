@@ -40,12 +40,14 @@
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
 
-#include <boost/bind.hpp>
-#include <boost/container/flat_set.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/bind/bind.hpp>
+#include <boost/container/flat_set.hpp>
 
 #include <core/Macros.hpp>
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

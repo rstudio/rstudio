@@ -19,7 +19,7 @@
 
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/classification.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <core/Log.hpp>
 #include <shared_core/Error.hpp>
@@ -30,6 +30,8 @@
 #include <core/system/System.hpp>
 
 #include "FileMonitorImpl.hpp"
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace core {

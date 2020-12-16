@@ -19,7 +19,7 @@
 #include "SessionPresentation.hpp"
 
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <core/Exec.hpp>
 #include <core/http/Util.hpp>
@@ -40,6 +40,7 @@
 
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

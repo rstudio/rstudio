@@ -21,8 +21,8 @@
 #include "NotebookWorkingDir.hpp"
 #include "NotebookHtmlWidgets.hpp"
 
-#include <boost/bind.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <core/StringUtils.hpp>
 #include <core/Algorithm.hpp>
@@ -33,6 +33,7 @@
 #include <r/RSexp.hpp>
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

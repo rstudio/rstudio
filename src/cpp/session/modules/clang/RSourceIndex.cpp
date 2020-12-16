@@ -15,8 +15,8 @@
 
 #include "RSourceIndex.hpp"
 
-#include <boost/bind.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <core/FileInfo.hpp>
 #include <shared_core/FilePath.hpp>
@@ -29,6 +29,7 @@
 
 using namespace rstudio::core;
 using namespace rstudio::core::libclang;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

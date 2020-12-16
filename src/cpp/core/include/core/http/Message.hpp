@@ -20,8 +20,10 @@
 #include <vector>
 #include <algorithm>
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/utility.hpp>
+
+using namespace boost::placeholders;
 
 namespace RSTUDIO_BOOST_NAMESPACE {
 namespace asio {

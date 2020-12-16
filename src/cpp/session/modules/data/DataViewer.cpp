@@ -20,9 +20,9 @@
 #include <sstream>
 #include <gsl/gsl>
 
-#include <boost/bind.hpp>
 #include <boost/format.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <core/Log.hpp>
 #include <shared_core/Error.hpp>
@@ -66,6 +66,7 @@
 #define MAX_COLUMNS 50
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

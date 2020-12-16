@@ -15,7 +15,7 @@
 
 #include "SessionCRANMirrors.hpp"
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <core/http/URL.hpp>
 #include <core/http/TcpIpBlockingClient.hpp>
@@ -29,6 +29,7 @@
 #include <session/prefs/UserPrefs.hpp>
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {
