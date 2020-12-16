@@ -105,7 +105,11 @@ public class CommandPaletteLauncher implements CommandPalette.Host
       
       // Create sources
       providers.add(new AppCommandPaletteSource(ShortcutManager.INSTANCE, commands_));
-      providers.add(pSource_.get().getPaletteEntryProvider());
+      CommandPaletteEntryProvider provider = pSource_.get().getPaletteEntryProvider();
+      if (provider != null)
+      {
+         providers.add(provider);
+      }
       providers.add(new RAddinPaletteSource(addins_.getRAddins(), ShortcutManager.INSTANCE));
       providers.add(new UserPrefPaletteSource(pPrefs_.get()));
 

@@ -19,7 +19,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import org.rstudio.studio.client.palette.model.CommandPaletteMruEntry;
 
 /**
- * An event emitted the
+ * An event emitted to the global event bus after a command palette item has been executed.
  */
 public class PaletteItemExecutedEvent
    extends GwtEvent<PaletteItemExecutedEvent.Handler>

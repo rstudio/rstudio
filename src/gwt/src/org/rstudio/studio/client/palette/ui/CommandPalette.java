@@ -424,7 +424,11 @@ public class CommandPalette extends Composite
          do
          {
             items = null;
-            sources_.get(renderedSource_).getCommandPaletteItems();
+            CommandPaletteEntryProvider provider = sources_.get(renderedSource_);
+            if (provider != null)
+            {
+               items = provider.getCommandPaletteItems();
+            }
             renderedSource_++;
          } while (items == null);
             
