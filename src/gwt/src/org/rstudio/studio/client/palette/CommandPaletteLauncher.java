@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.ShortcutManager;
@@ -77,6 +78,17 @@ public class CommandPaletteLauncher implements CommandPalette.Host
       // Listen for item executions; when they occur, update the MRU accordingly
       events.addHandler(PaletteItemExecutedEvent.TYPE, (evt) ->
       {
+         // Update local copy of MRU list immediately; this update will arrive
+         // from the server eventually, but the lag is obvious if you attempt
+         // to use the Command Palette as a quick "run last command again" tool
+         if (mru_ == null)
+         {
+            mru_ = new ArrayList<CommandPaletteMruEntry>();
+         }
+         mru_.removeIf(entry -> entry.equals(evt.getMruEntry()));
+         mru_.add(0, evt.getMruEntry());
+
+         // Update copy on server
          pWorkbenchLists_.get().getCommandPaletteMruList().prepend(
             evt.getMruEntry().toString());
       });

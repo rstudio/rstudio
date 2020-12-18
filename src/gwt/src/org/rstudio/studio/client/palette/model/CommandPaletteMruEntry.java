@@ -74,6 +74,12 @@ public class CommandPaletteMruEntry
       return new CommandPaletteMruEntry(parts.get(0), parts.get(1));
    }
 
+   public boolean equals(CommandPaletteMruEntry other)
+   {
+      return StringUtil.equals(scope_, other.getScope()) &&
+             StringUtil.equals(id_, other.getId());
+   }
+
    public String toString()
    {
       return scope_ + CommandPalette.SCOPE_MRU_DELIMITER + id_;
