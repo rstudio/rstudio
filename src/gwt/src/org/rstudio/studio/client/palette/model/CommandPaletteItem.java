@@ -48,6 +48,20 @@ public interface CommandPaletteItem extends IsWidget, HasHandlers
     * Invoke the entry (execute the command, etc.)
     */
    public void invoke(InvocationSource source);
+
+   /**
+    * Sets a flag indicating whether this item originated from the MRU
+    *
+    * @param isMru Whether this is an MRU item
+    */
+   public void setIsMru(boolean isMru);
+
+   /**
+    * Returns a flag indicating whether this item originated from the MRU
+    *
+    * @return Whether this is an MRU item
+    */
+   public boolean getIsMru();
    
    /**
     * Add a handler to be called when the palette item is invoked

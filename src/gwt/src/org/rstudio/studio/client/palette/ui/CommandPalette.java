@@ -45,6 +45,7 @@ import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.Label;
 import org.rstudio.studio.client.palette.model.CommandPaletteMruEntry;
 
 /**
@@ -74,6 +75,7 @@ public class CommandPalette extends Composite
       String searchBox();
       String commandList();
       String commandPanel();
+      String mruSeparator();
    }
 
    /**
@@ -416,7 +418,7 @@ public class CommandPalette extends Composite
    private void renderNextPage()
    {
       // If we have no items yet, start with MRU items
-      if (renderedItem_ == 0 && mru_ != null)
+      if (items_.size() == 0 && mru_ != null)
       {
          for (CommandPaletteMruEntry mru: mru_)
          {
@@ -429,6 +431,7 @@ public class CommandPalette extends Composite
                   CommandPaletteItem item = provider.getCommandPaletteItem(mru.getId());
                   if (item != null)
                   {
+                     item.setIsMru(true);
                      items_.add(item);
                   }
 
@@ -464,10 +467,11 @@ public class CommandPalette extends Composite
                         if (StringUtil.equals(entry.getScope(), provider.getProviderScope()) &&
                             StringUtil.equals(entry.getId(), item.getId()))
                         {
-                           // Item already present in MRU
+                           // Item already present in MRU; remove it
                            return true;
                         }
                      }
+                     // Item not present in MRU; don't remove
                      return false;
                   });
                }
@@ -481,6 +485,7 @@ public class CommandPalette extends Composite
       // Set initial conditions for render loop
       int rendered = 0;
       int idx = renderedItem_;
+      boolean mruSeparator = false;
 
       // Main render loop; render items until we have rendered a full page
       while (idx < items_.size() && rendered < RENDER_PAGE_SIZE)
@@ -498,6 +503,19 @@ public class CommandPalette extends Composite
             Widget widget = item.asWidget();
             if (widget != null)
             {
+               if (item.getIsMru())
+               {
+                  // If this item came from the MRU, we need to render a separator to
+                  // delineate the MRU and non MRU entries in the palette
+                  mruSeparator = true;
+               }
+               else if (mruSeparator)
+               {
+                  // Render the MRU separator if we've entered the region of non-MRU items
+                  addMruSeparator();
+                  mruSeparator = false;
+               }
+
                // Add and highlight the item
                commandList_.add(item.asWidget());
                visible_.add(item);
@@ -552,7 +570,20 @@ public class CommandPalette extends Composite
          completeRender();
       }
    }
-   
+
+   /**
+    * Adds an element to visually separate the MRU section of the palette from
+    * the rest of the commands
+    */
+   private void addMruSeparator()
+   {
+      Label separator = new Label("");
+      separator.addStyleName(styles_.mruSeparator());
+      // This separator is decorative from the perspective of a screen reader
+      A11y.setARIAHidden(separator);
+      commandList_.add(separator);
+   }
+
    private final Host host_;
    private final List<CommandPaletteEntryProvider> sources_;
    private final List<CommandPaletteItem> items_;
