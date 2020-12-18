@@ -19,6 +19,7 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/thread.hpp>
+#include <boost/regex.hpp>
 
 #include <core/Log.hpp>
 #include <core/Settings.hpp>
@@ -158,8 +159,13 @@ Error readOptions(const std::string& databaseConfigFile,
       if (options.connectionUri.empty())
          LOG_INFO_MESSAGE("Connecting to Postgres database " + options.username + "@" + options.host + ":" + options.port + "/" + options.database);
       else
-         LOG_INFO_MESSAGE("Connecting to Postgres database: " + options.connectionUri);
-
+      {
+         // matches up to the password, the password itself, and rest of it
+         // replaces the password with a mask (***) leaving the rest untouched
+         // no replacements if not a match (no password in the URI)
+         boost::regex matchPassword(R"((.*:\/\/[^:]*:)([^@]*)(@.*$))");
+         LOG_INFO_MESSAGE("Connecting to Postgres database: " + boost::regex_replace(options.connectionUri, matchPassword, "$1***$3"));
+      }
       checkConfFilePermissions = true;
    }
    else

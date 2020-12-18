@@ -168,9 +168,10 @@ public:
          std::string connectionStr;
 
          // prefer connection-uri
+         std::string password;
          if (!options.connectionUri.empty())
          {
-            Error error = parseConnectionUri(options.connectionUri, !options.password.empty(), &connectionStr);
+            Error error = parseConnectionUri(options.connectionUri, password, &connectionStr);
             if (error)
                return error;
          }
@@ -186,7 +187,6 @@ public:
                              safe_convert::numberToString(options.connectionTimeoutSeconds, "0"));
          }
 
-         std::string password;
          Error error = getPassword(options, password);
          if (error)
             return error;
@@ -218,7 +218,7 @@ public:
    }
 
    Error parseConnectionUri(const std::string& uri,
-                            bool skipPassword,
+                            std::string& password,
                             std::string* pConnectionStr) const
    {
       boost::regex re("(postgres|postgresql)://([^/#?]+)(.*)", boost::regex::icase);
@@ -238,7 +238,7 @@ public:
       }
 
       // extract user and password information
-      std::string user, password;
+      std::string user;
       std::vector<std::string> hostParts;
       boost::split(hostParts, host, boost::is_any_of("@"));
 
@@ -347,8 +347,6 @@ public:
          *pConnectionStr += " port='" + pgEncode(port) + "'";
       if (!user.empty())
          *pConnectionStr += " user='" + pgEncode(user) + "'";
-      if (!password.empty() && !skipPassword)
-         *pConnectionStr += " password='" + pgEncode(password) + "'";
       if (!database.empty())
          *pConnectionStr += " dbname='" + pgEncode(database) + "'";
 
@@ -380,11 +378,9 @@ public:
 
    Error getPassword(const PostgresqlConnectionOptions& options, std::string& password) const
    {
-      // if not using password authentication (or perhaps it is hardcoded into the connection uri), bail
-      if (options.password.empty())
-         return Success();
-
-      password = options.password;
+      // override password from the input with the one from options if any
+      if (!options.password.empty())
+         password = options.password;
 
       Error error = decryptPassword(options.secureKey, password);
       if (error)
