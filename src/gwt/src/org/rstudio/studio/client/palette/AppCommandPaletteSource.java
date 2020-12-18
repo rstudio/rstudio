@@ -51,9 +51,11 @@ public class AppCommandPaletteSource implements CommandPaletteEntryProvider
             continue;
          }
 
-         if (id.contains("Mru") || id.startsWith("mru") || id.contains("Dummy"))
+         if ((id.contains("Mru") || id.startsWith("mru") || id.contains("Dummy")) &&
+              !id.contains("Palette"))
          {
             // MRU entries and dummy commands should not appear in the palette
+            // (unless they pertain to the palette itself)
             continue;
          }
          

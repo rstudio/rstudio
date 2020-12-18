@@ -18,11 +18,13 @@ package org.rstudio.studio.client.palette;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.widget.ModalPopupPanel;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.palette.events.PaletteItemExecutedEvent;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.palette.model.CommandPaletteMruEntry;
@@ -60,6 +62,7 @@ public class CommandPaletteLauncher implements CommandPalette.Host
                                  Provider<UserPrefs> pPrefs,
                                  Provider<WorkbenchListManager> pWorkbenchLists,
                                  EventBus events,
+                                 GlobalDisplay display,
                                  Binder binder)
    {
       binder.bind(commands, this);
@@ -67,6 +70,7 @@ public class CommandPaletteLauncher implements CommandPalette.Host
       commands_ = commands;
       pSource_ = pSource;
       pPrefs_ = pPrefs;
+      display_ = display;
       pWorkbenchLists_ = pWorkbenchLists;
       state_ = State.Hidden;
 
@@ -92,6 +96,15 @@ public class CommandPaletteLauncher implements CommandPalette.Host
          createPanel();
       }
    }
+
+   @Handler
+   public void onClearCommandPaletteMru()
+   {
+      pWorkbenchLists_.get().getCommandPaletteMruList().clear();
+      mru_ = null;
+      display_.showMessage(GlobalDisplay.MSG_INFO, "Command Palette Cleared",
+         "The Command Palette's list of recently used items has been cleared.");
+   }
    
    /**
     * Creates the popup panel that hosts the palette. Since this panel is
@@ -113,8 +126,8 @@ public class CommandPaletteLauncher implements CommandPalette.Host
       providers.add(new RAddinPaletteSource(addins_.getRAddins(), ShortcutManager.INSTANCE));
       providers.add(new UserPrefPaletteSource(pPrefs_.get()));
 
-      // Populate the MRU on first show
-      if (mru_ == null)
+      // Populate the MRU on first show if enabled
+      if (mru_ == null && pPrefs_.get().commandPaletteMru().getValue())
       {
          pWorkbenchLists_.get().getCommandPaletteMruList().addListChangedHandler((evt) ->
          {
@@ -134,7 +147,8 @@ public class CommandPaletteLauncher implements CommandPalette.Host
       }
 
       // Create the command palette widget
-      palette_ = new CommandPalette(providers, mru_, this);
+      palette_ = new CommandPalette(providers,
+         pPrefs_.get().commandPaletteMru().getValue() ? mru_ : null, this);
 
       panel_ = new ModalPopupPanel(
             true,  // Auto hide
@@ -203,6 +217,7 @@ public class CommandPaletteLauncher implements CommandPalette.Host
 
    private final Commands commands_;
    private final AddinsCommandManager addins_;
+   private final GlobalDisplay display_;
    private final Provider<Source> pSource_;
    private final Provider<UserPrefs> pPrefs_;
    private final Provider<WorkbenchListManager> pWorkbenchLists_;

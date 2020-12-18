@@ -2818,6 +2818,19 @@ core::Error UserPrefValues::setInsertNativePipeOperator(bool val)
    return writePref("insert_native_pipe_operator", val);
 }
 
+/**
+ * Whether to keep track of recently used commands in the Command Palette
+ */
+bool UserPrefValues::commandPaletteMru()
+{
+   return readPref<bool>("command_palette_mru");
+}
+
+core::Error UserPrefValues::setCommandPaletteMru(bool val)
+{
+   return writePref("command_palette_mru", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -3036,6 +3049,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kPythonPath,
       kSaveRetryTimeout,
       kInsertNativePipeOperator,
+      kCommandPaletteMru,
    });
 }
    

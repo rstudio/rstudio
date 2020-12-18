@@ -71,6 +71,11 @@ public class AppCommandPaletteItem extends BasePaletteItem<AppCommandPaletteEntr
       }
       else
       {
+         // Record execution of command (used to populate recent commands). We do this *before*
+         // the command is actually executed since some commands don't return.
+         RStudioGinjector.INSTANCE.getEventBus().fireEvent(new PaletteItemExecutedEvent(
+            widget_.getScope(), widget_.getId()));
+
          // Regular command execution attempt; we still wrap this in a try/catch
          // so that if anything goes haywire during execution we can tell the user
          // about it.
@@ -86,10 +91,6 @@ public class AppCommandPaletteItem extends BasePaletteItem<AppCommandPaletteEntr
             Debug.logException(e);
          }
       }
-
-      // Record execution of command (used to populate recent commands)
-      RStudioGinjector.INSTANCE.getEventBus().fireEvent(new PaletteItemExecutedEvent(
-         widget_.getScope(), widget_.getId()));
    }
    
    @Override

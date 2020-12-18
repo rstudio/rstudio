@@ -50,11 +50,12 @@ public class RAddinPaletteItem extends BasePaletteItem<RAddinCommandPaletteEntry
    @Override
    public void invoke(InvocationSource source)
    {
-      executor_.execute(addin_);
-
       // Record execution of command (used to populate recent commands)
       RStudioGinjector.INSTANCE.getEventBus().fireEvent(new PaletteItemExecutedEvent(
          widget_.getScope(), widget_.getId()));
+
+      // Use the add-in executor to invoke the command
+      executor_.execute(addin_);
    }
 
    @Override
