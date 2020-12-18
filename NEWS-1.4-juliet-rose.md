@@ -13,6 +13,7 @@
 * Compilation of Sweave documents now uses tinytex when requested (#2788)
 * Preliminary compatibility with UCRT builds of R-devel (#8461)
 * Update Windows Desktop to openSSL 1.1.1i (#8574)
+* Improve ordering of items in Command Palette list and search results (#7567, #7956)
 
 ### RStudio Server
 
