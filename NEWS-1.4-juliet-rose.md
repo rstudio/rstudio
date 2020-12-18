@@ -14,6 +14,7 @@
 * Preliminary compatibility with UCRT builds of R-devel (#8461)
 * Update Windows Desktop to openSSL 1.1.1i (#8574)
 * Improve ordering of items in Command Palette list and search results (#7567, #7956)
+* Update embedded Pandoc to v2.11.3
 
 ### RStudio Server
 

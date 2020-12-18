@@ -16,8 +16,10 @@
 #ifndef CORE_PREDICATE_HPP
 #define CORE_PREDICATE_HPP
 
-#include <boost/bind.hpp>
 #include <boost/function.hpp>
+#include <boost/bind/bind.hpp>
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace core {

@@ -45,10 +45,10 @@
 #include <boost/filesystem.hpp>
 #undef BOOST_NO_CXX11_SCOPED_ENUMS
 
+#include <boost/bind/bind.hpp>
+#include <boost/make_shared.hpp>
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/algorithm/string/predicate.hpp>
-#include <boost/bind.hpp>
-#include <boost/make_shared.hpp>
 
 #include <shared_core/Logger.hpp>
 #include <shared_core/Error.hpp>
@@ -56,6 +56,8 @@
 #include <shared_core/system/User.hpp>
 
 typedef boost::filesystem::path path_t;
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace core {

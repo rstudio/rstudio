@@ -29,8 +29,8 @@
 
 #include <stdio.h>
 
-#include <boost/bind.hpp>
 #include <boost/format.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 
 #include <shared_core/FilePath.hpp>
@@ -56,6 +56,7 @@ extern "C" {
 }
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace r {

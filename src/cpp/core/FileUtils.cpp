@@ -16,7 +16,7 @@
 #include <fstream>
 #include <iostream>
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <core/FileUtils.hpp>
 #include <core/FileSerializer.hpp>
@@ -28,6 +28,8 @@
 #ifndef _WIN32
 #include <core/system/PosixUser.hpp>
 #endif
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace core {

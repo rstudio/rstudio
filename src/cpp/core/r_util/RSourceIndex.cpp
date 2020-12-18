@@ -25,8 +25,10 @@
 #include <core/r_util/RTokenizer.hpp>
 #include <core/r_util/RTokenCursor.hpp>
 
-#include <boost/bind.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/bind/bind.hpp>
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace core {

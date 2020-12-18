@@ -16,7 +16,7 @@ import React from 'react';
 
 import { BibliographyManager } from '../../../api/bibliography/bibliography';
 import { createUniqueCiteId } from '../../../api/cite';
-import { CSL } from '../../../api/csl';
+import { CSL, sanitizeForCiteproc } from '../../../api/csl';
 import { DOIServer } from '../../../api/doi';
 import { logException } from '../../../api/log';
 import { NavigationTreeNode } from '../../../api/widgets/navigation-tree';
@@ -167,7 +167,8 @@ function toCitationListEntry(
       // Generate CSL using the DOI
       const doiResult = await doiServer.fetchCSL(doc.doi, -1);
       const csl = doiResult.message as CSL;
-      return { ...csl, id: finalId, providerKey };
+      const sanitizedCSL = sanitizeForCiteproc(csl);
+      return { ...sanitizedCSL, id: finalId, providerKey };
     },
     isSlowGeneratingBibliographySource: true,
   };

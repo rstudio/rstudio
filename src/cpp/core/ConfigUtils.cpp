@@ -18,13 +18,15 @@
 #include <algorithm>
 
 #include <boost/regex.hpp>
-#include <boost/bind.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/replace.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace core {

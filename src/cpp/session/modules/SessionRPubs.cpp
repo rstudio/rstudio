@@ -15,11 +15,11 @@
 
 #include "SessionRPubs.hpp"
 
-#include <boost/bind.hpp>
 #include <boost/utility.hpp>
 #include <boost/format.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
@@ -39,6 +39,7 @@
 #include <session/projects/SessionProjects.hpp>
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

@@ -18,9 +18,9 @@
 
 #include <map>
 
-#include <boost/bind.hpp>
 #include <boost/utility.hpp>
 #include <boost/circular_buffer.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
@@ -29,6 +29,7 @@
 #include <session/SessionModuleContext.hpp>
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

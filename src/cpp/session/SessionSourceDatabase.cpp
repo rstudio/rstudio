@@ -19,8 +19,8 @@
 #include <vector>
 #include <algorithm>
 
-#include <boost/bind.hpp>
 #include <boost/regex.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <core/Log.hpp>
@@ -63,6 +63,7 @@
 // properties rather than a side-database
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

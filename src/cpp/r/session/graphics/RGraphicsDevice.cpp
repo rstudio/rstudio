@@ -17,8 +17,8 @@
 
 #include <cstdlib>
 
-#include <boost/bind.hpp>
 #include <boost/thread.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
@@ -53,6 +53,7 @@
 
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace r {

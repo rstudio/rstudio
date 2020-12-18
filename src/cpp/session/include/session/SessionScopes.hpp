@@ -19,8 +19,8 @@
 #ifndef SESSION_SCOPES_HPP
 #define SESSION_SCOPES_HPP
 
-#include <boost/bind.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/range/adaptor/map.hpp>
 
 #include <shared_core/FilePath.hpp>
@@ -38,6 +38,9 @@
 
 #include <session/projects/ProjectsSettings.hpp>
 #include <session/projects/SessionProjectSharing.hpp>
+
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

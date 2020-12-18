@@ -42,8 +42,10 @@
 
 #include <r/session/RSessionUtils.hpp>
 
+#include <boost/bind/bind.hpp>
 #include <boost/container/flat_set.hpp>
-#include <boost/bind.hpp>
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

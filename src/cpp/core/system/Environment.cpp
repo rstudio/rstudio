@@ -20,13 +20,15 @@
 
 #include <core/Algorithm.hpp>
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 
 #ifdef _WIN32
 #define kPathSeparator ";"
 #else
 #define kPathSeparator ":"
 #endif
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace core {

@@ -15,8 +15,8 @@
 
 #include "ZoteroCollectionsLocal.hpp"
 
-#include <boost/bind.hpp>
 #include <boost/algorithm/algorithm.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/json/Json.hpp>
@@ -38,6 +38,7 @@
 #include "session-config.h"
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

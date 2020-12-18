@@ -19,7 +19,7 @@
 
 #include "SessionUserCommands.hpp"
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
@@ -38,6 +38,7 @@ namespace modules {
 namespace user_commands {
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace {
 

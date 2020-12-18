@@ -22,10 +22,10 @@
 #endif
 
 #include <boost/algorithm/string.hpp>
-#include <boost/bind.hpp>
 #include <boost/date_time.hpp>
 #include <boost/regex.hpp>
 #include <core/BoostLamda.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <core/FileSerializer.hpp>
 #include <core/rapidxml/rapidxml.hpp>
@@ -55,6 +55,7 @@ using namespace rstudio::core;
 using namespace rstudio::core::shell_utils;
 using namespace rstudio::session::modules::vcs_utils;
 using namespace rstudio::session::console_process;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

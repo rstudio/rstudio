@@ -27,9 +27,8 @@
 
 #include <iostream>
 
-#include <boost/bind.hpp>
-
 #include <boost/asio/placeholders.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <shared_core/Error.hpp>
 #include <core/Log.hpp>
@@ -37,6 +36,7 @@
 #include <core/http/SocketUtils.hpp>
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace core {
