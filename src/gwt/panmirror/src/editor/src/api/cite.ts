@@ -194,7 +194,7 @@ function isValidDate(date: CSLDate): boolean {
 const kEtAl = 'et al.';
 export function formatAuthors(authors?: CSLName[], maxLength?: number): string {
   // No author(s) specified
-  if (!authors) {
+  if (!authors || authors.length === 0) {
     return '';
   }
 
