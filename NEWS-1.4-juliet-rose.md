@@ -13,6 +13,7 @@
 * Compilation of Sweave documents now uses tinytex when requested (#2788)
 * Preliminary compatibility with UCRT builds of R-devel (#8461)
 * Update Windows Desktop to openSSL 1.1.1i (#8574)
+* Update embedded Pandoc to v2.11.3
 
 ### RStudio Server
 
