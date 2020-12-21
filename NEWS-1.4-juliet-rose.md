@@ -4,7 +4,7 @@
 
 ### Misc
 
-* Added support for the `|>` pipe operator, and `\(x)` function shorthand syntax (#8543)
+* Added support for the `|>` pipe operator, and `\(x)` function shorthand syntax in R 4.1 (#8543)
 * Added preference toggle for inserting the |> pipe operator when the Insert Pipe Operator command is used (#8534)
 * Improve detection for crashes that occur early in session initialization (#7983)
 * The mouse back / forward buttons can now be used to navigate within the Help pane (#8338)
@@ -33,6 +33,8 @@
 * Improved checks for non-writable R library paths on startup (Pro #2184)
 * Code chunks in the visual editor now respect the "Tab Key Always Moves Focus" accessibility setting (#8584)
 * The commands "Execute Previous Chunks" and "Execute Subsequent Chunks" now work when the cursor is outside a code chunk in the visual editor (#8500)
+* Fix various issues when the "Limit Console Output" performance setting was enabled, and enable it by default (#8544, #8504, #8529, #8552)
+* Fix display of condition messages (errors and warnings) in some character encodings (#8546)
 
 
 
