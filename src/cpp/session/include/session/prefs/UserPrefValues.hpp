@@ -381,6 +381,7 @@ namespace prefs {
 #define kPythonPath "python_path"
 #define kSaveRetryTimeout "save_retry_timeout"
 #define kInsertNativePipeOperator "insert_native_pipe_operator"
+#define kCommandPaletteMru "command_palette_mru"
 
 class UserPrefValues: public Preferences
 {
@@ -1675,6 +1676,12 @@ public:
     */
    bool insertNativePipeOperator();
    core::Error setInsertNativePipeOperator(bool val);
+
+   /**
+    * Whether to keep track of recently used commands in the Command Palette
+    */
+   bool commandPaletteMru();
+   core::Error setCommandPaletteMru(bool val);
 
 };
 

@@ -440,6 +440,7 @@ public abstract class
    public abstract AppCommand showPythonOptions();
    public abstract AppCommand modifyKeyboardShortcuts();
    public abstract AppCommand showCommandPalette();
+   public abstract AppCommand clearCommandPaletteMru();
 
    // Terminal
    public abstract AppCommand newTerminal();

@@ -3063,6 +3063,18 @@ public class UserPrefsAccessor extends Prefs
          false);
    }
 
+   /**
+    * Whether to keep track of recently used commands in the Command Palette
+    */
+   public PrefValue<Boolean> commandPaletteMru()
+   {
+      return bool(
+         "command_palette_mru",
+         "Remember recently used items in Command Palette", 
+         "Whether to keep track of recently used commands in the Command Palette", 
+         true);
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -3495,6 +3507,8 @@ public class UserPrefsAccessor extends Prefs
          saveRetryTimeout().setValue(layer, source.getInteger("save_retry_timeout"));
       if (source.hasKey("insert_native_pipe_operator"))
          insertNativePipeOperator().setValue(layer, source.getBool("insert_native_pipe_operator"));
+      if (source.hasKey("command_palette_mru"))
+         commandPaletteMru().setValue(layer, source.getBool("command_palette_mru"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -3714,6 +3728,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(pythonPath());
       prefs.add(saveRetryTimeout());
       prefs.add(insertNativePipeOperator());
+      prefs.add(commandPaletteMru());
       return prefs;
    }
    

@@ -23,6 +23,7 @@ import org.rstudio.core.client.command.KeySequence;
 import org.rstudio.core.client.command.AppCommand.Context;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.palette.events.PaletteItemExecutedEvent;
 import org.rstudio.studio.client.palette.ui.AppCommandPaletteEntry;
 
 public class AppCommandPaletteItem extends BasePaletteItem<AppCommandPaletteEntry>
@@ -70,6 +71,11 @@ public class AppCommandPaletteItem extends BasePaletteItem<AppCommandPaletteEntr
       }
       else
       {
+         // Record execution of command (used to populate recent commands). We do this *before*
+         // the command is actually executed since some commands don't return.
+         RStudioGinjector.INSTANCE.getEventBus().fireEvent(new PaletteItemExecutedEvent(
+            widget_.getScope(), widget_.getId()));
+
          // Regular command execution attempt; we still wrap this in a try/catch
          // so that if anything goes haywire during execution we can tell the user
          // about it.
@@ -118,6 +124,12 @@ public class AppCommandPaletteItem extends BasePaletteItem<AppCommandPaletteEntr
    public void setSelected(boolean selected)
    {
       widget_.setSelected(selected);
+   }
+
+   @Override
+   public String getId()
+   {
+      return command_.getId();
    }
 
    private final List<KeySequence> keys_;

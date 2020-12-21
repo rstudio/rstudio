@@ -72,6 +72,16 @@ public abstract class BasePaletteItem<T extends Widget> implements CommandPalett
       return handlers_.addHandler(PaletteItemInvokedEvent.TYPE, handler);
    }
 
+   public void setIsMru(boolean isMru)
+   {
+      isMru_ = isMru;
+   }
+
+   public boolean getIsMru()
+   {
+      return isMru_;
+   }
+
    protected boolean labelMatchesSearch(String label, String[] keywords)
    {
       String hay = label.toLowerCase();
@@ -88,6 +98,7 @@ public abstract class BasePaletteItem<T extends Widget> implements CommandPalett
    public abstract T createWidget();
    
    protected T widget_;
-   
+
+   private boolean isMru_;
    private HandlerManager handlers_;
 }

@@ -1,5 +1,5 @@
 /*
- * CommandPaletteEntrySource.java
+ * CommandPaletteItem.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -48,6 +48,20 @@ public interface CommandPaletteItem extends IsWidget, HasHandlers
     * Invoke the entry (execute the command, etc.)
     */
    public void invoke(InvocationSource source);
+
+   /**
+    * Sets a flag indicating whether this item originated from the MRU
+    *
+    * @param isMru Whether this is an MRU item
+    */
+   public void setIsMru(boolean isMru);
+
+   /**
+    * Returns a flag indicating whether this item originated from the MRU
+    *
+    * @return Whether this is an MRU item
+    */
+   public boolean getIsMru();
    
    /**
     * Add a handler to be called when the palette item is invoked
@@ -83,4 +97,11 @@ public interface CommandPaletteItem extends IsWidget, HasHandlers
     * @param selected Whether to draw the entry as selected
     */
    public void setSelected(boolean selected);
+
+   /**
+    * Gets the ID of the item from the underlying provider
+    *
+    * @return The item's ID
+    */
+   public String getId();
 }

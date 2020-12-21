@@ -18,14 +18,17 @@ package org.rstudio.studio.client.palette;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyMap;
 import org.rstudio.core.client.command.KeyMap.KeyMapType;
 import org.rstudio.core.client.command.KeySequence;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
 import org.rstudio.studio.client.palette.model.CommandPaletteItem;
+import org.rstudio.studio.client.palette.ui.CommandPalette;
 import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
@@ -34,7 +37,7 @@ import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
  * A command palette entry source which serves as a factory for R addin
  * commands.
  */
-public class RAddinPaletteSource implements CommandPaletteEntrySource
+public class RAddinPaletteSource implements CommandPaletteEntryProvider
 {
    public RAddinPaletteSource(RAddins addins, ShortcutManager shortcuts)
    {
@@ -59,6 +62,29 @@ public class RAddinPaletteSource implements CommandPaletteEntrySource
       }
       
       return items;
+   }
+
+   @Override
+   public CommandPaletteItem getCommandPaletteItem(String id)
+   {
+      if (StringUtil.isNullOrEmpty(id))
+      {
+         return null;
+      }
+
+      RAddin addin = addins_.get(id);
+      if (addin == null)
+      {
+         Debug.logWarning("R addin requested by the command palette but not found: '" + id + "'");
+         return null;
+      }
+      return new RAddinPaletteItem(addin, executor_, map_.getBindings(id));
+   }
+
+   @Override
+   public String getProviderScope()
+   {
+      return CommandPalette.SCOPE_R_ADDIN;
    }
 
    private final RAddins addins_;
