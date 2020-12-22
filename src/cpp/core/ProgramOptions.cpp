@@ -57,23 +57,17 @@ bool validateOptionsProvided(const variables_map& vm,
 void reportError(const Error& error, const ErrorLocation& location, bool forceStderr)
 {
    std::string description = error.getProperty("description");
-   if (core::system::stderrIsTerminal() && !description.empty())
+
+   // in some cases, we may need to force stderr to be written
+   // for example, during installation on RedHat systems, stderr
+   // is not properly hooked up to a terminal when checking configuration during post install scripts
+   // which would cause error output to go only to syslog and be hidden from view during install
+   if ((forceStderr || core::system::stderrIsTerminal()) && !description.empty())
    {
       std::cerr << description << std::endl;
    }
-   else
-   {
-      // in some cases, we may need to force stderr to be written
-      // for example, during installation on RedHat systems, stderr
-      // is not properly hooked up to a terminal when checking configuration during post install scripts
-      // which would cause error output to go only to syslog and be hidden from view during install
-      if (forceStderr && !description.empty())
-         std::cerr << description << std::endl;
 
-      core::log::logError(error, location);
-   }
-
-
+   core::log::logError(error, location);
 }
 
 void reportError(const std::string& errorMessage, const ErrorLocation& location, bool forceStderr)
