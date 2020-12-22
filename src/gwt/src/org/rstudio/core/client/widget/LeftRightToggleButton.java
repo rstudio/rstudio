@@ -16,6 +16,7 @@ package org.rstudio.core.client.widget;
 
 import com.google.gwt.aria.client.PressedValue;
 import com.google.gwt.aria.client.Roles;
+import org.rstudio.core.client.ClassIds;
 import org.rstudio.core.client.theme.res.ThemeResources;
 
 import com.google.gwt.core.client.GWT;
@@ -85,10 +86,21 @@ public class LeftRightToggleButton extends Widget
       else
          addStyleName(styles.rightOn());
 
+      setClassId();
       Roles.getButtonRole().setAriaPressedState(left_, leftIsOn ? PressedValue.TRUE : PressedValue.FALSE);
       Roles.getButtonRole().setAriaPressedState(right_, leftIsOn ? PressedValue.FALSE : PressedValue.TRUE);
    }
 
+   public void setClassId()
+   {
+      ClassIds.assignClassId(getElement(),
+         ClassIds.LEFT_RIGHT_TOGGLE_BTN + " _ " +
+            left_.getInnerText() + "_" +
+            right_.getInnerText());
+      ClassIds.assignClassId(left_, ClassIds.LEFT_TOGGLE_BTN + "_"  + left_.getInnerText());
+      ClassIds.assignClassId(right_, ClassIds.RIGHT_TOGGLE_BTN + "_"  + right_.getInnerText());
+   }
+   
    @Override
    public HandlerRegistration addClickHandler(ClickHandler handler)
    {

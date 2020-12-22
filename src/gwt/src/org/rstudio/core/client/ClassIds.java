@@ -80,4 +80,14 @@ public class ClassIds
 
    // ToolbarButton
    public final static String TOOLBAR_BTN = "tlbr_btn";
+
+   // LeftRightToggleButton
+   public final static String LEFT_RIGHT_TOGGLE_BTN = "lr_tg_btn";
+   public final static String LEFT_TOGGLE_BTN = "left_tg_btn";
+   public final static String RIGHT_TOGGLE_BTN = "right_tg_btn";
+   
+   // FastSelectTable
+   public final static String FAST_SELECT_TABLE = "fast_select_tbl";
 }
+   
+      
