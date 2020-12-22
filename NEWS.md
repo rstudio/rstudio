@@ -94,6 +94,7 @@
 * **RETIRED:** The option `auth-proxy-require-hmac` is has been retired and it is no longer operational. RStudio will not start if enabled. See the documentation on [Proxy Security Considerations] for alternatives to secure RStudio. (Pro #2029)
 * Fix GetPass not working in remote sessions from Rstudio Desktop Pro (Pro #2218)
 * Fix issue with creating RSA key from remote sessions in RStudio Desktop Pro (Pro #2219)
+* Ensure error messages occurring during installation are displayed in the terminal (Pro #2214)
 
 ### Bugfixes
 

@@ -43,7 +43,7 @@ bool validateOptionsProvided(const variables_map& vm,
          std::string msg = "Required option " + optionName + " not specified";
          if (!configFile.empty())
             msg += " in config file " + configFile;
-         reportError(msg, ERROR_LOCATION);
+         reportError(msg, ERROR_LOCATION, true);
          return false;
       }
    }
@@ -54,21 +54,36 @@ bool validateOptionsProvided(const variables_map& vm,
 
 }
 
-void reportError(const Error& error, const ErrorLocation& location)
+void reportError(const Error& error, const ErrorLocation& location, bool forceStderr)
 {
    std::string description = error.getProperty("description");
-   if (core::system::stderrIsTerminal() && !description.empty())
+
+   // in some cases, we may need to force stderr to be written
+   // for example, during installation on RedHat systems, stderr
+   // is not properly hooked up to a terminal when checking configuration during post install scripts
+   // which would cause error output to go only to syslog and be hidden from view during install
+   if ((forceStderr || core::system::stderrIsTerminal()) && !description.empty())
+   {
       std::cerr << description << std::endl;
+   }
 
    core::log::logError(error, location);
 }
 
-void reportError(const std::string& errorMessage, const ErrorLocation& location)
+void reportError(const std::string& errorMessage, const ErrorLocation& location, bool forceStderr)
 {
    if (core::system::stderrIsTerminal())
+   {
       std::cerr << errorMessage << std::endl;
+   }
    else
+   {
+      // see above for rationale behind forceStderr
+      if (forceStderr)
+         std::cerr << errorMessage << std::endl;
+
       core::log::logErrorMessage(errorMessage, location);
+   }
 }
 
 void reportWarnings(const std::string& warningMessages,
@@ -118,7 +133,7 @@ bool parseConfigFile(variables_map& vm,
       if (error)
       {
          error.addProperty("description", "Unable to open config file: " + configFile);
-         reportError(error, ERROR_LOCATION);
+         reportError(error, ERROR_LOCATION, true);
 
          return false;
       }
@@ -133,7 +148,8 @@ bool parseConfigFile(variables_map& vm,
       {
          reportError(
            "Error reading " + configFile + ": " + std::string(e.what()),
-           ERROR_LOCATION);
+           ERROR_LOCATION,
+           true);
 
          return false;
       }
@@ -238,7 +254,7 @@ ProgramStatus read(const OptionsDescription& optionsDescription,
       std::string msg(e.what());
       if (!configFile.empty())
          msg += " in config file " + configFile;
-      reportError(msg, ERROR_LOCATION);
+      reportError(msg, ERROR_LOCATION, true);
       return ProgramStatus::exitFailure();
    }
    CATCH_UNEXPECTED_EXCEPTION
