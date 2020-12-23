@@ -181,9 +181,6 @@ Var AR_RegFlags
 
   !define MUI_HEADERIMAGE
   !define MUI_ABORTWARNING
-    
-;--------------------------------
-; path functions
 
 !verbose 3
 !include "WinMessages.NSH"
@@ -465,7 +462,7 @@ FunctionEnd
 ;   Call StrStr
 ;   Pop $R0
 ;  ($R0 at this point is "ass string")
- 
+
 !macro StrStr un
 Function ${un}StrStr
 Exch $R1 ; st=haystack,old$R1, $R1=needle
@@ -583,7 +580,7 @@ FunctionEnd
 
   ;Start Menu Folder Page Configuration
   !define MUI_STARTMENUPAGE_REGISTRY_ROOT "SHCTX"
-  !define MUI_STARTMENUPAGE_REGISTRY_KEY "Software\@CPACK_PACKAGE_VENDOR@\@CPACK_PACKAGE_INSTALL_REGISTRY_KEY@" 
+  !define MUI_STARTMENUPAGE_REGISTRY_KEY "Software\@CPACK_PACKAGE_VENDOR@\@CPACK_PACKAGE_INSTALL_REGISTRY_KEY@"
   !define MUI_STARTMENUPAGE_REGISTRY_VALUENAME "Start Menu Folder"
   !insertmacro MUI_PAGE_STARTMENU Application $STARTMENU_FOLDER
 
@@ -906,7 +903,9 @@ Section "Uninstall"
   Delete "$INSTDIR\Uninstall.exe"
   DeleteRegKey SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\@CPACK_PACKAGE_NAME@"
 
-  ;Remove shortcuts
+  ;
+  ; RSTUDIO CHANGE - Remove shortcuts
+  ;
   Delete "$INSTDIR\bin\Run Diagnostics.lnk"
   Delete "$INSTDIR\bin\msys_ssh\SSH Command Prompt.lnk" 
   RMDir /r "$INSTDIR\bin\"
@@ -1027,8 +1026,8 @@ Function .onInit
   ; Reads components status for registry
   !insertmacro SectionList "InitSection"
 
-  ; check to see if /D has been used to change 
-  ; the install directory by comparing it to the 
+  ; check to see if /D has been used to change
+  ; the install directory by comparing it to the
   ; install directory that is expected to be the
   ; default
   StrCpy $IS_DEFAULT_INSTALLDIR 0
