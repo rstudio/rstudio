@@ -70,6 +70,10 @@
 
 ### RStudio Server Pro
 
+> **Note:** RStudio Server Pro now requires a Postgres database when using its internal load balancer; this database must be set up *prior* to upgrade from earlier releases. If you have a multi-node RStudio Server Pro installation, consult the Administration Guide for instructions before upgrading.
+
+> **Note:** RStudio Server Pro uses a new location for user state; `.rstudio` is now `.local/share/rstudio`. This is a breaking change if you have [symlinked .rstudio](https://support.rstudio.com/hc/en-us/articles/218417097-Filling-up-the-home-directory-with-RStudio-Server) and can make downgrade more complicated. See the Administration Guide for more information, including instructions for using the old location if desired for compatibility with previous releases.
+
 * SAML is now supported as an authentication mechanism (Pro #1194)
 * OpenID Connect is now support as an authentication mechanism (Pro #1747)
 * Visual Studio Code is now an available editor when using Launcher sessions (Pro #1423)
