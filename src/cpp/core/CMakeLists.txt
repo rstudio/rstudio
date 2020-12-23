@@ -254,11 +254,13 @@ if (UNIX)
          http/Keychain.mm
          system/file_monitor/MacFileMonitor.cpp
          system/recycle_bin/MacRecycleBin.cpp
+         system/MacResources.cpp
       )
    else()
       set(CORE_SOURCE_FILES ${CORE_SOURCE_FILES}
          system/file_monitor/LinuxFileMonitor.cpp
          system/recycle_bin/LinuxRecycleBin.cpp
+         system/LinuxResources.cpp
       )
    endif()
 
@@ -294,6 +296,7 @@ else()
       system/Win32ShellUtils.cpp
       system/Win32System.cpp
       system/Win32ChildProcess.cpp
+      system/Win32Resources.cpp
       system/file_monitor/Win32FileMonitor.cpp
       system/recycle_bin/Win32RecycleBin.cpp
       r_util/RToolsInfo.cpp
