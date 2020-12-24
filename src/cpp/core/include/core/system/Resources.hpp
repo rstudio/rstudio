@@ -53,7 +53,10 @@ enum MemoryProvider {
 
 Error getMemoryUsed(int *pUsedKb, MemoryProvider *pProvider);
 
+Error getProcessMemoryUsed(int *pUsedKb, MemoryProvider *pProvider);
+
 Error getMemoryAvailable(int *pAvailKb, MemoryProvider *pProvider);
+
 
 } // namespace system
 } // namespace core
