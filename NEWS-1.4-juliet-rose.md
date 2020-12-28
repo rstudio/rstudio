@@ -15,6 +15,7 @@
 * Update Windows Desktop to openSSL 1.1.1i (#8574)
 * Improve ordering of items in Command Palette list and search results (#7567, #7956)
 * Update embedded Pandoc to v2.11.3
+* Change default per-user install folder to %LocalAppData%\Programs on Windows (#8598)
 
 ### RStudio Server
 
