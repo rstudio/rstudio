@@ -482,7 +482,7 @@ class FindPlugin extends Plugin<DecorationSet> {
   private findRegEx() {
     try {
       return new RegExp(this.term, !this.options.caseSensitive ? 'gui' : 'gu');
-    } catch(e) {
+    } catch {
       return null;
     }
   }
