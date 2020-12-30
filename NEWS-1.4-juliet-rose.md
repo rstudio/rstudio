@@ -14,9 +14,10 @@
 * Preliminary compatibility with UCRT builds of R-devel (#8461)
 * Update Windows Desktop to openSSL 1.1.1i (#8574)
 * Improve ordering of items in Command Palette list and search results (#7567, #7956)
-* Update embedded Pandoc to v2.11.3
+* Update embedded Pandoc to v2.11.3.2
 * Change default per-user install folder to %LocalAppData%\Programs on Windows (#8598)
 * Cmd+U now toggles underlining in the visual editor on macOS (#8656)
+* Improve YAML cursor position after omni-insert in the visual editor (#8670)
 
 ### RStudio Server
 
