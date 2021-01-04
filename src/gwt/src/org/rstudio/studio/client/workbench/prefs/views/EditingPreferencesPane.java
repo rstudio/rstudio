@@ -1,7 +1,7 @@
 /*
  * EditingPreferencesPane.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -77,6 +77,8 @@ public class EditingPreferencesPane extends PreferencesPane
             "When enabled, the indentation for documents not part of an RStudio project " +
             "will be automatically detected."));
       editingPanel.add(checkboxPref("Insert matching parens/quotes", prefs_.insertMatching()));
+      editingPanel.add(checkboxPref("Use native pipe operator, |> (requires R 4.1+)",
+         prefs_.insertNativePipeOperator()));
       editingPanel.add(checkboxPref("Auto-indent code after paste", prefs_.reindentOnPaste()));
       editingPanel.add(checkboxPref("Vertically align arguments in auto-indent", prefs_.verticallyAlignArgumentsIndent()));
       editingPanel.add(checkboxPref("Soft-wrap R source files", prefs_.softWrapRFiles()));
@@ -146,7 +148,6 @@ public class EditingPreferencesPane extends PreferencesPane
       Label executionLabel = headerLabel("Execution");
       editingPanel.add(executionLabel);
       executionLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
-      editingPanel.add(checkboxPref("Always save R scripts before sourcing", prefs.saveBeforeSourcing()));
       editingPanel.add(checkboxPref("Focus console after executing from source", prefs_.focusConsoleAfterExec()));
 
       executionBehavior_ = new SelectWidget(
@@ -287,6 +288,7 @@ public class EditingPreferencesPane extends PreferencesPane
       setEncoding(prefs.defaultEncoding().getGlobalValue());
 
       savePanel.add(spacedBefore(headerLabel("Auto-save")));
+      savePanel.add(checkboxPref("Always save R scripts before sourcing", prefs.saveBeforeSourcing()));
       savePanel.add(checkboxPref("Automatically save when editor loses focus", prefs_.autoSaveOnBlur()));
       autoSaveOnIdle_ = new SelectWidget(
             "When editor is idle: ",

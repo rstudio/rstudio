@@ -1,7 +1,7 @@
 /*
  * RExec.hpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -85,16 +85,23 @@ inline EvalFlags operator|(EvalFlags lhs, EvalFlags rhs)
    return static_cast<EvalFlags>(static_cast<int>(lhs) | static_cast<int>(rhs));
 }
 
-// parse and evaluate expressions  
+// parse and evaluate expressions
+core::Error executeCallUnsafe(SEXP callSEXP,
+                              SEXP envirSEXP,
+                              SEXP* pResultSEXP,
+                              sexp::Protect* pProtect);
+
 core::Error executeStringUnsafe(const std::string& str, 
                                 SEXP* pSEXP, 
                                 sexp::Protect* pProtect);
+
 core::Error executeStringUnsafe(const std::string& str,
                                 SEXP envirSEXP,
                                 SEXP* pSEXP,
                                 sexp::Protect* pProtect);
 
 core::Error executeString(const std::string& str);
+
 core::Error evaluateString(const std::string& str,
                            SEXP* pSEXP,
                            sexp::Protect* pProtect,

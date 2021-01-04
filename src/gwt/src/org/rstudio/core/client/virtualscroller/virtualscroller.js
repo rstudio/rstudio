@@ -1,7 +1,7 @@
 /*
  * virtualscroller.js
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,7 +27,7 @@ var VirtualScroller;
       //  *** _CONSTANTS ***
       this._DEBUG = false;
       this._SCROLL_DEBOUNCE_MS = 500;
-      this._BUCKET_MAX_SIZE = 50;
+      this._BUCKET_MAX_HEIGHT = 50;
       this._MAX_VISIBLE_BUCKETS = 10;
       this._MAX_NEWLINES = 1000;
 
@@ -52,6 +52,7 @@ var VirtualScroller;
       self._isAtBottomBucket = self._isAtBottomBucket.bind(self);
       self._isAtTopBucket = self._isAtTopBucket.bind(self);
       self._isBucketHidden = self._isBucketHidden.bind(self);
+      self._isBucketFull = self._isBucketFull.bind(self);
       self._jumpToBottom = self._jumpToBottom.bind(self);
       self._moveWindow = self._moveWindow.bind(self);
       self._onParentScroll = self._onParentScroll.bind(self);
@@ -155,6 +156,16 @@ var VirtualScroller;
       }
     },
 
+    _isBucketFull: function(bucket) {
+      var height = 0;
+      var contents = bucket.innerText;
+
+      // add height for each new line
+      height += contents.split(/\n/).length - 1;
+
+      return height >= this._BUCKET_MAX_HEIGHT;
+    },
+
     _hideBucket: function(index) {
       if (!!this.buckets[index] && !this._isBucketHidden(index))
         this.buckets[index].classList.add(this._HIDDEN_STYLE);
@@ -178,11 +189,11 @@ var VirtualScroller;
     },
 
     _scrolledToTop: function() {
-      return this.scrollerEle.scrollTop < 1;
+      return this.scrollerEle.scrollTop < 4;
     },
 
     _scrolledToBottom: function() {
-      return Math.abs(this.scrollerEle.scrollHeight - this.scrollerEle.offsetHeight - this.scrollerEle.scrollTop) < 1;
+      return Math.abs(this.scrollerEle.scrollHeight - this.scrollerEle.offsetHeight - this.scrollerEle.scrollTop) < 4;
     },
 
     // this BOUND callback function
@@ -260,12 +271,17 @@ var VirtualScroller;
       if (element === null)
         return;
 
-      if (this.getCurBucket().childElementCount >= this._BUCKET_MAX_SIZE) {
+      var keepScrolled = !!this.scrollerEle && this._scrolledToBottom();
+
+      if (this._isBucketFull(this.getCurBucket())) {
         this._createAndAddNewBucket();
       }
       this.prune(element);
       this.getCurBucket().appendChild(element);
       this._jumpToBottom();
+      if (keepScrolled && !!this.scrollerEle)  {
+        this.scrollerEle.scrollTop = this.scrollerEle.scrollHeight;
+      }
     },
 
     clear: function() {

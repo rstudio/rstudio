@@ -1,7 +1,7 @@
 /*
  * SessionModuleContext.hpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  *
  * Unless you have received this program directly from RStudio pursuant
@@ -25,6 +25,7 @@
 
 #include <core/BoostSignals.hpp>
 #include <core/HtmlUtils.hpp>
+#include <core/Version.hpp>
 #include <core/system/System.hpp>
 #include <core/system/ShellUtils.hpp>
 #include <core/system/FileChangeEvent.hpp>
@@ -150,6 +151,8 @@ bool isMinimumDevtoolsInstalled();
 bool isMinimumRoxygenInstalled();
 
 std::string packageVersion(const std::string& packageName);
+core::Error packageVersion(const std::string& packageName,
+                           core::Version* pVersion);
 
 bool hasMinimumRVersion(const std::string& version);
 

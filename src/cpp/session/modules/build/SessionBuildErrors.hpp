@@ -1,7 +1,7 @@
 /*
  * SessionBuildErrors.hpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,6 +24,8 @@
 #include <shared_core/FilePath.hpp>
 #include <shared_core/json/Json.hpp>
 
+#include <core/Version.hpp>
+
 #include <session/SessionModuleContext.hpp>
 
 namespace rstudio {
@@ -31,8 +33,8 @@ namespace session {
 namespace modules {
 namespace build {
 
-typedef boost::function<std::vector<module_context::SourceMarker>(const std::string&)>
-                                                         CompileErrorParser;
+using CompileErrorParserSignature = std::vector<module_context::SourceMarker>(const std::string&);
+using CompileErrorParser = boost::function<CompileErrorParserSignature>;
 
 class CompileErrorParsers
 {
@@ -68,7 +70,8 @@ CompileErrorParser gccErrorParser(const core::FilePath& basePath);
 
 CompileErrorParser rErrorParser(const core::FilePath& basePath);
 
-CompileErrorParser testthatErrorParser(const core::FilePath& basePath);
+CompileErrorParser testthatErrorParser(const core::FilePath& basePath,
+                                       const rstudio::core::Version& testthatVersion);
 
 CompileErrorParser shinytestErrorParser(const core::FilePath& basePath, const core::FilePath& rdsPath);
 

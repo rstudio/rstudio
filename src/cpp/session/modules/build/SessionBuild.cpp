@@ -1,7 +1,7 @@
 /*
  * SessionBuild.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,6 +29,7 @@
 
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/Version.hpp>
 #include <core/text/DcfParser.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/Environment.hpp>
@@ -670,13 +671,18 @@ private:
       type_ = type;
 
       // add testthat and shinytest result parsers
-      if (type == kTestFile) {
+      core::Version testthatVersion;
+      module_context::packageVersion("testthat", &testthatVersion);
+      
+      if (type == kTestFile)
+      {
          openErrorList_ = false;
-         parsers.add(testthatErrorParser(packagePath.getParent()));
+         parsers.add(testthatErrorParser(packagePath.getParent(), testthatVersion));
       }
-      else if (type == kTestPackage) {
+      else if (type == kTestPackage)
+      {
          openErrorList_ = false;
-         parsers.add(testthatErrorParser(packagePath.completePath("tests/testthat")));
+         parsers.add(testthatErrorParser(packagePath.completePath("tests/testthat"), testthatVersion));
       }
 
       initErrorParser(packagePath, parsers);

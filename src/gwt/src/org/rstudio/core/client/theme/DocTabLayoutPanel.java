@@ -2,7 +2,7 @@
  *
  * DocTabLayoutPanel.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,8 @@
  */
 package org.rstudio.core.client.theme;
 
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.user.client.ui.MenuItem;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ClassIds;
 import org.rstudio.core.client.Point;
@@ -34,13 +36,18 @@ import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
+import org.rstudio.studio.client.common.filetypes.events.RenameSourceFileEvent;
 import org.rstudio.studio.client.common.satellite.Satellite;
+import org.rstudio.studio.client.server.model.RequestDocumentCloseEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
+import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
+import org.rstudio.studio.client.workbench.views.source.events.CloseAllSourceDocsExceptEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragInitiatedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStateChangedEvent;
@@ -186,6 +193,47 @@ public class DocTabLayoutPanel
             super.add(child, text);
          else
             super.insert(child, text, position);
+      }
+
+      // populate tab context menu
+      int widgetIndex = getWidgetIndex(child);
+      if (widgetIndex >= 0)
+      {
+         setTabContextMenuHandler(widgetIndex, contextMenuEvent ->
+         {
+            final ToolbarPopupMenu menu = new ToolbarPopupMenu();
+            final NativeEvent nativeEvent = contextMenuEvent.getNativeEvent();
+
+            EditingTarget target = RStudioGinjector.INSTANCE.getSourceColumnManager().findEditor(docId);
+            if (target != null && target.getExtendedFileType() != null && target.getPath() != null)
+            {
+               final String filePath = target.getPath();
+               menu.addItem(new MenuItem("Rename", () ->
+               {
+                  events_.fireEvent(new RenameSourceFileEvent(filePath));
+               }));
+               menu.addSeparator();
+            }
+
+            menu.addItem(new MenuItem("Close", () ->
+            {
+               events_.fireEvent(new RequestDocumentCloseEvent(docId));
+            }));
+
+            menu.addItem(new MenuItem("Close All", () ->
+            {
+               commands_.closeAllSourceDocs().execute();
+            }));
+
+            menu.addItem(new MenuItem("Close All Others", () ->
+            {
+               events_.fireEvent(new CloseAllSourceDocsExceptEvent(docId));
+            }));
+
+            menu.showRelativeTo(nativeEvent.getClientX(), nativeEvent.getClientY());
+            contextMenuEvent.preventDefault();
+            contextMenuEvent.stopPropagation();
+         });
       }
    }
 

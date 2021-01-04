@@ -39,6 +39,11 @@ if [ "$FLAVOR" != "desktop" ] && [ "$FLAVOR" != "server" ]; then
     exit 1
 fi
 
+# macOS => mac for URL
+if [ "$OS" == "macos" ];  then
+    OS="mac"
+fi
+
 # figure out the "latest" package name by replacing the version number with "latest"; for example
 # for "rstudio-server-pro-1.3.413-4.deb", we want "rstudio-server-pro-latest.deb"
 LATEST=$(echo "$FILENAME" | sed -e 's/[[:digit:]]\.[[:digit:]][[:digit:]]*\.[[:digit:]][[:digit:]]*\(-[[:digit:]][[:digit:]]*\)*/latest/')

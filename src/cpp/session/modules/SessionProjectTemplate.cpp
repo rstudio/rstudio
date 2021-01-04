@@ -1,7 +1,7 @@
 /*
  * SessionProjectTemplate.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,8 +14,8 @@
  */
 #include <session/SessionProjectTemplate.hpp>
 
-#include <boost/bind.hpp>
 #include <boost/function.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/range/adaptors.hpp>
 
 #include <core/Algorithm.hpp>
@@ -37,6 +37,7 @@
 #define kRStudioProjectTemplatesPath "rstudio/templates/project"
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

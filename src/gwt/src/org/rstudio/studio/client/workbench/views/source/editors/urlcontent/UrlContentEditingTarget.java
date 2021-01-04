@@ -1,7 +1,7 @@
 /*
  * UrlContentEditingTarget.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -40,6 +40,7 @@ import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -480,7 +481,7 @@ public class UrlContentEditingTarget implements EditingTarget
    }
 
    @Override
-   public List<CommandPaletteItem> getCommandPaletteItems()
+   public CommandPaletteEntryProvider getPaletteEntryProvider()
    {
       return null;
    }

@@ -1,7 +1,7 @@
 /*
  * SessionLists.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,9 +18,9 @@
 
 #include <map>
 
-#include <boost/bind.hpp>
 #include <boost/utility.hpp>
 #include <boost/circular_buffer.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
@@ -29,6 +29,7 @@
 #include <session/SessionModuleContext.hpp>
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {
@@ -43,8 +44,9 @@ using namespace collection;
 const char * const kFileMru = "file_mru";
 const char * const kProjectMru = kProjectMruList;
 const char * const kHelpHistory = "help_history_links";
-const char * const kUserDictioanry = "user_dictionary";
+const char * const kUserDictionary = "user_dictionary";
 const char * const kPlotPublishMru = "plot_publish_mru";
+const char * const kCommandPaletteMru = "command_palette_mru";
 
 // path to lists dir
 FilePath s_listsPath;
@@ -296,7 +298,8 @@ Error initialize()
    s_lists[kProjectMru] = 15;
    s_lists[kHelpHistory] = 15;
    s_lists[kPlotPublishMru] = 15;
-   s_lists[kUserDictioanry] = 10000;
+   s_lists[kCommandPaletteMru] = 10;
+   s_lists[kUserDictionary] = 10000;
 
    // monitor the lists directory
    s_listsPath = module_context::registerMonitoredUserScratchDir(

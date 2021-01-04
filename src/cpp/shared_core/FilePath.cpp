@@ -1,7 +1,7 @@
 /*
  * FilePath.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant to the terms of a commercial license agreement
  * with RStudio, then this program is licensed to you under the following terms:
@@ -45,10 +45,10 @@
 #include <boost/filesystem.hpp>
 #undef BOOST_NO_CXX11_SCOPED_ENUMS
 
+#include <boost/bind/bind.hpp>
+#include <boost/make_shared.hpp>
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/algorithm/string/predicate.hpp>
-#include <boost/bind.hpp>
-#include <boost/make_shared.hpp>
 
 #include <shared_core/Logger.hpp>
 #include <shared_core/Error.hpp>
@@ -56,6 +56,8 @@
 #include <shared_core/system/User.hpp>
 
 typedef boost::filesystem::path path_t;
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace core {

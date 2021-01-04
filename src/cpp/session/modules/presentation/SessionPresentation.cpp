@@ -1,7 +1,7 @@
 /*
  * SessionPresentation.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,7 +19,7 @@
 #include "SessionPresentation.hpp"
 
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <core/Exec.hpp>
 #include <core/http/Util.hpp>
@@ -40,6 +40,7 @@
 
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

@@ -1,7 +1,7 @@
 /*
  * AceEditor.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -659,11 +659,14 @@ public class AceEditor implements DocDisplay,
       boolean hasWhitespaceBefore =
             Character.isSpace(getCharacterBeforeCursor()) ||
             (!hasSelection() && getCursorPosition().getColumn() == 0);
-      
+
+      // Use magrittr style pipes unless user has opted into new native pipe syntax in R 4.1+
+      String pipe = userPrefs_.insertNativePipeOperator().getValue() ? "|>" : "%>%";
+
       if (hasWhitespaceBefore)
-         insertCode("%>% ", false);
+         insertCode(pipe + " ", false);
       else
-         insertCode(" %>% ", false);
+         insertCode(" " + pipe + " ", false);
    }
    
    private boolean shouldIndentOnPaste()

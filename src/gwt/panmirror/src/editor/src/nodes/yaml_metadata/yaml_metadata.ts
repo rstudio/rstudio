@@ -1,7 +1,7 @@
 /*
  * yaml_metadata.ts
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -117,7 +117,7 @@ class YamlMetadataCommand extends ProsemirrorCommand {
         description: ui.context.translateText('YAML metadata block'),
         group: OmniInsertGroup.Blocks,
         priority: 3,
-        selectionOffset: 4,
+        selectionOffset: -4,
         image: () =>
           ui.prefs.darkMode() ? ui.images.omni_insert?.yaml_block_dark! : ui.images.omni_insert?.yaml_block!,
       },

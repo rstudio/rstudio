@@ -1,7 +1,7 @@
 /*
  * SourceColumn.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -153,12 +153,14 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       return editors_;
    }
 
-   public ArrayList<EditingTarget> getDirtyEditors(final EditingTarget excludeEditor)
+   public ArrayList<EditingTarget> getDirtyEditors(String excludeDocId)
    {
+      EditingTarget excludeTarget = 
+         StringUtil.isNullOrEmpty(excludeDocId) ? null : getDoc(excludeDocId);
       ArrayList<EditingTarget> dirtyEditors = new ArrayList<>();
       for (EditingTarget target : editors_)
       {
-         if (excludeEditor != null && target == excludeEditor)
+         if (target == excludeTarget)
             continue;
          if (target.dirtyState().getValue())
             dirtyEditors.add(target);

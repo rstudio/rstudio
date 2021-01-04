@@ -1,6 +1,6 @@
 /* UserPrefValues.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -2805,6 +2805,32 @@ core::Error UserPrefValues::setSaveRetryTimeout(int val)
    return writePref("save_retry_timeout", val);
 }
 
+/**
+ * Whether the Insert Pipe Operator command should insert the native R pipe operator, |>
+ */
+bool UserPrefValues::insertNativePipeOperator()
+{
+   return readPref<bool>("insert_native_pipe_operator");
+}
+
+core::Error UserPrefValues::setInsertNativePipeOperator(bool val)
+{
+   return writePref("insert_native_pipe_operator", val);
+}
+
+/**
+ * Whether to keep track of recently used commands in the Command Palette
+ */
+bool UserPrefValues::commandPaletteMru()
+{
+   return readPref<bool>("command_palette_mru");
+}
+
+core::Error UserPrefValues::setCommandPaletteMru(bool val)
+{
+   return writePref("command_palette_mru", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -3022,6 +3048,8 @@ std::vector<std::string> UserPrefValues::allKeys()
       kPythonVersion,
       kPythonPath,
       kSaveRetryTimeout,
+      kInsertNativePipeOperator,
+      kCommandPaletteMru,
    });
 }
    

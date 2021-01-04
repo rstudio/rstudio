@@ -1,7 +1,7 @@
 /*
  * RUtil.hpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -48,11 +48,20 @@ bool hasCapability(const std::string& capability);
 
 std::string rconsole2utf8(const std::string& encoded);
 
+core::Error nativeToUtf8(const std::string& value,
+                         bool allowSubstitution,
+                         std::string* pResult);
+
+core::Error utf8ToNative(const std::string& value,
+                         bool allowSubstitution,
+                         std::string* pResult);
+
 core::Error iconvstr(const std::string& value,
                      const std::string& from,
                      const std::string& to,
                      bool allowSubstitution,
                      std::string* result);
+
 
 bool isRKeyword(const std::string& name);
 bool isWindowsOnlyFunction(const std::string& name);

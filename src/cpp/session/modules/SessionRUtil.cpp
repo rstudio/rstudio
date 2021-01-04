@@ -1,7 +1,7 @@
 /*
  * SessionRUtil.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,6 +25,7 @@
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
 #include <r/RSexp.hpp>
+#include <r/RUtil.hpp>
 
 #include <session/SessionAsyncRProcess.hpp>
 #include <session/SessionModuleContext.hpp>

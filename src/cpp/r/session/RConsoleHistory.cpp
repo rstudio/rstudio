@@ -1,7 +1,7 @@
 /*
  * RConsoleHistory.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,9 +15,9 @@
 
 #include <r/session/RConsoleHistory.hpp>
 
-#include <boost/bind.hpp>
 #include <boost/function.hpp>
 #include <boost/tokenizer.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
@@ -28,6 +28,7 @@
 #include <gsl/gsl>
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace r {

@@ -1,7 +1,7 @@
 /*
  * Environment.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,13 +20,15 @@
 
 #include <core/Algorithm.hpp>
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 
 #ifdef _WIN32
 #define kPathSeparator ";"
 #else
 #define kPathSeparator ":"
 #endif
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace core {

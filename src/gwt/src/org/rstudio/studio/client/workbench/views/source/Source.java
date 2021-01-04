@@ -1,7 +1,7 @@
 /*
  * Source.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -79,7 +79,7 @@ import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.application.events.MouseNavigateSourceHistoryEvent;
+import org.rstudio.studio.client.application.events.MouseNavigateEvent;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
@@ -100,6 +100,7 @@ import org.rstudio.studio.client.events.GetEditorContextEvent;
 import org.rstudio.studio.client.events.RStudioApiRequestEvent;
 import org.rstudio.studio.client.events.ReplaceRangesEvent;
 import org.rstudio.studio.client.events.ReplaceRangesEvent.ReplacementData;
+import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
 import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.events.SetSelectionRangesEvent;
@@ -145,6 +146,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.NewWorkingCopyEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRdDialog;
+import org.rstudio.studio.client.workbench.views.source.events.CloseAllSourceDocsExceptEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserFinishedHandler;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserHighlightEvent;
@@ -220,8 +222,9 @@ public class Source implements InsertSourceHandler,
                                EditPresentationSourceEvent.Handler,
                                XRefNavigationEvent.Handler,
                                NewDocumentWithCodeEvent.Handler,
-                               MouseNavigateSourceHistoryEvent.Handler,
-                               RStudioApiRequestEvent.Handler
+                               MouseNavigateEvent.Handler,
+                               RStudioApiRequestEvent.Handler,
+                               CloseAllSourceDocsExceptEvent.Handler
 {
    interface Binder extends CommandBinder<Commands, Source>
    {
@@ -336,7 +339,7 @@ public class Source implements InsertSourceHandler,
       events_.addHandler(NewDocumentWithCodeEvent.TYPE, this);
       events_.addHandler(XRefNavigationEvent.TYPE, this);
       if (Desktop.hasDesktopFrame())
-         events_.addHandler(MouseNavigateSourceHistoryEvent.TYPE, this);
+         events_.addHandler(MouseNavigateEvent.TYPE, this);
 
       events_.addHandler(SourcePathChangedEvent.TYPE,
             new SourcePathChangedEvent.Handler()
@@ -464,6 +467,7 @@ public class Source implements InsertSourceHandler,
       events_.addHandler(RequestDocumentSaveEvent.TYPE, this);
       events_.addHandler(RequestDocumentCloseEvent.TYPE, this);
       events_.addHandler(RStudioApiRequestEvent.TYPE, this);
+      events_.addHandler(CloseAllSourceDocsExceptEvent.TYPE, this);
    }
 
    public void load()
@@ -641,9 +645,9 @@ public class Source implements InsertSourceHandler,
    }
 
    @Override
-   public List<CommandPaletteItem> getCommandPaletteItems()
+   public CommandPaletteEntryProvider getPaletteEntryProvider()
    {
-      return columnManager_.getCommandPaletteItems();
+      return columnManager_.getPaletteEntryProvider();
    }
 
    private boolean consoleEditorHadFocusLast()
@@ -1528,35 +1532,38 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onCloseAllSourceDocs()
    {
-      closeAllSourceDocs("Close All",  null, false);
+      closeAllSourceDocs("Close All", null, null);
    }
 
    @Handler
    public void onCloseOtherSourceDocs()
    {
-      closeAllSourceDocs("Close Other",  null, true);
+      closeAllSourceDocs("Close Other", null, columnManager_.getActiveDocId());
    }
 
+   /**
+    * Close all source documents
+    * 
+    * @param caption caption of command triggering this action
+    * @param onCompleted callback when done, may be null
+    * @param excludeDocId docId of document to keep open and activate (or null to close all)
+    */
    public void closeAllSourceDocs(final String caption,
-         final Command onCompleted, final boolean excludeActive)
+         final Command onCompleted, final String excludeDocId)
    {
-      if (SourceWindowManager.isMainSourceWindow() && !excludeActive)
+      if (SourceWindowManager.isMainSourceWindow())
       {
          // if this is the main window, close docs in the satellites first
-         pWindowManager_.get().closeAllSatelliteDocs(caption, new Command()
+         pWindowManager_.get().closeAllSatelliteDocs(caption, excludeDocId, () ->
          {
-            @Override
-            public void execute()
-            {
-               columnManager_.closeAllLocalSourceDocs(caption, null, onCompleted, excludeActive);
-            }
+            columnManager_.closeAllLocalSourceDocs(caption, null, onCompleted, excludeDocId);
          });
       }
       else
       {
          // this is a satellite (or we don't need to query satellites)--just
          // close our own tabs
-         columnManager_.closeAllLocalSourceDocs(caption, null, onCompleted, excludeActive);
+         columnManager_.closeAllLocalSourceDocs(caption, null, onCompleted, excludeDocId);
       }
    }
 
@@ -1799,7 +1806,7 @@ public class Source implements InsertSourceHandler,
    }
 
    @Override
-   public void onMouseNavigateSourceHistory(MouseNavigateSourceHistoryEvent event)
+   public void onMouseNavigate(MouseNavigateEvent event)
    {
       if (isPointInSourcePane(event.getMouseX(), event.getMouseY()))
       {
@@ -2733,7 +2740,7 @@ public class Source implements InsertSourceHandler,
          columnManager_.closeTabs(ids);
 
          // Let the server know we've completed the task
-         if (SourceWindowManager.isMainSourceWindow())
+         if (SourceWindowManager.isMainSourceWindow() && event.getNotifyComplete())
          {
             server_.requestDocumentCloseCompleted(true,
                   new VoidServerRequestCallback());
@@ -2753,7 +2760,7 @@ public class Source implements InsertSourceHandler,
             else
             {
                // We didn't save (or the user cancelled), so let the server know
-               if (SourceWindowManager.isMainSourceWindow())
+               if (SourceWindowManager.isMainSourceWindow() && event.getNotifyComplete())
                {
                   server_.requestDocumentCloseCompleted(false,
                         new VoidServerRequestCallback());
@@ -2945,6 +2952,12 @@ public class Source implements InsertSourceHandler,
       }
    }
    
+   @Override
+   public void onCloseAllSourceDocsExcept(CloseAllSourceDocsExceptEvent closeAllExceptEvent)
+   {
+      closeAllSourceDocs("Close All Others", null, closeAllExceptEvent.getKeepDocId());
+   }
+
    private void onRStudioApiRequestImpl(RStudioApiRequestEvent requestEvent)
    {
       // retrieve request data

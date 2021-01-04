@@ -1,7 +1,7 @@
 /*
  * RTokenizerTests.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -301,6 +301,13 @@ test_context("RTokenizer")
       expect_true(rTokens.at(1).isType(RToken::LPAREN));
       expect_true(rTokens.at(2).isType(RToken::STRING));
       expect_true(rTokens.at(3).isType(RToken::RPAREN));
+   }
+   
+   test_that("multiline strings are tokenized as strings")
+   {
+      RTokens rTokens(L"'abc\ndef'");
+      expect_true(rTokens.size() == 1);
+      expect_true(rTokens.at(0).isType(RToken::STRING));
    }
    
 }

@@ -1,7 +1,7 @@
 /*
  * PosixProcess.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,12 +16,14 @@
 #include <core/system/PosixProcess.hpp>
 
 #include <boost/asio.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <core/BoostThread.hpp>
 #include <core/Thread.hpp>
 
 #include <core/system/PosixSystem.hpp>
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace core {

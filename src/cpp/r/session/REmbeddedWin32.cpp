@@ -1,7 +1,7 @@
 /*
  * REmbeddedWin32.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,19 +22,21 @@
 #define R_INTERNAL_FUNCTIONS
 #include <Rversion.h>
 #include <r/RInternal.hpp>
+#include <r/RVersionInfo.hpp>
 
 #define Win32
 #include "REmbedded.hpp"
 
 #include <stdio.h>
 
-#include <boost/bind.hpp>
 #include <boost/format.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 
 #include <shared_core/FilePath.hpp>
 #include <core/Exec.hpp>
 #include <core/StringUtils.hpp>
+#include <core/system/LibraryLoader.hpp>
 
 #include <r/RInterface.hpp>
 #include <r/RFunctionHook.hpp>
@@ -54,6 +56,7 @@ extern "C" {
 }
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace r {
@@ -104,6 +107,74 @@ int askYesNoCancel(const char* question)
    }
 }
 
+bool initializeMaxMemoryDangerously()
+{
+   Error error;
+
+   void* pLibrary = nullptr;
+   error = core::system::loadLibrary("R.dll", &pLibrary);
+   if (error)
+      return false;
+
+   // first, see if we can load the 'R_max_memory' symbol directly
+   size_t* p_R_max_memory = nullptr;
+   error = core::system::loadSymbol(
+            pLibrary,
+            "R_max_memory",
+            (void**) &p_R_max_memory);
+
+   if (error)
+   {
+      // terrible, terrible hack -- for typical builds of R from CRAN,
+      // the memory address for R_max_memory lies just before the
+      // Rwin_graphicsx symbol, so find that symbol, and compute the
+      // position of R_max_memory offset from that
+      char* p_Rwin_graphicsx = nullptr;
+      error = core::system::loadSymbol(
+               pLibrary,
+               "Rwin_graphicsx",
+               (void**) &p_Rwin_graphicsx);
+
+      if (error)
+         return false;
+
+      // get memory address for R_max_memory
+      p_R_max_memory = (size_t*) (p_Rwin_graphicsx - sizeof(size_t));
+   }
+
+   // newer versions of R initialize R_max_memory to SIZE_MAX, while
+   // older versions use INT_MAX. allow either value here when checking
+   bool ok =
+         *p_R_max_memory == SIZE_MAX ||
+         *p_R_max_memory == INT_MAX;
+
+   if (!ok)
+      return false;
+
+   // we found the memory address! let's fill it up
+   MEMORYSTATUSEX status;
+   status.dwLength = sizeof(status);
+   ::GlobalMemoryStatusEx(&status);
+   *p_R_max_memory = status.ullTotalPhys;
+
+   return true;
+}
+
+bool initializeMaxMemoryViaCmdLineOptions()
+{
+   static const int rargc = 2;
+   static const char* rargv[] = {"R.exe", "--vanilla"};
+   ::cmdlineoptions(rargc, (char**) rargv);
+
+   return true;
+}
+
+void initializeMaxMemory(const core::FilePath& rHome)
+{
+   initializeMaxMemoryDangerously() ||
+         initializeMaxMemoryViaCmdLineOptions();
+}
+
 } // end anonymous namespace
 
 void runEmbeddedR(const core::FilePath& rHome,
@@ -117,12 +188,8 @@ void runEmbeddedR(const core::FilePath& rHome,
    // no signal handlers (see comment in REmbeddedPosix.cpp for rationale)
    R_SignalHandlers = 0;
 
-   // call cmdlineoptions (necessary to set memory limit)
-   // use --vanilla here to avoid most processing R might normally do
-   // (we'll re-initialize R below and have processing done then)
-   const int rargc = 2;
-   const char* rargv[] = {"R.exe", "--vanilla"};
-   ::cmdlineoptions(rargc, const_cast<char**>(rargv));
+   // initialize R_max_memory
+   initializeMaxMemory(rHome);
 
    // setup params structure
    structRstart rp;

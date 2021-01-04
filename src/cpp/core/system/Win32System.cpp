@@ -1,7 +1,7 @@
 /*
  * Win32System.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,12 +29,12 @@
 #include <tlhelp32.h>
 #include <VersionHelpers.h>
 
-#include <boost/bind.hpp>
 #include <boost/system/windows_error.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/range.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/split.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <core/Log.hpp>
@@ -54,6 +54,8 @@
 #ifndef JOB_OBJECT_LIMIT_BREAKAWAY_OK
 #define JOB_OBJECT_LIMIT_BREAKAWAY_OK 0x00000800
 #endif
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace core {

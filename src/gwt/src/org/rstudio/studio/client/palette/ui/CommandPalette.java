@@ -1,7 +1,7 @@
 /*
  * CommandPalette.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,7 +26,7 @@ import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.widget.AriaLiveStatusWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
-import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
+import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.palette.model.CommandPaletteItem.InvocationSource;
 
@@ -45,6 +45,8 @@ import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.Label;
+import org.rstudio.studio.client.palette.model.CommandPaletteMruEntry;
 
 /**
  * CommandPalette is a widget that displays all available RStudio commands in a
@@ -73,9 +75,17 @@ public class CommandPalette extends Composite
       String searchBox();
       String commandList();
       String commandPanel();
+      String mruSeparator();
    }
 
-   public CommandPalette(List<CommandPaletteEntrySource> sources, Host host)
+   /**
+    * Constructs a new Command Palette widget.
+    *
+    * @param sources A list of sources from which to draw commands for the palette
+    * @param mru A list of the most recently used commands
+    * @param host The object hosting the Command Palette
+    */
+   public CommandPalette(List<CommandPaletteEntryProvider> sources, List<CommandPaletteMruEntry> mru, Host host)
    {
       initWidget(uiBinder.createAndBindUi(this));
 
@@ -89,6 +99,7 @@ public class CommandPalette extends Composite
       needles_ = new String[0];
       registrations_ = new HandlerRegistrations();
       styles_.ensureInjected();
+      mru_ = mru;
       
       Element searchBox = searchBox_.getElement();
       searchBox.setAttribute("spellcheck", "false");
@@ -406,6 +417,31 @@ public class CommandPalette extends Composite
     */
    private void renderNextPage()
    {
+      // If we have no items yet, start with MRU items
+      if (items_.size() == 0 && mru_ != null)
+      {
+         for (CommandPaletteMruEntry mru: mru_)
+         {
+            // Look for the entry provider from which this MRU entry originated
+            for (CommandPaletteEntryProvider provider: sources_)
+            {
+               if (StringUtil.equals(provider.getProviderScope(), mru.getScope()))
+               {
+                  // Found the entry provider; ask it to supply the command.
+                  CommandPaletteItem item = provider.getCommandPaletteItem(mru.getId());
+                  if (item != null)
+                  {
+                     item.setIsMru(true);
+                     items_.add(item);
+                  }
+
+                  // Command found; no need to look at other providers
+                  break;
+               }
+            }
+         }
+      }
+
       // If we haven't already pulled items from all our sources and we have
       // less than a page of data left, pull in data from the next source.
       if (renderedSource_ < sources_.size() &&
@@ -415,16 +451,41 @@ public class CommandPalette extends Composite
          List<CommandPaletteItem> items = null;
          do
          {
-            items = sources_.get(renderedSource_).getCommandPaletteItems();
+            items = null;
+            CommandPaletteEntryProvider provider = sources_.get(renderedSource_);
+            if (provider != null)
+            {
+               items = provider.getCommandPaletteItems();
+
+               // Remove any items already present in the MRU
+               if (mru_ != null)
+               {
+                  items.removeIf((item) ->
+                  {
+                     for (CommandPaletteMruEntry entry : mru_)
+                     {
+                        if (StringUtil.equals(entry.getScope(), provider.getProviderScope()) &&
+                            StringUtil.equals(entry.getId(), item.getId()))
+                        {
+                           // Item already present in MRU; remove it
+                           return true;
+                        }
+                     }
+                     // Item not present in MRU; don't remove
+                     return false;
+                  });
+               }
+            }
             renderedSource_++;
          } while (items == null);
-            
+
          items_.addAll(items);
       }
       
       // Set initial conditions for render loop
       int rendered = 0;
       int idx = renderedItem_;
+      boolean mruSeparator = false;
 
       // Main render loop; render items until we have rendered a full page
       while (idx < items_.size() && rendered < RENDER_PAGE_SIZE)
@@ -442,6 +503,19 @@ public class CommandPalette extends Composite
             Widget widget = item.asWidget();
             if (widget != null)
             {
+               if (item.getIsMru())
+               {
+                  // If this item came from the MRU, we need to render a separator to
+                  // delineate the MRU and non MRU entries in the palette
+                  mruSeparator = true;
+               }
+               else if (mruSeparator)
+               {
+                  // Render the MRU separator if we've entered the region of non-MRU items
+                  addMruSeparator();
+                  mruSeparator = false;
+               }
+
                // Add and highlight the item
                commandList_.add(item.asWidget());
                visible_.add(item);
@@ -496,11 +570,25 @@ public class CommandPalette extends Composite
          completeRender();
       }
    }
-   
+
+   /**
+    * Adds an element to visually separate the MRU section of the palette from
+    * the rest of the commands
+    */
+   private void addMruSeparator()
+   {
+      Label separator = new Label("");
+      separator.addStyleName(styles_.mruSeparator());
+      // This separator is decorative from the perspective of a screen reader
+      A11y.setARIAHidden(separator);
+      commandList_.add(separator);
+   }
+
    private final Host host_;
-   private final List<CommandPaletteEntrySource> sources_;
+   private final List<CommandPaletteEntryProvider> sources_;
    private final List<CommandPaletteItem> items_;
    private final List<CommandPaletteItem> visible_;
+   private final List<CommandPaletteMruEntry> mru_;
    private final HandlerRegistrations registrations_;
    private int selected_;
    private String searchText_;
@@ -511,6 +599,16 @@ public class CommandPalette extends Composite
    private int renderedItem_; // The index of the last rendered item
    private int renderedSource_ = 0; // The index of the last rendered data source
    private final int RENDER_PAGE_SIZE = 50;
+
+   // These scopes serve two purposes: they ensure IDs are unique across different
+   // kinds of commands, and they serve as a key to look up MRU entries
+   public final static String SCOPE_APP_COMMAND = "command";
+   public final static String SCOPE_R_ADDIN = "r_addin";
+   public final static String SCOPE_USER_PREFS = "user_pref";
+   public final static String SCOPE_VISUAL_EDITOR = "visual_editor";
+
+   // The delimiter that separates the entry's scope from its ID in the MRU list
+   public final static String SCOPE_MRU_DELIMITER = "|";
 
    DebouncedCommand applyFilter_ = new DebouncedCommand(100)
    {

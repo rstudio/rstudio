@@ -1,7 +1,7 @@
 /*
  * SessionRHooks.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,7 +20,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 
 #include "SessionRHooks.hpp"
 
@@ -30,6 +30,7 @@ namespace modules {
 namespace rhooks {
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 Error initialize()
 {

@@ -1,7 +1,7 @@
 /*
  * EditingTargetCodeExecution.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -91,16 +91,17 @@ public class EditingTargetCodeExecution
    public void executeSelection(boolean consoleExecuteWhenNotFocused,
                                 boolean moveCursorAfter)
    {
-      executeSelectionMaybeNoFocus(consoleExecuteWhenNotFocused,
+      executeSelectionMaybeNoFocus(
+            consoleExecuteWhenNotFocused,
             moveCursorAfter,
             null,
             false);
    }
    
    public void executeSelection(boolean consoleExecuteWhenNotFocused,
-         boolean moveCursorAfter,
-         String functionWrapper,
-         boolean onlyUseConsole)
+                                boolean moveCursorAfter,
+                                String functionWrapper,
+                                boolean onlyUseConsole)
    {
       // when executing LaTeX in R Markdown, show a popup preview
       if (executeLatex(false))
@@ -272,7 +273,9 @@ public class EditingTargetCodeExecution
       executeSelection(consoleExecuteWhenNotFocused, moveCursorAfter, functionWrapper, false);
    }
    
-   private void executeRange(Range range, String functionWrapper, boolean onlyUseConsole)
+   private void executeRange(Range range,
+                             String functionWrapper,
+                             boolean onlyUseConsole)
    {
       String code = codeExtractor_.extractCode(docDisplay_, range);
       String language = "R";
@@ -311,7 +314,14 @@ public class EditingTargetCodeExecution
       
       if (functionWrapper != null)
       {
-         code = functionWrapper + "({" + code + "})";
+         if (code.indexOf('#') != -1 || code.indexOf('\n') != -1)
+         {
+            code = functionWrapper + "({\n" + code + "\n})";
+         }
+         else
+         {
+            code = functionWrapper + "({" + code + "})";
+         }
       }
       
       // send to console

@@ -1,7 +1,7 @@
 #
 # Tools.R
 #
-# Copyright (C) 2020 by RStudio, PBC
+# Copyright (C) 2021 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -148,6 +148,8 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 # the error message
 .rs.addFunction("restoreGlobalEnvFromFile", function(path)
 {
+   Encoding(path) <- "UTF-8"
+
    status <- try(load(path, envir = .GlobalEnv), silent = TRUE)
    if (!inherits(status, "try-error"))
       return("")
@@ -679,9 +681,31 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 })
 
 
-.rs.addFunction( "isLibraryWriteable", function(lib)
+.rs.addFunction("isLibraryWriteable", function(lib)
 {
-   file.exists(lib) && (file.access(lib, 2) == 0)
+   # file.access() can be unreliable here, as it's
+   # possible for a directory to be un-writable despite
+   # having writable permissions set. the best way to
+   # be sure is to try to create and remove a file in
+   # that directory
+   file <- tempfile(pattern = ".rstudio-", tmpdir = lib)
+   status <- tryCatch(file.create(file), condition = identity)
+   
+   # treat any conditions as errors, since R will emit a
+   # warning (rather than error) if file creation fails
+   if (inherits(status, "condition"))
+      return(FALSE)
+   
+   # now, try to remove the temporary file (it would stink
+   # if we could create files but not remove them ...)
+   status <- tryCatch(file.remove(file), condition = identity)
+   if (inherits(status, "condition"))
+      return(FALSE)
+   
+   # we successfully created and removed a file in the library
+   # directory; treat it as writable
+   TRUE
+   
 })
 
 .rs.addFunction( "defaultLibPathIsWriteable", function()

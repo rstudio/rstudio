@@ -1,7 +1,7 @@
 /*
  * RExec.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -262,6 +262,18 @@ core::Error executeSafely(boost::function<SEXP()> function, SEXP* pSEXP)
    {
       return Success();
    }
+}
+
+Error executeCallUnsafe(SEXP callSEXP,
+                        SEXP envirSEXP,
+                        SEXP *pResultSEXP,
+                        sexp::Protect *pProtect)
+{
+   return evaluateExpressionsUnsafe(callSEXP,
+                                    envirSEXP,
+                                    pResultSEXP,
+                                    pProtect,
+                                    EvalDirect);
 }
 
 Error executeStringUnsafe(const std::string& str,

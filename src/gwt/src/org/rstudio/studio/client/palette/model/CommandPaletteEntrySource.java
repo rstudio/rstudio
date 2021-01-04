@@ -1,7 +1,7 @@
 /*
  * CommandPaletteEntrySource.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,14 +14,12 @@
  */
 package org.rstudio.studio.client.palette.model;
 
-import java.util.List;
-
 public interface CommandPaletteEntrySource
-{ 
+{
    /**
-    * A list of all of the elements to be rendered as entries in the palette.
-    * 
-    * @return A list of elements. 
+    * Returns an object that provides command palette entries
+    *
+    * @return The palette entry provider, or null if no provider is available
     */
-   List<CommandPaletteItem> getCommandPaletteItems();
+   CommandPaletteEntryProvider getPaletteEntryProvider();
 }

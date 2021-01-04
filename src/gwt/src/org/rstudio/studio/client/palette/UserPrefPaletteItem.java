@@ -1,7 +1,7 @@
 /*
  * UserPrefPaletteItem.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -81,7 +81,13 @@ public class UserPrefPaletteItem extends BasePaletteItem<UserPrefPaletteEntry>
    {
       widget_.setSelected(selected);
    }
-   
+
+   @Override
+   public String getId()
+   {
+      return val_.getId();
+   }
+
    public void nudgeWriter()
    {
       PREF_WRITER.nudge();

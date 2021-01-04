@@ -1,7 +1,7 @@
 /*
  * SessionRPubs.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,11 +15,11 @@
 
 #include "SessionRPubs.hpp"
 
-#include <boost/bind.hpp>
 #include <boost/utility.hpp>
 #include <boost/format.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
@@ -39,6 +39,7 @@
 #include <session/projects/SessionProjects.hpp>
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

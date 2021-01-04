@@ -1,7 +1,7 @@
 /*
  * DesktopPosixDetectRHome.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -71,6 +71,7 @@ bool prepareEnvironment(Options& options)
    if (!rLdScriptPath.exists())
       rLdScriptPath = supportingFilePath.completePath("session/r-ldpath");
 #endif
+   
    // attempt to detect R environment
    std::string rScriptPath, rVersion, errMsg;
    r_util::EnvironmentVars rEnvVars;

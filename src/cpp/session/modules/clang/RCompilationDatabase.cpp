@@ -1,7 +1,7 @@
 /*
  * RCompilationDatabase.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -185,7 +185,65 @@ std::string buildFileHash(const FilePath& filePath)
    }
 }
 
-std::string packageBuildFileHash()
+std::string computeCompilerHash(bool isCpp)
+{
+   // include hash of default compiler version, so we can
+   // detect cases where the compiler version has changed
+   FilePath rHomeBinDir;
+   Error error = module_context::rBinDir(&rHomeBinDir);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return std::string();
+   }
+   
+   // retrieve compiler command
+   std::string compilerCommand;
+   {
+      shell_utils::ShellCommand rCmd = module_context::rCmd(rHomeBinDir);
+      rCmd << "config";
+      
+      if (isCpp)
+      {
+         rCmd << "CXX";
+      }
+      else
+      {
+         rCmd << "CC";
+      }
+   
+      core::system::ProcessOptions options;
+      core::system::ProcessResult result;
+      error = core::system::runCommand(rCmd, options, &result);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return std::string();
+      }
+      
+      compilerCommand = string_utils::trimWhitespace(result.stdOut);
+   }
+   
+   // ask the compiler what version it is
+   core::system::ProcessOptions options;
+   core::system::ProcessResult result;
+   error = core::system::runCommand(
+            compilerCommand + " --version",
+            options,
+            &result);
+   
+   if (error)
+   {
+      LOG_ERROR(error);
+      return std::string();
+   }
+   
+   std::stringstream ss;
+   ss << std::hash<std::string>{}(string_utils::trimWhitespace(result.stdOut));
+   return ss.str();
+}
+
+std::string computePackageBuildFileHash()
 {
    std::ostringstream ostr;
    
@@ -312,8 +370,14 @@ void RCompilationDatabase::updateForCurrentPackage()
    }
 
    // check hash to see if we can avoid this computation
-   std::string buildFileHash = packageBuildFileHash();
-   if (buildFileHash == packageBuildFileHash_)
+   std::string packageBuildFileHash = computePackageBuildFileHash();
+   std::string compilerHash = computeCompilerHash(packageCompilationConfig_.isCpp);
+   
+   bool isCurrent =
+         packageBuildFileHash == packageBuildFileHash_ &&
+         compilerHash == compilerHash_;
+   
+   if (isCurrent)
       return;
 
    // compilation config has changed; rebuild pch
@@ -329,7 +393,8 @@ void RCompilationDatabase::updateForCurrentPackage()
       packageCompilationConfig_.args = args;
       packageCompilationConfig_.PCH = packagePCH(pkgInfo.linkingTo());
       packageCompilationConfig_.isCpp = isCpp;
-      packageBuildFileHash_ = buildFileHash;
+      packageBuildFileHash_ = packageBuildFileHash;
+      compilerHash_ = compilerHash;
 
       // save them to disk
       savePackageCompilationConfig();
@@ -426,10 +491,22 @@ void RCompilationDatabase::savePackageCompilationConfig()
    configJson["pch"] = packageCompilationConfig_.PCH;
    configJson["is_cpp"] = packageCompilationConfig_.isCpp;
    configJson["hash"] = packageBuildFileHash_;
+   configJson["compiler"] = compilerHash_;
 
-   Error error = writeStringToFile(compilationConfigFilePath(), configJson.writeFormatted());
+   FilePath configFilePath = compilationConfigFilePath();
+   std::string jsonFormatted = configJson.writeFormatted();
+   
+   if (rSourceIndex().verbose() > 0)
+   {
+      std::cerr << "# SAVING PACKAGE COMPILATION CONFIG ----" << std::endl;
+      std::cerr << configFilePath.getAbsolutePath() << std::endl;
+      std::cerr << jsonFormatted << std::endl << std::endl;
+   }
+   
+   Error error = writeStringToFile(configFilePath, jsonFormatted);
    if (error)
       LOG_ERROR(error);
+   
 }
 
 void RCompilationDatabase::restorePackageCompilationConfig()
@@ -466,12 +543,23 @@ void RCompilationDatabase::restorePackageCompilationConfig()
       LOG_ERROR(error);
       return;
    }
+   
+   // also attempt to read 'compiler' field (added in 1.4 Juliet Rose)
+   // errors can be ignored here since this field won't exist in older databases
+   json::readObject(configJson.getObject(), "compiler", compilerHash_);
 
    packageCompilationConfig_.args.clear();
    for (const json::Value& argJson : argsJson)
    {
       if (json::isType<std::string>(argJson))
          packageCompilationConfig_.args.push_back(argJson.getString());
+   }
+   
+   if (rSourceIndex().verbose() > 0)
+   {
+      std::cerr << "# RESTORING PACKAGE COMPILATION CONFIG ----" << std::endl;
+      std::cerr << configFilePath.getAbsolutePath() << std::endl;
+      std::cerr << configJson.writeFormatted() << std::endl;
    }
 }
 
@@ -696,6 +784,7 @@ std::vector<std::string> RCompilationDatabase::projectTranslationUnits() const
 void RCompilationDatabase::rebuildPackageCompilationDatabase()
 {
    packageBuildFileHash_.clear();
+   compilerHash_.clear();
 }
 
 bool RCompilationDatabase::shouldIndexConfig(const CompilationConfig& config)
@@ -1146,8 +1235,9 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
       // create args array
       if (rSourceIndex().verbose() > 0)
       {
-         std::cerr << "GENERATING PRECOMPILED HEADERS:" << std::endl;
+         std::cerr << "# GENERATING PRECOMPILED HEADERS ----" << std::endl;
          core::debug::print(args);
+         std::cerr << std::endl;
       }
 
       core::system::ProcessArgs argsArray(args);

@@ -1,7 +1,7 @@
 /*
  * FileLock.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,9 +27,12 @@
 #include <core/system/Xdg.hpp>
 
 #include <boost/algorithm/string.hpp>
+#include <boost/bind/bind.hpp>
 
 // borrowed from SessionConstants.hpp
 #define kRStudioSessionRoute "RSTUDIO_SESSION_ROUTE"
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace core {

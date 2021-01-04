@@ -1,7 +1,7 @@
 /*
  * SessionModuleContext.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -160,6 +160,10 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
 {
    try
    {
+      // ignore forked sessions
+      if (main_process::wasForked())
+         return R_NilValue;
+      
       // extract name
       std::string name = r::sexp::asString(nameSEXP);
       
@@ -1401,8 +1405,10 @@ bool isMinimumRoxygenInstalled()
 std::string packageVersion(const std::string& packageName)
 {
    std::string version;
-   Error error = r::exec::RFunction(".rs.packageVersionString", packageName)
-                                                               .call(&version);
+   Error error = r::exec::RFunction(".rs.packageVersionString")
+         .addParam(packageName)
+         .call(&version);
+   
    if (error)
    {
       LOG_ERROR(error);
@@ -1414,7 +1420,22 @@ std::string packageVersion(const std::string& packageName)
    }
 }
 
-bool hasMinimumRVersion(const std::string &version)
+Error packageVersion(const std::string& packageName,
+                     core::Version* pVersion)
+{
+   std::string version;
+   Error error = r::exec::RFunction(".rs.packageVersionString")
+         .addParam(packageName)
+         .call(&version);
+   
+   if (error)
+      return error;
+   
+   *pVersion = Version(version);
+   return Success();
+}
+
+bool hasMinimumRVersion(const std::string& version)
 {
    bool hasVersion = false;
    boost::format fmt("getRversion() >= '%1%'");

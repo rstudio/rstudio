@@ -1,7 +1,7 @@
 /*
  * SessionSource.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,8 +22,8 @@
 
 #include <gsl/gsl>
 
-#include <boost/bind.hpp>
 #include <boost/utility.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <core/r_util/RSourceIndex.hpp>
 
@@ -61,6 +61,7 @@ extern "C" const char *locale2charset(const char *);
 #include <session/prefs/Preferences.hpp>
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {
@@ -1410,6 +1411,7 @@ SEXP rs_requestDocumentClose(SEXP idsSEXP, SEXP saveSXP) {
    fillIds(idsSEXP, &jsonData);
 
    jsonData["save"] = r::sexp::asLogical(saveSXP);
+   jsonData["notify_complete"] = true;
 
    ClientEvent event(client_events::kRequestDocumentClose, jsonData);
    

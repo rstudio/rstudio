@@ -1,7 +1,7 @@
 #
 # SessionProfiler.R
 #
-# Copyright (C) 2020 by RStudio, PBC
+# Copyright (C) 2021 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -85,16 +85,20 @@
       resources <- .rs.profileResources()
       htmlFile <- normalizePath(tempfile(fileext = ".html", tmpdir = resources$tempPath), winslash = "/", mustWork = FALSE)
 
-      if (identical(profilerOptions$profvis, NULL)) {
-         if (identical(tools::file_ext(profilerOptions$fileName), "Rprof")) {
+      if (identical(profilerOptions$profvis, NULL))
+      {
+         if (identical(tools::file_ext(profilerOptions$fileName), "Rprof"))
+         {
             profvis <- profvis::profvis(prof_input = profilerOptions$fileName, split = "h")
             htmlwidgets::saveWidget(profvis, htmlFile, selfcontained = TRUE)
          }
-         else {
+         else
+         {
             .rs.rpc.copy_profile(profilerOptions$fileName, htmlFile)
          }
       }
-      else {
+      else
+      {
          profvis <- profilerOptions$profvis
          htmlwidgets::saveWidget(profvis, htmlFile, selfcontained = TRUE)
       }

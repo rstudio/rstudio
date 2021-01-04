@@ -1,6 +1,6 @@
 /* UserPrefValues.hpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -380,6 +380,8 @@ namespace prefs {
 #define kPythonVersion "python_version"
 #define kPythonPath "python_path"
 #define kSaveRetryTimeout "save_retry_timeout"
+#define kInsertNativePipeOperator "insert_native_pipe_operator"
+#define kCommandPaletteMru "command_palette_mru"
 
 class UserPrefValues: public Preferences
 {
@@ -1668,6 +1670,18 @@ public:
     */
    int saveRetryTimeout();
    core::Error setSaveRetryTimeout(int val);
+
+   /**
+    * Whether the Insert Pipe Operator command should insert the native R pipe operator, |>
+    */
+   bool insertNativePipeOperator();
+   core::Error setInsertNativePipeOperator(bool val);
+
+   /**
+    * Whether to keep track of recently used commands in the Command Palette
+    */
+   bool commandPaletteMru();
+   core::Error setCommandPaletteMru(bool val);
 
 };
 

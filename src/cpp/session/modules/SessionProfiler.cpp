@@ -1,7 +1,7 @@
 /*
  * SessionProfiler.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -89,11 +89,11 @@ void onDocPendingRemove(
    if (htmlLocalPath.empty() && path.empty())
       return;
 
-   r::exec::RFunction rFunction(".rs.rpc.clear_profile");
-   rFunction.addParam(path);
-   rFunction.addParam(htmlLocalPath);
+   Error error = r::exec::RFunction(".rs.rpc.clear_profile")
+         .addUtf8Param(path)
+         .addUtf8Param(htmlLocalPath)
+         .call();
 
-   Error error = rFunction.call();
    if (error)
    {
       LOG_ERROR(error);

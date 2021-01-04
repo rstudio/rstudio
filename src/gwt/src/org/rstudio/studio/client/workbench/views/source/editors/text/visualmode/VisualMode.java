@@ -1,7 +1,7 @@
 /*
  * VisualMode.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -38,6 +38,7 @@ import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.Value;
+import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
 import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.panmirror.PanmirrorChanges;
@@ -53,6 +54,7 @@ import org.rstudio.studio.client.panmirror.events.PanmirrorFocusEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorNavigationEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorStateChangeEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorUpdatedEvent;
+import org.rstudio.studio.client.panmirror.location.PanmirrorEditingLocation;
 import org.rstudio.studio.client.panmirror.location.PanmirrorEditingOutlineLocation;
 import org.rstudio.studio.client.panmirror.location.PanmirrorEditingOutlineLocationItem;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineItem;
@@ -72,6 +74,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeList;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditorContainer;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
@@ -518,6 +521,16 @@ public class VisualMode implements VisualModeEditorSync,
                         allDone.execute(false);
                         return;
                      }
+                     
+                     // if we failed to extract a source capsule then don't switch (as the user will have lost data)
+                     // (note that this constant is also defined in rmd_chunk-capsule.ts)
+                     final String kRmdBlockCapsuleType = "f3175f2a-e8a0-4436-be12-b33925b6d220".toLowerCase();
+                     if (result.canonical.contains(kRmdBlockCapsuleType))
+                     {
+                        view_.showWarningBar("Unable to activate visual mode (error parsing code chunks out of document)");
+                        allDone.execute(false);
+                        return;
+                     }
 
                      // clear progress (for possible dialog overlays created by confirmation)
                      progress_.endProgressOperation();
@@ -708,12 +721,13 @@ public class VisualMode implements VisualModeEditorSync,
 
    /**
     * Perform a command after synchronizing the selection state of the visual
-    * editor. Note that the command will not be performed unless focus is in a
-    * code editor (as otherwise we can't map selection 1-1).
-    * 
-    * @param command
+    * editor. Note that the command will be passed a null position if focus is
+    * not in a code editor (outside a code editor we can't map selection 1-1).
+    *
+    * @param command The command to perform; will be passed the exact cursor
+    *    position if available.
     */
-   public void performWithSelection(Command command)
+   public void performWithSelection(CommandWithArg<Position> command)
    {
       // Drive focus to the editing surface. This is necessary so we correctly
       // identify the active (focused) editor on which to perform the command.
@@ -968,6 +982,31 @@ public class VisualMode implements VisualModeEditorSync,
          return null;
       return chunk.getDefinition();
    }
+
+
+   /**
+    * Gets the Scope of the nearest visual mode chunk.
+    *
+    * @param dir The direction in which to look
+    *
+    * @return The scope of the nearest chunk, or null if no chunk was found.
+    */
+   public Scope getNearestChunkScope(int dir)
+   {
+      PanmirrorEditingLocation loc = panmirror_.getEditingLocation();
+      if (loc == null)
+      {
+         // No current location, so can't find nearest chunk
+         return null;
+      }
+      VisualModeChunk chunk = visualModeChunks_.getNearestChunk(loc.pos, dir);
+      if (chunk == null)
+      {
+         // No nearest chunk
+         return null;
+      }
+      return chunk.getScope();
+   }
    
    /**
     * Gets the document outline for the status bar popup; displayed when
@@ -1055,9 +1094,9 @@ public class VisualMode implements VisualModeEditorSync,
    }
 
    @Override
-   public List<CommandPaletteItem> getCommandPaletteItems()
+   public CommandPaletteEntryProvider getPaletteEntryProvider()
    {
-      return panmirror_.getCommandPaletteItems();
+      return panmirror_.getPaletteEntryProvider();
    }
 
    public void focus(Command onComplete)

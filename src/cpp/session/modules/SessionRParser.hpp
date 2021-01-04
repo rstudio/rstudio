@@ -1,7 +1,7 @@
 /*
  * SessionRParser.hpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -40,12 +40,14 @@
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
 
-#include <boost/bind.hpp>
-#include <boost/container/flat_set.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/bind/bind.hpp>
+#include <boost/container/flat_set.hpp>
 
 #include <core/Macros.hpp>
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

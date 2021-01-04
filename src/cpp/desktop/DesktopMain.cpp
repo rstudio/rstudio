@@ -1,7 +1,7 @@
 /*
  * DesktopMain.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,9 +18,9 @@
 #include <QPushButton>
 #include <QQuickWindow>
 
-#include <boost/bind.hpp>
 #include <boost/function.hpp>
 #include <boost/scoped_ptr.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <core/CrashHandler.hpp>
 #include <core/FileSerializer.hpp>
@@ -58,6 +58,8 @@
 
 QProcess* pRSessionProcess;
 QString sharedSecret;
+
+using namespace boost::placeholders;
 
 using namespace rstudio;
 using namespace rstudio::core;

@@ -1,7 +1,7 @@
 /*
  * VisualModeChunks.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -98,6 +98,47 @@ public class VisualModeChunks implements ChunkDefinition.Provider
       }
       return null;
    }
+
+   /**
+    * Gets the visual mode chunk nearest to the given position.
+    *
+    * @param pos The position in visual mode (usually of the cursor)
+    * @param dir The direction in which to look
+    *
+    * @return The nearest chunk, or null if no chunks are found.
+    */
+   public VisualModeChunk getNearestChunk(int pos, int dir)
+   {
+      // Candidate for nearest chunk
+      VisualModeChunk nearest = null;
+
+      // Distance of nearest chunk from the given position
+      int best = 0;
+
+      for (VisualModeChunk chunk: chunks_)
+      {
+         // Check distance from position
+         int chunkPos = chunk.getVisualPosition();
+         int offset = dir == TextEditingTargetScopeHelper.PREVIOUS_CHUNKS ?
+            pos - chunkPos : chunkPos - pos;
+         if (offset < 0)
+         {
+            // Skip if past target
+            continue;
+         }
+
+         if (nearest == null || offset < best)
+         {
+            // Record this chunk if it's the nearest we've found so far
+            nearest = chunk;
+            best = offset;
+         }
+      }
+
+      // Return nearest chunk; could be null if e.g., there are no chunks after the cursor
+      // and FOLLOWING_CHUNKS was specified
+      return nearest;
+   }
    
    /**
     * Find the visual mode chunk editor corresponding to the given visual
@@ -121,61 +162,24 @@ public class VisualModeChunks implements ChunkDefinition.Provider
    }
    
    /**
-    * Executes the currently active chunk
-    */
-   public void executeCurrentChunk()
-   {
-      withActiveChunk((chunk) ->
-      {
-         chunk.execute();
-      });
-   }
-   
-   /**
-    * Executes all previous chunks
-    */
-   public void executePreviousChunks()
-   {
-      withActiveChunk((chunk) ->
-      {
-         target_.executeChunks(
-               Position.create(chunk.getScope().getBodyStart().getRow(), 0),
-               TextEditingTargetScopeHelper.PREVIOUS_CHUNKS);
-      });
-   }
-   
-   /**
-    * Executes the next chunk
-    */
-   public void executeNextChunk()
-   {
-      boolean next = false;
-      for (VisualModeChunk chunk: chunks_)
-      {
-         if (next)
-         {
-            chunk.focus();
-            chunk.execute();
-            break;
-         }
-         if (chunk.isActive())
-         {
-            next = true;
-         }
-      }
-   }
-   
-   /**
     * Performs an arbitrary command after synchronizing the selection state of
     * the child editor to the parent.
     * 
-    * @param command The command to perform.
+    * @param command The command to perform. The new position of the cursor in
+    *    source mode is passed as an argument.
     */
-   public void performWithSelection(Command command)
+   public void performWithSelection(CommandWithArg<Position> command)
    {
       withActiveChunk((chunk) ->
       {
-         chunk.performWithSelection(command);
+         if (chunk == null)
+         {
+            command.execute(null);
+         }
+         else
+         {
+            chunk.performWithSelection(command);
+         }
       });
    }
    
@@ -248,7 +252,12 @@ public class VisualModeChunks implements ChunkDefinition.Provider
          }
       }
    }
-   
+
+   /**
+    * Executes a command with the currently active visual chunk (or null if no chunk is active)
+    *
+    * @param command The command to execute.
+    */
    private void withActiveChunk(CommandWithArg<VisualModeChunk> command)
    {
       for (VisualModeChunk chunk: chunks_)
@@ -256,9 +265,12 @@ public class VisualModeChunks implements ChunkDefinition.Provider
          if (chunk.isActive())
          {
             command.execute(chunk);
-            break;
+            return;
          }
       }
+
+      // No chunk found; execute without one
+      command.execute(null);
    }
 
    private final VisualModeEditorSync sync_;

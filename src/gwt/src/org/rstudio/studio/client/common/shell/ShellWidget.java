@@ -1,7 +1,7 @@
 /*
  * ShellWidget.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -229,7 +229,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
       verticalPanel_.add(inputLine_);
       verticalPanel_.setWidth("100%");
 
-      scrollPanel_ = new ClickableScrollPanel();
+      // dont use the autoscroll timer if we're controlling the content externally
+      scrollPanel_ = new ClickableScrollPanel(!prefs_.limitVisibleConsole().getValue());
       scrollPanel_.setWidget(verticalPanel_);
       scrollPanel_.addStyleName("ace_editor");
       scrollPanel_.addStyleName("ace_scroller");
@@ -727,6 +728,11 @@ public class ShellWidget extends Composite implements ShellDisplay,
       private ClickableScrollPanel()
       {
          super();
+      }
+
+      private ClickableScrollPanel(boolean useTimer)
+      {
+         super(useTimer);
       }
 
       public HandlerRegistration addClickHandler(ClickHandler handler)

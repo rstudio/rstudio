@@ -1,7 +1,7 @@
 /*
  * GwtSymbolMaps.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,15 +20,17 @@
 #include <set>
 #include <algorithm>
 
-#include <boost/bind.hpp>
 #include <boost/regex.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <core/Thread.hpp>
 #include <core/RegexUtils.hpp>
 #include <shared_core/SafeConvert.hpp>
 #include <core/FileSerializer.hpp>
+
+using namespace boost::placeholders;
 
 // NOTE: this is a port of the following GWT class:
 // (our rev was 11565, we should track to future changes)

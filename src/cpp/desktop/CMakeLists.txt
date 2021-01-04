@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2020 by RStudio, PBC
+# Copyright (C) 2021 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -35,7 +35,7 @@ if(NOT WIN32)
          endif()
       endif()
 
-      set(QT_CANDIDATES 5.12.8)
+      set(QT_CANDIDATES 5.12.8 5.12.10)
 
       # find the newest installed Qt version among the versions we build
       # against

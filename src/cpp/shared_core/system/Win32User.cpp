@@ -1,7 +1,7 @@
 /*
  * Win32StringUtils.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,12 +18,14 @@
 #include <shlobj.h>
 
 #include <boost/algorithm/string.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <shared_core/FilePath.hpp>
 #include <shared_core/Logger.hpp>
 #include <shared_core/SafeConvert.hpp>
 #include <shared_core/system/Win32StringUtils.hpp>
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace core {

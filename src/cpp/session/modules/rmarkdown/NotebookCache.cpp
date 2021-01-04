@@ -1,7 +1,7 @@
 /*
  * NotebookCache.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,7 +20,7 @@
 #include "NotebookOutput.hpp"
 #include "NotebookHtmlWidgets.hpp"
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
@@ -41,6 +41,7 @@
 #define kCacheAgeThresholdMs 1000 * 60 * 60 * 24 * 2
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

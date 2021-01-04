@@ -1,7 +1,7 @@
 /*
  * SessionExecuteChunkOperation.hpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,10 +15,10 @@
 #ifndef SESSION_MODULES_RMARKDOWN_SESSION_EXECUTE_CHUNK_OPERATIONR_HPP
 #define SESSION_MODULES_RMARKDOWN_SESSION_EXECUTE_CHUNK_OPERATIONR_HPP
 
-#include <boost/bind.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <core/FileSerializer.hpp>
 #include <core/StringUtils.hpp>
@@ -30,6 +30,8 @@
 #include "NotebookOutput.hpp"
 #include "NotebookExec.hpp"
 #include "SessionRmdNotebook.hpp"
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {
