@@ -53,7 +53,7 @@
   VIAddVersionKey CompanyName "RStudio, PBC"
   VIAddVersionKey FileDescription "RStudio"
   VIAddVersionKey InternalName "RStudio"
-  VIAddVersionKey LegalCopyright "Copyright (C) 2020 by RStudio, PBC"
+  VIAddVersionKey LegalCopyright "Copyright (C) 2021 by RStudio, PBC"
   VIAddVersionKey LegalTrademarks "RStudio (TM) is a trademark of RStudio, PBC"
 
   ;
