@@ -72,6 +72,7 @@ Error getTotalMemory(int *pTotalKb, MemoryProvider *pProvider)
         return systemError(errno, "Failed to get total physical memory from sysctl", ERROR_LOCATION);
     }
 
+    *pTotalKb = mem / 1024;
     *pProvider = MemoryProviderMacOS;
     return Success();
 }

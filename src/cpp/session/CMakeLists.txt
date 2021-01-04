@@ -161,6 +161,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionThemes.cpp
    modules/SessionTutorial.cpp
    modules/SessionSVN.cpp
+   modules/SessionSystemResources.cpp
    modules/SessionUpdates.cpp
    modules/SessionVCS.cpp
    modules/SessionWorkbench.cpp
