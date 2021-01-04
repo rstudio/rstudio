@@ -135,7 +135,6 @@ public class FindOutputPane extends WorkbenchPane
       FormLabel replaceLabel = new FormLabel("Replace with: ", replaceTextBox_);
       replaceToolbar.addLeftWidget(replaceLabel);
       replaceToolbar.addLeftWidget(replaceTextBox_);
-      Roles.getButtonRole().setAriaLabelProperty(replaceTextBox_.getElement(), "Replace with");
 
       stopReplace_ = new ToolbarButton(
             ToolbarButton.NoText,
