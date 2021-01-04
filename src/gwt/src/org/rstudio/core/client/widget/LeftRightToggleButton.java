@@ -93,12 +93,12 @@ public class LeftRightToggleButton extends Widget
 
    public void setClassId()
    {
+      String leftId = ClassIds.idSafeString(left_.getInnerText());
+      String rightId = ClassIds.idSafeString(right_.getInnerText());
       ClassIds.assignClassId(getElement(),
-         ClassIds.LEFT_RIGHT_TOGGLE_BTN + " _ " +
-            left_.getInnerText() + "_" +
-            right_.getInnerText());
-      ClassIds.assignClassId(left_, ClassIds.LEFT_TOGGLE_BTN + "_"  + left_.getInnerText());
-      ClassIds.assignClassId(right_, ClassIds.RIGHT_TOGGLE_BTN + "_"  + right_.getInnerText());
+         ClassIds.LEFT_RIGHT_TOGGLE_BTN + "_" + leftId + "_" + rightId);
+      ClassIds.assignClassId(left_, ClassIds.LEFT_TOGGLE_BTN + "_"  + leftId);
+      ClassIds.assignClassId(right_, ClassIds.RIGHT_TOGGLE_BTN + "_"  + rightId);
    }
    
    @Override
