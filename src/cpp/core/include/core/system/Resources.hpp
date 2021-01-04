@@ -55,8 +55,7 @@ Error getMemoryUsed(int *pUsedKb, MemoryProvider *pProvider);
 
 Error getProcessMemoryUsed(int *pUsedKb, MemoryProvider *pProvider);
 
-Error getMemoryAvailable(int *pAvailKb, MemoryProvider *pProvider);
-
+Error getTotalMemory(int *pTotalKb, MemoryProvider *pProvider);
 
 } // namespace system
 } // namespace core
