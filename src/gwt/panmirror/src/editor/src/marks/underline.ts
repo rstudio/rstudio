@@ -1,7 +1,7 @@
 /*
  * underline.ts
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,6 +20,7 @@ import { Extension, extensionIfEnabled } from '../api/extension';
 import { PandocOutput, PandocTokenType } from '../api/pandoc';
 
 import './underline-styles.css';
+import { kPlatformMac } from '../api/platform';
 
 const extension: Extension = {
   marks: [
@@ -54,7 +55,7 @@ const extension: Extension = {
   ],
 
   commands: (schema: Schema) => {
-    return [new MarkCommand(EditorCommandId.Underline, [], schema.marks.underline)];
+    return [new MarkCommand(EditorCommandId.Underline, kPlatformMac ? ['Mod-u'] : [], schema.marks.underline)];
   },
 };
 

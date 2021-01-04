@@ -14,7 +14,10 @@
 * Preliminary compatibility with UCRT builds of R-devel (#8461)
 * Update Windows Desktop to openSSL 1.1.1i (#8574)
 * Improve ordering of items in Command Palette list and search results (#7567, #7956)
-* Update embedded Pandoc to v2.11.3
+* Update embedded Pandoc to v2.11.3.2
+* Change default per-user install folder to %LocalAppData%\Programs on Windows (#8598)
+* Cmd+U now toggles underlining in the visual editor on macOS (#8656)
+* Improve YAML cursor position after omni-insert in the visual editor (#8670)
 
 ### RStudio Server
 
@@ -35,6 +38,8 @@
 * The commands "Execute Previous Chunks" and "Execute Subsequent Chunks" now work when the cursor is outside a code chunk in the visual editor (#8500)
 * Fix various issues when the "Limit Console Output" performance setting was enabled, and enable it by default (#8544, #8504, #8529, #8552)
 * Fix display of condition messages (errors and warnings) in some character encodings (#8546)
+* Fix issues finding words with punctuation in visual mode (#8655)
+* Fix spurious image insertion when pasting into visual mode from Excel (#8665)
 
 
 

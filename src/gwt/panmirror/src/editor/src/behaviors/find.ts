@@ -1,7 +1,7 @@
 /*
  * find.ts
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -75,7 +75,9 @@ class FindPlugin extends Plugin<DecorationSet> {
   public find(term: string, options: FindOptions) {
     return (state: EditorState<any>, dispatch?: (tr: Transaction<any>) => void) => {
       if (dispatch) {
-        this.term = !options.regex ? term.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&') : term;
+        this.term = !options.regex ? term.replace(/[-/\\^$*+?.()|[\]{}]/g, (escape: string) => {
+          return '\\u' + ('0000' + escape.charCodeAt(0).toString(16)).slice(-4);
+        }) : term;
         this.options = options;
         this.updateResults(state, dispatch);
       }
