@@ -40,6 +40,7 @@
 #include "modules/SessionSource.hpp"
 #include "modules/SessionVCS.hpp"
 #include "modules/SessionFonts.hpp"
+#include "modules/SessionSystemResources.hpp"
 #include "modules/build/SessionBuild.hpp"
 #include "modules/jobs/SessionJobs.hpp"
 #include "modules/environment/SessionEnvironment.hpp"
@@ -544,6 +545,17 @@ void handleClientInit(const boost::function<void()>& initFunction,
    if (error)
       LOG_ERROR(error);
    sessionInfo["package_dependencies"] = packageDependencies;
+
+   boost::shared_ptr<modules::system_resources::MemoryUsage> pUsage;
+   error = modules::system_resources::getMemoryUsage(&pUsage);
+   if (error)
+   {
+      LOG_ERROR(error);
+   }
+   else if (pUsage)
+   {
+      sessionInfo["memory_stats"] = pUsage->toJson();
+   }
 
    // crash handler settings
    bool canModifyCrashSettings =

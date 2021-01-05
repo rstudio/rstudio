@@ -35,17 +35,27 @@ namespace system_resources {
 
 class MemoryStat {
 public:
-    int kb;
-    core::system::MemoryProvider provider;
-    core::json::Object toJson();
+   MemoryStat(): 
+       kb(0), provider(core::system::MemoryProviderUnknown)
+       {}
+   MemoryStat(int kbIn, core::system::MemoryProvider providerIn): 
+       kb(kbIn), provider(providerIn)
+       {}
+   core::json::Object toJson();
+
+   int kb;
+   core::system::MemoryProvider provider;
 };
 
 class MemoryUsage {
 public:
-    MemoryStat total;
-    MemoryStat used;
-    MemoryStat process;
-    core::json::Object toJson();
+   MemoryUsage() {}
+
+   core::json::Object toJson();
+
+   MemoryStat total;
+   MemoryStat used;
+   MemoryStat process;
 };
 
 core::Error getMemoryUsage(boost::shared_ptr<MemoryUsage> *pMemUsage);

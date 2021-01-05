@@ -15,19 +15,62 @@
 
 #include "SessionSystemResources.hpp"
 
+#include <boost/make_shared.hpp>
+
+using namespace rstudio::core;
+
 namespace rstudio {
 namespace session {
 namespace modules {
 namespace system_resources {
 
-core::Error getMemoryUsage(boost::shared_ptr<MemoryUsage> *pMemUsage)
+json::Object MemoryStat::toJson()
 {
-    return core::Success();
+   json::Object stat;
+   stat["kb"] = kb;
+   stat["provider"] = static_cast<int>(provider);
+   return stat;
 }
 
-core::Error initialize()
+json::Object MemoryUsage::toJson()
 {
+   json::Object usage;
+   usage["total"] = total.toJson();
+   usage["used"] = used.toJson();
+   usage["process"] = process.toJson();
+   return usage;
+}
+
+Error getMemoryUsage(boost::shared_ptr<MemoryUsage> *pMemUsage)
+{
+   boost::shared_ptr<MemoryUsage> pStats = boost::make_shared<MemoryUsage>();
+
+   Error error;
+   int kb;
+   core::system::MemoryProvider provider;
+
+   error = core::system::getTotalMemory(&kb, &provider);
+   if (error)
+      return error;
+   pStats->total = MemoryStat(kb, provider);
+
+   error = core::system::getMemoryUsed(&kb, &provider);
+   if (error)
+      return error;
+   pStats->used = MemoryStat(kb, provider);
+
+   error = core::system::getProcessMemoryUsed(&kb, &provider);
+   if (error)
+      return error;
+   pStats->process = MemoryStat(kb, provider);
+
+   *pMemUsage = pStats;
    return core::Success();
+}
+
+Error initialize()
+{
+   return Success();
 }
 
 }  // namespace system_resources

@@ -29,26 +29,29 @@ namespace system {
 // information, we indicate where the information comes from so we can provide
 // detail in the UI.
 enum MemoryProvider {
-    // Native MacOS memory provider
-    MemoryProviderMacOS = 0,
+   // Source of stat unknown
+   MemoryProviderUnknown,
 
-    // Native Windows memory provider
-    MemoryProviderWindows,
+   // Native MacOS memory provider
+   MemoryProviderMacOS,
 
-    // Linux provider based on cgroups; only available when process is inside a
-    // cgroup
-    MemoryProviderLinuxCgroups,
-    
-    // Linux provider based on ulimit; only useful if process has been given a
-    // memory cap via setrlimit(1) and friends
-    MemoryProviderLinuxUlimit,
+   // Native Windows memory provider
+   MemoryProviderWindows,
 
-    // Linux provider serving process memory information from the /proc virtual
-    // filesystem
-    MemoryProviderLinuxProcFs,
+   // Linux provider based on cgroups; only available when process is inside a
+   // cgroup
+   MemoryProviderLinuxCgroups,
+   
+   // Linux provider based on ulimit; only useful if process has been given a
+   // memory cap via setrlimit(1) and friends
+   MemoryProviderLinuxUlimit,
 
-    // Linux provider serving system-wide memory stats from /proc/meminfo
-    MemoryProviderLinuxProcMeminfo
+   // Linux provider serving process memory information from the /proc virtual
+   // filesystem
+   MemoryProviderLinuxProcFs,
+
+   // Linux provider serving system-wide memory stats from /proc/meminfo
+   MemoryProviderLinuxProcMeminfo
 };
 
 Error getMemoryUsed(int *pUsedKb, MemoryProvider *pProvider);
