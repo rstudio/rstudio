@@ -13,7 +13,7 @@ fi
 
 mkdir focus-visible
 cd focus-visible
-npm install focus-visible@5.1.0
+npm install focus-visible@5.2.0
 
 # Location used to embed in client bundle for GWT build
 FOCUS_VISIBLE_GWT_TARGET_DIR=../../src/org/rstudio/studio/client/workbench/ui/polyfill/js

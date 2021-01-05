@@ -55,7 +55,8 @@ public class SourceMarkerList extends Composite
             codec_,
             res_.styles().selectedRow(),
             true,
-            false);
+            false,
+            "Source Marker Item Table");
       setWidths();
       errorTable_.setStyleName(res_.styles().table());
       errorTable_.setSize("100%", "100%");
