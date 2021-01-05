@@ -85,8 +85,9 @@ public class ShellWidget extends Composite implements ShellDisplay,
       events_ = events;
       prefs_ = prefs;
       ariaLive_ = ariaLive;
-      
-      SelectInputClickHandler secondaryInputHandler = new SelectInputClickHandler();
+
+      boolean scrollOnClick = prefs_ == null || !prefs_.limitVisibleConsole().getValue();
+      SelectInputClickHandler secondaryInputHandler = new SelectInputClickHandler(scrollOnClick);
 
       output_ = new ConsoleOutputWriter(RStudioGinjector.INSTANCE.getVirtualConsoleFactory(), outputLabel);
       output_.getWidget().setStylePrimaryName(styles_.output());
@@ -230,7 +231,9 @@ public class ShellWidget extends Composite implements ShellDisplay,
       verticalPanel_.setWidth("100%");
 
       // dont use the autoscroll timer if we're controlling the content externally
-      scrollPanel_ = new ClickableScrollPanel(!prefs_.limitVisibleConsole().getValue());
+      // prefs can be null in certain contexts so protect against that
+      boolean useTimer = prefs_ == null || !prefs_.limitVisibleConsole().getValue();
+      scrollPanel_ = new ClickableScrollPanel(useTimer);
       scrollPanel_.setWidget(verticalPanel_);
       scrollPanel_.addStyleName("ace_editor");
       scrollPanel_.addStyleName("ace_scroller");
@@ -615,11 +618,17 @@ public class ShellWidget extends Composite implements ShellDisplay,
                                                     KeyDownHandler,
                                                     PasteEvent.Handler
    {
+      public SelectInputClickHandler(boolean scrollOnClick)
+      {
+         super();
+         scrollOnClick_ = scrollOnClick;
+      }
+
       @Override
       public void onClick(ClickEvent event)
       {
          // If clicking on the input panel already, stop propagation.
-         if (event.getSource() == input_)
+         if (!scrollOnClick_ || event.getSource() == input_)
          {
             event.stopPropagation();
             return;
@@ -715,6 +724,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
                scrollPanel_.scrollToBottom();
          }
       };
+
+      private boolean scrollOnClick_;
    }
 
    private boolean isInputOnscreen()
