@@ -30,7 +30,7 @@ namespace system {
 // detail in the UI.
 enum MemoryProvider {
    // Source of stat unknown
-   MemoryProviderUnknown,
+   MemoryProviderUnknown = 0,
 
    // Native MacOS memory provider
    MemoryProviderMacOS,
