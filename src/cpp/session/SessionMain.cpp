@@ -278,6 +278,7 @@ void terminateAllChildProcesses()
    if (!quitChildProcesses())
       return;
 
+   LOG_DEBUG_MESSAGE("Terminating all child processes");
    Error error = system::terminateChildProcesses();
    if (error)
       LOG_ERROR(error);
@@ -1174,6 +1175,8 @@ void rCleanup(bool terminatedNormally)
 {
    try
    {
+      LOG_DEBUG_MESSAGE("Executing cleanup routine");
+
       // bail completely if we were forked
       if (main_process::wasForked())
          return;
@@ -1191,6 +1194,7 @@ void rCleanup(bool terminatedNormally)
       // destroy session if requested
       if (s_destroySession)
       {
+         LOG_DEBUG_MESSAGE("Destroying session data");
          Error error = module_context::activeSession().destroy();
          if (error)
             LOG_ERROR(error);
@@ -1207,6 +1211,7 @@ void rCleanup(bool terminatedNormally)
       // up its data structures at same time that monitor wants to exit)
       //
       // https://github.com/rstudio/rstudio/issues/5222
+      LOG_DEBUG_MESSAGE("Stopping file monitor");
       system::file_monitor::stop();
 
       // cause graceful exit of clientEventService (ensures delivery
@@ -1222,11 +1227,15 @@ void rCleanup(bool terminatedNormally)
       // unix domain socket file so it is no big deal to bypass it
       if (rsession::options().programMode() == kSessionProgramModeServer)
       {
+         LOG_DEBUG_MESSAGE("Stopping Client Event Service");
          clientEventService().stop();
+
+         LOG_DEBUG_MESSAGE("Stopping HTTP Connection Listener");
          httpConnectionListener().stop();
       }
 
       // terminate known child processes
+      LOG_DEBUG_MESSAGE("Terminating known child processes");
       terminateAllChildren(&module_context::processSupervisor(),
                            ERROR_LOCATION);
 

@@ -435,6 +435,7 @@ bool waitForMethod(const std::string& method,
    boost::posix_time::ptime timeoutTime = timeoutTimeFromNow();
    boost::posix_time::time_duration connectionQueueTimeout =
                                    boost::posix_time::milliseconds(50);
+   LOG_DEBUG_MESSAGE("Timeout time: " + date_time::format(timeoutTime, date_time::kIso8601Format));
 
    // wait until we get the method we are looking for
    while(true)
@@ -445,6 +446,8 @@ bool waitForMethod(const std::string& method,
       // check for timeout
       if ( isTimedOut(timeoutTime) )
       {
+         LOG_DEBUG_MESSAGE("Timeout time has been reached");
+
          if (allowSuspend())
          {
             // note that we timed out
@@ -457,13 +460,17 @@ bool waitForMethod(const std::string& method,
                //
                // the conditions for the quit must be the same as those
                // for a regular suspend
+               LOG_DEBUG_MESSAGE("Quitting session due to timeout");
                rstudio::r::session::quit(false, EXIT_SUCCESS); // does not return
                return false;
             }
 
             // attempt to suspend (does not return if it succeeds)
+            LOG_DEBUG_MESSAGE("Attempting to suspend session");
             if (!suspend::suspendSession(false))
             {
+               LOG_DEBUG_MESSAGE("Failed to suspend session");
+
                // reset timeout flag
                suspend::setSuspendedFromTimeout(false);
 

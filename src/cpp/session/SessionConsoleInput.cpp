@@ -173,6 +173,7 @@ bool rConsoleRead(const std::string& prompt,
    }
 
    // r is not processing input
+   LOG_DEBUG_MESSAGE("Cleared executing state");
    setExecuting(false);
 
    if (!s_consoleInputBuffer.empty())
@@ -223,6 +224,7 @@ bool rConsoleRead(const std::string& prompt,
 
    // we are about to return input to r so set the flag indicating that state
    setExecuting(true);
+   LOG_DEBUG_MESSAGE("Set executing state");
 
    // ensure that output resulting from this input goes to the correct console
    if (clientEventQueue().setActiveConsole(pConsoleInput->console))

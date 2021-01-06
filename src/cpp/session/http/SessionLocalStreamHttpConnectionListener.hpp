@@ -136,10 +136,13 @@ private:
 
       // write pid to it
       std::ostringstream ostr;
-      ostr << core::system::currentProcessId();
+      PidType pid = core::system::currentProcessId();
+      ostr << pid;
       Error error = core::writeStringToFile(pidFile, ostr.str());
       if (error)
          return error;
+
+      LOG_DEBUG_MESSAGE("Logged pid to file: " + safe_convert::numberToString(pid) + " " + pidFile.getAbsolutePath());
 
       // chmod to ensure other users can read the file
       return changeFileMode(pidFile,
