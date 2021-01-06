@@ -15,8 +15,6 @@
 
 #include "SessionPlumber.hpp"
 
-#include <boost/algorithm/string/predicate.hpp>
-
 #include <core/Algorithm.hpp>
 #include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
@@ -24,7 +22,6 @@
 #include <core/YamlUtil.hpp>
 
 #include <r/RExec.hpp>
-#include <r/RRoutines.hpp>
 
 #include <session/SessionRUtil.hpp>
 #include <session/SessionOptions.hpp>
@@ -36,7 +33,7 @@ using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
-namespace modules { 
+namespace modules {
 namespace plumber {
 
 namespace {
@@ -88,10 +85,10 @@ Error copyTemplateFile(const std::string& templateFileName, const FilePath& targ
 Error createPlumberAPI(const json::JsonRpcRequest& request, json::JsonRpcResponse* pResponse)
 {
    json::Array result;
-   
+
    std::string apiName;
    std::string apiDirString;
-   
+
    Error error = json::readParams(request.params,
                                   &apiName,
                                   &apiDirString);
@@ -100,10 +97,10 @@ Error createPlumberAPI(const json::JsonRpcRequest& request, json::JsonRpcRespons
       LOG_ERROR(error);
       return error;
    }
-   
+
    FilePath apiDir = module_context::resolveAliasedPath(apiDirString);
    FilePath plumberDir = apiDir.completePath(apiName);
-   
+
    // if plumberDir exists and is not an empty directory, bail
    if (plumberDir.exists())
    {
@@ -115,12 +112,12 @@ Error createPlumberAPI(const json::JsonRpcRequest& request, json::JsonRpcRespons
                   "and is not a directory"));
          return Success();
       }
-      
+
       std::vector<FilePath> children;
       error = plumberDir.getChildren(children);
       if (error)
          LOG_ERROR(error);
-      
+
       if (!children.empty())
       {
          pResponse->setError(
@@ -139,9 +136,9 @@ Error createPlumberAPI(const json::JsonRpcRequest& request, json::JsonRpcRespons
          return Success();
       }
    }
-   
+
    const std::string templateFile = "plumber.R";
-   
+
    // if file already exists, report that as an error
    FilePath target = plumberDir.completePath(templateFile);
    std::string aliasedPath = module_context::createAliasedPath(plumberDir.completePath(templateFile));
@@ -154,7 +151,7 @@ Error createPlumberAPI(const json::JsonRpcRequest& request, json::JsonRpcRespons
                json::Value(message));
       return Success();
    }
-   
+
    // copy the file
    error = copyTemplateFile(templateFile, target);
    if (error)
@@ -162,28 +159,20 @@ Error createPlumberAPI(const json::JsonRpcRequest& request, json::JsonRpcRespons
       pResponse->setError(error, json::Value("Failed to write '" + module_context::createAliasedPath(target) + "'"));
       return Success();
    }
-   
+
    pResponse->setResult(result);
    return Success();
 }
 
 } // anonymous namespace
 
-PlumberFileType plumberTypeFromExtendedType(const std::string& extendedType)
-{
-   if (extendedType == kPlumberApiType)
-      return PlumberFileType::PlumberApi;
-   else
-      return PlumberFileType::PlumberNone;
-}
-
 Error initialize()
 {
    using namespace module_context;
    using boost::bind;
-   
+
    events().onDetectSourceExtendedType.connect(onDetectPlumberSourceType);
-   
+
    ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "create_plumber_api", createPlumberAPI));
