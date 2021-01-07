@@ -85,9 +85,9 @@ Error getProcessMemoryUsed(int *pUsedKb, MemoryProvider *pProvider)
         mach_task_self(), TASK_BASIC_INFO, reinterpret_cast<task_info_t>(&info), &count);
     if (ret == KERN_SUCCESS)
     {
-        *pUsedKb = static_cast<int>(info.virtual_size * (::getpagesize() / 1024));
-        *pProvider = MemoryProviderMacOS;
-        return Success();
+       *pUsedKb = static_cast<int>(info.resident_size / 1024);
+       *pProvider = MemoryProviderMacOS;
+       return Success();
     }
 
     return systemError(ret, "Failed to get memory resource usage from task_info", ERROR_LOCATION);
