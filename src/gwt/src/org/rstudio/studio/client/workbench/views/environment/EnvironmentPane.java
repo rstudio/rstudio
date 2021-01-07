@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.environment;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.user.client.ui.Label;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.DebugFilePosition;
 import org.rstudio.core.client.ElementIds;
@@ -141,6 +142,18 @@ public class EnvironmentPane extends WorkbenchPane
       toolbar.addLeftWidget(createImportMenu());
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.clearWorkspace().createToolbarButton());
+
+      MemoryUsage usage = session_.getSessionInfo().getMemoryUsage();
+      if (usage != null)
+      {
+         Label mem = new Label("Mem: " + Math.round(
+            ((usage.getUsed().getKb() * 1.0) / (usage.getTotal().getKb() * 1.0)) * 100) + "%");
+         mem.setTitle("Used by process: " + (usage.getProcess().getKb() / 1024) + " MiB\n" +
+            "Total used: " + (usage.getUsed().getKb() / 1024) + " MiB\n" +
+            "Total memory: " + (usage.getTotal().getKb() / 1024) + " MiB");
+         toolbar.addRightWidget(mem);
+         toolbar.addRightSeparator();
+      }
 
       ToolbarPopupMenu menu = new ToolbarPopupMenu();
       menu.addItem(createViewMenuItem(EnvironmentObjects.OBJECT_LIST_VIEW));

@@ -554,7 +554,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    }
    else if (pUsage)
    {
-      sessionInfo["memory_stats"] = pUsage->toJson();
+      sessionInfo["memory_usage"] = pUsage->toJson();
    }
 
    // crash handler settings
