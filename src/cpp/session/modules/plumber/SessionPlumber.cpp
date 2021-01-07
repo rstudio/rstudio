@@ -44,7 +44,7 @@ PlumberFileType getPlumberFileType(const std::string& contents)
    // this to be a plumber file. We don't care about details or fully checking syntax, just enough
    // to enable plumber-specific functionality.
    static const boost::regex rePlumberAnnotation(
-         R"(^#\*\s*@(get|put|post|filter|assets|use|delete|head|options|patch)\s)");
+         R"(^#\*\s*@(get|put|post|filter|assets|use|delete|head|options|patch|plumber|serializer|parser|preempt|response|tag|apiTitle|apiDescription|apiTOS|apiContact|apiLicense|apiVersion|apiTag)\s)");
    return regex_utils::search(contents, rePlumberAnnotation) ? 
           PlumberFileType::PlumberApi : PlumberFileType::PlumberNone;
 }
