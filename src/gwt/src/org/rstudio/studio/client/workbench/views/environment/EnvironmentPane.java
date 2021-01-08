@@ -79,6 +79,7 @@ import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import org.rstudio.studio.client.workbench.views.environment.view.MemUsageWidget;
 
 public class EnvironmentPane extends WorkbenchPane
                              implements EnvironmentPresenter.Display,
@@ -146,18 +147,9 @@ public class EnvironmentPane extends WorkbenchPane
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.clearWorkspace().createToolbarButton());
 
-      MemoryUsage usage = session_.getSessionInfo().getMemoryUsage();
-      if (usage != null)
-      {
-         toolbar.addRightWidget(createMemUsageWidget(usage));
-         Label mem = new Label("Mem: " + Math.round(
-            ((usage.getUsed().getKb() * 1.0) / (usage.getTotal().getKb() * 1.0)) * 100) + "%");
-         mem.setTitle("Used by process: " + (usage.getProcess().getKb() / 1024) + " MiB\n" +
-            "Total used: " + (usage.getUsed().getKb() / 1024) + " MiB\n" +
-            "Total memory: " + (usage.getTotal().getKb() / 1024) + " MiB");
-         toolbar.addRightWidget(mem);
-         toolbar.addRightSeparator();
-      }
+      memUsage_ = new MemUsageWidget(session_.getSessionInfo().getMemoryUsage());
+      toolbar.addRightWidget(memUsage_);
+      toolbar.addRightSeparator();
 
       ToolbarPopupMenu menu = new ToolbarPopupMenu();
       menu.addItem(createViewMenuItem(EnvironmentObjects.OBJECT_LIST_VIEW));
@@ -710,7 +702,7 @@ public class EnvironmentPane extends WorkbenchPane
       boolean initialized = session_.getSessionInfo().getPythonInitialized();
       setPythonEnabled(initialized);
 
-      // TODO: recompute memory used
+      memUsage_.setMemoryUsage(session_.getSessionInfo().getMemoryUsage());
    }
 
    @Override
@@ -855,15 +847,6 @@ public class EnvironmentPane extends WorkbenchPane
       Scheduler.get().scheduleDeferred(() -> commands_.refreshEnvironment().execute());
    }
 
-   private Widget createMemUsageWidget(MemoryUsage usage)
-   {
-      long percent = Math.round(((usage.getUsed().getKb() * 1.0) / (usage.getTotal().getKb() * 1.0)) * 100);
-      MiniPieWidget widget = new MiniPieWidget("#000000", "#505050", (int)percent);
-      widget.setHeight("18px");
-      widget.setWidth("18px");
-      return widget;
-   }
-
    public String getActiveLanguage()
    {
       return activeLanguage_;
@@ -895,6 +878,7 @@ public class EnvironmentPane extends WorkbenchPane
    private ToolbarMenuButton viewButton_;
    private ToolbarButton refreshButton_;
    private EnvironmentObjects objects_;
+   private MemUsageWidget memUsage_;
 
    private ArrayList<String> expandedObjects_;
    private int scrollPosition_;
