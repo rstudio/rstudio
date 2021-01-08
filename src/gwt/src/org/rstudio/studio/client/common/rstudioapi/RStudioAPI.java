@@ -41,8 +41,6 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-import org.rstudio.studio.client.server.Void;
-
 @Singleton
 public class RStudioAPI implements RStudioAPIShowDialogEvent.Handler
 {
@@ -110,7 +108,7 @@ public class RStudioAPI implements RStudioAPIShowDialogEvent.Handler
          @Override
          public void execute()
          {
-            server_.showDialogCompleted(null, false, new SimpleRequestCallback<Void>());
+            server_.showDialogCompleted(null, false, new SimpleRequestCallback<>());
          }
       }, true, false);
       dlg.showModal();
@@ -136,14 +134,14 @@ public class RStudioAPI implements RStudioAPIShowDialogEvent.Handler
             {
                indicator.onCompleted();
                
-               server_.showDialogCompleted(input.input, false, new SimpleRequestCallback<Void>());
+               server_.showDialogCompleted(input.input, false, new SimpleRequestCallback<>());
             }        
          }, 
          new Operation() {
             @Override
             public void execute()
             {
-               server_.showDialogCompleted(null, false, new SimpleRequestCallback<Void>());
+               server_.showDialogCompleted(null, false, new SimpleRequestCallback<>());
             }
          });
    }
@@ -163,17 +161,17 @@ public class RStudioAPI implements RStudioAPIShowDialogEvent.Handler
          false,
          new Operation() {
             public void execute() {
-               server_.showDialogCompleted(null, true, new SimpleRequestCallback<Void>());
+               server_.showDialogCompleted(null, true, new SimpleRequestCallback<>());
             }
          },
          new Operation() {
             public void execute() {
-               server_.showDialogCompleted(null, false, new SimpleRequestCallback<Void>());
+               server_.showDialogCompleted(null, false, new SimpleRequestCallback<>());
             }
          },
          new Operation() {
             public void execute() {
-               server_.showDialogCompleted(null, false, new SimpleRequestCallback<Void>());
+               server_.showDialogCompleted(null, false, new SimpleRequestCallback<>());
             }
          },
          ok,

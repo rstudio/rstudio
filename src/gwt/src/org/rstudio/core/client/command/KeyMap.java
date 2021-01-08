@@ -44,16 +44,16 @@ public class KeyMap
 
    public KeyMap()
    {
-      graph_ = new DirectedGraph<KeyCombination, List<CommandBinding>>(new DefaultConstructor<List<CommandBinding>>()
+      graph_ = new DirectedGraph<>(new DefaultConstructor<List<CommandBinding>>()
       {
          @Override
          public List<CommandBinding> create()
          {
-            return new ArrayList<CommandBinding>();
+            return new ArrayList<>();
          }
       });
 
-      idToNodeMap_ = new SafeMap<String, List<DirectedGraph<KeyCombination, List<CommandBinding>>>>();
+      idToNodeMap_ = new SafeMap<>();
    }
 
    public void addBinding(KeySequence keys, CommandBinding command)
@@ -61,11 +61,11 @@ public class KeyMap
       DirectedGraph<KeyCombination, List<CommandBinding>> node = graph_.ensureNode(keys.getData());
 
       if (node.getValue() == null)
-         node.setValue(new ArrayList<CommandBinding>());
+         node.setValue(new ArrayList<>());
       node.getValue().add(0, command);
 
       if (!idToNodeMap_.containsKey(command.getId()))
-         idToNodeMap_.put(command.getId(), new ArrayList<DirectedGraph<KeyCombination, List<CommandBinding>>>());
+         idToNodeMap_.put(command.getId(), new ArrayList<>());
       idToNodeMap_.get(command.getId()).add(node);
    }
 
@@ -94,7 +94,7 @@ public class KeyMap
          if (bindings == null || bindings.isEmpty())
             continue;
 
-         List<CommandBinding> filtered = new ArrayList<CommandBinding>();
+         List<CommandBinding> filtered = new ArrayList<>();
          for (CommandBinding binding : bindings)
             if (binding.getId() != command.getId())
                filtered.add(binding);
@@ -121,7 +121,7 @@ public class KeyMap
 
    public List<KeySequence> getBindings(String id)
    {
-      List<KeySequence> keys = new ArrayList<KeySequence>();
+      List<KeySequence> keys = new ArrayList<>();
       List<DirectedGraph<KeyCombination, List<CommandBinding>>> bindings = idToNodeMap_.get(id);
       if (bindings == null)
          return keys;
@@ -152,7 +152,7 @@ public class KeyMap
       if (node == null)
          return false;
 
-      final Mutable<Boolean> pending = new Mutable<Boolean>(false);
+      final Mutable<Boolean> pending = new Mutable<>(false);
       node.forEachNode(new ForEachNodeCommand<KeyCombination, List<CommandBinding>>()
       {
          @Override

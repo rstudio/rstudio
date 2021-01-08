@@ -29,8 +29,7 @@ public class SourcePathChangedEvent
       void onSourcePathChanged(SourcePathChangedEvent event);
    }
 
-   public static final GwtEvent.Type<SourcePathChangedEvent.Handler> TYPE =
-      new GwtEvent.Type<SourcePathChangedEvent.Handler>();
+   public static final GwtEvent.Type<SourcePathChangedEvent.Handler> TYPE = new GwtEvent.Type<>();
    
    public SourcePathChangedEvent()
    {

@@ -178,7 +178,7 @@ public class GitPresenterCore
    
    private ArrayList<String> getPathArray(ArrayList<StatusAndPath> items)
    {
-      ArrayList<String> paths = new ArrayList<String>();
+      ArrayList<String> paths = new ArrayList<>();
       for (StatusAndPath item : items)
          paths.add(item.getPath());
       return paths;

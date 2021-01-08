@@ -40,7 +40,7 @@ public class UnifiedParser implements DiffParser
    @Override
    public DiffFileHeader nextFilePair()
    {
-      ArrayList<String> headerLines = new ArrayList<String>();
+      ArrayList<String> headerLines = new ArrayList<>();
 
       boolean inDiff = false;
 
@@ -105,7 +105,7 @@ public class UnifiedParser implements DiffParser
 
       boolean[] mask = new boolean[ranges.length];
 
-      ArrayList<Line> lines = new ArrayList<Line>();
+      ArrayList<Line> lines = new ArrayList<>();
       for (;
            !isEmpty(counts) || nextLineIsComment();
            diffIndex_++)

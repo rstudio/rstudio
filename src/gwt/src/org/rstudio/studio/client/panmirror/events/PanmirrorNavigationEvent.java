@@ -80,7 +80,7 @@ public class PanmirrorNavigationEvent extends
    */
   public static Type<PanmirrorNavigationEvent.Handler> getType() {
     if (TYPE == null) {
-      TYPE = new Type<PanmirrorNavigationEvent.Handler>();
+      TYPE = new Type<>();
     }
     return TYPE;
   }

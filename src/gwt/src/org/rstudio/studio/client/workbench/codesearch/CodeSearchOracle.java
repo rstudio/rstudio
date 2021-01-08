@@ -150,8 +150,7 @@ public class CodeSearchOracle extends SuggestOracle
             if (queryLower.indexOf('*') != -1)
                pattern = patternForTerm(queryLower);
             
-            ArrayList<CodeSearchSuggestion> suggestions =
-                                       new ArrayList<CodeSearchSuggestion>();
+            ArrayList<CodeSearchSuggestion> suggestions = new ArrayList<>();
             for (int s=0; s<res.getSuggestions().size(); s++)
             {
                CodeSearchSuggestion sugg = res.getSuggestions().get(s);
@@ -297,8 +296,7 @@ public class CodeSearchOracle extends SuggestOracle
             @Override
             public void onResponseReceived(CodeSearchResults response)
             {  
-               ArrayList<CodeSearchSuggestion> suggestions = 
-                                       new ArrayList<CodeSearchSuggestion>();
+               ArrayList<CodeSearchSuggestion> suggestions = new ArrayList<>();
                
                // file results
                ArrayList<FileItem> fileResults = 
@@ -397,7 +395,7 @@ public class CodeSearchOracle extends SuggestOracle
                                    boolean moreAvailable)
    {
       // get file paths for file targets (which are always at the beginning)
-      ArrayList<String> filePaths = new ArrayList<String>();
+      ArrayList<String> filePaths = new ArrayList<>();
       for(CodeSearchSuggestion suggestion : suggestions)
       {
          if (!suggestion.isFileTarget())
@@ -410,8 +408,7 @@ public class CodeSearchOracle extends SuggestOracle
       ArrayList<String> displayLabels =
             DuplicateHelper.getPathLabels(filePaths, true);
       
-      ArrayList<CodeSearchSuggestion> newSuggestions =
-            new ArrayList<CodeSearchSuggestion>(suggestions);
+      ArrayList<CodeSearchSuggestion> newSuggestions = new ArrayList<>(suggestions);
       
       for (int i = 0; i < displayLabels.size(); i++)
       {
@@ -439,8 +436,7 @@ public class CodeSearchOracle extends SuggestOracle
    private final WorkbenchContext workbenchContext_;
    private final CodeSearchCommand codeSearch_ = new CodeSearchCommand();
    
-   private final ArrayList<SearchResult> resultCache_ = 
-                                             new ArrayList<SearchResult>();
+   private final ArrayList<SearchResult> resultCache_ = new ArrayList<>();
    
    private class SearchResult
    {

@@ -23,7 +23,7 @@ public class VcsRefreshEvent extends GwtEvent<VcsRefreshHandler>
    private final Reason reason_;
    private final int delayMs_;
 
-   public static final Type<VcsRefreshHandler> TYPE = new Type<VcsRefreshHandler>();
+   public static final Type<VcsRefreshHandler> TYPE = new Type<>();
 
    public VcsRefreshEvent(Reason reason)
    {

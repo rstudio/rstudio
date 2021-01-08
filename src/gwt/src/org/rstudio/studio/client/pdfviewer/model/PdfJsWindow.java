@@ -374,7 +374,7 @@ public class PdfJsWindow extends WindowEx
       final double w = pdfLocation.getWidth() * factor;
       final double h = pdfLocation.getHeight() * factor;
       
-      final Value<Integer> retries = new Value<Integer>(0);
+      final Value<Integer> retries = new Value<>(0);
 
       // Sometimes pageContainer is null during load, so retry every 100ms
       // until it's not, or we've tried 40 times.

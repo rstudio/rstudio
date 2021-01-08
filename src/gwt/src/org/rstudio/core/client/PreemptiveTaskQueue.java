@@ -141,7 +141,7 @@ public class PreemptiveTaskQueue
    }
    
    
-   private Queue<Task> taskQueue_ = new LinkedList<Task>();
+   private Queue<Task> taskQueue_ = new LinkedList<>();
    private boolean processing_ = false;
    private final boolean log_;
    private final boolean safe_;

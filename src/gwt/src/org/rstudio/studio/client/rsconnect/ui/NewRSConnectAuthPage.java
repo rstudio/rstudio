@@ -372,7 +372,7 @@ public class NewRSConnectAuthPage
    private RSConnectServerOperations server_;
    private GlobalDisplay display_;
    private RSConnectAuthWait contents_;
-   private Value<Boolean> waitingForAuth_ = new Value<Boolean>(false);
+   private Value<Boolean> waitingForAuth_ = new Value<>(false);
    private boolean runningAuthCompleteCheck_ = false;
    private ProgressIndicator wizardIndicator_;
 }

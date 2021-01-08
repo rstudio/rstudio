@@ -42,7 +42,7 @@ public class ListChangedEvent extends GwtEvent<ListChangedEvent.Handler>
       name_ = eventData.getString("name");
 
       JsArrayString list = eventData.getObject("list");
-      list_ = new ArrayList<String>();
+      list_ = new ArrayList<>();
       for (int i=0; i<list.length(); i++)
          list_.add(list.get(i));
    }

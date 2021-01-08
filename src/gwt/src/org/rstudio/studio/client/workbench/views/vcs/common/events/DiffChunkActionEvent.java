@@ -57,5 +57,5 @@ public class DiffChunkActionEvent extends GwtEvent<DiffChunkActionHandler>
    private Action action_;
    private DiffChunk diffChunk_;
 
-   public static final Type<DiffChunkActionHandler> TYPE = new Type<DiffChunkActionHandler>();
+   public static final Type<DiffChunkActionHandler> TYPE = new Type<>();
 }

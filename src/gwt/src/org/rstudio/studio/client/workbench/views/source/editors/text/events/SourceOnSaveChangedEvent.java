@@ -18,7 +18,7 @@ import com.google.gwt.event.shared.GwtEvent;
 
 public class SourceOnSaveChangedEvent extends GwtEvent<SourceOnSaveChangedHandler>
 {
-   public static final Type<SourceOnSaveChangedHandler> TYPE = new Type<SourceOnSaveChangedHandler>();
+   public static final Type<SourceOnSaveChangedHandler> TYPE = new Type<>();
 
    @Override
    public Type<SourceOnSaveChangedHandler> getAssociatedType()

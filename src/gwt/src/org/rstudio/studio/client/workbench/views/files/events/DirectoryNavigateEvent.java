@@ -36,8 +36,7 @@ public class DirectoryNavigateEvent extends GwtEvent<DirectoryNavigateHandler>
       }-*/;      
    }
    
-   public static final GwtEvent.Type<DirectoryNavigateHandler> TYPE =
-      new GwtEvent.Type<DirectoryNavigateHandler>();
+   public static final GwtEvent.Type<DirectoryNavigateHandler> TYPE = new GwtEvent.Type<>();
    
    public DirectoryNavigateEvent(Data data)
    {

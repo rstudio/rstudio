@@ -75,8 +75,8 @@ public class NewDirectoryNavigationPage
    private static ArrayList<WizardPage<NewProjectInput, NewProjectResult>>
                                          createPages(SessionInfo sessionInfo)
    {
-      ArrayList<WizardPage<NewProjectInput, NewProjectResult>> pages = 
-            new ArrayList<WizardPage<NewProjectInput, NewProjectResult>>();
+      ArrayList<WizardPage<NewProjectInput, NewProjectResult>> pages =
+            new ArrayList<>();
       
       // add default RStudio dialogs
       pages.add(new NewDirectoryPage());

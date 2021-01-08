@@ -36,8 +36,7 @@ public class SVNChangelistTablePresenter
          @Override
          public void onVcsRefresh(VcsRefreshEvent event)
          {
-            ArrayList<StatusAndPath> items =
-                  new ArrayList<StatusAndPath>(svnState.getStatus());
+            ArrayList<StatusAndPath> items = new ArrayList<>(svnState.getStatus());
 
             boolean usesChangelists = false;
             for (int i = items.size()-1; i >= 0; i--)

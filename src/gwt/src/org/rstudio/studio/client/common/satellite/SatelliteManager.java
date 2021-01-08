@@ -187,7 +187,7 @@ public class SatelliteManager implements CloseHandler<Window>
       if (!pendingEventsBySatelliteName_.containsKey(name))
       {
          pendingEventsBySatelliteName_.put(name,
-                                           new ArrayList<JavaScriptObject>());
+                                           new ArrayList<>());
       }
 
       // record satellite params for subsequent setting (this value is read
@@ -367,7 +367,7 @@ public class SatelliteManager implements CloseHandler<Window>
             if (satelliteWnd.isClosed())
             {
                if (removeWindows == null)
-                  removeWindows = new ArrayList<ActiveSatellite>();
+                  removeWindows = new ArrayList<>();
                removeWindows.add(satellite);
             }
             else
@@ -510,7 +510,7 @@ public class SatelliteManager implements CloseHandler<Window>
          return;
 
       for (ActiveSatellite satellite :
-                                    new ArrayList<ActiveSatellite>(satellites_))
+                                    new ArrayList<>(satellites_))
       {
          if (satellite.getName() == name
              && !satellite.getWindow().isClosed())
@@ -659,14 +659,12 @@ public class SatelliteManager implements CloseHandler<Window>
    private final EventBus events_;
    private final Provider<SourceWindowManager> pSourceWindowManager_;
    private final Provider<ApplicationUncaughtExceptionHandler> pUncaughtExceptionHandler_;
-   private final ArrayList<ActiveSatellite> satellites_ = 
-                                          new ArrayList<ActiveSatellite>();
+   private final ArrayList<ActiveSatellite> satellites_ = new ArrayList<>();
    
-   private final HashMap<String,JavaScriptObject> satelliteParams_ = 
-                                new HashMap<String,JavaScriptObject>();
+   private final HashMap<String,JavaScriptObject> satelliteParams_ = new HashMap<>();
 
    private final HashMap<String, ArrayList<JavaScriptObject>>
-         pendingEventsBySatelliteName_ = new HashMap<String, ArrayList<JavaScriptObject>>();
+         pendingEventsBySatelliteName_ = new HashMap<>();
 
    private class ActiveSatellite
    {

@@ -39,7 +39,7 @@ public class WorkbenchLists extends JavaScriptObject
    
    private ArrayList<String> convertList(JsArrayString jsList)
    {
-      ArrayList<String> list = new ArrayList<String>();
+      ArrayList<String> list = new ArrayList<>();
       for (int i=0; i<jsList.length(); i++)
          list.add(jsList.get(i));
       return list;

@@ -42,21 +42,21 @@ public class PanmirrorXRefServer
    
    public Promise<JavaScriptObject> indexForFile(String file)
    {
-      return new Promise<JavaScriptObject>((ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
+      return new Promise<>((ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
          server_.xrefIndexForFile(
             file,
-            new PromiseServerRequestCallback<JavaScriptObject>(resolve, reject)
+            new PromiseServerRequestCallback<>(resolve, reject)
          );
       });
    }
    
    public Promise<JavaScriptObject> xrefForId(String file, String id)
    {
-      return new Promise<JavaScriptObject>((ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
+      return new Promise<>((ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
          server_.xrefForId(
             file,
             id,
-            new PromiseServerRequestCallback<JavaScriptObject>(resolve, reject)
+            new PromiseServerRequestCallback<>(resolve, reject)
          );
       });
    }

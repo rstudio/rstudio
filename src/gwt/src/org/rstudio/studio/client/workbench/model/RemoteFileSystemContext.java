@@ -79,7 +79,7 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
 
       final FileSystemItem newPathEntry = FileSystemItem.createDir(newPath);
       
-      final ArrayList<FileSystemItem> fsi = new ArrayList<FileSystemItem>();
+      final ArrayList<FileSystemItem> fsi = new ArrayList<>();
 
       server_.listFiles(
             newPathEntry,

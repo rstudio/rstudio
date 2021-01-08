@@ -93,8 +93,8 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    {
       globalDisplay_ = globalDisplay;
       server_ = server;
-      satisfied_ = new ArrayList<Dependency>();
-      requestQueue_ = new LinkedList<DependencyRequest>();
+      satisfied_ = new ArrayList<>();
+      requestQueue_ = new LinkedList<>();
       session_ = session;
       commands_ = commands;
       events_ = eventBus;
@@ -674,7 +674,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
 
    public void withTestPackage(final Command command, boolean useTestThat)
    {
-      List<Dependency> dependencies = new ArrayList<Dependency>();
+      List<Dependency> dependencies = new ArrayList<>();
       String message;
       if (useTestThat)
       {
@@ -776,7 +776,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
               String packageName,
               String packageVersion)
    {
-    ArrayList<Dependency> deps = new ArrayList<Dependency>();
+    ArrayList<Dependency> deps = new ArrayList<>();
       deps.add(Dependency.cranPackage(packageName, packageVersion));
 
       return deps;
@@ -1001,7 +1001,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
             public void onResponseReceived(String jobId)
             {   
                // Hold handler registration so we can clean it up when finished
-               final Value<HandlerRegistration> reg = new Value<HandlerRegistration>(null);
+               final Value<HandlerRegistration> reg = new Value<>(null);
                reg.setValue(events_.addHandler(JobUpdatedEvent.TYPE, event ->
                {
                   // Ensure the update is for this job
@@ -1124,7 +1124,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    
    private String describeDepPkgs(JsArray<Dependency> dependencies)
    {
-      ArrayList<String> deps = new ArrayList<String>();
+      ArrayList<String> deps = new ArrayList<>();
       for (int i = 0; i < dependencies.length(); i++)
          deps.add(dependencies.get(i).getName());
       return StringUtil.join(deps, ", ");
@@ -1144,7 +1144,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
          }
       }
 
-      List<Dependency> dependencies = new ArrayList<Dependency>();
+      List<Dependency> dependencies = new ArrayList<>();
       dependencies.add(dependency);
       withUnsatisfiedDependencies(dependencies, requestCallback);
    }
@@ -1226,7 +1226,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    private ArrayList<Dependency> getFeatureDependencies(String feature)
    {
       // The list of R package dependencies to return
-      ArrayList<Dependency> dependencies = new ArrayList<Dependency>();
+      ArrayList<Dependency> dependencies = new ArrayList<>();
 
       // Read a list of package dependencies for this feature
       DependencyList list = session_.getSessionInfo().getPackageDependencies();

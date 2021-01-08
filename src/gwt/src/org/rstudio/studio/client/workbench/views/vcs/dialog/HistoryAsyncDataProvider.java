@@ -34,8 +34,8 @@ public abstract class HistoryAsyncDataProvider extends AsyncDataProvider<CommitI
    public HistoryAsyncDataProvider()
    {
       rev_ = "";
-      searchText_ = new Value<String>("");
-      fileFilter_ = new Value<FileSystemItem>(null);
+      searchText_ = new Value<>("");
+      fileFilter_ = new Value<>(null);
    }
    
    public void setHistoryStrategy(HistoryStrategy strategy)

@@ -35,7 +35,7 @@ public class UserCommandManager
    public UserCommandManager()
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
-      commandMap_ = new HashMap<KeyboardShortcut, UserCommand>();
+      commandMap_ = new HashMap<>();
 
       events_.addHandler(
             RegisterUserCommandEvent.TYPE,

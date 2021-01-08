@@ -31,8 +31,7 @@ public class CodeBrowserHighlightEvent
       void onCodeBrowserHighlight(CodeBrowserHighlightEvent event);
    }
 
-   public static final GwtEvent.Type<CodeBrowserHighlightEvent.Handler> TYPE =
-      new GwtEvent.Type<CodeBrowserHighlightEvent.Handler>();
+   public static final GwtEvent.Type<CodeBrowserHighlightEvent.Handler> TYPE = new GwtEvent.Type<>();
    
    public CodeBrowserHighlightEvent()
    {

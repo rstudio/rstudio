@@ -62,7 +62,7 @@ public class EditingTargetInlineChunkExecution
       
       display_ = display;
       docId_ = docId;
-      outputs_ = new HashMap<String, ChunkInlineOutput>();
+      outputs_ = new HashMap<>();
    }
    
    public void execute(Range range)
@@ -105,8 +105,7 @@ public class EditingTargetInlineChunkExecution
             display_.createAnchoredSelection(range.getStart(), range.getEnd()));
       
       // auto dismiss the panel when the cursor leaves the inline chunk
-      final Mutable<HandlerRegistration> cursorHandler =
-            new Mutable<HandlerRegistration>();
+      final Mutable<HandlerRegistration> cursorHandler = new Mutable<>();
       cursorHandler.set(display_.addCursorChangedHandler(
             new CursorChangedHandler()
       {

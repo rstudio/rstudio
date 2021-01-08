@@ -19,7 +19,6 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.common.vcs.RemoteBranchInfo;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.StageUnstageEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.StageUnstageHandler;
@@ -47,19 +46,19 @@ public class GitChangelistTablePresenter
          @Override
          public void onStageUnstage(StageUnstageEvent event)
          {
-            ArrayList<String> paths = new ArrayList<String>();
+            ArrayList<String> paths = new ArrayList<>();
             for (StatusAndPath path : event.getPaths())
                paths.add(path.getPath());
 
             if (event.isUnstage())
             {
                server_.gitUnstage(paths,
-                                  new SimpleRequestCallback<Void>());
+                                  new SimpleRequestCallback<>());
             }
             else
             {
                server_.gitStage(paths,
-                                new SimpleRequestCallback<Void>());
+                                new SimpleRequestCallback<>());
             }
          }
       });

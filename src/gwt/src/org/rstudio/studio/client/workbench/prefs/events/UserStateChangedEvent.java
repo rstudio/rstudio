@@ -24,7 +24,7 @@ import com.google.gwt.event.shared.EventHandler;
 @JavaScriptSerializable
 public class UserStateChangedEvent extends CrossWindowEvent<UserStateChangedEvent.Handler>
 {
-   public static final Type<UserStateChangedEvent.Handler> TYPE = new Type<UserStateChangedEvent.Handler>();
+   public static final Type<UserStateChangedEvent.Handler> TYPE = new Type<>();
    
    public UserStateChangedEvent()
    {

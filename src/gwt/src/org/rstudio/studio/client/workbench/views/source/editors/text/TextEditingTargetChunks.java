@@ -47,8 +47,8 @@ public class TextEditingTargetChunks
    public TextEditingTargetChunks(TextEditingTarget target)
    {
       target_ = target;
-      toolbars_ = new ArrayList<ChunkContextCodeUi>();
-      modifiedRanges_ = new ArrayList<Range>();
+      toolbars_ = new ArrayList<>();
+      modifiedRanges_ = new ArrayList<>();
       renderPass_ = 0;
       
       target.getDocDisplay().addScopeTreeReadyHandler(this);
@@ -210,7 +210,7 @@ public class TextEditingTargetChunks
    
    private void syncModifiedWidgets()
    {
-      Set<Scope> modifiedScopes = new HashSet<Scope>();
+      Set<Scope> modifiedScopes = new HashSet<>();
       
       for (Range range : modifiedRanges_)
       {

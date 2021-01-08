@@ -85,7 +85,7 @@ public class ApplicationUtils
    
    public static void removeQueryParam(String param)
    {
-      ArrayList<String> params = new ArrayList<String>();
+      ArrayList<String> params = new ArrayList<>();
       params.add(param);
       removeQueryParams(params);
    }

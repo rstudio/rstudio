@@ -241,7 +241,7 @@ public class AddinsToolbarButton extends ToolbarMenuButton
    
    private Map<String, List<RAddin>> organizeAddins()
    {
-      Map<String, List<RAddin>> organized = new HashMap<String, List<RAddin>>();
+      Map<String, List<RAddin>> organized = new HashMap<>();
       
       String query = searchWidget_.getValue().toLowerCase().trim();
       
@@ -260,7 +260,7 @@ public class AddinsToolbarButton extends ToolbarMenuButton
          String pkg = splat[0];
          
          if (!organized.containsKey(pkg))
-            organized.put(pkg, new ArrayList<RAddin>());
+            organized.put(pkg, new ArrayList<>());
          
          List<RAddin> addinList = organized.get(pkg);
          addinList.add(addin);

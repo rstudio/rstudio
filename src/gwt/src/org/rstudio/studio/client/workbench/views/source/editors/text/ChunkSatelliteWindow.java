@@ -43,7 +43,6 @@ import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
 import org.rstudio.studio.client.server.QuietServerRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteCacheEditorStyleEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteCodeExecutingEvent;
@@ -144,7 +143,7 @@ public class ChunkSatelliteWindow extends SatelliteWindow
             server_.cleanReplayNotebookChunkPlots(
                chunkWindowParams_.getDocId(), 
                chunkWindowParams_.getChunkId(),
-               new QuietServerRequestCallback<Void>());
+               new QuietServerRequestCallback<>());
          }
       });
 

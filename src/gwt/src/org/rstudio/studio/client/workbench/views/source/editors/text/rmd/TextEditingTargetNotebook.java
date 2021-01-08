@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import com.google.gwt.dom.client.Element;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
@@ -141,7 +140,7 @@ public class TextEditingTargetNotebook
       releaseOnDismiss_ = releaseOnDismiss;
       notebookDoc_ = document.getNotebookDoc();
       initialChunkDefs_ = JsArrayUtil.deepCopy(notebookDoc_.getChunkDefs());
-      satelliteChunkRequestIds_ = new ArrayList<String>();
+      satelliteChunkRequestIds_ = new ArrayList<>();
       setupCrc32_ = docUpdateSentinel_.getProperty(LAST_SETUP_CRC32);
       editingTarget_ = editingTarget;
       chunks_ = chunks;
@@ -151,10 +150,10 @@ public class TextEditingTargetNotebook
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       // Notebook outputs for code (text) editing mode; map of chunk ID to output UI
-      codeOutputs_ = new HashMap<String, ChunkOutputUi>();
+      codeOutputs_ = new HashMap<>();
       
       // Notebook outputs for visual editing mode
-      visualOutputs_ = new HashMap<String, ChunkOutputUi>();
+      visualOutputs_ = new HashMap<>();
 
       releaseOnDismiss.add(docDisplay_.addEditorFocusHandler(new FocusHandler()
       {
@@ -457,7 +456,7 @@ public class TextEditingTargetNotebook
             if (!isSetupChunkScope(chunk) &&
                 needsSetupChunkExecuted())
             {
-               List<ChunkExecUnit> chunks = new ArrayList<ChunkExecUnit>();
+               List<ChunkExecUnit> chunks = new ArrayList<>();
                chunks.add(new ChunkExecUnit(getSetupChunkScope(), 
                      NotebookQueueUnit.EXEC_MODE_BATCH));
                chunks.add(new ChunkExecUnit(chunk,
@@ -665,7 +664,7 @@ public class TextEditingTargetNotebook
       // execute setup chunk first if necessary
       if (needsSetupChunkExecuted() && !isSetupChunkScope(event.getScope()))
       {
-         List<ChunkExecUnit> chunks = new ArrayList<ChunkExecUnit>();
+         List<ChunkExecUnit> chunks = new ArrayList<>();
          chunks.add(new ChunkExecUnit(getSetupChunkScope(), 
                NotebookQueueUnit.EXEC_MODE_BATCH));
          chunks.add(new ChunkExecUnit(event.getScope(), event.getRange(), 
@@ -1688,7 +1687,7 @@ public class TextEditingTargetNotebook
       // remove any errors in the gutter associated with this chunk
       cleanScopeErrorState(output.getScope());
 
-      ArrayList<Widget> widgets = new ArrayList<Widget>();
+      ArrayList<Widget> widgets = new ArrayList<>();
       widgets.add(output.getOutputWidget());
       FadeOutAnimation anim = new FadeOutAnimation(widgets, new Command()
       {

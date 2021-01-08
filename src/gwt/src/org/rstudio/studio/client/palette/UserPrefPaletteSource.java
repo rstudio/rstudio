@@ -40,7 +40,7 @@ public class UserPrefPaletteSource implements CommandPaletteEntryProvider
    @Override
    public List<CommandPaletteItem> getCommandPaletteItems()
    {
-      List<CommandPaletteItem> items = new ArrayList<CommandPaletteItem>();
+      List<CommandPaletteItem> items = new ArrayList<>();
       for (PrefValue<?> val: prefs_.allPrefs())
       {
          if (StringUtil.isNullOrEmpty(val.getTitle()))

@@ -195,7 +195,7 @@ public class PanmirrorOutlineWidget extends Composite
    
    private ArrayList<PanmirrorOutlineItem> flattenOutline(PanmirrorOutlineItem[] items)
    {
-      ArrayList<PanmirrorOutlineItem> flattenedItems = new ArrayList<PanmirrorOutlineItem>();
+      ArrayList<PanmirrorOutlineItem> flattenedItems = new ArrayList<>();
       String chunkPref = pPrefs_.get().docOutlineShow().getValue();
       doFlattenOutline(items, flattenedItems, chunkPref);
       return flattenedItems;

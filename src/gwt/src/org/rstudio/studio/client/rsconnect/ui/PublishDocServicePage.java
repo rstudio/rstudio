@@ -38,9 +38,7 @@ public class PublishDocServicePage
            createPages(RSConnectPublishInput input)
    {
       ArrayList<WizardPage<RSConnectPublishInput, 
-                           RSConnectPublishResult>> pages =
-                           new ArrayList<WizardPage<RSConnectPublishInput, 
-                                                    RSConnectPublishResult>>();
+                           RSConnectPublishResult>> pages = new ArrayList<>();
       String rscTitle = RSConnectAccountWizard.SERVICE_NAME;
       String rscDesc = RSConnectAccountWizard.SERVICE_DESCRIPTION;
            

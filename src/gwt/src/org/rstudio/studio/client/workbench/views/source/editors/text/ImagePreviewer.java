@@ -149,12 +149,10 @@ public class ImagePreviewer
          return;
       
       // shared mutable state that we hide in this closure
-      final Mutable<PinnedLineWidget>  plw = new Mutable<PinnedLineWidget>();
-      final Mutable<ChunkOutputWidget> cow = new Mutable<ChunkOutputWidget>();
-      final Mutable<HandlerRegistration> docChangedHandler = 
-            new Mutable<HandlerRegistration>(); 
-      final Mutable<HandlerRegistration> renderHandler = 
-            new Mutable<HandlerRegistration>();
+      final Mutable<PinnedLineWidget>  plw = new Mutable<>();
+      final Mutable<ChunkOutputWidget> cow = new Mutable<>();
+      final Mutable<HandlerRegistration> docChangedHandler = new Mutable<>(); 
+      final Mutable<HandlerRegistration> renderHandler = new Mutable<>();
       
       // command that ensures state is cleaned up when widget hidden
       final Command onDetach = new Command()

@@ -133,7 +133,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          PanmirrorFormat format = formatSource.getFormat(new PanmirrorUITools().format);
                
          // create the editor
-         new PromiseWithProgress<PanmirrorEditor>(
+         new PromiseWithProgress<>(
             PanmirrorEditor.create(editorWidget.editorParent_.getElement(), context, format, options),
             null,
             progressDelay,
@@ -390,7 +390,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
                            int progressDelay,
                            CommandWithArg<JsObject> completed) 
    {
-      new PromiseWithProgress<JsObject>(
+      new PromiseWithProgress<>(
          editor_.setMarkdown(code, options, emitUpdate),
          null,
          progressDelay,
@@ -399,7 +399,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    }
    
    public void getMarkdown(PanmirrorWriterOptions options, int progressDelay, CommandWithArg<JsObject> completed) {
-      new PromiseWithProgress<JsObject>(
+      new PromiseWithProgress<>(
          editor_.getMarkdown(options),
          null,
          progressDelay,
@@ -409,7 +409,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    
    public void getCanonical(String code, PanmirrorWriterOptions options, int progressDelay, CommandWithArg<String> completed)
    {
-      new PromiseWithProgress<String>(
+      new PromiseWithProgress<>(
          editor_.getCanonical(code, options),
          null,
          progressDelay,
@@ -581,7 +581,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    
    public Promise<Boolean> showContextMenu(PanmirrorMenuItem[] items, int clientX, int clientY)
    {
-      return new Promise<Boolean>((ResolveCallbackFn<Boolean> resolve, RejectCallbackFn reject) -> {
+      return new Promise<>((ResolveCallbackFn<Boolean> resolve, RejectCallbackFn reject) -> {
          
          final PanmirrorToolbarMenu menu = new PanmirrorToolbarMenu(commands_);
          menu.addCloseHandler((event) -> {
@@ -744,7 +744,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final HandlerRegistrations registrations_ = new HandlerRegistrations();
-   private final ArrayList<JsVoidFunction> editorEventUnsubscribe_ = new ArrayList<JsVoidFunction>();
+   private final ArrayList<JsVoidFunction> editorEventUnsubscribe_ = new ArrayList<>();
 }
 
 

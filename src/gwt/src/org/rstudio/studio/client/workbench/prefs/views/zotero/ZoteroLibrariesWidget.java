@@ -47,7 +47,7 @@ public class ZoteroLibrariesWidget extends Composite
       VerticalPanel panel = new VerticalPanel();
       panel.addStyleName(RES.styles().librariesWidget());
       
-      ArrayList<String> options = new ArrayList<String>();
+      ArrayList<String> options = new ArrayList<>();
       
       if (includeUseDefault)
          options.add(USE_DEFAULT);

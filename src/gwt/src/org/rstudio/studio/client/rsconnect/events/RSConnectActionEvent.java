@@ -28,8 +28,7 @@ public class RSConnectActionEvent extends GwtEvent<RSConnectActionEvent.Handler>
       void onRSConnectAction(RSConnectActionEvent event);
    }
 
-   public static final GwtEvent.Type<RSConnectActionEvent.Handler> TYPE =
-      new GwtEvent.Type<RSConnectActionEvent.Handler>();
+   public static final GwtEvent.Type<RSConnectActionEvent.Handler> TYPE = new GwtEvent.Type<>();
    
    public static RSConnectActionEvent ConfigureAppEvent(String path)
    {

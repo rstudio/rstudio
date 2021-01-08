@@ -130,7 +130,7 @@ public class NotebookQueueUnit extends JavaScriptObject
    private final List<Integer> linesFromRanges(
          JsArray<NotebookExecRange> ranges)
    {
-      List<Integer> lines = new ArrayList<Integer>();
+      List<Integer> lines = new ArrayList<>();
       final String code = getCode();
       int line = 0, last = -1;
       for (int i = 0; i < code.length(); i++)

@@ -126,8 +126,8 @@ public class RObjectEntry
 
    public static final String NO_VALUE = "NO_VALUE";
    
-   private static final Set<String> DATA_CLASSES = new HashSet<String>();
-   private static final Set<String> HIERARCHICAL_CLASSES = new HashSet<String>();
+   private static final Set<String> DATA_CLASSES = new HashSet<>();
+   private static final Set<String> HIERARCHICAL_CLASSES = new HashSet<>();
    
    static {
       

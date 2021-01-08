@@ -36,8 +36,7 @@ public class SaveFileEvent extends GwtEvent<SaveFileHandler>
    
    // Boilerplate ----
    
-   public static final GwtEvent.Type<SaveFileHandler> TYPE =
-      new GwtEvent.Type<SaveFileHandler>();
+   public static final GwtEvent.Type<SaveFileHandler> TYPE = new GwtEvent.Type<>();
    
    @Override
    protected void dispatch(SaveFileHandler handler)

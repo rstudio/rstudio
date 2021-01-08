@@ -77,9 +77,9 @@ public class MathJax
       prefs_ = prefs;
       popup_ = new MathJaxPopupPanel(this);
       renderQueue_ = new MathJaxRenderQueue(this);
-      handlers_ = new ArrayList<HandlerRegistration>();
-      cowToPlwMap_ = new SafeMap<ChunkOutputWidget, PinnedLineWidget>();
-      lwToPlwMap_ = new SafeMap<LineWidget, ChunkOutputWidget>();
+      handlers_ = new ArrayList<>();
+      cowToPlwMap_ = new SafeMap<>();
+      lwToPlwMap_ = new SafeMap<>();
 
       handlers_.add(popup_.addAttachHandler(new AttachEvent.Handler()
       {

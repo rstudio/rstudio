@@ -35,7 +35,7 @@ public class ListUtil
    
    public static <T> List<T> filter(List<T> list, FilterPredicate<T> predicate)
    {
-      List<T> filtered = new ArrayList<T>();
+      List<T> filtered = new ArrayList<>();
       for (T object : list)
          if (predicate.test(object))
             filtered.add(object);
@@ -53,14 +53,14 @@ public class ListUtil
    @SuppressWarnings("unchecked")
    public static <T> List<T> create(T... ts)
    {
-      List<T> result = new ArrayList<T>(ts.length);
+      List<T> result = new ArrayList<>(ts.length);
       for (T t : ts) result.add(t);
       return result;
    }
    
    public static List<String> create(JsArrayString array)
    {
-      List<String> list = new ArrayList<String>();
+      List<String> list = new ArrayList<>();
       for (int i = 0, n = array.length(); i < n; i++)
          list.add(array.get(i));
       return list;
@@ -68,7 +68,7 @@ public class ListUtil
    
    public static <T extends JavaScriptObject> List<T> create(JsArray<T> array)
    {
-      List<T> list = new ArrayList<T>();
+      List<T> list = new ArrayList<>();
       for (int i = 0, n = array.length(); i < n; i++)
          list.add(array.get(i));
       return list;

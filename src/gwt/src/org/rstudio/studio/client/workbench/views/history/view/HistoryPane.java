@@ -575,7 +575,7 @@ public class HistoryPane extends WorkbenchPane
          {
             callback.onSuggestionsReady(
                   request,
-                  new Response(new ArrayList<Suggestion>()));
+                  new Response(new ArrayList<>()));
          }
       });
       searchWidget_.addKeyDownHandler(new KeyDownHandler()

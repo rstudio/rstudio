@@ -33,7 +33,7 @@ public class Websocket {
         return _isWebsocket();
     }
 
-    private final Set<WebsocketListener> listeners = new HashSet<WebsocketListener>();
+    private final Set<WebsocketListener> listeners = new HashSet<>();
 
     private final String varName;
     private final String url;

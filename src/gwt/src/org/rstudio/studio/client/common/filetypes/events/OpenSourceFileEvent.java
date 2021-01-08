@@ -27,8 +27,7 @@ import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
 @JavaScriptSerializable
 public class OpenSourceFileEvent extends CrossWindowEvent<OpenSourceFileHandler>
 {
-   public static final GwtEvent.Type<OpenSourceFileHandler> TYPE =
-      new GwtEvent.Type<OpenSourceFileHandler>();
+   public static final GwtEvent.Type<OpenSourceFileHandler> TYPE = new GwtEvent.Type<>();
 
    public OpenSourceFileEvent()
    {

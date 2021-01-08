@@ -91,15 +91,14 @@ public class VisualModeEditingLocation
          return null;
       
       // build the outline
-      ArrayList<Pair<PanmirrorEditingOutlineLocationItem, Scope>> outlineItems = 
-         new ArrayList<Pair<PanmirrorEditingOutlineLocationItem, Scope>>();
+      ArrayList<Pair<PanmirrorEditingOutlineLocationItem, Scope>> outlineItems = new ArrayList<>();
       buildOutlineLocation(docDisplay_.getScopeTree(), outlineItems);
       
       // return the location, set the active item by scanning backwards until
       // we find an item with a position before the cursor
       boolean foundActive = false;
       Position cursorPos = docDisplay_.getCursorPosition();
-      ArrayList<PanmirrorEditingOutlineLocationItem> items = new ArrayList<PanmirrorEditingOutlineLocationItem>();
+      ArrayList<PanmirrorEditingOutlineLocationItem> items = new ArrayList<>();
       for (int i = outlineItems.size() - 1; i >= 0; i--) 
       {
          Pair<PanmirrorEditingOutlineLocationItem, Scope> outlineItem = outlineItems.get(i);
@@ -125,8 +124,7 @@ public class VisualModeEditingLocation
          return;
       
       // build flattened version of scope tree which includes outline items
-      ArrayList<Pair<PanmirrorEditingOutlineLocationItem, Scope>> outlineItems = 
-         new ArrayList<Pair<PanmirrorEditingOutlineLocationItem, Scope>>();
+      ArrayList<Pair<PanmirrorEditingOutlineLocationItem, Scope>> outlineItems = new ArrayList<>();
       buildOutlineLocation(docDisplay_.getScopeTree(), outlineItems);
       
       // if the lengths differ then bail
@@ -172,19 +170,19 @@ public class VisualModeEditingLocation
          if (scope.isYaml())
          {
             item.type = PanmirrorOutlineItemType.YamlMetadata;
-            outlineItems.add(new Pair<PanmirrorEditingOutlineLocationItem, Scope>(item, scope));
+            outlineItems.add(new Pair<>(item, scope));
          }
          else if (scope.isMarkdownHeader())
          {
             item.type = PanmirrorOutlineItemType.Heading;
-            outlineItems.add(new Pair<PanmirrorEditingOutlineLocationItem, Scope>(item, scope));
+            outlineItems.add(new Pair<>(item, scope));
             buildOutlineLocation(scope.getChildren(), outlineItems);
          }
          else if (scope.isChunk())
          {
             item.type = PanmirrorOutlineItemType.RmdChunk;
             item.title = scope.getChunkLabel();
-            outlineItems.add(new Pair<PanmirrorEditingOutlineLocationItem, Scope>(item, scope));
+            outlineItems.add(new Pair<>(item, scope));
          }
       }
    }

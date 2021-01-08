@@ -98,8 +98,8 @@ public class CheckForUpdatesDialog extends PackageActionConfirmationDialog<Packa
       table.addColumn(availableColumn, "Available");
       table.setColumnWidth(availableColumn, 28, Unit.PCT);
 
-      ImageButtonColumn<PendingAction> newsColumn = 
-            new ImageButtonColumn<PendingAction>(
+      ImageButtonColumn<PendingAction> newsColumn =
+            new ImageButtonColumn<>(
                   new ImageResource2x(ThemeResources.INSTANCE.newsButton2x()),
                   new OperationWithInput<PendingAction>() {
                      

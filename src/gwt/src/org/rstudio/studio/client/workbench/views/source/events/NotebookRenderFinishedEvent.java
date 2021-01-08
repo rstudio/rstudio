@@ -29,8 +29,7 @@ public class NotebookRenderFinishedEvent
       void onNotebookRenderFinished(NotebookRenderFinishedEvent event);
    }
 
-   public static final GwtEvent.Type<NotebookRenderFinishedEvent.Handler> TYPE =
-      new GwtEvent.Type<NotebookRenderFinishedEvent.Handler>();
+   public static final GwtEvent.Type<NotebookRenderFinishedEvent.Handler> TYPE = new GwtEvent.Type<>();
    
    public NotebookRenderFinishedEvent()
    {

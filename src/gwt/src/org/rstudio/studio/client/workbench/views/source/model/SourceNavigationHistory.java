@@ -37,7 +37,7 @@ public class SourceNavigationHistory
    public SourceNavigationHistory(int maxItems)
    {
       maxItems_ = maxItems;
-      history_ = new LinkedList<SourceNavigation>();
+      history_ = new LinkedList<>();
       currentLocation_ = -1;
    }
   

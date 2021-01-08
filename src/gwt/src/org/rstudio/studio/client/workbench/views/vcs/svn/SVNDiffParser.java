@@ -50,8 +50,8 @@ public class SVNDiffParser implements DiffParser
       Pattern sectionHeaderPattern = Pattern.create(
             "^((Index: ([^\\r\\n]+)\\r?\\n=+)|(\\r?\\nProperty changes on: ([^\\r\\n]+)\\r?\\n_+))$");
 
-      ArrayList<String> sectionData = new ArrayList<String>();
-      ArrayList<Match> sectionMatches = new ArrayList<Match>();
+      ArrayList<String> sectionData = new ArrayList<>();
+      ArrayList<Match> sectionMatches = new ArrayList<>();
 
       int pos = 0;
       int lastHeaderStart = -1;
@@ -69,7 +69,7 @@ public class SVNDiffParser implements DiffParser
       if (lastHeaderStart >= 0)
          sectionData.add(data.substring(lastHeaderStart));
 
-      sections_ = new ArrayList<Section>();
+      sections_ = new ArrayList<>();
       for (int i = 0; i < sectionData.size(); i++)
       {
          sections_.add(parseSection(sectionMatches.get(i), sectionData.get(i)));
@@ -99,7 +99,7 @@ public class SVNDiffParser implements DiffParser
       if (sections_.size() == 0)
          return null;
 
-      ArrayList<Section> sectionsToUse = new ArrayList<Section>();
+      ArrayList<Section> sectionsToUse = new ArrayList<>();
 
       sectionsToUse.add(sections_.remove(0));
       String filename = sectionsToUse.get(0).filename;
@@ -176,12 +176,12 @@ public class SVNDiffParser implements DiffParser
          lastSection = section;
       }
 
-      return new DiffFileHeader(new ArrayList<String>(), filename, filename);
+      return new DiffFileHeader(new ArrayList<>(), filename, filename);
    }
 
    private DiffChunk createInfoChunk(Iterable<String> lines)
    {
-      ArrayList<Line> outLines = new ArrayList<Line>();
+      ArrayList<Line> outLines = new ArrayList<>();
       int chunkDiffIndex = diffIndex_++;
       for (String line : lines)
       {
@@ -203,7 +203,7 @@ public class SVNDiffParser implements DiffParser
       return pendingDiffChunks_.remove(0);
    }
 
-   private final ArrayList<DiffChunk> pendingDiffChunks_ = new ArrayList<DiffChunk>();
+   private final ArrayList<DiffChunk> pendingDiffChunks_ = new ArrayList<>();
    private final ArrayList<Section> sections_;
    private int diffIndex_;
 }

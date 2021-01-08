@@ -571,7 +571,7 @@ public class GeneralPreferencesPane extends PreferencesPane
 
    private void initializeGraphicsBackendWidget()
    {
-      Map<String, String> valuesToLabelsMap = new HashMap<String, String>();
+      Map<String, String> valuesToLabelsMap = new HashMap<>();
       valuesToLabelsMap.put(UserPrefs.GRAPHICS_BACKEND_DEFAULT, " (Default)");
       valuesToLabelsMap.put(UserPrefs.GRAPHICS_BACKEND_QUARTZ,    "Quartz");
       valuesToLabelsMap.put(UserPrefs.GRAPHICS_BACKEND_WINDOWS,   "Windows");

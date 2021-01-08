@@ -51,7 +51,7 @@ public class ProfilerType extends EditableFileType
 
    public HashSet<AppCommand> getSupportedCommands(Commands commands)
    {
-      HashSet<AppCommand> results = new HashSet<AppCommand>();
+      HashSet<AppCommand> results = new HashSet<>();
       results.add(commands.saveSourceDoc());
       results.add(commands.saveSourceDocAs());
       results.add(commands.saveProfileAs());

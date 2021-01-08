@@ -171,7 +171,7 @@ public class ErrorManager
 
    private void setErrorManagementType(String type)
    {
-      setErrorManagementType(type, new QuietServerRequestCallback<Void>());
+      setErrorManagementType(type, new QuietServerRequestCallback<>());
    }
 
    private void syncHandlerCommandsCheckedState()

@@ -18,7 +18,7 @@ import com.google.gwt.event.shared.GwtEvent;
 
 public class SwitchToDocEvent extends GwtEvent<SwitchToDocHandler>
 {
-   public static final Type<SwitchToDocHandler> TYPE = new Type<SwitchToDocHandler>();
+   public static final Type<SwitchToDocHandler> TYPE = new Type<>();
 
    public SwitchToDocEvent(int selectedIndex)
    {

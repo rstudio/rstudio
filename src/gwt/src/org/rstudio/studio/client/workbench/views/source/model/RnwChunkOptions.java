@@ -36,8 +36,7 @@ public class RnwChunkOptions extends JavaScriptObject
    
    public final ArrayList<String> getOptions() 
    {
-      ArrayList<String> options = new ArrayList<String>(
-                                                new JSONObject(this).keySet());
+      ArrayList<String> options = new ArrayList<>(new JSONObject(this).keySet());
       Collections.sort(options);
       return options;
    }
@@ -58,7 +57,7 @@ public class RnwChunkOptions extends JavaScriptObject
    public final ArrayList<String> getOptionValues(String name)
    {
       JSONArray arr = new JSONArray(getOptionTypeNative(name));
-      ArrayList<String> values = new ArrayList<String>();
+      ArrayList<String> values = new ArrayList<>();
       for (int i=0; i<arr.size(); i++)
       {
          JSONArray array = arr.get(i).isArray();
@@ -107,8 +106,8 @@ public class RnwChunkOptions extends JavaScriptObject
 
       String token = null;
       JsArrayString completions = JsArrayString.createArray().cast();
-      ArrayList<String> names = new ArrayList<String>();
-      ArrayList<String> values = new ArrayList<String>();
+      ArrayList<String> names = new ArrayList<>();
+      ArrayList<String> values = new ArrayList<>();
       parseRnwChunkHeader(linePart, names, values);
 
       assert names.size() == values.size();
@@ -192,7 +191,7 @@ public class RnwChunkOptions extends JavaScriptObject
       String currentValue = null;
 
       int currentPartBegin = 0;
-      Stack<Integer> braceStack = new Stack<Integer>();
+      Stack<Integer> braceStack = new Stack<>();
 
       RTokenizer tokenizer = new RTokenizer(line);
       for (RToken token; null != (token = tokenizer.nextToken()); )

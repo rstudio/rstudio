@@ -124,16 +124,15 @@ public abstract class ChangelistTable extends Composite
          return false;
       }
 
-      private Set<String> consumedEvents_ = new HashSet<String>();
+      private Set<String> consumedEvents_ = new HashSet<>();
    }
 
    public ChangelistTable()
    {
-      table_ = new MultiSelectCellTable<StatusAndPath>(100, resources_);
+      table_ = new MultiSelectCellTable<>(100, resources_);
 
-      dataProvider_ = new ListDataProvider<StatusAndPath>();
-      sortHandler_ = new ColumnSortEvent.ListHandler<StatusAndPath>(
-            dataProvider_.getList());
+      dataProvider_ = new ListDataProvider<>();
+      sortHandler_ = new ColumnSortEvent.ListHandler<>(dataProvider_.getList());
       table_.addColumnSortHandler(sortHandler_);
 
       selectionModel_ = createSelectionModel();
@@ -163,7 +162,7 @@ public abstract class ChangelistTable extends Composite
 
    protected MultiSelectionModel<StatusAndPath> createSelectionModel()
    {
-      return new MultiSelectionModel<StatusAndPath>(
+      return new MultiSelectionModel<>(
             new ProvidesKey<StatusAndPath>()
             {
                @Override
@@ -321,7 +320,7 @@ public abstract class ChangelistTable extends Composite
    {
       SelectionModel<? super StatusAndPath> selectionModel = table_.getSelectionModel();
 
-      ArrayList<StatusAndPath> results = new ArrayList<StatusAndPath>();
+      ArrayList<StatusAndPath> results = new ArrayList<>();
       for (StatusAndPath item : dataProvider_.getList())
       {
          if (selectionModel.isSelected(item))
@@ -334,7 +333,7 @@ public abstract class ChangelistTable extends Composite
    {
       SelectionModel<? super StatusAndPath> selectionModel = table_.getSelectionModel();
 
-      ArrayList<String> results = new ArrayList<String>();
+      ArrayList<String> results = new ArrayList<>();
       for (StatusAndPath item : dataProvider_.getList())
       {
          if (selectionModel.isSelected(item))
@@ -354,7 +353,7 @@ public abstract class ChangelistTable extends Composite
    {
       SelectionModel<? super StatusAndPath> selectionModel = table_.getSelectionModel();
 
-      ArrayList<String> results = new ArrayList<String>();
+      ArrayList<String> results = new ArrayList<>();
       for (StatusAndPath item : dataProvider_.getList())
       {
          if (selectionModel.isSelected(item) && item.isDiscardable())
@@ -372,7 +371,7 @@ public abstract class ChangelistTable extends Composite
             selectNext = true;
          else if (selectNext)
          {
-            ArrayList<StatusAndPath> selection = new ArrayList<StatusAndPath>();
+            ArrayList<StatusAndPath> selection = new ArrayList<>();
             selection.add(path);
             setSelectedStatusAndPaths(selection);
             return;

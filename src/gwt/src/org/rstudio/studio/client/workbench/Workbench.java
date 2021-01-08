@@ -64,7 +64,6 @@ import org.rstudio.studio.client.rmarkdown.events.ShinyGadgetDialogEvent;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.server.remote.ExecuteUserCommandEvent;
 import org.rstudio.studio.client.shiny.ShinyApplication;
@@ -601,13 +600,13 @@ public class Workbench implements BusyEvent.Handler,
                new Operation() {
                   @Override
                   public void execute() {
-                     server_.setUserCrashHandlerPrompted(true, new SimpleRequestCallback<Void>());
+                     server_.setUserCrashHandlerPrompted(true, new SimpleRequestCallback<>());
                   }
                },
                new Operation() {
                   @Override
                   public void execute() {
-                     server_.setUserCrashHandlerPrompted(false, new SimpleRequestCallback<Void>());
+                     server_.setUserCrashHandlerPrompted(false, new SimpleRequestCallback<>());
                   }
                },
                true);
@@ -648,7 +647,7 @@ public class Workbench implements BusyEvent.Handler,
          public void execute()
          {
             server_.userPromptCompleted(response,
-                                        new SimpleRequestCallback<Void>());
+                                        new SimpleRequestCallback<>());
 
          }
       };
@@ -739,7 +738,7 @@ public class Workbench implements BusyEvent.Handler,
       return new Operation() {
          public void execute()
          {
-            server_.adminNotificationAcknowledged(id, new SimpleRequestCallback<Void>());
+            server_.adminNotificationAcknowledged(id, new SimpleRequestCallback<>());
          }
       };
    }

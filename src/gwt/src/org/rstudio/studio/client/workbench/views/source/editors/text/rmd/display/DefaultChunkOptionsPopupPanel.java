@@ -111,15 +111,15 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    private Pair<String, String> getChunkHeaderBounds(String modeId)
    {
       if (modeId == "mode/rmarkdown")
-         return new Pair<String, String>("```{", "}");
+         return new Pair<>("```{", "}");
       else if (modeId == "mode/sweave")
-         return new Pair<String, String>("<<", ">>=");
+         return new Pair<>("<<", ">>=");
       else if (modeId == "mode/rhtml")
-         return new Pair<String, String>("<!--", "");
+         return new Pair<>("<!--", "");
       else if (modeId == "mode/c_cpp")
-         return new Pair<String, String>("/***", "");
+         return new Pair<>("/***", "");
       else if (modeId == "mode/r")  // Used in visual mode for embedded chunk editor
-         return new Pair<String, String>("{", "}");
+         return new Pair<>("{", "}");
       
       return null;
    }

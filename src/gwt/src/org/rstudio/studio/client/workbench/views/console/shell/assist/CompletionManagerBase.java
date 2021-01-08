@@ -82,7 +82,7 @@ public abstract class CompletionManagerBase
       completionCache_ = new CompletionCache();
       suggestTimer_ = new SuggestionTimer();
       helpTimer_ = new HelpTimer();
-      handlers_ = new ArrayList<HandlerRegistration>();
+      handlers_ = new ArrayList<>();
       snippets_ = new SnippetHelper((AceEditor) docDisplay, context.getId());
       
       // deferred so that handlers are toggled after subclasses have finished
@@ -137,7 +137,7 @@ public abstract class CompletionManagerBase
          completionCache_.store(line, completions);
       
       int n = completions.getCompletions().length();
-      List<QualifiedName> names = new ArrayList<QualifiedName>();
+      List<QualifiedName> names = new ArrayList<>();
       for (int i = 0; i < n; i++)
       {
          names.add(new QualifiedName(

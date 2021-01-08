@@ -102,7 +102,6 @@ import org.rstudio.studio.client.events.ReplaceRangesEvent;
 import org.rstudio.studio.client.events.ReplaceRangesEvent.ReplacementData;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
-import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.events.SetSelectionRangesEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -191,7 +190,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
-import java.util.List;
 import java.util.Set;
 
 @Singleton
@@ -1574,8 +1572,7 @@ public class Source implements InsertSourceHandler,
 
    public ArrayList<UnsavedChangesTarget> getUnsavedChanges(int type, Set<String> ids)
    {
-      ArrayList<UnsavedChangesTarget> targets =
-          new ArrayList<UnsavedChangesTarget>();
+      ArrayList<UnsavedChangesTarget> targets = new ArrayList<>();
 
       // if this is the main window, collect all unsaved changes from
       // the satellite windows as well
@@ -1633,7 +1630,7 @@ public class Source implements InsertSourceHandler,
    public Command revertUnsavedChangesBeforeExitCommand(
                                                final Command onCompleted)
    {
-      return () -> handleUnsavedChangesBeforeExit(new ArrayList<UnsavedChangesTarget>(),
+      return () -> handleUnsavedChangesBeforeExit(new ArrayList<>(),
                                                   onCompleted);
    }
 
@@ -2462,9 +2459,7 @@ public class Source implements InsertSourceHandler,
          columnManager_.activateCodeBrowser(
             navigation.getPath(),
             false,
-            new SourceNavigationResultCallback<CodeBrowserEditingTarget>(
-                                                      navigation.getPosition(),
-                                                      retryCommand));
+            new SourceNavigationResultCallback<>(navigation.getPosition(), retryCommand));
       }
 
       // check for file path navigation
@@ -2478,9 +2473,7 @@ public class Source implements InsertSourceHandler,
          // open the file and restore the position
          columnManager_.openFile(file,
                                  fileType,
-                                 new SourceNavigationResultCallback<EditingTarget>(
-                                                                  navigation.getPosition(),
-                                                                  retryCommand));
+            new SourceNavigationResultCallback<>(navigation.getPosition(), retryCommand));
       }
       else
       {
@@ -2682,7 +2675,7 @@ public class Source implements InsertSourceHandler,
       // the current save code is wired up in such a way that it's difficult
       // to distinguish a success from failure, so we just make sure the
       // server receives a response after 5s (defaulting to failure)
-      final Mutable<Boolean> savedSuccessfully = new Mutable<Boolean>(false);
+      final Mutable<Boolean> savedSuccessfully = new Mutable<>(false);
       final Timer completedTimer = new Timer()
       {
          @Override
@@ -2709,7 +2702,7 @@ public class Source implements InsertSourceHandler,
       }
       else
       {
-         final Set<String> idSet = new HashSet<String>();
+         final Set<String> idSet = new HashSet<>();
          for (String id : JsUtil.asIterable(ids))
             idSet.add(id);
 
@@ -3126,7 +3119,7 @@ public class Source implements InsertSourceHandler,
    }
 
    private final Commands commands_;
-   final Queue<StatFileEntry> statQueue_ = new LinkedList<StatFileEntry>();
+   final Queue<StatFileEntry> statQueue_ = new LinkedList<>();
    SourceColumnManager columnManager_;
    private final SourceServerOperations server_;
    private final FileTypeRegistry fileTypeRegistry_;

@@ -47,7 +47,6 @@ import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
 import org.rstudio.studio.client.server.QuietServerRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
@@ -178,7 +177,7 @@ public class EnvironmentPresenter extends BasePresenter
          @Override
          public void run()
          {
-            server_.requeryContext(new QuietServerRequestCallback<Void>());
+            server_.requeryContext(new QuietServerRequestCallback<>());
          }
       };
 
@@ -968,8 +967,7 @@ public class EnvironmentPresenter extends BasePresenter
    private String makeCommand(ImportFileSettings input,
                               boolean defaultStringsAsFactors)
    {
-      HashMap<String, ImportFileSettings> commandDefaults_ =
-              new HashMap<String, ImportFileSettings>();
+      HashMap<String, ImportFileSettings> commandDefaults_ = new HashMap<>();
 
       commandDefaults_.put("read.table", new ImportFileSettings(
               null, null, "unknown", false, null, "", ".", "\"'", "#", "NA", defaultStringsAsFactors));

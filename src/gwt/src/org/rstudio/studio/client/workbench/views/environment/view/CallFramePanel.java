@@ -124,7 +124,7 @@ public class CallFramePanel extends ResizeComposite
                                                          14, Style.Unit.PX);
       
       observer_ = observer;
-      callFrameItems_ = new ArrayList<CallFrameItem>();
+      callFrameItems_ = new ArrayList<>();
    }
 
    public void setCallFrames(JsArray<CallFrame> frameList, int contextDepth)

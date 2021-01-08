@@ -19,7 +19,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 
 public class OpenFileInBrowserEvent extends GwtEvent<OpenFileInBrowserHandler>
 {
-   public static Type<OpenFileInBrowserHandler> TYPE = new Type<OpenFileInBrowserHandler>();
+   public static Type<OpenFileInBrowserHandler> TYPE = new Type<>();
 
    public OpenFileInBrowserEvent(FileSystemItem file)
    {

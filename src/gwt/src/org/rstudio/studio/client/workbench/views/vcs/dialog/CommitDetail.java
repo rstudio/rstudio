@@ -121,7 +121,7 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
                return false;
 
             int filesCompared = 2;
-            ArrayList<ChunkOrLine> lines = new ArrayList<ChunkOrLine>();
+            ArrayList<ChunkOrLine> lines = new ArrayList<>();
             DiffChunk chunk;
             while (null != (chunk = unifiedParser.nextChunk()))
             {

@@ -92,7 +92,7 @@ public class ShortcutsEmitter
    
    private static List<String> preprocessShortcutValue(String shortcutValue)
    {
-      List<String> shortcuts = new ArrayList<String>();
+      List<String> shortcuts = new ArrayList<>();
       
       for (String keySequence : shortcutValue.split("\\|"))
       {
@@ -118,7 +118,7 @@ public class ShortcutsEmitter
                               String title,
                               String disableModes) throws UnableToCompleteException
    {
-      List<ShortcutKeyCombination> keys = new ArrayList<ShortcutKeyCombination>();
+      List<ShortcutKeyCombination> keys = new ArrayList<>();
       
       for (String keyCombination : shortcut.split("\\s+"))
       {

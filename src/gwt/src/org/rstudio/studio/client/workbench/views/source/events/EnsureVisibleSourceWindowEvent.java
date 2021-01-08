@@ -25,8 +25,7 @@ public class EnsureVisibleSourceWindowEvent extends GwtEvent<EnsureVisibleSource
       void onEnsureVisibleSourceWindow(EnsureVisibleSourceWindowEvent e);
    }
    
-   public static final GwtEvent.Type<EnsureVisibleSourceWindowEvent.Handler> TYPE =
-      new GwtEvent.Type<EnsureVisibleSourceWindowEvent.Handler>();
+   public static final GwtEvent.Type<EnsureVisibleSourceWindowEvent.Handler> TYPE = new GwtEvent.Type<>();
    
    public EnsureVisibleSourceWindowEvent()
    {

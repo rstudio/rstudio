@@ -19,8 +19,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 
 public class FileEditEvent extends GwtEvent<FileEditHandler>
 {
-   public static final GwtEvent.Type<FileEditHandler> TYPE =
-      new GwtEvent.Type<FileEditHandler>();
+   public static final GwtEvent.Type<FileEditHandler> TYPE = new GwtEvent.Type<>();
    
    public FileEditEvent(FileSystemItem file)
    {

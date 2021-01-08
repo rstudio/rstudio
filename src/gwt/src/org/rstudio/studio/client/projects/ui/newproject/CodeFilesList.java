@@ -81,7 +81,7 @@ public class CodeFilesList extends Composite
    
    public ArrayList<String> getCodeFiles()
    {
-      ArrayList<String> codeFiles = new ArrayList<String>();
+      ArrayList<String> codeFiles = new ArrayList<>();
       for (int i=0; i<listBox_.getItemCount(); i++)
          codeFiles.add(listBox_.getItemText(i));
       return codeFiles;

@@ -26,7 +26,7 @@ public class FadeOutAnimation extends Animation
 {
    public FadeOutAnimation(Widget widget, Command callback)
    {
-      List<Widget> widgets = new ArrayList<Widget>();
+      List<Widget> widgets = new ArrayList<>();
       widgets.add(widget);
       widgets_ = widgets;
       callback_ = callback;

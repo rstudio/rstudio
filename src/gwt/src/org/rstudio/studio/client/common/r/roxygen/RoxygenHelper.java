@@ -796,7 +796,7 @@ public class RoxygenHelper
          Pattern.create("^\\s*#+'\\s*@[^@]", "");
    
    private static final ArrayList<String> ROXYGEN_ANNOTATABLE_CALLS =
-      new ArrayList<String>(
+      new ArrayList<>(
             Arrays.asList(new String[] {
             "setClass",
             "setRefClass",

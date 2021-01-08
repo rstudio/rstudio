@@ -19,8 +19,7 @@ import org.rstudio.studio.client.workbench.views.source.model.DataItem;
 
 public class ShowDataEvent extends GwtEvent<ShowDataHandler>
 {
-   public static final GwtEvent.Type<ShowDataHandler> TYPE =
-      new GwtEvent.Type<ShowDataHandler>();
+   public static final GwtEvent.Type<ShowDataHandler> TYPE = new GwtEvent.Type<>();
    
    public ShowDataEvent(DataItem data)
    {

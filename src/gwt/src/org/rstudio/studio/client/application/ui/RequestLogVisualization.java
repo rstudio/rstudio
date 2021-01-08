@@ -306,7 +306,7 @@ public class RequestLogVisualization extends Composite
                      public void execute(String input)
                      {
                         CsvReader reader = new CsvReader(input);
-                        ArrayList<RequestLogEntry> entries = new ArrayList<RequestLogEntry>();
+                        ArrayList<RequestLogEntry> entries = new ArrayList<>();
                         Iterator<String[]> it = reader.iterator();
                         String now = it.next()[0];
                         while (it.hasNext())

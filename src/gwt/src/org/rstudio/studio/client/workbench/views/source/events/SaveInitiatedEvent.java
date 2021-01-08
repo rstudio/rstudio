@@ -25,8 +25,7 @@ public class SaveInitiatedEvent extends GwtEvent<SaveInitiatedEvent.Handler>
       void onSaveInitiated(SaveInitiatedEvent event);
    }
 
-   public static final GwtEvent.Type<SaveInitiatedEvent.Handler> TYPE =
-      new GwtEvent.Type<SaveInitiatedEvent.Handler>();
+   public static final GwtEvent.Type<SaveInitiatedEvent.Handler> TYPE = new GwtEvent.Type<>();
    
    public SaveInitiatedEvent(String path, String id)
    {

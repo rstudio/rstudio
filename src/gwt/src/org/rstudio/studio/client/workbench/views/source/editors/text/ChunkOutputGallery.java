@@ -73,7 +73,7 @@ public class ChunkOutputGallery extends Composite
       ChunkOutputPresenter.Host host,
       ChunkOutputSize chunkOutputSize)
    {
-      pages_ = new ArrayList<ChunkOutputPage>();
+      pages_ = new ArrayList<>();
       host_ = host;
       chunkOutputSize_ = chunkOutputSize;
       initWidget(uiBinder.createAndBindUi(this));

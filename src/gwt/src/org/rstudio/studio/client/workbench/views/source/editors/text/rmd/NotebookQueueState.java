@@ -186,7 +186,7 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       }
       else
       {
-         List<ChunkExecUnit> chunks = new ArrayList<ChunkExecUnit>();
+         List<ChunkExecUnit> chunks = new ArrayList<>();
          chunks.add(chunk);
          executeChunks("Run Chunk", chunks);
       }

@@ -180,14 +180,14 @@ public class SVNPresenter extends BaseVcsPresenter
    @Override
    public void showHistory(FileSystemItem fileFilter)
    {
-      showReviewPane(true, fileFilter, new ArrayList<StatusAndPath>());  
+      showReviewPane(true, fileFilter, new ArrayList<>());  
    }
    
    @Override
    public void showDiff(FileSystemItem file)
    {
       // build an ArrayList<StatusAndPath> so we can call the core helper
-      ArrayList<StatusAndPath> diffList = new ArrayList<StatusAndPath>();
+      ArrayList<StatusAndPath> diffList = new ArrayList<>();
       for (StatusAndPath item :  svnState_.getStatus())
       {
          if (item.getRawPath() == file.getPath())

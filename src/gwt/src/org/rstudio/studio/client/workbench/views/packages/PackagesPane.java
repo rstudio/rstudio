@@ -245,7 +245,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
             // no suggestions
             callback.onSuggestionsReady(
                   request,
-                  new Response(new ArrayList<Suggestion>()));
+                  new Response(new ArrayList<>()));
          }
       });
       
@@ -301,7 +301,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    @Override
    protected Widget createMainWidget()
    {
-      packagesDataProvider_ = new ListDataProvider<PackageInfo>();
+      packagesDataProvider_ = new ListDataProvider<>();
       packagesTableContainer_ = new LayoutPanel();
       packagesTableContainer_.addStyleName("ace_editor_theme");
       return packagesTableContainer_;
@@ -334,7 +334,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       try
       {
          packagesTableContainer_.clear();
-         packagesTable_ = new RStudioDataGrid<PackageInfo>(
+         packagesTable_ = new RStudioDataGrid<>(
             packagesDataProvider_.getList().size(), dataGridRes_);
       }
       catch (Exception e)
@@ -379,7 +379,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    private void initPackagesTable()
    {
       packagesTable_.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
-      packagesTable_.setSelectionModel(new NoSelectionModel<PackageInfo>());
+      packagesTable_.setSelectionModel(new NoSelectionModel<>());
         
       LoadedColumn loadedColumn = new LoadedColumn();
       

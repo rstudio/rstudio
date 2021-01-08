@@ -26,7 +26,6 @@ import org.rstudio.core.client.command.KeySequence;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
-import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
 import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.palette.ui.CommandPalette;
 import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
@@ -49,7 +48,7 @@ public class RAddinPaletteSource implements CommandPaletteEntryProvider
    @Override
    public List<CommandPaletteItem> getCommandPaletteItems()
    {
-      List<CommandPaletteItem> items = new ArrayList<CommandPaletteItem>();
+      List<CommandPaletteItem> items = new ArrayList<>();
       for (String id: JsUtil.asIterable(addins_.keys()))
       {
          RAddin addin = addins_.get(id);

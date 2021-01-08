@@ -26,8 +26,7 @@ import com.google.gwt.event.shared.GwtEvent;
 public class CodeBrowserFinishedEvent extends 
              CrossWindowEvent<CodeBrowserFinishedHandler>
 {
-   public static final GwtEvent.Type<CodeBrowserFinishedHandler> TYPE =
-      new GwtEvent.Type<CodeBrowserFinishedHandler>();
+   public static final GwtEvent.Type<CodeBrowserFinishedHandler> TYPE = new GwtEvent.Type<>();
    
    public CodeBrowserFinishedEvent()
    {

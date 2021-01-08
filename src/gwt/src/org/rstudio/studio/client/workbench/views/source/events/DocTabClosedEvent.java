@@ -30,8 +30,7 @@ public class DocTabClosedEvent
       void onDocTabClosed(DocTabClosedEvent event);
    }
 
-   public static final GwtEvent.Type<DocTabClosedEvent.Handler> TYPE =
-      new GwtEvent.Type<DocTabClosedEvent.Handler>();
+   public static final GwtEvent.Type<DocTabClosedEvent.Handler> TYPE = new GwtEvent.Type<>();
    
    public DocTabClosedEvent()
    {

@@ -60,7 +60,7 @@ public class EditorCommandManager
 
       public final void setBindings(String key, List<KeySequence> ksList)
       {
-         List<String> bindings = new ArrayList<String>();
+         List<String> bindings = new ArrayList<>();
          for (KeySequence ks : ksList)
             bindings.add(ks.toString());
 
@@ -77,7 +77,7 @@ public class EditorCommandManager
       public final List<KeySequence> getKeyBindings()
       {
          JsArrayString bindings = getBindingsInternal();
-         Set<KeySequence> keys = new HashSet<KeySequence>();
+         Set<KeySequence> keys = new HashSet<>();
          for (String binding : JsUtil.asIterable(bindings))
          {
             String[] splat = binding.split("\\|");
@@ -87,7 +87,7 @@ public class EditorCommandManager
             }
          }
 
-         List<KeySequence> keyList = new ArrayList<KeySequence>();
+         List<KeySequence> keyList = new ArrayList<>();
          keyList.addAll(keys);
          return keyList;
       }
@@ -112,7 +112,7 @@ public class EditorCommandManager
 
       manager_ = AceCommandManager.create();
 
-      bindings_ = new ConfigFileBacked<EditorKeyBindings>(
+      bindings_ = new ConfigFileBacked<>(
             files_,
             KEYBINDINGS_PATH,
             false,

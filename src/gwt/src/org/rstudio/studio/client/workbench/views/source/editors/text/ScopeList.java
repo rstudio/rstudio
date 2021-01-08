@@ -155,5 +155,5 @@ public class ScopeList implements Iterable<Scope>
       }
    }
 
-   private final ArrayList<Scope> scopes_ = new ArrayList<Scope>();
+   private final ArrayList<Scope> scopes_ = new ArrayList<>();
 }

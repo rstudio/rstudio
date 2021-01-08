@@ -31,7 +31,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEdi
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.user.client.Command;
 
 public class VisualModeChunks implements ChunkDefinition.Provider
 {
@@ -44,7 +43,7 @@ public class VisualModeChunks implements ChunkDefinition.Provider
       sentinel_ = sentinel;
       parent_ = display;
       sync_ = sync;
-      chunks_ = new ArrayList<VisualModeChunk>();
+      chunks_ = new ArrayList<>();
    }
 
    public PanmirrorUIChunks uiChunks()

@@ -83,6 +83,6 @@ public class PanmirrorToolbarRadioMenu extends ToolbarMenuButton implements Panm
    private final String defaultText_;
    private int minWidth_ = 0;
    private final PanmirrorToolbarMenu menu_;
-   private final ArrayList<String> commandIds_ = new ArrayList<String>();
+   private final ArrayList<String> commandIds_ = new ArrayList<>();
    private final PanmirrorToolbarCommands commands_;
 }

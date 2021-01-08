@@ -49,8 +49,7 @@ public class CollabEditSavedEvent extends GwtEvent<CollabEditSavedEvent.Handler>
       void onCollabEditSaved(CollabEditSavedEvent event);
    }
 
-   public static final GwtEvent.Type<CollabEditSavedEvent.Handler> TYPE =
-      new GwtEvent.Type<CollabEditSavedEvent.Handler>();
+   public static final GwtEvent.Type<CollabEditSavedEvent.Handler> TYPE = new GwtEvent.Type<>();
 
    public CollabEditSavedEvent()
    {

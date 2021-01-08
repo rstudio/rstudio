@@ -44,7 +44,7 @@ public class EventBasedChangeTracker<T> implements ChangeTracker
 
    public ChangeTracker fork()
    {
-      EventBasedChangeTracker<T> ebct = new EventBasedChangeTracker<T>(source_);
+      EventBasedChangeTracker<T> ebct = new EventBasedChangeTracker<>(source_);
       ebct.changed_ = changed_;
       return ebct;
    }

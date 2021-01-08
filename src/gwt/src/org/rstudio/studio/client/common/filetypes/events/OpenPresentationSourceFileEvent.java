@@ -22,8 +22,7 @@ import org.rstudio.studio.client.common.filetypes.TextFileType;
 
 public class OpenPresentationSourceFileEvent extends GwtEvent<OpenPresentationSourceFileHandler>
 {
-   public static final GwtEvent.Type<OpenPresentationSourceFileHandler> TYPE =
-      new GwtEvent.Type<OpenPresentationSourceFileHandler>();
+   public static final GwtEvent.Type<OpenPresentationSourceFileHandler> TYPE = new GwtEvent.Type<>();
 
    public OpenPresentationSourceFileEvent(FileSystemItem file, 
                                           TextFileType fileType,

@@ -195,7 +195,7 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
   /**
    * The elements used to display labels above the ticks.
    */
-  private List<Element> labelElements = new ArrayList<Element>();
+  private List<Element> labelElements = new ArrayList<>();
 
   /**
    * The formatter used to generate label text.
@@ -263,7 +263,7 @@ public class SliderBar extends FocusPanel implements ResizableWidget,
    * The elements used to display tick marks, which are the vertical lines along
    * the slider bar.
    */
-  private List<Element> tickElements = new ArrayList<Element>();
+  private List<Element> tickElements = new ArrayList<>();
 
   /**
    * Create a slider bar.

@@ -19,7 +19,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 
 public class CursorChangedEvent extends GwtEvent<CursorChangedHandler>
 {
-   public static final Type<CursorChangedHandler> TYPE = new Type<CursorChangedHandler>();
+   public static final Type<CursorChangedHandler> TYPE = new Type<>();
 
    public CursorChangedEvent(Position position)
    {

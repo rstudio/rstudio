@@ -201,7 +201,7 @@ public class VisualModeSpelling extends SpellingContext
       
       uiSpelling.suggestionList = (word) -> {
         String[] suggestions = typo().suggestionList(word);
-        return new JsArray<String>(suggestions);
+        return new JsArray<>(suggestions);
       };
       
       uiSpelling.isWordIgnored = (word) -> {
@@ -223,7 +223,7 @@ public class VisualModeSpelling extends SpellingContext
       uiSpelling.breakWords = (String text) -> {
       
         
-         JsArray<PanmirrorWordRange> words = new JsArray<PanmirrorWordRange>();
+         JsArray<PanmirrorWordRange> words = new JsArray<>();
          
          int pos = 0;
          while (pos < text.length()) 

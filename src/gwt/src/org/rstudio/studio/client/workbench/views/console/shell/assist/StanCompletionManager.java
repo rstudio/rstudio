@@ -102,7 +102,7 @@ public class StanCompletionManager extends CompletionManagerBase
    protected void addExtraCompletions(String token,
                                       List<QualifiedName> completions)
    {
-      Set<String> discoveredIdentifiers = new HashSet<String>();
+      Set<String> discoveredIdentifiers = new HashSet<>();
       
       Token cursorToken = docDisplay_.getTokenAt(docDisplay_.getCursorPosition());
       TokenIterator it = docDisplay_.createTokenIterator();

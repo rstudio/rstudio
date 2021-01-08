@@ -238,7 +238,7 @@ public class History extends BasePresenter implements SelectionCommitEvent.Handl
             }
 
             // set recent commands
-            ArrayList<HistoryEntry> subList = new ArrayList<HistoryEntry>();
+            ArrayList<HistoryEntry> subList = new ArrayList<>();
             subList.addAll(commands.subList(startIndex, commands.size()));
             boolean scrollToBottom = preservedScrollPos == -1;
             setRecentCommands(subList, scrollToBottom);
@@ -575,7 +575,7 @@ public class History extends BasePresenter implements SelectionCommitEvent.Handl
 
    private ArrayList<HistoryEntry> toList(RpcObjectList<HistoryEntry> response)
    {
-      ArrayList<HistoryEntry> entries = new ArrayList<HistoryEntry>();
+      ArrayList<HistoryEntry> entries = new ArrayList<>();
       for (int i = 0; i < response.length(); i++)
          entries.add(response.get(i));
       return entries;
@@ -584,7 +584,7 @@ public class History extends BasePresenter implements SelectionCommitEvent.Handl
    private ArrayList<HistoryEntry> toRecentCommandsList(
                                              JsArrayString jsCommands)
    {
-      ArrayList<HistoryEntry> commands = new ArrayList<HistoryEntry>();
+      ArrayList<HistoryEntry> commands = new ArrayList<>();
       for (int i=0; i<jsCommands.length(); i++)
          commands.add(HistoryEntry.create(i, jsCommands.get(i)));
       return commands;
@@ -593,7 +593,7 @@ public class History extends BasePresenter implements SelectionCommitEvent.Handl
    private ArrayList<HistoryEntry> toRecentCommandsList(
                                  RpcObjectList<HistoryEntry> response)
    {
-      ArrayList<HistoryEntry> entries = new ArrayList<HistoryEntry>();
+      ArrayList<HistoryEntry> entries = new ArrayList<>();
       for (int i = 0; i < response.length(); i++)
          entries.add(response.get(i));
       return entries;

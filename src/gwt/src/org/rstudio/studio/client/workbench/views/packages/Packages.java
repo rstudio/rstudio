@@ -446,15 +446,14 @@ public class Packages
                               final PackageInstallContext installContext)
    {
       // split the updates into their respective target libraries
-      List<String> packages = new ArrayList<String>();
-      LinkedHashMap<String, ArrayList<PackageUpdate>> updatesByLibPath = 
-         new  LinkedHashMap<String, ArrayList<PackageUpdate>>();  
+      List<String> packages = new ArrayList<>();
+      LinkedHashMap<String, ArrayList<PackageUpdate>> updatesByLibPath = new LinkedHashMap<>();  
       for (PackageUpdate update : updates)
       {
          // auto-create target list if necessary
          String libPath = update.getLibPath();
          if (!updatesByLibPath.containsKey(libPath))
-            updatesByLibPath.put(libPath, new ArrayList<PackageUpdate>());
+            updatesByLibPath.put(libPath, new ArrayList<>());
          
          // insert into list
          updatesByLibPath.get(libPath).add(update); 
@@ -848,7 +847,7 @@ public class Packages
       // apply filter (if any)
       if (packageFilter_.length() > 0)
       {
-         packages = new ArrayList<PackageInfo>();
+         packages = new ArrayList<>();
          
          // first do prefix search
          for (PackageInfo pkgInfo : allPackages_)
@@ -1157,8 +1156,7 @@ public class Packages
    private TreeMap<String, PackratPackageAction> createMapFromActions(
          JsArray<PackratPackageAction> actions)
    {
-      TreeMap<String, PackratPackageAction> result = 
-            new TreeMap<String, PackratPackageAction>();
+      TreeMap<String, PackratPackageAction> result = new TreeMap<>();
       for (int i = 0; i < actions.length(); i++)
       {
          result.put(actions.get(i).getPackage(), actions.get(i));
@@ -1171,15 +1169,14 @@ public class Packages
          JsArray<PackratPackageAction> snapshotActions)
    {
       // build a map of all the package actions
-      ArrayList<PackratConflictActions> conflicts = 
-            new ArrayList<PackratConflictActions>();
+      ArrayList<PackratConflictActions> conflicts = new ArrayList<>();
       TreeMap<String, PackratPackageAction> restoreMap = 
             createMapFromActions(restoreActions);
       TreeMap<String, PackratPackageAction> snapshotMap = 
             createMapFromActions(snapshotActions);
 
       // build a union of all affected package names
-      Set<String> packageNames = new TreeSet<String>();
+      Set<String> packageNames = new TreeSet<>();
       getPackageNamesFromActions(restoreActions, packageNames);
       getPackageNamesFromActions(snapshotActions, packageNames);
       
@@ -1220,7 +1217,7 @@ public class Packages
    private void setPackageState(PackageState newState)
    {
       // sort the packages
-      allPackages_ = new ArrayList<PackageInfo>();
+      allPackages_ = new ArrayList<>();
       JsArray<PackageInfo> serverPackages = newState.getPackageList();
       for (int i = 0; i < serverPackages.length(); i++)
          allPackages_.add(serverPackages.get(i));
@@ -1273,7 +1270,7 @@ public class Packages
    private final PackagesServerOperations server_;
    private final PackratServerOperations packratServer_;
    private final RenvServerOperations renvServer_;
-   private ArrayList<PackageInfo> allPackages_ = new ArrayList<PackageInfo>();
+   private ArrayList<PackageInfo> allPackages_ = new ArrayList<>();
    private ProjectContext projectContext_;
    private String packageFilter_ = new String();
    private HandlerRegistration consolePromptHandlerReg_ = null;

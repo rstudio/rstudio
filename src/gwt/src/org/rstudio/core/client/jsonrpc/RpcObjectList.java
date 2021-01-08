@@ -42,7 +42,7 @@ public class RpcObjectList<T extends JavaScriptObject> extends JavaScriptObject
 
    public final ArrayList<T> toArrayList()
    {
-      ArrayList<T> result = new ArrayList<T>(length());
+      ArrayList<T> result = new ArrayList<>(length());
       for (int i = 0; i < length(); i++)
          result.add(get(i));
       return result;

@@ -44,7 +44,6 @@ import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.DocumentChangedEvent;
@@ -108,7 +107,7 @@ public class AceEditorBackgroundLinkHighlighter
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       editor_ = editor;
-      activeMarkers_ = new SafeMap<Integer, List<MarkerRegistration>>();
+      activeMarkers_ = new SafeMap<>();
       
       nextHighlightStart_ = 0;
       timer_ = new Timer()
@@ -130,9 +129,9 @@ public class AceEditorBackgroundLinkHighlighter
       };
       
       
-      highlighters_ = new ArrayList<Highlighter>();
+      highlighters_ = new ArrayList<>();
       
-      handlers_ = new ArrayList<HandlerRegistration>();
+      handlers_ = new ArrayList<>();
       handlers_.add(editor_.addAceClickHandler(this));
       handlers_.add(editor_.addAttachHandler(this));
       handlers_.add(editor_.addDocumentChangedHandler(this));
@@ -185,7 +184,7 @@ public class AceEditorBackgroundLinkHighlighter
                                      final AnchoredRange range)
    {
       if (!activeMarkers_.containsKey(row))
-         activeMarkers_.put(row, new ArrayList<MarkerRegistration>());
+         activeMarkers_.put(row, new ArrayList<>());
       List<MarkerRegistration> markers = activeMarkers_.get(row);
       
       // if we're adding a marker that subsumes an old one, clear the old marker
@@ -606,8 +605,7 @@ public class AceEditorBackgroundLinkHighlighter
          @Override
          public void execute()
          {
-            final SafeMap<Integer, List<MarkerRegistration>> newMarkers =
-                  new SafeMap<Integer, List<MarkerRegistration>>();
+            final SafeMap<Integer, List<MarkerRegistration>> newMarkers = new SafeMap<>();
             MapUtil.forEach(activeMarkers_, new ForEachCommand<Integer, List<MarkerRegistration>>()
             {
                @Override

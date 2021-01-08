@@ -30,8 +30,7 @@ public class CollabExternalEditEvent
       void onCollabExternalEdit(CollabExternalEditEvent event);
    }
 
-   public static final GwtEvent.Type<CollabExternalEditEvent.Handler> TYPE =
-      new GwtEvent.Type<CollabExternalEditEvent.Handler>();
+   public static final GwtEvent.Type<CollabExternalEditEvent.Handler> TYPE = new GwtEvent.Type<>();
 
    public CollabExternalEditEvent()
    {

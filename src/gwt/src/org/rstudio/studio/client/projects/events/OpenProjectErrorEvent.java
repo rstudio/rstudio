@@ -20,8 +20,7 @@ import com.google.gwt.event.shared.GwtEvent;
 
 public class OpenProjectErrorEvent extends GwtEvent<OpenProjectErrorHandler>
 {
-   public static final GwtEvent.Type<OpenProjectErrorHandler> TYPE =
-      new GwtEvent.Type<OpenProjectErrorHandler>();
+   public static final GwtEvent.Type<OpenProjectErrorHandler> TYPE = new GwtEvent.Type<>();
    
    public OpenProjectErrorEvent(OpenProjectError error)
    {

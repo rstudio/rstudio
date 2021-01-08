@@ -35,7 +35,7 @@ public class AutocompleteSuggestionDisplay
    
    public AutocompleteSuggestionDisplay()
    {
-      showHandlers_ = new ArrayList<ShowSuggestionsHandler>();
+      showHandlers_ = new ArrayList<>();
       PopupPanel panel = getPopupPanel();
       if (panel != null)
       {

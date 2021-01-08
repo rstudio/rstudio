@@ -55,7 +55,6 @@ import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.StatusAndPathInfo;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -147,13 +146,13 @@ public class GitReviewPresenter implements ReviewPresenter
          ArrayList<String> paths = view_.getSelectedPaths();
 
          if (patchMode_ == PatchMode.Stage && !reverse_)
-            server_.gitStage(paths, new SimpleRequestCallback<Void>("Stage"));
+            server_.gitStage(paths, new SimpleRequestCallback<>("Stage"));
          else if (patchMode_ == PatchMode.Stage && reverse_)
             server_.gitUnstage(paths,
-                               new SimpleRequestCallback<Void>("Unstage"));
+                               new SimpleRequestCallback<>("Unstage"));
          else if (patchMode_ == PatchMode.Working && reverse_)
             server_.gitDiscard(paths,
-                               new SimpleRequestCallback<Void>("Discard"));
+                               new SimpleRequestCallback<>("Discard"));
          else
             throw new RuntimeException("Unknown patchMode and reverse combo");
 
@@ -170,7 +169,7 @@ public class GitReviewPresenter implements ReviewPresenter
       @Override
       public void onDiffChunkAction(DiffChunkActionEvent event)
       {
-         ArrayList<DiffChunk> chunks = new ArrayList<DiffChunk>();
+         ArrayList<DiffChunk> chunks = new ArrayList<>();
          chunks.add(event.getDiffChunk());
          doPatch(event.getAction(), event.getDiffChunk().getLines(), chunks);
       }
@@ -376,7 +375,7 @@ public class GitReviewPresenter implements ReviewPresenter
             ArrayList<String> paths = view_.getSelectedPaths();
             if (paths.size() == 0)
                return;
-            server_.gitStage(paths, new SimpleRequestCallback<Void>());
+            server_.gitStage(paths, new SimpleRequestCallback<>());
             
             view_.getChangelistTable().focus();
          }
@@ -405,7 +404,7 @@ public class GitReviewPresenter implements ReviewPresenter
 
                         server_.gitRevert(
                               paths,
-                              new SimpleRequestCallback<Void>("Revert Changes"));
+                              new SimpleRequestCallback<>("Revert Changes"));
                         
                         view_.getChangelistTable().focus();
                      }
@@ -548,7 +547,7 @@ public class GitReviewPresenter implements ReviewPresenter
          public void onClick(ClickEvent event)
          {
             // record the current selected paths (as a set)
-            final Set<String> selectedPaths = new HashSet<String>();
+            final Set<String> selectedPaths = new HashSet<>();
             selectedPaths.addAll(view_.getSelectedPaths());
             
             // first, double-check the file sizes of any files that are going
@@ -708,7 +707,7 @@ public class GitReviewPresenter implements ReviewPresenter
                            boolean reverse,
                            PatchMode patchMode)
    {
-      chunks = new ArrayList<DiffChunk>(chunks);
+      chunks = new ArrayList<>(chunks);
 
       if (reverse)
       {
@@ -729,7 +728,7 @@ public class GitReviewPresenter implements ReviewPresenter
       softModeSwitch_ = true;
       server_.gitApplyPatch(patch, patchMode,
                             StringUtil.notNull(currentSourceEncoding_),
-                            new SimpleRequestCallback<Void>());
+                            new SimpleRequestCallback<>());
    }
 
    private void updateDiff(boolean allowModeSwitch)
@@ -815,7 +814,7 @@ public class GitReviewPresenter implements ReviewPresenter
                   UnifiedParser parser = new UnifiedParser(response);
                   parser.nextFilePair();
 
-                  ArrayList<ChunkOrLine> allLines = new ArrayList<ChunkOrLine>();
+                  ArrayList<ChunkOrLine> allLines = new ArrayList<>();
 
                   activeChunks_.clear();
                   for (DiffChunk chunk;
@@ -931,7 +930,7 @@ public class GitReviewPresenter implements ReviewPresenter
    private final GitPresenterCore gitPresenterCore_;
    private final Display view_;
    private final GlobalDisplay globalDisplay_;
-   private ArrayList<DiffChunk> activeChunks_ = new ArrayList<DiffChunk>();
+   private ArrayList<DiffChunk> activeChunks_ = new ArrayList<>();
    private String currentResponse_;
    private String currentSourceEncoding_;
    private String currentFilename_;

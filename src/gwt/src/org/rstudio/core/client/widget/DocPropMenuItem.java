@@ -72,7 +72,7 @@ public class DocPropMenuItem extends CheckableMenuItem
    @Override
    public void onInvoked()
    {
-      HashMap<String, String> props = new HashMap<String, String>();
+      HashMap<String, String> props = new HashMap<>();
       String target = targetValue_;
       
       // toggle behavior for boolean values: if our target was true but the

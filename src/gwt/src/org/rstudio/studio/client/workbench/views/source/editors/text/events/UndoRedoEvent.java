@@ -40,6 +40,6 @@ public class UndoRedoEvent extends GwtEvent<UndoRedoHandler>
       handler.onUndoRedo(this);
    }
 
-   public static Type<UndoRedoHandler> TYPE = new Type<UndoRedoHandler>();
+   public static Type<UndoRedoHandler> TYPE = new Type<>();
    private final boolean redo_;
 }

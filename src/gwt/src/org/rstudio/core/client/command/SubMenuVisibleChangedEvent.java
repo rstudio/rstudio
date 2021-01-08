@@ -18,7 +18,7 @@ import com.google.gwt.event.shared.GwtEvent;
 
 public class SubMenuVisibleChangedEvent extends GwtEvent<SubMenuVisibleChangedHandler>
 {
-   public static final Type<SubMenuVisibleChangedHandler> TYPE = new Type<SubMenuVisibleChangedHandler>();
+   public static final Type<SubMenuVisibleChangedHandler> TYPE = new Type<>();
    @Override
    public Type<SubMenuVisibleChangedHandler> getAssociatedType()
    {

@@ -216,8 +216,8 @@ public class BranchToolbarButton extends ToolbarMenuButton
       }
       
       // separate branches based on remote name
-      Map<String, List<String>> branchMap = new LinkedHashMap<String, List<String>>();
-      List<String> localBranches = new ArrayList<String>();
+      Map<String, List<String>> branchMap = new LinkedHashMap<>();
+      List<String> localBranches = new ArrayList<>();
       branchMap.put(LOCAL_BRANCHES, localBranches);
       for (String branch : JsUtil.asIterable(branches))
       {
@@ -228,7 +228,7 @@ public class BranchToolbarButton extends ToolbarMenuButton
             {
                String remote = parts.get(1);
                if (!branchMap.containsKey(remote))
-                  branchMap.put(remote, new ArrayList<String>());
+                  branchMap.put(remote, new ArrayList<>());
                List<String> remoteBranches = branchMap.get(remote);
                remoteBranches.add(branch);
             }
@@ -447,10 +447,10 @@ public class BranchToolbarButton extends ToolbarMenuButton
       // iterate through initial branch map and copy branches
       // matching the current query. TODO: should we re-order
       // based on how 'close' a match we have?
-      Map<String, List<String>> branchMap = new HashMap<String, List<String>>();
+      Map<String, List<String>> branchMap = new HashMap<>();
       for (String key : initialBranchMap_.keySet())
       {
-         List<String> filteredBranches = new ArrayList<String>();
+         List<String> filteredBranches = new ArrayList<>();
          List<String> branches = initialBranchMap_.get(key);
          for (String branch : branches)
             if (branch.indexOf(query) != -1)

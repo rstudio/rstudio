@@ -47,7 +47,6 @@ import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
-import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -78,7 +77,6 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperat
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 
 public class CodeBrowserEditingTarget implements EditingTarget
 {
@@ -231,7 +229,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
                         CodeBrowserContents.create(getContext());
       if (!contents.equalTo(getContents()))
       {
-         HashMap<String, String> props = new HashMap<String, String>();
+         HashMap<String, String> props = new HashMap<>();
          contents.fillProperties(props);
          server_.modifyDocumentProperties(
                doc_.getId(),
@@ -452,7 +450,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    @Override
    public HashSet<AppCommand> getSupportedCommands()
    {
-      HashSet<AppCommand> commands = new HashSet<AppCommand>();
+      HashSet<AppCommand> commands = new HashSet<>();
       commands.add(commands_.printSourceDoc());
       commands.add(commands_.findReplace());
       commands.add(commands_.findNext());
@@ -845,7 +843,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
 
    private SourceDocument doc_;
 
-   private final Value<Boolean> dirtyState_ = new Value<Boolean>(false);
+   private final Value<Boolean> dirtyState_ = new Value<>(false);
    private ArrayList<HandlerRegistration> releaseOnDismiss_ = new ArrayList<>();
    private final SourceServerOperations server_;
    private final Commands commands_;

@@ -113,7 +113,7 @@ public class EditSnippetsDialog extends ModalDialogBase implements TextDisplay
       panel_.setHeight(size.height + "px");
       
       // snippet types
-      snippetTypes_ = new WidgetListBox<EditableSnippets>();
+      snippetTypes_ = new WidgetListBox<>();
       snippetTypes_.addChangeHandler(new ChangeHandler() {
          @Override
          public void onChange(ChangeEvent event)
@@ -306,8 +306,7 @@ public class EditSnippetsDialog extends ModalDialogBase implements TextDisplay
    private boolean editorDirty_ = false;
    private EditableSnippets activeSnippets_ = null;
    
-   private final ArrayList<HandlerRegistration> releaseOnDismiss_ =
-         new ArrayList<HandlerRegistration>();
+   private final ArrayList<HandlerRegistration> releaseOnDismiss_ = new ArrayList<>();
    
    private EventBus events_;
    private GlobalDisplay globalDisplay_;

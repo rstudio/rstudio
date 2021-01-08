@@ -24,8 +24,7 @@ public class RSConnectDeploymentStartedEvent extends GwtEvent<RSConnectDeploymen
       void onRSConnectDeploymentStarted(RSConnectDeploymentStartedEvent event);
    }
 
-   public static final GwtEvent.Type<RSConnectDeploymentStartedEvent.Handler> TYPE =
-      new GwtEvent.Type<RSConnectDeploymentStartedEvent.Handler>();
+   public static final GwtEvent.Type<RSConnectDeploymentStartedEvent.Handler> TYPE = new GwtEvent.Type<>();
    
    public RSConnectDeploymentStartedEvent(String path, String title)
    {

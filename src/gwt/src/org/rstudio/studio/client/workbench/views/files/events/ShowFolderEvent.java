@@ -19,8 +19,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 
 public class ShowFolderEvent extends GwtEvent<ShowFolderHandler>
 {
-   public static final Type<ShowFolderHandler> TYPE =
-         new Type<ShowFolderHandler>();
+   public static final Type<ShowFolderHandler> TYPE = new Type<>();
 
    public ShowFolderEvent(FileSystemItem path)
    {

@@ -44,7 +44,7 @@ public class PanmirrorStateChangeEvent extends
 
   public static Type<PanmirrorStateChangeEvent.Handler> getType() {
     if (TYPE == null) {
-      TYPE = new Type<PanmirrorStateChangeEvent.Handler>();
+      TYPE = new Type<>();
     }
     return TYPE;
   }
