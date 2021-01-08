@@ -64,7 +64,7 @@ public class FilesList extends Composite
    {
       Lexicographic,
       Natural
-   };
+   }
 
    public FilesList(final Files.Display.Observer observer,
                     final FileTypeRegistry fileTypeRegistry,
@@ -74,19 +74,18 @@ public class FilesList extends Composite
       order_ = order;
 
       // create data provider and sort handler
-      dataProvider_ = new ListDataProvider<FileSystemItem>();
-      sortHandler_ = new ColumnSortEvent.ListHandler<FileSystemItem>(
-                                                      dataProvider_.getList());
+      dataProvider_ = new ListDataProvider<>();
+      sortHandler_ = new ColumnSortEvent.ListHandler<>(dataProvider_.getList());
 
       // create cell table
-      filesDataGrid_ = new RStudioDataGrid<FileSystemItem>(
+      filesDataGrid_ = new RStudioDataGrid<>(
                                           15,
                                           FilesListDataGridResources.INSTANCE,
                                           KEY_PROVIDER);
-      selectionModel_ = new MultiSelectionModel<FileSystemItem>(KEY_PROVIDER);
+      selectionModel_ = new MultiSelectionModel<>(KEY_PROVIDER);
       filesDataGrid_.setSelectionModel(
          selectionModel_,
-         DefaultSelectionEventManager.<FileSystemItem> createCheckboxManager());
+         DefaultSelectionEventManager.createCheckboxManager());
       filesDataGrid_.setWidth("100%");
 
       filesDataGrid_.getElement().getStyle().setWhiteSpace(WhiteSpace.NOWRAP);
@@ -238,7 +237,7 @@ public class FilesList extends Composite
             if (!file.isDirectory())
                return StringUtil.formatFileSize(file.getLength());
             else
-               return new String();
+               return "";
          }
       };
       sizeColumn.setSortable(true);
@@ -266,7 +265,7 @@ public class FilesList extends Composite
             if (!file.isDirectory())
                return StringUtil.formatDate(file.getLastModified());
             else
-               return new String();
+               return "";
          }
       };
       modColumn.setSortable(true);
@@ -429,7 +428,7 @@ public class FilesList extends Composite
       Set<FileSystemItem> selectedSet = selectionModel_.getSelectedSet();
       selectedSet.retainAll(dataProvider_.getList());
 
-      return new ArrayList<FileSystemItem>(selectedSet);
+      return new ArrayList<>(selectedSet);
    }
 
    public void updateWithAction(FileChange viewAction)

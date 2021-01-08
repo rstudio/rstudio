@@ -162,7 +162,7 @@ public class WindowFrameButton extends FocusWidget
          return "Exclusive";
       }
    }
-   
+
    private final String name_;
    private final WindowState defaultState_;
 

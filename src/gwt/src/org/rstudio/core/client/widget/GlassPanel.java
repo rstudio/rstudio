@@ -40,13 +40,13 @@ public class GlassPanel extends ResizeComposite
    {
       glass_.setGlass(enabled);
    }
-   
+
    public Element getChildContainerElement()
    {
       return panel_.getWidgetContainerElement(child_);
    }
 
-   private LayoutPanel panel_;
-   private GlassAttacher glass_;
+   private final LayoutPanel panel_;
+   private final GlassAttacher glass_;
    private final Widget child_;
 }

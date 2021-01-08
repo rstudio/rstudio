@@ -42,7 +42,7 @@ public class PreWidget extends Widget implements HasKeyDownHandlers,
    {
       return addDomHandler(handler, KeyDownEvent.getType());
    }
-   
+
    public HandlerRegistration addPasteHandler(final PasteEvent.Handler handler)
    {
       // GWT doesn't understand paste events via BrowserEvents.Paste, so we need
@@ -58,7 +58,7 @@ public class PreWidget extends Widget implements HasKeyDownHandlers,
          }
       };
    }
-   
+
    public void setText(String text)
    {
       getElement().setInnerText(text);
@@ -68,7 +68,7 @@ public class PreWidget extends Widget implements HasKeyDownHandlers,
    {
       getElement().setInnerText(getElement().getInnerText() + text);
    }
-   
+
    @Override
    public void onBrowserEvent(Event event)
    {
@@ -81,11 +81,10 @@ public class PreWidget extends Widget implements HasKeyDownHandlers,
          }
       }
    }
-   
+
    private final native String getClipboardText(Event event) /*-{
       return event.clipboardData.getData('text/plain');
    }-*/;
-   
-   private ArrayList<PasteEvent.Handler> pasteHandlers_ = 
-         new ArrayList<PasteEvent.Handler>();
+
+   private final ArrayList<PasteEvent.Handler> pasteHandlers_ = new ArrayList<>();
 }

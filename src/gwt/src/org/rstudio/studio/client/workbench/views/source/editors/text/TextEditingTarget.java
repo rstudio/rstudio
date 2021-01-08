@@ -93,7 +93,6 @@ import org.rstudio.studio.client.notebook.CompileNotebookOptionsDialog;
 import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
-import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.plumber.events.LaunchPlumberAPIEvent;
 import org.rstudio.studio.client.plumber.events.PlumberAPIStatusEvent;
 import org.rstudio.studio.client.plumber.model.PlumberAPIParams;
@@ -322,7 +321,7 @@ public class TextEditingTarget implements
       public void onCompleted()
       {
          isSaving_ = false;
-		 
+
          // don't need to check again soon because we just saved
          // (without this and when file monitoring is active we'd
          // end up immediately checking for external edits)
@@ -383,7 +382,7 @@ public class TextEditingTarget implements
       public void onError(final String message)
       {
          isSaving_ = false;
-		 
+
          // in case the error occurred saving a document that wasn't
          // in the foreground
          view_.ensureVisible();
@@ -1104,7 +1103,7 @@ public class TextEditingTarget implements
             docDisplay_.gotoPageDown();
          }
       }
-      
+
    }
 
    @Handler
@@ -1145,27 +1144,27 @@ public class TextEditingTarget implements
    {
       visualMode_.deactivate(command);
    }
-   
+
    public void ensureVisualModeActive(Command command)
    {
       visualMode_.activate(command);
    }
-   
+
    public void onVisualEditorBlur()
    {
       maybeAutoSaveOnBlur();
    }
-   
+
    public void navigateToXRef(String xref)
    {
       ensureVisualModeActive(() -> {
          Scheduler.get().scheduleDeferred(() -> {
             visualMode_.navigateToXRef(xref, false);
          });
-        
+
       });
    }
-   
+
    public void navigateToXRef(XRef xref, boolean forceVisualMode)
    {
       if (isVisualModeActivated() || forceVisualMode)
@@ -1185,24 +1184,24 @@ public class TextEditingTarget implements
             int index = line.indexOf(title);
             if (index == -1)
                continue;
-            
+
             navigateToPosition(
                   SourcePosition.create(i, index),
                   false);
          }
       }
-      
+
    }
 
    // the navigateToPosition methods are called by modules that explicitly
    // want the text editor active (e.g. debugging, find in files, etc.) so they
    // don't chec for visual mode
-   
+
    @Override
    public void navigateToPosition(SourcePosition position,
                                   boolean recordCurrent)
    {
-      navigateToVisualPosition(position, (disp, pos) -> 
+      navigateToVisualPosition(position, (disp, pos) ->
       {
          disp.navigateToPosition(pos, recordCurrent);
       });
@@ -1218,7 +1217,7 @@ public class TextEditingTarget implements
          disp.navigateToPosition(pos, recordCurrent, highlightLine, false);
       });
    }
-   
+
    @Override
    public void navigateToPosition(SourcePosition position,
                                   boolean recordCurrent,
@@ -1233,20 +1232,20 @@ public class TextEditingTarget implements
             onNavigationCompleted.execute();
       });
    }
-   
+
    /**
     * Navigate to a source position, possibly in the visual editor.
-    * 
+    *
     * @param pos The position to navigate to
     * @param navCommand The command that actually performs the navigation
     */
-   private void navigateToVisualPosition(SourcePosition pos, 
+   private void navigateToVisualPosition(SourcePosition pos,
                                          CommandWith2Args<DocDisplay, SourcePosition> navCommand)
    {
       if (isVisualEditorActive())
       {
          VisualModeChunk chunk = visualMode_.getChunkAtRow(pos.getRow());
-         if (chunk == null) 
+         if (chunk == null)
          {
             // No editor chunk at this position, so we need to switch to text
             // editor mode.
@@ -1260,11 +1259,11 @@ public class TextEditingTarget implements
             // Adjust the position based on the chunk's offset and navigate
             // there.
             SourcePosition newPos = SourcePosition.create(
-                  pos.getRow() - chunk.getScope().getPreamble().getRow(), 
+                  pos.getRow() - chunk.getScope().getPreamble().getRow(),
                   pos.getColumn());
             navCommand.execute(chunk.getAceInstance(), newPos);
             chunk.focus();
-            
+
             // Scroll the cursor into view; we have to do this after a layout
             // pass so that Ace has time to render the cursor.
             Scheduler.get().scheduleDeferred(() ->
@@ -1283,7 +1282,7 @@ public class TextEditingTarget implements
    // These methods are called by SourceNavigationHistory and source pane management
    // features (e.g. external source window and source columns) so need to check for
    // and dispatch to visual mode
-   
+
    @Override
    public void recordCurrentNavigationPosition()
    {
@@ -1291,13 +1290,13 @@ public class TextEditingTarget implements
       {
          visualMode_.recordCurrentNavigationPosition();
       }
-      else 
+      else
       {
          docDisplay_.recordCurrentNavigationPosition();
       }
    }
-   
- 
+
+
    @Override
    public void restorePosition(SourcePosition position)
    {
@@ -1334,7 +1333,7 @@ public class TextEditingTarget implements
          return SourcePosition.create(getContext(), cursor.getRow(),
                cursor.getColumn(), docDisplay_.getScrollTop());
       }
-     
+
    }
 
    @Override
@@ -1348,7 +1347,7 @@ public class TextEditingTarget implements
       {
          return docDisplay_.isAtSourceRow(position);
       }
-     
+
    }
 
    @Override
@@ -1920,7 +1919,7 @@ public class TextEditingTarget implements
       {
          docDisplay_.addOrUpdateBreakpoint(breakpoint);
       }
-      
+
       view_.addRmdFormatChangedHandler(new RmdOutputFormatChangedEvent.Handler()
       {
          @Override
@@ -1932,12 +1931,12 @@ public class TextEditingTarget implements
 
       docDisplay_.addCursorChangedHandler(new CursorChangedHandler()
       {
-         Timer timer_ = new Timer()
+         final Timer timer_ = new Timer()
          {
             @Override
             public void run()
             {
-               HashMap<String, String> properties = new HashMap<String, String>();
+               HashMap<String, String> properties = new HashMap<>();
 
                properties.put(
                      PROPERTY_CURSOR_POSITION,
@@ -2366,7 +2365,7 @@ public class TextEditingTarget implements
       statusBar_.getPosition().setValue((pos.getRow() + 1) + ":" +
                                         (pos.getColumn() + 1));
    }
-   
+
    public void updateStatusBarLocation(String title, int type)
    {
       statusBar_.setScopeType(type);
@@ -2447,7 +2446,7 @@ public class TextEditingTarget implements
    {
       return 2 * 1024 * 1024;
    }
-   
+
    public int getPixelWidth()
    {
       if (isVisualEditorActive())
@@ -2578,7 +2577,7 @@ public class TextEditingTarget implements
          {
             // Initialize notebook after activation if present (and notebook is
             // uninitialized)
-            if (notebook_ != null && 
+            if (notebook_ != null &&
                 notebook_.getState() == TextEditingTargetNotebook.STATE_NONE)
             {
                notebook_.onRenderFinished(null);
@@ -2590,7 +2589,7 @@ public class TextEditingTarget implements
          view_.editorContainer().focus();
       }
    }
-   
+
    public void replaceSelection(String value, Command callback)
    {
       if (isVisualModeActivated())
@@ -2613,7 +2612,7 @@ public class TextEditingTarget implements
             {
                docDisplay_.insertCode(value);
             }
-            
+
             callback.execute();
          });
       }
@@ -2657,7 +2656,7 @@ public class TextEditingTarget implements
    {
       handlers_.fireEvent(event);
    }
-   
+
    public boolean isActivated()
    {
       return commandHandlerReg_ != null;
@@ -2804,7 +2803,7 @@ public class TextEditingTarget implements
    {
       if (isSaving_)
          return;
-	 
+
       save(new Command() {
          @Override
          public void execute()
@@ -2862,7 +2861,7 @@ public class TextEditingTarget implements
    public void saveThenExecute(String encodingOverride, boolean retryWrite, final Command command, final Command onSilentFailure)
    {
       isSaving_ = true;
-	  
+
       checkCompilePdfDependencies();
 
       final String path = docUpdateSentinel_.getPath();
@@ -2964,7 +2963,7 @@ public class TextEditingTarget implements
          {
             // Stupid compiler. Use this Value shim to make the dialog available
             // in its own handler.
-            final HasValue<ChooseEncodingDialog> d = new Value<ChooseEncodingDialog>(null);
+            final HasValue<ChooseEncodingDialog> d = new Value<>(null);
             d.setValue(new ChooseEncodingDialog(
                   response.getCommon(),
                   response.getAll(),
@@ -3193,7 +3192,7 @@ public class TextEditingTarget implements
       {
          // check canonical pref
          boolean canonical = prefs_.visualMarkdownEditingCanonical().getValue();
-       
+
          // check for a file based canonical setting
          String yaml = YamlFrontMatter.getFrontMatter(docDisplay_);
          String yamlCanonical = RmdEditorOptions.getMarkdownOption(yaml,  "canonical");
@@ -3239,7 +3238,7 @@ public class TextEditingTarget implements
          onComplete.execute();
       }
    }
-   
+
    // When the editor loses focus, perform an autosave if enabled, the
    // buffer is dirty, and we have a file to save to
    private void maybeAutoSaveOnBlur() {
@@ -3301,7 +3300,7 @@ public class TextEditingTarget implements
 
       if (spelling_ != null)
          spelling_.onDismiss();
-      
+
       if (visualMode_ != null)
          visualMode_.onDismiss();
 
@@ -3485,7 +3484,7 @@ public class TextEditingTarget implements
          renameInScope(disp);
       });
    }
-   
+
    void renameInScope(DocDisplay display)
    {
       display.focus();
@@ -3626,7 +3625,7 @@ public class TextEditingTarget implements
          int selectionWords = 0;
 
          Range selectionRange = null;
-         
+
          // A selection in visual mode may span multiple editors and blocks of
          // prose, which we can't count here.
          if (!isVisualEditorActive())
@@ -3671,8 +3670,8 @@ public class TextEditingTarget implements
             spelling_.checkSpelling(docDisplay_.getSpellingDoc());
          });
       }
-      
-     
+
+
    }
 
    @Handler
@@ -3744,7 +3743,7 @@ public class TextEditingTarget implements
    {
       if (isSaving_)
          return;
-	 
+
       saveThenExecute(null, true, postSaveCommand());
    }
 
@@ -3863,7 +3862,7 @@ public class TextEditingTarget implements
          extractLocalVariable(disp);
       });
    }
-   
+
    void extractLocalVariable(DocDisplay display)
    {
       if (!isCursorInRMode(display))
@@ -3938,7 +3937,6 @@ public class TextEditingTarget implements
                                  "Command Not Available",
                                  "The "+ command + " command is " +
                                  "only valid for R code chunks.");
-      return;
    }
 
 
@@ -3950,7 +3948,7 @@ public class TextEditingTarget implements
          extractActiveFunction(disp);
       });
    }
-   
+
    void extractActiveFunction(DocDisplay display)
    {
       if (!isCursorInRMode(display))
@@ -4048,7 +4046,7 @@ public class TextEditingTarget implements
          commentUncomment(disp);
       });
    }
-   
+
    void commentUncomment(DocDisplay display)
    {
       if (isCursorInTexMode(display))
@@ -4385,7 +4383,7 @@ public class TextEditingTarget implements
          reflowComment(disp);
       });
    }
-   
+
    void reflowComment(DocDisplay display)
    {
       if (DocumentMode.isSelectionInRMode(display) ||
@@ -4575,14 +4573,14 @@ public class TextEditingTarget implements
                }
             });
    }
-   
+
    private String getRmdFrontMatter()
    {
-      if (isVisualEditorActive()) 
+      if (isVisualEditorActive())
       {
          return visualMode_.getYamlFrontMatter();
-      } 
-      else 
+      }
+      else
       {
          return YamlFrontMatter.getFrontMatter(docDisplay_);
       }
@@ -4591,7 +4589,7 @@ public class TextEditingTarget implements
    private void applyRmdFrontMatter(String yaml)
    {
       boolean applied = false;
-      if (isVisualEditorActive()) 
+      if (isVisualEditorActive())
       {
          applied = visualMode_.applyYamlFrontMatter(yaml);
       }
@@ -4617,19 +4615,19 @@ public class TextEditingTarget implements
    {
       String yaml = getRmdFrontMatter();
       if (yaml == null)
-         return new ArrayList<String>();
+         return new ArrayList<>();
       List<String> formats = TextEditingTargetRMarkdownHelper.getOutputFormats(yaml);
       if (formats == null)
-         formats = new ArrayList<String>();
+         formats = new ArrayList<>();
       return formats;
    }
 
    private void updateRmdFormatList()
    {
       String formatUiName = "";
-      List<String> formatList = new ArrayList<String>();
-      List<String> valueList = new ArrayList<String>();
-      List<String> extensionList = new ArrayList<String>();
+      List<String> formatList = new ArrayList<>();
+      List<String> valueList = new ArrayList<>();
+      List<String> extensionList = new ArrayList<>();
 
       RmdSelectedTemplate selTemplate = getSelectedTemplate();
       if (selTemplate != null && selTemplate.isShiny)
@@ -4888,7 +4886,7 @@ public class TextEditingTarget implements
          }
 
          private boolean indentRestOfLines_ = false;
-         private Pattern TAG_WITH_CONTENTS = Pattern.create("@\\w+\\s+[^\\s]");
+         private final Pattern TAG_WITH_CONTENTS = Pattern.create("@\\w+\\s+[^\\s]");
       };
 
       for (String line : lines)
@@ -4991,21 +4989,21 @@ public class TextEditingTarget implements
       {
          codeExecution_.sendSelectionToTerminal(true);
       }
-      else 
+      else
       {
-         withVisualModeSelection(() -> 
+         withVisualModeSelection(() ->
          {
             codeExecution_.executeSelection(true);
          });
       }
    }
-   
+
    /**
     * Performs a command after synchronizing the document and selection state
     * from visual mode (useful for executing code). The command is not executed if
     * there is no active code editor in visual mode (e.g., the cursor is outside
     * a code chunk)
-    * 
+    *
     * @param command The command to perform
     */
    private void withVisualModeSelection(Command command)
@@ -5822,7 +5820,7 @@ public class TextEditingTarget implements
             jobDesc = "Run After";
       }
 
-      List<ChunkExecUnit> chunks = new ArrayList<ChunkExecUnit>();
+      List<ChunkExecUnit> chunks = new ArrayList<>();
       for (Scope scope : previousScopes)
       {
          if (isExecutableChunk(scope))
@@ -5839,7 +5837,7 @@ public class TextEditingTarget implements
    {
       prepareForVisualExecution(() -> executeSetupChunk());
    }
-   
+
    private void executeSetupChunk()
    {
       // attempt to find the setup scope by name
@@ -6049,7 +6047,7 @@ public class TextEditingTarget implements
    @Handler
    void onGoToHelp()
    {
-      withActiveEditor((disp) -> 
+      withActiveEditor((disp) ->
       {
          disp.goToHelp();
       });
@@ -6094,7 +6092,6 @@ public class TextEditingTarget implements
                "Source File Not Saved",
                "The currently active source file is not saved so doesn't " +
                "have a directory to change into.");
-         return;
       }
    }
 
@@ -6630,13 +6627,13 @@ public class TextEditingTarget implements
       {
          String yaml = getRmdFrontMatter();
          if (yaml == null)
-            return new String();
+            return "";
          return rmarkdownHelper_.getCustomKnit(yaml);
       }
       catch(Exception e)
       {
          Debug.log(e.getMessage());
-         return new String();
+         return "";
       }
    }
 
@@ -6678,7 +6675,7 @@ public class TextEditingTarget implements
          public void execute()
          {
             final HTMLPreviewParams params = pParams.get();
-            server_.previewHTML(params, new SimpleRequestCallback<Boolean>());
+            server_.previewHTML(params, new SimpleRequestCallback<>());
          }
       };
 
@@ -6780,7 +6777,7 @@ public class TextEditingTarget implements
             });
 
             // save options for this document
-            HashMap<String, String> changedProperties = new HashMap<String, String>();
+            HashMap<String, String> changedProperties = new HashMap<>();
             changedProperties.put(NOTEBOOK_TITLE, input.getNotebookTitle());
             changedProperties.put(NOTEBOOK_AUTHOR, input.getNotebookAuthor());
             changedProperties.put(NOTEBOOK_TYPE, input.getNotebookType());
@@ -6852,7 +6849,7 @@ public class TextEditingTarget implements
             pdfPreview.equals(UserPrefs.PDF_PREVIEWER_DESKTOP_SYNCTEX) &&
             Desktop.isDesktop();
 
-      String action = new String();
+      String action = "";
       if (showPdf && !useInternalPreview && !useDesktopSynctexPreview)
          action = "view_external";
 
@@ -7066,7 +7063,7 @@ public class TextEditingTarget implements
             disp.focus();
          });
       }
-     
+
    }
 
    @Handler
@@ -7215,7 +7212,7 @@ public class TextEditingTarget implements
       if (useScopeTreeFolding())
       {
          // Fold all except anonymous braces
-         HashSet<Integer> rowsFolded = new HashSet<Integer>();
+         HashSet<Integer> rowsFolded = new HashSet<>();
          for (AceFold f : JsUtil.asIterable(docDisplay_.getFolds()))
             rowsFolded.add(f.getStart().getRow());
 
@@ -7618,8 +7615,7 @@ public class TextEditingTarget implements
       return false;
    }
 
-   private CppCompletionContext cppCompletionContext_ =
-                                          new CppCompletionContext() {
+   private final CppCompletionContext cppCompletionContext_ = new CppCompletionContext() {
       @Override
       public boolean isCompletionEnabled()
       {
@@ -7672,7 +7668,7 @@ public class TextEditingTarget implements
       }
    };
 
-   private CompletionContext rContext_ = new CompletionContext() {
+   private final CompletionContext rContext_ = new CompletionContext() {
 
       @Override
       public String getPath()
@@ -7692,7 +7688,7 @@ public class TextEditingTarget implements
             return docUpdateSentinel_.getId();
       }
    };
-   
+
    public CompletionContext getRCompletionContext()
    {
       return rContext_;
@@ -7883,12 +7879,12 @@ public class TextEditingTarget implements
    {
       return notebook_;
    }
-   
+
    public VisualMode getVisualMode()
    {
       return visualMode_;
    }
-   
+
    public EditingTargetCodeExecution getCodeExecutor()
    {
       return codeExecution_;
@@ -8222,17 +8218,17 @@ public class TextEditingTarget implements
    {
       return docUpdateSentinel_.getBoolProperty(RMD_VISUAL_MODE, false);
    }
-   
+
    // physical state (guaranteed to be loaded and addressable)
-   public boolean isVisualEditorActive() 
+   public boolean isVisualEditorActive()
    {
       return visualMode_ != null && visualMode_.isVisualEditorActive();
    }
-   
+
    /**
     * Prepares to execute code when visual mode is active; ensures that the
     * underlying editor has a complete copy of the code and scope tree.
-    * 
+    *
     * @param onComplete Command to run when sync is complete.
     */
    public void prepareForVisualExecution(Command onComplete)
@@ -8246,12 +8242,12 @@ public class TextEditingTarget implements
          onComplete.execute();
       }
    }
-   
+
    /**
     * Executes a command with the active Ace instance. If there is no active
     * instance (e.g. in visual mode when focus is not in an editor), then the
     * command is not executed.
-    * 
+    *
     * @param cmd The command to execute.
     */
    private void withActiveEditor(CommandWithArg<DocDisplay> cmd)
@@ -8275,7 +8271,7 @@ public class TextEditingTarget implements
    {
       visualMode_.onUserSwitchingToVisualMode();
    }
-   
+
    public void getEditorContext()
    {
       if (visualMode_.isActivated())
@@ -8295,7 +8291,7 @@ public class TextEditingTarget implements
                server_.getEditorContextCompleted(data, new VoidServerRequestCallback());
                return;
             }
-            
+
             SourceColumnManager.getEditorContext(
                   getId(),
                   getPath(),
@@ -8315,7 +8311,7 @@ public class TextEditingTarget implements
          });
       }
    }
-   
+
    public void withEditorSelection(final CommandWithArg<String> callback)
    {
       if (visualMode_.isActivated())
@@ -8348,8 +8344,8 @@ public class TextEditingTarget implements
    private final UserState state_;
    private Display view_;
    private final Commands commands_;
-   private SourceServerOperations server_;
-   private EventBus events_;
+   private final SourceServerOperations server_;
+   private final EventBus events_;
    private final GlobalDisplay globalDisplay_;
    private final FileDialogs fileDialogs_;
    private final FileTypeRegistry fileTypeRegistry_;
@@ -8362,14 +8358,13 @@ public class TextEditingTarget implements
    private final Source source_;
    private final DependencyManager dependencyManager_;
    private DocUpdateSentinel docUpdateSentinel_;
-   private Value<String> name_ = new Value<String>(null);
+   private final Value<String> name_ = new Value<>(null);
    private TextFileType fileType_;
    private String id_;
    private HandlerRegistration commandHandlerReg_;
-   private ArrayList<HandlerRegistration> releaseOnDismiss_ =
-         new ArrayList<HandlerRegistration>();
+   private final ArrayList<HandlerRegistration> releaseOnDismiss_ = new ArrayList<>();
    private final DirtyState dirtyState_;
-   private HandlerManager handlers_ = new HandlerManager(this);
+   private final HandlerManager handlers_ = new HandlerManager(this);
    private FileSystemContext fileContext_;
    private final TextEditingTargetCompilePdfHelper compilePdfHelper_;
    private final TextEditingTargetRMarkdownHelper rmarkdownHelper_;
@@ -8388,7 +8383,7 @@ public class TextEditingTarget implements
    private TextEditingTargetSpelling spelling_;
    private TextEditingTargetNotebook notebook_;
    private TextEditingTargetChunks chunks_;
-   private BreakpointManager breakpointManager_;
+   private final BreakpointManager breakpointManager_;
    private final LintManager lintManager_;
    private CollabEditStartParams queuedCollabParams_;
    private MathJax mathjax_;
@@ -8405,7 +8400,7 @@ public class TextEditingTarget implements
    private EditingTargetCodeExecution codeExecution_;
 
    // Timer for autosave
-   private Timer autoSaveTimer_ = new Timer()
+   private final Timer autoSaveTimer_ = new Timer()
    {
       @Override
       public void run()
@@ -8470,7 +8465,7 @@ public class TextEditingTarget implements
    private boolean isDebugWarningVisible_ = false;
    private boolean isBreakpointWarningVisible_ = false;
    private String extendedType_;
-   
+
    // prevent multiple manual saves from queuing up
    private boolean isSaving_ = false;
 

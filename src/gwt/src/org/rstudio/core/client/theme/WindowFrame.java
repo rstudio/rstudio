@@ -400,11 +400,11 @@ public class WindowFrame extends Composite
    private Widget main_;
    private Widget header_;
    private Widget fill_;
-   private HashMap<Integer, Widget> contextButtons_ = new HashMap<Integer, Widget>();
+   private final HashMap<Integer, Widget> contextButtons_ = new HashMap<>();
    private HandlerRegistration ensureVisibleRegistration_;
    private HandlerRegistration ensureHeightRegistration_;
    private Widget previousHeader_;
-   private FlowPanel buttonsArea_;
+   private final FlowPanel buttonsArea_;
 
    // Injected ----
    private EventBus events_;

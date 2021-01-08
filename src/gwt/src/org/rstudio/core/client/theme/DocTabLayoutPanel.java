@@ -997,7 +997,7 @@ public class DocTabLayoutPanel
 
             // the data format is docID|windowID; windowID can be omitted if
             // the main window is the origin
-            String pieces[] = data.split("\\|");
+            String[] pieces = data.split("\\|");
             if (pieces.length < 1)
                return;
 
