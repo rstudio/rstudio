@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.environment;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Label;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.DebugFilePosition;
@@ -26,6 +27,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.core.client.widget.MiniPieWidget;
 import org.rstudio.core.client.widget.MonitoringMenuItem;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.SearchWidget;
@@ -58,6 +60,7 @@ import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentContextData;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
+import org.rstudio.studio.client.workbench.views.environment.model.MemoryUsage;
 import org.rstudio.studio.client.workbench.views.environment.model.ObjectContents;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentObjects;
@@ -146,6 +149,7 @@ public class EnvironmentPane extends WorkbenchPane
       MemoryUsage usage = session_.getSessionInfo().getMemoryUsage();
       if (usage != null)
       {
+         toolbar.addRightWidget(createMemUsageWidget(usage));
          Label mem = new Label("Mem: " + Math.round(
             ((usage.getUsed().getKb() * 1.0) / (usage.getTotal().getKb() * 1.0)) * 100) + "%");
          mem.setTitle("Used by process: " + (usage.getProcess().getKb() / 1024) + " MiB\n" +
@@ -705,6 +709,8 @@ public class EnvironmentPane extends WorkbenchPane
    {
       boolean initialized = session_.getSessionInfo().getPythonInitialized();
       setPythonEnabled(initialized);
+
+      // TODO: recompute memory used
    }
 
    @Override
@@ -847,6 +853,15 @@ public class EnvironmentPane extends WorkbenchPane
       }
 
       Scheduler.get().scheduleDeferred(() -> commands_.refreshEnvironment().execute());
+   }
+
+   private Widget createMemUsageWidget(MemoryUsage usage)
+   {
+      long percent = Math.round(((usage.getUsed().getKb() * 1.0) / (usage.getTotal().getKb() * 1.0)) * 100);
+      MiniPieWidget widget = new MiniPieWidget("#000000", "#505050", (int)percent);
+      widget.setHeight("18px");
+      widget.setWidth("18px");
+      return widget;
    }
 
    public String getActiveLanguage()
