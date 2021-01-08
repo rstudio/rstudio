@@ -311,7 +311,7 @@ public class ObjectExplorerDataGrid
          return null;
 
       // extract all access strings from data + parents
-      List<String> accessors = new ArrayList<String>();
+      List<String> accessors = new ArrayList<>();
       while (data != null && data.getObjectAccess() != null)
       {
          accessors.add(data.getObjectAccess());
@@ -571,20 +571,20 @@ public class ObjectExplorerDataGrid
       setSize("100%", "100%");
 
       // add columns
-      nameColumn_ = new IdentityColumn<Data>(new NameCell());
+      nameColumn_ = new IdentityColumn<>(new NameCell());
       addColumn(nameColumn_, new TextHeader("Name"));
 
-      typeColumn_ = new IdentityColumn<Data>(new TypeCell());
+      typeColumn_ = new IdentityColumn<>(new TypeCell());
       addColumn(typeColumn_, new ResizableHeader(this, "Type"));
 
-      valueColumn_ = new IdentityColumn<Data>(new ValueCell());
+      valueColumn_ = new IdentityColumn<>(new ValueCell());
       addColumn(valueColumn_, new ResizableHeader(this, "Value"));
 
       initializeColumnWidths();
 
       // set updater
-      dataProvider_ = new ListDataProvider<Data>();
-      dataProvider_.setList(new ArrayList<Data>());
+      dataProvider_ = new ListDataProvider<>();
+      dataProvider_.setList(new ArrayList<>());
       dataProvider_.addDataDisplay(this);
 
       // register handlers
@@ -1305,7 +1305,7 @@ public class ObjectExplorerDataGrid
    private final List<Data> flatten(Data data,
                                     Filter<Data> filter)
    {
-      List<Data> list = new ArrayList<Data>();
+      List<Data> list = new ArrayList<>();
       flattenImpl(data, filter, list);
       return list;
    }

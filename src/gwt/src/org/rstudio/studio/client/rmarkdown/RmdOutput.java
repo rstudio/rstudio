@@ -431,7 +431,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          public void execute()
          {
             server_.renderRmdSource(event.getSource(),
-                                    new SimpleRequestCallback<Boolean>()); 
+                                    new SimpleRequestCallback<>()); 
          }
       });
    }
@@ -860,10 +860,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
 
    // stores the last scroll position of each document we know about: map
    // of path to position
-   private final Map<String, Integer> scrollPositions_ = 
-         new HashMap<String, Integer>();
-   private final Map<String, String> anchors_ = 
-         new HashMap<String, String>();
+   private final Map<String, Integer> scrollPositions_ = new HashMap<>();
+   private final Map<String, String> anchors_ = new HashMap<>();
    private RmdRenderResult result_;
    private RmdShinyDocInfo shinyDoc_;
    private Operation onRenderCompleted_;

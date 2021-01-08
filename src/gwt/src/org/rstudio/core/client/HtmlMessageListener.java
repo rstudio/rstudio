@@ -44,7 +44,7 @@ public class HtmlMessageListener
       htmlMessageListener_ = this;
       fileTypeRegistry_ = fileTypeRegistry;
       pUserPrefs_ = pUIPrefs;
-      themeSources_ = new ArrayList<JavaScriptObject>();
+      themeSources_ = new ArrayList<>();
       
       initializeMessageListeners();
 

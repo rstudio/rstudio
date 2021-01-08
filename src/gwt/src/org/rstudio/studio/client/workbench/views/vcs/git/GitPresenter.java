@@ -36,7 +36,6 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.vcs.VCSApplicationParams;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -270,14 +269,14 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
    @Override
    public void showHistory(FileSystemItem fileFilter)
    {
-      showReviewPane(true, fileFilter, new ArrayList<StatusAndPath>());
+      showReviewPane(true, fileFilter, new ArrayList<>());
    }
    
    @Override
    public void showDiff(FileSystemItem file)
    {
       // build an ArrayList<StatusAndPath> so we can call the core helper
-      ArrayList<StatusAndPath> diffList = new ArrayList<StatusAndPath>();
+      ArrayList<StatusAndPath> diffList = new ArrayList<>();
       for (StatusAndPath item :  gitState_.getStatus())
       {
          if (item.getRawPath() == file.getPath())
@@ -305,7 +304,7 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
    public void revertFile(FileSystemItem file)
    {
       // build an ArrayList<String> so we can call the core helper
-      ArrayList<String> revertList = new ArrayList<String>();
+      ArrayList<String> revertList = new ArrayList<>();
       for (StatusAndPath item :  gitState_.getStatus())
       {
          if (item.getRawPath() == file.getPath())
@@ -350,7 +349,7 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
                   
                   server_.gitRevert(
                         revertList,
-                        new SimpleRequestCallback<Void>("Revert Changes"));
+                        new SimpleRequestCallback<>("Revert Changes"));
                   
                }
             },

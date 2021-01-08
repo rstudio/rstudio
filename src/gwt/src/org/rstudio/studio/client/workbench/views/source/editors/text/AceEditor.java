@@ -1644,7 +1644,7 @@ public class AceEditor implements DocDisplay,
    {
       // detach anchors on dispose
       ArrayList<org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor> 
-        anchors = new ArrayList<org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor>();
+        anchors = new ArrayList<>();
       
       return new SpellingDoc() {
 

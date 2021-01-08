@@ -614,8 +614,8 @@ public class ConnectionsPresenter extends BasePresenter
    private Connection exploredConnection_;
    private Connection lastExploredConnection_;
    
-   private ArrayList<Connection> allConnections_ = new ArrayList<Connection>();
-   private ArrayList<ConnectionId> activeConnections_ = new ArrayList<ConnectionId>();
+   private ArrayList<Connection> allConnections_ = new ArrayList<>();
+   private ArrayList<ConnectionId> activeConnections_ = new ArrayList<>();
    
    private static boolean installersUpdated_ = false;
    private static String installersWarning_ = null;

@@ -18,7 +18,7 @@ import com.google.gwt.event.shared.GwtEvent;
 
 public class EnabledChangedEvent extends GwtEvent<EnabledChangedHandler>
 {
-   public static final Type<EnabledChangedHandler> TYPE = new Type<EnabledChangedHandler>();
+   public static final Type<EnabledChangedHandler> TYPE = new Type<>();
 
    public EnabledChangedEvent(AppCommand command)
    {

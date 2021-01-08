@@ -44,7 +44,7 @@ public class PanmirrorFocusEvent extends
 
   public static Type<PanmirrorFocusEvent.Handler> getType() {
     if (TYPE == null) {
-      TYPE = new Type<PanmirrorFocusEvent.Handler>();
+      TYPE = new Type<>();
     }
     return TYPE;
   }

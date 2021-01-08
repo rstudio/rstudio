@@ -1083,7 +1083,7 @@ public class ClientEventDispatcher
 
    private final EventBus eventBus_;
 
-   private final ArrayList<ClientEvent> pendingEvents_ = new ArrayList<ClientEvent>();
+   private final ArrayList<ClientEvent> pendingEvents_ = new ArrayList<>();
 
 
 }

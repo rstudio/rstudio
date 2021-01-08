@@ -107,7 +107,7 @@ public class MathJaxUtil
    public static List<Range> findLatexChunks(DocDisplay docDisplay)
    {
       docDisplay.tokenizeDocument();
-      List<Range> ranges = new ArrayList<Range>();
+      List<Range> ranges = new ArrayList<>();
       
       Position startPos = null;
       for (int i = 0, n = docDisplay.getRowCount(); i < n; i++)

@@ -42,10 +42,10 @@ public class PanmirrorPubMedServer
    
    public Promise<JavaScriptObject> search(String query)
    {
-      return new Promise<JavaScriptObject>((ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
+      return new Promise<>((ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
          server_.pubmedSearch(
             query,
-            new PromiseServerRequestCallback<JavaScriptObject>(resolve, reject)
+            new PromiseServerRequestCallback<>(resolve, reject)
          );
       });
    }

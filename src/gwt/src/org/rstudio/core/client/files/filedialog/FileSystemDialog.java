@@ -325,7 +325,7 @@ public abstract class FileSystemDialog extends ModalDialogBase
       if (items == null)
          return new FileSystemItem[0];
 
-      ArrayList<FileSystemItem> filtered = new ArrayList<FileSystemItem>();
+      ArrayList<FileSystemItem> filtered = new ArrayList<>();
       for (int i = 0; i < items.length; i++)
       {
          if (items[i].isDirectory())

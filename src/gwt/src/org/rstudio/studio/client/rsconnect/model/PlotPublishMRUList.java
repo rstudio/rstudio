@@ -109,5 +109,5 @@ public class PlotPublishMRUList
    }
 
    private final WorkbenchList plotMru_;
-   private ArrayList<String> plotMruList_ = new ArrayList<String>();
+   private ArrayList<String> plotMruList_ = new ArrayList<>();
 }

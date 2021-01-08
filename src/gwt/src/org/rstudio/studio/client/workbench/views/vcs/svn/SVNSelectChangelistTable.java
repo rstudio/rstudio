@@ -56,7 +56,7 @@ public class SVNSelectChangelistTable extends SVNChangelistTable
    @Override
    public ArrayList<String> getSelectedPaths()
    {
-      ArrayList<String> selectedPaths = new ArrayList<String>();
+      ArrayList<String> selectedPaths = new ArrayList<>();
       for (Map.Entry<String, Boolean> entry : selected_.entrySet())
          if (entry.getValue() != null && entry.getValue())
             selectedPaths.add(entry.getKey());
@@ -103,7 +103,7 @@ public class SVNSelectChangelistTable extends SVNChangelistTable
    protected void configureTable()
    {
       commitColumn_ = new Column<StatusAndPath, Boolean>(
-            new TriStateCheckboxCell<StatusAndPath>(selectionModel_))
+            new TriStateCheckboxCell<>(selectionModel_))
       {
          @Override
          public Boolean getValue(StatusAndPath object)
@@ -141,8 +141,7 @@ public class SVNSelectChangelistTable extends SVNChangelistTable
          list.set(i, list.get(i));
    }
 
-   private final HashMap<String, Boolean> selected_ =
-                                                 new HashMap<String, Boolean>();
-   private final HashSet<String> uncommitableStatuses = new HashSet<String>();
+   private final HashMap<String, Boolean> selected_ = new HashMap<>();
+   private final HashSet<String> uncommitableStatuses = new HashSet<>();
    private Column<StatusAndPath, Boolean> commitColumn_;
 }

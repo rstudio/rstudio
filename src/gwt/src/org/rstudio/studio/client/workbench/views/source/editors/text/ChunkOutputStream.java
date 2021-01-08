@@ -66,7 +66,7 @@ public class ChunkOutputStream extends FlowPanel
    {
       host_ = host;
       chunkOutputSize_ = chunkOutputSize;
-      metadata_ = new HashMap<Integer, JavaScriptObject>();
+      metadata_ = new HashMap<>();
 
       if (chunkOutputSize_ == ChunkOutputSize.Full) {
          getElement().getStyle().setWidth(100, Unit.PCT);
@@ -571,8 +571,8 @@ public class ChunkOutputStream extends FlowPanel
       // flush any errors so they are properly accounted for
       flushQueuedErrors();
       
-      List<ChunkOutputPage> pages = new ArrayList<ChunkOutputPage>();
-      List<Widget> removed = new ArrayList<Widget>();
+      List<ChunkOutputPage> pages = new ArrayList<>();
+      List<Widget> removed = new ArrayList<>();
       for (Widget w: this)
       {
          // extract ordinal and metadata

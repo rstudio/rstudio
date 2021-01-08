@@ -20,8 +20,7 @@ import com.google.gwt.event.shared.GwtEvent;
 
 public class ShowHTMLPreviewEvent extends GwtEvent<ShowHTMLPreviewHandler>
 { 
-   public static final GwtEvent.Type<ShowHTMLPreviewHandler> TYPE =
-      new GwtEvent.Type<ShowHTMLPreviewHandler>();
+   public static final GwtEvent.Type<ShowHTMLPreviewHandler> TYPE = new GwtEvent.Type<>();
    
    public ShowHTMLPreviewEvent(HTMLPreviewParams params)
    {

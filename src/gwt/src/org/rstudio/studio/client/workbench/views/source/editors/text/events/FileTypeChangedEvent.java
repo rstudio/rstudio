@@ -18,8 +18,7 @@ import com.google.gwt.event.shared.GwtEvent;
 
 public class FileTypeChangedEvent extends GwtEvent<FileTypeChangedHandler>
 {
-   public static final Type<FileTypeChangedHandler> TYPE =
-         new Type<FileTypeChangedHandler>();
+   public static final Type<FileTypeChangedHandler> TYPE = new Type<>();
 
    public FileTypeChangedEvent()
    {

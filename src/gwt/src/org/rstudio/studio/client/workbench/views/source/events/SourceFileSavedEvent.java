@@ -25,8 +25,7 @@ import org.rstudio.studio.client.application.events.CrossWindowEvent;
 public class SourceFileSavedEvent
              extends CrossWindowEvent<SourceFileSavedHandler>
 {
-   public static final Type<SourceFileSavedHandler> TYPE = 
-         new Type<SourceFileSavedHandler>();
+   public static final Type<SourceFileSavedHandler> TYPE = new Type<>();
    
    public SourceFileSavedEvent()
    {

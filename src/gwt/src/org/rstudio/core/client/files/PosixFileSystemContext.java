@@ -51,7 +51,7 @@ public abstract class PosixFileSystemContext implements FileSystemContext
 
    public FileSystemItem[] parseDir(String dirPath)
    {
-      ArrayList<FileSystemItem> results = new ArrayList<FileSystemItem>();
+      ArrayList<FileSystemItem> results = new ArrayList<>();
 
       if (dirPath.startsWith("/"))
          results.add(FileSystemItem.createDir("/"));

@@ -49,5 +49,5 @@ public class ViewFileRevisionEvent extends GwtEvent<ViewFileRevisionHandler>
    private final String revision_;
    private final String filename_;
 
-   public static final Type<ViewFileRevisionHandler> TYPE = new Type<ViewFileRevisionHandler>();
+   public static final Type<ViewFileRevisionHandler> TYPE = new Type<>();
 }

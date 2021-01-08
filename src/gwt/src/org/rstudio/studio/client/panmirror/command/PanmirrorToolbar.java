@@ -230,5 +230,5 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
    
    private PanmirrorToolbarCommands commands_ = null;
    private PanmirrorMenus menus_ = null;
-   private ArrayList<PanmirrorCommandUIObject> commandObjects_ = new ArrayList<PanmirrorCommandUIObject>();
+   private ArrayList<PanmirrorCommandUIObject> commandObjects_ = new ArrayList<>();
 }

@@ -70,6 +70,6 @@ public class SuppressNextShellFocusEvent extends GwtEvent<SuppressNextShellFocus
       handler.onSuppressNextShellFocus(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }
 

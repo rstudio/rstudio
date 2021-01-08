@@ -53,7 +53,7 @@ public abstract class WizardIntermediatePage<I,T> extends WizardPage<I,T>
    {
       // we have a single subpage, which is the next page we were initialized
       // with
-      ArrayList<WizardPage<I, T>> subPage = new ArrayList<WizardPage<I, T>>();
+      ArrayList<WizardPage<I, T>> subPage = new ArrayList<>();
       subPage.add(nextPage_);
       return subPage;
    }

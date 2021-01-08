@@ -20,8 +20,7 @@ import com.google.gwt.event.shared.GwtEvent;
 
 public class OpenProjectNewWindowEvent extends GwtEvent<OpenProjectNewWindowHandler>
 {
-   public static final GwtEvent.Type<OpenProjectNewWindowHandler> TYPE =
-      new GwtEvent.Type<OpenProjectNewWindowHandler>();
+   public static final GwtEvent.Type<OpenProjectNewWindowHandler> TYPE = new GwtEvent.Type<>();
    
    public OpenProjectNewWindowEvent(String project, RVersionSpec rVersion)
    {

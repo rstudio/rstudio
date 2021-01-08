@@ -20,8 +20,7 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackageStatus;
 public class PackageStatusChangedEvent 
                      extends GwtEvent<PackageStatusChangedHandler>
 {
-   public static final GwtEvent.Type<PackageStatusChangedHandler> TYPE =
-      new GwtEvent.Type<PackageStatusChangedHandler>();
+   public static final GwtEvent.Type<PackageStatusChangedHandler> TYPE = new GwtEvent.Type<>();
    
    public PackageStatusChangedEvent(PackageStatus packageStatus)
    {

@@ -124,7 +124,6 @@ public class ShellInputAnimator
    
    private InputEditorDisplay display_;
    
-   private ArrayList<InputAnimator> pendingAnimatedInput_ =
-      new ArrayList<InputAnimator>();
+   private ArrayList<InputAnimator> pendingAnimatedInput_ = new ArrayList<>();
 
 }

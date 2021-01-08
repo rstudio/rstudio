@@ -24,8 +24,7 @@ public class RSConnectDeploymentCompletedEvent extends GwtEvent<RSConnectDeploym
       void onRSConnectDeploymentCompleted(RSConnectDeploymentCompletedEvent event);
    }
 
-   public static final GwtEvent.Type<RSConnectDeploymentCompletedEvent.Handler> TYPE =
-      new GwtEvent.Type<RSConnectDeploymentCompletedEvent.Handler>();
+   public static final GwtEvent.Type<RSConnectDeploymentCompletedEvent.Handler> TYPE = new GwtEvent.Type<>();
    
    public RSConnectDeploymentCompletedEvent(String url)
    {

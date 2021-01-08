@@ -27,7 +27,7 @@ public class CompletionOptions
 
    public ArrayList<String> getCompletions(String prefix)
    {
-      ArrayList<String> results = new ArrayList<String>();
+      ArrayList<String> results = new ArrayList<>();
       for (int i = 0; i < options_.size(); i++)
       {
          if (options_.get(i).startsWith(prefix) &&
@@ -39,6 +39,6 @@ public class CompletionOptions
       return results;
    }
 
-   private ArrayList<String> options_ = new ArrayList<String>();
-   private ArrayList<String> filterPrefixes_ = new ArrayList<String>();
+   private ArrayList<String> options_ = new ArrayList<>();
+   private ArrayList<String> filterPrefixes_ = new ArrayList<>();
 }

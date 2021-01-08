@@ -19,8 +19,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 
 public class OpenDataFileEvent extends GwtEvent<OpenDataFileHandler>
 {
-   public static final GwtEvent.Type<OpenDataFileHandler> TYPE =
-      new GwtEvent.Type<OpenDataFileHandler>();
+   public static final GwtEvent.Type<OpenDataFileHandler> TYPE = new GwtEvent.Type<>();
    
    public OpenDataFileEvent(FileSystemItem file)
    {

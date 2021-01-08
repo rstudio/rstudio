@@ -69,7 +69,7 @@ public class WebTextInput implements TextInput
       // This variable introduces a level of pointer indirection that lets us
       // get around passing TextEntryModalDialog a reference to itself in its
       // own constructor.
-      final Value<TextEntryModalDialog> pDialog = new Value<TextEntryModalDialog>(null);
+      final Value<TextEntryModalDialog> pDialog = new Value<>(null);
 
       final TextEntryModalDialog dialog = new TextEntryModalDialog(
             title,

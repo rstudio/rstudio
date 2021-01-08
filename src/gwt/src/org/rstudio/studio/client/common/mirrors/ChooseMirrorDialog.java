@@ -186,7 +186,7 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
          public void onResponseReceived(JsArray<CRANMirror> mirrors)
          {   
             // keep internal list of mirrors 
-            mirrors_ = new ArrayList<CRANMirror>(mirrors.length());
+            mirrors_ = new ArrayList<>(mirrors.length());
             
             // create list box and select default item
             listBox_ = new ListBox();

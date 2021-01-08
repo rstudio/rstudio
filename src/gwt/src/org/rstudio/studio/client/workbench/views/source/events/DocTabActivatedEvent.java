@@ -30,8 +30,7 @@ public class DocTabActivatedEvent
       void onDocTabActivated(DocTabActivatedEvent event);
    }
 
-   public static final GwtEvent.Type<DocTabActivatedEvent.Handler> TYPE =
-      new GwtEvent.Type<DocTabActivatedEvent.Handler>();
+   public static final GwtEvent.Type<DocTabActivatedEvent.Handler> TYPE = new GwtEvent.Type<>();
    
    public DocTabActivatedEvent()
    {

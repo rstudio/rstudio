@@ -44,7 +44,6 @@ import org.rstudio.studio.client.common.vcs.DiffResult;
 import org.rstudio.studio.client.common.vcs.SVNServerOperations;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -125,7 +124,7 @@ public class SVNReviewPresenter implements ReviewPresenter
       @Override
       public void onDiffChunkAction(DiffChunkActionEvent event)
       {
-         ArrayList<DiffChunk> chunks = new ArrayList<DiffChunk>();
+         ArrayList<DiffChunk> chunks = new ArrayList<>();
          chunks.add(event.getDiffChunk());
          doPatch(event.getAction(), event.getDiffChunk().getLines(), chunks);
       }
@@ -342,7 +341,7 @@ public class SVNReviewPresenter implements ReviewPresenter
                            ArrayList<Line> lines,
                            boolean reverse)
    {
-      chunks = new ArrayList<DiffChunk>(chunks);
+      chunks = new ArrayList<>(chunks);
 
       if (reverse)
       {
@@ -361,7 +360,7 @@ public class SVNReviewPresenter implements ReviewPresenter
 
       server_.svnApplyPatch(path, patch,
                             StringUtil.notNull(currentEncoding_),
-                            new SimpleRequestCallback<Void>());
+                            new SimpleRequestCallback<>());
    }
 
    private void updateDiff()
@@ -413,7 +412,7 @@ public class SVNReviewPresenter implements ReviewPresenter
                   SVNDiffParser parser = new SVNDiffParser(response);
                   parser.nextFilePair();
 
-                  ArrayList<ChunkOrLine> allLines = new ArrayList<ChunkOrLine>();
+                  ArrayList<ChunkOrLine> allLines = new ArrayList<>();
 
                   activeChunks_.clear();
                   for (DiffChunk chunk;
@@ -509,7 +508,7 @@ public class SVNReviewPresenter implements ReviewPresenter
    private final SVNServerOperations server_;
    private final SVNCommandHandler commandHandler_;
    private final Display view_;
-   private ArrayList<DiffChunk> activeChunks_ = new ArrayList<DiffChunk>();
+   private ArrayList<DiffChunk> activeChunks_ = new ArrayList<>();
    private String currentResponse_;
    private String currentEncoding_;
    private String currentFilename_;
@@ -518,7 +517,7 @@ public class SVNReviewPresenter implements ReviewPresenter
    private static final String MODULE_SVN = "vcs_svn";
    private static final String KEY_CONTEXT_LINES = "context_lines";
    
-   private final HashSet<String> undiffableStatuses_ = new HashSet<String>();
+   private final HashSet<String> undiffableStatuses_ = new HashSet<>();
 
    private boolean overrideSizeWarning_ = false;
 

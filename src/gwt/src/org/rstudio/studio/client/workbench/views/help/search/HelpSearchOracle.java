@@ -48,8 +48,7 @@ public class HelpSearchOracle extends SuggestOracle
          {
             int maxCount = Math.min(suggestions.length(), request.getLimit());
 
-            ArrayList<SearchSuggestion> results =
-               new ArrayList<SearchSuggestion>();
+            ArrayList<SearchSuggestion> results = new ArrayList<>();
             for (int i = 0; i< maxCount; i++)
                results.add(new SearchSuggestion(suggestions.get(i)));
             

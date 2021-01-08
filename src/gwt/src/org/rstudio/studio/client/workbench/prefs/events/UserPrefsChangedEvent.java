@@ -22,7 +22,7 @@ import org.rstudio.studio.client.workbench.prefs.model.PrefLayer;
 @JavaScriptSerializable
 public class UserPrefsChangedEvent extends CrossWindowEvent<UserPrefsChangedHandler>
 {
-   public static final Type<UserPrefsChangedHandler> TYPE = new Type<UserPrefsChangedHandler>();
+   public static final Type<UserPrefsChangedHandler> TYPE = new Type<>();
    
    public UserPrefsChangedEvent()
    {

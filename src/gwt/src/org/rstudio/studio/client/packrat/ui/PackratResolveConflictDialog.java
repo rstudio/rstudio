@@ -72,7 +72,7 @@ public class PackratResolveConflictDialog
       mainWidget_.add(label);
             
       // table
-      table_ = new RStudioDataGrid<PackratConflictActions>(conflictActions.size(),
+      table_ = new RStudioDataGrid<>(conflictActions.size(),
             (PackagesDataGridCommon)GWT.create(PackagesDataGridCommon.class));
       StyleUtils.forceMacScrollbars(table_);
       table_.addStyleName(RESOURCES.styles().conflictsTable());

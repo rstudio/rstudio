@@ -19,7 +19,7 @@ import com.google.gwt.event.shared.GwtEvent;
 public class LastSourceDocClosedEvent extends GwtEvent<LastSourceDocClosedHandler>
 {
    public static final Type<LastSourceDocClosedHandler> TYPE =
-      new Type<LastSourceDocClosedHandler>();
+      new Type<>();
 
    public LastSourceDocClosedEvent() {}
 

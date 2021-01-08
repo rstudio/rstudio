@@ -28,7 +28,6 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTerminalEvent;
 import org.rstudio.studio.client.server.ErrorLoggingServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.ui.MenuItem;
@@ -148,7 +147,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
       // inform server of the selection
       server_.processNotifyVisible(
             activeTerminalHandle_,
-            new ErrorLoggingServerRequestCallback<Void>());
+            new ErrorLoggingServerRequestCallback<>());
    }
 
    /**

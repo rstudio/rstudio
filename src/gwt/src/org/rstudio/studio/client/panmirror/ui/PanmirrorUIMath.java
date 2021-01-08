@@ -31,7 +31,7 @@ public class PanmirrorUIMath {
    
    public Promise<Boolean> typeset(Element el, String text, boolean priority)
    {
-      return new Promise<Boolean>((ResolveCallbackFn<Boolean> resolve, RejectCallbackFn reject) -> {
+      return new Promise<>((ResolveCallbackFn<Boolean> resolve, RejectCallbackFn reject) -> {
          MathJaxLoader.withMathJaxLoaded((alreadyLoaded) -> {
             MathJaxTypeset.typeset(el, text, priority, (error) -> {
                resolve.onInvoke(error);

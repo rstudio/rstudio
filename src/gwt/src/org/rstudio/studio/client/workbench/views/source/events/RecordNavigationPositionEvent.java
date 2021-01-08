@@ -20,7 +20,7 @@ import com.google.gwt.event.shared.GwtEvent;
 
 public class RecordNavigationPositionEvent extends GwtEvent<RecordNavigationPositionHandler>
 {
-   public static final Type<RecordNavigationPositionHandler> TYPE = new Type<RecordNavigationPositionHandler>();
+   public static final Type<RecordNavigationPositionHandler> TYPE = new Type<>();
 
    public RecordNavigationPositionEvent(SourcePosition position)
    {

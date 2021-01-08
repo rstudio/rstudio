@@ -29,8 +29,7 @@ public class ChunkChangeEvent
       void onChunkChange(ChunkChangeEvent event);
    }
 
-   public static final GwtEvent.Type<ChunkChangeEvent.Handler> TYPE =
-      new GwtEvent.Type<ChunkChangeEvent.Handler>();
+   public static final GwtEvent.Type<ChunkChangeEvent.Handler> TYPE = new GwtEvent.Type<>();
    
    public ChunkChangeEvent()
    {

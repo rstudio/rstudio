@@ -52,7 +52,7 @@ public class LintMarkers
                       JsArray<AceAnnotation> annotations)
    {
       document_ = document;
-      annotations_ = new ArrayList<AnchoredAceAnnotation>();
+      annotations_ = new ArrayList<>();
       annotations_.ensureCapacity(annotations.length());
       for (int i = 0; i < annotations.length(); i++)
          annotations_.set(i, new AnchoredAceAnnotation(annotations.get(i)));

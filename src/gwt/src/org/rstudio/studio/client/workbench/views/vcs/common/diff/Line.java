@@ -143,7 +143,7 @@ public class Line implements Comparable<Line>
 
    public static ArrayList<Line> reverseLines(ArrayList<Line> lines)
    {
-      ArrayList<Line> rlines = new ArrayList<Line>(lines.size());
+      ArrayList<Line> rlines = new ArrayList<>(lines.size());
       for (Line line : lines)
          rlines.add(line.reverse());
       return rlines;

@@ -67,7 +67,7 @@ public abstract class ClientStateValue<T> implements SaveClientStateEvent.Handle
    {
       JsObject grp = state.peek(group_);
       T obj = doGet(grp, name_);
-      valueTracker_ = new ValueChangeTracker<T>(obj);
+      valueTracker_ = new ValueChangeTracker<>(obj);
       onInit(obj);
 
       EventBus evt = RStudioGinjector.INSTANCE.getEventBus();

@@ -1017,8 +1017,7 @@ public class RSConnect implements SessionInitEvent.Handler,
 
       // If we know the most recent deployment of the directory, act on that
       // deployment by default
-      final ArrayList<RSConnectDeploymentRecord> recordList =
-            new ArrayList<RSConnectDeploymentRecord>();
+      final ArrayList<RSConnectDeploymentRecord> recordList = new ArrayList<>();
       RSConnectDeploymentRecord lastRecord = dirState_.getLastDeployment(dir);
       if (lastRecord != null)
       {

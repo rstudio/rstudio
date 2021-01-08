@@ -133,7 +133,7 @@ public class DocsMenu extends AppMenuBar
    
    private String[] deduplicate(String[] names, String[] paths)
    {
-      Map<String, Integer> counts = new HashMap<String, Integer>();
+      Map<String, Integer> counts = new HashMap<>();
       
       // initialize map with zeroes
       int n = names.length;
@@ -195,9 +195,9 @@ public class DocsMenu extends AppMenuBar
       }
    }
 
-   private ArrayList<String> ids_ = new ArrayList<String>();
-   private ArrayList<String> names_ = new ArrayList<String>();
-   private ArrayList<MenuItem> menuItems_ = new ArrayList<MenuItem>();
+   private ArrayList<String> ids_ = new ArrayList<>();
+   private ArrayList<String> names_ = new ArrayList<>();
+   private ArrayList<MenuItem> menuItems_ = new ArrayList<>();
    private EventBus events_;
    private PopupPanel panel_;
 }

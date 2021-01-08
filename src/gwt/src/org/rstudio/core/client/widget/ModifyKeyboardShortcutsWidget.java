@@ -232,10 +232,10 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       initialFilterText_ = filterText;
       shortcuts_ = ShortcutManager.INSTANCE;
       
-      changes_ = new HashMap<KeyboardShortcutEntry, KeyboardShortcutEntry>();
+      changes_ = new HashMap<>();
       buffer_ = new KeySequence();
       
-      table_ = new RStudioDataGrid<KeyboardShortcutEntry>(1000, RES, KEY_PROVIDER);
+      table_ = new RStudioDataGrid<>(1000, RES, KEY_PROVIDER);
       
       FlowPanel emptyWidget = new FlowPanel();
       Label emptyLabel = new Label("No bindings available");
@@ -285,7 +285,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       table_.setKeyboardSelectionHandler(new CellPreviewEvent.Handler<KeyboardShortcutEntry>()
       {
          private final AbstractCellTable.CellTableKeyboardSelectionHandler<KeyboardShortcutEntry> handler_ =
-               new AbstractCellTable.CellTableKeyboardSelectionHandler<KeyboardShortcutEntry>(table_);
+               new AbstractCellTable.CellTableKeyboardSelectionHandler<>(table_);
          
          @Override
          public void onCellPreview(CellPreviewEvent<KeyboardShortcutEntry> preview)
@@ -318,7 +318,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          }
       });
       
-      dataProvider_ = new ListDataProvider<KeyboardShortcutEntry>();
+      dataProvider_ = new ListDataProvider<>();
       dataProvider_.addDataDisplay(table_);
       
       addColumns();
@@ -361,7 +361,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          {
             callback.onSuggestionsReady(
                   request,
-                  new Response(new ArrayList<Suggestion>()));
+                  new Response(new ArrayList<>()));
          }
          
       });
@@ -438,13 +438,13 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          String id = newBinding.getId();
          
          // Get all commands with this ID.
-         List<KeyboardShortcutEntry> bindingsWithId = new ArrayList<KeyboardShortcutEntry>();
+         List<KeyboardShortcutEntry> bindingsWithId = new ArrayList<>();
          for (KeyboardShortcutEntry binding : originalBindings_)
             if (binding.getId() == id)
                bindingsWithId.add(binding);
          
          // Collect all shortcuts.
-         List<KeySequence> keys = new ArrayList<KeySequence>();
+         List<KeySequence> keys = new ArrayList<>();
          for (KeyboardShortcutEntry binding : bindingsWithId)
             keys.add(binding.getKeySequence());
             
@@ -735,7 +735,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       boolean isEmptyQuery = StringUtil.isNullOrEmpty(query);
       boolean customOnly = radioCustomized_.getValue();
       
-      List<KeyboardShortcutEntry> filtered = new ArrayList<KeyboardShortcutEntry>();
+      List<KeyboardShortcutEntry> filtered = new ArrayList<>();
       for (int i = 0; i < originalBindings_.size(); i++)
       {
          KeyboardShortcutEntry binding = originalBindings_.get(i);
@@ -1019,7 +1019,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    
    private void collectShortcuts()
    {
-      final List<KeyboardShortcutEntry> bindings = new ArrayList<KeyboardShortcutEntry>();
+      final List<KeyboardShortcutEntry> bindings = new ArrayList<>();
       SerializedCommandQueue queue = new SerializedCommandQueue();
       
       // Load addins discovered as part of package exports. This registers
@@ -1150,7 +1150,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
                      int type = KeyboardShortcutEntry.TYPE_RSTUDIO_COMMAND;
                      boolean isCustom = customBindings.hasKey(id);
                      
-                     List<KeySequence> keySequences = new ArrayList<KeySequence>();
+                     List<KeySequence> keySequences = new ArrayList<>();
                      if (isCustom)
                         keySequences = customBindings.get(id).getKeyBindings();
                      else

@@ -386,7 +386,7 @@ public class JobManager implements JobRefreshEvent.Handler,
             code,
             spec ->
             {
-               server_.startJob(spec, new ErrorLoggingServerRequestCallback<String>());
+               server_.startJob(spec, new ErrorLoggingServerRequestCallback<>());
             }
       );
       
@@ -409,7 +409,7 @@ public class JobManager implements JobRefreshEvent.Handler,
                }
 
                // tell the server to start running this script
-               server_.startJob(spec, new ErrorLoggingServerRequestCallback<String>());
+               server_.startJob(spec, new ErrorLoggingServerRequestCallback<>());
             });
       
       dialog.showModal();

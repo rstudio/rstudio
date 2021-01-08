@@ -104,6 +104,6 @@ public class WebMenuCallback implements MenuCallback
       return menuStack_.peek();
    }
 
-   private final Stack<AppMenuBar> menuStack_ = new Stack<AppMenuBar>();
+   private final Stack<AppMenuBar> menuStack_ = new Stack<>();
    private AppMenuBar result_;
 }

@@ -54,7 +54,7 @@ public class ChunkWindowManager
       pSatelliteManager_ = pSatelliteManager;
       events_ = events;
 
-      satelliteChunks_ = new ArrayList<Pair<String, String>>();
+      satelliteChunks_ = new ArrayList<>();
       
       if (!Satellite.isCurrentWindowSatellite())
       {
@@ -87,7 +87,7 @@ public class ChunkWindowManager
    @Override
    public void onChunkSatelliteCloseAllWindow(ChunkSatelliteCloseAllWindowEvent event)
    {
-      ArrayList<Pair<String,String>> newSatelliteChunks = new ArrayList<Pair<String,String>>();
+      ArrayList<Pair<String,String>> newSatelliteChunks = new ArrayList<>();
 
       for (Pair<String, String> chunkPair : satelliteChunks_)
       {
@@ -117,7 +117,7 @@ public class ChunkWindowManager
       String docId = event.getDocId();
       String chunkId = event.getChunkId();
 
-      satelliteChunks_.add(new Pair<String, String>(docId, chunkId));
+      satelliteChunks_.add(new Pair<>(docId, chunkId));
       events_.fireEventToAllSatellites(event);
 
       ChunkSatelliteWindowRegisteredEvent registeredEvent = new ChunkSatelliteWindowRegisteredEvent(docId, chunkId);

@@ -63,7 +63,7 @@ public class TextEditingTargetIdleMonitor
       
       display_ = editingTarget.getDocDisplay();
       sentinel_ = sentinel;
-      monitors_ = new ArrayList<HandlerRegistration>();
+      monitors_ = new ArrayList<>();
       commands_ = target.commands;
       timer_ = new Timer()
       {
@@ -231,7 +231,7 @@ public class TextEditingTargetIdleMonitor
       {
          target = t;
          sentinel = s;
-         commands = new HashMap<HandlerRegistration, IdleCommand>();
+         commands = new HashMap<>();
       }
       public final TextEditingTarget target;
       public final DocUpdateSentinel sentinel;
@@ -279,7 +279,7 @@ public class TextEditingTargetIdleMonitor
          }
       });
 
-       TARGET_MAP = new SafeMap<DocDisplay, IdleTarget>();
+       TARGET_MAP = new SafeMap<>();
    }
    
    private static final int DELAY_MS = 700;

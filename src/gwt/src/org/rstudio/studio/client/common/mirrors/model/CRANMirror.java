@@ -70,7 +70,7 @@ public class CRANMirror extends UserPrefs.CranMirror
    {
       setURL(cran);
 
-      ArrayList<String> entries = new ArrayList<String>();
+      ArrayList<String> entries = new ArrayList<>();
       for (CRANMirror repo : repos)
       {
          if (!repo.getName().toLowerCase().equals("cran"))
@@ -89,7 +89,7 @@ public class CRANMirror extends UserPrefs.CranMirror
 
    public final ArrayList<CRANMirror> getSecondaryRepos()
    {
-      ArrayList<CRANMirror> repos = new ArrayList<CRANMirror>();
+      ArrayList<CRANMirror> repos = new ArrayList<>();
 
       String secondary = getSecondary();
       if (StringUtil.isNullOrEmpty(secondary))

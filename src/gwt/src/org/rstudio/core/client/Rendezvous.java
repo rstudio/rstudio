@@ -41,7 +41,7 @@ public class Rendezvous
    public Rendezvous(int count)
    {
       this.remainingArrivals = count;
-      this.joined = new ArrayList<Command>();
+      this.joined = new ArrayList<>();
    }
 
    /**

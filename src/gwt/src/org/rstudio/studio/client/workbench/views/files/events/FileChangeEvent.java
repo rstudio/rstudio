@@ -19,8 +19,7 @@ import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 
 public class FileChangeEvent extends GwtEvent<FileChangeHandler>
 {
-   public static final GwtEvent.Type<FileChangeHandler> TYPE =
-      new GwtEvent.Type<FileChangeHandler>();
+   public static final GwtEvent.Type<FileChangeHandler> TYPE = new GwtEvent.Type<>();
    
    public FileChangeEvent(FileChange fileChange)
    {

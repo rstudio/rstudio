@@ -114,7 +114,7 @@ public class VisualModePanmirrorContext
       };
       
       uiContext.withSavedDocument = () -> {
-         return new Promise<Boolean>((ResolveCallbackFn<Boolean> resolve, RejectCallbackFn reject) -> {
+         return new Promise<>((ResolveCallbackFn<Boolean> resolve, RejectCallbackFn reject) -> {
            target_.withSavedDoc(() -> {
               resolve.onInvoke(true);
            });
@@ -185,7 +185,7 @@ public class VisualModePanmirrorContext
       };
       
       uiContext.clipboardUris = () -> {
-         return new Promise<JsArrayString>((ResolveCallbackFn<JsArrayString> resolve, RejectCallbackFn reject) -> {
+         return new Promise<>((ResolveCallbackFn<JsArrayString> resolve, RejectCallbackFn reject) -> {
            if (Desktop.isDesktop() && !Desktop.isRemoteDesktop())
            {
               Desktop.getFrame().getClipboardUris(uris -> {
@@ -200,7 +200,7 @@ public class VisualModePanmirrorContext
       };
       
       uiContext.clipboardImage = () -> {
-         return new Promise<String>((ResolveCallbackFn<String> resolve, RejectCallbackFn reject) -> {
+         return new Promise<>((ResolveCallbackFn<String> resolve, RejectCallbackFn reject) -> {
             if (Desktop.isDesktop() && !Desktop.isRemoteDesktop())
             {
                Desktop.getFrame().getClipboardImage(image -> {
@@ -218,7 +218,7 @@ public class VisualModePanmirrorContext
       };
       
       uiContext.resolveImageUris = (imageUris) -> {
-         return new Promise<JsArrayString>((ResolveCallbackFn<JsArrayString> resolve, RejectCallbackFn reject) -> {
+         return new Promise<>((ResolveCallbackFn<JsArrayString> resolve, RejectCallbackFn reject) -> {
            
             JsArrayString resolvedUris = JsArrayString.createArray().cast();
             JsArrayString unresolvedUris = JsArrayString.createArray().cast();
@@ -345,7 +345,7 @@ public class VisualModePanmirrorContext
    private List<FileSystemItem> hugoStaticDirs()
    {
       FileSystemItem siteDir = getBlogdownConfig().site_dir;
-      List<FileSystemItem> staticDirs = new ArrayList<FileSystemItem>();
+      List<FileSystemItem> staticDirs = new ArrayList<>();
       for (String dir : getBlogdownConfig().static_dirs)
          staticDirs.add(FileSystemItem.createDir(siteDir.completePath(dir)));
       return staticDirs;
@@ -377,7 +377,7 @@ public class VisualModePanmirrorContext
       private FileSystemItem file_;
       private JsVoidFunction notify_;
    }
-   private HashSet<FileWatcher> fileWatchers_ = new HashSet<FileWatcher>();
+   private HashSet<FileWatcher> fileWatchers_ = new HashSet<>();
    
    private final DocUpdateSentinel docUpdateSentinel_;
    private final TextEditingTarget target_;

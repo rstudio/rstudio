@@ -28,7 +28,6 @@ import org.rstudio.studio.client.common.crypto.RSAEncrypt;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.AskPassEvent;
 
@@ -138,7 +137,7 @@ public class AskPassManager
 
                                     server.askpassCompleted(
                                        null, false,
-                                       new SimpleRequestCallback<Void>());
+                                       new SimpleRequestCallback<>());
                                  }
                               });
                      }
@@ -152,7 +151,7 @@ public class AskPassManager
                         
                         server.askpassCompleted(
                                            null, false,
-                                           new SimpleRequestCallback<Void>());
+                                           new SimpleRequestCallback<>());
                      }
                   });
          }
@@ -170,8 +169,8 @@ public class AskPassManager
                askpassPending_ = false;
                
                server.askpassCompleted(null, 
-                                        false,
-                                        new SimpleRequestCallback<Void>());
+                                       false,
+                                       new SimpleRequestCallback<>());
             }
             
          } 

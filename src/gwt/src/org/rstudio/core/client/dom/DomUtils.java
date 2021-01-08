@@ -697,7 +697,7 @@ public class DomUtils
                                       boolean siblings,
                                       NodePredicate filter)
    {
-      List<Node> results = new ArrayList<Node>();
+      List<Node> results = new ArrayList<>();
       int remaining = 0;
 
       if (start == null)

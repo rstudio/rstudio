@@ -70,7 +70,7 @@ public class PanmirrorEditListDialog extends ModalDialog<PanmirrorListProps>
       numberStyle_.setVisible(capabilities.fancy);
       numberDelimiter_.setVisible(capabilities.fancy);
       
-      List<String> numberStyleChoices = new ArrayList<String>();
+      List<String> numberStyleChoices = new ArrayList<>();
       numberStyleChoices.add("DefaultStyle");
       numberStyleChoices.add("Decimal");
       numberStyleChoices.add("LowerRoman");

@@ -19,8 +19,7 @@ import org.rstudio.studio.client.workbench.views.source.model.ContentItem;
 
 public class ShowContentEvent extends GwtEvent<ShowContentHandler>
 {
-   public static final GwtEvent.Type<ShowContentHandler> TYPE =
-      new GwtEvent.Type<ShowContentHandler>();
+   public static final GwtEvent.Type<ShowContentHandler> TYPE = new GwtEvent.Type<>();
    
    public ShowContentEvent(ContentItem content)
    {

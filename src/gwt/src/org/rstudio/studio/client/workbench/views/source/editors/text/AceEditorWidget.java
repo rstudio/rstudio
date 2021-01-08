@@ -738,8 +738,7 @@ public class AceEditorWidget extends Composite
          if (state == ChunkRowExecState.LINE_QUEUED)
          {
             // queued state: introduce to the editor
-            final Value<ChunkRowAceExecState> execState =
-                  new Value<ChunkRowAceExecState>(null);
+            final Value<ChunkRowAceExecState> execState = new Value<>(null);
             execState.setValue(
                   new ChunkRowAceExecState(editor_, i, state, new Command()
                         {
@@ -1109,8 +1108,7 @@ public class AceEditorWidget extends Composite
    {
       Range range = event.getRange();
 
-      ArrayList<AnchoredAceAnnotation> annotations =
-            new ArrayList<AnchoredAceAnnotation>();
+      ArrayList<AnchoredAceAnnotation> annotations = new ArrayList<>();
 
       for (int i = 0; i < annotations_.size(); i++)
       {

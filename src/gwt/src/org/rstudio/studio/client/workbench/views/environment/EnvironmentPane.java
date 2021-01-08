@@ -101,7 +101,7 @@ public class EnvironmentPane extends WorkbenchPane
       prefs_ = prefs;
       dependencyManager_ = dependencyManager;
 
-      expandedObjects_ = new ArrayList<String>();
+      expandedObjects_ = new ArrayList<>();
       scrollPosition_ = 0;
       isClientStateDirty_ = false;
       environments_ = null;
@@ -109,7 +109,7 @@ public class EnvironmentPane extends WorkbenchPane
       EnvironmentContextData environmentState = session.getSessionInfo().getEnvironmentState();
       environmentName_ = environmentState.environmentName();
       environmentIsLocal_ = environmentState.environmentIsLocal();
-      environmentMonitoring_ = new Value<Boolean>(environmentState.environmentMonitoring());
+      environmentMonitoring_ = new Value<>(environmentState.environmentMonitoring());
 
       EnvironmentPaneResources.INSTANCE.environmentPaneStyle().ensureInjected();
 
@@ -227,7 +227,7 @@ public class EnvironmentPane extends WorkbenchPane
             // no suggestions
             callback.onSuggestionsReady(
                   request,
-                  new Response(new ArrayList<Suggestion>()));
+                  new Response(new ArrayList<>()));
          }
       });
 
@@ -389,7 +389,7 @@ public class EnvironmentPane extends WorkbenchPane
    {
       server_.setContextDepth(
             newDepth,
-            new SimpleRequestCallback<Void>("Error opening call frame"));
+            new SimpleRequestCallback<>("Error opening call frame"));
    }
 
    public boolean clientStateDirty()

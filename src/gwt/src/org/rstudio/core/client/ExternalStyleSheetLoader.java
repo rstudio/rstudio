@@ -105,7 +105,7 @@ public class ExternalStyleSheetLoader
       });
    }
 
-   private LinkedList<Callback> callbacks_ = new LinkedList<Callback>();
+   private LinkedList<Callback> callbacks_ = new LinkedList<>();
    private State state_ = State.Start;
    private final String url_;
    private final Document document_;

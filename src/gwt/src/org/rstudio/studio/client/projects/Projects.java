@@ -560,7 +560,7 @@ public class Projects implements OpenProjectFileHandler,
                   // not be currently installed; in those cases, verify that the package is
                   // installed and if not attempt installation from CRAN first
                   String pkg = newProject.getProjectTemplateOptions().getDescription().getPackage();
-                  ArrayList<Dependency> deps = new ArrayList<Dependency>();
+                  ArrayList<Dependency> deps = new ArrayList<>();
                   deps.add(Dependency.cranPackage(pkg));
                   RStudioGinjector.INSTANCE.getDependencyManager().withDependencies(
                         "Creating project",

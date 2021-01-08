@@ -25,8 +25,7 @@ public class CollabEditStartedEvent extends GwtEvent<CollabEditStartedEvent.Hand
       void onCollabEditStarted(CollabEditStartedEvent event);
    }
 
-   public static final GwtEvent.Type<CollabEditStartedEvent.Handler> TYPE =
-      new GwtEvent.Type<CollabEditStartedEvent.Handler>();
+   public static final GwtEvent.Type<CollabEditStartedEvent.Handler> TYPE = new GwtEvent.Type<>();
    
    public CollabEditStartedEvent(CollabEditStartParams params)
    {

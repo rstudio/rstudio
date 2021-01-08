@@ -44,7 +44,7 @@ public class PanmirrorBlurEvent extends
 
   public static Type<PanmirrorBlurEvent.Handler> getType() {
     if (TYPE == null) {
-      TYPE = new Type<PanmirrorBlurEvent.Handler>();
+      TYPE = new Type<>();
     }
     return TYPE;
   }

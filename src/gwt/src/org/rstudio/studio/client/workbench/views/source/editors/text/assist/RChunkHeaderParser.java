@@ -28,7 +28,7 @@ public class RChunkHeaderParser
 {
    public static Map<String, String> parse(String line)
    {
-      Map<String, String> options = new HashMap<String, String>();
+      Map<String, String> options = new HashMap<>();
       parse(line, options);
       return options;
    }
@@ -36,10 +36,10 @@ public class RChunkHeaderParser
    public static final void parse(String line, Map<String, String> options)
    {
       // set up state
-      Mutable<String> key = new Mutable<String>();
+      Mutable<String> key = new Mutable<>();
       Consumer keyConsumer = new MutableConsumer(key);
       
-      Mutable<String> val = new Mutable<String>();
+      Mutable<String> val = new Mutable<>();
       Consumer valConsumer = new MutableConsumer(val);
       
       // determine an appropriate pattern for extracting options from

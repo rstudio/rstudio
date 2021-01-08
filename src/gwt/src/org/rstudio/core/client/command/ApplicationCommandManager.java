@@ -42,7 +42,7 @@ public class ApplicationCommandManager
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
 
-      bindings_ = new ConfigFileBacked<EditorKeyBindings>(
+      bindings_ = new ConfigFileBacked<>(
             server_,
             KEYBINDINGS_PATH,
             false,
@@ -145,7 +145,7 @@ public class ApplicationCommandManager
                              final CommandWithArg<EditorKeyBindings> afterLoad)
    {
       List<Pair<List<KeySequence>, AppCommand>> resolvedBindings;
-      resolvedBindings = new ArrayList<Pair<List<KeySequence>, AppCommand>>();
+      resolvedBindings = new ArrayList<>();
 
       for (String id : bindings.iterableKeys())
       {
@@ -153,7 +153,7 @@ public class ApplicationCommandManager
          if (command == null)
             continue;
          List<KeySequence> keys = bindings.get(id).getKeyBindings();
-         resolvedBindings.add(new Pair<List<KeySequence>, AppCommand>(keys, command));
+         resolvedBindings.add(new Pair<>(keys, command));
       }
 
       KeyMap map = ShortcutManager.INSTANCE.getKeyMap(KeyMapType.APPLICATION);

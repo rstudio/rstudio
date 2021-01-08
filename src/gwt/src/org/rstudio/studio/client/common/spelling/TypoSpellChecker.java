@@ -66,8 +66,8 @@ public class TypoSpellChecker
       {
          String path = GWT.getHostPageBaseURL() + "dictionaries/" + language_ + "/" + language_;
 
-         final Mutable<String> aff = new Mutable<String>();
-         final Mutable<String> dic = new Mutable<String>();
+         final Mutable<String> aff = new Mutable<>();
+         final Mutable<String> dic = new Mutable<>();
          final Command onReady = () -> {
 
             if (cancelled_ || aff.get() == null || dic.get() == null)

@@ -267,7 +267,7 @@ public class SourceWindow implements LastSourceDocClosedHandler,
       Set<String> ids = null;
       if (idArray != null)
       {
-         ids = new HashSet<String>();
+         ids = new HashSet<>();
          for (String id : JsUtil.asIterable(idArray))
             ids.add(id);
       }
@@ -279,8 +279,7 @@ public class SourceWindow implements LastSourceDocClosedHandler,
          Command onCompleted)
    {
       JsArray<UnsavedChangesItem> items = jsoItems.cast();
-      ArrayList<UnsavedChangesTarget> targets = 
-            new ArrayList<UnsavedChangesTarget>();
+      ArrayList<UnsavedChangesTarget> targets = new ArrayList<>();
       for (int i = 0; i < items.length(); i++)
       {
          targets.add(items.get(i));

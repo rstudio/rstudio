@@ -41,9 +41,9 @@ public class ShinyViewerTypePopupMenu extends ToolbarPopupMenu
       addSeparator();
       addItem(commands.shinyRunInBrowser().createMenuItem(false));
       addSeparator();
-      addItem(new UserPrefMenuItem<Boolean>(prefs.shinyBackgroundJobs(), 
+      addItem(new UserPrefMenuItem<>(prefs.shinyBackgroundJobs(), 
             false, "In R Console", prefs));
-      addItem(new UserPrefMenuItem<Boolean>(prefs.shinyBackgroundJobs(), 
+      addItem(new UserPrefMenuItem<>(prefs.shinyBackgroundJobs(), 
             true, "In Background Job", prefs));
       addSeparator();
       addItem(commands.shinyRecordTest().createMenuItem(false));

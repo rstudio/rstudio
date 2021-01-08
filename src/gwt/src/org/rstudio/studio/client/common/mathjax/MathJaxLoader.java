@@ -137,7 +137,7 @@ public class MathJaxLoader
       return el;
    }
    
-   private static List<Callback> MATHJAX_CALLBACKS = new ArrayList<Callback>();
+   private static List<Callback> MATHJAX_CALLBACKS = new ArrayList<>();
    private static boolean MATHJAX_LOADED = false;
    private static int RETRY_COUNT = 0;
    

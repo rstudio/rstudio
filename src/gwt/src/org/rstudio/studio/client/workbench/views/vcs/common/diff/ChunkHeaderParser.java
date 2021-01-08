@@ -37,7 +37,7 @@ class ChunkHeaderParser
          return null;
 
       // match atCount many ranges
-      ArrayList<Range> ranges = new ArrayList<Range>(atCount);
+      ArrayList<Range> ranges = new ArrayList<>(atCount);
       for (int i = 0; i < atCount; i++)
       {
          matchWhitespace();

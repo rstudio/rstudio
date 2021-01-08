@@ -40,8 +40,7 @@ public class RSConnectDeploymentFailedEvent extends GwtEvent<RSConnectDeployment
       }-*/;
    }
 
-   public static final GwtEvent.Type<RSConnectDeploymentFailedEvent.Handler> TYPE =
-      new GwtEvent.Type<RSConnectDeploymentFailedEvent.Handler>();
+   public static final GwtEvent.Type<RSConnectDeploymentFailedEvent.Handler> TYPE = new GwtEvent.Type<>();
    
    public RSConnectDeploymentFailedEvent(Data data)
    {

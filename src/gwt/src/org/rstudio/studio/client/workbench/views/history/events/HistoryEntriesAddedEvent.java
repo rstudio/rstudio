@@ -20,8 +20,7 @@ import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
 
 public class HistoryEntriesAddedEvent extends GwtEvent<HistoryEntriesAddedHandler>
 {
-   public static final GwtEvent.Type<HistoryEntriesAddedHandler> TYPE =
-      new GwtEvent.Type<HistoryEntriesAddedHandler>();
+   public static final GwtEvent.Type<HistoryEntriesAddedHandler> TYPE = new GwtEvent.Type<>();
    
    public HistoryEntriesAddedEvent(RpcObjectList<HistoryEntry> entries)
    {

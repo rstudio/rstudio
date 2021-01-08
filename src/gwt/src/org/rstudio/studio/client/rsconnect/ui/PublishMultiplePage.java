@@ -39,9 +39,7 @@ public class PublishMultiplePage
            createPages(RSConnectPublishInput input)
    {
       ArrayList<WizardPage<RSConnectPublishInput, 
-                           RSConnectPublishResult>> pages =
-                           new ArrayList<WizardPage<RSConnectPublishInput, 
-                                                    RSConnectPublishResult>>();
+                           RSConnectPublishResult>> pages = new ArrayList<>();
       String singleTitle = "Publish just this document";
       String singleSubtitle = "Only the document " + 
                               input.getSourceRmd().getName() + 

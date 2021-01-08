@@ -121,7 +121,7 @@ public class YamlTree
       public String key;
       public int indentLevel = 0;
       public YamlTreeNode parent = null;
-      public List<YamlTreeNode> children = new ArrayList<YamlTreeNode>();
+      public List<YamlTreeNode> children = new ArrayList<>();
       
       private String getKey(String line)
       {
@@ -142,7 +142,7 @@ public class YamlTree
    public YamlTree(String yaml)
    {
       root_ = createYamlTree(yaml);
-      keyMap_ = new HashMap<String, YamlTreeNode>();
+      keyMap_ = new HashMap<>();
       createKeyMap(root_, keyMap_);
    }
    
@@ -182,7 +182,7 @@ public class YamlTree
          if (!keyMap_.containsKey(parentKey))
             return null;
          YamlTreeNode parent = keyMap_.get(parentKey);
-         ArrayList<String> result = new ArrayList<String>();
+         ArrayList<String> result = new ArrayList<>();
          for (YamlTreeNode child: parent.children)
          {
             result.add(child.key);

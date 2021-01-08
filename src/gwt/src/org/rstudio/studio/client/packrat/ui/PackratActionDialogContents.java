@@ -43,11 +43,11 @@ public class PackratActionDialogContents extends Composite {
          JsArray<PackratPackageAction> prRestoreActionsArray)
    {
       
-      prRestoreActionsList_ = new ArrayList<PackratPackageAction>();
+      prRestoreActionsList_ = new ArrayList<>();
       JsArrayUtil.fillList(prRestoreActionsArray, prRestoreActionsList_);
       
-      table_ = new RStudioDataGrid<PackratPackageAction>(prRestoreActionsList_.size(),
-            (PackagesDataGridCommon)GWT.create(PackagesDataGridCommon.class));
+      table_ = new RStudioDataGrid<>(prRestoreActionsList_.size(),
+            (PackagesDataGridCommon) GWT.create(PackagesDataGridCommon.class));
       table_.setRowData(prRestoreActionsList_);
       
       initTableColumns();
@@ -77,10 +77,10 @@ public class PackratActionDialogContents extends Composite {
    
    private void initTableColumns()
    {      
-      addColumn(table_, new SortableColumnWithHeader<PackratPackageAction>(prRestoreActionsList_, "package", "Package"));
-      addColumn(table_, new SortableColumnWithHeader<PackratPackageAction>(prRestoreActionsList_, "packrat.version", "Packrat"));
-      addColumn(table_, new SortableColumnWithHeader<PackratPackageAction>(prRestoreActionsList_, "library.version", "Library"));
-      addColumn(table_, new SortableColumnWithHeader<PackratPackageAction>(prRestoreActionsList_, "message", "Action"));
+      addColumn(table_, new SortableColumnWithHeader<>(prRestoreActionsList_, "package", "Package"));
+      addColumn(table_, new SortableColumnWithHeader<>(prRestoreActionsList_, "packrat.version", "Packrat"));
+      addColumn(table_, new SortableColumnWithHeader<>(prRestoreActionsList_, "library.version", "Library"));
+      addColumn(table_, new SortableColumnWithHeader<>(prRestoreActionsList_, "message", "Action"));
       
       table_.setColumnWidth(0, "15%");
       table_.setColumnWidth(1, "15%");

@@ -227,6 +227,5 @@ public class CodeSearch
    private final EventBus events_;
    
    private Observer observer_ = null;
-   private ArrayList<HandlerRegistration> eventBusHandlers_ = 
-                                 new ArrayList<HandlerRegistration>();
+   private ArrayList<HandlerRegistration> eventBusHandlers_ = new ArrayList<>();
 }

@@ -21,8 +21,7 @@ import com.google.gwt.event.shared.GwtEvent;
 public class PackageStateChangedEvent extends
                               GwtEvent<PackageStateChangedHandler>
 {
-   public static final GwtEvent.Type<PackageStateChangedHandler> TYPE =
-      new GwtEvent.Type<PackageStateChangedHandler>();
+   public static final GwtEvent.Type<PackageStateChangedHandler> TYPE = new GwtEvent.Type<>();
    
    public PackageStateChangedEvent(PackageState newState)
    {

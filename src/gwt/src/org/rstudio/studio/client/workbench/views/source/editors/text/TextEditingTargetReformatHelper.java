@@ -55,7 +55,7 @@ public class TextEditingTargetReformatHelper
                                 int offset,
                                 int n)
       {
-         complements_ = new HashMap<String, String>();
+         complements_ = new HashMap<>();
          
          complements_.put("(", ")");
          complements_.put("[", "]");
@@ -194,7 +194,7 @@ public class TextEditingTargetReformatHelper
          int index = offset_ + offset;
          if (index < 0 || index >= n_)
          {
-            ArrayList<Token> dummyTokens = new ArrayList<Token>();
+            ArrayList<Token> dummyTokens = new ArrayList<>();
             dummyTokens.add(Token.create("__ERROR__", "error", 0));
             return new SimpleTokenCursor(dummyTokens, 0, 1, complements_);
          }
@@ -235,7 +235,7 @@ public class TextEditingTargetReformatHelper
          
          boolean isCounterActive = true;
          
-         Stack<String> braceStack = new Stack<String>();
+         Stack<String> braceStack = new Stack<>();
          
          int stack = 0;
          String rhs = complements_.get(lhs);
@@ -698,7 +698,7 @@ public class TextEditingTargetReformatHelper
                   clone.fwdToMatchingToken();
                else
                {
-                  Mutable<Integer> counter = new Mutable<Integer>(0);
+                  Mutable<Integer> counter = new Mutable<>(0);
                   clone.fwdToMatchingToken(counter);
                   accumulatedLength += counter.get();
                }
@@ -1155,9 +1155,9 @@ public class TextEditingTargetReformatHelper
       
       String[] splat = docDisplay_.getSelectionValue().split("\n");
       
-      ArrayList<String> starts = new ArrayList<String>();
-      ArrayList<String> delimiters = new ArrayList<String>();
-      ArrayList<String> ends = new ArrayList<String>();
+      ArrayList<String> starts = new ArrayList<>();
+      ArrayList<String> delimiters = new ArrayList<>();
+      ArrayList<String> ends = new ArrayList<>();
       for (int i = 0; i < splat.length; i++)
       {
          String line = splat[i];
@@ -1194,7 +1194,7 @@ public class TextEditingTargetReformatHelper
       //    y =  10,
       //    z = 100
       //
-      ArrayList<Integer> endPrefixes = new ArrayList<Integer>();
+      ArrayList<Integer> endPrefixes = new ArrayList<>();
       boolean success = true;
       for (int i = 0; i < ends.size(); i++)
       {
@@ -1264,8 +1264,7 @@ public class TextEditingTargetReformatHelper
       int selectionStart = docDisplay_.getSelectionStart().getRow();
       int selectionEnd = docDisplay_.getSelectionEnd().getRow();
       
-      ArrayList<Pair<Integer, Integer>> ranges =
-            new ArrayList<Pair<Integer, Integer>>();
+      ArrayList<Pair<Integer, Integer>> ranges = new ArrayList<>();
       
       for (int i = selectionStart; i <= selectionEnd; i++)
       {
@@ -1304,7 +1303,7 @@ public class TextEditingTargetReformatHelper
                line = docDisplay_.getLine(rangeEnd);
             }
             
-            ranges.add(new Pair<Integer, Integer>(rangeStart, rangeEnd));
+            ranges.add(new Pair<>(rangeStart, rangeEnd));
          }
       }
       

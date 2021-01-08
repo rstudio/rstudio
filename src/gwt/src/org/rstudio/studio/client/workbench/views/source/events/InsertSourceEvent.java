@@ -18,8 +18,7 @@ import com.google.gwt.event.shared.GwtEvent;
 
 public class InsertSourceEvent extends GwtEvent<InsertSourceHandler>
 {
-   public static final Type<InsertSourceHandler> TYPE =
-         new Type<InsertSourceHandler>();
+   public static final Type<InsertSourceHandler> TYPE = new Type<>();
 
    public InsertSourceEvent(String source, boolean block)
    {

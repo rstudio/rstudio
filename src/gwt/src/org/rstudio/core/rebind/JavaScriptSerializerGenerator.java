@@ -40,7 +40,7 @@ public class JavaScriptSerializerGenerator extends Generator
                             String typeName) throws UnableToCompleteException
     {
        TypeOracle oracle = context.getTypeOracle();
-       List<JClassType> classes = new ArrayList<JClassType>();
+       List<JClassType> classes = new ArrayList<>();
        
        // locate all the types annotated with JavaScriptSerializable
        for (JClassType classType : oracle.getTypes())

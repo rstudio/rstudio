@@ -327,8 +327,7 @@ public class HTMLPreviewPresenter implements IsWidget
    {
       if (lastSuccessfulPreview_.getEnableReexecute())
       {
-         server_.previewHTML(lastPreviewParams_, 
-                             new SimpleRequestCallback<Boolean>());
+         server_.previewHTML(lastPreviewParams_, new SimpleRequestCallback<>());
       }
       else
       {

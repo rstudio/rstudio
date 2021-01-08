@@ -496,7 +496,7 @@ public class DataImport extends Composite
       {
          server_.previewDataImportClean(
                getOptions(),
-               new ErrorLoggingServerRequestCallback<Void>());
+               new ErrorLoggingServerRequestCallback<>());
       }
       
       localFiles_ = null;

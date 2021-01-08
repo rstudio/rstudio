@@ -106,7 +106,7 @@ public class SpellingPreferencesPane extends PreferencesPane
          userDictLabel.setText(kUserDictionary + StringUtil.formatGeneralNumber(entries) + " words");
       };
       
-      final ArrayList<String> userDictWords = new ArrayList<String>();
+      final ArrayList<String> userDictWords = new ArrayList<>();
       WorkbenchList userDict = workbenchListManager.getUserDictionaryList();
       userDict.addListChangedHandler((e) -> {
          userDictWords.clear();
@@ -133,7 +133,7 @@ public class SpellingPreferencesPane extends PreferencesPane
                if (dictionary != null)
                {
                   List<String> dictSplitItems = Arrays.asList(dictionary.split("\n"));
-                  ArrayList<String> dictWords = new ArrayList<String>();
+                  ArrayList<String> dictWords = new ArrayList<>();
                   for (String item : dictSplitItems)
                   {
                      item = item.trim();

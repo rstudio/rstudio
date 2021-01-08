@@ -211,7 +211,7 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
       List<String> values = Arrays.asList(value.split("\\s*,\\s*"));
 
       // remove entries that are only whitespace
-      ArrayList<String> result = new ArrayList<String>();
+      ArrayList<String> result = new ArrayList<>();
       for (String s : values)
       {
          if (!StringUtil.isNullOrEmpty(s))

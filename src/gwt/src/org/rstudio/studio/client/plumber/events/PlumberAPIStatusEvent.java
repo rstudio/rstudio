@@ -30,8 +30,7 @@ public class PlumberAPIStatusEvent
       void onPlumberAPIStatus(PlumberAPIStatusEvent event);
    }
 
-   public static final GwtEvent.Type<PlumberAPIStatusEvent.Handler> TYPE =
-      new GwtEvent.Type<PlumberAPIStatusEvent.Handler>();
+   public static final GwtEvent.Type<PlumberAPIStatusEvent.Handler> TYPE = new GwtEvent.Type<>();
    
    public PlumberAPIStatusEvent()
    {

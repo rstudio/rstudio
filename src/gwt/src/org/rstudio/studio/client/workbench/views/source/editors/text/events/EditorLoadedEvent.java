@@ -32,7 +32,7 @@ public class EditorLoadedEvent extends GwtEvent<EditorLoadedHandler>
    
    private final AceEditorNative editor_;
    
-   public static final Type<EditorLoadedHandler> TYPE = new Type<EditorLoadedHandler>();
+   public static final Type<EditorLoadedHandler> TYPE = new Type<>();
 
    @Override
    public Type<EditorLoadedHandler> getAssociatedType()

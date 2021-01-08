@@ -39,8 +39,7 @@ public class ExternalJavaScriptLoader
 
    public static void loadSequentially(String[] urls, final Callback callback)
    {
-      final LinkedList<ExternalJavaScriptLoader> loaders =
-            new LinkedList<ExternalJavaScriptLoader>();
+      final LinkedList<ExternalJavaScriptLoader> loaders = new LinkedList<>();
 
       for (String url : urls)
          loaders.add(new ExternalJavaScriptLoader(url));
@@ -131,7 +130,7 @@ public class ExternalJavaScriptLoader
       });
    }
 
-   private LinkedList<Callback> callbacks_ = new LinkedList<Callback>();
+   private LinkedList<Callback> callbacks_ = new LinkedList<>();
    private State state_ = State.Start;
    private final String url_;
    private final Document document_;

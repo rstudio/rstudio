@@ -304,8 +304,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
       // multiple save targets
       else
       {
-         ArrayList<UnsavedChangesTarget> unsaved = 
-                                      new ArrayList<UnsavedChangesTarget>();
+         ArrayList<UnsavedChangesTarget> unsaved = new ArrayList<>();
          if (saveAction == SaveAction.SAVEASK && globalEnvTarget != null)
             unsaved.add(globalEnvTarget);
          unsaved.addAll(unsavedSourceDocs);

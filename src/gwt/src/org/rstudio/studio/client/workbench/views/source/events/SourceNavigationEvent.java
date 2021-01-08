@@ -20,7 +20,7 @@ import com.google.gwt.event.shared.GwtEvent;
 
 public class SourceNavigationEvent extends GwtEvent<SourceNavigationHandler>
 {
-   public static final Type<SourceNavigationHandler> TYPE = new Type<SourceNavigationHandler>();
+   public static final Type<SourceNavigationHandler> TYPE = new Type<>();
 
    public SourceNavigationEvent(SourceNavigation navigation)
    {

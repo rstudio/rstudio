@@ -39,6 +39,5 @@ public abstract class CommandBundle
       return commandsById_;
    }
 
-   private final HashMap<String, AppCommand> commandsById_ =
-         new HashMap<String, AppCommand>();
+   private final HashMap<String, AppCommand> commandsById_ = new HashMap<>();
 }

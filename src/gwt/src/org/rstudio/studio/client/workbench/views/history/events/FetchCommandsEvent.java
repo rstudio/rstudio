@@ -18,8 +18,7 @@ import com.google.gwt.event.shared.GwtEvent;
 
 public class FetchCommandsEvent extends GwtEvent<FetchCommandsHandler>
 {
-   public static final Type<FetchCommandsHandler> TYPE =
-         new Type<FetchCommandsHandler>();
+   public static final Type<FetchCommandsHandler> TYPE = new Type<>();
    
    @Override
    public Type<FetchCommandsHandler> getAssociatedType()

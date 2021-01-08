@@ -179,7 +179,7 @@ public class Addins
          {
             server_.executeRAddinNonInteractively(
                   addin.getId(),
-                  new SimpleRequestCallback<Void>("Error Executing Addin", true));
+                  new SimpleRequestCallback<>("Error Executing Addin", true));
          }
       }
       

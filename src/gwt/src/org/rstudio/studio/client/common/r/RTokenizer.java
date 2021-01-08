@@ -30,7 +30,7 @@ public class RTokenizer
    
    public static ArrayList<RToken> asTokens(String code)
    {
-      ArrayList<RToken> results = new ArrayList<RToken>();
+      ArrayList<RToken> results = new ArrayList<>();
       RTokenizer rt = new RTokenizer(code);
       RToken t;
       while (null != (t = rt.nextToken()))

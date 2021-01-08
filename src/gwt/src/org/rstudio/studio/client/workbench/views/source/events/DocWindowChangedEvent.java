@@ -32,8 +32,7 @@ public class DocWindowChangedEvent
       void onDocWindowChanged(DocWindowChangedEvent event);
    }
 
-   public static final GwtEvent.Type<DocWindowChangedEvent.Handler> TYPE =
-      new GwtEvent.Type<DocWindowChangedEvent.Handler>();
+   public static final GwtEvent.Type<DocWindowChangedEvent.Handler> TYPE = new GwtEvent.Type<>();
    
    public DocWindowChangedEvent()
    {

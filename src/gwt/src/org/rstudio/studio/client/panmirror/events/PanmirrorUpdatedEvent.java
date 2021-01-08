@@ -44,7 +44,7 @@ public class PanmirrorUpdatedEvent extends
 
   public static Type<PanmirrorUpdatedEvent.Handler> getType() {
     if (TYPE == null) {
-      TYPE = new Type<PanmirrorUpdatedEvent.Handler>();
+      TYPE = new Type<>();
     }
     return TYPE;
   }

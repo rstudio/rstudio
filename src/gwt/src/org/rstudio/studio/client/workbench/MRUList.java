@@ -133,7 +133,7 @@ public class MRUList
    protected void manageCommands(List<String> entries, AppCommand[] commands)
    {
       // optionally transform paths
-      ArrayList<String> transformed = new ArrayList<String>();
+      ArrayList<String> transformed = new ArrayList<>();
       for (String entry : entries)
          transformed.add(transformMruEntryPath(entry));
 
@@ -169,7 +169,7 @@ public class MRUList
       return mruCmds_;
    }
 
-   private final ArrayList<String> mruEntries_ = new ArrayList<String>();
+   private final ArrayList<String> mruEntries_ = new ArrayList<>();
    private final AppCommand[] mruCmds_;
    private final AppCommand clearCommand_;
    private final WorkbenchList mruList_;

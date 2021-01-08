@@ -28,8 +28,7 @@ public class DocTabDragInitiatedEvent
       void onDocTabDragInitiated(DocTabDragInitiatedEvent event);
    }
 
-   public static final GwtEvent.Type<DocTabDragInitiatedEvent.Handler> TYPE =
-      new GwtEvent.Type<DocTabDragInitiatedEvent.Handler>();
+   public static final GwtEvent.Type<DocTabDragInitiatedEvent.Handler> TYPE = new GwtEvent.Type<>();
    
    public DocTabDragInitiatedEvent(String docId, int width, int cursorOffset)
    {

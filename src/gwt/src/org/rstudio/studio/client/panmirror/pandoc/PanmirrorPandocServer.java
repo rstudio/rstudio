@@ -46,9 +46,9 @@ public class PanmirrorPandocServer {
    
    public Promise<JavaScriptObject> getCapabilities()
    {
-      return new Promise<JavaScriptObject>((ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
+      return new Promise<>((ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
          server_.pandocGetCapabilities(
-            new PromiseServerRequestCallback<JavaScriptObject>(resolve, reject)
+            new PromiseServerRequestCallback<>(resolve, reject)
          );
       });
    }
@@ -59,58 +59,58 @@ public class PanmirrorPandocServer {
       // ever write stdin if it's empty)
       final String input = !StringUtil.isNullOrEmpty(markdown) ? markdown : " ";
       
-      return new Promise<JavaScriptObject>((ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
+      return new Promise<>((ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
          
          server_.pandocMarkdownToAst(
             input, format, options, 
-            new PromiseServerRequestCallback<JavaScriptObject>(resolve, reject)
+            new PromiseServerRequestCallback<>(resolve, reject)
          );
       });
    }
    
    public Promise<String> astToMarkdown(JavaScriptObject ast, String format, JsArrayString options)
    {
-      return new Promise<String>((ResolveCallbackFn<String> resolve, RejectCallbackFn reject) -> {
+      return new Promise<>((ResolveCallbackFn<String> resolve, RejectCallbackFn reject) -> {
          server_.pandocAstToMarkdown(
             ast, format, options, 
-            new PromiseServerRequestCallback<String>(resolve, reject)
+            new PromiseServerRequestCallback<>(resolve, reject)
          );
       });
    }
    
    public Promise<JavaScriptObject> getBibliography(String file, JsArrayString bibliographies, String refBlock, String etag)
    {
-      return new Promise<JavaScriptObject>((ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {       
+      return new Promise<>((ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {       
           server_.pandocGetBibliography(
             file,
             bibliographies,
             refBlock,
             etag,
-            new PromiseServerRequestCallback<JavaScriptObject>(resolve, reject, "Reading bibliography...", 1500)
+            new PromiseServerRequestCallback<>(resolve, reject, "Reading bibliography...", 1500)
          );
       });
    }
    
    public Promise<Boolean> addToBibliography(String bibliography, boolean project, String id, String sourceAsJson, String sourceAsBibTeX)
    {
-      return new Promise<Boolean>((ResolveCallbackFn<Boolean> resolve, RejectCallbackFn reject) -> {       
+      return new Promise<>((ResolveCallbackFn<Boolean> resolve, RejectCallbackFn reject) -> {       
          server_.pandocAddToBibliography(
            bibliography,
            project,
            id,
            sourceAsJson,
            sourceAsBibTeX,
-           new PromiseServerRequestCallback<Boolean>(resolve, reject, "Saving biliography...", 1500)
+           new PromiseServerRequestCallback<>(resolve, reject, "Saving biliography...", 1500)
         );
      }); 
    }
    
    public Promise<String> citationHTML(String file, String sourceAsJson, String csl)
    {
-      return new Promise<String>((ResolveCallbackFn<String> resolve, RejectCallbackFn reject) -> {
+      return new Promise<>((ResolveCallbackFn<String> resolve, RejectCallbackFn reject) -> {
          server_.pandocCitationHTML(
             file, sourceAsJson, csl,
-            new PromiseServerRequestCallback<String>(resolve, reject)
+            new PromiseServerRequestCallback<>(resolve, reject)
          );
       });
    }
@@ -118,8 +118,8 @@ public class PanmirrorPandocServer {
 
    public Promise<String> listExtensions(String format)
    {
-      return new Promise<String>((ResolveCallbackFn<String> resolve, RejectCallbackFn reject) -> {
-         server_.pandocListExtensions(format, new PromiseServerRequestCallback<String>(resolve, reject));
+      return new Promise<>((ResolveCallbackFn<String> resolve, RejectCallbackFn reject) -> {
+         server_.pandocListExtensions(format, new PromiseServerRequestCallback<>(resolve, reject));
       });
    }
 

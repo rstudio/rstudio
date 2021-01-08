@@ -1091,7 +1091,7 @@ public class TextEditingTargetWidget
 
       Command onInstall = () -> {
          // Form a list of all the dependencies to install
-         ArrayList<Dependency> deps = new ArrayList<Dependency>();
+         ArrayList<Dependency> deps = new ArrayList<>();
          for (String pkg: packages)
             deps.add(Dependency.cranPackage(pkg));
 

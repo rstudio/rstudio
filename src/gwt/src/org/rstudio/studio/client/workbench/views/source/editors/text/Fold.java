@@ -60,7 +60,7 @@ public class Fold
 
    public static ArrayList<Fold> decode(String foldData)
    {
-      ArrayList<Fold> results = new ArrayList<Fold>();
+      ArrayList<Fold> results = new ArrayList<>();
       String[] chunks = foldData.split("\n");
       for (String chunk : chunks)
       {
@@ -95,7 +95,7 @@ public class Fold
 
    public static ArrayList<Fold> fromJs(JsArray<JsArrayMixed> folds)
    {
-      ArrayList<Fold> results = new ArrayList<Fold>();
+      ArrayList<Fold> results = new ArrayList<>();
       for (int i = 0; i < folds.length(); i++)
       {
          JsArrayMixed foldData = folds.get(i);
@@ -115,7 +115,7 @@ public class Fold
     */
    public static ArrayList<Fold> flatten(JsArray<AceFold> folds)
    {
-      ArrayList<Fold> results = new ArrayList<Fold>();
+      ArrayList<Fold> results = new ArrayList<>();
       for (int i = 0; i < folds.length(); i++)
          collect(folds.get(i), results, Position.create(0, 0));
       return results;

@@ -33,7 +33,6 @@ import org.rstudio.core.client.command.KeyMap.KeyMapType;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.WarningBarClosedEvent;
 import org.rstudio.studio.client.events.EditEvent;
@@ -75,7 +74,7 @@ public class ShortcutManager implements NativePreviewHandler,
    private ShortcutManager()
    {
       keyBuffer_ = new KeySequence();
-      ignoredKeys_ = new IgnoredKeysMap<KeyCombination>();
+      ignoredKeys_ = new IgnoredKeysMap<>();
       keyTimer_ = new Timer()
       {
          @Override
@@ -85,12 +84,12 @@ public class ShortcutManager implements NativePreviewHandler,
          }
       };
 
-      shortcutInfo_ = new ArrayList<ShortcutInfo>();
-      defaultBindings_ = new ArrayList<Pair<KeySequence, AppCommandBinding>>();
+      shortcutInfo_ = new ArrayList<>();
+      defaultBindings_ = new ArrayList<>();
 
       // Initialize the key maps. We use a LinkedHashMap so that insertion
       // order can be preserved.
-      keyMaps_ = new LinkedHashMap<KeyMapType, KeyMap>();
+      keyMaps_ = new LinkedHashMap<>();
       for (KeyMapType type : KeyMapType.values())
          keyMaps_.put(type, new KeyMap());
 
@@ -271,7 +270,7 @@ public class ShortcutManager implements NativePreviewHandler,
          appKeyMap.addBinding(keys, binding);
 
          // Cache the binding (so we can reset later if required)
-         defaultBindings_.add(new Pair<KeySequence, AppCommandBinding>(keys, binding));
+         defaultBindings_.add(new Pair<>(keys, binding));
       }
    }
 
@@ -351,9 +350,9 @@ public class ShortcutManager implements NativePreviewHandler,
    {
       // Filter out commands disabled due to the current editor mode.
       // Also only retain the first discovered binding for a particular command.
-      final Set<String> encounteredShortcuts = new HashSet<String>();
+      final Set<String> encounteredShortcuts = new HashSet<>();
 
-      List<ShortcutInfo> filtered = new ArrayList<ShortcutInfo>();
+      List<ShortcutInfo> filtered = new ArrayList<>();
       for (int i = 0, n = shortcutInfo_.size(); i < n; i++)
       {
          ShortcutInfo object = shortcutInfo_.get(n - i - 1);
@@ -702,13 +701,13 @@ public class ShortcutManager implements NativePreviewHandler,
    {
       public IgnoredKeysMap()
       {
-         ignoredKeys_ = new HashMap<Integer, Set<T>>();
+         ignoredKeys_ = new HashMap<>();
          count_ = 0;
       }
 
       public Handle addIgnoredKeys(T keys)
       {
-         Set<T> keySet = new HashSet<T>();
+         Set<T> keySet = new HashSet<>();
          keySet.add(keys);
          return addIgnoredKeys(keySet);
       }

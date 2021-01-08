@@ -31,8 +31,7 @@ public class DocTabDragStartedEvent
       void onDocTabDragStarted(DocTabDragStartedEvent event);
    }
 
-   public static final GwtEvent.Type<DocTabDragStartedEvent.Handler> TYPE =
-      new GwtEvent.Type<DocTabDragStartedEvent.Handler>();
+   public static final GwtEvent.Type<DocTabDragStartedEvent.Handler> TYPE = new GwtEvent.Type<>();
    
    public DocTabDragStartedEvent()
    {

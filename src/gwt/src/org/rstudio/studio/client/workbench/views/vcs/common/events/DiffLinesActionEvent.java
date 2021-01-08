@@ -43,5 +43,5 @@ public class DiffLinesActionEvent extends GwtEvent<DiffLinesActionHandler>
 
    private final Action action_;
 
-   public static final Type<DiffLinesActionHandler> TYPE = new Type<DiffLinesActionHandler>();
+   public static final Type<DiffLinesActionHandler> TYPE = new Type<>();
 }

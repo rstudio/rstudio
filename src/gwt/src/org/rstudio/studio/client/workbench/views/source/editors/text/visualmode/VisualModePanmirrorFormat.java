@@ -86,7 +86,7 @@ public class VisualModePanmirrorFormat
             // doctypes
             if (formatComment.doctypes == null || formatComment.doctypes.length == 0)
             {
-               List<String> configDocTypes = new ArrayList<String>();
+               List<String> configDocTypes = new ArrayList<>();
                if (isBookdownProjectDocument())
                   configDocTypes.add(PanmirrorExtendedDocType.bookdown);
                if (isHugoProjectDocument() || isHugodownDocument())
@@ -221,13 +221,13 @@ public class VisualModePanmirrorFormat
       String yaml = YamlFrontMatter.getFrontMatter(docDisplay_);
       if (yaml == null)
       {
-         return new ArrayList<String>();
+         return new ArrayList<>();
       }
       else
       {
          List<String> formats = TextEditingTargetRMarkdownHelper.getOutputFormats(yaml);
          if (formats == null)
-            return new ArrayList<String>();
+            return new ArrayList<>();
          else
             return formats;   
       }
@@ -356,7 +356,7 @@ public class VisualModePanmirrorFormat
       {   
          // collect any alternate mode we may have
          BlogdownConfig config = getBlogdownConfig();
-         Pair<String,String> alternateMode = new Pair<String,String>(
+         Pair<String,String> alternateMode = new Pair<>(
             config.markdown_engine,
             config.markdown_extensions
          );
@@ -380,12 +380,12 @@ public class VisualModePanmirrorFormat
          // other valid ways of having a hugo document
          else if (isHugodownDocument() || hasHugoDocType(docTypes))
          {
-            return new Pair<String,String>("goldmark", "");
+            return new Pair<>("goldmark", "");
          }
          // github document
          else if (isGitHubDocument())
          {
-            return new Pair<String,String>("gfm", "");
+            return new Pair<>("gfm", "");
          }
       }
    

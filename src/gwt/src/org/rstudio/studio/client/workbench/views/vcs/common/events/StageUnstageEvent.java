@@ -52,5 +52,5 @@ public class StageUnstageEvent extends GwtEvent<StageUnstageHandler>
    private final boolean unstage_;
    private final ArrayList<StatusAndPath> paths;
 
-   public static final Type<StageUnstageHandler> TYPE = new Type<StageUnstageHandler>();
+   public static final Type<StageUnstageHandler> TYPE = new Type<>();
 }
