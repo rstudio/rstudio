@@ -114,7 +114,7 @@ public class ConsoleOutputWriter
 
       // we never want to count lines based on the trailing element so grab its parent, if possible
       // otherwise just grab the outElement
-      if (appendTarget.getAttribute("tabindex").equals("-1") && appendTarget.getTagName().toLowerCase().equals("span"))
+      if (appendTarget.getAttribute("tabindex").equals("-1") && appendTarget.getTagName().equalsIgnoreCase("span"))
       {
          if (appendTarget.getParentElement() != null)
             appendTarget = appendTarget.getParentElement();

@@ -15,7 +15,6 @@
 
 package org.rstudio.core.client;
 
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -239,8 +238,7 @@ public class AnsiCode
 
       public static String clazzForColorIndex(int index, boolean background)
       {
-         return((background ? BACKGROUND_STYLE : FOREGROUND_STYLE) +
-               Integer.toString(index));
+         return((background ? BACKGROUND_STYLE : FOREGROUND_STYLE) + index);
       }
 
       /**
@@ -585,12 +583,11 @@ public class AnsiCode
       if (!clazzes_.isEmpty())
       {
          StringBuilder buildClazzes = new StringBuilder();
-         Iterator<String> itr = clazzes_.iterator();
-         while (itr.hasNext())
+         for (String s : clazzes_)
          {
             if (buildClazzes.length() > 0)
                buildClazzes.append(" ");
-            buildClazzes.append(itr.next());
+            buildClazzes.append(s);
          }
          styles.inlineClazzes = buildClazzes.toString();
       }
@@ -599,12 +596,11 @@ public class AnsiCode
       {
          // block styles (line-height via font9)
          StringBuilder buildClazzes = new StringBuilder();
-         Iterator<String> itr = blockClazzes_.iterator();
-         while (itr.hasNext())
+         for (String s : blockClazzes_)
          {
             if (buildClazzes.length() > 0)
                buildClazzes.append(" ");
-            buildClazzes.append(itr.next());
+            buildClazzes.append(s);
          }
          styles.blockClazzes = buildClazzes.toString();
       }
@@ -665,13 +661,13 @@ public class AnsiCode
       else if (currentColor_.code() >= FOREGROUND_MIN && currentColor_.code() <= FOREGROUND_MAX)
       {
          int newBg = currentColor_.code() + (BACKGROUND_MIN - FOREGROUND_MIN);
-         clazzes_.add(BACKGROUND_STYLE + Integer.toString(newBg - BACKGROUND_MIN));
+         clazzes_.add(BACKGROUND_STYLE + (newBg - BACKGROUND_MIN));
          return new Color(false /*extended*/, newBg);
       }
       else
       {
          int newBg = currentColor_.code() + (BACKGROUND_INTENSE_MIN - FOREGROUND_INTENSE_MIN);
-         clazzes_.add(BACKGROUND_STYLE + Integer.toString(newBg + 8 - BACKGROUND_INTENSE_MIN));
+         clazzes_.add(BACKGROUND_STYLE + (newBg + 8 - BACKGROUND_INTENSE_MIN));
          return new Color(false /*extended*/, newBg);
       }
    }
