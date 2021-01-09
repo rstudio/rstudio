@@ -1450,6 +1450,12 @@
             "title": "Remember recently used items in Command Palette",
             "type": "boolean",
             "default": true
+        }, 
+        "show_memory_usage": {
+            "description": "Whether to compute and show memory usage in the Environment Pane",
+            "title": "Show memory usage in Environment Pane",
+            "type": "boolean",
+            "default": true
         }
     }
 }

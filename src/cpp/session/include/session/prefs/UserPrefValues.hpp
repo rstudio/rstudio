@@ -382,6 +382,7 @@ namespace prefs {
 #define kSaveRetryTimeout "save_retry_timeout"
 #define kInsertNativePipeOperator "insert_native_pipe_operator"
 #define kCommandPaletteMru "command_palette_mru"
+#define kShowMemoryUsage "show_memory_usage"
 
 class UserPrefValues: public Preferences
 {
@@ -1682,6 +1683,12 @@ public:
     */
    bool commandPaletteMru();
    core::Error setCommandPaletteMru(bool val);
+
+   /**
+    * Whether to compute and show memory usage in the Environment Pane
+    */
+   bool showMemoryUsage();
+   core::Error setShowMemoryUsage(bool val);
 
 };
 

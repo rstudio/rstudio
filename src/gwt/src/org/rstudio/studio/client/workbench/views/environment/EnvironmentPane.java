@@ -36,6 +36,7 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.core.client.widget.UserPrefMenuItem;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SuspendAndRestartEvent;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
@@ -147,7 +148,7 @@ public class EnvironmentPane extends WorkbenchPane
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.clearWorkspace().createToolbarButton());
 
-      memUsage_ = new MemUsageWidget(session_.getSessionInfo().getMemoryUsage());
+      memUsage_ = new MemUsageWidget(session_.getSessionInfo().getMemoryUsage(), prefs_);
       toolbar.addRightWidget(memUsage_);
       toolbar.addRightSeparator();
 

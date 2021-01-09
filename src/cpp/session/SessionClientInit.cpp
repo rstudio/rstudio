@@ -547,12 +547,19 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["package_dependencies"] = packageDependencies;
 
    boost::shared_ptr<modules::system_resources::MemoryUsage> pUsage;
-   error = modules::system_resources::getMemoryUsage(&pUsage);
-   if (error)
+
+   // Compute memory usage if enabled (the default, but can be disabled)
+   if (prefs::userPrefs().showMemoryUsage())
    {
-      LOG_ERROR(error);
+      error = modules::system_resources::getMemoryUsage(&pUsage);
+      if (error)
+      {
+         LOG_ERROR(error);
+      }
    }
-   else if (pUsage)
+
+   // Emit memory usage if successfully computed
+   if (pUsage)
    {
       sessionInfo["memory_usage"] = pUsage->toJson();
    }

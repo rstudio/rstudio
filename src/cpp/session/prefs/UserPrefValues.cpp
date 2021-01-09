@@ -2831,6 +2831,19 @@ core::Error UserPrefValues::setCommandPaletteMru(bool val)
    return writePref("command_palette_mru", val);
 }
 
+/**
+ * Whether to compute and show memory usage in the Environment Pane
+ */
+bool UserPrefValues::showMemoryUsage()
+{
+   return readPref<bool>("show_memory_usage");
+}
+
+core::Error UserPrefValues::setShowMemoryUsage(bool val)
+{
+   return writePref("show_memory_usage", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -3050,6 +3063,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kSaveRetryTimeout,
       kInsertNativePipeOperator,
       kCommandPaletteMru,
+      kShowMemoryUsage,
    });
 }
    
