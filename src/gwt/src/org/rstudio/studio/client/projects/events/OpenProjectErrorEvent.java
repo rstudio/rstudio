@@ -14,40 +14,46 @@
  */
 package org.rstudio.studio.client.projects.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import org.rstudio.studio.client.projects.model.OpenProjectError;
 
 import com.google.gwt.event.shared.GwtEvent;
 
-public class OpenProjectErrorEvent extends GwtEvent<OpenProjectErrorHandler>
+public class OpenProjectErrorEvent extends GwtEvent<OpenProjectErrorEvent.Handler>
 {
-   public static final GwtEvent.Type<OpenProjectErrorHandler> TYPE = new GwtEvent.Type<>();
-   
+   public static final Type<Handler> TYPE = new Type<>();
+
+   public interface Handler extends EventHandler
+   {
+      void onOpenProjectError(OpenProjectErrorEvent event);
+   }
+
    public OpenProjectErrorEvent(OpenProjectError error)
    {
       error_ = error;
    }
-   
+
    public String getProject()
    {
       return error_.getProject();
    }
-   
+
    public String getMessage()
    {
       return error_.getMessage();
    }
-  
+
    @Override
-   protected void dispatch(OpenProjectErrorHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onOpenProjectError(this);
    }
 
    @Override
-   public GwtEvent.Type<OpenProjectErrorHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
-   
+
    private final OpenProjectError error_;
 }
