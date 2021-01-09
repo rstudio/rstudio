@@ -134,6 +134,7 @@ import org.rstudio.studio.client.workbench.views.edit.model.ShowEditorData;
 import org.rstudio.studio.client.workbench.views.environment.events.*;
 import org.rstudio.studio.client.workbench.views.environment.model.DebugSourceResult;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentContextData;
+import org.rstudio.studio.client.workbench.views.environment.model.MemoryUsage;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
@@ -1068,6 +1069,11 @@ public class ClientEventDispatcher
          else if (type == ClientEvent.DocumentCloseAllNoSave)
          {
             eventBus_.dispatchEvent(new DocumentCloseAllNoSaveEvent());
+         }
+         else if (type == ClientEvent.MemoryUsageChanged)
+         {
+            MemoryUsage data = event.getData();
+            eventBus_.dispatchEvent(new MemoryUsageChangedEvent(data));
          }
          else
          {

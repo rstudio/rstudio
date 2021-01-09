@@ -14,6 +14,8 @@
  */
 
 #include "SessionSystemResources.hpp"
+#include <session/prefs/UserPrefs.hpp>
+#include <session/SessionModuleContext.hpp>
 
 #include <boost/make_shared.hpp>
 
@@ -23,6 +25,36 @@ namespace rstudio {
 namespace session {
 namespace modules {
 namespace system_resources {
+namespace {
+
+void emitMemoryChangedEvent()
+{
+   boost::shared_ptr<MemoryUsage> pUsage;
+   Error error = getMemoryUsage(&pUsage);
+   if (error)
+   {
+      LOG_ERROR(error);
+   }
+   else
+   {
+      ClientEvent event(client_events::kMemoryChangedEvent, pUsage->toJson());
+      module_context::enqueClientEvent(event);
+   }
+}
+
+void onUserSettingsChanged(const std::string& layer, const std::string& pref)
+{
+   if (pref != kShowMemoryUsage)
+      return;
+   
+   // If the pref was just turned on, compute and show memory usage immediately
+   if (prefs::userPrefs().showMemoryUsage())
+   {
+      emitMemoryChangedEvent();
+   }
+}
+
+} // anonymous namespace
 
 json::Object MemoryStat::toJson()
 {
@@ -70,6 +102,8 @@ Error getMemoryUsage(boost::shared_ptr<MemoryUsage> *pMemUsage)
 
 Error initialize()
 {
+   prefs::userPrefs().onChanged.connect(onUserSettingsChanged);
+
    return Success();
 }
 
