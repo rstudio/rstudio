@@ -25,15 +25,14 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
-import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateHandler;
 
 public class FilesTab extends DelayLoadWorkbenchTab<Files>
 {
    public interface Binder extends CommandBinder<Commands, FilesTab.Shim> {}
-   
+
    public abstract static class Shim
          extends DelayLoadTabShim<Files, FilesTab>
-         implements OpenFileInBrowserHandler, DirectoryNavigateHandler, RenameSourceFileEvent.Handler
+         implements OpenFileInBrowserHandler, DirectoryNavigateEvent.Handler, RenameSourceFileEvent.Handler
    {
       @Handler
       public abstract void onUploadFile();

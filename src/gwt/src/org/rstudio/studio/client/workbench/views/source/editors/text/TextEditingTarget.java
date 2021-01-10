@@ -134,7 +134,6 @@ import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEve
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
-import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobRunScriptEvent;
@@ -1870,7 +1869,7 @@ public class TextEditingTarget implements
       ));
 
       releaseOnDismiss_.add(events_.addHandler(FileChangeEvent.TYPE,
-                                               new FileChangeHandler() {
+                                               new FileChangeEvent.Handler() {
          @Override
          public void onFileChange(FileChangeEvent event)
          {

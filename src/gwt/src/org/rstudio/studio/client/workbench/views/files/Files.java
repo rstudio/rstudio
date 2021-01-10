@@ -66,79 +66,79 @@ import java.util.ArrayList;
 
 public class Files
       extends BasePresenter
-      implements FileChangeHandler, 
+      implements FileChangeEvent.Handler,
                  OpenFileInBrowserHandler,
-                 DirectoryNavigateHandler,
+                 DirectoryNavigateEvent.Handler,
                  RenameSourceFileEvent.Handler,
                  RStudioApiRequestEvent.Handler
 {
    interface Binder extends CommandBinder<Commands, Files> {}
- 
+
    public interface Display extends WorkbenchView
-   {   
+   {
       public interface NavigationObserver
       {
          void onFileNavigation(FileSystemItem file);
          void onSelectAllValueChanged(boolean value);
       }
-      
+
       public interface Observer extends NavigationObserver
       {
          void onFileSelectionChanged();
          void onColumnSortOrderChanaged(JsArray<ColumnSortInfo> sortOrder);
       }
-      
+
       void setObserver(Observer observer);
-           
+
       void resetColumnWidths();
       void setColumnSortOrder(JsArray<ColumnSortInfo> sortOrder);
-      
-      void listDirectory(FileSystemItem directory, 
+
+      void listDirectory(FileSystemItem directory,
                          ServerDataSource<DirectoryListing> filesDS);
-      
+
       void updateDirectoryListing(FileChange action);
-      
+
       void renameFile(FileSystemItem from, FileSystemItem to);
-      
+
       void selectAll();
       void selectNone();
-      
+
       ArrayList<FileSystemItem> getSelectedFiles();
-       
+
       void showFolderPicker(
             String title,
             RemoteFileSystemContext context,
             FileSystemItem initialDir,
             ProgressOperationWithInput<FileSystemItem> operation);
-      
+
       void showFilePicker(
             String title,
             RemoteFileSystemContext context,
             FileSystemItem initialFile,
             ProgressOperationWithInput<FileSystemItem> operation);
-      
+
       void showFileUpload(
                      String targetURL,
-                     FileSystemItem targetDirectory, 
+                     FileSystemItem targetDirectory,
                      RemoteFileSystemContext fileSystemContext,
                      Operation beginOperation,
                      OperationWithInput<PendingFileUpload> completedOperation,
                      Operation failedOperation);
 
 
-      void showHtmlFileChoice(FileSystemItem file, 
-                              Command onEdit, 
+      void showHtmlFileChoice(FileSystemItem file,
+                              Command onEdit,
                               Command onBrowse);
 
-      void showDataImportFileChoice(FileSystemItem file, 
-                                    Command onView, 
+      void showDataImportFileChoice(FileSystemItem file,
+                                    Command onView,
                                     Command onImport);
 
       void bringToFront();
    }
 
    @Inject
-   public Files(Display view, 
+   public Files(Display view,
                 EventBus eventBus,
                 FilesServerOperations server,
                 RemoteFileSystemContext fileSystemContext,
@@ -160,7 +160,7 @@ public class Files
       fileTypeRegistry_ = fileTypeRegistry;
       consoleDispatcher_ = consoleDispatcher;
       workbenchContext_ = workbenchContext;
-      
+
       eventBus_ = eventBus;
       server_ = server;
       fileSystemContext_ = fileSystemContext;
@@ -174,7 +174,7 @@ public class Files
 
       ((Binder)GWT.create(Binder.class)).bind(commands, this);
 
-      
+
       eventBus_.addHandler(FileChangeEvent.TYPE, this);
       eventBus_.addHandler(RenameSourceFileEvent.TYPE, this);
       eventBus_.addHandler(RStudioApiRequestEvent.TYPE, this);
@@ -197,9 +197,9 @@ public class Files
                columnSortOrder_ = value.cast();
             else
                columnSortOrder_ = null;
-            
+
             lastKnownState_ = columnSortOrder_;
-            
+
             view_.setColumnSortOrder(columnSortOrder_);
          }
 
@@ -228,8 +228,8 @@ public class Files
 
          private JsArray<ColumnSortInfo> lastKnownState_ = null;
       };
-      
-      
+
+
       // navigate to previous directory (works for resumed case)
       new StringStateValue(MODULE_FILES, KEY_PATH, ClientState.PROJECT_PERSISTENT, state) {
          @Override
@@ -260,21 +260,21 @@ public class Files
          {
             return currentPath_.getPath();
          }
-         
+
          private String transformPathStateValue(String value)
          {
             // if the value is null then return null
             if (value == null)
                return null;
-            
+
             // only respect the value for projects
             String projectFile = session_.getSessionInfo().getActiveProjectFile();
             if (projectFile == null)
                return null;
-                 
-            // ensure that the value is within the project dir (it wouldn't 
+
+            // ensure that the value is within the project dir (it wouldn't
             // be if the project directory has been moved or renamed)
-            String projectDirPath = 
+            String projectDirPath =
                FileSystemItem.createFile(projectFile).getParentPathString();
             if (value.startsWith(projectDirPath))
                return value;
@@ -282,7 +282,7 @@ public class Files
                return null;
          }
       };
-      
+
       // register handler for show hidden file state change
       pPrefs_.get().showHiddenFiles().addValueChangeHandler(show ->
       {
@@ -290,20 +290,20 @@ public class Files
          onRefreshFiles();
       });
    }
-   
+
 
    public Display getDisplay()
    {
       return view_;
    }
-   
+
    // observer for display
    public class DisplayObserver implements Display.Observer {
-      
+
       public void onFileSelectionChanged()
-      {    
+      {
       }
-      
+
       public void onFileNavigation(FileSystemItem file)
       {
          if (file.isDirectory())
@@ -315,7 +315,7 @@ public class Files
             navigateToFile(file);
          }
       }
-      
+
       public void onSelectAllValueChanged(boolean value)
       {
          if (value)
@@ -330,7 +330,7 @@ public class Files
          columnSortOrder_ = sortOrder;
       }
    }
-    
+
 
    @Handler
    void onRefreshFiles()
@@ -367,7 +367,7 @@ public class Files
    {
       pFilesUpload_.get().execute(currentPath_, fileSystemContext_);
    }
-   
+
    @Handler
    void onCopyFile()
    {
@@ -380,12 +380,12 @@ public class Files
                                        view_.selectNone();
                                     }});
    }
-   
+
    @Handler
    void onCopyFileTo()
    {
       final ArrayList<FileSystemItem> selectedFiles = view_.getSelectedFiles();
-      
+
       // validate selection size
       if (selectedFiles.size() == 0)
          return;
@@ -393,7 +393,7 @@ public class Files
       if (selectedFiles.size() > 1)
       {
          globalDisplay_.showErrorMessage(
-                           "Multiple Items Selected", 
+                           "Multiple Items Selected",
                            "Please select a single file or folder to copy");
          return;
       }
@@ -401,9 +401,9 @@ public class Files
       FileSystemItem initialFile = selectedFiles.get(0);
       if (initialFile.isDirectory())
          initialFile = initialFile.getParentPath();
-      
+
       view_.showFilePicker(
-                        "Choose Destination", 
+                        "Choose Destination",
                         fileSystemContext_,
                         initialFile,
                         new ProgressOperationWithInput<FileSystemItem>() {
@@ -413,13 +413,13 @@ public class Files
          {
             if (targetFile == null)
                return;
-            
+
             if (StringUtil.isNullOrEmpty(targetFile.getExtension()))
             {
                targetFile = FileSystemItem.createFile(
                      targetFile.getPath() + selectedFiles.get(0).getExtension());
             }
-            
+
             server_.copyFile(selectedFiles.get(0),
                  targetFile,
                  true,
@@ -433,14 +433,14 @@ public class Files
          }
       });
    }
-   
-   
+
+
    @Handler
    void onMoveFiles()
    {
       // get currently selected files
       final ArrayList<FileSystemItem> selectedFiles = view_.getSelectedFiles();
-      
+
       // validation: some selection exists
       if  (selectedFiles.size() == 0)
          return;
@@ -448,9 +448,9 @@ public class Files
       // validation -- not prohibited move of public folder
       if (!validateNotRestrictedFolder(selectedFiles, "moved"))
          return;
-      
+
       view_.showFolderPicker(
-                        "Choose Folder", 
+                        "Choose Folder",
                         fileSystemContext_,
                         currentPath_,
                         new ProgressOperationWithInput<FileSystemItem>() {
@@ -460,7 +460,7 @@ public class Files
          {
             if (targetDir == null)
                   return;
-            
+
             // check to make sure that we aren't moving any folders
             // onto themselves or moving any files into the directory
             // where they currently reside
@@ -468,33 +468,33 @@ public class Files
             {
                FileSystemItem file = selectedFiles.get(i);
                FileSystemItem fileParent = file.getParentPath();
-               
+
                if (file.getPath() == targetDir.getPath() ||
                    fileParent.getPath() == targetDir.getPath())
                {
                   progress.onError("Invalid target folder");
                   return;
-               } 
+               }
             }
-            
+
             progress.onProgress("Moving files...");
-            
+
             view_.selectNone();
-      
-            server_.moveFiles(selectedFiles, 
-                              targetDir, 
-                              new VoidServerRequestCallback(progress)); 
+
+            server_.moveFiles(selectedFiles,
+                              targetDir,
+                              new VoidServerRequestCallback(progress));
          }
       });
    }
-   
+
 
    @Handler
    void onExportFiles()
-   {     
+   {
       pFileExport_.get().export("Export Files",
                                 "selected file(s)",
-                                currentPath_, 
+                                currentPath_,
                                 view_.getSelectedFiles());
    }
 
@@ -503,63 +503,63 @@ public class Files
    {
       // get currently selected files
       ArrayList<FileSystemItem> selectedFiles = view_.getSelectedFiles();
-      
+
       // validation: some selection exists
       if  (selectedFiles.size() == 0)
          return;
-      
+
       // validation: no more than one file selected
       if  (selectedFiles.size() > 1)
       {
          globalDisplay_.showErrorMessage(
-                           "Invalid Selection", 
+                           "Invalid Selection",
                            "Please select only one file to rename");
          return;
       }
-      
+
       // validation -- not prohibited move of public folder
       if (!validateNotRestrictedFolder(selectedFiles, "renamed"))
          return;
-      
+
       // perform the rename
       final FileSystemItem file = selectedFiles.get(0);
       renameFile(file);
    }
-   
+
    @Handler
    void onDeleteFiles()
    {
       // get currently selected files
       final ArrayList<FileSystemItem> selectedFiles = view_.getSelectedFiles();
-      
+
       // validation: some selection exists
       if  (selectedFiles.size() == 0)
          return;
-      
+
       // validation -- not prohibited move of public folder
       if (!validateNotRestrictedFolder(selectedFiles, "deleted"))
          return;
-      
+
       // confirm delete then execute it
       globalDisplay_.showYesNoMessage(
                         GlobalDisplay.MSG_QUESTION,
-                        "Confirm Delete", 
-                        "Are you sure you want to delete the selected files?", 
+                        "Confirm Delete",
+                        "Are you sure you want to delete the selected files?",
                         new ProgressOperation() {
                            public void execute(final ProgressIndicator progress)
                            {
                               progress.onProgress("Deleting files...");
-                             
+
                               view_.selectNone();
-                              
+
                               server_.deleteFiles(
-                                    selectedFiles, 
+                                    selectedFiles,
                                     new VoidServerRequestCallback(progress));
                            }
                         },
                        true);
    }
-   
+
    private boolean validateNotRestrictedFolder(ArrayList<FileSystemItem> files,
                                                String verb)
    {
@@ -570,7 +570,7 @@ public class Files
             if (file.isPublicFolder())
             {
                globalDisplay_.showErrorMessage(
-                     "Error", 
+                     "Error",
                      "The Public folder cannot be " + verb + ".");
                return false;
             }
@@ -613,7 +613,7 @@ public class Files
    {
       eventBus_.fireEvent(new ShowFolderEvent(currentPath_));
    }
-   
+
    public void onFileChange(FileChangeEvent event)
    {
       view_.updateDirectoryListing(event.getFileChange());
@@ -623,32 +623,32 @@ public class Files
    {
       showFileInBrowser(event.getFile());
    }
-   
+
    public void onDirectoryNavigate(DirectoryNavigateEvent event)
    {
       navigateToDirectory(event.getDirectory());
       if (event.getActivate())
          view_.bringToFront();
    }
-  
+
    @Override
    public void onRenameSourceFile(RenameSourceFileEvent event)
    {
       renameFile(FileSystemItem.createFile(event.getPath()));
    }
-   
+
    @Override
    public void onRStudioApiRequest(RStudioApiRequestEvent requestEvent)
    {
       RStudioApiRequestEvent.Data requestData = requestEvent.getData();
-      
+
       if (requestData.getType() == RStudioApiRequestEvent.TYPE_FILES_PANE_NAVIGATE)
       {
          RStudioApiRequestEvent.FilesPaneNavigateData data = requestData.getPayload().cast();
          String path = data.getPath();
          navigateToDirectory(FileSystemItem.createDir(path));
       }
-      
+
    }
 
    private void navigateToDirectory(FileSystemItem directoryEntry)
@@ -679,7 +679,7 @@ public class Files
                @Override
                public void execute()
                {
-                  showFileInBrowser(file);                  
+                  showFileInBrowser(file);
                }
             });
       }
@@ -719,9 +719,9 @@ public class Files
       {
          fileTypeRegistry_.openFile(file);
       }
-      
+
    }
-   
+
    private void showFileInBrowser(FileSystemItem file)
    {
       // show the file in a new window if we can get a file url for it
@@ -738,7 +738,7 @@ public class Files
          }
       }
    }
-   
+
    private void renameFile(FileSystemItem file)
    {
       // guard for reentrancy
@@ -759,7 +759,7 @@ public class Files
         {
             // no longer waiting fo user to rename
             renaming_ = false;
-            
+
             progress.onProgress("Renaming file...");
 
             String path = file.getParentPath().completePath(input);
@@ -767,17 +767,17 @@ public class Files
                file.isDirectory() ?
                   FileSystemItem.createDir(path) :
                   FileSystemItem.create(path, false, file.getLength(), file.getLastModifiedNative());
-              
+
             // clear selection
             view_.selectNone();
-            
+
             // pre-emptively rename in the UI then fallback to refreshing
             // the view if there is an error
             view_.renameFile(file, target);
-            
+
             // execute on the server
-            server_.renameFile(file, 
-                               target, 
+            server_.renameFile(file,
+                               target,
                                new VoidServerRequestCallback(progress) {
                                  @Override
                                  protected void onSuccess()
@@ -787,7 +787,7 @@ public class Files
                                     {
                                        eventBus_.fireEvent(
                                              new SourcePathChangedEvent(
-                                                   file.getPath(), 
+                                                   file.getPath(),
                                                    target.getPath()));
                                     }
                                  }
@@ -796,26 +796,26 @@ public class Files
                                  {
                                     onRefreshFiles();
                                  }
-                              });        
-         }                                
-      }, 
-      () -> 
+                              });
+         }
+      },
+      () ->
       {
          // clear rename flag when operation is canceled
          renaming_ = false;
-      }); 
+      });
    }
-   
-   // data source for listing files on the current path which can 
+
+   // data source for listing files on the current path which can
    // be passed to the files view
-   ServerDataSource<DirectoryListing> currentPathFilesDS_ = 
+   ServerDataSource<DirectoryListing> currentPathFilesDS_ =
       new ServerDataSource<DirectoryListing>()
       {
          public void requestData(
                ServerRequestCallback<DirectoryListing> requestCallback)
          {
-            
-            server_.listFiles(currentPath_, 
+
+            server_.listFiles(currentPath_,
                   true, // pass true to enable monitoring for all calls to list_files
                   pPrefs_.get().showHiddenFiles().getValue(), // respect user pref for showing hidden
                   requestCallback);

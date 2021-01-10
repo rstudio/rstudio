@@ -49,7 +49,6 @@ import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
-import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
 import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.common.ProcessCallback;
 import org.rstudio.studio.client.workbench.views.vcs.common.VCSFileOpener;
@@ -69,7 +68,7 @@ import java.util.HashSet;
 public class SVNReviewPresenter implements ReviewPresenter
 {
    public interface Binder extends CommandBinder<Commands, SVNReviewPresenter> {}
-   
+
    public interface Display extends IsWidget, HasAttachHandlers, SVNPresenterDisplay
    {
       ArrayList<String> getSelectedPaths();
@@ -162,20 +161,20 @@ public class SVNReviewPresenter implements ReviewPresenter
       server_ = server;
       view_ = view;
       svnState_ = svnState;
-      
+
       binder.bind(commands, this);
-      
+
       undiffableStatuses_.add("?");
       undiffableStatuses_.add("!");
       undiffableStatuses_.add("X");
-      
-      commandHandler_ = new SVNCommandHandler(view, 
-                                              globalDisplay, 
-                                              commands, 
-                                              server, 
-                                              svnState, 
+
+      commandHandler_ = new SVNCommandHandler(view,
+                                              globalDisplay,
+                                              commands,
+                                              server,
+                                              svnState,
                                               vcsFileOpener);
-      
+
       new WidgetHandlerRegistration(view.asWidget())
       {
          @Override
@@ -209,7 +208,7 @@ public class SVNReviewPresenter implements ReviewPresenter
          @Override
          protected HandlerRegistration doRegister()
          {
-            return events.addHandler(FileChangeEvent.TYPE, new FileChangeHandler()
+            return events.addHandler(FileChangeEvent.TYPE, new FileChangeEvent.Handler()
             {
                @Override
                public void onFileChange(FileChangeEvent event)
@@ -381,7 +380,7 @@ public class SVNReviewPresenter implements ReviewPresenter
          clearDiff();
          currentFilename_ = item.getPath();
       }
-      
+
       // bail if this is an undiffable status
       if (undiffableStatuses_.contains(item.getStatus()))
          return;
@@ -485,19 +484,19 @@ public class SVNReviewPresenter implements ReviewPresenter
 
       view_.onShow();
    }
-   
+
    @Handler
    public void onVcsCommit()
    {
       commandHandler_.onVcsCommit();
    }
-   
+
    @Handler
    public void onVcsPull()
    {
       commandHandler_.onVcsPull();
    }
-   
+
    @Handler
    public void onVcsIgnore()
    {
@@ -516,7 +515,7 @@ public class SVNReviewPresenter implements ReviewPresenter
    private boolean initialized_;
    private static final String MODULE_SVN = "vcs_svn";
    private static final String KEY_CONTEXT_LINES = "context_lines";
-   
+
    private final HashSet<String> undiffableStatuses_ = new HashSet<>();
 
    private boolean overrideSizeWarning_ = false;

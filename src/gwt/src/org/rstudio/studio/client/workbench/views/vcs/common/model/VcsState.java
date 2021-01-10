@@ -30,7 +30,6 @@ import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.StatusAndPathInfo;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
-import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent.Reason;
@@ -82,7 +81,7 @@ public abstract class VcsState
             }
          }
       }));
-      registrations.add(eventBus_.addHandler(FileChangeEvent.TYPE, new FileChangeHandler()
+      registrations.add(eventBus_.addHandler(FileChangeEvent.TYPE, new FileChangeEvent.Handler()
       {
          @Override
          public void onFileChange(FileChangeEvent event)

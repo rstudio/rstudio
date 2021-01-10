@@ -26,29 +26,28 @@ import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 import org.rstudio.studio.client.workbench.views.packages.events.LoadedPackageUpdatesEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedEvent;
-import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedHandler;
 import org.rstudio.studio.client.workbench.views.packages.events.RaisePackagePaneEvent;
 
 public class PackagesTab extends DelayLoadWorkbenchTab<Packages>
 {
    public interface Binder extends CommandBinder<Commands, Shim> {}
-   
+
    public abstract static class Shim
-         extends DelayLoadTabShim<Packages, PackagesTab> 
+         extends DelayLoadTabShim<Packages, PackagesTab>
          implements LoadedPackageUpdatesEvent.Handler,
                     RaisePackagePaneEvent.Handler,
-                    PackageStateChangedHandler
+                    PackageStateChangedEvent.Handler
    {
       @Handler
       public abstract void onInstallPackage();
       @Handler
-      public abstract void onUpdatePackages();    
+      public abstract void onUpdatePackages();
    }
 
    @Inject
-   public PackagesTab(Shim shim, 
-                      Binder binder, 
-                      EventBus events, 
+   public PackagesTab(Shim shim,
+                      Binder binder,
+                      EventBus events,
                       Commands commands,
                       UserPrefs uiPrefs,
                       Session session)
@@ -61,14 +60,14 @@ public class PackagesTab extends DelayLoadWorkbenchTab<Packages>
       uiPrefs_ = uiPrefs;
       session_ = session;
    }
-   
+
    @Override
    public boolean isSuppressed()
    {
       return  session_.getSessionInfo().getDisablePackages() ||
               !uiPrefs_.packagesPaneEnabled().getValue();
    }
-   
+
    private final UserPrefs uiPrefs_;
    private final Session session_;
 }

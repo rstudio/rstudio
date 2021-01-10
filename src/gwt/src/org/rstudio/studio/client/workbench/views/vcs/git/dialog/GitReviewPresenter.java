@@ -61,7 +61,6 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
-import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
 import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.common.VCSFileOpener;
@@ -82,7 +81,7 @@ import java.util.Set;
 public class GitReviewPresenter implements ReviewPresenter
 {
    public interface Binder extends CommandBinder<Commands, GitReviewPresenter> {}
-   
+
    public interface Display extends IsWidget, HasAttachHandlers
    {
       ArrayList<String> getSelectedPaths();
@@ -116,10 +115,10 @@ public class GitReviewPresenter implements ReviewPresenter
       void showSizeWarning(long sizeInBytes);
       void hideSizeWarning();
 
-      void showContextMenu(int clientX, 
-                           int clientY, 
+      void showContextMenu(int clientX,
+                           int clientY,
                            Command openSelectedCommand);
-      
+
       void onShow();
 
       void setShowActions(boolean showActions);
@@ -231,9 +230,9 @@ public class GitReviewPresenter implements ReviewPresenter
       uiPrefs_ = uiPrefs;
       vcsFileOpener_ = vcsFileOpener;
       gitCommitLargeFileSize_ = session.getSessionInfo().getGitCommitLargeFileSize();
-      
+
       binder.bind(commands, this);
-      
+
       new WidgetHandlerRegistration(view.asWidget())
       {
          @Override
@@ -267,7 +266,7 @@ public class GitReviewPresenter implements ReviewPresenter
          @Override
          protected HandlerRegistration doRegister()
          {
-            return events.addHandler(FileChangeEvent.TYPE, new FileChangeHandler()
+            return events.addHandler(FileChangeEvent.TYPE, new FileChangeEvent.Handler()
             {
                @Override
                public void onFileChange(FileChangeEvent event)
@@ -290,7 +289,7 @@ public class GitReviewPresenter implements ReviewPresenter
             });
          }
       };
-      
+
       view_.getChangelistTable().addSelectionChangeHandler(new SelectionChangeEvent.Handler()
       {
          @Override
@@ -347,7 +346,7 @@ public class GitReviewPresenter implements ReviewPresenter
             }
          }
       });
-      
+
       view_.getChangelistTable().addContextMenuHandler(new ContextMenuHandler()
       {
          @Override
@@ -360,7 +359,7 @@ public class GitReviewPresenter implements ReviewPresenter
                                     @Override
                                     public void execute()
                                     {
-                                       openSelectedFiles();                       
+                                       openSelectedFiles();
                                     }
             });
 
@@ -376,7 +375,7 @@ public class GitReviewPresenter implements ReviewPresenter
             if (paths.size() == 0)
                return;
             server_.gitStage(paths, new SimpleRequestCallback<>());
-            
+
             view_.getChangelistTable().focus();
          }
       });
@@ -405,14 +404,14 @@ public class GitReviewPresenter implements ReviewPresenter
                         server_.gitRevert(
                               paths,
                               new SimpleRequestCallback<>("Revert Changes"));
-                        
+
                         view_.getChangelistTable().focus();
                      }
                   },
                   false);
          }
       });
-      
+
       view_.getIgnoreButton().addClickHandler(new ClickHandler() {
 
          @Override
@@ -484,7 +483,7 @@ public class GitReviewPresenter implements ReviewPresenter
       });
       view_.getUnstageAllButton().addClickHandler(
             new ApplyPatchClickHandler(PatchMode.Stage, true));
-      
+
       view_.getStagedCheckBox().addValueChangeHandler(
             new ValueChangeHandler<Boolean>()
             {
@@ -495,10 +494,10 @@ public class GitReviewPresenter implements ReviewPresenter
                      updateDiff(false);
                }
             });
-      
+
       view_.getIgnoreWhitespaceCheckBox().setValue(
             uiPrefs_.gitDiffIgnoreWhitespace().getGlobalValue());
-      
+
       view_.getIgnoreWhitespaceCheckBox().addValueChangeHandler(
             new ValueChangeHandler<Boolean>()
             {
@@ -511,7 +510,7 @@ public class GitReviewPresenter implements ReviewPresenter
                   updateDiff(false);
                }
             });
-      
+
       view_.getLineTableDisplay().addDiffChunkActionHandler(new ApplyPatchHandler());
       view_.getLineTableDisplay().addDiffLineActionHandler(new ApplyPatchHandler());
 
@@ -549,7 +548,7 @@ public class GitReviewPresenter implements ReviewPresenter
             // record the current selected paths (as a set)
             final Set<String> selectedPaths = new HashSet<>();
             selectedPaths.addAll(view_.getSelectedPaths());
-            
+
             // first, double-check the file sizes of any files that are going
             // to be added or modified (help the user avoid committing large
             // files to the repository)
@@ -564,20 +563,20 @@ public class GitReviewPresenter implements ReviewPresenter
                      onCommit();
                      return;
                   }
-                  
+
                   // iterate through the files and check for large modifications
                   for (int i = 0, n = response.length(); i < n; i++)
                   {
                      StatusAndPathInfo info = response.get(i);
-                     
+
                      // skip if this isn't a currently selected file for add
                      if (!selectedPaths.contains(info.getPath()))
                         continue;
-                     
+
                      String status = info.getStatus();
                      if (!StringUtil.isCharAt(status, 'A', 0))
                         continue;
-                     
+
                      // warn if we're trying to commit a file >10MB in size
                      double size = info.getFileSize();
                      if (gitCommitLargeFileSize_ > 0 && size >= gitCommitLargeFileSize_)
@@ -586,31 +585,31 @@ public class GitReviewPresenter implements ReviewPresenter
                         return;
                      }
                   }
-                  
+
                   // no large files; proceed with commit as normal
                   onCommit();
                   return;
                }
-               
+
                @Override
                public void onError(ServerError error)
                {
                   Debug.logError(error);
-                  
+
                   // although server errors here are unexpected,
                   // make a best effort attempt to commit regardless
                   onCommit();
                }
             });
          }
-         
+
          private void onLargeFile()
          {
             String prettySize = StringUtil.formatFileSize(gitCommitLargeFileSize_);
             String message =
                   "Some of the files to be committed are quite large " +
                   "(>" + prettySize + " in size). Are you sure you want to commit these files?";
-            
+
             globalDisplay_.showYesNoMessage(
                   GlobalDisplay.MSG_WARNING,
                   "Committing Large Files",
@@ -637,7 +636,7 @@ public class GitReviewPresenter implements ReviewPresenter
                   "Cancel",
                   true);
          }
-         
+
          private void onCommit()
          {
             server_.gitCommit(
@@ -682,8 +681,8 @@ public class GitReviewPresenter implements ReviewPresenter
                      }
                   });
          }
-         
-         
+
+
       });
 
       view_.getOverrideSizeWarningButton().addClickHandler(new ClickHandler()
@@ -762,7 +761,7 @@ public class GitReviewPresenter implements ReviewPresenter
          else
          {
             if (view_.getStagedCheckBox().getValue()
-                && (StringUtil.isCharAt(item.getStatus(), ' ', 0) || 
+                && (StringUtil.isCharAt(item.getStatus(), ' ', 0) ||
                     StringUtil.isCharAt(item.getStatus(), '?', 0)))
             {
                clearDiff();
@@ -859,7 +858,7 @@ public class GitReviewPresenter implements ReviewPresenter
    {
       vcsFileOpener_.openFiles(view_.getChangelistTable().getSelectedItems());
    }
-   
+
    @Override
    public Widget asWidget()
    {
@@ -893,13 +892,13 @@ public class GitReviewPresenter implements ReviewPresenter
 
       view_.onShow();
    }
-   
+
    @Handler
    public void onVcsPull()
    {
       gitPresenterCore_.onVcsPull();
    }
-   
+
    @Handler
    public void onVcsPullRebase()
    {
@@ -911,7 +910,7 @@ public class GitReviewPresenter implements ReviewPresenter
    {
       gitPresenterCore_.onVcsPush();
    }
-   
+
    @Handler
    public void onVcsIgnore()
    {
@@ -924,7 +923,7 @@ public class GitReviewPresenter implements ReviewPresenter
    {
       SuperDevMode.reload();
    }
-   
+
    private final Invalidation diffInvalidation_ = new Invalidation();
    private final GitServerOperations server_;
    private final GitPresenterCore gitPresenterCore_;

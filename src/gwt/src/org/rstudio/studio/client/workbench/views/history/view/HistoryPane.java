@@ -43,7 +43,6 @@ import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.history.HasHistory;
 import org.rstudio.studio.client.workbench.views.history.History.SearchBoxDisplay;
 import org.rstudio.studio.client.workbench.views.history.events.FetchCommandsEvent;
-import org.rstudio.studio.client.workbench.views.history.events.FetchCommandsHandler;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
 import org.rstudio.studio.client.workbench.views.history.view.HistoryEntryItemCodec.TimestampMode;
 
@@ -559,7 +558,7 @@ public class HistoryPane extends WorkbenchPane
       contextResults_.highlightRows((int)highlightOffset, (int)highlightLength);
    }
 
-   public HandlerRegistration addFetchCommandsHandler(FetchCommandsHandler handler)
+   public HandlerRegistration addFetchCommandsHandler(FetchCommandsEvent.Handler handler)
    {
       return addHandler(handler, FetchCommandsEvent.TYPE);
    }

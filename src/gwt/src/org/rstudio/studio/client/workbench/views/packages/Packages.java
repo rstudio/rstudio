@@ -69,7 +69,6 @@ import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.LoadedPackageUpdatesEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedEvent;
-import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedHandler;
 import org.rstudio.studio.client.workbench.views.packages.events.RaisePackagePaneEvent;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallContext;
@@ -96,7 +95,7 @@ import java.util.TreeSet;
 
 public class Packages
       extends BasePresenter
-      implements PackageStatusChangedHandler,
+      implements PackageStatusChangedEvent.Handler,
                  DeferredInitCompletedEvent.Handler,
                  PackagesDisplayObserver
 {
@@ -104,23 +103,23 @@ public class Packages
 
    public interface Display extends WorkbenchView
    {
-      void setPackageState(ProjectContext projectContext, 
+      void setPackageState(ProjectContext projectContext,
                            List<PackageInfo> packagesDS);
-      
+
       void installPackage(PackageInstallContext installContext,
                           PackageInstallOptions defaultInstallOptions,
                           PackagesServerOperations server,
                           GlobalDisplay globalDisplay,
                           OperationWithInput<PackageInstallRequest> operation);
-      
+
       void setPackageStatus(PackageStatus status);
-  
+
       void setObserver(PackagesDisplayObserver observer);
       void setProgress(boolean showProgress);
    }
-   
+
    @Inject
-   public Packages(Display view, 
+   public Packages(Display view,
                    final EventBus events,
                    PackagesServerOperations server,
                    PackratServerOperations packratServer,
@@ -150,9 +149,9 @@ public class Packages
       pFileDialogs_ = pFileDialogs;
       session_ = session;
       binder.bind(commands, this);
-      
+
       events.addHandler(PackageStatusChangedEvent.TYPE, this);
-      
+
       // make the install options persistent
       new JSObjectStateValue("packages-pane", "installOptions", ClientState.PROJECT_PERSISTENT,
             session.getSessionInfo().getClientState(), false)
@@ -185,22 +184,22 @@ public class Packages
 
          private PackageInstallOptions lastKnownState_;
       };
-      
+
       updatePackageState(true, false);
-      
+
       // after 2 seconds also add the DeferredInitCompleted handler
-      // (we wait because if we don't then on first load in a new 
-      // session where the packages tab is showing updatePackageState 
+      // (we wait because if we don't then on first load in a new
+      // session where the packages tab is showing updatePackageState
       // will be called twice)
       new Timer() {
          @Override
          public void run()
          {
-            events.addHandler(DeferredInitCompletedEvent.TYPE, Packages.this); 
+            events.addHandler(DeferredInitCompletedEvent.TYPE, Packages.this);
          }
       }.schedule(2000);
    }
-   
+
    void onInstallPackage()
    {
       withPackageInstallContext(new OperationWithInput<PackageInstallContext>(){
@@ -214,7 +213,7 @@ public class Packages
             }
             else
             {
-               globalDisplay_.showYesNoMessage(MessageDialog.QUESTION, 
+               globalDisplay_.showYesNoMessage(MessageDialog.QUESTION,
                  "Create Package Library",
                  "Would you like to create a personal library '" +
                  installContext.getDefaultUserLibraryPath() + "' " +
@@ -225,7 +224,7 @@ public class Packages
                     @Override
                     public void execute()
                     {
-                       ProgressIndicator indicator = 
+                       ProgressIndicator indicator =
                              globalDisplay_.getProgressIndicator(
                                                   "Error Creating Library");
                         server_.initDefaultUserLibrary(
@@ -234,13 +233,13 @@ public class Packages
                                  protected void onSuccess()
                                  {
                                     // call this function back recursively
-                                    // so we can retrieve the updated 
+                                    // so we can retrieve the updated
                                     // PackageInstallContext from the server
                                     onInstallPackage();
                                  }
-                              });  
+                              });
                      }
-                 }, 
+                 },
                  new Operation() // No operation
                  {
                      @Override
@@ -252,21 +251,21 @@ public class Packages
                               "Unable to install packages (default library '" +
                               installContext.getDefaultLibraryPath() + "' is " +
                               "not writeable)");
-                        
-                     }  
+
+                     }
                  },
                  true);
             }
          }
-         
+
       });
    }
-   
+
    void onRaisePackagePane(RaisePackagePaneEvent event)
    {
       view_.bringToFront();
    }
-   
+
    private void continueInstallPackage(
                            final PackageInstallContext installContext)
    {
@@ -276,16 +275,16 @@ public class Packages
          defaultCRANMirror_.configure(new Command() {
             public void execute()
             {
-               doInstallPackage(installContext); 
-            } 
+               doInstallPackage(installContext);
+            }
          });
       }
       else
       {
          doInstallPackage(installContext);
-      }   
+      }
    }
-  
+
    private void doInstallPackage(final PackageInstallContext installContext)
    {
       // if install options have not yet initialized the default library
@@ -294,29 +293,29 @@ public class Packages
       {
          installOptions_ = PackageInstallOptions.create(
                                  installOptions_.getInstallFromRepository(),
-                                 installContext.getDefaultLibraryPath(), 
+                                 installContext.getDefaultLibraryPath(),
                                  installOptions_.getInstallDependencies());
       }
-      
+
       view_.installPackage(
          installContext,
          installOptions_,
          server_,
          globalDisplay_,
-         new OperationWithInput<PackageInstallRequest>() 
+         new OperationWithInput<PackageInstallRequest>()
          {
             public void execute(PackageInstallRequest request)
             {
                installOptions_ = request.getOptions();
-               
-               boolean usingDefaultLibrary = 
+
+               boolean usingDefaultLibrary =
                   request.getOptions().getLibraryPath() ==
                                        installContext.getDefaultLibraryPath();
 
                StringBuilder command = new StringBuilder();
                command.append("install.packages(");
-               
-               List<String> packages = request.getPackages(); 
+
+               List<String> packages = request.getPackages();
                if (packages != null)
                {
                   if (packages.size() > 1)
@@ -325,13 +324,13 @@ public class Packages
                   {
                      if (i > 0)
                         command.append(", ");
-                     command.append("\""); 
+                     command.append("\"");
                      command.append(packages.get(i));
                      command.append("\"");
                   }
                   if (packages.size() > 1)
                      command.append(")");
-                  
+
                   // dependencies
                   if (!request.getOptions().getInstallDependencies())
                      command.append(", dependencies = FALSE");
@@ -341,13 +340,13 @@ public class Packages
                {
                   // get path
                   FileSystemItem localPackage = request.getLocalPackage();
-                  
-                  // convert to string 
+
+                  // convert to string
                   String path = localPackage.getPath();
-                  
+
                   // append command
                   command.append("\"" + path + "\", repos = NULL");
-                  
+
                   // append type if needed
                   if (path.endsWith(".tar.gz"))
                      command.append(", type = \"source\"");
@@ -356,22 +355,22 @@ public class Packages
                   else if (path.endsWith(".tgz"))
                      command.append(", type = .Platform$pkgType");
                }
-               
+
                if (!usingDefaultLibrary)
                {
                   command.append(", lib=\"");
                   command.append(request.getOptions().getLibraryPath());
                   command.append("\"");
                }
-               
+
                command.append(")");
                String cmd = command.toString();
                executeWithLoadedPackageCheck(new InstallCommand(packages, cmd));
            }
          });
    }
-    
-   
+
+
    void onUpdatePackages()
    {
       withPackageInstallContext(new OperationWithInput<PackageInstallContext>(){
@@ -383,33 +382,33 @@ public class Packages
             // short circuit to all packages are up to date message
             if (installContext.getWriteableLibraryPaths().length() == 0)
             {
-               globalDisplay_.showMessage(MessageDialog.INFO, 
-                                          "Check for Updates", 
+               globalDisplay_.showMessage(MessageDialog.INFO,
+                                          "Check for Updates",
                                           "All packages are up to date.");
-               
+
             }
-            
+
             // if CRAN needs to be configured then do it
             else if (!installContext.isCRANMirrorConfigured())
             {
                defaultCRANMirror_.configure(new Command() {
                   public void execute()
                   {
-                     doUpdatePackages(installContext); 
-                  } 
+                     doUpdatePackages(installContext);
+                  }
                });
             }
-            
+
             // otherwise we are good to go!
             else
             {
                doUpdatePackages(installContext);
-            }    
+            }
          }
-         
+
       });
    }
-   
+
    private void doUpdatePackages(final PackageInstallContext installContext)
    {
       new CheckForUpdatesDialog(
@@ -417,17 +416,17 @@ public class Packages
             public void requestData(
                ServerRequestCallback<JsArray<PackageUpdate>> requestCallback)
             {
-               server_.checkForPackageUpdates(requestCallback); 
-            }   
+               server_.checkForPackageUpdates(requestCallback);
+            }
          },
          new OperationWithInput<ArrayList<PackageUpdate>>() {
             @Override
             public void execute(ArrayList<PackageUpdate> updates)
             {
-               InstallCommand cmd = buildUpdatePackagesCommand(updates, 
+               InstallCommand cmd = buildUpdatePackagesCommand(updates,
                                                                installContext);
                executeWithLoadedPackageCheck(cmd);
-            }  
+            }
          },
          new Operation() {
             @Override
@@ -439,37 +438,37 @@ public class Packages
             }
          }).showModal();
    }
-   
-   
+
+
    private InstallCommand buildUpdatePackagesCommand(
                               ArrayList<PackageUpdate> updates,
                               final PackageInstallContext installContext)
    {
       // split the updates into their respective target libraries
       List<String> packages = new ArrayList<>();
-      LinkedHashMap<String, ArrayList<PackageUpdate>> updatesByLibPath = new LinkedHashMap<>();  
+      LinkedHashMap<String, ArrayList<PackageUpdate>> updatesByLibPath = new LinkedHashMap<>();
       for (PackageUpdate update : updates)
       {
          // auto-create target list if necessary
          String libPath = update.getLibPath();
          if (!updatesByLibPath.containsKey(libPath))
             updatesByLibPath.put(libPath, new ArrayList<>());
-         
+
          // insert into list
-         updatesByLibPath.get(libPath).add(update); 
-         
+         updatesByLibPath.get(libPath).add(update);
+
          // track global list of packages
          packages.add(update.getPackageName());
       }
-      
+
       // generate an install packages command for each targeted library
       StringBuilder command = new StringBuilder();
       for (String libPath : updatesByLibPath.keySet())
       {
          if (command.length() > 0)
             command.append("\n");
-         
-         ArrayList<PackageUpdate> libPathUpdates = updatesByLibPath.get(libPath); 
+
+         ArrayList<PackageUpdate> libPathUpdates = updatesByLibPath.get(libPath);
          command.append("install.packages(");
          if (libPathUpdates.size() > 1)
             command.append("c(");
@@ -478,42 +477,42 @@ public class Packages
             PackageUpdate update = libPathUpdates.get(i);
             if (i > 0)
                command.append(", ");
-            command.append("\""); 
+            command.append("\"");
             command.append(update.getPackageName());
             command.append("\"");
          }
          if (libPathUpdates.size() > 1)
             command.append(")");
-         
+
          if (libPath != installContext.getDefaultLibraryPath())
          {
             command.append(", lib=\"");
             command.append(libPath);
             command.append("\"");
          }
-        
+
          command.append(")");
-         
+
       }
-      
+
       return new InstallCommand(packages, command.toString());
    }
-   
-   
+
+
    @Handler
    public void onRefreshPackages()
    {
       updatePackageState(true, true);
    }
-   
+
    // Packrat ----
-   
+
    @Handler
    public void onPackratHelp()
    {
       globalDisplay_.openRStudioLink("packrat", false);
    }
-   
+
    @Handler
    public void onPackratClean()
    {
@@ -525,8 +524,8 @@ public class Packages
             public void requestData(
                   ServerRequestCallback<JsArray<PackratPackageAction>> requestCallback)
             {
-               packratServer_.getPendingActions("clean", 
-                     session_.getSessionInfo().getActiveProjectDir().getPath(), 
+               packratServer_.getPendingActions("clean",
+                     session_.getSessionInfo().getActiveProjectDir().getPath(),
                      requestCallback);
             }
          },
@@ -538,7 +537,7 @@ public class Packages
                executeRemoveCommand(input);
             }
          },
-         new Operation() 
+         new Operation()
          {
             @Override
             public void execute()
@@ -547,9 +546,9 @@ public class Packages
             }
          }).showModal();
    }
-   
+
    @Handler
-   public void onPackratBundle() 
+   public void onPackratBundle()
    {
       pFileDialogs_.get().saveFile(
          "Export Project Bundle to Gzipped Tarball",
@@ -558,20 +557,20 @@ public class Packages
          ".tar.gz",
          false,
          new ProgressOperationWithInput<FileSystemItem>() {
-   
+
             @Override
             public void execute(FileSystemItem input,
                                 ProgressIndicator indicator) {
-   
+
                if (input == null)
                   return;
-   
+
                indicator.onCompleted();
-   
+
                String bundleFile = input.getPath();
                if (bundleFile == null)
                   return;
-   
+
                StringBuilder args = new StringBuilder();
                // We use 'overwrite = TRUE' since the UI dialog will prompt
                // us if we want to overwrite
@@ -580,13 +579,13 @@ public class Packages
                .append(bundleFile)
                .append("', overwrite = TRUE")
                ;
-   
+
                packratUtil_.executePackratFunction("bundle", args.toString());
             }
 
             });
    }
-   
+
    @Handler
    public void onPackratCheckStatus()
    {
@@ -613,11 +612,11 @@ public class Packages
                confirmPackratActions(actions.getSnapshotActions(),
                                      "Snapshot", "snapshot");
             }
-            else 
+            else
             {
                // no restore actions or snapshot actions
-               globalDisplay_.showMessage(GlobalDisplay.MSG_INFO, 
-                     "Up to Date", 
+               globalDisplay_.showMessage(GlobalDisplay.MSG_INFO,
+                     "Up to Date",
                      "The Packrat library is up to date.");
             }
          }
@@ -625,29 +624,29 @@ public class Packages
          @Override
          public void onError(ServerError error)
          {
-            globalDisplay_.showErrorMessage("Error checking Packrat library status", 
+            globalDisplay_.showErrorMessage("Error checking Packrat library status",
                   error.getMessage());
          }
       });
    }
-   
+
    // renv ----
-   
+
    private void renvAction(final String action)
    {
       String errorMessage = "Error during " + action;
       ProgressIndicator indicator =
             globalDisplay_.getProgressIndicator(errorMessage);
-      
+
       indicator.onProgress("Performing " + action.toLowerCase() + "...");
-      
+
       renvServer_.renvActions(action, new ServerRequestCallback<JsArray<RenvAction>>()
       {
          @Override
          public void onResponseReceived(JsArray<RenvAction> response)
          {
             indicator.onCompleted();
-            
+
             if (response.length() == 0)
             {
                globalDisplay_.showMessage(
@@ -676,27 +675,27 @@ public class Packages
          }
       });
    }
-   
+
    @Handler
    public void onRenvHelp()
    {
       globalDisplay_.openRStudioLink("renv", false);
    }
-   
+
    @Handler
    public void onRenvSnapshot()
    {
       renvAction("Snapshot");
    }
-   
+
    @Handler
    public void onRenvRestore()
    {
       renvAction("Restore");
    }
-   
+
    // Miscellaneous ----
-   
+
    public void removePackage(final PackageInfo packageInfo)
    {
       withPackageInstallContext(new OperationWithInput<PackageInstallContext>(){
@@ -706,9 +705,9 @@ public class Packages
          {
             final boolean usingDefaultLibrary = packageInfo.getLibrary() ==
                                        installContext.getDefaultLibraryPath();
-            
+
             StringBuilder message = new StringBuilder();
-            message.append("Are you sure you wish to permanently uninstall the '"); 
+            message.append("Are you sure you wish to permanently uninstall the '");
             message.append(packageInfo.getName() + "' package");
             if (!usingDefaultLibrary)
             {
@@ -717,16 +716,16 @@ public class Packages
                message.append("'");
             }
             message.append("? This action cannot be undone.");
-               
+
             globalDisplay_.showYesNoMessage(
                MessageDialog.WARNING,
                "Uninstall Package ",
                message.toString(),
-               new Operation() 
+               new Operation()
                {
                   @Override
                   public void execute()
-                  {     
+                  {
                      StringBuilder command = new StringBuilder();
                      command.append("remove.packages(\"");
                      command.append(packageInfo.getName());
@@ -740,13 +739,13 @@ public class Packages
                      command.append(")");
                      String cmd = command.toString();
                      events_.fireEvent(new SendToConsoleEvent(cmd, true));
-                  }  
+                  }
                },
-               true); 
+               true);
          }
       });
    }
-      
+
    @Override
    public void updatePackageState(boolean showProgress, boolean manualUpdate)
    {
@@ -759,7 +758,7 @@ public class Packages
    {
       // check status to make sure the package was unloaded
       checkPackageStatusOnNextConsolePrompt(info.getName(), info.getLibrary());
-      
+
       // send the command
       StringBuilder command = new StringBuilder();
       if (info.getLibraryIndex() == 1)
@@ -776,32 +775,32 @@ public class Packages
                 .append(info.getLibraryAbsolute().replaceAll("\\\\", "\\\\\\\\"))
                 .append("\")");
       }
-      
+
       events_.fireEvent(new SendToConsoleEvent(command.toString(), true));
-     
+
    }
 
    public void unloadPackage(PackageInfo info)
-   { 
+   {
       // check status to make sure the package was unloaded
       checkPackageStatusOnNextConsolePrompt(info.getName(), info.getLibrary());
-      
+
       StringBuilder command = new StringBuilder();
       command.append("detach(\"package:");
       command.append(info.getName());
       command.append("\", unload = TRUE)");
       events_.fireEvent(new SendToConsoleEvent(command.toString(), true));
    }
-   
+
    public void showHelp(PackageInfo packageInfo)
    {
       events_.fireEvent(new ShowHelpEvent(packageInfo.getHelpUrl()));
    }
-   
+
    public void onPackageStateChanged(PackageStateChangedEvent event)
    {
       PackageState newState = event.getPackageState();
-      
+
       // if the event contains embedded state, apply it directly; if it doesn't,
       // fetch the new state from the server.
       if (newState != null)
@@ -809,13 +808,13 @@ public class Packages
       else
          updatePackageState(false, false);
    }
-   
+
    @Override
    public void onDeferredInitCompleted(DeferredInitCompletedEvent event)
    {
       updatePackageState(false, false);
    }
-   
+
    public void onPackageFilterChanged(String filter)
    {
       packageFilter_ = filter.toLowerCase();
@@ -826,7 +825,7 @@ public class Packages
    {
       PackageStatus status = event.getPackageStatus();
       view_.setPackageStatus(status);
-      
+
       // also update the list of allPackages_
       for (int i = 0; i<allPackages_.size(); i++)
       {
@@ -839,26 +838,26 @@ public class Packages
          }
       }
    }
-   
+
    private void setViewPackageList()
    {
       ArrayList<PackageInfo> packages = null;
-      
+
       // apply filter (if any)
       if (packageFilter_.length() > 0)
       {
          packages = new ArrayList<>();
-         
+
          // first do prefix search
          for (PackageInfo pkgInfo : allPackages_)
          {
             if (pkgInfo.getName().toLowerCase().startsWith(packageFilter_))
                packages.add(pkgInfo);
          }
-         
+
          // then do contains search on name & desc
          for (PackageInfo pkgInfo : allPackages_)
-         { 
+         {
             if (pkgInfo.getName().toLowerCase().contains(packageFilter_) ||
                 pkgInfo.getDesc().toLowerCase().contains(packageFilter_))
             {
@@ -884,35 +883,35 @@ public class Packages
       {
          packages = allPackages_;
       }
-      
+
       view_.setPackageState(projectContext_, packages);
    }
-   
+
    private void checkPackageStatusOnNextConsolePrompt(
                                          final String packageName,
                                          final String libName)
    {
       // remove any existing handler
       removeConsolePromptHandler();
-      
-      consolePromptHandlerReg_ = events_.addHandler(ConsolePromptEvent.TYPE, 
+
+      consolePromptHandlerReg_ = events_.addHandler(ConsolePromptEvent.TYPE,
          new ConsolePromptEvent.Handler() {
             @Override
             public void onConsolePrompt(ConsolePromptEvent event)
-            {  
+            {
                // remove handler so it is only called once
                removeConsolePromptHandler();
-               
+
                // check status and set it
                server_.isPackageLoaded(
-                         packageName, 
+                         packageName,
                          libName,
                          new ServerRequestCallback<Boolean>() {
                   @Override
                   public void onResponseReceived(Boolean status)
                   {
-                     PackageStatus pkgStatus = PackageStatus.create(packageName, 
-                                                                    libName, 
+                     PackageStatus pkgStatus = PackageStatus.create(packageName,
+                                                                    libName,
                                                                     status);
                      view_.setPackageStatus(pkgStatus);
                   }
@@ -922,7 +921,7 @@ public class Packages
                   {
                      // ignore errors
                   }
-               });  
+               });
             }
          });
    }
@@ -935,11 +934,11 @@ public class Packages
          consolePromptHandlerReg_ = null;
       }
    }
-   
+
    private void withPackageInstallContext(
          final OperationWithInput<PackageInstallContext> operation)
    {
-      final ProgressIndicator indicator = 
+      final ProgressIndicator indicator =
          globalDisplay_.getProgressIndicator("Error");
       indicator.onProgress("Retrieving package installation context...");
 
@@ -957,15 +956,15 @@ public class Packages
             public void onError(ServerError error)
             {
                indicator.onError(error.getUserMessage());
-            }           
-         });     
+            }
+         });
    }
-   
+
    public void onLoadedPackageUpdates(LoadedPackageUpdatesEvent event)
    {
-      restartForInstallWithConfirmation(event.getInstallCmd());  
+      restartForInstallWithConfirmation(event.getInstallCmd());
    }
-   
+
    private class InstallCommand
    {
       public InstallCommand(List<String> packages, String cmd)
@@ -976,7 +975,7 @@ public class Packages
       public final List<String> packages;
       public final String cmd;
    }
-   
+
    private void executeWithLoadedPackageCheck(final InstallCommand command)
    {
       // check if we are potentially going to be overwriting an
@@ -984,7 +983,7 @@ public class Packages
       if ((command.packages != null))
       {
          server_.loadedPackageUpdatesRequired(
-               command.packages, 
+               command.packages,
                new ServerRequestCallback<Boolean>() {
 
                   @Override
@@ -1007,7 +1006,7 @@ public class Packages
                      executePkgCommand(command.cmd);
                   }
 
-               }); 
+               });
       }
       else
       {
@@ -1019,18 +1018,18 @@ public class Packages
    {
       events_.fireEvent(new SendToConsoleEvent(cmd, true));
    }
-   
+
    private void restartForInstallWithConfirmation(final String installCmd)
    {
-      String msg = 
+      String msg =
             "One or more of the packages to be updated are currently loaded. " +
             "Restarting R prior to install is highly recommended.\n\n" +
             "RStudio can restart R before installing the requested packages. " +
             "All work and data will be preserved during restart.\n\n" +
             "Do you want to restart R prior to install?";
-                  
+
       final boolean haveInstallCmd = installCmd.startsWith("install.packages");
-      
+
       globalDisplay_.showYesNoMessage(
             MessageDialog.WARNING,
             "Updating Loaded Packages",
@@ -1039,7 +1038,7 @@ public class Packages
             () ->
             {
                events_.fireEvent(new SuspendAndRestartEvent(
-                      SuspendOptions.createSaveAll(true), installCmd));  
+                      SuspendOptions.createSaveAll(true), installCmd));
             },
             () ->
             {
@@ -1053,7 +1052,7 @@ public class Packages
                   }
                });
             },
-            true);   
+            true);
    }
 
    private class PackageStateUpdater extends SimpleRequestCallback<PackageState>
@@ -1072,7 +1071,7 @@ public class Packages
          {
             super.onError(error);
          }
-         
+
          view_.setProgress(false);
       }
 
@@ -1082,7 +1081,7 @@ public class Packages
          setPackageState(response);
       }
    }
-   
+
    public static class Action
    {
       public Action(String message, String buttonText, Command onExecute)
@@ -1091,49 +1090,49 @@ public class Packages
          buttonText_ = buttonText;
          onExecute_ = onExecute;
       }
-      
+
       public String getMessage()
       {
          return message_;
       }
-      
+
       public String getButtonText()
       {
          return buttonText_;
       }
-      
+
       public Command getOnExecute()
       {
          return onExecute_;
       }
-      
+
       private final String message_;
       private final String buttonText_;
       private final Command onExecute_;
    }
-   
-   private void confirmPackratActions(JsArray<PackratPackageAction> actions, 
-                                      String actionTitle, 
+
+   private void confirmPackratActions(JsArray<PackratPackageAction> actions,
+                                      String actionTitle,
                                       final String packratFunction)
    {
-      new PackratActionDialog(actionTitle, actions, 
+      new PackratActionDialog(actionTitle, actions,
             new OperationWithInput<Void>()
             {
                @Override
                public void execute(Void input)
                {
-                  packratUtil_.executePackratFunction(packratFunction, 
+                  packratUtil_.executePackratFunction(packratFunction,
                         "prompt = FALSE");
                }
             }).showModal();
    }
-   
+
    private void resolvePackratConflicts(
          JsArray<PackratPackageAction> restoreActions,
          JsArray<PackratPackageAction> snapshotActions)
    {
       new PackratResolveConflictDialog(
-            createConflictsFromActions(restoreActions, snapshotActions), 
+            createConflictsFromActions(restoreActions, snapshotActions),
             new OperationWithInput<PackratConflictResolution>()
             {
                @Override
@@ -1141,7 +1140,7 @@ public class Packages
                {
                   if (input == PackratConflictResolution.Library)
                   {
-                     packratUtil_.executePackratFunction("restore", 
+                     packratUtil_.executePackratFunction("restore",
                            "prompt = FALSE");
                   }
                   else if (input == PackratConflictResolution.Snapshot)
@@ -1152,7 +1151,7 @@ public class Packages
                }
             }).showModal();
    }
-   
+
    private TreeMap<String, PackratPackageAction> createMapFromActions(
          JsArray<PackratPackageAction> actions)
    {
@@ -1165,29 +1164,29 @@ public class Packages
    }
 
    private ArrayList<PackratConflictActions> createConflictsFromActions(
-         JsArray<PackratPackageAction> restoreActions, 
+         JsArray<PackratPackageAction> restoreActions,
          JsArray<PackratPackageAction> snapshotActions)
    {
       // build a map of all the package actions
       ArrayList<PackratConflictActions> conflicts = new ArrayList<>();
-      TreeMap<String, PackratPackageAction> restoreMap = 
+      TreeMap<String, PackratPackageAction> restoreMap =
             createMapFromActions(restoreActions);
-      TreeMap<String, PackratPackageAction> snapshotMap = 
+      TreeMap<String, PackratPackageAction> snapshotMap =
             createMapFromActions(snapshotActions);
 
       // build a union of all affected package names
       Set<String> packageNames = new TreeSet<>();
       getPackageNamesFromActions(restoreActions, packageNames);
       getPackageNamesFromActions(snapshotActions, packageNames);
-      
+
       // find the action for each package
       for (String packageName: packageNames)
       {
          conflicts.add(PackratConflictActions.create(
                packageName,
-               snapshotMap.containsKey(packageName) ? 
+               snapshotMap.containsKey(packageName) ?
                      snapshotMap.get(packageName).getMessage() : "",
-               restoreMap.containsKey(packageName) ? 
+               restoreMap.containsKey(packageName) ?
                      restoreMap.get(packageName).getMessage() : ""));
       }
 
@@ -1199,7 +1198,7 @@ public class Packages
       String cmd = "remove.packages(";
       if (actions.size() == 1)
          cmd += "\"" + actions.get(0).getPackage() +"\"";
-      else 
+      else
       {
          cmd += "c(";
          for (int i = 0; i < actions.size(); i++)
@@ -1225,17 +1224,17 @@ public class Packages
          public int compare(PackageInfo o1, PackageInfo o2)
          {
             // sort first by library, then by name
-            int library = 
+            int library =
                   PackageLibraryUtils.typeOfLibrary(
                         session_, o1.getLibrary()).compareTo(
                   PackageLibraryUtils.typeOfLibrary(
                         session_, o2.getLibrary()));
-            return library == 0 ? 
+            return library == 0 ?
                   o1.getName().compareToIgnoreCase(o2.getName()) :
                   library;
          }
       });
-      
+
       // Mark  which packages are first in their respective libraries (used
       // later to render headers)
       PackageLibraryType libraryType = PackageLibraryType.None;
@@ -1249,12 +1248,12 @@ public class Packages
             libraryType = pkgLibraryType;
          }
       }
-      
+
       projectContext_ = newState.getProjectContext();
       view_.setProgress(false);
       setViewPackageList();
    }
-   
+
    private void getPackageNamesFromActions(
          JsArray<PackratPackageAction> actions,
          Set<String> pkgNames)
@@ -1265,7 +1264,7 @@ public class Packages
       for (int i = 0; i < actions.length(); i++)
          pkgNames.add(actions.get(i).getPackage());
    }
-   
+
    private final Display view_;
    private final PackagesServerOperations server_;
    private final PackratServerOperations packratServer_;
@@ -1282,6 +1281,6 @@ public class Packages
    private final Provider<FileDialogs> pFileDialogs_;
    private final DefaultCRANMirror defaultCRANMirror_;
    private final Session session_;
-   private PackageInstallOptions installOptions_ = 
+   private PackageInstallOptions installOptions_ =
                                   PackageInstallOptions.create(true, "", true);
 }

@@ -14,34 +14,40 @@
  */
 package org.rstudio.studio.client.workbench.views.files.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 
-public class FileChangeEvent extends GwtEvent<FileChangeHandler>
+public class FileChangeEvent extends GwtEvent<FileChangeEvent.Handler>
 {
-   public static final GwtEvent.Type<FileChangeHandler> TYPE = new GwtEvent.Type<>();
-   
+   public static final Type<Handler> TYPE = new Type<>();
+
+   public interface Handler extends EventHandler
+   {
+      void onFileChange(FileChangeEvent event);
+   }
+
    public FileChangeEvent(FileChange fileChange)
    {
       fileChange_ = fileChange;
    }
-   
+
    public FileChange getFileChange()
    {
       return fileChange_;
    }
-   
+
    @Override
-   protected void dispatch(FileChangeHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onFileChange(this);
    }
 
    @Override
-   public GwtEvent.Type<FileChangeHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
-   
+
    private final FileChange fileChange_;
 }

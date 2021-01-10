@@ -23,7 +23,6 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.HTMLCapabilities;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedEvent;
-import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedHandler;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -49,9 +48,9 @@ public class FileTypeCommands
                            final HTMLPreviewServerOperations server)
    {
       session_ = session;
-          
+
       eventBus.addHandler(PackageStateChangedEvent.TYPE,
-                          new PackageStateChangedHandler() {
+                          new PackageStateChangedEvent.Handler() {
          @Override
          public void onPackageStateChanged(PackageStateChangedEvent e)
          {
@@ -72,7 +71,7 @@ public class FileTypeCommands
          }
       });
    }
-   
+
    public TextFileType[] statusBarFileTypes()
    {
       return new TextFileType[] {
@@ -101,22 +100,22 @@ public class FileTypeCommands
             FileTypeRegistry.STAN
       };
    }
-   
+
    public HTMLCapabilities getHTMLCapabiliites()
    {
       if (htmlCapabilities_ == null)
          setHTMLCapabilities(session_.getSessionInfo().getHTMLCapabilities());
-      
+
       return htmlCapabilities_;
    }
-   
+
    public void setHTMLCapabilities(HTMLCapabilities caps)
    {
       htmlCapabilities_ = caps;
    }
-   
+
    private final Session session_;
-   
+
    private HTMLCapabilities htmlCapabilities_;
 
 }

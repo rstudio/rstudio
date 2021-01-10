@@ -53,9 +53,7 @@ import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleResetHistoryEvent;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.history.events.FetchCommandsEvent;
-import org.rstudio.studio.client.workbench.views.history.events.FetchCommandsHandler;
 import org.rstudio.studio.client.workbench.views.history.events.HistoryEntriesAddedEvent;
-import org.rstudio.studio.client.workbench.views.history.events.HistoryEntriesAddedHandler;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryServerOperations;
 import org.rstudio.studio.client.workbench.views.source.events.InsertSourceEvent;
@@ -63,7 +61,7 @@ import org.rstudio.studio.client.workbench.views.source.events.InsertSourceEvent
 import java.util.ArrayList;
 
 public class History extends BasePresenter implements SelectionCommitEvent.Handler<Void>,
-                                                      FetchCommandsHandler
+                                                      FetchCommandsEvent.Handler
 {
    public interface SearchBoxDisplay extends HasValueChangeHandlers<String>
    {
@@ -107,7 +105,7 @@ public class History extends BasePresenter implements SelectionCommitEvent.Handl
 
       ArrayList<String> getSelectedCommands();
       ArrayList<Long> getSelectedCommandIndexes();
-      HandlerRegistration addFetchCommandsHandler(FetchCommandsHandler handler);
+      HandlerRegistration addFetchCommandsHandler(FetchCommandsEvent.Handler handler);
       void setMoreCommands(long moreCommands);
       SearchBoxDisplay getSearchBox();
       Mode getMode();
@@ -258,7 +256,7 @@ public class History extends BasePresenter implements SelectionCommitEvent.Handl
          }
       });
 
-      events_.addHandler(HistoryEntriesAddedEvent.TYPE, new HistoryEntriesAddedHandler()
+      events_.addHandler(HistoryEntriesAddedEvent.TYPE, new HistoryEntriesAddedEvent.Handler()
       {
          public void onHistoryEntriesAdded(HistoryEntriesAddedEvent event)
          {
