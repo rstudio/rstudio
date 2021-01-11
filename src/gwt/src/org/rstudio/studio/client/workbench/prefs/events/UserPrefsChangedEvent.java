@@ -14,16 +14,22 @@
  */
 package org.rstudio.studio.client.workbench.prefs.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import org.rstudio.core.client.js.JavaScriptSerializable;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.workbench.prefs.model.PrefLayer;
 
 @JavaScriptSerializable
-public class UserPrefsChangedEvent extends CrossWindowEvent<UserPrefsChangedHandler>
+public class UserPrefsChangedEvent extends CrossWindowEvent<UserPrefsChangedEvent.Handler>
 {
-   public static final Type<UserPrefsChangedHandler> TYPE = new Type<>();
-   
+   public static final Type<Handler> TYPE = new Type<>();
+
+   public interface Handler extends EventHandler
+   {
+      void onUserPrefsChanged(UserPrefsChangedEvent e);
+   }
+
    public UserPrefsChangedEvent()
    {
    }
@@ -37,20 +43,20 @@ public class UserPrefsChangedEvent extends CrossWindowEvent<UserPrefsChangedHand
    {
       return data_.getName();
    }
-   
+
    public JsObject getValues()
    {
       return data_.getValues();
    }
 
    @Override
-   public Type<UserPrefsChangedHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
 
    @Override
-   protected void dispatch(UserPrefsChangedHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onUserPrefsChanged(this);
    }

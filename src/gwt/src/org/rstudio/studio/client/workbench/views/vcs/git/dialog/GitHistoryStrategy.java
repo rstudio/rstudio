@@ -28,7 +28,7 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.vcs.common.Pager;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.DiffParser;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.UnifiedParser;
-import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.CommitInfo;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryStrategy;
 import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
@@ -95,21 +95,21 @@ public class GitHistoryStrategy implements HistoryStrategy
    {
       server_.gitShowFile(revision, filename, requestCallback);
    }
-   
+
    @Override
-   public void saveFileAs(String revision, 
-                          String source, 
+   public void saveFileAs(String revision,
+                          String source,
                           String destination,
                           ProgressIndicator indicator)
    {
-      server_.gitExportFile(revision, 
-                            source, 
+      server_.gitExportFile(revision,
+                            source,
                             destination,
                             new VoidServerRequestCallback(indicator));
    }
 
    @Override
-   public HandlerRegistration addVcsRefreshHandler(VcsRefreshHandler handler)
+   public HandlerRegistration addVcsRefreshHandler(VcsRefreshEvent.Handler handler)
    {
       return pVcsState_.get().addVcsRefreshHandler(handler, false);
    }
@@ -164,7 +164,7 @@ public class GitHistoryStrategy implements HistoryStrategy
    {
       return new UnifiedParser(commitDiff);
    }
-   
+
    @Override
    public boolean getShowHistoryErrors()
    {

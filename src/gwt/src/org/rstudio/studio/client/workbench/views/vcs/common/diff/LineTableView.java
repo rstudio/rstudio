@@ -43,9 +43,7 @@ import org.rstudio.studio.client.workbench.views.vcs.common.diff.Line.Type;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTablePresenter.Display;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.DiffChunkActionEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.DiffChunkActionEvent.Action;
-import org.rstudio.studio.client.workbench.views.vcs.common.events.DiffChunkActionHandler;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.DiffLinesActionEvent;
-import org.rstudio.studio.client.workbench.views.vcs.common.events.DiffLinesActionHandler;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -522,13 +520,13 @@ public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements 
    }
 
    @Override
-   public HandlerRegistration addDiffChunkActionHandler(DiffChunkActionHandler handler)
+   public HandlerRegistration addDiffChunkActionHandler(DiffChunkActionEvent.Handler handler)
    {
       return addHandler(handler, DiffChunkActionEvent.TYPE);
    }
 
    @Override
-   public HandlerRegistration addDiffLineActionHandler(DiffLinesActionHandler handler)
+   public HandlerRegistration addDiffLineActionHandler(DiffLinesActionEvent.Handler handler)
    {
       return addHandler(handler, DiffLinesActionEvent.TYPE);
    }

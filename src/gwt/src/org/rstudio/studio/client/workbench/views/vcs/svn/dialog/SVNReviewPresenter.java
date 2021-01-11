@@ -117,8 +117,8 @@ public class SVNReviewPresenter implements ReviewPresenter
       }
    }
 
-   private class ApplyPatchHandler implements DiffChunkActionHandler,
-                                              DiffLinesActionHandler
+   private class ApplyPatchHandler implements DiffChunkActionEvent.Handler,
+                                              DiffLinesActionEvent.Handler
    {
       @Override
       public void onDiffChunkAction(DiffChunkActionEvent event)
@@ -180,7 +180,7 @@ public class SVNReviewPresenter implements ReviewPresenter
          @Override
          protected HandlerRegistration doRegister()
          {
-            return svnState_.addVcsRefreshHandler(new VcsRefreshHandler()
+            return svnState_.addVcsRefreshHandler(new VcsRefreshEvent.Handler()
             {
                @Override
                public void onVcsRefresh(VcsRefreshEvent event)

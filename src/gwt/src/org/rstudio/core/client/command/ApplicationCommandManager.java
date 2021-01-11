@@ -27,7 +27,6 @@ import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedHandler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,7 +49,7 @@ public class ApplicationCommandManager
 
       events_.addHandler(
             EditorLoadedEvent.TYPE,
-            new EditorLoadedHandler()
+            new EditorLoadedEvent.Handler()
             {
                @Override
                public void onEditorLoaded(EditorLoadedEvent event)

@@ -162,8 +162,8 @@ public class GitReviewPresenter implements ReviewPresenter
       private final boolean reverse_;
    }
 
-   private class ApplyPatchHandler implements DiffChunkActionHandler,
-                                              DiffLinesActionHandler
+   private class ApplyPatchHandler implements DiffChunkActionEvent.Handler,
+                                              DiffLinesActionEvent.Handler
    {
       @Override
       public void onDiffChunkAction(DiffChunkActionEvent event)
@@ -238,7 +238,7 @@ public class GitReviewPresenter implements ReviewPresenter
          @Override
          protected HandlerRegistration doRegister()
          {
-            return gitState_.addVcsRefreshHandler(new VcsRefreshHandler()
+            return gitState_.addVcsRefreshHandler(new VcsRefreshEvent.Handler()
             {
                @Override
                public void onVcsRefresh(VcsRefreshEvent event)

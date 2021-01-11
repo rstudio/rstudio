@@ -14,10 +14,11 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.common.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.DiffChunkActionEvent.Action;
 
-public class DiffLinesActionEvent extends GwtEvent<DiffLinesActionHandler>
+public class DiffLinesActionEvent extends GwtEvent<DiffLinesActionEvent.Handler>
 {
    public DiffLinesActionEvent(Action action)
    {
@@ -30,18 +31,23 @@ public class DiffLinesActionEvent extends GwtEvent<DiffLinesActionHandler>
    }
 
    @Override
-   public Type<DiffLinesActionHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
 
    @Override
-   protected void dispatch(DiffLinesActionHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onDiffLinesAction(this);
    }
 
    private final Action action_;
 
-   public static final Type<DiffLinesActionHandler> TYPE = new Type<>();
+   public static final Type<Handler> TYPE = new Type<>();
+
+   public interface Handler extends EventHandler
+   {
+      void onDiffLinesAction(DiffLinesActionEvent event);
+   }
 }

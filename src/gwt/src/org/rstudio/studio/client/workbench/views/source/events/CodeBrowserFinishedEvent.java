@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.workbench.views.source.events;
 
 
+import com.google.gwt.event.shared.EventHandler;
 import org.rstudio.core.client.js.JavaScriptSerializable;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
@@ -23,43 +24,48 @@ import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDe
 import com.google.gwt.event.shared.GwtEvent;
 
 @JavaScriptSerializable
-public class CodeBrowserFinishedEvent extends 
-             CrossWindowEvent<CodeBrowserFinishedHandler>
+public class CodeBrowserFinishedEvent extends
+             CrossWindowEvent<CodeBrowserFinishedEvent.Handler>
 {
-   public static final GwtEvent.Type<CodeBrowserFinishedHandler> TYPE = new GwtEvent.Type<>();
-   
+   public static final GwtEvent.Type<Handler> TYPE = new GwtEvent.Type<>();
+
+   public interface Handler extends EventHandler
+   {
+      void onCodeBrowserFinished(CodeBrowserFinishedEvent event);
+   }
+
    public CodeBrowserFinishedEvent()
    {
       this(null);
    }
-   
+
    public CodeBrowserFinishedEvent(SearchPathFunctionDefinition function)
    {
       function_ = function;
    }
-   
+
    public SearchPathFunctionDefinition getFunction()
    {
       return function_;
    }
-   
+
    @Override
-   protected void dispatch(CodeBrowserFinishedHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onCodeBrowserFinished(this);
    }
 
    @Override
-   public GwtEvent.Type<CodeBrowserFinishedHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
-   
+
    @Override
    public boolean forward()
    {
       return false;
    }
-   
-   private SearchPathFunctionDefinition function_;
+
+   private final SearchPathFunctionDefinition function_;
 }

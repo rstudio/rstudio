@@ -33,7 +33,6 @@ import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent.Reason;
-import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
 
 import java.util.ArrayList;
 
@@ -47,7 +46,7 @@ public abstract class VcsState
       globalDisplay_ = globalDisplay;
       session_ = session;
       final HandlerRegistrations registrations = new HandlerRegistrations();
-      registrations.add(eventBus_.addHandler(VcsRefreshEvent.TYPE, new VcsRefreshHandler()
+      registrations.add(eventBus_.addHandler(VcsRefreshEvent.TYPE, new VcsRefreshEvent.Handler()
       {
          @Override
          public void onVcsRefresh(VcsRefreshEvent event)
@@ -137,7 +136,7 @@ public abstract class VcsState
    }
 
    public void bindRefreshHandler(Widget owner,
-                                  final VcsRefreshHandler handler)
+                                  final VcsRefreshEvent.Handler handler)
    {
       new WidgetHandlerRegistration(owner)
       {
@@ -149,12 +148,12 @@ public abstract class VcsState
       };
    }
 
-   public HandlerRegistration addVcsRefreshHandler(VcsRefreshHandler handler)
+   public HandlerRegistration addVcsRefreshHandler(VcsRefreshEvent.Handler handler)
    {
       return addVcsRefreshHandler(handler, true);
    }
 
-   public HandlerRegistration addVcsRefreshHandler(VcsRefreshHandler handler,
+   public HandlerRegistration addVcsRefreshHandler(VcsRefreshEvent.Handler handler,
                                                    boolean fireOnAdd)
    {
       HandlerRegistration hreg = handlers_.addHandler(

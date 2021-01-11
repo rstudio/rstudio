@@ -26,7 +26,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWi
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget.TabKeyMode;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.EditSession;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -47,7 +46,7 @@ public class ConnectionCodePanel extends Composite implements RequiresResize
    {
       this(true);
    }
-   
+
    public ConnectionCodePanel(boolean connectViaUI)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
@@ -90,7 +89,7 @@ public class ConnectionCodePanel extends Composite implements RequiresResize
       connectVia_.addItem("New R Notebook", ConnectionOptions.CONNECT_NEW_R_NOTEBOOK);
       if (BrowseCap.INSTANCE.canCopyToClipboard())
       {
-         connectVia_.addItem("Copy to Clipboard", 
+         connectVia_.addItem("Copy to Clipboard",
                              ConnectionOptions.CONNECT_COPY_TO_CLIPBOARD);
       }
       updateConnectViaUI_.execute();
@@ -109,21 +108,21 @@ public class ConnectionCodePanel extends Composite implements RequiresResize
          container_.add(codeHeaderPanel);
       else
       {
-         // accessibility requires a label for the editor, so put the one we're not using 
+         // accessibility requires a label for the editor, so put the one we're not using
          // into our container
          codeHeaderPanel.remove(codeLabel_);
          container_.add(codeLabel_);
          codeLabel_.setStyleName(ThemeStyles.INSTANCE.visuallyHidden());
       }
-     
+
       initWidget(container_);
    }
-   
+
    @Inject
    public void initialize()
    {
    }
-   
+
    public boolean setConnectVia(String connectVia)
    {
       for (int i = 0; i < connectVia_.getItemCount(); i++)
@@ -136,28 +135,28 @@ public class ConnectionCodePanel extends Composite implements RequiresResize
       }
       return false;
    }
-   
+
    public String getConnectVia()
    {
       return connectVia_.getSelectedValue();
    }
-   
+
    public HandlerRegistration addConnectViaChangeHandler(ChangeHandler handler)
    {
       return connectVia_.addChangeHandler(handler);
    }
-   
+
    public void setCode(String code, String connectVia)
    {
       settingCode_ = true;
-      
+
       // clear existing code viewer
       if (codeViewer_ != null)
       {
          codeViewer_.removeFromParent();
          codeViewer_ = null;
       }
-      
+
       // create new code viewer
       codeViewer_ = new AceEditorWidget(false);
       codeViewer_.setTabKeyMode(TabKeyMode.AlwaysMoveFocus);
@@ -168,13 +167,13 @@ public class ConnectionCodePanel extends Composite implements RequiresResize
       codeViewer_.getEditor().getSession().setUseWrapMode(true);
       codeViewer_.getEditor().getRenderer().setShowGutter(false);
       codeViewer_.getEditor().setReadOnly(false);
-      codeViewer_.addCursorChangedHandler(new CursorChangedHandler() {
+      codeViewer_.addCursorChangedHandler(new CursorChangedEvent.Handler() {
          @Override
          public void onCursorChanged(CursorChangedEvent event)
          {
             EditSession session = codeViewer_.getEditor().getSession();
             String selectedCode = session.getTextRange(session.getSelection().getRange());
-            if (!settingCode_ && selectedCode.trim().equals(session.getValue().trim())) 
+            if (!settingCode_ && selectedCode.trim().equals(session.getValue().trim()))
             {
                setConnectVia(ConnectionOptions.CONNECT_COPY_TO_CLIPBOARD);
             }
@@ -182,7 +181,7 @@ public class ConnectionCodePanel extends Composite implements RequiresResize
       });
       codeViewer_.setCode(code);
       container_.add(codeViewer_);
-      
+
       // update connectVia
       if (connectVia != null)
       {
@@ -192,7 +191,7 @@ public class ConnectionCodePanel extends Composite implements RequiresResize
       onResize();
       settingCode_ = false;
    }
-   
+
    @Override
    public void onResize()
    {
@@ -203,7 +202,7 @@ public class ConnectionCodePanel extends Composite implements RequiresResize
          codeViewer_.forceCursorChange();
       }
    }
-   
+
    public String getCode()
    {
       if (codeViewer_ != null)
@@ -211,14 +210,14 @@ public class ConnectionCodePanel extends Composite implements RequiresResize
       else
          return "";
    }
-   
-   
+
+
    private VerticalPanel container_;
    private ListBox connectVia_;
    private FormLabel codeLabel_;
    private AceEditorWidget codeViewer_;
    private boolean settingCode_ = false;
    private final Command updateConnectViaUI_;
-   
+
    private static NewConnectionShinyHost.Resources RES = NewConnectionShinyHost.RES;
 }

@@ -34,7 +34,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommand;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommandManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedHandler;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
@@ -120,7 +119,7 @@ public class EditorCommandManager
 
       events_.addHandler(
             EditorLoadedEvent.TYPE,
-            new EditorLoadedHandler()
+            new EditorLoadedEvent.Handler()
             {
                @Override
                public void onEditorLoaded(EditorLoadedEvent event)

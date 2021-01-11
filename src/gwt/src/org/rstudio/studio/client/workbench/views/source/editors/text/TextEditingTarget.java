@@ -178,7 +178,6 @@ import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStateCh
 import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionEvent;
-import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionHandler;
 import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.*;
@@ -1928,7 +1927,7 @@ public class TextEditingTarget implements
          }
       });
 
-      docDisplay_.addCursorChangedHandler(new CursorChangedHandler()
+      docDisplay_.addCursorChangedHandler(new CursorChangedEvent.Handler()
       {
          final Timer timer_ = new Timer()
          {
@@ -2142,7 +2141,7 @@ public class TextEditingTarget implements
    private void initStatusBar()
    {
       statusBar_ = view_.getStatusBar();
-      docDisplay_.addCursorChangedHandler(new CursorChangedHandler()
+      docDisplay_.addCursorChangedHandler(new CursorChangedEvent.Handler()
       {
          public void onCursorChanged(CursorChangedEvent event)
          {
@@ -7735,7 +7734,7 @@ public class TextEditingTarget implements
                   final EditingTarget target)
    {
       releaseOnDismiss.add(docDisplay.addRecordNavigationPositionHandler(
-            new RecordNavigationPositionHandler() {
+            new RecordNavigationPositionEvent.Handler() {
               @Override
               public void onRecordNavigationPosition(
                                          RecordNavigationPositionEvent event)

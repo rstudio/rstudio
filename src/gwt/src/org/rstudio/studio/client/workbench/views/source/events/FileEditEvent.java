@@ -14,35 +14,41 @@
  */
 package org.rstudio.studio.client.workbench.views.source.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import org.rstudio.core.client.files.FileSystemItem;
 
-public class FileEditEvent extends GwtEvent<FileEditHandler>
+public class FileEditEvent extends GwtEvent<FileEditEvent.Handler>
 {
-   public static final GwtEvent.Type<FileEditHandler> TYPE = new GwtEvent.Type<>();
-   
+   public static final Type<Handler> TYPE = new Type<>();
+
+   public interface Handler extends EventHandler
+   {
+      void onFileEdit(FileEditEvent event);
+   }
+
    public FileEditEvent(FileSystemItem file)
    {
       file_ = file;
    }
-   
+
    public FileSystemItem getFile()
    {
       return file_;
    }
-   
+
    @Override
-   protected void dispatch(FileEditHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onFileEdit(this);
    }
 
    @Override
-   public GwtEvent.Type<FileEditHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
-   
-   private FileSystemItem file_;
+
+   private final FileSystemItem file_;
 }
 

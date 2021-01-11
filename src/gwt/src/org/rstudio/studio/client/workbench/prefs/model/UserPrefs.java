@@ -44,12 +44,11 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
-import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedHandler;
 import org.rstudio.studio.client.common.GlobalDisplay;
 
 @Singleton
 public class UserPrefs extends UserPrefsComputed
-   implements UserPrefsChangedHandler, DeferredInitCompletedEvent.Handler
+   implements UserPrefsChangedEvent.Handler, DeferredInitCompletedEvent.Handler
 {
    public interface Binder
            extends CommandBinder<Commands, UserPrefs> {}
