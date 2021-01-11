@@ -51,7 +51,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Acti
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.BreakpointMoveEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.BreakpointSetEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CommandClickEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorModeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FindRequestedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasDocumentChangedHandlers;
@@ -60,11 +60,11 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasL
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasRenderFinishedHandlers;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.UndoRedoHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.UndoRedoEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.SpellingDoc;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
-import org.rstudio.studio.client.workbench.views.source.events.SaveFileHandler;
+import org.rstudio.studio.client.workbench.views.source.events.SaveFileEvent;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
@@ -239,9 +239,9 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    HandlerRegistration addEditorBlurHandler(BlurHandler handler);
    HandlerRegistration addCommandClickHandler(CommandClickEvent.Handler handler);
    HandlerRegistration addFindRequestedHandler(FindRequestedEvent.Handler handler);
-   HandlerRegistration addCursorChangedHandler(CursorChangedHandler handler);
+   HandlerRegistration addCursorChangedHandler(CursorChangedEvent.Handler handler);
    HandlerRegistration addEditorModeChangedHandler(EditorModeChangedEvent.Handler handler);
-   HandlerRegistration addSaveCompletedHandler(SaveFileHandler handler);
+   HandlerRegistration addSaveCompletedHandler(SaveFileEvent.Handler handler);
    HandlerRegistration addPasteHandler(PasteEvent.Handler handler);
 
    boolean isScopeTreeReady(int row);
@@ -318,7 +318,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void addCursorBelow();
    void editLinesFromStart();
 
-   HandlerRegistration addUndoRedoHandler(UndoRedoHandler handler);
+   HandlerRegistration addUndoRedoHandler(UndoRedoEvent.Handler handler);
    JavaScriptObject getCleanStateToken();
    boolean checkCleanStateToken(JavaScriptObject token);
 

@@ -77,7 +77,7 @@ import java.util.Set;
 @Singleton
 public class SourceWindowManager implements PopoutDocEvent.Handler,
                                             SourceDocAddedEvent.Handler,
-                                            SourceFileSavedHandler,
+                                            SourceFileSavedEvent.Handler,
                                             CodeBrowserCreatedEvent.Handler,
                                             SatelliteFocusedEvent.Handler,
                                             SatelliteClosedEvent.Handler,

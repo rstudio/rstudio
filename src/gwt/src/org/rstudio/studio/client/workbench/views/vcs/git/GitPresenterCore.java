@@ -37,14 +37,13 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
-import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
 import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
 
 @Singleton
 public class GitPresenterCore
 {
    public interface Binder extends CommandBinder<Commands, GitPresenterCore> {}
-   
+
    @Inject
    public GitPresenterCore(GitServerOperations server,
                            GitState gitState,
@@ -59,10 +58,10 @@ public class GitPresenterCore
       server_ = server;
       gitState_ = gitState;
       pIgnore_ = pIgnore;
-      
+
       commandBinder.bind(commands, this);
 
-      gitState_.addVcsRefreshHandler(new VcsRefreshHandler()
+      gitState_.addVcsRefreshHandler(new VcsRefreshEvent.Handler()
       {
          @Override
          public void onVcsRefresh(VcsRefreshEvent event)
@@ -98,7 +97,7 @@ public class GitPresenterCore
          }
       });
    }
-   
+
    public void onVcsPullRebase()
    {
       server_.gitPullRebase(new SimpleRequestCallback<ConsoleProcess>()
@@ -122,11 +121,11 @@ public class GitPresenterCore
          }
       });
    }
-   
+
    public void onVcsIgnore(ArrayList<StatusAndPath> items)
    {
       ArrayList<String> paths = getPathArray(items);
-     
+
       pIgnore_.get().showDialog(paths, new Ignore.Strategy() {
 
          @Override
@@ -134,19 +133,19 @@ public class GitPresenterCore
          {
             return "Git Ignore";
          }
-         
+
          @Override
          public String getIgnoresCaption()
          {
             return ".gitignore";
          }
-         
+
          @Override
          public String getHelpLinkName()
          {
             return "git_ignore_help";
          }
-         
+
          @Override
          public Ignore.Strategy.Filter getFilter()
          {
@@ -173,9 +172,9 @@ public class GitPresenterCore
             server_.gitSetIgnores(path, ignores, requestCallback);
          }
       });
-      
+
    }
-   
+
    private ArrayList<String> getPathArray(ArrayList<StatusAndPath> items)
    {
       ArrayList<String> paths = new ArrayList<>();
@@ -183,7 +182,7 @@ public class GitPresenterCore
          paths.add(item.getPath());
       return paths;
    }
-    
+
    private final GitServerOperations server_;
    private final GitState gitState_;
    private final Provider<Ignore> pIgnore_;

@@ -37,7 +37,6 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.fileexport.FileExport;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.events.OpenFileInBrowserEvent;
-import org.rstudio.studio.client.common.filetypes.events.OpenFileInBrowserHandler;
 import org.rstudio.studio.client.common.filetypes.events.RenameSourceFileEvent;
 import org.rstudio.studio.client.events.RStudioApiRequestEvent;
 import org.rstudio.studio.client.server.*;
@@ -67,7 +66,7 @@ import java.util.ArrayList;
 public class Files
       extends BasePresenter
       implements FileChangeEvent.Handler,
-                 OpenFileInBrowserHandler,
+                 OpenFileInBrowserEvent.Handler,
                  DirectoryNavigateEvent.Handler,
                  RenameSourceFileEvent.Handler,
                  RStudioApiRequestEvent.Handler

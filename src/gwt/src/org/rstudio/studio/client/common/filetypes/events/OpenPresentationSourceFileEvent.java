@@ -14,43 +14,49 @@
  */
 package org.rstudio.studio.client.common.filetypes.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 
-public class OpenPresentationSourceFileEvent extends GwtEvent<OpenPresentationSourceFileHandler>
+public class OpenPresentationSourceFileEvent extends GwtEvent<OpenPresentationSourceFileEvent.Handler>
 {
-   public static final GwtEvent.Type<OpenPresentationSourceFileHandler> TYPE = new GwtEvent.Type<>();
+   public static final Type<Handler> TYPE = new Type<>();
 
-   public OpenPresentationSourceFileEvent(FileSystemItem file, 
+   public interface Handler extends EventHandler
+   {
+      void onOpenPresentationSourceFile(OpenPresentationSourceFileEvent event);
+   }
+
+   public OpenPresentationSourceFileEvent(FileSystemItem file,
                                           TextFileType fileType,
                                           FilePosition position)
    {
       this(file, fileType, position, null);
    }
-   
-  
-   public OpenPresentationSourceFileEvent(FileSystemItem file, 
+
+
+   public OpenPresentationSourceFileEvent(FileSystemItem file,
                                           TextFileType fileType,
                                           String pattern)
    {
       this(file, fileType, null, pattern);
    }
 
-   
-   public OpenPresentationSourceFileEvent(FileSystemItem file, 
+
+   public OpenPresentationSourceFileEvent(FileSystemItem file,
                                           TextFileType fileType,
-                                          FilePosition position, 
+                                          FilePosition position,
                                           String pattern)
    {
       file_ = file;
       position_ = position;
-      fileType_ = fileType;  
+      fileType_ = fileType;
       pattern_ = pattern;
    }
-   
+
    public FileSystemItem getFile()
    {
       return file_;
@@ -60,29 +66,29 @@ public class OpenPresentationSourceFileEvent extends GwtEvent<OpenPresentationSo
    {
       return fileType_;
    }
-   
+
    public FilePosition getPosition()
    {
       return position_;
    }
-   
+
    public String getPattern()
    {
       return pattern_;
    }
 
    @Override
-   protected void dispatch(OpenPresentationSourceFileHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onOpenPresentationSourceFile(this);
    }
 
    @Override
-   public GwtEvent.Type<OpenPresentationSourceFileHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
-   
+
    private final FileSystemItem file_;
    private final FilePosition position_;
    private final TextFileType fileType_;

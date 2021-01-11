@@ -14,34 +14,40 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 
-public class EditorLoadedEvent extends GwtEvent<EditorLoadedHandler>
+public class EditorLoadedEvent extends GwtEvent<EditorLoadedEvent.Handler>
 {
    public EditorLoadedEvent(AceEditorNative editor)
    {
       editor_ = editor;
    }
-   
+
    public AceEditorNative getEditor()
    {
       return editor_;
    }
-   
+
    private final AceEditorNative editor_;
-   
-   public static final Type<EditorLoadedHandler> TYPE = new Type<>();
+
+   public static final Type<Handler> TYPE = new Type<>();
+
+   public interface Handler extends EventHandler
+   {
+      void onEditorLoaded(EditorLoadedEvent event);
+   }
 
    @Override
-   public Type<EditorLoadedHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
 
    @Override
-   protected void dispatch(EditorLoadedHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onEditorLoaded(this);
    }

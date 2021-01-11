@@ -14,12 +14,18 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 
-public class CursorChangedEvent extends GwtEvent<CursorChangedHandler>
+public class CursorChangedEvent extends GwtEvent<CursorChangedEvent.Handler>
 {
-   public static final Type<CursorChangedHandler> TYPE = new Type<>();
+   public static final Type<Handler> TYPE = new Type<>();
+
+   public interface Handler extends EventHandler
+   {
+      void onCursorChanged(CursorChangedEvent event);
+   }
 
    public CursorChangedEvent(Position position)
    {
@@ -34,13 +40,13 @@ public class CursorChangedEvent extends GwtEvent<CursorChangedHandler>
    private final Position position_;
 
    @Override
-   public Type<CursorChangedHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
 
    @Override
-   protected void dispatch(CursorChangedHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onCursorChanged(this);
    }

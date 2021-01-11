@@ -17,8 +17,8 @@ package org.rstudio.studio.client.workbench.views.vcs.common.diff;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import org.rstudio.studio.client.common.vcs.GitServerOperations.PatchMode;
-import org.rstudio.studio.client.workbench.views.vcs.common.events.DiffChunkActionHandler;
-import org.rstudio.studio.client.workbench.views.vcs.common.events.DiffLinesActionHandler;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.DiffChunkActionEvent;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.DiffLinesActionEvent;
 
 import java.util.ArrayList;
 
@@ -33,8 +33,8 @@ public class LineTablePresenter
 
       void setShowActions(boolean showActions);
 
-      HandlerRegistration addDiffChunkActionHandler(DiffChunkActionHandler handler);
-      HandlerRegistration addDiffLineActionHandler(DiffLinesActionHandler handler);
+      HandlerRegistration addDiffChunkActionHandler(DiffChunkActionEvent.Handler handler);
+      HandlerRegistration addDiffLineActionHandler(DiffLinesActionEvent.Handler handler);
 
       HandlerRegistration addSelectionChangeHandler(SelectionChangeEvent.Handler handler);
    }

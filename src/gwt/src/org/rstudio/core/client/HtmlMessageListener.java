@@ -27,7 +27,6 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
-import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedHandler;
 import org.rstudio.studio.client.workbench.prefs.model.PrefLayer;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
@@ -45,10 +44,10 @@ public class HtmlMessageListener
       fileTypeRegistry_ = fileTypeRegistry;
       pUserPrefs_ = pUIPrefs;
       themeSources_ = new ArrayList<>();
-      
+
       initializeMessageListeners();
 
-      eventBus.addHandler(UserPrefsChangedEvent.TYPE, new UserPrefsChangedHandler() 
+      eventBus.addHandler(UserPrefsChangedEvent.TYPE, new UserPrefsChangedEvent.Handler()
       {
          @Override
          public void onUserPrefsChanged(UserPrefsChangedEvent e)
@@ -79,19 +78,19 @@ public class HtmlMessageListener
    private native static String getOrigin() /*-{
      return $wnd.location.origin;
    }-*/;
-   
+
    public void setUrl(String url)
    {
       url_ = url;
    }
-   
+
    public static String getCurrentDomain()
    {
       if (htmlMessageListener_ == null) return "";
 
       return getDomainFromUrl(htmlMessageListener_.url_);
    }
-   
+
    private void openFileFromMessage(final String file,
                                     final int line,
                                     final int column,
@@ -133,7 +132,7 @@ public class HtmlMessageListener
    {
       htmlMessageListener_.registerThemeOriginImpl(source, origin);
    }
-   
+
    private native static void initializeMessageListeners() /*-{
       var handler = $entry(function(e) {
          var domain = @org.rstudio.core.client.HtmlMessageListener::getCurrentDomain()();
@@ -143,7 +142,7 @@ public class HtmlMessageListener
             return;
          if (e.data.source != "r2d3")
             return;
-            
+
          if (e.data.message === "openfile") {
             @org.rstudio.core.client.HtmlMessageListener::onOpenFileFromMessage(Ljava/lang/String;IIZ)(
                e.data.file,
@@ -164,17 +163,17 @@ public class HtmlMessageListener
          message: "ontheme"
       }, origin);
    }-*/;
-   
+
    public String getOriginDomain()
    {
       return getDomainFromUrl(getOrigin());
    }
-   
+
    public void allowOpenOnLoad()
    {
       highlightAllowed_ = true;
    }
-   
+
    private final FileTypeRegistry fileTypeRegistry_;
    private static HtmlMessageListener htmlMessageListener_;
    private Provider<UserPrefs> pUserPrefs_;

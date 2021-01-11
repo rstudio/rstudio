@@ -24,7 +24,6 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import org.rstudio.studio.client.common.ReadOnlyValue;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.UndoRedoEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.UndoRedoHandler;
 
 public class DirtyState implements ReadOnlyValue<Boolean>
 {
@@ -37,7 +36,7 @@ public class DirtyState implements ReadOnlyValue<Boolean>
       else
          markClean();
 
-      editor_.addUndoRedoHandler(new UndoRedoHandler()
+      editor_.addUndoRedoHandler(new UndoRedoEvent.Handler()
       {
          public void onUndoRedo(UndoRedoEvent event)
          {

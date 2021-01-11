@@ -23,7 +23,6 @@ import org.rstudio.core.client.cellview.TriStateCheckboxCell;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.StageUnstageEvent;
-import org.rstudio.studio.client.workbench.views.vcs.common.events.StageUnstageHandler;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -97,7 +96,7 @@ public class GitChangelistTable extends ChangelistTable
       super.configureTable();
    }
 
-   public HandlerRegistration addStageUnstageHandler(StageUnstageHandler handler)
+   public HandlerRegistration addStageUnstageHandler(StageUnstageEvent.Handler handler)
    {
       return addHandler(handler, StageUnstageEvent.TYPE);
    }

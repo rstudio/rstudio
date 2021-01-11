@@ -14,32 +14,37 @@
  */
 package org.rstudio.studio.client.workbench.views.source.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import org.rstudio.core.client.DebugFilePosition;
 import org.rstudio.core.client.js.JavaScriptSerializable;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 
-import com.google.gwt.event.shared.GwtEvent;
 
 @JavaScriptSerializable
-public class CodeBrowserNavigationEvent 
-             extends CrossWindowEvent<CodeBrowserNavigationHandler>
+public class CodeBrowserNavigationEvent
+             extends CrossWindowEvent<CodeBrowserNavigationEvent.Handler>
 {
-   public static final GwtEvent.Type<CodeBrowserNavigationHandler> TYPE = new GwtEvent.Type<>();
+   public static final Type<Handler> TYPE = new Type<>();
+
+   public interface Handler extends EventHandler
+   {
+      void onCodeBrowserNavigation(CodeBrowserNavigationEvent event);
+   }
 
    public CodeBrowserNavigationEvent()
    {
       this(null);
    }
-   
+
    public CodeBrowserNavigationEvent(SearchPathFunctionDefinition function)
    {
       this(function, null, false, false);
    }
-   
+
    public CodeBrowserNavigationEvent(SearchPathFunctionDefinition function,
                                      DebugFilePosition debugPosition,
-                                     boolean executing, 
+                                     boolean executing,
                                      boolean serverDispatched)
    {
       function_ = function;
@@ -47,39 +52,39 @@ public class CodeBrowserNavigationEvent
       executing_ = executing;
       serverDispatched_ = serverDispatched;
    }
-   
+
    public SearchPathFunctionDefinition getFunction()
    {
       return function_;
    }
-   
+
    public DebugFilePosition getDebugPosition()
    {
       return debugPosition_;
    }
-   
+
    public boolean getExecuting()
    {
-      return executing_; 
+      return executing_;
    }
-   
+
    public boolean serverDispatched()
    {
       return serverDispatched_;
    }
-   
+
    @Override
-   protected void dispatch(CodeBrowserNavigationHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onCodeBrowserNavigation(this);
    }
 
    @Override
-   public GwtEvent.Type<CodeBrowserNavigationHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
-   
+
    @Override
    public boolean forward()
    {

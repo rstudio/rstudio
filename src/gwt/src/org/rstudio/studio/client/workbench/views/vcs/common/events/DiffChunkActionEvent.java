@@ -14,10 +14,11 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.common.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.DiffChunk;
 
-public class DiffChunkActionEvent extends GwtEvent<DiffChunkActionHandler>
+public class DiffChunkActionEvent extends GwtEvent<DiffChunkActionEvent.Handler>
 {
    public enum Action
    {
@@ -43,19 +44,25 @@ public class DiffChunkActionEvent extends GwtEvent<DiffChunkActionHandler>
    }
 
    @Override
-   public Type<DiffChunkActionHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
 
    @Override
-   protected void dispatch(DiffChunkActionHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onDiffChunkAction(this);
    }
 
-   private Action action_;
-   private DiffChunk diffChunk_;
+   private final Action action_;
+   private final DiffChunk diffChunk_;
 
-   public static final Type<DiffChunkActionHandler> TYPE = new Type<>();
+   public static final Type<Handler> TYPE = new Type<>();
+
+   public interface Handler extends EventHandler
+   {
+      void onDiffChunkAction(DiffChunkActionEvent event);
+   }
+
 }

@@ -428,8 +428,7 @@ public class AceEditorWidget extends Composite
       uiPrefs_ = uiPrefs;
    }
 
-   public HandlerRegistration addCursorChangedHandler(
-         CursorChangedHandler handler)
+   public HandlerRegistration addCursorChangedHandler(CursorChangedEvent.Handler handler)
    {
       return addHandler(handler, CursorChangedEvent.TYPE);
    }
@@ -585,7 +584,7 @@ public class AceEditorWidget extends Composite
       return addDomHandler(handler, ClickEvent.getType());
    }
 
-   public HandlerRegistration addEditorLoadedHandler(EditorLoadedHandler handler)
+   public HandlerRegistration addEditorLoadedHandler(EditorLoadedEvent.Handler handler)
    {
       return addHandler(handler, EditorLoadedEvent.TYPE);
    }
@@ -636,7 +635,7 @@ public class AceEditorWidget extends Composite
 
    }-*/;
 
-   public HandlerRegistration addUndoRedoHandler(UndoRedoHandler handler)
+   public HandlerRegistration addUndoRedoHandler(UndoRedoEvent.Handler handler)
    {
       return addHandler(handler, UndoRedoEvent.TYPE);
    }
