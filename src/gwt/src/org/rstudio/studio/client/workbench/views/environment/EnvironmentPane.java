@@ -18,8 +18,6 @@ package org.rstudio.studio.client.workbench.views.environment;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.gwt.user.client.ui.HTMLPanel;
-import com.google.gwt.user.client.ui.Label;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.DebugFilePosition;
 import org.rstudio.core.client.ElementIds;
@@ -27,7 +25,6 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeStyles;
-import org.rstudio.core.client.widget.MiniPieWidget;
 import org.rstudio.core.client.widget.MonitoringMenuItem;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.SearchWidget;
@@ -36,7 +33,6 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
-import org.rstudio.core.client.widget.UserPrefMenuItem;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SuspendAndRestartEvent;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
@@ -57,11 +53,11 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.environment.events.MemoryUsageChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentContextData;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
-import org.rstudio.studio.client.workbench.views.environment.model.MemoryUsage;
 import org.rstudio.studio.client.workbench.views.environment.model.ObjectContents;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentObjects;
@@ -87,7 +83,8 @@ public class EnvironmentPane extends WorkbenchPane
                                         EnvironmentObjectsObserver,
                                         SessionInitEvent.Handler,
                                         ReticulateEvent.Handler,
-                                        SuspendAndRestartEvent.Handler
+                                        SuspendAndRestartEvent.Handler,
+                                        MemoryUsageChangedEvent.Handler
 {
    @Inject
    public EnvironmentPane(Commands commands,
@@ -131,6 +128,7 @@ public class EnvironmentPane extends WorkbenchPane
       events.addHandler(SessionInitEvent.TYPE, this);
       events.addHandler(ReticulateEvent.TYPE, this);
       events.addHandler(SuspendAndRestartEvent.TYPE, this);
+      events.addHandler(MemoryUsageChangedEvent.TYPE, this);
 
       ensureWidget();
    }
@@ -729,6 +727,12 @@ public class EnvironmentPane extends WorkbenchPane
    public void onSuspendAndRestart(SuspendAndRestartEvent event)
    {
       setActiveLanguage("R", false);
+   }
+
+   @Override
+   public void onMemoryUsageChanged(MemoryUsageChangedEvent event)
+   {
+      memUsage_.setMemoryUsage(event.getMemoryUsage());
    }
 
    // An extension of the toolbar popup menu that gets environment names from

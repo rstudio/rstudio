@@ -37,7 +37,7 @@ void emitMemoryChangedEvent()
    }
    else
    {
-      ClientEvent event(client_events::kMemoryChangedEvent, pUsage->toJson());
+      ClientEvent event(client_events::kMemoryUsageChanged, pUsage->toJson());
       module_context::enqueClientEvent(event);
    }
 }

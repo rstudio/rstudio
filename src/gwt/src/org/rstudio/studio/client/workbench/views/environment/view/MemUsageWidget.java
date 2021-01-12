@@ -59,6 +59,15 @@ public class MemUsageWidget extends Composite
 
       setMemoryUsage(usage);
 
+      prefs.showMemoryUsage().addValueChangeHandler(evt ->
+      {
+         // Clear memory usage display immediately when turned off
+         if (!evt.getValue())
+         {
+            setMemoryUsage(null);
+         }
+      });
+
       initWidget(host_);
    }
 
