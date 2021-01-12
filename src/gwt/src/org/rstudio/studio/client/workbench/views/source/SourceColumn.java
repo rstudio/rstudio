@@ -215,22 +215,22 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
    public void manageChevronVisibility()
    {
-	   display_.manageChevronVisibility();
+      display_.manageChevronVisibility();
    }
 
    public void moveTab(int index, int delta)
    {
-	   display_.moveTab(index, delta);
+      display_.moveTab(index, delta);
    }
 
    public void selectTab(Widget widget)
    {
-	   display_.selectTab(widget);
+      display_.selectTab(widget);
    }
 
    public void showOverflowPopout()
    {
-	   display_.showOverflowPopup();
+      display_.showOverflowPopup();
    }
 
    public void showUnsavedChangesDialog(
@@ -1283,7 +1283,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
    private boolean isActive()
    {
-	   return manager_.getActive() == this;
+      return manager_.getActive() == this;
    }
 
    private Commands commands_;

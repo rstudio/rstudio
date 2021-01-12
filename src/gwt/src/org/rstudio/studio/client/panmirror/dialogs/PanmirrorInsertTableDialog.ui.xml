@@ -6,22 +6,22 @@
    <ui:with field="res" type="org.rstudio.studio.client.panmirror.dialogs.PanmirrorDialogsResources" />
    <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
    <ui:style>
-      
+
       .column {
          width: 175px;
       }
-      
+
       .caption {
          width: 335px;
       }
-	  
+
       .header input[type="checkbox"] {
-         margin-right: 5px; 
-      }  
+         margin-right: 5px;
+      }
    </ui:style>
-   
+
    <g:VerticalPanel styleName="{res.styles.dialog}">
-   
+
       <rw:LayoutGrid styleName="{res.styles.spaced}">
          <rw:row>
             <rw:customCell styleName="{style.column}">
@@ -32,16 +32,16 @@
             </rw:customCell>
          </rw:row>
       </rw:LayoutGrid>
-    
+
       <rw:FormLabel for="{ElementIds.getVisualMdInsertTableCaption}" text="Caption:" ui:field="captionLabel_"></rw:FormLabel>
       <rw:TextBoxWithCue elementId="{ElementIds.getVisualMdInsertTableCaption}" cueText="(Optional)" styleName="{style.caption} {res.styles.spaced}" ui:field="caption_"/>
-          
-      <g:cell><g:Label></g:Label></g:cell>  
-          
-      <g:CheckBox styleName="{res.styles.checkBox} {res.styles.spaced}" text="Include table header" ui:field="header_"></g:CheckBox>
-        
 
-      	
+      <g:cell><g:Label></g:Label></g:cell>
+
+      <g:CheckBox styleName="{res.styles.checkBox} {res.styles.spaced}" text="Include table header" ui:field="header_"></g:CheckBox>
+
+
+
    </g:VerticalPanel>
 
-</ui:UiBinder> 
+</ui:UiBinder>

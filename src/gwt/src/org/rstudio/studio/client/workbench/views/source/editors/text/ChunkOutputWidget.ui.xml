@@ -2,7 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
    xmlns:g="urn:import:com.google.gwt.user.client.ui"
    xmlns:txt="urn:import:org.rstudio.studio.client.workbench.views.source.editors.text">
-   
+
    <ui:with field="res" type="org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget.Resources"/>
 
    <ui:data field="collapseChunkIcon2x" src="CollapseChunkIcon_2x.png"/>
@@ -11,19 +11,19 @@
    <ui:data field="removeChunkIconDark2x" src="RemoveChunkIconDark_2x.png"/>
 
    <ui:style type="org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget.ChunkStyle">
-   
+
    @external editor_dark;
 
    @url COLLAPSE_LIGHT collapseChunkIcon2x;
    @url COLLAPSE_DARK collapseChunkIconDark2x;
    @url REMOVE_LIGHT removeChunkIcon2x;
    @url REMOVE_DARK removeChunkIconDark2x;
-   
+
    .fullsize
    {
       padding: 0;
    }
-   
+
    .baresize
    {
       padding-top: 5px;
@@ -44,33 +44,33 @@
       width: 11px;
       height: 10px;
    }
-   
+
    .clearIcon
    {
-	  background-image: REMOVE_LIGHT;
+     background-image: REMOVE_LIGHT;
    }
-   
+
    .editor_dark .clearIcon
    {
-	  background-image: REMOVE_DARK;
+     background-image: REMOVE_DARK;
    }
- 
+
    .expandIcon
    {
-	  background-image: COLLAPSE_LIGHT;
+     background-image: COLLAPSE_LIGHT;
    }
-   
+
    .editor_dark .expandIcon
    {
-	  background-image: COLLAPSE_DARK;
+     background-image: COLLAPSE_DARK;
    }
- 
+
    .expand
    {
       width: 11px !important;
       height: 10px !important;
    }
-   
+
    .baresize .clear, .baresize .expand, .baresize .popout
    {
       top: 7px;
@@ -80,7 +80,7 @@
    {
       display: none;
    }
-   
+
    .clear
    {
       right: 12px;
@@ -89,24 +89,24 @@
       width: 11px !important;
       height: 10px !important;
    }
-   
+
    .noclear .clear
    {
       display: none;
    }
-   
-   .expand 
+
+   .expand
    {
       right: 35px;
       transition: transform 400ms ease, -webkit-transform 400ms ease;
    }
-   
+
    .noclear .expand
    {
       right: 12px;
    }
 
-   .popout 
+   .popout
    {
       right: 58px;
       width: 14px;
@@ -114,18 +114,18 @@
       top: 0px;
       opacity: 0.7;
    }
-   
+
    .collapsed .expand
    {
       transform: rotate(180deg);
       -webkit-transform: rotate(180deg);
    }
-   
+
    .overflowY .clear
    {
       right: 25px;
    }
-   
+
    .overflowY .expand
    {
       right: 48px;
@@ -135,23 +135,23 @@
    {
       right: 71px;
    }
-   
+
    div.outer.embedded {
-	  line-height: 0;
-	  top: 3px;
+     line-height: 0;
+     top: 3px;
    }
-   
+
    .embedded .frame {
-	  border: none;
+     border: none;
    }
-   
+
    .frame
    {
       border: 1px solid #e5e5e5;
       padding-top: 10px;
       overflow: hidden;
    }
-   
+
    .embedded .root {
       line-height: normal;
    }
@@ -167,7 +167,7 @@
       padding-bottom: 20px;
       border-width: 0;
    }
-   
+
    .outer
    {
       padding-bottom: 7px;
@@ -192,12 +192,12 @@
       padding: 0;
       margin: 0;
    }
-   
-   .root pre 
+
+   .root pre
    {
       margin-bottom: 0px;
    }
-   
+
    .empty
    {
       margin-left: auto;
@@ -207,11 +207,11 @@
       text-align: center;
       font-style: italic;
    }
-   
+
    .collapsed
    {
    }
-   
+
    .expander
    {
       position: absolute;
@@ -228,7 +228,7 @@
       height: 25px;
       cursor: pointer;
    }
-   
+
    .spinner
    {
       display: block;
@@ -242,19 +242,19 @@
       margin: -10px 0 0 -10px;
       transition: opacity 400ms ease;
    }
-   
+
    .pendingResize
    {
       opacity: 0.5;
       transition: opacity 400ms ease;
    }
-   
+
    </ui:style>
    <g:HTMLPanel styleName="{style.outer}">
       <g:HTMLPanel styleName="{style.expander}"
                ui:field="expander_"></g:HTMLPanel>
       <g:HTMLPanel ui:field="frame_" styleName="{style.frame}">
-        <g:Image styleName="{style.popout}" 
+        <g:Image styleName="{style.popout}"
                  resource="{res.popoutIcon2x}"
                  title="Show in New Window"
                  ui:field="popout_"></g:Image>
@@ -263,7 +263,7 @@
                  title="Clear Output">
           <g:HTMLPanel styleName="{style.clearIcon}"></g:HTMLPanel>
         </g:HTMLPanel>
-        <g:HTMLPanel styleName="{style.expand}" 
+        <g:HTMLPanel styleName="{style.expand}"
                  title="Expand/Collapse Output"
                  ui:field="expand_">
           <g:HTMLPanel styleName="{style.expandIcon}"></g:HTMLPanel>
@@ -272,4 +272,4 @@
         </g:SimplePanel>
       </g:HTMLPanel>
    </g:HTMLPanel>
-</ui:UiBinder> 
+</ui:UiBinder>

@@ -33,23 +33,23 @@ public class PanmirrorDOIServer
    public PanmirrorDOIServer() {
       RStudioGinjector.INSTANCE.injectMembers(this);
    }
-   
+
    @Inject
    void initialize(PanmirrorDOIServerOperations server)
    {
       server_ = server;
    }
 
-   
+
    public Promise<JavaScriptObject> fetchCSL(String doi, int delayMs)
    {
       return new Promise<>((ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
          server_.doiFetchCSL(
-        		doi,
+            doi,
             new PromiseServerRequestCallback<>(resolve, reject, "Looking up DOI...", delayMs)
          );
       });
-   }   
+   }
 
 
    PanmirrorDOIServerOperations server_;

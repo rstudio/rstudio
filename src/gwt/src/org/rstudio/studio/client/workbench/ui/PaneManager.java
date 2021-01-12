@@ -1491,7 +1491,7 @@ public class PaneManager
       additionalSourceCount_ = sourceColumnManager_.getSize() - 1;
 
       if (count == additionalSourceCount_)
-    	  return additionalSourceCount_;
+         return additionalSourceCount_;
 
       if (count > additionalSourceCount_)
       {

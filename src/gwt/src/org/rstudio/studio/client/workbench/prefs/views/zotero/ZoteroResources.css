@@ -12,16 +12,16 @@
 }
 
 .apiKeyPanel {
-	margin-top: 4px;
+   margin-top: 4px;
 }
 
 .librariesWidget {
-	margin-top: 4px;
+   margin-top: 4px;
    margin-left: 4px;
 }
 
 .librariesLabel {
- 
+
 }
 
 .librariesList {
@@ -30,12 +30,12 @@
 }
 
 .librariesSelect {
-	margin-bottom: 6px;
+   margin-bottom: 6px;
 }
 
 .librariesSelect .gwt-Label {
-	margin-left: 0;
-	margin-bottom: 0;
+   margin-left: 0;
+   margin-bottom: 0;
 }
 
 

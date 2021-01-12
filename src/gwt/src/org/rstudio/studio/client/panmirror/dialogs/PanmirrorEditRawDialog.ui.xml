@@ -6,34 +6,34 @@
    <ui:with field="res" type="org.rstudio.studio.client.panmirror.dialogs.PanmirrorDialogsResources" />
    <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
    <ui:style>
-     
+
       @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
-	    
+
       .rawDialog {
          width: 400px;
       }
-	    
+
       .formatSelect select {
          width: 100%;
       }
-     
+
       input[type="text"].rawContent {
          font-family: fixedWidthFont;
       }
-     
+
    </ui:style>
-   
+
    <g:HTMLPanel styleName="{res.styles.dialog} {style.rawDialog}">
-   
-      <dialogs:PanmirrorRawFormatSelect elementId="{ElementIds.getVisualMdRawFormatSelect}" 
+
+      <dialogs:PanmirrorRawFormatSelect elementId="{ElementIds.getVisualMdRawFormatSelect}"
                                         styleName="{style.formatSelect} {res.styles.spaced}" ui:field="rawFormatSelect_">
       </dialogs:PanmirrorRawFormatSelect>
-   		
+
       <rw:FormLabel for="{ElementIds.getVisualMdRawContent}" text="Content:" ui:field="rawContentLabel_"/>
       <rw:FormTextBox elementId="{ElementIds.getVisualMdRawContent}" styleName="{style.rawContent} {res.styles.spaced}"
-                 	ui:field="rawContent_">
+                    ui:field="rawContent_">
       </rw:FormTextBox>
-      	
+
    </g:HTMLPanel>
 
-</ui:UiBinder> 
+</ui:UiBinder>
