@@ -23,6 +23,7 @@ import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.core.client.widget.UserPrefMenuItem;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.environment.model.MemoryUsage;
 
@@ -43,10 +44,12 @@ public class MemUsageWidget extends Composite
       host_.add(pie_);
 
       ToolbarPopupMenu memoryMenu = new ToolbarPopupMenu();
+      memoryMenu.addItem(RStudioGinjector.INSTANCE.getCommands().freeUnusedMemory().createMenuItem(false));
+      memoryMenu.addSeparator();
       memoryMenu.addItem(new UserPrefMenuItem<Boolean>(
          prefs_.showMemoryUsage(),
          true,
-         "Show current memory usage",
+         "Show Current Memory Usage",
          prefs_
       ));
 
@@ -55,6 +58,7 @@ public class MemUsageWidget extends Composite
          ToolbarButton.NoTitle,
          (ImageResource) null,
          memoryMenu);
+      menu_.getElement().getStyle().setMarginTop(-2, Style.Unit.PX);
       host_.add(menu_);
 
       setMemoryUsage(usage);

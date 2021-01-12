@@ -388,6 +388,12 @@ public class EnvironmentPresenter extends BasePresenter
       refreshView();
    }
 
+   @Handler
+   void onFreeUnusedMemory()
+   {
+      eventBus_.fireEvent(new SendToConsoleEvent("gc()", true, false));
+   }
+
    void onClearWorkspace()
    {
       view_.bringToFront();
