@@ -673,11 +673,13 @@ private:
    
    void runTinytex(const FilePath& latexFilePath)
    {
+      Error error;
+
       // build arguments
       using Argument = std::pair<std::string, std::string>;
       std::vector<Argument> latexmkArgs;
       
-      std::string file = string_utils::utf8ToSystem(latexFilePath.getAbsolutePathNative());
+      std::string file = latexFilePath.getAbsolutePath();
       latexmkArgs.push_back({std::string(), shell_utils::escape(file)});
       
       std::string engine = string_utils::toLower(prefs::userPrefs().defaultLatexProgram());
@@ -704,10 +706,20 @@ private:
                ", ",
                collapse);
       
-      std::string code = "cat(\"Compiling document with tinytex ... \"); invisible(tinytex::latexmk(" + arguments + "))";
-      
+      std::string code =
+            "cat('Compiling document with tinytex ... ');"
+            "invisible(tinytex::latexmk(" + arguments + "))";
+
+      codePath_ = module_context::tempFile("tinytex-runner-", ".R");
+      error = writeStringToFile(codePath_, code);
+      if (error)
+      {
+         terminateWithError(error.getSummary());
+         return;
+      }
+
       FilePath rScriptPath;
-      Error error = module_context::rScriptPath(&rScriptPath);
+      error = module_context::rScriptPath(&rScriptPath);
       if (error)
       {
          terminateWithError(error.getSummary());
@@ -715,9 +727,9 @@ private:
       }
       
       std::vector<std::string> args;
-      args.push_back("--slave");
-      args.push_back("-e");
-      args.push_back(code);
+      args.push_back("-s");
+      args.push_back("-f");
+      args.push_back(string_utils::utf8ToSystem(codePath_.getAbsolutePath()));
       
       error = compile_pdf_supervisor::runProgram(
                rScriptPath,
@@ -819,6 +831,9 @@ private:
                                 const FilePath& texFilePath,
                                 const rnw_concordance::Concordances& concords = rnw_concordance::Concordances())
    {
+      // remove code file if we had one
+      codePath_.removeIfExists();
+
       // collect errors from the log
       core::tex::LogEntries logEntries;
       getLogEntries(texFilePath, &logEntries);
@@ -907,6 +922,7 @@ private:
 
 private:
    FilePath targetFilePath_;
+   FilePath codePath_;
    std::string encoding_;
    json::Object sourceLocation_;
    const boost::function<void()> onCompleted_;
