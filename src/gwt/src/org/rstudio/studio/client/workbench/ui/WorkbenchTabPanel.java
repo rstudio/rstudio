@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.ui;
 
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -24,6 +25,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.LayoutPanel;
+import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.ProvidesResize;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
@@ -35,6 +37,7 @@ import org.rstudio.core.client.layout.LogicalWindow;
 import org.rstudio.core.client.theme.ModuleTabLayoutPanel;
 import org.rstudio.core.client.theme.WindowFrame;
 import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.core.client.widget.model.ProvidesBusy;
 
 import java.util.ArrayList;
@@ -172,6 +175,32 @@ class WorkbenchTabPanel
          }
       },
       tab instanceof ProvidesBusy ? (ProvidesBusy) tab : null);
+
+      int widgetIndex = tabPanel_.getWidgetIndex(tab);
+      if (widgetIndex >= 0)
+      {
+         // add context menu to the Tab
+         tabPanel_.setTabContextMenuHandler(widgetIndex, contextMenuEvent ->
+         {
+            if (tab.closeable())
+            {
+               final ToolbarPopupMenu menu = new ToolbarPopupMenu();
+               final NativeEvent nativeEvent = contextMenuEvent.getNativeEvent();
+
+               menu.addItem(new MenuItem("Close", () ->
+               {
+                  tab.confirmClose(() -> tab.ensureHidden());
+               }));
+
+               menu.showRelativeTo(nativeEvent.getClientX(), nativeEvent.getClientY());
+            }
+            
+            // a tab that isn't closable will no-op when right-clicked, seems
+            // preferable to bringing up the browser context menu
+            contextMenuEvent.preventDefault();
+            contextMenuEvent.stopPropagation();
+         });
+      }
 
       tab.addEnsureVisibleHandler(ensureVisibleEvent ->
       {

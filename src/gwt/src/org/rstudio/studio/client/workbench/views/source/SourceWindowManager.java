@@ -434,6 +434,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    }
 
    public void closeAllSatelliteDocs(final String caption,
+         final String excludeDocId,
          final Command onCompleted)
    {
       doForAllSourceWindows(new SourceWindowCommand()
@@ -443,7 +444,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                Command continuation)
          {
             window.focus();
-            closeAllDocs(window, caption, continuation);
+            closeAllDocs(window, caption, excludeDocId, continuation);
          }
       },
       new Command()
@@ -1013,8 +1014,9 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    }-*/;
 
    private final native void closeAllDocs(WindowEx satellite, String caption,
+         String excludeDocId,
          Command onCompleted) /*-{
-      satellite.rstudioCloseAllDocs(caption, onCompleted);
+      satellite.rstudioCloseAllDocs(caption, excludeDocId, onCompleted);
    }-*/;
 
    private final native JsArray<UnsavedChangesItem> getUnsavedChanges(

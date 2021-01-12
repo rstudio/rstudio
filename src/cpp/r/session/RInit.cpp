@@ -73,9 +73,9 @@ std::string createAliasedPath(const FilePath& filePath)
    
 Error restoreGlobalEnvFromFile(const std::string& path, std::string* pErrMessage)
 {
-   r::exec::RFunction fn(".rs.restoreGlobalEnvFromFile");
-   fn.addParam(path);
-   return fn.call(pErrMessage);
+   return r::exec::RFunction(".rs.restoreGlobalEnvFromFile")
+         .addParam(path)
+         .call(pErrMessage);
 }
 
 void completeDeferredSessionInit(bool newSession)
@@ -129,7 +129,7 @@ void deferredRestoreNewSession()
       // what they intended
       r::exec::IgnoreInterruptsScope ignoreInterrupts;
 
-      std::string path = string_utils::utf8ToSystem(globalEnvPath.getAbsolutePath());
+      std::string path = globalEnvPath.getAbsolutePath();
       std::string aliasedPath = createAliasedPath(globalEnvPath);
       
       std::string errMessage;

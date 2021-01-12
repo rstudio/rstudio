@@ -92,12 +92,108 @@ oop.inherits(Mode, TextMode);
 
    };
 
-   this.checkOutdent = function(state, line, input) {
+   // outdent the row at 'currentRow', setting its indentation to match
+   // the indentation associated with 'requestRow'
+   this.$performOutdent = function(session, currentRow, requestRow)
+   {
+      var currentLine = session.doc.$lines[currentRow];
+      var requestLine = session.doc.$lines[requestRow];
+
+      var currentIndent = this.$getIndent(currentLine);
+      var requestIndent = this.$getIndent(requestLine);
+
+      if (requestIndent.length < currentIndent.length)
+      {
+         var range = new Range(currentRow, 0, currentRow, currentIndent.length);
+         session.replace(range, requestIndent);
+      }
+
+      return true;
+   };
+
+   this.$autoOutdentElse = function(state, session, row) 
+   {
+      // if we're inserting a colon following an 'else', then outdent
+      var line = session.doc.$lines[row].substring(0, session.selection.cursor.column);
+      var shouldOutdent = /^\s*(?:else|elif)(?:\s|[:])/.test(line);
+      if (!shouldOutdent)
+         return false;
+
+      // 'else' can bind to 'if', 'elif', 'for', and 'try' blocks, so check
+      // for each of these
+      for (var i = row - 1; i >= 0; i--)
+      {
+         var prevLine = session.doc.$lines[i];
+         var foundMatch = /^\s*(?:if|elif|for|try)(?:\s|[:])/.test(prevLine);
+         if (foundMatch)
+         {
+            return this.$performOutdent(session, row, i);
+         }
+      }
+   };
+
+   this.$autoOutdentExceptFinally = function(state, session, row)
+   {
+      // check that this line matches an 'except' or 'finally'
+      var line = session.doc.$lines[row].substring(0, session.selection.cursor.column);
+      var shouldOutdent = /^\s*(?:except|finally)(?:\s|[:])/.test(line);
+      if (!shouldOutdent)
+         return false;
+
+      // 'except' and 'finally' will bind to a paired 'try', so look for that
+      for (var i = row - 1; i >= 0; i--)
+      {
+         var prevLine = session.doc.$lines[i];
+         var foundMatch = /^\s*(?:try)(?:\s|[:])/.test(prevLine);
+         if (foundMatch)
+         {
+            return this.$performOutdent(session, row, i);
+         }
+      }
+
+   };
+
+   this.checkOutdent = function(state, line, input)
+   {
+      this.$lastInput = input;
+      return input === ":" || input === " ";
+   };
+
+   this.$canAutoOutdent = function(state, session, row)
+   {
+      // can't auto-outdent at start of line
+      var cursor = session.selection.cursor;
+      if (cursor.column === 0)
+         return false;
+
+      // if the user inserted a ':', then we can auto-outdent
+      if (this.$lastInput === ":")
+         return true;
+
+      // if the user inserted a space, then attempt to auto-outdent only
+      // if the space was inserted after a keyword
+      if (this.$lastInput === " ")
+      {
+         var token = session.getTokenAt(cursor.row, cursor.column - 1) || {};
+         var isKeyword = /\bkeyword\b/.test(token.type);
+         return isKeyword;
+      }
+
+      // false if no cases above matched
       return false;
    };
 
-   this.autoOutdent = function(state, doc, row) {
-      return;
+   this.autoOutdent = function(state, session, row)
+   {
+      if (!this.$canAutoOutdent(state, session, row))
+         return;
+
+      if (this.$autoOutdentElse(state, session, row) ||
+          this.$autoOutdentExceptFinally(state, session, row))
+      {
+         return;
+      }
+
    };
 
    this.transformAction = function(state, action, editor, session, param) {

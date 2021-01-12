@@ -160,6 +160,10 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
 {
    try
    {
+      // ignore forked sessions
+      if (main_process::wasForked())
+         return R_NilValue;
+      
       // extract name
       std::string name = r::sexp::asString(nameSEXP);
       
