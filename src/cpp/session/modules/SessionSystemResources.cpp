@@ -54,6 +54,14 @@ void onUserSettingsChanged(const std::string& layer, const std::string& pref)
    }
 }
 
+void onDetectChanges(module_context::ChangeSource source)
+{
+   if (prefs::userPrefs().showMemoryUsage())
+   {
+      emitMemoryChangedEvent();
+   }
+}
+
 } // anonymous namespace
 
 json::Object MemoryStat::toJson()
@@ -103,6 +111,8 @@ Error getMemoryUsage(boost::shared_ptr<MemoryUsage> *pMemUsage)
 Error initialize()
 {
    prefs::userPrefs().onChanged.connect(onUserSettingsChanged);
+
+   module_context::events().onDetectChanges.connect(onDetectChanges);
 
    return Success();
 }
