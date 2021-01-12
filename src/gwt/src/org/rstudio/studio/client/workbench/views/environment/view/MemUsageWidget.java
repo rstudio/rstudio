@@ -100,11 +100,11 @@ public class MemUsageWidget extends Composite
 
          String color = "#5f9a91";   // under 70%, green
          if (percent > 90) {
-            color = "#e55037";     // 90% and above, red
+            color = "#e55037";       // 90% and above, red
          } else if (percent > 80) {
-            color = "#e58537";     // 80-90%, orange
-         } else if (percent > 126) {
-            color = "#fcbf49";     // 70-80%, yellow
+            color = "#e58537";       // 80-90%, orange
+         } else if (percent > 70) {
+            color = "#fcbf49";       // 70-80%, yellow
          }
 
          pie_.setPercent((int)percent);
