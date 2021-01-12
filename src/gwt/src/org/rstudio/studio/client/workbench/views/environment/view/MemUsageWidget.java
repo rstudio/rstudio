@@ -38,13 +38,16 @@ public class MemUsageWidget extends Composite
       style.setProperty("display", "flex");
       style.setProperty("flexDirection", "row");
 
-      pie_ = new MiniPieWidget("#00000", "#ffffff", 0);
-      pie_.setHeight("13px");
-      pie_.setWidth("13px");
-      style = pie_.getElement().getStyle();
+      pieCrust_ = new HTMLPanel("");
+      pieCrust_.setHeight("13px");
+      pieCrust_.setWidth("13px");
+      style = pieCrust_.getElement().getStyle();
       style.setMarginTop(3, Style.Unit.PX);
       style.setMarginRight(3, Style.Unit.PX);
-      host_.add(pie_);
+      host_.add(pieCrust_);
+
+      pie_ = new MiniPieWidget("#000000", "#e4e4e4", 0);
+      pieCrust_.add(pie_);
 
       ToolbarPopupMenu memoryMenu = new ToolbarPopupMenu();
       memoryMenu.addItem(RStudioGinjector.INSTANCE.getCommands().freeUnusedMemory().createMenuItem(false));
@@ -57,7 +60,7 @@ public class MemUsageWidget extends Composite
       ));
 
       menu_ = new ToolbarMenuButton(
-         "Mem",
+         "Memory",
          ToolbarButton.NoTitle,
          (ImageResource) null,
          memoryMenu);
@@ -82,23 +85,37 @@ public class MemUsageWidget extends Composite
    {
       if (usage == null)
       {
-         pie_.setVisible(false);
-         menu_.setText("Mem");
+         pieCrust_.setVisible(false);
+         menu_.setText("Memory");
       }
       else
       {
          long percent = Math.round(((usage.getUsed().getKb() * 1.0) / (usage.getTotal().getKb() * 1.0)) * 100);
-         menu_.setText("Mem: " + percent + "%");
          menu_.setTitle("Used by process: " + (usage.getProcess().getKb() / 1024) + " MiB\n" +
             "Total used: " + (usage.getUsed().getKb() / 1024) + " MiB\n" +
             "Total memory: " + (usage.getTotal().getKb() / 1024) + " MiB");
 
+         // These values are chosen to align with those used in rstudio.cloud.
+         menu_.setText((usage.getProcess().getKb() / 1024) + " MiB");
+
+         String color = "#5f9a91";   // under 70%, green
+         if (percent > 90) {
+            color = "#e55037";     // 90% and above, red
+         } else if (percent > 80) {
+            color = "#e58537";     // 80-90%, orange
+         } else if (percent > 126) {
+            color = "#fcbf49";     // 70-80%, yellow
+         }
+
          pie_.setPercent((int)percent);
-         pie_.setVisible(true);
+         pie_.setForeColor(color);
+         pieCrust_.setVisible(true);
+         pieCrust_.getElement().setInnerHTML(pieCrust_.getElement().getInnerHTML());
       }
    }
 
    private final UserPrefs prefs_;
+   private final HTMLPanel pieCrust_;
    private final MiniPieWidget pie_;
    private final ToolbarMenuButton menu_;
    private final HTMLPanel host_;
