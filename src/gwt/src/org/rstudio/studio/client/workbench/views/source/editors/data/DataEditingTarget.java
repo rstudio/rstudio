@@ -214,7 +214,7 @@ public class DataEditingTarget extends UrlContentEditingTarget
       
       final String oldCacheKey = getCacheKey();
 
-      HashMap<String, String> props = new HashMap<String, String>();
+      HashMap<String, String> props = new HashMap<>();
       data.fillProperties(props);
       server_.modifyDocumentProperties(
             doc_.getId(),
@@ -226,7 +226,7 @@ public class DataEditingTarget extends UrlContentEditingTarget
                {
                   server_.removeCachedData(
                         oldCacheKey,
-                        new ErrorLoggingServerRequestCallback<Void>());
+                        new ErrorLoggingServerRequestCallback<>());
 
                   data.fillProperties(doc_.getProperties());
                   reloadDisplay();

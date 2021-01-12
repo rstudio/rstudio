@@ -83,7 +83,7 @@ public class DataTable
             // no suggestions
             callback.onSuggestionsReady(
                   request,
-                  new Response(new ArrayList<Suggestion>()));
+                  new Response(new ArrayList<>()));
          }
       });
       searchWidget_.addValueChangeHandler(new ValueChangeHandler<String>() {

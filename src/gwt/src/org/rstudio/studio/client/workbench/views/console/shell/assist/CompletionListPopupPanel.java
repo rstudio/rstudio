@@ -26,7 +26,7 @@ public class CompletionListPopupPanel<TItem> extends ThemedPopupPanel
    public CompletionListPopupPanel(TItem[] entries)
    {
       super(true);
-      list_ = new CompletionList<TItem>(entries, 10, true, true);
+      list_ = new CompletionList<>(entries, 10, true, true);
       setWidget(list_);
    }
 

@@ -30,7 +30,7 @@ public class LaunchPlumberAPIEvent
    }
 
    public static final GwtEvent.Type<LaunchPlumberAPIEvent.Handler> TYPE =
-      new GwtEvent.Type<LaunchPlumberAPIEvent.Handler>();
+      new GwtEvent.Type<>();
    
    public LaunchPlumberAPIEvent()
    {

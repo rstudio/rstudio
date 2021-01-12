@@ -19,7 +19,6 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.events.OpenDataFileEvent;
-import org.rstudio.studio.client.common.filetypes.events.OpenDataFileHandler;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -34,7 +33,7 @@ public class EnvironmentTab extends DelayLoadWorkbenchTab<EnvironmentPresenter>
 
    public abstract static class Shim
          extends DelayLoadTabShim<EnvironmentPresenter, EnvironmentTab>
-         implements OpenDataFileHandler
+         implements OpenDataFileEvent.Handler
    {
       @Handler
       public abstract void onLoadWorkspace();

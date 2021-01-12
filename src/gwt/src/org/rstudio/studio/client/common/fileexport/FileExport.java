@@ -43,7 +43,7 @@ public class FileExport
    
    public void export(String caption, String description, FileSystemItem file)
    {
-      ArrayList<FileSystemItem> files = new ArrayList<FileSystemItem>();
+      ArrayList<FileSystemItem> files = new ArrayList<>();
       files.add(file);
       export(caption, description, null, files);
    }
@@ -111,7 +111,7 @@ public class FileExport
                   archiveName += ZIP;
                
                // build list of filenames
-               ArrayList<String> filenames = new ArrayList<String>();
+               ArrayList<String> filenames = new ArrayList<>();
                for (FileSystemItem file : files)
                   filenames.add(file.getName());
                

@@ -72,6 +72,6 @@ public class MinimizedModuleTabLayoutPanel
    {
       return addHandler(handler, SelectionEvent.getType());
    }
-   
+
    private final String accessibleName_;
 }

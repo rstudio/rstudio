@@ -14,56 +14,62 @@
  */
 package org.rstudio.studio.client.projects.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import org.rstudio.studio.client.application.model.TutorialApiCallContext;
 
-public class SwitchToProjectEvent extends GwtEvent<SwitchToProjectHandler>
+public class SwitchToProjectEvent extends GwtEvent<SwitchToProjectEvent.Handler>
 {
-   public static final GwtEvent.Type<SwitchToProjectHandler> TYPE = new GwtEvent.Type<>();
-   
+   public static final Type<Handler> TYPE = new Type<>();
+
+   public interface Handler extends EventHandler
+   {
+      void onSwitchToProject(SwitchToProjectEvent event);
+   }
+
    public SwitchToProjectEvent(String project)
    {
       this(project, false);
    }
-   
+
    public SwitchToProjectEvent(String project, boolean forceSaveAll)
    {
       project_ = project;
       forceSaveAll_ = forceSaveAll;
       callContext_ = null;
    }
-   
+
    public SwitchToProjectEvent(String project, boolean forceSaveAll, TutorialApiCallContext callContext)
    {
       project_ = project;
       forceSaveAll_ = forceSaveAll;
       callContext_ = callContext;
    }
-   
+
    public String getProject()
    {
       return project_;
    }
-   
+
    public boolean getForceSaveAll() { return forceSaveAll_; }
-   
+
    public TutorialApiCallContext getCallContext()
    {
       return callContext_;
    }
-   
+
    @Override
-   protected void dispatch(SwitchToProjectHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onSwitchToProject(this);
    }
 
    @Override
-   public GwtEvent.Type<SwitchToProjectHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
-   
+
    private final String project_;
    private final boolean forceSaveAll_;
    private final TutorialApiCallContext callContext_;

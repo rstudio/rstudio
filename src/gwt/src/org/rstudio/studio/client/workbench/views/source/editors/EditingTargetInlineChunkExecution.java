@@ -33,7 +33,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
@@ -55,21 +54,21 @@ public class EditingTargetInlineChunkExecution
       events_.addHandler(ConsoleWriteErrorEvent.TYPE, this);
       events_.addHandler(ChunkExecStateChangedEvent.TYPE, this);
    }
-   
+
    public EditingTargetInlineChunkExecution(DocDisplay display, String docId)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
-      
+
       display_ = display;
       docId_ = docId;
-      outputs_ = new HashMap<String, ChunkInlineOutput>();
+      outputs_ = new HashMap<>();
    }
-   
+
    public void execute(Range range)
    {
       // synthesize an identifier for this chunk execution
       final String chunkId = "i" + StringUtil.makeRandomId(12);
-      
+
       // check to see if we're already showing a panel for this range; if we
       // are, remove it to make way for the new one
       for (ChunkInlineOutput output: outputs_.values())
@@ -92,23 +91,22 @@ public class EditingTargetInlineChunkExecution
             }
          }
       }
-      
+
       // create dummy scope for execution
       Scope scope = Scope.createRScopeNode(
             chunkId,
             range.getStart(),
             range.getEnd(),
             Scope.SCOPE_TYPE_CHUNK);
-      
+
       // create popup panel to host output
-      final ChunkInlineOutput output = new ChunkInlineOutput(chunkId, 
+      final ChunkInlineOutput output = new ChunkInlineOutput(chunkId,
             display_.createAnchoredSelection(range.getStart(), range.getEnd()));
-      
+
       // auto dismiss the panel when the cursor leaves the inline chunk
-      final Mutable<HandlerRegistration> cursorHandler =
-            new Mutable<HandlerRegistration>();
+      final Mutable<HandlerRegistration> cursorHandler = new Mutable<>();
       cursorHandler.set(display_.addCursorChangedHandler(
-            new CursorChangedHandler()
+            new CursorChangedEvent.Handler()
       {
          @Override
          public void onCursorChanged(CursorChangedEvent event)
@@ -138,13 +136,13 @@ public class EditingTargetInlineChunkExecution
       outputs_.put(chunkId, output);
 
       SendToChunkConsoleEvent event =
-            new SendToChunkConsoleEvent(docId_, scope, range, 
+            new SendToChunkConsoleEvent(docId_, scope, range,
                   NotebookQueueUnit.EXEC_SCOPE_INLINE);
       events_.fireEvent(event);
    }
-   
+
    // Handlers ----
-   
+
    @Override
    public void onConsoleWriteError(ConsoleWriteErrorEvent event)
    {
@@ -163,12 +161,12 @@ public class EditingTargetInlineChunkExecution
    public void onChunkExecStateChanged(ChunkExecStateChangedEvent event)
    {
       // ignore if not targeted at one of our chunks
-      if (event.getDocId() != docId_ || 
+      if (event.getDocId() != docId_ ||
           !outputs_.containsKey(event.getChunkId()))
          return;
-      
+
       ChunkInlineOutput output = outputs_.get(event.getChunkId());
-      
+
       if (event.getExecState() == NotebookDocQueue.CHUNK_EXEC_STARTED)
       {
          output.setState(ChunkInlineOutput.State.Started);
@@ -186,7 +184,7 @@ public class EditingTargetInlineChunkExecution
    private final String docId_;
    private final DocDisplay display_;
    private final HashMap<String, ChunkInlineOutput> outputs_;
-   
+
    // Injected ----
    private EventBus events_;
 }

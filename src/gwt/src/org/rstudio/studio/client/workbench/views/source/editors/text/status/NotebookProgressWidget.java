@@ -130,7 +130,7 @@ public class NotebookProgressWidget extends Composite
    public NotebookProgressWidget()
    {
       manager_ = new HandlerManager(this);
-      cancelCommands_ = new ArrayList<Command>();
+      cancelCommands_ = new ArrayList<>();
 
       initWidget(uiBinder.createAndBindUi(this));
       

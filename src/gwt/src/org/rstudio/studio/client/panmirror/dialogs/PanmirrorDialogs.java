@@ -71,7 +71,7 @@ public class PanmirrorDialogs {
    
    public Promise<Boolean> alert(String message, String title, int type) 
    {
-      return new Promise<Boolean>((ResolveCallbackFn<Boolean> resolve, RejectCallbackFn reject) -> {
+      return new Promise<>((ResolveCallbackFn<Boolean> resolve, RejectCallbackFn reject) -> {
          int alertType = MessageDisplay.MSG_INFO;
          switch(type) {
             case AlertType.Info:
@@ -98,7 +98,7 @@ public class PanmirrorDialogs {
    
    public Promise<Boolean> yesNoMessage(String message, String title, int type, String yesLabel, String noLabel) 
    {
-      return new Promise<Boolean>((ResolveCallbackFn<Boolean> resolve, RejectCallbackFn reject) -> {
+      return new Promise<>((ResolveCallbackFn<Boolean> resolve, RejectCallbackFn reject) -> {
          int alertType = MessageDisplay.MSG_INFO;
          switch(type) {
             case AlertType.Info:
@@ -147,7 +147,7 @@ public class PanmirrorDialogs {
    public Promise<PanmirrorLinkEditResult> editLink(
       PanmirrorLinkProps link, PanmirrorLinkTargets targets, PanmirrorLinkCapabilities capabilities)
    {
-      return new Promise<PanmirrorLinkEditResult>(
+      return new Promise<>(
          (ResolveCallbackFn<PanmirrorLinkEditResult> resolve, RejectCallbackFn reject) -> {  
             PanmirrorEditLinkDialog dialog = new PanmirrorEditLinkDialog(link, targets, capabilities,
                (result) -> { resolve.onInvoke(result); }
@@ -159,7 +159,7 @@ public class PanmirrorDialogs {
    
    public Promise<PanmirrorImageProps> editImage(PanmirrorImageProps image, PanmirrorImageDimensions dims, boolean editAttributes)
    {
-      return new Promise<PanmirrorImageProps>(
+      return new Promise<>(
          (ResolveCallbackFn<PanmirrorImageProps> resolve, RejectCallbackFn reject) -> {  
             PanmirrorEditImageDialog dialog = new PanmirrorEditImageDialog(image, dims, editAttributes, uiContext_,
                (result) -> { resolve.onInvoke(result); }
@@ -171,7 +171,7 @@ public class PanmirrorDialogs {
    
    public Promise<PanmirrorCodeBlockProps> editCodeBlock(PanmirrorCodeBlockProps codeBlock, boolean attributes, String[] languages)
    {
-      return new Promise<PanmirrorCodeBlockProps>(
+      return new Promise<>(
          (ResolveCallbackFn<PanmirrorCodeBlockProps> resolve, RejectCallbackFn reject) -> {  
             PanmirrorEditCodeBlockDialog dialog = new PanmirrorEditCodeBlockDialog(codeBlock, attributes, languages,
                (result) -> { resolve.onInvoke(result); }
@@ -184,7 +184,7 @@ public class PanmirrorDialogs {
    public Promise<PanmirrorListProps> editList(PanmirrorListProps props, 
                                                PanmirrorListCapabilities capabilities)
    {
-      return new Promise<PanmirrorListProps>(
+      return new Promise<>(
          (ResolveCallbackFn<PanmirrorListProps> resolve, RejectCallbackFn reject) -> {  
             PanmirrorEditListDialog dialog = new PanmirrorEditListDialog(props, capabilities,
                (result) -> { resolve.onInvoke(result); }
@@ -213,7 +213,7 @@ public class PanmirrorDialogs {
 
    private Promise<PanmirrorAttrEditResult> editPanmirrorAttr(String caption, String removeButtonCaption, String idHint, PanmirrorAttrProps attr) 
    {
-      return new Promise<PanmirrorAttrEditResult>(
+      return new Promise<>(
          (ResolveCallbackFn<PanmirrorAttrEditResult> resolve, RejectCallbackFn reject) -> {  
             PanmirrorEditAttrDialog dialog = new PanmirrorEditAttrDialog(caption, removeButtonCaption, idHint, attr, 
                (result) -> { resolve.onInvoke(result); }
@@ -237,7 +237,7 @@ public class PanmirrorDialogs {
 
    private Promise<PanmirrorRawFormatResult> editRaw(PanmirrorRawFormatProps raw, String[] outputFormats, boolean inline)
    {
-      return new Promise<PanmirrorRawFormatResult>(
+      return new Promise<>(
          (ResolveCallbackFn<PanmirrorRawFormatResult> resolve, RejectCallbackFn reject) -> {  
             PanmirrorEditRawDialog dialog = new PanmirrorEditRawDialog(raw, outputFormats, inline, 
                (result) -> { resolve.onInvoke(result); }
@@ -249,7 +249,7 @@ public class PanmirrorDialogs {
    
    public Promise<PanmirrorInsertTableResult> insertTable(PanmirrorTableCapabilities capabilities)
    {
-      return new Promise<PanmirrorInsertTableResult>(
+      return new Promise<>(
          (ResolveCallbackFn<PanmirrorInsertTableResult> resolve, RejectCallbackFn reject) -> {  
             PanmirrorInsertTableDialog dialog = new PanmirrorInsertTableDialog(capabilities, (result) -> {
                resolve.onInvoke(result);
@@ -261,7 +261,7 @@ public class PanmirrorDialogs {
    
    public Promise<PanmirrorInsertCiteResult> insertCite(PanmirrorInsertCiteProps citeProps)
    {
-      return new Promise<PanmirrorInsertCiteResult>(
+      return new Promise<>(
          (ResolveCallbackFn<PanmirrorInsertCiteResult> resolve, RejectCallbackFn reject) -> {  
             PanmirrorInsertCiteDialog dialog = new PanmirrorInsertCiteDialog(citeProps, (result) -> {
                resolve.onInvoke(result);
@@ -276,7 +276,7 @@ public class PanmirrorDialogs {
                                       JsVoidFunction focus,
                                       PanmirrorHTMLDialog.ValidateFn validate)
    {
-      return new Promise<Boolean>((ResolveCallbackFn<Boolean> resolve, RejectCallbackFn reject) -> {
+      return new Promise<>((ResolveCallbackFn<Boolean> resolve, RejectCallbackFn reject) -> {
          PanmirrorHTMLDialog dialog = new PanmirrorHTMLDialog(title, okText, create, focus, validate, (result) -> {
             resolve.onInvoke(result);
          });

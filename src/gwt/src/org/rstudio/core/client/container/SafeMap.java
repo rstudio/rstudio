@@ -25,7 +25,7 @@ public class SafeMap<K, V>
 {
    public SafeMap()
    {
-      data_ = new HashMap<K, V>();
+      data_ = new HashMap<>();
    }
 
    public V get(K key)

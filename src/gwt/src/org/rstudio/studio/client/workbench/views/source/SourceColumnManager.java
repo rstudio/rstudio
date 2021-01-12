@@ -55,7 +55,6 @@ import org.rstudio.studio.client.common.synctex.Synctex;
 import org.rstudio.studio.client.events.GetEditorContextEvent;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
-import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.rmarkdown.model.RmdChosenTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdOutputFormat;
@@ -234,7 +233,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
             }
          });
 
-      events_.addHandler(SourceFileSavedEvent.TYPE, new SourceFileSavedHandler()
+      events_.addHandler(SourceFileSavedEvent.TYPE, new SourceFileSavedEvent.Handler()
       {
          public void onSourceFileSaved(SourceFileSavedEvent event)
          {
@@ -250,7 +249,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          }
       });
 
-      events_.addHandler(SwitchToDocEvent.TYPE, new SwitchToDocHandler()
+      events_.addHandler(SwitchToDocEvent.TYPE, new SwitchToDocEvent.Handler()
       {
          public void onSwitchToDoc(SwitchToDocEvent event)
          {
@@ -269,17 +268,17 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          commands_.focusSourceColumnSeparator().setEnabled(enabled);
          commands_.focusSourceColumnSeparator().setVisible(enabled);
 
-         // The visibility of the following commands is in part determined by if we've reached 
+         // The visibility of the following commands is in part determined by if we've reached
          // the max number of source columns allowed. PaneManager helps manage these commands so
          // when modifying this code, update the change handler there as well.
          boolean visible = enabled && columnList_.size() <= PaneManager.MAX_COLUMN_COUNT + 1;
 
          commands_.newSourceColumn().setEnabled(enabled);
          commands_.newSourceColumn().setVisible(visible);
-           
+
          commands_.openSourceDocNewColumn().setEnabled(enabled);
          commands_.openSourceDocNewColumn().setVisible(visible);
-         
+
       });
 
       sourceNavigationHistory_.addChangeHandler(event -> manageSourceNavigationCommands());
@@ -1370,7 +1369,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       getActive().newDoc(fileType, contents, resultCallback);
    }
 
-   
+
    public void disownDoc(String docId)
    {
       SourceColumn column = findByDocument(docId);
@@ -1391,7 +1390,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       boolean setNewActiveEditor = false;
       if (column == getActive() && column.getEditors().size() > 1)
          setNewActiveEditor = true;
-      
+
       column.closeDoc(docId);
       if (isDrag)
          column.cancelTabDrag();
@@ -1478,7 +1477,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                column.closeTab(target.asWidget(), false, continuation);
             }
          };
-         
+
          cpsExecuteForEachEditor(column.getEditors(), command, onCompleted);
       }
    }
@@ -1540,7 +1539,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    /**
     * Close all source documents
-    * 
+    *
     * @param caption caption of command triggering this action
     * @param sourceColumn source column to operate on or null to operate on all columns
     * @param onCompleted callback when done or null
@@ -1563,12 +1562,12 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       // create a command used to close all tabs
       final Command closeAllTabsCommand = () ->
       {
-         if (sourceColumn == null) 
+         if (sourceColumn == null)
             closeAllTabs(excludeDocId, false, null);
          else
             closeAllTabs(sourceColumn, excludeDocId, false, null);
       };
-      
+
       saveEditingTargetsWithPrompt(caption,
          dirtyTargets,
          CommandUtil.join(closeAllTabsCommand, onCompleted),
@@ -1736,7 +1735,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    {
       editFile(path, new ResultCallback<EditingTarget, ServerError>() {});
    }
-   
+
    public void openProjectDocs(final Session session, boolean mainColumn)
    {
       if (mainColumn && activeColumn_ != getByName(MAIN_SOURCE_NAME))

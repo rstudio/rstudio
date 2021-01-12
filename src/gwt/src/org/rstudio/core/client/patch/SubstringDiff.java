@@ -47,7 +47,7 @@ public class SubstringDiff
    
    public TextChange[] asTextChanges() 
    {
-      ArrayList<TextChange> changes = new ArrayList<TextChange>();
+      ArrayList<TextChange> changes = new ArrayList<>();
       if (valid_)
       {
          if (offset_ > 0)

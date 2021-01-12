@@ -78,7 +78,7 @@ public class PanmirrorOutlineNavigationEvent extends
    */
   public static Type<PanmirrorOutlineNavigationEvent.Handler> getType() {
     if (TYPE == null) {
-      TYPE = new Type<PanmirrorOutlineNavigationEvent.Handler>();
+      TYPE = new Type<>();
     }
     return TYPE;
   }

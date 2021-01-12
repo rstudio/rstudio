@@ -3526,7 +3526,7 @@ public class UserPrefsAccessor extends Prefs
    }
    public List<PrefValue<?>> allPrefs()
    {
-      ArrayList<PrefValue<?>> prefs = new ArrayList<PrefValue<?>>();
+      ArrayList<PrefValue<?>> prefs = new ArrayList<>();
       prefs.add(runRprofileOnResume());
       prefs.add(saveWorkspace());
       prefs.add(loadWorkspace());

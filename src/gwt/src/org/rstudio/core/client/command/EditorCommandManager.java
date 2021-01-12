@@ -34,7 +34,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommand;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommandManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedHandler;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
@@ -60,7 +59,7 @@ public class EditorCommandManager
 
       public final void setBindings(String key, List<KeySequence> ksList)
       {
-         List<String> bindings = new ArrayList<String>();
+         List<String> bindings = new ArrayList<>();
          for (KeySequence ks : ksList)
             bindings.add(ks.toString());
 
@@ -77,7 +76,7 @@ public class EditorCommandManager
       public final List<KeySequence> getKeyBindings()
       {
          JsArrayString bindings = getBindingsInternal();
-         Set<KeySequence> keys = new HashSet<KeySequence>();
+         Set<KeySequence> keys = new HashSet<>();
          for (String binding : JsUtil.asIterable(bindings))
          {
             String[] splat = binding.split("\\|");
@@ -87,7 +86,7 @@ public class EditorCommandManager
             }
          }
 
-         List<KeySequence> keyList = new ArrayList<KeySequence>();
+         List<KeySequence> keyList = new ArrayList<>();
          keyList.addAll(keys);
          return keyList;
       }
@@ -112,7 +111,7 @@ public class EditorCommandManager
 
       manager_ = AceCommandManager.create();
 
-      bindings_ = new ConfigFileBacked<EditorKeyBindings>(
+      bindings_ = new ConfigFileBacked<>(
             files_,
             KEYBINDINGS_PATH,
             false,
@@ -120,7 +119,7 @@ public class EditorCommandManager
 
       events_.addHandler(
             EditorLoadedEvent.TYPE,
-            new EditorLoadedHandler()
+            new EditorLoadedEvent.Handler()
             {
                @Override
                public void onEditorLoaded(EditorLoadedEvent event)

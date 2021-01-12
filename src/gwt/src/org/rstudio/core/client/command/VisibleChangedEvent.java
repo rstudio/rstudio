@@ -18,7 +18,7 @@ import com.google.gwt.event.shared.GwtEvent;
 
 public class VisibleChangedEvent extends GwtEvent<VisibleChangedHandler>
 {
-   public static final Type<VisibleChangedHandler> TYPE = new Type<VisibleChangedHandler>();
+   public static final Type<VisibleChangedHandler> TYPE = new Type<>();
 
    public VisibleChangedEvent(AppCommand command)
    {

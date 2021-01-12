@@ -36,7 +36,6 @@ import org.rstudio.studio.client.workbench.views.vcs.BaseVcsPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.common.ProcessCallback;
 import org.rstudio.studio.client.workbench.views.vcs.common.VCSFileOpener;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
-import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
 import org.rstudio.studio.client.workbench.views.vcs.common.model.GitHubViewRequest;
 import org.rstudio.studio.client.workbench.views.vcs.svn.model.SVNState;
 
@@ -49,9 +48,9 @@ public class SVNPresenter extends BaseVcsPresenter
    }
 
    public interface Display extends WorkbenchView, IsWidget, SVNPresenterDisplay
-   {   
+   {
       void setItems(ArrayList<StatusAndPath> items);
-      
+
       void showContextMenu(int clientX, int clientY);
    }
 
@@ -71,31 +70,31 @@ public class SVNPresenter extends BaseVcsPresenter
       server_ = server;
       svnState_ = svnState;
       satelliteManager_ = satelliteManager;
-      
-      commandHandler_ = new SVNCommandHandler(view, 
-                                              globalDisplay, 
-                                              commands, 
-                                              server, 
-                                              svnState, 
+
+      commandHandler_ = new SVNCommandHandler(view,
+                                              globalDisplay,
+                                              commands,
+                                              server,
+                                              svnState,
                                               vcsFileOpener);
-      
+
       binder.bind(commands, this);
-      
-      svnState_.addVcsRefreshHandler(new VcsRefreshHandler()
+
+      svnState_.addVcsRefreshHandler(new VcsRefreshEvent.Handler()
       {
          @Override
          public void onVcsRefresh(VcsRefreshEvent event)
          {
             view_.setItems(svnState_.getStatus());
          }
-      });      
-      
+      });
+
       view_.getChangelistTable().addContextMenuHandler(new ContextMenuHandler(){
          @Override
          public void onContextMenu(ContextMenuEvent event)
          {
             NativeEvent nativeEvent = event.getNativeEvent();
-            view_.showContextMenu(nativeEvent.getClientX(), 
+            view_.showContextMenu(nativeEvent.getClientX(),
                                   nativeEvent.getClientY());
          }
       });
@@ -105,21 +104,21 @@ public class SVNPresenter extends BaseVcsPresenter
    {
       showReviewPane(false, null, items);
    }
-   
-   private void showReviewPane(boolean showHistory, 
+
+   private void showReviewPane(boolean showHistory,
                                FileSystemItem historyFileFilter,
                                ArrayList<StatusAndPath> items)
    {
       // setup params
       VCSApplicationParams params = VCSApplicationParams.create(
-                                          showHistory, 
+                                          showHistory,
                                           historyFileFilter,
                                           items);
-      
-      // open the window 
-      satelliteManager_.openSatellite("review_changes",     
+
+      // open the window
+      satelliteManager_.openSatellite("review_changes",
                                       params,
-                                      new Size(1000,1200)); 
+                                      new Size(1000,1200));
    }
 
    @Override
@@ -127,21 +126,21 @@ public class SVNPresenter extends BaseVcsPresenter
    {
       return view_.asWidget();
    }
-    
+
    @Handler
    void onVcsDiff()
    {
       showChanges(view_.getSelectedItems());
-   }  
-  
+   }
+
    // the following commands are BaseVcsPresenter overrides rather than
    // direct handlers (they are handled within the base class and then
    // dispatched to via these overrides)
-   
+
    @Override
    public void onVcsCommit()
    {
-      commandHandler_.onVcsCommit(); 
+      commandHandler_.onVcsCommit();
    }
 
    @Override
@@ -155,39 +154,39 @@ public class SVNPresenter extends BaseVcsPresenter
    {
       commandHandler_.onVcsPull();
    }
-   
+
    @Override
    public void onVcsPullRebase()
    {
       commandHandler_.onVcsPullRebase();
    }
-   
+
    @Override
    public void onVcsCleanup()
    {
       server_.svnCleanup(new ProcessCallback(
-                                         "SVN Cleanup", 
-                                         "Cleaning up working directory...", 
+                                         "SVN Cleanup",
+                                         "Cleaning up working directory...",
                                          750)); // pad progress for feedback
    }
-   
+
    @Override
    public void onVcsIgnore()
    {
       commandHandler_.onVcsIgnore();
    }
-   
+
    @Override
    public void showHistory(FileSystemItem fileFilter)
    {
-      showReviewPane(true, fileFilter, new ArrayList<StatusAndPath>());  
+      showReviewPane(true, fileFilter, new ArrayList<>());
    }
-   
+
    @Override
    public void showDiff(FileSystemItem file)
    {
       // build an ArrayList<StatusAndPath> so we can call the core helper
-      ArrayList<StatusAndPath> diffList = new ArrayList<StatusAndPath>();
+      ArrayList<StatusAndPath> diffList = new ArrayList<>();
       for (StatusAndPath item :  svnState_.getStatus())
       {
          if (item.getRawPath() == file.getPath())
@@ -196,7 +195,7 @@ public class SVNPresenter extends BaseVcsPresenter
             break;
          }
       }
-      
+
       if (diffList.size() > 0)
       {
          showChanges(diffList);
@@ -204,32 +203,32 @@ public class SVNPresenter extends BaseVcsPresenter
       else
       {
          globalDisplay_.showMessage(MessageDialog.INFO,
-                                    "No Changes to File", 
-                                    "There are no changes to the file \"" + 
+                                    "No Changes to File",
+                                    "There are no changes to the file \"" +
                                     file.getName() + "\" to diff.");
       }
 
    }
-   
+
    @Override
    public void revertFile(FileSystemItem file)
    {
       commandHandler_.revertFile(file);
    }
-   
-  
+
+
    @Override
    public void onVcsPush()
    {
       // git specific,  not supported by svn
    }
-   
+
    @Override
    public void viewOnGitHub(GitHubViewRequest viewRequest)
    {
       // git specific, not supported by svn
    }
-   
+
 
    private final Display view_;
    private final GlobalDisplay globalDisplay_;
@@ -237,5 +236,5 @@ public class SVNPresenter extends BaseVcsPresenter
    private final SVNCommandHandler commandHandler_;
    private final SVNState svnState_;
    private final SatelliteManager satelliteManager_;
-   
+
 }

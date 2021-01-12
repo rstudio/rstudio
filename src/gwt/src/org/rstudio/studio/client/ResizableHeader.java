@@ -86,7 +86,7 @@ public class ResizableHeader extends Header<String>
    
    public ResizableHeader(AbstractCellTable<?> table, String text)
    {
-      super(new ResizableHeaderCell<String>(table));
+      super(new ResizableHeaderCell<>(table));
       
       table_ = table;
       text_ = text;
@@ -94,7 +94,7 @@ public class ResizableHeader extends Header<String>
       
       MouseDragHandler.addHandler(table_, new MouseDragHandler()
       {
-         List<Integer> columnWidths_ = new ArrayList<Integer>();
+         List<Integer> columnWidths_ = new ArrayList<>();
          
          @Override
          public boolean beginDrag(MouseDownEvent event)

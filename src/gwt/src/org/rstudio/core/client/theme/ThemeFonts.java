@@ -26,7 +26,7 @@ public class ThemeFonts
 {
    private static final ThemeFontLoader fontLoader =
          GWT.create(ThemeFontLoader.class);
-   
+
    public static String getProportionalFont()
    {
       return fontLoader.getProportionalFont() + ", serif";
@@ -42,7 +42,7 @@ public class ThemeFonts
       String getProportionalFont();
       String getFixedWidthFont();
    }
-   
+
    public static String getFixedWidthClass()
    {
       return "rstudio-fixed-width-font";
@@ -54,15 +54,15 @@ public class ThemeFonts
       {
          return getDesktopInfo("proportionalFont");
       }
-      
+
       public final String getFixedWidthFont()
       {
          return getDesktopInfo("fixedWidthFont");
       }
-      
+
       private static final native String getDesktopInfo(String property)
       /*-{
-         
+
          // NOTE: because this is called very early during the startup process
          // (GWT needs to generate CSS based on the value of these entries),
          // it's possible (for satellite windows) that the 'desktopInfo' object
@@ -74,9 +74,9 @@ public class ThemeFonts
                break;
             window = window.opener;
          }
-         
+
          return window.desktopInfo[property];
-         
+
       }-*/;
    }
 
@@ -85,7 +85,7 @@ public class ThemeFonts
       public String getProportionalFont()
       {
          String font = BrowseCap.hasUbuntuFonts() ? "Ubuntu, " : "";
-         return font + "\"Lucida Sans\", \"DejaVu Sans\", \"Lucida Grande\", \"Segoe UI\", Verdana, Helvetica, sans-serif"; 
+         return font + "\"Lucida Sans\", \"DejaVu Sans\", \"Lucida Grande\", \"Segoe UI\", Verdana, Helvetica, sans-serif";
       }
 
       public String getFixedWidthFont()
@@ -112,14 +112,14 @@ public class ThemeFonts
                font = "\"" + font + "\", ";
             }
          }
-         
+
          if (BrowseCap.isMacintosh())
             font += "Monaco, monospace";
          else if (BrowseCap.isLinux())
             font += "\"Ubuntu Mono\", \"Droid Sans Mono\", \"DejaVu Sans Mono\", monospace";
          else
             font += "Consolas, \"Lucida Console\", monospace";
-         
+
          return font;
       }
    }
@@ -141,6 +141,6 @@ public class ThemeFonts
       {
          return "";
       }
-      
+
    }
 }

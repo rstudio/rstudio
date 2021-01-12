@@ -178,6 +178,5 @@ public class RSConnectDeployDialog
    private RSConnectAccount defaultAccount_;
    
    // Map of app URL to the deployment made to that URL
-   private Map<String, RSConnectDeploymentRecord> deployments_ = 
-         new HashMap<String, RSConnectDeploymentRecord>();
+   private Map<String, RSConnectDeploymentRecord> deployments_ = new HashMap<>();
 }

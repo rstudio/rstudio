@@ -161,7 +161,7 @@ public class AceBackgroundHighlighter
       editor_ = editor;
       session_ = editor.getSession();
       
-      highlightPatterns_ = new ArrayList<HighlightPattern>();
+      highlightPatterns_ = new ArrayList<>();
       editor.addEditorModeChangedHandler(this);
       
       int n = editor.getRowCount();
@@ -455,7 +455,7 @@ public class AceBackgroundHighlighter
    // Static Members ----
    
    static {
-      HIGHLIGHT_PATTERN_REGISTRY = new HashMap<String, List<HighlightPattern>>();
+      HIGHLIGHT_PATTERN_REGISTRY = new HashMap<>();
       HIGHLIGHT_PATTERN_REGISTRY.put("mode/rmarkdown", rMarkdownHighlightPatterns());
       HIGHLIGHT_PATTERN_REGISTRY.put("mode/c_cpp", cStyleHighlightPatterns());
       HIGHLIGHT_PATTERN_REGISTRY.put("mode/sweave", sweaveHighlightPatterns());

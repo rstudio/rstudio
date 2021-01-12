@@ -103,6 +103,6 @@ public class VirtualHistory
    }
    
    private final Frame frame_;
-   private List<Data> stack_ = new ArrayList<Data>();
+   private List<Data> stack_ = new ArrayList<>();
    private int pos_ = -1;
 }

@@ -73,7 +73,7 @@ public class LatexProgramRegistry
          JsArrayString types = 
                 pSession_.get().getSessionInfo().getLatexProgramTypes();
        
-         latexProgramTypes_ = new ArrayList<String>();
+         latexProgramTypes_ = new ArrayList<>();
          for (int i=0; i<types.length(); i++)
             latexProgramTypes_.add(types.get(i));
       }

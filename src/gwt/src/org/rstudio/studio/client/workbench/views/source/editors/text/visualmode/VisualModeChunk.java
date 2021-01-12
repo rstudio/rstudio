@@ -102,9 +102,9 @@ public class VisualModeChunk
 
       PanmirrorUIChunkEditor chunk = new PanmirrorUIChunkEditor();
       
-      releaseOnDismiss_ = new ArrayList<HandlerRegistration>();
-      destroyHandlers_ = new ArrayList<Command>();
-      rowState_ = new HashMap<Integer,VisualModeChunkRowState>();
+      releaseOnDismiss_ = new ArrayList<>();
+      destroyHandlers_ = new ArrayList<>();
+      rowState_ = new HashMap<>();
 
       // Create a new AceEditor instance and allow access to the underlying
       // native JavaScript object it represents (AceEditorNative)

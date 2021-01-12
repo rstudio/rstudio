@@ -40,7 +40,7 @@ public class WizardNavigationPage<I,T> extends WizardPage<I,T>
            image,
            largeImage,
            pages,
-           pages1 -> new WizardPageSelector<I, T>(pages1));
+           pages1 -> new WizardPageSelector<>(pages1));
    }
 
    public WizardNavigationPage(String title,

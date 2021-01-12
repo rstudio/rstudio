@@ -69,7 +69,7 @@ public class DirectedGraph<K, V>
    private DirectedGraph(DirectedGraph<K, V> parent, K key, V value, DefaultConstructor<V> constructor)
    {
       parent_ = parent;
-      children_ = new SafeMap<K, DirectedGraph<K, V>>();
+      children_ = new SafeMap<>();
       
       key_ = key;
       
@@ -117,7 +117,7 @@ public class DirectedGraph<K, V>
    
    private DirectedGraph<K, V> addChild(K key)
    {
-      DirectedGraph<K, V> child = new DirectedGraph<K, V>(this, key, null, constructor_);
+      DirectedGraph<K, V> child = new DirectedGraph<>(this, key, null, constructor_);
       children_.put(key, child);
       return child;
    }
@@ -142,8 +142,8 @@ public class DirectedGraph<K, V>
    
    public List<Pair<List<K>, V>> flatten()
    {
-      List<Pair<List<K>, V>> list = new ArrayList<Pair<List<K>, V>>();
-      List<K> keys = new ArrayList<K>();
+      List<Pair<List<K>, V>> list = new ArrayList<>();
+      List<K> keys = new ArrayList<>();
       fillRecursive(list, keys, this);
       return list;
    }
@@ -153,7 +153,7 @@ public class DirectedGraph<K, V>
                                             DirectedGraph<K, V> node)
    {
       keys.add(node.getKey());
-      list.add(new Pair<List<K>, V>(new ArrayList<K>(keys), node.getValue()));
+      list.add(new Pair<>(new ArrayList<>(keys), node.getValue()));
       
       for (Map.Entry<K, DirectedGraph<K, V>> entry : node.getChildren().entrySet())
          fillRecursive(list, keys, entry.getValue());
@@ -161,7 +161,7 @@ public class DirectedGraph<K, V>
    
    public List<K> getKeyChain()
    {
-      List<K> chain = new ArrayList<K>();
+      List<K> chain = new ArrayList<>();
       DirectedGraph<K, V> node = this;
       while (!node.isRoot())
       {

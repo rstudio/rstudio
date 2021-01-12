@@ -20,7 +20,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
@@ -36,16 +35,16 @@ import com.google.gwt.user.client.ui.Label;
 
 public class ImagePreviewPopup extends MiniPopupPanel
 {
-   public ImagePreviewPopup(DocDisplay display, Range range, String href, 
+   public ImagePreviewPopup(DocDisplay display, Range range, String href,
          String src)
    {
       super(true, false);
-      
+
       // defer visibility until image has finished loading
       setVisible(false);
       image_ = new Image(src);
       error_ = new Label("No image at path " + href);
-      
+
       final Element imgEl = image_.getElement();
       DOM.sinkEvents(imgEl, Event.ONLOAD | Event.ONERROR);
       DOM.setEventListener(imgEl, new EventListener()
@@ -65,7 +64,7 @@ public class ImagePreviewPopup extends MiniPopupPanel
             }
          }
       });
-      
+
       // allow zoom with double-click
       setTitle("Double-Click to Zoom");
       addDomHandler(new DoubleClickHandler()
@@ -76,13 +75,13 @@ public class ImagePreviewPopup extends MiniPopupPanel
             toggleSize();
          }
       }, DoubleClickEvent.getType());
-      
+
       // use anchor + cursor changed handler for smart auto-dismiss
       anchor_ = display.createAnchoredSelection(
             range.getStart(),
             range.getEnd());
-      
-      handler_ = display.addCursorChangedHandler(new CursorChangedHandler()
+
+      handler_ = display.addCursorChangedHandler(new CursorChangedEvent.Handler()
       {
          @Override
          public void onCursorChanged(CursorChangedEvent event)
@@ -92,7 +91,7 @@ public class ImagePreviewPopup extends MiniPopupPanel
                hide();
          }
       });
-      
+
       addAttachHandler(new AttachEvent.Handler()
       {
          @Override
@@ -103,7 +102,7 @@ public class ImagePreviewPopup extends MiniPopupPanel
          }
       });
    }
-   
+
    private boolean isSmall()
    {
       ImageElementEx el = image_.getElement().cast();
@@ -112,31 +111,31 @@ public class ImagePreviewPopup extends MiniPopupPanel
             SMALL_MAX_WIDTH.equals(style.getProperty("maxWidth")) ||
             SMALL_MAX_HEIGHT.equals(style.getProperty("maxHeight"));
    }
-   
+
    private void showSmall()
    {
       showWithDimensions(SMALL_MAX_WIDTH, SMALL_MAX_HEIGHT);
    }
-   
+
    private void showLarge()
    {
       showWithDimensions(LARGE_MAX_WIDTH, LARGE_MAX_HEIGHT);
    }
-   
+
    private void showWithDimensions(String width, String height)
    {
       setVisible(true);
-      
+
       ImageElementEx el = image_.getElement().cast();
       Style style = el.getStyle();
-      
+
       boolean isWide = el.naturalWidth() > el.naturalHeight();
       if (isWide)
          style.setProperty("maxWidth", width);
       else
          style.setProperty("maxHeight", height);
    }
-   
+
    private void toggleSize()
    {
       if (isSmall())
@@ -144,21 +143,21 @@ public class ImagePreviewPopup extends MiniPopupPanel
       else
          showSmall();
    }
-   
+
    private void detachHandlers()
    {
       anchor_.detach();
       handler_.removeHandler();
    }
-   
+
    private final AnchoredSelection anchor_;
    private final HandlerRegistration handler_;
    private final Image image_;
    private final Label error_;
-   
+
    private static final String SMALL_MAX_WIDTH  = "100px";
    private static final String SMALL_MAX_HEIGHT = "100px";
-   
+
    private static final String LARGE_MAX_WIDTH  = "400px";
    private static final String LARGE_MAX_HEIGHT = "600px";
 }

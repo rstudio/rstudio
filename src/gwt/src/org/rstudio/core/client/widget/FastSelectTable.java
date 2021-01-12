@@ -395,7 +395,7 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
    {
       sortSelectedRows();
 
-      ArrayList<Integer> results = new ArrayList<Integer>();
+      ArrayList<Integer> results = new ArrayList<>();
       for (TableRowElement row : selectedRows_)
          results.add(codec_.physicalOffsetToLogicalOffset(table_,
                                                           row.getRowIndex()));
@@ -488,7 +488,7 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
    {
       sortSelectedRows();
 
-      ArrayList<TItemOutput> results = new ArrayList<TItemOutput>();
+      ArrayList<TItemOutput> results = new ArrayList<>();
       for (TableRowElement row : selectedRows_)
          results.add(codec_.getOutputForRow(row));
       return results;
@@ -509,7 +509,7 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
    {
       sortSelectedRows();
 
-      ArrayList<TItemOutput2> results = new ArrayList<TItemOutput2>();
+      ArrayList<TItemOutput2> results = new ArrayList<>();
       for (TableRowElement row : selectedRows_)
          results.add(codec_.getOutputForRow2(row));
       return results;
@@ -584,7 +584,7 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
 
    public ArrayList<TableRowElement> getSelectedRows()
    {
-      return new ArrayList<TableRowElement>(selectedRows_);
+      return new ArrayList<>(selectedRows_);
    }
 
    public Rectangle getSelectionRect()

@@ -176,5 +176,5 @@ public class TextEditorContainer extends LayoutPanel implements CanFocus
    }
   
    private final Editor editor_;
-   private ArrayList<IsHideableWidget> widgets_ = new ArrayList<IsHideableWidget>();
+   private ArrayList<IsHideableWidget> widgets_ = new ArrayList<>();
 }

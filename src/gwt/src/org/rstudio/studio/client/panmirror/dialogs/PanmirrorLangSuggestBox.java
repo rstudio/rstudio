@@ -59,7 +59,7 @@ public class PanmirrorLangSuggestBox extends SuggestBox
          {
             String query = request.getQuery();
             
-            ArrayList<Suggestion> suggestions = new ArrayList<Suggestion>();
+            ArrayList<Suggestion> suggestions = new ArrayList<>();
             for (int i=0; i<languages.length; i++)
             {
                String language = languages[i];

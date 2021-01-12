@@ -24,7 +24,7 @@ public class ConnectionObjectSpecifier
 {
    public ConnectionObjectSpecifier()
    {
-      containers_ = new ArrayList<ConnectionPathEntry>();
+      containers_ = new ArrayList<>();
    }
    
    public ConnectionObjectSpecifier(String name, String type)

@@ -37,7 +37,7 @@ public class PanmirrorRawFormatSelect extends SelectWidget
    
    private static String[] getFormatList(String firstItem, String[] formats, String value)
    {
-      ArrayList<String> options = new ArrayList<String>();
+      ArrayList<String> options = new ArrayList<>();
       options.add(firstItem);
       options.addAll(Arrays.asList(formats));
       if (!options.contains(value))

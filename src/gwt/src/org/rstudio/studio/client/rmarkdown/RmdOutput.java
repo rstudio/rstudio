@@ -63,7 +63,6 @@ import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
-import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedHandler;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.events.NotebookRenderFinishedEvent;
 
@@ -89,13 +88,13 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                                   NotebookRenderFinishedEvent.Handler,
                                   RmdRenderPendingEvent.Handler,
                                   QuitInitiatedEvent.Handler,
-                                  UserPrefsChangedHandler
+                                  UserPrefsChangedEvent.Handler
 {
    public interface Binder
    extends CommandBinder<Commands, RmdOutput> {}
-   
+
    @Inject
-   public RmdOutput(EventBus eventBus, 
+   public RmdOutput(EventBus eventBus,
                     Commands commands,
                     Session session,
                     GlobalDisplay globalDisplay,
@@ -117,7 +116,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       events_ = eventBus;
       session_ = session;
       commands_ = commands;
-      
+
       eventBus.addHandler(RmdRenderStartedEvent.TYPE, this);
       eventBus.addHandler(RmdRenderCompletedEvent.TYPE, this);
       eventBus.addHandler(RmdShinyDocStartedEvent.TYPE, this);
@@ -141,37 +140,37 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       });
 
       binder.bind(commands, this);
-      
+
       exportRmdOutputClosedCallback();
    }
-   
+
    @Override
    public void onRmdRenderPending(RmdRenderPendingEvent event)
    {
       renderInProgress_ = true;
    }
-   
+
    @Override
    public void onRmdRenderStarted(RmdRenderStartedEvent event)
    {
       if (Desktop.isDesktop())
       {
-         // When an Office document starts rendering, tell the desktop frame 
-         // (if it exists) to get ready; this generally involves closing the 
+         // When an Office document starts rendering, tell the desktop frame
+         // (if it exists) to get ready; this generally involves closing the
          // document in preparation for a refresh
          String format = event.getFormat().getFormatName();
          if (StringUtil.equals(format, RmdOutputFormat.OUTPUT_WORD_DOCUMENT))
             Desktop.getFrame().prepareShowWordDoc();
          else if (StringUtil.equals(format, RmdOutputFormat.OUTPUT_PPT_PRESENTATION))
-            Desktop.getFrame().prepareShowPptPresentation(); 
+            Desktop.getFrame().prepareShowPptPresentation();
       }
    }
-   
+
    @Override
    public void onRmdRenderCompleted(RmdRenderCompletedEvent event)
    {
       renderInProgress_ = false;
-      
+
       // if there's a custom operation to be run when render completes, run
       // that instead
       if (onRenderCompleted_ != null)
@@ -189,7 +188,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          shinyDoc_ = null;
          return;
       }
-      
+
       if (result.hasShinyContent() && !result.isShinyDocument())
       {
          // If the result has Shiny content but wasn't rendered as a Shiny
@@ -221,16 +220,16 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          displayRenderResult(event.getResult());
       }
    }
-      
+
    @Override
    public void onRmdShinyDocStarted(RmdShinyDocStartedEvent event)
    {
       shinyDoc_ = event.getDocInfo();
-      RmdRenderResult result = 
+      RmdRenderResult result =
             RmdRenderResult.createFromShinyDoc(shinyDoc_);
       displayHTMLRenderResult(result);
    }
-   
+
    @Override
    public void onPreviewRmd(final PreviewRmdEvent event)
    {
@@ -247,21 +246,21 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
            null);
       events_.fireEvent(renderEvent);
    }
-   
+
    @Override
    public void onRenderRmd(final RenderRmdEvent event)
    {
       quitInitiatedAfterLastRender_ = false;
-      
+
       final Operation renderOperation = new Operation() {
          @Override
          public void execute()
          {
             renderInProgress_ = true;
-            server_.renderRmd(event.getSourceFile(), 
+            server_.renderRmd(event.getSourceFile(),
                               event.getSourceLine(),
                               event.getFormat(),
-                              event.getEncoding(), 
+                              event.getEncoding(),
                               event.getParamsFile(),
                               event.asTempfile(),
                               event.getType(),
@@ -269,7 +268,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                               event.getWorkingDir(),
                               event.getViewerType(),
                   new SimpleRequestCallback<Boolean>() {
-                       @Override 
+                       @Override
                        public void onError(ServerError error)
                        {
                           renderInProgress_ = false;
@@ -278,7 +277,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          }
       };
 
-      // If there's a running shiny document for this file and it's not a 
+      // If there's a running shiny document for this file and it's not a
       // presentation, we can do an in-place reload. Note that we don't
       // currently support in-place reload for Shiny presentations since we
       // would need to hook a client event at the end of the re-render that
@@ -290,7 +289,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                 RmdOutputFormat.OUTPUT_PRESENTATION_SUFFIX) &&
           (result_ == null || "shiny".equals(result_.getRuntime())))
       {
-         final RmdRenderResult result = 
+         final RmdRenderResult result =
                RmdRenderResult.createFromShinyDoc(shinyDoc_);
          displayHTMLRenderResult(result);
       }
@@ -299,54 +298,54 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          performRenderOperation(renderOperation);
       }
    }
-   
+
    @Override
    public void onNotebookRenderFinished(NotebookRenderFinishedEvent event)
    {
       // ignore if no result, no output frame/closed output frame, or frame not
       // associated with this document
       if (result_ == null ||
-          outputFrame_ == null || 
+          outputFrame_ == null ||
           outputFrame_.getWindowObject() == null ||
           outputFrame_.getWindowObject().isClosed() ||
           outputFrame_.getPreviewParams().getTargetFile() != event.getDocPath() ||
           !outputFrame_.getPreviewParams().getOutputFile().endsWith(".nb.html"))
         return;
-      
+
       // redisplay the result
       displayRenderResult(result_);
    }
-   
+
    @Override
    public void onWebsiteFileSaved(WebsiteFileSavedEvent event)
    {
-      // auto reload/rerender on file saves (first apply various 
+      // auto reload/rerender on file saves (first apply various
       // filters to not auto reload). note that before we even
       // receive this event we know the file is one that is contained
       // in the website directory
-      
+
       // skip if there is a build in progress
       if (workbenchContext_.isBuildInProgress())
          return;
-      
+
       // skip if there is a render in progress
       if (renderInProgress_)
          return;
-      
+
       // skip if there was a quit initiated since the last render
       if (quitInitiatedAfterLastRender_)
          return;
-        
+
       // is there an output frame?
       if (outputFrame_ == null || outputFrame_.getWindowObject() == null)
          return;
-      
+
       // is it showing a page from the current site?
       String websiteDir = session_.getSessionInfo().getBuildTargetDir();
       final RmdPreviewParams params = outputFrame_.getPreviewParams();
       if (!params.getTargetFile().startsWith(websiteDir))
          return;
-            
+
       // is the changed file one that should always produce a rebuild?
       FileSystemItem file = event.getFileSystemItem();
       TextFileType fileType = fileTypeRegistry_.getTextTypeForFile(file);
@@ -358,21 +357,21 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       {
          reRenderPreview();
       }
-      
+
       // is the changed file a markdown document
       else if (fileType.isMarkdown())
       {
          // included Rmd files always produce a rebuild of the current file
          if (file.getStem().startsWith("_"))
             reRenderPreview();
-     
+
          // ...otherwise leave it alone (requires a knit)
       }
-      
+
       // see if this should result in a copy + refresh
       else
       {
-         server_.maybeCopyWebsiteAsset(file.getPath(), 
+         server_.maybeCopyWebsiteAsset(file.getPath(),
                new SimpleRequestCallback<Boolean>() {
                   @Override
                   public void onResponseReceived(Boolean copied)
@@ -380,26 +379,26 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                      if (copied)
                         outputFrame_.showRmdPreview(params, true);
                   }
-                }); 
-      } 
+                });
+      }
    }
-   
+
    private void reRenderPreview()
    {
       reRenderPreview(null);
    }
-   
+
    private void reRenderPreview(String targetFile)
    {
       if (outputFrame_ == null)
          return;
-      
+
       livePreviewRenderInProgress_ = true;
-      
+
       RmdPreviewParams params = outputFrame_.getPreviewParams();
       if (targetFile == null)
          targetFile = params.getTargetFile();
-      
+
       RenderRmdEvent renderEvent = new RenderRmdEvent(
             targetFile,
             1,
@@ -409,29 +408,29 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
             false,
             RmdOutput.TYPE_STATIC,
             null,
-            null, 
+            null,
             null);
        events_.fireEvent(renderEvent);
    }
-   
+
    @Override
    public void onQuitInitiated(QuitInitiatedEvent event)
    {
       quitInitiatedAfterLastRender_ = true;
    }
- 
-   
+
+
    @Override
    public void onRenderRmdSource(final RenderRmdSourceEvent event)
    {
       quitInitiatedAfterLastRender_ = false;
-      
+
       performRenderOperation(new Operation() {
          @Override
          public void execute()
          {
             server_.renderRmdSource(event.getSource(),
-                                    new SimpleRequestCallback<Boolean>()); 
+                                    new SimpleRequestCallback<>());
          }
       });
    }
@@ -442,7 +441,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       // preemptively close the satellite window when R restarts (so we don't
       // wait around if the session doesn't get a chance to tell us about
       // terminated renders)
-      if (event.getStatus() == RestartStatusEvent.RESTART_INITIATED) 
+      if (event.getStatus() == RestartStatusEvent.RESTART_INITIATED)
       {
          if (outputFrame_ != null)
             outputFrame_.closeOutputFrame(false);
@@ -459,28 +458,28 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    {
       onViewerTypeChanged(prefs_.rmdViewerType().getValue());
    }
-   
+
    // Private methods ---------------------------------------------------------
-   
+
    private void onViewerTypeChanged(String newViewerType)
    {
-      if (outputFrame_ != null && 
-          outputFrame_.getWindowObject() != null && 
+      if (outputFrame_ != null &&
+          outputFrame_.getWindowObject() != null &&
           newViewerType != outputFrame_.getViewerType())
       {
          // close the existing frame
          RmdPreviewParams params = outputFrame_.getPreviewParams();
          outputFrame_.closeOutputFrame(true);
-         
+
          // reset the scroll position (as it will vary with the document width,
          // which will change)
          params.setScrollPosition(0);
-         
+
          // open a new one with the same parameters
          outputFrame_ = createOutputFrame(newViewerType);
          outputFrame_.showRmdPreview(params, true);
       }
-      else if (outputFrame_ != null && 
+      else if (outputFrame_ != null &&
                outputFrame_.getWindowObject() == null &&
                outputFrame_.getViewerType() != newViewerType)
       {
@@ -489,7 +488,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          outputFrame_ = null;
       }
    }
-   
+
    // perform the given render after terminating the currently running Shiny
    // application if there is one
    private void performRenderOperation(final Operation renderOperation)
@@ -499,14 +498,14 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          // if we already have this up in the viewer pane, cache the scroll
          // position (we don't need to do this for the satellite since it
          // caches scroll position when it closes)
-         if (result_ != null && 
+         if (result_ != null &&
              outputFrame_.getViewerType() == UserPrefs.RMD_VIEWER_TYPE_PANE)
          {
-            cacheDocPosition(result_, outputFrame_.getScrollPosition(), 
+            cacheDocPosition(result_, outputFrame_.getScrollPosition(),
                   outputFrame_.getAnchor());
          }
 
-         // there is a Shiny doc running; we'll need to terminate it before 
+         // there is a Shiny doc running; we'll need to terminate it before
          // we can render this document
          outputFrame_.closeOutputFrame(false);
          server_.terminateRenderRmd(true, new ServerRequestCallback<Void>()
@@ -521,7 +520,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
             @Override
             public void onError(ServerError error)
             {
-               globalDisplay_.showErrorMessage("Shiny Terminate Failed", 
+               globalDisplay_.showErrorMessage("Shiny Terminate Failed",
                      "The Shiny document " + shinyDoc_.getFile() + " needs to " +
                      "be stopped before the document can be rendered.");
             }
@@ -532,22 +531,22 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          renderOperation.execute();
       }
    }
-   
+
    private void rerenderAsShiny(RmdRenderResult result)
    {
       events_.fireEvent(new RenderRmdEvent(
-            result.getTargetFile(), result.getTargetLine(), 
-            null, result.getTargetEncoding(), null, false, 
+            result.getTargetFile(), result.getTargetLine(),
+            null, result.getTargetEncoding(), null, false,
             RmdOutput.TYPE_SHINY, null, null, result.getViewerType()));
    }
-   
-   private void displayOfficeDoc(final RmdRenderResult result, 
+
+   private void displayOfficeDoc(final RmdRenderResult result,
                                  final CommandWithArg<String> displayResult)
    {
       // in desktop mode, the document can be displayed directly
       if (Desktop.isDesktop())
          displayResult.execute(result.getOutputFile());
-      
+
       // it's not possible to show Office docs inline in a useful way from
       // within the browser, so just offer to download the file.
       else
@@ -557,27 +556,27 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
             public void execute()
             {
                displayResult.execute(result.getOutputFile());
-            }  
+            }
          });
       }
    }
-   
+
    private void displayRenderResult(final RmdRenderResult result)
    {
       // don't display anything if user doesn't want to
       if (prefs_.rmdViewerType().getValue() == UserPrefs.RMD_VIEWER_TYPE_NONE)
          return;
-      
+
       String extension = FileSystemItem.getExtensionFromPath(
-                                                result.getOutputFile()); 
+                                                result.getOutputFile());
       if (".pdf".equals(extension))
       {
          String previewer = prefs_.pdfPreviewer().getValue();
          if (previewer == UserPrefs.PDF_PREVIEWER_RSTUDIO)
          {
             pdfViewer_.viewPdfUrl(
-                  result.getOutputUrl(), 
-                  result.getPreviewSlide() >= 0 ? 
+                  result.getOutputUrl(),
+                  result.getPreviewSlide() >= 0 ?
                         result.getPreviewSlide() : null);
          }
          else if (previewer != UserPrefs.PDF_PREVIEWER_NONE)
@@ -585,11 +584,11 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
             if (Desktop.isDesktop())
                Desktop.getFrame().showPDF(StringUtil.notNull(result.getOutputFile()),
                                           result.getPreviewSlide());
-            else 
+            else
                globalDisplay_.showHtmlFile(result.getOutputFile());
          }
       }
-      else if (".docx".equals(extension) || 
+      else if (".docx".equals(extension) ||
                ".rtf".equals(extension) ||
                ".odt".equals(extension))
       {
@@ -604,7 +603,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       {
          displayHTMLRenderResult(result);
       }
-      else if (".md".equalsIgnoreCase(extension) || 
+      else if (".md".equalsIgnoreCase(extension) ||
                extension.toLowerCase().startsWith(".markdown") ||
                ".tex".equalsIgnoreCase(extension))
       {
@@ -624,23 +623,23 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                {
                   String url = server_.getFileUrl(
                         FileSystemItem.createFile(result.getOutputFile()));
-                  globalDisplay_.openWindow(url);  
-               }  
+                  globalDisplay_.openWindow(url);
+               }
             });
          }
-           
+
       }
    }
-   
+
    private void showDownloadPreviewFileDialog(
          final RmdRenderResult result, final Command onDownload)
    {
-      globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_INFO, 
-            "R Markdown Render Completed", 
-            "R Markdown has finished rendering " + 
-            result.getTargetFile() + " to " + 
-            result.getOutputFile() + ".", 
-            false, 
+      globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_INFO,
+            "R Markdown Render Completed",
+            "R Markdown has finished rendering " +
+            result.getTargetFile() + " to " +
+            result.getOutputFile() + ".",
+            false,
             new ProgressOperation()
             {
                @Override
@@ -650,12 +649,12 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                   indicator.onCompleted();
                }
             },
-            null, 
-            "Download File", 
-            "OK", 
+            null,
+            "Download File",
+            "OK",
             false);
    }
-   
+
    private void displayHTMLRenderResult(RmdRenderResult result)
    {
       // find the last known position for this file
@@ -671,10 +670,10 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       }
       final RmdPreviewParams params = RmdPreviewParams.create(
             result, scrollPosition, anchor);
-      
+
       // get the default viewer type from prefs
       String viewerType = prefs_.rmdViewerType().getValue();
-      
+
       // apply override from result, if any
       if (result.getViewerType() == RmdEditorOptions.PREVIEW_IN_VIEWER)
          viewerType = UserPrefs.RMD_VIEWER_TYPE_PANE;
@@ -687,18 +686,18 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       // slides well without help
       if (result.isHtmlPresentation() && viewerType == UserPrefs.RMD_VIEWER_TYPE_PANE)
          viewerType = UserPrefs.RMD_VIEWER_TYPE_WINDOW;
-      
+
       final String newViewerType = viewerType;
-      
+
       // if we're about to pop open a window but one of the publish buttons
-      // is waiting for a render to complete, skip the preview entirely so 
+      // is waiting for a render to complete, skip the preview entirely so
       // we don't disturb the publish flow with a window popping up
       if (newViewerType == UserPrefs.RMD_VIEWER_TYPE_WINDOW &&
             RSConnectPublishButton.isAnyRmdRenderPending())
       {
          return;
       }
-      
+
       // get the window object if available
       WindowEx win = null;
       boolean needsReopen = false;
@@ -708,12 +707,12 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          if (outputFrame_.getViewerType() != newViewerType)
             needsReopen = true;
       }
-      
-      // if there's a window up but it's showing a different document type, 
+
+      // if there's a window up but it's showing a different document type,
       // close it so that we can create a new one better suited to this doc type
-      if (needsReopen || 
-            (win != null && 
-             result_ != null && 
+      if (needsReopen ||
+            (win != null &&
+             result_ != null &&
              result_.getFormatName() != result.getFormatName()))
       {
          outputFrame_.closeOutputFrame(false);
@@ -734,29 +733,29 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          displayRenderResult(win, newViewerType, params);
       }
    }
-   
-   private void displayRenderResult(WindowEx win, String viewerType, 
+
+   private void displayRenderResult(WindowEx win, String viewerType,
                                     RmdPreviewParams params)
    {
       if (viewerType == UserPrefs.RMD_VIEWER_TYPE_NONE)
          return;
-      
+
       RmdRenderResult result = params.getResult();
-      
+
       if (outputFrame_ == null)
          outputFrame_ = createOutputFrame(viewerType);
-      
+
       // we're refreshing if the window is up and we're pulling the same
       // output file as the last one
       boolean isRefresh = win != null &&
-                          result_ != null && 
+                          result_ != null &&
                           result_.getOutputFile() == result.getOutputFile();
 
       // if this isn't a refresh but there's a window up, cache the scroll
       // position of the old document before we replace it
       if (!isRefresh && result_ != null && win != null)
       {
-         cacheDocPosition(result_, outputFrame_.getScrollPosition(), 
+         cacheDocPosition(result_, outputFrame_.getScrollPosition(),
                           outputFrame_.getAnchor());
       }
 
@@ -770,39 +769,39 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       boolean isNotebook = result_ != null &&
             FileSystemItem.getExtensionFromPath(result_.getOutputFile()) ==
             NOTEBOOK_EXT;
-      
-      // show the preview; activate the window (but not for auto-refresh of 
+
+      // show the preview; activate the window (but not for auto-refresh of
       // notebook preview)
-      outputFrame_.showRmdPreview(params, !(isRefresh && isNotebook && 
+      outputFrame_.showRmdPreview(params, !(isRefresh && isNotebook &&
             result.viewed()));
       result.setViewed(true);
-      
+
       // reset live preview state
       livePreviewRenderInProgress_ = false;
 
       // save the result so we know if the next render is a re-render of the
       // same document
-      result_ = result; 
+      result_ = result;
    }
- 
+
    private final native void exportRmdOutputClosedCallback()/*-{
-      var registry = this;     
+      var registry = this;
       $wnd.notifyRmdOutputClosed = $entry(
          function(params) {
             registry.@org.rstudio.studio.client.rmarkdown.RmdOutput::notifyRmdOutputClosed(Lcom/google/gwt/core/client/JavaScriptObject;)(params);
          }
-      ); 
+      );
    }-*/;
-   
+
    // when the window is closed, remember our position within it
    private void notifyRmdOutputClosed(JavaScriptObject closeParams)
    {
-      // save anchor location for presentations and scroll position for 
+      // save anchor location for presentations and scroll position for
       // documents
       RmdPreviewParams params = closeParams.cast();
-      cacheDocPosition(params.getResult(), params.getScrollPosition(), 
+      cacheDocPosition(params.getResult(), params.getScrollPosition(),
                        params.getAnchor());
-      
+
       // if this is a Shiny document, stop the associated process
       if (params.isShinyDocument() && !restarting_)
       {
@@ -810,8 +809,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       }
       shinyDoc_ = null;
    }
-   
-   private void cacheDocPosition(RmdRenderResult result, int scrollPosition, 
+
+   private void cacheDocPosition(RmdRenderResult result, int scrollPosition,
                                  String anchor)
    {
       if (result.isHtmlPresentation())
@@ -823,9 +822,9 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          scrollPositions_.put(keyFromResult(result), scrollPosition);
       }
    }
-   
-   // Generates lookup keys from results; used to enforce caching scroll 
-   // position and/or anchor by document name and type 
+
+   // Generates lookup keys from results; used to enforce caching scroll
+   // position and/or anchor by document name and type
    private String keyFromResult(RmdRenderResult result)
    {
       if (result.isShinyDocument())
@@ -833,7 +832,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       else
          return result.getOutputFile() + "-" + result.getFormatName();
    }
-   
+
    private RmdOutputFrame createOutputFrame(String viewerType)
    {
       switch(viewerType)
@@ -860,10 +859,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
 
    // stores the last scroll position of each document we know about: map
    // of path to position
-   private final Map<String, Integer> scrollPositions_ = 
-         new HashMap<String, Integer>();
-   private final Map<String, String> anchors_ = 
-         new HashMap<String, String>();
+   private final Map<String, Integer> scrollPositions_ = new HashMap<>();
+   private final Map<String, String> anchors_ = new HashMap<>();
    private RmdRenderResult result_;
    private RmdShinyDocInfo shinyDoc_;
    private Operation onRenderCompleted_;
@@ -871,9 +868,9 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    private boolean renderInProgress_ = false;
    private boolean livePreviewRenderInProgress_ = false;
    private boolean quitInitiatedAfterLastRender_ = false;
-   
+
    public final static String NOTEBOOK_EXT = ".nb.html";
-   
+
    public final static int TYPE_STATIC   = 0;
    public final static int TYPE_SHINY    = 1;
    public final static int TYPE_NOTEBOOK = 2;

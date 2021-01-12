@@ -24,7 +24,6 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
-import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
 import org.rstudio.studio.client.workbench.views.source.events.XRefNavigationEvent;
 
 import com.google.gwt.core.client.Scheduler;
@@ -55,48 +54,48 @@ public class CodeSearch
       void onCompleted();
       void onCancel();
    }
-   
-   
-   public interface Display 
+
+
+   public interface Display
    {
       SearchDisplay getSearchDisplay();
-      
+
       void setCueText(String text);
-      
+
       SuggestBox.DefaultSuggestionDisplay getSuggestionDisplay();
-      
+
       CodeSearchOracle getSearchOracle();
-      
+
    }
-   
+
    @Inject
-   public CodeSearch(Display display, 
+   public CodeSearch(Display display,
                      final FileTypeRegistry fileTypeRegistry,
                      final EventBus eventBus)
    {
       display_ = display;
       events_  = eventBus;
-      
+
       final SearchDisplay searchDisplay = display_.getSearchDisplay();
       searchDisplay.setAutoSelectEnabled(true);
-      
+
       searchDisplay.addSelectionHandler(new SelectionHandler<Suggestion>() {
 
          @Override
          public void onSelection(SelectionEvent<Suggestion> event)
          {
-            CodeNavigationTarget target = 
+            CodeNavigationTarget target =
                display_.getSearchOracle().navigationTarget(
                      searchDisplay.getLastValue(),
                      event.getSelectedItem());
-              
+
             // create full file path and position
             String srcFile = target.getFile();
             final FileSystemItem srcItem = FileSystemItem.createFile(srcFile);
             final FilePosition pos = target.getPosition();
             final XRef xref = target.getXRef();
-            
-            // fire editing event (delayed so the Enter keystroke 
+
+            // fire editing event (delayed so the Enter keystroke
             // doesn't get routed into the source editor)
             Scheduler.get().scheduleDeferred(() ->
             {
@@ -118,42 +117,42 @@ public class CodeSearch
             });
          }
       });
-      
+
       searchDisplay.addCloseHandler(new CloseHandler<SearchDisplay>() {
          @Override
          public void onClose(CloseEvent<SearchDisplay> event)
          {
             display_.getSearchDisplay().clear();
-            
+
             if (observer_ != null)
               observer_.onCancel();
          }
       });
-     
+
      // various conditions invalidate the search oracle's cache
-      
+
      searchDisplay.addBlurHandler(new BlurHandler() {
          @Override
          public void onBlur(BlurEvent event)
-         { 
+         {
             display_.getSearchOracle().clear();
          }
      });
 
-     
+
      searchDisplay.addFocusHandler(new FocusHandler() {
         @Override
         public void onFocus(FocusEvent event)
-        { 
+        {
            display_.getSearchOracle().clear();
         }
      });
-     
+
      eventBusHandlers_.add(
-           eventBus.addHandler(FileChangeEvent.TYPE, new FileChangeHandler() {
+           eventBus.addHandler(FileChangeEvent.TYPE, new FileChangeEvent.Handler() {
         @Override
         public void onFileChange(FileChangeEvent event)
-        {           
+        {
            // if this was an R file then invalidate the cache
            CodeSearchOracle oracle = display_.getSearchOracle();
            if (oracle.hasCachedResults())
@@ -162,9 +161,9 @@ public class CodeSearch
               if (fsi.getExtension().toLowerCase().equals(".r"))
                  oracle.clear();
            }
-        } 
+        }
      }));
-     
+
      searchDisplay.addValueChangeHandler(new ValueChangeHandler<String>() {
         @Override
         public void onValueChange(ValueChangeEvent<String> event)
@@ -175,15 +174,15 @@ public class CodeSearch
               display_.getSearchOracle().invalidateSearches();
               display_.getSuggestionDisplay().hideSuggestions();
            }
-        }     
+        }
      });
-     
+
      searchDisplay.addKeyDownHandler(new KeyDownHandler() {
 
         @Override
         public void onKeyDown(KeyDownEvent event)
         {
-           // eat key-up if the suggestions are showing (since the 
+           // eat key-up if the suggestions are showing (since the
            // suggestions menu is taking these and if we take it
            // the cursor will go to the beginning of the selection)
            if (display_.getSuggestionDisplay().isSuggestionListShowing() &&
@@ -193,19 +192,19 @@ public class CodeSearch
               event.stopPropagation();
            }
         }
-        
+
      });
    }
-   
+
    public Widget getSearchWidget()
    {
       return (Widget) display_.getSearchDisplay();
    }
-   
+
    public void setObserver(Observer observer)
    {
       observer_ = observer;
-      
+
       if (observer_ != null)
       {
          String cueText = observer_.getCueText();
@@ -213,8 +212,8 @@ public class CodeSearch
             display_.setCueText(cueText);
       }
    }
-   
-   // notify the CodeSearch that the search is completed so that it 
+
+   // notify the CodeSearch that the search is completed so that it
    // can un-hook from EventBus events
    public void detachEventBusHandlers()
    {
@@ -222,11 +221,10 @@ public class CodeSearch
          eventBusHandlers_.get(i).removeHandler();
       eventBusHandlers_.clear();
    }
-     
+
    private final Display display_;
    private final EventBus events_;
-   
+
    private Observer observer_ = null;
-   private ArrayList<HandlerRegistration> eventBusHandlers_ = 
-                                 new ArrayList<HandlerRegistration>();
+   private ArrayList<HandlerRegistration> eventBusHandlers_ = new ArrayList<>();
 }

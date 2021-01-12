@@ -205,7 +205,7 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
    {
       remotesInfo_ = remotesInfo;
       
-      List<String> remotes = new ArrayList<String>();
+      List<String> remotes = new ArrayList<>();
       for (RemotesInfo info : JsUtil.asIterable(remotesInfo))
       {
          if (!remotes.contains(info.getRemote()))

@@ -497,7 +497,7 @@ public class Wizard<I,T> extends ModalDialog<T>
     
    protected ArrayList<String> getWizardBodyStyles()
    {
-      ArrayList<String> classes = new ArrayList<String>();
+      ArrayList<String> classes = new ArrayList<>();
       classes.add(WizardResources.INSTANCE.styles().wizardBodyPanel());
       return classes;
    }

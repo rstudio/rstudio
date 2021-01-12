@@ -14,36 +14,41 @@
  */
 package org.rstudio.studio.client.workbench.views.history.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
 
-public class HistoryEntriesAddedEvent extends GwtEvent<HistoryEntriesAddedHandler>
+public class HistoryEntriesAddedEvent extends GwtEvent<HistoryEntriesAddedEvent.Handler>
 {
-   public static final GwtEvent.Type<HistoryEntriesAddedHandler> TYPE =
-      new GwtEvent.Type<HistoryEntriesAddedHandler>();
-   
+   public static final GwtEvent.Type<HistoryEntriesAddedEvent.Handler> TYPE = new GwtEvent.Type<>();
+
+   public interface Handler extends EventHandler
+   {
+      void onHistoryEntriesAdded(HistoryEntriesAddedEvent event);
+   }
+
    public HistoryEntriesAddedEvent(RpcObjectList<HistoryEntry> entries)
    {
       entries_ = entries;
    }
-   
+
    public RpcObjectList<HistoryEntry> getEntries()
    {
       return entries_;
    }
-   
+
    @Override
-   protected void dispatch(HistoryEntriesAddedHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onHistoryEntriesAdded(this);
    }
 
    @Override
-   public GwtEvent.Type<HistoryEntriesAddedHandler> getAssociatedType()
+   public GwtEvent.Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
-   
+
    private final RpcObjectList<HistoryEntry> entries_;
 }

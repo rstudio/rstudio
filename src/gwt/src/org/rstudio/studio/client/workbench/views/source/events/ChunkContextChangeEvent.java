@@ -29,8 +29,7 @@ public class ChunkContextChangeEvent
       void onChunkContextChange(ChunkContextChangeEvent event);
    }
 
-   public static final GwtEvent.Type<ChunkContextChangeEvent.Handler> TYPE =
-      new GwtEvent.Type<ChunkContextChangeEvent.Handler>();
+   public static final GwtEvent.Type<ChunkContextChangeEvent.Handler> TYPE = new GwtEvent.Type<>();
    
    public ChunkContextChangeEvent(String docId, String contextId,
          JsArray<ChunkDefinition> chunkDefs)

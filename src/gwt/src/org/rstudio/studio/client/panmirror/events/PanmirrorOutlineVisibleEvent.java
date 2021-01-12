@@ -78,7 +78,7 @@ public class PanmirrorOutlineVisibleEvent extends
    */
   public static Type<PanmirrorOutlineVisibleEvent.Handler> getType() {
     if (TYPE == null) {
-      TYPE = new Type<PanmirrorOutlineVisibleEvent.Handler>();
+      TYPE = new Type<>();
     }
     return TYPE;
   }

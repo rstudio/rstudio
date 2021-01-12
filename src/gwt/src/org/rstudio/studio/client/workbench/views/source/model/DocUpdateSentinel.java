@@ -132,8 +132,7 @@ public class DocUpdateSentinel
       prefs_ = prefs;
       chunkDefProvider_ = chunkDefProvider;
       changeTracker_ = docDisplay.getChangeTracker();
-      propertyChangeHandlers_ =
-            new HashMap<String, ValueChangeHandlerManager<String>>();
+      propertyChangeHandlers_ = new HashMap<>();
 
       prefs_.autoSaveOnIdle().bind((String behavior) ->
       {
@@ -728,7 +727,7 @@ public class DocUpdateSentinel
                            String value,
                            ProgressIndicator progress)
    {
-      HashMap<String, String> props = new HashMap<String, String>();
+      HashMap<String, String> props = new HashMap<>();
       props.put(name, value);
       modifyProperties(props, progress);
    }
@@ -782,7 +781,7 @@ public class DocUpdateSentinel
    {
       if (!propertyChangeHandlers_.containsKey(propertyName))
             propertyChangeHandlers_.put(
-                  propertyName, new ValueChangeHandlerManager<String>(this));
+                  propertyName, new ValueChangeHandlerManager<>(this));
       return propertyChangeHandlers_.get(propertyName).addValueChangeHandler(
             handler);
    }
@@ -828,7 +827,7 @@ public class DocUpdateSentinel
    {
       nudgeAutosave();
    }
-   
+
    public void nudgeAutosave()
    {
       if (suspendDetectChanges_ > 0)
@@ -897,8 +896,7 @@ public class DocUpdateSentinel
    {
       // Warning: This leaves the sourceDoc_ with a stale LastModifiedDate
       // but we don't use it.
-      server_.ignoreExternalEdit(sourceDoc_.getId(),
-                                 new SimpleRequestCallback<Void>());
+      server_.ignoreExternalEdit(sourceDoc_.getId(), new SimpleRequestCallback<>());
    }
 
    public String getEncoding()

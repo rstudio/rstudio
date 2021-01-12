@@ -14,12 +14,18 @@
  */
 package org.rstudio.studio.client.common.filetypes.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import org.rstudio.core.client.files.FileSystemItem;
 
-public class OpenFileInBrowserEvent extends GwtEvent<OpenFileInBrowserHandler>
+public class OpenFileInBrowserEvent extends GwtEvent<OpenFileInBrowserEvent.Handler>
 {
-   public static Type<OpenFileInBrowserHandler> TYPE = new Type<OpenFileInBrowserHandler>();
+   public static Type<Handler> TYPE = new Type<>();
+
+   public interface Handler extends EventHandler
+   {
+      void onOpenFileInBrowser(OpenFileInBrowserEvent file);
+   }
 
    public OpenFileInBrowserEvent(FileSystemItem file)
    {
@@ -32,13 +38,13 @@ public class OpenFileInBrowserEvent extends GwtEvent<OpenFileInBrowserHandler>
    }
 
    @Override
-   public Type<OpenFileInBrowserHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
 
    @Override
-   protected void dispatch(OpenFileInBrowserHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onOpenFileInBrowser(this);
    }

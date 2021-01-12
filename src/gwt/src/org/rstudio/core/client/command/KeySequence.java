@@ -25,12 +25,12 @@ public class KeySequence
 {
    public KeySequence()
    {
-      keyCombinations_ = new ArrayList<KeyCombination>();
+      keyCombinations_ = new ArrayList<>();
    }
 
    public KeySequence(List<KeyCombination> keyList)
    {
-      keyCombinations_ = new ArrayList<KeyCombination>(keyList);
+      keyCombinations_ = new ArrayList<>(keyList);
    }
 
    public static KeySequence fromShortcutString(String shortcut)

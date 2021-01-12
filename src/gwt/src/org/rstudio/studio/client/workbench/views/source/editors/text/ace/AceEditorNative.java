@@ -184,7 +184,7 @@ public class AceEditorNative extends JavaScriptObject
 
    public final HandlerRegistration delegateEventsTo(HasHandlers handlers)
    {
-      final LinkedList<JavaScriptObject> handles = new LinkedList<JavaScriptObject>();
+      final LinkedList<JavaScriptObject> handles = new LinkedList<>();
       handles.add(addDomListener(getTextInputElement(), "keydown", handlers));
       handles.add(addDomListener(getTextInputElement(), "keypress", handlers));
       handles.add(addDomListener(getTextInputElement(), "changeScrollTop", handlers));

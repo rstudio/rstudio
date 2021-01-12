@@ -54,7 +54,7 @@ public class StatusAndPath
       if (infos == null)
          return null;
 
-      ArrayList<StatusAndPath> result = new ArrayList<StatusAndPath>();
+      ArrayList<StatusAndPath> result = new ArrayList<>();
       for (int i = 0; i < infos.length(); i++)
       {
          result.add(new StatusAndPath(infos.get(i)));

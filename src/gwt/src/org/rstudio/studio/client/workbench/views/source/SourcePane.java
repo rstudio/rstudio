@@ -62,7 +62,7 @@ public class SourcePane extends LazyPanel implements Display,
    @Override
    protected Widget createWidget()
    {
-	  final int UTILITY_AREA_SIZE = 74;
+     final int UTILITY_AREA_SIZE = 74;
       panel_ = new LayoutPanel();
 
       new AutoGlassAttacher(panel_);

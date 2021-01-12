@@ -33,15 +33,15 @@ import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 public class SavePlotAsHandler
 {
    public interface ServerOperations
-   { 
-      void savePlot(FileSystemItem targetPath, 
+   {
+      void savePlot(FileSystemItem targetPath,
                     boolean overwrite,
                     ServerRequestCallback<Bool> requestCallback);
-      
+
       String getFileUrl(FileSystemItem path);
    }
-   
-   
+
+
    public SavePlotAsHandler(GlobalDisplay globalDisplay,
                             ProgressIndicator progressIndicator,
                             ServerOperations server)
@@ -50,8 +50,8 @@ public class SavePlotAsHandler
       progressIndicator_ = progressIndicator;
       server_ = server;
    }
-   
-   
+
+
    public void attemptSave(FileSystemItem targetPath,
                            boolean overwrite,
                            boolean viewAfterSave,
@@ -65,7 +65,7 @@ public class SavePlotAsHandler
    }
 
 
-   private void desktopSavePlotAs(final FileSystemItem targetPath, 
+   private void desktopSavePlotAs(final FileSystemItem targetPath,
                                   boolean overwrite,
                                   final boolean viewAfterSave,
                                   Operation onCompleted)
@@ -73,10 +73,10 @@ public class SavePlotAsHandler
       progressIndicator_.onProgress("Converting Plot...");
 
       savePlotAs(
-            targetPath, 
-            overwrite, 
+            targetPath,
+            overwrite,
             viewAfterSave,
-            onCompleted, 
+            onCompleted,
             new PlotSaveAsUIHandler() {
                @Override
                public void onSuccess()
@@ -105,21 +105,21 @@ public class SavePlotAsHandler
             });
    }
 
-   private void webSavePlotAs(final FileSystemItem targetPath, 
+   private void webSavePlotAs(final FileSystemItem targetPath,
                               final boolean overwrite,
                               final boolean viewAfterSave,
                               final Operation onCompleted)
    {
       globalDisplay_.openProgressWindow("_blank",
-            "Converting Plot...", 
-            new OperationWithInput<WindowEx>() {                                        
+            "Converting Plot...",
+            new OperationWithInput<WindowEx>() {
          public void execute(final WindowEx window)
          {
             savePlotAs(
-                  targetPath, 
-                  overwrite, 
+                  targetPath,
+                  overwrite,
                   viewAfterSave,
-                  onCompleted, 
+                  onCompleted,
                   new PlotSaveAsUIHandler() {
                      @Override
                      public void onSuccess()
@@ -130,10 +130,10 @@ public class SavePlotAsHandler
                            @Override
                            public void execute()
                            {
-                              window.replaceLocationHref(url);       
-                           }    
+                              window.replaceLocationHref(url);
+                           }
                         });
-                       
+
                      }
 
                      @Override
@@ -141,8 +141,8 @@ public class SavePlotAsHandler
                      {
                         window.close();
 
-                        globalDisplay_.showErrorMessage("Error Saving Plot", 
-                              error.getUserMessage());       
+                        globalDisplay_.showErrorMessage("Error Saving Plot",
+                              error.getUserMessage());
                      }
 
                      @Override
@@ -154,7 +154,7 @@ public class SavePlotAsHandler
          }
       });
    }
-   
+
    private interface PlotSaveAsUIHandler
    {
       void onSuccess();
@@ -163,14 +163,14 @@ public class SavePlotAsHandler
    }
 
 
-   private void savePlotAs(final FileSystemItem targetPath, 
+   private void savePlotAs(final FileSystemItem targetPath,
                            boolean overwrite,
                            final boolean viewAfterSave,
                            final Operation onCompleted,
                            final PlotSaveAsUIHandler uiHandler)
    {
       server_.savePlot(
-            targetPath, 
+            targetPath,
             overwrite,
             new ServerRequestCallback<Bool>() {
 
@@ -186,14 +186,14 @@ public class SavePlotAsHandler
                         onCompleted.execute();
                   }
                   else
-                  { 
+                  {
                      uiHandler.onOverwritePrompt();
 
                      globalDisplay_.showYesNoMessage(
-                           MessageDialog.WARNING, 
-                           "File Exists", 
+                           MessageDialog.WARNING,
+                           "File Exists",
                            "The specified file name already exists. " +
-                           "Do you want to overwrite it?", 
+                           "Do you want to overwrite it?",
                            new Operation() {
                               @Override
                               public void execute()
@@ -203,7 +203,7 @@ public class SavePlotAsHandler
                                              viewAfterSave,
                                              onCompleted);
                               }
-                           }, 
+                           },
                            true);
 
                   }
@@ -215,9 +215,9 @@ public class SavePlotAsHandler
                   uiHandler.onError(error);
                }
 
-            });     
+            });
    }
-   
+
    private final GlobalDisplay globalDisplay_;
    private ProgressIndicator progressIndicator_;
    private final ServerOperations server_;

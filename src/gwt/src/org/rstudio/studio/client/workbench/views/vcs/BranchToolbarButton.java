@@ -63,12 +63,11 @@ import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
-import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
 import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
 
 public class BranchToolbarButton extends ToolbarMenuButton
                                  implements HasValueChangeHandlers<String>,
-                                            VcsRefreshHandler
+                                            VcsRefreshEvent.Handler
 {
    protected class SwitchBranchCommand implements Command
    {
@@ -96,7 +95,7 @@ public class BranchToolbarButton extends ToolbarMenuButton
             "Switch branch",
             StandardIcons.INSTANCE.empty_command(),
             new ScrollableToolbarPopupMenu());
-      
+
       pVcsState_ = pVcsState;
 
       new WidgetHandlerRegistration(this)
@@ -108,7 +107,7 @@ public class BranchToolbarButton extends ToolbarMenuButton
                                                 BranchToolbarButton.this, true);
          }
       };
-      
+
       menu_ = getMenu();
       menu_.setAutoHideRedundantSeparators(false);
       menu_.addAttachHandler(new AttachEvent.Handler()
@@ -124,14 +123,14 @@ public class BranchToolbarButton extends ToolbarMenuButton
                   rebuildMenu();
                   menuRebuildRequired_ = false;
                }
-               
+
                // force a re-draw if necessary
                if (initialBranchMap_ != null)
                {
                   searchWidget_.setValue("");
                   onSearchValueChange();
                }
-               
+
                Scheduler.get().scheduleDeferred(new ScheduledCommand()
                {
                   @Override
@@ -154,9 +153,9 @@ public class BranchToolbarButton extends ToolbarMenuButton
             }
          }
       });
-      
+
       searchWidget_ = new SearchWidget("Search by branch name");
-      
+
       searchValueChangeTimer_ = new Timer()
       {
          @Override
@@ -166,12 +165,12 @@ public class BranchToolbarButton extends ToolbarMenuButton
          }
       };
    }
-   
+
    public void setBranchCaption(String caption)
    {
       if (StringUtil.isNullOrEmpty(caption))
          caption = NO_BRANCH;
-      
+
       setText(caption);
    }
 
@@ -191,7 +190,7 @@ public class BranchToolbarButton extends ToolbarMenuButton
          menuRebuildRequired_ = true;
          return;
       }
-      
+
       for (int i = 0; i < branches.length(); i++)
       {
          if (!StringUtil.equals(branches.get(i), branches_.get(i)))
@@ -202,11 +201,11 @@ public class BranchToolbarButton extends ToolbarMenuButton
          }
       }
    }
-   
+
    private void rebuildMenu()
    {
       menu_.clearItems();
-      
+
       JsArrayString branches = pVcsState_.get().getBranchInfo().getBranches();
       if (branches.length() == 0)
       {
@@ -214,10 +213,10 @@ public class BranchToolbarButton extends ToolbarMenuButton
          populateEmptyMenu(menu_);
          return;
       }
-      
+
       // separate branches based on remote name
-      Map<String, List<String>> branchMap = new LinkedHashMap<String, List<String>>();
-      List<String> localBranches = new ArrayList<String>();
+      Map<String, List<String>> branchMap = new LinkedHashMap<>();
+      List<String> localBranches = new ArrayList<>();
       branchMap.put(LOCAL_BRANCHES, localBranches);
       for (String branch : JsUtil.asIterable(branches))
       {
@@ -228,7 +227,7 @@ public class BranchToolbarButton extends ToolbarMenuButton
             {
                String remote = parts.get(1);
                if (!branchMap.containsKey(remote))
-                  branchMap.put(remote, new ArrayList<String>());
+                  branchMap.put(remote, new ArrayList<>());
                List<String> remoteBranches = branchMap.get(remote);
                remoteBranches.add(branch);
             }
@@ -238,14 +237,14 @@ public class BranchToolbarButton extends ToolbarMenuButton
             localBranches.add(branch);
          }
       }
-      
+
       // record the branches used on first populate
       initialBranchMap_ = branchMap;
-      
+
       onBeforePopulateMenu(menu_);
       populateMenu(menu_, branchMap);
    }
-   
+
    private void populateEmptyMenu(final ToolbarPopupMenu menu)
    {
       menu.addSeparator(new CustomMenuItemSeparator()
@@ -260,7 +259,7 @@ public class BranchToolbarButton extends ToolbarMenuButton
          }
       });
    }
-   
+
    private void populateMenu(final ToolbarPopupMenu menu, final Map<String, List<String>> branchMap)
    {
       if (branchMap.isEmpty())
@@ -268,11 +267,11 @@ public class BranchToolbarButton extends ToolbarMenuButton
          populateEmptyMenu(menu);
          return;
       }
-      
+
       MapUtil.forEach(branchMap, new MapUtil.ForEachCommand<String, List<String>>()
       {
          int separatorCount_ = 0;
-            
+
          @Override
          public void execute(final String caption, final List<String> branches)
          {
@@ -284,7 +283,7 @@ public class BranchToolbarButton extends ToolbarMenuButton
                      "develop",
                      "trunk"
                };
-               
+
                @Override
                public int compare(String o1, String o2)
                {
@@ -295,11 +294,11 @@ public class BranchToolbarButton extends ToolbarMenuButton
                      else if (o2.endsWith(specialBranch))
                         return 1;
                   }
-                  
+
                   return o1.compareToIgnoreCase(o2);
                }
             });
-            
+
             menu.addSeparator(new CustomMenuItemSeparator()
             {
                @Override
@@ -311,11 +310,11 @@ public class BranchToolbarButton extends ToolbarMenuButton
                   Label label = new Label(branchLabel);
                   label.addStyleName(ThemeStyles.INSTANCE.menuSubheader());
                   label.getElement().getStyle().setPaddingLeft(2, Unit.PX);
-                  
+
                   boolean useSearch =
                         (separatorCount_++ == 0) &&
                         (menu_.getItemCount() == 0);
-                  
+
                   Element mainEl = (useSearch)
                         ? createSearchSeparator(label)
                         : label.getElement();
@@ -323,7 +322,7 @@ public class BranchToolbarButton extends ToolbarMenuButton
                }
             });
             menu.addSeparator();
-            
+
             // truncate list when we have too many branches
             int n = 0;
             for (String branch : branches)
@@ -335,35 +334,35 @@ public class BranchToolbarButton extends ToolbarMenuButton
                // skip HEAD branches
                if (branch.contains("HEAD ->"))
                   continue;
-               
+
                // construct branch label without remotes prefix
                final String branchLabel = branch.replaceAll("^remotes/" + caption + "/", "");
                final String branchValue = branch.replaceAll("\\s+\\-\\>.*", "");
                menu.addItem(new MenuItem(
                      branchLabel,
                      new SwitchBranchCommand(branchLabel, branchValue)));
-               
+
                // update branch count
                if (n++ > MAX_BRANCHES)
                   break;
             }
          }
       });
-      
+
       if (menuWidth_ != 0)
       {
          Element tableEl = menu_.getMenuTableElement();
          if (tableEl != null)
             tableEl.getStyle().setWidth(menuWidth_, Unit.PX);
       }
-      
+
       menu.selectFirst();
    }
-   
+
    protected void onBeforePopulateMenu(ToolbarPopupMenu rootMenu)
    {
       menu_.clearItems();
-      
+
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
          @Override
@@ -373,33 +372,33 @@ public class BranchToolbarButton extends ToolbarMenuButton
          }
       });
    }
-   
+
    private Element createSearchSeparator(Label label)
    {
       final Element searchEl = searchWidget_.getElement();
       final Element labelEl = label.getElement();
-      
+
       labelEl.getStyle().setFloat(Style.Float.LEFT);
       searchEl.getStyle().setFloat(Style.Float.RIGHT);
-      
+
       if (!searchEl.hasClassName(RES.styles().searchWidget()))
          searchEl.addClassName(RES.styles().searchWidget());
-      
+
       Element container = DOM.createDiv();
       container.appendChild(labelEl);
       container.appendChild(searchEl);
-      
+
       // For some reason any attempts to click within the search box (when it
       // lives as a separator in the menu) end up losing focus immediately after
       // clicking, so we use a preview handler just to ensure focus doesn't leave
       // the search widget on click events.
-      
+
       if (previewHandler_ != null)
       {
          previewHandler_.removeHandler();
          previewHandler_ = null;
       }
-      
+
       previewHandler_ = Event.addNativePreviewHandler(new NativePreviewHandler()
       {
          @Override
@@ -414,27 +413,27 @@ public class BranchToolbarButton extends ToolbarMenuButton
                break;
             }
          }
-         
+
          private void onKeyEvent(NativePreviewEvent preview)
          {
             NativeEvent event = preview.getNativeEvent();
             Element targetEl = event.getEventTarget().cast();
             if (!DomUtils.isDescendant(targetEl, searchEl))
                return;
-            
+
             String searchValue = StringUtil.notNull(searchWidget_.getValue());
             if (!searchValue.equals(lastSearchValue_))
                searchValueChangeTimer_.schedule(200);
          }
       });
-      
+
       return container;
    }
-   
+
    private void onSearchValueChange()
    {
       lastSearchValue_ = searchWidget_.getValue();
-      
+
       // fast path -- no query to use
       String query = StringUtil.notNull(lastSearchValue_).trim();
       if (query.isEmpty())
@@ -443,34 +442,34 @@ public class BranchToolbarButton extends ToolbarMenuButton
          populateMenu(menu_, initialBranchMap_);
          return;
       }
-      
+
       // iterate through initial branch map and copy branches
       // matching the current query. TODO: should we re-order
       // based on how 'close' a match we have?
-      Map<String, List<String>> branchMap = new HashMap<String, List<String>>();
+      Map<String, List<String>> branchMap = new HashMap<>();
       for (String key : initialBranchMap_.keySet())
       {
-         List<String> filteredBranches = new ArrayList<String>();
+         List<String> filteredBranches = new ArrayList<>();
          List<String> branches = initialBranchMap_.get(key);
          for (String branch : branches)
             if (branch.indexOf(query) != -1)
                filteredBranches.add(branch);
-         
+
          if (!filteredBranches.isEmpty())
             branchMap.put(key, filteredBranches);
       }
-      
+
       // re-populate
       menu_.clearItems();
       onBeforePopulateMenu(menu_);
       populateMenu(menu_, branchMap);
    }
-   
+
    private void focusSearch()
    {
       searchWidget_.getInputElement().focus();
    }
-   
+
    public interface Styles extends CssResource
    {
       String searchWidget();
@@ -483,26 +482,26 @@ public class BranchToolbarButton extends ToolbarMenuButton
    }
 
    protected final Provider<GitState> pVcsState_;
-   
+
    private final ToolbarPopupMenu menu_;
    private int menuWidth_ = 0;
    private final SearchWidget searchWidget_;
    private Map<String, List<String>> initialBranchMap_;
-   
+
    private boolean menuRebuildRequired_ = true;
    private JsVectorString branches_ = JsVectorString.createVector();
-   
+
    private HandlerRegistration previewHandler_;
-   
+
    private String lastSearchValue_;
    private final Timer searchValueChangeTimer_;
-   
+
    private static final int MAX_BRANCHES = 100;
 
    private static final String NO_BRANCH = "(no branch)";
    private static final String NO_BRANCHES_AVAILABLE = "(no branches available)";
    private static final String LOCAL_BRANCHES = "(local branches)";
-   
+
    private static Resources RES = GWT.create(Resources.class);
    static
    {

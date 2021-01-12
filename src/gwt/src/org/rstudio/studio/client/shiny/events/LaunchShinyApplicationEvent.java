@@ -30,7 +30,7 @@ public class LaunchShinyApplicationEvent
    }
 
    public static final GwtEvent.Type<LaunchShinyApplicationEvent.Handler> TYPE =
-      new GwtEvent.Type<LaunchShinyApplicationEvent.Handler>();
+      new GwtEvent.Type<>();
    
    public LaunchShinyApplicationEvent()
    {

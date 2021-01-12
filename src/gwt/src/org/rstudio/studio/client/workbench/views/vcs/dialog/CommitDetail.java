@@ -39,7 +39,6 @@ import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.common.vcs.GitServerOperations.PatchMode;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.*;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.ViewFileRevisionEvent;
-import org.rstudio.studio.client.workbench.views.vcs.common.events.ViewFileRevisionHandler;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter.CommitDetailDisplay;
 
 import java.util.ArrayList;
@@ -55,12 +54,12 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
       sizeWarning_.setVisible(false);
       progressPanel_ = new ProgressPanel(ProgressImages.createLargeGray());
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
-      
+
       ThemeStyles styles = ThemeStyles.INSTANCE;
       labelId_.addStyleName(styles.selectableText());
       labelParent_.addStyleName(styles.selectableText());
    }
-   
+
    public void setIdDesc(String idDesc)
    {
       labelIdDesc_.setText(idDesc);
@@ -121,7 +120,7 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
                return false;
 
             int filesCompared = 2;
-            ArrayList<ChunkOrLine> lines = new ArrayList<ChunkOrLine>();
+            ArrayList<ChunkOrLine> lines = new ArrayList<>();
             DiffChunk chunk;
             while (null != (chunk = unifiedParser.nextChunk()))
             {
@@ -136,21 +135,21 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
             view.setShowActions(false);
             view.setData(lines, PatchMode.Stage);
             view.setWidth("100%");
-            
+
             final DiffFrame diffFrame = new DiffFrame(
-                           null, 
-                           fileHeader.getDescription(), 
-                           null, 
-                           commit_.getId(), 
+                           null,
+                           fileHeader.getDescription(),
+                           null,
+                           commit_.getId(),
                            view,
                            new Command() {
                               @Override
                               public void execute()
-                              { 
+                              {
                                  fireEvent(new ViewFileRevisionEvent(
-                                          commit_.getId(), 
+                                          commit_.getId(),
                                           fileHeader.getDescription().trim()));
-                                 
+
                               }
                            },
                            suppressViewLink);
@@ -183,8 +182,7 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
    }
 
    @Override
-   public HandlerRegistration addViewFileRevisionHandler(
-                                             ViewFileRevisionHandler handler)
+   public HandlerRegistration addViewFileRevisionHandler(ViewFileRevisionEvent.Handler handler)
    {
       return addHandler(handler, ViewFileRevisionEvent.TYPE);
    }
@@ -272,5 +270,5 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
    HTMLPanel commitViewPanel_;
 
    private ScrollPanel container_;
-   
+
 }

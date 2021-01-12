@@ -57,9 +57,9 @@ runWatchdogProcess()
       fi
    else
       if [ "$privileged" = true ]; then
-         sudo $TIMEOUT_CMD --foreground $timeout /bin/bash -c "env SEGFAULT_SIGNALS='abrt segv' LD_PRELOAD=$RSESSION_DIAGNOSTICS_LIBSEGFAULT $VALGRIND $command $arg1 $arg2 $arg3 $arg4 $arg5;exit"
+         sudo $TIMEOUT_CMD --foreground $timeout /bin/bash -c "env SEGFAULT_SIGNALS='abrt segv' LD_PRELOAD=$RSESSION_DIAGNOSTICS_LIBSEGFAULT DYLD_INSERT_LIBRARIES=$DYLD_INSERT_LIBRARIES $VALGRIND $command $arg1 $arg2 $arg3 $arg4 $arg5;exit"
       else
-         $TIMEOUT_CMD --foreground $timeout /bin/bash -c "env SEGFAULT_SIGNALS='abrt segv' LD_PRELOAD=$RSESSION_DIAGNOSTICS_LIBSEGFAULT $VALGRIND $command $arg1 $arg2 $arg3 $arg4 $arg5;exit"
+         $TIMEOUT_CMD --foreground $timeout /bin/bash -c "env SEGFAULT_SIGNALS='abrt segv' LD_PRELOAD=$RSESSION_DIAGNOSTICS_LIBSEGFAULT  DYLD_INSERT_LIBRARIES=$DYLD_INSERT_LIBRARIES $VALGRIND $command $arg1 $arg2 $arg3 $arg4 $arg5;exit"
       fi
    fi
 

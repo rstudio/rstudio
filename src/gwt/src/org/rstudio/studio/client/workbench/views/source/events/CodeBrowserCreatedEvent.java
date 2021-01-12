@@ -29,8 +29,7 @@ public class CodeBrowserCreatedEvent
       void onCodeBrowserCreated(CodeBrowserCreatedEvent event);
    }
 
-   public static final GwtEvent.Type<CodeBrowserCreatedEvent.Handler> TYPE =
-      new GwtEvent.Type<CodeBrowserCreatedEvent.Handler>();
+   public static final GwtEvent.Type<CodeBrowserCreatedEvent.Handler> TYPE = new GwtEvent.Type<>();
    
    public CodeBrowserCreatedEvent()
    {

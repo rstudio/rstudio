@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.output.find;
 
-import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.TableRowElement;

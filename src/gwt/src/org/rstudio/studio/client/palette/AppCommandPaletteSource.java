@@ -42,9 +42,9 @@ public class AppCommandPaletteSource implements CommandPaletteEntryProvider
    @Override
    public List<CommandPaletteItem> getCommandPaletteItems()
    {
-      List<CommandPaletteItem> items = new ArrayList<CommandPaletteItem>();
-      List<String> sorted = new ArrayList<String>();
-      Set<String> unsorted = new HashSet<String>();
+      List<CommandPaletteItem> items = new ArrayList<>();
+      List<String> sorted = new ArrayList<>();
+      Set<String> unsorted = new HashSet<>();
       unsorted.addAll(commands_.getCommands().keySet());
 
       // Front-load the first page of results with some useful commands; we don't attempt to sort

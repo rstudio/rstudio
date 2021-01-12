@@ -36,7 +36,7 @@ public class MultipleItemSuggestTextBox extends TextBoxBase
    
    public List<String> getItems()
    {
-      ArrayList<String> items = new ArrayList<String>();
+      ArrayList<String> items = new ArrayList<>();
       String text = super.getText();
       if (!StringUtil.isNullOrEmpty(text))
       {

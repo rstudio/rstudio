@@ -40,7 +40,6 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
-import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.panmirror.PanmirrorChanges;
 import org.rstudio.studio.client.panmirror.PanmirrorCode;
 import org.rstudio.studio.client.panmirror.PanmirrorContext;
@@ -1741,7 +1740,7 @@ public class VisualMode implements VisualModeEditorSync,
    private void alignScopeOutline(PanmirrorEditingOutlineLocation location)
    {
       // Get all of the chunks from the document (code view)
-      ArrayList<Scope> chunkScopes = new ArrayList<Scope>();
+      ArrayList<Scope> chunkScopes = new ArrayList<>();
       ScopeList chunks = new ScopeList(docDisplay_);
       chunks.selectAll(ScopeList.CHUNK);
       for (Scope chunk : chunks)
@@ -1750,8 +1749,7 @@ public class VisualMode implements VisualModeEditorSync,
       }
       
       // Get all of the chunks from the outline emitted by visual mode
-      ArrayList<PanmirrorEditingOutlineLocationItem> chunkItems = 
-            new ArrayList<PanmirrorEditingOutlineLocationItem>();
+      ArrayList<PanmirrorEditingOutlineLocationItem> chunkItems = new ArrayList<>();
       for (int j = 0; j < location.items.length; j++)
       {
          if (StringUtil.equals(location.items[j].type, PanmirrorOutlineItemType.RmdChunk))
@@ -1794,7 +1792,7 @@ public class VisualMode implements VisualModeEditorSync,
     */
    private void alignScopeTreeAfterUpdate(PanmirrorEditingOutlineLocation location)
    {
-      final Value<HandlerRegistration> handler = new Value<HandlerRegistration>(null);
+      final Value<HandlerRegistration> handler = new Value<>(null);
       handler.setValue(docDisplay_.addScopeTreeReadyHandler((evt) ->
       {
          if (location != null)
@@ -1839,14 +1837,14 @@ public class VisualMode implements VisualModeEditorSync,
   
    private ToolbarButton findReplaceButton_;
    
-   private ArrayList<AppCommand> disabledForVisualMode_ = new ArrayList<AppCommand>();
+   private ArrayList<AppCommand> disabledForVisualMode_ = new ArrayList<>();
    
    private final ProgressPanel progress_;
    
    private SerializedCommandQueue syncToEditorQueue_ = new SerializedCommandQueue();
    
    private boolean isLoading_ = false;
-   private List<ScheduledCommand> onReadyHandlers_ = new ArrayList<ScheduledCommand>(); 
+   private List<ScheduledCommand> onReadyHandlers_ = new ArrayList<>(); 
    
    private static final int kCreationProgressDelayMs = 0;
    private static final int kSerializationProgressDelayMs = 5000;

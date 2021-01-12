@@ -33,8 +33,7 @@ public class DataViewChangedEvent extends GwtEvent<DataViewChangedEvent.Handler>
       }-*/;
    }
 
-   public static final GwtEvent.Type<DataViewChangedEvent.Handler> TYPE =
-      new GwtEvent.Type<DataViewChangedEvent.Handler>();
+   public static final GwtEvent.Type<DataViewChangedEvent.Handler> TYPE = new GwtEvent.Type<>();
 
    public interface Handler extends EventHandler
    {

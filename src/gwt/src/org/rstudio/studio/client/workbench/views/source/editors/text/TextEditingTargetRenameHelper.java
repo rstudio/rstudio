@@ -18,9 +18,9 @@ public class TextEditingTargetRenameHelper
    public TextEditingTargetRenameHelper(DocDisplay docDisplay)
    {
       editor_ = (AceEditor) docDisplay;
-      state_ = new Stack<Integer>();
-      protectedNamesList_ = new ArrayList<Set<String>>();
-      ranges_ = new ArrayList<Range>();
+      state_ = new Stack<>();
+      protectedNamesList_ = new ArrayList<>();
+      ranges_ = new ArrayList<>();
    }
    
    public int renameInScope()
@@ -178,7 +178,7 @@ public class TextEditingTargetRenameHelper
    private int renameFunctionArgument(String functionName, String argName)
    {
       TokenCursor cursor = editor_.getSession().getMode().getCodeModel().getTokenCursor();
-      Stack<String> functionNames = new Stack<String>();
+      Stack<String> functionNames = new Stack<>();
       boolean renaming = false;
       
       do
@@ -396,7 +396,7 @@ public class TextEditingTargetRenameHelper
       ranges_.clear();
       state_.clear();
       protectedNamesList_.clear();
-      protectedNamesList_.add(new HashSet<String>());
+      protectedNamesList_.add(new HashSet<>());
    }
    
    private int peekState()
@@ -442,7 +442,7 @@ public class TextEditingTargetRenameHelper
    
    private void pushProtectedNames(Position position, Scope parentScope)
    {
-      protectedNamesList_.add(new HashSet<String>());
+      protectedNamesList_.add(new HashSet<>());
       Scope scope = editor_.getScopeAtPosition(position);
       if (scope.isFunction() && scope != parentScope)
       {

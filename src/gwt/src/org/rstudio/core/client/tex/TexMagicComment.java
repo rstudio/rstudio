@@ -24,7 +24,7 @@ public class TexMagicComment
 {
    public static ArrayList<TexMagicComment> parseComments(String code)
    {
-      ArrayList<TexMagicComment> comments = new ArrayList<TexMagicComment>();
+      ArrayList<TexMagicComment> comments = new ArrayList<>();
       
       Iterable<String> lines = StringUtil.getLineIterator(code);
       

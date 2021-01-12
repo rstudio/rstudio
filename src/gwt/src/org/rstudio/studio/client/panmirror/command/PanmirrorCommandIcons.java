@@ -88,6 +88,6 @@ public class PanmirrorCommandIcons
    
    public static PanmirrorCommandIcons INSTANCE = new PanmirrorCommandIcons();
    
-   private HashMap<String,ImageResource> icons_ = new HashMap<String,ImageResource>();
+   private HashMap<String,ImageResource> icons_ = new HashMap<>();
    
 }

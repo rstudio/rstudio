@@ -25,7 +25,7 @@ public class SelectionCommitEvent<I> extends GwtEvent<SelectionCommitEvent.Handl
    {
      if (TYPE != null)
      {
-       SelectionCommitEvent<I> event = new SelectionCommitEvent<I>(selectedItem);
+       SelectionCommitEvent<I> event = new SelectionCommitEvent<>(selectedItem);
        source.fireEvent(event);
      }
    }

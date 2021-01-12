@@ -63,7 +63,6 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
-import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedHandler;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.views.PaneLayoutPreferencesPane;
 import org.rstudio.studio.client.workbench.views.console.ConsolePane;
@@ -385,7 +384,7 @@ public class PaneManager
          // manage source column commands
          boolean visible = userPrefs.allowSourceColumns().getValue() &&
             (userPrefs.panes().getValue().getAdditionalSourceColumns() < MAX_COLUMN_COUNT);
-         
+
          commands_.newSourceColumn().setVisible(visible);
          commands_.openSourceDocNewColumn().setVisible(visible);
 
@@ -445,7 +444,7 @@ public class PaneManager
             ManageLayoutCommandsEvent.TYPE,
             event -> manageLayoutCommands());
 
-      eventBus.addHandler(UserPrefsChangedEvent.TYPE, new UserPrefsChangedHandler()
+      eventBus.addHandler(UserPrefsChangedEvent.TYPE, new UserPrefsChangedEvent.Handler()
       {
          @Override
          public void onUserPrefsChanged(UserPrefsChangedEvent e)
@@ -682,7 +681,7 @@ public class PaneManager
       if (validateNewColumnRequest())
          createAndDisplaySourceColumn();
    }
-   
+
    @Handler
    public void onOpenSourceDocNewColumn()
    {
@@ -715,7 +714,7 @@ public class PaneManager
       }
       return true;
    }
-   
+
    private String getAdjacentWindow(LogicalWindow window, boolean before)
    {
       if (window.getNormal() == null)
@@ -785,8 +784,8 @@ public class PaneManager
             selected = consoleTabPanel_.getSelectedIndex() >= 0 ?
                consoleTabPanel_.getSelectedTab() :
                null;
-            
-            // Special handling for Console; Console does not have a WorkbenchTab when there are 
+
+            // Special handling for Console; Console does not have a WorkbenchTab when there are
             // no other Console tabs open on start up and none have been added.
             if (selected == null || StringUtil.equals(selected.getTitle(), "Console"))
             {
@@ -811,15 +810,15 @@ public class PaneManager
    private void focusAdjacentWindow(LogicalWindow window, boolean before)
    {
       String adjacent = getAdjacentWindow(window, before);
-   
+
       // TabSet1 and TabSet2 could be empty, if so skip to the next pane
       while ((StringUtil.equals("TabSet1", adjacent) && tabSet1TabPanel_.isEmpty()) ||
              (StringUtil.equals("TabSet2", adjacent) && tabSet2TabPanel_.isEmpty()))
          adjacent = getAdjacentWindow(panesByName_.get(adjacent), before);
-      
+
       focusWindow(adjacent);
    }
-   
+
    private void swapConsolePane(PaneConfig paneConfig, int consoleTargetIndex)
    {
       int consoleCurrentIndex = paneConfig.getConsoleIndex();
@@ -865,7 +864,7 @@ public class PaneManager
       {
          if (equals(window, maximizedWindow_))
          {
-            // If we're trying to maximize the same pane that is currently maximized, interpret 
+            // If we're trying to maximize the same pane that is currently maximized, interpret
             // as a toggle off. There is only one tab per source column so always assume toggle off.
             if (tab == Tab.SourceColumn ||
                 equals(tab, maximizedTab_))
@@ -920,7 +919,7 @@ public class PaneManager
       for (LogicalWindow pane : sourceLogicalWindows_)
          pane.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL));
 
-      boolean isRightWidget = 
+      boolean isRightWidget =
             DomUtils.contains(right_.getElement(), window.getActiveWidget().getElement());
       boolean isCenterWidget =
             DomUtils.contains(center_.getElement(), window.getActiveWidget().getElement());
@@ -963,7 +962,7 @@ public class PaneManager
    {
       resizeHorizontally(rightTarget, leftTargets, null);
    }
-   
+
    private void resizeHorizontally(final double rightTarget,
                                    final ArrayList<Double> leftTargets,
                                    final Command afterComplete)
@@ -981,7 +980,7 @@ public class PaneManager
             if (afterComplete != null)
                afterComplete.execute();
          }
-         
+
          public void onLayout(Layer layer, double progress)
          {
          }
@@ -1377,7 +1376,7 @@ public class PaneManager
       if (MathUtil.isEqual(currentColumnSize, 0.0, 0.0001))
          return LEFT_COLUMN;
 
-      // If MainSplitPanel.enforceBoundaries has been called then the rightZoomPosition is the 
+      // If MainSplitPanel.enforceBoundaries has been called then the rightZoomPosition is the
       // offsetWidth - 3
       double rightZoomPosition = panel_.getOffsetWidth();
       if (MathUtil.isEqual(currentColumnSize, rightZoomPosition, 0.0001) ||
@@ -1492,7 +1491,7 @@ public class PaneManager
       additionalSourceCount_ = sourceColumnManager_.getSize() - 1;
 
       if (count == additionalSourceCount_)
-    	  return additionalSourceCount_;
+         return additionalSourceCount_;
 
       if (count > additionalSourceCount_)
       {
@@ -1524,7 +1523,7 @@ public class PaneManager
       Widget panel = createSourceColumnWindow(name.getName(), name.getAccessibleName());
       panel_.addLeftWidget(panel);
    }
-   
+
    private ColumnName createSourceColumn()
    {
       PaneConfig.addSourcePane();

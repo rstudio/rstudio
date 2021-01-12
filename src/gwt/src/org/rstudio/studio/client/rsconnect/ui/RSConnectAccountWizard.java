@@ -94,9 +94,7 @@ public class RSConnectAccountWizard
    {
       if (showCloudPage)
       {
-         return new WizardNavigationPage<
-            NewRSConnectAccountInput,
-            NewRSConnectAccountResult>(
+         return new WizardNavigationPage<>(
                   "Choose Account Type", 
                   "Choose Account Type", 
                   "Connect Account", 
@@ -111,9 +109,7 @@ public class RSConnectAccountWizard
                                          NewRSConnectAccountResult>> createPages()
    {
       ArrayList<WizardPage<NewRSConnectAccountInput, 
-                           NewRSConnectAccountResult>> pages =
-           new ArrayList<WizardPage<NewRSConnectAccountInput, 
-                                    NewRSConnectAccountResult>>();
+                           NewRSConnectAccountResult>> pages = new ArrayList<>();
 
       pages.add(new NewRSConnectCloudPage());
       pages.add(new NewRSConnectLocalPage());

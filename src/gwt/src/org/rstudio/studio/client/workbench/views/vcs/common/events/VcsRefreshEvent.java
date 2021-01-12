@@ -14,16 +14,22 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.common.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class VcsRefreshEvent extends GwtEvent<VcsRefreshHandler>
+public class VcsRefreshEvent extends GwtEvent<VcsRefreshEvent.Handler>
 {
    public enum Reason { NA, FileChange, VcsOperation }
 
    private final Reason reason_;
    private final int delayMs_;
 
-   public static final Type<VcsRefreshHandler> TYPE = new Type<VcsRefreshHandler>();
+   public static final Type<Handler> TYPE = new Type<>();
+
+   public interface Handler extends EventHandler
+   {
+      void onVcsRefresh(VcsRefreshEvent event);
+   }
 
    public VcsRefreshEvent(Reason reason)
    {
@@ -47,13 +53,13 @@ public class VcsRefreshEvent extends GwtEvent<VcsRefreshHandler>
    }
 
    @Override
-   public Type<VcsRefreshHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
 
    @Override
-   protected void dispatch(VcsRefreshHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onVcsRefresh(this);
    }

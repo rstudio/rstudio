@@ -14,12 +14,17 @@
  */
 package org.rstudio.studio.client.workbench.views.source.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class LastSourceDocClosedEvent extends GwtEvent<LastSourceDocClosedHandler>
+public class LastSourceDocClosedEvent extends GwtEvent<LastSourceDocClosedEvent.Handler>
 {
-   public static final Type<LastSourceDocClosedHandler> TYPE =
-      new Type<LastSourceDocClosedHandler>();
+   public static final Type<Handler> TYPE = new Type<>();
+
+   public interface Handler extends EventHandler
+   {
+      void onLastSourceDocClosed(LastSourceDocClosedEvent event);
+   }
 
    public LastSourceDocClosedEvent() {}
 
@@ -34,13 +39,13 @@ public class LastSourceDocClosedEvent extends GwtEvent<LastSourceDocClosedHandle
    }
 
    @Override
-   protected void dispatch(LastSourceDocClosedHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onLastSourceDocClosed(this);
    }
 
    @Override
-   public Type<LastSourceDocClosedHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }

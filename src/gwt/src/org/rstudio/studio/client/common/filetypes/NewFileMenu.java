@@ -42,7 +42,6 @@ public abstract class NewFileMenu
    protected abstract ArrayList<FileTypeCommands.CommandWithId> 
       getFileTypeCommands(FileTypeCommands fileTypeCommands);
    
-   private ArrayList<FileTypeCommands.CommandWithId> fileTypeCommands_ =
-         new ArrayList<FileTypeCommands.CommandWithId>();
+   private ArrayList<FileTypeCommands.CommandWithId> fileTypeCommands_ = new ArrayList<>();
 
 }

@@ -62,7 +62,7 @@ public class JavaScriptEventHistory
    
    public JavaScriptEventHistory()
    {
-      queue_ = new LinkedList<EventData>();
+      queue_ = new LinkedList<>();
       registerEventListeners();
    }
    

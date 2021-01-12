@@ -14,7 +14,7 @@
  */
 package org.rstudio.studio.client.common.filetypes.events;
 
-import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.EventHandler;
 
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -25,22 +25,26 @@ import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
 
 @JavaScriptSerializable
-public class OpenSourceFileEvent extends CrossWindowEvent<OpenSourceFileHandler>
+public class OpenSourceFileEvent extends CrossWindowEvent<OpenSourceFileEvent.Handler>
 {
-   public static final GwtEvent.Type<OpenSourceFileHandler> TYPE =
-      new GwtEvent.Type<OpenSourceFileHandler>();
+   public static final Type<Handler> TYPE = new Type<>();
+
+   public interface Handler extends EventHandler
+   {
+      void onOpenSourceFile(OpenSourceFileEvent event);
+   }
 
    public OpenSourceFileEvent()
    {
    }
-   
+
    public OpenSourceFileEvent(FileSystemItem file, TextFileType fileType)
    {
       this(file, null, fileType);
    }
-   
-   public OpenSourceFileEvent(FileSystemItem file, 
-                              FilePosition position, 
+
+   public OpenSourceFileEvent(FileSystemItem file,
+                              FilePosition position,
                               TextFileType fileType)
    {
       this(file, position, fileType, NavigationMethods.DEFAULT);
@@ -107,13 +111,13 @@ public class OpenSourceFileEvent extends CrossWindowEvent<OpenSourceFileHandler>
    }
 
    @Override
-   protected void dispatch(OpenSourceFileHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onOpenSourceFile(this);
    }
 
    @Override
-   public GwtEvent.Type<OpenSourceFileHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }

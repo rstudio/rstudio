@@ -124,7 +124,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       events_.addHandler(FileTypeChangedEvent.TYPE, event -> manageCommands(false));
       events_.addHandler(SourceOnSaveChangedEvent.TYPE, event -> manageSaveCommands(isActive()));
       events_.addHandler(SynctexStatusChangedEvent.TYPE, event -> manageSaveCommands(isActive()));
-      
+
       initialized_ = true;
    }
 
@@ -155,7 +155,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
    public ArrayList<EditingTarget> getDirtyEditors(String excludeDocId)
    {
-      EditingTarget excludeTarget = 
+      EditingTarget excludeTarget =
          StringUtil.isNullOrEmpty(excludeDocId) ? null : getDoc(excludeDocId);
       ArrayList<EditingTarget> dirtyEditors = new ArrayList<>();
       for (EditingTarget target : editors_)
@@ -215,22 +215,22 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
    public void manageChevronVisibility()
    {
-	   display_.manageChevronVisibility();
+      display_.manageChevronVisibility();
    }
 
    public void moveTab(int index, int delta)
    {
-	   display_.moveTab(index, delta);
+      display_.moveTab(index, delta);
    }
 
    public void selectTab(Widget widget)
    {
-	   display_.selectTab(widget);
+      display_.selectTab(widget);
    }
 
    public void showOverflowPopout()
    {
-	   display_.showOverflowPopup();
+      display_.showOverflowPopup();
    }
 
    public void showUnsavedChangesDialog(
@@ -1048,7 +1048,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       if (getTabCount() == 0 && newTabPending_ == 0)
       {
          newTabPending_++;
-         
+
          // Avoid scenarios where the Source tab comes up but no tabs are
          // in it. (But also avoid creating an extra source tab when there
          // were already new tabs about to be created!)
@@ -1280,10 +1280,10 @@ public class SourceColumn implements BeforeShowEvent.Handler,
          events_.fireEvent(new LastSourceDocClosedEvent(name_));
       }
    }
-   
+
    private boolean isActive()
    {
-	   return manager_.getActive() == this;
+      return manager_.getActive() == this;
    }
 
    private Commands commands_;

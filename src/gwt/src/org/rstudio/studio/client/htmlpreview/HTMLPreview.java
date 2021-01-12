@@ -21,7 +21,6 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.htmlpreview.events.ShowHTMLPreviewEvent;
-import org.rstudio.studio.client.htmlpreview.events.ShowHTMLPreviewHandler;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -30,29 +29,28 @@ import com.google.inject.Singleton;
 public class HTMLPreview
 {
    @Inject
-   public HTMLPreview(EventBus eventBus, 
+   public HTMLPreview(EventBus eventBus,
                       final SatelliteManager satelliteManager)
    {
-      eventBus.addHandler(ShowHTMLPreviewEvent.TYPE, 
-                          new ShowHTMLPreviewHandler() {
+      eventBus.addHandler(ShowHTMLPreviewEvent.TYPE,
+                          new ShowHTMLPreviewEvent.Handler() {
          @Override
          public void onShowHTMLPreview(ShowHTMLPreviewEvent event)
          {
             WindowEx win = satelliteManager.getSatelliteWindowObject(HTMLPreviewApplication.NAME);
             if (win != null && !Desktop.hasDesktopFrame() && BrowseCap.isChrome())
             {
-               satelliteManager.forceReopenSatellite(HTMLPreviewApplication.NAME, 
+               satelliteManager.forceReopenSatellite(HTMLPreviewApplication.NAME,
                                                      event.getParams(),
                                                      true);
             }
             else
             {
-               satelliteManager.openSatellite(HTMLPreviewApplication.NAME,     
+               satelliteManager.openSatellite(HTMLPreviewApplication.NAME,
                                               event.getParams(),
                                               new Size(1180,1200));
-                                              
-            } 
-         }  
+            }
+         }
       });
    }
 

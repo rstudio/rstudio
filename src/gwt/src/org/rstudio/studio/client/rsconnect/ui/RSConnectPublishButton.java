@@ -666,13 +666,13 @@ public class RSConnectPublishButton extends Composite
                      RSConnectPublishSource source = 
                            new RSConnectPublishSource(htmlFile, null, 
                                  true, true, false, "Plot", contentType_);
-                     ArrayList<String> deployFiles = new ArrayList<String>();
+                     ArrayList<String> deployFiles = new ArrayList<>();
                      deployFiles.add(FilePathUtils.friendlyFileName(htmlFile));
                      RSConnectPublishSettings settings = 
                            new RSConnectPublishSettings(
                                  deployFiles, 
-                                 new ArrayList<String>(), 
-                                 new ArrayList<String>(), 
+                                 new ArrayList<>(), 
+                                 new ArrayList<>(), 
                                  false, true);
                      events_.fireEvent(
                            new RSConnectDeployInitiatedEvent(source, settings,

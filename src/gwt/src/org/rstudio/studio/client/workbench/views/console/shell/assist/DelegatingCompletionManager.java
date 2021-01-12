@@ -35,7 +35,7 @@ public abstract class DelegatingCompletionManager implements CompletionManager
    public DelegatingCompletionManager(DocDisplay docDisplay, CompletionContext context)
    {
       docDisplay_ = docDisplay;
-      completionManagerMap_ = new HashMap<Mode, CompletionManager>();
+      completionManagerMap_ = new HashMap<>();
       nullManager_ = new NullCompletionManager();
       
       if (docDisplay_ instanceof AceEditor)

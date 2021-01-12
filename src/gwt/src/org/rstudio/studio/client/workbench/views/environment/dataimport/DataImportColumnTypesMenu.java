@@ -82,9 +82,9 @@ public class DataImportColumnTypesMenu extends PopupPanel
       super(true);
       setWidget(uiBinder.createAndBindUi(this));
       
-      menuItemsMap_ = new HashMap<String, MenuItem>();
+      menuItemsMap_ = new HashMap<>();
       
-      menuItems_ = new ArrayList<MenuItem>();
+      menuItems_ = new ArrayList<>();
       menuItems_.add(new MenuItem("include", (Widget)include_));
       menuItems_.add(new MenuItem("skip", (Widget)skip_));
       menuItems_.add(new MenuItem("only", (Widget)only_));

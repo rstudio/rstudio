@@ -81,7 +81,7 @@ public class CommandPaletteLauncher implements CommandPalette.Host
          // to use the Command Palette as a quick "run last command again" tool
          if (mru_ == null)
          {
-            mru_ = new ArrayList<CommandPaletteMruEntry>();
+            mru_ = new ArrayList<>();
          }
          mru_.removeIf(entry -> entry.equals(evt.getMruEntry()));
          mru_.add(0, evt.getMruEntry());
@@ -124,7 +124,7 @@ public class CommandPaletteLauncher implements CommandPalette.Host
    private void createPanel()
    {
       // Extra sources (currently only the source tab)
-      List<CommandPaletteEntryProvider> providers = new ArrayList<CommandPaletteEntryProvider>();
+      List<CommandPaletteEntryProvider> providers = new ArrayList<>();
       
       // Create sources
       providers.add(new AppCommandPaletteSource(ShortcutManager.INSTANCE, commands_));
@@ -144,7 +144,7 @@ public class CommandPaletteLauncher implements CommandPalette.Host
             ArrayList<String> mru = evt.getList();
 
             // After the first time the palette is shown, the MRU is updated by this event handler.
-            mru_ = new ArrayList<CommandPaletteMruEntry>();
+            mru_ = new ArrayList<>();
             for (String entry: mru)
             {
                CommandPaletteMruEntry mruEntry = CommandPaletteMruEntry.fromString(entry);

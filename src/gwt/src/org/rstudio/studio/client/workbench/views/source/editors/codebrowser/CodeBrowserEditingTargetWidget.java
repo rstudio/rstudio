@@ -53,7 +53,6 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
@@ -176,7 +175,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
         
             server.getHelpAtCursor(
                linePos.getLine(), linePos.getPosition(),
-               new SimpleRequestCallback<Void>("Help")); 
+               new SimpleRequestCallback<>("Help")); 
          }
          
          @Override

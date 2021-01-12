@@ -29,8 +29,7 @@ public class DocFocusedEvent extends CrossWindowEvent<DocFocusedEvent.Handler>
       void onDocFocused(DocFocusedEvent event);
    }
 
-   public static final GwtEvent.Type<DocFocusedEvent.Handler> TYPE =
-      new GwtEvent.Type<DocFocusedEvent.Handler>();
+   public static final GwtEvent.Type<DocFocusedEvent.Handler> TYPE = new GwtEvent.Type<>();
    
    public DocFocusedEvent()
    {

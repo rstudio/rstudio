@@ -230,7 +230,7 @@ public class JsUtil
    
    public static List<String> toList(JsArrayString array)
    {
-      List<String> list = new ArrayList<String>();
+      List<String> list = new ArrayList<>();
       for (int i = 0, n = array.length(); i < n; i++)
          list.add(array.get(i));
       return list;
