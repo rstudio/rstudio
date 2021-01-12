@@ -39,8 +39,11 @@ public class MemUsageWidget extends Composite
       style.setProperty("flexDirection", "row");
 
       pie_ = new MiniPieWidget("#00000", "#ffffff", 0);
-      pie_.setHeight("18px");
-      pie_.setWidth("18px");
+      pie_.setHeight("13px");
+      pie_.setWidth("13px");
+      style = pie_.getElement().getStyle();
+      style.setMarginTop(3, Style.Unit.PX);
+      style.setMarginRight(3, Style.Unit.PX);
       host_.add(pie_);
 
       ToolbarPopupMenu memoryMenu = new ToolbarPopupMenu();
@@ -58,7 +61,7 @@ public class MemUsageWidget extends Composite
          ToolbarButton.NoTitle,
          (ImageResource) null,
          memoryMenu);
-      menu_.getElement().getStyle().setMarginTop(-2, Style.Unit.PX);
+      menu_.getElement().getStyle().setMarginTop(-3, Style.Unit.PX);
       host_.add(menu_);
 
       setMemoryUsage(usage);
