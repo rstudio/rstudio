@@ -41,6 +41,7 @@
 * Fix display of condition messages (errors and warnings) in some character encodings (#8546)
 * Fix issues finding words with punctuation in visual mode (#8655)
 * Fix spurious image insertion when pasting into visual mode from Excel (#8665)
+* Fix out-of-date tooltip when renaming files (#8490, #8491)
 
 
 
