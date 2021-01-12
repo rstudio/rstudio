@@ -7,7 +7,8 @@ set +e
 useradd -r -U rstudio-server
 
 # create softlink to admin script in /usr/sbin
-ln -f -s "${CMAKE_INSTALL_PREFIX}"/bin/rstudio-server /usr/sbin/rstudio-server
+RSERVER_ADMIN_SCRIPT=/usr/sbin/rstudio-server
+ln -f -s "${CMAKE_INSTALL_PREFIX}"/bin/rstudio-server $RSERVER_ADMIN_SCRIPT
 
 # create config directory and default config files
 mkdir -p /etc/rstudio
@@ -125,7 +126,8 @@ then
 
    systemctl daemon-reload
    systemctl enable rstudio-server.service
-   systemctl start rstudio-server.service
+   $RSERVER_ADMIN_SCRIPT start
+
    sleep 1
    systemctl --no-pager status rstudio-server.service
 elif test "$INIT_SYSTEM" = "upstart"
@@ -137,7 +139,7 @@ then
    cp ${CMAKE_INSTALL_PREFIX}/extras/upstart/rstudio-server.redhat.conf /etc/init/rstudio-server.conf
    initctl reload-configuration
    initctl stop rstudio-server 2>/dev/null
-   initctl start rstudio-server
+   $RSERVER_ADMIN_SCRIPT start
 else
    if test -f /etc/SuSE-release
    then
@@ -148,7 +150,7 @@ else
    chmod +x /etc/init.d/rstudio-server
    chkconfig --add rstudio-server
    service rstudio-server stop 2>/dev/null
-   service rstudio-server start
+   $RSERVER_ADMIN_SCRIPT start
 fi
 
 # add pam profile

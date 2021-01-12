@@ -1,7 +1,7 @@
 /*
  * GeneralPreferencesPane.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -126,15 +126,17 @@ public class GeneralPreferencesPane extends PreferencesPane
          basic.add(rememberRVersionForProjects_);
       }
 
-      basic.add(dirChooser_ = new DirectoryChooserTextBox(
+      dirChooser_ = new DirectoryChooserTextBox(
             "Default working directory (when not in a project):",
             ElementIds.TextBoxButtonId.DEFAULT_WORKING_DIR,
             null,
             fileDialogs_,
-            fsContext_));
+            fsContext_);
+      
       spaced(dirChooser_);
       nudgeRight(dirChooser_);
       textBoxWithChooser(dirChooser_);
+      basic.add(dirChooser_);
 
       restoreLastProject_ = new CheckBox("Restore most recently opened project at startup");
       lessSpaced(restoreLastProject_);
@@ -411,7 +413,12 @@ public class GeneralPreferencesPane extends PreferencesPane
       saveWorkspace_.getListBox().setSelectedIndex(saveWorkspaceIndex);
 
       loadRData_.setValue(prefs.loadWorkspace().getValue());
-      dirChooser_.setText(prefs.initialWorkingDirectory().getValue());
+      
+      String workingDir = prefs.initialWorkingDirectory().getValue();
+      if (StringUtil.isNullOrEmpty(workingDir))
+         workingDir = session_.getSessionInfo().getInitialWorkingDir();
+      
+      dirChooser_.setText(workingDir);
 
       alwaysSaveHistory_.setEnabled(true);
       removeHistoryDuplicates_.setEnabled(true);

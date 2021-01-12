@@ -1,7 +1,7 @@
 /*
  * NotebookQueue.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,6 +35,7 @@
 #include <r/RExec.hpp>
 #include <r/RJson.hpp>
 #include <r/RSexp.hpp>
+#include <r/session/RSession.hpp>
 
 #include <core/Exec.hpp>
 #include <core/Thread.hpp>
@@ -292,12 +293,12 @@ private:
          std::string prefix;
 
          bool isPythonActive = module_context::isPythonReplActive();
-         if (isPythonActive && execContext_->engine() != "python")
+         if (isPythonActive && (execContext_ == nullptr || execContext_->engine() != "python"))
          {
             // switching from Python -> R: deactivate the Python REPL
             prefix = "quit\n";
          }
-         else if (!isPythonActive && execContext_->engine() == "python")
+         else if (!isPythonActive && execContext_ && execContext_->engine() == "python")
          {
             // switching from R -> Python: activate the Python REPL
             prefix = "reticulate::repl_python()\n";
@@ -320,12 +321,15 @@ private:
       return Success();
    }
 
-   void sendConsoleInput(const std::string& chunkId, const json::Value& input)
+   void sendConsoleInput(const std::string& chunkId, const json::Value& jsonInput)
    {
-      json::Array arr;
-      ExecRange range(0, 0);
-      arr.push_back(input);
-      arr.push_back(chunkId);
+      using namespace r::session;
+      
+      std::string input = jsonInput.isString()
+            ? jsonInput.getString()
+            : std::string();
+      
+      json::Array arr = RConsoleInput(input, chunkId).toJsonArray();
 
       // formulate request body
       json::Object rpc;

@@ -1,7 +1,7 @@
 /*
  * attr_edit-decoration.tsx
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,22 +16,20 @@
 import { Plugin, PluginKey, Transaction, EditorState } from 'prosemirror-state';
 import { DecorationSet, EditorView, Decoration } from 'prosemirror-view';
 
-import { findParentNodeOfType } from 'prosemirror-utils';
-
 import * as React from 'react';
 
 import { EditorUI } from '../../api/ui';
 import { AttrEditOptions } from '../../api/attr_edit';
+import { ImageButton } from '../../api/widgets/button';
 import { CommandFn } from '../../api/command';
 import { AttrProps } from '../../api/ui-dialogs';
 import { WidgetProps, reactRenderForEditorView } from '../../api/widgets/react';
 import { PandocExtensions } from '../../api/pandoc';
 
 import { kEditAttrShortcut } from './attr_edit';
-import { attrEditCommandFn } from './attr_edit-command';
+import { attrEditNodeCommandFn } from './attr_edit-command';
 
 import './attr_edit-decoration.css';
-import { ImageButton } from '../../api/widgets/button';
 
 interface AttrEditDecorationProps extends WidgetProps {
   tags: string[];
@@ -91,100 +89,111 @@ export class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
           const schema = newState.schema;
           const nodeTypes = editors.map(ed => ed.type(schema));
 
-          // provide decoration if selection is contained within one of the node types
-          const parentWithAttrs = findParentNodeOfType(nodeTypes)(tr.selection);
-          if (!parentWithAttrs) {
-            return DecorationSet.empty;
-          }
+          // decorations to return
+          const decorations: Decoration[] = [];
 
-          // get editor
-          const editor = editors.find(ed => ed.type(schema) === parentWithAttrs.node.type)!;
+          // start from current selection
+          const $head = tr.selection.$head;
 
-          // screen for noDecorator
-          if (editor.noDecorator) {
-            return DecorationSet.empty;
-          }
+          for (let i=1; i<=$head.depth; i++) {
 
-          // provide some editor defaults
-          editor.tags =
-            editor.tags ||
-            (editorNode => {
-              const attrTags = [];
-              if (editorNode.attrs.id) {
-                attrTags.push(`#${editorNode.attrs.id}`);
-              }
-              if (editorNode.attrs.classes && editorNode.attrs.classes.length) {
-                attrTags.push(`${editorNode.attrs.classes.map((clz: string) => '.' + clz).join(' ')}`);
-              }
-              return attrTags;
-            });
-          editor.offset = editor.offset || { top: 0, right: 0 };
+            const parentWithAttrs = { node: $head.node(i), pos: $head.before(i) };
+            if (!nodeTypes.includes(parentWithAttrs.node.type)) {
+              continue;
+            }
 
-          // get editFn
-          const editFn = (editorUI: EditorUI) => attrEditCommandFn(editorUI, pandocExtensions, editors);
+            // get editor
+            const editor = editors.find(ed => ed.type(schema) === parentWithAttrs.node.type)!;
 
-          // get attrs/tags
-          const node = parentWithAttrs.node;
-          const attrs = node.attrs;
-          const tags = editor.tags(node);
+            // screen for noDecorator
+            if (editor.noDecorator) {
+              continue;
+            }
 
-          // attr_edit controls
-          const attrEditDecoration = Decoration.widget(
-            parentWithAttrs.pos,
-            (view: EditorView, getPos: () => number) => {
-              // does the offsetParent have any right padding we need to offset for?
-              // we normally use right: 5px for positioning but that is relative to
-              // the edge of the offsetParent. However, some offset parents (e.g. a
-              // td or a nested div) have their own internal padding to account for
-              // so we look for it here
-              let rightPaddingOffset = 0;
-              const attrsNode = view.nodeDOM(getPos());
-              if (attrsNode) {
-                const attrsEl = attrsNode as HTMLElement;
-                if (attrsEl.offsetParent) {
-                  const offsetParentStyle = window.getComputedStyle(attrsEl.offsetParent);
-                  rightPaddingOffset = -parseInt(offsetParentStyle.paddingRight!, 10) || 0;
+            // provide some editor defaults
+            editor.tags =
+              editor.tags ||
+              (editorNode => {
+                const attrTags = [];
+                if (editorNode.attrs.id) {
+                  attrTags.push(`#${editorNode.attrs.id}`);
                 }
-              }
+                if (editorNode.attrs.classes && editorNode.attrs.classes.length) {
+                  attrTags.push(`${editorNode.attrs.classes.map((clz: string) => '.' + clz).join(' ')}`);
+                }
+                return attrTags;
+              });
+            editor.offset = editor.offset || { top: 0, right: 0 };
 
-              // cacculate position offsets
-              const baseOffset = editor.offset || { top: 0, right: 0 };
-              const xOffset = baseOffset.right + rightPaddingOffset;
-              const yOffset = baseOffset.top + 6;
-              const cssProps: React.CSSProperties = {
-                transform: `translate(${xOffset}px,-${yOffset}px)`,
-              };
+            // get editFn
+            const editFn = (editorUI: EditorUI) => attrEditNodeCommandFn(parentWithAttrs, editorUI, pandocExtensions, editors);
 
-              // create attr edit react component
-              const attrEdit = (
-                <AttrEditDecoration
-                  tags={tags}
-                  attrs={attrs}
-                  editFn={editFn(ui)}
-                  view={view}
-                  ui={ui}
-                  style={cssProps}
-                />
-              );
+            // get attrs/tags
+            const node = parentWithAttrs.node;
+            const attrs = node.attrs;
+            const tags = editor.tags(node);
 
-              // create decorator and render attr editor into it
-              const decoration = window.document.createElement('div');
-              reactRenderForEditorView(attrEdit, decoration, view);
+            // attr_edit controls
+            const attrEditDecoration = Decoration.widget(
+              parentWithAttrs.pos,
+              (view: EditorView, getPos: () => number) => {
+                // does the offsetParent have any right padding we need to offset for?
+                // we normally use right: 5px for positioning but that is relative to
+                // the edge of the offsetParent. However, some offset parents (e.g. a
+                // td or a nested div) have their own internal padding to account for
+                // so we look for it here
+                let rightPaddingOffset = 0;
+                const attrsNode = view.nodeDOM(getPos());
+                if (attrsNode) {
+                  const attrsEl = attrsNode as HTMLElement;
+                  if (attrsEl.offsetParent) {
+                    const offsetParentStyle = window.getComputedStyle(attrsEl.offsetParent);
+                    rightPaddingOffset = -parseInt(offsetParentStyle.paddingRight!, 10) || 0;
+                  }
+                }
 
-              return decoration;
-            },
-            {
-              // re-use existing instance for same tags
-              key: `tags:${tags.join('/')}`,
-              ignoreSelection: true,
-              stopEvent: () => {
-                return true;
+                // cacculate position offsets
+                const baseOffset = editor.offset || { top: 0, right: 0 };
+                const xOffset = baseOffset.right + rightPaddingOffset;
+                const yOffset = baseOffset.top + 6;
+                const cssProps: React.CSSProperties = {
+                  transform: `translate(${xOffset}px,-${yOffset}px)`,
+                };
+
+                // create attr edit react component
+                const attrEdit = (
+                  <AttrEditDecoration
+                    tags={tags}
+                    attrs={attrs}
+                    editFn={editFn(ui)}
+                    view={view}
+                    ui={ui}
+                    style={cssProps}
+                  />
+                );
+
+                // create decorator and render attr editor into it
+                const decoration = window.document.createElement('div');
+                reactRenderForEditorView(attrEdit, decoration, view);
+
+                return decoration;
               },
-            },
-          );
+              {
+                // re-use existing instance for same tags
+                key: `tags:${tags.join('/')}`,
+                ignoreSelection: true,
+                stopEvent: () => {
+                  return true;
+                },
+              },
+            );
 
+            decorations.push(attrEditDecoration);
+          }
+
+         
           // return decorations
-          return DecorationSet.create(tr.doc, [attrEditDecoration]);
+          return DecorationSet.create(tr.doc, decorations);
         },
       },
       props: {

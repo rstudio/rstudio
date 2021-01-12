@@ -1,7 +1,7 @@
 /*
  * SessionMain.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -65,6 +65,7 @@
 #include <core/system/Process.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/ParentProcessMonitor.hpp>
+#include <core/system/Xdg.hpp>
 
 #include <core/system/FileMonitor.hpp>
 #include <core/text/TemplateFilter.hpp>
@@ -291,6 +292,7 @@ void terminateAllChildProcesses()
 
 namespace overlay {
 Error initialize();
+Error initializeSessionProxy();
 } // namespace overlay
 } // namespace session
 } // namespace rstudio
@@ -340,7 +342,14 @@ void doSuspendForRestart(const rstudio::r::session::RSuspendOptions& options)
 Error suspendForRestart(const core::json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
-   rstudio::r::session::RSuspendOptions options(EX_CONTINUE);
+   // when launcher sessions restart, they need to set a special exit code
+   // to ensure that the rsession-run script restarts the rsession process
+   // instead of having to submit an entirely new launcher session
+   int exitStatus = options().getBoolOverlayOption(kLauncherSessionOption) ?
+            EX_SUSPEND_RESTART_LAUNCHER_SESSION :
+            EX_CONTINUE;
+
+   rstudio::r::session::RSuspendOptions options(exitStatus);
    Error error = json::readObjectParam(
                                request.params, 0,
                                "save_minimal", &(options.saveMinimal),
@@ -1717,6 +1726,17 @@ int main (int argc, char * const argv[])
 {
    try
    {
+      // sleep on startup if requested (mainly for debugging)
+      std::string sleepOnStartup = core::system::getenv("RSTUDIO_SESSION_SLEEP_ON_STARTUP");
+      if (!sleepOnStartup.empty())
+      {
+         int sleepDuration = core::safe_convert::stringTo<int>(sleepOnStartup, 0);
+         if (sleepDuration > 0)
+         {
+            boost::this_thread::sleep(boost::posix_time::seconds(sleepDuration));
+         }
+      }
+      
       // initialize log so we capture all errors including ones which occur
       // reading the config file (if we are in desktop mode then the log
       // will get re-initialized below)
@@ -1918,6 +1938,9 @@ int main (int argc, char * const argv[])
       std::string firstProjectPath = "";
       if (!options.verifyInstallation())
       {
+         // Validate the config and data directories.
+         core::system::xdg::verifyUserDirs();
+
          // determine if this is a new user and get the first project path if so
          bool newUser = false;
 
@@ -2002,6 +2025,12 @@ int main (int argc, char * const argv[])
       // start http connection listener
       error = waitWithTimeout(
             http_methods::startHttpConnectionListenerWithTimeout, 0, 100, 1);
+      if (error)
+         return sessionExitFailure(error, ERROR_LOCATION);
+
+      // start session proxy to route traffic to localhost-listening applications (like Shiny)
+      // this has to come after regular overlay initialization as it depends on persistent state
+      error = overlay::initializeSessionProxy();
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION);
 

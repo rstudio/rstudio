@@ -2,7 +2,7 @@
 #
 # RStudio Release Notarization (notarize-release.sh)
 # 
-# Copyright (C) 2020 by RStudio, PBC
+# Copyright (C) 2021 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -100,6 +100,9 @@ while true; do
         if [ "$ERROR_CODE" -eq "1519" ]; then
             # Error code 1519 = "Could not find the RequestUUID."
             echo "Notarization request UUID not ready. Waiting 30s to try again."
+        elif [ "$ERROR_CODE" -eq "-1011" ]; then
+            # Error code -1011 = "Unable to get notarization info."
+            echo "Temporarily unable to look up notarization info. Waiting 30s to try again."
         else 
             # Some other error, which is not something we know how to handle
             # and should consequently result in termination.

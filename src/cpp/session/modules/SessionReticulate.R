@@ -1,7 +1,7 @@
 #
 # SessionReticulate.R
 #
-# Copyright (C) 2020 by RStudio, PBC
+# Copyright (C) 2021 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -45,6 +45,12 @@
 
 .rs.addJsonRpcHandler("python_go_to_definition", function(line, offset)
 {
+   result <- .rs.python.goToDefinition(line, offset)
+   .rs.scalar(result)
+})
+
+.rs.addFunction("python.goToDefinition", function(line, offset)
+{
    # extract the line providing the object definition we're looking for
    text <- .rs.python.extractCurrentExpression(line, offset)
    if (!nzchar(text))
@@ -78,6 +84,12 @@
 })
 
 .rs.addJsonRpcHandler("python_go_to_help", function(line, offset)
+{
+   result <- .rs.python.goToHelp(line, offset)
+   .rs.scalar(result)
+})
+
+.rs.addFunction("python.goToHelp", function(line, offset)
 {
    text <- .rs.python.extractCurrentExpression(line, offset)
    if (!nzchar(text))
@@ -119,15 +131,19 @@
       help(...)
    }
    
-   # define View hook (for data viewer, object explorer)
-   main <- reticulate::import_main(convert = FALSE)
-   reticulate::py_set_attr(main, "View", .rs.reticulate.viewHook)
-   
    # ensure matplotlib hooks are injected on load
-   setHook("reticulate::matplotlib.pyplot::load", .rs.reticulate.matplotlib.onLoaded)
+   setHook(
+      "reticulate::matplotlib.pyplot::load",
+      function(...) .rs.reticulate.matplotlib.onLoaded("matplotlib.pyplot")
+   )
+   
+   setHook(
+      "reticulate::matplotlib.pylab::load",
+      function(...) .rs.reticulate.matplotlib.onLoaded("matplotlib.pylab")
+   )
 })
 
-.rs.addFunction("reticulate.matplotlib.onLoaded", function(...)
+.rs.addFunction("reticulate.matplotlib.onLoaded", function(module)
 {
    # install matplotlib hook if available
    if (requireNamespace("png", quietly = TRUE) &&
@@ -148,9 +164,8 @@
       }
       
       # inject our hook
-      plt <- matplotlib$pyplot
-      .rs.setVar("reticulate.matplotlib.show", plt$show)
-      plt$show <- .rs.reticulate.matplotlib.showHook
+      module <- reticulate::import(module, convert = TRUE)
+      module$show <- .rs.reticulate.matplotlib.showHook
    }
    
 })
@@ -242,6 +257,17 @@
          .Call("rs_showPythonHelp", text, PACKAGE = "(embedding)")
          return(TRUE)
       }
+      
+      # detect View calls, and use View hook instead
+      pattern <- "^View\\s*\\((.*)\\)$"
+      matches <- regmatches(trimmed, regexec(pattern, trimmed))
+      if (length(matches) && length(matches[[1]]) == 2)
+      {
+         name <- gsub("^\\s*|\\s*$", "", matches[[1]][[2]])
+         object <- reticulate::py_eval(name, convert = FALSE)
+         .rs.reticulate.viewHook(object, name)
+         return(TRUE)
+      }
    }
    
    FALSE
@@ -250,18 +276,6 @@
 
 .rs.addFunction("reticulate.replTeardown", function()
 {
-   # restore old help method
-   builtins <- reticulate::import_builtins(convert = FALSE)
-   builtins$help <- .rs.getVar("reticulate.help")
-   
-   # restore matplotlib method
-   show <- .rs.getVar("reticulate.matplotlib.show")
-   if (!is.null(show)) {
-      matplotlib <- reticulate::import("matplotlib", convert = TRUE)
-      plt <- matplotlib$pyplot
-      plt$show <- show
-   }
-   
    # client event
    .rs.reticulate.enqueueClientEvent(
       .rs.reticulateEvents$REPL_TEARDOWN,
@@ -1828,33 +1842,32 @@ html.heading = _heading
    ))
 })
 
-.rs.addFunction("reticulate.viewHook", function(object)
+.rs.addFunction("reticulate.viewHook", function(object, name)
 {
    # TODO: assign complex expressions to temporary variable before view
    reticulate:::disable_conversion_scope(object)
-   
-   # extract variable name passed to Python object
-   sys <- reticulate::import("sys", convert = TRUE)
-   frame <- sys$`_getframe`(1L)
-   names <- frame$f_code$co_names
-   
-   # create dummy environment for this object
-   name <- names[[2L]]
-   envir <- new.env(parent = emptyenv())
-   assign(name, object, envir = envir)
    
    # convert Pandas DataFrames to R data.frames for now
    # (consider adapting data viewer to arbitrary tabular data in future?)
    if (inherits(object, "pandas.core.frame.DataFrame"))
    {
+      # create object
       object <- reticulate::py_to_r(object)
-      View(object)
+      
+      # assign as 'name', then view that
+      assign(name, object, envir = environment())
+      eval(call("View", as.name(name)), envir = environment())
    }
    else
    {
+      # create dummy environment for this object
+      envir <- new.env(parent = emptyenv())
+      assign(name, object, envir = envir)
+      
+      # view object
       .rs.explorer.viewObject(
          object = object,
-         title  = names[[2L]],
+         title  = name,
          envir  = envir
       )
    }

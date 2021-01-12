@@ -1,7 +1,7 @@
 /*
  * ConsoleServerOperations.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -33,6 +33,7 @@ public interface ConsoleServerOperations extends CodeToolsServerOperations,
    // send console input
    void consoleInput(String consoleInput, 
                      String consoleId,
+                     int flags,
                      ServerRequestCallback<Void> requestCallback);
    
    void resetConsoleActions(ServerRequestCallback<Void> requestCallback);

@@ -1,7 +1,7 @@
 /*
  * RSexp.hpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -162,6 +162,10 @@ SEXP create(const ListBuilder& builder, Protect* pProtect);
 SEXP create(const std::map<std::string, std::string>& value, Protect* pProtect);
 SEXP create(const std::map<std::string, SEXP> &value,
             Protect *pProtect);
+
+// Create a UTF-8 encoded character vector
+SEXP createUtf8(const std::string& data, Protect* pProtect);
+SEXP createUtf8(const core::FilePath& filePath, Protect* pProtect);
 
 // Create a raw vector (binary data)
 SEXP createRawVector(const std::string& data, Protect* pProtect);

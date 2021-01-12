@@ -1,7 +1,7 @@
 /*
  * c_cpp_style_behaviour.js
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * The Original Code is Ajax.org Code Editor (ACE).
  *
@@ -127,16 +127,17 @@ var CStyleBehaviour = function(codeModel) {
 
       if (text === "\n") {
 
-         // Get some needed variables
-         var row = editor.selection.getCursor().row;
-         var col = editor.selection.getCursor().column;
-
-         var tab = session.getTabString();
-
+         // Get some needed variables.
          var cursor = editor.getCursorPosition();
-         var line = session.doc.getLine(cursor.row);
+         var row = cursor.row;
+         var col = cursor.col;
+         var tab = session.getTabString();
+         var lines = session.doc.$lines;
+         var line = lines[row];
 
-         if (this.codeModel.inMacro(session.getDocument().$lines, row - 1)) {
+         // If we're editing within a multi-line macro definition,
+         // don't try to apply any custom behavior rules.
+         if (this.codeModel.inMacro(lines, row - 1)) {
             return;
          }
 
@@ -149,13 +150,22 @@ var CStyleBehaviour = function(codeModel) {
             };
          }
 
-         // If we're inserting a newline within a newly constructed comment
-         // block, insert a '*'.
-         if (/^\s*\/\*/.test(line))
+         // If the user has started a multi-line comment block,
+         // with text of the form:
+         // 
+         //     /**
+         //
+         // then fill in the rest of the comment with
+         //
+         //     /**
+         //      * |
+         //      */
+         //
+         if (/^\s*[/][*]+\s*$/.test(line))
          {
-            // Double-check that we haven't already closed this comment,
-            // or that this comment is continued on the next line.
-            if (line.indexOf("*/") !== -1 || !/^\s*\*/.test(session.getLine(row + 1)))
+            // Check if this comment block has already been continued.
+            var nextLine = lines[row + 1] || "";
+            if (!/^\s*[*]/.test(nextLine))
             {
                var indent = this.$getIndent(line);
                var newIndent = indent + " * ";

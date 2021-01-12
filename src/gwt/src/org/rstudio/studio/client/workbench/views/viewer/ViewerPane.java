@@ -1,7 +1,7 @@
 /*
  * ViewerPane.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * This program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
@@ -261,9 +261,16 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    @Override
    public void refresh()
    {
-      String url = frame_.getUrl();
-      if (url != null)
-         frame_.setUrl(url);
+      try
+      {
+         frame_.getWindow().reload();
+      }
+      catch (Exception e)
+      {
+         String url = frame_.getUrl();
+         if (url != null)
+            frame_.setUrl(url);
+      }
    }
 
 

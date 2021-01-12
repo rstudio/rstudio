@@ -1,7 +1,7 @@
 /*
  * editor.ts
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -136,6 +136,9 @@ export interface EditorSetMarkdownResult {
 
   // unparsed meta
   unparsed_meta: { [key: string]: any };
+
+  // updated outline 
+  location: EditingOutlineLocation;
 }
 
 export interface EditorContext {
@@ -167,7 +170,7 @@ export interface EditorFindReplace {
   selectNext: () => boolean;
   selectPrevious: () => boolean;
   replace: (text: string) => boolean;
-  replaceAll: (text: string) => boolean;
+  replaceAll: (text: string) => number;
   clear: () => boolean;
 }
 
@@ -495,7 +498,7 @@ export class Editor {
       this.view.updateState(this.state);
     } else {
       // note current editing location
-      const location = this.getEditingLocation();
+      const loc = this.getEditingLocation();
 
       // replace the top level nodes in the doc
       const tr = this.state.tr;
@@ -508,8 +511,14 @@ export class Editor {
         return false;
       });
       // set selection to previous location if it's still valid
-      if (location.pos < tr.doc.nodeSize) {
-        setTextSelection(location.pos)(tr);
+      if (loc.pos < tr.doc.nodeSize) {
+        // eat exceptions that might result from an invalid position
+        try {
+          setTextSelection(loc.pos)(tr);
+        } catch(e) {
+          // do-nothing, this error can happen and shouldn't result in 
+          // a failure to setMarkdown
+        }
       }
       // dispatch
       this.view.dispatch(tr);
@@ -529,6 +538,7 @@ export class Editor {
     // current 'view' of the doc as markdown looks like
     const getMarkdownTr = this.state.tr;
     const canonical = await this.getMarkdownCode(getMarkdownTr, options);
+    const location = getEditingOutlineLocation(this.state);
 
     // return
     return {
@@ -536,6 +546,7 @@ export class Editor {
       line_wrapping,
       unrecognized,
       unparsed_meta,
+      location
     };
   }
 
@@ -557,6 +568,10 @@ export class Editor {
       selection_only: this.lastTrSelectionOnly,
       location: getEditingOutlineLocation(this.state),
     };
+  }
+
+  public getEditingOutlineLocation(): EditingOutlineLocation {
+    return getEditingOutlineLocation(this.state);
   }
 
   public getHTML(): string {

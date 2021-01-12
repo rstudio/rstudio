@@ -1,7 +1,7 @@
 /*
  * SessionModuleContext.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -2025,10 +2025,10 @@ void enqueFileChangedEvents(const core::FilePath& vcsStatusRoot,
 
 Error enqueueConsoleInput(const std::string& consoleInput)
 {
+   using namespace r::session;
+   
    // construct our JSON RPC
-   json::Array jsonParams;
-   jsonParams.push_back(consoleInput);
-   jsonParams.push_back("");
+   json::Array jsonParams = RConsoleInput(consoleInput).toJsonArray();
    
    json::Object jsonRpc;
    jsonRpc["method"] = "console_input";
@@ -2817,26 +2817,21 @@ Error adaptToLanguage(const std::string& language)
          conn.disconnect();
       });
       
-      if (activeLanguage == "R")
+      Error error;
+
+      if (activeLanguage == "R" && language == "Python")
       {
-         if (language == "Python")
-         {
-            // r -> python: activate the reticulate REPL
-            Error error =
-                  module_context::enqueueConsoleInput("reticulate::repl_python()");
-            if (error)
-               LOG_ERROR(error);
-         }
+         // r -> python: activate the reticulate REPL
+         error = module_context::enqueueConsoleInput("reticulate::repl_python()");
       }
-      else if (activeLanguage == "Python")
+      else if (activeLanguage == "Python" && language == "R")
       {
-         if (language == "R")
-         {
-            // python -> r: deactivate the reticulate REPL
-            Error error =
-                  module_context::enqueueConsoleInput("quit");
-         }
+         // python -> r: deactivate the reticulate REPL
+         error = module_context::enqueueConsoleInput("quit");
       }
+
+      if (error)
+         LOG_ERROR(error);
    }
    
    return Success();

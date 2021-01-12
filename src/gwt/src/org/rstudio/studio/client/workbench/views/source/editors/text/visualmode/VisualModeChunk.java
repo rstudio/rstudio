@@ -1,7 +1,7 @@
 /*
  * VisualModeChunk.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -112,8 +112,9 @@ public class VisualModeChunk
       final AceEditorNative chunkEditor = editor_.getWidget().getEditor();
       chunk.editor = Js.uncheckedCast(chunkEditor);
 
-      // Forward the R completion context from the parent editing session
+      // Forward the R and C++ completion contexts from the parent editing session
       editor_.setRCompletionContext(target_.getRCompletionContext());
+      editor_.setCppCompletionContext(target_.getCppCompletionContext());
       
       // Forward the Rnw completion context with a wrapper to adjust for the
       // position in our display; this is what allows the completion engine to
@@ -230,6 +231,9 @@ public class VisualModeChunk
       
       // Prevent tab from advancing into editor
       chunkEditor.getTextInputElement().setTabIndex(-1);
+
+      // Force the use of browser APIs to set focus to the input element
+      chunkEditor.useBrowserInputFocus();
 
       // Allow the editor's size to be determined by its content (these
       // settings trigger an auto-growing behavior), up to a max of 1000

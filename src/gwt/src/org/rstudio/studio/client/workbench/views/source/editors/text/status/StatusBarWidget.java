@@ -1,7 +1,7 @@
 /*
  * StatusBarWidget.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -130,6 +130,12 @@ public class StatusBarWidget extends Composite
       scope_.setClicksEnabled(visible);
       scope_.setContentsVisible(visible);
       scopeIcon_.setVisible(visible);
+   }
+
+   public void setPositionVisible(boolean visible)
+   {
+      position_.setClicksEnabled(visible);
+      position_.setVisible(visible);
    }
 
    public void setScopeType(int type)

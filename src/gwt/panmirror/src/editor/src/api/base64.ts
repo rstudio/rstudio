@@ -1,7 +1,7 @@
 /*
  * base_64.ts
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -34,7 +34,8 @@ function toBinary(text: string) {
   for (let i = 0; i < codeUnits.length; i++) {
     codeUnits[i] = text.charCodeAt(i);
   }
-  return String.fromCharCode(...Array.from(new Uint8Array(codeUnits.buffer)));
+  const charCodes = Array.from(new Uint8Array(codeUnits.buffer)).map(code => String.fromCharCode(code));
+  return charCodes.join('');
 }
 
 // reverse the conversion
@@ -43,5 +44,6 @@ function fromBinary(binary: string) {
   for (let i = 0; i < bytes.length; i++) {
     bytes[i] = binary.charCodeAt(i);
   }
-  return String.fromCharCode(...Array.from(new Uint16Array(bytes.buffer)));
+  const charCodes = Array.from(new Uint16Array(bytes.buffer)).map(code => String.fromCharCode(code));
+  return charCodes.join('');
 }

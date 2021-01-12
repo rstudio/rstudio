@@ -1,7 +1,7 @@
 /*
  * xref.ts
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,12 +13,13 @@
  *
  */
 
-import { Node as ProsemirrorNode } from 'prosemirror-model';
+import { Node as ProsemirrorNode, MarkType } from 'prosemirror-model';
 
 import { findChildrenByMark } from 'prosemirror-utils';
 
 import { pandocAutoIdentifier } from './pandoc_id';
 import { rmdChunkEngineAndLabel } from './rmd';
+import { kTexFormat } from './raw';
 
 export interface XRefServer {
   indexForFile: (file: string) => Promise<XRefs>;
@@ -72,11 +73,12 @@ export function xrefPosition(doc: ProsemirrorNode, xref: string): number {
             return false;
           }
           // see if we can locate the xref
-          if (locator.hasXRef(markedNode.node, id)) {
+          if (locator.hasXRef(markedNode.node, id, markType)) {
             xrefPos = markedNode.pos;
           }
         });
-      } else if (locator.nodeTypes) {
+      } 
+      if (xrefPos === -1 && locator.nodeTypes) {
         // otherwise recursively examine nodes to find the xref
         doc.descendants((node, pos) => {
           // bail if we already found it
@@ -112,7 +114,7 @@ function xrefTypeAndId(xref: string) {
 interface XRefPositionLocator {
   markType?: string;
   nodeTypes?: string[];
-  hasXRef: (node: ProsemirrorNode, id: string) => boolean;
+  hasXRef: (node: ProsemirrorNode, id: string, markType?: MarkType) => boolean;
 }
 
 const xrefPositionLocators: { [key: string]: XRefPositionLocator } = {
@@ -141,8 +143,13 @@ const xrefPositionLocators: { [key: string]: XRefPositionLocator } = {
     },
   },
   eq: {
+    nodeTypes: ['raw_block'],
     markType: 'math',
-    hasXRef: (node: ProsemirrorNode, id: string) => {
+    hasXRef: (node: ProsemirrorNode, id: string, markType?: MarkType) => {
+      // if it's not a mark then ensure it is tex format before proceeding
+      if (!markType && (node.attrs.format !== kTexFormat)) {
+        return false;
+      }
       const match = node.textContent.match(/^.*\(\\#eq:([a-zA-Z0-9\/-]+)\).*$/m);
       return !!match && match[1].localeCompare(id, undefined, { sensitivity: 'accent' }) === 0;
     },

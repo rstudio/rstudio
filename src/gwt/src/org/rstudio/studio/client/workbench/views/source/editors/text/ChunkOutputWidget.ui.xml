@@ -136,7 +136,7 @@
       right: 71px;
    }
    
-   .embedded {
+   div.outer.embedded {
 	  line-height: 0;
 	  top: 3px;
    }

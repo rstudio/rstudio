@@ -1,7 +1,7 @@
 /*
  * RCntxt.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -217,6 +217,11 @@ int RCntxt::callflag() const
 SEXP RCntxt::call() const
 {
    return pCntxt_ ? pCntxt_->call() : R_NilValue;
+}
+
+int RCntxt::evaldepth() const
+{
+   return pCntxt_ ? pCntxt_->evaldepth() : 0;
 }
 
 SEXP RCntxt::srcref() const

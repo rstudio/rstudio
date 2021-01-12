@@ -1,7 +1,7 @@
 /*
  * ClientEventDispatcher.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -97,6 +97,7 @@ import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentCompletedEv
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentFailedEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentOutputEvent;
 import org.rstudio.studio.client.server.Bool;
+import org.rstudio.studio.client.server.model.DocumentCloseAllNoSaveEvent;
 import org.rstudio.studio.client.server.model.RequestDocumentCloseEvent;
 import org.rstudio.studio.client.server.model.RequestDocumentSaveEvent;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
@@ -1063,6 +1064,10 @@ public class ClientEventDispatcher
          {
             RStudioApiRequestEvent.Data data = event.getData();
             eventBus_.dispatchEvent(new RStudioApiRequestEvent(data));
+         }
+         else if (type == ClientEvent.DocumentCloseAllNoSave)
+         {
+            eventBus_.dispatchEvent(new DocumentCloseAllNoSaveEvent());
          }
          else
          {

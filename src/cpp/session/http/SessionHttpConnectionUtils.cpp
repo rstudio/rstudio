@@ -1,7 +1,7 @@
 /*
  * SessionHttpConnectionUtils.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -241,6 +241,7 @@ bool checkForInterrupt(boost::shared_ptr<HttpConnection> ptrConnection)
    Error error = parseJsonRpcRequest(
             ptrConnection->request().body(),
             &request);
+   
    if (error)
    {
       ptrConnection->sendJsonRpcError(error);

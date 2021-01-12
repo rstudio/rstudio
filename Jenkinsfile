@@ -21,7 +21,7 @@ def compile_package(os, type, flavor, variant) {
 
   // add version suffix if present
   if (rstudioVersionSuffix != 0) {
-   env = "${env} RSTUDIO_VERSION_SUFFIX=${rstudioVersionSuffix}" 
+   env = "${env} RSTUDIO_VERSION_SUFFIX=${rstudioVersionSuffix}"
   }
 
   // add OS that the package was built for
@@ -50,7 +50,7 @@ def run_tests(type, flavor, variant) {
     currentBuild.result = "UNSTABLE"
   }
 
-  
+
   try {
     // attempt to run cpp unit tests
     sh "cd package/linux/build-${flavor.capitalize()}-${type}/src/cpp && ./rstudio-tests"
@@ -85,7 +85,7 @@ def s3_upload(type, flavor, os, arch) {
       script: "basename `ls ${buildFolder}/_CPack_Packages/Linux/${type}/*.tar.gz`",
       returnStdout: true
     ).trim()
-    
+
     def renamedTarballFile = sh (
       script: "echo ${tarballFile} | sed 's/-relwithdebinfo//'",
       returnStdout: true
@@ -93,7 +93,7 @@ def s3_upload(type, flavor, os, arch) {
 
     sh "mv ${buildFolder}/_CPack_Packages/Linux/${type}/${tarballFile} ${buildFolder}/_CPack_Packages/Linux/${type}/${renamedTarballFile}"
     tarballFile = renamedTarballFile
-    
+
     sh "aws s3 cp ${buildFolder}/_CPack_Packages/Linux/${type}/${tarballFile} s3://rstudio-ide-build/${flavor}/${os}/${arch}/"
   }
 
@@ -168,19 +168,19 @@ messagePrefix = "Jenkins ${env.JOB_NAME} build: <${env.BUILD_URL}display/redirec
 try {
     timestamps {
         def containers = [
-          [os: 'centos6',    arch: 'x86_64', flavor: 'server',  variant: '',    package_os: 'CentOS 6'],
           [os: 'opensuse',   arch: 'x86_64', flavor: 'server',  variant: '',    package_os: 'OpenSUSE'],
           [os: 'opensuse15', arch: 'x86_64', flavor: 'desktop', variant: '',    package_os: 'OpenSUSE 15'],
           [os: 'opensuse15', arch: 'x86_64', flavor: 'server',  variant: '',    package_os: 'OpenSUSE 15'],
           [os: 'centos7',    arch: 'x86_64', flavor: 'desktop', variant: '',    package_os: 'CentOS 7'],
+          [os: 'centos7',    arch: 'x86_64', flavor: 'server',  variant: '',    package_os: 'CentOS 7'],
           [os: 'xenial',     arch: 'amd64',  flavor: 'server',  variant: '',    package_os: 'Ubuntu Xenial'],
           [os: 'xenial',     arch: 'amd64',  flavor: 'desktop', variant: '',    package_os: 'Ubuntu Xenial'],
           [os: 'bionic',     arch: 'amd64',  flavor: 'server',  variant: '',    package_os: 'Ubuntu Bionic'],
           [os: 'bionic',     arch: 'amd64',  flavor: 'desktop', variant: '',    package_os: 'Ubuntu Bionic'],
           [os: 'debian9',    arch: 'x86_64', flavor: 'server',  variant: '',    package_os: 'Debian 9'],
           [os: 'debian9',    arch: 'x86_64', flavor: 'desktop', variant: '',    package_os: 'Debian 9'],
-          [os: 'centos8',   arch: 'x86_64', flavor: 'server',  variant: '',     package_os: 'CentOS 8'],
-          [os: 'centos8',   arch: 'x86_64', flavor: 'desktop', variant: '',     package_os: 'CentOS 8']
+          [os: 'centos8',    arch: 'x86_64', flavor: 'server',  variant: '',     package_os: 'CentOS 8'],
+          [os: 'centos8',    arch: 'x86_64', flavor: 'desktop', variant: '',     package_os: 'CentOS 8']
         ]
         containers = limit_builds(containers)
 
@@ -206,7 +206,7 @@ try {
                         // extract patch and suffix if present
                         def patch = components[2].split('-')
                         rstudioVersionPatch = patch[0]
-                        if (patch.length > 1) 
+                        if (patch.length > 1)
                             rstudioVersionSuffix = patch[1]
                         else
                             rstudioVersionSuffix = 0
@@ -235,9 +235,9 @@ try {
                             prepareWorkspace()
                             withCredentials([usernameColonPassword(credentialsId: 'github-rstudio-jenkins', variable: "github_login")]) {
                               def github_args = "--build-arg GITHUB_LOGIN=${github_login}"
-                              pullBuildPush(image_name: 'jenkins/ide', 
-                                dockerfile: "docker/jenkins/Dockerfile.${current_image.os}-${current_image.arch}", 
-                                image_tag: image_tag, 
+                              pullBuildPush(image_name: 'jenkins/ide',
+                                dockerfile: "docker/jenkins/Dockerfile.${current_image.os}-${current_image.arch}",
+                                image_tag: image_tag,
                                 build_args: github_args + " " + jenkins_user_build_args())
                             }
                         }
@@ -347,7 +347,7 @@ try {
               }
               stage('sign') {
                 withCredentials([file(credentialsId: 'ide-windows-signing-pfx', variable: 'pfx-file'), string(credentialsId: 'ide-pfx-passphrase', variable: 'pfx-passphrase')]) {
-                  bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.17134.0\\x86\\signtool\" sign /f %pfx-file% /p %pfx-passphrase% /v /ac package\\win32\\cert\\After_10-10-10_MSCV-VSClass3.cer /n \"RStudio, Inc.\" /t http://timestamp.VeriSign.com/scripts/timstamp.dll  package\\win32\\build\\RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}-RelWithDebInfo.exe"
+                  bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.17134.0\\x86\\signtool\" sign /f %pfx-file% /p %pfx-passphrase% /v /ac package\\win32\\cert\\After_10-10-10_MSCV-VSClass3.cer /n \"RStudio, Inc.\" /t http://timestamp.digicert.com  package\\win32\\build\\RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}-RelWithDebInfo.exe"
                   bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.17134.0\\x86\\signtool\" verify /v /kp package\\win32\\build\\RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}-RelWithDebInfo.exe"
                 }
               }
@@ -357,7 +357,7 @@ try {
                   cd package\\win32\\build
                   FOR /F %%G IN ('dir /s /b *.pdb') DO (..\\..\\..\\dependencies\\windows\\breakpad-tools-windows\\dump_syms %%G > %%G.sym)
                 '''
-                
+
                 // upload the breakpad symbols
                 withCredentials([string(credentialsId: 'ide-sentry-api-key', variable: 'SENTRY_API_KEY')]){
                   bat "cd package\\win32\\build\\src\\cpp && ..\\..\\..\\..\\..\\dependencies\\windows\\sentry-cli.exe --auth-token %SENTRY_API_KEY% upload-dif --org rstudio --project ide-backend -t breakpad ."

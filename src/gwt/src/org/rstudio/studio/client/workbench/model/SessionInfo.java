@@ -1,7 +1,7 @@
 /*
  * SessionInfo.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -58,6 +58,7 @@ public class SessionInfo extends JavaScriptObject
    public final native String getClientVersion() /*-{
       return this.client_version;
    }-*/;
+   
 
    public final native String getUserIdentity() /*-{
       return this.userIdentity;
@@ -75,6 +76,10 @@ public class SessionInfo extends JavaScriptObject
       return this.session_label;
    }-*/;
 
+   public final native String getPrompt() /*-{
+      return this.prompt;
+   }-*/;
+   
    public final native JsArray<RnwWeave> getRnwWeaveTypes() /*-{
       return this.rnw_weave_types;
    }-*/;

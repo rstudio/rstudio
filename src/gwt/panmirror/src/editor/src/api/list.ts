@@ -1,7 +1,7 @@
 /*
  * list.ts
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,9 +30,13 @@ export interface ListCapabilities {
   order: boolean;
 }
 
-export function isList(node: ProsemirrorNode) {
-  const schema = node.type.schema;
-  return node.type === schema.nodes.bullet_list || node.type === schema.nodes.ordered_list;
+export function isList(node: ProsemirrorNode | null | undefined) {
+  if (node) {
+    const schema = node.type.schema;
+    return node.type === schema.nodes.bullet_list || node.type === schema.nodes.ordered_list;
+  } else {
+    return false;
+  }
 }
 
 export function precedingListItemInsertPos(doc: ProsemirrorNode, selection: Selection) {
@@ -41,13 +45,17 @@ export function precedingListItemInsertPos(doc: ProsemirrorNode, selection: Sele
     return null;
   }
 
-  // check for insert position in preceding list item
+  // check for insert position in preceding list item (only trigger when
+  // the user is at the very beginning of a new bullet)
   const schema = doc.type.schema;
+  const $head = selection.$head;
   const parentListItem = findParentNodeOfType(schema.nodes.list_item)(selection);
   if (parentListItem) {
     const $liPos = doc.resolve(parentListItem.pos);
     const listIndex = $liPos.index();
-    if (listIndex > 0) {
+    const parentIndex = $head.index($head.depth - 1);
+    const parentOffset = $head.parentOffset;
+    if (listIndex > 0 && parentIndex === 0 && parentOffset === 0) {
       const pos = $liPos.pos - 1;
       return pos;
     } else {

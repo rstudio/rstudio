@@ -1,7 +1,7 @@
 /*
  * yaml.ts
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -128,7 +128,7 @@ export function toYamlCode(obj: any): string | null {
 }
 
 export function stripYamlDelimeters(yamlCode: string) {
-  return yamlCode.replace(/^[\s-]+/, '').replace(/[\s-\.]+$/, '');
+  return yamlCode.replace(/^[ \t-]+\n/, '').replace(/\n[ \t-\.]+$/, '');
 }
 
 export interface ParsedYaml {

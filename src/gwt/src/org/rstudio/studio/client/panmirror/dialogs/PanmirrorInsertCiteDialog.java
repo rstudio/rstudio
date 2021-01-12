@@ -311,7 +311,7 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
    // they look to be based upon this:
    // https://bibdesk.sourceforge.io/manual/BibDeskHelp_2.html
    private boolean isValidCitationId(String citationId) {      
-      String invalidCharsRegex = ".*[\\s@',\\\\#}{~%&$^_].*";
+      String invalidCharsRegex = ".*[@;\\[\\]\\s\\!\\,].*";
       return !citationId.matches(invalidCharsRegex);
    }
    

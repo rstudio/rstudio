@@ -1,7 +1,7 @@
 /*
  * pandoc_id.ts
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -101,7 +101,6 @@ export function pandocAsciify(text: string) {
         break;
 
       case 200:
-      case 201:
       case 201:
       case 203:
       case 274:
@@ -261,9 +260,6 @@ export function pandocAsciify(text: string) {
       case 218:
       case 219:
       case 220:
-      case 340:
-      case 342:
-      case 344:
       case 360:
       case 362:
       case 364:

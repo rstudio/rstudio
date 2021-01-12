@@ -1,7 +1,7 @@
 /*
  * SpellingPreferencesPane.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -88,7 +88,8 @@ public class SpellingPreferencesPane extends PreferencesPane
 
       add(blacklistWarning_);
 
-      languageWidget_.addChangeHandler((event) -> {
+      languageWidget_.addChangeHandler((event) ->
+      {
          boolean canRealtimeCheck = TypoSpellChecker.canRealtimeSpellcheckDict(languageWidget_.getSelectedLanguage());
          blacklistWarning_.setVisible(!canRealtimeCheck);
          realtimeSpellcheckingCheckbox_.setValue(realtimeSpellcheckingCheckbox_.getValue() && canRealtimeCheck);
@@ -172,11 +173,18 @@ public class SpellingPreferencesPane extends PreferencesPane
    @Override
    public RestartRequirement onApply(UserPrefs rPrefs)
    {
-      uiPrefs_.spellingDictionaryLanguage().setGlobalValue(
-                                       languageWidget_.getSelectedLanguage());
-
       RestartRequirement restart = super.onApply(rPrefs);
-      restart.setDesktopRestartRequired(restart.getDesktopRestartRequired() || customDictsWidget_.getCustomDictsModified());
+      
+      uiPrefs_.spellingDictionaryLanguage().setGlobalValue(
+            languageWidget_.getSelectedLanguage());
+
+      restart.setDesktopRestartRequired(
+            restart.getDesktopRestartRequired() ||
+            customDictsWidget_.getCustomDictsModified() ||
+            !StringUtil.equals(
+                  rPrefs.spellingDictionaryLanguage().getValue(),
+                  languageWidget_.getSelectedLanguage()));
+      
       return restart;
    }
 

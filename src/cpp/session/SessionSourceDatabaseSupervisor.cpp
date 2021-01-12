@@ -2,7 +2,7 @@
  *
  * SessionSourceDatabaseSupervisor.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -573,7 +573,7 @@ void suspendSourceDatabase(int status)
 {
    // write a sentinel so we can differentiate between a sdb that's orphaned
    // from a crash, and an sdb that represents a suspended session
-   Error error = status == EX_CONTINUE ? 
+   Error error = (status == EX_SUSPEND_RESTART_LAUNCHER_SESSION || EX_CONTINUE) ?
       sessionRestartFilePath(sessionDirPath()).ensureFile() : 
       sessionSuspendFilePath(sessionDirPath()).ensureFile();
    if (error)

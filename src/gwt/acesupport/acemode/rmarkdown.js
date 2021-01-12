@@ -1,7 +1,7 @@
 /*
  * markdown.js
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * The Initial Developer of the Original Code is
  * Ajax.org B.V.
@@ -233,17 +233,16 @@ oop.inherits(Mode, MarkdownMode);
             }
          }
 
-         // skip over '`' if it ends an inline R chunk
+         // skip over '`' if it ends an inline code block
          else if (text === "`")
          {
             var pos = editor.getCursorPosition();
+            var line = session.getLine(pos.row);
             var token = session.getTokenAt(pos.row, pos.column + 1);
 
-            // validate that we are working within an inline chunk --
-            // only skip '`' if that appears to be the case
-            if (token != null &&
-                token.value === "`" &&
-                token.type.indexOf("support.function") !== -1)
+            if (token !== null &&
+                token.type.indexOf("support.function") !== -1 &&
+                line[pos.column] === "`")
             {
                return {
                   text: "",

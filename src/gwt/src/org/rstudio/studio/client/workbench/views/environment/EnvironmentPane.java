@@ -1,7 +1,7 @@
 /*
  * EnvironmentPane.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -34,6 +34,7 @@ import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.SuspendAndRestartEvent;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.ImageMenuItem;
@@ -79,7 +80,8 @@ public class EnvironmentPane extends WorkbenchPane
                              implements EnvironmentPresenter.Display,
                                         EnvironmentObjectsObserver,
                                         SessionInitEvent.Handler,
-                                        ReticulateEvent.Handler
+                                        ReticulateEvent.Handler,
+                                        SuspendAndRestartEvent.Handler
 {
    @Inject
    public EnvironmentPane(Commands commands,
@@ -122,6 +124,7 @@ public class EnvironmentPane extends WorkbenchPane
 
       events.addHandler(SessionInitEvent.TYPE, this);
       events.addHandler(ReticulateEvent.TYPE, this);
+      events.addHandler(SuspendAndRestartEvent.TYPE, this);
 
       ensureWidget();
    }
@@ -708,6 +711,12 @@ public class EnvironmentPane extends WorkbenchPane
       {
          setActiveLanguage("R", true);
       }
+   }
+   
+   @Override
+   public void onSuspendAndRestart(SuspendAndRestartEvent event)
+   {
+      setActiveLanguage("R", false);
    }
 
    // An extension of the toolbar popup menu that gets environment names from

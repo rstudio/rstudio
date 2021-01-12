@@ -2,7 +2,7 @@
 /*
  * PanmirrorCommandIcons.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -34,6 +34,7 @@ public class PanmirrorCommandIcons
    public final String CODE = "code";
    public final String IMAGE = "image";
    public final String ITALIC = "italic";
+   public final String UNDERLINE = "underline";
    public final String OMNI = "omni";
    public final String LINK = "link";
    public final String NUMBERED_LIST = "numbered_list";
@@ -56,6 +57,8 @@ public class PanmirrorCommandIcons
       icons_.put(IMAGE, res.image());
       icons_.put(ITALIC, res.italic());
       icons_.put(dm(ITALIC), res.italic_dm());
+      icons_.put(UNDERLINE, res.underline());
+      icons_.put(dm(UNDERLINE), res.underline_dm());
       icons_.put(OMNI, res.omni());
       icons_.put(LINK, res.link());
       icons_.put(NUMBERED_LIST, res.numbered_list());

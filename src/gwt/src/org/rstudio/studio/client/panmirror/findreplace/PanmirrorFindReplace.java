@@ -1,7 +1,7 @@
 /*
  * PanmirrorFind.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,6 +27,6 @@ public class PanmirrorFindReplace
    public native boolean selectNext();
    public native boolean selectPrevious();
    public native boolean replace(String term);
-   public native boolean replaceAll(String term);
+   public native int replaceAll(String term);
    public native boolean clear();
 }

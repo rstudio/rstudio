@@ -3,7 +3,7 @@
 #
 # install-common
 #
-# Copyright (C) 2020 by RStudio, PBC
+# Copyright (C) 2021 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -30,9 +30,15 @@ set -e
 # via sudo; however, this causes problems if used when building a Dockerfile
 if [ "$1" != "--install-crashpad-sudo" ]
 then
-   ./install-crashpad
+  if [[ "$OSTYPE" == "darwin"* ]]; then 
+    # use pre-built binaries on macos as compilation environment is difficult
+    # to configure there
+    ./install-crashpad osx
+  else 
+    ./install-crashpad
+  fi
 else
-   sudo ./install-crashpad
+  sudo ./install-crashpad
 fi
 
 if [ -e install-overlay ]

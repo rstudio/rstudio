@@ -1,7 +1,7 @@
 /*
  * raw_block.ts
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -119,6 +119,12 @@ const extension = (context: ExtensionContext): Extension | null => {
             if (tok.t === PandocTokenType.RawBlock) {
               readPandocRawBlock(schema, tok, writer);
               return true;
+            } else if (isParagraphWrappingMultilineRaw(tok)) {
+              const rawTok = tok.c[0];
+              const format = rawTok.c[kRawBlockFormat];
+              const content = rawTok.c[kRawBlockContent];
+              writer.addNode(schema.nodes.raw_block, { format }, [schema.text(content)]);
+              return true;
             } else {
               return false;
             }
@@ -199,6 +205,20 @@ function readPandocRawBlock(schema: Schema, tok: PandocToken, writer: Prosemirro
     writer.writeText(text);
     writer.closeNode();
   }
+}
+
+function isParagraphWrappingMultilineRaw(tok: PandocToken) {
+  return isSingleChildParagraph(tok) && 
+         tok.c[0].t === PandocTokenType.RawInline &&
+         isMultilineString(tok.c[0].c[kRawBlockContent]);
+}
+
+function isSingleChildParagraph(tok: PandocToken) {
+  return tok.t === PandocTokenType.Para && tok.c && tok.c.length === 1;
+}
+
+function isMultilineString(str: string) {
+  return str.indexOf('\n') !== -1;
 }
 
 // base class for format specific raw block commands (e.g. html/tex)

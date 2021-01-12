@@ -1,7 +1,7 @@
 /*
  * RUserData.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,6 +25,8 @@
 
 #define kMigratedFile  "rs-14-migrated"
 #define kMigrationLock "rs-14-migration.lock"
+
+#define LICENSE_FILE_EXT ".lic"
 
 namespace rstudio {
 namespace core {
@@ -117,6 +119,32 @@ Error migrateUserStateIfNecessary(SessionType sessionType)
    std::vector<std::string> failures;
    for (const auto& f: files)
    {
+      // RStudio Desktop Pro encourages users to install ODBC drivers to the user scratch folder
+      // e.g., ~/.rstudio-desktop/odbc/drivers (in RStudio 1.3 and prior); see
+      // .rs.connectionOdbcInstallerPath for details. These driver paths then become part of user
+      // content such as R scripts, so they can't be moved without breaking user code. Skip this
+      // directory when migrating to avoid this breakage.
+      if (f.isDirectory() && f.getFilename() == "odbc")
+      {
+         // Log as a failure so we don't clean up the ~/.rstudio-desktop folder (will generate an
+         // ignorable but accurate warning in the logs)
+         failures.push_back(f.getFilename());
+         continue;
+      }
+
+      // RStudio Desktop Pro stores information about user license in these files; leave as-is
+      // using same technique as the "odbc" files above.
+      if (!f.isDirectory() && f.getFilename() == "verify")
+      {
+         failures.push_back(f.getFilename());
+         continue;
+      }
+      if (!f.isDirectory() && f.hasExtensionLowerCase(LICENSE_FILE_EXT))
+      {
+         failures.push_back(f.getFilename());
+         continue;
+      }
+
       FilePath target = newPath.completeChildPath(f.getFilename());
       Error moveError = f.move(target);
       if (moveError)

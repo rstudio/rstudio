@@ -1,7 +1,7 @@
 /*
  * HistoryCompletionManager.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -59,6 +59,11 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
       lastSearch_ = "";
 
       // Current offset when navigating through search results
+      offset_ = -1;
+   }
+   
+   public void resetOffset()
+   {
       offset_ = -1;
    }
 
@@ -229,16 +234,16 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
    {
       public HistoryCallback(String text, PopupMode desiredMode)
       {
+         // reset offset if initiating a new search
+         if (!StringUtil.equals(text, lastSearch_))
+            offset_ = -1;
+         
+         // set associated class members
          historyRequestInvalidation_.invalidate();
          token_ = historyRequestInvalidation_.getInvalidationToken();
          text_ = text;
          lastSearch_ = text;
          desiredMode_ = desiredMode;
-
-         // If we aren't re-initiating a previous search, clear the offset
-         // selection
-         if (lastSearch_ != text)
-            offset_ = -1;
       }
 
       @Override

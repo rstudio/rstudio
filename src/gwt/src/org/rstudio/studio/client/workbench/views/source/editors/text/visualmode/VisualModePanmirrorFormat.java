@@ -1,7 +1,7 @@
 /*
  * VisualModePanmirrorFormat.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -106,7 +106,7 @@ public class VisualModePanmirrorFormat
             // non-standard mode and extension either come from a format comment,
             // a detection of an alternate engine (likely due to blogdown/hugo)
             
-            Pair<String,String> alternateEngine = alternateMarkdownEngine();
+            Pair<String,String> alternateEngine = alternateMarkdownEngine(format.docTypes);
             if (formatComment.mode != null)
             {
                format.pandocMode = formatComment.mode;
@@ -156,7 +156,7 @@ public class VisualModePanmirrorFormat
             
             // check for blogdown math in code (e.g. `$math$`)
             format.rmdExtensions.blogdownMathInCode = 
-              hasBlogdownMathInCode(formatComment) || rmdExtensions.blogdownMathInCode;
+              hasBlogdownMathInCode(formatComment, format.docTypes) || rmdExtensions.blogdownMathInCode;
             
             // hugoExtensions
             format.hugoExtensions = new PanmirrorHugoExtensions();
@@ -257,7 +257,21 @@ public class VisualModePanmirrorFormat
    
    private boolean isGitHubDocument()
    {
-      return getOutputFormats().contains("github_document");
+      return getOutputFormats().contains("github_document") || isGitREADME();
+   }
+   
+   private boolean isGitREADME()
+   {
+      String path = docUpdateSentinel_.getPath();
+      if (path != null && isGitRepo())
+         return FileSystemItem.createFile(path).getStem().equalsIgnoreCase("README");
+      else
+         return false;
+   }
+   
+   private boolean isGitRepo()
+   {
+      return sessionInfo_.getVcsName().equalsIgnoreCase("git");
    }
    
    private boolean isDistillDocument()
@@ -297,9 +311,9 @@ public class VisualModePanmirrorFormat
       return false;
    }
    
-   private boolean hasBlogdownMathInCode(PanmirrorPandocFormatConfig config)
+   private boolean hasBlogdownMathInCode(PanmirrorPandocFormatConfig config, String[] docTypes)
    {
-      if (alternateMarkdownEngine() != null && getBlogdownConfig().rmd_extensions != null)
+      if (alternateMarkdownEngine(docTypes) != null && getBlogdownConfig().rmd_extensions != null)
          return getBlogdownConfig().rmd_extensions.contains("+tex_math_dollars_in_code") &&
                 !this.disableBlogdownMathInCode(config);
       else
@@ -334,7 +348,7 @@ public class VisualModePanmirrorFormat
    }
    
    // see if there's an alternate markdown engine in play
-   private Pair<String,String> alternateMarkdownEngine()
+   private Pair<String,String> alternateMarkdownEngine(String[] docTypes)
    {
       // if we have a doc
       String docPath = docUpdateSentinel_.getPath();
@@ -363,8 +377,8 @@ public class VisualModePanmirrorFormat
          {
             return alternateMode;
          }
-         // hugodown document that lives outside of a project
-         else if (isHugodownDocument())
+         // other valid ways of having a hugo document
+         else if (isHugodownDocument() || hasHugoDocType(docTypes))
          {
             return new Pair<String,String>("goldmark", "");
          }
@@ -376,6 +390,15 @@ public class VisualModePanmirrorFormat
       }
    
       return null;   
+   }
+   
+   private boolean hasHugoDocType(String[] docTypes)
+   {
+      for (int i=0; i<docTypes.length; i++) {
+         if (docTypes[i].compareToIgnoreCase(PanmirrorExtendedDocType.hugo) == 0)
+            return true;
+      }
+      return false;
    }
 
    private boolean isDocInProject()

@@ -1,7 +1,7 @@
 /*
  * CompletionRequester.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -693,7 +693,7 @@ public class CompletionRequester
                   rnwContext_ == null ? null : rnwContext_.getActiveRnwWeave());
 
             String[] pkgNames = new String[result.completions.length()];
-            Arrays.fill(pkgNames, "`chunk-option`");
+            Arrays.fill(pkgNames, "<chunk-option>");
 
             Completions response = Completions.createCompletions(
                   result.token,
@@ -703,7 +703,7 @@ public class CompletionRequester
                   JsUtil.toJsArrayInteger(new ArrayList<>(result.completions.length())),
                   JsUtil.toJsArrayString(new ArrayList<>(result.completions.length())),
                   "",
-                  false,
+                  true,
                   false,
                   true,
                   null,

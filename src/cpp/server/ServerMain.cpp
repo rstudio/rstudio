@@ -1,7 +1,7 @@
 /*
  * ServerMain.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -516,6 +516,17 @@ int main(int argc, char * const argv[])
       // ignore SIGPIPE (don't log error because we should never call
       // syslog prior to daemonizing)
       core::system::ignoreSignal(core::system::SigPipe);
+      
+#ifdef __APPLE__
+      // warn if the rstudio pam profile does not exist
+      // (note that this only effects macOS development configurations)
+      FilePath pamProfilePath("/etc/pam.d/rstudio");
+      if (!pamProfilePath.exists())
+      {
+         std::cerr << "WARNING: /etc/pam.d/rstudio does not exist; authentication may fail!" << std::endl;
+         std::cerr << "Run 'sudo cp /etc/pam.d/cups /etc/pam.d/rstudio' to set a default PAM profile for RStudio." << std::endl;
+      }
+#endif
 
       // read program options 
       std::ostringstream osWarnings;
@@ -531,7 +542,7 @@ int main(int argc, char * const argv[])
       }
       
       // daemonize if requested
-      if (options.serverDaemonize())
+      if (options.serverDaemonize() && options.dbCommand().empty())
       {
          Error error = core::system::daemonize(options.serverPidFile());
          if (error)
@@ -540,6 +551,9 @@ int main(int argc, char * const argv[])
          error = core::system::ignoreTerminalSignals();
          if (error)
             return core::system::exitFailure(error, ERROR_LOCATION);
+
+         // Reload the loggers after succesful daemonize to clear out old FDs.
+         core::log::reloadAllLogDestinations();
 
          // set file creation mask to 022 (might have inherted 0 from init)
          if (options.serverSetUmask())
@@ -642,6 +656,16 @@ int main(int argc, char * const argv[])
       error = core::http::secure_cookie::initialize(options.secureCookieKeyFile());
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
+
+      // execute any database commands if passed
+      if (!options.dbCommand().empty())
+      {
+         Error error = server_core::database::execute(options.databaseConfigFile(), serverUser, options.dbCommand());
+         if (error)
+            return core::system::exitFailure(error, ERROR_LOCATION);
+
+         return EXIT_SUCCESS;
+      }
 
       // initialize database connectivity
       error = server_core::database::initialize(options.databaseConfigFile(), true, serverUser);

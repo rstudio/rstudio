@@ -1,7 +1,7 @@
 #
 # SessionEnvironment.R
 #
-# Copyright (C) 2020 by RStudio, PBC
+# Copyright (C) 2021 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -446,7 +446,7 @@
 {
    # if 'name' is missing, we're likely being invoked by
    # 'utils::file.edit()', so just edit the requested file
-   if (missing(name))
+   if (missing(name) || is.null(name))
       return(.Call("rs_editFile", file, PACKAGE = "(embedding)"))
    
    # otherwise, we're more likely being invoked by 'edit()', which

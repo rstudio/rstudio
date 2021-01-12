@@ -1,7 +1,7 @@
 /*
  * SyslogDestination.cpp
  * 
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant to the terms of a commercial license agreement
  * with RStudio, then this program is licensed to you under the following terms:
@@ -108,6 +108,13 @@ unsigned int SyslogDestination::getSyslogId()
 unsigned int SyslogDestination::getId() const
 {
    return getSyslogId();
+}
+
+void SyslogDestination::reload()
+{
+   // Close and re-open the log.
+   ::closelog();
+   ::openlog(m_impl->ProgramId.c_str(), LOG_CONS | LOG_PID, LOG_USER);
 }
 
 void SyslogDestination::writeLog(

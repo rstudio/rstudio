@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2020 by RStudio, PBC
+# Copyright (C) 2021 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -96,7 +96,7 @@ define_source_file_names(rstudio-r)
 # link dependencies
 target_link_libraries(rstudio-r rstudio-core)
 
-if(RSTUDIO_PACKAGE_BUILD AND APPLE)
+if(APPLE)
    target_link_libraries(rstudio-r "-undefined dynamic_lookup")
 else()
    target_link_libraries(rstudio-r "${LIBR_LIBRARIES}")

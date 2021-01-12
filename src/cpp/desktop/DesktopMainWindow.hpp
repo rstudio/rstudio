@@ -1,7 +1,7 @@
 /*
  * DesktopMainWindow.hpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,6 +21,8 @@
 #include <QProcess>
 #include <QtGui>
 #include <QSessionManager>
+
+#include <core/Thread.hpp>
 
 #include "DesktopInfo.hpp"
 #include "DesktopGwtCallback.hpp"
@@ -57,6 +59,8 @@ public:
    QWebEngineProfile* getPageProfile();
    WebView* getWebView();
    bool workbenchInitialized();
+
+   void setErrorDisplayed();
 
 public Q_SLOTS:
    void quit();
@@ -114,7 +118,9 @@ private:
    void onActivated() override;
 
    void onUrlChanged(QUrl url);
+   void reload();
    void onLoadFinished(bool ok);
+   void onLoadFailed();
 
    void saveRemoteAuthCookies(const boost::function<QList<QNetworkCookie>()>& loadCookies,
                               const boost::function<void(QList<QNetworkCookie>)>& saveCookies,
@@ -132,6 +138,9 @@ private:
    boost::shared_ptr<JobLauncher> pLauncher_;
    ApplicationLaunch *pAppLauncher_;
    QProcess* pCurrentSessionProcess_;
+
+   boost::mutex mutex_;
+   bool isErrorDisplayed_;
 
 #ifdef _WIN32
    HWINEVENTHOOK eventHook_;

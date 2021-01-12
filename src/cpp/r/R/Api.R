@@ -1,7 +1,7 @@
 #
 # Api.R
 #
-# Copyright (C) 2020 by RStudio, PBC
+# Copyright (C) 2021 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -23,7 +23,8 @@
    TYPE_SET_EDITOR_SELECTION = 2L,
    TYPE_DOCUMENT_ID          = 3L,
    TYPE_DOCUMENT_OPEN        = 4L,
-   TYPE_DOCUMENT_NEW         = 5L
+   TYPE_DOCUMENT_NEW         = 5L,
+   TYPE_FILES_PANE_NAVIGATE  = 6L
 ))
 
 # list of potential event targets
@@ -64,11 +65,20 @@
    # attempt to initialize a project within that directory
    .rs.ensureDirectory(path)
    
-   # check to see if a .Rproj file already exists in that directory;
-   # if so, then we don't need to re-initialize
-   rProjFiles <- list.files(path, 
-                            pattern = "[.]Rproj$",
-                            full.names = TRUE)
+   # NOTE: list.files() will fail on Windows for paths containing
+   # characters not representable in the current locale, so we instead
+   # change to the requested directory, list files, and then build the
+   # full paths
+   rProjFiles <- (function() {
+      
+      # move to project path
+      owd <- setwd(path)
+      on.exit(setwd(owd), add = TRUE)
+      
+      # list files in path
+      file.path(path, list.files(pattern = "[.]Rproj$"))
+
+   })()
    
    # if we already have a .Rproj file, just return that
    if (length(rProjFiles))
@@ -125,7 +135,7 @@
   info$mode <- .Call("rs_rstudioProgramMode", PACKAGE = "(embedding)")
   info$edition <- .Call("rs_rstudioEdition", PACKAGE = "(embedding)")
   info$version <- .Call("rs_rstudioVersion", PACKAGE = "(embedding)")
-  info$version <- package_version(info$version)
+  info$version <- base::package_version(info$version)
   info$release_name <- .Call("rs_rstudioReleaseName", PACKAGE = "(embedding)")
   info
 })
@@ -291,7 +301,7 @@
    # then use a separate API (this allows the API to work regardless of
    # whether we're in source or visual mode)
    if (identical(line, -1L) && identical(col, -1L))
-      return(file.edit(filePath))
+      return(invisible(.Call("rs_fileEdit", filePath, PACKAGE = "(embedding)")))
 
    # send event to client
    .rs.enqueClientEvent("jump_to_function", list(
@@ -710,9 +720,15 @@
    
 })
 
+.rs.addApiFunction("closeAllSourceBuffersWithoutSaving", function() {
+   .Call("rs_documentCloseAllNoSave", PACKAGE = "(embedding)")
+})
+
+# NOTE: we allow '1L' just in case for backwards compatibility
+# with older preferences not migrated to the newer string version
 .rs.addApiFunction("getConsoleHasColor", function(name) {
-   value <- .rs.readUiPref("ansi_console_mode")
-   if (is.null(value) || value != 1) FALSE else TRUE
+   mode <- .rs.readUiPref("ansi_console_mode")
+   !is.null(mode) && mode %in% list(1L, "on")
 })
 
 .rs.addApiFunction("terminalSend", function(id, text) {
@@ -1104,4 +1120,27 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
    
    # fire away
    .rs.api.sendRequest(request)
+})
+
+.rs.addApiFunction("filesPaneNavigate", function(path)
+{
+   info <- file.info(path, extra_cols = FALSE)
+   if (is.na(info$isdir))
+      stop("'", path, "' does not exist")
+   else if (identical(info$isdir, FALSE))
+      path <- dirname(path)
+   
+   payload <- list(
+      path  = .rs.scalar(.rs.createAliasedPath(path))
+   )
+   
+   request <- .rs.api.createRequest(
+      type    = .rs.api.eventTypes$TYPE_FILES_PANE_NAVIGATE,
+      sync    = FALSE,
+      target  = .rs.api.eventTargets$TYPE_UNKNOWN,
+      payload = payload
+   )
+   
+   .rs.api.sendRequest(request)
+   invisible(path)
 })

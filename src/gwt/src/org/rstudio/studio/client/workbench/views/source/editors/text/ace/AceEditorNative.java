@@ -1,7 +1,7 @@
 /*
  * AceEditorNative.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -204,6 +204,16 @@ public class AceEditorNative extends JavaScriptObject
 
    public final native Element getTextInputElement() /*-{
       return this.textInput.getElement();
+   }-*/;
+
+   /**
+    * Forces the use of browser focus scrolling. This is the default on Chrome, but on other
+    * browsers, a complicated hack involving setting the 'ace_nocontext' attribute on all parent
+    * elements is used instead to avoid scroll jitter. This is not necessary in embedded editors,
+    * and causes ProseMirror to go nuts (see issue 8518), so this hook allows us to turn it off.
+    */
+   public final native void useBrowserInputFocus() /*-{
+      this.textInput.$focusScroll = "browser";
    }-*/;
 
    /**

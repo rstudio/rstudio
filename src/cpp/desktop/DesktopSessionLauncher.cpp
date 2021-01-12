@@ -1,7 +1,7 @@
 /*
  * DesktopSessionLauncher.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -68,9 +68,11 @@ void launchProcess(const std::string& absPath,
    if (rLib.exists())
    {
       QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
+      
       environment.insert(
                QStringLiteral("DYLD_INSERT_LIBRARIES"),
                QString::fromStdString(rLib.getAbsolutePathNative()));
+      
       process->setProcessEnvironment(environment);
    }
 #endif
@@ -135,6 +137,7 @@ Error SessionLauncher::launchFirstSession()
    logEnvVar("R_LIBS");
    logEnvVar("R_LIBS_USER");
    logEnvVar("DYLD_LIBRARY_PATH");
+   logEnvVar("DYLD_FALLBACK_LIBRARY_PATH");
    logEnvVar("LD_LIBRARY_PATH");
    logEnvVar("PATH");
    logEnvVar("HOME");
@@ -201,6 +204,7 @@ Error SessionLauncher::launchFirstSession()
       pAppLaunch_->activateWindow();
       pMainWindow_->loadUrl(url);
    }
+   
    qApp->setQuitOnLastWindowClosed(true);
    return Success();
 }
@@ -311,7 +315,10 @@ void SessionLauncher::showLaunchErrorPage()
    if (error)
        LOG_ERROR(error);
    else
+   {
+      pMainWindow_->setErrorDisplayed();
       pMainWindow_->loadHtml(QString::fromStdString(oss.str()));
+   }
 }
 
 void SessionLauncher::onRSessionExited(int, QProcess::ExitStatus)

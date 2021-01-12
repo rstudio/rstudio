@@ -1,7 +1,7 @@
 /*
  * NotebookOutput.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -293,8 +293,26 @@ Error handleChunkOutputRequest(const http::Request& request,
 
    if (!target.exists())
    {
-      pResponse->setNotFoundError(request);
-      return Success();
+      // if this path refers to a file in an unsaved cache, it's possible that it does not exist
+      // because the document has now been saved, and the file was consequently moved to the saved
+      // context. we are likely seeing this request because the front end has a stale reference to
+      // the file in its previous unsaved location (see issue 8227).
+      if (ctxId != kSavedCtx)
+      {
+         FilePath savedTarget = chunkCacheFolder(path, docId, kSavedCtx).completePath(
+            algorithm::join(parts, "/"));
+         if (savedTarget.exists())
+         {
+            target = savedTarget;
+         }
+      }
+
+      // if we're still unable to find a viable copy of the file, fail the request
+      if (!target.exists())
+      {
+         pResponse->setNotFoundError(request);
+         return Success();
+      }
    }
 
    bool isHtml = target.hasExtensionLowerCase(".htm") ||

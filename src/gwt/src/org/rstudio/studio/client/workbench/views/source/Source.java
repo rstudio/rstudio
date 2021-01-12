@@ -1,7 +1,7 @@
 /*
  * Source.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -1350,7 +1350,7 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onActivateSource()
    {
-      onActivateSource(SourceColumnManager.MAIN_SOURCE_NAME, null);
+      onActivateSource(columnManager_.getActive().getName(), null);
    }
 
    public void onActivateSource(String columnName, final Command afterActivation)
@@ -1459,7 +1459,7 @@ public class Source implements InsertSourceHandler,
       }
       if (e.getOldWindowId().equals(SourceWindowManager.getSourceWindowId()))
       {
-         columnManager_.disownDocOnDrag(e.getDocId(), oldDisplay);
+         columnManager_.disownDoc(e.getDocId(), oldDisplay, true);
       }
    }
 
@@ -1667,6 +1667,11 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onOpenSourceDoc()
    {
+      openSourceDoc(null, null);
+   }
+   
+   public void openSourceDoc(Command onCancelled, Command onCompleted)
+   {
       fileDialogs_.openFile(
             "Open File",
             fileContext_,
@@ -1677,7 +1682,11 @@ public class Source implements InsertSourceHandler,
                                    ProgressIndicator indicator)
                {
                   if (input == null)
+                  {
+                     if (onCancelled != null)
+                        onCancelled.execute();
                      return;
+                  }
 
                   workbenchContext_.setDefaultFileDialogDir(
                                                    input.getParentPath());
@@ -1688,6 +1697,8 @@ public class Source implements InsertSourceHandler,
                      public void execute()
                      {
                         fileTypeRegistry_.openFile(input);
+                        if (onCompleted != null)
+                           onCompleted.execute();
                      }
                   });
                }
@@ -1737,8 +1748,7 @@ public class Source implements InsertSourceHandler,
 
                   SourcePosition position = event.getCursorPosition();
                   if (position != null &&
-                      position.getRow() > 0 ||
-                      position.getColumn() > 0)
+                      (position.getRow() > 0 || position.getColumn() > 0))
                   {
                      editingTarget.navigateToPosition(position, false);
                   }
@@ -1939,10 +1949,24 @@ public class Source implements InsertSourceHandler,
             {
                if (file.focusOnNavigate())
                {
-                  Scheduler.get().scheduleDeferred(() ->
+                  events_.fireEvent(new SuppressNextShellFocusEvent());
+                  
+                  if (target instanceof TextEditingTarget)
+                  {
+                     TextEditingTarget textTarget = (TextEditingTarget) target;
+                     if (textTarget.isVisualModeActivated())
+                     {
+                        Scheduler.get().scheduleDeferred(() -> target.focus());
+                     }
+                     else
+                     {
+                        target.focus();
+                     }
+                  }
+                  else
                   {
                      target.focus();
-                  });
+                  }
                }
             };
 
@@ -2186,7 +2210,9 @@ public class Source implements InsertSourceHandler,
    {
       if (SourceWindowManager.isMainSourceWindow())
       {
-         fileTypeRegistry_.editFile(event.getFile());
+         FileSystemItem file = event.getFile();
+         file.setFocusOnNavigate(true);
+         fileTypeRegistry_.editFile(file);
       }
    }
 

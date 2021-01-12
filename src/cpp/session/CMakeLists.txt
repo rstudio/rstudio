@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2020 by RStudio, PBC
+# Copyright (C) 2021 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -25,8 +25,9 @@ endif()
 if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/mathjax-27")
   message(FATAL_ERROR "Mathjax 2.7 not found (re-run install-dependencies script to install)")
 endif()
-if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc")
-  message(FATAL_ERROR "pandoc not found (re-run install-dependencies script to install)")
+set(PANDOC_VERSION "2.11.2" CACHE INTERNAL "Pandoc version")
+if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc/${PANDOC_VERSION}")
+  message(FATAL_ERROR "pandoc ${PANDOC_VERSION} not found (re-run install-dependencies script to install)")
 endif()
 
 # verify embedded packages are available
@@ -443,7 +444,7 @@ target_link_libraries(rsession
    ${CRASHPAD_LIBRARIES}
 )
 
-if(RSTUDIO_PACKAGE_BUILD AND APPLE)
+if(APPLE)
    target_link_libraries(rsession "-undefined dynamic_lookup")
 else()
    target_link_libraries(rsession "${LIBR_LIBRARIES}")
@@ -550,8 +551,6 @@ if (NOT RSTUDIO_SESSION_WIN32)
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
    # install pandoc
-   set(PANDOC_VERSION "2.9.2.1" CACHE INTERNAL "Pandoc version")
-
    set(PANDOC_BIN "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc/${PANDOC_VERSION}")
    file(GLOB PANDOC_FILES "${PANDOC_BIN}/pandoc*")
    install(FILES ${PANDOC_FILES}

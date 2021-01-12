@@ -1,7 +1,7 @@
 /*
  * UserPrefsLayer.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -107,6 +107,20 @@ Error UserPrefsLayer::writePrefs(const core::json::Object &prefs)
    {
       // If we successfully wrote the contents, mark the last sync time
       lastSync_ = prefsFile_.getLastWriteTime();
+   }
+
+   // Modify the error to be more descriptive
+   if (isFileNotFoundError(error) && prefsFile_.exists())
+   {
+      error = Error(
+         error.getName(),
+         error.getCode(),
+         "Unable to save preferences. Please verify that " + 
+            prefsFile_.getAbsolutePath() +
+            " exists and is owned by the user '" +
+            system::username() + "'.",
+         error,
+         ERROR_LOCATION);
    }
 
    return error;

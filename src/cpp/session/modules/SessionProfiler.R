@@ -1,7 +1,7 @@
 #
 # SessionProfiler.R
 #
-# Copyright (C) 2020 by RStudio, PBC
+# Copyright (C) 2021 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -31,9 +31,16 @@
       "profvis.prof_output",
       default = .rs.profilesPath()
    )
-   
-   if (!.rs.dirExists(tempPath))
-      dir.create(tempPath, recursive = TRUE)
+
+   # NOTE: this code runs on IDE startup, and so errors can cause
+   # session initialization to fail. for that reason, we catch and
+   # log errors as warnings just so we avoid taking down the session
+   #
+   # https://github.com/rstudio/rstudio/issues/8256
+   tryCatch(
+      dir.create(tempPath, recursive = TRUE, showWarnings = FALSE),
+      error = warning
+   )
 
    list(tempPath = tempPath)
 })

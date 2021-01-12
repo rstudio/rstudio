@@ -1,7 +1,7 @@
 /*
  * CodeBrowserEditingTargetWidget.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.resources.client.ClientBundle;
@@ -154,11 +155,11 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
             int modifier = KeyboardShortcut.getModifierValue(event);
             if (modifier == KeyboardShortcut.NONE)
             {
-               if (event.getKeyCode() == 112) // F1
+               if (event.getKeyCode() == KeyCodes.KEY_F1)
                {
                   goToHelp();
                }
-               else if (event.getKeyCode() == 113) // F2
+               else if (event.getKeyCode() == KeyCodes.KEY_F2)
                {
                   goToDefinition();
                }

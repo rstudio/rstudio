@@ -1,7 +1,7 @@
 /*
  * SessionBookdownXRefs.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -137,11 +137,15 @@ XRefFileIndex indexForDoc(const std::string& file, const std::string& contents)
       }
    }
    std::string indexContents = boost::algorithm::join(indexLines, "\n");
-
+   
    // build index
    XRefFileIndex index(file);
 
-   // run pandoc w/ custom lua filter to capture index
+   // if we have no lines, bail early
+   if (indexContents.empty())
+      return index;
+
+   // otherwise, run pandoc w/ custom lua filter to capture index
    std::vector<std::string> args;
    args.push_back("--from");
    args.push_back("markdown");

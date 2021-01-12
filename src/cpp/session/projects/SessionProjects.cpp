@@ -1,7 +1,7 @@
 /*
  * SessionProjects.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -961,18 +961,20 @@ void startup(const std::string& firstProjectPath)
 
 SEXP rs_writeProjectFile(SEXP projectFilePathSEXP)
 {
-   std::string absolutePath = r::sexp::asString(projectFilePathSEXP);
+   std::string absolutePath = r::sexp::asUtf8String(projectFilePathSEXP);
    FilePath projectFilePath(absolutePath);
    
    Error error = r_util::writeProjectFile(
             projectFilePath,
             ProjectContext::buildDefaults(),
             ProjectContext::defaultConfig());
-   
+
+   if (error)
+      r::exec::warning(error.asString());
+
+   bool succeeded = error == Success();
    r::sexp::Protect protect;
-   return error ?
-            r::sexp::create(false, &protect) :
-            r::sexp::create(true, &protect);
+   return r::sexp::create(succeeded, &protect);
 }
 
 SEXP rs_addFirstRunDoc(SEXP projectFileAbsolutePathSEXP, SEXP docRelativePathsSEXP)
@@ -995,7 +997,7 @@ SEXP rs_addFirstRunDoc(SEXP projectFileAbsolutePathSEXP, SEXP docRelativePathsSE
 
 SEXP rs_requestOpenProject(SEXP projectFileSEXP, SEXP newSessionSEXP)
 {
-   std::string projectFile = r::sexp::asString(projectFileSEXP);
+   std::string projectFile = r::sexp::asUtf8String(projectFileSEXP);
    bool newSession = r::sexp::asLogical(newSessionSEXP);
    
    // opening projects in a new session is only supported in desktop, RSP
@@ -1079,14 +1081,16 @@ json::Array websiteOutputFormatsJson()
    json::Array formatsJson;
    if (projectContext().config().buildType == r_util::kBuildTypeWebsite)
    {
-      r::exec::RFunction getFormats(".rs.getAllOutputFormats");
-      getFormats.addParam(string_utils::utf8ToSystem(
-         projectContext().buildTargetPath().getAbsolutePath()));
-      getFormats.addParam(projectContext().defaultEncoding());
       std::vector<std::string> formats;
-      Error error = getFormats.call(&formats);
+      
+      Error error = r::exec::RFunction(".rs.getAllOutputFormats")
+            .addUtf8Param(projectContext().buildTargetPath())
+            .addParam(projectContext().defaultEncoding())
+            .call(&formats);
+      
       if (error)
          LOG_ERROR(error);
+      
       formatsJson = json::toJsonArray(formats);
    }
    return formatsJson;

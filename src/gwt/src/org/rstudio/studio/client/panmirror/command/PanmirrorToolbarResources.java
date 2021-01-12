@@ -1,7 +1,7 @@
 /*
  * PanmirrorToolbarResources.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -65,6 +65,12 @@ public interface PanmirrorToolbarResources extends ClientBundle
    
    @Source("italic_dm_2x.png")
    ImageResource italic_dm();
+   
+   @Source("underline_2x.png")
+   ImageResource underline();
+   
+   @Source("underline_dm_2x.png")
+   ImageResource underline_dm();
    
    @Source("omni_2x.png")
    ImageResource omni();

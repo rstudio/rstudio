@@ -1,7 +1,7 @@
 /*
  * SessionPersistentState.hpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -68,6 +68,14 @@ public:
    // port scrambling token
    std::string portToken() const;
    void setPortToken(const std::string& token);
+
+   // reused standalone port (for launcher session restarts)
+   std::string reusedStandalonePort() const;
+   void setReusedStandalonePort(const std::string& port);
+
+   // reused session proxy port (for launcher session restarts)
+   std::string reusedSessionProxyPort() const;
+   void setReusedSessionProxyPort(const std::string& port);
 
    // get underlying settings
    core::Settings& settings() { return settings_; }

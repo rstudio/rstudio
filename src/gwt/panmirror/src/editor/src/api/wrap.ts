@@ -1,7 +1,7 @@
 /*
  * wrap.ts
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,7 +19,7 @@ import { Transform } from 'prosemirror-transform';
 import { split } from 'sentence-splitter';
 
 import { trTransform } from './transaction';
-import { findChildrenByType } from 'prosemirror-utils';
+import { findChildrenByType, findParentNodeOfTypeClosestToPos } from 'prosemirror-utils';
 
 export function wrapSentences(tr: Transaction) {
   trTransform(tr, wrapSentencesTransform);
@@ -39,8 +39,19 @@ function wrapSentencesTransform(tr: Transform) {
       return;
     }
 
+    // don't break sentences inside tables
+    if (schema.nodes.table && findParentNodeOfTypeClosestToPos($pos, schema.nodes.table)) {
+      return;
+    }
+
+    // don't break bookdown text references
+    const textContent = paragraph.node.textContent;
+    if (/^\(ref\:[^\s]+\)\s+[^\s]/.test(textContent)) {
+      return;
+    }
+
     // break sentences in text
-    const parts = split(paragraph.node.textContent);
+    const parts = split(textContent);
     parts
       .reverse()
       .filter(part => part.type === 'Sentence')

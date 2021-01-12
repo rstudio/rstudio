@@ -21,6 +21,8 @@
 
 #include <core/system/Process.hpp>
 
+#include <r/ROptions.hpp>
+
 #include <session/SessionModuleContext.hpp>
 
 using namespace rstudio::core;
@@ -67,6 +69,15 @@ Error runAsync(const std::string& executablePath,
    );
 }
 
+std::vector<std::string> prependStackSize(const std::vector<std::string>& args)
+{
+   std::string size = r::options::getOption<std::string>("pandoc.editor.stack.size", "128m", false);
+   std::vector<std::string> newArgs = { "+RTS", "-K" + size, "-RTS" };
+   std::copy(args.begin(), args.end(), std::back_inserter(newArgs));
+   return newArgs;
+}
+
+
 } // anonymous namespace
 
 std::string pandocPath()
@@ -74,17 +85,11 @@ std::string pandocPath()
    return pandocBinary("pandoc");
 }
 
-std::string pandocCiteprocPath()
-{
-   return pandocBinary("pandoc-citeproc");
-}
-
-
 Error runPandoc(const std::vector<std::string>& args, const std::string& input, core::system::ProcessResult* pResult)
 {
    return core::system::runProgram(
       pandocPath(),
-      args,
+      prependStackSize(args),
       input,
       pandocOptions(),
       pResult
@@ -95,25 +100,9 @@ Error runPandocAsync(const std::vector<std::string>& args,
                      const std::string&input,
                      const boost::function<void(const core::system::ProcessResult&)>& onCompleted)
 {
-   return runAsync(pandocPath(), args, input, onCompleted);
+   return runAsync(pandocPath(), prependStackSize(args), input, onCompleted);
 }
 
-Error runPandocCiteproc(const std::vector<std::string>& args, core::system::ProcessResult* pResult)
-{
-   return core::system::runProgram(
-      pandocCiteprocPath(),
-      args,
-      "",
-      pandocOptions(),
-      pResult
-   );
-}
-
-Error runPandocCiteprocAsync(const std::vector<std::string>& args,
-                             const boost::function<void(const core::system::ProcessResult&)>& onCompleted)
-{
-   return runAsync(pandocCiteprocPath(), args, "", onCompleted);
-}
 
 } // end namespace module_context
 } // end namespace session

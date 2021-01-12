@@ -1,7 +1,7 @@
 /*
  * AceEditorMixins.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,6 +24,7 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.AceSelectionChangedEvent;
 
+import com.google.gwt.core.client.Scheduler;
 import com.google.inject.Inject;
 
 public class AceEditorMixins
@@ -46,7 +47,12 @@ public class AceEditorMixins
             {
                String selection = editor_.getSelectedText();
                if (!StringUtil.isNullOrEmpty(selection))
-                  Desktop.getFrame().setGlobalMouseSelection(selection);
+               {
+                  Scheduler.get().scheduleDeferred(() ->
+                  {
+                     Desktop.getFrame().setGlobalMouseSelection(selection);
+                  });
+               }
             }
          });
       }

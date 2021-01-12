@@ -1,7 +1,7 @@
 /*
  * command.ts
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -43,6 +43,7 @@ export enum EditorCommandId {
   Superscript = '0200D2FC-B5AF-423B-8B7A-4A7FC3DAA6AF',
   Subscript = '3150428F-E468-4E6E-BF53-A2713E59B4A0',
   Smallcaps = '41D8030F-5E8B-48F2-B1EE-6BC40FD502E4',
+  Underline = '7F0E6AE2-08F4-4594-9BA2-E6B8B27FA8F7',
   Paragraph = '20EC2695-75CE-4DCD-A644-266E9F5F5913',
   Heading1 = '5B77642B-923D-4440-B85D-1A27C9CF9D77',
   Heading2 = '42985A4B-6BF2-4EEF-AA30-3E84A8B9111C',

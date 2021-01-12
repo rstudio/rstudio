@@ -1,7 +1,7 @@
 /*
  * KeyCombination.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -141,7 +141,9 @@ public class KeyCombination
       else if (keyCode_ == 8)
          return macStyle ? "&#9003;" : "Backspace";
       else if (keyCode_ == KeyCodes.KEY_SPACE)
-         return macStyle? "&#9250" : "Space";
+         // Mac spacebar shortcut character looks too much like a 'b'
+         // return macStyle? "&#9250" : "Space";
+         return "Space";
 
       if (key_ != null)
          return key_;

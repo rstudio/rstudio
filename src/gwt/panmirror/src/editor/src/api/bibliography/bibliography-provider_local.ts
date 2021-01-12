@@ -1,7 +1,7 @@
 /*
  * bibliography-provider_local.ts
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -205,7 +205,7 @@ function referenceBlockFromYaml(parsedYamls: ParsedYaml[]): string {
   if (refBlockParsedYamls.length > 0) {
     const lastReferenceParsedYaml = refBlockParsedYamls[refBlockParsedYamls.length - 1];
     if (lastReferenceParsedYaml) {
-      return lastReferenceParsedYaml.yamlCode;
+      return `---\n${lastReferenceParsedYaml.yamlCode}\n---\n`;
     }
   }
 

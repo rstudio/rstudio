@@ -1,7 +1,7 @@
 /*
  * Database.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -123,23 +123,29 @@ class ConnectVisitor : public boost::static_visitor<Error>
 public:
    ConnectVisitor(bool validateOnly,
                   boost::shared_ptr<IConnection>* pPtrConnection,
-                  std::string* pConnectionStr = nullptr) :
+                  std::string* pConnectionStr = nullptr,
+                  std::string* pPassword = nullptr) :
       validateOnly_(validateOnly),
       pPtrConnection_(pPtrConnection),
-      pConnectionStr_(pConnectionStr)
+      pConnectionStr_(pConnectionStr),
+      pPassword_(pPassword)
    {
    }
 
    Error operator()(const SqliteConnectionOptions& options) const
    {
+      std::string readonly = options.readonly ? " readonly=true" : "";
+      std::string connectionStr = "shared_cache=true" + readonly + " dbname=\"" + options.file + "\"";
+      if (pConnectionStr_)
+         *pConnectionStr_ = connectionStr;
+
       // no validation for sqlite as it is not configurable
       if (validateOnly_)
          return Success();
 
       try
       {
-         std::string readonly = options.readonly ? " readonly=true" : "";
-         boost::shared_ptr<IConnection> pConnection(new Connection(soci::sqlite3, "shared_cache=true" + readonly + " dbname=\"" + options.file + "\""));
+         boost::shared_ptr<IConnection> pConnection(new Connection(soci::sqlite3, connectionStr));
 
          // foreign keys must explicitly be enabled for sqlite
          Error error = pConnection->executeStr("PRAGMA foreign_keys = ON;");
@@ -162,9 +168,10 @@ public:
          std::string connectionStr;
 
          // prefer connection-uri
+         std::string password;
          if (!options.connectionUri.empty())
          {
-            Error error = parseConnectionUri(options.connectionUri, !options.password.empty(), &connectionStr);
+            Error error = parseConnectionUri(options.connectionUri, password, &connectionStr);
             if (error)
                return error;
          }
@@ -180,9 +187,19 @@ public:
                              safe_convert::numberToString(options.connectionTimeoutSeconds, "0"));
          }
 
-         Error error = addPassword(options, &connectionStr);
+         Error error = getPassword(options, password);
          if (error)
             return error;
+
+         // Make the password part of the connection string
+         // unless requested to be returned as-is separately
+         if (!pPassword_)
+         {
+            password = pgEncode(password, false);
+            connectionStr += " password='" + password + "'";
+         }
+         else
+            *pPassword_ = password;
 
          if (pConnectionStr_)
             *pConnectionStr_ = connectionStr;
@@ -201,7 +218,7 @@ public:
    }
 
    Error parseConnectionUri(const std::string& uri,
-                            bool skipPassword,
+                            std::string& password,
                             std::string* pConnectionStr) const
    {
       boost::regex re("(postgres|postgresql)://([^/#?]+)(.*)", boost::regex::icase);
@@ -221,7 +238,7 @@ public:
       }
 
       // extract user and password information
-      std::string user, password;
+      std::string user;
       std::vector<std::string> hostParts;
       boost::split(hostParts, host, boost::is_any_of("@"));
 
@@ -330,8 +347,6 @@ public:
          *pConnectionStr += " port='" + pgEncode(port) + "'";
       if (!user.empty())
          *pConnectionStr += " user='" + pgEncode(user) + "'";
-      if (!password.empty() && !skipPassword)
-         *pConnectionStr += " password='" + pgEncode(password) + "'";
       if (!database.empty())
          *pConnectionStr += " dbname='" + pgEncode(database) + "'";
 
@@ -356,18 +371,16 @@ public:
       return Success();
    }
 
-   Error decryptPassword(const std::string& secureKey, std::string& password) const
+  Error decryptPassword(const std::string& secureKey, std::string& password) const
    {
       return Success();
    }
 
-   Error addPassword(const PostgresqlConnectionOptions& options, std::string* pConnectionStr) const
+   Error getPassword(const PostgresqlConnectionOptions& options, std::string& password) const
    {
-      // if not using password authentication (or perhaps it is hardcoded into the connection uri), bail
-      if (options.password.empty())
-         return Success();
-
-      std::string password = options.password;
+      // override password from the input with the one from options if any
+      if (!options.password.empty())
+         password = options.password;
 
       Error error = decryptPassword(options.secureKey, password);
       if (error)
@@ -380,10 +393,6 @@ public:
             LOG_WARNING_MESSAGE("A plain text value is potentially being used for the PostgreSQL password. The RStudio Server documentation for PostgreSQL shows how to encrypt this value.");
          }
       }
-
-      password = pgEncode(password, false);
-
-      *pConnectionStr += " password='" + password + "'";
       return Success();
    }
 
@@ -404,6 +413,7 @@ private:
    bool validateOnly_;
    boost::shared_ptr<IConnection>* pPtrConnection_;
    std::string* pConnectionStr_;
+   std::string* pPassword_;
 };
 
 Query::Query(const std::string& sqlStatement,
@@ -563,6 +573,45 @@ std::string PooledConnection::driverName() const
    return connection_->driverName();
 }
 
+ConnectionPool::ConnectionPool(const ConnectionOptions& options) :
+   connectionOptions_(options)
+{
+}
+
+void ConnectionPool::testAndReconnect(boost::shared_ptr<Connection>& connection)
+{
+   // do not test Sqlite connections - there is no backend system to connect to in this case
+   // so any errors on the file handle itself we do not want to gracefully recover from, as they would
+   // indicate a very serious programming error
+   if (connection->driver() == Driver::Sqlite)
+      return;
+
+   // it is possible for connections to go stale (such as if the upstream connection is closed)
+   // which will prevent it from being usable - we test for this by running a very efficient query
+   // and checking to make sure that no error has occurred
+   Error error = connection->executeStr("SELECT 1");
+   if (!error)
+      return;
+
+   error.addProperty("description", "Connection check query failed when getting connection from the pool");
+   LOG_ERROR(error);
+
+   // a connection error has occurred - attempt to reopen the connection by throwing this one away
+   // and replacing it with a new one
+   boost::shared_ptr<IConnection> newConnection;
+   error = connect(connectionOptions_, &newConnection);
+   if (error)
+   {
+      // could not re-establish connection - simply log an error
+      // future attempts to use this connection will be responsible for further attempts
+      error.addProperty("description", "Could not re-establish database connection");
+      LOG_ERROR(error);
+      return;
+   }
+
+   connection = boost::static_pointer_cast<Connection>(newConnection);
+}
+
 boost::shared_ptr<IConnection> ConnectionPool::getConnection()
 {
    // block until a connection is available, but log an error
@@ -574,6 +623,9 @@ boost::shared_ptr<IConnection> ConnectionPool::getConnection()
    {
       if (connections_.deque(&connection, boost::posix_time::seconds(30)))
       {
+         // test connection to ensure it is still alive
+         testAndReconnect(connection);
+
          // create wrapper PooledConnection around retrieved Connection
          return boost::shared_ptr<IConnection>(new PooledConnection(shared_from_this(), connection));
       }
@@ -591,6 +643,9 @@ bool ConnectionPool::getConnection(const boost::posix_time::time_duration& maxWa
    boost::shared_ptr<Connection> connection;
    if (!connections_.deque(&connection, maxWait))
       return false;
+
+   // test connection to ensure it is still alive
+   testAndReconnect(connection);
 
    pConnection->reset(new PooledConnection(shared_from_this(), connection));
    return true;
@@ -866,9 +921,10 @@ Error SchemaUpdater::updateToVersion(const std::string& maxVersion)
 }
 
 Error validateOptions(const ConnectionOptions& options,
-                      std::string* pConnectionStr)
+                      std::string* pConnectionStr,
+                      std::string* pPassword /*= nullptr*/)
 {
-   return boost::apply_visitor(ConnectVisitor(true, nullptr, pConnectionStr), options);
+   return boost::apply_visitor(ConnectVisitor(true, nullptr, pConnectionStr, pPassword), options);
 }
 
 Error connect(const ConnectionOptions& options,
@@ -881,7 +937,7 @@ Error createConnectionPool(size_t poolSize,
                            const ConnectionOptions& options,
                            boost::shared_ptr<ConnectionPool>* pPool)
 {
-   pPool->reset(new ConnectionPool());
+   pPool->reset(new ConnectionPool(options));
 
    for (size_t i = 0; i < poolSize; ++i)
    {

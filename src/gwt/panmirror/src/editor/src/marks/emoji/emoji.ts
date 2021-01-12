@@ -1,7 +1,7 @@
 /*
  * emoji.ts
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -69,7 +69,7 @@ const extension = (context: ExtensionContext): Extension | null => {
             return [
               'span',
               {
-                class: 'emoji',
+                class: 'emoji pm-emoji-font',
                 title: ':' + mark.attrs.emojihint + ':',
                 'data-emojihint': mark.attrs.emojihint,
                 'data-emojiprompt': mark.attrs.prompt,

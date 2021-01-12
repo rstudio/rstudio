@@ -1,7 +1,7 @@
 /*
  * styles.css
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,8 +29,10 @@
 }
 
 .pm-content > p:first-child,
-.pm-content > .pm-div:first-child {
-  margin-top: 10px;
+.pm-content > p:nth-child(2), 
+.pm-content > .pm-div:nth-child(1),
+.pm-content > .pm-div:nth-child(2) {
+  margin-top: 1em;
 }
 
 h3.pm-heading {
@@ -88,8 +90,12 @@ h4.pm-heading {
   margin-block-end: 1em;
 }
 
-.pm-div *:last-child {
-  margin-bottom: 0;
+.pm-div > *:last-child {
+  margin-bottom: 0.2em;
+}
+
+.pm-div > ul:last-child {
+  margin-bottom: 0.4em;
 }
 
 .pm-div .pm-div {
@@ -132,6 +138,7 @@ h4.pm-heading {
   border: 1px solid;
   margin-block-end: 1.5em;
   margin-top: 10px;
+  clear: both;
 }
 
 .pm-definition-list {

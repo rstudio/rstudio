@@ -1,7 +1,7 @@
 /*
  * clear_formatting.ts
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,7 +21,7 @@ import { ProsemirrorCommand, EditorCommandId } from '../api/command';
 import { liftTarget } from 'prosemirror-transform';
 
 // marks included in clear formatting
-const kFormattingMarks = ['code', 'em', 'smallcaps', 'span', 'strikeout', 'strong', 'superscript', 'subscript'];
+const kFormattingMarks = ['code', 'em', 'underline', 'smallcaps', 'span', 'strikeout', 'strong', 'superscript', 'subscript'];
 
 // for nodes, all nodes with isTextblock === true will be converted to paragraph, and all
 // nodes in this list will be lifted

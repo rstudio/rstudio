@@ -1,7 +1,7 @@
 /*
  * PanmirrorEditorWidget.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -240,8 +240,13 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       events_ = events;
    }
    
-   private void attachEditor(PanmirrorEditor editor) {
-      
+   public boolean isEditorAttached()
+   {
+      return super.isAttached() && editor_ != null;
+   }
+   
+   private void attachEditor(PanmirrorEditor editor)
+   {
       editor_ = editor;
        
       // initialize css
@@ -333,7 +338,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
                   toolbar_.sync(true);
                   syncEditorTheme(event.getTheme());
                }
-            }.schedule(150);
+            }.schedule(500);
       }));
       
       registrations_.add(events_.addHandler(ChangeFontSizeEvent.TYPE, (event) -> {
@@ -352,30 +357,21 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       );   
    }
    
-   
-   @Override
-   public void onDetach()
+   public void destroy()
    {
-      try 
+      // detach registrations (outline events)
+      registrations_.removeHandler();
+      
+      if (editor_ != null) 
       {
-         // detach registrations (outline events)
-         registrations_.removeHandler();
-         
-         if (editor_ != null) 
-         {
-            // unsubscribe from editor events
-            for (JsVoidFunction unsubscribe : editorEventUnsubscribe_) 
-               unsubscribe.call();
-            editorEventUnsubscribe_.clear();
-              
-            // destroy editor
-            editor_.destroy();
-            editor_ = null;
-         }
-      }
-      finally
-      {
-         super.onDetach();
+         // unsubscribe from editor events
+         for (JsVoidFunction unsubscribe : editorEventUnsubscribe_) 
+            unsubscribe.call();
+         editorEventUnsubscribe_.clear();
+           
+         // destroy editor
+         editor_.destroy();
+         editor_ = null;
       }
    }
    
@@ -388,8 +384,6 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    {
       return editor_.getTitle();
    }
-   
-  
    
    public void setMarkdown(String code, 
                            PanmirrorWriterOptions options, 
@@ -557,6 +551,11 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    public PanmirrorEditingLocation getEditingLocation()
    {
       return editor_.getEditingLocation();
+   }
+
+   public PanmirrorEditingOutlineLocation getEditingOutlineLocation()
+   {
+      return editor_.getEditingOutlineLocation();
    }
    
    public PanmirrorOutlineItem[] getOutline()

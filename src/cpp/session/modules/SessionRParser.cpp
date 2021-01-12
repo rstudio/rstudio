@@ -1,7 +1,7 @@
 /*
  * SessionRParser.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -959,7 +959,7 @@ void extractFormal(
    std::wstring::const_iterator defaultValueStart;
    
    if (cursor.isType(RToken::ID))
-      formalName = cursor.contentAsUtf8();
+      formalName = getSymbolName(cursor);
    
    if (!cursor.moveToNextSignificantToken())
       return;

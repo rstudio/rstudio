@@ -1,7 +1,7 @@
 /*
  * DatabaseTests.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -521,6 +521,11 @@ TEST_CASE("Database", "[.database]")
       options.password = "12345";
       CHECK_FALSE(validateOptions(options, &connectionStr));
       CHECK(connectionStr == "host='[fd9a:3b89:ca91:43a2:0:0:0:0]' port='2345' user='joe' dbname='rstudio-test' password='12345'");
+
+      std::string password;
+      CHECK_FALSE(validateOptions(options, &connectionStr, &password));
+      CHECK(connectionStr == "host='[fd9a:3b89:ca91:43a2:0:0:0:0]' port='2345' user='joe' dbname='rstudio-test'");
+      CHECK(password == "12345");
    }
 }
 

@@ -1,7 +1,7 @@
 /*
  * SessionOptions.gen.hpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -110,7 +110,10 @@ protected:
       "Runs the session in standalone mode, indicating we should use HTTP communication. This is generally only used with Launcher sessions.")
       (kVerifySignaturesSessionOption,
       value<bool>(&verifySignatures_)->default_value(false),
-      "Indicates whether or not to verify signatures on incoming requests. This is generally only used with Launcher sessions.");
+      "Indicates whether or not to verify signatures on incoming requests. This is generally only used with Launcher sessions.")
+      (kWwwResusePorts,
+      value<bool>(&wwwReusePorts_)->default_value(false),
+      "Whether or not to reuse last used bound ports when restarting a Launcher session.");
 
    pSession->add_options()
       (kTimeoutSessionOption,
@@ -274,7 +277,7 @@ protected:
       value<bool>(&autoReloadSource_)->default_value(false),
       "Indicates whether or not to automatically reload R source if it changes during the session.")
       ("r-compatible-graphics-engine-version",
-      value<int>(&rCompatibleGraphicsEngineVersion_)->default_value(13),
+      value<int>(&rCompatibleGraphicsEngineVersion_)->default_value(14),
       "Specifies the maximum graphics engine version that this version of RStudio is compatible with.")
       ("r-resources-path",
       value<std::string>(&rResourcesPath_)->default_value("resources"),
@@ -393,6 +396,7 @@ public:
    std::string wwwAddress() const { return wwwAddress_; }
    bool standalone() const { return standalone_; }
    bool verifySignatures() const { return verifySignatures_; }
+   bool wwwReusePorts() const { return wwwReusePorts_; }
    int timeoutMinutes() const { return timeoutMinutes_; }
    bool timeoutSuspend() const { return timeoutSuspend_; }
    int disconnectedTimeoutMinutes() const { return disconnectedTimeoutMinutes_; }
@@ -487,6 +491,7 @@ protected:
    std::string wwwAddress_;
    bool standalone_;
    bool verifySignatures_;
+   bool wwwReusePorts_;
    int timeoutMinutes_;
    bool timeoutSuspend_;
    int disconnectedTimeoutMinutes_;

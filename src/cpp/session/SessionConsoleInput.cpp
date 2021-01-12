@@ -1,7 +1,7 @@
 /*
  * SessionConsoleInput.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -62,8 +62,10 @@ void setExecuting(bool executing)
 void enqueueConsoleInput(const rstudio::r::session::RConsoleInput& input)
 {
    json::Object data;
-   data[kConsoleText] = input.text + "\n";
-   data[kConsoleId]   = input.console;
+   data[kConsoleText]  = input.text + "\n";
+   data[kConsoleId]    = input.console;
+   data[kConsoleFlags] = input.flags;
+   
    ClientEvent inputEvent(client_events::kConsoleWriteInput, data);
    clientEventQueue().add(inputEvent);
 }
@@ -107,43 +109,23 @@ bool canSuspend(const std::string& prompt)
 // extract console input -- can be either null (user hit escape) or a string
 Error extractConsoleInput(const json::JsonRpcRequest& request)
 {
-   if (request.params.getSize() == 2)
-   {
-      // ensure the caller specified the requesting console
-      std::string console;
-      if (request.params[1].getType() == json::Type::STRING)
-      {
-         console = request.params[1].getString();
-      }
-      else
-      {
-         return Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
-      }
-
-      // extract the requesting console
-      if (request.params[0].isNull())
-      {
-         addToConsoleInputBuffer(rstudio::r::session::RConsoleInput(console));
-         return Success();
-      }
-      else if (request.params[0].getType() == json::Type::STRING)
-      {
-         // get console input to return to R
-         std::string text = request.params[0].getString();
-         addToConsoleInputBuffer(rstudio::r::session::RConsoleInput(text, console));
-
-         // return success
-         return Success();
-      }
-      else
-      {
-         return Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
-      }
-   }
-   else
-   {
-      return Error(json::errc::ParamMissing, ERROR_LOCATION);
-   }
+   std::string text;
+   std::string console;
+   int flags = 0;
+   
+   Error error = core::json::readParams(
+            request.params,
+            &text,
+            &console,
+            &flags);
+   
+   if (error)
+      return error;
+   
+   using namespace r::session;
+   addToConsoleInputBuffer(RConsoleInput(text, console, flags));
+   
+   return Success();
 }
 
 bool executing()
@@ -175,7 +157,7 @@ void fixupPendingConsoleInput()
    auto input = s_consoleInputBuffer.front();
    
    // nothing to do if this is a cancel
-   if (input.cancel)
+   if (input.isCancel() || input.isEof())
       return;
    
    // if this has no newlines, then nothing to do
@@ -279,7 +261,9 @@ void fixupPendingConsoleInput()
       }
    
       // add to buffer
-      s_consoleInputBuffer.push(rstudio::r::session::RConsoleInput(line, input.console));
+      using namespace r::session;
+      s_consoleInputBuffer.push(
+               RConsoleInput(line, input.console, input.flags));
       
    }
 }
@@ -342,7 +326,7 @@ bool rConsoleRead(const std::string& prompt,
       if (error)
       {
          LOG_ERROR(error);
-         *pConsoleInput = rstudio::r::session::RConsoleInput("", "");
+         *pConsoleInput = rstudio::r::session::RConsoleInput();
       }
       else
       {
@@ -351,7 +335,7 @@ bool rConsoleRead(const std::string& prompt,
    }
 
    // fire onBeforeExecute and onConsoleInput events if this isn't a cancel
-   if (!pConsoleInput->cancel)
+   if (!pConsoleInput->isCancel())
    {
       module_context::events().onBeforeExecute();
       module_context::events().onConsoleInput(pConsoleInput->text);
@@ -363,8 +347,9 @@ bool rConsoleRead(const std::string& prompt,
    // ensure that output resulting from this input goes to the correct console
    if (clientEventQueue().setActiveConsole(pConsoleInput->console))
    {
-      module_context::events().onActiveConsoleChanged(pConsoleInput->console,
-            pConsoleInput->text);
+      module_context::events().onActiveConsoleChanged(
+               pConsoleInput->console,
+               pConsoleInput->text);
    }
 
    ClientEvent promptEvent(client_events::kConsoleWritePrompt, prompt);

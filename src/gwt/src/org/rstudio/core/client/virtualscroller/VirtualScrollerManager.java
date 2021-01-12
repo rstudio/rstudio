@@ -1,7 +1,7 @@
 /*
  * VirtualScrollerManager.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,7 @@ import com.google.gwt.core.client.JavaScriptException;
 
 import java.util.Date;
 import java.util.HashMap;
+
 import com.google.gwt.dom.client.Element;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
@@ -99,6 +100,18 @@ public class VirtualScrollerManager
          return;
 
       scrollers_.get(parent.getAttribute(scrollerAttribute_)).clear();
+   }
+
+   public static void ensureStartingOnNewLine(Element parent)
+   {
+      if (!initialized_ || parent == null ) return;
+
+      parent = getVirtualScrollerAncestor(parent);
+
+      if (scrollers_.get(parent.getAttribute(scrollerAttribute_)) == null)
+         return;
+
+      scrollerForElement(parent).ensureStartingOnNewLine();
    }
 
    public static Element getCurBucket(Element parent)

@@ -5,7 +5,7 @@ ENV OPERATING_SYSTEM=centos_8
 RUN set -x \
       && yum install epel-release -y \
       && yum install dnf-plugins-core -y \ 
-      && yum config-manager --set-enabled PowerTools \
+      && yum config-manager --set-enabled powertools \
       && yum update -y
 
 RUN yum install -y \

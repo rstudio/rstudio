@@ -654,54 +654,99 @@ FilePath defaultZoteroDataDir()
    return homeDir.completeChildPath("Zotero");
 }
 
+FilePath defaultProfileDir()
+{
+   // read the lines
+   FilePath profilesDir = zoteroProfilesDir();
+   FilePath profileIni = profilesDir.getParent().completeChildPath("profiles.ini");
+   if (profileIni.exists())
+   {
+
+       std::vector<std::string> lines;
+       Error error = core::readStringVectorFromFile(profileIni, &lines);
+       if (error)
+       {
+          LOG_ERROR(error);
+          return FilePath();
+       }
+
+       // find the default profile
+       boost::regex regex("^\\[.*?\\]$");
+       boost::regex valueRegex("^(.*)=(.*)$");
+       std::string sectionPath;
+       bool sectionPathIsRelative = false;
+       bool sectionIsDefault = false;
+       for (auto line : lines)
+       {
+          boost::smatch match;
+          if (boost::regex_search(line, match, regex))
+          {
+             sectionPath = "";
+             sectionPathIsRelative = false;
+             sectionIsDefault = false;
+          }
+          else if (boost::regex_search(line, match, valueRegex))
+          {
+             std::string key = string_utils::toLower(boost::algorithm::trim_copy(std::string(match[1])));
+             std::string value = boost::algorithm::trim_copy(std::string(match[2]));
+             if (key == "path")
+                sectionPath = value;
+             else if (key == "isrelative")
+                sectionPathIsRelative = value == "1";
+             else if (key == "default")
+                sectionIsDefault = value == "1";
+          }
+
+          if (sectionIsDefault && !sectionPath.empty())
+          {
+             if (sectionPathIsRelative)
+                return profilesDir.getParent().completeChildPath(sectionPath);
+             else
+                return FilePath(sectionPath);
+          }
+       }
+
+    }
+    return FilePath();
+
+}
+
 DetectedLocalZoteroConfig detectLocalZoteroConfig()
 {
    // we'll fall back to the default if we can't find another dir in the profile
    DetectedLocalZoteroConfig config;
    config.dataDirectory = defaultZoteroDataDir();
 
-   // find the zotero profiles dir
-   FilePath profilesDir = zoteroProfilesDir();
-   if (profilesDir.exists())
+   // find the prefs for the default profile
+   FilePath profileDir = defaultProfileDir();
+   FilePath prefsFile = profileDir.completeChildPath("prefs.js");
+   if (prefsFile.exists())
    {
-      // there will be one path in the directory
-      std::vector<FilePath> children;
-      Error error = profilesDir.getChildren(children);
+      // read the prefs.js file
+      std::string prefs;
+      Error error = core::readStringFromFile(prefsFile, &prefs);
       if (error)
          LOG_ERROR(error);
-      if (children.size() > 0)
+
+      // look for the zotero.dataDir pref
+      boost::smatch match;
+      boost::regex regex("user_pref\\(\"extensions.zotero.dataDir\",\\s*\"([^\"]+)\"\\);");
+      if (boost::regex_search(prefs, match, regex))
       {
-         // there will be a single directory inside the profiles dir
-         FilePath profileDir = children[0];
-         FilePath prefsFile = profileDir.completeChildPath("prefs.js");
-         if (prefsFile.exists())
-         {
-            // read the prefs.js file
-            std::string prefs;
-            error = core::readStringFromFile(prefsFile, &prefs);
-            if (error)
-               LOG_ERROR(error);
+         // prefs file escapes backslahes (it's javascript) so convert them
+         std::string dataDirMatch = match[1];
+         dataDirMatch = boost::algorithm::replace_all_copy(dataDirMatch, "\\\\", "/");
 
-            // look for the zotero.dataDir pref
-            boost::smatch match;
-            boost::regex regex("user_pref\\(\"extensions.zotero.dataDir\",\\s*\"([^\"]+)\"\\);");
-            if (boost::regex_search(prefs, match, regex))
-            {
-               // prefs file escapes backslahes (it's javascript) so convert them
-               std::string dataDirMatch = match[1];
-               dataDirMatch = boost::algorithm::replace_all_copy(dataDirMatch, "\\\\", "/");
-
-               // set dataDir only if the path exists
-               FilePath profileDataDir(dataDirMatch);
-               if (profileDataDir.exists())
-                  config.dataDirectory = profileDataDir;
-            }
-
-            // look for better bibtex in the config
-            config.betterBibtex = betterBibtexInConfig(prefs);
-         }
+         // set dataDir only if the path exists
+         FilePath profileDataDir(dataDirMatch);
+         if (profileDataDir.exists())
+            config.dataDirectory = profileDataDir;
       }
+
+      // look for better bibtex in the config
+      config.betterBibtex = betterBibtexInConfig(prefs);
    }
+
 
    // no data directory if it doesn't exist
    if (!config.dataDirectory.exists())

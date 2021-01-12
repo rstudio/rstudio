@@ -1,7 +1,7 @@
 /*
  * RCompletionManager.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -447,13 +447,13 @@ public class RCompletionManager implements CompletionManager
          {
             return snippets_.attemptSnippetInsertion(true);
          }
-         else if (keycode == 112 // F1
+         else if (keycode == KeyCodes.KEY_F1
                   && modifier == KeyboardShortcut.NONE)
          {
             goToHelp();
             return true;
          }
-         else if (keycode == 113 // F2
+         else if (keycode == KeyCodes.KEY_F2
                   && modifier == KeyboardShortcut.NONE)
          {
             goToDefinition();
@@ -532,12 +532,12 @@ public class RCompletionManager implements CompletionManager
                else if (keycode == KeyCodes.KEY_END)
                   return popup_.selectLast();
                
-               if (keycode == 112) // F1
+               if (keycode == KeyCodes.KEY_F1)
                {
                   context_.showHelpTopic();
                   return true;
                }
-               else if (keycode == 113) // F2
+               else if (keycode == KeyCodes.KEY_F2)
                {
                   goToDefinition();
                   return true;
@@ -1882,15 +1882,42 @@ public class RCompletionManager implements CompletionManager
          
       }
       
-      // For input of the form 'something$foo' or 'something@bar', quote the
-      // element following '@' if it's a non-syntactic R symbol; otherwise
-      // return as is
-      private String quoteIfNotSyntacticNameCompletion(String string)
+      // Quote non-syntactic completion values where appropriate.
+      //
+      // For example, this is necessary when completing a list member;
+      // e.g. in 'foo$bar' or 'foo@bar'.
+      //
+      private String quoteIfNotSyntacticNameCompletion(QualifiedName name)
       {
-         if (RegexUtil.isSyntacticRIdentifier(string))
-            return string;
-         else
-            return "`" + string + "`";
+         String value = name.name;
+         
+         // we don't quote for certain completion types
+         int type = name.type;
+         if (type == RCompletionType.ROXYGEN ||
+             type == RCompletionType.PACKAGE ||
+             type == RCompletionType.ARGUMENT ||
+             type == RCompletionType.OPTION ||
+             type == RCompletionType.CONTEXT)
+         {
+            return value;
+         }
+         
+         // we don't quote for completions from certain custom sources
+         String source = name.source;
+         boolean isSpecialSource =
+               StringUtil.equals(source,  "<file>") ||
+               StringUtil.equals(source,  "<directory>") ||
+               StringUtil.equals(source,  "<chunk-option>");
+         
+         if (isSpecialSource)
+            return value;
+         
+         // if this is already a syntactic identifier, no quote is required
+         if (RegexUtil.isSyntacticRIdentifier(value))
+            return value;
+         
+         // otherwise, quote
+         return "`" + value.replaceAll("`", "\\`") + "`";
       }
       
       private void applyValueRmdOption(final String value)
@@ -1940,7 +1967,7 @@ public class RCompletionManager implements CompletionManager
          if (completionToken.startsWith("'") || completionToken.startsWith("\""))
             completionToken = completionToken.substring(1);
          
-         if (qualifiedName.source == "`chunk-option`")
+         if (qualifiedName.source == "<chunk-option>")
          {
             applyValueRmdOption(qualifiedName.name);
             return;
@@ -1994,18 +2021,10 @@ public class RCompletionManager implements CompletionManager
          if (qualifiedName.type == RCompletionType.DIRECTORY)
             value = value + "/";
          
-         if (!RCompletionType.isFileType(qualifiedName.type))
+         if (!RCompletionType.isFileType(qualifiedName.type) &&
+             !shouldQuote)
          {
-            if (value == ":=")
-               value = quoteIfNotSyntacticNameCompletion(value);
-            else if (!value.matches(".*[=:]\\s*$") && 
-                  !value.matches("^\\s*([`'\"]).*\\1\\s*$") &&
-                  source != "<file>" &&
-                  source != "<directory>" &&
-                  source != "`chunk-option`" &&
-                  !value.startsWith("@") &&
-                  !shouldQuote)
-               value = quoteIfNotSyntacticNameCompletion(value);
+            value = quoteIfNotSyntacticNameCompletion(qualifiedName);
          }
 
          /* In some cases, applyValue can be called more than once

@@ -1,7 +1,7 @@
 /*
  * CppCompletionManager.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -169,13 +169,13 @@ public class CppCompletionManager implements CompletionManager
          {
             return snippets_.attemptSnippetInsertion(true);
          }
-         else if (event.getKeyCode() == 112 // F1
+         else if (event.getKeyCode() == KeyCodes.KEY_F1
                   && modifier == KeyboardShortcut.NONE)
          {
             goToHelp();
             return true;
          }
-         else if (event.getKeyCode() == 113 // F2
+         else if (event.getKeyCode() == KeyCodes.KEY_F2
                   && modifier == KeyboardShortcut.NONE)
          {
             goToDefinition();

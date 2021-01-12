@@ -1,7 +1,7 @@
 /*
  * cite-commands.ts
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,6 +28,7 @@ import { BibliographyManager } from '../../api/bibliography/bibliography';
 
 import { ensureSourcesInBibliography } from './cite';
 import { showInsertCitationDialog, InsertCitationDialogResult } from '../../behaviors/insert_citation/insert_citation';
+import { markIsActive, getMarkRange } from '../../api/mark';
 
 export class InsertCitationCommand extends ProsemirrorCommand {
   private initialSelectionKey: string | undefined;
@@ -82,18 +83,30 @@ export class InsertCitationCommand extends ProsemirrorCommand {
                   // The starting location of this transaction
                   const start = tr.selection.from;
 
-                  // Insert the cite mark and text
+                  // See if we are already inside an active cite mark
+                  const alreadyInCite = markIsActive(tr, schema.marks.cite);
+                  const includeWrapper = !result.intextCitationStyle || result.bibliographySources.length > 1;
 
                   // Insert the wrapping [] if the user wants that style citation
                   // Note that if the use is inserting more than one citation, we ignore this and just
                   // always perform a 'note' style citation insert
-                  if (!result.intextCitationStyle || result.bibliographySources.length > 1) {
-                    const wrapperText = schema.text(`[]`, []);
+                  // If we're already inside a cite including [], don't bother inserting wrapper
+                  if (!alreadyInCite && includeWrapper) {
+                    const wrapperText = schema.text('[]');
                     tr.insert(tr.selection.from, wrapperText);
 
                     // move the selection into the wrapper
                     setTextSelection(tr.selection.from - 1)(tr);
-                  } 
+                  }
+
+                  // If the previous character is a part of a cite_id, advance to the end of the mark,
+                  // insert a separator, and then proceed
+                  const preCiteIdRange = getMarkRange(tr.doc.resolve(start - 1), schema.marks.cite_id);
+                  if (preCiteIdRange) {
+                    setTextSelection(preCiteIdRange.to)(tr);
+                    const separator = schema.text('; ');
+                    tr.insert(tr.selection.from, separator);
+                  }
 
                   // insert the CiteId marks and text
                   bibliographySources.forEach((citation, i) => {
@@ -105,13 +118,20 @@ export class InsertCitationCommand extends ProsemirrorCommand {
                     }
                   });
 
-                  // Enclose wrapper in the cite mark
-                  const endOfWrapper = tr.selection.from + 1;
-                  const citeMark = schema.marks.cite.create();
-                  tr.addMark(start, endOfWrapper, citeMark);
+                  // If the next character is a part of a cite_id, insert a separator (that will appear after the current citeId)
+                  const postCiteIdRange = getMarkRange(tr.doc.resolve(tr.selection.from + 1), schema.marks.cite_id);
+                  if (postCiteIdRange) {
+                    const separator = schema.text('; ');
+                    tr.insert(tr.selection.from, separator);
+                  }
 
-                  // Move selection to the end of the inserted content
-                  setTextSelection(endOfWrapper)(tr);
+                  // Enclose wrapper in the cite mark (if not already in a cite)
+                  if (!alreadyInCite) {
+                    const endOfWrapper = includeWrapper ? tr.selection.from + 1 : tr.selection.from;
+                    const citeMark = schema.marks.cite.create();
+                    tr.addMark(start, endOfWrapper, citeMark);
+                    setTextSelection(endOfWrapper)(tr);
+                  }
                 }
 
                 // commit the transaction

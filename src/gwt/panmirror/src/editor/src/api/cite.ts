@@ -1,7 +1,7 @@
 /*
  * cite.ts
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -194,7 +194,7 @@ function isValidDate(date: CSLDate): boolean {
 const kEtAl = 'et al.';
 export function formatAuthors(authors?: CSLName[], maxLength?: number): string {
   // No author(s) specified
-  if (!authors) {
+  if (!authors || authors.length === 0) {
     return '';
   }
 

@@ -1,7 +1,7 @@
 /*
  * Request.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -106,12 +106,12 @@ std::string Request::proxiedUri() const
 
    std::string root = rootPath();
 
-   // multi-session includes additional path elements in the URL
-   // this should show up only on internal requests
-   std::string sessionContextHeader = headerValue("X-RStudio-SessionContext");
-   if (sessionContextHeader != "")
+   // some internal requests may contain a virtual path any attempt to
+   // compose the same address as seen in browser must be include this path
+   std::string vPath = virtualPath();
+   if (!vPath.empty())
    {
-      root += sessionContextHeader;
+      root += vPath;
    }
 
    // might be using new Forwarded header
@@ -413,4 +413,3 @@ std::ostream& operator << (std::ostream& stream, const Request& r)
 } // namespacce http
 } // namespace core
 } // namespace rstudio
-

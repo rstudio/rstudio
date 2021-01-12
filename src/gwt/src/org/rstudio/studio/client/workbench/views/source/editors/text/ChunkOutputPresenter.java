@@ -1,7 +1,7 @@
 /*
  * ChunkOutputPresenter.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import com.google.gwt.dom.client.Element;
 import org.rstudio.core.client.js.JsArrayEx;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.rmarkdown.model.NotebookFrameMetadata;
@@ -52,7 +53,7 @@ public interface ChunkOutputPresenter extends IsWidget, EditorThemeListener
    void updatePlot(String plotUrl, String pendingStyle);
 
    // Handles html that can be appended to end of the chunk.
-   void showCallbackHtml(String htmlOutput);
+   void showCallbackHtml(String htmlOutput, Element parentElement);
 
    // clear output or indicate that interactive output (or playback) is complete
    void clearOutput();

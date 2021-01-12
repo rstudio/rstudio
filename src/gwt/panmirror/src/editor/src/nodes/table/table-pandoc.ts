@@ -1,7 +1,7 @@
 /*
  * table-pandoc.ts
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,25 +20,62 @@ import { ProsemirrorWriter, PandocToken, PandocTokenType, PandocOutput } from '.
 import { CssAlignment } from './table-commands';
 import { tableColumnAlignments, tableColumnWidths } from './table-columns';
 
-const TABLE_CAPTION = 0;
-const TABLE_COL_ALIGNMENTS = 1;
-const TABLE_COL_WIDTHS = 2;
-const TABLE_HEADER = 3;
-const TABLE_ROWS = 4;
+// attributes
+const kTableAttr = 0;
+
+// caption
+const kTableCaption = 1;
+const kTableCaptionShort = 0; // [Inline]
+const kTableCaptionFull = 1;  // [Block]
+
+// columdefs
+const kTableColSpec = 2;
+const kTableColSpecAlign = 0;
+const kTableColSpecWidth = 1;
+
+// table head
+const kTableHead = 3;
+const kTableHeadAttr = 0;
+const kTableHeadRows = 1; // [Row]
+
+// table body
+const kTableBody = 4;
+const kTableBodyAttr = 0;
+const kTableBodyRowHeadNumColumns = 1;
+const kTableBodyRowHead = 2;
+const kTableBodyRows = 3; // [Row]
+
+// table foot
+const kTableFoot = 5;
+const kTableFootAttr = 0;
+const kTableFootRows = 1; // [Row]
+
+// table row
+const kTableRowAttr = 0;
+const kTableRowCells = 1; // [Cell]
+
+// table cell
+const kTableCellAttr = 0;
+const kTableCellAlignments = 1;
+const kTableCellRowSpan = 2;
+const kTableCellColSpan = 3;
+const KTableCellContents = 4; // [Block]
+
 
 export function readPandocTable(schema: Schema) {
   return (writer: ProsemirrorWriter, tok: PandocToken) => {
     // get alignments and columns widths
     const alignments = columnCssAlignments(tok);
-    const colpercents = tok.c[TABLE_COL_WIDTHS] as number[];
+    const colpercents = columnPercents(tok);
 
     // helper function to parse a table row
-    const parseRow = (row: PandocToken[][], cellType: NodeType) => {
-      if (row.length) {
+    const parseRow = (row: any[], cellType: NodeType) => {
+      const cells: any[] = row[kTableRowCells];
+      if (cells.length) {
         writer.openNode(schema.nodes.table_row, {});
-        row.forEach((cell, i) => {
+        cells.forEach((cell: any[], i) => {
           writer.openNode(cellType, { align: alignments[i] });
-          writer.writeTokens(cell);
+          writer.writeTokens(cell[KTableCellContents]);
           writer.closeNode();
         });
         writer.closeNode();
@@ -52,14 +89,15 @@ export function readPandocTable(schema: Schema) {
     writer.openNode(schema.nodes.table, { colpercents });
 
     // parse column headers
-    const headers = tok.c[TABLE_HEADER] as PandocToken[][];
-    if (headers.some(header => header.length > 0)) {
-      parseRow(headers, schema.nodes.table_header);
+    const head = tok.c[kTableHead] as any[];
+    const firstRow = head[kTableHeadRows][0];
+    if (firstRow && firstRow[kTableRowCells].some((cell: any[]) => cell[KTableCellContents].length > 0)) {
+      parseRow(firstRow, schema.nodes.table_header);
     }
 
     // parse table rows
-    const rows = tok.c[TABLE_ROWS] as PandocToken[][][];
-    rows.forEach(row => {
+    const body = tok.c[kTableBody][0] as any[];
+    body[kTableBodyRows].forEach((row: any[]) => {
       parseRow(row, schema.nodes.table_cell);
     });
 
@@ -67,9 +105,10 @@ export function readPandocTable(schema: Schema) {
     writer.closeNode();
 
     // read caption
-    const caption = tok.c[TABLE_CAPTION];
-    writer.openNode(schema.nodes.table_caption, { inactive: caption.length === 0 });
-    writer.writeTokens(tok.c[TABLE_CAPTION]);
+    const caption = tok.c[kTableCaption][kTableCaptionFull];
+    const captionBlock: PandocToken[] = caption.length ? caption[0].c : [];
+    writer.openNode(schema.nodes.table_caption, { inactive: captionBlock.length === 0 });
+    writer.writeTokens(captionBlock);
     writer.closeNode();
 
     // close table container node
@@ -82,6 +121,10 @@ export function writePandocTableContainer(output: PandocOutput, node: Prosemirro
   const table = node.firstChild!;
 
   output.writeToken(PandocTokenType.Table, () => {
+
+    // write empty attributes
+    output.writeAttr();
+
     // write caption
     output.writeNode(caption);
 
@@ -92,48 +135,70 @@ export function writePandocTableContainer(output: PandocOutput, node: Prosemirro
 
 export function writePandocTable(output: PandocOutput, node: ProsemirrorNode) {
   const firstRow = node.firstChild!;
-  const cols = firstRow.childCount;
 
-  // write alignments
+  // get alignments and column widths
   const alignments = tableColumnAlignments(node);
+  const widths = tableColumnWidths(node);
+
+  // write colspcs
+  // TODO: Columns are coming out ColWidthDefault
   output.writeArray(() => {
-    for (let i = 0; i < cols; i++) {
-      output.writeToken(alignments[i]);
-    }
+    alignments.forEach((align, i) => {
+      output.writeArray(() => {
+        output.writeToken(align);
+        if (widths[i] === 0) {
+          output.writeToken(PandocTokenType.ColWidthDefault);
+        } else {
+          output.writeToken(PandocTokenType.ColWidth, widths[i]);
+        }
+      });
+    });
   });
 
-  // write columns widths
-  const widths = tableColumnWidths(node);
-  output.writeArray(() => {
-    for (let i = 0; i < cols; i++) {
-      output.write(widths[i]);
-    }
-  });
 
   // write header row if necessary
-  let headerCut = 0;
-  if (firstRow.firstChild!.type === node.type.schema.nodes.table_header) {
-    output.writeNode(firstRow);
-    headerCut = 1;
-  } else {
-    output.writeArray(() => {
-      output.writeInlines(Fragment.empty);
-    });
-  }
-
-  // write rows
+  const headerCut = firstRow.firstChild!.type === node.type.schema.nodes.table_header ? 1 : 0;
   output.writeArray(() => {
-    for (let i = headerCut; i < node.childCount; i++) {
-      output.writeNode(node.content.child(i));
-    }
+    output.writeAttr();
+    output.writeArray(() => {
+      writePandocTableRow(output, firstRow, headerCut === 0);
+    });
   });
+
+  // write table body
+  output.writeArray(() => {
+    output.writeArray(() => {
+      output.writeAttr();
+      output.write(0);
+      output.writeArray(() => { /* */ });
+      // write rows
+      output.writeArray(() => {
+        for (let i = headerCut; i < node.childCount; i++) {
+          writePandocTableRow(output, node.content.child(i));
+        }
+      });
+    });
+  });
+
+  // write table footer
+  output.writeArray(() => {
+    output.writeAttr();
+    output.writeArray(() => { /* */ });
+  });
+
+
 }
 
 export function writePandocTableCaption(output: PandocOutput, node: ProsemirrorNode) {
   output.writeArray(() => {
-    if (!node.attrs.inactive) {
-      output.writeInlines(node.content);
-    }
+    output.write(null);
+    output.writeArray(() => {
+      if (!node.attrs.inactive && node.childCount > 0) {
+        output.writeToken(PandocTokenType.Plain, () => {
+          output.writeInlines(node.content);
+        });
+      }
+    });
   });
 }
 
@@ -157,8 +222,33 @@ export function writePandocTableHeaderNodes(output: PandocOutput, node: Prosemir
   });
 }
 
+function writePandocTableRow(output: PandocOutput, node: ProsemirrorNode, empty = false) {
+  output.writeArray(() => {
+    output.writeAttr();
+    output.writeArray(() => {
+      node.forEach((cellNode) => {
+        output.writeArray(() => {
+          output.writeAttr();
+          output.writeToken(PandocTokenType.AlignDefault);
+          output.write(1);
+          output.write(1);
+          if (!empty) {
+            output.writeNode(cellNode);
+          } else {
+            output.writeArray(() => {
+              output.writeInlines(Fragment.empty);
+            });
+          }
+        });
+      });
+    });
+  });
+}
+
+
 function columnCssAlignments(tableToken: PandocToken) {
-  return tableToken.c[TABLE_COL_ALIGNMENTS].map((alignment: any) => {
+  return tableToken.c[kTableColSpec].map((spec: any) => {
+    const alignment = spec[kTableColSpecAlign];
     switch (alignment.t) {
       case PandocTokenType.AlignLeft:
         return CssAlignment.Left;
@@ -170,5 +260,12 @@ function columnCssAlignments(tableToken: PandocToken) {
       default:
         return null;
     }
+  });
+}
+
+function columnPercents(tableToken: PandocToken): number[] {
+  return tableToken.c[kTableColSpec].map((spec: any) => {
+    const width = spec[kTableColSpecWidth];
+    return width.t === PandocTokenType.ColWidth ? width.c : 0;
   });
 }

@@ -1,7 +1,7 @@
 /*
  * editor-extensions.ts
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -83,6 +83,7 @@ import markStrikeout from '../marks/strikeout';
 import markSuperscript from '../marks/superscript';
 import markSubscript from '../marks/subscript';
 import markSmallcaps from '../marks/smallcaps';
+import markUnderline from '../marks/underline';
 import markRawInline from '../marks/raw_inline/raw_inline';
 import markRawTex from '../marks/raw_inline/raw_tex';
 import markRawHTML from '../marks/raw_inline/raw_html';
@@ -172,6 +173,7 @@ export function initExtensions(context: ExtensionContext, extensions?: readonly 
     nodeHtmlPreserve,
 
     // marks
+    markUnderline,
     markStrikeout,
     markSuperscript,
     markSubscript,

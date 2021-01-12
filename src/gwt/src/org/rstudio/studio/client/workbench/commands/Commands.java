@@ -1,7 +1,7 @@
 /*
  * Commands.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -52,6 +52,7 @@ public abstract class
    public abstract AppCommand newSqlDoc();
    public abstract AppCommand newRPlumberDoc();
    public abstract AppCommand openSourceDoc();
+   public abstract AppCommand openSourceDocNewColumn();
    public abstract AppCommand reopenSourceDocWithEncoding();
    public abstract AppCommand saveSourceDoc();
    public abstract AppCommand saveSourceDocAs();

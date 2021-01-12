@@ -1,7 +1,7 @@
 /*
  * transaction.ts
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -80,7 +80,7 @@ export class MarkTransaction {
 
 export interface AppendMarkTransactionHandler {
   name: string;
-  filter: (node: ProsemirrorNode) => boolean;
+  filter: (node: ProsemirrorNode, transactions: Transaction[]) => boolean;
   append: (tr: MarkTransaction, node: ProsemirrorNode, pos: number, state: EditorState) => void;
 }
 
@@ -110,7 +110,7 @@ export function appendMarkTransactionsPlugin(handlers: readonly AppendMarkTransa
             node = tr.doc.nodeAt(pos)!;
 
             // call the handler
-            if (handler.filter(node)) {
+            if (handler.filter(node, transactions)) {
               handler.append(markTr, node, pos, newState);
             }
           }

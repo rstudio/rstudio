@@ -1,7 +1,7 @@
 /*
  * ConsoleOutputWriter.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -162,13 +162,8 @@ public class ConsoleOutputWriter
    {
       if (virtualConsole_ != null)
       {
-         Node child = virtualConsole_.getParent().getLastChild();
-         if (child != null &&
-             child.getNodeType() == Node.ELEMENT_NODE &&
-             !Element.as(child).getInnerText().endsWith("\n"))
-         {
-            virtualConsole_.submit("\n");
-         }
+          virtualConsole_.ensureStartingOnNewLine();
+
          // clear the virtual console so we start with a fresh slate
          virtualConsole_ = null;
       }

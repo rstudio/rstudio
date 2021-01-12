@@ -1,7 +1,7 @@
 /*
  * SessionHttpMethods.hpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -190,7 +190,12 @@ Error startHttpConnectionListener()
 
       // set the standalone port so rpostback and others know how to
       // connect back into the session process
-      core::system::setenv(kRSessionStandalonePortNumber, safe_convert::numberToString(endpoint.port()));
+      std::string port = safe_convert::numberToString(endpoint.port());
+      core::system::setenv(kRSessionStandalonePortNumber, port);
+
+      // save the standalone port for possible session relaunches - launcher sessions
+      // need to rebind to the same port
+      persistentState().setReusedStandalonePort(port);
    }
 
    return Success();
@@ -437,13 +442,13 @@ bool waitForMethod(const std::string& method,
                                    boost::posix_time::milliseconds(50);
 
    // wait until we get the method we are looking for
-   while(true)
+   while (true)
    {
       // suspend if necessary (does not return if a suspend occurs)
       suspend::suspendIfRequested(allowSuspend);
 
       // check for timeout
-      if ( isTimedOut(timeoutTime) )
+      if (isTimedOut(timeoutTime))
       {
          if (allowSuspend())
          {
@@ -504,13 +509,13 @@ bool waitForMethod(const std::string& method,
          }
 
          // check for client_init
-         if ( isMethod(ptrConnection, kClientInit) )
+         if (isMethod(ptrConnection, kClientInit))
          {
             client_init::handleClientInit(initFunction, ptrConnection);
          }
 
          // check for the method we are waiting on
-         else if ( isMethod(ptrConnection, method) )
+         else if (isMethod(ptrConnection, method))
          {
             // parse and validate request then proceed
             if (parseAndValidateJsonRpcConnection(ptrConnection, pRequest))

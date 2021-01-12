@@ -1,7 +1,7 @@
 /*
  * SessionFiles.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -636,6 +636,10 @@ Error completeUpload(const core::json::JsonRpcRequest& request,
          Error copyError = uploadedTempFilePath.move(targetPath, FilePath::MoveCrossDevice, true);
          if (copyError)
             return copyError;
+
+         // update permissions (handles case where an uploaded file does not inherit shared project
+         // permissions correctly in Server Pro)
+         module_context::events().onPermissionsChanged(targetPath);
       }
       
       // check quota after uploads

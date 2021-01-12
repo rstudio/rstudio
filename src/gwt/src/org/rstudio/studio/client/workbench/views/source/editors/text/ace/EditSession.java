@@ -1,7 +1,7 @@
 /*
  * EditSession.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,7 +29,34 @@ public class EditSession extends JavaScriptObject
    }-*/;
    
    public native final String getState(int row) /*-{
-      return this.getState(row);
+      
+      var state = this.getState(row);
+      
+      // handle array states -- necessary for cases where
+      // rainbow parentheses are enabled, as we may see a
+      // '#tmp' temporary state at the front of the state
+      // array.
+      if (Array.isArray(state))
+      {
+         for (var i = 0; i < state.length; i++)
+         {
+            // skip the '#tmp' state
+            if (state[i] === "#tmp")
+            {
+               continue;
+            }
+            
+            return state[i] || "start";
+         }
+         
+         // if we have an empty state array, or if that
+         // array only contains the '#tmp' state, then
+         // just return the default 'start' state
+         return "start";
+      }
+      
+      return state || "start";
+      
    }-*/;
    
    public native final String getTabString() /*-{

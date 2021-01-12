@@ -1,7 +1,7 @@
 /*
  * ClientEvent.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -192,6 +192,7 @@ class ClientEvent extends JavaScriptObject
    public static final String TutorialLaunch = "tutorial_launch";
    public static final String ReticulateEvent = "reticulate_event";
    public static final String RStudioApiRequest = "rstudioapi_request";
+   public static final String DocumentCloseAllNoSave = "document_close_all_no_save";
 
    protected ClientEvent()
    {

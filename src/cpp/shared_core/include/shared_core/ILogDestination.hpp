@@ -1,7 +1,7 @@
 /*
  * ILogDestination.hpp
  * 
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant to the terms of a commercial license agreement
  * with RStudio, then this program is licensed to you under the following terms:
@@ -61,6 +61,11 @@ public:
     * @return The unique ID of the log destination.
     */
    virtual unsigned int getId() const = 0;
+
+   /**
+    * @brief Reloads the log destintation. Ensures that the log does not have any stale file handles.
+    */
+   virtual void reload() = 0;
 
    /**
     * @brief Gets the maximum level of logs that will be written to this log destination.

@@ -1,7 +1,7 @@
 /*
  * HistoryPresenter.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -352,10 +352,10 @@ public class HistoryPresenter
                @Override
                public void onResponseReceived(String response)
                {
-                  super.onResponseReceived(response);
                   if (token.isInvalid())
                      return;
 
+                  super.onResponseReceived(response);
                   DiffParser parser = strategy_.createParserForCommit(response);
                   view_.getCommitDetail().setDetails(
                                       parser, !strategy_.isShowFileSupported());
@@ -365,6 +365,9 @@ public class HistoryPresenter
                @Override
                public void onError(ServerError error)
                {
+                  if (token.isInvalid())
+                     return;
+                  
                   commitShowing_ = null;
 
                   JSONNumber size = error.getClientInfo().isNumber();

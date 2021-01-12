@@ -1,7 +1,7 @@
 /*
  * ServerSessionManager.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,6 +20,7 @@
 #include <boost/format.hpp>
 
 #include <shared_core/SafeConvert.hpp>
+#include <core/system/Process.hpp>
 #include <core/system/PosixUser.hpp>
 #include <core/system/Environment.hpp>
 #include <core/json/JsonRpc.hpp>
@@ -73,7 +74,8 @@ void readRequestArgs(const core::http::Request& request, core::system::Options *
 
 core::system::ProcessConfig sessionProcessConfig(
          r_util::SessionContext context,
-         const core::system::Options& extraArgs = core::system::Options())
+         const core::system::Options& extraArgs = core::system::Options(),
+         bool requestIsSecure = false)
 {
    // prepare command line arguments
    server::Options& options = server::options();
@@ -105,11 +107,13 @@ core::system::ProcessConfig sessionProcessConfig(
 
    // ensure cookies are marked secure if applicable
    bool useSecureCookies = options.authCookiesForceSecure() ||
-                           options.getOverlayOption("ssl-enabled") == "1";
+                           options.getOverlayOption("ssl-enabled") == "1" ||
+                           requestIsSecure;
+   args.push_back(std::make_pair("--" kUseSecureCookiesSessionOption, 
+         useSecureCookies ? "1" : "0"));
+
    args.push_back(std::make_pair("--" kRootPathSessionOption,
                                  options.wwwRootPath()));
-   args.push_back(std::make_pair("--" kUseSecureCookiesSessionOption,
-                                 useSecureCookies ? "1" : "0"));
    args.push_back(std::make_pair("--" kSameSiteSessionOption,
                                  safe_convert::numberToString(static_cast<int>(options.wwwSameSite()))));
 
@@ -265,7 +269,7 @@ Error SessionManager::launchSession(boost::asio::io_service& ioService,
    r_util::SessionLaunchProfile profile;
    profile.context = context;
    profile.executablePath = server::options().rsessionPath();
-   profile.config = sessionProcessConfig(context, args);
+   profile.config = sessionProcessConfig(context, args, request.isSecure());
 
    // pass the profile to any filters we have
    for (SessionLaunchProfileFilter f : sessionLaunchProfileFilters_)
@@ -317,12 +321,36 @@ Error SessionManager::launchAndTrackSession(
       configFilter = s_processConfigFilter;
    }
    END_LOCK_MUTEX
-
+         
+   // retrieve profile config
+   auto config = profile.config;
+   
+   // on macOS, we need to forward DYLD_INSERT_LIBRARIES
+#if __APPLE__
+   std::string rPath = server::options().rsessionWhichR();
+   
+   core::system::ProcessOptions options;
+   core::system::ProcessResult result;
+   Error rError = core::system::runCommand(
+            rPath + " --vanilla -s -e \"cat(R.home('lib/libR.dylib'))\"",
+            options,
+            &result);
+   
+   if (rError)
+      LOG_ERROR(rError);
+   
+   std::string rLibPath = result.stdOut;
+   core::system::setenv(
+            &config.environment,
+            "DYLD_INSERT_LIBRARIES",
+            rLibPath);
+#endif
+         
    // launch the session
    PidType pid = 0;
    Error error = launchChildProcess(profile.executablePath,
                                     runAsUser,
-                                    profile.config,
+                                    config,
                                     configFilter,
                                     &pid);
    if (error)

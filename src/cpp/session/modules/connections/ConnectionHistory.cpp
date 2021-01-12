@@ -1,7 +1,7 @@
 /*
  * ConnectionHistory.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,7 +31,7 @@ namespace connections {
 namespace {
 
 
-bool isConnection(const ConnectionId& id, json::Value valueJson)
+bool isConnection(const ConnectionId& id, const json::Value& valueJson)
 {
    if (!json::isType<json::Object>(valueJson))
    {

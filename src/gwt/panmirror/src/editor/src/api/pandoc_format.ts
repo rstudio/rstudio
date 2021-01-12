@@ -1,7 +1,7 @@
 /*
  * pandoc_format.ts
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,6 +27,7 @@ export const kMarkdownMmdFormat = 'markdown_mmd';
 export const kMarkdownStrictFormat = 'markdown_strict';
 export const kGfmFormat = 'gfm';
 export const kCommonmarkFormat = 'commonmark';
+export const kCommonmarkXFormat = 'commonmark_x';
 
 export interface PandocFormat {
   mode: string;
@@ -215,6 +216,7 @@ export async function resolvePandocFormat(pandoc: PandocServer, format: EditorFo
   // additional markdown variants we support
   const kMarkdownVariants: { [key: string]: string[] } = {
     [kCommonmarkFormat]: commonmarkExtensions(),
+    [kCommonmarkXFormat]: commonmarkXExtensions(),
     [kGfmFormat]: gfmExtensions(),
     goldmark: goldmarkExtensions(format),
     blackfriday: blackfridayExtensions(format),
@@ -237,6 +239,7 @@ export async function resolvePandocFormat(pandoc: PandocServer, format: EditorFo
       kMarkdownStrictFormat,
       kGfmFormat,
       kCommonmarkFormat,
+      kCommonmarkXFormat
     ]
       .concat(Object.keys(kMarkdownVariants))
       .includes(baseName)
@@ -248,15 +251,6 @@ export async function resolvePandocFormat(pandoc: PandocServer, format: EditorFo
   // format options we will be building
   let formatOptions: string;
 
-  // determine valid options (normally all options, but for gfm and commonmark then
-  // the valid optoins are constrained)
-  let validOptions: string = '';
-  if ([kGfmFormat, kCommonmarkFormat].includes(baseName)) {
-    validOptions = await pandoc.listExtensions(baseName);
-  } else {
-    // will fill in below when retreiving formatOptions (don't want to make 2 calls)
-  }
-
   // if we are using a variant then get it's base options and merge with user options
   if (kMarkdownVariants[baseName]) {
     const variant = kMarkdownVariants[baseName];
@@ -264,11 +258,8 @@ export async function resolvePandocFormat(pandoc: PandocServer, format: EditorFo
     baseName = 'markdown_strict';
   }
 
-  // query for format options (set validOptions if we don't have them yet)
+  // query for format options
   formatOptions = await pandoc.listExtensions(baseName);
-  if (!validOptions) {
-    validOptions = formatOptions;
-  }
 
   // active pandoc extensions
   const pandocExtensions: { [key: string]: boolean } = {};
@@ -279,7 +270,8 @@ export async function resolvePandocFormat(pandoc: PandocServer, format: EditorFo
   });
 
   // now parse extensions for user options (validate and build format name)
-  const validOptionNames = parseExtensions(validOptions).map(option => option.name);
+  const validOptionNames = parseExtensions(formatOptions).map(option => option.name);
+
   let fullName = baseName;
   parseExtensions(options).forEach(option => {
     // validate that the option is valid
@@ -356,6 +348,32 @@ function commonmarkExtensions(rawHTML = true) {
     '+intraword_underscores',
     '+lists_without_preceding_blankline',
     '+shortcut_reference_links',
+  ];
+  return extensions;
+}
+
+// https://github.com/jgm/pandoc/commit/0aed9dd589189a9bbe5cae99e0e024e2d4a92c36
+function commonmarkXExtensions() {
+  const extensions = [
+    '+pipe_tables',
+    '+raw_html',
+    '+auto_identifiers',
+    '+strikeout',
+    '+task_lists',
+    '+emoji',
+    '+raw_tex',
+    '+smart',
+    '+tex_math_dollars',
+    '+superscript',
+    '+subscript',
+    '+definition_lists',
+    '+footnotes',
+    '+fancy_lists',
+    '+fenced_divs',
+    '+bracketed_spans',
+    '+raw_attribute',
+    '+implicit_header_references',
+    // '+attributes' (not yet)
   ];
   return extensions;
 }

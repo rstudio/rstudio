@@ -1,7 +1,7 @@
 /*
  * History.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -219,8 +219,6 @@ public class History extends BasePresenter implements SelectionCommitEvent.Handl
          @Override
          public void onConsoleResetHistory(ConsoleResetHistoryEvent event)
          {
-            view_.bringToFront();
-
             // convert to HistoryEntry
             ArrayList<HistoryEntry> commands = toRecentCommandsList(
                                                          event.getHistory());

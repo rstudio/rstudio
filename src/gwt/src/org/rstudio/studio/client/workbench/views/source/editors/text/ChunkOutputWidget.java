@@ -1,7 +1,7 @@
 /*
  * ChunkOutputWidget.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,6 +24,7 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.ProgressSpinner;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -262,11 +263,11 @@ public class ChunkOutputWidget extends Composite
       return expansionState_.addValueChangeHandler(handler);
    }
 
-   public void renderHtml(String htmlOutput)
+   public void renderHtml(String htmlOutput, Element parentElement)
    {
       if (StringUtil.isNullOrEmpty(htmlOutput))
          return;
-      presenter_.showCallbackHtml(htmlOutput);
+      presenter_.showCallbackHtml(htmlOutput, parentElement);
    }
 
    public void showChunkOutput(RmdChunkOutput output, int mode, int scope,
@@ -594,11 +595,13 @@ public class ChunkOutputWidget extends Composite
       if (embedded)
       {
          addStyleName(style.embedded());
+         addStyleName(FontSizer.getNormalFontSizeClass());
          chunkOutputSize_ = ChunkOutputSize.Natural;
       }
       else
       {
          removeStyleName(style.embedded());
+         removeStyleName(FontSizer.getNormalFontSizeClass());
       }
    }
 

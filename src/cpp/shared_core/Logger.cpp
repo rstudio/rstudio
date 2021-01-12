@@ -1,7 +1,7 @@
 /*
  * Logger.cpp
  * 
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant to the terms of a commercial license agreement
  * with RStudio, then this program is licensed to you under the following terms:
@@ -377,6 +377,24 @@ void logInfoMessage(const std::string& in_message, const ErrorLocation& in_logge
 void logInfoMessage(const std::string& in_message, const std::string& in_section, const ErrorLocation& in_loggedFrom)
 {
    logger().writeMessageToDestinations(LogLevel::INFO, in_message, in_section, in_loggedFrom);
+}
+
+void reloadAllLogDestinations()
+{
+   Logger& log = logger();
+
+   WRITE_LOCK_BEGIN(log.Mutex)
+   {
+      for (auto& dest : log.DefaultLogDestinations)
+         dest.second->reload();
+
+      for (auto& section : log.SectionedLogDestinations)
+      {
+         for (auto& dest : section.second)
+            dest.second->reload();
+      }
+   }
+   RW_LOCK_END(false);
 }
 
 void removeLogDestination(unsigned int in_destinationId, const std::string& in_section)

@@ -1,7 +1,7 @@
 /*
  * Logger.hpp
  * 
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant to the terms of a commercial license agreement
  * with RStudio, then this program is licensed to you under the following terms:
@@ -302,6 +302,11 @@ void logInfoMessage(const std::string& in_message, const ErrorLocation& in_logge
  * @param in_location     The location from which the error message was logged.
  */
 void logInfoMessage(const std::string& in_message, const std::string& in_section, const ErrorLocation& in_loggedFrom);
+
+/**
+ * @brief Reloads all log destinations. May be used after fork to prevent stale file handles.
+ */
+void reloadAllLogDestinations();
 
 /**
  * @brief Removes a log destination from the logger.

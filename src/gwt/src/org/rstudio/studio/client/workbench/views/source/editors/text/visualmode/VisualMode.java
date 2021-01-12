@@ -1,7 +1,7 @@
 /*
  * VisualMode.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -334,19 +334,14 @@ public class VisualMode implements VisualModeEditorSync,
                         // note that ready.execute() is never called in the error case
                         return;
                      }
-                     
+
                      // we are about to mutate the document, so create a single
                      // shot handler that will adjust the known position of
                      // items in the outline (we do this opportunistically
                      // unless executing code)
                      if (markdown.location != null && syncType != SyncType.SyncTypeExecution)
                      {
-                        final Value<HandlerRegistration> handler = new Value<HandlerRegistration>(null);
-                        handler.setValue(docDisplay_.addScopeTreeReadyHandler((evt) ->
-                        {
-                           alignScopeOutline(markdown.location);
-                           handler.getValue().removeHandler();
-                        }));
+                         alignScopeTreeAfterUpdate(markdown.location);
                      }
                      
                      // apply diffs unless the wrap column changed (too expensive)
@@ -523,6 +518,16 @@ public class VisualMode implements VisualModeEditorSync,
                         allDone.execute(false);
                         return;
                      }
+                     
+                     // if we failed to extract a source capsule then don't switch (as the user will have lost data)
+                     // (note that this constant is also defined in rmd_chunk-capsule.ts)
+                     final String kRmdBlockCapsuleType = "f3175f2a-e8a0-4436-be12-b33925b6d220".toLowerCase();
+                     if (result.canonical.contains(kRmdBlockCapsuleType))
+                     {
+                        view_.showWarningBar("Unable to activate visual mode (error parsing code chunks out of document)");
+                        allDone.execute(false);
+                        return;
+                     }
 
                      // clear progress (for possible dialog overlays created by confirmation)
                      progress_.endProgressOperation();
@@ -540,8 +545,10 @@ public class VisualMode implements VisualModeEditorSync,
                            // so that diffs are efficient)
                            if (result.canonical != editorCode)
                            {
-                              getSourceEditor().setCode(result.canonical);
-                              markDirty();
+                               // ensure we realign the scope tree after changing the code
+                               alignScopeTreeAfterUpdate(result.location);
+                               getSourceEditor().setCode(result.canonical);
+                               markDirty();
                            }
                            
                            // completed
@@ -553,11 +560,23 @@ public class VisualMode implements VisualModeEditorSync,
                               // case sync our editing location to what it is in source 
                               if (focus)
                               { 
-                                 panmirror_.focus();
-                                 panmirror_.setEditingLocation(
-                                       visualModeLocation_.getSourceOutlineLocation(), 
-                                       visualModeLocation_.savedEditingLocation()
-                                       ); 
+                                 // catch exceptions which occur here (can result from attempting to restore
+                                 // an invalid position). generally we'd like to diagnose and fix instances
+                                 // of this error in a more targeted fashion, however we are now at the point
+                                 // of v1.4 release and the error results in an inability to switch to visual
+                                 // mode, so we do more coarse grained error handling here
+                                 try
+                                 {
+                                    panmirror_.focus();
+                                    panmirror_.setEditingLocation(
+                                          visualModeLocation_.getSourceOutlineLocation(), 
+                                          visualModeLocation_.savedEditingLocation()
+                                          ); 
+                                 }
+                                 catch(Exception e)
+                                 {
+                                    Debug.logException(e);
+                                 }
                               }
                               
                               // show any warnings
@@ -689,6 +708,7 @@ public class VisualMode implements VisualModeEditorSync,
    public void unmanageCommands()
    {
       restoreDisabledForVisualMode();
+      setCodeCommandsEnabled(true);
    }
    
    public void insertChunk(String chunkPlaceholder, int rowOffset, int colOffset)
@@ -712,6 +732,16 @@ public class VisualMode implements VisualModeEditorSync,
       // Perform the command in the active code editor, if any.
       visualModeChunks_.performWithSelection(command);
    }
+
+   /**
+    * Moves the cursor in source mode to the currently active outline item in visual mode.
+    */
+   public void syncSourceOutlineLocation()
+   {
+      visualModeLocation_.setSourceOutlineLocation(
+              panmirror_.getEditingOutlineLocation());
+   }
+
    
    public DocDisplay getActiveEditor()
    {
@@ -923,8 +953,12 @@ public class VisualMode implements VisualModeEditorSync,
    {
       if (syncOnIdle_ != null)
          syncOnIdle_.suspend();
+
       if (saveLocationOnIdle_ != null)
          saveLocationOnIdle_.suspend();
+
+      if (panmirror_ != null)
+         panmirror_.destroy();
    }
    
    public VisualModeChunk getChunkAtRow(int row)
@@ -1136,6 +1170,12 @@ public class VisualMode implements VisualModeEditorSync,
                
                // update status bar widget with current position
                syncStatusBarLocation();
+
+               // hide cursor position widget (doesn't update in visual mode)
+               if (target_.getStatusBar() != null)
+               {
+                  target_.getStatusBar().setPositionVisible(false);
+               }
                
                // (re)inject notebook output from the editor
                target_.getNotebook().migrateCodeModeOutput();
@@ -1192,7 +1232,13 @@ public class VisualMode implements VisualModeEditorSync,
             
             // move notebook outputs from visual mode
             target_.getNotebook().migrateVisualModeOutput();
-            
+
+            // bring the cursor position indicator back
+            if (target_.getStatusBar() != null)
+            {
+               target_.getStatusBar().setPositionVisible(true);
+            }
+
             // execute completed hook
             Scheduler.get().scheduleDeferred(completed);
          };
@@ -1710,7 +1756,26 @@ public class VisualMode implements VisualModeEditorSync,
          chunk.setScope(chunkScopes.get(k));
       }
    }
-   
+
+   /**
+    * Aligns the scope tree with chunks in visual mode; intended to be called when code
+    * has been mutated in the editor.
+    *
+    * @param location An outline of editing locations
+    */
+   private void alignScopeTreeAfterUpdate(PanmirrorEditingOutlineLocation location)
+   {
+      final Value<HandlerRegistration> handler = new Value<HandlerRegistration>(null);
+      handler.setValue(docDisplay_.addScopeTreeReadyHandler((evt) ->
+      {
+         if (location != null)
+         {
+            alignScopeOutline(location);
+         }
+         handler.getValue().removeHandler();
+      }));
+   }
+
    private Commands commands_;
    private UserPrefs prefs_;
    private SourceServerOperations source_;

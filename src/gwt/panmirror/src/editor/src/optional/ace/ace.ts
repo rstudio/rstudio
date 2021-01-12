@@ -1,7 +1,7 @@
 /*
  * ace.ts
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -128,6 +128,7 @@ export class AceNodeView implements NodeView {
   private updating: boolean;
   private escaping: boolean;
   private gapCursorPending: boolean;
+  private mouseDown: boolean;
   private mode: string;
   private findMarkers: number[];
   private selectionMarker: number | null;
@@ -171,8 +172,9 @@ export class AceNodeView implements NodeView {
     this.subscriptions = [];
     this.resizeTimer = 0;
     this.renderedWidth = 0;
-    this.scrollRow = 0;
+    this.scrollRow = -1;
     this.cursorDirty = false;
+    this.mouseDown = false;
 
     // options
     this.editorOptions = editorOptions;
@@ -502,15 +504,17 @@ export class AceNodeView implements NodeView {
     // If the cursor moves and we're in focus, ensure that the cursor is
     // visible. Ace's own cursor visiblity mechanisms don't work in embedded
     // editors.
-    if (this.editSession) {
-      this.editSession.getSelection().on('changeCursor', () => {
-        if (this.dom.contains(document.activeElement)) {
-          this.cursorDirty = true;
-        }
-      });
-    }
-    this.aceEditor.on('beforeEndOperation', () => {
-      if (this.cursorDirty) {
+    this.aceEditor.getSelection().on('changeCursor', () => {
+      if (this.dom.contains(document.activeElement) && !this.mouseDown) {
+        this.cursorDirty = true;
+      }
+    });
+
+    this.aceEditor.renderer.on('afterRender', () => {
+      // If the cursor position is dirty and the mouse is not down, scroll the
+      // cursor into view. Don't scroll while the mouse is down, as it will be
+      // treated as a click-and-drag by Ace.
+      if (this.cursorDirty && !this.mouseDown) {
         this.scrollCursorIntoView();
         this.cursorDirty = false;
       }
@@ -712,6 +716,19 @@ export class AceNodeView implements NodeView {
         this.scrollRow = -1;
       }),
     );
+
+    // Keep track of mouse state so we can avoid e.g., autoscrolling while the
+    // mouse is down
+    this.dom.addEventListener("mousedown", (evt) => {
+      this.mouseDown = true;
+    });
+    this.dom.addEventListener("mouseup", (evt) => {
+      this.mouseDown = false;
+    });
+    this.dom.addEventListener("mouseleave", (evt) => {
+      // Treat mouse exit as an up since it will cause us to miss the up event
+      this.mouseDown = false;
+    });
   }
 
   /**
@@ -825,7 +842,12 @@ export class AceNodeView implements NodeView {
 
     // Ensure we still have focus before proceeding
     if (this.dom.contains(document.activeElement)) {
-      const cursor = document.activeElement as HTMLElement;
+
+      // Find the element containing the rendered virtual cursor 
+      const cursor = this.dom.querySelector(".ace_cursor");
+      if (cursor === null) {
+        return;
+      }
 
       // Ace doesn't actually move the cursor but uses CSS translations to
       // make it appear in the right place, so we need to use the somewhat
@@ -838,12 +860,12 @@ export class AceNodeView implements NodeView {
       const cursorRect = cursor.getBoundingClientRect();
 
       // Scrolling down?
-      const down = cursorRect.bottom + cursorRect.height + 20 - containerRect.bottom;
+      const down = cursorRect.bottom + 10 - containerRect.bottom;
       if (down > 0) {
         container.scrollTop += down;
       } else {
         // Scrolling up?
-        const up = containerRect.top + cursorRect.height + 35 - cursorRect.top;
+        const up = containerRect.top + 10 - cursorRect.top;
         if (up > 0) {
           container.scrollTop -= up;
         }

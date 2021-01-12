@@ -1,7 +1,7 @@
 #
 # SessionPackages.R
 #
-# Copyright (C) 2020 by RStudio, PBC
+# Copyright (C) 2021 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -789,6 +789,9 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
                                                    sourceFiles,
                                                    usingRcpp)
 {
+   # mark encoding
+   Encoding(packageDirectory) <- "UTF-8"
+
    # sourceFiles is passed in as a list -- convert back to
    # character vector
    sourceFiles <- as.character(sourceFiles)

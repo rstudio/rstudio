@@ -1,7 +1,7 @@
 /*
  * ServerOptions.gen.hpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -168,7 +168,10 @@ protected:
    pDatabase->add_options()
       ("database-config-file",
       value<std::string>(&databaseConfigFile_)->default_value(""),
-      "If set, overrides the path to the /etc/rstudio/database.conf configuration file.");
+      "If set, overrides the path to the /etc/rstudio/database.conf configuration file.")
+      ("db-command",
+      value<std::string>(&dbCommand_)->default_value(std::string()),
+      "Executes the shell command specified injecting the current database configuration in the command.");
 
    pAuth->add_options()
       ("auth-none",
@@ -260,6 +263,7 @@ public:
    std::string rsessionConfigFile() const { return rsessionConfigFile_; }
    int rsessionProxyMaxWaitSeconds() const { return rsessionProxyMaxWaitSeconds_; }
    std::string databaseConfigFile() const { return databaseConfigFile_; }
+   std::string dbCommand() const { return dbCommand_; }
    bool authNone() const { return authNone_; }
    bool authValidateUsers() const { return authValidateUsers_; }
    int authStaySignedInDays() const { return authStaySignedInDays_; }
@@ -311,6 +315,7 @@ protected:
    int deprecatedStackLimitMb_;
    int deprecatedUserProcessLimit_;
    std::string databaseConfigFile_;
+   std::string dbCommand_;
    bool authNone_;
    bool authValidateUsers_;
    int authStaySignedInDays_;

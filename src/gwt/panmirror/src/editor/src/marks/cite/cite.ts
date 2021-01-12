@@ -1,7 +1,7 @@
 /*
  * cite.ts
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,7 +24,7 @@ import { FocusEvent } from '../../api/event-types';
 import { PandocTokenType, PandocToken, PandocOutput, ProsemirrorWriter, PandocServer } from '../../api/pandoc';
 import { fragmentText } from '../../api/fragment';
 import { markIsActive, splitInvalidatedMarks, getMarkRange, detectAndApplyMarks } from '../../api/mark';
-import { MarkTransaction } from '../../api/transaction';
+import { MarkTransaction, kPasteTransaction } from '../../api/transaction';
 import { BibliographyManager, BibliographyFile, BibliographySource } from '../../api/bibliography/bibliography';
 import { EditorUI } from '../../api/ui';
 import { joinPaths, getExtension } from '../../api/path';
@@ -42,28 +42,42 @@ import { doiFromSlice } from './cite-doi';
 import { citePopupPlugin } from './cite-popup';
 import { InsertCitationCommand } from './cite-commands';
 import { setTextSelection } from 'prosemirror-utils';
-
-
+import { AddMarkStep } from 'prosemirror-transform';
 
 const kCiteCitationsIndex = 0;
 
-export const kCiteIdPrefixPattern = '-?@';
-const kCiteIdOptionalCharsPattern = '[^@;\\[\\]\\-\\s]*';
 
-const kCiteIdCharsPattern = `${kCiteIdOptionalCharsPattern}`;
-const kCiteIdPattern = `^${kCiteIdPrefixPattern}${kCiteIdCharsPattern}$`;
+// Follow the pandoc rules for citations
+// Each citation must have a key, composed of ‘@’ + the citation identifier from the database, 
+// and may optionally have a prefix, a locator, and a suffix. The citation key must begin with a letter, 
+// digit, or _, and may contain alphanumerics (UNICODE), _, and internal punctuation characters (:.#$%&-+?<>~/).
+// In addition, we don't permit the citation to include a . or ? character (which are allowed in the cite identifier)
+// This is only because when writing in text citations, it will be common to follow a citation with 
+// punctuation, and we should be smart enough to filter that punctuation out of the citation itself.
+const kCiteIdPrefixPattern = '-?@';
+const kCiteIdCharsPattern = '[^@;\\[\\]\\s\\!\\,]*';
+const kCiteIdBasePattern = `${kCiteIdPrefixPattern}${kCiteIdCharsPattern}`;
+
+// Completions examine all the text inside the citation mark, so they need to only be interested
+// in a citeId that terminates at the cursor (at the end of the text)
+const kCompletionCiteIdRegEx = new RegExp(`(${kCiteIdPrefixPattern})(${kCiteIdCharsPattern})$`);
+
+// Note that since Cite Ids can appear inline as in-text representations or can appear inside of brackets 
+// in a Note style. Consequently, this is used in various places to identify them interchangeably (e.g. we use)
+// this to identify a citeId inline in text, but also to identify a citedId in a bracketed citation.
+const kCiteId = new RegExp(`^${kCiteIdBasePattern}`);
+
+// Plain In Text: @foo2019 (this is intentionally a duplicate of the above)
+// just to make the meaning more clear (this is used to detect an in text citation)
+const kInTextCiteRegex = new RegExp(`${kCiteIdBasePattern}$`);
+
+// Note Style: [@foo2019]
 const kBeginCitePattern = `(.* ${kCiteIdPrefixPattern}|${kCiteIdPrefixPattern})`;
+const kNoteCiteRegex = new RegExp(`\\[${kBeginCitePattern}${kCiteIdCharsPattern}.*\\]`);
 
-const kEditingFullCiteRegEx = new RegExp(`\\[${kBeginCitePattern}${kCiteIdOptionalCharsPattern}.*\\]`);
-
-const kCiteIdRegEx = new RegExp(kCiteIdPattern);
+// In Text with Suffix: @foo2019 [p 35]
 const kInTextCiteWithSuffixPattern = `${kCiteIdPrefixPattern}${kCiteIdCharsPattern}.*?\\[.*?\\]`;
 const kInTextCiteWithSuffixRegEx = new RegExp(`^${kInTextCiteWithSuffixPattern}$`);
-const kCiteRegEx = new RegExp(`${kBeginCitePattern}${kCiteIdCharsPattern}.*`);
-
-export const kEditingCiteIdRegEx = new RegExp(
-  `^(${kCiteIdPrefixPattern})(${kCiteIdOptionalCharsPattern}|10.\\d{4,}\\S+)`,
-);
 
 enum CitationMode {
   NormalCitation = 'NormalCitation',
@@ -125,7 +139,7 @@ const extension = (context: ExtensionContext): Extension | null => {
               // mark would have been broken by this if it wasn't valid). this
               // code predates that, and we leave it in for good measure in case that
               // code is removed or changes in another unexpected way.
-              if (idText.match(kCiteIdRegEx)) {
+              if (idText.match(kInTextCiteRegex)) {
                 const prefixMatch = idText.match(/^-?@/);
                 if (prefixMatch) {
                   output.writeRawMarkdown(prefixMatch.input!);
@@ -170,7 +184,7 @@ const extension = (context: ExtensionContext): Extension | null => {
               const parentText = fragmentText(parent);
 
               // if it's just a cite id then write it straight up
-              if (fragmentText(parent).match(kCiteIdRegEx)) {
+              if (fragmentText(parent).match(kInTextCiteRegex)) {
 
                 output.writeInlines(parent);
 
@@ -185,7 +199,7 @@ const extension = (context: ExtensionContext): Extension | null => {
                 if (
                   fragmentText(openCite) === '[' &&
                   fragmentText(closeCite) === ']' &&
-                  fragmentText(cite).match(kCiteRegEx)
+                  fragmentText(cite).match(kInTextCiteRegex)
                 ) {
                   output.writeRawMarkdown('[');
                   output.writeInlines(cite);
@@ -223,14 +237,10 @@ const extension = (context: ExtensionContext): Extension | null => {
                   } else {
                     output.writeInlines(parent);
                   }
-
                 } else {
                   output.writeInlines(parent);
                 }
-
               }
-
-
             },
           },
         },
@@ -248,10 +258,10 @@ const extension = (context: ExtensionContext): Extension | null => {
           const range = getMarkRange(tr.doc.resolve(tr.selection.head-1), schema.marks.cite_id);
           if (range) {
             const text = tr.doc.textBetween(range.from, tr.selection.$head.after());
-            const citeIdLength = editingCiteIdLength(text);
+            const citeIdLen = citeIdLength(text);
             const markLength = range.to - range.from;
-            if (citeIdLength > markLength) {
-              tr.addMark(range.from, range.from + citeIdLength, schema.marks.cite_id.create());
+            if (citeIdLen > markLength) {
+              tr.addMark(range.from, range.from + citeIdLen, schema.marks.cite_id.create());
             }
           }
           return tr;
@@ -261,24 +271,39 @@ const extension = (context: ExtensionContext): Extension | null => {
 
     appendMarkTransaction: (schema: Schema) => {
 
-      const kInTextCiteRegex = new RegExp(`${kCiteIdPrefixPattern}${kCiteIdCharsPattern}`, 'g');
-      const kFullCiteRegex = new RegExp(kEditingFullCiteRegEx.source, 'g');
-      const kInTextCiteWithSuffixRegex = new RegExp(kInTextCiteWithSuffixPattern, 'g');
-
+      const kFindInTextCiteRegex = new RegExp(kCiteIdBasePattern, 'g');
+      const kFindInTextCiteWithSuffixRegex = new RegExp(kInTextCiteWithSuffixPattern, 'g');
+      const kFindFullCiteRegex = new RegExp(kNoteCiteRegex.source, 'g');
+      
       return [
         {
           // 'break' cite marks if they are no longer valid. note that this will still preserve
-          // the mark up to the length that it is valid
+          // the mark up to the length that it is valid. 
           name: 'cite-marks',
-          filter: (node: ProsemirrorNode) => 
-             node.isTextblock && node.type.allowsMarkType(schema.marks.cite),
+          filter: (node: ProsemirrorNode, transactions: Transaction[]) =>  {
+
+            // if the transaction added any cite id marks then we need to lay off
+            // (mostly so that input rules can be reversed)
+            if (transactions.some(trans => trans.steps.some(step => {
+              if (step instanceof AddMarkStep) {
+                return (step as any).mark.type === schema.marks.cite_id;
+              }
+            }))) {
+              return false;
+
+            /// otherwise proceed if this node is a textblock that allows cites
+            } else {
+          
+              return node.isTextblock && node.type.allowsMarkType(schema.marks.cite);
+            }
+          },
           append: (tr: MarkTransaction, node: ProsemirrorNode, pos: number) => {
-            splitInvalidatedMarks(tr, node, pos, validCiteLength, schema.marks.cite, (from: number, to: number) => {
+            splitInvalidatedMarks(tr, node, pos, citeLength, schema.marks.cite, (from: number, to: number) => {
               tr.removeMark(from, to, schema.marks.cite);
             });
             // match all valid forms of mark
             if (node.textContent.indexOf('@') !== -1) {
-              [kInTextCiteRegex, kFullCiteRegex, kInTextCiteWithSuffixRegex].forEach(re => {
+              [kFindInTextCiteRegex, kFindFullCiteRegex, kFindInTextCiteWithSuffixRegex].forEach(re => {
                 detectAndApplyMarks(
                   tr,
                   tr.doc.nodeAt(pos)!,
@@ -304,7 +329,7 @@ const extension = (context: ExtensionContext): Extension | null => {
           name: 'remove-cite-id-marks',
           filter: (node: ProsemirrorNode) => node.isTextblock && node.type.allowsMarkType(schema.marks.cite_id),
           append: (tr: MarkTransaction, node: ProsemirrorNode, pos: number) => {
-            splitInvalidatedMarks(tr, node, pos, editingCiteIdLength, schema.marks.cite_id);
+            splitInvalidatedMarks(tr, node, pos, citeIdLength, schema.marks.cite_id);
           },
         },
       ];
@@ -340,26 +365,25 @@ const extension = (context: ExtensionContext): Extension | null => {
 function handlePaste(ui: EditorUI, bibManager: BibliographyManager, server: PandocServer) {
   return (view: EditorView, _event: Event, slice: Slice) => {
     const schema = view.state.schema;
-    if (markIsActive(view.state, schema.marks.cite)) {
+    if (markIsActive(view.state, schema.marks.cite_id)) {
       // This is a DOI
       const parsedDOI = doiFromSlice(view.state, slice);
       if (parsedDOI) {
-        // First check the local bibliography- if we already have this DOI
-        // we can just paste the DOI and allow the completion to handle it
-        const source = bibManager.findDoiInLocalBibliography(parsedDOI.token);
-
         // Insert the DOI text as a placeholder
         const tr = view.state.tr;
-        tr.setMeta('paste', true);
+        tr.setMeta(kPasteTransaction, true);
         tr.setMeta('uiEvent', 'paste');
 
         const doiText = schema.text(parsedDOI.token);
         tr.replaceSelectionWith(doiText, true);
         view.dispatch(tr);
 
+        // First check the local bibliography- if we already have this DOI
+        // we can just paste the DOI
+        const source = bibManager.findDoiInLocalBibliography(parsedDOI.token);
         if (!source && bibManager.allowsWrites()) {
           insertCitation(view, parsedDOI.token, bibManager, parsedDOI.pos, ui, server);
-        }
+        } 
         return true;
       } else {
         // This is just content, accept any text and try pasting that
@@ -367,7 +391,7 @@ function handlePaste(ui: EditorUI, bibManager: BibliographyManager, server: Pand
         slice.content.forEach((node: ProsemirrorNode) => (text = text + node.textContent));
         if (text.length > 0) {
           const tr = view.state.tr;
-          tr.setMeta('paste', true);
+          tr.setMeta(kPasteTransaction, true);
           tr.setMeta('uiEvent', 'paste');
           tr.replaceSelectionWith(schema.text(text));
           view.dispatch(tr);
@@ -399,23 +423,23 @@ function citeIdInputRule(schema: Schema) {
       }
 
       // get cite id length
-      const citeIdLength = editingCiteIdLength(text);
+      const citeIdLen = citeIdLength(text);
 
       // insert the @
       const tr = state.tr;
       tr.insertText(match[0]); 
 
       // insert a pairing end bracket if we started with [
-      if (citeIdLength === 1 && textBefore.match(/\[-?$/) && text[1] !== ']') {
+      if (citeIdLen === 1 && textBefore.match(/\[-?$/) && text[1] !== ']') {
         tr.insertText(']');
         setTextSelection(tr.selection.head - 1)(tr);
       }
      
-      if (citeIdLength) {
+      if (citeIdLen) {
         // offset mark for incidence of '-' prefix
         const offset = textBefore.endsWith('-') ? 1 : 0;
         const citeStart = start - offset;
-        const citeEnd = citeStart + citeIdLength + offset ;
+        const citeEnd = citeStart + citeIdLen + offset ;
         tr.addMark(citeStart, citeEnd, schema.marks.cite_id.create());
       }
 
@@ -496,7 +520,7 @@ function readPandocCite(schema: Schema) {
   };
 }
 
-const kCitationIdRegex = new RegExp(`(^\\[| )(${kCiteIdPrefixPattern}${kCiteIdOptionalCharsPattern})`, 'g');
+const kCitationIdRegex = new RegExp(`(^\\[| )(${kCiteIdBasePattern})`, 'g');
 
 function encloseInCiteMark(tr: Transaction, start: number, end: number) {
   const schema = tr.doc.type.schema;
@@ -520,9 +544,9 @@ function encloseInCiteMark(tr: Transaction, start: number, end: number) {
   return tr;
 }
 
-function validCiteLength(text: string) {
-  if (text.match(kEditingFullCiteRegEx) ||
-      text.match(kCiteIdRegEx) ||
+function citeLength(text: string) {
+  if (text.match(kNoteCiteRegex) ||
+      text.match(kInTextCiteRegex) ||
       text.match(kInTextCiteWithSuffixRegEx)) {
     return text.length;
   } else {
@@ -532,8 +556,8 @@ function validCiteLength(text: string) {
 
 // up to how many characters of the passed text constitute a valid cite_id in the editor
 // (note that the editor tolerates citations ids with just an '@')
-function editingCiteIdLength(text: string) {
-  const match = text.match(kEditingCiteIdRegEx);
+function citeIdLength(text: string) {
+  const match = text.match(kCiteId);
   if (match) {
     return match[0].length;
   } else {
@@ -547,17 +571,11 @@ export interface ParsedCitation {
   offset: number;
 }
 
-// completions allow spaces in the cite id (multiple search terms)
-const kCiteIdCompletionCharsPattern = kCiteIdOptionalCharsPattern.replace('\\s', '');
-const kCompletionCiteIdRegEx = new RegExp(
-  `(${kCiteIdPrefixPattern})(${kCiteIdCompletionCharsPattern}|10.\\d{4,}\\S+)$`,
-);
-
 export function parseCitation(context: EditorState | Transaction): ParsedCitation | null {
-
-  // return completions only if we are inside a cite (this allows for completions across
-  // cite_id marks and spaces after them (necesary to allow spaces in completion queries)
-  const markType = context.doc.type.schema.marks.cite;
+  // return completions only if we are inside a cite_id . This way
+  // if the user dismisses the cite_id (e.g. decides to type @ as literal string)
+  // we won't offer completions
+  const markType = context.doc.type.schema.marks.cite_id;
   const range = getMarkRange(context.doc.resolve(context.selection.head - 1), markType);
   if (range) {
     // examine text up to the cursor
@@ -574,11 +592,8 @@ export function parseCitation(context: EditorState | Transaction): ParsedCitatio
         const pos = range.from + match.index! + match[1].length;
         return { token, pos, offset: -match[1].length };
       }
-    }
-
-    
+    }   
   }
-
   return null;
 }
 
@@ -692,6 +707,7 @@ export async function insertCitation(
         view.dispatch(tr);
       }
     }
+    view.focus();
   }
 }
 

@@ -1,7 +1,7 @@
 /*
  * DomUtils.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -900,6 +900,24 @@ public class DomUtils
       doc.open();
       doc.writeln(content);
       doc.close();
+   }-*/;
+
+   /**
+    * Forwards wheel events between a document and element. Originally written to pass wheel 
+    * events up from an iframe.
+    * @param fromDoc The document that first receives the wheel event.
+    * @param toElement The element the event is forwarded to.
+    */
+   public static final native void forwardWheelEvent(Document fromDoc, Element toElement) /*-{
+
+       function forward(event) {
+           toElement.dispatchEvent(new event.constructor(event.type, event));
+       }
+       // While "wheel" is the current standard, Ace will not handle the event if "mousewheel" is 
+       // supported by the browser. Older browsers require "DomMouseScroll".
+       var wheelEvent = $wnd.document.onmousewheel !== undefined ? "mousewheel" :
+           "onwheel" in toElement ? "wheel" : "DomMouseScroll";
+       fromDoc.addEventListener(wheelEvent, forward);
    }-*/;
 
    public static native final Element getElementById(String id) /*-{

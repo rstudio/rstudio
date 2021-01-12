@@ -1,7 +1,7 @@
 /*
  * nbsp.ts
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,7 +22,7 @@ import { forChangedNodes } from '../api/transaction';
 import { mergedTextNodes } from '../api/text';
 
 const kNbsp = '\u00A0';
-const kNbspRegEx = /\xA0+/g;
+const kNbspRegEx = /\xA0/g;
 
 const extension = {
   commands: () => {

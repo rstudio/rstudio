@@ -3,7 +3,7 @@
 #
 # CMakeGlobals.txt
 #
-# Copyright (C) 2020 by RStudio, PBC
+# Copyright (C) 2021 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -214,8 +214,12 @@ endif()
 # make sure the CMAKE_INSTALL_PREFIX uses a cmake style path
 file(TO_CMAKE_PATH "${CMAKE_INSTALL_PREFIX}" CMAKE_INSTALL_PREFIX)
 
+# clear embedded packages variable (always do this first so that CMake caches
+# are properly flushed / reset whenever we embed an unembed packages)
+set(RSTUDIO_EMBEDDED_PACKAGES "" CACHE INTERNAL "Embedded R Packages")
+
 # embedded packages
-# set(RSTUDIO_EMBEDDED_PACKAGES rstudioapi CACHE INTERNAL "Embedded R Packages")
+# set(RSTUDIO_EMBEDDED_PACKAGES rmarkdown CACHE INTERNAL "Embedded R Packages")
 
 # include utilities
 include(RStudioCMakeUtils)

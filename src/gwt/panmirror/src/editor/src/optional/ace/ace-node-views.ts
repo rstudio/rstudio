@@ -1,7 +1,7 @@
 /*
  * ace-node-views.ts
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -72,10 +72,12 @@ export class AceNodeViews {
         }
 
         // if there is no previous node and the click is above us then gap cursor above
+        // (only do this if the cursor is within 150 pixels of the left edge)
       } else if (
         !$pos.nodeBefore &&
         $pos.depth === 1 &&
-        mouseEvent.clientY < nodeView.dom.getBoundingClientRect().top
+        mouseEvent.clientY < nodeView.dom.getBoundingClientRect().top &&
+        Math.abs(mouseEvent.clientX - nodeView.dom.getBoundingClientRect().left) < 150
       ) {
         gapCursor = new GapCursor($pos, $pos);
       }

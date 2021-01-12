@@ -137,6 +137,14 @@ function DisplayMath(s)
   end
 end
 
+function RawBlock(format, str)
+  if format == "tex" then
+     return DisplayMath(str)
+  else
+     return ''
+  end
+end
+
 -- echo body
 function Doc(body, metadata, variables)
   return body
@@ -172,6 +180,10 @@ function Emph(s)
 end
 
 function Strong(s)
+  return ''
+end
+
+function Underline(s)
   return ''
 end
 
@@ -263,11 +275,16 @@ function DefinitionList(items)
   return '' 
 end
 
-function RawBlock(format, str)
-  return ''
-end
-
 function Div(s, attr)
   return ''
 end
+
+-- ignore tokens we don't expect
+local meta = {}
+meta.__index =
+  function(_, key)
+    return function() return "" end
+  end
+setmetatable(_G, meta)
+
 

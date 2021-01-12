@@ -1,7 +1,7 @@
 /*
  * emoji-completion.tsx
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -93,7 +93,7 @@ function emojiCompletions(ui: EditorUI) {
 
 const EmojiView: React.FC<Emoji> = emoji => {
   return (
-    <div className={'pm-completion-list-item-text'}>
+    <div className={'pm-completion-list-item-text pm-emoji-font'}>
       {emoji.emoji}&nbsp;:{emoji.aliases[0]}:
     </div>
   );

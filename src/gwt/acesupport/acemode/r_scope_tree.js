@@ -1,7 +1,7 @@
 /*
  * r_scope_tree.js
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -424,6 +424,9 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
          for (var i = children.length - 1; i >= 0; i--)
          {
             var child = children[i];
+            if (child.isFunction() || child.isChunk())
+               return;
+
             if (child.isSection() && child.attributes.depth >= depth)
             {
                debuglog("Closing Markdown scope: '" + child.label + "'");
@@ -444,7 +447,7 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
          this.closeMarkdownHeaderScopes(node.parentScope, position, depth);
       };
 
-      this.onMarkdownHead = function(label, labelStartPos, labelEndPos, depth)
+      this.onMarkdownHead = function(label, labelStartPos, labelEndPos, depth, isMarkdown)
       {
          debuglog("Adding Markdown header: '" + label + "' [" + depth + "]");
          var scopes = this.getActiveScopes(labelStartPos);
@@ -456,7 +459,7 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
             labelEndPos,
             labelStartPos,
             ScopeNode.TYPE_SECTION,
-            {depth: depth, isMarkdown: true}
+            {depth: depth, isMarkdown: isMarkdown}
          ));
       };
 

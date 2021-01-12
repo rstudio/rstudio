@@ -1,7 +1,7 @@
 /*
  * TextEditingTarget.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -1920,13 +1920,6 @@ public class TextEditingTarget implements
          docDisplay_.addOrUpdateBreakpoint(breakpoint);
       }
       
-      if (extendedType_.startsWith(SourceDocument.XT_RMARKDOWN_PREFIX))
-      {
-         // populate the popup menu with a list of available formats
-         updateRmdFormatList();
-         setRMarkdownBehaviorEnabled(true);
-      }
-
       view_.addRmdFormatChangedHandler(new RmdOutputFormatChangedEvent.Handler()
       {
          @Override
@@ -1977,6 +1970,13 @@ public class TextEditingTarget implements
          events_,
          releaseOnDismiss_
       );
+
+      // populate the popup menu with a list of available formats
+      if (extendedType_.startsWith(SourceDocument.XT_RMARKDOWN_PREFIX))
+      {
+         updateRmdFormatList();
+         setRMarkdownBehaviorEnabled(true);
+      }
 
       // provide find replace button to view
       view_.addVisualModeFindReplaceButton(visualMode_.getFindReplaceButton());
@@ -2604,7 +2604,15 @@ public class TextEditingTarget implements
       {
          ensureTextEditorActive(() ->
          {
-            docDisplay_.replaceSelection(value);
+            if (docDisplay_.hasSelection())
+            {
+               docDisplay_.replaceSelection(value);
+            }
+            else
+            {
+               docDisplay_.insertCode(value);
+            }
+            
             callback.execute();
          });
       }
@@ -3007,8 +3015,12 @@ public class TextEditingTarget implements
                public void execute(final FileSystemItem saveItem,
                                    ProgressIndicator indicator)
                {
+                  // null here implies the user cancelled the save
                   if (saveItem == null)
+                  {
+                     isSaving_ = false;
                      return;
+                  }
 
                   try
                   {
@@ -3200,10 +3212,16 @@ public class TextEditingTarget implements
          {
             String code = docDisplay_.getCode();
             visualMode_.getCanonicalChanges(code, (changes) -> {
-               if (changes.changes != null)
-                  docDisplay_.applyChanges(changes.changes, true);
-               else if (changes.code != null)
-                  docDisplay_.setCode(changes.code, true);
+               // null changes means an error occurred (user has already been shown an alert)
+               if (changes != null)
+               {
+                  if (changes.changes != null)
+                     docDisplay_.applyChanges(changes.changes, true);
+                  else if (changes.code != null)
+                     docDisplay_.setCode(changes.code, true);
+               }
+               // need to continue in order to not permanetly break save
+               // (user has seen an error message so will still likely report)
                onComplete.execute();
             });
          }
@@ -3345,9 +3363,15 @@ public class TextEditingTarget implements
       // hasn't changed as the path may have changed
       syncPublishPath(docUpdateSentinel_.getPath());
 
-      // ignore if unchanged
-      if (StringUtil.equals(extendedType, extendedType_))
+      // if autosaves are enabled and the extended type hasn't changed, then
+      // don't do any further work as adapting to the extended type can cause
+      // disruptive side effects during autosave (e.g., knocking down
+      // autocomplete dialogs, resetting vim mode)
+      if (StringUtil.equals(extendedType, extendedType_) &&
+          prefs_.autoSaveEnabled())
+      {
          return;
+      }
 
       view_.adaptToExtendedFileType(extendedType);
       if (extendedType.startsWith(SourceDocument.XT_RMARKDOWN_PREFIX))
@@ -6429,6 +6453,14 @@ public class TextEditingTarget implements
             String viewerType = RmdEditorOptions.getString(
                   getRmdFrontMatter(), RmdEditorOptions.PREVIEW_IN, null);
 
+            // if visual mode is active, move the cursor in source mode to
+            // match its position in visual mode, so that we pass the correct
+            // line number hint to render below
+            if (isVisualEditorActive())
+            {
+               visualMode_.syncSourceOutlineLocation();
+            }
+
             rmarkdownHelper_.renderRMarkdown(
                   docUpdateSentinel_.getPath(),
                   docDisplay_.getCursorPosition().getRow() + 1,
@@ -7588,7 +7620,12 @@ public class TextEditingTarget implements
    {
       return rContext_;
    }
-   
+
+   public CppCompletionContext getCppCompletionContext()
+   {
+      return cppCompletionContext_;
+   }
+
    public RnwCompletionContext getRnwCompletionContext()
    {
       return compilePdfHelper_;

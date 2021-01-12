@@ -1,7 +1,7 @@
 #
 # Diagnostics.R
 #
-# Copyright (C) 2020 by RStudio, PBC
+# Copyright (C) 2021 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -26,7 +26,8 @@ redact_regex <- function() {
   
   words <- c(
     "API", "AUTH", "GITHUB", "HOST", "HOST", "KEY", "LOGNAME",
-    "PASSWORD", "PAT", "PWD", "SECRET", "TOKEN", "UID", "USERNAME"
+    "PASSWORD", "PAT", "PWD", "R TRAVIS (COM|ORG)", "SECRET", 
+    "TOKEN", "UID", "USERNAME"
   )
   
   fmt <- "\\b%s\\b"

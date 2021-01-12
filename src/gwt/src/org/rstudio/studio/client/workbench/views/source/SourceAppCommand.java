@@ -1,7 +1,7 @@
 /*
  * SourceAppCommand.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -177,15 +177,25 @@ public class SourceAppCommand
 
    public void setEnabled(boolean enabled)
    {
-      setEnabled(true, enabled, enabled);
+      setEnabled(true, enabled, enabled, false);
+   }
+   
+   public void setEnabled(boolean setCommand,
+                          boolean commandEnabled,
+                          boolean buttonEnabled)
+   {
+      setEnabled(setCommand, commandEnabled, buttonEnabled, false);
    }
 
-   public void setEnabled(boolean setCommand, boolean commandEnabled, boolean buttonEnabled)
+   public void setEnabled(boolean setCommand,
+                          boolean commandEnabled,
+                          boolean buttonEnabled,
+                          boolean force)
    {
       buttonEnabled_ = buttonEnabled;
       if (setCommand)
-         command_.setEnabled(commandEnabled);
-      handlers_.fireEvent((new EnabledChangedEvent(command_, column_, buttonEnabled)));
+         command_.setEnabled(commandEnabled, force);
+      handlers_.fireEvent(new EnabledChangedEvent(command_, column_, buttonEnabled));
    }
 
    private ToolbarButton createToolbarButton(boolean synced)

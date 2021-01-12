@@ -1,7 +1,7 @@
 /*
  * StderrDestination.cpp
  * 
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant to the terms of a commercial license agreement
  * with RStudio, then this program is licensed to you under the following terms:
@@ -37,6 +37,11 @@ StderrLogDestination::StderrLogDestination(LogLevel in_logLevel) :
 unsigned int StderrLogDestination::getId() const
 {
    return 0;
+}
+
+void StderrLogDestination::reload()
+{
+   // No action necessary.
 }
 
 void StderrLogDestination::writeLog(LogLevel in_logLevel, const std::string& in_message)

@@ -1,7 +1,7 @@
 /*
  * insert_citation_picker.ts
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -106,12 +106,12 @@ export async function showInsertCitationDialog(
       const providersForBibliography = (writable: boolean) => {
         return writable
           ? [
-              bibliographySourcePanel(doc, ui, bibliographyManager),
-              doiSourcePanel(ui, server.doi),
-              crossrefSourcePanel(ui, server.crossref, server.doi),
-              dataciteSourcePanel(ui, server.datacite, server.doi),
-              pubmedSourcePanel(ui, server.pubmed, server.doi),
-            ]
+            bibliographySourcePanel(doc, ui, bibliographyManager),
+            doiSourcePanel(ui, server.doi, bibliographyManager),
+            crossrefSourcePanel(ui, server.crossref, server.doi, bibliographyManager),
+            dataciteSourcePanel(ui, server.datacite, server.doi, bibliographyManager),
+            pubmedSourcePanel(ui, server.pubmed, server.doi, bibliographyManager),
+          ]
           : [bibliographySourcePanel(doc, ui, bibliographyManager)];
       };
 
@@ -144,41 +144,48 @@ export async function showInsertCitationDialog(
         selectedNode: NavigationTreeNode,
         intextCitationStyle: boolean
       ) => {
+        // Because some bibliography entries will need to download their CSL (based upon the
+        // DOI), we need to keep the dialog alive so we can use it to show progress. As a result
+        // rather than waiting for the dialog to be dismissed and  using the result, we do the work
+        // here ahead of calling 'confirm'. But confirm also provides the validation message for the
+        // dialog, so we still call 'confirm' even if we know it isn't valid (no citations selected)
+        // so the validation message can be displayed to the user.
+        if (bibliographySourceProviders.length > 0) {
 
-        // Look through the items and see whether any will be slow
-        // If some are slow, show progress
-        const requiresProgress = bibliographySourceProviders.some(
-          sourceProvider => sourceProvider.isSlowGeneratingBibliographySource,
-        );
-        if (requiresProgress) {
-          showProgress(
-            ui.context.translateText(
-              bibliographySourceProviders.length === 1
-                ? 'Creating bibliography entry...'
-                : 'Creating bibliography entries...',
-            ),
+          // Look through the items and see whether any will be slow
+          // If some are slow, show progress
+          const requiresProgress = bibliographySourceProviders.some(
+            sourceProvider => sourceProvider.isSlowGeneratingBibliographySource,
           );
+          if (requiresProgress) {
+            showProgress(
+              ui.context.translateText(
+                bibliographySourceProviders.length === 1
+                  ? 'Creating bibliography entry...'
+                  : 'Creating bibliography entries...',
+              ),
+            );
+          }
+
+          // Generate bibliography sources for each of the entries
+          const bibliographySources = await Promise.all(
+            bibliographySourceProviders.map(sourceProvider => sourceProvider.toBibliographySource(sourceProvider.id)),
+          );
+          result = {
+            bibliographySources,
+            bibliography,
+            intextCitationStyle,
+            selectionKey: selectedNode.key,
+          };
+
+          // Notify the caller to perform the inseration
+          await performInsertCitations(result);
+
+          // Clear progress
+          if (requiresProgress) {
+            hideProgress();
+          }
         }
-
-        // Generate bibliography sources for each of the entries
-        const bibliographySources = await Promise.all(
-          bibliographySourceProviders.map(sourceProvider => sourceProvider.toBibliographySource(sourceProvider.id)),
-        );
-        result = {
-          bibliographySources,
-          bibliography,
-          intextCitationStyle,
-          selectionKey: selectedNode.key,
-        };
-
-        // Notify the caller to perform the inseration
-        await performInsertCitations(result);
-
-        // Clear progress
-        if (requiresProgress) {
-          hideProgress();
-        }
-
         // Dismiss the dialog
         confirm();
       };
@@ -206,7 +213,7 @@ export async function showInsertCitationDialog(
     () => {
       // Validation
       // User has to select a citation, everything else we can use defaults
-      if (result && result.bibliographySources.length === 0) {
+      if (!result || result.bibliographySources.length === 0) {
         return ui.context.translateText('Please select at least one citation to insert.');
       }
       return null;
@@ -540,9 +547,18 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
   };
 
   const onTagChanged = (key: string, text: string) => {
+    // Edit any matching entries in the citation basket
     const targetSource = insertCitationPanelState.citationsToAdd.find(source => source.id === key);
     if (targetSource) {
       targetSource.id = text;
+    }
+
+    // Edit the currently selected item
+    if (insertCitationPanelState.selectedIndex > -1) {
+      const currentlySelectedCitation = insertCitationPanelState.citations[insertCitationPanelState.selectedIndex];
+      if (currentlySelectedCitation && currentlySelectedCitation.id === key) {
+        currentlySelectedCitation.id = text;
+      }
     }
   };
 
@@ -620,6 +636,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
           onTagValidate={onTagValidate}
           ui={props.ui}
           placeholder={props.ui.context.translateText('Selected Citation Keys')}
+          maxDisplayCharacters={50}
         />
       </div>
       <div className="pm-cite-panel-insert-inputs">

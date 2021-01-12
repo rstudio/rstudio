@@ -1,7 +1,7 @@
 /*
  * ServerDatabase.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,7 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/thread.hpp>
+#include <boost/regex.hpp>
 
 #include <core/Log.hpp>
 #include <core/Settings.hpp>
@@ -62,9 +63,23 @@ constexpr const size_t kDefaultConnectionPoolSize = 4;
 
 boost::shared_ptr<ConnectionPool> s_connectionPool;
 
+struct ConfiguredDriverVisitor : boost::static_visitor<Driver>
+{
+   Driver operator()(const SqliteConnectionOptions& options)
+   {
+      return Driver::Sqlite;
+   }
+
+   Driver operator()(const PostgresqlConnectionOptions& options)
+   {
+      return Driver::Postgresql;
+   }
+};
+
 Error readOptions(const std::string& databaseConfigFile,
                   const boost::optional<system::User>& databaseFileUser,
-                  ConnectionOptions* pOptions)
+                  ConnectionOptions* pOptions,
+                  const std::string forceDatabaseProvider = "")
 {
    // read the options from the specified configuration file
    // if not specified, fall back to system configuration
@@ -78,6 +93,9 @@ Error readOptions(const std::string& databaseConfigFile,
       return error;
 
    std::string databaseProvider = settings.get(kDatabaseProvider, kDatabaseProviderSqlite);
+   if (!forceDatabaseProvider.empty())
+      databaseProvider = forceDatabaseProvider;
+
    bool checkConfFilePermissions = false;
 
    if (boost::iequals(databaseProvider, kDatabaseProviderSqlite))
@@ -141,8 +159,13 @@ Error readOptions(const std::string& databaseConfigFile,
       if (options.connectionUri.empty())
          LOG_INFO_MESSAGE("Connecting to Postgres database " + options.username + "@" + options.host + ":" + options.port + "/" + options.database);
       else
-         LOG_INFO_MESSAGE("Connecting to Postgres database: " + options.connectionUri);
-
+      {
+         // matches up to the password, the password itself, and rest of it
+         // replaces the password with a mask (***) leaving the rest untouched
+         // no replacements if not a match (no password in the URI)
+         boost::regex matchPassword(R"((.*:\/\/[^:]*:)([^@]*)(@.*$))");
+         LOG_INFO_MESSAGE("Connecting to Postgres database: " + boost::regex_replace(options.connectionUri, matchPassword, "$1***$3"));
+      }
       checkConfFilePermissions = true;
    }
    else
@@ -202,6 +225,20 @@ Error migrationsDir(FilePath* pMigrationsDir)
 
 } // anonymous namespace
 
+core::database::Driver getConfiguredDriver(const std::string& databaseConfigFile)
+{
+   ConnectionOptions options;
+   Error error = readOptions(databaseConfigFile, boost::optional<system::User>(), &options);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return core::database::Driver::Unknown;
+   }
+
+   ConfiguredDriverVisitor visitor;
+   return boost::apply_visitor(visitor, options);
+}
+
 Error initialize(const std::string& databaseConfigFile,
                  bool updateSchema,
                  const boost::optional<system::User>& databaseFileUser)
@@ -240,6 +277,13 @@ Error initialize(const std::string& databaseConfigFile,
       }
    }
 
+   return Success();
+}
+
+Error execute(const std::string& databaseConfigFile,
+              const boost::optional<system::User>& databaseFileUser,
+              std::string command)
+{
    return Success();
 }
 

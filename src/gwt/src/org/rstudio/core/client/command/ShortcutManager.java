@@ -1,7 +1,7 @@
 /*
  * ShortcutManager.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -33,6 +33,7 @@ import org.rstudio.core.client.command.KeyMap.KeyMapType;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.WarningBarClosedEvent;
 import org.rstudio.studio.client.events.EditEvent;
@@ -462,13 +463,14 @@ public class ShortcutManager implements NativePreviewHandler,
       }
 
       keyBuffer_.add(keyCombination);
+      
 
       // we handle `Ctrl+L` for the sublime mode here
       // because it is conflicted with `consoleClear`
       if (editorMode_ == KeyboardShortcut.MODE_SUBLIME)
-         {
-            if (keyCombination.getKeyCode() == KeyCodes.KEY_L &&
-                keyCombination.getModifier() == KeyboardShortcut.CTRL)
+      {
+         if (keyCombination.getKeyCode() == KeyCodes.KEY_L &&
+             keyCombination.getModifier() == KeyboardShortcut.CTRL)
          {
             Element target = Element.as(event.getEventTarget());
             AceEditor editor = AceEditor.getEditor(target);
@@ -540,15 +542,40 @@ public class ShortcutManager implements NativePreviewHandler,
                binding.execute();
             return true;
          }
+         
          if (map.isPrefix(keyBuffer_))
          {
             pending = true;
             reportShortcutPending();
          }
          else
+         {
             reportShortcutUnbound();
+         }
       }
-
+      
+      // Handle 'Ctrl + Z' (Undo) specially on Windows desktop.
+      // We basically detect attempts to use undo, and then re-fire
+      // those from Qt specifically since that will ensure a properly
+      // created key event is generated and used to perform the undo.
+      //
+      // https://github.com/rstudio/rstudio/issues/7960
+      if (!isExecutingUndoQtWorkaround_ &&
+            BrowseCap.isWindowsDesktop() &&
+            BrowseCap.isQtWebEngine() &&
+            !StringUtil.equals(keyCombination.key(), "z") &&
+            keyCombination.getKeyCode() == KeyCodes.KEY_Z &&
+            keyCombination.getModifier() == KeyboardShortcut.CTRL)
+      {
+         isExecutingUndoQtWorkaround_ = true;
+         clearKeyBuffer();
+         event.stopPropagation();
+         event.preventDefault();
+         commands_.undoDummy().execute();
+         return true;
+      }
+      isExecutingUndoQtWorkaround_ = false;
+            
       if (!(pending || isPrefixForEditor(keyCombination, event)))
          clearKeyBuffer();
 
@@ -803,6 +830,8 @@ public class ShortcutManager implements NativePreviewHandler,
    private final List<Pair<KeySequence, AppCommandBinding>> defaultBindings_;
    private boolean reportShortcutBinding_ = false;
    private boolean reportedPending_ = false;
+   
+   private boolean isExecutingUndoQtWorkaround_ = false;
 
    // Injected ----
    private UserCommandManager userCommands_;

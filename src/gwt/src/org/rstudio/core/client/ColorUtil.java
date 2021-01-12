@@ -1,7 +1,7 @@
 /*
  * ColorUtil.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -93,6 +93,11 @@ public class ColorUtil
                mix(green_, other.green_, ratio, mode),
                mix(blue_, other.blue_, ratio, mode),
                mix(alpha_, other.alpha_, ratio, 1));
+      }
+      
+      public RGBColor withAlpha(double alpha)
+      {
+         return new RGBColor(red_, green_, blue_, alpha);
       }
       
       public static RGBColor fromHex(String hexString)

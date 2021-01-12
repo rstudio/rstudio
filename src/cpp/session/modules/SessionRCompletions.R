@@ -1,7 +1,7 @@
 #
 # SessionRCompletions.R
 #
-# Copyright (C) 2020 by RStudio, PBC
+# Copyright (C) 2021 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -176,6 +176,8 @@ assign(x = ".rs.acCompletionTypes",
       "@export",
       "@exportClass ",
       "@exportMethod ",
+      "@exportPattern ",
+      "@exportS3Method ",
       "@family ",
       "@field ",
       "@format ",
@@ -184,6 +186,7 @@ assign(x = ".rs.acCompletionTypes",
       "@importFrom ",
       "@importMethodsFrom ",
       "@include ",
+      "@includeRmd ",
       "@inherit ",
       "@inheritDotParams ",
       "@inheritParams ",
@@ -201,6 +204,7 @@ assign(x = ".rs.acCompletionTypes",
       "@rdname ",
       "@references ",
       "@return ",
+      "@returns ",
       "@section ",
       "@seealso ",
       "@slot ",
@@ -587,14 +591,13 @@ assign(x = ".rs.acCompletionTypes",
          next
       
       # ok, we found a method -- return it
-      data <- list(
-         formals = .rs.getFunctionArgumentNames(method),
-         methods = rep.int(
-            paste(functionName, class, sep = "."),
-            length(formals)
-         )
+      formals <- .rs.getFunctionArgumentNames(method)
+      methods <- rep.int(
+         paste(functionName, class, sep = "."),
+         length(formals)
       )
       
+      data <- list(formals = formals, methods = methods)
       return(data)
    }
    
@@ -661,7 +664,13 @@ assign(x = ".rs.acCompletionTypes",
    {
       stripped <- .rs.stripSurrounding(string)
       envir <- .rs.resolveEnvironment(envir)
-      object <- .rs.tryCatch(get(stripped, envir = envir, mode = "function"))
+      
+      object <- .rs.tryCatch(
+         .rs.getAnywhere(
+            name  = stripped,
+            envir = envir
+         )
+      )
    }
    else if (length(splat) == 2)
    {
@@ -710,6 +719,8 @@ assign(x = ".rs.acCompletionTypes",
    
 })
 
+# Get completions appropriate within a particular function call.
+# This typically implies retrieving the function formals.
 .rs.addFunction("getCompletionsFunction", function(token,
                                                    string,
                                                    functionCall,
@@ -822,8 +833,13 @@ assign(x = ".rs.acCompletionTypes",
                                        envir)
       }
       
+      # If we have formals, quote them as appropriate and append ' = '.
       if (length(formals$formals))
-         formals$formals <- paste(formals$formals, "= ")
+      {
+         formals$formals <- vapply(formals$formals, function(fml) {
+            paste(deparse(as.name(fml), backtick = TRUE), "= ")
+         }, FUN.VALUE = character(1))
+      }
       
       # If we're getting completions for the `base::c` function, just discard
       # the argument completions, since other context completions are more
@@ -3203,6 +3219,12 @@ assign(x = ".rs.acCompletionTypes",
    
 })
 
+# Get relevant completions for a particular argument, e.g. in
+#
+#   library(package = |)
+#
+# That is, if we're completing an argument called 'package', then infer
+# that package names are an appropriate completion result.
 .rs.addFunction("getCompletionsArgument", function(token,
                                                    activeArg,
                                                    functionCall = NULL,
@@ -3294,12 +3316,14 @@ assign(x = ".rs.acCompletionTypes",
    
    # Get package names for completions
    if (activeArg %in% c("pkg", "package"))
+   {
       completions <- .rs.appendCompletions(
          completions,
          .rs.getCompletionsPackages(token = token,
                                     appendColons = FALSE,
                                     excludeOtherCompletions = FALSE)
       )
+   }
    
    completions
 })

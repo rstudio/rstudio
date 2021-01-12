@@ -1,7 +1,7 @@
 /*
  * cite-completion.tsx
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,7 +29,6 @@ import { CompletionItemView } from '../../api/widgets/completion';
 
 import { PandocServer } from '../../api/pandoc';
 import { EditorEvents } from '../../api/events';
-import { FocusEvent } from '../../api/event-types';
 
 import { BibliographyEntry, entryForSource } from './cite-bibliography_entry';
 import { parseCitation, insertCitation as insertSingleCitation, performCiteCompletionReplacement } from './cite';
@@ -120,32 +119,23 @@ function filterCitations(token: string, manager: BibliographyManager, entries: B
     return entries;
   }
 
+  // Filter an exact match - if its exact match to an entry in the bibliography already, skip completion
+  // Ignore any punctuation at the end of the token
+  const tokenWithoutEndPunctuation = token.match(/.*[^\,\!\?\.\:]/);
+  const completionId = tokenWithoutEndPunctuation ? tokenWithoutEndPunctuation[0] : token;
+  if (manager.localSources().find(source => source.id === completionId)) {
+    return [];
+  }
+
+  // Now do the regular search
   const search = (str: string) => {
     const results = uniqby(manager.searchAllSources(str, kMaxCitationCompletions), source => source.id).map(entry =>
       entryForSource(entry, ui),
     );
     return uniqby(results, (entry: BibliographyEntry) => entry.source.id);
   };
-
-  // first search w/ the part of the token before any space -- if that yields an exact match then no completions
-  // (i.e. in this case there is already a valid cite_id at pos)
-  if (token.includes(' ')) {
-    const firstPart = token.split(' ')[0];
-    const firstPartResults = search(firstPart);
-    if (firstPartResults.find(entry => entry.source.id === firstPart)) {
-      return [];
-    }
-  }
-
-  // Now do the regular search
   const searchResults = search(token);
-
-  // If we have an exact match, no need for completions
-  if (searchResults.find(entry => entry.source.id === token)) {
-    return [];
-  } else {
-    return searchResults || [];
-  }
+  return searchResults || [];
 }
 
 function citationCompletions(ui: EditorUI, manager: BibliographyManager) {

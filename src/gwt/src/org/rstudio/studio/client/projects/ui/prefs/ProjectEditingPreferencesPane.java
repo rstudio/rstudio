@@ -1,7 +1,7 @@
 /*
  * ProjectEditingPreferencesPane.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -135,7 +135,7 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       numSpacesForTab_.setValue(initialConfig_.getNumSpacesForTab() + "");
       chkAutoAppendNewline_.setValue(initialConfig_.getAutoAppendNewline());
       chkStripTrailingWhitespace_.setValue(initialConfig_.getStripTrailingWhitespace());
-      lineEndings_.setIntValue(initialConfig_.getLineEndings());
+      lineEndings_.setValue(ProjectPrefs.prefFromLineEndings(initialConfig_.getLineEndings()));
       setEncoding(initialConfig_.getEncoding());
    }
 

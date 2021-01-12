@@ -1,7 +1,7 @@
 /*
  * RemoteServer.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -675,13 +675,15 @@ public class RemoteServer implements Server
 
    public void consoleInput(String consoleInput,
                             String consoleId,
+                            int flags,
                             ServerRequestCallback<Void> requestCallback)
    {
-      JSONArray params = new JSONArray();
-      params.set(0, consoleInput == null ? JSONNull.getInstance() :
-         new JSONString(consoleInput));
-      params.set(1, consoleId == null? JSONNull.getInstance() :
-         new JSONString(consoleId));
+      JSONArray params = new JSONArrayBuilder()
+            .add(consoleInput)
+            .add(consoleId)
+            .add(flags)
+            .get();
+      
       sendRequest(RPC_SCOPE, CONSOLE_INPUT, params, requestCallback);
    }
 

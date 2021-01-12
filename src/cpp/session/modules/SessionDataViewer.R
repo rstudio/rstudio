@@ -1,7 +1,7 @@
 #
 # SessionDataViewer.R
 #
-# Copyright (C) 2020 by RStudio, PBC
+# Copyright (C) 2021 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -171,7 +171,7 @@
                # create histogram for brushing -- suppress warnings as in rare cases
                # an otherwise benign integer overflow can occurs; see
                # https://github.com/rstudio/rstudio/issues/3232
-               h <- suppressWarnings(hist(hist_vals, plot = FALSE))
+               h <- suppressWarnings(graphics::hist(hist_vals, plot = FALSE))
                col_breaks <- h$breaks
                col_counts <- h$counts
                
@@ -638,13 +638,21 @@
       # check the source refs to see if we can open the file itself instead of
       # opening a read-only source viewer
       srcref <- .rs.getSrcref(x)
-      if (!is.null(srcref)) {
+      if (!is.null(srcref))
+      {
          srcfile <- attr(srcref, "srcfile", exact = TRUE)
-         if (!is.null(srcfile) && !is.null(srcfile$filename) && 
-             file.exists(srcfile$filename)) {
+         filename <- .rs.nullCoalesce(srcfile$filename, "")
+         if (!identical(filename, "~/.active-rstudio-document") &&
+             file.exists(filename))
+         {
             # the srcref points to a valid file--go there 
-            invisible(.Call("rs_jumpToFunction", normalizePath(srcfile$filename), 
-                            srcref[[1]], srcref[[5]]))
+            .Call("rs_jumpToFunction",
+                  normalizePath(filename, winslash = "/"),
+                  srcref[[1]],
+                  srcref[[5]],
+                  TRUE,
+                  PACKAGE = "(embedding)")
+            
             return(invisible(NULL))
          }
       }
@@ -662,7 +670,7 @@
          namespace <- "viewing"
       else if (identical(namespace, "R_GlobalEnv"))
          namespace <- ".GlobalEnv"
-      invisible(.Call("rs_viewFunction", x, title, namespace))
+      invisible(.Call("rs_viewFunction", x, title, namespace, PACKAGE = "(embedding)"))
       return(invisible(NULL))
    }
    else if (inherits(x, "vignette"))

@@ -1,7 +1,7 @@
 /*
  * RSAEncrypt.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,9 +35,9 @@ public class RSAEncrypt
          final String input,
          final ResponseCallback callback)
    {
-      if (Desktop.hasDesktopFrame())
+      if (Desktop.isDesktop())
       {
-         // Don't encrypt for desktop, Windows can't decrypt it.
+         // Don't encrypt for desktop sessions, Windows can't decrypt it.
          callback.onSuccess(input);
          return;
       }

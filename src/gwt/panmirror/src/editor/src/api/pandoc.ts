@@ -1,7 +1,7 @@
 /*
  * pandoc.ts
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -132,6 +132,7 @@ export interface PandocExtensions {
   tex_math_single_backslash: boolean;
   yaml_metadata_block: boolean;
   gutenberg: boolean;
+  // attributes: boolean; (not yet)
   [key: string]: boolean;
 }
 
@@ -168,6 +169,7 @@ export enum PandocTokenType {
   Subscript = 'Subscript',
   Strikeout = 'Strikeout',
   SmallCaps = 'SmallCaps',
+  Underline = 'Underline',
   Quoted = 'Quoted',
   RawInline = 'RawInline',
   RawBlock = 'RawBlock',
@@ -189,6 +191,8 @@ export enum PandocTokenType {
   AlignLeft = 'AlignLeft',
   AlignDefault = 'AlignDefault',
   AlignCenter = 'AlignCenter',
+  ColWidth = 'ColWidth',
+  ColWidthDefault = 'ColWidthDefault',
   HorizontalRule = 'HorizontalRule',
   LineBreak = 'LineBreak',
   SoftBreak = 'SoftBreak',

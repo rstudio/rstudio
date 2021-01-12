@@ -1,7 +1,7 @@
 /*
  * insert_citation-source-panel-list-item.ts
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -51,8 +51,12 @@ export const CitationSourcePanelListItem = (props: ListChildComponentProps) => {
     }
   };
 
-  const onItemClick = () => {
-    citationListData.onSelectedIndexChanged(props.index);
+  const onItemClick = (e: React.MouseEvent) => {
+    if (e.shiftKey) {
+      citationListData.onAddCitation(citationEntry);
+    } else {
+      citationListData.onSelectedIndexChanged(props.index);
+    }
   };
 
   const onDoubleClick = () => {

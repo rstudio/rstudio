@@ -1,7 +1,7 @@
 /*
  * CommandLineHistory.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,8 @@
 package org.rstudio.studio.client.common;
 
 import com.google.gwt.user.client.ui.HasText;
+
+import org.rstudio.core.client.MathUtil;
 import org.rstudio.core.client.StringUtil;
 
 import java.util.ArrayList;
@@ -70,7 +72,7 @@ public class CommandLineHistory
 
    public String getHistoryEntry(int offset)
    {
-      int pos = getPositionAtOffset(offset);
+      int pos = MathUtil.clamp(getPositionAtOffset(offset), 0, history_.size() - 1);
       return history_.get(pos);
    }
 

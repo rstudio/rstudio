@@ -1,7 +1,7 @@
 /*
  * AppCommand.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -219,7 +219,12 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
 
    public void setEnabled(boolean enabled)
    {
-      if (enabled != enabled_)
+      setEnabled(enabled, false);
+   }
+   
+   public void setEnabled(boolean enabled, boolean force)
+   {
+      if (force || enabled != enabled_)
       {
          enabled_ = enabled;
          handlers_.fireEvent(new EnabledChangedEvent(this));

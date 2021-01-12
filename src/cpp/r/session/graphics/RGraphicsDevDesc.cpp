@@ -1,7 +1,7 @@
 /*
  * RGraphicsDevDesc.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -761,6 +761,7 @@ void setSize(pDevDesc pDD)
       break;
    case 12:
    case 13:
+   case 14:
    default:
       pSizeFn = ((DevDescVersion12*)pDD)->size;
       break;
@@ -866,6 +867,7 @@ void setDeviceAttributes(pDevDesc pDev, pDevDesc pShadow)
    }
       
    case 13:
+   case 14:
    {
       setCommonDeviceAttributes((DevDescVersion13*) pDev, (DevDescVersion13*) pShadow);
       
@@ -915,6 +917,7 @@ void activate(const pDevDesc dd)
       break;
    case 12:
    case 13:
+   case 14:
    default:
       pActivateFn = ((DevDescVersion12*)dd)->activate;
       break;
@@ -951,6 +954,7 @@ void circle(double x, double y, double r, const pGEcontext gc, pDevDesc dd)
       break;
    case 12:
    case 13:
+   case 14:
    default:
       pCircleFn = ((DevDescVersion12*)dd)->circle;
       break;
@@ -987,6 +991,7 @@ void clip(double x0, double x1, double y0, double y1, pDevDesc dd)
       break;
    case 12:
    case 13:
+   case 14:
    default:
       pClipFn = ((DevDescVersion12*)dd)->clip;
       break;
@@ -1023,6 +1028,7 @@ void close(pDevDesc dd)
       break;
    case 12:
    case 13:
+   case 14:
    default:
       pCloseFn = ((DevDescVersion12*)dd)->close;
       break;
@@ -1059,6 +1065,7 @@ void deactivate(pDevDesc dd)
       break;
    case 12:
    case 13:
+   case 14:
    default:
       pDeactivateFn = ((DevDescVersion12*)dd)->deactivate;
       break;
@@ -1095,6 +1102,7 @@ Rboolean locator(double *x, double *y, pDevDesc dd)
       break;
    case 12:
    case 13:
+   case 14:
    default:
       pLocatorFn = ((DevDescVersion12*)dd)->locator;
       break;
@@ -1131,6 +1139,7 @@ void line(double x1, double y1, double x2, double y2, const pGEcontext gc, pDevD
       break;
    case 12:
    case 13:
+   case 14:
    default:
       pLineFn = ((DevDescVersion12*)dd)->line;
       break;
@@ -1167,6 +1176,7 @@ void metricInfo(int c, const pGEcontext gc, double *ascent, double *descent, dou
       break;
    case 12:
    case 13:
+   case 14:
    default:
       pMetricInfoFn = ((DevDescVersion12*)dd)->metricInfo;
       break;
@@ -1203,6 +1213,7 @@ void mode(int mode, pDevDesc dd)
       break;
    case 12:
    case 13:
+   case 14:
    default:
       pModeFn = ((DevDescVersion12*)dd)->mode;
       break;
@@ -1240,6 +1251,7 @@ void newPage(const pGEcontext gc, pDevDesc dd)
       break;
    case 12:
    case 13:
+   case 14:
    default:
       pNewPageFn = ((DevDescVersion12*)dd)->newPage;
       break;
@@ -1276,6 +1288,7 @@ void polygon(int n, double *x, double *y, const pGEcontext gc, pDevDesc dd)
       break;
    case 12:
    case 13:
+   case 14:
    default:
       pPolygonFn = ((DevDescVersion12*)dd)->polygon;
       break;
@@ -1312,6 +1325,7 @@ void polyline(int n, double *x, double *y, const pGEcontext gc, pDevDesc dd)
       break;
    case 12:
    case 13:
+   case 14:
    default:
       pPolylineFn = ((DevDescVersion12*)dd)->polyline;
       break;
@@ -1348,6 +1362,7 @@ void rect(double x0, double y0, double x1, double y1, const pGEcontext gc, pDevD
       break;
    case 12:
    case 13:
+   case 14:
    default:
       pRectFn = ((DevDescVersion12*)dd)->rect;
       break;
@@ -1382,6 +1397,7 @@ void path(double *x,
       break;
    case 12:
    case 13:
+   case 14:
    default:
       pPathFn = ((DevDescVersion12*)dd)->path;
       break;
@@ -1425,6 +1441,7 @@ void raster(unsigned int *raster,
       break;
    case 12:
    case 13:
+   case 14:
    default:
       pRasterFn = ((DevDescVersion12*)dd)->raster;
       break;
@@ -1457,6 +1474,7 @@ SEXP cap(pDevDesc dd)
       break;
    case 12:
    case 13:
+   case 14:
    default:
       pCapFn = ((DevDescVersion12*)dd)->cap;
       break;
@@ -1492,6 +1510,7 @@ void size(double *left, double *right, double *bottom, double *top, pDevDesc dd)
       break;
    case 12:
    case 13:
+   case 14:
    default:
       pSizeFn = ((DevDescVersion12*)dd)->size;
       break;
@@ -1527,6 +1546,7 @@ double strWidth(const char *str, const pGEcontext gc, pDevDesc dev)
       break;
    case 12:
    case 13:
+   case 14:
    default:
       pStrWidthFn = ((DevDescVersion12*)dev)->strWidth;
       break;
@@ -1569,6 +1589,7 @@ void text(double x,
       break;
    case 12:
    case 13:
+   case 14:
    default:
       pTextFn = ((DevDescVersion12*)dev)->text;
       break;

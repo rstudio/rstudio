@@ -1,7 +1,7 @@
 /*
  * virtualscroller.js
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -84,6 +84,11 @@ var VirtualScroller;
         } else {
           ancestor = ancestor.parentElement;
         }
+      }
+
+      // validate that we've successfully found ace_scroller
+      if (self.scrollerEle == null) {
+        throw "internal error: virtual scroller could not find ace_scroller element";
       }
 
       // jump to latest button
@@ -264,9 +269,18 @@ var VirtualScroller;
     },
 
     clear: function() {
+      var i = 0;
+
       // remove all buckets from the DOM
-      for (var i = 0; i < this.buckets.length; i++) {
+      for (i = 0; i < this.buckets.length; i++) {
         this.buckets[i].remove();
+      }
+
+      // remove possible vestigial contents of the parent element that
+      // may have snuck in before the VirtualScroller was initialized
+      var eleChildren = this.consoleEle.children;
+      while (this.consoleEle.children.length > 0) {
+          this.consoleEle.removeChild(this.consoleEle.children[0]);
       }
 
       this._setJumpToLatestVisible(false);
@@ -295,6 +309,16 @@ var VirtualScroller;
 
       if (indexToSlice > 0)
         element.innerText = element.innerText.substring(indexToSlice);
+    },
+
+    ensureStartingOnNewLine: function() {
+      if (this.getCurBucket().children < 1)
+        return;
+
+      // get the last element from the last bucket
+      var lastText = this.getCurBucket().lastElementChild.innerHTML;
+      if (!lastText.endsWith("\n"))
+        this.getCurBucket().lastElementChild.innerHTML = lastText + "\n";
     },
 
     _createAndAddNewBucket: function() {

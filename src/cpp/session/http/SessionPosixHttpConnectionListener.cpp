@@ -1,7 +1,7 @@
 /*
  * SessionPosixHttpConnectionListener.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,6 +23,7 @@
 #include <session/SessionConstants.hpp>
 #include <session/SessionOptions.hpp>
 #include <session/SessionLocalStreams.hpp>
+#include <session/SessionPersistentState.hpp>
 
 #include "SessionTcpIpHttpConnectionListener.hpp"
 #include "SessionLocalStreamHttpConnectionListener.hpp"
@@ -111,7 +112,17 @@ void initializeHttpConnectionListener()
             }
          }
 
-         s_pHttpConnectionListener = new TcpIpHttpConnectionListener(wwwAddress, options.wwwPort(), "");
+         // reuse the port we were bound to before restart if specified - this is done
+         // to enable smooth session restarts for launcher sessions
+         std::string bindPort = options.wwwPort();
+         if (bindPort == "0" && options.wwwReusePorts())
+         {
+            std::string reusedPort = persistentState().reusedStandalonePort();
+            if (!reusedPort.empty())
+               bindPort = reusedPort;
+         }
+
+         s_pHttpConnectionListener = new TcpIpHttpConnectionListener(wwwAddress, bindPort, "");
       }
       else
       {

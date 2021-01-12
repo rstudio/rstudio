@@ -1,7 +1,7 @@
 /*
  * cite-completion_doi.tsx
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -103,36 +103,9 @@ function citationDOICompletions(ui: EditorUI, server: DOIServer, bibliographyMan
                 formattedIssueDate: formatIssuedDate(source.issued),
               },
             ];
+          } else {
+            return [];
           }
-
-          // If we don't have a local source, we shouldn't handle pastes- the
-          // paste handler is expected to deal with this case. If the user is typing
-          // a DOI, we may need to still check for completions below, but this should be
-          // unusual
-          if (!completionContext.isPaste && bibliographyManager.allowsWrites()) {
-            // Check with the server to see if we can get citation data for this DOI
-            const result = await server.fetchCSL(parsedDOI.token, kPRogressDelay);
-            if (result.status === 'ok') {
-              const csl = result.message;
-
-              // We should only return csl that includes a DOI since this UI depends upon that being present
-              // Note that this should always be true because we are looking up the CSL by DOI, but in the event
-              // that the server returns something unexpected, we will simply not match any completions
-              if (csl.DOI) {
-                return [
-                  {
-                    id: csl.DOI,
-                    csl,
-                    inBibliography: false,
-                    image: imageForType(ui.images, csl.type)[ui.prefs.darkMode() ? 1 : 0],
-                    formattedAuthor: formatAuthors(csl.author, 40),
-                    formattedIssueDate: formatIssuedDate(csl.issued),
-                  },
-                ];
-              }
-            }
-          }
-          return [];
         },
       };
     }

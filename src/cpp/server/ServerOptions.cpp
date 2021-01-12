@@ -1,7 +1,7 @@
 /*
  * ServerOptions.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -220,7 +220,7 @@ ProgramStatus Options::read(int argc,
       sameSite != kSameSiteNoneOption &&
       sameSite != kSameSiteLaxOption)
    {
-      program_options::reportError("Invalid SameSite option: " + sameSite, ERROR_LOCATION);
+      program_options::reportError("Invalid SameSite option: " + sameSite, ERROR_LOCATION, true);
       return ProgramStatus::exitFailure();
    }
    if (sameSite == kSameSiteNoneOption)
@@ -235,7 +235,7 @@ ProgramStatus Options::read(int argc,
    std::string errMsg;
    if (!validateOverlayOptions(&errMsg, osWarnings))
    {
-      program_options::reportError(errMsg, ERROR_LOCATION);
+      program_options::reportError(errMsg, ERROR_LOCATION, true);
       return ProgramStatus::exitFailure();
    }
 

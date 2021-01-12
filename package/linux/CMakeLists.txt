@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2020 by RStudio, PBC
+# Copyright (C) 2021 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -13,7 +13,7 @@
 #
 #
 
-# configure cpack install location 
+# configure cpack install location
 set(CPACK_SET_DESTDIR "ON")
 set(CPACK_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 
@@ -25,7 +25,7 @@ if (NOT PACKAGE_ARCHITECTURE)
       exec_program(dpkg ARGS --print-architecture
                    OUTPUT_VARIABLE PACKAGE_ARCHITECTURE)
    elseif(RPM_EXECUTABLE)
-      exec_program(arch OUTPUT_VARIABLE PACKAGE_ARCHITECTURE) 
+      exec_program(arch OUTPUT_VARIABLE PACKAGE_ARCHITECTURE)
    endif()
 endif()
 
@@ -51,7 +51,7 @@ if(RSTUDIO_SERVER)
   # debian control files
   set(DEBIAN_POSTINST postinst.in)
   set(DEBIAN_POSTRM postrm.in)
-  
+
   # rpm scripts
   set(RPM_POSTINST postinst.sh.in)
   set(RPM_POSTRM postrm.sh.in)
@@ -73,11 +73,11 @@ if(RSTUDIO_SERVER)
   set(RSTUDIO_DEBIAN_DEPENDS "psmisc, libapparmor1, libedit2, sudo, lsb-release, libssl1.0.0 | libssl1.0.2 | libssl1.1, libclang-dev, libsqlite3-0, libpq5, ")
 
 elseif(RSTUDIO_DESKTOP)
- 
+
    # debian control files
   set(DEBIAN_POSTINST postinst-desktop.in)
   set(DEBIAN_POSTRM postrm-desktop.in)
-  
+
   # rpm scripts
   set(RPM_POSTINST postinst-desktop.sh.in)
   set(RPM_POSTRM postrm-desktop.sh.in)
@@ -93,7 +93,7 @@ elseif(RSTUDIO_DESKTOP)
 
   # deb dependencies
   set(RSTUDIO_DEBIAN_DEPENDS "libedit2, libssl1.0.0 | libssl1.0.2 | libssl1.1, libclang-dev, libxkbcommon-x11-0, libsqlite3-0, libpq5, ")
-  
+
 endif()
 
 # define package suffix
@@ -101,7 +101,7 @@ set(RSTUDIO_PACKAGE_SUFFIX "-")
 
 if(RSTUDIO_SERVER)
    # add rhel to package name for redhat enterprise linux builds
-   if(IS_RHEL) 
+   if(IS_RHEL)
       set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}rhel-")
    endif()
 endif()
@@ -130,7 +130,7 @@ file(COPY ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/postinst
 
 set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${CMAKE_CURRENT_BINARY_DIR}/debian-control/postinst;${CMAKE_CURRENT_BINARY_DIR}/debian-control/postrm")
 
-# dynamically configured rpm scripts (only works with cmake 2.8.1 or higher). 
+# dynamically configured rpm scripts (only works with cmake 2.8.1 or higher).
 # alternatively you can get CPackRPM.cmake from the cmake tip and copy it into
 # your local cmake modules directory -- this is what we currently do
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/rpm-script/${RPM_POSTINST}
@@ -142,14 +142,14 @@ set(CPACK_RPM_SPEC_INSTALL_POST "/bin/true")
 set(CPACK_RPM_POST_INSTALL_SCRIPT_FILE "${CMAKE_CURRENT_BINARY_DIR}/rpm-script/postinst.sh")
 set(CPACK_RPM_POST_UNINSTALL_SCRIPT_FILE "${CMAKE_CURRENT_BINARY_DIR}/rpm-script/postrm.sh")
 
-# /usr and /usr/lib are already present in CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST, 
+# /usr and /usr/lib are already present in CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST,
 # but some Linux distributions complain without this explicit suppression
 set(CPACK_RPM_SPEC_MORE_DEFINE "%define ignore \#")
-set(CPACK_RPM_USER_FILELIST 
+set(CPACK_RPM_USER_FILELIST
   "%ignore /usr"
   "%ignore /usr/lib")
 
-set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION 
+set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION
   "/usr/share/applications"
   "/usr/share/icons"
   "/usr/share/pixmaps"

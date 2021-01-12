@@ -1,7 +1,7 @@
 /*
  * rainbow_paren_highlight_rules.js
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -39,30 +39,26 @@ define("mode/rainbow_paren_highlight_rules", ["require", "exports", "module"], f
       merge : false,
       onMatch: function(val, state, stack) {
 
-      if (!$rainbowParentheses) {
-        this.token = "paren.keyword.operator.nomatch";
-        return this.token;
-      }
+        if (!$rainbowParentheses) {
+          this.token = "paren.keyword.operator.nomatch";
+          return this.token;
+        }
 
-      if (stack.length !== 2) {
-        stack.length = 2;
+        stack = stack || [];
         stack[0] = state;
-        stack[1] = 0;
-      }
+        stack[1] = stack[1] || 0;
 
-      switch(val) {
-        case "[":
-        case "{":
-        case "(":
+        switch(val) {
+
+        case "[": case "{": case "(":
           this.token = "paren.paren_color_" + (stack[1] % $numParenColors);
           stack[1] = stack[1] + 1;
           break;
-        default:
-          if (stack.length > 1 && stack[1] > 0) {
-            stack[1] = stack[1] - 1;
-            this.token = "paren.paren_color_" + (stack[1] % $numParenColors);
-          }
-      }
+        case "]": case "}": case ")":
+          stack[1] = Math.max(0, stack[1] - 1);
+          this.token = "paren.paren_color_" + (stack[1] % $numParenColors);
+          break;
+        }
 
       return this.token;
     },

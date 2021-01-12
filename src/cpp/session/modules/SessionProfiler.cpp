@@ -1,7 +1,7 @@
 /*
  * SessionProfiler.cpp
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -45,21 +45,21 @@ namespace {
 
 std::string profilesCacheDir() 
 {
-   return module_context::scopedScratchPath().completeChildPath(kProfilesCacheDir)
-      .getAbsolutePath();
+   return module_context::scopedScratchPath()
+       .completeChildPath(kProfilesCacheDir)
+       .getAbsolutePath();
 }
 
 SEXP rs_profilesPath()
 {
    r::sexp::Protect rProtect;
-   std::string cacheDir = core::string_utils::utf8ToSystem(profilesCacheDir());
-   return r::sexp::create(cacheDir, &rProtect);
+   return r::sexp::create(profilesCacheDir(), &rProtect);
 }
 
 } // anonymous namespace
 
 void handleProfilerResReq(const http::Request& request,
-                            http::Response* pResponse)
+                          http::Response* pResponse)
 {
    std::string resourceName = http::util::pathAfterPrefix(request, "/" kProfilesUrlPath "/");
 
@@ -102,17 +102,21 @@ void onDocPendingRemove(
 }
 
 Error initialize()
-{  
+{
    ExecBlock initBlock;
    
    source_database::events().onDocPendingRemove.connect(onDocPendingRemove);
 
    RS_REGISTER_CALL_METHOD(rs_profilesPath);
-   
-   r::options::setOptionDefault(
-            "profvis.prof_output",
-            string_utils::utf8ToSystem(profilesCacheDir()));
-   
+
+   // set up profiles path (be careful to mark as UTF-8)
+   r::sexp::Protect protect;
+   SEXP cacheDir = r::sexp::createUtf8(profilesCacheDir(), &protect);
+   Error error = r::exec::RFunction(".rs.setOptionDefault")
+               .addParam("profvis.prof_output")
+               .addParam(cacheDir)
+               .call();
+
    initBlock.addFunctions()
       (boost::bind(module_context::sourceModuleRFile, "SessionProfiler.R"))
       (boost::bind(module_context::registerUriHandler, "/" kProfilesUrlPath "/", handleProfilerResReq))

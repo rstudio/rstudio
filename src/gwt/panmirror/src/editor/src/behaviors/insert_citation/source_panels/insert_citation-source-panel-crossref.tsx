@@ -1,7 +1,7 @@
 /*
  * insert_citation-source-panel-crossref.tsx
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,13 +29,16 @@ import {
   CitationSourcePanelProvider,
   CitationListEntry,
   CitationSourceListStatus,
+  matchExistingSourceCitationListEntry,
 } from './insert_citation-source-panel';
 import { CitationSourceLatentSearchPanel } from './insert_citation-source-panel-latent-search';
+import { BibliographyManager } from '../../../api/bibliography/bibliography';
 
 export function crossrefSourcePanel(
   ui: EditorUI,
   server: CrossrefServer,
   doiServer: DOIServer,
+  bibliographyManager: BibliographyManager
 ): CitationSourcePanelProvider {
   const kCrossrefType = 'Crossref';
   return {
@@ -59,9 +62,11 @@ export function crossrefSourcePanel(
     search: async (searchTerm: string, _selectedNode: NavigationTreeNode, existingCitationIds: string[]) => {
       try {
         const works = await server.works(searchTerm);
+        const existingSources = bibliographyManager.localSources();
+
         const dedupeCitationIds = existingCitationIds;
         const citationEntries = works.items.map(work => {
-          const citationEntry = toCitationListEntry(work, dedupeCitationIds, ui, doiServer);
+          const citationEntry = matchExistingSourceCitationListEntry(work.DOI, dedupeCitationIds, ui, bibliographyManager) || toCitationListEntry(work, dedupeCitationIds, ui, doiServer);
           if (citationEntry) {
             // Add this id to the list of existing Ids so future ids will de-duplicate against this one
             dedupeCitationIds.push(citationEntry.id);

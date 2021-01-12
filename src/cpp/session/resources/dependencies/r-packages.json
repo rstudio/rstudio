@@ -216,9 +216,9 @@
             "source": false
         },
         "rmarkdown": {
-            "version": "1.12",
+            "version": "2.5",
             "location": "cran",
-            "source": false
+            "source": true
         },
         "roxygen2": {
             "version": "6.0.1",
@@ -276,7 +276,7 @@
             "source": false
         },
         "xfun": {
-            "version": "0.3",
+            "version": "0.15",
             "location": "cran",
             "source": false
         },
@@ -291,7 +291,7 @@
             "source": false
         },
         "yaml": {
-            "version": "2.1.5",
+            "version": "2.1.19",
             "location": "cran",
             "source": false
         }

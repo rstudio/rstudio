@@ -1,7 +1,7 @@
 /*
  * SyslogDestination.hpp
  * 
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant to the terms of a commercial license agreement
  * with RStudio, then this program is licensed to you under the following terms:
@@ -67,6 +67,11 @@ public:
     * @return The unique ID of the syslog destination.
     */
    unsigned int getId() const override;
+
+   /**
+    * @brief Reloads the log destintation. Ensures that the log does not have any stale file handles.
+    */
+   void reload() override;
 
    /**
     * @brief Writes a message to syslog.

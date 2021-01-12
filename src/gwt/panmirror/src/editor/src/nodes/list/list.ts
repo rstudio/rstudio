@@ -1,7 +1,7 @@
 /*
  * list.ts
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -342,7 +342,7 @@ function listAttrEdit(type: string, capabilities: ListCapabilities, ui: EditorUI
       type: (schema: Schema) => schema.nodes[type],
       editFn: () => editListPropertiesCommandFn(ui, capabilities),
       offset: {
-        top: 10,
+        top: 5,
         right: 5,
       },
     };

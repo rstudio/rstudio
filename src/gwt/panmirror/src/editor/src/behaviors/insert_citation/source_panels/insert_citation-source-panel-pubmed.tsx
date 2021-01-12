@@ -1,7 +1,7 @@
 /*
  * insert_citation-source-panel-pubmed.tsx
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,7 +16,7 @@ import React from 'react';
 
 import { BibliographyManager } from '../../../api/bibliography/bibliography';
 import { createUniqueCiteId } from '../../../api/cite';
-import { CSL } from '../../../api/csl';
+import { CSL, sanitizeForCiteproc } from '../../../api/csl';
 import { DOIServer } from '../../../api/doi';
 import { logException } from '../../../api/log';
 import { NavigationTreeNode } from '../../../api/widgets/navigation-tree';
@@ -29,6 +29,7 @@ import {
   CitationListEntry,
   CitationSourceListStatus,
   errorForStatus,
+  matchExistingSourceCitationListEntry,
 } from './insert_citation-source-panel';
 import { CitationSourceLatentSearchPanel } from './insert_citation-source-panel-latent-search';
 
@@ -36,6 +37,7 @@ export function pubmedSourcePanel(
   ui: EditorUI,
   server: PubMedServer,
   doiServer: DOIServer,
+  bibliographyManager: BibliographyManager
 ): CitationSourcePanelProvider {
   const kPubmedType = 'Pubmed';
   return {
@@ -72,8 +74,8 @@ export function pubmedSourcePanel(
 
               // Create Citation List Entries for these PubMed docs
               const citationEntries = docs.map(doc => {
-                const citationEntry = toCitationListEntry(doc, dedupeCitationIds, ui, doiServer);
-                if (citationEntry) {
+                const citationEntry = matchExistingSourceCitationListEntry(doc.doi, dedupeCitationIds, ui, bibliographyManager) || toCitationListEntry(doc, dedupeCitationIds, ui, doiServer);
+                if (citationEntry && citationEntry.id) {
                   // Add this id to the list of existing Ids so future ids will de-duplicate against this one
                   dedupeCitationIds.push(citationEntry.id);
                 }
@@ -148,7 +150,7 @@ function toCitationListEntry(
   doiServer: DOIServer,
 ): CitationListEntry {
   const id = createUniqueCiteId(existingIds, suggestCiteId(doc));
-  const providerKey = 'crossref';
+  const providerKey = 'pubmed';
   return {
     id,
     isIdEditable: true,
@@ -165,7 +167,8 @@ function toCitationListEntry(
       // Generate CSL using the DOI
       const doiResult = await doiServer.fetchCSL(doc.doi, -1);
       const csl = doiResult.message as CSL;
-      return { ...csl, id: finalId, providerKey };
+      const sanitizedCSL = sanitizeForCiteproc(csl);
+      return { ...sanitizedCSL, id: finalId, providerKey };
     },
     isSlowGeneratingBibliographySource: true,
   };

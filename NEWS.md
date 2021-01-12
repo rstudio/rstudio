@@ -1,4 +1,4 @@
-## v1.4 - Release Notes
+[##](##) v1.4 - Release Notes
 
 ### Python
 
@@ -15,6 +15,7 @@
 
 * The default renderer used for the RStudio graphics device can now be customized. (#2142)
 * The AGG renderer (as provided by the ragg package) is now a supported backend. (#6539)
+* Version 14 of the R Graphics Engine, which will be introduced in R 4.1, is now supported. (#8383)
 
 ### Workbench
 
@@ -45,12 +46,18 @@
 * Add support for navigating source history with mouse forward/back buttons (#7272)
 * Add ability to go directly to various Global Option panes via Command Palette (#7678)
 * R6Class method definitions are now indexed and accessible by the fuzzy finder (Ctrl + .)
-* The 'Preview' command for R documentation files now passes along RdMacros declared from the package DESCRIPTION file. (#6871)
+* The 'Preview' command for R documentation files now passes along RdMacros declared from the package DESCRIPTION file (#6871)
 * Some panes didn't have commands for making them visible, now they do (#5775)
 * Show correct symbol for Return key in Mac menus (#6524)
 * Added command and button for clearing Build pane output (#6636)
 * Added option to disable clickable hyperlinks in the editor (#6689, thanks to Paul Kaefer)
 * Added basic editor support for Dockerfiles (#5141)
+* Markdown-style sub-sections are now rendered as nested sections in the document outline for R documents (#4124)
+* Update to Pandoc 2.11 (#7696)
+* `Ctrl + D` can now be used to send EOF when reading user input via `readLines()` (#3448)
+* External files with spaces in their path or filename are now openable on Big Sur from Files pane (#8506)
+* PDF files opened from Files pane on macOS will open in registered application, not always Preview.app (#8506)
+* RStudio Server is no longer supported on RedHat Enterprise Linux 6 or CentOS 6, as these platforms have reached the vendors' End of Life (EOL) dates (Pro #2203)
 
 ### RStudio Server
 
@@ -62,6 +69,10 @@
 * Improved error logging of mistyped usernames when using PAM authentication (#7501)
 
 ### RStudio Server Pro
+
+> **Note:** RStudio Server Pro now requires a Postgres database when using its internal load balancer; this database must be set up *prior* to upgrade from earlier releases. If you have a multi-node RStudio Server Pro installation, consult the Administration Guide for instructions before upgrading.
+
+> **Note:** RStudio Server Pro uses a new location for user state; `.rstudio` is now `.local/share/rstudio`. This is a breaking change if you have [symlinked .rstudio](https://support.rstudio.com/hc/en-us/articles/218417097-Filling-up-the-home-directory-with-RStudio-Server) and can make downgrade more complicated. See the Administration Guide for more information, including instructions for using the old location if desired for compatibility with previous releases.
 
 * SAML is now supported as an authentication mechanism (Pro #1194)
 * OpenID Connect is now support as an authentication mechanism (Pro #1747)
@@ -79,7 +90,15 @@
 * Update embedded nginx to v1.19.2 (Pro #1719)
 * Changed the command to retrieve Slurm resource utilization to be run as the current user rather than the `slurm-service-user` (Pro #1527)
 * Reduced supurflous log messages in the Slurm Launcher Plugin log file about non-RStudio jobs in Slurm (Pro #1528)
-* Allow administrators to disabile the ability to set resource reqeusts on jobs launched through the Slurm Launcher Plugin (Pro #1948)
+* Allow administrators to disable the ability to set resource reqeusts on jobs launched through the Slurm Launcher Plugin (Pro #1948)
+* Add support for setting GPU and GRES requests on jobs launched through the Slurm Launcher Plugin (Pro #1390)
+* Allow administrators to enable Slurm job requeueing for jobs launched through the Slurm Launcher Plugin (Pro #2025)
+* Update the version of Slurm supported by the Slurm Launcher Plugin to 20.02 (Pro #2192) 
+* Project Sharing can now use raw UIDs as security principals, for compatibility with nodes that cannot resolve domains (Pro #2104)
+* **RETIRED:** The option `auth-proxy-require-hmac` is has been retired and it is no longer operational. RStudio will not start if enabled. See the documentation on [Proxy Security Considerations] for alternatives to secure RStudio. (Pro #2029)
+* Fix GetPass not working in remote sessions from Rstudio Desktop Pro (Pro #2218)
+* Fix issue with creating RSA key from remote sessions in RStudio Desktop Pro (Pro #2219)
+* Ensure error messages occurring during installation are displayed in the terminal (Pro #2214)
 
 ### Bugfixes
 
@@ -116,8 +135,9 @@
 * Reduced difference in font size and spacing between Terminal and Console (#6382)
 * Fixed issue where path autocompletion in R Markdown documents did not respect Knit Directory preference (#5412)
 * Fixed issue where Job Launcher streams could remain open longer than expected when viewing the job details page (Pro #1855)
-* Fixed issue where `rstudioapi::askForPassword()` did not mask user input in some cases.
+* Fixed issue where `rstudioapi::askForPassword()` did not mask user input in some cases
 * Fixed issue where Job Launcher admin users would have `gid=0` in Slurm Launcher Sessions (Pro #1935)
+* Fixed issue where Slurm Job Launcher jobs would not post updated resource utilization without browser refresh (Pro #2177)
 * Fixed issue causing script errors when reloading Shiny applications from the editor toolbar (#7762)
 * Fixed issue where saving a file or project located in a backed up directory (such as with Dropbox or Google Drive) would frequently fail and display an error prompt (#7131)
 * Fixed issue causing C++ diagnostics to fail when Xcode developer tools were active (#7824)
@@ -126,4 +146,13 @@
 * Fixed issue where non-ASCII characters in Subversion commit comments were incorrect encoded on Windows (#7959)
 * Prevent Discard button from being hidden in Subversion diff viewer (#6031)
 * Fixed issue where French (AZERTY) keyboards inserted '/' rather than ':' in some cases (#7932)
-* `readline()` and `readLines()` can now be interrupted, even when reading from `stdin()`. (#3448)
+* `readline()` and `readLines()` can now be interrupted, even when reading from `stdin()` (#3448)
+* Fixed issue causing Knit button to show old formats after editing the YAML header (#7833)
+* Fixed issue wherein the Python prompt would continue to be shown after an R restart (#8011)
+* Fixed issue where searches in the console history could inappropriately preserve search position (#7682)
+* Fixed issue where `auth-pam-session-use-password` would not work when multiple Server nodes are used behind an external load balancer (Pro #2158)
+* Fixed issue where project sharing configured it `server-project-sharing-root-dir` would fail to share when the path contain mixed ACL support (Pro #2061)
+* Fixed issue where project sharing would fail to share when the path contain mixed NFS ACL support (Pro #2103)
+* Fixed issue where in sharing a project on some NFSv4 filesystems could result in damage to owner permissions (Pro #2188)
+* Fixed issue where file permissions were not corrected after uploading a file to a shared project (Pro #2208)
+* Fixed issue where the project sharing would not work behind a HTTPS proxy (Pro #2088)

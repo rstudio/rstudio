@@ -1,7 +1,7 @@
 /*
  * attr_edit-decoration.css
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,6 +20,13 @@
   background-color: transparent;
   font-size: 10px;
 }
+
+.pm-div .pm-attr-edit-decoration {
+  margin-top: 10px;
+  right: 10px;
+}
+
+
 
 .pm-attr-edit-decoration .attr-edit-widget {
   padding: 2px;

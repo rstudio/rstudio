@@ -1,7 +1,7 @@
 /*
  * insert_citation-source-panel-pubmed.tsx
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,13 +29,16 @@ import {
   CitationListEntry,
   CitationSourceListStatus,
   errorForStatus,
+  matchExistingSourceCitationListEntry,
 } from './insert_citation-source-panel';
 import { CitationSourceLatentSearchPanel } from './insert_citation-source-panel-latent-search';
+import { BibliographyManager } from '../../../api/bibliography/bibliography';
 
 export function dataciteSourcePanel(
   ui: EditorUI,
   server: DataCiteServer,
   doiServer: DOIServer,
+  bibliographyManager: BibliographyManager
 ): CitationSourcePanelProvider {
   const kDataCiteType = 'Datacite';
   return {
@@ -66,7 +69,7 @@ export function dataciteSourcePanel(
               const records: DataCiteRecord[] = dataciteResult.message;
               const dedupeCitationIds = existingCitationIds;
               const citationEntries = records.map(record => {
-                const citationEntry = toCitationListEntry(record, dedupeCitationIds, ui, doiServer);
+                const citationEntry = matchExistingSourceCitationListEntry(record.doi, dedupeCitationIds, ui, bibliographyManager) || toCitationListEntry(record, dedupeCitationIds, ui, doiServer);
                 if (citationEntry) {
                   // Add this id to the list of existing Ids so future ids will de-duplicate against this one
                   dedupeCitationIds.push(citationEntry.id);

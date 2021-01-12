@@ -59,10 +59,13 @@ Positional arguments
         target and toolchain.
 
 Options
-  --directory <directory>
+  -d, --directory <directory>
         Root directory where to install the components.
         Maps to C:/Qt on Windows, /opt/Qt on Linux, /usr/local/Qt on Mac
         by default.
+
+  -f, --force
+        Force download and do not attempt to re-use an existing installation.
 
   --host <host-os>
         The host operating system. Can be one of linux_x64, mac_x64,
@@ -106,6 +109,8 @@ EOF
 TARGET_PLATFORM=desktop
 COMPONENTS=
 VERSION=
+FORCE_DOWNLOAD=false
+MD5_TOOL=md5sum
 
 case "$OSTYPE" in
     *linux*)
@@ -117,6 +122,7 @@ case "$OSTYPE" in
         HOST_OS=mac_x64
         INSTALL_DIR=/usr/local/Qt
         TOOLCHAIN=clang_64
+        MD5_TOOL="md5 -r"
         ;;
     msys)
         HOST_OS=windows_x86
@@ -134,6 +140,9 @@ while [ $# -gt 0 ]; do
         --directory|-d)
             INSTALL_DIR="$2"
             shift
+            ;;
+        --force|-f)
+            FORCE_DOWNLOAD=true
             ;;
         --host)
             HOST_OS="$2"
@@ -195,6 +204,24 @@ case "$TARGET_PLATFORM" in
         ;;
 esac
 
+HASH=$(echo "${OSTYPE} ${TARGET_PLATFORM} ${TOOLCHAIN} ${VERSION} ${INSTALL_DIR}" | ${MD5_TOOL} | head -c 16)
+HASH_FILEPATH="${INSTALL_DIR}/${HASH}.manifest"
+INSTALLATION_IS_VALID=false
+if ! ${FORCE_DOWNLOAD} && [ -f "${HASH_FILEPATH}" ]; then
+    INSTALLATION_IS_VALID=true
+    while read filepath; do
+        if [ ! -e "${filepath}" ]; then
+            INSTALLATION_IS_VALID=false
+            break
+        fi
+    done <"${HASH_FILEPATH}"
+fi
+
+if ${INSTALLATION_IS_VALID}; then
+    echo "Already installed. Skipping download." >&2
+    exit 0
+fi
+
 DOWNLOAD_DIR=`mktemp -d 2>/dev/null || mktemp -d -t 'install-qt'`
 
 #
@@ -234,7 +261,12 @@ function compute_url(){
                 # https://github.com/rstudio/rstudio/issues/6782
                 REMOTE_PATH="$(${CURL} ${BASE_URL}/${REMOTE_BASE}/ | grep -o -E "5\.12\.8\-0\-20200405[[:alnum:]_.\-]*7z" | grep "${COMPONENT}" | tail -1)"
             else
-                REMOTE_PATH="$(${CURL} ${BASE_URL}/${REMOTE_BASE}/ | grep -o -E "[[:alnum:]_.\-]*7z" | grep "${COMPONENT}" | tail -1)"
+                COMPNAME="${COMPONENT}"
+                if [[ "${COMPONENT}" == "qtwaylandcompositor" ]]; then
+                    # Qt 5.13+ has a mismatch between folder name and archive name of qtwaylandcompositor
+                    COMPNAME="qtwayland-compositor"
+                fi
+                REMOTE_PATH="$(${CURL} ${BASE_URL}/${REMOTE_BASE}/ | grep -o -E "[[:alnum:]_.\-]*7z" | grep "${COMPNAME}" | tail -1)"
             fi
             if [ ! -z "${REMOTE_PATH}" ]; then
                 echo "${BASE_URL}/${REMOTE_BASE}/${REMOTE_PATH}"
@@ -248,14 +280,15 @@ function compute_url(){
 }
 
 mkdir -p ${INSTALL_DIR}
+rm -f "${HASH_FILEPATH}"
 
 for COMPONENT in ${COMPONENTS}; do
 
     URL="$(compute_url ${COMPONENT})"
-echo URL=${URL}
     echo "Downloading ${COMPONENT}..." >&2
     curl --progress-bar -L -o ${DOWNLOAD_DIR}/package.7z ${URL} >&2
     7z x -y -o${INSTALL_DIR} ${DOWNLOAD_DIR}/package.7z >/dev/null 2>&1
+    7z l -ba -slt -y ${DOWNLOAD_DIR}/package.7z | tr '\\' '/' | sed -n -e "s|^Path\ =\ |${INSTALL_DIR}/|p" >> "${HASH_FILEPATH}" 2>/dev/null
     rm -f ${DOWNLOAD_DIR}/package.7z
 
     #
@@ -291,7 +324,11 @@ echo URL=${URL}
         # adjust the PATH variable.
         echo $(dirname "${CONF_FILE}")
     elif [[ "${COMPONENT}" =~ "qtcreator" ]]; then
-        echo "${INSTALL_DIR}/Tools/QtCreator/bin"
+        if [ "${HOST_OS}" == "mac_x64" ]; then
+            echo "${INSTALL_DIR}/Qt Creator.app/Contents/MacOS"
+        else
+            echo "${INSTALL_DIR}/Tools/QtCreator/bin"
+        fi
     fi
 
 done

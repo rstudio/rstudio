@@ -1,7 +1,7 @@
 /*
  * csl.ts
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -72,6 +72,7 @@ export interface CSL {
   subtitle?: string;
   subject?: string;
   archive?: string;
+  license?: [];
 }
 
 export interface CSLName {
@@ -103,6 +104,7 @@ export function sanitizeForCiteproc(csl: CSL): CSL {
     'subtitle',
     'container-title',
     'short-container-title',
+    'license'
   ];
   const cslAny: { [key: string]: any } = {
     ...csl,
@@ -119,19 +121,26 @@ export function sanitizeForCiteproc(csl: CSL): CSL {
           cslAny[property] = undefined;
         }
       }
-      return csl;
+      return cslAny;
     });
 
   // Strip any raw date representations
-  if (csl.issued?.raw) {
-    delete csl.issued.raw;
+  if (cslAny.issued?.raw) {
+    delete cslAny.issued.raw;
   }
+
+  // Pubmed and others may included license information (including date ranges and more)
+  // which will not be properly parsed by Pandoc (when writing to the bibiliography). Remove
+  if (cslAny.license) {
+    delete cslAny.license;
+  }
+
   // pandoc-citeproc performance is extremely poor with large abstracts. As a result, purge this property
   delete cslAny.abstract;
   delete cslAny.id;
 
   // Ensure only valid CSL types make it through
-  csl.type = ensureValidCSLType(csl.type);
+  cslAny.type = ensureValidCSLType(cslAny.type);
 
   return cslAny as CSL;
 }

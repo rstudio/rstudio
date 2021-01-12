@@ -1,7 +1,7 @@
 /*
  * VisualModeNavigation.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -87,7 +87,7 @@ public class VisualModeNavigation
    public SourcePosition getSourcePosition()
    {
       PanmirrorWidget panmirror = context_.panmirror();
-      if (panmirror != null && panmirror.isAttached())
+      if (panmirror != null && panmirror.isEditorAttached())
       {
          PanmirrorEditingLocation editingLocation = panmirror.getEditingLocation();
          return createSourcePosition(editingLocation.pos);

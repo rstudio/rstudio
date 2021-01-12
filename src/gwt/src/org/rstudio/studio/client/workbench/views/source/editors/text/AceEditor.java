@@ -1,7 +1,7 @@
 /*
  * AceEditor.java
  *
- * Copyright (C) 2020 by RStudio, PBC
+ * Copyright (C) 2021 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -3882,26 +3882,40 @@ public class AceEditor implements DocDisplay,
       }
       while (false);
       
-      // check for binary operator on start line
+      // check for lines of the form:
+      //
+      //     ) foo +
+      //
+      // that is, the line ends in a binary operator, but also
+      // starts with a right bracket. in that case, we want to
+      // move the cursor to the associated left bracket.
       if (rowEndsInBinaryOperatorOrOpenParen(startRow))
       {
          // move token cursor to that row
          c.moveToEndOfRow(startRow);
 
          // skip comments, operators, etc.
+         boolean foundBracket = false;
          while (c.hasType("text", "comment", "virtual-comment", "keyword.operator"))
          {
             if (c.isRightBracket())
+            {
+               foundBracket = true;
                break;
+            }
 
             if (!c.moveToPreviousToken())
+               break;
+          
+            // if we moved back off the start row, break
+            if (c.getRow() != startRow)
                break;
          }
 
          // if we landed on a closing bracket, look for its match
          // and then continue search from that row. otherwise,
          // just look back a single row
-         if (c.valueEquals(")") || c.valueEquals("]"))
+         if (foundBracket && (c.valueEquals(")") || c.valueEquals("]")))
          {
             if (c.bwdToMatchingToken())
             {
