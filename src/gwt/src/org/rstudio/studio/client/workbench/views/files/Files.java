@@ -22,7 +22,6 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.ColumnSortInfo;
 import org.rstudio.core.client.command.CommandBinder;
@@ -37,7 +36,6 @@ import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.fileexport.FileExport;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
-import org.rstudio.studio.client.common.filetypes.events.CopySourcePathEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenFileInBrowserEvent;
 import org.rstudio.studio.client.common.filetypes.events.RenameSourceFileEvent;
 import org.rstudio.studio.client.events.RStudioApiRequestEvent;
@@ -71,7 +69,6 @@ public class Files
                  OpenFileInBrowserEvent.Handler,
                  DirectoryNavigateEvent.Handler,
                  RenameSourceFileEvent.Handler,
-                 CopySourcePathEvent.Handler,
                  RStudioApiRequestEvent.Handler
 {
    interface Binder extends CommandBinder<Commands, Files> {}
@@ -179,7 +176,6 @@ public class Files
 
       eventBus_.addHandler(FileChangeEvent.TYPE, this);
       eventBus_.addHandler(RenameSourceFileEvent.TYPE, this);
-      eventBus_.addHandler(CopySourcePathEvent.TYPE, this);
       eventBus_.addHandler(RStudioApiRequestEvent.TYPE, this);
 
       initSession();
@@ -638,20 +634,6 @@ public class Files
    public void onRenameSourceFile(RenameSourceFileEvent event)
    {
       renameFile(FileSystemItem.createFile(event.getPath()));
-   }
-
-   @Override
-   public void onCopySourcePath(CopySourcePathEvent event)
-   {
-      String path = event.getPath();
-      if (BrowseCap.isWindowsDesktop() && !Desktop.isRemoteDesktop())
-      {
-         // on Windows desktop, with a regular session (versus an RDP remote
-         // session), resolve the "~" to a full path since Windows doesn't
-         // natively understand "~"
-         path = server_.resolveAliasedPath(FileSystemItem.createFile(path));
-      }
-      DomUtils.copyToClipboard(path);
    }
 
    @Override
