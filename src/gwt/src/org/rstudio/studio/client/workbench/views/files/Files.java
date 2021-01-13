@@ -36,6 +36,7 @@ import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.fileexport.FileExport;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.filetypes.events.CopySourcePathEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenFileInBrowserEvent;
 import org.rstudio.studio.client.common.filetypes.events.RenameSourceFileEvent;
 import org.rstudio.studio.client.events.RStudioApiRequestEvent;
@@ -69,6 +70,7 @@ public class Files
                  OpenFileInBrowserEvent.Handler,
                  DirectoryNavigateEvent.Handler,
                  RenameSourceFileEvent.Handler,
+                 CopySourcePathEvent.Handler,
                  RStudioApiRequestEvent.Handler
 {
    interface Binder extends CommandBinder<Commands, Files> {}
@@ -176,6 +178,7 @@ public class Files
 
       eventBus_.addHandler(FileChangeEvent.TYPE, this);
       eventBus_.addHandler(RenameSourceFileEvent.TYPE, this);
+      eventBus_.addHandler(CopySourcePathEvent.TYPE, this);
       eventBus_.addHandler(RStudioApiRequestEvent.TYPE, this);
 
       initSession();
@@ -634,6 +637,12 @@ public class Files
    public void onRenameSourceFile(RenameSourceFileEvent event)
    {
       renameFile(FileSystemItem.createFile(event.getPath()));
+   }
+
+   @Override
+   public void onCopySourcePath(CopySourcePathEvent event)
+   {
+      DomUtils.copyToClipboard(event.getPath());
    }
 
    @Override
