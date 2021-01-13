@@ -143,6 +143,48 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    )
 })
 
+# saves the R global environment to a file
+# analogous to the R_SaveGlobalEnvToFile # C routine,
+# but we avoid saving Python objects as they will not be valid after restore
+.rs.addFunction("saveGlobalEnvToFile", function(path)
+{
+   # get list of objects in global environment
+   envir <- globalenv()
+   
+   # get the names of those objects
+   symbols <- ls(envir = envir, all.names = TRUE)
+   
+   # exclude Python objects
+   isPython <- vapply(symbols, function(symbol) {
+      
+      # avoid stepping on active bindings
+      if (bindingIsActive(symbol, envir))
+         return(FALSE)
+      
+      inherits(envir[[symbol]], "python.builtin.object")
+         
+   }, FUN.VALUE = logical(1))
+   
+   symbols <- symbols[!isPython]
+   
+   # save those objects to a tempfile, and then move that
+   # to the request location
+   sidecarFile <- paste(path, "incomplete", sep = ".")
+   on.exit(unlink(sidecarFile), add = TRUE)
+   
+   # perform the save
+   save(list  = symbols,
+        file  = sidecarFile,
+        envir = envir)
+   
+   # move to the requested location
+   file.rename(sidecarFile, path)
+   
+   # done!
+   TRUE
+   
+})
+
 # attempts to restore the global environment from a file
 # on success, returns an empty string; on failure, returns
 # the error message
@@ -233,7 +275,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 
 
 # try to determine if devtools::dev_mode is on
-.rs.addFunction( "devModeOn", function(){
+.rs.addFunction("devModeOn", function() {
    
   # determine devmode path (devtools <= 0.6 hard-coded it)
   devToolsPath <- getOption("devtools.path")
@@ -243,7 +285,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 
   # no devtools path
   if (is.null(devToolsPath))
-    return (FALSE)
+    return(FALSE)
 
   # is the devtools path active?
   devToolsPath <- .rs.normalizePath(devToolsPath, winslash = "/", mustWork = FALSE)
