@@ -337,6 +337,9 @@ public class Source implements InsertSourceEvent.Handler,
          @Override
          public void onSourcePathChanged(final SourcePathChangedEvent event)
          {
+            // Satellites also need to know about this happening, for example if a file
+            // is renamed via the tab context menu or externally
+            events_.fireEventToAllSatellites(event);
 
             columnManager_.inEditorForPath(event.getFrom(),
                             new OperationWithInput<EditingTarget>()
