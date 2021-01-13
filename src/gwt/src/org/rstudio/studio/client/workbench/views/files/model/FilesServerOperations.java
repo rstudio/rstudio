@@ -27,10 +27,10 @@ public interface FilesServerOperations
 {
    void stat(String path,
              ServerRequestCallback<FileSystemItem> requestCallback);
-   
+
    void isTextFile(String path,
                    ServerRequestCallback<Boolean> requestCallback);
-   
+
    void isGitDirectory(String path,
                        ServerRequestCallback<Boolean> requestCallback);
 
@@ -90,11 +90,11 @@ public interface FilesServerOperations
    String getFileExportUrl(String name,
                            FileSystemItem parentDirectory,
                            ArrayList<String> filenames);
-   
+
    void writeConfigJSON(String relativePath,
                   JavaScriptObject object,
                   ServerRequestCallback<Boolean> requestCallback);
-   
+
    void readConfigJSON(String relativePath,
                  boolean logErrorIfNotFound,
                  ServerRequestCallback<JavaScriptObject> requestCallback);

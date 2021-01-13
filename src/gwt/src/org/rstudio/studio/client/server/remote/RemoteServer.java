@@ -552,7 +552,7 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, SET_USER_CRASH_HANDLER_PROMPTED, enableCrashHandling, requestCallback);
    }
-   
+
    @Override
    public void rstudioApiResponse(JavaScriptObject response,
                                   ServerRequestCallback<Void> requestCallback)
@@ -683,7 +683,7 @@ public class RemoteServer implements Server
             .add(consoleId)
             .add(flags)
             .get();
-      
+
       sendRequest(RPC_SCOPE, CONSOLE_INPUT, params, requestCallback);
    }
 
@@ -2067,7 +2067,7 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, WRITE_PROJECT_OPTIONS, options, callback);
    }
-   
+
    public void writeProjectConfig(RProjectConfig config, ServerRequestCallback<Void> callback)
    {
       sendRequest(RPC_SCOPE, WRITE_PROJECT_CONFIG, config, callback);
@@ -4632,7 +4632,7 @@ public class RemoteServer implements Server
                   REQUERY_CONTEXT,
                   requestCallback);
    }
-   
+
    @Override
    public void isFunctionMasked(String functionName,
                                 String packageName,
@@ -4642,7 +4642,7 @@ public class RemoteServer implements Server
             .add(functionName)
             .add(packageName)
             .get();
-      
+
       sendRequest(RPC_SCOPE, IS_FUNCTION_MASKED, params, requestCallback);
    }
 
@@ -5468,7 +5468,7 @@ public class RemoteServer implements Server
       params.set(0, new JSONString(input));
       sendRequest(RPC_SCOPE, GET_RMD_OUTPUT_INFO, params, requestCallback);
    }
-   
+
    @Override
    public void rmdImportImages(JsArrayString images, String imagesDir,
                                ServerRequestCallback<JsArrayString> requestCallback)
@@ -6265,17 +6265,17 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, CROSSREF_WORKS, query, callback);
    }
-   
+
    @Override
    public void dataciteSearch(String query, ServerRequestCallback<JavaScriptObject> callback)
    {
-      sendRequest(RPC_SCOPE, DATACITE_SEARCH, query, callback);  
+      sendRequest(RPC_SCOPE, DATACITE_SEARCH, query, callback);
    }
-   
+
    @Override
    public void pubmedSearch(String query, ServerRequestCallback<JavaScriptObject> callback)
    {
-      sendRequest(RPC_SCOPE, PUBMED_SEARCH, query, callback);  
+      sendRequest(RPC_SCOPE, PUBMED_SEARCH, query, callback);
    }
 
    @Override
@@ -6298,9 +6298,9 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, ZOTERO_GET_LIBRARY_NAMES, callback);
    }
-   
+
    @Override
-   public void zoteroGetActiveCollectionSpecs(String file, 
+   public void zoteroGetActiveCollectionSpecs(String file,
                                               JsArrayString collections,
                                               ServerRequestCallback<JavaScriptObject> callback)
    {
@@ -6308,9 +6308,9 @@ public class RemoteServer implements Server
       params.set(0, new JSONString(StringUtil.notNull(file)));
       params.set(1, new JSONArray(collections));
       sendRequest(RPC_SCOPE, ZOTERO_GET_ACTIVE_COLLECTIONSPECS, params, callback);
-      
+
    }
-   
+
    @Override
    public void zoteroValidateWebAPIKey(String key, ServerRequestCallback<Boolean> callback)
    {
@@ -6863,11 +6863,11 @@ public class RemoteServer implements Server
    private static final String PANDOC_CITATION_HTML = "pandoc_citation_html";
 
    private static final String CROSSREF_WORKS = "crossref_works";
-   
+
    private static final String PUBMED_SEARCH = "pubmed_search";
-   
+
    private static final String DATACITE_SEARCH = "datacite_search";
-  
+
    private static final String ZOTERO_GET_COLLECTIONS = "zotero_get_collections";
    private static final String ZOTERO_GET_LIBRARY_NAMES = "zotero_get_library_names";
    private static final String ZOTERO_GET_ACTIVE_COLLECTIONSPECS = "zotero_get_active_collection_specs";
@@ -6879,5 +6879,5 @@ public class RemoteServer implements Server
 
    private static final String XREF_INDEX_FOR_FILE = "xref_index_for_file";
    private static final String XREF_FOR_ID = "xref_for_id";
-  
+
 }
