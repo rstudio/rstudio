@@ -14,6 +14,7 @@
  */
 
 #include "SessionSystemResources.hpp"
+#include "../SessionMainProcess.hpp"
 #include <session/prefs/UserPrefs.hpp>
 #include <session/SessionModuleContext.hpp>
 
@@ -56,6 +57,12 @@ void onUserSettingsChanged(const std::string& layer, const std::string& pref)
 
 void onDetectChanges(module_context::ChangeSource source)
 {
+   // Don't emit memory stats from child processes
+   if (main_process::wasForked())
+   {
+      return;
+   }
+
    if (prefs::userPrefs().showMemoryUsage())
    {
       emitMemoryChangedEvent();
