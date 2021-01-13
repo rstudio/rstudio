@@ -22,6 +22,7 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.ColumnSortInfo;
 import org.rstudio.core.client.command.CommandBinder;
@@ -642,7 +643,15 @@ public class Files
    @Override
    public void onCopySourcePath(CopySourcePathEvent event)
    {
-      DomUtils.copyToClipboard(event.getPath());
+      String path = event.getPath();
+      if (BrowseCap.isWindowsDesktop() && !Desktop.isRemoteDesktop())
+      {
+         // on Windows desktop, with a regular session (versus an RDP remote
+         // session), resolve the "~" to a full path since Windows doesn't
+         // natively understand "~"
+         path = server_.resolveAliasedPath(FileSystemItem.createFile(path));
+      }
+      DomUtils.copyToClipboard(path);
    }
 
    @Override
