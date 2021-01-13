@@ -704,6 +704,9 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       // our internal doc mappings so we can route navigations to the right
       // window for that path
       updateDocPath(event.getDocId(), event.getPath());
+
+      // satellites also need to know if a file was renamed
+      events_.fireEventToAllSatellites(event);
    }
 
    @Override
