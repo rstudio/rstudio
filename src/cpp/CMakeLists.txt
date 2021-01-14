@@ -188,6 +188,21 @@ if(RSTUDIO_PACKAGE_BUILD)
    add_definitions(-DRSTUDIO_PACKAGE_BUILD)
 endif()
 
+# yaml-cpp
+if(WIN32)
+   # TODO
+else()
+
+   set(YAML_CPP_INCLUDE_DIR
+      /opt/rstudio-tools/yaml-cpp/0.6.3/include)
+   
+   set(YAML_CPP_LIBRARIES
+      /opt/rstudio-tools/yaml-cpp/0.6.3/build/libyaml-cpp.a)
+
+endif()
+
+include_directories(SYSTEM "${YAML_CPP_INCLUDE_DIR}")
+
 # determine whether we should statically link boost. we always do this
 # unless we are building a non-packaged build on linux (in which case
 # boost dynamic libraries are presumed to be installed on the system ldpath)

@@ -1031,6 +1031,70 @@ SEXP create(const core::json::Value& value, Protect* pProtect)
    }
 }
 
+namespace {
+
+SEXP createYamlMap(const YAML::Node& node, Protect* pProtect)
+{
+   ListBuilder builder(pProtect);
+ 
+   for (auto it = node.begin();
+        it != node.end();
+        ++it)
+   {
+      std::string key = it->first.as<std::string>();
+      SEXP value = create(it->second, pProtect);
+      builder.add(key, value);
+   }
+   
+   return r::sexp::create(builder, pProtect);
+}
+
+SEXP createYamlSequence(const YAML::Node& node, Protect* pProtect)
+{
+   ListBuilder builder(pProtect);
+   
+   for (auto it = node.begin();
+        it != node.end();
+        ++it)
+   {
+      SEXP value = create(*it, pProtect);
+      builder.add(value);
+   }
+   
+   return r::sexp::create(builder, pProtect);
+}
+
+SEXP createYamlScalar(const YAML::Node& node, Protect* pProtect)
+{
+   // as far as I can tell, yaml-cpp doesn't record the type for scalars;
+   // you simply need to try to convert to a particular type you want and
+   // then fall back if that fails. *shrugs*
+   return r::sexp::create(node.Scalar(), pProtect);
+}
+
+} // end anonymous namespace
+
+SEXP create(const YAML::Node& node, Protect* pProtect)
+{
+   auto type = node.Type();
+   switch (type)
+   {
+   case YAML::NodeType::Map:
+      return createYamlMap(node, pProtect);
+   case YAML::NodeType::Sequence:
+      return createYamlSequence(node, pProtect);
+   case YAML::NodeType::Scalar:
+      return createYamlScalar(node, pProtect);
+   case YAML::NodeType::Undefined:
+   case YAML::NodeType::Null:
+      return R_NilValue;
+   default:
+      return R_NilValue;
+   }
+}
+
+
+
 SEXP create(const char* value, Protect* pProtect)
 {
    return create(std::string(value), pProtect);
