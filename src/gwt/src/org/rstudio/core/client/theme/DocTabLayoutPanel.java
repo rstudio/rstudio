@@ -41,6 +41,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
+import org.rstudio.studio.client.common.filetypes.events.CopySourcePathEvent;
 import org.rstudio.studio.client.common.filetypes.events.RenameSourceFileEvent;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.server.model.RequestDocumentCloseEvent;
@@ -221,6 +222,10 @@ public class DocTabLayoutPanel
                menu.addItem(new MenuItem("Rename", () ->
                {
                   events_.fireEvent(new RenameSourceFileEvent(filePath));
+               }));
+               menu.addItem(new MenuItem("Copy Path", () ->
+               {
+                  events_.fireEvent(new CopySourcePathEvent(filePath));
                }));
                menu.addSeparator();
             }

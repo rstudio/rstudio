@@ -98,4 +98,11 @@ public interface FilesServerOperations
    void readConfigJSON(String relativePath,
                  boolean logErrorIfNotFound,
                  ServerRequestCallback<JavaScriptObject> requestCallback);
+
+   /**
+    * Use VERY sparingly; we generally don't want to expose
+    * non-aliased paths to other parts of the client codebase
+    * (most client-side APIs assume paths are aliased)
+    */
+   String resolveAliasedPath(FileSystemItem file);
 }

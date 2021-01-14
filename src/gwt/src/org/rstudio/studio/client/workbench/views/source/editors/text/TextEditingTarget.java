@@ -78,6 +78,7 @@ import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.SweaveFileType;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.common.filetypes.events.CopySourcePathEvent;
 import org.rstudio.studio.client.common.filetypes.events.RenameSourceFileEvent;
 import org.rstudio.studio.client.common.mathjax.MathJax;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper;
@@ -3757,6 +3758,12 @@ public class TextEditingTarget implements
    void onRenameSourceDoc()
    {
       events_.fireEvent(new RenameSourceFileEvent(docUpdateSentinel_.getPath()));
+   }
+
+   @Handler
+   void onCopySourceDocPath()
+   {
+      events_.fireEvent(new CopySourcePathEvent(docUpdateSentinel_.getPath()));
    }
 
    @Handler

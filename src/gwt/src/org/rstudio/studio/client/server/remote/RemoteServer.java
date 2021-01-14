@@ -1588,10 +1588,10 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, RENAME_FILE, paramArray, requestCallback);
    }
 
-   // this method is private as we generally don't want to expose
+   // This method should be rarely used; we generally don't want to expose
    // non-aliased paths to other parts of the client codebase
    // (most client-side APIs assume paths are aliased)
-   private final String resolveAliasedPath(FileSystemItem file)
+   public final String resolveAliasedPath(FileSystemItem file)
    {
       String path = file.getPath();
       if (path.startsWith("~"))
