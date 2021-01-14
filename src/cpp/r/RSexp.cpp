@@ -17,6 +17,8 @@
 #define RSTUDIO_DEBUG_LABEL "rsexp"
 // #define RSTUDIO_ENABLE_DEBUG_MACROS
 
+#include <cctype>
+
 #include <gsl/gsl>
 
 #include <r/RInternal.hpp>
@@ -1066,10 +1068,94 @@ SEXP createYamlSequence(const YAML::Node& node, Protect* pProtect)
 
 SEXP createYamlScalar(const YAML::Node& node, Protect* pProtect)
 {
-   // as far as I can tell, yaml-cpp doesn't record the type for scalars;
-   // you simply need to try to convert to a particular type you want and
-   // then fall back if that fails. *shrugs*
-   return r::sexp::create(node.Scalar(), pProtect);
+   // yaml-cpp doesn't record the associated type for scalars;
+   // we need to guess and infer for ourselves
+   const std::string& text = node.Scalar();
+   
+   // handle empty strings up front
+   if (text.empty())
+      return R_NilValue;
+   
+   // first, handle some known keywords
+   if (text == "null" ||
+       text == "Null" ||
+       text == "NULL" ||
+       text == "~" ||
+       text == "")
+   {
+      return R_NilValue;
+   }
+   else if (text == "true" ||
+            text == "True" ||
+            text == "TRUE")
+   {
+      return r::sexp::create(true, pProtect);
+   }
+   else if (text == "false" ||
+            text == "False" ||
+            text == "FALSE")
+   {
+      return r::sexp::create(false, pProtect);
+   }
+   else if (text == ".nan" ||
+            text == ".NaN" ||
+            text == ".NAN")
+   {
+      return r::sexp::create(R_NaReal, pProtect);
+   }
+   else if (text == ".inf" ||
+            text == ".Inf" ||
+            text == ".INF")
+   {
+      return r::sexp::create(R_PosInf, pProtect);
+   }
+   else if (text == "+.inf" ||
+            text == "+.Inf" ||
+            text == "+.INF")
+   {
+      return r::sexp::create(R_PosInf, pProtect);
+   }
+   else if (text == "-.inf" ||
+            text == "-.Inf" ||
+            text == "-.INF")
+   {
+      return r::sexp::create(R_NegInf, pProtect);
+   }
+   
+   // check for potential numeric values
+   // (TODO: handle integers specifically?
+   char ch = text[0];
+   if (ch == '-' ||
+       ch == '+' ||
+       std::isdigit(static_cast<int>(ch)))
+   {
+      // first, attempt a conversion to int
+      try
+      {
+         int value = node.as<int>();
+         return r::sexp::create(value, pProtect);
+      }
+      catch (...)
+      {
+         // intentionally swallow errors
+      }
+      
+      // if that failed, try a conversion to double
+      try
+      {
+         double value = node.as<double>();
+         return r::sexp::create(value, pProtect);
+      }
+      catch (...)
+      {
+         // intentionally swallow errors
+      }
+      
+      // fall-through and parse as string
+   }
+   
+   // if not special conditions apply, then it's just a string
+   return r::sexp::create(text, pProtect);
 }
 
 } // end anonymous namespace
