@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.environment.view;
 
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
@@ -96,7 +97,18 @@ public class MemUsageWidget extends Composite
       {
          long percent = Math.round(((usage.getUsed().getKb() * 1.0) / (usage.getTotal().getKb() * 1.0)) * 100);
          menu_.setTitle("Memory used by R session");
-         menu_.setText((usage.getProcess().getKb() / 1024) + " MiB");
+         long mib = usage.getProcess().getKb() / 1024;
+         if (mib >= 1024)
+         {
+            // Memory usage is > 1GiB, format as XX.YY GiB
+            NumberFormat decimalFormat = NumberFormat.getFormat(".##");
+            menu_.setText(decimalFormat.format((double)mib / (double)1024) + " GiB");
+         }
+         else
+         {
+            // Memory usage is in MiB
+            menu_.setText(mib + " MiB");
+         }
 
          // These values are chosen to align with those used in rstudio.cloud.
          String color = "#5f9a91";   // under 70%, green
