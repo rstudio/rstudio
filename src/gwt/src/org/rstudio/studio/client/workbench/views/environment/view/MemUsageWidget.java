@@ -46,7 +46,11 @@ public class MemUsageWidget extends Composite
       style.setMarginRight(3, Style.Unit.PX);
       host_.add(pieCrust_);
 
-      pie_ = new MiniPieWidget("#000000", "#e4e4e4", 0);
+      pie_ = new MiniPieWidget("Memory Usage",
+         "Pie chart depicting the percentage of total memory in use",
+         "#000000",
+         "#e4e4e4",
+         0);
       pieCrust_.add(pie_);
 
       ToolbarPopupMenu memoryMenu = new ToolbarPopupMenu();
@@ -91,13 +95,10 @@ public class MemUsageWidget extends Composite
       else
       {
          long percent = Math.round(((usage.getUsed().getKb() * 1.0) / (usage.getTotal().getKb() * 1.0)) * 100);
-         menu_.setTitle("Used by process: " + (usage.getProcess().getKb() / 1024) + " MiB\n" +
-            "Total used: " + (usage.getUsed().getKb() / 1024) + " MiB\n" +
-            "Total memory: " + (usage.getTotal().getKb() / 1024) + " MiB");
-
-         // These values are chosen to align with those used in rstudio.cloud.
+         menu_.setTitle("Memory used by R session");
          menu_.setText((usage.getProcess().getKb() / 1024) + " MiB");
 
+         // These values are chosen to align with those used in rstudio.cloud.
          String color = "#5f9a91";   // under 70%, green
          if (percent > 90) {
             color = "#e55037";       // 90% and above, red
@@ -109,6 +110,7 @@ public class MemUsageWidget extends Composite
 
          pie_.setPercent((int)percent);
          pie_.setForeColor(color);
+         pie_.setTitle("Memory in use: " + percent + "%");
          pieCrust_.setVisible(true);
          pieCrust_.getElement().setInnerHTML(pieCrust_.getElement().getInnerHTML());
       }
