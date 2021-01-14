@@ -10,6 +10,7 @@
 * The mouse back / forward buttons can now be used to navigate within the Help pane (#8338)
 * Right-click on document tab provides menu with close, close all, close others (#1664)
 * Rename File added to document tab context menu (#8374)
+* Copy Path command added to document tab context menu (#7289)
 * Compilation of Sweave documents now uses tinytex when requested (#2788)
 * Preliminary compatibility with UCRT builds of R-devel (#8461)
 * Update Windows Desktop to openSSL 1.1.1i (#8574)
@@ -34,6 +35,7 @@
 * Fixed issue where attempting to profile lines ending in comment would fail (#8407)
 * Fixed issue where warnings + messages were mis-encoded in chunk outputs on Windows (#8565)
 * Fixed issue where C++ compilation database was not invalidated when compiler was updated (#8588)
+* Fixed issue where restarting session with reticulate Python objects could cause errors in console (#8185)
 * Improved checks for non-writable R library paths on startup (Pro #2184)
 * Code chunks in the visual editor now respect the "Tab Key Always Moves Focus" accessibility setting (#8584)
 * The commands "Execute Previous Chunks" and "Execute Subsequent Chunks" now work when the cursor is outside a code chunk in the visual editor (#8500)
@@ -41,6 +43,7 @@
 * Fix display of condition messages (errors and warnings) in some character encodings (#8546)
 * Fix issues finding words with punctuation in visual mode (#8655)
 * Fix spurious image insertion when pasting into visual mode from Excel (#8665)
+* Fix out-of-date tooltip when renaming files (#8490, #8491)
 
 
 

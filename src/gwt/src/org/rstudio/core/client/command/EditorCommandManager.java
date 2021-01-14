@@ -19,16 +19,21 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.files.ConfigFileBacked;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.events.EditorKeybindingsChangedEvent;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ResetEditorCommandsEvent;
 import org.rstudio.studio.client.application.events.SetEditorCommandBindingsEvent;
+import org.rstudio.studio.client.common.filetypes.events.CopySourcePathEvent;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommand;
@@ -139,6 +144,18 @@ public class EditorCommandManager
                }
             });
 
+      events_.addHandler(CopySourcePathEvent.TYPE, event ->
+      {
+         String path = event.getPath();
+         if (BrowseCap.isWindowsDesktop() && !Desktop.isRemoteDesktop())
+         {
+            // on Windows desktop, with a regular session (versus an RDP remote
+            // session), resolve the "~" to a full path since Windows doesn't
+            // natively understand "~"
+            path = files_.resolveAliasedPath(FileSystemItem.createFile(path));
+         }
+         DomUtils.copyToClipboard(path);
+      });
    }
 
    @Inject
