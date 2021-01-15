@@ -1,5 +1,5 @@
 /*
- * Win32Pty.hpp
+ * Win32ConPty.hpp
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -12,27 +12,21 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+#ifndef CORE_SYSTEM_WIN32CONPTY_HPP
+#define CORE_SYSTEM_WIN32CONPTY_HPP
 
-#ifndef CORE_SYSTEM_WIN32PTY_HPP
-#define CORE_SYSTEM_WIN32PTY_HPP
-
-#include <winpty/winpty.h>
+#include "Win32Terminal.hpp"
 
 namespace rstudio {
 namespace core {
 namespace system {
 
-// Wrapper class for winpty library (https://github.com/rprichard/winpty)
-// "A windows software package providing an interface similar to a Unix
-// pty-master for communicating with Windows console programs."
-class WinPty : public WinTerminal
+class WinConPty : public WinTerminal
 {
-public:
-   WinPty()
-      : pPty_(nullptr)
-   {}
+ public:
+   WinConPty() {}
 
-   virtual ~WinPty();
+   virtual ~WinConPty();
 
    // Start the process specified by exe; it will do I/O via the returned
    // handles. On success, caller is responsible for closing
@@ -45,7 +39,6 @@ public:
                HANDLE* pStdErrRead,
                HANDLE* pProcess) override;
 
-
    bool ptyRunning() const override;
 
    // Change the size of the pseudoterminal
@@ -53,21 +46,10 @@ public:
 
    // Send interrupt (Ctrl+C)
    Error interrupt() override;
-
-private:
-   Error startPty(HANDLE* pStdInWrite, HANDLE* pStdOutRead, HANDLE* pStdErrRead);
-   Error runProcess(HANDLE* pProcess);
-   void stopPty();
-
-private:
-   winpty_t *pPty_;
-   std::string exe_;
-   std::vector<std::string> args_;
-   ProcessOptions options_;
 };
 
 } // namespace system
 } // namespace core
 } // namespace rstudio
 
-#endif // CORE_SYSTEM_WIN32PTY_HPP
+#endif // CORE_SYSTEM_WIN32CONPTY_HPP

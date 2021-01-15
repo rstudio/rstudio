@@ -245,6 +245,19 @@ core::Error UserPrefValues::setShowLineNumbers(bool val)
 }
 
 /**
+ * Force use of WinPTY instead of ConPTY for Terminal (Windows only)
+ */
+bool UserPrefValues::terminalDisableConpty()
+{
+   return readPref<bool>("terminal_disable_conpty");
+}
+
+core::Error UserPrefValues::setTerminalDisableConpty(bool val)
+{
+   return writePref("terminal_disable_conpty", val);
+}
+
+/**
  * Highlight the selected word in RStudio's code editor.
  */
 bool UserPrefValues::highlightSelectedWord()
@@ -2851,6 +2864,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kCustomShellCommand,
       kCustomShellOptions,
       kShowLineNumbers,
+      kTerminalDisableConpty,
       kHighlightSelectedWord,
       kHighlightSelectedLine,
       kPanes,

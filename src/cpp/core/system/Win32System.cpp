@@ -42,6 +42,7 @@
 #include <core/DateTime.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/Environment.hpp>
+#include <core/system/RegistryKey.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
@@ -201,6 +202,33 @@ bool isCurrentProcessWin64()
 bool isWin7OrLater()
 {
    return IsWindows7OrGreater();
+}
+
+uint64_t getWinBuildNumber()
+{
+   // VERY unlikely to encounter errors here, but just in case we'll return the build number
+   // for Windows-7, our current minimally supported build
+   const uint64_t win7 = 7601U;
+
+   RegistryKey regKey;
+   Error error = regKey.open(HKEY_LOCAL_MACHINE,
+                             "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
+                             KEY_READ);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return win7;
+   }
+
+   std::string buildStr;
+   error = regKey.getStringValue("CurrentBuild", &buildStr);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return win7;
+   }
+
+   return safe_convert::stringTo<uint64_t>(buildStr, win7);
 }
 
 std::string username()

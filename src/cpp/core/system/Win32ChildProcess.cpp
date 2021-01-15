@@ -14,20 +14,15 @@
  */
 
 #include "ChildProcessSubprocPoll.hpp"
-#include "Win32Pty.hpp"
+#include "Win32PtyAgent.hpp"
 
 #include <iostream>
 
 #include <windows.h>
 #include <Shlwapi.h>
 
-#include <boost/algorithm/string/predicate.hpp>
-
 #include <core/system/ChildProcess.hpp>
-#include <core/system/System.hpp>
 #include <core/system/ShellUtils.hpp>
-#include <shared_core/FilePath.hpp>
-#include <core/StringUtils.hpp>
 
 #include "CriticalSection.hpp"
 
@@ -167,7 +162,7 @@ struct ChildProcess::Impl
    HANDLE hStdErrRead;
    HANDLE hProcess;
    PidType pid;
-   WinPty pty;
+   WinPtyAgent pty;
    char ctrlC;
    bool terminated;
 
@@ -230,7 +225,7 @@ Error ChildProcess::writeToStdin(const std::string& input, bool eof)
    {
       if (options().pseudoterminal)
       {
-         Error error = WinPty::writeToPty(pImpl_->hStdInWrite, input);
+         Error error = WinPtyAgent::writeToPty(pImpl_->hStdInWrite, input);
          if (error)
             return error;
       }
@@ -357,13 +352,14 @@ Error ChildProcess::run()
    // concurrently then a race condition can cause handles to get incorrectly
    // directed. the workaround suggested by microsoft is to wrap the process
    // creation code in a critical section. see this article for details:
-   //   http://support.microsoft.com/kb/315939
+   //   https://www.betaarchive.com/wiki/index.php/Microsoft_KB_Archive/315939
    static CriticalSection s_runCriticalSection;
    CriticalSection::Scope csScope(s_runCriticalSection);
 
-   // pseudoterminal mode: use winpty to emulate Posix pseudoterminal
    if (options_.pseudoterminal)
    {
+      // TODO (gary) remove this once ConPTY support is completed
+      pImpl_->pty.setForceWinPty();
       error = pImpl_->pty.start(exe_, args_, options_,
                                &pImpl_->hStdInWrite,
                                &pImpl_->hStdOutRead,
@@ -712,7 +708,7 @@ void AsyncChildProcess::poll()
 
    // check stdout
    std::string stdOut;
-   Error error = WinPty::readFromPty(pImpl_->hStdOutRead, &stdOut);
+   Error error = WinPtyAgent::readFromPty(pImpl_->hStdOutRead, &stdOut);
    if (error)
       reportError(error);
    if (!stdOut.empty() && callbacks_.onStdout)
@@ -723,7 +719,7 @@ void AsyncChildProcess::poll()
    if (pImpl_->hStdErrRead)
    {
       std::string stdErr;
-      error = WinPty::readFromPty(pImpl_->hStdErrRead, &stdErr);
+      error = WinPtyAgent::readFromPty(pImpl_->hStdErrRead, &stdErr);
       if (error)
          reportError(error);
       if (!stdErr.empty() && callbacks_.onStderr)

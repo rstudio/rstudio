@@ -16,6 +16,7 @@
 #ifdef _WIN32
 
 #include "Win32Pty.hpp"
+#include "Win32PtyAgent.hpp"
 
 #include <gsl/gsl>
 
@@ -190,7 +191,7 @@ TEST_CASE("Win32PtyTests")
       while (tries && stdOut.empty())
       {
          ::Sleep(100);
-         err = WinPty::readFromPty(hOutRead, &stdOut);
+         err = WinPtyAgent::readFromPty(hOutRead, &stdOut);
          CHECK(!err);
          tries--;
       }
@@ -230,7 +231,7 @@ TEST_CASE("Win32PtyTests")
       while (tries)
       {
          ::Sleep(100);
-         err = WinPty::readFromPty(hOutRead, &stdOut);
+         err = WinPtyAgent::readFromPty(hOutRead, &stdOut);
          CHECK(!err);
          tries--;
          if (stdOut.find('>') != std::string::npos)
@@ -248,10 +249,10 @@ TEST_CASE("Win32PtyTests")
       {
          std::string typeThis;
          typeThis.push_back(line1[i]);
-         err = WinPty::writeToPty(hInWrite,typeThis);
+         err = WinPtyAgent::writeToPty(hInWrite,typeThis);
          CHECK(!err);
          ::Sleep(25);
-         err = WinPty::readFromPty(hOutRead, &stdOut);
+         err = WinPtyAgent::readFromPty(hOutRead, &stdOut);
          CHECK(!err);
       }
 
@@ -260,7 +261,7 @@ TEST_CASE("Win32PtyTests")
       while (tries && stdOut.length() < line1.length())
       {
          ::Sleep(100);
-         err = WinPty::readFromPty(hOutRead, &stdOut);
+         err = WinPtyAgent::readFromPty(hOutRead, &stdOut);
          CHECK(!err);
          tries--;
       }

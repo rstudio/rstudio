@@ -115,6 +115,13 @@ bool isWin64();
 bool isCurrentProcessWin64();
 
 bool isWin7OrLater();
+
+/**
+ * Should rarely make a decision based on actual Windows build number, but
+ * we have one of those rare cases with ConPTY
+ */
+uint64_t getWinBuildNumber();
+
 Error makeFileHidden(const FilePath& path);
 Error copyMetafileToClipboard(const FilePath& path);
 void ensureLongPath(FilePath* pFilePath);

@@ -15,9 +15,7 @@
 
 #include "Win32Pty.hpp"
 
-#include <shared_core/Error.hpp>
 #include <core/StringUtils.hpp>
-#include <core/system/System.hpp>
 #include <core/system/LibraryLoader.hpp>
 
 namespace rstudio {
@@ -604,78 +602,6 @@ Error WinPty::interrupt()
    return Success();
 }
 
-Error WinPty::writeToPty(HANDLE hPipe, const std::string& input)
-{
-   if (input.empty())
-      return Success();
-
-   OVERLAPPED over;
-   memset(&over, 0, sizeof(over));
-
-   DWORD dwWritten;
-   BOOL bSuccess = ::WriteFile(hPipe,
-                               input.data(),
-                               static_cast<DWORD>(input.length()),
-                               &dwWritten,
-                               &over);
-   auto lastErr = ::GetLastError();
-   if (!bSuccess && lastErr == ERROR_IO_PENDING)
-   {
-      bSuccess = GetOverlappedResult(hPipe,
-                                     &over,
-                                     &dwWritten,
-                                     TRUE /*wait*/);
-      lastErr = ::GetLastError();
-   }
-   if (!bSuccess)
-      return systemError(lastErr, ERROR_LOCATION);
-
-   return Success();
-}
-
-
-Error WinPty::readFromPty(HANDLE hPipe, std::string* pOutput)
-{
-   // check for available bytes
-   DWORD dwAvail = 0;
-   if (!::PeekNamedPipe(hPipe, nullptr, 0, nullptr, &dwAvail, nullptr))
-   {
-      auto lastErr = ::GetLastError();
-      if (lastErr == ERROR_BROKEN_PIPE)
-         return Success();
-      else
-         return systemError(lastErr, ERROR_LOCATION);
-   }
-
-   // no data available
-   if (dwAvail == 0)
-      return Success();
-
-   // read data which is available
-   DWORD nBytesRead = dwAvail;
-   std::vector<CHAR> buffer(dwAvail, 0);
-   OVERLAPPED over;
-   memset(&over, 0, sizeof(over));
-   BOOL bSuccess = ::ReadFile(hPipe, &(buffer[0]), dwAvail, nullptr, &over);
-   auto lastErr = ::GetLastError();
-   if (!bSuccess && lastErr == ERROR_IO_PENDING)
-   {
-      bSuccess = GetOverlappedResult(hPipe,
-                                     &over,
-                                     &nBytesRead,
-                                     TRUE /*wait*/);
-      lastErr = ::GetLastError();
-   }
-
-   if (!bSuccess)
-      return systemError(lastErr, ERROR_LOCATION);
-
-   // append to output
-   pOutput->append(&(buffer[0]), nBytesRead);
-
-   // success
-   return Success();
-}
 
 } // namespace system
 } // namespace core

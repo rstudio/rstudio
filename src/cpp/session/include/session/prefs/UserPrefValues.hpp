@@ -70,6 +70,7 @@ namespace prefs {
 #define kCustomShellCommand "custom_shell_command"
 #define kCustomShellOptions "custom_shell_options"
 #define kShowLineNumbers "show_line_numbers"
+#define kTerminalDisableConpty "terminal_disable_conpty"
 #define kHighlightSelectedWord "highlight_selected_word"
 #define kHighlightSelectedLine "highlight_selected_line"
 #define kPanes "panes"
@@ -488,6 +489,12 @@ public:
     */
    bool showLineNumbers();
    core::Error setShowLineNumbers(bool val);
+
+   /**
+    * Force use of WinPTY instead of ConPTY for Terminal (Windows only)
+    */
+   bool terminalDisableConpty();
+   core::Error setTerminalDisableConpty(bool val);
 
    /**
     * Highlight the selected word in RStudio's code editor.
