@@ -20,6 +20,7 @@ package org.rstudio.core.client.command;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.user.client.Command;
 import org.rstudio.core.client.CommandWith2Args;
 import org.rstudio.core.client.DirectedGraph;
 import org.rstudio.core.client.Mutable;
@@ -130,6 +131,38 @@ public class KeyMap
          keys.add(new KeySequence(bindings.get(i).getKeyChain()));
 
       return keys;
+   }
+
+   /**
+    * Returns a list of key/command bindings for the given command.
+    *
+    * @param id The command to look up bindings for
+    * @return A list of key bindings for the command
+    */
+   public List<KeyCommandBinding> getKeyCommandBindings(String id)
+   {
+      List<KeyCommandBinding> keyBindings = new ArrayList<>();
+      List<DirectedGraph<KeyCombination, List<CommandBinding>>> bindings = idToNodeMap_.get(id);
+      if (bindings == null)
+      {
+         // No bindings found, so return an empty list
+         return keyBindings;
+      }
+
+      for (int i = 0, n = bindings.size(); i < n; i++)
+      {
+         // For this purpose, we're only interested in the first command binding
+         // for the key sequence
+         List<CommandBinding> commandBindings = bindings.get(i).getValue();
+         if (commandBindings.size() > 0)
+         {
+            keyBindings.add(new KeyCommandBinding(
+               commandBindings.get(0),
+               new KeySequence(bindings.get(i).getKeyChain())));
+         }
+      }
+
+      return keyBindings;
    }
 
    public CommandBinding getActiveBinding(KeySequence keys, boolean includeDisabled)
