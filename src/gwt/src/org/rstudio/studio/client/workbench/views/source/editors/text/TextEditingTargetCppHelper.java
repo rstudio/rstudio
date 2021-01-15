@@ -19,7 +19,6 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionOperation;
@@ -115,7 +114,7 @@ public class TextEditingTargetCppHelper
                   docPath, 
                   line, 
                   column, 
-                  new CppCompletionServerRequestCallback<Void>(
+                  new CppCompletionServerRequestCallback<>(
                                           "Finding usages..."));
          }
          

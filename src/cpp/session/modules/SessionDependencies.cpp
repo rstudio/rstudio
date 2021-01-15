@@ -16,8 +16,8 @@
 #include "SessionDependencies.hpp"
 #include "SessionPackages.hpp"
 
-#include <boost/bind.hpp>
 #include <boost/algorithm/string/join.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
@@ -36,6 +36,7 @@
 #include "jobs/ScriptJob.hpp"
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

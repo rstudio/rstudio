@@ -180,7 +180,7 @@ public class LocatorPanel extends LayoutPanel
          public void run()
          {
             feedbackTimer_ = null;
-            ArrayList<Widget> widgets = new ArrayList<Widget>();
+            ArrayList<Widget> widgets = new ArrayList<>();
             widgets.add(feedbackImage_);
             feedbackAnimation_ = new FadeOutAnimation(widgets,
                                                       new Command() {

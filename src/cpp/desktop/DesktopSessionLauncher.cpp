@@ -17,7 +17,7 @@
 
 #include <iostream>
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <core/Macros.hpp>
 #include <core/http/Request.hpp>
@@ -42,6 +42,7 @@
              std::cout << (message) << std::endl;
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace desktop {

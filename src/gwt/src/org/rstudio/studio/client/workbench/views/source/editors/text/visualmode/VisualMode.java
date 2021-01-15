@@ -38,8 +38,8 @@ import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.Value;
+import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
-import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.panmirror.PanmirrorChanges;
 import org.rstudio.studio.client.panmirror.PanmirrorCode;
 import org.rstudio.studio.client.panmirror.PanmirrorContext;
@@ -53,6 +53,7 @@ import org.rstudio.studio.client.panmirror.events.PanmirrorFocusEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorNavigationEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorStateChangeEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorUpdatedEvent;
+import org.rstudio.studio.client.panmirror.location.PanmirrorEditingLocation;
 import org.rstudio.studio.client.panmirror.location.PanmirrorEditingOutlineLocation;
 import org.rstudio.studio.client.panmirror.location.PanmirrorEditingOutlineLocationItem;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineItem;
@@ -72,6 +73,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeList;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditorContainer;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
@@ -718,12 +720,13 @@ public class VisualMode implements VisualModeEditorSync,
 
    /**
     * Perform a command after synchronizing the selection state of the visual
-    * editor. Note that the command will not be performed unless focus is in a
-    * code editor (as otherwise we can't map selection 1-1).
-    * 
-    * @param command
+    * editor. Note that the command will be passed a null position if focus is
+    * not in a code editor (outside a code editor we can't map selection 1-1).
+    *
+    * @param command The command to perform; will be passed the exact cursor
+    *    position if available.
     */
-   public void performWithSelection(Command command)
+   public void performWithSelection(CommandWithArg<Position> command)
    {
       // Drive focus to the editing surface. This is necessary so we correctly
       // identify the active (focused) editor on which to perform the command.
@@ -978,6 +981,31 @@ public class VisualMode implements VisualModeEditorSync,
          return null;
       return chunk.getDefinition();
    }
+
+
+   /**
+    * Gets the Scope of the nearest visual mode chunk.
+    *
+    * @param dir The direction in which to look
+    *
+    * @return The scope of the nearest chunk, or null if no chunk was found.
+    */
+   public Scope getNearestChunkScope(int dir)
+   {
+      PanmirrorEditingLocation loc = panmirror_.getEditingLocation();
+      if (loc == null)
+      {
+         // No current location, so can't find nearest chunk
+         return null;
+      }
+      VisualModeChunk chunk = visualModeChunks_.getNearestChunk(loc.pos, dir);
+      if (chunk == null)
+      {
+         // No nearest chunk
+         return null;
+      }
+      return chunk.getScope();
+   }
    
    /**
     * Gets the document outline for the status bar popup; displayed when
@@ -1065,9 +1093,9 @@ public class VisualMode implements VisualModeEditorSync,
    }
 
    @Override
-   public List<CommandPaletteItem> getCommandPaletteItems()
+   public CommandPaletteEntryProvider getPaletteEntryProvider()
    {
-      return panmirror_.getCommandPaletteItems();
+      return panmirror_.getPaletteEntryProvider();
    }
 
    public void focus(Command onComplete)
@@ -1712,7 +1740,7 @@ public class VisualMode implements VisualModeEditorSync,
    private void alignScopeOutline(PanmirrorEditingOutlineLocation location)
    {
       // Get all of the chunks from the document (code view)
-      ArrayList<Scope> chunkScopes = new ArrayList<Scope>();
+      ArrayList<Scope> chunkScopes = new ArrayList<>();
       ScopeList chunks = new ScopeList(docDisplay_);
       chunks.selectAll(ScopeList.CHUNK);
       for (Scope chunk : chunks)
@@ -1721,8 +1749,7 @@ public class VisualMode implements VisualModeEditorSync,
       }
       
       // Get all of the chunks from the outline emitted by visual mode
-      ArrayList<PanmirrorEditingOutlineLocationItem> chunkItems = 
-            new ArrayList<PanmirrorEditingOutlineLocationItem>();
+      ArrayList<PanmirrorEditingOutlineLocationItem> chunkItems = new ArrayList<>();
       for (int j = 0; j < location.items.length; j++)
       {
          if (StringUtil.equals(location.items[j].type, PanmirrorOutlineItemType.RmdChunk))
@@ -1765,7 +1792,7 @@ public class VisualMode implements VisualModeEditorSync,
     */
    private void alignScopeTreeAfterUpdate(PanmirrorEditingOutlineLocation location)
    {
-      final Value<HandlerRegistration> handler = new Value<HandlerRegistration>(null);
+      final Value<HandlerRegistration> handler = new Value<>(null);
       handler.setValue(docDisplay_.addScopeTreeReadyHandler((evt) ->
       {
          if (location != null)
@@ -1810,14 +1837,14 @@ public class VisualMode implements VisualModeEditorSync,
   
    private ToolbarButton findReplaceButton_;
    
-   private ArrayList<AppCommand> disabledForVisualMode_ = new ArrayList<AppCommand>();
+   private ArrayList<AppCommand> disabledForVisualMode_ = new ArrayList<>();
    
    private final ProgressPanel progress_;
    
    private SerializedCommandQueue syncToEditorQueue_ = new SerializedCommandQueue();
    
    private boolean isLoading_ = false;
-   private List<ScheduledCommand> onReadyHandlers_ = new ArrayList<ScheduledCommand>(); 
+   private List<ScheduledCommand> onReadyHandlers_ = new ArrayList<>(); 
    
    private static final int kCreationProgressDelayMs = 0;
    private static final int kSerializationProgressDelayMs = 5000;

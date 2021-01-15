@@ -628,7 +628,7 @@ private:
       }
       else if (prefs::userPrefs().useTinytex())
       {
-         runTinytex();
+         runTinytex(targetFilePath_);
       }
       else
       {
@@ -642,7 +642,19 @@ private:
    void onWeaveCompleted(const rnw_weave::Result& result)
    {
       if (result.succeeded)
-         runLatexCompiler(true, result.concordances);
+      {
+         if (prefs::userPrefs().useTinytex())
+         {
+            // compute tex file path
+            std::string texFileName = targetFilePath_.getStem() + ".tex";
+            FilePath texFilePath = targetFilePath_.getParent().completePath(texFileName);
+            runTinytex(texFilePath);
+         }
+         else
+         {
+            runLatexCompiler(true, result.concordances);
+         }
+      }
       else if (!result.errorLogEntries.empty())
          terminateWithErrorLogEntries(result.errorLogEntries);
       else
@@ -659,13 +671,13 @@ private:
       onLatexCompileCompleted(status, targetFilePath_);
    }
    
-   void runTinytex()
+   void runTinytex(const FilePath& latexFilePath)
    {
       // build arguments
       using Argument = std::pair<std::string, std::string>;
       std::vector<Argument> latexmkArgs;
       
-      std::string file = string_utils::utf8ToSystem(targetFilePath_.getAbsolutePathNative());
+      std::string file = string_utils::utf8ToSystem(latexFilePath.getAbsolutePathNative());
       latexmkArgs.push_back({std::string(), shell_utils::escape(file)});
       
       std::string engine = string_utils::toLower(prefs::userPrefs().defaultLatexProgram());
@@ -711,7 +723,7 @@ private:
                rScriptPath,
                args,
                tex::utils::rTexInputsEnvVars(),
-               targetFilePath_.getParent(),
+               latexFilePath.getParent(),
                boost::bind(
                   &AsyncPdfCompiler::onTinytexOutput,
                   AsyncPdfCompiler::shared_from_this(),

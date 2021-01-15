@@ -17,9 +17,9 @@
 
 #include <algorithm>
 
-#include <boost/bind.hpp>
 #include <boost/format.hpp>
 #include <boost/utility.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <shared_core/Error.hpp>
 #include <core/Log.hpp>
@@ -42,6 +42,7 @@
 using namespace rstudio::core;
 using namespace rstudio::r::sexp;
 using namespace rstudio::r::exec;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

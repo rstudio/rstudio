@@ -36,7 +36,7 @@ public class NewConnectionContext extends JavaScriptObject
 
    public final ArrayList<NewConnectionInfo> getConnectionsList()
    {
-      ArrayList<NewConnectionInfo> result = new ArrayList<NewConnectionInfo>(getConnectionsLength());
+      ArrayList<NewConnectionInfo> result = new ArrayList<>(getConnectionsLength());
       for (int i = 0; i < getConnectionsLength(); i++)
          result.add(getConnectionsItem(i));
 

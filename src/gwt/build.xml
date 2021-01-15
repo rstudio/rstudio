@@ -64,7 +64,7 @@
    <target name="ext">
       <jscomp compilationLevel="simple" warning="default"
               debug="false" output="${ace.bin}/acesupport.js">
-              
+
           <externs dir="${src.dir}/../acesupport">
              <file name="extern.js"/>
           </externs>
@@ -185,23 +185,23 @@
    <target name="desktop" description="Run desktop development mode">
       <antcall target="codeserver">
          <param name="gwt.main.module" value="org.rstudio.studio.RStudioDesktopSuperDevMode"/>
-      	 <param name="panmirror.target" value="ide-dev"/>
+         <param name="panmirror.target" value="ide-dev"/>
       </antcall>
    </target>
 
    <target name="devmode" description="Run server development mode">
       <antcall target="codeserver">
          <param name="gwt.main.module" value="org.rstudio.studio.RStudioSuperDevMode"/>
-      	 <param name="panmirror.target" value="ide-dev"/>
+         <param name="panmirror.target" value="ide-dev"/>
       </antcall>
    </target>
-	
-	<target name="devmode-panmirror" description="Run server development mode">
+
+   <target name="devmode-panmirror" description="Run server development mode">
       <antcall target="codeserver">
          <param name="gwt.main.module" value="org.rstudio.studio.RStudioSuperDevMode"/>
          <param name="panmirror.target" value="ide-dev-watch"/>
       </antcall>
-	</target>
+   </target>
 
    <target name="codeserver" depends="acesupport,javac" description="Run GWT devmode code server">
       <antcall target="panmirror">

@@ -25,8 +25,7 @@ public class EnvironmentObjectRemovedEvent
       void onEnvironmentObjectRemoved(EnvironmentObjectRemovedEvent event);
    }
 
-   public static final GwtEvent.Type<EnvironmentObjectRemovedEvent.Handler> TYPE =
-      new GwtEvent.Type<EnvironmentObjectRemovedEvent.Handler>();
+   public static final GwtEvent.Type<EnvironmentObjectRemovedEvent.Handler> TYPE = new GwtEvent.Type<>();
    
    public EnvironmentObjectRemovedEvent(String objectName)
    {

@@ -44,9 +44,7 @@ public class PublishReportSourcePage
            createPages(RSConnectPublishInput input, boolean asMultiple)
    {
       ArrayList<WizardPage<RSConnectPublishInput, 
-                           RSConnectPublishResult>> pages =
-                           new ArrayList<WizardPage<RSConnectPublishInput, 
-                                                    RSConnectPublishResult>>();
+                           RSConnectPublishResult>> pages = new ArrayList<>();
       
       String descriptor = "document";
       if (asMultiple)

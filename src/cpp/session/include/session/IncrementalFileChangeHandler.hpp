@@ -20,7 +20,7 @@
 
 #include <boost/noncopyable.hpp>
 #include <boost/function.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
@@ -31,6 +31,8 @@
 #include <session/SessionModuleContext.hpp>
 
 #include <session/projects/SessionProjects.hpp>
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

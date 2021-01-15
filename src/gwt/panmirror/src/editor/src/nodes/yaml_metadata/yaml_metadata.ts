@@ -117,7 +117,7 @@ class YamlMetadataCommand extends ProsemirrorCommand {
         description: ui.context.translateText('YAML metadata block'),
         group: OmniInsertGroup.Blocks,
         priority: 3,
-        selectionOffset: 4,
+        selectionOffset: -4,
         image: () =>
           ui.prefs.darkMode() ? ui.images.omni_insert?.yaml_block_dark! : ui.images.omni_insert?.yaml_block!,
       },

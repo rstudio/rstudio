@@ -21,9 +21,11 @@
 #include <shared_core/json/Json.hpp>
 #include <core/system/Xdg.hpp>
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <session/SessionModuleContext.hpp>
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

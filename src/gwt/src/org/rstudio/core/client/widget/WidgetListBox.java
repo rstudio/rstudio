@@ -328,8 +328,8 @@ public class WidgetListBox<T extends Widget>
    private VerticalPanel panel_;
    private VerticalPanel emptyTextBox_;
    private Label emptyTextLabel_;
-   private List<HTMLPanel> options_ = new ArrayList<HTMLPanel>();
-   private List<T> items_ = new ArrayList<T>();
+   private List<HTMLPanel> options_ = new ArrayList<>();
+   private List<T> items_ = new ArrayList<>();
 
    private Resources resources_;
    private ListStyle style_;

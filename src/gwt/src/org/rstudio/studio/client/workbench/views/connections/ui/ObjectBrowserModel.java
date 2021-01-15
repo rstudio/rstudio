@@ -112,9 +112,9 @@ public class ObjectBrowserModel implements TreeViewModel
 
       if (value == null || rootData)
       {
-         return new DefaultNodeInfo<DatabaseObject>(
+         return new DefaultNodeInfo<>(
                   objectProvider_,
-                   new ContainerCell(),
+                  new ContainerCell(),
                   noObjectSelectionModel_,
                   null);
       }
@@ -127,17 +127,17 @@ public class ObjectBrowserModel implements TreeViewModel
          {
             FieldProvider fieldProvider = new FieldProvider((DatabaseObject)value);
             fieldProviders_.put(val, fieldProvider);
-            return new DefaultNodeInfo<Field>(fieldProvider, 
-                                              new FieldCell(),
-                                              noFieldSelectionModel_,
-                                              null);
+            return new DefaultNodeInfo<>(fieldProvider,
+                                         new FieldCell(),
+                                         noFieldSelectionModel_,
+                                         null);
          }
          
          ObjectProvider objectProvider = new ObjectProvider(val);
          objectProviders_.put(val, objectProvider);
          
          // does not contain data, so draw as a container cell
-         return new DefaultNodeInfo<DatabaseObject>(
+         return new DefaultNodeInfo<>(
                objectProvider,
                new ContainerCell(),
                noObjectSelectionModel_, null);
@@ -312,7 +312,7 @@ public class ObjectBrowserModel implements TreeViewModel
       private void clearData()
       {
          updateRowCount(0, true);
-         updateRowData(0, new ArrayList<DatabaseObject>());
+         updateRowData(0, new ArrayList<>());
          prefetchedObjectList_ = null; 
          fireUpdateCompleted();
       }
@@ -439,7 +439,7 @@ public class ObjectBrowserModel implements TreeViewModel
                   @Override
                   public void onResponseReceived(JsArray<Field> fields)
                   {
-                     ArrayList<Field> data = new ArrayList<Field>();
+                     ArrayList<Field> data = new ArrayList<>();
                      if (fields != null)
                      {
                         for (int i=0; i<fields.length(); i++)
@@ -462,7 +462,7 @@ public class ObjectBrowserModel implements TreeViewModel
       private void clearData()
       {
          updateRowCount(0, true);
-         updateRowData(0, new ArrayList<Field>());
+         updateRowData(0, new ArrayList<>());
          dequeNodeExpansion(table_);
       }
       
@@ -535,10 +535,8 @@ public class ObjectBrowserModel implements TreeViewModel
    }
    
    private ObjectProvider objectProvider_;
-   private HashMap<DatabaseObject,FieldProvider> fieldProviders_ 
-                              = new HashMap<DatabaseObject,FieldProvider>();
-   private HashMap<DatabaseObject,ObjectProvider> objectProviders_ 
-                              = new HashMap<DatabaseObject,ObjectProvider>();
+   private HashMap<DatabaseObject,FieldProvider> fieldProviders_ = new HashMap<>();
+   private HashMap<DatabaseObject,ObjectProvider> objectProviders_ = new HashMap<>();
    
    private Connection connection_;
    private String filter_;
@@ -550,13 +548,11 @@ public class ObjectBrowserModel implements TreeViewModel
    private ConnectionsServerOperations server_;
    private EventBus eventBus_;
 
-   private final ArrayList<CommandWithArg<JsArray<DatabaseObject>>> objectListContinuations_ = 
-         new ArrayList<CommandWithArg<JsArray<DatabaseObject>>>();
+   private final ArrayList<CommandWithArg<JsArray<DatabaseObject>>> objectListContinuations_ =
+      new ArrayList<>();
    
-   private static NoSelectionModel<DatabaseObject> noObjectSelectionModel_ = 
-         new NoSelectionModel<DatabaseObject>();
-   private static NoSelectionModel<Field> noFieldSelectionModel_ =
-         new NoSelectionModel<Field>();
+   private static NoSelectionModel<DatabaseObject> noObjectSelectionModel_ = new NoSelectionModel<>();
+   private static NoSelectionModel<Field> noFieldSelectionModel_ = new NoSelectionModel<>();
    
    static final ObjectBrowser.Resources RES = ObjectBrowser.RES;
 }

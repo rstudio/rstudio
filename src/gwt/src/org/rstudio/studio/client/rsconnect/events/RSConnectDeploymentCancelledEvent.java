@@ -24,8 +24,7 @@ public class RSConnectDeploymentCancelledEvent extends GwtEvent<RSConnectDeploym
       void onRSConnectDeploymentCancelled(RSConnectDeploymentCancelledEvent event);
    }
 
-   public static final GwtEvent.Type<RSConnectDeploymentCancelledEvent.Handler> TYPE =
-      new GwtEvent.Type<RSConnectDeploymentCancelledEvent.Handler>();
+   public static final GwtEvent.Type<RSConnectDeploymentCancelledEvent.Handler> TYPE = new GwtEvent.Type<>();
    
    public RSConnectDeploymentCancelledEvent()
    {

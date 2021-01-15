@@ -144,5 +144,5 @@ public class NewConnectionSnippetDialog extends ModalDialog<HashMap<String, Stri
    
    private NewConnectionInfo newConnectionInfo_;
    private ArrayList<NewConnectionSnippetParts> initialConfig_;
-   HashMap<String, String> partsKeyValues_ = new HashMap<String, String>();
+   HashMap<String, String> partsKeyValues_ = new HashMap<>();
 }

@@ -18,7 +18,7 @@
 #include <iostream>
 
 #include <boost/algorithm/cxx11/any_of.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <core/Scope.hpp>
 #include <shared_core/Error.hpp>
@@ -27,6 +27,8 @@
 
 #include <core/PerformanceTimer.hpp>
 #include <core/system/ChildProcess.hpp>
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace core {

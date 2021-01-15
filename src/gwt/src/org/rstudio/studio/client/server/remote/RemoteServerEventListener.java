@@ -486,12 +486,10 @@ class RemoteServerEventListener
    private Watchdog watchdog_ = new Watchdog();
 
    // Stores async requests that expect to be completed later.
-   private final HashMap<String, AsyncRequestInfo> asyncRequests_
-         = new HashMap<String, AsyncRequestInfo>();
+   private final HashMap<String, AsyncRequestInfo> asyncRequests_ = new HashMap<>();
 
    // Stores any async responses that didn't have matching requests at the
    // time they were received. This is to deal with any race conditions where
    // the completion occurs before we even finished making the request.
-   private final HashMap<String, RpcResponse> asyncResponses_
-         = new HashMap<String, RpcResponse>();
+   private final HashMap<String, RpcResponse> asyncResponses_ = new HashMap<>();
 }

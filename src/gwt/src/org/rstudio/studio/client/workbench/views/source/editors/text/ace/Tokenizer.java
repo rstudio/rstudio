@@ -157,6 +157,6 @@ public class Tokenizer extends JavaScriptObject
    
    public final List<Token> tokenize(String line)
    {
-      return new ArrayList<Token>(Arrays.asList(doTokenize(line)));
+      return new ArrayList<>(Arrays.asList(doTokenize(line)));
    }
 }

@@ -144,11 +144,10 @@ public class CompletionPopupPanel extends ThemedPopupPanel
                                     boolean truncated)
    {
       registerIgnoredKeys();
-      CompletionList<QualifiedName> list = new CompletionList<QualifiedName>(
-                                       values,
-                                       6,
-                                       true,
-                                       true);
+      CompletionList<QualifiedName> list = new CompletionList<>(values,
+                                                                6,
+                                                                true,
+                                                                true);
 
       list.addSelectionCommitHandler((SelectionCommitEvent<QualifiedName> event) ->
       {
@@ -446,7 +445,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    private void registerIgnoredKeys()
    {
       resetIgnoredKeysHandle();
-      Set<KeyCombination> keySet = new HashSet<KeyCombination>();
+      Set<KeyCombination> keySet = new HashSet<>();
       keySet.add(new KeyCombination("n", KeyCodes.KEY_N, KeyboardShortcut.CTRL));
       keySet.add(new KeyCombination("p", KeyCodes.KEY_P, KeyboardShortcut.CTRL));
       handle_ = ShortcutManager.INSTANCE.addIgnoredKeys(keySet);

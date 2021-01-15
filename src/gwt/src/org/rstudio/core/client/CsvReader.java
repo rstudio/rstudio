@@ -37,7 +37,7 @@ public class CsvReader implements Iterable<String[]>
 
          public String[] next()
          {
-            ArrayList<String> list = new ArrayList<String>();
+            ArrayList<String> list = new ArrayList<>();
             StringBuilder chunk = new StringBuilder();
 
             final int START = 0;

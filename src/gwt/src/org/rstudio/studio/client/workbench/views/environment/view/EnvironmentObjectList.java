@@ -77,8 +77,7 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
       // disable persistent and transient row selection (currently necessary
       // because we emit more than one row per object and the DataGrid selection
       // behaviors aren't designed to work that way)
-      setSelectionModel(new NoSelectionModel<RObjectEntry>(
-              RObjectEntry.KEY_PROVIDER));
+      setSelectionModel(new NoSelectionModel<>(RObjectEntry.KEY_PROVIDER));
       setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
 
       createColumns();
@@ -101,11 +100,11 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
       // If the view is unfiltered, return nothing.
       if (host_.getFilterText().isEmpty())
       {
-         return new ArrayList<String>();
+         return new ArrayList<>();
       }
 
       // If the view is filtered, return items that are visible.
-      ArrayList<String> objectNames = new ArrayList<String>();
+      ArrayList<String> objectNames = new ArrayList<>();
       List<RObjectEntry> objects = getVisibleItems();
       for (RObjectEntry object: objects)
       {

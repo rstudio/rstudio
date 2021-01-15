@@ -15,10 +15,12 @@
 
 #include "ChildProcessSubprocPoll.hpp"
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/thread/thread.hpp>
 
 #include <tests/TestThat.hpp>
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace core {

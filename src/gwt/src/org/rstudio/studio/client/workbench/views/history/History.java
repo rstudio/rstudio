@@ -53,9 +53,7 @@ import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleResetHistoryEvent;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.history.events.FetchCommandsEvent;
-import org.rstudio.studio.client.workbench.views.history.events.FetchCommandsHandler;
 import org.rstudio.studio.client.workbench.views.history.events.HistoryEntriesAddedEvent;
-import org.rstudio.studio.client.workbench.views.history.events.HistoryEntriesAddedHandler;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryServerOperations;
 import org.rstudio.studio.client.workbench.views.source.events.InsertSourceEvent;
@@ -63,7 +61,7 @@ import org.rstudio.studio.client.workbench.views.source.events.InsertSourceEvent
 import java.util.ArrayList;
 
 public class History extends BasePresenter implements SelectionCommitEvent.Handler<Void>,
-                                                      FetchCommandsHandler
+                                                      FetchCommandsEvent.Handler
 {
    public interface SearchBoxDisplay extends HasValueChangeHandlers<String>
    {
@@ -107,7 +105,7 @@ public class History extends BasePresenter implements SelectionCommitEvent.Handl
 
       ArrayList<String> getSelectedCommands();
       ArrayList<Long> getSelectedCommandIndexes();
-      HandlerRegistration addFetchCommandsHandler(FetchCommandsHandler handler);
+      HandlerRegistration addFetchCommandsHandler(FetchCommandsEvent.Handler handler);
       void setMoreCommands(long moreCommands);
       SearchBoxDisplay getSearchBox();
       Mode getMode();
@@ -238,7 +236,7 @@ public class History extends BasePresenter implements SelectionCommitEvent.Handl
             }
 
             // set recent commands
-            ArrayList<HistoryEntry> subList = new ArrayList<HistoryEntry>();
+            ArrayList<HistoryEntry> subList = new ArrayList<>();
             subList.addAll(commands.subList(startIndex, commands.size()));
             boolean scrollToBottom = preservedScrollPos == -1;
             setRecentCommands(subList, scrollToBottom);
@@ -258,7 +256,7 @@ public class History extends BasePresenter implements SelectionCommitEvent.Handl
          }
       });
 
-      events_.addHandler(HistoryEntriesAddedEvent.TYPE, new HistoryEntriesAddedHandler()
+      events_.addHandler(HistoryEntriesAddedEvent.TYPE, new HistoryEntriesAddedEvent.Handler()
       {
          public void onHistoryEntriesAdded(HistoryEntriesAddedEvent event)
          {
@@ -575,7 +573,7 @@ public class History extends BasePresenter implements SelectionCommitEvent.Handl
 
    private ArrayList<HistoryEntry> toList(RpcObjectList<HistoryEntry> response)
    {
-      ArrayList<HistoryEntry> entries = new ArrayList<HistoryEntry>();
+      ArrayList<HistoryEntry> entries = new ArrayList<>();
       for (int i = 0; i < response.length(); i++)
          entries.add(response.get(i));
       return entries;
@@ -584,7 +582,7 @@ public class History extends BasePresenter implements SelectionCommitEvent.Handl
    private ArrayList<HistoryEntry> toRecentCommandsList(
                                              JsArrayString jsCommands)
    {
-      ArrayList<HistoryEntry> commands = new ArrayList<HistoryEntry>();
+      ArrayList<HistoryEntry> commands = new ArrayList<>();
       for (int i=0; i<jsCommands.length(); i++)
          commands.add(HistoryEntry.create(i, jsCommands.get(i)));
       return commands;
@@ -593,7 +591,7 @@ public class History extends BasePresenter implements SelectionCommitEvent.Handl
    private ArrayList<HistoryEntry> toRecentCommandsList(
                                  RpcObjectList<HistoryEntry> response)
    {
-      ArrayList<HistoryEntry> entries = new ArrayList<HistoryEntry>();
+      ArrayList<HistoryEntry> entries = new ArrayList<>();
       for (int i = 0; i < response.length(); i++)
          entries.add(response.get(i));
       return entries;

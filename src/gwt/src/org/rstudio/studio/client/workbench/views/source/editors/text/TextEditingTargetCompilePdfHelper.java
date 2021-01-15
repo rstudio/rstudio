@@ -460,6 +460,5 @@ public class TextEditingTargetCompilePdfHelper
    private static final Pattern concordancePattern_ = Pattern.create(
                      "\\\\[\\s]*SweaveOpts[\\s]*{.*concordance[\\s]*=.*}");
    
-   private static HashMap<String, RnwChunkOptions> chunkOptionsCache_ = 
-                                    new HashMap<String, RnwChunkOptions>();
+   private static HashMap<String, RnwChunkOptions> chunkOptionsCache_ = new HashMap<>();
 }

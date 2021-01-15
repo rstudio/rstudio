@@ -46,14 +46,10 @@ import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.common.vcs.VcsCloneOptions;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
-import org.rstudio.studio.client.projects.events.OpenProjectErrorHandler;
 import org.rstudio.studio.client.projects.events.OpenProjectFileEvent;
-import org.rstudio.studio.client.projects.events.OpenProjectFileHandler;
 import org.rstudio.studio.client.projects.events.OpenProjectNewWindowEvent;
-import org.rstudio.studio.client.projects.events.OpenProjectNewWindowHandler;
 import org.rstudio.studio.client.projects.events.RequestOpenProjectEvent;
 import org.rstudio.studio.client.projects.events.SwitchToProjectEvent;
-import org.rstudio.studio.client.projects.events.SwitchToProjectHandler;
 import org.rstudio.studio.client.projects.events.NewProjectEvent;
 import org.rstudio.studio.client.projects.events.NewProjectFolderEvent;
 import org.rstudio.studio.client.projects.events.NewProjectFromVcsEvent;
@@ -89,10 +85,10 @@ import com.google.inject.Singleton;
 import java.util.function.Consumer;
 
 @Singleton
-public class Projects implements OpenProjectFileHandler,
-                                 SwitchToProjectHandler,
-                                 OpenProjectErrorHandler,
-                                 OpenProjectNewWindowHandler,
+public class Projects implements OpenProjectFileEvent.Handler,
+                                 SwitchToProjectEvent.Handler,
+                                 OpenProjectErrorEvent.Handler,
+                                 OpenProjectNewWindowEvent.Handler,
                                  NewProjectEvent.Handler,
                                  NewProjectFromVcsEvent.Handler,
                                  NewProjectFolderEvent.Handler,
@@ -560,7 +556,7 @@ public class Projects implements OpenProjectFileHandler,
                   // not be currently installed; in those cases, verify that the package is
                   // installed and if not attempt installation from CRAN first
                   String pkg = newProject.getProjectTemplateOptions().getDescription().getPackage();
-                  ArrayList<Dependency> deps = new ArrayList<Dependency>();
+                  ArrayList<Dependency> deps = new ArrayList<>();
                   deps.add(Dependency.cranPackage(pkg));
                   RStudioGinjector.INSTANCE.getDependencyManager().withDependencies(
                         "Creating project",

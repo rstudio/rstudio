@@ -14,36 +14,41 @@
  */
 package org.rstudio.studio.client.workbench.views.packages.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageStatus;
 
-public class PackageStatusChangedEvent 
-                     extends GwtEvent<PackageStatusChangedHandler>
+public class PackageStatusChangedEvent
+                     extends GwtEvent<PackageStatusChangedEvent.Handler>
 {
-   public static final GwtEvent.Type<PackageStatusChangedHandler> TYPE =
-      new GwtEvent.Type<PackageStatusChangedHandler>();
-   
+   public static final Type<Handler> TYPE = new Type<>();
+
+   public interface Handler extends EventHandler
+   {
+      void onPackageStatusChanged(PackageStatusChangedEvent event);
+   }
+
    public PackageStatusChangedEvent(PackageStatus packageStatus)
    {
       packageStatus_ = packageStatus;
    }
-   
+
    public PackageStatus getPackageStatus()
    {
       return packageStatus_;
    }
-   
+
    @Override
-   protected void dispatch(PackageStatusChangedHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onPackageStatusChanged(this);
    }
 
    @Override
-   public GwtEvent.Type<PackageStatusChangedHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
-   
-   private PackageStatus packageStatus_;
+
+   private final PackageStatus packageStatus_;
 }

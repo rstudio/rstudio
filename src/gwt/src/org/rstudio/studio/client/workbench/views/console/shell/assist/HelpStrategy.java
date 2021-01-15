@@ -38,7 +38,7 @@ public class HelpStrategy
    public HelpStrategy(CodeToolsServerOperations server)
    {
       server_ = server;
-      cache_ = new HashMap<QualifiedName, ParsedInfo>();
+      cache_ = new HashMap<>();
    }
    
    public void showHelpTopic(final QualifiedName selectedItem)

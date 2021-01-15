@@ -60,7 +60,6 @@ import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.files.events.ShowFolderEvent;
-import org.rstudio.studio.client.workbench.views.files.events.ShowFolderHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Selection;
 
@@ -190,7 +189,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
          });
       });
 
-      events.addHandler(ShowFolderEvent.TYPE, new ShowFolderHandler()
+      events.addHandler(ShowFolderEvent.TYPE, new ShowFolderEvent.Handler()
       {
          public void onShowFolder(ShowFolderEvent event)
          {

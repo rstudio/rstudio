@@ -127,8 +127,7 @@ class RemoteServerAuth
 
    // save previous form as a precaution against forms which are not
    // cleaned up due to the submit handler not being called
-   private static ArrayList<FormPanel> previousUpdateCredentialsForms_ =
-                                            new ArrayList<FormPanel>();
+   private static ArrayList<FormPanel> previousUpdateCredentialsForms_ = new ArrayList<>();
 
    private void safeCleanupPreviousUpdateCredentials()
    {

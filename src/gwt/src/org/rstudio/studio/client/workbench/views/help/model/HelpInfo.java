@@ -33,9 +33,9 @@ public class HelpInfo extends JavaScriptObject
 
    public final ParsedInfo parse(String defaultSignature)
    {
-      HashMap<String, String> values = new HashMap<String, String>();
-      HashMap<String, String> args = new HashMap<String, String>();
-      HashMap<String, String> slots = new HashMap<String, String>();
+      HashMap<String, String> values = new HashMap<>();
+      HashMap<String, String> args = new HashMap<>();
+      HashMap<String, String> slots = new HashMap<>();
 
       String html = getHTML();
       if (html != null)
@@ -65,7 +65,7 @@ public class HelpInfo extends JavaScriptObject
          // get all h2 and h3 headings
          NodeList<Element> h2headings = div.getElementsByTagName("h2");
          NodeList<Element> h3headings = div.getElementsByTagName("h3");
-         ArrayList<Element> headings = new ArrayList<Element>();
+         ArrayList<Element> headings = new ArrayList<>();
          for (int i = 0; i < h2headings.getLength(); i++)
             headings.add(h2headings.getItem(i));
          for (int i = 0; i < h3headings.getLength(); i++)
@@ -242,7 +242,7 @@ public class HelpInfo extends JavaScriptObject
       public final ParsedInfo toParsedInfo() 
       {
          // values
-         HashMap<String,String> values = new HashMap<String,String>();
+         HashMap<String,String> values = new HashMap<>();
          values.put("Title", getTitle());
          values.put("Description", getDescription());
          
@@ -252,7 +252,7 @@ public class HelpInfo extends JavaScriptObject
          JsArrayString jsArgDescriptions = getArgDescriptions();
          if (jsArgs != null && jsArgDescriptions != null)
          {
-            args = new HashMap<String,String>();
+            args = new HashMap<>();
             for (int i =0; i<jsArgs.length(); i++)
                args.put(jsArgs.get(i), jsArgDescriptions.get(i));
          }
@@ -282,7 +282,7 @@ public class HelpInfo extends JavaScriptObject
          super();
          this.pkgName = pkgName;
          this.signature = signature;
-         this.values = values != null ? values : new HashMap<String, String>();
+         this.values = values != null ? values : new HashMap<>();
          this.args = args;
          this.slots = slots;
       }

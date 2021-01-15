@@ -124,8 +124,7 @@ public class ObjectBrowser extends Composite implements RequiresResize
          
          // if we got here, the user has clicked Show More, so scroll to the
          // bottom when they're done
-         final Value<HandlerRegistration> registration = 
-               new Value<HandlerRegistration>(null);
+         final Value<HandlerRegistration> registration = new Value<>(null);
          registration.setValue(scrollPanel_.addScrollHandler(e -> 
          {
             scrollPanel_.scrollToBottom();

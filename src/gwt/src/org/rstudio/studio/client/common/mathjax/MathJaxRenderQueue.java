@@ -26,7 +26,7 @@ public class MathJaxRenderQueue
    {
       mathjax_ = mathjax;
       
-      ranges_ = new LinkedList<Range>();
+      ranges_ = new LinkedList<>();
       callback_ = new MathJaxTypeset.Callback()
       {
          @Override

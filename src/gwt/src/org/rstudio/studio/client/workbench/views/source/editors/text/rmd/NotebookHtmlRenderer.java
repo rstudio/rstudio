@@ -32,7 +32,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.events.NotebookRenderFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SaveFileEvent;
-import org.rstudio.studio.client.workbench.views.source.events.SaveFileHandler;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 import com.google.gwt.core.client.JsArray;
@@ -40,7 +39,7 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 
 public class NotebookHtmlRenderer
-             implements SaveFileHandler,
+             implements SaveFileEvent.Handler,
                         RmdRenderPendingEvent.Handler,
                         RenderRmdEvent.Handler
 {
@@ -56,7 +55,7 @@ public class NotebookHtmlRenderer
       sentinel_ = sentinel;
       events_ = events;
       dependencyManager_ = dependencyManager;
-      
+
       events_.addHandler(RmdRenderPendingEvent.TYPE, this);
       events_.addHandler(RenderRmdEvent.TYPE, this);
    }
@@ -66,8 +65,8 @@ public class NotebookHtmlRenderer
    {
       if (event.getDocId() != sentinel_.getId())
          return;
-      
-      // wait up to a second for the R Markdown render to start before we 
+
+      // wait up to a second for the R Markdown render to start before we
       // initiate a render of the notebook
       renderTimer_ = new Timer()
       {
@@ -101,28 +100,28 @@ public class NotebookHtmlRenderer
       // multiple notebook creation requests)
       if (isRunning_)
          return;
-      
+
       // bail if this was an autosave
       if (event.isAutosave())
          return;
-      
+
       // bail if we don't render chunks inline (for safety--notebooks
       // are always in this mode)
       if (!display_.showChunkOutputInline())
          return;
-      
+
       // bail if no notebook output format
       if (!target_.hasRmdNotebook())
          return;
-      
+
       final String rmdPath = sentinel_.getPath();
-      
+
       // bail if unsaved doc (no point in generating notebooks for those)
       if (StringUtil.isNullOrEmpty(rmdPath))
          return;
-      
+
       final String outputPath =
-            FilePathUtils.filePathSansExtension(rmdPath) + 
+            FilePathUtils.filePathSansExtension(rmdPath) +
             RmdOutput.NOTEBOOK_EXT;
 
       // create the command to render the notebook
@@ -135,7 +134,7 @@ public class NotebookHtmlRenderer
             createNotebookDeferred(rmdPath, outputPath);
          }
       };
-      
+
       // if an R Markdown render is pending, wait for it to start before we ask
       // the notebook to render; this ensures that in the case where we're
       // rendering both the notebook and another format that the other format
@@ -149,10 +148,10 @@ public class NotebookHtmlRenderer
          renderCommand.execute();
       }
    }
-   
+
    // Private methods ---------------------------------------------------------
-   
-   private void createNotebookDeferred(final String rmdPath, 
+
+   private void createNotebookDeferred(final String rmdPath,
                                        final String outputPath)
    {
       dependencyManager_.withUnsatisfiedDependencies(
@@ -167,10 +166,10 @@ public class NotebookHtmlRenderer
                      createNotebookFromCache(rmdPath, outputPath);
                      return;
                   }
-                  
+
                   Dependency dependency = unsatisfied.get(0);
                   String message;
-                  
+
                   if (StringUtil.isNullOrEmpty(dependency.getVersion()))
                   {
                      message = "The rmarkdown package is not installed; " +
@@ -181,11 +180,11 @@ public class NotebookHtmlRenderer
                      message = "An updated version of the rmarkdown package " +
                                "is required to generate notebook HTML files.";
                   }
-                  
+
                   editingDisplay_.showWarningBar(message);
                   isRunning_ = false;
                }
-               
+
                @Override
                public void onError(ServerError error)
                {
@@ -224,7 +223,7 @@ public class NotebookHtmlRenderer
                         if (result.succeeded())
                         {
                            events_.fireEvent(new NotebookRenderFinishedEvent(
-                                 sentinel_.getId(), 
+                                 sentinel_.getId(),
                                  sentinel_.getPath()));
                         }
                         else
@@ -239,18 +238,18 @@ public class NotebookHtmlRenderer
                      @Override
                      public void onError(ServerError error)
                      {
-                        editingDisplay_.showWarningBar(warningPrefix + 
+                        editingDisplay_.showWarningBar(warningPrefix +
                               error.getMessage());
                         isRunning_ = false;
                      }
                   });
          }
       };
-      
-      dependencyManager_.withRMarkdown("R Notebook", "Creating R Notebooks", 
+
+      dependencyManager_.withRMarkdown("R Notebook", "Creating R Notebooks",
             createNotebookCmd);
    }
-   
+
    private boolean isRunning_;
    private Timer renderTimer_;
    private Command renderCommand_;

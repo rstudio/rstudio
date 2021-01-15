@@ -262,8 +262,7 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
 
          if (resp.length() == 0)
          {
-            popup_ = new CompletionListPopupPanel<HistoryMatch>(
-                  new HistoryMatch[0]);
+            popup_ = new CompletionListPopupPanel<>(new HistoryMatch[0]);
             popup_.setText("(No matching commands)");
             mode_ = PopupMode.PopupNoResults;
          }
@@ -272,7 +271,7 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
             HistoryMatch[] entries = new HistoryMatch[resp.length()];
             for (int i = 0; i < entries.length; i++)
                entries[i] = new HistoryMatch(resp.get(entries.length - i - 1).getCommand(), text_, i);
-            popup_ = new CompletionListPopupPanel<HistoryMatch>(entries);
+            popup_ = new CompletionListPopupPanel<>(entries);
             mode_ = desiredMode_;
          }
 

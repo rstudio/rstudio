@@ -18,7 +18,7 @@
 #include <iostream>
 #include <algorithm>
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <core/Algorithm.hpp>
 #include <core/FileSerializer.hpp>
@@ -32,6 +32,8 @@
 #define kRFrameworkVersions "/Library/Frameworks/R.framework/Versions"
 #define kRScriptPath "Resources/bin/R"
 #endif
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace core {

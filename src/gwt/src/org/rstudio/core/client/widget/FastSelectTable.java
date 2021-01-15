@@ -25,6 +25,7 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.core.client.ClassIds;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.DomUtils;
@@ -55,7 +56,8 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
    public FastSelectTable(ItemCodec<TItemInput, TItemOutput, TItemOutput2> codec,
                           String selectedClassName,
                           boolean focusable,
-                          boolean allowMultiSelect)
+                          boolean allowMultiSelect,
+                          String title)
    {
       codec_ = codec;
       selectedClassName_ = selectedClassName;
@@ -69,6 +71,7 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
       table_.setCellSpacing(0);
       table_.setBorder(0);
       table_.getStyle().setCursor(Cursor.DEFAULT);
+      setClassId(title);
       setElement(table_);
 
       addMouseDownHandler(new MouseDownHandler()
@@ -106,6 +109,11 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
             handleKeyDown(event);
          }
       });
+   }
+   
+   public void setClassId(String name)
+   {
+      table_.setClassName(ClassIds.FAST_SELECT_TABLE + "_" + ClassIds.idSafeString(name));
    }
 
    public void setCellPadding(int padding)
@@ -387,7 +395,7 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
    {
       sortSelectedRows();
 
-      ArrayList<Integer> results = new ArrayList<Integer>();
+      ArrayList<Integer> results = new ArrayList<>();
       for (TableRowElement row : selectedRows_)
          results.add(codec_.physicalOffsetToLogicalOffset(table_,
                                                           row.getRowIndex()));
@@ -480,7 +488,7 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
    {
       sortSelectedRows();
 
-      ArrayList<TItemOutput> results = new ArrayList<TItemOutput>();
+      ArrayList<TItemOutput> results = new ArrayList<>();
       for (TableRowElement row : selectedRows_)
          results.add(codec_.getOutputForRow(row));
       return results;
@@ -501,7 +509,7 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
    {
       sortSelectedRows();
 
-      ArrayList<TItemOutput2> results = new ArrayList<TItemOutput2>();
+      ArrayList<TItemOutput2> results = new ArrayList<>();
       for (TableRowElement row : selectedRows_)
          results.add(codec_.getOutputForRow2(row));
       return results;
@@ -576,7 +584,7 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
 
    public ArrayList<TableRowElement> getSelectedRows()
    {
-      return new ArrayList<TableRowElement>(selectedRows_);
+      return new ArrayList<>(selectedRows_);
    }
 
    public Rectangle getSelectionRect()

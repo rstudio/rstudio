@@ -14,9 +14,10 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class UndoRedoEvent extends GwtEvent<UndoRedoHandler>
+public class UndoRedoEvent extends GwtEvent<UndoRedoEvent.Handler>
 {
    public UndoRedoEvent(boolean redo)
    {
@@ -29,17 +30,23 @@ public class UndoRedoEvent extends GwtEvent<UndoRedoHandler>
    }
 
    @Override
-   public Type<UndoRedoHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
 
    @Override
-   protected void dispatch(UndoRedoHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onUndoRedo(this);
    }
 
-   public static Type<UndoRedoHandler> TYPE = new Type<UndoRedoHandler>();
+   public static Type<Handler> TYPE = new Type<>();
+
+   public interface Handler extends EventHandler
+   {
+      void onUndoRedo(UndoRedoEvent event);
+   }
+
    private final boolean redo_;
 }

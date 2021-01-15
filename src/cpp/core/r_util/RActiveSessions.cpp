@@ -15,7 +15,7 @@
 
 #include <core/r_util/RActiveSessions.hpp>
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/StringUtils.hpp>
@@ -27,6 +27,8 @@
 #include <core/r_util/RSessionContext.hpp>
 
 #define kSessionDirPrefix "session-"
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace core {

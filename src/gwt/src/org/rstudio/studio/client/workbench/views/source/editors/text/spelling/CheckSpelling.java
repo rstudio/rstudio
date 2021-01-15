@@ -172,8 +172,8 @@ public class CheckSpelling
                currentPos_,
                wrapped_ ? initialCursorPos_.getPosition() : -1);
 
-         final ArrayList<String> words = new ArrayList<String>();
-         final ArrayList<SpellingDoc.WordRange> checkWords = new ArrayList<SpellingDoc.WordRange>();
+         final ArrayList<String> words = new ArrayList<>();
+         final ArrayList<SpellingDoc.WordRange> checkWords = new ArrayList<>();
 
          SpellingDoc.WordRange lastWord = null;
          for (SpellingDoc.WordRange w : wordSource)

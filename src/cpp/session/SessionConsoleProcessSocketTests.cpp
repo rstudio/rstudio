@@ -16,11 +16,11 @@
 #include <session/SessionConsoleProcessSocket.hpp>
 #include <session/SessionConsoleProcessSocketPacket.hpp>
 
-#include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <websocketpp/config/asio_no_tls_client.hpp>
 #include <websocketpp/client.hpp>
@@ -32,6 +32,7 @@ namespace session {
 namespace console_process {
 
 using namespace console_process;
+using namespace boost::placeholders;
 
 namespace {
 

@@ -51,11 +51,12 @@ public class SourceMarkerList extends Composite
    {
       codec_ = new SourceMarkerItemCodec(res_, false);
 
-      errorTable_ = new FastSelectTable<SourceMarker, CodeNavigationTarget, CodeNavigationTarget>(
+      errorTable_ = new FastSelectTable<>(
             codec_,
             res_.styles().selectedRow(),
             true,
-            false);
+            false,
+            "Source Marker Item Table");
       setWidths();
       errorTable_.setStyleName(res_.styles().table());
       errorTable_.setSize("100%", "100%");
@@ -120,7 +121,7 @@ public class SourceMarkerList extends Composite
                            int autoSelect)
    {
       boolean showFileHeaders = false;
-      ArrayList<SourceMarker> errorList = new ArrayList<SourceMarker>();
+      ArrayList<SourceMarker> errorList = new ArrayList<>();
       int firstErrorIndex = -1;
       for (int i=0; i<errors.length(); i++)
       {

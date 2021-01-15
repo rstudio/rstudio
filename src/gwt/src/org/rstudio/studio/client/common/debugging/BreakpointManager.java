@@ -149,7 +149,7 @@ public class BreakpointManager
 
       notifyServer(breakpoint, true, true);
 
-      ArrayList<Breakpoint> bps = new ArrayList<Breakpoint>();
+      ArrayList<Breakpoint> bps = new ArrayList<>();
       bps.add(breakpoint);
       return breakpoint;
    }
@@ -265,7 +265,7 @@ public class BreakpointManager
 
    public ArrayList<Breakpoint> getBreakpointsInFile(String fileName)
    {
-      ArrayList<Breakpoint> breakpoints = new ArrayList<Breakpoint>();
+      ArrayList<Breakpoint> breakpoints = new ArrayList<>();
       for (Breakpoint breakpoint: breakpoints_)
       {
          if (breakpoint.isInFile(fileName))
@@ -381,7 +381,7 @@ public class BreakpointManager
       // past to begin actually evaluating the function. Step past it
       // immediately.
       JsArray<CallFrame> frames = event.getCallFrames();
-      Set<FileFunction> activeFunctions = new TreeSet<FileFunction>();
+      Set<FileFunction> activeFunctions = new TreeSet<>();
       boolean hasSourceEquiv = false;
       for (int idx = 0; idx < frames.length(); idx++)
       {
@@ -409,7 +409,7 @@ public class BreakpointManager
       // For any functions that were previously active in the callstack but
       // are no longer active, enable any pending breakpoints for those
       // functions.
-      Set<FileFunction> enableFunctions = new TreeSet<FileFunction>();
+      Set<FileFunction> enableFunctions = new TreeSet<>();
       for (FileFunction function: activeFunctions_)
       {
          if (!activeFunctions.contains(function))
@@ -480,7 +480,7 @@ public class BreakpointManager
       {
          // Restarting R unloads all the packages, so mark all active package
          // breakpoints as inactive when this happens.
-         ArrayList<Breakpoint> breakpoints = new ArrayList<Breakpoint>();
+         ArrayList<Breakpoint> breakpoints = new ArrayList<>();
          for (Breakpoint breakpoint: breakpoints_)
          {
             if (breakpoint.isPackageBreakpoint())
@@ -497,8 +497,8 @@ public class BreakpointManager
 
    private void setFunctionBreakpoints(FileFunction function)
    {
-      ArrayList<String> steps = new ArrayList<String>();
-      final ArrayList<Breakpoint> breakpoints = new ArrayList<Breakpoint>();
+      ArrayList<String> steps = new ArrayList<>();
+      final ArrayList<Breakpoint> breakpoints = new ArrayList<>();
       for (Breakpoint breakpoint: breakpoints_)
       {
          if (function.containsBreakpoint(breakpoint))
@@ -537,8 +537,7 @@ public class BreakpointManager
       // look over the list of breakpoints in this function and see if any are
       // marked inactive, or if they need their steps refreshed (necessary
       // when a function has had steps added or removed in the editor)
-      final ArrayList<Breakpoint> inactiveBreakpoints =
-            new ArrayList<Breakpoint>();
+      final ArrayList<Breakpoint> inactiveBreakpoints = new ArrayList<>();
       int[] inactiveLines = new int[]{};
       int numLines = 0;
       for (Breakpoint breakpoint: breakpoints_)
@@ -609,7 +608,7 @@ public class BreakpointManager
 
    private void resetBreakpointsInPath(String path, boolean isFile)
    {
-      Set<FileFunction> functionsToBreak = new TreeSet<FileFunction>();
+      Set<FileFunction> functionsToBreak = new TreeSet<>();
       for (Breakpoint breakpoint: breakpoints_)
       {
          // set this breakpoint if it's a function breakpoint in the file
@@ -633,7 +632,7 @@ public class BreakpointManager
    private void markInactiveBreakpoint(Breakpoint breakpoint)
    {
       breakpoint.setState(Breakpoint.STATE_INACTIVE);
-      ArrayList<Breakpoint> breakpoints = new ArrayList<Breakpoint>();
+      ArrayList<Breakpoint> breakpoints = new ArrayList<>();
       breakpoints.add(breakpoint);
       notifyBreakpointsSaved(breakpoints, true);
    }
@@ -642,8 +641,7 @@ public class BreakpointManager
          ArrayList<Breakpoint> breakpoints,
          JsArray<FunctionSteps> stepList)
    {
-      ArrayList<Breakpoint> unSettableBreakpoints =
-            new ArrayList<Breakpoint>();
+      ArrayList<Breakpoint> unSettableBreakpoints = new ArrayList<>();
 
       // Walk through the array of breakpoints for which we requested function
       // steps and the array of results from the server in lock-step, populating
@@ -716,8 +714,8 @@ public class BreakpointManager
 
    private void updatePackageBreakpoints(String packageName, boolean enable)
    {
-      Set<FileFunction> functionsToBreak = new TreeSet<FileFunction>();
-      ArrayList<Breakpoint> breakpointsToDisable = new ArrayList<Breakpoint>();
+      Set<FileFunction> functionsToBreak = new TreeSet<>();
+      ArrayList<Breakpoint> breakpointsToDisable = new ArrayList<>();
       for (Breakpoint breakpoint: breakpoints_)
       {
          if (breakpoint.isPackageBreakpoint() &&
@@ -749,7 +747,7 @@ public class BreakpointManager
 
    private void clearAllBreakpoints()
    {
-      Set<FileFunction> functions = new TreeSet<FileFunction>();
+      Set<FileFunction> functions = new TreeSet<>();
       for (Breakpoint breakpoint: breakpoints_)
       {
          breakpoint.setState(Breakpoint.STATE_REMOVING);
@@ -768,12 +766,12 @@ public class BreakpointManager
                function.functionName,
                function.fileName,
                function.packageName,
-               new ArrayList<String>(),
-               new QuietServerRequestCallback<Void>());
+               new ArrayList<>(),
+               new QuietServerRequestCallback<>());
       }
 
       server_.removeAllBreakpoints(new VoidServerRequestCallback());
-      notifyBreakpointsSaved(new ArrayList<Breakpoint>(breakpoints_), false);
+      notifyBreakpointsSaved(new ArrayList<>(breakpoints_), false);
       breakpoints_.clear();
       onBreakpointAddOrRemove();
    }
@@ -786,7 +784,7 @@ public class BreakpointManager
 
    private void notifyServer(Breakpoint breakpoint, boolean added, boolean arm)
    {
-      ArrayList<Breakpoint> bps = new ArrayList<Breakpoint>();
+      ArrayList<Breakpoint> bps = new ArrayList<>();
       bps.add(breakpoint);
       server_.updateBreakpoints(bps, added, arm,
                                 new VoidServerRequestCallback());
@@ -796,8 +794,7 @@ public class BreakpointManager
    {
       for (Breakpoint breakpoint: breakpoints_)
       {
-         ArrayList<Breakpoint> activatedBreakpoints =
-               new ArrayList<Breakpoint>();
+         ArrayList<Breakpoint> activatedBreakpoints = new ArrayList<>();
          if (breakpoint.isPendingDebugCompletion() &&
              breakpoint.getState() == Breakpoint.STATE_INACTIVE &&
              breakpoint.getType() == Breakpoint.TYPE_TOPLEVEL &&
@@ -886,8 +883,8 @@ public class BreakpointManager
    private final GlobalDisplay globalDisplay_;
    private final Commands commands_;
 
-   private ArrayList<Breakpoint> breakpoints_ = new ArrayList<Breakpoint>();
-   private Set<FileFunction> activeFunctions_ = new TreeSet<FileFunction>();
+   private ArrayList<Breakpoint> breakpoints_ = new ArrayList<>();
+   private Set<FileFunction> activeFunctions_ = new TreeSet<>();
    private String activeSource_;
 
    private boolean breakpointStateDirty_ = false;

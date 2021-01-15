@@ -75,5 +75,5 @@ public class GraphTheme
 
    private final String className_;
 
-   private static HashMap<Integer, String> colors_ = new HashMap<Integer, String>();
+   private static HashMap<Integer, String> colors_ = new HashMap<>();
 }

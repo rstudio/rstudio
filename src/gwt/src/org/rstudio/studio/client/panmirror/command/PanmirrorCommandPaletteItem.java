@@ -60,5 +60,11 @@ public class PanmirrorCommandPaletteItem extends BasePaletteItem<PanmirrorComman
       widget_.setSelected(selected);
    }
 
+   @Override
+   public String getId()
+   {
+      return cmd_.getId();
+   }
+
    private final PanmirrorCommandUI cmd_;
 }

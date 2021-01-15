@@ -23,7 +23,7 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/range/as_array.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <signal.h>
 #include <fcntl.h>
@@ -89,6 +89,8 @@
 #include <shared_core/system/User.hpp>
 
 #include "config.h"
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace core {

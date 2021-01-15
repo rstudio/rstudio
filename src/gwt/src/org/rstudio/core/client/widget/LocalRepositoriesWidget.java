@@ -80,7 +80,7 @@ public class LocalRepositoriesWidget extends Composite
    }
    
    public ArrayList<String> getItems() {
-      ArrayList<String> items = new ArrayList<String>();
+      ArrayList<String> items = new ArrayList<>();
       int numItems = listBox_.getItemCount();
       for (int i = 0; i < numItems; ++i) {
          items.add(listBox_.getItemText(i));

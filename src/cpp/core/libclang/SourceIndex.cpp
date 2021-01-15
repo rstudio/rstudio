@@ -259,7 +259,7 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
    // report to user if requested
    if (verbose_ > 1)
    {
-      std::cerr << "COMPILATION ARGUMENTS:" << std::endl;
+      std::cerr << "# COMPILATION ARGUMENTS ----" << std::endl;
       core::debug::print(args);
    }
 

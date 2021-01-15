@@ -166,7 +166,8 @@ public class FindOutputPane extends WorkbenchPane
             new FindOutputCodec(resources),
             resources.styles().selectedRow(),
             true,
-            false);
+            false,
+            "Find in Files Results");
       FontSizer.applyNormalFontSize(table_);
       table_.addStyleName(resources.styles().findOutput());
       table_.addClickHandler(new ClickHandler()

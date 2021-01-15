@@ -22,17 +22,18 @@
 #include <map>
 
 #include <boost/format.hpp>
-#include <boost/bind.hpp>
 #include <boost/function.hpp>
+#include <boost/regex.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/split.hpp>
-#include <boost/regex.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/RegexUtils.hpp>
 
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace core {

@@ -40,7 +40,7 @@ public class ProjectTemplateRegistryProvider
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
-      pendingCallbacks_ = new ArrayList<Callback>();
+      pendingCallbacks_ = new ArrayList<>();
       
       events_.addHandler(ProjectTemplateRegistryUpdatedEvent.TYPE, this);
       

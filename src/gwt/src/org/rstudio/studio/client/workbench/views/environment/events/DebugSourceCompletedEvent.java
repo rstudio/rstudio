@@ -28,8 +28,7 @@ public class DebugSourceCompletedEvent
       void onDebugSourceCompleted(DebugSourceCompletedEvent event);
    }
 
-   public static final GwtEvent.Type<DebugSourceCompletedEvent.Handler> TYPE =
-      new GwtEvent.Type<DebugSourceCompletedEvent.Handler>();
+   public static final GwtEvent.Type<DebugSourceCompletedEvent.Handler> TYPE = new GwtEvent.Type<>();
    
    public DebugSourceCompletedEvent(DebugSourceResult result)
    {

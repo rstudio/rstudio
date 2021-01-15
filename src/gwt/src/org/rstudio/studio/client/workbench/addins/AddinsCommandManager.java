@@ -37,7 +37,7 @@ public class AddinsCommandManager
    {
       events_ = events;
 
-      bindings_ = new ConfigFileBacked<EditorKeyBindings>(
+      bindings_ = new ConfigFileBacked<>(
             server,
             KEYBINDINGS_PATH,
             false,
@@ -120,8 +120,7 @@ public class AddinsCommandManager
    private void registerBindings(final EditorKeyBindings bindings,
                                  final CommandWithArg<EditorKeyBindings> afterLoad)
    {
-      List<Pair<List<KeySequence>, CommandBinding>> commands =
-            new ArrayList<Pair<List<KeySequence>, CommandBinding>>();
+      List<Pair<List<KeySequence>, CommandBinding>> commands = new ArrayList<>();
 
       RAddins rAddins = MainWindowObject.rAddins().get();
       for (String id : bindings.iterableKeys())
@@ -131,7 +130,7 @@ public class AddinsCommandManager
          if (addin == null)
             continue;
          CommandBinding binding = new AddinCommandBinding(addin);
-         commands.add(new Pair<List<KeySequence>, CommandBinding>(keyList, binding));
+         commands.add(new Pair<>(keyList, binding));
       }
 
       KeyMap map = ShortcutManager.INSTANCE.getKeyMap(KeyMapType.ADDIN);

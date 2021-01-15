@@ -81,7 +81,13 @@ public class UserPrefPaletteItem extends BasePaletteItem<UserPrefPaletteEntry>
    {
       widget_.setSelected(selected);
    }
-   
+
+   @Override
+   public String getId()
+   {
+      return val_.getId();
+   }
+
    public void nudgeWriter()
    {
       PREF_WRITER.nudge();

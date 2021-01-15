@@ -14,10 +14,11 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.common.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class ViewFileRevisionEvent extends GwtEvent<ViewFileRevisionHandler>
-{  
+public class ViewFileRevisionEvent extends GwtEvent<ViewFileRevisionEvent.Handler>
+{
    public ViewFileRevisionEvent(String revision, String filename)
    {
       revision_ = revision;
@@ -28,20 +29,20 @@ public class ViewFileRevisionEvent extends GwtEvent<ViewFileRevisionHandler>
    {
       return revision_;
    }
-   
+
    public String getFilename()
    {
       return filename_;
    }
 
    @Override
-   public Type<ViewFileRevisionHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
 
    @Override
-   protected void dispatch(ViewFileRevisionHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onViewFileRevision(this);
    }
@@ -49,5 +50,10 @@ public class ViewFileRevisionEvent extends GwtEvent<ViewFileRevisionHandler>
    private final String revision_;
    private final String filename_;
 
-   public static final Type<ViewFileRevisionHandler> TYPE = new Type<ViewFileRevisionHandler>();
+   public static final Type<Handler> TYPE = new Type<>();
+
+   public interface Handler extends EventHandler
+   {
+      void onViewFileRevision(ViewFileRevisionEvent event);
+   }
 }

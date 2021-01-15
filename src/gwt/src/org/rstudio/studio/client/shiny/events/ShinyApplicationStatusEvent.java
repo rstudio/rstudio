@@ -30,8 +30,7 @@ public class ShinyApplicationStatusEvent
       void onShinyApplicationStatus(ShinyApplicationStatusEvent event);
    }
 
-   public static final GwtEvent.Type<ShinyApplicationStatusEvent.Handler> TYPE =
-      new GwtEvent.Type<ShinyApplicationStatusEvent.Handler>();
+   public static final GwtEvent.Type<ShinyApplicationStatusEvent.Handler> TYPE = new GwtEvent.Type<>();
    
    public ShinyApplicationStatusEvent()
    {

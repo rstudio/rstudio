@@ -78,7 +78,7 @@ public class PanmirrorFindReplaceVisibleEvent extends
    */
   public static Type<PanmirrorFindReplaceVisibleEvent.Handler> getType() {
     if (TYPE == null) {
-      TYPE = new Type<PanmirrorFindReplaceVisibleEvent.Handler>();
+      TYPE = new Type<>();
     }
     return TYPE;
   }

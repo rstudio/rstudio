@@ -58,7 +58,7 @@ public class JsArrayUtil
    public static <T extends JavaScriptObject> ArrayList<T> toArrayList(
          JsArray<T> jsArray)
    {
-      ArrayList<T> list = new ArrayList<T>();
+      ArrayList<T> list = new ArrayList<>();
       fillList(jsArray, list);
       return list;
    }
@@ -86,7 +86,7 @@ public class JsArrayUtil
    
    public static ArrayList<String> fromJsArrayString(JsArrayString in)
    {
-      ArrayList<String> out = new ArrayList<String>();
+      ArrayList<String> out = new ArrayList<>();
       for (int i = 0; i < in.length(); i++)
       {
          out.add(in.get(i));

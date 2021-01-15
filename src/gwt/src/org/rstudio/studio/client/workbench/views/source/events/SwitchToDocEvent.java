@@ -14,11 +14,17 @@
  */
 package org.rstudio.studio.client.workbench.views.source.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class SwitchToDocEvent extends GwtEvent<SwitchToDocHandler>
+public class SwitchToDocEvent extends GwtEvent<SwitchToDocEvent.Handler>
 {
-   public static final Type<SwitchToDocHandler> TYPE = new Type<SwitchToDocHandler>();
+   public static final Type<Handler> TYPE = new Type<>();
+
+   public interface Handler extends EventHandler
+   {
+      void onSwitchToDoc(SwitchToDocEvent event);
+   }
 
    public SwitchToDocEvent(int selectedIndex)
    {
@@ -31,13 +37,13 @@ public class SwitchToDocEvent extends GwtEvent<SwitchToDocHandler>
    }
 
    @Override
-   public Type<SwitchToDocHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
 
    @Override
-   protected void dispatch(SwitchToDocHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onSwitchToDoc(this);
    }

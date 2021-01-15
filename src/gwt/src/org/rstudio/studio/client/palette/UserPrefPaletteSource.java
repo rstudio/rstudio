@@ -18,9 +18,11 @@ package org.rstudio.studio.client.palette;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
+import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.palette.model.CommandPaletteItem;
+import org.rstudio.studio.client.palette.ui.CommandPalette;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.PrefValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
@@ -28,7 +30,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
  * A command palette entry source which serves as a factory for user preference
  * values.
  */
-public class UserPrefPaletteSource implements CommandPaletteEntrySource
+public class UserPrefPaletteSource implements CommandPaletteEntryProvider
 {
    public UserPrefPaletteSource(UserPrefs prefs)
    {
@@ -38,7 +40,7 @@ public class UserPrefPaletteSource implements CommandPaletteEntrySource
    @Override
    public List<CommandPaletteItem> getCommandPaletteItems()
    {
-      List<CommandPaletteItem> items = new ArrayList<CommandPaletteItem>();
+      List<CommandPaletteItem> items = new ArrayList<>();
       for (PrefValue<?> val: prefs_.allPrefs())
       {
          if (StringUtil.isNullOrEmpty(val.getTitle()))
@@ -51,6 +53,30 @@ public class UserPrefPaletteSource implements CommandPaletteEntrySource
       }
       
       return items;
+   }
+
+   @Override
+   public CommandPaletteItem getCommandPaletteItem(String id)
+   {
+      if (StringUtil.isNullOrEmpty(id))
+      {
+         return null;
+      }
+
+      PrefValue<?> val = prefs_.getPrefValue(id);
+      if (val == null)
+      {
+         Debug.logWarning("Unknown preference requested by command palette: '" + id + "'");
+         return null;
+      }
+
+      return new UserPrefPaletteItem(val);
+   }
+
+   @Override
+   public String getProviderScope()
+   {
+      return CommandPalette.SCOPE_USER_PREFS;
    }
 
    private final UserPrefs prefs_;

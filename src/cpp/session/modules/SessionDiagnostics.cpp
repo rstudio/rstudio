@@ -41,7 +41,7 @@
 #include "shiny/SessionShiny.hpp"
 
 #include <boost/shared_ptr.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/range/adaptor/map.hpp>
 
 #include <r/RSexp.hpp>
@@ -54,6 +54,8 @@
 #include <core/text/CsvParser.hpp>
 #include <core/collection/Tree.hpp>
 #include <core/collection/Stack.hpp>
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

@@ -25,10 +25,10 @@
 
 #include <core/Algorithm.hpp>
 
-#include <boost/bind.hpp>
 #include <boost/function.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 #include <boost/optional.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <core/Macros.hpp>
 #include <core/Log.hpp>
@@ -43,6 +43,7 @@
 #undef FALSE
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace r {

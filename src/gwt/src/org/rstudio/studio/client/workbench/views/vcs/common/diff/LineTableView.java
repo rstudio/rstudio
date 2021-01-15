@@ -43,9 +43,7 @@ import org.rstudio.studio.client.workbench.views.vcs.common.diff.Line.Type;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTablePresenter.Display;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.DiffChunkActionEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.DiffChunkActionEvent.Action;
-import org.rstudio.studio.client.workbench.views.vcs.common.events.DiffChunkActionHandler;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.DiffLinesActionEvent;
-import org.rstudio.studio.client.workbench.views.vcs.common.events.DiffLinesActionHandler;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -379,7 +377,7 @@ public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements 
       });
       setSelectionModel(selectionModel_);
 
-      setData(new ArrayList<ChunkOrLine>(), PatchMode.Working);
+      setData(new ArrayList<>(), PatchMode.Working);
    }
 
    private void refreshValue(ChunkOrLine value)
@@ -387,7 +385,7 @@ public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements 
       int index = lines_.indexOf(value);
       if (index >= 0)
       {
-         ArrayList<ChunkOrLine> list = new ArrayList<ChunkOrLine>();
+         ArrayList<ChunkOrLine> list = new ArrayList<>();
          list.add(value);
          setRowData(index, list);
       }
@@ -498,13 +496,13 @@ public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements 
    @Override
    public void clear()
    {
-      setData(new ArrayList<ChunkOrLine>(), PatchMode.Working);
+      setData(new ArrayList<>(), PatchMode.Working);
    }
 
    @Override
    public ArrayList<Line> getSelectedLines()
    {
-      ArrayList<Line> selected = new ArrayList<Line>();
+      ArrayList<Line> selected = new ArrayList<>();
       for (ChunkOrLine line : lines_)
          if (line.getLine() != null && selectionModel_.isSelected(line))
             selected.add(line.getLine());
@@ -514,7 +512,7 @@ public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements 
    @Override
    public ArrayList<Line> getAllLines()
    {
-      ArrayList<Line> selected = new ArrayList<Line>();
+      ArrayList<Line> selected = new ArrayList<>();
       for (ChunkOrLine line : lines_)
          if (line.getLine() != null)
             selected.add(line.getLine());
@@ -522,13 +520,13 @@ public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements 
    }
 
    @Override
-   public HandlerRegistration addDiffChunkActionHandler(DiffChunkActionHandler handler)
+   public HandlerRegistration addDiffChunkActionHandler(DiffChunkActionEvent.Handler handler)
    {
       return addHandler(handler, DiffChunkActionEvent.TYPE);
    }
 
    @Override
-   public HandlerRegistration addDiffLineActionHandler(DiffLinesActionHandler handler)
+   public HandlerRegistration addDiffLineActionHandler(DiffLinesActionEvent.Handler handler)
    {
       return addHandler(handler, DiffLinesActionEvent.TYPE);
    }
@@ -547,8 +545,8 @@ public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements 
    private boolean showActions_ = true;
    private ArrayList<ChunkOrLine> lines_;
    private SwitchableSelectionModel<ChunkOrLine> selectionModel_;
-   private HashSet<Integer> startRows_ = new HashSet<Integer>();
-   private HashSet<Integer> endRows_ = new HashSet<Integer>();
+   private HashSet<Integer> startRows_ = new HashSet<>();
+   private HashSet<Integer> endRows_ = new HashSet<>();
    private boolean useStartBorder_ = false;
    private boolean useEndBorder_ = true;
    // Keep explicit track of the first selected line so we can render it differently

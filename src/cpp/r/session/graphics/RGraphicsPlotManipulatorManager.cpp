@@ -18,8 +18,8 @@
 #include <string>
 #include <algorithm>
 
-#include <boost/bind.hpp>
 #include <boost/function.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <core/Log.hpp>
 #include <shared_core/Error.hpp>
@@ -32,6 +32,7 @@
 #include "RGraphicsPlotManager.hpp"
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace r {

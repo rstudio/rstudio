@@ -19,12 +19,15 @@
 
 #include <boost/format.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <core/Base64.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/RegexUtils.hpp>
 
 #include <core/http/Util.hpp>
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace core {

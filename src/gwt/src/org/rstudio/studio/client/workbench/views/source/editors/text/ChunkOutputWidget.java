@@ -114,7 +114,7 @@ public class ChunkOutputWidget extends Composite
       options_ = options;
       chunkOutputSize_ = chunkOutputSize;
       initWidget(uiBinder.createAndBindUi(this));
-      expansionState_ = new Value<Integer>(expansionState);
+      expansionState_ = new Value<>(expansionState);
       applyCachedEditorStyle();
       if (expansionState_.getValue() == COLLAPSED)
          setCollapsedStyles();

@@ -23,10 +23,10 @@ namespace core {
    class Error;
 }
 }
- 
+
 namespace rstudio {
 namespace session {
-namespace modules { 
+namespace modules {
 namespace plumber {
 
 enum class PlumberFileType
@@ -35,10 +35,8 @@ enum class PlumberFileType
    PlumberApi
 };
 
-PlumberFileType plumberTypeFromExtendedType(const std::string& extendedType);
-
 core::Error initialize();
-                       
+
 } // namespace plumber
 } // namespace modules
 } // namespace session

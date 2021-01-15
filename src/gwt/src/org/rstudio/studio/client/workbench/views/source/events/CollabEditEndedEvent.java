@@ -46,8 +46,7 @@ public class CollabEditEndedEvent
       void onCollabEditEnded(CollabEditEndedEvent event);
    }
 
-   public static final GwtEvent.Type<CollabEditEndedEvent.Handler> TYPE =
-      new GwtEvent.Type<CollabEditEndedEvent.Handler>();
+   public static final GwtEvent.Type<CollabEditEndedEvent.Handler> TYPE = new GwtEvent.Type<>();
 
    public CollabEditEndedEvent()
    {

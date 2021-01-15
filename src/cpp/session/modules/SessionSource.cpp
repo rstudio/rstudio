@@ -22,8 +22,8 @@
 
 #include <gsl/gsl>
 
-#include <boost/bind.hpp>
 #include <boost/utility.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <core/r_util/RSourceIndex.hpp>
 
@@ -61,6 +61,7 @@ extern "C" const char *locale2charset(const char *);
 #include <session/prefs/Preferences.hpp>
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

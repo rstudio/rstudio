@@ -90,7 +90,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
       currentViewType_ = UserPrefs.SHINY_VIEWER_TYPE_NONE;
       dependencyManager_ = dependencyManager;
       interrupt_ = interrupt;
-      params_ = new ArrayList<ShinyApplicationParams>();
+      params_ = new ArrayList<>();
       
       eventBus_.addHandler(ShinyApplicationStatusEvent.TYPE, this);
       eventBus_.addHandler(LaunchShinyApplicationEvent.TYPE, this);

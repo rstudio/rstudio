@@ -115,5 +115,5 @@ public class AceKeyboardPreviewer
       return false;
    }
    
-   private ArrayList<Handler> handlers_ = new ArrayList<Handler>();
+   private ArrayList<Handler> handlers_ = new ArrayList<>();
 }

@@ -54,6 +54,5 @@ public class TerminalReceivedConsoleProcessInfoEvent extends GwtEvent<TerminalRe
    }
 
    private ConsoleProcessInfo data_;
-   public static final Type<TerminalReceivedConsoleProcessInfoEvent.Handler> TYPE =
-         new Type<TerminalReceivedConsoleProcessInfoEvent.Handler>();
+   public static final Type<TerminalReceivedConsoleProcessInfoEvent.Handler> TYPE = new Type<>();
 }

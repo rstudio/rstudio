@@ -68,7 +68,7 @@ public class RVersionSelectWidget extends SelectWidget
       boolean disambiguate = RVersionSpec.hasDuplicates(rVersions);
 
       // build list of choices
-      ArrayList<String> choices = new ArrayList<String>();
+      ArrayList<String> choices = new ArrayList<>();
 
       // include "default" label if requested
       if (includeSystemDefault)
@@ -91,7 +91,7 @@ public class RVersionSelectWidget extends SelectWidget
    private static String[] rVersionValues(JsArray<RVersionSpec> rVersions,
                                           boolean includeSystemDefault)
    {
-      ArrayList<String> values = new ArrayList<String>();
+      ArrayList<String> values = new ArrayList<>();
 
       if (includeSystemDefault)
          values.add(rVersionSpecToString(RVersionSpec.createEmpty()));

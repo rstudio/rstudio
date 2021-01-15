@@ -43,7 +43,6 @@ import org.rstudio.studio.client.workbench.snippets.model.SnippetData;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetsChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedEvent;
-import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedHandler;
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
@@ -60,7 +59,7 @@ import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 @Singleton
-public class SourceWindow implements LastSourceDocClosedHandler,
+public class SourceWindow implements LastSourceDocClosedEvent.Handler,
                                      PopoutDocEvent.Handler,
                                      DocTabDragStartedEvent.Handler
 {
@@ -77,24 +76,24 @@ public class SourceWindow implements LastSourceDocClosedHandler,
       source_ = source;
       events_ = events;
       satellite_ = satellite;
-      
+
       // this class is for satellite source windows only; if an instance gets
       // created in the main window, don't hook up any of its behaviors
       if (!Satellite.isCurrentWindowSatellite())
          return;
-      
+
       // add event handlers
       events.addHandler(LastSourceDocClosedEvent.TYPE, this);
       events.addHandler(PopoutDocEvent.TYPE, this);
       events.addHandler(DocTabDragStartedEvent.TYPE, this);
 
-      // set up desktop hooks (required to e.g. process commands issued by 
+      // set up desktop hooks (required to e.g. process commands issued by
       // the desktop frame)
       pDesktopHooks.get();
-      
+
       // export callbacks for main window
       exportFromSatellite();
-      
+
       // load custom snippets into this window
       snippetServer.getSnippets(new ServerRequestCallback<JsArray<SnippetData>>()
       {
@@ -117,7 +116,7 @@ public class SourceWindow implements LastSourceDocClosedHandler,
             Debug.logError(error);
          }
       });
-      
+
       // in desktop mode, the frame checks to see if we want to be closed, but
       // in web mode the best we can do is prompt if the user attempts to close
       // a source window with unsaved changes.
@@ -133,18 +132,18 @@ public class SourceWindow implements LastSourceDocClosedHandler,
                   markReadyToClose();
                   return;
                }
-               
-               ArrayList<UnsavedChangesTarget> unsaved = 
+
+               ArrayList<UnsavedChangesTarget> unsaved =
                      source_.getUnsavedChanges(Source.TYPE_FILE_BACKED);
 
                // in a source window, we need to look for untitled docs too
                if (!SourceWindowManager.isMainSourceWindow())
                {
-                  ArrayList<UnsavedChangesTarget> untitled = 
+                  ArrayList<UnsavedChangesTarget> untitled =
                         source_.getUnsavedChanges(Source.TYPE_UNTITLED);
                   unsaved.addAll(untitled);
                }
-               
+
                if (unsaved.size() > 0)
                {
                   String msg = "Your edits to the ";
@@ -171,23 +170,23 @@ public class SourceWindow implements LastSourceDocClosedHandler,
          });
       }
    }
-   
+
    public void setInitialDoc(String docId, SourcePosition sourcePosition)
    {
       initialDocId_ = docId;
       initialSourcePosition_ = sourcePosition;
    }
-   
+
    public String getInitialDocId()
    {
       return initialDocId_;
    }
-   
+
    public SourcePosition getInitialSourcePosition()
    {
       return initialSourcePosition_;
    }
-   
+
    // Event handlers ----------------------------------------------------------
 
    @Override
@@ -198,7 +197,7 @@ public class SourceWindow implements LastSourceDocClosedHandler,
       markReadyToClose();
       WindowEx.get().close();
    }
-   
+
 
    @Override
    public void onPopoutDoc(PopoutDocEvent event)
@@ -225,11 +224,11 @@ public class SourceWindow implements LastSourceDocClosedHandler,
       $wnd.rstudioCloseAllDocs = $entry(function(caption, excludeDocId, onCompleted) {
          satellite.@org.rstudio.studio.client.workbench.views.source.SourceWindow::closeAllDocs(Ljava/lang/String;Ljava/lang/String;Lcom/google/gwt/user/client/Command;)(caption, excludeDocId, onCompleted);
       });
-      
+
       $wnd.rstudioGetUnsavedChanges = $entry(function() {
          return satellite.@org.rstudio.studio.client.workbench.views.source.SourceWindow::getUnsavedChanges()();
       });
-      
+
       $wnd.rstudioGetCurrentDocPath = $entry(function() {
          return satellite.@org.rstudio.studio.client.workbench.views.source.SourceWindow::getCurrentDocPath()();
       });
@@ -237,63 +236,62 @@ public class SourceWindow implements LastSourceDocClosedHandler,
       $wnd.rstudioGetCurrentDocId = $entry(function() {
          return satellite.@org.rstudio.studio.client.workbench.views.source.SourceWindow::getCurrentDocId()();
       });
-      
+
       $wnd.rstudioHandleUnsavedChangesBeforeExit = $entry(function(targets, onCompleted) {
          satellite.@org.rstudio.studio.client.workbench.views.source.SourceWindow::handleUnsavedChangesBeforeExit(Lcom/google/gwt/core/client/JavaScriptObject;Lcom/google/gwt/user/client/Command;)(targets, onCompleted);
       });
-      
+
       $wnd.rstudioSaveWithPrompt = $entry(function(target, onCompleted) {
          satellite.@org.rstudio.studio.client.workbench.views.source.SourceWindow::saveWithPrompt(Lcom/google/gwt/core/client/JavaScriptObject;Lcom/google/gwt/user/client/Command;)(target, onCompleted);
       });
-      
+
       $wnd.rstudioSaveUnsavedDocuments = $entry(function(ids, onCompleted) {
          satellite.@org.rstudio.studio.client.workbench.views.source.SourceWindow::saveUnsavedDocuments(Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/user/client/Command;)(ids, onCompleted);
       });
-      
+
       $wnd.rstudioReadyToClose = false;
       $wnd.rstudioCloseSourceWindow = $entry(function() {
          satellite.@org.rstudio.studio.client.workbench.views.source.SourceWindow::closeSourceWindow()();
       });
    }-*/;
-   
+
    private void saveWithPrompt(JavaScriptObject jsoItem, Command onCompleted)
    {
       UnsavedChangesItem item = jsoItem.cast();
       source_.saveWithPrompt(item, onCompleted, null);
    }
-   
+
    private void saveUnsavedDocuments(JsArrayString idArray, Command onCompleted)
    {
       Set<String> ids = null;
       if (idArray != null)
       {
-         ids = new HashSet<String>();
+         ids = new HashSet<>();
          for (String id : JsUtil.asIterable(idArray))
             ids.add(id);
       }
-      
+
       source_.saveUnsavedDocuments(ids, onCompleted);
    }
-   
-   private void handleUnsavedChangesBeforeExit(JavaScriptObject jsoItems, 
+
+   private void handleUnsavedChangesBeforeExit(JavaScriptObject jsoItems,
          Command onCompleted)
    {
       JsArray<UnsavedChangesItem> items = jsoItems.cast();
-      ArrayList<UnsavedChangesTarget> targets = 
-            new ArrayList<UnsavedChangesTarget>();
+      ArrayList<UnsavedChangesTarget> targets = new ArrayList<>();
       for (int i = 0; i < items.length(); i++)
       {
          targets.add(items.get(i));
       }
       source_.handleUnsavedChangesBeforeExit(targets, onCompleted);
    }
-   
+
    private void closeAllDocs(String caption, String excludeDocId, Command onCompleted)
    {
       if (source_ != null)
          source_.closeAllSourceDocs(caption, onCompleted, excludeDocId);
    }
-   
+
    private JsArray<UnsavedChangesItem> getUnsavedChanges()
    {
       JsArray<UnsavedChangesItem> items = JsArray.createArray().cast();
@@ -305,7 +303,7 @@ public class SourceWindow implements LastSourceDocClosedHandler,
       }
       return items;
    }
-   
+
    private String getCurrentDocPath()
    {
       return source_.getCurrentDocPath();
@@ -318,14 +316,14 @@ public class SourceWindow implements LastSourceDocClosedHandler,
 
    private void closeSourceWindow()
    {
-      final ApplicationQuit.QuitContext quitContext = 
+      final ApplicationQuit.QuitContext quitContext =
             new ApplicationQuit.QuitContext()
             {
                @Override
                public void onReadyToQuit(boolean saveChanges)
                {
                   markReadyToClose();
-                  
+
                   // we may be in the middle of closing the window already, so
                   // defer the closure request
                   Scheduler.get().scheduleDeferred(
@@ -339,14 +337,14 @@ public class SourceWindow implements LastSourceDocClosedHandler,
                   });
                }
             };
-            
-      // collect titled and untitled changes -- we don't prompt for untitled 
-      // changes in the main window, but we do in the source window 
-      ArrayList<UnsavedChangesTarget> untitled = 
+
+      // collect titled and untitled changes -- we don't prompt for untitled
+      // changes in the main window, but we do in the source window
+      ArrayList<UnsavedChangesTarget> untitled =
             source_.getUnsavedChanges(Source.TYPE_UNTITLED);
       ArrayList<UnsavedChangesTarget> fileBacked =
             source_.getUnsavedChanges(Source.TYPE_FILE_BACKED);
-      
+
      if (Desktop.hasDesktopFrame() && untitled.size() > 0)
      {
         // single untitled, unsaved doc in desktop mode is the most common case
@@ -369,10 +367,10 @@ public class SourceWindow implements LastSourceDocClosedHandler,
            // if we have multiple unsaved untitled targets or a mix of untitled
            // and file backed targets, we just fall back to a generic prompt
            RStudioGinjector.INSTANCE.getGlobalDisplay().showYesNoMessage(
-                 GlobalDisplay.MSG_WARNING, 
-                 "Unsaved Changes", 
+                 GlobalDisplay.MSG_WARNING,
+                 "Unsaved Changes",
                  "There are unsaved documents in this window. Are you sure " +
-                 "you want to close it?", 
+                 "you want to close it?",
                  false,  // include cancel
                  new Operation()
                  {
@@ -383,23 +381,23 @@ public class SourceWindow implements LastSourceDocClosedHandler,
                     }
                  },
                  null,
-                 null, 
-                 "Close and Discard Changes", 
-                 "Cancel", 
+                 null,
+                 "Close and Discard Changes",
+                 "Cancel",
                  false);
            return;
         }
       }
-     
+
       // prompt to save any unsaved documents
       if (fileBacked.size() == 0)
          quitContext.onReadyToQuit(false);
       else
-         ApplicationQuit.handleUnsavedChanges(SaveAction.SAVEASK, 
-               "Close Source Window", true /*allowCancel*/, false /*forceSaveAll*/, 
+         ApplicationQuit.handleUnsavedChanges(SaveAction.SAVEASK,
+               "Close Source Window", true /*allowCancel*/, false /*forceSaveAll*/,
                source_, null, null, quitContext);
    }
-   
+
    private String unsavedTargetDesc(UnsavedChangesTarget item)
    {
       if (StringUtil.isNullOrEmpty(item.getPath()))
@@ -407,11 +405,11 @@ public class SourceWindow implements LastSourceDocClosedHandler,
       else
          return FilePathUtils.friendlyFileName(item.getPath());
    }
-   
+
    private final native void markReadyToClose() /*-{
       $wnd.rstudioReadyToClose = true;
    }-*/;
-   
+
    private final EventBus events_;
    private final Source source_;
    private final Satellite satellite_;

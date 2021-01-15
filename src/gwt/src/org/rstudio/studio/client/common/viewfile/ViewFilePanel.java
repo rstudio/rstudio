@@ -418,6 +418,5 @@ public class ViewFilePanel extends Composite implements TextDisplay
    
    private SaveFileAsHandler saveFileAsHandler_ = null;
    
-   private final ArrayList<HandlerRegistration> releaseOnDismiss_ =
-         new ArrayList<HandlerRegistration>();
+   private final ArrayList<HandlerRegistration> releaseOnDismiss_ = new ArrayList<>();
 }

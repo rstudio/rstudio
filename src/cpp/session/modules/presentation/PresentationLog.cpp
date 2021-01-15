@@ -16,9 +16,9 @@
 
 #include "PresentationLog.hpp"
 
-#include <boost/bind.hpp>
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <shared_core/Error.hpp>
@@ -34,6 +34,7 @@
 #include "PresentationState.hpp"
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

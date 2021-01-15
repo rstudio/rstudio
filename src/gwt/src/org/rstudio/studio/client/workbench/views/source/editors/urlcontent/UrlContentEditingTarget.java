@@ -40,7 +40,7 @@ import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
-import org.rstudio.studio.client.palette.model.CommandPaletteItem;
+import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.SourceColumn;
@@ -60,7 +60,6 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperat
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 
 public class UrlContentEditingTarget implements EditingTarget
 {
@@ -147,7 +146,7 @@ public class UrlContentEditingTarget implements EditingTarget
 
    public HashSet<AppCommand> getSupportedCommands()
    {
-      HashSet<AppCommand> commands = new HashSet<AppCommand>();
+      HashSet<AppCommand> commands = new HashSet<>();
       commands.add(commands_.printSourceDoc());
       if (SourceWindowManager.isMainSourceWindow())
          commands.add(commands_.popoutDoc());
@@ -480,7 +479,7 @@ public class UrlContentEditingTarget implements EditingTarget
    }
 
    @Override
-   public List<CommandPaletteItem> getCommandPaletteItems()
+   public CommandPaletteEntryProvider getPaletteEntryProvider()
    {
       return null;
    }
@@ -498,7 +497,7 @@ public class UrlContentEditingTarget implements EditingTarget
 
    protected SourceColumn column_;
    protected SourceDocument doc_;
-   private Value<Boolean> dirtyState_ = new Value<Boolean>(false);
+   private Value<Boolean> dirtyState_ = new Value<>(false);
 
    protected final SourceServerOperations server_;
    protected final Commands commands_;

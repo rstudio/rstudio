@@ -230,7 +230,7 @@ public class Ignore
       // special case for empty path list -- make the project root the 
       // parent path and return an empty list
       if (paths.size() == 0)
-         return new IgnoreList("", new ArrayList<String>());
+         return new IgnoreList("", new ArrayList<>());
        
       // get the parent path of the first element
       FileSystemItem firstPath = FileSystemItem.createFile(paths.get(0));
@@ -238,7 +238,7 @@ public class Ignore
       
       // confirm that all of the elements start with that path and take the
       // remainder of their paths for our list
-      ArrayList<String> ignored = new ArrayList<String>();
+      ArrayList<String> ignored = new ArrayList<>();
       for (String path : paths)
       {
          String thisParent = 
@@ -278,7 +278,7 @@ public class Ignore
    private String getIgnored(IgnoreList ignoreList, String existingIgnored)
    {
       // split existing ignored into list
-      ArrayList<String> ignored = new ArrayList<String>();
+      ArrayList<String> ignored = new ArrayList<>();
       Iterable<String> existing = StringUtil.getLineIterator(existingIgnored);
       for (String item : existing)
       {

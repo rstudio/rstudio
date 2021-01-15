@@ -18,10 +18,10 @@
 #include <algorithm>
 #include <gsl/gsl>
 
-#include <boost/algorithm/string.hpp>
-#include <boost/bind.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <core/Exec.hpp>
 #include <core/StringUtils.hpp>
@@ -37,6 +37,7 @@
 #include <session/prefs/UserPrefs.hpp>
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

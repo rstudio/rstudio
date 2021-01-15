@@ -22,7 +22,7 @@ public class ShortcutInfo
 {
    public ShortcutInfo (KeyboardShortcut shortcut, AppCommand command)
    {
-      shortcuts_ = new ArrayList<String>();
+      shortcuts_ = new ArrayList<>();
       description_ = shortcut.getTitle().length() > 0 ?
                         shortcut.getTitle() :
                         command != null ?

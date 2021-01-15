@@ -35,13 +35,13 @@ public class UserPrefBooleanPaletteEntry extends UserPrefPaletteEntry
       super(val, item);
       prefItem_ = item;
       boolean initial = val.getGlobalValue();
-      
+
       // Create the checkbox with the initial value
       checkbox_ = new CheckBox();
       checkbox_.setValue(initial);
       Style style = checkbox_.getElement().getStyle();
       syncLabel();
-      
+
       // Set a constant width for the checkbox so that toggling on/off doesn't
       // change its width
       style.setWidth(45, Unit.PX);
@@ -66,7 +66,7 @@ public class UserPrefBooleanPaletteEntry extends UserPrefPaletteEntry
 
       // Establish link between the toggle switch and the name element for
       // accessibility purposes (must be done post-init so that name_ has an ID)
-      Roles.getCheckboxRole().setAriaLabelledbyProperty(checkbox_.getElement(), 
+      Roles.getCheckboxRole().setAriaLabelledbyProperty(checkbox_.getElement(),
             Id.of(name_.getElement()));
    }
 
@@ -90,12 +90,12 @@ public class UserPrefBooleanPaletteEntry extends UserPrefPaletteEntry
    {
       return checkbox_;
    }
-   
+
    private void syncLabel()
    {
-	   checkbox_.setText(checkbox_.getValue() ? "On" : "Off");
+      checkbox_.setText(checkbox_.getValue() ? "On" : "Off");
    }
-   
+
    private final CheckBox checkbox_;
    private final UserPrefPaletteItem prefItem_;
 }

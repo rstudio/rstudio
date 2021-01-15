@@ -33,7 +33,7 @@
 #include <sys/types.h>
 
 #include <boost/asio.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <shared_core/Error.hpp>
 #include <core/Log.hpp>
@@ -45,6 +45,8 @@
 #include <core/Thread.hpp>
 
 #include <core/PerformanceTimer.hpp>
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace core {

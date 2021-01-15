@@ -74,7 +74,7 @@ public abstract class CommandPaletteCommand extends CommandPaletteEntry
    @Override
    public String getScope()
    {
-      return "command";
+      return CommandPalette.SCOPE_APP_COMMAND;
    }
    
    @Override

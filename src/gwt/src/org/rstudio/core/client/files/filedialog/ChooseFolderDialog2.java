@@ -53,7 +53,7 @@ public class ChooseFolderDialog2 extends FileSystemDialog
    public FileSystemItem[] ls()
    {
       FileSystemItem[] items = super.ls();
-      ArrayList<FileSystemItem> dirs = new ArrayList<FileSystemItem>();
+      ArrayList<FileSystemItem> dirs = new ArrayList<>();
       for (FileSystemItem item : items)
          if (item.isDirectory())
             dirs.add(item);

@@ -512,7 +512,7 @@ public abstract class Prefs
       PrefValue<T> val = (PrefValue<T>) values_.get(name);
       if (val == null)
       {
-         val = new ObjectValue<T>(name, title, description, defaultValue);
+         val = new ObjectValue<>(name, title, description, defaultValue);
          values_.put(name, val);
       }
       return val;
@@ -525,6 +525,5 @@ public abstract class Prefs
    }
    
    private JsArray<PrefLayer> layers_;
-   private final HashMap<String, PrefValue<?>> values_ =
-         new HashMap<String, PrefValue<?>>();
+   private final HashMap<String, PrefValue<?>> values_ = new HashMap<>();
 }

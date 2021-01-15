@@ -47,7 +47,7 @@ public abstract class UserPrefPaletteEntry extends CommandPaletteEntry
    @Override
    public String getScope()
    {
-      return "userpref";
+      return CommandPalette.SCOPE_USER_PREFS;
    }
 
    @Override

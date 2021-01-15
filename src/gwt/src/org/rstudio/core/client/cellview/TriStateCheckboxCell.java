@@ -51,7 +51,7 @@ public class TriStateCheckboxCell<TKey> implements Cell<Boolean>
    public TriStateCheckboxCell(SelectionModel<TKey> selectionModel)
    {
       selectionModel_ = selectionModel;
-      consumedEvents_ = new HashSet<String>();
+      consumedEvents_ = new HashSet<>();
       consumedEvents_.add("click");
       consumedEvents_.add("keydown");
       consumedEvents_.add("mouseover");

@@ -21,7 +21,7 @@
 
 #include <windows.h>
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
@@ -29,6 +29,7 @@
 #include "DesktopRVersion.hpp"
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace desktop {

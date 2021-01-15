@@ -20,7 +20,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 
 #include "SessionRHooks.hpp"
 
@@ -30,6 +30,7 @@ namespace modules {
 namespace rhooks {
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 Error initialize()
 {

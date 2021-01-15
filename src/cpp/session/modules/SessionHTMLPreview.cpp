@@ -16,17 +16,15 @@
 
 #include "SessionHTMLPreview.hpp"
 
-#include <boost/bind.hpp>
 #include <boost/format.hpp>
 #include <boost/enable_shared_from_this.hpp>
-
+#include <boost/algorithm/string/join.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/iostreams/copy.hpp>
 #include <boost/iostreams/concepts.hpp>
 #include <boost/iostreams/filter/regex.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
-
-#include <boost/algorithm/string/join.hpp>
-#include <boost/algorithm/string/predicate.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
@@ -57,6 +55,7 @@
 #define kHTMLPreviewLocation "/" kHTMLPreview "/"
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

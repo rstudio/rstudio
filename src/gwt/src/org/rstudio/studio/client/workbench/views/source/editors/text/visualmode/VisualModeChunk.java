@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Pattern;
@@ -101,9 +102,9 @@ public class VisualModeChunk
 
       PanmirrorUIChunkEditor chunk = new PanmirrorUIChunkEditor();
       
-      releaseOnDismiss_ = new ArrayList<HandlerRegistration>();
-      destroyHandlers_ = new ArrayList<Command>();
-      rowState_ = new HashMap<Integer,VisualModeChunkRowState>();
+      releaseOnDismiss_ = new ArrayList<>();
+      destroyHandlers_ = new ArrayList<>();
+      rowState_ = new HashMap<>();
 
       // Create a new AceEditor instance and allow access to the underlying
       // native JavaScript object it represents (AceEditorNative)
@@ -127,17 +128,27 @@ public class VisualModeChunk
       editor_.setUseWrapMode(true);
       
       // Track activation state and notify visual mode
-      editor_.addFocusHandler((evt) -> 
+      releaseOnDismiss_.add(editor_.addFocusHandler((evt) ->
       { 
          active_ = true; 
          target_.getVisualMode().setActiveEditor(editor_);
-      });
-      editor_.addBlurHandler((evt) ->
+      }));
+      releaseOnDismiss_.add(editor_.addBlurHandler((evt) ->
       {
          active_ = false;
          target_.getVisualMode().setActiveEditor(null);
-      });
-       
+      }));
+
+      // Track UI pref for tab behavior. Note that this can't be a lambda because Ace has trouble with lambda bindings.
+      releaseOnDismiss_.add(RStudioGinjector.INSTANCE.getUserPrefs().tabKeyMoveFocus().bind(
+         new CommandWithArg<Boolean>()
+         {
+            @Override
+            public void execute(Boolean movesFocus)
+            {
+               chunkEditor.setTabMovesFocus(movesFocus);
+            }
+         }));
 
       // Provide the editor's container element
       host_ = Document.get().createDivElement();
@@ -551,7 +562,7 @@ public class VisualModeChunk
     */
    public void executeSelection()
    {
-      performWithSelection(() ->
+      performWithSelection((pos) ->
       {
          codeExecution_.executeSelection(false);
       });
@@ -561,9 +572,10 @@ public class VisualModeChunk
     * Performs an arbitrary command after synchronizing the selection state of
     * the child editor to the parent.
     * 
-    * @param command The command to perform.
+    * @param command The command to perform. The new position of the cursor in
+    *    source mode is passed as an argument.
     */
-   public void performWithSelection(Command command)
+   public void performWithSelection(CommandWithArg<Position> command)
    {
       sync_.syncToEditor(SyncType.SyncTypeExecution, () ->
       {
@@ -571,7 +583,7 @@ public class VisualModeChunk
       });
    }
    
-   private void performWithSyncedSelection(Command command)
+   private void performWithSyncedSelection(CommandWithArg<Position> command)
    {
       // Ensure we have a scope. This should always exist since we sync the
       // scope outline prior to executing code.
@@ -600,7 +612,7 @@ public class VisualModeChunk
       // Execute selection in the parent
       parent_.setSelectionRange(selectionRange);
 
-      command.execute();
+      command.execute(selectionRange.getStart());
       
       // After the event loop, forward the parent selection back to the child if
       // it's changed (this allows us to advance the cursor after running a line)

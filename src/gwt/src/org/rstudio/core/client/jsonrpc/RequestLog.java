@@ -45,8 +45,7 @@ public class RequestLog
       return entries;
    }
 
-   private static final ArrayList<RequestLogEntry> entries_ =
-         new ArrayList<RequestLogEntry>();
+   private static final ArrayList<RequestLogEntry> entries_ = new ArrayList<>();
 
    private static final int MAX_ENTRIES = 50;
 }

@@ -170,7 +170,7 @@ public class RmdTemplateOptionsWidget extends Composite
    
    private void updateFormatOptions(String format)
    {
-      tabs_ = new HashMap<String, FlowPanel>();
+      tabs_ = new HashMap<>();
       optionsTabs_.clear();
       for (int i = 0; i < formats_.length(); i++)
       {
@@ -193,7 +193,7 @@ public class RmdTemplateOptionsWidget extends Composite
       {
          labelFormatNotes_.setVisible(false);
       }
-      optionWidgets_ = new ArrayList<RmdFormatOption>();
+      optionWidgets_ = new ArrayList<>();
       JsArrayString options = format.getOptions();
       for (int i = 0; i < options.length(); i++)
       {
@@ -320,7 +320,7 @@ public class RmdTemplateOptionsWidget extends Composite
    private void applyFrontMatter(RmdFrontMatter frontMatter)
    {
       frontMatter_ = frontMatter;
-      frontMatterCache_ = new HashMap<String, String>();
+      frontMatterCache_ = new HashMap<>();
       ensureOptionsCache();
       JsArrayString formats = frontMatter.getFormatList();
       for (int i = 0; i < formats.length(); i++)
@@ -379,7 +379,7 @@ public class RmdTemplateOptionsWidget extends Composite
    {
       if (optionCache_ != null)
          return;
-      optionCache_ = new HashMap<String, RmdTemplateFormatOption>();
+      optionCache_ = new HashMap<>();
       for (int i = 0; i < options_.length(); i++)
       {
          RmdTemplateFormatOption option = options_.get(i);

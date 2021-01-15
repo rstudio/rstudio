@@ -14,13 +14,19 @@
  */
 package org.rstudio.studio.client.workbench.views.source.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import org.rstudio.studio.client.workbench.views.source.model.SourceNavigation;
 
 import com.google.gwt.event.shared.GwtEvent;
 
-public class SourceNavigationEvent extends GwtEvent<SourceNavigationHandler>
+public class SourceNavigationEvent extends GwtEvent<SourceNavigationEvent.Handler>
 {
-   public static final Type<SourceNavigationHandler> TYPE = new Type<SourceNavigationHandler>();
+   public static final Type<Handler> TYPE = new Type<>();
+
+   public interface Handler extends EventHandler
+   {
+      void onSourceNavigation(SourceNavigationEvent event);
+   }
 
    public SourceNavigationEvent(SourceNavigation navigation)
    {
@@ -33,13 +39,13 @@ public class SourceNavigationEvent extends GwtEvent<SourceNavigationHandler>
    }
 
    @Override
-   public Type<SourceNavigationHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
 
    @Override
-   protected void dispatch(SourceNavigationHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onSourceNavigation(this);
    }

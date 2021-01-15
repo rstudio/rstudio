@@ -141,7 +141,7 @@ public class UnifiedEmitter
     */
    private ArrayList<DiffChunk> toDiffChunks(ArrayList<Line> lines)
    {
-      ArrayList<DiffChunk> chunks = new ArrayList<DiffChunk>();
+      ArrayList<DiffChunk> chunks = new ArrayList<>();
 
       if (lines.size() == 0)
          return chunks;
@@ -195,7 +195,7 @@ public class UnifiedEmitter
 
       return new DiffChunk(ranges,
                            "",
-                           new ArrayList<Line>(sublist),
+                           new ArrayList<>(sublist),
                            -1);
    }
 
@@ -218,7 +218,7 @@ public class UnifiedEmitter
     */
    private static class OutputLinesGenerator
    {
-      private final ArrayList<Line> output = new ArrayList<Line>();
+      private final ArrayList<Line> output = new ArrayList<>();
 
       private final Iterator<Line> ctxit; // Iterator for all context lines
       private final Iterator<Line> dffit; // Iterator for all diff lines
@@ -382,8 +382,8 @@ public class UnifiedEmitter
       }
    }
 
-   private final ArrayList<Line> contextLines_ = new ArrayList<Line>();
-   private final ArrayList<Line> diffLines_ = new ArrayList<Line>();
+   private final ArrayList<Line> contextLines_ = new ArrayList<>();
+   private final ArrayList<Line> diffLines_ = new ArrayList<>();
    private final String fileA_;
    private final String fileB_;
    private static final String EOL = "\n";

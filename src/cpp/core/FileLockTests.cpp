@@ -23,10 +23,12 @@
 #include <shared_core/FilePath.hpp>
 
 #include <boost/thread.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 
 #define RSTUDIO_NO_TESTTHAT_ALIASES
 #include <tests/TestThat.hpp>
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace core {

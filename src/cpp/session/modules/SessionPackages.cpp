@@ -20,9 +20,9 @@
 
 #include "SessionPackages.hpp"
 
-#include <boost/bind.hpp>
 #include <boost/regex.hpp>
 #include <boost/format.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
@@ -43,6 +43,7 @@
 #include "session-config.h"
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

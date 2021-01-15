@@ -44,9 +44,9 @@ public class PanmirrorZoteroServer
 
    public Promise<Boolean> validateWebAPIKey(String key)
    {
-      return new Promise<Boolean>((ResolveCallbackFn<Boolean> resolve, RejectCallbackFn reject) -> {
+      return new Promise<>((ResolveCallbackFn<Boolean> resolve, RejectCallbackFn reject) -> {
          server_.zoteroValidateWebAPIKey(key,
-               new PromiseServerRequestCallback<Boolean>(resolve, reject));
+               new PromiseServerRequestCallback<>(resolve, reject));
       });
    }
 
@@ -54,28 +54,28 @@ public class PanmirrorZoteroServer
                                                    JsArray<PanmirrorZoteroCollectionSpec> cached,
                                                    boolean useCache)
    {
-      return new Promise<JavaScriptObject>(
+      return new Promise<>(
             (ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
                server_.zoteroGetCollections(file, collections, cached, useCache,
-                     new PromiseServerRequestCallback<JavaScriptObject>(resolve, reject, "Loading Collections...", 2000));
+                     new PromiseServerRequestCallback<>(resolve, reject, "Loading Collections...", 2000));
             });
    }
 
    public Promise<JavaScriptObject> getLibraryNames()
    {
-      return new Promise<JavaScriptObject>(
+      return new Promise<>(
             (ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
                server_.zoteroGetLibraryNames(
-                     new PromiseServerRequestCallback<JavaScriptObject>(resolve, reject));
+                     new PromiseServerRequestCallback<>(resolve, reject));
             });
    }
    
    public Promise<JavaScriptObject> getActiveCollectionSpecs(String file, JsArrayString collections)
    {
-      return new Promise<JavaScriptObject>(
+      return new Promise<>(
             (ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
                server_.zoteroGetActiveCollectionSpecs(file, collections,
-                  new PromiseServerRequestCallback<JavaScriptObject>(resolve, reject, "Reading Collections...", 2000));
+                  new PromiseServerRequestCallback<>(resolve, reject, "Reading Collections...", 2000));
             });
    }
    
@@ -85,12 +85,12 @@ public class PanmirrorZoteroServer
                                                        String translatorId, 
                                                        int libraryID)
    {
-      return new Promise<JavaScriptObject>((ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
+      return new Promise<>((ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
          server_.zoteroBetterBibtexExport(
             itemKeys, 
             translatorId, 
             libraryID, 
-            new PromiseServerRequestCallback<JavaScriptObject>(resolve, reject)
+            new PromiseServerRequestCallback<>(resolve, reject)
          );
       });
    }

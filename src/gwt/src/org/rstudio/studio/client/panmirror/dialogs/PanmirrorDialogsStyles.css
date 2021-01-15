@@ -12,7 +12,7 @@
    width: 425px !important;
 }
 
-	   
+
 .dialog label,
 .dialog .gwt-Label {
    margin-bottom: 4px;
@@ -60,7 +60,7 @@
 }
 
 .dialog .fullWidthTable {
-	width: 100%;
+   width: 100%;
 }
 
 .spaced {
@@ -68,14 +68,14 @@
 }
 
 .listBox {
-	border: solid 1px #a3a8b2;
-	border-radius: 2px;
-	height: 22px;
+   border: solid 1px #a3a8b2;
+   border-radius: 2px;
+   height: 22px;
 }
 
 .dialog .checkBox  input[type="checkbox"] {
-   margin-right: 5px; 
-}  
+   margin-right: 5px;
+}
 
 .dialog .textArea {
    -moz-box-sizing: border-box;

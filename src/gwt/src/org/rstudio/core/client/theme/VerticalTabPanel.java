@@ -32,7 +32,7 @@ public class VerticalTabPanel extends VerticalPanel
             Id.of(ElementIds.getElementId(getTabId(basePanelId))));
       ElementIds.assignElementId(getElement(), getTabPanelId(basePanelId));
    }
-   
+
    public String getBasePanelId()
    {
       return basePanelId_;
@@ -47,7 +47,7 @@ public class VerticalTabPanel extends VerticalPanel
    {
       return basePanelId + "_tab";
    }
-   
+
    /* ID used to generate both tab and panel ids */
-   private String basePanelId_;
+   private final String basePanelId_;
 }

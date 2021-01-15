@@ -112,7 +112,7 @@ public class SVNSelectChangelistTablePresenter extends SVNChangelistTablePresent
 
          private ArrayList<String> toArray(String path)
          {
-            ArrayList<String> result = new ArrayList<String>();
+            ArrayList<String> result = new ArrayList<>();
             result.add(path);
             return result;
          }

@@ -18,7 +18,6 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
-import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
 import org.rstudio.studio.client.workbench.views.vcs.svn.model.SVNState;
 
 import java.util.ArrayList;
@@ -31,13 +30,12 @@ public class SVNChangelistTablePresenter
    {
       view_ = view;
 
-      svnState.bindRefreshHandler(view, new VcsRefreshHandler()
+      svnState.bindRefreshHandler(view, new VcsRefreshEvent.Handler()
       {
          @Override
          public void onVcsRefresh(VcsRefreshEvent event)
          {
-            ArrayList<StatusAndPath> items =
-                  new ArrayList<StatusAndPath>(svnState.getStatus());
+            ArrayList<StatusAndPath> items = new ArrayList<>(svnState.getStatus());
 
             boolean usesChangelists = false;
             for (int i = items.size()-1; i >= 0; i--)

@@ -23,7 +23,7 @@
 #include <core/text/DcfParser.hpp>
 
 #include <boost/regex.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/range/adaptor/map.hpp>
 #include <boost/system/error_code.hpp>
 
@@ -38,6 +38,7 @@
 #include <session/SessionPackageProvidedExtension.hpp>
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

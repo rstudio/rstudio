@@ -229,7 +229,7 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    protected void synchronize()
    {
       syncSelection();
-      Map<String, String> options = new LinkedHashMap<String, String>();
+      Map<String, String> options = new LinkedHashMap<>();
       
       Set<String> keys = chunkOptions_.keySet();
       for (String key : keys)

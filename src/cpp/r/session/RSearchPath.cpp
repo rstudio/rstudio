@@ -26,11 +26,11 @@
 #include <algorithm>
 #include <gsl/gsl>
 
-#include <boost/bind.hpp>
 #include <boost/function.hpp>
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <core/Log.hpp>
 #include <shared_core/Error.hpp>
@@ -46,6 +46,7 @@
 #include <r/session/RSessionUtils.hpp>
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace r {

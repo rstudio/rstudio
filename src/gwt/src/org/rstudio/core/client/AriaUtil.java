@@ -27,9 +27,9 @@ public class AriaUtil
    public static boolean isMenuChecked(MenuitemRole role, Element element)
    {
       if (role instanceof MenuitemradioRole)
-         return Roles.getMenuitemradioRole().getAriaCheckedState(element) == CheckedValue.TRUE.getAriaValue();
+         return StringUtil.equals(Roles.getMenuitemradioRole().getAriaCheckedState(element), CheckedValue.TRUE.getAriaValue());
       else if (role instanceof MenuitemcheckboxRole)
-         return Roles.getMenuitemcheckboxRole().getAriaCheckedState(element) == CheckedValue.TRUE.getAriaValue();
+         return StringUtil.equals(Roles.getMenuitemcheckboxRole().getAriaCheckedState(element), CheckedValue.TRUE.getAriaValue());
       else
          return false;
    }

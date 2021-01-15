@@ -17,7 +17,7 @@
 
 #include <atomic>
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/thread.hpp>
 
 #include <shared_core/SafeConvert.hpp>
@@ -27,6 +27,8 @@
 #include <core/Thread.hpp>
 
 #include <tests/TestThat.hpp>
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace core {

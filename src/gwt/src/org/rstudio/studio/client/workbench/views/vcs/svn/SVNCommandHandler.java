@@ -131,8 +131,7 @@ public class SVNCommandHandler
             String path = item.getPath();
             if (path == ".")
                path = "";
-            IgnoreList ignoreList = new IgnoreList(path, 
-                                                   new ArrayList<String>());
+            IgnoreList ignoreList = new IgnoreList(path, new ArrayList<>());
             pIgnore_.get().showDialog(ignoreList, ignoreStrategy_);
             return;
          }
@@ -250,7 +249,7 @@ public class SVNCommandHandler
       if (items.size() == 0)
          return;
 
-      final ArrayList<String> paths = new ArrayList<String>();
+      final ArrayList<String> paths = new ArrayList<>();
 
       boolean conflict = false;
       for (StatusAndPath item : items)
@@ -306,7 +305,7 @@ public class SVNCommandHandler
    public void revertFile(FileSystemItem file)
    {
       // build an ArrayList<String> so we can call the core helper
-      ArrayList<String> revertList = new ArrayList<String>();
+      ArrayList<String> revertList = new ArrayList<>();
       for (StatusAndPath item :  svnState_.getStatus())
       {
          if (item.getRawPath() == file.getPath())
@@ -359,7 +358,7 @@ public class SVNCommandHandler
    private ArrayList<String> getPathArray()
    {
       ArrayList<StatusAndPath> items = display_.getSelectedItems();
-      ArrayList<String> paths = new ArrayList<String>();
+      ArrayList<String> paths = new ArrayList<>();
       for (StatusAndPath item : items)
          paths.add(item.getPath());
       return paths;

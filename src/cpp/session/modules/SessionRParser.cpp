@@ -42,8 +42,10 @@
 
 #include <r/session/RSessionUtils.hpp>
 
+#include <boost/bind/bind.hpp>
 #include <boost/container/flat_set.hpp>
-#include <boost/bind.hpp>
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {
@@ -676,7 +678,7 @@ void lookAheadAndWarnOnUsagesOfSymbol(const RTokenCursor& startCursor,
       }
       
       // Skip over functions
-      if (clone.contentEquals(L"function"))
+      if (isFunctionKeyword(clone))
       {
          if (!clone.moveToNextSignificantToken())
             return;
@@ -1014,7 +1016,7 @@ bool extractInfoFromFunctionDefinition(
 {
    do
    {
-      if (cursor.contentEquals(L"function"))
+      if (isFunctionKeyword(cursor))
          break;
       
    } while (cursor.moveToNextSignificantToken());
@@ -1936,7 +1938,7 @@ void enterFunctionScope(RTokenCursor cursor,
    Position position = cursor.currentPosition();
    
    if (cursor.moveToPreviousSignificantToken() &&
-       cursor.contentEquals(L"function") &&
+       isFunctionKeyword(cursor) &&
        cursor.moveToPreviousSignificantToken() &&
        isLeftAssign(cursor) &&
        cursor.moveToPreviousSignificantToken())
@@ -2163,7 +2165,7 @@ START:
       }
       
       // Check for keywords.
-      if (cursor.contentEquals(L"function"))
+      if (isFunctionKeyword(cursor))
          goto FUNCTION_START;
       else if (cursor.contentEquals(L"for"))
          goto FOR_START;
@@ -2431,7 +2433,7 @@ START:
          if (isBinaryOp(next))
          {
             // handle '\n' within the token
-            int row =
+            std::size_t row =
                   cursor.row() +
                   std::count(cursor.begin(), cursor.end(), '\n');
             
@@ -2664,7 +2666,6 @@ ARGUMENT_LIST_END:
 FUNCTION_START:
       
       DEBUG("** Function start ** " << cursor);
-      ENSURE_CONTENT(cursor, status, L"function");
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(cursor, status);
       ENSURE_TYPE(cursor, status, RToken::LPAREN, true);
       status.pushBracket(cursor);

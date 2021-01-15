@@ -14,35 +14,40 @@
  */
 package org.rstudio.studio.client.common.filetypes.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import org.rstudio.core.client.files.FileSystemItem;
 
-public class OpenDataFileEvent extends GwtEvent<OpenDataFileHandler>
+public class OpenDataFileEvent extends GwtEvent<OpenDataFileEvent.Handler>
 {
-   public static final GwtEvent.Type<OpenDataFileHandler> TYPE =
-      new GwtEvent.Type<OpenDataFileHandler>();
-   
+   public static final Type<Handler> TYPE = new Type<>();
+
+   public interface Handler extends EventHandler
+   {
+      void onOpenDataFile(OpenDataFileEvent event);
+   }
+
    public OpenDataFileEvent(FileSystemItem file)
    {
       file_ = file;
    }
-   
+
    public FileSystemItem getFile()
    {
       return file_;
    }
-   
+
    @Override
-   protected void dispatch(OpenDataFileHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onOpenDataFile(this);
    }
 
    @Override
-   public GwtEvent.Type<OpenDataFileHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
-   
+
    private final FileSystemItem file_;
 }

@@ -198,7 +198,7 @@ public class SafeHtmlUtil
       
       // Store matches in a tree set ordered by the index at which the match was
       // found.
-      Set<SearchMatch> matches = new TreeSet<SearchMatch>(
+      Set<SearchMatch> matches = new TreeSet<>(
             (SearchMatch o1, SearchMatch o2) -> {
                   return o1.index.compareTo(o2.index);
             });

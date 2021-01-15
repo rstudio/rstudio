@@ -31,7 +31,6 @@ import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 
 import com.google.gwt.user.client.Window;
@@ -118,7 +117,7 @@ public class AskSecretManager
                               Debug.logError(error);
                               server.askSecretCompleted(
                                  null, false, false,
-                                 new SimpleRequestCallback<Void>());
+                                 new SimpleRequestCallback<>());
                            }
                         });
                   }
@@ -132,7 +131,7 @@ public class AskSecretManager
                      
                      server.askSecretCompleted(
                         null, false, false,
-                        new SimpleRequestCallback<Void>());
+                        new SimpleRequestCallback<>());
                   }
                }
             );
@@ -155,7 +154,7 @@ public class AskSecretManager
                   null, 
                   false,
                   false,
-                  new SimpleRequestCallback<Void>());
+                  new SimpleRequestCallback<>());
             }
             
          } 

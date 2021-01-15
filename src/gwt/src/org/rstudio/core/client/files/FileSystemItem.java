@@ -343,8 +343,7 @@ public class FileSystemItem extends JavaScriptObject
    }-*/;
 
    // NOTE: should be synced with mime type database in FilePath.cpp
-   private final static HashMap<String,String> MIME_TYPES =
-                                             new HashMap<String,String>();
+   private final static HashMap<String,String> MIME_TYPES = new HashMap<>();
    static
    {
       MIME_TYPES.put( "htm",   "text/html" );

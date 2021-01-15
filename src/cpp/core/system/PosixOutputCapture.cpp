@@ -29,7 +29,9 @@
 
 #include <core/system/System.hpp>
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace core {

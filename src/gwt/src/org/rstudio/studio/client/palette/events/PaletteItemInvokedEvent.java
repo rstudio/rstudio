@@ -19,6 +19,9 @@ import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
+/**
+ * Event internal to the command palette, emitted when an item in the palette is invoked via clicking
+ */
 public class PaletteItemInvokedEvent
       extends GwtEvent<PaletteItemInvokedEvent.Handler>
 {

@@ -78,7 +78,7 @@ public abstract class CommandPaletteEntry extends Composite
 
       // Apply command label
       name_.setText(getLabel());
-      
+
       // If the command is not enabled, style it as disabled.
       if (!enabled())
       {
@@ -95,24 +95,24 @@ public abstract class CommandPaletteEntry extends Composite
       else
       {
          context_.getElement().setInnerHTML(context);
-         
+
          // Remove plugin image from non-plugin entries
          if (!(this instanceof RAddinCommandPaletteEntry))
          {
-        	 plugin_.removeFromParent();
+            plugin_.removeFromParent();
          }
       }
-      
+
       // Insert invoker
       invoker_.add(getInvoker());
-      
+
       // Apply clickable class on command-style entries
       if (dismissOnInvoke())
       {
-    	  addStyleName(styles_.clickable());
+         addStyleName(styles_.clickable());
       }
    }
-   
+
    /*
     * Set whether or not the command should appear selected.
     */
@@ -121,7 +121,7 @@ public abstract class CommandPaletteEntry extends Composite
       // No-op if we're not changing state
       if (selected_ == selected)
          return;
-      
+
       // Add the CSS class indicating that this entry is selected
       if (selected)
          addStyleName(styles_.selected());
@@ -130,12 +130,12 @@ public abstract class CommandPaletteEntry extends Composite
 
       // Update ARIA state to indicate that we're selected. (The host is
       // responsible for updating other ARIA state such as active descendant.)
-      Roles.getOptionRole().setAriaSelectedState(getElement(), 
+      Roles.getOptionRole().setAriaSelectedState(getElement(),
             selected ? SelectedValue.TRUE : SelectedValue.FALSE);
-      
+
       selected_ = selected;
    }
-   
+
    /**
     * Highlights the given keywords on the command entry.
     */
@@ -149,36 +149,36 @@ public abstract class CommandPaletteEntry extends Composite
       else
       {
          SafeHtmlBuilder sb = new SafeHtmlBuilder();
-         SafeHtmlUtil.highlightSearchMatch(sb, getLabel(), keywords, 
+         SafeHtmlUtil.highlightSearchMatch(sb, getLabel(), keywords,
                styles_.searchMatch());
          name_.getElement().setInnerSafeHtml(sb.toSafeHtml());
 
          sb = new SafeHtmlBuilder();
-         SafeHtmlUtil.highlightSearchMatch(sb, getContext(), keywords, 
+         SafeHtmlUtil.highlightSearchMatch(sb, getContext(), keywords,
                styles_.searchMatch());
          context_.getElement().setInnerSafeHtml(sb.toSafeHtml());
       }
    }
-   
+
    /**
     * Get the label for the entry.
-    * 
+    *
     * @return The entry's label.
     */
    abstract public String getLabel();
 
    /**
     * Get the entry's ID.
-    * 
+    *
     * @return A unique ID referring to the entry.
     */
    abstract public String getId();
-   
+
    /**
     * Get the entry's scope. This is not displayed to users; it is a short
     * alphanumeric string used to ensure IDs are unique across different kinds
     * of entries which may have their own ID systems.
-    * 
+    *
     * @return The entry's scope.
     */
    abstract public String getScope();
@@ -186,28 +186,28 @@ public abstract class CommandPaletteEntry extends Composite
    /**
     * Get the entry's context. This is displayed to the user to help
     * disambiguate similar-looking entries.
-    * 
+    *
     * @return The entry's context.
     */
    abstract public String getContext();
 
    /**
     * Is the entry currently enabled?
-    * 
+    *
     * @return Whether the entry is enabled.
     */
    abstract public boolean enabled();
 
    /**
     * Get a widget that can be used to invoke the entry.
-    * 
+    *
     * @return A widget to invoke the entry.
     */
    abstract public Widget getInvoker();
-   
+
    /**
     * Dismiss after invoke?
-    * 
+    *
     * @return Whether to dismiss the palette after invoking the entry.
     */
    abstract public boolean dismissOnInvoke();

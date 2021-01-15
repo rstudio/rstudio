@@ -20,14 +20,16 @@
 #include <vector>
 #include <algorithm>
 
-#include <boost/bind.hpp>
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/variant.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <core/http/UriHandler.hpp>
 #include <core/http/AsyncConnection.hpp>
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace core {

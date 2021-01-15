@@ -14,13 +14,19 @@
  */
 package org.rstudio.studio.client.workbench.views.source.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 import com.google.gwt.event.shared.GwtEvent;
 
-public class RecordNavigationPositionEvent extends GwtEvent<RecordNavigationPositionHandler>
+public class RecordNavigationPositionEvent extends GwtEvent<RecordNavigationPositionEvent.Handler>
 {
-   public static final Type<RecordNavigationPositionHandler> TYPE = new Type<RecordNavigationPositionHandler>();
+   public static final Type<Handler> TYPE = new Type<>();
+
+   public interface Handler extends EventHandler
+   {
+      void onRecordNavigationPosition(RecordNavigationPositionEvent event);
+   }
 
    public RecordNavigationPositionEvent(SourcePosition position)
    {
@@ -33,13 +39,13 @@ public class RecordNavigationPositionEvent extends GwtEvent<RecordNavigationPosi
    }
 
    @Override
-   public Type<RecordNavigationPositionHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
 
    @Override
-   protected void dispatch(RecordNavigationPositionHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onRecordNavigationPosition(this);
    }

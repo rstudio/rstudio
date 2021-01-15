@@ -225,7 +225,7 @@ public class Application implements ApplicationEventHandlers
                // error is informing us that we should redirect
                // redirect to the specified URL (as a sub URL of the site's root)
                String redirectUrl = ApplicationUtils.getHostPageBaseURLWithoutContext(false) +
-            		   error.getRedirectUrl();
+                    error.getRedirectUrl();
                navigateWindowWithDelay(redirectUrl);
             }
             else

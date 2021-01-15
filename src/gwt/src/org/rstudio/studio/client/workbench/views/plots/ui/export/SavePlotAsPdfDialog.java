@@ -529,7 +529,7 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
       private ListBox paperSizeListBox_;
       private final TextBox widthTextBox_;
       private final TextBox heightTextBox_;
-      private final List<PaperSize> paperSizes_ = new ArrayList<PaperSize>(); 
+      private final List<PaperSize> paperSizes_ = new ArrayList<>(); 
       private final NumberFormat sizeFormat_ = NumberFormat.getFormat("##0.00");
       
       private final double kMimimumSize = 3.0;

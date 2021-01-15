@@ -85,16 +85,23 @@ inline EvalFlags operator|(EvalFlags lhs, EvalFlags rhs)
    return static_cast<EvalFlags>(static_cast<int>(lhs) | static_cast<int>(rhs));
 }
 
-// parse and evaluate expressions  
+// parse and evaluate expressions
+core::Error executeCallUnsafe(SEXP callSEXP,
+                              SEXP envirSEXP,
+                              SEXP* pResultSEXP,
+                              sexp::Protect* pProtect);
+
 core::Error executeStringUnsafe(const std::string& str, 
                                 SEXP* pSEXP, 
                                 sexp::Protect* pProtect);
+
 core::Error executeStringUnsafe(const std::string& str,
                                 SEXP envirSEXP,
                                 SEXP* pSEXP,
                                 sexp::Protect* pProtect);
 
 core::Error executeString(const std::string& str);
+
 core::Error evaluateString(const std::string& str,
                            SEXP* pSEXP,
                            sexp::Protect* pProtect,

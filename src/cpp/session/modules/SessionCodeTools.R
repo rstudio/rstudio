@@ -972,13 +972,26 @@
 {
    # call custom help handler if provided
    if (nzchar(helpHandler)) {
-      helpHandlerFunc <- tryCatch(eval(parse(text = helpHandler)),
-                                  error = function(e) NULL)
+      
+      # resolve help handler
+      helpHandlerFunc <- tryCatch(
+         eval(parse(text = helpHandler)),
+         error = function(e) NULL
+      )
+      
       if (!is.function(helpHandlerFunc))
          return(NULL)
-      help <- helpHandlerFunc("completion", name, src)
+      
+      # invoke handler function
+      help <- tryCatch(
+         helpHandlerFunc("completion", name, src),
+         error = function(e) NULL
+      )
+      
       if (is.null(help))
          return(NULL)
+      
+      # attempt to retrieve signature
       signature <- help$signature
       if (!is.null(signature)) {
          paren <- regexpr("\\(", signature)[[1]]
@@ -1003,19 +1016,51 @@
       }
    }
    
-   onError <- .rs.scalar("(...)")
+   # NOTE: 'src' can refer either to a package for usages of the form
+   # 'utils::alarm()', or an object for usages of the form 'object$method()'.
+   # We need to be careful to handle both types.
    
+   # first, try to resolve as environment
    envir <- .rs.tryCatch(.rs.resolveEnvironment(src))
-   if (!is.environment(envir))
-      return(onError)
+   if (is.environment(envir))
+   {
+      method <- .rs.tryCatch(get(name, envir = envir, mode = "function"))
+      if (is.function(method))
+      {
+         signature <- .rs.getSignature(method)
+         result <- sub("function ", "", signature)
+         return(.rs.scalar(result))
+      }
+   }
    
-   method <- .rs.tryCatch(get(name, envir = envir, mode = "function"))
-   if (!is.function(method))
-      return(onError)
+   # next, try to resolve as regular R object
+   envir <- .rs.getActiveFrame()
+   object <- .rs.getAnywhere(src, envir = envir)
+   if (!is.null(object))
+   {
+      # if the user is calling 'R6$new', try inferring objects from the
+      # initialize method instead
+      method <- if (inherits(object, "R6ClassGenerator") &&
+                    identical(name, "new"))
+      {
+         object$public_methods$initialize
+      }
+      else
+      {
+         .rs.tryCatch(object[[name]])
+      }
+      
+      if (is.function(method))
+      {
+         signature <- .rs.getSignature(method)
+         result <- sub("function ", "", signature)
+         return(.rs.scalar(result))
+      }
+   }
    
-   signature <- .rs.getSignature(method)
-   result <- sub("function ", "", signature)
-   .rs.scalar(result)
+   # all else fails, just provide a dummy return value
+   .rs.scalar("(...)")
+   
 })
 
 .rs.addFunction("getActiveArgument", function(object,

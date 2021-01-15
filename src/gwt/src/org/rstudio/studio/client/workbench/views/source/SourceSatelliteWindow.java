@@ -43,7 +43,7 @@ public class SourceSatelliteWindow extends SatelliteWindow
 
    @Inject
    public SourceSatelliteWindow(Provider<EventBus> pEventBus,
-                                Provider<FontSizeManager> pFSManager, 
+                                Provider<FontSizeManager> pFSManager,
                                 Provider<SourceSatellitePresenter> pPresenter,
                                 Provider<SourceWindowManager> pWindowManager,
                                 Provider<SourceWindow> pSourceWindow,
@@ -82,7 +82,7 @@ public class SourceSatelliteWindow extends SatelliteWindow
          title += " - ";
       title += "RStudio Source Editor";
       Window.setTitle(title);
-      
+
       // set up the source window
       SourceWindow sourceWindow = pSourceWindow_.get();
       if (windowParams != null &&
@@ -90,25 +90,25 @@ public class SourceSatelliteWindow extends SatelliteWindow
           windowParams.getSourcePosition() != null)
       {
          // if this source window is being opened to pop out a particular doc,
-         // read that doc's ID and current position so we can restore it 
-         sourceWindow.setInitialDoc(windowParams.getDocId(), 
+         // read that doc's ID and current position so we can restore it
+         sourceWindow.setInitialDoc(windowParams.getDocId(),
                windowParams.getSourcePosition());
       }
-      
+
       SourceSatellitePresenter appPresenter = pPresenter_.get();
-      
+
       // initialize build commands (we want these to work from source windows)
       BuildCommands.setBuildCommandState(
-            RStudioGinjector.INSTANCE.getCommands(), 
+            RStudioGinjector.INSTANCE.getCommands(),
             RStudioGinjector.INSTANCE.getSession().getSessionInfo());
 
       // initialize working directory
-      if (!StringUtil.isNullOrEmpty(windowParams.getWorkingDir())) 
+      if (!StringUtil.isNullOrEmpty(windowParams.getWorkingDir()))
       {
          pEventBus_.get().fireEvent(new WorkingDirChangedEvent(
                windowParams.getWorkingDir()));
       }
-      
+
       // make it fill the containing layout panel
       Widget presWidget = appPresenter.asWidget();
       mainPanel.add(presWidget);
@@ -120,8 +120,8 @@ public class SourceSatelliteWindow extends SatelliteWindow
    public void reactivate(JavaScriptObject params)
    {
    }
-   
-   @Override 
+
+   @Override
    public Widget getWidget()
    {
       return this;
@@ -132,7 +132,7 @@ public class SourceSatelliteWindow extends SatelliteWindow
    {
       return true;
    }
-   
+
    private final Provider<EventBus> pEventBus_;
    private final Provider<SourceSatellitePresenter> pPresenter_;
    private final Provider<SourceWindowManager> pWindowManager_;

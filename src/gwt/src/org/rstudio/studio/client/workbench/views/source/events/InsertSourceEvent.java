@@ -14,12 +14,17 @@
  */
 package org.rstudio.studio.client.workbench.views.source.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class InsertSourceEvent extends GwtEvent<InsertSourceHandler>
+public class InsertSourceEvent extends GwtEvent<InsertSourceEvent.Handler>
 {
-   public static final Type<InsertSourceHandler> TYPE =
-         new Type<InsertSourceHandler>();
+   public static final Type<Handler> TYPE = new Type<>();
+
+   public interface Handler extends EventHandler
+   {
+      void onInsertSource(InsertSourceEvent event);
+   }
 
    public InsertSourceEvent(String source, boolean block)
    {
@@ -39,13 +44,13 @@ public class InsertSourceEvent extends GwtEvent<InsertSourceHandler>
    }
 
    @Override
-   public Type<InsertSourceHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
 
    @Override
-   protected void dispatch(InsertSourceHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onInsertSource(this);
    }

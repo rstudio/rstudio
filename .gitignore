@@ -36,6 +36,7 @@ CMakeLists.txt.user
 .orig
 .vagrant
 tags
+*.tags
 GPATH
 GRTAGS
 GSYMS

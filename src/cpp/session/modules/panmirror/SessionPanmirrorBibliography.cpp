@@ -15,7 +15,7 @@
 
 #include "SessionPanmirrorBibliography.hpp"
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <shared_core/Error.hpp>
 #include <core/Hash.hpp>
@@ -30,6 +30,7 @@
 #include <session/SessionModuleContext.hpp>
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

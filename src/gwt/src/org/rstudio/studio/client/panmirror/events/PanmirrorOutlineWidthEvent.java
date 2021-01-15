@@ -78,7 +78,7 @@ public class PanmirrorOutlineWidthEvent extends
    */
   public static Type<PanmirrorOutlineWidthEvent.Handler> getType() {
     if (TYPE == null) {
-      TYPE = new Type<PanmirrorOutlineWidthEvent.Handler>();
+      TYPE = new Type<>();
     }
     return TYPE;
   }

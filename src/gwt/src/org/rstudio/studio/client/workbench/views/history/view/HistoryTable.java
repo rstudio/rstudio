@@ -49,7 +49,8 @@ public class HistoryTable extends FastSelectTable<HistoryEntry, String, Long>
                                       timestampMode == TimestampMode.ITEM),
             selectedClassName,
             true,
-            true);
+            true,
+            "History Entry Table");
 
       searchResult_ = timestampMode == TimestampMode.ITEM;
       

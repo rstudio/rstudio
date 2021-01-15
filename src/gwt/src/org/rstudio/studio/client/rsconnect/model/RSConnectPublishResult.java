@@ -20,7 +20,7 @@ public class RSConnectPublishResult
 {
    public RSConnectPublishResult(RSConnectPublishSource source)
    {
-      ArrayList<String> deployFiles = new ArrayList<String>();
+      ArrayList<String> deployFiles = new ArrayList<>();
       deployFiles.add(source.getDeployFile());
       publishType_ = PUBLISH_RPUBS;
       appName_     = ""; 

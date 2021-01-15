@@ -264,7 +264,7 @@ public class RProjectConfig extends JavaScriptObject
                                           boolean namespace,
                                           boolean vignette)
    {
-      ArrayList<String> roclets = new ArrayList<String>();
+      ArrayList<String> roclets = new ArrayList<>();
       if (rd)
          roclets.add(ROXYGENIZE_RD);
       if (collate)

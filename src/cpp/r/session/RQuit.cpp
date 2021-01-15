@@ -15,7 +15,7 @@
 
 #define R_INTERNAL_FUNCTIONS
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <gsl/gsl>
 
 #include <r/RErrorCategory.hpp>
@@ -28,6 +28,7 @@
 #include "RStdCallbacks.hpp"
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace r {

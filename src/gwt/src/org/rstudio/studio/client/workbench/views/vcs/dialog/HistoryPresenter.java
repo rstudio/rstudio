@@ -53,7 +53,6 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.DiffParser;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.SwitchViewEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.ViewFileRevisionEvent;
-import org.rstudio.studio.client.workbench.views.vcs.common.events.ViewFileRevisionHandler;
 import org.rstudio.studio.client.workbench.views.vcs.git.dialog.GitHistoryStrategy;
 import org.rstudio.studio.client.workbench.views.vcs.svn.dialog.SVNHistoryStrategy;
 
@@ -79,15 +78,15 @@ public class HistoryPresenter
       HasValue<String> getSearchTextBox();
 
       void setPageStart(int pageStart);
-      
+
       HandlerRegistration addBranchChangedHandler(
                                        ValueChangeHandler<String> handler);
-      
+
       HasValue<FileSystemItem> getFileFilter();
 
       void removeBranchToolbarButton();
       void removeSearchTextBox();
-      
+
       void showSizeWarning(long sizeInBytes);
       void hideSizeWarning();
 
@@ -119,9 +118,9 @@ public class HistoryPresenter
       void showDetailProgress();
       void setDetails(DiffParser unifiedParser, boolean suppressViewLink);
       void setCommitListIsLoading(boolean isLoading);
-      
+
       HandlerRegistration addViewFileRevisionHandler(
-                                          ViewFileRevisionHandler handler);
+                                          ViewFileRevisionEvent.Handler handler);
    }
 
    @Inject
@@ -162,7 +161,7 @@ public class HistoryPresenter
       {
          view_.removeBranchToolbarButton();
       }
-      
+
       view_.getCommitList().addSelectionChangeHandler(new SelectionChangeEvent.Handler()
       {
          @Override
@@ -223,7 +222,7 @@ public class HistoryPresenter
       {
          view_.removeSearchTextBox();
       }
-      
+
       strategy_.setFileFilter(view_.getFileFilter());
       view_.getFileFilter().addValueChangeHandler(new ValueChangeHandler<FileSystemItem>() {
 
@@ -236,17 +235,17 @@ public class HistoryPresenter
             view_.setPageStart(0);
          }
       });
-      
+
       view_.getCommitDetail().addViewFileRevisionHandler(
-                                          new ViewFileRevisionHandler() {
+                                          new ViewFileRevisionEvent.Handler() {
          @Override
          public void onViewFileRevision(final ViewFileRevisionEvent event)
          {
-            final ProgressIndicator indicator = 
-                  new GlobalProgressDelayer(globalDisplay, 
+            final ProgressIndicator indicator =
+                  new GlobalProgressDelayer(globalDisplay,
                                             500,
                                             "Reading file...").getIndicator();
-            
+
             strategy_.showFile(
                   event.getRevision(),
                   event.getFilename(),
@@ -259,13 +258,13 @@ public class HistoryPresenter
                         indicator.onCompleted();
 
                         final ViewFilePanel viewFilePanel = pViewFilePanel.get();
-                        
+
                         viewFilePanel.setSaveFileAsHandler(
                                           new ViewFilePanel.SaveFileAsHandler()
                         {
-                           
+
                            @Override
-                           public void onSaveFileAs(FileSystemItem source, 
+                           public void onSaveFileAs(FileSystemItem source,
                                                     FileSystemItem destination,
                                                     ProgressIndicator indicator)
                            {
@@ -275,7 +274,7 @@ public class HistoryPresenter
                                                    indicator);
                            }
                         });
-                        
+
                         viewFilePanel.getToolbar().addRightWidget(
                                                          new ToolbarButton(
                               "Show History",
@@ -289,11 +288,11 @@ public class HistoryPresenter
                                   view_.getFileFilter().setValue(
                                               viewFilePanel.getTargetFile());
                                   viewFilePanel.close();
-                                 
+
                                }
-                                 
+
                               }));
-                        
+
                         viewFilePanel.showFile(
                               event.getFilename() + " @ " + event.getRevision(),
                               FileSystemItem.createFile(event.getFilename()),
@@ -316,7 +315,7 @@ public class HistoryPresenter
 
                   });
          }
-         
+
       });
    }
 
@@ -367,7 +366,7 @@ public class HistoryPresenter
                {
                   if (token.isInvalid())
                      return;
-                  
+
                   commitShowing_ = null;
 
                   JSONNumber size = error.getClientInfo().isNumber();
@@ -405,7 +404,7 @@ public class HistoryPresenter
    {
       return view_.asWidget();
    }
-   
+
    public void setFileFilter(FileSystemItem fileFilter)
    {
       if (fileFilter != null)

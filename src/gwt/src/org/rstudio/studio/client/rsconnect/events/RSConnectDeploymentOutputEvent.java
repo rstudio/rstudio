@@ -26,8 +26,7 @@ public class RSConnectDeploymentOutputEvent extends GwtEvent<RSConnectDeployment
       void onRSConnectDeploymentOutput(RSConnectDeploymentOutputEvent event);
    }
 
-   public static final GwtEvent.Type<RSConnectDeploymentOutputEvent.Handler> TYPE =
-      new GwtEvent.Type<RSConnectDeploymentOutputEvent.Handler>();
+   public static final GwtEvent.Type<RSConnectDeploymentOutputEvent.Handler> TYPE = new GwtEvent.Type<>();
    
    public RSConnectDeploymentOutputEvent(CompileOutput output)
    {

@@ -735,10 +735,10 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="activateVcs" value="Ctrl+F1" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="activateBuild" value="Meta+F2" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="activateBuild" value="Ctrl+F2" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         
+
          <!-- Not using Cmd+F5 (aka Meta+F5) on Mac, it is the standard shortcut for toggling VoiceOver -->
          <shortcut refid="activateConnections" value="Ctrl+F5" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         
+
          <shortcut refid="activateFindInFiles" value="Meta+F6" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="activateFindInFiles" value="Ctrl+F6" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="newSourceColumn" value="Meta+F7" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
@@ -1122,7 +1122,7 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Open File in New C_olumn..."
         buttonLabel=""
         desc="Open an existing file in a new column"/>
-   
+
    <cmd id="reopenSourceDocWithEncoding"
         label="Reopen Current Document with Encoding..."
         menuLabel="Reopen with _Encoding..."
@@ -1140,6 +1140,12 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Rename"
         buttonLabel=""
         desc="Rename current document"/>
+
+   <cmd id="copySourceDocPath"
+        label="Copy Document Path"
+        menuLabel="Copy Path"
+        buttonLabel=""
+        desc="Copy current document path"/>
 
    <cmd id="saveSourceDocAs"
         label="Save Current Document As..."
@@ -1918,12 +1924,12 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="executePreviousChunks"
         menuLabel="_Run All Chunks Above"
-        desc="Run all above the current one"
+        desc="Run all chunks above the current one"
         context="r"/>
 
    <cmd id="executeSubsequentChunks"
         menuLabel="Run All C_hunks Below"
-        desc="Run all chunks after the current one"
+        desc="Run all chunks below the current one"
         context="r"/>
 
    <cmd id="executeCurrentChunk"
@@ -3961,4 +3967,8 @@ well as menu structures (for main menu and popup menus).
    <cmd id="showCommandPalette"
         label="Show Command Palette"
         menuLabel="Show _Command Palette" />
+
+   <cmd id="clearCommandPaletteMru"
+        menuLabel="Clear Recently Executed Command List" />
+
 </commands>

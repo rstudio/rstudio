@@ -68,7 +68,7 @@ public class RnwWeaveRegistry
          JsArray<RnwWeave> types = 
                            pSession_.get().getSessionInfo().getRnwWeaveTypes();
        
-         weaveTypes_ = new ArrayList<RnwWeave>();
+         weaveTypes_ = new ArrayList<>();
          for (int i=0; i<types.length(); i++)
             weaveTypes_.add(types.get(i));
       }

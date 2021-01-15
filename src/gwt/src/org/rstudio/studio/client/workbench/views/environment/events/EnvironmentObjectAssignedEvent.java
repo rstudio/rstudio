@@ -28,8 +28,7 @@ public class EnvironmentObjectAssignedEvent
       void onEnvironmentObjectAssigned(EnvironmentObjectAssignedEvent event);
    }
 
-   public static final GwtEvent.Type<EnvironmentObjectAssignedEvent.Handler> TYPE =
-      new GwtEvent.Type<EnvironmentObjectAssignedEvent.Handler>();
+   public static final GwtEvent.Type<EnvironmentObjectAssignedEvent.Handler> TYPE = new GwtEvent.Type<>();
    
    public EnvironmentObjectAssignedEvent(RObject objectInfo)
    {

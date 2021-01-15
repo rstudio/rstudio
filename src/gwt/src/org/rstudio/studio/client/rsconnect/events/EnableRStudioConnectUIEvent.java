@@ -37,8 +37,7 @@ public class EnableRStudioConnectUIEvent
       void onEnableRStudioConnectUI(EnableRStudioConnectUIEvent event);
    }
 
-   public static final GwtEvent.Type<EnableRStudioConnectUIEvent.Handler> TYPE =
-      new GwtEvent.Type<EnableRStudioConnectUIEvent.Handler>();
+   public static final GwtEvent.Type<EnableRStudioConnectUIEvent.Handler> TYPE = new GwtEvent.Type<>();
    
    public EnableRStudioConnectUIEvent(Data enable)
    {

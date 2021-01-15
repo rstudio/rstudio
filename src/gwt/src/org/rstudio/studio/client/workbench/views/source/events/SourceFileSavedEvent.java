@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import org.rstudio.core.client.js.JavaScriptSerializable;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 
@@ -23,11 +24,15 @@ import org.rstudio.studio.client.application.events.CrossWindowEvent;
  */
 @JavaScriptSerializable
 public class SourceFileSavedEvent
-             extends CrossWindowEvent<SourceFileSavedHandler>
+             extends CrossWindowEvent<SourceFileSavedEvent.Handler>
 {
-   public static final Type<SourceFileSavedHandler> TYPE = 
-         new Type<SourceFileSavedHandler>();
-   
+   public static final Type<Handler> TYPE = new Type<>();
+
+   public interface Handler extends EventHandler
+   {
+      void onSourceFileSaved(SourceFileSavedEvent event);
+   }
+
    public SourceFileSavedEvent()
    {
    }
@@ -42,20 +47,20 @@ public class SourceFileSavedEvent
    {
       return path_;
    }
-   
+
    public String getDocId()
    {
       return docId_;
    }
 
    @Override
-   public Type<SourceFileSavedHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
 
    @Override
-   protected void dispatch(SourceFileSavedHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onSourceFileSaved(this);
    }

@@ -184,8 +184,15 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
 
   var RHighlightRules = function()
   {
+    // NOTE: The backslash character is an experimental alias
+    // for the 'function' symbol, and can be used for defining
+    // short-hand functions, e.g.
+    //
+    //     \(x) x + 1
+    //
     var keywords = lang.arrayToMap([
-      "function", "if", "else", "in", "break", "next", "repeat", "for", "while"
+      "\\", "function", "if", "else", "in",
+      "break", "next", "repeat", "for", "while"
     ]);
 
     var specialFunctions = lang.arrayToMap([
@@ -201,7 +208,9 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
       "NA_complex_"
     ]);
 
-    var reIdentifier = "[a-zA-Z.][a-zA-Z0-9._]*";
+    // NOTE: We accept '\' as a standalone identifier here
+    // so that it can be parsed as the 'function' alias symbol
+    var reIdentifier = "(?:\\\\|[a-zA-Z.][a-zA-Z0-9._]*)";
 
     var $complements = {
       "{" : "}",

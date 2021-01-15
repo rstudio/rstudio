@@ -19,32 +19,31 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 
 import com.google.gwt.event.shared.HandlerRegistration;
 
-public class AceEditorEditLinesHelper implements CursorChangedHandler
+public class AceEditorEditLinesHelper implements CursorChangedEvent.Handler
 {
    public AceEditorEditLinesHelper(AceEditor editor)
    {
       editor_ = editor;
    }
-   
+
    public void editLinesFromStart()
    {
       int state = state_;
       state_ = (state_ + 1) % 4;
-      
+
       if (cursorChangedHandler_ == null)
          cursorChangedHandler_ = editor_.addCursorChangedHandler(this);
-      
+
       if (range_ == null)
          range_ = getSelectionExtent();
-      
+
       try
       {
          isPerformingEditLinesAction_ = true;
-      
+
          switch (state)
          {
 
@@ -66,28 +65,28 @@ public class AceEditorEditLinesHelper implements CursorChangedHandler
 
          }
       }
-      
+
       catch (Exception e)
       {
          Debug.logException(e);
       }
-      
+
       finally
       {
          isPerformingEditLinesAction_ = false;
       }
-      
+
    }
-   
+
    private void editLinesFromStart(boolean ignoreBlankLines,
                                    boolean useCommonIndent)
    {
       if (editor_.inMultiSelectMode())
          editor_.exitMultiSelectMode();
-      
+
       int startRow = range_.getStart().getRow();
       int endRow = range_.getEnd().getRow();
-      
+
       if (ignoreBlankLines)
       {
          for (; startRow <= endRow; startRow++)
@@ -104,11 +103,11 @@ public class AceEditorEditLinesHelper implements CursorChangedHandler
          if (line.trim().isEmpty())
             return;
       }
-      
+
       String line = editor_.getLine(startRow);
       String indent = StringUtil.getIndent(line);
       int indentSize = indent.length();
-      
+
       if (useCommonIndent)
       {
          for (int row = startRow + 1; row <= endRow; row++)
@@ -121,43 +120,43 @@ public class AceEditorEditLinesHelper implements CursorChangedHandler
             indentSize = Math.min(indentSize, indent.length());
          }
       }
-      
+
       // Place first cursor at requested location
       editor_.setCursorPosition(Position.create(startRow, indentSize));
-      
+
       // Add new cursors for items in range
       for (int row = startRow + 1; row <= endRow; row++)
       {
          line = editor_.getLine(row);
          if (ignoreBlankLines && line.trim().isEmpty())
             continue;
-         
+
          if (!useCommonIndent)
          {
             indent = StringUtil.getIndent(line);
             indentSize = indent.length();
          }
-         
+
          Range cursorRange = Range.create(row, indentSize, row, indentSize);
          editor_.getNativeSelection().addRange(cursorRange, true);
       }
    }
-   
+
    private Range getSelectionExtent()
    {
       int startRow = editor_.getRowCount();
       int endRow   = 0;
-      
+
       for (Range range : editor_.getNativeSelection().getAllRanges())
       {
          startRow = Math.min(startRow, range.getStart().getRow());
          endRow   = Math.max(endRow, range.getEnd().getRow());
       }
-      
+
       return Range.create(startRow, 0, endRow, 0);
-      
+
    }
-   
+
    @Override
    public void onCursorChanged(CursorChangedEvent event)
    {
@@ -169,7 +168,7 @@ public class AceEditorEditLinesHelper implements CursorChangedHandler
          cursorChangedHandler_ = null;
       }
    }
-   
+
    private final AceEditor editor_;
    private HandlerRegistration cursorChangedHandler_;
    private Range range_ = null;

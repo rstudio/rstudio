@@ -72,7 +72,6 @@ import org.rstudio.studio.client.workbench.views.edit.events.ShowEditorEvent;
 import org.rstudio.studio.client.workbench.views.help.events.ActivateHelpEvent;
 import org.rstudio.studio.client.workbench.views.plots.PlotsTab;
 import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedEvent;
-import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedHandler;
 
 public class WorkbenchScreen extends Composite
                              implements WorkbenchMainView,
@@ -148,7 +147,7 @@ public class WorkbenchScreen extends Composite
       });
 
       eventBus.addHandler(LastSourceDocClosedEvent.TYPE,
-                          new LastSourceDocClosedHandler()
+                          new LastSourceDocClosedEvent.Handler()
       {
          public void onLastSourceDocClosed(LastSourceDocClosedEvent event)
          {

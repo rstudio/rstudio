@@ -27,8 +27,7 @@ public class MaximizeSourceWindowEvent extends GwtEvent<MaximizeSourceWindowEven
    }
    
    
-   public static final GwtEvent.Type<MaximizeSourceWindowEvent.Handler> TYPE =
-      new GwtEvent.Type<MaximizeSourceWindowEvent.Handler>();
+   public static final GwtEvent.Type<MaximizeSourceWindowEvent.Handler> TYPE = new GwtEvent.Type<>();
    
    public MaximizeSourceWindowEvent()
    {

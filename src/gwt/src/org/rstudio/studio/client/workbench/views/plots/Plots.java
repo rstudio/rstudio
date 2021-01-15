@@ -133,7 +133,7 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
 
             }
 
-            server.locatorCompleted(p, new SimpleRequestCallback<Void>());
+            server.locatorCompleted(p, new SimpleRequestCallback<>());
          }
       });
 

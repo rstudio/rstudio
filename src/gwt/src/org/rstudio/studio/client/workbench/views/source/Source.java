@@ -90,9 +90,7 @@ import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.filetypes.events.OpenPresentationSourceFileEvent;
-import org.rstudio.studio.client.common.filetypes.events.OpenPresentationSourceFileHandler;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
-import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileHandler;
 import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
@@ -100,8 +98,8 @@ import org.rstudio.studio.client.events.GetEditorContextEvent;
 import org.rstudio.studio.client.events.RStudioApiRequestEvent;
 import org.rstudio.studio.client.events.ReplaceRangesEvent;
 import org.rstudio.studio.client.events.ReplaceRangesEvent.ReplacementData;
+import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
-import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.events.SetSelectionRangesEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -147,10 +145,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.NewW
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRdDialog;
 import org.rstudio.studio.client.workbench.views.source.events.CloseAllSourceDocsExceptEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserFinishedEvent;
-import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserFinishedHandler;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserHighlightEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
-import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationHandler;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditEndedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartedEvent;
@@ -162,20 +158,15 @@ import org.rstudio.studio.client.workbench.views.source.events.ScrollToPositionE
 import org.rstudio.studio.client.workbench.views.source.events.XRefNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.events.EnsureVisibleSourceWindowEvent;
 import org.rstudio.studio.client.workbench.views.source.events.FileEditEvent;
-import org.rstudio.studio.client.workbench.views.source.events.FileEditHandler;
 import org.rstudio.studio.client.workbench.views.source.events.InsertSourceEvent;
-import org.rstudio.studio.client.workbench.views.source.events.InsertSourceHandler;
 import org.rstudio.studio.client.workbench.views.source.events.MaximizeSourceWindowEvent;
 import org.rstudio.studio.client.workbench.views.source.events.NewDocumentWithCodeEvent;
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocInitiatedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ShowContentEvent;
-import org.rstudio.studio.client.workbench.views.source.events.ShowContentHandler;
 import org.rstudio.studio.client.workbench.views.source.events.ShowDataEvent;
-import org.rstudio.studio.client.workbench.views.source.events.ShowDataHandler;
 import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceNavigationEvent;
-import org.rstudio.studio.client.workbench.views.source.events.SourceNavigationHandler;
 import org.rstudio.studio.client.workbench.views.source.events.SourcePathChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.ContentItem;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
@@ -190,20 +181,19 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
-import java.util.List;
 import java.util.Set;
 
 @Singleton
-public class Source implements InsertSourceHandler,
+public class Source implements InsertSourceEvent.Handler,
                                IsWidget,
-                               OpenSourceFileHandler,
-                               OpenPresentationSourceFileHandler,
+                               OpenSourceFileEvent.Handler,
+                               OpenPresentationSourceFileEvent.Handler,
                                CommandPaletteEntrySource,
-                               FileEditHandler,
-                               ShowContentHandler,
-                               ShowDataHandler,
-                               CodeBrowserNavigationHandler,
-                               CodeBrowserFinishedHandler,
+                               FileEditEvent.Handler,
+                               ShowContentEvent.Handler,
+                               ShowDataEvent.Handler,
+                               CodeBrowserNavigationEvent.Handler,
+                               CodeBrowserFinishedEvent.Handler,
                                CodeBrowserHighlightEvent.Handler,
                                SnippetsChangedEvent.Handler,
                                PopoutDocEvent.Handler,
@@ -347,6 +337,9 @@ public class Source implements InsertSourceHandler,
          @Override
          public void onSourcePathChanged(final SourcePathChangedEvent event)
          {
+            // Satellites also need to know about this happening, for example if a file
+            // is renamed via the tab context menu or externally
+            events_.fireEventToAllSatellites(event);
 
             columnManager_.inEditorForPath(event.getFrom(),
                             new OperationWithInput<EditingTarget>()
@@ -375,7 +368,7 @@ public class Source implements InsertSourceHandler,
       });
 
       events_.addHandler(SourceNavigationEvent.TYPE,
-                        new SourceNavigationHandler() {
+                        new SourceNavigationEvent.Handler() {
          @Override
          public void onSourceNavigation(SourceNavigationEvent event)
          {
@@ -644,9 +637,9 @@ public class Source implements InsertSourceHandler,
    }
 
    @Override
-   public List<CommandPaletteItem> getCommandPaletteItems()
+   public CommandPaletteEntryProvider getPaletteEntryProvider()
    {
-      return columnManager_.getCommandPaletteItems();
+      return columnManager_.getPaletteEntryProvider();
    }
 
    private boolean consoleEditorHadFocusLast()
@@ -1542,7 +1535,7 @@ public class Source implements InsertSourceHandler,
 
    /**
     * Close all source documents
-    * 
+    *
     * @param caption caption of command triggering this action
     * @param onCompleted callback when done, may be null
     * @param excludeDocId docId of document to keep open and activate (or null to close all)
@@ -1573,8 +1566,7 @@ public class Source implements InsertSourceHandler,
 
    public ArrayList<UnsavedChangesTarget> getUnsavedChanges(int type, Set<String> ids)
    {
-      ArrayList<UnsavedChangesTarget> targets =
-          new ArrayList<UnsavedChangesTarget>();
+      ArrayList<UnsavedChangesTarget> targets = new ArrayList<>();
 
       // if this is the main window, collect all unsaved changes from
       // the satellite windows as well
@@ -1632,7 +1624,7 @@ public class Source implements InsertSourceHandler,
    public Command revertUnsavedChangesBeforeExitCommand(
                                                final Command onCompleted)
    {
-      return () -> handleUnsavedChangesBeforeExit(new ArrayList<UnsavedChangesTarget>(),
+      return () -> handleUnsavedChangesBeforeExit(new ArrayList<>(),
                                                   onCompleted);
    }
 
@@ -1675,7 +1667,7 @@ public class Source implements InsertSourceHandler,
    {
       openSourceDoc(null, null);
    }
-   
+
    public void openSourceDoc(Command onCancelled, Command onCompleted)
    {
       fileDialogs_.openFile(
@@ -1738,7 +1730,7 @@ public class Source implements InsertSourceHandler,
          docType = FileTypeRegistry.RMARKDOWN;
 
       final ResultCallback<EditingTarget, ServerError> callback = event.getCallback();
-      
+
       // command to create and run the new doc
       Command newDocCommand = new Command()
       {
@@ -1775,11 +1767,11 @@ public class Source implements InsertSourceHandler,
                         commands_.executePreviousChunks().execute();
                      }
                   }
-                  
+
                   if (callback != null)
                      callback.onSuccess(arg);
                }
-               
+
                @Override
                public void onFailure(ServerError info)
                {
@@ -1956,7 +1948,7 @@ public class Source implements InsertSourceHandler,
                if (file.focusOnNavigate())
                {
                   events_.fireEvent(new SuppressNextShellFocusEvent());
-                  
+
                   if (target instanceof TextEditingTarget)
                   {
                      TextEditingTarget textTarget = (TextEditingTarget) target;
@@ -2461,9 +2453,7 @@ public class Source implements InsertSourceHandler,
          columnManager_.activateCodeBrowser(
             navigation.getPath(),
             false,
-            new SourceNavigationResultCallback<CodeBrowserEditingTarget>(
-                                                      navigation.getPosition(),
-                                                      retryCommand));
+            new SourceNavigationResultCallback<>(navigation.getPosition(), retryCommand));
       }
 
       // check for file path navigation
@@ -2477,9 +2467,7 @@ public class Source implements InsertSourceHandler,
          // open the file and restore the position
          columnManager_.openFile(file,
                                  fileType,
-                                 new SourceNavigationResultCallback<EditingTarget>(
-                                                                  navigation.getPosition(),
-                                                                  retryCommand));
+            new SourceNavigationResultCallback<>(navigation.getPosition(), retryCommand));
       }
       else
       {
@@ -2681,7 +2669,7 @@ public class Source implements InsertSourceHandler,
       // the current save code is wired up in such a way that it's difficult
       // to distinguish a success from failure, so we just make sure the
       // server receives a response after 5s (defaulting to failure)
-      final Mutable<Boolean> savedSuccessfully = new Mutable<Boolean>(false);
+      final Mutable<Boolean> savedSuccessfully = new Mutable<>(false);
       final Timer completedTimer = new Timer()
       {
          @Override
@@ -2708,7 +2696,7 @@ public class Source implements InsertSourceHandler,
       }
       else
       {
-         final Set<String> idSet = new HashSet<String>();
+         final Set<String> idSet = new HashSet<>();
          for (String id : JsUtil.asIterable(ids))
             idSet.add(id);
 
@@ -2828,7 +2816,7 @@ public class Source implements InsertSourceHandler,
          {
             if (docDisplay == null)
                return;
-            
+
             JsArray<Range> ranges = event.getData().getRanges();
             if (ranges.length() == 0)
                return;
@@ -2885,7 +2873,7 @@ public class Source implements InsertSourceHandler,
          {
             if (docDisplay == null)
                return;
-            
+
             doReplaceRanges(event, docDisplay);
          }
       });
@@ -2910,7 +2898,7 @@ public class Source implements InsertSourceHandler,
       }
       docDisplay.focus();
    }
-   
+
    private boolean apiEventTargetIsConsole(String id)
    {
       return
@@ -2918,7 +2906,7 @@ public class Source implements InsertSourceHandler,
             StringUtil.isNullOrEmpty(id) &&
             consoleEditorHadFocusLast();
    }
-   
+
    private void invokeEditorApiAction(String docId,
                                       CommandWithArg<TextEditingTarget> callback)
    {
@@ -2929,7 +2917,7 @@ public class Source implements InsertSourceHandler,
                new VoidServerRequestCallback());
       });
    }
-   
+
    @Override
    public void onRStudioApiRequest(RStudioApiRequestEvent requestEvent)
    {
@@ -2940,7 +2928,7 @@ public class Source implements InsertSourceHandler,
       catch (Exception e)
       {
          Debug.logException(e);
-         
+
          // ensure that a response if made if something goes wrong
          if (requestEvent.getData().isSynchronous())
          {
@@ -2950,7 +2938,7 @@ public class Source implements InsertSourceHandler,
          }
       }
    }
-   
+
    @Override
    public void onCloseAllSourceDocsExcept(CloseAllSourceDocsExceptEvent closeAllExceptEvent)
    {
@@ -2961,21 +2949,21 @@ public class Source implements InsertSourceHandler,
    {
       // retrieve request data
       RStudioApiRequestEvent.Data requestData = requestEvent.getData();
-      
+
       // if this event is only for the active source window,
       // then ignore if if we're not the active window
       boolean ignore =
             requestData.getTarget() == RStudioApiRequestEvent.TARGET_ACTIVE_WINDOW &&
             !isLastFocusedSourceWindow();
-      
+
       if (ignore)
          return;
-      
+
       int type = requestData.getType();
       if (type == RStudioApiRequestEvent.TYPE_GET_EDITOR_SELECTION)
       {
          RStudioApiRequestEvent.GetEditorSelectionData data = requestEvent.getPayload().cast();
-         
+
          if (apiEventTargetIsConsole(data.getDocId()))
          {
             String selection = consoleEditorProvider_.getConsoleEditor().getSelectionValue();
@@ -2999,12 +2987,12 @@ public class Source implements InsertSourceHandler,
       else if (type == RStudioApiRequestEvent.TYPE_SET_EDITOR_SELECTION)
       {
          RStudioApiRequestEvent.SetEditorSelectionData data = requestEvent.getPayload().cast();
-         
+
          if (apiEventTargetIsConsole(data.getDocId()))
          {
             InputEditorDisplay console = consoleEditorProvider_.getConsoleEditor();
             console.replaceSelection(data.getValue(), true);
-            
+
             server_.rstudioApiResponse(
                   JavaScriptObject.createObject(),
                   new VoidServerRequestCallback());
@@ -3025,7 +3013,7 @@ public class Source implements InsertSourceHandler,
       else if (type == RStudioApiRequestEvent.TYPE_DOCUMENT_ID)
       {
          RStudioApiRequestEvent.DocumentIdData data = requestEvent.getPayload().cast();
-         
+
          if (data.getAllowConsole() && consoleEditorHadFocusLast())
          {
             JsObject response = JsObject.createJsObject();
@@ -3055,7 +3043,7 @@ public class Source implements InsertSourceHandler,
                // attempts by the shell widget to steal focus here)
                events_.fireEvent(new SuppressNextShellFocusEvent());
                result.focus();
-               
+
                JsObject response = JsObject.createJsObject();
                response.setString("id", result.getId());
                server_.rstudioApiResponse(response, new VoidServerRequestCallback());
@@ -3070,16 +3058,16 @@ public class Source implements InsertSourceHandler,
                      new VoidServerRequestCallback());
             }
          });
-         
+
       }
       else if (type == RStudioApiRequestEvent.TYPE_DOCUMENT_NEW)
       {
          RStudioApiRequestEvent.DocumentNewData data = requestEvent.getPayload().cast();
-         
+
          SourcePosition position = SourcePosition.create(
                data.getRow(),
                data.getColumn());
-         
+
          events_.fireEvent(new NewDocumentWithCodeEvent(
                data.getType(),
                data.getCode(),
@@ -3125,7 +3113,7 @@ public class Source implements InsertSourceHandler,
    }
 
    private final Commands commands_;
-   final Queue<StatFileEntry> statQueue_ = new LinkedList<StatFileEntry>();
+   final Queue<StatFileEntry> statQueue_ = new LinkedList<>();
    SourceColumnManager columnManager_;
    private final SourceServerOperations server_;
    private final FileTypeRegistry fileTypeRegistry_;

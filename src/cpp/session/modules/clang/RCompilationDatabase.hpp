@@ -124,6 +124,7 @@ private:
    // package compliation settings (track file modification times on build
    // oriented files to avoid re-running detection)
    std::string packageBuildFileHash_;
+   std::string compilerHash_;
    CompilationConfig packageCompilationConfig_;
    bool usePrecompiledHeaders_;
    bool forceRebuildPrecompiledHeaders_;

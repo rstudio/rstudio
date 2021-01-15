@@ -25,6 +25,7 @@
 
 #include <core/BoostSignals.hpp>
 #include <core/HtmlUtils.hpp>
+#include <core/Version.hpp>
 #include <core/system/System.hpp>
 #include <core/system/ShellUtils.hpp>
 #include <core/system/FileChangeEvent.hpp>
@@ -150,6 +151,8 @@ bool isMinimumDevtoolsInstalled();
 bool isMinimumRoxygenInstalled();
 
 std::string packageVersion(const std::string& packageName);
+core::Error packageVersion(const std::string& packageName,
+                           core::Version* pVersion);
 
 bool hasMinimumRVersion(const std::string& version);
 

@@ -19,21 +19,19 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.events.OpenFileInBrowserEvent;
-import org.rstudio.studio.client.common.filetypes.events.OpenFileInBrowserHandler;
 import org.rstudio.studio.client.common.filetypes.events.RenameSourceFileEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
-import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateHandler;
 
 public class FilesTab extends DelayLoadWorkbenchTab<Files>
 {
    public interface Binder extends CommandBinder<Commands, FilesTab.Shim> {}
-   
+
    public abstract static class Shim
          extends DelayLoadTabShim<Files, FilesTab>
-         implements OpenFileInBrowserHandler, DirectoryNavigateHandler, RenameSourceFileEvent.Handler
+         implements OpenFileInBrowserEvent.Handler, DirectoryNavigateEvent.Handler, RenameSourceFileEvent.Handler
    {
       @Handler
       public abstract void onUploadFile();

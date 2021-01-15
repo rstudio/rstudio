@@ -86,7 +86,7 @@ public class EnvironmentObjects extends ResizeComposite
       environmentName_ = EnvironmentPane.GLOBAL_ENVIRONMENT_NAME;
 
       objectDisplayType_ = OBJECT_LIST_VIEW;
-      objectDataProvider_ = new ListDataProvider<RObjectEntry>();
+      objectDataProvider_ = new ListDataProvider<>();
       objectSort_ = new RObjectEntrySort();
 
       // timer used to scroll table element into view
@@ -214,7 +214,7 @@ public class EnvironmentObjects extends ResizeComposite
    {
       // create an entry for each object and sort the array
       int numObjects = objects.length();
-      ArrayList<RObjectEntry> objectEntryList = new ArrayList<RObjectEntry>();
+      ArrayList<RObjectEntry> objectEntryList = new ArrayList<>();
       for (int i = 0; i < numObjects; i++)
       {
          RObjectEntry entry = entryFromRObject(objects.get(i));

@@ -59,7 +59,7 @@ public class PanmirrorCommandPaletteEntry extends CommandPaletteCommand
 
    private static List<KeySequence> keySequence(PanmirrorCommandUI command)
    {
-      List<KeySequence> keys = new ArrayList<KeySequence>();
+      List<KeySequence> keys = new ArrayList<>();
       KeySequence keySequence = command.getKeySequence();
       if (keySequence != null)
          keys.add(keySequence);

@@ -19,8 +19,8 @@
 #include <QWebChannel>
 #include <QWebEngineSettings>
 
-#include <boost/bind.hpp>
 #include <boost/format.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <core/FileSerializer.hpp>
 #include <core/Macros.hpp>
@@ -37,6 +37,7 @@
 #include "DesktopRCommandEvaluator.hpp"
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace desktop {

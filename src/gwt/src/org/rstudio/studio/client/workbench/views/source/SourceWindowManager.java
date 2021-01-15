@@ -77,7 +77,7 @@ import java.util.Set;
 @Singleton
 public class SourceWindowManager implements PopoutDocEvent.Handler,
                                             SourceDocAddedEvent.Handler,
-                                            SourceFileSavedHandler,
+                                            SourceFileSavedEvent.Handler,
                                             CodeBrowserCreatedEvent.Handler,
                                             SatelliteFocusedEvent.Handler,
                                             SatelliteClosedEvent.Handler,
@@ -615,7 +615,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
             break;
          }
       }
-      HashMap<String,String> props = new HashMap<String,String>();
+      HashMap<String,String> props = new HashMap<>();
       props.put(SourceColumnManager.COLUMN_PREFIX, name);
 
       if (write)
@@ -704,6 +704,9 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       // our internal doc mappings so we can route navigations to the right
       // window for that path
       updateDocPath(event.getDocId(), event.getPath());
+
+      // satellites also need to know if a file was renamed
+      events_.fireEventToAllSatellites(event);
    }
 
    @Override
@@ -1052,7 +1055,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
 
    private boolean updateWindowGeometry()
    {
-      final ArrayList<String> changedWindows = new ArrayList<String>();
+      final ArrayList<String> changedWindows = new ArrayList<>();
       final JsObject newGeometries = JsObject.createJsObject();
 
       doForAllSourceWindows(new OperationWithInput<Pair<String,WindowEx>>()
@@ -1112,7 +1115,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          if (window == null || window.isClosed())
             continue;
 
-         command.execute(new Pair<String,WindowEx>(windowId, window));
+         command.execute(new Pair<>(windowId, window));
       }
    }
 
@@ -1168,14 +1171,14 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
             // no point in writing a value to the server if we're not changing
             // it
             if (doc.getSourceWindowId() == windowId)
-               return new HashMap<String,String>();
+               return new HashMap<>();
             doc.assignSourceWindowId(windowId);
             break;
          }
       }
 
       // create the new property map
-      HashMap<String,String> props = new HashMap<String,String>();
+      HashMap<String,String> props = new HashMap<>();
       props.put(SOURCE_WINDOW_ID, windowId);
 
       return props;

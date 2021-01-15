@@ -18,7 +18,7 @@ import com.google.gwt.event.shared.GwtEvent;
 
 public class CommandEvent extends GwtEvent<CommandHandler>
 {
-   public static final Type<CommandHandler> TYPE = new Type<CommandHandler>();
+   public static final Type<CommandHandler> TYPE = new Type<>();
 
    public CommandEvent(AppCommand command)
    {

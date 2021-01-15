@@ -40,8 +40,7 @@ public class FilesCopy
                        Command completedCommand)
    {
       // copy list so we don't modify passed list
-      ArrayList<FileSystemItem> filesQueue = new ArrayList<FileSystemItem>(
-                                                               files);
+      ArrayList<FileSystemItem> filesQueue = new ArrayList<>(files);
       
       // begin copy sequence (this method keeps calling itself until
       // the queue of files is empty)

@@ -145,7 +145,7 @@ public class NewConnectionSnippetHost extends Composite
    }
 
    private ArrayList<NewConnectionSnippetParts> parseSnippet(String input) {
-      ArrayList<NewConnectionSnippetParts> parts = new ArrayList<NewConnectionSnippetParts>();
+      ArrayList<NewConnectionSnippetParts> parts = new ArrayList<>();
 
       RegExp regExp = RegExp.compile(pattern_, "g");
 
@@ -248,8 +248,8 @@ public class NewConnectionSnippetHost extends Composite
       visibleRows = Math.min(visibleRows, maxRows);
 
       visibleParams = Math.min(visibleParams, snippetParts.size());
-      final ArrayList<NewConnectionSnippetParts> secondarySnippetParts = 
-            new ArrayList<NewConnectionSnippetParts>(snippetParts.subList(visibleParams, snippetParts.size()));
+      final ArrayList<NewConnectionSnippetParts> secondarySnippetParts =
+            new ArrayList<>(snippetParts.subList(visibleParams, snippetParts.size()));
 
       final LayoutGrid connGrid = new LayoutGrid(visibleRows + 1, 4);
       connGrid.addStyleName(RES.styles().grid());
@@ -653,7 +653,7 @@ public class NewConnectionSnippetHost extends Composite
 
    NewConnectionInfo info_;
    ArrayList<NewConnectionSnippetParts> snippetParts_;
-   HashMap<String, String> partsKeyValues_ = new HashMap<String, String>();
+   HashMap<String, String> partsKeyValues_ = new HashMap<>();
 
    static final String pattern_ = "\\$\\{([0-9]+):([^:=}]+)(=([^:}]*))?(:([^}]+))?\\}";
    static final String patternRandNumber_ = "\\$\\{#\\}";

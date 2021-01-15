@@ -28,8 +28,7 @@ public class RSConnectDeployInitiatedEvent extends GwtEvent<RSConnectDeployIniti
       void onRSConnectDeployInitiated(RSConnectDeployInitiatedEvent event);
    }
 
-   public static final GwtEvent.Type<RSConnectDeployInitiatedEvent.Handler> TYPE =
-      new GwtEvent.Type<RSConnectDeployInitiatedEvent.Handler>();
+   public static final GwtEvent.Type<RSConnectDeployInitiatedEvent.Handler> TYPE = new GwtEvent.Type<>();
    
    public RSConnectDeployInitiatedEvent(RSConnectPublishSource source,
                                         RSConnectPublishSettings settings,

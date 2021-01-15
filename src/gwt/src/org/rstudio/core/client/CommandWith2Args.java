@@ -16,5 +16,5 @@ package org.rstudio.core.client;
 
 public interface CommandWith2Args<T, U>
 {
-   public void execute(T arg1, U arg2);
+   void execute(T arg1, U arg2);
 }

@@ -199,6 +199,8 @@ RToken RTokenizer::nextToken()
   case L' ': case L'\t': case L'\r': case L'\n':
   case L'\x00A0': case L'\x3000':
      return matchWhitespace();
+  case L'\\':
+     return matchIdentifier();
   }
 
   wchar_t cNext = peek(1);
@@ -406,9 +408,18 @@ RToken RTokenizer::matchNumber()
 RToken RTokenizer::matchIdentifier()
 {
    std::wstring::const_iterator start = pos_;
-   eat();
-   while (string_utils::isalnum(peek()) || peek() == L'.' || peek() == L'_')
+   
+   bool match = true;
+   while (match)
+   {
       eat();
+    
+      wchar_t ch = peek();
+      match =
+            string_utils::isalnum(ch) ||
+            ch == L'.' ||
+            ch == L'_';
+   }
    
    std::size_t row = row_;
    std::size_t column = column_;
@@ -453,6 +464,7 @@ RToken RTokenizer::matchOperator()
 
    switch (peek())
    {
+   
    case L':': // :::, ::, :=
    {
       if (cNext == L'=')
@@ -461,23 +473,29 @@ RToken RTokenizer::matchOperator()
          return consumeToken(RToken::OPER, 1 + (cNext == L':') + (cNextNext == L':'));
    }
       
-   case L'|':
-      return consumeToken(RToken::OPER, cNext == L'|' ? 2 : 1);
+   case L'|': // ||, |>, |
+      if (cNext == L'|' || cNext == L'>')
+         return consumeToken(RToken::OPER, 2);
+      else
+         return consumeToken(RToken::OPER, 1);
       
-   case L'&':
+   case L'&': // &&, &
       return consumeToken(RToken::OPER, cNext == L'&' ? 2 : 1);
       
-   case L'<': // <=, <-, <<-
-      
+   case L'<': // <=, <-, <<-, <
       if (cNext == L'=' || cNext == L'-') // <=, <-
+      {
          return consumeToken(RToken::OPER, 2);
+      }
       else if (cNext == L'<')
       {
          if (cNextNext == L'-') // <<-
             return consumeToken(RToken::OPER, 3);
       }
       else // plain old <
+      {
          return consumeToken(RToken::OPER, 1);
+      }
       
    case L'-': // also -> and ->>
       if (cNext == L'>')

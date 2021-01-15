@@ -58,7 +58,7 @@ import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.ProfilerType;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
-import org.rstudio.studio.client.palette.model.CommandPaletteItem;
+import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.rsconnect.model.PublishHtmlSource;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -87,7 +87,6 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperat
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 
 public class ProfilerEditingTarget implements EditingTarget,
                                               HasSelectionCommitHandlers<CodeNavigationTarget>
@@ -697,7 +696,7 @@ public class ProfilerEditingTarget implements EditingTarget,
 
    private void persistDocumentProperty(String property, String value)
    {
-      HashMap<String, String> props = new HashMap<String, String>();
+      HashMap<String, String> props = new HashMap<>();
       props.put(property, value);
 
       sourceServer_.modifyDocumentProperties(
@@ -785,7 +784,7 @@ public class ProfilerEditingTarget implements EditingTarget,
    }
 
    @Override
-   public List<CommandPaletteItem> getCommandPaletteItems()
+   public CommandPaletteEntryProvider getPaletteEntryProvider()
    {
       return null;
    }
@@ -891,7 +890,7 @@ public class ProfilerEditingTarget implements EditingTarget,
    private ProfilerEditingTargetWidget view_;
    private final ProfilerPresenter presenter_;
 
-   private final Value<Boolean> neverDirtyState_ = new Value<Boolean>(false);
+   private final Value<Boolean> neverDirtyState_ = new Value<>(false);
 
    private final EventBus events_;
    private final Commands commands_;
@@ -914,7 +913,7 @@ public class ProfilerEditingTarget implements EditingTarget,
 
    private static boolean initializedEvents_;
 
-   private Value<String> name_ = new Value<String>(null);
+   private Value<String> name_ = new Value<>(null);
    private String tempName_;
 
    private String htmlPath_;

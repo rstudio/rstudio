@@ -19,12 +19,12 @@
 #include <string>
 #include <vector>
 
-#include <boost/bind.hpp>
 #include <boost/function.hpp>
 #include <boost/utility.hpp>
 #include <boost/regex.hpp>
 #include <boost/range/adaptors.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <core/Algorithm.hpp>
 #include <shared_core/SafeConvert.hpp>
@@ -33,6 +33,8 @@
 
 #include <core/r_util/RTokenizer.hpp>
 #include <core/r_util/RFunctionInformation.hpp>
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace core {

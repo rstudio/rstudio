@@ -26,7 +26,7 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 public final class DialogHtmlSanitizer implements HtmlSanitizer {
-   private static final Set<String> TAG_WHITELIST = new HashSet<String>(
+   private static final Set<String> TAG_WHITELIST = new HashSet<>(
       Arrays.asList(
          "p", "em", "strong", "b", "i", "a"
       )

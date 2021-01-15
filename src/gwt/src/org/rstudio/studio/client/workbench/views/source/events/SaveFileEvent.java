@@ -14,9 +14,10 @@
  */
 package org.rstudio.studio.client.workbench.views.source.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class SaveFileEvent extends GwtEvent<SaveFileHandler>
+public class SaveFileEvent extends GwtEvent<SaveFileEvent.Handler>
 {
    public SaveFileEvent(String path, String fileType, String encoding)
    {
@@ -24,29 +25,33 @@ public class SaveFileEvent extends GwtEvent<SaveFileHandler>
       fileType_ = fileType;
       encoding_ = encoding;
    }
-   
+
    public final String getPath() { return path_; }
    public final String getFileType() { return fileType_; }
    public final String getEncoding() { return encoding_; }
    public final boolean isAutosave() { return path_ == null; }
-   
+
    private final String path_;
    private final String fileType_;
    private final String encoding_;
-   
+
    // Boilerplate ----
-   
-   public static final GwtEvent.Type<SaveFileHandler> TYPE =
-      new GwtEvent.Type<SaveFileHandler>();
-   
+
+   public static final Type<Handler> TYPE = new Type<>();
+
+   public interface Handler extends EventHandler
+   {
+      void onSaveFile(SaveFileEvent event);
+   }
+
    @Override
-   protected void dispatch(SaveFileHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onSaveFile(this);
    }
 
    @Override
-   public GwtEvent.Type<SaveFileHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }

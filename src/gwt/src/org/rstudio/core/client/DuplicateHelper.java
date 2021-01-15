@@ -58,16 +58,14 @@ public class DuplicateHelper
 
       void addDupeInfo(T value, ArrayList<Integer> indices)
       {
-         valueCounts_.add(new Pair<T, Integer>(value, indices.size()));
+         valueCounts_.add(new Pair<>(value, indices.size()));
          if (indices.size() > 1)
             dupes_.add(indices);
       }
 
       private final Comparator<T> comparator_;
-      private ArrayList<ArrayList<Integer>> dupes_ =
-            new ArrayList<ArrayList<Integer>>();
-      private ArrayList<Pair<T, Integer>> valueCounts_ =
-            new ArrayList<Pair<T, Integer>>();
+      private ArrayList<ArrayList<Integer>> dupes_ = new ArrayList<>();
+      private ArrayList<Pair<T, Integer>> valueCounts_ = new ArrayList<>();
    }
 
    private static class CaseInsensitiveStringComparator implements Comparator<String>
@@ -106,10 +104,10 @@ public class DuplicateHelper
    public static <T> DuplicationInfo<T> detectDupes(List<T> list,
                                                     final Comparator<T> comparator)
    {
-      ArrayList<Pair<Integer, T>> sorted = new ArrayList<Pair<Integer, T>>();
+      ArrayList<Pair<Integer, T>> sorted = new ArrayList<>();
       for (int i = 0; i < list.size(); i++)
       {
-         sorted.add(new Pair<Integer, T>(i, list.get(i)));
+         sorted.add(new Pair<>(i, list.get(i)));
       }
 
       // Sort our copy of the list, so dupes are right next to each other
@@ -122,8 +120,8 @@ public class DuplicateHelper
          }
       });
 
-      DuplicationInfo<T> dupeInfo = new DuplicationInfo<T>(comparator);
-      ArrayList<Integer> currentDupes = new ArrayList<Integer>();
+      DuplicationInfo<T> dupeInfo = new DuplicationInfo<>(comparator);
+      ArrayList<Integer> currentDupes = new ArrayList<>();
       T lastSeenValue = null;
       for (Pair<Integer, T> value : sorted)
       {
@@ -135,7 +133,7 @@ public class DuplicateHelper
             // a new list.
             if (currentDupes.size() > 0)
                dupeInfo.addDupeInfo(lastSeenValue, currentDupes);
-            currentDupes = new ArrayList<Integer>();
+            currentDupes = new ArrayList<>();
          }
 
          // Add ourselves to the current list
@@ -157,7 +155,7 @@ public class DuplicateHelper
    public static ArrayList<String> getPathLabels(ArrayList<String> paths,
                                                  boolean includeExtension)
    {
-      ArrayList<String> labels = new ArrayList<String>();
+      ArrayList<String> labels = new ArrayList<>();
       for (String entry : paths)
       {
          if (includeExtension)
@@ -204,15 +202,14 @@ public class DuplicateHelper
                            ArrayList<Integer> indices,
                            ArrayList<String> labels)
    {
-      ArrayList<ArrayList<String>> pathElementListList =
-            new ArrayList<ArrayList<String>>();
+      ArrayList<ArrayList<String>> pathElementListList = new ArrayList<>();
 
       for (Integer index : indices)
          pathElementListList.add(toPathElements(fullPaths.get(index)));
 
       while (indices.size() > 0)
       {
-         ArrayList<String> lastPathElements = new ArrayList<String>();
+         ArrayList<String> lastPathElements = new ArrayList<>();
 
          for (int i = 0; i < pathElementListList.size(); i++)
          {
@@ -269,7 +266,6 @@ public class DuplicateHelper
    private static ArrayList<String> toPathElements(String path)
    {
       FileSystemItem fsi = FileSystemItem.createFile(path);
-      return new ArrayList<String>(
-            Arrays.asList(fsi.getParentPathString().split("/")));
+      return new ArrayList<>(Arrays.asList(fsi.getParentPathString().split("/")));
    }
 }

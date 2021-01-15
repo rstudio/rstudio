@@ -59,6 +59,7 @@ public abstract class
    public abstract AppCommand saveSourceDocWithEncoding();
    public abstract AppCommand saveAllSourceDocs();
    public abstract AppCommand renameSourceDoc();
+   public abstract AppCommand copySourceDocPath();
    public abstract AppCommand closeSourceDoc();
    public abstract AppCommand closeOtherSourceDocs();
    public abstract AppCommand closeAllSourceDocs();
@@ -440,6 +441,7 @@ public abstract class
    public abstract AppCommand showPythonOptions();
    public abstract AppCommand modifyKeyboardShortcuts();
    public abstract AppCommand showCommandPalette();
+   public abstract AppCommand clearCommandPaletteMru();
 
    // Terminal
    public abstract AppCommand newTerminal();
