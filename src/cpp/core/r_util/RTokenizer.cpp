@@ -514,10 +514,15 @@ RToken RTokenizer::matchOperator()
    case L'>': // also >=
       return consumeToken(RToken::OPER, cNext == L'=' ? 2 : 1);
       
-   case L'=': // also ==
-      return consumeToken(RToken::OPER, cNext == L'=' ? 2 : 1);
+   case L'=': // also =>, ==
+      if (cNext == L'=' || cNext == '>')
+         return consumeToken(RToken::OPER, 2);
+      else
+         return consumeToken(RToken::OPER, 1);
+         
    case L'!': // also !=
       return consumeToken(RToken::OPER, cNext == L'=' ? 2 : 1);
+      
    default:
       return RToken();
    }
