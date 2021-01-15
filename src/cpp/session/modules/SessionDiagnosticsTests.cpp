@@ -287,6 +287,8 @@ test_context("Diagnostics")
       EXPECT_NO_ERRORS("phi = function(`arg 1`) 1 + 1\nph(`arg 1` = 1)");
       EXPECT_NO_ERRORS("'a\nb' <- 1");
       EXPECT_NO_ERRORS("`a\nb` <- 1");
+      
+      EXPECT_NO_ERRORS("mtcars |> data => lm(mpg ~ cyl, data = data)");
    }
    
    lintRStudioRFiles();
