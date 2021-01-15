@@ -17,6 +17,7 @@
 #define CORE_SYSTEM_WIN32PTY_HPP
 
 #include <winpty/winpty.h>
+#include "Win32Terminal.hpp"
 
 namespace rstudio {
 namespace core {
