@@ -21,15 +21,15 @@ namespace core {
    class Error;
 }
 }
- 
+
 namespace rstudio {
 namespace session {
 namespace modules { 
 namespace packages {
-   
+
 core::Error initialize();
 void enquePackageStateChanged();
-                       
+
 } // namespace packages
 } // namespace modules
 } // namespace session

@@ -20,7 +20,6 @@
 
 #include "SessionPackages.hpp"
 
-#include <boost/regex.hpp>
 #include <boost/format.hpp>
 #include <boost/bind/bind.hpp>
 
@@ -64,9 +63,7 @@ public:
 
 private:
 
-   AvailablePackagesCache()
-   {
-   }
+   AvailablePackagesCache() = default;
 
 public:
 
@@ -186,8 +183,8 @@ Error availablePackages(const core::json::JsonRpcRequest&,
 
    // return as json
    json::Array jsonResults;
-   for (size_t i = 0; i < availablePackages.size(); i++)
-      jsonResults.push_back(json::Value(availablePackages.at(i)));
+   for (std::string& availablePackage : availablePackages)
+      jsonResults.push_back(json::Value(availablePackage));
    pResponse->setResult(jsonResults);
    return Success();
 }
