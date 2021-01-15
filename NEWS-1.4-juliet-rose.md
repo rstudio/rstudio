@@ -4,7 +4,7 @@
 
 ### Misc
 
-* Added support for the `|>` pipe operator, and `\(x)` function shorthand syntax in R 4.1 (#8543)
+* Added support for the `|>` pipe operator, the `=>` pipe-bind operator, and `\(x)` function shorthand syntax proposed for R 4.1.0 (#8543)
 * Added preference toggle for inserting the |> pipe operator when the Insert Pipe Operator command is used (#8534)
 * Improve detection for crashes that occur early in session initialization (#7983)
 * The mouse back / forward buttons can now be used to navigate within the Help pane (#8338)
