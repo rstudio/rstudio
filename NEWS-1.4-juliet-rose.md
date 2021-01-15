@@ -44,6 +44,7 @@
 * Fix issues finding words with punctuation in visual mode (#8655)
 * Fix spurious image insertion when pasting into visual mode from Excel (#8665)
 * Fix out-of-date tooltip when renaming files (#8490, #8491)
+* Fix incorrect keyboard shortcuts shown in some places in the Command Palette (#8735)
 
 
 

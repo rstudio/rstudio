@@ -38,14 +38,24 @@ public class AppCommandBinding implements CommandBinding
       command_.executeFromShortcut();
    }
 
+   /**
+    * Indicates whether the binding is enabled in the current editor mode
+    *
+    * @return Whether the binding is enabled
+    */
+   public boolean isEnabledInCurrentMode()
+   {
+      int mode = ShortcutManager.INSTANCE.getEditorMode();
+      return (disableModes_ & mode) == 0;
+   }
+
    @Override
    public boolean isEnabled()
    {
       if (!command_.isEnabled())
          return false;
 
-      int mode = ShortcutManager.INSTANCE.getEditorMode();
-      if ((disableModes_ & mode) != 0)
+      if (!isEnabledInCurrentMode())
          return false;
 
       return true;
