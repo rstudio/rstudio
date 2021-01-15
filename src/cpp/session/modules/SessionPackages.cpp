@@ -179,7 +179,8 @@ Error availablePackages(const core::json::JsonRpcRequest&,
 
    // order and remove duplicates
    std::stable_sort(availablePackages.begin(), availablePackages.end());
-   std::unique(availablePackages.begin(), availablePackages.end());
+   availablePackages.erase(std::unique(availablePackages.begin(), availablePackages.end()),
+                           availablePackages.end());
 
    // return as json
    json::Array jsonResults;
@@ -316,7 +317,7 @@ void onDetectChanges(module_context::ChangeSource source)
       detectLibPathsChanges();
 }
 
-void onDeferredInit(bool newSession)
+void onDeferredInit(bool /* newSession */)
 {
    // Ensure we have a writeable user library
    Error error = r::exec::RFunction(".rs.ensureWriteableUserLibrary").call();
