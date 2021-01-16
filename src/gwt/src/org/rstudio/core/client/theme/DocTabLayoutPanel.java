@@ -41,6 +41,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
+import org.rstudio.studio.client.common.filetypes.events.CopySourcePathEvent;
 import org.rstudio.studio.client.common.filetypes.events.RenameSourceFileEvent;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.server.model.RequestDocumentCloseEvent;
@@ -53,6 +54,7 @@ import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStarted
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStateChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocInitiatedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocTabDragParams;
 
 import com.google.gwt.animation.client.Animation;
@@ -123,6 +125,15 @@ public class DocTabLayoutPanel
       // to notify us of incoming drags)
       events_ = RStudioGinjector.INSTANCE.getEventBus();
       events_.addHandler(DocTabDragStartedEvent.TYPE, dragManager_);
+
+      events_.addHandler(SourceFileSavedEvent.TYPE, event ->
+      {
+         // update tooltip to reflect current filename after a Rename or Save As
+         DocTab tab = getTabForDocId(event.getDocId());
+         if (tab != null)
+            tab.replaceTooltip(event.getPath());
+      });
+
       commands_ = RStudioGinjector.INSTANCE.getCommands();
 
    }
@@ -211,6 +222,10 @@ public class DocTabLayoutPanel
                menu.addItem(new MenuItem("Rename", () ->
                {
                   events_.fireEvent(new RenameSourceFileEvent(filePath));
+               }));
+               menu.addItem(new MenuItem("Copy Path", () ->
+               {
+                  events_.fireEvent(new CopySourcePathEvent(filePath));
                }));
                menu.addSeparator();
             }
@@ -1377,6 +1392,19 @@ public class DocTabLayoutPanel
          return "text";
       else
          return "application/rstudio-tab";
+   }
+
+   private DocTab getTabForDocId(String docId)
+   {
+      for (int i = 0; i < getWidgetCount(); i++)
+      {
+         DocTab tab = (DocTab)getTabWidget(i);
+         if (StringUtil.equals(tab.getDocId(), docId))
+         {
+            return tab;
+         }
+      }
+      return null;
    }
 
    public static final int BAR_HEIGHT = 24;

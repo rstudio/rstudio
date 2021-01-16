@@ -2433,7 +2433,7 @@ START:
          if (isBinaryOp(next))
          {
             // handle '\n' within the token
-            int row =
+            std::size_t row =
                   cursor.row() +
                   std::count(cursor.begin(), cursor.end(), '\n');
             

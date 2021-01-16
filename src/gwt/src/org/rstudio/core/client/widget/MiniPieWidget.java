@@ -14,11 +14,14 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.aria.client.Id;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
+import org.rstudio.core.client.ElementIds;
 
 /**
  * A mini pie chart widget that shows a simple percentage in the form of a pie chart.
@@ -32,11 +35,22 @@ public class MiniPieWidget extends Composite
     * @param backColor The color to use for the background (unfilled) portion of the chart
     * @param percent The percentage of the chart to fill with the foreground color
     */
-   public MiniPieWidget(String foreColor, String backColor, int percent)
+   public MiniPieWidget(String title, String description, String foreColor, String backColor, int percent)
    {
       Element svg = Document.get().createElement("svg");
       svg.setAttribute("viewBox", "0 0 " + (PIE_CENTER * 2) + " " + (PIE_CENTER * 2));
       svg.setAttribute("style", "width: 100%; height: 100%;");
+
+      // Create accessibility title and description
+      title_ = Document.get().createTitleElement();
+      title_.setInnerText(title);
+      title_.setId(ElementIds.getUniqueElementId("pie-title"));
+      svg.appendChild(title_);
+      Roles.getImgRole().setAriaLabelledbyProperty(svg, Id.of(title_));
+
+      description_ = Document.get().createElement("desc");
+      description_.setInnerText(description);
+      svg.appendChild(description_);
 
       // Create background segment
       back_ = Document.get().createElement("circle");
@@ -94,6 +108,26 @@ public class MiniPieWidget extends Composite
       fore_.setAttribute("stroke-dasharray", percent + " " + (100 - percent));
    }
 
+   /**
+    * Sets the accessibility title of the pie chart (not displayed)
+    *
+    * @param title The new title
+    */
+   public void setTitle(String title)
+   {
+      title_.setInnerText(title);
+   }
+
+   /**
+    * Sets the accessibility description of the pie chart (not displayed)
+    *
+    * @param description The new description
+    */
+   public void setDescription(String description)
+   {
+      description_.setInnerText(description);
+   }
+
    private class ElementPanel extends SimplePanel
    {
       ElementPanel(Element ele)
@@ -110,4 +144,6 @@ public class MiniPieWidget extends Composite
 
    private final Element back_;
    private final Element fore_;
+   private final Element title_;
+   private final Element description_;
 }

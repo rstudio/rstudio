@@ -903,7 +903,7 @@ public class DomUtils
    }-*/;
 
    /**
-    * Forwards wheel events between a document and element. Originally written to pass wheel 
+    * Forwards wheel events between a document and element. Originally written to pass wheel
     * events up from an iframe.
     * @param fromDoc The document that first receives the wheel event.
     * @param toElement The element the event is forwarded to.
@@ -913,7 +913,7 @@ public class DomUtils
        function forward(event) {
            toElement.dispatchEvent(new event.constructor(event.type, event));
        }
-       // While "wheel" is the current standard, Ace will not handle the event if "mousewheel" is 
+       // While "wheel" is the current standard, Ace will not handle the event if "mousewheel" is
        // supported by the browser. Older browsers require "DomMouseScroll".
        var wheelEvent = $wnd.document.onmousewheel !== undefined ? "mousewheel" :
            "onwheel" in toElement ? "wheel" : "DomMouseScroll";
@@ -1307,6 +1307,30 @@ public class DomUtils
    public static final native DOMRect getBoundingClientRect(Element el)
    /*-{
       return el.getBoundingClientRect();
+   }-*/;
+
+   public static final native void copyToClipboard(String text)
+   /*-{
+      if (window.clipboardData && window.clipboardData.setData) {
+         // Internet Explorer-specific code path to prevent textarea being shown while dialog is visible.
+         clipboardData.setData("Text", text);
+      }
+      else if (document.queryCommandSupported && document.queryCommandSupported("copy")) {
+         var textarea = document.createElement("textarea");
+         textarea.textContent = text;
+         textarea.style.position = "fixed";  // Prevent scrolling to bottom of page in Microsoft Edge.
+         document.body.appendChild(textarea);
+         textarea.select();
+         try {
+            document.execCommand("copy");  // Security exception may be thrown by some browsers.
+         }
+         catch (ex) {
+            console.warn("Copy to clipboard failed.", ex);
+         }
+         finally {
+            document.body.removeChild(textarea);
+         }
+      }
    }-*/;
 
    public static final int ESTIMATED_SCROLLBAR_WIDTH = 19;

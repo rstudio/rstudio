@@ -1496,6 +1496,25 @@ html.heading = _heading
    else
       get(name, envir = parent)
    
+   # is this a null pointer? if so, handle that up-front
+   if (reticulate:::py_is_null_xptr(object))
+   {
+      result <- list(
+         name              = .rs.scalar(name),
+         type              = .rs.scalar("<unknown>"),
+         clazz             = "<unknown>",
+         is_data           = .rs.scalar(TRUE),
+         value             = .rs.scalar("<Null pointer>"),
+         description       = .rs.scalar("<Null pointer>"),
+         size              = .rs.scalar(0L),
+         length            = .rs.scalar(0L),
+         contents          = list(),
+         contents_deferred = .rs.scalar(FALSE)
+      )
+      
+      return(result)
+   }
+   
    # is this object 'data'? consider non-callable, non-module objects as data
    isData <- !(
       grepl("^__.*__$", name) ||

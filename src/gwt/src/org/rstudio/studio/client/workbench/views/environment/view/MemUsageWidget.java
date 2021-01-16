@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.environment.view;
 
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
@@ -46,7 +47,11 @@ public class MemUsageWidget extends Composite
       style.setMarginRight(3, Style.Unit.PX);
       host_.add(pieCrust_);
 
-      pie_ = new MiniPieWidget("#000000", "#e4e4e4", 0);
+      pie_ = new MiniPieWidget("Memory Usage",
+         "Pie chart depicting the percentage of total memory in use",
+         "#000000",
+         "#e4e4e4",
+         0);
       pieCrust_.add(pie_);
 
       ToolbarPopupMenu memoryMenu = new ToolbarPopupMenu();
@@ -91,13 +96,21 @@ public class MemUsageWidget extends Composite
       else
       {
          long percent = Math.round(((usage.getUsed().getKb() * 1.0) / (usage.getTotal().getKb() * 1.0)) * 100);
-         menu_.setTitle("Used by process: " + (usage.getProcess().getKb() / 1024) + " MiB\n" +
-            "Total used: " + (usage.getUsed().getKb() / 1024) + " MiB\n" +
-            "Total memory: " + (usage.getTotal().getKb() / 1024) + " MiB");
+         menu_.setTitle("Memory used by R session");
+         long mib = usage.getProcess().getKb() / 1024;
+         if (mib >= 1024)
+         {
+            // Memory usage is > 1GiB, format as XX.YY GiB
+            NumberFormat decimalFormat = NumberFormat.getFormat(".##");
+            menu_.setText(decimalFormat.format((double)mib / (double)1024) + " GiB");
+         }
+         else
+         {
+            // Memory usage is in MiB
+            menu_.setText(mib + " MiB");
+         }
 
          // These values are chosen to align with those used in rstudio.cloud.
-         menu_.setText((usage.getProcess().getKb() / 1024) + " MiB");
-
          String color = "#5f9a91";   // under 70%, green
          if (percent > 90) {
             color = "#e55037";       // 90% and above, red
@@ -109,6 +122,7 @@ public class MemUsageWidget extends Composite
 
          pie_.setPercent((int)percent);
          pie_.setForeColor(color);
+         pie_.setTitle("Memory in use: " + percent + "%");
          pieCrust_.setVisible(true);
          pieCrust_.getElement().setInnerHTML(pieCrust_.getElement().getInnerHTML());
       }
