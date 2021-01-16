@@ -13,23 +13,55 @@
  *
  */
 
+#include <windows.h>
+#include <psapi.h>
+
+#include <shared_core/Error.hpp>
+
 #include <core/system/Resources.hpp>
 
 namespace rstudio {
 namespace core {
 namespace system {
 
-
 Error getMemoryUsed(int *pUsedKb, MemoryProvider *pProvider)
 {
-    // TODO
-    return Success();
+   MEMORYSTATUSEX status;
+   status.dwLength = sizeof(status);
+   if (::GlobalMemoryStatusEx(&status) == 0)
+   {
+      return systemError(::GetLastError(), ERROR_LOCATION);
+   }
+
+   *pUsedKb = static_cast<int>((status.ullTotalPhys - status.ullAvailPhys) / 1024);
+   *pProvider = MemoryProviderWindows;
+   return Success();
 }
 
-Error getMemoryAvailable(int *pAvailKb, MemoryProvider *pProvider)
+Error getProcessMemoryUsed(int *pUsedKb, MemoryProvider *pProvider)
 {
-    // TODO
-    return Success();
+   PROCESS_MEMORY_COUNTERS info;
+   if (::GetProcessMemoryInfo(GetCurrentProcess(), &info, sizeof(info)) == 0)
+   {
+      return systemError(::GetLastError(), ERROR_LOCATION);
+   }
+   *pUsedKb = static_cast<int>(info.WorkingSetSize / 1024);
+   *pProvider = MemoryProviderWindows;
+   return Success();
+}
+
+Error getTotalMemory(int *pTotalKb, MemoryProvider *pProvider)
+{
+   MEMORYSTATUSEX status;
+   status.dwLength = sizeof(status);
+   if (::GlobalMemoryStatusEx(&status) == 0)
+   {
+      return systemError(::GetLastError(), ERROR_LOCATION);
+   }
+
+   *pTotalKb = static_cast<int>(status.ullTotalPhys / 1024);
+   *pProvider = MemoryProviderWindows;
+   return Success();
 }
 
 } // namespace sytem
