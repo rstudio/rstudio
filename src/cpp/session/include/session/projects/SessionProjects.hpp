@@ -70,7 +70,7 @@ struct RProjectBuildOptions
 {
    RProjectBuildOptions() :
       previewWebsite(true),
-      livePreviewWebsite(true),
+      livePreviewWebsite(false),
       websiteOutputFormat(),
       autoRoxygenizeForCheck(true),
       autoRoxygenizeForBuildPackage(true),
