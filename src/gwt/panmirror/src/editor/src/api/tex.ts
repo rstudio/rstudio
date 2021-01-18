@@ -18,6 +18,13 @@
 //   0: Not tex content
 //  >1: Length of valid tex string
 export function texLength(text: string) {
+
+  // if tex includes newlines it's auto-valid (could be math)
+  if (text.includes('\n')) {
+    return text.length;
+  }
+  
+
   let braceLevel = 0;
   let bracketLevel = 0;
 
