@@ -208,11 +208,9 @@ if(WIN32)
 
 else()
 
-   set(YAML_CPP_INCLUDE_DIR
-       /opt/rstudio-tools/yaml-cpp/0.6.3/include)
-   
-   set(YAML_CPP_LIBRARIES
-       /opt/rstudio-tools/yaml-cpp/0.6.3/build/libyaml-cpp.a)
+   set(YAML_CPP_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../dependencies/common")
+   set(YAML_CPP_INCLUDE_DIR "${YAML_CPP_ROOT}/yaml-cpp/0.6.3/include")
+   set(YAML_CPP_LIBRARIES "${YAML_CPP_ROOT}/yaml-cpp/0.6.3/build/libyaml-cpp.a")
 
 endif()
 
