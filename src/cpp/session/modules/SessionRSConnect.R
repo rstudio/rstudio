@@ -435,7 +435,7 @@
 .rs.addFunction("inferReticulatePython", function() {
    # Use existing RETICULATE_PYTHON if set
    env_value <- Sys.getenv("RETICULATE_PYTHON")
-   if (!nzchar(env_value)) {
+   if (nzchar(env_value)) {
       return(env_value)
    }
 

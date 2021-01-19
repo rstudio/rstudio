@@ -49,3 +49,19 @@ test_that("setting UI prefs updates options", {
    .rs.writeUiPref("use_publish_ca_bundle", FALSE)
    expect_null(getOption("rsconnect.ca.bundle"))
 })
+
+test_that("RETICULATE_PYTHON environment variable is respected", {
+   # save old value and set a dummy value
+   oldPython <- Sys.getenv("RETICULATE_PYTHON")
+   Sys.setenv(RETICULATE_PYTHON = "/opt/testthat/python")
+   on.exit({
+      # restore old value
+      Sys.setenv(RETICULATE_PYTHON = oldPython)
+   }, add = TRUE)
+
+   # perform autodiscovery
+   python <- .rs.inferReticulatePython()
+
+   # we expect that since we set a custom value it'll be reflected
+   expect_equal(python, Sys.getenv("RETICULATE_PYTHON"))
+})
