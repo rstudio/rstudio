@@ -13,6 +13,8 @@
  *
  */
 
+#include <yaml-cpp/yaml.h>
+
 #include <session/SessionRUtil.hpp>
 
 #include <shared_core/Error.hpp>
@@ -125,6 +127,21 @@ SEXP rs_fromJSON(SEXP objectSEXP)
    
    r::sexp::Protect protect;
    return r::sexp::create(jsonValue, &protect);
+}
+
+SEXP rs_fromYAML(SEXP objectSEXP)
+{
+   std::string yamlCode = r::sexp::asString(objectSEXP);
+   
+   try
+   {
+      YAML::Node node = YAML::Load(yamlCode);
+      r::sexp::Protect protect;
+      return r::sexp::create(node, &protect);
+   }
+   CATCH_UNEXPECTED_EXCEPTION;
+   
+   return R_NilValue;
 }
 
 SEXP rs_isNullExternalPointer(SEXP objectSEXP)
@@ -300,6 +317,7 @@ SEXP rs_runAsyncRProcess(SEXP codeSEXP,
 Error initialize()
 {
    RS_REGISTER_CALL_METHOD(rs_fromJSON, 1);
+   RS_REGISTER_CALL_METHOD(rs_fromYAML, 1);
    RS_REGISTER_CALL_METHOD(rs_isNullExternalPointer, 1);
    RS_REGISTER_CALL_METHOD(rs_readIniFile, 1);
    RS_REGISTER_CALL_METHOD(rs_rResourcesPath, 0);

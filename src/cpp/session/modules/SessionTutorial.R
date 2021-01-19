@@ -262,8 +262,8 @@
       length.out = yamlSeparators[[2]] - yamlSeparators[[1]] - 1
    )
    
-   yamlCode <- contents[yamlRange]
-   yaml <- yaml::yaml.load(paste(yamlCode, collapse = "\n"))
+   yamlCode <- paste(contents[yamlRange], collapse = "\n")
+   yaml <- .Call("rs_fromYAML", yamlCode, PACKAGE = "(embedding)")
    
    title <- .rs.nullCoalesce(yaml$title, "")
    desc  <- .rs.nullCoalesce(yaml$description, "")

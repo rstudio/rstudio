@@ -12,6 +12,7 @@ rtools*
 winpty*/
 openssl*/
 crashpad*/
+yaml-cpp-*/
 *.zip
 breakpad-tools-windows/
 
