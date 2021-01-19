@@ -145,3 +145,13 @@
    system2(r, args, ...)
    
 })
+
+# NOTE: this uses a bundled YAML library in the IDE as opposed to the R
+# yaml package; primarily to avoid issues that can arise when attempting
+# to load R packages in a session (users will then struggle to update or
+# reinstall such packages)
+.rs.addFunction("fromYAML", function(yamlCode)
+{
+   yamlCode <- paste(yamlCode, collapse = "\n")
+   .Call("rs_fromYAML", yamlCode, PACKAGE = "(embedding)")
+})

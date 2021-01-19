@@ -886,7 +886,7 @@ Error ProjectContext::readBuildOptions(RProjectBuildOptions* pOptions)
 
    pOptions->makefileArgs = optionsFile.get("makefile_args");
    pOptions->previewWebsite = optionsFile.getBool("preview_website", true);
-   pOptions->livePreviewWebsite = optionsFile.getBool("live_preview_website", true);
+   pOptions->livePreviewWebsite = optionsFile.getBool("live_preview_website", false);
    pOptions->websiteOutputFormat = optionsFile.get("website_output_format", "all");
    pOptions->autoRoxygenizeForCheck = optionsFile.getBool(
                                        "auto_roxygenize_for_check",

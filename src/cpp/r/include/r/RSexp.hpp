@@ -22,6 +22,8 @@
 #include <map>
 #include <set>
 
+#include <yaml-cpp/yaml.h>
+
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/any.hpp>
@@ -139,6 +141,7 @@ core::Error extract(SEXP valueSEXP, core::json::Value* pJson);
 // create SEXP from c++ type
 SEXP create(SEXP valueSEXP, Protect* pProtect);
 SEXP create(const core::json::Value& value, Protect* pProtect);
+SEXP create(const YAML::Node& node, Protect* pProtect);
 SEXP create(const char* value, Protect* pProtect);
 SEXP create(const std::string& value, Protect* pProtect);
 SEXP create(int value, Protect* pProtect);

@@ -287,9 +287,18 @@ std::string utf8ToSystem(const std::string& str,
       if (n == -1)
       {
          if (escapeInvalidChars)
-            output << "\\u{" << std::hex << wide[i] << "}";
+         {
+            // NOTE: in R, both '\u{1234}' and '\u1234' are valid
+            // ways of specifying a unicode literal, but only the
+            // latter is accepted by Python, and since the reticulate
+            // REPL uses the same conversion routines we prefer the
+            // format compatible with both parsers
+            output << "\\u" << std::hex << wide[i];
+         }
          else
+         {
             output << "?"; // TODO: Use GetCPInfo()
+         }
       }
       else
       {

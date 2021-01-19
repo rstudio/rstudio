@@ -1,158 +1,51 @@
-[##](##) v1.4 - Release Notes
 
-### Python
+## RStudio 1.4 "Juliet Rose" Release Notes
 
-* The default version of Python used by `reticulate` can now be customized via the Global Options pane.
-* Python indentation rules are now applied to Python code within R Markdown documents. (#5945)
-* Pressing F1 when the Python completion list is shown now opens the relevant Help documentation. (#5982)
-* Python objects are now shown in the Environment Pane when `reticulate` REPL is active. (#6862)
-* Python objects can now be viewed using the Data Viewer and Object Explorer. (#6862)
-* The `matplotlib.pyplot.show()` function now displays PNG plots within the Plots pane. (#4965)
-* Plots generated via `matplotlib` are now shown with a higher DPI in the Plots pane when appropriate.
-* The autocompletion system can now auto-complete virtual environment names in `reticulate::virtualenv()`.
 
-### Plots
+### Misc
 
-* The default renderer used for the RStudio graphics device can now be customized. (#2142)
-* The AGG renderer (as provided by the ragg package) is now a supported backend. (#6539)
-* Version 14 of the R Graphics Engine, which will be introduced in R 4.1, is now supported. (#8383)
-
-### Workbench
-
-* Any tab can be hidden from view through Global Options. (#6428)
-* Accessibility preference to reduce focus rectangle display (#7242)
-* Multiple source panes can be opened in the main window via Global Options. (#2854)
-* Keyboard shortcut `F6` added to navigate focus to the next pane. (#7408)
-* Accessibility preference to show a highlight around focused panel (#7881)
-
-### Configurable Paths
-
-* The user data folder `~/.rstudio` has been moved to `~/.local/share/rstudio`, and its location can now be customized with `XDG_DATA_HOME`. (#1846)
-* `XDG_CONFIG_DIRS` can be used to specify alternate directories for server configuration files. (Pro #1607)
-* It is now possible to specify the exact folder for user data and configuration files using new environment variables `RSTUDIO_DATA_HOME`, `RSTUDIO_CONFIG_DIR`, etc. (#7792)
-
-### Miscellaneous
-
-* The Files pane now sorts file names naturally, so that e.g. `step10.R` comes after `step9.R`. (#5766)
-* Added command to File pane's "More" menu to copy path to clipboard (#6344)
-* Table summaries are shown for `tibble` objects in R Notebooks. (#5970)
-* RStudio now infers document type from shebang (e.g. #!/usr/bin/env sh) for R, Python and shell scripts (#5643)
-* New option to configure soft wrapping for R Markdown files, and command to change the soft wrap mode of the editor on the fly (#2341)
-* New Command Palette for searching and running build-in commands and add-ins (#5168)
-* Colorize parentheses, braces, and brackets in assorted colors (#7027)
-* Option to display Console error and message output in same color as regular output (#7029)
-* Moved console options to a new pane in Global Options (#7047)
-* The Data Viewer now uses the `format()` methods defined for columns entries when available (#7239)
-* Add support for navigating source history with mouse forward/back buttons (#7272)
-* Add ability to go directly to various Global Option panes via Command Palette (#7678)
-* R6Class method definitions are now indexed and accessible by the fuzzy finder (Ctrl + .)
-* The 'Preview' command for R documentation files now passes along RdMacros declared from the package DESCRIPTION file (#6871)
-* Some panes didn't have commands for making them visible, now they do (#5775)
-* Show correct symbol for Return key in Mac menus (#6524)
-* Added command and button for clearing Build pane output (#6636)
-* Added option to disable clickable hyperlinks in the editor (#6689, thanks to Paul Kaefer)
-* Added basic editor support for Dockerfiles (#5141)
-* Markdown-style sub-sections are now rendered as nested sections in the document outline for R documents (#4124)
-* Update to Pandoc 2.11 (#7696)
-* `Ctrl + D` can now be used to send EOF when reading user input via `readLines()` (#3448)
-* External files with spaces in their path or filename are now openable on Big Sur from Files pane (#8506)
-* PDF files opened from Files pane on macOS will open in registered application, not always Preview.app (#8506)
-* RStudio Server is no longer supported on RedHat Enterprise Linux 6 or CentOS 6, as these platforms have reached the vendors' End of Life (EOL) dates (Pro #2203)
+* Added support for the `|>` pipe operator, the `=>` pipe-bind operator, and `\(x)` function shorthand syntax proposed for R 4.1.0 (#8543)
+* Added preference toggle for inserting the |> pipe operator when the Insert Pipe Operator command is used (#8534)
+* Improve detection for crashes that occur early in session initialization (#7983)
+* The mouse back / forward buttons can now be used to navigate within the Help pane (#8338)
+* Right-click on document tab provides menu with close, close all, close others (#1664)
+* Rename File added to document tab context menu (#8374)
+* Copy Path command added to document tab context menu (#7289)
+* Compilation of Sweave documents now uses tinytex when requested (#2788)
+* Preliminary compatibility with UCRT builds of R-devel (#8461)
+* Update Windows Desktop to openSSL 1.1.1i (#8574)
+* Improve ordering of items in Command Palette list and search results (#7567, #7956)
+* Update embedded Pandoc to v2.11.3.2
+* Change default per-user install folder to %LocalAppData%\Programs on Windows (#8598)
+* Cmd+U now toggles underlining in the visual editor on macOS (#8656)
+* Improve YAML cursor position after omni-insert in the visual editor (#8670)
+* Detect newer plumber tags when enabling plumber integration (#8118)
 
 ### RStudio Server
 
-* The font used in the editor and console can now be customized on RStudio Server. (#2534)
-* The new option `www-same-site` provides support for the `SameSite` attribute on cookies issued by RStudio. (#6608)
-* New `X-RStudio-Request` header for specifying originating URL behind path-rewriting proxies (Pro #1579)
-* New `X-RStudio-Root-Path` header or the new `www-root-path` for specifying the exact path prefixes added by a path-rewriting proxy (Pro #1410).
-* The option `www-url-path-prefix` was deprecated and removed. Use `www-root-path` instead.
-* Improved error logging of mistyped usernames when using PAM authentication (#7501)
-
-### RStudio Server Pro
-
-> **Note:** RStudio Server Pro now requires a Postgres database when using its internal load balancer; this database must be set up *prior* to upgrade from earlier releases. If you have a multi-node RStudio Server Pro installation, consult the Administration Guide for instructions before upgrading.
-
-> **Note:** RStudio Server Pro uses a new location for user state; `.rstudio` is now `.local/share/rstudio`. This is a breaking change if you have [symlinked .rstudio](https://support.rstudio.com/hc/en-us/articles/218417097-Filling-up-the-home-directory-with-RStudio-Server) and can make downgrade more complicated. See the Administration Guide for more information, including instructions for using the old location if desired for compatibility with previous releases.
-
-* SAML is now supported as an authentication mechanism (Pro #1194)
-* OpenID Connect is now support as an authentication mechanism (Pro #1747)
-* Visual Studio Code is now an available editor when using Launcher sessions (Pro #1423)
-* New `auth-proxy-sign-out-url` option specified an endpoint to take the user to when "Sign Out" is clicked in the IDE user interface (Pro #1745)
-* New user profile option `session-limit` allow limiting the maximum number of sessions a user can have (Pro #540)
-* Project sharing is automatically disabled and a warning is issued when `server-multiple-sessions=0`. (Pro #1263)
-* New `load-balancer` option `timeout` limits how long to wait for a response from a node, defaults to 10 seconds. (Pro #1642)
-* New `load-balancer` option `verify-ssl-certs` for testing nodes with self-signed certificates when using SSL. (Pro #1504)
-* New `launcher-verify-ssl-certs` and `launcher-sessions-callback-verify-ssl-certs` options for testing with self-signed certificates when using SSL. (Pro #1504)
-* R sessions can now be renamed from within the session or the home page. (Pro #1572)
-* Project Sharing now works on Launcher sessions.
-* Remote session connections over HTTPS can now load certificates from the Apple Keychain. (Pro #1828)
-* Improved session load balancing when using the Local Job Launcher plugin to evenly spread session load between Local plugin nodes. (Pro #1814)
-* Update embedded nginx to v1.19.2 (Pro #1719)
-* Changed the command to retrieve Slurm resource utilization to be run as the current user rather than the `slurm-service-user` (Pro #1527)
-* Reduced supurflous log messages in the Slurm Launcher Plugin log file about non-RStudio jobs in Slurm (Pro #1528)
-* Allow administrators to disable the ability to set resource reqeusts on jobs launched through the Slurm Launcher Plugin (Pro #1948)
-* Add support for setting GPU and GRES requests on jobs launched through the Slurm Launcher Plugin (Pro #1390)
-* Allow administrators to enable Slurm job requeueing for jobs launched through the Slurm Launcher Plugin (Pro #2025)
-* Update the version of Slurm supported by the Slurm Launcher Plugin to 20.02 (Pro #2192) 
-* Project Sharing can now use raw UIDs as security principals, for compatibility with nodes that cannot resolve domains (Pro #2104)
-* **RETIRED:** The option `auth-proxy-require-hmac` is has been retired and it is no longer operational. RStudio will not start if enabled. See the documentation on [Proxy Security Considerations] for alternatives to secure RStudio. (Pro #2029)
-* Fix GetPass not working in remote sessions from Rstudio Desktop Pro (Pro #2218)
-* Fix issue with creating RSA key from remote sessions in RStudio Desktop Pro (Pro #2219)
-* Ensure error messages occurring during installation are displayed in the terminal (Pro #2214)
+* **BREAKING:** RStudio when served via `http` erroneously reported its own address as `https` during redirects if the header `X-Forwarded-Proto` was defined by a proxy. That could lead to a confusing proxy setup. That has been fixed, but existing proxy installations with redirect rewite settings matching for `https` may have to be adjusted.
 
 ### Bugfixes
 
-* Fixed issue where debugger contexts were not displayed correctly for byte-compiled functions. (#6922)
-* UTF-8 character vectors are now properly displayed within the Environment pane. (#6877)
-* Fixed issue where diagnostics system surface "Unknown or uninitialized column" warnings in some cases. (#7372)
-* Fixed issue where hovering mouse cursor over C++ completion popup would steal focus. (#5941)
-* Fixed issue where autocompletion could fail for functions masked by objects in global environments. (#6942)
-* Fixed issue where autocompletion could fail to provide argument names for piped-to S3 generics. (#7060)
-* Fixed issue where UTF-8 output from Python chunks was mis-encoded on Windows. (#6254)
-* Git integration now works properly for project names containing the '!' character. (#6160)
-* Fixed issue where loading the Rfast package could lead to session hangs. (#6645)
-* Fixed header resizing in Data Viewer (#1665)
-* Fixed resizing last column in Data Viewer (#2642)
-* Fixed inconsistencies in the resizing between a column and its header (#4361)
-* Fixed submission of inconsistently indented Python blocks to `reticulate` (#5094)
-* Fixed error when redirecting inside Plumber applications in RStudio Server Pro (Pro #1570)
-* Fixed failure to open files after an attempt to open a very large file (#6637)
-* Fixed Data Viewer getting out of sync with the underlying data when changing live viewer object (#1819)
-* Fixed issue where attempts to plot could fail if R tempdir was deleted (#2214)
-* Fixed issue that caused sessions to freeze due to slow I/O for monitor logs (Pro #1259)
-* Added CSRF protection to sign-in pages (Pro #1469)
-* Fixed issue that allowed multiple concurrent sign-in requests (#6502)
-* Fixed issue where the admin logs page could sometimes crash due to a malformed log statement (Pro #1768)
-* Fixed issue where the URL popped out by the Viewer pane was incorrect after navigation (#6967)
-* Fixed issue where clicking the filter UI box would sort a data viewer column (#7299)
-* Fixed issue where Windows shortcuts were not resolved correctly in file dialogs. (#7327)
-* Fixed issue where failure to rotate a log file could cause a process crash (Pro #1779)
-* Fixed issue where saving workspace could emit 'package may not be available when loading' warning (#7001)
-* Fixed issue where indented Python chunks could not be run (#3731)
-* Fixed disappearing commands and recent files/projects when RStudio Desktop opens new windows (#3968)
-* Fixed issue where active repositories were not propagated to newly-created `renv` projects (#7136)
-* Fixed issue where .DollarNames methods defined in global environment were not resolved (#7487)
-* Reduced difference in font size and spacing between Terminal and Console (#6382)
-* Fixed issue where path autocompletion in R Markdown documents did not respect Knit Directory preference (#5412)
-* Fixed issue where Job Launcher streams could remain open longer than expected when viewing the job details page (Pro #1855)
-* Fixed issue where `rstudioapi::askForPassword()` did not mask user input in some cases
-* Fixed issue where Job Launcher admin users would have `gid=0` in Slurm Launcher Sessions (Pro #1935)
-* Fixed issue where Slurm Job Launcher jobs would not post updated resource utilization without browser refresh (Pro #2177)
-* Fixed issue causing script errors when reloading Shiny applications from the editor toolbar (#7762)
-* Fixed issue where saving a file or project located in a backed up directory (such as with Dropbox or Google Drive) would frequently fail and display an error prompt (#7131)
-* Fixed issue causing C++ diagnostics to fail when Xcode developer tools were active (#7824)
-* Added option for clickable links in Terminal pane (#6621)
-* Fixed issue where R scripts containing non-ASCII characters in their path could not be sourced as a local job on Windows (#6701)
-* Fixed issue where non-ASCII characters in Subversion commit comments were incorrect encoded on Windows (#7959)
-* Prevent Discard button from being hidden in Subversion diff viewer (#6031)
-* Fixed issue where French (AZERTY) keyboards inserted '/' rather than ':' in some cases (#7932)
-* `readline()` and `readLines()` can now be interrupted, even when reading from `stdin()` (#3448)
-* Fixed issue causing Knit button to show old formats after editing the YAML header (#7833)
-* Fixed issue wherein the Python prompt would continue to be shown after an R restart (#8011)
-* Fixed issue where searches in the console history could inappropriately preserve search position (#7682)
-* Fixed issue where `auth-pam-session-use-password` would not work when multiple Server nodes are used behind an external load balancer (Pro #2158)
-* Fixed issue where project sharing configured it `server-project-sharing-root-dir` would fail to share when the path contain mixed ACL support (Pro #2061)
-* Fixed issue where project sharing would fail to share when the path contain mixed NFS ACL support (Pro #2103)
-* Fixed issue where in sharing a project on some NFSv4 filesystems could result in damage to owner permissions (Pro #2188)
-* Fixed issue where file permissions were not corrected after uploading a file to a shared project (Pro #2208)
-* Fixed issue where the project sharing would not work behind a HTTPS proxy (Pro #2088)
+* Fix Windows Desktop installer to support running from path with characters from other codepages (#8421)
+* Fixed issue where rendering .tex document with tinytex would fail on Windows (#8725)
+* Fixed issue where reinstalling an already-loaded package could cause errors (#8265)
+* Fixed issue where right-assignment with multi-line strings gave false-positive diagnostic errors (#8307)
+* Fixed issue where restoring R workspace could fail when project path contained non-ASCII characters (#8321)
+* Fixed issue where forked R sessions could hang after a package was loaded or unloaded (#8361)
+* Fixed issue where attempting to profile lines ending in comment would fail (#8407)
+* Fixed issue where warnings + messages were mis-encoded in chunk outputs on Windows (#8565)
+* Fixed issue where C++ compilation database was not invalidated when compiler was updated (#8588)
+* Fixed issue where restarting session with reticulate Python objects could cause errors in console (#8185)
+* Improved checks for non-writable R library paths on startup (Pro #2184)
+* Code chunks in the visual editor now respect the "Tab Key Always Moves Focus" accessibility setting (#8584)
+* The commands "Execute Previous Chunks" and "Execute Subsequent Chunks" now work when the cursor is outside a code chunk in the visual editor (#8500)
+* Fix various issues when the "Limit Console Output" performance setting was enabled, and enable it by default (#8544, #8504, #8529, #8552)
+* Fix display of condition messages (errors and warnings) in some character encodings (#8546)
+* Fix issues finding words with punctuation in visual mode (#8655)
+* Fix spurious image insertion when pasting into visual mode from Excel (#8665)
+* Fix out-of-date tooltip when renaming files (#8490, #8491)
+* Fix incorrect keyboard shortcuts shown in some places in the Command Palette (#8735)
+
+
+
