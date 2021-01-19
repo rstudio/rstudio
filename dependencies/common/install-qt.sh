@@ -244,18 +244,21 @@ function compute_url(){
     else
         REMOTE_BASES=(
             # New repository format (>=6.0.0)
-            "qt6_${VERSION//./}/qt.qt6.${VERSION//./}.${TOOLCHAIN}"
-            "qt6_${VERSION//./}_${ANDROID_ARCH}/qt.qt6.${VERSION//./}.${TOOLCHAIN}"
-            "qt6_${VERSION//./}_${ANDROID_ARCH}/qt.qt6.${VERSION//./}.${COMPONENT}.${TOOLCHAIN}"
+            # RSTUDIO: skip Qt 6
+            #"qt6_${VERSION//./}/qt.qt6.${VERSION//./}.${TOOLCHAIN}"
+            #"qt6_${VERSION//./}_${ANDROID_ARCH}/qt.qt6.${VERSION//./}.${TOOLCHAIN}"
+            #"qt6_${VERSION//./}_${ANDROID_ARCH}/qt.qt6.${VERSION//./}.${COMPONENT}.${TOOLCHAIN}"
             # New repository format (>=5.9.6)
             "qt5_${VERSION//./}/qt.qt5.${VERSION//./}.${TOOLCHAIN}"
             "qt5_${VERSION//./}/qt.qt5.${VERSION//./}.${COMPONENT}.${TOOLCHAIN}"
             # Multi-abi Android since 5.14
-            "qt5_${VERSION//./}/qt.qt5.${VERSION//./}.${TARGET_PLATFORM}"
-            "qt5_${VERSION//./}/qt.qt5.${VERSION//./}.${COMPONENT}.${TARGET_PLATFORM}"
+            # RSTUDIO: skip Android
+            #"qt5_${VERSION//./}/qt.qt5.${VERSION//./}.${TARGET_PLATFORM}"
+            #"qt5_${VERSION//./}/qt.qt5.${VERSION//./}.${COMPONENT}.${TARGET_PLATFORM}"
             # Older repository format (<5.9.0)
-            "qt5_${VERSION//./}/qt.${VERSION//./}.${TOOLCHAIN}"
-            "qt5_${VERSION//./}/qt.${VERSION//./}.${COMPONENT}.${TOOLCHAIN}"
+            # RSTUDIO: skip older Qt
+            #"qt5_${VERSION//./}/qt.${VERSION//./}.${TOOLCHAIN}"
+            #"qt5_${VERSION//./}/qt.${VERSION//./}.${COMPONENT}.${TOOLCHAIN}"
         )
 
         for REMOTE_BASE in ${REMOTE_BASES[*]}; do
