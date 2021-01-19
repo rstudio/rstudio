@@ -24,6 +24,7 @@
 
 #include <r/RExec.hpp>
 #include <r/RJson.hpp>
+#include <r/RRoutines.hpp>
 #include <r/RSexp.hpp>
 
 #include <session/projects/SessionProjects.hpp>
@@ -387,14 +388,13 @@ void onResume(const Settings& settings)
    if (error)
       LOG_ERROR(error);
 }
-   
 
 } // end anonymous namespace
 
 Error initialize()
 {
    using namespace module_context;
-
+   
    ppe::indexer().addWorker(tutorialWorker());
  
    events().onDeferredInit.connect(onDeferredInit);

@@ -1,5 +1,5 @@
 /*
- * SessionPackages.hpp
+ * KeyCommandBinding.java
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -12,27 +12,29 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+package org.rstudio.core.client.command;
 
-#ifndef SESSION_PACKAGES_HPP
-#define SESSION_PACKAGES_HPP
+/**
+ * Represents a key sequence associated with a command binding
+ */
+public class KeyCommandBinding
+{
+   public KeyCommandBinding(KeyMap.CommandBinding binding, KeySequence keys)
+   {
+      binding_ = binding;
+      keys_ = keys;
+   }
 
-namespace rstudio {
-namespace core {
-   class Error;
+   public KeyMap.CommandBinding getBinding()
+   {
+      return binding_;
+   }
+
+   public KeySequence getKeys()
+   {
+      return keys_;
+   }
+
+   private final KeyMap.CommandBinding binding_;
+   private final KeySequence keys_;
 }
-}
-
-namespace rstudio {
-namespace session {
-namespace modules { 
-namespace packages {
-
-core::Error initialize();
-void enquePackageStateChanged();
-
-} // namespace packages
-} // namespace modules
-} // namespace session
-} // namespace rstudio
-
-#endif // SESSION_PACKAGES_HPP

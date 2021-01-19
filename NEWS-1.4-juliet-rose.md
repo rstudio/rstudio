@@ -4,7 +4,7 @@
 
 ### Misc
 
-* Added support for the `|>` pipe operator, and `\(x)` function shorthand syntax in R 4.1 (#8543)
+* Added support for the `|>` pipe operator, the `=>` pipe-bind operator, and `\(x)` function shorthand syntax proposed for R 4.1.0 (#8543)
 * Added preference toggle for inserting the |> pipe operator when the Insert Pipe Operator command is used (#8534)
 * Improve detection for crashes that occur early in session initialization (#7983)
 * The mouse back / forward buttons can now be used to navigate within the Help pane (#8338)
@@ -28,6 +28,7 @@
 ### Bugfixes
 
 * Fix Windows Desktop installer to support running from path with characters from other codepages (#8421)
+* Fixed issue where rendering .tex document with tinytex would fail on Windows (#8725)
 * Fixed issue where reinstalling an already-loaded package could cause errors (#8265)
 * Fixed issue where right-assignment with multi-line strings gave false-positive diagnostic errors (#8307)
 * Fixed issue where restoring R workspace could fail when project path contained non-ASCII characters (#8321)
@@ -44,6 +45,7 @@
 * Fix issues finding words with punctuation in visual mode (#8655)
 * Fix spurious image insertion when pasting into visual mode from Excel (#8665)
 * Fix out-of-date tooltip when renaming files (#8490, #8491)
+* Fix incorrect keyboard shortcuts shown in some places in the Command Palette (#8735)
 
 
 

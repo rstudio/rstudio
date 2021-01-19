@@ -535,6 +535,16 @@
 
 .rs.addFunction("tinytexRoot", function()
 {
+   # check for tlmgr path set via option; the tinytex root directory is
+   # always 2 directories up from that
+   tlmgr <- getOption("tinytex.tlmgr.path", default = NULL)
+   if (!is.null(tlmgr))
+   {
+      root <- dirname(dirname(dirname(tlmgr)))
+      return(root)
+   }
+   
+   # otherwise, use default locations for different platforms
    sysname <- Sys.info()[["sysname"]]
    if (sysname == "Windows")
       file.path(Sys.getenv("APPDATA"), "TinyTeX")
@@ -546,11 +556,7 @@
 
 .rs.addFunction("tinytexBin", function()
 {
-   root <- tryCatch(
-      tinytex:::tinytex_root(),
-      error = function(e) .rs.tinytexRoot()
-   )
-   
+   root <- .rs.tinytexRoot()
    if (!file.exists(root))
       return(NULL)
    

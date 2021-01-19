@@ -346,6 +346,7 @@ target_link_libraries(rstudio-core
    ${CRASHPAD_LIBRARIES}
    ${SOCI_LIBRARIES}
    ${CORE_SYSTEM_LIBRARIES}
+   ${YAML_CPP_LIBRARIES}
 )
 
 # define executable (for running unit tests)

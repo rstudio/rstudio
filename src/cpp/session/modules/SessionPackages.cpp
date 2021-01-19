@@ -20,7 +20,6 @@
 
 #include "SessionPackages.hpp"
 
-#include <boost/regex.hpp>
 #include <boost/format.hpp>
 #include <boost/bind/bind.hpp>
 
@@ -64,9 +63,7 @@ public:
 
 private:
 
-   AvailablePackagesCache()
-   {
-   }
+   AvailablePackagesCache() = default;
 
 public:
 
@@ -182,12 +179,13 @@ Error availablePackages(const core::json::JsonRpcRequest&,
 
    // order and remove duplicates
    std::stable_sort(availablePackages.begin(), availablePackages.end());
-   std::unique(availablePackages.begin(), availablePackages.end());
+   availablePackages.erase(std::unique(availablePackages.begin(), availablePackages.end()),
+                           availablePackages.end());
 
    // return as json
    json::Array jsonResults;
-   for (size_t i = 0; i < availablePackages.size(); i++)
-      jsonResults.push_back(json::Value(availablePackages.at(i)));
+   for (std::string& availablePackage : availablePackages)
+      jsonResults.push_back(json::Value(availablePackage));
    pResponse->setResult(jsonResults);
    return Success();
 }
@@ -319,7 +317,7 @@ void onDetectChanges(module_context::ChangeSource source)
       detectLibPathsChanges();
 }
 
-void onDeferredInit(bool newSession)
+void onDeferredInit(bool /* newSession */)
 {
    // Ensure we have a writeable user library
    Error error = r::exec::RFunction(".rs.ensureWriteableUserLibrary").call();

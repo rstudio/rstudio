@@ -188,6 +188,36 @@ if(RSTUDIO_PACKAGE_BUILD)
    add_definitions(-DRSTUDIO_PACKAGE_BUILD)
 endif()
 
+# yaml-cpp
+if(WIN32)
+
+   if(RSTUDIO_SESSION_WIN32)
+      set(YAML_CPP_ARCH "x86")
+   else()
+      set(YAML_CPP_ARCH "x64")
+   endif()
+
+   set(YAML_CPP_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/yaml-cpp-0.6.3")
+   set(YAML_CPP_INCLUDE_DIR "${YAML_CPP_ROOT}/include")
+
+   if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+      set(YAML_CPP_LIBRARIES "${YAML_CPP_ROOT}/lib/${YAML_CPP_ARCH}/libyaml-cppmdd.lib")
+  else()
+      set(YAML_CPP_LIBRARIES "${YAML_CPP_ROOT}/lib/${YAML_CPP_ARCH}/libyaml-cppmd.lib")
+  endif()
+
+else()
+
+   set(YAML_CPP_INCLUDE_DIR
+       /opt/rstudio-tools/yaml-cpp/0.6.3/include)
+   
+   set(YAML_CPP_LIBRARIES
+       /opt/rstudio-tools/yaml-cpp/0.6.3/build/libyaml-cpp.a)
+
+endif()
+
+include_directories(SYSTEM "${YAML_CPP_INCLUDE_DIR}")
+
 # determine whether we should statically link boost. we always do this
 # unless we are building a non-packaged build on linux (in which case
 # boost dynamic libraries are presumed to be installed on the system ldpath)

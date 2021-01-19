@@ -34,7 +34,13 @@ public class ShortcutInfo
                      true;
       order_ = shortcut.getOrder();
       disableModes_ = shortcut.getDisableModes();
+      command_ = command;
       addShortcut(shortcut);
+   }
+
+   public AppCommand getCommand()
+   {
+      return command_;
    }
 
    public String getDescription()
@@ -44,13 +50,23 @@ public class ShortcutInfo
 
    public List<String> getShortcuts()
    {
+      List<String> shortcuts = new ArrayList<>();
+      for (KeyboardShortcut shortcut: shortcuts_)
+      {
+         shortcuts.add(shortcut.toString(true));
+      }
+      return shortcuts;
+   }
+
+   public List<KeyboardShortcut> getKeyboardShortcuts()
+   {
       return shortcuts_;
    }
 
    public void addShortcut(KeyboardShortcut shortcut)
    {
       shortcuts_.clear();
-      shortcuts_.add(shortcut.toString(true));
+      shortcuts_.add(shortcut);
    }
 
    public String getGroupName()
@@ -73,10 +89,11 @@ public class ShortcutInfo
       return disableModes_;
    }
 
-   private List<String> shortcuts_;
+   private List<KeyboardShortcut> shortcuts_;
    private String description_;
    private String groupName_;
    private boolean isActive_;
    private int order_;
    private int disableModes_;
+   private final AppCommand command_;
 }
