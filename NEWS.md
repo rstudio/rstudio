@@ -46,6 +46,6 @@
 * Fix spurious image insertion when pasting into visual mode from Excel (#8665)
 * Fix out-of-date tooltip when renaming files (#8490, #8491)
 * Fix incorrect keyboard shortcuts shown in some places in the Command Palette (#8735)
-
+* Fixed an issue where Load Balanced Local Launcher instances could get into a state where they would no longer receive job updates from other nodes due to silent network drops (Pro #2281)
 
 
