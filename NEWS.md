@@ -25,6 +25,10 @@
 
 * **BREAKING:** RStudio when served via `http` erroneously reported its own address as `https` during redirects if the header `X-Forwarded-Proto` was defined by a proxy. That could lead to a confusing proxy setup. That has been fixed, but existing proxy installations with redirect rewite settings matching for `https` may have to be adjusted.
 
+### RStudio Workbench
+
+RStudio Server Pro has been renamed to RStudio Workbench to more accurately reflect its cross-language editing capabilities.
+
 ### Bugfixes
 
 * Fix Windows Desktop installer to support running from path with characters from other codepages (#8421)
