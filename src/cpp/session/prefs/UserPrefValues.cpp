@@ -1870,7 +1870,7 @@ core::Error UserPrefValues::setJobsTabVisibility(std::string val)
 }
 
 /**
- * Whether to show the Launcher jobs tab in RStudio Pro.
+ * Whether to show the Launcher jobs tab in RStudio Pro and RStudio Workbench.
  */
 bool UserPrefValues::showLauncherJobsTab()
 {
@@ -1883,7 +1883,7 @@ core::Error UserPrefValues::setShowLauncherJobsTab(bool val)
 }
 
 /**
- * How to sort jobs in the Launcher tab in RStudio Pro.
+ * How to sort jobs in the Launcher tab in RStudio Pro and RStudio Workbench.
  */
 std::string UserPrefValues::launcherJobsSort()
 {
@@ -2039,7 +2039,7 @@ core::Error UserPrefValues::setRootDocument(std::string val)
 }
 
 /**
- * When to show the server home page in RStudio Server Pro.
+ * When to show the server home page in RStudio Workbench.
  */
 std::string UserPrefValues::showUserHomePage()
 {
@@ -2052,7 +2052,7 @@ core::Error UserPrefValues::setShowUserHomePage(std::string val)
 }
 
 /**
- * Whether to reuse sessions when opening projects in RStudio Server Pro.
+ * Whether to reuse sessions when opening projects in RStudio Workbench.
  */
 bool UserPrefValues::reuseSessionsForProjectLinks()
 {
@@ -2286,7 +2286,7 @@ core::Error UserPrefValues::setLatexShellEscape(bool val)
 }
 
 /**
- * Whether to restore the last version of R used by the project in RStudio Pro.
+ * Whether to restore the last version of R used by the project in RStudio Pro and RStudio Workbench.
  */
 bool UserPrefValues::restoreProjectRVersion()
 {

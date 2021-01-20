@@ -176,7 +176,7 @@ protected:
    pAuth->add_options()
       ("auth-none",
       value<bool>(&authNone_)->default_value(!core::system::effectiveUserIsRoot()),
-      "If set, disables multi-user authentication. Pro features may not work in this mode.")
+      "If set, disables multi-user authentication. Workbench/Pro features may not work in this mode.")
       ("auth-validate-users",
       value<bool>(&authValidateUsers_)->default_value(core::system::effectiveUserIsRoot()),
       "Indicates whether or not to validate that authenticated users exist on the target system. Disabling this option may cause issues to start or to run a session.")

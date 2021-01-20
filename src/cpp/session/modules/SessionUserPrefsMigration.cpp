@@ -222,7 +222,7 @@ core::Error migratePrefs(const FilePath& src)
    destPrefs[kAlwaysSaveHistory] = settings.getBool("alwaysSaveHistory", true);
    destPrefs[kRemoveHistoryDuplicates] = settings.getBool("removeHistoryDuplicates", false);
 
-   // Migrate RStudio Server Pro options
+   // Migrate RStudio Workbench options
    destPrefs[kShowUserHomePage] = settings.get("showUserHomePage", kShowUserHomePageSessions);
    destPrefs[kReuseSessionsForProjectLinks] = 
       settings.getBool("reuseSessionsForProjectLinks", true);
