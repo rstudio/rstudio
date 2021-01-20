@@ -2016,26 +2016,26 @@ public class UserPrefsAccessor extends Prefs
    public final static String JOBS_TAB_VISIBILITY_DEFAULT = "default";
 
    /**
-    * Whether to show the Launcher jobs tab in RStudio Pro.
+    * Whether to show the Launcher jobs tab in RStudio Pro and RStudio Workbench.
     */
    public PrefValue<Boolean> showLauncherJobsTab()
    {
       return bool(
          "show_launcher_jobs_tab",
          "", 
-         "Whether to show the Launcher jobs tab in RStudio Pro.", 
+         "Whether to show the Launcher jobs tab in RStudio Pro and RStudio Workbench.",
          true);
    }
 
    /**
-    * How to sort jobs in the Launcher tab in RStudio Pro.
+    * How to sort jobs in the Launcher tab in RStudio Pro and RStudio Workbench.
     */
    public PrefValue<String> launcherJobsSort()
    {
       return enumeration(
          "launcher_jobs_sort",
          "", 
-         "How to sort jobs in the Launcher tab in RStudio Pro.", 
+         "How to sort jobs in the Launcher tab in RStudio Pro and RStudio Workbench.",
          new String[] {
             LAUNCHER_JOBS_SORT_RECORDED,
             LAUNCHER_JOBS_SORT_STATE
@@ -2224,14 +2224,14 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * When to show the server home page in RStudio Server Pro.
+    * When to show the server home page in RStudio Workbench.
     */
    public PrefValue<String> showUserHomePage()
    {
       return enumeration(
          "show_user_home_page",
-         "Show user home page in RStudio Pro", 
-         "When to show the server home page in RStudio Server Pro.", 
+         "Show user home page in RStudio Workbench",
+         "When to show the server home page in RStudio Workbench.",
          new String[] {
             SHOW_USER_HOME_PAGE_ALWAYS,
             SHOW_USER_HOME_PAGE_NEVER,
@@ -2245,14 +2245,14 @@ public class UserPrefsAccessor extends Prefs
    public final static String SHOW_USER_HOME_PAGE_SESSIONS = "sessions";
 
    /**
-    * Whether to reuse sessions when opening projects in RStudio Server Pro.
+    * Whether to reuse sessions when opening projects in RStudio Workbench.
     */
    public PrefValue<Boolean> reuseSessionsForProjectLinks()
    {
       return bool(
          "reuse_sessions_for_project_links",
          "", 
-         "Whether to reuse sessions when opening projects in RStudio Server Pro.", 
+         "Whether to reuse sessions when opening projects in RStudio Workbench.",
          false);
    }
 
@@ -2461,14 +2461,14 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether to restore the last version of R used by the project in RStudio Pro.
+    * Whether to restore the last version of R used by the project in RStudio Pro and RStudio Workbench.
     */
    public PrefValue<Boolean> restoreProjectRVersion()
    {
       return bool(
          "restore_project_r_version",
-         "Restore project R version in RStudio Pro", 
-         "Whether to restore the last version of R used by the project in RStudio Pro.", 
+         "Restore project R version in RStudio Pro and RStudio Workbench",
+         "Whether to restore the last version of R used by the project in RStudio Pro and RStudio Workbench.",
          true);
    }
 

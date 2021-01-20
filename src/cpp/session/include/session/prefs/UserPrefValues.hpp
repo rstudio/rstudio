@@ -1241,13 +1241,13 @@ public:
    core::Error setJobsTabVisibility(std::string val);
 
    /**
-    * Whether to show the Launcher jobs tab in RStudio Pro.
+    * Whether to show the Launcher jobs tab in RStudio Pro and RStudio Workbench.
     */
    bool showLauncherJobsTab();
    core::Error setShowLauncherJobsTab(bool val);
 
    /**
-    * How to sort jobs in the Launcher tab in RStudio Pro.
+    * How to sort jobs in the Launcher tab in RStudio Pro and RStudio Workbench.
     */
    std::string launcherJobsSort();
    core::Error setLauncherJobsSort(std::string val);
@@ -1319,13 +1319,13 @@ public:
    core::Error setRootDocument(std::string val);
 
    /**
-    * When to show the server home page in RStudio Server Pro.
+    * When to show the server home page in RStudio Workbench.
     */
    std::string showUserHomePage();
    core::Error setShowUserHomePage(std::string val);
 
    /**
-    * Whether to reuse sessions when opening projects in RStudio Server Pro.
+    * Whether to reuse sessions when opening projects in RStudio Workbench.
     */
    bool reuseSessionsForProjectLinks();
    core::Error setReuseSessionsForProjectLinks(bool val);
@@ -1433,7 +1433,7 @@ public:
    core::Error setLatexShellEscape(bool val);
 
    /**
-    * Whether to restore the last version of R used by the project in RStudio Pro.
+    * Whether to restore the last version of R used by the project in RStudio Pro and RStudio Workbench.
     */
    bool restoreProjectRVersion();
    core::Error setRestoreProjectRVersion(bool val);

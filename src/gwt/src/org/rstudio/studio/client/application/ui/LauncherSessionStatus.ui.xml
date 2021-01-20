@@ -33,7 +33,7 @@
       <g:Label ui:field="message_" styleName="{style.waiting}" text="Waiting for session to start..."></g:Label>
       <g:HTML>
          You may continue waiting here or monitor from
-         <a title="Return to RStudio Server Pro Home" 
+         <a title="Return to RStudio Workbench Home"
             href="../../home">RStudio Server Home</a>.
       </g:HTML>
       <g:Label styleName="{style.status}" ui:field="status_" visible="false"></g:Label>

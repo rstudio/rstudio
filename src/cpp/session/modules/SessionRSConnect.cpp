@@ -100,6 +100,9 @@ public:
    {
       boost::shared_ptr<RSConnectPublish> pDeploy(new RSConnectPublish(file));
 
+      // environment variables to be passed to the publish process
+      core::system::Options env;
+
       // lead command with download options and certificate check state
       std::string cmd("{ " + module_context::CRANDownloadOptions() + "; " 
                       "options(rsconnect.check.certificate = " +
@@ -120,6 +123,36 @@ public:
          }
       }
 
+      // when not deploying static content, figure out what version of Python
+      // the content needs
+      if (!asStatic)
+      {
+         std::string reticulatePython;
+         Error error = r::exec::RFunction(".rs.inferReticulatePython").call(&reticulatePython);
+         if (error) {
+            LOG_ERROR(error);
+         }
+
+         if (!reticulatePython.empty())
+         {
+            // we found a Python version; forward it
+            core::system::setenv(&env, "RETICULATE_PYTHON", reticulatePython);
+
+            // if showing publishing diagnostics, emit the version of Python
+            // we're forwarding (for troubleshooting purposes)
+            if (prefs::userPrefs().showPublishDiagnostics())
+            {
+               cmd += "cat('Set RETICULATE_PYTHON = \"" +
+                  string_utils::singleQuotedStrEscape(reticulatePython) + "\"\n'); ";
+            }
+         }
+         else if (prefs::userPrefs().showPublishDiagnostics())
+         {
+            // if we didn't find Python, note as such
+            cmd += "cat('RETICULATE_PYTHON unset (no Python installation found)\n'); ";
+         }
+      }
+   
       // create temporary file to host file manifest
       if (!fileList.isEmpty())
       {
@@ -206,7 +239,7 @@ public:
              (prefs::userPrefs().showPublishDiagnostics() ? ", logLevel = 'verbose'" : "") + 
              ")}";
 
-      pDeploy->start(cmd.c_str(), FilePath(), async_r::R_PROCESS_VANILLA);
+      pDeploy->start(cmd.c_str(), env, FilePath(), async_r::R_PROCESS_VANILLA);
       *pDeployOut = pDeploy;
       return Success();
    }

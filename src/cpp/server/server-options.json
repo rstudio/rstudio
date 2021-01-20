@@ -295,7 +295,7 @@
             "memberName": "authNone_",
             "type": "bool",
             "defaultValue": {"code": "!core::system::effectiveUserIsRoot()", "description": "1 (true) if rserver was run without root privilege, otherwise 0 (false)."},
-            "description": "If set, disables multi-user authentication. Pro features may not work in this mode."
+            "description": "If set, disables multi-user authentication. Workbench/Pro features may not work in this mode."
          },
          {
             "name": "auth-validate-users",

@@ -638,7 +638,7 @@ Error completeUpload(const core::json::JsonRpcRequest& request,
             return copyError;
 
          // update permissions (handles case where an uploaded file does not inherit shared project
-         // permissions correctly in Server Pro)
+         // permissions correctly in RStudio Workbench)
          module_context::events().onPermissionsChanged(targetPath);
       }
       

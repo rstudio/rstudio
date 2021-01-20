@@ -431,6 +431,49 @@
     dir_size = .rs.scalar(dirlist$totalSize))
 })
 
+# Attempts to infer the current Python interpreter used by reticulate
+.rs.addFunction("inferReticulatePython", function() {
+   # Use existing RETICULATE_PYTHON if set
+   env_value <- Sys.getenv("RETICULATE_PYTHON")
+   if (nzchar(env_value)) {
+      return(env_value)
+   }
+
+   # If the reticulate package is installed, we can ask it what it's using
+   if (.rs.isPackageInstalled("reticulate")) {
+      if (reticulate::py_available(initialize = FALSE)) {
+         # Python is available/initialized; use it
+         py_config <- reticulate::py_config()
+         if (!is.null(py_config) && !is.null(py_config$python)) {
+            return(py_config$python)
+         }
+      } 
+
+      # Couldn't find initialized Python; attempt to discover it
+
+      # First, turn off Miniconda support in reticulate so that it doesn't 
+      # prompt the user to install it during Python version discovery
+      prev_miniconda <- Sys.getenv("RETICULATE_MINICONDA_ENABLED")
+      Sys.setenv(RETICULATE_MINICONDA_ENABLED = "FALSE")
+
+      # Then perform a Python version scan/discovery
+      py_config <- NULL
+      tryCatch({
+         py_config <- reticulate::py_discover_config()
+      }, finally = {
+         Sys.setenv(RETICULATE_MINICONDA_ENABLED = prev_miniconda)
+      })
+
+      # Return a Python binary if we found one
+      if (!is.null(py_config) && !is.null(py_config$python)) {
+         return(py_config$python)
+      }
+   }
+
+   # We didn't find any indication of the python version
+   ""
+})
+
 .rs.addFunction("enableRStudioConnectUI", function(enable) {
   .rs.enqueClientEvent("enable_rstudio_connect", enable);
   message("RStudio Connect UI ", if (enable) "enabled" else "disabled", ".")
