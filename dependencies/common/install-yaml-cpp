@@ -48,10 +48,11 @@ rm -rf build
 mkdir build
 cd build
 
-cmake                          \
-	-DCMAKE_BUILD_TYPE=Release \
-	-DYAML_CPP_BUILD_TOOLS=Off \
-	-DYAML_CPP_BUILD_TESTS=Off \
+cmake                                    \
+	-DCMAKE_BUILD_TYPE=Release           \
+	-DCMAKE_POSITION_INDEPENDENT_CODE=On \
+	-DYAML_CPP_BUILD_TOOLS=Off           \
+	-DYAML_CPP_BUILD_TESTS=Off           \
 	..
 
 cmake --build .
