@@ -19,7 +19,12 @@ set -e
 
 YAML_CPP_VERSION="0.6.3"
 YAML_CPP_BRANCH="yaml-cpp-${YAML_CPP_VERSION}"
-YAML_CPP_DIRECTORY="$(pwd)/yaml-cpp/${YAML_CPP_VERSION}"
+YAML_CPP_DIRECTORY="/opt/rstudio-tools/yaml-cpp/${YAML_CPP_VERSION}"
+
+if [ $EUID -ne 0 ]; then
+	echo "Re-running '$0' as root"
+	exec sudo /bin/bash "$0" "$@"
+fi
 
 if [ -f "${YAML_CPP_DIRECTORY}" ]; then
 	echo "${YAML_CPP_BRANCH} already installed."
@@ -48,10 +53,11 @@ rm -rf build
 mkdir build
 cd build
 
-cmake                          \
-	-DCMAKE_BUILD_TYPE=Release \
-	-DYAML_CPP_BUILD_TOOLS=Off \
-	-DYAML_CPP_BUILD_TESTS=Off \
+cmake                                    \
+	-DCMAKE_BUILD_TYPE=Release           \
+	-DCMAKE_POSITION_INDEPENDENT_CODE=On \
+	-DYAML_CPP_BUILD_TOOLS=Off           \
+	-DYAML_CPP_BUILD_TESTS=Off           \
 	..
 
 cmake --build .
