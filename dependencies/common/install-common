@@ -34,7 +34,6 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --install-crashpad-sudo)
       INSTALL_CRASHPAD_SUDO="sudo"
-      echo Installing crashpad via sudo
       shift
       ;;
     --help|-h)
