@@ -47,13 +47,6 @@ public class MemUsageWidget extends Composite
       style.setMarginRight(3, Style.Unit.PX);
       host_.add(pieCrust_);
 
-      pie_ = new MiniPieWidget("Memory Usage",
-         "Pie chart depicting the percentage of total memory in use",
-         "#000000",
-         "#e4e4e4",
-         0);
-      pieCrust_.add(pie_);
-
       ToolbarPopupMenu memoryMenu = new ToolbarPopupMenu();
       memoryMenu.addItem(RStudioGinjector.INSTANCE.getCommands().freeUnusedMemory().createMenuItem(false));
       memoryMenu.addSeparator();
@@ -90,25 +83,14 @@ public class MemUsageWidget extends Composite
    {
       if (usage == null)
       {
-         pieCrust_.setVisible(false);
+         pieCrust_.getElement().removeAllChildren();
          menu_.setText("Memory");
       }
       else
       {
          long percent = Math.round(((usage.getUsed().getKb() * 1.0) / (usage.getTotal().getKb() * 1.0)) * 100);
          menu_.setTitle("Memory used by R session");
-         long mib = usage.getProcess().getKb() / 1024;
-         if (mib >= 1024)
-         {
-            // Memory usage is > 1GiB, format as XX.YY GiB
-            NumberFormat decimalFormat = NumberFormat.getFormat(".##");
-            menu_.setText(decimalFormat.format((double)mib / (double)1024) + " GiB");
-         }
-         else
-         {
-            // Memory usage is in MiB
-            menu_.setText(mib + " MiB");
-         }
+         menu_.setText(formatBigMemory(usage.getProcess().getKb()));
 
          // These values are chosen to align with those used in rstudio.cloud.
          String color = "#5f9a91";   // under 70%, green
@@ -120,17 +102,39 @@ public class MemUsageWidget extends Composite
             color = "#fcbf49";       // 70-80%, yellow
          }
 
-         pie_.setPercent((int)percent);
-         pie_.setForeColor(color);
-         pie_.setTitle("Memory in use: " + percent + "%");
-         pieCrust_.setVisible(true);
+         // For browser SVG painting reasons, it is necessary to create a wholly
+         // new SVG element and then replay it as HTML into the DOM to get it to 
+         // draw correctly.
+         MiniPieWidget pie = new MiniPieWidget(
+            "Memory in use: " + percent + "% of " + 
+               formatBigMemory(usage.getTotal().getKb()) + 
+               " (source: " + usage.getTotal().getProviderName() + ")",
+            "Pie chart depicting the percentage of total memory in use", 
+            color, 
+            "#e4e4e4", 
+            (int)percent);
+         pieCrust_.getElement().removeAllChildren();
+         pieCrust_.add(pie);
          pieCrust_.getElement().setInnerHTML(pieCrust_.getElement().getInnerHTML());
       }
+   }
+   
+   private String formatBigMemory(int kb)
+   {
+      long mib = kb / 1024;
+      if (mib >= 1024)
+      {
+         // Memory usage is > 1GiB, format as XX.YY GiB
+         NumberFormat decimalFormat = NumberFormat.getFormat(".##");
+         return decimalFormat.format((double)mib / (double)1024) + " GiB";
+      }
+
+      // Memory usage is in MiB
+      return mib + " MiB";
    }
 
    private final UserPrefs prefs_;
    private final HTMLPanel pieCrust_;
-   private final MiniPieWidget pie_;
    private final ToolbarMenuButton menu_;
    private final HTMLPanel host_;
 }
