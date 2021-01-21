@@ -124,7 +124,7 @@ private:
          std::string memLine;
          std::getline(*pMemStream, memLine);
 
-         if (string_utils::isPrefixOf(key + ":", memLine))
+         if (string_utils::isPrefixOf(memLine, key + ":"))
          {
             // This is the key we're looking for; read the value from the remainder of the line.
             try
