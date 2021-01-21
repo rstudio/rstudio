@@ -18,6 +18,8 @@
 #include <session/prefs/UserPrefs.hpp>
 #include <session/SessionModuleContext.hpp>
 
+#include <chrono>
+
 #include <boost/make_shared.hpp>
 
 using namespace rstudio::core;
@@ -28,7 +30,8 @@ namespace modules {
 namespace system_resources {
 namespace {
 
-std::atomic<time_t> s_activeQuery;
+// Keep track of the time at which the active memory query was issued
+std::atomic<std::chrono::steady_clock::time_point> s_activeQuery;
 
 /**
  * Computes memory usage and emits it to the client as a client event.
@@ -51,10 +54,10 @@ void emitMemoryChangedEvent()
 /**
  * Performs a previously scheduled query for available memory.
  */
-void performScheduledMemoryQuery(time_t originQuery)
+void performScheduledMemoryQuery(std::chrono::steady_clock::time_point originQuery)
 {
    // Only perform this query if it hasn't been superseded by a newer one.
-   if (originQuery == s_activeQuery)
+   if (originQuery == s_activeQuery.load())
    {
       // Only perform this query if pref is enabled; it's possible for queries
       // to get scheduled even with the pref off
@@ -76,7 +79,7 @@ void scheduleMemoryChangedEvent()
    //
    // To debounce memory queries, we place them in a queue for 500ms, and
    // ignore any query execution that isn't at the top of the queue.
-   time_t now = std::time(nullptr);
+   std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
    s_activeQuery = now;
    module_context::scheduleDelayedWork(
             boost::posix_time::milliseconds(500),
