@@ -208,8 +208,8 @@ if(WIN32)
 
 else()
 
-   set(YAML_CPP_INCLUDE_DIR "${RSTUDIO_DEPENDENCIES_DIR}/common/yaml-cpp/0.6.3/include")
-   set(YAML_CPP_LIBRARIES "${RSTUDIO_DEPENDENCIES_DIR}/common/yaml-cpp/0.6.3/build/libyaml-cpp.a")
+   set(YAML_CPP_INCLUDE_DIR "/opt/rstudio-tools/yaml-cpp/0.6.3/include")
+   set(YAML_CPP_LIBRARIES   "/opt/rstudio-tools/yaml-cpp/0.6.3/build/libyaml-cpp.a")
 
 endif()
 
