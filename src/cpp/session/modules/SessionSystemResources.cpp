@@ -28,6 +28,11 @@ namespace modules {
 namespace system_resources {
 namespace {
 
+std::atomic<time_t> s_activeQuery;
+
+/**
+ * Computes memory usage and emits it to the client as a client event.
+ */
 void emitMemoryChangedEvent()
 {
    boost::shared_ptr<MemoryUsage> pUsage;
@@ -41,6 +46,52 @@ void emitMemoryChangedEvent()
       ClientEvent event(client_events::kMemoryUsageChanged, pUsage->toJson());
       module_context::enqueClientEvent(event);
    }
+}
+
+/**
+ * Performs a previously scheduled query for available memory.
+ */
+void performScheduledMemoryQuery(time_t originQuery)
+{
+   // Only perform this query if it hasn't been superseded by a newer one.
+   if (originQuery == s_activeQuery)
+   {
+      // Only perform this query if pref is enabled; it's possible for queries
+      // to get scheduled even with the pref off
+      if (prefs::userPrefs().showMemoryUsage())
+      {
+         emitMemoryChangedEvent();
+      }
+   }
+}
+
+/**
+ * Schedules a memory changed event to be emitted. 
+ */
+void scheduleMemoryChangedEvent()
+{
+   // Memory queries aren't very expensive, but aren't free either, so it's
+   // wasteful to repeatedly query the OS for memory stats multiple times a
+   // second (which can happen as queries are bound to UI triggers). 
+   //
+   // To debounce memory queries, we place them in a queue for 500ms, and
+   // ignore any query execution that isn't at the top of the queue.
+   time_t now = std::time(nullptr);
+   s_activeQuery = now;
+   module_context::scheduleDelayedWork(
+            boost::posix_time::milliseconds(500),
+            boost::bind(performScheduledMemoryQuery, now));
+}
+
+/**
+ * Performs periodic re-query for memory stats
+ */
+bool performPeriodicWork()
+{
+   scheduleMemoryChangedEvent();
+
+   // Continue querying for memory stats
+   return true;
 }
 
 void onUserSettingsChanged(const std::string& layer, const std::string& pref)
@@ -63,10 +114,10 @@ void onDetectChanges(module_context::ChangeSource source)
       return;
    }
 
-   if (prefs::userPrefs().showMemoryUsage())
-   {
-      emitMemoryChangedEvent();
-   }
+   // Wait a few ms before actually computing usage; this gives memory
+   // counters time to catch up with whatever just happened and allows for
+   // debouncing.
+   scheduleMemoryChangedEvent();
 }
 
 } // anonymous namespace
@@ -118,6 +169,11 @@ Error getMemoryUsage(boost::shared_ptr<MemoryUsage> *pMemUsage)
 Error initialize()
 {
    prefs::userPrefs().onChanged.connect(onUserSettingsChanged);
+
+   // Monitor memory usage every 10 seconds
+   module_context::schedulePeriodicWork(
+      boost::posix_time::seconds(10),
+      performPeriodicWork);
 
    module_context::events().onDetectChanges.connect(onDetectChanges);
 
