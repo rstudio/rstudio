@@ -21,14 +21,14 @@ YAML_CPP_VERSION="0.6.3"
 YAML_CPP_BRANCH="yaml-cpp-${YAML_CPP_VERSION}"
 YAML_CPP_DIRECTORY="/opt/rstudio-tools/yaml-cpp/${YAML_CPP_VERSION}"
 
+if [ -e "${YAML_CPP_DIRECTORY}" ]; then
+	echo "${YAML_CPP_BRANCH} already installed."
+	exit 0
+fi
+
 if [ $EUID -ne 0 ]; then
 	echo "Re-running '$0' as root"
 	exec sudo /bin/bash "$0" "$@"
-fi
-
-if [ -f "${YAML_CPP_DIRECTORY}" ]; then
-	echo "${YAML_CPP_BRANCH} already installed."
-	exit 0
 fi
 
 # lazy way to make sure parent directory of target is created
@@ -36,7 +36,7 @@ mkdir -p "${YAML_CPP_DIRECTORY}"
 rm -rf "${YAML_CPP_DIRECTORY}"
 
 # check out the required branch of yaml-cpp
-if ! [ -f "${YAML_CPP_BRANCH}" ]; then
+if ! [ -e "${YAML_CPP_BRANCH}" ]; then
 	git clone                                \
 		--depth 1                            \
 		--branch "${YAML_CPP_BRANCH}"        \
