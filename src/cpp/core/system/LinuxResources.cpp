@@ -15,12 +15,15 @@
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
+#include <shared_core/SafeConvert.hpp>
 
 #include <core/system/Resources.hpp>
 
 #include <core/Log.hpp>
 #include <core/Thread.hpp>
 #include <core/StringUtils.hpp>
+#include <core/Algorithm.hpp>
+#include <core/FileSerializer.hpp>
 
 #include <iostream>
 #include <fstream>
@@ -119,7 +122,7 @@ private:
       }
 
       // Read one line at a time, looking for the key
-      while(!pMemStream->eof())
+      while (!pMemStream->eof())
       {
          std::string memLine;
          std::getline(*pMemStream, memLine);
@@ -138,7 +141,7 @@ private:
                error = systemError(boost::system::errc::protocol_error, 
                      "Could not read memory stat " 
                      "'" + key + "'"
-                     "from /proc/meminfo line " 
+                     " from /proc/meminfo line " 
                      "'" + memLine + "'",
                      ERROR_LOCATION);
             }
@@ -156,18 +159,125 @@ private:
 
 class CGroupsMemoryProvider : public LinuxMemoryProvider
 {
+public:
+   CGroupsMemoryProvider(const std::string& path):
+      path_(path)
+   {
+   }
+
    Error getMemoryUsed(int *pUsedKb, MemoryProvider *pProvider)
    {
-      // TODO: get memory used from cgroups file
-      return Success();
+      Error error = getCgroupMemoryStat("memory.usage_in_bytes", pUsedKb); 
+      if (!error)
+      {
+         *pProvider = MemoryProviderLinuxCgroups;
+      }
+      return error;
    }
 
    Error getTotalMemory(int *pTotalKb, MemoryProvider *pProvider)
    {
-      // TODO: get memory total from cgroups file
+      Error error = getCgroupMemoryStat("memory.max_usage_in_bytes", pTotalKb); 
+      if (!error)
+      {
+         *pProvider = MemoryProviderLinuxCgroups;
+      }
+      return error;
+   }
+
+private:
+   // Gets a memory statistic from cgroup virtual file
+   Error getCgroupMemoryStat(const std::string& key, int *pValue)
+   {
+      // Attempt to read the statistic from the file.
+      FilePath statPath = FilePath("/sys/fs/cgroup/memory" + path_).completePath(key);
+      std::string val;
+      Error error = readStringFromFile(statPath, &val);
+      if (error)
+      {
+         return error;
+      }
+
+      // Attempt to convert the file's entire contents to a stat
+      boost::optional<long> stat = safe_convert::stringTo<long>(
+            string_utils::trimWhitespace(val));
+      if (!stat)
+      {
+         error = systemError(boost::system::errc::protocol_error, 
+               "Could not read cgroup memory stat " 
+               "'" + key + "'"
+               " from " + statPath.getAbsolutePath() + " value " 
+               "'" + val + "'",
+               ERROR_LOCATION);
+         return error;
+      }
+
+      // Convert to kb for return value
+      *pValue = static_cast<int>(*stat / 1024);
       return Success();
    }
+
+   std::string path_;
 };
+
+// Returns the memory cgroup path.
+std::string getMemoryCgroup()
+{
+   FilePath cgroup("/proc/self/cgroup");
+   if (!cgroup.exists())
+   {
+      // No problem, likely no cgroup support on this host. We'll use a different method to check
+      // memory usage.
+      return std::string();
+   }
+
+   std::shared_ptr<std::istream> pCgroupStream;
+   Error error = cgroup.openForRead(pCgroupStream);
+   if (error)
+   {
+      // Can't read cgroup file (unexpected)
+      LOG_ERROR(error);
+      return std::string();
+   }
+
+   // Loop through lines in cgroup file. We're trying to figure out where our memory entry is.
+   // It looks like this:
+   // 9:memory:/user.slice/user-1000.slice/user@1000.service
+   try
+   {
+      while (!pCgroupStream->eof())
+      {
+         std::string line;
+         std::getline(*pCgroupStream, line);
+         std::vector<std::string> entries = core::algorithm::split(line, ":");
+
+         // We expect 3 entries; from the example above they'd be:
+         // 0. "9"
+         // 1. "memory"
+         // 2. "/user.slice/user-1000.slice/user@1000.service"
+         if (entries.size() != 3)
+         {
+            continue;
+         }
+
+         // We are only interested in the "memory" entry.
+         if (entries[1] == "memory")
+         {
+            // Return the memory entry.
+            return entries[2];
+         }
+      }
+
+      // If we got this far, we hit the end of the file without finding a memory entry.
+      LOG_WARNING_MESSAGE("No memory control group found in /proc/self/cgroup");
+   }
+   catch (...)
+   {
+      LOG_WARNING_MESSAGE("Could not parse /proc/self/cgroup, will not use cgroup memory statistics");
+   }
+
+   return std::string();
+}
 
 // Factory for memory provider instantiation
 boost::shared_ptr<LinuxMemoryProvider> getMemoryProvider()
@@ -184,15 +294,14 @@ boost::shared_ptr<LinuxMemoryProvider> getMemoryProvider()
    // Otherwise, try to create one
    LOCK_MUTEX(s_mutex)
    {
-      // Check /sys/fs for virtual cgroups filesystem.
-      FilePath cgroup("/sys/fs/cgroup/memory");
-      if (cgroup.exists())
+      std::string cgroup = getMemoryCgroup();
+      if (cgroup.empty())
       {
-         s_provider.reset(new CGroupsMemoryProvider());
+         s_provider.reset(new MemInfoMemoryProvider());
       }
       else
       {
-         s_provider.reset(new MemInfoMemoryProvider());
+         s_provider.reset(new CGroupsMemoryProvider(cgroup));
       }
    }
    END_LOCK_MUTEX;
