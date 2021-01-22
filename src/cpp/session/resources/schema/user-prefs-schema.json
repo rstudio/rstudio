@@ -1456,6 +1456,12 @@
             "title": "Show memory usage in Environment Pane",
             "type": "boolean",
             "default": true
+        },
+        "memory_query_interval_seconds": {
+            "description": "How many seconds to wait between automatic requeries of memory statistics (0 to disable)",
+            "title": "Interval for requerying memory stats (seconds)",
+            "type": "integer",
+            "default": 10
         }
     }
 }

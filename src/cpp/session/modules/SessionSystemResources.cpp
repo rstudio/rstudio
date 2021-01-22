@@ -173,10 +173,17 @@ Error initialize()
 {
    prefs::userPrefs().onChanged.connect(onUserSettingsChanged);
 
-   // Monitor memory usage every 10 seconds
-   module_context::schedulePeriodicWork(
-      boost::posix_time::seconds(10),
-      performPeriodicWork);
+   // Query memory regularly if prefs indicate we should do so. This helps us
+   // update memory usage in the Environment pane that isn't necessarily the
+   // result of user actions (long-running code, background jobs, non-R
+   // processes on the system, etc.)
+   int seconds = prefs::userPrefs().memoryQueryIntervalSeconds();
+   if (seconds > 0)
+   {
+      module_context::schedulePeriodicWork(
+         boost::posix_time::seconds(seconds),
+         performPeriodicWork);
+   }
 
    module_context::events().onDetectChanges.connect(onDetectChanges);
 

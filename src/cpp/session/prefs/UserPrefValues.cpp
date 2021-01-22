@@ -2844,6 +2844,19 @@ core::Error UserPrefValues::setShowMemoryUsage(bool val)
    return writePref("show_memory_usage", val);
 }
 
+/**
+ * How many seconds to wait between automatic requeries of memory statistics (0 to disable)
+ */
+int UserPrefValues::memoryQueryIntervalSeconds()
+{
+   return readPref<int>("memory_query_interval_seconds");
+}
+
+core::Error UserPrefValues::setMemoryQueryIntervalSeconds(int val)
+{
+   return writePref("memory_query_interval_seconds", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -3064,6 +3077,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kInsertNativePipeOperator,
       kCommandPaletteMru,
       kShowMemoryUsage,
+      kMemoryQueryIntervalSeconds,
    });
 }
    

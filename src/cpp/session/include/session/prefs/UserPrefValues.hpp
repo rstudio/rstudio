@@ -383,6 +383,7 @@ namespace prefs {
 #define kInsertNativePipeOperator "insert_native_pipe_operator"
 #define kCommandPaletteMru "command_palette_mru"
 #define kShowMemoryUsage "show_memory_usage"
+#define kMemoryQueryIntervalSeconds "memory_query_interval_seconds"
 
 class UserPrefValues: public Preferences
 {
@@ -1689,6 +1690,12 @@ public:
     */
    bool showMemoryUsage();
    core::Error setShowMemoryUsage(bool val);
+
+   /**
+    * How many seconds to wait between automatic requeries of memory statistics (0 to disable)
+    */
+   int memoryQueryIntervalSeconds();
+   core::Error setMemoryQueryIntervalSeconds(int val);
 
 };
 
