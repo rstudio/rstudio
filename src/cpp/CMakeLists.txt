@@ -206,11 +206,16 @@ if(WIN32)
       set(YAML_CPP_LIBRARIES "${YAML_CPP_ROOT}/lib/${YAML_CPP_ARCH}/libyaml-cppmd.lib")
   endif()
 
-else()
+elseif(NOT RSTUDIO_USE_SYSTEM_YAML_CPP)
 
    set(YAML_CPP_INCLUDE_DIR "/opt/rstudio-tools/yaml-cpp/0.6.3/include")
    set(YAML_CPP_LIBRARIES   "/opt/rstudio-tools/yaml-cpp/0.6.3/build/libyaml-cpp.a")
 
+else()
+   # NOTE: defines the following CMake variables:
+   # - YAML_CPP_INCLUDE_DIR
+   # - YAML_CPP_LIBRARIES
+   find_package(yaml-cpp REQUIRED)
 endif()
 
 include_directories(SYSTEM "${YAML_CPP_INCLUDE_DIR}")
