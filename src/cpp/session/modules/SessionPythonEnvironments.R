@@ -197,6 +197,14 @@
    paths <- strsplit(Sys.getenv("PATH"), split = .Platform$path.sep, fixed = TRUE)[[1]]
    for (path in paths) {
       
+      # skip fake broken Windows Python interpreters
+      skip <-
+         .rs.platform.isWindows &&
+         grepl("AppData\\Local\\Microsoft\\WindowsApps", path, fixed = TRUE)
+      
+      if (skip)
+         next
+      
       # create pattern matching interpreter paths
       pattern <- if (.rs.platform.isWindows)
          "^python[[:digit:].]*exe$"
@@ -211,7 +219,8 @@
       )
       
       # loop over interpreters and add
-      for (python in pythons) {
+      for (python in pythons)
+      {
          info <- .rs.python.getPythonInfo(python, strict = TRUE)
          interpreters[[length(interpreters) + 1]] <- info
       }
