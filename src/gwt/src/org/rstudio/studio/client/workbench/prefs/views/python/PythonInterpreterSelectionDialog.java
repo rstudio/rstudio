@@ -37,7 +37,7 @@ public class PythonInterpreterSelectionDialog extends ModalDialog<PythonInterpre
       widgets_.setAriaLabel("Python Interpreters");
       
       for (PythonInterpreter interpreter : JsUtil.asIterable(interpreters))
-         if (interpreter.getVersion() != null)
+         if (interpreter.isValid())
             widgets_.addItem(new PythonInterpreterListEntryUi(interpreter));
    }
    
