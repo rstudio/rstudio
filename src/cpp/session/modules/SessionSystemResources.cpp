@@ -33,6 +33,9 @@ namespace {
 // Keep track of the time at which the active memory query was issued
 std::atomic<std::chrono::steady_clock::time_point> s_activeQuery;
 
+// The interval, in seconds, at which we will query for memory statistics
+std::atomic<int> s_queryInterval;
+
 /**
  * Computes memory usage and emits it to the client as a client event.
  */
@@ -87,26 +90,57 @@ void scheduleMemoryChangedEvent()
 }
 
 /**
- * Performs periodic re-query for memory stats
+ * Performs periodic re-query for memory stats.
+ * 
+ * We do this regularly if prefs indicate we should do so. This helps us
+ * update memory usage in the Environment pane that isn't necessarily the
+ * result of user actions (long-running code, background jobs, non-R
+ * processes on the system, etc.)
  */
-bool performPeriodicWork()
+void performPeriodicWork(bool refreshStats)
 {
-   scheduleMemoryChangedEvent();
+   // Schedule a re-query if requested
+   if (refreshStats)
+   {
+      scheduleMemoryChangedEvent();
+   }
 
-   // Continue querying for memory stats
-   return true;
+   // Schedule the next re-query; we re-read the pref every time so it can be
+   // adjusted without a restart.
+   s_queryInterval = prefs::userPrefs().memoryQueryIntervalSeconds();
+   if (s_queryInterval > 0)
+   {
+      module_context::scheduleDelayedWork(
+         boost::posix_time::seconds(s_queryInterval.load()),
+         boost::bind(performPeriodicWork, true));
+   }
 }
 
 void onUserSettingsChanged(const std::string& layer, const std::string& pref)
 {
-   if (pref != kShowMemoryUsage)
-      return;
-   
-   // If the pref was just turned on, compute and show memory usage immediately
-   if (prefs::userPrefs().showMemoryUsage())
+   if (pref == kShowMemoryUsage)
    {
-      emitMemoryChangedEvent();
+      // If the pref was just turned on, compute and show memory usage immediately
+      if (prefs::userPrefs().showMemoryUsage())
+      {
+         emitMemoryChangedEvent();
+      }
    }
+   else if (pref == kMemoryQueryIntervalSeconds)
+   {
+      if (s_queryInterval == 0 &&
+          prefs::userPrefs().memoryQueryIntervalSeconds() > 0)
+      {
+         // If we were previously not querying at all, start doing so now.
+         performPeriodicWork(true /* refresh stats */);
+      }
+   }
+}
+
+void onDeferredInit(bool newSession)
+{
+   // Schedule the initial refresh of memory statistics
+   performPeriodicWork(false);
 }
 
 void onDetectChanges(module_context::ChangeSource source)
@@ -171,21 +205,13 @@ Error getMemoryUsage(boost::shared_ptr<MemoryUsage> *pMemUsage)
 
 Error initialize()
 {
+   s_queryInterval = 0;
+
+   // Listen for user settings changes and change events so we can perform
+   // memory statistic refreshes as needed.
    prefs::userPrefs().onChanged.connect(onUserSettingsChanged);
-
-   // Query memory regularly if prefs indicate we should do so. This helps us
-   // update memory usage in the Environment pane that isn't necessarily the
-   // result of user actions (long-running code, background jobs, non-R
-   // processes on the system, etc.)
-   int seconds = prefs::userPrefs().memoryQueryIntervalSeconds();
-   if (seconds > 0)
-   {
-      module_context::schedulePeriodicWork(
-         boost::posix_time::seconds(seconds),
-         performPeriodicWork);
-   }
-
    module_context::events().onDetectChanges.connect(onDetectChanges);
+   module_context::events().onDeferredInit.connect(onDeferredInit);
 
    return Success();
 }
