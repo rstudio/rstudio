@@ -118,7 +118,13 @@ public class MemUsageWidget extends Composite
          pieCrust_.getElement().setInnerHTML(pieCrust_.getElement().getInnerHTML());
       }
    }
-   
+
+   /**
+    * Formats a large memory statistic for memory display
+    *
+    * @param kb The amount of memory
+    * @return A string describing the amount of memory
+    */
    private String formatBigMemory(int kb)
    {
       long mib = kb / 1024;
