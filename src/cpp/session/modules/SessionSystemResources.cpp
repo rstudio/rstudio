@@ -20,6 +20,12 @@
 
 #include <chrono>
 
+#include <core/Exec.hpp>
+
+#include <R/RExec.hpp>
+#include <R/RSexp.hpp>
+#include <R/RJson.hpp>
+
 #include <boost/make_shared.hpp>
 
 using namespace rstudio::core;
@@ -157,6 +163,42 @@ void onDetectChanges(module_context::ChangeSource source)
    scheduleMemoryChangedEvent();
 }
 
+
+Error getMemoryUsageReport(const json::JsonRpcRequest& request, json::JsonRpcResponse* pResponse)
+{
+   json::Object report;
+
+   // Get system-level memory stats
+   boost::shared_ptr<MemoryUsage> pMemUsage;
+   Error error = getMemoryUsage(&pMemUsage);
+   if (error)
+   {
+      return error;
+   }
+
+   // Get R memory stats and convert result to JSON
+   SEXP rMemUsage;
+   r::sexp::Protect protect;
+   error = r::exec::RFunction(".rs.getRMemoryUsed").call(&rMemUsage, &protect);
+   if (error)
+   {
+      return error;
+   }
+   json::Value rMemUsageVal;
+   error = r::json::jsonValueFromList(rMemUsage, &rMemUsageVal);
+   if (error)
+   {
+      return error;
+   }
+   
+   // Emit report to client
+   report["system"] = pMemUsage->toJson();
+   report["r"] = rMemUsageVal;
+   pResponse->setResult(report);
+
+   return Success();
+}
+
 } // anonymous namespace
 
 json::Object MemoryStat::toJson()
@@ -205,6 +247,9 @@ Error getMemoryUsage(boost::shared_ptr<MemoryUsage> *pMemUsage)
 
 Error initialize()
 {
+   using boost::bind;
+   using namespace module_context;
+
    s_queryInterval = 0;
 
    // Listen for user settings changes and change events so we can perform
@@ -213,7 +258,12 @@ Error initialize()
    module_context::events().onDetectChanges.connect(onDetectChanges);
    module_context::events().onDeferredInit.connect(onDeferredInit);
 
-   return Success();
+   core::ExecBlock initBlock;
+   initBlock.addFunctions()
+      (bind(registerRpcMethod, "get_memory_usage_report", getMemoryUsageReport))
+      (bind(module_context::sourceModuleRFile, "SessionSystemResources.R"));
+
+   return initBlock.execute();
 }
 
 }  // namespace system_resources

@@ -25,8 +25,9 @@
    # Vector cells are always 8 bytes (see ?gc)
    vector_kb <- mem_used["Vcells", "used"] / 128
 
-   return list(
-      cons = .rs.scalar(cons_kb),
-      vector = .rs.scalar(vector_kb)
+   # Return stats
+   list(
+      cons = .rs.scalar(round(cons_kb)),
+      vector = .rs.scalar(round(vector_kb))
    )
 })
