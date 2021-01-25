@@ -49,6 +49,7 @@ public class MemUsageWidget extends Composite
 
       ToolbarPopupMenu memoryMenu = new ToolbarPopupMenu();
       memoryMenu.addItem(RStudioGinjector.INSTANCE.getCommands().freeUnusedMemory().createMenuItem(false));
+      memoryMenu.addItem(RStudioGinjector.INSTANCE.getCommands().showMemoryUsageReport().createMenuItem(false));
       memoryMenu.addSeparator();
       memoryMenu.addItem(new UserPrefMenuItem<Boolean>(
          prefs_.showMemoryUsage(),

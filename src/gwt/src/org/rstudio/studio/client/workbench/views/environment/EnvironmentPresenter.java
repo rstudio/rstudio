@@ -27,6 +27,8 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.core.client.widget.ModalDialog;
+import org.rstudio.core.client.widget.ModalPopupPanel;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
@@ -37,6 +39,7 @@ import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.debugging.DebugCommander;
 import org.rstudio.studio.client.common.debugging.DebugCommander.DebugMode;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
@@ -81,8 +84,11 @@ import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.DownloadInfo;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentContextData;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
+import org.rstudio.studio.client.workbench.views.environment.model.MemoryUsageReport;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentClientState;
+import org.rstudio.studio.client.workbench.views.environment.view.MemoryUsageSummary;
+import org.rstudio.studio.client.workbench.views.environment.view.MemoryUsageSummaryDialog;
 import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserHighlightEvent;
@@ -392,6 +398,20 @@ public class EnvironmentPresenter extends BasePresenter
    void onFreeUnusedMemory()
    {
       eventBus_.fireEvent(new SendToConsoleEvent("gc()", true, false));
+   }
+
+   @Handler
+   void onShowMemoryUsageReport()
+   {
+      server_.getMemoryUsageReport(new SimpleRequestCallback<MemoryUsageReport>()
+      {
+         @Override
+         public void onResponseReceived(MemoryUsageReport report)
+         {
+            MemoryUsageSummaryDialog dialog = new MemoryUsageSummaryDialog(report);
+            dialog.showModal();
+         }
+      });
    }
 
    void onClearWorkspace()
