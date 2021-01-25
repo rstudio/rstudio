@@ -127,6 +127,9 @@
 
 .rs.addFunction("python.interpreterInfo", function(path, type)
 {
+   # prefer UTF-8 path when possible
+   path <- enc2utf8(path)
+   
    # defaults for version, description
    valid <- TRUE
    version <- "[unknown]"
