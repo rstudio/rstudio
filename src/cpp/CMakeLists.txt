@@ -218,6 +218,10 @@ else()
    find_package(yaml-cpp REQUIRED)
 endif()
 
+if(NOT EXISTS "${YAML_CPP_INCLUDE_DIR}")
+   message(FATAL_ERROR "yaml-cpp not found (re-run dependencies script to install)")
+endif()
+
 include_directories(SYSTEM "${YAML_CPP_INCLUDE_DIR}")
 
 # determine whether we should statically link boost. we always do this

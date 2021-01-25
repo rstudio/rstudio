@@ -14,11 +14,10 @@
  */
 
 import { Node as ProsemirrorNode, Schema, DOMOutputSpec, ResolvedPos } from 'prosemirror-model';
-import { EditorState, Transaction } from 'prosemirror-state';
+import { EditorState, Transaction, Plugin, PluginKey, NodeSelection, TextSelection } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
-import { findParentNodeOfType, ContentNodeWithPos, findParentNodeOfTypeClosestToPos } from 'prosemirror-utils';
+import { findParentNodeOfType, ContentNodeWithPos } from 'prosemirror-utils';
 import { wrapIn } from 'prosemirror-commands';
-import { GapCursor } from 'prosemirror-gapcursor';
 import { liftTarget } from 'prosemirror-transform';
 
 import { ExtensionContext, Extension } from '../api/extension';
@@ -136,6 +135,28 @@ const extension = (context: ExtensionContext) : Extension | null => {
           group: OmniInsertGroup.Blocks,
           priority: 1,
           image: () => (ui.prefs.darkMode() ? ui.images.omni_insert?.div_dark! : ui.images.omni_insert?.div!),
+        }),
+      ];
+    },
+
+    plugins: (schema: Schema) => {
+      return [
+        new Plugin({
+          key: new PluginKey("div-selection"),
+          appendTransaction: (_transactions: Transaction[], _oldState: EditorState, newState: EditorState) => {
+            if (newState.selection.empty) {
+              return;
+            }
+            const divNode = findParentNodeOfType(schema.nodes.div)(newState.selection);
+            if (divNode && 
+                (newState.selection.anchor === divNode.start + 1) &&
+                 newState.selection.head === divNode.pos + divNode.node.nodeSize - 2) {
+              const tr = newState.tr;
+              const sel = TextSelection.create(tr.doc, divNode.start, divNode.start + divNode.node.nodeSize - 1);
+              tr.setSelection(sel);
+              return tr;
+            }
+          }
         }),
       ];
     },
