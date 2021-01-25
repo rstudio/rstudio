@@ -16,6 +16,8 @@
 
 package org.rstudio.studio.client.panmirror.dialogs;
 
+import java.util.HashMap;
+
 import org.rstudio.core.client.ElementIds.TextBoxButtonId;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -44,11 +46,16 @@ public class PanmirrorImageChooser extends TextBoxWithButton {
          public void onClick(ClickEvent event)
          {
             FileSystemItem defaultDir = FileSystemItem.createDir(uiContext.getDefaultResourceDir.get());
+            
+            // use previously selected directory for this defaultDir if we have one
+            FileSystemItem initialDir = FileSystemItem.createDir(
+               previousImageDirs_.getOrDefault(defaultDir.getPath(), defaultDir.getPath())
+            );
                
             RStudioGinjector.INSTANCE.getFileDialogs().openFile(
                "Choose Image",
                RStudioGinjector.INSTANCE.getRemoteFileSystemContext(),
-               defaultDir,
+               initialDir,
                new ProgressOperationWithInput<FileSystemItem>()
                {
                   public void execute(FileSystemItem input,
@@ -56,6 +63,9 @@ public class PanmirrorImageChooser extends TextBoxWithButton {
                   {
                      if (input == null)
                         return;
+                     
+                     // save mapping of defaultDir to imageDir
+                     previousImageDirs_.put(defaultDir.getPath(), input.getParentPathString());
 
                      // compute relative path
                      String mappedPath = uiContext.mapPathToResource.map(input.getPath());
@@ -89,5 +99,7 @@ public class PanmirrorImageChooser extends TextBoxWithButton {
          }
       });
    }
+   
+   private static HashMap<String,String> previousImageDirs_ = new HashMap<String,String>();
    
 }
