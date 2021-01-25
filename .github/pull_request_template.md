@@ -7,6 +7,10 @@
 
 > Describe the approach taken and the tradeoffs involved if non-obvious; add an overview of the solution if it's complicated.
 
+### Automated Tests
+
+> Indicate whether this change includes unit tests or integration tests, or link a work item or pull request to add those tests to another repo. If the change cannot or will not be covered by a test, indicate why.
+
 ### QA Notes
 
 > Add additional information for QA on how to validate the change, paying special attention to the level of risk, adjacent areas that could be affected by the change, and any important contextual information not present in the linked issues. 
