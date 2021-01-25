@@ -2188,10 +2188,7 @@ void manageUserMakevars()
 
 void onDeferredInit(bool newSession)
 {
-   if (newSession)
-   {
-      manageUserMakevars();
-   }
+   manageUserMakevars();
 }
 
 Error initialize()
