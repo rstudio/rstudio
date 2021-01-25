@@ -176,6 +176,7 @@
 {
    interpreters <- c(
       .rs.python.findPythonSystemInterpreters(),
+      .rs.python.findPythonPyenvInterpreters(),
       .rs.python.findPythonVirtualEnvironments(),
       .rs.python.findPythonCondaEnvironments()
    )
@@ -222,6 +223,30 @@
    
 })
 
+.rs.addFunction("python.findPythonPyenvInterpreters", function()
+{
+   root <- Sys.getenv("PYENV_ROOT", unset = "~/.pyenv")
+   
+   # on Windows, Python interpreters are normally part of pyenv-windows
+   if (.rs.platform.isWindows)
+      root <- file.path(root, "pyenv-win")
+   
+   # get path to roots of Python installations
+   versionsPath <- file.path(root, "versions")
+   pythonRoots <- list.files(versionsPath, full.names = TRUE)
+   
+   # form path to Python binaries
+   stem <- if (.rs.platform.isWindows) "python.exe" else "bin/python"
+   pythonPaths <- file.path(pythonRoots, stem)
+   
+   # exclude anything that doesn't exist for some reason
+   pythonPaths <- pythonPaths[file.exists(pythonPaths)]
+   
+   # get interpreter info for each found
+   lapply(pythonPaths, .rs.python.getPythonInfo, strict = TRUE)
+   
+})
+
 .rs.addFunction("python.findPythonCondaEnvironments", function()
 {
    envs <- tryCatch(
@@ -231,6 +256,12 @@
    
    if (inherits(envs, "error"))
       return(list())
+   
+   # ignore environments found in revdep folders
+   envs <- envs[grep("/revdep/", envs$python, invert = TRUE), ]
+   
+   # ignore basilisk environments
+   envs <- envs[grep("/basilisk/", envs$python, invert = TRUE), ]
    
    lapply(envs$python, .rs.python.getCondaEnvironmentInfo)
 })
