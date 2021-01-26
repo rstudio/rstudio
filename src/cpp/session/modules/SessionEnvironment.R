@@ -377,7 +377,10 @@
 
 .rs.addFunction("functionNameFromCall", function(val)
 {
-   call <- attr(val, "_rs_call", exact = TRUE)
+   call <- .rs.nullCoalesce(
+      attr(val, "_rs_call", exact = TRUE),
+      val
+   )
    
    if (is.function(call[[1]]))
       return("[Anonymous function]")
@@ -392,10 +395,21 @@
 {
    if (is.call(object))
    {
+      # if this is the concatenation of a large number of objects,
+      # then just use a shorter representation of the call
+      callee <- object[[1L]]
+      long <-
+         is.name(callee) &&
+         length(object) > 20
+      
+      if (long)
+         return(as.call(list(callee, quote(...))))
+      
+      # sanitize each call entry separately
       for (i in seq_along(object))
-      {
          object[[i]] <- .rs.sanitizeCallSummary(object[[i]])
-      }
+      
+      # return object
       object
    }
    else if (!is.language(object))
@@ -405,7 +419,7 @@
       #
       # note that we still want to accept literals here,
       # e.g. 42, "abc"
-      if (length(object) == 1)
+      if (!is.object(object) && length(object) == 1)
       {
          object
       }
@@ -423,7 +437,10 @@
 
 .rs.addFunction("callSummary", function(val)
 {
-   call <- attr(val, "_rs_call", exact = TRUE)
+   call <- .rs.nullCoalesce(
+      attr(val, "_rs_call", exact = TRUE),
+      val
+   )
    
    # some calls might be very large when deparsed, especially when
    # they include R objects which have already been evaluted. this
