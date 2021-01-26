@@ -203,16 +203,29 @@
 # used to create description for promises
 .rs.addFunction("promiseDescription", function(obj)
 {
-   # by default, the description should be the expression associated with the
-   # object
-   description <- paste(deparse(substitute(obj)), collapse="")
-
-   # create a more friendly description for delay-loaded data
-   if (substr(description, 1, 16) == "lazyLoadDBfetch(")
-   {
-      description <- "<Promise>"
-   }
-   return (description)
+   # NOTE: substitute() returns the expression associated with a promise,
+   # without forcing it to be evaluated
+   expr <- substitute(obj)
+   
+   # if this appears to be a call to 'lazyLoadDBfetch()', that implies
+   # this is lazy-loaded data (typically associated with an R package).
+   # handle those up front
+   isLazyLoad <-
+      is.call(expr) &&
+      is.name(expr[[1L]]) &&
+      identical(expr[[1L]], as.name("lazyLoadDBfetch"))
+   
+   if (isLazyLoad)
+      return("<Promise>")
+   
+   # for some calls, e.g. those formed manually or those evaluated via
+   # do.call(), the 'expression' here might just be an already-evaluated
+   # R object. in such a case, we want to avoid deparsing the object as
+   # it could be expensive (especially for large objects).
+   if (is.call(expr))
+      .rs.deparse(expr)
+   else
+      .rs.valueDescription(expr)
 })
 
 # used to create descriptions for language objects and symbols
