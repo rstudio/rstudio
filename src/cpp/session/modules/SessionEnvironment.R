@@ -377,16 +377,66 @@
 
 .rs.addFunction("functionNameFromCall", function(val)
 {
-   call <- attr(val, "_rs_call")
+   call <- attr(val, "_rs_call", exact = TRUE)
+   
    if (is.function(call[[1]]))
-      "[Anonymous function]"
+      return("[Anonymous function]")
+   
+   if (is.name(call[[1L]]))
+      return(as.character(call[[1L]]))
+   
+   .rs.deparse(call[[1L]])
+})
+
+.rs.addFunction("sanitizeCallSummary", function(object)
+{
+   if (is.call(object))
+   {
+      for (i in seq_along(object))
+      {
+         object[[i]] <- .rs.sanitizeCallSummary(object[[i]])
+      }
+      object
+   }
+   else if (!is.language(object))
+   {
+      # if the object would be very expensive to deparse,
+      # just use a placeholder instead
+      #
+      # note that we still want to accept literals here,
+      # e.g. 42, "abc"
+      if (length(object) == 1)
+      {
+         object
+      }
+      else
+      {
+         type <- .rs.explorer.objectType(object)
+         as.name(sprintf("<%s>", type))
+      }
+   }
    else
-      as.character(substitute(call))
+   {
+      object
+   }
 })
 
 .rs.addFunction("callSummary", function(val)
 {
-   deparse(attr(val, "_rs_call"))
+   call <- attr(val, "_rs_call", exact = TRUE)
+   
+   # some calls might be very large when deparsed, especially when
+   # they include R objects which have already been evaluted. this
+   # happens most often with calls like:
+   #
+   #   do.call("fn", list(object))
+   #
+   # where 'object' is something very large when deparsed. we avoid
+   # issues by replacing such objects with a short identifier of their
+   # type / class
+   call <- .rs.sanitizeCallSummary(call)
+   
+   .rs.deparse(call)
 })
 
 .rs.addFunction("valueDescription", function(obj)
