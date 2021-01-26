@@ -76,7 +76,7 @@ public class ReticulateEvent extends GwtEvent<ReticulateEvent.Handler>
    public static final Type<Handler> TYPE = new Type<>();
 
    // synchronize with SessionReticulate.R
-   public static final String TYPE_PYTHON_INITIALIZED = "pythAon_initialized";
+   public static final String TYPE_PYTHON_INITIALIZED = "python_initialized";
    public static final String TYPE_REPL_INITIALIZED   = "repl_initialized";
    public static final String TYPE_REPL_ITERATION     = "repl_iteration";
    public static final String TYPE_REPL_BUSY          = "repl_busy";
