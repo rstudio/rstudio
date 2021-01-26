@@ -89,31 +89,20 @@ public class MemUsageWidget extends Composite
       }
       else
       {
-         long percent = Math.round(((usage.getUsed().getKb() * 1.0) / (usage.getTotal().getKb() * 1.0)) * 100);
          menu_.setTitle("Memory used by R session");
          menu_.setText(formatBigMemory(usage.getProcess().getKb()));
-
-         // These values are chosen to align with those used in rstudio.cloud.
-         String color = "#5f9a91";   // under 70%, green
-         if (percent > 90) {
-            color = "#e55037";       // 90% and above, red
-         } else if (percent > 80) {
-            color = "#e58537";       // 80-90%, orange
-         } else if (percent > 70) {
-            color = "#fcbf49";       // 70-80%, yellow
-         }
 
          // For browser SVG painting reasons, it is necessary to create a wholly
          // new SVG element and then replay it as HTML into the DOM to get it to 
          // draw correctly.
          MiniPieWidget pie = new MiniPieWidget(
-            "Memory in use: " + percent + "% of " + 
+            "Memory in use: " + usage.getPercentUsed() + "% of " +
                formatBigMemory(usage.getTotal().getKb()) + 
                " (source: " + usage.getTotal().getProviderName() + ")",
             "Pie chart depicting the percentage of total memory in use", 
-            color, 
-            "#e4e4e4", 
-            (int)percent);
+            usage.getColorCode(),
+            MEMORY_PIE_UNUSED_COLOR,
+            usage.getPercentUsed());
          pieCrust_.getElement().removeAllChildren();
          pieCrust_.add(pie);
          pieCrust_.getElement().setInnerHTML(pieCrust_.getElement().getInnerHTML());
@@ -144,4 +133,6 @@ public class MemUsageWidget extends Composite
    private final HTMLPanel pieCrust_;
    private final ToolbarMenuButton menu_;
    private final HTMLPanel host_;
+
+   public static final String MEMORY_PIE_UNUSED_COLOR = "#e4e4e4";
 }

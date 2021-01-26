@@ -19,9 +19,10 @@ import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import org.rstudio.core.client.ElementIds;
+
+import javax.validation.constraints.Min;
 
 /**
  * A mini pie chart widget that shows a simple percentage in the form of a pie chart.
@@ -29,8 +30,18 @@ import org.rstudio.core.client.ElementIds;
 public class MiniPieWidget extends Composite
 {
    /**
-    * Create a new mini pie widget
+    * Create a new mini pie widget (zero-arg constructor for use in UiBinder)
+    */
+   public MiniPieWidget()
+   {
+      this("", "", "#ffffff", "#000000", 0);
+   }
+
+   /**
+    * Create a new mini pie widget.
     *
+    * @param title The title of the chart (for accessibility, not shown)
+    * @param description The description of the chart (for accessibility, not shown)
     * @param foreColor The color to use for the foreground (filled) portion of the chart
     * @param backColor The color to use for the background (unfilled) portion of the chart
     * @param percent The percentage of the chart to fill with the foreground color
