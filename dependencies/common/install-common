@@ -60,7 +60,7 @@ done
 if [[ "$OSTYPE" == "darwin"* ]]; then
   # use pre-built binaries on macos as compilation environment is difficult
   # to configure there
-  echo Using pre-built osx binaries
+  echo Using pre-built crashpad osx binaries
   $INSTALL_CRASHPAD_SUDO ./install-crashpad osx
 else
   $INSTALL_CRASHPAD_SUDO ./install-crashpad
