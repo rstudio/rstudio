@@ -1010,11 +1010,7 @@ public class PaneManager
 
    private void restorePaneLayout()
    {
-      // Ensure that all windows are in the 'normal' state. This allows
-      // hidden windows to display themselves, and so on. This also forces
-      // widgets to size themselves vertically.
-      for (LogicalWindow window : panes_)
-         window.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
+      restorePaneStateToDefault();
       restoreColumnLayout();
    }
 
@@ -1096,10 +1092,7 @@ public class PaneManager
 
    private void restoreSavedLayout()
    {
-      // Ensure that all windows are in the 'normal' state. This allows
-      // hidden windows to display themselves, and so on.
-      for (LogicalWindow window : panes_)
-         window.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
+      restorePaneStateToDefault();
 
       maximizedWindow_.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
 
@@ -1116,6 +1109,25 @@ public class PaneManager
       invalidateSavedLayoutState(true);
    }
 
+   private void restorePaneStateToDefault()
+   {
+      // Ensure that all windows are in the 'normal' state. This allows hidden windows to display
+      // themselves, and so on. This also forces widgets to size themselves vertically.
+      // TabSet Panes without any tabs should remain minimized.
+      for (LogicalWindow window : panes_)
+      {
+         if ((window == panesByName_.get("TabSet1") && tabSet1TabPanel_.isEmpty()) ||
+             (window == panesByName_.get("TabSet2") && tabSet2TabPanel_.isEmpty()))
+         {
+            if (window.getState() != WindowState.MINIMIZE)
+               window.onWindowStateChange(new WindowStateChangeEvent(WindowState.MINIMIZE));
+         }
+         else
+            window.onWindowStateChange(
+               new WindowStateChangeEvent(WindowState.NORMAL, true));
+      }
+   }
+   
    @Handler
    public void onMaximizeConsole()
    {
