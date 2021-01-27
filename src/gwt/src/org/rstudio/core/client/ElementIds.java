@@ -579,4 +579,18 @@ public class ElementIds
    public final static String COMMAND_PALETTE_LIST = "command_palette_list";
    public final static String COMMAND_PALETTE_SEARCH = "command_palette_search";
    public final static String COMMAND_ENTRY_PREFIX = "command_entry_";
+
+   // Right-click tab context menus
+   public final static String FEATURE_TAB_CONTEXT = "feature_tab_context";
+   public final static String EDITOR_TAB_CONTEXT = "editor_tab_context";
+   public final static String GIT_TAB_CONTEXT = "git_tab_context";
+   public final static String SVN_TAB_CONTEXT = "svn_tab_context";
+
+   // Right-click tab context menus commands
+   public final static String TAB_CLOSE = "tab_close";
+   public final static String TAB_RENAME_FILE = "tab_rename_file";
+   public final static String TAB_COPY_PATH = "tab_copy_path";
+   public final static String TAB_CLOSE_ALL = "tab_close_all";
+   public final static String TAB_CLOSE_OTHERS = "tab_close_others";
+
 }

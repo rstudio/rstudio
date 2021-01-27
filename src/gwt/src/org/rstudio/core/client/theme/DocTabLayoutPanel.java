@@ -19,6 +19,7 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.client.ui.MenuItem;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ClassIds;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
@@ -219,33 +220,35 @@ public class DocTabLayoutPanel
             if (target != null && target.getExtendedFileType() != null && target.getPath() != null)
             {
                final String filePath = target.getPath();
-               menu.addItem(new MenuItem("Rename", () ->
+               menu.addItem(ElementIds.TAB_RENAME_FILE, new MenuItem("Rename", () ->
                {
                   events_.fireEvent(new RenameSourceFileEvent(filePath));
                }));
-               menu.addItem(new MenuItem("Copy Path", () ->
+               menu.addItem(ElementIds.TAB_COPY_PATH, new MenuItem("Copy Path", () ->
                {
                   events_.fireEvent(new CopySourcePathEvent(filePath));
                }));
                menu.addSeparator();
             }
 
-            menu.addItem(new MenuItem("Close", () ->
+            menu.addItem(ElementIds.TAB_CLOSE, new MenuItem("Close", () ->
             {
                events_.fireEvent(new RequestDocumentCloseEvent(docId));
             }));
 
-            menu.addItem(new MenuItem("Close All", () ->
+            menu.addItem(ElementIds.TAB_CLOSE_ALL, new MenuItem("Close All", () ->
             {
                commands_.closeAllSourceDocs().execute();
             }));
 
-            menu.addItem(new MenuItem("Close All Others", () ->
+            menu.addItem(ElementIds.TAB_CLOSE_OTHERS, new MenuItem("Close All Others", () ->
             {
                events_.fireEvent(new CloseAllSourceDocsExceptEvent(docId));
             }));
 
-            menu.showRelativeTo(nativeEvent.getClientX(), nativeEvent.getClientY());
+            menu.showRelativeTo(nativeEvent.getClientX(),
+                                nativeEvent.getClientY(),
+                                ElementIds.EDITOR_TAB_CONTEXT);
             contextMenuEvent.preventDefault();
             contextMenuEvent.stopPropagation();
          });
