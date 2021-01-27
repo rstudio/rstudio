@@ -61,6 +61,8 @@ public class MemoryUsageSummary extends Composite
       pie_.setPercent(percent);
       pie_.getElement().getStyle().setWidth(150, com.google.gwt.dom.client.Style.Unit.PX);
       pie_.getElement().getStyle().setHeight(150, com.google.gwt.dom.client.Style.Unit.PX);
+      pie_.setTitle("Memory in use: " + usage.getPercentUsed());
+      pie_.setDescription("Pie chart depicting the percentage of total memory in use");
       ElementIds.assignElementId(pie_, ElementIds.MEMORY_PIE_FULL);
       pieLabel_.setText(percent + "%");
 
