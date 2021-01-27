@@ -2181,7 +2181,7 @@ START:
       {
          status.pushState(ParseStatus::ParseStateWithinParens);
          status.pushBracket(cursor);
-         MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(cursor, status);
+         MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
          if (cursor.isType(RToken::RPAREN))
             status.lint().unexpectedToken(cursor);
          goto START;
@@ -2192,7 +2192,7 @@ START:
       {
          status.pushState(ParseStatus::ParseStateWithinBraces);
          status.pushBracket(cursor);
-         MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(cursor, status);
+         MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
          goto START;
       }
       
