@@ -15,6 +15,13 @@
 
 > Add additional information for QA on how to validate the change, paying special attention to the level of risk, adjacent areas that could be affected by the change, and any important contextual information not present in the linked issues. 
 
+### Checklist
+
+- [ ] If this PR adds a new feature, or fixes a bug in a previously released version, it includes an entry in `NEWS.md` 
+- [ ] If this PR adds or changes UI, the updated UI meets [accessibility standards](https://github.com/rstudio/rstudio/wiki/Accessibility)
+- [ ] A reviewer is assigned to this PR (if unsure who to assign, check Area Owners list)
+- [ ] This PR passes all local unit tests
+
 <!-- Note for community contributors: Please sign our contributor agreement as described in CONTRIBUTING.md and note that you've done so in this space. Very much appreciate your contributions and support! -->
 
 
