@@ -628,7 +628,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       public void onClick(ClickEvent event)
       {
          // If clicking on the input panel already, stop propagation.
-         if (!scrollOnClick_ || event.getSource() == input_)
+         if (event.getSource() == input_)
          {
             event.stopPropagation();
             return;
@@ -720,7 +720,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
             // https://github.com/rstudio/rstudio/issues/6231
             boolean wasScrolledToBottom = scrollPanel_.isScrolledToBottom();
             input_.setFocus(true);
-            if (wasScrolledToBottom)
+            if (scrollOnClick_ && wasScrolledToBottom)
                scrollPanel_.scrollToBottom();
          }
       };
