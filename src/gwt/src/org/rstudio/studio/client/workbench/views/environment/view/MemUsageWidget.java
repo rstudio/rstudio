@@ -19,7 +19,8 @@ import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
-import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.MiniPieWidget;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarMenuButton;
@@ -48,6 +49,7 @@ public class MemUsageWidget extends Composite
       style.setMarginTop(3, Style.Unit.PX);
       style.setMarginRight(3, Style.Unit.PX);
       host_.add(pieCrust_);
+      ElementIds.assignElementId(pieCrust_, ElementIds.MEMORY_PIE_MINI);
 
       ToolbarPopupMenu memoryMenu = new ToolbarPopupMenu();
       memoryMenu.addItem(RStudioGinjector.INSTANCE.getCommands().freeUnusedMemory().createMenuItem(false));
@@ -105,7 +107,8 @@ public class MemUsageWidget extends Composite
             setSuspended(false);
          }
 
-         menu_.setTitle("Memory used by R session");
+         menu_.setTitle(StringUtil.prettyFormatNumber(usage.getProcess().getKb()) +
+            " KiB used by R session (source: " + usage.getProcess().getProviderName());
          menu_.setText(formatBigMemory(usage.getProcess().getKb()));
 
          MiniPieWidget pie = new MiniPieWidget(

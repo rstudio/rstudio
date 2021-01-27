@@ -224,6 +224,11 @@ public class ElementIds
    public final static String NEW_SHINY_APP_SINGLE_FILE = "new_shiny_app_single_file";
    public final static String NEW_SHINY_APP_MULTI_FILE = "new_shiny_app_multi_file";
 
+   // Memory
+   public final static String MEMORY_PIE_MINI = "memory_pie_mini";
+   public final static String MEMORY_PIE_FULL = "memory_pie_full";
+   public final static String MEMORY_USAGE_TABLE = "memory_usage_table";
+
    // TextBoxWithButton and subclasses -- prefixes for button/text/help, combined with suffixes
    public final static String TBB_TEXT = "tbb_text";
    public final static String TBB_BUTTON = "tbb_button";

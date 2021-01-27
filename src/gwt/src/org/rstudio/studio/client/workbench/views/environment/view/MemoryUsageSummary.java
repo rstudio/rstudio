@@ -26,6 +26,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.MiniPieWidget;
 import org.rstudio.studio.client.workbench.views.environment.model.MemoryStat;
@@ -60,9 +61,11 @@ public class MemoryUsageSummary extends Composite
       pie_.setPercent(percent);
       pie_.getElement().getStyle().setWidth(150, com.google.gwt.dom.client.Style.Unit.PX);
       pie_.getElement().getStyle().setHeight(150, com.google.gwt.dom.client.Style.Unit.PX);
+      ElementIds.assignElementId(pie_, ElementIds.MEMORY_PIE_FULL);
       pieLabel_.setText(percent + "%");
 
       Element statsTable = Document.get().createTableElement();
+      ElementIds.assignElementId(statsTable, ElementIds.MEMORY_USAGE_TABLE);
       statsTable.setClassName(style.stats());
 
       // Create the header for the table:
