@@ -443,6 +443,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       if (txtSearchPattern_.getText().isEmpty())
          txtSearchPattern_.setText(dialogState.getQuery());
       checkboxCaseSensitive_.setValue(dialogState.isCaseSensitive());
+      checkboxWholeWord_.setValue(dialogState.isWholeWord());
       checkboxRegex_.setValue(dialogState.isRegex());
       dirChooser_.setText(dialogState.getPath());
 
