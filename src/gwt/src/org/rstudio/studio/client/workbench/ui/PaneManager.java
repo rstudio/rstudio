@@ -371,12 +371,16 @@ public class PaneManager
          center_.replaceWindows(newPanes.get(0), newPanes.get(1));
          right_.replaceWindows(newPanes.get(2), newPanes.get(3));
 
+         tabs1_ = tabNamesToTabs(evt.getValue().getTabSet1());
+         tabs2_ = tabNamesToTabs(evt.getValue().getTabSet2());
+
+         setWindowStateOnTabChange(panesByName_.get("TabSet1"), tabSet1TabPanel_, tabs1_);
+         setWindowStateOnTabChange(panesByName_.get("TabSet2"), tabSet2TabPanel_, tabs2_);
+         
          tabSet1TabPanel_.clear();
          tabSet2TabPanel_.clear();
          hiddenTabSetTabPanel_.clear();
-         tabs1_ = tabNamesToTabs(evt.getValue().getTabSet1());
          populateTabPanel(tabs1_, tabSet1TabPanel_, tabSet1MinPanel_);
-         tabs2_ = tabNamesToTabs(evt.getValue().getTabSet2());
          populateTabPanel(tabs2_, tabSet2TabPanel_, tabSet2MinPanel_);
          hiddenTabs_ = tabNamesToTabs(evt.getValue().getHiddenTabSet());
          populateTabPanel(hiddenTabs_, hiddenTabSetTabPanel_, hiddenTabSetMinPanel_);
@@ -765,6 +769,15 @@ public class PaneManager
 
       Debug.log("Couldn't locate adjacent pane for " + name);
       return "";
+   }
+         
+   private void setWindowStateOnTabChange(LogicalWindow window, WorkbenchTabPanel tabPanel,
+                                          ArrayList<Tab> tabs)
+   {
+      if (tabPanel.isEmpty() && !tabs.isEmpty())
+         window.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL));
+      else if (!tabPanel.isEmpty() && tabs.isEmpty() && window.getState() != WindowState.MINIMIZE)
+         window.onWindowStateChange(new WindowStateChangeEvent(WindowState.MINIMIZE));
    }
 
    @SuppressWarnings("rawtypes")
