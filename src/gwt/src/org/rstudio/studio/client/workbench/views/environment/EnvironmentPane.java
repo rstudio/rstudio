@@ -134,6 +134,9 @@ public class EnvironmentPane extends WorkbenchPane
       events.addHandler(MemoryUsageChangedEvent.TYPE, this);
       events.addHandler(SessionSerializationEvent.TYPE, this);
 
+      // Sync the state of the memory usage toggle command to the preference
+      prefs.showMemoryUsage().bind(val -> commands.toggleShowMemoryUsage().setChecked(val));
+
       ensureWidget();
    }
 

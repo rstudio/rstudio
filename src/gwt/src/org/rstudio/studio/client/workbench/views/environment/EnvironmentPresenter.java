@@ -33,6 +33,7 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.ConsoleDispatcher;
@@ -61,6 +62,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputEvent;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
@@ -412,6 +414,14 @@ public class EnvironmentPresenter extends BasePresenter
             dialog.showModal();
          }
       });
+   }
+
+   @Handler
+   void onToggleShowMemoryUsage()
+   {
+      UserPrefs prefs = RStudioGinjector.INSTANCE.getUserPrefs();
+      prefs.showMemoryUsage().setGlobalValue(!prefs.showMemoryUsage().getValue());
+      prefs.writeUserPrefs();
    }
 
    void onClearWorkspace()
