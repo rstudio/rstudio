@@ -37,6 +37,8 @@
                             labelText="Find:" enableSpellcheck="false" styleName="{style.pattern}"/>
          <g:CheckBox ui:field="checkboxCaseSensitive_" text="Case sensitive"/>
          &#x00a0;
+         <g:CheckBox ui:field="checkboxWholeWord_" text="Whole word"/>
+         &#x00a0;
          <g:CheckBox ui:field="checkboxRegex_" text="Regular expression"/>
          &#x00a0;
       </p>

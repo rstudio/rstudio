@@ -62,6 +62,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
                                              String path,
                                              boolean regex,
                                              boolean caseSensitive,
+                                             boolean wholeWord,
                                              JsArrayString filePatterns,
                                              JsArrayString excludeFilePatterns) /*-{
          return {
@@ -69,6 +70,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
             path: path,
             regex: regex,
             caseSensitive: caseSensitive,
+            wholeWord: wholeWord, 
             filePatterns: filePatterns,
             excludeFilePatterns: excludeFilePatterns,
             resultsCount: 0,
@@ -93,6 +95,10 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
 
       public native final boolean isCaseSensitive() /*-{
          return this.caseSensitive;
+      }-*/;
+
+      public native final boolean isWholeWord() /*-{
+          return this.wholeWord;
       }-*/;
 
       public final String[] getFilePatterns()
@@ -180,6 +186,19 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
 
       setExampleIdAndAriaProperties(spanPatternExample_, txtFilePattern_);
       setExampleIdAndAriaProperties(spanExcludePatternExample_, txtExcludeFilePattern_);
+
+      checkboxRegex_.addValueChangeHandler(event ->
+      {
+         // Disable "Whole Word" checkbox when regex is selected
+         if (event.getValue())
+            checkboxWholeWord_.setValue(false);
+      });
+      
+      checkboxWholeWord_.addValueChangeHandler(event ->
+      {
+         if (event.getValue())
+            checkboxRegex_.setValue(false);
+      });
 
       listPresetFilePatterns_.addChangeHandler(new ChangeHandler()
       {
@@ -367,6 +386,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
                                getEffectivePath(),
                                checkboxRegex_.getValue(),
                                checkboxCaseSensitive_.getValue(),
+                               checkboxWholeWord_.getValue(),
                                JsUtil.toJsArrayString(list),
                                JsUtil.toJsArrayString(excludeList));
    }
@@ -470,9 +490,11 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
    @UiField
    LabeledTextBox txtSearchPattern_;
    @UiField
-   CheckBox checkboxRegex_;
-   @UiField
    CheckBox checkboxCaseSensitive_;
+   @UiField
+   CheckBox checkboxWholeWord_;
+   @UiField
+   CheckBox checkboxRegex_;
    @UiField(provided = true)
    DirectoryChooserTextBox dirChooser_;
    @UiField
