@@ -121,6 +121,7 @@ public class MemoryUsageSummary extends Composite
 
       stats_.getElement().appendChild(statsTable);
 
+      // Hack to force SVG to draw
       String html = pie_.getParent().getElement().getInnerHTML();
       pie_.getParent().getElement().setInnerHTML(html);
    }

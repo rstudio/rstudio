@@ -64,7 +64,7 @@
         </g:cell>
         <g:cell>
             <g:VerticalPanel styleName="{style.right}">
-                <g:Label styleName="{style.header}" text="Memory Report"></g:Label>
+                <g:Label styleName="{style.header}" text="Memory Usage"></g:Label>
                 <g:HTMLPanel ui:field="stats_">
                 </g:HTMLPanel>
             </g:VerticalPanel>

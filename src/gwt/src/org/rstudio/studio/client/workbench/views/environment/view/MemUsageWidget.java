@@ -19,6 +19,7 @@ import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.widget.MiniPieWidget;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarMenuButton;
@@ -33,6 +34,7 @@ public class MemUsageWidget extends Composite
    public MemUsageWidget(MemoryUsage usage, UserPrefs prefs)
    {
       prefs_ = prefs;
+      suspended_ = false;
 
       host_ = new HTMLPanel("");
       Style style = host_.getElement().getStyle();
@@ -59,7 +61,7 @@ public class MemUsageWidget extends Composite
       ));
 
       menu_ = new ToolbarMenuButton(
-         "Memory",
+         "Mem",
          ToolbarButton.NoTitle,
          (ImageResource) null,
          memoryMenu);
@@ -80,33 +82,58 @@ public class MemUsageWidget extends Composite
       initWidget(host_);
    }
 
+   /**
+    * Sets the memory usage to be displayed in the widget.
+    *
+    * @param usage The memory usage to display
+    */
    public void setMemoryUsage(MemoryUsage usage)
    {
+      usage_ = usage;
+
       if (usage == null)
       {
          pieCrust_.getElement().removeAllChildren();
-         menu_.setText("Memory");
+         pieCrust_.setVisible(false);
+         menu_.setText("Mem");
       }
       else
       {
+         // If we were previously showing suspended memory data, then switch to live session view
+         if (suspended_)
+         {
+            setSuspended(false);
+         }
+
          menu_.setTitle("Memory used by R session");
          menu_.setText(formatBigMemory(usage.getProcess().getKb()));
 
-         // For browser SVG painting reasons, it is necessary to create a wholly
-         // new SVG element and then replay it as HTML into the DOM to get it to 
-         // draw correctly.
          MiniPieWidget pie = new MiniPieWidget(
             "Memory in use: " + usage.getPercentUsed() + "% of " +
-               formatBigMemory(usage.getTotal().getKb()) + 
+               formatBigMemory(usage.getTotal().getKb()) +
                " (source: " + usage.getTotal().getProviderName() + ")",
-            "Pie chart depicting the percentage of total memory in use", 
+            "Pie chart depicting the percentage of total memory in use",
             usage.getColorCode(),
             MEMORY_PIE_UNUSED_COLOR,
             usage.getPercentUsed());
-         pieCrust_.getElement().removeAllChildren();
-         pieCrust_.add(pie);
-         pieCrust_.getElement().setInnerHTML(pieCrust_.getElement().getInnerHTML());
+         loadPieDisplay(pie);
       }
+   }
+
+   /**
+    * Load a pie chart into the memory usage widget
+    *
+    * @param pie The pie chart to load
+    */
+   private void loadPieDisplay(MiniPieWidget pie)
+   {
+      // For browser SVG painting reasons, it is necessary to create a wholly
+      // new SVG element and then replay it as HTML into the DOM to get it to
+      // draw correctly.
+      pieCrust_.setVisible(true);
+      pieCrust_.getElement().removeAllChildren();
+      pieCrust_.add(pie);
+      pieCrust_.getElement().setInnerHTML(pieCrust_.getElement().getInnerHTML());
    }
 
    /**
@@ -129,10 +156,51 @@ public class MemUsageWidget extends Composite
       return mib + " MiB";
    }
 
+   /**
+    * Sets whether to show the memory usage as suspended
+    *
+    * @param suspended
+    */
+   public void setSuspended(boolean suspended)
+   {
+      // Ignore if we're already in the desired state
+      if (suspended == suspended_)
+      {
+         return;
+      }
+      suspended_ = suspended;
+
+      // If the widget isn't showing memory usage information
+      if (usage_ == null)
+      {
+         return;
+      }
+
+      if (suspended)
+      {
+         MiniPieWidget pie = new MiniPieWidget(
+            "Memory in use: none (suspended)",
+            "Empty pie chart depicting no memory usage",
+            "#000000",
+            MEMORY_PIE_UNUSED_COLOR,
+            0);
+         loadPieDisplay(pie);
+
+         menu_.setEnabled(false);
+      }
+      else
+      {
+         menu_.setEnabled(true);
+      }
+   }
+
    private final UserPrefs prefs_;
    private final HTMLPanel pieCrust_;
    private final ToolbarMenuButton menu_;
    private final HTMLPanel host_;
+
+   private MemoryUsage usage_;
+   private boolean suspended_;
 
    public static final String MEMORY_PIE_UNUSED_COLOR = "#e4e4e4";
 }

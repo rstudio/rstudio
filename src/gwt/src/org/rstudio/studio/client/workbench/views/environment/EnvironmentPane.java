@@ -34,7 +34,9 @@ import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.SessionSerializationEvent;
 import org.rstudio.studio.client.application.events.SuspendAndRestartEvent;
+import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.ImageMenuItem;
@@ -84,7 +86,8 @@ public class EnvironmentPane extends WorkbenchPane
                                         SessionInitEvent.Handler,
                                         ReticulateEvent.Handler,
                                         SuspendAndRestartEvent.Handler,
-                                        MemoryUsageChangedEvent.Handler
+                                        MemoryUsageChangedEvent.Handler,
+                                        SessionSerializationEvent.Handler
 {
    @Inject
    public EnvironmentPane(Commands commands,
@@ -129,6 +132,7 @@ public class EnvironmentPane extends WorkbenchPane
       events.addHandler(ReticulateEvent.TYPE, this);
       events.addHandler(SuspendAndRestartEvent.TYPE, this);
       events.addHandler(MemoryUsageChangedEvent.TYPE, this);
+      events.addHandler(SessionSerializationEvent.TYPE, this);
 
       ensureWidget();
    }
@@ -144,11 +148,10 @@ public class EnvironmentPane extends WorkbenchPane
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(createImportMenu());
       toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands_.clearWorkspace().createToolbarButton());
-
       memUsage_ = new MemUsageWidget(session_.getSessionInfo().getMemoryUsage(), prefs_);
-      toolbar.addRightWidget(memUsage_);
-      toolbar.addRightSeparator();
+      toolbar.addLeftWidget(memUsage_);
+      toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(commands_.clearWorkspace().createToolbarButton());
 
       ToolbarPopupMenu menu = new ToolbarPopupMenu();
       menu.addItem(createViewMenuItem(EnvironmentObjects.OBJECT_LIST_VIEW));
@@ -733,6 +736,16 @@ public class EnvironmentPane extends WorkbenchPane
    public void onMemoryUsageChanged(MemoryUsageChangedEvent event)
    {
       memUsage_.setMemoryUsage(event.getMemoryUsage());
+   }
+
+   @Override
+   public void onSessionSerialization(SessionSerializationEvent event)
+   {
+      if (event.getAction().getType() == SessionSerializationAction.SUSPEND_SESSION)
+      {
+         // Show suspension hint in memory usage widget
+         memUsage_.setSuspended(true);
+      }
    }
 
    // An extension of the toolbar popup menu that gets environment names from
