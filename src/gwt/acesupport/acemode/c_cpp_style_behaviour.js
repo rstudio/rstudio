@@ -130,7 +130,7 @@ var CStyleBehaviour = function(codeModel) {
          // Get some needed variables.
          var cursor = editor.getCursorPosition();
          var row = cursor.row;
-         var col = cursor.col;
+         var col = cursor.column;
          var tab = session.getTabString();
          var lines = session.doc.$lines;
          var line = lines[row];
