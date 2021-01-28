@@ -759,6 +759,13 @@ int main(int argc, char* argv[])
          core::system::initializeStderrLog("rdesktop", core::log::LogLevel::WARN);
       }
 
+      // set Python encoding -- this is necessary for UTF-8 input
+      // not representable in the current locale to be handled
+      // correctly on Windows
+      std::string encoding = core::system::getenv("PYTHONIOENCODING");
+      if (encoding.empty())
+         core::system::setenv("PYTHONIOENCODING", "utf-8");
+
       initializeSharedSecret();
       initializeWorkingDirectory(argc, argv, filename);
       initializeStartupEnvironment(&filename);

@@ -33,6 +33,7 @@ import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.MenuItemSeparator;
 import com.google.gwt.user.client.ui.Widget;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.AppMenuItem;
@@ -86,9 +87,11 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
     * Position popup relative to a point, typically for a right-click context menu
     * @param clientX
     * @param clientY
+    * @param elementId - unique elementId for automation
     */
-   public void showRelativeTo(int clientX, int clientY)
+   public void showRelativeTo(int clientX, int clientY, String elementId)
    {
+      ElementIds.assignElementId(this, elementId);
       setPopupPositionAndShow((offsetWidth, offsetHeight) ->
       {
          // Calculate left position for the popup; normally the clicked location but
@@ -195,6 +198,12 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
    public void selectItem(MenuItem menuItem)
    {
       menuBar_.selectItem(menuItem);
+   }
+
+   public void addItem(String menuElementId, MenuItem menuItem)
+   {
+      addItem(menuItem);
+      ElementIds.assignElementId(menuItem.getElement(), menuElementId);
    }
 
    public void addItem(MenuItem menuItem)

@@ -227,8 +227,6 @@ public:
 
    bool connectToServer()
    {
-      using websocketpp::lib::placeholders::_1;
-      using websocketpp::lib::placeholders::_2;
       using websocketpp::lib::bind;
 
       try {
@@ -246,13 +244,13 @@ public:
          // Register our message handler
          client_.set_message_handler(bind(&SocketClient::on_message,
                                           SocketClient::shared_from_this(),
-                                          &client_, ::_1, ::_2));
+                                          &client_, _1, _2));
          client_.set_open_handler(bind(&SocketClient::on_open,
                                        SocketClient::shared_from_this(),
-                                       &client_, ::_1));
+                                       &client_, _1));
          client_.set_fail_handler(bind(&SocketClient::on_fail,
                                        SocketClient::shared_from_this(),
-                                       &client_, ::_1));
+                                       &client_, _1));
 
          websocketpp::lib::error_code ec;
          client::connection_ptr con = client_.get_connection(uri, ec);

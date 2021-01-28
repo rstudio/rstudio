@@ -18,6 +18,7 @@
    PYTHON_INITIALIZED = "python_initialized",
    REPL_INITIALIZED   = "repl_initialized",
    REPL_ITERATION     = "repl_iteration",
+   REPL_BUSY          = "repl_busy",
    REPL_TEARDOWN      = "repl_teardown"
 ))
 
@@ -273,6 +274,13 @@
    FALSE
 })
 
+.rs.addFunction("reticulate.replBusy", function(busy)
+{
+   .rs.reticulate.enqueueClientEvent(
+      .rs.reticulateEvents$REPL_BUSY,
+      list(busy = .rs.scalar(busy))
+   )
+})
 
 .rs.addFunction("reticulate.replTeardown", function()
 {
@@ -1976,6 +1984,11 @@ options(reticulate.repl.initialize = function()
 options(reticulate.repl.hook = function(buffer, contents, trimmed)
 {
    .rs.reticulate.replHook(buffer, contents, trimmed)
+})
+
+options(reticulate.repl.busy = function(busy)
+{
+   .rs.reticulate.replBusy(busy)
 })
 
 options(reticulate.repl.teardown = function()

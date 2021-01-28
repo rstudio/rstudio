@@ -127,6 +127,9 @@
 
 .rs.addFunction("python.interpreterInfo", function(path, type)
 {
+   # prefer UTF-8 path when possible
+   path <- enc2utf8(path)
+   
    # defaults for version, description
    valid <- TRUE
    version <- "[unknown]"
@@ -176,6 +179,7 @@
 {
    interpreters <- c(
       .rs.python.findPythonSystemInterpreters(),
+      .rs.python.findPythonPyenvInterpreters(),
       .rs.python.findPythonVirtualEnvironments(),
       .rs.python.findPythonCondaEnvironments()
    )
@@ -197,6 +201,14 @@
    paths <- strsplit(Sys.getenv("PATH"), split = .Platform$path.sep, fixed = TRUE)[[1]]
    for (path in paths) {
       
+      # skip fake broken Windows Python interpreters
+      skip <-
+         .rs.platform.isWindows &&
+         grepl("AppData\\Local\\Microsoft\\WindowsApps", path, fixed = TRUE)
+      
+      if (skip)
+         next
+      
       # create pattern matching interpreter paths
       pattern <- if (.rs.platform.isWindows)
          "^python[[:digit:].]*exe$"
@@ -211,7 +223,8 @@
       )
       
       # loop over interpreters and add
-      for (python in pythons) {
+      for (python in pythons)
+      {
          info <- .rs.python.getPythonInfo(python, strict = TRUE)
          interpreters[[length(interpreters) + 1]] <- info
       }
@@ -219,6 +232,30 @@
    }
    
    interpreters
+   
+})
+
+.rs.addFunction("python.findPythonPyenvInterpreters", function()
+{
+   root <- Sys.getenv("PYENV_ROOT", unset = "~/.pyenv")
+   
+   # on Windows, Python interpreters are normally part of pyenv-windows
+   if (.rs.platform.isWindows)
+      root <- file.path(root, "pyenv-win")
+   
+   # get path to roots of Python installations
+   versionsPath <- file.path(root, "versions")
+   pythonRoots <- list.files(versionsPath, full.names = TRUE)
+   
+   # form path to Python binaries
+   stem <- if (.rs.platform.isWindows) "python.exe" else "bin/python"
+   pythonPaths <- file.path(pythonRoots, stem)
+   
+   # exclude anything that doesn't exist for some reason
+   pythonPaths <- pythonPaths[file.exists(pythonPaths)]
+   
+   # get interpreter info for each found
+   lapply(pythonPaths, .rs.python.getPythonInfo, strict = TRUE)
    
 })
 
@@ -231,6 +268,12 @@
    
    if (inherits(envs, "error"))
       return(list())
+   
+   # ignore environments found in revdep folders
+   envs <- envs[grep("/revdep/", envs$python, invert = TRUE), ]
+   
+   # ignore basilisk environments
+   envs <- envs[grep("/basilisk/", envs$python, invert = TRUE), ]
    
    lapply(envs$python, .rs.python.getCondaEnvironmentInfo)
 })

@@ -35240,6 +35240,199 @@ oop.inherits(Mode, TextMode);
 exports.Mode = Mode;
 });
 
+define("ace/mode/swift_highlight_rules",["require","exports","module","ace/lib/oop","ace/lib/lang","ace/mode/doc_comment_highlight_rules","ace/mode/text_highlight_rules"], function(require, exports, module) {
+"use strict";
+
+var oop = require("../lib/oop");
+var lang = require("../lib/lang");
+var DocCommentHighlightRules = require("./doc_comment_highlight_rules").DocCommentHighlightRules;
+var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
+
+var SwiftHighlightRules = function() {
+   var keywordMapper = this.createKeywordMapper({
+        "variable.language": "",
+        "keyword": "__COLUMN__|__FILE__|__FUNCTION__|__LINE__"
+            + "|as|associativity|break|case|class|continue|default|deinit|didSet"
+            + "|do|dynamicType|else|enum|extension|fallthrough|for|func|get|if|import"
+            + "|in|infix|init|inout|is|left|let|let|mutating|new|none|nonmutating"
+            + "|operator|override|postfix|precedence|prefix|protocol|return|right"
+            + "|safe|Self|self|set|struct|subscript|switch|Type|typealias"
+            + "|unowned|unsafe|var|weak|where|while|willSet"
+            + "|convenience|dynamic|final|infix|lazy|mutating|nonmutating|optional|override|postfix"
+            + "|prefix|required|static|guard|defer",
+        "storage.type": "bool|double|Double"
+            + "|extension|float|Float|int|Int|open|internal|fileprivate|private|public|string|String",
+        "constant.language":
+            "false|Infinity|NaN|nil|no|null|null|off|on|super|this|true|undefined|yes",
+        "support.function":
+            ""
+    }, "identifier");
+    
+    function string(start, options) {
+        var nestable = options.nestable || options.interpolation;
+        var interpStart = options.interpolation && options.interpolation.nextState || "start";
+        var mainRule = {
+            regex: start + (options.multiline ? "" : "(?=.)"),
+            token: "string.start"
+        };
+        var nextState = [
+            options.escape && {
+                regex: options.escape,
+                token: "character.escape"
+            },
+            options.interpolation && {
+                token : "paren.quasi.start",
+                regex : lang.escapeRegExp(options.interpolation.lead + options.interpolation.open),
+                push  : interpStart
+            },
+            options.error && {
+                regex: options.error,
+                token: "error.invalid"
+            }, 
+            {
+                regex: start + (options.multiline ? "" : "|$"),
+                token: "string.end",
+                next: nestable ? "pop" : "start"
+            }, {
+                defaultToken: "string"
+            }
+        ].filter(Boolean);
+        
+        if (nestable)
+            mainRule.push = nextState;
+        else
+            mainRule.next = nextState;
+        
+        if (!options.interpolation)
+            return mainRule;
+        
+        var open = options.interpolation.open;
+        var close = options.interpolation.close;
+        var counter = {
+            regex: "[" + lang.escapeRegExp(open + close) + "]",
+            onMatch: function(val, state, stack) {
+                this.next = val == open ? this.nextState : "";
+                if (val == open && stack.length) {
+                    stack.unshift("start", state);
+                    return "paren";
+                }
+                if (val == close && stack.length) {
+                    stack.shift();
+                    this.next = stack.shift();
+                    if (this.next.indexOf("string") != -1)
+                        return "paren.quasi.end";
+                }
+                return val == open ? "paren.lparen" : "paren.rparen";
+            },
+            nextState: interpStart
+        }; 
+        return [counter, mainRule];
+    }
+    
+    function comments() {
+        return [{
+                token : "comment",
+                regex : "\\/\\/(?=.)",
+                next : [
+                    DocCommentHighlightRules.getTagRule(),
+                    {token : "comment", regex : "$|^", next: "start"},
+                    {defaultToken : "comment", caseInsensitive: true}
+                ]
+            },
+            DocCommentHighlightRules.getStartRule("doc-start"),
+            {
+                token : "comment.start",
+                regex : /\/\*/,
+                stateName: "nested_comment",
+                push : [
+                    DocCommentHighlightRules.getTagRule(),
+                    {token : "comment.start", regex : /\/\*/, push: "nested_comment"},
+                    {token : "comment.end", regex : "\\*\\/", next : "pop"},
+                    {defaultToken : "comment", caseInsensitive: true}
+                ]
+            }
+        ];
+    }
+    
+
+    this.$rules = {
+        start: [
+            string('"', {
+                escape: /\\(?:[0\\tnr"']|u{[a-fA-F1-9]{0,8}})/,
+                interpolation: {lead: "\\", open: "(", close: ")"},
+                error: /\\./,
+                multiline: false
+            }),
+            comments(),
+            {
+                 regex: /@[a-zA-Z_$][a-zA-Z_$\d\u0080-\ufffe]*/,
+                 token: "variable.parameter"
+            },
+            {
+                regex: /[a-zA-Z_$][a-zA-Z_$\d\u0080-\ufffe]*/,
+                token: keywordMapper
+            },  
+            {
+                token : "constant.numeric", 
+                regex : /[+-]?(?:0(?:b[01]+|o[0-7]+|x[\da-fA-F])|\d+(?:(?:\.\d*)?(?:[PpEe][+-]?\d+)?)\b)/
+            }, {
+                token : "keyword.operator",
+                regex : /--|\+\+|===|==|=|!=|!==|<=|>=|<<=|>>=|>>>=|<>|<|>|!|&&|\|\||\?:|[!$%&*+\-~\/^]=?/,
+                next  : "start"
+            }, {
+                token : "punctuation.operator",
+                regex : /[?:,;.]/,
+                next  : "start"
+            }, {
+                token : "paren.lparen",
+                regex : /[\[({]/,
+                next  : "start"
+            }, {
+                token : "paren.rparen",
+                regex : /[\])}]/
+            } 
+            
+        ]
+    };
+    this.embedRules(DocCommentHighlightRules, "doc-",
+        [ DocCommentHighlightRules.getEndRule("start") ]);
+    
+    this.normalizeRules();
+};
+
+
+oop.inherits(SwiftHighlightRules, TextHighlightRules);
+
+exports.HighlightRules = SwiftHighlightRules;
+});
+
+define("ace/mode/swift",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/swift_highlight_rules","ace/mode/behaviour/cstyle","ace/mode/folding/cstyle"], function(require, exports, module) {
+"use strict";
+
+var oop = require("../lib/oop");
+var TextMode = require("./text").Mode;
+var HighlightRules = require("./swift_highlight_rules").HighlightRules;
+var CstyleBehaviour = require("./behaviour/cstyle").CstyleBehaviour;
+var FoldMode = require("./folding/cstyle").FoldMode;
+
+var Mode = function() {
+    this.HighlightRules = HighlightRules;
+    this.foldingRules = new FoldMode();
+    this.$behaviour = new CstyleBehaviour();
+    this.$behaviour = this.$defaultBehaviour;
+};
+oop.inherits(Mode, TextMode);
+
+(function() {
+    this.lineCommentStart = "//";
+    this.blockComment = {start: "/*", end: "*/", nestable: true};
+    
+    this.$id = "ace/mode/swift";
+}).call(Mode.prototype);
+
+exports.Mode = Mode;
+});
+
 define("ace/mode/svg_highlight_rules",["require","exports","module","ace/lib/oop","ace/mode/javascript_highlight_rules","ace/mode/xml_highlight_rules"], function(require, exports, module) {
 "use strict";
 
@@ -48650,7 +48843,7 @@ module.exports = { lineMode: false };
 
 });
 
-define("ace/editor",["require","exports","module","ace/lib/fixoldbrowsers","ace/mode/abap","ace/mode/actionscript","ace/mode/ada","ace/mode/applescript","ace/mode/asciidoc","ace/mode/autohotkey","ace/mode/batchfile","ace/mode/behaviour","ace/mode/c9search","ace/mode/cirru","ace/mode/clojure","ace/mode/cobol","ace/mode/coffee","ace/mode/coldfusion","ace/mode/csharp","ace/mode/css","ace/mode/curly","ace/mode/d","ace/mode/dart","ace/mode/diff","ace/mode/django","ace/mode/dockerfile","ace/mode/dot","ace/mode/eiffel","ace/mode/elixir","ace/mode/elm","ace/mode/erlang","ace/mode/forth","ace/mode/ftl","ace/mode/gcode","ace/mode/gherkin","ace/mode/gitignore","ace/mode/glsl","ace/mode/golang","ace/mode/groovy","ace/mode/haml","ace/mode/handlebars","ace/mode/haskell","ace/mode/haxe","ace/mode/html","ace/mode/ini","ace/mode/io","ace/mode/jack","ace/mode/jade","ace/mode/java","ace/mode/javascript","ace/mode/julia","ace/mode/latex","ace/mode/less","ace/mode/liquid","ace/mode/lisp","ace/mode/livescript","ace/mode/logiql","ace/mode/lsl","ace/mode/lua","ace/mode/luapage","ace/mode/lucene","ace/mode/makefile","ace/mode/markdown","ace/mode/mask","ace/mode/matlab","ace/mode/mel","ace/mode/mushcode","ace/mode/mysql","ace/mode/nix","ace/mode/objectivec","ace/mode/ocaml","ace/mode/pascal","ace/mode/perl","ace/mode/pgsql","ace/mode/php","ace/mode/powershell","ace/mode/praat","ace/mode/prolog","ace/mode/properties","ace/mode/protobuf","ace/mode/python","ace/mode/ruby","ace/mode/rust","ace/mode/sass","ace/mode/scad","ace/mode/scala","ace/mode/scheme","ace/mode/scss","ace/mode/sh","ace/mode/sjs","ace/mode/smarty","ace/mode/snippets","ace/mode/space","ace/mode/sql","ace/mode/stylus","ace/mode/svg","ace/mode/tcl","ace/mode/tex","ace/mode/text","ace/mode/textile","ace/mode/toml","ace/mode/twig","ace/mode/typescript","ace/mode/vala","ace/mode/vbscript","ace/mode/velocity","ace/mode/verilog","ace/mode/vhdl","ace/mode/xml","ace/mode/xquery","ace/mode/yaml","ace/lib/oop","ace/lib/dom","ace/lib/lang","ace/lib/useragent","ace/keyboard/textinput","ace/mouse/mouse_handler","ace/mouse/fold_handler","ace/keyboard/keybinding","ace/edit_session","ace/search","ace/range","ace/lib/event_emitter","ace/commands/command_manager","ace/commands/default_commands","ace/config","ace/token_iterator","ace/clipboard"], function(require, exports, module) {
+define("ace/editor",["require","exports","module","ace/lib/fixoldbrowsers","ace/mode/abap","ace/mode/actionscript","ace/mode/ada","ace/mode/applescript","ace/mode/asciidoc","ace/mode/autohotkey","ace/mode/batchfile","ace/mode/behaviour","ace/mode/c9search","ace/mode/cirru","ace/mode/clojure","ace/mode/cobol","ace/mode/coffee","ace/mode/coldfusion","ace/mode/csharp","ace/mode/css","ace/mode/curly","ace/mode/d","ace/mode/dart","ace/mode/diff","ace/mode/django","ace/mode/dockerfile","ace/mode/dot","ace/mode/eiffel","ace/mode/elixir","ace/mode/elm","ace/mode/erlang","ace/mode/forth","ace/mode/ftl","ace/mode/gcode","ace/mode/gherkin","ace/mode/gitignore","ace/mode/glsl","ace/mode/golang","ace/mode/groovy","ace/mode/haml","ace/mode/handlebars","ace/mode/haskell","ace/mode/haxe","ace/mode/html","ace/mode/ini","ace/mode/io","ace/mode/jack","ace/mode/jade","ace/mode/java","ace/mode/javascript","ace/mode/julia","ace/mode/latex","ace/mode/less","ace/mode/liquid","ace/mode/lisp","ace/mode/livescript","ace/mode/logiql","ace/mode/lsl","ace/mode/lua","ace/mode/luapage","ace/mode/lucene","ace/mode/makefile","ace/mode/markdown","ace/mode/mask","ace/mode/matlab","ace/mode/mel","ace/mode/mushcode","ace/mode/mysql","ace/mode/nix","ace/mode/objectivec","ace/mode/ocaml","ace/mode/pascal","ace/mode/perl","ace/mode/pgsql","ace/mode/php","ace/mode/powershell","ace/mode/praat","ace/mode/prolog","ace/mode/properties","ace/mode/protobuf","ace/mode/python","ace/mode/ruby","ace/mode/rust","ace/mode/sass","ace/mode/scad","ace/mode/scala","ace/mode/scheme","ace/mode/scss","ace/mode/sh","ace/mode/sjs","ace/mode/smarty","ace/mode/snippets","ace/mode/space","ace/mode/sql","ace/mode/stylus","ace/mode/swift","ace/mode/svg","ace/mode/tcl","ace/mode/tex","ace/mode/text","ace/mode/textile","ace/mode/toml","ace/mode/twig","ace/mode/typescript","ace/mode/vala","ace/mode/vbscript","ace/mode/velocity","ace/mode/verilog","ace/mode/vhdl","ace/mode/xml","ace/mode/xquery","ace/mode/yaml","ace/lib/oop","ace/lib/dom","ace/lib/lang","ace/lib/useragent","ace/keyboard/textinput","ace/mouse/mouse_handler","ace/mouse/fold_handler","ace/keyboard/keybinding","ace/edit_session","ace/search","ace/range","ace/lib/event_emitter","ace/commands/command_manager","ace/commands/default_commands","ace/config","ace/token_iterator","ace/clipboard"], function(require, exports, module) {
 "use strict";
 
 require("./lib/fixoldbrowsers");
@@ -48746,6 +48939,7 @@ require("./mode/snippets");
 require("./mode/space");
 require("./mode/sql");
 require("./mode/stylus");
+require("./mode/swift");
 require("./mode/svg");
 require("./mode/tcl");
 require("./mode/tex");
