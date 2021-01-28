@@ -2,4 +2,5 @@
 
 ### Bugfixes
 
+* Fixed issue where R code input could be executed in the wrong order in some cases (#8837)
 
