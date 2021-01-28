@@ -64,5 +64,6 @@ RStudio Server Pro has been renamed to RStudio Workbench to more accurately refl
 * Fix incorrect keyboard shortcuts shown in some places in the Command Palette (#8735)
 * Fixed an issue where Load Balanced Local Launcher instances could get into a state where they would no longer receive job updates from other nodes due to silent network drops (Pro #2281)
 * Fixed issue with formatting of closing braces when inserting newline in C++ code (#8770)
+* Add 'whole word' filter to Find in Files. (#8594)
 
 
