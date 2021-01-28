@@ -649,6 +649,13 @@ public class VirtualConsole
          match = match.nextMatch();
       }
 
+      Entry<Integer, ClassRange> last = class_.lastEntry();
+      if (last != null)
+      {
+         ClassRange range = last.getValue();
+         if (isVirtualized()) VirtualScrollerManager.prune(parent_.getParentElement(), range.element);
+      }
+
       // If there was any plain text after the last control character, add it
       if (tail < data.length())
          text(data.substring(tail), currentClazz, forceNewRange);
