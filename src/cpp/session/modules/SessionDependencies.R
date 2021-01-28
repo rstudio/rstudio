@@ -13,6 +13,19 @@
 #
 #
 
+.rs.addFunction("installFeatureDependencies", function(feature,
+                                                       caption,
+                                                       prompt)
+{
+   data <- list(
+      feature = .rs.scalar(feature),
+      caption = .rs.scalar(caption),
+      prompt  = .rs.scalar(prompt)
+   )
+   
+   .Call("rs_installFeatureDependencies", data, PACKAGE = "(embedding)")
+})
+
 # Topographically sorts a list of packages (nodes) by their dependencies (edges). Note that this is
 # not meant to be a general-purpose topo sort algorithm, and that it returns packages in the correct
 # installation order, which is the exact reverse of traditional topological order. For example,

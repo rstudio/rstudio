@@ -146,6 +146,13 @@
 
 .rs.addFunction("reticulate.matplotlib.onLoaded", function(module)
 {
+   # validate feature requirements
+   .rs.installFeatureDependencies(
+      feature = "python_plots",
+      caption = "Generating Python Plots",
+      prompt  = "Generating Python plots"
+   )
+      
    # install matplotlib hook if available
    if (requireNamespace("png", quietly = TRUE) &&
        reticulate::py_module_available("matplotlib"))

@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.common.dependencies.model;
 
 import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
 import com.google.gwt.core.client.JsArray;
@@ -31,5 +32,9 @@ public interface DependencyServerOperations extends CryptoServerOperations
        String context,
        JsArray<Dependency> dependencies,
        ServerRequestCallback<String> requestCallback);
+   
+   void installFeatureDependenciesCompleted(
+       boolean succeeded,
+       ServerRequestCallback<Void> requestCallback);
 }
 

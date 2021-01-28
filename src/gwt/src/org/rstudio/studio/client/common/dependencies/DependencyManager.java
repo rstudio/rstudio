@@ -30,12 +30,14 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.Value;
+import org.rstudio.studio.client.common.dependencies.events.InstallFeatureDependenciesEvent;
 import org.rstudio.studio.client.common.dependencies.events.InstallShinyEvent;
 import org.rstudio.studio.client.common.dependencies.model.Dependency;
 import org.rstudio.studio.client.common.dependencies.model.DependencyList;
 import org.rstudio.studio.client.common.dependencies.model.DependencyServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleActivateEvent;
@@ -53,6 +55,7 @@ import com.google.inject.Singleton;
 
 @Singleton
 public class DependencyManager implements InstallShinyEvent.Handler,
+                                          InstallFeatureDependenciesEvent.Handler,
                                           PackageStateChangedEvent.Handler
 {
    class DependencyRequest
@@ -100,6 +103,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
 
       eventBus.addHandler(InstallShinyEvent.TYPE, this);
       eventBus.addHandler(PackageStateChangedEvent.TYPE, this);
+      eventBus.addHandler(InstallFeatureDependenciesEvent.TYPE, this);
    }
 
    public void withDependencies(String progressCaption,
@@ -367,8 +371,28 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    @Override
    public void onInstallShiny(InstallShinyEvent event)
    {
-      withShiny(event.getUserAction(),
-                new Command() { public void execute() {}});
+      withShiny(event.getUserAction(), () -> {});
+   }
+   
+   @Override
+   public void onInstallFeatureDependencies(InstallFeatureDependenciesEvent event)
+   {
+      InstallFeatureDependenciesEvent.Data data = event.getData();
+      
+      CommandWithArg<Boolean> callback = (Boolean succeeded) ->
+      {
+         server_.installFeatureDependenciesCompleted(
+               succeeded,
+               new VoidServerRequestCallback());
+      };
+      
+      withDependencies(
+            data.getCaption(),
+            data.getPrompt(),
+            getFeatureDescription(data.getFeature()),
+            getFeatureDependencies(data.getFeature()),
+            true,
+            callback);
    }
 
    public void withReticulate(final String progressCaption,

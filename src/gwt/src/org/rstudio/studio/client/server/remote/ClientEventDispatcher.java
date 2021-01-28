@@ -46,6 +46,7 @@ import org.rstudio.studio.client.common.debugging.events.PackageLoadedEvent;
 import org.rstudio.studio.client.common.debugging.events.PackageUnloadedEvent;
 import org.rstudio.studio.client.common.debugging.events.UnhandledErrorEvent;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
+import org.rstudio.studio.client.common.dependencies.events.InstallFeatureDependenciesEvent;
 import org.rstudio.studio.client.common.dependencies.events.InstallShinyEvent;
 import org.rstudio.studio.client.common.rpubs.events.RPubsUploadStatusEvent;
 import org.rstudio.studio.client.common.rstudioapi.events.AskSecretEvent;
@@ -1068,6 +1069,11 @@ public class ClientEventDispatcher
          else if (type == ClientEvent.DocumentCloseAllNoSave)
          {
             eventBus_.dispatchEvent(new DocumentCloseAllNoSaveEvent());
+         }
+         else if (type == ClientEvent.InstallFeatureDependencies)
+         {
+            InstallFeatureDependenciesEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new InstallFeatureDependenciesEvent(data));
          }
          else
          {

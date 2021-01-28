@@ -1404,7 +1404,8 @@ SEXP rs_requestDocumentSave(SEXP idsSEXP)
    return r::sexp::create(waitForSuccess(event, s_waitForRequestDocumentSave), &protect);
 }
 
-SEXP rs_requestDocumentClose(SEXP idsSEXP, SEXP saveSXP) {
+SEXP rs_requestDocumentClose(SEXP idsSEXP, SEXP saveSXP)
+{
    r::sexp::Protect protect;
    
    json::Object jsonData;
@@ -1418,7 +1419,8 @@ SEXP rs_requestDocumentClose(SEXP idsSEXP, SEXP saveSXP) {
    return r::sexp::create(waitForSuccess(event, s_waitForRequestDocumentClose), &protect);
 }
 
-SEXP rs_documentCloseAllNoSave() {
+SEXP rs_documentCloseAllNoSave()
+{
    ClientEvent event(client_events::kDocumentCloseAllNoSave);
    module_context::enqueClientEvent(event);
    return R_NilValue;

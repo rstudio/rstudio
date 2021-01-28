@@ -5508,6 +5508,21 @@ public class RemoteServer implements Server
                   params,
                   requestCallback);
    }
+   
+   @Override
+   public void installFeatureDependenciesCompleted(boolean succeeded,
+                                                   ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(succeeded)
+            .get();
+      
+      sendRequest(
+            RPC_SCOPE,
+            "install_feature_dependencies_completed",
+            params,
+            requestCallback);
+   }
 
    @Override
    public  void getPackratPrerequisites(

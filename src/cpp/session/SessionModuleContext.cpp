@@ -269,6 +269,8 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
          type = session::client_events::kEnvironmentRemoved;
       else if (name == "environment_changed")
          type = session::client_events::kEnvironmentChanged;
+      else if (name == "install_feature_dependencies")
+         type = session::client_events::kInstallFeatureDependencies;
 
       if (type != -1)
       {

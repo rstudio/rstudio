@@ -202,6 +202,8 @@ const int kReticulateEvent = 187;
 const int kEnvironmentChanged = 188;
 const int kRStudioApiRequest = 189;
 const int kDocumentCloseAllNoSave = 190;
+const int kInstallFeatureDependencies = 191;
+const int kInstallFeatureDependenciesCompleted = 192;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -561,6 +563,10 @@ std::string ClientEvent::typeName() const
          return "rstudioapi_request";
       case client_events::kDocumentCloseAllNoSave:
          return "document_close_all_no_save";
+      case client_events::kInstallFeatureDependencies:
+         return "install_feature_dependencies";
+      case client_events::kInstallFeatureDependenciesCompleted:
+         return "install_feature_dependencies_completed";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " +
                              safe_convert::numberToString(type_));

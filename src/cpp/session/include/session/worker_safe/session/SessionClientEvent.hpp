@@ -203,6 +203,8 @@ extern const int kReticulateEvent;
 extern const int kEnvironmentChanged;
 extern const int kRStudioApiRequest;
 extern const int kDocumentCloseAllNoSave;
+extern const int kInstallFeatureDependencies;
+extern const int kInstallFeatureDependenciesCompleted;
 }
 
 class ClientEvent

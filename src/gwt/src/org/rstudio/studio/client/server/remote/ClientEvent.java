@@ -193,6 +193,7 @@ class ClientEvent extends JavaScriptObject
    public static final String ReticulateEvent = "reticulate_event";
    public static final String RStudioApiRequest = "rstudioapi_request";
    public static final String DocumentCloseAllNoSave = "document_close_all_no_save";
+   public static final String InstallFeatureDependencies = "install_feature_dependencies";
 
    protected ClientEvent()
    {

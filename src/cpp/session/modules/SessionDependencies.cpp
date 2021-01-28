@@ -26,6 +26,8 @@
 #include <core/json/JsonRpc.hpp>
 
 #include <r/RExec.hpp>
+#include <r/RJson.hpp>
+#include <r/RRoutines.hpp>
 #include <r/session/RSessionUtils.hpp>
 
 #include <session/SessionModuleContext.hpp>
@@ -42,6 +44,8 @@ namespace rstudio {
 namespace session {
 
 namespace {
+
+module_context::WaitForMethodFunction s_waitForInstallFeatureDependencies;
 
 struct EmbeddedPackage
 {
@@ -627,12 +631,56 @@ Error installDependencies(const json::JsonRpcRequest& request,
    return Success();
 }
 
+SEXP rs_installFeatureDependencies(SEXP dataSEXP)
+{
+   Error error;
+   r::sexp::Protect protect;
+   
+   // convert to JSON
+   json::Value dataJson;
+   error = r::json::jsonValueFromObject(dataSEXP, &dataJson);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return r::sexp::create(false, &protect);
+   }
+   
+   // create client event
+   ClientEvent event(client_events::kInstallFeatureDependencies, dataJson);
+   
+   // fire client event with wait-for method
+   json::JsonRpcRequest request;
+   if (!s_waitForInstallFeatureDependencies(&request, event))
+   {
+      error = systemError(
+               boost::system::errc::operation_canceled,
+               ERROR_LOCATION);
+      LOG_ERROR(error);
+      
+      return r::sexp::create(false, &protect);
+   }
+   
+   // read params
+   bool succeeded = false;
+   error = json::readParams(request.params, &succeeded);
+   if (error)
+      LOG_ERROR(error);
+   
+   return r::sexp::create(succeeded, &protect);
+   
+}
 
 } // anonymous namespace
 
 
 Error initialize()
-{         
+{
+   RS_REGISTER_CALL_METHOD(rs_installFeatureDependencies);
+   
+   // register wait for methods
+   s_waitForInstallFeatureDependencies =
+         module_context::registerWaitForMethod("install_feature_dependencies_completed");
+   
    // install handlers
    using boost::bind;
    using namespace session::module_context;

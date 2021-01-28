@@ -405,8 +405,13 @@
             "description": "Python/Reticulate",
             "packages": [
                 "jsonlite",
-                "png",
                 "reticulate"
+            ]
+        },
+        "python_plots": {
+            "description": "Python plots",
+            "packages": [
+                "png"
             ]
         },
         "stan": {
