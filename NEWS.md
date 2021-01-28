@@ -43,6 +43,7 @@ RStudio Server Pro has been renamed to RStudio Workbench to more accurately refl
 ### Bugfixes
 
 * Fix Windows Desktop installer to support running from path with characters from other codepages (#8421)
+* Fixed issue where debugger could hang when debugging functions called via do.call() (#5158)
 * Fixed issue where rendering .tex document with tinytex would fail on Windows (#8725)
 * Fixed issue where reinstalling an already-loaded package could cause errors (#8265)
 * Fixed issue where RStudio would inappropriately autoload the 'yaml' and 'tinytex' packages (#8698)
