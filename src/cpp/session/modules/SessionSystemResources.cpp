@@ -22,9 +22,9 @@
 
 #include <core/Exec.hpp>
 
-#include <R/RExec.hpp>
-#include <R/RSexp.hpp>
-#include <R/RJson.hpp>
+#include <r/RExec.hpp>
+#include <r/RSexp.hpp>
+#include <r/RJson.hpp>
 
 #include <boost/make_shared.hpp>
 
@@ -37,7 +37,8 @@ namespace system_resources {
 namespace {
 
 // Keep track of the time at which the active memory query was issued
-std::atomic<std::chrono::steady_clock::time_point> s_activeQuery;
+std::chrono::steady_clock::time_point s_activeQuery;
+boost::mutex s_queryMutex;
 
 // The interval, in seconds, at which we will query for memory statistics
 std::atomic<int> s_queryInterval;
@@ -66,15 +67,19 @@ void emitMemoryChangedEvent()
 void performScheduledMemoryQuery(std::chrono::steady_clock::time_point originQuery)
 {
    // Only perform this query if it hasn't been superseded by a newer one.
-   if (originQuery == s_activeQuery.load())
+   LOCK_MUTEX(s_queryMutex)
    {
-      // Only perform this query if pref is enabled; it's possible for queries
-      // to get scheduled even with the pref off
-      if (prefs::userPrefs().showMemoryUsage())
+      if (originQuery == s_activeQuery)
       {
-         emitMemoryChangedEvent();
+         // Only perform this query if pref is enabled; it's possible for queries
+         // to get scheduled even with the pref off
+         if (prefs::userPrefs().showMemoryUsage())
+         {
+            emitMemoryChangedEvent();
+         }
       }
    }
+   END_LOCK_MUTEX
 }
 
 /**
@@ -88,11 +93,15 @@ void scheduleMemoryChangedEvent()
    //
    // To debounce memory queries, we place them in a queue for 500ms, and
    // ignore any query execution that isn't at the top of the queue.
-   std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
-   s_activeQuery = now;
-   module_context::scheduleDelayedWork(
-            boost::posix_time::milliseconds(500),
-            boost::bind(performScheduledMemoryQuery, now));
+   LOCK_MUTEX(s_queryMutex)
+   {
+      std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+      s_activeQuery = now;
+      module_context::scheduleDelayedWork(
+               boost::posix_time::milliseconds(500),
+               boost::bind(performScheduledMemoryQuery, now));
+   }
+   END_LOCK_MUTEX
 }
 
 /**
