@@ -371,12 +371,16 @@ public class PaneManager
          center_.replaceWindows(newPanes.get(0), newPanes.get(1));
          right_.replaceWindows(newPanes.get(2), newPanes.get(3));
 
+         tabs1_ = tabNamesToTabs(evt.getValue().getTabSet1());
+         tabs2_ = tabNamesToTabs(evt.getValue().getTabSet2());
+
+         setWindowStateOnTabChange(panesByName_.get("TabSet1"), tabSet1TabPanel_, tabs1_);
+         setWindowStateOnTabChange(panesByName_.get("TabSet2"), tabSet2TabPanel_, tabs2_);
+         
          tabSet1TabPanel_.clear();
          tabSet2TabPanel_.clear();
          hiddenTabSetTabPanel_.clear();
-         tabs1_ = tabNamesToTabs(evt.getValue().getTabSet1());
          populateTabPanel(tabs1_, tabSet1TabPanel_, tabSet1MinPanel_);
-         tabs2_ = tabNamesToTabs(evt.getValue().getTabSet2());
          populateTabPanel(tabs2_, tabSet2TabPanel_, tabSet2MinPanel_);
          hiddenTabs_ = tabNamesToTabs(evt.getValue().getHiddenTabSet());
          populateTabPanel(hiddenTabs_, hiddenTabSetTabPanel_, hiddenTabSetMinPanel_);
@@ -766,6 +770,15 @@ public class PaneManager
       Debug.log("Couldn't locate adjacent pane for " + name);
       return "";
    }
+         
+   private void setWindowStateOnTabChange(LogicalWindow window, WorkbenchTabPanel tabPanel,
+                                          ArrayList<Tab> tabs)
+   {
+      if (tabPanel.isEmpty() && !tabs.isEmpty())
+         window.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL));
+      else if (!tabPanel.isEmpty() && tabs.isEmpty() && window.getState() != WindowState.MINIMIZE)
+         window.onWindowStateChange(new WindowStateChangeEvent(WindowState.MINIMIZE));
+   }
 
    @SuppressWarnings("rawtypes")
    private void focusWindow(String name)
@@ -1010,11 +1023,7 @@ public class PaneManager
 
    private void restorePaneLayout()
    {
-      // Ensure that all windows are in the 'normal' state. This allows
-      // hidden windows to display themselves, and so on. This also forces
-      // widgets to size themselves vertically.
-      for (LogicalWindow window : panes_)
-         window.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
+      restorePaneStateToDefault();
       restoreColumnLayout();
    }
 
@@ -1096,10 +1105,7 @@ public class PaneManager
 
    private void restoreSavedLayout()
    {
-      // Ensure that all windows are in the 'normal' state. This allows
-      // hidden windows to display themselves, and so on.
-      for (LogicalWindow window : panes_)
-         window.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
+      restorePaneStateToDefault();
 
       maximizedWindow_.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
 
@@ -1116,6 +1122,25 @@ public class PaneManager
       invalidateSavedLayoutState(true);
    }
 
+   private void restorePaneStateToDefault()
+   {
+      // Ensure that all windows are in the 'normal' state. This allows hidden windows to display
+      // themselves, and so on. This also forces widgets to size themselves vertically.
+      // TabSet Panes without any tabs should remain minimized.
+      for (LogicalWindow window : panes_)
+      {
+         if ((window == panesByName_.get("TabSet1") && tabSet1TabPanel_.isEmpty()) ||
+             (window == panesByName_.get("TabSet2") && tabSet2TabPanel_.isEmpty()))
+         {
+            if (window.getState() != WindowState.MINIMIZE)
+               window.onWindowStateChange(new WindowStateChangeEvent(WindowState.MINIMIZE));
+         }
+         else
+            window.onWindowStateChange(
+               new WindowStateChangeEvent(WindowState.NORMAL, true));
+      }
+   }
+   
    @Handler
    public void onMaximizeConsole()
    {
