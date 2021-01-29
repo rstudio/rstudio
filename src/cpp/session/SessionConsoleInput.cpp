@@ -44,7 +44,7 @@ namespace console_input {
 namespace {
 
 // queue of pending console input
-using ConsoleInputQueue = std::queue<rstudio::r::session::RConsoleInput>;
+using ConsoleInputQueue = std::deque<rstudio::r::session::RConsoleInput>;
 ConsoleInputQueue s_consoleInputBuffer;
 
 // manage global state indicating whether R is processing input
@@ -153,6 +153,8 @@ namespace {
 // code is going to be sent to the reticulate Python REPL.
 void fixupPendingConsoleInput()
 {
+   using namespace r::session;
+   
    // get next input
    auto input = s_consoleInputBuffer.front();
    
@@ -170,7 +172,7 @@ void fixupPendingConsoleInput()
    bool pyReplActive = modules::reticulate::isReplActive();
    
    // pop off current input (we're going to split and re-push now)
-   s_consoleInputBuffer.pop();
+   s_consoleInputBuffer.pop_front();
    
    // does this Python line start an indented block?
    // NOTE: should consider using tokenizer here
@@ -182,6 +184,9 @@ void fixupPendingConsoleInput()
    // keep track of the indentation used for the current block
    // of Python code (default to no indent)
    std::string blockIndent;
+   
+   // pending console input (we'll need to push this to the front of the queue)
+   std::vector<RConsoleInput> pendingInputs;
    
    // split input into list of commands
    std::vector<std::string> lines = core::algorithm::split(input.text, "\n");
@@ -261,10 +266,17 @@ void fixupPendingConsoleInput()
       }
    
       // add to buffer
-      using namespace r::session;
-      s_consoleInputBuffer.push(
+      pendingInputs.push_back(
                RConsoleInput(line, input.console, input.flags));
       
+   }
+   
+   // now push the pending inputs to the front of the queue
+   for (auto it = pendingInputs.rbegin();
+        it != pendingInputs.rend();
+        it++)
+   {
+      s_consoleInputBuffer.push_front(*it);
    }
 }
 
@@ -272,7 +284,7 @@ void popConsoleInput(rstudio::r::session::RConsoleInput* pConsoleInput)
 {
    fixupPendingConsoleInput();
    *pConsoleInput = s_consoleInputBuffer.front();
-   s_consoleInputBuffer.pop();
+   s_consoleInputBuffer.pop_front();
 }
 
 } // end anonymous namespace
@@ -362,7 +374,7 @@ bool rConsoleRead(const std::string& prompt,
 
 void addToConsoleInputBuffer(const rstudio::r::session::RConsoleInput& consoleInput)
 {
-   s_consoleInputBuffer.push(consoleInput);
+   s_consoleInputBuffer.push_back(consoleInput);
 }
 
 } // namespace console_input 
