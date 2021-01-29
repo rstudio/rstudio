@@ -86,10 +86,10 @@ public class FindOutputPresenter extends BasePresenter
 
       void showSearchCompleted();
 
-      void updateSearchLabel(String query, String path);
-      void updateSearchLabel(String query, String path, String replace);
-      void updateSearchLabel(String query, String path, String replace, int successCount,
-        int errorCount);
+      void updateSearchLabel(String query, String path, boolean wholeWord);
+      void updateSearchLabel(String query, String path, String replace, boolean wholeWord);
+      void updateSearchLabel(String query, String path, String replace, boolean wholeWord,
+                             int successCount, int errorCount);
       void clearSearchLabel();
 
       boolean getRegexPreviewMode();
@@ -319,6 +319,7 @@ public class FindOutputPresenter extends BasePresenter
                                                       currentFindHandle_ = handle;
                                                       updateSearchLabel(dialogState_.getQuery(),
                                                                         dialogState_.getPath(),
+                                                                        dialogState_.isWholeWord(),
                                                                         dialogState_.isRegex(),
                                                                         view_.getReplaceText());
                                                    }
@@ -383,9 +384,13 @@ public class FindOutputPresenter extends BasePresenter
                currentFindHandle_ = null;
                view_.hideProgress();
                view_.setStopReplaceButtonVisible(false);
-               updateSearchLabel(dialogState_.getQuery(), dialogState_.getPath(),
-                  dialogState_.isRegex(), view_.getReplaceText(), dialogState_.getErrorCount(),
-                  dialogState_.getResultsCount());
+               updateSearchLabel(dialogState_.getQuery(),
+                                 dialogState_.getPath(),
+                                 dialogState_.isWholeWord(),
+                                 dialogState_.isRegex(),
+                                 view_.getReplaceText(),
+                                 dialogState_.getErrorCount(),
+                                 dialogState_.getResultsCount());
             }
          }
       });
@@ -456,7 +461,7 @@ public class FindOutputPresenter extends BasePresenter
       view_.clearMatches();
       view_.addMatches(state.getResults().toArrayList());
 
-      updateSearchLabel(state.getInput(), state.getPath(), state.isRegex());
+      updateSearchLabel(state.getInput(), state.getPath(), state.isWholeWord(), state.isRegex());
 
       if (state.isRunning())
          view_.setStopSearchButtonVisible(true);
@@ -488,10 +493,14 @@ public class FindOutputPresenter extends BasePresenter
 
             // find result always starts with !replaceMode
             view_.setReplaceMode(false);
-
             view_.disableReplace();
-            server_.beginFind(input.getQuery(),
-                              input.isRegex(),
+            
+            String serverQuery = input.getQuery();
+            if (input.isWholeWord())
+               serverQuery = "\\b" + serverQuery + "\\b";
+            
+            server_.beginFind(serverQuery,
+                              input.isRegex() || input.isWholeWord(),
                               !input.isCaseSensitive(),
                               searchPath,
                               includeFilePatterns,
@@ -504,6 +513,7 @@ public class FindOutputPresenter extends BasePresenter
                                     currentFindHandle_ = handle;
                                     updateSearchLabel(input.getQuery(),
                                                       input.getPath(),
+                                                      input.isWholeWord(),
                                                       input.isRegex());
                                     view_.setStopSearchButtonVisible(true);
 
@@ -592,16 +602,16 @@ public class FindOutputPresenter extends BasePresenter
       view_.bringToFront();
    }
 
-   private void updateSearchLabel(String query, String path, boolean regex)
+   private void updateSearchLabel(String query, String path, boolean wholeWord, boolean regex)
    {
       if (regex)
          query = "/" + query + "/";
       else
          query = "\"" + query + "\"";
-      view_.updateSearchLabel(query, path);
+      view_.updateSearchLabel(query, path, wholeWord);
    }
 
-   private void updateSearchLabel(String query, String path, boolean regex,
+   private void updateSearchLabel(String query, String path, boolean wholeWord, boolean regex,
       String replace)
    {
       if (regex)
@@ -615,10 +625,10 @@ public class FindOutputPresenter extends BasePresenter
          replace = "\"" + replace + "\"";
       }
 
-      view_.updateSearchLabel(query, path, replace);
+      view_.updateSearchLabel(query, path, replace, wholeWord);
    }
 
-   private void updateSearchLabel(String query, String path, boolean regex,
+   private void updateSearchLabel(String query, String path, boolean wholeWord, boolean regex,
       String replace, int errorCount, int resultsCount)
    {
       if (regex)
@@ -632,7 +642,7 @@ public class FindOutputPresenter extends BasePresenter
          replace = "\"" + replace + "\"";
       }
       int successCount = resultsCount - errorCount;
-      view_.updateSearchLabel(query, path, replace, successCount, errorCount);
+      view_.updateSearchLabel(query, path, replace, wholeWord, successCount, errorCount);
    }
 
    private void stopAndClear()
