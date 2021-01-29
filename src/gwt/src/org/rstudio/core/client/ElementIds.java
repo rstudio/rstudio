@@ -186,6 +186,12 @@ public class ElementIds
    public final static String FIND_FILES_TEXT = "find_files_text";
    public static String getFindFilesText() { return getElementId(FIND_FILES_TEXT); }
    public final static String FIND_FILES_PATTERN_EXAMPLE = "find_files_pattern_example";
+   public final static String FIND_FILES_CASE = "find_files_case";
+   public static String getFindFilesCase() { return getElementId(FIND_FILES_CASE); }
+   public final static String FIND_FILES_WHOLE_WORD = "find_files_whole_word";
+   public static String getFindFilesWholeWord() { return getElementId(FIND_FILES_WHOLE_WORD); }
+   public final static String FIND_FILES_REGEX = "find_files_regex";
+   public static String getFindFilesRegex() { return getElementId(FIND_FILES_REGEX); }
 
    // ImportFileSettingsDialog
    public final static String IMPORT_FILE_NAME = "import_file_name";

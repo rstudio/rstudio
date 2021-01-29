@@ -50,6 +50,10 @@ public class FindInFilesState extends JavaScriptObject
       return this.path;
    }-*/;
 
+   public native final boolean isWholeWord() /*-{
+      return this.wholeWord;
+   }-*/;
+   
    public native final boolean isRegex() /*-{
       return this.regex;
    }-*/;
