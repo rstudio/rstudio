@@ -75,6 +75,11 @@ if( ${RSTUDIO_TARGET} STREQUAL "Development" OR ${RSTUDIO_TARGET} STREQUAL "Desk
    set(RSTUDIO_DESKTOP TRUE)
 endif()
 
+# override if requested
+if(RSTUDIO_NO_DESKTOP)
+   set(RSTUDIO_DESKTOP FALSE)
+endif()
+
 # set session32 if specified
 if(RSTUDIO_TARGET STREQUAL "SessionWin32")
    set(RSTUDIO_SESSION_WIN32 TRUE)
