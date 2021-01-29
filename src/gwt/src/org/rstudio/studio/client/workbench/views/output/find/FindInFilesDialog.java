@@ -70,7 +70,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
             path: path,
             regex: regex,
             caseSensitive: caseSensitive,
-            wholeWord: wholeWord, 
+            wholeWord: wholeWord,
             filePatterns: filePatterns,
             excludeFilePatterns: excludeFilePatterns,
             resultsCount: 0,
@@ -187,17 +187,13 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       setExampleIdAndAriaProperties(spanPatternExample_, txtFilePattern_);
       setExampleIdAndAriaProperties(spanExcludePatternExample_, txtExcludeFilePattern_);
 
-      checkboxCaseSensitive_.getElement().setId(ElementIds.FIND_FILES_CASE);
-      checkboxWholeWord_.getElement().setId(ElementIds.FIND_FILES_WHOLE_WORD);
-      checkboxRegex_.getElement().setId(ElementIds.FIND_FILES_REGEX);
-
       checkboxRegex_.addValueChangeHandler(event ->
       {
          // Disable "Whole Word" checkbox when regex is selected
          if (event.getValue())
             checkboxWholeWord_.setValue(false);
       });
-      
+
       checkboxWholeWord_.addValueChangeHandler(event ->
       {
          if (event.getValue())
@@ -266,7 +262,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       divCustomFilter_.getStyle().setDisplay(
             (listPresetFilePatterns_.getSelectedIndex() ==
              Include.CustomFilter.ordinal() &&
-             listPresetExcludeFilePatterns_.getSelectedIndex() != 
+             listPresetExcludeFilePatterns_.getSelectedIndex() !=
              Exclude.StandardGit.ordinal())
             ? Style.Display.BLOCK
             : Style.Display.NONE);
@@ -320,7 +316,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
 
       // disable custom filter text box when 'Custom Filter' is not selected
       divExcludeCustomFilter_.getStyle().setDisplay(
-            listPresetExcludeFilePatterns_.getSelectedIndex() == 
+            listPresetExcludeFilePatterns_.getSelectedIndex() ==
             Exclude.CustomFilter.ordinal()
             ? Style.Display.BLOCK
             : Style.Display.NONE);
@@ -344,9 +340,9 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       // if a disabled index is selected, change selection to All Files
       if (disableIncludes &&
           (listPresetFilePatterns_.getSelectedIndex() ==
-              Include.CommonRSourceFiles.ordinal() || 
+              Include.CommonRSourceFiles.ordinal() ||
            listPresetFilePatterns_.getSelectedIndex() ==
-              Include.RScripts.ordinal() || 
+              Include.RScripts.ordinal() ||
            listPresetFilePatterns_.getSelectedIndex() ==
              Include.CustomFilter.ordinal()))
       {
@@ -436,7 +432,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       txtSearchPattern_.selectAll();
       updateOkButtonEnabled();
    }
-   
+
    public void setSearchPattern(String searchPattern)
    {
       txtSearchPattern_.setText(searchPattern);
@@ -476,7 +472,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       txtExcludeFilePattern_.setText(excludeFilePatterns);
       manageExcludeFilePattern();
    }
-   
+
    private void updateOkButtonEnabled()
    {
       enableOkButton(txtSearchPattern_.getText().trim().length() > 0);
