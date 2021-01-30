@@ -108,7 +108,7 @@ public class MemUsageWidget extends Composite
          }
 
          menu_.setTitle(StringUtil.prettyFormatNumber(usage.getProcess().getKb()) +
-            " KiB used by R session (source: " + usage.getProcess().getProviderName());
+            " KiB used by R session (source: " + usage.getProcess().getProviderName() + ")");
          menu_.setText(formatBigMemory(usage.getProcess().getKb()));
 
          MiniPieWidget pie = new MiniPieWidget(
