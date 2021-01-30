@@ -160,9 +160,29 @@ private:
 class CGroupsMemoryProvider : public LinuxMemoryProvider
 {
 public:
-   CGroupsMemoryProvider(const std::string& path):
-      path_(path)
+   CGroupsMemoryProvider(const std::string& path)
    {
+      // In some environments, scoped memory stats are available in e.g.,
+      //
+      // /sys/fs/cgroup/memory/user.slice/user-1000.slice/user@1000.service/memory/memory.usage_in_bytes
+      // 
+      // In others, we will need to read the memory stats at a system level, e.g.,
+      //
+      // /sys/fs/cgroup/memory/memory.usage_in_bytes
+      //
+      // Check to see whether the path we read from the process's cgroup file exists. If it does, we
+      // can read scoped memory stats. 
+      FilePath statPath("/sys/fs/cgroup/memory" + path);
+      if (statPath.exists())
+      {
+         // Use scoped memory stats
+         path_ = path;
+      }
+      else
+      {
+         // Use system memory stats
+         path_ = "";
+      }
    }
 
    Error getMemoryUsed(int *pUsedKb, MemoryProvider *pProvider)
@@ -177,7 +197,7 @@ public:
 
    Error getTotalMemory(int *pTotalKb, MemoryProvider *pProvider)
    {
-      Error error = getCgroupMemoryStat("memory.max_usage_in_bytes", pTotalKb); 
+      Error error = getCgroupMemoryStat("memory.limit_in_bytes", pTotalKb); 
       if (!error)
       {
          *pProvider = MemoryProviderLinuxCgroups;
@@ -185,9 +205,8 @@ public:
       return error;
    }
 
-private:
-   // Gets a memory statistic from cgroup virtual file
-   Error getCgroupMemoryStat(const std::string& key, int *pValue)
+   // Gets a memory value from cgroup virtual file
+   Error getCGroupMemoryValue(const std::string&key, std::string *pValue)
    {
       // Attempt to read the statistic from the file.
       FilePath statPath = FilePath("/sys/fs/cgroup/memory" + path_).completePath(key);
@@ -198,15 +217,33 @@ private:
          return error;
       }
 
-      // Attempt to convert the file's entire contents to a stat
-      boost::optional<long> stat = safe_convert::stringTo<long>(
-            string_utils::trimWhitespace(val));
+      // Remove whitespace; these virtual files usually end with a newline
+      val = string_utils::trimWhitespace(val);
+      *pValue = val;
+
+      return Success();
+   }
+
+private:
+   // Gets a memory statistic from cgroup virtual file
+   Error getCgroupMemoryStat(const std::string& key, int *pValue)
+   {
+      // Get the raw value from the file
+      std::string val;
+      Error error = getCGroupMemoryValue(key, &val);
+      if (error)
+      {
+         return error;
+      }
+
+      // Attempt to convert the file's contents to a stat
+      boost::optional<long> stat = safe_convert::stringTo<long>(val);
       if (!stat)
       {
          error = systemError(boost::system::errc::protocol_error, 
                "Could not read cgroup memory stat " 
                "'" + key + "'"
-               " from " + statPath.getAbsolutePath() + " value " 
+               " from " 
                "'" + val + "'",
                ERROR_LOCATION);
          return error;
@@ -295,13 +332,33 @@ boost::shared_ptr<LinuxMemoryProvider> getMemoryProvider()
    LOCK_MUTEX(s_mutex)
    {
       std::string cgroup = getMemoryCgroup();
-      if (cgroup.empty())
+
+      if (!cgroup.empty())
+      {
+         // We got a cgroup. Does it have a limit?
+         boost::shared_ptr<CGroupsMemoryProvider> provider = 
+            boost::make_shared<CGroupsMemoryProvider>(cgroup);
+
+         // Check memory limit
+         std::string val;
+         Error error = provider->getCGroupMemoryValue("memory.limit_in_bytes", &val);
+
+         if (error)
+         {
+            LOG_ERROR(error);
+         }
+         else if (val != "9223372036854771712")
+         {
+            // This above is a special value indicating no memory limit (it is roughly the maximum
+            // int64 value). If we don't find it, we can use the cgroup to provide a memory limit.
+            s_provider = provider;
+         }
+      }
+
+      // Fall back on the default if we don't have a provider at this point.
+      if (!s_provider)
       {
          s_provider.reset(new MemInfoMemoryProvider());
-      }
-      else
-      {
-         s_provider.reset(new CGroupsMemoryProvider(cgroup));
       }
    }
    END_LOCK_MUTEX;
