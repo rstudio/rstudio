@@ -36,7 +36,9 @@ namespace modules {
 namespace system_resources {
 namespace {
 
-// Keep track of the time at which the active memory query was issued
+// Keep track of the time at which the active memory query was issued; this is
+// used to debounce memory queries. We use a steady_clock to avoid being
+// affected by system wall clock adjustments.
 std::chrono::steady_clock::time_point s_activeQuery;
 boost::mutex s_queryMutex;
 
@@ -121,7 +123,8 @@ void performPeriodicWork(bool refreshStats)
    }
 
    // Schedule the next re-query; we re-read the pref every time so it can be
-   // adjusted without a restart.
+   // adjusted without a restart. Note that setting the pref to 0 will cause
+   // automatic requeries to cease entirely.
    s_queryInterval = prefs::userPrefs().memoryQueryIntervalSeconds();
    if (s_queryInterval > 0)
    {
@@ -172,8 +175,12 @@ void onDetectChanges(module_context::ChangeSource source)
    scheduleMemoryChangedEvent();
 }
 
-
-Error getMemoryUsageReport(const json::JsonRpcRequest& request, json::JsonRpcResponse* pResponse)
+/**
+ * Gets a memory usage report for the client; this is a summary of both system
+ * and R memory usage and used to build the visualization in Tools -> Memory ->
+ * Memory Usage Report.
+ */
+Error getMemoryUsageReport(const json::JsonRpcRequest& , json::JsonRpcResponse* pResponse)
 {
    json::Object report;
 

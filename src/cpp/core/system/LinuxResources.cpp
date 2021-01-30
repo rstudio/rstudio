@@ -37,6 +37,12 @@ namespace core {
 namespace system {
 namespace {
 
+/**
+ * LinuxMemoryProvider is an abstract class that provides memory usage stats on
+ * Linux. As there are several ways of limiting and measuring memory usage on
+ * Linux, we figure out the most appropriate one at runtime and create the 
+ * corresponding provider (see getMemoryProvider factory)
+ */
 class LinuxMemoryProvider
 {
 public:
@@ -70,6 +76,10 @@ public:
    }
 };
 
+/**
+ * MemInfoMemoryProvider is a class supplying Linux memory statistics using the
+ * contents of the file /proc/meminfo.
+ */
 class MemInfoMemoryProvider : public LinuxMemoryProvider
 {
 public:
@@ -157,6 +167,10 @@ private:
    int memTotal_;
 };
 
+/**
+ * CGroupsMemoryProvider is a class supplying Linux memory statistics using the
+ * contents of the virtual cgroups filesystem at /sys/fs/cgroup.
+ */
 class CGroupsMemoryProvider : public LinuxMemoryProvider
 {
 public:
@@ -166,12 +180,13 @@ public:
       //
       // /sys/fs/cgroup/memory/user.slice/user-1000.slice/user@1000.service/memory/memory.usage_in_bytes
       // 
-      // In others, we will need to read the memory stats at a system level, e.g.,
+      // In others, we will need to read the memory stats at a system level,
+      // e.g.,
       //
       // /sys/fs/cgroup/memory/memory.usage_in_bytes
       //
-      // Check to see whether the path we read from the process's cgroup file exists. If it does, we
-      // can read scoped memory stats. 
+      // Check to see whether the path we read from the process's cgroup file
+      // exists. If it does, we can read scoped memory stats.
       FilePath statPath("/sys/fs/cgroup/memory" + path);
       if (statPath.exists())
       {
@@ -349,8 +364,9 @@ boost::shared_ptr<LinuxMemoryProvider> getMemoryProvider()
          }
          else if (val != "9223372036854771712")
          {
-            // This above is a special value indicating no memory limit (it is roughly the maximum
-            // int64 value). If we don't find it, we can use the cgroup to provide a memory limit.
+            // The above is a special value indicating no memory limit (it is
+            // roughly the maximum int64 value). If we don't find it, we can use
+            // the cgroup to provide a memory limit.
             s_provider = provider;
          }
       }

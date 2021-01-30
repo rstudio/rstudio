@@ -33,6 +33,10 @@ namespace session {
 namespace modules {
 namespace system_resources {
 
+/**
+ * MemoryStat represents a single memory usage statistic; a value in KiB and
+ * the source (provider) of that value.
+ */
 class MemoryStat {
 public:
    MemoryStat(): 
@@ -47,17 +51,21 @@ public:
    core::system::MemoryProvider provider;
 };
 
+/**
+ * MemoryUsage represents system-level memory usage.
+ */
 class MemoryUsage {
 public:
    MemoryUsage() {}
 
    core::json::Object toJson();
 
-   MemoryStat total;
-   MemoryStat used;
-   MemoryStat process;
+   MemoryStat total;    // Total system memory
+   MemoryStat used;     // System memory currently in use
+   MemoryStat process;  // Memory used by the current process
 };
 
+// Get information on current memory usage
 core::Error getMemoryUsage(boost::shared_ptr<MemoryUsage> *pMemUsage);
 
 core::Error initialize();
