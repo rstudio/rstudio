@@ -95,7 +95,7 @@ public:
 
    Error getMemoryUsed(long *pUsedKb, MemoryProvider *pProvider)
    {
-      int availableKb = 0;
+      long availableKb = 0;
       Error error = readMemInfoKey("MemAvailable", &availableKb);
       if (error)
       {
@@ -164,7 +164,7 @@ private:
       return error;
    }
 
-   int memTotal_;
+   long memTotal_;
 };
 
 /**
