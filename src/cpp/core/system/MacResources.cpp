@@ -43,7 +43,7 @@ Error getHostStats(vm_statistics_data_t *pStats)
 
 } // anonymous namespace
 
-Error getMemoryUsed(int *pUsedKb, MemoryProvider *pProvider)
+Error getMemoryUsed(long *pUsedKb, MemoryProvider *pProvider)
 {
     vm_statistics_data_t stats;
     Error error = getHostStats(&stats);
@@ -54,13 +54,13 @@ Error getMemoryUsed(int *pUsedKb, MemoryProvider *pProvider)
 
     // Typically pages are 4096 bytes, so to go from pages -> kb we'll be
     // multiplying by 4.
-    *pUsedKb = static_cast<int>(stats.active_count * (::getpagesize() / 1024));
+    *pUsedKb = static_cast<long>(stats.active_count * (::getpagesize() / 1024));
 
     *pProvider = MemoryProviderMacOS;
     return Success();
 }
 
-Error getTotalMemory(int *pTotalKb, MemoryProvider *pProvider)
+Error getTotalMemory(long *pTotalKb, MemoryProvider *pProvider)
 {
     int flags[] = { CTL_HW, HW_MEMSIZE };
     int64_t mem;
@@ -77,7 +77,7 @@ Error getTotalMemory(int *pTotalKb, MemoryProvider *pProvider)
     return Success();
 }
 
-Error getProcessMemoryUsed(int *pUsedKb, MemoryProvider *pProvider)
+Error getProcessMemoryUsed(long *pUsedKb, MemoryProvider *pProvider)
 {
     struct task_basic_info info;
     mach_msg_type_number_t count = TASK_BASIC_INFO_COUNT;
@@ -85,7 +85,7 @@ Error getProcessMemoryUsed(int *pUsedKb, MemoryProvider *pProvider)
         mach_task_self(), TASK_BASIC_INFO, reinterpret_cast<task_info_t>(&info), &count);
     if (ret == KERN_SUCCESS)
     {
-       *pUsedKb = static_cast<int>(info.resident_size / 1024);
+       *pUsedKb = static_cast<long>(info.resident_size / 1024);
        *pProvider = MemoryProviderMacOS;
        return Success();
     }

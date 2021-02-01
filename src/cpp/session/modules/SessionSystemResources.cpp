@@ -220,7 +220,7 @@ Error getMemoryUsageReport(const json::JsonRpcRequest& , json::JsonRpcResponse* 
 json::Object MemoryStat::toJson()
 {
    json::Object stat;
-   stat["kb"] = kb;
+   stat["kb"] = static_cast<int64_t>(kb);
    stat["provider"] = static_cast<int>(provider);
    return stat;
 }
@@ -239,7 +239,7 @@ Error getMemoryUsage(boost::shared_ptr<MemoryUsage> *pMemUsage)
    boost::shared_ptr<MemoryUsage> pStats = boost::make_shared<MemoryUsage>();
 
    Error error;
-   int kb;
+   long kb;
    core::system::MemoryProvider provider;
 
    error = core::system::getTotalMemory(&kb, &provider);

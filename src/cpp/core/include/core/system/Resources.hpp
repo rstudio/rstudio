@@ -54,11 +54,11 @@ enum MemoryProvider {
    MemoryProviderLinuxProcMeminfo
 };
 
-Error getMemoryUsed(int *pUsedKb, MemoryProvider *pProvider);
+Error getMemoryUsed(long *pUsedKb, MemoryProvider *pProvider);
 
-Error getProcessMemoryUsed(int *pUsedKb, MemoryProvider *pProvider);
+Error getProcessMemoryUsed(long *pUsedKb, MemoryProvider *pProvider);
 
-Error getTotalMemory(int *pTotalKb, MemoryProvider *pProvider);
+Error getTotalMemory(long *pTotalKb, MemoryProvider *pProvider);
 
 } // namespace system
 } // namespace core

@@ -71,7 +71,7 @@ test_context("Resources")
    test_that("All resource usage metrics are nonzero")
    {
       // Used memory should be nonzero
-      int kb = 0;
+      long kb = 0;
       MemoryProvider provider = MemoryProviderUnknown;
       Error error = getMemoryUsed(&kb, &provider);
       expect_false(error);
@@ -97,7 +97,7 @@ test_context("Resources")
 
    test_that("Memory resource usage metrics are congruent")
    {
-      int used, process, total;
+      long used, process, total;
       MemoryProvider provider;
       getMemoryUsed(&used, &provider);
       getProcessMemoryUsed(&process, &provider);

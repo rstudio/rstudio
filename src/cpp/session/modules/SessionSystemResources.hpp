@@ -42,12 +42,12 @@ public:
    MemoryStat(): 
        kb(0), provider(core::system::MemoryProviderUnknown)
        {}
-   MemoryStat(int kbIn, core::system::MemoryProvider providerIn): 
+   MemoryStat(long kbIn, core::system::MemoryProvider providerIn): 
        kb(kbIn), provider(providerIn)
        {}
    core::json::Object toJson();
 
-   int kb;
+   long kb;
    core::system::MemoryProvider provider;
 };
 

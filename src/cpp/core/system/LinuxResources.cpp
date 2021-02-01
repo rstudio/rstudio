@@ -47,14 +47,14 @@ class LinuxMemoryProvider
 {
 public:
 
-   virtual Error getMemoryUsed(int *pUsedKb, MemoryProvider *pProvider) = 0;
+   virtual Error getMemoryUsed(long *pUsedKb, MemoryProvider *pProvider) = 0;
 
-   virtual Error getTotalMemory(int *pTotalKb, MemoryProvider *pProvider) = 0;
+   virtual Error getTotalMemory(long *pTotalKb, MemoryProvider *pProvider) = 0;
 
-   Error getProcessMemoryUsed(int *pUsedKb, MemoryProvider *pProvider)
+   Error getProcessMemoryUsed(long *pUsedKb, MemoryProvider *pProvider)
    {
-      int size = 0;
-      int resident = 0;
+      long size = 0;
+      long resident = 0;
       try 
       {
          std::ifstream statm("/proc/self/statm");
@@ -93,7 +93,7 @@ public:
       }
    }
 
-   Error getMemoryUsed(int *pUsedKb, MemoryProvider *pProvider)
+   Error getMemoryUsed(long *pUsedKb, MemoryProvider *pProvider)
    {
       int availableKb = 0;
       Error error = readMemInfoKey("MemAvailable", &availableKb);
@@ -106,7 +106,7 @@ public:
       return Success();
    }
 
-   Error getTotalMemory(int *pTotalKb, MemoryProvider *pProvider)
+   Error getTotalMemory(long *pTotalKb, MemoryProvider *pProvider)
    {
       *pTotalKb = memTotal_;
       *pProvider = MemoryProviderLinuxProcMeminfo;
@@ -116,7 +116,7 @@ public:
 private:
 
    // Parses /proc/meminfo to look up specific memory stats.
-   Error readMemInfoKey(const std::string& key, int* pValue)
+   Error readMemInfoKey(const std::string& key, long* pValue)
    {
       // /proc/meminfo contains lines that look like this:
       //
@@ -200,7 +200,7 @@ public:
       }
    }
 
-   Error getMemoryUsed(int *pUsedKb, MemoryProvider *pProvider)
+   Error getMemoryUsed(long *pUsedKb, MemoryProvider *pProvider)
    {
       Error error = getCgroupMemoryStat("memory.usage_in_bytes", pUsedKb); 
       if (!error)
@@ -210,7 +210,7 @@ public:
       return error;
    }
 
-   Error getTotalMemory(int *pTotalKb, MemoryProvider *pProvider)
+   Error getTotalMemory(long *pTotalKb, MemoryProvider *pProvider)
    {
       Error error = getCgroupMemoryStat("memory.limit_in_bytes", pTotalKb); 
       if (!error)
@@ -241,7 +241,7 @@ public:
 
 private:
    // Gets a memory statistic from cgroup virtual file
-   Error getCgroupMemoryStat(const std::string& key, int *pValue)
+   Error getCgroupMemoryStat(const std::string& key, long *pValue)
    {
       // Get the raw value from the file
       std::string val;
@@ -265,7 +265,7 @@ private:
       }
 
       // Convert to kb for return value
-      *pValue = static_cast<int>(*stat / 1024);
+      *pValue = *stat / 1024;
       return Success();
    }
 
@@ -386,7 +386,7 @@ boost::shared_ptr<LinuxMemoryProvider> getMemoryProvider()
 
 
 
-Error getMemoryUsed(int *pUsedKb, MemoryProvider *pProvider)
+Error getMemoryUsed(long *pUsedKb, MemoryProvider *pProvider)
 {
    boost::shared_ptr<LinuxMemoryProvider> provider = getMemoryProvider();
    if (provider)
@@ -399,7 +399,7 @@ Error getMemoryUsed(int *pUsedKb, MemoryProvider *pProvider)
    return Success();
 }
 
-Error getProcessMemoryUsed(int *pUsedKb, MemoryProvider *pProvider)
+Error getProcessMemoryUsed(long *pUsedKb, MemoryProvider *pProvider)
 {
    boost::shared_ptr<LinuxMemoryProvider> provider = getMemoryProvider();
    if (provider)
@@ -412,7 +412,7 @@ Error getProcessMemoryUsed(int *pUsedKb, MemoryProvider *pProvider)
    return Success();
 }
 
-Error getTotalMemory(int *pTotalKb, MemoryProvider *pProvider)
+Error getTotalMemory(long *pTotalKb, MemoryProvider *pProvider)
 {
    boost::shared_ptr<LinuxMemoryProvider> provider = getMemoryProvider();
    if (provider)
