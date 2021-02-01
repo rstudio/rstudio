@@ -2023,7 +2023,7 @@ public class UserPrefsAccessor extends Prefs
       return bool(
          "show_launcher_jobs_tab",
          "", 
-         "Whether to show the Launcher jobs tab in RStudio Pro and RStudio Workbench.",
+         "Whether to show the Launcher jobs tab in RStudio Pro and RStudio Workbench.", 
          true);
    }
 
@@ -2035,7 +2035,7 @@ public class UserPrefsAccessor extends Prefs
       return enumeration(
          "launcher_jobs_sort",
          "", 
-         "How to sort jobs in the Launcher tab in RStudio Pro and RStudio Workbench.",
+         "How to sort jobs in the Launcher tab in RStudio Pro and RStudio Workbench.", 
          new String[] {
             LAUNCHER_JOBS_SORT_RECORDED,
             LAUNCHER_JOBS_SORT_STATE
@@ -2230,8 +2230,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "show_user_home_page",
-         "Show user home page in RStudio Workbench",
-         "When to show the server home page in RStudio Workbench.",
+         "Show user home page in RStudio Workbench", 
+         "When to show the server home page in RStudio Workbench.", 
          new String[] {
             SHOW_USER_HOME_PAGE_ALWAYS,
             SHOW_USER_HOME_PAGE_NEVER,
@@ -2252,7 +2252,7 @@ public class UserPrefsAccessor extends Prefs
       return bool(
          "reuse_sessions_for_project_links",
          "", 
-         "Whether to reuse sessions when opening projects in RStudio Workbench.",
+         "Whether to reuse sessions when opening projects in RStudio Workbench.", 
          false);
    }
 
@@ -2467,8 +2467,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "restore_project_r_version",
-         "Restore project R version in RStudio Pro and RStudio Workbench",
-         "Whether to restore the last version of R used by the project in RStudio Pro and RStudio Workbench.",
+         "Restore project R version in RStudio Pro and RStudio Workbench", 
+         "Whether to restore the last version of R used by the project in RStudio Pro and RStudio Workbench.", 
          true);
    }
 
@@ -2583,6 +2583,18 @@ public class UserPrefsAccessor extends Prefs
          "tab_key_move_focus",
          "Tab key always moves focus", 
          "Tab key moves focus out of text editing controls instead of inserting tabs.", 
+         false);
+   }
+
+   /**
+    * In source editor tab panel, tab key moves focus directly from find text to replace text.
+    */
+   public PrefValue<Boolean> findPanelLegacyTabSequence()
+   {
+      return bool(
+         "find_panel_legacy_tab_sequence",
+         "Tab key behavior in find panel matches RStudio 1.2 and earlier", 
+         "In source editor tab panel, tab key moves focus directly from find text to replace text.", 
          false);
    }
 
@@ -3443,6 +3455,8 @@ public class UserPrefsAccessor extends Prefs
          reducedMotion().setValue(layer, source.getBool("reduced_motion"));
       if (source.hasKey("tab_key_move_focus"))
          tabKeyMoveFocus().setValue(layer, source.getBool("tab_key_move_focus"));
+      if (source.hasKey("find_panel_legacy_tab_sequence"))
+         findPanelLegacyTabSequence().setValue(layer, source.getBool("find_panel_legacy_tab_sequence"));
       if (source.hasKey("show_focus_rectangles"))
          showFocusRectangles().setValue(layer, source.getBool("show_focus_rectangles"));
       if (source.hasKey("show_panel_focus_rectangle"))
@@ -3512,7 +3526,7 @@ public class UserPrefsAccessor extends Prefs
    }
    public List<PrefValue<?>> allPrefs()
    {
-      ArrayList<PrefValue<?>> prefs = new ArrayList<>();
+      ArrayList<PrefValue<?>> prefs = new ArrayList<PrefValue<?>>();
       prefs.add(runRprofileOnResume());
       prefs.add(saveWorkspace());
       prefs.add(loadWorkspace());
@@ -3696,6 +3710,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(typingStatusDelayMs());
       prefs.add(reducedMotion());
       prefs.add(tabKeyMoveFocus());
+      prefs.add(findPanelLegacyTabSequence());
       prefs.add(showFocusRectangles());
       prefs.add(showPanelFocusRectangle());
       prefs.add(autoSaveOnIdle());

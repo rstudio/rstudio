@@ -1213,6 +1213,12 @@
             "title": "Tab key always moves focus",
             "description": "Tab key moves focus out of text editing controls instead of inserting tabs."
         },
+        "find_panel_legacy_tab_sequence": {
+            "type": "boolean",
+            "default": false,
+            "title": "Tab key behavior in find panel matches RStudio 1.2 and earlier",
+            "description": "In source editor tab panel, tab key moves focus directly from find text to replace text."
+        },
         "show_focus_rectangles": {
             "type": "boolean",
             "default": true,
