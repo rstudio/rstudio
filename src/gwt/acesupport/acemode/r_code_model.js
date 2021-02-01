@@ -1259,11 +1259,20 @@ var RCodeModel = function(session, tokenizer,
          return Range.fromPoints(pos, end);
       }
       else if (foldToken.value == '}') {
-         var start = session.$findOpeningBracket(foldToken.value, pos);
+
+         var start = session.$findOpeningBracket(
+            foldToken.value,
+            pos,
+            /(?:^|[.])paren(?:$|[.])/
+         );
+         
          if (!start)
             return;
-         return Range.fromPoints({row: start.row, column: start.column+1},
-                                 {row: pos.row, column: pos.column-1});
+
+         return Range.fromPoints(
+            {row: start.row, column: start.column + 1},
+            {row: pos.row, column: pos.column - 1}
+         );
       }
       else if (/\bcodebegin\b/.test(foldToken.type)) {
          // Find next codebegin or codeend
