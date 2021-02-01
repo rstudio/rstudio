@@ -366,7 +366,7 @@ var $alignCase                 = true; // case 'a':
                row: row,
                column: line.length
             },
-            /(?:^|[.])paren(?:$|[.])/
+            Utils.getTokenTypeRegex("paren")
          );
 
          if (openBracePos) {
@@ -398,7 +398,7 @@ var $alignCase                 = true; // case 'a':
                row: row,
                column: /(\S)/.exec(line).index + 1
             },
-            /(?:^|[.])paren(?:$|[.])/
+            Utils.getTokenTypeRegex("paren")
          );
 
          if (openBracePos) {
