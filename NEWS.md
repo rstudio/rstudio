@@ -67,5 +67,5 @@ RStudio Server Pro has been renamed to RStudio Workbench to more accurately refl
 * Fixed issue with formatting of closing braces when inserting newline in C++ code (#8770)
 * Add 'whole word' filter to Find in Files. (#8594)
 * Fixed issue where empty panes would remain open and pop open unexpectedly (#8460)
-
+* Fixed an issue where the Kubernetes Launcher could hang in Azure Kubernetes Service (AKS) environments by lowering the watch-timeout-seconds parameter default down to 3 minutes instead of 5 (Pro #2312)
 
