@@ -39,6 +39,7 @@ RStudio Server Pro has been renamed to RStudio Workbench to more accurately refl
 * Cmd+U now toggles underlining in the visual editor on macOS (#8656)
 * Improve YAML cursor position after omni-insert in the visual editor (#8670)
 * Detect newer plumber tags when enabling plumber integration (#8118)
+* Show memory usage details in Environment pane (#4033)
 
 ### Bugfixes
 
