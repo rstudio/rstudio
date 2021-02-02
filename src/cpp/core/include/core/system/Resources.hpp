@@ -54,10 +54,17 @@ enum MemoryProvider {
    MemoryProviderLinuxProcMeminfo
 };
 
-Error getMemoryUsed(long *pUsedKb, MemoryProvider *pProvider);
 
+// Returns the amount of memory used by the *current* system process (i.e. the one that calls this
+// function). Note that this will not be the memory used by the main R session if called from a
+// forked/child process.
 Error getProcessMemoryUsed(long *pUsedKb, MemoryProvider *pProvider);
 
+// Returns the total amount of memory in use.
+Error getTotalMemoryUsed(long *pUsedKb, MemoryProvider *pProvider);
+
+// Returns the total amount of available memory. This may be a physical constraint (e.g., physical
+// RAM) or a virtual one (e.g., a cgroup-imposed limit)
 Error getTotalMemory(long *pTotalKb, MemoryProvider *pProvider);
 
 } // namespace system

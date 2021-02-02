@@ -43,7 +43,7 @@ Error getHostStats(vm_statistics_data_t *pStats)
 
 } // anonymous namespace
 
-Error getMemoryUsed(long *pUsedKb, MemoryProvider *pProvider)
+Error getTotalMemoryUsed(long *pUsedKb, MemoryProvider *pProvider)
 {
     vm_statistics_data_t stats;
     Error error = getHostStats(&stats);

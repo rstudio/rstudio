@@ -247,7 +247,7 @@ Error getMemoryUsage(boost::shared_ptr<MemoryUsage> *pMemUsage)
       return error;
    pStats->total = MemoryStat(kb, provider);
 
-   error = core::system::getMemoryUsed(&kb, &provider);
+   error = core::system::getTotalMemoryUsed(&kb, &provider);
    if (error)
       return error;
    pStats->used = MemoryStat(kb, provider);

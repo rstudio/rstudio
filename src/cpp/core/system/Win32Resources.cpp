@@ -24,7 +24,7 @@ namespace rstudio {
 namespace core {
 namespace system {
 
-Error getMemoryUsed(long *pUsedKb, MemoryProvider *pProvider)
+Error getTotalMemoryUsed(long *pUsedKb, MemoryProvider *pProvider)
 {
    MEMORYSTATUSEX status;
    status.dwLength = sizeof(status);

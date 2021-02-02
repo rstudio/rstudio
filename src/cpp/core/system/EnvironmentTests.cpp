@@ -73,7 +73,7 @@ test_context("Resources")
       // Used memory should be nonzero
       long kb = 0;
       MemoryProvider provider = MemoryProviderUnknown;
-      Error error = getMemoryUsed(&kb, &provider);
+      Error error = getTotalMemoryUsed(&kb, &provider);
       expect_false(error);
       expect_true(kb > 0);
       expect_true(provider != MemoryProviderUnknown);
@@ -99,7 +99,7 @@ test_context("Resources")
    {
       long used, process, total;
       MemoryProvider provider;
-      getMemoryUsed(&used, &provider);
+      getTotalMemoryUsed(&used, &provider);
       getProcessMemoryUsed(&process, &provider);
       getTotalMemory(&total, &provider);
 

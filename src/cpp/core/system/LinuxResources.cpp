@@ -47,7 +47,7 @@ class LinuxMemoryProvider
 {
 public:
 
-   virtual Error getMemoryUsed(long *pUsedKb, MemoryProvider *pProvider) = 0;
+   virtual Error getTotalMemoryUsed(long *pUsedKb, MemoryProvider *pProvider) = 0;
 
    virtual Error getTotalMemory(long *pTotalKb, MemoryProvider *pProvider) = 0;
 
@@ -93,7 +93,7 @@ public:
       }
    }
 
-   Error getMemoryUsed(long *pUsedKb, MemoryProvider *pProvider)
+   Error getTotalMemoryUsed(long *pUsedKb, MemoryProvider *pProvider)
    {
       long availableKb = 0;
       Error error = readMemInfoKey("MemAvailable", &availableKb);
@@ -211,7 +211,7 @@ public:
       }
    }
 
-   Error getMemoryUsed(long *pUsedKb, MemoryProvider *pProvider)
+   Error getTotalMemoryUsed(long *pUsedKb, MemoryProvider *pProvider)
    {
       Error error = getCgroupMemoryStat("memory.usage_in_bytes", pUsedKb); 
       if (!error)
@@ -397,12 +397,12 @@ boost::shared_ptr<LinuxMemoryProvider> getMemoryProvider()
 
 
 
-Error getMemoryUsed(long *pUsedKb, MemoryProvider *pProvider)
+Error getTotalMemoryUsed(long *pUsedKb, MemoryProvider *pProvider)
 {
    boost::shared_ptr<LinuxMemoryProvider> provider = getMemoryProvider();
    if (provider)
    {
-      return provider->getMemoryUsed(pUsedKb, pProvider);
+      return provider->getTotalMemoryUsed(pUsedKb, pProvider);
    }
 
    *pUsedKb = 0;
