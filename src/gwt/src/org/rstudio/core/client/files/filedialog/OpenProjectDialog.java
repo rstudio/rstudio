@@ -20,6 +20,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.FormCheckBox;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
@@ -43,8 +44,8 @@ public class OpenProjectDialog extends FileDialog
                 boolean newSessionOption,
                 final ProgressOperationWithInput<OpenProjectParams> operation)
    {
-      super("Open Project", null, Roles.getDialogRole(), "Open", false, false, false, context, 
-            "R Projects (*.RProj)", 
+      super("Open Project", null, Roles.getDialogRole(), "Open", false, false, false, context,
+            "R Projects (*.RProj)",
             new ProgressOperationWithInput<FileSystemItem>()
             {
                @Override
@@ -54,15 +55,15 @@ public class OpenProjectDialog extends FileDialog
                   // NOTE: we currently do not expose R version selection
                   // for the open project dialog since projects already
                   // have a pinned R version by default
-                  operation.execute(new OpenProjectParams(input, 
+                  operation.execute(new OpenProjectParams(input,
                                                           null,
                                                           inNewSession_),
                         indicator);
                }
             });
-      
+
       RStudioGinjector.INSTANCE.injectMembers(this);
-      
+
       // Used to create a project in an existing directory which
       // does not already have a .Rproj file.
       ThemedButton createButton = new ThemedButton("Create", new ClickHandler()
@@ -79,7 +80,7 @@ public class OpenProjectDialog extends FileDialog
                      {
                         accept(FileSystemItem.createFile(response));
                      }
-                     
+
                      @Override
                      public void onError(ServerError error)
                      {
@@ -90,8 +91,8 @@ public class OpenProjectDialog extends FileDialog
          }
       });
       addButton(createButton, ElementIds.CREATE_BUTTON);
-      
-      newSessionCheck_ = new CheckBox("Open in new session");
+
+      newSessionCheck_ = new FormCheckBox("Open in new session", ElementIds.OP_NEW_SESSION);
       newSessionCheck_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
       {
          @Override
@@ -103,16 +104,16 @@ public class OpenProjectDialog extends FileDialog
       if (newSessionOption)
          addLeftWidget(newSessionCheck_);
    }
-   
+
    @Inject
    private void initialize(ProjectsServerOperations server)
    {
       server_ = server;
    }
-   
+
    private CheckBox newSessionCheck_;
    private static boolean inNewSession_ = false;
-   
+
    // Injected ----
    private ProjectsServerOperations server_;
 }

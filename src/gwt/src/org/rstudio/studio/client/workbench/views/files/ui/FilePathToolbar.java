@@ -18,6 +18,7 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.*;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.events.SelectionCommitEvent;
@@ -115,7 +116,8 @@ public class FilePathToolbar extends Composite
       navigationObserver_ = navigationObserver;
 
       // select all check box
-      CheckBoxHiddenLabel selectAllCheckBox = new CheckBoxHiddenLabel("Select all files");
+      CheckBoxHiddenLabel selectAllCheckBox = new CheckBoxHiddenLabel("Select all files",
+                                                                      ElementIds.FP_SELECT_ALL);
       selectAllCheckBox.addStyleDependentName("FilesSelectAll");
       selectAllCheckBox.addValueChangeHandler(new ValueChangeHandler<Boolean>(){
 
