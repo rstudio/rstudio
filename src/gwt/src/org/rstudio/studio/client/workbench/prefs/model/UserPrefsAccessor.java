@@ -2587,14 +2587,14 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * In source editor tab panel, tab key moves focus directly from find text to replace text.
+    * In source editor find panel, tab key moves focus directly from find text to replace text.
     */
    public PrefValue<Boolean> findPanelLegacyTabSequence()
    {
       return bool(
          "find_panel_legacy_tab_sequence",
-         "Tab key behavior in find panel matches RStudio 1.2 and earlier", 
-         "In source editor tab panel, tab key moves focus directly from find text to replace text.", 
+         "Tab key moves focus directly from find text to replace text in find panel", 
+         "In source editor find panel, tab key moves focus directly from find text to replace text.", 
          false);
    }
 

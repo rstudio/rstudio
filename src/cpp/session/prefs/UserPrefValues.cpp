@@ -2403,7 +2403,7 @@ core::Error UserPrefValues::setTabKeyMoveFocus(bool val)
 }
 
 /**
- * In source editor tab panel, tab key moves focus directly from find text to replace text.
+ * In source editor find panel, tab key moves focus directly from find text to replace text.
  */
 bool UserPrefValues::findPanelLegacyTabSequence()
 {

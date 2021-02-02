@@ -1487,7 +1487,7 @@ public:
    core::Error setTabKeyMoveFocus(bool val);
 
    /**
-    * In source editor tab panel, tab key moves focus directly from find text to replace text.
+    * In source editor find panel, tab key moves focus directly from find text to replace text.
     */
    bool findPanelLegacyTabSequence();
    core::Error setFindPanelLegacyTabSequence(bool val);
