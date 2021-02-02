@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -153,8 +154,23 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       {
          String chunkId = notebook_.getRowChunkId(
                chunk.getScope().getPreamble().getRow());
+
          if (chunkId == null)
-            return;
+         {
+            // If this chunk has never been executed before, it doesn't have a ID yet;
+            // create one so that we can queue the chunk.
+            ChunkDefinition def = getChunkDefAtRow(chunk.getScope().getEnd().getRow(), null);
+            if (def == null)
+            {
+               // Could not create an ID for the chunk; this is not expected.
+               Debug.logWarning("Could not create a notebook output chunk at row " +
+                  chunk.getScope().getBodyStart().getRow() + " of " +
+                  sentinel_.getPath());
+               return;
+            }
+
+            chunkId = def.getChunkId();
+         }
 
          NotebookQueueUnit unit = getUnit(chunkId);
          if (unit == null)
