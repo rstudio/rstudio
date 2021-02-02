@@ -2403,6 +2403,19 @@ core::Error UserPrefValues::setTabKeyMoveFocus(bool val)
 }
 
 /**
+ * In source editor find panel, tab key moves focus directly from find text to replace text.
+ */
+bool UserPrefValues::findPanelLegacyTabSequence()
+{
+   return readPref<bool>("find_panel_legacy_tab_sequence");
+}
+
+core::Error UserPrefValues::setFindPanelLegacyTabSequence(bool val)
+{
+   return writePref("find_panel_legacy_tab_sequence", val);
+}
+
+/**
  * Control with keyboard focus displays a visual focus indicator.
  */
 bool UserPrefValues::showFocusRectangles()
@@ -3043,6 +3056,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kTypingStatusDelayMs,
       kReducedMotion,
       kTabKeyMoveFocus,
+      kFindPanelLegacyTabSequence,
       kShowFocusRectangles,
       kShowPanelFocusRectangle,
       kAutoSaveOnIdle,

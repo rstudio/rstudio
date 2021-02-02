@@ -33,14 +33,14 @@ public class ProjectOpener
 {
    public final static int PROJECT_TYPE_FILE   = 0;
    public final static int PROJECT_TYPE_SHARED = 1;
-   
+
    private void initialize()
    {
       if (initialized_) return;
       initialized_ = true;
       server_ = RStudioGinjector.INSTANCE.getServer();
    }
-   
+
    public void showOpenProjectDialog(
                   FileSystemContext fsContext,
                   ProjectsServerOperations server,
@@ -50,7 +50,7 @@ public class ProjectOpener
                   final ProgressOperationWithInput<OpenProjectParams> onCompleted)
    {
       initialize();
-      
+
       // use the default dialog on desktop mode or single-session mode
       FileDialogs dialogs = RStudioGinjector.INSTANCE.getFileDialogs();
       if (Desktop.hasDesktopFrame() ||
@@ -58,8 +58,8 @@ public class ProjectOpener
                                                  .getMultiSession())
       {
          dialogs.openFile(
-            "Open Project", 
-            fsContext, 
+            "Open Project",
+            fsContext,
             FileSystemItem.createDir(defaultLocation),
             "R Projects (*.Rproj)",
             true,
@@ -80,11 +80,11 @@ public class ProjectOpener
                               indicator);
                      }
                   };
-                  
+
                   // null return values here imply a cancellation
                   if (input == null)
                      return;
-                  
+
                   if (input.isDirectory())
                   {
                      // Locate or create the .Rproj associated with this directory
@@ -107,9 +107,9 @@ public class ProjectOpener
                                  // There's a chance that there's an Rproj even
                                  // if we couldn't find or create it; make a best-effort
                                  // attempt to open it.
-                                 String rprojPath = 
+                                 String rprojPath =
                                        input.completePath(input.getName() + ".Rproj");
-                                 FileSystemItem rprojFile = 
+                                 FileSystemItem rprojFile =
                                        FileSystemItem.createFile(rprojPath);
                                  onProjectFileReady.execute(rprojFile);
                               }
@@ -120,18 +120,18 @@ public class ProjectOpener
                      onProjectFileReady.execute(input);
                   }
                }
-            });  
+            });
       }
       else
       {
          // in multi-session mode, we have a special dialog for opening projects
          WebFileDialogs webDialogs = (WebFileDialogs)dialogs;
-         webDialogs.openProject(fsContext, 
-               FileSystemItem.createDir(defaultLocation), 
+         webDialogs.openProject(fsContext,
+               FileSystemItem.createDir(defaultLocation),
                defaultType, showNewSession, onCompleted);
       }
    }
-   
+
    // Injected ----
    private boolean initialized_;
    private ProjectsServerOperations server_;

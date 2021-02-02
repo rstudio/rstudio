@@ -2587,6 +2587,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * In source editor find panel, tab key moves focus directly from find text to replace text.
+    */
+   public PrefValue<Boolean> findPanelLegacyTabSequence()
+   {
+      return bool(
+         "find_panel_legacy_tab_sequence",
+         "Tab key moves focus directly from find text to replace text in find panel", 
+         "In source editor find panel, tab key moves focus directly from find text to replace text.", 
+         false);
+   }
+
+   /**
     * Control with keyboard focus displays a visual focus indicator.
     */
    public PrefValue<Boolean> showFocusRectangles()
@@ -3467,6 +3479,8 @@ public class UserPrefsAccessor extends Prefs
          reducedMotion().setValue(layer, source.getBool("reduced_motion"));
       if (source.hasKey("tab_key_move_focus"))
          tabKeyMoveFocus().setValue(layer, source.getBool("tab_key_move_focus"));
+      if (source.hasKey("find_panel_legacy_tab_sequence"))
+         findPanelLegacyTabSequence().setValue(layer, source.getBool("find_panel_legacy_tab_sequence"));
       if (source.hasKey("show_focus_rectangles"))
          showFocusRectangles().setValue(layer, source.getBool("show_focus_rectangles"));
       if (source.hasKey("show_panel_focus_rectangle"))
@@ -3724,6 +3738,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(typingStatusDelayMs());
       prefs.add(reducedMotion());
       prefs.add(tabKeyMoveFocus());
+      prefs.add(findPanelLegacyTabSequence());
       prefs.add(showFocusRectangles());
       prefs.add(showPanelFocusRectangle());
       prefs.add(autoSaveOnIdle());

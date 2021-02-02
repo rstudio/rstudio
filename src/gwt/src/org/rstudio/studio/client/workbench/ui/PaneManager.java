@@ -374,9 +374,30 @@ public class PaneManager
          tabs1_ = tabNamesToTabs(evt.getValue().getTabSet1());
          tabs2_ = tabNamesToTabs(evt.getValue().getTabSet2());
 
-         setWindowStateOnTabChange(panesByName_.get("TabSet1"), tabSet1TabPanel_, tabs1_);
-         setWindowStateOnTabChange(panesByName_.get("TabSet2"), tabSet2TabPanel_, tabs2_);
-         
+         WindowState oldTabSet1State = panesByName_.get("TabSet1").getState();
+         WindowState oldTabSet2State = panesByName_.get("TabSet2").getState();
+         WindowState tabSet1State = setWindowStateOnTabChange(panesByName_.get("TabSet1"),
+         tabSet1TabPanel_, tabs1_);
+         WindowState tabSet2State = setWindowStateOnTabChange(panesByName_.get("TabSet2"),
+            tabSet2TabPanel_, tabs2_);
+
+         // Additional checks when tab set panes are in the same column and either has had a
+         // state change
+         if (getCurrentConfig().getTabSet1Left() == getCurrentConfig().getTabSet2Left() &&
+             (oldTabSet1State != tabSet1State || oldTabSet2State != tabSet2State))
+         {
+            if (tabSet1State == WindowState.MINIMIZE &&
+                tabSet2State == WindowState.MINIMIZE)
+            {
+               double rightTargetSize = 0.0;
+               if (getCurrentConfig().getTabSet1Left())
+                  rightTargetSize = right_.getOffsetWidth() + center_.getOffsetWidth();
+               resizeHorizontally(rightTargetSize, panel_.getLeftWidgetSizes());
+            }
+            else if (center_.getOffsetWidth() == 0 || right_.getOffsetWidth() == 0)
+               resizeHorizontally(panel_.getDefaultSplitterWidth(), panel_.getLeftWidgetSizes());
+         }
+
          tabSet1TabPanel_.clear();
          tabSet2TabPanel_.clear();
          hiddenTabSetTabPanel_.clear();
@@ -770,14 +791,25 @@ public class PaneManager
       Debug.log("Couldn't locate adjacent pane for " + name);
       return "";
    }
-         
-   private void setWindowStateOnTabChange(LogicalWindow window, WorkbenchTabPanel tabPanel,
-                                          ArrayList<Tab> tabs)
+
+   private WindowState setWindowStateOnTabChange(LogicalWindow window, WorkbenchTabPanel tabPanel,
+                                                 ArrayList<Tab> tabs)
    {
-      if (tabPanel.isEmpty() && !tabs.isEmpty())
-         window.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL));
-      else if (!tabPanel.isEmpty() && tabs.isEmpty() && window.getState() != WindowState.MINIMIZE)
-         window.onWindowStateChange(new WindowStateChangeEvent(WindowState.MINIMIZE));
+      WindowState newState = window.getState();
+      if (tabs.isEmpty() && window.getState() != WindowState.MINIMIZE)
+         newState = WindowState.MINIMIZE;
+      else if (tabs.size() == 1 && tabs.get(0) == Tab.Presentation)
+      {
+         if (!session_.getSessionInfo().getPresentationState().isActive() &&
+             window.getState() != WindowState.MINIMIZE)
+            newState = WindowState.MINIMIZE;
+      }
+      else if (tabPanel.isEmpty() && !tabs.isEmpty())
+         newState = WindowState.NORMAL;
+
+      if (newState != window.getState())
+         window.onWindowStateChange(new WindowStateChangeEvent(newState));
+      return newState;
    }
 
    @SuppressWarnings("rawtypes")
@@ -1140,7 +1172,7 @@ public class PaneManager
                new WindowStateChangeEvent(WindowState.NORMAL, true));
       }
    }
-   
+
    @Handler
    public void onMaximizeConsole()
    {
