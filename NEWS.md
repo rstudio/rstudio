@@ -4,6 +4,7 @@
 
 ### R
 
+* Show memory usage details in Environment pane (#4033)
 * Added support for the `|>` pipe operator and the `=>` pipe-bind operator, proposed for R 4.1.0 (#8543)
 * Added support for the `\(x)` function shorthand syntax, proposed for R 4.1.0 (#8543)
 * Added preference toggle for inserting the `|>` pipe operator when the Insert Pipe Operator command is used (#8534)
@@ -39,7 +40,6 @@ RStudio Server Pro has been renamed to RStudio Workbench to more accurately refl
 * Cmd+U now toggles underlining in the visual editor on macOS (#8656)
 * Improve YAML cursor position after omni-insert in the visual editor (#8670)
 * Detect newer plumber tags when enabling plumber integration (#8118)
-* Show memory usage details in Environment pane (#4033)
 
 ### Bugfixes
 
