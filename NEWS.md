@@ -59,6 +59,7 @@ RStudio Server Pro has been renamed to RStudio Workbench to more accurately refl
 * Improved checks for non-writable R library paths on startup (Pro #2184)
 * Code chunks in the visual editor now respect the "Tab Key Always Moves Focus" accessibility setting (#8584)
 * The commands "Execute Previous Chunks" and "Execute Subsequent Chunks" now work when the cursor is outside a code chunk in the visual editor (#8500)
+* Fixed issue preventing R Notebook chunks from being queued for execution if they had never been previously run (#4238)
 * Fix various issues when the "Limit Console Output" performance setting was enabled, and enable it by default (#8544, #8504, #8529, #8552)
 * Fix display of condition messages (errors and warnings) in some character encodings (#8546)
 * Fix issues finding words with punctuation in visual mode (#8655)
