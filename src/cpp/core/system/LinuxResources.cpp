@@ -135,7 +135,18 @@ private:
       while (!pMemStream->eof())
       {
          std::string memLine;
-         std::getline(*pMemStream, memLine);
+         try
+         {
+            std::getline(*pMemStream, memLine);
+         }
+         catch(const std::exception& e)
+         {
+            Error error = systemError(boost::system::errc::io_error, 
+                                      ERROR_LOCATION);
+            error.addProperty("what", e.what());
+            error.addProperty("path", "/proc/meminfo");
+            return error;
+         }
 
          if (string_utils::isPrefixOf(memLine, key + ":"))
          {
