@@ -599,4 +599,13 @@ public class ElementIds
    public final static String TAB_CLOSE_ALL = "tab_close_all";
    public final static String TAB_CLOSE_OTHERS = "tab_close_others";
 
+   // OpenProjectDialog
+   public final static String OP_NEW_SESSION = "op_new_session";
+
+   // FilePathToolbar
+   public final static String FP_SELECT_ALL = "fp_select_all";
+
+   // ChooseEncodingDialog
+   public final static String ENC_SHOW_ALL = "enc_show_all";
+   public final static String ENC_SET_DEFAULT = "enc_set_default";
 }
