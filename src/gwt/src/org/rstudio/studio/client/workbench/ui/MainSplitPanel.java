@@ -185,10 +185,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
             {
                // When there are only two panels, make the left side slightly larger than the right,
                // otherwise divide the space equally.
-               double splitWidth = (leftList_.isEmpty()) ?
-                                   Window.getClientWidth() * 0.45 :
-                                   Window.getClientWidth() / (2 + leftList_.size());
-
+               double splitWidth = getDefaultSplitterWidth();
                addEast(right_, splitWidth);
 
                for (Widget w : leftList_)
@@ -258,6 +255,13 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       initialize(leftList_, center_, right_);
    }
 
+   public double getDefaultSplitterWidth()
+   {
+      return leftList_.isEmpty() ?
+         Window.getClientWidth() * 0.45 :
+         Window.getClientWidth() / (2 + leftList_.size());
+   }
+   
    public double getLeftSize()
    {
       double sum = 0.0;
