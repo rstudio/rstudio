@@ -106,33 +106,21 @@ public class MemoryUsageSummary extends Composite
 
       // Create a row for each statistic
       statsBody.appendChild(buildStatsRow(
-         "Total used by R (vectors)",
-         report.getRUsage().getVectorKb(),
-         "R"
-      ));
-
-      statsBody.appendChild(buildStatsRow(
-         "Total used by R (cons)",
-         report.getRUsage().getConsKb(),
-         "R"
-      ));
-
-      statsBody.appendChild(buildStatsRow(
          "Total used by R",
          report.getRUsage().getConsKb() + report.getRUsage().getVectorKb(),
          "R"
       ));
 
       statsBody.appendChild(buildStatsRow(
-         "Total used by IDE session",
+         "Total used by session",
          report.getSystemUsage().getProcess()));
 
       statsBody.appendChild(buildStatsRow(
-         "Total used",
+         "Total used by system",
          report.getSystemUsage().getUsed()));
 
       statsBody.appendChild(buildStatsRow(
-         "Total memory",
+         "Total system memory",
          report.getSystemUsage().getTotal()));
 
       stats_.getElement().appendChild(statsTable);
