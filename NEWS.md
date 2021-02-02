@@ -11,9 +11,10 @@
 
 ### Python
 
-* The Python REPL can now be interrupted. (#8763, #8785)
-* Fixed issue where inspecting a null Python object would cause emit errors to console (#8185)
+* The Python REPL can now be interrupted (#8763, #8785)
+* Python installs within `/opt/python` and `/opt/local/python` are now discovered by RStudio (#8852)
 * Improved handling of unicode input on Windows (#8549)
+* Fixed issue where inspecting a null Python object would cause emit errors to console (#8185)
 * Detect active Python version when publishing content (#8636)
 
 ### RStudio Server
