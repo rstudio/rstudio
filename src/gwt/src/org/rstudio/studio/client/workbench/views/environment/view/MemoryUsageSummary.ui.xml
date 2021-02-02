@@ -12,18 +12,23 @@
             font-size: 18pt;
             font-weight: bold;
             margin-bottom: 15px;
+            margin-top: 0;
+            margin-left: 4px;
         }
 
         .stats {
             margin-bottom: 20px;
         }
 
-        .stats thead td {
-            color: #808080;
+        .stats thead th {
             border-bottom: 1px solid #808080;
         }
 
-        .stats td {
+        .stats th {
+            text-align: left;
+        }
+
+        .stats td, .stats th {
             padding: 4px;
         }
 
@@ -64,7 +69,6 @@
         </g:cell>
         <g:cell>
             <g:VerticalPanel styleName="{style.right}">
-                <g:Label styleName="{style.header}" text="Memory Usage"></g:Label>
                 <g:HTMLPanel ui:field="stats_">
                 </g:HTMLPanel>
             </g:VerticalPanel>

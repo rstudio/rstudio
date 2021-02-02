@@ -234,6 +234,7 @@ public class ElementIds
    public final static String MEMORY_PIE_MINI = "memory_pie_mini";
    public final static String MEMORY_PIE_FULL = "memory_pie_full";
    public final static String MEMORY_USAGE_TABLE = "memory_usage_table";
+   public final static String MEMORY_TABLE_TITLE = "memory_table_title";
 
    // TextBoxWithButton and subclasses -- prefixes for button/text/help, combined with suffixes
    public final static String TBB_TEXT = "tbb_text";

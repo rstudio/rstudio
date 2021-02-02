@@ -14,9 +14,12 @@
  */
 package org.rstudio.studio.client.workbench.views.environment.view;
 
+import com.google.gwt.aria.client.Id;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.HeadingElement;
 import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.resources.client.CssResource;
@@ -39,6 +42,7 @@ public class MemoryUsageSummary extends Composite
    {
       String kbCell();
       String stats();
+      String header();
    }
 
    /**
@@ -70,19 +74,26 @@ public class MemoryUsageSummary extends Composite
       ElementIds.assignElementId(statsTable, ElementIds.MEMORY_USAGE_TABLE);
       statsTable.setClassName(style.stats());
 
-      // Create the header for the table:
+      // Create the header title for the table
+      HeadingElement header = Document.get().createHElement(1);
+      header.setClassName(style.header());
+      header.setInnerText("Memory Usage");
+      stats_.getElement().appendChild(header);
+      ElementIds.assignElementId(header, ElementIds.MEMORY_TABLE_TITLE);
+
+      // Create the header row for the table:
       //
       // Statistic  Memory  Source
       // ---------  ------  ------
       Element statsHeader = Document.get().createTHeadElement();
       Element statsRow = Document.get().createTRElement();
-      Element statCell = Document.get().createTDElement();
+      Element statCell = Document.get().createTHElement();
       statCell.setInnerText("Statistic");
       statsRow.appendChild(statCell);
-      Element memoryCell = Document.get().createTDElement();
+      Element memoryCell = Document.get().createTHElement();
       memoryCell.setInnerText("Memory");
       statsRow.appendChild(memoryCell);
-      Element sourceCell = Document.get().createTDElement();
+      Element sourceCell = Document.get().createTHElement();
       sourceCell.setInnerText("Source");
       statsRow.appendChild(sourceCell);
       statsHeader.appendChild(statsRow);
@@ -125,6 +136,7 @@ public class MemoryUsageSummary extends Composite
          report.getSystemUsage().getTotal()));
 
       stats_.getElement().appendChild(statsTable);
+      Roles.getDialogRole().setAriaLabelledbyProperty(statsTable, Id.of(header));
 
       // Hack to force SVG to draw
       String html = pie_.getParent().getElement().getInnerHTML();
