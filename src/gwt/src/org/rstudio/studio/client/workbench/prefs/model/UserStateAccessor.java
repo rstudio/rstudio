@@ -566,7 +566,7 @@ public class UserStateAccessor extends Prefs
    }
    public List<PrefValue<?>> allPrefs()
    {
-      ArrayList<PrefValue<?>> prefs = new ArrayList<>();
+      ArrayList<PrefValue<?>> prefs = new ArrayList<PrefValue<?>>();
       prefs.add(contextId());
       prefs.add(autoCreatedProfile());
       prefs.add(theme());

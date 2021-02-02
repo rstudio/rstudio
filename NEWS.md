@@ -40,6 +40,7 @@ RStudio Server Pro has been renamed to RStudio Workbench to more accurately refl
 * Cmd+U now toggles underlining in the visual editor on macOS (#8656)
 * Improve YAML cursor position after omni-insert in the visual editor (#8670)
 * Detect newer plumber tags when enabling plumber integration (#8118)
+* Option to restore RStudio 1.2 tab key behavior in editor find panel; search in Command Palette for "Tab key behavior in find panel matches RStudio 1.2 and earlier" (#7295)
 
 ### Bugfixes
 

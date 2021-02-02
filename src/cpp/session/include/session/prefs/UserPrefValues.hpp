@@ -316,6 +316,7 @@ namespace prefs {
 #define kTypingStatusDelayMs "typing_status_delay_ms"
 #define kReducedMotion "reduced_motion"
 #define kTabKeyMoveFocus "tab_key_move_focus"
+#define kFindPanelLegacyTabSequence "find_panel_legacy_tab_sequence"
 #define kShowFocusRectangles "show_focus_rectangles"
 #define kShowPanelFocusRectangle "show_panel_focus_rectangle"
 #define kAutoSaveOnIdle "auto_save_on_idle"
@@ -1484,6 +1485,12 @@ public:
     */
    bool tabKeyMoveFocus();
    core::Error setTabKeyMoveFocus(bool val);
+
+   /**
+    * In source editor find panel, tab key moves focus directly from find text to replace text.
+    */
+   bool findPanelLegacyTabSequence();
+   core::Error setFindPanelLegacyTabSequence(bool val);
 
    /**
     * Control with keyboard focus displays a visual focus indicator.
