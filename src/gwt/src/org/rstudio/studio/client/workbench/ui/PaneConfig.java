@@ -175,6 +175,20 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       return !getConsoleLeft();
    }
 
+   public final boolean getTabSet1Left()
+   {
+      JsArrayString panes = getQuadrants();
+      return StringUtil.equals(panes.get(0), "TabSet1") ||
+         StringUtil.equals(panes.get(1), "TabSet1");
+   }
+   
+   public final boolean getTabSet2Left()
+   {
+      JsArrayString panes = getQuadrants();
+      return StringUtil.equals(panes.get(0), "TabSet2") ||
+         StringUtil.equals(panes.get(1), "TabSet2");
+   }
+   
    public final boolean validateAndAutoCorrect()
    {
       JsArrayString panes = getQuadrants();
