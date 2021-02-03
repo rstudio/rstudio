@@ -109,31 +109,38 @@ public class MemoryUsageSummary extends Composite
       statsTable.appendChild(statsBody);
 
       // Create a row for each statistic
+
+      // The sum of all the objects in R (cons + vectors, as reported by gc())
       statsBody.appendChild(buildStatsRow(
          null,
-         "Total used by R objects",
+         "Used by R objects",
          report.getRUsage().getConsKb() + report.getRUsage().getVectorKb(),
          "R"
       ));
 
+      // The size of the R session process itself, exclusive of child sessions, jobs, etc.
       statsBody.appendChild(buildStatsRow(
          MemoryUsagePieChart.getProcessColorCode(
-            report.getSystemUsage().getProcessPercentUsed()),
-         "Total used by session",
+            report.getSystemUsage().getPercentUsed()),
+         "Used by session",
          report.getSystemUsage().getProcess()));
 
+      // The memory used by the system that isn't already accounted for in the process
       statsBody.appendChild(buildStatsRow(
          MemoryUsagePieChart.getSystemColorCode(
             report.getSystemUsage().getPercentUsed()),
-         "Total used by system",
-         report.getSystemUsage().getUsed()));
+         "Used by system",
+         report.getSystemUsage().getUsed().getKb() - report.getSystemUsage().getProcess().getKb(),
+         report.getSystemUsage().getUsed().getProviderName()));
 
+      // The memory left on the system (the total less the used)
       statsBody.appendChild(buildStatsRow(
          MemUsageWidget.MEMORY_PIE_UNUSED_COLOR,
          "Free system memory",
          report.getSystemUsage().getTotal().getKb() - report.getSystemUsage().getUsed().getKb(),
          report.getSystemUsage().getUsed().getProviderName()));
 
+      // Total system memory
       statsBody.appendChild(buildStatsRow(
          null,
          "Total system memory",

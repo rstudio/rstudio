@@ -20,7 +20,7 @@
             font-weight: bold;
             margin-bottom: 15px;
             margin-top: 0;
-            margin-left: 4px;
+            margin-left: 25px;
         }
 
         .stats {
