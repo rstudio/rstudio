@@ -200,6 +200,7 @@
 #include "modules/SessionRVersions.hpp"
 #include "modules/SessionTerminal.hpp"
 #include "modules/SessionFonts.hpp"
+#include "modules/SessionSystemResources.hpp"
 
 #include <session/SessionProjectTemplate.hpp>
 
@@ -603,6 +604,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::tutorial::initialize)
       (modules::graphics::initialize)
       (modules::fonts::initialize)
+      (modules::system_resources::initialize)
 
       // workers
       (workers::web_request::initialize)

@@ -3087,6 +3087,30 @@ public class UserPrefsAccessor extends Prefs
          true);
    }
 
+   /**
+    * Whether to compute and show memory usage in the Environment Pane
+    */
+   public PrefValue<Boolean> showMemoryUsage()
+   {
+      return bool(
+         "show_memory_usage",
+         "Show memory usage in Environment Pane", 
+         "Whether to compute and show memory usage in the Environment Pane", 
+         true);
+   }
+
+   /**
+    * How many seconds to wait between automatic requeries of memory statistics (0 to disable)
+    */
+   public PrefValue<Integer> memoryQueryIntervalSeconds()
+   {
+      return integer(
+         "memory_query_interval_seconds",
+         "Interval for requerying memory stats (seconds)", 
+         "How many seconds to wait between automatic requeries of memory statistics (0 to disable)", 
+         10);
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -3523,6 +3547,10 @@ public class UserPrefsAccessor extends Prefs
          insertNativePipeOperator().setValue(layer, source.getBool("insert_native_pipe_operator"));
       if (source.hasKey("command_palette_mru"))
          commandPaletteMru().setValue(layer, source.getBool("command_palette_mru"));
+      if (source.hasKey("show_memory_usage"))
+         showMemoryUsage().setValue(layer, source.getBool("show_memory_usage"));
+      if (source.hasKey("memory_query_interval_seconds"))
+         memoryQueryIntervalSeconds().setValue(layer, source.getInteger("memory_query_interval_seconds"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -3744,6 +3772,8 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(saveRetryTimeout());
       prefs.add(insertNativePipeOperator());
       prefs.add(commandPaletteMru());
+      prefs.add(showMemoryUsage());
+      prefs.add(memoryQueryIntervalSeconds());
       return prefs;
    }
    

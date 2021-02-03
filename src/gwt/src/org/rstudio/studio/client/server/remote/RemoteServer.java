@@ -170,6 +170,7 @@ import org.rstudio.studio.client.workbench.views.environment.model.DataPreviewRe
 import org.rstudio.studio.client.workbench.views.environment.model.DownloadInfo;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentContextData;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentFrame;
+import org.rstudio.studio.client.workbench.views.environment.model.MemoryUsageReport;
 import org.rstudio.studio.client.workbench.views.environment.model.ObjectContents;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.files.model.DirectoryListing;
@@ -4707,6 +4708,14 @@ public class RemoteServer implements Server
                   GET_FUNCTION_STEPS,
                   params,
                   requestCallback);
+   }
+
+   @Override
+   public void getMemoryUsageReport(ServerRequestCallback<MemoryUsageReport> requestCallback)
+   {
+      sendRequest(RPC_SCOPE,
+         "get_memory_usage_report",
+         requestCallback);
    }
 
    @Override
