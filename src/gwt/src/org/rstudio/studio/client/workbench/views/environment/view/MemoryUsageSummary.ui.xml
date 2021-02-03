@@ -8,6 +8,13 @@
             font-weight: bold;
         }
 
+        .swatch {
+            height: 10px;
+            width: 10px;
+            border: 1px solid #909090;
+            border-radius: 2px;
+        }
+
         .header {
             font-size: 18pt;
             font-weight: bold;
@@ -22,6 +29,10 @@
 
         .stats thead th {
             border-bottom: 1px solid #808080;
+        }
+
+        .stats thead th.legend {
+            border-bottom: none;
         }
 
         .stats th {

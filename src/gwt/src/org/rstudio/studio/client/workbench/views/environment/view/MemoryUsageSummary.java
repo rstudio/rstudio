@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.environment.view;
 import com.google.gwt.aria.client.Id;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.HeadingElement;
@@ -31,7 +32,6 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.widget.MiniPieWidget;
 import org.rstudio.studio.client.workbench.views.environment.model.MemoryStat;
 import org.rstudio.studio.client.workbench.views.environment.model.MemoryUsage;
 import org.rstudio.studio.client.workbench.views.environment.model.MemoryUsageReport;
@@ -43,6 +43,8 @@ public class MemoryUsageSummary extends Composite
       String kbCell();
       String stats();
       String header();
+      String swatch();
+      String legend();
    }
 
    /**
@@ -79,10 +81,16 @@ public class MemoryUsageSummary extends Composite
 
       // Create the header row for the table:
       //
-      // Statistic  Memory  Source
-      // ---------  ------  ------
+      // Color  Statistic  Memory  Source
+      // -----  ---------  ------  ------
       Element statsHeader = Document.get().createTHeadElement();
       Element statsRow = Document.get().createTRElement();
+      Element colorCell = Document.get().createTHElement();
+
+      Roles.getDialogRole().setAriaHiddenState(colorCell, true);
+      colorCell.setClassName(style.legend());
+      statsRow.appendChild(colorCell);
+
       Element statCell = Document.get().createTHElement();
       statCell.setInnerText("Statistic");
       statsRow.appendChild(statCell);
@@ -102,20 +110,32 @@ public class MemoryUsageSummary extends Composite
 
       // Create a row for each statistic
       statsBody.appendChild(buildStatsRow(
+         null,
          "Total used by R objects",
          report.getRUsage().getConsKb() + report.getRUsage().getVectorKb(),
          "R"
       ));
 
       statsBody.appendChild(buildStatsRow(
+         MemoryUsagePieChart.getProcessColorCode(
+            report.getSystemUsage().getProcessPercentUsed()),
          "Total used by session",
          report.getSystemUsage().getProcess()));
 
       statsBody.appendChild(buildStatsRow(
+         MemoryUsagePieChart.getSystemColorCode(
+            report.getSystemUsage().getPercentUsed()),
          "Total used by system",
          report.getSystemUsage().getUsed()));
 
       statsBody.appendChild(buildStatsRow(
+         MemUsageWidget.MEMORY_PIE_UNUSED_COLOR,
+         "Free system memory",
+         report.getSystemUsage().getTotal().getKb() - report.getSystemUsage().getUsed().getKb(),
+         report.getSystemUsage().getUsed().getProviderName()));
+
+      statsBody.appendChild(buildStatsRow(
+         null,
          "Total system memory",
          report.getSystemUsage().getTotal()));
 
@@ -134,13 +154,14 @@ public class MemoryUsageSummary extends Composite
    /**
     * Create a row from a memory statistic
     *
+    * @param color The color swatch for the statistic, or null for no swatch
     * @param name The name of the statistic
     * @param stat The statistic
     * @return A table row containing the statistic.
     */
-   private TableRowElement buildStatsRow(String name, MemoryStat stat)
+   private TableRowElement buildStatsRow(String color, String name, MemoryStat stat)
    {
-      return buildStatsRow(name, stat.getKb(), stat.getProviderName());
+      return buildStatsRow(color, name, stat.getKb(), stat.getProviderName());
    }
 
    /**
@@ -151,9 +172,22 @@ public class MemoryUsageSummary extends Composite
     * @param source The source of the statistic
     * @return A table row containing the statistic
     */
-   private TableRowElement buildStatsRow(String stat, int kb, String source)
+   private TableRowElement buildStatsRow(String color, String stat, int kb, String source)
    {
       TableRowElement row = Document.get().createTRElement();
+
+      // This cell contains a small color swatch that serves as a guide for interpreting the pie chart. The entire
+      // column is hidden from the accessibility tree since it's just visual decoration for the chart values.
+      TableCellElement colorCell = Document.get().createTDElement();
+      if (color != null)
+      {
+         DivElement swatch = Document.get().createDivElement();
+         swatch.getStyle().setBackgroundColor(color);
+         swatch.addClassName(style.swatch());
+         Roles.getDialogRole().setAriaHiddenState(swatch, true);
+         colorCell.appendChild(swatch);
+      }
+      row.appendChild(colorCell);
 
       TableCellElement statCell = Document.get().createTDElement();
       statCell.setInnerText(stat);
