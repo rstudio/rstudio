@@ -50,6 +50,12 @@ std::atomic<int> s_queryInterval;
  */
 void emitMemoryChangedEvent()
 {
+   // Ensure we don't emit memory stats from child processes
+   if (main_process::wasForked())
+   {
+      return;
+   }
+
    boost::shared_ptr<MemoryUsage> pUsage;
    Error error = getMemoryUsage(&pUsage);
    if (error)
@@ -163,12 +169,6 @@ void onDeferredInit(bool newSession)
 
 void onDetectChanges(module_context::ChangeSource source)
 {
-   // Don't emit memory stats from child processes
-   if (main_process::wasForked())
-   {
-      return;
-   }
-
    // Wait a few ms before actually computing usage; this gives memory
    // counters time to catch up with whatever just happened and allows for
    // debouncing.
