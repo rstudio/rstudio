@@ -76,6 +76,32 @@ public class VirtualScrollerManager
       scrollers_.get(parent.getAttribute(scrollerAttribute_)).append(content);
    }
 
+   public static boolean scrolledToBottom(Element parent)
+   {
+      // if we don't have a connection to that parent there's nothing to clear
+      if (!initialized_ || parent == null ) return false;
+
+      parent = getVirtualScrollerAncestor(parent);
+
+      if (scrollers_.get(parent.getAttribute(scrollerAttribute_)) == null)
+         return false;
+
+      return scrollerForElement(parent).scrolledToBottom();
+   }
+
+   public static void scrollToBottom(Element parent)
+   {
+      // if we don't have a connection to that parent there's nothing to clear
+      if (!initialized_ || parent == null ) return;
+
+      parent = getVirtualScrollerAncestor(parent);
+
+      if (scrollers_.get(parent.getAttribute(scrollerAttribute_)) == null)
+         return;
+
+      scrollerForElement(parent).scrollToBottom();
+   }
+
    public static void prune(Element parent, Element ele)
    {
       // if we don't have a connection to that parent there's nothing to clear
