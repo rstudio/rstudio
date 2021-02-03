@@ -19,6 +19,7 @@ import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.MiniPieWidget;
@@ -111,14 +112,7 @@ public class MemUsageWidget extends Composite
             " KiB used by R session (source: " + usage.getProcess().getProviderName() + ")");
          menu_.setText(formatBigMemory(usage.getProcess().getKb()));
 
-         MiniPieWidget pie = new MiniPieWidget(
-            "Memory in use: " + usage.getPercentUsed() + "% of " +
-               formatBigMemory(usage.getTotal().getKb()) +
-               " (source: " + usage.getTotal().getProviderName() + ")",
-            "Pie chart depicting the percentage of total memory in use",
-            usage.getColorCode(),
-            MEMORY_PIE_UNUSED_COLOR,
-            usage.getPercentUsed());
+         MemoryUsagePieChart pie = new MemoryUsagePieChart(usage);
          loadPieDisplay(pie);
       }
    }
@@ -128,7 +122,7 @@ public class MemUsageWidget extends Composite
     *
     * @param pie The pie chart to load
     */
-   private void loadPieDisplay(MiniPieWidget pie)
+   private void loadPieDisplay(Widget pie)
    {
       // For browser SVG painting reasons, it is necessary to create a wholly
       // new SVG element and then replay it as HTML into the DOM to get it to
@@ -184,9 +178,7 @@ public class MemUsageWidget extends Composite
          MiniPieWidget pie = new MiniPieWidget(
             "Memory in use: none (suspended)",
             "Empty pie chart depicting no memory usage",
-            "#000000",
-            MEMORY_PIE_UNUSED_COLOR,
-            0);
+            MEMORY_PIE_UNUSED_COLOR);
          loadPieDisplay(pie);
 
          menu_.setEnabled(false);

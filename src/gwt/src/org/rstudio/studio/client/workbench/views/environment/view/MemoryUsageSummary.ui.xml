@@ -1,7 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:widget="urn:import:org.rstudio.core.client.widget">
+             xmlns:env="urn:import:org.rstudio.studio.client.workbench.views.environment.view">
     <ui:style type="org.rstudio.studio.client.workbench.views.environment.view.MemoryUsageSummary.Style">
         .pieLabel {
             font-size: 14pt;
@@ -57,7 +57,7 @@
         <g:cell>
             <g:VerticalPanel styleName="{style.left}">
                 <g:cell>
-                    <widget:MiniPieWidget title="Memory usage" ui:field="pie_" />
+                    <env:MemoryUsagePieChart title="Memory usage" ui:field="pie_" />
                 </g:cell>
                 <g:cell>
                     <g:VerticalPanel styleName="{style.pieLegendBox}">

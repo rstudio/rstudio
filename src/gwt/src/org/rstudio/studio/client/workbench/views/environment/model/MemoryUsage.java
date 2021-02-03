@@ -43,24 +43,12 @@ public class MemoryUsage extends JavaScriptObject
    }
 
    /**
-    * Gets a color code representing the memory usage (green = low, red = high, etc.)
+    * Compute the percentage of process memory used.
     *
-    * @return The color code, in a CSS-compatible format.
+    * @return The amount of memory used as a percentage of the total.
     */
-   public final String getColorCode()
+   public final int getProcessPercentUsed()
    {
-      int percent = getPercentUsed();
-
-      // These values are chosen to align with those used in rstudio.cloud.
-      String color = "#5f9a91";   // under 70%, green
-      if (percent > 90) {
-         color = "#e55037";       // 90% and above, red
-      } else if (percent > 80) {
-         color = "#e58537";       // 80-90%, orange
-      } else if (percent > 70) {
-         color = "#fcbf49";       // 70-80%, yellow
-      }
-
-      return color;
+      return (int)Math.round(((getProcess().getKb() * 1.0) / (getTotal().getKb() * 1.0)) * 100);
    }
 }

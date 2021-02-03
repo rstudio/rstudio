@@ -25,7 +25,7 @@ import org.rstudio.core.client.ElementIds;
 import javax.validation.constraints.Min;
 
 /**
- * A mini pie chart widget that shows a simple percentage in the form of a pie chart.
+ * A mini pie chart widget that shows a set of percentages in the form of a pie chart.
  */
 public class MiniPieWidget extends Composite
 {
@@ -34,7 +34,7 @@ public class MiniPieWidget extends Composite
     */
    public MiniPieWidget()
    {
-      this("", "", "#ffffff", "#000000", 0);
+      this("", "", "#000000");
    }
 
    /**
@@ -42,15 +42,14 @@ public class MiniPieWidget extends Composite
     *
     * @param title The title of the chart (for accessibility, not shown)
     * @param description The description of the chart (for accessibility, not shown)
-    * @param foreColor The color to use for the foreground (filled) portion of the chart
     * @param backColor The color to use for the background (unfilled) portion of the chart
-    * @param percent The percentage of the chart to fill with the foreground color
     */
-   public MiniPieWidget(String title, String description, String foreColor, String backColor, int percent)
+   public MiniPieWidget(String title, String description, String backColor)
    {
       Element svg = Document.get().createElement("svg");
       svg.setAttribute("viewBox", "0 0 " + (PIE_CENTER * 2) + " " + (PIE_CENTER * 2));
       svg.setAttribute("style", "width: 100%; height: 100%;");
+      percent_ = 0;
 
       // Create accessibility title and description
       title_ = Document.get().createTitleElement();
@@ -73,19 +72,6 @@ public class MiniPieWidget extends Composite
       setBackColor(backColor);
       svg.appendChild(back_);
 
-      // Create foreground segment
-      fore_ = Document.get().createElement("circle");
-      fore_.setAttribute("cx", PIE_CENTER + "");
-      fore_.setAttribute("cy", PIE_CENTER + "");
-      fore_.setAttribute("r", PIE_RADIUS + "");
-      fore_.setAttribute("fill", "transparent");
-      fore_.setAttribute("stroke-width", PIE_STROKE + "");
-      fore_.setAttribute("stroke-dashoffset", "25");
-      setForeColor(foreColor);
-      svg.appendChild(fore_);
-
-      setPercent(percent);
-
       initWidget(new ElementPanel(svg));
    }
 
@@ -100,23 +86,30 @@ public class MiniPieWidget extends Composite
    }
 
    /**
-    * Sets the color of the pie chart for the used (filled) portion of the chart
+    * Adds a segment to the pie chart.
     *
-    * @param color The color to set
+    * @param percent The percentage of the chart to be consumed by the segment.
+    * @param color The color of the segment.
     */
-   public void setForeColor(String color)
+   public void addSegment(int percent, String color)
    {
-      fore_.setAttribute("stroke", color);
-   }
+      // Create the new segment of the chart
+      Element ele = Document.get().createElement("circle");
+      ele.setAttribute("cx", PIE_CENTER + "");
+      ele.setAttribute("cy", PIE_CENTER + "");
+      ele.setAttribute("r", PIE_RADIUS + "");
+      ele.setAttribute("fill", "transparent");
+      ele.setAttribute("stroke-width", PIE_STROKE + "");
 
-   /**
-    * Sets the percentage of the pie chart to be filled
-    *
-    * @param percent The fill percent (0 - 100)
-    */
-   public void setPercent(int percent)
-   {
-      fore_.setAttribute("stroke-dasharray", percent + " " + (100 - percent));
+      // Create one big dash that consumes the requested percentage
+      ele.setAttribute("stroke-dasharray", percent + " " + (100 - percent));
+
+      // Start at 25 ("noon") plus the current running total
+      ele.setAttribute("stroke-dashoffset", "25");
+      ele.setAttribute("stroke", color);
+
+      // Append to the SVG host element
+      getElement().appendChild(ele);
    }
 
    /**
@@ -139,6 +132,9 @@ public class MiniPieWidget extends Composite
       description_.setInnerText(description);
    }
 
+   /**
+    * Extend SimplePanel so we can use the <svg> element without a superfluous <div> wrapping it.
+    */
    private class ElementPanel extends SimplePanel
    {
       ElementPanel(Element ele)
@@ -154,7 +150,7 @@ public class MiniPieWidget extends Composite
    private final static int PIE_STROKE = 20;
 
    private final Element back_;
-   private final Element fore_;
    private final Element title_;
    private final Element description_;
+   private int percent_;
 }

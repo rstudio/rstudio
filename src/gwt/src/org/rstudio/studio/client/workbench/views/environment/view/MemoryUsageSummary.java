@@ -52,22 +52,18 @@ public class MemoryUsageSummary extends Composite
     */
    public MemoryUsageSummary(MemoryUsageReport report)
    {
-      report_ = report;
+      pie_ = new MemoryUsagePieChart(report.getSystemUsage());
 
       initWidget(GWT.<MemoryUsageSummary.Binder>create(MemoryUsageSummary.Binder.class).createAndBindUi(this));
 
       MemoryUsage usage = report.getSystemUsage();
 
-      // Create the pie chart showing the percentage of memory used
-      int percent = usage.getPercentUsed();
-      pie_.setForeColor(usage.getColorCode());
-      pie_.setBackColor(MemUsageWidget.MEMORY_PIE_UNUSED_COLOR);
-      pie_.setPercent(percent);
+      // Size pie chart showing the percentage of memory used
       pie_.getElement().getStyle().setWidth(150, com.google.gwt.dom.client.Style.Unit.PX);
       pie_.getElement().getStyle().setHeight(150, com.google.gwt.dom.client.Style.Unit.PX);
-      pie_.setTitle("Memory in use: " + usage.getPercentUsed());
-      pie_.setDescription("Pie chart depicting the percentage of total memory in use");
       ElementIds.assignElementId(pie_, ElementIds.MEMORY_PIE_FULL);
+
+      int percent = usage.getPercentUsed();
       pieLabel_.setText(percent + "%");
 
       Element statsTable = Document.get().createTableElement();
@@ -106,7 +102,7 @@ public class MemoryUsageSummary extends Composite
 
       // Create a row for each statistic
       statsBody.appendChild(buildStatsRow(
-         "Total used by R",
+         "Total used by R objects",
          report.getRUsage().getConsKb() + report.getRUsage().getVectorKb(),
          "R"
       ));
@@ -180,10 +176,8 @@ public class MemoryUsageSummary extends Composite
       return row;
    }
 
-   @UiField MiniPieWidget pie_;
+   @UiField(provided = true) MemoryUsagePieChart pie_;
    @UiField Label pieLabel_;
    @UiField HTMLPanel stats_;
    @UiField Style style;
-
-   private final MemoryUsageReport report_;
 }
