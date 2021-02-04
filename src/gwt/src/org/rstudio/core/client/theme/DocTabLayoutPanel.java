@@ -45,7 +45,7 @@ import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.events.CopySourcePathEvent;
 import org.rstudio.studio.client.common.filetypes.events.RenameSourceFileEvent;
 import org.rstudio.studio.client.common.satellite.Satellite;
-import org.rstudio.studio.client.server.model.RequestDocumentCloseEvent;
+import org.rstudio.studio.client.server.model.DocumentCloseEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
@@ -233,7 +233,7 @@ public class DocTabLayoutPanel
 
             menu.addItem(ElementIds.TAB_CLOSE, new MenuItem("Close", () ->
             {
-               events_.fireEvent(new RequestDocumentCloseEvent(docId));
+               events_.fireEvent(new DocumentCloseEvent(docId));
             }));
 
             menu.addItem(ElementIds.TAB_CLOSE_ALL, new MenuItem("Close All", () ->
