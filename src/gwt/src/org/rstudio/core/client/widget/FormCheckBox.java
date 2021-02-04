@@ -23,6 +23,21 @@ import com.google.gwt.user.client.ui.CheckBox;
 public class FormCheckBox extends CheckBox
                           implements CanSetControlId
 {
+   public FormCheckBox()
+   {
+      super();
+   }
+
+   /**
+    * @param label label text
+    * @param id unique element ID
+    */
+   public FormCheckBox(String label, String id)
+   {
+      super(label);
+      setElementId(id);
+   }
+
    @Override
    public void setElementId(String id)
    {

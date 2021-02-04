@@ -1,5 +1,5 @@
 /*
- * RequestDocumentCloseEvent.java
+ * MemoryUsageChangedEvent.java
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -12,55 +12,31 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.server.model;
+package org.rstudio.studio.client.workbench.views.environment.events;
 
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
+import org.rstudio.studio.client.workbench.views.environment.model.MemoryUsage;
 
-public class RequestDocumentCloseEvent extends GwtEvent<RequestDocumentCloseEvent.Handler>
+public class MemoryUsageChangedEvent extends GwtEvent<MemoryUsageChangedEvent.Handler>
 {
-   public static class Data extends JavaScriptObject
+   public MemoryUsageChangedEvent(MemoryUsage data)
    {
-      protected Data()
-      {
-      }
-
-      public native final JsArrayString getDocumentIds()
-      /*-{
-         return this["ids"];
-      }-*/;
-
-      public native final boolean getSave()
-      /*-{
-         return this["save"];
-      }-*/;
-
+      usage_ = data;
    }
 
-   public RequestDocumentCloseEvent(Data data)
+   public MemoryUsage getMemoryUsage()
    {
-      data_ = data;
+      return usage_;
    }
 
-   public JsArrayString getDocumentIds()
-   {
-      return data_.getDocumentIds();
-   }
-
-   public boolean getSave()
-   {
-      return data_.getSave();
-   }
-
-   private final Data data_;
+   private final MemoryUsage usage_;
 
    // Boilerplate ----
 
    public interface Handler extends EventHandler
    {
-      void onRequestDocumentClose(RequestDocumentCloseEvent event);
+      void onMemoryUsageChanged(MemoryUsageChangedEvent event);
    }
 
    @Override
@@ -72,8 +48,9 @@ public class RequestDocumentCloseEvent extends GwtEvent<RequestDocumentCloseEven
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onRequestDocumentClose(this);
+      handler.onMemoryUsageChanged(this);
    }
 
    public static final Type<Handler> TYPE = new Type<>();
 }
+

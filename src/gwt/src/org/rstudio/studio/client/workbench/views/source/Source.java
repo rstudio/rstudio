@@ -2727,7 +2727,7 @@ public class Source implements InsertSourceEvent.Handler,
          columnManager_.closeTabs(ids);
 
          // Let the server know we've completed the task
-         if (SourceWindowManager.isMainSourceWindow() && event.getNotifyComplete())
+         if (SourceWindowManager.isMainSourceWindow())
          {
             server_.requestDocumentCloseCompleted(true,
                   new VoidServerRequestCallback());
@@ -2747,7 +2747,7 @@ public class Source implements InsertSourceEvent.Handler,
             else
             {
                // We didn't save (or the user cancelled), so let the server know
-               if (SourceWindowManager.isMainSourceWindow() && event.getNotifyComplete())
+               if (SourceWindowManager.isMainSourceWindow())
                {
                   server_.requestDocumentCloseCompleted(false,
                         new VoidServerRequestCallback());

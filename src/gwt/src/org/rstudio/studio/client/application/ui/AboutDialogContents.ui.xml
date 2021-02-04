@@ -60,7 +60,7 @@
          overflow: hidden;
          margin-left: auto;
          margin-right: auto;
-         width: 50%;
+         width: 55%;
          user-select: text;
       }
       

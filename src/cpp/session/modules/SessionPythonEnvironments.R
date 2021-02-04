@@ -179,6 +179,7 @@
 {
    interpreters <- c(
       .rs.python.findPythonSystemInterpreters(),
+      .rs.python.findPythonInterpretersInKnownLocations(),
       .rs.python.findPythonPyenvInterpreters(),
       .rs.python.findPythonVirtualEnvironments(),
       .rs.python.findPythonCondaEnvironments()
@@ -232,6 +233,50 @@
    }
    
    interpreters
+   
+})
+
+.rs.addFunction("python.findPythonInterpretersInKnownLocations", function()
+{
+   # set of discovered paths
+   pythonPaths <- character()
+   
+   # Python root paths we'll search in
+   roots <- c(
+      "/opt/python",
+      "/opt/local/python",
+      "/usr/local/opt/python",
+      getOption("rstudio.python.installationPath")
+   )
+   
+   # check and see if any of these roots point directly
+   # to a particular version of Python
+   paths <- vapply(roots, function(root) {
+      paths <- file.path(root, c("bin/python", "bin/python3"))
+      paths[file.exists(paths)][1]
+   }, FUN.VALUE = character(1))
+   
+   # collect the discovered python paths, if any
+   exists <- !is.na(paths)
+   pythonPaths <- c(pythonPaths, paths[exists])
+   roots <- roots[!exists]
+   
+   # treat any remaining root directories as versioned roots
+   roots <- list.files(roots, full.names = TRUE)
+   
+   # check and see if any of these roots point directly
+   # to a particular version of Python
+   paths <- vapply(roots, function(root) {
+      paths <- file.path(root, c("bin/python", "bin/python3"))
+      paths[file.exists(paths)][1]
+   }, FUN.VALUE = character(1))
+   
+   # collect the discovered python paths, if any
+   exists <- !is.na(paths)
+   pythonPaths <- c(pythonPaths, paths[exists])
+   
+   # return the discovered paths
+   lapply(pythonPaths, .rs.python.getPythonInfo, strict = TRUE)
    
 })
 

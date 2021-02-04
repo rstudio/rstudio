@@ -4,6 +4,7 @@
 
 ### R
 
+* Show memory usage details in Environment pane (#4033)
 * Added support for the `|>` pipe operator and the `=>` pipe-bind operator, proposed for R 4.1.0 (#8543)
 * Added support for the `\(x)` function shorthand syntax, proposed for R 4.1.0 (#8543)
 * Added preference toggle for inserting the `|>` pipe operator when the Insert Pipe Operator command is used (#8534)
@@ -11,9 +12,10 @@
 
 ### Python
 
-* The Python REPL can now be interrupted. (#8763, #8785)
-* Fixed issue where inspecting a null Python object would cause emit errors to console (#8185)
+* The Python REPL can now be interrupted (#8763, #8785)
+* Python installs within `/opt/python` and `/opt/local/python` are now discovered by RStudio (#8852)
 * Improved handling of unicode input on Windows (#8549)
+* Fixed issue where inspecting a null Python object would cause emit errors to console (#8185)
 * Detect active Python version when publishing content (#8636)
 
 ### RStudio Server
@@ -39,6 +41,7 @@ RStudio Server Pro has been renamed to RStudio Workbench to more accurately refl
 * Cmd+U now toggles underlining in the visual editor on macOS (#8656)
 * Improve YAML cursor position after omni-insert in the visual editor (#8670)
 * Detect newer plumber tags when enabling plumber integration (#8118)
+* Option to restore RStudio 1.2 tab key behavior in editor find panel; search in Command Palette for "Tab key behavior in find panel matches RStudio 1.2 and earlier" (#7295)
 
 ### Bugfixes
 
@@ -57,6 +60,7 @@ RStudio Server Pro has been renamed to RStudio Workbench to more accurately refl
 * Improved checks for non-writable R library paths on startup (Pro #2184)
 * Code chunks in the visual editor now respect the "Tab Key Always Moves Focus" accessibility setting (#8584)
 * The commands "Execute Previous Chunks" and "Execute Subsequent Chunks" now work when the cursor is outside a code chunk in the visual editor (#8500)
+* Fixed issue preventing R Notebook chunks from being queued for execution if they had never been previously run (#4238)
 * Fix various issues when the "Limit Console Output" performance setting was enabled, and enable it by default (#8544, #8504, #8529, #8552)
 * Fix display of condition messages (errors and warnings) in some character encodings (#8546)
 * Fix issues finding words with punctuation in visual mode (#8655)

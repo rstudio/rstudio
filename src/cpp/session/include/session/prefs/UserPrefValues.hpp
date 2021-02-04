@@ -316,6 +316,7 @@ namespace prefs {
 #define kTypingStatusDelayMs "typing_status_delay_ms"
 #define kReducedMotion "reduced_motion"
 #define kTabKeyMoveFocus "tab_key_move_focus"
+#define kFindPanelLegacyTabSequence "find_panel_legacy_tab_sequence"
 #define kShowFocusRectangles "show_focus_rectangles"
 #define kShowPanelFocusRectangle "show_panel_focus_rectangle"
 #define kAutoSaveOnIdle "auto_save_on_idle"
@@ -382,6 +383,8 @@ namespace prefs {
 #define kSaveRetryTimeout "save_retry_timeout"
 #define kInsertNativePipeOperator "insert_native_pipe_operator"
 #define kCommandPaletteMru "command_palette_mru"
+#define kShowMemoryUsage "show_memory_usage"
+#define kMemoryQueryIntervalSeconds "memory_query_interval_seconds"
 
 class UserPrefValues: public Preferences
 {
@@ -1486,6 +1489,12 @@ public:
    core::Error setTabKeyMoveFocus(bool val);
 
    /**
+    * In source editor find panel, tab key moves focus directly from find text to replace text.
+    */
+   bool findPanelLegacyTabSequence();
+   core::Error setFindPanelLegacyTabSequence(bool val);
+
+   /**
     * Control with keyboard focus displays a visual focus indicator.
     */
    bool showFocusRectangles();
@@ -1682,6 +1691,18 @@ public:
     */
    bool commandPaletteMru();
    core::Error setCommandPaletteMru(bool val);
+
+   /**
+    * Whether to compute and show memory usage in the Environment Pane
+    */
+   bool showMemoryUsage();
+   core::Error setShowMemoryUsage(bool val);
+
+   /**
+    * How many seconds to wait between automatic requeries of memory statistics (0 to disable)
+    */
+   int memoryQueryIntervalSeconds();
+   core::Error setMemoryQueryIntervalSeconds(int val);
 
 };
 

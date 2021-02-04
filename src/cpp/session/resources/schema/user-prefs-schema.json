@@ -1213,6 +1213,12 @@
             "title": "Tab key always moves focus",
             "description": "Tab key moves focus out of text editing controls instead of inserting tabs."
         },
+        "find_panel_legacy_tab_sequence": {
+            "type": "boolean",
+            "default": false,
+            "title": "Tab key moves focus directly from find text to replace text in find panel",
+            "description": "In source editor find panel, tab key moves focus directly from find text to replace text."
+        },
         "show_focus_rectangles": {
             "type": "boolean",
             "default": true,
@@ -1450,6 +1456,18 @@
             "title": "Remember recently used items in Command Palette",
             "type": "boolean",
             "default": true
+        }, 
+        "show_memory_usage": {
+            "description": "Whether to compute and show memory usage in the Environment Pane",
+            "title": "Show memory usage in Environment Pane",
+            "type": "boolean",
+            "default": true
+        },
+        "memory_query_interval_seconds": {
+            "description": "How many seconds to wait between automatic requeries of memory statistics (0 to disable)",
+            "title": "Interval for requerying memory stats (seconds)",
+            "type": "integer",
+            "default": 10
         }
     }
 }

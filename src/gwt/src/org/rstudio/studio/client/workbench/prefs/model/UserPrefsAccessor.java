@@ -2023,7 +2023,7 @@ public class UserPrefsAccessor extends Prefs
       return bool(
          "show_launcher_jobs_tab",
          "", 
-         "Whether to show the Launcher jobs tab in RStudio Pro and RStudio Workbench.",
+         "Whether to show the Launcher jobs tab in RStudio Pro and RStudio Workbench.", 
          true);
    }
 
@@ -2035,7 +2035,7 @@ public class UserPrefsAccessor extends Prefs
       return enumeration(
          "launcher_jobs_sort",
          "", 
-         "How to sort jobs in the Launcher tab in RStudio Pro and RStudio Workbench.",
+         "How to sort jobs in the Launcher tab in RStudio Pro and RStudio Workbench.", 
          new String[] {
             LAUNCHER_JOBS_SORT_RECORDED,
             LAUNCHER_JOBS_SORT_STATE
@@ -2230,8 +2230,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "show_user_home_page",
-         "Show user home page in RStudio Workbench",
-         "When to show the server home page in RStudio Workbench.",
+         "Show user home page in RStudio Workbench", 
+         "When to show the server home page in RStudio Workbench.", 
          new String[] {
             SHOW_USER_HOME_PAGE_ALWAYS,
             SHOW_USER_HOME_PAGE_NEVER,
@@ -2252,7 +2252,7 @@ public class UserPrefsAccessor extends Prefs
       return bool(
          "reuse_sessions_for_project_links",
          "", 
-         "Whether to reuse sessions when opening projects in RStudio Workbench.",
+         "Whether to reuse sessions when opening projects in RStudio Workbench.", 
          false);
    }
 
@@ -2467,8 +2467,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "restore_project_r_version",
-         "Restore project R version in RStudio Pro and RStudio Workbench",
-         "Whether to restore the last version of R used by the project in RStudio Pro and RStudio Workbench.",
+         "Restore project R version in RStudio Pro and RStudio Workbench", 
+         "Whether to restore the last version of R used by the project in RStudio Pro and RStudio Workbench.", 
          true);
    }
 
@@ -2583,6 +2583,18 @@ public class UserPrefsAccessor extends Prefs
          "tab_key_move_focus",
          "Tab key always moves focus", 
          "Tab key moves focus out of text editing controls instead of inserting tabs.", 
+         false);
+   }
+
+   /**
+    * In source editor find panel, tab key moves focus directly from find text to replace text.
+    */
+   public PrefValue<Boolean> findPanelLegacyTabSequence()
+   {
+      return bool(
+         "find_panel_legacy_tab_sequence",
+         "Tab key moves focus directly from find text to replace text in find panel", 
+         "In source editor find panel, tab key moves focus directly from find text to replace text.", 
          false);
    }
 
@@ -3075,6 +3087,30 @@ public class UserPrefsAccessor extends Prefs
          true);
    }
 
+   /**
+    * Whether to compute and show memory usage in the Environment Pane
+    */
+   public PrefValue<Boolean> showMemoryUsage()
+   {
+      return bool(
+         "show_memory_usage",
+         "Show memory usage in Environment Pane", 
+         "Whether to compute and show memory usage in the Environment Pane", 
+         true);
+   }
+
+   /**
+    * How many seconds to wait between automatic requeries of memory statistics (0 to disable)
+    */
+   public PrefValue<Integer> memoryQueryIntervalSeconds()
+   {
+      return integer(
+         "memory_query_interval_seconds",
+         "Interval for requerying memory stats (seconds)", 
+         "How many seconds to wait between automatic requeries of memory statistics (0 to disable)", 
+         10);
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -3443,6 +3479,8 @@ public class UserPrefsAccessor extends Prefs
          reducedMotion().setValue(layer, source.getBool("reduced_motion"));
       if (source.hasKey("tab_key_move_focus"))
          tabKeyMoveFocus().setValue(layer, source.getBool("tab_key_move_focus"));
+      if (source.hasKey("find_panel_legacy_tab_sequence"))
+         findPanelLegacyTabSequence().setValue(layer, source.getBool("find_panel_legacy_tab_sequence"));
       if (source.hasKey("show_focus_rectangles"))
          showFocusRectangles().setValue(layer, source.getBool("show_focus_rectangles"));
       if (source.hasKey("show_panel_focus_rectangle"))
@@ -3509,10 +3547,14 @@ public class UserPrefsAccessor extends Prefs
          insertNativePipeOperator().setValue(layer, source.getBool("insert_native_pipe_operator"));
       if (source.hasKey("command_palette_mru"))
          commandPaletteMru().setValue(layer, source.getBool("command_palette_mru"));
+      if (source.hasKey("show_memory_usage"))
+         showMemoryUsage().setValue(layer, source.getBool("show_memory_usage"));
+      if (source.hasKey("memory_query_interval_seconds"))
+         memoryQueryIntervalSeconds().setValue(layer, source.getInteger("memory_query_interval_seconds"));
    }
    public List<PrefValue<?>> allPrefs()
    {
-      ArrayList<PrefValue<?>> prefs = new ArrayList<>();
+      ArrayList<PrefValue<?>> prefs = new ArrayList<PrefValue<?>>();
       prefs.add(runRprofileOnResume());
       prefs.add(saveWorkspace());
       prefs.add(loadWorkspace());
@@ -3696,6 +3738,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(typingStatusDelayMs());
       prefs.add(reducedMotion());
       prefs.add(tabKeyMoveFocus());
+      prefs.add(findPanelLegacyTabSequence());
       prefs.add(showFocusRectangles());
       prefs.add(showPanelFocusRectangle());
       prefs.add(autoSaveOnIdle());
@@ -3729,6 +3772,8 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(saveRetryTimeout());
       prefs.add(insertNativePipeOperator());
       prefs.add(commandPaletteMru());
+      prefs.add(showMemoryUsage());
+      prefs.add(memoryQueryIntervalSeconds());
       return prefs;
    }
    

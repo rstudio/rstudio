@@ -2403,6 +2403,19 @@ core::Error UserPrefValues::setTabKeyMoveFocus(bool val)
 }
 
 /**
+ * In source editor find panel, tab key moves focus directly from find text to replace text.
+ */
+bool UserPrefValues::findPanelLegacyTabSequence()
+{
+   return readPref<bool>("find_panel_legacy_tab_sequence");
+}
+
+core::Error UserPrefValues::setFindPanelLegacyTabSequence(bool val)
+{
+   return writePref("find_panel_legacy_tab_sequence", val);
+}
+
+/**
  * Control with keyboard focus displays a visual focus indicator.
  */
 bool UserPrefValues::showFocusRectangles()
@@ -2831,6 +2844,32 @@ core::Error UserPrefValues::setCommandPaletteMru(bool val)
    return writePref("command_palette_mru", val);
 }
 
+/**
+ * Whether to compute and show memory usage in the Environment Pane
+ */
+bool UserPrefValues::showMemoryUsage()
+{
+   return readPref<bool>("show_memory_usage");
+}
+
+core::Error UserPrefValues::setShowMemoryUsage(bool val)
+{
+   return writePref("show_memory_usage", val);
+}
+
+/**
+ * How many seconds to wait between automatic requeries of memory statistics (0 to disable)
+ */
+int UserPrefValues::memoryQueryIntervalSeconds()
+{
+   return readPref<int>("memory_query_interval_seconds");
+}
+
+core::Error UserPrefValues::setMemoryQueryIntervalSeconds(int val)
+{
+   return writePref("memory_query_interval_seconds", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -3017,6 +3056,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kTypingStatusDelayMs,
       kReducedMotion,
       kTabKeyMoveFocus,
+      kFindPanelLegacyTabSequence,
       kShowFocusRectangles,
       kShowPanelFocusRectangle,
       kAutoSaveOnIdle,
@@ -3050,6 +3090,8 @@ std::vector<std::string> UserPrefValues::allKeys()
       kSaveRetryTimeout,
       kInsertNativePipeOperator,
       kCommandPaletteMru,
+      kShowMemoryUsage,
+      kMemoryQueryIntervalSeconds,
    });
 }
    

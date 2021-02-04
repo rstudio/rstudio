@@ -506,6 +506,12 @@ well as menu structures (for main menu and popup menus).
          <menu label="_Addins">
             <cmd refid="browseAddins"/>
          </menu>
+         <menu label="_Memory">
+            <cmd refid="freeUnusedMemory"/>
+            <cmd refid="showMemoryUsageReport"/>
+            <separator/>
+            <cmd refid="toggleShowMemoryUsage"/>
+         </menu>
          <separator/>
          <cmd refid="helpKeyboardShortcuts"/>
          <cmd refid="modifyKeyboardShortcuts"/>
@@ -3971,4 +3977,14 @@ well as menu structures (for main menu and popup menus).
    <cmd id="clearCommandPaletteMru"
         menuLabel="Clear Recently Executed Command List" />
 
+   <cmd id="freeUnusedMemory"
+        menuLabel="_Free Unused R Memory" />
+
+   <cmd id="showMemoryUsageReport"
+        menuLabel="Memory Usage _Report..." />
+
+   <cmd id="toggleShowMemoryUsage"
+        label="Toggle Memory Usage Display in Environment Pane"
+        menuLabel="_Show Current Memory Usage"
+        checkable="true" />
 </commands>

@@ -230,6 +230,12 @@ public class ElementIds
    public final static String NEW_SHINY_APP_SINGLE_FILE = "new_shiny_app_single_file";
    public final static String NEW_SHINY_APP_MULTI_FILE = "new_shiny_app_multi_file";
 
+   // Memory
+   public final static String MEMORY_PIE_MINI = "memory_pie_mini";
+   public final static String MEMORY_PIE_FULL = "memory_pie_full";
+   public final static String MEMORY_USAGE_TABLE = "memory_usage_table";
+   public final static String MEMORY_TABLE_TITLE = "memory_table_title";
+
    // TextBoxWithButton and subclasses -- prefixes for button/text/help, combined with suffixes
    public final static String TBB_TEXT = "tbb_text";
    public final static String TBB_BUTTON = "tbb_button";
@@ -599,4 +605,13 @@ public class ElementIds
    public final static String TAB_CLOSE_ALL = "tab_close_all";
    public final static String TAB_CLOSE_OTHERS = "tab_close_others";
 
+   // OpenProjectDialog
+   public final static String OP_NEW_SESSION = "op_new_session";
+
+   // FilePathToolbar
+   public final static String FP_SELECT_ALL = "fp_select_all";
+
+   // ChooseEncodingDialog
+   public final static String ENC_SHOW_ALL = "enc_show_all";
+   public final static String ENC_SET_DEFAULT = "enc_set_default";
 }
