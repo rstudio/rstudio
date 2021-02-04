@@ -247,6 +247,8 @@ namespace prefs {
 #define kShowRmdRenderCommand "show_rmd_render_command"
 #define kEnableTextDrag "enable_text_drag"
 #define kShowHiddenFiles "show_hidden_files"
+#define kAlwaysShownFiles "always_shown_files"
+#define kAlwaysShownExtensions "always_shown_extensions"
 #define kSortFileNamesNaturally "sort_file_names_naturally"
 #define kJobsTabVisibility "jobs_tab_visibility"
 #define kJobsTabVisibilityClosed "closed"
@@ -1229,6 +1231,18 @@ public:
     */
    bool showHiddenFiles();
    core::Error setShowHiddenFiles(bool val);
+
+   /**
+    * List of files that are always shown in the Files Pane, regardless of whether hidden files are shown
+    */
+   core::json::Array alwaysShownFiles();
+   core::Error setAlwaysShownFiles(core::json::Array val);
+
+   /**
+    * List of extensions that are always shown in the Files Pane, regardless of whether hidden files are shown
+    */
+   core::json::Array alwaysShownExtensions();
+   core::Error setAlwaysShownExtensions(core::json::Array val);
 
    /**
     * Whether to sort file names naturally, so that e.g., file10.R comes after file9.R

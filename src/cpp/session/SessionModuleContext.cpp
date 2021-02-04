@@ -1934,38 +1934,37 @@ SEXP rs_isRScriptInPackageBuildTarget(SEXP filePathSEXP)
 
 bool fileListingFilter(const core::FileInfo& fileInfo, bool hideObjectFiles)
 {
-   // check extension for special file types which are always visible
    core::FilePath filePath(fileInfo.absolutePath());
+
+   // Check to see if this is one of the extensions we always show
    std::string ext = filePath.getExtensionLowerCase();
+   core::json::Array exts = prefs::userPrefs().alwaysShownExtensions();
+   for (json::Value val: exts)
+   {
+      if (json::isType<std::string>(val))
+      {
+         if (ext == string_utils::toLower(val.getString()))
+         {
+            return true;
+         }
+      }
+   }
+
+   // Check to see if this is one of the files we always show
    std::string name = filePath.getFilename();
-   if (ext == ".r" ||
-       ext == ".rprofile" ||
-       ext == ".rbuildignore" ||
-       ext == ".rdata"    ||
-       ext == ".rhistory" ||
-       ext == ".ruserdata" ||
-       ext == ".renviron" ||
-       ext == ".httr-oauth" ||
-       ext == ".github" ||
-       ext == ".gitignore" ||
-       ext == ".gitattributes" ||
-       ext == ".circleci")
+   core::json::Array files = prefs::userPrefs().alwaysShownFiles();
+   for (json::Value val: files)
    {
-      return true;
+      if (json::isType<std::string>(val))
+      {
+         if (name == val.getString())
+         {
+            return true;
+         }
+      }
    }
-   else if (name == ".travis.yml")
-   {
-      return true;
-   }
-   else if (name == ".gitlab-ci.yml")
-   {
-      return true;
-   }
-   else if (name == ".build.yml")
-   {
-      return true;
-   }
-   else if (hideObjectFiles &&
+
+   if (hideObjectFiles &&
             (ext == ".o" || ext == ".so" || ext == ".dll") &&
             filePath.getParent().getFilename() == "src")
    {

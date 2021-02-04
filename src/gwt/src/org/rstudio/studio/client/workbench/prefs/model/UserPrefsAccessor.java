@@ -1983,6 +1983,30 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * List of files that are always shown in the Files Pane, regardless of whether hidden files are shown
+    */
+   public PrefValue<JsArrayString> alwaysShownFiles()
+   {
+      return object(
+         "always_shown_files",
+         "Files always shown in the Files Pane", 
+         "List of files that are always shown in the Files Pane, regardless of whether hidden files are shown", 
+         JsArrayUtil.createStringArray(".build.yml", ".gitlab-ci.yml", ".travis.yml"));
+   }
+
+   /**
+    * List of extensions that are always shown in the Files Pane, regardless of whether hidden files are shown
+    */
+   public PrefValue<JsArrayString> alwaysShownExtensions()
+   {
+      return object(
+         "always_shown_extensions",
+         "Extensions always shown in the Files Pane", 
+         "List of extensions that are always shown in the Files Pane, regardless of whether hidden files are shown", 
+         JsArrayUtil.createStringArray(".circleci", ".gitattributes", ".github", ".gitignore", ".httr-oauth", ".r", ".rbuildignore", ".rdata", ".renvignore", ".renviron", ".rhistory", ".rprofile", ".ruserdata"));
+   }
+
+   /**
     * Whether to sort file names naturally, so that e.g., file10.R comes after file9.R
     */
    public PrefValue<Boolean> sortFileNamesNaturally()
@@ -3393,6 +3417,10 @@ public class UserPrefsAccessor extends Prefs
          enableTextDrag().setValue(layer, source.getBool("enable_text_drag"));
       if (source.hasKey("show_hidden_files"))
          showHiddenFiles().setValue(layer, source.getBool("show_hidden_files"));
+      if (source.hasKey("always_shown_files"))
+         alwaysShownFiles().setValue(layer, source.getObject("always_shown_files"));
+      if (source.hasKey("always_shown_extensions"))
+         alwaysShownExtensions().setValue(layer, source.getObject("always_shown_extensions"));
       if (source.hasKey("sort_file_names_naturally"))
          sortFileNamesNaturally().setValue(layer, source.getBool("sort_file_names_naturally"));
       if (source.hasKey("jobs_tab_visibility"))
@@ -3695,6 +3723,8 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(showRmdRenderCommand());
       prefs.add(enableTextDrag());
       prefs.add(showHiddenFiles());
+      prefs.add(alwaysShownFiles());
+      prefs.add(alwaysShownExtensions());
       prefs.add(sortFileNamesNaturally());
       prefs.add(jobsTabVisibility());
       prefs.add(showLauncherJobsTab());
