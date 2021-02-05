@@ -77,6 +77,7 @@ import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.SweaveFileType;
+import org.rstudio.studio.client.common.filetypes.TexFileType;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.filetypes.events.CopySourcePathEvent;
 import org.rstudio.studio.client.common.filetypes.events.RenameSourceFileEvent;
@@ -156,6 +157,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.VimMarks;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionOperation;
@@ -592,12 +594,47 @@ public class TextEditingTarget implements
                     (fileType_.isC() || isCursorInRMode(docDisplay_) || isCursorInTexMode(docDisplay_)))
             {
                String line = docDisplay_.getCurrentLineUpToCursor();
+               
+               // validate that this line is composed of only comments and whitespace
+               // (necessary to check token type for e.g. Markdown documents)
+               // https://github.com/rstudio/rstudio/issues/6421
+               JsArray<Token> tokens =
+                     docDisplay_.getTokens(docDisplay_.getCursorPosition().getRow());
+               
+               boolean isCommentLine = true;
+               for (int i = 0, n = tokens.length(); i < n; i++)
+               {
+                  Token token = tokens.get(i);
+                  
+                  // allow for empty whitespace tokens
+                  String value = token.getValue();
+                  if (value.trim().isEmpty())
+                     continue;
+                  
+                  // allow tokens explicitly declared as comments
+                  if (token.hasType("comment"))
+                     continue;
+                  
+                  // if we got here, then we got a non-whitespace, non-comment token,
+                  // so we cannot continue the comment
+                  isCommentLine = false;
+                  break;
+               }
+               
                Pattern pattern = null;
-
-               if (isCursorInRMode(docDisplay_))
+               
+               if (!isCommentLine)
+               {
+                  pattern = null;
+               }
+               else if (isCursorInRMode(docDisplay_))
+               {
                   pattern = Pattern.create("^(\\s*#+'?\\s*)");
+               }
                else if (isCursorInTexMode(docDisplay_))
+               {
                   pattern = Pattern.create("^(\\s*%+'?\\s*)");
+               }
                else if (fileType_.isC())
                {
                   // bail on attributes
@@ -7555,6 +7592,9 @@ public class TextEditingTarget implements
 
    private boolean isCursorInTexMode(DocDisplay display)
    {
+      if (fileType_ instanceof TexFileType)
+         return true;
+      
       if (fileType_.canCompilePDF())
       {
          if (fileType_.isRnw())
@@ -7575,11 +7615,17 @@ public class TextEditingTarget implements
 
    private boolean isCursorInRMode(DocDisplay display)
    {
+      TextFileType type = display.getFileType();
+      if (type instanceof TexFileType)
+         return false;
+      
       String mode = display.getLanguageMode(display.getCursorPosition());
       if (mode == null)
          return true;
+      
       if (mode.equals(TextFileType.R_LANG_MODE))
          return true;
+      
       return false;
    }
 
