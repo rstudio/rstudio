@@ -42,6 +42,8 @@ RStudio Server Pro has been renamed to RStudio Workbench to more accurately refl
 * Improve YAML cursor position after omni-insert in the visual editor (#8670)
 * Detect newer plumber tags when enabling plumber integration (#8118)
 * Option to restore RStudio 1.2 tab key behavior in editor find panel; search in Command Palette for "Tab key behavior in find panel matches RStudio 1.2 and earlier" (#7295)
+* Show `.renvignore` in Files pane (#8658)
+* Make the set of always-shown files and extensions in the Files pane configurable (#3221)
 
 ### Bugfixes
 
