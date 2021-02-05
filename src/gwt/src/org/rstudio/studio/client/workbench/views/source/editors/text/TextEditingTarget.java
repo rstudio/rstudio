@@ -7616,7 +7616,7 @@ public class TextEditingTarget implements
    private boolean isCursorInRMode(DocDisplay display)
    {
       TextFileType type = display.getFileType();
-      if (type instanceof TexFileType)
+      if (type != null && type instanceof TexFileType)
          return false;
       
       String mode = display.getLanguageMode(display.getCursorPosition());
