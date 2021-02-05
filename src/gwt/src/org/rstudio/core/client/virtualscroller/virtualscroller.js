@@ -194,7 +194,8 @@ var VirtualScroller;
     },
 
     scrolledToBottom: function() {
-      return Math.abs(this.scrollerEle.scrollHeight - this.scrollerEle.offsetHeight - this.scrollerEle.scrollTop) < 50;
+      return !!this.scrollerEle &&
+          Math.abs(this.scrollerEle.scrollHeight - this.scrollerEle.offsetHeight - this.scrollerEle.scrollTop) < 50;
     },
 
     scrollToBottom: function() {
