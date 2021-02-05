@@ -34,6 +34,7 @@ import org.rstudio.studio.client.workbench.views.buildtools.model.BuildState;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentContextData;
+import org.rstudio.studio.client.workbench.views.environment.model.MemoryUsage;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobState;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesState;
 import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersState;
@@ -662,5 +663,8 @@ public class SessionInfo extends JavaScriptObject
    public final native String getReticulatePython() /*-{
       return this.reticulate_python;
    }-*/;
-   
+
+   public final native MemoryUsage getMemoryUsage() /*-{
+      return this.memory_usage;
+   }-*/;
 }

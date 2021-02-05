@@ -64,6 +64,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.server.model.DocumentCloseAllNoSaveEvent;
+import org.rstudio.studio.client.server.model.DocumentCloseEvent;
 import org.rstudio.studio.client.workbench.FileMRUList;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ClientState;
@@ -102,9 +103,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class SourceColumnManager implements CommandPaletteEntrySource,
                                             SourceExtendedTypeDetectedEvent.Handler,
                                             DocumentCloseAllNoSaveEvent.Handler,
+                                            DocumentCloseEvent.Handler,
                                             DebugModeChangedEvent.Handler
 {
-   public interface CPSEditingTargetCommand
+  public interface CPSEditingTargetCommand
    {
       void execute(EditingTarget editingTarget, Command continuation);
    }
@@ -210,6 +212,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       events_.addHandler(SourceExtendedTypeDetectedEvent.TYPE, this);
       events_.addHandler(DebugModeChangedEvent.TYPE, this);
       events_.addHandler(DocumentCloseAllNoSaveEvent.TYPE, this);
+      events_.addHandler(DocumentCloseEvent.TYPE, this);
 
       WindowEx.addFocusHandler(new FocusHandler()
       {
@@ -1103,6 +1106,15 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    public void onDocumentCloseAllNoSave(DocumentCloseAllNoSaveEvent event)
    {
       revertUnsavedTargets(() -> closeAllTabs(null, false, null));
+   }
+
+   @Override
+   public void onDocumentClose(DocumentCloseEvent event)
+   {
+      EditingTarget target = findEditor(event.getDocId());
+      if (target == null)
+         return;
+      findByDocument(event.getDocId()).closeTab(target.asWidget(), true, null);
    }
 
    public void nextTabWithWrap()

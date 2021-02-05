@@ -69,3 +69,15 @@ test_that("functions with backslashes deparse correctly", {
 
    expect_equal(output, code)
 })
+
+test_that("memory usage stats are reasonable", {
+   report <- .rs.invokeRpc("get_memory_usage_report")
+
+   # ensure that we get values from R
+   expect_true(report$r$cons > 0)
+   expect_true(report$r$vector > 0)
+
+   # ensure that the memory used by R is less than the memory used by the process
+   r_total <- report$r$cons + report$r$vector
+   expect_true(report$system$process$kb > r_total)
+})

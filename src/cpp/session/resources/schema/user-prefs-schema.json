@@ -1456,6 +1456,18 @@
             "title": "Remember recently used items in Command Palette",
             "type": "boolean",
             "default": true
+        }, 
+        "show_memory_usage": {
+            "description": "Whether to compute and show memory usage in the Environment Pane",
+            "title": "Show memory usage in Environment Pane",
+            "type": "boolean",
+            "default": true
+        },
+        "memory_query_interval_seconds": {
+            "description": "How many seconds to wait between automatic requeries of memory statistics (0 to disable)",
+            "title": "Interval for requerying memory stats (seconds)",
+            "type": "integer",
+            "default": 10
         }
     }
 }

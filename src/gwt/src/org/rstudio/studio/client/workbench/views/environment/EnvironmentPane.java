@@ -34,7 +34,9 @@ import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.SessionSerializationEvent;
 import org.rstudio.studio.client.application.events.SuspendAndRestartEvent;
+import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.ImageMenuItem;
@@ -53,6 +55,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.environment.events.MemoryUsageChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentContextData;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentFrame;
@@ -75,13 +78,16 @@ import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import org.rstudio.studio.client.workbench.views.environment.view.MemUsageWidget;
 
 public class EnvironmentPane extends WorkbenchPane
                              implements EnvironmentPresenter.Display,
                                         EnvironmentObjectsObserver,
                                         SessionInitEvent.Handler,
                                         ReticulateEvent.Handler,
-                                        SuspendAndRestartEvent.Handler
+                                        SuspendAndRestartEvent.Handler,
+                                        MemoryUsageChangedEvent.Handler,
+                                        SessionSerializationEvent.Handler
 {
    @Inject
    public EnvironmentPane(Commands commands,
@@ -125,6 +131,11 @@ public class EnvironmentPane extends WorkbenchPane
       events.addHandler(SessionInitEvent.TYPE, this);
       events.addHandler(ReticulateEvent.TYPE, this);
       events.addHandler(SuspendAndRestartEvent.TYPE, this);
+      events.addHandler(MemoryUsageChangedEvent.TYPE, this);
+      events.addHandler(SessionSerializationEvent.TYPE, this);
+
+      // Sync the state of the memory usage toggle command to the preference
+      prefs.showMemoryUsage().bind(val -> commands.toggleShowMemoryUsage().setChecked(val));
 
       ensureWidget();
    }
@@ -139,6 +150,9 @@ public class EnvironmentPane extends WorkbenchPane
       toolbar.addLeftWidget(commands_.saveWorkspace().createToolbarButton());
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(createImportMenu());
+      toolbar.addLeftSeparator();
+      memUsage_ = new MemUsageWidget(session_.getSessionInfo().getMemoryUsage(), prefs_);
+      toolbar.addLeftWidget(memUsage_);
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.clearWorkspace().createToolbarButton());
 
@@ -692,6 +706,8 @@ public class EnvironmentPane extends WorkbenchPane
    {
       boolean initialized = session_.getSessionInfo().getPythonInitialized();
       setPythonEnabled(initialized);
+
+      memUsage_.setMemoryUsage(session_.getSessionInfo().getMemoryUsage());
    }
 
    @Override
@@ -717,6 +733,22 @@ public class EnvironmentPane extends WorkbenchPane
    public void onSuspendAndRestart(SuspendAndRestartEvent event)
    {
       setActiveLanguage("R", false);
+   }
+
+   @Override
+   public void onMemoryUsageChanged(MemoryUsageChangedEvent event)
+   {
+      memUsage_.setMemoryUsage(event.getMemoryUsage());
+   }
+
+   @Override
+   public void onSessionSerialization(SessionSerializationEvent event)
+   {
+      if (event.getAction().getType() == SessionSerializationAction.SUSPEND_SESSION)
+      {
+         // Show suspension hint in memory usage widget
+         memUsage_.setSuspended(true);
+      }
    }
 
    // An extension of the toolbar popup menu that gets environment names from
@@ -867,6 +899,7 @@ public class EnvironmentPane extends WorkbenchPane
    private ToolbarMenuButton viewButton_;
    private ToolbarButton refreshButton_;
    private EnvironmentObjects objects_;
+   private MemUsageWidget memUsage_;
 
    private ArrayList<String> expandedObjects_;
    private int scrollPosition_;
