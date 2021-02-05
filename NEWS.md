@@ -59,6 +59,7 @@ RStudio Server Pro has been renamed to RStudio Workbench to more accurately refl
 * Fixed issue where attempting to profile lines ending in comment would fail (#8407)
 * Fixed issue where warnings + messages were mis-encoded in chunk outputs on Windows (#8565)
 * Fixed issue where C++ compilation database was not invalidated when compiler was updated (#8588)
+* Fixed issue where SQL chunks containing non-ASCII characters could fail to run on Windows (#8900)
 * Improved checks for non-writable R library paths on startup (Pro #2184)
 * Code chunks in the visual editor now respect the "Tab Key Always Moves Focus" accessibility setting (#8584)
 * The commands "Execute Previous Chunks" and "Execute Subsequent Chunks" now work when the cursor is outside a code chunk in the visual editor (#8500)
