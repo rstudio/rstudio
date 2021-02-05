@@ -26,6 +26,8 @@ public class VirtualScrollerNative
    public native void setup(Element ele, String visuallyHiddenClass);
    public native void append(Element ele);
    public native Element getCurBucket();
+   public native boolean scrolledToBottom();
+   public native void scrollToBottom();
    public native void clear();
    public native void prune(Element ele);
    public native void ensureStartingOnNewLine();
