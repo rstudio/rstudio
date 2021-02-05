@@ -74,4 +74,4 @@ RStudio Server Pro has been renamed to RStudio Workbench to more accurately refl
 * Add 'whole word' filter to Find in Files. (#8594)
 * Fixed issue where empty panes would remain open and pop open unexpectedly (#8460)
 * Fixed an issue where the Kubernetes Launcher could hang in Azure Kubernetes Service (AKS) environments by lowering the watch-timeout-seconds parameter default down to 3 minutes instead of 5 (Pro #2312)
-
+* Fixed issue where 'continue comment on newline' would treat Markdown headers as comments (#6421)
