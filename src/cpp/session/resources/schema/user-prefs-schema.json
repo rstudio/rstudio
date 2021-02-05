@@ -945,7 +945,7 @@
         },
         "always_shown_files": {
             "type": "array",
-            "description": "List of files that are always shown in the Files Pane, regardless of whether hidden files are shown",
+            "description": "List of file names (case sensitive) that are always shown in the Files Pane, regardless of whether hidden files are shown",
             "title": "Files always shown in the Files Pane",
             "items": {
                 "type": "string"
@@ -958,7 +958,7 @@
         },
         "always_shown_extensions": {
             "type": "array",
-            "description": "List of extensions that are always shown in the Files Pane, regardless of whether hidden files are shown",
+            "description": "List of file extensions (beginning with ., not case sensitive) that are always shown in the Files Pane, regardless of whether hidden files are shown",
             "title": "Extensions always shown in the Files Pane",
             "items": {
                 "type": "string"

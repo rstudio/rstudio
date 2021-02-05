@@ -1844,7 +1844,7 @@ core::Error UserPrefValues::setShowHiddenFiles(bool val)
 }
 
 /**
- * List of files that are always shown in the Files Pane, regardless of whether hidden files are shown
+ * List of file names (case sensitive) that are always shown in the Files Pane, regardless of whether hidden files are shown
  */
 core::json::Array UserPrefValues::alwaysShownFiles()
 {
@@ -1857,7 +1857,7 @@ core::Error UserPrefValues::setAlwaysShownFiles(core::json::Array val)
 }
 
 /**
- * List of extensions that are always shown in the Files Pane, regardless of whether hidden files are shown
+ * List of file extensions (beginning with ., not case sensitive) that are always shown in the Files Pane, regardless of whether hidden files are shown
  */
 core::json::Array UserPrefValues::alwaysShownExtensions()
 {

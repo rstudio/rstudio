@@ -1983,26 +1983,26 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * List of files that are always shown in the Files Pane, regardless of whether hidden files are shown
+    * List of file names (case sensitive) that are always shown in the Files Pane, regardless of whether hidden files are shown
     */
    public PrefValue<JsArrayString> alwaysShownFiles()
    {
       return object(
          "always_shown_files",
          "Files always shown in the Files Pane", 
-         "List of files that are always shown in the Files Pane, regardless of whether hidden files are shown", 
+         "List of file names (case sensitive) that are always shown in the Files Pane, regardless of whether hidden files are shown", 
          JsArrayUtil.createStringArray(".build.yml", ".gitlab-ci.yml", ".travis.yml"));
    }
 
    /**
-    * List of extensions that are always shown in the Files Pane, regardless of whether hidden files are shown
+    * List of file extensions (beginning with ., not case sensitive) that are always shown in the Files Pane, regardless of whether hidden files are shown
     */
    public PrefValue<JsArrayString> alwaysShownExtensions()
    {
       return object(
          "always_shown_extensions",
          "Extensions always shown in the Files Pane", 
-         "List of extensions that are always shown in the Files Pane, regardless of whether hidden files are shown", 
+         "List of file extensions (beginning with ., not case sensitive) that are always shown in the Files Pane, regardless of whether hidden files are shown", 
          JsArrayUtil.createStringArray(".circleci", ".gitattributes", ".github", ".gitignore", ".httr-oauth", ".r", ".rbuildignore", ".rdata", ".renvignore", ".renviron", ".rhistory", ".rprofile", ".ruserdata"));
    }
 
