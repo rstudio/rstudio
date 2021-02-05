@@ -1480,8 +1480,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       {
          final CPSEditingTargetCommand command = (EditingTarget target, Command continuation) ->
          {
-            if (!StringUtil.isNullOrEmpty(excludeDocId) &&
-               (target == activeColumn_.getDoc(excludeDocId) || target == column.getDoc(excludeDocId)))
+            if (!StringUtil.isNullOrEmpty(excludeDocId) && target == column.getDoc(excludeDocId))
             {
                continuation.execute();
             }
