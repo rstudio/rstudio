@@ -438,11 +438,12 @@ Error executeSqlEngineChunk(const std::string& docId,
    }
 
    // run sql and save result
-   error = r::exec::RFunction(
-               ".rs.runSqlForDataCapture",
-               code,
-               string_utils::utf8ToSystem(dataPath.getAbsolutePath()),
-               options).call();
+   error = r::exec::RFunction(".rs.runSqlForDataCapture")
+         .addUtf8Param(code)
+         .addUtf8Param(dataPath.getAbsolutePath())
+         .addParam(options)
+         .call();
+
    if (error)
    {
       std::string message = "Failed to execute SQL chunk";
