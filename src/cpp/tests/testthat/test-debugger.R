@@ -44,3 +44,11 @@ test_that("we successfully parse the function name from different calls", {
    expect_equal(.rs.functionNameFromCall(cl), "[Anonymous function]")
    
 })
+
+test_that("function calls are not mangled into something un-printable", {
+   
+   cl <- call("function", pairlist(a = 1, b = 2, c = 3), quote({}))
+   sanitized <- .rs.sanitizeCallSummary(cl)
+   expect_equal(cl, sanitized)
+   
+})

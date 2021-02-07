@@ -16,6 +16,12 @@
 context("environment")
 
 test_that("environment object listings are correct", {
+
+   # temporarily disable showing the .Last.value so we don't have to account for it in test results
+   lastValue <- .rs.api.readRStudioPreference("show_last_dot_value")
+   on.exit(.rs.api.writeRStudioPreference("show_last_dot_value", lastValue))
+   .rs.api.writeRStudioPreference("show_last_dot_value", FALSE)
+
    # our test-runner sets runAllTests function in the global environment, so initial
    # length is one
    .rs.invokeRpc("set_environment", "R_GlobalEnv")
@@ -48,6 +54,12 @@ test_that("flag must be specified when removing objects", {
 })
 
 test_that("all objects are removed when requested", {
+
+   # temporarily disable showing the .Last.value so we don't have to account for it in test results
+   lastValue <- .rs.api.readRStudioPreference("show_last_dot_value")
+   on.exit(.rs.api.writeRStudioPreference("show_last_dot_value", lastValue))
+   .rs.api.writeRStudioPreference("show_last_dot_value", FALSE)
+
    contents <- .rs.invokeRpc("list_environment")
    expect_true(length(contents) > 0)
 

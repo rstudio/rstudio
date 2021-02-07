@@ -412,6 +412,12 @@
       # return object
       object
    }
+   else if (is.pairlist(object))
+   {
+      # handle pairlists specially, primarily because they're
+      # used directly within function calls
+      object
+   }
    else if (!is.language(object))
    {
       # if the object would be very expensive to deparse,

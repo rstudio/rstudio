@@ -17,6 +17,7 @@
 * Improved handling of unicode input on Windows (#8549)
 * Fixed issue where inspecting a null Python object would cause emit errors to console (#8185)
 * Detect active Python version when publishing content (#8636)
+* Use active Python version when knitting R Markdown files (#8854)
 
 ### RStudio Server
 
@@ -42,6 +43,8 @@ RStudio Server Pro has been renamed to RStudio Workbench to more accurately refl
 * Improve YAML cursor position after omni-insert in the visual editor (#8670)
 * Detect newer plumber tags when enabling plumber integration (#8118)
 * Option to restore RStudio 1.2 tab key behavior in editor find panel; search in Command Palette for "Tab key behavior in find panel matches RStudio 1.2 and earlier" (#7295)
+* Show `.renvignore` in Files pane (#8658)
+* Make the set of always-shown files and extensions in the Files pane configurable (#3221)
 
 ### Bugfixes
 
@@ -57,6 +60,7 @@ RStudio Server Pro has been renamed to RStudio Workbench to more accurately refl
 * Fixed issue where attempting to profile lines ending in comment would fail (#8407)
 * Fixed issue where warnings + messages were mis-encoded in chunk outputs on Windows (#8565)
 * Fixed issue where C++ compilation database was not invalidated when compiler was updated (#8588)
+* Fixed issue where SQL chunks containing non-ASCII characters could fail to run on Windows (#8900)
 * Improved checks for non-writable R library paths on startup (Pro #2184)
 * Code chunks in the visual editor now respect the "Tab Key Always Moves Focus" accessibility setting (#8584)
 * The commands "Execute Previous Chunks" and "Execute Subsequent Chunks" now work when the cursor is outside a code chunk in the visual editor (#8500)
@@ -72,4 +76,4 @@ RStudio Server Pro has been renamed to RStudio Workbench to more accurately refl
 * Add 'whole word' filter to Find in Files. (#8594)
 * Fixed issue where empty panes would remain open and pop open unexpectedly (#8460)
 * Fixed an issue where the Kubernetes Launcher could hang in Azure Kubernetes Service (AKS) environments by lowering the watch-timeout-seconds parameter default down to 3 minutes instead of 5 (Pro #2312)
-
+* Fixed issue where 'continue comment on newline' would treat Markdown headers as comments (#6421)

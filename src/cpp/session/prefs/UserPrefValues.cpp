@@ -1844,6 +1844,32 @@ core::Error UserPrefValues::setShowHiddenFiles(bool val)
 }
 
 /**
+ * List of file names (case sensitive) that are always shown in the Files Pane, regardless of whether hidden files are shown
+ */
+core::json::Array UserPrefValues::alwaysShownFiles()
+{
+   return readPref<core::json::Array>("always_shown_files");
+}
+
+core::Error UserPrefValues::setAlwaysShownFiles(core::json::Array val)
+{
+   return writePref("always_shown_files", val);
+}
+
+/**
+ * List of file extensions (beginning with ., not case sensitive) that are always shown in the Files Pane, regardless of whether hidden files are shown
+ */
+core::json::Array UserPrefValues::alwaysShownExtensions()
+{
+   return readPref<core::json::Array>("always_shown_extensions");
+}
+
+core::Error UserPrefValues::setAlwaysShownExtensions(core::json::Array val)
+{
+   return writePref("always_shown_extensions", val);
+}
+
+/**
  * Whether to sort file names naturally, so that e.g., file10.R comes after file9.R
  */
 bool UserPrefValues::sortFileNamesNaturally()
@@ -3013,6 +3039,8 @@ std::vector<std::string> UserPrefValues::allKeys()
       kShowRmdRenderCommand,
       kEnableTextDrag,
       kShowHiddenFiles,
+      kAlwaysShownFiles,
+      kAlwaysShownExtensions,
       kSortFileNamesNaturally,
       kJobsTabVisibility,
       kShowLauncherJobsTab,

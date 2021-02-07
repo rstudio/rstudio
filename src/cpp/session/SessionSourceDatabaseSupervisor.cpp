@@ -573,7 +573,8 @@ void suspendSourceDatabase(int status)
 {
    // write a sentinel so we can differentiate between a sdb that's orphaned
    // from a crash, and an sdb that represents a suspended session
-   Error error = (status == EX_SUSPEND_RESTART_LAUNCHER_SESSION || EX_CONTINUE) ?
+   Error error = (status == EX_SUSPEND_RESTART_LAUNCHER_SESSION ||
+                  status == EX_CONTINUE) ?
       sessionRestartFilePath(sessionDirPath()).ensureFile() : 
       sessionSuspendFilePath(sessionDirPath()).ensureFile();
    if (error)
