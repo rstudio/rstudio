@@ -25,7 +25,8 @@
 
 ### RStudio Workbench
 
-RStudio Server Pro has been renamed to RStudio Workbench to more accurately reflect its cross-language editing capabilities.
+* RStudio Server Pro has been renamed to RStudio Workbench to more accurately reflect its cross-language editing capabilities.
+* Added support for JupyterLab 3 
 
 ### Misc
 
