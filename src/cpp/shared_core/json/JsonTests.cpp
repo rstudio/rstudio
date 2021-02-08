@@ -85,12 +85,6 @@ json::Object returnObject()
    return val.getValue<json::Object>();
 }
 
-json::Value createValue()
-{
-   json::Object obj = createObject();
-   return std::move(obj);
-}
-
 json::Value getValue()
 {
    std::string jsonStr = "{\"a\": 5}";
