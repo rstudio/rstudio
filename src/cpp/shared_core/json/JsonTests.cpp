@@ -455,14 +455,6 @@ TEST_CASE("Json")
       REQUIRE(arr.getSize() == 0);
    }
 
-   SECTION("Test self assignment")
-   {
-      json::Value val = createValue();
-      val = val;
-
-      REQUIRE(val.getObject()["a"].getBool());
-   }
-
    SECTION("Unicode string test")
    {
       std::string jsonStr = "{\"a\": \"的中文翻譯 | 英漢字典\"}";
