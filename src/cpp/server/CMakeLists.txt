@@ -28,7 +28,6 @@ set(SERVER_SOURCE_FILES
    ServerEval.cpp
    ServerInit.cpp
    ServerLoginPages.cpp
-   ServerMain.cpp
    ServerMainOverlay.cpp
    ServerMeta.cpp
    ServerOffline.cpp
@@ -154,10 +153,11 @@ include_directories(
    ${EXT_SOURCE_DIR}
    ${SESSION_SOURCE_DIR}/include
    ${SHARED_CORE_SOURCE_DIR}/include
+   ${TESTS_INCLUDE_DIR}
 )
 
 # define executable
-add_stripped_executable(rserver ${SERVER_SOURCE_FILES} ${SERVER_HEADER_FILES})
+add_stripped_executable(rserver ServerMain.cpp ${SERVER_SOURCE_FILES} ${SERVER_HEADER_FILES})
 
 # set link dependencies
 target_link_libraries(rserver
@@ -291,4 +291,30 @@ endif()
 # add overlay if it exists
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMakeOverlay.txt")
    include(CMakeOverlay.txt)
+endif()
+
+# test files
+if (RSTUDIO_UNIT_TESTS_ENABLED)
+
+  set(SERVER_TEST_FILES)
+
+  list(APPEND SERVER_SOURCE_FILES ${SERVER_TEST_FILES})
+
+  add_executable(rserver-tests
+     TestMain.cpp
+     ${SERVER_TEST_FILES}
+     ${SERVER_SOURCE_FILES}
+     ${CORE_HEADER_FILES}
+     ${SERVER_HEADER_FILES}
+  )
+
+  target_link_libraries(rserver-tests
+     rstudio-core
+     rstudio-server-core
+     rstudio-monitor
+     ${CRASHPAD_LIBRARIES}
+     ${SOCI_LIBRARIES}
+     ${SERVER_SYSTEM_LIBRARIES}
+  )
+
 endif()

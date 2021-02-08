@@ -78,8 +78,6 @@ runWatchdogProcess()
       UNIT_TEST_FAILURE=true
    elif [ $RETCODE != 0 ]; then
       UNIT_TEST_FAILURE=true
-   else
-      UNIT_TEST_FAILURE=false
    fi
 }
 
@@ -88,7 +86,7 @@ findLibSegFault
 TEST_SCOPE=
 if [ "$1" == "--scope" ]; then
    if [ "$#" == 1 ]; then
-      printf "Specify scope (core, rsession, or r).\n"
+      printf "Specify scope (core, rserver, rsession, or r).\n"
       exit 1
    fi
 
@@ -141,16 +139,27 @@ if [ "$(uname)" = "Darwin" ]; then
    export DYLD_INSERT_LIBRARIES="$R_LIB_DIR/libR.dylib"
 fi
 
+UNIT_TEST_FAILURE=false
+
 # Run core tests
 if [ -z "$TEST_SCOPE" ] || [ "$TEST_SCOPE" == "core" ]; then
     echo Running 'core' tests...
-    $VALGRIND ${CMAKE_CURRENT_BINARY_DIR}/core/$RSTUDIO_CORETEST_BIN
-    checkUnitTestFailure
+    runWatchdogProcess 5m false "${CMAKE_CURRENT_BINARY_DIR}/core/$RSTUDIO_CORETEST_BIN"
 
     if [ -e ${CMAKE_CURRENT_BINARY_DIR}/server_core/rstudio-server-core-tests ]
     then
         echo Running 'server_core' tests...
         runWatchdogProcess 5m false "${CMAKE_CURRENT_BINARY_DIR}/server_core/rstudio-server-core-tests"
+    fi
+fi
+
+# Run server tests
+if [ -z "$TEST_SCOPE" ] || [ "$TEST_SCOPE" == "rserver" ]; then
+    echo Running 'rserver' tests...
+    if [ -e ${CMAKE_CURRENT_BINARY_DIR}/server/rserver-tests ]
+    then
+        echo Running 'rserver' tests...
+        runWatchdogProcess 5m false "${CMAKE_CURRENT_BINARY_DIR}/server/rserver-tests" -s
     fi
 fi
 
@@ -181,6 +190,7 @@ if [ -z "$TEST_SCOPE" ] || [ "$TEST_SCOPE" == "r" ]; then
     runWatchdogProcess 5m false "${CMAKE_CURRENT_BINARY_DIR}/session/$RSTUDIO_SESSION_BIN" \
         --run-script "\"source('${CMAKE_CURRENT_SOURCE_DIR}/tests/testthat/run-tests.R'); runAllTests('${CMAKE_CURRENT_SOURCE_DIR}', '${CMAKE_CURRENT_BINARY_DIR}'$TESTTHAT_FILTER)\"" \
         --config-file="$SESSION_CONF_FILE"
+   checkRUnitTestFailure
 fi
 
 # return an error exit code if any unit tests failed
