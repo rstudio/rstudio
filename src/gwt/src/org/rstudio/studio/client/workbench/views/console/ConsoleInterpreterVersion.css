@@ -1,0 +1,24 @@
+@charset "UTF-8";
+
+@external rstudio-themes-light;
+@external rstudio-themes-dark;
+
+.labelTabbed {
+   margin-right: 6px;
+   margin-top: 1px;
+   font-size: 11px;
+}
+
+.labelUntabbed {
+   margin-right: 2px;
+   margin-top: 2px;
+   font-size: 11px;
+}
+
+.rstudio-themes-light .label {
+   color: black;
+}
+
+.rstudio-themes-dark .label {
+   color: white;
+}

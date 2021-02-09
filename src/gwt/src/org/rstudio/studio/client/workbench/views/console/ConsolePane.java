@@ -139,10 +139,13 @@ public class ConsolePane extends WorkbenchPane
 
       profilerInterruptButton_ = ConsoleInterruptProfilerButton.CreateProfilerButton();
       profilerInterruptButton_.setVisible(false);
+      
+      consoleInterpreterVersion_ = new ConsoleInterpreterVersion(true);
 
       toolbar.addRightWidget(profilerInterruptButton_);
       toolbar.addRightWidget(consoleInterruptButton_);
       toolbar.addRightWidget(consoleClearButton_);
+      toolbar.addRightWidget(consoleInterpreterVersion_);
 
       return toolbar;
    }
@@ -329,6 +332,7 @@ public class ConsolePane extends WorkbenchPane
    private Label workingDir_;
    private ToolbarButton consoleInterruptButton_;
    private ToolbarButton consoleClearButton_;
+   private ConsoleInterpreterVersion consoleInterpreterVersion_;
    private Image profilerInterruptButton_;
    private Stack<ConsoleMode> mode_;
    private SecondaryToolbar secondaryToolbar_;
