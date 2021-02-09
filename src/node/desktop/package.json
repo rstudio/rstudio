@@ -1,0 +1,12 @@
+{
+  "name": "rstudio",
+  "version": "0.1.0",
+  "description": "rstudio electron prototype",
+  "main": "./src/app.js",
+  "dependencies": {
+    "electron": "^11.2.3"
+  },
+  "scripts": {
+    "start": "electron ."
+  }
+}
