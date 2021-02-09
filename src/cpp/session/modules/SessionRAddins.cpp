@@ -235,7 +235,7 @@ public:
 
          for (; it != end; ++it)
          {
-            std::map<std::string, std::string> fields = parseAddinDcf(*it);
+            std::map<std::string, std::string> fields = parseAddinDcf(addinPath, *it);
             add(pkgName, fields);
          }
       }
@@ -269,6 +269,7 @@ public:
 private:
    
    static std::map<std::string, std::string> parseAddinDcf(
+                                          const FilePath& addinPath,
                                           const std::string& contents)
    {
       // read and parse the DCF file
@@ -276,7 +277,10 @@ private:
       std::string errMsg;
       Error error = text::parseDcfFile(contents, true, &fields, &errMsg);
       if (error)
+      {
+         error.addProperty("path", addinPath.getAbsolutePath());
          LOG_ERROR(error);
+      }
 
       return fields;
    }
