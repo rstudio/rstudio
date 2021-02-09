@@ -10,3 +10,4 @@
 ### Misc
 
 * Update Pandoc to 2.11.4 (#8848)
+* Update jQuery to 3.5.1 (Pro #2314)
