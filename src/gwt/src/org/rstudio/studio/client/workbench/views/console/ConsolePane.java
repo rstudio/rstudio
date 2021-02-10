@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.console;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Label;
@@ -128,10 +129,20 @@ public class ConsolePane extends WorkbenchPane
    protected Toolbar createMainToolbar()
    {
       Toolbar toolbar = new Toolbar("Console Tab");
+      
+      consoleInterpreterVersion_ = new ConsoleInterpreterVersion(true);
+      toolbar.addLeftWidget(consoleInterpreterVersion_);
+      
+      HTML separator = new HTML("&centerdot;");
+      separator.addStyleName(ThemeStyles.INSTANCE.toolbarDotSeparator());
+      toolbar.addLeftWidget(separator);
+      
       workingDir_ = new Label();
       workingDir_.setStyleName(ThemeStyles.INSTANCE.subtitle());
       toolbar.addLeftWidget(workingDir_);
+      
       toolbar.addLeftWidget(commands_.goToWorkingDir().createToolbarButton());
+      
       consoleInterruptButton_ = commands_.interruptR().createToolbarButton();
       consoleClearButton_ = commands_.consoleClear().createToolbarButton();
       consoleClearButton_.addStyleName(ThemeStyles.INSTANCE.consoleClearButton());
@@ -140,12 +151,10 @@ public class ConsolePane extends WorkbenchPane
       profilerInterruptButton_ = ConsoleInterruptProfilerButton.CreateProfilerButton();
       profilerInterruptButton_.setVisible(false);
       
-      consoleInterpreterVersion_ = new ConsoleInterpreterVersion(true);
 
       toolbar.addRightWidget(profilerInterruptButton_);
       toolbar.addRightWidget(consoleInterruptButton_);
       toolbar.addRightWidget(consoleClearButton_);
-      toolbar.addRightWidget(consoleInterpreterVersion_);
 
       return toolbar;
    }

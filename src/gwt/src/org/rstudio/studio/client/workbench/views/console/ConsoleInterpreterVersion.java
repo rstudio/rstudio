@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.console;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.RVersionsInfo;
@@ -59,11 +60,16 @@ public class ConsoleInterpreterVersion
       
       label_ = new Label(rVersionLabel());
       label_.addStyleName(RES.styles().label());
+      label_.addStyleName(ThemeStyles.INSTANCE.title());
       
       if (isTabbedView)
+      {
          label_.addStyleName(RES.styles().labelTabbed());
+      }
       else
+      {
          label_.addStyleName(RES.styles().labelUntabbed());
+      }
          
       initWidget(label_);
       setVisible(true);

@@ -392,22 +392,18 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
             owner_.setMainWidget(consolePane_);
             owner_.addLeftWidget(goToWorkingDirButton_);
             
-            owner_.setContextButton(consoleInterpreterVersion_,
-                                    consoleInterpreterVersion_.getWidth(),
-                                    consoleInterpreterVersion_.getHeight(),
-                                    0);
             owner_.setContextButton(consoleClearButton_,
                                     consoleClearButton_.getWidth(),
                                     consoleClearButton_.getHeight(),
-                                    1);
+                                    0);
             owner_.setContextButton(consoleInterrupt_,
                                     consoleInterrupt_.getWidth(),
                                     consoleInterrupt_.getHeight(),
-                                    2);
+                                    1);
             owner_.setContextButton(consoleInterruptProfiler_,
                                     consoleInterruptProfiler_.getWidth(),
                                     consoleInterruptProfiler_.getHeight(),
-                                    3);
+                                    2);
             
                   
             consolePane_.onBeforeSelected();
@@ -421,7 +417,6 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
             owner_.setContextButton(null, 0, 0, 0);
             owner_.setContextButton(null, 0, 0, 1);
             owner_.setContextButton(null, 0, 0, 2);
-            owner_.setContextButton(null, 0, 0, 3);
          }
       }
 
