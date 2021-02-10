@@ -1,5 +1,5 @@
 /*
- * app.js
+ * preload.js
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -13,22 +13,4 @@
  *
  */
 
-const { app, BrowserWindow } = require('electron');
-const Main = require('./main');
-
-// Where it all begins
-app.whenReady().then(() => {
-  new Main().run();
-});
-
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
-});
-
-app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
-  }
-});
+window.electronDesktop = true;

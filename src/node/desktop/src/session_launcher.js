@@ -35,7 +35,7 @@ module.exports = class SessionLauncher {
     // DYLD_INSERT_LIBRARIES to inject the library we wish to use on
     // launch 
     let rHome = process.env.R_HOME;
-    let rLib = `${rHome}/lib/libR.dylib`;
+    let rLib = path.join(rHome, 'lib/libR.dylib');
     if (fs.existsSync(rLib))
     {
         process.env.DYLD_INSERT_LIBRARIES = path.resolve(rLib);

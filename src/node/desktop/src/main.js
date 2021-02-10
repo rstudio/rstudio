@@ -46,9 +46,9 @@ module.exports = class Main {
     installPath = path.resolve(installPath);
 
     // calculate paths to config file, rsession, and desktop scripts
-    let confPath = `${installPath}/conf/rdesktop-dev.conf`;
-    let sessionPath = `${installPath}/session/rsession`;
-    let scriptsPath = `${installPath}/desktop`;
+    let confPath = path.join(installPath, 'conf/rdesktop-dev.conf');
+    let sessionPath = path.join(installPath, 'session/rsession');
+    let scriptsPath = path.join(installPath, 'desktop');
     let devMode = true;
 
     if (!this.prepareEnvironment(scriptsPath)) {
@@ -69,7 +69,7 @@ module.exports = class Main {
 
   prepareEnvironment(scriptsPath) {
     // attempt to detect R environment
-    let ldScriptPath = `${scriptsPath}/../session/r-ldpath`;
+    let ldScriptPath = path.join(scriptsPath, '../session/r-ldpath');
 
     // whole bunch of code...
 
