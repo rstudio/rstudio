@@ -3,6 +3,27 @@
 @external rstudio-themes-light;
 @external rstudio-themes-dark;
 
+.container {
+   display: inline-block;
+}
+
+.icon {
+   display: inline-block;
+   height: 14px;
+   margin-right: 4px;
+   vertical-align: top;
+   border-radius: 2px;
+   border: 1px solid white;
+   background: white;
+}
+
+.iconR {
+   
+}
+
+.iconPython {
+}
+
 .labelTabbed {
    margin-left: 4px;
    margin-right: 6px;

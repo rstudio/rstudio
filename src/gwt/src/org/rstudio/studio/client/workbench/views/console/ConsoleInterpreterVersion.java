@@ -18,16 +18,17 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.application.model.RVersionsInfo;
+import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.events.ReticulateEvent;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.views.PythonInterpreter;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
@@ -58,9 +59,16 @@ public class ConsoleInterpreterVersion
       
       events_.addHandler(ReticulateEvent.TYPE, this);
       
+      container_ = new FlowPanel();
       label_ = new Label(rVersionLabel());
+      icon_ = new Image(StandardIcons.INSTANCE.rLogoSvg().getSafeUri());
+      
+      container_.addStyleName(RES.styles().container());
+      
       label_.addStyleName(RES.styles().label());
       label_.addStyleName(ThemeStyles.INSTANCE.title());
+      
+      icon_.addStyleName(RES.styles().icon());
       
       if (isTabbedView)
       {
@@ -70,9 +78,28 @@ public class ConsoleInterpreterVersion
       {
          label_.addStyleName(RES.styles().labelUntabbed());
       }
-         
-      initWidget(label_);
+      
+      container_.add(icon_);
+      container_.add(label_);
+      initWidget(container_);
+      
       setVisible(true);
+   }
+   
+   private void adaptToR()
+   {
+      icon_.removeStyleName(RES.styles().iconPython());
+      icon_.addStyleName(RES.styles().iconR());
+      icon_.setUrl(StandardIcons.INSTANCE.rLogoSvg().getSafeUri());
+      label_.setText(rVersionLabel());
+   }
+   
+   private void adaptToPython(PythonInterpreter info)
+   {
+      icon_.removeStyleName(RES.styles().iconR());
+      icon_.addStyleName(RES.styles().iconPython());
+      icon_.setUrl(StandardIcons.INSTANCE.pythonLogoSvg().getSafeUri());
+      label_.setText(pythonVersionLabel(info));
    }
    
    @Override
@@ -83,31 +110,36 @@ public class ConsoleInterpreterVersion
       if (StringUtil.equals(type, ReticulateEvent.TYPE_REPL_INITIALIZED))
       {
          PythonInterpreter info = event.getPayload().cast();
-         label_.setText("Python (" + info.getVersion() + ")");
-         label_.setTitle(info.getDescription());
+         adaptToPython(info);
       }
       else if (StringUtil.equals(type, ReticulateEvent.TYPE_REPL_TEARDOWN))
       {
-         label_.setText(rVersionLabel());
+         adaptToR();
       }
    }
    
    
-   public String rVersionLabel()
+   private String rVersionLabel()
    {
-      SessionInfo sessionInfo = session_.getSessionInfo();
-      if (sessionInfo == null)
-         return "R (unknown)";
+      String version = "(unknown)";
       
-      RVersionsInfo rVersionInfo = sessionInfo.getRVersionsInfo();
-      if (rVersionInfo == null)
-         return "R (unknown)";
+      try
+      {
+         version = session_
+               .getSessionInfo()
+               .getRVersionsInfo()
+               .getRVersion();
+      }
+      catch (Exception e)
+      {
+      }
       
-      String version = rVersionInfo.getRVersion();
-      if (StringUtil.isNullOrEmpty(version))
-         return "R (unknown)";
-      
-      return "R (" + version + ")";
+      return "R " + version;
+   }
+   
+   private String pythonVersionLabel(PythonInterpreter info)
+   {
+      return "Python " + info.getVersion();
    }
    
    public int getWidth()
@@ -120,6 +152,8 @@ public class ConsoleInterpreterVersion
       return 18;
    }
    
+   private final FlowPanel container_;
+   private final Image icon_;
    private final Label label_;
    
    // Injected ----
@@ -130,6 +164,12 @@ public class ConsoleInterpreterVersion
    
    public interface Styles extends CssResource
    {
+      String container();
+      
+      String icon();
+      String iconR();
+      String iconPython();
+      
       String label();
       String labelTabbed();
       String labelUntabbed();
