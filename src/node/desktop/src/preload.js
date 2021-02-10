@@ -13,4 +13,4 @@
  *
  */
 
-window.electronDesktop = true;
+window.desktop = true;

@@ -26,8 +26,8 @@
       if (window.desktop)
          return "true";
 
-      // also true when run under QtWebEngine, which defers hook injection
-      return window.navigator.userAgent.indexOf("QtWebEngine") > 0 ? "true" : "false";
+      // also true when run under Electron, which defers hook injection
+      return window.navigator.userAgent.indexOf("Electron") > 0 ? "true" : "false";
    ]]></property-provider>
 
    <define-property name="rstudio.remoteDesktop" values="true,false"/>
@@ -36,7 +36,7 @@
       if (window.remoteDesktop)
          return "true";
 
-      // also true when run under QtWebEngine, which defers hook injection
+      // also true when run under Electron, which defers hook injection
       return window.navigator.userAgent.indexOf("RStudio Remote Desktop") > 0 ? "true" : "false";
    ]]></property-provider>
 

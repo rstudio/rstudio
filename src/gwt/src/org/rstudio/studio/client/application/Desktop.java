@@ -20,13 +20,13 @@ public class Desktop
 {
    public static native boolean isDesktop() /*-{
       // we're in desktop mode if the program mode is explicitly set that way;
-      // as a fallback, check for the desktop object injected by Qt
+      // as a fallback, check for the desktop object injected by Electron preload
       return ($wnd.program_mode === "desktop" || !!$wnd.desktop) &&
               !$wnd.remoteDesktop;
    }-*/;
 
    public static native boolean isRemoteDesktop() /*-{
-      // we're in remote desktop mode if the remoteDesktop object was injected by Qt
+      // we're in remote desktop mode if the remoteDesktop object was injected by Electron preload
       return !!$wnd.remoteDesktop;
    }-*/;
    
