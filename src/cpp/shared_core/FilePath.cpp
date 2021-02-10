@@ -87,6 +87,7 @@ MimeType s_mimeTypes[] =
       { "png",          "image/png" },
       { "webp",         "image/webp" },
       { "js",           "text/javascript" },
+      { "jsx",          "text/jsx" },
       { "pdf",          "application/pdf" },
       { "svg",          "image/svg+xml" },
       { "swf",          "application/x-shockwave-flash" },

@@ -115,6 +115,9 @@ public interface FileIconResources extends ClientBundle
    @Source("iconJavascript_2x.png")
    ImageResource iconJavascript2x();
 
+   @Source("iconJsx.png")
+   ImageResource iconJsx2x();
+
    @Source("iconRsweave_2x.png")
    ImageResource iconRsweave2x();
 

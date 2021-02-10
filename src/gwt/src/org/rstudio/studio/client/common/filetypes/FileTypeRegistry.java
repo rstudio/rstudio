@@ -146,6 +146,12 @@ public class FileTypeRegistry
                           true,
                           true, false, false, false, false, false, false, false, false, false, false, false);
 
+   public static final TextFileType JSX =
+      new TextFileType("jsx", "JSX", EditorLanguage.LANG_JSX, ".jsx",
+         new ImageResource2x(ICONS.iconJsx2x()),
+         true,
+         false, false, false, false, false, false, false, false, false, false, false, false);
+
    public static final TextFileType JSON =
          new TextFileType("json", "JSON", EditorLanguage.LANG_JAVASCRIPT, ".json",
                           new ImageResource2x(ICONS.iconJavascript2x()),
@@ -381,6 +387,7 @@ public class FileTypeRegistry
       register("*.css", CSS, new ImageResource2x(icons.iconCss2x()));
       register("*.sass", SASS, new ImageResource2x(icons.iconScss2x()));
       register("*.scss", SCSS, new ImageResource2x(icons.iconScss2x()));
+      register("*.jsx", JSX, new ImageResource2x(icons.iconJsx2x()));
       register("*.js", JS, new ImageResource2x(icons.iconJavascript2x()));
       register("*.ts", JS, new ImageResource2x(icons.iconJavascript2x()));
       register("*.json", JSON, new ImageResource2x(icons.iconJavascript2x()));

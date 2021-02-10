@@ -70,6 +70,8 @@ public class EditorLanguage
          "ace/mode/css", false, true);
    public static final EditorLanguage LANG_JAVASCRIPT = new EditorLanguage(
          "ace/mode/javascript", false, true);
+   public static final EditorLanguage LANG_JSX = new EditorLanguage(
+         "ace/mode/jsx", false, true);
    public static final EditorLanguage LANG_TOML = new EditorLanguage(
          "ace/mode/toml", false, true);
    public static final EditorLanguage LANG_XML = new EditorLanguage(
