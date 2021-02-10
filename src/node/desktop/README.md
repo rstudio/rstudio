@@ -3,7 +3,7 @@ Proof-of-concept RStudio Desktop prototype using Electron instead of QtWebEngine
 
 Only runnable within context of an RStudio development environment.
 
-## Running Electron prototype
+## Running Electron prototype (macOS)
 - clone rstudio repo
 - checkout and build branch `prototype/electron`
     - only build desktop, and disable crashpad by renaming or deleting /opt/rstudio/crashpad and generate cmake via:
