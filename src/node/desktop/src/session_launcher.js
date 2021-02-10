@@ -13,6 +13,7 @@
  *
  */
 
+const { BrowserWindow, session } = require('electron');
 const child_process = require('child_process');
 const fs = require('fs');
 const path = require('path');
@@ -23,6 +24,8 @@ module.exports = class SessionLauncher {
   constructor(sessionPath, confPath) {
       this.sessionPath_ = sessionPath;
       this.confPath_ = confPath;
+      this.port_ = "";
+      this.host_ = "";
   }
 
   launchSession(argList) {
@@ -39,14 +42,14 @@ module.exports = class SessionLauncher {
     }
     // #endif // Q_OS_DARWIN
 
-    const session = child_process.spawn(this.sessionPath_, argList);
-    session.stdout.on('data', (data) => {
+    const sessionProc = child_process.spawn(this.sessionPath_, argList);
+    sessionProc.stdout.on('data', (data) => {
       console.log(`stdout: ${data}`)
     });
-    session.stderr.on('data', (data) => {
+    sessionProc.stderr.on('data', (data) => {
       console.log(`stderr: ${data}`);
     });
-    session.on('close', (code) => {
+    sessionProc.on('close', (code) => {
       console.log(`child process exited with code ${code}`);
     });
   }
@@ -58,6 +61,28 @@ module.exports = class SessionLauncher {
     launchContext.argList.push("--show-help-home", "1");
 
     this.launchSession(launchContext.argList);
+
+    // show the window
+    const win = new BrowserWindow({
+      width: 1200,
+      height: 1024,
+      webPreferences: {
+        nodeIntegration: false,
+        contextIsolation: true,
+      }
+    });
+
+    // pass along the shared secret with every request
+    const filter = {
+      urls: [`${launchContext.url}/*`]
+    }
+    session.defaultSession.webRequest.onBeforeSendHeaders(filter, (details, callback) => {
+      details.requestHeaders['X-Shared-Secret'] = process.env.RS_SHARED_SECRET;
+      callback({ requestHeaders: details.requestHeaders});
+    });
+
+    win.loadURL(launchContext.url);
+    win.webContents.openDevTools();
   }
 
   get launcherToken() {
@@ -67,15 +92,23 @@ module.exports = class SessionLauncher {
     return s_launcherToken;
   }
 
+  get port() {
+    if (this.port_.length == 0) {
+      this.port_ = "40810"; // see DesktopOptions.cpp portNumber() for how to randomly generate
+    }
+    return this.port_;
+  }
+
   buildLaunchContext() {
+    this.host_ = "127.0.0.1";
     return {
-        host: "127.0.0.1",
-        port: 8787,
-        url: "http://127.0.0.1:8787",
+        host: this.host_,
+        port: `${this.port}`,
+        url: `http://${this.host_}:${this.port}`,
         argList: [
-            "--config-file", "none",
+            "--config-file", this.confPath_,
             "--program-mode", "desktop",
-            "--www-port", "8787",
+            "--www-port", this.port,
             "--launcher-token", this.launcherToken,
         ],
     }

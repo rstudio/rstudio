@@ -13,7 +13,7 @@
  *
  */
 
-const { app, BrowserWindow, session } = require('electron');
+const { app } = require('electron');
 const os = require('os');
 const fs = require('fs');
 const path = require('path');
@@ -44,6 +44,7 @@ module.exports = class Main {
       return;
     }
     installPath = path.resolve(installPath);
+
     // calculate paths to config file, rsession, and desktop scripts
     let confPath = `${installPath}/conf/rdesktop-dev.conf`;
     let sessionPath = `${installPath}/session/rsession`;
@@ -56,22 +57,14 @@ module.exports = class Main {
       return;
     }
 
-
     let launcher = new SessionLauncher(sessionPath, confPath);
     launcher.launchFirstSession(installPath, devMode);
-
-    this.createWindow()
   }
-
 
   initializeSharedSecret() {
     let secret = "12345";
     process.env.RS_SHARED_SECRET = secret;
 
-    // pass along the shared secret with every request (in real code this must be scoped only to the session's authority)
-    // session.defaultSession.webRequest.onBeforeSendHeaders((details, callback) => {
-    //   details.requestHeaders['X-Shared-Secret'] = secret;
-    // });
   }
 
   prepareEnvironment(scriptsPath) {
@@ -86,21 +79,9 @@ module.exports = class Main {
     process.env.R_INCLUDE_DIR = "/Library/Frameworks/R.framework/Resources/include";
     process.env.R_DOC_DIR = "/Library/Frameworks/R.framework/Resources/doc";
     process.env.DYLD_FALLBACK_LIBRARY_PATH = "/Library/Frameworks/R.framework/Resources/lib:/Users/gary/lib:/usr/local/lib:/usr/lib:::/lib:/Library/Java/JavaVirtualMachines/jdk-11.0.1.jdk/Contents/Home/lib/server";
-    process.env.RS_CRASH_HANDLER_PATH ="/opt/rstudio-tools/crashpad/crashpad/out/Default/crashpad_handler";
+    process.env.RS_CRASH_HANDLER_PATH = "/opt/rstudio-tools/crashpad/crashpad/out/Default/crashpad_handler";
+
+    // process.env.RSTUDIO_SESSION_SLEEP_ON_STARTUP = "25";
     return true;
-  }
-
-  createWindow () {
-    const win = new BrowserWindow({
-      width: 1200,
-      height: 1024,
-      webPreferences: {
-        nodeIntegration: false,
-        contextIsolation: true,
-      }
-    });
-
-    win.webContents.openDevTools();
-    win.loadURL('http://localhost:8787');
   }
 }
