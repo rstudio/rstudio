@@ -1,5 +1,5 @@
 /*
- * session_launcher.js
+ * session-launcher.js
  *
  * Copyright (C) 2021 by RStudio, PBC
  *

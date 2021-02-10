@@ -17,7 +17,7 @@ const { app } = require('electron');
 const os = require('os');
 const fs = require('fs');
 const path = require('path');
-const SessionLauncher = require('./session_launcher');
+const SessionLauncher = require('./session-launcher');
 
 module.exports = class Main {
   constructor() {
