@@ -219,6 +219,9 @@ public class EnvironmentPane extends WorkbenchPane
             (ImageResource) null,
             languageMenu_);
 
+      // nudge language selector up to baseline align with environment selector
+      languageButton_.getElement().getStyle().setMarginTop(-4, Unit.PX);
+
       toolbar.addLeftWidget(languageButton_);
       toolbar.addLeftSeparator();
 

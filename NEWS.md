@@ -46,6 +46,7 @@
 * Option to restore RStudio 1.2 tab key behavior in editor find panel; search in Command Palette for "Tab key behavior in find panel matches RStudio 1.2 and earlier" (#7295)
 * Show `.renvignore` in Files pane (#8658)
 * Make the set of always-shown files and extensions in the Files pane configurable (#3221)
+* Log location of addins that raise parse errors at startup (#8012)
 
 ### Bugfixes
 
