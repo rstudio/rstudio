@@ -8,8 +8,6 @@ properties([
                               numToKeepStr: '100')),
     parameters([string(name: 'RSTUDIO_VERSION_MAJOR', defaultValue: '1', description: 'RStudio Major Version'),
                 string(name: 'RSTUDIO_VERSION_MINOR', defaultValue: '4', description: 'RStudio Minor Version'),
-                string(name: 'RSTUDIO_VERSION_PATCH', defaultValue: '999', description: 'RStudio Patch Version'),
-                string(name: 'RSTUDIO_VERSION_SUFFIX', defaultValue: '0', description: 'RStudio Pro Suffix Version'),
                 string(name: 'SLACK_CHANNEL', defaultValue: '#ide-builds', description: 'Slack channel to publish build message.'),
                 string(name: 'OS_FILTER', defaultValue: '', description: 'Pattern to limit builds by matching OS'),
                 string(name: 'ARCH_FILTER', defaultValue: '', description: 'Pattern to limit builds by matching ARCH'),
@@ -149,10 +147,10 @@ def prepareWorkspace(){ // accessory to clean workspace and checkout
 }
 
 // forward declare version vars
-rstudioVersionMajor  = params.RSTUDIO_VERSION_MAJOR
-rstudioVersionMinor  = params.RSTUDIO_VERSION_MINOR
-rstudioVersionPatch  = params.RSTUDIO_VERSION_PATCH
-rstudioVersionSuffix = params.RSTUDIO_VERSION_SUFFIX
+rstudioVersionMajor  = 0
+rstudioVersionMinor  = 0
+rstudioVersionPatch  = 0
+rstudioVersionSuffix = 0
 
 def trigger_external_build(build_name, wait = false) {
   // triggers downstream job passing along the important params from this build
@@ -185,6 +183,40 @@ try {
           [os: 'centos8',    arch: 'x86_64', flavor: 'desktop', variant: '',     package_os: 'CentOS 8']
         ]
         containers = limit_builds(containers)
+
+        // create the version we're about to build
+        node('docker') {
+            stage('set up versioning') {
+                prepareWorkspace()
+
+                container = pullBuildPush(image_name: 'jenkins/ide', dockerfile: "docker/jenkins/Dockerfile.versioning", image_tag: "rstudio-versioning", build_args: jenkins_user_build_args())
+                container.inside() {
+                    stage('bump version') {
+                        def rstudioVersion = sh (
+                          script: "docker/jenkins/rstudio-version.sh bump ${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}",
+                          returnStdout: true
+                        ).trim()
+                        echo "RStudio build version: ${rstudioVersion}"
+                        def components = rstudioVersion.split('\\.')
+
+                        // extract major / minor version
+                        rstudioVersionMajor = components[0]
+                        rstudioVersionMinor = components[1]
+
+                        // extract patch and suffix if present
+                        def patch = components[2].split('-')
+                        rstudioVersionPatch = patch[0]
+                        if (patch.length > 1)
+                            rstudioVersionSuffix = patch[1]
+                        else
+                            rstudioVersionSuffix = 0
+
+                        // update slack message to include build version
+                        messagePrefix = "Jenkins ${env.JOB_NAME} build: <${env.BUILD_URL}display/redirect|${env.BUILD_DISPLAY_NAME}>, version: ${rstudioVersion}"
+                    }
+                }
+            }
+        }
 
         // build each container image
         parallel_images = [:]
