@@ -69,7 +69,8 @@ module.exports = class SessionLauncher {
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,
-      }
+        preload: path.join(__dirname, 'preload.js'),
+      },
     });
 
     // pass along the shared secret with every request
