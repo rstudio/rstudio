@@ -18,8 +18,6 @@ const child_process = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-let s_launcherToken = "";
-
 module.exports = class SessionLauncher {
   constructor(sessionPath, confPath) {
       this.sessionPath_ = sessionPath;
@@ -27,6 +25,8 @@ module.exports = class SessionLauncher {
       this.port_ = "";
       this.host_ = "";
   }
+
+  static s_launcherToken = "";
 
   launchSession(argList) {
     // #ifdef Q_OS_DARWIN
@@ -85,11 +85,11 @@ module.exports = class SessionLauncher {
     win.webContents.openDevTools();
   }
 
-  get launcherToken() {
-    if (s_launcherToken.length == 0) {
-       s_launcherToken = "7F83A8BD";
+  static get launcherToken() {
+    if (SessionLauncher.s_launcherToken.length == 0) {
+       SessionLauncher.s_launcherToken = "7F83A8BD";
     }
-    return s_launcherToken;
+    return SessionLauncher.s_launcherToken;
   }
 
   get port() {
@@ -109,7 +109,7 @@ module.exports = class SessionLauncher {
             "--config-file", this.confPath_,
             "--program-mode", "desktop",
             "--www-port", this.port,
-            "--launcher-token", this.launcherToken,
+            "--launcher-token", SessionLauncher.launcherToken,
         ],
     }
   }
