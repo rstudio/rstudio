@@ -55,6 +55,7 @@ var $alignCase                 = true; // case 'a':
    };
 
    this.checkOutdent = function(state, line, input) {
+      
       if (Utils.endsWith(state, "start")) {
 
          // private: / public: / protected
@@ -365,7 +366,7 @@ var $alignCase                 = true; // case 'a':
                row: row,
                column: line.length
             },
-            new RegExp("(?:^|[.])paren(?:$|[.])", "")
+            Utils.getTokenTypeRegex("paren")
          );
 
          if (openBracePos) {
@@ -396,7 +397,8 @@ var $alignCase                 = true; // case 'a':
             {
                row: row,
                column: /(\S)/.exec(line).index + 1
-            }
+            },
+            Utils.getTokenTypeRegex("paren")
          );
 
          if (openBracePos) {

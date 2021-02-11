@@ -268,6 +268,11 @@ var unicode = require("ace/unicode");
       return true;
    };
 
+   this.getTokenTypeRegex = function(type)
+   {
+      return new RegExp("(?:^|[.])" + type + "(?:$|[.])", "");
+   }
+
 
 }).call(exports);
 

@@ -15,10 +15,11 @@
 
 define("mode/token_cursor", ["require", "exports", "module"], function(require, exports, module) {
 
-var $reParenType = /(?:^|[.])paren(?:$|[.])/;
-
 var oop = require("ace/lib/oop");
 var Utils = require("mode/utils");
+
+var $reParenType = Utils.getTokenTypeRegex("paren");
+
 var TokenCursor = function(tokens, row, offset) {
 
    this.$tokens = tokens;
