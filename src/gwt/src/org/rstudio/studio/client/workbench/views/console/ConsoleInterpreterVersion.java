@@ -24,11 +24,14 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.views.PythonInterpreter;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.resources.client.TextResource;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
@@ -61,7 +64,16 @@ public class ConsoleInterpreterVersion
       
       container_ = new FlowPanel();
       label_ = new Label(rVersionLabel());
-      icon_ = new Image(StandardIcons.INSTANCE.rLogoSvg().getSafeUri());
+      
+      rLogo_ = createLogo(
+           StandardIcons.INSTANCE.rLogoSvg(),
+           RES.styles().iconR(),
+           isTabbedView);
+      
+      pythonLogo_ = createLogo(
+            StandardIcons.INSTANCE.pythonLogoSvg(),
+            RES.styles().iconPython(),
+            isTabbedView);
       
       container_.addStyleName(RES.styles().container());
       
@@ -71,33 +83,71 @@ public class ConsoleInterpreterVersion
             ? RES.styles().labelTabbed()
             : RES.styles().labelUntabbed());
       
-      icon_.addStyleName(RES.styles().icon());
+      if (isPythonActive())
+      {
+         container_.add(pythonLogo_);
+      }
+      else
+      {
+         container_.add(rLogo_);
+      }
       
-      icon_.addStyleName(isTabbedView
-            ? RES.styles().iconTabbed()
-            : RES.styles().iconUntabbed());
-      
-      container_.add(icon_);
       container_.add(label_);
       initWidget(container_);
       
       setVisible(true);
    }
    
+   private HTML createLogo(TextResource resource,
+                           String languageClass,
+                           boolean isTabbedView)
+   {
+      HTML html = new HTML();
+      html.setHTML(resource.getText());
+      html.getElement().getStyle().setDisplay(Display.INLINE_BLOCK);
+      
+      Element svg = html.getElement().getFirstChildElement();
+      
+      // NOTE: GWT chokes when modifying the className
+      // attribute of an SVG element so we do it "by hand" here
+      addClassName(svg, RES.styles().icon());
+      addClassName(svg, isTabbedView
+            ? RES.styles().iconTabbed()
+            : RES.styles().iconUntabbed());
+      addClassName(svg, languageClass);
+      
+      return html;
+   }
+   
    private void adaptToR()
    {
-      icon_.removeStyleName(RES.styles().iconPython());
-      icon_.addStyleName(RES.styles().iconR());
-      icon_.setUrl(StandardIcons.INSTANCE.rLogoSvg().getSafeUri());
+      container_.remove(0);
+      container_.insert(rLogo_, 0);
       label_.setText(rVersionLabel());
+      
    }
    
    private void adaptToPython(PythonInterpreter info)
    {
-      icon_.removeStyleName(RES.styles().iconR());
-      icon_.addStyleName(RES.styles().iconPython());
-      icon_.setUrl(StandardIcons.INSTANCE.pythonLogoSvg().getSafeUri());
+      container_.remove(0);
+      container_.insert(pythonLogo_, 0);
       label_.setText(pythonVersionLabel(info));
+   }
+   
+   private boolean isPythonActive()
+   {
+      boolean active = false;
+      
+      // use try-catch block in case session info isn't ready yet
+      try
+      {
+         active = session_.getSessionInfo().getPythonReplActive();
+      }
+      catch (Exception e)
+      {
+      }
+      
+      return active;
    }
    
    @Override
@@ -150,8 +200,14 @@ public class ConsoleInterpreterVersion
       return 18;
    }
    
+   private final native void addClassName(Element element, String className)
+   /*-{
+      element.classList.add(className);
+   }-*/;
+   
    private final FlowPanel container_;
-   private final Image icon_;
+   private final HTML rLogo_;
+   private final HTML pythonLogo_;
    private final Label label_;
    
    // Injected ----

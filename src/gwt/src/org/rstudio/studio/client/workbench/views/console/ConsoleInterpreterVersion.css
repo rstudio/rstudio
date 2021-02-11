@@ -10,28 +10,8 @@
 
 .icon {
    display: inline-block;
-   height: 17px;
    margin-right: 4px;
    vertical-align: top;
-}
-
-.rstudio-themes-default .icon {
-   border-radius: 2px;
-   padding: 2px;
-   
-   /* alternate style with soft border + background */
-   /*
-   padding: 1px;
-   border: 1px solid #d6dadc;
-   background: white;
-   */
-}
-
-.rstudio-themes-dark .icon {
-   border-radius: 2px;
-   padding: 1px;
-   border: 1px solid black;
-   background: black;
 }
 
 .iconTabbed {
@@ -45,13 +25,39 @@
 }
 
 .iconR {
+   width: 17px;
+   height: 17px;
+   padding: 2px;
 }
 
 .iconPython {
+   width: 17px;
+   height: 17px;
+   padding: 2px;
 }
 
 .rstudio-themes-default .iconPython {
    height: 18px;
+}
+
+.rstudio-themes-dark .iconPython {
+   filter: drop-shadow( 1px  1px 2px rgba(0, 0, 0, 0.4))
+           drop-shadow( 1px -1px 2px rgba(0, 0, 0, 0.4))
+           drop-shadow(-1px -1px 2px rgba(0, 0, 0, 0.4))
+           drop-shadow(-1px  1px 2px rgba(0, 0, 0, 0.4))
+}
+
+.rstudio-themes-default .iconR {
+   
+}
+
+.rstudio-themes-dark .iconR {
+   stroke: black;
+   stroke-width: 12px;
+   filter: drop-shadow( 1px  1px 1px rgba(0, 0, 0, 0.5))
+           drop-shadow( 1px -1px 1px rgba(0, 0, 0, 0.5))
+           drop-shadow(-1px -1px 1px rgba(0, 0, 0, 0.5))
+           drop-shadow(-1px  1px 1px rgba(0, 0, 0, 0.5))
 }
 
 .labelTabbed {
