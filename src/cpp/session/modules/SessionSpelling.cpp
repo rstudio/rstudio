@@ -35,9 +35,9 @@
 
 #include <shared_core/Error.hpp>
 
-#define kDictionariesPath "dictionaries/"
-#define kSystemLanguages kDictionariesPath "languages-system"
-#define kCustomDictionaries kDictionariesPath "custom"
+#define kDictionariesPath "dictionaries"
+#define kSystemLanguages kDictionariesPath "/languages-system"
+#define kCustomDictionaries kDictionariesPath "/custom"
 
 using namespace rstudio::core;
 
@@ -78,12 +78,6 @@ json::Object dictionaryAsJson(const core::spelling::HunspellDictionary& dict)
    return dictJson;
 }
 
-FilePath userDictionariesDir()
-{
-   return module_context::userScratchPath().completeChildPath("dictionaries");
-}
-
-
 void syncSpellingEngineDictionaries()
 {
    s_pSpellingEngine->useDictionary(prefs::userPrefs().spellingDictionaryLanguage());
@@ -96,6 +90,13 @@ core::spelling::HunspellDictionaryManager hunspellDictionaryManager()
                                          options().hunspellDictionariesPath(),
                                          userDictionariesDir());
    return dictManager;
+}
+
+} // end anonymous namespace
+
+FilePath userDictionariesDir()
+{
+   return module_context::userScratchPath().completeChildPath("dictionaries");
 }
 
 /*
@@ -116,6 +117,11 @@ FilePath legacyCustomDictionariesDir()
    return module_context::userScratchPath().completeChildPath(kCustomDictionaries);
 }
 
+FilePath allDictionariesDir()
+{
+   return core::system::xdg::userConfigDir().completeChildPath(kDictionariesPath);
+}
+
 FilePath allLanguagesDir()
 {
    return core::system::xdg::userConfigDir().completeChildPath(kSystemLanguages);
@@ -125,6 +131,8 @@ FilePath customDictionariesDir()
 {
    return core::system::xdg::userConfigDir().completeChildPath(kCustomDictionaries);
 }
+
+namespace {
 
 // This responds to the request path of /dictionaries/<dict>/<dict>.dic
 // and returns the file at <userScratchDir>/dictionaries/<dict>.dic
@@ -357,12 +365,35 @@ void onUserSettingsChanged(const std::string& layer, const std::string& pref)
    syncSpellingEngineDictionaries();
 }
 
-SEXP rs_dictionariesPath()
+SEXP rs_dictionariesPath(SEXP typeSEXP)
 {
+   std::string type = r::sexp::safeAsString(typeSEXP);
+   
    r::sexp::Protect protect;
-   return r::sexp::create(
-      options().hunspellDictionariesPath().getAbsolutePath(),
-            &protect);
+   
+   if (type == "bundled")
+   {
+      return r::sexp::createUtf8(
+               options().hunspellDictionariesPath().getAbsolutePath(),
+               &protect);
+   }
+   else if (type == "extra")
+   {
+      return r::sexp::createUtf8(
+               allDictionariesDir().getAbsolutePath(),
+               &protect);
+   }
+   else if (type == "user")
+   {
+      return r::sexp::createUtf8(
+               userDictionariesDir().getAbsolutePath(),
+               &protect);
+   }
+   else
+   {
+      r::exec::warning("unknown dictionary type '" + type + "'");
+      return R_NilValue;
+   }
 }
 
 SEXP rs_userDictionariesPath()
@@ -413,7 +444,6 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_checkSpelling);
    RS_REGISTER_CALL_METHOD(rs_dictionariesPath);
    RS_REGISTER_CALL_METHOD(rs_userDictionariesPath);
-
 
    // initialize spelling engine
    using namespace rstudio::core::spelling;

@@ -21,6 +21,7 @@
 namespace rstudio {
 namespace core {
    class Error;
+   class FilePath;
 }
 }
  
@@ -28,6 +29,12 @@ namespace rstudio {
 namespace session {
 namespace modules { 
 namespace spelling {
+
+core::FilePath userDictionariesDir();
+core::FilePath legacyAllLanguagesDir();
+core::FilePath allDictionariesDir();
+core::FilePath allLanguagesDir();
+core::FilePath customDictionariesDir();
 
 core::json::Object spellingPrefsContextAsJson();
 
