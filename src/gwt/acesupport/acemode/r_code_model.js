@@ -1252,20 +1252,38 @@ var RCodeModel = function(session, tokenizer,
 
       var pos = {row: row, column: foldToken.column + 1};
 
-      if (foldToken.value == '{') {
-         var end = session.$findClosingBracket(foldToken.value, pos);
+      if (foldToken.value == '{')
+      {
+         var end = session.$findClosingBracket(
+            foldToken.value,
+            pos,
+            Utils.getTokenTypeRegex("paren")
+         );
+
          if (!end)
             return;
+
          return Range.fromPoints(pos, end);
       }
-      else if (foldToken.value == '}') {
-         var start = session.$findOpeningBracket(foldToken.value, pos);
+      else if (foldToken.value == '}')
+      {
+
+         var start = session.$findOpeningBracket(
+            foldToken.value,
+            pos,
+            Utils.getTokenTypeRegex("paren")
+         );
+         
          if (!start)
             return;
-         return Range.fromPoints({row: start.row, column: start.column+1},
-                                 {row: pos.row, column: pos.column-1});
+
+         return Range.fromPoints(
+            {row: start.row, column: start.column + 1},
+            {row: pos.row, column: pos.column - 1}
+         );
       }
-      else if (/\bcodebegin\b/.test(foldToken.type)) {
+      else if (/\bcodebegin\b/.test(foldToken.type))
+      {
          // Find next codebegin or codeend
          var tokenIterator = new TokenIterator(session, row, 0);
          for (var tok; tok = tokenIterator.stepForward(); ) {
