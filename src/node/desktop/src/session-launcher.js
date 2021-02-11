@@ -66,6 +66,8 @@ module.exports = class SessionLauncher {
     const win = new BrowserWindow({
       width: 1200,
       height: 1024,
+      // https://github.com/electron/electron/blob/master/docs/faq.md#the-font-looks-blurry-what-is-this-and-what-can-i-do
+      backgroundColor: '#fff', 
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,
