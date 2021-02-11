@@ -67,17 +67,15 @@ public class ConsoleInterpreterVersion
       
       label_.addStyleName(RES.styles().label());
       label_.addStyleName(ThemeStyles.INSTANCE.title());
+      label_.addStyleName(isTabbedView
+            ? RES.styles().labelTabbed()
+            : RES.styles().labelUntabbed());
       
       icon_.addStyleName(RES.styles().icon());
       
-      if (isTabbedView)
-      {
-         label_.addStyleName(RES.styles().labelTabbed());
-      }
-      else
-      {
-         label_.addStyleName(RES.styles().labelUntabbed());
-      }
+      icon_.addStyleName(isTabbedView
+            ? RES.styles().iconTabbed()
+            : RES.styles().iconUntabbed());
       
       container_.add(icon_);
       container_.add(label_);
@@ -167,6 +165,9 @@ public class ConsoleInterpreterVersion
       String container();
       
       String icon();
+      String iconTabbed();
+      String iconUntabbed();
+      
       String iconR();
       String iconPython();
       
