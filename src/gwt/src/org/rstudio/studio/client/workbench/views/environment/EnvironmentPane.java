@@ -18,6 +18,8 @@ package org.rstudio.studio.client.workbench.views.environment;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.event.logical.shared.ResizeEvent;
+import com.google.gwt.event.logical.shared.ResizeHandler;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.DebugFilePosition;
 import org.rstudio.core.client.ElementIds;
@@ -200,6 +202,14 @@ public class EnvironmentPane extends WorkbenchPane
       SecondaryToolbar toolbar = new SecondaryToolbar("Environment Tab Second");
 
       languageMenu_ = new ToolbarPopupMenu();
+      toolbar.addHandler(new ResizeHandler()
+      {
+         @Override
+         public void onResize(ResizeEvent event)
+         {
+            manageToolbarSizes(event.getWidth());
+         }
+      }, ResizeEvent.getType());
 
       MenuItem rMenuItem = new MenuItem("R", () -> setActiveLanguage("R", true));
       languageMenu_.addItem(rMenuItem);
@@ -869,6 +879,32 @@ public class EnvironmentPane extends WorkbenchPane
       }
 
       Scheduler.get().scheduleDeferred(() -> commands_.refreshEnvironment().execute());
+   }
+
+   private void manageToolbarSizes(int width)
+   {
+      if (width == 0)
+      {
+         return;
+      }
+
+      if (width > 400)
+      {
+         dataImportButton_.setText("Import Dataset");
+      }
+      else if (width > 350)
+      {
+         dataImportButton_.setText("Import");
+      }
+      else if (width > 300)
+      {
+         dataImportButton_.setText("");
+      }
+      else
+      {
+         dataImportButton_.setText("");
+         viewButton_.setText("");
+      }
    }
 
    public String getActiveLanguage()
