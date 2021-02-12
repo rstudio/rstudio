@@ -444,7 +444,9 @@ public class EnvironmentPane extends WorkbenchPane
    @Override
    public void setObjectDisplayType(int type)
    {
-      viewButton_.setText(nameOfViewType(type));
+      // Adjust the List/Grid text label, but only if that text label is shown (it can be hidden
+      // when the Environment pane is very narrow)
+      viewButton_.setText(viewButton_.hasLabel(), nameOfViewType(type));
       viewButton_.setLeftImage(imageOfViewType(type));
       objects_.setObjectDisplay(type);
    }
@@ -881,29 +883,43 @@ public class EnvironmentPane extends WorkbenchPane
       Scheduler.get().scheduleDeferred(() -> commands_.refreshEnvironment().execute());
    }
 
+   /**
+    * Manages the size of the Environment pane's toolbar, reducing the width of elements
+    * so all the controls are visible and usable even at narrow widths.
+    *
+    * @param width The new width of the Environment pane
+    */
    private void manageToolbarSizes(int width)
    {
+      // At startup, we get a resize event with 0 width; ignore this.
       if (width == 0)
       {
          return;
       }
 
+      // The View button has text by default
+      viewButton_.setText(true, viewButton_.getText());
+
       if (width > 400)
       {
+         // Full width: show full label for data import
          dataImportButton_.setText("Import Dataset");
       }
       else if (width > 350)
       {
+         // Reduced width: shorten label
          dataImportButton_.setText("Import");
       }
-      else if (width > 300)
+      else if (width > 325)
       {
+         // Even more reduced width: shorten label more
          dataImportButton_.setText("");
       }
       else
       {
+         // Extremely narrow: no labels at all, just buttons
          dataImportButton_.setText("");
-         viewButton_.setText("");
+         viewButton_.setText(false, viewButton_.getText());
       }
    }
 
