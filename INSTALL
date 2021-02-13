@@ -166,8 +166,6 @@ d) Create a soft link in /usr/sbin to the server administrative script
 
 e) Create /var directories required for RStudio to run. This can be done with:
 
-   mkdir -p /var/run/rstudio-server
-   mkdir -p /var/lock/rstudio-server
    mkdir -p /var/log/rstudio-server
    mkdir -p /var/lib/rstudio-server
 
