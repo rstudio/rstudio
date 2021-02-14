@@ -136,19 +136,94 @@ contextBridge.exposeInMainWorld('desktop',  {
   getFixedWidthFont: () => '',
   setFixedWidthFont: (font) => '',
 
-  // add remainder here
-  // ....
-  //
-
-  getSessionServers: () => [], // only meaningful for RDP but invoked in open-source
-  setBusy: (busy) => {},
-  getInitMessages: () => { return ""; },
+  getZoomLevels: () => '',
+  getZoomLevel: () => 1.0,
+  setZoomLevel: (zoomLevel) => {},
+  
+  zoomIn: () => {},
+  zoomOut: () => {},
+  zoomActualSize: () => {},
+  
   setBackgroundColor: (rgbColor) => {},
-  syncToEditorTheme: (isDark) => {},
   changeTitleBarColor: (red, green, blue)  => {},
+  syncToEditorTheme: (isDark) => {},
+
+  getEnableAccessibility: () => false,
+  setEnableAccessibility: (enable) => {},
+
+  getClipboardMonitoring: () => false,
+  setClipboardMonitoring: (monitoring) => {},
+  
+  getIgnoreGpuBlacklist: () => true,
+  setIgnoreGpuBlacklist: (ignore) => {},
+  
+  getDisableGpuDriverBugWorkarounds: () => true,
+  setDisableGpuDriverBugWorkarounds: (disable) => {},
+
+  showLicenseDialog: () => {},
+  showSessionServerOptionsDialog: () => {},
+  getInitMessages: () => { return ""; },
+  getLicenseStatusMessage: () => '',
+  allowProductUsage: () => true,
+
+  getDesktopSynctexViewer: () => '',
+
+  externalSynctexPreview: (pdfPath, page) => {},
+
+  externalSynctexView: (pdfFile,
+                        srcFile,
+                        line,
+                        column) => {},
+
+  supportsFullscreenMode: () => true,
+  toggleFullscreenMode: () => {},
+  showKeyboardShortcutHelp: () => {},
+
+  launchSession: (reload) => {},
+
   reloadZoomWindow: () => {},
 
+  setTutorialUrl: (url) => {},
+  
+  setViewerUrl: (url) => {},
+  reloadViewerZoomWindow: (url) => {},
+
+  setShinyDialogUrl: (url) => {},
+
+  getScrollingCompensationType: () => '',
+
+  isMacOS: () => true,
+  isCentOS: () => false,
+
+  setBusy: (busy) => {},
+
   setWindowTitle: (title) => {},
+
+  installRtools: (version, installerPath) => {},
+
+  getDisplayDpi: () => '',
+
+  onSessionQuit: () => '',
+
+  getSessionServer: () => { return {}; },
+  getSessionServers: () => [],
+  reconnectToSessionServer: (sessionServerJson) => {},
+
+  setLauncherServer: (sessionServerJson) => false,
+  connectToLauncherServer: () => {},
+
+  getLauncherServer: () => { return {}; },
+  startLauncherJobStatusStream: (jobId) => {},
+  stopLauncherJobStatusStream: (jobId) => {},
+  startLauncherJobOutputStream: (jobId) => {},
+  stopLauncherJobOutputStream: (jobId) => {},
+  controlLauncherJob: (jobId, operation) => {},
+  submitLauncherJob: (job) => {},
+  getJobContainerUser: () => {},
+  validateJobsConfig: () => {},
+  getProxyPortNumber: () => -1,
+
+  signOut: () => {},
 });
 
 // RDP-only
