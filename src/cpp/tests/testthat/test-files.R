@@ -18,7 +18,8 @@ context("files")
 test_that("file listings are correct", {
 
   # Create temporary directory to host a directory listing
-  testdir <- tempdir()
+  testdir <- file.path(tempdir(), "file-listings")
+  dir.create(testdir, recursive = TRUE)
   on.exit(unlink(testdir, recursive = TRUE), add = TRUE)
 
   # Read old pref values

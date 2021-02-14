@@ -418,10 +418,24 @@ export class AceNodeView implements NodeView {
       const container = this.view.nodeDOM(editingRoot.pos) as HTMLElement;
       const scroller = zenscroll.createScroller(container);
 
+      let top = 0;
+
+      // The DOM node representing this editor chunk (this.dom) may not be a
+      // direct child of the scrollable container. If it isn't, walk up the DOM
+      // tree until we find the main content node (pm-content), which is the
+      // offset parent against which we need to compute scroll position.
+      let scrollParent = this.dom;
+      while (scrollParent.offsetParent != null &&
+             !scrollParent.offsetParent.classList.contains("pm-content"))
+      {
+        top += scrollParent.offsetTop;
+        scrollParent = scrollParent.offsetParent as HTMLElement;
+      }
+
       // Since the element we want to scroll into view is not a direct child of
       // the scrollable container, do a little math to figure out the
       // destination scroll position.
-      const top = ele.offsetTop + this.dom.offsetTop;
+      top += ele.offsetTop + scrollParent.offsetTop;
       const bottom = top + ele.offsetHeight;
       const viewTop = container.scrollTop;
       const viewBottom = container.scrollTop + container.offsetHeight;

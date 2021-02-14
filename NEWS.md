@@ -25,7 +25,10 @@
 
 ### RStudio Workbench
 
-RStudio Server Pro has been renamed to RStudio Workbench to more accurately reflect its cross-language editing capabilities.
+* RStudio Server Pro has been renamed to RStudio Workbench to more accurately reflect its cross-language editing capabilities.
+* Added support for JupyterLab 3 (Pro #2022)
+* Added support for code-server 3.4.0+ (Pro # 1984)
+* Added a new user settings template file for VSCode settings to allow administrators to specify a default user configuration for VSCode sessions (Pro #2014)
 
 ### Misc
 
@@ -45,6 +48,7 @@ RStudio Server Pro has been renamed to RStudio Workbench to more accurately refl
 * Option to restore RStudio 1.2 tab key behavior in editor find panel; search in Command Palette for "Tab key behavior in find panel matches RStudio 1.2 and earlier" (#7295)
 * Show `.renvignore` in Files pane (#8658)
 * Make the set of always-shown files and extensions in the Files pane configurable (#3221)
+* Log location of addins that raise parse errors at startup (#8012)
 
 ### Bugfixes
 
@@ -61,9 +65,11 @@ RStudio Server Pro has been renamed to RStudio Workbench to more accurately refl
 * Fixed issue where warnings + messages were mis-encoded in chunk outputs on Windows (#8565)
 * Fixed issue where C++ compilation database was not invalidated when compiler was updated (#8588)
 * Fixed issue where SQL chunks containing non-ASCII characters could fail to run on Windows (#8900)
+* Fixed issue where 'case:' statements were not outdented when rainbow parentheses were active. (#8846)
 * Improved checks for non-writable R library paths on startup (Pro #2184)
 * Code chunks in the visual editor now respect the "Tab Key Always Moves Focus" accessibility setting (#8584)
 * The commands "Execute Previous Chunks" and "Execute Subsequent Chunks" now work when the cursor is outside a code chunk in the visual editor (#8500)
+* Fixed issue causing the document to scroll unpredictably when a code chunk inside a list item is executed in the visual editor (#8883)
 * Fixed issue preventing R Notebook chunks from being queued for execution if they had never been previously run (#4238)
 * Fix various issues when the "Limit Console Output" performance setting was enabled, and enable it by default (#8544, #8504, #8529, #8552)
 * Fix display of condition messages (errors and warnings) in some character encodings (#8546)
