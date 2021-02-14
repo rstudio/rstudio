@@ -19,8 +19,8 @@ contextBridge.exposeInMainWorld('desktop', {
 });
 
 // RDP-only
-contextBridge.exposeInMainWorld('remoteDesktop', {
-});
+//contextBridge.exposeInMainWorld('remoteDesktop', {
+//});
 
 contextBridge.exposeInMainWorld('desktopInfo', {
   chromiumDevtoolsPort: () => {console.log('chromiumDevToolsPort'); return 123; }

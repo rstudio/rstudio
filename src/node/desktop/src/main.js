@@ -73,7 +73,6 @@ module.exports = class Main {
 
     // whole bunch of code...
 
-    // set environment and return true
     process.env.R_HOME = "/Library/Frameworks/R.framework/Resources";
     process.env.R_SHARE_DIR = "/Library/Frameworks/R.framework/Resources/share";
     process.env.R_INCLUDE_DIR = "/Library/Frameworks/R.framework/Resources/include";
@@ -81,7 +80,9 @@ module.exports = class Main {
     process.env.DYLD_FALLBACK_LIBRARY_PATH = "/Library/Frameworks/R.framework/Resources/lib:/Users/gary/lib:/usr/local/lib:/usr/lib:::/lib:/Library/Java/JavaVirtualMachines/jdk-11.0.1.jdk/Contents/Home/lib/server";
     process.env.RS_CRASH_HANDLER_PATH = "/opt/rstudio-tools/crashpad/crashpad/out/Default/crashpad_handler";
 
-    // process.env.RSTUDIO_SESSION_SLEEP_ON_STARTUP = "25";
+    // uncomment to stall start of rsession for # seconds so you can attach debugger to it
+    // process.env.RSTUDIO_SESSION_SLEEP_ON_STARTUP = "15";
+
     return true;
   }
 }
