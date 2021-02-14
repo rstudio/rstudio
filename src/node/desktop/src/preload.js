@@ -27,21 +27,128 @@ const { contextBridge } = require('electron');
  */
 
 contextBridge.exposeInMainWorld('desktop',  {
-  getSessionServers: () => [], // only meaningful for RDP but invoked in open-source
-  setBusy: (busy) => {},
+  proportionalFont: () => "",
+  fixedWidthFont: () => "",
+  browseUrl: (url) => {},
+
+  getOpenFileName: (caption, label, dir, filter, canChooseDirectories, focusOwner) => {
+    window.alert('Not implemented');
+    return '';
+  },
+
+  getSaveFileName: (caption, label, dir, defaultExtension, forceDefaultExtension, focusOwner) => {
+    window.alert('Not implemented');
+    return '';
+  },
+
+  getExistingDirectory: (caption, label, dir, focusOwner) => {
+    window.alert('Not implemented');
+    return '';
+  },
+
+  onClipboardSelectionChanged: () => {},
+
+  undo: () => {},
+  redo: () => {},
+
+  clipboardCut: () => {},
+  clipboardCopy: () => {},
+  clipboardPaste: () => {},
+
+  setClipboardText: (text) => {},
+  getClipboardText: () => '',
+  getClipboardUris: () => [],
+  getClipboardImage: () => '',
+
+  setGlobalMouseSelection: (selection) => {},
+  getGlobalMouseSelection: () => '',
+
+  getCursorPosition: () => { return {x: 20, y: 20} },
+  doesWindowExistAtCursorPosition: () => false,
+
   onWorkbenchInitialized: (scratchPath) => {},
-  getInitMessages: () => { return ""; },
-  setBackgroundColor: (rgbColor) => {},
-  syncToEditorTheme: (isDark) => {},
-  changeTitleBarColor: (red, green, blue)  => {},
-  reloadZoomWindow: () => {},
+  showFolder: (path) => {},
+  showFile: (path) => {},
+  showWordDoc: (path) => {},
+  showPptPresentation: (path) => {},
+  showPDF: (path, pdfPage) => {},
+  prepareShowWordDoc: () => {},
+  prepareShowPptPresentation: () => {},
+
+  // R version selection currently Win32 only
+  getRVersion: () => '',
+  chooseRVersion: () => '',
+
+  devicePixelRatio: () => 1.0,
+
+  openMinimalWindow: (name, url, width, height) => {window.alert('Not implemented'); },
+  activateMinimalWindow: (name) => {},
+  activateSatelliteWindow: (name) => {},
+  prepareForSatelliteWindow: (name, x, y, width, height) => {},
+  prepareForNamedWindow: (name, allowExternalNavigate, showToolbar) => {},
+  closeNamedWindow: (name) => {},
+
+  copyPageRegionToClipboard: (left, top, width, height) => {},
+  exportPageRegionToFile: (targetPath, format, left, top, width, height) => {},
+
+  printText: (text) => {},
+  paintPrintText: (printer) => {},
+  printFinished: (result) => {},
+
+  supportsClipboardMetafile: () => false,
 
   showMessageBox: (type, caption, message, buttons, defaultButton, cancelButton) => {
     window.alert(message);
     return 1;
   },
 
+  promptForText :(title, 
+                  caption,
+                  defaultValue,
+                  type,
+                  rememberPasswordPrompt,
+                  rememberByDefault,
+                  selectionStart,
+                  selectionLength,
+                  okButtonCaption) => {
+                    window.alert('Not implemented');
+                    return '';
+                  },
+
+  bringMainFrameToFront: () => {},
+  bringMainFrameBehindActive: () => {},
+
+  desktopRenderingEngine: () => '',
+  setDesktopRenderingEngine: (engine) => {},
+
+  filterText: (text) => text,
+
+  cleanClipboard: (stripHtml) => {},
+
   setPendingQuit: (pendingQuit) => {},
+
+  openProjectInNewWindow: (projectFilePath) => { window.alert('Not implemented'); },
+  openSessionInNewWindow: (workingDirectoryPath) => {},
+
+  openTerminal: (terminalPath, workingDirectory, extraPathEntries, shellType) => {},
+
+  getFixedWidthFontList: () => '',
+  getFixedWidthFont: () => '',
+  setFixedWidthFont: (font) => '',
+
+  // add remainder here
+  // ....
+  //
+
+  getSessionServers: () => [], // only meaningful for RDP but invoked in open-source
+  setBusy: (busy) => {},
+  getInitMessages: () => { return ""; },
+  setBackgroundColor: (rgbColor) => {},
+  syncToEditorTheme: (isDark) => {},
+  changeTitleBarColor: (red, green, blue)  => {},
+  reloadZoomWindow: () => {},
+
+  setWindowTitle: (title) => {},
 });
 
 // RDP-only
