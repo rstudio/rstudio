@@ -30,7 +30,7 @@ public class DocumentMode
       TEX,
       UNKNOWN
    }
-   
+
    public static Mode getModeForPosition(DocDisplay docDisplay,
                                          Position position)
    {
@@ -51,12 +51,12 @@ public class DocumentMode
       else
          return Mode.UNKNOWN;
    }
-   
+
    public static Mode getModeForCursorPosition(DocDisplay docDisplay)
    {
       return getModeForPosition(docDisplay, docDisplay.getCursorPosition());
    }
-   
+
    private static boolean isPositionInMode(DocDisplay docDisplay,
                                            Position position,
                                            String modeString)
@@ -64,28 +64,28 @@ public class DocumentMode
       String m = docDisplay.getLanguageMode(position);
       return m != null && m.equals(modeString);
    }
-   
+
    // Markdown Mode
    public static boolean isPositionInMarkdownMode(DocDisplay docDisplay,
                                                    Position position)
    {
       if (docDisplay.getFileType().isPlainMarkdown())
          return true;
-      
+
       return isPositionInMode(
             docDisplay,
             position,
             FileType.MARKDOWN_LANG_MODE);
-      
+
    }
-   
+
    public static boolean isCursorInMarkdownMode(DocDisplay docDisplay)
    {
       return isPositionInMarkdownMode(
             docDisplay,
             docDisplay.getCursorPosition());
    }
-   
+
    public static boolean isSelectionInMarkdownMode(DocDisplay docDisplay)
    {
       return isPositionInMarkdownMode(
@@ -95,19 +95,19 @@ public class DocumentMode
                   docDisplay,
                   docDisplay.getSelectionEnd());
    }
-   
+
    // R Mode
    public static boolean isPositionInRMode(DocDisplay docDisplay,
                                             Position position)
    {
       if (docDisplay.getFileType().isR())
          return true;
-      
+
       return isPositionInMode(
             docDisplay,
             position,
             FileType.R_LANG_MODE);
-      
+
    }
    public static boolean isCursorInRMode(DocDisplay docDisplay)
    {
@@ -115,34 +115,34 @@ public class DocumentMode
             docDisplay,
             docDisplay.getCursorPosition());
    }
-   
+
    public static boolean isSelectionInRMode(DocDisplay docDisplay)
    {
       return isPositionInRMode(docDisplay, docDisplay.getSelectionStart()) &&
              isPositionInRMode(docDisplay, docDisplay.getSelectionEnd());
    }
-   
+
    // C++ Mode
    public static boolean isPositionInCppMode(DocDisplay docDisplay,
                                               Position position)
-   {    
+   {
       return isPositionInMode(
             docDisplay,
             position,
             FileType.C_CPP_LANG_MODE);
    }
-   
+
    public static boolean isCursorInCppMode(DocDisplay docDisplay)
    {
       return isPositionInCppMode(docDisplay, docDisplay.getCursorPosition());
    }
-   
+
    public static boolean isSelectionInCppMode(DocDisplay docDisplay)
    {
       return isPositionInCppMode(docDisplay, docDisplay.getSelectionStart()) &&
              isPositionInCppMode(docDisplay, docDisplay.getSelectionEnd());
    }
-   
+
    // TeX Mode
    public static boolean isPositionInTexMode(DocDisplay docDisplay,
                                                Position position)
@@ -164,77 +164,77 @@ public class DocumentMode
       {
          return false;
       }
-      
+
    }
-   
+
    public static boolean isCursorInTexMode(DocDisplay docDisplay)
    {
       return isPositionInTexMode(docDisplay, docDisplay.getCursorPosition());
    }
-   
+
    public static boolean isSelectionInTexMode(DocDisplay docDisplay)
    {
       return isPositionInTexMode(docDisplay, docDisplay.getSelectionStart()) &&
              isPositionInTexMode(docDisplay, docDisplay.getSelectionEnd());
    }
-   
+
    // Python Mode
    public static boolean isPositionInPythonMode(DocDisplay docDisplay,
                                                  Position position)
    {
       if (docDisplay.getFileType().isPython())
          return true;
-      
+
       return isPositionInMode(
             docDisplay,
             position,
             FileType.PYTHON_LANG_MODE);
-      
+
    }
-   
+
    public static boolean isCursorInPythonMode(DocDisplay docDisplay)
    {
       return isPositionInPythonMode(
             docDisplay,
             docDisplay.getCursorPosition());
    }
-   
+
    public static boolean isSelectionInPythonMode(DocDisplay docDisplay)
    {
       return isPositionInPythonMode(docDisplay, docDisplay.getSelectionStart()) &&
              isPositionInPythonMode(docDisplay, docDisplay.getSelectionEnd());
    }
-   
+
    public static boolean isPositionInSqlMode(DocDisplay docDisplay,
                                              Position position)
    {
       if (docDisplay.getFileType().isSql())
          return true;
-      
+
       return isPositionInMode(docDisplay, position, FileType.SQL_LANG_MODE);
    }
-   
+
    // Stan Mode
    public static boolean isPositionInStanMode(DocDisplay docDisplay,
                                               Position position)
    {
       if (docDisplay.getFileType().isStan())
          return true;
-      
+
       return isPositionInMode(
             docDisplay,
             position,
             FileType.STAN_LANG_MODE);
-      
+
    }
-   
+
    public static boolean isCursorInStanMode(DocDisplay docDisplay)
    {
       return isPositionInStanMode(
             docDisplay,
             docDisplay.getCursorPosition());
    }
-   
+
    public static boolean isSelectionInStanMode(DocDisplay docDisplay)
    {
       return isPositionInStanMode(docDisplay, docDisplay.getSelectionStart()) &&

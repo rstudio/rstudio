@@ -30,9 +30,9 @@ import com.google.gwt.user.client.ui.Widget;
 public class NewRdDialog extends ModalDialog<NewRdDialog.Result>
 {
    public static class Result
-   {  
+   {
       public static final String TYPE_NONE = "none";
-      
+
       public Result(String name, String type)
       {
          this.name = name;
@@ -41,31 +41,31 @@ public class NewRdDialog extends ModalDialog<NewRdDialog.Result>
       public final String name;
       public final String type;
    }
-   
+
    public interface Binder extends UiBinder<Widget, NewRdDialog>
    {
    }
-   
+
    public NewRdDialog(OperationWithInput<Result> operation)
    {
       super("New R Documentation File", Roles.getDialogRole(), operation);
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
-      
+
    }
-   
+
    @Override
    protected Widget createMainWidget()
    {
       return mainWidget_;
    }
-   
+
    @Override
    protected void focusInitialControl()
    {
       txtName_.setFocus(true);
    }
-   
-   
+
+
    @Override
    protected Result collectInput()
    {
@@ -83,7 +83,7 @@ public class NewRdDialog extends ModalDialog<NewRdDialog.Result>
                "Name Not Specified",
                "You must specify a topic name for the new Rd file.",
                txtName_);
-         
+
          return false;
       }
       else
@@ -92,11 +92,11 @@ public class NewRdDialog extends ModalDialog<NewRdDialog.Result>
       }
    }
 
-   
+
    @UiField
    FormTextBox txtName_;
    @UiField
    FormListBox listDocType_;
-   
-   private Widget mainWidget_; 
+
+   private Widget mainWidget_;
 }

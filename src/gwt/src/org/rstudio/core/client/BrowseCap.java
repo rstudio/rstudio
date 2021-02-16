@@ -27,7 +27,7 @@ public class BrowseCap
    {
       if (hasMetaKey())
          return -1;
-  
+
       else if (FIXED_UBUNTU_MONO)
       {
          if (isFirefox())
@@ -52,17 +52,17 @@ public class BrowseCap
    {
       return false;
    }
-   
+
    public boolean hasWindowFind()
    {
       return !isInternetExplorer();
    }
-   
+
    public boolean canCopyToClipboard()
    {
       return (Desktop.hasDesktopFrame()) || !isSafari();
    }
-   
+
    public static boolean isInternetExplorer()
    {
       return isUserAgent("trident");
@@ -72,28 +72,28 @@ public class BrowseCap
    {
       return isMacintosh();
    }
-   
+
    public static boolean isMacintosh()
    {
       return OPERATING_SYSTEM.equals("macintosh");
    }
-   
+
    public static boolean isMacintoshDesktop()
    {
       return (Desktop.hasDesktopFrame()) && isMacintosh();
    }
-   
+
    public static boolean isMacintoshDesktopMojave()
    {
       return isMacintoshDesktop() && isUserAgent("mac os x 10_14");
-            
+
    }
-  
+
    public static boolean isWindows()
    {
       return OPERATING_SYSTEM.equals("windows");
    }
-   
+
    public static boolean isWindowsDesktop()
    {
       return (Desktop.hasDesktopFrame()) && isWindows();
@@ -103,65 +103,65 @@ public class BrowseCap
    {
       return OPERATING_SYSTEM.equals("linux");
    }
-   
+
    public static boolean isLinuxDesktop()
    {
       return (Desktop.hasDesktopFrame()) && isLinux();
    }
-   
+
    public static boolean hasUbuntuFonts()
    {
       return FIXED_UBUNTU_MONO;
    }
-   
+
    public static boolean isChrome()
    {
       return isUserAgent("chrome");
    }
-   
+
    public static boolean isChromeServer()
    {
       return isChrome() && !Desktop.hasDesktopFrame();
    }
-   
+
    public static boolean isSafari()
    {
       return isUserAgent("safari") && !isChrome();
    }
-   
-   public static boolean isChromeLinux() 
+
+   public static boolean isChromeLinux()
    {
       return isChrome() && isLinux();
    }
-      
+
    public static boolean isFirefox()
    {
       return isUserAgent("firefox");
    }
-   
+
    public static boolean isSafariOrFirefox()
    {
       return isSafari() || isFirefox();
    }
-   
+
    public static boolean isChromeFrame()
    {
       return isUserAgent("chromeframe");
    }
-   
+
    public static boolean isQtWebEngine()
    {
       return isUserAgent("qtwebengine");
    }
-   
+
    public static final native String qtWebEngineVersion()
    /*-{
       var pattern = new RegExp("QtWebEngine/([^\\s]+)", "i");
       var match = navigator.userAgent.match(pattern)
       return match[1] || "";
    }-*/;
-   
-   public static double devicePixelRatio() 
+
+   public static double devicePixelRatio()
    {
       // TODO: validate that we can rely on browser to report even
       // on desktop clients
@@ -193,12 +193,12 @@ public class BrowseCap
       else
          return "Unknown";
    }
-   
+
    public static String operatingSystem()
    {
       return OPERATING_SYSTEM;
    }
-   
+
    private static native final double getDevicePixelRatio() /*-{
       try
       {
@@ -212,13 +212,13 @@ public class BrowseCap
          return 1.0;
       }
    }-*/;
-   
+
    private static native final boolean isUserAgent(String uaTest) /*-{
       var ua = navigator.userAgent.toLowerCase();
       if (ua.indexOf(uaTest) != -1)
          return true;
       else
-         return false;      
+         return false;
    }-*/;
 
    private static native final String getOperatingSystem() /*-{
@@ -238,7 +238,7 @@ public class BrowseCap
       {
          // get fixed width font
          String fixedWidthFont = ThemeFonts.getFixedWidthFont();
-         
+
          // in desktop mode we'll get an exact match whereas in web mode
          // we'll get a list of fonts so we need to do an additional probe
          if (Desktop.hasDesktopFrame())
@@ -251,10 +251,9 @@ public class BrowseCap
          return false;
       }
    }
-   
 
    private static final boolean FIXED_UBUNTU_MONO = getFixedUbuntuMono();
-   
+
    static
    {
       Document.get().getBody().addClassName(OPERATING_SYSTEM);
@@ -274,7 +273,7 @@ public class BrowseCap
       if (FIXED_UBUNTU_MONO)
       {
          Document.get().getBody().addClassName("ubuntu_mono");
-         
+
          if (isFirefox())
             Document.get().getBody().addClassName("ubuntu_mono_firefox");
       }

@@ -26,16 +26,16 @@ public class Version implements Comparable<Version>
       Version rhsVersion = new Version(rhs);
       return lhsVersion.compareTo(rhsVersion);
    }
-      
+
    private Version(String version)
    {
       components_ = new ArrayList<>();
-      
+
       String[] parts = version.split("[.-]");
       for (int i = 0; i < parts.length; i++)
       {
          int value = 0;
-         
+
          try
          {
             value = Integer.parseInt(parts[i]);
@@ -44,11 +44,11 @@ public class Version implements Comparable<Version>
          {
             Debug.logException(e);
          }
-         
+
          components_.add(value);
       }
    }
-   
+
    @Override
    public int compareTo(Version other)
    {
@@ -57,16 +57,16 @@ public class Version implements Comparable<Version>
       {
          int lhs = component(i);
          int rhs = other.component(i);
-         
+
          if (lhs < rhs)
             return -1;
          else if (lhs > rhs)
             return 1;
       }
-      
+
       return 0;
    }
-   
+
    private int component(int index)
    {
       if (index < 0)
@@ -82,11 +82,11 @@ public class Version implements Comparable<Version>
          return 0;
       }
    }
-   
+
    private int size()
    {
       return components_.size();
    }
-   
+
    private final List<Integer> components_;
 }

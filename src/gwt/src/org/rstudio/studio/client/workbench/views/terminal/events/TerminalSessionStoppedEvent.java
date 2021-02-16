@@ -33,21 +33,21 @@ public class TerminalSessionStoppedEvent extends CrossWindowEvent<Handler>
        */
       void onTerminalSessionStopped(TerminalSessionStoppedEvent event);
    }
-   
+
    public interface HasHandlers extends com.google.gwt.event.shared.HasHandlers
    {
       void addTerminalSessionStoppedHandler(Handler handler);
    }
-  
+
    public TerminalSessionStoppedEvent()
    {
    }
-   
+
    public TerminalSessionStoppedEvent(TerminalSession terminalWidget)
    {
       terminalWidget_ = terminalWidget;
-   } 
-   
+   }
+
    @Override
    public com.google.gwt.event.shared.GwtEvent.Type<Handler> getAssociatedType()
    {
@@ -59,13 +59,13 @@ public class TerminalSessionStoppedEvent extends CrossWindowEvent<Handler>
    {
       handler.onTerminalSessionStopped(this);
    }
-   
+
    public TerminalSession getTerminalWidget()
    {
       return terminalWidget_;
    }
-  
+
    private TerminalSession terminalWidget_;
-   
+
    public static final Type<Handler> TYPE = new Type<>();
 }

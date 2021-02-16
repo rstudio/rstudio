@@ -60,7 +60,7 @@ public class AddinsToolbarButton extends ToolbarMenuButton
       super("Addins",
             ToolbarButton.NoTitle,
             CoreResources.INSTANCE.iconEmpty(),
-            new ScrollableToolbarPopupMenu() 
+            new ScrollableToolbarPopupMenu()
             {
                @Override
                protected int getMaxHeight()
@@ -69,14 +69,14 @@ public class AddinsToolbarButton extends ToolbarMenuButton
                }
             },
             false);
-      
+
       RStudioGinjector.INSTANCE.injectMembers(this);
-      
+
       ElementIds.assignElementId(this, ElementIds.ADDINS_TOOLBAR_BUTTON);
       menu_ = getMenu();
-      
+
       menu_.setAutoHideRedundantSeparators(false);
-      
+
       addClickHandler(new ClickHandler()
       {
          @Override
@@ -85,7 +85,7 @@ public class AddinsToolbarButton extends ToolbarMenuButton
             populate();
          }
       });
-      
+
       addAttachHandler(new AttachEvent.Handler()
       {
          @Override
@@ -101,7 +101,7 @@ public class AddinsToolbarButton extends ToolbarMenuButton
             }
          }
       });
-      
+
       searchWidget_ = new SearchWidget("Search for addins");
       searchValueChangeTimer_ = new Timer()
       {
@@ -111,13 +111,13 @@ public class AddinsToolbarButton extends ToolbarMenuButton
             onSearchValueChange();
          }
       };
-      
+
       searchEl_ = searchWidget_.getElement();
-      
+
       searchEl_.getStyle().setMarginLeft(10, Unit.PX);
       searchEl_.getStyle().setMarginRight(10, Unit.PX);
       searchEl_.getStyle().setMarginTop(-2, Unit.PX);
-      
+
       DOM.sinkEvents(searchEl_, Event.KEYEVENTS);
       DOM.setEventListener(searchEl_, new EventListener()
       {
@@ -127,25 +127,25 @@ public class AddinsToolbarButton extends ToolbarMenuButton
             searchValueChangeTimer_.schedule(200);
          }
       });
-      
+
    }
-   
+
    private void populate()
    {
       menu_.clearItems();
-      
+
       Map<String, List<RAddin>> addinsByPkg = organizeAddins();
-      
+
       if (addinsByPkg.isEmpty())
       {
          populateEmptyMenu();
          return;
       }
-      
+
       MapUtil.forEach(addinsByPkg, new MapUtil.ForEachCommand<String, List<RAddin>>()
       {
          private int separatorCount_ = 0;
-         
+
          @Override
          public void execute(final String pkg, final List<RAddin> addins)
          {
@@ -164,7 +164,7 @@ public class AddinsToolbarButton extends ToolbarMenuButton
                }
             });
             menu_.addSeparator();
-            
+
             addins.sort(new Comparator<RAddin>()
             {
                @Override
@@ -173,21 +173,21 @@ public class AddinsToolbarButton extends ToolbarMenuButton
                   return Integer.compare(o1.getOrdinal(), o2.getOrdinal());
                }
             });
-            
+
             for (RAddin addin : addins)
                menu_.addItem(menuItem(addin));
          }
       });
-      
+
       menu_.selectFirst();
-      
+
       Element tableEl = menu_.getMenuTableElement();
       if (tableEl != null)
       {
          int menuWidth = Math.max(MIN_WIDTH_PX, menuWidth_);
          tableEl.getStyle().setWidth(menuWidth, Unit.PX);
       }
-      
+
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
          @Override
@@ -197,7 +197,7 @@ public class AddinsToolbarButton extends ToolbarMenuButton
          }
       });
    }
-   
+
    private void populateEmptyMenu()
    {
       menu_.addSeparator(new CustomMenuItemSeparator()
@@ -211,7 +211,7 @@ public class AddinsToolbarButton extends ToolbarMenuButton
             return createSearchSeparator(label);
          }
       });
-      
+
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
          @Override
@@ -221,7 +221,7 @@ public class AddinsToolbarButton extends ToolbarMenuButton
          }
       });
    }
-   
+
    private MenuItem menuItem(final RAddin addin)
    {
       MenuItem menuItem = new MenuItem(
@@ -234,60 +234,60 @@ public class AddinsToolbarButton extends ToolbarMenuButton
                   executor_.execute(addin);
                }
             });
-      
+
       menuItem.setTitle(addin.getDescription());
       return menuItem;
    }
-   
+
    private Map<String, List<RAddin>> organizeAddins()
    {
       Map<String, List<RAddin>> organized = new HashMap<>();
-      
+
       String query = searchWidget_.getValue().toLowerCase().trim();
-      
+
       RAddins addins = manager_.getRAddins();
       for (String key : JsUtil.asIterable(addins.keys()))
       {
          RAddin addin = addins.get(key);
-         
+
          if (addin.getName().toLowerCase().indexOf(query) == -1 &&
              addin.getPackage().toLowerCase().indexOf(query) == -1)
          {
             continue;
          }
-         
+
          String[] splat = key.split("::");
          String pkg = splat[0];
-         
+
          if (!organized.containsKey(pkg))
             organized.put(pkg, new ArrayList<>());
-         
+
          List<RAddin> addinList = organized.get(pkg);
          addinList.add(addin);
       }
-      
+
       return organized;
    }
-   
+
    private Element createSearchSeparator(Label label)
    {
       final Element searchEl = searchWidget_.getElement();
       final Element labelEl = label.getElement();
-      
+
       labelEl.getStyle().setFloat(Style.Float.LEFT);
       searchEl.getStyle().setFloat(Style.Float.RIGHT);
-      
+
       Element container = DOM.createDiv();
       container.appendChild(labelEl);
       container.appendChild(searchEl);
       return container;
    }
-   
+
    private void onSearchValueChange()
    {
       populate();
    }
-   
+
    @Inject
    private void initialize(AddinsCommandManager manager,
                            AddinExecutor executor)
@@ -295,17 +295,17 @@ public class AddinsToolbarButton extends ToolbarMenuButton
       manager_ = manager;
       executor_ = executor;
    }
-   
+
    private final ToolbarPopupMenu menu_;
    private final SearchWidget searchWidget_;
    private final Element searchEl_;
    private final Timer searchValueChangeTimer_;
-   
+
    private int menuWidth_ = 0;
-   
+
    // Injected ----
    private AddinsCommandManager manager_;
    private AddinExecutor executor_;
-   
+
    private static final int MIN_WIDTH_PX = 260;
 }

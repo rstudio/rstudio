@@ -21,11 +21,11 @@ public class AceSupport
 {
    public static final native void initialize()
    /*-{
-      
+
       $wnd.AceSupport = {
          ScopeManager : $wnd.require("mode/r_scope_tree").ScopeManager,
          ScopeNode    : $wnd.require("mode/r_scope_tree").ScopeNode
       };
-      
+
    }-*/;
 }

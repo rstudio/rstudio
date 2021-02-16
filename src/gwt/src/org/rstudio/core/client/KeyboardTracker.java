@@ -35,19 +35,19 @@ public class KeyboardTracker
             int type = preview.getTypeInt();
             if ((type & Event.KEYEVENTS) == 0)
                return;
-            
+
             NativeEvent event = preview.getNativeEvent();
             modifier_ = KeyboardShortcut.getModifierValue(event);
          }
-            
+
       });
    }
-   
+
    public boolean isShiftKeyDown()
    {
       return (modifier_ & KeyboardShortcut.SHIFT) != 0;
    }
-   
+
    private int modifier_ = 0;
-   
+
 }

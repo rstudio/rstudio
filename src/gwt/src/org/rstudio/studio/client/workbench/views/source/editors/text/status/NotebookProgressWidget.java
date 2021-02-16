@@ -51,7 +51,7 @@ public class NotebookProgressWidget extends Composite
          extends UiBinder<Widget, NotebookProgressWidget>
    {
    }
-   
+
    @Override
    public void setVisible(boolean visible)
    {
@@ -75,7 +75,7 @@ public class NotebookProgressWidget extends Composite
                   start_ = pos;
                   updateProgressBar(false);
                }
-               
+
                // request another frame if we're still showing
                if (isVisible())
                {
@@ -91,29 +91,29 @@ public class NotebookProgressWidget extends Composite
                   }.schedule(STEP_MS);
                }
             }
-            
+
             private double start_ = 0;
             private final int STEP_MS = 15;
          });
       }
    }
-   
+
    public void setPercent(int percent)
    {
       percent_ = percent;
       updateProgressBar(true);
    }
-   
+
    public void setLabel(String label)
    {
       progressLabel_.setText(label + ": ");
    }
-   
+
    public HandlerRegistration addClickHandler(ClickHandler handler)
    {
       return manager_.addHandler(ClickEvent.getType(), handler);
    }
-   
+
    public HandlerRegistration addCancelHandler(final Command onCanceled)
    {
       cancelCommands_.add(onCanceled);
@@ -133,7 +133,7 @@ public class NotebookProgressWidget extends Composite
       cancelCommands_ = new ArrayList<>();
 
       initWidget(uiBinder.createAndBindUi(this));
-      
+
       // ensure elements look clickable
       progressBar_.getElement().getStyle().setCursor(Cursor.POINTER);
       interruptButton_.getElement().getStyle().setCursor(Cursor.POINTER);
@@ -146,7 +146,7 @@ public class NotebookProgressWidget extends Composite
             event.stopPropagation();
 
             ClickEvent.fireNativeEvent(
-                  Document.get().createClickEvent(0, 0, 0, 0, 0, false, false, 
+                  Document.get().createClickEvent(0, 0, 0, 0, 0, false, false,
                         false, false),
                   manager_);
          }
@@ -165,7 +165,7 @@ public class NotebookProgressWidget extends Composite
          }
       }, MouseDownEvent.getType());
    }
-   
+
    private void updateProgressBar(boolean resetHighlight)
    {
       ColorUtil.RGBColor barColor = ColorUtil.RGBColor.fromCss(
@@ -174,20 +174,20 @@ public class NotebookProgressWidget extends Composite
             "rgba(208, 233, 201, 1.0)");
       ColorUtil.RGBColor emptyColor = ColorUtil.RGBColor.fromCss(
             "rgba(24, 163, 82, 0.3)");
-      
+
       int end = Math.round((float)progressBar_.getOffsetWidth() *
             ((float) percent_ / (float) 100));
-      
+
       final int HEAD_WIDTH = 10;
       final int TAIL_WIDTH = 35;
-      
+
       int high = highlight_ % (progressBar_.getOffsetWidth() + TAIL_WIDTH);
       int highStart = Math.max(high - TAIL_WIDTH, 0);
       int highEnd = Math.min(high + HEAD_WIDTH, end);
       highlight_ = high; // avoid overflow
       if (high > end && highStart <= end)
       {
-         highColor = highColor.mixedWith(barColor, 
+         highColor = highColor.mixedWith(barColor,
                (float)(end - highStart) / (float) TAIL_WIDTH, 1);
          high = end;
       }
@@ -200,7 +200,7 @@ public class NotebookProgressWidget extends Composite
          highStart = 0;
          highEnd = 0;
       }
-      
+
       progressBar_.getElement().getStyle().setBackgroundImage(
             "linear-gradient(to right, " +
               barColor.asRgb()   + " 0, " +
@@ -211,7 +211,7 @@ public class NotebookProgressWidget extends Composite
               emptyColor.asRgb() + " " + end       + "px, " +
               emptyColor.asRgb() + " 100%)");
    }
-   
+
    @UiField HTMLPanel progressBar_;
    @UiField HorizontalPanel root_;
    @UiField Label progressLabel_;

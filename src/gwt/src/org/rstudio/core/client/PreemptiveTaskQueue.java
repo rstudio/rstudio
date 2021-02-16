@@ -29,34 +29,34 @@ public class PreemptiveTaskQueue
 {
    public interface Task
    {
-      String getLabel(); // used for debug/log output 
+      String getLabel(); // used for debug/log output
       boolean shouldPreempt();
       void execute(Command done);
    }
-   
+
    public PreemptiveTaskQueue()
    {
       this(true, false);
    }
-   
+
    public PreemptiveTaskQueue(boolean safe)
    {
       this(safe, false);
    }
-   
+
    public PreemptiveTaskQueue(boolean safe, boolean log)
    {
       log_ = log;
       safe_ = safe;
    }
-   
+
    public void addTask(Task task)
    {
       log("adding " + task.getLabel());
       taskQueue_.add(task);
       processTasks();
    }
-   
+
    private void processTasks()
    {
       if (processing_)
@@ -64,22 +64,22 @@ public class PreemptiveTaskQueue
          log("already running");
          return;
       }
-      
+
       processing_ = true;
       processNextTask();
    }
-   
+
    private void processNextTask()
    {
       log("process next task");
-      
+
       if (taskQueue_.isEmpty())
       {
          log("done");
          processing_ = false;
          return;
       }
-      
+
       // see if any of the tasks have priority
       Task nextTask = null;
       for (Task task : taskQueue_)
@@ -91,17 +91,17 @@ public class PreemptiveTaskQueue
             break;
          }
       }
-      
+
       // if there is no priority task then just remove from the queue
       if (nextTask == null)
       {
          nextTask = taskQueue_.peek();
-         log("executing " + nextTask.getLabel());  
+         log("executing " + nextTask.getLabel());
       }
-      
+
       // remove the task
       taskQueue_.remove(nextTask);
-      
+
       // run the next task and then continue processing. catch any exceptions
       // so that we can continue processing if 'safe' was requested
       try
@@ -111,9 +111,9 @@ public class PreemptiveTaskQueue
             // defer next task to give event loop a chance
             // to process other user input/actions
             Scheduler.get().scheduleDeferred(() -> {
-               processNextTask(); 
+               processNextTask();
             });
-           
+
          });
       }
       catch(Exception e)
@@ -127,11 +127,11 @@ public class PreemptiveTaskQueue
          else
          {
             throw e;
-         }  
+         }
       }
-      
+
    }
-   
+
    private void log(String label)
    {
       if (log_)
@@ -139,11 +139,11 @@ public class PreemptiveTaskQueue
          Debug.logToConsole(hashCode() + " " + label + " size=" + taskQueue_.size());
       }
    }
-   
-   
+
+
    private Queue<Task> taskQueue_ = new LinkedList<>();
    private boolean processing_ = false;
    private final boolean log_;
    private final boolean safe_;
-   
+
 }

@@ -104,7 +104,6 @@ public class SVNHistoryStrategy implements HistoryStrategy
       // no-op
    }
 
-
    @Override
    public HandlerRegistration addVcsRefreshHandler(VcsRefreshEvent.Handler handler)
    {

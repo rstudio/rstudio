@@ -36,9 +36,9 @@ public class MouseTracker
                lastEventType_ = type;
                return;
             }
-            
+
             NativeEvent event = preview.getNativeEvent();
-            
+
             // Safari triggers certain mouse events when modifier keys are
             // pressed. Suppress those as they can cause unexpected behavior
             // when e.g. typing in a textbox while the mouse happens to lie
@@ -48,20 +48,20 @@ public class MouseTracker
                event.stopPropagation();
                event.preventDefault();
             }
-            
+
             lastEventType_ = type;
             lastMouseX_ = event.getClientX();
             lastMouseY_ = event.getClientY();
          }
       });
    }
-   
+
    private boolean isSafariModifierKeyCausingMouseEvent(NativeEvent event,
                                                         int type)
    {
       if (!BrowseCap.isSafari())
          return false;
-      
+
       // If the last event was a key event, and we just got a mouse event,
       // suppress it. (The intention here is to suppress a 'mouseout' or
       // 'mouseover' event synthesized in respond to a modifier keypress.
@@ -76,31 +76,31 @@ public class MouseTracker
          suppressing_ = true;
          return true;
       }
-      
+
       // Stop suppressing once we get a new non-mouseover/mouseout event.
       else if (type != Event.ONMOUSEOVER && type != Event.ONMOUSEOUT)
       {
          suppressing_ = false;
          return false;
       }
-      
+
       // For other intermediate events, return status of suppressing flag.
       return suppressing_;
    }
-   
+
    public int getLastMouseX()
    {
       return lastMouseX_;
    }
-   
+
    public int getLastMouseY()
    {
       return lastMouseY_;
    }
-   
+
    private int lastMouseX_;
    private int lastMouseY_;
-   
+
    private int lastEventType_;
    private boolean suppressing_;
 }

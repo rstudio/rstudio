@@ -455,5 +455,4 @@ public class CppCompletionManager implements CompletionManager
 
    private final HandlerRegistrations handlers_;
 
-
 }

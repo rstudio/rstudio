@@ -34,7 +34,7 @@ public class AriaLiveShellWidget extends Widget
       A11y.setVisuallyHidden(getElement());
       Roles.getStatusRole().setAriaLiveProperty(getElement(), LiveValue.ASSERTIVE);
    }
-   
+
    public void announce(String text)
    {
       if (lineCount_ > prefs_.screenreaderConsoleAnnounceLimit().getValue())
@@ -50,7 +50,7 @@ public class AriaLiveShellWidget extends Widget
             lineCount_++;
             append(line.toString());
             line.setLength(0);
-            
+
             if (lineCount_ == prefs_.screenreaderConsoleAnnounceLimit().getValue())
             {
                append("Too much console output to announce.");

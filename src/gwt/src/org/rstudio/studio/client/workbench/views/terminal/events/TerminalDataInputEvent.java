@@ -31,12 +31,12 @@ public class TerminalDataInputEvent extends GwtEvent<Handler>
        */
       void onTerminalDataInput(TerminalDataInputEvent event);
    }
-   
+
    public interface HasHandlers extends com.google.gwt.event.shared.HasHandlers
    {
       HandlerRegistration addTerminalDataInputHandler(Handler handler);
    }
-   
+
    public TerminalDataInputEvent(String data)
    {
       data_ = data;
@@ -53,13 +53,13 @@ public class TerminalDataInputEvent extends GwtEvent<Handler>
    {
       handler.onTerminalDataInput(this);
    }
-   
+
    public String getData()
    {
       return data_;
    }
-  
+
    private final String data_;
-   
+
    public static final Type<Handler> TYPE = new Type<>();
 }

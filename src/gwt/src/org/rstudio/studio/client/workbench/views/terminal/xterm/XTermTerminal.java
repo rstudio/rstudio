@@ -115,7 +115,6 @@ public class XTermTerminal extends XTermDisposable
     */
    public native XTermDisposable onCursorMove(JsVoidFunction callback);
 
-
    /**
     * Adds an event listener for when a data event fires. This happens for
     * example when the user types or pastes into the terminal. The event value
@@ -466,4 +465,3 @@ public class XTermTerminal extends XTermDisposable
       getElement().classList.remove(classStr);
    }
 }
-

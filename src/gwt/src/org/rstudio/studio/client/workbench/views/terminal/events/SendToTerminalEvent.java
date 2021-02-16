@@ -36,11 +36,11 @@ public class SendToTerminalEvent extends CrossWindowEvent<Handler>
    public static class Data extends JavaScriptObject
    {
       protected Data() {}
-      
+
       public final native String getText() /*-{ return this["text"]; }-*/;
       public final native boolean getSetFocus() /*-{ return this["set_focus"]; }-*/;
    }
-  
+
    public SendToTerminalEvent()
    {
    }
@@ -49,7 +49,7 @@ public class SendToTerminalEvent extends CrossWindowEvent<Handler>
    {
       this(data.getText(), data.getSetFocus());
    }
-   
+
    public SendToTerminalEvent(String text, boolean setFocus)
    {
       text_ = text;
@@ -60,12 +60,12 @@ public class SendToTerminalEvent extends CrossWindowEvent<Handler>
    {
       return text_;
    }
-   
+
    public boolean getSetFocus()
    {
       return setFocus_;
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {

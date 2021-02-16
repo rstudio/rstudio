@@ -21,7 +21,7 @@ import com.google.gwt.resources.client.ImageResource;
 public interface CodeIcons extends ClientBundle
 {
    public static final CodeIcons INSTANCE = GWT.create(CodeIcons.class);
-   
+
    @Source("variable_2x.png")
    ImageResource variable2x();
 
@@ -69,40 +69,40 @@ public interface CodeIcons extends ClientBundle
 
    @Source("snippet_2x.png")
    ImageResource snippet2x();
-   
+
    @Source("section_2x.png")
    ImageResource section2x();
-   
+
    @Source("section_h1_2x.png")
    ImageResource sectionH12x();
-   
+
    @Source("section_h2_2x.png")
    ImageResource sectionH22x();
-   
+
    @Source("section_h3_2x.png")
    ImageResource sectionH32x();
-   
+
    @Source("section_h4_2x.png")
    ImageResource sectionH42x();
-   
+
    @Source("section_h5_2x.png")
    ImageResource sectionH52x();
-   
+
    @Source("section_h6_2x.png")
    ImageResource sectionH62x();
-   
+
    @Source("figure_2x.png")
    ImageResource figure2x();
-   
+
    @Source("table_2x.png")
    ImageResource table2x();
-   
+
    @Source("python_2x.png")
    ImageResource python2x();
-   
+
    @Source("virtualenv_2x.png")
    ImageResource virtualenv2x();
-   
+
    @Source("conda_2x.png")
    ImageResource conda2x();
 }

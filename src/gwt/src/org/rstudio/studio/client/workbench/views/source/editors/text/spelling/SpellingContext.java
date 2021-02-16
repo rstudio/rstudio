@@ -20,7 +20,7 @@ public abstract class SpellingContext implements TypoSpellChecker.Context
       docUpdateSentinel_ = docUpdateSentinel;
       typoSpellChecker_ = new TypoSpellChecker(this);
    }
-   
+
    // Legacy checkSpelling function for popup dialog
    public void checkSpelling(SpellingDoc spellingDoc)
    {
@@ -51,13 +51,13 @@ public abstract class SpellingContext implements TypoSpellChecker.Context
                            }
                         });
    }
-   
+
    public void onDismiss()
    {
       while (releaseOnDismiss_.size() > 0)
          releaseOnDismiss_.remove(0).removeHandler();
    }
-   
+
    @Override
    public ArrayList<String> readDictionary()
    {
@@ -83,30 +83,30 @@ public abstract class SpellingContext implements TypoSpellChecker.Context
       for (String ignored : ignoredWords)
          csvWriter.writeValue(ignored);
       csvWriter.endLine();
-      docUpdateSentinel_.setProperty(IGNORED_WORDS, 
-                                     csvWriter.getValue(), 
-                                     new NullProgressIndicator());   
+      docUpdateSentinel_.setProperty(IGNORED_WORDS,
+                                     csvWriter.getValue(),
+                                     new NullProgressIndicator());
    }
 
    @Override
    public void releaseOnDismiss(HandlerRegistration handler)
    {
-      releaseOnDismiss_.add(handler);      
+      releaseOnDismiss_.add(handler);
    }
-   
+
    protected TypoSpellChecker typo()
    {
       return typoSpellChecker_;
    }
-   
-   
+
+
    private boolean isSpellChecking_;
-   
+
    private final TypoSpellChecker typoSpellChecker_;
 
    private final DocUpdateSentinel docUpdateSentinel_;
-   
+
    private ArrayList<HandlerRegistration> releaseOnDismiss_ = new ArrayList<>();
-   
+
    private final static String IGNORED_WORDS = "ignored_words";
 }

@@ -159,4 +159,3 @@ public class GraphLine
    // Use a static canvas to avoid the overhead of continually recreating them
    private static final Canvas s_canvas = Canvas.createIfSupported();
 }
-

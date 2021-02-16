@@ -48,4 +48,3 @@ public class XTermBufferNamespace
     */
    public native XTermDisposable onBufferChange(JsConsumerWithArg<XTermBuffer> callback);
 }
-
