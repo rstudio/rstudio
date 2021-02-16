@@ -1445,6 +1445,14 @@ body.windows .toolbar {
    white-space: nowrap;
 }
 
+.toolbarDotSeparator {
+   display: inline;
+   font-size: 9pt;
+}
+
+.rstudio-themes-flat .rstudio-themes-dark .toolbarDotSeparator {
+   color: rgb(169, 169, 169);
+}
 
 .rstheme_secondaryToolbar {
    background: TABBACKGROUND bottom repeat-x;

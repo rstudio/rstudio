@@ -221,10 +221,20 @@
 
 .rs.addFunction("reticulate.replInitialize", function()
 {
+   # compute interpreter info (only needs to be done once as the Python
+   # interpreter cannot be re-initialized again in the same session)
+   info <- .rs.getVar("python.activeInterpreterInfo")
+   if (is.null(info))
+   {
+      config <- reticulate::py_config()
+      info <- .rs.python.describeInterpreter(config$python)
+      .rs.setVar("python.activeInterpreterInfo", info)
+   }
+   
    # signal a switch to Python context
    .rs.reticulate.enqueueClientEvent(
       .rs.reticulateEvents$REPL_INITIALIZED,
-      list()
+      info
    )
    
 })

@@ -127,6 +127,7 @@ import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionSni
 import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionWizard;
 import org.rstudio.studio.client.workbench.views.connections.ui.ObjectBrowser;
 import org.rstudio.studio.client.workbench.views.connections.ui.ObjectBrowserModel;
+import org.rstudio.studio.client.workbench.views.console.ConsoleInterpreterVersion;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManagerBase;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.HelpStrategy;
@@ -338,6 +339,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(SourceColumn column);
    void injectMembers(SourceColumnManager columnManager);
    void injectMembers(PythonPreferencesPaneBase<?> pane);
+   void injectMembers(ConsoleInterpreterVersion version);
 
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 
