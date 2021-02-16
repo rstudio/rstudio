@@ -27,7 +27,7 @@ public class Invalidation
       {
          return thisSequence_ != sequence_;
       }
-      
+
       public boolean isValid()
       {
          return thisSequence_ == sequence_;

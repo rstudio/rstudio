@@ -38,7 +38,7 @@ public interface FileDialogResources extends ClientBundle
 
    @Source("project_2x.png")
    DataResource project2x();
-   
+
    @Source("home_2x.png")
    ImageResource homeImage2x();
 
@@ -48,7 +48,7 @@ public interface FileDialogResources extends ClientBundle
    @Source("project_2x.png")
    ImageResource projectImage2x();
 
-   ImageResource fade();   
+   ImageResource fade();
 
    @Source("browse_2x.png")
    ImageResource browse2x();

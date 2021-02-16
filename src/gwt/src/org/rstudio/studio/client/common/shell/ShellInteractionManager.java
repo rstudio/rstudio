@@ -38,10 +38,10 @@ public class ShellInteractionManager implements ShellOutputWriter
       input_ = display_.getInputEditorDisplay();
       historyManager_ = new CommandLineHistory(input_);
       inputHandler_ = inputHandler;
-      
+
       display_.addCapturingKeyDownHandler(new InputKeyDownHandler());
    }
-   
+
    public void setHistoryEnabled(boolean enabled)
    {
       historyEnabled_ = enabled;
@@ -83,33 +83,33 @@ public class ShellInteractionManager implements ShellOutputWriter
       if (lastPromptText_ != null)
          consolePrompt(lastPromptText_, false);
    }
-   
+
    @Override
    public void consoleWriteExtendedError(
-         String error, UnhandledError traceInfo, 
+         String error, UnhandledError traceInfo,
          boolean expand, String command)
    {
    }
-   
+
    @Override
    public void consoleWritePrompt(String prompt)
    {
       consolePrompt(prompt);
    }
-   
+
    private void processInput(final CommandWithArg<ShellInput> onInputReady)
    {
       // get the current prompt text
       String promptText = display_.getPromptText();
-      
-      // process command entry 
+
+      // process command entry
       String commandEntry = display_.processCommandEntry();
       if (addToHistory_)
          historyManager_.addToHistory(commandEntry);
-      
+
       // input is entry + newline
       String input = commandEntry + "\n";
-      
+
       outputPrefixToSuppress_ = null;
       // update console with prompt and input
       display_.consoleWritePrompt(promptText);
@@ -123,18 +123,18 @@ public class ShellInteractionManager implements ShellOutputWriter
 
       onInputReady.execute(ShellInput.create(input, echoInput));
    }
- 
+
    private void navigateHistory(int offset)
    {
       historyManager_.navigateHistory(offset);
       display_.ensureInputVisible();
    }
-    
+
    private void consolePrompt(String prompt)
    {
       // determine whether we should add this to the history
       boolean addToHistory = false;
-     
+
       if (historyEnabled_)
       {
          // figure out what the suffix of the default prompt is by inspecting
@@ -145,7 +145,7 @@ public class ShellInteractionManager implements ShellOutputWriter
                defaultPromptSuffix_ = prompt.substring(prompt.length()-2);
             else if (prompt.length() > 0)
                defaultPromptSuffix_ = prompt;
-            
+
             addToHistory = true;
          }
          else if (prompt.endsWith(defaultPromptSuffix_))
@@ -153,10 +153,10 @@ public class ShellInteractionManager implements ShellOutputWriter
             addToHistory = true;
          }
       }
-      
+
       consolePrompt(prompt, addToHistory);
    }
-    
+
    private void consolePrompt(String prompt, boolean addToHistory)
    {
       boolean showInput = showInputForPrompt(prompt);
@@ -165,7 +165,7 @@ public class ShellInteractionManager implements ShellOutputWriter
       addToHistory_ = addToHistory && showInput;
       historyManager_.resetPosition();
       lastPromptText_ = prompt;
-      
+
       // set focus on the first prompt
       if (!firstPromptShown_)
       {
@@ -173,14 +173,14 @@ public class ShellInteractionManager implements ShellOutputWriter
          display_.getInputEditorDisplay().setFocus(true);
       }
    }
-   
+
    private boolean showInputForPrompt(String prompt)
    {
       String promptLower = prompt.trim().toLowerCase();
-      boolean hasPassword = promptLower.contains("password") || 
+      boolean hasPassword = promptLower.contains("password") ||
                             promptLower.contains("passphrase");
-      
-      
+
+
       // if there is no password or passphrase then show input
       if (!hasPassword)
       {
@@ -195,7 +195,7 @@ public class ShellInteractionManager implements ShellOutputWriter
          return hasYesNo;
       }
    }
-   
+
    private final class InputKeyDownHandler implements KeyDownHandler
    {
       public void onKeyDown(KeyDownEvent event)
@@ -203,7 +203,7 @@ public class ShellInteractionManager implements ShellOutputWriter
          int keyCode = event.getNativeKeyCode();
          int modifiers = KeyboardShortcut.getModifierValue(
                                                 event.getNativeEvent());
-         if (historyEnabled_ && 
+         if (historyEnabled_ &&
                ((event.isUpArrow() && modifiers == 0) ||
                 (keyCode == 'P'    && modifiers == KeyboardShortcut.CTRL)))
          {
@@ -216,7 +216,7 @@ public class ShellInteractionManager implements ShellOutputWriter
                navigateHistory(-1);
             }
          }
-         else if (historyEnabled_ && 
+         else if (historyEnabled_ &&
                ((event.isDownArrow() && modifiers == 0) ||
                 (keyCode == 'N'      && modifiers == KeyboardShortcut.CTRL)))
          {
@@ -240,36 +240,36 @@ public class ShellInteractionManager implements ShellOutputWriter
          {
             event.preventDefault();
             event.stopPropagation();
-         
+
             if (display_.isPromptEmpty())
                display_.consoleWriteOutput("^C");
-            
+
             inputHandler_.execute(ShellInput.createInterrupt());
          }
          else if (modifiers == KeyboardShortcut.CTRL && keyCode == 'L')
          {
             event.preventDefault();
             event.stopPropagation();
-           
+
             display_.clearOutput();
          }
       }
    }
-    
+
    private final ShellDisplay display_;
-   
+
    private boolean addToHistory_;
    private boolean historyEnabled_ = true;
    private String lastPromptText_;
    private String defaultPromptSuffix_ = null;
-   
+
    private boolean firstPromptShown_ = false;
 
    private final InputEditorDisplay input_;
    private final CommandLineHistory historyManager_;
-   
+
    private final CommandWithArg<ShellInput> inputHandler_;
-   
+
    /* Hack to fix echoing problems on Windows.
     * For echoed input like username, Windows always echoes input back to the
     * client. We don't have a good way to avoid this happening on the server,

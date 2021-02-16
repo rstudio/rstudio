@@ -93,15 +93,14 @@ public class SVNCommitDialog extends ModalDialogBase
 
       ThemedButton commitButton = new ThemedButton("Commit",
                                                     new ClickHandler() {
-         public void onClick(ClickEvent event) 
+         public void onClick(ClickEvent event)
          {
             attemptCommit();
          }
       });
       addButton(commitButton, ElementIds.DIALOG_OK_BUTTON);
       addCancelButton();
-      
-     
+
       changelist_ = changelistPresenter.getView();
       widget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       widget_.setSize("500px", "400px");
@@ -128,7 +127,7 @@ public class SVNCommitDialog extends ModalDialogBase
       });
 
       DomUtils.disableSpellcheck(message_);
-      
+
       if (!StringUtil.isNullOrEmpty(commitDraft_))
          message_.setText(commitDraft_);
    }
@@ -154,7 +153,7 @@ public class SVNCommitDialog extends ModalDialogBase
       commitDraft_ = message_.getText();
       session_.persistClientState();
    }
- 
+
    private void attemptCommit()
    {
       if (validateInput())
@@ -165,13 +164,13 @@ public class SVNCommitDialog extends ModalDialogBase
                new SimpleRequestCallback<ConsoleProcess>("SVN Commit")
                {
                   private int exitCode_ = 0;
-                  
+
                   @Override
                   public void onResponseReceived(ConsoleProcess cp)
                   {
                      // hide the dialog -- we'll re-show it if the commit fails
                      SVNCommitDialog.this.setVisible(false);
-                     
+
                      // subscribe to process exit so we can record the
                      // exit code and manage the commit draft persistence
                      cp.addProcessExitHandler(new Handler()
@@ -183,7 +182,7 @@ public class SVNCommitDialog extends ModalDialogBase
                            // whether to become visible or close the dialog
                            // once the console process dialog exits
                            exitCode_ = event.getExitCode();
-                           
+
                            // We'll set the commitDraft_ on unload, so clear
                            // out the text box now
                            if (exitCode_  == 0)
@@ -207,7 +206,7 @@ public class SVNCommitDialog extends ModalDialogBase
                               SVNCommitDialog.this.setVisible(true);
                         }
                      });
-                 
+
                      // show the dialog
                      dialog.showModal();
                   }

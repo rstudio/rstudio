@@ -132,4 +132,3 @@ public class XTermBufferCell
    /** Whether the cell has the default attribute (no color or style). */
    public native boolean isAttributeDefault();
 }
-

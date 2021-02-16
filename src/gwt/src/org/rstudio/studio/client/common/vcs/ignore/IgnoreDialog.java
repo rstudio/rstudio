@@ -36,101 +36,101 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
-public class IgnoreDialog extends ModalDialogBase 
+public class IgnoreDialog extends ModalDialogBase
                           implements Ignore.Display
-{    
+{
    @Inject
    public IgnoreDialog()
    {
       super(Roles.getDialogRole());
-      dirChooser_ = new DirectoryChooserTextBox("Directory:", 
-                                                "", 
+      dirChooser_ = new DirectoryChooserTextBox("Directory:",
+                                                "",
                                                 ElementIds.TextBoxButtonId.VCS_IGNORE,
                                                 null);
       dirChooser_.addStyleName(RES.styles().dirChooser());
-      
+
       editor_ = new AceEditor();
       editor_.setUseWrapMode(false);
       editor_.setShowLineNumbers(false);
       editor_.setTabAlwaysMovesFocus();
       editor_.setTextInputAriaLabel("Ignored files");
-      
+
       ignoresCaption_ = new CaptionWithHelp("Ignore:",
                                              "Specifying ignored files",
                                              editor_.getWidget());
       ignoresCaption_.setIncludeVersionInfo(false);
       ignoresCaption_.addStyleName(RES.styles().ignoresCaption());
 
-      saveButton_ = new ThemedButton("Save", (ClickHandler)null); 
+      saveButton_ = new ThemedButton("Save", (ClickHandler)null);
       addButton(saveButton_, ElementIds.DIALOG_OK_BUTTON);
       addCancelButton();
       setButtonAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
-      
+
       progressIndicator_ = addProgressIndicator();
    }
-   
+
    @Override
    public void setDialogCaption(String caption)
    {
       setText(caption);
    }
-   
+
    @Override
    public void setIgnoresCaption(String caption)
    {
       ignoresCaption_.setCaption(caption);
    }
-   
+
    @Override
    public void setHelpLinkName(String helpLinkName)
    {
       ignoresCaption_.setRStudioLinkName(helpLinkName);
    }
-   
+
    @Override
    public ProgressIndicator progressIndicator()
    {
       return progressIndicator_;
    }
-   
+
    @Override
    public HasClickHandlers saveButton()
    {
       return saveButton_;
    }
-   
+
    @Override
    public void setCurrentPath(String path)
    {
       dirChooser_.setText(path);
    }
-   
+
    @Override
    public String getCurrentPath()
    {
       return dirChooser_.getText();
    }
-   
+
    @Override
    public HandlerRegistration addPathChangedHandler(
                                  ValueChangeHandler<String> handler)
    {
       return dirChooser_.addValueChangeHandler(handler);
    }
-   
-   
+
+
    @Override
    public void setIgnored(String ignored)
    {
       editor_.setCode(ignored.trim(), false);
    }
-   
+
    @Override
    public void focusIgnored()
    {
       editor_.focus();
    }
-   
+
    @Override
    public String getIgnored()
    {
@@ -139,56 +139,56 @@ public class IgnoreDialog extends ModalDialogBase
          ignored = ignored.trim() + "\n";
       return ignored;
    }
-   
+
    @Override
    public void scrollToBottom()
    {
       editor_.scrollToBottom();
    }
-   
+
    @Override
    protected Widget createMainWidget()
    {
       VerticalPanel verticalPanel = new VerticalPanel();
-      
+
       verticalPanel.add(dirChooser_);
-      
+
       verticalPanel.add(ignoresCaption_);
-      
+
       final String aceWidth = "400px";
       final String aceHeight = "300px";
-      
+
       Widget editorWidget = editor_.getWidget();
       editorWidget.setSize(aceWidth, aceHeight);
-     
+
       SimplePanel panel = new SimplePanel();
       panel.addStyleName(RES.styles().editorFrame());
       panel.setSize(aceWidth, aceHeight);
       panel.setWidget(editor_.getWidget());
       verticalPanel.add(panel);
-      
+
       return verticalPanel;
    }
-   
+
    @Override
    protected void focusInitialControl()
    {
       editor_.focus();
    }
-   
+
    static interface Styles extends CssResource
    {
       String dirChooser();
       String ignoresCaption();
       String editorFrame();
    }
-  
+
    static interface Resources extends ClientBundle
    {
       @Source("IgnoreDialog.css")
       Styles styles();
    }
-   
+
    static Resources RES = (Resources)GWT.create(Resources.class);
    public static void ensureStylesInjected()
    {
@@ -200,7 +200,7 @@ public class IgnoreDialog extends ModalDialogBase
    private final AceEditor editor_;
    private final ThemedButton saveButton_;
    private final ProgressIndicator progressIndicator_;
-  
-  
-  
+
+
+
 }

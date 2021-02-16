@@ -34,7 +34,6 @@ public class FindResultEvent extends GwtEvent<FindResultEvent.Handler>
       {
       }
 
-
       public native final String getHandle() /*-{
          return this.handle;
       }-*/;

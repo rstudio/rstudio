@@ -25,7 +25,7 @@ import com.google.gwt.core.client.JsArrayString;
 
 public class JsArrayUtil
 {
-   public static boolean jsArrayStringContains(JsArrayString haystack, 
+   public static boolean jsArrayStringContains(JsArrayString haystack,
                                                String needle)
    {
       for (int i = 0; i < haystack.length(); i++)
@@ -35,10 +35,10 @@ public class JsArrayUtil
       }
       return false;
    }
-   
+
    public static final native <T extends JavaScriptObject> T jsFindInCollection(
-         JsArray<T> haystack, 
-         String property, 
+         JsArray<T> haystack,
+         String property,
          String needle) /*-{
       for (var i = 0; i < haystack.length; i++)
       {
@@ -47,14 +47,14 @@ public class JsArrayUtil
       }
       return null;
    }-*/;
-   
-   public static <T extends JavaScriptObject> void fillList(JsArray<T> jsArray, 
+
+   public static <T extends JavaScriptObject> void fillList(JsArray<T> jsArray,
          List<T> list) {
       for (int i = 0; i < jsArray.length(); ++i) {
          list.add(jsArray.get(i));
       }
    }
-   
+
    public static <T extends JavaScriptObject> ArrayList<T> toArrayList(
          JsArray<T> jsArray)
    {
@@ -62,7 +62,7 @@ public class JsArrayUtil
       fillList(jsArray, list);
       return list;
    }
-   
+
    public static <T extends JavaScriptObject> JsArray<T> toJsArray(List<T> list)
    {
       JsArray<T> array = JsArray.createArray().cast();
@@ -72,8 +72,7 @@ public class JsArrayUtil
       }
       return array;
    }
-   
-   
+
    public static JsArrayString toJsArrayString(List<String> in)
    {
       JsArrayString out = JavaScriptObject.createArray().cast();
@@ -83,7 +82,7 @@ public class JsArrayUtil
       }
       return out;
    }
-   
+
    public static ArrayList<String> fromJsArrayString(JsArrayString in)
    {
       ArrayList<String> out = new ArrayList<>();
@@ -93,8 +92,8 @@ public class JsArrayUtil
       }
       return out;
    }
-   
-   public static boolean jsArrayStringEqual(JsArrayString first, 
+
+   public static boolean jsArrayStringEqual(JsArrayString first,
          JsArrayString second)
    {
       if (first.length() != second.length())
@@ -106,11 +105,11 @@ public class JsArrayUtil
       }
       return true;
    }
-   
+
    public final static native void remove(JsArray<?> array, int index) /*-{
       array.splice(index, 1);
    }-*/;
-   
+
    public static JsArrayString concat(JsArrayString a, JsArrayString b)
    {
       JsArrayString ab = JsArrayString.createArray().cast();
@@ -120,7 +119,7 @@ public class JsArrayUtil
          ab.push(b.get(i));
       return ab;
    }
-   
+
    public static final native <T extends JavaScriptObject> JsArray<T> copy(JsArray<T> object) /*-{
       return object.slice();
    }-*/;
@@ -135,7 +134,7 @@ public class JsArrayUtil
          copy.push(array.get(i));
       return copy;
    }
-   
+
    public static JsArrayString createStringArray(String ...strings)
    {
       JsArrayString result = JsArray.createArray().cast();
@@ -145,7 +144,7 @@ public class JsArrayUtil
       }
       return result;
    }
-   
+
    public static JsArrayString createStringArray(List<String> strings)
    {
       JsArrayString result = JsArray.createArray().cast();
@@ -154,9 +153,9 @@ public class JsArrayUtil
          result.push(str);
       }
       return result;
-      
+
    }
-   
+
    @SuppressWarnings("unchecked")
    public static final <T extends JavaScriptObject> JsArray<T> deepCopy(JsArray<T> array)
    {

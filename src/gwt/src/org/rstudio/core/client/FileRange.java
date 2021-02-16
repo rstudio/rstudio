@@ -23,7 +23,7 @@ public class FileRange extends JavaScriptObject
    public native final FilePosition getStart() /*-{
       return this.start;
    }-*/;
-   
+
    public native final FilePosition getEnd() /*-{
       return this.end;
    }-*/;

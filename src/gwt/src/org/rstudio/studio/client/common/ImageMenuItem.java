@@ -20,17 +20,17 @@ import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.MenuItem;
 
-public class ImageMenuItem 
+public class ImageMenuItem
 {
-   public static MenuItem create(ImageResource res, 
-                                 String text, 
-                                 ScheduledCommand command, 
+   public static MenuItem create(ImageResource res,
+                                 String text,
+                                 ScheduledCommand command,
                                  Integer iconOffsetY)
    {
-      
-      return new MenuItem(AppCommand.formatMenuLabel(res, text, null, 
-                                                     iconOffsetY), 
-                          true, 
+
+      return new MenuItem(AppCommand.formatMenuLabel(res, text, null,
+                                                     iconOffsetY),
+                          true,
                           command);
    }
 }

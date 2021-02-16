@@ -28,35 +28,35 @@ public abstract class DebouncedCommand
             execute();
          }
       };
-      
+
       delayMs_ = delayMs;
       suspended_ = false;
    }
-   
+
    public void nudge()
    {
       if (!suspended_)
          timer_.schedule(delayMs_);
    }
-   
+
    public void suspend()
    {
       timer_.cancel();
       suspended_ = true;
    }
-   
+
    public void resume()
    {
       suspended_ = false;
    }
-   
+
    public boolean isRunning()
    {
       return timer_.isRunning();
    }
-   
+
    protected abstract void execute();
-   
+
    private final Timer timer_;
    private final int delayMs_;
    private boolean suspended_;

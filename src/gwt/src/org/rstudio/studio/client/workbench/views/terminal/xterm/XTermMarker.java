@@ -43,4 +43,3 @@ public class XTermMarker extends XTermDisposable
     */
    @JsProperty public native int getLine();
 }
-

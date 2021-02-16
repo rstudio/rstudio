@@ -32,10 +32,10 @@ public class ClearTerminalEvent extends CrossWindowEvent<Handler>
    public static class Data extends JavaScriptObject
    {
       protected Data() {}
-      
+
       public final native String getId() /*-{ return this["id"]; }-*/;
    }
-  
+
    public ClearTerminalEvent()
    {
    }
@@ -44,7 +44,7 @@ public class ClearTerminalEvent extends CrossWindowEvent<Handler>
    {
       this(data.getId());
    }
-   
+
    public ClearTerminalEvent(String id)
    {
       id_ = id;

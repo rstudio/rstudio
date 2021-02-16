@@ -25,26 +25,26 @@ import com.google.gwt.core.client.JsArrayString;
 public class JsMap<T extends JavaScriptObject> extends JavaScriptObject
 {
    protected JsMap() {}
-   
+
    @SuppressWarnings("rawtypes")
    public static native final JsMap create() /*-{ return {}; }-*/;
-   
+
    public native final T get(String key) /*-{
       return this[key];
    }-*/;
-   
+
    public native final void set(String key, T value) /*-{
       this[key] = value;
    }-*/;
-   
+
    public native final JsArrayString keys() /*-{
       return Object.keys(this);
    }-*/;
-   
+
    public native final int size() /*-{
       return this.size;
    }-*/;
-   
+
    public native final boolean isEmpty() /*-{
       return this.size === 0;
    }-*/;

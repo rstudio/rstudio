@@ -194,7 +194,6 @@ public class DuplicateHelper
          }
       }
 
-
       return labels;
    }
 
@@ -233,7 +232,6 @@ public class DuplicateHelper
                      pathElementList.remove(pathElementList.size() - 1));
             }
          }
-
 
          DuplicationInfo<String> dupeInfo = DuplicateHelper.detectDupes(
                lastPathElements,

@@ -36,7 +36,7 @@ public class AboutDialog extends ModalDialogBase
       setText("About " + editionInfo_.editionName());
       ThemedButton OKButton = new ThemedButton("OK", (ClickEvent) -> closeDialog());
       addOkButton(OKButton);
-      
+
       if (editionInfo_.proLicense() && Desktop.hasDesktopFrame())
       {
          ThemedButton licenseButton = new ThemedButton("Manage License...", (ClickEvent) ->  {
@@ -66,8 +66,8 @@ public class AboutDialog extends ModalDialogBase
    private void initialize(ProductEditionInfo editionInfo)
    {
       editionInfo_ = editionInfo;
-   } 
-   
+   }
+
    private AboutDialogContents contents_;
    private ProductEditionInfo editionInfo_;
 }

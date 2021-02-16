@@ -40,19 +40,19 @@ public class CompilePanel extends Composite
    {
       this(new CompileOutputBuffer());
    }
-   
+
    public CompilePanel(CompileOutputDisplay outputDisplay)
    {
-      
+
       panel_ = new SimplePanel();
       outputDisplay_ = outputDisplay;
-      
+
       panel_.setWidget(outputDisplay_.asWidget());
       errorList_ = new SourceMarkerList();
-      
+
       initWidget(panel_);
    }
-   
+
    public void connectToolbar(Toolbar toolbar)
    {
       Commands commands = RStudioGinjector.INSTANCE.getCommands();
@@ -60,7 +60,7 @@ public class CompilePanel extends Composite
       stopButton_ = new ToolbarButton(ToolbarButton.NoText, "Stop", stopImage);
       stopButton_.setVisible(false);
       toolbar.addRightWidget(stopButton_);
-      
+
       showOutputButton_ = new LeftRightToggleButton("Output", "Issues", false);
       showOutputButton_.setVisible(false);
       showOutputButton_.addClickHandler(new ClickHandler() {
@@ -74,7 +74,7 @@ public class CompilePanel extends Composite
          }
       });
       toolbar.addRightWidget(showOutputButton_);
-       
+
       showErrorsButton_ = new LeftRightToggleButton("Output", "Issues",  true);
       showErrorsButton_.setVisible(false);
       showErrorsButton_.addClickHandler(new ClickHandler() {
@@ -88,14 +88,14 @@ public class CompilePanel extends Composite
       });
       toolbar.addRightWidget(showErrorsButton_);
    }
-   
+
    // NOTE: targetFileName enables optional suppressing of the file
    // name header in the error list -- it's fine to pass null for this
    // and in that case there will always be a header
    public void compileStarted(String targetFileName)
    {
       clearAll();
-      
+
       targetFileName_ = targetFileName;
 
       showOutputButton_.setVisible(false);
@@ -112,9 +112,9 @@ public class CompilePanel extends Composite
       stopButton_.setVisible(false);
       outputDisplay_.clear();
       errorList_.clear();
-      panel_.setWidget(outputDisplay_.asWidget());  
+      panel_.setWidget(outputDisplay_.asWidget());
    }
-   
+
    public void showOutput(CompileOutput output, boolean scrollToBottom)
    {
       switch(output.getType())
@@ -130,33 +130,33 @@ public class CompilePanel extends Composite
          break;
       }
    }
-   
+
    public void showOutput(String output)
    {
       outputDisplay_.writeOutput(output);
    }
-   
+
    public void clearOutput()
    {
       outputDisplay_.clear();
    }
-   
-   public void showErrors(String basePath, 
+
+   public void showErrors(String basePath,
                           JsArray<SourceMarker> errors,
                           int autoSelect,
                           boolean openErrors)
    {
       showErrors(basePath, errors, autoSelect, false, openErrors);
    }
-   
-   public void showErrors(String basePath, 
+
+   public void showErrors(String basePath,
                           JsArray<SourceMarker> errors,
                           int autoSelect,
                           boolean alwaysShowList,
                           boolean openErrors)
    {
-      errorList_.showMarkers(targetFileName_, 
-                             basePath, 
+      errorList_.showMarkers(targetFileName_,
+                             basePath,
                              errors,
                              autoSelect);
 
@@ -169,9 +169,9 @@ public class CompilePanel extends Composite
       {
          showErrorsButton_.setVisible(true);
       }
-   }  
- 
-   
+   }
+
+
    public void scrollToBottom()
    {
       outputDisplay_.scrollToBottom();
@@ -180,33 +180,33 @@ public class CompilePanel extends Composite
    public void compileCompleted()
    {
       stopButton_.setVisible(false);
-      
+
       if (isErrorPanelShowing())
          errorList_.focus();
    }
-   
+
    public HasClickHandlers stopButton()
    {
       return stopButton_;
    }
-   
+
    public HasSelectionCommitHandlers<CodeNavigationTarget> errorList()
    {
       return errorList_;
    }
-   
+
    public void setCanStop(boolean canStop)
    {
       canStop_ = canStop;
    }
-   
+
    private boolean isErrorPanelShowing()
    {
       return errorList_.isAttached();
    }
 
    private String targetFileName_;
-   
+
    private ToolbarButton stopButton_;
    private LeftRightToggleButton showOutputButton_;
    private LeftRightToggleButton showErrorsButton_;

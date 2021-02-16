@@ -194,7 +194,6 @@ public class SVNReviewPanel extends ResizeComposite implements Display
       private final HandlerManager handlers_ = new HandlerManager(this);
    }
 
-
    interface Binder extends UiBinder<Widget, SVNReviewPanel>
    {
    }

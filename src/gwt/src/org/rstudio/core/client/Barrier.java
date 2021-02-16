@@ -26,7 +26,7 @@ import org.rstudio.core.client.events.BarrierReleasedEvent;
  * outstanding tokens are released, then BarrierReleasedEvent is fired.
  *
  * As a safety precaution, all but the first call to release() on a
- * given token is a no-op. 
+ * given token is a no-op.
  */
 public class Barrier
 {
@@ -65,7 +65,6 @@ public class Barrier
    {
       handlers_.addHandler(BarrierReleasedEvent.TYPE, handler);
    }
-
 
    private void release()
    {

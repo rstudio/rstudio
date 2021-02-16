@@ -29,11 +29,11 @@ public class RemoveTerminalEvent extends GwtEvent<Handler>
    {
       protected Data() {}
 
-      public native final String getHandle() /*-{ 
-         return this.handle; 
+      public native final String getHandle() /*-{
+         return this.handle;
       }-*/;
    }
-   
+
    public interface Handler extends EventHandler
    {
       void onRemoveTerminal(RemoveTerminalEvent event);
@@ -48,7 +48,7 @@ public class RemoveTerminalEvent extends GwtEvent<Handler>
    {
       return handle_;
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {

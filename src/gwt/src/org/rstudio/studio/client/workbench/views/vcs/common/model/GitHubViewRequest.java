@@ -29,10 +29,10 @@ public class GitHubViewRequest
    {
       this(file, type, -1, -1);
    }
-   
+
    public GitHubViewRequest(FileSystemItem file,
                             int type,
-                            int startLine, 
+                            int startLine,
                             int endLine)
    {
       file_ = file;
@@ -65,7 +65,7 @@ public class GitHubViewRequest
    private int type_;
    private int startLine_;
    private int endLine_;
-   
+
    public final static int VCS_VIEW = 0;
    public final static int VCS_BLAME = 1;
 }
