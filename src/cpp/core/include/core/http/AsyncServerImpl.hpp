@@ -385,6 +385,9 @@ private:
    
    void handleAccept(const boost::system::error_code& ec)
    {
+      if (ec == boost::asio::error::operation_aborted)
+         return;
+
       try
       {
          if (!ec) 
@@ -395,11 +398,9 @@ private:
          }
          else
          {
-            // for errors, log and continue (but don't log operation aborted
-            // or bad file descriptor since it happens in the ordinary course
-            // of shutting down the server)
-            if (ec != boost::asio::error::operation_aborted &&
-                ec != boost::asio::error::bad_descriptor)
+            // for errors, log and continue (but don't log bad file descriptor
+            // since it happens in the ordinary course of shutting down the server)
+            if (ec != boost::asio::error::bad_descriptor)
             {
                // log the error
                LOG_ERROR(Error(ec, ERROR_LOCATION));
