@@ -39,10 +39,10 @@ staleLabel: stale
 
 # Comment to post when marking as stale. Set to `false` to disable
 markComment: >
-  This issue has been automatically marked as stale because it has not had
-  recent activity. It will be closed if no further activity occurs, per 
-  https://github.com/rstudio/rstudio/wiki/Issue-Grooming. Thank you
-  for your contributions.
+  This issue has been automatically marked as stale and will be closed if no further activity occurs.
+  We appreciate your efforts to help improve the product.  If you strongly feel that this issue deserves
+  further attention, please follow the guidelines at:
+  https://github.com/rstudio/rstudio/wiki/Issue-Grooming. Thank you for your contributions.
 
 # Comment to post when removing the stale label.
 # unmarkComment: >
