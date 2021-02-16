@@ -31,19 +31,16 @@ contextBridge.exposeInMainWorld('desktop',  {
   fixedWidthFont: () => "",
   browseUrl: (url) => {},
 
-  getOpenFileName: (caption, label, dir, filter, canChooseDirectories, focusOwner) => {
-    window.alert('Not implemented');
-    return '';
+  getOpenFileName: (caption, label, dir, filter, canChooseDirectories, focusOwner, callback) => {
+    callback('');
   },
 
-  getSaveFileName: (caption, label, dir, defaultExtension, forceDefaultExtension, focusOwner) => {
-    window.alert('Not implemented');
-    return '';
+  getSaveFileName: (caption, label, dir, defaultExtension, forceDefaultExtension, focusOwner, callback) => {
+    callback('');
   },
 
-  getExistingDirectory: (caption, label, dir, focusOwner) => {
-    window.alert('Not implemented');
-    return '';
+  getExistingDirectory: (caption, label, dir, focusOwner, callback) => {
+    callback('');
   },
 
   onClipboardSelectionChanged: () => {},
@@ -56,15 +53,15 @@ contextBridge.exposeInMainWorld('desktop',  {
   clipboardPaste: () => {},
 
   setClipboardText: (text) => {},
-  getClipboardText: () => '',
-  getClipboardUris: () => [],
-  getClipboardImage: () => '',
+  getClipboardText: (callback) => { callback(''); },
+  getClipboardUris: (callback) => { callback([]); },
+  getClipboardImage: (callback) => { callback(''); },
 
   setGlobalMouseSelection: (selection) => {},
-  getGlobalMouseSelection: () => '',
+  getGlobalMouseSelection: (callback) => { callback(''); },
 
-  getCursorPosition: () => { return {x: 20, y: 20} },
-  doesWindowExistAtCursorPosition: () => false,
+  getCursorPosition: (callback) => { callback({x: 20, y: 20}); },
+  doesWindowExistAtCursorPosition: (callback) => { callback(false); },
 
   onWorkbenchInitialized: (scratchPath) => {},
   showFolder: (path) => {},
@@ -76,8 +73,8 @@ contextBridge.exposeInMainWorld('desktop',  {
   prepareShowPptPresentation: () => {},
 
   // R version selection currently Win32 only
-  getRVersion: () => '',
-  chooseRVersion: () => '',
+  getRVersion: (callback) => { callback(''); },
+  chooseRVersion: (callback) => { callback(''); },
 
   devicePixelRatio: () => 1.0,
 
@@ -95,14 +92,14 @@ contextBridge.exposeInMainWorld('desktop',  {
   paintPrintText: (printer) => {},
   printFinished: (result) => {},
 
-  supportsClipboardMetafile: () => false,
+  supportsClipboardMetafile: (callback) => { callback(false); },
 
-  showMessageBox: (type, caption, message, buttons, defaultButton, cancelButton) => {
+  showMessageBox: (type, caption, message, buttons, defaultButton, cancelButton, callback) => {
     window.alert(message);
-    return 1;
+    callback(1.0);
   },
 
-  promptForText :(title, 
+  promptForText: (title,
                   caption,
                   defaultValue,
                   type,
@@ -110,15 +107,16 @@ contextBridge.exposeInMainWorld('desktop',  {
                   rememberByDefault,
                   selectionStart,
                   selectionLength,
-                  okButtonCaption) => {
+                  okButtonCaption,
+                  callback) => {
                     window.alert('Not implemented');
-                    return '';
+                    callback('');
                   },
 
   bringMainFrameToFront: () => {},
   bringMainFrameBehindActive: () => {},
 
-  desktopRenderingEngine: () => '',
+  desktopRenderingEngine: (callback) => { callback(''); },
   setDesktopRenderingEngine: (engine) => {},
 
   filterText: (text) => text,
@@ -148,23 +146,23 @@ contextBridge.exposeInMainWorld('desktop',  {
   changeTitleBarColor: (red, green, blue)  => {},
   syncToEditorTheme: (isDark) => {},
 
-  getEnableAccessibility: () => false,
+  getEnableAccessibility: (callback) => { callback(false); },
   setEnableAccessibility: (enable) => {},
 
-  getClipboardMonitoring: () => false,
+  getClipboardMonitoring: (callback) => { callback(false); },
   setClipboardMonitoring: (monitoring) => {},
   
   getIgnoreGpuBlacklist: () => true,
   setIgnoreGpuBlacklist: (ignore) => {},
   
-  getDisableGpuDriverBugWorkarounds: () => true,
+  getDisableGpuDriverBugWorkarounds: (callback) => { callback(true); },
   setDisableGpuDriverBugWorkarounds: (disable) => {},
 
   showLicenseDialog: () => {},
   showSessionServerOptionsDialog: () => {},
-  getInitMessages: () => { return ""; },
-  getLicenseStatusMessage: () => '',
-  allowProductUsage: () => true,
+  getInitMessages: (callback) => { callback(''); },
+  getLicenseStatusMessage: (callback) => { callback(''); },
+  allowProductUsage: (callback) => { callback(true); },
 
   getDesktopSynctexViewer: () => '',
 
@@ -201,18 +199,18 @@ contextBridge.exposeInMainWorld('desktop',  {
 
   installRtools: (version, installerPath) => {},
 
-  getDisplayDpi: () => '',
+  getDisplayDpi: (callback) => { callback('72'); },
 
   onSessionQuit: () => '',
 
-  getSessionServer: () => { return {}; },
-  getSessionServers: () => [],
+  getSessionServer: (callback) => { callback({}); },
+  getSessionServers: (callback) => { callback([]); },
   reconnectToSessionServer: (sessionServerJson) => {},
 
-  setLauncherServer: (sessionServerJson) => false,
+  setLauncherServer: (sessionServerJson, callback) => { callback(false); },
   connectToLauncherServer: () => {},
 
-  getLauncherServer: () => { return {}; },
+  getLauncherServer: (callback) => { callback({}); },
   startLauncherJobStatusStream: (jobId) => {},
   stopLauncherJobStatusStream: (jobId) => {},
   startLauncherJobOutputStream: (jobId) => {},
@@ -221,7 +219,7 @@ contextBridge.exposeInMainWorld('desktop',  {
   submitLauncherJob: (job) => {},
   getJobContainerUser: () => {},
   validateJobsConfig: () => {},
-  getProxyPortNumber: () => -1,
+  getProxyPortNumber: (callback) => { callback(-1); },
 
   signOut: () => {},
 });
