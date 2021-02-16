@@ -29,6 +29,7 @@
 * Added support for JupyterLab 3 (Pro #2022)
 * Added support for code-server 3.4.0+ (Pro # 1984)
 * Added a new user settings template file for VSCode settings to allow administrators to specify a default user configuration for VSCode sessions (Pro #2014)
+* Improved a Slurm Session Launch Delay that may occur due to buffering when using Slurm job steps (Pro #2331)
 
 ### Misc
 
