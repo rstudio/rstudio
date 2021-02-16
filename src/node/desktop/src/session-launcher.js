@@ -69,6 +69,7 @@ module.exports = class SessionLauncher {
       // https://github.com/electron/electron/blob/master/docs/faq.md#the-font-looks-blurry-what-is-this-and-what-can-i-do
       backgroundColor: '#fff', 
       webPreferences: {
+        enableRemoteModule: false,
         nodeIntegration: false,
         contextIsolation: true,
         preload: path.join(__dirname, 'preload.js'),
