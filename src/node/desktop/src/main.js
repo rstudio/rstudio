@@ -29,7 +29,7 @@ module.exports = class Main {
       console.log('RSTUDIO_VERSION is 0.0.0.0.00001');
       app.exit(0);
       return;
-  }
+    }
 
     // ignore SIGPIPE
     process.on('SIGPIPE', () => {});

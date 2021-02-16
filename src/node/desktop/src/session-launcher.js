@@ -13,17 +13,19 @@
  *
  */
 
-const { BrowserWindow, session } = require('electron');
 const child_process = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const MainWindow = require('./main-window');
 
 module.exports = class SessionLauncher {
   constructor(sessionPath, confPath) {
       this.sessionPath_ = sessionPath;
       this.confPath_ = confPath;
-      this.port_ = "";
-      this.host_ = "";
+      this.port = "";
+      this.host = "";
+      this.mainWindow = null;
+      this.sessionProcess = null;
   }
 
   static s_launcherToken = "";
@@ -52,6 +54,8 @@ module.exports = class SessionLauncher {
     sessionProc.on('close', (code) => {
       console.log(`child process exited with code ${code}`);
     });
+
+    return sessionProc;
   }
 
   launchFirstSession(installPath, devMode) {
@@ -60,33 +64,15 @@ module.exports = class SessionLauncher {
     // show help home on first run
     launchContext.argList.push("--show-help-home", "1");
 
-    this.launchSession(launchContext.argList);
+    // launch the process
+    this.sessionProcess = this.launchSession(launchContext.argList);
+
+    this.mainWindow = new MainWindow(launchContext.url, false);
+    this.mainWindow.sessionLauncher = this;
+    this.mainWindow.sessionProcess = this.sessionProcess;
 
     // show the window
-    const win = new BrowserWindow({
-      width: 1812,
-      height: 1024,
-      // https://github.com/electron/electron/blob/master/docs/faq.md#the-font-looks-blurry-what-is-this-and-what-can-i-do
-      backgroundColor: '#fff', 
-      webPreferences: {
-        enableRemoteModule: false,
-        nodeIntegration: false,
-        contextIsolation: true,
-        preload: path.join(__dirname, 'preload.js'),
-      },
-    });
-
-    // pass along the shared secret with every request
-    const filter = {
-      urls: [`${launchContext.url}/*`]
-    }
-    session.defaultSession.webRequest.onBeforeSendHeaders(filter, (details, callback) => {
-      details.requestHeaders['X-Shared-Secret'] = process.env.RS_SHARED_SECRET;
-      callback({ requestHeaders: details.requestHeaders});
-    });
-
-    win.loadURL(launchContext.url);
-    win.webContents.openDevTools();
+    this.mainWindow.load(launchContext.url);
   }
 
   static get launcherToken() {
@@ -103,12 +89,16 @@ module.exports = class SessionLauncher {
     return this.port_;
   }
 
+  set port(value) {
+    this.port_ = value;
+  }
+
   buildLaunchContext() {
-    this.host_ = "127.0.0.1";
+    this.host = "127.0.0.1";
     return {
-        host: this.host_,
+        host: this.host,
         port: `${this.port}`,
-        url: `http://${this.host_}:${this.port}`,
+        url: `http://${this.host}:${this.port}`,
         argList: [
             "--config-file", this.confPath_,
             "--program-mode", "desktop",
