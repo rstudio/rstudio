@@ -1,5 +1,7 @@
 @charset "UTF-8";
 
+@external windows;
+
 @external rstudio-themes-flat;
 @external rstudio-themes-default;
 @external rstudio-themes-dark;
@@ -22,6 +24,14 @@
    margin-top: -3px;
    margin-left: -8px;
    margin-right: 10px;
+}
+
+.windows .iconTabbed {
+	margin-top: -4px;
+}
+
+.windows .iconUntabbed {
+	margin-top: -2px;
 }
 
 .iconR {
@@ -65,6 +75,10 @@
    margin-top: 4px;
    margin-right: 6px;
    font-size: 9pt;
+}
+
+.windows .labelTabbed {
+	margin-top: 3px;
 }
 
 .labelUntabbed {
