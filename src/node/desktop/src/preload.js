@@ -305,123 +305,147 @@ contextBridge.exposeInMainWorld('desktop',  {
   },
 
   cleanClipboard: (stripHtml) => {
-
+    ipcRenderer.send('desktop_clean_clipboard', stripHtml);
   },
 
   setPendingQuit: (pendingQuit) => {
-
+    ipcRenderer.send('desktop_set_pending_quit', pendingQuit);
   },
 
   openProjectInNewWindow: (projectFilePath) => {
-    window.alert('Not implemented');
+    ipcRenderer.send('desktop_open_project_in_new_window', projectFilePath);
   },
 
   openSessionInNewWindow: (workingDirectoryPath) => {
-
+    ipcRenderer.send('desktop_open_session_in_new_window', workingDirectoryPath);
   },
 
   openTerminal: (terminalPath, workingDirectory, extraPathEntries, shellType) => {
-
+    ipcRenderer.send('desktop_open_terminal', terminalPath, workingDirectory, extraPathEntries, shellType);
   },
 
-  getFixedWidthFontList: () => {
-    return '';
+  getFixedWidthFontList: (callback) => {
+    ipcRenderer
+      .invoke('desktop_get_fixed_width_font_list')
+      .then(fonts => callback(fonts));
   },
 
-  getFixedWidthFont: () => {
-    return '';
+  getFixedWidthFont: (callback) => {
+    ipcRenderer
+      .invoke('desktop_get_fixed_width_font')
+      .then(font => callback(font));
   },
 
   setFixedWidthFont: (font) => {
-    return '';
+    ipcRenderer.send('desktop_set_fixed_width_font', font);
   },
 
-  getZoomLevels: () => {
-    return '';
+  getZoomLevels: (callback) => {
+    ipcRenderer
+      .invoke('desktop_get_zoom_levels')
+      .then(levels => callback(levels));
   },
 
-  getZoomLevel: () => {
-    return 1.0;
-   },
+  getZoomLevel: (callback) => {
+    ipcRenderer
+      .invoke('desktop_get_zoom_level')
+      .then(zoomLevel => callback(zoomLevel));
+  },
 
   setZoomLevel: (zoomLevel) => {
-
+    ipcRenderer.send('desktop_set_zoom_level', zoomLevel);
   },
   
   zoomIn: () => {
-
+    ipcRenderer.send('desktop_zoom_in');
   },
 
   zoomOut: () => {
-
+    ipcRenderer.send('desktop_zoom_out');
   },
 
   zoomActualSize: () => {
-
+    ipcRenderer.send('desktop_zoom_actual_size');
   },
   
-  setBackgroundColor: (rgbColor) => {
+  ////////////
 
+  setBackgroundColor: (rgbColor) => {
+    ipcRenderer.send('desktop_set_background_color', rgbColor);
   },
 
   changeTitleBarColor: (red, green, blue)  => {
-
+    ipcRenderer.send('desktop_change_title_bar_color', red, green, blue);
   },
 
   syncToEditorTheme: (isDark) => {
-
+    ipcRenderer.send('desktop_sync_to_editor_theme', isDark);
   },
 
-  getEnableAccessibility: (callback) => { 
-    callback(false); 
+  getEnableAccessibility: (callback) => {
+    ipcRenderer
+      .invoke('desktop_get_enable_accessibility')
+      .then(enabled => callback(enabled));
   },
 
   setEnableAccessibility: (enable) => {
-
+    ipcRenderer.send('desktop_set_enable_accessibility', enable);
   },
 
   getClipboardMonitoring: (callback) => {
-    callback(false);
+    ipcRenderer
+      .invoke('desktop_get_clipboard_monitoring')
+      .then(monitoring => callback(monitoring));
   },
 
   setClipboardMonitoring: (monitoring) => {
-
+    ipcRenderer.send('desktop_set_clipboard_monitoring', monitoring);
   },
 
-  getIgnoreGpuBlacklist: () => {
-    return true;
+  getIgnoreGpuBlacklist: (callback) => {
+    ipcRenderer
+      .invoke('desktop_get_ignore_gpu_blacklist')
+      .then(ignore => callback(ignore));
   },
 
   setIgnoreGpuBlacklist: (ignore) => {
-
+    ipcRenderer.send('desktop_set_ignore_gpu_blacklist', ignore);
   },
 
   getDisableGpuDriverBugWorkarounds: (callback) => {
-    callback(true); 
+    ipcRenderer
+      .invoke('desktop_get_disable_gpu_driver_bug_workarounds')
+      .then(disabled => callback(disabled));
   },
 
   setDisableGpuDriverBugWorkarounds: (disable) => {
-
+    ipcRenderer.send('desktop_set_disable_gpu_driver_bug_workarounds', disable);
   },
 
   showLicenseDialog: () => {
-
+    ipcRenderer.send('desktop_show_license_dialog');
   },
 
   showSessionServerOptionsDialog: () => {
-
+    ipcRenderer.send('desktop_show_session_server_options_dialog');
   },
 
   getInitMessages: (callback) => {
-    callback('');
+    ipcRenderer
+      .invoke('desktop_get_init_messages')
+      .then(messages => callback(messages));
   },
 
   getLicenseStatusMessage: (callback) => {
-    callback('');
+    ipcRenderer
+      .invoke('desktop_get_license_status_message')
+      .then(message => callback(message));
   },
 
   allowProductUsage: (callback) => { 
-    callback(true); 
+    ipcRenderer
+      .invoke('desktop_allow_product_usage')
+      .then(allow => callback(allow));
   },
 
   getDesktopSynctexViewer: () => {

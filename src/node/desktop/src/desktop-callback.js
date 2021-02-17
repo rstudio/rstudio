@@ -34,7 +34,7 @@ module.exports = class DesktopCallback {
                                                   focusOwner) => {
       DesktopCallback.unimpl('desktop_get_open_file_name');
       return '';
-    })
+    });
 
     ipcMain.handle('desktop_get_save_file_name', (event,
                                                   caption,
@@ -45,205 +45,329 @@ module.exports = class DesktopCallback {
                                                   focusOwner) => {
       DesktopCallback.unimpl('desktop_get_save_file_name');
       return '';
-    })
+    });
 
     ipcMain.handle('desktop_get_existing_directory', (caption, label, dir, focusOwner) => {
       DesktopCallback.unimpl('desktop_get_existing_directory');
       return '';
-    })
+    });
 
     ipcMain.on('desktop_on_clipboard_selection_changed', (event) => {
       DesktopCallback.unimpl('desktop_on_clipboard_selection_changed');
-    })
+    });
 
     ipcMain.on('desktop_undo', (event) => {
       DesktopCallback.unimpl('desktop_undo');
-    })
+    });
 
     ipcMain.on('desktop_redo', (event) => {
       DesktopCallback.unimpl('desktop_redo');
-    })
+    });
 
     ipcMain.on('desktop_clipboard_cut', (event) => {
       DesktopCallback.unimpl('desktop_clipboard_cut');
-    })
+    });
 
     ipcMain.on('desktop_clipboard_copy', (event) => {
       DesktopCallback.unimpl('desktop_clipboard_copy');
-    })
+    });
 
     ipcMain.on('desktop_clipboard_paste', (event) => {
       DesktopCallback.unimpl('desktop_clipboard_paste');
-    })
+    });
 
     ipcMain.on('desktop_set_clipboard_text', (event, text) => {
       DesktopCallback.unimpl('desktop_set_clipboard_text');
-    })
+    });
 
     ipcMain.handle('desktop_get_clipboard_text', (event) => {
       DesktopCallback.unimpl('desktop_get_clipboard_text');
       return '';
-    })
+    });
 
     ipcMain.handle('desktop_get_clipboard_uris', (event) => {
       DesktopCallback.unimpl('desktop_get_clipboard_uris');
       return '';
-    })
+    });
 
    ipcMain.handle('desktop_get_clipboard_image', (event) => {
       DesktopCallback.unimpl('desktop_get_clipboard_image');
       return '';
-    })
+    });
 
     ipcMain.on('desktop_set_global_mouse_selection', (event, selection) => {
       DesktopCallback.unimpl('desktop_set_global_mouse_selection');
-    })
+    });
 
    ipcMain.handle('desktop_get_global_mouse_selection', (event) => {
       DesktopCallback.unimpl('desktop_get_global_mouse_selection');
       return '';
-    })
+    });
 
    ipcMain.handle('desktop_get_cursor_position', (event) => {
       DesktopCallback.unimpl('desktop_get_cursor_position');
       return {x: 20, y: 20};
-    })
+    });
 
     ipcMain.handle('desktop_does_window_exist_at_cursor_position', (event) => {
       return false;
-    })
+    });
 
     ipcMain.on('desktop_on_workbench_initialized', (event, scratchPath) => {
-    })
+    });
 
     ipcMain.on('desktop_show_folder', (event, path) => {
       DesktopCallback.unimpl('desktop_show_folder');
-    })
+    });
 
     ipcMain.on('desktop_show_file', (event, file) => {
       DesktopCallback.unimpl('desktop_show_file');
-    })
+    });
 
     ipcMain.on('desktop_show_word_doc', (event, wordDoc) => {
       DesktopCallback.unimpl('desktop_show_word_doc');
-    })
+    });
 
     ipcMain.on('desktop_show_ppt_presentation', (event, pptDoc) => {
       DesktopCallback.unimpl('desktop_show_ppt_presentation');
-    })
+    });
 
     ipcMain.on('desktop_show_pdf', (event, path, pdfPage) => {
       DesktopCallback.unimpl('desktop_show_pdf');
-    })
+    });
 
     ipcMain.on('desktop_prepare_show_word_doc', (event) => {
       DesktopCallback.unimpl('desktop_prepare_show_word_doc');
-    })
+    });
 
     ipcMain.on('desktop_prepare_show_ppt_presentation', (event) => {
       DesktopCallback.unimpl('desktop_prepare_show_ppt_presentation');
-    })
+    });
 
     ipcMain.handle('desktop_get_r_version', (event) => {
       return '';
-    })
+    });
 
     ipcMain.handle('desktop_choose_r_version', (event) => {
       DesktopCallback.unimpl('desktop_choose_r_version');
       return '';
-    })
+    });
 
     ipcMain.handle('desktop_device_pixel_ratio', (event) => {
       DesktopCallback.unimpl('desktop_device_pixel_ratio');
       return 1.0;
-    })
+    });
 
     ipcMain.on('desktop_open_minimal_window', (event, name, url, width, height) => {
       DesktopCallback.unimpl('desktop_open_minimal_window');
-    })
+    });
 
     ipcMain.on('desktop_activate_minimal_window', (event, name) => {
       DesktopCallback.unimpl('desktop_activate_minimal_window');
-    })
+    });
 
     ipcMain.on('desktop_activate_satellite_window', (event, name) => {
       DesktopCallback.unimpl('desktop_activate_satellite_window');
-    })
+    });
 
     ipcMain.on('desktop_prepare_for_satellite_window', (event, name, x, y, width, height) => {
       DesktopCallback.unimpl('desktop_prepare_for_satellite_window');
-    })
+    });
 
     ipcMain.on('desktop_prepare_for_named_window', (event, name, allowExternalNavigate, showToolbar) => {
       DesktopCallback.unimpl('desktop_prepare_for_named_window');
-    })
+    });
 
     ipcMain.on('desktop_close_named_window', (event, name) => {
       DesktopCallback.unimpl('desktop_close_named_window');
-    })
+    });
 
     ipcMain.on('desktop_copy_page_region_to_clipboard', (event, left, top, width, height) => {
       DesktopCallback.unimpl('desktop_copy_page_region_to_clipboard');
-    })
+    });
 
     ipcMain.on('desktop_export_page_region_to_file', (event, targetPath, format, left, top, width, height) => {
       DesktopCallback.unimpl('desktop_export_page_region_to_file');
-    })
+    });
 
     ipcMain.on('desktop_print_text', (event, text) => {
       DesktopCallback.unimpl('desktop_print_text');
-    })
+    });
 
     ipcMain.on('desktop_paint_print_text', (event, printer) => {
       DesktopCallback.unimpl('desktop_paint_print_text');
-    })
+    });
 
     ipcMain.on('desktop_print_finished', (event, result) => {
       DesktopCallback.unimpl('desktop_print_finished');
-    })
+    });
 
     ipcMain.handle('desktop_supports_clipboard_metafile', (event) => {
       return false;
-    })
+    });
 
     ipcMain.handle('desktop_show_message_box', (event, type, caption, message, buttons, defaultButton, cancelButton) => {
       DesktopCallback.unimpl('desktop_show_message_box');
       return 1.0;
-    })
+    });
 
     ipcMain.handle('desktop_prompt_for_text', (event, title, caption, defaultValue, type, 
                                                rememberPasswordPrompt, rememberByDefault,
                                                selectionStart, selectionLength, okButtonCaption) => {
       DesktopCallback.unimpl('desktop_prompt_for_text');
       return ''; 
-    })
+    });
 
     ipcMain.on('desktop_bring_main_frame_to_front', (event) => {
       DesktopCallback.unimpl('desktop_bring_main_frame_to_front');
-    })
+    });
 
     ipcMain.on('desktop_bring_main_frame_behind_active', (event) => {
       DesktopCallback.unimpl('desktop_bring_main_frame_behind_active');
-    })
+    });
 
     ipcMain.handle('desktop_rendering_engine', (event) => {
       DesktopCallback.unimpl('desktop_rendering_engine');
       return '';
-    })
+    });
 
     ipcMain.on('desktop_set_desktop_rendering_engine', (event, engine) => {
       DesktopCallback.unimpl('desktop_set_desktop_rendering_engine');
-    })
+    });
 
     ipcMain.handle('desktop_filter_text', (event, text) => {
       DesktopCallback.unimpl('desktop_filter_text');
       return text;
+    });
+
+    ipcMain.on('desktop_clean_clipboard', (event, stripHtml) => {
+      DesktopCallback.unimpl('desktop_clean_clipboard');
+    });
+
+    ipcMain.on('desktop_set_pending_quit', (event, pendingQuit) => {
+      DesktopCallback.unimpl('desktop_set_pending_quit');
+    });
+
+    ipcMain.on('desktop_open_project_in_new_window', (event, projectFilePath) => {
+      DesktopCallback.unimpl('desktop_open_project_in_new_window');
+    });
+
+    ipcMain.on('desktop_open_session_in_new_window', (event, workingDirectoryPath) => {
+      DesktopCallback.unimpl('desktop_open_session_in_new_window');
+    });
+
+   ipcMain.on('desktop_open_terminal', (event, terminalPath, workingDirectory, extraPathEntries, shellType) => {
+      DesktopCallback.unimpl('desktop_open_terminal');
+    });
+
+    ipcMain.handle('desktop_get_fixed_width_font_list', (event) => {
+      DesktopCallback.unimpl('desktop_get_fixed_width_font_list');
+      return '';
+    });
+
+    ipcMain.handle('desktop_get_fixed_width_font', (event) => {
+      DesktopCallback.unimpl('desktop_get_fixed_width_font');
+      return '';
+    });
+
+    ipcMain.on('desktop_set_fixed_width_font', (event, font) => {
+      DesktopCallback.unimpl('desktop_set_fixed_width_font');
+    });
+
+    ipcMain.handle('desktop_get_zoom_levels', (event) => {
+      DesktopCallback.unimpl('desktop_get_zoom_levels');
+      return '';
+    });
+
+    ipcMain.handle('desktop_get_zoom_level', (event) => {
+      DesktopCallback.unimpl('desktop_get_zoom_level');
+      return 1.0;
+    });
+
+    ipcMain.on('desktop_set_zoom_level', (event, zoomLevel) => {
+      DesktopCallback.unimpl('desktop_set_zoom_level');
+    });
+
+    ipcMain.on('desktop_zoom_in', (event) => {
+      DesktopCallback.unimpl('desktop_zoom_in');
+    });
+
+    ipcMain.on('desktop_zoom_out', (event) => {
+      DesktopCallback.unimpl('desktop_zoom_out');
+    });
+
+    ipcMain.on('desktop_zoom_actual_size', (event) => {
+      DesktopCallback.unimpl('desktop_zoom_actual_size');
+    });
+
+    ipcMain.on('desktop_set_background_color', (event, rgbColor) => {
+    });
+
+    ipcMain.on('desktop_change_title_bar_color', (event, red, green, blue) => {
+    });
+
+    ipcMain.on('desktop_sync_to_editor_theme', (event, isDark) => {
+    });
+
+    ipcMain.handle('desktop_get_enable_accessibility', (event) => {
+      DesktopCallback.unimpl('desktop_get_enable_accessibility');
+      return true;
+    });
+
+    ipcMain.on('desktop_set_enable_accessibility', (event, enable) => {
+      DesktopCallback.unimpl('desktop_set_enable_accessibility');
+    });
+
+    ipcMain.handle('desktop_get_clipboard_monitoring', (event) => {
+      DesktopCallback.unimpl('desktop_get_clipboard_monitoring');
+      return false;
+    });
+
+    ipcMain.on('desktop_set_clipboard_monitoring', (event, monitoring) => {
+      DesktopCallback.unimpl('desktop_set_clipboard_monitoring');
+    });
+
+    ipcMain.handle('desktop_get_ignore_gpu_blacklist', (event, ignore) => {
+      DesktopCallback.unimpl('desktop_get_ignore_gpu_blacklist');
+      return true;
+    });
+
+    ipcMain.on('desktop_set_ignore_gpu_blacklist', (event, ignore) => {
+      DesktopCallback.unimpl('desktop_set_ignore_gpu_blacklist');
+    });
+
+    ipcMain.handle('desktop_get_disable_gpu_driver_bug_workarounds', (event) => {
+      DesktopCallback.unimpl('desktop_get_disable_gpu_driver_bug_workarounds');
+      return false;
+    });
+
+    ipcMain.on('desktop_set_disable_gpu_driver_bug_workarounds', (event, disable) => {
+      DesktopCallback.unimpl('desktop_set_disable_gpu_driver_bug_workarounds');
+    });
+
+    ipcMain.on('desktop_show_license_dialog', (event) => {
+      DesktopCallback.unimpl('desktop_show_license_dialog');
+    });
+
+    ipcMain.on('desktop_show_session_server_options_dialog', (event) => {
+      DesktopCallback.unimpl('desktop_show_session_server_options_dialog');
+    });
+
+    ipcMain.handle('desktop_get_init_messages', (event) => {
+      return '';
+    });
+
+    ipcMain.handle('desktop_get_license_status_message', (event) => {
+      return '';
     })
 
+    ipcMain.handle('desktop_allow_product_usage', (event) => {
+      return true;
+    })
 
     ipcMain.handle('desktop_get_display_dpi', (event, arg) => {
       return '72';
-    })
+    });
   }
 
   static unimpl(ipcName) {
