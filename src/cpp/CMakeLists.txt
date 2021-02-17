@@ -328,6 +328,11 @@ add_definitions(-DRSTUDIO_BOOST_SIGNALS_VERSION=${RSTUDIO_BOOST_SIGNALS_VERSION}
 # add boost as system include directory
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 
+if(NOT DEFINED RSTUDIO_CRASHPAD_ENABLED AND APPLE AND RSTUDIO_HOST_ARCHITECTURE STREQUAL arm64)
+   message(STATUS "Crashpad not yet supported on M1 macOS machines; disabling Crashpad")
+   set(RSTUDIO_CRASHPAD_ENABLED FALSE)
+endif()
+
 # Crashpad
 if (NOT DEFINED RSTUDIO_CRASHPAD_ENABLED OR RSTUDIO_CRASHPAD_ENABLED)
    if(UNIX)
@@ -423,16 +428,12 @@ if(NOT RSTUDIO_USE_SYSTEM_SOCI)
 endif()
 
 # database library includes
-if (UNIX)
-   if (APPLE)
-      # We assume that libpq is available under the default brew install location
-      # since we install postgresql via brew in install-dependencies-osx
-      include_directories(SYSTEM "/usr/local/opt/postgresql/include")
-      include_directories(SYSTEM "/usr/local/opt/postgresql/include/libpq")
-   else()
-      include_directories(SYSTEM "/usr/include/postgresql")
-      include_directories(SYSTEM "/usr/include/pgsql")
-   endif()
+if(APPLE)
+   include_directories(SYSTEM "${MACOS_OPT_DIR}/postgresql/include")
+   include_directories(SYSTEM "${MACOS_OPT_DIR}/postgresql/include/libpq")
+elseif(UNIX)
+   include_directories(SYSTEM "/usr/include/postgresql")
+   include_directories(SYSTEM "/usr/include/pgsql")
 elseif(WIN32)
    include_directories(SYSTEM "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/sqlite/sqlite-amalgamation-3310100")
    include_directories(SYSTEM "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/postgresql/include")
@@ -450,13 +451,7 @@ if(UNIX)
    find_library(DL_LIB "dl")
    find_library(SQLITE_LIB "sqlite3")
    get_filename_component(SQLITE_LIB "${SQLITE_LIB}" REALPATH)
-   if (APPLE)
-      # macdeployqt will only bundle dylibs, and find_library may resolve an xcode library spec file
-      # which won't get included in the bundle; hardcode path to ensure this doesn't happen
-      set(PQ_LIB "/usr/local/lib/libpq.dylib")
-    else()
-      find_library(PQ_LIB "pq")
-   endif()
+   find_library(PQ_LIB "pq" HINTS ${MACOS_OPT_DIR}/libpq/lib /usr/local/lib)
    get_filename_component(PQ_LIB "${PQ_LIB}" REALPATH)
    list(APPEND SOCI_DEPENDENCIES ${SQLITE_LIB} ${PQ_LIB})
    list(APPEND SOCI_LIBRARIES ${SOCI_SQLITE_LIB} ${SOCI_POSTGRESQL_LIB} ${SQLITE_LIB} ${PQ_LIB} ${SOCI_CORE_LIB} ${DL_LIB})
@@ -487,6 +482,11 @@ if (SOCI_LIB_COUNT EQUAL 0)
 endif()
 
 message(STATUS "SOCI libraries found under ${SOCI_LIBRARY_DIR}")
+
+if(UNIX)
+   find_package(OpenSSL REQUIRED)
+   include_directories(SYSTEM "${OPENSSL_INCLUDE_DIR}")
+endif()
 
 if(WIN32)
      # winpty - pseudoterminal support on Windows

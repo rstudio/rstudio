@@ -48,6 +48,15 @@ if(NOT "$ENV{RSTUDIO_VERSION_SUFFIX}" STREQUAL "" AND NOT "$ENV{RSTUDIO_VERSION_
    set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION}-$ENV{RSTUDIO_VERSION_SUFFIX}")
 endif()
 
+# detect architecture
+if(UNIX)
+   execute_process(
+      COMMAND uname -m
+      OUTPUT_VARIABLE RSTUDIO_HOST_ARCHITECTURE
+      OUTPUT_STRIP_TRAILING_WHITESPACE)
+   message(STATUS "Host architecture: ${RSTUDIO_HOST_ARCHITECTURE}")
+endif()
+
 # default to debug builds
 if(NOT CMAKE_BUILD_TYPE)
    message(STATUS "CMake build type not set; defaulting to debug build")
@@ -67,12 +76,19 @@ if(NOT RSTUDIO_TARGET)
 endif()
 
 # set desktop and server build flags
-if( NOT WIN32 AND ( (${RSTUDIO_TARGET} STREQUAL "Development") OR
-                    (${RSTUDIO_TARGET} STREQUAL "Server")) )
-   set(RSTUDIO_SERVER TRUE)
+if(NOT DEFINED RSTUDIO_SERVER)
+   if(RSTUDIO_TARGET STREQUAL "Development" OR RSTUDIO_TARGET STREQUAL "Server")
+      set(RSTUDIO_SERVER TRUE)
+   endif()
 endif()
-if( ${RSTUDIO_TARGET} STREQUAL "Development" OR ${RSTUDIO_TARGET} STREQUAL "Desktop" )
-   set(RSTUDIO_DESKTOP TRUE)
+
+if(NOT DEFINED RSTUDIO_DESKTOP)
+   if(APPLE AND RSTUDIO_HOST_ARCHITECTURE STREQUAL arm64)
+      message(STATUS "Desktop builds not currently supported on M1 macOS machines; disabling RSTUDIO_DESKTOP")
+      set(RSTUDIO_DESKTOP FALSE)
+   elseif(RSTUDIO_TARGET STREQUAL "Development" OR RSTUDIO_TARGET STREQUAL "Desktop")
+      set(RSTUDIO_DESKTOP TRUE)
+   endif()
 endif()
 
 # override if requested
@@ -292,3 +308,21 @@ macro(add_stripped_executable _target)
    endif()
    define_source_file_names("${_target}")
 endmacro(add_stripped_executable)
+
+if(APPLE)
+
+   # find Homebrew opt directory
+   foreach(DIR /opt/homebrew/opt /usr/local/opt)
+      if(EXISTS "${DIR}")
+         set(MACOS_OPT_DIR "${DIR}")
+         break()
+      endif()
+   endforeach()
+
+   # set OPENSSL_ROOT_DIR if unset
+   if(NOT DEFINED OPENSSL_ROOT_DIR)
+      set(OPENSSL_ROOT_DIR "${MACOS_OPT_DIR}/openssl" CACHE INTERNAL "")
+   endif()
+
+endif()
+
