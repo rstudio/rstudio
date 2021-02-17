@@ -67,12 +67,16 @@ if(NOT RSTUDIO_TARGET)
 endif()
 
 # set desktop and server build flags
-if( NOT WIN32 AND ( (${RSTUDIO_TARGET} STREQUAL "Development") OR
-                    (${RSTUDIO_TARGET} STREQUAL "Server")) )
-   set(RSTUDIO_SERVER TRUE)
+if(NOT DEFINED RSTUDIO_SERVER)
+   if(RSTUDIO_TARGET STREQUAL "Development" OR RSTUDIO_TARGET STREQUAL "Server")
+      set(RSTUDIO_SERVER TRUE)
+   endif()
 endif()
-if( ${RSTUDIO_TARGET} STREQUAL "Development" OR ${RSTUDIO_TARGET} STREQUAL "Desktop" )
-   set(RSTUDIO_DESKTOP TRUE)
+
+if(NOT DEFINED RSTUDIO_DESKTOP)
+   if(RSTUDIO_TARGET STREQUAL "Development" OR RSTUDIO_TARGET STREQUAL "Desktop")
+      set(RSTUDIO_DESKTOP TRUE)
+   endif()
 endif()
 
 # override if requested
@@ -292,3 +296,14 @@ macro(add_stripped_executable _target)
    endif()
    define_source_file_names("${_target}")
 endmacro(add_stripped_executable)
+
+# help CMake find OpenSSL
+if(APPLE)
+   foreach(DIR /opt/homebrew/opt/openssl /usr/local/opt/openssl /opt/openssl)
+      if(EXISTS "${DIR}")
+         set(OPENSSL_ROOT_DIR "${DIR}" CACHE INTERNAL "")
+         break()
+      endif()
+   endforeach()
+endif()
+

@@ -20,7 +20,7 @@
 # detection for OSX (look for R framework)
 if(APPLE)
 
-   find_library(LIBR_LIBRARIES R)
+   find_library(LIBR_LIBRARIES R PATHS /opt/homebrew/opt/R/lib)
    
    if(LIBR_LIBRARIES MATCHES ".*\\.framework")
       set(LIBR_HOME "${LIBR_LIBRARIES}/Resources" CACHE PATH "R home directory")

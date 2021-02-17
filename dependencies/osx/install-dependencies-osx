@@ -51,8 +51,9 @@ fi
 if ! command -v pidof &> /dev/null; then
    brew install pidof
 fi
+
 if ! command -v gdb &> /dev/null; then
-   brew install gdb
+   brew install gdb || true
    grep -qxF 'set startup-with-shell off' ~/.gdbinit || echo "set startup-with-shell off" >> ~/.gdbinit
 fi
 
