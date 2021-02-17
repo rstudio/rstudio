@@ -12,9 +12,30 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+const { ipcMain } = require('electron');
 
 module.exports = class MenuCallback {
   constructor(parent) {
     this.parent = parent;
+
+    ipcMain.on('menu_begin_main', (event) => {
+      console.log('menu_begin_main');
+    })
+
+    ipcMain.on('menu_begin', (event, label) => {
+      console.log(`menu_begin: ${label}`);
+    })
+
+  /*
+  addCommand: (cmdId, label, tooltip, shortcut, isChecked) => {},
+  addSeparator: () => {},
+  endMenu: () => {},
+  endMainMenu: () => {console.log('endMainMenu')},
+  setCommandVisible: (commandId, visible) => {},
+  setCommandEnabled: (commandId, enabled) => {},
+  setCommandChecked: (commandId, checked) => {},
+  setMainMenuEnabled: (enabled) => {},
+  setCommandLabel: (commandId, label) => {},
+  */
   }
 }

@@ -376,8 +376,14 @@ contextBridge.exposeInMainWorld('desktopInfo', {
 });
 
 contextBridge.exposeInMainWorld('desktopMenuCallback', {
-  beginMainMenu: () => {console.log('beginMainMenu')},
-  beginMenu: (label) => {},
+  beginMainMenu: () => {
+    ipcRenderer.send('menu_begin_main');
+  },
+
+  beginMenu: (label) => {
+    ipcRenderer.send('menu_begin', label);
+  },
+
   addCommand: (cmdId, label, tooltip, shortcut, isChecked) => {},
   addSeparator: () => {},
   endMenu: () => {},

@@ -25,12 +25,24 @@ module.exports = class DesktopCallback {
       DesktopCallback.unimpl('desktop_browser_url');
     })
 
-    ipcMain.handle('desktop_get_open_file_name', (event, caption, label, dir, filter, canChooseDirectories, focusOwner) => {
+    ipcMain.handle('desktop_get_open_file_name', (event,
+                                                  caption,
+                                                  label,
+                                                  dir,
+                                                  filter,
+                                                  canChooseDirectories,
+                                                  focusOwner) => {
       DesktopCallback.unimpl('desktop_get_open_file_name');
       return '';
     })
 
-    ipcMain.handle('desktop_get_save_file_name', (event, caption, label, dir, defaultExtension, forceDefaultExtension, focusOwner) => {
+    ipcMain.handle('desktop_get_save_file_name', (event,
+                                                  caption,
+                                                  label,
+                                                  dir,
+                                                  defaultExtension,
+                                                  forceDefaultExtension,
+                                                  focusOwner) => {
       DesktopCallback.unimpl('desktop_get_save_file_name');
       return '';
     })
