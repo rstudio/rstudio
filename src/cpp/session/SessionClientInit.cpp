@@ -266,6 +266,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
    // check if reticulate's Python session has been initialized
    sessionInfo["python_initialized"] = modules::reticulate::isPythonInitialized();
    
+   // check if the Python REPL is active
+   sessionInfo["python_repl_active"] = modules::reticulate::isReplActive();
+   
    // propagate RETICULATE_PYTHON if set
    sessionInfo["reticulate_python"] = core::system::getenv("RETICULATE_PYTHON");
    
