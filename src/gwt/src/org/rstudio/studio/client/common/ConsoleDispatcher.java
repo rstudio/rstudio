@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.common;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.RUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -50,12 +51,14 @@ public class ConsoleDispatcher
 
    public void executeSetWd(FileSystemItem dir, boolean activateConsole)
    {
-      String escaped = dir.getPath().replaceAll("\\\\", "\\\\\\\\");
-      if (escaped.equals("~"))
-         escaped = "~/";
-      eventBus_.fireEvent(
-            new SendToConsoleEvent("setwd(\"" + escaped + "\")", true));
-
+      String path = dir.getPath();
+      
+      if (path.equals("~"))
+         path = "~/";
+      
+      String code = "setwd(" + RUtil.asStringLiteral(path) + ")";
+      eventBus_.fireEvent(new SendToConsoleEvent(code, true));
+      
       if (activateConsole)
          commands_.activateConsole().execute();
    }
@@ -67,7 +70,7 @@ public class ConsoleDispatcher
 
    public void executeCommand(String command, String argument)
    {
-      String code = command + "(\"" + argument + "\")";
+      String code = command + "(" + RUtil.asStringLiteral(argument) + ")";
       eventBus_.fireEvent(new SendToConsoleEvent(code, true));
    }
 
@@ -86,9 +89,9 @@ public class ConsoleDispatcher
 
       if (!isSystemEncoding && !contentIsAscii)
       {
-         code.append(", encoding = '" +
+         code.append(", encoding = \"" +
                (!StringUtil.isNullOrEmpty(encoding) ? encoding : "UTF-8") +
-               "'");
+               "\"");
       }
       code.append(")");
       eventBus_.fireEvent(new SendToConsoleEvent(code.toString(), true));
@@ -194,10 +197,7 @@ public class ConsoleDispatcher
 
    public static String escapedPath(String path)
    {
-      String escapedPath = "'" +
-                           path.replace("\\", "\\\\").replace("'", "\\'") +
-                           "'";
-      return escapedPath;
+      return RUtil.asStringLiteral(path);
    }
 
    private String normalizeEncoding(String str)

@@ -114,7 +114,7 @@ void buildFontDatabase()
       core::system::ProcessOptions options;
       core::system::ProcessResult result;
       Error error = core::system::runCommand(
-               "fc-list :spacing=100 -f '%{family}\n' | cut -d ',' -f 1 | sort | uniq",
+               "{ fc-list :mono -f '%{family}\n' & fc-list :dual -f '%{family}\n' & fc-list :charcell -f '%{family}\n'; } | cut -d ',' -f 1 | sort | uniq",
                options,
                &result);
 

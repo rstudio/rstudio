@@ -91,6 +91,20 @@ Error aesEncrypt(
    std::vector<unsigned char>& out_encrypted);
 
 /**
+ * Overloaded version of aesEncrypt for use without an initialization vector.
+ *
+ * @param in_data           The data to be encrypted.
+ * @param in_key            The key with which to encrypt the data.
+ * @param out_encrypted     The encrypted data.
+ *
+ * @return Success if the data could be AES encrypted; Error otherwise.
+ */
+Error aesEncrypt(
+    const std::vector<unsigned char>& in_data,
+    const std::vector<unsigned char>& in_key,
+    std::vector<unsigned char>& out_encrypted);
+
+/**
  * @brief Base-64 decodes a string.
  *
  * This function is the inverse of base64Encode.
