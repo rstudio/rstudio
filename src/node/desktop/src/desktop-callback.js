@@ -358,15 +358,158 @@ module.exports = class DesktopCallback {
     });
 
     ipcMain.handle('desktop_get_license_status_message', (event) => {
+      DesktopCallback.unimpl('desktop_get_license_status_messages');
       return '';
     })
 
     ipcMain.handle('desktop_allow_product_usage', (event) => {
+      DesktopCallback.unimpl('desktop_allow_product_usage');
       return true;
     })
 
-    ipcMain.handle('desktop_get_display_dpi', (event, arg) => {
+    ipcMain.handle('desktop_get_desktop_synctex_viewer', (event) => {
+      DesktopCallback.unimpl('desktop_get_desktop_synctex_viewer');
+      return '';
+    });
+
+    ipcMain.on('desktop_external_synctex_preview', (event, pdfPath, page) => {
+      DesktopCallback.unimpl('desktop_external_synctex_preview');
+    });
+
+    ipcMain.on('desktop_external_synctex_view', (event, pdfFile, srcFile, line, column) => {
+      DesktopCallback.unimpl('desktop_external_synctex_view');
+    });
+
+    ipcMain.handle('desktop_supports_fullscreen_mode', (event) => {
+      DesktopCallback.unimpl('desktop_supports_fullscreen_mode');
+      return true;
+    });
+
+    ipcMain.on('desktop_toggle_fullscreen_mode', (event) => {
+      DesktopCallback.unimpl('desktop_toggle_fullscreen_mode');
+    });
+
+    ipcMain.on('desktop_show_keyboard_shortcut_help', (event) => {
+      DesktopCallback.unimpl('desktop_show_keyboard_shortcut_help');
+    });
+
+    ipcMain.on('desktop_launch_session', (event, reload) => {
+      DesktopCallback.unimpl('desktop_launch)_session');
+    });
+
+    ipcMain.on('desktop_reload_zoom_window', (event) => {
+    });
+
+    ipcMain.on('desktop_set_tutorial_url', (event, url) => {
+      DesktopCallback.unimpl('desktop_set_tutorial_url');
+    });
+  
+    ipcMain.on('desktop_set_viewer_url', (event, url) => {
+      DesktopCallback.unimpl('desktop_set_viewer_url');
+    });
+
+    ipcMain.on('desktop_reload_viewer_zoom_window', (event, url) => {
+      DesktopCallback.unimpl('desktop_reload_viewer_zoom_window');
+    });
+
+    ipcMain.on('desktop_set_shiny_dialog_url', (event, url) => {
+      DesktopCallback.unimpl('desktop_set_shiny_dialog_url');
+    });
+
+    ipcMain.handle('desktop_get_scrolling_compensation_type', (event) => {
+      DesktopCallback.unimpl('desktop_get_scrolling_compensation_type');
+      return '';
+    });
+
+    ipcMain.handle('desktop_is_macos', (event) => {
+      return true;
+    });
+
+    ipcMain.handle('desktop_is_centos', (event) => {
+      return false;
+    });
+
+    ipcMain.on('desktop_set_busy', (event, busy) => {
+    });
+
+    ipcMain.on('desktop_set_window_title', (event, title) => {
+      DesktopCallback.unimpl('desktop_set_window_title');
+    });
+
+    ipcMain.on('desktop_install_rtools', (event, version, installerPath) => {
+      DesktopCallback.unimpl('desktop_install_rtools');
+    });
+
+    ipcMain.handle('desktop_get_display_dpi', (event) => {
       return '72';
+    });
+
+    ipcMain.on('desktop_on_session_quit', (event) => {
+      DesktopCallback.unimpl('desktop_on_session_quit');
+    });
+
+    ipcMain.handle('desktop_get_session_server', (event) => {
+      DesktopCallback.unimpl('desktop_get_session_server');
+      return {};
+    });
+
+    ipcMain.handle('desktop_get_session_servers', (event) => {
+      return [];
+    });
+
+    ipcMain.on('desktop_reconnect_to_session_server', (event, sessionServerJson) => {
+      DesktopCallback.unimpl('desktop_reconnect_to_session_server');
+    });
+
+    ipcMain.handle('desktop_set_launcher_server', (event, sessionServerJson) => {
+      DesktopCallback.unimpl('desktop_set_launcher_server');
+      return false;
+    });
+
+    ipcMain.on('desktop_connect_to_launcher_server', (event) => {
+      DesktopCallback.unimpl('desktop_connect_to_launcher_server');
+    });
+
+    ipcMain.handle('desktop_get_launcher_server', (event) => {
+      DesktopCallback.unimpl('desktop_get_launcher_server');
+      return {};
+    });
+
+    ipcMain.on('desktop_start_launcher_job_status_stream', (event, jobId) => {
+      DesktopCallback.unimpl('desktop_start_launcher_job_status_stream');
+    });
+
+    ipcMain.on('desktop_stop_launcher_job_status_stream', (event, jobId) => {
+      DesktopCallback.unimpl('desktop_stop_launcher_job_status_stream');
+    });
+
+    ipcMain.on('desktop_start_launcher_job_output_stream', (event, jobId) => {
+      DesktopCallback.unimpl('desktop_start_launcher_job_output_stream');
+    });
+
+    ipcMain.on('desktop_stop_launcher_job_output_stream', (event, jobId) => {
+      DesktopCallback.unimpl('desktop_stop_launcher_job_output_stream');
+    });
+
+    ipcMain.on('desktop_control_launcher_job', (event, jobId, operation) => {
+      DesktopCallback.unimpl('desktop_control_launcher_job');
+    });
+
+    ipcMain.on('desktop_submit_launcher_job', (event, job) => {
+      DesktopCallback.unimpl('desktop_submit_launcher_job');
+    });
+
+    ipcMain.on('desktop_get_job_container_user', (event) => {
+      DesktopCallback.unimpl('desktop_get_job_container_user');
+    });
+
+    ipcMain.on('desktop_validate_jobs_config', (event) => {
+      DesktopCallback.unimpl('desktop_validate_jobs_config');
+    });
+
+    ipcMain.handle('desktop_get_proxy_port_number', (event) => {
+      DesktopCallback.unimpl('desktop_get_proxy_port_number');
+      return -1;
     });
   }
 

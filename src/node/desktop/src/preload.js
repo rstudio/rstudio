@@ -367,8 +367,6 @@ contextBridge.exposeInMainWorld('desktop',  {
   zoomActualSize: () => {
     ipcRenderer.send('desktop_zoom_actual_size');
   },
-  
-  ////////////
 
   setBackgroundColor: (rgbColor) => {
     ipcRenderer.send('desktop_set_background_color', rgbColor);
@@ -448,79 +446,89 @@ contextBridge.exposeInMainWorld('desktop',  {
       .then(allow => callback(allow));
   },
 
-  getDesktopSynctexViewer: () => {
-    return ''
+  getDesktopSynctexViewer: (callback) => {
+    ipcRenderer
+      .invoke('desktop_get_desktop_synctex_viewer')
+      .then(viewer => callback(viewer));
   },
 
   externalSynctexPreview: (pdfPath, page) => {
-
+    ipcRenderer.send('desktop_external_synctex_preview', pdfPath, page);
   },
 
   externalSynctexView: (pdfFile,
                         srcFile,
                         line,
                         column) => {
-
+    ipcRenderer.send('desktop_external_synctex_view', pdfFile, srcFile, line, column);
   },
 
-  supportsFullscreenMode: () => {
-    return true;
+  supportsFullscreenMode: (callback) => {
+    ipcRenderer
+      .invoke('desktop_supports_fullscreen_mode')
+      .then(supportsFullScreen => callback(supportsFullScreen));
    },
 
   toggleFullscreenMode: () => {
-
+    ipcRenderer.send('desktop_toggle_fullscreen_mode');
   },
 
   showKeyboardShortcutHelp: () => {
-
+    ipcRenderer.send('desktop_show_keyboard_shortcut_help');
   },
 
   launchSession: (reload) => {
-
+    ipcRenderer.send('desktop_launch_session', reload);
   },
 
   reloadZoomWindow: () => {
-
+    ipcRenderer.send('desktop_reload_zoom_window');
   },
 
   setTutorialUrl: (url) => {
-
+    ipcRenderer.send('desktop_set_tutorial_url', url);
   },
   
   setViewerUrl: (url) => {
-
+    ipcRenderer.send('desktop_set_viewer_url', url);
   },
 
   reloadViewerZoomWindow: (url) => {
-
+    ipcRenderer.send('desktop_reload_viewer_zoom_window', url);
   },
 
   setShinyDialogUrl: (url) => {
-
+    ipcRenderer.send('desktop_set_shiny_dialog_url', url);
   },
 
-  getScrollingCompensationType: () => {
-    return '';
+  getScrollingCompensationType: (callback) => {
+    ipcRenderer
+      .invoke('desktop_get_scrolling_compensation_type')
+      .then(compensationType => callback(compensationType));
   },
 
-  isMacOS: () => {
-    return true;
+  isMacOS: (callback) => {
+    ipcRenderer
+      .invoke('desktop_is_macos')
+      .then(isMac => callback(isMac));
   },
 
-  isCentOS: () => {
-    return false;
+  isCentOS: (callback) => {
+    ipcRenderer
+      .invoke('desktop_is_centos')
+      .then(isCentOS => callback(isCentOS));
   },
 
   setBusy: (busy) => {
-
+    ipcRenderer.send('desktop_set_busy', busy);
   },
 
   setWindowTitle: (title) => {
-
+    ipcRenderer.send('desktop_set_window_title', title);
   },
 
   installRtools: (version, installerPath) => {
-
+    ipcRenderer.send('desktop_install_rtools', version, installerPath);
   },
 
   getDisplayDpi: (callback) => {
@@ -530,71 +538,81 @@ contextBridge.exposeInMainWorld('desktop',  {
   },
 
   onSessionQuit: () => {
-    return ''
+    ipcRenderer.send('desktop_on_session_quit');
   },
 
   getSessionServer: (callback) => {
-    callback({});
+    ipcRenderer
+      .invoke('desktop_get_session_server'
+      .then(server => callback(server)));
   },
 
   getSessionServers: (callback) => {
-    callback([]);
+    ipcRenderer
+      .invoke('desktop_get_session_servers')
+      .then(servers => callback(servers));
   },
 
   reconnectToSessionServer: (sessionServerJson) => {
-
+    ipcRenderer.send('desktop_reconnect_to_session_server', sessionServerJson);
   },
 
   setLauncherServer: (sessionServerJson, callback) => {
-    callback(false);
+    ipcRenderer
+      .invoke('desktop_set_launcher_server', sessionServerJson)
+      .then(result => callback(result));
   },
 
   connectToLauncherServer: () => {
-
+    ipcRenderer.send('desktop_connect_to_launcher_server');
   },
 
   getLauncherServer: (callback) => {
-    callback({});
+    ipcRenderer
+      .invoke('desktop_get_launcher_server')
+      .then(server => callback(server));
   },
 
   startLauncherJobStatusStream: (jobId) => {
-
+    ipcRenderer.send('desktop_start_launcher_job_status_stream', jobId);
   },
 
   stopLauncherJobStatusStream: (jobId) => {
-
+    ipcRenderer.send('desktop_stop_launcher_job_status_stream', jobId);
   },
 
   startLauncherJobOutputStream: (jobId) => {
-
+    ipcRenderer.send('desktop_start_launcher_job_output_stream', jobId);
   },
 
   stopLauncherJobOutputStream: (jobId) => {
-
+    ipcRenderer.send('desktop_stop_launcher_job_output_stream', jobId);
   },
 
   controlLauncherJob: (jobId, operation) => {
-
+    ipcRenderer.send('desktop_control_launcher_job', jobId, operation);
   },
 
   submitLauncherJob: (job) => {
-
+    ipcRenderer.send('desktop_submit_launcher_job', job);
   },
 
   getJobContainerUser: () => {
-
+    ipcRenderer.send('desktop_get_job_container_user');
   },
 
   validateJobsConfig: () => {
-
+    ipcRenderer.send('desktop_validate_jobs_config');
   },
 
   getProxyPortNumber: (callback) => {
-    callback(-1); 
+    ipcRenderer
+      .invoke('desktop_get_proxy_port_number')
+      .then(port => callback(port));
   },
 
   signOut: () => {
-
+    ipcRenderer.send('desktop_sign_out');
   },
 });
 
