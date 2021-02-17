@@ -2286,6 +2286,7 @@ body.ubuntu_mono .searchBox {
 
 .logoAnchor {
    top: 12px;
+   z-index: 1;
 }
 
 .rstudio-themes-flat .logoAnchor {
