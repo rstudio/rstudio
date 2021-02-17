@@ -22,9 +22,15 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.logical.shared.HasResizeHandlers;
+import com.google.gwt.event.logical.shared.ResizeEvent;
+import com.google.gwt.event.logical.shared.ResizeHandler;
+import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConstant;
 
+import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.SeparatorManager;
 import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -32,8 +38,9 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 
 import java.util.AbstractList;
+import java.util.List;
 
-public class Toolbar extends Composite
+public class Toolbar extends ResizeComposite implements HasResizeHandlers
 {
    private static class ChildWidgetList extends AbstractList<Widget>
    {
@@ -210,7 +217,7 @@ public class Toolbar extends Composite
    {
       super();
 
-      toolbarWrapper_ = new HTMLPanel("");
+      toolbarWrapper_ = new SimpleLayoutPanel();
 
       Roles.getToolbarRole().set(toolbarWrapper_.getElement());
       Roles.getToolbarRole().setAriaLabelProperty(toolbarWrapper_.getElement(), label);
@@ -404,6 +411,18 @@ public class Toolbar extends Composite
    }
 
    @Override
+   public void onResize()
+   {
+      ResizeEvent.fire(this, getOffsetWidth(), getHeight());
+   }
+
+   @Override
+   public HandlerRegistration addResizeHandler(ResizeHandler handler)
+   {
+      return handlers_.addHandler(ResizeEvent.getType(), handler);
+   }
+
+   @Override
    public void addStyleName(String styleName)
    {
       horizontalPanel_.addStyleName(styleName);
@@ -460,7 +479,8 @@ public class Toolbar extends Composite
    private HorizontalPanel horizontalPanel_;
    private HorizontalPanel leftToolbarPanel_;
    private HorizontalPanel rightToolbarPanel_;
-   private HTMLPanel toolbarWrapper_;
+   private SimpleLayoutPanel toolbarWrapper_;
+   private final HandlerManager handlers_ = new HandlerManager(this);
    protected final ThemeStyles styles_ = ThemeResources.INSTANCE.themeStyles();
    private boolean separatorsInvalidated_ = false;
 
