@@ -109,8 +109,139 @@ module.exports = class DesktopCallback {
       return {x: 20, y: 20};
     })
 
+    ipcMain.handle('desktop_does_window_exist_at_cursor_position', (event) => {
+      return false;
+    })
+
+    ipcMain.on('desktop_on_workbench_initialized', (event, scratchPath) => {
+    })
+
+    ipcMain.on('desktop_show_folder', (event, path) => {
+      DesktopCallback.unimpl('desktop_show_folder');
+    })
+
+    ipcMain.on('desktop_show_file', (event, file) => {
+      DesktopCallback.unimpl('desktop_show_file');
+    })
+
+    ipcMain.on('desktop_show_word_doc', (event, wordDoc) => {
+      DesktopCallback.unimpl('desktop_show_word_doc');
+    })
+
+    ipcMain.on('desktop_show_ppt_presentation', (event, pptDoc) => {
+      DesktopCallback.unimpl('desktop_show_ppt_presentation');
+    })
+
+    ipcMain.on('desktop_show_pdf', (event, path, pdfPage) => {
+      DesktopCallback.unimpl('desktop_show_pdf');
+    })
+
+    ipcMain.on('desktop_prepare_show_word_doc', (event) => {
+      DesktopCallback.unimpl('desktop_prepare_show_word_doc');
+    })
+
+    ipcMain.on('desktop_prepare_show_ppt_presentation', (event) => {
+      DesktopCallback.unimpl('desktop_prepare_show_ppt_presentation');
+    })
+
+    ipcMain.handle('desktop_get_r_version', (event) => {
+      return '';
+    })
+
+    ipcMain.handle('desktop_choose_r_version', (event) => {
+      DesktopCallback.unimpl('desktop_choose_r_version');
+      return '';
+    })
+
+    ipcMain.handle('desktop_device_pixel_ratio', (event) => {
+      DesktopCallback.unimpl('desktop_device_pixel_ratio');
+      return 1.0;
+    })
+
+    ipcMain.on('desktop_open_minimal_window', (event, name, url, width, height) => {
+      DesktopCallback.unimpl('desktop_open_minimal_window');
+    })
+
+    ipcMain.on('desktop_activate_minimal_window', (event, name) => {
+      DesktopCallback.unimpl('desktop_activate_minimal_window');
+    })
+
+    ipcMain.on('desktop_activate_satellite_window', (event, name) => {
+      DesktopCallback.unimpl('desktop_activate_satellite_window');
+    })
+
+    ipcMain.on('desktop_prepare_for_satellite_window', (event, name, x, y, width, height) => {
+      DesktopCallback.unimpl('desktop_prepare_for_satellite_window');
+    })
+
+    ipcMain.on('desktop_prepare_for_named_window', (event, name, allowExternalNavigate, showToolbar) => {
+      DesktopCallback.unimpl('desktop_prepare_for_named_window');
+    })
+
+    ipcMain.on('desktop_close_named_window', (event, name) => {
+      DesktopCallback.unimpl('desktop_close_named_window');
+    })
+
+    ipcMain.on('desktop_copy_page_region_to_clipboard', (event, left, top, width, height) => {
+      DesktopCallback.unimpl('desktop_copy_page_region_to_clipboard');
+    })
+
+    ipcMain.on('desktop_export_page_region_to_file', (event, targetPath, format, left, top, width, height) => {
+      DesktopCallback.unimpl('desktop_export_page_region_to_file');
+    })
+
+    ipcMain.on('desktop_print_text', (event, text) => {
+      DesktopCallback.unimpl('desktop_print_text');
+    })
+
+    ipcMain.on('desktop_paint_print_text', (event, printer) => {
+      DesktopCallback.unimpl('desktop_paint_print_text');
+    })
+
+    ipcMain.on('desktop_print_finished', (event, result) => {
+      DesktopCallback.unimpl('desktop_print_finished');
+    })
+
+    ipcMain.handle('desktop_supports_clipboard_metafile', (event) => {
+      return false;
+    })
+
+    ipcMain.handle('desktop_show_message_box', (event, type, caption, message, buttons, defaultButton, cancelButton) => {
+      DesktopCallback.unimpl('desktop_show_message_box');
+      return 1.0;
+    })
+
+    ipcMain.handle('desktop_prompt_for_text', (event, title, caption, defaultValue, type, 
+                                               rememberPasswordPrompt, rememberByDefault,
+                                               selectionStart, selectionLength, okButtonCaption) => {
+      DesktopCallback.unimpl('desktop_prompt_for_text');
+      return ''; 
+    })
+
+    ipcMain.on('desktop_bring_main_frame_to_front', (event) => {
+      DesktopCallback.unimpl('desktop_bring_main_frame_to_front');
+    })
+
+    ipcMain.on('desktop_bring_main_frame_behind_active', (event) => {
+      DesktopCallback.unimpl('desktop_bring_main_frame_behind_active');
+    })
+
+    ipcMain.handle('desktop_rendering_engine', (event) => {
+      DesktopCallback.unimpl('desktop_rendering_engine');
+      return '';
+    })
+
+    ipcMain.on('desktop_set_desktop_rendering_engine', (event, engine) => {
+      DesktopCallback.unimpl('desktop_set_desktop_rendering_engine');
+    })
+
+    ipcMain.handle('desktop_filter_text', (event, text) => {
+      DesktopCallback.unimpl('desktop_filter_text');
+      return text;
+    })
+
+
     ipcMain.handle('desktop_get_display_dpi', (event, arg) => {
-      console.log('warning: desktop_get_display_dpi returning hardcoded value of 72');
       return '72';
     })
   }

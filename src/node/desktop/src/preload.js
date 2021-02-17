@@ -74,10 +74,11 @@ contextBridge.exposeInMainWorld('desktop',  {
                          dir,
                          focusOwner,
                          callback) => {
-    ipcRenderer.invoke('desktop_get_existing_directory', caption,
-                                                         label,
-                                                         dir,
-                                                         focusOwner)
+    ipcRenderer
+      .invoke('desktop_get_existing_directory', caption,
+                                                label,
+                                                dir,
+                                                focusOwner)
       .then(directory => callback(directory));
   },
 
@@ -144,67 +145,122 @@ contextBridge.exposeInMainWorld('desktop',  {
   },
 
   doesWindowExistAtCursorPosition: (callback) => {
-    callback(false);
+    ipcRenderer
+      .invoke('desktop_does_window_exist_at_cursor_position')
+      .then(exists => callback(exists));
   },
 
   onWorkbenchInitialized: (scratchPath) => {
-
+    ipcRenderer.send('desktop_on_workbench_initialized', scratchPath);
   },
 
   showFolder: (path) => {
-
+    ipcRenderer.send('desktop_show_folder', path);
   },
 
-  showFile: (path) => {
-
+  showFile: (file) => {
+    ipcRenderer.send('desktop_show_file', file);
   },
 
   showWordDoc: (path) => {
-
+    ipcRenderer.send('desktop_show_word_doc', wordDoc);
   },
 
-  showPptPresentation: (path) => {},
+  showPptPresentation: (pptDoc) => {
+    ipcRenderer.send('desktop_show_ppt_presentation', pptDoc);
+  },
 
-  showPDF: (path, pdfPage) => {},
+  showPDF: (path, pdfPage) => {
+    ipcRenderer.send('desktop_show_pdf', path, pdfPage);
+  },
 
-  prepareShowWordDoc: () => {},
+  prepareShowWordDoc: () => {
+    ipcRenderer.send('desktop_prepare_show_word_doc');
+  },
 
-  prepareShowPptPresentation: () => {},
+  prepareShowPptPresentation: () => {
+    ipcRenderer.send('desktop_prepare_show_ppt_presentation');
+  },
 
   // R version selection currently Win32 only
-  getRVersion: (callback) => { callback(''); },
+  getRVersion: (callback) => {
+     ipcRenderer
+      .invoke('desktop_get_r_version')
+      .then(rver => callback(rver));
+  },
 
-  chooseRVersion: (callback) => { callback(''); },
+  chooseRVersion: (callback) => {
+    ipcRenderer
+      .invoke('desktop_choose_r_version')
+      .then(rver => callback(rver));
+  },
 
-  devicePixelRatio: () => 1.0,
+  devicePixelRatio: (callback) => {
+     ipcRenderer
+      .invoke('desktop_device_pixel_ratio')
+      .then(ratio => callback(ratio));
+  },
 
-  openMinimalWindow: (name, url, width, height) => {window.alert('Not implemented'); },
+  openMinimalWindow: (name, url, width, height) => {
+    ipcRenderer.send('desktop_open_minimal_window', name, url, width, height);
+  },
 
-  activateMinimalWindow: (name) => {},
+  activateMinimalWindow: (name) => {
+    ipcRenderer.send('desktop_activate_minimal_window', name);
+  },
 
-  activateSatelliteWindow: (name) => {},
+  activateSatelliteWindow: (name) => {
+    ipcRenderer.send('desktop_activate_satellite_window', name);
+  },
 
-  prepareForSatelliteWindow: (name, x, y, width, height) => {},
+  prepareForSatelliteWindow: (name, x, y, width, height) => {
+    ipcRenderer.send('desktop_prepare_for_satellite_window', name, x, y, width, height);
+  },
 
-  prepareForNamedWindow: (name, allowExternalNavigate, showToolbar) => {},
+  prepareForNamedWindow: (name, allowExternalNavigate, showToolbar) => {
+    ipcRenderer.send('desktop_prepare_for_named_window', name, allowExternalNavigate, showToolbar);
+  },
 
-  closeNamedWindow: (name) => {},
+  closeNamedWindow: (name) => {
+    ipcRenderer.send('desktop_close_named_window', name);
+  },
 
-  copyPageRegionToClipboard: (left, top, width, height) => {},
+  copyPageRegionToClipboard: (left, top, width, height) => {
+    ipcRenderer.send('desktop_copy_page_region_to_clipboard', left, top, width, height);
+  },
 
-  exportPageRegionToFile: (targetPath, format, left, top, width, height) => {},
+  exportPageRegionToFile: (targetPath, format, left, top, width, height) => {
+    ipcRenderer.send('desktop_export_page_region_to_file', targetPath, format, left, top, width, height);
+  },
 
-  printText: (text) => {},
+  printText: (text) => {
+    ipcRenderer.send('desktop_print_text', text);
+  },
 
-  paintPrintText: (printer) => {},
+  paintPrintText: (printer) => {
+    ipcRenderer.send('desktop_paint_print_text', printer);
+  },
 
-  printFinished: (result) => {},
+  printFinished: (result) => {
+    ipcRenderer.send('desktop_print_finished', result);
+  },
 
-  supportsClipboardMetafile: (callback) => { callback(false); },
+  supportsClipboardMetafile: (callback) => {
+     ipcRenderer
+      .invoke('desktop_supports_clipboard_metafile')
+      .then(metafilesupport => callback(metafilesupport));
+  },
 
-  showMessageBox: (type, caption, message, buttons, defaultButton, cancelButton, callback) => {
-    window.alert(message);
-    callback(1.0);
+  showMessageBox: (type,
+                   caption,
+                   message,
+                   buttons,
+                   defaultButton,
+                   cancelButton,
+                   callback) => {
+     ipcRenderer
+      .invoke('desktop_show_message_box', type, caption, message, buttons, defaultButton, cancelButton)
+      .then(result => callback(result));
   },
 
   promptForText: (title,
@@ -217,155 +273,305 @@ contextBridge.exposeInMainWorld('desktop',  {
                   selectionLength,
                   okButtonCaption,
                   callback) => {
-                    window.alert('Not implemented');
-                    callback('');
-                  },
+      ipcRenderer
+        .invoke('desktop_prompt_for_text', title, caption, defaultValue, type, 
+                                           rememberPasswordPrompt, rememberByDefault,
+                                           selectionStart, selectionLength, okButtonCaption)
+        .then(text => callback(text));
+    },
 
-  bringMainFrameToFront: () => {},
-  bringMainFrameBehindActive: () => {},
+  bringMainFrameToFront: () => {
+    ipcRenderer.send('desktop_bring_main_frame_to_front');
+  },
 
-  desktopRenderingEngine: (callback) => { callback(''); },
+  bringMainFrameBehindActive: () => {
+    ipcRenderer.send('desktop_bring_main_frame_behind_active');
+  },
 
-  setDesktopRenderingEngine: (engine) => {},
+  desktopRenderingEngine: (callback) => {
+    ipcRenderer
+      .invoke('desktop_rendering_engine')
+      .then(engine => callback(engine));
+  },
 
-  filterText: (text) => text,
+  setDesktopRenderingEngine: (engine) => {
+    ipcRenderer.send('desktop_set_desktop_rendering_engine', engine);
+  },
 
-  cleanClipboard: (stripHtml) => {},
+  filterText: (text, callback) => {
+    ipcRenderer
+      .invoke('desktop_filter_text', text)
+      .then(filtered => callback(text));
+  },
 
-  setPendingQuit: (pendingQuit) => {},
+  cleanClipboard: (stripHtml) => {
 
-  openProjectInNewWindow: (projectFilePath) => { window.alert('Not implemented'); },
+  },
 
-  openSessionInNewWindow: (workingDirectoryPath) => {},
+  setPendingQuit: (pendingQuit) => {
 
-  openTerminal: (terminalPath, workingDirectory, extraPathEntries, shellType) => {},
+  },
 
-  getFixedWidthFontList: () => '',
+  openProjectInNewWindow: (projectFilePath) => {
+    window.alert('Not implemented');
+  },
 
-  getFixedWidthFont: () => '',
+  openSessionInNewWindow: (workingDirectoryPath) => {
 
-  setFixedWidthFont: (font) => '',
+  },
 
-  getZoomLevels: () => '',
+  openTerminal: (terminalPath, workingDirectory, extraPathEntries, shellType) => {
 
-  getZoomLevel: () => 1.0,
+  },
 
-  setZoomLevel: (zoomLevel) => {},
+  getFixedWidthFontList: () => {
+    return '';
+  },
+
+  getFixedWidthFont: () => {
+    return '';
+  },
+
+  setFixedWidthFont: (font) => {
+    return '';
+  },
+
+  getZoomLevels: () => {
+    return '';
+  },
+
+  getZoomLevel: () => {
+    return 1.0;
+   },
+
+  setZoomLevel: (zoomLevel) => {
+
+  },
   
-  zoomIn: () => {},
+  zoomIn: () => {
 
-  zoomOut: () => {},
+  },
 
-  zoomActualSize: () => {},
+  zoomOut: () => {
+
+  },
+
+  zoomActualSize: () => {
+
+  },
   
-  setBackgroundColor: (rgbColor) => {},
+  setBackgroundColor: (rgbColor) => {
 
-  changeTitleBarColor: (red, green, blue)  => {},
+  },
 
-  syncToEditorTheme: (isDark) => {},
+  changeTitleBarColor: (red, green, blue)  => {
 
-  getEnableAccessibility: (callback) => { callback(false); },
+  },
 
-  setEnableAccessibility: (enable) => {},
+  syncToEditorTheme: (isDark) => {
 
-  getClipboardMonitoring: (callback) => { callback(false); },
+  },
 
-  setClipboardMonitoring: (monitoring) => {},
+  getEnableAccessibility: (callback) => { 
+    callback(false); 
+  },
 
-  getIgnoreGpuBlacklist: () => true,
+  setEnableAccessibility: (enable) => {
 
-  setIgnoreGpuBlacklist: (ignore) => {},
+  },
 
-  getDisableGpuDriverBugWorkarounds: (callback) => { callback(true); },
+  getClipboardMonitoring: (callback) => {
+    callback(false);
+  },
 
-  setDisableGpuDriverBugWorkarounds: (disable) => {},
+  setClipboardMonitoring: (monitoring) => {
 
-  showLicenseDialog: () => {},
+  },
 
-  showSessionServerOptionsDialog: () => {},
+  getIgnoreGpuBlacklist: () => {
+    return true;
+  },
 
-  getInitMessages: (callback) => { callback(''); },
+  setIgnoreGpuBlacklist: (ignore) => {
 
-  getLicenseStatusMessage: (callback) => { callback(''); },
+  },
 
-  allowProductUsage: (callback) => { callback(true); },
+  getDisableGpuDriverBugWorkarounds: (callback) => {
+    callback(true); 
+  },
 
-  getDesktopSynctexViewer: () => '',
+  setDisableGpuDriverBugWorkarounds: (disable) => {
 
-  externalSynctexPreview: (pdfPath, page) => {},
+  },
+
+  showLicenseDialog: () => {
+
+  },
+
+  showSessionServerOptionsDialog: () => {
+
+  },
+
+  getInitMessages: (callback) => {
+    callback('');
+  },
+
+  getLicenseStatusMessage: (callback) => {
+    callback('');
+  },
+
+  allowProductUsage: (callback) => { 
+    callback(true); 
+  },
+
+  getDesktopSynctexViewer: () => {
+    return ''
+  },
+
+  externalSynctexPreview: (pdfPath, page) => {
+
+  },
 
   externalSynctexView: (pdfFile,
                         srcFile,
                         line,
-                        column) => {},
+                        column) => {
 
-  supportsFullscreenMode: () => true,
-
-  toggleFullscreenMode: () => {},
-
-  showKeyboardShortcutHelp: () => {},
-
-  launchSession: (reload) => {},
-
-  reloadZoomWindow: () => {},
-
-  setTutorialUrl: (url) => {},
-  
-  setViewerUrl: (url) => {},
-
-  reloadViewerZoomWindow: (url) => {},
-
-  setShinyDialogUrl: (url) => {},
-
-  getScrollingCompensationType: () => '',
-
-  isMacOS: () => true,
-
-  isCentOS: () => false,
-
-  setBusy: (busy) => {},
-
-  setWindowTitle: (title) => {},
-
-  installRtools: (version, installerPath) => {},
-
-  getDisplayDpi: (callback) => {
-    ipcRenderer.invoke('desktop_get_display_dpi').then(dpi => callback(dpi));
   },
 
-  onSessionQuit: () => '',
+  supportsFullscreenMode: () => {
+    return true;
+   },
 
-  getSessionServer: (callback) => { callback({}); },
+  toggleFullscreenMode: () => {
 
-  getSessionServers: (callback) => { callback([]); },
+  },
 
-  reconnectToSessionServer: (sessionServerJson) => {},
+  showKeyboardShortcutHelp: () => {
 
-  setLauncherServer: (sessionServerJson, callback) => { callback(false); },
+  },
 
-  connectToLauncherServer: () => {},
+  launchSession: (reload) => {
 
-  getLauncherServer: (callback) => { callback({}); },
+  },
 
-  startLauncherJobStatusStream: (jobId) => {},
+  reloadZoomWindow: () => {
 
-  stopLauncherJobStatusStream: (jobId) => {},
+  },
 
-  startLauncherJobOutputStream: (jobId) => {},
+  setTutorialUrl: (url) => {
 
-  stopLauncherJobOutputStream: (jobId) => {},
+  },
+  
+  setViewerUrl: (url) => {
 
-  controlLauncherJob: (jobId, operation) => {},
+  },
 
-  submitLauncherJob: (job) => {},
+  reloadViewerZoomWindow: (url) => {
 
-  getJobContainerUser: () => {},
+  },
 
-  validateJobsConfig: () => {},
+  setShinyDialogUrl: (url) => {
 
-  getProxyPortNumber: (callback) => { callback(-1); },
+  },
 
-  signOut: () => {},
+  getScrollingCompensationType: () => {
+    return '';
+  },
+
+  isMacOS: () => {
+    return true;
+  },
+
+  isCentOS: () => {
+    return false;
+  },
+
+  setBusy: (busy) => {
+
+  },
+
+  setWindowTitle: (title) => {
+
+  },
+
+  installRtools: (version, installerPath) => {
+
+  },
+
+  getDisplayDpi: (callback) => {
+    ipcRenderer
+      .invoke('desktop_get_display_dpi')
+      .then(dpi => callback(dpi));
+  },
+
+  onSessionQuit: () => {
+    return ''
+  },
+
+  getSessionServer: (callback) => {
+    callback({});
+  },
+
+  getSessionServers: (callback) => {
+    callback([]);
+  },
+
+  reconnectToSessionServer: (sessionServerJson) => {
+
+  },
+
+  setLauncherServer: (sessionServerJson, callback) => {
+    callback(false);
+  },
+
+  connectToLauncherServer: () => {
+
+  },
+
+  getLauncherServer: (callback) => {
+    callback({});
+  },
+
+  startLauncherJobStatusStream: (jobId) => {
+
+  },
+
+  stopLauncherJobStatusStream: (jobId) => {
+
+  },
+
+  startLauncherJobOutputStream: (jobId) => {
+
+  },
+
+  stopLauncherJobOutputStream: (jobId) => {
+
+  },
+
+  controlLauncherJob: (jobId, operation) => {
+
+  },
+
+  submitLauncherJob: (job) => {
+
+  },
+
+  getJobContainerUser: () => {
+
+  },
+
+  validateJobsConfig: () => {
+
+  },
+
+  getProxyPortNumber: (callback) => {
+    callback(-1); 
+  },
+
+  signOut: () => {
+
+  },
 });
 
 // RDP-only
@@ -387,7 +593,7 @@ contextBridge.exposeInMainWorld('desktopMenuCallback', {
   addCommand: (cmdId, label, tooltip, shortcut, isChecked) => {},
   addSeparator: () => {},
   endMenu: () => {},
-  endMainMenu: () => {console.log('endMainMenu')},
+  endMainMenu: () => {},
   setCommandVisible: (commandId, visible) => {},
   setCommandEnabled: (commandId, enabled) => {},
   setCommandChecked: (commandId, checked) => {},

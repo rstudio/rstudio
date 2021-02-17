@@ -19,11 +19,9 @@ module.exports = class MenuCallback {
     this.parent = parent;
 
     ipcMain.on('menu_begin_main', (event) => {
-      console.log('menu_begin_main');
     })
 
     ipcMain.on('menu_begin', (event, label) => {
-      console.log(`menu_begin: ${label}`);
     })
 
   /*
