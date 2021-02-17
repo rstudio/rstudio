@@ -309,9 +309,9 @@ macro(add_stripped_executable _target)
    define_source_file_names("${_target}")
 endmacro(add_stripped_executable)
 
-# figure out Homebrew opt directory and help CMake find OpenSSL
-if(APPLE AND NOT OPENSSL_ROOT_DIR)
+if(APPLE)
 
+   # find Homebrew opt directory
    foreach(DIR /opt/homebrew/opt /usr/local/opt)
       if(EXISTS "${DIR}")
          set(MACOS_OPT_DIR "${DIR}")
@@ -319,7 +319,10 @@ if(APPLE AND NOT OPENSSL_ROOT_DIR)
       endif()
    endforeach()
 
-   set(OPENSSL_ROOT_DIR "${MACOS_OPT_DIR}/openssl" CACHE INTERNAL "")
+   # set OPENSSL_ROOT_DIR if unset
+   if(NOT DEFINED OPENSSL_ROOT_DIR)
+      set(OPENSSL_ROOT_DIR "${MACOS_OPT_DIR}/openssl" CACHE INTERNAL "")
+   endif()
 
 endif()
 
