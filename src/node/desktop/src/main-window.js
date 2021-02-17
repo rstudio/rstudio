@@ -15,15 +15,27 @@
 
 const { BrowserWindow, session } = require('electron');
 const path = require('path');
+const DesktopCallback = require('./desktop-callback');
+const MenuCallback = require('./menu-callback');
 
 // corresponds to DesktopMainWindow.cpp/hpp
 module.exports = class MainWindow {
   constructor(url, isRemoteDesktop) {
     this.url = url;
     this.isRemoteDesktop = isRemoteDesktop;
-    this.sessionLauncher = null;
+    this.sessionLauncher_ = null;
     this.sessionProcess_ = null;
     this.window = null;
+    this.desktopCallback = new DesktopCallback(this, this, isRemoteDesktop);
+    this.menuCallback = new MenuCallback(this);
+  }
+
+  set sessionLauncher(value) {
+    this.sessionLauncher_ = value;
+  }
+
+  get sessionLauncher() {
+    return this.sessionLauncher_;
   }
 
   set sessionProcess(value) {

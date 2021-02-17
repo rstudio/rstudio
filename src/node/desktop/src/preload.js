@@ -13,6 +13,7 @@
  *
  */
 const { contextBridge } = require('electron');
+const { ipcRenderer } = require('electron')
 
 /**
  * The preload script is run in the renderer before our GWT code and enables
@@ -24,72 +25,179 @@ const { contextBridge } = require('electron');
  * 
  * Be careful to only expose the exact APIs desired; DO NOT expose general-purpose
  * IPC objects, etc.
+ * 
+ * Actual implementation happens in the main process, reached via ipcRenderer,
+ * and implemented in DesktopCallback class.
  */
 
 contextBridge.exposeInMainWorld('desktop',  {
-  proportionalFont: () => "",
-  fixedWidthFont: () => "",
-  browseUrl: (url) => {},
-
-  getOpenFileName: (caption, label, dir, filter, canChooseDirectories, focusOwner, callback) => {
-    callback('');
+  browseUrl: (url) => {
+    ipcRenderer.send('desktop_browse_url', url);
   },
 
-  getSaveFileName: (caption, label, dir, defaultExtension, forceDefaultExtension, focusOwner, callback) => {
-    callback('');
+  getOpenFileName: (caption,
+                    label,
+                    dir,
+                    filter,
+                    canChooseDirectories,
+                    focusOwner,
+                    callback) => {
+    ipcRenderer
+      .invoke('desktop_get_open_file_name', caption,
+                                            label,
+                                            dir,
+                                            filter,
+                                            canChooseDirectories,
+                                            focusOwner)
+      .then(filename => callback(filename));
   },
 
-  getExistingDirectory: (caption, label, dir, focusOwner, callback) => {
-    callback('');
+  getSaveFileName: (caption,
+                    label,
+                    dir,
+                    defaultExtension,
+                    forceDefaultExtension,
+                    focusOwner,
+                    callback) => {
+    ipcRenderer
+      .invoke('desktop_get_save_file_name', caption,
+                                            label,
+                                            dir,
+                                            defaultExtension,
+                                            forceDefaultExtension,
+                                            focusOwner)
+      .then(filename => callback(filename));
   },
 
-  onClipboardSelectionChanged: () => {},
+  getExistingDirectory: (caption,
+                         label,
+                         dir,
+                         focusOwner,
+                         callback) => {
+    ipcRenderer.invoke('desktop_get_existing_directory', caption,
+                                                         label,
+                                                         dir,
+                                                         focusOwner)
+      .then(directory => callback(directory));
+  },
 
-  undo: () => {},
-  redo: () => {},
+  onClipboardSelectionChanged: () => {
+    ipcRenderer.send('desktop_on_clipboard_selection_changed');
+  },
 
-  clipboardCut: () => {},
-  clipboardCopy: () => {},
-  clipboardPaste: () => {},
+  undo: () => {
+    ipcRenderer.send('desktop_undo');
+  },
 
-  setClipboardText: (text) => {},
-  getClipboardText: (callback) => { callback(''); },
-  getClipboardUris: (callback) => { callback([]); },
-  getClipboardImage: (callback) => { callback(''); },
+  redo: () => {
+    ipcRenderer.send('desktop_redo');
+  },
 
-  setGlobalMouseSelection: (selection) => {},
-  getGlobalMouseSelection: (callback) => { callback(''); },
+  clipboardCut: () => {
+    ipcRenderer.send('desktop_clipboard_cut');
+  },
 
-  getCursorPosition: (callback) => { callback({x: 20, y: 20}); },
-  doesWindowExistAtCursorPosition: (callback) => { callback(false); },
+  clipboardCopy: () => {
+    ipcRenderer.send('desktop_clipboard_copy');
+  },
 
-  onWorkbenchInitialized: (scratchPath) => {},
-  showFolder: (path) => {},
-  showFile: (path) => {},
-  showWordDoc: (path) => {},
+  clipboardPaste: () => {
+    ipcRenderer.send('desktop_clipboard_paste');
+  },
+
+  setClipboardText: (text) => {
+    ipcRenderer.send('desktop_set_clipboard_text', text);
+  },
+
+  getClipboardText: (callback) => {
+    ipcRenderer
+      .invoke('desktop_get_clipboard_text')
+      .then(text => callback(text));
+  },
+
+  getClipboardUris: (callback) => {
+     ipcRenderer
+      .invoke('desktop_get_clipboard_uris')
+      .then(text => callback(text));
+ },
+
+  getClipboardImage: (callback) => {
+     ipcRenderer
+      .invoke('desktop_get_clipboard_image')
+      .then(text => callback(text));
+  },
+
+  setGlobalMouseSelection: (selection) => {
+    ipcRenderer.send('desktop_set_global_mouse_selection', selection);
+  },
+
+  getGlobalMouseSelection: (callback) => {
+    ipcRenderer
+      .invoke('desktop_get_global_mouse_selection')
+      .then(selection => callback(selection));
+  },
+
+  getCursorPosition: (callback) => {
+    ipcRenderer
+      .invoke('desktop_get_cursor_position')
+      .then(position => callback(position));
+  },
+
+  doesWindowExistAtCursorPosition: (callback) => {
+    callback(false);
+  },
+
+  onWorkbenchInitialized: (scratchPath) => {
+
+  },
+
+  showFolder: (path) => {
+
+  },
+
+  showFile: (path) => {
+
+  },
+
+  showWordDoc: (path) => {
+
+  },
+
   showPptPresentation: (path) => {},
+
   showPDF: (path, pdfPage) => {},
+
   prepareShowWordDoc: () => {},
+
   prepareShowPptPresentation: () => {},
 
   // R version selection currently Win32 only
   getRVersion: (callback) => { callback(''); },
+
   chooseRVersion: (callback) => { callback(''); },
 
   devicePixelRatio: () => 1.0,
 
   openMinimalWindow: (name, url, width, height) => {window.alert('Not implemented'); },
+
   activateMinimalWindow: (name) => {},
+
   activateSatelliteWindow: (name) => {},
+
   prepareForSatelliteWindow: (name, x, y, width, height) => {},
+
   prepareForNamedWindow: (name, allowExternalNavigate, showToolbar) => {},
+
   closeNamedWindow: (name) => {},
 
   copyPageRegionToClipboard: (left, top, width, height) => {},
+
   exportPageRegionToFile: (targetPath, format, left, top, width, height) => {},
 
   printText: (text) => {},
+
   paintPrintText: (printer) => {},
+
   printFinished: (result) => {},
 
   supportsClipboardMetafile: (callback) => { callback(false); },
@@ -117,6 +225,7 @@ contextBridge.exposeInMainWorld('desktop',  {
   bringMainFrameBehindActive: () => {},
 
   desktopRenderingEngine: (callback) => { callback(''); },
+
   setDesktopRenderingEngine: (engine) => {},
 
   filterText: (text) => text,
@@ -126,42 +235,59 @@ contextBridge.exposeInMainWorld('desktop',  {
   setPendingQuit: (pendingQuit) => {},
 
   openProjectInNewWindow: (projectFilePath) => { window.alert('Not implemented'); },
+
   openSessionInNewWindow: (workingDirectoryPath) => {},
 
   openTerminal: (terminalPath, workingDirectory, extraPathEntries, shellType) => {},
 
   getFixedWidthFontList: () => '',
+
   getFixedWidthFont: () => '',
+
   setFixedWidthFont: (font) => '',
 
   getZoomLevels: () => '',
+
   getZoomLevel: () => 1.0,
+
   setZoomLevel: (zoomLevel) => {},
   
   zoomIn: () => {},
+
   zoomOut: () => {},
+
   zoomActualSize: () => {},
   
   setBackgroundColor: (rgbColor) => {},
+
   changeTitleBarColor: (red, green, blue)  => {},
+
   syncToEditorTheme: (isDark) => {},
 
   getEnableAccessibility: (callback) => { callback(false); },
+
   setEnableAccessibility: (enable) => {},
 
   getClipboardMonitoring: (callback) => { callback(false); },
+
   setClipboardMonitoring: (monitoring) => {},
-  
+
   getIgnoreGpuBlacklist: () => true,
+
   setIgnoreGpuBlacklist: (ignore) => {},
-  
+
   getDisableGpuDriverBugWorkarounds: (callback) => { callback(true); },
+
   setDisableGpuDriverBugWorkarounds: (disable) => {},
 
   showLicenseDialog: () => {},
+
   showSessionServerOptionsDialog: () => {},
+
   getInitMessages: (callback) => { callback(''); },
+
   getLicenseStatusMessage: (callback) => { callback(''); },
+
   allowProductUsage: (callback) => { callback(true); },
 
   getDesktopSynctexViewer: () => '',
@@ -174,7 +300,9 @@ contextBridge.exposeInMainWorld('desktop',  {
                         column) => {},
 
   supportsFullscreenMode: () => true,
+
   toggleFullscreenMode: () => {},
+
   showKeyboardShortcutHelp: () => {},
 
   launchSession: (reload) => {},
@@ -184,6 +312,7 @@ contextBridge.exposeInMainWorld('desktop',  {
   setTutorialUrl: (url) => {},
   
   setViewerUrl: (url) => {},
+
   reloadViewerZoomWindow: (url) => {},
 
   setShinyDialogUrl: (url) => {},
@@ -191,6 +320,7 @@ contextBridge.exposeInMainWorld('desktop',  {
   getScrollingCompensationType: () => '',
 
   isMacOS: () => true,
+
   isCentOS: () => false,
 
   setBusy: (busy) => {},
@@ -199,26 +329,40 @@ contextBridge.exposeInMainWorld('desktop',  {
 
   installRtools: (version, installerPath) => {},
 
-  getDisplayDpi: (callback) => { callback('72'); },
+  getDisplayDpi: (callback) => {
+    ipcRenderer.invoke('desktop_get_display_dpi').then(dpi => callback(dpi));
+  },
 
   onSessionQuit: () => '',
 
   getSessionServer: (callback) => { callback({}); },
+
   getSessionServers: (callback) => { callback([]); },
+
   reconnectToSessionServer: (sessionServerJson) => {},
 
   setLauncherServer: (sessionServerJson, callback) => { callback(false); },
+
   connectToLauncherServer: () => {},
 
   getLauncherServer: (callback) => { callback({}); },
+
   startLauncherJobStatusStream: (jobId) => {},
+
   stopLauncherJobStatusStream: (jobId) => {},
+
   startLauncherJobOutputStream: (jobId) => {},
+
   stopLauncherJobOutputStream: (jobId) => {},
+
   controlLauncherJob: (jobId, operation) => {},
+
   submitLauncherJob: (job) => {},
+
   getJobContainerUser: () => {},
+
   validateJobsConfig: () => {},
+
   getProxyPortNumber: (callback) => { callback(-1); },
 
   signOut: () => {},
