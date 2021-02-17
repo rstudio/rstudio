@@ -48,6 +48,15 @@ if(NOT "$ENV{RSTUDIO_VERSION_SUFFIX}" STREQUAL "" AND NOT "$ENV{RSTUDIO_VERSION_
    set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION}-$ENV{RSTUDIO_VERSION_SUFFIX}")
 endif()
 
+# detect architecture
+if(UNIX)
+   execute_process(
+      COMMAND uname -m
+      OUTPUT_VARIABLE RSTUDIO_HOST_ARCHITECTURE
+      OUTPUT_STRIP_TRAILING_WHITESPACE)
+   message(STATUS "Host architecture: ${RSTUDIO_HOST_ARCHITECTURE}")
+endif()
+
 # default to debug builds
 if(NOT CMAKE_BUILD_TYPE)
    message(STATUS "CMake build type not set; defaulting to debug build")
@@ -74,7 +83,10 @@ if(NOT DEFINED RSTUDIO_SERVER)
 endif()
 
 if(NOT DEFINED RSTUDIO_DESKTOP)
-   if(RSTUDIO_TARGET STREQUAL "Development" OR RSTUDIO_TARGET STREQUAL "Desktop")
+   if(APPLE AND RSTUDIO_HOST_ARCHITECTURE STREQUAL arm64)
+      message(STATUS "Desktop builds not currently supported on M1 macOS machines; disabling RSTUDIO_DESKTOP")
+      set(RSTUDIO_DESKTOP FALSE)
+   elseif(RSTUDIO_TARGET STREQUAL "Development" OR RSTUDIO_TARGET STREQUAL "Desktop")
       set(RSTUDIO_DESKTOP TRUE)
    endif()
 endif()
@@ -297,13 +309,17 @@ macro(add_stripped_executable _target)
    define_source_file_names("${_target}")
 endmacro(add_stripped_executable)
 
-# help CMake find OpenSSL
-if(APPLE)
-   foreach(DIR /opt/homebrew/opt/openssl /usr/local/opt/openssl /opt/openssl)
+# figure out Homebrew opt directory and help CMake find OpenSSL
+if(APPLE AND NOT OPENSSL_ROOT_DIR)
+
+   foreach(DIR /opt/homebrew/opt /usr/local/opt)
       if(EXISTS "${DIR}")
-         set(OPENSSL_ROOT_DIR "${DIR}" CACHE INTERNAL "")
+         set(MACOS_OPT_DIR "${DIR}")
          break()
       endif()
    endforeach()
+
+   set(OPENSSL_ROOT_DIR "${MACOS_OPT_DIR}/openssl" CACHE INTERNAL "")
+
 endif()
 

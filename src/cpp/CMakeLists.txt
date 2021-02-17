@@ -328,6 +328,11 @@ add_definitions(-DRSTUDIO_BOOST_SIGNALS_VERSION=${RSTUDIO_BOOST_SIGNALS_VERSION}
 # add boost as system include directory
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 
+if(NOT DEFINED RSTUDIO_CRASHPAD_ENABLED AND APPLE AND RSTUDIO_HOST_ARCHITECTURE STREQUAL arm64)
+   message(STATUS "Crashpad not yet supported on M1 macOS machines; disabling Crashpad")
+   set(RSTUDIO_CRASHPAD_ENABLED FALSE)
+endif()
+
 # Crashpad
 if (NOT DEFINED RSTUDIO_CRASHPAD_ENABLED OR RSTUDIO_CRASHPAD_ENABLED)
    if(UNIX)
@@ -424,13 +429,8 @@ endif()
 
 # database library includes
 if(APPLE)
-   foreach(DIR /opt/homebrew/opt/postgresql /usr/local/opt/postgresql /usr/include/postgresql)
-      if(EXISTS "${DIR}")
-         include_directories(SYSTEM "${DIR}/include")
-         include_directories(SYSTEM "${DIR}/include/libpq")
-         break()
-      endif()
-   endforeach()
+   include_directories(SYSTEM "${MACOS_OPT_DIR}/postgresql/include")
+   include_directories(SYSTEM "${MACOS_OPT_DIR}/postgresql/include/libpq")
 elseif(UNIX)
    include_directories(SYSTEM "/usr/include/postgresql")
    include_directories(SYSTEM "/usr/include/pgsql")
@@ -451,7 +451,7 @@ if(UNIX)
    find_library(DL_LIB "dl")
    find_library(SQLITE_LIB "sqlite3")
    get_filename_component(SQLITE_LIB "${SQLITE_LIB}" REALPATH)
-   find_library(PQ_LIB "pq" HINTS /opt/homebrew/opt/libpq/lib /usr/local/lib)
+   find_library(PQ_LIB "pq" HINTS ${MACOS_OPT_DIR}/libpq/lib /usr/local/lib)
    get_filename_component(PQ_LIB "${PQ_LIB}" REALPATH)
    list(APPEND SOCI_DEPENDENCIES ${SQLITE_LIB} ${PQ_LIB})
    list(APPEND SOCI_LIBRARIES ${SOCI_SQLITE_LIB} ${SOCI_POSTGRESQL_LIB} ${SQLITE_LIB} ${PQ_LIB} ${SOCI_CORE_LIB} ${DL_LIB})
