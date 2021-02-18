@@ -27,7 +27,7 @@ module.exports = class MainWindow {
     this.sessionProcess_ = null;
     this.window = null;
     this.desktopCallback = new DesktopCallback(this, this, isRemoteDesktop);
-    this.menuCallback = new MenuCallback(this);
+    this.menuCallback = new MenuCallback();
   }
 
   set sessionLauncher(value) {

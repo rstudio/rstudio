@@ -15,8 +15,7 @@
 const { ipcMain } = require('electron');
 
 module.exports = class MenuCallback {
-  constructor(parent) {
-    this.parent = parent;
+  constructor() {
 
     ipcMain.on('menu_begin_main', (event) => {
     })

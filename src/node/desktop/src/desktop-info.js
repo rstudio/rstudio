@@ -1,5 +1,5 @@
 /*
- * app.js
+ * desktopinfo.js
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -13,23 +13,9 @@
  *
  */
 
-const { app, BrowserWindow } = require('electron');
-const DesktopInfo = require('./desktop-info');
-const Main = require('./main');
 
-// Where it all begins
-app.whenReady().then(() => {
-
-  globalThis.rstudioGlobal = {
-    desktopInfo: new DesktopInfo()
+module.exports = class DesktopInfo {
+  constructor() {
   };
+}
 
-  new Main().run();
-});
-
-app.on('window-all-closed', () => {
-  // Mac apps generally don't close when you close the last window, but RStudio does
-  // if (process.platform !== 'darwin') {
-    app.quit();
-  // }
-});

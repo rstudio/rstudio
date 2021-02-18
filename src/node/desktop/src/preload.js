@@ -620,7 +620,15 @@ contextBridge.exposeInMainWorld('desktop',  {
 //contextBridge.exposeInMainWorld('remoteDesktop', {});
 
 contextBridge.exposeInMainWorld('desktopInfo', {
-  chromiumDevtoolsPort: () => { return 0; }
+  platform: '',
+  version: '',
+  scrollingCompensationType: '',
+  fixedWidthFontList: '',
+  fixedWidthFont: '',
+  proportionalFont: '',
+  desktopSynctexViewer: '',
+  zoomLevel: 1.0,
+  chromiumDevtoolsPort: 0,
 });
 
 contextBridge.exposeInMainWorld('desktopMenuCallback', {

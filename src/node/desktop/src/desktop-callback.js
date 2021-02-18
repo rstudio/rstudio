@@ -219,7 +219,6 @@ module.exports = class DesktopCallback {
     });
 
     ipcMain.on('desktop_bring_main_frame_to_front', (event) => {
-      DesktopCallback.unimpl('desktop_bring_main_frame_to_front');
     });
 
     ipcMain.on('desktop_bring_main_frame_behind_active', (event) => {
@@ -227,7 +226,6 @@ module.exports = class DesktopCallback {
     });
 
     ipcMain.handle('desktop_rendering_engine', (event) => {
-      DesktopCallback.unimpl('desktop_rendering_engine');
       return '';
     });
 
@@ -328,7 +326,6 @@ module.exports = class DesktopCallback {
     });
 
     ipcMain.handle('desktop_get_ignore_gpu_blacklist', (event, ignore) => {
-      DesktopCallback.unimpl('desktop_get_ignore_gpu_blacklist');
       return true;
     });
 
@@ -337,7 +334,6 @@ module.exports = class DesktopCallback {
     });
 
     ipcMain.handle('desktop_get_disable_gpu_driver_bug_workarounds', (event) => {
-      DesktopCallback.unimpl('desktop_get_disable_gpu_driver_bug_workarounds');
       return false;
     });
 
