@@ -166,13 +166,17 @@ public class RpcRequest
                   // default error message
                   String message = "Status code " + 
                                    Integer.toString(status) + 
-                                   " returned by R session when executing '" +
+                                   " returned by " +
+                                   (Desktop.isDesktop() ? "R session" : "RStudio Server") +
+                                   " when executing '" +
                                    getMethod() + "'";
                   
                   // override error message for status code 0
                   if (status == 0)
                   {
-                     message = "Unable to establish connection with R session to execute '" + getMethod() + "'";
+                     message = "Unable to establish connection with " +
+                        (Desktop.isDesktop() ? "R session" : "RStudio Server") +
+                        " when executing '" + getMethod() + "'";
                   }
 
                   requestLogEntry_.logResponse(ResponseType.Unknown,
