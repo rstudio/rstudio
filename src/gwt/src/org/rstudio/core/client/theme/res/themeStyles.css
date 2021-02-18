@@ -1343,7 +1343,7 @@ body.windows .toolbar {
 }
 
 .rstheme_toolbarWrapper {
-
+   height: 100%;
 }
 
 .rstudio-themes-flat .rstheme_toolbarWrapper {
