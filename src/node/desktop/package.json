@@ -1,7 +1,7 @@
 {
-  "name": "rstudio",
+  "name": "RStudio",
   "version": "0.1.0",
-  "description": "rstudio electron prototype",
+  "description": "RStudio Electron Prototype",
   "main": "./src/app.js",
   "dependencies": {
     "electron": "^11.2.3"
