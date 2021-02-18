@@ -51,6 +51,7 @@
 * Make the set of always-shown files and extensions in the Files pane configurable (#3221)
 * Log location of addins that raise parse errors at startup (#8012)
 * Support dual/charcell-spaced editor fonts (e.g., Fira Code) on Linux desktop environments (#6894)
+* Improve logging of session RPC failures (Pro #2248)
 
 ### Bugfixes
 
