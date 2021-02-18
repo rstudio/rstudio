@@ -20,7 +20,8 @@ command -v javac >/dev/null 2>&1 || { echo >&2 "javac required but not found: ex
 if javac -version 2>&1 | grep -q 'javac 1\.8\.'; then
     echo Building with JDK 1.8.
 else
-    echo Error: javac version 1.8 required but not found: exiting.
+    echo Error: javac version 1.8 required but not found
+    echo Error: consider setting JAVA_HOME to a Java 8 installation
     exit 1
 fi
 
