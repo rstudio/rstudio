@@ -1,5 +1,5 @@
 {
-  "name": "RStudio",
+  "name": "rstudio",
   "version": "0.1.0",
   "description": "RStudio Electron Prototype",
   "main": "./src/app.js",
