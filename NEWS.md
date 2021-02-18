@@ -86,3 +86,5 @@
 * Fixed an issue where the Kubernetes Launcher could hang in Azure Kubernetes Service (AKS) environments by lowering the watch-timeout-seconds parameter default down to 3 minutes instead of 5 (Pro #2312)
 * Fixed issue where 'continue comment on newline' would treat Markdown headers as comments (#6421)
 * Fixed issue where Set Working Directory command could fail if path contained quotes (#6004)
+* Fixed issue where Pro database drivers will not install if `~/odbcinst.ini` is missing (Pro #2284)
+
