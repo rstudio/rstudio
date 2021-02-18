@@ -429,7 +429,7 @@ module.exports = class DesktopCallback {
     });
 
     ipcMain.on('desktop_set_window_title', (event, title) => {
-      DesktopCallback.unimpl('desktop_set_window_title');
+      this.mainWindow.window.setTitle(`${title} - RStudio`);
     });
 
     ipcMain.on('desktop_install_rtools', (event, version, installerPath) => {
