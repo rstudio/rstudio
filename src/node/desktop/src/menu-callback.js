@@ -18,21 +18,45 @@ module.exports = class MenuCallback {
   constructor() {
 
     ipcMain.on('menu_begin_main', (event) => {
-    })
+    });
 
     ipcMain.on('menu_begin', (event, label) => {
-    })
+    });
 
-  /*
-  addCommand: (cmdId, label, tooltip, shortcut, isChecked) => {},
-  addSeparator: () => {},
-  endMenu: () => {},
-  endMainMenu: () => {console.log('endMainMenu')},
-  setCommandVisible: (commandId, visible) => {},
-  setCommandEnabled: (commandId, enabled) => {},
-  setCommandChecked: (commandId, checked) => {},
-  setMainMenuEnabled: (enabled) => {},
-  setCommandLabel: (commandId, label) => {},
-  */
+    ipcMain.on('menu_add_command', (event, cmdId, label, tooltip, shortcut, isChecked) => {
+
+    });
+
+    ipcMain.on('menu_add_separator', (event) => {
+
+    });
+
+    ipcMain.on('menu_end', (event) => {
+
+    });
+
+    ipcMain.on('menu_end_main', (event) => {
+
+    });
+
+    ipcMain.on('menu_set_command_visible', (event, commandId, visible) => {
+
+    });
+
+    ipcMain.on('menu_set_command_enabled', (event, commandId, enabled) => {
+
+    });
+
+    ipcMain.on('menu_set_command_checked', (event, commandId, checked) => {
+
+    });
+
+    ipcMain.on('menu_set_main_menu_enabled', (event, enabled) => {
+
+    });
+
+    ipcMain.on('menu_set_command_label', (event, commandId, label) => {
+
+    });
   }
 }

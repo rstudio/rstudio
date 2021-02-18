@@ -661,13 +661,39 @@ contextBridge.exposeInMainWorld('desktopMenuCallback', {
     ipcRenderer.send('menu_begin', label);
   },
 
-  addCommand: (cmdId, label, tooltip, shortcut, isChecked) => {},
-  addSeparator: () => {},
-  endMenu: () => {},
-  endMainMenu: () => {},
-  setCommandVisible: (commandId, visible) => {},
-  setCommandEnabled: (commandId, enabled) => {},
-  setCommandChecked: (commandId, checked) => {},
-  setMainMenuEnabled: (enabled) => {},
-  setCommandLabel: (commandId, label) => {},
+  addCommand: (cmdId, label, tooltip, shortcut, isChecked) => {
+    ipcRenderer.send('menu_add_command', cmdId, label, tooltip, shortcut, isChecked);
+  },
+
+  addSeparator: () => {
+    ipcRenderer.send('menu_add_separator');
+  },
+
+  endMenu: () => {
+    ipcRenderer.send('menu_end');
+  },
+
+  endMainMenu: () => {
+    ipcRenderer.send('menu_end_main');
+  },
+
+  setCommandVisible: (commandId, visible) => {
+    ipcRenderer.send('menu_set_command_visible', commandId, visible);
+  },
+
+  setCommandEnabled: (commandId, enabled) => {
+    ipcRenderer.send('menu_set_command_enabled', commandId, enabled);
+  },
+
+  setCommandChecked: (commandId, checked) => {
+    ipcRenderer.send('menu_set_command_checked', commandId, checked);
+  },
+
+  setMainMenuEnabled: (enabled) => {
+    ipcRenderer.send('menu_set_main_menu_enabled', enabled);
+  },
+
+  setCommandLabel: (commandId, label) => {
+    ipcRenderer.send('menu_set_command_label', commandId, label);
+  },
 });
