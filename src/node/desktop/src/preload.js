@@ -623,9 +623,30 @@ contextBridge.exposeInMainWorld('desktopInfo', {
   platform: '',
   version: '',
   scrollingCompensationType: '',
-  fixedWidthFontList: '',
-  fixedWidthFont: '',
-  proportionalFont: '',
+  fixedWidthFontList: `AndaleMono
+AppleBraille-Outline6Dot
+AppleBraille-Outline8Dot
+AppleBraille-Pinpoint6Dot
+AppleBraille-Pinpoint8Dot
+AppleBraille
+AppleColorEmoji
+Courier
+Courier-Oblique
+Courier-Bold
+Courier-BoldOblique
+CourierNewPSMT
+CourierNewPS-ItalicMT
+CourierNewPS-BoldMT
+CourierNewPS-BoldItalicMT
+Menlo-Regular
+Menlo-Italic
+Menlo-Bold
+Menlo-BoldItalic
+Monaco
+PTMono-Regular
+PTMono-Bold`,
+  fixedWidthFont: 'Monaco',
+  proportionalFont: 'Lucida Grande',
   desktopSynctexViewer: '',
   zoomLevel: 1.0,
   chromiumDevtoolsPort: 0,
