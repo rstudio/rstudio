@@ -166,15 +166,15 @@ public class RpcRequest
                   // default error message
                   String message = "Status code " + 
                                    Integer.toString(status) + 
-                                   " returned";
+                                   " returned by R session when executing '" +
+                                   getMethod() + "'";
                   
                   // override error message for status code 0
                   if (status == 0)
                   {
-                     message = "Unable to establish connection with R session"; 
+                     message = "Unable to establish connection with R session to execute '" + getMethod() + "'";
                   }
-                  
-                 
+
                   requestLogEntry_.logResponse(ResponseType.Unknown,
                                               message);
                   RpcError error = RpcError.create(
