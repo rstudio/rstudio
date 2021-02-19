@@ -22,6 +22,10 @@ module.exports = class MenuCallback {
 
     ipcMain.on('menu_begin_main', (event) => {
       this.mainMenu = new Menu();
+      if (process.platform === 'darwin') {
+        let appMenu = new MenuItem({role: "appMenu"});
+        this.mainMenu.append(appMenu);
+      }
     });
 
     ipcMain.on('menu_begin', (event, label) => {
@@ -39,6 +43,10 @@ module.exports = class MenuCallback {
     });
 
     ipcMain.on('menu_add_separator', (event) => {
+      if (this.menuStack.length > 0) {
+        let separator = new MenuItem({type: "separator"});
+        this.menuStack[this.menuStack.length - 1].append(separator);
+      }
     });
 
     ipcMain.on('menu_end', (event) => {
