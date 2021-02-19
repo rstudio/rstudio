@@ -15,7 +15,10 @@
 package org.rstudio.core.client.command;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.Pair;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.EditorCommandManager.EditorKeyBindings;
 import org.rstudio.core.client.command.KeyMap.KeyMapType;
 import org.rstudio.core.client.files.ConfigFileBacked;
@@ -57,6 +60,35 @@ public class ApplicationCommandManager
                   loadBindings();
                }
             });
+
+      // Listen for changes to the list of commands that have callbacks. We maintain a list of these on the client
+      // side in order to avoid having to emit an RPC every time a command is executed.
+      events_.addHandler(
+         CommandCallbacksChangedEvent.TYPE,
+         new CommandCallbacksChangedEvent.Handler()
+         {
+            @Override
+            public void onCommandCallbacksChanged(CommandCallbacksChangedEvent event)
+            {
+               commandsWithCallbacks_ = JsArrayUtil.fromJsArrayString(event.getCommands());
+            }
+         });
+
+      // Listen for commands to be executed. If a command that has a callback is executed, notify the server
+      // so that the callback can be invoked.
+      events_.addHandler(
+         CommandEvent.TYPE,
+         new CommandHandler()
+         {
+            @Override
+            public void onCommand(AppCommand command)
+            {
+               if (commandsWithCallbacks_.contains(command.getId()) || commandsWithCallbacks_.contains("*"))
+               {
+                  // TODO: invoke RPC
+               }
+            }
+         });
 
       // This event should only be received by satellites.
       events_.addHandler(
@@ -189,6 +221,7 @@ public class ApplicationCommandManager
    }
 
    private final ConfigFileBacked<EditorKeyBindings> bindings_;
+   private List<String> commandsWithCallbacks_;
 
    public static final String KEYBINDINGS_PATH =
          "keybindings/rstudio_bindings.json";
