@@ -19,38 +19,61 @@ module.exports = class MenuCallback {
 
     this.mainMenu = null;
     this.menuStack = [];
+    this.lastWasTools = false;
 
     ipcMain.on('menu_begin_main', (event) => {
       this.mainMenu = new Menu();
       if (process.platform === 'darwin') {
-        let appMenu = new MenuItem({role: "appMenu"});
-        this.mainMenu.append(appMenu);
+        this.mainMenu.append(new MenuItem({role: "appMenu"}));
       }
     });
 
     ipcMain.on('menu_begin', (event, label) => {
       let subMenu = new Menu();
-      let menuItem = new MenuItem({submenu: subMenu, label: label});
+      let opts = {submenu: subMenu, label: label};
+      if (label === '&File') {
+        opts.role = 'fileMenu';
+      } else if (label === '&Edit') {
+        opts.role = 'editMenu';
+      } else if (label === '&View') {
+        opts.role = 'viewMenu';
+      } else if (label === '&Help') {
+        opts.role = 'help';
+      } else if (label === '&Tools') {
+        this.lastWasTools = true;
+      }
+      let menuItem = new MenuItem(opts);
       if (this.menuStack.length == 0) {
         this.mainMenu.append(menuItem);
       } else {
-        this.menuStack[this.menuStack.length - 1].append(menuItem);
+        this.addToCurrentMenu(menuItem);
       }
       this.menuStack.push(subMenu);
     });
 
-    ipcMain.on('menu_add_command', (event, cmdId, label, tooltip, shortcut, isChecked) => {
+    ipcMain.on('menu_add_command', (event, cmdId, label, tooltip, shortcut, checkable) => {
+      let menuItemOpts = {label: label, id: cmdId};
+      if (checkable) {
+        menuItemOpts.checked = false;
+      }
+      this.addToCurrentMenu(new MenuItem(menuItemOpts));
     });
 
     ipcMain.on('menu_add_separator', (event) => {
-      if (this.menuStack.length > 0) {
-        let separator = new MenuItem({type: "separator"});
-        this.menuStack[this.menuStack.length - 1].append(separator);
-      }
+      let separator = new MenuItem({type: "separator"});
+      this.addToCurrentMenu(separator);
     });
 
     ipcMain.on('menu_end', (event) => {
       this.menuStack.pop();
+      if (this.lastWasTools) {
+        this.lastWasTools = false;
+
+        // add the Window menu on mac
+        if (process.platform === 'darwin') {
+          this.mainMenu.append(new MenuItem({role: 'windowMenu'}));
+        }
+      }
     });
 
     ipcMain.on('menu_end_main', (event) => {
@@ -58,18 +81,44 @@ module.exports = class MenuCallback {
     });
 
     ipcMain.on('menu_set_command_visible', (event, commandId, visible) => {
+      let item = this.getMenuItemById(commandId);
+      if (item) {
+        item.visible = visible;
+      }
     });
 
     ipcMain.on('menu_set_command_enabled', (event, commandId, enabled) => {
+      let item = this.getMenuItemById(commandId);
+      if (item) {
+        item.enabled = enabled;
+      }
     });
 
     ipcMain.on('menu_set_command_checked', (event, commandId, checked) => {
+      let item = this.getMenuItemById(commandId);
+      if (item) {
+        item.checked = checked;
+      }
     });
 
     ipcMain.on('menu_set_main_menu_enabled', (event, enabled) => {
     });
 
     ipcMain.on('menu_set_command_label', (event, commandId, label) => {
+      let item = this.getMenuItemById(commandId);
+      if (item) {
+        item.label = label;
+      }
     });
+  }
+
+  addToCurrentMenu(menuItem) {
+    if (this.menuStack.length > 0) {
+      this.menuStack[this.menuStack.length - 1].append(menuItem);
+    }
+  }
+
+  getMenuItemById(id) {
+    return this.mainMenu ? this.mainMenu.getMenuItemById(id) : null;
   }
 }
