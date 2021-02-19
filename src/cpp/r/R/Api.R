@@ -1072,7 +1072,7 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
             callback = commandCallback),
           envir = .rs.commandCallbacks)
 
-   # send event to client indicating which command IDs currently have callbacks registered. 
+   # send event to client indicating which command IDs currently have callbacks registered
    .rs.enqueClientEvent("command_callbacks_changed", 
                         .rs.scalarListFromList(as.list(.rs.getCommandsWithCallbacks())))
 
@@ -1086,6 +1086,11 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
       warning("Handle '", handle, " is not a registered RStudio command callback.")
    else {
       rm(list = handle, envir = .rs.commandCallbacks)
+
+      # send event to client indicating which command IDs currently have callbacks registered
+      .rs.enqueClientEvent("command_callbacks_changed", 
+                           .rs.scalarListFromList(as.list(.rs.getCommandsWithCallbacks())))
+
    }
 
    invisible(NULL)
