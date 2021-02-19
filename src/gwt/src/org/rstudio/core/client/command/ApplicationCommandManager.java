@@ -15,10 +15,8 @@
 package org.rstudio.core.client.command;
 
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.Pair;
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.EditorCommandManager.EditorKeyBindings;
 import org.rstudio.core.client.command.KeyMap.KeyMapType;
 import org.rstudio.core.client.files.ConfigFileBacked;
@@ -26,7 +24,9 @@ import org.rstudio.core.client.events.ExecuteAppCommandEvent;
 import org.rstudio.core.client.events.RStudioKeybindingsChangedEvent;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.rstudioapi.model.RStudioAPIServerOperations;
 import org.rstudio.studio.client.common.satellite.Satellite;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedEvent;
@@ -83,9 +83,15 @@ public class ApplicationCommandManager
             @Override
             public void onCommand(AppCommand command)
             {
+               if (commandsWithCallbacks_ == null)
+               {
+                  // Expected if no commands are registered
+                  return;
+               }
+
                if (commandsWithCallbacks_.contains(command.getId()) || commandsWithCallbacks_.contains("*"))
                {
-                  // TODO: invoke RPC
+                  apiServer_.recordCommandExecution(command.getId(), new VoidServerRequestCallback());
                }
             }
          });
@@ -127,10 +133,14 @@ public class ApplicationCommandManager
    }
 
    @Inject
-   private void initialize(EventBus events, FilesServerOperations server, Commands commands)
+   private void initialize(EventBus events,
+                           FilesServerOperations server,
+                           RStudioAPIServerOperations apiServer,
+                           Commands commands)
    {
       events_ = events;
       server_ = server;
+      apiServer_ = apiServer;
       commands_ = commands;
    }
 
@@ -229,6 +239,7 @@ public class ApplicationCommandManager
    // Injected ----
    private EventBus events_;
    private FilesServerOperations server_;
+   private RStudioAPIServerOperations apiServer_;
    private Commands commands_;
 }
 
