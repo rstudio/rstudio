@@ -4,9 +4,13 @@
   "description": "RStudio Electron Prototype",
   "main": "./src/app.js",
   "dependencies": {
+    "babel-eslint": "^10.1.0",
     "electron": "^11.2.3"
   },
   "scripts": {
     "start": "electron ."
+  },
+  "devDependencies": {
+    "eslint": "^7.20.0"
   }
 }

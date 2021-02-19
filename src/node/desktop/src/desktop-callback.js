@@ -23,7 +23,7 @@ module.exports = class DesktopCallback {
 
     ipcMain.on('desktop_browse_url', (event, url) => {
       DesktopCallback.unimpl('desktop_browser_url');
-    })
+    });
 
     ipcMain.handle('desktop_get_open_file_name', (event,
                                                   caption,
@@ -356,12 +356,12 @@ module.exports = class DesktopCallback {
     ipcMain.handle('desktop_get_license_status_message', (event) => {
       DesktopCallback.unimpl('desktop_get_license_status_messages');
       return '';
-    })
+    });
 
     ipcMain.handle('desktop_allow_product_usage', (event) => {
       DesktopCallback.unimpl('desktop_allow_product_usage');
       return true;
-    })
+    });
 
     ipcMain.handle('desktop_get_desktop_synctex_viewer', (event) => {
       DesktopCallback.unimpl('desktop_get_desktop_synctex_viewer');
@@ -515,4 +515,4 @@ module.exports = class DesktopCallback {
       message: `${ipcName} callback NYI`
     });
     }
-}
+};

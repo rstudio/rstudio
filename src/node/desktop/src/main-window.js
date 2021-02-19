@@ -65,7 +65,7 @@ module.exports = class MainWindow {
     // pass along the shared secret with every request
     const filter = {
       urls: [`${url}/*`]
-    }
+    };
     session.defaultSession.webRequest.onBeforeSendHeaders(filter, (details, callback) => {
       details.requestHeaders['X-Shared-Secret'] = process.env.RS_SHARED_SECRET;
       callback({ requestHeaders: details.requestHeaders});
@@ -74,4 +74,4 @@ module.exports = class MainWindow {
     this.window.loadURL(url);
     // this.window.webContents.openDevTools();
   }
-}
+};

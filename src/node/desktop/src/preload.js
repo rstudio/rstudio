@@ -13,7 +13,7 @@
  *
  */
 const { contextBridge } = require('electron');
-const { ipcRenderer } = require('electron')
+const { ipcRenderer } = require('electron');
 
 /**
  * The preload script is run in the renderer before our GWT code and enables
@@ -162,7 +162,7 @@ contextBridge.exposeInMainWorld('desktop',  {
     ipcRenderer.send('desktop_show_file', file);
   },
 
-  showWordDoc: (path) => {
+  showWordDoc: (wordDoc) => {
     ipcRenderer.send('desktop_show_word_doc', wordDoc);
   },
 

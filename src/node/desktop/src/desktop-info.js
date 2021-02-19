@@ -16,6 +16,5 @@
 
 module.exports = class DesktopInfo {
   constructor() {
-  };
-}
-
+  }
+};

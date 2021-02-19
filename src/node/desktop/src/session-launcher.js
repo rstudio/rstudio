@@ -22,13 +22,13 @@ module.exports = class SessionLauncher {
   constructor(sessionPath, confPath) {
       this.sessionPath_ = sessionPath;
       this.confPath_ = confPath;
-      this.port = "";
-      this.host = "";
+      this.port = '';
+      this.host = '';
       this.mainWindow = null;
       this.sessionProcess = null;
   }
 
-  static s_launcherToken = "";
+  static s_launcherToken = '';
 
   launchSession(argList) {
     // #ifdef Q_OS_DARWIN
@@ -46,7 +46,7 @@ module.exports = class SessionLauncher {
 
     const sessionProc = child_process.spawn(this.sessionPath_, argList);
     sessionProc.stdout.on('data', (data) => {
-      console.log(`stdout: ${data}`)
+      console.log(`stdout: ${data}`);
     });
     sessionProc.stderr.on('data', (data) => {
       console.log(`stderr: ${data}`);
@@ -62,7 +62,7 @@ module.exports = class SessionLauncher {
     let launchContext = this.buildLaunchContext();
 
     // show help home on first run
-    launchContext.argList.push("--show-help-home", "1");
+    launchContext.argList.push('--show-help-home', '1');
 
     // launch the process
     this.sessionProcess = this.launchSession(launchContext.argList);
@@ -77,14 +77,14 @@ module.exports = class SessionLauncher {
 
   static get launcherToken() {
     if (SessionLauncher.s_launcherToken.length == 0) {
-       SessionLauncher.s_launcherToken = "7F83A8BD";
+       SessionLauncher.s_launcherToken = '7F83A8BD';
     }
     return SessionLauncher.s_launcherToken;
   }
 
   get port() {
     if (this.port_.length == 0) {
-      this.port_ = "40810"; // see DesktopOptions.cpp portNumber() for how to randomly generate
+      this.port_ = '40810'; // see DesktopOptions.cpp portNumber() for how to randomly generate
     }
     return this.port_;
   }
@@ -94,17 +94,17 @@ module.exports = class SessionLauncher {
   }
 
   buildLaunchContext() {
-    this.host = "127.0.0.1";
+    this.host = '127.0.0.1';
     return {
         host: this.host,
         port: `${this.port}`,
         url: `http://${this.host}:${this.port}`,
         argList: [
-            "--config-file", this.confPath_,
-            "--program-mode", "desktop",
-            "--www-port", this.port,
-            "--launcher-token", SessionLauncher.launcherToken,
+            '--config-file', this.confPath_,
+            '--program-mode', 'desktop',
+            '--www-port', this.port,
+            '--launcher-token', SessionLauncher.launcherToken,
         ],
-    }
+    };
   }
-}
+};

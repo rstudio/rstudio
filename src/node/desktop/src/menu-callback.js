@@ -25,7 +25,7 @@ module.exports = class MenuCallback {
     ipcMain.on('menu_begin_main', (event) => {
       this.mainMenu = new Menu();
       if (process.platform === 'darwin') {
-        this.mainMenu.append(new MenuItem({role: "appMenu"}));
+        this.mainMenu.append(new MenuItem({role: 'appMenu'}));
       }
     });
 
@@ -56,6 +56,7 @@ module.exports = class MenuCallback {
     });
 
     ipcMain.on('menu_add_command', (event, cmdId, label, tooltip, shortcut, checkable) => {
+      console.log(shortcut);
       let menuItemOpts = {label: label, id: cmdId};
       if (checkable) {
         menuItemOpts.checked = false;
@@ -71,7 +72,7 @@ module.exports = class MenuCallback {
     });
 
     ipcMain.on('menu_add_separator', (event) => {
-      let separator = new MenuItem({type: "separator"});
+      let separator = new MenuItem({type: 'separator'});
       this.addToCurrentMenu(separator);
     });
 
@@ -138,4 +139,8 @@ module.exports = class MenuCallback {
   getMenuItemById(id) {
     return this.mainMenu ? this.mainMenu.getMenuItemById(id) : null;
   }
-}
+
+  convertShortcut(shortcut) {
+
+  }
+};

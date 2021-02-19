@@ -14,7 +14,6 @@
  */
 
 const { app } = require('electron');
-const os = require('os');
 const fs = require('fs');
 const path = require('path');
 const SessionLauncher = require('./session-launcher');
@@ -52,7 +51,7 @@ module.exports = class Main {
     let devMode = true;
 
     if (!this.prepareEnvironment(scriptsPath)) {
-      console.log(`Failed to prepare environment`);
+      console.log('Failed to prepare environment');
       app.exit(1);
       return;
     }
@@ -62,27 +61,27 @@ module.exports = class Main {
   }
 
   initializeSharedSecret() {
-    let secret = "12345";
+    let secret = '12345';
     process.env.RS_SHARED_SECRET = secret;
 
   }
 
   prepareEnvironment(scriptsPath) {
     // attempt to detect R environment
-    let ldScriptPath = path.join(scriptsPath, '../session/r-ldpath');
+    // let ldScriptPath = path.join(scriptsPath, '../session/r-ldpath');
 
     // whole bunch of code...
 
-    process.env.R_HOME = "/Library/Frameworks/R.framework/Resources";
-    process.env.R_SHARE_DIR = "/Library/Frameworks/R.framework/Resources/share";
-    process.env.R_INCLUDE_DIR = "/Library/Frameworks/R.framework/Resources/include";
-    process.env.R_DOC_DIR = "/Library/Frameworks/R.framework/Resources/doc";
-    process.env.DYLD_FALLBACK_LIBRARY_PATH = "/Library/Frameworks/R.framework/Resources/lib:/Users/gary/lib:/usr/local/lib:/usr/lib:::/lib:/Library/Java/JavaVirtualMachines/jdk-11.0.1.jdk/Contents/Home/lib/server";
-    process.env.RS_CRASH_HANDLER_PATH = "/opt/rstudio-tools/crashpad/crashpad/out/Default/crashpad_handler";
+    process.env.R_HOME = '/Library/Frameworks/R.framework/Resources';
+    process.env.R_SHARE_DIR = '/Library/Frameworks/R.framework/Resources/share';
+    process.env.R_INCLUDE_DIR = '/Library/Frameworks/R.framework/Resources/include';
+    process.env.R_DOC_DIR = '/Library/Frameworks/R.framework/Resources/doc';
+    process.env.DYLD_FALLBACK_LIBRARY_PATH = '/Library/Frameworks/R.framework/Resources/lib:/Users/gary/lib:/usr/local/lib:/usr/lib:::/lib:/Library/Java/JavaVirtualMachines/jdk-11.0.1.jdk/Contents/Home/lib/server';
+    process.env.RS_CRASH_HANDLER_PATH = '/opt/rstudio-tools/crashpad/crashpad/out/Default/crashpad_handler';
 
     // uncomment to stall start of rsession for # seconds so you can attach debugger to it
     // process.env.RSTUDIO_SESSION_SLEEP_ON_STARTUP = "15";
 
     return true;
   }
-}
+};

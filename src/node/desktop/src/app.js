@@ -13,7 +13,7 @@
  *
  */
 
-const { app, BrowserWindow } = require('electron');
+const { app } = require('electron');
 const DesktopInfo = require('./desktop-info');
 const Main = require('./main');
 
