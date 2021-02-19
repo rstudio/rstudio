@@ -60,6 +60,9 @@ module.exports = class MenuCallback {
       if (checkable) {
         menuItemOpts.checked = false;
       }
+      if (shortcut.length > 0) {
+        menuItemOpts.accelerator = this.convertShortcut(shortcut);
+      }
       if (label === 'Actual &Size') {
         menuItemOpts.role = 'resetZoom';
       } else if (label === '&Zoom In') {
@@ -139,7 +142,18 @@ module.exports = class MenuCallback {
     return this.mainMenu ? this.mainMenu.getMenuItemById(id) : null;
   }
 
+  /**
+   * Convert RStudio shortcut string to Electron Accelerator
+   */
   convertShortcut(shortcut) {
-
+    return shortcut.split('+').map(key => {
+      if (key === 'Cmd') {
+        return 'CommandOrControl';
+      } else if (key === 'Meta') {
+        return 'Command';
+      } else {
+        return key;
+      }
+    }).join('+');
   }
 };
