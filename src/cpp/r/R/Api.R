@@ -1060,7 +1060,7 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 
    # find a unique ID for this callback
    repeat {
-      handle <- .Call("rs_createUUID", PACKAGE = "(embedding)")
+      handle <- .Call("rs_generateShortUuid", PACKAGE = "(embedding)")
       if (!(handle %in% names(.rs.commandCallbacks)))
          break
    } 
@@ -1085,7 +1085,7 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
    if (!is.null(handle) && !exists(handle, envir = .rs.commandCallbacks))
       warning("Handle '", handle, " is not a registered RStudio command callback.")
    else {
-      rm(handle, envir = .rs.notebookChunkCallbacks)
+      rm(list = handle, envir = .rs.commandCallbacks)
    }
 
    invisible(NULL)
