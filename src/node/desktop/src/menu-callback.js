@@ -20,6 +20,7 @@ module.exports = class MenuCallback {
     this.mainMenu = null;
     this.menuStack = [];
     this.lastWasTools = false;
+    this.lastWasDiagnostics = false;
 
     ipcMain.on('menu_begin_main', (event) => {
       this.mainMenu = new Menu();
@@ -41,7 +42,10 @@ module.exports = class MenuCallback {
         opts.role = 'help';
       } else if (label === '&Tools') {
         this.lastWasTools = true;
+      } else if (label === 'Dia&gnostics') {
+        this.lastWasDiagnostics = true;
       }
+
       let menuItem = new MenuItem(opts);
       if (this.menuStack.length == 0) {
         this.mainMenu.append(menuItem);
@@ -56,6 +60,13 @@ module.exports = class MenuCallback {
       if (checkable) {
         menuItemOpts.checked = false;
       }
+      if (label === 'Actual &Size') {
+        menuItemOpts.role = 'resetZoom';
+      } else if (label === '&Zoom In') {
+        menuItemOpts.role = 'zoomIn';
+      } else if (label === 'Zoom O&ut') {
+        menuItemOpts.role = 'zoomOut';
+      }
       this.addToCurrentMenu(new MenuItem(menuItemOpts));
     });
 
@@ -65,7 +76,13 @@ module.exports = class MenuCallback {
     });
 
     ipcMain.on('menu_end', (event) => {
+      if (this.lastWasDiagnostics) {
+        this.lastWasDiagnostics = false;
+        this.addToCurrentMenu(new MenuItem({role: 'toggleDevTools'}));
+      }
+
       this.menuStack.pop();
+
       if (this.lastWasTools) {
         this.lastWasTools = false;
 
