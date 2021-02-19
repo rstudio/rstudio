@@ -46,5 +46,29 @@ test_that("command callbacks are invoked", {
    # the callback should not be invoked, so execution count should
    # remain at 2
    expect_equal(invoked, 2)
+})
+
+test_that("command stream callbacks are invoked", {
+   # register a command stream callback
+   commands <- c()
+   handle <- .rs.api.registerCommandCallback("*", function(id) {
+      commands <<- c(commands, id)
+   })
    
+   # record several command executions
+   .rs.invokeRpc("record_command_execution", "insertChunk")
+   .rs.invokeRpc("record_command_execution", "showHelpMenu")
+   .rs.invokeRpc("record_command_execution", "startJob")
+   
+   # ensure that the callback received all 3
+   expect_equal(commands, c("insertChunk", "showHelpMenu", "startJob"))
+   
+   # unregister the callback
+   .rs.api.unregisterCommandCallback(handle)
+   
+   # invoke one more command execution
+   .rs.invokeRpc("record_command_execution", "startProfiler")
+   
+   # this execution should not be received
+   expect_equal(commands, c("insertChunk", "showHelpMenu", "startJob"))
 })
