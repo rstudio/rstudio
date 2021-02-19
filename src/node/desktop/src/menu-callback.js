@@ -56,7 +56,6 @@ module.exports = class MenuCallback {
     });
 
     ipcMain.on('menu_add_command', (event, cmdId, label, tooltip, shortcut, checkable) => {
-      console.log(shortcut);
       let menuItemOpts = {label: label, id: cmdId};
       if (checkable) {
         menuItemOpts.checked = false;
