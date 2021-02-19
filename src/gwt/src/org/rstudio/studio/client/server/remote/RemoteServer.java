@@ -6370,6 +6370,15 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, "get_installed_fonts", callback);
    }
 
+   @Override
+   public void recordCommandExecution(String commandId,
+                                   ServerRequestCallback<Void> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(StringUtil.notNull(commandId)));
+      sendRequest(RPC_SCOPE, "record_command_execution", params, callback);
+   }
+
    protected String clientInitId_ = "";
    private String clientId_;
    private String clientVersion_ = "";

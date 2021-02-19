@@ -18,9 +18,11 @@ package org.rstudio.studio.client.server.remote;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 
+import org.rstudio.core.client.command.CommandCallbacksChangedEvent;
 import org.rstudio.core.client.events.ExecuteAppCommandEvent;
 import org.rstudio.core.client.events.HighlightEvent;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -1074,6 +1076,11 @@ public class ClientEventDispatcher
          {
             MemoryUsage data = event.getData();
             eventBus_.dispatchEvent(new MemoryUsageChangedEvent(data));
+         }
+         else if (type == ClientEvent.CommandCallbacksChanged)
+         {
+            JsArrayString commands = event.getData();
+            eventBus_.dispatchEvent(new CommandCallbacksChangedEvent(commands));
          }
          else
          {
