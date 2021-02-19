@@ -53,6 +53,7 @@
 * Log location of addins that raise parse errors at startup (#8012)
 * Support dual/charcell-spaced editor fonts (e.g., Fira Code) on Linux desktop environments (#6894)
 * Improve logging of session RPC failures (Pro #2248)
+* Add support for `rstudioapi` methods enabling callbacks for command execution (Pro #1846)
 
 ### Bugfixes
 
