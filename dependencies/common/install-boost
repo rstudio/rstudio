@@ -26,7 +26,7 @@ PLATFORM=`uname`
 # vars
 BOOST_VERSION_NUMBER=1.69.0
 BOOST_VERSION=boost_1_69_0
-BOOST_DIR=/opt/rstudio-tools/boost/$BOOST_VERSION
+BOOST_DIR=/opt/rstudio-tools/$(uname -m)/boost/$BOOST_VERSION
 BOOST_TAR=$BOOST_VERSION.tar.bz2
 BOOST_BUILD_DIR=boost-build
 BOOST_MODULES="algorithm asio array bind build chrono circular_buffer config context crc

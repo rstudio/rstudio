@@ -28,7 +28,7 @@ fi
 INSTALL_DIR=`pwd`
 
 # vars
-RSTUDIO_TOOLS_DIR=/opt/rstudio-tools
+RSTUDIO_TOOLS_DIR=/opt/rstudio-tools/$(uname -m)
 DEPOT_TOOLS_DIR=$RSTUDIO_TOOLS_DIR/depot_tools
 LLVM_VERSION=4.0.0
 LLVM_SOURCE_URL=https://s3.amazonaws.com/rstudio-buildtools/llvm-$LLVM_VERSION.src.tar.xz
