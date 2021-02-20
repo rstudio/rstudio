@@ -32,8 +32,16 @@ module.exports = class DesktopCallback {
                                                   filter,
                                                   canChooseDirectories,
                                                   focusOwner) => {
-      DesktopCallback.unimpl('desktop_get_open_file_name');
-      return '';
+
+      // TODO: apply filter
+      return dialog.showOpenDialog(
+        BrowserWindow.getFocusedWindow(),
+        {
+          properties: [canChooseDirectories ? 'openDirectory' : 'openFile'],
+          title: caption,
+          defaultPath: dir,
+          buttonLabel: label,
+        });
     });
 
     ipcMain.handle('desktop_get_save_file_name', (event,

@@ -49,7 +49,13 @@ contextBridge.exposeInMainWorld('desktop',  {
                                             filter,
                                             canChooseDirectories,
                                             focusOwner)
-      .then(filename => callback(filename));
+      .then(result => {
+        if (result.canceled) {
+          callback('');
+        } else {
+          callback(result.filePaths[0]);
+        }
+      });
   },
 
   getSaveFileName: (caption,
