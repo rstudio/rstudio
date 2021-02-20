@@ -34,11 +34,11 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    public DefaultChunkOptionsPopupPanel(String engine)
    {
       super(true);
-      
+
       engine_ = engine;
       enginePanel_.setVisible(false);
    }
-   
+
    @Override
    protected void initOptions(Command afterInit)
    {
@@ -51,7 +51,7 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
 
       afterInit.execute();
    }
-   
+
    @Override
    protected void synchronize()
    {
@@ -59,12 +59,12 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       Pair<String, String> chunkHeaderBounds = getChunkHeaderBounds(modeId);
       if (chunkHeaderBounds == null)
          return;
-      
+
       String label = tbChunkLabel_.getText();
       String newLine =
             chunkHeaderBounds.first +
             chunkPreamble_;
-      
+
       if (!label.isEmpty())
       {
          if (StringUtil.isNullOrEmpty(chunkPreamble_))
@@ -72,7 +72,7 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
          else
             newLine += " " + label;
       }
-      
+
       if (!chunkOptions_.isEmpty())
       {
          Map<String, String> sorted = sortedOptions(chunkOptions_);
@@ -82,32 +82,32 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
             newLine += ", ";
          newLine += StringUtil.collapse(sorted, "=", ", ");
       }
-      
+
       newLine +=
             chunkHeaderBounds.second +
             "\n";
-      
+
       display_.replaceRange(
             Range.fromPoints(
                   Position.create(position_.getRow(), 0),
                   Position.create(position_.getRow() + 1, 0)), newLine);
    }
-   
+
    @Override
    protected void revert()
    {
       if (position_ == null)
          return;
-      
+
       Range replaceRange = Range.fromPoints(
             Position.create(position_.getRow(), 0),
             Position.create(position_.getRow() + 1, 0));
-      
+
       display_.replaceRange(
             replaceRange,
             originalLine_ + "\n");
    }
-   
+
    private Pair<String, String> getChunkHeaderBounds(String modeId)
    {
       if (modeId == "mode/rmarkdown")
@@ -120,34 +120,34 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
          return new Pair<>("/***", "");
       else if (modeId == "mode/r")  // Used in visual mode for embedded chunk editor
          return new Pair<>("{", "}");
-      
+
       return null;
    }
-   
+
    private String extractChunkPreamble(String extractedChunkHeader,
                                        String modeId)
    {
       if (modeId == "mode/sweave")
          return "";
-      
+
       int firstSpaceIdx = extractedChunkHeader.indexOf(' ');
       if (firstSpaceIdx == -1)
          return extractedChunkHeader;
-      
+
       int firstCommaIdx = extractedChunkHeader.indexOf(',');
       if (firstCommaIdx == -1)
          firstCommaIdx = extractedChunkHeader.length();
-      
+
       String label = extractedChunkHeader.substring(
             0, Math.min(firstSpaceIdx, firstCommaIdx)).trim();
-      
+
       return label;
    }
-   
+
    private void parseChunkHeader(String line, HashMap<String, String> chunkOptions)
    {
       String modeId = display_.getModeId();
-      
+
       Pattern pattern = null;
       if (modeId == "mode/rmarkdown")
          pattern = RegexUtil.RE_RMARKDOWN_CHUNK_BEGIN;
@@ -157,19 +157,19 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
          pattern = RegexUtil.RE_RHTML_CHUNK_BEGIN;
       else if (modeId == "mode/r")
          pattern = RegexUtil.RE_EMBEDDED_R_CHUNK_BEGIN;
-      
+
       if (pattern == null) return;
-      
+
       Match match = pattern.match(line,  0);
       if (match == null) return;
-      
+
       String extracted = match.getGroup(1);
       chunkPreamble_ = extractChunkPreamble(extracted, modeId);
-      
+
       String chunkLabel = ChunkContextUi.extractChunkLabel(extracted);
       if (!StringUtil.isNullOrEmpty(chunkLabel))
          tbChunkLabel_.setText(chunkLabel);
-      
+
       // if we had a chunk label, then we want to navigate our cursor to
       // the first comma in the chunk header; otherwise, we start at the
       // first space. this is done to accept chunk headers of the form
@@ -180,19 +180,19 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       int argsStartIdx = StringUtil.isNullOrEmpty(chunkLabel)
             ? extracted.indexOf(' ')
             : extracted.indexOf(',');
-      
+
       String arguments = extracted.substring(argsStartIdx + 1);
       TextCursor cursor = new TextCursor(arguments);
-      
+
       // consume commas and whitespace if needed
       cursor.consumeUntilRegex("[^\\s,]");
-      
+
       int startIndex = 0;
       do
       {
          if (!cursor.fwdToCharacter('=', false))
             break;
-         
+
          int equalsIndex = cursor.getIndex();
          int endIndex = arguments.length();
          if (cursor.fwdToCharacter(',', true) ||
@@ -200,15 +200,15 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
          {
             endIndex = cursor.getIndex();
          }
-         
+
          chunkOptions.put(
                arguments.substring(startIndex, equalsIndex).trim(),
                arguments.substring(equalsIndex + 1, endIndex).trim());
-         
+
          startIndex = cursor.getIndex() + 1;
       }
       while (cursor.moveToNextCharacter());
    }
-   
+
    private String engine_;
 }

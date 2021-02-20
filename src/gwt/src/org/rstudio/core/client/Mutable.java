@@ -23,26 +23,26 @@ public class Mutable<T>
    {
       data_ = null;
    }
-   
+
    public Mutable(T data)
    {
       data_ = data;
    }
-   
+
    public T get()
    {
       return data_;
    }
-   
+
    public void set(T data)
    {
       data_ = data;
    }
-   
+
    public void clear()
    {
       data_ = null;
    }
-   
+
    private T data_;
 }

@@ -21,14 +21,14 @@ public class SuperDevMode
       $wnd.__gwt_bookmarklet_params = {
          server_url:'http://localhost:9876/',
          module_name:'rstudio'
-      }; 
-      
-      var s = $doc.createElement('script'); 
-      s.src = 'http://localhost:9876/dev_mode_on.js'; 
+      };
+
+      var s = $doc.createElement('script');
+      s.src = 'http://localhost:9876/dev_mode_on.js';
       void($doc.getElementsByTagName('head')[0].appendChild(s));
    }-*/;
-   
-   
+
+
    public static final native boolean isActive()
    /*-{
       var modules = $wnd.__gwt_activeModules || {};

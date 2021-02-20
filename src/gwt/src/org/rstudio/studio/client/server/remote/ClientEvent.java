@@ -194,6 +194,7 @@ class ClientEvent extends JavaScriptObject
    public static final String RStudioApiRequest = "rstudioapi_request";
    public static final String DocumentCloseAllNoSave = "document_close_all_no_save";
    public static final String MemoryUsageChanged = "memory_usage_changed";
+   public static final String CommandCallbacksChanged = "command_callbacks_changed";
 
    protected ClientEvent()
    {

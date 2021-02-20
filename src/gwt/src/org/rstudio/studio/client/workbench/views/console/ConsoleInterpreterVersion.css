@@ -1,0 +1,98 @@
+@charset "UTF-8";
+
+@external windows;
+
+@external rstudio-themes-flat;
+@external rstudio-themes-default;
+@external rstudio-themes-dark;
+
+.container {
+   display: inline-block;
+}
+
+.icon {
+   display: inline-block;
+   margin-right: 4px;
+   margin-top: -3px;
+   vertical-align: top;
+}
+
+.iconTabbed {
+   margin-right: 10px;
+}
+
+.iconUntabbed {
+   margin-top: -3px;
+   margin-left: -8px;
+   margin-right: 10px;
+}
+
+.windows .iconTabbed {
+	margin-top: -4px;
+}
+
+.windows .iconUntabbed {
+	margin-top: -2px;
+}
+
+.iconR {
+   width: 17px;
+   height: 17px;
+   padding: 2px;
+}
+
+.iconPython {
+   width: 16px;
+   height: 16px;
+   padding: 2px;
+}
+
+.rstudio-themes-default .iconPython {
+   height: 18px;
+}
+
+.rstudio-themes-dark .iconPython {
+   filter: drop-shadow( 1px  1px 1px rgba(0, 0, 0, 0.4))
+           drop-shadow( 1px -1px 1px rgba(0, 0, 0, 0.4))
+           drop-shadow(-1px -1px 1px rgba(0, 0, 0, 0.4))
+           drop-shadow(-1px  1px 1px rgba(0, 0, 0, 0.4))
+}
+
+.rstudio-themes-default .iconR {
+   
+}
+
+.rstudio-themes-dark .iconR {
+   stroke: black;
+   stroke-width: 12px;
+   filter: drop-shadow( 1px  1px 1px rgba(0, 0, 0, 0.5))
+           drop-shadow( 1px -1px 1px rgba(0, 0, 0, 0.5))
+           drop-shadow(-1px -1px 1px rgba(0, 0, 0, 0.5))
+           drop-shadow(-1px  1px 1px rgba(0, 0, 0, 0.5))
+}
+
+.labelTabbed {
+   display: inline-block;
+   margin-top: 4px;
+   margin-right: 6px;
+   font-size: 9pt;
+}
+
+.windows .labelTabbed {
+	margin-top: 3px;
+}
+
+.labelUntabbed {
+   display: inline-block;
+   margin-top: 1px;
+   margin-right: 6px;
+   font-size: 9pt;
+}
+
+.rstudio-themes-default .label {
+   color: black;
+}
+
+.rstudio-themes-dark .label {
+   color: white;
+}

@@ -269,6 +269,8 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
          type = session::client_events::kEnvironmentRemoved;
       else if (name == "environment_changed")
          type = session::client_events::kEnvironmentChanged;
+      else if (name == "command_callbacks_changed")
+         type = session::client_events::kCommandCallbacksChanged;
 
       if (type != -1)
       {

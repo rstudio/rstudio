@@ -19,16 +19,18 @@
 * Detect active Python version when publishing content (#8636)
 * Use active Python version when knitting R Markdown files (#8854)
 
-### RStudio Server
-
-* **BREAKING:** RStudio when served via `http` erroneously reported its own address as `https` during redirects if the header `X-Forwarded-Proto` was defined by a proxy. That could lead to a confusing proxy setup. That has been fixed, but existing proxy installations with redirect rewite settings matching for `https` may have to be adjusted.
-
 ### RStudio Workbench
 
 * RStudio Server Pro has been renamed to RStudio Workbench to more accurately reflect its cross-language editing capabilities.
 * Added support for JupyterLab 3 (Pro #2022)
 * Added support for code-server 3.4.0+ (Pro # 1984)
 * Added a new user settings template file for VSCode settings to allow administrators to specify a default user configuration for VSCode sessions (Pro #2014)
+* Improved a Slurm Session Launch Delay that may occur due to buffering when using Slurm job steps (Pro #2331)
+
+### RStudio Server
+
+* **BREAKING:** RStudio when served via `http` erroneously reported its own address as `https` during redirects if the header `X-Forwarded-Proto` was defined by a proxy. That could lead to a confusing proxy setup. That has been fixed, but existing proxy installations with redirect rewite settings matching for `https` may have to be adjusted.
+* **BREAKING:** RStudio Workbench's Linux packages have new file names, `rstudio-workbench-*` instead of `rstudio-server-pro-*`. The operating system package name remains `rstudio-server`, so installs and upgrades will work correctly. Scripts which refer to the `.deb` or `.rpm` file names directly will need to be updated.
 
 ### Misc
 
@@ -49,6 +51,9 @@
 * Show `.renvignore` in Files pane (#8658)
 * Make the set of always-shown files and extensions in the Files pane configurable (#3221)
 * Log location of addins that raise parse errors at startup (#8012)
+* Support dual/charcell-spaced editor fonts (e.g., Fira Code) on Linux desktop environments (#6894)
+* Improve logging of session RPC failures (Pro #2248)
+* Add support for `rstudioapi` methods enabling callbacks for command execution (Pro #1846)
 
 ### Bugfixes
 
@@ -83,3 +88,6 @@
 * Fixed issue where empty panes would remain open and pop open unexpectedly (#8460)
 * Fixed an issue where the Kubernetes Launcher could hang in Azure Kubernetes Service (AKS) environments by lowering the watch-timeout-seconds parameter default down to 3 minutes instead of 5 (Pro #2312)
 * Fixed issue where 'continue comment on newline' would treat Markdown headers as comments (#6421)
+* Fixed issue where Set Working Directory command could fail if path contained quotes (#6004)
+* Fixed issue where Pro database drivers will not install if `~/odbcinst.ini` is missing (Pro #2284)
+

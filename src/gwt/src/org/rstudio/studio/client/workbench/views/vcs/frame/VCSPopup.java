@@ -33,7 +33,7 @@ public class VCSPopup
       void switchToHistory(FileSystemItem fileFilter);
       void switchToReview(ArrayList<StatusAndPath> selected);
    }
-   
+
    public static Controller show(final LayoutPanel swapContainer,
                                  final ReviewPresenter rpres,
                                  final HistoryPresenter hpres,
@@ -63,18 +63,18 @@ public class VCSPopup
          swapContainer.setWidgetVisible(history, false);
          rpres.onShow();
       }
-      
-      // create a controller used to implement switch view and to return 
+
+      // create a controller used to implement switch view and to return
       final Controller controller = new Controller() {
          @Override
          public void switchToHistory(FileSystemItem fileFilter)
          {
             if (fileFilter != null)
                hpres.setFileFilter(fileFilter);
-            
+
             hpres.onShow();
             swapContainer.setWidgetVisible(history, true);
-            swapContainer.setWidgetVisible(review, false);    
+            swapContainer.setWidgetVisible(review, false);
          }
 
          @Override
@@ -82,12 +82,12 @@ public class VCSPopup
          {
             if (selected != null)
                rpres.setSelectedPaths(selected);
-            
+
             rpres.onShow();
             swapContainer.setWidgetVisible(review, true);
             swapContainer.setWidgetVisible(history, false);
          }
-         
+
       };
 
       rpres.addSwitchViewHandler(new SwitchViewEvent.Handler() {
@@ -104,9 +104,8 @@ public class VCSPopup
             controller.switchToReview(null);
          }
       });
-      
+
       return controller;
    }
-   
-   
+
 }

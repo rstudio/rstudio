@@ -223,4 +223,3 @@ public abstract class FileDialog extends FileSystemDialog
    protected boolean allowNonexistentFile_;
    private boolean attemptAcceptOnNextNavigate_ = false;
 }
-

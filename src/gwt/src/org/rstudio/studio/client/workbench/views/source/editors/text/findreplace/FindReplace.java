@@ -52,11 +52,11 @@ public class FindReplace
       HasValue<Boolean> getWholeWord();
       HasValue<Boolean> getRegex();
       HasClickHandlers getReplaceAll();
-      
-      void activate(String searchText, 
-                    boolean defaultForward, 
+
+      void activate(String searchText,
+                    boolean defaultForward,
                     boolean inSelection);
-      
+
       void focusFindField(boolean selectAll);
       Widget getUnderlyingWidget();
    }
@@ -70,7 +70,7 @@ public class FindReplace
       display_ = display;
       globalDisplay_ = globalDisplay;
       errorCaption_ = showingReplace ? "Find/Replace" : "Find";
-      
+
       HasValue<Boolean> caseSensitive = display_.getCaseSensitive();
       caseSensitive.setValue(defaultCaseSensitive_);
       caseSensitive.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
@@ -79,7 +79,7 @@ public class FindReplace
             defaultCaseSensitive_ = event.getValue();
          }
       });
-      
+
       HasValue<Boolean> wholeWord = display_.getWholeWord();
       wholeWord.setValue(defaultWholeWord_);
       wholeWord.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
@@ -88,7 +88,7 @@ public class FindReplace
             defaultWholeWord_ = event.getValue();
          }
       });
-      
+
       HasValue<Boolean> regex = display_.getRegex();
       regex.setValue(defaultRegex_);
       regex.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
@@ -97,7 +97,7 @@ public class FindReplace
             defaultRegex_ = event.getValue();
          }
       });
-      
+
       HasValue<Boolean> wrapSearch = display_.getWrapSearch();
       wrapSearch.setValue(defaultWrapSearch_);
       wrapSearch.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
@@ -106,11 +106,11 @@ public class FindReplace
             defaultWrapSearch_ = event.getValue();
          }
       });
-      
+
       HasValue<Boolean> inSelection = display_.getInSelection();
       inSelection.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
          public void onValueChange(ValueChangeEvent<Boolean> event)
-         {     
+         {
             if (event.getValue())
             {
                resetTargetSelection();
@@ -120,8 +120,8 @@ public class FindReplace
                clearTargetSelection();
          }
       });
-      
-      
+
+
       addClickHandler(display.getReplaceAll(), new ClickHandler()
       {
          public void onClick(ClickEvent event)
@@ -129,26 +129,26 @@ public class FindReplace
             replaceAll();
          }
       });
-      
+
       display_.addFindKeyUpHandler(new KeyUpHandler() {
 
          @Override
          public void onKeyUp(KeyUpEvent event)
          {
             int keycode = event.getNativeKeyCode();
-            if (KeyboardHelper.isNavigationalKeycode(keycode) || 
-                KeyboardHelper.isControlKeycode(keycode)) 
+            if (KeyboardHelper.isNavigationalKeycode(keycode) ||
+                KeyboardHelper.isControlKeycode(keycode))
             {
                return;
-            } 
+            }
             // perform incremental search
             find(defaultForward_ ? FindType.Forward : FindType.Reverse, true);
          }
-         
+
       });
    }
-   
-   public void activate(String searchText, 
+
+   public void activate(String searchText,
                         boolean defaultForward,
                         boolean inSelection)
    {
@@ -156,27 +156,27 @@ public class FindReplace
       incrementalSearchPosition_ = null;
       display_.activate(searchText, defaultForward, inSelection);
    }
-   
+
    public void findNext()
    {
       find(FindType.Forward);
    }
-   
+
    public void findPrevious()
    {
       find(FindType.Reverse);
    }
-   
+
    public void replaceAndFind()
    {
       replace();
    }
-   
+
    public void notifyEditorFocused()
    {
       display_.getInSelection().setValue(false, true);
    }
-   
+
    public void notifyClosing()
    {
       clearTargetSelection();
@@ -195,17 +195,17 @@ public class FindReplace
    {
       return find(findType, false);
    }
-   
+
    public void selectAll()
    {
       // NOTE: 'null' range here implies whole document
       Range range = null;
       if (targetSelection_ != null)
          range = targetSelection_.getRange();
-      
+
       boolean wholeWord = display_.getWholeWord().getValue();
       boolean caseSensitive = display_.getCaseSensitive().getValue();
-      
+
       String searchString = display_.getFindValue().getValue();
       if (searchString.length() != 0)
       {
@@ -213,7 +213,7 @@ public class FindReplace
          editor_.focus();
       }
    }
-   
+
    private boolean find(FindType findType, boolean incremental)
    {
       String searchString = display_.getFindValue().getValue();
@@ -224,24 +224,24 @@ public class FindReplace
          if (incremental && (incrementalSearchPosition_ != null))
             editor_.setSelectionRange(Range.fromPoints(
                   incrementalSearchPosition_, incrementalSearchPosition_));
-         
+
          return false;
       }
-      
+
       boolean ignoreCase = !display_.getCaseSensitive().getValue();
       boolean regex = display_.getRegex().getValue();
       boolean wholeWord = display_.getWholeWord().getValue();
       boolean wrap = display_.getWrapSearch().getValue();
-     
+
       // if we are searching in a selection then create a custom position
       // (based on the current selection) and range (based on the originally
       // saved selection range)
       Position position = null;
       Range range = null;
       if (display_.getInSelection().getValue() && (targetSelection_ != null))
-      {       
+      {
          range = targetSelection_.getRange();
-         
+
          if (findType == FindType.Forward)
          {
             Position selectionEnd = editor_.getSelectionEnd();
@@ -255,7 +255,7 @@ public class FindReplace
                position = selectionStart;
          }
       }
-      
+
       // if this is an incremental search and we don't have a previous
       // incremental start position then set it, otherwise clear it
       if (incremental)
@@ -265,11 +265,11 @@ public class FindReplace
             if (position != null)
                incrementalSearchPosition_ = position;
             else
-               incrementalSearchPosition_ = defaultForward_ ? 
+               incrementalSearchPosition_ = defaultForward_ ?
                                           editor_.getSelectionStart() :
                                           editor_.getSelectionEnd();
          }
-        
+
          // incremental searches always continue searching from the
          // original search position
          position = incrementalSearchPosition_;
@@ -278,7 +278,7 @@ public class FindReplace
       {
          incrementalSearchPosition_ = null;
       }
-      
+
       // do the search
       Search search = Search.create(searchString,
                                     findType != FindType.Forward,
@@ -288,7 +288,7 @@ public class FindReplace
                                     position,
                                     range,
                                     regex);
-   
+
       try
       {
          Range resultRange = search.find(editor_.getSession());
@@ -304,7 +304,7 @@ public class FindReplace
             {
                editor_.collapseSelection(true);
             }
-            
+
             return false;
          }
          else
@@ -318,7 +318,7 @@ public class FindReplace
          globalDisplay_.showMessage(GlobalDisplay.MSG_ERROR,
                errorCaption_,
                "Invalid search term.");
-         
+
          return false;
       }
    }
@@ -341,7 +341,7 @@ public class FindReplace
          editor_.replaceSelection(display_.getRegex().getValue()
                                   ? substitute(m, replacement, line)
                                   : replacement);
-         
+
          if (targetSelection_ != null)
             targetSelection_.syncMarker();
       }
@@ -360,13 +360,13 @@ public class FindReplace
       String query = regex ? find : Pattern.escape(find);
       if (wholeWord)
          query = "\\b" + query + "\\b";
-      
+
       return Pattern.create(query, flags);
    }
 
    private void replaceAll()
    {
-      String code = null; 
+      String code = null;
       if (targetSelection_ != null)
       {
          Range range = targetSelection_.getRange();
@@ -406,7 +406,7 @@ public class FindReplace
 
             // Point to the end of this match
             pos = index + m.getValue().length();
-            
+
             // If the data matched is an empty string (which can happen for
             // regexps that don't consume characters such as ^ or $), then we
             // didn't advance the state of the underlying RegExp object, and
@@ -419,21 +419,21 @@ public class FindReplace
          result.append(code, pos, code.length());
 
          String newCode = result.toString();
-         
+
          // either replace all or replace just the target range
          if (targetSelection_ != null)
          {
             // restore and then replace the selection
             editor_.setSelectionRange(targetSelection_.getRange());
             editor_.replaceSelection(newCode, false);
-            
+
             // reset the target selection
             resetTargetSelection();
          }
          else
          {
             editor_.replaceCode(newCode);
-         }      
+         }
       }
       globalDisplay_.showMessage(GlobalDisplay.MSG_INFO,
                                  errorCaption_,
@@ -516,11 +516,11 @@ public class FindReplace
    private final String errorCaption_;
    private boolean defaultForward_ = true;
    private Position incrementalSearchPosition_ = null;
-   
+
    private class TargetSelectionTracker
    {
       public TargetSelectionTracker()
-      { 
+      {
          // expand the selection to include lines (ace will effectively do
          // this for a range based search)
          editor_.fitSelectionToLines(true);
@@ -532,54 +532,54 @@ public class FindReplace
                end);
          // collapse the cursor to the beginning or end
          editor_.collapseSelection(defaultForward_);
-         
+
          // sync marker
          syncMarker();
       }
-      
+
       public Range getRange()
       {
          return anchoredSelection_.getRange();
       }
-      
+
       public void syncMarker()
       {
          clear();
-         
+
          markerId_ = editor_.getSession().addMarker(getRange(),
                                                    "ace_find_line",
                                                    "background",
                                                    false);
       }
-      
+
       public void clear()
       {
          if (anchoredSelection_ != null)
             anchoredSelection_.detach();
-         
+
          if (markerId_ != null)
             editor_.getSession().removeMarker(markerId_);
       }
-      
+
       private Integer markerId_ = null;
       private AnchoredSelection anchoredSelection_ = null;
-      
+
    }
    private TargetSelectionTracker targetSelection_ = null;
-   
+
    private void clearTargetSelection()
    {
       if (targetSelection_ != null)
          targetSelection_.clear();
       targetSelection_ = null;
    }
-   
+
    private void resetTargetSelection()
    {
       clearTargetSelection();
       targetSelection_ = new TargetSelectionTracker();
    }
-   
+
    private static boolean defaultCaseSensitive_ = false;
    private static boolean defaultWrapSearch_ = true;
    private static boolean defaultRegex_ = false;

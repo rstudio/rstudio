@@ -16,6 +16,9 @@
 # Create environment to store data for registerChunkCallback and unregisterChunkCallback
 .rs.setVar("notebookChunkCallbacks", new.env(parent = emptyenv()))
 
+# Create environment to store data for command callbacks
+.rs.setVar("commandCallbacks", new.env(parent = emptyenv()))
+
 # list of API events (keep in sync with RStudioApiRequestEvent.java)
 .rs.setVar("api.eventTypes", list(
    TYPE_UNKNOWN              = 0L,
@@ -33,8 +36,6 @@
    TYPE_ACTIVE_WINDOW = 1L,
    TYPE_ALL_WINDOWS   = 2L
 ))
-
-
 
 .rs.addApiFunction("restartSession", function(command = NULL) {
    command <- as.character(command)
@@ -1037,6 +1038,95 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
    }
 })
 
+# get list of command IDs which currently have callbacks (listeners) attached
+.rs.addFunction("getCommandsWithCallbacks", function() {
+   unique(sort(unlist(lapply(names(.rs.commandCallbacks), function(handle) {
+      handler <- get(handle, envir = .rs.commandCallbacks)
+      if (nzchar(handler$command)) 
+         handler$command
+      else
+         NULL
+   }))))
+})
+
+# register a command callback
+.rs.addApiFunction("registerCommandCallback", function(commandId, commandCallback) {
+
+   # validate arguments
+   if (!nzchar(commandId))
+      stop("'commandId' must be a character vector naming an RStudio command ID")
+   if (!is.function(commandCallback))
+      stop("'commandCallback' must be a function")
+
+   # find a unique ID for this callback
+   repeat {
+      handle <- .Call("rs_generateShortUuid", PACKAGE = "(embedding)")
+      if (!(handle %in% names(.rs.commandCallbacks)))
+         break
+   } 
+
+   # save the ID along with the registered callback
+   assign(handle, 
+          value = list(
+            command = commandId,
+            callback = commandCallback),
+          envir = .rs.commandCallbacks)
+
+   # send event to client indicating which command IDs currently have callbacks registered
+   .rs.enqueClientEvent("command_callbacks_changed", 
+                        .rs.scalarListFromList(as.list(.rs.getCommandsWithCallbacks())))
+
+   # return the handle we created
+   handle 
+})
+
+# unregister a command callback
+.rs.addApiFunction("unregisterCommandCallback", function(handle = NULL) {
+   if (!is.null(handle) && !exists(handle, envir = .rs.commandCallbacks))
+      warning("Handle '", handle, " is not a registered RStudio command callback.")
+   else {
+      rm(list = handle, envir = .rs.commandCallbacks)
+
+      # send event to client indicating which command IDs currently have callbacks registered
+      .rs.enqueClientEvent("command_callbacks_changed", 
+                           .rs.scalarListFromList(as.list(.rs.getCommandsWithCallbacks())))
+
+   }
+
+   invisible(NULL)
+})
+
+# records the execution of a command
+.rs.addJsonRpcHandler("record_command_execution", function(commandId) {
+   # loop over all registered command callbacks
+   for (handle in names(.rs.commandCallbacks)) {
+
+      # retrieve handler metadata
+      handler <- get(handle, envir = .rs.commandCallbacks)
+      
+      # sanity check: ensure this handler looks properly formatted. nothing else should be writing
+      # to this environment, but if it does we don't want it to trip up the processing below.
+      if (!is.list(handler)) {
+         next
+      }
+      if (!is.function(handler$callback)) {
+         next
+      }
+
+      # if this is a stream listener for all commands ("*"), invoke it with the command ID
+      if (identical(handler$command, "*")) {
+         handler$callback(commandId)
+         next
+      }
+
+      # if this is a listener for a specific command, invoke it without arguments
+      if (identical(handler$command, commandId)) {
+         handler$callback()
+      }
+   }
+})
+
+
 # Tutorial ----
 
 # invoked by rstudioapi to instruct RStudio to open a particular
@@ -1152,3 +1242,4 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
    .rs.api.sendRequest(request)
    invisible(path)
 })
+

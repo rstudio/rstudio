@@ -32,11 +32,11 @@ public class SwitchToTerminalEvent extends CrossWindowEvent<Handler>
        */
       void onSwitchToTerminal(SwitchToTerminalEvent event);
    }
-   
+
    public SwitchToTerminalEvent()
    {
    }
-   
+
    /**
     * @param handle terminal to switch to
     * @param input text to send to terminal, may be null
@@ -66,17 +66,17 @@ public class SwitchToTerminalEvent extends CrossWindowEvent<Handler>
    {
       handler.onSwitchToTerminal(this);
    }
-   
+
    public String getTerminalHandle()
    {
       return terminalHandle_;
    }
-   
+
    public String getInputText()
    {
       return inputText_;
    }
-   
+
    public boolean createdByApi()
    {
       return createdByApi_;
@@ -85,6 +85,6 @@ public class SwitchToTerminalEvent extends CrossWindowEvent<Handler>
    private String terminalHandle_;
    private String inputText_;
    private boolean createdByApi_;
-   
+
    public static final Type<Handler> TYPE = new Type<>();
 }

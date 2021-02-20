@@ -65,6 +65,7 @@ import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.views.PaneLayoutPreferencesPane;
+import org.rstudio.studio.client.workbench.views.console.ConsoleInterpreterVersion;
 import org.rstudio.studio.client.workbench.views.console.ConsolePane;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
 import org.rstudio.studio.client.workbench.views.output.markers.MarkersOutputTab;
@@ -1667,7 +1668,9 @@ public class PaneManager
    private LogicalWindow createConsole()
    {
       String frameName = "Console";
+      
       PrimaryWindowFrame frame = new PrimaryWindowFrame(frameName, null);
+      frame.setTitleWidget(new ConsoleInterpreterVersion());
 
       ToolbarButton goToWorkingDirButton =
             commands_.goToWorkingDir().createToolbarButton();

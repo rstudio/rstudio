@@ -46,45 +46,45 @@ public class CommitFilterToolbarButton extends ToolbarMenuButton
             ALL_COMMITS_TITLE,
             StandardIcons.INSTANCE.empty_command(),
             new ToolbarPopupMenu());
-      
+
       fileTypeRegistry_ = fileTypeRegistry;
       fileDialogs_ = fileDialogs;
       fileContext_ = fileContext;
       session_ = session;
-      
+
       ToolbarPopupMenu menu = getMenu();
-      
+
       menu.addItem(new MenuItem("(all commits)", new Command() {
          @Override
          public void execute()
          {
             setValue(null);
-         } 
+         }
       }));
-      
+
       menu.addItem(new MenuItem("Filter by File...", new Command() {
          @Override
          public void execute()
          {
             fileDialogs_.openFile("Choose File",
-                                  fileContext_, 
+                                  fileContext_,
                                   getInitialChooserPath(),
                                   chooserOperation());
-         } 
+         }
       }));
-      
+
       menu.addItem(new MenuItem("Filter by Directory...", new Command() {
          @Override
          public void execute()
          {
-            fileDialogs_.chooseFolder("Choose Folder", 
-                                       fileContext_, 
+            fileDialogs_.chooseFolder("Choose Folder",
+                                       fileContext_,
                                        getInitialChooserPath(),
                                        chooserOperation());
-            
-         } 
+
+         }
       }));
-      
+
    }
 
    @Override
@@ -104,7 +104,7 @@ public class CommitFilterToolbarButton extends ToolbarMenuButton
    public void setValue(FileSystemItem value)
    {
       setValue(value, true);
-      
+
    }
 
    @Override
@@ -113,7 +113,7 @@ public class CommitFilterToolbarButton extends ToolbarMenuButton
       if (!FileSystemItem.areEqual(value, value_))
       {
          value_ = value;
-         
+
          if (value_ == null)
          {
             setLeftImage(StandardIcons.INSTANCE.empty_command());
@@ -129,19 +129,19 @@ public class CommitFilterToolbarButton extends ToolbarMenuButton
             setText(value_.getName());
             setTitle("Filter: " + value_.getPath());
          }
-         
+
          if (fireEvents)
             ValueChangeEvent.fire(CommitFilterToolbarButton.this, value_);
       }
-      
+
    }
-   
+
    private FileSystemItem getInitialChooserPath()
    {
-      return  value_ != null ? value_.getParentPath() : 
-                               session_.getSessionInfo().getActiveProjectDir(); 
+      return  value_ != null ? value_.getParentPath() :
+                               session_.getSessionInfo().getActiveProjectDir();
    }
-   
+
    private ProgressOperationWithInput<FileSystemItem> chooserOperation()
    {
       return new ProgressOperationWithInput<FileSystemItem>() {
@@ -151,20 +151,20 @@ public class CommitFilterToolbarButton extends ToolbarMenuButton
                              ProgressIndicator indicator)
          {
             indicator.onCompleted();
-            
+
             if (input != null)
                setValue(input);
          }
        };
    }
 
-   
+
    private FileSystemItem value_ = null;
    private final FileTypeRegistry fileTypeRegistry_;
    private final RemoteFileSystemContext fileContext_;
    private final FileDialogs fileDialogs_;
    private final Session session_;
-   
+
    private static final String ALL_COMMITS = "(all commits)";
    private static final String ALL_COMMITS_TITLE = "Filter: (None)";
 }

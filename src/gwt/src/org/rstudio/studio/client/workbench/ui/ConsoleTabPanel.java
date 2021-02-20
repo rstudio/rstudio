@@ -27,6 +27,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.console.ConsoleClearButton;
+import org.rstudio.studio.client.workbench.views.console.ConsoleInterpreterVersion;
 import org.rstudio.studio.client.workbench.views.console.ConsoleInterruptButton;
 import org.rstudio.studio.client.workbench.views.console.ConsoleInterruptProfilerButton;
 import org.rstudio.studio.client.workbench.views.console.ConsolePane;
@@ -43,12 +44,14 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
    public void initialize(ConsoleInterruptButton consoleInterrupt,
                           ConsoleInterruptProfilerButton consoleInterruptProfiler,
                           ConsoleClearButton consoleClearButton,
+                          ConsoleInterpreterVersion consoleInterpreterVersion,
                           UserPrefs uiPrefs,
                           Session session)
    {
       consoleInterrupt_ = consoleInterrupt;
       consoleInterruptProfiler_ = consoleInterruptProfiler;
       consoleClearButton_ = consoleClearButton;
+      consoleInterpreterVersion_ = consoleInterpreterVersion;
       userPrefs_ = uiPrefs;
       session_ = session;
    }
@@ -388,6 +391,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
          {
             owner_.setMainWidget(consolePane_);
             owner_.addLeftWidget(goToWorkingDirButton_);
+            
             owner_.setContextButton(consoleClearButton_,
                                     consoleClearButton_.getWidth(),
                                     consoleClearButton_.getHeight(),
@@ -400,6 +404,8 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
                                     consoleInterruptProfiler_.getWidth(),
                                     consoleInterruptProfiler_.getHeight(),
                                     2);
+            
+                  
             consolePane_.onBeforeSelected();
             consolePane_.onSelected();
             consolePane_.setVisible(true);
@@ -466,6 +472,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
    private ConsoleInterruptButton consoleInterrupt_;
    private ConsoleInterruptProfilerButton consoleInterruptProfiler_;
    private ConsoleClearButton consoleClearButton_;
+   private ConsoleInterpreterVersion consoleInterpreterVersion_;
    private final ToolbarButton goToWorkingDirButton_;
    private boolean findResultsTabVisible_;
    private boolean consoleOnly_;

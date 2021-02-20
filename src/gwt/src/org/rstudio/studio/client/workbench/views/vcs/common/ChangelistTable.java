@@ -61,7 +61,7 @@ public abstract class ChangelistTable extends Composite
       @Source({RStudioCellTableStyle.RSTUDIO_DEFAULT_CSS,
                "ChangelistTableCellTableStyle.css"})
       ChangelistTableCellTableStyle cellTableStyle();
-      
+
       @Source("ChangelistTable.css")
       Styles styles();
    }
@@ -70,13 +70,13 @@ public abstract class ChangelistTable extends Composite
    {
       String status();
    }
-   
+
 
    interface Styles extends CssResource
    {
       String infoBar();
    }
-   
+
    public static void ensureStylesInjected()
    {
       resources_.styles().ensureInjected();
@@ -206,7 +206,7 @@ public abstract class ChangelistTable extends Composite
          progressPanel_.endProgressOperation();
       }
    }
-   
+
 
    public void showInfoBar(String message, boolean animate)
    {
@@ -215,10 +215,10 @@ public abstract class ChangelistTable extends Composite
          infoBar_ = new ChangelistInfoBar();
          layout_.add(infoBar_);
          layout_.setWidgetLeftRight(infoBar_, 0, Unit.PX, 0, Unit.PX);
-         layout_.setWidgetTopHeight(infoBar_, 
-                                    0, Unit.PX, 
+         layout_.setWidgetTopHeight(infoBar_,
+                                    0, Unit.PX,
                                     infoBar_.getHeight(), Unit.PX);
-         layout_.setWidgetTopBottom(scrollPanel_, 
+         layout_.setWidgetTopBottom(scrollPanel_,
                                     infoBar_.getHeight(), Unit.PX,
                                     0, Unit.PX);
          infoBar_.setText(message);
@@ -396,7 +396,7 @@ public abstract class ChangelistTable extends Composite
    {
       return table_.addMouseDownHandler(handler);
    }
-   
+
    @Override
    public HandlerRegistration addContextMenuHandler(ContextMenuHandler handler)
    {
@@ -412,7 +412,7 @@ public abstract class ChangelistTable extends Composite
    {
       table_.setFocus(true);
    }
-   
+
    private class ChangelistInfoBar extends InfoBar
    {
       public ChangelistInfoBar()
@@ -420,7 +420,7 @@ public abstract class ChangelistTable extends Composite
          super(InfoBar.INFO);
          addStyleName(resources_.styles().infoBar());
          container_.getElement().getStyle().setBackgroundColor("#EEEFF1");
-         
+
       }
    }
 

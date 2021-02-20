@@ -203,6 +203,7 @@ const int kEnvironmentChanged = 188;
 const int kRStudioApiRequest = 189;
 const int kDocumentCloseAllNoSave = 190;
 const int kMemoryUsageChanged = 191;
+const int kCommandCallbacksChanged = 192;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -564,6 +565,8 @@ std::string ClientEvent::typeName() const
          return "document_close_all_no_save";
       case client_events::kMemoryUsageChanged:
          return "memory_usage_changed";
+      case client_events::kCommandCallbacksChanged:
+         return "command_callbacks_changed";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " +
                              safe_convert::numberToString(type_));

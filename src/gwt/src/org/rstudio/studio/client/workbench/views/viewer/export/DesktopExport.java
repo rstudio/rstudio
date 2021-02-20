@@ -37,10 +37,10 @@ public class DesktopExport
          {
             // hide gripper
             sizeEditor.setGripperVisible(false);
-            
+
             // get zoom level
             double zoomLevel = DesktopInfo.getZoomLevel();
-            
+
             // get the preview iframe rect
             ElementEx iframe = sizeEditor.getPreviewIFrame().<ElementEx>cast();
             final Rectangle viewerRect = new Rectangle(
@@ -48,24 +48,24 @@ public class DesktopExport
                    (int) Math.ceil(zoomLevel * iframe.getClientTop()),
                    (int) Math.ceil(zoomLevel * iframe.getClientWidth()),
                    (int) Math.ceil(zoomLevel * iframe.getClientHeight())).inflate(-1);
-            
+
             // perform the export
             Scheduler.get().scheduleDeferred(new ScheduledCommand() {
                @Override
                public void execute()
                {
                   exporter.execute(viewerRect);
-                  
+
                   // show gripper
                   sizeEditor.setGripperVisible(true);
-                  
+
                   // call onCompleted
                   if (onCompleted != null)
                      onCompleted.execute();
                }
             });
-         }   
+         }
       });
-     
+
    }
 }

@@ -15,6 +15,7 @@
 package org.rstudio.core.client.command;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.command.EditorCommandManager.EditorKeyBindings;
 import org.rstudio.core.client.command.KeyMap.KeyMapType;
@@ -23,7 +24,9 @@ import org.rstudio.core.client.events.ExecuteAppCommandEvent;
 import org.rstudio.core.client.events.RStudioKeybindingsChangedEvent;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.rstudioapi.model.RStudioAPIServerOperations;
 import org.rstudio.studio.client.common.satellite.Satellite;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedEvent;
@@ -57,6 +60,41 @@ public class ApplicationCommandManager
                   loadBindings();
                }
             });
+
+      // Listen for changes to the list of commands that have callbacks. We maintain a list of these on the client
+      // side in order to avoid having to emit an RPC every time a command is executed.
+      events_.addHandler(
+         CommandCallbacksChangedEvent.TYPE,
+         new CommandCallbacksChangedEvent.Handler()
+         {
+            @Override
+            public void onCommandCallbacksChanged(CommandCallbacksChangedEvent event)
+            {
+               commandsWithCallbacks_ = JsArrayUtil.fromJsArrayString(event.getCommands());
+            }
+         });
+
+      // Listen for commands to be executed. If a command that has a callback is executed, notify the server
+      // so that the callback can be invoked.
+      events_.addHandler(
+         CommandEvent.TYPE,
+         new CommandHandler()
+         {
+            @Override
+            public void onCommand(AppCommand command)
+            {
+               if (commandsWithCallbacks_ == null)
+               {
+                  // Expected if no commands are registered
+                  return;
+               }
+
+               if (commandsWithCallbacks_.contains(command.getId()) || commandsWithCallbacks_.contains("*"))
+               {
+                  apiServer_.recordCommandExecution(command.getId(), new VoidServerRequestCallback());
+               }
+            }
+         });
 
       // This event should only be received by satellites.
       events_.addHandler(
@@ -95,10 +133,14 @@ public class ApplicationCommandManager
    }
 
    @Inject
-   private void initialize(EventBus events, FilesServerOperations server, Commands commands)
+   private void initialize(EventBus events,
+                           FilesServerOperations server,
+                           RStudioAPIServerOperations apiServer,
+                           Commands commands)
    {
       events_ = events;
       server_ = server;
+      apiServer_ = apiServer;
       commands_ = commands;
    }
 
@@ -189,6 +231,7 @@ public class ApplicationCommandManager
    }
 
    private final ConfigFileBacked<EditorKeyBindings> bindings_;
+   private List<String> commandsWithCallbacks_;
 
    public static final String KEYBINDINGS_PATH =
          "keybindings/rstudio_bindings.json";
@@ -196,6 +239,7 @@ public class ApplicationCommandManager
    // Injected ----
    private EventBus events_;
    private FilesServerOperations server_;
+   private RStudioAPIServerOperations apiServer_;
    private Commands commands_;
 }
 

@@ -25,12 +25,12 @@ import org.rstudio.studio.client.workbench.prefs.model.UserStateAccessor;
 public class AceTheme extends UserStateAccessor.Theme
 {
    protected AceTheme() {}
-   
+
    public static final AceTheme createDefault()
    {
       return createDefault(false);
    }
-   
+
    public static final AceTheme createDefault(boolean isDark)
    {
       if (isDark)
@@ -42,7 +42,7 @@ public class AceTheme extends UserStateAccessor.Theme
          return create("Textmate (default)", "theme/default/textmate.rstheme", false);
       }
    }
-   
+
    public static final native AceTheme create(String name, String url, Boolean isDark)
    /*-{
       var theme = new Object();
@@ -51,47 +51,47 @@ public class AceTheme extends UserStateAccessor.Theme
       theme.isDark = isDark;
       return theme;
    }-*/;
-   
+
    public native final Boolean isDark()
    /*-{
       return this.isDark;
    }-*/;
-   
+
    public native final Boolean isSolarizedLight() /*-{
       return this.url.indexOf('solarized_light.rstheme') !== -1;
    }-*/;
-   
+
    public final Boolean isDefaultTheme()
    {
       return Pattern.create("^theme/default/.+?\\.rstheme$").test(getUrl());
    }
-   
+
    public final Boolean isLocalCustomTheme()
    {
       return Pattern.create("^theme/custom/local/.+?\\.rstheme$").test(getUrl());
    }
-   
+
    public final Boolean isGlobalCustomTheme()
    {
       return Pattern.create("^theme/custom/global/.+?\\.rstheme$").test(getUrl());
    }
-   
+
    public final String getFileStem()
    {
       return FileSystemItem.createFile(this.getUrl()).getStem();
    }
-   
+
    public final Boolean isEqualTo(AceTheme other)
    {
       return StringUtil.equalsIgnoreCase(other.getName(), this.getName());
    }
 
    public final static String getThemeErrorClass(AceTheme theme)
-   {    
+   {
       if (theme == null || createDefault().isEqualTo(theme))
          return " ace_constant";
-      else  
+      else
          return " ace_constant ace_language";
    }
-   
+
 }

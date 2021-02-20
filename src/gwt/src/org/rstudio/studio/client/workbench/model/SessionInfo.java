@@ -655,6 +655,10 @@ public class SessionInfo extends JavaScriptObject
    public final native boolean getPythonInitialized() /*-{
       return this.python_initialized;
    }-*/;
+   
+   public final native boolean getPythonReplActive() /*-{
+      return this.python_repl_active;
+   }-*/;
 
    public final native String getSessionNode() /*-{
       return this.session_node;

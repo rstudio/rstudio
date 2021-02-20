@@ -228,7 +228,6 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
       openSelectedFiles();
    }
 
-
    @Override
    public void onVcsCommit()
    {
@@ -327,7 +326,6 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
 
 
    }
-
 
    private void doRevert(final ArrayList<String> revertList,
                          final Command onRevertConfirmed)

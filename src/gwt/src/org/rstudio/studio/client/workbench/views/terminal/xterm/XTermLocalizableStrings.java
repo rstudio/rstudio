@@ -35,4 +35,3 @@ public class XTermLocalizableStrings
     */
    public String tooMuchOutput;
 }
-

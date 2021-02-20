@@ -74,17 +74,17 @@ public class TutorialPane
                           TutorialServerOperations server)
    {
       super("Tutorial", events);
-      
+
       globalDisplay_ = globalDisplay;
       commands_      = commands;
       session_       = session;
       dependencies_  = dependencies;
       server_        = server;
-      
+
       indicator_ = globalDisplay_.getProgressIndicator("Error Loading Tutorial");
-      
+
       events.addHandler(ThemeChangedEvent.TYPE, this);
-      
+
       initTutorialJsCallbacks();
       ensureWidget();
    }
@@ -98,29 +98,29 @@ public class TutorialPane
       frame_.addStyleName("ace_editor_theme");
       frame_.setUrl(URIConstants.ABOUT_BLANK);
       ElementIds.assignElementId(frame_.getElement(), ElementIds.TUTORIAL_FRAME);
-    
+
       frame_.addLoadHandler(this);
-      
+
       home();
       return new AutoGlassPanel(frame_);
    }
-   
+
    @Override
    protected Toolbar createMainToolbar()
    {
       toolbar_ = new Toolbar("Tutorial Tab");
-      
+
       // TODO: managing history within an iframe is surprisingly challenging,
       // so we just leave these buttons unavailable for now and just allow
       // navigation to home
       // toolbar_.addLeftWidget(commands_.tutorialBack().createToolbarButton());
       // toolbar_.addLeftWidget(commands_.tutorialForward().createToolbarButton());
-      
+
       toolbar_.addLeftWidget(commands_.tutorialHome().createToolbarButton());
       toolbar_.addLeftWidget(commands_.tutorialPopout().createToolbarButton());
       toolbar_.addLeftWidget(commands_.tutorialStop().createToolbarButton());
       toolbar_.addRightWidget(commands_.tutorialRefresh().createToolbarButton());
-      
+
       return toolbar_;
    }
 
@@ -129,18 +129,18 @@ public class TutorialPane
    {
       frame_.getWindow().back();
    }
-   
+
    @Override
    public void forward()
    {
       frame_.getWindow().forward();
    }
-   
+
    @Override
    public void popout()
    {
       final String url = frame_.getUrl();
-      
+
       server_.tutorialMetadata(url, new ServerRequestCallback<JsObject>()
       {
          @Override
@@ -151,7 +151,7 @@ public class TutorialPane
                   response.getString("name"),
                   response.getString("package"));
          }
-         
+
          @Override
          public void onError(ServerError error)
          {
@@ -159,18 +159,18 @@ public class TutorialPane
             onPopout(url, null, null);
          }
       });
-      
+
    }
-   
+
    private void onPopout(String tutorialUrl,
                          String tutorialName,
                          String tutorialPackage)
    {
       int width = Math.max(800, frame_.getElement().getClientWidth());
       int height = Math.max(800, frame_.getElement().getClientHeight());
-      
+
       String windowName = "rstudio-tutorial-" + StringUtil.makeRandomId(16);
-      
+
       NewWindowOptions options = new NewWindowOptions();
       options.setAppendClientId(false);
       options.setName(windowName);
@@ -183,23 +183,23 @@ public class TutorialPane
                tutorialPackage,
                windowName);
       });
-      
+
       globalDisplay_.openWebMinimalWindow(
             tutorialUrl,
             false,
             width,
             height,
             options);
-      
+
       home();
    }
-   
+
    @Override
    public void refresh()
    {
       frame_.getWindow().reload();
    }
-   
+
    @Override
    public void onTutorialStarted(Tutorial tutorial)
    {
@@ -207,7 +207,7 @@ public class TutorialPane
       {
          private HandlerRegistration handler_;
          private boolean loaded_ = false;
-         
+
          @Override
          protected void invoke()
          {
@@ -216,7 +216,7 @@ public class TutorialPane
                if (!loaded_)
                   indicator_.onProgress("Loading tutorial...");
             });
-            
+
             handler_ = frame_.addLoadHandler((LoadEvent event) ->
             {
                loaded_ = true;
@@ -226,20 +226,20 @@ public class TutorialPane
          }
       };
    }
-   
+
    @Override
    public void launchTutorial(Tutorial tutorial)
    {
       commands_.tutorialStop().setVisible(false);
       commands_.tutorialStop().setEnabled(false);
-      
+
       String url = "./tutorial/run" +
             "?package=" + tutorial.getPackageName() +
             "&name=" + tutorial.getTutorialName();
-      
+
       navigate(url, false);
    }
-   
+
    @Override
    public void openTutorial(String url)
    {
@@ -247,26 +247,26 @@ public class TutorialPane
       commands_.tutorialStop().setEnabled(true);
       navigate(url, true);
    }
-   
+
    @Override
    public void home()
    {
       frame_.setUrl("." + TutorialPresenter.URLS_HOME);
    }
-   
+
    @Override
    public String getUrl()
    {
       return frame_.getUrl();
    }
-   
+
    private void runTutorial(String tutorialName,
                             String tutorialPackage)
    {
       // check and see if this tutorial is running in a child window
       if (focusExistingTutorialWindow(tutorialName, tutorialPackage))
          return;
-      
+
       // otherwise, launch tutorial in pane
       dependencies_.withTutorialDependencies(() ->
       {
@@ -274,12 +274,12 @@ public class TutorialPane
          launchTutorial(tutorial);
       });
    }
-   
+
    private void stopTutorial(String url)
    {
       server_.tutorialStop(url, new VoidServerRequestCallback());
    }
-   
+
    private void navigate(String url, boolean replaceUrl)
    {
       if (URIUtils.isLocalUrl(url))
@@ -290,10 +290,10 @@ public class TutorialPane
       {
          frame_.getElement().setAttribute("sandbox", "allow-scripts allow-same-origin allow-forms allow-popups");
       }
-     
+
       frame_.setUrl(url);
    }
-   
+
    private void onTutorialLoaded()
    {
       // because we proxy Shiny applications on RSP, we're free
@@ -302,26 +302,26 @@ public class TutorialPane
       // this here
       if (!frame_.getUrl().startsWith(GWT.getHostPageBaseURL()))
          return;
-      
+
       Document doc = frame_.getWindow().getDocument();
       NodeList<Element> els = doc.getElementsByTagName("a");
       for (int i = 0, n = els.getLength(); i < n; i++)
       {
          Element el = els.getItem(i);
-         
+
          String href = el.getPropertyString("href");
          if (href == null)
             continue;
-         
+
          boolean isNonLocalHref =
                href.contains("://") &&
                !href.startsWith(GWT.getHostPageBaseURL());
-         
+
          if (isNonLocalHref)
             el.setPropertyString("target", "_blank");
       }
    }
-   
+
    private void onPageLoaded()
    {
       // initialize styles for frame
@@ -341,10 +341,10 @@ public class TutorialPane
          styleEl.setInnerHTML(RES.styles().getText());
          doc.getHead().appendChild(styleEl);
       }
-      
+
       body.getStyle().setVisibility(Visibility.VISIBLE);
    }
-   
+
    private void onFrameLoaded()
    {
       String url = frame_.getUrl();
@@ -357,42 +357,42 @@ public class TutorialPane
          onPageLoaded();
       }
    }
-   
+
    @Override
    public void onLoad(LoadEvent event)
    {
       onFrameLoaded();
    }
-   
+
    @Override
    public void onThemeChanged(ThemeChangedEvent event)
    {
       onFrameLoaded();
    }
-   
+
    @Override
    public HandlerRegistration addLoadHandler(LoadHandler handler)
    {
       return frame_.addLoadHandler(handler);
    }
-   
+
    @Override
    public HandlerRegistration addTutorialNavigateHandler(Handler handler)
    {
       return frame_.addHandler(handler, TutorialNavigateEvent.TYPE);
    }
-   
+
    private void installLearnr()
    {
       new ImmediatelyInvokedFunctionExpression()
       {
          private HandlerRegistration handler_;
          private ProgressIndicator progress_;
-         
+
          private final String errorCaption = "Error installing learnr";
          private final String errorMessage =
                "RStudio was unable to install the learnr package.";
-         
+
          @Override
          protected void invoke()
          {
@@ -404,7 +404,7 @@ public class TutorialPane
                public void onConsolePrompt(ConsolePromptEvent event)
                {
                   handler_.removeHandler();
-                  
+
                   String version = session_.getSessionInfo().getPackageDependencies().getPackage("learnr").getVersion();
                   server_.isPackageInstalled("learnr", version, new ServerRequestCallback<Boolean>()
                   {
@@ -416,7 +416,7 @@ public class TutorialPane
                            progress_.onError(errorMessage);
                            return;
                         }
-                        
+
                         progress_.onCompleted();
                      }
 
@@ -429,7 +429,7 @@ public class TutorialPane
                   });
                }
             });
-            
+
             // fire console event installing learnr
             progress_.onProgress("Installing learnr...");
             SendToConsoleEvent event = new SendToConsoleEvent("install.packages(\"learnr\")", true);
@@ -437,29 +437,29 @@ public class TutorialPane
          }
       };
    }
-   
+
    private final native void initTutorialJsCallbacks()
    /*-{
-   
+
       var self = this;
-      
+
       $wnd.tutorialRun = $entry(function(tutorialName, tutorialPackage) {
          self.@org.rstudio.studio.client.workbench.views.tutorial.TutorialPane::runTutorial(*)(tutorialName, tutorialPackage);
       });
-      
+
       $wnd.tutorialInstallLearnr = $entry(function() {
          self.@org.rstudio.studio.client.workbench.views.tutorial.TutorialPane::installLearnr()();
       });
-      
+
    }-*/;
-   
+
    private final native void initExternalWindowJsCallbacks(WindowEx window,
                                                            String tutorialUrl,
                                                            String tutorialName,
                                                            String tutorialPackage,
                                                            String windowName)
    /*-{
-      
+
       // register this window
       $wnd.tutorialWindows = $wnd.tutorialWindows || {};
       $wnd.tutorialWindows[tutorialUrl] = {
@@ -468,16 +468,16 @@ public class TutorialPane
          "window": window,
          "windowName": windowName
       };
-      
+
       // start polling for window closure
       var self = this;
       $wnd.tutorialWindowsCallback = $wnd.tutorialWindowsCallback || setInterval(function() {
-         
+
          // stop any tutorials whose associated window was closed
          for (var url in $wnd.tutorialWindows)
          {
             var entry = $wnd.tutorialWindows[url];
-            
+
             var window = entry["window"];
             if (window.closed)
             {
@@ -485,7 +485,7 @@ public class TutorialPane
                delete $wnd.tutorialWindows[url];
             }
          }
-         
+
          // stop polling if we have no more child windows
          var keys = Object.keys($wnd.tutorialWindows);
          if (keys.length === 0)
@@ -493,24 +493,24 @@ public class TutorialPane
             clearInterval($wnd.tutorialWindowsCallback);
             $wnd.tutorialWindowsCallback = null;
          }
-         
+
       }, 500);
-      
+
    }-*/;
-   
+
    private final native boolean focusExistingTutorialWindow(String tutorialName,
                                                             String tutorialPackage)
    /*-{
-   
+
       var windows = $wnd.tutorialWindows || {};
       for (var url in windows)
       {
          var entry = $wnd.tutorialWindows[url];
-         
+
          var match =
             entry["name"] === tutorialName &&
             entry["package"] === tutorialPackage;
-         
+
          if (match)
          {
             var windowName = entry["windowName"];
@@ -518,17 +518,17 @@ public class TutorialPane
             return true;
          }
       }
-      
+
       return false;
-      
+
    }-*/;
-   
+
    private void focusExistingTutorialWindowImpl(String name)
    {
       globalDisplay_.bringWindowToFront(name);
    }
-   
-   // Resources ---- 
+
+   // Resources ----
    public interface Resources extends ClientBundle
    {
       @Source("TutorialPane.css")
@@ -536,12 +536,12 @@ public class TutorialPane
    }
 
 
-   
+
    private final ProgressIndicator indicator_;
-   
+
    private RStudioFrame frame_;
    private Toolbar toolbar_;
-   
+
    // Injected ----
    private final GlobalDisplay globalDisplay_;
    private final Commands commands_;

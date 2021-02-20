@@ -48,7 +48,7 @@ public class RCompletionToolTip extends CppCompletionToolTip
       handlers_ = new HandlerRegistrations();
 
       getElement().getStyle().setZIndex(10000);
-      
+
       addAttachHandler(new AttachEvent.Handler()
       {
          @Override
@@ -61,7 +61,7 @@ public class RCompletionToolTip extends CppCompletionToolTip
          }
       });
    }
-   
+
    private void attachHandlers()
    {
       handlers_.add(docDisplay_.addBlurHandler(new BlurHandler()
@@ -73,17 +73,17 @@ public class RCompletionToolTip extends CppCompletionToolTip
          }
       }));
    }
-   
+
    private void detachHandlers()
    {
       handlers_.removeHandler();
    }
-   
+
    public boolean previewKeyDown(NativeEvent event)
    {
       if (!isShowing())
          return false;
-      
+
       if (event.getKeyCode() == KeyCodes.KEY_ESCAPE)
       {
          event.stopPropagation();
@@ -91,10 +91,10 @@ public class RCompletionToolTip extends CppCompletionToolTip
          hide();
          return true;
       }
-      
+
       return false;
    }
-   
+
    public void resolvePositionAndShow(String signature,
                                       Rectangle rectangle)
    {
@@ -103,18 +103,18 @@ public class RCompletionToolTip extends CppCompletionToolTip
             rectangle.getLeft(),
             (rectangle.getTop() + rectangle.getBottom()) / 2);
    }
-   
+
    public void resolvePositionAndShow(String signature)
    {
       setCursorAnchor();
       resolvePositionAndShow(signature, docDisplay_.getCursorBounds());
    }
-   
+
    private String truncateSignature(String signature)
    {
       return truncateSignature(signature, 200);
    }
-   
+
    private String truncateSignature(String signature, int length)
    {
       // Perform smart truncation -- look for a comma at or after the
@@ -127,7 +127,7 @@ public class RCompletionToolTip extends CppCompletionToolTip
          {
             truncated = signature.substring(0, length);
          }
-         
+
          for (int i = 0; i < commaIndices.size(); i++)
          {
             int index = commaIndices.get(i);
@@ -137,13 +137,13 @@ public class RCompletionToolTip extends CppCompletionToolTip
                break;
             }
          }
-         
+
          return truncated + " <...truncated...> )";
       }
-      
+
       return signature;
    }
-   
+
    public void resolvePositionAndShow(String signature,
                                       int left,
                                       int top)
@@ -151,22 +151,22 @@ public class RCompletionToolTip extends CppCompletionToolTip
       signature = truncateSignature(signature);
       if (signature != null)
          setText(signature);
-      
+
       // resolve the tooltip width (allow the left bounds to be
       // nudged if the tooltip would be too large to fit)
       left = resolveWidth(left, signature);
-      
+
       // show the tooltip
       resolvePositionRelativeTo(left, top);
       setVisible(true);
       show();
-      
+
    }
-   
+
    private int resolveWidth(int left, String signature)
    {
       int targetWidth = 400;
-      
+
       // adjust width based on size of signature
       if (signature.length() > 400)
          targetWidth = 700;
@@ -174,13 +174,13 @@ public class RCompletionToolTip extends CppCompletionToolTip
          targetWidth = 600;
       else if (signature.length() > 200)
          targetWidth = 500;
-      
+
       // check for overflow
       if (targetWidth > (Window.getClientWidth() - left - 40))
       {
          // try nudging the 'left' value
          left = Window.getClientWidth() - targetWidth - 40;
-         
+
          // if 'left' is now too small, force to larger and
          // clamp the target width
          if (left < 40)
@@ -189,19 +189,19 @@ public class RCompletionToolTip extends CppCompletionToolTip
             targetWidth = Window.getClientWidth() - 80;
          }
       }
-      
+
       Style styles = getElement().getStyle();
       styles.setProperty("maxWidth", targetWidth + "px");
-      
+
       return left;
    }
-   
+
    public void resolvePositionAndShow(String signature,
                                       Position displayPos)
    {
       resolvePositionAndShow(signature, docDisplay_.getPositionBounds(displayPos));
    }
-   
+
    public void resolvePositionAndShow(String signature, Range activeRange)
    {
       setAnchor(activeRange.getStart(), activeRange.getEnd());
@@ -209,7 +209,7 @@ public class RCompletionToolTip extends CppCompletionToolTip
             signature,
             docDisplay_.getPositionBounds(activeRange.getStart()));
    }
-   
+
    private void resolvePositionRelativeTo(final int left,
                                           final int top)
    {
@@ -229,19 +229,19 @@ public class RCompletionToolTip extends CppCompletionToolTip
          }
       });
    }
-   
+
    private void setAnchor(Position start, Position end)
    {
       int startCol = start.getColumn();
       if (startCol > 0)
          start.setColumn(start.getColumn() - 1);
-      
+
       end.setColumn(end.getColumn() + 1);
       if (anchor_ != null)
          anchor_.detach();
       anchor_ = docDisplay_.createAnchoredSelection(start, end);
    }
-   
+
    private void setCursorAnchor()
    {
       Position start = docDisplay_.getSelectionStart();
@@ -252,7 +252,7 @@ public class RCompletionToolTip extends CppCompletionToolTip
          anchor_.detach();
       anchor_ = docDisplay_.createAnchoredSelection(start, end);
    }
-   
+
    @Override
    protected void onLoad()
    {
@@ -262,7 +262,7 @@ public class RCompletionToolTip extends CppCompletionToolTip
          nativePreviewReg_.removeHandler();
          nativePreviewReg_ = null;
       }
-      
+
       nativePreviewReg_ = Event.addNativePreviewHandler(new NativePreviewHandler()
       {
          public void onPreviewNativeEvent(NativePreviewEvent e)
@@ -272,7 +272,7 @@ public class RCompletionToolTip extends CppCompletionToolTip
                 eventType == Event.ONMOUSEDOWN)
             {
                // dismiss if we've left our anchor zone
-               // (defer this so the current key has a chance to 
+               // (defer this so the current key has a chance to
                // enter the editor and affect the cursor)
                Scheduler.get().scheduleDeferred(new ScheduledCommand() {
 
@@ -298,7 +298,7 @@ public class RCompletionToolTip extends CppCompletionToolTip
          }
       });
    }
-   
+
    @Override
    protected void onUnload()
    {
@@ -309,16 +309,16 @@ public class RCompletionToolTip extends CppCompletionToolTip
          nativePreviewReg_ = null;
       }
    }
-   
+
    public String getSignature()
    {
       return getLabel();
    }
-   
+
    private final DocDisplay docDisplay_;
    private final HandlerRegistrations handlers_;
-   
+
    private HandlerRegistration nativePreviewReg_;
    private AnchoredSelection anchor_;
-   
+
 }

@@ -34,30 +34,30 @@ public class VisualModeConfirmDialog extends ModalDialog<Boolean>
    public VisualModeConfirmDialog(OperationWithInput<Boolean> onConfirm,
                                   Operation onCancel)
    {
-      super("Switch to Visual Mode", 
-            Roles.getDialogRole(), 
-            onConfirm, 
+      super("Switch to Visual Mode",
+            Roles.getDialogRole(),
+            onConfirm,
             onCancel);
-      
+
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       mainWidget_.addStyleName(VisualModeDialogsResources.INSTANCE.styles().confirmDialog());
-      
+
       setOkButtonCaption("Use Visual Mode");
-      
+
       chkDontShowAgain_ = new CheckBox("Don't show this message again");
       chkDontShowAgain_.setValue(true);
       addLeftWidget(chkDontShowAgain_);
    }
-   
-  
+
+
    @Override
    protected Widget createMainWidget()
    {
       return mainWidget_;
    }
-   
-  
-   
+
+
+
    @Override
    protected Boolean collectInput()
    {
@@ -68,14 +68,14 @@ public class VisualModeConfirmDialog extends ModalDialog<Boolean>
    @Override
    protected boolean validate(Boolean result)
    {
-      return true;  
+      return true;
    }
-   
-   
+
+
    interface Binder extends UiBinder<Widget, VisualModeConfirmDialog> {}
-   
-   private Widget mainWidget_; 
-   
+
+   private Widget mainWidget_;
+
    private CheckBox chkDontShowAgain_;
-   
+
 }

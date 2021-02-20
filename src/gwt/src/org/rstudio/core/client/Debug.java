@@ -46,19 +46,19 @@ public class Debug
       GWT.log(message, null);
       logToConsole(message);
    }
-   
+
    public static void logWarning(String warning)
    {
       printStackTrace("WARNING: " + warning);
    }
-   
+
    public static native void logObject(Object object) /*-{
       if (typeof(console) != "undefined")
       {
          console.log(object);
       }
    }-*/;
-   
+
    public static native void logToConsole(String message) /*-{
     if (typeof(console) != "undefined")
     {
@@ -71,7 +71,7 @@ public class Debug
       Debug.log(label + '=' + value);
       return value;
    }
-   
+
    public static void printStackTrace(String label)
    {
       StringBuffer buf = new StringBuffer(label + "\n");
@@ -86,7 +86,7 @@ public class Debug
    {
       Debug.log(error.toString());
    }
-   
+
    public static void logException(Exception e)
    {
       Debug.log(e.toString());
@@ -95,7 +95,7 @@ public class Debug
    /**
     * Same as log() but for short-term messages that should not be checked
     * in. Making this a different method from log() allows devs to use Find
-    * Usages to get rid of all calls before checking in changes. 
+    * Usages to get rid of all calls before checking in changes.
     */
    public static void devlog(String label)
    {
@@ -112,7 +112,7 @@ public class Debug
    {
       Debug.log(new JSONObject(object).toString());
    }
-   
+
    public static native void prettyPrint(JavaScriptObject obj) /*-{
       var str = JSON.stringify(obj, undefined, 2);
       console.log(str);
@@ -147,13 +147,13 @@ public class Debug
       }
       devlog(format);
    }
-   
+
    public static void logToRConsole(String message)
    {
       Element consoleEl = Document.get().getElementById(ElementIds.getElementId(ElementIds.CONSOLE_OUTPUT));
       if (consoleEl == null)
          return;
-      
+
       Element textEl = Document.get().createSpanElement();
       String safe = SafeHtmlUtils.fromString(message).asString();
       textEl.setInnerHTML("* " + safe);
@@ -161,20 +161,20 @@ public class Debug
       consoleEl.appendChild(Document.get().createBRElement());
       consoleEl.setScrollTop(Integer.MAX_VALUE);
    }
-   
+
    public static void logStatus(String html)
    {
       Element el = debugPopupElement();
       html = html.replaceAll("\n", "<br />");
       el.setInnerHTML(html);
    }
-   
+
    private static final Element debugPopupElement()
    {
       Element el = DOM.getElementById("rstudio_debug_output");
       if (el != null)
          return el;
-               
+
       final MiniPopupPanel popupPanel = new MiniPopupPanel(false, false);
       VerticalPanel verticalPanel = new VerticalPanel();
       FlowPanel contentPanel = new FlowPanel();
@@ -187,21 +187,21 @@ public class Debug
       popupPanel.show();
       return contentPanel.getElement();
    }
-   
+
    public static final native void logEvents(Element el)
    /*-{
       for (var key in el) {
          var prefix = key.substr(0, 2);
          if (prefix !== "on")
             continue;
-         
+
          var event = key.substr(2);
          el.addEventListener(event, function(e) {
             console.log(e);
          });
       }
    }-*/;
-   
+
    public static final native void logEvents(Element el, JsVector<String> events)
    /*-{
       for (var event in events) {
@@ -210,9 +210,9 @@ public class Debug
          });
       }
    }-*/;
-   
+
    public static native void breakpoint() /*-{
       debugger;
    }-*/;
-      
+
 }
