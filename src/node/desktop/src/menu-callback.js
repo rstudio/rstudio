@@ -15,13 +15,14 @@
 const { ipcMain, Menu, MenuItem } = require('electron');
 
 module.exports = class MenuCallback {
+  mainMenu = null;
+  menuStack = [];
+  actions = new Map();
+
+  lastWasTools = false;
+  lastWasDiagostics = false;
+
   constructor() {
-
-    this.mainMenu = null;
-    this.menuStack = [];
-    this.lastWasTools = false;
-    this.lastWasDiagnostics = false;
-
     ipcMain.on('menu_begin_main', (event) => {
       this.mainMenu = new Menu();
       if (process.platform === 'darwin') {
@@ -63,14 +64,32 @@ module.exports = class MenuCallback {
       if (shortcut.length > 0) {
         menuItemOpts.accelerator = this.convertShortcut(shortcut);
       }
-      if (label === 'Actual &Size') {
+
+      // some shortcuts (namely, the Edit shortcuts) don't have bindings on the client side.
+      // populate those here when discovered
+       if (cmdId === 'zoomActualSize') {
         menuItemOpts.role = 'resetZoom';
-      } else if (label === '&Zoom In') {
+      } else if (cmdId === 'zoomIn') {
         menuItemOpts.role = 'zoomIn';
-      } else if (label === 'Zoom O&ut') {
+      } else if (cmdId === 'zoomOut') {
         menuItemOpts.role = 'zoomOut';
+      } else if (cmdId === 'cutDummy') {
+        menuItemOpts.role = 'cut';
+      } else if (cmdId === 'copyDummy') {
+        menuItemOpts.role = 'copy';
+      } else if (cmdId === 'pasteDummy') {
+        menuItemOpts.role = 'paste';
+      } else if (cmdId === 'pasteWithIndentDummy') {
+        menuItemOpts.role = 'pasteAndMatchStyle';
+      } else if (cmdId === 'undoDummy') {
+        menuItemOpts.role = 'undo';
+      } else if (cmdId === 'redoDummy') {
+        menuItemOpts.role = 'redo';
       }
-      this.addToCurrentMenu(new MenuItem(menuItemOpts));
+
+      let menuItem = new MenuItem(menuItemOpts);
+      this.actions.set(cmdId, menuItem);
+      this.addToCurrentMenu(menuItem);
     });
 
     ipcMain.on('menu_add_separator', (event) => {
@@ -139,7 +158,7 @@ module.exports = class MenuCallback {
   }
 
   getMenuItemById(id) {
-    return this.mainMenu ? this.mainMenu.getMenuItemById(id) : null;
+    return this.actions.get(id);
   }
 
   /**

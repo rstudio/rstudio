@@ -22,7 +22,7 @@ module.exports = class SessionLauncher {
   constructor(sessionPath, confPath) {
       this.sessionPath_ = sessionPath;
       this.confPath_ = confPath;
-      this.port = '';
+      this.port_ = '';
       this.host = '';
       this.mainWindow = null;
       this.sessionProcess = null;
