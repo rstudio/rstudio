@@ -57,7 +57,10 @@ module.exports = class MenuCallback {
     });
 
     ipcMain.on('menu_add_command', (event, cmdId, label, tooltip, shortcut, checkable) => {
-      let menuItemOpts = {label: label, id: cmdId};
+      let menuItemOpts = {label: label, id: cmdId, click: (menuItem, browserWindow, event) => {
+        this.commandInvoked(menuItem.id);
+      }};
+
       if (checkable) {
         menuItemOpts.checked = false;
       }
@@ -174,5 +177,9 @@ module.exports = class MenuCallback {
         return key;
       }
     }).join('+');
+  }
+
+  commandInvoked(commandId) {
+    console.log(`Invoke ${commandId}`);
   }
 };

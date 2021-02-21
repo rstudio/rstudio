@@ -46,13 +46,13 @@ module.exports = class SessionLauncher {
 
     const sessionProc = child_process.spawn(this.sessionPath_, argList);
     sessionProc.stdout.on('data', (data) => {
-      console.log(`stdout: ${data}`);
+      console.log(`rsession stdout: ${data}`);
     });
     sessionProc.stderr.on('data', (data) => {
-      console.log(`stderr: ${data}`);
+      console.log(`rsession stderr: ${data}`);
     });
     sessionProc.on('close', (code) => {
-      console.log(`child process exited with code ${code}`);
+      console.log(`rsession process exited with code ${code}`);
     });
 
     return sessionProc;
