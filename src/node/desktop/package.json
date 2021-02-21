@@ -2,7 +2,7 @@
   "name": "rstudio",
   "version": "0.1.0",
   "description": "RStudio Electron Prototype",
-  "main": "./src/app.js",
+  "main": "./src/main/app.js",
   "dependencies": {
     "babel-eslint": "^10.1.0",
     "electron": "^11.2.3"

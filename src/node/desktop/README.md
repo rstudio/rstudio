@@ -19,6 +19,6 @@ Only runnable within context of an RStudio development environment.
 - `cd rstudio/src/node/desktop`
 - `yarn init`
 - `yarn add electron@latest`
-- tweak package.json to support running via `yarn start`, and to use `./src/app.js`
+- tweak package.json to support running via `yarn start`, and to use `./src/main/app.js`
 - `yarn install`
 - write code and test with `yarn start`
