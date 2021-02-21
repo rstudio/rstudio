@@ -14,7 +14,7 @@
  */
 const { contextBridge } = require('electron');
 const { ipcRenderer } = require('electron');
-
+const { getMenuBridge } = require('./menu-bridge');
 /**
  * The preload script is run in the renderer before our GWT code and enables
  * setting up a bridge between the main process and the renderer process via
@@ -658,48 +658,4 @@ PTMono-Bold`,
   chromiumDevtoolsPort: 0,
 });
 
-contextBridge.exposeInMainWorld('desktopMenuCallback', {
-  beginMainMenu: () => {
-    ipcRenderer.send('menu_begin_main');
-  },
-
-  beginMenu: (label) => {
-    ipcRenderer.send('menu_begin', label);
-  },
-
-  addCommand: (cmdId, label, tooltip, shortcut, isChecked) => {
-    ipcRenderer.send('menu_add_command', cmdId, label, tooltip, shortcut, isChecked);
-  },
-
-  addSeparator: () => {
-    ipcRenderer.send('menu_add_separator');
-  },
-
-  endMenu: () => {
-    ipcRenderer.send('menu_end');
-  },
-
-  endMainMenu: () => {
-    ipcRenderer.send('menu_end_main');
-  },
-
-  setCommandVisible: (commandId, visible) => {
-    ipcRenderer.send('menu_set_command_visible', commandId, visible);
-  },
-
-  setCommandEnabled: (commandId, enabled) => {
-    ipcRenderer.send('menu_set_command_enabled', commandId, enabled);
-  },
-
-  setCommandChecked: (commandId, checked) => {
-    ipcRenderer.send('menu_set_command_checked', commandId, checked);
-  },
-
-  setMainMenuEnabled: (enabled) => {
-    ipcRenderer.send('menu_set_main_menu_enabled', enabled);
-  },
-
-  setCommandLabel: (commandId, label) => {
-    ipcRenderer.send('menu_set_command_label', commandId, label);
-  },
-});
+contextBridge.exposeInMainWorld('desktopMenuCallback', getMenuBridge());
