@@ -27,7 +27,7 @@ module.exports = class MainWindow {
     this.sessionProcess_ = null;
     this.window = null;
     this.desktopCallback = new DesktopCallback(this, this, isRemoteDesktop);
-    this.menuCallback = new MenuCallback();
+    this.menuCallback = new MenuCallback(this);
   }
 
   set sessionLauncher(value) {
@@ -72,6 +72,12 @@ module.exports = class MainWindow {
     });
 
     this.window.loadURL(url);
-    // this.window.webContents.openDevTools();
+  }
+
+  invokeCommand(cmdId) {
+    this.window.webContents.executeJavaScript(`window.desktopHooks.invokeCommand("${cmdId}")`)
+      .catch(() => {
+        console.error(`Error: failed to execute desktopHooks.invokeCommand("${cmdId}")`);
+      });
   }
 };

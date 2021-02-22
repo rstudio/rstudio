@@ -16,13 +16,16 @@ const { ipcMain, Menu, MenuItem } = require('electron');
 
 module.exports = class MenuCallback {
   mainMenu = null;
+  mainWindow = null;
   menuStack = [];
   actions = new Map();
 
   lastWasTools = false;
   lastWasDiagostics = false;
 
-  constructor() {
+  constructor(mainWindow) {
+    this.mainWindow = mainWindow;
+
     ipcMain.on('menu_begin_main', (event) => {
       this.mainMenu = new Menu();
       if (process.platform === 'darwin') {
@@ -58,7 +61,7 @@ module.exports = class MenuCallback {
 
     ipcMain.on('menu_add_command', (event, cmdId, label, tooltip, shortcut, checkable) => {
       let menuItemOpts = {label: label, id: cmdId, click: (menuItem, browserWindow, event) => {
-        this.commandInvoked(menuItem.id);
+        this.actionInvoked(menuItem.id);
       }};
 
       if (checkable) {
@@ -179,7 +182,7 @@ module.exports = class MenuCallback {
     }).join('+');
   }
 
-  commandInvoked(commandId) {
-    console.log(`Invoke ${commandId}`);
+  actionInvoked(commandId) {
+    this.mainWindow.invokeCommand(commandId);
   }
 };
