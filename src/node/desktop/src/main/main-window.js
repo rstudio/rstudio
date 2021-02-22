@@ -80,4 +80,18 @@ module.exports = class MainWindow {
         console.error(`Error: failed to execute desktopHooks.invokeCommand("${cmdId}")`);
       });
   }
+
+  onWorkbenchInitialized() {
+    this.window.webContents.executeJavaScript('window.desktopHooks.getActiveProjectDir()')
+      .then(projectDir => {
+        if (projectDir.length > 0) {
+          this.window.setTitle(`${projectDir} - RStudio`);
+        } else {
+          this.window.setTitle('RStudio');
+        }
+      })
+      .catch(() => {
+        console.error('Error: failed to execute desktopHooks.getActiveProjectDir()');
+      });
+  }
 };

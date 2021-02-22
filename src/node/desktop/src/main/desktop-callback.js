@@ -122,6 +122,7 @@ module.exports = class DesktopCallback {
     });
 
     ipcMain.on('desktop_on_workbench_initialized', (event, scratchPath) => {
+      this.mainWindow.onWorkbenchInitialized();
     });
 
     ipcMain.on('desktop_show_folder', (event, path) => {
