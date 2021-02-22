@@ -493,7 +493,8 @@ int main(int argc, char* argv[])
             break;
          }
 
-      } while (dir.cdUp());
+      }
+      while (dir.cdUp());
 #endif
 
       // look for a version check request; if we have one, just do that and exit
@@ -782,13 +783,48 @@ int main(int argc, char* argv[])
       // calculate paths to config file, rsession, and desktop scripts
       FilePath confPath, sessionPath, scriptsPath;
       bool devMode = false;
+      std::string rsessionStem = "rsession";
+
+#ifdef __APPLE__
+      // on macOS, we need to figure out whether we're about to run
+      // with an x86_64 or an arm64 build of R, and select the appropriate
+      // rsession copy based on that
+      {
+         FilePath rHome = FilePath(core::system::getenv("R_HOME"));
+         FilePath rLib = rHome.completeChildPath("lib/libR.dylib");
+
+         core::system::ProcessOptions options;
+         core::system::ProcessResult result;
+         Error lipoError = core::system::runProgram(
+                  "/usr/bin/lipo",
+                  { "-archs", rLib.getAbsolutePath() },
+                  std::string(),
+                  options,
+                  &result);
+
+         if (error)
+         {
+            LOG_ERROR(error);
+         }
+
+         std::string rArchs = string_utils::trimWhitespace(result.stdOut);
+         if (rArchs == "x86_64")
+         {
+            rsessionStem = "x86_64/rsession";
+         }
+         else
+         {
+            rsessionStem = "arm64/rsession";
+         }
+      }
+#endif
 
       // check for debug configuration
       FilePath currentPath = FilePath::safeCurrentPath(installPath);
       if (currentPath.completePath("conf/rdesktop-dev.conf").exists())
       {
          confPath = currentPath.completePath("conf/rdesktop-dev.conf");
-         sessionPath = currentPath.completePath("session/rsession");
+         sessionPath = currentPath.completePath("session/" + rsessionStem);
          scriptsPath = currentPath.completePath("desktop");
          devMode = true;
       }
@@ -798,7 +834,7 @@ int main(int argc, char* argv[])
       else if (installPath.completePath("conf/rdesktop-dev.conf").exists())
       {
          confPath = installPath.completePath("conf/rdesktop-dev.conf");
-         sessionPath = installPath.completePath("session/rsession");
+         sessionPath = installPath.completePath("session/" + rsessionStem);
          scriptsPath = installPath.completePath("desktop");
          devMode = true;
       }
@@ -807,14 +843,14 @@ int main(int argc, char* argv[])
       if (confPath.isEmpty())
       {
          // default paths (then tweak)
-         sessionPath = installPath.completePath("bin/rsession");
+         sessionPath = installPath.completePath("bin/" + rsessionStem);
          scriptsPath = installPath.completePath("bin");
 
          // check for running in a bundle on OSX
 #ifdef __APPLE__
          if (installPath.completePath("Info.plist").exists())
          {
-            sessionPath = installPath.completePath("MacOS/rsession");
+            sessionPath = installPath.completePath("MacOS/" + rsessionStem);
             scriptsPath = installPath.completePath("MacOS");
          }
 #endif

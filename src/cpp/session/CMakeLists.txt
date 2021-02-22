@@ -13,7 +13,7 @@
 #
 #
 
-project (SESSION)
+project(SESSION)
 
 add_subdirectory(workers)
 
@@ -413,7 +413,10 @@ if(WIN32)
 endif()
 
 # define executable
-add_stripped_executable(rsession ${SESSION_SOURCE_FILES} ${SESSION_HEADER_FILES})
+add_stripped_executable(
+   rsession
+   ${SESSION_SOURCE_FILES}
+   ${SESSION_HEADER_FILES})
 
 # skip libR RPATH at development time
 if(RSTUDIO_DEVELOPMENT OR RSTUDIO_RUN_IN_PLACE)
@@ -451,10 +454,8 @@ else()
    target_link_libraries(rsession "${LIBR_LIBRARIES}")
 endif()
 
-if (RSTUDIO_SERVER)
-   target_link_libraries(rsession
-      rstudio-server-core
-   )
+if(RSTUDIO_SERVER)
+   target_link_libraries(rsession rstudio-server-core)
 endif()
 
 # configure and install r-ldpaths script
@@ -473,11 +474,13 @@ if(UNIX)
            DESTINATION ${RSTUDIO_INSTALL_BIN})
 endif()
 
-# install binary
-install(TARGETS rsession DESTINATION ${RSTUDIO_INSTALL_BIN})
+# install binary (note: we use architecture-specific alternative below)
+if(NOT APPLE)
+   install(TARGETS rsession DESTINATION "${RSTUDIO_INSTALL_BIN}")
+endif()
 
 # include resources, R scripts and binaries if this isn't a session 32-bit build
-if (NOT RSTUDIO_SESSION_WIN32)
+if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
 
    # postback
    add_subdirectory(postback)
@@ -590,6 +593,23 @@ if (NOT RSTUDIO_SESSION_WIN32)
    install(DIRECTORY "resources/tutorial_resources"
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
+   # install architecture-specific components on macOS
+   if(APPLE)
+
+      file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x86_64")
+      install(
+         DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x86_64"
+         DESTINATION "${RSTUDIO_INSTALL_BIN}/x86_64"
+         USE_SOURCE_PERMISSIONS)
+
+      file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/arm64")
+      install(
+         DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/arm64"
+         DESTINATION "{RSTUDIO_INSTALL_BIN}/arm64"
+         USE_SOURCE_PERMISSIONS)
+
+   endif()
+
    # install libclang
    if(WIN32)
       file(GLOB LIBCLANG_32_FILES "${LIBCLANG_DIR}/x86/*")
@@ -674,15 +694,15 @@ if(APPLE)
          # 2. extracts the path from the output using grep and awk
          # 3. runs install_name_tool and tells it to replace the path with one that
          #    points to a bundled copy of the same file
-         add_custom_command (TARGET rsession POST_BUILD
-            COMMAND install_name_tool -change `otool -L ${CMAKE_CURRENT_BINARY_DIR}/rsession | grep ${LIB_FILE} | awk '{ print $$1 }'` @executable_path/../Frameworks/${LIB_FILE} ${CMAKE_CURRENT_BINARY_DIR}/rsession)
+         add_custom_command(TARGET rsession POST_BUILD
+            COMMAND install_name_tool -change `otool -L ${CMAKE_CURRENT_BINARY_DIR}/rsession | grep ${LIB_FILE} | awk '{ print $$1 }'` @executable_path/../Frameworks/${RSESSION_ARCH}/${LIB_FILE} ${CMAKE_CURRENT_BINARY_DIR}/rsession)
       endforeach()
 
       # do something similar to the above to fix paths to SOCI libraries
       foreach(lib ${SOCI_DEPENDENCIES})
          get_filename_component(LIB_NAME "${lib}" NAME_WE)
-         add_custom_command (TARGET rsession POST_BUILD
-             COMMAND install_name_tool -change `otool -L ${CMAKE_CURRENT_BINARY_DIR}/rsession | grep ${LIB_NAME} | awk '{ print $$1 }'` @executable_path/../Frameworks/$$\(otool -L ${CMAKE_CURRENT_BINARY_DIR}/rsession | grep ${LIB_NAME} | awk '{ print $$1 }' | xargs basename\) ${CMAKE_CURRENT_BINARY_DIR}/rsession)
+         add_custom_command(TARGET rsession POST_BUILD
+            COMMAND install_name_tool -change `otool -L ${CMAKE_CURRENT_BINARY_DIR}/rsession | grep ${LIB_NAME} | awk '{ print $$1 }'` @executable_path/../Frameworks/${RSESSION_ARCH}/$$\(otool -L ${CMAKE_CURRENT_BINARY_DIR}/rsession | grep ${LIB_NAME} | awk '{ print $$1 }' | xargs basename\) ${CMAKE_CURRENT_BINARY_DIR}/rsession)
       endforeach()
 
    endif()
