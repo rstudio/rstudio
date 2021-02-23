@@ -45,6 +45,11 @@ module.exports = class SessionLauncher {
     }
     // #endif // Q_OS_DARWIN
 
+    if (!fs.existsSync(this.sessionPath_)) {
+      console.log(`rsession not found at ${this.sessionPath_}`);
+      return null;
+    }
+
     const sessionProc = child_process.spawn(this.sessionPath_, argList);
     sessionProc.stdout.on('data', (data) => {
       console.log(`rsession stdout: ${data}`);
@@ -54,7 +59,10 @@ module.exports = class SessionLauncher {
     });
     sessionProc.on('exit', (code, signal) => {
       if (code !== null) {
-        console.log(`rsession exited: code=${code}`);
+          console.log(`rsession exited: code=${code}`);
+        if (code !== 0) {
+          console.log(`${this.sessionPath_} ${argList}`);
+        }
       } else {
         console.log(`rsession terminated: signal=${signal}`);
       }

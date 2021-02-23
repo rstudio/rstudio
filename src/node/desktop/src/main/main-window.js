@@ -103,7 +103,6 @@ module.exports = class MainWindow {
         }
       })
       .catch(() => {
-        console.error('Error: failed to execute desktopHooks.getActiveProjectDir()');
       });
   }
 
