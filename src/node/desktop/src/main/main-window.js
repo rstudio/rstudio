@@ -17,6 +17,7 @@ const { BrowserWindow, session } = require('electron');
 const path = require('path');
 const { DesktopCallback } = require('./desktop-callback');
 const MenuCallback = require('./menu-callback');
+const RCommandEvaluator = require('./r-command-evaluator');
 
 // corresponds to DesktopMainWindow.cpp/hpp
 module.exports = class MainWindow {
@@ -30,6 +31,8 @@ module.exports = class MainWindow {
     this.menuCallback = new MenuCallback(this);
     this.quitConfirmed = false;
     this.workbenchInitialized_ = false;
+
+    RCommandEvaluator.setMainWindow(this);
   }
 
   set sessionLauncher(value) {
@@ -77,7 +80,7 @@ module.exports = class MainWindow {
   }
 
   quit() {
-    // RCommandEvaluator::setMainWindow(nullptr);
+    RCommandEvaluator.setMainWindow(null);
     this.quitConfirmed = true;
     this.window.close();
   }
