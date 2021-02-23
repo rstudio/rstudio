@@ -55,6 +55,7 @@
 * Support dual/charcell-spaced editor fonts (e.g., Fira Code) on Linux desktop environments (#6894)
 * Improve logging of session RPC failures (Pro #2248)
 * Add support for `rstudioapi` methods enabling callbacks for command execution (Pro #1846)
+* Add support for non-CRAN repositories when installing R packages in the background (#8946)
 
 ### Bugfixes
 
