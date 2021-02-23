@@ -91,4 +91,5 @@
 * Fixed issue where 'continue comment on newline' would treat Markdown headers as comments (#6421)
 * Fixed issue where Set Working Directory command could fail if path contained quotes (#6004)
 * Fixed issue where Pro database drivers will not install if `~/odbcinst.ini` is missing (Pro #2284)
+* Fixed issue causing the mouse cursor to become too small in certain areas on Linux Desktop (#8781)
 
