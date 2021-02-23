@@ -32,18 +32,17 @@ module.exports = class SessionLauncher {
   static s_launcherToken = '';
 
   launchSession(argList) {
-    // #ifdef Q_OS_DARWIN
-    // on macOS with the hardened runtime, we can no longer rely on dyld
-    // to lazy-load symbols from libR.dylib; to resolve this, we use
-    // DYLD_INSERT_LIBRARIES to inject the library we wish to use on
-    // launch 
-    let rHome = process.env.R_HOME;
-    let rLib = path.join(rHome, 'lib/libR.dylib');
-    if (fs.existsSync(rLib))
-    {
+    if (process.platform === 'darwin') {
+      // on macOS with the hardened runtime, we can no longer rely on dyld
+      // to lazy-load symbols from libR.dylib; to resolve this, we use
+      // DYLD_INSERT_LIBRARIES to inject the library we wish to use on
+      // launch 
+      let rHome = process.env.R_HOME;
+      let rLib = path.join(rHome, 'lib/libR.dylib');
+      if (fs.existsSync(rLib)) {
         process.env.DYLD_INSERT_LIBRARIES = path.resolve(rLib);
+      }
     }
-    // #endif // Q_OS_DARWIN
 
     if (!fs.existsSync(this.sessionPath_)) {
       console.log(`rsession not found at ${this.sessionPath_}`);

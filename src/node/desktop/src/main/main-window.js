@@ -77,6 +77,7 @@ module.exports = class MainWindow {
     });
 
     this.window.loadURL(url);
+    // this.window.webContents.openDevTools();
   }
 
   quit() {
