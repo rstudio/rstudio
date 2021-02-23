@@ -15,7 +15,7 @@
 
 const { BrowserWindow, session } = require('electron');
 const path = require('path');
-const DesktopCallback = require('./desktop-callback');
+const { DesktopCallback } = require('./desktop-callback');
 const MenuCallback = require('./menu-callback');
 
 // corresponds to DesktopMainWindow.cpp/hpp
@@ -28,6 +28,8 @@ module.exports = class MainWindow {
     this.window = null;
     this.desktopCallback = new DesktopCallback(this, this, isRemoteDesktop);
     this.menuCallback = new MenuCallback(this);
+    this.quitConfirmed = false;
+    this.workbenchInitialized_ = false;
   }
 
   set sessionLauncher(value) {
@@ -74,6 +76,12 @@ module.exports = class MainWindow {
     this.window.loadURL(url);
   }
 
+  quit() {
+    // RCommandEvaluator::setMainWindow(nullptr);
+    this.quitConfirmed = true;
+    this.window.close();
+  }
+
   invokeCommand(cmdId) {
     this.window.webContents.executeJavaScript(`window.desktopHooks.invokeCommand("${cmdId}")`)
       .catch(() => {
@@ -82,6 +90,7 @@ module.exports = class MainWindow {
   }
 
   onWorkbenchInitialized() {
+    this.workbenchInitialized_ = true;
     this.window.webContents.executeJavaScript('window.desktopHooks.getActiveProjectDir()')
       .then(projectDir => {
         if (projectDir.length > 0) {
@@ -93,5 +102,13 @@ module.exports = class MainWindow {
       .catch(() => {
         console.error('Error: failed to execute desktopHooks.getActiveProjectDir()');
       });
+  }
+
+  collectPendingQuitRequest() {
+    return this.desktopCallback.collectPendingQuitRequest();
+  }
+
+  get workbenchInitialized() {
+    return this.workbenchInitialized_;
   }
 };

@@ -16,6 +16,7 @@
 const child_process = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const { PendingQuit } = require('./desktop-callback');
 const MainWindow = require('./main-window');
 
 module.exports = class SessionLauncher {
@@ -51,8 +52,13 @@ module.exports = class SessionLauncher {
     sessionProc.stderr.on('data', (data) => {
       console.log(`rsession stderr: ${data}`);
     });
-    sessionProc.on('close', (code) => {
-      console.log(`rsession process exited with code ${code}`);
+    sessionProc.on('exit', (code, signal) => {
+      if (code !== null) {
+        console.log(`rsession exited: code=${code}`);
+      } else {
+        console.log(`rsession terminated: signal=${signal}`);
+      }
+      this.onRSessionExited();
     });
 
     return sessionProc;
@@ -106,5 +112,54 @@ module.exports = class SessionLauncher {
             '--launcher-token', SessionLauncher.launcherToken,
         ],
     };
+  }
+  
+  onRSessionExited() {
+    let pendingQuit = this.mainWindow.collectPendingQuitRequest();
+
+    // if there was no pending quit set then this is a crash
+    if (pendingQuit === PendingQuit.PendingQuitNone) {
+
+      // closeAllSatellites();
+
+      this.mainWindow.window.webContents.executeJavaScript('window.desktopHooks.notifyRCrashed()')
+        .catch(() => {
+          // The above can throw if the window has no desktop hooks; this is normal
+          // if we haven't loaded the initial session.
+        });
+
+        if (!this.mainWindow.onWorkbenchInitialized()) {
+          // If the R session exited without initializing the workbench, treat it as
+          // a boot failure.
+          this.showLaunchErrorPage(); 
+        }
+
+    // quit and exit means close the main window
+    } else if (pendingQuit === PendingQuit.PendingQuitAndExit) {
+      this.mainWindow.quit();
+    }
+
+    // otherwise this is a restart so we need to launch the next session
+    else {
+      let reload = (pendingQuit === PendingQuit.PendingQuitRestartAndReload);
+      if (reload) {
+        this.closeAllSatellites();
+      }
+
+      // launch next session
+      this.launchNextSession(reload);
+    }
+  }
+
+  showLaunchErrorPage() {
+    console.log('Launch error page not implemented');
+  }
+
+  launchNextSession(reload) {
+    console.log('Launching next session not implemented');
+  }
+
+  closeAllSatellites() {
+    console.log('CloseAllSatellites not implemented');
   }
 };

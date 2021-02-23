@@ -13,13 +13,21 @@
  *
  */
 
- const { ipcMain, dialog, BrowserWindow } = require('electron');
+const { ipcMain, dialog, BrowserWindow } = require('electron');
 
-module.exports = class DesktopCallback {
+const PendingQuit = {
+  'PendingQuitNone': 0,
+  'PendingQuitAndExit': 1,
+  'PendingQuitAndRestart': 2,
+  'PendingQuitRestartAndReload': 3
+};
+
+class DesktopCallback {
   constructor(mainWindow, ownerWindow, isRemoteDesktop) {
     this.mainWindow = mainWindow;
     this.ownerWindow = ownerWindow;
     this.isRemoteDesktop = isRemoteDesktop;
+    this.pendingQuit = PendingQuit.PendingQuitNone;
 
     ipcMain.on('desktop_browse_url', (event, url) => {
       DesktopCallback.unimpl('desktop_browser_url');
@@ -252,7 +260,7 @@ module.exports = class DesktopCallback {
     });
 
     ipcMain.on('desktop_set_pending_quit', (event, pendingQuit) => {
-      DesktopCallback.unimpl('desktop_set_pending_quit');
+      this.pendingQuit = pendingQuit;
     });
 
     ipcMain.on('desktop_open_project_in_new_window', (event, projectFilePath) => {
@@ -523,5 +531,17 @@ module.exports = class DesktopCallback {
       title: 'Unimplemented',
       message: `${ipcName} callback NYI`
     });
+  }
+
+  collectPendingQuitRequest() {
+    if (this.pendingQuit != PendingQuit.PendingQuitNone) {
+      let currentPendingQuit = this.pendingQuit;
+      this.pendingQuit = PendingQuit.PendingQuitNone;
+      return currentPendingQuit;
+    } else {
+      return PendingQuit.PendingQuitNone;
     }
-};
+  }
+}
+
+module.exports = {PendingQuit, DesktopCallback};
