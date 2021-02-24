@@ -66,8 +66,8 @@ test_that(".rs.CRANDownloadOptionsString() fills missing CRAN repo", {
    # read default CRAN URL from user preferences
    cran <- .rs.readUiPref("cran_mirror")$url
 
-   # set up only a secondary repo
-   options(repos = c(RSPM = "https://rspm.rstudio.com"))
+   # unset repos
+   options(repos = NULL)
 
    # create dummy environment
    envir <- new.env(parent = globalenv())
@@ -76,6 +76,6 @@ test_that(".rs.CRANDownloadOptionsString() fills missing CRAN repo", {
    # evaluate the download string and confirm that it contains the CRAN URL from user prefs
    string <- .rs.CRANDownloadOptionsString()
    actual <- eval(parse(text = string), envir = envir)
-   expect_equal(actual[["repos"]]["CRAN"], c(CRAN = cran))
+   expect_equal(unlist(actual[["repos"]]["CRAN"]), c(CRAN = cran))
 })
 

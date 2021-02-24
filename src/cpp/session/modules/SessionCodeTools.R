@@ -1990,8 +1990,8 @@
    if (identical(options[["download.file.method"]], "curl"))
       options[["download.file.extra"]] <- .rs.downloadFileExtraWithCurlArgs()
 
-   # if there is no CRAN mirror specified in the R session, read it from preferences
-   if (is.na(options[["repos"]]["CRAN"])) {
+   # if there is no repo option set in the R session, read it from preferences
+   if (identical(length(options[["repos"]]), 0L)) {
       options[["repos"]]["CRAN"] <- .rs.readUiPref("cran_mirror")$url
    }
    
