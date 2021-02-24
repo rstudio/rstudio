@@ -474,10 +474,8 @@ if(UNIX)
            DESTINATION ${RSTUDIO_INSTALL_BIN})
 endif()
 
-# install binary (note: we use architecture-specific alternative below)
-if(NOT APPLE)
-   install(TARGETS rsession DESTINATION "${RSTUDIO_INSTALL_BIN}")
-endif()
+# install binary
+install(TARGETS rsession DESTINATION "${RSTUDIO_INSTALL_BIN}")
 
 # include resources, R scripts and binaries if this isn't a session 32-bit build
 if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
@@ -595,19 +593,10 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
 
    # install architecture-specific components on macOS
    if(APPLE)
-
-      file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x86_64")
-      install(
-         DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x86_64"
-         DESTINATION "${RSTUDIO_INSTALL_BIN}/x86_64"
-         USE_SOURCE_PERMISSIONS)
-
-      file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/arm64")
       install(
          DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/arm64"
          DESTINATION "${RSTUDIO_INSTALL_BIN}/arm64"
          USE_SOURCE_PERMISSIONS)
-
    endif()
 
    # install libclang
@@ -679,8 +668,7 @@ endif()
 
 if(APPLE)
 
-   # if doing a package build on MacOS, reroute dependent libraries to our
-   # bundled copies
+   # if doing a package build on MacOS, reroute dependent libraries to our bundled copies
    if (RSTUDIO_PACKAGE_BUILD)
       find_package(OpenSSL REQUIRED QUIET)
       foreach(lib ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY})

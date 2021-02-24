@@ -35,22 +35,30 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMakeOverlay.txt")
 endif()
 
 # developer-id code signing
-if (RSTUDIO_PACKAGE_BUILD)
+if(RSTUDIO_PACKAGE_BUILD AND NOT RSESSION_ALTERNATE_BUILD)
    INSTALL(CODE "
+     
+     message(STATUS \"Installing arm64 components ...\")
+     execute_process(
+         COMMAND
+            R -s -f \"${CMAKE_CURRENT_SOURCE_DIR}/install-rsession-arm64.R\" --args
+            \"${CMAKE_CURRENT_SOURCE_DIR}\"
+            \"\${CMAKE_INSTALL_PREFIX}\")
+
      # don't follow symlinks in GLOB_RECURSE
      cmake_policy(SET CMP0009 NEW)
      cmake_policy(SET CMP0011 NEW)
 
-     list (APPEND CODESIGN_TARGETS \"\${CMAKE_INSTALL_PREFIX}/RStudio.app\")
+     list(APPEND CODESIGN_TARGETS \"\${CMAKE_INSTALL_PREFIX}/RStudio.app\")
 
      file(GLOB_RECURSE CODESIGN_PLUGINS \"\${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/plugins\")
-     list (APPEND CODESIGN_TARGETS \${CODESIGN_PLUGINS})
+     list(APPEND CODESIGN_TARGETS \${CODESIGN_PLUGINS})
 
      file(GLOB_RECURSE CODESIGN_FRAMEWORKS \"\${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/Frameworks\")
-     list (APPEND CODESIGN_TARGETS \${CODESIGN_FRAMEWORKS})
+     list(APPEND CODESIGN_TARGETS \${CODESIGN_FRAMEWORKS})
 
      file(GLOB_RECURSE CODESIGN_MACOS \"\${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/MacOS\")
-     list (APPEND CODESIGN_TARGETS \${CODESIGN_MACOS})
+     list(APPEND CODESIGN_TARGETS \${CODESIGN_MACOS})
 
      # deep sign all targets
      foreach(CODESIGN_TARGET \${CODESIGN_TARGETS})
