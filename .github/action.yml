@@ -1,0 +1,25 @@
+name: 'Close stale issues'
+on:
+  schedule:
+    - cron: '30 1 * * *'
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v3
+        with:
+          days-before-stale: 180
+          days-before-close: 14
+          stale-issue-message: >
+            This issue has been automatically marked as stale because it has not had
+            recent activity. It will be closed if no further activity occurs, per 
+            https://github.com/rstudio/rstudio/wiki/Issue-Grooming. Thank you
+            for your contributions.
+            
+          close-issue-message: >
+            This issue has been automatically closed due to inactivity.
+            
+          stale-issue-label: 'stale'
+          exempt-issue-labels: 'automation,backlog,builds,codetree-epic,developer,documentation,high,in progress,security,test,triage'
+          exempt-all-milestones: true
