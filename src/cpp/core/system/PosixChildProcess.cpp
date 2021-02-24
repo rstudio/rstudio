@@ -78,7 +78,18 @@ const int kThreadSafeForkErrorExit = 153;
 
 int resolveExitStatus(int status)
 {
-   return WIFEXITED(status) ? WEXITSTATUS(status) : status;
+   if (WIFEXITED(status))
+   {
+      return WEXITSTATUS(status);
+   }
+   else if (WIFSIGNALED(status))
+   {
+      // return bash-style exit codes for process terminated by a signal
+      // ex: if killed with SIGTERM, returns 128 + 15 = 143
+      return 128 + WTERMSIG(status);
+   }
+   else
+      return status;
 }
 
 void setPipeNonBlocking(int pipeFd)
