@@ -15,56 +15,48 @@
 #
 #
 
-set -e
+set -eux
 
-if [ -e install-overlay ]
-then
-  ./install-overlay
-fi
+ARCH="$(arch)"
 
-# make sure brew is installed, and error if not
-if ! command -v brew &> /dev/null; then
-   echo "homebrew is not installed, but is needed to install dependencies"
-   exit 1
-fi
+if [ "${ARCH}" = "arm64" ]; then
 
-# install postgres, needed by SOCI
-if brew list --formula | grep postgresql &> /dev/null; then
-   echo "postgresql already installed"
+   # validate that Homebrew is installed in the expected locations
+   if [ ! -f /usr/local/bin/brew ]; then
+      echo "Error: Homebrew is not installed for x86_64 (missing /usr/local/bin/brew)"
+      exit 1
+   fi
+
+   if [ ! -f /opt/homebrew/bin/brew ]; then
+      echo "Error: Homebrew is not installed for arm64 (missing /opt/homebrew/bin/brew)"
+      exit 1
+   fi
+
+   # save the PATH -- note that we munge this so that the correct
+   # homebrew executable is found first on the PATH
+   OLDPATH="${PATH}"
+
+   # install x86_64 dependencies
+   PATH="/usr/local/bin:${OLDPATH}"
+   arch -x86_64 ./install-dependencies-osx-arch
+
+   # install arm64 dependencies
+   PATH="/opt/homebrew/bin:${OLDPATH}"
+   arch -arm64 ./install-dependencies-osx-arch
+
+   # restore path
+   PATH="${OLDPATH}"
+
 else
-   brew install postgresql
-fi
 
-# coreutils needed for unit tests (specifically gtimeout)
-if ! command -v gtimeout &> /dev/null; then
-   brew install coreutils
-fi
+   # assume x86_64
+   ./install-dependencies-osx-arch
 
-# openssl needed to run rsession  (including unit tests)
-if brew list --formula | grep openssl@1.1 &> /dev/null; then
-   echo "openssl already installed"
-else
-   brew install openssl
-fi
+   # desktop dependencies (qt; currently x86_64 only)
+   if [ "$1" != "--exclude-qt-sdk" ]; then
+      ./install-qt-macos
+   fi
 
-# pidof and gdb needed for analysis of hung unit tests
-if ! command -v pidof &> /dev/null; then
-   brew install pidof
-fi
-
-if ! command -v gdb &> /dev/null; then
-   brew install gdb || true
-   grep -qxF 'set startup-with-shell off' ~/.gdbinit || echo "set startup-with-shell off" >> ~/.gdbinit
-fi
-
-cd ../common
-./install-common --install-crashpad-sudo
-cd ../osx
-
-# desktop dependencies (qt)
-if [ "$1" != "--exclude-qt-sdk" ]
-then
-  ./install-qt-macos
 fi
 
 # enable PAM
