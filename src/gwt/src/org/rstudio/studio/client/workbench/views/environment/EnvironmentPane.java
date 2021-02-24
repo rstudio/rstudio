@@ -184,8 +184,10 @@ public class EnvironmentPane extends WorkbenchPane
             AppCommand.formatMenuLabel(null, "Refresh Now", null),
             true, // as HTML
             () -> commands_.refreshEnvironment().execute()));
-      toolbar.addRightWidget(
-            new ToolbarMenuButton(ToolbarButton.NoText, "Refresh options", refreshMenu, false));
+      ToolbarMenuButton refreshMenuBtn =
+         new ToolbarMenuButton(ToolbarButton.NoText, "Refresh options", refreshMenu, false);
+      ElementIds.assignElementId(refreshMenuBtn, ElementIds.MB_REFRESH_OPTS);
+      toolbar.addRightWidget(refreshMenuBtn);
 
       return toolbar;
    }
@@ -228,6 +230,7 @@ public class EnvironmentPane extends WorkbenchPane
             ToolbarButton.NoTitle,
             (ImageResource) null,
             languageMenu_);
+      ElementIds.assignElementId(languageButton_, ElementIds.MB_ENV_LANGUAGE);
 
       // nudge language selector up to baseline align with environment selector
       languageButton_.getElement().getStyle().setMarginTop(-4, Unit.PX);
@@ -743,7 +746,7 @@ public class EnvironmentPane extends WorkbenchPane
          setActiveLanguage("R", true);
       }
    }
-   
+
    @Override
    public void onSuspendAndRestart(SuspendAndRestartEvent event)
    {

@@ -33,6 +33,7 @@ import com.google.gwt.user.client.ui.*;
 import com.google.gwt.view.client.ListDataProvider;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.FontSizer;
@@ -644,6 +645,7 @@ public class EnvironmentObjects extends ResizeComposite
       environmentEmptyMessage_ = new Label(EMPTY_ENVIRONMENT_MESSAGE);
       environmentEmptyMessage_.setStyleName(styles.subtitle());
       environmentEmptyMessage_.setStylePrimaryName(style.emptyEnvironmentMessage());
+      ElementIds.assignElementId(environmentEmptyMessage_, ElementIds.ENV_EMPTY);
       messagePanel.add(environmentEmptyMessage_);
       return messagePanel;
    }
