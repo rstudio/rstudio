@@ -184,15 +184,15 @@ class DesktopCallback {
     });
 
     ipcMain.on('desktop_activate_satellite_window', (event, name) => {
-      DesktopCallback.unimpl('desktop_activate_satellite_window');
+      console.log(`activate_satellite_window ${name}`);
     });
 
-    ipcMain.on('desktop_prepare_for_satellite_window', (event, name, x, y, width, height) => {
-      DesktopCallback.unimpl('desktop_prepare_for_satellite_window');
+    ipcMain.handle('desktop_prepare_for_satellite_window', (event, name, x, y, width, height) => {
+      // TODO
     });
 
-    ipcMain.on('desktop_prepare_for_named_window', (event, name, allowExternalNavigate, showToolbar) => {
-      DesktopCallback.unimpl('desktop_prepare_for_named_window');
+    ipcMain.handle('desktop_prepare_for_named_window', (event, name, allowExternalNavigate, showToolbar) => {
+      console.log(`prepare_for_named_window ${name}`);
     });
 
     ipcMain.on('desktop_close_named_window', (event, name) => {

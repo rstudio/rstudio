@@ -205,12 +205,14 @@ exports.getDesktopBridge = () => {
       ipcRenderer.send('desktop_activate_satellite_window', name);
     },
 
-    prepareForSatelliteWindow: (name, x, y, width, height) => {
-      ipcRenderer.send('desktop_prepare_for_satellite_window', name, x, y, width, height);
+    prepareForSatelliteWindow: (name, x, y, width, height, callback) => {
+      ipcRenderer.invoke('desktop_prepare_for_satellite_window', name, x, y, width, height)
+        .then(() => callback());
     },
 
-    prepareForNamedWindow: (name, allowExternalNavigate, showToolbar) => {
-      ipcRenderer.send('desktop_prepare_for_named_window', name, allowExternalNavigate, showToolbar);
+    prepareForNamedWindow: (name, allowExternalNavigate, showToolbar, callback) => {
+      ipcRenderer.invoke('desktop_prepare_for_named_window', name, allowExternalNavigate, showToolbar)
+        .then(() => callback());
     },
 
     closeNamedWindow: (name) => {
