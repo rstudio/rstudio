@@ -224,8 +224,14 @@ class DesktopCallback {
     });
 
     ipcMain.handle('desktop_show_message_box', (event, type, caption, message, buttons, defaultButton, cancelButton) => {
-      DesktopCallback.unimpl('desktop_show_message_box');
-      return 1.0;
+      return dialog.showMessageBox(
+        BrowserWindow.getFocusedWindow(),
+        {
+          type: this.convertMessageBoxType(type),
+          title: caption,
+          message: message,
+          buttons: this.convertButtons(buttons),
+        });
     });
 
     ipcMain.handle('desktop_prompt_for_text', (event, title, caption, defaultValue, type, 
@@ -541,6 +547,25 @@ class DesktopCallback {
     } else {
       return PendingQuit.PendingQuitNone;
     }
+  }
+
+  convertMessageBoxType(type) {
+    // map QMessageBox types to Electron values
+    switch (type) {
+      case 1:
+        return 'info';
+      case 2:
+        return 'warning';
+      case 3:
+        return 'error';
+      default:
+      case 4:
+        return 'question';
+    }
+  }
+
+  convertButtons(buttons) {
+    return buttons.split('|');
   }
 }
 

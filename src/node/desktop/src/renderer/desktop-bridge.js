@@ -252,7 +252,7 @@ exports.getDesktopBridge = () => {
       callback) => {
       ipcRenderer
         .invoke('desktop_show_message_box', type, caption, message, buttons, defaultButton, cancelButton)
-        .then(result => callback(result));
+        .then(result => callback(result.response));
     },
 
     promptForText: (title,
