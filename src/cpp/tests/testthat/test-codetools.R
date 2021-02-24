@@ -61,3 +61,21 @@ test_that(".rs.CRANDownloadOptionsString() generates a valid R expression", {
    expect_equal(actual$download.file.extra, "embedded 'quotes'")
    
 })
+
+test_that(".rs.CRANDownloadOptionsString() fills missing CRAN repo", {
+   # read default CRAN URL from user preferences
+   cran <- .rs.readUiPref("cran_mirror")$url
+
+   # unset repos
+   options(repos = NULL)
+
+   # create dummy environment
+   envir <- new.env(parent = globalenv())
+   envir[["options"]] <- base::list
+
+   # evaluate the download string and confirm that it contains the CRAN URL from user prefs
+   string <- .rs.CRANDownloadOptionsString()
+   actual <- eval(parse(text = string), envir = envir)
+   expect_equal(unlist(actual[["repos"]]["CRAN"]), c(CRAN = cran))
+})
+
