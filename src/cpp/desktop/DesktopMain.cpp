@@ -22,6 +22,8 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/bind/bind.hpp>
 
+#include <shared_core/SafeConvert.hpp>
+
 #include <core/CrashHandler.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/json/JsonRpc.hpp>
@@ -29,8 +31,8 @@
 #include <core/ProgramStatus.hpp>
 #include <core/Version.hpp>
 #include <core/system/FileScanner.hpp>
-#include <shared_core/SafeConvert.hpp>
 #include <core/StringUtils.hpp>
+#include <core/system/Architecture.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 #include <core/r_util/RProjectFile.hpp>
@@ -831,31 +833,42 @@ int main(int argc, char* argv[])
 #ifdef __APPLE__
       // on macOS, we need to figure out whether we're about to run
       // with an x86_64 or an arm64 build of R, and select the appropriate
-      // rsession copy based on that
+      // rsession copy based on that.
+      //
+      // note that development builds of RStudio on arm64 will use
+      // pure-arm64 components, so we want to avoid indirection in that case
+      FilePath rHome = FilePath(core::system::getenv("R_HOME"));
+      FilePath rLib = rHome.completeChildPath("lib/libR.dylib");
+
+      auto rsessionArchs = core::system::supportedArchitectures(sessionPath);
+      auto rArchs = core::system::supportedArchitectures(rLib);
+
+      bool rSupportsX86 = rArchs.find("x86_64") != std::string::npos;
+      bool rSupportsArm64 = rArchs.find("arm64") != std::string::npos;
+      bool rsessionSupportsArm64 = rsessionArchs.find("arm64") != std::string::npos;
+
+      if (rSupportsArm64 && !rsessionSupportsArm64)
       {
-         FilePath rHome = FilePath(core::system::getenv("R_HOME"));
-         FilePath rLib = rHome.completeChildPath("lib/libR.dylib");
-
-         core::system::ProcessOptions options;
-         core::system::ProcessResult result;
-         Error lipoError = core::system::runProgram(
-                  "/usr/bin/lipo",
-                  { "-archs", rLib.getAbsolutePath() },
-                  std::string(),
-                  options,
-                  &result);
-
-         if (error)
+         FilePath arm64SessionPath = sessionPath.getParent().completeChildPath("rsession-arm64");
+         if (arm64SessionPath.exists())
          {
-            LOG_ERROR(error);
+            sessionPath = arm64SessionPath;
          }
-
-         std::string rArchs = string_utils::trimWhitespace(result.stdOut);
-         if (rArchs.find("arm64") != std::string::npos)
+         else if (!rSupportsX86)
          {
-            FilePath arm64SessionPath = sessionPath.getParent().completeChildPath("rsession-arm64");
-            if (arm64SessionPath.exists())
-               sessionPath = arm64SessionPath;
+            // NOTE: this should only effect developer builds, but will hopefully make the issue
+            // more obvious if a developer with a pure-arm64 build tries to run with x86_64 R,
+            // or vice versa.
+            std::stringstream ss;
+            ss << "Incompatible version of R detected -- RStudio may fail to launch." << std::endl
+               << std::endl
+               << "R home: " << rHome.getAbsolutePath() << std::endl
+               << "R architecture: " << rArchs << std::endl
+               << "RStudio architecture: " << rsessionArchs << std::endl
+               << std::endl
+               << "Consider setting RSTUDIO_WHICH_R to a compatible version of R, or placing a compatible R binary first on the PATH."
+               << std::endl;
+            LOG_WARNING_MESSAGE(ss.str());
          }
       }
 #endif

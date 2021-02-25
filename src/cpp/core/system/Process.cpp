@@ -51,6 +51,15 @@ Error runProgram(const std::string& executable,
    return child.run(input, pResult);
 }
 
+Error runProgram(const std::string& executable,
+                 const std::vector<std::string>& args,
+                 const ProcessOptions& options,
+                 ProcessResult* pResult)
+{
+   SyncChildProcess child(executable, args, options);
+   return child.run(std::string(), pResult);
+}
+
 Error runCommand(const std::string& command,
                  const ProcessOptions& options,
                  ProcessResult* pResult)

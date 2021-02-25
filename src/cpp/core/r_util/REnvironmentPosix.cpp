@@ -53,16 +53,14 @@ FilePath scanForRScript(const std::vector<std::string>& rScriptPaths,
       {
          // verify that the alias points to a real version of R
          Error error = core::system::realPath(*it, &rScriptPath);
-         if (!error)
-         {
-            return rScriptPath;
-         }
-         else
+         if (error)
          {
             error.addProperty("script-path", *it);
             LOG_ERROR(error);
             continue;
          }
+
+         return rScriptPath;
       }
    }
 
@@ -107,12 +105,26 @@ std::string extraLibraryPaths(const FilePath& ldPathsScript,
 
 FilePath systemDefaultRScript(std::string* pErrMsg)
 {
-   // define potential paths
-   std::vector<std::string> rScriptPaths;
-   rScriptPaths.push_back("/usr/bin/R");
-   rScriptPaths.push_back("/usr/local/bin/R");
-   rScriptPaths.push_back("/opt/local/bin/R");
-   rScriptPaths.push_back("/Library/Frameworks/R.framework/Resources/bin/R");
+   // first, check version of R on the PATH
+   core::FilePath rPath;
+   core::system::findProgramOnPath("R", &rPath);
+   if (rPath.exists())
+   {
+      rPath = scanForRScript({ rPath.getAbsolutePath() }, pErrMsg);
+      if (rPath.exists())
+         return rPath;
+   }
+
+   // check other fallback paths
+   std::vector<std::string> rScriptPaths = {
+      "/usr/bin/R",
+      "/usr/local/bin/R",
+      "/opt/local/bin/R",
+   #ifdef __APPLE__
+      "/Library/Frameworks/R.framework/Resources/bin/R",
+   #endif
+   };
+
    return scanForRScript(rScriptPaths, pErrMsg);
 }
 
@@ -647,40 +659,69 @@ bool detectREnvironment(const FilePath& whichRScript,
       *pRScriptPath = std::string();
    }
 
+
    // detect R locations
    FilePath rHomePath, rLibPath;
+   std::string scriptErrMsg;
    config_utils::Variables scriptVars;
+   bool detected = false;
+
+   // check RSTUDIO_WHICH_R override
+   std::string rstudioWhichR = core::system::getenv("RSTUDIO_WHICH_R");
+   if (!rstudioWhichR.empty())
+   {
+      detected = detectRLocationsUsingScript(
+               FilePath(rstudioWhichR),
+               &rHomePath,
+               &rLibPath,
+               &scriptVars,
+               pErrMsg);
+   }
+
 #ifdef __APPLE__
-   if (!detectRLocationsUsingScript(FilePath(*pRScriptPath),
-                                    &rHomePath,
-                                    &rLibPath,
-                                    &scriptVars,
-                                    pErrMsg))
+
+   if (!detected)
+   {
+      // check with default R script path
+      detected = detectRLocationsUsingScript(
+               FilePath(*pRScriptPath),
+               &rHomePath,
+               &rLibPath,
+               &scriptVars,
+               pErrMsg);
+   }
+
+   if (!detected)
    {
       // fallback to detecting using Framework directory
       rHomePath = FilePath();
       rLibPath = FilePath();
       scriptVars.clear();
-      std::string scriptErrMsg;
       *pRScriptPath = "/Library/Frameworks/R.framework/Resources/bin/R";
-      if (!detectRLocationsUsingFramework(&rHomePath,
-                                          &rLibPath,
-                                          &scriptVars,
-                                          &scriptErrMsg))
-      {
-         pErrMsg->append("; " + scriptErrMsg);
-         return false;
-      }
+
+      detected = detectRLocationsUsingFramework(
+               &rHomePath,
+               &rLibPath,
+               &scriptVars,
+               &scriptErrMsg);
    }
+
 #else
-   if (!detectRLocationsUsingR(*pRScriptPath,
-                               &rHomePath,
-                               &rLibPath,
-                               &scriptVars,
-                               pErrMsg,
-                               prelaunchScript,
-                               module,
-                               modulesBinaryPath))
+
+   if (!detected)
+   {
+      detected = detectRLocationsUsingR(
+               *pRScriptPath,
+               &rHomePath,
+               &rLibPath,
+               &scriptVars,
+               pErrMsg,
+               prelaunchScript,
+               module,
+               modulesBinaryPath);
+   }
+
+   if (!detected)
    {
       // fallback to detecting using script (sometimes we are unable to
       // call R successfully immediately after a system reboot)
@@ -697,20 +738,23 @@ bool detectREnvironment(const FilePath& whichRScript,
       rHomePath = FilePath();
       rLibPath = FilePath();
       scriptVars.clear();
-      std::string scriptErrMsg;
-      if (!detectRLocationsUsingScript(FilePath(*pRScriptPath),
-                                       &rHomePath,
-                                       &rLibPath,
-                                       &scriptVars,
-                                       &scriptErrMsg,
-                                       prelaunchScript))
-      {
-         pErrMsg->append("; " + scriptErrMsg);
-         return false;
-      }
+
+      detected = detectRLocationsUsingScript(
+               FilePath(*pRScriptPath),
+               &rHomePath,
+               &rLibPath,
+               &scriptVars,
+               &scriptErrMsg,
+               prelaunchScript);
    }
+
 #endif
 
+   if (!detected)
+   {
+      pErrMsg->append("; " + scriptErrMsg);
+      return false;
+   }
 
    // set R home path
    pVars->push_back(std::make_pair("R_HOME", rHomePath.getAbsolutePath()));
@@ -743,7 +787,7 @@ bool detectREnvironment(const FilePath& whichRScript,
        FilePath("/Library/Frameworks/R.framework/Resources/etc/x86_64")
                                                                    .exists())
    {
-      pVars->push_back(std::make_pair("R_ARCH","/x86_64"));
+      pVars->push_back(std::make_pair("R_ARCH", "/x86_64"));
    }
 #endif
 
