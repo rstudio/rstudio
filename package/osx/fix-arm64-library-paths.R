@@ -1,3 +1,11 @@
+#!/usr/bin/env R --vanilla -s -f
+
+args <- commandArgs(trailingOnly = TRUE)
+
+if (length(args) == 0) {
+   message("Usage: fix-arm64-library-paths.R [x86_64 library path] [arm64 library path]")
+   quit("no")
+}
 
 fix_paths <- function(dir, prefix) {
    
@@ -37,8 +45,6 @@ fix_paths <- function(dir, prefix) {
    }
    
 }
-
-args <- commandArgs(trailingOnly = TRUE)
 
 # x86_64 paths
 fix_paths(args[[1L]], "@executable_path/../Frameworks")

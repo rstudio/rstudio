@@ -86,7 +86,7 @@ endif()
 
 if(NOT DEFINED RSTUDIO_DESKTOP)
    if(APPLE AND UNAME_M STREQUAL arm64)
-      message(STATUS "Desktop builds not currently supported on M1 macOS machines; disabling RSTUDIO_DESKTOP")
+      message(STATUS "Desktop builds not currently supported on arm64; disabling RSTUDIO_DESKTOP")
       set(RSTUDIO_DESKTOP FALSE)
    elseif(RSTUDIO_TARGET STREQUAL "Development" OR RSTUDIO_TARGET STREQUAL "Desktop")
       set(RSTUDIO_DESKTOP TRUE)
