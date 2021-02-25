@@ -1681,7 +1681,9 @@ test_that("addTheme gives an error when adding an empty theme", {
 
 test_that_wrapped("addTheme gives error when the theme already exists", {
    themePath <- file.path(inputFileLocation, "rsthemes", paste0(themes[[40]]$fileName, ".rstheme"))
-   .rs.addTheme(themePath, FALSE, FALSE, FALSE)
+   # suppress warning for theme overwrite
+   suppressWarnings(
+      .rs.addTheme(themePath, FALSE, FALSE, FALSE))
    expect_error(
       .rs.addTheme(themePath, FALSE, FALSE, FALSE),
       paste0(
@@ -1698,7 +1700,9 @@ AFTER_FUN = function()
 
 test_that_wrapped("addTheme works correctly with force = TRUE", {
    inputThemePath <- file.path(inputFileLocation, "rsthemes", paste0(themes[[14]]$fileName, ".rstheme"))
-   name <- .rs.addTheme(inputThemePath, FALSE, TRUE, FALSE)
+   # suppress warning for theme overwrite
+   suppressWarnings({
+      name <- .rs.addTheme(inputThemePath, FALSE, TRUE, FALSE)})
    exLines <- readLines(inputThemePath, encoding = "UTF-8")
 
    installedTheme <- .rs.getThemes()[[tolower(name)]]
@@ -1804,13 +1808,14 @@ test_that_wrapped("rs_getThemes location override works correctly", {
       paste0("theme/default/", defaultThemes[[themeName]]$fileName, ".rstheme"),
       info = "default location")
 
-   # Install globally
+   # Install globally; ignore overwrite warning
    expectedDawn <- themes[[themeName]]
-   .rs.addTheme(
-      file.path(inputFileLocation, "rsthemes", paste0(expectedDawn$fileName, ".rstheme")),
-      FALSE,
-      FALSE,
-      TRUE)
+   suppressWarnings(
+      .rs.addTheme(
+         file.path(inputFileLocation, "rsthemes", paste0(expectedDawn$fileName, ".rstheme")),
+         FALSE,
+         FALSE,
+         TRUE))
    dawnTheme <- .rs.getThemes()[[tolower(themeName)]]
    expect_equal(
       dawnTheme$url,
@@ -1819,11 +1824,12 @@ test_that_wrapped("rs_getThemes location override works correctly", {
 
    # Install locally
    expectedDawn <- themes[[themeName]]
-   .rs.addTheme(
-      file.path(inputFileLocation, "rsthemes", paste0(expectedDawn$fileName, ".rstheme")),
-      FALSE,
-      FALSE,
-      FALSE)
+   suppressWarnings(
+      .rs.addTheme(
+         file.path(inputFileLocation, "rsthemes", paste0(expectedDawn$fileName, ".rstheme")),
+         FALSE,
+         FALSE,
+         FALSE))
    dawnTheme <- .rs.getThemes()[[tolower(themeName)]]
    expect_equal(
       dawnTheme$url,
