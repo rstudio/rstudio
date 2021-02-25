@@ -68,7 +68,7 @@ public class MemUsageWidget extends Composite
          ToolbarButton.NoTitle,
          (ImageResource) null,
          memoryMenu);
-      ElementIds.assignElementId(menu_, ElementIds.MEMORY_MB_DROPDOWN);
+      ElementIds.assignElementId(menu_, ElementIds.MEMORY_DROPDOWN);
       menu_.getElement().getStyle().setMarginTop(-3, Style.Unit.PX);
       host_.add(menu_);
 
