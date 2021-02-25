@@ -77,8 +77,10 @@ const extension: Extension = {
 
   commands: () => {
     return [
-      new ProsemirrorCommand(EditorCommandId.GoToNextSection, ['Mod-PageDown'], goToSectionCommand('next')),
-      new ProsemirrorCommand(EditorCommandId.GoToPreviousSection, ['Mod-PageUp'], goToSectionCommand('previous')),
+      new ProsemirrorCommand(EditorCommandId.GoToNextSection, ['Mod-PageDown'], goToOutlineCommand('next', 'section')),
+      new ProsemirrorCommand(EditorCommandId.GoToPreviousSection, ['Mod-PageUp'], goToOutlineCommand('previous', 'section')),
+      new ProsemirrorCommand(EditorCommandId.GoToNextChunk, [], goToOutlineCommand('next', 'chunk')),
+      new ProsemirrorCommand(EditorCommandId.GoToPreviousChunk, [], goToOutlineCommand('previous', 'chunk')),
     ];
   },
 
@@ -105,7 +107,7 @@ const extension: Extension = {
   },
 };
 
-export function goToSectionCommand(dir: 'next' | 'previous') {
+export function goToOutlineCommand(dir: 'next' | 'previous', targetType: 'chunk' | 'section') {
   return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
     if (dispatch && view) {
       let outline = getDocumentOutline(state);
@@ -113,6 +115,12 @@ export function goToSectionCommand(dir: 'next' | 'previous') {
         outline = outline.reverse();
       }
       const target = outline.find(nodeWithPos => {
+        // if we are only targeting chunks, do not navigate to other types, and vice versa
+        let isChunk = nodeWithPos.node.type === state.schema.nodes.rmd_chunk;
+        if (isChunk !== (targetType === 'chunk')) {
+          return false;
+        }
+
         if (dir === 'next') {
           return nodeWithPos.pos > state.selection.head;
         } else {
