@@ -591,14 +591,6 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
    install(DIRECTORY "resources/tutorial_resources"
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
-   # install architecture-specific components on macOS
-   if(APPLE)
-      install(
-         DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/arm64"
-         DESTINATION "${RSTUDIO_INSTALL_BIN}/arm64"
-         USE_SOURCE_PERMISSIONS)
-   endif()
-
    # install libclang
    if(WIN32)
       file(GLOB LIBCLANG_32_FILES "${LIBCLANG_DIR}/x86/*")
@@ -668,6 +660,12 @@ endif()
 
 if(APPLE)
 
+   if(RSESSION_ALTERNATE_BUILD)
+      set(RSESSION_DYLIB_PREFIX "@executable_path/../Frameworks/arm64")
+   else()
+      set(RSESSION_DYLIB_PREFIX "@executable_path/../Frameworks")
+   endif()
+
    # if doing a package build on MacOS, reroute dependent libraries to our bundled copies
    if (RSTUDIO_PACKAGE_BUILD)
       find_package(OpenSSL REQUIRED QUIET)
@@ -683,14 +681,14 @@ if(APPLE)
          # 3. runs install_name_tool and tells it to replace the path with one that
          #    points to a bundled copy of the same file
          add_custom_command(TARGET rsession POST_BUILD
-            COMMAND install_name_tool -change `otool -L ${CMAKE_CURRENT_BINARY_DIR}/rsession | grep ${LIB_FILE} | awk '{ print $$1 }'` @executable_path/../Frameworks/${RSESSION_ARCH}/${LIB_FILE} ${CMAKE_CURRENT_BINARY_DIR}/rsession)
+            COMMAND install_name_tool -change `otool -L ${CMAKE_CURRENT_BINARY_DIR}/rsession | grep ${LIB_FILE} | awk '{ print $$1 }'` ${RSESSION_DYLIB_PREFIX}/${LIB_FILE} ${CMAKE_CURRENT_BINARY_DIR}/rsession)
       endforeach()
 
       # do something similar to the above to fix paths to SOCI libraries
       foreach(lib ${SOCI_DEPENDENCIES})
          get_filename_component(LIB_NAME "${lib}" NAME_WE)
          add_custom_command(TARGET rsession POST_BUILD
-            COMMAND install_name_tool -change `otool -L ${CMAKE_CURRENT_BINARY_DIR}/rsession | grep ${LIB_NAME} | awk '{ print $$1 }'` @executable_path/../Frameworks/${RSESSION_ARCH}/$$\(otool -L ${CMAKE_CURRENT_BINARY_DIR}/rsession | grep ${LIB_NAME} | awk '{ print $$1 }' | xargs basename\) ${CMAKE_CURRENT_BINARY_DIR}/rsession)
+            COMMAND install_name_tool -change `otool -L ${CMAKE_CURRENT_BINARY_DIR}/rsession | grep ${LIB_NAME} | awk '{ print $$1 }'` ${RSESSION_DYLIB_PREFIX}/$$\(otool -L ${CMAKE_CURRENT_BINARY_DIR}/rsession | grep ${LIB_NAME} | awk '{ print $$1 }' | xargs basename\) ${CMAKE_CURRENT_BINARY_DIR}/rsession)
       endforeach()
 
    endif()

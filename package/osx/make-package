@@ -24,10 +24,16 @@ BUILD_DIR_ARM64="${PKG_DIR}/build-arm64"
 
 GWT_SRC_DIR="${PKG_DIR}/../../src/gwt"
 
+if [ "$(arch)" = "arm64" ]; then
+   arch=x86_64,arm64
+else
+   arch=x86_64
+fi
+
 # read command line arguments
 arch=x86_64,arm64
-clean=
-dev=
+clean=0
+install=0
 
 build_gwt=1
 copy_gwt=1
@@ -39,6 +45,7 @@ for arg in "$@"; do
    case "$arg" in
    clean)             clean=1 ;;
    --clean)           clean=1 ;;
+   --install)         install=1 ;;
    --arch=*)          arch=${arg#*=} ;;
    --build-gwt=*)     build_gwt=${arg#*=} ;;
    --copy-gwt=*)      copy_gwt=${arg#*=} ;;
@@ -50,8 +57,7 @@ done
 case "${arch}" in *arm64*)  build_arm64=1 ;; esac
 case "${arch}" in *x86_64*) build_x86_64=1 ;; esac
 
-
-if [ -n "${clean}" ]; then
+if [ "${clean}" = "1" ]; then
 
    # remove existing build dir
    rm -rf "${BUILD_DIR_X86_64}"
@@ -145,3 +151,10 @@ if [ "${build_package}" = "1" ]; then
 fi
 
 cd "${PKG_DIR}"
+
+if [ "${install}" = "1" ]; then
+   rm -rf /Applications/RStudio.app
+   cp -R ./build-x86_64/_CPack_Packages/Darwin/DragNDrop/RStudio-99.9.9/RStudio.app /Applications/RStudio.app
+fi
+
+

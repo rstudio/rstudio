@@ -783,7 +783,50 @@ int main(int argc, char* argv[])
       // calculate paths to config file, rsession, and desktop scripts
       FilePath confPath, sessionPath, scriptsPath;
       bool devMode = false;
-      std::string rsessionStem = "rsession";
+
+      // check for debug configuration
+      FilePath currentPath = FilePath::safeCurrentPath(installPath);
+      if (currentPath.completePath("conf/rdesktop-dev.conf").exists())
+      {
+         confPath = currentPath.completePath("conf/rdesktop-dev.conf");
+         sessionPath = currentPath.completePath("session/rsession");
+         scriptsPath = currentPath.completePath("desktop");
+         devMode = true;
+      }
+      // Sometimes boost is returning the wrong current path, which leads to not discovering the conf files correctly.
+      // This falls back to checking under the install path. If this file is present there, we probably want to be
+      // running in developer mode.
+      else if (installPath.completePath("conf/rdesktop-dev.conf").exists())
+      {
+         confPath = installPath.completePath("conf/rdesktop-dev.conf");
+         sessionPath = installPath.completePath("session/rsession");
+         scriptsPath = installPath.completePath("desktop");
+         devMode = true;
+      }
+
+      // if there is no conf path then release mode
+      if (confPath.isEmpty())
+      {
+         // default paths (then tweak)
+         sessionPath = installPath.completePath("bin/rsession");
+         scriptsPath = installPath.completePath("bin");
+
+         // check for running in a bundle on OSX
+#ifdef __APPLE__
+         if (installPath.completePath("Info.plist").exists())
+         {
+            sessionPath = installPath.completePath("MacOS/rsession");
+            scriptsPath = installPath.completePath("MacOS");
+         }
+#endif
+      }
+
+      // set the scripts path in options
+      desktop::options().setScriptsPath(scriptsPath);
+
+      Options& options = desktop::options();
+      if (!prepareEnvironment(options))
+         return 1;
 
 #ifdef __APPLE__
       // on macOS, we need to figure out whether we're about to run
@@ -808,60 +851,15 @@ int main(int argc, char* argv[])
          }
 
          std::string rArchs = string_utils::trimWhitespace(result.stdOut);
-         if (rArchs == "x86_64")
+         if (rArchs.find("arm64") != std::string::npos)
          {
-            rsessionStem = "x86_64/rsession";
-         }
-         else
-         {
-            rsessionStem = "arm64/rsession";
+            FilePath arm64SessionPath = sessionPath.getParent().completeChildPath("rsession-arm64");
+            if (arm64SessionPath.exists())
+               sessionPath = arm64SessionPath;
          }
       }
 #endif
 
-      // check for debug configuration
-      FilePath currentPath = FilePath::safeCurrentPath(installPath);
-      if (currentPath.completePath("conf/rdesktop-dev.conf").exists())
-      {
-         confPath = currentPath.completePath("conf/rdesktop-dev.conf");
-         sessionPath = currentPath.completePath("session/" + rsessionStem);
-         scriptsPath = currentPath.completePath("desktop");
-         devMode = true;
-      }
-      // Sometimes boost is returning the wrong current path, which leads to not discovering the conf files correctly.
-      // This falls back to checking under the install path. If this file is present there, we probably want to be
-      // running in developer mode.
-      else if (installPath.completePath("conf/rdesktop-dev.conf").exists())
-      {
-         confPath = installPath.completePath("conf/rdesktop-dev.conf");
-         sessionPath = installPath.completePath("session/" + rsessionStem);
-         scriptsPath = installPath.completePath("desktop");
-         devMode = true;
-      }
-
-      // if there is no conf path then release mode
-      if (confPath.isEmpty())
-      {
-         // default paths (then tweak)
-         sessionPath = installPath.completePath("bin/" + rsessionStem);
-         scriptsPath = installPath.completePath("bin");
-
-         // check for running in a bundle on OSX
-#ifdef __APPLE__
-         if (installPath.completePath("Info.plist").exists())
-         {
-            sessionPath = installPath.completePath("MacOS/" + rsessionStem);
-            scriptsPath = installPath.completePath("MacOS");
-         }
-#endif
-      }
-
-      // set the scripts path in options
-      desktop::options().setScriptsPath(scriptsPath);
-
-      Options& options = desktop::options();
-      if (!prepareEnvironment(options))
-         return 1;
 
 #ifdef _WIN32
       RVersion version = detectRVersion(false);

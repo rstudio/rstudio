@@ -21,13 +21,13 @@ endif()
 set(RSTUDIO_PACKAGE_SUFFIX "-")
 
 # flags to pass to codesign executable
-set(CODESIGN_FLAGS 
-    "--options" "runtime" 
-    "--timestamp" 
-    "--entitlements" "${CMAKE_CURRENT_SOURCE_DIR}/entitlements.plist" 
-    "--deep" 
-    "-s" "8A388E005EF927A09B952C6E71B0E8F2F467AB26" 
-    "-i" "org.rstudio.RStudio")
+set(CODESIGN_FLAGS
+   "--options" "runtime"
+   "--timestamp"
+   "--entitlements" "${CMAKE_CURRENT_SOURCE_DIR}/entitlements.plist"
+   "--deep"
+   "-s" "8A388E005EF927A09B952C6E71B0E8F2F467AB26"
+   "-i" "org.rstudio.RStudio")
 
 # include overlay if it exists
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMakeOverlay.txt")
@@ -37,35 +37,58 @@ endif()
 # developer-id code signing
 if(RSTUDIO_PACKAGE_BUILD AND NOT RSESSION_ALTERNATE_BUILD)
    INSTALL(CODE "
-     
-     message(STATUS \"Installing arm64 components ...\")
-     execute_process(
-         COMMAND
-            R -s -f \"${CMAKE_CURRENT_SOURCE_DIR}/install-rsession-arm64.R\" --args
-            \"${CMAKE_CURRENT_SOURCE_DIR}\"
-            \"\${CMAKE_INSTALL_PREFIX}\")
 
-     # don't follow symlinks in GLOB_RECURSE
-     cmake_policy(SET CMP0009 NEW)
-     cmake_policy(SET CMP0011 NEW)
+   # if we're building on arm64, then
+   # copy arm64 build components into the x86_64 build tree
+   if(${UNAME_M} STREQUAL arm64)
 
-     list(APPEND CODESIGN_TARGETS \"\${CMAKE_INSTALL_PREFIX}/RStudio.app\")
+      configure_file(
+         \"${CMAKE_CURRENT_SOURCE_DIR}/build-arm64/src/cpp/session/rsession\"
+         \"\${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/MacOS/rsession-arm64\"
+         COPYONLY)
 
-     file(GLOB_RECURSE CODESIGN_PLUGINS \"\${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/plugins\")
-     list(APPEND CODESIGN_TARGETS \${CODESIGN_PLUGINS})
+      set(HOMEBREW_LIBS libpq krb5 openssl sqlite3)
 
-     file(GLOB_RECURSE CODESIGN_FRAMEWORKS \"\${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/Frameworks\")
-     list(APPEND CODESIGN_TARGETS \${CODESIGN_FRAMEWORKS})
+      foreach(LIB \${HOMEBREW_LIBS})
+         set(LIBPATH \"/opt/homebrew/opt/\${LIB}/lib\")
+         file(GLOB LIBFILES \"\${LIBPATH}/*.dylib\")
+         foreach(LIBFILE \${LIBFILES})
+            file(
+               COPY \"\${LIBFILE}\"
+               DESTINATION \"\${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/Frameworks/arm64\")
+         endforeach()
+      endforeach()
 
-     file(GLOB_RECURSE CODESIGN_MACOS \"\${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/MacOS\")
-     list(APPEND CODESIGN_TARGETS \${CODESIGN_MACOS})
+      execute_process(
+         COMMAND R -s -f \"${CMAKE_CURRENT_SOURCE_DIR}/fix-arm64-library-paths.R\"
+         --args
+         \"\${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/Frameworks\"
+         \"\${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/Frameworks/arm64\"
+         COMMAND_ERROR_IS_FATAL ANY)
 
-     # deep sign all targets
-     foreach(CODESIGN_TARGET \${CODESIGN_TARGETS})
-         message(\"Signing \${CODESIGN_TARGET}...\")
-         execute_process(COMMAND codesign ${CODESIGN_FLAGS} \"\${CODESIGN_TARGET}\")
-     endforeach()
-     ")
+   endif()
+   
+   # don't follow symlinks in GLOB_RECURSE
+   cmake_policy(SET CMP0009 NEW)
+   cmake_policy(SET CMP0011 NEW)
+
+   list(APPEND CODESIGN_TARGETS \"\${CMAKE_INSTALL_PREFIX}/RStudio.app\")
+
+   file(GLOB_RECURSE CODESIGN_PLUGINS \"\${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/plugins\")
+   list(APPEND CODESIGN_TARGETS \${CODESIGN_PLUGINS})
+
+   file(GLOB_RECURSE CODESIGN_FRAMEWORKS \"\${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/Frameworks\")
+   list(APPEND CODESIGN_TARGETS \${CODESIGN_FRAMEWORKS})
+
+   file(GLOB_RECURSE CODESIGN_MACOS \"\${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/MacOS\")
+   list(APPEND CODESIGN_TARGETS \${CODESIGN_MACOS})
+
+   # deep sign all targets
+   foreach(CODESIGN_TARGET \${CODESIGN_TARGETS})
+      message(\"Signing \${CODESIGN_TARGET}...\")
+      execute_process(COMMAND codesign ${CODESIGN_FLAGS} \"\${CODESIGN_TARGET}\")
+   endforeach()
+   ")
 endif()
 
 # package attributes

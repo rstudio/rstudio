@@ -57,10 +57,6 @@ if(UNIX)
       OUTPUT_STRIP_TRAILING_WHITESPACE)
    message(STATUS "Machine architecture: ${UNAME_M}")
 
-   if(NOT DEFINED RSESSION_ARCH)
-      set(RSESSION_ARCH "${UNAME_M}")
-   endif()
-
 endif()
 
 # default to debug builds
