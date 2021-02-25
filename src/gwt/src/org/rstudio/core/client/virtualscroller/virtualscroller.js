@@ -332,7 +332,8 @@ var VirtualScroller;
       }
 
       if (indexToSlice > 0) {
-        element.innerText = "[...]" + element.innerText.substring(indexToSlice);
+        element.innerText = "<console output truncated>" +
+          element.innerText.substring(indexToSlice);
       }
     },
 
