@@ -157,8 +157,15 @@ fi
 cd "${PKG_DIR}"
 
 if [ "${install}" = "1" ]; then
-   rm -rf /Applications/RStudio.app
-   cp -R ./build-x86_64/_CPack_Packages/Darwin/DragNDrop/RStudio-99.9.9/RStudio.app /Applications/RStudio.app
+   RSTUDIO_BUNDLE_PATH="${BUILD_DIR_X86_64}/_CPack_Packages/Darwin/DragNDrop/RStudio-99.9.9/RStudio.app"
+   RSTUDIO_DEVEL_PATH="/Applications/RStudio-Devel.app"
+   if [ -f "${RSTUDIO_BUNDLE_PATH}" ]; then
+      rm -rf "${RSTUDIO_DEVEL_PATH}"
+      cp -R "${RSTUDIO_BUNDLE_PATH}" "${RSTUDIO_DEVEL_PATH}"
+      echo "RStudio installed to '${RSTUDIO_DEVEL_PATH}'"
+   else
+      echo "Error: '${RSTUDIO_BUNDLE_PATH}' does not exist; cannot install"
+   fi
 fi
 
 
