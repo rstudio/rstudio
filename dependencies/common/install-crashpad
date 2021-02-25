@@ -54,6 +54,7 @@ then
         ARCHIVE_FOLDER=linux
       fi
 
+      mkdir -p $RSTUDIO_TOOLS_DIR
       cd $RSTUDIO_TOOLS_DIR
       wget "$CRASHPAD_PRE_BUILT_ROOT_URL/$ARCHIVE_FOLDER/crashpad-$1$ARCHIVE_EXT"
       tar xvf "crashpad-$1$ARCHIVE_EXT"
