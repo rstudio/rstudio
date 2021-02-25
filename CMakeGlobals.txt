@@ -77,7 +77,7 @@ endif()
 
 # set desktop and server build flags
 if(NOT DEFINED RSTUDIO_SERVER)
-   if(RSTUDIO_TARGET STREQUAL "Development" OR RSTUDIO_TARGET STREQUAL "Server")
+   if(NOT WIN32 AND (RSTUDIO_TARGET STREQUAL "Development" OR RSTUDIO_TARGET STREQUAL "Server"))
       set(RSTUDIO_SERVER TRUE)
    endif()
 endif()
