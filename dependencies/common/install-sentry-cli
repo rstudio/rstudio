@@ -17,4 +17,7 @@
 
 set -e
 
+source ../tools/rstudio-tools.sh
+section "Installing Sentry CLI"
+
 curl -sL https://sentry.io/get-cli/ | bash || true

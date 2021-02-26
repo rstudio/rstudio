@@ -17,7 +17,7 @@
 
 set -e
 
-function help() {
+help () {
   cat <<EOF
 usage: install-common [options]
 

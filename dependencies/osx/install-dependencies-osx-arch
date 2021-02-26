@@ -15,7 +15,10 @@
 #
 #
 
-set -eux
+set -e
+
+source ../tools/rstudio-tools.sh
+require-program brew
 
 # NOTE: the intention is for this script to be invoked as e.g.
 #
@@ -28,15 +31,8 @@ if [ -e install-overlay ]; then
    ./install-overlay
 fi
 
-# make sure brew is installed, and error if not
-if ! command -v brew &> /dev/null; then
-   echo "homebrew is not installed, but is needed to install dependencies"
-   exit 1
-fi
-
-# install requisite Homebrew formulae
+section "Installing Homebrew Formulae"
 FORMULAS=(coreutils gdb openssl pidof postgresql)
-
 for FORMULA in "${FORMULAS[@]}"; do
    brew install "${FORMULA}" || true
 done

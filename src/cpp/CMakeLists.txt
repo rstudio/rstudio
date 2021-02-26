@@ -208,8 +208,8 @@ if(WIN32)
 
 elseif(NOT RSTUDIO_USE_SYSTEM_YAML_CPP)
 
-   set(YAML_CPP_INCLUDE_DIR "/opt/rstudio-tools/${UNAME_M}/yaml-cpp/0.6.3/include")
-   set(YAML_CPP_LIBRARIES   "/opt/rstudio-tools/${UNAME_M}/yaml-cpp/0.6.3/build/libyaml-cpp.a")
+   set(YAML_CPP_INCLUDE_DIR "${RSTUDIO_TOOLS_ROOT}/yaml-cpp/0.6.3/include")
+   set(YAML_CPP_LIBRARIES   "${RSTUDIO_TOOLS_ROOT}/yaml-cpp/0.6.3/build/libyaml-cpp.a")
 
 else()
    # NOTE: defines the following CMake variables:
@@ -260,7 +260,7 @@ list(APPEND BOOST_LIBS
 # UNIX BOOST
 if(UNIX)
    # prefer static link to our custom built version
-   set(RSTUDIO_TOOLS_BOOST /opt/rstudio-tools/${UNAME_M}/boost/boost_1_69_0)
+   set(RSTUDIO_TOOLS_BOOST "${RSTUDIO_TOOLS_ROOT}/boost/boost_1_69_0")
    if(NOT RSTUDIO_USE_SYSTEM_BOOST AND EXISTS ${RSTUDIO_TOOLS_BOOST})
       add_definitions(-DRSTUDIO_BOOST_NAMESPACE=rstudio_boost)
 
@@ -326,7 +326,7 @@ endif()
 # Crashpad
 if (NOT DEFINED RSTUDIO_CRASHPAD_ENABLED OR RSTUDIO_CRASHPAD_ENABLED)
    if(UNIX)
-      set(RSTUDIO_TOOLS_CRASHPAD "/opt/rstudio-tools/${UNAME_M}/crashpad")
+      set(RSTUDIO_TOOLS_CRASHPAD "${RSTUDIO_TOOLS_ROOT}/crashpad")
       set(CRASHPAD_INCLUDE_DIR "${RSTUDIO_TOOLS_CRASHPAD}")
       set(CRASHPAD_INNER_DIR "${RSTUDIO_TOOLS_CRASHPAD}/crashpad")
       include_directories(SYSTEM ${CRASHPAD_INCLUDE_DIR})
@@ -399,7 +399,7 @@ endif()
 
 # SOCI
 if(UNIX)
-   set(RSTUDIO_TOOLS_SOCI "/opt/rstudio-tools/${UNAME_M}/soci")
+   set(RSTUDIO_TOOLS_SOCI "${RSTUDIO_TOOLS_ROOT}/soci")
    set(SOCI_INCLUDE_BUILD_DIR "${RSTUDIO_TOOLS_SOCI}/build/include")
 else()
    set(RSTUDIO_TOOLS_SOCI "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/soci")

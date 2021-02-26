@@ -192,6 +192,15 @@ if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}")
    set(RSTUDIO_DEPENDENCIES_DIR "${ROOT_SRC_DIR}/dependencies")
 endif()
 
+# tools
+if(NOT DEFINED RSTUDIO_TOOLS_ROOT)
+   if(WIN32)
+      set(RSTUDIO_TOOLS_ROOT "${RSTUDIO_DEPENDENCIES_DIR}")
+   else()
+      set(RSTUDIO_TOOLS_ROOT "/opt/rstudio-tools/${UNAME_M}")
+   endif()
+endif()
+
 # special install directories for apple desktop
 if (APPLE AND RSTUDIO_DESKTOP)
    set(RSTUDIO_INSTALL_BIN RStudio.app/Contents/MacOS)

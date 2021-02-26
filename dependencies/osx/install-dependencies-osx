@@ -16,36 +16,47 @@
 #
 
 set -e
+source ../tools/rstudio-tools.sh
+
+set-default RSTUDIO_TOOLS_ROOT "/opt/rstudio-tools"
+set-default BREW_X86           "/usr/local/bin/brew"
+set-default BREW_ARM           "/opt/homebrew/bin/brew"
 
 ARCH="$(arch)"
 
 if [ "${ARCH}" = "arm64" ]; then
 
    # validate that Homebrew is installed in the expected locations
-   if [ ! -f /usr/local/bin/brew ]; then
-      echo "Error: Homebrew is not installed for x86_64 (missing /usr/local/bin/brew)"
+   if [ ! -f "${BREW_X86}" ]; then
+      echo "Error: Homebrew is not installed for x86_64 (missing '${BREW_X86}')"
       exit 1
    fi
 
-   if [ ! -f /opt/homebrew/bin/brew ]; then
-      echo "Error: Homebrew is not installed for arm64 (missing /opt/homebrew/bin/brew)"
+   if [ ! -f "${BREW_ARM}" ]; then
+      echo "Error: Homebrew is not installed for arm64 (missing '${BREW_ARM}')"
       exit 1
    fi
 
    # save the PATH -- note that we munge this so that the correct
    # homebrew executable is found first on the PATH
    OLDPATH="${PATH}"
+   OLDROOT="${RSTUDIO_TOOLS_ROOT}"
 
    # install x86_64 dependencies
-   PATH="/usr/local/bin:${OLDPATH}"
+   PATH="$(dirname "${BREW_X86}"):${OLDPATH}"
+   RSTUDIO_TOOLS_ROOT="${OLDROOT}/x86_64"
+   mkdir -p "${RSTUDIO_TOOLS_ROOT}"
    arch -x86_64 ./install-dependencies-osx-arch
 
    # install arm64 dependencies
-   PATH="/opt/homebrew/bin:${OLDPATH}"
+   PATH="$(dirname "${BREW_ARM}"):${OLDPATH}"
+   RSTUDIO_TOOLS_ROOT="${OLDROOT}/arm64"
+   mkdir -p "${RSTUDIO_TOOLS_ROOT}"
    arch -arm64 ./install-dependencies-osx-arch
 
    # restore path
    PATH="${OLDPATH}"
+   RSTUDIO_TOOLS_ROOT="${OLDROOT}"
 
 else
 
@@ -61,3 +72,4 @@ fi
 
 # enable PAM
 sudo cp /etc/pam.d/cups /etc/pam.d/rstudio
+

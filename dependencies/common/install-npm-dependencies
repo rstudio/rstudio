@@ -17,7 +17,8 @@
 
 set -e
 
-source rstudio-tools
+source ../tools/rstudio-tools.sh
+section "Installing NPM"
 
 # variables that control download + installation process
 NODE_VERSION="10.19.0"

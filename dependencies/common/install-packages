@@ -17,6 +17,9 @@
 
 set -e
 
+source ../tools/rstudio-tools.sh
+section "Installing R Packages"
+
 # install dir
 INSTALL_DIR=`pwd`
 

@@ -17,89 +17,84 @@
 
 set -e
 
-# install dir
-INSTALL_DIR=`pwd`
+source ../tools/rstudio-tools.sh
+section "Installing SOCI"
 
 # vars
-BOOST_VERSION="1_69_0"
-RSTUDIO_TOOLS_DIR=/opt/rstudio-tools/$(uname -m)
-SOCI_DIR=$RSTUDIO_TOOLS_DIR/soci
+SOCI_DIR=$RSTUDIO_TOOLS_ROOT/soci
 SOCI_BIN_DIR=$SOCI_DIR/build
 SOCI_URL=https://s3.amazonaws.com/rstudio-buildtools/soci.tar.gz
-BOOST_DIR="$RSTUDIO_TOOLS_DIR/boost/boost_$BOOST_VERSION"
+BOOST_VERSION="1_69_0"
+BOOST_DIR="$RSTUDIO_TOOLS_ROOT/boost/boost_$BOOST_VERSION"
 
 # install SOCI if it isn't already installed
-if ! ls $SOCI_BIN_DIR/lib/libsoci_core* &> /dev/null
-then
-
-   mkdir -p "${RSTUDIO_TOOLS_DIR}"
-   cd "${RSTUDIO_TOOLS_DIR}"
-
-   # download SOCI from source
-   if ! [ -d "$SOCI_DIR" ]
-   then
-      if [ ! -f soci.tar.gz ]; then
-         sudo curl $SOCI_URL -o soci.tar.gz
-      fi
-      sudo tar zxvf soci.tar.gz
-   fi
-   cd $SOCI_DIR
-
-   # make build directory
-   sudo mkdir -p $SOCI_BIN_DIR
-   cd $SOCI_BIN_DIR
-
-   # create symlink to our boost datetime library so it is properly discovered by the SOCI build
-   sudo ln -sf "$BOOST_DIR/lib/libboost_date_time.a" "$BOOST_DIR/lib/rstudio_boost_date_time.a"
-
-   # set compilation visibility
-   if [[ "$OSTYPE" = "darwin"* ]]; then
-      COMPILE_VISIBILITY="hidden"
-   else
-      COMPILE_VISIBILITY="default"
-   fi
-
-   # remove an old cmake cache if it exists
-   rm -f CMakeCache.txt
-
-   # build SOCI
-   cmakeCommand=$(which cmake)
-   makeCommand=$(which make)
-
-   sudo $cmakeCommand -G "Unix Makefiles" \
-       -DCMAKE_POLICY_DEFAULT_CMP0063="NEW" \
-       -DCMAKE_POLICY_DEFAULT_CMP0074="NEW" \
-       -DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=true \
-       -DCMAKE_CXX_VISIBILITY_PRESET="$COMPILE_VISIBILITY" \
-       -DCMAKE_OSX_DEPLOYMENT_TARGET="10.12" \
-       -DSOCI_TESTS=OFF \
-       -DSOCI_CXX11=ON \
-       -DSOCI_EMPTY=OFF \
-       -DBoost_NO_SYSTEM_PATHS=1 \
-       -DBOOST_ROOT="$BOOST_DIR" \
-       -DBOOST_INCLUDE_DIRS="$BOOST_DIR/include" \
-       -DBOOST_LIBRARY_DIRS="$BOOST_DIR/lib" \
-       -DBoost_USE_STATIC_LIBS=ON \
-       -DBoost_DEBUG=1 \
-       -DCMAKE_INCLUDE_PATH="$BOOST_DIR/include" \
-       -DCMAKE_LIBRARY_PATH="$BOOST_DIR/lib" \
-       -DWITH_BOOST=ON \
-       -DWITH_POSTGRESQL=ON \
-       -DWITH_SQLITE3=ON \
-       -DWITH_DB2=OFF \
-       -DWITH_MYSQL=OFF \
-       -DWITH_ORACLE=OFF \
-       -DWITH_FIREBIRD=OFF \
-       -DWITH_ODBC=OFF \
-      ..
-
-   sudo $makeCommand
-   
-   # fix up permissions so bin dir will be readable by others
-   sudo chmod -R 777 "$SOCI_BIN_DIR" 
-else
-   echo "SOCI already installed in $SOCI_BIN_DIR"
+if [ -d "${SOCI_BIN_DIR}/lib" ]; then
+   echo "SOCI already installed at '${SOCI_DIR}'"
+   exit 0
 fi
 
-# back to install dir
-cd $INSTALL_DIR
+require-root-for "${RSTUDIO_TOOLS_ROOT}" "$@"
+
+mkdir -p "${RSTUDIO_TOOLS_ROOT}"
+cd "${RSTUDIO_TOOLS_ROOT}"
+
+# download and unpack SOCI sources
+if ! [ -d "$SOCI_DIR" ]; then
+   download "${SOCI_URL}" soci.tar.gz
+   tar zxvf soci.tar.gz
+fi
+cd "${SOCI_DIR}"
+
+# make build directory
+mkdir -p "$SOCI_BIN_DIR"
+cd "$SOCI_BIN_DIR"
+
+# create symlink to our boost datetime library so it is properly discovered by the SOCI build
+ln -nfs "$BOOST_DIR/lib/libboost_date_time.a" "$BOOST_DIR/lib/rstudio_boost_date_time.a"
+
+# set compilation visibility
+if [[ "$OSTYPE" = "darwin"* ]]; then
+   COMPILE_VISIBILITY="hidden"
+else
+   COMPILE_VISIBILITY="default"
+fi
+
+# remove an old cmake cache if it exists
+rm -f CMakeCache.txt
+
+# build SOCI
+: "${CMAKE=cmake}"
+: "${MAKE=make}"
+
+"${CMAKE}" -G "Unix Makefiles"                         \
+   -DCMAKE_POLICY_DEFAULT_CMP0063="NEW"                \
+   -DCMAKE_POLICY_DEFAULT_CMP0074="NEW"                \
+   -DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=true         \
+   -DCMAKE_CXX_VISIBILITY_PRESET="$COMPILE_VISIBILITY" \
+   -DCMAKE_OSX_DEPLOYMENT_TARGET="10.12"               \
+   -DSOCI_TESTS=OFF                                    \
+   -DSOCI_CXX11=ON                                     \
+   -DSOCI_EMPTY=OFF                                    \
+   -DBoost_NO_SYSTEM_PATHS=1                           \
+   -DBOOST_ROOT="$BOOST_DIR"                           \
+   -DBOOST_INCLUDE_DIRS="$BOOST_DIR/include"           \
+   -DBOOST_LIBRARY_DIRS="$BOOST_DIR/lib"               \
+   -DBoost_USE_STATIC_LIBS=ON                          \
+   -DBoost_DEBUG=1                                     \
+   -DCMAKE_INCLUDE_PATH="$BOOST_DIR/include"           \
+   -DCMAKE_LIBRARY_PATH="$BOOST_DIR/lib"               \
+   -DWITH_BOOST=ON                                     \
+   -DWITH_POSTGRESQL=ON                                \
+   -DWITH_SQLITE3=ON                                   \
+   -DWITH_DB2=OFF                                      \
+   -DWITH_MYSQL=OFF                                    \
+   -DWITH_ORACLE=OFF                                   \
+   -DWITH_FIREBIRD=OFF                                 \
+   -DWITH_ODBC=OFF                                     \
+   ..
+
+"${MAKE}"
+
+# fix up permissions so bin dir will be readable by others
+chmod -R 777 "$SOCI_BIN_DIR"
+

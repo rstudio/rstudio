@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# rstudio-tools -- Bash toolkit used in dependency scripts
+# rstudio-tools.sh -- Bash toolkit used in dependency scripts
 #
 # Copyright (C) 2021 by RStudio, PBC
 #
@@ -15,6 +15,46 @@
 #
 
 # Generic Tools ----
+
+section () {
+	echo -e "\033[1m\033[36m==>\033[39m $*\033[0m"
+}
+
+error () {
+	echo "Error: $*"
+	exit 1
+}
+
+set-default () {
+
+	if [ "$#" = "0" ]; then
+		cat <<- EOF
+		Set the value of a variable if it is unset.
+		Usage: set-default var val
+		EOF
+		return 0
+	fi
+
+	local VAR="$1"
+	local VAL="$2"
+
+	if [ -z "${!VAR}" ]; then
+		eval "$VAR=$VAL"
+	fi
+
+}
+
+rerun-as-root () {
+	exec sudo /bin/bash "$0" "$@"
+}
+
+require-root-for () {
+	if ! [ -w "$1" ]; then
+		echo "Requesting root privileges for access to '$1'"
+		shift
+		rerun-as-root "$@"
+	fi
+}
 
 # Aliases over 'pushd' and 'popd' just to suppress printing of
 # the directory stack on stdout
@@ -30,6 +70,16 @@ popd () {
 # Bash builtin, or otherwise)
 has-command () {
 	command -v "$1" &> /dev/null
+}
+
+has-program () {
+	command -v "$1" &> /dev/null
+}
+
+require-program () {
+	if ! has-program "$1"; then
+		error "required program '$1' is not available on the PATH"
+	fi
 }
 
 is-verbose () {
@@ -265,4 +315,7 @@ is-opensuse () {
 is-ubuntu () {
 	[ "$(platform)" = "ubuntu" ]
 }
+
+set-default RSTUDIO_TOOLS_ROOT "/opt/rstudio-tools"
+export RSTUDIO_TOOLS_ROOT
 

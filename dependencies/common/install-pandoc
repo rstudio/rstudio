@@ -17,7 +17,8 @@
 
 set -e
 
-source rstudio-tools
+source ../tools/rstudio-tools.sh
+section "Installing Pandoc"
 
 # variables that control download + installation process
 PANDOC_VERSION="2.11.4"

@@ -17,16 +17,8 @@
 
 set -e
 
-# define downloader function based on availability of wget / curl
-if command -v wget &> /dev/null; then
-   download () {
-      wget "$1"
-   }
-elif command -v curl &> /dev/null; then
-   download () {
-      curl -O "$1"
-   }
-fi
+source ../tools/rstudio-tools.sh
+section "Installing Crashpad"
 
 # check for presence of flag to skip installation
 # older platforms are unable to build crashpad and may request to skip it
@@ -36,18 +28,17 @@ if [ "$RSTUDIO_DISABLE_CRASHPAD" == "1" ]; then
 fi
 
 # install dir
-INSTALL_DIR=`pwd`
+INSTALL_DIR=$(pwd)
 
 # vars
-RSTUDIO_TOOLS_DIR=/opt/rstudio-tools/$(uname -m)
-DEPOT_TOOLS_DIR=$RSTUDIO_TOOLS_DIR/depot_tools
+DEPOT_TOOLS_DIR=$RSTUDIO_TOOLS_ROOT/depot_tools
 LLVM_VERSION=4.0.0
 LLVM_SOURCE_URL=https://s3.amazonaws.com/rstudio-buildtools/llvm-$LLVM_VERSION.src.tar.xz
 CLANG_SOURCE_URL=https://s3.amazonaws.com/rstudio-buildtools/cfe-$LLVM_VERSION.src.tar.xz
 CRASHPAD_PRE_BUILT_ROOT_URL=https://s3.amazonaws.com/rstudio-buildtools/crashpad-bin
-LLVM_DIR=$RSTUDIO_TOOLS_DIR/llvm-$LLVM_VERSION
+LLVM_DIR=$RSTUDIO_TOOLS_ROOT/llvm-$LLVM_VERSION
 LLVM_BIN_DIR=$LLVM_DIR/build/bin
-CRASHPAD_DIR=$RSTUDIO_TOOLS_DIR/crashpad
+CRASHPAD_DIR=$RSTUDIO_TOOLS_ROOT/crashpad
 CRASHPAD_BIN_DIR=$CRASHPAD_DIR/crashpad/out/Default
 
 # check for presence of argument indicating to install pre-built binaries
@@ -65,8 +56,8 @@ then
         ARCHIVE_FOLDER=linux
       fi
 
-      mkdir -p $RSTUDIO_TOOLS_DIR
-      cd $RSTUDIO_TOOLS_DIR
+      mkdir -p $RSTUDIO_TOOLS_ROOT
+      cd $RSTUDIO_TOOLS_ROOT
       download "$CRASHPAD_PRE_BUILT_ROOT_URL/$ARCHIVE_FOLDER/crashpad-$1$ARCHIVE_EXT"
       tar xvf "crashpad-$1$ARCHIVE_EXT"
       if ! test -e $CRASHPAD_BIN_DIR/crashpad_handler
@@ -114,7 +105,7 @@ if [[ "$OSTYPE" != "darwin"* ]]; then
    if ! $use_system_clang && ! test -e $LLVM_BIN_DIR
    then
       echo "Insufficient system clang - building clang from source..."
-      cd $RSTUDIO_TOOLS_DIR
+      cd $RSTUDIO_TOOLS_ROOT
 
       if ! test -e $LLVM_DIR
       then
