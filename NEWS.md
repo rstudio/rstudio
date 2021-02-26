@@ -5,7 +5,6 @@
 ### R
 
 * Show memory usage details in Environment pane (#4033)
-* Support for arm64 builds of R on M1 macOS machines
 * Added support for the `|>` pipe operator and the `=>` pipe-bind operator, proposed for R 4.1.0 (#8543)
 * Added support for the `\(x)` function shorthand syntax, proposed for R 4.1.0 (#8543)
 * Added preference toggle for inserting the `|>` pipe operator when the Insert Pipe Operator command is used (#8534)
