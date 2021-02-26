@@ -82,6 +82,7 @@
 * Fix display of condition messages (errors and warnings) in some character encodings (#8546)
 * Fix issues finding words with punctuation in visual mode (#8655)
 * Fix spurious image insertion when pasting into visual mode from Excel (#8665)
+* Fix issue causing spell check to stop identifying misspellings when switching between visual and source modes (#8473)
 * Fix out-of-date tooltip when renaming files (#8490, #8491)
 * Fix incorrect keyboard shortcuts shown in some places in the Command Palette (#8735)
 * Fixed an issue where Load Balanced Local Launcher instances could get into a state where they would no longer receive job updates from other nodes due to silent network drops (Pro #2281)

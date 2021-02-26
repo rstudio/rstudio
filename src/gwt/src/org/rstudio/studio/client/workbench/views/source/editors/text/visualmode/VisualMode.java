@@ -569,6 +569,7 @@ public class VisualMode implements VisualModeEditorSync,
                                  // mode, so we do more coarse grained error handling here
                                  try
                                  {
+                                    panmirror_.spellingInvalidateAllWords();
                                     panmirror_.focus();
                                     panmirror_.setEditingLocation(
                                           visualModeLocation_.getSourceOutlineLocation(), 
