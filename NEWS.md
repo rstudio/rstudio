@@ -94,4 +94,5 @@
 * Fixed issue where Set Working Directory command could fail if path contained quotes (#6004)
 * Fixed issue where Pro database drivers will not install if `~/odbcinst.ini` is missing (Pro #2284)
 * Fixed issue causing the mouse cursor to become too small in certain areas on Linux Desktop (#8781)
+* Fixed issue causing Run Tests command to do nothing unless the Build tab was available (#8775)
 

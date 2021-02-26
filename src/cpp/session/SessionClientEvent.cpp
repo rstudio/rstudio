@@ -30,7 +30,7 @@ namespace rstudio {
 namespace session {
 
 namespace client_events {
-
+   
 const int kBusy = 1;
 const int kConsolePrompt = 2;
 const int kConsoleWriteOutput = 3;
@@ -181,6 +181,9 @@ const int kOpenFileDialog = 163;
 const int kRemoveTerminal = 164;
 const int kShowPageViewerEvent = 165;
 const int kAskSecret = 166;
+const int kTestsStarted = 167;
+const int kTestsOutput = 168;
+const int kTestsCompleted = 169;
 const int kJobUpdated = 170;
 const int kJobRefresh = 171;
 const int kJobOutput = 172;
@@ -212,7 +215,7 @@ void ClientEvent::init(int type, const json::Value& data)
    data_ = data;
    id_ = core::system::generateUuid();
 }
-
+   
 void ClientEvent::asJsonObject(int id, json::Object* pObject) const
 {
    json::Object& object = *pObject;
@@ -220,8 +223,8 @@ void ClientEvent::asJsonObject(int id, json::Object* pObject) const
    object["type"] = typeName();
    object["data"] = data();
 }
-
-std::string ClientEvent::typeName() const
+   
+std::string ClientEvent::typeName() const 
 {
    switch (type_)
    {
@@ -231,33 +234,33 @@ std::string ClientEvent::typeName() const
          return "console_prompt";
       case client_events::kConsoleWriteOutput:
          return "console_output";
-      case client_events::kConsoleWriteError:
+      case client_events::kConsoleWriteError: 
          return "console_error";
-      case client_events::kShowErrorMessage:
+      case client_events::kShowErrorMessage: 
          return "show_error_message";
-      case client_events::kShowHelp:
+      case client_events::kShowHelp: 
          return "show_help";
-      case client_events::kBrowseUrl:
+      case client_events::kBrowseUrl: 
          return "browse_url";
-      case client_events::kShowEditor:
+      case client_events::kShowEditor: 
          return "show_editor";
-      case client_events::kChooseFile:
+      case client_events::kChooseFile: 
          return "choose_file";
       case client_events::kAbendWarning:
          return "abend_warning";
       case client_events::kQuit:
          return "quit";
-      case client_events::kSuicide:
+      case client_events::kSuicide: 
          return "suicide";
       case client_events::kFileChanged:
          return "file_changed";
-      case client_events::kWorkingDirChanged:
+      case client_events::kWorkingDirChanged: 
          return "working_dir_changed";
-      case client_events::kPlotsStateChanged:
+      case client_events::kPlotsStateChanged: 
          return "plots_state_changed";
-      case client_events::kPackageStatusChanged:
+      case client_events::kPackageStatusChanged: 
          return "package_status_changed";
-      case client_events::kPackageStateChanged:
+      case client_events::kPackageStateChanged: 
          return "package_state_changed";
       case client_events::kLocator:
          return "locator";
@@ -521,6 +524,12 @@ std::string ClientEvent::typeName() const
          return "show_page_viewer";
       case client_events::kAskSecret:
          return "ask_secret";
+      case client_events::kTestsStarted:
+         return "tests_started";
+      case client_events::kTestsOutput:
+         return "tests_output";
+      case client_events::kTestsCompleted:
+         return "tests_completed";
       case client_events::kJobUpdated:
          return "job_updated";
       case client_events::kJobRefresh:
@@ -568,7 +577,7 @@ std::string ClientEvent::typeName() const
       case client_events::kCommandCallbacksChanged:
          return "command_callbacks_changed";
       default:
-         LOG_WARNING_MESSAGE("unexpected event type: " +
+         LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));
          return "";
    }
@@ -592,8 +601,8 @@ ClientEvent browseUrlEvent(const std::string& url, const std::string& window)
    browseURLInfo["window"] = window;
    return ClientEvent(client_events::kBrowseUrl, browseURLInfo);
 }
-
-
+    
+   
 ClientEvent showErrorMessageEvent(const std::string& title,
                                   const std::string& message)
 {
@@ -604,7 +613,7 @@ ClientEvent showErrorMessageEvent(const std::string& title,
 }
 
 
-
-
+   
+   
 } // namespace session
 } // namespace rstudio
