@@ -55,11 +55,14 @@ fi
 # re-run as root if necessary
 require-root-for "${RSTUDIO_TOOLS_ROOT}" "$@"
 
+# move to tempdir for build
+cd "$(mktemp -d -t boost-build)"
+
 # download boost
 BOOST_URL=https://s3.amazonaws.com/rstudio-buildtools/Boost/boost_1_69_0.tar.bz2
 download "${BOOST_URL}" "${BOOST_TAR}"
 
-# remove existing boost installation
+# remove existing boost directory
 rm -rf "${BOOST_DIR}"
 
 # untar source (remove existing)

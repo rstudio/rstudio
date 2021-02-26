@@ -42,6 +42,6 @@ grep -qxF 'set startup-with-shell off' ~/.gdbinit || echo "set startup-with-shel
 
 # install common utilities
 cd ../common
-./install-common --install-crashpad-sudo
+./install-common
 cd ../osx
 

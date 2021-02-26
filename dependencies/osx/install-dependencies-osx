@@ -18,9 +18,8 @@
 set -e
 source ../tools/rstudio-tools.sh
 
-set-default RSTUDIO_TOOLS_ROOT "/opt/rstudio-tools"
-set-default BREW_X86           "/usr/local/bin/brew"
-set-default BREW_ARM           "/opt/homebrew/bin/brew"
+set-default BREW_X86 "/usr/local/bin/brew"
+set-default BREW_ARM "/opt/homebrew/bin/brew"
 
 ARCH="$(arch)"
 
@@ -45,13 +44,15 @@ if [ "${ARCH}" = "arm64" ]; then
    # install x86_64 dependencies
    PATH="$(dirname "${BREW_X86}"):${OLDPATH}"
    RSTUDIO_TOOLS_ROOT="${OLDROOT}/x86_64"
-   mkdir -p "${RSTUDIO_TOOLS_ROOT}"
+
+   section "Installing x86_64 Dependencies"
    arch -x86_64 ./install-dependencies-osx-arch
 
    # install arm64 dependencies
    PATH="$(dirname "${BREW_ARM}"):${OLDPATH}"
    RSTUDIO_TOOLS_ROOT="${OLDROOT}/arm64"
-   mkdir -p "${RSTUDIO_TOOLS_ROOT}"
+
+   section "Installing arm64 Dependencies"
    arch -arm64 ./install-dependencies-osx-arch
 
    # restore path
@@ -61,6 +62,9 @@ if [ "${ARCH}" = "arm64" ]; then
 else
 
    # assume x86_64
+   OLDROOT="${RSTUDIO_TOOLS_ROOT}"
+   RSTUDIO_TOOLS_ROOT="${RSTUDIO_TOOLS_ROOT}/x86_64"
+
    ./install-dependencies-osx-arch
 
    # desktop dependencies (qt; currently x86_64 only)
@@ -68,8 +72,15 @@ else
       ./install-qt-macos
    fi
 
+   RSTUDIO_TOOLS_ROOT="${OLDROOT}"
+
 fi
 
 # enable PAM
-sudo cp /etc/pam.d/cups /etc/pam.d/rstudio
+if ! is-jenkins; then
+   if ! [ -f "/etc/pam.d/rstudio" ]; then
+      section "Installing RStudio PAM Profile"
+      sudo cp /etc/pam.d/cups /etc/pam.d/rstudio
+   fi
+fi
 

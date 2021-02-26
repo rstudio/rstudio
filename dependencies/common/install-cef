@@ -18,8 +18,7 @@
 set -e
 
 source ../tools/rstudio-tools.sh
-
-section Instaling CEF
+section "Installing Chromium Embedded Framework (CEF)"
 
 # install dir
 INSTALL_DIR=$(pwd)

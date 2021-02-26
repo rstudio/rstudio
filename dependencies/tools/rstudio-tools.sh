@@ -45,15 +45,26 @@ set-default () {
 }
 
 rerun-as-root () {
-	exec sudo /bin/bash "$0" "$@"
+	exec sudo -E /bin/bash "$0" "$@"
 }
 
 require-root-for () {
+
+	# If the directory does not exist, try to create it
+	if ! [ -d "$1" ]; then
+		mkdir -p "$1" &> /dev/null || true
+		if [ "$#" = "0" ]; then
+			return 0
+		fi
+	fi
+
+	# Otherwise, check if the directory is writable
 	if ! [ -w "$1" ]; then
-		echo "Requesting root privileges for access to '$1'"
+		echo "Execution of '$0' requires root privileges for access to '$1'"
 		shift
 		rerun-as-root "$@"
 	fi
+
 }
 
 # Aliases over 'pushd' and 'popd' just to suppress printing of
@@ -288,6 +299,10 @@ is-mac () {
 	[ "$(uname)" = "Darwin" ]
 }
 
+is-macos () {
+	[ "$(uname)" = "Darwin" ]
+}
+
 is-darwin () {
 	[ "$(uname)" = "Darwin" ]
 }
@@ -314,6 +329,10 @@ is-opensuse () {
 
 is-ubuntu () {
 	[ "$(platform)" = "ubuntu" ]
+}
+
+is-jenkins () {
+	[ -n "${JENKINS_URL}" ]
 }
 
 set-default RSTUDIO_TOOLS_ROOT "/opt/rstudio-tools"

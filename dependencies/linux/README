@@ -65,12 +65,7 @@ install Google Web Toolkit, Hunspell dictionaries, MathJax, Boost 1.69, and
 other dependencies):
 
 NOTE: To build without crashpad support, define RSTUDIO_DISABLE_CRASHPAD=1
-before running the script; otherwise, pass the --install-crashpad-sudo
-option so crashpad can be installed to opt/rstudio-tools/crashpad.
-
-   ./install-common --install-crashpad-sudo
-
-OR
+before running the script. For example:
 
    RSTUDIO_DISABLE_CRASHPAD=1 ./install-common
 

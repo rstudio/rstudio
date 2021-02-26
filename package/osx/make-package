@@ -97,17 +97,18 @@ if [ -n "${build_x86_64}" ]; then
    rm -rf build/_CPack_Packages
 
    echo "Configuring for x86_64 ..."
-   arch -x86_64 "${CMAKE}"                              \
-      -DCMAKE_BUILD_TYPE=RelWithDebInfo                 \
-      -DCMAKE_OSX_DEPLOYMENT_TARGET="10.12"             \
-      -DRSTUDIO_TARGET=Desktop                          \
-      -DRSTUDIO_PACKAGE_BUILD=1                         \
-      -DRSTUDIO_CRASHPAD_ENABLED=0                      \
-      -DGWT_BUILD="${build_gwt}"                        \
-      -DGWT_COPY="${copy_gwt}"                          \
-      -DGWT_BIN_DIR="${BUILD_DIR_X86_64}/gwt/bin"       \
-      -DGWT_WWW_DIR="${BUILD_DIR_X86_64}/gwt/www"       \
-      -DGWT_EXTRAS_DIR="${BUILD_DIR_X86_64}/gwt/extras" \
+   arch -x86_64 "${CMAKE}"                                \
+      -DCMAKE_BUILD_TYPE=RelWithDebInfo                   \
+      -DCMAKE_OSX_DEPLOYMENT_TARGET="10.12"               \
+      -DRSTUDIO_TARGET=Desktop                            \
+      -DRSTUDIO_PACKAGE_BUILD=1                           \
+      -DRSTUDIO_CRASHPAD_ENABLED=0                        \
+      -DRSTUDIO_TOOLS_ROOT="${RSTUDIO_TOOLS_ROOT}/x86_64" \
+      -DGWT_BUILD="${build_gwt}"                          \
+      -DGWT_COPY="${copy_gwt}"                            \
+      -DGWT_BIN_DIR="${BUILD_DIR_X86_64}/gwt/bin"         \
+      -DGWT_WWW_DIR="${BUILD_DIR_X86_64}/gwt/www"         \
+      -DGWT_EXTRAS_DIR="${BUILD_DIR_X86_64}/gwt/extras"   \
       "${PKG_DIR}/../.."
    echo "Done!"
 
@@ -129,15 +130,16 @@ if [ -n "${build_arm64}" ]; then
    rm -rf build/_CPack_Packages
 
    echo "Configuring for arm64 ..."
-   arch -arm64 cmake                              \
-      -DCMAKE_BUILD_TYPE=RelWithDebInfo           \
-      -DCMAKE_OSX_DEPLOYMENT_TARGET="10.12"       \
-      -DRSESSION_ALTERNATE_BUILD=1                \
-      -DRSTUDIO_TARGET=Desktop                    \
-      -DRSTUDIO_PACKAGE_BUILD=1                   \
-      -DRSTUDIO_CRASHPAD_ENABLED=0                \
-      -DGWT_BUILD=0                               \
-      -DGWT_COPY=0                                \
+   arch -arm64 cmake                                     \
+      -DCMAKE_BUILD_TYPE=RelWithDebInfo                  \
+      -DCMAKE_OSX_DEPLOYMENT_TARGET="10.12"              \
+      -DRSESSION_ALTERNATE_BUILD=1                       \
+      -DRSTUDIO_TARGET=Desktop                           \
+      -DRSTUDIO_PACKAGE_BUILD=1                          \
+      -DRSTUDIO_CRASHPAD_ENABLED=0                       \
+      -DRSTUDIO_TOOLS_ROOT="${RSTUDIO_TOOLS_ROOT}/arm64" \
+      -DGWT_BUILD=0                                      \
+      -DGWT_COPY=0                                       \
       "${PKG_DIR}/../.."
    echo "Done!"
 
