@@ -18,8 +18,29 @@
 set -e
 source ../tools/rstudio-tools.sh
 
-set-default BREW_X86 "/usr/local/bin/brew"
-set-default BREW_ARM "/opt/homebrew/bin/brew"
+# set Homebrew paths
+if [ -z "${BREW_X86}" ]; then
+   if [ -f "${HOME}/homebrew/x86_64/bin/brew" ]; then
+      BREW_X86="${HOME}/homebrew/x86_64/bin/brew"
+   else
+      BREW_X86="/usr/local/bin/brew"
+   fi
+fi
+
+if [ -z "${BREW_ARM}" ]; then
+   if [ -f "${HOME}/homebrew/arm64/bin/brew" ]; then
+      BREW_ARM="${HOME}/homebrew/arm64/bin/brew"
+   else
+      BREW_ARM="/opt/homebrew/bin/brew"
+   fi
+fi
+
+# override RSTUDIO_TOOLS_ROOT for Jenkins
+if is-jenkins; then
+   RSTUDIO_TOOLS_ROOT="${HOME}/opt/rstudio-tools"
+   export RSTUDIO_TOOLS_ROOT
+   echo "Using '${RSTUDIO_TOOLS_ROOT}' for RStudio tools on Jenkins"
+fi
 
 ARCH="$(arch)"
 
@@ -62,7 +83,10 @@ if [ "${ARCH}" = "arm64" ]; then
 else
 
    # assume x86_64
+   OLDPATH="${PATH}"
    OLDROOT="${RSTUDIO_TOOLS_ROOT}"
+
+   PATH="$(dirname "${BREW_X86}"):${OLDPATH}"
    RSTUDIO_TOOLS_ROOT="${RSTUDIO_TOOLS_ROOT}/x86_64"
 
    ./install-dependencies-osx-arch
@@ -72,6 +96,8 @@ else
       ./install-qt-macos
    fi
 
+   # restore path
+   PATH="${OLDPATH}"
    RSTUDIO_TOOLS_ROOT="${OLDROOT}"
 
 fi
