@@ -242,6 +242,11 @@ Error runProgram(const std::string& executable,
                  const ProcessOptions& options,
                  ProcessResult* pResult);
 
+Error runProgram(const std::string& executable,
+                 const std::vector<std::string>& args,
+                 const ProcessOptions& options,
+                 ProcessResult* pResult);
+
 // Run a command synchronously. The command will be passed to and executed
 // by a command shell (/bin/sh on posix, cmd.exe on windows).
 //

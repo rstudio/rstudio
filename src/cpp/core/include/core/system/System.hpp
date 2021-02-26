@@ -50,6 +50,7 @@ namespace rstudio {
 namespace core {
 
 class FileInfo;
+class FilePath;
 
 namespace system {
 
@@ -59,6 +60,9 @@ Error realPath(const std::string& path, FilePath* pRealPath);
 bool realPathsEqual(const FilePath& a, const FilePath& b);
 
 void addToSystemPath(const FilePath& path, bool prepend = false);
+
+Error findProgramOnPath(const std::string& program,
+                        core::FilePath* pProgramPath);
 
 #ifndef _WIN32
 Error closeAllFileDescriptors();

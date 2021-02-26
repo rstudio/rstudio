@@ -50,11 +50,13 @@ endif()
 
 # detect architecture
 if(UNIX)
+
    execute_process(
       COMMAND uname -m
-      OUTPUT_VARIABLE RSTUDIO_HOST_ARCHITECTURE
+      OUTPUT_VARIABLE UNAME_M
       OUTPUT_STRIP_TRAILING_WHITESPACE)
-   message(STATUS "Host architecture: ${RSTUDIO_HOST_ARCHITECTURE}")
+   message(STATUS "Machine architecture: ${UNAME_M}")
+
 endif()
 
 # default to debug builds
@@ -77,14 +79,14 @@ endif()
 
 # set desktop and server build flags
 if(NOT DEFINED RSTUDIO_SERVER)
-   if(RSTUDIO_TARGET STREQUAL "Development" OR RSTUDIO_TARGET STREQUAL "Server")
+   if(NOT WIN32 AND (RSTUDIO_TARGET STREQUAL "Development" OR RSTUDIO_TARGET STREQUAL "Server"))
       set(RSTUDIO_SERVER TRUE)
    endif()
 endif()
 
 if(NOT DEFINED RSTUDIO_DESKTOP)
-   if(APPLE AND RSTUDIO_HOST_ARCHITECTURE STREQUAL arm64)
-      message(STATUS "Desktop builds not currently supported on M1 macOS machines; disabling RSTUDIO_DESKTOP")
+   if(APPLE AND UNAME_M STREQUAL arm64)
+      message(STATUS "Desktop builds not currently supported on arm64; disabling RSTUDIO_DESKTOP")
       set(RSTUDIO_DESKTOP FALSE)
    elseif(RSTUDIO_TARGET STREQUAL "Development" OR RSTUDIO_TARGET STREQUAL "Desktop")
       set(RSTUDIO_DESKTOP TRUE)
@@ -204,16 +206,14 @@ else()
 endif()
 
 # if the install prefix is /usr/local then tweak as appropriate
-if(UNIX)
-   if(${CMAKE_INSTALL_PREFIX} STREQUAL "/usr/local")
-      if(APPLE AND RSTUDIO_DESKTOP)
-         set(CMAKE_INSTALL_PREFIX "/Applications")
+if(NOT DEFINED CMAKE_INSTALL_PREFIX)
+   if(APPLE)
+      set(CMAKE_INSTALL_PREFIX "/Applications")
+   elseif(UNIX)
+      if(RSTUDIO_DESKTOP)
+         set(CMAKE_INSTALL_PREFIX "/usr/local/lib/rstudio")
       else()
-         if(RSTUDIO_DESKTOP)
-            set(CMAKE_INSTALL_PREFIX "/usr/local/lib/rstudio")
-         else()
-            set(CMAKE_INSTALL_PREFIX "/usr/local/lib/rstudio-server")
-         endif()
+         set(CMAKE_INSTALL_PREFIX "/usr/local/lib/rstudio-server")
       endif()
    endif()
 endif()
@@ -311,17 +311,21 @@ endmacro(add_stripped_executable)
 
 if(APPLE)
 
-   # find Homebrew opt directory
-   foreach(DIR /opt/homebrew/opt /usr/local/opt)
-      if(EXISTS "${DIR}")
-         set(MACOS_OPT_DIR "${DIR}")
-         break()
-      endif()
-   endforeach()
+   # set Homebrew prefix directory
+   if(UNAME_M STREQUAL arm64)
+      set(HOMEBREW_PREFIX /opt/homebrew CACHE INTERNAL "")
+   else()
+      set(HOMEBREW_PREFIX /usr/local CACHE INTERNAL "")
+   endif()
+
+   # help Boost find icu4c
+   if(RSTUDIO_USE_SYSTEM_BOOST)
+      link_directories(${HOMEBREW_PREFIX}/opt/icu4c/lib)
+   endif()
 
    # set OPENSSL_ROOT_DIR if unset
    if(NOT DEFINED OPENSSL_ROOT_DIR)
-      set(OPENSSL_ROOT_DIR "${MACOS_OPT_DIR}/openssl" CACHE INTERNAL "")
+      set(OPENSSL_ROOT_DIR "${HOMEBREW_PREFIX}/opt/openssl" CACHE INTERNAL "")
    endif()
 
 endif()

@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+
+#
+# install-dependencies-osx-arch
+#
+# Copyright (C) 2021 by RStudio, PBC
+#
+# Unless you have received this program directly from RStudio pursuant
+# to the terms of a commercial license agreement with RStudio, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
+
+set -eux
+
+# NOTE: the intention is for this script to be invoked as e.g.
+#
+#   arch -x86_64 ./install-dependencies-osx-arch
+#   arch -arm64  ./install-dependencies-osx-arch
+#
+# to install the dependencies as appropriate for each architecture.
+
+if [ -e install-overlay ]; then
+   ./install-overlay
+fi
+
+# make sure brew is installed, and error if not
+if ! command -v brew &> /dev/null; then
+   echo "homebrew is not installed, but is needed to install dependencies"
+   exit 1
+fi
+
+# install requisite Homebrew formulae
+FORMULAS=(coreutils gdb openssl pidof postgresql)
+
+for FORMULA in "${FORMULAS[@]}"; do
+   brew install "${FORMULA}" || true
+done
+
+# set up .gdbinit
+grep -qxF 'set startup-with-shell off' ~/.gdbinit || echo "set startup-with-shell off" >> ~/.gdbinit
+
+# install common utilities
+cd ../common
+./install-common --install-crashpad-sudo
+cd ../osx
+

@@ -533,7 +533,7 @@ private:
       error = r::exec::evaluateString(renderFunc, &renderFuncSEXP, &rProtect);
       if (error || !r::sexp::isFunction((renderFuncSEXP)))
       {
-         boost::format fmt("(function(input, ...) { system(paste0(\"%1% '\", input, \"'\")) })");
+         boost::format fmt("(function(input, ...) { system(paste0('%1% \"', input, '\"')) })");
          renderFunc = boost::str(fmt % renderFunc);
       }
 

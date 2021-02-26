@@ -19,7 +19,7 @@ set -e
 
 YAML_CPP_VERSION="0.6.3"
 YAML_CPP_BRANCH="yaml-cpp-${YAML_CPP_VERSION}"
-YAML_CPP_DIRECTORY="/opt/rstudio-tools/yaml-cpp/${YAML_CPP_VERSION}"
+YAML_CPP_DIRECTORY="/opt/rstudio-tools/$(uname -m)/yaml-cpp/${YAML_CPP_VERSION}"
 
 if [ -e "${YAML_CPP_DIRECTORY}" ]; then
 	echo "${YAML_CPP_BRANCH} already installed."

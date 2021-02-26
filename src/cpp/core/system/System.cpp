@@ -13,6 +13,8 @@
  *
  */
 
+#define RSTUDIO_DEBUG_MACROS_DISABLED
+
 #include <atomic>
 #include <unordered_set>
 
@@ -20,6 +22,7 @@
 
 #include <core/system/System.hpp>
 
+#include <core/Algorithm.hpp>
 #include <core/Hash.hpp>
 #include <core/Log.hpp>
 #include <core/LogOptions.hpp>
@@ -75,6 +78,29 @@ void addToSystemPath(const FilePath& path, bool prepend)
    else
       systemPath = systemPath + kPathSeparator + path.getAbsolutePath();
    system::setenv("PATH", systemPath);
+}
+
+Error findProgramOnPath(const std::string& program,
+                        core::FilePath* pProgramPath)
+{
+   auto paths = core::algorithm::split(
+            core::system::getenv("PATH"),
+            kPathSeparator);
+
+   for (auto&& path : paths)
+   {
+      if (!path.empty())
+      {
+         FilePath candidatePath = FilePath(path).completeChildPath(program);
+         if (candidatePath.exists())
+         {
+            *pProgramPath = candidatePath;
+            return Success();
+         }
+      }
+   }
+
+   return fileNotFoundError(program, ERROR_LOCATION);
 }
 
 
