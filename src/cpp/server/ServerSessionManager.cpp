@@ -327,23 +327,13 @@ Error SessionManager::launchAndTrackSession(
    
    // on macOS, we need to forward DYLD_INSERT_LIBRARIES
 #if __APPLE__
-   std::string rPath = server::options().rsessionWhichR();
-   
-   core::system::ProcessOptions options;
-   core::system::ProcessResult result;
-   Error rError = core::system::runCommand(
-            rPath + " --vanilla -s -e \"cat(R.home('lib/libR.dylib'))\"",
-            options,
-            &result);
-   
-   if (rError)
-      LOG_ERROR(rError);
-   
-   std::string rLibPath = result.stdOut;
+   auto rVersion = server::r_environment::rVersion();
+   auto rLibPath = rVersion.homeDir().completeChildPath("lib/libR.dylib");
+
    core::system::setenv(
             &config.environment,
             "DYLD_INSERT_LIBRARIES",
-            rLibPath);
+            rLibPath.getAbsolutePath());
 #endif
          
    // launch the session

@@ -26,7 +26,7 @@ if(MSVC)
 endif()
 
 # source files
-set (CORE_SOURCE_FILES
+set(CORE_SOURCE_FILES
    Backtrace.cpp
    Base64.cpp
    BoostErrors.cpp
@@ -111,6 +111,7 @@ set (CORE_SOURCE_FILES
    spelling/HunspellCustomDictionaries.cpp
    spelling/HunspellDictionaryManager.cpp
    spelling/HunspellSpellingEngine.cpp
+   system/Architecture.cpp
    system/ChildProcessSubprocPoll.cpp
    system/Crypto.cpp
    system/Environment.cpp

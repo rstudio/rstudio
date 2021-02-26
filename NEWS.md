@@ -26,6 +26,7 @@
 * Added support for code-server 3.4.0+ (Pro # 1984)
 * Added a new user settings template file for VSCode settings to allow administrators to specify a default user configuration for VSCode sessions (Pro #2014)
 * Improved a Slurm Session Launch Delay that may occur due to buffering when using Slurm job steps (Pro #2331)
+* Set enviornment variables `RS_URI_SCHEME`, `RS_SESSION_URL`, and `RS_HOME_URL` when VSCode is launched (Pro #2346)
 
 ### RStudio Server
 
@@ -54,6 +55,7 @@
 * Support dual/charcell-spaced editor fonts (e.g., Fira Code) on Linux desktop environments (#6894)
 * Improve logging of session RPC failures (Pro #2248)
 * Add support for `rstudioapi` methods enabling callbacks for command execution (Pro #1846)
+* Add support for non-CRAN repositories when installing R packages in the background (#8946)
 
 ### Bugfixes
 
@@ -80,6 +82,7 @@
 * Fix display of condition messages (errors and warnings) in some character encodings (#8546)
 * Fix issues finding words with punctuation in visual mode (#8655)
 * Fix spurious image insertion when pasting into visual mode from Excel (#8665)
+* Fix issue causing spell check to stop identifying misspellings when switching between visual and source modes (#8473)
 * Fix out-of-date tooltip when renaming files (#8490, #8491)
 * Fix incorrect keyboard shortcuts shown in some places in the Command Palette (#8735)
 * Fixed an issue where Load Balanced Local Launcher instances could get into a state where they would no longer receive job updates from other nodes due to silent network drops (Pro #2281)
@@ -90,4 +93,5 @@
 * Fixed issue where 'continue comment on newline' would treat Markdown headers as comments (#6421)
 * Fixed issue where Set Working Directory command could fail if path contained quotes (#6004)
 * Fixed issue where Pro database drivers will not install if `~/odbcinst.ini` is missing (Pro #2284)
+* Fixed issue causing the mouse cursor to become too small in certain areas on Linux Desktop (#8781)
 

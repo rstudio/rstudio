@@ -13,7 +13,7 @@
 #
 #
 
-project (SESSION)
+project(SESSION)
 
 add_subdirectory(workers)
 
@@ -413,7 +413,10 @@ if(WIN32)
 endif()
 
 # define executable
-add_stripped_executable(rsession ${SESSION_SOURCE_FILES} ${SESSION_HEADER_FILES})
+add_stripped_executable(
+   rsession
+   ${SESSION_SOURCE_FILES}
+   ${SESSION_HEADER_FILES})
 
 # skip libR RPATH at development time
 if(RSTUDIO_DEVELOPMENT OR RSTUDIO_RUN_IN_PLACE)
@@ -451,10 +454,8 @@ else()
    target_link_libraries(rsession "${LIBR_LIBRARIES}")
 endif()
 
-if (RSTUDIO_SERVER)
-   target_link_libraries(rsession
-      rstudio-server-core
-   )
+if(RSTUDIO_SERVER)
+   target_link_libraries(rsession rstudio-server-core)
 endif()
 
 # configure and install r-ldpaths script
@@ -474,10 +475,10 @@ if(UNIX)
 endif()
 
 # install binary
-install(TARGETS rsession DESTINATION ${RSTUDIO_INSTALL_BIN})
+install(TARGETS rsession DESTINATION "${RSTUDIO_INSTALL_BIN}")
 
 # include resources, R scripts and binaries if this isn't a session 32-bit build
-if (NOT RSTUDIO_SESSION_WIN32)
+if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
 
    # postback
    add_subdirectory(postback)
@@ -659,8 +660,13 @@ endif()
 
 if(APPLE)
 
-   # if doing a package build on MacOS, reroute dependent libraries to our
-   # bundled copies
+   if(RSESSION_ALTERNATE_BUILD)
+      set(RSESSION_DYLIB_PREFIX "@executable_path/../Frameworks/arm64")
+   else()
+      set(RSESSION_DYLIB_PREFIX "@executable_path/../Frameworks")
+   endif()
+
+   # if doing a package build on MacOS, reroute dependent libraries to our bundled copies
    if (RSTUDIO_PACKAGE_BUILD)
       find_package(OpenSSL REQUIRED QUIET)
       foreach(lib ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY})
@@ -674,15 +680,15 @@ if(APPLE)
          # 2. extracts the path from the output using grep and awk
          # 3. runs install_name_tool and tells it to replace the path with one that
          #    points to a bundled copy of the same file
-         add_custom_command (TARGET rsession POST_BUILD
-            COMMAND install_name_tool -change `otool -L ${CMAKE_CURRENT_BINARY_DIR}/rsession | grep ${LIB_FILE} | awk '{ print $$1 }'` @executable_path/../Frameworks/${LIB_FILE} ${CMAKE_CURRENT_BINARY_DIR}/rsession)
+         add_custom_command(TARGET rsession POST_BUILD
+            COMMAND install_name_tool -change `otool -L ${CMAKE_CURRENT_BINARY_DIR}/rsession | grep ${LIB_FILE} | awk '{ print $$1 }'` ${RSESSION_DYLIB_PREFIX}/${LIB_FILE} ${CMAKE_CURRENT_BINARY_DIR}/rsession)
       endforeach()
 
       # do something similar to the above to fix paths to SOCI libraries
       foreach(lib ${SOCI_DEPENDENCIES})
          get_filename_component(LIB_NAME "${lib}" NAME_WE)
-         add_custom_command (TARGET rsession POST_BUILD
-             COMMAND install_name_tool -change `otool -L ${CMAKE_CURRENT_BINARY_DIR}/rsession | grep ${LIB_NAME} | awk '{ print $$1 }'` @executable_path/../Frameworks/$$\(otool -L ${CMAKE_CURRENT_BINARY_DIR}/rsession | grep ${LIB_NAME} | awk '{ print $$1 }' | xargs basename\) ${CMAKE_CURRENT_BINARY_DIR}/rsession)
+         add_custom_command(TARGET rsession POST_BUILD
+            COMMAND install_name_tool -change `otool -L ${CMAKE_CURRENT_BINARY_DIR}/rsession | grep ${LIB_NAME} | awk '{ print $$1 }'` ${RSESSION_DYLIB_PREFIX}/$$\(otool -L ${CMAKE_CURRENT_BINARY_DIR}/rsession | grep ${LIB_NAME} | awk '{ print $$1 }' | xargs basename\) ${CMAKE_CURRENT_BINARY_DIR}/rsession)
       endforeach()
 
    endif()

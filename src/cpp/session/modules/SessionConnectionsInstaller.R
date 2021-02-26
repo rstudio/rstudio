@@ -366,7 +366,7 @@
    
    for (line in lines) {
       # Is header?
-      if (grepl(" *\\[[^]]+\\] *", line)) {
+      if (grepl("^ *\\[[^]]+\\] *", line)) {
          currentDriver <- gsub("^ *\\[|\\] *", "", line)
          data[[currentDriver]] <- ""
       }
