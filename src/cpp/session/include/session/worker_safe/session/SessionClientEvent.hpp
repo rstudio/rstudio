@@ -28,9 +28,9 @@ namespace core {
 
 namespace rstudio {
 namespace session {
-
+   
 namespace client_events {
-
+   
 extern const int kConsolePrompt;
 extern const int kConsoleWriteOutput;
 extern const int kConsoleWriteError;
@@ -182,6 +182,9 @@ extern const int kOpenFileDialog;
 extern const int kRemoveTerminal;
 extern const int kShowPageViewerEvent;
 extern const int kAskSecret;
+extern const int kTestsStarted;
+extern const int kTestsOutput;
+extern const int kTestsCompleted;
 extern const int kJobUpdated;
 extern const int kJobRefresh;
 extern const int kJobOutput;
@@ -206,37 +209,37 @@ extern const int kDocumentCloseAllNoSave;
 extern const int kMemoryUsageChanged;
 extern const int kCommandCallbacksChanged;
 }
-
+   
 class ClientEvent
-{
+{   
 public:
    explicit ClientEvent(int type)
    {
       init(type, core::json::Value());
    }
-
+   
    ClientEvent(int type, const core::json::Value& data)
    {
       init(type, data);
    }
-
+   
    ClientEvent(int type, const char* data)
    {
       init(type, core::json::Value(std::string(data)));
    }
-
+   
    ClientEvent(int type, const std::string& data)
    {
       init(type, core::json::Value(data));
    }
-
+   
    ClientEvent(int type, bool data)
    {
       core::json::Object boolObject;
       boolObject["value"] = data;
       init(type, boolObject);
    }
-
+      
    // COPYING: via compiler (copyable members)
 
 public:
@@ -244,12 +247,12 @@ public:
    std::string typeName() const;
    const core::json::Value& data() const { return data_; }
    const std::string& id() const { return id_; }
-
+   
    void asJsonObject(int id, core::json::Object* pObject) const;
-
+     
 private:
    void init(int type, const core::json::Value& data);
-
+  
 private:
    int type_;
    core::json::Value data_;
@@ -262,10 +265,10 @@ ClientEvent showEditorEvent(const std::string& content,
 
 ClientEvent browseUrlEvent(const std::string& url,
                            const std::string& window = "_blank");
-
+   
 ClientEvent showErrorMessageEvent(const std::string& title,
                                   const std::string& message);
-
+   
 } // namespace session
 } // namespace rstudio
 

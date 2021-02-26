@@ -105,6 +105,10 @@ import org.rstudio.studio.client.server.model.RequestDocumentSaveEvent;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.shiny.events.ShinyFrameNavigatedEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
+import org.rstudio.studio.client.tests.events.TestsCompletedEvent;
+import org.rstudio.studio.client.tests.events.TestsOutputEvent;
+import org.rstudio.studio.client.tests.events.TestsStartedEvent;
+import org.rstudio.studio.client.tests.model.TestsResult;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.addins.events.AddinRegistryUpdatedEvent;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
@@ -205,13 +209,13 @@ import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigateEve
 
 import java.util.ArrayList;
 
-public class ClientEventDispatcher
+public class ClientEventDispatcher 
 {
    public ClientEventDispatcher(EventBus eventBus)
    {
       eventBus_ = eventBus;
    }
-
+   
    public void enqueEventAsJso(JavaScriptObject event)
    {
       ClientEvent clientEvent = event.<ClientEvent>cast();
@@ -240,9 +244,9 @@ public class ClientEventDispatcher
          });
       }
    }
-
-   private void dispatchEvent(ClientEvent event)
-   {
+   
+   private void dispatchEvent(ClientEvent event) 
+   { 
       String type = event.getType();
       try
       {
@@ -366,7 +370,7 @@ public class ClientEventDispatcher
             eventBus_.dispatchEvent(new ShowDataEvent(data));
          }
          else if (type == ClientEvent.AbendWarning)
-         {
+         {            
             eventBus_.dispatchEvent(new SessionAbendWarningEvent());
          }
          else if (type == ClientEvent.ShowWarningBar)
@@ -573,7 +577,7 @@ public class ClientEventDispatcher
          {
             // NOTE: we don't explicitly stop listening for events here
             // for the reasons cited above in ClientEvent.Quit
-
+            
             // fire event
             String message = event.getData();
             eventBus_.dispatchEvent(new SuicideEvent(message));
@@ -994,6 +998,21 @@ public class ClientEventDispatcher
             AskSecretEvent.Data data = event.getData();
             eventBus_.dispatchEvent(new AskSecretEvent(data));
          }
+         else if (type == ClientEvent.TestsStarted)
+         {
+            TestsStartedEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new TestsStartedEvent(data));
+         }
+         else if (type == ClientEvent.TestsOutput)
+         {
+            CompileOutput data = event.getData();
+            eventBus_.dispatchEvent(new TestsOutputEvent(data));
+         }
+         else if (type == ClientEvent.TestsCompleted)
+         {
+            TestsResult result = event.getData();
+            eventBus_.dispatchEvent(new TestsCompletedEvent(result));
+         }
          else if (type == ClientEvent.JobUpdated)
          {
             JobUpdate data = event.getData();
@@ -1092,7 +1111,7 @@ public class ClientEventDispatcher
          GWT.log("WARNING: Exception occurred dispatching event: " + type, e);
       }
    }
-
+   
 
    private final EventBus eventBus_;
 
