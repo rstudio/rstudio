@@ -17,6 +17,17 @@
 
 set -e
 
+# define downloader function based on availability of wget / curl
+if command -v wget &> /dev/null; then
+   download () {
+      wget "$1"
+   }
+elif command -v curl &> /dev/null; then
+   download () {
+      curl -O "$1"
+   }
+fi
+
 # check for presence of flag to skip installation
 # older platforms are unable to build crashpad and may request to skip it
 if [ "$RSTUDIO_DISABLE_CRASHPAD" == "1" ]; then
@@ -56,7 +67,7 @@ then
 
       mkdir -p $RSTUDIO_TOOLS_DIR
       cd $RSTUDIO_TOOLS_DIR
-      wget "$CRASHPAD_PRE_BUILT_ROOT_URL/$ARCHIVE_FOLDER/crashpad-$1$ARCHIVE_EXT"
+      download "$CRASHPAD_PRE_BUILT_ROOT_URL/$ARCHIVE_FOLDER/crashpad-$1$ARCHIVE_EXT"
       tar xvf "crashpad-$1$ARCHIVE_EXT"
       if ! test -e $CRASHPAD_BIN_DIR/crashpad_handler
       then
@@ -107,8 +118,8 @@ if [[ "$OSTYPE" != "darwin"* ]]; then
 
       if ! test -e $LLVM_DIR
       then
-         wget $LLVM_SOURCE_URL
-         wget $CLANG_SOURCE_URL
+         download $LLVM_SOURCE_URL
+         download $CLANG_SOURCE_URL
 
          tar xvf llvm-$LLVM_VERSION.src.tar.xz
          tar xvf cfe-$LLVM_VERSION.src.tar.xz

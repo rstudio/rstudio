@@ -45,8 +45,7 @@ then
    # download boost
    BOOST_URL=https://s3.amazonaws.com/rstudio-buildtools/Boost/boost_1_69_0.tar.bz2
    if [ ! -f "$BOOST_TAR" ]; then
-      if [ "$PLATFORM" == "Darwin" ]
-      then
+      if [ "$PLATFORM" = "Darwin" ]; then
          curl -L $BOOST_URL > $BOOST_TAR
       else
          # sourceforge uses a certificate that is not compatible with older wget
