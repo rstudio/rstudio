@@ -38,6 +38,17 @@ clean=0
 copy_gwt=1
 install=0
 
+# set tools directory
+if [ -z "${RSTUDIO_TOOLS_ROOT}" ]; then
+   if [ -d "${HOME}/opt/rstudio-tools" ]; then
+      RSTUDIO_TOOLS_ROOT="${HOME}/opt/rstudio-tools"
+   else
+      RSTUDIO_TOOLS_ROOT="/opt/rstudio-tools"
+   fi
+fi
+
+echo "Using RStudio tools at '${RSTUDIO_TOOLS_ROOT}'"
+
 # read command line arguments
 
 for arg in "$@"; do
