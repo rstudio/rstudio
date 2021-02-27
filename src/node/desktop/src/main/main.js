@@ -46,7 +46,8 @@ module.exports = class Main {
 
     // calculate paths to config file, rsession, and desktop scripts
     let confPath = path.join(installPath, 'conf/rdesktop-dev.conf');
-    let sessionPath = path.join(installPath, 'session/rsession');
+    let sessionExe = process.platform === 'win32' ? 'rsession.exe' : 'rsession';
+    let sessionPath = path.join(installPath, 'session', sessionExe);
     let scriptsPath = path.join(installPath, 'desktop');
     let devMode = true;
 
