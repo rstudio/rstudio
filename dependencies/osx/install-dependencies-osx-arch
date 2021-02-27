@@ -32,7 +32,7 @@ if [ -e install-overlay ]; then
 fi
 
 section "Installing Homebrew Formulae"
-FORMULAS=(coreutils gdb openssl pidof postgresql)
+FORMULAS=(coreutils gdb openssl pidof postgresql r)
 for FORMULA in "${FORMULAS[@]}"; do
    brew install "${FORMULA}" || true
 done

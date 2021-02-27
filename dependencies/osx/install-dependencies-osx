@@ -35,12 +35,18 @@ if [ -z "${BREW_ARM}" ]; then
    fi
 fi
 
-# override RSTUDIO_TOOLS_ROOT for Jenkins
 if is-jenkins; then
+
+   # override RSTUDIO_TOOLS_ROOT for Jenkins
    RSTUDIO_TOOLS_ROOT="${HOME}/opt/rstudio-tools"
    export RSTUDIO_TOOLS_ROOT
+
    echo "Using '${RSTUDIO_TOOLS_ROOT}' for RStudio tools on Jenkins"
+   echo "BREW_X86: ${BREW_X86}"
+   echo "BREW_ARM: ${BREW_ARM}"
+
 fi
+
 
 ARCH="$(arch)"
 
