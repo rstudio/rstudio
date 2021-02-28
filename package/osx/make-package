@@ -177,7 +177,7 @@ fi
 
 if [ "${build_package}" = "1" ]; then
 
-   if has-program cpack; then
+   if command -v cpack &> /dev/null; then
       CPACK=cpack
    else
       CPACK="${HOME}/homebrew/arm64/bin/cpack"
