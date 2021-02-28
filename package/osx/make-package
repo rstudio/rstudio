@@ -176,9 +176,16 @@ if [ -n "${build_arm64}" ]; then
 fi
 
 if [ "${build_package}" = "1" ]; then
+
+   if has-program cpack; then
+      CPACK=cpack
+   else
+      CPACK="${HOME}/homebrew/arm64/bin/cpack"
+   fi
+
    echo "Building package ..."
    cd "${BUILD_DIR_X86_64}"
-   cpack -G DragNDrop
+   "${CPACK}" -G DragNDrop
    echo "Done!"
 fi
 
