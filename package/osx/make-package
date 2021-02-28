@@ -38,6 +38,19 @@ clean=0
 copy_gwt=1
 install=0
 
+# set CMake paths
+if [ -z "${CMAKE_X86_64}" ]; then
+   if [ -f "${HOME}/homebrew/x86_64/bin/cmake" ]; then
+      CMAKE_X86_64="${HOME}/homebrew/x86_64/bin/cmake"
+   fi
+fi
+
+if [ -z "${CMAKE_X86_64}" ]; then
+   if [ -f "${HOME}/homebrew/arm64/bin/cmake" ]; then
+      CMAKE_ARM64="${HOME}/homebrew/arm64/bin/cmake"
+   fi
+fi
+
 # set tools directory
 if [ -z "${RSTUDIO_TOOLS_ROOT}" ]; then
    if [ -d "${HOME}/opt/rstudio-tools" ]; then
@@ -98,7 +111,7 @@ fi
 if [ -n "${build_x86_64}" ]; then
 
    # prefer using x86_64 build of cmake
-   CMAKE="${CMAKE_X86_64-/usr/local/bin/cmake}"
+   CMAKE="${CMAKE_X86_64:-/usr/local/bin/cmake}"
 
    mkdir -p "${BUILD_DIR_X86_64}"
    mkdir -p "${BUILD_DIR_X86_64}/gwt"
@@ -133,7 +146,7 @@ fi
 if [ -n "${build_arm64}" ]; then
 
    # prefer using arm64 build of cmake
-   CMAKE="${CMAKE_ARM64-/opt/homebrew/bin/cmake}"
+   CMAKE="${CMAKE_ARM64:-/opt/homebrew/bin/cmake}"
 
    mkdir -p "${BUILD_DIR_ARM64}"
    cd "${BUILD_DIR_ARM64}"
