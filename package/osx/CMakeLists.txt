@@ -43,16 +43,12 @@ if(RSTUDIO_PACKAGE_BUILD AND NOT RSESSION_ALTERNATE_BUILD)
    install(SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/cmake/fix-library-paths.cmake")
 
    # sign the package
-   if(RSTUDIO_CODESIGN_PACKAGE)
+   configure_file(
+      "${CMAKE_CURRENT_SOURCE_DIR}/cmake/sign-package.cmake"
+      "${CMAKE_CURRENT_BINARY_DIR}/cmake/sign-package.cmake"
+      @ONLY)
 
-      configure_file(
-         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/sign-package.cmake"
-         "${CMAKE_CURRENT_BINARY_DIR}/cmake/sign-package.cmake"
-         @ONLY)
-
-      install(SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/cmake/sign-package.cmake")
-
-   endif()
+   install(SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/cmake/sign-package.cmake")
 
 endif()
 
