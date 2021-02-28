@@ -65,12 +65,19 @@ if(RSTUDIO_PACKAGE_BUILD AND NOT RSESSION_ALTERNATE_BUILD)
    endif()
 
    execute_process(
-      COMMAND \"${LIBR_EXECUTABLE}\" -s -f \"${CMAKE_CURRENT_SOURCE_DIR}/fix-arm64-library-paths.R\"
-      --args
-      \"\${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/Frameworks\"
-      \"\${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/Frameworks/arm64\"
-      COMMAND_ERROR_IS_FATAL ANY)
-   
+      COMMAND
+         \"${CMAKE_CURRENT_SOURCE_DIR}/fix-library-paths.sh\"
+         \"\${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/Frameworks\"
+         \"@execute_path/../Frameworks\"
+   )
+
+   execute_process(
+      COMMAND
+         \"${CMAKE_CURRENT_SOURCE_DIR}/fix-library-paths.sh\"
+         \"\${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/Frameworks/arm64\"
+         \"@execute_path/../Frameworks/arm64\"
+   )
+
    # don't follow symlinks in GLOB_RECURSE
    cmake_policy(SET CMP0009 NEW)
    cmake_policy(SET CMP0011 NEW)
