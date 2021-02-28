@@ -35,9 +35,9 @@ section "Installing Homebrew Formulae"
 
 # TODO: gdb is not supported on arm64 yet
 if [ "$(arch)" = "arm64" ]; then
-   FORMULAS=(cmake coreutils openssl pidof postgresql r)
+   FORMULAS=(ant cmake coreutils openssl pidof postgresql r)
 else
-   FORMULAS=(cmake coreutils gdb openssl pidof postgresql r)
+   FORMULAS=(ant cmake coreutils gdb openssl pidof postgresql r)
 fi
 
 for FORMULA in "${FORMULAS[@]}"; do
