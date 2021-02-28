@@ -138,7 +138,7 @@ if [ -n "${build_x86_64}" ]; then
    echo "Done!"
 
    echo "Building for x86_64 with flags '${MAKEFLAGS}' ..."
-   arch -x86_64 /usr/local/bin/cmake --build . --target all -- ${MAKEFLAGS}
+   arch -x86_64 "${CMAKE}" --build . --target all -- ${MAKEFLAGS}
    echo "Done!"
 
 fi
@@ -170,7 +170,7 @@ if [ -n "${build_arm64}" ]; then
    echo "Done!"
 
    echo "Building for arm64 with flags '${MAKEFLAGS}' ..."
-   arch -arm64 cmake --build . --target all -- ${MAKEFLAGS}
+   arch -arm64 "${CMAKE}" --build . --target all -- ${MAKEFLAGS}
    echo "Done!"
 
 fi
