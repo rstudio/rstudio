@@ -15,6 +15,8 @@
 
 const { ipcMain, dialog, BrowserWindow } = require('electron');
 
+const PendingWindow = require('./pending-window');
+
 const PendingQuit = {
   'PendingQuitNone': 0,
   'PendingQuitAndExit': 1,
@@ -188,7 +190,7 @@ class DesktopCallback {
     });
 
     ipcMain.handle('desktop_prepare_for_satellite_window', (event, name, x, y, width, height) => {
-      // TODO
+      this.mainWindow.prepareForWindow(new PendingWindow(name, x, y, width, height));
     });
 
     ipcMain.handle('desktop_prepare_for_named_window', (event, name, allowExternalNavigate, showToolbar) => {

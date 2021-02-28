@@ -31,6 +31,7 @@ module.exports = class MainWindow {
     this.menuCallback = new MenuCallback(this);
     this.quitConfirmed = false;
     this.workbenchInitialized_ = false;
+    this.pendingWindows = [];
 
     RCommandEvaluator.setMainWindow(this);
   }
@@ -52,21 +53,9 @@ module.exports = class MainWindow {
   }
 
   load(url) {
-
     // show the window
-    this.window = new BrowserWindow({
-      width: 1400,
-      height: 1024,
-      // https://github.com/electron/electron/blob/master/docs/faq.md#the-font-looks-blurry-what-is-this-and-what-can-i-do
-      backgroundColor: '#fff', 
-      webPreferences: {
-        enableRemoteModule: false,
-        nodeIntegration: false,
-        contextIsolation: true,
-        preload: path.join(__dirname, '../renderer/preload.js'),
-      },
-    });
-
+    this.window = this.createWindow(1400, 1024);
+ 
     // pass along the shared secret with every request
     const filter = {
       urls: [`${url}/*`]
@@ -74,6 +63,20 @@ module.exports = class MainWindow {
     session.defaultSession.webRequest.onBeforeSendHeaders(filter, (details, callback) => {
       details.requestHeaders['X-Shared-Secret'] = process.env.RS_SHARED_SECRET;
       callback({ requestHeaders: details.requestHeaders});
+    });
+
+    this.window.webContents.on('new-window',
+      (event, url, frameName, disposition, options, additionalFeatures, referrer, postBody) => {
+
+      event.preventDefault();
+
+      // check if we have a satellite window waiting to come up
+      if (this.pendingWindows.length) {
+        const pendingWindow = this.pendingWindows.pop();
+        const newWindow = this.createWindow(pendingWindow.width, pendingWindow.height);
+        newWindow.loadURL(url);
+        newWindow.webContents.openDevTools();
+      }
     });
 
     this.window.loadURL(url);
@@ -113,5 +116,25 @@ module.exports = class MainWindow {
 
   get workbenchInitialized() {
     return this.workbenchInitialized_;
+ 
+  }
+
+  createWindow(width, height) {
+    return new BrowserWindow({
+      width: width,
+      height: height,
+      // https://github.com/electron/electron/blob/master/docs/faq.md#the-font-looks-blurry-what-is-this-and-what-can-i-do
+      backgroundColor: '#fff', 
+      webPreferences: {
+        enableRemoteModule: false,
+        nodeIntegration: false,
+        contextIsolation: true,
+        preload: path.join(__dirname, '../renderer/preload.js'),
+      },
+    });
+  }
+
+  prepareForWindow(pendingWindow) {
+    this.pendingWindows.push(pendingWindow);
   }
 };
