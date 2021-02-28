@@ -26,7 +26,8 @@ PREFIX="$2"
 cd "$DIR"
 for FILE in *.dylib; do
 
-   install_name_tool -id "${FILE}" "${FILE}"
+   codesign --remove-signature "${FILE}" &> /dev/null
+   install_name_tool -id "${FILE}" "${FILE}" &> /dev/null
 
    LIBPATHS=$( \
       otool -L "${FILE}" | \
@@ -39,7 +40,7 @@ for FILE in *.dylib; do
    for LIBPATH in ${LIBPATHS}; do
       OLD="${LIBPATH}"
       NEW="${PREFIX}/$(basename "${OLD}")"
-      install_name_tool -change "${OLD}" "${NEW}" "${FILE}"
+      install_name_tool -change "${OLD}" "${NEW}" "${FILE}" &> /dev/null
    done
 
 done

@@ -24,6 +24,16 @@ BUILD_DIR_ARM64="${PKG_DIR}/build-arm64"
 
 GWT_SRC_DIR="${PKG_DIR}/../../src/gwt"
 
+# determine if we'll be signing the package
+# (currently only done for Jenkins builds)
+if [ -z "${CODESIGN_PACKAGE}" ]; then
+   if [ -n "${JENKINS_URL}" ]; then
+      CODESIGN_PACKAGE=1
+   else
+      CODESIGN_PACKAGE=0
+   fi
+fi
+
 # determine architectures to build for
 if [ "$(arch)" = "arm64" ]; then
    arch=x86_64,arm64
@@ -129,6 +139,7 @@ if [ -n "${build_x86_64}" ]; then
       -DRSTUDIO_PACKAGE_BUILD=1                           \
       -DRSTUDIO_CRASHPAD_ENABLED=0                        \
       -DRSTUDIO_TOOLS_ROOT="${RSTUDIO_TOOLS_ROOT}/x86_64" \
+      -DRSTUDIO_CODESIGN_PACKAGE="${CODESIGN_PACKAGE}"    \
       -DGWT_BUILD="${build_gwt}"                          \
       -DGWT_COPY="${copy_gwt}"                            \
       -DGWT_BIN_DIR="${BUILD_DIR_X86_64}/gwt/bin"         \
