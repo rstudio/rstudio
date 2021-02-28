@@ -36,14 +36,17 @@ endif()
 
 # developer-id code signing
 if(RSTUDIO_PACKAGE_BUILD AND NOT RSESSION_ALTERNATE_BUILD)
-   INSTALL(CODE "
 
-   # if we're building on arm64, then
-   # copy arm64 build components into the x86_64 build tree
-   if(${UNAME_M} STREQUAL arm64)
+   install(CODE "
+
+   set(
+      RSESSION_ARM64_PATH
+      \"${CMAKE_CURRENT_SOURCE_DIR}/build-arm64/src/cpp/session/rsession\")
+
+   if(EXISTS \"\${RSESSION_ARM64_PATH}\")
 
       configure_file(
-         \"${CMAKE_CURRENT_SOURCE_DIR}/build-arm64/src/cpp/session/rsession\"
+         \"\${RSESSION_ARM64_PATH}\"
          \"\${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/MacOS/rsession-arm64\"
          COPYONLY)
 
@@ -59,14 +62,14 @@ if(RSTUDIO_PACKAGE_BUILD AND NOT RSESSION_ALTERNATE_BUILD)
          endforeach()
       endforeach()
 
-      execute_process(
-         COMMAND R -s -f \"${CMAKE_CURRENT_SOURCE_DIR}/fix-arm64-library-paths.R\"
-         --args
-         \"\${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/Frameworks\"
-         \"\${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/Frameworks/arm64\"
-         COMMAND_ERROR_IS_FATAL ANY)
-
    endif()
+
+   execute_process(
+      COMMAND R -s -f \"${CMAKE_CURRENT_SOURCE_DIR}/fix-arm64-library-paths.R\"
+      --args
+      \"\${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/Frameworks\"
+      \"\${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/Frameworks/arm64\"
+      COMMAND_ERROR_IS_FATAL ANY)
    
    # don't follow symlinks in GLOB_RECURSE
    cmake_policy(SET CMP0009 NEW)
@@ -89,6 +92,7 @@ if(RSTUDIO_PACKAGE_BUILD AND NOT RSESSION_ALTERNATE_BUILD)
       execute_process(COMMAND codesign ${CODESIGN_FLAGS} \"\${CODESIGN_TARGET}\")
    endforeach()
    ")
+
 endif()
 
 # package attributes
