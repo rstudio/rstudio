@@ -64,8 +64,12 @@ if(RSTUDIO_PACKAGE_BUILD AND NOT RSESSION_ALTERNATE_BUILD)
 
    endif()
 
+   find_program(R
+      NAMES R
+      PATHS \"\$ENV{HOME}/homebrew/arm64/bin/R\")
+
    execute_process(
-      COMMAND R -s -f \"${CMAKE_CURRENT_SOURCE_DIR}/fix-arm64-library-paths.R\"
+      COMMAND \"\${R}\" -s -f \"${CMAKE_CURRENT_SOURCE_DIR}/fix-arm64-library-paths.R\"
       --args
       \"\${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/Frameworks\"
       \"\${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/Frameworks/arm64\"
