@@ -33,23 +33,8 @@ set(
 
 # developer-id code signing
 if(RSTUDIO_PACKAGE_BUILD AND NOT RSESSION_ALTERNATE_BUILD)
-
-   # fix library paths
-   configure_file(
-      "${CMAKE_CURRENT_SOURCE_DIR}/cmake/fix-library-paths.cmake"
-      "${CMAKE_CURRENT_BINARY_DIR}/cmake/fix-library-paths.cmake"
-      @ONLY)
-
-   install(SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/cmake/fix-library-paths.cmake")
-
-   # sign the package
-   configure_file(
-      "${CMAKE_CURRENT_SOURCE_DIR}/cmake/sign-package.cmake"
-      "${CMAKE_CURRENT_BINARY_DIR}/cmake/sign-package.cmake"
-      @ONLY)
-
-   install(SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/cmake/sign-package.cmake")
-
+   configure_and_install("cmake/fix-library-paths.cmake")
+   configure_and_install("cmake/codesign-package.cmake")
 endif()
 
 # package attributes
