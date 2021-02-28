@@ -34,11 +34,17 @@ fi
 section "Installing Homebrew Formulae"
 
 # TODO: gdb is not supported on arm64 yet
-if [ "$(arch)" = "arm64" ]; then
-   FORMULAS=(ant cmake coreutils openssl pidof postgresql r)
-else
-   FORMULAS=(ant cmake coreutils gdb openssl pidof postgresql r)
-fi
+FORMULAS=(
+   ant
+   cmake
+   coreutils
+   krb5
+   libpq
+   openssl
+   pidof
+   postgresql
+   r
+)
 
 for FORMULA in "${FORMULAS[@]}"; do
    brew install "${FORMULA}" || true
