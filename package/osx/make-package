@@ -181,7 +181,7 @@ if [ "${build_package}" = "1" ]; then
 
    info "Building package ..."
    cd "${BUILD_DIR_X86_64}"
-   "${CPACK}" -G DragNDrop
+   "${CPACK}" --verbose -G DragNDrop
    info "Done!"
 
 fi
