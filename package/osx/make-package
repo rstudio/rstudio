@@ -51,6 +51,11 @@ find-program CMAKE_ARM64 cmake  \
    "${HOME}/homebrew/arm64/bin" \
    "/opt/homebrew/bin"
 
+# find ant
+find-program ANT ant            \
+   "${HOME}/homebrew/arm64/bin" \
+   "${HOME}/opt/bin"
+
 # read command line arguments
 for arg in "$@"; do
 
@@ -78,7 +83,7 @@ if [ "${clean}" = "1" ]; then
    # clean out ant build if requested
    if [ -d "${GWT_SRC_DIR}" ]; then
       cd "${GWT_SRC_DIR}"
-      ant clean
+      "${ANT}" clean
    fi
 
    # move back to package dir
