@@ -47,8 +47,13 @@ FORMULAS=(
    r
 )
 
+HOMEBREW_PREFIX=$(brew --prefix)
 for FORMULA in "${FORMULAS[@]}"; do
-   brew install "${FORMULA}" || true
+   if [ -d "${HOMEBREW_PREFIX}/opt/${FORMULA}" ]; then
+      info "${FORMULA} already installed."
+   else
+      brew install "${FORMULA}" || true
+   fi
 done
 
 # set up .gdbinit
