@@ -48,7 +48,7 @@ fi
 
 # install if we aren't already installed
 if [ -e "${BOOST_DIR}" ]; then
-   echo "Boost ${BOOST_VERSION_NUMBER} already installed at '${BOOST_DIR}'"
+   info "Boost ${BOOST_VERSION_NUMBER} already installed at '${BOOST_DIR}'"
    exit 0
 fi
 
@@ -101,7 +101,7 @@ if [ "$PLATFORM" = "Darwin" ]; then
    BJAM_CXXFLAGS="cxxflags=-fPIC -std=c++11 -mmacosx-version-min=10.12"
    BJAM_LDFLAGS=""
 
-   ./bjam              \
+   ./bjam                   \
       "${BOOST_BJAM_FLAGS}" \
       --prefix="$BOOST_DIR" \
       "${TOOLSET}"          \
@@ -111,14 +111,17 @@ if [ "$PLATFORM" = "Darwin" ]; then
       threading=multi       \
       link=static           \
       install
+
 else
+
    # plain old build for other platforms
-   ./bjam                     \
-      "${BOOST_BJAM_FLAGS}"        \
-      --prefix="$BOOST_DIR"        \
-      variant=release              \
-      cxxflags="-fPIC -std=c++11"  \
+   ./bjam                         \
+      "${BOOST_BJAM_FLAGS}"       \
+      --prefix="$BOOST_DIR"       \
+      variant=release             \
+      cxxflags="-fPIC -std=c++11" \
       install
+
 fi
 
 # rename libraries in the boost install dir
@@ -137,5 +140,5 @@ done
 cd "${INSTALL_DIR}"
 rm -rf "${BOOST_BUILD_DIR}"
 
-echo "Boost ${BOOST_VERSION} installed to '${BOOST_DIR}'"
+info "Boost ${BOOST_VERSION} installed to '${BOOST_DIR}'"
 

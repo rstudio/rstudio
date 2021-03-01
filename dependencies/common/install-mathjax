@@ -23,14 +23,18 @@ section "Installing Mathjax"
 URL="https://s3.amazonaws.com/rstudio-buildtools"
 
 # download and extract mathjax if necessary
-MATHJAX_DIR=mathjax-27
+MATHJAX_DIR="${RSTUDIO_TOOLS_ROOT}/mathjax-27"
 if [ -d "$MATHJAX_DIR" ]; then
    echo "Mathjax already installed at '${MATHJAX_DIR}'"
    exit 0
 fi
 
+require-root-for "${RSTUDIO_TOOLS_ROOT}" "$@"
+cd "${RSTUDIO_TOOLS_ROOT}"
+
 MATHJAX=mathjax-27.zip
 download "${URL}/${MATHJAX}"
+rm -rf "${MATHJAX_DIR}"
 unzip -q "$MATHJAX"
 rm "$MATHJAX"
 

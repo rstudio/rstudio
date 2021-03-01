@@ -54,5 +54,5 @@ mkdir -p $CEF_DIR
 mv $CEF_FILE $CEF_DIR/$CEF_VERSION
 rm $CEF_ARCHIVE
 
-echo "Chromiume Embedded Framework installed to '${CEF_DIR}/${CEF_VERSION}'"
+echo "Chromium Embedded Framework installed to '${CEF_DIR}/${CEF_VERSION}'"
 cd "${INSTALL_DIR}"

@@ -18,6 +18,7 @@ set -e
 set +H
 
 PKG_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${PKG_DIR}/../../dependencies/tools/rstudio-tools.sh"
 
 BUILD_DIR_X86_64="${PKG_DIR}/build"
 BUILD_DIR_ARM64="${PKG_DIR}/build-arm64"
@@ -42,28 +43,18 @@ copy_gwt=1
 install=0
 
 # set CMake paths
-if [ -z "${CMAKE_X86_64}" ]; then
-   if [ -f "${HOME}/homebrew/x86_64/bin/cmake" ]; then
-      CMAKE_X86_64="${HOME}/homebrew/x86_64/bin/cmake"
-   fi
-fi
+find-program CMAKE_X86_64 cmake  \
+   "${HOME}/homebrew/x86_64/bin" \
+   "/usr/local/bin"
 
-if [ -z "${CMAKE_ARM64}" ]; then
-   if [ -f "${HOME}/homebrew/arm64/bin/cmake" ]; then
-      CMAKE_ARM64="${HOME}/homebrew/arm64/bin/cmake"
-   fi
-fi
+find-program CMAKE_ARM64 cmake  \
+   "${HOME}/homebrew/arm64/bin" \
+   "/opt/homebrew/bin"
 
 # set tools directory
-if [ -z "${RSTUDIO_TOOLS_ROOT}" ]; then
-   if [ -d "${HOME}/opt/rstudio-tools" ]; then
-      RSTUDIO_TOOLS_ROOT="${HOME}/opt/rstudio-tools"
-   else
-      RSTUDIO_TOOLS_ROOT="/opt/rstudio-tools"
-   fi
-fi
-
-echo "Using RStudio tools at '${RSTUDIO_TOOLS_ROOT}'"
+find-file RSTUDIO_TOOLS_ROOT   \
+   "${HOME}/opt/rstudio-tools" \
+   "/opt/rstudio-tools"
 
 # read command line arguments
 
@@ -115,7 +106,7 @@ if [ -n "${build_x86_64}" ]; then
 
    # prefer using x86_64 build of cmake
    CMAKE="${CMAKE_X86_64:-/usr/local/bin/cmake}"
-   echo "Using CMake '${CMAKE}' for x86_64 build"
+   info "Using CMake '${CMAKE}' for x86_64 build"
 
    mkdir -p "${BUILD_DIR_X86_64}"
    mkdir -p "${BUILD_DIR_X86_64}/gwt"
@@ -124,7 +115,7 @@ if [ -n "${build_x86_64}" ]; then
    rm -f CMakeCache.txt
    rm -rf build/_CPack_Packages
 
-   echo "Configuring for x86_64 ..."
+   info "Configuring for x86_64 ..."
    arch -x86_64 "${CMAKE}"                                \
       -DCMAKE_BUILD_TYPE=RelWithDebInfo                   \
       -DCMAKE_OSX_DEPLOYMENT_TARGET="10.12"               \
@@ -139,11 +130,11 @@ if [ -n "${build_x86_64}" ]; then
       -DGWT_WWW_DIR="${BUILD_DIR_X86_64}/gwt/www"         \
       -DGWT_EXTRAS_DIR="${BUILD_DIR_X86_64}/gwt/extras"   \
       "${PKG_DIR}/../.."
-   echo "Done!"
+   info "Done!"
 
-   echo "Building for x86_64 with flags '${MAKEFLAGS}' ..."
+   info "Building for x86_64 with flags '${MAKEFLAGS}' ..."
    arch -x86_64 "${CMAKE}" --build . --target all -- ${MAKEFLAGS}
-   echo "Done!"
+   info "Done!"
 
 fi
 
@@ -152,14 +143,14 @@ if [ -n "${build_arm64}" ]; then
 
    # prefer using arm64 build of cmake
    CMAKE="${CMAKE_ARM64:-/opt/homebrew/bin/cmake}"
-   echo "Using CMake '${CMAKE}' for arm64 build"
+   info "Using CMake '${CMAKE}' for arm64 build"
 
    mkdir -p "${BUILD_DIR_ARM64}"
    cd "${BUILD_DIR_ARM64}"
    rm -f CMakeCache.txt
    rm -rf build/_CPack_Packages
 
-   echo "Configuring for arm64 ..."
+   info "Configuring for arm64 ..."
    arch -arm64 "${CMAKE}"                                \
       -DCMAKE_BUILD_TYPE=RelWithDebInfo                  \
       -DCMAKE_OSX_DEPLOYMENT_TARGET="10.12"              \
@@ -171,26 +162,24 @@ if [ -n "${build_arm64}" ]; then
       -DGWT_BUILD=0                                      \
       -DGWT_COPY=0                                       \
       "${PKG_DIR}/../.."
-   echo "Done!"
+   info "Done!"
 
-   echo "Building for arm64 with flags '${MAKEFLAGS}' ..."
+   info "Building for arm64 with flags '${MAKEFLAGS}' ..."
    arch -arm64 "${CMAKE}" --build . --target all -- ${MAKEFLAGS}
-   echo "Done!"
+   info "Done!"
 
 fi
 
 if [ "${build_package}" = "1" ]; then
 
-   if command -v cpack &> /dev/null; then
-      CPACK=cpack
-   else
-      CPACK="${HOME}/homebrew/arm64/bin/cpack"
-   fi
+   # find cpack
+   find-program CPACK cpack "${HOME}/homebrew/arm64/bin/cpack"
 
-   echo "Building package ..."
+   info "Building package ..."
    cd "${BUILD_DIR_X86_64}"
    "${CPACK}" -G DragNDrop
-   echo "Done!"
+   info "Done!"
+
 fi
 
 cd "${PKG_DIR}"
@@ -201,10 +190,9 @@ if [ "${install}" = "1" ]; then
    if [ -e "${RSTUDIO_BUNDLE_PATH}" ]; then
       rm -rf "${RSTUDIO_DEVEL_PATH}"
       cp -R "${RSTUDIO_BUNDLE_PATH}" "${RSTUDIO_DEVEL_PATH}"
-      echo "RStudio installed to '${RSTUDIO_DEVEL_PATH}'"
+      info "RStudio installed to '${RSTUDIO_DEVEL_PATH}'"
    else
-      echo "Error: '${RSTUDIO_BUNDLE_PATH}' does not exist; cannot install"
+      warn "'${RSTUDIO_BUNDLE_PATH}' does not exist; cannot install"
    fi
 fi
-
 

@@ -25,6 +25,10 @@ PANDOC_VERSION="2.11.4"
 PANDOC_SUBDIR="pandoc/${PANDOC_VERSION}"
 PANDOC_URL_BASE="https://s3.amazonaws.com/rstudio-buildtools/pandoc/${PANDOC_VERSION}"
 
+# move to tools root
+require-root-for "${RSTUDIO_TOOLS_ROOT}" "$@"
+cd "${RSTUDIO_TOOLS_ROOT}"
+
 # see if we already have binaries
 if [ -d "${PANDOC_SUBDIR}" ]; then
     echo "Pandoc ${PANDOC_VERSION} already installed"

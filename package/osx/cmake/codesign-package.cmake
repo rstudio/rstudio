@@ -44,7 +44,7 @@ list(APPEND CODESIGN_TARGETS ${CODESIGN_MACOS})
 
 # deep sign all targets
 foreach(CODESIGN_TARGET ${CODESIGN_TARGETS})
-   echo("Signing '${CODESIGN_TARGET}' ...'")
+   echo("Signing ${CODESIGN_TARGET}")
 	execute_process(COMMAND codesign ${CODESIGN_FLAGS} "${CODESIGN_TARGET}")
 endforeach()
 

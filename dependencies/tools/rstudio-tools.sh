@@ -20,17 +20,33 @@ section () {
 	echo -e "\033[1m\033[36m==>\033[39m $*\033[0m"
 }
 
+info () {
+	echo -e "\033[1m[I]\033[0m $*"
+}
+
+warn () {
+	echo -e "\033[1m\033[31m[W]\033[0m $*"
+}
+
 error () {
-	echo "Error: $*"
-	exit 1
+
+	echo -e "\033[1m\033[31m[E]\033[0m $*"
+
+	if [ "${BASH_SUBSHELL}" -eq 0 ]; then
+		return 1
+	else
+		exit 1
+	fi
+
 }
 
 set-default () {
 
 	if [ "$#" = "0" ]; then
 		cat <<- EOF
-		Set the value of a variable if it is unset.
 		Usage: set-default var val
+
+		Set the value of a variable if it is unset.
 		EOF
 		return 0
 	fi
@@ -67,6 +83,32 @@ require-root-for () {
 
 }
 
+find-file () {
+
+	if [ "$#" -lt 2 ] || [ "$1" = "--help" ]; then
+		echo "Usage: find-file <var> [paths]"
+		return 0
+	fi
+
+	VAR="$1"
+	shift
+
+	if [ -n "${VAR}" ]; then
+		return 0
+	fi
+
+	for FILE in "$@"; do
+		if [ -e "${FILE}" ]; then
+			info "Found ${VAR}: ${FILE}"
+			eval "${VAR}=${FILE}"
+			return 0
+		fi
+	done
+
+	error "could not find file"
+
+}
+
 # Aliases over 'pushd' and 'popd' just to suppress printing of
 # the directory stack on stdout
 pushd () {
@@ -85,6 +127,50 @@ has-command () {
 
 has-program () {
 	command -v "$1" &> /dev/null
+}
+
+find-program () {
+
+	if [ "$#" -lt 2 ] || [ "$1" = "--help" ]; then
+		echo "Usage: find-program <var> <program> [paths...]"
+		return 0
+	fi
+
+	# read variable
+	VAR="$1"
+	shift
+
+	# if the variable is already set, bail
+	if [ -n "${!VAR}" ]; then
+		info "Found ${VAR}: ${!VAR} [cached]"
+		return 0
+	fi
+
+	# read program name
+	PROGRAM="$1"
+	shift
+
+	# search for program in specified paths
+	for DIR in "$@"; do
+		VAL="${DIR}/${PROGRAM}"
+		if [ -f "${VAL}" ]; then
+			info "Found ${VAR}: ${VAL}"
+			eval "${VAR}=${VAL}"
+			return 0
+		fi
+	done
+
+	# if we couldn't find it, look for copy on the PATH
+	CANDIDATE=$(which "${PROGRAM}")
+	if [ -n "${CANDIDATE}" ]; then
+		info "Found ${PROGRAM}: ${CANDIDATE}"
+		eval "${VAR}=${CANDIDATE}"
+		return 0
+	fi
+
+	# failed to find program
+	error "could not find program '${PROGRAM}'"
+
 }
 
 require-program () {
@@ -335,6 +421,6 @@ is-jenkins () {
 	[ -n "${JENKINS_URL}" ]
 }
 
-set-default RSTUDIO_TOOLS_ROOT "/opt/rstudio-tools"
+set-default RSTUDIO_TOOLS_ROOT "/opt/rstudio-tools/$(arch)"
 export RSTUDIO_TOOLS_ROOT
 

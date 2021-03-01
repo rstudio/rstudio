@@ -19,34 +19,20 @@ set -e
 source ../tools/rstudio-tools.sh
 
 # set Homebrew paths
-if [ -z "${BREW_X86}" ]; then
-   if [ -f "${HOME}/homebrew/x86_64/bin/brew" ]; then
-      BREW_X86="${HOME}/homebrew/x86_64/bin/brew"
-   else
-      BREW_X86="/usr/local/bin/brew"
-   fi
-fi
+find-program BREW_X86 brew       \
+   "${HOME}/homebrew/x86_64/bin" \
+   "/usr/local/bin"
 
-if [ -z "${BREW_ARM}" ]; then
-   if [ -f "${HOME}/homebrew/arm64/bin/brew" ]; then
-      BREW_ARM="${HOME}/homebrew/arm64/bin/brew"
-   else
-      BREW_ARM="/opt/homebrew/bin/brew"
-   fi
-fi
+find-program BREW_ARM brew      \
+   "${HOME}/homebrew/arm64/bin" \
+   "/opt/homebrew/bin"
 
+# override RSTUDIO_TOOLS_ROOT for Jenkins
 if is-jenkins; then
-
-   # override RSTUDIO_TOOLS_ROOT for Jenkins
    RSTUDIO_TOOLS_ROOT="${HOME}/opt/rstudio-tools"
    export RSTUDIO_TOOLS_ROOT
-
    echo "Using '${RSTUDIO_TOOLS_ROOT}' for RStudio tools on Jenkins"
-   echo "BREW_X86: ${BREW_X86}"
-   echo "BREW_ARM: ${BREW_ARM}"
-
 fi
-
 
 ARCH="$(arch)"
 

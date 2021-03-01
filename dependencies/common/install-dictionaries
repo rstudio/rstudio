@@ -23,15 +23,18 @@ section "Installing Dictionaries"
 URL="https://s3.amazonaws.com/rstudio-buildtools/dictionaries"
 
 # download and extract the dictionaries if necessary
-DICTIONARIES_DIR=dictionaries
-if [ -d "$DICTIONARIES_DIR" ]; then
+DICTIONARIES_DIR="${RSTUDIO_TOOLS_ROOT}/dictionaries"
+if [ -d "${DICTIONARIES_DIR}" ]; then
    echo "Dictionaries already installed at '${DICTIONARIES_DIR}'"
    exit 0
 fi
 
+require-root-for "${RSTUDIO_TOOLS_ROOT}" "$@"
+
 CORE_DICTIONARIES=core-dictionaries.zip
-download "${URL}/$CORE_DICTIONARIES"
-mkdir -p $DICTIONARIES_DIR
-unzip -qd "$DICTIONARIES_DIR" "$CORE_DICTIONARIES"
-rm $CORE_DICTIONARIES
+download "${URL}/${CORE_DICTIONARIES}"
+rm -rf "${DICTIONARIES_DIR}"
+mkdir -p "${DICTIONARIES_DIR}"
+unzip -qd "${DICTIONARIES_DIR}" "${CORE_DICTIONARIES}"
+rm "${CORE_DICTIONARIES}"
 

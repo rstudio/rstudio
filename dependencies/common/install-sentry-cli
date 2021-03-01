@@ -20,4 +20,9 @@ set -e
 source ../tools/rstudio-tools.sh
 section "Installing Sentry CLI"
 
+# set INSTALL_DIR if /usr/local/bin is not writable
+if ! [ -w /usr/local/bin ]; then
+	export INSTALL_DIR="$HOME/opt/bin"
+fi
+
 curl -sL https://sentry.io/get-cli/ | bash || true
