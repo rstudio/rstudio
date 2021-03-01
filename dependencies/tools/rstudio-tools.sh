@@ -420,6 +420,6 @@ is-jenkins () {
 	[ -n "${JENKINS_URL}" ]
 }
 
-set-default RSTUDIO_TOOLS_ROOT "/opt/rstudio-tools/$(arch)"
+set-default RSTUDIO_TOOLS_ROOT "/opt/rstudio-tools/$(uname -m)"
 export RSTUDIO_TOOLS_ROOT
 
