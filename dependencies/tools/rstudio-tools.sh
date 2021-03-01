@@ -89,16 +89,19 @@ find-file () {
 		return 0
 	fi
 
-	VAR="$1"
+	local VAR="$1"
 	shift
 
-	if [ -n "${VAR}" ]; then
+	if [ -n "${!VAR}" ]; then
+		info "Found ${VAR}: ${!VAR} [cached]"
 		return 0
 	fi
 
+	local FILE
 	for FILE in "$@"; do
 		if [ -e "${FILE}" ]; then
 			info "Found ${VAR}: ${FILE}"
+			echo "${VAR}=${FILE}"
 			eval "${VAR}=${FILE}"
 			return 0
 		fi
@@ -136,7 +139,7 @@ find-program () {
 	fi
 
 	# read variable
-	VAR="$1"
+	local VAR="$1"
 	shift
 
 	# if the variable is already set, bail
@@ -146,12 +149,12 @@ find-program () {
 	fi
 
 	# read program name
-	PROGRAM="$1"
+	local PROGRAM="$1"
 	shift
 
 	# search for program in specified paths
 	for DIR in "$@"; do
-		VAL="${DIR}/${PROGRAM}"
+		local VAL="${DIR}/${PROGRAM}"
 		if [ -f "${VAL}" ]; then
 			info "Found ${VAR}: ${VAL}"
 			eval "${VAR}=${VAL}"
@@ -160,7 +163,7 @@ find-program () {
 	done
 
 	# if we couldn't find it, look for copy on the PATH
-	CANDIDATE=$(which "${PROGRAM}")
+	local CANDIDATE=$(which "${PROGRAM}")
 	if [ -n "${CANDIDATE}" ]; then
 		info "Found ${PROGRAM}: ${CANDIDATE}"
 		eval "${VAR}=${CANDIDATE}"
@@ -356,6 +359,7 @@ os-version () {
 }
 
 os-version-part () {
+
 	local VERSION="$(os-version | cut -d"." -f"$1")"
 
 	if [ -n "${VERSION}" ]; then
@@ -365,6 +369,7 @@ os-version-part () {
 
 	echo "0"
 	return 0
+
 }
 
 os-version-major () {
