@@ -211,7 +211,7 @@ if(NOT DEFINED RSTUDIO_TOOLS_ROOT)
          endif()
       endif()
    else()
-      set(RSTUDIO_TOOLS_ROOT "/opt/rstudio-tools")
+      set(RSTUDIO_TOOLS_ROOT "/opt/rstudio-tools/${UNAME_M}")
    endif()
 endif()
 
