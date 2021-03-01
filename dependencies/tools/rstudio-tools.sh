@@ -420,6 +420,17 @@ is-jenkins () {
 	[ -n "${JENKINS_URL}" ]
 }
 
-set-default RSTUDIO_TOOLS_ROOT "/opt/rstudio-tools/$(uname -m)"
+# pick a default RSTUDIO_TOOLS_ROOT location
+#
+# prefer using home folder on Jenkins where we might not be able
+# to access files at /opt and will lack sudo
+if [ -z "${RSTUDIO_TOOLS_ROOT}" ]; then
+	if is-jenkins; then
+		RSTUDIO_TOOLS_ROOT="$HOME/opt/rstudio-tools/$(uname -m)"
+	else
+		RSTUDIO_TOOLS_ROOT="/opt/rstudio-tools/$(uname -m)"
+	fi
+fi
+
 export RSTUDIO_TOOLS_ROOT
 
