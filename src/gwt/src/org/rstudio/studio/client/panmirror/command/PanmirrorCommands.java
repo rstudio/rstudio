@@ -124,4 +124,6 @@ public class PanmirrorCommands
    // outline
    public static final String GoToNextSection = "AE827BDA-96F8-4E84-8030-298D98386765";
    public static final String GoToPreviousSection = "E6AA728C-2B75-4939-9123-0F082837ACDF";
+   public static final String GoToNextChunk = "50DD6E51-13B5-4F1E-A46B-6A33EB1609D9";
+   public static final String GoToPreviousChunk = "8D105D33-78FE-4A98-8195-6B71361424C5";
 }

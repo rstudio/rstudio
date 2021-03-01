@@ -76,6 +76,7 @@
 * Improved checks for non-writable R library paths on startup (Pro #2184)
 * Code chunks in the visual editor now respect the "Tab Key Always Moves Focus" accessibility setting (#8584)
 * The commands "Execute Previous Chunks" and "Execute Subsequent Chunks" now work when the cursor is outside a code chunk in the visual editor (#8500)
+* The commands "Go to Next Chunk" and "Go to Previous Chunk" now work in the visual editor (#9005)
 * Fixed issue causing the document to scroll unpredictably when a code chunk inside a list item is executed in the visual editor (#8883)
 * Fixed issue preventing R Notebook chunks from being queued for execution if they had never been previously run (#4238)
 * Fix various issues when the "Limit Console Output" performance setting was enabled, and enable it by default (#8544, #8504, #8529, #8552)
@@ -94,4 +95,5 @@
 * Fixed issue where Set Working Directory command could fail if path contained quotes (#6004)
 * Fixed issue where Pro database drivers will not install if `~/odbcinst.ini` is missing (Pro #2284)
 * Fixed issue causing the mouse cursor to become too small in certain areas on Linux Desktop (#8781)
+* Fixed issue causing Run Tests command to do nothing unless the Build tab was available (#8775)
 

@@ -74,8 +74,8 @@
                   ui:field="showTracebackImage"
                   width="9"
                   height="9"
-                  styleName="{style.errorCommandImage}"/>
-           <g:Anchor styleName="{style.errorCommandText}" ui:field="showTracebackText">
+                  styleName="{style.errorCommandImage} show_traceback_image"/>
+           <g:Anchor styleName="{style.errorCommandText} show_traceback_text" ui:field="showTracebackText">
               Show Traceback
            </g:Anchor>
         </g:HTMLPanel>
@@ -84,14 +84,14 @@
                     ui:field="rerunImage"
                     width="9"
                     height="9"
-                    styleName="{style.errorCommandImage}"/>
-           <g:Anchor styleName="{style.errorCommandText}" ui:field="rerunText">
+                    styleName="{style.errorCommandImage} rerun_image"/>
+           <g:Anchor styleName="{style.errorCommandText} rerun_text" ui:field="rerunText">
               Rerun with Debug
            </g:Anchor>
         </g:HTMLPanel>
      </g:HTMLPanel>
      <g:HTML ui:field="errorMessage" styleName="{style.errorMessage}"></g:HTML>
-     <g:HTMLPanel ui:field="framePanel" visible="false" styleName="{style.framePanel}">
+     <g:HTMLPanel ui:field="framePanel" visible="false" styleName="{style.framePanel} stack_trace">
      </g:HTMLPanel>
    </g:HTMLPanel>
 </ui:UiBinder> 
