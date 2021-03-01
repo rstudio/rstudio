@@ -161,7 +161,6 @@ echo "${CMD}"
 
 # run compile step!
 docker run                 \
-  --env HOST_OS="$(uname)" \
   --name "$CONTAINER_ID"   \
   --volume "$(pwd):/src"   \
   "$REPO:$IMAGE" bash -c "${CMD}"
