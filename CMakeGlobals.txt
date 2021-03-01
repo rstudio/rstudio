@@ -197,23 +197,17 @@ if(NOT DEFINED RSTUDIO_TOOLS_ROOT)
    if(WIN32)
       set(RSTUDIO_TOOLS_ROOT "${RSTUDIO_DEPENDENCIES_DIR}")
    elseif(APPLE)
-      if(UNAME_M STREQUAL arm64)
-         if(EXISTS "$ENV{HOME}/opt/rstudio-tools/arm64")
-            set(RSTUDIO_TOOLS_ROOT "$ENV{HOME}/opt/rstudio-tools/arm64")
-         else()
-            set(RSTUDIO_TOOLS_ROOT "/opt/rstudio-tools/arm64")
-         endif()
-      else()
-         if(EXISTS "$ENV{HOME}/opt/rstudio-tools/x86_64")
-            set(RSTUDIO_TOOLS_ROOT "$ENV{HOME}/opt/rstudio-tools/x86_64")
-         else()
-            set(RSTUDIO_TOOLS_ROOT "/opt/rstudio-tools/x86_64")
-         endif()
-      endif()
+      find_path(RSTUDIO_TOOLS_ROOT
+         NAMES boost
+         HINTS
+            "$ENV{HOME}/opt/rstudio-tools/${UNAME_M}"
+            "/opt/rstudio-tools/${UNAME_M}")
    else()
       set(RSTUDIO_TOOLS_ROOT "/opt/rstudio-tools/${UNAME_M}")
    endif()
 endif()
+
+message(STATUS "Using RStudio tools root: ${RSTUDIO_TOOLS_ROOT}")
 
 # special install directories for apple desktop
 if (APPLE AND RSTUDIO_DESKTOP)
@@ -336,19 +330,21 @@ if(APPLE)
 
    # set Homebrew prefix directory
    if(NOT DEFINED HOMEBREW_PREFIX)
+
       if(UNAME_M STREQUAL arm64)
-         if(EXISTS "$ENV{HOME}/homebrew/arm64")
-            set(HOMEBREW_PREFIX "$ENV{HOME}/homebrew/arm64")
-         else()
-            set(HOMEBREW_PREFIX /opt/homebrew CACHE INTERNAL "")
-         endif()
+         set(HOMEBREW_PREFIX_FALLBACK /opt/homebrew)
       else()
-         if(EXISTS "$ENV{HOME}/homebrew/x86_64")
-            set(HOMEBREW_PREFIX "$ENV{HOME}/homebrew/x86_64")
-         else()
-            set(HOMEBREW_PREFIX /usr/local CACHE INTERNAL "")
-         endif()
+         set(HOMEBREW_PREFIX_FALLBACK /usr/local)
       endif()
+      
+      find_path(HOMEBREW_PREFIX
+         NAMES bin/brew
+         HINTS
+            "$ENV{HOME}/homebrew/${UNAME_M}"
+            "${HOMEBREW_PREFIX_FALLBACK}")
+
+      message(STATUS "Using Homebrew: ${HOMEBREW_PREFIX}")
+
    endif()
 
    # help Boost find icu4c

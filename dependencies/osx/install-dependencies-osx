@@ -18,36 +18,23 @@
 set -e
 source ../tools/rstudio-tools.sh
 
-# set Homebrew paths
-find-program BREW_X86 brew       \
-   "${HOME}/homebrew/x86_64/bin" \
-   "/usr/local/bin"
-
-find-program BREW_ARM brew      \
-   "${HOME}/homebrew/arm64/bin" \
-   "/opt/homebrew/bin"
-
-# override RSTUDIO_TOOLS_ROOT for Jenkins
+# prefer tools directory in home directory on Jenkins
 if is-jenkins; then
-   RSTUDIO_TOOLS_ROOT="${HOME}/opt/rstudio-tools"
-   export RSTUDIO_TOOLS_ROOT
-   echo "Using '${RSTUDIO_TOOLS_ROOT}' for RStudio tools on Jenkins"
+   RSTUDIO_TOOLS_ROOT="${HOME}${RSTUDIO_TOOLS_ROOT}"
 fi
 
-ARCH="$(arch)"
+info "RSTUDIO_TOOLS_ROOT: ${RSTUDIO_TOOLS_ROOT}"
 
-if [ "${ARCH}" = "arm64" ]; then
+if [ "$(arch)" = "arm64" ]; then
 
-   # validate that Homebrew is installed in the expected locations
-   if [ ! -f "${BREW_X86}" ]; then
-      echo "Error: Homebrew is not installed for x86_64 (missing '${BREW_X86}')"
-      exit 1
-   fi
+   # set Homebrew paths
+   find-program BREW_X86 brew       \
+      "${HOME}/homebrew/x86_64/bin" \
+      "/usr/local/bin"
 
-   if [ ! -f "${BREW_ARM}" ]; then
-      echo "Error: Homebrew is not installed for arm64 (missing '${BREW_ARM}')"
-      exit 1
-   fi
+   find-program BREW_ARM brew      \
+      "${HOME}/homebrew/arm64/bin" \
+      "/opt/homebrew/bin"
 
    # save the PATH -- note that we munge this so that the correct
    # homebrew executable is found first on the PATH
@@ -56,14 +43,14 @@ if [ "${ARCH}" = "arm64" ]; then
 
    # install x86_64 dependencies
    PATH="$(dirname "${BREW_X86}"):${OLDPATH}"
-   RSTUDIO_TOOLS_ROOT="${OLDROOT}/x86_64"
+   RSTUDIO_TOOLS_ROOT=$(realpath "${OLDROOT}/../x86_64")
 
    section "Installing x86_64 Dependencies"
    arch -x86_64 ./install-dependencies-osx-arch
 
    # install arm64 dependencies
    PATH="$(dirname "${BREW_ARM}"):${OLDPATH}"
-   RSTUDIO_TOOLS_ROOT="${OLDROOT}/arm64"
+   RSTUDIO_TOOLS_ROOT=$(realpath "${OLDROOT}/../arm64")
 
    section "Installing arm64 Dependencies"
    arch -arm64 ./install-dependencies-osx-arch
@@ -74,12 +61,17 @@ if [ "${ARCH}" = "arm64" ]; then
 
 else
 
+   # set Homebrew paths
+   find-program BREW_X86 brew       \
+      "${HOME}/homebrew/x86_64/bin" \
+      "/usr/local/bin"
+
    # assume x86_64
    OLDPATH="${PATH}"
    OLDROOT="${RSTUDIO_TOOLS_ROOT}"
 
    PATH="$(dirname "${BREW_X86}"):${OLDPATH}"
-   RSTUDIO_TOOLS_ROOT="${RSTUDIO_TOOLS_ROOT}/x86_64"
+   RSTUDIO_TOOLS_ROOT=$(realpath "${RSTUDIO_TOOLS_ROOT}/../x86_64")
 
    ./install-dependencies-osx-arch
 
