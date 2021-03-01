@@ -15,6 +15,11 @@
 
 package org.rstudio.studio.client.common.debugging.ui;
 
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Node;
+import com.google.gwt.dom.client.NodeList;
+import com.google.gwt.dom.client.Style;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
@@ -34,8 +39,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class ConsoleError extends Composite
 {
-   private static ConsoleErrorUiBinder uiBinder = GWT
-         .create(ConsoleErrorUiBinder.class);
+   private static ConsoleErrorUiBinder uiBinder = GWT.create(ConsoleErrorUiBinder.class);
 
    interface ConsoleErrorUiBinder extends UiBinder<Widget, ConsoleError>
    {
@@ -47,6 +51,8 @@ public class ConsoleError extends Composite
       void runCommandWithDebug(String command);
    }
 
+   // Because we are adding interactive elements to the VirtualScroller the GWT bindings are lost.
+   // We need to programmatically find the elements and manipulate them through regular JS functions.
    public ConsoleError(UnhandledError err, 
                        String errorClass, 
                        Observer observer, 
@@ -61,47 +67,37 @@ public class ConsoleError extends Composite
       vc.setVirtualizedDisableOverride(true);
       vc.submit(err.getErrorMessage().trim());
       errorMessage.addStyleName(errorClass);
-      
-      EventListener showHideTraceback = new EventListener()
+
+      EventListener onConsoleErrorClick = event ->
       {
-         @Override
-         public void onBrowserEvent(Event event)
+         if (DOM.eventGetType(event) == Event.ONCLICK)
          {
-            if (DOM.eventGetType(event) == Event.ONCLICK)
+            Element target = Element.as(event.getEventTarget());
+            if (target == null)
+               return;
+
+            if (target.hasClassName("show_traceback_text") || target.hasClassName("show_traceback_image"))
             {
                setTracebackVisible(!showingTraceback_);
                observer_.onErrorBoxResize();
             }
-         }
-      };
-      
-      EventListener rerunWithDebug = new EventListener()
-      {
-         @Override
-         public void onBrowserEvent(Event event)
-         {
-            if (DOM.eventGetType(event) == Event.ONCLICK)
+            else if (target.hasClassName("rerun_text") || target.hasClassName("rerun_image"))
             {
                observer_.onErrorBoxResize();
                observer_.runCommandWithDebug(command_);
             }
          }
       };
-      
-      DOM.sinkEvents(showTracebackText.getElement(), Event.ONCLICK);
-      DOM.setEventListener(showTracebackText.getElement(), showHideTraceback);
-      DOM.sinkEvents(showTracebackImage.getElement(), Event.ONCLICK);
-      DOM.setEventListener(showTracebackImage.getElement(), showHideTraceback);
+
       rerunText.setVisible(command_ != null);
       rerunImage.setVisible(command_ != null);
-      DOM.sinkEvents(rerunText.getElement(), Event.ONCLICK);
-      DOM.setEventListener(rerunText.getElement(), rerunWithDebug);
-      DOM.sinkEvents(rerunImage.getElement(), Event.ONCLICK);
-      DOM.setEventListener(rerunImage.getElement(), rerunWithDebug);
-      
+
+      DOM.sinkEvents(this.getElement(), Event.ONCLICK);
+      DOM.setEventListener(this.getElement(), onConsoleErrorClick);
+
       for (int i = err.getErrorFrames().length() - 1; i >= 0; i--)
       {
-         ConsoleErrorFrame frame = new ConsoleErrorFrame(i + 1, 
+         ConsoleErrorFrame frame = new ConsoleErrorFrame(i + 1,
                err.getErrorFrames().get(i));
          framePanel.add(frame);
       }
@@ -110,9 +106,29 @@ public class ConsoleError extends Composite
    public void setTracebackVisible(boolean visible)
    {
       showingTraceback_ = visible;
-      showTracebackText.setText(showingTraceback_ ? 
-            "Hide Traceback" : "Show Traceback");
-      framePanel.setVisible(showingTraceback_);
+
+      NodeList<Node> children = this.getElement().getChildNodes();
+      for (int i = 0; i < children.getLength(); i++)
+      {
+         Node n = children.getItem(i);
+         if (n.getNodeType() != Node.ELEMENT_NODE)
+            continue;
+
+         Element child = Element.as(children.getItem(i));
+         if (child.hasClassName("show_traceback_text")) {
+            if (showingTraceback_)
+               child.setInnerText("Hide Traceback");
+            else
+               child.setInnerText("Show Traceback");
+         }
+         else if (child.hasClassName("stack_trace"))
+         {
+            if (showingTraceback_)
+               child.getStyle().setDisplay(Style.Display.BLOCK);
+            else
+               child.getStyle().setDisplay(Style.Display.NONE);
+         }
+      }
    }
 
    @UiField Anchor showTracebackText;

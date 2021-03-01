@@ -1166,13 +1166,27 @@ public class TextEditingTarget implements
    @Handler
    void onGoToNextChunk()
    {
-      moveCursorToNextSectionOrChunk(false);
+      if (visualMode_.isActivated())
+      {
+         visualMode_.goToNextChunk();
+      }
+      else
+      {
+         moveCursorToNextSectionOrChunk(false);
+      }
    }
 
    @Handler
    void onGoToPrevChunk()
    {
-      moveCursorToPreviousSectionOrChunk(false);
+      if (visualMode_.isActivated())
+      {
+         visualMode_.goToPreviousChunk();
+      }
+      else
+      {
+         moveCursorToPreviousSectionOrChunk(false);
+      }
    }
 
 

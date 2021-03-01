@@ -234,6 +234,7 @@ public class PaneManager
                       @Named("R Markdown") final WorkbenchTab renderRmdTab,
                       @Named("Deploy") final WorkbenchTab deployContentTab,
                       @Named("Terminal") final WorkbenchTab terminalTab,
+                      @Named("Tests") final WorkbenchTab testsTab,
                       @Named("Jobs") final WorkbenchTab jobsTab,
                       @Named("Launcher") final WorkbenchTab launcherJobsTab,
                       @Named("Data Output") final WorkbenchTab dataTab,
@@ -271,6 +272,7 @@ public class PaneManager
       jobsTab_ = jobsTab;
       launcherJobsTab_ = launcherJobsTab;
       optionsLoader_ = optionsLoader;
+      testsTab_ = testsTab;
       dataTab_ = dataTab;
       tutorialTab_ = tutorialTab;
       pGlobalDisplay_ = pGlobalDisplay;
@@ -1693,6 +1695,7 @@ public class PaneManager
             terminalTab_,
             eventBus_,
             goToWorkingDirButton,
+            testsTab_,
             dataTab_,
             jobsTab_,
             launcherJobsTab_);
@@ -1983,6 +1986,7 @@ public class PaneManager
    private final WorkbenchTab deployContentTab_;
    private final MarkersOutputTab markersTab_;
    private final WorkbenchTab terminalTab_;
+   private final WorkbenchTab testsTab_;
    private final WorkbenchTab jobsTab_;
    private final WorkbenchTab launcherJobsTab_;
    private final WorkbenchTab dataTab_;
