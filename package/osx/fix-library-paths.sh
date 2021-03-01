@@ -26,7 +26,6 @@ PREFIX="$2"
 cd "$DIR"
 for FILE in *.dylib; do
 
-   codesign --remove-signature "${FILE}" &> /dev/null
    install_name_tool -id "${FILE}" "${FILE}" &> /dev/null
 
    LIBPATHS=$( \
