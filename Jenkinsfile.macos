@@ -41,7 +41,8 @@ pipeline {
           if (params.RSTUDIO_VERSION_SUFFIX != 0) {
             env = "${env} RSTUDIO_VERSION_SUFFIX=${params.RSTUDIO_VERSION_SUFFIX}" 
           }
-          sh 'cd package/osx && ${env} ./make-package clean && cd ../..'
+          // sh 'cd package/osx && ${env} ./make-package clean && cd ../..'
+          sh 'cd package/osx && ${env} ./make-package && cd ../..'
         }
       }
     }
@@ -110,10 +111,10 @@ pipeline {
     }
   }
 
-  post {
-    always {
-      deleteDir()
-      sendNotifications slack_channel: SLACK_CHANNEL
-    }
-  }
+  // post {
+  //   always {
+  //     deleteDir()
+  //     sendNotifications slack_channel: SLACK_CHANNEL
+  //   }
+  // }
 }
