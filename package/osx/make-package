@@ -24,11 +24,8 @@ BUILD_DIR_ARM64="${PKG_DIR}/build-arm64"
 
 GWT_SRC_DIR="${PKG_DIR}/../../src/gwt"
 
-if [ -n "${JENKINS_URL}" ]; then
-   ADHOC=0
-else
-   ADHOC=1
-fi
+# use RStudio credentials for builds on Jenkins
+USE_CREDS="${#JENKINS_URL}"
 
 # determine architectures to build for
 if [ "$(arch)" = "arm64" ]; then
@@ -135,7 +132,7 @@ if [ -n "${build_x86_64}" ]; then
       -DRSTUDIO_PACKAGE_BUILD=1                           \
       -DRSTUDIO_CRASHPAD_ENABLED=0                        \
       -DRSTUDIO_TOOLS_ROOT="${RSTUDIO_TOOLS_ROOT}/x86_64" \
-      -DRSTUDIO_USE_ADHOC_SIGNATURE="${ADHOC}"            \
+      -DRSTUDIO_CODESIGN_USE_CREDENTIALS="${USE_CREDS}"   \
       -DGWT_BUILD="${build_gwt}"                          \
       -DGWT_COPY="${copy_gwt}"                            \
       -DGWT_BIN_DIR="${BUILD_DIR_X86_64}/gwt/bin"         \

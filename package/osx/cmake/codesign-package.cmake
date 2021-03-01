@@ -21,7 +21,7 @@ set(CODESIGN_FLAGS
 # install_name_tool will invalidate existing signatures on
 # bundled libraries and macOS will refuse to launch RStudio
 # with the older invalid signature
-if(NOT @RSTUDIO_USE_ADHOC_SIGNATURE@)
+if(@RSTUDIO_CODESIGN_USE_CREDENTIALS@)
    echo("Signing RStudio with RStudio's credentials")
    list(APPEND CODESIGN_FLAGS
       -s 8A388E005EF927A09B952C6E71B0E8F2F467AB26
