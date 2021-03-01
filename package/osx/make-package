@@ -171,8 +171,9 @@ fi
 
 if [ "${build_package}" = "1" ]; then
 
-   # find cpack
-   find-program CPACK cpack "${HOME}/homebrew/arm64/bin/cpack"
+   find-program CPACK cpack        \
+      "${HOME}/homebrew/arm64/bin" \
+      "${HOME}/opt/bin"
 
    info "Building package ..."
    cd "${BUILD_DIR_X86_64}"
