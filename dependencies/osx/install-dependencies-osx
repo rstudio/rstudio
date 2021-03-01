@@ -18,11 +18,6 @@
 set -e
 source ../tools/rstudio-tools.sh
 
-# prefer tools directory in home directory on Jenkins
-if is-jenkins; then
-   RSTUDIO_TOOLS_ROOT="${HOME}${RSTUDIO_TOOLS_ROOT}"
-fi
-
 info "RSTUDIO_TOOLS_ROOT: ${RSTUDIO_TOOLS_ROOT}"
 
 if [ "$(arch)" = "arm64" ]; then
