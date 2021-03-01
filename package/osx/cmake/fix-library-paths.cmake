@@ -24,7 +24,7 @@ if(EXISTS "@RSESSION_ARM64_PATH@")
 		COPYONLY)
 
 	# copy required Homebrew libraries
-	set(HOMEBREW_LIBS libpq krb5 openssl sqlite3)
+	set(HOMEBREW_LIBS gettext krb5 libpq openssl sqlite3)
 	
 	file(MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/Frameworks/arm64")
 	foreach(LIB ${HOMEBREW_LIBS})

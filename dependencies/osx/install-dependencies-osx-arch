@@ -38,6 +38,7 @@ FORMULAS=(
    ant
    cmake
    coreutils
+   gettext
    krb5
    libpq
    openssl
