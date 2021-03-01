@@ -78,10 +78,19 @@ INSTALL_PATH="${NODE_BIN}:${PATH}"
 
 # install yarn if necessary
 if [ ! -x "$(command -v yarn)" ]; then
+
   YARN_INSTALL_SCRIPT="yarn-install.sh"
   download "https://yarnpkg.com/install.sh" "${YARN_INSTALL_SCRIPT}"
   chmod +x "${YARN_INSTALL_SCRIPT}"
-  PATH=${INSTALL_PATH} ./$YARN_INSTALL_SCRIPT
+
+  # allow failures in Docker compile scripts on macOS
+  # https://github.com/rstudio/rstudio/issues/9045
+  if [ "${HOST_OS}" = "Darwin" ]; then
+    PATH=${INSTALL_PATH} ./$YARN_INSTALL_SCRIPT || true
+  else
+    PATH=${INSTALL_PATH} ./$YARN_INSTALL_SCRIPT || true
+  fi
+
   rm $YARN_INSTALL_SCRIPT
   INSTALL_PATH="${HOME}/.yarn/bin:${HOME}/.config/yarn/global/node_modules/.bin:${INSTALL_PATH}"
 else
@@ -97,8 +106,17 @@ else
   # otherwise, use source tree
   pushd ../../src/gwt/panmirror/src/editor
 fi
-PATH=${INSTALL_PATH} yarn config set ignore-engines true
-PATH=${INSTALL_PATH} yarn install
+
+# allow failures in Docker compile scripts on macOS
+# https://github.com/rstudio/rstudio/issues/9045
+if [ "${HOST_OS}" = "Darwin" ]; then
+  PATH=${INSTALL_PATH} yarn config set ignore-engines true || true
+  PATH=${INSTALL_PATH} yarn install || true
+else
+  PATH=${INSTALL_PATH} yarn config set ignore-engines true
+  PATH=${INSTALL_PATH} yarn install
+fi
+
 popd
 
 
