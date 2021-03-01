@@ -85,7 +85,8 @@ module.exports = class Main {
       process.env.R_INCLUDE_DIR = '/opt/R/3.6.3/lib/R/include';
       process.env.R_DOC_DIR = '/opt/R/3.6.3/lib/R/doc';
     } else if (process.platform === 'win32') {
-      // TODO
+      process.env.R_HOME = 'C:\\R\\R-35~1.0';
+      process.env.PATH = `C:\\R\\R-3.5.0\\bin\\x64;${process.env.PATH}`; 
     } else {
       console.log(`Unsupported platform ${process.platform}`);
       return false;

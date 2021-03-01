@@ -14,11 +14,50 @@
  */
 
 exports.getDesktopInfoBridge = () => {
-  return {
-    platform: '',
-    version: '',
-    scrollingCompensationType: '',
-    fixedWidthFontList: `AndaleMono
+  if (process.platform === 'win32') {
+    return {
+      platform: '',
+      version: '',
+      scrollingCompensationType: '',
+      fixedWidthFontList: `BIZ UDGothic
+BIZ UDMincho Medium
+Cascadia Code
+Cascadia Code ExtraLight
+Cascadia Code Light
+Cascadia Code SemiBold
+Cascadia Code SemiLight
+Cascadia Mono
+Cascadia Mono ExtraLight
+Cascadia Mono Light
+Cascadia Mono SemiBold
+Cascadia Mono SemiLight
+Consolas
+Courier
+Courier New
+Lucida Console
+Lucida Sans Typewriter
+MingLiU-ExtB
+MingLiU_HKSCS-ExtB
+MS Gothic
+MS Mincho
+NSimSun
+OCR A Extended
+SimSun
+SimSun-ExtB
+UD Digi Kyokasho N-B
+UD Digi Kyokasho N-R`,
+      fixedWidthFont: 'Lucida Console',
+      proportionalFont: 'Segoe UI',
+      desktopSynctexViewer: '',
+      zoomLevel: 1.0,
+      chromiumDevtoolsPort: 0,
+    };
+  } else {
+    return {
+      platform: '',
+      version: '',
+      scrollingCompensationType: '',
+      fixedWidthFontList: `AndaleMono
 AppleBraille-Outline6Dot
 AppleBraille-Outline8Dot
 AppleBraille-Pinpoint6Dot
@@ -40,11 +79,12 @@ Menlo-BoldItalic
 Monaco
 PTMono-Regular
 PTMono-Bold`,
-    fixedWidthFont: 'Monaco',
-    proportionalFont: 'Lucida Grande',
-    desktopSynctexViewer: '',
-    zoomLevel: 1.0,
-    chromiumDevtoolsPort: 0,
+      fixedWidthFont: 'Monaco',
+      proportionalFont: 'Lucida Grande',
+      desktopSynctexViewer: '',
+      zoomLevel: 1.0,
+      chromiumDevtoolsPort: 0,
+    };
 
-  };
+  }
 };
