@@ -57,7 +57,7 @@ if [ -n "${FLAVOR}" ]; then
    fi
 
    # re-run as root if necessary
-   require-root-for "${RSTUDIO_TOOLS_ROOT}" "$@"
+   elevate-permissions-if-necessary-for "${RSTUDIO_TOOLS_ROOT}" "$@"
 
    echo "Installing pre-built Crashpad binaries for '${FLAVOR}'"
    if is-macos; then
@@ -84,7 +84,7 @@ if [ -n "${FLAVOR}" ]; then
 fi
 
 # re-run as root if necessary
-require-root-for "${RSTUDIO_TOOLS_ROOT}" "$@"
+elevate-permissions-if-necessary-for "${RSTUDIO_TOOLS_ROOT}" "$@"
 
 # install google depot_tools if not already installed
 # these tools are necessary to properly checkout and build crashpad

@@ -53,7 +53,7 @@ if [ -e "${BOOST_DIR}" ]; then
 fi
 
 # re-run as root if necessary
-require-root-for "${RSTUDIO_TOOLS_ROOT}" "$@"
+elevate-permissions-if-necessary-for "${RSTUDIO_TOOLS_ROOT}" "$@"
 
 # move to tempdir for build
 cd "$(mktemp -d -t boost-build)"

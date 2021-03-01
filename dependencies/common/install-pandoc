@@ -32,7 +32,7 @@ if [ -d "${RSTUDIO_TOOLS_ROOT}/${PANDOC_SUBDIR}" ]; then
 fi
 
 # move to tools root
-require-root-for "${RSTUDIO_TOOLS_ROOT}" "$@"
+elevate-permissions-if-necessary-for "${RSTUDIO_TOOLS_ROOT}" "$@"
 cd "${RSTUDIO_TOOLS_ROOT}"
 
 # enter pandoc subdirectory

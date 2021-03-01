@@ -64,12 +64,11 @@ rerun-as-root () {
 	exec sudo -E /bin/bash "$0" "$@"
 }
 
-require-root-for () {
+elevate-permissions-if-necessary-for () {
 
 	# If the directory does not exist, try to create it
-	if ! [ -d "$1" ]; then
-		mkdir -p "$1" &> /dev/null || true
-		if [ "$#" = "0" ]; then
+	if ! [ -e "$1" ]; then
+		if mkdir -p "$1" &> /dev/null; then
 			return 0
 		fi
 	fi
