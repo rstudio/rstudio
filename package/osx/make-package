@@ -26,7 +26,11 @@ BUILD_DIR_ARM64="${PKG_DIR}/build-arm64"
 GWT_SRC_DIR="${PKG_DIR}/../../src/gwt"
 
 # use RStudio credentials for builds on Jenkins
-USE_CREDS="${#JENKINS_URL}"
+if [ -n "${JENKINS_URL}" ]; then
+   USE_CREDS=1
+else
+   USE_CREDS=0
+fi
 
 # determine architectures to build for
 if [ "$(arch)" = "arm64" ]; then
