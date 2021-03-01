@@ -29,7 +29,7 @@ if [ -d "${DICTIONARIES_DIR}" ]; then
    exit 0
 fi
 
-elevate-permissions-if-necessary-for "${RSTUDIO_TOOLS_ROOT}" "$@"
+sudo-if-necessary-for "${RSTUDIO_TOOLS_ROOT}" "$@"
 
 CORE_DICTIONARIES=core-dictionaries.zip
 download "${URL}/${CORE_DICTIONARIES}"

@@ -33,7 +33,7 @@ if [ -d "${SOCI_BIN_DIR}/lib" ]; then
    exit 0
 fi
 
-elevate-permissions-if-necessary-for "${RSTUDIO_TOOLS_ROOT}" "$@"
+sudo-if-necessary-for "${RSTUDIO_TOOLS_ROOT}" "$@"
 cd "${RSTUDIO_TOOLS_ROOT}"
 
 # download and unpack SOCI sources

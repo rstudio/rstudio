@@ -64,7 +64,7 @@ rerun-as-root () {
 	exec sudo -E /bin/bash "$0" "$@"
 }
 
-elevate-permissions-if-necessary-for () {
+sudo-if-necessary-for () {
 
 	# If the directory does not exist, try to create it
 	if ! [ -e "$1" ]; then

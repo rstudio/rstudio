@@ -29,7 +29,7 @@ if [ -d "$MATHJAX_DIR" ]; then
    exit 0
 fi
 
-elevate-permissions-if-necessary-for "${RSTUDIO_TOOLS_ROOT}" "$@"
+sudo-if-necessary-for "${RSTUDIO_TOOLS_ROOT}" "$@"
 cd "${RSTUDIO_TOOLS_ROOT}"
 
 MATHJAX=mathjax-27.zip

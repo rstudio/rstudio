@@ -30,7 +30,7 @@ if [ -e "${YAML_CPP_DIRECTORY}" ]; then
 fi
 
 # re-run as root if necessary
-elevate-permissions-if-necessary-for "${RSTUDIO_TOOLS_ROOT}" "$@"
+sudo-if-necessary-for "${RSTUDIO_TOOLS_ROOT}" "$@"
 
 # lazy way to make sure parent directory of target is created
 mkdir -p "${YAML_CPP_DIRECTORY}"
