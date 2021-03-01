@@ -16,7 +16,7 @@
 #
 
 set -e
-source ../tools/rstudio-tools.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 
 info "RSTUDIO_TOOLS_ROOT: ${RSTUDIO_TOOLS_ROOT}"
 

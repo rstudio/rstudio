@@ -17,7 +17,7 @@
 
 set -e
 
-source ../tools/rstudio-tools.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 require-program brew
 
 # NOTE: the intention is for this script to be invoked as e.g.

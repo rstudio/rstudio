@@ -17,7 +17,7 @@
 
 set -e
 
-source ../tools/rstudio-tools.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 section "Installing NPM"
 
 # variables that control download + installation process

@@ -17,7 +17,7 @@
 
 set -e
 
-source ../tools/rstudio-tools.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 section "Installing Boost"
 
 # install dir
@@ -56,7 +56,7 @@ fi
 sudo-if-necessary-for "${RSTUDIO_TOOLS_ROOT}" "$@"
 
 # move to tempdir for build
-cd "$(mktemp -d -t boost-build)"
+cd "$(mktemp -d)"
 
 # download boost
 BOOST_URL=https://s3.amazonaws.com/rstudio-buildtools/Boost/boost_1_69_0.tar.bz2

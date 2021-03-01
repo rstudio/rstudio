@@ -17,7 +17,7 @@
 
 set -e
 
-source ../tools/rstudio-tools.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 section "Installing yaml-cpp"
 
 YAML_CPP_VERSION="0.6.3"
