@@ -11,7 +11,7 @@ Only runnable within context of an RStudio development environment.
     - must build into `rstudio/src/cpp/cmake-build-debug` (otherwise tweak relative path in `main.js` to match)
 - `ant desktop` from `rstudio/src/gwt`
 - from `rstudio/src/node/desktop`
-    - `yarn install`
+    - `yarn`
     - `yarn start`
 
 ## Initial Creation
@@ -20,5 +20,5 @@ Only runnable within context of an RStudio development environment.
 - `yarn init`
 - `yarn add electron@latest`
 - tweak package.json to support running via `yarn start`, and to use `./src/main/app.js`
-- `yarn install`
+- `yarn`
 - write code and test with `yarn start`
