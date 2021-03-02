@@ -29,7 +29,22 @@ INSTALL_DIR="${PKG_DIR}/install"
 mkdir -p "${INSTALL_DIR}"
 
 # build RStudio version suffix
-RSTUDIO_BUNDLE_NAME="RStudio-${RSTUDIO_VERSION_MAJOR-99}.${RSTUDIO_VERSION_MINOR-9}.${RSTUDIO_VERSION_PATCH-9}"
+RSTUDIO_VERSION_ARRAY=(
+   "${RSTUDIO_VERSION_MAJOR-99}"
+   "${RSTUDIO_VERSION_MINOR-9}"
+   "${RSTUDIO_VERSION_PATCH-9}"
+)
+
+RSTUDIO_VERSION_SUFFIX=$(IFS="."; echo "${RSTUDIO_VERSION_ARRAY[*]}")
+
+# build bundle name (handle Pro builds as well)
+if [ -f "${PKG_DIR}/CMakeOverlay.txt" ]; then
+   RSTUDIO_PRO_SUFFIX="-Pro"
+else
+   RSTUDIO_PRO_SUFFIX=""
+fi
+
+RSTUDIO_BUNDLE_NAME="RStudio${RSTUDIO_PRO_SUFFIX}-${RSTUDIO_VERSION_SUFFIX}"
 
 # use RStudio credentials for builds on Jenkins
 if [ -n "${JENKINS_URL}" ]; then
