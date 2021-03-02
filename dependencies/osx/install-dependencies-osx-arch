@@ -36,12 +36,14 @@ section "Installing Homebrew Formulae"
 # TODO: gdb is not supported on arm64 yet
 FORMULAS=(
    ant
+   awscli
    cmake
    coreutils
    gettext
    krb5
    libpq
    openssl
+   ninja
    pidof
    postgresql
    r

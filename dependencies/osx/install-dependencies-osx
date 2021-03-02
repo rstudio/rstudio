@@ -15,9 +15,6 @@
 #
 #
 
-# TODO: install awscli from Homebrew; ensure it's put on the PATH
-# for build machines (e.g. in ~/opt/bin)
-
 set -e
 source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 
@@ -82,6 +79,14 @@ else
    PATH="${OLDPATH}"
    RSTUDIO_TOOLS_ROOT="${OLDROOT}"
 
+fi
+
+# put some necessary utilities on the PATH
+if is-jenkins; then
+   mkdir -p "${HOME}/opt/bin"
+   for PROGRAM in aws gtimeout ninja R; do
+      ln -nfs "${HOME}/homebrew/arm64/bin/${PROGRAM}" "${HOME}/opt/bin/${PROGRAM}"
+   done
 fi
 
 # enable PAM

@@ -38,6 +38,11 @@ else
    USE_CREDS=0
 fi
 
+# use Ninja if available
+if has-program ninja; then
+   export CMAKE_GENERATOR=Ninja
+fi
+
 # set CMake paths
 find-program CMAKE_X86_64 cmake  \
    "${HOME}/homebrew/x86_64/bin" \

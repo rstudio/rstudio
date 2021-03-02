@@ -22,12 +22,12 @@ set(CODESIGN_FLAGS
 # bundled libraries and macOS will refuse to launch RStudio
 # with the older invalid signature
 if(@RSTUDIO_CODESIGN_USE_CREDENTIALS@)
-   echo("Signing RStudio with RStudio's credentials")
+   echo("codesign: using RStudio's credentials")
    list(APPEND CODESIGN_FLAGS
       -s 8A388E005EF927A09B952C6E71B0E8F2F467AB26
       -i org.rstudio.RStudio)
 else()
-   echo("Signing RStudio with ad-hoc signature")
+   echo("codesign: using ad-hoc signature")
    list(APPEND CODESIGN_FLAGS -s -)
 endif()
 
