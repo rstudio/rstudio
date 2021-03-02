@@ -15,6 +15,9 @@
 #
 #
 
+# TODO: install awscli from Homebrew; ensure it's put on the PATH
+# for build machines (e.g. in ~/opt/bin)
+
 set -e
 source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 
