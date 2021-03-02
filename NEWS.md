@@ -27,6 +27,7 @@
 * Added a new user settings template file for VSCode settings to allow administrators to specify a default user configuration for VSCode sessions (Pro #2014)
 * Improved a Slurm Session Launch Delay that may occur due to buffering when using Slurm job steps (Pro #2331)
 * Set enviornment variables `RS_URI_SCHEME`, `RS_SESSION_URL`, and `RS_HOME_URL` when VSCode is launched (Pro #2346)
+* Updated LimeLM TurboActivate and TurboFloat to v4.4.3.
 
 ### RStudio Server
 
