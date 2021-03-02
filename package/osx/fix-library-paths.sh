@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# update-mathjax
+# fix-library-paths.sh
 #
 # Copyright (C) 2021 by RStudio, PBC
 #
@@ -15,19 +15,31 @@
 #
 #
 
-set -e
+if [ "$#" = "0" ]; then
+   echo "Usage: $0 [frameworks directory] [prefix]"
+   exit 0
+fi
 
-# install dir
-INSTALL_DIR=`pwd`
+DIR="$1"
+PREFIX="$2"
 
-# script dir
-SCRIPT_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-cd $SCRIPT_DIR
+cd "$DIR"
+for FILE in *.dylib; do
 
-# remove then re-install mathjax
-MATHJAX_DIR=mathjax-23
-rm -rf $MATHJAX_DIR
-./install-mathjax
+   install_name_tool -id "${FILE}" "${FILE}" &> /dev/null
 
-# back to install dir
-cd $INSTALL_DIR
+   LIBPATHS=$( \
+      otool -L "${FILE}" | \
+      tail -n+2 | \
+      cut -d' ' -f1 | \
+      sed 's|\t||g' | \
+      grep 'homebrew'
+   )
+
+   for LIBPATH in ${LIBPATHS}; do
+      OLD="${LIBPATH}"
+      NEW="${PREFIX}/$(basename "${OLD}")"
+      install_name_tool -change "${OLD}" "${NEW}" "${FILE}" &> /dev/null
+   done
+
+done

@@ -1,8 +1,13 @@
 # ignore everything except items that are specifically denoted
 *
-!dependencies/*
+!dependencies/common/install-*
+!dependencies/linux/install-*
+!dependencies/osx/install-*
+!dependencies/windows/*
+!dependencies/tools/rstudio-tools.sh
 !docker/jenkins
 !docker/docker-compile.sh
 !package/linux/install-dependencies
 !src/gwt/panmirror/src/editor/yarn.lock
 !src/gwt/panmirror/src/editor/package.json
+

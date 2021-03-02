@@ -43,8 +43,8 @@ PKG_DIR=$(pwd)/package
 mkdir -p "$PKG_DIR"
 
 # move to the repo root (script's grandparent directory)
-cd "$(dirname ${BASH_SOURCE[0]})/.."
-REPO=$(basename $(pwd))
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
+REPO=$(basename "$(pwd)")
 
 if [ "${IMAGE:0:7}" = "windows" ]; then
     echo -e "Use win-docker-compile.cmd in a Windows Command Prompt to build for Windows."
@@ -64,7 +64,7 @@ if [ -z "$IMAGE" ] || [ -z "$FLAVOR" ]; then
 fi
 
 # check to see if there's already a built image
-IMAGEID=`docker images $REPO:$IMAGE --format "{{.ID}}"`
+IMAGEID=$(docker images "$REPO:$IMAGE" --format "{{.ID}}")
 if [ -z "$IMAGEID" ]; then
     echo "No image found for $REPO:$IMAGE."
 else
@@ -72,12 +72,16 @@ else
 fi
 
 # get build arg env vars, if any
-if [ ! -z "${DOCKER_GITHUB_LOGIN}" ]; then
+if [ -n "${DOCKER_GITHUB_LOGIN}" ]; then
    BUILD_ARGS="--build-arg GITHUB_LOGIN=${DOCKER_GITHUB_LOGIN}"
 fi
 
 # rebuild the image if necessary
-docker build --tag "$REPO:$IMAGE" --file "docker/jenkins/Dockerfile.$IMAGE" $BUILD_ARGS .
+docker build                                \
+  --tag "$REPO:$IMAGE"                      \
+  --file "docker/jenkins/Dockerfile.$IMAGE" \
+  $BUILD_ARGS                               \
+  .
 
 # infer the package extension from the image name
 if [ "${IMAGE:0:6}" = "centos" ]; then
@@ -94,7 +98,7 @@ else
     INSTALLER=debian
 fi
 
-if [ -n "$VERSION" ]; then 
+if [ -n "$VERSION" ]; then
     SPLIT=(${VERSION//\./ })
     PATCH="${SPLIT[2]}"
     # determine major and minor versions
@@ -125,7 +129,7 @@ elif hash nproc 2>/dev/null; then
 fi
 
 # forward build type if set
-if [ ! -z "$CMAKE_BUILD_TYPE" ]; then
+if [ -n "$CMAKE_BUILD_TYPE" ]; then
     ENV="$ENV CMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE"
 fi
 
@@ -156,7 +160,10 @@ echo "Running build command:"
 echo "${CMD}"
 
 # run compile step!
-docker run --name "$CONTAINER_ID" -v "$(pwd):/src" "$REPO:$IMAGE" bash -c "${CMD}"
+docker run                 \
+  --name "$CONTAINER_ID"   \
+  --volume "$(pwd):/src"   \
+  "$REPO:$IMAGE" bash -c "${CMD}"
 
 # extract logs to get filename (should be on the last line)
 PKG_FILENAME=$(docker logs --tail 1 "$CONTAINER_ID")
@@ -165,7 +172,7 @@ if [ "${PKG_FILENAME:0:6}" = "build-" ]; then
   docker cp "$CONTAINER_ID:/package/$PKG_FILENAME" "$PKG_DIR"
   echo "Packages produced"
   echo "-----------------"
-  echo $PKG_FILENAME
+  echo "$PKG_FILENAME"
 else
   echo "No package found."
 fi
@@ -173,3 +180,4 @@ fi
 # stop the container
 docker stop "$CONTAINER_ID"
 echo "Container image saved in $CONTAINER_ID."
+

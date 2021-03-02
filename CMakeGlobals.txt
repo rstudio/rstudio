@@ -192,6 +192,25 @@ if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}")
    set(RSTUDIO_DEPENDENCIES_DIR "${ROOT_SRC_DIR}/dependencies")
 endif()
 
+# tools
+if(NOT DEFINED RSTUDIO_TOOLS_ROOT)
+   if(DEFINED ENV{RSTUDIO_TOOLS_ROOT})
+      set(RSTUDIO_TOOLS_ROOT $ENV{RSTUDIO_TOOLS_ROOT})
+   elseif(WIN32)
+      set(RSTUDIO_TOOLS_ROOT "${RSTUDIO_DEPENDENCIES_DIR}")
+   elseif(APPLE)
+      find_path(RSTUDIO_TOOLS_ROOT
+         NAMES boost
+         HINTS
+            "$ENV{HOME}/opt/rstudio-tools/${UNAME_M}"
+            "/opt/rstudio-tools/${UNAME_M}")
+   else()
+      set(RSTUDIO_TOOLS_ROOT "/opt/rstudio-tools/${UNAME_M}")
+   endif()
+endif()
+
+message(STATUS "Using RStudio tools root: ${RSTUDIO_TOOLS_ROOT}")
+
 # special install directories for apple desktop
 if (APPLE AND RSTUDIO_DESKTOP)
    set(RSTUDIO_INSTALL_BIN RStudio.app/Contents/MacOS)
@@ -312,10 +331,22 @@ endmacro(add_stripped_executable)
 if(APPLE)
 
    # set Homebrew prefix directory
-   if(UNAME_M STREQUAL arm64)
-      set(HOMEBREW_PREFIX /opt/homebrew CACHE INTERNAL "")
-   else()
-      set(HOMEBREW_PREFIX /usr/local CACHE INTERNAL "")
+   if(NOT DEFINED HOMEBREW_PREFIX)
+
+      if(UNAME_M STREQUAL arm64)
+         set(HOMEBREW_PREFIX_FALLBACK /opt/homebrew)
+      else()
+         set(HOMEBREW_PREFIX_FALLBACK /usr/local)
+      endif()
+      
+      find_path(HOMEBREW_PREFIX
+         NAMES bin/brew
+         HINTS
+            "$ENV{HOME}/homebrew/${UNAME_M}"
+            "${HOMEBREW_PREFIX_FALLBACK}")
+
+      message(STATUS "Using Homebrew: ${HOMEBREW_PREFIX}")
+
    endif()
 
    # help Boost find icu4c

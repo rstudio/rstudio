@@ -17,34 +17,24 @@
 
 set -e
 
-# install dir
-INSTALL_DIR=`pwd`
+source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
+section "Installing Mathjax"
 
-# determine platform
-PLATFORM=`uname`
-
-# use curl or wget as appropriate
-download()
-{
-  if [ "$PLATFORM" == "Darwin" ]
-  then
-    curl -L https://s3.amazonaws.com/rstudio-buildtools/$1 > $1
-  else
-    wget https://s3.amazonaws.com/rstudio-buildtools/$1 -O $1
-  fi
-}
+URL="https://s3.amazonaws.com/rstudio-buildtools"
 
 # download and extract mathjax if necessary
-MATHJAX_DIR=mathjax-27
-if [ -d "$MATHJAX_DIR" ]
-then
-   echo "Mathjax already installed"
-else
-   MATHJAX=mathjax-27.zip
-   download $MATHJAX
-   unzip -q "$MATHJAX"
-   rm $MATHJAX
+MATHJAX_DIR="${RSTUDIO_TOOLS_ROOT}/mathjax-27"
+if [ -d "$MATHJAX_DIR" ]; then
+   echo "Mathjax already installed at '${MATHJAX_DIR}'"
+   exit 0
 fi
 
-# back to install dir
-cd $INSTALL_DIR
+sudo-if-necessary-for "${RSTUDIO_TOOLS_ROOT}" "$@"
+cd "${RSTUDIO_TOOLS_ROOT}"
+
+MATHJAX=mathjax-27.zip
+download "${URL}/${MATHJAX}"
+rm -rf "${MATHJAX_DIR}"
+unzip -q "$MATHJAX"
+rm "$MATHJAX"
+

@@ -17,35 +17,24 @@
 
 set -e
 
-# install dir
-INSTALL_DIR=`pwd`
+source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
+section "Installing Dictionaries"
 
-# determine platform
-PLATFORM=`uname`
-
-# use curl or wget as appropriate
-download()
-{
-  if [ "$PLATFORM" == "Darwin" ]
-  then
-    curl -L https://s3.amazonaws.com/rstudio-buildtools/dictionaries/$1 > $1
-  else
-    wget https://s3.amazonaws.com/rstudio-buildtools/dictionaries/$1 -O $1
-  fi
-}
+URL="https://s3.amazonaws.com/rstudio-buildtools/dictionaries"
 
 # download and extract the dictionaries if necessary
-DICTIONARIES_DIR=dictionaries
-if [ -d "$DICTIONARIES_DIR" ]
-then
-   echo "Dictionaries already installed"
-else
-   CORE_DICTIONARIES=core-dictionaries.zip
-   download $CORE_DICTIONARIES
-   mkdir -p $DICTIONARIES_DIR
-   unzip -qd "$DICTIONARIES_DIR" "$CORE_DICTIONARIES"
-   rm $CORE_DICTIONARIES
+DICTIONARIES_DIR="${RSTUDIO_TOOLS_ROOT}/dictionaries"
+if [ -d "${DICTIONARIES_DIR}" ]; then
+   echo "Dictionaries already installed at '${DICTIONARIES_DIR}'"
+   exit 0
 fi
 
-# back to install dir
-cd $INSTALL_DIR
+sudo-if-necessary-for "${RSTUDIO_TOOLS_ROOT}" "$@"
+
+CORE_DICTIONARIES=core-dictionaries.zip
+download "${URL}/${CORE_DICTIONARIES}"
+rm -rf "${DICTIONARIES_DIR}"
+mkdir -p "${DICTIONARIES_DIR}"
+unzip -qd "${DICTIONARIES_DIR}" "${CORE_DICTIONARIES}"
+rm "${CORE_DICTIONARIES}"
+
