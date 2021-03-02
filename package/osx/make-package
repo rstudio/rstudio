@@ -60,7 +60,7 @@ else
 fi
 
 # default build options
-build_gwt=1
+build_gwt=0  # TODO: change back to 1
 build_package=1
 clean=0
 copy_gwt=1
