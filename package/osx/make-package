@@ -219,7 +219,7 @@ if [ "${build_package}" = "1" ]; then
    # install target
    cd "${BUILD_DIR_X86_64}"
 
-   "${CMAKE}" --build . --target install
+   "${CMAKE}" --build . --target install > /dev/null
 
    # move to target directory
    cd "${INSTALL_DIR}"
