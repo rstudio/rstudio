@@ -430,7 +430,7 @@ is-jenkins () {
 # prefer using home folder on Jenkins where we might not be able
 # to access files at /opt and will lack sudo
 if [ -z "${RSTUDIO_TOOLS_ROOT}" ]; then
-	if is-jenkins; then
+	if is-jenkins && [ "$(arch)" = "arm64" ]; then
 		RSTUDIO_TOOLS_ROOT="$HOME/opt/rstudio-tools/$(uname -m)"
 	else
 		RSTUDIO_TOOLS_ROOT="/opt/rstudio-tools/$(uname -m)"
