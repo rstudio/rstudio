@@ -208,8 +208,8 @@ if(WIN32)
 
 elseif(NOT RSTUDIO_USE_SYSTEM_YAML_CPP)
 
-   set(YAML_CPP_INCLUDE_DIR "/opt/rstudio-tools/yaml-cpp/0.6.3/include")
-   set(YAML_CPP_LIBRARIES   "/opt/rstudio-tools/yaml-cpp/0.6.3/build/libyaml-cpp.a")
+   set(YAML_CPP_INCLUDE_DIR "/opt/rstudio-tools/${UNAME_M}/yaml-cpp/0.6.3/include")
+   set(YAML_CPP_LIBRARIES   "/opt/rstudio-tools/${UNAME_M}/yaml-cpp/0.6.3/build/libyaml-cpp.a")
 
 else()
    # NOTE: defines the following CMake variables:
@@ -260,7 +260,7 @@ list(APPEND BOOST_LIBS
 # UNIX BOOST
 if(UNIX)
    # prefer static link to our custom built version
-   set(RSTUDIO_TOOLS_BOOST /opt/rstudio-tools/boost/boost_1_69_0)
+   set(RSTUDIO_TOOLS_BOOST /opt/rstudio-tools/${UNAME_M}/boost/boost_1_69_0)
    if(NOT RSTUDIO_USE_SYSTEM_BOOST AND EXISTS ${RSTUDIO_TOOLS_BOOST})
       add_definitions(-DRSTUDIO_BOOST_NAMESPACE=rstudio_boost)
 
@@ -312,23 +312,13 @@ else()
    message(STATUS "Using RStudio-provided Boost ${RSTUDIO_BOOST_REQUESTED_VERSION}: ${BOOST_ROOT}")
 endif()
 
-# allow opt-in to using Boost.Signals2
-# TODO: remove this in RStudio v1.3 and port to signals2
-if(NOT RSTUDIO_BOOST_SIGNALS_VERSION)
-   if (Boost_VERSION LESS 106900)
-      set(RSTUDIO_BOOST_SIGNALS_VERSION 1)
-   else()
-      set(RSTUDIO_BOOST_SIGNALS_VERSION 2)
-   endif()
-endif()
-
-message(STATUS "Using Boost.Signals version ${RSTUDIO_BOOST_SIGNALS_VERSION}")
-add_definitions(-DRSTUDIO_BOOST_SIGNALS_VERSION=${RSTUDIO_BOOST_SIGNALS_VERSION})
+set(RSTUDIO_BOOST_SIGNALS_VERSION 2)
+add_definitions(-DRSTUDIO_BOOST_SIGNALS_VERSION=2)
 
 # add boost as system include directory
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 
-if(NOT DEFINED RSTUDIO_CRASHPAD_ENABLED AND APPLE AND RSTUDIO_HOST_ARCHITECTURE STREQUAL arm64)
+if(NOT DEFINED RSTUDIO_CRASHPAD_ENABLED AND APPLE AND UNAME_M STREQUAL arm64)
    message(STATUS "Crashpad not yet supported on M1 macOS machines; disabling Crashpad")
    set(RSTUDIO_CRASHPAD_ENABLED FALSE)
 endif()
@@ -336,7 +326,7 @@ endif()
 # Crashpad
 if (NOT DEFINED RSTUDIO_CRASHPAD_ENABLED OR RSTUDIO_CRASHPAD_ENABLED)
    if(UNIX)
-      set(RSTUDIO_TOOLS_CRASHPAD "/opt/rstudio-tools/crashpad")
+      set(RSTUDIO_TOOLS_CRASHPAD "/opt/rstudio-tools/${UNAME_M}/crashpad")
       set(CRASHPAD_INCLUDE_DIR "${RSTUDIO_TOOLS_CRASHPAD}")
       set(CRASHPAD_INNER_DIR "${RSTUDIO_TOOLS_CRASHPAD}/crashpad")
       include_directories(SYSTEM ${CRASHPAD_INCLUDE_DIR})
@@ -409,7 +399,7 @@ endif()
 
 # SOCI
 if(UNIX)
-   set(RSTUDIO_TOOLS_SOCI "/opt/rstudio-tools/soci")
+   set(RSTUDIO_TOOLS_SOCI "/opt/rstudio-tools/${UNAME_M}/soci")
    set(SOCI_INCLUDE_BUILD_DIR "${RSTUDIO_TOOLS_SOCI}/build/include")
 else()
    set(RSTUDIO_TOOLS_SOCI "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/soci")
@@ -423,14 +413,14 @@ endif()
 
 set(SOCI_INCLUDE_DIR "${RSTUDIO_TOOLS_SOCI}/include")
 if(NOT RSTUDIO_USE_SYSTEM_SOCI)
-   include_directories(SYSTEM ${SOCI_INCLUDE_DIR})
-   include_directories(SYSTEM ${SOCI_INCLUDE_BUILD_DIR})
+   include_directories(BEFORE SYSTEM ${SOCI_INCLUDE_DIR})
+   include_directories(BEFORE SYSTEM ${SOCI_INCLUDE_BUILD_DIR})
 endif()
 
 # database library includes
 if(APPLE)
-   include_directories(SYSTEM "${MACOS_OPT_DIR}/postgresql/include")
-   include_directories(SYSTEM "${MACOS_OPT_DIR}/postgresql/include/libpq")
+   include_directories(BEFORE SYSTEM "${HOMEBREW_PREFIX}/opt/postgresql/include")
+   include_directories(BEFORE SYSTEM "${HOMEBREW_PREFIX}/opt/postgresql/include/libpq")
 elseif(UNIX)
    include_directories(SYSTEM "/usr/include/postgresql")
    include_directories(SYSTEM "/usr/include/pgsql")
@@ -451,7 +441,7 @@ if(UNIX)
    find_library(DL_LIB "dl")
    find_library(SQLITE_LIB "sqlite3")
    get_filename_component(SQLITE_LIB "${SQLITE_LIB}" REALPATH)
-   find_library(PQ_LIB "pq" HINTS ${MACOS_OPT_DIR}/libpq/lib /usr/local/lib)
+   find_library(PQ_LIB "pq" HINTS ${HOMEBREW_PREFIX}/opt/libpq/lib)
    get_filename_component(PQ_LIB "${PQ_LIB}" REALPATH)
    list(APPEND SOCI_DEPENDENCIES ${SQLITE_LIB} ${PQ_LIB})
    list(APPEND SOCI_LIBRARIES ${SOCI_SQLITE_LIB} ${SOCI_POSTGRESQL_LIB} ${SQLITE_LIB} ${PQ_LIB} ${SOCI_CORE_LIB} ${DL_LIB})

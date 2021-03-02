@@ -59,9 +59,11 @@ if(GWT_BUILD)
                   -Dlib.dir="${GWT_LIB_DIR}"
                   -Dgwt.main.module="org.rstudio.studio.${GWT_MAIN_MODULE}")
 endif()
+
 if(NOT DEFINED GWT_COPY)
    set(GWT_COPY Yes)
 endif()
+
 if(GWT_COPY)
    message(STATUS "Configured to install GWT")
 

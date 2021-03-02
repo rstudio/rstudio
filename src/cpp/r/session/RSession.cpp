@@ -26,6 +26,7 @@
 #include <core/Log.hpp>
 #include <core/Settings.hpp>
 #include <core/Scope.hpp>
+#include <core/system/Architecture.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 #include <core/FileSerializer.hpp>
@@ -235,6 +236,47 @@ SEXP rs_GEplayDisplayList()
    return Rf_ScalarLogical(1);
 }
 
+#ifdef __APPLE__
+
+Error validateCompatible(const std::string& rHome)
+{
+   FilePath rsessionPath;
+   Error error = core::system::executablePath(nullptr, &rsessionPath);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return Success();
+   }
+
+   FilePath rLibPath = FilePath(rHome).completeChildPath("lib/libR.dylib");
+   if (!rLibPath.exists())
+   {
+      LOG_ERROR(fileNotFoundError(rLibPath, ERROR_LOCATION));
+      return Success();
+   }
+
+   std::string rsessionArchs = core::system::supportedArchitectures(rsessionPath);
+   std::string rArchs = core::system::supportedArchitectures(rLibPath);
+
+   for (auto arch : { "x86_64", "arm64" })
+   {
+      if (rsessionArchs.find(arch) != std::string::npos &&
+          rArchs.find(arch) != std::string::npos)
+      {
+         return Success();
+      }
+   }
+
+   Error formatError(boost::system::errc::executable_format_error, ERROR_LOCATION);
+   formatError.addProperty("r-home", rHome);
+   formatError.addProperty("r-archs", rArchs);
+   formatError.addProperty("rsession-archs", rsessionArchs);
+   return formatError;
+
+}
+
+#endif
+
 } // end anonymous namespace
    
 Error run(const ROptions& options, const RCallbacks& callbacks) 
@@ -261,6 +303,13 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
    // R_LIBS_USER
    if (!s_options.rLibsUser.empty())
       core::system::setenv("R_LIBS_USER", s_options.rLibsUser);
+
+#ifdef __APPLE__
+   // validate compatible architecture
+   error = validateCompatible(rLocations.homePath);
+   if (error)
+      return error;
+#endif
    
    // set compatible graphics engine version
    int engineVersion = s_options.rCompatibleGraphicsEngineVersion;

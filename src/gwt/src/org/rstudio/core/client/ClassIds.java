@@ -88,4 +88,9 @@ public class ClassIds
 
    // FastSelectTable
    public final static String FAST_SELECT_TABLE = "fast_select_tbl";
+
+   // EnvironmentList
+   public final static String ENV_LIST_DATA_HDR = "env_list_data_hdr";
+   public final static String ENV_LIST_FUNCTIONS_HDR = "env_list_functions_hdr";
+   public final static String ENV_LIST_VALUES_HDR = "env_list_values_hdr";
 }

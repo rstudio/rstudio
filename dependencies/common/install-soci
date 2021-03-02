@@ -17,12 +17,12 @@
 
 set -e
 
-# install dir 
+# install dir
 INSTALL_DIR=`pwd`
 
 # vars
 BOOST_VERSION="1_69_0"
-RSTUDIO_TOOLS_DIR=/opt/rstudio-tools
+RSTUDIO_TOOLS_DIR=/opt/rstudio-tools/$(uname -m)
 SOCI_DIR=$RSTUDIO_TOOLS_DIR/soci
 SOCI_BIN_DIR=$SOCI_DIR/build
 SOCI_URL=https://s3.amazonaws.com/rstudio-buildtools/soci.tar.gz
@@ -31,14 +31,17 @@ BOOST_DIR="$RSTUDIO_TOOLS_DIR/boost/boost_$BOOST_VERSION"
 # install SOCI if it isn't already installed
 if ! ls $SOCI_BIN_DIR/lib/libsoci_core* &> /dev/null
 then
-   cd $RSTUDIO_TOOLS_DIR
+
+   mkdir -p "${RSTUDIO_TOOLS_DIR}"
+   cd "${RSTUDIO_TOOLS_DIR}"
 
    # download SOCI from source
    if ! [ -d "$SOCI_DIR" ]
    then
-      sudo curl $SOCI_URL -o soci.tar.gz
+      if [ ! -f soci.tar.gz ]; then
+         sudo curl $SOCI_URL -o soci.tar.gz
+      fi
       sudo tar zxvf soci.tar.gz
-      sudo rm soci.tar.gz
    fi
    cd $SOCI_DIR
 
@@ -48,7 +51,7 @@ then
 
    # create symlink to our boost datetime library so it is properly discovered by the SOCI build
    sudo ln -sf "$BOOST_DIR/lib/libboost_date_time.a" "$BOOST_DIR/lib/rstudio_boost_date_time.a"
- 
+
    # set compilation visibility
    if [[ "$OSTYPE" = "darwin"* ]]; then
       COMPILE_VISIBILITY="hidden"
@@ -56,19 +59,29 @@ then
       COMPILE_VISIBILITY="default"
    fi
 
+   # remove an old cmake cache if it exists
+   rm -f CMakeCache.txt
+
    # build SOCI
    cmakeCommand=$(which cmake)
    makeCommand=$(which make)
+
    sudo $cmakeCommand -G "Unix Makefiles" \
        -DCMAKE_POLICY_DEFAULT_CMP0063="NEW" \
+       -DCMAKE_POLICY_DEFAULT_CMP0074="NEW" \
        -DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=true \
        -DCMAKE_CXX_VISIBILITY_PRESET="$COMPILE_VISIBILITY" \
        -DCMAKE_OSX_DEPLOYMENT_TARGET="10.12" \
        -DSOCI_TESTS=OFF \
        -DSOCI_CXX11=ON \
        -DSOCI_EMPTY=OFF \
-       -DCMAKE_INCLUDE_PATH="$BOOST_DIR/include" \
+       -DBoost_NO_SYSTEM_PATHS=1 \
+       -DBOOST_ROOT="$BOOST_DIR" \
+       -DBOOST_INCLUDE_DIRS="$BOOST_DIR/include" \
+       -DBOOST_LIBRARY_DIRS="$BOOST_DIR/lib" \
        -DBoost_USE_STATIC_LIBS=ON \
+       -DBoost_DEBUG=1 \
+       -DCMAKE_INCLUDE_PATH="$BOOST_DIR/include" \
        -DCMAKE_LIBRARY_PATH="$BOOST_DIR/lib" \
        -DWITH_BOOST=ON \
        -DWITH_POSTGRESQL=ON \
@@ -78,7 +91,8 @@ then
        -DWITH_ORACLE=OFF \
        -DWITH_FIREBIRD=OFF \
        -DWITH_ODBC=OFF \
-       -DBoost_DEBUG=1 ..   
+      ..
+
    sudo $makeCommand
    
    # fix up permissions so bin dir will be readable by others

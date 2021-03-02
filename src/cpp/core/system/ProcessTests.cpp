@@ -499,6 +499,7 @@ test_context("ProcessTests")
       lock.unlock();
 
       // kill the child processes
+      sleep(1);
       error = core::system::terminateChildProcesses();
       REQUIRE(!error);
 

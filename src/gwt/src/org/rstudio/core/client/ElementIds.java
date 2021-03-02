@@ -235,6 +235,7 @@ public class ElementIds
    public final static String MEMORY_PIE_FULL = "memory_pie_full";
    public final static String MEMORY_USAGE_TABLE = "memory_usage_table";
    public final static String MEMORY_TABLE_TITLE = "memory_table_title";
+   public final static String MEMORY_DROPDOWN = "memory_dropdown";
 
    // TextBoxWithButton and subclasses -- prefixes for button/text/help, combined with suffixes
    public final static String TBB_TEXT = "tbb_text";
@@ -404,6 +405,9 @@ public class ElementIds
    public static String getMbObjectListView() { return getElementId(MB_OBJECT_LIST_VIEW); }
    public final static String SW_ENVIRONMENT = "sw_environment";
    public static String getSwEnvironment() { return getElementId(SW_ENVIRONMENT); }
+   public final static String MB_REFRESH_OPTS = "mb_refresh_opts";
+   public final static String MB_ENV_LANGUAGE = "mb_env_language";
+   public final static String ENV_EMPTY = "env_empty";
 
    // HistoryPane
    public final static String SW_HISTORY = "sw_history";

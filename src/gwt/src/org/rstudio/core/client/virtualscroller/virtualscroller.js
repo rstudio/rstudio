@@ -331,8 +331,10 @@ var VirtualScroller;
         newlinesToPrune -= 1;
       }
 
-      if (indexToSlice > 0)
-        element.innerText = element.innerText.substring(indexToSlice);
+      if (indexToSlice > 0) {
+        element.innerText = "<console output truncated>" +
+          element.innerText.substring(indexToSlice);
+      }
     },
 
     ensureStartingOnNewLine: function() {

@@ -355,7 +355,9 @@ std::string buildCombinedInstallScript(const std::vector<Dependency>& deps)
       }
    }
 
-   // Install the CRAN packages with a single call
+   // Install the CRAN packages with a single call. Note that we do not pass the repos option to
+   // install.packages() since default CRAN repos are already set in the session via
+   // an earlier call to .rs.CRANDownloadOptionsString().
    if (!cranPackages.empty())
    {
       std::string pkgList = boost::algorithm::join(cranPackages, ",");
@@ -366,10 +368,8 @@ std::string buildCombinedInstallScript(const std::vector<Dependency>& deps)
       }
       else
       {
-         cmd += "utils::install.packages(c(" + pkgList + "), " +
-                "repos = '"+ module_context::CRANReposURL() + "'";
-         cmd += ")\n\n";
-      }
+         cmd += "utils::install.packages(c(" + pkgList + ")\n\n";
+     }
    }
 
    // Install the CRAN source packages with a single call
@@ -383,8 +383,7 @@ std::string buildCombinedInstallScript(const std::vector<Dependency>& deps)
       }
       else
       {
-         cmd += "utils::install.packages(c(" + pkgList + "), " +
-                "repos = '"+ module_context::CRANReposURL() + "', ";
+         cmd += "utils::install.packages(c(" + pkgList + "), ";
          cmd += "type = 'source')\n\n";
       }
    }

@@ -569,6 +569,7 @@ public class VisualMode implements VisualModeEditorSync,
                                  // mode, so we do more coarse grained error handling here
                                  try
                                  {
+                                    panmirror_.spellingInvalidateAllWords();
                                     panmirror_.focus();
                                     panmirror_.setEditingLocation(
                                           visualModeLocation_.getSourceOutlineLocation(), 
@@ -823,7 +824,17 @@ public class VisualMode implements VisualModeEditorSync,
    {
       panmirror_.execCommand(PanmirrorCommands.GoToPreviousSection);
    }
-   
+
+   public void goToNextChunk()
+   {
+      panmirror_.execCommand(PanmirrorCommands.GoToNextChunk);
+   }
+
+   public void goToPreviousChunk()
+   {
+      panmirror_.execCommand(PanmirrorCommands.GoToPreviousChunk);
+   }
+
    public HasFindReplace getFindReplace()
    {
       if (panmirror_ != null) {
