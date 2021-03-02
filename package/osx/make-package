@@ -43,15 +43,6 @@ if has-program ninja; then
    export CMAKE_GENERATOR=Ninja
 fi
 
-# set CMake paths
-find-program CMAKE_X86_64 cmake  \
-   "${HOME}/homebrew/x86_64/bin" \
-   "/usr/local/bin"
-
-find-program CMAKE_ARM64 cmake  \
-   "${HOME}/homebrew/arm64/bin" \
-   "/opt/homebrew/bin"
-
 # find ant
 find-program ANT ant            \
    "${HOME}/homebrew/arm64/bin" \
@@ -65,7 +56,7 @@ else
 fi
 
 # default build options
-build_gwt=0  # TODO: change back to 1
+build_gwt=1
 build_package=1
 clean=0
 copy_gwt=1
@@ -118,6 +109,11 @@ fi
 # perform an x86_64 build
 if [ -n "${build_x86_64}" ]; then
 
+   # find x86_64 cmake
+   find-program CMAKE_X86_64 cmake  \
+      "${HOME}/homebrew/x86_64/bin" \
+      "/usr/local/bin"
+
    # prefer using x86_64 build of cmake
    CMAKE="${CMAKE_X86_64:-/usr/local/bin/cmake}"
    info "Using CMake '${CMAKE}' for x86_64 build"
@@ -156,6 +152,11 @@ fi
 # perform an arm64 build
 if [ -n "${build_arm64}" ]; then
 
+   # set CMake paths
+   find-program CMAKE_ARM64 cmake  \
+      "${HOME}/homebrew/arm64/bin" \
+      "/opt/homebrew/bin"
+
    # prefer using arm64 build of cmake
    CMAKE="${CMAKE_ARM64:-/opt/homebrew/bin/cmake}"
    info "Using CMake '${CMAKE}' for arm64 build"
@@ -190,13 +191,20 @@ if [ "${build_package}" = "1" ]; then
 
    info "Building package ..."
 
+   # find appropriate copy of CMake
+   find-program CMAKE cmake        \
+      "${HOME}/opt/bin"            \
+      "${HOME}/homebrew/arm64/bin" \
+      "/usr/local/bin"
+
    # remove an existing install directory
    rm -rf "${INSTALL_DIR}"
    mkdir -p "${INSTALL_DIR}"
 
    # install target
    cd "${BUILD_DIR_X86_64}"
-   "${CMAKE_ARM64}" --build . --target install
+
+   "${CMAKE}" --build . --target install
 
    # move to target directory
    cd "${INSTALL_DIR}"
