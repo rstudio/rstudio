@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+if [ -d "${HOME}/opt/bin" ]; then
+   PATH="${HOME}/opt/bin:$PATH"
+fi
+
 checkUnitTestFailure() {
    RET_CODE=$?
    if [ $RET_CODE != 0 ]; then
