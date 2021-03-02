@@ -20,10 +20,16 @@ set +H
 PKG_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${PKG_DIR}/../../dependencies/tools/rstudio-tools.sh"
 
+GWT_SRC_DIR="${PKG_DIR}/../../src/gwt"
+
 BUILD_DIR_X86_64="${PKG_DIR}/build"
 BUILD_DIR_ARM64="${PKG_DIR}/build-arm64"
 
-GWT_SRC_DIR="${PKG_DIR}/../../src/gwt"
+INSTALL_DIR="${PKG_DIR}/install"
+mkdir -p "${INSTALL_DIR}"
+
+# build RStudio version suffix
+RSTUDIO_BUNDLE_NAME="RStudio-${RSTUDIO_VERSION_MAJOR-99}.${RSTUDIO_VERSION_MINOR-9}.${RSTUDIO_VERSION_PATCH-9}"
 
 # use RStudio credentials for builds on Jenkins
 if [ -n "${JENKINS_URL}" ]; then
@@ -31,20 +37,6 @@ if [ -n "${JENKINS_URL}" ]; then
 else
    USE_CREDS=0
 fi
-
-# determine architectures to build for
-if [ "$(arch)" = "arm64" ]; then
-   arch=x86_64,arm64
-else
-   arch=x86_64
-fi
-
-# default build options
-build_gwt=1
-build_package=1
-clean=0
-copy_gwt=1
-install=0
 
 # set CMake paths
 find-program CMAKE_X86_64 cmake  \
@@ -59,6 +51,20 @@ find-program CMAKE_ARM64 cmake  \
 find-program ANT ant            \
    "${HOME}/homebrew/arm64/bin" \
    "${HOME}/opt/bin"
+
+# determine architectures to build for
+if [ "$(arch)" = "arm64" ]; then
+   arch=x86_64,arm64
+else
+   arch=x86_64
+fi
+
+# default build options
+build_gwt=1
+build_package=1
+clean=0
+copy_gwt=1
+install=0
 
 # read command line arguments
 for arg in "$@"; do
@@ -122,6 +128,7 @@ if [ -n "${build_x86_64}" ]; then
    arch -x86_64 "${CMAKE}"                                   \
       -DCMAKE_BUILD_TYPE=RelWithDebInfo                      \
       -DCMAKE_OSX_DEPLOYMENT_TARGET="10.12"                  \
+      -DCMAKE_INSTALL_PREFIX="${PKG_DIR}/install"            \
       -DRSTUDIO_TARGET=Desktop                               \
       -DRSTUDIO_PACKAGE_BUILD=1                              \
       -DRSTUDIO_CRASHPAD_ENABLED=0                           \
@@ -173,15 +180,43 @@ if [ -n "${build_arm64}" ]; then
 
 fi
 
+
 if [ "${build_package}" = "1" ]; then
 
-   find-program CPACK cpack        \
-      "${HOME}/homebrew/arm64/bin" \
-      "${HOME}/opt/bin"
-
    info "Building package ..."
+
+   # remove an existing install directory
+   rm -rf "${INSTALL_DIR}"
+   mkdir -p "${INSTALL_DIR}"
+
+   # install target
    cd "${BUILD_DIR_X86_64}"
-   "${CPACK}" --verbose -G DragNDrop
+   "${CMAKE_ARM64}" --build . --target install
+
+   # move to target directory
+   cd "${INSTALL_DIR}"
+
+   # create 'Applications' symlink
+   ln -nfs /Applications Applications
+
+   # package into dmg
+   info "Creating '${RSTUDIO_BUNDLE_NAME}.dmg ...'"
+
+   cd ..
+
+   hdiutil create                       \
+      -fs "HFS+"                        \
+      -volname "${RSTUDIO_BUNDLE_NAME}" \
+      -srcfolder "install"              \
+      -ov                               \
+      -format "UDZO"                    \
+      -verbose                          \
+      -debug                            \
+      "${RSTUDIO_BUNDLE_NAME}.dmg"
+
+   # move to expected location in build folder
+   mv "${RSTUDIO_BUNDLE_NAME}.dmg" "${BUILD_DIR_X86_64}/"
+
    info "Done!"
 
 fi
@@ -189,7 +224,7 @@ fi
 cd "${PKG_DIR}"
 
 if [ "${install}" = "1" ]; then
-   RSTUDIO_BUNDLE_PATH="${BUILD_DIR_X86_64}/_CPack_Packages/Darwin/DragNDrop/RStudio-99.9.9/RStudio.app"
+   RSTUDIO_BUNDLE_PATH="${INSTALL_DIR}/RStudio.app"
    RSTUDIO_DEVEL_PATH="/Applications/RStudio-Devel.app"
    if [ -e "${RSTUDIO_BUNDLE_PATH}" ]; then
       rm -rf "${RSTUDIO_DEVEL_PATH}"
