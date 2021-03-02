@@ -22,6 +22,11 @@ info "RSTUDIO_TOOLS_ROOT: ${RSTUDIO_TOOLS_ROOT}"
 
 if [ "$(arch)" = "arm64" ]; then
 
+   # install Jenkins pre-requisites
+   if is-jenkins; then
+      ./install-dependencies-osx-jenkins
+   fi
+
    # set Homebrew paths
    find-program BREW_X86 brew       \
       "${HOME}/homebrew/x86_64/bin" \
