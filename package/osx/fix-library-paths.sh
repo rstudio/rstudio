@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# fix-arm64-library-paths.sh
+# fix-library-paths.sh
 #
 # Copyright (C) 2021 by RStudio, PBC
 #

@@ -43,16 +43,21 @@ pipeline {
 
       steps {
         script {
+
           // unlock keychain to ensure build gets signed.
           withCredentials([string(credentialsId: 'ide-keychain-passphrase', variable: 'KEYCHAIN_PASSPHRASE')]){
             sh 'security unlock-keychain -p $KEYCHAIN_PASSPHRASE && security set-keychain-settings' // turn off timeout
           }
+
+          // set requisite environment variables
           def env = "RSTUDIO_VERSION_MAJOR=${params.RSTUDIO_VERSION_MAJOR} RSTUDIO_VERSION_MINOR=${params.RSTUDIO_VERSION_MINOR} RSTUDIO_VERSION_PATCH=${params.RSTUDIO_VERSION_PATCH}"
           if (params.RSTUDIO_VERSION_SUFFIX != 0) {
             env = "${env} RSTUDIO_VERSION_SUFFIX=${params.RSTUDIO_VERSION_SUFFIX}" 
           }
-          // sh 'cd package/osx && ${env} ./make-package clean && cd ../..'
-          sh 'cd package/osx && ${env} ./make-package && cd ../..'
+
+          // build rstudio
+          sh 'cd package/osx && ${env} ./make-package clean && cd ../..'
+
         }
       }
 
@@ -135,10 +140,10 @@ pipeline {
 
   }
 
-  // post {
-  //   always {
-  //     deleteDir()
-  //     sendNotifications slack_channel: SLACK_CHANNEL
-  //   }
-  // }
+  post {
+    always {
+      deleteDir()
+      sendNotifications slack_channel: SLACK_CHANNEL
+    }
+  }
 }
