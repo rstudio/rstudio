@@ -67,11 +67,11 @@ public class CppFileType extends TextFileType
       HashSet<AppCommand> result = super.getSupportedCommands(commands);
       if (isCpp())
       {
-         result.add(commands.commentUncomment());
-         result.add(commands.reflowComment());
          result.add(commands.sourceActiveDocument());
          result.add(commands.sourceActiveDocumentWithEcho());
       }
+      result.add(commands.commentUncomment());
+      result.add(commands.reflowComment());
       result.add(commands.goToDefinition());
       result.add(commands.codeCompletion());
       result.add(commands.findUsages());
