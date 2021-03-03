@@ -4,6 +4,7 @@
 
 ### R
 
+* Add native support for Apple Silicon (aarch64) builds of R on macOS (#8652)
 * Show memory usage details in Environment pane (#4033)
 * Added support for the `|>` pipe operator and the `=>` pipe-bind operator, proposed for R 4.1.0 (#8543)
 * Added support for the `\(x)` function shorthand syntax, proposed for R 4.1.0 (#8543)
@@ -58,6 +59,7 @@
 * Add support for `rstudioapi` methods enabling callbacks for command execution (Pro #1846)
 * Add support for non-CRAN repositories when installing R packages in the background (#8946)
 * Add server homepage link and retry options to mitigate "Unable to connect to service" errors (Pro #2066)
+* Add support for commenting and uncommenting code in C (`.c` and `.h`) files (#4109, thanks to @cm421)
 
 ### Bugfixes
 
