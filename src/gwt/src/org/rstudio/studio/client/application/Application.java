@@ -15,6 +15,8 @@
 
 package org.rstudio.studio.client.application;
 
+import java.util.ArrayList;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.dom.client.Document;
@@ -39,6 +41,7 @@ import com.google.inject.Singleton;
 import org.rstudio.core.client.Barrier;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.Barrier.Token;
 import org.rstudio.core.client.command.CommandBinder;
@@ -47,6 +50,7 @@ import org.rstudio.core.client.dom.DocumentEx;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.ModalDialogTracker;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationQuit.QuitContext;
 import org.rstudio.studio.client.application.events.*;
@@ -227,6 +231,62 @@ public class Application implements ApplicationEventHandlers
                String redirectUrl = ApplicationUtils.getHostPageBaseURLWithoutContext(false) +
             		   error.getRedirectUrl();
                navigateWindowWithDelay(redirectUrl);
+            }
+            else if (error.getCode() == ServerError.LICENSE_USAGE_LIMIT)
+            {
+               ArrayList<String> buttonLabels = new ArrayList<>();
+               ArrayList<String> elementIds = new ArrayList<>();
+               ArrayList<Operation> buttonOperations = new ArrayList<>();
+
+               buttonLabels.add("Retry");
+               elementIds.add(ElementIds.DIALOG_RETRY_BUTTON);
+               buttonOperations.add(() ->
+               {
+                  // reload the browser to re-send the request to load the session
+                 Window.Location.reload();
+               });
+
+               // we display a special dialog for license limit issues
+               // to allow the user to attempt to re-launch the session
+               globalDisplay_.showGenericDialog(GlobalDisplay.MSG_ERROR,
+                                              "Licensing Limit Reached",
+                                              error.getUserMessage() + "\n\n" +
+                                                 "Please quit any unused running sessions and try again, " +
+                                                 "or contact your administrator to update your license.",
+                                              buttonLabels, elementIds, buttonOperations, 0);
+            }
+            else if (StringUtil.equals(error.getUserMessage(), "Unable to connect to service") ||
+                     StringUtil.equals(error.getUserMessage(), "Error occurred during transmission"))
+            {
+               ArrayList<String> buttonLabels = new ArrayList<>();
+               ArrayList<String> elementIds = new ArrayList<>();
+               ArrayList<Operation> buttonOperations = new ArrayList<>();
+
+               // Check to see if we have a link to the server homepage. This only exists on Pro, and
+               // can be disabled by administrators, but is useful to recover from a session that
+               // won't connect.
+               String homepageLink = DomUtils.getLinkHref("server-homepage");
+               if (!StringUtil.isNullOrEmpty(homepageLink))
+               {
+                  buttonLabels.add("Go Home");
+                  elementIds.add(ElementIds.DIALOG_HOME_BUTTON);
+                  buttonOperations.add(() -> 
+                  {
+                     Window.Location.assign(homepageLink);
+                  });
+               }
+
+               buttonLabels.add("Retry");
+               elementIds.add(ElementIds.DIALOG_RETRY_BUTTON);
+               buttonOperations.add(() ->
+               {
+                  Window.Location.reload();
+               });
+               globalDisplay_.showGenericDialog(GlobalDisplay.MSG_ERROR,
+                                              "Cannot Connect to R Session",
+                                              "Could not connect to the R session on RStudio Server.\n\n" +
+                                              error.getUserMessage() + " (" + error.getCode() + ")",
+                                              buttonLabels, elementIds, buttonOperations, 0);
             }
             else
             {

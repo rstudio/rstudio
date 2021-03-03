@@ -1304,6 +1304,35 @@ public class DomUtils
       headEl.appendChild(scriptEl);
    }
 
+   /**
+    * Gets the href target of a link element from the document's head.
+    *
+    * @param rel The link's relationship to this document.
+    * @return The href attribute of the first link with the given relationship, or
+    *    null if no links with the given relationship were found.
+    */
+   public static final String getLinkHref(String rel)
+   {
+      HeadElement headEl = Document.get().getHead();
+      NodeList<Element> links = headEl.getElementsByTagName("link");
+      for (int i = 0; i < links.getLength(); i++)
+      {
+         Element link = links.getItem(i);
+         // Look for a matching rel; if we find it, return the href if any
+         if (StringUtil.equals(link.getAttribute("rel"), rel))
+         {
+            String href = link.getAttribute("href");
+            if (!StringUtil.isNullOrEmpty(href))
+            {
+              return href;
+            }
+         }
+      }
+
+      // Did not find a matching <link>
+      return null;
+   }
+
    public static final native DOMRect getBoundingClientRect(Element el)
    /*-{
       return el.getBoundingClientRect();

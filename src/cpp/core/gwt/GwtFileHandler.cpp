@@ -42,6 +42,7 @@ struct FileRequestOptions
    std::string initJs;
    std::string gwtPrefix;
    bool useEmulatedStack;
+   std::string serverHomepagePath;
    std::string frameOptions;
 };
 
@@ -149,6 +150,9 @@ void handleFileRequest(const FileRequestOptions& options,
       vars["viewport_tag"] = std::string();
 #endif
 
+      // pass link to server homepage (will be empty if homepage isn't active)
+      vars["server_homepage"] = options.serverHomepagePath;
+
       // read existing CSRF token
       std::string csrfToken = request.cookieValue(kCSRFTokenCookie);
       vars["csrf_token"] = string_utils::htmlEscape(csrfToken, true /* isAttribute */);
@@ -179,10 +183,12 @@ http::UriHandlerFunction fileHandlerFunction(
                                        const std::string& initJs,
                                        const std::string& gwtPrefix,
                                        bool useEmulatedStack,
+                                       const std::string& serverHomepagePath,
                                        const std::string& frameOptions)
 {
    FileRequestOptions options { wwwLocalPath, baseUri, mainPageFilter, initJs,
-                                gwtPrefix, useEmulatedStack, frameOptions };
+                                gwtPrefix, useEmulatedStack, serverHomepagePath,
+                                frameOptions };
 
    return boost::bind(handleFileRequest,
                       options,
