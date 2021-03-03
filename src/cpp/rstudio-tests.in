@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 # help our build machine find the appropriate version of R
-if [ "$(uname)" = "Darwin" ] && [ -n "${JENKINS_URL}" ]; then
-   PATH="${HOME}/homebrew/x86_64/bin:${PATH}"
+if [ "$(uname)" = "Darwin" ] && [ -n "$JENKINS_URL" ]; then
+   PATH="$HOME/homebrew/x86_64/bin:$PATH"
 fi
 
 checkUnitTestFailure() {
