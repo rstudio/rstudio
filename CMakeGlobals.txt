@@ -57,6 +57,11 @@ if(UNIX)
       OUTPUT_STRIP_TRAILING_WHITESPACE)
    message(STATUS "Machine architecture: ${UNAME_M}")
 
+else()
+
+   # assume x86_64 on Windows for now
+   set(UNAME_M x86_64)
+
 endif()
 
 # default to debug builds
@@ -84,13 +89,11 @@ if(NOT DEFINED RSTUDIO_SERVER)
    endif()
 endif()
 
-if(NOT DEFINED RSTUDIO_DESKTOP)
-   if(APPLE AND UNAME_M STREQUAL arm64)
-      message(STATUS "Desktop builds not currently supported on arm64; disabling RSTUDIO_DESKTOP")
-      set(RSTUDIO_DESKTOP FALSE)
-   elseif(RSTUDIO_TARGET STREQUAL "Development" OR RSTUDIO_TARGET STREQUAL "Desktop")
-      set(RSTUDIO_DESKTOP TRUE)
-   endif()
+if(NOT UNAME_M STREQUAL x86_64)
+   message(STATUS "Desktop builds not yet supported on ${UNAME_M}; disabling RSTUDIO_DESKTOP")
+   set(RSTUDIO_DESKTOP FALSE)
+elseif(RSTUDIO_TARGET STREQUAL "Development" OR RSTUDIO_TARGET STREQUAL "Desktop")
+   set(RSTUDIO_DESKTOP TRUE)
 endif()
 
 # override if requested

@@ -318,12 +318,14 @@ add_definitions(-DRSTUDIO_BOOST_SIGNALS_VERSION=2)
 # add boost as system include directory
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 
-if(NOT DEFINED RSTUDIO_CRASHPAD_ENABLED AND APPLE AND UNAME_M STREQUAL arm64)
-   message(STATUS "Crashpad not yet supported on M1 macOS machines; disabling Crashpad")
+# Crashpad
+
+# disabled on non-x86_64 architectures for now
+if(NOT UNAME_M STREQUAL "x86_64")
+   message(STATUS "Crashpad not yet supported on ${UNAME_M}; disabling Crashpad")
    set(RSTUDIO_CRASHPAD_ENABLED FALSE)
 endif()
 
-# Crashpad
 if (NOT DEFINED RSTUDIO_CRASHPAD_ENABLED OR RSTUDIO_CRASHPAD_ENABLED)
    if(UNIX)
       set(RSTUDIO_TOOLS_CRASHPAD "${RSTUDIO_TOOLS_ROOT}/crashpad")
