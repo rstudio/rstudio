@@ -27,7 +27,7 @@ set -e
 ./install-yaml-cpp
 ./install-crashpad
 
-if [ "$(uname -m)" = "x86_64" ]; then
+if [ "$(uname)" = "Darwin" ] || [ "$(uname -m)" = "x86_64" ]; then
 	./install-npm-dependencies
 fi
 
