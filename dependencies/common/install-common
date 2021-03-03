@@ -23,12 +23,15 @@ set -e
 ./install-pandoc
 ./install-packages
 ./install-sentry-cli
-./install-npm-dependencies
 ./install-soci
 ./install-yaml-cpp
 ./install-crashpad
 
-if [ -e install-overlay ]
-then
-   ./install-overlay
+if [ "$(uname -m)" = "x86_64" ]; then
+	./install-npm-dependencies
 fi
+
+if [ -e install-overlay ]; then
+	./install-overlay
+fi
+
