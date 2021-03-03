@@ -89,11 +89,13 @@ if(NOT DEFINED RSTUDIO_SERVER)
    endif()
 endif()
 
-if(NOT UNAME_M STREQUAL x86_64)
-   message(STATUS "Desktop builds not yet supported on ${UNAME_M}; disabling RSTUDIO_DESKTOP")
-   set(RSTUDIO_DESKTOP FALSE)
-elseif(RSTUDIO_TARGET STREQUAL "Development" OR RSTUDIO_TARGET STREQUAL "Desktop")
-   set(RSTUDIO_DESKTOP TRUE)
+if(NOT DEFINED RSTUDIO_DESKTOP)
+   if(NOT UNAME_M STREQUAL x86_64)
+      message(STATUS "Desktop builds not yet supported on ${UNAME_M}; disabling RSTUDIO_DESKTOP")
+      set(RSTUDIO_DESKTOP FALSE)
+   elseif(RSTUDIO_TARGET STREQUAL "Development" OR RSTUDIO_TARGET STREQUAL "Desktop")
+      set(RSTUDIO_DESKTOP TRUE)
+   endif()
 endif()
 
 # override if requested
