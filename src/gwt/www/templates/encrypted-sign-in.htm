@@ -304,17 +304,10 @@ setInterval(function() {
     try {
       if (xhr.readyState == 4) {
         if (xhr.status == 200) {
-          var isIE11 = !!window.MSInputMethodContext && !!document.documentMode;
           var isSignIn = false;
-          if (isIE11) {
-            isSignIn = xhr.response.indexOf('signinhidden') !== -1;
-            var url = location.href.split('?')[0];
-            responseURL = url.replace('/auth-sign-in', '');
-          } else {
-            var url = xhr.responseURL.split('?')[0];
-            var href = location.href.split('?')[0];
-            isSignIn = url === href;
-          }
+          var url = xhr.responseURL.split('?')[0];
+          var href = location.href.split('?')[0];
+          isSignIn = url === href;
           var controls = document.getElementById("controls");
           var goback = document.getElementById("goback");
           if (!isSignIn) {
