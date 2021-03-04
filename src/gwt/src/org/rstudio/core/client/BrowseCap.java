@@ -53,11 +53,6 @@ public class BrowseCap
       return false;
    }
 
-   public boolean hasWindowFind()
-   {
-      return !isInternetExplorer();
-   }
-
    public boolean canCopyToClipboard()
    {
       return (Desktop.hasDesktopFrame()) || !isSafari();
@@ -188,8 +183,6 @@ public class BrowseCap
          return "Firefox";
       else if (BrowseCap.isSafari())
          return "Safari";
-      else if (BrowseCap.isInternetExplorer())
-         return "IE";
       else
          return "Unknown";
    }

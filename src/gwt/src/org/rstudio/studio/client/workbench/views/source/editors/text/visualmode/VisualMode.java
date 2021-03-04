@@ -1721,11 +1721,7 @@ public class VisualMode implements VisualModeEditorSync,
       {
          return "You cannot enter visual mode while using realtime collaboration.";
       }
-      else if (BrowseCap.isInternetExplorer())
-      {
-         return "Visual mode is not supported in Internet Explorer.";
-      }
-      else 
+      else
       {
          return visualModeFormat_.validateSourceForVisualMode();
       }
