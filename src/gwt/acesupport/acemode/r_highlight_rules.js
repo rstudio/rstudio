@@ -183,14 +183,8 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
 
   var RHighlightRules = function()
   {
-    // NOTE: The backslash character is an experimental alias
-    // for the 'function' symbol, and can be used for defining
-    // short-hand functions, e.g.
-    //
-    //     \(x) x + 1
-    //
     var keywords = lang.arrayToMap([
-      "\\", "function", "if", "else", "in",
+      "function", "if", "else", "in",
       "break", "next", "repeat", "for", "while"
     ]);
 
@@ -207,9 +201,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
       "NA_complex_"
     ]);
 
-    // NOTE: We accept '\' as a standalone identifier here
-    // so that it can be parsed as the 'function' alias symbol
-    var reIdentifier = "(?:\\\\|[a-zA-Z.][a-zA-Z0-9._]*)";
+    var reIdentifier = "[a-zA-Z.][a-zA-Z0-9._]*";
 
     var $complements = {
       "{" : "}",
@@ -325,6 +317,20 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
         regex : "[`](?:(?:\\\\.)|(?:[^`\\\\]))*?[`]",
         merge : false,
         next  : "start"
+      }
+    ];
+
+    rules["#lambda"] = [
+      {
+        token : "keyword",
+        regex : "\\\\",
+        next  : "start",
+        onMatch : function(value, state, stack, line) {
+          return [{
+            type: this.token,
+            value: "λ"
+          }];
+        }
       }
     ];
 
@@ -462,7 +468,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
 
     // Construct rules from previously defined blocks.
     rules["start"] = include([
-      "#comment", "#string", "#number",
+      "#comment", "#string", "#number", "#lambda",
       "#package-access", "#quoted-identifier",
       "#function-call-or-keyword", "#keyword-or-identifier",
       "#knitr-embed", "#operator", "#text"
