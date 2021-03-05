@@ -111,25 +111,6 @@ bool isSafariOlderThan(const std::string& userAgent, double version)
    }
 }
 
-bool isTrident(const std::string& userAgent)
-{
-   return contains(userAgent, "Trident");
-}
-
-bool isTridentOlderThan(const std::string& userAgent, double version)
-{
-   if (isTrident(userAgent))
-   {
-      boost::regex tridentRegEx("Trident/(\\d{1,4})");
-      return !hasRequiredBrowserVersion(userAgent, tridentRegEx, version);
-   }
-   else
-   {
-      return false;
-   }
-}
-
-
 bool hasRequiredBrowser(const std::string& userAgent)
 {
    if (isChromeOlderThan(userAgent, 69))
@@ -152,18 +133,11 @@ bool hasRequiredBrowser(const std::string& userAgent)
       // https://en.wikipedia.org/wiki/Safari_version_history
       return false;
    }
-   else if (isTridentOlderThan(userAgent, 7.0))
-   {
-      // Trident user agent based on IE 11, the last version of IE (and the only one we support
-      // since IE 10 is EOL and no further IE releases based on Trident are expected)
-      return false;
-   }
    else
    {
       return isChrome(userAgent) ||
              isFirefox(userAgent) ||
-             isSafari(userAgent) ||
-             isTrident(userAgent);
+             isSafari(userAgent);
    }
 }
 
