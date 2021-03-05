@@ -220,6 +220,13 @@ function cslToBibDB(id: string, csl: CSL): BibDB | undefined {
 // For a given type, we filter out any fields that aren't required,
 // eitheror, or optional.
 function shouldIncludeField(bibDBFieldName: string, bibType: BibType) {
+  // Special case:
+  // For datasets, allow author 
+  // Fixes https://github.com/rstudio/rstudio/issues/9059
+  if (bibType.csl === 'dataset' && bibDBFieldName === 'author') {
+    return true;
+  }
+
   return (
     bibType.required.includes(bibDBFieldName) ||
     bibType.optional.includes(bibDBFieldName) ||
