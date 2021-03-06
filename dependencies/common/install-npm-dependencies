@@ -17,7 +17,8 @@
 
 set -e
 
-source rstudio-tools
+source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
+section "Installing NPM"
 
 # variables that control download + installation process
 NODE_VERSION="10.19.0"
@@ -96,8 +97,10 @@ else
   # otherwise, use source tree
   pushd ../../src/gwt/panmirror/src/editor
 fi
+
 PATH=${INSTALL_PATH} yarn config set ignore-engines true
 PATH=${INSTALL_PATH} yarn install
+
 popd
 
 

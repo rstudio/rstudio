@@ -1040,13 +1040,14 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 
 # get list of command IDs which currently have callbacks (listeners) attached
 .rs.addFunction("getCommandsWithCallbacks", function() {
-   unique(sort(unlist(lapply(names(.rs.commandCallbacks), function(handle) {
+   commands <- unique(sort(unlist(lapply(names(.rs.commandCallbacks), function(handle) {
       handler <- get(handle, envir = .rs.commandCallbacks)
       if (nzchar(handler$command)) 
          handler$command
       else
-         NULL
+         ""
    }))))
+   commands[nzchar(commands)]
 })
 
 # register a command callback

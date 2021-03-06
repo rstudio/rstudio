@@ -42,6 +42,7 @@ struct FileRequestOptions
    std::string initJs;
    std::string gwtPrefix;
    bool useEmulatedStack;
+   std::string serverHomepagePath;
    std::string frameOptions;
 };
 
@@ -128,13 +129,8 @@ void handleFileRequest(const FileRequestOptions& options,
                          (request.queryParamValue("emulatedStack") == "1");
       vars["compiler_stack_mode"] = useEmulatedStack ? "emulated" : "native";
 
-      // polyfill for IE11 (only)
-      std::string polyfill = "<script type=\"text/javascript\" language=\"javascript\" src=\"js/core-js/minified.js\"></script>\n";
-      if (regex_utils::match(request.userAgent(), boost::regex(".*Trident.*"))) {
-         vars["head_tags"] = polyfill;
-      } else {
-         vars["head_tags"] = std::string();
-      }
+      // initialize head_tags
+      vars["head_tags"] = std::string();
 
       // check for initJs
       if (!options.initJs.empty())
@@ -148,6 +144,9 @@ void handleFileRequest(const FileRequestOptions& options,
 #else
       vars["viewport_tag"] = std::string();
 #endif
+
+      // pass link to server homepage (will be empty if homepage isn't active)
+      vars["server_homepage"] = options.serverHomepagePath;
 
       // read existing CSRF token
       std::string csrfToken = request.cookieValue(kCSRFTokenCookie);
@@ -179,10 +178,12 @@ http::UriHandlerFunction fileHandlerFunction(
                                        const std::string& initJs,
                                        const std::string& gwtPrefix,
                                        bool useEmulatedStack,
+                                       const std::string& serverHomepagePath,
                                        const std::string& frameOptions)
 {
    FileRequestOptions options { wwwLocalPath, baseUri, mainPageFilter, initJs,
-                                gwtPrefix, useEmulatedStack, frameOptions };
+                                gwtPrefix, useEmulatedStack, serverHomepagePath,
+                                frameOptions };
 
    return boost::bind(handleFileRequest,
                       options,

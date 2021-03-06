@@ -441,18 +441,20 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
       (
         searchTerm: string,
         panelProvider: CitationSourcePanelProvider,
-        selectedNode: NavigationTreeNode,
         existingIds: string[],
+        existingState: InsertCitationPanelState
       ) => {
-        const searchResult = panelProvider.typeAheadSearch(searchTerm, selectedNode, existingIds);
+        const searchResult = panelProvider.typeAheadSearch(searchTerm, existingState.selectedNode, existingIds);
         if (searchResult) {
-          updateState({
-            searchTerm,
-            citations: searchResult?.citations,
-            status: searchResult?.status,
-            statusMessage: searchResult?.statusMessage,
-            selectedNode,
-          });
+          setInsertCitationPanelState(
+            {
+              ...existingState,
+              searchTerm,
+              citations: searchResult?.citations,
+              status: searchResult?.status,
+              statusMessage: searchResult?.statusMessage,
+            }
+          );
         }
       },
       30,
@@ -470,8 +472,9 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
     citationsToAdd: mergedCitationsToAdd,
     searchTerm: insertCitationPanelState.searchTerm,
     onSearchTermChanged: (term: string) => {
-      updateState({ searchTerm: term });
-      memoizedTypeaheadSearch(term, selectedPanelProvider, insertCitationPanelState.selectedNode, existingCitationIds);
+      const updatedState = { ...insertCitationPanelState, searchTerm: term };
+      updateState(updatedState);
+      memoizedTypeaheadSearch(term, selectedPanelProvider, existingCitationIds, updatedState);
     },
     onExecuteSearch: (searchTerm: string) => {
       searchCanceled.current = false;

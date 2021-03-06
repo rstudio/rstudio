@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# rstudio-tools -- Bash toolkit used in dependency scripts
+# rstudio-tools.sh -- Bash toolkit used in dependency scripts
 #
 # Copyright (C) 2021 by RStudio, PBC
 #
@@ -15,6 +15,101 @@
 #
 
 # Generic Tools ----
+
+section () {
+	echo -e "\033[1m\033[36m==>\033[39m $*\033[0m"
+}
+
+info () {
+	echo -e "\033[1m[I]\033[0m $*"
+}
+
+warn () {
+	echo -e "\033[1m\033[31m[W]\033[0m $*"
+}
+
+error () {
+
+	echo -e "\033[1m\033[31m[E]\033[0m $*"
+
+	if [ "${BASH_SUBSHELL}" -eq 0 ]; then
+		return 1
+	else
+		exit 1
+	fi
+
+}
+
+set-default () {
+
+	if [ "$#" = "0" ]; then
+		cat <<- EOF
+		Usage: set-default var val
+
+		Set the value of a variable if it is unset.
+		EOF
+		return 0
+	fi
+
+	local VAR="$1"
+	local VAL="$2"
+
+	if [ -z "${!VAR}" ]; then
+		eval "$VAR=$VAL"
+	fi
+
+}
+
+rerun-as-root () {
+	exec sudo -E /bin/bash "$0" "$@"
+}
+
+sudo-if-necessary-for () {
+
+	# If the directory does not exist, try to create it
+	if ! [ -e "$1" ]; then
+		if mkdir -p "$1" &> /dev/null; then
+			return 0
+		fi
+	fi
+
+	# Otherwise, check if the directory is writable
+	if ! [ -w "$1" ]; then
+		echo "Execution of '$0' requires root privileges for access to '$1'"
+		shift
+		rerun-as-root "$@"
+	fi
+
+}
+
+find-file () {
+
+	if [ "$#" -lt 2 ] || [ "$1" = "--help" ]; then
+		echo "Usage: find-file <var> [paths]"
+		return 0
+	fi
+
+	local VAR="$1"
+	shift
+
+	if [ -n "${!VAR}" ]; then
+		info "Found ${VAR}: ${!VAR} [cached]"
+		return 0
+	fi
+
+	local FILE
+	for FILE in "$@"; do
+		if [ -e "${FILE}" ]; then
+			info "Found ${VAR}: ${FILE}"
+			echo "${VAR}=${FILE}"
+			eval "${VAR}=${FILE}"
+			return 0
+		fi
+	done
+
+	error "could not find file"
+
+}
 
 # Aliases over 'pushd' and 'popd' just to suppress printing of
 # the directory stack on stdout
@@ -30,6 +125,60 @@ popd () {
 # Bash builtin, or otherwise)
 has-command () {
 	command -v "$1" &> /dev/null
+}
+
+has-program () {
+	command -v "$1" &> /dev/null
+}
+
+find-program () {
+
+	if [ "$#" -lt 2 ] || [ "$1" = "--help" ]; then
+		echo "Usage: find-program <var> <program> [paths...]"
+		return 0
+	fi
+
+	# read variable
+	local VAR="$1"
+	shift
+
+	# if the variable is already set, bail
+	if [ -n "${!VAR}" ]; then
+		info "Found ${VAR}: ${!VAR} [cached]"
+		return 0
+	fi
+
+	# read program name
+	local PROGRAM="$1"
+	shift
+
+	# search for program in specified paths
+	for DIR in "$@"; do
+		local VAL="${DIR}/${PROGRAM}"
+		if [ -f "${VAL}" ]; then
+			info "Found ${VAR}: ${VAL}"
+			eval "${VAR}=${VAL}"
+			return 0
+		fi
+	done
+
+	# if we couldn't find it, look for copy on the PATH
+	local CANDIDATE=$(which "${PROGRAM}")
+	if [ -n "${CANDIDATE}" ]; then
+		info "Found ${PROGRAM}: ${CANDIDATE}"
+		eval "${VAR}=${CANDIDATE}"
+		return 0
+	fi
+
+	# failed to find program
+	error "could not find program '${PROGRAM}'"
+
+}
+
+require-program () {
+	if ! has-program "$1"; then
+		error "required program '$1' is not available on the PATH"
+	fi
 }
 
 is-verbose () {
@@ -210,6 +359,7 @@ os-version () {
 }
 
 os-version-part () {
+
 	local VERSION="$(os-version | cut -d"." -f"$1")"
 
 	if [ -n "${VERSION}" ]; then
@@ -219,6 +369,7 @@ os-version-part () {
 
 	echo "0"
 	return 0
+
 }
 
 os-version-major () {
@@ -235,6 +386,10 @@ os-version-patch () {
 
 # Helper functions for quickly checking platform types
 is-mac () {
+	[ "$(uname)" = "Darwin" ]
+}
+
+is-macos () {
 	[ "$(uname)" = "Darwin" ]
 }
 
@@ -265,4 +420,22 @@ is-opensuse () {
 is-ubuntu () {
 	[ "$(platform)" = "ubuntu" ]
 }
+
+is-jenkins () {
+	[ -n "${JENKINS_URL}" ]
+}
+
+# pick a default RSTUDIO_TOOLS_ROOT location
+#
+# prefer using home folder on Jenkins where we might not be able
+# to access files at /opt and will lack sudo
+if [ -z "${RSTUDIO_TOOLS_ROOT}" ]; then
+	if is-jenkins && [ "$(arch)" = "arm64" ]; then
+		RSTUDIO_TOOLS_ROOT="$HOME/opt/rstudio-tools/$(uname -m)"
+	else
+		RSTUDIO_TOOLS_ROOT="/opt/rstudio-tools/$(uname -m)"
+	fi
+fi
+
+export RSTUDIO_TOOLS_ROOT
 

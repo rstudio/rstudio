@@ -34,6 +34,7 @@ endif()
 if(NOT DEFINED GWT_BUILD)
    set(GWT_BUILD Yes)
 endif()
+
 if(DEFINED ENV{GWT_BUILD})
    set(GWT_BUILD $ENV{GWT_BUILD})
 endif()
@@ -48,16 +49,28 @@ if(GWT_BUILD)
    message(STATUS "Configured to build GWT")
    set(GWT_COPY Yes)
 
+   find_program(ANT
+      NAMES ant
+      PATHS "$ENV{HOME}/opt/bin" "$ENV{HOME}/homebrew/${UNAME_M}/bin")
+
+   if(ANT)
+      message(STATUS "Using ant: ${ANT}")
+   else()
+      message(FATAL_ERROR "ant not found (required to build GWT)")
+   endif()
+
    # invoke ant to build
    add_custom_target(gwt_build ALL)
    add_custom_command(
       TARGET gwt_build
       WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-      COMMAND ant -Dbuild.dir="${GWT_BIN_DIR}"
-                  -Dwww.dir="${GWT_WWW_DIR}"
-                  -Dextras.dir="${GWT_EXTRAS_DIR}"
-                  -Dlib.dir="${GWT_LIB_DIR}"
-                  -Dgwt.main.module="org.rstudio.studio.${GWT_MAIN_MODULE}")
+      COMMAND
+         ${ANT}
+         -Dbuild.dir="${GWT_BIN_DIR}"
+         -Dwww.dir="${GWT_WWW_DIR}"
+         -Dextras.dir="${GWT_EXTRAS_DIR}"
+         -Dlib.dir="${GWT_LIB_DIR}"
+         -Dgwt.main.module="org.rstudio.studio.${GWT_MAIN_MODULE}")
 endif()
 
 if(NOT DEFINED GWT_COPY)

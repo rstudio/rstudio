@@ -39,6 +39,7 @@ if(APPLE)
       set(LIBR_INCLUDE_DIRS "${LIBR_HOME}/include" CACHE PATH "R include directory")
       set(LIBR_DOC_DIR "${LIBR_HOME}/doc" CACHE PATH "R doc directory")
       set(LIBR_LIB_DIR "${LIBR_HOME}/lib" CACHE PATH "R lib directory")
+      set(LIBR_EXECUTABLE "${LIBR_HOME}/bin/R" CACHE PATH "R executable")
    endif()
 
 # detection for UNIX & Win32

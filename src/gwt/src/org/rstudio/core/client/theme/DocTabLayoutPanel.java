@@ -1389,12 +1389,7 @@ public class DocTabLayoutPanel
 
    private String getDataTransferFormat()
    {
-      // IE only supports textual data; for other browsers, though, use our own
-      // format so it doesn't activate text drag targets in other apps
-      if (BrowseCap.isInternetExplorer())
-         return "text";
-      else
-         return "application/rstudio-tab";
+      return "application/rstudio-tab";
    }
 
    private DocTab getTabForDocId(String docId)
