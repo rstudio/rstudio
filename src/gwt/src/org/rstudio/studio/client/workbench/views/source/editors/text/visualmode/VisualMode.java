@@ -522,9 +522,7 @@ public class VisualMode implements VisualModeEditorSync,
                      }
                      
                      // if we failed to extract a source capsule then don't switch (as the user will have lost data)
-                     // (note that this constant is also defined in rmd_chunk-capsule.ts)
-                     final String kRmdBlockCapsuleType = "f3175f2a-e8a0-4436-be12-b33925b6d220".toLowerCase();
-                     if (result.canonical.contains(kRmdBlockCapsuleType))
+                     if (hasSourceCapsule(result.canonical))
                      {
                         view_.showWarningBar("Unable to activate visual mode (error parsing code chunks out of document)");
                         allDone.execute(false);
@@ -627,7 +625,13 @@ public class VisualMode implements VisualModeEditorSync,
                                  (markdown) -> {
             if  (markdown != null) 
             {
-               if (!writerOptions.wrapChanged)
+               // ensure that no source capsules have snuck in
+               if (hasSourceCapsule(markdown))
+               {
+                  view_.showWarningBar("Unable to reformat to canonical markdown (parsing error, please report this to RStudio)");
+                  completed.execute(null);  
+               }
+               else if (!writerOptions.wrapChanged)
                {
                   PanmirrorUIToolsSource sourceTools = new PanmirrorUITools().source;
                   TextChange[] changes = sourceTools.diffChars(code, markdown, 1);
@@ -646,6 +650,7 @@ public class VisualMode implements VisualModeEditorSync,
       });
    }
    
+
    /**
     * Returns the width of the entire visual editor
     * 
@@ -1737,6 +1742,13 @@ public class VisualMode implements VisualModeEditorSync,
    {
       docUpdateSentinel_.setBoolProperty(TextEditingTarget.RMD_VISUAL_MODE, false);
       view_.showWarningBar(message);
+   }
+   
+   private boolean hasSourceCapsule(String markdown)
+   {
+      // (note that this constant is also defined in rmd_chunk-capsule.ts)
+      final String kRmdBlockCapsuleType = "f3175f2a-e8a0-4436-be12-b33925b6d220".toLowerCase();
+      return markdown.contains(kRmdBlockCapsuleType);
    }
    
    /**
