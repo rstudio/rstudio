@@ -61,9 +61,22 @@ endif()
 
 # default to debug builds
 if(NOT CMAKE_BUILD_TYPE)
-   message(STATUS "CMake build type not set; defaulting to debug build")
-   set(CMAKE_BUILD_TYPE "Debug")
+
+   foreach(BUILD_TYPE Debug Release RelWithDebInfo MinSizeRel)
+      if(CMAKE_BINARY_DIR MATCHES "${BUILD_TYPE}")
+         set(CMAKE_BUILD_TYPE "${BUILD_TYPE}")
+         break()
+      endif()
+   endforeach()
+
+   if(NOT CMAKE_BUILD_TYPE)
+      set(CMAKE_BUILD_TYPE Debug)
+   endif()
+
+
 endif()
+
+message(STATUS "CMake build type: ${CMAKE_BUILD_TYPE}")
 
 # enable testing on all builds unless explicitly disabled
 if (NOT RSTUDIO_UNIT_TESTS_DISABLED)

@@ -129,6 +129,9 @@ void handleFileRequest(const FileRequestOptions& options,
                          (request.queryParamValue("emulatedStack") == "1");
       vars["compiler_stack_mode"] = useEmulatedStack ? "emulated" : "native";
 
+      // initialize head_tags
+      vars["head_tags"] = std::string();
+
       // check for initJs
       if (!options.initJs.empty())
          vars["head_tags"] = vars["head_tags"] + "<script>" + options.initJs + "</script>";
