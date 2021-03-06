@@ -631,12 +631,23 @@ public class VisualMode implements VisualModeEditorSync,
                   view_.showWarningBar("Unable to reformat to canonical markdown (parsing error, please report this to RStudio)");
                   completed.execute(null);  
                }
+               /*
+                 We saw at least one situation where the diffs produced by diff-match-patch 
+                 were not able to correctly capture the source changes (this has to do with
+                 a \begin{}/\end{} tex chunk being turned into a raw tex block right before
+                 an Rmd chunk). To be cautious we will now send the changes back as a single
+                 set of transformed markdown. Since the entire changeset is already merged
+                 into a single undo-able action by Ace, there shouldn't really be a 
+                 perceivable change in user behavior here.
+                */
+               /*
                else if (!writerOptions.wrapChanged)
                {
                   PanmirrorUIToolsSource sourceTools = new PanmirrorUITools().source;
                   TextChange[] changes = sourceTools.diffChars(code, markdown, 1);
                   completed.execute(new PanmirrorChanges(null, changes));
                }
+               */
                else
                {
                   completed.execute(new PanmirrorChanges(markdown, null));
