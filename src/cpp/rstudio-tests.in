@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+# help our build machine find the appropriate version of R
+if [ "$(uname)" = "Darwin" ] && [ -n "$JENKINS_URL" ]; then
+   PATH="$HOME/homebrew/x86_64/bin:$PATH"
+fi
+
 checkUnitTestFailure() {
    RET_CODE=$?
    if [ $RET_CODE != 0 ]; then
@@ -174,7 +179,7 @@ if [ -z "$TEST_SCOPE" ] || [ "$TEST_SCOPE" == "rsession" ]; then
     echo Running 'rsession' tests...
 
     export RS_CRASH_HANDLER_PATH="${CMAKE_CURRENT_BINARY_DIR}/server/crash-handler-proxy/crash-handler-proxy"
-   export RS_CRASHPAD_HANDLER_PATH="/opt/rstudio-tools/$(uname -m)/crashpad/crashpad/out/Default/crashpad_handler"
+    export RS_CRASHPAD_HANDLER_PATH="${RSTUDIO_TOOLS_ROOT}/crashpad/crashpad/out/Default/crashpad_handler"
     runWatchdogProcess 5m false "${CMAKE_CURRENT_BINARY_DIR}/session/$RSTUDIO_SESSION_BIN" --run-tests --config-file="$SESSION_CONF_FILE"
 fi
 
@@ -191,7 +196,7 @@ if [ -z "$TEST_SCOPE" ] || [ "$TEST_SCOPE" == "r" ]; then
     export RSTUDIO_DATA_HOME="$RSTUDIO_FOLDER/data"
     export RSTUDIO_CONFIG_HOME="$RSTUDIO_FOLDER/config"
     export RS_CRASH_HANDLER_PATH="${CMAKE_CURRENT_BINARY_DIR}/server/crash-handler-proxy/crash-handler-proxy"
-    export RS_CRASHPAD_HANDLER_PATH="/opt/rstudio-tools/$(uname -m)/crashpad/crashpad/out/Default/crashpad_handler"
+    export RS_CRASHPAD_HANDLER_PATH="${RSTUDIO_TOOLS_ROOT}/crashpad/crashpad/out/Default/crashpad_handler"
     runWatchdogProcess 5m false "${CMAKE_CURRENT_BINARY_DIR}/session/$RSTUDIO_SESSION_BIN" \
         --run-script "\"source('${CMAKE_CURRENT_SOURCE_DIR}/tests/testthat/run-tests.R'); runAllTests('${CMAKE_CURRENT_SOURCE_DIR}', '${CMAKE_CURRENT_BINARY_DIR}'$TESTTHAT_FILTER)\"" \
         --config-file="$SESSION_CONF_FILE"

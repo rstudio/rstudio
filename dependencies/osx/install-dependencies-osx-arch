@@ -15,7 +15,10 @@
 #
 #
 
-set -eux
+set -e
+
+source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
+require-program brew
 
 # NOTE: the intention is for this script to be invoked as e.g.
 #
@@ -28,17 +31,31 @@ if [ -e install-overlay ]; then
    ./install-overlay
 fi
 
-# make sure brew is installed, and error if not
-if ! command -v brew &> /dev/null; then
-   echo "homebrew is not installed, but is needed to install dependencies"
-   exit 1
-fi
+section "Installing Homebrew Formulae"
 
-# install requisite Homebrew formulae
-FORMULAS=(coreutils gdb openssl pidof postgresql)
+# TODO: gdb is not supported on arm64 yet
+FORMULAS=(
+   ant
+   awscli
+   cmake
+   coreutils
+   gettext
+   krb5
+   libpq
+   openssl
+   ninja
+   pidof
+   postgresql
+   r
+)
 
+HOMEBREW_PREFIX=$(brew --prefix)
 for FORMULA in "${FORMULAS[@]}"; do
-   brew install "${FORMULA}" || true
+   if [ -d "${HOMEBREW_PREFIX}/opt/${FORMULA}" ]; then
+      info "${FORMULA} already installed."
+   else
+      brew install "${FORMULA}" || true
+   fi
 done
 
 # set up .gdbinit
@@ -46,6 +63,6 @@ grep -qxF 'set startup-with-shell off' ~/.gdbinit || echo "set startup-with-shel
 
 # install common utilities
 cd ../common
-./install-common --install-crashpad-sudo
+./install-common
 cd ../osx
 

@@ -17,5 +17,5 @@
 
 QT_PLUGIN_PATH="@QT_PLUGIN_PATH@" \
     LD_LIBRARY_PATH="@QT_LIBRARY_PATH@" \
-    RS_CRASH_HANDLER_PATH="/opt/rstudio-tools/$(uname -m)/crashpad/crashpad/out/Default/crashpad_handler" \
+    RS_CRASH_HANDLER_PATH="@RSTUDIO_TOOLS_ROOT@/crashpad/crashpad/out/Default/crashpad_handler" \
     desktop/rstudio "$@"

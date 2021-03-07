@@ -17,36 +17,6 @@
 
 set -e
 
-function help() {
-  cat <<EOF
-usage: install-common [options]
-
-Options
-  --install-crashpad-sudo
-      When installing dependencies to setup a dev environment, need to run install-crashpad
-      via sudo; however, this causes problems if used when building a Dockerfile
-
-EOF
-}
-
-INSTALL_CRASHPAD_SUDO=
-while [ $# -gt 0 ]; do
-  case "$1" in
-    --install-crashpad-sudo)
-      INSTALL_CRASHPAD_SUDO="sudo"
-      shift
-      ;;
-    --help|-h)
-      help
-      exit 0
-      ;;
-    *)
-      help
-      exit 1
-      ;;
-  esac
-done
-
 ./install-dictionaries
 ./install-mathjax
 ./install-boost
@@ -56,15 +26,7 @@ done
 ./install-npm-dependencies
 ./install-soci
 ./install-yaml-cpp
-
-if [[ "$OSTYPE" == "darwin"* ]]; then
-  # use pre-built binaries on macos as compilation environment is difficult
-  # to configure there
-  echo Using pre-built crashpad osx binaries
-  $INSTALL_CRASHPAD_SUDO ./install-crashpad osx
-else
-  $INSTALL_CRASHPAD_SUDO ./install-crashpad
-fi
+./install-crashpad
 
 if [ -e install-overlay ]
 then

@@ -93,6 +93,6 @@ cd ../common
 sudo ./install-crashpad bionic
 
 # common
-./install-common --install-crashpad-sudo
+./install-common
 cd ../linux
 

@@ -65,14 +65,16 @@ install Google Web Toolkit, Hunspell dictionaries, MathJax, Boost 1.69, and
 other dependencies):
 
 NOTE: To build without crashpad support, define RSTUDIO_DISABLE_CRASHPAD=1
-before running the script; otherwise, pass the --install-crashpad-sudo
-option so crashpad can be installed to opt/rstudio-tools/crashpad.
-
-   ./install-common --install-crashpad-sudo
-
-OR
+before running the script. For example:
 
    RSTUDIO_DISABLE_CRASHPAD=1 ./install-common
+
+To install pre-built Crashpad binaries for a particular operating system,
+pass the required variant as an argument to the Crashpad script.
+
+For example, on Ubuntu 18.04 (Bionic), you might run:
+
+   ./install-crashpad bionic
 
 3) Optionally install the Qt SDK, including QtWebEngine, from
 https://qt.io. You should do this if you are building the Desktop version

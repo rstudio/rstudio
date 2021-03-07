@@ -4,6 +4,7 @@
 
 ### R
 
+* Add native support for Apple Silicon (aarch64) builds of R on macOS (#8652)
 * Show memory usage details in Environment pane (#4033)
 * Added support for the `|>` pipe operator and the `=>` pipe-bind operator, proposed for R 4.1.0 (#8543)
 * Added support for the `\(x)` function shorthand syntax, proposed for R 4.1.0 (#8543)
@@ -27,11 +28,13 @@
 * Added a new user settings template file for VSCode settings to allow administrators to specify a default user configuration for VSCode sessions (Pro #2014)
 * Improved a Slurm Session Launch Delay that may occur due to buffering when using Slurm job steps (Pro #2331)
 * Set enviornment variables `RS_URI_SCHEME`, `RS_SESSION_URL`, and `RS_HOME_URL` when VSCode is launched (Pro #2346)
+* Updated LimeLM TurboActivate and TurboFloat to v4.4.3.
 
 ### RStudio Server
 
 * **BREAKING:** RStudio when served via `http` erroneously reported its own address as `https` during redirects if the header `X-Forwarded-Proto` was defined by a proxy. That could lead to a confusing proxy setup. That has been fixed, but existing proxy installations with redirect rewite settings matching for `https` may have to be adjusted.
 * **BREAKING:** RStudio Workbench's Linux packages have new file names, `rstudio-workbench-*` instead of `rstudio-server-pro-*`. The operating system package name remains `rstudio-server`, so installs and upgrades will work correctly. Scripts which refer to the `.deb` or `.rpm` file names directly will need to be updated.
+* **BREAKING:** RStudio Server no longer supports Internet Explorer 11. 
 
 ### Misc
 
@@ -56,6 +59,8 @@
 * Improve logging of session RPC failures (Pro #2248)
 * Add support for `rstudioapi` methods enabling callbacks for command execution (Pro #1846)
 * Add support for non-CRAN repositories when installing R packages in the background (#8946)
+* Add server homepage link and retry options to mitigate "Unable to connect to service" errors (Pro #2066)
+* Add support for commenting and uncommenting code in C (`.c` and `.h`) files (#4109, thanks to @cm421)
 
 ### Bugfixes
 
@@ -96,4 +101,6 @@
 * Fixed issue where Pro database drivers will not install if `~/odbcinst.ini` is missing (Pro #2284)
 * Fixed issue causing the mouse cursor to become too small in certain areas on Linux Desktop (#8781)
 * Fixed issue causing Run Tests command to do nothing unless the Build tab was available (#8775)
+* Fixed issue importing dataset author data from DOIs in the Visual Editor (#9059)
+* Fixed issue where the Insert Citation dialog in the visual editor would clear selected citation when typeahead searching (#8521)
 

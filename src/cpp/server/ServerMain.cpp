@@ -113,6 +113,7 @@ http::UriHandlerFunction blockingFileHandler()
                                    initJs,
                                    options.gwtPrefix(),
                                    options.wwwUseEmulatedStack(),
+                                   "", // no server homepage in open source
                                    options.wwwFrameOrigin());
 }
 

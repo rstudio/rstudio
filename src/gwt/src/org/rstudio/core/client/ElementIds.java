@@ -150,6 +150,7 @@ public class ElementIds
    public final static String DIALOG_OK_BUTTON = "dlg_ok";
    public final static String DIALOG_APPLY_BUTTON = "dlg_apply";
    public final static String DIALOG_RETRY_BUTTON = "dlg_retry";
+   public final static String DIALOG_HOME_BUTTON = "dlg_home";
    public final static String SELECT_ALL_BUTTON = "select_all";
    public final static String SELECT_NONE_BUTTON = "select_none";
    public final static String ABOUT_MANAGE_LICENSE_BUTTON = "about_manage_license";

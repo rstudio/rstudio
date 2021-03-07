@@ -17,52 +17,42 @@
 
 set -e
 
+source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
+section "Installing Chromium Embedded Framework (CEF)"
+
 # install dir
-INSTALL_DIR=`pwd`
+INSTALL_DIR=$(pwd)
 
 # determine platform
-PLATFORM=`uname`
+PLATFORM=$(uname)
 
 # bail if not mac for now
-if [ "$PLATFORM" != "Darwin" ]
-then
+if [ "$PLATFORM" != "Darwin" ]; then
   exit 0
 fi
 
-# use curl or wget as appropriate
-download()
-{
-  if [ "$PLATFORM" == "Darwin" ]
-  then
-    curl -L https://s3.amazonaws.com/rstudio-buildtools/$1 > $1
-  else
-    wget https://s3.amazonaws.com/rstudio-buildtools/$1 -O $1
-  fi
-}
-
 # download and extract cef if necessary
+# TODO: Linux platform (32 vs. 64 bit)
 CEF_VERSION="3.1547.1412"
-if [ "$PLATFORM" == "Darwin" ]
-then
+if [ "$PLATFORM" = "Darwin" ]; then
   CEF_PLATFORM=macosx64
-
-  # TODO: Linux platform (32 vs. 64 bit)
 fi
 
 CEF_DIR=CEF
-if [ -d "$CEF_DIR/$CEF_VERSION" ]
-then
-   echo "Chromium Embedded Framework already installed"
-else
-   CEF_FILE=cef_binary_${CEF_VERSION}_$CEF_PLATFORM
-   CEF_ARCHIVE=$CEF_FILE.zip
-   download $CEF_ARCHIVE
-   unzip -q $CEF_ARCHIVE
-   rm -rf __MACOSX
-   mkdir -p $CEF_DIR
-   mv $CEF_FILE $CEF_DIR/$CEF_VERSION
-   rm $CEF_ARCHIVE
+if [ -d "$CEF_DIR/$CEF_VERSION" ]; then
+   echo "Chromium Embedded Framework already installed at '${CEF_DIR}/${CEF_VERSION}'"
+   cd "${INSTALL_DIR}"
+   exit 0
 fi
 
-# back to install dir
-cd $INSTALL_DIR
+CEF_FILE=cef_binary_${CEF_VERSION}_$CEF_PLATFORM
+CEF_ARCHIVE=$CEF_FILE.zip
+download $CEF_ARCHIVE
+unzip -q $CEF_ARCHIVE
+rm -rf __MACOSX
+mkdir -p $CEF_DIR
+mv $CEF_FILE $CEF_DIR/$CEF_VERSION
+rm $CEF_ARCHIVE
+
+echo "Chromium Embedded Framework installed to '${CEF_DIR}/${CEF_VERSION}'"
+cd "${INSTALL_DIR}"

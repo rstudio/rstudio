@@ -52,10 +52,7 @@
 }
 
 .rstudio-themes-dark .iconPython {
-   filter: drop-shadow( 1px  1px 1px rgba(0, 0, 0, 0.4))
-           drop-shadow( 1px -1px 1px rgba(0, 0, 0, 0.4))
-           drop-shadow(-1px -1px 1px rgba(0, 0, 0, 0.4))
-           drop-shadow(-1px  1px 1px rgba(0, 0, 0, 0.4))
+   filter: brightness(1.25);
 }
 
 .rstudio-themes-default .iconR {
@@ -63,13 +60,9 @@
 }
 
 .rstudio-themes-dark .iconR {
-   stroke: black;
-   stroke-width: 12px;
-   filter: drop-shadow( 1px  1px 1px rgba(0, 0, 0, 0.5))
-           drop-shadow( 1px -1px 1px rgba(0, 0, 0, 0.5))
-           drop-shadow(-1px -1px 1px rgba(0, 0, 0, 0.5))
-           drop-shadow(-1px  1px 1px rgba(0, 0, 0, 0.5))
+   filter: brightness(1.25);
 }
+
 
 .labelTabbed {
    display: inline-block;
