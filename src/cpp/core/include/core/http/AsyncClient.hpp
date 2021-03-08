@@ -620,12 +620,12 @@ private:
       {
          if (chunk->size() > maxChunkSize)
          {
-            // break the chunk into more reasonable partial chunks
+            // break the chunk into more reasonable partial chunks with each chunk being
+            // less than or equal to the max chunk size
             size_t numChunks = static_cast<size_t>(ceil(static_cast<double>(chunk->size()) / maxChunkSize));
-            size_t newChunkSize = static_cast<size_t>(static_cast<double>(chunk->size()) / numChunks);
             for (size_t i = 0; i < numChunks; ++i)
             {
-               std::string chunkPiece = chunk->substr(i * newChunkSize, newChunkSize);
+               std::string chunkPiece = chunk->substr(maxChunkSize * i, maxChunkSize);
                newChunks.push_back(boost::make_shared<std::string>(std::move(chunkPiece)));
             }
          }
