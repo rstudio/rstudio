@@ -1050,7 +1050,9 @@
     var env = parsedLocation.env,
       obj = parsedLocation.obj,
       cacheKey = parsedLocation.cacheKey;
+
     maxColumns = defaultMaxColumns = parsedLocation.maxCols;
+
 
     // keep track of column types for later render
     var typeIndices = {
