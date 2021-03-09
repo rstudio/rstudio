@@ -17,7 +17,7 @@ import { Transaction } from 'prosemirror-state';
 
 import { PandocServer } from '../pandoc';
 
-import { expandPaths, getExtension, joinPaths } from '../path';
+import { getExtension, joinPaths, isAbsolute } from '../path';
 import { EditorUI } from '../ui';
 
 import {
@@ -28,7 +28,7 @@ import {
   BibliographySourceWithCollections,
 } from './bibliography';
 import { ParsedYaml, parseYamlNodes, valueFromYamlText } from '../yaml';
-import { toBibLaTeX, toBibTeX } from './bibDB';
+import { toBibTeX } from './bibDB';
 import { CSL } from '../csl';
 
 export interface BibliographyResult {
@@ -59,10 +59,16 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
     return Promise.resolve();
   }
 
-  public async load(docPath: string | null, resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean> {
+  public async load(ui: EditorUI, docPath: string | null, resourcePath: string, yamlBlocks: ParsedYaml[]): Promise<boolean> {
     // Gather the biblography files from the document
     const bibliographiesRelative = bibliographyFilesFromDoc(yamlBlocks);
-    const bibliographiesAbsolute = expandPaths(resourcePath, bibliographiesRelative || []);
+    const bibliographiesAbsolute = bibliographiesRelative?.map(path => {
+      if (isAbsolute(path, ui.context.isWindowsDesktop())) {
+        return path;
+      } else {
+        return joinPaths(resourcePath, path);
+      }
+    }) || [];
 
     // Gather the reference block
     const refBlock = referenceBlockFromYaml(yamlBlocks);
@@ -155,7 +161,7 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
       bibliographyFilesFromDocument(doc, ui)?.map(path => {
         return {
           displayPath: path,
-          fullPath: joinPaths(ui.context.getDefaultResourceDir(), path),
+          fullPath: isAbsolute(path, ui.context.isWindowsDesktop()) ? path : joinPaths(ui.context.getDefaultResourceDir(), path),
           isProject: false,
           writable: kPermissableFileExtensions.includes(getExtension(path)),
         };
