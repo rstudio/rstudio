@@ -104,4 +104,5 @@
 * Fixed issue importing dataset author data from DOIs in the Visual Editor (#9059)
 * Fixed issue where the Insert Citation dialog in the visual editor would clear selected citation when typeahead searching (#8521)
 * Fixed issue where the bibliography path is assumed to be document relative when inserting citations in the visual editor (#8847)
+* Fixed issue causing RStudio Server to create `.local/share/rstudio` folder with incorrect permissions when `session-timeout-kill-hours` is set (Pro #2388)
 
