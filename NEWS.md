@@ -36,6 +36,21 @@
 * **BREAKING:** RStudio Workbench's Linux packages have new file names, `rstudio-workbench-*` instead of `rstudio-server-pro-*`. The operating system package name remains `rstudio-server`, so installs and upgrades will work correctly. Scripts which refer to the `.deb` or `.rpm` file names directly will need to be updated.
 * **BREAKING:** RStudio Server no longer supports Internet Explorer 11. 
 
+### Visual Editor
+
+* Code chunks in the visual editor now respect the "Tab Key Always Moves Focus" accessibility setting (#8584)
+* The commands "Execute Previous Chunks" and "Execute Subsequent Chunks" now work when the cursor is outside a code chunk in the visual editor (#8500)
+* The commands "Go to Next Chunk" and "Go to Previous Chunk" now work in the visual editor (#9005)
+* Fixed issue causing the document to scroll unpredictably when a code chunk inside a list item is executed in the visual editor (#8883)
+* Cmd+U now toggles underlining in the visual editor on macOS (#8656)
+* Improve YAML cursor position after omni-insert in the visual editor (#8670)
+* Fix issues finding words with punctuation in visual mode (#8655)
+* Fix spurious image insertion when pasting into visual mode from Excel (#8665)
+* Fix issue causing spell check to stop identifying misspellings when switching between visual and source modes (#8473)
+* Fixed issue importing dataset author data from DOIs in the visual editor (#9059)
+* Fixed issue where the Insert Citation dialog in the visual editor would clear selected citation when typeahead searching (#8521)
+* Fixed issue where the bibliography path is assumed to be document relative when inserting citations in the visual editor (#8847)
+
 ### Misc
 
 * Improve detection for crashes that occur early in session initialization (#7983)
@@ -48,8 +63,6 @@
 * Improve ordering of items in Command Palette list and search results (#7567, #7956)
 * Update embedded Pandoc to v2.11.3.2
 * Change default per-user install folder to %LocalAppData%\Programs on Windows (#8598)
-* Cmd+U now toggles underlining in the visual editor on macOS (#8656)
-* Improve YAML cursor position after omni-insert in the visual editor (#8670)
 * Detect newer plumber tags when enabling plumber integration (#8118)
 * Option to restore RStudio 1.2 tab key behavior in editor find panel; search in Command Palette for "Tab key behavior in find panel matches RStudio 1.2 and earlier" (#7295)
 * Show `.renvignore` in Files pane (#8658)
@@ -79,16 +92,9 @@
 * Fixed issue where SQL chunks containing non-ASCII characters could fail to run on Windows (#8900)
 * Fixed issue where 'case:' statements were not outdented when rainbow parentheses were active. (#8846)
 * Improved checks for non-writable R library paths on startup (Pro #2184)
-* Code chunks in the visual editor now respect the "Tab Key Always Moves Focus" accessibility setting (#8584)
-* The commands "Execute Previous Chunks" and "Execute Subsequent Chunks" now work when the cursor is outside a code chunk in the visual editor (#8500)
-* The commands "Go to Next Chunk" and "Go to Previous Chunk" now work in the visual editor (#9005)
-* Fixed issue causing the document to scroll unpredictably when a code chunk inside a list item is executed in the visual editor (#8883)
 * Fixed issue preventing R Notebook chunks from being queued for execution if they had never been previously run (#4238)
 * Fix various issues when the "Limit Console Output" performance setting was enabled, and enable it by default (#8544, #8504, #8529, #8552)
 * Fix display of condition messages (errors and warnings) in some character encodings (#8546)
-* Fix issues finding words with punctuation in visual mode (#8655)
-* Fix spurious image insertion when pasting into visual mode from Excel (#8665)
-* Fix issue causing spell check to stop identifying misspellings when switching between visual and source modes (#8473)
 * Fix out-of-date tooltip when renaming files (#8490, #8491)
 * Fix incorrect keyboard shortcuts shown in some places in the Command Palette (#8735)
 * Fixed an issue where Load Balanced Local Launcher instances could get into a state where they would no longer receive job updates from other nodes due to silent network drops (Pro #2281)
@@ -101,8 +107,5 @@
 * Fixed issue where Pro database drivers will not install if `~/odbcinst.ini` is missing (Pro #2284)
 * Fixed issue causing the mouse cursor to become too small in certain areas on Linux Desktop (#8781)
 * Fixed issue causing Run Tests command to do nothing unless the Build tab was available (#8775)
-* Fixed issue importing dataset author data from DOIs in the Visual Editor (#9059)
-* Fixed issue where the Insert Citation dialog in the visual editor would clear selected citation when typeahead searching (#8521)
-* Fixed issue where the bibliography path is assumed to be document relative when inserting citations in the visual editor (#8847)
 * Fixed issue causing RStudio Server to create `.local/share/rstudio` folder with incorrect permissions when `session-timeout-kill-hours` is set (Pro #2388)
 
