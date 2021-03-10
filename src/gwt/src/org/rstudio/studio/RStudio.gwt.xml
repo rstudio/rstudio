@@ -4,9 +4,9 @@
 
    <!-- GWT module dependencies                                    -->
    <inherits name='com.google.gwt.user.User'/>
-   
+
    <inherits name='com.google.gwt.widgetideas.SliderBar'/>
-    
+
    <inherits name='com.sksamuel.gwt.GwtWebsockets'/>
 
    <!-- Gin module dependencies                                    -->
@@ -26,8 +26,9 @@
       if (window.desktop)
          return "true";
 
-      // also true when run under QtWebEngine, which defers hook injection
-      return window.navigator.userAgent.indexOf("QtWebEngine") > 0 ? "true" : "false";
+      // also true when run under Electron or QtWebEngine, which defer hook injection
+      return ((window.navigator.userAgent.indexOf("Electron") > 0) ||
+              (window.navigator.userAgent.indexOf("QtWebEngine") > 0)) ? "true" : "false";
    ]]></property-provider>
 
    <define-property name="rstudio.remoteDesktop" values="true,false"/>
@@ -36,7 +37,7 @@
       if (window.remoteDesktop)
          return "true";
 
-      // also true when run under QtWebEngine, which defers hook injection
+      // also true when run under Electron or QtWebEngine, which defer hook injection
       return window.navigator.userAgent.indexOf("RStudio Remote Desktop") > 0 ? "true" : "false";
    ]]></property-provider>
 
@@ -44,13 +45,13 @@
       <when-property-is name="rstudio.desktop" value="true"/>
    </set-property>
    <collapse-property name="rstudio.desktop" values="*"/>
-    
+
    <define-property name="rstudio.unittests" values="true,false"/>
    <set-property name="rstudio.unittests" value="false"/>
 
    <!-- RStudio module dependencies                                -->
    <inherits name='org.rstudio.core.Core' />
-   
+
    <!-- Specify the app entry point class.                         -->
    <entry-point class='org.rstudio.studio.client.RStudio'/>
 
@@ -75,7 +76,7 @@
          <when-property-is name="rstudio.remoteDesktop" value="false"/>
       </all>
    </replace-with>
- 
+
    <replace-with class="org.rstudio.studio.client.application.ui.impl.WebApplicationHeader">
       <when-type-is class="org.rstudio.studio.client.application.ui.ApplicationHeader" />
    </replace-with>
@@ -118,7 +119,7 @@
       <when-type-is class="org.rstudio.studio.client.common.dialog.DialogBuilderFactory"/>
       <when-property-is name="rstudio.desktop" value="true"/>
    </replace-with>
-  
+
    <replace-with class="org.rstudio.studio.client.common.impl.WebTextInput">
       <when-type-is class="org.rstudio.studio.client.common.TextInput"/>
    </replace-with>
