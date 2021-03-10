@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+set -e
+
+echo Creating a standalone version of RStudio Prototype...
+
+APP_ROOT=./RStudio.app
+RES_DIR=${APP_ROOT}/Contents/Resources
+APP_DIR=${RES_DIR}/app
+BUILD_OUT=../../cpp/cmake-build-release
+APP_NATIVE=${APP_DIR}/native
+
+echo Erasing previous prototype...
+rm -rf ${APP_ROOT}
+
+echo Copying Electron skeleton...
+cp -iR  ./node_modules/Electron/dist/Electron.app/ ${APP_ROOT}
+mkdir ${APP_DIR}
+
+echo Copying RStudio Desktop sources...
+cp package.json ${APP_DIR}
+cp -iR ./src ${APP_DIR}
+
+echo Copying RStudio binaries and support files from ${BUILD_OUT}
+cp -iR ${BUILD_OUT}/ ${APP_NATIVE}
+rm -f ${APP_NATIVE}/build.ninja ${APP_NATIVE}/cmake_install.cmake ${APP_NATIVE}/CMakeCache.txt
+rm -f ${APP_NATIVE}/rstudio-tests ${APP_NATIVE}/rstudio-tests ${APP_NATIVE}/rules.ninja
+rm -rf ${APP_NATIVE}/CMakeFiles
+

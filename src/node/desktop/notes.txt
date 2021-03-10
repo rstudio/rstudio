@@ -1,0 +1,36 @@
+MISSING: registerAsRStudioSatellite
+SatelliteManager.java: exportSatelliteRegistrationCallback()
+
+
+
+-------
+
+window.opener
+    window.opener.unregisterDesktopChildWindow()
+
+window.unregisterDesktopChildWindow()
+
+window.opener.registerDesktopChildWindow()
+
+#define SOURCE_WINDOW_PREFIX "_rstudio_satellite_source_window_"
+
+SatelliteUtils.java
+    SATELLITE_PREFIX
+    getSatelliteWindowName()
+    getWindowNameFromSatelliteName()
+    windowNameIsSatellite()
+
+
+
+- SatelliteWindow:GwtWindow:BrowserWindow:BrowserWindow:QMainWindow
+    * when satellite window closes, runjavaScript(window.rstudioCloseSourceWindow())
+
+- SecondaryWindow:BrowserWindow
+
+- WebPage:QWebEnginePage
+    * createWindow, this is where SatelliteWindow or SecondaryWindow is created
+    * acceptNavigationRequest()
+
+- WebView:QWebEngineView
+    * contains WebPage* pWebPage_;
+
