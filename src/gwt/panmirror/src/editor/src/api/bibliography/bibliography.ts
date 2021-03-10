@@ -24,8 +24,8 @@ import { CSL } from '../csl';
 import { ZoteroServer } from '../zotero';
 import { BibliographyDataProviderLocal, kLocalBiliographyProviderKey } from './bibliography-provider_local';
 import { BibliographyDataProviderZotero } from './bibliography-provider_zotero';
-import { toBibLaTeX, toBibTeX } from './bibDB';
-import { joinPaths } from '../path';
+import { toBibTeX } from './bibDB';
+import { joinPaths, isAbsolute } from '../path';
 
 export interface BibliographyFile {
   displayPath: string;
@@ -37,7 +37,7 @@ export interface BibliographyFile {
 export function bibliographyFileForPath(path: string, ui: EditorUI): BibliographyFile {
   return {
     displayPath: path,
-    fullPath: joinPaths(ui.context.getDefaultResourceDir(), path),
+    fullPath: isAbsolute(path, ui.context.isWindowsDesktop()) ? path : joinPaths(ui.context.getDefaultResourceDir(), path),
     isProject: false,
     writable: true,
   };
@@ -78,6 +78,7 @@ export interface BibliographyDataProvider {
 
   isEnabled(): boolean;
   load(
+    ui: EditorUI,
     docPath: string | null,
     resourcePath: string,
     yamlBlocks: ParsedYaml[],
@@ -159,7 +160,7 @@ export class BibliographyManager {
     // Load each provider
     const providersNeedUpdate = await Promise.all(
       this.providers.map(provider =>
-        provider.load(docPath, ui.context.getDefaultResourceDir(), parsedYamlNodes, refreshCollectionData),
+        provider.load(ui, docPath, ui.context.getDefaultResourceDir(), parsedYamlNodes, refreshCollectionData),
       ),
     );
 
