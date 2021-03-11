@@ -108,4 +108,5 @@
 * Fixed issue causing the mouse cursor to become too small in certain areas on Linux Desktop (#8781)
 * Fixed issue causing Run Tests command to do nothing unless the Build tab was available (#8775)
 * Fixed issue causing RStudio Server to create `.local/share/rstudio` folder with incorrect permissions when `session-timeout-kill-hours` is set (Pro #2388)
+* Fixed issue causing `verify-installation` to exit without showing the error that caused it to do so (Pro #2399)
 
