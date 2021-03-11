@@ -187,7 +187,7 @@ public class DataTable
    {
       return (offset, max) ->
       {
-         columnTextWidget_.setValue(offset + " - " + max);
+         columnTextWidget_.setValue(offset + " - " + (offset + max));
          setColumnControlVisibility(isLimitedColumnFrame());
       };
    }
