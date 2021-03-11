@@ -104,4 +104,5 @@
 * Fixed issue importing dataset author data from DOIs in the Visual Editor (#9059)
 * Fixed issue where the Insert Citation dialog in the visual editor would clear selected citation when typeahead searching (#8521)
 * Fixed issue where the bibliography path is assumed to be document relative when inserting citations in the visual editor (#8847)
+* Fixed issue where paging in the DataViewer would throw errors and current columns wouldn't update (#9078)
 
