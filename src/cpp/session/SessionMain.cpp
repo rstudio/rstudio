@@ -1799,6 +1799,15 @@ int main (int argc, char * const argv[])
       if (status.exit())
          return status.exitCode();
 
+      // print version if requested
+      if (options.version())
+      {
+         std::cout << RSTUDIO_VERSION ", \"" RSTUDIO_RELEASE_NAME "\" "
+                      "( " RSTUDIO_GIT_COMMIT ", " RSTUDIO_BUILD_DATE ")"
+                      "for " RSTUDIO_PACKAGE_OS << std::endl;
+         return 0;
+      }
+
       // convenience flags for server and desktop mode
       bool desktopMode = options.programMode() == kSessionProgramModeDesktop;
       bool serverMode = options.programMode() == kSessionProgramModeServer;
