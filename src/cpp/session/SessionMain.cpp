@@ -1802,8 +1802,9 @@ int main (int argc, char * const argv[])
       // print version if requested
       if (options.version())
       {
+         std::string gitCommit(RSTUDIO_GIT_COMMIT);
          std::cout << RSTUDIO_VERSION ", \"" RSTUDIO_RELEASE_NAME "\" "
-                      "( " RSTUDIO_GIT_COMMIT ", " RSTUDIO_BUILD_DATE ")"
+                      "(" << gitCommit.substr(0, 8) << ", " RSTUDIO_BUILD_DATE ") "
                       "for " RSTUDIO_PACKAGE_OS << std::endl;
          return 0;
       }
