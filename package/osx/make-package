@@ -37,6 +37,11 @@ RSTUDIO_VERSION_ARRAY=(
 
 RSTUDIO_VERSION_FULL=$(IFS="."; echo "${RSTUDIO_VERSION_ARRAY[*]}")
 
+# include Pro version suffix if provided
+if [ -n "${RSTUDIO_VERSION_SUFFIX}" ]; then
+   RSTUDIO_VERSION_FULL+="-${RSTUDIO_VERSION_SUFFIX}"
+fi
+
 # build bundle name (handle Pro builds as well)
 if [ -f "${PKG_DIR}/CMakeOverlay.txt" ]; then
    RSTUDIO_PRO_SUFFIX="-pro"
