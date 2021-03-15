@@ -223,7 +223,7 @@ std::string gitBin()
 }
 #endif
 
-std::string gitText(const ShellArgs& args)
+std::string gitText(const ShellArgs& shellArgs)
 {
    std::stringstream ss;
 
@@ -234,8 +234,7 @@ std::string gitText(const ShellArgs& args)
    else
       ss << s_gitExePath << " ";
 
-   std::string arguments = core::algorithm::join(args, " ");
-   ss << arguments << "\n";
+   ss << core::algorithm::join(shellArgs.args(), " ") << "\n";
 
    return ss.str();
 }

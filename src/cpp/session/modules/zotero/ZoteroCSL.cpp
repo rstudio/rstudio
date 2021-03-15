@@ -15,6 +15,8 @@
 
 #include "ZoteroCSL.hpp"
 
+#include <boost/algorithm/string.hpp>
+
 #include <core/Log.hpp>
 
 #include <core/Algorithm.hpp>
