@@ -430,7 +430,7 @@ public class History extends BasePresenter implements SelectionCommitEvent.Handl
       String commandString = getSelectedCommands();
       commandString = StringUtil.chomp(commandString);
       if (commandString.length() > 0 )
-         events_.fireEvent(new SendToConsoleEvent(commandString, false));
+         events_.fireEvent(new SendToConsoleEvent(commandString, null, false));
    }
 
    @Handler
