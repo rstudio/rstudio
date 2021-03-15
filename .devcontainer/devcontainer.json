@@ -12,6 +12,7 @@
   "extensions": [
     "ms-vscode.cpptools",
     "editorconfig.editorconfig",
+    "vscjava.vscode-java-pack",
   ],
 
   "forwardPorts": [

@@ -11,6 +11,7 @@ RUN apt-get update && \
     curl \
     gdebi-core \
     git \
+    libnss3 \
     libxml2-dev \
     locales \
     p7zip-full \
