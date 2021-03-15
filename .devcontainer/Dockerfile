@@ -29,6 +29,4 @@ RUN groupadd --gid $USER_GID $USERNAME \
     && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
     && chmod 0440 /etc/sudoers.d/$USERNAME
 
-# RUN useradd -m -s /bin/bash -N -u 1000 -g sudo rstudio && echo "rstudio:rstudio" | sudo sudo chpasswd
-
 USER ${USERNAME}
