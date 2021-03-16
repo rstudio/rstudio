@@ -58,6 +58,8 @@ test_context("Errors")
 {
    test_that("Success() can be logged")
    {
+      // attempts to log default-constructed Error objects could segfault
+      // https://github.com/rstudio/rstudio/issues/9113
       Error error;
       LOG_ERROR(error);
       LOG_ERROR(Success());
