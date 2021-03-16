@@ -13,6 +13,8 @@
  *
  */
 
+#include <set>
+
 #include <core/system/Architecture.hpp>
 
 #include <core/Algorithm.hpp>
