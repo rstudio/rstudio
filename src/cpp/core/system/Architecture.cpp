@@ -55,7 +55,9 @@ std::string supportedArchitecturesViaFile(const core::FilePath& path)
             archs.insert(arch);
    }
 
-   return core::algorithm::join(archs, " ");
+   return core::algorithm::join(
+            std::vector<std::string>(archs.begin(), archs.end()),
+            " ");
 }
 
 std::string supportedArchitecturesViaUname()

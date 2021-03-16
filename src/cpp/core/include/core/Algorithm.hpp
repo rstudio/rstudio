@@ -21,6 +21,7 @@
 #include <algorithm>
 
 #include <boost/type_traits.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include <core/Macros.hpp>
 #include <core/StringUtils.hpp>
@@ -259,23 +260,28 @@ inline std::vector<std::string> split(const std::string& string,
    return split(string, std::string(delim, N - 1));
 }
 
+inline std::string join(const std::vector<std::string>& container, const std::string& delim)
+{
+   return boost::algorithm::join(container, delim);
+}
+
+
 template <typename Iterator, typename F>
 inline std::string join(Iterator begin,
                         Iterator end,
                         const std::string& delim,
                         F&& f)
 {
-   if (begin == end)
+   if (begin >= end)
       return std::string();
    
-   std::string result = f(*begin);
-
-   for (Iterator it = std::next(begin); it != end; ++it)
+   std::string result;
+   result += f(*begin);
+   for (Iterator it = begin + 1; it != end; ++it)
    {
       result += delim;
       result += f(*it);
    }
-
    return result;
    
 }
@@ -287,13 +293,6 @@ inline std::string join(Iterator begin,
 {
    auto callback = [](const std::string& string) { return string; };
    return join(begin, end, delim, std::move(callback));
-}
-
-template <typename Container, typename Delim>
-inline std::string join(const Container& container,
-                        const Delim& delim)
-{
-   return join(container.begin(), container.end(), delim);
 }
 
 } // namespace algorithm
