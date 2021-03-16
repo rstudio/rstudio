@@ -38,7 +38,7 @@ RSTUDIO_VERSION_ARRAY=(
 RSTUDIO_VERSION_FULL=$(IFS="."; echo "${RSTUDIO_VERSION_ARRAY[*]}")
 
 # include Pro version suffix if provided
-if [ -n "${RSTUDIO_VERSION_SUFFIX}" ]; then
+if [ -n "${RSTUDIO_VERSION_SUFFIX}" ] && [ "${RSTUDIO_VERSION_SUFFIX}" != "0" ]; then
    RSTUDIO_VERSION_FULL+="-${RSTUDIO_VERSION_SUFFIX}"
 fi
 
