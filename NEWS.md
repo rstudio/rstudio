@@ -91,6 +91,7 @@
 * Fixed issue where C++ compilation database was not invalidated when compiler was updated (#8588)
 * Fixed issue where SQL chunks containing non-ASCII characters could fail to run on Windows (#8900)
 * Fixed issue where 'case:' statements were not outdented when rainbow parentheses were active. (#8846)
+* Fixed issue where Stan completion handlers were duplicated on save (#9106)
 * Improved checks for non-writable R library paths on startup (Pro #2184)
 * Fixed issue preventing R Notebook chunks from being queued for execution if they had never been previously run (#4238)
 * Fix various issues when the "Limit Console Output" performance setting was enabled, and enable it by default (#8544, #8504, #8529, #8552)
