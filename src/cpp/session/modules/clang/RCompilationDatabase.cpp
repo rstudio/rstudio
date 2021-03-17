@@ -977,10 +977,30 @@ std::vector<std::string> RCompilationDatabase::argsForRCmdSHLIB(
 std::vector<std::string> RCompilationDatabase::baseCompilationArgs(bool isCpp)
                                                                           const
 {
-   std::vector<std::string> args = clang().compileArgs(isCpp);
+   std::vector<std::string> args;
 
-   // add system include headers as reported by compiler
+   // add built-in clang compiler headers
+   // (not required with Rtools40; libclang can just use those headers)
+   if (r::version_info::currentRVersion().versionMajor() < 4)
+   {
+      auto clArgs = clang().compileArgs(isCpp);
+      args.insert(args.end(), clArgs.begin(), clArgs.end());
+   }
+
+#ifdef _WIN32
+   // disable inclusion of default system headers
+   // otherwise, libclang will discover and use headers as provided with
+   // an installation of Visual Studio (if available), and those headers
+   // may not be compatible with the Rtools headers
+   args.push_back("-nostdinc");
+
+   // add Rtools headers
+   auto rtArgs = rToolsArgs();
+   args.insert(args.end(), rtArgs.begin(), rtArgs.end());
+#endif
+
 #ifndef _WIN32
+   // add system include headers as reported by compiler
    std::vector<std::string> includes;
    discoverSystemIncludePaths(&includes);
    for (auto include : includes)
