@@ -979,13 +979,20 @@ std::vector<std::string> RCompilationDatabase::baseCompilationArgs(bool isCpp)
 {
    std::vector<std::string> args;
 
+
+#ifdef _WIN32
    // add built-in clang compiler headers
-   // (not required with Rtools40; libclang can just use those headers)
+   // built-in headers are not required with Rtools40 (used by R 4.0.x)
    if (r::version_info::currentRVersion().versionMajor() < 4)
    {
       auto clArgs = clang().compileArgs(isCpp);
       args.insert(args.end(), clArgs.begin(), clArgs.end());
    }
+#else
+   // add built-in clang compiler headers
+   auto clArgs = clang().compileArgs(isCpp);
+   args.insert(args.end(), clArgs.begin(), clArgs.end());
+#endif
 
 #ifdef _WIN32
    // disable inclusion of default system headers
