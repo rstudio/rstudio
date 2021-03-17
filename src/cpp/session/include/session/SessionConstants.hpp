@@ -63,6 +63,8 @@
 #define kRunTestsSessionOption            "run-tests"
 #define kRunScriptSessionOption           "run-script"
 
+#define kVersionSessionOption             "version"
+
 #define kLimitSessionOption               "session-limit"
 #define kTimeoutSessionOption             "session-timeout-minutes"
 #define kTimeoutSuspendSessionOption      "session-timeout-suspend"

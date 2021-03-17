@@ -74,6 +74,7 @@
 * Add support for non-CRAN repositories when installing R packages in the background (#8946)
 * Add server homepage link and retry options to mitigate "Unable to connect to service" errors (Pro #2066)
 * Add support for commenting and uncommenting code in C (`.c` and `.h`) files (#4109, thanks to @cm421)
+* The R session binary (`rsession`) now has a `--version` option for reporting its version (Pro #2410)
 
 ### Bugfixes
 
