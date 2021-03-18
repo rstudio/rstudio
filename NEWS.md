@@ -114,4 +114,5 @@
 * Fixed issue causing RStudio Server to create `.local/share/rstudio` folder with incorrect permissions when `session-timeout-kill-hours` is set (Pro #2388)
 * Fixed issue causing `verify-installation` to exit without showing the error that caused it to do so (Pro #2399)
 * Fixed issue causing spurious "Failed to reset ACL permission mask" errors to be logged outside shared projects on some filesystems (Pro #2406)
+* Fixed issue where sending code from Python History pane would switch Console to R mode (#8693)
 

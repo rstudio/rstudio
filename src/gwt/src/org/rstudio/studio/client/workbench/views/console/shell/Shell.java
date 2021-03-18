@@ -418,7 +418,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
 
    public void onSendToConsole(final SendToConsoleEvent event)
    {
-      if (event.getLanguage().equals("Python"))
+      if (StringUtil.equals(event.getLanguage(), "Python"))
       {
          dependencyManager_.withReticulate(
                "Executing Python code",
@@ -435,10 +435,18 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
 
    private void onSendToConsoleImpl(final SendToConsoleEvent event)
    {
-      languageTracker_.adaptToLanguage(
-            event.getLanguage(),
-            () -> { sendToConsoleImpl(event); }
-            );
+      String language = event.getLanguage();
+      
+      if (StringUtil.isNullOrEmpty(language))
+      {
+         sendToConsoleImpl(event);
+      }
+      else
+      {
+         languageTracker_.adaptToLanguage(
+               language,
+               () -> sendToConsoleImpl(event));
+      }
    }
 
    private void sendToConsoleImpl(final SendToConsoleEvent event)
