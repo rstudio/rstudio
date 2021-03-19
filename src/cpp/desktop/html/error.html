@@ -48,9 +48,16 @@
             }
 
             input[type="button"] {
-                font-size: 18pt;
+                font-size: 14pt;
                 background-color: #75aadb;
                 color: #ffffff;
+                text-transform: uppercase;
+                font-weight: bold;
+                letter-spacing: 0.05em;
+                padding: 10px;
+                margin-top: 20px;
+                border: none;
+                cursor: pointer;
             }
 
             .visually-hidden {
@@ -73,6 +80,9 @@
                     return;
                 }
 
+                // Fill in the user agent
+                report.value = report.value.replace("user_agent", navigator.userAgent);
+
                 // Select all the text in the report
                 report.focus();
                 report.select();
@@ -91,6 +101,7 @@
                 if (ver) {
                     ver.innerText += "\n\n" + navigator.userAgent;
                 }
+
             });
         </script>
     </head>
@@ -162,6 +173,8 @@
 ### RStudio Version
 
 #version#
+
+user_agent
 
 ### Error message
 
