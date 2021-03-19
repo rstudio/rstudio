@@ -29,6 +29,6 @@ Please keep the below portion in your issue, and check `[x]` the applicable boxe
 
 - [ ] I have read the guide for [submitting good bug reports](https://github.com/rstudio/rstudio/wiki/Writing-Good-Bug-Reports).
 - [ ] I have installed the latest version of RStudio, and confirmed that the issue still persists.
-- [ ] If I am reporting a RStudio crash, I have included a [diagnostics report](https://support.rstudio.com/hc/en-us/articles/200321257-Running-a-Diagnostics-Report).
+- [ ] If I am reporting an RStudio crash, I have included a [diagnostics report](https://support.rstudio.com/hc/en-us/articles/200321257-Running-a-Diagnostics-Report).
 - [ ] I have done my best to include a minimal, self-contained set of instructions for consistently reproducing the issue.
 

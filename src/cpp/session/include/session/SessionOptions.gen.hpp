@@ -44,6 +44,7 @@ protected:
    buildOptions(boost::program_options::options_description* pTests,
                 boost::program_options::options_description* pScript,
                 boost::program_options::options_description* pVerify,
+                boost::program_options::options_description* pVersion,
                 boost::program_options::options_description* pProgram,
                 boost::program_options::options_description* pLog,
                 boost::program_options::options_description* pDocs,
@@ -76,6 +77,11 @@ protected:
       (kVerifyInstallationSessionOption,
       value<bool>(&verifyInstallation_)->default_value(false),
       "Verifies that the session installation is working correctly and exits.");
+
+   pVersion->add_options()
+      (kVersionSessionOption,
+      value<bool>(&version_)->default_value(false)->implicit_value(true),
+      "Prints the version number and exits.");
 
    pProgram->add_options()
       (kProgramModeSessionOption,
@@ -387,6 +393,7 @@ public:
    bool runTests() const { return runTests_; }
    std::string runScript() const { return runScript_; }
    bool verifyInstallation() const { return verifyInstallation_; }
+   bool version() const { return version_; }
    std::string programMode() const { return programMode_; }
    bool logStderr() const { return logStderr_; }
    std::string docsURL() const { return docsURL_; }
@@ -482,6 +489,7 @@ protected:
    bool runTests_;
    std::string runScript_;
    bool verifyInstallation_;
+   bool version_;
    std::string programMode_;
    bool logStderr_;
    std::string docsURL_;

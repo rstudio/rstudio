@@ -174,9 +174,9 @@ class Error : public virtual ErrorLock
 {
 public:
    /**
-    * @brief Default constructor.
+    * @brief Constructor.
     */
-   Error() = default;
+   Error();
 
    /**
     * @brief Copy constructor.
@@ -427,6 +427,13 @@ public:
     */
    std::string asString() const;
 
+   /**
+    * @brief Checks whether this error was caused by a separate error.
+    *
+    * @return True if the error has an associated cause.
+    */
+   bool hasCause() const;
+   
    /**
     * @brief Gets the error which caused this error.
     *

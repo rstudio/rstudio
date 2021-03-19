@@ -137,10 +137,10 @@ void deferredRestoreNewSession()
       Error error = restoreGlobalEnvFromFile(path, &errMessage);
       if (error)
       {
-         ::REprintf(
-                  "WARNING: Failed to restore workspace from '%s' "
-                  "(an internal error occurred)\n",
-                  aliasedPath.c_str());
+         std::cerr << "WARNING: Failed to restore workspace from "
+                   << "'" << aliasedPath << "'"
+                   << " (an internal error occurred)"
+                   << std::endl;
          LOG_ERROR(error);
       }
       else if (!errMessage.empty())
@@ -150,14 +150,15 @@ void deferredRestoreNewSession()
             << "'" << aliasedPath << "'" << std::endl
             << "Reason: " << errMessage << std::endl;
          std::string message = ss.str();
-         
-         ::REprintf("%s\n", message.c_str());
+
+         std::cerr << message << std::endl;
          LOG_ERROR_MESSAGE(message);
       }
       else
       {
-         const char* fmt = "[Workspace loaded from %s]\n\n";
-         Rprintf(fmt, aliasedPath.c_str());
+         std::cout << "[Workspace loaded from " << aliasedPath << "]"
+                   << std::endl
+                   << std::endl;
       }
    }
 

@@ -364,7 +364,7 @@ Error writeToPNG(const FilePath& targetPath, DeviceContext* pDC)
 
          Error deleteError = pDC->targetPath.remove();
          if (deleteError)
-            LOG_ERROR(error);
+            LOG_ERROR(deleteError);
       }
    }
 

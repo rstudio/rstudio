@@ -1,0 +1,27 @@
+{
+  "name": "RStudio-Focal-Amd64",
+
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+
+  "settings": {
+    "terminal.integrated.shell.linux": "/bin/bash"
+  },
+
+  "extensions": [
+    "editorconfig.editorconfig",
+    "ms-vscode.cpptools",
+    "ms-azuretools.vscode-docker",
+    "twxs.cmake",
+    "vscjava.vscode-java-pack"
+  ],
+
+  "forwardPorts": [
+    8787
+  ],
+
+  "postStartCommand": "cd dependencies/linux && ./install-dependencies-debian",
+
+  "remoteUser": "rstudio"
+}
