@@ -236,7 +236,7 @@ Error getRecentSessionLogs(std::string* pLogFile, std::string *pLogContents)
    // inverse sort so most recent logs are first
    std::sort(logs.begin(), logs.end(), [](FilePath a, FilePath b)
    {
-      return a.getLastWriteTime() < b.getLastWriteTime();
+      return a.getLastWriteTime() > b.getLastWriteTime();
    });
 
    // Loop over all the log files and stop when we find a session log
