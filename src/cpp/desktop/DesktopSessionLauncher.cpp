@@ -38,6 +38,8 @@
 #include "DesktopSlotBinders.hpp"
 #include "DesktopActivationOverlay.hpp"
 
+#include "desktop-config.h"
+
 #define RUN_DIAGNOSTICS_LOG(message) if (desktop::options().runDiagnostics()) \
              std::cout << (message) << std::endl;
 
@@ -234,7 +236,7 @@ Error getRecentSessionLogs(std::string* pLogFile, std::string *pLogContents)
    // inverse sort so most recent logs are first
    std::sort(logs.begin(), logs.end(), [](FilePath a, FilePath b)
    {
-      return a.getLastWriteTime() < b.getLastWriteTime();
+      return a.getLastWriteTime() > b.getLastWriteTime();
    });
 
    // Loop over all the log files and stop when we find a session log
@@ -277,6 +279,14 @@ void SessionLauncher::showLaunchErrorPage()
    
    // String mapping of template codes to diagnostic information
    std::map<std::string,std::string> vars;
+
+   // Create version string
+   std::stringstream ss;
+   std::string gitCommit(RSTUDIO_GIT_COMMIT);
+   ss << "RStudio "  RSTUDIO_VERSION ", \"" RSTUDIO_RELEASE_NAME "\" "
+         "(" << gitCommit.substr(0, 8) << ", " RSTUDIO_BUILD_DATE ") "
+         "for " RSTUDIO_PACKAGE_OS;
+   vars["version"] = ss.str();
 
    // Collect message from the abnormal end log path
    if (abendLogPath().exists())
