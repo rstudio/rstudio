@@ -29,6 +29,7 @@
 #include <core/system/Types.hpp>
 
 namespace rstudio {
+namespace core {
 namespace unit_tests {
 
 using namespace core::collection;
@@ -52,6 +53,18 @@ private:
    std::streambuf* pCoutBuf_;
    std::streambuf* pCerrBuf_;
 };
+
+test_context("Errors")
+{
+   test_that("Success() can be logged")
+   {
+      // attempts to log default-constructed Error objects could segfault
+      // https://github.com/rstudio/rstudio/issues/9113
+      Error error;
+      LOG_ERROR(error);
+      LOG_ERROR(Success());
+   }
+}
 
 test_context("Position")
 {
@@ -277,4 +290,5 @@ test_context("Options")
 }
 
 } // namespace unit_tests
+} // namespace core
 } // namespace rstudio

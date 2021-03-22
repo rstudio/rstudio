@@ -44,6 +44,16 @@
             "description": "Verifies that the session installation is working correctly and exits."
          }
       ],
+      "version": [
+         {
+            "name": {"constant": "kVersionSessionOption", "value": "version"},
+            "memberName": "version_",
+            "type": "bool",
+            "defaultValue": false,
+            "implicitValue": true,
+            "description": "Prints the version number and exits."
+         }
+      ],
       "program": [
          {
             "name": {"constant": "kProgramModeSessionOption", "value": "program-mode"},

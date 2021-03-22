@@ -13,6 +13,8 @@
  *
  */
 
+#include <set>
+
 #include <core/system/Architecture.hpp>
 
 #include <core/Algorithm.hpp>
@@ -22,22 +24,42 @@ namespace rstudio {
 namespace core {
 namespace system {
 
-std::string supportedArchitecturesViaLipo(const core::FilePath& path)
+std::string supportedArchitecturesViaFile(const core::FilePath& path)
 {
    using namespace core::system;
 
    ProcessOptions options;
    ProcessResult result;
 
-   std::vector<std::string> args = { "-archs", path.getAbsolutePath() };
-   Error error = runProgram("/usr/bin/lipo", args, options, &result);
+   std::vector<std::string> args = { "--", path.getAbsolutePath() };
+   Error error = runProgram("/usr/bin/file", args, options, &result);
    if (error)
    {
       LOG_ERROR(error);
       return {};
    }
 
-   return core::string_utils::trimWhitespace(result.stdOut);
+   std::vector<std::string> lines =
+         core::algorithm::split(result.stdOut, "\n");
+
+   std::set<std::string> archs;
+
+   for (std::string line : lines)
+   {
+      // trim leading filename if present
+      auto idx = line.find(':');
+      if (idx != std::string::npos)
+         line = line.substr(idx + 1);
+
+      // check for known architectures
+      for (auto&& arch : { "x86_64", "arm64" })
+         if (line.find(arch) != std::string::npos)
+            archs.insert(arch);
+   }
+
+   return core::algorithm::join(
+            std::vector<std::string>(archs.begin(), archs.end()),
+            " ");
 }
 
 std::string supportedArchitecturesViaUname()
@@ -67,13 +89,7 @@ std::string supportedArchitectures(const core::FilePath& path)
 
 #elif defined(__APPLE__)
 
-   // if lipo is available, use it to infer the architecture; otherwise,
-   // fall back to default uname implementation
-   FilePath lipoPath("/usr/bin/lipo");
-   if (lipoPath.exists())
-      return supportedArchitecturesViaLipo(path);
-   else
-      return supportedArchitecturesViaUname();
+   return supportedArchitecturesViaFile(path);
 
 #else
 
