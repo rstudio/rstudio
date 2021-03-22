@@ -43,7 +43,6 @@ RUN apt-get update && \
     locales \
     lsof \
     ninja-build \
-    openjdk-8-jdk \
     p7zip-full \
     patchelf \
     pkg-config \
@@ -65,8 +64,10 @@ ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Java 8 (not in official repo for focal)
-RUN add-apt-repository -y ppa:openjdk-r/ppa && apt-get update && apt-get -y install openjdk-8-jdk
+# Java 8 and 11 (not in official repo for focal)
+RUN add-apt-repository -y ppa:openjdk-r/ppa && \
+    apt-get update && \
+    apt-get install -y openjdk-8-jdk openjdk-11-jdk
 RUN update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
 
 # Create the user
