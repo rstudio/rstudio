@@ -556,7 +556,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="rstudioCommunityForum"/>
          <cmd refid="rstudioSupport"/>
          <separator/>
-         <menu label="_Cheatsheets">
+         <menu label="_Cheat Sheets">
             <cmd refid="openRStudioIDECheatSheet"/>'
             <cmd refid="openDataTransformationCheatSheet"/>
             <cmd refid="openDataVisualizationCheatSheet"/>
@@ -2202,8 +2202,8 @@ well as menu structures (for main menu and popup menus).
          context="help"/>
 
     <cmd id="browseCheatSheets"
-         menuLabel="_Browse Cheatsheets..."
-         desc="Browse available cheatsheets in your web browser"
+         menuLabel="_Browse Cheat Sheets..."
+         desc="Browse available cheat sheets in your web browser"
          context="help"/>
 
    <cmd id="knitDocument"
