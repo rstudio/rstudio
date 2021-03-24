@@ -2174,6 +2174,7 @@ int main (int argc, char * const argv[])
       rOptions.packratEnabled = persistentState().settings().getBool("packratEnabled");
       rOptions.sessionScope = options.sessionScope();
       rOptions.runScript = options.runScript();
+      rOptions.suspendOnIncompleteStatement = options.suspendOnIncompleteStatement();
 
       // r callbacks
       rstudio::r::session::RCallbacks rCallbacks;
