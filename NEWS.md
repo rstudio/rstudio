@@ -27,6 +27,7 @@
 * Added support for code-server 3.4.0+ (Pro # 1984)
 * Added a new user settings template file for VSCode settings to allow administrators to specify a default user configuration for VSCode sessions (Pro #2014)
 * Improved a Slurm Session Launch Delay that may occur due to buffering when using Slurm job steps (Pro #2331)
+* Add support for using OpenID and SAML authentication schemes when a proxy is required for outbound requests (Pro #2427)
 * Set environment variables `RS_URI_SCHEME`, `RS_SESSION_URL`, and `RS_HOME_URL` when VSCode is launched (Pro #2346)
 * Updated LimeLM TurboActivate and TurboFloat to v4.4.3.
 * Improved R session diagnostic logging; now records all instances of a session (Pro #2268)
@@ -36,6 +37,7 @@
 * **BREAKING:** RStudio when served via `http` erroneously reported its own address as `https` during redirects if the header `X-Forwarded-Proto` was defined by a proxy. That could lead to a confusing proxy setup. That has been fixed, but existing proxy installations with redirect rewite settings matching for `https` may have to be adjusted.
 * **BREAKING:** RStudio Workbench's Linux packages have new file names, `rstudio-workbench-*` instead of `rstudio-server-pro-*`. The operating system package name remains `rstudio-server`, so installs and upgrades will work correctly. Scripts which refer to the `.deb` or `.rpm` file names directly will need to be updated.
 * **BREAKING:** RStudio Server no longer supports Internet Explorer 11. 
+* New `env-vars` configuration file simplifies setting environment variables for the main RStudio server process.
 
 ### Visual Editor
 

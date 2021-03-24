@@ -61,11 +61,13 @@
 #include "ServerAddins.hpp"
 #include "ServerBrowser.hpp"
 #include "ServerEval.hpp"
+#include "ServerEnvVars.hpp"
 #include "ServerInit.hpp"
 #include "ServerMeta.hpp"
 #include "ServerOffline.hpp"
 #include "ServerPAMAuth.hpp"
 #include "ServerREnvironment.hpp"
+#include "ServerXdgVars.hpp"
 
 using namespace rstudio;
 using namespace rstudio::core;
@@ -323,9 +325,27 @@ bool reloadLoggingConfiguration()
    return !static_cast<bool>(error);
 }
 
+bool reloadEnvConfiguration()
+{
+   LOG_INFO_MESSAGE("Reloading environment configuration...");
+   Error error = env_vars::initialize();
+   if (error)
+   {
+      LOG_ERROR_MESSAGE("Failed to reload environment configuration");
+      LOG_ERROR(error);
+   }
+   else
+   {
+      LOG_INFO_MESSAGE("Successfully reloaded environment configuration");
+   }
+
+   return !static_cast<bool>(error);
+}
+
 void reloadConfiguration()
 {
    bool success = reloadLoggingConfiguration();
+   success = reloadEnvConfiguration() && success;
    success = overlay::reloadConfiguration() && success;
 
    if (success)
@@ -700,6 +720,19 @@ int main(int argc, char * const argv[])
          // add a monitor log writer
          core::log::addLogDestination(
             monitor::client().createLogDestination(core::log::LogLevel::WARN, kProgramIdentity));
+      }
+
+      // initialize XDG var insertion
+      error = xdg_vars::initialize();
+      if (error)
+         return core::system::exitFailure(error, ERROR_LOCATION);
+
+      // initialize environment variables
+      error = env_vars::initialize();
+      if (error)
+      {
+         // error loading env vars is non-fatal
+         LOG_ERROR(error);
       }
 
       // overlay may replace this
