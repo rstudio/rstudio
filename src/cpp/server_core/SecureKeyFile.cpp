@@ -31,6 +31,8 @@ core::Error readSecureKeyFile(const FilePath& secureKeyPath,
    // read file if it already exists
    if (secureKeyPath.exists())
    {
+      LOG_DEBUG_MESSAGE("Using secure key file: \"" + secureKeyPath.getAbsolutePath() + "\"");
+
       // read the key
       std::string secureKey;
       core::Error error = core::readStringFromFile(secureKeyPath, &secureKey);
@@ -61,6 +63,8 @@ core::Error readSecureKeyFile(const FilePath& secureKeyPath,
       core::Error error = secureKeyPath.getParent().ensureDirectory();
       if (error)
          return error;
+
+      LOG_DEBUG_MESSAGE("Creating secure key file at: \"" + secureKeyPath.getAbsolutePath() + "\"");
 
       // attempt to write it
       error = writeStringToFile(secureKeyPath, secureKey);
