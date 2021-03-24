@@ -27,8 +27,9 @@
 * Added support for code-server 3.4.0+ (Pro # 1984)
 * Added a new user settings template file for VSCode settings to allow administrators to specify a default user configuration for VSCode sessions (Pro #2014)
 * Improved a Slurm Session Launch Delay that may occur due to buffering when using Slurm job steps (Pro #2331)
-* Set enviornment variables `RS_URI_SCHEME`, `RS_SESSION_URL`, and `RS_HOME_URL` when VSCode is launched (Pro #2346)
+* Set environment variables `RS_URI_SCHEME`, `RS_SESSION_URL`, and `RS_HOME_URL` when VSCode is launched (Pro #2346)
 * Updated LimeLM TurboActivate and TurboFloat to v4.4.3.
+* Improved R session diagnostic logging; now records all instances of a session (Pro #2268)
 
 ### RStudio Server
 
@@ -75,6 +76,7 @@
 * Add server homepage link and retry options to mitigate "Unable to connect to service" errors (Pro #2066)
 * Add support for commenting and uncommenting code in C (`.c` and `.h`) files (#4109, thanks to @cm421)
 * The R session binary (`rsession`) now has a `--version` option for reporting its version (Pro #2410)
+* RStudio Desktop startup diagnostics now include the RStudio version/platform and an option to copy to plain text (#6628, #9117)
 
 ### Bugfixes
 
