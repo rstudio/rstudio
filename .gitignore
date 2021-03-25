@@ -27,7 +27,13 @@ NEWS.html
 CONTRIBUTING.html
 CMakeLists.txt.user
 .idea/
-.vscode/
+
+# Blacklist most .vscode settings as user-specific
+**/.vscode/
+
+# Whitelist any that are useful to share
+!.vscode/extensions.json
+
 **/\.tern-port
 .#*
 *.autosave
