@@ -223,46 +223,35 @@ void verifyUserDirs(
    const boost::optional<FilePath>& homeDir)
 {
 #ifndef _WIN32
-   auto testDir = [](const FilePath& dir, const ErrorLocation& errorLoc)
+   auto testDir = [](const FilePath& dir)
    {
       Error error, permError;
       if (dir.exists())
       {
-         error = dir.testWritePermissions();
+         bool writeable = false;
+         // Test the directory for write access; this just checks the directory itself for a write
+         // access bit. 
+         error = dir.isWriteable(writeable);
          if (error)
          {
-            permError = Error(
-               error.getName(),
-               error.getCode(),
-               "Missing write permissions to " + dir.getAbsolutePath() + ". Some features may not work correctly.",
-               ERROR_LOCATION);
-
-
-            // It is unlikely that we'll be able to correct the permissions on the folder given that we don't have write
-            // permissions to it, but it doesn't hurt to try.
-            system::User currUser;
-            error = system::User::getUserFromIdentifier(system::username(), currUser);
-            if (!error)
-               error = dir.changeOwnership(currUser, true);
+            // We couldn't even read the directory's access bits
+            LOG_WARNING_MESSAGE("Could not access " + dir.getAbsolutePath() + " to check write "
+                  "permissions. Some features may not work correctly.");
+            LOG_ERROR(error);
          }
-      }
-
-      if (error)
-      {
-         std::string message;
-         message.append("Unable to access \"")
-            .append(dir.getAbsolutePath())
-            .append("\":\n  ")
-            .append(error.asString());
-         if (permError)
-            message.append("\n  ").append(permError.asString());
-
-         log::logWarningMessage(message, ERROR_LOCATION);
+         else if (!writeable)
+         {
+            // We determined that the directory was not writable. There's nothing we can do to
+            // correct this, so just log a warning to help diagnose downstream failures (which are
+            // virtually guaranteed).
+            LOG_WARNING_MESSAGE("Missing write permissions to " + dir.getAbsolutePath() + 
+                  ". Some features may not work correctly.");
+         }
       }
    };
 
-   testDir(userConfigDir(user, homeDir), ERROR_LOCATION);
-   testDir(userDataDir(user, homeDir), ERROR_LOCATION);
+   testDir(userConfigDir(user, homeDir));
+   testDir(userDataDir(user, homeDir));
 #endif
 }
 
