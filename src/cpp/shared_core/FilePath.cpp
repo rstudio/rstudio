@@ -1570,6 +1570,14 @@ void FilePath::setLastWriteTime(std::time_t in_time) const
 
 Error FilePath::testWritePermissions() const
 {
+   // This check only works on ordinary files; it is an error to use it on directories.
+   if (isDirectory())
+   {
+      Error error = systemError(boost::system::errc::is_a_directory, ERROR_LOCATION);
+      error.addProperty("path", getAbsolutePath());
+      return error;
+   }
+
    std::ostream* pStream = nullptr;
    try
    {
