@@ -37,6 +37,7 @@
 * **BREAKING:** RStudio when served via `http` erroneously reported its own address as `https` during redirects if the header `X-Forwarded-Proto` was defined by a proxy. That could lead to a confusing proxy setup. That has been fixed, but existing proxy installations with redirect rewite settings matching for `https` may have to be adjusted.
 * **BREAKING:** RStudio Workbench's Linux packages have new file names, `rstudio-workbench-*` instead of `rstudio-server-pro-*`. The operating system package name remains `rstudio-server`, so installs and upgrades will work correctly. Scripts which refer to the `.deb` or `.rpm` file names directly will need to be updated.
 * **BREAKING:** RStudio Server no longer supports Internet Explorer 11. 
+* Added `session-suspend-on-incomplete-statement` option to enable more aggressive session suspension behavior (Pro #1934)
 * New `env-vars` configuration file simplifies setting environment variables for the main RStudio server process.
 
 ### Visual Editor
