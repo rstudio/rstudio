@@ -17,6 +17,7 @@ package org.rstudio.core.client.files.filedialog;
 import com.google.gwt.aria.client.DialogRole;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -65,12 +66,22 @@ public abstract class FileDialog extends FileSystemDialog
     */
    protected boolean shouldAccept()
    {
-      browser_.setFilename(browser_.getFilename().trim());
-
-      String filename = browser_.getFilename();
-
+      // It's possible the user has typed the name of a file, but hasn't
+      // actually selected a file in the browser. If the user has typed
+      // a filename, then prefer using that over what the previously
+      // selected file might have been.
+      //
+      // Note that selecting an item in the file widget will also update
+      // the browser filename.
+      String filename = browser_.getFilename().trim();
+      if (StringUtil.isNullOrEmpty(filename))
+         filename = browser_.getSelectedValue().trim();
+      
       if (filename.length() == 0)
          return false;
+      
+      // Make sure the browser's notion of the filename is in sync.
+      browser_.setFilename(filename);
 
       int lastIndex = filename.lastIndexOf('/');
       if (lastIndex >= 0)
@@ -107,8 +118,9 @@ public abstract class FileDialog extends FileSystemDialog
       if (navigateIfDirectory())
          return false;
 
-      boolean useExactFilename = browser_.getSelectedValue() != null
-            && browser_.getSelectedValue() == filename;
+      boolean useExactFilename =
+            browser_.getSelectedValue() != null &&
+            browser_.getSelectedValue() == filename;
 
       if (!useExactFilename || getAlwaysMungeFilename())
       {
