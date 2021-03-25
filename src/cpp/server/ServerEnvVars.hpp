@@ -1,5 +1,5 @@
 /*
- * ServerXdgVars.cpp
+ * ServerEnvVars.hpp
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -13,33 +13,27 @@
  *
  */
 
-#include "ServerXdgVars.hpp"
+#ifndef SERVER_ENV_VARS_HPP
+#define SERVER_ENV_VARS_HPP
 
-#include <core/system/Xdg.hpp>
+#include <core/system/Types.hpp>
 
-#include <server/ServerSessionManager.hpp>
-
-using namespace rstudio::core;
+namespace rstudio {
+namespace core {
+   class Error;
+}
+}
 
 namespace rstudio {
 namespace server {
-namespace xdg_vars {
+namespace env_vars {
 
-namespace {
+core::Error initialize();
 
-void sessionProfileFilter(core::r_util::SessionLaunchProfile* pProfile)
-{
-   core::system::xdg::forwardXdgEnvVars(&(pProfile->config.environment));
-}
+void forwardHttpProxyVars(core::system::Options *pEnvironment);
 
-} // anonymous namespace
-
-Error initialize()
-{
-   sessionManager().addSessionLaunchProfileFilter(sessionProfileFilter);
-   return Success();
-}
-
-} // namespace xdg_vars
+} // namespace env_vars
 } // namespace server
 } // namespace rstudio
+
+#endif // SERVER_ENV_VARS_HPP
