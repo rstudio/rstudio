@@ -13,7 +13,6 @@
     "editorconfig.editorconfig",
     "ms-vscode.cpptools",
     "ms-vscode.cmake-tools",
-    "ms-azuretools.vscode-docker",
     "twxs.cmake",
     "vscjava.vscode-java-pack"
   ],
