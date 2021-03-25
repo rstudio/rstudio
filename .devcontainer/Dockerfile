@@ -52,6 +52,7 @@ RUN apt-get update && \
     software-properties-common \
     sudo \
     unzip \
+    uuid \
     uuid-dev \
     valgrind \
     wget \
