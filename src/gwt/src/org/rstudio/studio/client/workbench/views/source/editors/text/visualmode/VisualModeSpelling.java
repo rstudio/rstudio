@@ -189,35 +189,37 @@ public class VisualModeSpelling extends SpellingContext
       PanmirrorUISpelling uiSpelling = new PanmirrorUISpelling();
       
       uiSpelling.realtimeEnabled = () -> {
-         return typo().realtimeSpellcheckEnabled(); 
+         return spellChecker().realtimeSpellcheckEnabled();
       };
       
       uiSpelling.checkWord = (word) -> {
-         if (typo().shouldCheckWord(word))
-            return typo().checkSpelling(word);
-         else
-            return true;
+         return true;
+//         if (typo().shouldCheckWord(word))
+//            return typo().checkSpelling(word);
+//         else
+//            return true;
       };
       
       uiSpelling.suggestionList = (word) -> {
-        String[] suggestions = typo().suggestionList(word);
-        return new JsArray<>(suggestions);
+         return new JsArray<>(new String[] {});
+//        String[] suggestions = typo().suggestionList(word);
+//        return new JsArray<>(suggestions);
       };
       
       uiSpelling.isWordIgnored = (word) -> {
-        return typo().isIgnoredWord(word); 
+        return spellChecker().isIgnoredWord(word);
       };
       
       uiSpelling.ignoreWord = (word) -> {
-         typo().addIgnoredWord(word);
+         spellChecker().addIgnoredWord(word);
       };
       
       uiSpelling.unignoreWord = (word) -> {
-         typo().removeIgnoredWord(word);
+         spellChecker().removeIgnoredWord(word);
       };
       
       uiSpelling.addToDictionary = (word) -> {
-         typo().addToUserDictionary(word);
+         spellChecker().addToUserDictionary(word);
       };
       
       uiSpelling.breakWords = (String text) -> {
@@ -241,13 +243,13 @@ public class VisualModeSpelling extends SpellingContext
             // set start of word
             int wordStart = pos++;
             
-            // consume until a non-word is encourted
+            // consume until a non-word is encountered
             while (pos < text.length() && classifier.classify(text.charAt(pos)) != CharClass.NonWord)
             {
                pos++;
             }
             
-            // back over boundary (e.g. apostrophie) characters
+            // back over boundary (e.g. apostrophe) characters
             while (classifier.classify(text.charAt(pos - 1)) == CharClass.Boundary)
             {
                pos--;

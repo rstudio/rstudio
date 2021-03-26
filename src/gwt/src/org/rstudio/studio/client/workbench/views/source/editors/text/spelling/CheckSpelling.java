@@ -28,7 +28,7 @@ import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.common.spelling.TypoSpellChecker;
+import org.rstudio.studio.client.common.spelling.RealtimeSpellChecker;
 import org.rstudio.studio.client.common.spelling.model.SpellCheckerResult;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -75,13 +75,13 @@ public class CheckSpelling
       HasClickHandlers getCancelButton();
    }
 
-   public CheckSpelling(TypoSpellChecker spellChecker,
+   public CheckSpelling(RealtimeSpellChecker spellChecker,
                         SpellingDoc spellingDoc,
                         Display view,
                         ProgressDisplay progressDisplay,
                         ResultCallback<Void, Exception> callback)
    {
-      typoSpellChecker_ = spellChecker;
+      realtimeSpellChecker_ = spellChecker;
       spellingDoc_ = spellingDoc;
       view_ = view;
       progressDisplay_ = progressDisplay;
@@ -116,14 +116,14 @@ public class CheckSpelling
 
       view_.getIgnoreAllButton().addClickHandler((ClickEvent event) ->
       {
-         typoSpellChecker_.addIgnoredWord(view_.getMisspelledWord().getText());
+         realtimeSpellChecker_.addIgnoredWord(view_.getMisspelledWord().getText());
          currentPos_ = spellingDoc_.getCursorPosition() + 1;
          findNextMisspelling();
       });
 
       view_.getAddButton().addClickHandler((ClickEvent event) ->
       {
-         typoSpellChecker_.addToUserDictionary(view_.getMisspelledWord().getText());
+         realtimeSpellChecker_.addToUserDictionary(view_.getMisspelledWord().getText());
          currentPos_ = spellingDoc_.getCursorPosition() + 1;
          findNextMisspelling();
       });
@@ -182,7 +182,7 @@ public class CheckSpelling
             // of the last word that we iterated over)
             lastWord = w;
           
-            if (!typoSpellChecker_.shouldCheckSpelling(spellingDoc_, w))
+            if (!realtimeSpellChecker_.shouldCheckSpelling(spellingDoc_, w))
                continue;
 
             checkWords.add(w);
@@ -196,7 +196,7 @@ public class CheckSpelling
          if (checkWords.size() > 0)
          {
             final int endCheckedPos = lastWord.end;
-            typoSpellChecker_.checkSpelling(words, new SimpleRequestCallback<SpellCheckerResult>()
+            realtimeSpellChecker_.checkWords(words, new SimpleRequestCallback<SpellCheckerResult>()
             {
                @Override
                public void onResponseReceived(SpellCheckerResult response)
@@ -321,43 +321,27 @@ public class CheckSpelling
 
             view_.focusReplacement();
 
-            // If Typo isn't loaded or isn't able to load (blacklisted dictionary)
-            // just defer to the async backend dictionary. Once we can load all dictionaries
-            // the legacy code can be removed.
-            if (TypoSpellChecker.isLoaded())
+            realtimeSpellChecker_.suggestionList(word, new ServerRequestCallback<JsArrayString>()
             {
-               String[] suggestions = typoSpellChecker_.suggestionList(word);
-               view_.setSuggestions(suggestions);
-               if (suggestions.length > 0)
+               @Override
+               public void onResponseReceived(
+                  JsArrayString response)
                {
-                  view_.getReplacement().setText(suggestions[0]);
-                  view_.focusReplacement();
+                  String[] suggestions = JsUtil.toStringArray(response);
+                  view_.setSuggestions(suggestions);
+                  if (suggestions.length > 0)
+                  {
+                     view_.getReplacement().setText(suggestions[0]);
+                     view_.focusReplacement();
+                  }
                }
-            }
-            else
-            {
-               typoSpellChecker_.legacySuggestionList(word, new ServerRequestCallback<JsArrayString>()
-               {
-                  @Override
-                  public void onResponseReceived(
-                     JsArrayString response)
-                  {
-                     String[] suggestions = JsUtil.toStringArray(response);
-                     view_.setSuggestions(suggestions);
-                     if (suggestions.length > 0)
-                     {
-                        view_.getReplacement().setText(suggestions[0]);
-                        view_.focusReplacement();
-                     }
-                  }
 
-                  @Override
-                  public void onError(ServerError error)
-                  {
-                     Debug.logError(error);
-                  }
-               });
-            }
+               @Override
+               public void onError(ServerError error)
+               {
+                 Debug.logError(error);
+               }
+            });
 
             return false;
          }, 100);
@@ -373,7 +357,7 @@ public class CheckSpelling
       }
    }
 
-   private final TypoSpellChecker typoSpellChecker_;
+   private final RealtimeSpellChecker realtimeSpellChecker_;
    private final SpellingDoc spellingDoc_;
    private final Display view_;
    private final ProgressDisplay progressDisplay_;
