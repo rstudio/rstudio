@@ -223,7 +223,7 @@ void verifyUserDirs(
    const boost::optional<FilePath>& homeDir)
 {
 #ifndef _WIN32
-   auto testDir = [](const FilePath& dir)
+   auto testDir = [](const FilePath& dir, const ErrorLocation& errorLoc)
    {
       Error error, permError;
       if (dir.exists())
@@ -235,23 +235,25 @@ void verifyUserDirs(
          if (error)
          {
             // We couldn't even read the directory's access bits
-            LOG_WARNING_MESSAGE("Could not access " + dir.getAbsolutePath() + " to check write "
-                  "permissions. Some features may not work correctly.");
-            LOG_ERROR(error);
+            rstudio::core::log::logWarningMessage("Could not access " + dir.getAbsolutePath() + 
+                  " to check write " "permissions. Some features may not work correctly.",
+                  errorLoc);
+            rstudio::core::log::logError(error, errorLoc);
          }
          else if (!writeable)
          {
             // We determined that the directory was not writable. There's nothing we can do to
             // correct this, so just log a warning to help diagnose downstream failures (which are
             // virtually guaranteed).
-            LOG_WARNING_MESSAGE("Missing write permissions to " + dir.getAbsolutePath() + 
-                  ". Some features may not work correctly.");
+            rstudio::core::log::logWarningMessage("Missing write permissions to " + 
+                  dir.getAbsolutePath() + ". Some features may not work correctly.",
+                  errorLoc);
          }
       }
    };
 
-   testDir(userConfigDir(user, homeDir));
-   testDir(userDataDir(user, homeDir));
+   testDir(userConfigDir(user, homeDir), ERROR_LOCATION);
+   testDir(userDataDir(user, homeDir), ERROR_LOCATION);
 #endif
 }
 
