@@ -24,7 +24,7 @@
 #include <core/Algorithm.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/Database.hpp>
-#include <core/Hash.hpp>
+#include <shared_core/Hash.hpp>
 
 #include <core/system/Process.hpp>
 

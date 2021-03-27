@@ -18,7 +18,7 @@
 #include <boost/bind/bind.hpp>
 
 #include <shared_core/Error.hpp>
-#include <core/Hash.hpp>
+#include <shared_core/Hash.hpp>
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/json/JsonRpc.hpp>

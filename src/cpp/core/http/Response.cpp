@@ -29,7 +29,7 @@
 #include <core/http/URL.hpp>
 #include <core/http/Util.hpp>
 #include <core/http/Cookie.hpp>
-#include <core/Hash.hpp>
+#include <shared_core/Hash.hpp>
 #include <core/RegexUtils.hpp>
 #include <core/FileSerializer.hpp>
 

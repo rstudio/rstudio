@@ -43,7 +43,6 @@ set(CORE_SOURCE_FILES
    FileSerializer.cpp
    FileUtils.cpp
    GitGraph.cpp
-   Hash.cpp
    HtmlUtils.cpp
    Log.cpp
    LogOptions.cpp
