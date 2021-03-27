@@ -29,7 +29,7 @@
 #include <core/FileInfo.hpp>
 #include <core/Log.hpp>
 #include <core/Base64.hpp>
-#include <core/Hash.hpp>
+#include <shared_core/Hash.hpp>
 #include <core/Settings.hpp>
 #include <core/DateTime.hpp>
 #include <core/FileSerializer.hpp>

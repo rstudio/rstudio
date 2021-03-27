@@ -18,7 +18,7 @@
 #include <shared_core/Error.hpp>
 #include <shared_core/json/Json.hpp>
 
-#include <core/Hash.hpp>
+#include <shared_core/Hash.hpp>
 
 #include <core/FileSerializer.hpp>
 

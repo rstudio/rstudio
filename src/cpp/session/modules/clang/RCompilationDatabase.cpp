@@ -24,7 +24,7 @@
 #include <boost/algorithm/string/trim_all.hpp>
 
 #include <core/Debug.hpp>
-#include <core/Hash.hpp>
+#include <shared_core/Hash.hpp>
 #include <core/Algorithm.hpp>
 #include <core/PerformanceTimer.hpp>
 #include <core/FileSerializer.hpp>

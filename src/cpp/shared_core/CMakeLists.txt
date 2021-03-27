@@ -33,6 +33,7 @@ set (SHARED_CORE_SOURCE_FILES
    Error.cpp
    FileLogDestination.cpp
    FilePath.cpp
+   Hash.cpp
    Logger.cpp
    ReaderWriterMutex.cpp
    StderrLogDestination.cpp
