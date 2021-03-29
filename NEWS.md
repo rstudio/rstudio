@@ -1,13 +1,13 @@
-## RStudio 1.4 "Tiger Daylily"
+## RStudio 1.4 "Black Eyed Susan"
 
 ### Bugfixes
 
-* Fixed issue where R code input could be executed in the wrong order in some cases (#8837)
-* Fixed issue where default initial working directory was incorrectly set to a project directory (#8683)
-* Fixed issue causing the second inline equation in a paragraph to fail to render in visual editing mode (#8810)
-* Fixed issue where session source database sentinel file was not being written correctly when the session is suspended (#8903)
+* Fixed an issue causing slow session startup and "Unable to connect to service" errors on RStudio Server (#9152)
+* Fixed issue causing Project Sharing to fail to set Access Control Lists when using NFS v4 and `username@domain` security principals (Pro #2415)
+* Fixed issue causing `verify-installation` to exit without showing the error that caused it to do so (Pro #2399)
+* Add server homepage link and retry options to mitigate "Unable to connect to service" errors (Pro #2066)
+* Fixed issue causing RStudio Server to create `.local/share/rstudio` folder with incorrect permissions when `session-timeout-kill-hours` is set (Pro #2388)
+* Fixed issue causing spurious "Failed to reset ACL permission mask" errors to be logged outside shared projects on some filesystems (Pro #2406)
+* Improved R session diagnostic logging; now records all instances of a session (Pro #2268)
 
-### Misc
 
-* Update Pandoc to 2.11.4 (#8848)
-* Update jQuery to 3.5.1 (Pro #2314)
