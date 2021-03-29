@@ -568,13 +568,23 @@ private:
       // pass along the current Python environment, if any
       std::string reticulatePython;
       error = r::exec::RFunction(".rs.inferReticulatePython").call(&reticulatePython);
-      if (error) {
+      if (error)
          LOG_ERROR(error);
-      }
+      
+      // pass along current PATH
+      std::string currentPath = core::system::getenv("PATH");
+      core::system::setenv(&environment, "PATH", currentPath);
+      
       if (!reticulatePython.empty())
       {
          // we found a Python version; forward it
-         environment.push_back(std::make_pair("RETICULATE_PYTHON", reticulatePython));
+         environment.push_back({"RETICULATE_PYTHON", reticulatePython});
+         
+         // also update the PATH so this version of Python is visible
+         core::system::addToPath(
+                  &environment,
+                  FilePath(reticulatePython).getParent().getAbsolutePath(),
+                  true);
       }
 
       // render unless we were handed an existing output file
