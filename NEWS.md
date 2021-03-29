@@ -84,6 +84,7 @@
 ### Bugfixes
 
 * Fixed an issue that could cause RStudio to crash when generating plots on Windows (#9113)
+* Fixed an issue causing slow session startup and "Unable to connect to service" errors on RStudio Server (#9152)
 * Fix Windows Desktop installer to support running from path with characters from other codepages (#8421)
 * Fixed issue where R code input could be executed in the wrong order in some cases (#8837)
 * Fixed issue where debugger could hang when debugging functions called via `do.call()` (#5158)
