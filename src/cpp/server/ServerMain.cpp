@@ -767,7 +767,10 @@ int main(int argc, char * const argv[])
       {
          Error error = session_proxy::runVerifyInstallationSession();
          if (error)
+         {
+            std::cerr << "Verify Installation Failed: " << error << std::endl;
             return core::system::exitFailure(error, ERROR_LOCATION);
+         }
 
          return EXIT_SUCCESS;
       }
