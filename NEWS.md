@@ -29,7 +29,7 @@
 * Improved a Slurm Session Launch Delay that may occur due to buffering when using Slurm job steps (Pro #2331)
 * Add support for using OpenID and SAML authentication schemes when a proxy is required for outbound requests (Pro #2427)
 * Set environment variables `RS_URI_SCHEME`, `RS_SESSION_URL`, and `RS_HOME_URL` when VSCode is launched (Pro #2346)
-* Updated LimeLM TurboActivate and TurboFloat to v4.4.3.
+* Updated product licensing engine (LimeLM) to TurboActivate and TurboFloat to v4.4.3.
 * Improved R session diagnostic logging; now records all instances of a session (Pro #2268)
 
 ### RStudio Server
@@ -66,7 +66,7 @@
 * Update Windows Desktop to openSSL 1.1.1i (#8574)
 * Improve ordering of items in Command Palette list and search results (#7567, #7956)
 * Update embedded Pandoc to v2.11.3.2
-* Change default per-user install folder to %LocalAppData%\Programs on Windows (#8598)
+* Change default per-user install folder to `%LocalAppData%\Programs` on Windows (#8598)
 * Detect newer plumber tags when enabling plumber integration (#8118)
 * Option to restore RStudio 1.2 tab key behavior in editor find panel; search in Command Palette for "Tab key behavior in find panel matches RStudio 1.2 and earlier" (#7295)
 * Show `.renvignore` in Files pane (#8658)
@@ -122,3 +122,4 @@
 * Fixed issue causing spurious "Failed to reset ACL permission mask" errors to be logged outside shared projects on some filesystems (Pro #2406)
 * Fixed issue where sending code from Python History pane would switch Console to R mode (#8693)
 * Fixed issue where Open File dialog would fail to open files whose names were explicitly typed (#4059)
+* Fixed issue causing Project Sharing to fail to set Access Control Lists when using NFS v4 and `username@domain` security principals (Pro #2415)
