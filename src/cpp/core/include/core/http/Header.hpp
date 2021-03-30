@@ -37,9 +37,9 @@ struct Header
    
    static Header connectionClose() { return Header("Connection", "close"); }
 };
-   
+
 typedef std::vector<Header> Headers;
-   
+
 class HeaderNamePredicate
 {
 public:
@@ -51,18 +51,18 @@ public:
 private:
    std::string name_;
 };
-   
+
 bool containsHeader(const Headers& headers, const std::string& name);
-   
-Headers::const_iterator findHeader(const Headers& headers, 
+
+Headers::const_iterator findHeader(const Headers& headers,
                                    const std::string& name);
-   
+
 std::string headerValue(const Headers& headers, const std::string& name);
-   
+std::vector<std::string> headerValues(const Headers& headers, const std::string& name);
+
 bool parseHeader(const std::string& line, Header* pHeader);
-   
+
 void parseHeaders(std::istream& is, Headers* pHeaders);
-   
 
 
 } // namespace http

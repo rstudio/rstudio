@@ -100,6 +100,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
 
    target_link_libraries(rstudio-shared-core-tests
       rstudio-shared-core
+      rstudio-core
       ${Boost_LIBRARIES}
    )
 endif()

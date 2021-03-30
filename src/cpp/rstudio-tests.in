@@ -156,6 +156,12 @@ if [ -z "$TEST_SCOPE" ] || [ "$TEST_SCOPE" == "core" ]; then
         echo Running 'server_core' tests...
         runWatchdogProcess 5m false "${CMAKE_CURRENT_BINARY_DIR}/server_core/rstudio-server-core-tests"
     fi
+
+    if [ -e ${CMAKE_CURRENT_BINARY_DIR}/shared_core/rstudio-shared-core-tests ]
+    then
+        echo Running 'shared_core' tests...
+        runWatchdogProcess 5m false "${CMAKE_CURRENT_BINARY_DIR}/shared_core/rstudio-shared-core-tests"
+    fi
 fi
 
 # Run server tests
@@ -200,7 +206,7 @@ if [ -z "$TEST_SCOPE" ] || [ "$TEST_SCOPE" == "r" ]; then
     runWatchdogProcess 5m false "${CMAKE_CURRENT_BINARY_DIR}/session/$RSTUDIO_SESSION_BIN" \
         --run-script "\"source('${CMAKE_CURRENT_SOURCE_DIR}/tests/testthat/run-tests.R'); runAllTests('${CMAKE_CURRENT_SOURCE_DIR}', '${CMAKE_CURRENT_BINARY_DIR}'$TESTTHAT_FILTER)\"" \
         --config-file="$SESSION_CONF_FILE"
-   checkRUnitTestFailure
+    checkRUnitTestFailure
 fi
 
 # return an error exit code if any unit tests failed

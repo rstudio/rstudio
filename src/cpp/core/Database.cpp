@@ -47,6 +47,22 @@ struct is_error_code_enum<soci::soci_error::error_category>
 
 namespace rstudio {
 namespace core {
+
+namespace system {
+namespace crypto {
+   // stubs for pro-only code
+   Error decryptPassword(const std::string& secureKey, const std::string& keyHash, std::string& password)
+   {
+      return Success();
+   }
+
+   bool passwordContainsKeyHash(const std::string& password)
+   {
+      return false;
+   }
+} // namespace crypto
+} // namespace system
+
 namespace database {
    const boost::system::error_category& databaseErrorCategory();
 }
@@ -371,26 +387,40 @@ public:
       return Success();
    }
 
-  Error decryptPassword(const std::string& secureKey, std::string& password) const
-   {
-      return Success();
-   }
-
    Error getPassword(const PostgresqlConnectionOptions& options, std::string& password) const
    {
       // override password from the input with the one from options if any
       if (!options.password.empty())
          password = options.password;
 
-      Error error = decryptPassword(options.secureKey, password);
+      // Somewhat convoluted due to need to handle several cases (Pro-only):
+      //
+      // (1) password without embedded encryption key; this could be a plain-text
+      //     password or an encrypted password generated before we added such embedding, but
+      //     we can't be sure without trying to decrypt and treating as plain text if that fails
+      // (2) an encrypted password with embedded key hash; if it won't decrypt, this is an error
+      //     and we don't want to treat as plain text
+      //
+      // In a future release we could simplify by assuming a password without embedded key must
+      // be plain text. Tracked in https://github.com/rstudio/rstudio-pro/issues/2446
+      // 
+
+      bool assumeEncrypted = core::system::crypto::passwordContainsKeyHash(password);
+
+      Error error = core::system::crypto::decryptPassword(options.secureKey, options.secureKeyHash, password);
       if (error)
       {
          static bool warnOnce = false;
+
+         if (assumeEncrypted)
+            return error;
+
+         // decrypt failed, we'll just use the password as-is
          if (!warnOnce)
          {
             warnOnce = true;
             LOG_DEBUG_MESSAGE(error.asString());
-            LOG_WARNING_MESSAGE("A plain text value is potentially being used for the PostgreSQL password. The RStudio Server documentation for PostgreSQL shows how to encrypt this value.");
+            LOG_WARNING_MESSAGE("A plain text value is potentially being used for the PostgreSQL password, or an encrypted password could not be decrypted. The RStudio Server documentation for PostgreSQL shows how to encrypt this value.");
          }
       }
       return Success();

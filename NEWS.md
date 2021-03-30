@@ -31,6 +31,7 @@
 * Set environment variables `RS_URI_SCHEME`, `RS_SESSION_URL`, and `RS_HOME_URL` when VSCode is launched (Pro #2346)
 * Updated product licensing engine (LimeLM) to TurboActivate and TurboFloat to v4.4.3.
 * Improved R session diagnostic logging; now records all instances of a session (Pro #2268)
+* Improved troubleshooting logging for PostgreSQL encrypted password configuration (Pro #2441)
 
 ### RStudio Server
 
