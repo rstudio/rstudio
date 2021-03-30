@@ -96,13 +96,13 @@ runWatchdogProcess() {
 
    # centos6 doesn't support the --foreground option for timeout
    if [ "${OPERATING_SYSTEM}" = "centos_6" ] || [ -z "${TIMEOUT_CMD}" ]; then
-      if [ "$privileged" = true ]; then
-         sudo /bin/bash -c "env SEGFAULT_SIGNALS='abrt segv' ${PRELOAD} $*; exit"
+      if [ "${privileged}" = "true" ]; then
+         sudo /bin/bash -c "env SEGFAULT_SIGNALS='abrt segv' ${PRELOAD} ${command} $*; exit"
       else
-         /bin/bash -c "env SEGFAULT_SIGNALS='abrt segv' ${PRELOAD} $*; exit"
+         /bin/bash -c "env SEGFAULT_SIGNALS='abrt segv' ${PRELOAD} ${command} $*; exit"
       fi
    else
-      if [ "$privileged" = true ]; then
+      if [ "${privileged}" = "true" ]; then
          sudo "${TIMEOUT_CMD}" --foreground "${timeout}" /bin/bash -c "env SEGFAULT_SIGNALS='abrt segv' ${PRELOAD} ${command} $*; exit"
       else
          "${TIMEOUT_CMD}" --foreground "${timeout}" /bin/bash -c "env SEGFAULT_SIGNALS='abrt segv' ${PRELOAD} ${command} $*; exit"
