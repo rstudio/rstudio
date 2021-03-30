@@ -223,7 +223,7 @@ try {
         for (int i = 0; i < containers.size(); i++) {
             // derive the tag for this image
             def current_image = containers[i]
-            def image_tag = "${current_image.os}-${current_image.arch}-${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}"
+            def image_tag = "${current_image.os}-${current_image.arch}-${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}-stable"
 
             // ensure that this image tag has not already been built (since we
             // recycle tags for many platforms to e.g. build desktop and server
@@ -260,7 +260,7 @@ try {
                 docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:jenkins-aws') {
                   def image_cache
                   def image_name = "jenkins/ide"
-                  def image_tag = "windows-${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}"
+                  def image_tag = "windows-${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}-stable"
                   def cache_tag = image_tag
                   def build_args = github_args
                   def docker_context = '.'
@@ -296,7 +296,7 @@ try {
                     docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:jenkins-aws') {
                         stage('prepare ws/container') {
                           prepareWorkspace()
-                          def image_tag = "${current_container.os}-${current_container.arch}-${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}"
+                          def image_tag = "${current_container.os}-${current_container.arch}-${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}-stable"
                           current_image = docker.image("jenkins/ide:" + image_tag)
                         }
                         current_image.inside("--privileged") {
@@ -323,7 +323,7 @@ try {
             stage('prepare container') {
                checkout scm
                docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:jenkins-aws') {
-                 def image_tag = "windows-${rstudioVersionMajor}.${rstudioVersionMinor}"
+                 def image_tag = "windows-${rstudioVersionMajor}.${rstudioVersionMinor}-stable"
                  windows_image = docker.image("jenkins/ide:" + image_tag)
                }
             }
