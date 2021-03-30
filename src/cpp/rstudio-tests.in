@@ -17,13 +17,6 @@ error () {
     exit 1
 }
 
-checkUnitTestFailure() {
-   RETCODE="$?"
-   if [ "${RETCODE}" = "0" ]; then
-      UNIT_TEST_FAILURE=true
-   fi
-}
-
 checkRUnitTestFailure() {
    FAILURES=$(cat "@CMAKE_CURRENT_BINARY_DIR@/testthat-failures.log")
    if [ "${FAILURES}" != "0" ]; then
@@ -94,22 +87,24 @@ runWatchdogProcess() {
       PRELOAD="LD_PRELOAD=${RSESSION_DIAGNOSTICS_LIBSEGFAULT}"
    fi
 
+   FULL_COMMAND="env SEGFAULT_SIGNALS='abrt segv' ${PRELOAD} ${command} $*; exit"
+
    # centos6 doesn't support the --foreground option for timeout
    if [ "${OPERATING_SYSTEM}" = "centos_6" ] || [ -z "${TIMEOUT_CMD}" ]; then
       if [ "${privileged}" = "true" ]; then
-         sudo /bin/bash -c "env SEGFAULT_SIGNALS='abrt segv' ${PRELOAD} ${command} $*; exit"
+         sudo /bin/bash -c "${FULL_COMMAND}"
       else
-         /bin/bash -c "env SEGFAULT_SIGNALS='abrt segv' ${PRELOAD} ${command} $*; exit"
+         /bin/bash -c "${FULL_COMMAND}"
       fi
    else
       if [ "${privileged}" = "true" ]; then
-         sudo "${TIMEOUT_CMD}" --foreground "${timeout}" /bin/bash -c "env SEGFAULT_SIGNALS='abrt segv' ${PRELOAD} ${command} $*; exit"
+         sudo "${TIMEOUT_CMD}" --foreground "${timeout}" /bin/bash -c "${FULL_COMMAND}"
       else
-         "${TIMEOUT_CMD}" --foreground "${timeout}" /bin/bash -c "env SEGFAULT_SIGNALS='abrt segv' ${PRELOAD} ${command} $*; exit"
+         "${TIMEOUT_CMD}" --foreground "${timeout}" /bin/bash -c "${FULL_COMMAND}"
       fi
    fi
 
-   RETCODE=$?
+   RETCODE="$?"
    if [ "${RETCODE}" = "124" ]; then
       # process is hanging - use gdb to collect a stack trace to find out why
       echo "Hang detected. Dumping backtrace..."
@@ -204,7 +199,7 @@ if has-scope "rserver"; then
 
    if [ -e "@CMAKE_CURRENT_BINARY_DIR@/server/rserver-tests" ]; then
       section "Running 'rserver' tests..."
-      runWatchdogProcess 5m false "@CMAKE_CURRENT_BINARY_DIR@/server/rserver-tests" -s
+      runWatchdogProcess 5m false "@CMAKE_CURRENT_BINARY_DIR@/server/rserver-tests"
    fi
 
 fi
@@ -222,7 +217,10 @@ if has-scope "rsession"; then
 
    export RS_CRASH_HANDLER_PATH="@CMAKE_CURRENT_BINARY_DIR@/server/crash-handler-proxy/crash-handler-proxy"
    export RS_CRASHPAD_HANDLER_PATH="@RSTUDIO_TOOLS_ROOT@/crashpad/crashpad/out/Default/crashpad_handler"
-   runWatchdogProcess 5m false "@CMAKE_CURRENT_BINARY_DIR@/session/${RSTUDIO_SESSION_BIN}" --run-tests --config-file="${SESSION_CONF_FILE}"
+   runWatchdogProcess 5m false                                    \
+      "@CMAKE_CURRENT_BINARY_DIR@/session/${RSTUDIO_SESSION_BIN}" \
+      --run-tests                                                 \
+      --config-file="${SESSION_CONF_FILE}"
 
 fi
 
