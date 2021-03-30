@@ -124,10 +124,9 @@ runWatchdogProcess() {
 }
 
 has-scope () {
-   [ -z "${TEST_SCOPE}" ] || "${TEST_SCOPE}" = "$1"
+   [ -z "${TEST_SCOPE}" ] || [ "${TEST_SCOPE}" = "$1" ]
 }
 
-TEST_SCOPE=
 case "$1" in
 
 "--scope")
@@ -159,11 +158,6 @@ esac
 
 # try to find libSegFault if available
 findLibSegFault
-
-# help our build machine find the appropriate version of R
-if [ "$(uname)" = "Darwin" ] && [ -n "${JENKINS_URL}" ]; then
-   PATH="$HOME/homebrew/x86_64/bin:$PATH"
-fi
 
 ## On a Debug Mac IDE build via xcodebuild, the executables
 ## will be in a Debug folder
