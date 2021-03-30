@@ -82,7 +82,7 @@ public:
    void disconnect();
 
 private:
-   void onConsoleText(int type, const std::string& output, bool truncate);
+   void onConsoleText(int type, const std::string& output, bool truncate, bool pending);
    void onConsolePrompt(const std::string&);
    void onFileOutput(const core::FilePath& file, const core::FilePath& sidecar,
         const core::json::Value& metadata, ChunkOutputType outputType, 
