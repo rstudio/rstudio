@@ -52,7 +52,7 @@ findLibSegFault() {
    for CANDIDATE in "${CANDIDATES[@]}"; do
       if [ -e "${CANDIDATE}" ]; then
          RSESSION_DIAGNOSTICS_LIBSEGFAULT="${CANDIDATE}"
-         break
+         return 0
       fi
    done
 
