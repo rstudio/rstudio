@@ -9,5 +9,6 @@
 * Fixed issue causing RStudio Server to create `.local/share/rstudio` folder with incorrect permissions when `session-timeout-kill-hours` is set (Pro #2388)
 * Fixed issue causing spurious "Failed to reset ACL permission mask" errors to be logged outside shared projects on some filesystems (Pro #2406)
 * Improved R session diagnostic logging; now records all instances of a session (Pro #2268)
+* Log location of addins that raise parse errors at startup (#8012)
 
 
