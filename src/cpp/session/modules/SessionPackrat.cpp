@@ -17,7 +17,7 @@
 
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
-#include <core/Hash.hpp>
+#include <shared_core/Hash.hpp>
 #include <core/system/FileMonitor.hpp>
 #include <core/RecursionGuard.hpp>
 

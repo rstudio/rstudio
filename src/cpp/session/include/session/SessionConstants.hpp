@@ -76,6 +76,7 @@
 #define kWwwPortSessionOption             "www-port"
 #define kWwwResusePorts                   "www-reuse-ports"
 #define kTerminalPortOption               "terminal-port"
+#define kSessionSuspendOnIncompleteStatement "session-suspend-on-incomplete-statement"
 
 #define kLauncherSessionOption            "launcher-session"
 

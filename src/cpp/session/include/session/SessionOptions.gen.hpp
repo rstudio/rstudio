@@ -205,7 +205,10 @@ protected:
       "Specifies a list of directories exempt from directory view restrictions, separated by a colon character (:).")
       (kSessionEnvVarSaveBlacklist,
       value<std::string>(&envVarSaveBlacklist_)->default_value(std::string()),
-      "Specifies a list of environment variables that will not be saved when sessions suspend, separated by a colon character (:).");
+      "Specifies a list of environment variables that will not be saved when sessions suspend, separated by a colon character (:).")
+      (kSessionSuspendOnIncompleteStatement,
+      value<bool>(&suspendOnIncompleteStatement_)->default_value(false),
+      "Specifies whether the session should be allowed to suspend when a user has entered a partial R statement.");
 
    pAllow->add_options()
       ("allow-vcs-executable-edit",
@@ -432,6 +435,7 @@ public:
    bool restrictDirectoryView() const { return restrictDirectoryView_; }
    std::string directoryViewWhitelist() const { return directoryViewWhitelist_; }
    std::string envVarSaveBlacklist() const { return envVarSaveBlacklist_; }
+   bool suspendOnIncompleteStatement() const { return suspendOnIncompleteStatement_; }
    bool allowVcsExecutableEdit() const { return allowVcsExecutableEdit_; }
    bool allowCRANReposEdit() const { return allowCRANReposEdit_; }
    bool allowVcs() const { return allowVcs_; }
@@ -528,6 +532,7 @@ protected:
    bool restrictDirectoryView_;
    std::string directoryViewWhitelist_;
    std::string envVarSaveBlacklist_;
+   bool suspendOnIncompleteStatement_;
    bool allowVcsExecutableEdit_;
    bool allowCRANReposEdit_;
    bool allowVcs_;

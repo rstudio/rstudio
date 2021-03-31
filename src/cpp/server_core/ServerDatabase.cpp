@@ -140,6 +140,8 @@ Error readOptions(const std::string& databaseConfigFile,
       std::string secureKey = core::http::secure_cookie::getKey();
       OBFUSCATE_KEY(secureKey);
       options.secureKey = secureKey;
+      options.secureKeyFileUsed = core::http::secure_cookie::getKeyFileUsed();
+      options.secureKeyHash = core::http::secure_cookie::getKeyHash();
       *pOptions = options;
 
       if (!options.connectionUri.empty() &&

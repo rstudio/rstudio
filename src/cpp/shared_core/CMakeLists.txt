@@ -33,6 +33,7 @@ set (SHARED_CORE_SOURCE_FILES
    Error.cpp
    FileLogDestination.cpp
    FilePath.cpp
+   Hash.cpp
    Logger.cpp
    ReaderWriterMutex.cpp
    StderrLogDestination.cpp
@@ -99,6 +100,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
 
    target_link_libraries(rstudio-shared-core-tests
       rstudio-shared-core
+      rstudio-core
       ${Boost_LIBRARIES}
    )
 endif()

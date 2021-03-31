@@ -72,7 +72,8 @@ struct ROptions
          disableRProfileOnStart(false),
          rProfileOnResume(false),
          restoreEnvironmentOnResume(true),
-         packratEnabled(false)
+         packratEnabled(false),
+         suspendOnIncompleteStatement(false)
    {
    }
    core::FilePath userHomePath;
@@ -101,6 +102,7 @@ struct ROptions
    bool restoreEnvironmentOnResume;
    core::r_util::SessionScope sessionScope;
    bool packratEnabled;
+   bool suspendOnIncompleteStatement;
 };
       
 struct RInitInfo

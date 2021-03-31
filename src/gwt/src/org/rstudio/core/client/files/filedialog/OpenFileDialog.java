@@ -71,7 +71,7 @@ public class OpenFileDialog extends FileDialog
    @Override
    protected FileSystemItem getSelectedItem()
    {
-      FileSystemItem item = browser_.getSelectedItem();
+      FileSystemItem item = super.getSelectedItem();
       if (item == null)
          item = browser_.getCurrentDirectory();
       return item;

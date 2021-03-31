@@ -29,14 +29,16 @@
 * Improved a Slurm Session Launch Delay that may occur due to buffering when using Slurm job steps (Pro #2331)
 * Add support for using OpenID and SAML authentication schemes when a proxy is required for outbound requests (Pro #2427)
 * Set environment variables `RS_URI_SCHEME`, `RS_SESSION_URL`, and `RS_HOME_URL` when VSCode is launched (Pro #2346)
-* Updated LimeLM TurboActivate and TurboFloat to v4.4.3.
+* Updated product licensing engine (LimeLM) to TurboActivate and TurboFloat to v4.4.3.
 * Improved R session diagnostic logging; now records all instances of a session (Pro #2268)
+* Improved troubleshooting logging for PostgreSQL encrypted password configuration (Pro #2441)
 
 ### RStudio Server
 
 * **BREAKING:** RStudio when served via `http` erroneously reported its own address as `https` during redirects if the header `X-Forwarded-Proto` was defined by a proxy. That could lead to a confusing proxy setup. That has been fixed, but existing proxy installations with redirect rewite settings matching for `https` may have to be adjusted.
 * **BREAKING:** RStudio Workbench's Linux packages have new file names, `rstudio-workbench-*` instead of `rstudio-server-pro-*`. The operating system package name remains `rstudio-server`, so installs and upgrades will work correctly. Scripts which refer to the `.deb` or `.rpm` file names directly will need to be updated.
 * **BREAKING:** RStudio Server no longer supports Internet Explorer 11. 
+* Added `session-suspend-on-incomplete-statement` option to enable more aggressive session suspension behavior (Pro #1934)
 * New `env-vars` configuration file simplifies setting environment variables for the main RStudio server process.
 
 ### Visual Editor
@@ -65,7 +67,7 @@
 * Update Windows Desktop to openSSL 1.1.1i (#8574)
 * Improve ordering of items in Command Palette list and search results (#7567, #7956)
 * Update embedded Pandoc to v2.11.3.2
-* Change default per-user install folder to %LocalAppData%\Programs on Windows (#8598)
+* Change default per-user install folder to `%LocalAppData%\Programs` on Windows (#8598)
 * Detect newer plumber tags when enabling plumber integration (#8118)
 * Option to restore RStudio 1.2 tab key behavior in editor find panel; search in Command Palette for "Tab key behavior in find panel matches RStudio 1.2 and earlier" (#7295)
 * Show `.renvignore` in Files pane (#8658)
@@ -83,6 +85,7 @@
 ### Bugfixes
 
 * Fixed an issue that could cause RStudio to crash when generating plots on Windows (#9113)
+* Fixed an issue causing slow session startup and "Unable to connect to service" errors on RStudio Server (#9152)
 * Fix Windows Desktop installer to support running from path with characters from other codepages (#8421)
 * Fixed issue where R code input could be executed in the wrong order in some cases (#8837)
 * Fixed issue where debugger could hang when debugging functions called via `do.call()` (#5158)
@@ -119,4 +122,5 @@
 * Fixed issue causing `verify-installation` to exit without showing the error that caused it to do so (Pro #2399)
 * Fixed issue causing spurious "Failed to reset ACL permission mask" errors to be logged outside shared projects on some filesystems (Pro #2406)
 * Fixed issue where sending code from Python History pane would switch Console to R mode (#8693)
-
+* Fixed issue where Open File dialog would fail to open files whose names were explicitly typed (#4059)
+* Fixed issue causing Project Sharing to fail to set Access Control Lists when using NFS v4 and `username@domain` security principals (Pro #2415)
