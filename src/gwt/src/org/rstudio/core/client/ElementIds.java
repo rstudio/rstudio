@@ -180,6 +180,7 @@ public class ElementIds
    public final static String TERMINAL_CLOSING_PREFS = "terminal_closing_prefs";
 
    public final static String NEW_PROJECT_DIRECTORY = "new_project_directory";
+   public final static String NEW_PROJECT_TYPE = "new_project_type";
    public final static String NEW_PROJECT_GIT_REPO = "new_project_git_repo";
    public final static String NEW_PROJECT_RENV = "new_project_renv";
    public final static String NEW_PROJECT_SOURCE_FILES = "new_project_source_files";

@@ -95,6 +95,7 @@ public class NewPackagePage extends NewDirectoryPage
                                           labels,
                                           values,
                                           false);
+      ElementIds.assignElementId(listProjectType_, ElementIds.NEW_PROJECT_TYPE);
       listProjectType_.addChangeHandler(new ChangeHandler() {
          @Override
          public void onChange(ChangeEvent event)
