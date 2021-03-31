@@ -1,132 +1,165 @@
 #!/usr/bin/env bash
 
-# help our build machine find the appropriate version of R
-if [ "$(uname)" = "Darwin" ] && [ -n "$JENKINS_URL" ]; then
-   PATH="$HOME/homebrew/x86_64/bin:$PATH"
-fi
+SCRIPT="${BASH_SOURCE[0]}"
+DIR="$(dirname "${SCRIPT}")"
 
-checkUnitTestFailure() {
-   RET_CODE=$?
-   if [ $RET_CODE != 0 ]; then
-      UNIT_TEST_FAILURE=true
-   fi
+read -r -d '' USAGE <<- EOF
+Run RStudio unit tests. Available flags:
+
+--help    Show this help.
+--scope   Run only tests wtih the given scope (core, rserver, rsession, r).
+--filter  Run a subset of R tests, matching the requested filter.
+EOF
+
+section () {
+    echo -e "\033[1;94m==>\033[0m \033[1;97m$1\033[0m"
+}
+
+error () {
+    echo -e "\033[1;91mERROR: $1\033[0m";
+    exit 1
 }
 
 checkRUnitTestFailure() {
-    FAILURES=$(cat "${CMAKE_CURRENT_BINARY_DIR}/testthat-failures.log")
-    if [[ $FAILURES != 0 ]]; then
-        UNIT_TEST_FAILURE=true
-    fi
+   FAILURES=$(cat "@CMAKE_CURRENT_BINARY_DIR@/testthat-failures.log")
+   if [ "${FAILURES}" != "0" ]; then
+      UNIT_TEST_FAILURE=true
+   fi
 }
 
-findLibSegFault()
-{
-   # if the libsegfault location has not explicitly been set
-   # try to find it in common distribution locations
-   if [[ -z "$${EMPTY}{RSESSION_DIAGNOSTICS_LIBSEGFAULT}" ]]; then
-      if [[ -e /lib/x86_64-linux-gnu/libSegFault.so ]]; then
-         RSESSION_DIAGNOSTICS_LIBSEGFAULT=/lib/x86_64-linux-gnu/libSegFault.so
-      elif [[ -e /lib/i386-linux-gnu/libSegFault.so ]]; then
-         RSESSION_DIAGNOSTICS_LIBSEGFAULT=/lib/i386-linux-gnu/libSegFault.so
-      elif [[ -e /lib64/libSegFault.so ]]; then
-         RSESSION_DIAGNOSTICS_LIBSEGFAULT=/lib64/libSegFault.so
-      elif [[ -e /lib/libSegFault.so ]]; then
-         RSESSION_DIAGNOSTICS_LIBSEGFAULT=/lib/libSegFault.so
+# finds libSegFault.so, and sets RSESSION_DIAGNOSTICS_LIBSEGFAULT
+# as a side effect
+findLibSegFault() {
+
+   # not available on macOS
+   if [ "$(uname)" = "Darwin" ]; then
+      return 0
+   fi
+
+   # if already set, nothign to do
+   if [ -n "${RSESSION_DIAGNOSTICS_LIBSEGFAULT}" ]; then
+      return 0
+   fi
+
+   # look in common locations
+   CANDIDATES=(
+      /lib/x86_64-linux-gnu/libSegFault.so
+      /lib/i386-linux-gnu/libSegFault.so
+      /lib64/libSegFault.so
+      /lib/libSegFault.so
+   )
+
+   for CANDIDATE in "${CANDIDATES[@]}"; do
+      if [ -e "${CANDIDATE}" ]; then
+         RSESSION_DIAGNOSTICS_LIBSEGFAULT="${CANDIDATE}"
+         return 0
       fi
-   fi
+   done
+
+   echo "WARNING: Could not find libSegFault.so"
+
 }
 
-runWatchdogProcess()
-{
-   if [[ "$OSTYPE" == "darwin"* ]]; then
-      # requires brew install coreutils
-      TIMEOUT_CMD=gtimeout
-   else
-      TIMEOUT_CMD=timeout
+runWatchdogProcess() {
+
+   TIMEOUTS=(gtimeout timeout)
+   for TIMEOUT in "${TIMEOUTS[@]}"; do
+      if command -v "${TIMEOUT}" &> /dev/null; then
+         TIMEOUT_CMD="${TIMEOUT}"
+         break
+      fi
+   done
+
+   if [ -z "${TIMEOUT_CMD}" ]; then
+      echo "WARNING: 'timeout' utility is not available; hangs will not be diagnosed"
    fi
-   timeout=$1
-   privileged=$2
-   command=$3
-   arg1=$4
-   arg2=$5
-   arg3=$6
-   arg4=$7
-   arg5=$8
+
+   timeout="$1"
+   shift
+
+   privileged="$1"
+   shift
+
+   command="$1"
+   shift
+
+   local PRELOAD
+   if [ "$(uname)" = "Darwin" ]; then
+      PRELOAD="DYLD_INSERT_LIBRARIES=${DYLD_INSERT_LIBRARIES}"
+   else
+      PRELOAD="LD_PRELOAD=${RSESSION_DIAGNOSTICS_LIBSEGFAULT}"
+   fi
+
+   FULL_COMMAND="env SEGFAULT_SIGNALS='abrt segv' ${PRELOAD} ${command} $*; exit"
 
    # centos6 doesn't support the --foreground option for timeout
-   if [ "$OPERATING_SYSTEM" = "centos_6" ]; then
-      if [ "$privileged" = true ]; then
-         sudo /bin/bash -c "env SEGFAULT_SIGNALS='abrt segv' LD_PRELOAD=$RSESSION_DIAGNOSTICS_LIBSEGFAULT $VALGRIND $command $arg1 $arg2 $arg3 $arg4 $arg5;exit"
+   if [ "${OPERATING_SYSTEM}" = "centos_6" ] || [ -z "${TIMEOUT_CMD}" ]; then
+      if [ "${privileged}" = "true" ]; then
+         sudo /bin/bash -c "${FULL_COMMAND}"
       else
-         /bin/bash -c "env SEGFAULT_SIGNALS='abrt segv' LD_PRELOAD=$RSESSION_DIAGNOSTICS_LIBSEGFAULT $VALGRIND $command $arg1 $arg2 $arg3 $arg4 $arg5;exit"
+         /bin/bash -c "${FULL_COMMAND}"
       fi
    else
-      if [ "$privileged" = true ]; then
-         sudo $TIMEOUT_CMD --foreground $timeout /bin/bash -c "env SEGFAULT_SIGNALS='abrt segv' LD_PRELOAD=$RSESSION_DIAGNOSTICS_LIBSEGFAULT DYLD_INSERT_LIBRARIES=$DYLD_INSERT_LIBRARIES $VALGRIND $command $arg1 $arg2 $arg3 $arg4 $arg5;exit"
+      if [ "${privileged}" = "true" ]; then
+         sudo "${TIMEOUT_CMD}" --foreground "${timeout}" /bin/bash -c "${FULL_COMMAND}"
       else
-         $TIMEOUT_CMD --foreground $timeout /bin/bash -c "env SEGFAULT_SIGNALS='abrt segv' LD_PRELOAD=$RSESSION_DIAGNOSTICS_LIBSEGFAULT  DYLD_INSERT_LIBRARIES=$DYLD_INSERT_LIBRARIES $VALGRIND $command $arg1 $arg2 $arg3 $arg4 $arg5;exit"
+         "${TIMEOUT_CMD}" --foreground "${timeout}" /bin/bash -c "${FULL_COMMAND}"
       fi
    fi
 
-   RETCODE=$?
-   if [ $RETCODE == 124 ]; then
+   RETCODE="$?"
+   if [ "${RETCODE}" = "124" ]; then
       # process is hanging - use gdb to collect a stack trace to find out why
       echo "Hang detected. Dumping backtrace..."
-      if [[ "$OSTYPE" == "darwin"* ]]; then
-         # pidof on Mac doesn't support fully qualified process names
-         commandbase="$(basename $command)"
-      else
-         commandbase=$command
-      fi
-      sudo gdb -q -batch -ex 'thread apply all backtrace' -p "$(pidof $commandbase)"
-      sudo kill -9 "$(pidof $commandbase)"
+      PID=$(pgrep -nf "${command}")
+      sudo gdb -q -batch -ex 'thread apply all backtrace' -p "${PID}"
+      sudo kill -9 "${PID}"
       UNIT_TEST_FAILURE=true
-   elif [ $RETCODE != 0 ]; then
+   elif [ "${RETCODE}" != "0" ]; then
       UNIT_TEST_FAILURE=true
    fi
+
 }
 
-findLibSegFault
+has-scope () {
+   [ -z "${TEST_SCOPE}" ] || [ "${TEST_SCOPE}" = "$1" ]
+}
 
-TEST_SCOPE=
-if [ "$1" == "--scope" ]; then
-   if [ "$#" == 1 ]; then
-      printf "Specify scope (core, rserver, rsession, or r).\n"
+case "$1" in
+
+"--scope")
+
+   if [ -z "$2" ]; then
+      echo "Usage: ./rstudio-tests --scope [core|rserver|rsession|r]"
       exit 1
    fi
 
-   # Remember test scope
    TEST_SCOPE="$2"
-
-   # Remove the option and argument we just read
    shift 2
-elif [ "$1" == "--filter" ]; then
+
+;;
+
+"--filter")
 
    # used for filtering to a subset of R testthat tests
    TEST_SCOPE="r"
    TEST_FILTER="$2"
    shift 2
 
-elif [ "$1" == "--help" ]; then
-   printf "%s\n\n" "Runs RStudio unit tests. Available flags: "
-   printf "%s\n" "--help    Show this help"
-   printf "%s\n" "--scope   Run only tests with the given scope (core, rsession, or r)"
-   printf "%s\n\n" "--filter  Used instead of --scope to run a subset of R tests"
-   printf "%s\n" "Any other options are passed to Valgrind."
-   exit 0
-fi
+;;
 
-## Any remaining arguments passed in are considered arguments to valgrind
-if [ "$#" -eq 0 ]; then
-   VALGRIND=
-else
-   VALGRIND="valgrind --dsymutil=yes $@"
-fi
+"--help")
+   echo "${USAGE}"
+   exit 0
+
+esac
+
+# try to find libSegFault if available
+findLibSegFault
 
 ## On a Debug Mac IDE build via xcodebuild, the executables
 ## will be in a Debug folder
-if [ ! -e "${CMAKE_CURRENT_BINARY_DIR}/core/rstudio-core-tests" ]
-then
+if [ ! -e "@CMAKE_CURRENT_BINARY_DIR@/core/rstudio-core-tests" ]; then
     RSTUDIO_CORETEST_BIN="Debug/rstudio-core-tests"
     RSTUDIO_SESSION_BIN="Debug/rsession"
 else
@@ -135,84 +168,107 @@ else
 fi
 
 # set R environment variables needed by rsession tests
-export R_HOME=$(R --slave --vanilla -e "cat(paste(R.home('home'),sep=':'))")
-export R_DOC_DIR=$(R --slave --vanilla -e "cat(paste(R.home('doc'),sep=':'))")
-export R_LIB_DIR=$(R --slave --vanilla -e "cat(paste(R.home('lib'),sep=':'))")
+export R_HOME=$(R RHOME)
+export R_DOC_DIR=$(R --vanilla -s -e "cat(paste(R.home('doc'), sep=':'))")
+export R_LIB_DIR=$(R --vanilla -s -e "cat(paste(R.home('lib'), sep=':'))")
 
 # On macOS, we need to tell the rsession executable where to look for libR.dylib
 if [ "$(uname)" = "Darwin" ]; then
-   export DYLD_INSERT_LIBRARIES="$R_LIB_DIR/libR.dylib"
+   export DYLD_INSERT_LIBRARIES="${R_LIB_DIR}/libR.dylib"
 fi
 
 UNIT_TEST_FAILURE=false
 
 # Run core tests
-if [ -z "$TEST_SCOPE" ] || [ "$TEST_SCOPE" == "core" ]; then
-    echo Running 'core' tests...
-    runWatchdogProcess 5m false "${CMAKE_CURRENT_BINARY_DIR}/core/$RSTUDIO_CORETEST_BIN"
+if has-scope "core"; then
 
-    if [ -e ${CMAKE_CURRENT_BINARY_DIR}/server_core/rstudio-server-core-tests ]
-    then
-        echo Running 'server_core' tests...
-        runWatchdogProcess 5m false "${CMAKE_CURRENT_BINARY_DIR}/server_core/rstudio-server-core-tests"
-    fi
+   section "Running 'core' tests"
+   runWatchdogProcess 5m false "@CMAKE_CURRENT_BINARY_DIR@/core/${RSTUDIO_CORETEST_BIN}"
 
-    if [ -e ${CMAKE_CURRENT_BINARY_DIR}/shared_core/rstudio-shared-core-tests ]
-    then
-        echo Running 'shared_core' tests...
-        runWatchdogProcess 5m false "${CMAKE_CURRENT_BINARY_DIR}/shared_core/rstudio-shared-core-tests"
-    fi
+   if [ -e "@CMAKE_CURRENT_BINARY_DIR@/server_core/rstudio-server-core-tests" ]; then
+      section "Running 'server_core' tests"
+      runWatchdogProcess 5m false "@CMAKE_CURRENT_BINARY_DIR@/server_core/rstudio-server-core-tests"
+   fi
+
+   if [ -e "@CMAKE_CURRENT_BINARY_DIR@/shared_core/rstudio-shared-core-tests" ]; then
+      section "Running 'shared_core' tests"
+      runWatchdogProcess 5m false "@CMAKE_CURRENT_BINARY_DIR@/shared_core/rstudio-shared-core-tests"
+   fi
+
 fi
 
 # Run server tests
-if [ -z "$TEST_SCOPE" ] || [ "$TEST_SCOPE" == "rserver" ]; then
-    echo Running 'rserver' tests...
-    if [ -e ${CMAKE_CURRENT_BINARY_DIR}/server/rserver-tests ]
-    then
-        echo Running 'rserver' tests...
-        runWatchdogProcess 5m false "${CMAKE_CURRENT_BINARY_DIR}/server/rserver-tests" -s
-    fi
+if has-scope "rserver"; then
+
+   if [ -e "@CMAKE_CURRENT_BINARY_DIR@/server/rserver-tests" ]; then
+      section "Running 'rserver' tests..."
+      runWatchdogProcess 5m false "@CMAKE_CURRENT_BINARY_DIR@/server/rserver-tests"
+   fi
+
 fi
 
 # Setup for rsession tests
-if [ -e ${CMAKE_CURRENT_BINARY_DIR}/conf/rsession-dev.conf ]; then
-   SESSION_CONF_FILE=${CMAKE_CURRENT_BINARY_DIR}/conf/rsession-dev.conf
+if [ -e "@CMAKE_CURRENT_BINARY_DIR@/conf/rsession-dev.conf" ]; then
+   SESSION_CONF_FILE="@CMAKE_CURRENT_BINARY_DIR@/conf/rsession-dev.conf"
 else
-   SESSION_CONF_FILE=${CMAKE_CURRENT_BINARY_DIR}/conf/rdesktop-dev.conf
+   SESSION_CONF_FILE="@CMAKE_CURRENT_BINARY_DIR@/conf/rdesktop-dev.conf"
 fi
 
-if [ -z "$TEST_SCOPE" ] || [ "$TEST_SCOPE" == "rsession" ]; then
-    echo Running 'rsession' tests...
+if has-scope "rsession"; then
 
-    export RS_CRASH_HANDLER_PATH="${CMAKE_CURRENT_BINARY_DIR}/server/crash-handler-proxy/crash-handler-proxy"
-    export RS_CRASHPAD_HANDLER_PATH="${RSTUDIO_TOOLS_ROOT}/crashpad/crashpad/out/Default/crashpad_handler"
-    runWatchdogProcess 5m false "${CMAKE_CURRENT_BINARY_DIR}/session/$RSTUDIO_SESSION_BIN" --run-tests --config-file="$SESSION_CONF_FILE"
+   section "Running 'rsession' tests"
+
+   export RS_CRASH_HANDLER_PATH="@CMAKE_CURRENT_BINARY_DIR@/server/crash-handler-proxy/crash-handler-proxy"
+   export RS_CRASHPAD_HANDLER_PATH="@RSTUDIO_TOOLS_ROOT@/crashpad/crashpad/out/Default/crashpad_handler"
+   runWatchdogProcess 5m false                                    \
+      "@CMAKE_CURRENT_BINARY_DIR@/session/${RSTUDIO_SESSION_BIN}" \
+      --run-tests                                                 \
+      --config-file="${SESSION_CONF_FILE}"
+
 fi
 
-if [ -z "$TEST_SCOPE" ] || [ "$TEST_SCOPE" == "r" ]; then
-    echo Running 'r' tests...
+if has-scope "r"; then
 
-    if [ ! -z "$TEST_FILTER" ]; then
-        TESTTHAT_FILTER=", filter = '$TEST_FILTER'"
-    fi
+   section "Running 'r' tests"
 
-    # Establish temporary folders for user state and data; this prevents the state/config on the 
-    # machine from affecting the tests
-    RSTUDIO_FOLDER=$(mktemp -d -t rstudio-tests-XXXXXXXXXX)
-    export RSTUDIO_DATA_HOME="$RSTUDIO_FOLDER/data"
-    export RSTUDIO_CONFIG_HOME="$RSTUDIO_FOLDER/config"
-    export RS_CRASH_HANDLER_PATH="${CMAKE_CURRENT_BINARY_DIR}/server/crash-handler-proxy/crash-handler-proxy"
-    export RS_CRASHPAD_HANDLER_PATH="${RSTUDIO_TOOLS_ROOT}/crashpad/crashpad/out/Default/crashpad_handler"
-    runWatchdogProcess 5m false "${CMAKE_CURRENT_BINARY_DIR}/session/$RSTUDIO_SESSION_BIN" \
-        --run-script "\"source('${CMAKE_CURRENT_SOURCE_DIR}/tests/testthat/run-tests.R'); runAllTests('${CMAKE_CURRENT_SOURCE_DIR}', '${CMAKE_CURRENT_BINARY_DIR}'$TESTTHAT_FILTER)\"" \
-        --config-file="$SESSION_CONF_FILE"
-    checkRUnitTestFailure
+   # tell testthat our source dir, binary dir
+   export TESTTHAT_TESTS_DIR="@CMAKE_CURRENT_SOURCE_DIR@/tests/testthat"
+   export TESTTHAT_OUTPUT_DIR="@CMAKE_CURRENT_BINARY_DIR@"
+
+   # set TESTTHAT_FILTER if a filter was provided
+   if [ -n "${TEST_FILTER}" ]; then
+      TESTTHAT_FILTER="${TEST_FILTER}"
+      export TESTTHAT_FILTER
+   fi
+
+   # Establish temporary folders for user state and data; this prevents the state/config on the
+   # machine from affecting the tests
+   RSTUDIO_FOLDER=$(mktemp -d -t rstudio-tests-XXXXXXXXXX)
+   export RSTUDIO_DATA_HOME="${RSTUDIO_FOLDER}/data"
+   export RSTUDIO_CONFIG_HOME="${RSTUDIO_FOLDER}/config"
+   export RS_CRASH_HANDLER_PATH="@CMAKE_CURRENT_BINARY_DIR@/server/crash-handler-proxy/crash-handler-proxy"
+   export RS_CRASHPAD_HANDLER_PATH="@RSTUDIO_TOOLS_ROOT@/crashpad/crashpad/out/Default/crashpad_handler"
+
+   runWatchdogProcess 5m false                                                   \
+      "@CMAKE_CURRENT_BINARY_DIR@/session/${RSTUDIO_SESSION_BIN}"                \
+      --run-script "\"source('${TESTTHAT_TESTS_DIR}/run-tests.R'); runTests()\"" \
+      --config-file="${SESSION_CONF_FILE}"
+
+   checkRUnitTestFailure
+
+fi
+
+# if Pro unit tests are available, run those
+PRO_TESTS="${DIR}/rstudio-pro-tests"
+if [ -e "${PRO_TESTS}" ]; then
+   source "${PRO_TESTS}"
 fi
 
 # return an error exit code if any unit tests failed
-if [ "$UNIT_TEST_FAILURE" = true ]; then
-    exit 1
+if [ "${UNIT_TEST_FAILURE}" = "true" ]; then
+   error "One or more test suites had failures."
+   exit 1
 fi
 
-# otherwise, return success
+# success!
 exit 0
