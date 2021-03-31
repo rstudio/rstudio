@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+SCRIPT="${BASH_SOURCE[0]}"
+DIR="$(dirname "${SCRIPT}")"
+
 read -r -d '' USAGE <<- EOF
 Run RStudio unit tests. Available flags:
 
@@ -253,6 +256,12 @@ if has-scope "r"; then
 
    checkRUnitTestFailure
 
+fi
+
+# if Pro unit tests are available, run those
+PRO_TESTS="${DIR}/rstudio-pro-tests"
+if [ -e "${PRO_TESTS}" ]; then
+   source "${PRO_TESTS}"
 fi
 
 # return an error exit code if any unit tests failed
