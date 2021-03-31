@@ -608,10 +608,19 @@ else()
 
       # test runner script
       if(NOT WIN32)
-         configure_file(rstudio-tests.in ${CMAKE_CURRENT_BINARY_DIR}/rstudio-tests @ONLY)
-         if(EXISTS rstudio-pro-tests.in)
-            configure_file(rstudio-pro-tests.in ${CMAKE_CURRENT_BINARY_DIR}/rstudio-pro-tests @ONLY)
+
+         configure_file(
+            "${CMAKE_CURRENT_SOURCE_DIR}/rstudio-tests.in"
+            "${CMAKE_CURRENT_BINARY_DIR}/rstudio-tests"
+            @ONLY)
+
+         if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/rstudio-pro-tests.in")
+            configure_file(
+               "${CMAKE_CURRENT_SOURCE_DIR}/rstudio-pro-tests.in"
+               "${CMAKE_CURRENT_BINARY_DIR}/rstudio-pro-tests"
+               @ONLY)
          endif()
+
       endif()
 
       # add desktop subprojects if we aren't building in server only mode
