@@ -93,6 +93,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
       txtProjectName_.setWidth("100%");
       DomUtils.disableSpellcheck(txtProjectName_);
       Roles.getTextboxRole().setAriaRequiredProperty(txtProjectName_.getElement(), true);
+      ElementIds.assignElementId(txtProjectName_, ElementIds.NEW_PROJECT_DIRECTORY);
 
       // create the dir name label
       dirNameLabel_ = new FormLabel(getDirNameLabel(), txtProjectName_);
@@ -125,6 +126,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
       
       chkGitInit_ = new CheckBox("Create a git repository");
       chkGitInit_.addStyleName(styles.wizardCheckbox());
+      ElementIds.assignElementId(chkGitInit_, ElementIds.NEW_PROJECT_GIT_REPO);
       if (sessionInfo.isVcsAvailable(VCSConstants.GIT_ID))
       {  
          chkGitInit_.setValue(userState.newProjGitInit().getValue());
@@ -142,6 +144,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
       
       // Initialize project with renv
       chkRenvInit_ = new CheckBox("Use renv with this project");
+      ElementIds.assignElementId(chkRenvInit_, ElementIds.NEW_PROJECT_RENV);
       chkRenvInit_.addValueChangeHandler((ValueChangeEvent<Boolean> event) -> {
          if (event.getValue())
          {
