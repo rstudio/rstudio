@@ -112,6 +112,11 @@ public class ElementIds
       return ID_PREFIX + "label_" + idSafeString(label);
    }
 
+   public static String idWithPrefix(String prefix, String id)
+   {
+      return idSafeString(prefix) + "_" + id;
+   }
+
    private static final Pattern RE_NUMBERED_ELEMENT_ID = Pattern.create("^[a-zA-Z0-9_]+_\\d+$");
 
    public final static String ID_PREFIX = "rstudio_";
@@ -179,12 +184,12 @@ public class ElementIds
    public final static String TERMINAL_GENERAL_PREFS = "terminal_general_prefs";
    public final static String TERMINAL_CLOSING_PREFS = "terminal_closing_prefs";
 
-   public final static String NEW_PROJECT_DIRECTORY = "new_project_directory";
-   public final static String NEW_PROJECT_TYPE = "new_project_type";
-   public final static String NEW_PROJECT_GIT_REPO = "new_project_git_repo";
-   public final static String NEW_PROJECT_RENV = "new_project_renv";
-   public final static String NEW_PROJECT_SOURCE_FILES = "new_project_source_files";
-   public final static String NEW_PROJECT_NEW_SESSION = "new_project_new_session";
+   public final static String NEW_PROJECT_DIRECTORY = "directory_name";
+   public final static String NEW_PROJECT_TYPE = "project_type";
+   public final static String NEW_PROJECT_GIT_REPO = "git_repo";
+   public final static String NEW_PROJECT_RENV = "use_renv";
+   public final static String NEW_PROJECT_SOURCE_FILES = "source_files";
+   public final static String NEW_PROJECT_NEW_SESSION = "new_session";
 
    // AskSecretDialog
    public final static String ASK_SECRET_TEXT = "ask_secret_text";

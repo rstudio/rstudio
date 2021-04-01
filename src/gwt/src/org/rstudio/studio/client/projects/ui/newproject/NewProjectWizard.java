@@ -75,7 +75,8 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
       }
       
       openInNewWindow_ = new CheckBox("Open in new session");
-      ElementIds.assignElementId(openInNewWindow_, ElementIds.NEW_PROJECT_NEW_SESSION);
+      ElementIds.assignElementId(openInNewWindow_,
+         ElementIds.idWithPrefix(getTitle(), ElementIds.NEW_PROJECT_NEW_SESSION));
       addLeftWidget(openInNewWindow_);
       openInNewWindow_.setVisible(false);
    }  
