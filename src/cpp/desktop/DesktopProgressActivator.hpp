@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef DESKTOP_PROGRESS_ACTIVATOR
-#define DESKTOP_PROGRESS_ACTIVATOR
+#ifndef DESKTOP_PROGRESS_ACTIVATOR_HPP
+#define DESKTOP_PROGRESS_ACTIVATOR_HPP
 
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -56,4 +56,4 @@ inline ProgressActivator::~ProgressActivator()
 } // namespace desktop
 } // namespace rstudio
 
-#endif // DESKTOP_PROGRESS_ACTIVATOR
+#endif // DESKTOP_PROGRESS_ACTIVATOR_HPP

@@ -13,6 +13,8 @@
  *
  */
 
+#ifndef SESSION_MODULES_RMARKDOWN_NOTEBOOK_PATHS_HPP
+#define SESSION_MODULES_RMARKDOWN_NOTEBOOK_PATHS_HPP
 
 #include <string>
 
@@ -38,3 +40,5 @@ core::Error notebookIdToPath(const std::string& id, core::FilePath* pPath);
 } // namespace modules
 } // namespace session
 } // namespace rstudio
+
+#endif /* SESSION_MODULES_RMARKDOWN_NOTEBOOK_PATHS_HPP */
