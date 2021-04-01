@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.projects.ui.newproject;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -94,6 +95,7 @@ public class NewPackagePage extends NewDirectoryPage
                                           labels,
                                           values,
                                           false);
+      ElementIds.assignElementId(listProjectType_, ElementIds.NEW_PROJECT_TYPE);
       listProjectType_.addChangeHandler(new ChangeHandler() {
          @Override
          public void onChange(ChangeEvent event)
@@ -115,6 +117,7 @@ public class NewPackagePage extends NewDirectoryPage
    {
       // code files panel
       listCodeFiles_ = new CodeFilesList();
+      ElementIds.assignElementId(listCodeFiles_, ElementIds.NEW_PROJECT_SOURCE_FILES);
       addWidget(listCodeFiles_);
    }
    
