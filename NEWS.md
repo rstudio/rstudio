@@ -10,5 +10,5 @@
 * Fixed issue causing spurious "Failed to reset ACL permission mask" errors to be logged outside shared projects on some filesystems (Pro #2406)
 * Improved R session diagnostic logging; now records all instances of a session (Pro #2268)
 * Log location of addins that raise parse errors at startup (#8012)
-
+* Fixed issue preventing R Notebook chunks from being queued for execution if they had never been previously run (#4238)
 
