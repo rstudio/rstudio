@@ -375,8 +375,8 @@ try {
         }
 
         // trigger macos build if we're in open-source repo
-        if (env.JOB_NAME == 'IDE/open-source-pipeline/v1.4-tiger-daylily') {
-          trigger_external_build('IDE/macos-v1.4-tiger-daylily')
+        if (env.JOB_NAME == 'IDE/open-source-pipeline/v1.4-black-eyed-susan') {
+          trigger_external_build('IDE/macos-v1.4-black-eyed-susan')
         }
 
         parallel parallel_containers
