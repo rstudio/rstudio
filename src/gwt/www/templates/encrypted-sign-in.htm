@@ -81,6 +81,13 @@ input[type=text], input[type=password] {
   padding: 8px;
 }
 
+@media (prefers-color-scheme: dark) {
+  input[type=text], input[type=password] {
+    border: 1px solid #4d4e4f;
+    background-color: #000;
+    color: #fff;
+  }
+}
 .buttonpanel {
   text-align: center;
   margin-top: 20px;
@@ -96,7 +103,6 @@ input[type=text], input[type=password] {
 
 button.fancy {
   background-color: #1e77bc;
-  border-radius: 4px;
   font-size: 14px;
   padding: 10px 15px;
   cursor: pointer;
@@ -107,6 +113,7 @@ button.fancy {
 }
 
 button.disabled {
+    /* TODO dark mode */
   background-color: #e0e2e5;
   color: grey;
 }
