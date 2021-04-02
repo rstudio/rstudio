@@ -23,6 +23,7 @@
 #include "BoostAsioSsl.hpp"
 
 #include <core/http/AsyncClient.hpp>
+#include <core/http/Ssl.hpp>
 #include <core/http/TcpIpAsyncConnector.hpp>
 
 #ifdef _WIN32
@@ -61,74 +62,13 @@ public:
        certificateAuthority_(certificateAuthority),
        connectionTimeout_(connectionTimeout)
    {
-      if (verify_)
-      {
-         sslContext_.set_default_verify_paths();
-         sslContext_.set_verify_mode(boost::asio::ssl::context::verify_peer);
-
-         if (!certificateAuthority_.empty())
-         {
-            boost::asio::const_buffer buff(certificateAuthority_.data(), certificateAuthority_.size());
-            boost::system::error_code ec;
-            sslContext_.add_certificate_authority(buff, ec);
-            if (ec)
-               LOG_ERROR(Error(ec, ERROR_LOCATION));
-         }
-
-      #ifdef _WIN32
-         // on Windows, OpenSSL does not support loading certificates from the Windows certificate store
-         // because of this, each time we need to verify certificates, we initialize
-         // all certificates individually with OpenSSL
-         const ICertStore& certStore = getCertificateStore();
-      #endif
-
-      #ifdef __APPLE__
-         // on OSX, OpenSSL does not support loading certificates from the Keychain
-         // because of this, each time we need to verify certificates, we initialize
-         // all certificates individually with OpenSSL, similar to what is done above for Windows
-         const ICertStore& certStore = getKeychain();
-      #endif
-
-      #if defined(__APPLE__) || defined(_WIN32)
-         for (const auto& cert : certStore.getCertificates())
-         {
-            if (X509_STORE* store = SSL_CTX_get_cert_store(sslContext_.native_handle()))
-            {
-               if (::X509_STORE_add_cert(store, cert) != 1)
-               {
-                  char* subjectName = X509_NAME_oneline(X509_get_subject_name(cert), nullptr, 0);
-                  std::string subjectNameStr(subjectName);
-                  OPENSSL_free(subjectName);
-
-                  boost::system::error_code ec = boost::system::error_code(
-                              static_cast<int>(::ERR_get_error()),
-                              boost::asio::error::get_ssl_category());
-                  Error error(ec, ERROR_LOCATION);
-                  error.addProperty("Description", "Could not add certificate to OpenSSL cert store: " + subjectNameStr);
-
-                  LOG_ERROR(error);
-               }
-            }
-         }
-      #endif
-      }
-      else
-      {
-         sslContext_.set_verify_mode(boost::asio::ssl::context::verify_none);
-      }
+      ssl::initializeSslContext(&sslContext_, verify, certificateAuthority);
 
       // use scoped ptr so we can call the constructor after we've configured
       // the ssl::context (immediately above)
       ptrSslStream_.reset(new boost::asio::ssl::stream<boost::asio::ip::tcp::socket>(ioService, sslContext_));
 
-      // TLS v1.3 requires that the SNI be set, so set the SNI.
-      if (!SSL_set_tlsext_host_name(
-            ptrSslStream_->native_handle(),
-            (hostname.empty() ? address_.c_str() : hostname.c_str())))
-      {
-         boost::system::error_code ec{ static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category() };
-         LOG_ERROR(Error(ec, ERROR_LOCATION));
-      }
+      ssl::initializeSslStream(ptrSslStream_.get(), (hostname.empty() ? address_.c_str() : hostname.c_str()));
    }
 
 
@@ -260,7 +200,7 @@ private:
                                static_cast<int>(::ERR_get_error()),
                                boost::asio::error::get_ssl_category());
                    Error error(ec, ERROR_LOCATION);
-                   error.addProperty("Description",
+                   error.addProperty("description",
                                      "Could not create OpenSSL certificate object from Windows certificate data");
                    LOG_DEBUG_MESSAGE(error.asString());
                 }
@@ -315,7 +255,7 @@ private:
                            static_cast<int>(::ERR_get_error()),
                            boost::asio::error::get_ssl_category());
                Error error(ec, ERROR_LOCATION);
-               error.addProperty("Description",
+               error.addProperty("description",
                                  "Could not create OpenSSL certificate object from Keychain certificate data");
                LOG_DEBUG_MESSAGE(error.asString());
             }
