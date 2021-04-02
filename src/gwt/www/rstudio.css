@@ -43,10 +43,8 @@ body, td {
 }
 #border {
   width: 300px;
-  border: 4px solid #e0e2e5;
-  padding: 8px;
-  -moz-border-radius: 10px;
-  -webkit-border-radius: 10px;
+  padding: 15px;
+  background-color: #f7f8f9;
 }
 #image {
   margin-right: -18px;
