@@ -162,7 +162,14 @@ a img {
   width: 20px;
   height: 20px;
   text-align: center;
+} 
+ 
+@media (prefers-color-scheme: dark) {
+  .signin-spinner {
+    color: black;
+  }
 }
+
 .signin-spinner div {
   transform-origin: 10px 10px;
   animation: signin-spinner 1.2s linear infinite;
@@ -177,6 +184,12 @@ a img {
   height: 5px;
   background: black;
 }
+@media (prefers-color-scheme: dark) {
+  .signin-spinner div:after {
+    background: white;
+  }
+}
+
 .signin-spinner div:nth-child(1) {
   transform: rotate(0deg);
   animation-delay: -1.1s;
