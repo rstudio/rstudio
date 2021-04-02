@@ -14,6 +14,13 @@
 body {
   background-color: #fff;
 }
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #000;
+  }
+}
+
 body, td {
   font-family: Lucida Grande, Lucida Sans Unicode, Helvetica, sans-serif;
   font-size: 11pt;
@@ -27,6 +34,13 @@ body, td {
   -webkit-border-radius: 5px;
   overflow: hidden;
 }
+
+@media (prefers-color-scheme: dark) {
+  #banner {
+    background-color: #202225;
+  }
+}
+
 #logo {
   width: 50%;
   float: left;
@@ -45,6 +59,12 @@ body, td {
   width: 300px;
   padding: 15px;
   background-color: #f7f8f9;
+}
+@media (prefers-color-scheme: dark) {
+  #border {
+    background-color: #202225;
+    color: #fff;
+  }
 }
 #image {
   margin-right: -18px;

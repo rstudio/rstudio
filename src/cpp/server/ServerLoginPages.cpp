@@ -81,7 +81,13 @@ void fillLoginFields(const core::http::Request& request,
 
    // include custom login page html
    bool isRdp = request.queryParamValue(kIsRStudioProDesktop) == "1";
-   boost::format logoImgHtmlFormat(R"DELIM(<img src="images/rstudio.png" width="78" height="27" alt="%1%"/>)DELIM");
+   boost::format logoImgHtmlFormat(R"DELIM(
+<picture>
+   <source
+      srcset="images/rstudio-dark.png"
+      media="(prefers-color-scheme: dark)"/>
+   <img src="images/rstudio.png" width="78" height="27" alt="%1%"/>
+</picture>)DELIM");
    if (!isRdp)
    {
       variables[kLoginPageHtml] = server::options().authLoginPageHtml();
