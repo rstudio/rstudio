@@ -30,7 +30,7 @@
 
    <!-- Configure path to GWT SDK -->
    <property name="gwt.sdk" value="${lib.dir}/gwt/gwt-rstudio"/>
-   <property name="gwt.extra.args" value=""/>
+   <property name="gwt.extra.args" value="-incremental"/>
    <property name="gwt.main.module" value="org.rstudio.studio.RStudio"/>
    <property name="ace.bin" value="${src.dir}/org/rstudio/studio/client/workbench/views/source/editors/text/ace"/>
 
