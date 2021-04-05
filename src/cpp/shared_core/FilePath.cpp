@@ -93,6 +93,7 @@ MimeType s_mimeTypes[] =
       { "ttf",          "application/x-font-ttf" },
       { "woff",         "application/font-woff" },
       { "woff2",        "application/font-woff2" },
+      { "wasm",         "application/wasm"},
 
       // markdown types
       { "md",           "text/x-markdown" },
