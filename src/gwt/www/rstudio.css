@@ -89,6 +89,14 @@ body, td {
   width: 250px;
 }
 
+#staySignedIn {
+  vertical-align: middle;
+}
+
+#staySignedInLabel {
+  vertical-align: middle;
+}
+
 #detail {
   color: #aaa;
   margin-top: 8px;
