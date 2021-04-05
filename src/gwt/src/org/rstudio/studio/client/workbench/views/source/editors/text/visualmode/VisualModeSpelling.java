@@ -202,7 +202,7 @@ public class VisualModeSpelling extends SpellingContext
       uiSpelling.checkWords = (words) -> {
          ArrayList<String> w = new ArrayList<>(Arrays.asList(words));
 
-         SpellCheckerResult cachedWords = spellChecker().cachedWords(w);
+         SpellCheckerResult cachedWords = spellChecker().getCachedWords(w);
 
          // if we don't have a transaction and we don't have all the words cached at the moment
          // send a request to the server

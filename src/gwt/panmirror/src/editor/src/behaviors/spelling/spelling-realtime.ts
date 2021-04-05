@@ -235,12 +235,8 @@ function spellingDecorations(
     const word = words.next()!;
     const wordText = state.doc.textBetween(word.start, word.end);
 
-    let ranges = rangeMap.get(wordText);
-    if (!!ranges) {
-      ranges.push(word);
-    } else {
-      ranges = [word];
-    }
+    const ranges = rangeMap.get(wordText) || [];
+    ranges.push(word);
     rangeMap.set(wordText, ranges);
 
     wordsToCheck.push(spellcheckerWord(wordText));

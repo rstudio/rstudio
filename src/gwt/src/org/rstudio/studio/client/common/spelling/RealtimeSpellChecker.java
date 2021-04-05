@@ -98,7 +98,7 @@ public class RealtimeSpellChecker
          for (String w : words)
          {
             if (w.length() > 0)
-               domainSpecificWords_.add(w.toLowerCase());
+               domainSpecificWords_.add(w);
          }
       }
    }
@@ -148,7 +148,7 @@ public class RealtimeSpellChecker
       context_.invalidateWord(affectedWord, false);
    }
 
-   public SpellCheckerResult cachedWords(ArrayList<String> words)
+   public SpellCheckerResult getCachedWords(ArrayList<String> words)
    {
       SpellCheckerResult result = new SpellCheckerResult();
       for (String word : words)
@@ -156,12 +156,10 @@ public class RealtimeSpellChecker
          if (isWordIgnored(word) || correctWords.contains(word))
          {
             result.getCorrect().add(word);
-            words.remove(word);
          }
          else if (incorrectWords.containsKey(word))
          {
             result.getIncorrect().add(word);
-            words.remove(word);
          }
       }
 
@@ -171,7 +169,7 @@ public class RealtimeSpellChecker
    public void checkWords(ArrayList<String> words,
                           ServerRequestCallback<SpellCheckerResult> callback)
    {
-      SpellCheckerResult knownWords = cachedWords(words);
+      SpellCheckerResult knownWords = getCachedWords(words);
 
       // we've already cached all of the words, don't hit the server
       if (knownWords.getIncorrect().size() + knownWords.getCorrect().size() == words.size()) {

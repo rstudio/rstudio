@@ -29,6 +29,7 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.MenuItem;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.spelling.model.SpellCheckerResult;
@@ -244,7 +245,7 @@ public class TextEditingTargetSpelling extends SpellingContext
                              @Override
                              public void onError(ServerError error)
                              {
-
+                                Debug.logError(error);
                              }
                           });
                        }
@@ -253,7 +254,7 @@ public class TextEditingTargetSpelling extends SpellingContext
                     @Override
                     public void onError(ServerError error)
                     {
-
+                       Debug.logError(error);
                     }
                  });
               });
