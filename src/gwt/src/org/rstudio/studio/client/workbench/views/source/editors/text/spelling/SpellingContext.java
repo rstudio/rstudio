@@ -1,6 +1,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.spelling;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 
 import org.rstudio.core.client.CsvReader;
@@ -69,8 +70,7 @@ public abstract class SpellingContext implements RealtimeSpellChecker.Context
          if (iterator.hasNext())
          {
             String[] words = iterator.next();
-            for (String word : words)
-               ignoredWords.add(word);
+            ignoredWords.addAll(Arrays.asList(words));
          }
       }
       return ignoredWords;

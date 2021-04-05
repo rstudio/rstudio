@@ -353,7 +353,7 @@ public class LintManager
             @Override
             public void onError(ServerError error)
             {
-
+               Debug.logError(error);
             }
          });
       }

@@ -1472,30 +1472,6 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * The maximum number of spelling words to check at once.
-    */
-   public PrefValue<Integer> maxSpellcheckWords()
-   {
-      return integer(
-         "max_spellcheck_words",
-         "Maximum number of words to spell check", 
-         "The maximum number of spelling words to check at once.", 
-         500);
-   }
-
-   /**
-    * The maximum number of spelling correction suggestions to prefetch.
-    */
-   public PrefValue<Integer> maxSpellcheckPrefetch()
-   {
-      return integer(
-         "max_spellcheck_prefetch",
-         "Number of words to prefetch for spell check", 
-         "The maximum number of spelling correction suggestions to prefetch.", 
-         20);
-   }
-
-   /**
     * Whether to enable real-time spellchecking by default.
     */
    public PrefValue<Boolean> realTimeSpellchecking()
@@ -3343,10 +3319,6 @@ public class UserPrefsAccessor extends Prefs
          ignoreUppercaseWords().setValue(layer, source.getBool("ignore_uppercase_words"));
       if (source.hasKey("ignore_words_with_numbers"))
          ignoreWordsWithNumbers().setValue(layer, source.getBool("ignore_words_with_numbers"));
-      if (source.hasKey("max_spellcheck_words"))
-         maxSpellcheckWords().setValue(layer, source.getInteger("max_spellcheck_words"));
-      if (source.hasKey("max_spellcheck_prefetch"))
-         maxSpellcheckPrefetch().setValue(layer, source.getInteger("max_spellcheck_prefetch"));
       if (source.hasKey("real_time_spellchecking"))
          realTimeSpellchecking().setValue(layer, source.getBool("real_time_spellchecking"));
       if (source.hasKey("navigate_to_build_error"))
@@ -3686,8 +3658,6 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(documentLoadLintDelay());
       prefs.add(ignoreUppercaseWords());
       prefs.add(ignoreWordsWithNumbers());
-      prefs.add(maxSpellcheckWords());
-      prefs.add(maxSpellcheckPrefetch());
       prefs.add(realTimeSpellchecking());
       prefs.add(navigateToBuildError());
       prefs.add(packagesPaneEnabled());

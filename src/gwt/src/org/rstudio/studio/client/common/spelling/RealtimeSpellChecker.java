@@ -23,12 +23,14 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.TextResource;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.spelling.model.SpellCheckerResult;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchList;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
+import org.rstudio.studio.client.workbench.events.ListChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.SpellingDoc;
 
@@ -73,20 +75,21 @@ public class RealtimeSpellChecker
       userPrefs_.realTimeSpellchecking().addValueChangeHandler(realtimeChangedHandler);
 
       // subscribe to user dictionary changes
-//      context_.releaseOnDismiss(userDictionary_.addListChangedHandler((ListChangedEvent event) ->
-//         {
-//            // detect whether this is the first delivery of the list
-//            // or if it is an update
-//            userDictionaryWords_ = event.getList();
-//            updateIgnoredWordsIndex();
-//         }
-//      ));
+      context_.releaseOnDismiss(userDictionary_.addListChangedHandler((ListChangedEvent event) ->
+         {
+            // detect whether this is the first delivery of the list
+            // or if it is an update
+            userDictionaryWords_ = event.getList();
+            updateIgnoredWordsIndex();
+         }
+      ));
    }
 
    @Inject
    void initialize(SpellingService spellingService, WorkbenchListManager workbenchListManager, UserPrefs uiPrefs)
    {
       spellingService_ = spellingService;
+      userDictionary_ = workbenchListManager.getUserDictionaryList();
       userPrefs_ = uiPrefs;
 
       if (domainSpecificWords_.isEmpty())
@@ -107,7 +110,7 @@ public class RealtimeSpellChecker
 
    public void addToUserDictionary(final String word)
    {
-      // append to user dictionary (this is async so the in-memory list of 
+      // append to user dictionary (this is async so the in-memory list of
       // ignored words won't update immediately)
       userDictionary_.append(word);
       
@@ -145,13 +148,12 @@ public class RealtimeSpellChecker
       context_.invalidateWord(affectedWord, false);
    }
 
-   public void checkWords(ArrayList<String> words,
-                          ServerRequestCallback<SpellCheckerResult> callback)
+   public SpellCheckerResult cachedWords(ArrayList<String> words)
    {
       SpellCheckerResult result = new SpellCheckerResult();
       for (String word : words)
       {
-         if (correctWords.contains(word))
+         if (isWordIgnored(word) || correctWords.contains(word))
          {
             result.getCorrect().add(word);
             words.remove(word);
@@ -163,32 +165,44 @@ public class RealtimeSpellChecker
          }
       }
 
-      // we've already cached all of the words, don't hit the server
-      if (words.size() == 0) {
-         callback.onResponseReceived(result);
-         return;
-      }
+      return result;
+   }
 
-      spellingService_.checkSpelling(words, new ServerRequestCallback<SpellCheckerResult>() {
-         @Override
-         public void onResponseReceived(SpellCheckerResult response) {
-            // cache responses so we don't have to hit the server for these words again in the session
-            correctWords.addAll(result.getCorrect());
-            for (String wrongWord : response.getIncorrect())
+   public void checkWords(ArrayList<String> words,
+                          ServerRequestCallback<SpellCheckerResult> callback)
+   {
+      SpellCheckerResult knownWords = cachedWords(words);
+
+      // we've already cached all of the words, don't hit the server
+      if (knownWords.getIncorrect().size() + knownWords.getCorrect().size() == words.size()) {
+         callback.onResponseReceived(knownWords);
+      }
+      else
+      {
+         spellingService_.checkSpelling(words, new ServerRequestCallback<SpellCheckerResult>()
+         {
+            @Override
+            public void onResponseReceived(SpellCheckerResult response)
             {
-               incorrectWords.put(wrongWord, null);
+               // cache responses so we don't have to hit the server for these words again in the session
+               correctWords.addAll(response.getCorrect());
+               for (String wrongWord : response.getIncorrect())
+               {
+                  incorrectWords.put(wrongWord, null);
+               }
+
+               response.getCorrect().addAll(knownWords.getCorrect());
+               response.getIncorrect().addAll(knownWords.getIncorrect());
+               callback.onResponseReceived(response);
             }
 
-            response.getCorrect().addAll(result.getCorrect());
-            response.getIncorrect().addAll(result.getIncorrect());
-            callback.onResponseReceived(response);
-         }
-
-         @Override
-         public void onError(ServerError error) {
-
-         }
-      });
+            @Override
+            public void onError(ServerError error)
+            {
+               Debug.logError(error);
+            }
+         });
+      }
    }
 
    public void suggestionList(String word,

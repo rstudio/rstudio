@@ -81,10 +81,6 @@ public class TextEditingTargetSpelling extends SpellingContext
 
       for (SpellingDoc.WordRange wordRange : wordSource)
       {
-         // only check a certain number of words at once to not overwhelm the system
-         if (checkedRanges >= prefs_.maxSpellcheckWords().getValue())
-            break;
-
          if (!spellChecker().shouldCheckSpelling(spellingDoc, wordRange))
             continue;
 

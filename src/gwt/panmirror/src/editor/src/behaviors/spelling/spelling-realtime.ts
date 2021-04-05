@@ -23,7 +23,11 @@ import { setTextSelection } from 'prosemirror-utils';
 
 import { FocusEvent } from '../../api/event-types';
 import { PandocMark } from '../../api/mark';
-import { EditorUISpelling, kCharClassWord } from '../../api/spelling';
+import {
+  EditorUISpelling,
+  EditorWordRange,
+  kCharClassWord
+} from '../../api/spelling';
 import { EditorEvents } from '../../api/events';
 import { kAddToHistoryTransaction } from '../../api/transaction';
 import { EditorUI, EditorMenuItem } from '../../api/ui';
@@ -57,7 +61,7 @@ export function invalidateWord(view: EditorView, word: string) {
 }
 
 class RealtimeSpellingPlugin extends Plugin<DecorationSet> {
-  // track whether we've ever had the focus (don't do any spelling operaitons until then)
+  // track whether we've ever had the focus (don't do any spelling operations until then)
   private hasBeenFocused = true;
 
   private view: EditorView | null = null;
@@ -88,7 +92,7 @@ class RealtimeSpellingPlugin extends Plugin<DecorationSet> {
 
           if (tr.getMeta(kUpdateSpellingTransaction)) {
             // explicit update request invalidates any existing decorations (this can happen when
-            // we get focus for the very firs time or when the main or secondary dictionaries change)
+            // we get focus for the very first time or when the main or secondary dictionaries change)
             return DecorationSet.create(newState.doc, spellingDecorations(newState, ui.spelling, excluded));
           } else if (tr.getMeta(kInvalidateSpellingWordTransaction)) {
             // for word invalidations we search through the decorations and remove words that match
@@ -144,7 +148,7 @@ class RealtimeSpellingPlugin extends Plugin<DecorationSet> {
             for (const range of addRanges) {
               decos = decos.add(
                 tr.doc,
-                spellingDecorations(newState, ui.spelling, excluded, true, range.from, range.to),
+                spellingDecorations(newState, ui.spelling, excluded, true, range.from - 1, range.to)
               );
             }
 
@@ -196,6 +200,11 @@ class RealtimeSpellingPlugin extends Plugin<DecorationSet> {
         focusUnsubscribe();
         this.hasBeenFocused = true;
         updateSpelling(this.view);
+
+        // call a second time as no words will be cached initially, this simplifies the
+        // need for threading a callback through the entire plugin system
+        const v = this.view;
+        setTimeout(() => updateSpelling(v), 5000);
       }
     });
   }
@@ -209,28 +218,55 @@ function spellingDecorations(
   from = -1,
   to = -1,
 ): Decoration[] {
+
+  // a map of wordText -> [wordRange...]
+  const rangeMap = new Map<string, EditorWordRange[]>();
+
   // break words
   const words = getWords(state, from, to, spelling, excluded);
 
   // spell check and return decorations for misspellings
   const decorations: Decoration[] = [];
+
+  // words to pass to the spellchecker
+  const wordsToCheck: string[] = [];
+
   while (words.hasNext()) {
     const word = words.next()!;
     const wordText = state.doc.textBetween(word.start, word.end);
-    const wordCheck = spellcheckerWord(wordText);
-    if (!spelling.checkWord(wordCheck)) {
-      const attrs: DecorationAttrs = {};
-      const spec: { [key: string]: any } = {
-        word: wordCheck,
-      };
-      if (excludeCursor && state.selection.head > word.start && state.selection.head <= word.end) {
-        spec.cursor = true;
-      } else {
-        attrs.class = kSpellingErrorClass;
+
+    let ranges = rangeMap.get(wordText);
+    if (!!ranges) {
+      ranges.push(word);
+    } else {
+      ranges = [word];
+    }
+    rangeMap.set(wordText, ranges);
+
+    wordsToCheck.push(spellcheckerWord(wordText));
+  }
+
+  const incorrectWords: string[] = spelling.checkWords(wordsToCheck);
+
+  for (const incorrectWord of incorrectWords) {
+    const ranges: EditorWordRange[] | undefined = rangeMap.get(incorrectWord);
+
+    if (!!ranges) {
+      for (const range of ranges) {
+        const attrs: DecorationAttrs = {};
+        const spec: { [key: string]: any } = {
+          word: incorrectWord,
+        };
+        if (excludeCursor && state.selection.head > range.start && state.selection.head <= range.end) {
+          spec.cursor = true;
+        } else {
+          attrs.class = kSpellingErrorClass;
+        }
+        decorations.push(Decoration.inline(range.start, range.end, attrs, spec));
       }
-      decorations.push(Decoration.inline(word.start, word.end, attrs, spec));
     }
   }
+
   return decorations;
 }
 
@@ -251,15 +287,11 @@ function spellingSuggestionContextMenuHandler(ui: EditorUI) {
       };
     };
 
-    // helper to show a context menu and prevetn further event handling
+    // helper to show a context menu and prevent further event handling
     const showContextMenu = (menuItems: EditorMenuItem[]) => {
       // show the menu
       const { clientX, clientY } = event as MouseEvent;
       ui.display.showContextMenu!(menuItems, clientX, clientY);
-
-      // prevent default handling
-      event.stopPropagation();
-      event.preventDefault();
     };
 
     if (event.target && event.target instanceof Node) {
@@ -270,41 +302,45 @@ function spellingSuggestionContextMenuHandler(ui: EditorUI) {
       const pos = view.posAtDOM(event.target, 0);
       const deco = realtimeSpellingKey.getState(view.state)!.find(pos, pos);
       if (deco.length) {
+        // prevent default handling
+        event.stopPropagation();
+        event.preventDefault();
+
         // get word
         const { from, to } = deco[0];
         const word = spellcheckerWord(view.state.doc.textBetween(from, to));
 
-        // get suggetions
         const kMaxSuggetions = 5;
-        const suggestions = ui.spelling.suggestionList(word);
+        ui.spelling.suggestionList(word, (suggestions: string[]): void => {
+          // create menu w/ suggestions
+          const menuItems: EditorMenuItem[] = suggestions.slice(0, kMaxSuggetions).map(suggestion => {
+            return {
+              text: suggestion,
+              exec: () => {
+                const tr = view.state.tr;
+                tr.setSelection(TextSelection.create(tr.doc, from, to));
+                const marks = tr.selection.$from.marks();
+                tr.replaceSelectionWith(schema.text(suggestion, marks), false);
+                setTextSelection(from + suggestion.length)(tr);
+                view.dispatch(tr);
+                view.focus();
+              },
+            };
+          });
+          if (menuItems.length) {
+            menuItems.push({ separator: true });
+          }
 
-        // create menu w/ suggestions
-        const menuItems: EditorMenuItem[] = suggestions.slice(0, kMaxSuggetions).map(suggestion => {
-          return {
-            text: suggestion,
-            exec: () => {
-              const tr = view.state.tr;
-              tr.setSelection(TextSelection.create(tr.doc, from, to));
-              const marks = tr.selection.$from.marks();
-              tr.replaceSelectionWith(schema.text(suggestion, marks), false);
-              setTextSelection(from + suggestion.length)(tr);
-              view.dispatch(tr);
-              view.focus();
-            },
-          };
-        });
-        if (menuItems.length) {
+          menuItems.push(menuAction(ui.context.translateText('Ignore All'), () => ui.spelling.ignoreWord(word)));
           menuItems.push({ separator: true });
-        }
+          menuItems.push(
+            menuAction(ui.context.translateText('Add to Dictionary'), () => ui.spelling.addToDictionary(word)),
+          );
 
-        menuItems.push(menuAction(ui.context.translateText('Ignore All'), () => ui.spelling.ignoreWord(word)));
-        menuItems.push({ separator: true });
-        menuItems.push(
-          menuAction(ui.context.translateText('Add to Dictionary'), () => ui.spelling.addToDictionary(word)),
-        );
+          // show context menu
+          showContextMenu(menuItems);
+        });
 
-        // show context menu
-        showContextMenu(menuItems);
         return true;
       }
 
@@ -318,7 +354,12 @@ function spellingSuggestionContextMenuHandler(ui: EditorUI) {
           const from = findBeginWord(view.state, clickPos.pos, classify);
           const to = findEndWord(view.state, clickPos.pos, classify);
           const word = spellcheckerWord(view.state.doc.textBetween(from, to));
+
           if (ui.spelling.isWordIgnored(word)) {
+            // prevent default handling
+            event.stopPropagation();
+            event.preventDefault();
+
             showContextMenu([
               menuAction(`${ui.context.translateText('Unignore')} \'${word}\'`, () => ui.spelling.unignoreWord(word)),
             ]);
