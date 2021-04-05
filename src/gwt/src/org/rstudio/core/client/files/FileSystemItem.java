@@ -359,6 +359,7 @@ public class FileSystemItem extends JavaScriptObject
       MIME_TYPES.put( "svg",   "image/svg+xml" );
       MIME_TYPES.put( "swf",   "application/x-shockwave-flash" );
       MIME_TYPES.put( "ttf",   "application/x-font-ttf" );
+      MIME_TYPES.put( "wasm",  "application/wasm");
 
       // markdown types
       MIME_TYPES.put( "md",       "text/x-markdown" );
