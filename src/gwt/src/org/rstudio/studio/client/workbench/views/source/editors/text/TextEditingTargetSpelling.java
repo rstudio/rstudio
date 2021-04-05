@@ -90,7 +90,8 @@ public class TextEditingTargetSpelling extends SpellingContext
          if (wordsInRanges.containsKey(word))
          {
             list = wordsInRanges.get(word);
-         } else
+         }
+         else
          {
             list = new ArrayList<>();
          }
