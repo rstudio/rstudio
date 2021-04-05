@@ -68,20 +68,26 @@ body, td {
 
 .caption {
   text-align: center;
-  font-size: 14px;
+  font-size: 18px;
   margin-right: 0;
   width: 100%;
+  font-weight: normal;
 }
 
 input[type=text], input[type=password] {
   width: 262px;
-  border: 1px solid #aaa;
+  border: 1px solid #cdcecf;
   font-size: 14px;
-  padding: 3px;
-  -moz-border-radius: 4px;
-  -webkit-border-radius: 4px;
+  padding: 8px;
 }
 
+@media (prefers-color-scheme: dark) {
+  input[type=text], input[type=password] {
+    border: 1px solid #4d4e4f;
+    background-color: #000;
+    color: #fff;
+  }
+}
 .buttonpanel {
   text-align: center;
   margin-top: 20px;
@@ -94,11 +100,14 @@ input[type=text], input[type=password] {
   display: #errorDisplay#;
   font-weight: bold;
 }
+@media (prefers-color-scheme: dark) {
+  #errorpanel {
+    color: #ff7070;
+  }
+}
 
 button.fancy {
   background-color: #1e77bc;
-  border-radius: 4px;
-  font-weight: bold;
   font-size: 14px;
   padding: 10px 15px;
   cursor: pointer;
@@ -233,7 +242,7 @@ function submitRealForm() {
             </p>
             <div style="display: #staySignedInDisplay#;">
                <input type="checkbox" name="staySignedIn" id="staySignedIn" value="1"/>
-               <label for="staySignedIn">Stay signed in when browser closes</label>
+               <label id="staySignedInLabel" for="staySignedIn">Stay signed in when browser closes</label>
                <p style="display: #authTimeoutMinutesDisplay#;">
                   <span style="font-size:10px">You will automatically be signed out after #authTimeoutMinutes# minutes of inactivity.</span>
                </p>
