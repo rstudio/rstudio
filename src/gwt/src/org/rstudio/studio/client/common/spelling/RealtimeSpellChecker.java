@@ -174,7 +174,8 @@ public class RealtimeSpellChecker
       SpellCheckerResult knownWords = cachedWords(words);
 
       // we've already cached all of the words, don't hit the server
-      if (knownWords.getIncorrect().size() + knownWords.getCorrect().size() == words.size()) {
+      if (knownWords.getIncorrect().size() + knownWords.getCorrect().size() == words.size())
+      {
          callback.onResponseReceived(knownWords);
       }
       else
@@ -310,4 +311,3 @@ public class RealtimeSpellChecker
    private SpellingService spellingService_;
    private UserPrefs userPrefs_;
 }
-
