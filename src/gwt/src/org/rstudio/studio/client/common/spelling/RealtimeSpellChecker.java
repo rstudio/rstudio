@@ -248,7 +248,7 @@ public class RealtimeSpellChecker
 
       for (char c: word.toCharArray())
       {
-         if(!Character.isUpperCase(c))
+         if (!Character.isUpperCase(c))
             return false;
       }
       return true;
