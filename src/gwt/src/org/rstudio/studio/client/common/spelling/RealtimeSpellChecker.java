@@ -261,7 +261,7 @@ public class RealtimeSpellChecker
 
       for (char c: word.toCharArray())
       {
-         if(Character.isDigit(c))
+         if (Character.isDigit(c))
             return true;
       }
       return false;
