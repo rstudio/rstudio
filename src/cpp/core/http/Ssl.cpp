@@ -18,10 +18,152 @@
 
 #include <core/Log.hpp>
 
+#ifdef _WIN32
+#include <windows.h>
+#include <wincrypt.h>
+#include <cryptuiapi.h>
+#include <openssl/x509.h>
+#endif
+
+#ifdef __APPLE__
+#include <core/http/Keychain.hpp>
+#include <openssl/x509.h>
+#endif
+
 namespace rstudio {
 namespace core {
 namespace http {
 namespace ssl {
+
+namespace {
+
+#if defined(_WIN32) || defined(__APPLE__)
+class ICertStore
+{
+public:
+   virtual std::vector<X509*> getCertificates() const = 0;
+   virtual ~ICertStore() {}
+};
+#endif
+
+#ifdef _WIN32
+class WindowsCertificateStore : public ICertStore
+{
+public:
+   WindowsCertificateStore()
+   {
+      // load certificates from important stores
+      LPCSTR stores[] = {"ROOT", "CA"};
+      for (const LPCSTR& store : stores)
+      {
+          HCERTSTORE hStore = CertOpenSystemStore(NULL, store);
+          if (!hStore)
+          {
+             LOG_ERROR_MESSAGE("Could not open certificate store");
+             return;
+          }
+
+          PCCERT_CONTEXT pContext = nullptr;
+          while (pContext = CertEnumCertificatesInStore(hStore, pContext))
+          {
+             // convert the certificate returned from the Windows store into a
+             // format that OpenSSL can understand
+             const BYTE* certPtr = pContext->pbCertEncoded;
+             X509* x509 = d2i_X509(nullptr, &certPtr, pContext->cbCertEncoded);
+             if (x509)
+             {
+                certificates.push_back(x509);
+             }
+             else
+             {
+                boost::system::error_code ec = boost::system::error_code(
+                            static_cast<int>(::ERR_get_error()),
+                            boost::asio::error::get_ssl_category());
+                Error error(ec, ERROR_LOCATION);
+                error.addProperty("description",
+                                  "Could not create OpenSSL certificate object from Windows certificate data");
+                LOG_DEBUG_MESSAGE(error.asString());
+             }
+          }
+
+          CertCloseStore(hStore, 0);
+      }
+   }
+
+   // note to caller - the certificate data (X509 pointers) here must not be freed as the data
+   // must persist for the lifetime of the process
+   std::vector<X509*> getCertificates() const
+   {
+      return certificates;
+   }
+
+private:
+   // certificate pointers - these are intentionally leaked
+   // as they need to be available for the entire run of the program
+   std::vector<X509*> certificates;
+};
+
+static const ICertStore& getCertificateStore()
+{
+    // Meyer's singleton - guarantees this is thread safe
+    // and will be initialized exactly once by the first caller
+    static WindowsCertificateStore instance;
+    return instance;
+}
+#endif
+
+#ifdef __APPLE__
+class Keychain : public ICertStore
+{
+public:
+   Keychain()
+   {
+      // load all certs from the keychain
+      std::vector<KeychainCertificateData> certs = getKeychainCertificates();
+      for (const auto& cert : certs)
+      {
+         // convert the raw bytes from the keychain into a format that OpenSSL can understand
+         const unsigned char* bytePtr = cert.data.get();
+         X509* x509 = d2i_X509(nullptr, &bytePtr, cert.size);
+         if (x509)
+         {
+            certificates.push_back(x509);
+         }
+         else
+         {
+            boost::system::error_code ec = boost::system::error_code(
+                        static_cast<int>(::ERR_get_error()),
+                        boost::asio::error::get_ssl_category());
+            Error error(ec, ERROR_LOCATION);
+            error.addProperty("description",
+                              "Could not create OpenSSL certificate object from Keychain certificate data");
+            LOG_DEBUG_MESSAGE(error.asString());
+         }
+      }
+   }
+
+   // note to caller - the certificate data (X509 pointers) here must not be freed as the data
+   // must persist for the lifetime of the process
+   std::vector<X509*> getCertificates() const
+   {
+      return certificates;
+   }
+
+private:
+   // certificate pointers - these are intentionally leaked
+   // as they need to be available for the entire run of the program
+   std::vector<X509*> certificates;
+};
+
+static const ICertStore& getKeychain()
+{
+   // Meyer's singleton - guarantees this is thread safe
+   // and will be initialized exactly once by the first caller
+   static Keychain instance;
+   return instance;
+}
+#endif
+} // namespace
 
 void initializeSslContext(boost::asio::ssl::context* pContext,
                                  bool verify,
