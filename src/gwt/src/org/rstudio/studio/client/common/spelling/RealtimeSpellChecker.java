@@ -172,7 +172,8 @@ public class RealtimeSpellChecker
       SpellCheckerResult knownWords = getCachedWords(words);
 
       // we've already cached all of the words, don't hit the server
-      if (knownWords.getIncorrect().size() + knownWords.getCorrect().size() == words.size()) {
+      if (knownWords.getIncorrect().size() + knownWords.getCorrect().size() == words.size())
+      {
          callback.onResponseReceived(knownWords);
       }
       else
@@ -245,7 +246,7 @@ public class RealtimeSpellChecker
 
       for (char c: word.toCharArray())
       {
-         if(!Character.isUpperCase(c))
+         if (!Character.isUpperCase(c))
             return false;
       }
       return true;
@@ -258,7 +259,7 @@ public class RealtimeSpellChecker
 
       for (char c: word.toCharArray())
       {
-         if(Character.isDigit(c))
+         if (Character.isDigit(c))
             return true;
       }
       return false;
@@ -308,4 +309,3 @@ public class RealtimeSpellChecker
    private SpellingService spellingService_;
    private UserPrefs userPrefs_;
 }
-
