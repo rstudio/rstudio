@@ -273,6 +273,21 @@ void ConsoleProcess::commonInit()
                   reticulatePython);
       }
    }
+   
+   // if we're using zsh, we want to set a custom ZDOTDIR so that we can
+   // inject some of our own tools to be run for newly-launched terminals.
+   // this allows us to invoke our own hooks while still running the user's
+   // own startup files as appropriate
+   if (getShellType() == TerminalShell::ShellType::PosixZsh)
+   {
+      FilePath zDotDir =
+            session::options().rResourcesPath().completeChildPath("terminal/zsh");
+      
+      core::system::setenv(
+               &*options_.environment,
+               "ZDOTDIR",
+               zDotDir.getAbsolutePath());
+   }
 
    // When we retrieve from outputBuffer, we only want complete lines. Add a
    // dummy \n so we can tell the first line is a complete line.
