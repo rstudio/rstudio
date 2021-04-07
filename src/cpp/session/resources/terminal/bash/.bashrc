@@ -12,10 +12,7 @@ elif [ -f ~/.profile ]; then
 	source ~/.profile
 fi
 
-# if RETICULATE_PYTHON is set, then place that
-# first on the PATH so that a user invocation of
-# 'python' would invoke the RStudio-configured
-# version of Python
-if [ -n "${RETICULATE_PYTHON}" ]; then
-	PATH="$(dirname "${RETICULATE_PYTHON}"):${PATH}"
+if [ -f "${RSTUDIO_TERMINAL_HOOKS}" ]; then
+	source "${RSTUDIO_TERMINAL_HOOKS}"
 fi
+

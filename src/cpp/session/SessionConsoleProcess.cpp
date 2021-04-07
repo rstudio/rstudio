@@ -305,6 +305,15 @@ void ConsoleProcess::commonInit()
                "ZDOTDIR",
                zDotDir.getAbsolutePath());
    }
+ 
+   // set RSTUDIO_TERMINAL_HOOKS (to be sourced on startup by supported shells)
+   FilePath hooksPath =
+         session::options().rResourcesPath().completeChildPath("terminal/hooks");
+   
+   core::system::setenv(
+            &*options_.environment,
+            "RSTUDIO_TERMINAL_HOOKS",
+            hooksPath.getAbsolutePath());
 
    // When we retrieve from outputBuffer, we only want complete lines. Add a
    // dummy \n so we can tell the first line is a complete line.

@@ -11,8 +11,8 @@ if [ -f "${_ZDOTDIR-$HOME}/.zlogin" ]; then
 	ZDOTDIR="${ZDOTDIR_SAVE}"
 fi
 
-if [ -n "${RETICULATE_PYTHON}" ]; then
-	PATH="$(dirname "${RETICULATE_PYTHON}"):${PATH}"
+if [ -f "${RSTUDIO_TERMINAL_HOOKS}" ]; then
+	source "${RSTUDIO_TERMINAL_HOOKS}"
 fi
 
 ZDOTDIR="${_ZDORDIR-$HOME}"
