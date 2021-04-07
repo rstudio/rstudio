@@ -61,13 +61,15 @@ if (!file.exists(normalizePath(file.path(soci_build_dir, "x64\\lib\\Release\\lib
    # download and install postgresql includes/libraries - we prebuild these because the postgresql build process is non-trivial
    downloadAndUnzip(postgresql_zip, owd, postgresql_zip_url)
 
-   # clone repository if we dont already have it
+   # clone repository if we don't already have it
    if (!file.exists("soci")) {
       section("Downloading SOCI sources")
       download(soci_url, destfile = "soci.tar.gz")
-	  section("Unzipping SOCI sources")
-	  exec("7z.exe", "e", "soci.tar.gz")
-	  exec("7z.exe", "x", "soci.tar")
+      section("Decompressing SOCI sources")
+      exec("7z.exe", "e", "soci.tar.gz")
+      Sys.sleep(5)
+      section("Expanding SOCI sources")
+      exec("7z.exe", "x", "soci.tar")
    }
 
    # create build directories
