@@ -199,6 +199,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
 
       Toolbar columnToolbar = new Toolbar("Manage Column Display");
       columnToolbar.setStyleName(res_.styles().newSection());
+      columnToolbar.setHeight("20px");
 
       ToolbarButton addButton = new ToolbarButton(
          "Add Column",

@@ -50,7 +50,8 @@ const char * const kDelim = "|";
 
 // secure cookie key
 std::string s_secureCookieKey;
-
+std::string s_secureCookieKeyPath; // absolute path to secure-cookie-file used to obtain the key value
+std::string s_secureCookieKeyHash; // 1-way hash of the secureCookieKey value
 
 Error base64HMAC(const std::string& value,
                  const std::string& expires,
@@ -264,11 +265,19 @@ const std::string& getKey()
 {
    return s_secureCookieKey;
 }
+const std::string& getKeyFileUsed()
+{
+   return s_secureCookieKeyPath;
+}
 
+const std::string& getKeyHash()
+{
+   return s_secureCookieKeyHash;
+}
 
 Error initialize()
 {
-   Error error = key_file::readSecureKeyFile("secure-cookie-key", &s_secureCookieKey);
+   Error error = key_file::readSecureKeyFile("secure-cookie-key", &s_secureCookieKey, &s_secureCookieKeyHash, &s_secureCookieKeyPath);
    if (error)
       return error;
 
@@ -280,7 +289,7 @@ Error initialize(const FilePath& secureKeyFile)
    if (secureKeyFile.isEmpty())
       return initialize();
 
-   Error error = key_file::readSecureKeyFile(secureKeyFile, &s_secureCookieKey);
+   Error error = key_file::readSecureKeyFile(secureKeyFile, &s_secureCookieKey, &s_secureCookieKeyHash, &s_secureCookieKeyPath);
    if (error)
       return error;
 

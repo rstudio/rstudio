@@ -17,8 +17,6 @@
 
 #include <core/system/Xdg.hpp>
 
-#include <server/ServerOptionsOverlay.hpp>
-
 #include <server/ServerSessionManager.hpp>
 
 using namespace rstudio::core;

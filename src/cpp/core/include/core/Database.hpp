@@ -47,7 +47,9 @@ struct PostgresqlConnectionOptions
    std::string password;
    std::string connectionUri;
    int connectionTimeoutSeconds;
-   std::string secureKey;
+   std::string secureKey; // obfuscated secure-key value
+   std::string secureKeyFileUsed; // absolute path to file containing the key, for troubleshooting
+   std::string secureKeyHash; // hash of secureKey (pre-obfuscation)
 };
 
 enum class Driver

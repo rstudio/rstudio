@@ -206,22 +206,27 @@ RToolsInfo::RToolsInfo(const std::string& name,
       // set clang args
 #ifdef _WIN64
       std::string baseDir = "mingw64";
-      std::string arch = "x86_64";
+      std::string triple = "x86_64-w64-mingw32";
 #else
       std::string baseDir = "mingw32";
-      std::string arch = "i686";
+      std::string triple = "i686-w64-mingw32";
 #endif
 
-      // path to mingw includes
-      boost::format mgwIncFmt("%1%/%2%-w64-mingw32/include");
-      std::string mingwIncludeSuffix = boost::str(mgwIncFmt % baseDir % arch);
-      FilePath mingwIncludePath = installPath.completeChildPath(mingwIncludeSuffix);
-      clangArgs.push_back("-I" + mingwIncludePath.getAbsolutePath());
+      std::vector<std::string> stems = {
+         "include/c++/8.3.0",
+         "include/c++/8.3.0/" + triple,
+         "include/c++/8.3.0/backward",
+         "lib/gcc/" + triple + "/8.3.0/include",
+         "include",
+         "lib/gcc/" + triple + "/8.3.0/include-fixed",
+         triple + "/include"
+      };
 
-      // path to C++ headers
-      std::string cppSuffix = "c++/8.3.0";
-      FilePath cppIncludePath = installPath.completeChildPath(cppSuffix);
-      clangArgs.push_back("-I" + cppIncludePath.getAbsolutePath());
+      for (auto&& stem : stems)
+      {
+         FilePath includePath = installPath.completeChildPath(baseDir + "/" + stem);
+         clangArgs.push_back("-I" + includePath.getAbsolutePath());
+      }
    }
    else
    {

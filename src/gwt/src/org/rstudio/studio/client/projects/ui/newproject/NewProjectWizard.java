@@ -17,6 +17,7 @@ package org.rstudio.studio.client.projects.ui.newproject;
 import java.util.ArrayList;
 
 import com.google.gwt.aria.client.Roles;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Wizard;
 import org.rstudio.core.client.widget.WizardNavigationPage;
@@ -74,6 +75,8 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
       }
       
       openInNewWindow_ = new CheckBox("Open in new session");
+      ElementIds.assignElementId(openInNewWindow_,
+         ElementIds.idWithPrefix(getTitle(), ElementIds.NEW_PROJECT_NEW_SESSION));
       addLeftWidget(openInNewWindow_);
       openInNewWindow_.setVisible(false);
    }  

@@ -23,7 +23,7 @@
 #include <core/system/System.hpp>
 
 #include <core/Algorithm.hpp>
-#include <core/Hash.hpp>
+#include <shared_core/Hash.hpp>
 #include <core/Log.hpp>
 #include <core/LogOptions.hpp>
 

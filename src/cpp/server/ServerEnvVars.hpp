@@ -1,5 +1,5 @@
 /*
- * Hash.hpp
+ * ServerEnvVars.hpp
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -13,23 +13,27 @@
  *
  */
 
-#ifndef CORE_HASH_HPP
-#define CORE_HASH_HPP
+#ifndef SERVER_ENV_VARS_HPP
+#define SERVER_ENV_VARS_HPP
 
-#include <string>
+#include <core/system/Types.hpp>
 
 namespace rstudio {
 namespace core {
-namespace hash {
-   
-std::string crc32Hash(const std::string& content);
+   class Error;
+}
+}
 
-std::string crc32HexHash(const std::string& content);
+namespace rstudio {
+namespace server {
+namespace env_vars {
 
-} // namespace hash
-} // namespace core 
+core::Error initialize();
+
+void forwardHttpProxyVars(core::system::Options *pEnvironment);
+
+} // namespace env_vars
+} // namespace server
 } // namespace rstudio
 
-
-#endif // CORE_HASH_HPP
-
+#endif // SERVER_ENV_VARS_HPP
