@@ -234,8 +234,12 @@ else()
    else()
      set(RSTUDIO_INSTALL_BIN bin)
    endif()
-   set(RSTUDIO_INSTALL_SUPPORTING .)
+   if(NOT RSTUDIO_INSTALL_SUPPORTING)
+       set(RSTUDIO_INSTALL_SUPPORTING .)
+   endif()
 endif()
+
+add_compile_definitions(RSTUDIO_RESOURCES_DIR="${RSTUDIO_INSTALL_SUPPORTING}")
 
 # if the install prefix is /usr/local then tweak as appropriate
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

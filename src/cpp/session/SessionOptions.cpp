@@ -87,7 +87,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    core::system::unsetenv(kMonitorSharedSecretEnvVar);
 
    // compute the resource path
-   Error error = core::system::installPath("..", argv[0], &resourcePath_);
+   Error error = core::system::installPath(RSTUDIO_RESOURCES_DIR, argv[0], &resourcePath_);
    if (error)
    {
       LOG_ERROR_MESSAGE("Unable to determine install path: "+error.getSummary());
