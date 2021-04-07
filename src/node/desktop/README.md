@@ -8,8 +8,8 @@ Only runnable within context of an RStudio development environment.
 - checkout and build branch `prototype/electron`
     - only build desktop, and disable crashpad by renaming or deleting /opt/rstudio/crashpad and generate cmake via:
         - `-DRSTUDIO_TARGET=Desktop -DRSTUDIO_CRASHPAD_ENABLED:BOOL=OFF -G Ninja`
-    - must build into `rstudio/src/cpp/cmake-build-debug` (otherwise tweak relative path in `main.js` to match)
-- `ant desktop` from `rstudio/src/gwt`
+    - must build into `rstudio/src/cpp/build` (otherwise tweak relative path in `main.js` to match)
+- `ant desktop` from `rstudio/src/gwt` (or do a full `ant` beforehand)
 - from `rstudio/src/node/desktop`
     - `yarn`
     - `yarn start`

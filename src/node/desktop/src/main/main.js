@@ -36,7 +36,7 @@ module.exports = class Main {
     this.initializeSharedSecret();
 
     // get install path
-    let installPath = '../../cpp/cmake-build-debug';
+    let installPath = '../../cpp/build';
     if (!fs.existsSync(installPath)) {
       console.log(`Unable to find ${installPath}`);
       app.exit(1);
