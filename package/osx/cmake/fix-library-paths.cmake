@@ -42,7 +42,15 @@ if(EXISTS "@RSESSION_ARM64_PATH@")
 		COMMAND
 		"@CMAKE_CURRENT_SOURCE_DIR@/fix-library-paths.sh"
 		"${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/Frameworks/arm64"
-		"@executable_path/../Frameworks/arm64")
+		"@executable_path/../Frameworks/arm64"
+		"*.dylib")
+
+	execute_process(
+		COMMAND
+			"@CMAKE_CURRENT_SOURCE_DIR@/fix-library-paths.sh"
+			"${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/MacOS"
+			"@executable_path/../Frameworks/arm64"
+			"rsession-arm64")
 
 else()
 
@@ -53,8 +61,16 @@ endif()
 # fix library paths on x86_64 components
 execute_process(
 	COMMAND
-	"@CMAKE_CURRENT_SOURCE_DIR@/fix-library-paths.sh"
-	"${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/Frameworks"
-	"@executable_path/../Frameworks")
+		"@CMAKE_CURRENT_SOURCE_DIR@/fix-library-paths.sh"
+		"${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/Frameworks"
+		"@executable_path/../Frameworks"
+		"*.dylib")
+
+execute_process(
+	COMMAND
+		"@CMAKE_CURRENT_SOURCE_DIR@/fix-library-paths.sh"
+		"${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/MacOS"
+		"@executable_path/../Frameworks"
+		"RStudio diagnostics rpostback rsession")
 
 
