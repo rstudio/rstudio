@@ -332,7 +332,7 @@ bool AvailableTerminalShells::getSystemShell(TerminalShell* pShellInfo)
    // interactive non-login shell, but do the same startup initialization
    // via our rcfile that a login shell would've performed
    core::FilePath bashRcPath =
-         session::options().rResourcesPath().completeChildPath("terminal/bashrc");
+         session::options().rResourcesPath().completeChildPath("terminal/.bashrc");
    pShellInfo->args.emplace_back("--rcfile");
    pShellInfo->args.emplace_back(bashRcPath.getAbsolutePath());
    
