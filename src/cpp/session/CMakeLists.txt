@@ -616,6 +616,11 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
    install(DIRECTORY "resources/tutorial_resources"
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
+   # install terminal resources
+   install(
+      DIRECTORY "resources/terminal"
+      DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
+
    # install libclang
    if(WIN32)
       file(GLOB LIBCLANG_32_FILES "${LIBCLANG_DIR}/x86/*")

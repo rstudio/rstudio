@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+if [ -f /etc/profile ]; then
+	source /etc/profile
+fi
+
+for RCFILE in ~/.bash_profile ~/.bash_login ~/.profile; do
+	if [ -f "${RCFILE}" ]; then
+		source "${RCFILE}"
+		break
+	fi
+done
+
+if [ -n "${RSTUDIO_TERMINAL_PATH}" ]; then
+	PATH="${RSTUDIO_TERMINAL_PATH}:${PATH}"
+	export PATH
+fi
+

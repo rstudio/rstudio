@@ -15,15 +15,17 @@
 
 #include <session/SessionTerminalShell.hpp>
 
+#include <shared_core/FilePath.hpp>
+
 #include <core/Algorithm.hpp>
-#include <core/system/System.hpp>
+#include <core/FileUtils.hpp>
 #include <core/StringUtils.hpp>
+#include <core/system/System.hpp>
 
 #include <session/SessionModuleContext.hpp>
-#include "SessionGit.hpp"
 #include <session/prefs/UserPrefs.hpp>
-#include <shared_core/FilePath.hpp>
-#include <core/FileUtils.hpp>
+
+#include "SessionGit.hpp"
 
 namespace rstudio {
 namespace session {
@@ -319,12 +321,25 @@ bool AvailableTerminalShells::getSystemShell(TerminalShell* pShellInfo)
    pShellInfo->type = TerminalShell::ShellType::Cmd64;
    pShellInfo->name = "Command Prompt";
 #else
+   
+   // use default bash shell
    pShellInfo->name = "Bash";
    pShellInfo->type = TerminalShell::ShellType::PosixBash;
    pShellInfo->path = core::FilePath("/usr/bin/env");
    pShellInfo->args.emplace_back("bash");
-   pShellInfo->args.emplace_back("-l"); // act like a login shell
+   
+   // we want to simulate a login shell, but without explicitly starting
+   // bash as a login shell. we do this so that we can control the rcfile
+   // sourced by bash on startup. to accomplish this, we run bash as an
+   // interactive non-login shell, but do the same startup initialization
+   // via our rcfile that a login shell would've performed
+   core::FilePath bashRcPath =
+         session::options().rResourcesPath().completeChildPath("terminal/bashrc");
+   pShellInfo->args.emplace_back("--rcfile");
+   pShellInfo->args.emplace_back(bashRcPath.getAbsolutePath());
+   
 #endif
+   
    return true;
 }
 
