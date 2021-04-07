@@ -326,16 +326,6 @@ bool AvailableTerminalShells::getSystemShell(TerminalShell* pShellInfo)
    pShellInfo->path = core::FilePath("/usr/bin/env");
    pShellInfo->args.emplace_back("bash");
    
-   // we want to simulate a login shell, but without explicitly starting
-   // bash as a login shell. we do this so that we can control the rcfile
-   // sourced by bash on startup. to accomplish this, we run bash as an
-   // interactive non-login shell, but do the same startup initialization
-   // via our rcfile that a login shell would've performed
-   core::FilePath bashRcPath =
-         session::options().rResourcesPath().completeChildPath("terminal/bash/.bashrc");
-   pShellInfo->args.emplace_back("--rcfile");
-   pShellInfo->args.emplace_back(bashRcPath.getAbsolutePath());
-   
 #endif
    
    return true;

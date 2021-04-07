@@ -274,6 +274,23 @@ void ConsoleProcess::commonInit()
       }
    }
    
+   // if we're using bash, then we'll use a custom rcfile to ensure our
+   // hooks get run when the shell is launcehd
+   if (getShellType() == TerminalShell::ShellType::PosixBash ||
+       getShellType() == TerminalShell::ShellType::GitBash)
+   {
+      // we want to simulate a login shell, but without explicitly starting
+      // bash as a login shell. we do this so that we can control the rcfile
+      // sourced by bash on startup. to accomplish this, we run bash as an
+      // interactive non-login shell, but do the same startup initialization
+      // via our rcfile that a login shell would've performed
+      core::FilePath bashRcPath =
+            session::options().rResourcesPath().completeChildPath("terminal/bash/.bashrc");
+      
+      options_.args.emplace_back("--rcfile");
+      options_.args.emplace_back(bashRcPath.getAbsolutePath());
+   }
+   
    // if we're using zsh, we want to set a custom ZDOTDIR so that we can
    // inject some of our own tools to be run for newly-launched terminals.
    // this allows us to invoke our own hooks while still running the user's

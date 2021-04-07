@@ -46,3 +46,4 @@ GSYMS
 GTAGS
 TODO-INTERNAL
 *.pid
+.zsh_history
