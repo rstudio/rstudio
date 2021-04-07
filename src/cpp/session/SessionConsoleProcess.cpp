@@ -15,6 +15,8 @@
 
 #include <sstream>
 
+#include <r/RExec.hpp>
+
 #include <session/SessionConsoleProcess.hpp>
 #include <session/projects/SessionProjects.hpp>
 
@@ -250,6 +252,26 @@ void ConsoleProcess::commonInit()
       core::system::setenv(&(options_.environment.get()), "RSTUDIO_SESSION_ID",
                            module_context::activeSession().id());
 #endif
+   }
+   
+   // if RStudio has been configured to use Python,
+   // place that copy of Python on the PATH
+   std::string reticulatePython = core::system::getenv("RETICULATE_PYTHON");
+   if (reticulatePython.empty())
+   {
+      Error error = r::exec::RFunction(".rs.inferReticulatePython")
+            .call(&reticulatePython);
+      
+      if (error)
+         LOG_ERROR(error);
+      
+      if (!reticulatePython.empty())
+      {
+         core::system::setenv(
+                  &*options_.environment,
+                  "RETICULATE_PYTHON",
+                  reticulatePython);
+      }
    }
 
    // When we retrieve from outputBuffer, we only want complete lines. Add a
@@ -882,7 +904,7 @@ ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
    else
    {
       // otherwise create a new one
-      cp =  create(command, options, procInfo);
+      cp = create(command, options, procInfo);
    }
 
    if (cp->procInfo_->getChannelMode() == Websocket)

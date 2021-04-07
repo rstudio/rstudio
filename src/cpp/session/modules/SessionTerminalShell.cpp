@@ -307,11 +307,9 @@ core::FilePath getGitBashShell()
       gitBashPath = gitExePath.getParent().getParent().completePath("usr/bin/bash.exe");
       if (gitBashPath.exists())
          return gitBashPath;
-      else
-         return core::FilePath();
    }
-   else
-       return core::FilePath();
+   
+   return core::FilePath();
 }
 
 bool AvailableTerminalShells::getSystemShell(TerminalShell* pShellInfo)
