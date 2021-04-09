@@ -40,6 +40,7 @@
 * **BREAKING:** RStudio Server no longer supports Internet Explorer 11. 
 * Added `session-suspend-on-incomplete-statement` option to enable more aggressive session suspension behavior (Pro #1934)
 * New `env-vars` configuration file simplifies setting environment variables for the main RStudio server process.
+* Refreshed style on sign-in page; sign-in page now has a dark mode that syncs with the operating system's (#9092, #9093)
 
 ### Visual Editor
 
@@ -125,3 +126,4 @@
 * Fixed issue where Open File dialog would fail to open files whose names were explicitly typed (#4059)
 * Fixed issue causing Project Sharing to fail to set Access Control Lists when using NFS v4 and `username@domain` security principals (Pro #2415)
 * Fixed issue where dialog boxes [e.g. Git commit, Installing Pro Database drivers] could fail to show output with Limit Console Output turned on (Pro #2284)
+* Fixed issue preventing Kubernetes sessions from starting due to incorrect SSL certificate checking on websocket connections; make websocket connections support the `verify-ssl-certs` option (Pro #2463)
