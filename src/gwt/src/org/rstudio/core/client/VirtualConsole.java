@@ -773,9 +773,8 @@ public class VirtualConsole
 
    private static final Pattern CONTROL = Pattern.create("[\r\b\f\n]");
 
-   // some panels might want to never virtualize the scrolling based
-   // on how they use the VirtualConsole (e.g. Build Pane)
-   private boolean virtualizedDisableOverride_ = false;
+   // only a select few panes should be virtualized. default it to off everywhere.
+   private boolean virtualizedDisableOverride_ = true;
 
    private final StringBuilder output_ = new StringBuilder();
    private final TreeMap<Integer, ClassRange> class_ = new TreeMap<>();
