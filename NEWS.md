@@ -124,4 +124,4 @@
 * Fixed issue where sending code from Python History pane would switch Console to R mode (#8693)
 * Fixed issue where Open File dialog would fail to open files whose names were explicitly typed (#4059)
 * Fixed issue causing Project Sharing to fail to set Access Control Lists when using NFS v4 and `username@domain` security principals (Pro #2415)
-* Fixed issue where one-off uses of the VirtualConsole would be Virtualized and output would be lost (Pro #2284)
+* Fixed issue where dialog boxes [e.g. Git commit, Installing Pro Database drivers] could fail to show output with Limit Console Output turned on (Pro #2284)
