@@ -57,6 +57,8 @@
 #include <server_core/sessions/SessionSignature.hpp>
 #endif
 
+#include "SessionAsyncRpcConnection.hpp"
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -103,6 +105,14 @@ bool parseAndValidateJsonRpcConnection(
          boost::shared_ptr<HttpConnection> ptrConnection,
          json::JsonRpcRequest* pJsonRpcRequest)
 {
+   // Async rpc requests will have already parsed the request so just copy it over here
+   if (ptrConnection->isAsyncRpc()) {
+      boost::shared_ptr<rpc::AsyncRpcConnection> asyncConnection =
+              boost::static_pointer_cast<rpc::AsyncRpcConnection>(ptrConnection);
+      *pJsonRpcRequest = asyncConnection->jsonRpcRequest();
+      return true;
+   }
+
    // attempt to parse the request into a json-rpc request
    Error error = json::parseJsonRpcRequest(ptrConnection->request().body(),
                                            pJsonRpcRequest);
@@ -243,12 +253,6 @@ bool isWaitForMethodUri(const std::string& uri)
    return false;
 }
 
-bool isJsonRpcRequest(boost::shared_ptr<HttpConnection> ptrConnection)
-{
-   return boost::algorithm::starts_with(ptrConnection->request().uri(),
-                                        "/rpc/");
-}
-
 void polledEventHandler()
 {
    // if R is getting called after a fork this is likely multicore or
@@ -305,6 +309,9 @@ void polledEventHandler()
       {
          if ( isMethod(ptrConnection, kClientInit) )
          {
+            if (ptrConnection->isAsyncRpc()) {
+               BOOST_ASSERT(false); // The listener thread skips client_init when converting RPC to async
+            }
             // client_init means the user is attempting to reload the browser
             // in the middle of a computation. process client_init and post
             // a busy event as our initFunction
@@ -571,6 +578,20 @@ bool waitForMethod(const std::string& method,
                         pRequest);
 }
 
+bool isJsonRpcRequest(boost::shared_ptr<HttpConnection> ptrConnection)
+{
+    return boost::algorithm::starts_with(ptrConnection->request().uri(),
+                                         "/rpc/");
+}
+
+bool isAsyncJsonRpcRequest(boost::shared_ptr<HttpConnection> ptrConnection)
+{
+   std::string uri = ptrConnection->request().uri();
+   // Excluding the client_init operation because it's one of those special cases that will
+   // require more code + testing. Since its only made once per browser process it won't pile up
+   return boost::algorithm::starts_with(uri, "/rpc/") && uri != "/rpc/client_init";
+}
+
 void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                       ConnectionType connectionType)
 {
@@ -582,6 +603,10 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
 
    if (uriHandler) // uri handler
    {
+      if (ptrConnection->isAsyncRpc())
+      {
+         BOOST_ASSERT(false); // should not get here for uri handlers
+      }
       core::http::visitHandler(uriHandler.get(),
                                request,
                                boost::bind(endHandleConnection,
@@ -797,6 +822,22 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
       response.setNotFoundError(request);
       ptrConnection->sendResponse(response);
    }
+}
+
+boost::shared_ptr<HttpConnection> handleAsyncRpc(boost::shared_ptr<HttpConnection> ptrConnection)
+{
+   json::JsonRpcRequest jsonRpcRequest;
+   boost::shared_ptr<HttpConnection> res;
+   if (parseAndValidateJsonRpcConnection(ptrConnection, &jsonRpcRequest))
+   {
+      std::string asyncHandle = core::system::generateUuid(true);
+      // This will eventually call sendResponse and close ptrConnection
+      rpc::sendJsonAsyncPendingResponse(jsonRpcRequest, ptrConnection, asyncHandle);
+
+      res.reset(new rpc::AsyncRpcConnection(ptrConnection, jsonRpcRequest, asyncHandle));
+   }
+   // else - an invalid request - an http error response has already been sent so return nothing
+   return res;
 }
 
 WaitResult startHttpConnectionListenerWithTimeout()

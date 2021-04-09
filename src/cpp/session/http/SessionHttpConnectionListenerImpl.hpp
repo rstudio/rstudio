@@ -47,6 +47,7 @@
 
 #include "SessionHttpConnectionImpl.hpp"
 #include "../SessionUriHandlers.hpp"
+#include "../SessionHttpMethods.hpp"
 
 
 namespace rstudio {
@@ -321,9 +322,32 @@ private:
 
       // place the connection on the correct queue
       if (connection::isGetEvents(ptrHttpConnection))
+      {
+         eventsActive_ = true;
          eventsConnectionQueue_.enqueConnection(ptrHttpConnection);
+      }
       else
-         mainConnectionQueue_.enqueConnection(ptrHttpConnection);
+      {
+         // Turn off async rpc for the client upon seeing ClientInit until the first get_events arrives
+         // since the client is not listening at first
+         if (connection::isMethod(ptrHttpConnection, kClientInit))
+         {
+            eventsActive_ = false;
+         }
+         if (options().asyncRpcEnabled() && 
+             http_methods::isAsyncJsonRpcRequest(ptrHttpConnection) && 
+             eventsActive_)
+         {
+            boost::shared_ptr<HttpConnection> asyncConnection = http_methods::handleAsyncRpc(ptrHttpConnection);
+            if (asyncConnection)
+               mainConnectionQueue_.enqueConnection(asyncConnection);
+            // else: error in handling the rpc request, nothing left to do
+         }
+         else
+         {
+            mainConnectionQueue_.enqueConnection(ptrHttpConnection);
+         }
+      }
    }
 
 private:
@@ -343,6 +367,8 @@ private:
 
    // flag indicating we've started
    bool started_;
+   // Set when the first get_events request is received - ensure async rpc not used until client is ready to listen
+   bool eventsActive_;
 };
 
 } // namespace session

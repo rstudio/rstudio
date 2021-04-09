@@ -18,6 +18,7 @@
 #include "SessionRpc.hpp"
 #include "SessionHttpMethods.hpp"
 #include "SessionClientEventQueue.hpp"
+#include "SessionAsyncRpcConnection.hpp"
 
 #include <shared_core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
@@ -85,26 +86,6 @@ void endHandleRpcRequestDirect(boost::shared_ptr<HttpConnection> ptrConnection,
    }
 }
 
-void endHandleRpcRequestIndirect(
-      const std::string& asyncHandle,
-      const core::Error& executeError,
-      json::JsonRpcResponse* pJsonRpcResponse)
-{
-   json::JsonRpcResponse temp;
-   json::JsonRpcResponse& jsonRpcResponse =
-                                 pJsonRpcResponse ? *pJsonRpcResponse : temp;
-
-   BOOST_ASSERT(!jsonRpcResponse.hasAfterResponse());
-   if (executeError)
-   {
-      jsonRpcResponse.setError(executeError);
-   }
-   json::Object value;
-   value["handle"] = asyncHandle;
-   value["response"] = jsonRpcResponse.getRawResponse();
-   ClientEvent evt(client_events::kAsyncCompletion, value);
-   module_context::enqueClientEvent(evt);
-}
 
 void saveJsonResponse(const core::Error& error, core::json::JsonRpcResponse *pSrc,
                       core::Error *pError,      core::json::JsonRpcResponse *pDest)
@@ -255,6 +236,48 @@ void raiseJsonRpcResponseError(json::JsonRpcResponse& response)
    }
 }
 
+void sendJsonAsyncPendingResponse(const core::json::JsonRpcRequest &request,
+                                  boost::shared_ptr<HttpConnection> ptrConnection,
+                                  std::string &asyncHandle)
+{
+   // indirect return (asyncHandle style)
+   json::JsonRpcResponse response;
+   response.setAsyncHandle(asyncHandle);
+   response.setField(kEventsPending, "false");
+   ptrConnection->sendJsonRpcResponse(response);
+}
+
+void endHandleRpcRequestIndirect(
+        const std::string& asyncHandle,
+        const core::Error& executeError,
+        json::JsonRpcResponse* pJsonRpcResponse)
+{
+   json::JsonRpcResponse temp;
+   json::JsonRpcResponse& jsonRpcResponse =
+           pJsonRpcResponse ? *pJsonRpcResponse : temp;
+
+   if (executeError)
+   {
+      jsonRpcResponse.setError(executeError);
+   }
+   json::Object value;
+   value["handle"] = asyncHandle;
+   value["response"] = jsonRpcResponse.getRawResponse();
+   ClientEvent evt(client_events::kAsyncCompletion, value);
+   module_context::enqueClientEvent(evt);
+
+   // run after response if we have one (then detect changes again)
+   if (pJsonRpcResponse->hasAfterResponse())
+   {
+      pJsonRpcResponse->runAfterResponse();
+      if (!pJsonRpcResponse->suppressDetectChanges())
+      {
+         module_context::events().onDetectChanges(
+                 module_context::ChangeSourceRPC);
+      }
+   }
+}
+
 void handleRpcRequest(const core::json::JsonRpcRequest& request,
                       boost::shared_ptr<HttpConnection> ptrConnection,
                       http_methods::ConnectionType connectionType)
@@ -277,7 +300,19 @@ void handleRpcRequest(const core::json::JsonRpcRequest& request,
       std::pair<bool, json::JsonRpcAsyncFunction> reg = it->second;
       json::JsonRpcAsyncFunction handlerFunction = reg.second;
 
-      if (reg.first)
+      // For asyncRpc the http response was already sent - just call the handler and emit the event
+      if (ptrConnection->isAsyncRpc())
+      {
+         boost::shared_ptr<rpc::AsyncRpcConnection> asyncConn =
+                 boost::static_pointer_cast<rpc::AsyncRpcConnection>(ptrConnection);
+         handlerFunction(request,
+                         boost::bind(endHandleRpcRequestIndirect,
+                                     asyncConn->asyncHandle(),
+                                     _1,
+                                     _2));
+      }
+      // Sync rpc
+      else if (reg.first)
       {
          // direct return
          handlerFunction(request,
@@ -287,18 +322,15 @@ void handleRpcRequest(const core::json::JsonRpcRequest& request,
                                      _1,
                                      _2));
       }
+      // registerAsyncRpc - http connection is still open, send the async response, then emit the event
       else
       {
-         // indirect return (asyncHandle style)
-         std::string handle = core::system::generateUuid(true);
-         json::JsonRpcResponse response;
-         response.setAsyncHandle(handle);
-         response.setField(kEventsPending, "false");
-         ptrConnection->sendJsonRpcResponse(response);
+         std::string asyncHandle = core::system::generateUuid(true);
+         sendJsonAsyncPendingResponse(request, ptrConnection, asyncHandle);
 
          handlerFunction(request,
                          boost::bind(endHandleRpcRequestIndirect,
-                                     handle,
+                                     asyncHandle,
                                      _1,
                                      _2));
       }
@@ -312,7 +344,14 @@ void handleRpcRequest(const core::json::JsonRpcRequest& request,
       // application states
       LOG_ERROR(executeError);
 
-      endHandleRpcRequestDirect(ptrConnection, executeStartTime, executeError, nullptr);
+      if (ptrConnection->isAsyncRpc())
+      {
+         boost::shared_ptr<rpc::AsyncRpcConnection> asyncConn =
+                 boost::static_pointer_cast<rpc::AsyncRpcConnection>(ptrConnection);
+         endHandleRpcRequestIndirect(asyncConn->asyncHandle(), executeError, nullptr);
+      }
+      else
+         endHandleRpcRequestDirect(ptrConnection, executeStartTime, executeError, nullptr);
    }
 }
 

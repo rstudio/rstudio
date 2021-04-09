@@ -127,6 +127,23 @@ public:
       CATCH_UNEXPECTED_EXCEPTION
    }
 
+   virtual void sendJsonRpcResponse(
+           core::json::JsonRpcResponse& jsonRpcResponse)
+   {
+      // setup response
+      core::http::Response response;
+
+      // automagic gzip support
+      if (request().acceptsEncoding(core::http::kGzipEncoding))
+         response.setContentEncoding(core::http::kGzipEncoding);
+
+      // set response
+      core::json::setJsonRpcResponse(jsonRpcResponse, &response);
+
+      // send the response
+      sendResponse(response);
+   }
+
    // close (occurs automatically after writeResponse, here in case it
    // need to be closed in other circumstances
    virtual void close()
@@ -167,6 +184,10 @@ public:
                                                         continuation);
 
       requestParser_.setFormHandler(formHandler);
+   }
+
+   virtual bool isAsyncRpc() const {
+      return false;
    }
 
 

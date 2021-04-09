@@ -38,6 +38,8 @@
 #include <session/SessionMain.hpp>
 #include <session/SessionOptions.hpp>
 #include <session/projects/ProjectsSettings.hpp>
+#include "../SessionRpc.hpp"
+#include "../SessionAsyncRpcConnection.hpp"
 
 namespace rstudio {
 namespace session {
@@ -65,22 +67,6 @@ void HttpConnection::sendJsonRpcResponse()
    sendJsonRpcResponse(jsonRpcResponse);
 }
 
-void HttpConnection::sendJsonRpcResponse(
-                     const core::json::JsonRpcResponse& jsonRpcResponse)
-{
-   // setup response
-   core::http::Response response;
-
-   // automagic gzip support
-   if (request().acceptsEncoding(core::http::kGzipEncoding))
-      response.setContentEncoding(core::http::kGzipEncoding);
-
-   // set response
-   core::json::setJsonRpcResponse(jsonRpcResponse, &response);
-
-   // send the response
-   sendResponse(response);
-}
 
 
 
@@ -90,7 +76,6 @@ std::string rstudioRequestIdFromRequest(const core::http::Request& request)
 {
    return request.headerValue("X-RS-RID");
 }
-
 
 bool isMethod(boost::shared_ptr<HttpConnection> ptrConnection,
                      const std::string& method)
