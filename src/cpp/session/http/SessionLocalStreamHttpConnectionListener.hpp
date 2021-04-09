@@ -13,6 +13,8 @@
  *
  */
 
+#ifndef SESSION_LOCAL_STREAM_HTTP_CONNECTION_LISTENER_HPP
+#define SESSION_LOCAL_STREAM_HTTP_CONNECTION_LISTENER_HPP
 
 #include <vector>
 
@@ -168,3 +170,5 @@ private:
 
 } // namespace session
 } // namespace rstudio
+
+#endif /* SESSION_LOCAL_STREAM_HTTP_CONNECTION_LISTENER_HPP */

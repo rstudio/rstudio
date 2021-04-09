@@ -13,6 +13,10 @@
  *
  */
 
+#ifndef CORE_USER_OBFUSCATION_HPP
+#define CORE_USER_OBFUSCATION_HPP
+
 #define OBFUSCATE_USER_ID(x)    (x)
 #define DEOBFUSCATE_USER_ID(x)  (x)
 
+#endif /* CORE_USER_OBFUSCATION_HPP */

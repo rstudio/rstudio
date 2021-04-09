@@ -13,6 +13,9 @@
  *
  */
 
+#ifndef SESSION_THEMES_HPP
+#define SESSION_THEMES_HPP
+
 #include <string>
 
 namespace rstudio {
@@ -32,3 +35,5 @@ core::Error initialize();
 } // namespace modules
 } // namespace session
 } // namespace rstudio
+
+#endif /* SESSION_THEMES_HPP */
