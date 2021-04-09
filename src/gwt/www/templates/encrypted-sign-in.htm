@@ -18,182 +18,24 @@
 
 <head>
 <meta charset="UTF-8" />
+<meta name="public-key-url" content="#'publicKeyUrl#"/>
 <title>RStudio Sign In</title>
 <link rel="shortcut icon" href="images/favicon.ico" />
 
-<script>
-function verifyMe()
-{
-   if (document.getElementById('signinbutton').disabled)
-   {
-      return false;
-   }
-   if(document.getElementById('username').value=='')
-   {
-      document.getElementById('username').focus();
-      showError('You must enter a username');
-      return false;
-   }
-   if(document.getElementById('password').value=='')
-   {
-      document.getElementById('password').focus();
-      showError('You must enter a password');
-      return false;
-   }
-   document.getElementById('staySignedIn').disabled = true;
-   document.getElementById('signinbutton').disabled = true;
-   document.getElementById('signinbutton').classList.add('disabled');
-   document.getElementById('spinner').classList.remove('signin-hidden');
-   document.getElementById('progress-message').innerText = "Signing in";
-   setTimeout(function () {
-      document.getElementById('username').disabled = true;
-      document.getElementById('password').disabled = true;
-   }, 0);
-   return true;
-}
-</script>
-
 <link rel="stylesheet" href="rstudio.css" type="text/css"/>
+<link rel="stylesheet" href="signin.css" type="text/css"/>
 <link rel="stylesheet" href="css/focus-visible.css" type="text/css"/>
 
 <style type="text/css">
 
-body, td {
-   font-size: 12px;
-}
-
-#border {
-   margin: 0 auto;
-}
-
-.caption {
-  text-align: center;
-  font-size: 18px;
-  margin-right: 0;
-  width: 100%;
-  font-weight: normal;
-}
-
-input[type=text], input[type=password] {
-  width: 262px;
-  border: 1px solid #cdcecf;
-  font-size: 14px;
-  padding: 8px;
-}
-
-@media (prefers-color-scheme: dark) {
-  input[type=text], input[type=password] {
-    border: 1px solid #4d4e4f;
-    background-color: #000;
-    color: #fff;
-  }
-}
-.buttonpanel {
-  text-align: center;
-  margin-top: 20px;
-  margin-bottom: 20px;
-}
 #errorpanel {
-  text-align: center;
-  padding: 0 25% 0 25%;
-  color: #e60000;
   display: #errorDisplay#;
-  font-weight: bold;
-}
-@media (prefers-color-scheme: dark) {
-  #errorpanel {
-    color: #ff7070;
-  }
 }
 
-button.fancy {
-  background-color: #1e77bc;
-  font-size: 14px;
-  padding: 10px 15px;
-  cursor: pointer;
-  outline: none;
-  border: 0;
-  color: white;
-  min-width: 200px;
-}
-
-button.disabled {
-  background-color: #e0e2e5;
-  color: grey;
-}
-
-div.signinhidden {
-   display: none;
-}
 </style>
 
 <script type="text/javascript" src="js/encrypt.min.js"></script>
-<script type="text/javascript">
-
-function speakError() {
-   document.getElementById("live-error").innerText = document.getElementById("errortext").innerText;
-}
-
-function showError(errorMessage) {
-   var errorDiv = document.getElementById('errorpanel');
-   errorDiv.innerHTML = '';
-   var errorp = document.createElement('p');
-   errorp.id = "errortext";
-   errorDiv.appendChild(errorp);
-   if (typeof(errorp.innerText) == 'undefined')
-      errorp.textContent = errorMessage;
-   else
-      errorp.innerText = errorMessage;
-   errorDiv.style.display = 'block';
-   speakError();
-}
-
-function prepare() {
-   if (!verifyMe())
-      return false;
-   try {
-      var payload = document.getElementById('username').value + "\n" +
-                    document.getElementById('password').value;
-      var xhr = new XMLHttpRequest();
-      xhr.open("GET", "#'publicKeyUrl#", true);
-      xhr.onreadystatechange = function() {
-         try {
-            if (xhr.readyState == 4) {
-               if (xhr.status != 200) {
-                  var errorMessage;
-                  if (xhr.status == 0)
-                     errorMessage = "Error: Could not reach server--check your internet connection";
-                  else
-                     errorMessage = "Error: " + xhr.statusText;
-                  showError(errorMessage);
-               }
-               else {
-                  var response = xhr.responseText;
-                  var chunks = response.split(':', 2);
-                  var exp = chunks[0];
-                  var mod = chunks[1];
-                  var encrypted = encrypt(payload, exp, mod);
-                  document.getElementById('persist').value = document.getElementById('staySignedIn').checked ? "1" : "0";
-                  document.getElementById('package').value = encrypted;
-                  document.getElementById('clientPath').value = window.location.pathname;
-                  document.realform.submit();
-               }
-            }
-         } catch (exception) {
-            showError("Error: " + exception);
-         }
-      };
-      xhr.send(null);
-   } catch (exception) {
-      showError("Error: " + exception);
-   }
-}
-
-function submitRealForm() {
-   if (prepare())
-      document.realform.submit();
-}
-</script>
+<script type="text/javascript" src="js/signin.js"></script>
 
 </head>
 <body>
@@ -219,26 +61,26 @@ function submitRealForm() {
             <p>
                <label for="username">Username:</label><br />
                <input type='text'
-                      name='username'
-                      autocomplete='off'
-                      autocorrect='off'
-                      autocapitalize='off'
-                      spellcheck='false'
-                      value=''
-                      id='username'
-                      size='45'/><br />
+                        name='username'
+                        autocomplete='off'
+                        autocorrect='off'
+                        autocapitalize='off'
+                        spellcheck='false'
+                        value=''
+                        id='username'
+                        size='45'/><br />
             </p>
             <p>
                <label for="password">Password:</label><br />
                <input type='password'
-                      name='password'
-                      autocomplete='off'
-                      autocorrect='off'
-                      autocapitalize='off'
-                      spellcheck='false'
-                      value=''
-                      id='password'
-                      size='45'/><br />
+                        name='password'
+                        autocomplete='off'
+                        autocorrect='off'
+                        autocapitalize='off'
+                        spellcheck='false'
+                        value=''
+                        id='password'
+                        size='45'/><br />
             </p>
             <div style="display: #staySignedInDisplay#;">
                <input type="checkbox" name="staySignedIn" id="staySignedIn" value="1"/>
@@ -284,58 +126,6 @@ function submitRealForm() {
 #!loginPageHtml#
 </div>
 
-<script type="text/javascript">
-document.getElementById('username').focus();
-
-var errorPanel = document.getElementById('errorpanel');
-var displayProp = window.getComputedStyle(errorPanel, null).getPropertyValue("display");
-if (displayProp !== "none")
-{
-   document.title = "Error: RStudio Sign In Failed";
-   // If error message displayed, give time for screen reader to catch up then
-   // copy error message to aria-live region to trigger announcement
-   setTimeout(function () {
-      speakError();
-   }, 2000);
-}
-
-// polling itself to see if the sign in page is still needed.
-// we may be here because our cookies expired and there might
-// be multiple tabs in the same situation. if one of those tabs
-// sign in back, a new cookie will be sent in this probing what
-// will cause a different url we should visit to be returned
-// skipping the need of a sign in attempt in all other tabs.
-var responseURL = '';
-setInterval(function() {
-  var xhr = new XMLHttpRequest();
-  xhr.open("GET", "./", true);
-  xhr.onreadystatechange = function() {
-    try {
-      if (xhr.readyState == 4) {
-        if (xhr.status == 200) {
-          var isSignIn = false;
-          var url = xhr.responseURL.split('?')[0];
-          var href = location.href.split('?')[0];
-          isSignIn = url === href;
-          var controls = document.getElementById("controls");
-          var goback = document.getElementById("goback");
-          if (!isSignIn) {
-            responseURL = url;
-            controls.classList.add('signinhidden');
-            goback.classList.remove('signinhidden');
-          } else {
-            controls.classList.remove('signinhidden');
-            goback.classList.add('signinhidden');
-          }
-        }
-      }
-    } catch (exception) {
-      showError("Error: " + exception);
-    }
-  };
-  xhr.send(null);
-}, 1000);
-</script>
 </main>
 <script type="text/javascript" src="js/focus-visible.min.js"></script>
 </body>
