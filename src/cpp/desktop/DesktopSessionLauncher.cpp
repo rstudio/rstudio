@@ -519,7 +519,7 @@ Error SessionLauncher::launchSession(const QStringList& argList,
    if (sessionPath_.getFilename() == "rsession-arm64")
    {
       QStringList archArgList;
-      archArgList.append("-arm64");
+      archArgList.append(QStringLiteral("-arm64"));
       archArgList.append(argList);
       
       return parent_process_monitor::wrapFork(
