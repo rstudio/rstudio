@@ -520,6 +520,7 @@ Error SessionLauncher::launchSession(const QStringList& argList,
    {
       QStringList archArgList;
       archArgList.append(QStringLiteral("-arm64"));
+      archArgList.append(sessionPath_.getAbsolutePath());
       archArgList.append(argList);
       
       return parent_process_monitor::wrapFork(
