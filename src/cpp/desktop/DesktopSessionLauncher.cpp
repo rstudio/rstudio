@@ -518,6 +518,7 @@ Error SessionLauncher::launchSession(const QStringList& argList,
    // we need indirection through arch to handle arm64
    if (sessionPath_.getFilename() == "rsession-arm64")
    {
+      QStringList archArgList;
       archArgList.append("-arm64");
       archArgList.append(argList);
       
