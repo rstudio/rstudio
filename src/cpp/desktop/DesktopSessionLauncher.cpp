@@ -512,12 +512,41 @@ Error SessionLauncher::launchSession(const QStringList& argList,
    Error error = abendLogPath().removeIfExists();
    if (error)
       LOG_ERROR(error);
+   
+#ifdef __APPLE__
+   
+   // we need indirection through arch to handle arm64
+   if (sessionPath_.getFilename() == "rsession-arm64")
+   {
+      QStringList archArgList;
+      archArgList.append(QStringLiteral("-arm64"));
+      archArgList.append(sessionPath_.getAbsolutePath());
+      archArgList.append(argList);
+      
+      return parent_process_monitor::wrapFork(
+               boost::bind(launchProcess,
+                           "/usr/bin/arch",
+                           archArgList,
+                           ppRSessionProcess));
+   }
+   else
+   {
+      return parent_process_monitor::wrapFork(
+               boost::bind(launchProcess,
+                           sessionPath_.getAbsolutePath(),
+                           argList,
+                           ppRSessionProcess));
+   }
+   
+#else
 
    return parent_process_monitor::wrapFork(
          boost::bind(launchProcess,
                      sessionPath_.getAbsolutePath(),
                      argList,
                      ppRSessionProcess));
+   
+#endif
 }
 
 void SessionLauncher::onLaunchError(QString message)
