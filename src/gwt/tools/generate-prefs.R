@@ -78,8 +78,14 @@ generate <- function (schemaPath, className) {
    prefs <- schema$properties
 
    java <- ""   # The contents of the Java file we'll be creating
+   javaConstants <- ""   # The contents of the Java constants (i18n) file we'll be creating
+   javaProperties <- ""  # The contents of the Java properties (i18n) file we'll be creating
    cpp <- ""    # The contents of the C++ file we'll be creating
    hpp <- ""    # The contents of the C++ header file we'll be creating
+
+   # DEBUG: Text prepended to all i18n outputs (so we can spot which is being displayed, if any)
+   prefixDefault <- "@d"
+   prefixProperties <- "@en"
 
    # Components
 
@@ -177,16 +183,42 @@ generate <- function (schemaPath, className) {
          "   /**\n",
          "    * ", def[["description"]], "\n",
          "    */\n")
-      
-      # Add a Java accessor for the preference, and an entry for syncing it with another copy
+
+      # Create a Java/GWT Properties file header for the preference
+      commentProperties <- paste0(
+         "# ", def[["description"]], "\n")
+
+      # Add title and description entries for the java constants file
       prefTitle <- if (is.null(def[["title"]])) "" else def[["title"]]
+      javaConstants <- paste0(javaConstants,
+         comment,
+         "   @DefaultStringValue(\"", prefixDefault, prefTitle, "\")\n",
+         "   String ", camel, "Title", "();\n",
+         "   @DefaultStringValue(\"", prefixDefault, def[["description"]], "\")\n",
+         "   String ", camel, "Description", "();\n",
+         "\n")
+
+      # Add title and description entries for the java properties file
+      javaProperties <- paste0(javaProperties,
+         commentProperties,
+         camel, "Title = ", prefixProperties, prefTitle, "\n",
+         camel, "Description = ", prefixProperties, def[["description"]], "\n",
+         "\n")
+
+      # DEBUG: Add entry here for the java constants and properties files.  Then change perfTitle to
+      #        always cite them, with the constnats/properties having the "" if null.
+
+      # Add a Java accessor for the preference, and an entry for syncing it with another copy
+
+      prefTitle <- paste0("_constants.", camel, "Title()")
+      prefDescription <- paste0("_constants.", camel, "Description()")
       java <- paste0(java,
          comment,
          "   public PrefValue<", type, "> ", camel, "()\n",
          "   {\n",
          "      return ", preftype, "(\n         \"", pref, "\",\n",
-                       "         \"", prefTitle, "\", \n", 
-                       "         \"", def[["description"]], "\", \n")
+                       "         ", prefTitle, ", \n",
+                       "         ", prefDescription, ", \n")
       if (!is.null(def[["enum"]]))
       {
           java <- paste0(java, "         new String[] {\n",
@@ -297,6 +329,8 @@ generate <- function (schemaPath, className) {
    # Return computed Java and C++ code
    list(
       java = java,
+      javaConstants = javaConstants,
+      javaProperties = javaProperties,
       cpp = cpp,
       hpp = hpp)
 }
@@ -307,6 +341,12 @@ result <- generate("../../cpp/session/resources/schema/user-prefs-schema.json",
 template <- readLines("prefs/UserPrefsAccessor.java")
 writeLines(gsub("%PREFS%", result$java, template), 
            con = "../src/org/rstudio/studio/client/workbench/prefs/model/UserPrefsAccessor.java")
+template <- readLines("prefs/UserPrefsAccessorConstants.java")
+writeLines(gsub("%PREFS%", result$javaConstants, template),
+           con = "../src/org/rstudio/studio/client/workbench/prefs/model/UserPrefsAccessorConstants.java")
+template <- readLines("prefs/UserPrefsAccessorConstants_en.properties")
+writeLines(gsub("%PREFS%", result$javaProperties, template),
+           con = "../src/org/rstudio/studio/client/workbench/prefs/model/UserPrefsAccessorConstants_en.properties")
 template <- readLines("prefs/UserPrefValues.hpp")
 writeLines(gsub("%PREFS%", result$hpp, template), 
            con = "../../cpp/session/include/session/prefs/UserPrefValues.hpp")
@@ -320,6 +360,12 @@ result <- generate("../../cpp/session/resources/schema/user-state-schema.json",
 javaTemplate <- readLines("prefs/UserStateAccessor.java")
 writeLines(gsub("%STATE%", result$java, javaTemplate), 
            con = "../src/org/rstudio/studio/client/workbench/prefs/model/UserStateAccessor.java")
+javaTemplate <- readLines("prefs/UserStateAccessorConstants.java")
+writeLines(gsub("%STATE%", result$javaConstants, javaTemplate),
+           con = "../src/org/rstudio/studio/client/workbench/prefs/model/UserStateAccessorConstants.java")
+javaTemplate <- readLines("prefs/UserStateAccessorConstants_en.properties")
+writeLines(gsub("%STATE%", result$javaProperties, javaTemplate),
+           con = "../src/org/rstudio/studio/client/workbench/prefs/model/UserStateAccessorConstants_en.properties")
 template <- readLines("prefs/UserStateValues.hpp")
 writeLines(gsub("%STATE%", result$hpp, template), 
            con = "../../cpp/session/include/session/prefs/UserStateValues.hpp")

@@ -25,1813 +25,1771 @@ public interface UserPrefsAccessorConstants extends Constants {
    /**
     * Whether to run .Rprofile again after resuming a suspended R session.
     */
-   @DefaultStringValue("Run .Rprofile on resume")
+   @DefaultStringValue("@dRun .Rprofile on resume")
    String runRprofileOnResumeTitle();
-   @DefaultStringValue("Whether to run .Rprofile again after resuming a suspended R session.")
+   @DefaultStringValue("@dWhether to run .Rprofile again after resuming a suspended R session.")
    String runRprofileOnResumeDescription();
 
    /**
     * Whether to save the workspace to an .Rdata file after the R session ends.
     */
-   @DefaultStringValue("Save workspace on quit")
+   @DefaultStringValue("@dSave workspace on quit")
    String saveWorkspaceTitle();
-   @DefaultStringValue("Whether to save the workspace to an .Rdata file after the R session ends.")
+   @DefaultStringValue("@dWhether to save the workspace to an .Rdata file after the R session ends.")
    String saveWorkspaceDescription();
 
    /**
     * Whether to load the workspace when the R session begins.
     */
-   @DefaultStringValue("Load workspace on start")
+   @DefaultStringValue("@dLoad workspace on start")
    String loadWorkspaceTitle();
-   @DefaultStringValue("Whether to load the workspace when the R session begins.")
+   @DefaultStringValue("@dWhether to load the workspace when the R session begins.")
    String loadWorkspaceDescription();
 
    /**
     * The initial working directory for new R sessions.
     */
-   @DefaultStringValue("Initial working directory")
+   @DefaultStringValue("@dInitial working directory")
    String initialWorkingDirectoryTitle();
-   @DefaultStringValue("The initial working directory for new R sessions.")
+   @DefaultStringValue("@dThe initial working directory for new R sessions.")
    String initialWorkingDirectoryDescription();
 
    /**
     * The CRAN mirror to use.
     */
-   @DefaultStringValue("")
+   @DefaultStringValue("@d")
    String cranMirrorTitle();
-   @DefaultStringValue("The CRAN mirror to use.")
+   @DefaultStringValue("@dThe CRAN mirror to use.")
    String cranMirrorDescription();
 
    /**
     * The name of the default Bioconductor mirror.
     */
-   @DefaultStringValue("")
+   @DefaultStringValue("@d")
    String bioconductorMirrorNameTitle();
-   @DefaultStringValue("The name of the default Bioconductor mirror.")
+   @DefaultStringValue("@dThe name of the default Bioconductor mirror.")
    String bioconductorMirrorNameDescription();
 
    /**
     * The URL of the default Bioconductor mirror.
     */
-   @DefaultStringValue("")
+   @DefaultStringValue("@d")
    String bioconductorMirrorUrlTitle();
-   @DefaultStringValue("The URL of the default Bioconductor mirror.")
+   @DefaultStringValue("@dThe URL of the default Bioconductor mirror.")
    String bioconductorMirrorUrlDescription();
 
    /**
     * Whether to always save the R console history.
     */
-   @DefaultStringValue("Save R console history")
+   @DefaultStringValue("@dSave R console history")
    String alwaysSaveHistoryTitle();
-   @DefaultStringValue("Whether to always save the R console history.")
+   @DefaultStringValue("@dWhether to always save the R console history.")
    String alwaysSaveHistoryDescription();
 
    /**
     * Whether to remove duplicate entries from the R console history.
     */
-   @DefaultStringValue("Remove duplicates from console history")
+   @DefaultStringValue("@dRemove duplicates from console history")
    String removeHistoryDuplicatesTitle();
-   @DefaultStringValue("Whether to remove duplicate entries from the R console history.")
+   @DefaultStringValue("@dWhether to remove duplicate entries from the R console history.")
    String removeHistoryDuplicatesDescription();
 
    /**
     * Show the result of the last expression (.Last.value) in the Environment pane.
     */
-   @DefaultStringValue("Show .Last.value in Environment pane")
+   @DefaultStringValue("@dShow .Last.value in Environment pane")
    String showLastDotValueTitle();
-   @DefaultStringValue("Show the result of the last expression (.Last.value) in the Environment pane.")
+   @DefaultStringValue("@dShow the result of the last expression (.Last.value) in the Environment pane.")
    String showLastDotValueDescription();
 
    /**
     * The line ending format to use when saving files.
     */
-   @DefaultStringValue("Line ending format")
+   @DefaultStringValue("@dLine ending format")
    String lineEndingConversionTitle();
-   @DefaultStringValue("The line ending format to use when saving files.")
+   @DefaultStringValue("@dThe line ending format to use when saving files.")
    String lineEndingConversionDescription();
 
    /**
     * Whether to use newlines when saving Makefiles.
     */
-   @DefaultStringValue("Use newlines in Makefiles")
+   @DefaultStringValue("@dUse newlines in Makefiles")
    String useNewlinesInMakefilesTitle();
-   @DefaultStringValue("Whether to use newlines when saving Makefiles.")
+   @DefaultStringValue("@dWhether to use newlines when saving Makefiles.")
    String useNewlinesInMakefilesDescription();
 
    /**
     * The terminal shell to use on Windows.
     */
-   @DefaultStringValue("")
+   @DefaultStringValue("@d")
    String windowsTerminalShellTitle();
-   @DefaultStringValue("The terminal shell to use on Windows.")
+   @DefaultStringValue("@dThe terminal shell to use on Windows.")
    String windowsTerminalShellDescription();
 
    /**
     * The terminal shell to use on POSIX operating systems (MacOS and Linux).
     */
-   @DefaultStringValue("")
+   @DefaultStringValue("@d")
    String posixTerminalShellTitle();
-   @DefaultStringValue("The terminal shell to use on POSIX operating systems (MacOS and Linux).")
+   @DefaultStringValue("@dThe terminal shell to use on POSIX operating systems (MacOS and Linux).")
    String posixTerminalShellDescription();
 
    /**
     * The fully qualified path to the custom shell command to use in the Terminal tab.
     */
-   @DefaultStringValue("")
+   @DefaultStringValue("@d")
    String customShellCommandTitle();
-   @DefaultStringValue("The fully qualified path to the custom shell command to use in the Terminal tab.")
+   @DefaultStringValue("@dThe fully qualified path to the custom shell command to use in the Terminal tab.")
    String customShellCommandDescription();
 
    /**
     * The command-line options to pass to the custom shell command.
     */
-   @DefaultStringValue("")
+   @DefaultStringValue("@d")
    String customShellOptionsTitle();
-   @DefaultStringValue("The command-line options to pass to the custom shell command.")
+   @DefaultStringValue("@dThe command-line options to pass to the custom shell command.")
    String customShellOptionsDescription();
 
    /**
     * Show line numbers in RStudio's code editor.
     */
-   @DefaultStringValue("Show line numbers in editor")
+   @DefaultStringValue("@dShow line numbers in editor")
    String showLineNumbersTitle();
-   @DefaultStringValue("Show line numbers in RStudio's code editor.")
+   @DefaultStringValue("@dShow line numbers in RStudio's code editor.")
    String showLineNumbersDescription();
 
    /**
     * Highlight the selected word in RStudio's code editor.
     */
-   @DefaultStringValue("Highlight selected word in editor")
+   @DefaultStringValue("@dHighlight selected word in editor")
    String highlightSelectedWordTitle();
-   @DefaultStringValue("Highlight the selected word in RStudio's code editor.")
+   @DefaultStringValue("@dHighlight the selected word in RStudio's code editor.")
    String highlightSelectedWordDescription();
 
    /**
     * Highlight the selected line in RStudio's code editor.
     */
-   @DefaultStringValue("Highlight selected line in editor")
+   @DefaultStringValue("@dHighlight selected line in editor")
    String highlightSelectedLineTitle();
-   @DefaultStringValue("Highlight the selected line in RStudio's code editor.")
+   @DefaultStringValue("@dHighlight the selected line in RStudio's code editor.")
    String highlightSelectedLineDescription();
 
    /**
     * Layout of panes in the RStudio workbench.
     */
-   @DefaultStringValue("")
+   @DefaultStringValue("@d")
    String panesTitle();
-   @DefaultStringValue("Layout of panes in the RStudio workbench.")
+   @DefaultStringValue("@dLayout of panes in the RStudio workbench.")
    String panesDescription();
 
    /**
     * Whether to enable the ability to add source columns to display.
     */
-   @DefaultStringValue("Allow source columns")
+   @DefaultStringValue("@dAllow source columns")
    String allowSourceColumnsTitle();
-   @DefaultStringValue("Whether to enable the ability to add source columns to display.")
+   @DefaultStringValue("@dWhether to enable the ability to add source columns to display.")
    String allowSourceColumnsDescription();
 
    /**
     * Whether to insert spaces when pressing the Tab key.
     */
-   @DefaultStringValue("Insert spaces for Tab")
+   @DefaultStringValue("@dInsert spaces for Tab")
    String useSpacesForTabTitle();
-   @DefaultStringValue("Whether to insert spaces when pressing the Tab key.")
+   @DefaultStringValue("@dWhether to insert spaces when pressing the Tab key.")
    String useSpacesForTabDescription();
 
    /**
     * The number of spaces to insert when pressing the Tab key.
     */
-   @DefaultStringValue("Number of spaces for Tab")
+   @DefaultStringValue("@dNumber of spaces for Tab")
    String numSpacesForTabTitle();
-   @DefaultStringValue("The number of spaces to insert when pressing the Tab key.")
+   @DefaultStringValue("@dThe number of spaces to insert when pressing the Tab key.")
    String numSpacesForTabDescription();
 
    /**
-    * When enabled, the indentation for documents not part of an RStudio project will be automatically detected.
+    * Whether to automatically detect indentation settings from file contents.
     */
-   @DefaultStringValue("Autodetect indentation in files")
+   @DefaultStringValue("@dAutodetect indentation in files")
    String autoDetectIndentationTitle();
-   @DefaultStringValue("When enabled, the indentation for documents not part of an RStudio project will be automatically detected.")
+   @DefaultStringValue("@dWhether to automatically detect indentation settings from file contents.")
    String autoDetectIndentationDescription();
 
    /**
     * Whether to show the margin guide in the RStudio code editor.
     */
-   @DefaultStringValue("Show margin in editor")
+   @DefaultStringValue("@dShow margin in editor")
    String showMarginTitle();
-   @DefaultStringValue("Whether to show the margin guide in the RStudio code editor.")
+   @DefaultStringValue("@dWhether to show the margin guide in the RStudio code editor.")
    String showMarginDescription();
 
    /**
     * Whether to flash the cursor off and on.
     */
-   @DefaultStringValue("Use a blinking cursor")
+   @DefaultStringValue("@dUse a blinking cursor")
    String blinkingCursorTitle();
-   @DefaultStringValue("Whether to flash the cursor off and on.")
+   @DefaultStringValue("@dWhether to flash the cursor off and on.")
    String blinkingCursorDescription();
 
    /**
     * The number of columns of text after which the margin is shown.
     */
-   @DefaultStringValue("Margin column")
+   @DefaultStringValue("@dMargin column")
    String marginColumnTitle();
-   @DefaultStringValue("The number of columns of text after which the margin is shown.")
+   @DefaultStringValue("@dThe number of columns of text after which the margin is shown.")
    String marginColumnDescription();
 
    /**
     * Whether to show invisible characters, such as spaces and tabs, in the RStudio code editor.
     */
-   @DefaultStringValue("Show invisible characters in editor")
+   @DefaultStringValue("@dShow invisible characters in editor")
    String showInvisiblesTitle();
-   @DefaultStringValue("Whether to show invisible characters, such as spaces and tabs, in the RStudio code editor.")
+   @DefaultStringValue("@dWhether to show invisible characters, such as spaces and tabs, in the RStudio code editor.")
    String showInvisiblesDescription();
 
    /**
     * Whether to show indentation guides in the RStudio code editor.
     */
-   @DefaultStringValue("Show indentation guides")
+   @DefaultStringValue("@dShow indentation guides")
    String showIndentGuidesTitle();
-   @DefaultStringValue("Whether to show indentation guides in the RStudio code editor.")
+   @DefaultStringValue("@dWhether to show indentation guides in the RStudio code editor.")
    String showIndentGuidesDescription();
 
    /**
-    * Whether to continue comments (by inserting the comment character) after adding a new line.  Press Shift + Enter to exit a comment.
+    * Whether continue comments (by inserting the comment character) after adding a new line.
     */
-   @DefaultStringValue("Continue comments after adding new line")
+   @DefaultStringValue("@dContinue comments after adding new line")
    String continueCommentsOnNewlineTitle();
-   @DefaultStringValue("Whether to continue comments (by inserting the comment character) after adding a new line.  Press Shift + Enter to exit a comment.")
+   @DefaultStringValue("@dWhether continue comments (by inserting the comment character) after adding a new line.")
    String continueCommentsOnNewlineDescription();
 
    /**
-    * Hyperlinks in comments will be underlined and clickable
+    * Whether web links in comments are clickable.
     */
-   @DefaultStringValue("Hyperlinks in comments will be underlined and clickable")
+   @DefaultStringValue("@d")
    String highlightWebLinkTitle();
-   @DefaultStringValue("Hyperlinks in comments will be underlined and clickable")
+   @DefaultStringValue("@dWhether web links in comments are clickable.")
    String highlightWebLinkDescription();
 
    /**
     * The keybindings to use in the RStudio code editor.
     */
-   @DefaultStringValue("Keybinding set for editor")
+   @DefaultStringValue("@dKeybinding set for editor")
    String editorKeybindingsTitle();
-   @DefaultStringValue("The keybindings to use in the RStudio code editor.")
+   @DefaultStringValue("@dThe keybindings to use in the RStudio code editor.")
    String editorKeybindingsDescription();
-   @DefaultStringValue("Default")
-   String editorKeybindingsEnum_default();
-   @DefaultStringValue("Vim")
-   String editorKeybindingsEnum_vim();
-   @DefaultStringValue("Emacs")
-   String editorKeybindingsEnum_emacs();
-   @DefaultStringValue("Sublime Text")
-   String editorKeybindingsEnum_sublime();
 
    /**
     * Whether to insert matching pairs, such as () and [], when the first is typed.
     */
-   @DefaultStringValue("Auto-insert matching parentheses and brackets")
+   @DefaultStringValue("@dAuto-insert matching parentheses and brackets")
    String insertMatchingTitle();
-   @DefaultStringValue("Whether to insert matching pairs, such as () and [], when the first is typed.")
+   @DefaultStringValue("@dWhether to insert matching pairs, such as () and [], when the first is typed.")
    String insertMatchingDescription();
 
    /**
     * Whether to insert spaces around the equals sign in R code.
     */
-   @DefaultStringValue("Insert spaces around = in R code")
+   @DefaultStringValue("@dInsert spaces around = in R code")
    String insertSpacesAroundEqualsTitle();
-   @DefaultStringValue("Whether to insert spaces around the equals sign in R code.")
+   @DefaultStringValue("@dWhether to insert spaces around the equals sign in R code.")
    String insertSpacesAroundEqualsDescription();
 
    /**
     * Whether to insert parentheses after function completions.
     */
-   @DefaultStringValue("Insert parentheses after functions")
+   @DefaultStringValue("@dInsert parentheses after functions")
    String insertParensAfterFunctionCompletionTitle();
-   @DefaultStringValue("Whether to insert parentheses after function completions.")
+   @DefaultStringValue("@dWhether to insert parentheses after function completions.")
    String insertParensAfterFunctionCompletionDescription();
 
    /**
     * Whether to attempt completion of multiple-line statements when pressing Tab.
     */
-   @DefaultStringValue("Complete multi-line statements with Tab")
+   @DefaultStringValue("@dComplete multi-line statements with Tab")
    String tabMultilineCompletionTitle();
-   @DefaultStringValue("Whether to attempt completion of multiple-line statements when pressing Tab.")
+   @DefaultStringValue("@dWhether to attempt completion of multiple-line statements when pressing Tab.")
    String tabMultilineCompletionDescription();
 
    /**
     * Whether to attempt completion of statements when pressing Tab.
     */
-   @DefaultStringValue("Use Tab to trigger autocompletion")
+   @DefaultStringValue("@dUse Tab to trigger autocompletion")
    String tabCompletionTitle();
-   @DefaultStringValue("Whether to attempt completion of statements when pressing Tab.")
+   @DefaultStringValue("@dWhether to attempt completion of statements when pressing Tab.")
    String tabCompletionDescription();
 
    /**
     * Whether to show help tooltips for functions when the cursor has not been recently moved.
     */
-   @DefaultStringValue("Show function help tooltips on idle")
+   @DefaultStringValue("@dShow function help tooltips on idle")
    String showHelpTooltipOnIdleTitle();
-   @DefaultStringValue("Whether to show help tooltips for functions when the cursor has not been recently moved.")
+   @DefaultStringValue("@dWhether to show help tooltips for functions when the cursor has not been recently moved.")
    String showHelpTooltipOnIdleDescription();
 
    /**
     * Which kinds of delimiters can be used to surround the current selection.
     */
-   @DefaultStringValue("Surround selections with delimiter insertion")
+   @DefaultStringValue("@dSurround selections with")
    String surroundSelectionTitle();
-   @DefaultStringValue("Which kinds of delimiters can be used to surround the current selection.")
+   @DefaultStringValue("@dWhich kinds of delimiters can be used to surround the current selection.")
    String surroundSelectionDescription();
-   @DefaultStringValue("Never")
-   String surroundSelectionEnum_never();
-   @DefaultStringValue("Quotes")
-   String surroundSelectionEnum_quotes();
-   @DefaultStringValue("Quotes & Brackets")
-   String surroundSelectionEnum_quotes_and_brackets();
 
    /**
     * Whether to enable code snippets in the RStudio code editor.
     */
-   @DefaultStringValue("Enable code snippets")
+   @DefaultStringValue("@dEnable code snippets")
    String enableSnippetsTitle();
-   @DefaultStringValue("Whether to enable code snippets in the RStudio code editor.")
+   @DefaultStringValue("@dWhether to enable code snippets in the RStudio code editor.")
    String enableSnippetsDescription();
 
    /**
     * When to use auto-completion for R code in the RStudio code editor.
     */
-   @DefaultStringValue("Use code completion for R")
+   @DefaultStringValue("@dUse code completion for R")
    String codeCompletionTitle();
-   @DefaultStringValue("When to use auto-completion for R code in the RStudio code editor.")
+   @DefaultStringValue("@dWhen to use auto-completion for R code in the RStudio code editor.")
    String codeCompletionDescription();
-   @DefaultStringValue("Automatically")
-   String codeCompletionEnum_always();
-   @DefaultStringValue("Never")
-   String codeCompletionEnum_never();
-   @DefaultStringValue("When triggered ($, ::)")
-   String codeCompletionEnum_triggered();
-   @DefaultStringValue("Manually (tab)")
-   String codeCompletionEnum_manual();
 
    /**
     * When to use auto-completion for other languages (such as JavaScript and SQL) in the RStudio code editor.
     */
-   @DefaultStringValue("Use code completion for other languages")
+   @DefaultStringValue("@dUse code completion for other languages")
    String codeCompletionOtherTitle();
-   @DefaultStringValue("When to use auto-completion for other languages (such as JavaScript and SQL) in the RStudio code editor.")
+   @DefaultStringValue("@dWhen to use auto-completion for other languages (such as JavaScript and SQL) in the RStudio code editor.")
    String codeCompletionOtherDescription();
-   @DefaultStringValue("Automatically")
-   String codeCompletionOtherEnum_always();
-   @DefaultStringValue("When triggered")
-   String codeCompletionOtherEnum_triggered();
-   @DefaultStringValue("Manually (ctrl+space)")
-   String codeCompletionOtherEnum_manual();
 
    /**
     * Whether to always use code completion in the R console.
     */
-   @DefaultStringValue("Use code completion in the R console")
+   @DefaultStringValue("@dUse code completion in the R console")
    String consoleCodeCompletionTitle();
-   @DefaultStringValue("Whether to always use code completion in the R console.")
+   @DefaultStringValue("@dWhether to always use code completion in the R console.")
    String consoleCodeCompletionDescription();
 
    /**
     * The number of milliseconds to wait before offering code suggestions.
     */
-   @DefaultStringValue("Delay before completing code (ms)")
+   @DefaultStringValue("@dDelay before completing code (ms)")
    String codeCompletionDelayTitle();
-   @DefaultStringValue("The number of milliseconds to wait before offering code suggestions.")
+   @DefaultStringValue("@dThe number of milliseconds to wait before offering code suggestions.")
    String codeCompletionDelayDescription();
 
    /**
     * The number of characters in a symbol that can be entered before completions are offered.
     */
-   @DefaultStringValue("Number of characters for code completion")
+   @DefaultStringValue("@dNumber of characters for code completion")
    String codeCompletionCharactersTitle();
-   @DefaultStringValue("The number of characters in a symbol that can be entered before completions are offered.")
+   @DefaultStringValue("@dThe number of characters in a symbol that can be entered before completions are offered.")
    String codeCompletionCharactersDescription();
 
    /**
     * Whether to show function signature tooltips during autocompletion.
     */
-   @DefaultStringValue("Show function signature tooltips")
+   @DefaultStringValue("@dShow function signature tooltips")
    String showFunctionSignatureTooltipsTitle();
-   @DefaultStringValue("Whether to show function signature tooltips during autocompletion.")
+   @DefaultStringValue("@dWhether to show function signature tooltips during autocompletion.")
    String showFunctionSignatureTooltipsDescription();
 
    /**
     * Whether to show diagnostic messages (such as syntax and usage errors) for R code as you type.
     */
-   @DefaultStringValue("Show diagnostics in R code")
+   @DefaultStringValue("@dShow diagnostics in R code")
    String showDiagnosticsRTitle();
-   @DefaultStringValue("Whether to show diagnostic messages (such as syntax and usage errors) for R code as you type.")
+   @DefaultStringValue("@dWhether to show diagnostic messages (such as syntax and usage errors) for R code as you type.")
    String showDiagnosticsRDescription();
 
    /**
     * Whether to show diagnostic messages for C++ code as you type.
     */
-   @DefaultStringValue("Show diagnostics in C++ code")
+   @DefaultStringValue("@dShow diagnostics in C++ code")
    String showDiagnosticsCppTitle();
-   @DefaultStringValue("Whether to show diagnostic messages for C++ code as you type.")
+   @DefaultStringValue("@dWhether to show diagnostic messages for C++ code as you type.")
    String showDiagnosticsCppDescription();
 
    /**
     * Whether to show diagnostic messages for other types of code (not R or C++).
     */
-   @DefaultStringValue("Show diagnostics in other languages")
+   @DefaultStringValue("@dShow diagnostics in other languages")
    String showDiagnosticsOtherTitle();
-   @DefaultStringValue("Whether to show diagnostic messages for other types of code (not R or C++).")
+   @DefaultStringValue("@dWhether to show diagnostic messages for other types of code (not R or C++).")
    String showDiagnosticsOtherDescription();
 
    /**
     * Whether to show style diagnostics (suggestions for improving R code style)
     */
-   @DefaultStringValue("Show style diagnostics for R code")
+   @DefaultStringValue("@dShow style diagnostics for R code")
    String styleDiagnosticsTitle();
-   @DefaultStringValue("Whether to show style diagnostics (suggestions for improving R code style)")
+   @DefaultStringValue("@dWhether to show style diagnostics (suggestions for improving R code style)")
    String styleDiagnosticsDescription();
 
    /**
     * Whether to check code for problems after saving it.
     */
-   @DefaultStringValue("Check code for problems when saving")
+   @DefaultStringValue("@dCheck code for problems when saving")
    String diagnosticsOnSaveTitle();
-   @DefaultStringValue("Whether to check code for problems after saving it.")
+   @DefaultStringValue("@dWhether to check code for problems after saving it.")
    String diagnosticsOnSaveDescription();
 
    /**
     * Whether to run code diagnostics in the background, as you type.
     */
-   @DefaultStringValue("Run R code diagnostics in the background")
+   @DefaultStringValue("@dRun R code diagnostics in the background")
    String backgroundDiagnosticsTitle();
-   @DefaultStringValue("Whether to run code diagnostics in the background, as you type.")
+   @DefaultStringValue("@dWhether to run code diagnostics in the background, as you type.")
    String backgroundDiagnosticsDescription();
 
    /**
     * The number of milliseconds to delay before running code diagnostics in the background.
     */
-   @DefaultStringValue("Run R code diagnostics after (ms)")
+   @DefaultStringValue("@dRun R code diagnostics after (ms)")
    String backgroundDiagnosticsDelayMsTitle();
-   @DefaultStringValue("The number of milliseconds to delay before running code diagnostics in the background.")
+   @DefaultStringValue("@dThe number of milliseconds to delay before running code diagnostics in the background.")
    String backgroundDiagnosticsDelayMsDescription();
 
    /**
     * Whether to run diagnostics in R function calls.
     */
-   @DefaultStringValue("Run diagnostics on R function calls")
+   @DefaultStringValue("@dRun diagnostics on R function calls")
    String diagnosticsInRFunctionCallsTitle();
-   @DefaultStringValue("Whether to run diagnostics in R function calls.")
+   @DefaultStringValue("@dWhether to run diagnostics in R function calls.")
    String diagnosticsInRFunctionCallsDescription();
 
    /**
     * Whether to check arguments to R function calls.
     */
-   @DefaultStringValue("Check arguments to R function calls")
+   @DefaultStringValue("@dCheck arguments to R function calls")
    String checkArgumentsToRFunctionCallsTitle();
-   @DefaultStringValue("Whether to check arguments to R function calls.")
+   @DefaultStringValue("@dWhether to check arguments to R function calls.")
    String checkArgumentsToRFunctionCallsDescription();
 
    /**
     * Whether to check for unexpected variable assignments inside R function calls.
     */
-   @DefaultStringValue("Check for unexpected assignments")
+   @DefaultStringValue("@dCheck for unexpected assignments")
    String checkUnexpectedAssignmentInFunctionCallTitle();
-   @DefaultStringValue("Whether to check for unexpected variable assignments inside R function calls.")
+   @DefaultStringValue("@dWhether to check for unexpected variable assignments inside R function calls.")
    String checkUnexpectedAssignmentInFunctionCallDescription();
 
    /**
     * Whether to generate a warning if a variable is used without being defined in the current scope.
     */
-   @DefaultStringValue("Warn when R variable used but not defined")
+   @DefaultStringValue("@dWarn when R variable used but not defined")
    String warnIfNoSuchVariableInScopeTitle();
-   @DefaultStringValue("Whether to generate a warning if a variable is used without being defined in the current scope.")
+   @DefaultStringValue("@dWhether to generate a warning if a variable is used without being defined in the current scope.")
    String warnIfNoSuchVariableInScopeDescription();
 
    /**
     * Whether to generate a warning if a variable is defined without being used in the current scope
     */
-   @DefaultStringValue("Warn when R variable defined but not used")
+   @DefaultStringValue("@dWarn when R variable defined but not used")
    String warnVariableDefinedButNotUsedTitle();
-   @DefaultStringValue("Whether to generate a warning if a variable is defined without being used in the current scope")
+   @DefaultStringValue("@dWhether to generate a warning if a variable is defined without being used in the current scope")
    String warnVariableDefinedButNotUsedDescription();
 
    /**
     * Whether to automatically discover and offer to install missing R package dependencies.
     */
-   @DefaultStringValue("Detect missing R packages in the editor")
+   @DefaultStringValue("@dDetect missing R packages in the editor")
    String autoDiscoverPackageDependenciesTitle();
-   @DefaultStringValue("Whether to automatically discover and offer to install missing R package dependencies.")
+   @DefaultStringValue("@dWhether to automatically discover and offer to install missing R package dependencies.")
    String autoDiscoverPackageDependenciesDescription();
 
    /**
     * Whether to ensure that source files end with a newline character.
     */
-   @DefaultStringValue("Ensure files end with a newline when saving")
+   @DefaultStringValue("@dEnsure files end with a newline when saving")
    String autoAppendNewlineTitle();
-   @DefaultStringValue("Whether to ensure that source files end with a newline character.")
+   @DefaultStringValue("@dWhether to ensure that source files end with a newline character.")
    String autoAppendNewlineDescription();
 
    /**
     * Whether to strip trailing whitespace from each line when saving.
     */
-   @DefaultStringValue("Strip trailing whitespace when saving")
+   @DefaultStringValue("@dStrip trailing whitespace when saving")
    String stripTrailingWhitespaceTitle();
-   @DefaultStringValue("Whether to strip trailing whitespace from each line when saving.")
+   @DefaultStringValue("@dWhether to strip trailing whitespace from each line when saving.")
    String stripTrailingWhitespaceDescription();
 
    /**
     * Whether to save the position of the cursor when a file is closed, restore it when the file is opened.
     */
-   @DefaultStringValue("Restore cursor position when reopening files")
+   @DefaultStringValue("@dRestore cursor position when reopening files")
    String restoreSourceDocumentCursorPositionTitle();
-   @DefaultStringValue("Whether to save the position of the cursor when a file is closed, restore it when the file is opened.")
+   @DefaultStringValue("@dWhether to save the position of the cursor when a file is closed, restore it when the file is opened.")
    String restoreSourceDocumentCursorPositionDescription();
 
    /**
     * Whether to automatically re-indent code when it's pasted into RStudio.
     */
-   @DefaultStringValue("Re-indent code when pasting")
+   @DefaultStringValue("@dRe-indent code when pasting")
    String reindentOnPasteTitle();
-   @DefaultStringValue("Whether to automatically re-indent code when it's pasted into RStudio.")
+   @DefaultStringValue("@dWhether to automatically re-indent code when it's pasted into RStudio.")
    String reindentOnPasteDescription();
 
    /**
     * Whether to vertically align arguments to R function calls during automatic indentation.
     */
-   @DefaultStringValue("Vertically align function arguments")
+   @DefaultStringValue("@dVertically align function arguments")
    String verticallyAlignArgumentsIndentTitle();
-   @DefaultStringValue("Whether to vertically align arguments to R function calls during automatic indentation.")
+   @DefaultStringValue("@dWhether to vertically align arguments to R function calls during automatic indentation.")
    String verticallyAlignArgumentsIndentDescription();
 
    /**
     * Whether to soft-wrap R source files, wrapping the text for display without inserting newline characters.
     */
-   @DefaultStringValue("Soft-wrap R source files")
+   @DefaultStringValue("@dSoft-wrap R source files")
    String softWrapRFilesTitle();
-   @DefaultStringValue("Whether to soft-wrap R source files, wrapping the text for display without inserting newline characters.")
+   @DefaultStringValue("@dWhether to soft-wrap R source files, wrapping the text for display without inserting newline characters.")
    String softWrapRFilesDescription();
 
    /**
     * Whether to soft-wrap R Markdown files (and similar types such as R HTML and R Notebooks)
     */
-   @DefaultStringValue("Soft-wrap R Markdown files")
+   @DefaultStringValue("@dSoft-wrap R Markdown files")
    String softWrapRmdFilesTitle();
-   @DefaultStringValue("Whether to soft-wrap R Markdown files (and similar types such as R HTML and R Notebooks)")
+   @DefaultStringValue("@dWhether to soft-wrap R Markdown files (and similar types such as R HTML and R Notebooks)")
    String softWrapRmdFilesDescription();
 
    /**
     * Whether to focus the R console after executing an R command from a script.
     */
-   @DefaultStringValue("Focus console after executing R code")
+   @DefaultStringValue("@dFocus console after executing R code")
    String focusConsoleAfterExecTitle();
-   @DefaultStringValue("Whether to focus the R console after executing an R command from a script.")
+   @DefaultStringValue("@dWhether to focus the R console after executing an R command from a script.")
    String focusConsoleAfterExecDescription();
 
    /**
     * The style of folding to use.
     */
-   @DefaultStringValue("Fold style in editor")
+   @DefaultStringValue("@dFold style in editor")
    String foldStyleTitle();
-   @DefaultStringValue("The style of folding to use.")
+   @DefaultStringValue("@dThe style of folding to use.")
    String foldStyleDescription();
-   @DefaultStringValue("Start Only")
-   String foldStyleEnum_begin_only();
-   @DefaultStringValue("Start and End")
-   String foldStyleEnum_begin_and_end();
 
    /**
     * Whether to automatically save scripts before executing them.
     */
-   @DefaultStringValue("Save R scripts before sourcing")
+   @DefaultStringValue("@dSave R scripts before sourcing")
    String saveBeforeSourcingTitle();
-   @DefaultStringValue("Whether to automatically save scripts before executing them.")
+   @DefaultStringValue("@dWhether to automatically save scripts before executing them.")
    String saveBeforeSourcingDescription();
 
    /**
     * Whether to use syntax highlighting in the R console.
     */
-   @DefaultStringValue("Syntax highlighting in R console")
+   @DefaultStringValue("@dSyntax highlighting in R console")
    String syntaxColorConsoleTitle();
-   @DefaultStringValue("Whether to use syntax highlighting in the R console.")
+   @DefaultStringValue("@dWhether to use syntax highlighting in the R console.")
    String syntaxColorConsoleDescription();
 
    /**
     * Whether to display error, warning, and message output in a different color.
     */
-   @DefaultStringValue("Different color for error output in R console")
+   @DefaultStringValue("@dDifferent color for error output in R console")
    String highlightConsoleErrorsTitle();
-   @DefaultStringValue("Whether to display error, warning, and message output in a different color.")
+   @DefaultStringValue("@dWhether to display error, warning, and message output in a different color.")
    String highlightConsoleErrorsDescription();
 
    /**
     * Whether to allow scrolling past the end of a file.
     */
-   @DefaultStringValue("Scroll past end of file")
+   @DefaultStringValue("@dScroll past end of file")
    String scrollPastEndOfDocumentTitle();
-   @DefaultStringValue("Whether to allow scrolling past the end of a file.")
+   @DefaultStringValue("@dWhether to allow scrolling past the end of a file.")
    String scrollPastEndOfDocumentDescription();
 
    /**
     * Whether to highlight R function calls in the code editor.
     */
-   @DefaultStringValue("Highlight R function calls")
+   @DefaultStringValue("@dHighlight R function calls")
    String highlightRFunctionCallsTitle();
-   @DefaultStringValue("Whether to highlight R function calls in the code editor.")
+   @DefaultStringValue("@dWhether to highlight R function calls in the code editor.")
    String highlightRFunctionCallsDescription();
 
    /**
     * Whether to highlight parentheses in a variety of colors.
     */
-   @DefaultStringValue("Rainbow parentheses")
+   @DefaultStringValue("@dRainbow parentheses")
    String rainbowParenthesesTitle();
-   @DefaultStringValue("Whether to highlight parentheses in a variety of colors.")
+   @DefaultStringValue("@dWhether to highlight parentheses in a variety of colors.")
    String rainbowParenthesesDescription();
 
    /**
     * The maximum number of characters to display in a single line in the R console.
     */
-   @DefaultStringValue("Maximum characters per line in R console")
+   @DefaultStringValue("@dMaximum characters per line in R console")
    String consoleLineLengthLimitTitle();
-   @DefaultStringValue("The maximum number of characters to display in a single line in the R console.")
+   @DefaultStringValue("@dThe maximum number of characters to display in a single line in the R console.")
    String consoleLineLengthLimitDescription();
 
    /**
     * The maximum number of console actions to store and display in the console scrollback buffer.
     */
-   @DefaultStringValue("Maximum lines in R console")
+   @DefaultStringValue("@dMaximum lines in R console")
    String consoleMaxLinesTitle();
-   @DefaultStringValue("The maximum number of console actions to store and display in the console scrollback buffer.")
+   @DefaultStringValue("@dThe maximum number of console actions to store and display in the console scrollback buffer.")
    String consoleMaxLinesDescription();
 
    /**
     * How to treat ANSI escape codes in the console.
     */
-   @DefaultStringValue("ANSI escape codes in R console")
+   @DefaultStringValue("@dANSI escape codes in R console")
    String ansiConsoleModeTitle();
-   @DefaultStringValue("How to treat ANSI escape codes in the console.")
+   @DefaultStringValue("@dHow to treat ANSI escape codes in the console.")
    String ansiConsoleModeDescription();
 
    /**
     * Whether to only show a limited window of the total console output
     */
-   @DefaultStringValue("Limit visible console output")
+   @DefaultStringValue("@dLimit visible console output")
    String limitVisibleConsoleTitle();
-   @DefaultStringValue("Whether to only show a limited window of the total console output")
+   @DefaultStringValue("@dWhether to only show a limited window of the total console output")
    String limitVisibleConsoleDescription();
 
    /**
     * Whether to show a toolbar on code chunks in R Markdown documents.
     */
-   @DefaultStringValue("Show toolbar on R Markdown chunks")
+   @DefaultStringValue("@dShow toolbar on R Markdown chunks")
    String showInlineToolbarForRCodeChunksTitle();
-   @DefaultStringValue("Whether to show a toolbar on code chunks in R Markdown documents.")
+   @DefaultStringValue("@dWhether to show a toolbar on code chunks in R Markdown documents.")
    String showInlineToolbarForRCodeChunksDescription();
 
    /**
     * Whether to highlight code chunks in R Markdown documents with a different background color.
     */
-   @DefaultStringValue("Highlight code chunks in R Markdown files")
+   @DefaultStringValue("@dHighlight code chunks in R Markdown files")
    String highlightCodeChunksTitle();
-   @DefaultStringValue("Whether to highlight code chunks in R Markdown documents with a different background color.")
+   @DefaultStringValue("@dWhether to highlight code chunks in R Markdown documents with a different background color.")
    String highlightCodeChunksDescription();
 
    /**
     * Whether to save all open, unsaved files before building the project.
     */
-   @DefaultStringValue("Save files before building")
+   @DefaultStringValue("@dSave files before building")
    String saveFilesBeforeBuildTitle();
-   @DefaultStringValue("Whether to save all open, unsaved files before building the project.")
+   @DefaultStringValue("@dWhether to save all open, unsaved files before building the project.")
    String saveFilesBeforeBuildDescription();
 
    /**
     * The default editor font size, in points.
     */
-   @DefaultStringValue("Editor font size (points)")
+   @DefaultStringValue("@dEditor font size (points)")
    String fontSizePointsTitle();
-   @DefaultStringValue("The default editor font size, in points.")
+   @DefaultStringValue("@dThe default editor font size, in points.")
    String fontSizePointsDescription();
 
    /**
     * The help panel font size, in points.
     */
-   @DefaultStringValue("Help panel font size (points)")
+   @DefaultStringValue("@dHelp panel font size (points)")
    String helpFontSizePointsTitle();
-   @DefaultStringValue("The help panel font size, in points.")
+   @DefaultStringValue("@dThe help panel font size, in points.")
    String helpFontSizePointsDescription();
 
    /**
     * The name of the color theme to apply to the text editor in RStudio.
     */
-   @DefaultStringValue("Theme")
+   @DefaultStringValue("@dTheme")
    String editorThemeTitle();
-   @DefaultStringValue("The name of the color theme to apply to the text editor in RStudio.")
+   @DefaultStringValue("@dThe name of the color theme to apply to the text editor in RStudio.")
    String editorThemeDescription();
 
    /**
     * Whether to use a custom editor font in RStudio Server.
     */
-   @DefaultStringValue("Enable editor fonts on RStudio Server")
+   @DefaultStringValue("@dEnable editor fonts on RStudio Server")
    String serverEditorFontEnabledTitle();
-   @DefaultStringValue("Whether to use a custom editor font in RStudio Server.")
+   @DefaultStringValue("@dWhether to use a custom editor font in RStudio Server.")
    String serverEditorFontEnabledDescription();
 
    /**
     * The name of the fixed-width editor font to use with RStudio Server.
     */
-   @DefaultStringValue("Editor font")
+   @DefaultStringValue("@dEditor font")
    String serverEditorFontTitle();
-   @DefaultStringValue("The name of the fixed-width editor font to use with RStudio Server.")
+   @DefaultStringValue("@dThe name of the fixed-width editor font to use with RStudio Server.")
    String serverEditorFontDescription();
 
    /**
     * The default character encoding to use when saving files.
     */
-   @DefaultStringValue("Default character encoding")
+   @DefaultStringValue("@dDefault character encoding")
    String defaultEncodingTitle();
-   @DefaultStringValue("The default character encoding to use when saving files.")
+   @DefaultStringValue("@dThe default character encoding to use when saving files.")
    String defaultEncodingDescription();
 
    /**
     * Whether to show the toolbar at the top of the RStudio workbench.
     */
-   @DefaultStringValue("Show top toolbar")
+   @DefaultStringValue("@dShow top toolbar")
    String toolbarVisibleTitle();
-   @DefaultStringValue("Whether to show the toolbar at the top of the RStudio workbench.")
+   @DefaultStringValue("@dWhether to show the toolbar at the top of the RStudio workbench.")
    String toolbarVisibleDescription();
 
    /**
     * The directory path under which to place new projects by default.
     */
-   @DefaultStringValue("Default new project location")
+   @DefaultStringValue("@dDefault new project location")
    String defaultProjectLocationTitle();
-   @DefaultStringValue("The directory path under which to place new projects by default.")
+   @DefaultStringValue("@dThe directory path under which to place new projects by default.")
    String defaultProjectLocationDescription();
 
    /**
     * Whether to echo R code when sourcing it.
     */
-   @DefaultStringValue("Source with echo by default")
+   @DefaultStringValue("@dSource with echo by default")
    String sourceWithEchoTitle();
-   @DefaultStringValue("Whether to echo R code when sourcing it.")
+   @DefaultStringValue("@dWhether to echo R code when sourcing it.")
    String sourceWithEchoDescription();
 
    /**
     * Whether to initialize new projects with a Git repo by default.
     */
-   @DefaultStringValue("Initialize new projects with Git")
+   @DefaultStringValue("@dInitialize new projects with Git")
    String newProjectGitInitTitle();
-   @DefaultStringValue("Whether to initialize new projects with a Git repo by default.")
+   @DefaultStringValue("@dWhether to initialize new projects with a Git repo by default.")
    String newProjectGitInitDescription();
 
    /**
     * The default engine to use when processing Sweave documents.
     */
-   @DefaultStringValue("Default Sweave engine")
+   @DefaultStringValue("@dDefault Sweave engine")
    String defaultSweaveEngineTitle();
-   @DefaultStringValue("The default engine to use when processing Sweave documents.")
+   @DefaultStringValue("@dThe default engine to use when processing Sweave documents.")
    String defaultSweaveEngineDescription();
 
    /**
     * The default program to use when processing LaTeX documents.
     */
-   @DefaultStringValue("Default LaTeX program")
+   @DefaultStringValue("@dDefault LaTeX program")
    String defaultLatexProgramTitle();
-   @DefaultStringValue("The default program to use when processing LaTeX documents.")
+   @DefaultStringValue("@dThe default program to use when processing LaTeX documents.")
    String defaultLatexProgramDescription();
 
    /**
     * Whether to use Roxygen for documentation.
     */
-   @DefaultStringValue("Use Roxygen for documentation")
+   @DefaultStringValue("@dUse Roxygen for documentation")
    String useRoxygenTitle();
-   @DefaultStringValue("Whether to use Roxygen for documentation.")
+   @DefaultStringValue("@dWhether to use Roxygen for documentation.")
    String useRoxygenDescription();
 
    /**
     * Whether to use RStudio's data import feature.
     */
-   @DefaultStringValue("Enable data import")
+   @DefaultStringValue("@dEnable data import")
    String useDataimportTitle();
-   @DefaultStringValue("Whether to use RStudio's data import feature.")
+   @DefaultStringValue("@dWhether to use RStudio's data import feature.")
    String useDataimportDescription();
 
    /**
     * The program to use to preview PDF files after generation.
     */
-   @DefaultStringValue("PDF previewer")
+   @DefaultStringValue("@dPDF previewer")
    String pdfPreviewerTitle();
-   @DefaultStringValue("The program to use to preview PDF files after generation.")
+   @DefaultStringValue("@dThe program to use to preview PDF files after generation.")
    String pdfPreviewerDescription();
 
    /**
     * Whether to always enable the concordance for RNW files.
     */
-   @DefaultStringValue("Enable Rnw concordance")
+   @DefaultStringValue("@dEnable Rnw concordance")
    String alwaysEnableRnwConcordanceTitle();
-   @DefaultStringValue("Whether to always enable the concordance for RNW files.")
+   @DefaultStringValue("@dWhether to always enable the concordance for RNW files.")
    String alwaysEnableRnwConcordanceDescription();
 
    /**
     * Whether to insert numbered sections in LaTeX.
     */
-   @DefaultStringValue("Insert numbered LaTeX sections")
+   @DefaultStringValue("@dInsert numbered LaTeX sections")
    String insertNumberedLatexSectionsTitle();
-   @DefaultStringValue("Whether to insert numbered sections in LaTeX.")
+   @DefaultStringValue("@dWhether to insert numbered sections in LaTeX.")
    String insertNumberedLatexSectionsDescription();
 
    /**
     * The language of the spelling dictionary to use for spell checking.
     */
-   @DefaultStringValue("Spelling dictionary language")
+   @DefaultStringValue("@dSpelling dictionary language")
    String spellingDictionaryLanguageTitle();
-   @DefaultStringValue("The language of the spelling dictionary to use for spell checking.")
+   @DefaultStringValue("@dThe language of the spelling dictionary to use for spell checking.")
    String spellingDictionaryLanguageDescription();
 
    /**
     * The list of custom dictionaries to use when spell checking.
     */
-   @DefaultStringValue("Custom spelling dictionaries")
+   @DefaultStringValue("@dCustom spelling dictionaries")
    String spellingCustomDictionariesTitle();
-   @DefaultStringValue("The list of custom dictionaries to use when spell checking.")
+   @DefaultStringValue("@dThe list of custom dictionaries to use when spell checking.")
    String spellingCustomDictionariesDescription();
 
    /**
     * The number of milliseconds to wait before linting a document after it is loaded.
     */
-   @DefaultStringValue("Lint document after load (ms)")
+   @DefaultStringValue("@dLint document after load (ms)")
    String documentLoadLintDelayTitle();
-   @DefaultStringValue("The number of milliseconds to wait before linting a document after it is loaded.")
+   @DefaultStringValue("@dThe number of milliseconds to wait before linting a document after it is loaded.")
    String documentLoadLintDelayDescription();
 
    /**
     * Whether to ignore words in uppercase when spell checking.
     */
-   @DefaultStringValue("Ignore uppercase words in spell check")
+   @DefaultStringValue("@dIgnore uppercase words in spell check")
    String ignoreUppercaseWordsTitle();
-   @DefaultStringValue("Whether to ignore words in uppercase when spell checking.")
+   @DefaultStringValue("@dWhether to ignore words in uppercase when spell checking.")
    String ignoreUppercaseWordsDescription();
 
    /**
     * Whether to ignore words with numbers in them when spell checking.
     */
-   @DefaultStringValue("Ignore words with numbers in spell check")
+   @DefaultStringValue("@dIgnore words with numbers in spell check")
    String ignoreWordsWithNumbersTitle();
-   @DefaultStringValue("Whether to ignore words with numbers in them when spell checking.")
+   @DefaultStringValue("@dWhether to ignore words with numbers in them when spell checking.")
    String ignoreWordsWithNumbersDescription();
 
    /**
     * The maximum number of spelling words to check at once.
     */
-   @DefaultStringValue("Maximum number of words to spell check")
+   @DefaultStringValue("@dMaximum number of words to spell check")
    String maxSpellcheckWordsTitle();
-   @DefaultStringValue("The maximum number of spelling words to check at once.")
+   @DefaultStringValue("@dThe maximum number of spelling words to check at once.")
    String maxSpellcheckWordsDescription();
 
    /**
     * The maximum number of spelling correction suggestions to prefetch.
     */
-   @DefaultStringValue("Number of words to prefetch for spell check")
+   @DefaultStringValue("@dNumber of words to prefetch for spell check")
    String maxSpellcheckPrefetchTitle();
-   @DefaultStringValue("The maximum number of spelling correction suggestions to prefetch.")
+   @DefaultStringValue("@dThe maximum number of spelling correction suggestions to prefetch.")
    String maxSpellcheckPrefetchDescription();
 
    /**
     * Whether to enable real-time spellchecking by default.
     */
-   @DefaultStringValue("Use real-time spellchecking")
+   @DefaultStringValue("@dUse real-time spellchecking")
    String realTimeSpellcheckingTitle();
-   @DefaultStringValue("Whether to enable real-time spellchecking by default.")
+   @DefaultStringValue("@dWhether to enable real-time spellchecking by default.")
    String realTimeSpellcheckingDescription();
 
    /**
     * Whether to navigate to build errors.
     */
-   @DefaultStringValue("Navigate to build errors")
+   @DefaultStringValue("@dNavigate to build errors")
    String navigateToBuildErrorTitle();
-   @DefaultStringValue("Whether to navigate to build errors.")
+   @DefaultStringValue("@dWhether to navigate to build errors.")
    String navigateToBuildErrorDescription();
 
    /**
     * Whether to enable RStudio's Packages pane.
     */
-   @DefaultStringValue("Enable the Packages pane")
+   @DefaultStringValue("@dEnable the Packages pane")
    String packagesPaneEnabledTitle();
-   @DefaultStringValue("Whether to enable RStudio's Packages pane.")
+   @DefaultStringValue("@dWhether to enable RStudio's Packages pane.")
    String packagesPaneEnabledDescription();
 
    /**
     * Whether to use RCPP templates.
     */
-   @DefaultStringValue("Use RCpp file templates")
+   @DefaultStringValue("@dUse RCpp file templates")
    String useRcppTemplateTitle();
-   @DefaultStringValue("Whether to use RCPP templates.")
+   @DefaultStringValue("@dWhether to use RCPP templates.")
    String useRcppTemplateDescription();
 
    /**
     * Whether to restore the last opened source documents when RStudio starts up.
     */
-   @DefaultStringValue("Restore last opened documents on startup")
+   @DefaultStringValue("@dRestore last opened documents on startup")
    String restoreSourceDocumentsTitle();
-   @DefaultStringValue("Whether to restore the last opened source documents when RStudio starts up.")
+   @DefaultStringValue("@dWhether to restore the last opened source documents when RStudio starts up.")
    String restoreSourceDocumentsDescription();
 
    /**
     * Whether to handle errors only when user code is on the stack.
     */
-   @DefaultStringValue("Handle errors only when user code present")
+   @DefaultStringValue("@dHandle errors only when user code present")
    String handleErrorsInUserCodeOnlyTitle();
-   @DefaultStringValue("Whether to handle errors only when user code is on the stack.")
+   @DefaultStringValue("@dWhether to handle errors only when user code is on the stack.")
    String handleErrorsInUserCodeOnlyDescription();
 
    /**
     * Whether to automatically expand tracebacks when an error occurs.
     */
-   @DefaultStringValue("Auto-expand error tracebacks")
+   @DefaultStringValue("@dAuto-expand error tracebacks")
    String autoExpandErrorTracebacksTitle();
-   @DefaultStringValue("Whether to automatically expand tracebacks when an error occurs.")
+   @DefaultStringValue("@dWhether to automatically expand tracebacks when an error occurs.")
    String autoExpandErrorTracebacksDescription();
 
    /**
     * Whether to check for new versions of RStudio when RStudio starts.
     */
-   @DefaultStringValue("Check for new version at startup")
+   @DefaultStringValue("@dCheck for new version at startup")
    String checkForUpdatesTitle();
-   @DefaultStringValue("Whether to check for new versions of RStudio when RStudio starts.")
+   @DefaultStringValue("@dWhether to check for new versions of RStudio when RStudio starts.")
    String checkForUpdatesDescription();
 
    /**
     * Whether to show functions without source references in the Traceback pane while debugging.
     */
-   @DefaultStringValue("Show internal functions when debugging")
+   @DefaultStringValue("@dShow internal functions when debugging")
    String showInternalFunctionsTitle();
-   @DefaultStringValue("Whether to show functions without source references in the Traceback pane while debugging.")
+   @DefaultStringValue("@dWhether to show functions without source references in the Traceback pane while debugging.")
    String showInternalFunctionsDescription();
 
    /**
     * Where to display Shiny applications when they are run.
     */
-   @DefaultStringValue("Run Shiny applications in")
+   @DefaultStringValue("@dRun Shiny applications in")
    String shinyViewerTypeTitle();
-   @DefaultStringValue("Where to display Shiny applications when they are run.")
+   @DefaultStringValue("@dWhere to display Shiny applications when they are run.")
    String shinyViewerTypeDescription();
 
    /**
     * Whether to run Shiny applications as background jobs.
     */
-   @DefaultStringValue("Run Shiny applications in the background")
+   @DefaultStringValue("@dRun Shiny applications in the background")
    String shinyBackgroundJobsTitle();
-   @DefaultStringValue("Whether to run Shiny applications as background jobs.")
+   @DefaultStringValue("@dWhether to run Shiny applications as background jobs.")
    String shinyBackgroundJobsDescription();
 
    /**
     * Where to display Shiny applications when they are run.
     */
-   @DefaultStringValue("Run Plumber APIs in")
+   @DefaultStringValue("@dRun Plumber APIs in")
    String plumberViewerTypeTitle();
-   @DefaultStringValue("Where to display Shiny applications when they are run.")
+   @DefaultStringValue("@dWhere to display Shiny applications when they are run.")
    String plumberViewerTypeDescription();
 
    /**
     * The default name to use as the document author when creating new documents.
     */
-   @DefaultStringValue("Document author")
+   @DefaultStringValue("@dDocument author")
    String documentAuthorTitle();
-   @DefaultStringValue("The default name to use as the document author when creating new documents.")
+   @DefaultStringValue("@dThe default name to use as the document author when creating new documents.")
    String documentAuthorDescription();
 
    /**
     * The path to the preferred R Markdown template.
     */
-   @DefaultStringValue("Path to preferred R Markdown template")
+   @DefaultStringValue("@dPath to preferred R Markdown template")
    String rmdPreferredTemplatePathTitle();
-   @DefaultStringValue("The path to the preferred R Markdown template.")
+   @DefaultStringValue("@dThe path to the preferred R Markdown template.")
    String rmdPreferredTemplatePathDescription();
 
    /**
     * Where to display R Markdown documents when they have completed rendering.
     */
-   @DefaultStringValue("Display R Markdown documents in")
+   @DefaultStringValue("@dDisplay R Markdown documents in")
    String rmdViewerTypeTitle();
-   @DefaultStringValue("Where to display R Markdown documents when they have completed rendering.")
+   @DefaultStringValue("@dWhere to display R Markdown documents when they have completed rendering.")
    String rmdViewerTypeDescription();
 
    /**
     * Whether to show verbose diagnostic information when publishing content.
     */
-   @DefaultStringValue("Show diagnostic info when publishing")
+   @DefaultStringValue("@dShow diagnostic info when publishing")
    String showPublishDiagnosticsTitle();
-   @DefaultStringValue("Whether to show verbose diagnostic information when publishing content.")
+   @DefaultStringValue("@dWhether to show verbose diagnostic information when publishing content.")
    String showPublishDiagnosticsDescription();
 
    /**
     * Whether to check remote server SSL certificates when publishing content.
     */
-   @DefaultStringValue("Check SSL certificates when publishing")
+   @DefaultStringValue("@dCheck SSL certificates when publishing")
    String publishCheckCertificatesTitle();
-   @DefaultStringValue("Whether to check remote server SSL certificates when publishing content.")
+   @DefaultStringValue("@dWhether to check remote server SSL certificates when publishing content.")
    String publishCheckCertificatesDescription();
 
    /**
     * Whether to use a custom certificate authority (CA) bundle when publishing content.
     */
-   @DefaultStringValue("Use custom CA bundle when publishing")
+   @DefaultStringValue("@dUse custom CA bundle when publishing")
    String usePublishCaBundleTitle();
-   @DefaultStringValue("Whether to use a custom certificate authority (CA) bundle when publishing content.")
+   @DefaultStringValue("@dWhether to use a custom certificate authority (CA) bundle when publishing content.")
    String usePublishCaBundleDescription();
 
    /**
     * The path to the custom certificate authority (CA) bundle to use when publishing content.
     */
-   @DefaultStringValue("Path to custom CA bundle for publishing")
+   @DefaultStringValue("@dPath to custom CA bundle for publishing")
    String publishCaBundleTitle();
-   @DefaultStringValue("The path to the custom certificate authority (CA) bundle to use when publishing content.")
+   @DefaultStringValue("@dThe path to the custom certificate authority (CA) bundle to use when publishing content.")
    String publishCaBundleDescription();
 
    /**
     * Whether to show chunk output inline for ordinary R Markdown documents.
     */
-   @DefaultStringValue("Show chunk output inline in all documents")
+   @DefaultStringValue("@dShow chunk output inline in all documents")
    String rmdChunkOutputInlineTitle();
-   @DefaultStringValue("Whether to show chunk output inline for ordinary R Markdown documents.")
+   @DefaultStringValue("@dWhether to show chunk output inline for ordinary R Markdown documents.")
    String rmdChunkOutputInlineDescription();
 
    /**
     * Whether to show the document outline by default when opening R Markdown documents.
     */
-   @DefaultStringValue("Open document outline by default")
+   @DefaultStringValue("@dOpen document outline by default")
    String showDocOutlineRmdTitle();
-   @DefaultStringValue("Whether to show the document outline by default when opening R Markdown documents.")
+   @DefaultStringValue("@dWhether to show the document outline by default when opening R Markdown documents.")
    String showDocOutlineRmdDescription();
 
    /**
     * Whether to automatically run an R Markdown document's Setup chunk before running other chunks.
     */
-   @DefaultStringValue("Automatically run Setup chunk when needed")
+   @DefaultStringValue("@dAutomatically run Setup chunk when needed")
    String autoRunSetupChunkTitle();
-   @DefaultStringValue("Whether to automatically run an R Markdown document's Setup chunk before running other chunks.")
+   @DefaultStringValue("@dWhether to automatically run an R Markdown document's Setup chunk before running other chunks.")
    String autoRunSetupChunkDescription();
 
    /**
     * Whether to hide the R console when executing inline R Markdown chunks.
     */
-   @DefaultStringValue("Hide console when running R Markdown chunks")
+   @DefaultStringValue("@dHide console when running R Markdown chunks")
    String hideConsoleOnChunkExecuteTitle();
-   @DefaultStringValue("Whether to hide the R console when executing inline R Markdown chunks.")
+   @DefaultStringValue("@dWhether to hide the R console when executing inline R Markdown chunks.")
    String hideConsoleOnChunkExecuteDescription();
 
    /**
     * The unit of R code to execute when the Execute command is invoked.
     */
-   @DefaultStringValue("Unit of R code execution")
+   @DefaultStringValue("@dUnit of R code execution")
    String executionBehaviorTitle();
-   @DefaultStringValue("The unit of R code to execute when the Execute command is invoked.")
+   @DefaultStringValue("@dThe unit of R code to execute when the Execute command is invoked.")
    String executionBehaviorDescription();
-   @DefaultStringValue("Current line")
-   String executionBehaviorEnum_line();
-   @DefaultStringValue("Multi-line R statement")
-   String executionBehaviorEnum_statement();
-   @DefaultStringValue("Multiple consecutive R lines")
-   String executionBehaviorEnum_paragraph();
 
    /**
     * Whether to show the Terminal tab.
     */
-   @DefaultStringValue("Show the Terminal tab")
+   @DefaultStringValue("@dShow the Terminal tab")
    String showTerminalTabTitle();
-   @DefaultStringValue("Whether to show the Terminal tab.")
+   @DefaultStringValue("@dWhether to show the Terminal tab.")
    String showTerminalTabDescription();
 
    /**
     * Whether to use local echo in the Terminal.
     */
-   @DefaultStringValue("Use local echo in the Terminal")
+   @DefaultStringValue("@dUse local echo in the Terminal")
    String terminalLocalEchoTitle();
-   @DefaultStringValue("Whether to use local echo in the Terminal.")
+   @DefaultStringValue("@dWhether to use local echo in the Terminal.")
    String terminalLocalEchoDescription();
 
    /**
     * Whether to use websockets to communicate with the shell in the Terminal tab.
     */
-   @DefaultStringValue("Use websockets in the Terminal")
+   @DefaultStringValue("@dUse websockets in the Terminal")
    String terminalWebsocketsTitle();
-   @DefaultStringValue("Whether to use websockets to communicate with the shell in the Terminal tab.")
+   @DefaultStringValue("@dWhether to use websockets to communicate with the shell in the Terminal tab.")
    String terminalWebsocketsDescription();
 
    /**
     * Whether to close the terminal pane after the shell exits.
     */
-   @DefaultStringValue("Close Terminal pane after shell exit")
+   @DefaultStringValue("@dClose Terminal pane after shell exit")
    String terminalCloseBehaviorTitle();
-   @DefaultStringValue("Whether to close the terminal pane after the shell exits.")
+   @DefaultStringValue("@dWhether to close the terminal pane after the shell exits.")
    String terminalCloseBehaviorDescription();
 
    /**
     * Whether to track and save changes to system environment variables in the Terminal.
     */
-   @DefaultStringValue("Save and restore system environment in Terminal tab")
+   @DefaultStringValue("@dSave and restore system environment in Terminal tab")
    String terminalTrackEnvironmentTitle();
-   @DefaultStringValue("Whether to track and save changes to system environment variables in the Terminal.")
+   @DefaultStringValue("@dWhether to track and save changes to system environment variables in the Terminal.")
    String terminalTrackEnvironmentDescription();
 
    /**
     * Terminal bell style
     */
-   @DefaultStringValue("Terminal bell style")
+   @DefaultStringValue("@dTerminal bell style")
    String terminalBellStyleTitle();
-   @DefaultStringValue("Terminal bell style")
+   @DefaultStringValue("@dTerminal bell style")
    String terminalBellStyleDescription();
 
    /**
     * Terminal rendering engine: canvas is faster, dom may be needed for some browsers or graphics cards
     */
-   @DefaultStringValue("Terminal tab rendering engine")
+   @DefaultStringValue("@dTerminal tab rendering engine")
    String terminalRendererTitle();
-   @DefaultStringValue("Terminal rendering engine: canvas is faster, dom may be needed for some browsers or graphics cards")
+   @DefaultStringValue("@dTerminal rendering engine: canvas is faster, dom may be needed for some browsers or graphics cards")
    String terminalRendererDescription();
 
    /**
     * Whether web links displayed in the Terminal tab are made clickable.
     */
-   @DefaultStringValue("Make links in Terminal clickable")
+   @DefaultStringValue("@dMake links in Terminal clickable")
    String terminalWeblinksTitle();
-   @DefaultStringValue("Whether web links displayed in the Terminal tab are made clickable.")
+   @DefaultStringValue("@dWhether web links displayed in the Terminal tab are made clickable.")
    String terminalWeblinksDescription();
 
    /**
     * Whether to print the render command use to knit R Markdown documents in the R Markdown tab.
     */
-   @DefaultStringValue("Show R Markdown render command")
+   @DefaultStringValue("@dShow R Markdown render command")
    String showRmdRenderCommandTitle();
-   @DefaultStringValue("Whether to print the render command use to knit R Markdown documents in the R Markdown tab.")
+   @DefaultStringValue("@dWhether to print the render command use to knit R Markdown documents in the R Markdown tab.")
    String showRmdRenderCommandDescription();
 
    /**
     * Whether to enable moving text on the editing surface by clicking and dragging it.
     */
-   @DefaultStringValue("Enable dragging text in code editor")
+   @DefaultStringValue("@dEnable dragging text in code editor")
    String enableTextDragTitle();
-   @DefaultStringValue("Whether to enable moving text on the editing surface by clicking and dragging it.")
+   @DefaultStringValue("@dWhether to enable moving text on the editing surface by clicking and dragging it.")
    String enableTextDragDescription();
 
    /**
     * Whether to show hidden files in the Files pane.
     */
-   @DefaultStringValue("Show hidden files in Files pane")
+   @DefaultStringValue("@dShow hidden files in Files pane")
    String showHiddenFilesTitle();
-   @DefaultStringValue("Whether to show hidden files in the Files pane.")
+   @DefaultStringValue("@dWhether to show hidden files in the Files pane.")
    String showHiddenFilesDescription();
 
    /**
     * List of file names (case sensitive) that are always shown in the Files Pane, regardless of whether hidden files are shown
     */
-   @DefaultStringValue("Files always shown in the Files Pane")
+   @DefaultStringValue("@dFiles always shown in the Files Pane")
    String alwaysShownFilesTitle();
-   @DefaultStringValue("List of file names (case sensitive) that are always shown in the Files Pane, regardless of whether hidden files are shown")
+   @DefaultStringValue("@dList of file names (case sensitive) that are always shown in the Files Pane, regardless of whether hidden files are shown")
    String alwaysShownFilesDescription();
 
    /**
     * List of file extensions (beginning with ., not case sensitive) that are always shown in the Files Pane, regardless of whether hidden files are shown
     */
-   @DefaultStringValue("Extensions always shown in the Files Pane")
+   @DefaultStringValue("@dExtensions always shown in the Files Pane")
    String alwaysShownExtensionsTitle();
-   @DefaultStringValue("List of file extensions (beginning with ., not case sensitive) that are always shown in the Files Pane, regardless of whether hidden files are shown")
+   @DefaultStringValue("@dList of file extensions (beginning with ., not case sensitive) that are always shown in the Files Pane, regardless of whether hidden files are shown")
    String alwaysShownExtensionsDescription();
 
    /**
     * Whether to sort file names naturally, so that e.g., file10.R comes after file9.R
     */
-   @DefaultStringValue("Sort file names naturally in Files pane")
+   @DefaultStringValue("@dSort file names naturally in Files pane")
    String sortFileNamesNaturallyTitle();
-   @DefaultStringValue("Whether to sort file names naturally, so that e.g., file10.R comes after file9.R")
+   @DefaultStringValue("@dWhether to sort file names naturally, so that e.g., file10.R comes after file9.R")
    String sortFileNamesNaturallyDescription();
 
    /**
     * The visibility of the Jobs tab.
     */
-   @DefaultStringValue("Jobs tab visibility")
+   @DefaultStringValue("@dJobs tab visibility")
    String jobsTabVisibilityTitle();
-   @DefaultStringValue("The visibility of the Jobs tab.")
+   @DefaultStringValue("@dThe visibility of the Jobs tab.")
    String jobsTabVisibilityDescription();
 
    /**
     * Whether to show the Launcher jobs tab in RStudio Pro and RStudio Workbench.
     */
-   @DefaultStringValue("")
+   @DefaultStringValue("@d")
    String showLauncherJobsTabTitle();
-   @DefaultStringValue("Whether to show the Launcher jobs tab in RStudio Pro and RStudio Workbench.")
+   @DefaultStringValue("@dWhether to show the Launcher jobs tab in RStudio Pro and RStudio Workbench.")
    String showLauncherJobsTabDescription();
 
    /**
     * How to sort jobs in the Launcher tab in RStudio Pro and RStudio Workbench.
     */
-   @DefaultStringValue("")
+   @DefaultStringValue("@d")
    String launcherJobsSortTitle();
-   @DefaultStringValue("How to sort jobs in the Launcher tab in RStudio Pro and RStudio Workbench.")
+   @DefaultStringValue("@dHow to sort jobs in the Launcher tab in RStudio Pro and RStudio Workbench.")
    String launcherJobsSortDescription();
 
    /**
     * How to detect busy status in the Terminal.
     */
-   @DefaultStringValue("")
+   @DefaultStringValue("@d")
    String busyDetectionTitle();
-   @DefaultStringValue("How to detect busy status in the Terminal.")
+   @DefaultStringValue("@dHow to detect busy status in the Terminal.")
    String busyDetectionDescription();
 
    /**
     * A whitelist of apps that should not be considered busy in the Terminal.
     */
-   @DefaultStringValue("")
+   @DefaultStringValue("@d")
    String busyWhitelistTitle();
-   @DefaultStringValue("A whitelist of apps that should not be considered busy in the Terminal.")
+   @DefaultStringValue("@dA whitelist of apps that should not be considered busy in the Terminal.")
    String busyWhitelistDescription();
 
    /**
     * The working directory to use when knitting R Markdown documents.
     */
-   @DefaultStringValue("Working directory for knitting")
+   @DefaultStringValue("@dWorking directory for knitting")
    String knitWorkingDirTitle();
-   @DefaultStringValue("The working directory to use when knitting R Markdown documents.")
+   @DefaultStringValue("@dThe working directory to use when knitting R Markdown documents.")
    String knitWorkingDirDescription();
 
    /**
     * Which objects to show in the document outline pane.
     */
-   @DefaultStringValue("Show in Document Outline")
+   @DefaultStringValue("@dShow in Document Outline")
    String docOutlineShowTitle();
-   @DefaultStringValue("Which objects to show in the document outline pane.")
+   @DefaultStringValue("@dWhich objects to show in the document outline pane.")
    String docOutlineShowDescription();
 
    /**
     * When to preview LaTeX mathematical equations when cursor has not moved recently.
     */
-   @DefaultStringValue("Preview LaTeX equations on idle")
+   @DefaultStringValue("@dPreview LaTeX equations on idle")
    String latexPreviewOnCursorIdleTitle();
-   @DefaultStringValue("When to preview LaTeX mathematical equations when cursor has not moved recently.")
+   @DefaultStringValue("@dWhen to preview LaTeX mathematical equations when cursor has not moved recently.")
    String latexPreviewOnCursorIdleDescription();
 
    /**
     * Whether to wrap around when going to the previous or next editor tab.
     */
-   @DefaultStringValue("Wrap around when going to previous/next tab")
+   @DefaultStringValue("@dWrap around when going to previous/next tab")
    String wrapTabNavigationTitle();
-   @DefaultStringValue("Whether to wrap around when going to the previous or next editor tab.")
+   @DefaultStringValue("@dWhether to wrap around when going to the previous or next editor tab.")
    String wrapTabNavigationDescription();
 
    /**
     * The theme to use for the main RStudio user interface.
     */
-   @DefaultStringValue("Global theme")
+   @DefaultStringValue("@dGlobal theme")
    String globalThemeTitle();
-   @DefaultStringValue("The theme to use for the main RStudio user interface.")
+   @DefaultStringValue("@dThe theme to use for the main RStudio user interface.")
    String globalThemeDescription();
 
    /**
     * Whether to ignore whitespace when generating diffs of version controlled files.
     */
-   @DefaultStringValue("Ignore whitespace in VCS diffs")
+   @DefaultStringValue("@dIgnore whitespace in VCS diffs")
    String gitDiffIgnoreWhitespaceTitle();
-   @DefaultStringValue("Whether to ignore whitespace when generating diffs of version controlled files.")
+   @DefaultStringValue("@dWhether to ignore whitespace when generating diffs of version controlled files.")
    String gitDiffIgnoreWhitespaceDescription();
 
    /**
     * Whether double-clicking should select a word in the Console pane.
     */
-   @DefaultStringValue("Double click to select in the Console")
+   @DefaultStringValue("@dDouble click to select in the Console")
    String consoleDoubleClickSelectTitle();
-   @DefaultStringValue("Whether double-clicking should select a word in the Console pane.")
+   @DefaultStringValue("@dWhether double-clicking should select a word in the Console pane.")
    String consoleDoubleClickSelectDescription();
 
    /**
     * Whether a git repo should be initialized inside new projects by default.
     */
-   @DefaultStringValue("Create a Git repo in new projects")
+   @DefaultStringValue("@dCreate a Git repo in new projects")
    String newProjGitInitTitle();
-   @DefaultStringValue("Whether a git repo should be initialized inside new projects by default.")
+   @DefaultStringValue("@dWhether a git repo should be initialized inside new projects by default.")
    String newProjGitInitDescription();
 
    /**
     * The root document to use when compiling PDF documents.
     */
-   @DefaultStringValue("Root document for PDF compilation")
+   @DefaultStringValue("@dRoot document for PDF compilation")
    String rootDocumentTitle();
-   @DefaultStringValue("The root document to use when compiling PDF documents.")
+   @DefaultStringValue("@dThe root document to use when compiling PDF documents.")
    String rootDocumentDescription();
 
    /**
     * When to show the server home page in RStudio Workbench.
     */
-   @DefaultStringValue("Show user home page in RStudio Workbench")
+   @DefaultStringValue("@dShow user home page in RStudio Workbench")
    String showUserHomePageTitle();
-   @DefaultStringValue("When to show the server home page in RStudio Workbench.")
+   @DefaultStringValue("@dWhen to show the server home page in RStudio Workbench.")
    String showUserHomePageDescription();
 
    /**
     * Whether to reuse sessions when opening projects in RStudio Workbench.
     */
-   @DefaultStringValue("")
+   @DefaultStringValue("@d")
    String reuseSessionsForProjectLinksTitle();
-   @DefaultStringValue("Whether to reuse sessions when opening projects in RStudio Workbench.")
+   @DefaultStringValue("@dWhether to reuse sessions when opening projects in RStudio Workbench.")
    String reuseSessionsForProjectLinksDescription();
 
    /**
     * Whether to enable RStudio's version control system interface.
     */
-   @DefaultStringValue("Enable version control if available")
+   @DefaultStringValue("@dEnable version control if available")
    String vcsEnabledTitle();
-   @DefaultStringValue("Whether to enable RStudio's version control system interface.")
+   @DefaultStringValue("@dWhether to enable RStudio's version control system interface.")
    String vcsEnabledDescription();
 
    /**
     * Automatically refresh VCS status?
     */
-   @DefaultStringValue("Auto-refresh state from version control")
+   @DefaultStringValue("@dAuto-refresh state from version control")
    String vcsAutorefreshTitle();
-   @DefaultStringValue("Automatically refresh VCS status?")
+   @DefaultStringValue("@dAutomatically refresh VCS status?")
    String vcsAutorefreshDescription();
 
    /**
     * The path to the Git executable to use.
     */
-   @DefaultStringValue("Path to Git executable")
+   @DefaultStringValue("@dPath to Git executable")
    String gitExePathTitle();
-   @DefaultStringValue("The path to the Git executable to use.")
+   @DefaultStringValue("@dThe path to the Git executable to use.")
    String gitExePathDescription();
 
    /**
     * The path to the Subversion executable to use.
     */
-   @DefaultStringValue("Path to Subversion executable")
+   @DefaultStringValue("@dPath to Subversion executable")
    String svnExePathTitle();
-   @DefaultStringValue("The path to the Subversion executable to use.")
+   @DefaultStringValue("@dThe path to the Subversion executable to use.")
    String svnExePathDescription();
 
    /**
     * The path to the terminal executable to use.
     */
-   @DefaultStringValue("")
+   @DefaultStringValue("@d")
    String terminalPathTitle();
-   @DefaultStringValue("The path to the terminal executable to use.")
+   @DefaultStringValue("@dThe path to the terminal executable to use.")
    String terminalPathDescription();
 
    /**
     * The path to the RSA key file to use.
     */
-   @DefaultStringValue("")
+   @DefaultStringValue("@d")
    String rsaKeyPathTitle();
-   @DefaultStringValue("The path to the RSA key file to use.")
+   @DefaultStringValue("@dThe path to the RSA key file to use.")
    String rsaKeyPathDescription();
 
    /**
     * Whether to use the devtools R package.
     */
-   @DefaultStringValue("Use the devtools R package if available")
+   @DefaultStringValue("@dUse the devtools R package if available")
    String useDevtoolsTitle();
-   @DefaultStringValue("Whether to use the devtools R package.")
+   @DefaultStringValue("@dWhether to use the devtools R package.")
    String useDevtoolsDescription();
 
    /**
     * Whether to use Internet2 for networking on R for Windows.
     */
-   @DefaultStringValue("")
+   @DefaultStringValue("@d")
    String useInternet2Title();
-   @DefaultStringValue("Whether to use Internet2 for networking on R for Windows.")
+   @DefaultStringValue("@dWhether to use Internet2 for networking on R for Windows.")
    String useInternet2Description();
 
    /**
     * Whether to use secure downloads when fetching R packages.
     */
-   @DefaultStringValue("Download R packages securely")
+   @DefaultStringValue("@dDownload R packages securely")
    String useSecureDownloadTitle();
-   @DefaultStringValue("Whether to use secure downloads when fetching R packages.")
+   @DefaultStringValue("@dWhether to use secure downloads when fetching R packages.")
    String useSecureDownloadDescription();
 
    /**
     * Whether to clean up temporary files after running R CMD CHECK.
     */
-   @DefaultStringValue("Clean up temporary files after R CMD CHECK")
+   @DefaultStringValue("@dClean up temporary files after R CMD CHECK")
    String cleanupAfterRCmdCheckTitle();
-   @DefaultStringValue("Whether to clean up temporary files after running R CMD CHECK.")
+   @DefaultStringValue("@dWhether to clean up temporary files after running R CMD CHECK.")
    String cleanupAfterRCmdCheckDescription();
 
    /**
     * Whether to view the directory after running R CMD CHECK.
     */
-   @DefaultStringValue("View directory after R CMD CHECK")
+   @DefaultStringValue("@dView directory after R CMD CHECK")
    String viewDirAfterRCmdCheckTitle();
-   @DefaultStringValue("Whether to view the directory after running R CMD CHECK.")
+   @DefaultStringValue("@dWhether to view the directory after running R CMD CHECK.")
    String viewDirAfterRCmdCheckDescription();
 
    /**
     * Whether to hide object files in the Files pane.
     */
-   @DefaultStringValue("Hide object files in the Files pane")
+   @DefaultStringValue("@dHide object files in the Files pane")
    String hideObjectFilesTitle();
-   @DefaultStringValue("Whether to hide object files in the Files pane.")
+   @DefaultStringValue("@dWhether to hide object files in the Files pane.")
    String hideObjectFilesDescription();
 
    /**
     * Whether to restore the last project when starting RStudio.
     */
-   @DefaultStringValue("Restore last project when starting RStudio")
+   @DefaultStringValue("@dRestore last project when starting RStudio")
    String restoreLastProjectTitle();
-   @DefaultStringValue("Whether to restore the last project when starting RStudio.")
+   @DefaultStringValue("@dWhether to restore the last project when starting RStudio.")
    String restoreLastProjectDescription();
 
    /**
     * The number of seconds after which a project is deemed to have successfully started.
     */
-   @DefaultStringValue("Number of seconds for safe project startup")
+   @DefaultStringValue("@dNumber of seconds for safe project startup")
    String projectSafeStartupSecondsTitle();
-   @DefaultStringValue("The number of seconds after which a project is deemed to have successfully started.")
+   @DefaultStringValue("@dThe number of seconds after which a project is deemed to have successfully started.")
    String projectSafeStartupSecondsDescription();
 
    /**
     * Use tinytex to compile .tex files.
     */
-   @DefaultStringValue("Use tinytex to compile .tex files")
+   @DefaultStringValue("@dUse tinytex to compile .tex files")
    String useTinytexTitle();
-   @DefaultStringValue("Use tinytex to compile .tex files.")
+   @DefaultStringValue("@dUse tinytex to compile .tex files.")
    String useTinytexDescription();
 
    /**
     * Whether to clean output after running Texi2Dvi.
     */
-   @DefaultStringValue("Clean output after running Texi2Dvi")
+   @DefaultStringValue("@dClean output after running Texi2Dvi")
    String cleanTexi2dviOutputTitle();
-   @DefaultStringValue("Whether to clean output after running Texi2Dvi.")
+   @DefaultStringValue("@dWhether to clean output after running Texi2Dvi.")
    String cleanTexi2dviOutputDescription();
 
    /**
     * Whether to enable shell escaping with LaTeX documents.
     */
-   @DefaultStringValue("Shell escape LaTeX documents")
+   @DefaultStringValue("@dShell escape LaTeX documents")
    String latexShellEscapeTitle();
-   @DefaultStringValue("Whether to enable shell escaping with LaTeX documents.")
+   @DefaultStringValue("@dWhether to enable shell escaping with LaTeX documents.")
    String latexShellEscapeDescription();
 
    /**
     * Whether to restore the last version of R used by the project in RStudio Pro and RStudio Workbench.
     */
-   @DefaultStringValue("Restore project R version in RStudio Pro and RStudio Workbench")
+   @DefaultStringValue("@dRestore project R version in RStudio Pro and RStudio Workbench")
    String restoreProjectRVersionTitle();
-   @DefaultStringValue("Whether to restore the last version of R used by the project in RStudio Pro and RStudio Workbench.")
+   @DefaultStringValue("@dWhether to restore the last version of R used by the project in RStudio Pro and RStudio Workbench.")
    String restoreProjectRVersionDescription();
 
    /**
     * The verbosity level to use with Clang (0 - 2)
     */
-   @DefaultStringValue("Clang verbosity level (0 - 2)")
+   @DefaultStringValue("@dClang verbosity level (0 - 2)")
    String clangVerboseTitle();
-   @DefaultStringValue("The verbosity level to use with Clang (0 - 2)")
+   @DefaultStringValue("@dThe verbosity level to use with Clang (0 - 2)")
    String clangVerboseDescription();
 
    /**
     * Whether to automatically submit crash reports to RStudio.
     */
-   @DefaultStringValue("Submit crash reports to RStudio")
+   @DefaultStringValue("@dSubmit crash reports to RStudio")
    String submitCrashReportsTitle();
-   @DefaultStringValue("Whether to automatically submit crash reports to RStudio.")
+   @DefaultStringValue("@dWhether to automatically submit crash reports to RStudio.")
    String submitCrashReportsDescription();
 
    /**
     * The R version to use by default.
     */
-   @DefaultStringValue("")
+   @DefaultStringValue("@d")
    String defaultRVersionTitle();
-   @DefaultStringValue("The R version to use by default.")
+   @DefaultStringValue("@dThe R version to use by default.")
    String defaultRVersionDescription();
 
    /**
     * The maximum number of columns to show at once in the data viewer.
     */
-   @DefaultStringValue("Maximum number of columns in data viewer")
+   @DefaultStringValue("@dMaximum number of columns in data viewer")
    String dataViewerMaxColumnsTitle();
-   @DefaultStringValue("The maximum number of columns to show at once in the data viewer.")
+   @DefaultStringValue("@dThe maximum number of columns to show at once in the data viewer.")
    String dataViewerMaxColumnsDescription();
 
    /**
     * Support accessibility aids such as screen readers (RStudio Server).
     */
-   @DefaultStringValue("Enable support for screen readers in RStudio Server")
+   @DefaultStringValue("@dEnable support for screen readers in RStudio Server")
    String enableScreenReaderTitle();
-   @DefaultStringValue("Support accessibility aids such as screen readers (RStudio Server).")
+   @DefaultStringValue("@dSupport accessibility aids such as screen readers (RStudio Server).")
    String enableScreenReaderDescription();
 
    /**
     * Number of milliseconds to wait after last keystroke before updating live region.
     */
-   @DefaultStringValue("Seconds to wait before updating ARIA live region")
+   @DefaultStringValue("@dSeconds to wait before updating ARIA live region")
    String typingStatusDelayMsTitle();
-   @DefaultStringValue("Number of milliseconds to wait after last keystroke before updating live region.")
+   @DefaultStringValue("@dNumber of milliseconds to wait after last keystroke before updating live region.")
    String typingStatusDelayMsDescription();
 
    /**
     * Reduce use of animations in the user interface.
     */
-   @DefaultStringValue("Reduced animation/motion mode")
+   @DefaultStringValue("@dReduced animation/motion mode")
    String reducedMotionTitle();
-   @DefaultStringValue("Reduce use of animations in the user interface.")
+   @DefaultStringValue("@dReduce use of animations in the user interface.")
    String reducedMotionDescription();
 
    /**
     * Tab key moves focus out of text editing controls instead of inserting tabs.
     */
-   @DefaultStringValue("Tab key always moves focus")
+   @DefaultStringValue("@dTab key always moves focus")
    String tabKeyMoveFocusTitle();
-   @DefaultStringValue("Tab key moves focus out of text editing controls instead of inserting tabs.")
+   @DefaultStringValue("@dTab key moves focus out of text editing controls instead of inserting tabs.")
    String tabKeyMoveFocusDescription();
 
    /**
     * In source editor find panel, tab key moves focus directly from find text to replace text.
     */
-   @DefaultStringValue("Tab key moves focus directly from find text to replace text in find panel")
+   @DefaultStringValue("@dTab key moves focus directly from find text to replace text in find panel")
    String findPanelLegacyTabSequenceTitle();
-   @DefaultStringValue("In source editor find panel, tab key moves focus directly from find text to replace text.")
+   @DefaultStringValue("@dIn source editor find panel, tab key moves focus directly from find text to replace text.")
    String findPanelLegacyTabSequenceDescription();
 
    /**
     * Control with keyboard focus displays a visual focus indicator.
     */
-   @DefaultStringValue("Always show focus outlines")
+   @DefaultStringValue("@dAlways show focus outlines")
    String showFocusRectanglesTitle();
-   @DefaultStringValue("Control with keyboard focus displays a visual focus indicator.")
+   @DefaultStringValue("@dControl with keyboard focus displays a visual focus indicator.")
    String showFocusRectanglesDescription();
 
    /**
     * Show which panel contains keyboard focus.
     */
-   @DefaultStringValue("Show focus outline around focused panel")
+   @DefaultStringValue("@dShow focus outline around focused panel")
    String showPanelFocusRectangleTitle();
-   @DefaultStringValue("Show which panel contains keyboard focus.")
+   @DefaultStringValue("@dShow which panel contains keyboard focus.")
    String showPanelFocusRectangleDescription();
 
    /**
     * How to deal with changes to documents on idle.
     */
-   @DefaultStringValue("Autosave mode on idle")
+   @DefaultStringValue("@dAutosave mode on idle")
    String autoSaveOnIdleTitle();
-   @DefaultStringValue("How to deal with changes to documents on idle.")
+   @DefaultStringValue("@dHow to deal with changes to documents on idle.")
    String autoSaveOnIdleDescription();
-   @DefaultStringValue("Save and write changes")
-   String autoSaveOnIdleEnum_commit();
-   @DefaultStringValue("Backup unsaved changes")
-   String autoSaveOnIdleEnum_backup();
-   @DefaultStringValue("Do nothing")
-   String autoSaveOnIdleEnum_none();
 
    /**
     * The idle period, in milliseconds, after which documents should be auto-saved.
     */
-   @DefaultStringValue("Idle period for document autosave (ms)")
+   @DefaultStringValue("@dIdle period for document autosave (ms)")
    String autoSaveIdleMsTitle();
-   @DefaultStringValue("The idle period, in milliseconds, after which documents should be auto-saved.")
+   @DefaultStringValue("@dThe idle period, in milliseconds, after which documents should be auto-saved.")
    String autoSaveIdleMsDescription();
 
    /**
     * Whether to automatically save when the editor loses focus.
     */
-   @DefaultStringValue("Save documents when editor loses input focus")
+   @DefaultStringValue("@dSave documents when editor loses input focus")
    String autoSaveOnBlurTitle();
-   @DefaultStringValue("Whether to automatically save when the editor loses focus.")
+   @DefaultStringValue("@dWhether to automatically save when the editor loses focus.")
    String autoSaveOnBlurDescription();
 
    /**
     * Initial directory for new terminals.
     */
-   @DefaultStringValue("Initial working directory for new terminals")
+   @DefaultStringValue("@dInitial working directory for new terminals")
    String terminalInitialDirectoryTitle();
-   @DefaultStringValue("Initial directory for new terminals.")
+   @DefaultStringValue("@dInitial directory for new terminals.")
    String terminalInitialDirectoryDescription();
 
    /**
     * Whether to show the full path to project in desktop window title.
     */
-   @DefaultStringValue("Show full path to project in RStudio Desktop windows")
+   @DefaultStringValue("@dShow full path to project in RStudio Desktop windows")
    String fullProjectPathInWindowTitleTitle();
-   @DefaultStringValue("Whether to show the full path to project in desktop window title.")
+   @DefaultStringValue("@dWhether to show the full path to project in desktop window title.")
    String fullProjectPathInWindowTitleDescription();
 
    /**
     * Whether to enable visual editing by default for new markdown documents
     */
-   @DefaultStringValue("Use visual editing by default for new markdown documents")
+   @DefaultStringValue("@dUse visual editing by default for new markdown documents")
    String visualMarkdownEditingIsDefaultTitle();
-   @DefaultStringValue("Whether to enable visual editing by default for new markdown documents")
+   @DefaultStringValue("@dWhether to enable visual editing by default for new markdown documents")
    String visualMarkdownEditingIsDefaultDescription();
 
    /**
     * Default spacing for lists created in the visual editor
     */
-   @DefaultStringValue("Default list spacing in visual markdown editing mode")
+   @DefaultStringValue("@dDefault list spacing in visual markdown editing mode")
    String visualMarkdownEditingListSpacingTitle();
-   @DefaultStringValue("Default spacing for lists created in the visual editor")
+   @DefaultStringValue("@dDefault spacing for lists created in the visual editor")
    String visualMarkdownEditingListSpacingDescription();
 
    /**
     * Whether to automatically wrap text when writing markdown
     */
-   @DefaultStringValue("Wrap text in visual markdown editing mode")
+   @DefaultStringValue("@dWrap text in visual markdown editing mode")
    String visualMarkdownEditingWrapTitle();
-   @DefaultStringValue("Whether to automatically wrap text when writing markdown")
+   @DefaultStringValue("@dWhether to automatically wrap text when writing markdown")
    String visualMarkdownEditingWrapDescription();
 
    /**
     * The column to wrap text at when writing markdown
     */
-   @DefaultStringValue("Wrap column for visual markdown editing mode")
+   @DefaultStringValue("@dWrap column for visual markdown editing mode")
    String visualMarkdownEditingWrapAtColumnTitle();
-   @DefaultStringValue("The column to wrap text at when writing markdown")
+   @DefaultStringValue("@dThe column to wrap text at when writing markdown")
    String visualMarkdownEditingWrapAtColumnDescription();
 
    /**
     * Placement of footnotes within markdown output.
     */
-   @DefaultStringValue("Place visual markdown footnotes in")
+   @DefaultStringValue("@dPlace visual markdown footnotes in")
    String visualMarkdownEditingReferencesLocationTitle();
-   @DefaultStringValue("Placement of footnotes within markdown output.")
+   @DefaultStringValue("@dPlacement of footnotes within markdown output.")
    String visualMarkdownEditingReferencesLocationDescription();
 
    /**
     * Whether to write canonical visual mode markdown when saving from source mode.
     */
-   @DefaultStringValue("Write canonical visual mode markdown in source mode")
+   @DefaultStringValue("@dWrite canonical visual mode markdown in source mode")
    String visualMarkdownEditingCanonicalTitle();
-   @DefaultStringValue("Whether to write canonical visual mode markdown when saving from source mode.")
+   @DefaultStringValue("@dWhether to write canonical visual mode markdown when saving from source mode.")
    String visualMarkdownEditingCanonicalDescription();
 
    /**
     * Maximum content width for visual editing mode, in pixels
     */
-   @DefaultStringValue("Max content width for visual markdown editor (px)")
+   @DefaultStringValue("@dMax content width for visual markdown editor (px)")
    String visualMarkdownEditingMaxContentWidthTitle();
-   @DefaultStringValue("Maximum content width for visual editing mode, in pixels")
+   @DefaultStringValue("@dMaximum content width for visual editing mode, in pixels")
    String visualMarkdownEditingMaxContentWidthDescription();
 
    /**
     * Whether to show the document outline by default when opening R Markdown documents in visual mode.
     */
-   @DefaultStringValue("Show document outline in visual markdown editing mode")
+   @DefaultStringValue("@dShow document outline in visual markdown editing mode")
    String visualMarkdownEditingShowDocOutlineTitle();
-   @DefaultStringValue("Whether to show the document outline by default when opening R Markdown documents in visual mode.")
+   @DefaultStringValue("@dWhether to show the document outline by default when opening R Markdown documents in visual mode.")
    String visualMarkdownEditingShowDocOutlineDescription();
 
    /**
     * Whether to show the margin guide in the visual mode code blocks.
     */
-   @DefaultStringValue("Show margin in visual mode code blocks")
+   @DefaultStringValue("@dShow margin in visual mode code blocks")
    String visualMarkdownEditingShowMarginTitle();
-   @DefaultStringValue("Whether to show the margin guide in the visual mode code blocks.")
+   @DefaultStringValue("@dWhether to show the margin guide in the visual mode code blocks.")
    String visualMarkdownEditingShowMarginDescription();
 
    /**
     * The default visual editing mode font size, in points
     */
-   @DefaultStringValue("Font size for visual editing mode")
+   @DefaultStringValue("@dFont size for visual editing mode")
    String visualMarkdownEditingFontSizePointsTitle();
-   @DefaultStringValue("The default visual editing mode font size, in points")
+   @DefaultStringValue("@dThe default visual editing mode font size, in points")
    String visualMarkdownEditingFontSizePointsDescription();
 
    /**
     * The name of the editor to use to provide code editing in visual mode
     */
-   @DefaultStringValue("Editor for code chunks in visual editing mode")
+   @DefaultStringValue("@dEditor for code chunks in visual editing mode")
    String visualMarkdownCodeEditorTitle();
-   @DefaultStringValue("The name of the editor to use to provide code editing in visual mode")
+   @DefaultStringValue("@dThe name of the editor to use to provide code editing in visual mode")
    String visualMarkdownCodeEditorDescription();
 
    /**
     * Zotero libraries to insert citations from.
     */
-   @DefaultStringValue("Zotero libraries")
+   @DefaultStringValue("@dZotero libraries")
    String zoteroLibrariesTitle();
-   @DefaultStringValue("Zotero libraries to insert citations from.")
+   @DefaultStringValue("@dZotero libraries to insert citations from.")
    String zoteroLibrariesDescription();
 
    /**
     * Preferred emoji skintone
     */
-   @DefaultStringValue("")
+   @DefaultStringValue("@d")
    String emojiSkintoneTitle();
-   @DefaultStringValue("Preferred emoji skintone")
+   @DefaultStringValue("@dPreferred emoji skintone")
    String emojiSkintoneDescription();
 
    /**
     * List of aria-live announcements to disable.
     */
-   @DefaultStringValue("Disabled aria-live announcements")
+   @DefaultStringValue("@dDisabled aria-live announcements")
    String disabledAriaLiveAnnouncementsTitle();
-   @DefaultStringValue("List of aria-live announcements to disable.")
+   @DefaultStringValue("@dList of aria-live announcements to disable.")
    String disabledAriaLiveAnnouncementsDescription();
 
    /**
     * Maximum number of lines of console output announced after a command.
     */
-   @DefaultStringValue("Maximum number of console lines to announce")
+   @DefaultStringValue("@dMaximum number of console lines to announce")
    String screenreaderConsoleAnnounceLimitTitle();
-   @DefaultStringValue("Maximum number of lines of console output announced after a command.")
+   @DefaultStringValue("@dMaximum number of lines of console output announced after a command.")
    String screenreaderConsoleAnnounceLimitDescription();
 
    /**
     * List of path components; file monitor will ignore paths containing one or more of these components.
     */
-   @DefaultStringValue("List of path components ignored by file monitor")
+   @DefaultStringValue("@dList of path components ignored by file monitor")
    String fileMonitorIgnoredComponentsTitle();
-   @DefaultStringValue("List of path components; file monitor will ignore paths containing one or more of these components.")
+   @DefaultStringValue("@dList of path components; file monitor will ignore paths containing one or more of these components.")
    String fileMonitorIgnoredComponentsDescription();
 
    /**
     * Whether to install R package dependencies one at a time.
     */
-   @DefaultStringValue("Install R package dependencies one at a time")
+   @DefaultStringValue("@dInstall R package dependencies one at a time")
    String installPkgDepsIndividuallyTitle();
-   @DefaultStringValue("Whether to install R package dependencies one at a time.")
+   @DefaultStringValue("@dWhether to install R package dependencies one at a time.")
    String installPkgDepsIndividuallyDescription();
 
    /**
     * R graphics backend.
     */
-   @DefaultStringValue("R graphics backend")
+   @DefaultStringValue("@dR graphics backend")
    String graphicsBackendTitle();
-   @DefaultStringValue("R graphics backend.")
+   @DefaultStringValue("@dR graphics backend.")
    String graphicsBackendDescription();
 
    /**
     * Type of anti-aliasing to be used for generated R plots.
     */
-   @DefaultStringValue("R graphics antialiasing method")
+   @DefaultStringValue("@dR graphics antialiasing method")
    String graphicsAntialiasingTitle();
-   @DefaultStringValue("Type of anti-aliasing to be used for generated R plots.")
+   @DefaultStringValue("@dType of anti-aliasing to be used for generated R plots.")
    String graphicsAntialiasingDescription();
 
    /**
     * List of fixed-width fonts to check for browser support.
     */
-   @DefaultStringValue("Fixed-width font list for RStudio Server")
+   @DefaultStringValue("@dFixed-width font list for RStudio Server")
    String browserFixedWidthFontsTitle();
-   @DefaultStringValue("List of fixed-width fonts to check for browser support.")
+   @DefaultStringValue("@dList of fixed-width fonts to check for browser support.")
    String browserFixedWidthFontsDescription();
 
    /**
     * The Python type.
     */
-   @DefaultStringValue("")
+   @DefaultStringValue("@d")
    String pythonTypeTitle();
-   @DefaultStringValue("The Python type.")
+   @DefaultStringValue("@dThe Python type.")
    String pythonTypeDescription();
 
    /**
     * The Python version.
     */
-   @DefaultStringValue("")
+   @DefaultStringValue("@d")
    String pythonVersionTitle();
-   @DefaultStringValue("The Python version.")
+   @DefaultStringValue("@dThe Python version.")
    String pythonVersionDescription();
 
    /**
     * The path to the default Python interpreter.
     */
-   @DefaultStringValue("")
+   @DefaultStringValue("@d")
    String pythonPathTitle();
-   @DefaultStringValue("The path to the default Python interpreter.")
+   @DefaultStringValue("@dThe path to the default Python interpreter.")
    String pythonPathDescription();
 
    /**
     * The maximum amount of seconds of retry for save operations.
     */
-   @DefaultStringValue("Save Retry Timeout")
+   @DefaultStringValue("@dSave Retry Timeout")
    String saveRetryTimeoutTitle();
-   @DefaultStringValue("The maximum amount of seconds of retry for save operations.")
+   @DefaultStringValue("@dThe maximum amount of seconds of retry for save operations.")
    String saveRetryTimeoutDescription();
 
    /**
     * Whether the Insert Pipe Operator command should insert the native R pipe operator, |>
     */
-   @DefaultStringValue("Use R's native pipe operator, |>")
+   @DefaultStringValue("@dUse R's native pipe operator, |>")
    String insertNativePipeOperatorTitle();
-   @DefaultStringValue("Whether the Insert Pipe Operator command should insert the native R pipe operator, |>")
+   @DefaultStringValue("@dWhether the Insert Pipe Operator command should insert the native R pipe operator, |>")
    String insertNativePipeOperatorDescription();
 
    /**
     * Whether to keep track of recently used commands in the Command Palette
     */
-   @DefaultStringValue("Remember recently used items in Command Palette")
+   @DefaultStringValue("@dRemember recently used items in Command Palette")
    String commandPaletteMruTitle();
-   @DefaultStringValue("Whether to keep track of recently used commands in the Command Palette")
+   @DefaultStringValue("@dWhether to keep track of recently used commands in the Command Palette")
    String commandPaletteMruDescription();
 
    /**
     * Whether to compute and show memory usage in the Environment Pane
     */
-   @DefaultStringValue("Show memory usage in Environment Pane")
+   @DefaultStringValue("@dShow memory usage in Environment Pane")
    String showMemoryUsageTitle();
-   @DefaultStringValue("Whether to compute and show memory usage in the Environment Pane")
+   @DefaultStringValue("@dWhether to compute and show memory usage in the Environment Pane")
    String showMemoryUsageDescription();
 
    /**
     * How many seconds to wait between automatic requeries of memory statistics (0 to disable)
     */
-   @DefaultStringValue("Interval for requerying memory stats (seconds)")
+   @DefaultStringValue("@dInterval for requerying memory stats (seconds)")
    String memoryQueryIntervalSecondsTitle();
-   @DefaultStringValue("How many seconds to wait between automatic requeries of memory statistics (0 to disable)")
+   @DefaultStringValue("@dHow many seconds to wait between automatic requeries of memory statistics (0 to disable)")
    String memoryQueryIntervalSecondsDescription();
+
+
 
 }

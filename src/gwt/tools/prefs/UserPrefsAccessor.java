@@ -30,6 +30,9 @@ import org.rstudio.core.client.JsArrayUtil;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.core.client.GWT;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessorConstants;
+
 
 /**
  * Accessor class for user preferences.
@@ -59,4 +62,6 @@ public class UserPrefsAccessor extends Prefs
    public static final int LAYER_SYSTEM   = 2;
    public static final int LAYER_USER     = 3;
    public static final int LAYER_PROJECT  = 4;
+
+   private UserPrefsAccessorConstants _constants = GWT.create(UserPrefsAccessorConstants.class);
 }
