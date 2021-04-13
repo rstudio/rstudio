@@ -108,7 +108,7 @@ assign(".rs.activeConnections",
    header <- if (is.null(package)) {
       "An error occurred while updating the RStudio Connections pane:"
    } else {
-      fmt <- "An error occurred while '%s' attempted to update the RStudio Connections pane:"
+      fmt <- "An error occurred while the '%s' package was updating the RStudio Connections pane:"
       sprintf(fmt, package)
    } 
    
