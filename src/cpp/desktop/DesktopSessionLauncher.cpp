@@ -516,7 +516,7 @@ Error SessionLauncher::launchSession(const QStringList& argList,
 #ifdef __APPLE__
    
    // we need indirection through arch to handle arm64
-   if (sessionPath_.getFilename() == "rsession-arm64")
+   if (false && sessionPath_.getFilename() == "rsession-arm64")
    {
       QStringList archArgList;
       archArgList.append(QStringLiteral("-arm64"));
