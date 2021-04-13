@@ -31,4 +31,12 @@ public class PendingFileUpload extends JavaScriptObject
    public final native JsArray<FileSystemItem> getOverwrites() /*-{
       return this.overwrites;
    }-*/;
+
+   public final native Boolean getUnzipFound() /*-{
+      return this.unzipFound;
+   }-*/;
+
+   public final native Boolean getIsZip() /*-{
+      return this.isZip;
+   }-*/;
 }

@@ -67,22 +67,27 @@ public class FilesUpload
          new OperationWithInput<PendingFileUpload>() {
             public void execute(PendingFileUpload pendingUpload)
             {
-               // confirm overwrites if necessary
+               Boolean unzipFound = pendingUpload.getUnzipFound();
+               Boolean isZip = pendingUpload.getIsZip();
                FileUploadToken token = pendingUpload.getToken();
-               if (pendingUpload.getOverwrites().length() > 0)
+
+               // confirm unzip is installed
+               if (unzipFound == Boolean.FALSE && isZip == Boolean.TRUE)
                {
+                  // Warn user unzip is not installed
                   globalDisplay_.showYesNoMessage(
-                       MessageDialog.WARNING, 
-                       "Confirm Overwrite",
-                       confirmFileUploadOverwriteMessage(pendingUpload), 
-                       false, 
-                       completeFileUploadOperation(token, true), 
-                       completeFileUploadOperation(token, false), 
-                       false);
+                          MessageDialog.WARNING,
+                          "Unzip not found on PATH",
+                          "Unzip was not found on users PATH. Would you like to upload the zip archive without unzipping?",
+                          false,
+                          checkForFileUploadOverwrite(pendingUpload, token),
+                          () -> {},
+                          true
+                          );
                }
-               else
-               {
-                  completeFileUploadOperation(token, true).execute();
+               else {
+                  // Upload and warn of overwrites, if any
+                  checkForFileUploadOverwrite(pendingUpload, token).execute();
                }
             }                     
         },
@@ -152,6 +157,33 @@ public class FilesUpload
                   eventBus_.fireEvent(event);
                }
             });
+         }
+      };
+   }
+
+   private Operation checkForFileUploadOverwrite(
+           PendingFileUpload pendingUpload,
+           FileUploadToken token
+   )
+   {
+      return new Operation() {
+         @Override
+         public void execute() {
+            if (pendingUpload.getOverwrites().length() > 0)
+            {
+               globalDisplay_.showYesNoMessage(
+                       MessageDialog.WARNING,
+                       "Confirm Overwrite",
+                       confirmFileUploadOverwriteMessage(pendingUpload),
+                       false,
+                       completeFileUploadOperation(token, true),
+                       completeFileUploadOperation(token, false),
+                       false);
+            }
+            else
+            {
+               completeFileUploadOperation(token, true).execute();
+            }
          }
       };
    }

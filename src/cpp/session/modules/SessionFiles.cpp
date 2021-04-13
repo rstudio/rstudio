@@ -544,6 +544,8 @@ void handleFilesRequest(const http::Request& request,
 const char * const kUploadFilename = "filename";
 const char * const kUploadedTempFile = "uploadedTempFile";
 const char * const kUploadTargetDirectory = "targetDirectory";
+const char * const kIsZip = "isZip";
+const char * const kUnzipFound = "unzipFound";
 
 Error writeTmpData(const FilePath& tmpFile,
                    const char* buffer,
@@ -583,10 +585,12 @@ Error completeUpload(const core::json::JsonRpcRequest& request,
    
    // parse fields out of token object
    std::string filename, uploadedTempFile, targetDirectory;
+   bool unzipFound;
    error = json::readObject(token, 
                             kUploadFilename, filename,
                             kUploadedTempFile, uploadedTempFile,
-                            kUploadTargetDirectory, targetDirectory);
+                            kUploadTargetDirectory, targetDirectory,
+                            kUnzipFound, unzipFound);
    if (error)
       return error;
    
@@ -598,7 +602,7 @@ Error completeUpload(const core::json::JsonRpcRequest& request,
    {
       FilePath targetDirectoryPath(targetDirectory);
 
-      if (boost::ends_with(filename, "zip"))
+      if (boost::ends_with(filename, "zip") && unzipFound)
       {
          // expand the archive
          r::exec::RFunction unzip("unzip");
@@ -660,41 +664,68 @@ Error completeUpload(const core::json::JsonRpcRequest& request,
    
 Error detectZipFileOverwrites(const FilePath& uploadedZipFile,
                               const FilePath& destDir,
-                              json::Array* pOverwritesJson)
+                              const std::string& originalFilename,
+                              json::Array* pOverwritesJson,
+                              bool& rUnzipfound)
 {
-   // query for all of the paths in the zip file
-   core::system::ProcessResult result;
-   Error error = core::system::runCommand("unzip -Z1 " + uploadedZipFile.getAbsolutePath(),
-                                          core::system::ProcessOptions(),
-                                          &result);
-   if (error)
-      return error;
+   // unable to use R's unzip here in worker thread, using system's unzip instead
+   // try a couple locations for unzip, in case it's not on user's PATH
+   std::vector<std::string> pathsToTry({
+                                       "unzip",
+                                       "/usr/bin/unzip"});
+   for (auto &path : pathsToTry) {
+      core::system::ProcessResult result;
+      Error error = core::system::runCommand(path + " -Z1 " + uploadedZipFile.getAbsolutePath(),
+                                             core::system::ProcessOptions(),
+                                             &result);
 
-   if (result.exitStatus == 0)
-   {
-      std::vector<std::string> zipFileListing;
-      boost::split(zipFileListing, result.stdOut, boost::is_any_of("\n"));
+      if (error)
+         return error;
 
-      // check for overwrites
-      for (std::vector<std::string>::const_iterator
-           it = zipFileListing.begin();
-           it != zipFileListing.end();
-           ++it)
+      // If any of the paths were valid, check for overwrites and return
+      if (result.exitStatus == 0)
       {
-         // don't count empty lines
-         if ((*it).empty()) continue;
+         rUnzipfound = true;
 
-         FilePath filePath = destDir.completePath(*it);
-         if (filePath.exists())
-            pOverwritesJson->push_back(module_context::createFileSystemItem(filePath));
+         std::vector<std::string> zipFileListing;
+         boost::split(zipFileListing, result.stdOut, boost::is_any_of("\n"));
+
+         // check for overwrites
+         for (std::vector<std::string>::const_iterator
+              it = zipFileListing.begin();
+              it != zipFileListing.end();
+              ++it)
+         {
+            // don't count empty lines
+            if ((*it).empty()) continue;
+
+            FilePath filePath = destDir.completePath(*it);
+            if (filePath.exists())
+               pOverwritesJson->push_back(module_context::createFileSystemItem(filePath));
+         }
+
+         return Success();
+      }
+      else if (result.exitStatus == 127)
+      {
+         // bash return code 127 - "command not found"
+         // try another unzip location
+         continue;
+      }
+      else
+      {
+         return systemError(result.exitStatus,
+                            "Unexpected result for unzip command",
+                            ERROR_LOCATION);
       }
    }
-   else
-   {
-      return systemError(result.exitStatus,
-                         "Unexpected result for unzip command",
-                         ERROR_LOCATION);
-   }
+
+   // If we get here, there were no serious errors, but unzip was not found
+   // Try uploading just the .zip file, without unzipping
+   rUnzipfound = false;
+   FilePath zipPath = destDir.completePath(originalFilename);
+   if (zipPath.exists())
+      pOverwritesJson->push_back(module_context::createFileSystemItem(zipPath));
    
    return Success();
 }
@@ -1050,9 +1081,10 @@ bool handleFileUploadRequestAsync(const http::Request& request,
    FilePath destPath = destDir.completeChildPath(pUploadState->fileName);
 
    json::Array overwritesJson;
+   bool unzipFound = false;
    if (isZip)
    {
-      Error error = detectZipFileOverwrites(pUploadState->tmpFile, destDir, &overwritesJson);
+      Error error = detectZipFileOverwrites(pUploadState->tmpFile, destDir, pUploadState->fileName, &overwritesJson, unzipFound);
       if (error)
       {
          writeError(error);
@@ -1070,10 +1102,13 @@ bool handleFileUploadRequestAsync(const http::Request& request,
    uploadTokenJson[kUploadFilename] = pUploadState->fileName;
    uploadTokenJson[kUploadedTempFile] = pUploadState->tmpFile.getAbsolutePath();
    uploadTokenJson[kUploadTargetDirectory] = destDir.getAbsolutePath();
+   uploadTokenJson[kUnzipFound] = unzipFound; // Include here to be used by completeUpload()
 
    json::Object uploadJson;
    uploadJson["token"] = uploadTokenJson;
    uploadJson["overwrites"] = overwritesJson;
+   uploadJson[kUnzipFound] = unzipFound; // Include here to be used by GWT
+   uploadJson[kIsZip] = isZip;
    json::setJsonRpcResult(uploadJson, &response);
 
    // response content type must always be text/html to be handled
