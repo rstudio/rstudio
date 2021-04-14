@@ -516,11 +516,31 @@ Error SessionLauncher::launchSession(const QStringList& argList,
 #ifdef __APPLE__
    
    // we need indirection through arch to handle arm64
-   if (false && sessionPath_.getFilename() == "rsession-arm64")
+   if (sessionPath_.getFilename() == "rsession-arm64")
    {
       QStringList archArgList;
+
+      // run rsession-arm64 with arm64 context
       archArgList.append(QStringLiteral("-arm64"));
+
+      // on macOS with the hardened runtime, we can no longer rely on dyld
+      // to lazy-load symbols from libR.dylib; to resolve this, we use
+      // DYLD_INSERT_LIBRARIES to inject the library we wish to use on
+      // launch 
+      FilePath rHome = FilePath(core::system::getenv("R_HOME"));
+      FilePath rLib = rHome.completeChildPath("lib/libR.dylib");
+      if (rLib.exists())
+      {
+         std::string dyldInsertLibraries("DYLD_INSERT_LIBRARIES=");
+         dyldInsertLibraries.append(rLib.getAbsolutePath());
+         archArgList.append(QStringLiteral("-e"));
+         archArgList.append(QString::fromStdString(dyldInsertLibraries));
+      }
+
+      // add rsession-arm64 path
       archArgList.append(QString::fromStdString(sessionPath_.getAbsolutePath()));
+      
+      // forward remaining arguments
       archArgList.append(argList);
       
       return parent_process_monitor::wrapFork(

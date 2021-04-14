@@ -27,7 +27,7 @@ FILES="$3"
 cd "$DIR"
 for FILE in ${FILES}; do
 
-   install_name_tool -id "${FILE}" "${FILE}" &> /dev/null
+   install_name_tool -id "${FILE}" "${FILE}"
 
    LIBPATHS=$( \
       otool -L "${FILE}" | \
@@ -40,7 +40,7 @@ for FILE in ${FILES}; do
    for LIBPATH in ${LIBPATHS}; do
       OLD="${LIBPATH}"
       NEW="${PREFIX}/$(basename "${OLD}")"
-      install_name_tool -change "${OLD}" "${NEW}" "${FILE}" &> /dev/null
+      install_name_tool -change "${OLD}" "${NEW}" "${FILE}"
    done
 
 done
