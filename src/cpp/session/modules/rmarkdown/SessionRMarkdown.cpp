@@ -75,6 +75,8 @@ namespace session {
 
 namespace {
 
+bool s_lastWebsiteProject;
+
 #ifdef _WIN32
 
 // TODO: promote to StringUtils?
@@ -1636,11 +1638,19 @@ namespace module_context {
 
 bool isWebsiteProject()
 {
-   if (!modules::rmarkdown::rmarkdownPackageAvailable())
-      return false;
+   if (!r::exec::isMainThread())
+      return s_lastWebsiteProject;
 
-   return (projects::projectContext().config().buildType ==
-           r_util::kBuildTypeWebsite);
+   if (!modules::rmarkdown::rmarkdownPackageAvailable())
+   {
+      s_lastWebsiteProject = false;
+      return false;
+   }
+
+   bool res = (projects::projectContext().config().buildType ==
+               r_util::kBuildTypeWebsite);
+   s_lastWebsiteProject = res;
+   return res;
 }
 
 // used to determine if this is both a website build target AND a bookdown target
