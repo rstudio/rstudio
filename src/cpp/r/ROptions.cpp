@@ -78,6 +78,11 @@ int getBuildOptionWidth()
 
 SEXP getOption(const std::string& name)
 {
+   if (!r::exec::isMainThread())
+   {
+      LOG_ERROR_MESSAGE("R.getOption: " + name + " made from non-main thread");
+      return R_NilValue;
+   }
    return Rf_GetOption(Rf_install(name.c_str()), R_BaseEnv);
 }
 

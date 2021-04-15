@@ -47,6 +47,8 @@ namespace exec {
 // safe (no r error longjump) execution of abritrary nullary function
 core::Error executeSafely(boost::function<void()> function);
 
+typedef boost::function<bool()> MainThreadFunction;
+
 // helper class for variation of executeSafely w/ return value (impl below)
 template <typename T>
 class ExecuteTargetWithReturn 
@@ -300,7 +302,9 @@ bool interruptsPending();
 void setInterruptsPending(bool pending);
 void checkUserInterrupt();
 
-   
+bool isMainThread();
+void initMainThread(MainThreadFunction f);
+
 class IgnoreInterruptsScope : boost::noncopyable
 {
 public:
