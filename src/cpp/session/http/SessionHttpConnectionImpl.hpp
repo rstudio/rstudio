@@ -61,7 +61,8 @@ public:
    HttpConnectionImpl(boost::asio::io_service& ioService,
                       const HeadersParsedHandler& headersParsed,
                       const Handler& handler)
-      : socket_(ioService), headersParsedHandler_(headersParsed), handler_(handler)
+      : socket_(ioService), headersParsedHandler_(headersParsed), handler_(handler),
+        receivedTime_(boost::posix_time::microsec_clock::universal_time())
    {
    }
 
@@ -186,10 +187,15 @@ public:
       requestParser_.setFormHandler(formHandler);
    }
 
-   virtual bool isAsyncRpc() const {
+   virtual bool isAsyncRpc() const
+   {
       return false;
    }
 
+   virtual boost::posix_time::ptime receivedTime() const
+   {
+      return receivedTime_;
+   }
 
 private:
 
@@ -312,6 +318,7 @@ private:
    std::string requestId_;
    HeadersParsedHandler headersParsedHandler_;
    Handler handler_;
+   boost::posix_time::ptime receivedTime_;
 };
 
 } // namespace session

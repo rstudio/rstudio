@@ -80,6 +80,11 @@ public:
       return true;
    }
 
+   virtual boost::posix_time::ptime receivedTime() const
+   {
+      return ptrConnection_->receivedTime();
+   }
+
    core::json::JsonRpcRequest jsonRpcRequest() const {
       return jsonRequest_;
    }
