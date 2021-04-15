@@ -40,6 +40,8 @@ void setRpcDelay(int delayMs);
 
 core::Error initialize();
 
+bool isOfflineableRequest(boost::shared_ptr<HttpConnection> ptrConnection);
+
 void sendJsonAsyncPendingResponse(const core::json::JsonRpcRequest &request,
                                   boost::shared_ptr<HttpConnection> ptrConnection,
                                   std::string &asyncHandle);

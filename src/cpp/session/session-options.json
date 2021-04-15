@@ -346,6 +346,27 @@
             "memberName": "suspendOnIncompleteStatement_",
             "defaultValue": false,
             "description": "Specifies whether the session should be allowed to suspend when a user has entered a partial R statement."
+         },
+         {
+            "name": {"constant": "kSessionAsyncRpcEnabled", "value": "session-async-rpc-enabled"},
+            "type": "bool",
+            "memberName": "asyncRpcEnabled_",
+            "defaultValue": false,
+            "description": "Enables async responses to rpc requests to prevent connection logjams in the browser, allowing interrupt of busy sessions"
+         },
+         {
+            "name": {"constant": "kSessionAsyncRpcTimeoutMs", "value": "session-async-rpc-timeout-ms"},
+            "type": "int",
+            "memberName": "asyncRpcTimeoutMs_",
+            "defaultValue": 1000,
+            "description": "Duration in millis before requests are converted to async - i.e. how fast will the server free up connections when it's busy"
+         },
+         {
+            "name": {"constant": "kSessionHandleOfflineTimeoutMs", "value": "session-handle-offline-timeout-ms"},
+            "type": "int",
+            "memberName": "handleOfflineTimeoutMs_",
+            "defaultValue": 2000,
+            "description": "Duration in millis before requests that can be handled offline are processed by the offline handler thread."
          }
       ],
       "allow": [

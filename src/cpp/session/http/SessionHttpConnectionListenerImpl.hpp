@@ -48,6 +48,7 @@
 #include "SessionHttpConnectionImpl.hpp"
 #include "../SessionUriHandlers.hpp"
 #include "../SessionHttpMethods.hpp"
+#include "../SessionRpc.hpp"
 
 
 namespace rstudio {
@@ -172,6 +173,11 @@ public:
    virtual HttpConnectionQueue& eventsConnectionQueue()
    {
       return eventsConnectionQueue_;
+   }
+
+   virtual bool eventsActive()
+   {
+      return eventsActive_;
    }
 
 protected:
@@ -334,10 +340,41 @@ private:
          {
             eventsActive_ = false;
          }
-         if (options().asyncRpcEnabled() && 
+         if (options().handleOfflineEnabled() && options().handleOfflineTimeoutMs() == 0 &&
+             rpc::isOfflineableRequest(ptrHttpConnection))
+         {
+            // TODO: handleOffline - should these be put into a separate queue and run in a dedicated thread?
+            if (http_methods::connectionDebugEnabled())
+            {
+               boost::posix_time::ptime now = boost::posix_time::microsec_clock::universal_time();
+               boost::posix_time::time_duration beforeTime(now - ptrConnection->receivedTime());
+               LOG_DEBUG_MESSAGE("- Handle immediate:  " + ptrConnection->request().uri() +
+                                 " after: " + std::to_string(beforeTime.seconds()) +
+                                 "." + std::to_string(beforeTime.fractional_seconds()).substr(0,2));
+               http_methods::handleConnection(ptrConnection, http_methods::ForegroundConnection);
+               boost::posix_time::time_duration afterTime(
+                                 boost::posix_time::microsec_clock::universal_time() - now);
+               LOG_DEBUG_MESSAGE("--- complete:        " + ptrConnection->request().uri() +
+                                 " in: " + std::to_string(afterTime.seconds()) +
+                                 "." + std::to_string(afterTime.fractional_seconds()).substr(0,2));
+            }
+            else
+               http_methods::handleConnection(ptrConnection, http_methods::ForegroundConnection);
+            return;
+         }
+         if (options().asyncRpcEnabled() &&
+             options().asyncRpcTimeoutMs() == 0 &&
              http_methods::isAsyncJsonRpcRequest(ptrHttpConnection) && 
              eventsActive_)
          {
+            if (http_methods::connectionDebugEnabled())
+            {
+               boost::posix_time::ptime now = boost::posix_time::microsec_clock::universal_time();
+               boost::posix_time::time_duration beforeTime(now - ptrConnection->receivedTime());
+               LOG_DEBUG_MESSAGE("Async imm reply:     " + ptrConnection->request().uri() +
+                                 " after: " + std::to_string(beforeTime.seconds()) +
+                                 "." + std::to_string(beforeTime.fractional_seconds()).substr(0,2));
+            }
             boost::shared_ptr<HttpConnection> asyncConnection = http_methods::handleAsyncRpc(ptrHttpConnection);
             if (asyncConnection)
                mainConnectionQueue_.enqueConnection(asyncConnection);

@@ -56,6 +56,7 @@ core::WaitResult startHttpConnectionListenerWithTimeout();
 void registerGwtHandlers();
 std::string clientVersion();
 std::string nextSessionUrl();
+bool connectionDebugEnabled();
 
 } // namespace http_methods
 } // namespace session

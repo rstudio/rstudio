@@ -40,6 +40,8 @@ namespace {
 // a delay used when processing RPC methods (used to simulate network latency)
 int s_rpcDelayMs = -1;
 
+std::set<std::string> s_offlineableUris;
+
 // json rpc methods
 core::json::JsonRpcAsyncMethods* s_pJsonRpcMethods = nullptr;
    
@@ -360,6 +362,14 @@ void setRpcDelay(int delayMs)
    s_rpcDelayMs = delayMs;
 }
 
+bool isOfflineableRequest(boost::shared_ptr<HttpConnection> ptrConnection)
+{
+   // Only specific requests that do not use the R runtime are offlineable (e.g. save_document)
+   if (s_offlineableUris.find(ptrConnection->request().uri()) == s_offlineableUris.end())
+      return false;
+   return true;
+}
+
 Error initialize()
 {
    // intentionally allocate methods on the heap and let them leak
@@ -370,6 +380,15 @@ Error initialize()
    s_pJsonRpcMethods = new core::json::JsonRpcAsyncMethods;
 
    RS_REGISTER_CALL_METHOD(rs_invokeRpc);
+
+   // TODO: asyncRpc - add option to registerRpcMethod?
+   s_offlineableUris.insert("/rpc/save_document");
+   s_offlineableUris.insert("/rpc/save_document_diff");
+   s_offlineableUris.insert("/rpc/open_document");
+   s_offlineableUris.insert("/rpc/set_client_state");
+   s_offlineableUris.insert("/rpc/list_files");
+   s_offlineableUris.insert("/rpc/modify_document_properties");
+   s_offlineableUris.insert("/rpc/check_for_external_edit");
 
    return Success();
 }

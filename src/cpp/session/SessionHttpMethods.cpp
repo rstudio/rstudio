@@ -77,6 +77,8 @@ std::vector<std::string> s_waitForMethodNames;
 // url for next session
 std::string s_nextSessionUrl;
 
+bool s_connectionDebugEnabled = true;
+
 boost::posix_time::ptime timeoutTimeFromNow()
 {
    int timeoutMinutes = options().timeoutMinutes();
@@ -93,6 +95,11 @@ boost::posix_time::ptime timeoutTimeFromNow()
 
 void processEvents()
 {
+   if (!r::exec::isMainThread())
+   {
+      LOG_ERROR_MESSAGE("processEvents() called from non-main thread");
+      return;
+   }
     // execute safely since this can call arbitrary R code (and
     // (can also cause jump_to_top if an interrupt is pending)
     Error error = rstudio::r::exec::executeSafely(
@@ -268,6 +275,12 @@ void polledEventHandler()
       return;
    }
 
+   if (!r::exec::isMainThread())
+   {
+      LOG_ERROR_MESSAGE("polledEventHandler called from thread other than main");
+      return;
+   }
+
    // static lastPerformed value used for throttling
    using namespace boost::posix_time;
    static ptime s_lastPerformed;
@@ -322,6 +335,14 @@ void polledEventHandler()
          }
          else
          {
+            if (s_connectionDebugEnabled)
+            {
+               boost::posix_time::time_duration duration(
+                       boost::posix_time::microsec_clock::universal_time() - ptrConnection->receivedTime());
+               LOG_DEBUG_MESSAGE("Handle background: " + ptrConnection->request().uri() +
+                                 " after: " + std::to_string(duration.seconds()) +
+                                 "." + std::to_string(duration.fractional_seconds()).substr(0,2));
+            }
             handleConnection(ptrConnection, http_methods::BackgroundConnection);
          }
       }
@@ -412,6 +433,11 @@ std::string clientVersion()
    return RSTUDIO_GIT_REVISION_HASH;
 }
 
+bool connectionDebugEnabled()
+{
+   return s_connectionDebugEnabled;
+}
+
 void waitForMethodInitFunction(const ClientEvent& initEvent)
 {
    module_context::enqueClientEvent(initEvent);
@@ -440,6 +466,11 @@ bool waitForMethod(const std::string& method,
    if (main_process::wasForked())
    {
       LOG_ERROR_MESSAGE("Waiting for method " + method + " after fork");
+      return false;
+   }
+   if (!r::exec::isMainThread())
+   {
+      LOG_ERROR_MESSAGE("waitForMethod: " + method + " called from thread other than main");
       return false;
    }
 
@@ -540,7 +571,21 @@ bool waitForMethod(const std::string& method,
          // another connection type, dispatch it
          else
          {
-            handleConnection(ptrConnection, ForegroundConnection);
+            if (s_connectionDebugEnabled)
+            {
+               boost::posix_time::ptime now = boost::posix_time::microsec_clock::universal_time();
+               boost::posix_time::time_duration beforeTime(now - ptrConnection->receivedTime());
+               LOG_DEBUG_MESSAGE("- Handle foreground: " + ptrConnection->request().uri() +
+                                 " after: " + std::to_string(beforeTime.seconds()) +
+                                 "." + std::to_string(beforeTime.fractional_seconds()).substr(0,2));
+               handleConnection(ptrConnection, ForegroundConnection);
+               boost::posix_time::time_duration afterTime(boost::posix_time::microsec_clock::universal_time() - now);
+               LOG_DEBUG_MESSAGE("--- complete:        " + ptrConnection->request().uri() +
+                                 " in: " + std::to_string(afterTime.seconds()) +
+                                 "." + std::to_string(afterTime.fractional_seconds()).substr(0,2));
+            }
+            else
+               handleConnection(ptrConnection, ForegroundConnection);
          }
 
          // since we got a connection we can reset the timeout time
