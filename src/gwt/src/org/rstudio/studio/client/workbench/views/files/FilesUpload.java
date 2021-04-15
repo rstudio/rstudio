@@ -67,9 +67,9 @@ public class FilesUpload
          new OperationWithInput<PendingFileUpload>() {
             public void execute(PendingFileUpload pendingUpload)
             {
-               Boolean unzipFound = pendingUpload.getUnzipFound();
-               Boolean isZip = pendingUpload.getIsZip();
                FileUploadToken token = pendingUpload.getToken();
+               Boolean unzipFound = token.getUnzipFound();
+               Boolean isZip = token.getIsZip();
 
                // confirm unzip is installed
                if (unzipFound == Boolean.FALSE && isZip == Boolean.TRUE)
@@ -77,15 +77,16 @@ public class FilesUpload
                   // Warn user unzip is not installed
                   globalDisplay_.showYesNoMessage(
                           MessageDialog.WARNING,
-                          "Unzip not found on PATH",
-                          "Unzip was not found on users PATH. Would you like to upload the zip archive without unzipping?",
+                          "unzip not found",
+                          "The unzip system utility could not be found. unzip is required for decompressing .zip archives after upload.\n\nWould you like to upload the zip archive without unzipping?",
                           false,
                           checkForFileUploadOverwrite(pendingUpload, token),
-                          () -> {},
+                          completeFileUploadOperation(token, false),
                           true
                           );
                }
-               else {
+               else
+               {
                   // Upload and warn of overwrites, if any
                   checkForFileUploadOverwrite(pendingUpload, token).execute();
                }

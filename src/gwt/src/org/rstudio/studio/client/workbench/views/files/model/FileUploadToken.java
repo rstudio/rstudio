@@ -21,4 +21,24 @@ public class FileUploadToken extends JavaScriptObject
    protected FileUploadToken()
    {
    }
+
+   public final native String getFilename() /*-{
+      return this.filename;
+   }-*/;
+
+   public final native String getUploadTempFile() /*-{
+      return this.uploadedTempFile;
+   }-*/;
+
+   public final native String geTargetDirectory() /*-{
+      return this.targetDirectory;
+   }-*/;
+
+   public final native Boolean getUnzipFound() /*-{
+      return this.unzipFound;
+   }-*/;
+
+   public final native Boolean getIsZip() /*-{
+      return this.isZip;
+   }-*/;
 }
