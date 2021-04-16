@@ -30,15 +30,15 @@ public class FileUploadToken extends JavaScriptObject
       return this.uploadedTempFile;
    }-*/;
 
-   public final native String geTargetDirectory() /*-{
+   public final native String getTargetDirectory() /*-{
       return this.targetDirectory;
    }-*/;
 
-   public final native Boolean getUnzipFound() /*-{
+   public final native boolean getUnzipFound() /*-{
       return this.unzipFound;
    }-*/;
 
-   public final native Boolean getIsZip() /*-{
+   public final native boolean getIsZip() /*-{
       return this.isZip;
    }-*/;
 }

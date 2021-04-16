@@ -68,11 +68,11 @@ public class FilesUpload
             public void execute(PendingFileUpload pendingUpload)
             {
                FileUploadToken token = pendingUpload.getToken();
-               Boolean unzipFound = token.getUnzipFound();
-               Boolean isZip = token.getIsZip();
+               boolean unzipFound = token.getUnzipFound();
+               boolean isZip = token.getIsZip();
 
                // confirm unzip is installed
-               if (unzipFound == Boolean.FALSE && isZip == Boolean.TRUE)
+               if (!unzipFound && isZip)
                {
                   // Warn user unzip is not installed
                   globalDisplay_.showYesNoMessage(
