@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gwt.core.client.GWT;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessorConstants;
 
 
 /**
@@ -445,7 +446,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether to automatically detect indentation settings from file contents.
+    * When enabled, the indentation for documents not part of an RStudio project will be automatically detected.
     */
    public PrefValue<Boolean> autoDetectIndentation()
    {
@@ -517,7 +518,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether continue comments (by inserting the comment character) after adding a new line.
+    * Whether to continue comments (by inserting the comment character) after adding a new line.  Press Shift + Enter to exit a comment.
     */
    public PrefValue<Boolean> continueCommentsOnNewline()
    {
@@ -529,7 +530,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether web links in comments are clickable.
+    * Hyperlinks in comments will be underlined and clickable
     */
    public PrefValue<Boolean> highlightWebLink()
    {
@@ -555,7 +556,13 @@ public class UserPrefsAccessor extends Prefs
             EDITOR_KEYBINDINGS_EMACS,
             EDITOR_KEYBINDINGS_SUBLIME
          },
-         "default");
+         "default",
+         new String[] {
+            _constants.editorKeybindingsEnum_default(),
+            _constants.editorKeybindingsEnum_vim(),
+            _constants.editorKeybindingsEnum_emacs(),
+            _constants.editorKeybindingsEnum_sublime()
+         });
    }
 
    public final static String EDITOR_KEYBINDINGS_DEFAULT = "default";
@@ -649,7 +656,12 @@ public class UserPrefsAccessor extends Prefs
             SURROUND_SELECTION_QUOTES,
             SURROUND_SELECTION_QUOTES_AND_BRACKETS
          },
-         "quotes_and_brackets");
+         "quotes_and_brackets",
+         new String[] {
+            _constants.surroundSelectionEnum_never(),
+            _constants.surroundSelectionEnum_quotes(),
+            _constants.surroundSelectionEnum_quotes_and_brackets()
+         });
    }
 
    public final static String SURROUND_SELECTION_NEVER = "never";
@@ -683,7 +695,13 @@ public class UserPrefsAccessor extends Prefs
             CODE_COMPLETION_TRIGGERED,
             CODE_COMPLETION_MANUAL
          },
-         "always");
+         "always",
+         new String[] {
+            _constants.codeCompletionEnum_always(),
+            _constants.codeCompletionEnum_never(),
+            _constants.codeCompletionEnum_triggered(),
+            _constants.codeCompletionEnum_manual()
+         });
    }
 
    public final static String CODE_COMPLETION_ALWAYS = "always";
@@ -705,7 +723,12 @@ public class UserPrefsAccessor extends Prefs
             CODE_COMPLETION_OTHER_TRIGGERED,
             CODE_COMPLETION_OTHER_MANUAL
          },
-         "always");
+         "always",
+         new String[] {
+            _constants.codeCompletionOtherEnum_always(),
+            _constants.codeCompletionOtherEnum_triggered(),
+            _constants.codeCompletionOtherEnum_manual()
+         });
    }
 
    public final static String CODE_COMPLETION_OTHER_ALWAYS = "always";
@@ -1025,7 +1048,11 @@ public class UserPrefsAccessor extends Prefs
             FOLD_STYLE_BEGIN_ONLY,
             FOLD_STYLE_BEGIN_AND_END
          },
-         "begin-and-end");
+         "begin-and-end",
+         new String[] {
+            _constants.foldStyleEnum_begin_only(),
+            _constants.foldStyleEnum_begin_and_end()
+         });
    }
 
    public final static String FOLD_STYLE_BEGIN_ONLY = "begin-only";
@@ -1822,7 +1849,12 @@ public class UserPrefsAccessor extends Prefs
             EXECUTION_BEHAVIOR_STATEMENT,
             EXECUTION_BEHAVIOR_PARAGRAPH
          },
-         "statement");
+         "statement",
+         new String[] {
+            _constants.executionBehaviorEnum_line(),
+            _constants.executionBehaviorEnum_statement(),
+            _constants.executionBehaviorEnum_paragraph()
+         });
    }
 
    public final static String EXECUTION_BEHAVIOR_LINE = "line";
@@ -2662,7 +2694,12 @@ public class UserPrefsAccessor extends Prefs
             AUTO_SAVE_ON_IDLE_BACKUP,
             AUTO_SAVE_ON_IDLE_NONE
          },
-         "backup");
+         "backup",
+         new String[] {
+            _constants.autoSaveOnIdleEnum_commit(),
+            _constants.autoSaveOnIdleEnum_backup(),
+            _constants.autoSaveOnIdleEnum_none()
+         });
    }
 
    public final static String AUTO_SAVE_ON_IDLE_COMMIT = "commit";

@@ -47,6 +47,7 @@ import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.common.DiagnosticsHelpLink;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.workbench.prefs.model.Prefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.snippets.ui.EditSnippetsDialog;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
@@ -78,41 +79,17 @@ public class EditingPreferencesPane extends PreferencesPane
       editingPanel.add(checkboxPref(prefs_.continueCommentsOnNewline()));
       editingPanel.add(checkboxPref(prefs_.highlightWebLink()));
 
-      delimiterSurroundWidget_ = new SelectWidget(
-            "Surround selection on text insertion:",
-            new String[] {
-                  "Never",
-                  "Quotes",
-                  "Quotes & Brackets"
-            },
-            new String[] {
-                  UserPrefs.SURROUND_SELECTION_NEVER,
-                  UserPrefs.SURROUND_SELECTION_QUOTES,
-                  UserPrefs.SURROUND_SELECTION_QUOTES_AND_BRACKETS
-            },
-            false,
-            true,
-            false);
+      delimiterSurroundWidget_ = new SelectWidget((Prefs.EnumValue) prefs_.surroundSelection(),
+         false,
+         true,
+         false);
       editingPanel.add(delimiterSurroundWidget_);
 
       HorizontalPanel keyboardPanel = new HorizontalPanel();
-      editorMode_ = new SelectWidget(
-            "Keybindings:",
-            new String[] {
-                  "Default",
-                  "Vim",
-                  "Emacs",
-                  "Sublime Text"
-            },
-            new String[] {
-                  UserPrefs.EDITOR_KEYBINDINGS_DEFAULT,
-                  UserPrefs.EDITOR_KEYBINDINGS_VIM,
-                  UserPrefs.EDITOR_KEYBINDINGS_EMACS,
-                  UserPrefs.EDITOR_KEYBINDINGS_SUBLIME,
-            },
-            false,
-            true,
-            false);
+      editorMode_ = new SelectWidget((Prefs.EnumValue) prefs_.editorKeybindings(),
+                                     false,
+                                     true,
+                                     false);
       editorMode_.getElement().getStyle().setMarginBottom(0, Unit.PX);
 
       keyboardPanel.add(editorMode_);
@@ -136,18 +113,11 @@ public class EditingPreferencesPane extends PreferencesPane
       executionLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
       editingPanel.add(checkboxPref(prefs_.focusConsoleAfterExec()));
 
-      executionBehavior_ = new SelectWidget(
-            "Ctrl+Enter executes: ",
-            new String[] {
-               "Current line",
-               "Multi-line R statement",
-               "Multiple consecutive R lines"
-            },
-            new String[] {
-               UserPrefs.EXECUTION_BEHAVIOR_LINE,
-               UserPrefs.EXECUTION_BEHAVIOR_STATEMENT,
-               UserPrefs.EXECUTION_BEHAVIOR_PARAGRAPH
-            },
+      // DEBUG: Before i18n, this had ctrl+enter hard coded into the description as a way of indicating to reader what
+      // this "execution" setting meant.  Current translation does not include that, but maybe we could map the
+      // translated shortcut value here as well (ctrl+enter doesn't HAVE to be the shortcut, although it is probably a
+      // good guess).  Alternative could be to add the text here or in the preference's title.
+      executionBehavior_ = new SelectWidget((Prefs.EnumValue) prefs_.executionBehavior(),
             false,
             true,
             false);
@@ -197,16 +167,7 @@ public class EditingPreferencesPane extends PreferencesPane
       displayPanel.add(extraSpaced(
          checkboxPref(prefs_.rainbowParentheses(), false /* defaultSpace */)));
 
-      foldMode_ = new SelectWidget(
-            "Fold Style:",
-            new String[] {
-                  "Start Only",
-                  "Start and End"
-            },
-            new String[] {
-                  UserPrefs.FOLD_STYLE_BEGIN_ONLY,
-                  UserPrefs.FOLD_STYLE_BEGIN_AND_END
-            },
+      foldMode_ = new SelectWidget((Prefs.EnumValue) prefs_.foldStyle(),
             false,
             true,
             false);
@@ -231,7 +192,7 @@ public class EditingPreferencesPane extends PreferencesPane
 
       encodingValue_ = prefs_.defaultEncoding().getGlobalValue();
       savePanel.add(lessSpaced(encoding_ = new TextBoxWithButton(
-            "Default text encoding:",
+            prefs_.defaultEncoding().getTitle(),
             "",
             "Change...",
             null,
@@ -275,24 +236,13 @@ public class EditingPreferencesPane extends PreferencesPane
       savePanel.add(spacedBefore(headerLabel("Auto-save")));
       savePanel.add(checkboxPref(prefs.saveBeforeSourcing()));
       savePanel.add(checkboxPref(prefs_.autoSaveOnBlur()));
-      autoSaveOnIdle_ = new SelectWidget(
-            "When editor is idle: ",
-            new String[] {
-               "Backup unsaved changes",
-               "Save and write changes",
-               "Do nothing"
-            },
-            new String[] {
-               UserPrefs.AUTO_SAVE_ON_IDLE_BACKUP,
-               UserPrefs.AUTO_SAVE_ON_IDLE_COMMIT,
-               UserPrefs.AUTO_SAVE_ON_IDLE_NONE
-            },
+      autoSaveOnIdle_ = new SelectWidget((Prefs.EnumValue) prefs_.autoSaveOnIdle(),
             false,
             true,
             false);
       savePanel.add(autoSaveOnIdle_);
       autoSaveIdleMs_ = new SelectWidget(
-            "Idle period: ",
+         prefs.autoSaveIdleMs().getTitle(),
             new String[] {
                "500ms",
                "1000ms",
@@ -322,18 +272,7 @@ public class EditingPreferencesPane extends PreferencesPane
 
       completionPanel.add(headerLabel("R and C/C++"));
 
-      showCompletions_ = new SelectWidget(
-            "Show code completions:",
-            new String[] {
-                  "Automatically",
-                  "When Triggered ($, ::)",
-                  "Manually (Tab)"
-            },
-            new String[] {
-                  UserPrefs.CODE_COMPLETION_ALWAYS,
-                  UserPrefs.CODE_COMPLETION_TRIGGERED,
-                  UserPrefs.CODE_COMPLETION_MANUAL
-            },
+      showCompletions_ = new SelectWidget((Prefs.EnumValue) prefs_.codeCompletion(),
             false,
             true,
             false);
@@ -378,16 +317,7 @@ public class EditingPreferencesPane extends PreferencesPane
       otherLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
       completionPanel.add(otherLabel);
 
-      showCompletionsOther_ = new SelectWidget(
-            "Show code completions:",
-            new String[] {
-                  "Automatically",
-                  "Manually (Ctrl+Space) "
-            },
-            new String[] {
-                  UserPrefs.CODE_COMPLETION_OTHER_ALWAYS,
-                  UserPrefs.CODE_COMPLETION_OTHER_MANUAL
-            },
+      showCompletionsOther_ = new SelectWidget((Prefs.EnumValue) prefs_.codeCompletionOther(),
             false,
             true,
             false);

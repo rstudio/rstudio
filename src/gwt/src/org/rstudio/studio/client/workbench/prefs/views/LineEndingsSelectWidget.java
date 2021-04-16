@@ -22,11 +22,12 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 public class LineEndingsSelectWidget extends SelectWidget
 {
+   // TODO: i18n
    public LineEndingsSelectWidget()
    {
       this(false);
    }
-   
+
    public LineEndingsSelectWidget(boolean includeDefault)
    {
       super("Line ending conversion:",

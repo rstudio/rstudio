@@ -207,11 +207,11 @@ public interface UserPrefsAccessorConstants extends Constants {
    String numSpacesForTabDescription();
 
    /**
-    * Whether to automatically detect indentation settings from file contents.
+    * When enabled, the indentation for documents not part of an RStudio project will be automatically detected.
     */
    @DefaultStringValue("@dAutodetect indentation in files")
    String autoDetectIndentationTitle();
-   @DefaultStringValue("@dWhether to automatically detect indentation settings from file contents.")
+   @DefaultStringValue("@dWhen enabled, the indentation for documents not part of an RStudio project will be automatically detected.")
    String autoDetectIndentationDescription();
 
    /**
@@ -255,19 +255,19 @@ public interface UserPrefsAccessorConstants extends Constants {
    String showIndentGuidesDescription();
 
    /**
-    * Whether continue comments (by inserting the comment character) after adding a new line.
+    * Whether to continue comments (by inserting the comment character) after adding a new line.  Press Shift + Enter to exit a comment.
     */
    @DefaultStringValue("@dContinue comments after adding new line")
    String continueCommentsOnNewlineTitle();
-   @DefaultStringValue("@dWhether continue comments (by inserting the comment character) after adding a new line.")
+   @DefaultStringValue("@dWhether to continue comments (by inserting the comment character) after adding a new line.  Press Shift + Enter to exit a comment.")
    String continueCommentsOnNewlineDescription();
 
    /**
-    * Whether web links in comments are clickable.
+    * Hyperlinks in comments will be underlined and clickable
     */
-   @DefaultStringValue("@d")
+   @DefaultStringValue("@dHyperlinks in comments will be underlined and clickable")
    String highlightWebLinkTitle();
-   @DefaultStringValue("@dWhether web links in comments are clickable.")
+   @DefaultStringValue("@dHyperlinks in comments will be underlined and clickable")
    String highlightWebLinkDescription();
 
    /**
@@ -277,6 +277,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String editorKeybindingsTitle();
    @DefaultStringValue("@dThe keybindings to use in the RStudio code editor.")
    String editorKeybindingsDescription();
+   @DefaultStringValue("@dDefault")
+   String editorKeybindingsEnum_default();
+   @DefaultStringValue("@dVim")
+   String editorKeybindingsEnum_vim();
+   @DefaultStringValue("@dEmacs")
+   String editorKeybindingsEnum_emacs();
+   @DefaultStringValue("@dSublime Text")
+   String editorKeybindingsEnum_sublime();
 
    /**
     * Whether to insert matching pairs, such as () and [], when the first is typed.
@@ -329,10 +337,16 @@ public interface UserPrefsAccessorConstants extends Constants {
    /**
     * Which kinds of delimiters can be used to surround the current selection.
     */
-   @DefaultStringValue("@dSurround selections with")
+   @DefaultStringValue("@dSurround selections with delimiter insertion")
    String surroundSelectionTitle();
    @DefaultStringValue("@dWhich kinds of delimiters can be used to surround the current selection.")
    String surroundSelectionDescription();
+   @DefaultStringValue("@dNever")
+   String surroundSelectionEnum_never();
+   @DefaultStringValue("@dQuotes")
+   String surroundSelectionEnum_quotes();
+   @DefaultStringValue("@dQuotes & Brackets")
+   String surroundSelectionEnum_quotes_and_brackets();
 
    /**
     * Whether to enable code snippets in the RStudio code editor.
@@ -349,6 +363,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String codeCompletionTitle();
    @DefaultStringValue("@dWhen to use auto-completion for R code in the RStudio code editor.")
    String codeCompletionDescription();
+   @DefaultStringValue("@dAutomatically")
+   String codeCompletionEnum_always();
+   @DefaultStringValue("@dNever")
+   String codeCompletionEnum_never();
+   @DefaultStringValue("@dWhen triggered ($, ::)")
+   String codeCompletionEnum_triggered();
+   @DefaultStringValue("@dManually (tab)")
+   String codeCompletionEnum_manual();
 
    /**
     * When to use auto-completion for other languages (such as JavaScript and SQL) in the RStudio code editor.
@@ -357,6 +379,12 @@ public interface UserPrefsAccessorConstants extends Constants {
    String codeCompletionOtherTitle();
    @DefaultStringValue("@dWhen to use auto-completion for other languages (such as JavaScript and SQL) in the RStudio code editor.")
    String codeCompletionOtherDescription();
+   @DefaultStringValue("@dAutomatically")
+   String codeCompletionOtherEnum_always();
+   @DefaultStringValue("@dWhen triggered")
+   String codeCompletionOtherEnum_triggered();
+   @DefaultStringValue("@dManually (ctrl+space)")
+   String codeCompletionOtherEnum_manual();
 
    /**
     * Whether to always use code completion in the R console.
@@ -565,6 +593,10 @@ public interface UserPrefsAccessorConstants extends Constants {
    String foldStyleTitle();
    @DefaultStringValue("@dThe style of folding to use.")
    String foldStyleDescription();
+   @DefaultStringValue("@dStart Only")
+   String foldStyleEnum_begin_only();
+   @DefaultStringValue("@dStart and End")
+   String foldStyleEnum_begin_and_end();
 
    /**
     * Whether to automatically save scripts before executing them.
@@ -1053,6 +1085,12 @@ public interface UserPrefsAccessorConstants extends Constants {
    String executionBehaviorTitle();
    @DefaultStringValue("@dThe unit of R code to execute when the Execute command is invoked.")
    String executionBehaviorDescription();
+   @DefaultStringValue("@dCurrent line")
+   String executionBehaviorEnum_line();
+   @DefaultStringValue("@dMulti-line R statement")
+   String executionBehaviorEnum_statement();
+   @DefaultStringValue("@dMultiple consecutive R lines")
+   String executionBehaviorEnum_paragraph();
 
    /**
     * Whether to show the Terminal tab.
@@ -1533,6 +1571,12 @@ public interface UserPrefsAccessorConstants extends Constants {
    String autoSaveOnIdleTitle();
    @DefaultStringValue("@dHow to deal with changes to documents on idle.")
    String autoSaveOnIdleDescription();
+   @DefaultStringValue("@dSave and write changes")
+   String autoSaveOnIdleEnum_commit();
+   @DefaultStringValue("@dBackup unsaved changes")
+   String autoSaveOnIdleEnum_backup();
+   @DefaultStringValue("@dDo nothing")
+   String autoSaveOnIdleEnum_none();
 
    /**
     * The idle period, in milliseconds, after which documents should be auto-saved.

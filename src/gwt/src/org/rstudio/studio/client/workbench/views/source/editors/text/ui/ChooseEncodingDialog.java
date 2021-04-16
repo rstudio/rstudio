@@ -32,6 +32,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 
 public class ChooseEncodingDialog extends ModalDialog<String>
 {
+   // TODO: i18n
    public ChooseEncodingDialog(JsArrayString commonEncodings,
                                JsArrayString allEncodings,
                                String currentEncoding,

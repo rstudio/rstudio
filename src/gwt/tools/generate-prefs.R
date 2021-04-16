@@ -195,8 +195,22 @@ generate <- function (schemaPath, className) {
          "   @DefaultStringValue(\"", prefixDefault, prefTitle, "\")\n",
          "   String ", camel, "Title", "();\n",
          "   @DefaultStringValue(\"", prefixDefault, def[["description"]], "\")\n",
-         "   String ", camel, "Description", "();\n",
-         "\n")
+         "   String ", camel, "Description", "();\n")
+
+      if (!is.null(def[["enumReadable"]]))
+      {
+         javaConstants <- paste0(javaConstants,
+                                 paste0(mapply(function (enumVal, enumReadable) {
+                                    paste0(
+                                       "   @DefaultStringValue(\"", prefixDefault, enumReadable, "\")\n",
+                                       "   String ", camel, "Enum_", gsub("[^A-Za-z0-9_]", "_", enumVal), "();"
+                                    )
+                                 }, def[["enum"]], def[["enumReadable"]]), collapse = "\n"
+                                 ), "\n"
+         )
+      }
+
+      javaConstants <- paste0(javaConstants, "\n")
 
       # Add title and description entries for the java properties file
       javaProperties <- paste0(javaProperties,
@@ -221,18 +235,26 @@ generate <- function (schemaPath, className) {
                        "         ", prefDescription, ", \n")
       if (!is.null(def[["enum"]]))
       {
-          java <- paste0(java, "         new String[] {\n",
-             paste(lapply(def[["enum"]], function(enumval) {
-                    toupper(paste0("            ",
-                                   pref, 
-                                   "_", 
-                                   gsub("[^A-Za-z0-9_]", "_", enumval)))
-                   }), collapse = ",\n"),
-             "\n         },\n")
+         java <- paste0(java, "         new String[] {\n",
+                        paste(lapply(def[["enum"]], function(enumval) {
+                           toupper(paste0("            ",
+                                          pref,
+                                          "_",
+                                          gsub("[^A-Za-z0-9_]", "_", enumval)))
+                        }), collapse = ",\n"),
+                        "\n         },\n")
       }
       java <- paste0(java, 
-                       "         ", defaultval, ");\n",
-                       "   }\n\n")
+                       "         ", defaultval)
+      if (!is.null(def[["enumReadable"]]))
+      {
+         java <- paste0(java, ",\n", "         new String[] {\n",
+                        paste(lapply(def[["enum"]], function(enumval) {
+                           paste0("            _constants.", camel, "Enum_", gsub("[^A-Za-z0-9_]", "_", enumval), "()")
+                        }), collapse = ",\n"),
+                        "\n         }")
+      }
+      java <- paste0(java, ");\n   }\n\n")
       synctype <- if (identical(preftype, "enumeration")) "String" else capitalize(preftype)
       javasync <- paste0(javasync,
          "      if (source.hasKey(\"", pref, "\"))\n",
