@@ -277,18 +277,25 @@ void ConsoleProcess::commonInit()
    // if we're using bash, then we'll use a custom rcfile to ensure our
    // hooks get run when the shell is launcehd
    if (getShellType() == TerminalShell::ShellType::PosixBash ||
-       getShellType() == TerminalShell::ShellType::GitBash)
+       getShellType() == TerminalShell::ShellType::GitBash ||
+       getShellType() == TerminalShell::ShellType::WSLBash)
    {
-      // we want to simulate a login shell, but without explicitly starting
-      // bash as a login shell. we do this so that we can control the rcfile
-      // sourced by bash on startup. to accomplish this, we run bash as an
-      // interactive non-login shell, but do the same startup initialization
-      // via our rcfile that a login shell would've performed
-      core::FilePath bashRcPath =
-            session::options().rResourcesPath().completeChildPath("terminal/bash/.bashrc");
+      // set the HOME directory for the new shell to our bundled bash utility
+      // folder, so that the shell reads those first
+      core::FilePath bashDotDir =
+            session::options().rResourcesPath().completeChildPath("terminal/bash");
       
-      options_.args.emplace_back("--rcfile");
-      options_.args.emplace_back(bashRcPath.getAbsolutePath());
+      // store the 'real' home so we can restore it after
+      core::system::setenv(
+               &*options_.environment,
+               "_REALHOME",
+               core::system::getenv("HOME"));
+      
+      // set HOME so our dotfiles can be sourced on startup
+      core::system::setenv(
+               &*options_.environment,
+               "HOME",
+               bashDotDir.getAbsolutePath());
    }
    
    // if we're using zsh, we want to set a custom ZDOTDIR so that we can

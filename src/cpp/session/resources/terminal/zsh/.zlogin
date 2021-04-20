@@ -9,6 +9,7 @@ if [ -f "${_ZDOTDIR-$HOME}/.zlogin" ]; then
 	fi
 
 	ZDOTDIR="${ZDOTDIR_SAVE}"
+	unset ZDOTDIR_SAVE
 fi
 
 # zsh normally constructs the HISTFILE location from
