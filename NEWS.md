@@ -82,6 +82,7 @@
 * Add support for commenting and uncommenting code in C (`.c` and `.h`) files (#4109, thanks to @cm421)
 * The R session binary (`rsession`) now has a `--version` option for reporting its version (Pro #2410)
 * RStudio Desktop startup diagnostics now include the RStudio version/platform and an option to copy to plain text (#6628, #9117)
+* Improved Spellcheck package to be compatible with all known Hunspell-compatible dictionaries, improved spellcheck initial loading and large file performance (#9161)
 
 ### Bugfixes
 

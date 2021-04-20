@@ -17,6 +17,7 @@
 
 package org.rstudio.studio.client.panmirror.ui;
 
+import elemental2.core.Function;
 import org.rstudio.studio.client.panmirror.spelling.PanmirrorWordRange;
 
 import elemental2.core.JsArray;
@@ -28,11 +29,11 @@ public class PanmirrorUISpelling {
    
    // realtime interface
    public GetBool realtimeEnabled;
-   public CheckWord checkWord;
+   public CheckWord checkWords;
    public SuggestionList suggestionList;
    
    // dictionary
-   public CheckWord isWordIgnored;
+   public ShouldCheckWord isWordIgnored;
    public DictionaryFunction ignoreWord;
    public DictionaryFunction unignoreWord;
    public DictionaryFunction addToDictionary;
@@ -46,17 +47,23 @@ public class PanmirrorUISpelling {
    {
       boolean get();
    }
-   
+
+   @JsFunction
+   public interface ShouldCheckWord
+   {
+      boolean check(String word);
+   }
+
    @JsFunction
    public interface CheckWord
    {
-      boolean check(String word);
+      String[] checkWords(String[] word);
    }
    
    @JsFunction
    public interface SuggestionList
    {
-      JsArray<String> suggest(String word);
+      void suggestionList(String word, Function callback);
    }
    
    @JsFunction

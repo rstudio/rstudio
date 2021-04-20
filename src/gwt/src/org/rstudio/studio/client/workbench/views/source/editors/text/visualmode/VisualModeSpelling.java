@@ -16,17 +16,24 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 
+import com.google.gwt.core.client.JsArrayString;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.spelling.model.SpellCheckerResult;
 import org.rstudio.studio.client.panmirror.spelling.PanmirrorAnchor;
 import org.rstudio.studio.client.panmirror.spelling.PanmirrorRect;
 import org.rstudio.studio.client.panmirror.spelling.PanmirrorSpellingDoc;
 import org.rstudio.studio.client.panmirror.spelling.PanmirrorWordRange;
 import org.rstudio.studio.client.panmirror.spelling.PanmirrorWordSource;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUISpelling;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier.CharClass;
@@ -189,40 +196,68 @@ public class VisualModeSpelling extends SpellingContext
       PanmirrorUISpelling uiSpelling = new PanmirrorUISpelling();
       
       uiSpelling.realtimeEnabled = () -> {
-         return typo().realtimeSpellcheckEnabled(); 
+         return spellChecker().realtimeSpellcheckEnabled();
       };
-      
-      uiSpelling.checkWord = (word) -> {
-         if (typo().shouldCheckWord(word))
-            return typo().checkSpelling(word);
-         else
-            return true;
+
+      uiSpelling.checkWords = (words) -> {
+         ArrayList<String> w = new ArrayList<>(Arrays.asList(words));
+
+         SpellCheckerResult cachedWords = spellChecker().getCachedWords(w);
+
+         // if we don't have a transaction and we don't have all the words cached at the moment
+         // send a request to the server
+         if ((cachedWords.getIncorrect().size() + cachedWords.getCorrect().size()) != w.size())
+         {
+            spellChecker().checkWords(w, new ServerRequestCallback<SpellCheckerResult>()
+            {
+               @Override
+               public void onResponseReceived(SpellCheckerResult response) {}
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+               }
+            });
+         }
+
+         return cachedWords.getIncorrect().toArray(new String[0]);
       };
-      
-      uiSpelling.suggestionList = (word) -> {
-        String[] suggestions = typo().suggestionList(word);
-        return new JsArray<>(suggestions);
+
+      uiSpelling.suggestionList = (word, callback) -> {
+         spellChecker().suggestionList(word, new ServerRequestCallback<JsArrayString>()
+         {
+            @Override
+            public void onResponseReceived(JsArrayString response)
+            {
+               callback.call(word, response);
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+               Debug.logError(error);
+            }
+         });
       };
       
       uiSpelling.isWordIgnored = (word) -> {
-        return typo().isIgnoredWord(word); 
+        return spellChecker().isIgnoredWord(word);
       };
       
       uiSpelling.ignoreWord = (word) -> {
-         typo().addIgnoredWord(word);
+         spellChecker().addIgnoredWord(word);
       };
       
       uiSpelling.unignoreWord = (word) -> {
-         typo().removeIgnoredWord(word);
+         spellChecker().removeIgnoredWord(word);
       };
       
       uiSpelling.addToDictionary = (word) -> {
-         typo().addToUserDictionary(word);
+         spellChecker().addToUserDictionary(word);
       };
       
       uiSpelling.breakWords = (String text) -> {
-      
-        
          JsArray<PanmirrorWordRange> words = new JsArray<>();
          
          int pos = 0;
@@ -241,13 +276,13 @@ public class VisualModeSpelling extends SpellingContext
             // set start of word
             int wordStart = pos++;
             
-            // consume until a non-word is encourted
+            // consume until a non-word is encountered
             while (pos < text.length() && classifier.classify(text.charAt(pos)) != CharClass.NonWord)
             {
                pos++;
             }
             
-            // back over boundary (e.g. apostrophie) characters
+            // back over boundary (e.g. apostrophe) characters
             while (classifier.classify(text.charAt(pos - 1)) == CharClass.Boundary)
             {
                pos--;
@@ -294,7 +329,7 @@ public class VisualModeSpelling extends SpellingContext
       if (userDictionary)
          eventBus_.fireEvent(new VisualModeSpellingAddToDictionaryEvent(word));
    }
-   
+
    private final DocDisplay docDisplay_;
    private final Context context_;
    private EventBus eventBus_;
