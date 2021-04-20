@@ -13,6 +13,9 @@
  *
  */
 
+#ifndef CORE_MARKDOWN_MATHJAX_HPP
+#define CORE_MARKDOWN_MATHJAX_HPP
+
 #include <string>
 #include <vector>
 #include <map>
@@ -84,7 +87,5 @@ bool requiresMathjax(const std::string& htmlOutput);
 } // namespace markdown
 } // namespace core
 } // namespace rstudio
-   
 
-
-
+#endif /* CORE_MARKDOWN_MATHJAX_HPP*/

@@ -13,6 +13,9 @@
  *
  */
 
+#ifndef SESSION_URI_HANDLERS_HPP
+#define SESSION_URI_HANDLERS_HPP
+
 #include <core/http/UriHandler.hpp>
 
 namespace rstudio {
@@ -24,3 +27,5 @@ core::http::UriHandlers& handlers();
 } // namespace uri_handlers
 } // namespace session
 } // namespace rstudio
+
+#endif /* SESSION_URI_HANDLERS_HPP */

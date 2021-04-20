@@ -125,4 +125,6 @@
 * Fixed issue where sending code from Python History pane would switch Console to R mode (#8693)
 * Fixed issue where Open File dialog would fail to open files whose names were explicitly typed (#4059)
 * Fixed issue causing Project Sharing to fail to set Access Control Lists when using NFS v4 and `username@domain` security principals (Pro #2415)
+* Fixed issue where dialog boxes [e.g. Git commit, Installing Pro Database drivers] could fail to show output with Limit Console Output turned on (Pro #2284)
 * Fixed issue preventing Kubernetes sessions from starting due to incorrect SSL certificate checking on websocket connections; make websocket connections support the `verify-ssl-certs` option (Pro #2463)
+* Fixed issue where uploading a .zip archive when unzip was not on PATH would cause a cryptic error. (#9151)

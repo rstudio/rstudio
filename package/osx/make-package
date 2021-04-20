@@ -51,13 +51,6 @@ fi
 
 RSTUDIO_BUNDLE_NAME="RStudio${RSTUDIO_PRO_SUFFIX}-${RSTUDIO_VERSION_FULL}"
 
-# use RStudio credentials for builds on Jenkins
-if [ -n "${JENKINS_URL}" ]; then
-   USE_CREDS=1
-else
-   USE_CREDS=0
-fi
-
 # use Ninja if available
 if has-program ninja; then
    export CMAKE_GENERATOR=Ninja
@@ -78,9 +71,16 @@ fi
 # default build options
 build_gwt=1
 build_package=1
+build_dmg=1
 clean=0
 copy_gwt=1
 install=0
+use_creds=0
+
+# by default, use RStudio credentials for builds on Jenkins
+if [ -n "${JENKINS_URL}" ]; then
+   use_creds=1
+fi
 
 # read command line arguments
 for arg in "$@"; do
@@ -93,6 +93,8 @@ for arg in "$@"; do
    --build-gwt=*)     build_gwt=${arg#*=} ;;
    --copy-gwt=*)      copy_gwt=${arg#*=} ;;
    --build-package=*) build_package=${arg#*=} ;;
+   --build-dmg=*)     build_dmg=${arg#*=} ;;
+   --use-creds=*)     use_creds=${arg#*=} ;;
    esac
 
 done
@@ -154,7 +156,7 @@ if [ -n "${build_x86_64}" ]; then
       -DRSTUDIO_PACKAGE_BUILD=1                              \
       -DRSTUDIO_CRASHPAD_ENABLED=0                           \
       -DRSTUDIO_TOOLS_ROOT="${RSTUDIO_TOOLS_ROOT}/../x86_64" \
-      -DRSTUDIO_CODESIGN_USE_CREDENTIALS="${USE_CREDS}"      \
+      -DRSTUDIO_CODESIGN_USE_CREDENTIALS="${use_creds}"      \
       -DGWT_BUILD="${build_gwt}"                             \
       -DGWT_COPY="${copy_gwt}"                               \
       -DGWT_BIN_DIR="${BUILD_DIR_X86_64}/gwt/bin"            \
@@ -224,29 +226,33 @@ if [ "${build_package}" = "1" ]; then
    # install target
    cd "${BUILD_DIR_X86_64}"
 
-   "${CMAKE}" --build . --target install > /dev/null
+   "${CMAKE}" --build . --target install
 
-   # move to target directory
-   cd "${INSTALL_DIR}"
+   if [ "${build_dmg}" = "1" ]; then
 
-   # create 'Applications' symlink
-   ln -nfs /Applications Applications
+      # move to target directory
+      cd "${INSTALL_DIR}"
 
-   # package into dmg
-   info "Creating '${RSTUDIO_BUNDLE_NAME}.dmg ...'"
+      # create 'Applications' symlink
+      ln -nfs /Applications Applications
 
-   cd ..
+      # package into dmg
+      info "Creating '${RSTUDIO_BUNDLE_NAME}.dmg ...'"
 
-   hdiutil create                       \
-      -fs "APFS"                        \
-      -volname "${RSTUDIO_BUNDLE_NAME}" \
-      -srcfolder "install"              \
-      -ov                               \
-      -format "UDZO"                    \
-      "${RSTUDIO_BUNDLE_NAME}.dmg"
+      cd ..
 
-   # move to expected location in build folder
-   mv "${RSTUDIO_BUNDLE_NAME}.dmg" "${BUILD_DIR_X86_64}/"
+      hdiutil create                       \
+         -fs "APFS"                        \
+         -volname "${RSTUDIO_BUNDLE_NAME}" \
+         -srcfolder "install"              \
+         -ov                               \
+         -format "UDZO"                    \
+         "${RSTUDIO_BUNDLE_NAME}.dmg"
+
+      # move to expected location in build folder
+      mv "${RSTUDIO_BUNDLE_NAME}.dmg" "${BUILD_DIR_X86_64}/"
+
+   fi
 
    info "Done!"
 
