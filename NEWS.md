@@ -138,3 +138,4 @@
 * Fixed issue where dialog boxes [e.g. Git commit, Installing Pro Database drivers] could fail to show output with Limit Console Output turned on (Pro #2284)
 * Fixed issue preventing Kubernetes sessions from starting due to incorrect SSL certificate checking on websocket connections; make websocket connections support the `verify-ssl-certs` option (Pro #2463)
 * Fixed issue where uploading a .zip archive when unzip was not on PATH would cause a cryptic error. (#9151)
+* Errors that occur when R packages update the Connections pane are now better handled and reported (#9219)
