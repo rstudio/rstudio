@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+echo "Hello"
+
 # set HOME directory
 _FAKEHOME="${HOME}"
 HOME="${_REALHOME}"

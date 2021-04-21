@@ -255,72 +255,76 @@ void ConsoleProcess::commonInit()
    }
    
    // if RStudio has been configured to use Python,
+   // and the user has opted in to our terminal config
    // place that copy of Python on the PATH
-   std::string reticulatePython = core::system::getenv("RETICULATE_PYTHON");
-   if (reticulatePython.empty())
+   if (prefs::userPrefs().terminalPythonIntegration())
    {
-      Error error = r::exec::RFunction(".rs.inferReticulatePython")
-            .call(&reticulatePython);
-      
-      if (error)
-         LOG_ERROR(error);
-      
+      std::string reticulatePython = core::system::getenv("RETICULATE_PYTHON");
+      if (reticulatePython.empty())
+      {
+         Error error = r::exec::RFunction(".rs.inferReticulatePython")
+               .call(&reticulatePython);
+
+         if (error)
+            LOG_ERROR(error);
+
+         if (!reticulatePython.empty())
+         {
+            core::system::setenv(
+                     &*options_.environment,
+                     "RETICULATE_PYTHON",
+                     reticulatePython);
+         }
+      }
+
       if (!reticulatePython.empty())
       {
+         // enable terminal hooks for bash
+         if (getShellType() == TerminalShell::ShellType::PosixBash ||
+             getShellType() == TerminalShell::ShellType::GitBash ||
+             getShellType() == TerminalShell::ShellType::WSLBash)
+         {
+            // set the HOME directory for the new shell to our bundled bash utility
+            // folder, so that the shell reads those first
+            core::FilePath bashDotDir =
+                  session::options().rResourcesPath().completeChildPath("terminal/bash");
+
+            // store the 'real' home so we can restore it after
+            core::system::setenv(
+                     &*options_.environment,
+                     "_REALHOME",
+                     core::system::getenv("HOME"));
+
+            // set HOME so our dotfiles can be sourced on startup
+            core::system::setenv(
+                     &*options_.environment,
+                     "HOME",
+                     bashDotDir.getAbsolutePath());
+         }
+
+         // enable terminal hooks for zsh
+         if (getShellType() == TerminalShell::ShellType::PosixZsh)
+         {
+            FilePath zDotDir =
+                  session::options().rResourcesPath().completeChildPath("terminal/zsh");
+
+            core::system::setenv(
+                     &*options_.environment,
+                     "ZDOTDIR",
+                     zDotDir.getAbsolutePath());
+         }
+
+         // set RSTUDIO_TERMINAL_HOOKS (to be sourced on startup by supported shells)
+         FilePath hooksPath =
+               session::options().rResourcesPath().completeChildPath("terminal/hooks");
+
          core::system::setenv(
                   &*options_.environment,
-                  "RETICULATE_PYTHON",
-                  reticulatePython);
+                  "RSTUDIO_TERMINAL_HOOKS",
+                  hooksPath.getAbsolutePath());
+
       }
    }
-   
-   // if we're using bash, then we'll use a custom rcfile to ensure our
-   // hooks get run when the shell is launcehd
-   if (getShellType() == TerminalShell::ShellType::PosixBash ||
-       getShellType() == TerminalShell::ShellType::GitBash ||
-       getShellType() == TerminalShell::ShellType::WSLBash)
-   {
-      // set the HOME directory for the new shell to our bundled bash utility
-      // folder, so that the shell reads those first
-      core::FilePath bashDotDir =
-            session::options().rResourcesPath().completeChildPath("terminal/bash");
-      
-      // store the 'real' home so we can restore it after
-      core::system::setenv(
-               &*options_.environment,
-               "_REALHOME",
-               core::system::getenv("HOME"));
-      
-      // set HOME so our dotfiles can be sourced on startup
-      core::system::setenv(
-               &*options_.environment,
-               "HOME",
-               bashDotDir.getAbsolutePath());
-   }
-   
-   // if we're using zsh, we want to set a custom ZDOTDIR so that we can
-   // inject some of our own tools to be run for newly-launched terminals.
-   // this allows us to invoke our own hooks while still running the user's
-   // own startup files as appropriate
-   if (getShellType() == TerminalShell::ShellType::PosixZsh)
-   {
-      FilePath zDotDir =
-            session::options().rResourcesPath().completeChildPath("terminal/zsh");
-      
-      core::system::setenv(
-               &*options_.environment,
-               "ZDOTDIR",
-               zDotDir.getAbsolutePath());
-   }
- 
-   // set RSTUDIO_TERMINAL_HOOKS (to be sourced on startup by supported shells)
-   FilePath hooksPath =
-         session::options().rResourcesPath().completeChildPath("terminal/hooks");
-   
-   core::system::setenv(
-            &*options_.environment,
-            "RSTUDIO_TERMINAL_HOOKS",
-            hooksPath.getAbsolutePath());
 
    // When we retrieve from outputBuffer, we only want complete lines. Add a
    // dummy \n so we can tell the first line is a complete line.

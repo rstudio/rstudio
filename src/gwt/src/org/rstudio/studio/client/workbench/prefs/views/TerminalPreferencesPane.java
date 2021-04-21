@@ -139,7 +139,7 @@ public class TerminalPreferencesPane extends PreferencesPane
       customShellOptionsLabel_ = new FormLabel("Custom shell command-line options:", customShellOptions_);
       general.add(spacedBefore(customShellOptionsLabel_));
       general.add(customShellOptions_);
-
+      
       Label perfLabel = headerLabel("Connection");
       perfLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
       general.add(perfLabel);
@@ -173,6 +173,11 @@ public class TerminalPreferencesPane extends PreferencesPane
       general.add(lessSpaced(chkAudibleBell_));
       chkWebLinks_ = new CheckBox("Clickable web links");
       general.add(chkWebLinks_);
+      
+      Label genMiscLabel = headerLabel("Miscellaneous");
+      genMiscLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
+      general.add(genMiscLabel);
+      general.add(checkboxPref("Place active version of Python on PATH", prefs_.terminalPythonIntegration()));
 
       HelpLink helpLink = new HelpLink("Using the RStudio terminal", "rstudio_terminal", false);
       nudgeRight(helpLink);
