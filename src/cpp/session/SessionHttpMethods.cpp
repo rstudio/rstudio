@@ -564,6 +564,11 @@ bool waitForMethod(const std::string& method,
                // ensure initialized
                init::ensureSessionInitialized();
 
+               if (s_connectionDebugEnabled && method != kConsoleInput)
+               {
+                  LOG_DEBUG_MESSAGE("Handle wait for:     " + ptrConnection->request().uri());
+               }
+
                break; // got the method, we are out of here!
             }
          }
