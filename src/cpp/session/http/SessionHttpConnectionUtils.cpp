@@ -197,6 +197,10 @@ bool checkForSuspend(boost::shared_ptr<HttpConnection> ptrConnection)
       }
       else
       {
+         if (http_methods::connectionDebugEnabled())
+         {
+            LOG_DEBUG_MESSAGE("handle session suspend");
+         }
          // send a signal to this process to suspend
          using namespace rstudio::core::system;
          sendSignalToSelf(force ? SigUsr2 : SigUsr1);
@@ -252,6 +256,17 @@ bool checkForInterrupt(boost::shared_ptr<HttpConnection> ptrConnection)
       // busy and it should instead send an explicit request to canncel the current
       // console read request.
       bool busy = session::console_input::executing();
+      if (http_methods::connectionDebugEnabled())
+      {
+         if (busy)
+         {
+            LOG_DEBUG_MESSAGE("handle busy interrupt");
+         }
+         else
+         {
+            LOG_DEBUG_MESSAGE("handle idle interrupt");
+         }
+      }
       if (busy)
       {
          r::exec::setInterruptsPending(true);
