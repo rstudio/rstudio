@@ -177,7 +177,7 @@ public class TerminalPreferencesPane extends PreferencesPane
       Label genMiscLabel = headerLabel("Miscellaneous");
       genMiscLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
       general.add(genMiscLabel);
-      general.add(checkboxPref("Place active version of Python on PATH", prefs_.terminalPythonIntegration()));
+      general.add(checkboxPref("Place active version of Python on PATH (bash / zsh only)", prefs_.terminalPythonIntegration()));
 
       HelpLink helpLink = new HelpLink("Using the RStudio terminal", "rstudio_terminal", false);
       nudgeRight(helpLink);

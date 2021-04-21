@@ -279,10 +279,43 @@ void ConsoleProcess::commonInit()
 
       if (!reticulatePython.empty())
       {
+         auto isBashShell = [&]()
+         {
+            switch (getShellType())
+            {
+            
+            case TerminalShell::ShellType::PosixBash:
+            case TerminalShell::ShellType::GitBash:
+            case TerminalShell::ShellType::WSLBash:
+            {
+               return true;
+            }
+               
+            case TerminalShell::ShellType::CustomShell:
+            {
+               std::string shellPath = options_.shellPath.getAbsolutePath();
+               
+#ifdef _WIN32
+               if (boost::algorithm::ends_with(shellPath, "bash.exe"))
+                  return true;
+#endif
+               
+               if (boost::algorithm::ends_with(shellPath, "bash"))
+                  return true;
+               
+               return false;
+            }
+               
+            default:
+            {
+               return false;
+            }
+               
+            }
+         };
+         
          // enable terminal hooks for bash
-         if (getShellType() == TerminalShell::ShellType::PosixBash ||
-             getShellType() == TerminalShell::ShellType::GitBash ||
-             getShellType() == TerminalShell::ShellType::WSLBash)
+         if (isBashShell())
          {
             // set the HOME directory for the new shell to our bundled bash utility
             // folder, so that the shell reads those first
@@ -303,7 +336,38 @@ void ConsoleProcess::commonInit()
          }
 
          // enable terminal hooks for zsh
-         if (getShellType() == TerminalShell::ShellType::PosixZsh)
+         auto isZshShell = [&]()
+         {
+            switch (getShellType())
+            {
+            
+            case TerminalShell::ShellType::PosixZsh:
+            {
+               return true;
+            }
+               
+            case TerminalShell::ShellType::CustomShell:
+            {
+               std::string shellPath = options_.shellPath.getAbsolutePath();
+               
+#ifdef _WIN32
+               if (boost::algorithm::ends_with(shellPath, "zsh.exe"))
+                  return true;
+#endif
+               
+               if (boost::algorithm::ends_with(shellPath, "zsh"))
+                  return true;
+            }
+               
+            default:
+            {
+               return false;
+            }
+               
+            }
+         };
+         
+         if (isZshShell())
          {
             FilePath zDotDir =
                   session::options().rResourcesPath().completeChildPath("terminal/zsh");
