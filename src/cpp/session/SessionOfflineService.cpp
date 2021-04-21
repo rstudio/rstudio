@@ -25,6 +25,8 @@
 #include <core/system/System.hpp>
 #include <core/Macros.hpp>
 
+#include <core/system/Process.hpp>
+
 #include <session/SessionOptions.hpp>
 #include "SessionConsoleInput.hpp"
 #include <session/SessionHttpConnection.hpp>
@@ -32,6 +34,8 @@
 #include "SessionRpc.hpp"
 #include "SessionOfflineService.hpp"
 #include "SessionAsyncRpcConnection.hpp"
+#include "modules/SessionSystemResources.hpp"
+#include "session/prefs/UserPrefs.hpp"
 
 using namespace rstudio::core;
 
@@ -39,8 +43,8 @@ namespace rstudio {
 namespace session {
 
 namespace {
-   static boost::posix_time::time_duration s_handleOfflineDuration;
-   static boost::posix_time::time_duration s_asyncRpcDuration;
+   boost::posix_time::time_duration s_handleOfflineDuration;
+   boost::posix_time::time_duration s_asyncRpcDuration;
 }
 
 OfflineService& offlineService()
@@ -57,8 +61,7 @@ Error OfflineService::start()
       return Success();
    }
 
-   if ((!options().asyncRpcEnabled() || options().asyncRpcTimeoutMs() == 0) &&
-       (!options().handleOfflineEnabled() || options().handleOfflineTimeoutMs() == 0))
+   if ((!options().asyncRpcEnabled() || options().asyncRpcTimeoutMs() == 0) && !options().handleOfflineEnabled())
    {
       if (options().asyncRpcEnabled())
          LOG_DEBUG_MESSAGE("Immediate asyncRpc enabled");
@@ -66,7 +69,6 @@ Error OfflineService::start()
          LOG_DEBUG_MESSAGE("Immediate offline request handling enabled");
       return Success();
    }
-
 
    // block all signals for launch of background thread (will cause it
    // to never receive signals)
@@ -179,14 +181,8 @@ void OfflineService::run()
       }
 
       int sleepMillis = asyncRpcMillis;
-
-      //std::cout << "Running offlineService: " << asyncRpcMillis << " millis - handleOffline " << handleOfflineMillis << std::endl;
-
-      s_asyncRpcDuration = boost::posix_time::milliseconds(asyncRpcMillis);
-      s_handleOfflineDuration = boost::posix_time::milliseconds(handleOfflineMillis);
-
-      LOG_DEBUG_MESSAGE("OfflineService started with session-async-rpc-timeout-ms=" + std::to_string(asyncRpcMillis) +
-                        " handle-offline-timeout-ms=" + std::to_string(handleOfflineMillis));
+      if (sleepMillis == 0)
+         sleepMillis = 250;
 
       // Pick the smallest non-zero value to use in the sleep call
       // TODO: asyncRpc will run jobs later in some cases e.g. asyncRpcMillis=500 and handleOffline=750
@@ -194,13 +190,21 @@ void OfflineService::run()
       if (sleepMillis == 0 || (handleOfflineMillis != 0 && handleOfflineMillis < sleepMillis))
          sleepMillis = handleOfflineMillis;
 
-      BOOST_ASSERT(sleepMillis > 0); // If both are 0 this thread should not have been started
+      s_asyncRpcDuration = boost::posix_time::milliseconds(asyncRpcMillis);
+      s_handleOfflineDuration = boost::posix_time::milliseconds(handleOfflineMillis);
+
+      LOG_DEBUG_MESSAGE("OfflineService started with session-async-rpc-timeout-ms=" + std::to_string(asyncRpcMillis) +
+                        " handle-offline-timeout-ms=" + std::to_string(handleOfflineMillis) + " polling every: " + std::to_string(sleepMillis) + "ms");
 
       boost::chrono::milliseconds sleepTime = boost::chrono::milliseconds(sleepMillis);
 
       // get alias to mainConnectionQueue
       HttpConnectionQueue& mainConnectionQueue = httpConnectionListener().mainConnectionQueue();
       bool serverStopped = false;
+      int emitMemEventsCt = 3000 / sleepMillis;
+      if (emitMemEventsCt == 0)
+         emitMemEventsCt = 1;
+      int emitMemEventsIndex = 0;
       while (!serverStopped)
       {
          if (boost::this_thread::interruption_requested())
@@ -218,7 +222,7 @@ void OfflineService::run()
                continue;
 
             // If R is not occupying the main thread, we'll continue to wait.
-            // TODO: asyncRpc - other skippable operations, not from R - if so, we could remove this test
+            // TODO: asyncRpc - are there other skippable operations, not from R - if so, we could remove this test
             if (!console_input::executing())
             {
                // TODO: asyncRpc log a warning here if mainConnectionQueue has more than 5 entries
@@ -264,14 +268,26 @@ void OfflineService::run()
                while (ptrConnection); // Possible a queue has built up so flush them all out
             }
 
+            if (options().handleOfflineEnabled())
+            {
+               // For terminal and other processes that are otherwise not dependent on the R runtime
+               module_context::processSupervisor().poll();
+
+               if (++emitMemEventsIndex >= emitMemEventsCt)
+               {
+                  // TODO: asyncRpc - is this dependency on modules ok? Maybe we should add a new event that is used only
+                  // by listeners that are thread-safe
+                  if (prefs::userPrefs().showMemoryUsage())
+                     modules::system_resources::emitMemoryChangedEvent();
+                  emitMemEventsIndex = 0;
+               }
+            }
+
             if (asyncRpcMillis > 0)
             {
                // convert stale connections to async
                mainConnectionQueue.convertConnections(asyncConnectionConverter, now);
             }
-
-            // TODO: asyncRpc - do we need to do anything to ensure session status events like
-            // MemoryChangedEvent continue to be sent here? Looks like those are emitted on a separate
          }
          catch(const boost::thread_interrupted&)
          {

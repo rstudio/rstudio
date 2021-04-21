@@ -389,6 +389,15 @@ Error initialize()
    s_offlineableUris.insert("/rpc/list_files");
    s_offlineableUris.insert("/rpc/modify_document_properties");
    s_offlineableUris.insert("/rpc/check_for_external_edit");
+   s_offlineableUris.insert("/rpc/start_terminal");
+   s_offlineableUris.insert("/rpc/process_start");
+   s_offlineableUris.insert("/rpc/process_notify_start");
+   s_offlineableUris.insert("/rpc/process_notify_visible");
+   s_offlineableUris.insert("/rpc/process_get_buffer_chunk");
+   s_offlineableUris.insert("/rpc/process_erase_buffer");
+   s_offlineableUris.insert("/rpc/process_set_size");
+   s_offlineableUris.insert("/rpc/get_source_template");
+   s_offlineableUris.insert("/rpc/new_document");
 
    return Success();
 }
