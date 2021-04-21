@@ -1138,16 +1138,34 @@ FilePath tempDir()
 
 FilePath findProgram(const std::string& name)
 {
-   std::string which;
-   Error error = r::exec::RFunction("Sys.which", name).call(&which);
-   if (error)
+   // TODO: added isMainThread() test here to allow the console to run offline.
+   // On starting a terminal, it does 'which svn' to see if there's another directory to be added to the path
+   // of the new shell automatically. Can we always use findProgramOnPath? It will be a lot faster since R's
+   // version seems to fork a process to call the shell's 'which'
+   if (!r::exec::isMainThread())
    {
-      LOG_ERROR(error);
-      return FilePath();
+      FilePath resultPath;
+      Error error = system::findProgramOnPath(name, &resultPath);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return FilePath();
+      }
+      return resultPath;
    }
    else
    {
-      return FilePath(which);
+      std::string which;
+      Error error = r::exec::RFunction("Sys.which", name).call(&which);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return FilePath();
+      }
+      else
+      {
+         return FilePath(which);
+      }
    }
 }
 
@@ -2254,7 +2272,6 @@ Events& events()
    static Events instance;
    return instance;
 }
-
 
 core::system::ProcessSupervisor& processSupervisor()
 {
