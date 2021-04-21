@@ -113,6 +113,14 @@
    engine <- tolower(Sys.getenv("MPLENGINE"))
    if (engine %in% c("", "qt5agg"))
       Sys.setenv(MPLENGINE = "tkAgg")
+   
+   # update default version of Python to be used when reticulate is laoded
+   .rs.registerPackageLoadHook("reticulate", function(...)
+   {
+      python <- .rs.readUiPref("python_path")
+      .rs.reticulate.usePython(python)
+   })
+   
 })
 
 .rs.addFunction("reticulate.onPythonInitialized", function()
