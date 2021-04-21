@@ -462,7 +462,12 @@ Error RFunction::call(SEXP evalNS, bool safely, SEXP* pResultSEXP,
          error.addProperty("symbol", functionName_);
       return error;
    }
-   
+   if (!isMainThread())
+   {
+      LOG_ERROR_MESSAGE("Attempt to call R function: " + functionName_ + " on thread than main");
+      return rCodeExecutionError("Attempt to call R function on thread other than main", ERROR_LOCATION);
+   }
+
    // create the call object (LANGSXP) with the correct number of elements
    SEXP callSEXP;
    pProtect->add(callSEXP = Rf_allocVector(LANGSXP, 1 + params_.size()));
