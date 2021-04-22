@@ -23,23 +23,33 @@
 ### RStudio Workbench
 
 * RStudio Server Pro has been renamed to RStudio Workbench to more accurately reflect its cross-language editing capabilities.
+* **BREAKING:** RStudio Workbench's Linux packages have new file names, `rstudio-workbench-*` instead of `rstudio-server-pro-*`. The operating system package name remains `rstudio-server`, so installs and upgrades will work correctly. Scripts which refer to the `.deb` or `.rpm` file names directly will need to be updated.
 * Added support for JupyterLab 3 (Pro #2022)
-* Added support for code-server 3.4.0+ (Pro # 1984)
-* Added a new user settings template file for VSCode settings to allow administrators to specify a default user configuration for VSCode sessions (Pro #2014)
 * Improved a Slurm Session Launch Delay that may occur due to buffering when using Slurm job steps (Pro #2331)
 * Add support for using OpenID and SAML authentication schemes when a proxy is required for outbound requests (Pro #2427)
-* Set environment variables `RS_URI_SCHEME`, `RS_SESSION_URL`, and `RS_HOME_URL` when VSCode is launched (Pro #2346)
 * Updated product licensing engine (LimeLM) to TurboActivate and TurboFloat to v4.4.3.
+* Licenses can now be applied and updated without a restart (Pro #2468)
 * Improved R session diagnostic logging; now records all instances of a session (Pro #2268)
 * Improved troubleshooting logging for PostgreSQL encrypted password configuration (Pro #2441)
+* Improved `locktester` file locking diagnostic utility; now tries all lock types and recommends configuration (Pro #2400)
+* Added new `rstudio-server reload` command to reload some server configuration settings without a restart (Pro #2139)
+* Display hidden characters in filenames when logging config files with `run-diagnostics` (Pro #2509)
 
-### RStudio Server
+### Visual Studio Code
+
+* Visual Studio Code is fully supported on RStudio Workbench and no longer in beta
+* Added support for Dash, Streamlit, and local web development servers in VS Code sessions
+* Added RStudio Workbench navigation tools in VS Code sessions
+* Added support for code-server 3.4.0+ (Pro # 1984)
+* Added a new user settings template file for VSCode settings to allow administrators to specify a default user configuration for VSCode sessions (Pro #2014)
+* Set environment variables `RS_URI_SCHEME`, `RS_SESSION_URL`, and `RS_HOME_URL` when VSCode is launched (Pro #2346)
+
+### RStudio Server Open Source
 
 * **BREAKING:** RStudio when served via `http` erroneously reported its own address as `https` during redirects if the header `X-Forwarded-Proto` was defined by a proxy. That could lead to a confusing proxy setup. That has been fixed, but existing proxy installations with redirect rewite settings matching for `https` may have to be adjusted.
-* **BREAKING:** RStudio Workbench's Linux packages have new file names, `rstudio-workbench-*` instead of `rstudio-server-pro-*`. The operating system package name remains `rstudio-server`, so installs and upgrades will work correctly. Scripts which refer to the `.deb` or `.rpm` file names directly will need to be updated.
 * **BREAKING:** RStudio Server no longer supports Internet Explorer 11. 
 * Added `session-suspend-on-incomplete-statement` option to enable more aggressive session suspension behavior (Pro #1934)
-* New `env-vars` configuration file simplifies setting environment variables for the main RStudio server process.
+* New `env-vars` configuration file simplifies setting environment variables for the main RStudio server process. (Pro #2433)
 * Refreshed style on sign-in page; sign-in page now has a dark mode that syncs with the operating system's (#9092, #9093)
 
 ### Visual Editor
@@ -82,6 +92,7 @@
 * Add support for commenting and uncommenting code in C (`.c` and `.h`) files (#4109, thanks to @cm421)
 * The R session binary (`rsession`) now has a `--version` option for reporting its version (Pro #2410)
 * RStudio Desktop startup diagnostics now include the RStudio version/platform and an option to copy to plain text (#6628, #9117)
+* Improved Spellcheck package to be compatible with all known Hunspell-compatible dictionaries, improved spellcheck initial loading and large file performance (#9161)
 
 ### Bugfixes
 
@@ -128,3 +139,4 @@
 * Fixed issue where dialog boxes [e.g. Git commit, Installing Pro Database drivers] could fail to show output with Limit Console Output turned on (Pro #2284)
 * Fixed issue preventing Kubernetes sessions from starting due to incorrect SSL certificate checking on websocket connections; make websocket connections support the `verify-ssl-certs` option (Pro #2463)
 * Fixed issue where uploading a .zip archive when unzip was not on PATH would cause a cryptic error. (#9151)
+* Errors that occur when R packages update the Connections pane are now better handled and reported (#9219)

@@ -42,17 +42,17 @@ try {
 
 # install R
 if (-Not (Test-Path -Path "C:\R")) {
-    $RSetupPackage = "C:\R-3.5.0-win.exe"
+    $RSetupPackage = "C:\R-3.6.3-win.exe"
     if (-Not (Test-Path -Path $RSetupPackage)) {
-        Write-Host "Downloading R 3.5.0..."
-        Download-File https://cran.rstudio.com/bin/windows/base/old/3.5.0/R-3.5.0-win.exe $RSetupPackage
+        Write-Host "Downloading R 3.6.3..."
+        Download-File https://cran.rstudio.com/bin/windows/base/old/3.6.3/R-3.6.3-win.exe $RSetupPackage
     } else {
         Write-Host "Using previously downloaded R installer"
     }
     Write-Host "Installing R..."
-    Start-Process $RSetupPackage -Wait -ArgumentList '/VERYSILENT /DIR="C:\R\R-3.5.0\"'
+    Start-Process $RSetupPackage -Wait -ArgumentList '/VERYSILENT /DIR="C:\R\R-3.6.3\"'
     if ($DeleteDownloads) { Remove-Item $RSetupPackage -Force }
-    $env:path += ';C:\R\R-3.5.0\bin\i386\'
+    $env:path += ';C:\R\R-3.6.3\bin\i386\'
     [Environment]::SetEnvironmentVariable('Path', $env:path, [System.EnvironmentVariableTarget]::Machine);
 } else {
     Write-Host "C:\R already exists, skipping R installation"

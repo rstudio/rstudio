@@ -1,24 +1,25 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.spelling;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 
 import org.rstudio.core.client.CsvReader;
 import org.rstudio.core.client.CsvWriter;
 import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.widget.NullProgressIndicator;
-import org.rstudio.studio.client.common.spelling.TypoSpellChecker;
+import org.rstudio.studio.client.common.spelling.RealtimeSpellChecker;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 import com.google.gwt.event.shared.HandlerRegistration;
 
-public abstract class SpellingContext implements TypoSpellChecker.Context
+public abstract class SpellingContext implements RealtimeSpellChecker.Context
 {
    public SpellingContext(DocUpdateSentinel docUpdateSentinel)
    {
       docUpdateSentinel_ = docUpdateSentinel;
-      typoSpellChecker_ = new TypoSpellChecker(this);
+      realtimeSpellChecker_ = new RealtimeSpellChecker(this);
    }
 
    // Legacy checkSpelling function for popup dialog
@@ -27,7 +28,7 @@ public abstract class SpellingContext implements TypoSpellChecker.Context
       if (isSpellChecking_)
          return;
       isSpellChecking_ = true;
-      new CheckSpelling(typo(), spellingDoc,
+      new CheckSpelling(spellChecker(), spellingDoc,
                         new SpellingDialog(),
                         new InitialProgressDialog(1000),
                         new ResultCallback<Void, Exception>()
@@ -69,8 +70,7 @@ public abstract class SpellingContext implements TypoSpellChecker.Context
          if (iterator.hasNext())
          {
             String[] words = iterator.next();
-            for (String word : words)
-               ignoredWords.add(word);
+            ignoredWords.addAll(Arrays.asList(words));
          }
       }
       return ignoredWords;
@@ -94,15 +94,14 @@ public abstract class SpellingContext implements TypoSpellChecker.Context
       releaseOnDismiss_.add(handler);
    }
 
-   protected TypoSpellChecker typo()
+   protected RealtimeSpellChecker spellChecker()
    {
-      return typoSpellChecker_;
+      return realtimeSpellChecker_;
    }
-
 
    private boolean isSpellChecking_;
 
-   private final TypoSpellChecker typoSpellChecker_;
+   private final RealtimeSpellChecker realtimeSpellChecker_;
 
    private final DocUpdateSentinel docUpdateSentinel_;
 
