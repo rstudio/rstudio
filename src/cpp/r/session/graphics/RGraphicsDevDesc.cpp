@@ -883,6 +883,7 @@ void setDeviceAttributes(pDevDesc pDev, pDevDesc pShadow)
       pLhs->setMask         = pRhs->setMask;
       pLhs->releaseMask     = pRhs->releaseMask;
       pLhs->deviceVersion   = pRhs->deviceVersion;
+      pLhs->deviceClip      = pRhs->deviceClip;
       
       break;
    }
