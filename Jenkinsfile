@@ -7,7 +7,7 @@ properties([
                               daysToKeepStr: '',
                               numToKeepStr: '100')),
     parameters([string(name: 'RSTUDIO_VERSION_MAJOR', defaultValue: '1', description: 'RStudio Major Version'),
-                string(name: 'RSTUDIO_VERSION_MINOR', defaultValue: '4', description: 'RStudio Minor Version'),
+                string(name: 'RSTUDIO_VERSION_MINOR', defaultValue: '5', description: 'RStudio Minor Version'),
                 string(name: 'SLACK_CHANNEL', defaultValue: '#ide-builds', description: 'Slack channel to publish build message.'),
                 string(name: 'OS_FILTER', defaultValue: '', description: 'Pattern to limit builds by matching OS'),
                 string(name: 'ARCH_FILTER', defaultValue: '', description: 'Pattern to limit builds by matching ARCH'),
@@ -158,6 +158,8 @@ def trigger_external_build(build_name, wait = false) {
                                                   string(name: 'RSTUDIO_VERSION_MINOR',  value: "${rstudioVersionMinor}"),
                                                   string(name: 'RSTUDIO_VERSION_PATCH',  value: "${rstudioVersionPatch}"),
                                                   string(name: 'RSTUDIO_VERSION_SUFFIX', value: "${rstudioVersionSuffix}"),
+                                                  string(name: 'GIT_REVISION', value: "${env.GIT_COMMIT}"),
+                                                  string(name: 'BRANCH_NAME', value: "${env.GIT_BRANCH}"),
                                                   string(name: 'SLACK_CHANNEL', value: SLACK_CHANNEL)]
 }
 
@@ -375,13 +377,10 @@ try {
         }
 
         // trigger macos build if we're in open-source repo
-        if (env.JOB_NAME == 'IDE/open-source-pipeline/master') {
-          trigger_external_build('IDE/macos-v1.4')
+        if (env.JOB_NAME.startsWith('IDE/open-source-pipeline') {
+          trigger_external_build('IDE/macos-pipeline')
         }
 
-        else if (env.JOB_NAME == 'IDE/open-source-pipeline/v1.3') {
-          trigger_external_build('IDE/macos-v1.3')
-        }
         parallel parallel_containers
 
         if (env.JOB_NAME == 'IDE/open-source-pipeline/master') {
@@ -392,15 +391,8 @@ try {
         // the pro variants
         // additionally, run qa-autotest against the version we've just built
         if (env.JOB_NAME == 'IDE/pro-pipeline/master') {
-          trigger_external_build('IDE/pro-docs-v1.4')
-          trigger_external_build('IDE/launcher-docs-v1.4')
-          trigger_external_build('IDE/pro-desktop-docs-v1.4')
           trigger_external_build('IDE/qa-autotest')
           trigger_external_build('IDE/qa-automation')
-          trigger_external_build('IDE/monitor-v1.4')
-          trigger_external_build('IDE/macos-v1.4-pro')
-          trigger_external_build('IDE/windows-v1.4-pro')
-          trigger_external_build('IDE/session-v1.4')
         }
 
         slackSend channel: params.get('SLACK_CHANNEL', '#ide-builds'), color: 'good', message: "${messagePrefix} passed (${currentBuild.result})"
