@@ -42,6 +42,15 @@ const std::string kEnvCommand = "/usr/bin/env";
 
 } // anonymous namespace
 
+void ConsoleProcess::setenv(const std::string& name,
+                            const std::string& value)
+{
+   core::system::setenv(
+            &*options_.environment,
+            name,
+            value);
+}
+
 // create process options for a terminal
 core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
       const ConsoleProcessInfo& procInfo,
@@ -254,142 +263,6 @@ void ConsoleProcess::commonInit()
 #endif
    }
    
-   // if RStudio has been configured to use Python,
-   // and the user has opted in to our terminal config
-   // place that copy of Python on the PATH
-   if (prefs::userPrefs().terminalPythonIntegration())
-   {
-      std::string reticulatePython = core::system::getenv("RETICULATE_PYTHON");
-      if (reticulatePython.empty())
-      {
-         Error error = r::exec::RFunction(".rs.inferReticulatePython")
-               .call(&reticulatePython);
-
-         if (error)
-            LOG_ERROR(error);
-
-         if (!reticulatePython.empty())
-         {
-            core::system::setenv(
-                     &*options_.environment,
-                     "RETICULATE_PYTHON",
-                     reticulatePython);
-         }
-      }
-
-      if (!reticulatePython.empty())
-      {
-         auto isBashShell = [&]()
-         {
-            switch (getShellType())
-            {
-            
-            case TerminalShell::ShellType::PosixBash:
-            case TerminalShell::ShellType::GitBash:
-            case TerminalShell::ShellType::WSLBash:
-            {
-               return true;
-            }
-               
-            case TerminalShell::ShellType::CustomShell:
-            {
-               std::string shellPath = options_.shellPath.getAbsolutePath();
-               
-#ifdef _WIN32
-               if (boost::algorithm::ends_with(shellPath, "bash.exe"))
-                  return true;
-#endif
-               
-               if (boost::algorithm::ends_with(shellPath, "bash"))
-                  return true;
-               
-               return false;
-            }
-               
-            default:
-            {
-               return false;
-            }
-               
-            }
-         };
-         
-         // enable terminal hooks for bash
-         if (isBashShell())
-         {
-            // set the HOME directory for the new shell to our bundled bash utility
-            // folder, so that the shell reads those first
-            core::FilePath bashDotDir =
-                  session::options().rResourcesPath().completeChildPath("terminal/bash");
-
-            // store the 'real' home so we can restore it after
-            core::system::setenv(
-                     &*options_.environment,
-                     "_REALHOME",
-                     core::system::getenv("HOME"));
-
-            // set HOME so our dotfiles can be sourced on startup
-            core::system::setenv(
-                     &*options_.environment,
-                     "HOME",
-                     bashDotDir.getAbsolutePath());
-         }
-
-         // enable terminal hooks for zsh
-         auto isZshShell = [&]()
-         {
-            switch (getShellType())
-            {
-            
-            case TerminalShell::ShellType::PosixZsh:
-            {
-               return true;
-            }
-               
-            case TerminalShell::ShellType::CustomShell:
-            {
-               std::string shellPath = options_.shellPath.getAbsolutePath();
-               
-#ifdef _WIN32
-               if (boost::algorithm::ends_with(shellPath, "zsh.exe"))
-                  return true;
-#endif
-               
-               if (boost::algorithm::ends_with(shellPath, "zsh"))
-                  return true;
-            }
-               
-            default:
-            {
-               return false;
-            }
-               
-            }
-         };
-         
-         if (isZshShell())
-         {
-            FilePath zDotDir =
-                  session::options().rResourcesPath().completeChildPath("terminal/zsh");
-
-            core::system::setenv(
-                     &*options_.environment,
-                     "ZDOTDIR",
-                     zDotDir.getAbsolutePath());
-         }
-
-         // set RSTUDIO_TERMINAL_HOOKS (to be sourced on startup by supported shells)
-         FilePath hooksPath =
-               session::options().rResourcesPath().completeChildPath("terminal/hooks");
-
-         core::system::setenv(
-                  &*options_.environment,
-                  "RSTUDIO_TERMINAL_HOOKS",
-                  hooksPath.getAbsolutePath());
-
-      }
-   }
-
    // When we retrieve from outputBuffer, we only want complete lines. Add a
    // dummy \n so we can tell the first line is a complete line.
    if (!options_.smartTerminal)
@@ -936,6 +809,148 @@ ConsoleProcessPtr ConsoleProcess::create(
    return ptrProc;
 }
 
+namespace {
+
+bool augmentTerminalProcessPython(ConsoleProcessPtr cp)
+{
+   // disabled if user pref requests so
+   if (!prefs::userPrefs().terminalPythonIntegration())
+      return false;
+   
+   // find currently-configured version of Python
+   std::string reticulatePython = core::system::getenv("RETICULATE_PYTHON");
+   if (reticulatePython.empty())
+   {
+      Error error = r::exec::RFunction(".rs.inferReticulatePython")
+            .call(&reticulatePython);
+
+      if (error)
+         LOG_ERROR(error);
+
+      if (!reticulatePython.empty())
+      {
+         cp->setenv("RETICULATE_PYTHON", reticulatePython);
+      }
+   }
+   
+   // return true if we have a configured version of python
+   // (indicating that we want terminal hooks to be installed)
+   return !reticulatePython.empty();
+}
+
+void useTerminalHooks(ConsoleProcessPtr cp)
+{
+   // enable terminal hooks for bash
+   auto isBashShell = [&]()
+   {
+      switch (cp->getShellType())
+      {
+
+      case TerminalShell::ShellType::PosixBash:
+      case TerminalShell::ShellType::GitBash:
+      {
+         return true;
+      }
+
+      case TerminalShell::ShellType::CustomShell:
+      {
+         FilePath shellPath = cp->getShellPath();
+         std::string shellName = shellPath.getFilename();
+
+#ifdef _WIN32
+         if (boost::algorithm::ends_with(shellName, "bash.exe"))
+            return true;
+#endif
+
+         if (boost::algorithm::ends_with(shellName, "bash"))
+            return true;
+
+         return false;
+      }
+
+      default:
+      {
+         return false;
+      }
+
+      }
+   };
+
+   if (isBashShell())
+   {
+      // set the HOME directory for the new shell to our bundled bash utility
+      // folder, so that the shell reads those first
+      core::FilePath bashDotDir =
+            session::options().rResourcesPath().completeChildPath("terminal/bash");
+
+      // store the 'real' home so we can restore it after
+      cp->setenv("_REALHOME", core::system::getenv("HOME"));
+
+      // set HOME so our dotfiles can be sourced on startup
+      cp->setenv("HOME", bashDotDir.getAbsolutePath());
+   }
+
+   // enable terminal hooks for zsh
+   auto isZshShell = [&]()
+   {
+      switch (cp->getShellType())
+      {
+
+      case TerminalShell::ShellType::PosixZsh:
+      {
+         return true;
+      }
+
+      case TerminalShell::ShellType::CustomShell:
+      {
+         FilePath shellPath = cp->getShellPath();
+         std::string shellName = shellPath.getFilename();
+
+#ifdef _WIN32
+         if (boost::algorithm::ends_with(shellName, "zsh.exe"))
+            return true;
+#endif
+
+         if (boost::algorithm::ends_with(shellName, "zsh"))
+            return true;
+      }
+
+      default:
+      {
+         return false;
+      }
+
+      }
+   };
+
+   if (isZshShell())
+   {
+      FilePath zDotDir =
+            session::options().rResourcesPath().completeChildPath("terminal/zsh");
+
+      cp->setenv("ZDOTDIR", zDotDir.getAbsolutePath());
+   }
+
+   // set RSTUDIO_TERMINAL_HOOKS (to be sourced on startup by supported shells)
+   FilePath hooksPath =
+         session::options().rResourcesPath().completeChildPath("terminal/hooks");
+
+   cp->setenv("RSTUDIO_TERMINAL_HOOKS", hooksPath.getAbsolutePath());
+   
+}
+   
+void augmentTerminalProcess(ConsoleProcessPtr cp)
+{
+   // check whether terminal hooks are required
+   // (currently, only done if we want to place python on PATH)
+   bool needsTerminalHooks = augmentTerminalProcessPython(cp);
+   if (needsTerminalHooks)
+      useTerminalHooks(cp);
+}
+   
+
+} // end anonymous namespace
+
 // supports reattaching to a running process, or creating a new process with
 // previously used handle
 ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
@@ -997,6 +1012,7 @@ ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
 
          options.terminateChildren = true;
          cp.reset(new ConsoleProcess(command, options, procInfo));
+         augmentTerminalProcess(cp);
          addConsoleProcess(cp);
 
          // Windows Command Prompt and PowerShell don't support reloading
@@ -1021,6 +1037,7 @@ ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
    {
       // otherwise create a new one
       cp = create(command, options, procInfo);
+      augmentTerminalProcess(cp);
    }
 
    if (cp->procInfo_->getChannelMode() == Websocket)
@@ -1029,6 +1046,7 @@ ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
       s_terminalSocket.listen(cp->procInfo_->getHandle(),
                               cp->createConsoleProcessSocketConnectionCallbacks());
    }
+   
    return cp;
 }
 
@@ -1125,6 +1143,11 @@ void ConsoleProcess::saveEnvironment(const std::string& env)
 void ConsoleProcess::loadEnvironment(const std::string& handle, core::system::Options* pEnv)
 {
    ConsoleProcessInfo::loadConsoleEnvironment(handle, pEnv);
+}
+
+FilePath ConsoleProcess::getShellPath() const
+{
+   return options_.shellPath;
 }
 
 std::string ConsoleProcess::getShellName() const

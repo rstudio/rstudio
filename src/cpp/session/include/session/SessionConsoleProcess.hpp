@@ -151,6 +151,8 @@ public:
 
    std::string handle() const { return procInfo_->getHandle(); }
    InteractionMode interactionMode() const { return procInfo_->getInteractionMode(); }
+   
+   void setenv(const std::string& name, const std::string& value);
 
    core::Error start();
    void enqueInput(const Input& input);
@@ -181,6 +183,7 @@ public:
    bool getWasRestarted() const { return procInfo_->getRestarted(); }
    boost::optional<int> getExitCode() const { return procInfo_->getExitCode(); }
 
+   core::FilePath getShellPath() const;
    std::string getShellName() const;
    TerminalShell::ShellType getShellType() const { return procInfo_->getShellType(); }
 

@@ -97,6 +97,7 @@ public class TerminalPreferencesPane extends PreferencesPane
       general.add(terminalShell_);
       terminalShell_.setEnabled(false);
       terminalShell_.addChangeHandler(event -> manageCustomShellControlVisibility());
+      terminalShell_.addChangeHandler(event -> managePythonIntegrationControlVisibility());
 
       // custom shell exe path chooser
       Command onShellExePathChosen = new Command()
@@ -104,6 +105,8 @@ public class TerminalPreferencesPane extends PreferencesPane
          @Override
          public void execute()
          {
+            managePythonIntegrationControlVisibility();
+            
             if (BrowseCap.isWindowsDesktop())
             {
                String shellExePath = customShellChooser_.getText();
@@ -138,7 +141,18 @@ public class TerminalPreferencesPane extends PreferencesPane
       customShellOptions_.setEnabled(false);
       customShellOptionsLabel_ = new FormLabel("Custom shell command-line options:", customShellOptions_);
       general.add(spacedBefore(customShellOptionsLabel_));
-      general.add(customShellOptions_);
+      general.add(spaced(customShellOptions_));
+      
+      
+      chkPythonIntegration_ = checkboxPref(
+            "Enable Python integration",
+            prefs_.terminalPythonIntegration());
+      
+      chkPythonIntegration_.setTitle(
+            "When enabled, the active version of Python will be placed on the PATH for new terminal sessions. " +
+            "Only bash and zsh are supported.");
+      
+      general.add(chkPythonIntegration_);
       
       Label perfLabel = headerLabel("Connection");
       perfLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
@@ -173,11 +187,6 @@ public class TerminalPreferencesPane extends PreferencesPane
       general.add(lessSpaced(chkAudibleBell_));
       chkWebLinks_ = new CheckBox("Clickable web links");
       general.add(chkWebLinks_);
-      
-      Label genMiscLabel = headerLabel("Miscellaneous");
-      genMiscLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
-      general.add(genMiscLabel);
-      general.add(checkboxPref("Place active version of Python on PATH (bash / zsh only)", prefs_.terminalPythonIntegration()));
 
       HelpLink helpLink = new HelpLink("Using the RStudio terminal", "rstudio_terminal", false);
       nudgeRight(helpLink);
@@ -419,6 +428,44 @@ public class TerminalPreferencesPane extends PreferencesPane
       customShellOptionsLabel_.setVisible(customEnabled);
       customShellOptions_.setVisible(customEnabled);
    }
+   
+   private boolean pythonIntegrationSupported()
+   {
+      String shell = terminalShell_.getValue();
+      if (StringUtil.equals(shell, "bash") ||
+          StringUtil.equals(shell, "zsh"))
+      {
+         return true;
+      }
+      
+      if (StringUtil.equals(shell, "custom"))
+      {
+         String shellPath = customShellChooser_.getText();
+         if (shellPath.endsWith("bash") ||
+             shellPath.endsWith("zsh") ||
+             shellPath.endsWith("bash.exe") ||
+             shellPath.endsWith("zsh.exe"))
+         {
+            return true;
+         }
+      }
+      
+      return false;
+   }
+   
+   private void managePythonIntegrationControlVisibility()
+   {
+      if (pythonIntegrationSupported())
+      {
+         chkPythonIntegration_.setEnabled(true);
+         chkPythonIntegration_.setVisible(true);
+      }
+      else
+      {
+         chkPythonIntegration_.setEnabled(false);
+         chkPythonIntegration_.setVisible(false);
+      }
+   }
 
    private String selectedBusyMode()
    {
@@ -461,6 +508,7 @@ public class TerminalPreferencesPane extends PreferencesPane
    private final CheckBox chkHardwareAcceleration_;
    private final CheckBox chkAudibleBell_;
    private final CheckBox chkWebLinks_;
+   private final CheckBox chkPythonIntegration_;
 
    private SelectWidget autoClosePref_;
    private SelectWidget busyMode_;
