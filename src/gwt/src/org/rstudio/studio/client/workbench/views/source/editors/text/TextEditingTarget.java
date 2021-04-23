@@ -1813,6 +1813,9 @@ public class TextEditingTarget implements
             // in a collaborative editing session so we can get delete
             // notifications
             checkForExternalEdit(500);
+
+            // relint on blur
+            lintManager_.relintAfterDelay(100);
          }
       });
 
