@@ -113,7 +113,8 @@ bool parseAndValidateJsonRpcConnection(
          json::JsonRpcRequest* pJsonRpcRequest)
 {
    // Async rpc requests will have already parsed the request so just copy it over here
-   if (ptrConnection->isAsyncRpc()) {
+   if (ptrConnection->isAsyncRpc())
+   {
       boost::shared_ptr<rpc::AsyncRpcConnection> asyncConnection =
               boost::static_pointer_cast<rpc::AsyncRpcConnection>(ptrConnection);
       *pJsonRpcRequest = asyncConnection->jsonRpcRequest();
