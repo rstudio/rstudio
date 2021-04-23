@@ -42,15 +42,7 @@
 #undef FALSE
 #undef ERROR
 
-#ifdef TRACE_GD_CALLS
-#define TRACE_GD_CALL std::cerr << \
-   std::string(BOOST_CURRENT_FUNCTION).substr( \
-   std::string(BOOST_CURRENT_FUNCTION).find_last_of("::") + 1) \
-   << std::endl;
-#else
-#define TRACE_GD_CALL
-#endif
-
+#define TRACE_GD_CALL (::rstudio::r::session::graphics::device::GD_Trace(BOOST_CURRENT_FUNCTION))
 
 using namespace rstudio::core;
 using namespace boost::placeholders;
@@ -60,9 +52,14 @@ namespace r {
 namespace session {
 namespace graphics {
 namespace device {
-   
+
+// whether or not we should trace GD calls
+// intentionally not in anonymous namespace so that it can
+// be referenced and changed without explicit header export
+bool s_gdTracingEnabled = false;
+
 namespace {
-   
+
 // name of our graphics device
 const char * const kRStudioDevice = "RStudioGD";
 
@@ -71,6 +68,14 @@ pGEDevDesc s_pGEDevDesc = nullptr;
 
 // externally provided locator function
 boost::function<bool(double*,double*)> s_locatorFunction;
+
+void GD_Trace(const std::string& func)
+{
+   if (s_gdTracingEnabled)
+   {
+      std::cerr << func.substr(func.find_last_of("::") + 1) << std::endl;
+   }
+}
    
 // global size attributes (used to initialize new devices)
 int s_width = 0;
@@ -85,7 +90,7 @@ using namespace handler;
    
 void GD_NewPage(const pGEcontext gc, pDevDesc dev)
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    // delegate
    handler::newPage(gc, dev);
@@ -97,7 +102,7 @@ void GD_NewPage(const pGEcontext gc, pDevDesc dev)
 
 Rboolean GD_NewFrameConfirm(pDevDesc dd)
 {   
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    // returning false causes the default implementation (printing a prompt
    // of "Hit <Return> to see next plot:" to the console) to be used. this 
@@ -108,7 +113,7 @@ Rboolean GD_NewFrameConfirm(pDevDesc dd)
    
 void GD_Mode(int mode, pDevDesc dev) 
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    // 0 = stop drawing
    // 1 = start drawing
@@ -125,7 +130,7 @@ void GD_Size(double *left,
              double *top,
              pDevDesc dev) 
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    *left = 0.0;
    *right = s_width;
@@ -135,7 +140,7 @@ void GD_Size(double *left,
 
 void GD_Clip(double x0, double x1, double y0, double y1, pDevDesc dev)
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    handler::clip(x0, x1, y0, y1, dev);
 }
@@ -148,7 +153,7 @@ void GD_Rect(double x0,
              const pGEcontext gc,
              pDevDesc dev)
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    handler::rect(x0, y0, x1, y1, gc, dev);
 }
@@ -161,7 +166,7 @@ void GD_Path(double *x,
              const pGEcontext gc,
              pDevDesc dd)
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    handler::path(x, y, npoly, nper, winding, gc, dd);
 }
@@ -178,14 +183,14 @@ void GD_Raster(unsigned int *raster,
                const pGEcontext gc,
                pDevDesc dd)
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    handler::raster(raster, w, h, x, y, width, height, rot, interpolate, gc, dd);
 }
 
 SEXP GD_Cap(pDevDesc dd)
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    return handler::cap(dd);
 }
@@ -196,7 +201,7 @@ void GD_Circle(double x,
                const pGEcontext gc,
                pDevDesc dev)
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    handler::circle(x, y, r, gc, dev);
 }
@@ -208,7 +213,7 @@ void GD_Line(double x1,
              const pGEcontext gc,
              pDevDesc dev)
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    handler::line(x1, y1, x2, y2, gc, dev);
 }
@@ -219,7 +224,7 @@ void GD_Polyline(int n,
                  const pGEcontext gc,
                  pDevDesc dev)
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    handler::polyline(n, x, y, gc, dev);
 }
@@ -230,7 +235,7 @@ void GD_Polygon(int n,
                 const pGEcontext gc,
                 pDevDesc dev)
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    handler::polygon(n, x, y, gc, dev);
 }
@@ -242,7 +247,7 @@ void GD_MetricInfo(int c,
                    double* width,
                    pDevDesc dev)
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    handler::metricInfo(c, gc, ascent, descent, width, dev);
    
@@ -266,14 +271,14 @@ void GD_MetricInfo(int c,
 
 double GD_StrWidth(const char *str, const pGEcontext gc, pDevDesc dev)
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    return handler::strWidth(str, gc, dev);
 }
 
 double GD_StrWidthUTF8(const char *str, const pGEcontext gc, pDevDesc dev)
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    return handler::strWidth(str, gc, dev);
 }
@@ -286,7 +291,7 @@ void GD_Text(double x,
              const pGEcontext gc,
              pDevDesc dev)
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    handler::text(x, y, str, rot, hadj, gc, dev);
 }
@@ -299,7 +304,7 @@ void GD_TextUTF8(double x,
                  const pGEcontext gc,
                  pDevDesc dev)
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    handler::text(x, y, str, rot, hadj, gc, dev);
 }
@@ -307,7 +312,7 @@ void GD_TextUTF8(double x,
 
 Rboolean GD_Locator(double *x, double *y, pDevDesc dev) 
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    if (s_locatorFunction)
    {
@@ -337,17 +342,18 @@ Rboolean GD_Locator(double *x, double *y, pDevDesc dev)
 
 void GD_Activate(pDevDesc dev) 
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
+   boost::this_thread::sleep_for(boost::chrono::milliseconds(100));
 }
 
 void GD_Deactivate(pDevDesc dev) 
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 }   
    
 void GD_Close(pDevDesc dev) 
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    if (s_pGEDevDesc != nullptr)
    {
@@ -371,7 +377,7 @@ void GD_Close(pDevDesc dev)
    
 void GD_OnExit(pDevDesc dd)
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    // NOTE: this may be called at various times including during error 
    // handling (jump_to_top_ex). therefore, do not place any process or device
@@ -381,7 +387,7 @@ void GD_OnExit(pDevDesc dd)
 
 int GD_HoldFlush(pDevDesc dd, int level)
 {
-   TRACE_GD_CALL
+   TRACE_GD_CALL;
 
    // NOTE: holdflush does not apply to bitmap devices since they are
    // already "buffered" via the fact that they only do expensive operations
@@ -394,6 +400,40 @@ int GD_HoldFlush(pDevDesc dd, int level)
    // every e.g. 1-second during background processing.
 
    return 0;
+}
+
+// NOTE: pattern / clip / mask callbacks appear (as of R 4.1.0) to only
+// be used by the Cairo and PDF devices; other implementations which
+// do not make use of these features just return R_NilValue and otherwise
+// do nothing
+SEXP GD_SetPattern(SEXP pattern, pDevDesc dd)
+{
+   return R_NilValue;
+}
+
+void GD_ReleasePattern(SEXP ref, pDevDesc dd)
+{
+
+}
+
+SEXP GD_SetClipPath(SEXP path, SEXP ref, pDevDesc dd)
+{
+   return R_NilValue;
+}
+
+void GD_ReleaseClipPath(SEXP ref, pDevDesc dd)
+{
+
+}
+
+SEXP GD_SetMask(SEXP path, SEXP ref, pDevDesc dd)
+{
+   return R_NilValue;
+}
+
+void GD_ReleaseMask(SEXP ref, pDevDesc dd)
+{
+
 }
 
 void resyncDisplayList()
@@ -508,6 +548,14 @@ SEXP rs_createGD()
       devDesc.eventEnv = R_NilValue;
       devDesc.eventHelper = nullptr;
       devDesc.holdflush = GD_HoldFlush;
+
+      // added in version 14 (R 4.1.0)
+      devDesc.setPattern = GD_SetPattern;
+      devDesc.releasePattern = GD_ReleasePattern;
+      devDesc.setClipPath = GD_SetClipPath;
+      devDesc.releaseClipPath = GD_ReleaseClipPath;
+      devDesc.setMask = GD_SetMask;
+      devDesc.releaseMask = GD_ReleaseMask;
 
       // capabilities flags
       devDesc.haveTransparency = 2;
@@ -690,7 +738,7 @@ void onBeforeExecute()
 }
 
 } // anonymous namespace
-    
+
 void playDisplayList()
 {
    GEplayDisplayList(s_pGEDevDesc);

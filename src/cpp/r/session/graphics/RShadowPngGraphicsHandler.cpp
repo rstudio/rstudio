@@ -332,6 +332,7 @@ void onBeforeAddDevice(DeviceContext* pDC)
 {
    shadowDevOff(pDC);
 }
+
 void onAfterAddDevice(DeviceContext* pDC)
 {
    pDevDesc dev;
@@ -595,6 +596,36 @@ void onBeforeExecute(DeviceContext* pDC)
    }
 }
 
+SEXP setPattern(SEXP pattern, pDevDesc dd)
+{
+   return R_NilValue;
+}
+
+void releasePattern(SEXP ref, pDevDesc dd)
+{
+
+}
+
+SEXP setClipPath(SEXP path, SEXP ref, pDevDesc dd)
+{
+   return R_NilValue;
+}
+
+void releaseClipPath(SEXP ref, pDevDesc dd)
+{
+
+}
+
+SEXP setMask(SEXP path, SEXP ref, pDevDesc dd)
+{
+   return R_NilValue;
+}
+
+void releaseMask(SEXP ref, pDevDesc dd)
+{
+
+}
+
 } // namespace shadow
 
 void installShadowHandler()
@@ -622,6 +653,12 @@ void installShadowHandler()
    handler::newPage = shadow::newPage;
    handler::mode = shadow::mode;
    handler::onBeforeExecute = shadow::onBeforeExecute;
+   handler::setPattern = shadow::setPattern;
+   handler::releasePattern = shadow::releasePattern;
+   handler::setClipPath = shadow::setClipPath;
+   handler::releaseClipPath = shadow::releaseClipPath;
+   handler::setMask = shadow::setMask;
+   handler::releaseMask = shadow::releaseMask;
 }
    
 } // namespace handler

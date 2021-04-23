@@ -196,7 +196,14 @@ std::string extraBitmapParams()
    // to devices defined by the 'grDevices' package, and it doesn't handle
    // 'ragg')
    if (backend != "default" && backend != "ragg")
+   {
+      if (backend == "cairo")
+      {
+         backend = "cairo-png";
+      }
+
       params.push_back("type = \"" + backend + "\"");
+   }
    
    std::string antialias = getDefaultAntialiasing();
 
