@@ -75,6 +75,12 @@ namespace session {
 
 namespace {
 
+// TODO: asyncRpc - save_document_diff will call isWebsiteProject() that
+// needs to check the R runtime for whether Rmarkdown is installed. This is
+// not entirely accurate since if the first call to isWebsiteProject() is made
+// offline, it will return the wrong thing. Can we just cache a flag globally
+// whether RMarkdown is available - compute at startup and update when new libs
+// are added or will that state ever change?
 bool s_lastWebsiteProject;
 
 #ifdef _WIN32
