@@ -138,6 +138,13 @@ case "$ACTION" in
     
     bump)
 
+    # don't bump version if HEAD is already versioned
+    if [ "$PATCH_INDEX" == "0" ]; then
+        log "Not bumping version (HEAD is at $VERSION.$PATCH)"
+        echo "$VERSION.$PATCH"
+        exit 0
+    fi
+
     # record date for timestamp in CSV
     TIMESTAMP=$(date -u '+%Y-%m-%d %H:%M:%S')
         
