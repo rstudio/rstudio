@@ -35,6 +35,7 @@ struct SqliteConnectionOptions
    SqliteConnectionOptions(const std::string& file) : file(file), readonly(false) {}
    SqliteConnectionOptions() : readonly(false) {}
    std::string file;
+   int poolSize;
    bool readonly;
 };
 
@@ -48,6 +49,7 @@ struct PostgresqlConnectionOptions
    std::string connectionUri;
    int connectionTimeoutSeconds;
    std::string secureKey;
+   int poolSize;
 };
 
 enum class Driver
