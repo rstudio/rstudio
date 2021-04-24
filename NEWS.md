@@ -33,6 +33,7 @@
 * Improved troubleshooting logging for PostgreSQL encrypted password configuration (Pro #2441)
 * Improved `locktester` file locking diagnostic utility; now tries all lock types and recommends configuration (Pro #2400)
 * Added new `rstudio-server reload` command to reload some server configuration settings without a restart (Pro #2139)
+* Added `pool-size` option in `database.conf` to control size of database connection pool; avoid creating a large pool on systems with many CPUs (Pro #2494)
 * Display hidden characters in filenames when logging config files with `run-diagnostics` (Pro #2509)
 
 ### Visual Studio Code
