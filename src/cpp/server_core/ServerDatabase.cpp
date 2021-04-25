@@ -17,6 +17,8 @@
 #include <server_core/ServerKeyObfuscation.hpp>
 #include <server_core/http/SecureCookie.hpp>
 
+#include <shared_core/SafeConvert.hpp>
+
 #include <boost/algorithm/string.hpp>
 #include <boost/thread.hpp>
 #include <boost/regex.hpp>
@@ -37,6 +39,7 @@ using namespace core::database;
 namespace {
 
 // settings constants
+constexpr const char* kConfigFile = "database.conf";
 constexpr const char* kDatabaseProvider = "provider";
 constexpr const char* kDatabaseProviderSqlite = "sqlite";
 constexpr const char* kDatabaseProviderPostgresql = "postgresql";
@@ -54,12 +57,14 @@ constexpr const char* kDatabasePassword = "password";
 constexpr const char* kPostgresqlDatabaseConnectionTimeoutSeconds = "connnection-timeout-seconds";
 constexpr const int   kDefaultPostgresqlDatabaseConnectionTimeoutSeconds = 10;
 constexpr const char* kPostgresqlDatabaseConnectionUri = "connection-uri";
+constexpr const char* kConnectionPoolSize = "pool-size";
 
 // environment variables
 constexpr const char* kDatabaseMigrationsPathEnvVar = "RS_DB_MIGRATIONS_PATH";
 
-//misc constants
-constexpr const size_t kDefaultConnectionPoolSize = 4;
+// misc constants
+constexpr const size_t kDefaultMinPoolSize = 4;
+constexpr const size_t kDefaultMaxPoolSize = 20;
 
 boost::shared_ptr<ConnectionPool> s_connectionPool;
 
@@ -76,6 +81,19 @@ struct ConfiguredDriverVisitor : boost::static_visitor<Driver>
    }
 };
 
+struct ConnectionPoolSizeVisitor : boost::static_visitor<int>
+{
+   int operator()(const SqliteConnectionOptions& options)
+   {
+      return options.poolSize;
+   }
+
+   int operator()(const PostgresqlConnectionOptions& options)
+   {
+      return options.poolSize;
+   }
+};
+
 Error readOptions(const std::string& databaseConfigFile,
                   const boost::optional<system::User>& databaseFileUser,
                   ConnectionOptions* pOptions,
@@ -85,7 +103,7 @@ Error readOptions(const std::string& databaseConfigFile,
    // if not specified, fall back to system configuration
    FilePath optionsFile = !databaseConfigFile.empty() ?
             FilePath(databaseConfigFile) :
-            core::system::xdg::systemConfigFile("database.conf");
+            core::system::xdg::systemConfigFile(kConfigFile);
    
    Settings settings;
    Error error = settings.initialize(optionsFile);
@@ -106,6 +124,7 @@ Error readOptions(const std::string& databaseConfigFile,
       FilePath databaseDirectory = FilePath(settings.get(kSqliteDatabaseDirectory, kDefaultSqliteDatabaseDirectory));
       FilePath databaseFile = databaseDirectory.completeChildPath("rstudio.sqlite");
       options.file = databaseFile.getAbsolutePath();
+      options.poolSize = settings.getInt(kConnectionPoolSize, 0);
 
       error = databaseDirectory.ensureDirectory();
       if (error)
@@ -142,6 +161,7 @@ Error readOptions(const std::string& databaseConfigFile,
       options.secureKey = secureKey;
       options.secureKeyFileUsed = core::http::secure_cookie::getKeyFileUsed();
       options.secureKeyHash = core::http::secure_cookie::getKeyHash();
+      options.poolSize = settings.getInt(kConnectionPoolSize, 0);
       *pOptions = options;
 
       if (!options.connectionUri.empty() &&
@@ -250,9 +270,37 @@ Error initialize(const std::string& databaseConfigFile,
    if (error)
       return error;
 
-   size_t poolSize = boost::thread::hardware_concurrency();
+   // Attempt to read pool size from configuration file
+   ConnectionPoolSizeVisitor visitor;
+   size_t poolSize = boost::apply_visitor(visitor, options);
+   std::string source = databaseConfigFile.empty() ? kConfigFile : databaseConfigFile;
+
    if (poolSize == 0)
-      poolSize = kDefaultConnectionPoolSize;
+   {
+      // If no size specified in config file, start with a connection pool with one connection per
+      // logical CPU.
+      poolSize = boost::thread::hardware_concurrency();
+      source = "logical CPU count";
+
+      if (poolSize == 0)
+      {
+         // Not able to determine number of CPUs; use the default pool minimum size.
+         poolSize = kDefaultMinPoolSize;
+         source = "default minimum";
+      }
+
+      if (poolSize > kDefaultMaxPoolSize)
+      {
+         // Some machines have a very large number of logical CPUs (128 or more). A pool that large can
+         // exhaust the connection limit on the database, so cap the pool size to be gentler on the
+         // database.
+         poolSize = kDefaultMaxPoolSize;
+         source = "default maximum with " + safe_convert::numberToString(poolSize) + " CPUs";
+      }
+   }
+
+   LOG_INFO_MESSAGE("Creating database connection pool of size " +
+         safe_convert::numberToString(poolSize) + " (source: " + source + ")");
 
    error = createConnectionPool(poolSize, options, &s_connectionPool);
    if (error)
