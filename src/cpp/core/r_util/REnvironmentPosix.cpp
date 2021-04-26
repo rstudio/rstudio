@@ -111,6 +111,7 @@ FilePath systemDefaultRScript(std::string* pErrMsg)
       "/usr/local/bin/R",
       "/opt/local/bin/R",
    #ifdef __APPLE__
+      "/opt/homebrew/bin/R",
       "/Library/Frameworks/R.framework/Resources/bin/R",
    #endif
    };
