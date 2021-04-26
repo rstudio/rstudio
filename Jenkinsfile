@@ -152,6 +152,11 @@ rstudioVersionMinor  = 0
 rstudioVersionPatch  = 0
 rstudioVersionSuffix = 0
 
+// compute release branch by parsing the job name (env.GIT_BRANCH should work here but doesn't appear to), e.g.
+// "IDE/pro-pipeline/v4.3" => "v4.3"
+branchComponents = env.JOB_NAME.split("/")
+rstudioReleaseBranch = branchComponents.getAt(branchComponents.size() - 1)
+
 def trigger_external_build(build_name, wait = false) {
   // triggers downstream job passing along the important params from this build
   build job: build_name, wait: wait, parameters: [string(name: 'RSTUDIO_VERSION_MAJOR',  value: "${rstudioVersionMajor}"),
@@ -159,7 +164,7 @@ def trigger_external_build(build_name, wait = false) {
                                                   string(name: 'RSTUDIO_VERSION_PATCH',  value: "${rstudioVersionPatch}"),
                                                   string(name: 'RSTUDIO_VERSION_SUFFIX', value: "${rstudioVersionSuffix}"),
                                                   string(name: 'GIT_REVISION', value: "${env.GIT_COMMIT}"),
-                                                  string(name: 'BRANCH_NAME', value: "${env.GIT_BRANCH}"),
+                                                  string(name: 'BRANCH_NAME', value: "${rstudioReleaseBranch}"),
                                                   string(name: 'SLACK_CHANNEL', value: SLACK_CHANNEL)]
 }
 
@@ -225,7 +230,7 @@ try {
         for (int i = 0; i < containers.size(); i++) {
             // derive the tag for this image
             def current_image = containers[i]
-            def image_tag = "${current_image.os}-${current_image.arch}-${env.GIT_BRANCH}"
+            def image_tag = "${current_image.os}-${current_image.arch}-${rstudioReleaseBranch}"
 
             // ensure that this image tag has not already been built (since we
             // recycle tags for many platforms to e.g. build desktop and server
@@ -262,7 +267,7 @@ try {
                 docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:jenkins-aws') {
                   def image_cache
                   def image_name = "jenkins/ide"
-                  def image_tag = "windows-${env.GIT_BRANCH}"
+                  def image_tag = "windows-${rstudioReleaseBranch}"
                   def cache_tag = image_tag
                   def build_args = github_args
                   def docker_context = '.'
@@ -298,7 +303,7 @@ try {
                     docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:jenkins-aws') {
                         stage('prepare ws/container') {
                           prepareWorkspace()
-                          def image_tag = "${current_container.os}-${current_container.arch}-${env.GIT_BRANCH}"
+                          def image_tag = "${current_container.os}-${current_container.arch}-${rstudioReleaseBranch}"
                           current_image = docker.image("jenkins/ide:" + image_tag)
                         }
                         current_image.inside("--privileged") {
@@ -325,7 +330,7 @@ try {
             stage('prepare container') {
                checkout scm
                docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:jenkins-aws') {
-                 def image_tag = "windows-${env.GIT_BRANCH}"
+                 def image_tag = "windows-${rstudioReleaseBranch}"
                  windows_image = docker.image("jenkins/ide:" + image_tag)
                }
             }
