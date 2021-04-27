@@ -1,5 +1,5 @@
 /*
- * SessionRpc.hpp
+ * SessionAsyncRpcConnection.hpp
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -29,7 +29,7 @@ namespace session {
 namespace rpc {
 
 /**
- * Created from an HttpConnectionImpl, then put into mainConnectionQueue for RPC requests handed asynchronously 
+ * Created from an HttpConnectionImpl, then put into mainConnectionQueue for RPC requests handed asynchronously
  * by the rsession, where it first acks the http request, then later calls the rpc handler, then sends a kAsyncCompletion
  * event in the response.
  */
@@ -39,7 +39,7 @@ class AsyncRpcConnection :
         boost::noncopyable
 {
 public:
-   AsyncRpcConnection(const boost::shared_ptr<HttpConnection> ptrConnection,
+   AsyncRpcConnection(const boost::shared_ptr<HttpConnection>& ptrConnection,
                       const core::json::JsonRpcRequest& jsonRequest,
                       const std::string& asyncHandle)
       : ptrConnection_(ptrConnection), jsonRequest_(jsonRequest), asyncHandle_(asyncHandle)
@@ -51,7 +51,8 @@ public:
    virtual const core::http::Request& request() { return ptrConnection_->request(); }
 
    // Not valid for async rpc since we already replied to http
-   virtual void sendResponse(const core::http::Response& response) {
+   virtual void sendResponse(const core::http::Response& response)
+   {
       BOOST_ASSERT(false);
    }
 
@@ -61,11 +62,13 @@ public:
       rpc::endHandleRpcRequestIndirect(asyncHandle(), core::Success(), &jsonRpcResponse);
    }
 
-   virtual void close() {
+   virtual void close()
+   {
       // Not closing ptrConnection_ since it will already be closed
    }
 
-   virtual std::string requestId() const {
+   virtual std::string requestId() const
+   {
       return ptrConnection_->requestId();
    }
 
@@ -76,21 +79,24 @@ public:
    }
 
    // Differentiate from HttpConnectionImpl
-   virtual bool isAsyncRpc() const {
+   virtual bool isAsyncRpc() const
+   {
       return true;
    }
 
-   virtual boost::posix_time::ptime receivedTime() const
+   virtual std::chrono::steady_clock::time_point receivedTime() const
    {
       return ptrConnection_->receivedTime();
    }
 
-   core::json::JsonRpcRequest jsonRpcRequest() const {
+   core::json::JsonRpcRequest jsonRpcRequest() const
+   {
       return jsonRequest_;
    }
 
    // The uuid for the rpc ack and event response
-   std::string asyncHandle() const {
+   std::string asyncHandle() const
+   {
       return asyncHandle_;
    }
 

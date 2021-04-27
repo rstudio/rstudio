@@ -240,6 +240,7 @@ Error executeSafely(boost::function<void()> function)
    if (!isMainThread())
    {
       LOG_ERROR_MESSAGE("executeSafely called from thread other than main");
+      return rCodeExecutionError("execute function called from thread other than main", ERROR_LOCATION);
    }
    // disable custom error handlers while we execute code
    DisableErrorHandlerScope disableErrorHandler;
@@ -464,7 +465,7 @@ Error RFunction::call(SEXP evalNS, bool safely, SEXP* pResultSEXP,
    }
    if (!isMainThread())
    {
-      LOG_ERROR_MESSAGE("Attempt to call R function: " + functionName_ + " on thread than main");
+      LOG_ERROR_MESSAGE("Attempt to call R function: " + functionName_ + " on thread other than main");
       return rCodeExecutionError("Attempt to call R function on thread other than main", ERROR_LOCATION);
    }
 
