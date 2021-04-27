@@ -19,6 +19,7 @@
 * Fixed issue where inspecting a null Python object would cause emit errors to console (#8185)
 * Detect active Python version when publishing content (#8636)
 * Use active Python version when knitting R Markdown files (#8854)
+* The active version of Python is now placed on the PATH for new Terminal sessions (#9188)
 
 ### RStudio Workbench
 
