@@ -36,11 +36,11 @@ namespace rstudio {
 namespace session {
 
 typedef boost::function<bool(const boost::shared_ptr<HttpConnection>&,
-                             const boost::posix_time::ptime)>
+                             const std::chrono::steady_clock::time_point)>
         HttpConnectionMatcher;
 
 typedef boost::function<boost::shared_ptr<HttpConnection>(const boost::shared_ptr<HttpConnection>&,
-                                                          const boost::posix_time::ptime)>
+                                                          const std::chrono::steady_clock::time_point)>
         HttpConnectionConverter;
 
 class HttpConnectionQueue : boost::noncopyable
@@ -65,11 +65,11 @@ public:
 
    boost::shared_ptr<HttpConnection> dequeMatchingConnection(
                const HttpConnectionMatcher matcher,
-               const boost::posix_time::ptime now);
+               const std::chrono::steady_clock::time_point now);
 
    void convertConnections(
                const HttpConnectionConverter matcher,
-               const boost::posix_time::ptime now);
+               const std::chrono::steady_clock::time_point now);
 
 private:
    boost::shared_ptr<HttpConnection> doDequeConnection();

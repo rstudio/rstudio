@@ -80,7 +80,7 @@ public:
 
    virtual bool isAsyncRpc() const = 0;
 
-   virtual boost::posix_time::ptime receivedTime() const = 0;
+   virtual std::chrono::steady_clock::time_point receivedTime() const = 0;
 };
 
 

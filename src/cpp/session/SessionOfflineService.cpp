@@ -43,8 +43,8 @@ namespace rstudio {
 namespace session {
 
 namespace {
-   boost::posix_time::time_duration s_handleOfflineDuration;
-   boost::posix_time::time_duration s_asyncRpcDuration;
+   std::chrono::milliseconds s_handleOfflineDuration;
+   std::chrono::milliseconds s_asyncRpcDuration;
 }
 
 OfflineService& offlineService()
@@ -114,20 +114,22 @@ void OfflineService::stop()
    {
       // the main thread is the one who calls stop() and it should 
       // NEVER be interrupted for any reason
-      LOG_WARNING_MESSAGE("thread interrupted during stop");
+      LOG_WARNING_MESSAGE("OfflineService thread interrupted during stop");
    }
 }
 
 // Called for each connection in mainConnectionQueue until an offlineable request is found.
 bool offlineConnectionMatcher(boost::shared_ptr<HttpConnection> ptrHttpConn,
-                              boost::posix_time::ptime now)
+                              std::chrono::steady_clock::time_point now)
 {
    if (!rpc::isOfflineableRequest(ptrHttpConn))
       return false;
 
-   // Weird clock problem!
    if (now < ptrHttpConn->receivedTime())
+   {
+      LOG_ERROR_MESSAGE("offlineConnectionMatcher: ignoring connection received in the future");
       return false;
+   }
 
    // The R runtime is busy and we received this long enough ago
    if (now - ptrHttpConn->receivedTime() > s_handleOfflineDuration)
@@ -138,7 +140,7 @@ bool offlineConnectionMatcher(boost::shared_ptr<HttpConnection> ptrHttpConn,
 // Called for each connection in mainConnectionQueue - for any stale connections, convert to async
 // and return the new AsyncRpcConnection
 boost::shared_ptr<HttpConnection> asyncConnectionConverter(boost::shared_ptr<HttpConnection> ptrHttpConn,
-                                                           boost::posix_time::ptime now)
+                                                           std::chrono::steady_clock::time_point now)
 {
    if (!ptrHttpConn->isAsyncRpc() &&
        http_methods::isJsonRpcRequest(ptrHttpConn) &&
@@ -148,10 +150,9 @@ boost::shared_ptr<HttpConnection> asyncConnectionConverter(boost::shared_ptr<Htt
 
       if (http_methods::connectionDebugEnabled())
       {
-         boost::posix_time::time_duration duration(now - ptrHttpConn->receivedTime());
+         std::chrono::duration<double> duration = now - ptrHttpConn->receivedTime();
          LOG_DEBUG_MESSAGE("Async reply:         " + ptrHttpConn->request().uri() +
-                           " after: " + std::to_string(duration.seconds()) +
-                           "." + std::to_string(duration.fractional_seconds()).substr(0,2));
+                           " after: " + string_utils::formatDouble(duration.count(), 2));
       }
 
       return asyncConnection;
@@ -190,8 +191,8 @@ void OfflineService::run()
       if (sleepMillis == 0 || (handleOfflineMillis != 0 && handleOfflineMillis < sleepMillis))
          sleepMillis = handleOfflineMillis;
 
-      s_asyncRpcDuration = boost::posix_time::milliseconds(asyncRpcMillis);
-      s_handleOfflineDuration = boost::posix_time::milliseconds(handleOfflineMillis);
+      s_asyncRpcDuration = std::chrono::milliseconds(asyncRpcMillis);
+      s_handleOfflineDuration = std::chrono::milliseconds(handleOfflineMillis);
 
       LOG_DEBUG_MESSAGE("OfflineService started with session-async-rpc-timeout-ms=" + std::to_string(asyncRpcMillis) +
                         " handle-offline-timeout-ms=" + std::to_string(handleOfflineMillis) + " polling every: " + std::to_string(sleepMillis) + "ms");
@@ -201,7 +202,7 @@ void OfflineService::run()
       // get alias to mainConnectionQueue
       HttpConnectionQueue& mainConnectionQueue = httpConnectionListener().mainConnectionQueue();
       bool serverStopped = false;
-      int emitMemEventsCt = 3000 / sleepMillis;
+      int emitMemEventsCt = prefs::userPrefs().memoryQueryIntervalSeconds() * 1000 / sleepMillis;
       if (emitMemEventsCt == 0)
          emitMemEventsCt = 1;
       int emitMemEventsIndex = 0;
@@ -229,7 +230,7 @@ void OfflineService::run()
                continue;
             }
 
-            boost::posix_time::ptime now = boost::posix_time::microsec_clock::universal_time();
+            std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
 
             if (handleOfflineMillis > 0)
             {
@@ -242,18 +243,16 @@ void OfflineService::run()
                   {
                      if (http_methods::connectionDebugEnabled())
                      {
-                        boost::posix_time::time_duration beforeTime(now - ptrConnection->receivedTime());
+                        std::chrono::duration<double> beforeTime = now - ptrConnection->receivedTime();
                         LOG_DEBUG_MESSAGE("- Handle offline:    " + ptrConnection->request().uri() +
-                                          " after: " + std::to_string(beforeTime.seconds()) +
-                                          "." + std::to_string(beforeTime.fractional_seconds()).substr(0,2));
+                                          " after: " + string_utils::formatDouble(beforeTime.count(), 2));
 
                         http_methods::handleConnection(ptrConnection, http_methods::BackgroundConnection);
 
-                        boost::posix_time::ptime endReq = boost::posix_time::microsec_clock::universal_time();
-                        boost::posix_time::time_duration afterTime(endReq - now);
+                        std::chrono::steady_clock::time_point endReq = std::chrono::steady_clock::now();
+                        std::chrono::duration<double> afterTime = endReq - now;
                         LOG_DEBUG_MESSAGE("--- complete:        " + ptrConnection->request().uri() +
-                                          " in: " + std::to_string(afterTime.seconds()) +
-                                          "." + std::to_string(afterTime.fractional_seconds()).substr(0,2));
+                                          " in: " + string_utils::formatDouble(afterTime.count(), 2));
                         now = endReq;
                      }
                      else

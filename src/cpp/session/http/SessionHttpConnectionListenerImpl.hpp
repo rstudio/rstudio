@@ -38,6 +38,8 @@
 
 #include <core/FileSerializer.hpp>
 
+#include <core/StringUtils.hpp>
+
 #include <session/SessionOptions.hpp>
 #include <session/SessionConstants.hpp>
 
@@ -346,17 +348,14 @@ private:
             // TODO: handleOffline - should these be put into a separate queue and run in a dedicated thread?
             if (http_methods::connectionDebugEnabled())
             {
-               boost::posix_time::ptime now = boost::posix_time::microsec_clock::universal_time();
-               boost::posix_time::time_duration beforeTime(now - ptrConnection->receivedTime());
+               std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+               std::chrono::duration<double> beforeTime = now - ptrConnection->receivedTime();
                LOG_DEBUG_MESSAGE("- Handle immediate:  " + ptrConnection->request().uri() +
-                                 " after: " + std::to_string(beforeTime.seconds()) +
-                                 "." + std::to_string(beforeTime.fractional_seconds()).substr(0,2));
+                                 " after: " + core::string_utils::formatDouble(beforeTime.count(), 2));
                http_methods::handleConnection(ptrConnection, http_methods::ForegroundConnection);
-               boost::posix_time::time_duration afterTime(
-                                 boost::posix_time::microsec_clock::universal_time() - now);
+               std::chrono::duration<double> afterTime = std::chrono::steady_clock::now() - now;
                LOG_DEBUG_MESSAGE("--- complete:        " + ptrConnection->request().uri() +
-                                 " in: " + std::to_string(afterTime.seconds()) +
-                                 "." + std::to_string(afterTime.fractional_seconds()).substr(0,2));
+                                 " in: " + core::string_utils::formatDouble(afterTime.count(), 2));
             }
             else
                http_methods::handleConnection(ptrConnection, http_methods::ForegroundConnection);
@@ -369,11 +368,10 @@ private:
          {
             if (http_methods::connectionDebugEnabled())
             {
-               boost::posix_time::ptime now = boost::posix_time::microsec_clock::universal_time();
-               boost::posix_time::time_duration beforeTime(now - ptrConnection->receivedTime());
+               std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+               std::chrono::duration<double> beforeTime = now - ptrConnection->receivedTime();
                LOG_DEBUG_MESSAGE("Async imm reply:     " + ptrConnection->request().uri() +
-                                 " after: " + std::to_string(beforeTime.seconds()) +
-                                 "." + std::to_string(beforeTime.fractional_seconds()).substr(0,2));
+                                 " after: " + core::string_utils::formatDouble(beforeTime.count(), 2));
             }
             boost::shared_ptr<HttpConnection> asyncConnection = http_methods::handleAsyncRpc(ptrHttpConnection);
             if (asyncConnection)

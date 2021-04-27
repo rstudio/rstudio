@@ -323,7 +323,8 @@ void polledEventHandler()
       {
          if ( isMethod(ptrConnection, kClientInit) )
          {
-            if (ptrConnection->isAsyncRpc()) {
+            if (ptrConnection->isAsyncRpc())
+            {
                BOOST_ASSERT(false); // The listener thread skips client_init when converting RPC to async
             }
             // client_init means the user is attempting to reload the browser
@@ -338,11 +339,10 @@ void polledEventHandler()
          {
             if (s_connectionDebugEnabled)
             {
-               boost::posix_time::time_duration duration(
-                       boost::posix_time::microsec_clock::universal_time() - ptrConnection->receivedTime());
+               std::chrono::duration<double> duration =
+                       std::chrono::steady_clock::now() - ptrConnection->receivedTime();
                LOG_DEBUG_MESSAGE("Handle background: " + ptrConnection->request().uri() +
-                                 " after: " + std::to_string(duration.seconds()) +
-                                 "." + std::to_string(duration.fractional_seconds()).substr(0,2));
+                                 " after: " + string_utils::formatDouble(duration.count(), 2));
             }
             handleConnection(ptrConnection, http_methods::BackgroundConnection);
          }
@@ -579,16 +579,14 @@ bool waitForMethod(const std::string& method,
          {
             if (s_connectionDebugEnabled)
             {
-               boost::posix_time::ptime now = boost::posix_time::microsec_clock::universal_time();
-               boost::posix_time::time_duration beforeTime(now - ptrConnection->receivedTime());
+               std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+               std::chrono::duration<double> beforeTime = now - ptrConnection->receivedTime();
                LOG_DEBUG_MESSAGE("- Handle foreground: " + ptrConnection->request().uri() +
-                                 " after: " + std::to_string(beforeTime.seconds()) +
-                                 "." + std::to_string(beforeTime.fractional_seconds()).substr(0,2));
+                                 " after: " + string_utils::formatDouble(beforeTime.count(), 2));
                handleConnection(ptrConnection, ForegroundConnection);
-               boost::posix_time::time_duration afterTime(boost::posix_time::microsec_clock::universal_time() - now);
+               std::chrono::duration<double> afterTime = std::chrono::steady_clock::now() - now;
                LOG_DEBUG_MESSAGE("--- complete:        " + ptrConnection->request().uri() +
-                                 " in: " + std::to_string(afterTime.seconds()) +
-                                 "." + std::to_string(afterTime.fractional_seconds()).substr(0,2));
+                                 " in: " + string_utils::formatDouble(afterTime.count(), 2));
             }
             else
                handleConnection(ptrConnection, ForegroundConnection);

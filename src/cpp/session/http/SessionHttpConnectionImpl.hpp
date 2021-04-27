@@ -62,7 +62,7 @@ public:
                       const HeadersParsedHandler& headersParsed,
                       const Handler& handler)
       : socket_(ioService), headersParsedHandler_(headersParsed), handler_(handler),
-        receivedTime_(boost::posix_time::microsec_clock::universal_time())
+        receivedTime_(std::chrono::steady_clock::now())
    {
    }
 
@@ -192,7 +192,7 @@ public:
       return false;
    }
 
-   virtual boost::posix_time::ptime receivedTime() const
+   virtual std::chrono::steady_clock::time_point receivedTime() const
    {
       return receivedTime_;
    }
@@ -318,7 +318,7 @@ private:
    std::string requestId_;
    HeadersParsedHandler headersParsedHandler_;
    Handler handler_;
-   boost::posix_time::ptime receivedTime_;
+   std::chrono::steady_clock::time_point receivedTime_;
 };
 
 } // namespace session

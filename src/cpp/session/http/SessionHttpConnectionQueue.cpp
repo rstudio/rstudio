@@ -139,7 +139,7 @@ boost::posix_time::ptime HttpConnectionQueue::lastConnectionTime()
 
 boost::shared_ptr<HttpConnection> HttpConnectionQueue::dequeMatchingConnection(
         const HttpConnectionMatcher matcher,
-        const boost::posix_time::ptime now)
+        const std::chrono::steady_clock::time_point now)
 {
    LOCK_MUTEX(*pMutex_)
       {
@@ -161,7 +161,7 @@ boost::shared_ptr<HttpConnection> HttpConnectionQueue::dequeMatchingConnection(
 
 void HttpConnectionQueue::convertConnections(
         const HttpConnectionConverter converter,
-        const boost::posix_time::ptime now)
+        const std::chrono::steady_clock::time_point now)
 {
    LOCK_MUTEX(*pMutex_)
       {
