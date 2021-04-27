@@ -127,7 +127,7 @@ bool ClientEventQueue::hasEvents()
   
 void ClientEventQueue::remove(std::vector<ClientEvent>* pEvents)
 {
-   int numEvents;
+   int numEvents = -1;
    LOCK_MUTEX(*pMutex_)
    {
       numEvents = pendingEvents_.size();
