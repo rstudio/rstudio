@@ -843,7 +843,7 @@ public class AceEditor implements DocDisplay,
                // Markdown completion manager
                if (fileType_.isMarkdown() || fileType_.isRmd())
                {
-                  managers.put(DocumentMode.Mode.MARKDOWN, new MarkdownCompletionManager(
+                  managers.put(DocumentMode.Mode.MARKDOWN, MarkdownCompletionManager.create(
                         editor,
                         new CompletionPopupPanel(),
                         server_,
@@ -853,7 +853,7 @@ public class AceEditor implements DocDisplay,
                // Python completion manager
                if (fileType_.isPython() || fileType_.isRmd())
                {
-                  managers.put(DocumentMode.Mode.PYTHON, new PythonCompletionManager(
+                  managers.put(DocumentMode.Mode.PYTHON, PythonCompletionManager.create(
                         editor,
                         new CompletionPopupPanel(),
                         server_,
@@ -872,7 +872,7 @@ public class AceEditor implements DocDisplay,
                // SQL completion manager
                if (fileType_.isSql() || fileType_.isRmd())
                {
-                  managers.put(DocumentMode.Mode.SQL, new SqlCompletionManager(
+                  managers.put(DocumentMode.Mode.SQL, SqlCompletionManager.create(
                         editor,
                         new CompletionPopupPanel(),
                         server_,
@@ -882,7 +882,7 @@ public class AceEditor implements DocDisplay,
                // Stan completion manager
                if (fileType_.isStan() || fileType_.isRmd())
                {
-                  managers.put(DocumentMode.Mode.STAN, new StanCompletionManager(
+                  managers.put(DocumentMode.Mode.STAN, StanCompletionManager.create(
                         editor,
                         new CompletionPopupPanel(),
                         server_,
