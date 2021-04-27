@@ -143,8 +143,8 @@ def limit_builds(containers) {
 def prepareWorkspace(){ // accessory to clean workspace and checkout
   step([$class: 'WsCleanup'])
   checkout scm
-  sh "env"
-  rstudioBuildCommit = env.GIT_COMMIT
+  // record the commit for invoking downstream builds
+  rstudioBuildCommit = sh(returnStdout: true, script: 'git rev-parse HEAD')
   sh 'git reset --hard && git clean -ffdx' // lifted from rstudio/connect
 }
 
