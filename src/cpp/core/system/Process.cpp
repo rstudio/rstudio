@@ -103,7 +103,7 @@ Error runChild(boost::shared_ptr<AsyncChildProcess> pChild,
                const ProcessCallbacks& callbacks)
 {
    // run the child
-   RECURSIVE_LOCK_MUTEX(*pMutex);
+   RECURSIVE_LOCK_MUTEX(*pMutex)
    {
       Error error = pChild->run(callbacks);
       if (error)
