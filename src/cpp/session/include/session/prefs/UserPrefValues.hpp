@@ -385,6 +385,7 @@ namespace prefs {
 #define kCommandPaletteMru "command_palette_mru"
 #define kShowMemoryUsage "show_memory_usage"
 #define kMemoryQueryIntervalSeconds "memory_query_interval_seconds"
+#define kTerminalPythonIntegration "terminal_python_integration"
 
 class UserPrefValues: public Preferences
 {
@@ -1703,6 +1704,12 @@ public:
     */
    int memoryQueryIntervalSeconds();
    core::Error setMemoryQueryIntervalSeconds(int val);
+
+   /**
+    * Enable Python terminal hooks. When enabled, the RStudio-configured version of Python will be placed on the PATH.
+    */
+   bool terminalPythonIntegration();
+   core::Error setTerminalPythonIntegration(bool val);
 
 };
 

@@ -2016,26 +2016,36 @@ options(reticulate.repl.teardown = function()
 
 # Attempts to infer the current Python interpreter used by reticulate
 .rs.addFunction("inferReticulatePython", function() {
+   
    # Use existing RETICULATE_PYTHON if set
-   env_value <- Sys.getenv("RETICULATE_PYTHON")
-   if (nzchar(env_value)) {
-      return(env_value)
+   python <- Sys.getenv("RETICULATE_PYTHON", unset = NA)
+   if (!is.na(python))
+      return(python)
+   
+   # if reticulate is already loaded, check and see if it's already
+   # configured to use a particular copy of Python
+   loaded <-
+      "reticulate" %in% loadedNamespaces() &&
+      reticulate::py_available(initialize = FALSE)
+   
+   if (loaded) {
+      config <- reticulate::py_config()
+      return(config$python)
    }
 
-   # If the reticulate package is installed, we can ask it what it's using
+   # if the user has configured RStudio to use a particular version
+   # of Python, then use that
+   python <- .rs.readUiPref("python_path")
+   if (!is.null(python))
+      return(path.expand(python))
+   
+   # if reticulate is installed, then try to load it and ask what
+   # version of Python it would choose to bind to.
+   #
+   # TODO: we might want to avoid loading reticulate if possible here?
    if (.rs.isPackageInstalled("reticulate")) {
-      if (reticulate::py_available(initialize = FALSE)) {
-         # Python is available/initialized; use it
-         py_config <- reticulate::py_config()
-         if (!is.null(py_config) && !is.null(py_config$python)) {
-            return(py_config$python)
-         }
-      } 
-
-      # Couldn't find initialized Python; attempt to discover it
-
-      # First, turn off Miniconda support in reticulate so that it doesn't 
-      # prompt the user to install it during Python version discovery
+      
+      # avoid miniconda prompts
       prev_miniconda <- Sys.getenv("RETICULATE_MINICONDA_ENABLED")
       Sys.setenv(RETICULATE_MINICONDA_ENABLED = "FALSE")
 
@@ -2051,8 +2061,10 @@ options(reticulate.repl.teardown = function()
       if (!is.null(py_config) && !is.null(py_config$python)) {
          return(py_config$python)
       }
+      
    }
 
-   # We didn't find any indication of the python version
+   # we didn't find any indication of the python version
    ""
+   
 })

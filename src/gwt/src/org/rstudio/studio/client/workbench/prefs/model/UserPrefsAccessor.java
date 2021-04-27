@@ -3111,6 +3111,18 @@ public class UserPrefsAccessor extends Prefs
          10);
    }
 
+   /**
+    * Enable Python terminal hooks. When enabled, the RStudio-configured version of Python will be placed on the PATH.
+    */
+   public PrefValue<Boolean> terminalPythonIntegration()
+   {
+      return bool(
+         "terminal_python_integration",
+         "Enable terminal Python integration", 
+         "Enable Python terminal hooks. When enabled, the RStudio-configured version of Python will be placed on the PATH.", 
+         true);
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -3551,6 +3563,8 @@ public class UserPrefsAccessor extends Prefs
          showMemoryUsage().setValue(layer, source.getBool("show_memory_usage"));
       if (source.hasKey("memory_query_interval_seconds"))
          memoryQueryIntervalSeconds().setValue(layer, source.getInteger("memory_query_interval_seconds"));
+      if (source.hasKey("terminal_python_integration"))
+         terminalPythonIntegration().setValue(layer, source.getBool("terminal_python_integration"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -3774,6 +3788,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(commandPaletteMru());
       prefs.add(showMemoryUsage());
       prefs.add(memoryQueryIntervalSeconds());
+      prefs.add(terminalPythonIntegration());
       return prefs;
    }
    

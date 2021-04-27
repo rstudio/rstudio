@@ -2870,6 +2870,19 @@ core::Error UserPrefValues::setMemoryQueryIntervalSeconds(int val)
    return writePref("memory_query_interval_seconds", val);
 }
 
+/**
+ * Enable Python terminal hooks. When enabled, the RStudio-configured version of Python will be placed on the PATH.
+ */
+bool UserPrefValues::terminalPythonIntegration()
+{
+   return readPref<bool>("terminal_python_integration");
+}
+
+core::Error UserPrefValues::setTerminalPythonIntegration(bool val)
+{
+   return writePref("terminal_python_integration", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -3092,6 +3105,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kCommandPaletteMru,
       kShowMemoryUsage,
       kMemoryQueryIntervalSeconds,
+      kTerminalPythonIntegration,
    });
 }
    
