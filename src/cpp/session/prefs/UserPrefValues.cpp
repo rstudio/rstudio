@@ -1857,6 +1857,19 @@ core::Error UserPrefValues::setSortFileNamesNaturally(bool val)
 }
 
 /**
+ * Whether to change the directory in the Files pane automatically when the working directory in R changes.
+ */
+bool UserPrefValues::syncFilesPaneWorkingDir()
+{
+   return readPref<bool>("sync_files_pane_working_dir");
+}
+
+core::Error UserPrefValues::setSyncFilesPaneWorkingDir(bool val)
+{
+   return writePref("sync_files_pane_working_dir", val);
+}
+
+/**
  * The visibility of the Jobs tab.
  */
 std::string UserPrefValues::jobsTabVisibility()
@@ -3014,6 +3027,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kAlwaysShownFiles,
       kAlwaysShownExtensions,
       kSortFileNamesNaturally,
+      kSyncFilesPaneWorkingDir,
       kJobsTabVisibility,
       kShowLauncherJobsTab,
       kLauncherJobsSort,
