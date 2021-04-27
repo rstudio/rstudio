@@ -59,6 +59,8 @@
 
 #include <session/projects/SessionProjects.hpp>
 
+#include <session/prefs/UserPrefs.hpp>
+
 #include "SessionFilesQuotas.hpp"
 #include "SessionFilesListingMonitor.hpp"
 #include "SessionGit.hpp"
@@ -75,6 +77,9 @@ namespace {
 
 // monitor for file listings
 FilesListingMonitor s_filesListingMonitor;
+
+// current directory shown in files pane
+FilePath s_currentDir;
 
 // make sure that monitoring persists accross suspended sessions
 const char * const kFilesMonitoredPath = "files.monitored-path";
@@ -117,6 +122,54 @@ void onClientInit()
    quotas::checkQuotaStatus();
 }
    
+void onDetectChanges(module_context::ChangeSource source)
+{
+   // attempt to determine whether the user has changed the working directory with R
+
+   if (source != module_context::ChangeSourceREPL)
+   {
+      // only consider REPL changes so we don't pick up transient working directory switches from
+      // e.g. RPCs
+      return;
+   }
+
+   if (s_currentDir.isEmpty())
+   {
+      // do not attempt to detect a change before we have picked up a working directory (usually via
+      // list_files)
+      return;
+   }
+
+   if (!prefs::userPrefs().syncFilesPaneWorkingDir())
+   {
+      // ignore if we aren't tracking the working directory
+      return;
+   }
+
+   FilePath emptyPath;
+   FilePath workingPath = FilePath::safeCurrentPath(emptyPath);
+   if (workingPath.isEmpty())
+   {
+      // couldn't get the current working directory, don't do anything
+      return;
+   }
+
+   if (workingPath.isEquivalentTo(s_currentDir))
+   {
+      // the current working directory is already the active one in the Files pane; no action needed
+      return;
+   }
+
+   // if we got this far, then the current working directory is not the one we're showing. mark the
+   // new one as current...
+   s_currentDir = workingPath;
+
+   // ... then tell the client to navigate to the new directory
+   json::Object dataJson;
+   dataJson["directory"] = module_context::createAliasedPath(workingPath);
+   dataJson["activate"] = false; // don't focus the pane since this action is implicit
+   ClientEvent event(client_events::kDirectoryNavigate, dataJson);
+}
 
 // extract a set of FilePath object from a list of home path relative strings
 Error extractFilePaths(const json::Array& files, 
@@ -256,6 +309,9 @@ Error listFiles(const json::JsonRpcRequest& request, json::JsonRpcResponse* pRes
          if (error)
             return error;
       }
+
+      // monitoring is only used by the Files pane, so this is our new current directory
+      s_currentDir = targetPath;
    }
    else
    {
@@ -1344,6 +1400,7 @@ Error initialize()
    
    // subscribe to events
    events().onClientInit.connect(bind(onClientInit));
+   events().onDetectChanges.connect(bind(onDetectChanges));
 
    RS_REGISTER_CALL_METHOD(rs_readLines, 1);
    RS_REGISTER_CALL_METHOD(rs_pathInfo, 1);
