@@ -75,13 +75,8 @@ namespace session {
 
 namespace {
 
-// TODO: asyncRpc - save_document_diff will call isWebsiteProject() that
-// needs to check the R runtime for whether Rmarkdown is installed. This is
-// not entirely accurate since if the first call to isWebsiteProject() is made
-// offline, it will return the wrong thing. Can we just cache a flag globally
-// whether RMarkdown is available - compute at startup and update when new libs
-// are added or will that state ever change?
-bool s_lastWebsiteProject;
+bool s_rmarkdownAvailable;
+bool s_rmarkdownAvailableInited;
 
 #ifdef _WIN32
 
@@ -161,6 +156,25 @@ Error detectWebsiteOutputDir(const std::string& siteDir,
 }
 
 std::string s_websiteOutputDir;
+
+bool haveMarkdownToHTMLOption()
+{
+   SEXP markdownToHTMLOption = r::options::getOption("rstudio.markdownToHTML");
+   return !r::sexp::isNull(markdownToHTMLOption);
+}
+
+void initRmarkdownPackageAvailable()
+{
+   s_rmarkdownAvailableInited = true;
+   if (!haveMarkdownToHTMLOption())
+   {
+      s_rmarkdownAvailable = r::util::hasRequiredVersion("3.0");
+   }
+   else
+   {
+      s_rmarkdownAvailable = false;
+   }
+}
 
 void initWebsiteOutputDir()
 {
@@ -961,11 +975,6 @@ void initEnvironment()
       LOG_ERROR(error);
 }
 
-bool haveMarkdownToHTMLOption()
-{
-   SEXP markdownToHTMLOption = r::options::getOption("rstudio.markdownToHTML");
-   return !r::sexp::isNull(markdownToHTMLOption);
-}
 
 // when the RMarkdown package is installed, give .Rmd files the extended type
 // "rmarkdown", unless there is a marker that indicates we should
@@ -1560,14 +1569,17 @@ bool pptAvailable()
 
 bool rmarkdownPackageAvailable()
 {
-   if (!haveMarkdownToHTMLOption())
+   if (!s_rmarkdownAvailableInited)
    {
-      return r::util::hasRequiredVersion("3.0");
+      if (!r::exec::isMainThread())
+      {
+         LOG_WARNING_MESSAGE(" Accessing rmarkdownPackageAvailable() from thread other than main");
+         return false;
+      }
+      initRmarkdownPackageAvailable();
    }
-   else
-   {
-      return false;
-   }
+
+   return s_rmarkdownAvailable;
 }
 
 bool isSiteProject(const std::string& site)
@@ -1644,19 +1656,11 @@ namespace module_context {
 
 bool isWebsiteProject()
 {
-   if (!r::exec::isMainThread())
-      return s_lastWebsiteProject;
-
    if (!modules::rmarkdown::rmarkdownPackageAvailable())
-   {
-      s_lastWebsiteProject = false;
       return false;
-   }
 
-   bool res = (projects::projectContext().config().buildType ==
-               r_util::kBuildTypeWebsite);
-   s_lastWebsiteProject = res;
-   return res;
+   return (projects::projectContext().config().buildType ==
+           r_util::kBuildTypeWebsite);
 }
 
 // used to determine if this is both a website build target AND a bookdown target
