@@ -143,6 +143,7 @@ def limit_builds(containers) {
 def prepareWorkspace(){ // accessory to clean workspace and checkout
   step([$class: 'WsCleanup'])
   checkout scm
+  sh env
   rstudioBuildCommit = env.GIT_COMMIT
   sh 'git reset --hard && git clean -ffdx' // lifted from rstudio/connect
 }
@@ -160,7 +161,6 @@ branchComponents = env.JOB_NAME.split("/")
 rstudioReleaseBranch = branchComponents[branchComponents.size() - 1]
 
 def trigger_external_build(build_name, wait = false) {
-  sh env
   // triggers downstream job passing along the important params from this build
   build job: build_name, wait: wait, parameters: [string(name: 'RSTUDIO_VERSION_MAJOR',  value: "${rstudioVersionMajor}"),
                                                   string(name: 'RSTUDIO_VERSION_MINOR',  value: "${rstudioVersionMinor}"),
