@@ -17,22 +17,22 @@ properties([
 
 def compile_package(os, type, flavor, variant) {
   // start with major, minor, and patch versions
-  def env = "RSTUDIO_VERSION_MAJOR=${rstudioVersionMajor} RSTUDIO_VERSION_MINOR=${rstudioVersionMinor} RSTUDIO_VERSION_PATCH=${rstudioVersionPatch}"
+  def envVars = "RSTUDIO_VERSION_MAJOR=${rstudioVersionMajor} RSTUDIO_VERSION_MINOR=${rstudioVersionMinor} RSTUDIO_VERSION_PATCH=${rstudioVersionPatch}"
 
   // add version suffix if present
   if (rstudioVersionSuffix != 0) {
-   env = "${env} RSTUDIO_VERSION_SUFFIX=${rstudioVersionSuffix}"
+   envVars = "${envVars} RSTUDIO_VERSION_SUFFIX=${rstudioVersionSuffix}"
   }
 
   // add OS that the package was built for
-  env = "${env} PACKAGE_OS=\"${os}\""
+  envVars = "${envVars} PACKAGE_OS=\"${os}\""
 
   // currently our nodes have access to 4 cores, so spread out the compile job
   // a little (currently using up all 4 cores causes problems)
-  env = "${env} MAKEFLAGS=-j2"
+  envVars = "${envVars} MAKEFLAGS=-j2"
 
   // perform the compilation
-  sh "cd package/linux && ${env} ./make-${flavor}-package ${type} clean ${variant} && cd ../.."
+  sh "cd package/linux && ${envVars} ./make-${flavor}-package ${type} clean ${variant} && cd ../.."
 
   // sign the new package
   withCredentials([file(credentialsId: 'gpg-codesign-private-key', variable: 'codesignKey'),
