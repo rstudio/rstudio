@@ -143,6 +143,7 @@ def limit_builds(containers) {
 def prepareWorkspace(){ // accessory to clean workspace and checkout
   step([$class: 'WsCleanup'])
   checkout scm
+  rstudioBuildCommit = env.GIT_COMMIT
   sh 'git reset --hard && git clean -ffdx' // lifted from rstudio/connect
 }
 
@@ -151,6 +152,7 @@ rstudioVersionMajor  = 0
 rstudioVersionMinor  = 0
 rstudioVersionPatch  = 0
 rstudioVersionSuffix = 0
+rstudioBuildCommit   = ""
 
 // compute release branch by parsing the job name (env.GIT_BRANCH should work here but doesn't appear to), e.g.
 // "IDE/pro-pipeline/v4.3" => "v4.3"
@@ -163,7 +165,7 @@ def trigger_external_build(build_name, wait = false) {
                                                   string(name: 'RSTUDIO_VERSION_MINOR',  value: "${rstudioVersionMinor}"),
                                                   string(name: 'RSTUDIO_VERSION_PATCH',  value: "${rstudioVersionPatch}"),
                                                   string(name: 'RSTUDIO_VERSION_SUFFIX', value: "${rstudioVersionSuffix}"),
-                                                  string(name: 'GIT_REVISION', value: "${env.GIT_COMMIT}"),
+                                                  string(name: 'GIT_REVISION', value: "${rstudioBuildCommit}"),
                                                   string(name: 'BRANCH_NAME', value: "${rstudioReleaseBranch}"),
                                                   string(name: 'SLACK_CHANNEL', value: SLACK_CHANNEL)]
 }
