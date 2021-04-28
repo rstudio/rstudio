@@ -335,15 +335,6 @@ void setDeviceAttributes(pDevDesc pDev, pDevDesc pShadow)
       
       pLhs->canGenIdle      = pRhs->canGenIdle;
       
-      pLhs->setPattern      = pRhs->setPattern;
-      pLhs->releasePattern  = pRhs->releasePattern;
-      pLhs->setClipPath     = pRhs->setClipPath;
-      pLhs->releaseClipPath = pRhs->releaseClipPath;
-      pLhs->setMask         = pRhs->setMask;
-      pLhs->releaseMask     = pRhs->releaseMask;
-      pLhs->deviceVersion   = pRhs->deviceVersion;
-      pLhs->deviceClip      = pRhs->deviceClip;
-      
       break;
    }
       
