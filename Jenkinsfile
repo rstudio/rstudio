@@ -178,7 +178,6 @@ messagePrefix = "Jenkins ${env.JOB_NAME} build: <${env.BUILD_URL}display/redirec
 try {
     timestamps {
         def containers = [
-        /*
           [os: 'opensuse',   arch: 'x86_64', flavor: 'server',  variant: '',    package_os: 'OpenSUSE'],
           [os: 'opensuse15', arch: 'x86_64', flavor: 'desktop', variant: '',    package_os: 'OpenSUSE 15'],
           [os: 'opensuse15', arch: 'x86_64', flavor: 'server',  variant: '',    package_os: 'OpenSUSE 15'],
@@ -190,9 +189,8 @@ try {
           [os: 'bionic',     arch: 'amd64',  flavor: 'desktop', variant: '',    package_os: 'Ubuntu Bionic'],
           [os: 'debian9',    arch: 'x86_64', flavor: 'server',  variant: '',    package_os: 'Debian 9'],
           [os: 'debian9',    arch: 'x86_64', flavor: 'desktop', variant: '',    package_os: 'Debian 9'],
-          [os: 'centos8',    arch: 'x86_64', flavor: 'server',  variant: '',     package_os: 'CentOS 8'],
-          */
-          [os: 'centos8',    arch: 'x86_64', flavor: 'desktop', variant: '',     package_os: 'CentOS 8']
+          [os: 'centos8',    arch: 'x86_64', flavor: 'server',  variant: '',    package_os: 'CentOS 8'],
+          [os: 'centos8',    arch: 'x86_64', flavor: 'desktop', variant: '',    package_os: 'CentOS 8']
         ]
         containers = limit_builds(containers)
 
@@ -259,7 +257,6 @@ try {
         }
 
         // prepare container for windows builder
-        /*
         parallel_images["windows"] = {
           node('windows') {
             stage('prepare Windows container') {
@@ -294,7 +291,6 @@ try {
             }
           }
         }
-        */
 
         parallel parallel_images
 
@@ -332,7 +328,6 @@ try {
             }
         }
 
-        /*
         parallel_containers["windows"] = {
           node('windows') {
             stage('prepare container') {
@@ -388,7 +383,6 @@ try {
             }
           }
         }
-        */
 
         // trigger macos build if we're in open-source repo
         if (env.JOB_NAME.startsWith('IDE/open-source-pipeline')) {
