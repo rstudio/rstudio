@@ -49,6 +49,33 @@ namespace shadow {
 
 namespace {
 
+SEXP setPattern(SEXP pattern, pDevDesc dd)
+{
+   return R_NilValue;
+}
+
+void releasePattern(SEXP ref, pDevDesc dd)
+{
+}
+   
+SEXP setClipPath(SEXP path, SEXP ref, pDevDesc dd)
+{
+   return R_NilValue;
+}
+
+void releaseClipPath(SEXP ref, pDevDesc dd)
+{
+}
+   
+SEXP setMask(SEXP path, SEXP ref, pDevDesc dd)
+{
+   return R_NilValue;
+}
+
+void releaseMask(SEXP ref, pDevDesc dd)
+{
+}
+
 class PreserveCurrentDeviceScope
 {
 public:
@@ -192,6 +219,22 @@ Error shadowDevDesc(DeviceContext* pDC, pDevDesc* pDev)
          Error err = r::exec::executeString(code);
          if (err)
             return err;
+         
+         // stop-gap fix for crash with usages of newer graphics device APIs
+         // added in R 4.1.0 / graphics engine 14
+         if (R_GE_getVersion() >= 14)
+         {
+            DevDescVersion14* pDevDesc = (DevDescVersion14*) GEcurrentDevice()->dev;
+
+            pDevDesc->setPattern = setPattern;
+            pDevDesc->releasePattern = releasePattern;
+
+            pDevDesc->setClipPath = setClipPath;
+            pDevDesc->releaseClipPath = releaseClipPath;
+
+            pDevDesc->setMask = setMask;
+            pDevDesc->releaseMask = releaseMask;
+         }
       }
       
       // save reference to shadow device
