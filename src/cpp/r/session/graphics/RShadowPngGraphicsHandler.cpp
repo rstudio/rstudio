@@ -244,6 +244,7 @@ Error shadowDevDesc(DeviceContext* pDC, pDevDesc* pDev)
          
          // stop-gap fix for crash with usages of newer graphics device APIs
          // added in R 4.1.0 / graphics engine 14
+         // https://github.com/rstudio/rstudio/issues/9251
          if (R_GE_getVersion() >= 14)
          {
             DevDescVersion14* pDevDesc = (DevDescVersion14*) GEcurrentDevice()->dev;
