@@ -607,7 +607,8 @@ SEXP rs_createGD()
       handler::onAfterAddDevice(pDC);
 
       // make us active
-      Rf_selectDevice(Rf_ndevNumber(s_pGEDevDesc->dev));
+      int deviceNumber = Rf_ndevNumber(s_pGEDevDesc->dev);
+      Rf_selectDevice(deviceNumber);
    } 
    END_SUSPEND_INTERRUPTS;
 
@@ -633,7 +634,8 @@ Error makeActive()
    }
    
    // select us
-   Rf_selectDevice(Rf_ndevNumber(s_pGEDevDesc->dev));
+   int deviceNumber = Rf_ndevNumber(s_pGEDevDesc->dev);
+   Rf_selectDevice(deviceNumber);
    
    return Success();
 }
@@ -641,7 +643,7 @@ Error makeActive()
 bool isActive()
 {
    return s_pGEDevDesc != nullptr &&
-          Rf_ndevNumber(s_pGEDevDesc->dev) == Rf_curDevice();
+         Rf_ndevNumber(s_pGEDevDesc->dev) == Rf_curDevice();
 }
 
 SEXP rs_activateGD()
@@ -848,7 +850,10 @@ double devicePixelRatio()
 void close()
 {     
    if (s_pGEDevDesc != nullptr)
-      Rf_killDevice(Rf_ndevNumber(s_pGEDevDesc->dev));
+   {
+      int deviceNumber = Rf_ndevNumber(s_pGEDevDesc->dev);
+      Rf_killDevice(deviceNumber);
+   }
 }
    
 
