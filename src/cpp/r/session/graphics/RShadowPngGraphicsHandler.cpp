@@ -618,7 +618,7 @@ SEXP setPattern(SEXP pattern, pDevDesc dd)
    if (pngDevDesc == nullptr)
       return R_NilValue;
    
-   return dev_desc::setPattern(pattern, dd);
+   return dev_desc::setPattern(pattern, pngDevDesc);
 }
 
 void releasePattern(SEXP ref, pDevDesc dd)
@@ -627,7 +627,7 @@ void releasePattern(SEXP ref, pDevDesc dd)
    if (pngDevDesc == nullptr)
       return;
    
-   dev_desc::releasePattern(ref, dd);
+   dev_desc::releasePattern(ref, pngDevDesc);
 }
 
 SEXP setClipPath(SEXP path, SEXP ref, pDevDesc dd)
@@ -636,7 +636,7 @@ SEXP setClipPath(SEXP path, SEXP ref, pDevDesc dd)
    if (pngDevDesc == nullptr)
       return R_NilValue;
    
-   return dev_desc::setClipPath(path, ref, dd);
+   return dev_desc::setClipPath(path, ref, pngDevDesc);
 }
 
 void releaseClipPath(SEXP ref, pDevDesc dd)
@@ -645,7 +645,7 @@ void releaseClipPath(SEXP ref, pDevDesc dd)
    if (pngDevDesc == nullptr)
       return;
    
-   dev_desc::releaseClipPath(ref, dd);
+   dev_desc::releaseClipPath(ref, pngDevDesc);
 }
 
 SEXP setMask(SEXP path, SEXP ref, pDevDesc dd)
@@ -654,7 +654,7 @@ SEXP setMask(SEXP path, SEXP ref, pDevDesc dd)
    if (pngDevDesc == nullptr)
       return R_NilValue;
    
-   return dev_desc::setMask(path, ref, dd);
+   return dev_desc::setMask(path, ref, pngDevDesc);
 }
 
 void releaseMask(SEXP ref, pDevDesc dd)
@@ -663,7 +663,7 @@ void releaseMask(SEXP ref, pDevDesc dd)
    if (pngDevDesc == nullptr)
       return;
    
-   dev_desc::releaseMask(ref, dd);
+   dev_desc::releaseMask(ref, pngDevDesc);
 }
 
 } // namespace shadow

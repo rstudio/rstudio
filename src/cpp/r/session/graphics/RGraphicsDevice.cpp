@@ -411,35 +411,37 @@ int GD_HoldFlush(pDevDesc dd, int level)
 SEXP GD_SetPattern(SEXP pattern, pDevDesc dd)
 {
    TRACE_GD_CALL;
-   return R_NilValue;
+   return handler::setPattern(pattern, dd);
 }
 
 void GD_ReleasePattern(SEXP ref, pDevDesc dd)
 {
    TRACE_GD_CALL;
+   handler::releasePattern(ref, dd);
 }
 
 SEXP GD_SetClipPath(SEXP path, SEXP ref, pDevDesc dd)
 {
    TRACE_GD_CALL;
-   return R_NilValue;
+   return handler::setClipPath(path, ref, dd);
 }
 
 void GD_ReleaseClipPath(SEXP ref, pDevDesc dd)
 {
    TRACE_GD_CALL;
-
+   handler::releaseClipPath(ref, dd);
 }
 
 SEXP GD_SetMask(SEXP path, SEXP ref, pDevDesc dd)
 {
    TRACE_GD_CALL;
-   return R_NilValue;
+   return handler::setMask(path, ref, dd);
 }
 
 void GD_ReleaseMask(SEXP ref, pDevDesc dd)
 {
    TRACE_GD_CALL;
+   handler::releaseMask(ref, dd);
 }
 
 void resyncDisplayList()
