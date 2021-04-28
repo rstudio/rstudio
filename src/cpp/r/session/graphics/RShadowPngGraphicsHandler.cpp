@@ -98,15 +98,12 @@ public:
    
    void (*close)(pDevDesc dd);
    
-   bool hasPattern = false;
    SEXP (*setPattern)(SEXP pattern, pDevDesc dd) = nullptr;
    void (*releasePattern)(SEXP ref, pDevDesc dd) = nullptr;
    
-   bool hasClip = false;
    SEXP (*setClipPath)(SEXP path, SEXP ref, pDevDesc dd) = nullptr;
    void (*releaseClipPath)(SEXP ref, pDevDesc dd) = nullptr;
    
-   bool hasMask = false;
    SEXP (*setMask)(SEXP path, SEXP ref, pDevDesc dd) = nullptr;
    void (*releaseMask)(SEXP ref, pDevDesc dd) = nullptr;
    
@@ -135,10 +132,7 @@ SEXP setPattern(SEXP pattern, pDevDesc dd)
       auto& callbacks = s_gdCallbacks[dd];
       auto callback = callbacks.setPattern;
       if (callback != nullptr)
-      {
-         callbacks.hasPattern = true;
          return callback(pattern, dd);
-      }
    }
    
    return R_NilValue;
@@ -152,11 +146,8 @@ void releasePattern(SEXP ref, pDevDesc dd)
    {
       auto& callbacks = s_gdCallbacks[dd];
       auto callback = callbacks.releasePattern;
-      if (callback != nullptr && callbacks.hasPattern)
-      {
-         callbacks.hasPattern = false;
+      if (callback != nullptr)
          return callback(ref, dd);
-      }
    }
 }
    
@@ -169,10 +160,7 @@ SEXP setClipPath(SEXP path, SEXP ref, pDevDesc dd)
       auto& callbacks = s_gdCallbacks[dd];
       auto callback = callbacks.setClipPath;
       if (callback != nullptr)
-      {
-         callbacks.hasClip = true;
          return callback(path, ref, dd);
-      }
    }
    
    return R_NilValue;
@@ -186,11 +174,8 @@ void releaseClipPath(SEXP ref, pDevDesc dd)
    {
       auto& callbacks = s_gdCallbacks[dd];
       auto callback = callbacks.releaseClipPath;
-      if (callback != nullptr && callbacks.hasClip)
-      {
-         callbacks.hasClip = false;
+      if (callback != nullptr)
          return callback(ref, dd);
-      }
    }
 }
    
@@ -203,10 +188,7 @@ SEXP setMask(SEXP path, SEXP ref, pDevDesc dd)
       auto& callbacks = s_gdCallbacks[dd];
       auto callback = callbacks.setMask;
       if (callback != nullptr)
-      {
-         callbacks.hasMask = true;
          return callback(path, ref, dd);
-      }
    }
    
    return R_NilValue;
@@ -220,11 +202,8 @@ void releaseMask(SEXP ref, pDevDesc dd)
    {
       auto& callbacks = s_gdCallbacks[dd];
       auto callback = callbacks.releaseMask;
-      if (callback != nullptr && callbacks.hasMask)
-      {
-         callbacks.hasMask = false;
+      if (callback != nullptr)
          return callback(ref, dd);
-      }
    }
 }
 
@@ -804,32 +783,56 @@ void onBeforeExecute(DeviceContext* pDC)
 
 SEXP setPattern(SEXP pattern, pDevDesc dd)
 {
-   return R_NilValue;
+   pDevDesc pngDevDesc = shadowDevDesc(dd);
+   if (pngDevDesc == nullptr)
+      return R_NilValue;
+   
+   return dev_desc::setPattern(pattern, dd);
 }
 
 void releasePattern(SEXP ref, pDevDesc dd)
 {
-
+   pDevDesc pngDevDesc = shadowDevDesc(dd);
+   if (pngDevDesc == nullptr)
+      return;
+   
+   dev_desc::releasePattern(ref, dd);
 }
 
 SEXP setClipPath(SEXP path, SEXP ref, pDevDesc dd)
 {
-   return R_NilValue;
+   pDevDesc pngDevDesc = shadowDevDesc(dd);
+   if (pngDevDesc == nullptr)
+      return R_NilValue;
+   
+   return dev_desc::setClipPath(path, ref, dd);
 }
 
 void releaseClipPath(SEXP ref, pDevDesc dd)
 {
-
+   pDevDesc pngDevDesc = shadowDevDesc(dd);
+   if (pngDevDesc == nullptr)
+      return;
+   
+   dev_desc::releaseClipPath(ref, dd);
 }
 
 SEXP setMask(SEXP path, SEXP ref, pDevDesc dd)
 {
-   return R_NilValue;
+   pDevDesc pngDevDesc = shadowDevDesc(dd);
+   if (pngDevDesc == nullptr)
+      return R_NilValue;
+   
+   return dev_desc::setMask(path, ref, dd);
 }
 
 void releaseMask(SEXP ref, pDevDesc dd)
 {
-
+   pDevDesc pngDevDesc = shadowDevDesc(dd);
+   if (pngDevDesc == nullptr)
+      return;
+   
+   dev_desc::releaseMask(ref, dd);
 }
 
 } // namespace shadow

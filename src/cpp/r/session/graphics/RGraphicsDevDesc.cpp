@@ -198,12 +198,37 @@ pDevDesc allocate(const RSDevDesc& devDesc)
       pDD->haveCapture = devDesc.haveCapture;
       pDD->haveLocator = devDesc.haveLocator;
 
-      return (pDevDesc)pDD;
+      return (pDevDesc) pDD;
    }
       
-   // NOTE: graphics device won't be initialized unless we confirm
-   // that the current graphics engine version is v14 compatible
    case 14:
+   {
+      DevDescVersion14* pDD =
+            allocAndInitCommonMembers<DevDescVersion14>(devDesc);
+
+      pDD->path = devDesc.path;
+      pDD->raster = devDesc.raster;
+      pDD->cap = devDesc.cap;
+      pDD->eventEnv = devDesc.eventEnv;
+      pDD->eventHelper = devDesc.eventHelper;
+      
+      pDD->holdflush = devDesc.holdflush;
+      pDD->haveTransparency = devDesc.haveTransparency;
+      pDD->haveTransparentBg = devDesc.haveTransparentBg;
+      pDD->haveRaster = devDesc.haveRaster;
+      pDD->haveCapture = devDesc.haveCapture;
+      pDD->haveLocator = devDesc.haveLocator;
+      
+      pDD->setPattern = devDesc.setPattern;
+      pDD->releasePattern = devDesc.releasePattern;
+      pDD->setClipPath = devDesc.setClipPath;
+      pDD->releaseClipPath = devDesc.releaseClipPath;
+      pDD->setMask = devDesc.setMask;
+      pDD->releaseMask = devDesc.releaseMask;
+
+      return (pDevDesc) pDD;
+   }
+      
    default:
    {
       DevDescVersion14* pDD =
@@ -1040,7 +1065,7 @@ void text(double x,
    void (*pTextFn)(double, double, const char*, double, double,
                    const pGEcontext, pDevDesc);
    int engineVersion = ::R_GE_getVersion();
-   switch(engineVersion)
+   switch (engineVersion)
    {
    case 5:
       pTextFn = ((DevDescVersion5*)dev)->text;
@@ -1073,12 +1098,127 @@ void text(double x,
    pTextFn(x, y, str, rot, hadj, gc, dev);
 }
 
+SEXP setPattern(SEXP pattern, pDevDesc dd)
+{
+   int engineVersion = ::R_GE_getVersion();
+   
+   SEXP (*callback)(SEXP pattern, pDevDesc dd) = nullptr;
+   
+   switch (engineVersion)
+   {
+   case 14:
+   default:
+      callback = ((DevDescVersion14*)dd)->setPattern;
+      break;
+   }
+   
+   if (callback != nullptr)
+      return callback(pattern, dd);
+   
+   return R_NilValue;
+}
+
+void releasePattern(SEXP ref, pDevDesc dd)
+{
+   int engineVersion = ::R_GE_getVersion();
+   
+   void (*callback)(SEXP ref, pDevDesc dd) = nullptr;
+   
+   switch (engineVersion)
+   {
+   case 14:
+   default:
+      callback = ((DevDescVersion14*)dd)->releasePattern;
+      break;
+   }
+   
+   if (callback != nullptr)
+      callback(ref, dd);
+}
+
+SEXP setClipPath(SEXP path, SEXP ref, pDevDesc dd)
+{
+   int engineVersion = ::R_GE_getVersion();
+   
+   SEXP (*callback)(SEXP path, SEXP ref, pDevDesc dd) = nullptr;
+   
+   switch (engineVersion)
+   {
+   case 14:
+   default:
+      callback = ((DevDescVersion14*)dd)->setClipPath;
+      break;
+   }
+   
+   if (callback != nullptr)
+      return callback(path, ref, dd);
+   
+   return R_NilValue;
+}
+
+void releaseClipPath(SEXP ref, pDevDesc dd)
+{
+   int engineVersion = ::R_GE_getVersion();
+   
+   void (*callback)(SEXP ref, pDevDesc dd) = nullptr;
+   
+   switch (engineVersion)
+   {
+   case 14:
+   default:
+      callback = ((DevDescVersion14*)dd)->releaseClipPath;
+      break;
+   }
+   
+   if (callback != nullptr)
+      callback(ref, dd);
+}
+
+SEXP setMask(SEXP path, SEXP ref, pDevDesc dd)
+{
+   int engineVersion = ::R_GE_getVersion();
+   
+   SEXP (*callback)(SEXP path, SEXP ref, pDevDesc dd) = nullptr;
+   
+   switch (engineVersion)
+   {
+   case 14:
+   default:
+      callback = ((DevDescVersion14*)dd)->setMask;
+      break;
+   }
+   
+   if (callback != nullptr)
+      return callback(path, ref, dd);
+   
+   return R_NilValue;
+}
+
+void releaseMask(SEXP ref, pDevDesc dd)
+{
+   int engineVersion = ::R_GE_getVersion();
+   
+   void (*callback)(SEXP ref, pDevDesc dd) = nullptr;
+   
+   switch (engineVersion)
+   {
+   case 14:
+   default:
+      callback = ((DevDescVersion14*)dd)->releaseMask;
+      break;
+   }
+   
+   if (callback != nullptr)
+       callback(ref, dd);
+}
+
+
 void setSize(pDevDesc pDD)
 {
    // get pointer to size function
    void (*pSizeFn)(double*, double*, double*, double*, pDevDesc);
    int engineVersion = ::R_GE_getVersion();
-   switch(engineVersion)
+   switch (engineVersion)
    {
    case 5:
       pSizeFn = ((DevDescVersion5*)pDD)->size;

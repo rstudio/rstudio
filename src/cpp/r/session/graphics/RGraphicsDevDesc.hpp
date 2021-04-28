@@ -74,6 +74,17 @@ double strWidth(const char *str, const pGEcontext gc, pDevDesc dd);
 void text(double x, double y, const char *str, double rot,
           double hadj, const pGEcontext gc, pDevDesc dd);
 
+SEXP setPattern(SEXP pattern, pDevDesc dd);
+void releasePattern(SEXP ref, pDevDesc dd);
+
+SEXP setClipPath(SEXP path, SEXP ref, pDevDesc dd);
+void releaseClipPath(SEXP ref, pDevDesc dd);
+
+SEXP setMask(SEXP path, SEXP ref, pDevDesc dd);
+void releaseMask(SEXP ref, pDevDesc dd);
+
+
+
 } // namespace dev_desc
 } // namespace handler
 } // namespace graphics
