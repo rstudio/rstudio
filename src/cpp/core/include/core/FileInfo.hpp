@@ -38,7 +38,8 @@ public:
       : absolutePath_(), 
         isDirectory_(false), 
         size_(0), 
-        lastWriteTime_(0)
+        lastWriteTime_(0),
+        isSymlink_(false)
    {
    }
    
