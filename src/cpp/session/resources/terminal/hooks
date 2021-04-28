@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+
+if [ -f "${RETICULATE_PYTHON}" ]; then
+	PATH="$(dirname "${RETICULATE_PYTHON}"):${PATH}"
+fi

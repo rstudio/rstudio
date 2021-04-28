@@ -420,7 +420,8 @@ public:
 
 public:
    RegistrationCommand()
-      : type_(None)
+      : type_(None),
+        recursive_(false)
    {
    }
 

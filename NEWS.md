@@ -10,6 +10,7 @@
 * Added support for the `\(x)` function shorthand syntax, proposed for R 4.1.0 (#8543)
 * Added preference toggle for inserting the `|>` pipe operator when the Insert Pipe Operator command is used (#8534)
 * Compilation of Sweave documents now uses tinytex when requested (#2788)
+* Preliminary support for R graphics engine version 14 in R 4.1.0. (#9251)
 
 ### Python
 
@@ -19,6 +20,7 @@
 * Fixed issue where inspecting a null Python object would cause emit errors to console (#8185)
 * Detect active Python version when publishing content (#8636)
 * Use active Python version when knitting R Markdown files (#8854)
+* The active version of Python is now placed on the PATH for new Terminal sessions (#9188)
 
 ### RStudio Workbench
 

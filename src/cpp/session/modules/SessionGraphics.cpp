@@ -32,6 +32,20 @@ using namespace rstudio::core;
 using namespace boost::placeholders;
 
 namespace rstudio {
+namespace r {
+namespace session {
+namespace graphics {
+namespace device {
+
+extern bool s_gdTracingEnabled;
+
+} // end namespace device
+} // end namespace graphics
+} // end namespace session
+} // end namespace r
+} // end namespace rstudio
+
+namespace rstudio {
 namespace session {
 namespace modules {
 namespace graphics {
@@ -85,6 +99,13 @@ core::json::Array supportedBackends()
    return backendsJson;
 }
 
+SEXP rs_traceGraphicsDevice(SEXP enableSEXP)
+{
+   bool enable = r::sexp::asLogical(enableSEXP);
+   r::session::graphics::device::s_gdTracingEnabled = enable;
+   return enableSEXP;
+}
+
 core::Error initialize()
 {
    using namespace module_context;
@@ -94,6 +115,7 @@ core::Error initialize()
    syncWithPrefs();
    
    RS_REGISTER_CALL_METHOD(rs_devicePixelRatio);
+   RS_REGISTER_CALL_METHOD(rs_traceGraphicsDevice);
    
    using boost::bind;
    ExecBlock initBlock;

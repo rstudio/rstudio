@@ -5,9 +5,9 @@ gwt-websockets
 
 A simple GWT wrapper for javascript websockets which enable you to avoid writing native javascript code. This is not a fully featured client/server framework for websockets. Instead it is a simple wrapper for client side code when you need to connect to an existing websocket server. For example, this library was built because I needed to connect a mobile GWT webapp to a Java websocket system that used Apache Camel.
 
-This library has no dependancy outside of the standard GWT distribution.
+This library has no dependency outside of the standard GWT distribution.
 
-To use add this dependancy to your project (hosted on maven central):
+To use add this dependency to your project (hosted on maven central):
 
     <dependency>
         <groupId>com.sksamuel.gwt</groupId>

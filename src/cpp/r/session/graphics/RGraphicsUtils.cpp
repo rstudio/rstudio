@@ -196,7 +196,9 @@ std::string extraBitmapParams()
    // to devices defined by the 'grDevices' package, and it doesn't handle
    // 'ragg')
    if (backend != "default" && backend != "ragg")
+   {
       params.push_back("type = \"" + backend + "\"");
+   }
    
    std::string antialias = getDefaultAntialiasing();
 
@@ -235,9 +237,12 @@ RestorePreviousGraphicsDeviceScope::~RestorePreviousGraphicsDeviceScope()
    {
       // reslect the previously selected device if we had one
       if (pImpl_->pPreviousDevice != nullptr)
-         Rf_selectDevice(Rf_ndevNumber(pImpl_->pPreviousDevice->dev));
+      {
+         int deviceNumber = Rf_ndevNumber(pImpl_->pPreviousDevice->dev);
+         Rf_selectDevice(deviceNumber);
+      }
    }
-   catch(...)
+   catch (...)
    {
    }
 }

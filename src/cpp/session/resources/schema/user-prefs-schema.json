@@ -1498,6 +1498,12 @@
             "title": "Interval for requerying memory stats (seconds)",
             "type": "integer",
             "default": 10
+        },
+        "terminal_python_integration": {
+            "description": "Enable Python terminal hooks. When enabled, the RStudio-configured version of Python will be placed on the PATH.",
+            "title": "Enable terminal Python integration",
+            "type": "boolean",
+            "default": true
         }
     }
 }
