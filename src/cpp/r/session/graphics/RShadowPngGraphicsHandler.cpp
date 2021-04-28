@@ -44,6 +44,22 @@ namespace rstudio {
 namespace r {
 namespace session {
 namespace graphics {
+namespace device {
+
+void GD_Trace(const std::string&);
+
+} // end namespace device
+} // end namespace graphics
+} // end namespace session
+} // end namespace r
+} // end namespace rstudio
+
+#define TRACE_GD_CALL (::rstudio::r::session::graphics::device::GD_Trace(BOOST_CURRENT_FUNCTION))
+
+namespace rstudio {
+namespace r {
+namespace session {
+namespace graphics {
 namespace handler {
 namespace shadow {
 
@@ -51,29 +67,35 @@ namespace {
 
 SEXP setPattern(SEXP pattern, pDevDesc dd)
 {
+   TRACE_GD_CALL;
    return R_NilValue;
 }
 
 void releasePattern(SEXP ref, pDevDesc dd)
 {
+   TRACE_GD_CALL;
 }
    
 SEXP setClipPath(SEXP path, SEXP ref, pDevDesc dd)
 {
+   TRACE_GD_CALL;
    return R_NilValue;
 }
 
 void releaseClipPath(SEXP ref, pDevDesc dd)
 {
+   TRACE_GD_CALL;
 }
    
 SEXP setMask(SEXP path, SEXP ref, pDevDesc dd)
 {
+   TRACE_GD_CALL;
    return R_NilValue;
 }
 
 void releaseMask(SEXP ref, pDevDesc dd)
 {
+   TRACE_GD_CALL;
 }
 
 class PreserveCurrentDeviceScope

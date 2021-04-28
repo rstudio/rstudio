@@ -58,6 +58,14 @@ namespace device {
 // be referenced and changed without explicit header export
 bool s_gdTracingEnabled = false;
 
+void GD_Trace(const std::string& func)
+{
+   if (s_gdTracingEnabled)
+   {
+      std::cerr << func.substr(func.find_last_of("::") + 1) << std::endl;
+   }
+}
+   
 namespace {
 
 // name of our graphics device
@@ -67,16 +75,8 @@ const char * const kRStudioDevice = "RStudioGD";
 pGEDevDesc s_pGEDevDesc = nullptr;
 
 // externally provided locator function
-boost::function<bool(double*,double*)> s_locatorFunction;
+boost::function<bool(double*, double*)> s_locatorFunction;
 
-void GD_Trace(const std::string& func)
-{
-   if (s_gdTracingEnabled)
-   {
-      std::cerr << func.substr(func.find_last_of("::") + 1) << std::endl;
-   }
-}
-   
 // global size attributes (used to initialize new devices)
 int s_width = 0;
 int s_height = 0;
@@ -343,7 +343,6 @@ Rboolean GD_Locator(double *x, double *y, pDevDesc dev)
 void GD_Activate(pDevDesc dev) 
 {
    TRACE_GD_CALL;
-   boost::this_thread::sleep_for(boost::chrono::milliseconds(100));
 }
 
 void GD_Deactivate(pDevDesc dev) 
@@ -406,34 +405,41 @@ int GD_HoldFlush(pDevDesc dd, int level)
 // be used by the Cairo and PDF devices; other implementations which
 // do not make use of these features just return R_NilValue and otherwise
 // do nothing
+
+#define TRACE_GD_CALL (::rstudio::r::session::graphics::device::GD_Trace(BOOST_CURRENT_FUNCTION))
+
 SEXP GD_SetPattern(SEXP pattern, pDevDesc dd)
 {
+   TRACE_GD_CALL;
    return R_NilValue;
 }
 
 void GD_ReleasePattern(SEXP ref, pDevDesc dd)
 {
-
+   TRACE_GD_CALL;
 }
 
 SEXP GD_SetClipPath(SEXP path, SEXP ref, pDevDesc dd)
 {
+   TRACE_GD_CALL;
    return R_NilValue;
 }
 
 void GD_ReleaseClipPath(SEXP ref, pDevDesc dd)
 {
+   TRACE_GD_CALL;
 
 }
 
 SEXP GD_SetMask(SEXP path, SEXP ref, pDevDesc dd)
 {
+   TRACE_GD_CALL;
    return R_NilValue;
 }
 
 void GD_ReleaseMask(SEXP ref, pDevDesc dd)
 {
-
+   TRACE_GD_CALL;
 }
 
 void resyncDisplayList()
