@@ -32,7 +32,22 @@ import com.google.gwt.core.client.JsArray;
 public class SqlCompletionManager extends CompletionManagerBase
                                   implements CompletionManager
 {
-   public SqlCompletionManager(DocDisplay docDisplay,
+   // Use a funstructor to create an instance in order to ensure toggleHandlers()
+   // is invoked after the object is fully instantiated
+   public static SqlCompletionManager create(DocDisplay docDisplay,
+                                             CompletionPopupDisplay popup,
+                                             CodeToolsServerOperations server,
+                                             CompletionContext context)
+   {
+      SqlCompletionManager retVal = new SqlCompletionManager(docDisplay, popup, server, context);
+
+      retVal.toggleHandlers(true);
+
+      return retVal;
+   }
+
+   // Use the create() funstructor above instead of invoking this constructor directly
+   private SqlCompletionManager(DocDisplay docDisplay,
                                CompletionPopupDisplay popup,
                                CodeToolsServerOperations server,
                                CompletionContext context)

@@ -45,7 +45,22 @@ import com.google.gwt.event.shared.HandlerRegistration;
 public class StanCompletionManager extends CompletionManagerBase
                                    implements CompletionManager
 {
-   public StanCompletionManager(DocDisplay docDisplay,
+   // Use a funstructor to create an instance in order to ensure toggleHandlers()
+   // is invoked after the object is fully instantiated
+   public static StanCompletionManager create(DocDisplay docDisplay,
+                                             CompletionPopupDisplay popup,
+                                             CodeToolsServerOperations server,
+                                             CompletionContext context)
+   {
+      StanCompletionManager retVal = new StanCompletionManager(docDisplay, popup, server, context);
+
+      retVal.toggleHandlers(true);
+
+      return retVal;
+   }
+
+   // Use the create() funstructor above instead of invoking this constructor directly
+   private StanCompletionManager(DocDisplay docDisplay,
                                 CompletionPopupDisplay popup,
                                 CodeToolsServerOperations server,
                                 CompletionContext context)
