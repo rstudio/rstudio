@@ -65,37 +65,167 @@ namespace shadow {
 
 namespace {
 
+// this struct is used to store the graphics device callbacks initialized
+// as part of a device's description object, so that they can be hooked
+// and then delegated to after we've validated they are safe to call
+class RGraphicsDeviceCallbacks
+{
+   
+public:
+   
+   RGraphicsDeviceCallbacks()
+   {
+   }
+   
+   explicit RGraphicsDeviceCallbacks(pDevDesc pDev)
+   {
+      if (R_GE_getVersion() >= 14)
+      {
+         auto dev = (DevDescVersion14*) pDev;
+         
+         close = dev->close;
+
+         setPattern = dev->setPattern;
+         releasePattern = dev->releasePattern;
+         
+         setClipPath = dev->setClipPath;
+         releaseClipPath = dev->releaseClipPath;
+         
+         setMask = dev->setMask;
+         releaseMask = dev->releaseMask;
+      }
+   }
+   
+   void (*close)(pDevDesc dd);
+   
+   bool hasPattern = false;
+   SEXP (*setPattern)(SEXP pattern, pDevDesc dd) = nullptr;
+   void (*releasePattern)(SEXP ref, pDevDesc dd) = nullptr;
+   
+   bool hasClip = false;
+   SEXP (*setClipPath)(SEXP path, SEXP ref, pDevDesc dd) = nullptr;
+   void (*releaseClipPath)(SEXP ref, pDevDesc dd) = nullptr;
+   
+   bool hasMask = false;
+   SEXP (*setMask)(SEXP path, SEXP ref, pDevDesc dd) = nullptr;
+   void (*releaseMask)(SEXP ref, pDevDesc dd) = nullptr;
+   
+};
+
+std::map<pDevDesc, RGraphicsDeviceCallbacks> s_gdCallbacks;
+
+void close(pDevDesc dd)
+{
+   if (s_gdCallbacks.count(dd))
+   {
+      auto close = s_gdCallbacks[dd].close;
+      if (close != nullptr)
+         close(dd);
+   }
+   
+   s_gdCallbacks.erase(dd);
+}
+
 SEXP setPattern(SEXP pattern, pDevDesc dd)
 {
    TRACE_GD_CALL;
+   
+   if (s_gdCallbacks.count(dd))
+   {
+      auto& callbacks = s_gdCallbacks[dd];
+      auto callback = callbacks.setPattern;
+      if (callback != nullptr)
+      {
+         callbacks.hasPattern = true;
+         return callback(pattern, dd);
+      }
+   }
+   
    return R_NilValue;
 }
 
 void releasePattern(SEXP ref, pDevDesc dd)
 {
    TRACE_GD_CALL;
+   
+   if (s_gdCallbacks.count(dd))
+   {
+      auto& callbacks = s_gdCallbacks[dd];
+      auto callback = callbacks.releasePattern;
+      if (callback != nullptr && callbacks.hasPattern)
+      {
+         callbacks.hasPattern = false;
+         return callback(ref, dd);
+      }
+   }
 }
    
 SEXP setClipPath(SEXP path, SEXP ref, pDevDesc dd)
 {
    TRACE_GD_CALL;
+   
+   if (s_gdCallbacks.count(dd))
+   {
+      auto& callbacks = s_gdCallbacks[dd];
+      auto callback = callbacks.setClipPath;
+      if (callback != nullptr)
+      {
+         callbacks.hasClip = true;
+         return callback(path, ref, dd);
+      }
+   }
+   
    return R_NilValue;
 }
 
 void releaseClipPath(SEXP ref, pDevDesc dd)
 {
    TRACE_GD_CALL;
+   
+   if (s_gdCallbacks.count(dd))
+   {
+      auto& callbacks = s_gdCallbacks[dd];
+      auto callback = callbacks.releaseClipPath;
+      if (callback != nullptr && callbacks.hasClip)
+      {
+         callbacks.hasClip = false;
+         return callback(ref, dd);
+      }
+   }
 }
    
 SEXP setMask(SEXP path, SEXP ref, pDevDesc dd)
 {
    TRACE_GD_CALL;
+   
+   if (s_gdCallbacks.count(dd))
+   {
+      auto& callbacks = s_gdCallbacks[dd];
+      auto callback = callbacks.setMask;
+      if (callback != nullptr)
+      {
+         callbacks.hasMask = true;
+         return callback(path, ref, dd);
+      }
+   }
+   
    return R_NilValue;
 }
 
 void releaseMask(SEXP ref, pDevDesc dd)
 {
    TRACE_GD_CALL;
+   
+   if (s_gdCallbacks.count(dd))
+   {
+      auto& callbacks = s_gdCallbacks[dd];
+      auto callback = callbacks.releaseMask;
+      if (callback != nullptr && callbacks.hasMask)
+      {
+         callbacks.hasMask = false;
+         return callback(ref, dd);
+      }
+   }
 }
 
 class PreserveCurrentDeviceScope
@@ -247,16 +377,26 @@ Error shadowDevDesc(DeviceContext* pDC, pDevDesc* pDev)
          // https://github.com/rstudio/rstudio/issues/9251
          if (R_GE_getVersion() >= 14)
          {
-            DevDescVersion14* pDevDesc = (DevDescVersion14*) GEcurrentDevice()->dev;
-
-            pDevDesc->setPattern = setPattern;
-            pDevDesc->releasePattern = releasePattern;
-
-            pDevDesc->setClipPath = setClipPath;
-            pDevDesc->releaseClipPath = releaseClipPath;
-
-            pDevDesc->setMask = setMask;
-            pDevDesc->releaseMask = releaseMask;
+            // get reference to device
+            pDevDesc dd = GEcurrentDevice()->dev;
+            
+            // cache device callbacks
+            RGraphicsDeviceCallbacks callbacks(dd);
+            s_gdCallbacks[dd] = callbacks;
+            
+            // inject our new callbacks
+            DevDescVersion14* pDev = (DevDescVersion14*) dd;
+            
+            pDev->close = close;
+            
+            pDev->setPattern = setPattern;
+            pDev->releasePattern = releasePattern;
+            
+            pDev->setClipPath = setClipPath;
+            pDev->releaseClipPath = releaseClipPath;
+            
+            pDev->setMask = setMask;
+            pDev->releaseMask = releaseMask;
          }
       }
       

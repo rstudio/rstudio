@@ -197,11 +197,6 @@ std::string extraBitmapParams()
    // 'ragg')
    if (backend != "default" && backend != "ragg")
    {
-      if (backend == "cairo")
-      {
-         backend = "cairo-png";
-      }
-
       params.push_back("type = \"" + backend + "\"");
    }
    
