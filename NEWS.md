@@ -10,6 +10,7 @@
 * Added support for the `\(x)` function shorthand syntax, proposed for R 4.1.0 (#8543)
 * Added preference toggle for inserting the `|>` pipe operator when the Insert Pipe Operator command is used (#8534)
 * Compilation of Sweave documents now uses tinytex when requested (#2788)
+* Preliminary support for R graphics engine version 14 in R 4.1.0. (#9251)
 
 ### Python
 
