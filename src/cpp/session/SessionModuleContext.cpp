@@ -1156,7 +1156,12 @@ FilePath findProgram(const std::string& name)
    else
    {
       std::string which;
+      FilePath resultPath;
+
+      // TODO: switch over to using findProgramOnPath all the time here - for now, doing it both ways to ensure there
+      // are no edge cases in findProgramOnPath that make a difference to app code
       Error error = r::exec::RFunction("Sys.which", name).call(&which);
+      Error dbgError = system::findProgramOnPath(name, &resultPath);
       if (error)
       {
          LOG_ERROR(error);
@@ -1164,6 +1169,14 @@ FilePath findProgram(const std::string& name)
       }
       else
       {
+         if (dbgError && which != "")
+         {
+            LOG_ERROR_MESSAGE("findProgramOnPath returns error: " + dbgError.asString() + " Sys.which returns: " + resultPath.getAbsolutePath());
+         }
+         else if (which != resultPath.getAbsolutePath())
+         {
+            LOG_ERROR_MESSAGE("findProgramOnPath returns wrong result: " + which + " != " + resultPath.getAbsolutePath());
+         }
          return FilePath(which);
       }
    }
