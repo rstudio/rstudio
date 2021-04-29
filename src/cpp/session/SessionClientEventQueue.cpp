@@ -74,7 +74,7 @@ bool ClientEventQueue::setActiveConsole(const std::string& console)
 
 void ClientEventQueue::add(const ClientEvent& event)
 {
-   if (http_methods::connectionDebugEnabled())
+   if (http_methods::protocolDebugEnabled() && event.type() != client_events::kConsoleWriteError)
    {
       if (event.data().getType() == json::Type::STRING)
          LOG_DEBUG_MESSAGE("Queued event: " + event.typeName() + ": " + event.data().getString());
@@ -127,11 +127,8 @@ bool ClientEventQueue::hasEvents()
   
 void ClientEventQueue::remove(std::vector<ClientEvent>* pEvents)
 {
-   int numEvents = -1;
    LOCK_MUTEX(*pMutex_)
    {
-      numEvents = pendingEvents_.size();
-
       // flush any pending output
       flushPendingConsoleOutput();
       
@@ -142,14 +139,8 @@ void ClientEventQueue::remove(std::vector<ClientEvent>* pEvents)
    
       // clear pending events
       pendingEvents_.clear();
-
    }
    END_LOCK_MUTEX
-
-   if (http_methods::connectionDebugEnabled() && numEvents > 0)
-   {
-      LOG_DEBUG_MESSAGE("Sending: " + std::to_string(numEvents) + " events");
-   }
 }
 
 void ClientEventQueue::clear()

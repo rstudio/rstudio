@@ -13,6 +13,9 @@
  *
  */
 
+// We need LogLevel::DEBUG so don't #define DEBUG for this file
+#define RSTUDIO_DEBUG_MACROS_DISABLED
+
 #include "SessionHttpMethods.hpp"
 #include "SessionConsoleInput.hpp"
 #include "SessionMainProcess.hpp"
@@ -32,6 +35,7 @@
 #include <core/gwt/GwtFileHandler.hpp>
 
 #include <shared_core/json/Json.hpp>
+#include <shared_core/Logger.hpp>
 #include <core/json/JsonRpc.hpp>
 
 #include <core/system/Crypto.hpp>
@@ -52,6 +56,7 @@
 #include <session/SessionPersistentState.hpp>
 #include <session/SessionScopes.hpp>
 #include <session/projects/SessionProjects.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 #ifdef RSTUDIO_SERVER
 #include <server_core/sessions/SessionSignature.hpp>
@@ -77,7 +82,8 @@ std::vector<std::string> s_waitForMethodNames;
 // url for next session
 std::string s_nextSessionUrl;
 
-bool s_connectionDebugEnabled = true;
+bool s_protocolDebugEnabled = false;
+bool s_sessionDebugLogCreated = false;
 
 boost::posix_time::ptime timeoutTimeFromNow()
 {
@@ -337,7 +343,7 @@ void polledEventHandler()
          }
          else
          {
-            if (s_connectionDebugEnabled)
+            if (s_protocolDebugEnabled)
             {
                std::chrono::duration<double> duration =
                        std::chrono::steady_clock::now() - ptrConnection->receivedTime();
@@ -434,9 +440,9 @@ std::string clientVersion()
    return RSTUDIO_GIT_REVISION_HASH;
 }
 
-bool connectionDebugEnabled()
+bool protocolDebugEnabled()
 {
-   return s_connectionDebugEnabled;
+   return s_protocolDebugEnabled;
 }
 
 void waitForMethodInitFunction(const ClientEvent& initEvent)
@@ -565,7 +571,7 @@ bool waitForMethod(const std::string& method,
                // ensure initialized
                init::ensureSessionInitialized();
 
-               if (s_connectionDebugEnabled && method != kConsoleInput)
+               if (s_protocolDebugEnabled && method != kConsoleInput)
                {
                   LOG_DEBUG_MESSAGE("Handle wait for:     " + ptrConnection->request().uri());
                }
@@ -577,7 +583,7 @@ bool waitForMethod(const std::string& method,
          // another connection type, dispatch it
          else
          {
-            if (s_connectionDebugEnabled)
+            if (s_protocolDebugEnabled)
             {
                std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
                std::chrono::duration<double> beforeTime = now - ptrConnection->receivedTime();
@@ -932,6 +938,49 @@ void registerGwtHandlers()
                                                   "/",
                                                   http::UriFilterFunction(),
                                                   initJs);
+}
+
+namespace {
+
+/**
+ * When a session debug logging preference is enabled, either create a new FileLog or update an existing one
+ * to have DEBUG so these messages show up. This prevents the user from needing to configure logging.conf
+ * for the session just to turn on debug logging.
+ */
+void initSessionDebugLog()
+{
+   if (s_sessionDebugLogCreated)
+      return;
+   s_sessionDebugLogCreated = true;
+
+   // TODO: should we have a preference for the path to this log file?
+   system::initFileLogDestination(log::LogLevel::DEBUG, core::system::xdg::userDataDir().completePath("log"));
+}
+
+void onUserPrefsChanged(const std::string& layer, const std::string& pref)
+{
+   if (pref == kSessionProtocolDebug)
+   {
+      bool newVal = prefs::userPrefs().sessionProtocolDebug();
+      if (newVal != s_protocolDebugEnabled)
+      {
+         s_protocolDebugEnabled = newVal;
+         if (newVal)
+             initSessionDebugLog();
+      }
+   }
+}
+
+
+}
+
+core::Error initialize()
+{
+   s_protocolDebugEnabled = prefs::userPrefs().sessionProtocolDebug();
+   prefs::userPrefs().onChanged.connect(onUserPrefsChanged);
+   if (s_protocolDebugEnabled)
+      initSessionDebugLog();
+   return Success();
 }
 
 std::string nextSessionUrl()

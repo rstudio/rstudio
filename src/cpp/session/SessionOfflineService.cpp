@@ -148,7 +148,7 @@ boost::shared_ptr<HttpConnection> asyncConnectionConverter(boost::shared_ptr<Htt
    {
       boost::shared_ptr<HttpConnection> asyncConnection = http_methods::handleAsyncRpc(ptrHttpConn);
 
-      if (http_methods::connectionDebugEnabled())
+      if (http_methods::protocolDebugEnabled())
       {
          std::chrono::duration<double> duration = now - ptrHttpConn->receivedTime();
          LOG_DEBUG_MESSAGE("Async reply:         " + ptrHttpConn->request().uri() +
@@ -241,7 +241,7 @@ void OfflineService::run()
                   ptrConnection = mainConnectionQueue.dequeMatchingConnection(offlineConnectionMatcher, now);
                   if (ptrConnection)
                   {
-                     if (http_methods::connectionDebugEnabled())
+                     if (http_methods::protocolDebugEnabled())
                      {
                         std::chrono::duration<double> beforeTime = now - ptrConnection->receivedTime();
                         LOG_DEBUG_MESSAGE("- Handle offline:    " + ptrConnection->request().uri() +

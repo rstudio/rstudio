@@ -164,6 +164,8 @@ public:
     */
    void reload() override;
 
+   bool isFileLogger() const override;
+
    /**
     * @brief Writes a message to the log file.
     *

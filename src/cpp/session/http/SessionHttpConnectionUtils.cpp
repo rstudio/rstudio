@@ -197,7 +197,7 @@ bool checkForSuspend(boost::shared_ptr<HttpConnection> ptrConnection)
       }
       else
       {
-         if (http_methods::connectionDebugEnabled())
+         if (http_methods::protocolDebugEnabled())
          {
             LOG_DEBUG_MESSAGE("handle session suspend");
          }
@@ -256,7 +256,7 @@ bool checkForInterrupt(boost::shared_ptr<HttpConnection> ptrConnection)
       // busy and it should instead send an explicit request to canncel the current
       // console read request.
       bool busy = session::console_input::executing();
-      if (http_methods::connectionDebugEnabled())
+      if (http_methods::protocolDebugEnabled())
       {
          if (busy)
          {

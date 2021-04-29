@@ -346,7 +346,7 @@ private:
              rpc::isOfflineableRequest(ptrHttpConnection))
          {
             // TODO: handleOffline - should these be put into a separate queue and run in a dedicated thread?
-            if (http_methods::connectionDebugEnabled())
+            if (http_methods::protocolDebugEnabled())
             {
                std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
                std::chrono::duration<double> beforeTime = now - ptrConnection->receivedTime();
@@ -366,7 +366,7 @@ private:
              http_methods::isAsyncJsonRpcRequest(ptrHttpConnection) && 
              eventsActive_)
          {
-            if (http_methods::connectionDebugEnabled())
+            if (http_methods::protocolDebugEnabled())
             {
                std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
                std::chrono::duration<double> beforeTime = now - ptrConnection->receivedTime();

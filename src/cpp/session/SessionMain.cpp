@@ -524,6 +524,8 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       // console processes
       (console_process::initialize)
 
+      (http_methods::initialize)
+
       // r utils
       (r_utils::initialize)
 
