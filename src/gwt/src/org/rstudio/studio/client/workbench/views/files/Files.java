@@ -52,6 +52,7 @@ import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportPresenter;
 import org.rstudio.studio.client.workbench.views.files.events.*;
 import org.rstudio.studio.client.workbench.views.files.model.DirectoryListing;
@@ -69,7 +70,8 @@ public class Files
                  OpenFileInBrowserEvent.Handler,
                  DirectoryNavigateEvent.Handler,
                  RenameSourceFileEvent.Handler,
-                 RStudioApiRequestEvent.Handler
+                 RStudioApiRequestEvent.Handler,
+                 WorkingDirChangedEvent.Handler
 {
    interface Binder extends CommandBinder<Commands, Files> {}
 
@@ -177,6 +179,7 @@ public class Files
       eventBus_.addHandler(FileChangeEvent.TYPE, this);
       eventBus_.addHandler(RenameSourceFileEvent.TYPE, this);
       eventBus_.addHandler(RStudioApiRequestEvent.TYPE, this);
+      eventBus_.addHandler(WorkingDirChangedEvent.TYPE, this);
 
       initSession();
    }
@@ -287,6 +290,24 @@ public class Files
       {
          // refresh when pref value changes to show/hide hidden files
          onRefreshFiles();
+      });
+
+      // register handler for sync pane pref, so that when the user enables the pref we can sync immediately
+      // to show it's working
+      pPrefs_.get().syncFilesPaneWorkingDir().addValueChangeHandler(sync ->
+      {
+         // ignore at startup/haven't navigated yet
+         if (!hasNavigatedToDirectory_)
+            return;
+
+         // if we are now syncing and we know the current working path, go there
+         if (sync.getValue() && workingPath_ != null)
+         {
+            if (!currentPath_.equalTo(workingPath_))
+            {
+               eventBus_.fireEvent(new DirectoryNavigateEvent(workingPath_, false));
+            }
+         }
       });
    }
 
@@ -631,6 +652,28 @@ public class Files
    }
 
    @Override
+   public void onWorkingDirChanged(WorkingDirChangedEvent event)
+   {
+      // save the current working directory
+      workingPath_ = FileSystemItem.createDir(event.getPath());
+
+      // don't listen to these until we've actually loaded
+      if (!hasNavigatedToDirectory_)
+      {
+         return;
+      }
+
+      // if enabled via pref, navigate to directories in the Files pane when the working directory changes
+      if (pPrefs_.get().syncFilesPaneWorkingDir().getValue())
+      {
+         if (!currentPath_.equalTo(workingPath_))
+         {
+            eventBus_.fireEvent(new DirectoryNavigateEvent(workingPath_, false));
+         }
+      }
+   }
+
+   @Override
    public void onRenameSourceFile(RenameSourceFileEvent event)
    {
       renameFile(FileSystemItem.createFile(event.getPath()));
@@ -831,6 +874,7 @@ public class Files
    private final RemoteFileSystemContext fileSystemContext_;
    private final Session session_;
    private FileSystemItem currentPath_ = FileSystemItem.home();
+   private FileSystemItem workingPath_;
    private boolean hasNavigatedToDirectory_ = false;
    private final Provider<FilesCopy> pFilesCopy_;
    private final Provider<FilesUpload> pFilesUpload_;

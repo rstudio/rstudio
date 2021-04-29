@@ -1363,32 +1363,6 @@ core::Error UserPrefValues::setIgnoreWordsWithNumbers(bool val)
 }
 
 /**
- * The maximum number of spelling words to check at once.
- */
-int UserPrefValues::maxSpellcheckWords()
-{
-   return readPref<int>("max_spellcheck_words");
-}
-
-core::Error UserPrefValues::setMaxSpellcheckWords(int val)
-{
-   return writePref("max_spellcheck_words", val);
-}
-
-/**
- * The maximum number of spelling correction suggestions to prefetch.
- */
-int UserPrefValues::maxSpellcheckPrefetch()
-{
-   return readPref<int>("max_spellcheck_prefetch");
-}
-
-core::Error UserPrefValues::setMaxSpellcheckPrefetch(int val)
-{
-   return writePref("max_spellcheck_prefetch", val);
-}
-
-/**
  * Whether to enable real-time spellchecking by default.
  */
 bool UserPrefValues::realTimeSpellchecking()
@@ -1880,6 +1854,19 @@ bool UserPrefValues::sortFileNamesNaturally()
 core::Error UserPrefValues::setSortFileNamesNaturally(bool val)
 {
    return writePref("sort_file_names_naturally", val);
+}
+
+/**
+ * Whether to change the directory in the Files pane automatically when the working directory in R changes.
+ */
+bool UserPrefValues::syncFilesPaneWorkingDir()
+{
+   return readPref<bool>("sync_files_pane_working_dir");
+}
+
+core::Error UserPrefValues::setSyncFilesPaneWorkingDir(bool val)
+{
+   return writePref("sync_files_pane_working_dir", val);
 }
 
 /**
@@ -2897,6 +2884,19 @@ core::Error UserPrefValues::setMemoryQueryIntervalSeconds(int val)
 }
 
 /**
+ * Enable Python terminal hooks. When enabled, the RStudio-configured version of Python will be placed on the PATH.
+ */
+bool UserPrefValues::terminalPythonIntegration()
+{
+   return readPref<bool>("terminal_python_integration");
+}
+
+core::Error UserPrefValues::setTerminalPythonIntegration(bool val)
+{
+   return writePref("terminal_python_integration", val);
+}
+
+/**
  * Enable session protocol debug logging showing all session requests and events
  */
 bool UserPrefValues::sessionProtocolDebug()
@@ -3015,8 +3015,6 @@ std::vector<std::string> UserPrefValues::allKeys()
       kDocumentLoadLintDelay,
       kIgnoreUppercaseWords,
       kIgnoreWordsWithNumbers,
-      kMaxSpellcheckWords,
-      kMaxSpellcheckPrefetch,
       kRealTimeSpellchecking,
       kNavigateToBuildError,
       kPackagesPaneEnabled,
@@ -3055,6 +3053,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kAlwaysShownFiles,
       kAlwaysShownExtensions,
       kSortFileNamesNaturally,
+      kSyncFilesPaneWorkingDir,
       kJobsTabVisibility,
       kShowLauncherJobsTab,
       kLauncherJobsSort,
@@ -3133,6 +3132,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kCommandPaletteMru,
       kShowMemoryUsage,
       kMemoryQueryIntervalSeconds,
+      kTerminalPythonIntegration,
       kSessionProtocolDebug,
    });
 }

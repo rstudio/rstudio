@@ -67,7 +67,7 @@ public abstract class CompletionManagerBase
       public void onToken(TokenIterator it, Token token);
    }
    
-   public CompletionManagerBase(CompletionPopupDisplay popup,
+   protected CompletionManagerBase(CompletionPopupDisplay popup,
                                 DocDisplay docDisplay,
                                 CodeToolsServerOperations server,
                                 CompletionContext context)
@@ -84,10 +84,6 @@ public abstract class CompletionManagerBase
       helpTimer_ = new HelpTimer();
       handlers_ = new ArrayList<>();
       snippets_ = new SnippetHelper((AceEditor) docDisplay, context.getId());
-      
-      // deferred so that handlers are toggled after subclasses have finished
-      // construction
-      Scheduler.get().scheduleDeferred(() -> toggleHandlers(true));
    }
    
    @Inject
@@ -825,7 +821,7 @@ public abstract class CompletionManagerBase
       helpTimer_.schedule(completion);
    }
    
-   private void toggleHandlers(boolean enable)
+   protected void toggleHandlers(boolean enable)
    {
       if (enable)
          addHandlers();

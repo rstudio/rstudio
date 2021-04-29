@@ -24,8 +24,22 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 public class MarkdownCompletionManager extends CompletionManagerBase
                                        implements CompletionManager
 {
+   // Use a funstructor to create an instance in order to ensure toggleHandlers()
+   // is invoked after the object is fully instantiated
+   public static MarkdownCompletionManager create(DocDisplay docDisplay,
+                                                  CompletionPopupDisplay popup,
+                                                  CodeToolsServerOperations server,
+                                                  CompletionContext context)
+   {
+      MarkdownCompletionManager retVal = new MarkdownCompletionManager(docDisplay, popup, server, context);
 
-   public MarkdownCompletionManager(DocDisplay docDisplay,
+      retVal.toggleHandlers(true);
+
+      return retVal;
+   }
+
+   // Use the create() funstructor above instead of invoking this constructor directly
+   private MarkdownCompletionManager(DocDisplay docDisplay,
                                     CompletionPopupDisplay popup,
                                     CodeToolsServerOperations server,
                                     CompletionContext context)

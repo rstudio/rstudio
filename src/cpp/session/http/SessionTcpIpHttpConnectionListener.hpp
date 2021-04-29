@@ -11,6 +11,9 @@
  *
  */
 
+#ifndef SESSION_TCP_IP_HTTP_CONNECTION_LISTENER_HPP
+#define SESSION_TCP_IP_HTTP_CONNECTION_LISTENER_HPP
+
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <shared_core/Error.hpp>
@@ -85,3 +88,5 @@ private:
 
 } // namespace session
 } // namespace rstudio
+
+#endif /* SESSION_TCP_IP_HTTP_CONNECTION_LISTENER_HPP */

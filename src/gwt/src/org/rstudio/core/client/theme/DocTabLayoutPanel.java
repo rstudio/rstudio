@@ -21,6 +21,7 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ClassIds;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Point;
+import org.rstudio.core.client.RUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.NodePredicate;
@@ -33,6 +34,7 @@ import org.rstudio.core.client.events.TabCloseEvent;
 import org.rstudio.core.client.events.TabClosedEvent;
 import org.rstudio.core.client.events.TabClosingEvent;
 import org.rstudio.core.client.events.TabReorderEvent;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -47,6 +49,8 @@ import org.rstudio.studio.client.common.filetypes.events.RenameSourceFileEvent;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.server.model.DocumentCloseEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.events.CloseAllSourceDocsExceptEvent;
@@ -227,6 +231,13 @@ public class DocTabLayoutPanel
                menu.addItem(ElementIds.TAB_COPY_PATH, new MenuItem("Copy Path", () ->
                {
                   events_.fireEvent(new CopySourcePathEvent(filePath));
+               }));
+               menu.addItem(ElementIds.TAB_SET_WORKING_DIR, new MenuItem("Set Working Directory", () ->
+               {
+                  FileSystemItem targetPath = FileSystemItem.createFile(filePath);
+                  events_.fireEvent(new SendToConsoleEvent(
+                     "setwd(" + RUtil.asStringLiteral(targetPath.getParentPathString()) + ")", true));
+                  events_.fireEvent(new DirectoryNavigateEvent(targetPath.getParentPath(), false));
                }));
                menu.addSeparator();
             }

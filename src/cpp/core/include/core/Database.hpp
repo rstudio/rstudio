@@ -35,6 +35,7 @@ struct SqliteConnectionOptions
    SqliteConnectionOptions(const std::string& file) : file(file), readonly(false) {}
    SqliteConnectionOptions() : readonly(false) {}
    std::string file;
+   int poolSize;
    bool readonly;
 };
 
@@ -47,6 +48,7 @@ struct PostgresqlConnectionOptions
    std::string password;
    std::string connectionUri;
    int connectionTimeoutSeconds;
+   int poolSize;
    std::string secureKey; // obfuscated secure-key value
    std::string secureKeyFileUsed; // absolute path to file containing the key, for troubleshooting
    std::string secureKeyHash; // hash of secureKey (pre-obfuscation)

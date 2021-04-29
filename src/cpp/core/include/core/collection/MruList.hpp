@@ -13,6 +13,9 @@
  *
  */
 
+#ifndef CORE_MRU_LIST_HPP
+#define CORE_MRU_LIST_HPP
+
 #include <cstddef>
 
 #include <list>
@@ -55,3 +58,4 @@ private:
 } // namespace core
 } // namespace rstudio
 
+#endif /* CORE_MRU_LIST_HPP */
