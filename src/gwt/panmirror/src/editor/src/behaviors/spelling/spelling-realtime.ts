@@ -148,7 +148,7 @@ class RealtimeSpellingPlugin extends Plugin<DecorationSet> {
             for (const range of addRanges) {
               decos = decos.add(
                 tr.doc,
-                spellingDecorations(newState, ui.spelling, excluded, true, range.from - 1, range.to)
+                spellingDecorations(newState, ui.spelling, excluded, false, range.from - 1, range.to)
               );
             }
 

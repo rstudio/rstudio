@@ -162,6 +162,9 @@
    # avoid timeouts when querying unresponsive R package repositories
    options(renv.config.connect.timeout = 0L)
    options(renv.config.connect.retry = 0L)
+
+   # tell renv that we know what we're doing
+   options(renv.consent = TRUE)
    
    # if we're running tests, be quiet during init
    if (!is.na(Sys.getenv("TESTTHAT", unset = NA)))
