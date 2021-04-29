@@ -3,7 +3,7 @@
 
 ### Bugfixes
 
-* Placeholder
+* Fixed issue where .md, .py, .sql, and .stan files had duplicate event handlers (#9106)
 
 ### Misc
 
