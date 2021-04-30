@@ -49,10 +49,13 @@ public class JobProgress extends Composite
    @Inject
    public JobProgress(EventBus eventBus)
    {
-      // stop must be defined before calling createAndBindUi
+      // buttons must be defined before calling createAndBindUi
       stop_ = new ToolbarButton(ToolbarButton.NoText,
-                                "Stop job",
-                                new ImageResource2x(RESOURCES.jobCancel()));
+         "Stop job",
+         new ImageResource2x(RESOURCES.jobCancel()));
+      replay_ = new ToolbarButton(ToolbarButton.NoText,
+         "Replay job",
+         new ImageResource2x(RESOURCES.jobReplay()));
       initWidget(uiBinder.createAndBindUi(this));
       eventBus_ = eventBus;
       complete_ = false;
@@ -78,6 +81,8 @@ public class JobProgress extends Composite
       String status = JobConstants.stateDescription(job.state);
       stop_.addClickHandler(clickEvent ->
          eventBus_.fireEvent(new JobExecuteActionEvent(job.id, JobConstants.ACTION_STOP)));
+      replay_.addClickHandler(clickEvent ->
+         eventBus_.fireEvent(new JobExecuteActionEvent(job.id, JobConstants.ACTION_REPLAY)));
 
       if (job.completed > 0)
       {
@@ -86,6 +91,7 @@ public class JobProgress extends Composite
          status += " " + StringUtil.friendlyDateTime(new Date(job.completed * 1000));
          elapsed_.setText(StringUtil.conciseElaspedTime(job.completed - job.started));
          status_.setVisible(true);
+         replay_.setVisible(true);
       }
       else if (job.max > 0)
       {
@@ -93,6 +99,7 @@ public class JobProgress extends Composite
          progress_.setVisible(true);
          progress_.setProgress(job.progress, job.max);
          status_.setVisible(false);
+         replay_.setVisible(false);
       }
       else
       {
@@ -104,6 +111,7 @@ public class JobProgress extends Composite
             // Still running; show its status
             status = job.status;
          }
+         replay_.setVisible(false);
       }
 
       // show stop button if job has a "stop" action, and is not completed
@@ -133,6 +141,7 @@ public class JobProgress extends Composite
    @UiField ProgressBar progress_;
    @UiField Label elapsed_;
    @UiField(provided=true) ToolbarButton stop_;
+   @UiField(provided=true) ToolbarButton replay_;
    @UiField Label status_;
    
    private final EventBus eventBus_;

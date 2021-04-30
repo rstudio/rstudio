@@ -41,9 +41,12 @@
       <g:cell horizontalAlignment="ALIGN_CENTER" 
               verticalAlignment="ALIGN_MIDDLE"
               width="5%" >
-         <rw:ToolbarButton ui:field="stop_"></rw:ToolbarButton>
+         <g:HTMLPanel>
+            <rw:ToolbarButton ui:field="stop_"></rw:ToolbarButton>
+            <rw:ToolbarButton ui:field="replay_"></rw:ToolbarButton>
+         </g:HTMLPanel>
       </g:cell>
-      <g:cell horizontalAlignment="ALIGN_RIGHT" 
+      <g:cell horizontalAlignment="ALIGN_RIGHT"
               verticalAlignment="ALIGN_MIDDLE"
               width="5%">
          <g:Label styleName="{style.elapsed}" ui:field="elapsed_"></g:Label>
