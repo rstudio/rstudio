@@ -422,6 +422,12 @@ Error stopScriptJob(const std::string& id)
    return stopAsyncRJob(id);
 }
 
+Error replayScriptJob(const std::string& id)
+{
+   // TODO
+   return Success();
+}
+
 } // namespace jobs
 } // namespace modules
 } // namespace session

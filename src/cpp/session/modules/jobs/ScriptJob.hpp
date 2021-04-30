@@ -102,6 +102,8 @@ core::Error startScriptJob(const ScriptLaunchSpec& spec,
 
 core::Error stopScriptJob(const std::string& id);
 
+core::Error replayScriptJob(const std::string& id);
+
 } // namespace jobs
 } // namespace modules
 } // namespace session

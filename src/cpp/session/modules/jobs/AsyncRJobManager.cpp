@@ -136,13 +136,13 @@ Error registerAsyncRJob(boost::shared_ptr<AsyncRJob> job,
    return Success();
 }
 
-core::Error stopAsyncRJob(const std::string& id)
+core::Error getAsyncRJob(const std::string& id, boost::shared_ptr<AsyncRJob> *pJob)
 {
    for (auto job: s_jobs)
    {
       if (job->id() == id)
       {
-         job->cancel();
+         *pJob = job;
          return Success();
       }
    }
@@ -152,6 +152,20 @@ core::Error stopAsyncRJob(const std::string& id)
          ERROR_LOCATION);
    error.addProperty("id", id);
    return error;
+}
+
+
+core::Error stopAsyncRJob(const std::string& id)
+{
+   boost::shared_ptr<AsyncRJob> pJob;
+   Error error = getAsyncRJob(id, &pJob);
+   if (error)
+   {
+      return error;
+   }
+
+   pJob->cancel();
+   return Success();
 }
  
 } // namespace jobs

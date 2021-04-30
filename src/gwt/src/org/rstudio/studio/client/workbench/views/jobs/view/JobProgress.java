@@ -91,7 +91,7 @@ public class JobProgress extends Composite
          status += " " + StringUtil.friendlyDateTime(new Date(job.completed * 1000));
          elapsed_.setText(StringUtil.conciseElaspedTime(job.completed - job.started));
          status_.setVisible(true);
-         replay_.setVisible(true);
+         replay_.setVisible(JsArrayUtil.jsArrayStringContains(job.actions, JobConstants.ACTION_REPLAY));
       }
       else if (job.max > 0)
       {

@@ -16,9 +16,14 @@
 # Helpers --------------------------------------------------------------------
 
 .rs.addFunction("scriptActions", function() {
-   list(stop = function(id) {
-      .Call("rs_stopScriptJob", id, PACKAGE = "(embedding)")
-   })
+   list(
+     stop = function(id) {
+        .Call("rs_stopScriptJob", id, PACKAGE = "(embedding)")
+     },
+     replay = function(id) {
+        .Call("rs_replayScriptJob", id, PACKAGE = "(embedding)")
+     }
+   )
 })
 
 # API functions --------------------------------------------------------------

@@ -77,6 +77,9 @@ protected:
 core::Error registerAsyncRJob(boost::shared_ptr<AsyncRJob> job,
       std::string *pId);
 
+// Retrieves an asynchronous R job by ID
+core::Error getAsyncRJob(const std::string& id, boost::shared_ptr<AsyncRJob> *pJob);
+
 // Stops an asynchronous R job
 core::Error stopAsyncRJob(const std::string& id);
  
