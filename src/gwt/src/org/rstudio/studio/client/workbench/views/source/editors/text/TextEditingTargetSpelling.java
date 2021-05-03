@@ -118,14 +118,16 @@ public class TextEditingTargetSpelling extends SpellingContext
 
                   lint.push(LintItem.create(wordStart.getRow(), wordStart.getColumn(), wordEnd.getRow(), wordEnd.getColumn(), "Spellcheck", "spelling"));
                }
-
-               request.onResponseReceived(lint);
             }
+
+            request.onResponseReceived(lint);
+
          }
 
          @Override
          public void onError(ServerError error)
          {
+            Debug.logError(error);
          }
       });
    }
