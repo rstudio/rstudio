@@ -1138,17 +1138,19 @@ FilePath tempDir()
 
 FilePath findProgram(const std::string& name)
 {
-   // TODO: added isMainThread() test here to allow the console to run offline.
-   // On starting a terminal, it does 'which svn' to see if there's another directory to be added to the path
-   // of the new shell automatically. Can we always use findProgramOnPath? It will be a lot faster since R's
+   // Added isMainThread() test here to allow the console to run offline.
+   // On starting a terminal, it does 'which svn' and adds that dir to the
+   // path if it find one
+   // FUTURE: Can we always use findProgramOnPath? It will be a lot faster since R's
    // version seems to fork a process to call the shell's 'which'
+   // Be careful of Windows there are two copies of the environment so
+   // R's env might be out of sync with rsession's PATH.
    if (!r::exec::isMainThread())
    {
       FilePath resultPath;
       Error error = system::findProgramOnPath(name, &resultPath);
       if (error)
       {
-         LOG_ERROR(error);
          return FilePath();
       }
       return resultPath;
@@ -1158,8 +1160,7 @@ FilePath findProgram(const std::string& name)
       std::string which;
       FilePath resultPath;
 
-      // TODO: switch over to using findProgramOnPath all the time here - for now, doing it both ways to ensure there
-      // are no edge cases in findProgramOnPath that make a difference to app code
+      // For now, going to check both ways and log warnings if they don't match
       Error error = r::exec::RFunction("Sys.which", name).call(&which);
       Error dbgError = system::findProgramOnPath(name, &resultPath);
       if (error)
@@ -1171,11 +1172,11 @@ FilePath findProgram(const std::string& name)
       {
          if (dbgError && which != "")
          {
-            LOG_ERROR_MESSAGE("findProgramOnPath returns error: " + dbgError.asString() + " Sys.which returns: " + resultPath.getAbsolutePath());
+            LOG_WARNING_MESSAGE("findProgramOnPath returns error: " + dbgError.asString() + " Sys.which returns: " + resultPath.getAbsolutePath());
          }
          else if (which != resultPath.getAbsolutePath())
          {
-            LOG_ERROR_MESSAGE("findProgramOnPath returns wrong result: " + which + " != " + resultPath.getAbsolutePath());
+            LOG_WARNING_MESSAGE("findProgramOnPath returns wrong result: " + which + " != " + resultPath.getAbsolutePath());
          }
          return FilePath(which);
       }

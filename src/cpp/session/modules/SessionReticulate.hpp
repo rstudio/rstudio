@@ -16,6 +16,8 @@
 #ifndef SESSION_MODULES_RETICULATE_HPP
 #define SESSION_MODULES_RETICULATE_HPP
 
+#include <string>
+
 namespace rstudio {
 namespace core {
 
@@ -33,6 +35,8 @@ bool isPythonInitialized();
 bool isReplActive();
 
 core::Error initialize();
+
+std::string reticulatePython();
 
 } // end namespace reticulate
 } // end namespace modules
