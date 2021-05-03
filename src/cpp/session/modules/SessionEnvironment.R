@@ -60,7 +60,11 @@
 
 .rs.addFunction("valueAsStringImpl", function(val)
 {
-   if (is.null(val))
+   if (missing(val))
+   {
+      "<missing>"
+   }
+   else if (is.null(val))
    {
       "NULL"
    }
