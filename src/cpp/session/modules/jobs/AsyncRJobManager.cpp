@@ -67,6 +67,18 @@ void AsyncRJob::onStdout(const std::string& output)
       job_->addOutput(output, false);
 }
 
+Error AsyncRJob::replay()
+{
+   // this base implementation does not know how to replay itself
+   Error error = systemError(boost::system::errc::not_supported, ERROR_LOCATION);
+   if (job_)
+   {
+      error.addProperty("id", job_->id());
+   }
+   error.addProperty("description", "Job does not support replay");
+   return error;
+}
+
 void AsyncRJob::onCompleted(int exitStatus)
 {
    // if the job has not yet been marked complete, do so now
@@ -166,6 +178,18 @@ core::Error stopAsyncRJob(const std::string& id)
 
    pJob->cancel();
    return Success();
+}
+
+core::Error replayAsyncRJob(const std::string& id)
+{
+   boost::shared_ptr<AsyncRJob> pJob;
+   Error error = getAsyncRJob(id, &pJob);
+   if (error)
+   {
+      return error;
+   }
+
+   return pJob->replay();
 }
  
 } // namespace jobs

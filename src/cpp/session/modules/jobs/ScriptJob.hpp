@@ -80,6 +80,7 @@ public:
    static boost::shared_ptr<ScriptJob> create(
          const ScriptLaunchSpec& spec);
    void start();
+   core::Error replay();
 
 private:
    ScriptJob(const ScriptLaunchSpec& spec);

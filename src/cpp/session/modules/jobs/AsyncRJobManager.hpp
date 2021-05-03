@@ -58,6 +58,9 @@ public:
    virtual void onStderr(const std::string& output);
    virtual void onCompleted(int exitStatus);
 
+   // Replay the job (run it again)
+   virtual core::Error replay();
+
 protected:
    // Whether the R process is complete
    bool completed_;
@@ -83,6 +86,9 @@ core::Error getAsyncRJob(const std::string& id, boost::shared_ptr<AsyncRJob> *pJ
 // Stops an asynchronous R job
 core::Error stopAsyncRJob(const std::string& id);
  
+// Replays an asynchronous R job
+core::Error replayAsyncRJob(const std::string& id);
+
 } // namespace jobs
 } // namespace modules
 } // namespace session
