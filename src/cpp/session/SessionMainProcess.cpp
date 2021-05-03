@@ -79,19 +79,9 @@ void setupForkHandlers()
 }
 #endif
 
-// TODO: asyncRpc - this is just a sanity check on the thread local implementation
-// remove it since getting the thread id is a system call 
-bool sysIsMainThread()
-{
-   return boost::this_thread::get_id() == s_mainThreadId;
-}
-
 bool isMainThread()
 {
-   bool res = t_isMainThread.get();
-   if (res != sysIsMainThread())
-      LOG_ERROR_MESSAGE("isMainThreadCheck - wrong result!");
-   return res;
+   return t_isMainThread.get();
 }
 
 void initThreadId()

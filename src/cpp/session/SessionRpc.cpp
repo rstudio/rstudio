@@ -381,7 +381,6 @@ Error initialize()
 
    RS_REGISTER_CALL_METHOD(rs_invokeRpc);
 
-   // TODO: asyncRpc - add option to registerRpcMethod?
    s_offlineableUris.insert("/rpc/save_document");
    s_offlineableUris.insert("/rpc/save_document_diff");
    s_offlineableUris.insert("/rpc/open_document");

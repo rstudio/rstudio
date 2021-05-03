@@ -186,7 +186,7 @@ void OfflineService::run()
          sleepMillis = 250;
 
       // Pick the smallest non-zero value to use in the sleep call
-      // TODO: asyncRpc will run jobs later in some cases e.g. asyncRpcMillis=500 and handleOffline=750
+      // Note - this will run jobs later in some cases e.g. asyncRpcMillis=500 and handleOffline=750
       // runs offline requests every second, not 750. Keeping it simple for now
       if (sleepMillis == 0 || (handleOfflineMillis != 0 && handleOfflineMillis < sleepMillis))
          sleepMillis = handleOfflineMillis;
@@ -223,10 +223,8 @@ void OfflineService::run()
                continue;
 
             // If R is not occupying the main thread, we'll continue to wait.
-            // TODO: asyncRpc - are there other skippable operations, not from R - if so, we could remove this test
             if (!console_input::executing())
             {
-               // TODO: asyncRpc log a warning here if mainConnectionQueue has more than 5 entries
                continue;
             }
 
@@ -257,7 +255,7 @@ void OfflineService::run()
                      }
                      else
                      {
-                        // TODO: asyncRpc - should we add a new mutex here so that only one handleConnection runs
+                        // FUTURE: asyncRpc: should we add a new mutex here so that only one handleConnection runs
                         // Offlineable Uris must be threadsafe to be runnable at the same time here and
                         // on the main thread
                         http_methods::handleConnection(ptrConnection, http_methods::BackgroundConnection);
@@ -274,8 +272,6 @@ void OfflineService::run()
 
                if (++emitMemEventsIndex >= emitMemEventsCt)
                {
-                  // TODO: asyncRpc - is this dependency on modules ok? Maybe we should add a new event that is used only
-                  // by listeners that are thread-safe
                   if (prefs::userPrefs().showMemoryUsage())
                      modules::system_resources::emitMemoryChangedEvent();
                   emitMemEventsIndex = 0;

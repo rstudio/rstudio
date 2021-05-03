@@ -953,7 +953,6 @@ void initSessionDebugLog()
       return;
    s_sessionDebugLogCreated = true;
 
-   // TODO: should we have a preference for the path to this log file?
    system::initFileLogDestination(log::LogLevel::DEBUG, core::system::xdg::userDataDir().completePath("log"));
 }
 
