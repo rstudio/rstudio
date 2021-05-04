@@ -172,6 +172,7 @@ function submitRealForm() {
 function pollForSignin() {
   if (activeSignIn)
      return;
+
   var xhr = new XMLHttpRequest();
   xhr.open("GET", "./", true);
   xhr.onreadystatechange = function() {
@@ -179,6 +180,7 @@ function pollForSignin() {
        return;
      try {
         if (xhr.readyState === 4) {
+           setTimeout(pollForSignin, 1000);
            if (xhr.status === 200) {
               var isSignIn = false;
               var url = xhr.responseURL.split('?')[0];
@@ -220,7 +222,7 @@ window.addEventListener("load", function() {
       userEle.focus();
    
       // Begin polling for sign-ins from other tabs (we only do this for interactive forms)
-      setInterval(pollForSignin, 1000);
+      setTimeout(pollForSignin, 1000);
    }
 
 
