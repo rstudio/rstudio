@@ -19,6 +19,8 @@ var responseURL = "";
 // Global variable; tracks whether an active sign-in is in progress
 var activeSignIn = false;
 
+var pollInProgress = false;
+
 /**
  * Ensure error region is spoken by a screen reader.
  */
@@ -170,8 +172,11 @@ function submitRealForm() {
  * Checks to see if the user has already signed in via another tab.
  */
 function pollForSignin() {
-  if (activeSignIn)
+  if (activeSignIn || pollInProgress)
      return;
+
+  pollInProgress = true;
+
   var xhr = new XMLHttpRequest();
   xhr.open("GET", "./", true);
   xhr.onreadystatechange = function() {
@@ -179,6 +184,7 @@ function pollForSignin() {
        return;
      try {
         if (xhr.readyState === 4) {
+           pollInProgress = false;
            if (xhr.status === 200) {
               var isSignIn = false;
               var url = xhr.responseURL.split('?')[0];
