@@ -603,11 +603,6 @@ DisableDebugScope::DisableDebugScope(SEXP env)
    if (env == nullptr)
       return;
    
-   // nothing to do if disabled
-   bool suppressed = r::options::getOption<bool>("rstudio.errors.suppressed", false, false);
-   if (suppressed)
-      return;
-
    // check to see whether there's a debug flag set on this environment
    rdebug_ = RDEBUG(env);
 
