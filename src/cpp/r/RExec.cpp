@@ -375,26 +375,21 @@ void RFunction::commonInit(const std::string& functionName)
    // record functionName (used later for diagnostics)
    functionName_ = functionName;
    
-   // get name & ns
-   std::string name, ns;
-   
    // check for namespace qualifier
-   std::string nsQual(":::");
-   size_t pos = functionName_.find(nsQual);
-   if (pos != std::string::npos)
+   auto pos = functionName_.find(":::");
+   if (pos == std::string::npos)
    {
-      ns = functionName_.substr(0, pos);
-      name = functionName_.substr(pos + nsQual.size());
-   }
-   else
-   {
-      name = functionName_;
+      functionSEXP_ = Rf_install(functionName.c_str());
+      return;
    }
    
-   // lookup function
-   functionSEXP_ = sexp::findFunction(name, ns);
-   if (functionSEXP_ != R_UnboundValue)
-      preserver_.add(functionSEXP_);
+   // build call to the requested
+   functionSEXP_ = Rf_lang3(
+            Rf_install("::"),
+            Rf_install(functionName_.substr(0, pos).c_str()),
+            Rf_install(functionName_.substr(pos + 3).c_str()));
+   
+   preserver_.add(functionSEXP_);
 }
    
 Error RFunction::callUnsafe()
