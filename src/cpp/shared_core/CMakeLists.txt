@@ -33,6 +33,7 @@ set (SHARED_CORE_SOURCE_FILES
    Error.cpp
    FileLogDestination.cpp
    FilePath.cpp
+   Hash.cpp
    Logger.cpp
    ReaderWriterMutex.cpp
    StderrLogDestination.cpp
@@ -58,24 +59,6 @@ if (UNIX)
    find_library(PTHREAD_LIBRARIES pthread)
    set (SHARED_CORE_SYSTEM_LIBS
       ${PTHREAD_LIBRARIES})
-
-   if(APPLE)
-      if(${MACOSX_VERSION} VERSION_GREATER "10.10"
-         AND EXISTS "/usr/local/opt/openssl")
-         set(SHARED_CORE_SYSTEM_LIBS
-            ${SHARED_CORE_SYSTEM_LIBS}
-            -L/usr/local/opt/openssl/lib -lssl -lcrypto)
-
-         set(SHARED_INCLUDE_DIRS
-            ${SHARED_INCLUDE_DIRS}
-            /usr/local/opt/openssl/include)
-
-         if(NOT DEFINED OPENSSL_ROOT_DIR)
-            set(OPENSSL_ROOT_DIR
-               /usr/local/opt/openssl)
-         endif()
-      endif()
-   endif()
 
 else()
 
@@ -117,6 +100,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
 
    target_link_libraries(rstudio-shared-core-tests
       rstudio-shared-core
+      rstudio-core
       ${Boost_LIBRARIES}
    )
 endif()

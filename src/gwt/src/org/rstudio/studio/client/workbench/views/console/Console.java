@@ -19,12 +19,15 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.layout.DelayFadeInHelper;
 import org.rstudio.core.client.widget.FocusContext;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.events.ReticulateEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.BusyEvent;
 import org.rstudio.studio.client.workbench.events.ZoomPaneEvent;
@@ -71,11 +74,33 @@ public class Console
 
       interruptFadeInHelper_ = new DelayFadeInHelper(
             view_.getConsoleInterruptButton().asWidget());
+      
       events.addHandler(BusyEvent.TYPE, event ->
       {
          if (event.isBusy())
          {
             interruptFadeInHelper_.beginShow();
+         }
+      });
+      
+      events.addHandler(ReticulateEvent.TYPE, event ->
+      {
+         String type = event.getType();
+         if (StringUtil.equals(type, ReticulateEvent.TYPE_REPL_BUSY))
+         {
+            JsObject data = event.getPayload().cast();
+            
+            boolean busy = data.getBoolean("busy");
+            if (busy)
+            {
+               interruptFadeInHelper_.beginShow();
+            }
+            else
+            {
+               interruptFadeInHelper_.hide();
+            }
+            
+            commands.interruptR().setEnabled(busy, true);
          }
       });
 

@@ -273,7 +273,6 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       }
    }
 
-
    @Override
    public HandlerRegistration addLoadHandler(LoadHandler handler)
    {
@@ -285,7 +284,6 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    {
       return new Size(frame_.getOffsetWidth(), frame_.getOffsetHeight());
    }
-
 
    @Override
    public void onResize()

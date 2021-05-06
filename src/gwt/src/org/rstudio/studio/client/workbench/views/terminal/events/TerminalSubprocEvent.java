@@ -37,7 +37,7 @@ public class TerminalSubprocEvent extends GwtEvent<TerminalSubprocEvent.Handler>
          eventData.subprocs = hasSubprocs;
          return eventData;
       }-*/;
- 
+
       /**
        * @return Terminal handle
        */

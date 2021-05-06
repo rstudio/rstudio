@@ -13,5 +13,9 @@
  *
  */
 
+#ifndef SESSION_CLIENT_EVENT_HPP
+#define SESSION_CLIENT_EVENT_HPP
 
 #include "worker_safe/session/SessionClientEvent.hpp"
+
+#endif /* SESSION_CLIENT_EVENT_HPP */

@@ -33,4 +33,3 @@ public class XTermFitAddon extends XTermAddon
     */
    public native XTermDimensions proposeDimensions();
 }
-

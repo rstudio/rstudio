@@ -44,6 +44,7 @@ protected:
    buildOptions(boost::program_options::options_description* pTests,
                 boost::program_options::options_description* pScript,
                 boost::program_options::options_description* pVerify,
+                boost::program_options::options_description* pVersion,
                 boost::program_options::options_description* pProgram,
                 boost::program_options::options_description* pLog,
                 boost::program_options::options_description* pDocs,
@@ -76,6 +77,11 @@ protected:
       (kVerifyInstallationSessionOption,
       value<bool>(&verifyInstallation_)->default_value(false),
       "Verifies that the session installation is working correctly and exits.");
+
+   pVersion->add_options()
+      (kVersionSessionOption,
+      value<bool>(&version_)->default_value(false)->implicit_value(true),
+      "Prints the version number and exits.");
 
    pProgram->add_options()
       (kProgramModeSessionOption,
@@ -199,7 +205,10 @@ protected:
       "Specifies a list of directories exempt from directory view restrictions, separated by a colon character (:).")
       (kSessionEnvVarSaveBlacklist,
       value<std::string>(&envVarSaveBlacklist_)->default_value(std::string()),
-      "Specifies a list of environment variables that will not be saved when sessions suspend, separated by a colon character (:).");
+      "Specifies a list of environment variables that will not be saved when sessions suspend, separated by a colon character (:).")
+      (kSessionSuspendOnIncompleteStatement,
+      value<bool>(&suspendOnIncompleteStatement_)->default_value(false),
+      "Specifies whether the session should be allowed to suspend when a user has entered a partial R statement.");
 
    pAllow->add_options()
       ("allow-vcs-executable-edit",
@@ -387,6 +396,7 @@ public:
    bool runTests() const { return runTests_; }
    std::string runScript() const { return runScript_; }
    bool verifyInstallation() const { return verifyInstallation_; }
+   bool version() const { return version_; }
    std::string programMode() const { return programMode_; }
    bool logStderr() const { return logStderr_; }
    std::string docsURL() const { return docsURL_; }
@@ -425,6 +435,7 @@ public:
    bool restrictDirectoryView() const { return restrictDirectoryView_; }
    std::string directoryViewWhitelist() const { return directoryViewWhitelist_; }
    std::string envVarSaveBlacklist() const { return envVarSaveBlacklist_; }
+   bool suspendOnIncompleteStatement() const { return suspendOnIncompleteStatement_; }
    bool allowVcsExecutableEdit() const { return allowVcsExecutableEdit_; }
    bool allowCRANReposEdit() const { return allowCRANReposEdit_; }
    bool allowVcs() const { return allowVcs_; }
@@ -482,6 +493,7 @@ protected:
    bool runTests_;
    std::string runScript_;
    bool verifyInstallation_;
+   bool version_;
    std::string programMode_;
    bool logStderr_;
    std::string docsURL_;
@@ -520,6 +532,7 @@ protected:
    bool restrictDirectoryView_;
    std::string directoryViewWhitelist_;
    std::string envVarSaveBlacklist_;
+   bool suspendOnIncompleteStatement_;
    bool allowVcsExecutableEdit_;
    bool allowCRANReposEdit_;
    bool allowVcs_;

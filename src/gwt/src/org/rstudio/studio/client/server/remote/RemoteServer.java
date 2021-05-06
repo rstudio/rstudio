@@ -170,6 +170,7 @@ import org.rstudio.studio.client.workbench.views.environment.model.DataPreviewRe
 import org.rstudio.studio.client.workbench.views.environment.model.DownloadInfo;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentContextData;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentFrame;
+import org.rstudio.studio.client.workbench.views.environment.model.MemoryUsageReport;
 import org.rstudio.studio.client.workbench.views.environment.model.ObjectContents;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.files.model.DirectoryListing;
@@ -4710,6 +4711,14 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void getMemoryUsageReport(ServerRequestCallback<MemoryUsageReport> requestCallback)
+   {
+      sendRequest(RPC_SCOPE,
+         "get_memory_usage_report",
+         requestCallback);
+   }
+
+   @Override
    public void setFunctionBreakpoints(
          String functionName,
          String fileName,
@@ -6359,6 +6368,15 @@ public class RemoteServer implements Server
    public void getInstalledFonts(ServerRequestCallback<JsArrayString> callback)
    {
       sendRequest(RPC_SCOPE, "get_installed_fonts", callback);
+   }
+
+   @Override
+   public void recordCommandExecution(String commandId,
+                                   ServerRequestCallback<Void> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(StringUtil.notNull(commandId)));
+      sendRequest(RPC_SCOPE, "record_command_execution", params, callback);
    }
 
    protected String clientInitId_ = "";

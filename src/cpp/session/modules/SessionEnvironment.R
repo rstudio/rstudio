@@ -60,7 +60,11 @@
 
 .rs.addFunction("valueAsStringImpl", function(val)
 {
-   if (is.null(val))
+   if (missing(val))
+   {
+      "<missing>"
+   }
+   else if (is.null(val))
    {
       "NULL"
    }
@@ -203,16 +207,29 @@
 # used to create description for promises
 .rs.addFunction("promiseDescription", function(obj)
 {
-   # by default, the description should be the expression associated with the
-   # object
-   description <- paste(deparse(substitute(obj)), collapse="")
-
-   # create a more friendly description for delay-loaded data
-   if (substr(description, 1, 16) == "lazyLoadDBfetch(")
-   {
-      description <- "<Promise>"
-   }
-   return (description)
+   # NOTE: substitute() returns the expression associated with a promise,
+   # without forcing it to be evaluated
+   expr <- substitute(obj)
+   
+   # if this appears to be a call to 'lazyLoadDBfetch()', that implies
+   # this is lazy-loaded data (typically associated with an R package).
+   # handle those up front
+   isLazyLoad <-
+      is.call(expr) &&
+      is.name(expr[[1L]]) &&
+      identical(expr[[1L]], as.name("lazyLoadDBfetch"))
+   
+   if (isLazyLoad)
+      return("<Promise>")
+   
+   # for some calls, e.g. those formed manually or those evaluated via
+   # do.call(), the 'expression' here might just be an already-evaluated
+   # R object. in such a case, we want to avoid deparsing the object as
+   # it could be expensive (especially for large objects).
+   if (is.call(expr))
+      return(.rs.deparse(expr))
+   
+   .rs.valueDescription(expr)
 })
 
 # used to create descriptions for language objects and symbols
@@ -364,82 +381,169 @@
 
 .rs.addFunction("functionNameFromCall", function(val)
 {
-   call <- attr(val, "_rs_call")
+   call <- .rs.nullCoalesce(
+      attr(val, "_rs_call", exact = TRUE),
+      val
+   )
+   
    if (is.function(call[[1]]))
-      "[Anonymous function]"
+      return("[Anonymous function]")
+   
+   if (is.name(call[[1L]]))
+      return(as.character(call[[1L]]))
+   
+   .rs.deparse(call[[1L]])
+})
+
+.rs.addFunction("sanitizeCallSummary", function(object)
+{
+   if (is.call(object))
+   {
+      # if this is the concatenation of a large number of objects,
+      # then just use a shorter representation of the call
+      callee <- object[[1L]]
+      long <-
+         is.name(callee) &&
+         length(object) > 20
+      
+      if (long)
+         return(as.call(list(callee, quote(...))))
+      
+      # sanitize each call entry separately
+      for (i in seq_along(object))
+      {
+         # assigning NULL to object will remove that entry
+         # https://github.com/rstudio/rstudio/issues/9299
+         sanitized <- .rs.sanitizeCallSummary(object[[i]])
+         if (!is.null(sanitized))
+            object[[i]] <- sanitized
+      }
+      
+      # return object
+      object
+   }
+   else if (is.pairlist(object))
+   {
+      # handle pairlists specially, primarily because they're
+      # used directly within function calls
+      object
+   }
+   else if (!is.language(object))
+   {
+      # if the object would be very expensive to deparse,
+      # just use a placeholder instead
+      #
+      # note that we still want to accept literals here,
+      # e.g. 42, "abc"
+      if (!is.object(object) && length(object) == 1)
+      {
+         object
+      }
+      else
+      {
+         type <- .rs.explorer.objectType(object)
+         as.name(sprintf("<%s>", type))
+      }
+   }
    else
-      as.character(substitute(call))
+   {
+      object
+   }
 })
 
 .rs.addFunction("callSummary", function(val)
 {
-   deparse(attr(val, "_rs_call"))
+   call <- .rs.nullCoalesce(
+      attr(val, "_rs_call", exact = TRUE),
+      val
+   )
+   
+   # some calls might be very large when deparsed, especially when
+   # they include R objects which have already been evaluted. this
+   # happens most often with calls like:
+   #
+   #   do.call("fn", list(object))
+   #
+   # where 'object' is something very large when deparsed. we avoid
+   # issues by replacing such objects with a short identifier of their
+   # type / class
+   call <- .rs.sanitizeCallSummary(call)
+   
+   .rs.deparse(call)
 })
 
 .rs.addFunction("valueDescription", function(obj)
 {
    tryCatch(
+      .rs.valueDescriptionImpl(obj),
+      error = function(e) ""
+   )
+})
+
+.rs.addFunction("valueDescriptionImpl", function(obj)
+{
+   if (missing(obj))
    {
-      if (missing(obj))
+      return("Missing argument")
+   }
+   else if (is.null(obj))
+   {
+      return("NULL")
+   }
+   else if (is(obj, "ore.frame"))
+   {
+      sqlTable <- attr(obj, "sqlTable", exact = TRUE)
+      if (is.null(sqlTable))
+         return("Oracle R frame") 
+      else
+         return(paste("Oracle R frame:", sqlTable))
+   }
+   else if (.rs.isExternalPointer(obj))
+   {
+      class <- class(obj)
+      if (length(class) && !identical(class, "externalptr"))
       {
-        return("Missing argument")
-      }
-      else if (is(obj, "ore.frame"))
-      {
-        sqlTable <- attr(obj, "sqlTable", exact = TRUE)
-        if (is.null(sqlTable))
-          return("Oracle R frame") 
-        else
-          return(paste("Oracle R frame:", sqlTable))
-      }
-      else if (.rs.isExternalPointer(obj))
-      {
-         class <- class(obj)
-         if (length(class) && !identical(class, "externalptr"))
-         {
-            fmt <- "External pointer of class '%s'"
-            return(sprintf(fmt, class[[1]]))
-         }
-         else
-         {
-            return("External pointer")
-         }
-      }
-      else if (is.data.frame(obj))
-      {
-         return(paste(dim(obj)[1],
-                      "obs. of",
-                      dim(obj)[2],
-                      ifelse(dim(obj)[2] == 1, "variable", "variables"),
-                      sep=" "))
-      }
-      else if (is.environment(obj))
-      {
-         return("Environment")
-      }
-      else if (isS4(obj))
-      {
-         return(paste("Formal class ", is(obj)))
-      }
-      else if (is.list(obj))
-      {
-         return(paste("List of ", length(obj)))
-      }
-      else if (is.matrix(obj)
-              || is.numeric(obj)
-              || is.factor(obj)
-              || is.raw(obj) 
-              || is.character(obj)
-              || is.logical(obj))
-      {
-         return(.rs.valueFromStr(obj))
+         fmt <- "External pointer of class '%s'"
+         return(sprintf(fmt, class[[1]]))
       }
       else
-         return("")
-   },
-   error = function(e) print(e))
-
-   return ("")
+      {
+         return("External pointer")
+      }
+   }
+   else if (is.data.frame(obj))
+   {
+      return(paste(dim(obj)[1],
+                   "obs. of",
+                   dim(obj)[2],
+                   ifelse(dim(obj)[2] == 1, "variable", "variables"),
+                   sep=" "))
+   }
+   else if (is.environment(obj))
+   {
+      return("Environment")
+   }
+   else if (isS4(obj))
+   {
+      return(paste("Formal class ", is(obj)))
+   }
+   else if (is.list(obj))
+   {
+      return(paste("List of ", length(obj)))
+   }
+   else if (is.matrix(obj)
+            || is.numeric(obj)
+            || is.factor(obj)
+            || is.raw(obj) 
+            || is.character(obj)
+            || is.logical(obj))
+   {
+      return(.rs.valueFromStr(obj))
+   }
+   else
+   {
+      return("")
+   }
 })
 
 .rs.addFunction("editor", function(name, file = "", title = file, ...)

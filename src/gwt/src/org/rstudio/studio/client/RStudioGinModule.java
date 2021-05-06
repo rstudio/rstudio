@@ -190,6 +190,7 @@ import org.rstudio.studio.client.workbench.views.output.rsconnectdeploy.RSConnec
 import org.rstudio.studio.client.workbench.views.output.sourcecpp.SourceCppOutputPane;
 import org.rstudio.studio.client.workbench.views.output.sourcecpp.SourceCppOutputPresenter;
 import org.rstudio.studio.client.workbench.views.output.sourcecpp.SourceCppOutputTab;
+import org.rstudio.studio.client.workbench.views.output.tests.TestsOutputTab;
 import org.rstudio.studio.client.workbench.views.help.Help;
 import org.rstudio.studio.client.workbench.views.help.HelpPane;
 import org.rstudio.studio.client.workbench.views.help.HelpTab;
@@ -307,7 +308,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(FileTypeCommands.class).in(Singleton.class);
       bind(Synctex.class).in(Singleton.class);
       bind(PDFViewer.class).in(Singleton.class);
-      bind(HTMLPreview.class).in(Singleton.class);
+      bind(HTMLPreview.class).in(Singleton.class);      
       bind(ShinyApplication.class).in(Singleton.class);
       bind(PlumberAPI.class).in(Singleton.class);
       bind(BreakpointManager.class).asEagerSingleton();
@@ -337,17 +338,17 @@ public class RStudioGinModule extends AbstractGinModule
 
       bind(ApplicationView.class).to(ApplicationWindow.class)
             .in(Singleton.class);
-
+      
       bind(VCSApplicationView.class).to(VCSApplicationWindow.class)
             .in(Singleton.class);
       bind(ReviewPresenter.class).to(ReviewPresenterImpl.class);
-
+      
       bind(HTMLPreviewApplicationView.class).to(HTMLPreviewApplicationWindow.class);
       bind(ShinyApplicationView.class).to(ShinyApplicationWindow.class);
       bind(PlumberAPIView.class).to(PlumberAPIWindow.class);
       bind(RmdOutputView.class).to(RmdOutputWindow.class);
       bind(SourceSatelliteView.class).to(SourceSatelliteWindow.class);
-
+      
       bind(Server.class).to(RemoteServer.class);
       bind(WorkbenchServerOperations.class).to(RemoteServer.class);
 
@@ -397,13 +398,14 @@ public class RStudioGinModule extends AbstractGinModule
       bindTab("Deploy", RSConnectDeployOutputTab.class);
       bindTab("Markers", MarkersOutputTab.class);
       bindTab("Terminal", TerminalTab.class);
+      bindTab("Tests", TestsOutputTab.class);
       bindTab("Jobs", JobsTab.class);
       bindTab("Launcher", LauncherJobsTab.class);
       bindTab("Data Output", DataOutputTab.class);
       bindTab("Tutorial", TutorialTab.class);
 
       bind(Shell.Display.class).to(ShellPane.class);
-
+           
       bind(HelpSearch.Display.class).to(HelpSearchWidget.class);
       bind(CodeSearch.Display.class).to(CodeSearchWidget.class);
 
@@ -412,12 +414,12 @@ public class RStudioGinModule extends AbstractGinModule
       bind(LineTablePresenter.Display.class).to(LineTableView.class);
       bind(HistoryPresenter.DisplayBuilder.class).to(
                                                     HistoryPanel.Builder.class);
-
+      
       bind(HTMLPreviewPresenter.Display.class).to(HTMLPreviewPanel.class);
       bind(ShinyApplicationPresenter.Display.class).to(ShinyApplicationPanel.class);
       bind(PlumberAPIPresenter.Display.class).to(PlumberAPIPanel.class);
       bind(RmdOutputPresenter.Display.class).to(RmdOutputPanel.class);
-
+      
       bind(GlobalDisplay.class)
             .to(DefaultGlobalDisplay.class)
             .in(Singleton.class);
@@ -490,7 +492,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class);
 
       bind(DocDisplay.class).to(AceEditor.class);
-
+      
       install(new GinFactoryModuleBuilder()
          .implement(CompileOutputPaneDisplay.class, CompileOutputPane.class)
          .build(CompileOutputPaneFactory.class));

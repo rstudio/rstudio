@@ -62,7 +62,7 @@ import org.rstudio.studio.client.common.rpubs.ui.RPubsUploadDialog;
 import org.rstudio.studio.client.common.rstudioapi.RStudioAPI;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
-import org.rstudio.studio.client.common.spelling.TypoSpellChecker;
+import org.rstudio.studio.client.common.spelling.RealtimeSpellChecker;
 import org.rstudio.studio.client.common.spelling.ui.SpellingCustomDictionariesWidget;
 import org.rstudio.studio.client.htmlpreview.HTMLPreviewApplication;
 import org.rstudio.studio.client.notebook.CompileNotebookOptionsDialog;
@@ -127,6 +127,7 @@ import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionSni
 import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionWizard;
 import org.rstudio.studio.client.workbench.views.connections.ui.ObjectBrowser;
 import org.rstudio.studio.client.workbench.views.connections.ui.ObjectBrowserModel;
+import org.rstudio.studio.client.workbench.views.console.ConsoleInterpreterVersion;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManagerBase;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.HelpStrategy;
@@ -216,7 +217,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(CaptionWithHelp captionWithHelp);
    void injectMembers(RnwWeaveSelectWidget selectWidget);
    void injectMembers(TextEditingTargetCompilePdfHelper compilePdfHelper);
-   void injectMembers(TypoSpellChecker typoSpellChecker);
+   void injectMembers(RealtimeSpellChecker realtimeSpellChecker);
    void injectMembers(SpellingCustomDictionariesWidget widget);
    void injectMembers(FileExport fileExport);
    void injectMembers(RPubsUploadDialog uploadDialog);
@@ -338,6 +339,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(SourceColumn column);
    void injectMembers(SourceColumnManager columnManager);
    void injectMembers(PythonPreferencesPaneBase<?> pane);
+   void injectMembers(ConsoleInterpreterVersion version);
 
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

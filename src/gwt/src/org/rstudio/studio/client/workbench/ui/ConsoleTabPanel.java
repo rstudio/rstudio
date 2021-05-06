@@ -27,6 +27,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.console.ConsoleClearButton;
+import org.rstudio.studio.client.workbench.views.console.ConsoleInterpreterVersion;
 import org.rstudio.studio.client.workbench.views.console.ConsoleInterruptButton;
 import org.rstudio.studio.client.workbench.views.console.ConsoleInterruptProfilerButton;
 import org.rstudio.studio.client.workbench.views.console.ConsolePane;
@@ -43,28 +44,31 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
    public void initialize(ConsoleInterruptButton consoleInterrupt,
                           ConsoleInterruptProfilerButton consoleInterruptProfiler,
                           ConsoleClearButton consoleClearButton,
+                          ConsoleInterpreterVersion consoleInterpreterVersion,
                           UserPrefs uiPrefs,
                           Session session)
    {
       consoleInterrupt_ = consoleInterrupt;
       consoleInterruptProfiler_ = consoleInterruptProfiler;
       consoleClearButton_ = consoleClearButton;
+      consoleInterpreterVersion_ = consoleInterpreterVersion;
       userPrefs_ = uiPrefs;
       session_ = session;
    }
-
+   
    public ConsoleTabPanel(final PrimaryWindowFrame owner,
                           final LogicalWindow parentWindow,
                           ConsolePane consolePane,
                           WorkbenchTab compilePdfTab,
                           FindOutputTab findResultsTab,
                           WorkbenchTab sourceCppTab,
-                          WorkbenchTab renderRmdTab,
+                          WorkbenchTab renderRmdTab, 
                           WorkbenchTab deployContentTab,
                           MarkersOutputTab markersTab,
                           WorkbenchTab terminalTab,
                           EventBus events,
                           ToolbarButton goToWorkingDirButton,
+                          WorkbenchTab testsTab,
                           WorkbenchTab dataTab,
                           WorkbenchTab jobsTab,
                           WorkbenchTab launcherJobsTab)
@@ -80,10 +84,11 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
       deployContentTab_ = deployContentTab;
       markersTab_ = markersTab;
       terminalTab_ = terminalTab;
+      testsTab_ = testsTab;
       dataTab_ = dataTab;
       jobsTab_ = jobsTab;
       launcherJobsTab_ = launcherJobsTab;
-
+      
       RStudioGinjector.INSTANCE.injectMembers(this);
 
       compilePdfTab.addEnsureVisibleHandler(ensureVisibleEvent ->
@@ -116,7 +121,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
          if (!consoleOnly_)
             selectTab(0);
       });
-
+      
       sourceCppTab.addEnsureVisibleHandler(ensureVisibleEvent ->
       {
          sourceCppTabVisible_ = true;
@@ -142,6 +147,21 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
       renderRmdTab.addEnsureHiddenHandler(ensureHiddenEvent ->
       {
          renderRmdTabVisible_ = false;
+         managePanels();
+         if (!consoleOnly_)
+            selectTab(0);
+      });
+
+      testsTab.addEnsureVisibleHandler(ensureVisibleEvent ->
+      {
+         testsTabVisible_ = true;
+         managePanels();
+         if (ensureVisibleEvent.getActivate())
+            selectTab(testsTab_);
+      });
+      testsTab.addEnsureHiddenHandler(ensureHiddenEvent ->
+      {
+         testsTabVisible_ = false;
          managePanels();
          if (!consoleOnly_)
             selectTab(0);
@@ -176,7 +196,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
          if (!consoleOnly_)
             selectTab(0);
       });
-
+      
       markersTab.addEnsureVisibleHandler(ensureVisibleEvent ->
       {
          markersTabVisible_ = true;
@@ -237,7 +257,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
          if (!consoleOnly_)
             selectTab(0);
       });
-
+      
       events.addHandler(WorkingDirChangedEvent.TYPE, workingDirChangedEvent ->
       {
          String path = workingDirChangedEvent.getPath();
@@ -253,7 +273,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
       {
          terminalTabVisible_ = false;
       }
-
+      
       // Determine initial visibility of local jobs and launcher jobs tabs
       String jobsTabVisibilitySetting = userPrefs_.jobsTabVisibility().getValue();
       Command showLauncherTab = () ->
@@ -336,21 +356,22 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
    private void managePanels()
    {
       boolean consoleOnly = !terminalTabVisible_ &&
-                            !compilePdfTabVisible_ &&
+                            !compilePdfTabVisible_ && 
                             !findResultsTabVisible_ &&
                             !sourceCppTabVisible_ &&
                             !renderRmdTabVisible_ &&
                             !deployContentTabVisible_ &&
                             !markersTabVisible_ &&
+                            !testsTabVisible_ &&
                             !dataTabVisible_ &&
                             !jobsTabVisible_ &&
                             !launcherJobsTabVisible_;
-
+      
       if (consoleOnly)
          owner_.addStyleName(ThemeResources.INSTANCE.themeStyles().consoleOnlyWindowFrame());
       else
          owner_.removeStyleName(ThemeResources.INSTANCE.themeStyles().consoleOnlyWindowFrame());
-
+      
       if (!consoleOnly)
       {
          ArrayList<WorkbenchTab> tabs = new ArrayList<>();
@@ -369,6 +390,8 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
             tabs.add(deployContentTab_);
          if (markersTabVisible_)
             tabs.add(markersTab_);
+         if (testsTabVisible_)
+            tabs.add(testsTab_);
          if (dataTabVisible_)
             tabs.add(dataTab_);
          if (jobsTabVisible_)
@@ -388,6 +411,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
          {
             owner_.setMainWidget(consolePane_);
             owner_.addLeftWidget(goToWorkingDirButton_);
+            
             owner_.setContextButton(consoleClearButton_,
                                     consoleClearButton_.getWidth(),
                                     consoleClearButton_.getHeight(),
@@ -400,6 +424,8 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
                                     consoleInterruptProfiler_.getWidth(),
                                     consoleInterruptProfiler_.getHeight(),
                                     2);
+            
+                  
             consolePane_.onBeforeSelected();
             consolePane_.onSelected();
             consolePane_.setVisible(true);
@@ -413,10 +439,10 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
             owner_.setContextButton(null, 0, 0, 2);
          }
       }
-
+      
       addLayoutStyles(owner_.getElement());
    }
-
+   
    public void addLayoutStyles(Element parent)
    {
       // In order to be able to style the actual layout div that GWT uses internally
@@ -426,21 +452,21 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
          boolean hasHeaderClass = false;
          boolean hasMinimizeClass = false;
          boolean hasMaximizeClass = false;
-
+         
          for (Element c = e.getFirstChildElement(); c != null; c = c.getNextSiblingElement()) {
             if (c.hasClassName(ThemeResources.INSTANCE.themeStyles().windowFrameWidget()))
                hasWidgetClass = true;
-
+            
             if (c.hasClassName(ThemeResources.INSTANCE.themeStyles().primaryWindowFrameHeader()))
                hasHeaderClass = true;
-
+            
             if (c.hasClassName(ThemeResources.INSTANCE.themeStyles().minimize()))
                hasMinimizeClass = true;
-
+            
             if (c.hasClassName(ThemeResources.INSTANCE.themeStyles().maximize()))
                hasMaximizeClass = true;
          }
-
+         
          if (hasWidgetClass) e.addClassName(ThemeResources.INSTANCE.themeStyles().consoleWidgetLayout());
          if (hasHeaderClass) e.addClassName(ThemeResources.INSTANCE.themeStyles().consoleHeaderLayout());
          if (hasMinimizeClass) e.addClassName(ThemeResources.INSTANCE.themeStyles().consoleMinimizeLayout());
@@ -466,11 +492,14 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
    private ConsoleInterruptButton consoleInterrupt_;
    private ConsoleInterruptProfilerButton consoleInterruptProfiler_;
    private ConsoleClearButton consoleClearButton_;
+   private ConsoleInterpreterVersion consoleInterpreterVersion_;
    private final ToolbarButton goToWorkingDirButton_;
    private boolean findResultsTabVisible_;
    private boolean consoleOnly_;
    private UserPrefs userPrefs_;
    private Session session_;
+   private final WorkbenchTab testsTab_;
+   private boolean testsTabVisible_;
    private final WorkbenchTab dataTab_;
    private boolean dataTabVisible_;
    private final WorkbenchTab jobsTab_;

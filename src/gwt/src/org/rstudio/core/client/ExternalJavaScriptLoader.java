@@ -61,14 +61,14 @@ public class ExternalJavaScriptLoader
    {
       this(Document.get(), url);
    }
-   
+
    public ExternalJavaScriptLoader(Document document, String url)
    {
       document_ = document;
       url_ = url;
    }
-   
-   public boolean isLoaded() 
+
+   public boolean isLoaded()
    {
       return state_ == State.Loaded;
    }

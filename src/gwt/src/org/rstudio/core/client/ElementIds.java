@@ -112,6 +112,11 @@ public class ElementIds
       return ID_PREFIX + "label_" + idSafeString(label);
    }
 
+   public static String idWithPrefix(String prefix, String id)
+   {
+      return idSafeString(prefix) + "_" + id;
+   }
+
    private static final Pattern RE_NUMBERED_ELEMENT_ID = Pattern.create("^[a-zA-Z0-9_]+_\\d+$");
 
    public final static String ID_PREFIX = "rstudio_";
@@ -150,6 +155,7 @@ public class ElementIds
    public final static String DIALOG_OK_BUTTON = "dlg_ok";
    public final static String DIALOG_APPLY_BUTTON = "dlg_apply";
    public final static String DIALOG_RETRY_BUTTON = "dlg_retry";
+   public final static String DIALOG_HOME_BUTTON = "dlg_home";
    public final static String SELECT_ALL_BUTTON = "select_all";
    public final static String SELECT_NONE_BUTTON = "select_none";
    public final static String ABOUT_MANAGE_LICENSE_BUTTON = "about_manage_license";
@@ -178,6 +184,13 @@ public class ElementIds
    public final static String TERMINAL_GENERAL_PREFS = "terminal_general_prefs";
    public final static String TERMINAL_CLOSING_PREFS = "terminal_closing_prefs";
 
+   public final static String NEW_PROJECT_DIRECTORY = "directory_name";
+   public final static String NEW_PROJECT_TYPE = "project_type";
+   public final static String NEW_PROJECT_GIT_REPO = "git_repo";
+   public final static String NEW_PROJECT_RENV = "use_renv";
+   public final static String NEW_PROJECT_SOURCE_FILES = "source_files";
+   public final static String NEW_PROJECT_NEW_SESSION = "new_session";
+
    // AskSecretDialog
    public final static String ASK_SECRET_TEXT = "ask_secret_text";
    public static String getAskSecretText() { return getElementId(ASK_SECRET_TEXT); }
@@ -186,6 +199,12 @@ public class ElementIds
    public final static String FIND_FILES_TEXT = "find_files_text";
    public static String getFindFilesText() { return getElementId(FIND_FILES_TEXT); }
    public final static String FIND_FILES_PATTERN_EXAMPLE = "find_files_pattern_example";
+   public final static String FIND_FILES_CASE = "find_files_case";
+   public static String getFindFilesCase() { return getElementId(FIND_FILES_CASE); }
+   public final static String FIND_FILES_WHOLE_WORD = "find_files_whole_word";
+   public static String getFindFilesWholeWord() { return getElementId(FIND_FILES_WHOLE_WORD); }
+   public final static String FIND_FILES_REGEX = "find_files_regex";
+   public static String getFindFilesRegex() { return getElementId(FIND_FILES_REGEX); }
 
    // ImportFileSettingsDialog
    public final static String IMPORT_FILE_NAME = "import_file_name";
@@ -223,6 +242,13 @@ public class ElementIds
    public final static String NEW_SHINY_APP_NAME = "new_shiny_app_name";
    public final static String NEW_SHINY_APP_SINGLE_FILE = "new_shiny_app_single_file";
    public final static String NEW_SHINY_APP_MULTI_FILE = "new_shiny_app_multi_file";
+
+   // Memory
+   public final static String MEMORY_PIE_MINI = "memory_pie_mini";
+   public final static String MEMORY_PIE_FULL = "memory_pie_full";
+   public final static String MEMORY_USAGE_TABLE = "memory_usage_table";
+   public final static String MEMORY_TABLE_TITLE = "memory_table_title";
+   public final static String MEMORY_DROPDOWN = "memory_dropdown";
 
    // TextBoxWithButton and subclasses -- prefixes for button/text/help, combined with suffixes
    public final static String TBB_TEXT = "tbb_text";
@@ -392,6 +418,9 @@ public class ElementIds
    public static String getMbObjectListView() { return getElementId(MB_OBJECT_LIST_VIEW); }
    public final static String SW_ENVIRONMENT = "sw_environment";
    public static String getSwEnvironment() { return getElementId(SW_ENVIRONMENT); }
+   public final static String MB_REFRESH_OPTS = "mb_refresh_opts";
+   public final static String MB_ENV_LANGUAGE = "mb_env_language";
+   public final static String ENV_EMPTY = "env_empty";
 
    // HistoryPane
    public final static String SW_HISTORY = "sw_history";
@@ -538,7 +567,6 @@ public class ElementIds
    public final static String VISUAL_MD_LIST_INSERT_CITE_CREATE_BIB_TYPE = "visual_md_insert_cite_create_bib_type";
    public static String getVisualMdInsertCiteCreateBibType() { return getElementId(VISUAL_MD_LIST_INSERT_CITE_CREATE_BIB_TYPE); }
 
-
    public final static String VISUAL_MD_LIST_TIGHT = "visual_md_ordered_list_tight";
    public final static String VISUAL_MD_IMAGE_TAB_IMAGE = "visual_md_image_tab_image";
    public final static String VISUAL_MD_IMAGE_WIDTH = "visual_md_image_width";
@@ -564,7 +592,6 @@ public class ElementIds
    public final static String VISUAL_MD_CODE_BLOCK_LANG_LABEL2 = "visual_md_code_block_lang_label2";
    public final static String VISUAL_MD_CODE_BLOCK_LANG = "visual_md_code_block_tab_lang";
 
-
    // ProgressDialog
    public final static String PROGRESS_TITLE_LABEL = "progress_title_label";
 
@@ -579,4 +606,27 @@ public class ElementIds
    public final static String COMMAND_PALETTE_LIST = "command_palette_list";
    public final static String COMMAND_PALETTE_SEARCH = "command_palette_search";
    public final static String COMMAND_ENTRY_PREFIX = "command_entry_";
+
+   // Right-click tab context menus
+   public final static String FEATURE_TAB_CONTEXT = "feature_tab_context";
+   public final static String EDITOR_TAB_CONTEXT = "editor_tab_context";
+   public final static String GIT_TAB_CONTEXT = "git_tab_context";
+   public final static String SVN_TAB_CONTEXT = "svn_tab_context";
+
+   // Right-click tab context menus commands
+   public final static String TAB_CLOSE = "tab_close";
+   public final static String TAB_RENAME_FILE = "tab_rename_file";
+   public final static String TAB_COPY_PATH = "tab_copy_path";
+   public final static String TAB_CLOSE_ALL = "tab_close_all";
+   public final static String TAB_CLOSE_OTHERS = "tab_close_others";
+
+   // OpenProjectDialog
+   public final static String OP_NEW_SESSION = "op_new_session";
+
+   // FilePathToolbar
+   public final static String FP_SELECT_ALL = "fp_select_all";
+
+   // ChooseEncodingDialog
+   public final static String ENC_SHOW_ALL = "enc_show_all";
+   public final static String ENC_SET_DEFAULT = "enc_set_default";
 }

@@ -1243,7 +1243,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
 
    private static boolean canActivateSourceWindows()
    {
-      return Desktop.hasDesktopFrame() || BrowseCap.isInternetExplorer();
+      return Desktop.hasDesktopFrame();
    }
 
    private void focusSourceWindow(String windowId)

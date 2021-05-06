@@ -101,20 +101,24 @@
 
 #endif /* Debug logging macros */
 
-#ifndef DEBUG
-# define DEBUG RSTUDIO_DEBUG
-#endif
+#ifndef RSTUDIO_DEBUG_MACROS_DISABLED
 
-#ifndef DEBUG_LINE
-# define DEBUG_LINE RSTUDIO_DEBUG_LINE
-#endif
+# ifndef DEBUG
+#  define DEBUG RSTUDIO_DEBUG
+# endif
 
-#ifndef DEBUG_BLOCK
-# define DEBUG_BLOCK RSTUDIO_DEBUG_BLOCK
-#endif
+# ifndef DEBUG_LINE
+#  define DEBUG_LINE RSTUDIO_DEBUG_LINE
+# endif
 
-#ifndef LOG_OBJECT
-# define LOG_OBJECT(x) RSTUDIO_LOG_OBJECT(x)
+# ifndef DEBUG_BLOCK
+#  define DEBUG_BLOCK RSTUDIO_DEBUG_BLOCK
+# endif
+
+# ifndef LOG_OBJECT
+#  define LOG_OBJECT(x) RSTUDIO_LOG_OBJECT(x)
+# endif
+
 #endif
 
 #endif

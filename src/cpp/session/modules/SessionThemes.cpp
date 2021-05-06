@@ -154,6 +154,12 @@ void getThemesInLocation(
                (std::istreambuf_iterator<char>()));
             themeIFStream.close();
 
+            // Skip theme if file is empty.
+            if (themeContents.empty())
+            {
+               continue;
+            }
+
             boost::smatch matches;
             bool found = boost::regex_search(
                themeContents,
@@ -187,12 +193,14 @@ void getThemesInLocation(
                }
                catch (boost::bad_lexical_cast&)
                {
-                  LOG_WARNING_MESSAGE("rs-theme-is-dark value is not a valid boolean string for theme \"" + name + "\".");
+                  LOG_WARNING_MESSAGE("rs-theme-is-dark value is not a valid boolean string "
+                        " for theme \"" + name + "\" (" + themeFile.getAbsolutePath() + ")");
                }
             }
             else
             {
-               LOG_WARNING_MESSAGE("rs-theme-is-dark is not set for theme \"" + name + "\".");
+               LOG_WARNING_MESSAGE("rs-theme-is-dark is not set for theme \"" + name + "\" (" +
+                     themeFile.getAbsolutePath() + ")");
             }
 
             (*themeMap)[boost::algorithm::to_lower_copy(name)] = std::make_tuple(

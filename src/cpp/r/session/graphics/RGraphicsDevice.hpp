@@ -30,7 +30,7 @@ namespace r {
 namespace session {
 namespace graphics {
 namespace device {
-   
+
 extern const int kDefaultWidth;
 extern const int kDefaultHeight;
 extern const double kDefaultDevicePixelRatio;

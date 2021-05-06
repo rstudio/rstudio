@@ -28,6 +28,8 @@
 #include <shared_core/Logger.hpp>
 #include <shared_core/SafeConvert.hpp>
 
+#include <boost/optional.hpp>
+
 #ifdef _WIN32
 #include <boost/system/windows_error.hpp>
 #endif
@@ -177,10 +179,15 @@ struct Error::Impl
    std::string Name;
    std::string Message;
    ErrorProperties Properties;
-   Error Cause;
+   boost::optional<Error> Cause;
    ErrorLocation Location;
    bool Expected = false;
 };
+
+Error::Error() :
+   m_impl(new Impl())
+{
+}
 
 // This is a shallow copy because deep copy will only be performed on a write.
 Error::Error(const Error& in_other) :
@@ -362,7 +369,7 @@ std::string Error::asString() const
    ostr << log::s_delim << " " << s_occurredAt << " "
         << log::cleanDelimiters(getLocation().asString());
 
-   if (getCause())
+   if (hasCause())
    {
       ostr << log::s_delim << " " << s_causedBy << ": " << getCause().asString();
    }
@@ -370,9 +377,17 @@ std::string Error::asString() const
    return ostr.str();
 }
 
+bool Error::hasCause() const
+{
+   if (impl().Cause)
+      return true;
+   else
+      return false;
+}
+
 const Error& Error::getCause() const
 {
-   return impl().Cause;
+   return *impl().Cause;
 }
 
 int Error::getCode() const

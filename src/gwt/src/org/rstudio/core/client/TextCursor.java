@@ -25,55 +25,55 @@ public class TextCursor
       index_ = index;
       n_ = data_.length();
    }
-   
+
    public TextCursor(String data)
    {
       this(data, 0);
    }
-   
+
    public TextCursor clone()
    {
       return new TextCursor(data_, index_);
    }
-   
+
    public boolean moveToNextCharacter()
    {
       if (index_ == n_)
          return false;
-      
+
       index_++;
       return true;
    }
-   
+
    public boolean moveToPreviousCharacter()
    {
       if (index_ == 0)
          return false;
-      
+
       index_--;
       return true;
    }
-   
+
    public boolean contentEquals(char ch)
    {
       if (index_ == n_)
          return false;
       return data_.charAt(index_) == ch;
    }
-   
+
    public boolean fwdToMatchingCharacter()
    {
       if (index_ == n_)
          return false;
-      
+
       char lhs = data_.charAt(index_);
       char rhs = complement(lhs);
-      
+
       boolean checkEscapes =
             lhs == '\'' ||
             lhs == '"' ||
             lhs == '`';
-            
+
       TextCursor cursor = clone();
       int braceCount = 0;
       while (cursor.moveToNextCharacter())
@@ -82,10 +82,10 @@ public class TextCursor
          {
             if (!cursor.moveToNextCharacter())
                break;
-            
+
             continue;
          }
-         
+
          if (cursor.contentEquals(rhs))
          {
             if (braceCount == 0)
@@ -98,18 +98,18 @@ public class TextCursor
          else if (cursor.contentEquals(lhs))
             ++braceCount;
       }
-      
+
       return false;
    }
-   
+
    public boolean bwdToMatchingCharacter()
    {
       if (index_ == n_)
          return false;
-      
+
       char lhs = data_.charAt(index_);
       char rhs = complement(lhs);
-      
+
       TextCursor cursor = clone();
       int braceCount = 0;
       while (cursor.moveToPreviousCharacter())
@@ -126,11 +126,11 @@ public class TextCursor
          else if (cursor.contentEquals(lhs))
             ++braceCount;
       }
-      
+
       return false;
-      
+
    }
-   
+
    public boolean fwdToCharacter(char ch, boolean skipMatchingBraces)
    {
       if (skipMatchingBraces)
@@ -138,7 +138,7 @@ public class TextCursor
       else
          return fwdToCharacter__noskip(ch);
    }
-   
+
    private boolean fwdToCharacter__skip(char ch)
    {
       TextCursor cursor = clone();
@@ -149,15 +149,15 @@ public class TextCursor
             index_ = cursor.getIndex();
             return true;
          }
-         
+
          if (cursor.isLeftBracket())
             if (cursor.fwdToMatchingCharacter())
                continue;
-         
+
       } while (cursor.moveToNextCharacter());
       return false;
    }
-   
+
    private boolean fwdToCharacter__noskip(char ch)
    {
       int idx = data_.indexOf(ch, index_);
@@ -165,17 +165,17 @@ public class TextCursor
       index_ = idx;
       return true;
    }
-   
+
    public int findNext(char ch)
    {
       return data_.indexOf(ch, index_ + 1);
    }
-   
+
    public char peek()
    {
       return peek(0);
    }
-   
+
    public char peek(int offset)
    {
       int index = index_ + offset;
@@ -183,17 +183,17 @@ public class TextCursor
          return '\0';
       return data_.charAt(index);
    }
-   
+
    public boolean consume(char expected)
    {
       if (index_ == n_)
          return false;
-      
+
       boolean matches = data_.charAt(index_) == expected;
       index_ += matches ? 1 : 0;
       return matches;
    }
-   
+
    public boolean consumeUntil(char expected)
    {
       int index = data_.indexOf(expected, index_);
@@ -204,7 +204,7 @@ public class TextCursor
       }
       return false;
    }
-   
+
    public boolean consumeUntil(String expected)
    {
       int index = data_.indexOf(expected, index_);
@@ -215,26 +215,26 @@ public class TextCursor
       }
       return false;
    }
-   
+
    public boolean consumeUntilRegex(String regex)
    {
       Pattern pattern = Pattern.create(regex);
       Match match = pattern.match(data_, index_);
       if (match == null)
          return false;
-      
+
       index_ = match.getIndex();
       return true;
    }
-   
+
    public String getData()
    {
       return data_;
    }
-   
+
    public void setIndex(int index) { index_ = index; }
    public int getIndex() { return index_; }
-   
+
    public boolean isLeftBracket()
    {
       if (index_ == n_)
@@ -242,7 +242,7 @@ public class TextCursor
       char ch = data_.charAt(index_);
       return ch == '{' || ch == '[' || ch == '(';
    }
-   
+
    public boolean isRightBracket()
    {
       if (index_ == n_)
@@ -250,21 +250,21 @@ public class TextCursor
       char ch = data_.charAt(index_);
       return ch == '}' || ch == ']' || ch == ')';
    }
-   
+
    public boolean isSingleQuote()
    {
       if (index_ == n_)
          return false;
       return data_.charAt(index_) == '\'';
    }
-   
+
    public boolean isDoubleQuote()
    {
       if (index_ == n_)
          return false;
       return data_.charAt(index_) == '"';
    }
-   
+
    private char complement(char ch)
    {
       switch (ch)
@@ -272,16 +272,16 @@ public class TextCursor
          case '(': return ')';
          case '[': return ']';
          case '{': return '}';
-         
+
          case ')': return '(';
          case ']': return '[';
          case '}': return '{';
       }
       return ch;
    }
-   
+
    private final String data_;
    private int index_;
    private int n_;
-   
+
 }

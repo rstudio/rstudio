@@ -42,10 +42,10 @@ public class AddRemoteDialog extends ModalDialog<AddRemoteDialog.Input>
          name_ = name;
          url_ = url;
       }
-      
+
       public final String getName() { return name_; }
       public final String getUrl() { return url_; }
-      
+
       private final String name_;
       private final String url_;
    }
@@ -57,32 +57,32 @@ public class AddRemoteDialog extends ModalDialog<AddRemoteDialog.Input>
             tbName_.getValue().trim(),
             tbUrl_.getValue().trim());
    }
-   
+
    public AddRemoteDialog(String caption,
                           String defaultUrl,
                           OperationWithInput<Input> operation)
    {
       super(caption, Roles.getDialogRole(), operation);
       setOkButtonCaption("Add");
-      
+
       container_ = new VerticalPanel();
       tbName_ = textBox();
       tbUrl_ = textBox();
       lblName_ = label("Remote Name:", tbName_);
       lblUrl_ = label("Remote URL:", tbUrl_);
-      
+
       tbName_.addKeyDownHandler(this);
       tbUrl_.addKeyDownHandler(this);
-      
+
       tbUrl_.setValue(StringUtil.notNull(defaultUrl));
-      
+
       container_.add(lblName_);
       container_.add(tbName_);
       container_.add(new VerticalSpacer("6px"));
       container_.add(lblUrl_);
       container_.add(tbUrl_);
       container_.add(new VerticalSpacer("6px"));
-      
+
       synchronize();
    }
 
@@ -91,7 +91,7 @@ public class AddRemoteDialog extends ModalDialog<AddRemoteDialog.Input>
    {
       return container_;
    }
-   
+
    @Override
    public void onKeyDown(KeyDownEvent event)
    {
@@ -111,16 +111,16 @@ public class AddRemoteDialog extends ModalDialog<AddRemoteDialog.Input>
       tbName_.setFocus(true);
       tbName_.selectAll();
    }
-   
+
    private void synchronize()
    {
       boolean isValidState =
             !StringUtil.isNullOrEmpty(tbName_.getValue()) &&
             !StringUtil.isNullOrEmpty(tbUrl_.getValue());
-      
+
       enableOkButton(isValidState);
    }
-   
+
    private TextBox textBox()
    {
       TextBox textBox = new TextBox();
@@ -130,14 +130,14 @@ public class AddRemoteDialog extends ModalDialog<AddRemoteDialog.Input>
       Roles.getTextboxRole().setAriaRequiredProperty(textBox.getElement(), true);
       return textBox;
    }
-   
+
    private FormLabel label(String text, Widget w)
    {
       FormLabel label = new FormLabel(text, w);
       label.getElement().getStyle().setMarginBottom(4, Unit.PX);
       return label;
    }
-   
+
    private final FormLabel lblName_;
    private final FormLabel lblUrl_;
    private final TextBox tbName_;

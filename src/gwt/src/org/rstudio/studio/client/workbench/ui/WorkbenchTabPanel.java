@@ -31,6 +31,7 @@ import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.layout.LogicalWindow;
@@ -187,14 +188,16 @@ class WorkbenchTabPanel
                final ToolbarPopupMenu menu = new ToolbarPopupMenu();
                final NativeEvent nativeEvent = contextMenuEvent.getNativeEvent();
 
-               menu.addItem(new MenuItem("Close", () ->
+               menu.addItem(ElementIds.TAB_CLOSE, new MenuItem("Close", () ->
                {
                   tab.confirmClose(() -> tab.ensureHidden());
                }));
 
-               menu.showRelativeTo(nativeEvent.getClientX(), nativeEvent.getClientY());
+               menu.showRelativeTo(nativeEvent.getClientX(),
+                                   nativeEvent.getClientY(),
+                                   ElementIds.FEATURE_TAB_CONTEXT);
             }
-            
+
             // a tab that isn't closable will no-op when right-clicked, seems
             // preferable to bringing up the browser context menu
             contextMenuEvent.preventDefault();

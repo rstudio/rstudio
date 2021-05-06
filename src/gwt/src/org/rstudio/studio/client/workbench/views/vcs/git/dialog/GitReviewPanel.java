@@ -249,9 +249,9 @@ public class GitReviewPanel extends ResizeComposite implements Display
       topToolbar_.addLeftWidget(switchViewButton_);
 
       topToolbar_.addLeftWidget(branchToolbarButton);
-      
+
       topToolbar_.addLeftSeparator();
-      
+
       topToolbar_.addLeftWidget(new ToolbarButton(
             ToolbarButton.NoText,
             commands.vcsRefresh().getTooltip(),
@@ -264,7 +264,7 @@ public class GitReviewPanel extends ResizeComposite implements Display
                   commands.vcsRefresh().execute();
                }
             }));
-      
+
       topToolbar_.addLeftSeparator();
 
       stageFilesButton_ = topToolbar_.addLeftWidget(new ToolbarButton(
@@ -289,7 +289,7 @@ public class GitReviewPanel extends ResizeComposite implements Display
       topToolbar_.addRightSeparator();
 
       topToolbar_.addRightWidget(commands.vcsPush().createToolbarButton());
-  
+
       diffToolbar_.addStyleName(RES.styles().toolbar());
       diffToolbar_.addStyleName(RES.styles().diffToolbar());
       diffToolbar_.getWrapper().addStyleName(RES.styles().diffToolbarInnerWrapper());
@@ -308,7 +308,7 @@ public class GitReviewPanel extends ResizeComposite implements Display
 
       lblCommit_.setFor(commitMessage_);
       lblContext_.setFor(contextLines_);
-      
+
       // Hide frequently-updating character count from screen readers
       A11y.setARIAHidden(lblCharCount_);
 
@@ -332,7 +332,7 @@ public class GitReviewPanel extends ResizeComposite implements Display
             diffToolbar_.invalidateSeparators();
          }
       });
-      
+
       DomUtils.disableSpellcheck(commitMessage_);
 
       listBoxAdapter_ = new ListBoxAdapter(contextLines_);
@@ -397,7 +397,7 @@ public class GitReviewPanel extends ResizeComposite implements Display
          }
       };
    }
-   
+
    private boolean isCtrlOrMeta(int modifier)
    {
       return BrowseCap.isMacintosh()
@@ -451,14 +451,14 @@ public class GitReviewPanel extends ResizeComposite implements Display
    {
       return revertFilesButton_;
    }
-   
+
    @Override
    public void setFilesCommandsEnabled(boolean enabled)
    {
       stageFilesButton_.setEnabled(enabled);
       revertFilesButton_.setEnabled(enabled);
       ignoreButton_.setEnabled(enabled);
-      
+
    }
 
    @Override
@@ -515,7 +515,7 @@ public class GitReviewPanel extends ResizeComposite implements Display
             commitMessage_.setText(text);
             updateCharCount();
          }
-         
+
          @Override
          public String getText()
          {
@@ -565,7 +565,7 @@ public class GitReviewPanel extends ResizeComposite implements Display
    {
       return unstagedCheckBox_;
    }
-   
+
    @Override
    public HasValue<Boolean> getIgnoreWhitespaceCheckBox()
    {
@@ -608,14 +608,14 @@ public class GitReviewPanel extends ResizeComposite implements Display
    {
       diffScroll_.setWidget(lines_);
    }
-   
+
    @Override
-   public void showContextMenu(final int clientX, 
+   public void showContextMenu(final int clientX,
                                final int clientY,
                                Command openSelectedCommand)
    {
       final ToolbarPopupMenu menu = new ToolbarPopupMenu();
-      
+
       MenuItem stageMenu = new MenuItem(
            AppCommand.formatMenuLabel(new ImageResource2x(RES.stage2x()), "Stage", ""),
            true,
@@ -625,16 +625,16 @@ public class GitReviewPanel extends ResizeComposite implements Display
               {
                  stageFilesButton_.click();
               }
-              
+
            });
       if (stageFilesButton_.isEnabled())
       {
          menu.addItem(stageMenu);
          menu.addSeparator();
       }
-     
-    
-      
+
+
+
      MenuItem revertMenu = new MenuItem(
            AppCommand.formatMenuLabel(new ImageResource2x(RES.discard2x()), "Revert...", ""),
            true,
@@ -644,11 +644,11 @@ public class GitReviewPanel extends ResizeComposite implements Display
               {
                  revertFilesButton_.click();
               }
-              
+
            });
       if (revertFilesButton_.isEnabled())
          menu.addItem(revertMenu);
-      
+
       MenuItem ignoreMenu = new MenuItem(
             AppCommand.formatMenuLabel(new ImageResource2x(RES.ignore2x()), "Ignore...", ""),
             true,
@@ -658,26 +658,26 @@ public class GitReviewPanel extends ResizeComposite implements Display
                {
                   ignoreButton_.click();
                }
-               
+
             });
        if (ignoreButton_.isEnabled())
           menu.addItem(ignoreMenu);
-     
+
       menu.addSeparator();
       MenuItem openMenu = new MenuItem(
                            AppCommand.formatMenuLabel(null, "Open File", ""),
-                           true, 
+                           true,
                            openSelectedCommand);
       menu.addItem(openMenu);
-     
+
       menu.setPopupPositionAndShow(new PositionCallback() {
          @Override
          public void setPosition(int offsetWidth, int offsetHeight)
          {
-             menu.setPopupPosition(clientX, clientY);     
+             menu.setPopupPosition(clientX, clientY);
          }
       });
-     
+
    }
 
    @Override

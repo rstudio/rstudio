@@ -394,7 +394,7 @@ void ChunkExecContext::onError(const core::json::Object& err)
 }
 
 void ChunkExecContext::onConsoleText(int type, const std::string& output, 
-      bool truncate)
+      bool truncate, bool pending)
 {
    // if we haven't received any actual output yet, don't push input into the
    // file yet
@@ -417,7 +417,17 @@ void ChunkExecContext::onConsoleText(int type, const std::string& output,
    {
       std::string input = pendingInput_;
       pendingInput_.clear();
-      onConsoleText(kChunkConsoleInput, input, true);
+      if (pending)
+      {
+         // guard against any possibility of runaway recursion by discarding pending input if we are
+         // already processing it (no clear codepath leads to this but we've seen behavior that
+         // looks like it in the wild)
+         LOG_WARNING_MESSAGE("Discarding pending notebook text '" + input + "'");
+      }
+      else
+      {
+         onConsoleText(kChunkConsoleInput, input, true, true);
+      }
    }
 
    // determine output filename and ensure it exists
@@ -492,14 +502,14 @@ void ChunkExecContext::onConsoleOutput(module_context::ConsoleOutputType type,
       const std::string& output)
 {
    if (type == module_context::ConsoleOutputNormal)
-      onConsoleText(kChunkConsoleOutput, output, false);
+      onConsoleText(kChunkConsoleOutput, output, false, false);
    else
-      onConsoleText(kChunkConsoleError, output, false);
+      onConsoleText(kChunkConsoleError, output, false, false);
 }
 
 void ChunkExecContext::onConsoleInput(const std::string& input)
 {
-   onConsoleText(kChunkConsoleInput, input, false);
+   onConsoleText(kChunkConsoleInput, input, false, false);
 }
 
 void ChunkExecContext::initializeOutput()

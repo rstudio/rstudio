@@ -285,7 +285,7 @@ public class GitPane extends WorkbenchPane implements Display
       menu.addSeparator();
       menu.addItem(commands_.vcsOpen().createMenuItem(false));
 
-      menu.showRelativeTo(clientX, clientY);
+      menu.showRelativeTo(clientX, clientY, ElementIds.GIT_TAB_CONTEXT);
    }
 
    private ToolbarButton historyButton_;

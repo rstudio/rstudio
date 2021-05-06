@@ -13,6 +13,9 @@
  *
  */
 
+#ifndef CORE_RECURSION_GUARD_HPP
+#define CORE_RECURSION_GUARD_HPP
+
 #include <boost/utility.hpp>
 
 #define DROP_RECURSIVE_CALLS \
@@ -39,3 +42,5 @@ private:
 
 }
 }
+
+#endif /* CORE_RECURSION_GUARD_HPP */

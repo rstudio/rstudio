@@ -15,7 +15,10 @@
 
 #include <tests/TestThat.hpp>
 
+#include <shared_core/Error.hpp>
+
 #include <core/system/Environment.hpp>
+#include <core/system/Resources.hpp>
 
 #define kLatexStyleLineCommentRegex ("^%+\\s*")
 
@@ -60,6 +63,53 @@ test_context("Environment expansion")
       std::string expanded = expandEnvVars(env, "Don't be ${VAR}lish or ${VAR}lhardy.");
 
       expect_equal(expanded, "Don't be foolish or foolhardy.");
+   }
+}
+
+test_context("Resources")
+{
+   test_that("All resource usage metrics are nonzero")
+   {
+      // Used memory should be nonzero
+      long kb = 0;
+      MemoryProvider provider = MemoryProviderUnknown;
+      Error error = getTotalMemoryUsed(&kb, &provider);
+      expect_false(error);
+      expect_true(kb > 0);
+      expect_true(provider != MemoryProviderUnknown);
+
+      // Process used memory should be nonzero
+      kb = 0;
+      provider = MemoryProviderUnknown;
+      error = getProcessMemoryUsed(&kb, &provider);
+      expect_false(error);
+      expect_true(kb > 0);
+      expect_true(provider != MemoryProviderUnknown);
+
+      // Total memory should be nonzero
+      kb = 0;
+      provider = MemoryProviderUnknown;
+      error = getTotalMemory(&kb, &provider);
+      expect_false(error);
+      expect_true(kb > 0);
+      expect_true(provider != MemoryProviderUnknown);
+   }
+
+   test_that("Memory resource usage metrics are congruent")
+   {
+      long used, process, total;
+      MemoryProvider provider;
+      getTotalMemoryUsed(&used, &provider);
+      getProcessMemoryUsed(&process, &provider);
+      getTotalMemory(&total, &provider);
+
+      // It'd be weird if there was more used memory than we had memory in the
+      // first place
+      expect_true(total > used);
+
+      // It'd also be weird if the process used more memory than the total
+      // amount of used memory
+      expect_true(used > process);
    }
 }
 

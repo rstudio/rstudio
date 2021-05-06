@@ -44,6 +44,22 @@ namespace rstudio {
 namespace r {
 namespace session {
 namespace graphics {
+namespace device {
+
+void GD_Trace(const std::string&);
+
+} // end namespace device
+} // end namespace graphics
+} // end namespace session
+} // end namespace r
+} // end namespace rstudio
+
+#define TRACE_GD_CALL (::rstudio::r::session::graphics::device::GD_Trace(BOOST_CURRENT_FUNCTION))
+
+namespace rstudio {
+namespace r {
+namespace session {
+namespace graphics {
 namespace handler {
 namespace shadow {
 
@@ -52,20 +68,28 @@ namespace {
 class PreserveCurrentDeviceScope
 {
 public:
-   PreserveCurrentDeviceScope() : previousDevice_(nullptr)
+   
+   PreserveCurrentDeviceScope()
+      : previousDevice_(nullptr)
    {
-      if (!NoDevices())
+      if (!Rf_NoDevices())
+      {
          previousDevice_ = GEcurrentDevice();
+      }
    }
+   
    ~PreserveCurrentDeviceScope()
    {
       try
       {
          // always restore previous device
          if (previousDevice_ != nullptr)
-            selectDevice(ndevNumber(previousDevice_->dev));
+         {
+            int deviceNumber = Rf_ndevNumber(previousDevice_->dev);
+            Rf_selectDevice(deviceNumber);
+         }
       }
-      catch(...)
+      catch (...)
       {
       }
    }
@@ -101,7 +125,7 @@ void shadowDevOff(DeviceContext* pDC)
    
    // kill the device if it's still alive
    pGEDevDesc geDev = desc2GEDesc(pDevData->pShadowPngDevice);
-   if (ndevNumber(pDevData->pShadowPngDevice) > 0)
+   if (Rf_ndevNumber(pDevData->pShadowPngDevice) > 0)
    {
       // close the device -- don't log R errors because they can happen
       // in the ordinary course of things for invalid graphics staes
@@ -120,7 +144,7 @@ Error shadowDevDesc(DeviceContext* pDC, pDevDesc* pDev)
 
    // generate on demand
    if (pDevData->pShadowPngDevice == nullptr ||
-       ndevNumber(pDevData->pShadowPngDevice) == 0)
+       Rf_ndevNumber(pDevData->pShadowPngDevice) == 0)
    {
       pDevData->pShadowPngDevice = nullptr;
 
@@ -257,7 +281,10 @@ void shadowDevSync(DeviceContext* pDC)
       LOG_ERROR(error);
       return;
    }
-   selectDevice(ndevNumber(dev));
+   
+   // select the device
+   int deviceNumber = Rf_ndevNumber(dev);
+   Rf_selectDevice(deviceNumber);
 
    // copy display list (ignore R errors because they can happen in the normal
    // course of things for invalid graphics states). also suppress output
@@ -332,6 +359,7 @@ void onBeforeAddDevice(DeviceContext* pDC)
 {
    shadowDevOff(pDC);
 }
+
 void onAfterAddDevice(DeviceContext* pDC)
 {
    pDevDesc dev;
@@ -364,7 +392,7 @@ Error writeToPNG(const FilePath& targetPath, DeviceContext* pDC)
 
          Error deleteError = pDC->targetPath.remove();
          if (deleteError)
-            LOG_ERROR(error);
+            LOG_ERROR(deleteError);
       }
    }
 
@@ -590,9 +618,64 @@ void onBeforeExecute(DeviceContext* pDC)
       if (pCurrentDevice->dev == pShadowDevData->pShadowPngDevice)
       {
          // select the rstudio device
-         selectDevice(ndevNumber(pDC->dev));
+         int deviceNumber = Rf_ndevNumber(pDC->dev);
+         Rf_selectDevice(deviceNumber);
       }
    }
+}
+
+SEXP setPattern(SEXP pattern, pDevDesc dd)
+{
+   pDevDesc pngDevDesc = shadowDevDesc(dd);
+   if (pngDevDesc == nullptr)
+      return R_NilValue;
+   
+   return dev_desc::setPattern(pattern, pngDevDesc);
+}
+
+void releasePattern(SEXP ref, pDevDesc dd)
+{
+   pDevDesc pngDevDesc = shadowDevDesc(dd);
+   if (pngDevDesc == nullptr)
+      return;
+   
+   dev_desc::releasePattern(ref, pngDevDesc);
+}
+
+SEXP setClipPath(SEXP path, SEXP ref, pDevDesc dd)
+{
+   pDevDesc pngDevDesc = shadowDevDesc(dd);
+   if (pngDevDesc == nullptr)
+      return R_NilValue;
+   
+   return dev_desc::setClipPath(path, ref, pngDevDesc);
+}
+
+void releaseClipPath(SEXP ref, pDevDesc dd)
+{
+   pDevDesc pngDevDesc = shadowDevDesc(dd);
+   if (pngDevDesc == nullptr)
+      return;
+   
+   dev_desc::releaseClipPath(ref, pngDevDesc);
+}
+
+SEXP setMask(SEXP path, SEXP ref, pDevDesc dd)
+{
+   pDevDesc pngDevDesc = shadowDevDesc(dd);
+   if (pngDevDesc == nullptr)
+      return R_NilValue;
+   
+   return dev_desc::setMask(path, ref, pngDevDesc);
+}
+
+void releaseMask(SEXP ref, pDevDesc dd)
+{
+   pDevDesc pngDevDesc = shadowDevDesc(dd);
+   if (pngDevDesc == nullptr)
+      return;
+   
+   dev_desc::releaseMask(ref, pngDevDesc);
 }
 
 } // namespace shadow
@@ -600,8 +683,8 @@ void onBeforeExecute(DeviceContext* pDC)
 void installShadowHandler()
 {
    handler::allocate = shadow::allocate;
-   handler::destroy = shadow::destroy;
    handler::initialize = shadow::initialize;
+   handler::destroy = shadow::destroy;
    handler::setSize = shadow::setSize;
    handler::setDeviceAttributes = shadow::setDeviceAttributes;
    handler::onBeforeAddDevice = shadow::onBeforeAddDevice;
@@ -622,6 +705,12 @@ void installShadowHandler()
    handler::newPage = shadow::newPage;
    handler::mode = shadow::mode;
    handler::onBeforeExecute = shadow::onBeforeExecute;
+   handler::setPattern = shadow::setPattern;
+   handler::releasePattern = shadow::releasePattern;
+   handler::setClipPath = shadow::setClipPath;
+   handler::releaseClipPath = shadow::releaseClipPath;
+   handler::setMask = shadow::setMask;
+   handler::releaseMask = shadow::releaseMask;
 }
    
 } // namespace handler

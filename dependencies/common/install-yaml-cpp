@@ -17,21 +17,27 @@
 
 set -e
 
+source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
+section "Installing yaml-cpp"
+
 YAML_CPP_VERSION="0.6.3"
 YAML_CPP_BRANCH="yaml-cpp-${YAML_CPP_VERSION}"
-YAML_CPP_DIRECTORY="$(pwd)/yaml-cpp/${YAML_CPP_VERSION}"
+YAML_CPP_DIRECTORY="${RSTUDIO_TOOLS_ROOT}/yaml-cpp/${YAML_CPP_VERSION}"
 
-if [ -f "${YAML_CPP_DIRECTORY}" ]; then
-	echo "${YAML_CPP_BRANCH} already installed."
+if [ -e "${YAML_CPP_DIRECTORY}" ]; then
+	echo "${YAML_CPP_BRANCH} already installed at '${YAML_CPP_DIRECTORY}'."
 	exit 0
 fi
+
+# re-run as root if necessary
+sudo-if-necessary-for "${RSTUDIO_TOOLS_ROOT}" "$@"
 
 # lazy way to make sure parent directory of target is created
 mkdir -p "${YAML_CPP_DIRECTORY}"
 rm -rf "${YAML_CPP_DIRECTORY}"
 
 # check out the required branch of yaml-cpp
-if ! [ -f "${YAML_CPP_BRANCH}" ]; then
+if ! [ -e "${YAML_CPP_BRANCH}" ]; then
 	git clone                                \
 		--depth 1                            \
 		--branch "${YAML_CPP_BRANCH}"        \
@@ -48,10 +54,11 @@ rm -rf build
 mkdir build
 cd build
 
-cmake                          \
-	-DCMAKE_BUILD_TYPE=Release \
-	-DYAML_CPP_BUILD_TOOLS=Off \
-	-DYAML_CPP_BUILD_TESTS=Off \
+cmake                                    \
+	-DCMAKE_BUILD_TYPE=Release           \
+	-DCMAKE_POSITION_INDEPENDENT_CODE=On \
+	-DYAML_CPP_BUILD_TOOLS=Off           \
+	-DYAML_CPP_BUILD_TESTS=Off           \
 	..
 
 cmake --build .

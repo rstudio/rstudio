@@ -19,7 +19,7 @@ public class Counter
    {
       count_ = startValue;
    }
-   
+
    public Counter()
    {
       this(0);
@@ -30,17 +30,17 @@ public class Counter
       count_ = 0;
       return count_;
    }
-   
+
    public int increment()
    {
       count_++;
       return count_;
    }
-   
+
    public int get()
    {
       return count_;
    }
-   
+
    private int count_;
 }

@@ -26,7 +26,7 @@ if(MSVC)
 endif()
 
 # source files
-set (CORE_SOURCE_FILES
+set(CORE_SOURCE_FILES
    Backtrace.cpp
    Base64.cpp
    BoostErrors.cpp
@@ -43,7 +43,6 @@ set (CORE_SOURCE_FILES
    FileSerializer.cpp
    FileUtils.cpp
    GitGraph.cpp
-   Hash.cpp
    HtmlUtils.cpp
    Log.cpp
    LogOptions.cpp
@@ -88,6 +87,7 @@ set (CORE_SOURCE_FILES
    http/RequestParser.cpp
    http/Response.cpp
    http/SocketProxy.cpp
+   http/Ssl.cpp
    http/URL.cpp
    http/UriHandler.cpp
    http/Util.cpp
@@ -111,6 +111,7 @@ set (CORE_SOURCE_FILES
    spelling/HunspellCustomDictionaries.cpp
    spelling/HunspellDictionaryManager.cpp
    spelling/HunspellSpellingEngine.cpp
+   system/Architecture.cpp
    system/ChildProcessSubprocPoll.cpp
    system/Crypto.cpp
    system/Environment.cpp
@@ -174,55 +175,21 @@ if (UNIX)
    endif()
 
    # include directories and libraries
-   set (CORE_SYSTEM_LIBRARIES
+   set(CORE_SYSTEM_LIBRARIES
       ${PTHREAD_LIBRARIES}
       ${UTIL_LIBRARIES}
       ${UUID_LIBRARIES}
       ${RT_LIBRARIES}
       ${ZLIB_LIBRARIES}
-      ${CORE_SERVICES_LIBRARY}
-   )
+      ${CORE_SERVICES_LIBRARY})
 
-   # handle El Capitan moving OpenSSL away
-   if(APPLE)
-      if(${MACOSX_VERSION} VERSION_GREATER "10.10"
-            AND EXISTS "/usr/local/opt/openssl")
-
-         set(CORE_SYSTEM_LIBRARIES
-            ${CORE_SYSTEM_LIBRARIES}
-            -L/usr/local/opt/openssl/lib -lssl -lcrypto)
-
-         set(CORE_INCLUDE_DIRS
-            ${CORE_INCLUDE_DIRS}
-            /usr/local/opt/openssl/include)
-
-         if(NOT DEFINED OPENSSL_ROOT_DIR)
-            set(OPENSSL_ROOT_DIR
-               /usr/local/opt/openssl)
-         endif()
-      endif()
-   endif()
-
-   find_package(OpenSSL REQUIRED QUIET)
-   set(CORE_SYSTEM_LIBRARIES
-         ${CORE_SYSTEM_LIBRARIES}
-         ${OPENSSL_LIBRARIES}
-      )
-   set(CORE_INCLUDE_DIRS
-      ${CORE_INCLUDE_DIRS}
-      ${OPENSSL_INCLUDE_DIR}
-   )
+   list(APPEND CORE_SYSTEM_LIBRARIES ${OPENSSL_LIBRARIES})
+   list(APPEND CORE_INCLUDE_DIRS ${OPENSSL_INCLUDE_DIR})
 
    if(RSTUDIO_SERVER)
       find_package(PAM REQUIRED)
-      set(CORE_SYSTEM_LIBRARIES
-         ${CORE_SYSTEM_LIBRARIES}
-         ${PAM_LIBRARIES}
-      )
-      set(CORE_INCLUDE_DIRS
-         ${CORE_INCLUDE_DIRS}
-         ${PAM_INCLUDE_DIRS}
-      )
+      list(APPEND CORE_SYSTEM_LIBRARIES ${PAM_LIBRARIES})
+      list(APPEND CORE_INCLUDE_DIRS ${PAM_INCLUDE_DIRS})
    endif()
 
    # source files
@@ -254,11 +221,13 @@ if (UNIX)
          http/Keychain.mm
          system/file_monitor/MacFileMonitor.cpp
          system/recycle_bin/MacRecycleBin.cpp
+         system/MacResources.cpp
       )
    else()
       set(CORE_SOURCE_FILES ${CORE_SOURCE_FILES}
          system/file_monitor/LinuxFileMonitor.cpp
          system/recycle_bin/LinuxRecycleBin.cpp
+         system/LinuxResources.cpp
       )
    endif()
 
@@ -294,6 +263,7 @@ else()
       system/Win32ShellUtils.cpp
       system/Win32System.cpp
       system/Win32ChildProcess.cpp
+      system/Win32Resources.cpp
       system/file_monitor/Win32FileMonitor.cpp
       system/recycle_bin/Win32RecycleBin.cpp
       r_util/RToolsInfo.cpp
@@ -305,7 +275,7 @@ configure_file (${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
       ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
 # define include dirs
-set(CORE_INCLUDE_DIRS ${CORE_INCLUDE_DIRS} include)
+list(APPEND CORE_INCLUDE_DIRS include)
 
 # search for core addins
 if(RSTUDIO_ADDINS_PATH)
@@ -322,7 +292,6 @@ endif()
 set(SHARED_CORE_INCLUDE_DIRS
    ${SHARED_CORE_SOURCE_DIR}/include)
 
-# include directories
 include_directories(
    ${CORE_INCLUDE_DIRS}
    ${SHARED_CORE_INCLUDE_DIRS}

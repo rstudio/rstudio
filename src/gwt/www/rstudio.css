@@ -14,6 +14,13 @@
 body {
   background-color: #fff;
 }
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #000;
+  }
+}
+
 body, td {
   font-family: Lucida Grande, Lucida Sans Unicode, Helvetica, sans-serif;
   font-size: 11pt;
@@ -27,6 +34,13 @@ body, td {
   -webkit-border-radius: 5px;
   overflow: hidden;
 }
+
+@media (prefers-color-scheme: dark) {
+  #banner {
+    background-color: #202225;
+  }
+}
+
 #logo {
   width: 50%;
   float: left;
@@ -43,10 +57,14 @@ body, td {
 }
 #border {
   width: 300px;
-  border: 4px solid #e0e2e5;
-  padding: 8px;
-  -moz-border-radius: 10px;
-  -webkit-border-radius: 10px;
+  padding: 15px;
+  background-color: #f7f8f9;
+}
+@media (prefers-color-scheme: dark) {
+  #border {
+    background-color: #202225;
+    color: #fff;
+  }
 }
 #image {
   margin-right: -18px;
@@ -69,6 +87,14 @@ body, td {
   font-size: 16px;
   font-weight: normal;
   width: 250px;
+}
+
+#staySignedIn {
+  vertical-align: middle;
+}
+
+#staySignedInLabel {
+  vertical-align: middle;
 }
 
 #detail {
@@ -144,7 +170,14 @@ a img {
   width: 20px;
   height: 20px;
   text-align: center;
+} 
+ 
+@media (prefers-color-scheme: dark) {
+  .signin-spinner {
+    color: black;
+  }
 }
+
 .signin-spinner div {
   transform-origin: 10px 10px;
   animation: signin-spinner 1.2s linear infinite;
@@ -159,6 +192,12 @@ a img {
   height: 5px;
   background: black;
 }
+@media (prefers-color-scheme: dark) {
+  .signin-spinner div:after {
+    background: white;
+  }
+}
+
 .signin-spinner div:nth-child(1) {
   transform: rotate(0deg);
   animation-delay: -1.1s;

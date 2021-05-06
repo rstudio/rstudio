@@ -46,7 +46,64 @@
                 color: #505050;
                 font-size: 10pt;
             }
+
+            input[type="button"] {
+                font-size: 14pt;
+                background-color: #75aadb;
+                color: #ffffff;
+                text-transform: uppercase;
+                font-weight: bold;
+                letter-spacing: 0.05em;
+                padding: 10px;
+                margin-top: 20px;
+                border: none;
+                cursor: pointer;
+            }
+
+            .visually-hidden {
+                clip: rect(0 0 0 0);
+                clip-path: inset(50%);
+                height: 1px;
+                overflow: hidden;
+                position: absolute;
+                white-space: nowrap;
+                width: 1px;
+            }
+
         </style>
+        <script>
+            // Function to copy problem report to clipboard
+            var copyProblemReport = function() {
+                // Find the <textarea> containing the problem report
+                var report = document.getElementById("problem_report");
+                if (!report) {
+                    return;
+                }
+
+                // Fill in the user agent
+                report.value = report.value.replace("user_agent", navigator.userAgent);
+
+                // Select all the text in the report
+                report.focus();
+                report.select();
+
+                // Attempt to copy the text to the clipboard
+                if (document.execCommand('copy')) {
+                    alert("Problem report copied to clipboard.");
+                } else {
+                    alert("Could not copy problem report to clipboard.");
+                }
+            };
+
+            // When the page loads, inject the local user agent into the version information
+            window.addEventListener("load", function() {
+                var ver = document.getElementById("version");
+                if (ver) {
+                    ver.innerText += "\n\n" + navigator.userAgent;
+                }
+
+            });
+        </script>
     </head>
     <body>
         <div style="float: right; width: 144px; height: 112px; position: relative; margin-left: 20px;">
@@ -76,6 +133,8 @@
         <p>
             The R session failed to start.
         </p>
+        <h2>RStudio Version</h2>
+        <code id="version">#version#</code>
         <h2>Error Message</h2>
         <code>#launch_failed#</code>
         <h2>Process Output</h2>
@@ -98,12 +157,55 @@
             <li>Make sure that R starts up correctly outside RStudio (using RGui, R.app, or R in a terminal).</li>
             <li>Fully uninstall all versions of R from your machine, and reinstall the version you wish to use with RStudio.</li>
             <li>Remove startup customizations such as an <samp>.Rprofile</samp> file, if present.</li>
+            <li>If posting this report online, use the Copy Problem Report button below to generate a textual version of this diagnostic.</li>
         </ul>
         <p>
           Further troubleshooting help can be found on our website:
         </p>
         <p>
           <a href="https://www.rstudio.org/links/troubleshooting_startup">Troubleshooting RStudio Startup</a>
+        </p>
+        <p>
+            <form>
+                <textarea id="problem_report" class="visually-hidden">
+## R Session Startup Failure Report
+
+### RStudio Version
+
+#version#
+
+user_agent
+
+### Error message
+
+#launch_failed#
+
+### Process Output
+
+The R session exited with code #exit_code#. 
+
+Error output:
+
+```
+#process_error#
+```
+
+Standard output:
+
+```
+#process_output#
+```
+
+### Logs
+
+*#log_file#*
+
+```
+#log_content#
+```
+                </textarea>
+                <input type="button" value="Copy Problem Report" onclick="copyProblemReport()"/>
+            </form>
         </p>
     </body>
 </html>

@@ -16,55 +16,89 @@
 #
 
 set -e
+source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 
-if [ -e install-overlay ]
-then
-  ./install-overlay
-fi
+info "RSTUDIO_TOOLS_ROOT: ${RSTUDIO_TOOLS_ROOT}"
 
-# make sure brew is installed, and error if not
-if ! command -v brew &> /dev/null; then
-   echo "homebrew is not installed, but is needed to install dependencies"
-   exit 1
-fi
+if [ "$(arch)" = "arm64" ]; then
 
-# install postgres, needed by SOCI
-if brew list --formula | grep postgresql &> /dev/null; then
-   echo "postgresql already installed"
+   # install Jenkins pre-requisites
+   if is-jenkins; then
+      ./install-dependencies-osx-jenkins
+   fi
+
+   # set Homebrew paths
+   find-program BREW_X86 brew       \
+      "${HOME}/homebrew/x86_64/bin" \
+      "/usr/local/bin"
+
+   find-program BREW_ARM brew      \
+      "${HOME}/homebrew/arm64/bin" \
+      "/opt/homebrew/bin"
+
+   # save the PATH -- note that we munge this so that the correct
+   # homebrew executable is found first on the PATH
+   OLDPATH="${PATH}"
+   OLDROOT="${RSTUDIO_TOOLS_ROOT}"
+
+   # install x86_64 dependencies
+   PATH="$(dirname "${BREW_X86}"):${OLDPATH}"
+   RSTUDIO_TOOLS_ROOT=$(realpath -m "${OLDROOT}/../x86_64")
+
+   section "Installing x86_64 Dependencies"
+   arch -x86_64 ./install-dependencies-osx-arch
+
+   # install arm64 dependencies
+   PATH="$(dirname "${BREW_ARM}"):${OLDPATH}"
+   RSTUDIO_TOOLS_ROOT=$(realpath -m "${OLDROOT}/../arm64")
+
+   section "Installing arm64 Dependencies"
+   arch -arm64 ./install-dependencies-osx-arch
+
+   # restore path
+   PATH="${OLDPATH}"
+   RSTUDIO_TOOLS_ROOT="${OLDROOT}"
+
 else
-   brew install postgresql
+
+   # set Homebrew paths
+   find-program BREW_X86 brew       \
+      "${HOME}/homebrew/x86_64/bin" \
+      "/usr/local/bin"
+
+   # assume x86_64
+   OLDPATH="${PATH}"
+   OLDROOT="${RSTUDIO_TOOLS_ROOT}"
+
+   PATH="$(dirname "${BREW_X86}"):${OLDPATH}"
+   RSTUDIO_TOOLS_ROOT=$(realpath -m "${RSTUDIO_TOOLS_ROOT}/../x86_64")
+
+   ./install-dependencies-osx-arch
+
+   # desktop dependencies (qt; currently x86_64 only)
+   if [ "$1" != "--exclude-qt-sdk" ]; then
+      ./install-qt-macos
+   fi
+
+   # restore path
+   PATH="${OLDPATH}"
+   RSTUDIO_TOOLS_ROOT="${OLDROOT}"
+
 fi
 
-# coreutils needed for unit tests (specifically gtimeout)
-if ! command -v gtimeout &> /dev/null; then
-   brew install coreutils
-fi
-
-# openssl needed to run rsession  (including unit tests)
-if brew list --formula | grep openssl@1.1 &> /dev/null; then
-   echo "openssl already installed"
-else
-   brew install openssl
-fi
-
-# pidof and gdb needed for analysis of hung unit tests
-if ! command -v pidof &> /dev/null; then
-   brew install pidof
-fi
-if ! command -v gdb &> /dev/null; then
-   brew install gdb
-   grep -qxF 'set startup-with-shell off' ~/.gdbinit || echo "set startup-with-shell off" >> ~/.gdbinit
-fi
-
-cd ../common
-./install-common --install-crashpad-sudo
-cd ../osx
-
-# desktop dependencies (qt)
-if [ "$1" != "--exclude-qt-sdk" ]
-then
-  ./install-qt-macos
+# put some necessary utilities on the PATH
+if is-jenkins; then
+   mkdir -p "${HOME}/opt/bin"
+   for PROGRAM in aws gtimeout ninja R; do
+      ln -nfs "${HOME}/homebrew/arm64/bin/${PROGRAM}" "${HOME}/opt/bin/${PROGRAM}"
+   done
 fi
 
 # enable PAM
-sudo cp /etc/pam.d/cups /etc/pam.d/rstudio
+if ! is-jenkins; then
+   if ! [ -f "/etc/pam.d/rstudio" ]; then
+      section "Installing RStudio PAM Profile"
+      sudo cp /etc/pam.d/cups /etc/pam.d/rstudio
+   fi
+fi
+

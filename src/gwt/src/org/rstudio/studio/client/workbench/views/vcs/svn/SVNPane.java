@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.vcs.svn;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
@@ -131,7 +132,7 @@ public class SVNPane extends WorkbenchPane implements Display
       menu.addSeparator();
       menu.addItem(commands_.vcsOpen().createMenuItem(false));
 
-      menu.showRelativeTo(clientX, clientY);
+      menu.showRelativeTo(clientX, clientY, ElementIds.SVN_TAB_CONTEXT);
    }
 
    @Override

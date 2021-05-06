@@ -27,7 +27,7 @@
 #include <core/Exec.hpp>
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
-#include <core/Hash.hpp>
+#include <shared_core/Hash.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/FileUtils.hpp>
 #include <core/RegexUtils.hpp>

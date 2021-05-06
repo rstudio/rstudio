@@ -1,49 +1,274 @@
 #!/usr/bin/env bash
 
+#
+# make-package
+#
+# Copyright (C) 2021 by RStudio, PBC
+#
+# Unless you have received this program directly from RStudio pursuant
+# to the terms of a commercial license agreement with RStudio, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
 set -e
+set +H
 
-PACKAGE_DIR=`pwd`
+PKG_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${PKG_DIR}/../../dependencies/tools/rstudio-tools.sh"
 
-BUILD_DIR=$(pwd)/build
+GWT_SRC_DIR="${PKG_DIR}/../../src/gwt"
 
-# find package source folder
-PKG_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+BUILD_DIR_X86_64="${PKG_DIR}/build"
+BUILD_DIR_ARM64="${PKG_DIR}/build-arm64"
 
-if [ "$1" == "clean" ]
-then
-   # remove existing build dir
-   rm -rf "$BUILD_DIR"
-   
-   # clean out ant build if
-   if [ -d "../../src/gwt" ]; then
-      cd ../../src/gwt
-      ant clean
-   fi
-   cd $PACKAGE_DIR
+INSTALL_DIR="${PKG_DIR}/install"
+mkdir -p "${INSTALL_DIR}"
+
+# build RStudio version suffix
+RSTUDIO_VERSION_ARRAY=(
+   "${RSTUDIO_VERSION_MAJOR-99}"
+   "${RSTUDIO_VERSION_MINOR-9}"
+   "${RSTUDIO_VERSION_PATCH-9}"
+)
+
+RSTUDIO_VERSION_FULL=$(IFS="."; echo "${RSTUDIO_VERSION_ARRAY[*]}")
+
+# include Pro version suffix if provided
+if [ -n "${RSTUDIO_VERSION_SUFFIX}" ] && [ "${RSTUDIO_VERSION_SUFFIX}" != "0" ]; then
+   RSTUDIO_VERSION_FULL+="-${RSTUDIO_VERSION_SUFFIX}"
 fi
 
-mkdir -p $BUILD_DIR/gwt
-cd $BUILD_DIR
-rm -f CMakeCache.txt
-rm -rf build/_CPack_Packages
+# build bundle name (handle Pro builds as well)
+if [ -f "${PKG_DIR}/CMakeOverlay.txt" ]; then
+   RSTUDIO_PRO_SUFFIX="-pro"
+else
+   RSTUDIO_PRO_SUFFIX=""
+fi
 
-cmake -DRSTUDIO_TARGET=Desktop \
-      -DCMAKE_OSX_DEPLOYMENT_TARGET="10.12" \
-      -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-      -DRSTUDIO_PACKAGE_BUILD=1 \
-      -DGWT_BIN_DIR="$BUILD_DIR/gwt/bin" \
-      -DGWT_WWW_DIR="$BUILD_DIR/gwt/www" \
-      -DGWT_EXTRAS_DIR="$BUILD_DIR/gwt/extras" \
-      $PKG_DIR/../..
+RSTUDIO_BUNDLE_NAME="RStudio${RSTUDIO_PRO_SUFFIX}-${RSTUDIO_VERSION_FULL}"
 
-# don't use all CPUs for now (hangs build machine)
-#
-# MAKEFLAGS="$MAKEFLAGS -j$(sysctl -n hw.ncpu)"
-MAKEFLAGS="$MAKEFLAGS -j2"
+# use Ninja if available
+if has-program ninja; then
+   export CMAKE_GENERATOR=Ninja
+fi
 
-echo "Building with flags $MAKEFLAGS..."
-make $MAKEFLAGS
+# find ant
+find-program ANT ant            \
+   "${HOME}/homebrew/arm64/bin" \
+   "${HOME}/opt/bin"
 
-cpack -G DragNDrop
+# determine architectures to build for
+if [ "$(arch)" = "arm64" ]; then
+   arch=x86_64,arm64
+else
+   arch=x86_64
+fi
 
-cd $PACKAGE_DIR
+# default build options
+build_gwt=1
+build_package=1
+build_dmg=1
+clean=0
+copy_gwt=1
+install=0
+use_creds=0
+
+# by default, use RStudio credentials for builds on Jenkins
+if [ -n "${JENKINS_URL}" ]; then
+   use_creds=1
+fi
+
+# read command line arguments
+for arg in "$@"; do
+
+   case "$arg" in
+   clean)             clean=1 ;;
+   --arch=*)          arch=${arg#*=} ;;
+   --clean)           clean=1 ;;
+   --install)         install=1 ;;
+   --build-gwt=*)     build_gwt=${arg#*=} ;;
+   --copy-gwt=*)      copy_gwt=${arg#*=} ;;
+   --build-package=*) build_package=${arg#*=} ;;
+   --build-dmg=*)     build_dmg=${arg#*=} ;;
+   --use-creds=*)     use_creds=${arg#*=} ;;
+   esac
+
+done
+
+case "${arch}" in *arm64*)  build_arm64=1  ;; esac
+case "${arch}" in *x86_64*) build_x86_64=1 ;; esac
+
+if [ "${clean}" = "1" ]; then
+
+   # remove existing build dir
+   rm -rf "${BUILD_DIR_X86_64}"
+   rm -rf "${BUILD_DIR_ARM64}"
+
+   # clean out ant build if requested
+   if [ -d "${GWT_SRC_DIR}" ]; then
+      cd "${GWT_SRC_DIR}"
+      "${ANT}" clean
+   fi
+
+   # move back to package dir
+   cd "${PKG_DIR}"
+
+fi
+
+# set up MAKEFLAGS
+# don't use all CPUs on build machine (appears to cause hangs)
+if [ -n "${JENKINS_URL}" ]; then
+   MAKEFLAGS="${MAKEFLAGS} -j2"
+else
+   MAKEFLAGS="${MAKEFLAGS} -j$(sysctl -n hw.ncpu)"
+fi
+
+
+# perform an x86_64 build
+if [ -n "${build_x86_64}" ]; then
+
+   # find x86_64 cmake
+   find-program CMAKE_X86_64 cmake  \
+      "${HOME}/homebrew/x86_64/bin" \
+      "/usr/local/bin"
+
+   # prefer using x86_64 build of cmake
+   CMAKE="${CMAKE_X86_64:-/usr/local/bin/cmake}"
+   info "Using CMake '${CMAKE}' for x86_64 build"
+
+   mkdir -p "${BUILD_DIR_X86_64}"
+   mkdir -p "${BUILD_DIR_X86_64}/gwt"
+
+   cd "${BUILD_DIR_X86_64}"
+   rm -f CMakeCache.txt
+   rm -rf build/_CPack_Packages
+
+   info "Configuring for x86_64 ..."
+   arch -x86_64 "${CMAKE}"                                   \
+      -DCMAKE_BUILD_TYPE=RelWithDebInfo                      \
+      -DCMAKE_OSX_DEPLOYMENT_TARGET="10.12"                  \
+      -DCMAKE_INSTALL_PREFIX="${PKG_DIR}/install"            \
+      -DRSTUDIO_TARGET=Desktop                               \
+      -DRSTUDIO_PACKAGE_BUILD=1                              \
+      -DRSTUDIO_CRASHPAD_ENABLED=0                           \
+      -DRSTUDIO_TOOLS_ROOT="${RSTUDIO_TOOLS_ROOT}/../x86_64" \
+      -DRSTUDIO_CODESIGN_USE_CREDENTIALS="${use_creds}"      \
+      -DGWT_BUILD="${build_gwt}"                             \
+      -DGWT_COPY="${copy_gwt}"                               \
+      -DGWT_BIN_DIR="${BUILD_DIR_X86_64}/gwt/bin"            \
+      -DGWT_WWW_DIR="${BUILD_DIR_X86_64}/gwt/www"            \
+      -DGWT_EXTRAS_DIR="${BUILD_DIR_X86_64}/gwt/extras"      \
+      "${PKG_DIR}/../.."
+   info "Done!"
+
+   info "Building for x86_64 with flags '${MAKEFLAGS}' ..."
+   arch -x86_64 "${CMAKE}" --build . --target all -- ${MAKEFLAGS}
+   info "Done!"
+
+fi
+
+# perform an arm64 build
+if [ -n "${build_arm64}" ]; then
+
+   # set CMake paths
+   find-program CMAKE_ARM64 cmake  \
+      "${HOME}/homebrew/arm64/bin" \
+      "/opt/homebrew/bin"
+
+   # prefer using arm64 build of cmake
+   CMAKE="${CMAKE_ARM64:-/opt/homebrew/bin/cmake}"
+   info "Using CMake '${CMAKE}' for arm64 build"
+
+   mkdir -p "${BUILD_DIR_ARM64}"
+   cd "${BUILD_DIR_ARM64}"
+   rm -f CMakeCache.txt
+   rm -rf build/_CPack_Packages
+
+   info "Configuring for arm64 ..."
+   arch -arm64 "${CMAKE}"                                   \
+      -DCMAKE_BUILD_TYPE=RelWithDebInfo                     \
+      -DCMAKE_OSX_DEPLOYMENT_TARGET="10.12"                 \
+      -DRSESSION_ALTERNATE_BUILD=1                          \
+      -DRSTUDIO_TARGET=Desktop                              \
+      -DRSTUDIO_PACKAGE_BUILD=1                             \
+      -DRSTUDIO_CRASHPAD_ENABLED=0                          \
+      -DRSTUDIO_TOOLS_ROOT="${RSTUDIO_TOOLS_ROOT}/../arm64" \
+      -DGWT_BUILD=0                                         \
+      -DGWT_COPY=0                                          \
+      "${PKG_DIR}/../.."
+   info "Done!"
+
+   info "Building for arm64 with flags '${MAKEFLAGS}' ..."
+   arch -arm64 "${CMAKE}" --build . --target all -- ${MAKEFLAGS}
+   info "Done!"
+
+fi
+
+
+if [ "${build_package}" = "1" ]; then
+
+   info "Building package ..."
+
+   # find appropriate copy of CMake
+   find-program CMAKE cmake        \
+      "${HOME}/opt/bin"            \
+      "${HOME}/homebrew/arm64/bin" \
+      "/usr/local/bin"
+
+   # remove an existing install directory
+   rm -rf "${INSTALL_DIR}"
+   mkdir -p "${INSTALL_DIR}"
+
+   # install target
+   cd "${BUILD_DIR_X86_64}"
+
+   "${CMAKE}" --build . --target install
+
+   if [ "${build_dmg}" = "1" ]; then
+
+      # move to target directory
+      cd "${INSTALL_DIR}"
+
+      # create 'Applications' symlink
+      ln -nfs /Applications Applications
+
+      # package into dmg
+      info "Creating '${RSTUDIO_BUNDLE_NAME}.dmg ...'"
+
+      cd ..
+
+      hdiutil create                       \
+         -fs "APFS"                        \
+         -volname "${RSTUDIO_BUNDLE_NAME}" \
+         -srcfolder "install"              \
+         -ov                               \
+         -format "UDZO"                    \
+         "${RSTUDIO_BUNDLE_NAME}.dmg"
+
+      # move to expected location in build folder
+      mv "${RSTUDIO_BUNDLE_NAME}.dmg" "${BUILD_DIR_X86_64}/"
+
+   fi
+
+   info "Done!"
+
+fi
+
+cd "${PKG_DIR}"
+
+if [ "${install}" = "1" ]; then
+   RSTUDIO_BUNDLE_PATH="${INSTALL_DIR}/RStudio.app"
+   RSTUDIO_DEVEL_PATH="/Applications/RStudio-Devel.app"
+   if [ -e "${RSTUDIO_BUNDLE_PATH}" ]; then
+      rm -rf "${RSTUDIO_DEVEL_PATH}"
+      cp -R "${RSTUDIO_BUNDLE_PATH}" "${RSTUDIO_DEVEL_PATH}"
+      info "RStudio installed to '${RSTUDIO_DEVEL_PATH}'"
+   else
+      warn "'${RSTUDIO_BUNDLE_PATH}' does not exist; cannot install"
+   fi
+fi
+

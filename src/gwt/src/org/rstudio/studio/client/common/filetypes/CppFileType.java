@@ -25,57 +25,57 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spellin
 
 public class CppFileType extends TextFileType
 {
-   CppFileType(String id, String ext, ImageResource icon, 
+   CppFileType(String id, String ext, ImageResource icon,
                boolean isCpp, boolean canSource)
    {
       super(id, "C/C++", EditorLanguage.LANG_CPP, ext, icon,
-            false, false, isCpp, false, false, false, 
+            false, false, isCpp, false, false, false,
             false, false, false, true, false, true, false);
-      
+
       isCpp_ = isCpp;
       canSource_ = canSource;
    }
-   
+
    @Override
    public boolean isCpp()
    {
       return isCpp_;
    }
-   
+
    @Override
    public boolean canSource()
    {
       return canSource_;
    }
- 
+
    @Override
    public boolean canSourceWithEcho()
    {
       return false;
    }
-     
+
    @Override
    public boolean canSourceOnSave()
    {
       return canSource();
    }
- 
-   
+
+
    @Override
    public HashSet<AppCommand> getSupportedCommands(Commands commands)
    {
       HashSet<AppCommand> result = super.getSupportedCommands(commands);
       if (isCpp())
       {
-         result.add(commands.commentUncomment());
-         result.add(commands.reflowComment());
          result.add(commands.sourceActiveDocument());
          result.add(commands.sourceActiveDocumentWithEcho());
       }
+      result.add(commands.commentUncomment());
+      result.add(commands.reflowComment());
       result.add(commands.goToDefinition());
       result.add(commands.codeCompletion());
       result.add(commands.findUsages());
-            
+
       return result;
    }
 

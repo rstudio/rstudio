@@ -714,18 +714,6 @@
             "title": "Ignore words with numbers in spell check",
             "description": "Whether to ignore words with numbers in them when spell checking."
         },
-        "max_spellcheck_words": {
-            "type": "integer",
-            "default": 500,
-            "title": "Maximum number of words to spell check",
-            "description": "The maximum number of spelling words to check at once."
-        },
-        "max_spellcheck_prefetch": {
-            "type": "integer",
-            "default": 20,
-            "title": "Number of words to prefetch for spell check",
-            "description": "The maximum number of spelling correction suggestions to prefetch."
-        },
         "real_time_spellchecking": {
             "type": "boolean",
             "default": true,
@@ -919,7 +907,7 @@
             "title": "Terminal tab rendering engine",
             "description": "Terminal rendering engine: canvas is faster, dom may be needed for some browsers or graphics cards"
         },
-         "terminal_weblinks": {
+        "terminal_weblinks": {
             "type": "boolean",
             "default": true,
             "title": "Make links in Terminal clickable",
@@ -943,6 +931,42 @@
             "title": "Show hidden files in Files pane",
             "description": "Whether to show hidden files in the Files pane."
         },
+        "always_shown_files": {
+            "type": "array",
+            "description": "List of file names (case sensitive) that are always shown in the Files Pane, regardless of whether hidden files are shown",
+            "title": "Files always shown in the Files Pane",
+            "items": {
+                "type": "string"
+            },
+            "default": [
+                ".build.yml",
+                ".gitlab-ci.yml",
+                ".travis.yml"
+            ]
+        },
+        "always_shown_extensions": {
+            "type": "array",
+            "description": "List of file extensions (beginning with ., not case sensitive) that are always shown in the Files Pane, regardless of whether hidden files are shown",
+            "title": "Extensions always shown in the Files Pane",
+            "items": {
+                "type": "string"
+            },
+            "default": [
+                ".circleci",
+                ".gitattributes",
+                ".github",
+                ".gitignore",
+                ".httr-oauth",
+                ".r",
+                ".rbuildignore",
+                ".rdata"   ,
+                ".renvignore",
+                ".renviron",
+                ".rhistory",
+                ".rprofile",
+                ".ruserdata"
+            ]
+        },
         "sort_file_names_naturally": {
             "type": "boolean",
             "default": true,
@@ -959,13 +983,13 @@
         "show_launcher_jobs_tab": {
             "type": "boolean",
             "default": true,
-            "description": "Whether to show the Launcher jobs tab in RStudio Pro."
+            "description": "Whether to show the Launcher jobs tab in RStudio Pro and RStudio Workbench."
         },
         "launcher_jobs_sort": {
             "type": "string",
             "enum": ["recorded", "state"],
             "default": "recorded",
-            "description": "How to sort jobs in the Launcher tab in RStudio Pro."
+            "description": "How to sort jobs in the Launcher tab in RStudio Pro and RStudio Workbench."
         },
         "busy_detection": {
             "type": "string",
@@ -1040,13 +1064,13 @@
             "type": "string",
             "enum": ["always", "never", "sessions"],
             "default": "sessions",
-            "title": "Show user home page in RStudio Pro",
-            "description": "When to show the server home page in RStudio Server Pro."
+            "title": "Show user home page in RStudio Workbench",
+            "description": "When to show the server home page in RStudio Workbench."
         },
         "reuse_sessions_for_project_links": {
             "type": "boolean",
             "default": false,
-            "description": "Whether to reuse sessions when opening projects in RStudio Server Pro."
+            "description": "Whether to reuse sessions when opening projects in RStudio Workbench."
         },
         "vcs_enabled": {
             "type": "boolean",
@@ -1150,8 +1174,8 @@
         "restore_project_r_version": {
             "type": "boolean",
             "default": true,
-            "title": "Restore project R version in RStudio Pro",
-            "description": "Whether to restore the last version of R used by the project in RStudio Pro."
+            "title": "Restore project R version in RStudio Pro and RStudio Workbench",
+            "description": "Whether to restore the last version of R used by the project in RStudio Pro and RStudio Workbench."
         },
         "clang_verbose": {
             "type": "integer",
@@ -1212,6 +1236,12 @@
             "default": false,
             "title": "Tab key always moves focus",
             "description": "Tab key moves focus out of text editing controls instead of inserting tabs."
+        },
+        "find_panel_legacy_tab_sequence": {
+            "type": "boolean",
+            "default": false,
+            "title": "Tab key moves focus directly from find text to replace text in find panel",
+            "description": "In source editor find panel, tab key moves focus directly from find text to replace text."
         },
         "show_focus_rectangles": {
             "type": "boolean",
@@ -1448,6 +1478,24 @@
         "command_palette_mru": {
             "description": "Whether to keep track of recently used commands in the Command Palette",
             "title": "Remember recently used items in Command Palette",
+            "type": "boolean",
+            "default": true
+        }, 
+        "show_memory_usage": {
+            "description": "Whether to compute and show memory usage in the Environment Pane",
+            "title": "Show memory usage in Environment Pane",
+            "type": "boolean",
+            "default": true
+        },
+        "memory_query_interval_seconds": {
+            "description": "How many seconds to wait between automatic requeries of memory statistics (0 to disable)",
+            "title": "Interval for requerying memory stats (seconds)",
+            "type": "integer",
+            "default": 10
+        },
+        "terminal_python_integration": {
+            "description": "Enable Python terminal hooks. When enabled, the RStudio-configured version of Python will be placed on the PATH.",
+            "title": "Enable terminal Python integration",
             "type": "boolean",
             "default": true
         }

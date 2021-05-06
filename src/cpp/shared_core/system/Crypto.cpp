@@ -141,6 +141,14 @@ Error aesDecrypt(
 }
 
 Error aesEncrypt(
+    const std::vector<unsigned char>& data,
+    const std::vector<unsigned char>& key,
+    std::vector<unsigned char>& out_encrypted)
+{
+   return aesEncrypt(data, key, {}, out_encrypted);
+}
+
+Error aesEncrypt(
    const std::vector<unsigned char>& data,
    const std::vector<unsigned char>& key,
    const std::vector<unsigned char>& iv,
@@ -153,7 +161,7 @@ Error aesEncrypt(
 
    EVP_CIPHER_CTX *ctx;
    ctx = EVP_CIPHER_CTX_new();
-   EVP_CipherInit_ex(ctx, EVP_aes_128_cbc(), nullptr, &key[0], &iv[0], s_encrypt);
+   EVP_CipherInit_ex(ctx, EVP_aes_128_cbc(), nullptr, &key[0], iv.empty() ? nullptr : &iv[0], s_encrypt);
 
    // perform the encryption
    if(!EVP_CipherUpdate(ctx, &out_encrypted[0], &outlen, &data[0], gsl::narrow_cast<int>(data.size())))

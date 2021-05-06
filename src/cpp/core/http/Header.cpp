@@ -47,14 +47,32 @@ std::string headerValue(const Headers& headers, const std::string& name)
    Headers::const_iterator it = std::find_if(headers.begin(), 
                                              headers.end(), 
                                              HeaderNamePredicate(name));
-   
+
    if ( it != headers.end() )
       return (*it).value;
    else
       return std::string();
 }
 
-   
+std::vector<std::string> headerValues(const Headers& headers, const std::string& name)
+{
+   std::vector<std::string> values;
+
+   Headers::const_iterator it = headers.begin();
+   for (;;)
+   {
+      it = std::find_if(it, 
+                        headers.end(), 
+                        HeaderNamePredicate(name));
+      if (it == headers.end())
+         break;
+
+      values.push_back((*it).value);
+      it++;
+   }
+   return values;
+}
+
 bool parseHeader(const std::string& line, Header* pHeader)
 {
    // parse the name and value out of the header

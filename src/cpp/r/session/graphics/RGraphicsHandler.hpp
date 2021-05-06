@@ -158,6 +158,16 @@ extern void (*mode)(int mode, pDevDesc dev);
 
 extern void (*onBeforeExecute)(DeviceContext* pDC);
 
+// below added in version 14 (R 4.1.0)
+extern SEXP (*setPattern)(SEXP pattern, pDevDesc dd);
+extern void (*releasePattern)(SEXP ref, pDevDesc dd);
+
+extern SEXP (*setClipPath)(SEXP path, SEXP ref, pDevDesc dd);
+extern void (*releaseClipPath)(SEXP ref, pDevDesc dd);
+
+extern SEXP (*setMask)(SEXP path, SEXP ref, pDevDesc dd);
+extern void (*releaseMask)(SEXP ref, pDevDesc dd);
+
 } // namespace handler
 } // namespace graphics
 } // namespace session

@@ -1363,32 +1363,6 @@ core::Error UserPrefValues::setIgnoreWordsWithNumbers(bool val)
 }
 
 /**
- * The maximum number of spelling words to check at once.
- */
-int UserPrefValues::maxSpellcheckWords()
-{
-   return readPref<int>("max_spellcheck_words");
-}
-
-core::Error UserPrefValues::setMaxSpellcheckWords(int val)
-{
-   return writePref("max_spellcheck_words", val);
-}
-
-/**
- * The maximum number of spelling correction suggestions to prefetch.
- */
-int UserPrefValues::maxSpellcheckPrefetch()
-{
-   return readPref<int>("max_spellcheck_prefetch");
-}
-
-core::Error UserPrefValues::setMaxSpellcheckPrefetch(int val)
-{
-   return writePref("max_spellcheck_prefetch", val);
-}
-
-/**
  * Whether to enable real-time spellchecking by default.
  */
 bool UserPrefValues::realTimeSpellchecking()
@@ -1844,6 +1818,32 @@ core::Error UserPrefValues::setShowHiddenFiles(bool val)
 }
 
 /**
+ * List of file names (case sensitive) that are always shown in the Files Pane, regardless of whether hidden files are shown
+ */
+core::json::Array UserPrefValues::alwaysShownFiles()
+{
+   return readPref<core::json::Array>("always_shown_files");
+}
+
+core::Error UserPrefValues::setAlwaysShownFiles(core::json::Array val)
+{
+   return writePref("always_shown_files", val);
+}
+
+/**
+ * List of file extensions (beginning with ., not case sensitive) that are always shown in the Files Pane, regardless of whether hidden files are shown
+ */
+core::json::Array UserPrefValues::alwaysShownExtensions()
+{
+   return readPref<core::json::Array>("always_shown_extensions");
+}
+
+core::Error UserPrefValues::setAlwaysShownExtensions(core::json::Array val)
+{
+   return writePref("always_shown_extensions", val);
+}
+
+/**
  * Whether to sort file names naturally, so that e.g., file10.R comes after file9.R
  */
 bool UserPrefValues::sortFileNamesNaturally()
@@ -1870,7 +1870,7 @@ core::Error UserPrefValues::setJobsTabVisibility(std::string val)
 }
 
 /**
- * Whether to show the Launcher jobs tab in RStudio Pro.
+ * Whether to show the Launcher jobs tab in RStudio Pro and RStudio Workbench.
  */
 bool UserPrefValues::showLauncherJobsTab()
 {
@@ -1883,7 +1883,7 @@ core::Error UserPrefValues::setShowLauncherJobsTab(bool val)
 }
 
 /**
- * How to sort jobs in the Launcher tab in RStudio Pro.
+ * How to sort jobs in the Launcher tab in RStudio Pro and RStudio Workbench.
  */
 std::string UserPrefValues::launcherJobsSort()
 {
@@ -2039,7 +2039,7 @@ core::Error UserPrefValues::setRootDocument(std::string val)
 }
 
 /**
- * When to show the server home page in RStudio Server Pro.
+ * When to show the server home page in RStudio Workbench.
  */
 std::string UserPrefValues::showUserHomePage()
 {
@@ -2052,7 +2052,7 @@ core::Error UserPrefValues::setShowUserHomePage(std::string val)
 }
 
 /**
- * Whether to reuse sessions when opening projects in RStudio Server Pro.
+ * Whether to reuse sessions when opening projects in RStudio Workbench.
  */
 bool UserPrefValues::reuseSessionsForProjectLinks()
 {
@@ -2286,7 +2286,7 @@ core::Error UserPrefValues::setLatexShellEscape(bool val)
 }
 
 /**
- * Whether to restore the last version of R used by the project in RStudio Pro.
+ * Whether to restore the last version of R used by the project in RStudio Pro and RStudio Workbench.
  */
 bool UserPrefValues::restoreProjectRVersion()
 {
@@ -2400,6 +2400,19 @@ bool UserPrefValues::tabKeyMoveFocus()
 core::Error UserPrefValues::setTabKeyMoveFocus(bool val)
 {
    return writePref("tab_key_move_focus", val);
+}
+
+/**
+ * In source editor find panel, tab key moves focus directly from find text to replace text.
+ */
+bool UserPrefValues::findPanelLegacyTabSequence()
+{
+   return readPref<bool>("find_panel_legacy_tab_sequence");
+}
+
+core::Error UserPrefValues::setFindPanelLegacyTabSequence(bool val)
+{
+   return writePref("find_panel_legacy_tab_sequence", val);
 }
 
 /**
@@ -2831,6 +2844,45 @@ core::Error UserPrefValues::setCommandPaletteMru(bool val)
    return writePref("command_palette_mru", val);
 }
 
+/**
+ * Whether to compute and show memory usage in the Environment Pane
+ */
+bool UserPrefValues::showMemoryUsage()
+{
+   return readPref<bool>("show_memory_usage");
+}
+
+core::Error UserPrefValues::setShowMemoryUsage(bool val)
+{
+   return writePref("show_memory_usage", val);
+}
+
+/**
+ * How many seconds to wait between automatic requeries of memory statistics (0 to disable)
+ */
+int UserPrefValues::memoryQueryIntervalSeconds()
+{
+   return readPref<int>("memory_query_interval_seconds");
+}
+
+core::Error UserPrefValues::setMemoryQueryIntervalSeconds(int val)
+{
+   return writePref("memory_query_interval_seconds", val);
+}
+
+/**
+ * Enable Python terminal hooks. When enabled, the RStudio-configured version of Python will be placed on the PATH.
+ */
+bool UserPrefValues::terminalPythonIntegration()
+{
+   return readPref<bool>("terminal_python_integration");
+}
+
+core::Error UserPrefValues::setTerminalPythonIntegration(bool val)
+{
+   return writePref("terminal_python_integration", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -2937,8 +2989,6 @@ std::vector<std::string> UserPrefValues::allKeys()
       kDocumentLoadLintDelay,
       kIgnoreUppercaseWords,
       kIgnoreWordsWithNumbers,
-      kMaxSpellcheckWords,
-      kMaxSpellcheckPrefetch,
       kRealTimeSpellchecking,
       kNavigateToBuildError,
       kPackagesPaneEnabled,
@@ -2974,6 +3024,8 @@ std::vector<std::string> UserPrefValues::allKeys()
       kShowRmdRenderCommand,
       kEnableTextDrag,
       kShowHiddenFiles,
+      kAlwaysShownFiles,
+      kAlwaysShownExtensions,
       kSortFileNamesNaturally,
       kJobsTabVisibility,
       kShowLauncherJobsTab,
@@ -3017,6 +3069,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kTypingStatusDelayMs,
       kReducedMotion,
       kTabKeyMoveFocus,
+      kFindPanelLegacyTabSequence,
       kShowFocusRectangles,
       kShowPanelFocusRectangle,
       kAutoSaveOnIdle,
@@ -3050,6 +3103,9 @@ std::vector<std::string> UserPrefValues::allKeys()
       kSaveRetryTimeout,
       kInsertNativePipeOperator,
       kCommandPaletteMru,
+      kShowMemoryUsage,
+      kMemoryQueryIntervalSeconds,
+      kTerminalPythonIntegration,
    });
 }
    

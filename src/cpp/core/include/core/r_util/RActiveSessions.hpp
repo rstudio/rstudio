@@ -406,10 +406,15 @@ class ActiveSessions : boost::noncopyable
 public:
    explicit ActiveSessions(const FilePath& rootStoragePath)
    {
-      storagePath_ = rootStoragePath.completeChildPath("sessions/active");
+      storagePath_ = storagePath(rootStoragePath);
       Error error = storagePath_.ensureDirectory();
       if (error)
          LOG_ERROR(error);
+   }
+
+   static FilePath storagePath(const FilePath& rootStoragePath)
+   {
+      return rootStoragePath.completeChildPath("sessions/active");
    }
 
    core::Error create(const std::string& project,

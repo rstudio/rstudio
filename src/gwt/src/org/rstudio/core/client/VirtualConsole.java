@@ -489,6 +489,10 @@ public class VirtualConsole
     */
    public void submit(String data, String clazz, boolean forceNewRange, boolean ariaLiveAnnounce)
    {
+      boolean wasAtBottom = false;
+      if (isVirtualized())
+         wasAtBottom = VirtualScrollerManager.scrolledToBottom(parent_.getParentElement());
+
       // Only capture new elements when dealing with error output, which
       // is the only place that sets forceNewRange to true. This is just an
       // optimization to avoid unnecessary overhead for large (non-error)
@@ -659,6 +663,9 @@ public class VirtualConsole
       // If there was any plain text after the last control character, add it
       if (tail < data.length())
          text(data.substring(tail), currentClazz, forceNewRange);
+
+      if (wasAtBottom && isVirtualized())
+         VirtualScrollerManager.scrollToBottom(parent_.getParentElement());
    }
 
    // Elements added by last submit call; only captured if forceNewRange was true
@@ -766,9 +773,8 @@ public class VirtualConsole
 
    private static final Pattern CONTROL = Pattern.create("[\r\b\f\n]");
 
-   // some panels might want to never virtualize the scrolling based
-   // on how they use the VirtualConsole (e.g. Build Pane)
-   private boolean virtualizedDisableOverride_ = false;
+   // only a select few panes should be virtualized. default it to off everywhere.
+   private boolean virtualizedDisableOverride_ = true;
 
    private final StringBuilder output_ = new StringBuilder();
    private final TreeMap<Integer, ClassRange> class_ = new TreeMap<>();

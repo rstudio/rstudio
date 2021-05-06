@@ -53,12 +53,13 @@ var VirtualScroller;
       self._isAtTopBucket = self._isAtTopBucket.bind(self);
       self._isBucketHidden = self._isBucketHidden.bind(self);
       self._isBucketFull = self._isBucketFull.bind(self);
-      self._jumpToBottom = self._jumpToBottom.bind(self);
       self._moveWindow = self._moveWindow.bind(self);
       self._onParentScroll = self._onParentScroll.bind(self);
       self._showBucket = self._showBucket.bind(self);
       self.append = self.append.bind(self);
       self.clear = self.clear.bind(self);
+      self.scrollToBottom = self.scrollToBottom.bind(self);
+      self.scrolledToBottom = self.scrolledToBottom.bind(self);
       self.getCurBucket = self.getCurBucket.bind(self);
       self.setScrollParent = self.setScrollParent.bind(self);
 
@@ -192,8 +193,15 @@ var VirtualScroller;
       return this.scrollerEle.scrollTop < 4;
     },
 
-    _scrolledToBottom: function() {
-      return Math.abs(this.scrollerEle.scrollHeight - this.scrollerEle.offsetHeight - this.scrollerEle.scrollTop) < 4;
+    scrolledToBottom: function() {
+      return !!this.scrollerEle &&
+          Math.abs(this.scrollerEle.scrollHeight - this.scrollerEle.offsetHeight - this.scrollerEle.scrollTop) < 50;
+    },
+
+    scrollToBottom: function() {
+      if (!!this.scrollerEle)  {
+        this.scrollerEle.scrollTop = this.scrollerEle.scrollHeight;
+      }
     },
 
     // this BOUND callback function
@@ -238,7 +246,7 @@ var VirtualScroller;
           this._moveWindow(true);
         }
         // if we scrolled to the bottom, move the window down
-        else if (this._scrolledToBottom() && !this._isAtBottomBucket()) {
+        else if (this.scrolledToBottom() && !this._isAtBottomBucket()) {
           this._moveWindow(false);
         }
         else {
@@ -252,7 +260,7 @@ var VirtualScroller;
         // load in a bit more data so the user knows there's more content above
         var self = this;
         setTimeout(function () {
-          if (self._scrolledToBottom() || self._scrolledToTop())
+          if (self.scrolledToBottom() || self._scrolledToTop())
             self._onParentScroll();
         }, this._SCROLL_DEBOUNCE_MS + 10);
       }
@@ -271,7 +279,7 @@ var VirtualScroller;
       if (element === null)
         return;
 
-      var keepScrolled = !!this.scrollerEle && this._scrolledToBottom();
+      var keepScrolled = !!this.scrollerEle && this.scrolledToBottom();
 
       if (this._isBucketFull(this.getCurBucket())) {
         this._createAndAddNewBucket();
@@ -323,8 +331,10 @@ var VirtualScroller;
         newlinesToPrune -= 1;
       }
 
-      if (indexToSlice > 0)
-        element.innerText = element.innerText.substring(indexToSlice);
+      if (indexToSlice > 0) {
+        element.innerText = "<console output truncated>" +
+          element.innerText.substring(indexToSlice);
+      }
     },
 
     ensureStartingOnNewLine: function() {

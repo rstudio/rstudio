@@ -18,11 +18,11 @@ package org.rstudio.studio.client.common.compile;
 import com.google.gwt.core.client.JavaScriptObject;
 
 public class CompileOutput extends JavaScriptObject
-{ 
+{
    protected CompileOutput()
    {
    }
-   
+
    public static final int kCommand = 0;
    public static final int kNormal = 1;
    public static final int kError = 2;
@@ -32,8 +32,8 @@ public class CompileOutput extends JavaScriptObject
       compileOutput.type = type;
       compileOutput.output = output;
       return compileOutput;
-   }-*/; 
-   
+   }-*/;
+
    public native final int getType() /*-{
       return this.type;
    }-*/;

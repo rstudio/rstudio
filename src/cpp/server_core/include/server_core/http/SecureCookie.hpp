@@ -77,6 +77,8 @@ core::Error initialize();
 core::Error initialize(const FilePath& secureKeyFile);
 
 const std::string& getKey();
+const std::string& getKeyFileUsed();
+const std::string& getKeyHash();
 
 } // namespace secure_cookie
 } // namespace http

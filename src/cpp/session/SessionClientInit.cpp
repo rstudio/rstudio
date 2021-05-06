@@ -40,6 +40,7 @@
 #include "modules/SessionSource.hpp"
 #include "modules/SessionVCS.hpp"
 #include "modules/SessionFonts.hpp"
+#include "modules/SessionSystemResources.hpp"
 #include "modules/build/SessionBuild.hpp"
 #include "modules/jobs/SessionJobs.hpp"
 #include "modules/environment/SessionEnvironment.hpp"
@@ -264,6 +265,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
  
    // check if reticulate's Python session has been initialized
    sessionInfo["python_initialized"] = modules::reticulate::isPythonInitialized();
+   
+   // check if the Python REPL is active
+   sessionInfo["python_repl_active"] = modules::reticulate::isReplActive();
    
    // propagate RETICULATE_PYTHON if set
    sessionInfo["reticulate_python"] = core::system::getenv("RETICULATE_PYTHON");
@@ -545,6 +549,24 @@ void handleClientInit(const boost::function<void()>& initFunction,
       LOG_ERROR(error);
    sessionInfo["package_dependencies"] = packageDependencies;
 
+   boost::shared_ptr<modules::system_resources::MemoryUsage> pUsage;
+
+   // Compute memory usage if enabled (the default, but can be disabled)
+   if (prefs::userPrefs().showMemoryUsage())
+   {
+      error = modules::system_resources::getMemoryUsage(&pUsage);
+      if (error)
+      {
+         LOG_ERROR(error);
+      }
+   }
+
+   // Emit memory usage if successfully computed
+   if (pUsage)
+   {
+      sessionInfo["memory_usage"] = pUsage->toJson();
+   }
+
    // crash handler settings
    bool canModifyCrashSettings =
          options.programMode() == kSessionProgramModeDesktop &&
@@ -559,7 +581,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    if (session::options().getBoolOverlayOption(kSessionUserLicenseSoftLimitReached))
    {
       sessionInfo["license_message"] =
-            "There are more concurrent users of RStudio Server Pro than your license supports. "
+            "There are more concurrent users of RStudio Workbench than your license supports. "
             "Please obtain an updated license to continue using the product.";
    }
 

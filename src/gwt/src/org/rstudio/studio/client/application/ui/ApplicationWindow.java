@@ -39,8 +39,8 @@ import org.rstudio.studio.client.palette.CommandPaletteLauncher;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 @Singleton
-public class ApplicationWindow extends Composite 
-                               implements ApplicationView, 
+public class ApplicationWindow extends Composite
+                               implements ApplicationView,
                                           RequiresResize,
                                           ProvidesResize
 {
@@ -63,10 +63,10 @@ public class ApplicationWindow extends Composite
       // occupy full client area of the window
       Window.enableScrolling(false);
       Window.setMargin("0px");
-      
+
       // app ui contained within a vertical panel
       applicationPanel_ = new LayoutPanel();
-    
+
       // header bar
       applicationHeader_ = applicationHeader;
       Widget applicationHeaderWidget = applicationHeader_.asWidget();
@@ -91,19 +91,19 @@ public class ApplicationWindow extends Composite
       applicationHeader_.showToolbar(showToolbar);
       updateHeaderTopBottom();
       updateWorkbenchTopBottom();
-      applicationPanel_.forceLayout();  
+      applicationPanel_.forceLayout();
       if (announce && showToolbar != currentVisibility)
          ariaLive_.announce(AriaLiveService.TOOLBAR_VISIBILITY,
                showToolbar ? "Main toolbar visible" : "Main toolbar hidden",
                Timing.IMMEDIATE, Severity.STATUS);
    }
-   
+
    @Override
    public boolean isToolbarShowing()
    {
       return applicationHeader_.isToolbarVisible();
    }
-   
+
    @Override
    public void focusToolbar()
    {
@@ -121,37 +121,37 @@ public class ApplicationWindow extends Composite
    {
       return this;
    }
-   
+
    @Override
    public void showApplicationQuit()
    {
       ApplicationEndedPopupPanel.showQuit();
    }
-   
+
    @Override
    public void showApplicationMultiSessionQuit()
    {
       ApplicationEndedPopupPanel.showMultiSessionQuit();
    }
-   
+
    @Override
    public void showApplicationSuicide(String reason)
    {
       ApplicationEndedPopupPanel.showSuicide(reason);
    }
-   
+
    @Override
    public void showApplicationDisconnected()
    {
       ApplicationEndedPopupPanel.showDisconnected();
    }
-   
+
    @Override
    public void showApplicationOffline()
    {
       ApplicationEndedPopupPanel.showOffline();
    }
-   
+
    @Override
    public void showApplicationUpdateRequired()
    {
@@ -169,7 +169,7 @@ public class ApplicationWindow extends Composite
 
             });
    }
-      
+
    @Override
    public void showWorkbenchView(Widget workbenchScreen)
    {
@@ -213,12 +213,12 @@ public class ApplicationWindow extends Composite
       warningBar_.setText(message);
       warningBar_.showLicenseButton(showLicenseButton);
    }
-   
+
    @Override
    public void showLicenseWarning(boolean severe, String message)
    {
       showWarning(severe, message, true);
-      
+
    }
 
    @Override
@@ -241,7 +241,7 @@ public class ApplicationWindow extends Composite
                                            0,
                                            Style.Unit.PX);
    }
-   
+
    private void updateWorkbenchTopBottom()
    {
       applicationPanel_.setWidgetTopBottom(
@@ -277,7 +277,7 @@ public class ApplicationWindow extends Composite
             "an unexpected crash.\n\n" +
             "You may have lost workspace data as a result of this crash.");
    }
-   
+
    @Override
    public void reportStatus(String message, int delayMs, Severity severity)
    {
@@ -285,22 +285,22 @@ public class ApplicationWindow extends Composite
    }
 
    @Override
-   public void showSerializationProgress(String msg, 
-                                         boolean modal, 
+   public void showSerializationProgress(String msg,
+                                         boolean modal,
                                          int delayMs,
                                          int timeoutMs)
    {
       // hide any existing progress
       hideSerializationProgress();
-      
+
       // create and show progress
-      activeSerializationProgress_ = 
+      activeSerializationProgress_ =
                     new ApplicationSerializationProgress(msg, modal, delayMs,
                           !ariaLive_.isDisabled(AriaLiveService.SESSION_STATE));
-      
-      // implement timeout for *this* serialization progress instance if 
-      // requested (check to ensure the same instance because another 
-      // serialization progress could occur in the meantime and we don't 
+
+      // implement timeout for *this* serialization progress instance if
+      // requested (check to ensure the same instance because another
+      // serialization progress could occur in the meantime and we don't
       // want to hide it)
       if (timeoutMs > 0)
       {
@@ -313,10 +313,10 @@ public class ApplicationWindow extends Composite
                if (timeoutSerializationProgress == activeSerializationProgress_)
                   hideSerializationProgress();
             }
-         }.schedule(timeoutMs);     
+         }.schedule(timeoutMs);
       }
    }
-   
+
    @Override
    public void hideSerializationProgress()
    {
@@ -326,13 +326,13 @@ public class ApplicationWindow extends Composite
          activeSerializationProgress_ = null;
       }
    }
-  
+
    @Override
    public void onResize()
    {
       applicationPanel_.onResize();
    }
-   
+
    // main application UI components
    private LayoutPanel applicationPanel_;
    private ApplicationHeader applicationHeader_;

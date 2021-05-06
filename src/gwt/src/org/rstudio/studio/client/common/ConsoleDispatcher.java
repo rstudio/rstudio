@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.common;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.RUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -28,7 +29,6 @@ import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEve
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-
 
 @Singleton
 public class ConsoleDispatcher
@@ -51,27 +51,29 @@ public class ConsoleDispatcher
 
    public void executeSetWd(FileSystemItem dir, boolean activateConsole)
    {
-      String escaped = dir.getPath().replaceAll("\\\\", "\\\\\\\\");
-      if (escaped.equals("~"))
-         escaped = "~/";
-      eventBus_.fireEvent(
-            new SendToConsoleEvent("setwd(\"" + escaped + "\")", true));
+      String path = dir.getPath();
+      
+      if (path.equals("~"))
+         path = "~/";
+      
+      String code = "setwd(" + RUtil.asStringLiteral(path) + ")";
+      eventBus_.fireEvent(new SendToConsoleEvent(code, true));
       
       if (activateConsole)
          commands_.activateConsole().execute();
    }
-   
+
    public void executeCommand(String command, FileSystemItem targetFile)
    {
       executeCommand(command, targetFile.getPath());
    }
-   
+
    public void executeCommand(String command, String argument)
    {
-      String code = command + "(\"" + argument + "\")";
+      String code = command + "(" + RUtil.asStringLiteral(argument) + ")";
       eventBus_.fireEvent(new SendToConsoleEvent(code, true));
    }
-   
+
    public void executeCommandWithFileEncoding(String command,
                                               String path,
                                               String encoding,
@@ -81,21 +83,20 @@ public class ConsoleDispatcher
       String systemEncoding = session_.getSessionInfo().getSystemEncoding();
       boolean isSystemEncoding =
        normalizeEncoding(encoding).equals(normalizeEncoding(systemEncoding));
-      
+
       StringBuilder code = new StringBuilder();
       code.append(command + "(" + escapedPath);
-      
+
       if (!isSystemEncoding && !contentIsAscii)
       {
-         code.append(", encoding = '" +
+         code.append(", encoding = \"" +
                (!StringUtil.isNullOrEmpty(encoding) ? encoding : "UTF-8") +
-               "'");
+               "\"");
       }
       code.append(")");
       eventBus_.fireEvent(new SendToConsoleEvent(code.toString(), true));
    }
-   
-   
+
    public void saveFileAsThenExecuteCommand(String caption,
                                             final String defaultExtension,
                                             boolean forceExtension,
@@ -115,14 +116,14 @@ public class ConsoleDispatcher
                {
                   if (input == null)
                      return;
-                  
+
                   executeCommand(command, input);
                   indicator.onCompleted();
                }
             });
    }
-   
-   public void chooseFileThenExecuteCommand(String caption, 
+
+   public void chooseFileThenExecuteCommand(String caption,
                                             final String command)
    {
       fileDialogs_.openFile(
@@ -135,26 +136,25 @@ public class ConsoleDispatcher
                {
                   if (input == null)
                      return;
-                  
+
                   executeCommand(command, input);
                   indicator.onCompleted();
                }
             });
-      
+
    }
-  
-   
+
    public void executeSourceCommand(String path,
                                     TextFileType fileType,
-                                    String encoding, 
+                                    String encoding,
                                     boolean contentKnownToBeAscii,
                                     boolean echo,
                                     boolean focus,
                                     boolean debug)
    {
-       
+
       StringBuilder code = new StringBuilder();
-      
+
       if (fileType.isCpp())
       {
          // use a relative path if possible
@@ -162,7 +162,7 @@ public class ConsoleDispatcher
                                        workbenchContext_.getCurrentWorkingDir());
          if (relativePath != null)
             path = relativePath;
-       
+
          code.append("Rcpp::sourceCpp(" + escapedPath(path) + ")");
       }
       else
@@ -171,44 +171,40 @@ public class ConsoleDispatcher
          String systemEncoding = session_.getSessionInfo().getSystemEncoding();
          boolean isSystemEncoding =
           normalizeEncoding(encoding) == normalizeEncoding(systemEncoding);
-         
+
          if (contentKnownToBeAscii || isSystemEncoding)
-            code.append((debug ? "debugSource" : "source") + 
+            code.append((debug ? "debugSource" : "source") +
                      "(" + escapedPath);
          else
          {
-            code.append((debug ? "debugSource" : "source") + 
+            code.append((debug ? "debugSource" : "source") +
                   "(" + escapedPath + ", encoding = '" +
                   (!StringUtil.isNullOrEmpty(encoding) ? encoding : "UTF-8") +
                   "'");
          }
-         
+
          if (echo)
             code.append(", echo=TRUE");
          code.append(")");
       }
-      
-      
+
+
       eventBus_.fireEvent(new SendToConsoleEvent(code.toString(), true));
-      
+
       if (focus)
          commands_.activateConsole().execute();
    }
-   
+
    public static String escapedPath(String path)
    {
-      String escapedPath = "'" +
-                           path.replace("\\", "\\\\").replace("'", "\\'") +
-                           "'";
-      return escapedPath;
+      return RUtil.asStringLiteral(path);
    }
-   
+
    private String normalizeEncoding(String str)
    {
       return StringUtil.notNull(str).replaceAll("[- ]", "").toLowerCase();
    }
-   
-   
+
    private final EventBus eventBus_;
    private final Commands commands_;
    private final FileDialogs fileDialogs_;

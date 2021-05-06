@@ -85,12 +85,6 @@ json::Object returnObject()
    return val.getValue<json::Object>();
 }
 
-json::Value createValue()
-{
-   json::Object obj = createObject();
-   return std::move(obj);
-}
-
 json::Value getValue()
 {
    std::string jsonStr = "{\"a\": 5}";
@@ -453,14 +447,6 @@ TEST_CASE("Json")
          arr.end());
 
       REQUIRE(arr.getSize() == 0);
-   }
-
-   SECTION("Test self assignment")
-   {
-      json::Value val = createValue();
-      val = val;
-
-      REQUIRE(val.getObject()["a"].getBool());
    }
 
    SECTION("Unicode string test")

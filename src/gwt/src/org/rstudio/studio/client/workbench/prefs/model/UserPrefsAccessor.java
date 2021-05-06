@@ -1472,30 +1472,6 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * The maximum number of spelling words to check at once.
-    */
-   public PrefValue<Integer> maxSpellcheckWords()
-   {
-      return integer(
-         "max_spellcheck_words",
-         "Maximum number of words to spell check", 
-         "The maximum number of spelling words to check at once.", 
-         500);
-   }
-
-   /**
-    * The maximum number of spelling correction suggestions to prefetch.
-    */
-   public PrefValue<Integer> maxSpellcheckPrefetch()
-   {
-      return integer(
-         "max_spellcheck_prefetch",
-         "Number of words to prefetch for spell check", 
-         "The maximum number of spelling correction suggestions to prefetch.", 
-         20);
-   }
-
-   /**
     * Whether to enable real-time spellchecking by default.
     */
    public PrefValue<Boolean> realTimeSpellchecking()
@@ -1983,6 +1959,30 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * List of file names (case sensitive) that are always shown in the Files Pane, regardless of whether hidden files are shown
+    */
+   public PrefValue<JsArrayString> alwaysShownFiles()
+   {
+      return object(
+         "always_shown_files",
+         "Files always shown in the Files Pane", 
+         "List of file names (case sensitive) that are always shown in the Files Pane, regardless of whether hidden files are shown", 
+         JsArrayUtil.createStringArray(".build.yml", ".gitlab-ci.yml", ".travis.yml"));
+   }
+
+   /**
+    * List of file extensions (beginning with ., not case sensitive) that are always shown in the Files Pane, regardless of whether hidden files are shown
+    */
+   public PrefValue<JsArrayString> alwaysShownExtensions()
+   {
+      return object(
+         "always_shown_extensions",
+         "Extensions always shown in the Files Pane", 
+         "List of file extensions (beginning with ., not case sensitive) that are always shown in the Files Pane, regardless of whether hidden files are shown", 
+         JsArrayUtil.createStringArray(".circleci", ".gitattributes", ".github", ".gitignore", ".httr-oauth", ".r", ".rbuildignore", ".rdata", ".renvignore", ".renviron", ".rhistory", ".rprofile", ".ruserdata"));
+   }
+
+   /**
     * Whether to sort file names naturally, so that e.g., file10.R comes after file9.R
     */
    public PrefValue<Boolean> sortFileNamesNaturally()
@@ -2016,26 +2016,26 @@ public class UserPrefsAccessor extends Prefs
    public final static String JOBS_TAB_VISIBILITY_DEFAULT = "default";
 
    /**
-    * Whether to show the Launcher jobs tab in RStudio Pro.
+    * Whether to show the Launcher jobs tab in RStudio Pro and RStudio Workbench.
     */
    public PrefValue<Boolean> showLauncherJobsTab()
    {
       return bool(
          "show_launcher_jobs_tab",
          "", 
-         "Whether to show the Launcher jobs tab in RStudio Pro.", 
+         "Whether to show the Launcher jobs tab in RStudio Pro and RStudio Workbench.", 
          true);
    }
 
    /**
-    * How to sort jobs in the Launcher tab in RStudio Pro.
+    * How to sort jobs in the Launcher tab in RStudio Pro and RStudio Workbench.
     */
    public PrefValue<String> launcherJobsSort()
    {
       return enumeration(
          "launcher_jobs_sort",
          "", 
-         "How to sort jobs in the Launcher tab in RStudio Pro.", 
+         "How to sort jobs in the Launcher tab in RStudio Pro and RStudio Workbench.", 
          new String[] {
             LAUNCHER_JOBS_SORT_RECORDED,
             LAUNCHER_JOBS_SORT_STATE
@@ -2224,14 +2224,14 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * When to show the server home page in RStudio Server Pro.
+    * When to show the server home page in RStudio Workbench.
     */
    public PrefValue<String> showUserHomePage()
    {
       return enumeration(
          "show_user_home_page",
-         "Show user home page in RStudio Pro", 
-         "When to show the server home page in RStudio Server Pro.", 
+         "Show user home page in RStudio Workbench", 
+         "When to show the server home page in RStudio Workbench.", 
          new String[] {
             SHOW_USER_HOME_PAGE_ALWAYS,
             SHOW_USER_HOME_PAGE_NEVER,
@@ -2245,14 +2245,14 @@ public class UserPrefsAccessor extends Prefs
    public final static String SHOW_USER_HOME_PAGE_SESSIONS = "sessions";
 
    /**
-    * Whether to reuse sessions when opening projects in RStudio Server Pro.
+    * Whether to reuse sessions when opening projects in RStudio Workbench.
     */
    public PrefValue<Boolean> reuseSessionsForProjectLinks()
    {
       return bool(
          "reuse_sessions_for_project_links",
          "", 
-         "Whether to reuse sessions when opening projects in RStudio Server Pro.", 
+         "Whether to reuse sessions when opening projects in RStudio Workbench.", 
          false);
    }
 
@@ -2461,14 +2461,14 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether to restore the last version of R used by the project in RStudio Pro.
+    * Whether to restore the last version of R used by the project in RStudio Pro and RStudio Workbench.
     */
    public PrefValue<Boolean> restoreProjectRVersion()
    {
       return bool(
          "restore_project_r_version",
-         "Restore project R version in RStudio Pro", 
-         "Whether to restore the last version of R used by the project in RStudio Pro.", 
+         "Restore project R version in RStudio Pro and RStudio Workbench", 
+         "Whether to restore the last version of R used by the project in RStudio Pro and RStudio Workbench.", 
          true);
    }
 
@@ -2583,6 +2583,18 @@ public class UserPrefsAccessor extends Prefs
          "tab_key_move_focus",
          "Tab key always moves focus", 
          "Tab key moves focus out of text editing controls instead of inserting tabs.", 
+         false);
+   }
+
+   /**
+    * In source editor find panel, tab key moves focus directly from find text to replace text.
+    */
+   public PrefValue<Boolean> findPanelLegacyTabSequence()
+   {
+      return bool(
+         "find_panel_legacy_tab_sequence",
+         "Tab key moves focus directly from find text to replace text in find panel", 
+         "In source editor find panel, tab key moves focus directly from find text to replace text.", 
          false);
    }
 
@@ -3075,6 +3087,42 @@ public class UserPrefsAccessor extends Prefs
          true);
    }
 
+   /**
+    * Whether to compute and show memory usage in the Environment Pane
+    */
+   public PrefValue<Boolean> showMemoryUsage()
+   {
+      return bool(
+         "show_memory_usage",
+         "Show memory usage in Environment Pane", 
+         "Whether to compute and show memory usage in the Environment Pane", 
+         true);
+   }
+
+   /**
+    * How many seconds to wait between automatic requeries of memory statistics (0 to disable)
+    */
+   public PrefValue<Integer> memoryQueryIntervalSeconds()
+   {
+      return integer(
+         "memory_query_interval_seconds",
+         "Interval for requerying memory stats (seconds)", 
+         "How many seconds to wait between automatic requeries of memory statistics (0 to disable)", 
+         10);
+   }
+
+   /**
+    * Enable Python terminal hooks. When enabled, the RStudio-configured version of Python will be placed on the PATH.
+    */
+   public PrefValue<Boolean> terminalPythonIntegration()
+   {
+      return bool(
+         "terminal_python_integration",
+         "Enable terminal Python integration", 
+         "Enable Python terminal hooks. When enabled, the RStudio-configured version of Python will be placed on the PATH.", 
+         true);
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -3283,10 +3331,6 @@ public class UserPrefsAccessor extends Prefs
          ignoreUppercaseWords().setValue(layer, source.getBool("ignore_uppercase_words"));
       if (source.hasKey("ignore_words_with_numbers"))
          ignoreWordsWithNumbers().setValue(layer, source.getBool("ignore_words_with_numbers"));
-      if (source.hasKey("max_spellcheck_words"))
-         maxSpellcheckWords().setValue(layer, source.getInteger("max_spellcheck_words"));
-      if (source.hasKey("max_spellcheck_prefetch"))
-         maxSpellcheckPrefetch().setValue(layer, source.getInteger("max_spellcheck_prefetch"));
       if (source.hasKey("real_time_spellchecking"))
          realTimeSpellchecking().setValue(layer, source.getBool("real_time_spellchecking"));
       if (source.hasKey("navigate_to_build_error"))
@@ -3357,6 +3401,10 @@ public class UserPrefsAccessor extends Prefs
          enableTextDrag().setValue(layer, source.getBool("enable_text_drag"));
       if (source.hasKey("show_hidden_files"))
          showHiddenFiles().setValue(layer, source.getBool("show_hidden_files"));
+      if (source.hasKey("always_shown_files"))
+         alwaysShownFiles().setValue(layer, source.getObject("always_shown_files"));
+      if (source.hasKey("always_shown_extensions"))
+         alwaysShownExtensions().setValue(layer, source.getObject("always_shown_extensions"));
       if (source.hasKey("sort_file_names_naturally"))
          sortFileNamesNaturally().setValue(layer, source.getBool("sort_file_names_naturally"));
       if (source.hasKey("jobs_tab_visibility"))
@@ -3443,6 +3491,8 @@ public class UserPrefsAccessor extends Prefs
          reducedMotion().setValue(layer, source.getBool("reduced_motion"));
       if (source.hasKey("tab_key_move_focus"))
          tabKeyMoveFocus().setValue(layer, source.getBool("tab_key_move_focus"));
+      if (source.hasKey("find_panel_legacy_tab_sequence"))
+         findPanelLegacyTabSequence().setValue(layer, source.getBool("find_panel_legacy_tab_sequence"));
       if (source.hasKey("show_focus_rectangles"))
          showFocusRectangles().setValue(layer, source.getBool("show_focus_rectangles"));
       if (source.hasKey("show_panel_focus_rectangle"))
@@ -3509,10 +3559,16 @@ public class UserPrefsAccessor extends Prefs
          insertNativePipeOperator().setValue(layer, source.getBool("insert_native_pipe_operator"));
       if (source.hasKey("command_palette_mru"))
          commandPaletteMru().setValue(layer, source.getBool("command_palette_mru"));
+      if (source.hasKey("show_memory_usage"))
+         showMemoryUsage().setValue(layer, source.getBool("show_memory_usage"));
+      if (source.hasKey("memory_query_interval_seconds"))
+         memoryQueryIntervalSeconds().setValue(layer, source.getInteger("memory_query_interval_seconds"));
+      if (source.hasKey("terminal_python_integration"))
+         terminalPythonIntegration().setValue(layer, source.getBool("terminal_python_integration"));
    }
    public List<PrefValue<?>> allPrefs()
    {
-      ArrayList<PrefValue<?>> prefs = new ArrayList<>();
+      ArrayList<PrefValue<?>> prefs = new ArrayList<PrefValue<?>>();
       prefs.add(runRprofileOnResume());
       prefs.add(saveWorkspace());
       prefs.add(loadWorkspace());
@@ -3616,8 +3672,6 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(documentLoadLintDelay());
       prefs.add(ignoreUppercaseWords());
       prefs.add(ignoreWordsWithNumbers());
-      prefs.add(maxSpellcheckWords());
-      prefs.add(maxSpellcheckPrefetch());
       prefs.add(realTimeSpellchecking());
       prefs.add(navigateToBuildError());
       prefs.add(packagesPaneEnabled());
@@ -3653,6 +3707,8 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(showRmdRenderCommand());
       prefs.add(enableTextDrag());
       prefs.add(showHiddenFiles());
+      prefs.add(alwaysShownFiles());
+      prefs.add(alwaysShownExtensions());
       prefs.add(sortFileNamesNaturally());
       prefs.add(jobsTabVisibility());
       prefs.add(showLauncherJobsTab());
@@ -3696,6 +3752,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(typingStatusDelayMs());
       prefs.add(reducedMotion());
       prefs.add(tabKeyMoveFocus());
+      prefs.add(findPanelLegacyTabSequence());
       prefs.add(showFocusRectangles());
       prefs.add(showPanelFocusRectangle());
       prefs.add(autoSaveOnIdle());
@@ -3729,6 +3786,9 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(saveRetryTimeout());
       prefs.add(insertNativePipeOperator());
       prefs.add(commandPaletteMru());
+      prefs.add(showMemoryUsage());
+      prefs.add(memoryQueryIntervalSeconds());
+      prefs.add(terminalPythonIntegration());
       return prefs;
    }
    

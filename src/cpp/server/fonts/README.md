@@ -80,7 +80,7 @@ user font overrides the system font.
 It is also possible to set a default font for all RStudio Server users using
 the `server_editor_font_enabled` and `server_editor_font` options in
 `rstudio-prefs.json`.. See the *Session User Settings* chapter of the RStudio
-Server Pro Administration Guide for more information.
+Workbench Administration Guide for more information.
 
 Browser Fonts
 -------------

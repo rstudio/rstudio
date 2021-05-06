@@ -50,12 +50,12 @@ public class ApplicationEndedPopupPanel extends PopupPanel
    {
       asyncShow(QUIT, "", null);
    }
-   
+
    public static void showMultiSessionQuit()
    {
       asyncShow(QUIT_MULTI, "", null);
    }
-   
+
    public static void showSuicide(String reason)
    {
       String description = "<p>R encountered a fatal error.";
@@ -64,7 +64,7 @@ public class ApplicationEndedPopupPanel extends PopupPanel
       description += "</p>The session was terminated.";
       asyncShow(SUICIDE, description, null);
    }
-   
+
    public static void showDisconnected()
    {
       String description =
@@ -74,13 +74,13 @@ public class ApplicationEndedPopupPanel extends PopupPanel
 
       asyncShow(DISCONNECTED, description, null);
    }
-   
+
    public static void showOffline()
    {
-      String description = 
+      String description =
          "RStudio is temporarily offline due to system maintenance. We " +
          "apologize for the inconvenience, please try again in a few minutes.";
-      
+
       asyncShow(OFFLINE, description, null);
    }
 
@@ -121,7 +121,7 @@ public class ApplicationEndedPopupPanel extends PopupPanel
    private static final int DISCONNECTED = 3;
    private static final int OFFLINE = 4;
    private static final int QUIT_MULTI = 5;
-   
+
    private ApplicationEndedPopupPanel(int mode, String description)
    {
       super(false, false);
@@ -130,11 +130,11 @@ public class ApplicationEndedPopupPanel extends PopupPanel
       setGlassStyleName(RESOURCES.styles().glass());
 
       Roles.getAlertdialogRole().set(getElement());
-      
+
       // main panel
       HorizontalPanel horizontalPanel = new HorizontalPanel();
       horizontalPanel.setSpacing(10);
-      
+
       // create widgets and make mode dependent customizations
       DecorativeImage image;
       Label captionLabel = new Label();
@@ -142,7 +142,7 @@ public class ApplicationEndedPopupPanel extends PopupPanel
       final FancyButton button = new FancyButton();
       button.addClickHandler(event -> reloadApplication());
       FocusHelper.setFocusDeferred(button);
-      
+
       switch(mode)
       {
       case QUIT:
@@ -150,38 +150,38 @@ public class ApplicationEndedPopupPanel extends PopupPanel
          captionLabel.setText("R Session Ended");
          button.setText("Start New Session");
          break;
-         
+
       case SUICIDE:
          image = new DecorativeImage(new ImageResource2x(RESOURCES.applicationSuicide2x()));
          captionLabel.setText("R Session Aborted");
          button.setText("Start New Session");
          break;
-       
+
       case DISCONNECTED:
          image = new DecorativeImage(new ImageResource2x(RESOURCES.applicationDisconnected2x()));
          captionLabel.setText("R Session Disconnected");
          button.setText("Reconnect");
          break;
-         
+
       case OFFLINE:
          image = new DecorativeImage(new ImageResource2x(RESOURCES.applicationOffline2x()));
          captionLabel.setText("RStudio Temporarily Offline");
          button.setText("Reconnect");
          break;
-         
+
       case QUIT_MULTI:
          image = new DecorativeImage(new ImageResource2x(RESOURCES.applicationQuit2x()));
          captionLabel.setText("R Session Ended");
          button.setText("Reconnect");
          break;
-      
+
       default:
          throw new IllegalArgumentException("Unknown mode " + mode);
       }
-      
+
       // add image
       horizontalPanel.add(image);
- 
+
       // captions and button
       VerticalPanel contentPanel = new VerticalPanel();
       contentPanel.setStylePrimaryName(RESOURCES.styles().contentPanel());
@@ -191,15 +191,15 @@ public class ApplicationEndedPopupPanel extends PopupPanel
       contentPanel.add(descriptionLabel);
       contentPanel.add(button);
       horizontalPanel.add(contentPanel);
-      
-      // center the horizontal panel within the popup 
+
+      // center the horizontal panel within the popup
       CenterPanel mainPanel = new CenterPanel(horizontalPanel);
       mainPanel.setStylePrimaryName(RESOURCES.styles().mainPanel());
 
       setWidget(((MyUiBinder)GWT.create(MyUiBinder.class)).createAndBindUi(this));
       content_.setWidget(mainPanel);
    }
-   
+
    @Override
    public void onPreviewNativeEvent(Event.NativePreviewEvent event)
    {
@@ -209,12 +209,12 @@ public class ApplicationEndedPopupPanel extends PopupPanel
          switch (nativeEvent.getKeyCode())
          {
             case KeyCodes.KEY_ENTER:
-               
+
                nativeEvent.preventDefault();
                nativeEvent.stopPropagation();
                reloadApplication();
                break;
-         } 
+         }
       }
    }
 
@@ -237,7 +237,7 @@ public class ApplicationEndedPopupPanel extends PopupPanel
       if (reloading_)
          return;
       reloading_ = true;
-      
+
       if (Desktop.isDesktop())
       {
          Desktop.getFrame().launchSession(true);
@@ -247,7 +247,7 @@ public class ApplicationEndedPopupPanel extends PopupPanel
          Window.Location.reload();
       }
    }
-      
+
    interface Styles extends CssResource
    {
       String applicationEndedPopupPanel();
@@ -267,12 +267,12 @@ public class ApplicationEndedPopupPanel extends PopupPanel
       String S();
       String SE();
    }
-  
+
    interface Resources extends ClientBundle
    {
       @Source("ApplicationEndedPopupPanel.css")
       Styles styles();
-      
+
       @Source("applicationQuit_2x.png")
       ImageResource applicationQuit2x();
 
@@ -302,7 +302,7 @@ public class ApplicationEndedPopupPanel extends PopupPanel
    }
 
    interface MyUiBinder extends UiBinder<Widget, ApplicationEndedPopupPanel> {}
-   
+
    static Resources RESOURCES = GWT.create(Resources.class);
    public static void ensureStylesInjected()
    {
@@ -311,6 +311,6 @@ public class ApplicationEndedPopupPanel extends PopupPanel
 
    @UiField
    SimplePanel content_;
-   
+
    private boolean reloading_ = false;
 }

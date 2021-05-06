@@ -18,6 +18,8 @@ package org.rstudio.studio.client.workbench.views.environment;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.event.logical.shared.ResizeEvent;
+import com.google.gwt.event.logical.shared.ResizeHandler;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.DebugFilePosition;
 import org.rstudio.core.client.ElementIds;
@@ -34,7 +36,9 @@ import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.SessionSerializationEvent;
 import org.rstudio.studio.client.application.events.SuspendAndRestartEvent;
+import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.ImageMenuItem;
@@ -53,6 +57,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.environment.events.MemoryUsageChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentContextData;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentFrame;
@@ -75,13 +80,16 @@ import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import org.rstudio.studio.client.workbench.views.environment.view.MemUsageWidget;
 
 public class EnvironmentPane extends WorkbenchPane
                              implements EnvironmentPresenter.Display,
                                         EnvironmentObjectsObserver,
                                         SessionInitEvent.Handler,
                                         ReticulateEvent.Handler,
-                                        SuspendAndRestartEvent.Handler
+                                        SuspendAndRestartEvent.Handler,
+                                        MemoryUsageChangedEvent.Handler,
+                                        SessionSerializationEvent.Handler
 {
    @Inject
    public EnvironmentPane(Commands commands,
@@ -125,6 +133,11 @@ public class EnvironmentPane extends WorkbenchPane
       events.addHandler(SessionInitEvent.TYPE, this);
       events.addHandler(ReticulateEvent.TYPE, this);
       events.addHandler(SuspendAndRestartEvent.TYPE, this);
+      events.addHandler(MemoryUsageChangedEvent.TYPE, this);
+      events.addHandler(SessionSerializationEvent.TYPE, this);
+
+      // Sync the state of the memory usage toggle command to the preference
+      prefs.showMemoryUsage().bind(val -> commands.toggleShowMemoryUsage().setChecked(val));
 
       ensureWidget();
    }
@@ -139,6 +152,9 @@ public class EnvironmentPane extends WorkbenchPane
       toolbar.addLeftWidget(commands_.saveWorkspace().createToolbarButton());
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(createImportMenu());
+      toolbar.addLeftSeparator();
+      memUsage_ = new MemUsageWidget(session_.getSessionInfo().getMemoryUsage(), prefs_);
+      toolbar.addLeftWidget(memUsage_);
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.clearWorkspace().createToolbarButton());
 
@@ -168,8 +184,10 @@ public class EnvironmentPane extends WorkbenchPane
             AppCommand.formatMenuLabel(null, "Refresh Now", null),
             true, // as HTML
             () -> commands_.refreshEnvironment().execute()));
-      toolbar.addRightWidget(
-            new ToolbarMenuButton(ToolbarButton.NoText, "Refresh options", refreshMenu, false));
+      ToolbarMenuButton refreshMenuBtn =
+         new ToolbarMenuButton(ToolbarButton.NoText, "Refresh options", refreshMenu, false);
+      ElementIds.assignElementId(refreshMenuBtn, ElementIds.MB_REFRESH_OPTS);
+      toolbar.addRightWidget(refreshMenuBtn);
 
       return toolbar;
    }
@@ -186,6 +204,14 @@ public class EnvironmentPane extends WorkbenchPane
       SecondaryToolbar toolbar = new SecondaryToolbar("Environment Tab Second");
 
       languageMenu_ = new ToolbarPopupMenu();
+      toolbar.addHandler(new ResizeHandler()
+      {
+         @Override
+         public void onResize(ResizeEvent event)
+         {
+            manageToolbarSizes(event.getWidth());
+         }
+      }, ResizeEvent.getType());
 
       MenuItem rMenuItem = new MenuItem("R", () -> setActiveLanguage("R", true));
       languageMenu_.addItem(rMenuItem);
@@ -204,6 +230,10 @@ public class EnvironmentPane extends WorkbenchPane
             ToolbarButton.NoTitle,
             (ImageResource) null,
             languageMenu_);
+      ElementIds.assignElementId(languageButton_, ElementIds.MB_ENV_LANGUAGE);
+
+      // nudge language selector up to baseline align with environment selector
+      languageButton_.getElement().getStyle().setMarginTop(-4, Unit.PX);
 
       toolbar.addLeftWidget(languageButton_);
       toolbar.addLeftSeparator();
@@ -417,7 +447,9 @@ public class EnvironmentPane extends WorkbenchPane
    @Override
    public void setObjectDisplayType(int type)
    {
-      viewButton_.setText(nameOfViewType(type));
+      // Adjust the List/Grid text label, but only if that text label is shown (it can be hidden
+      // when the Environment pane is very narrow)
+      viewButton_.setText(viewButton_.hasLabel(), nameOfViewType(type));
       viewButton_.setLeftImage(imageOfViewType(type));
       objects_.setObjectDisplay(type);
    }
@@ -692,6 +724,8 @@ public class EnvironmentPane extends WorkbenchPane
    {
       boolean initialized = session_.getSessionInfo().getPythonInitialized();
       setPythonEnabled(initialized);
+
+      memUsage_.setMemoryUsage(session_.getSessionInfo().getMemoryUsage());
    }
 
    @Override
@@ -712,11 +746,27 @@ public class EnvironmentPane extends WorkbenchPane
          setActiveLanguage("R", true);
       }
    }
-   
+
    @Override
    public void onSuspendAndRestart(SuspendAndRestartEvent event)
    {
       setActiveLanguage("R", false);
+   }
+
+   @Override
+   public void onMemoryUsageChanged(MemoryUsageChangedEvent event)
+   {
+      memUsage_.setMemoryUsage(event.getMemoryUsage());
+   }
+
+   @Override
+   public void onSessionSerialization(SessionSerializationEvent event)
+   {
+      if (event.getAction().getType() == SessionSerializationAction.SUSPEND_SESSION)
+      {
+         // Show suspension hint in memory usage widget
+         memUsage_.setSuspended(true);
+      }
    }
 
    // An extension of the toolbar popup menu that gets environment names from
@@ -836,6 +886,46 @@ public class EnvironmentPane extends WorkbenchPane
       Scheduler.get().scheduleDeferred(() -> commands_.refreshEnvironment().execute());
    }
 
+   /**
+    * Manages the size of the Environment pane's toolbar, reducing the width of elements
+    * so all the controls are visible and usable even at narrow widths.
+    *
+    * @param width The new width of the Environment pane
+    */
+   private void manageToolbarSizes(int width)
+   {
+      // At startup, we get a resize event with 0 width; ignore this.
+      if (width == 0)
+      {
+         return;
+      }
+
+      // The View button has text by default
+      viewButton_.setText(true, viewButton_.getText());
+
+      if (width > 400)
+      {
+         // Full width: show full label for data import
+         dataImportButton_.setText("Import Dataset");
+      }
+      else if (width > 350)
+      {
+         // Reduced width: shorten label
+         dataImportButton_.setText("Import");
+      }
+      else if (width > 325)
+      {
+         // Even more reduced width: shorten label more
+         dataImportButton_.setText("");
+      }
+      else
+      {
+         // Extremely narrow: no labels at all, just buttons
+         dataImportButton_.setText("");
+         viewButton_.setText(false, viewButton_.getText());
+      }
+   }
+
    public String getActiveLanguage()
    {
       return activeLanguage_;
@@ -867,6 +957,7 @@ public class EnvironmentPane extends WorkbenchPane
    private ToolbarMenuButton viewButton_;
    private ToolbarButton refreshButton_;
    private EnvironmentObjects objects_;
+   private MemUsageWidget memUsage_;
 
    private ArrayList<String> expandedObjects_;
    private int scrollPosition_;

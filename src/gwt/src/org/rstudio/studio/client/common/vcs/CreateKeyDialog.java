@@ -50,10 +50,10 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
       super("Create RSA Key", Roles.getDialogRole(), new ProgressOperationWithInput<CreateKeyOptions>() {
 
          @Override
-         public void execute(final CreateKeyOptions input, 
+         public void execute(final CreateKeyOptions input,
                              final ProgressIndicator indicator)
          {
-            final ProgressOperationWithInput<CreateKeyOptions> 
+            final ProgressOperationWithInput<CreateKeyOptions>
                                                       thisOperation = this;
 
             indicator.onProgress("Creating RSA Key...");
@@ -74,7 +74,7 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
 
                      // call server to create the key
                      server.createSshKey(
-                        options, 
+                        options,
                         new ServerRequestCallback<CreateKeyResult>() {
 
                            @Override
@@ -104,7 +104,7 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
                                  // close the dialog
                                  indicator.onCompleted();
 
-                                 // update the key path 
+                                 // update the key path
                                  if (res.getExitStatus() == 0)
                                     onCompleted.execute(input.getPath());
 
@@ -144,7 +144,7 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
 
    @Override
    protected CreateKeyOptions collectInput()
-   {  
+   {
       if (getPassphrase() != getConfirmPassphrase())
          return null;
       else
@@ -168,7 +168,7 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
          if (getPassphrase() != getConfirmPassphrase())
          {
             display.showErrorMessage(
-                  "Non-Matching Passphrases", 
+                  "Non-Matching Passphrases",
                   "The passphrase and passphrase confirmation do not match.",
                   txtConfirmPassphrase_);
          }
@@ -243,10 +243,10 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
    private static void confirmOverwriteKey(String path, Operation onConfirmed)
    {
       RStudioGinjector.INSTANCE.getGlobalDisplay().showYesNoMessage(
-            MessageDialog.WARNING, 
-            "Key Already Exists", 
+            MessageDialog.WARNING,
+            "Key Already Exists",
             "An RSA key already exists at " + path + ". " +
-            "Do you want to overwrite the existing key?", 
+            "Do you want to overwrite the existing key?",
             onConfirmed,
             false);
    }
@@ -286,6 +286,6 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
 
    private TextBox txtPassphrase_;
    private TextBox txtConfirmPassphrase_;
-   
+
    private final FileSystemItem rsaSshKeyPath_;
 }

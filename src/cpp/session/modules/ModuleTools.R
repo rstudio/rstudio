@@ -329,6 +329,11 @@
 .rs.addFunction("readUserPref", .rs.readUiPref)
 
 .rs.addFunction("writeUiPref", function(prefName, value) {
+  # some preferences can take values that are lists of scalars; ensure the deserializer treats lists
+  # accordingly                 
+  if (is.list(value)) {
+     value <- .rs.scalarListFromList(value)
+  }
   .rs.writePrefInternal("rs_writeUserPref", prefName, value)
 })
 .rs.addFunction("writeUserPref", .rs.writeUiPref)

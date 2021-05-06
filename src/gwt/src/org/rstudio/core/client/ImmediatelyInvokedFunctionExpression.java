@@ -21,7 +21,7 @@ package org.rstudio.core.client;
 public abstract class ImmediatelyInvokedFunctionExpression
 {
    protected abstract void invoke();
-   
+
    public ImmediatelyInvokedFunctionExpression()
    {
       invoke();

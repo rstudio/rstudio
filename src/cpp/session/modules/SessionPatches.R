@@ -34,9 +34,8 @@
 
 .rs.registerPackageLoadHook("parallel", function(...)
 {
-   # enforce sequential setup of cluster on macOS
+   # enforce sequential setup of cluster
    # https://github.com/rstudio/rstudio/issues/6692
-   if (Sys.info()[["sysname"]] == "Darwin")
-      parallel:::setDefaultClusterOptions(setup_strategy = "sequential")
+   parallel:::setDefaultClusterOptions(setup_strategy = "sequential")
 })
 

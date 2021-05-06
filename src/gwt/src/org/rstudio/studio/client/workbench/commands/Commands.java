@@ -373,6 +373,9 @@ public abstract class
    public abstract AppCommand activateEnvironment();
    public abstract AppCommand layoutZoomEnvironment();
    public abstract AppCommand refreshEnvironment();
+   public abstract AppCommand freeUnusedMemory();
+   public abstract AppCommand toggleShowMemoryUsage();
+   public abstract AppCommand showMemoryUsageReport();
 
    // Plots
    public abstract AppCommand nextPlot();

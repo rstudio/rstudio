@@ -127,6 +127,9 @@
 
 .rs.addFunction("python.interpreterInfo", function(path, type)
 {
+   # prefer UTF-8 path when possible
+   path <- enc2utf8(path)
+   
    # defaults for version, description
    valid <- TRUE
    version <- "[unknown]"
@@ -176,6 +179,8 @@
 {
    interpreters <- c(
       .rs.python.findPythonSystemInterpreters(),
+      .rs.python.findPythonInterpretersInKnownLocations(),
+      .rs.python.findPythonPyenvInterpreters(),
       .rs.python.findPythonVirtualEnvironments(),
       .rs.python.findPythonCondaEnvironments()
    )
@@ -197,6 +202,14 @@
    paths <- strsplit(Sys.getenv("PATH"), split = .Platform$path.sep, fixed = TRUE)[[1]]
    for (path in paths) {
       
+      # skip fake broken Windows Python interpreters
+      skip <-
+         .rs.platform.isWindows &&
+         grepl("AppData\\Local\\Microsoft\\WindowsApps", path, fixed = TRUE)
+      
+      if (skip)
+         next
+      
       # create pattern matching interpreter paths
       pattern <- if (.rs.platform.isWindows)
          "^python[[:digit:].]*exe$"
@@ -211,7 +224,8 @@
       )
       
       # loop over interpreters and add
-      for (python in pythons) {
+      for (python in pythons)
+      {
          info <- .rs.python.getPythonInfo(python, strict = TRUE)
          interpreters[[length(interpreters) + 1]] <- info
       }
@@ -219,6 +233,74 @@
    }
    
    interpreters
+   
+})
+
+.rs.addFunction("python.findPythonInterpretersInKnownLocations", function()
+{
+   # set of discovered paths
+   pythonPaths <- character()
+   
+   # Python root paths we'll search in
+   roots <- c(
+      "/opt/python",
+      "/opt/local/python",
+      "/usr/local/opt/python",
+      getOption("rstudio.python.installationPath")
+   )
+   
+   # check and see if any of these roots point directly
+   # to a particular version of Python
+   paths <- vapply(roots, function(root) {
+      paths <- file.path(root, c("bin/python", "bin/python3"))
+      paths[file.exists(paths)][1]
+   }, FUN.VALUE = character(1))
+   
+   # collect the discovered python paths, if any
+   exists <- !is.na(paths)
+   pythonPaths <- c(pythonPaths, paths[exists])
+   roots <- roots[!exists]
+   
+   # treat any remaining root directories as versioned roots
+   roots <- list.files(roots, full.names = TRUE)
+   
+   # check and see if any of these roots point directly
+   # to a particular version of Python
+   paths <- vapply(roots, function(root) {
+      paths <- file.path(root, c("bin/python", "bin/python3"))
+      paths[file.exists(paths)][1]
+   }, FUN.VALUE = character(1))
+   
+   # collect the discovered python paths, if any
+   exists <- !is.na(paths)
+   pythonPaths <- c(pythonPaths, paths[exists])
+   
+   # return the discovered paths
+   lapply(pythonPaths, .rs.python.getPythonInfo, strict = TRUE)
+   
+})
+
+.rs.addFunction("python.findPythonPyenvInterpreters", function()
+{
+   root <- Sys.getenv("PYENV_ROOT", unset = "~/.pyenv")
+   
+   # on Windows, Python interpreters are normally part of pyenv-windows
+   if (.rs.platform.isWindows)
+      root <- file.path(root, "pyenv-win")
+   
+   # get path to roots of Python installations
+   versionsPath <- file.path(root, "versions")
+   pythonRoots <- list.files(versionsPath, full.names = TRUE)
+   
+   # form path to Python binaries
+   stem <- if (.rs.platform.isWindows) "python.exe" else "bin/python"
+   pythonPaths <- file.path(pythonRoots, stem)
+   
+   # exclude anything that doesn't exist for some reason
+   pythonPaths <- pythonPaths[file.exists(pythonPaths)]
+   
+   # get interpreter info for each found
+   lapply(pythonPaths, .rs.python.getPythonInfo, strict = TRUE)
    
 })
 
@@ -231,6 +313,12 @@
    
    if (inherits(envs, "error"))
       return(list())
+   
+   # ignore environments found in revdep folders
+   envs <- envs[grep("/revdep/", envs$python, invert = TRUE), ]
+   
+   # ignore basilisk environments
+   envs <- envs[grep("/basilisk/", envs$python, invert = TRUE), ]
    
    lapply(envs$python, .rs.python.getCondaEnvironmentInfo)
 })
@@ -282,10 +370,4 @@
 {
    info <- .rs.python.getPythonInfo(pythonPath, strict = TRUE)
    .rs.scalarListFromList(info)
-})
-
-.rs.registerPackageLoadHook("reticulate", function(...)
-{
-   python <- .rs.readUiPref("python_path")
-   .rs.reticulate.usePython(python)
 })

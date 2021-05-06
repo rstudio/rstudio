@@ -25,3 +25,14 @@ endfunction()
 function(install_process)
    install(CODE "execute_process(COMMAND ${ARGV} WORKING_DIRECTORY \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}\")")
 endfunction()
+
+function(configure_and_install FILEPATH)
+
+   configure_file(
+      "${CMAKE_CURRENT_SOURCE_DIR}/${FILEPATH}"
+      "${CMAKE_CURRENT_BINARY_DIR}/${FILEPATH}"
+      @ONLY)
+
+   install(SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/${FILEPATH}")
+
+endfunction()

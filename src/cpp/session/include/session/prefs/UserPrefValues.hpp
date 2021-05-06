@@ -187,8 +187,6 @@ namespace prefs {
 #define kDocumentLoadLintDelay "document_load_lint_delay"
 #define kIgnoreUppercaseWords "ignore_uppercase_words"
 #define kIgnoreWordsWithNumbers "ignore_words_with_numbers"
-#define kMaxSpellcheckWords "max_spellcheck_words"
-#define kMaxSpellcheckPrefetch "max_spellcheck_prefetch"
 #define kRealTimeSpellchecking "real_time_spellchecking"
 #define kNavigateToBuildError "navigate_to_build_error"
 #define kPackagesPaneEnabled "packages_pane_enabled"
@@ -247,6 +245,8 @@ namespace prefs {
 #define kShowRmdRenderCommand "show_rmd_render_command"
 #define kEnableTextDrag "enable_text_drag"
 #define kShowHiddenFiles "show_hidden_files"
+#define kAlwaysShownFiles "always_shown_files"
+#define kAlwaysShownExtensions "always_shown_extensions"
 #define kSortFileNamesNaturally "sort_file_names_naturally"
 #define kJobsTabVisibility "jobs_tab_visibility"
 #define kJobsTabVisibilityClosed "closed"
@@ -316,6 +316,7 @@ namespace prefs {
 #define kTypingStatusDelayMs "typing_status_delay_ms"
 #define kReducedMotion "reduced_motion"
 #define kTabKeyMoveFocus "tab_key_move_focus"
+#define kFindPanelLegacyTabSequence "find_panel_legacy_tab_sequence"
 #define kShowFocusRectangles "show_focus_rectangles"
 #define kShowPanelFocusRectangle "show_panel_focus_rectangle"
 #define kAutoSaveOnIdle "auto_save_on_idle"
@@ -382,6 +383,9 @@ namespace prefs {
 #define kSaveRetryTimeout "save_retry_timeout"
 #define kInsertNativePipeOperator "insert_native_pipe_operator"
 #define kCommandPaletteMru "command_palette_mru"
+#define kShowMemoryUsage "show_memory_usage"
+#define kMemoryQueryIntervalSeconds "memory_query_interval_seconds"
+#define kTerminalPythonIntegration "terminal_python_integration"
 
 class UserPrefValues: public Preferences
 {
@@ -1006,18 +1010,6 @@ public:
    core::Error setIgnoreWordsWithNumbers(bool val);
 
    /**
-    * The maximum number of spelling words to check at once.
-    */
-   int maxSpellcheckWords();
-   core::Error setMaxSpellcheckWords(int val);
-
-   /**
-    * The maximum number of spelling correction suggestions to prefetch.
-    */
-   int maxSpellcheckPrefetch();
-   core::Error setMaxSpellcheckPrefetch(int val);
-
-   /**
     * Whether to enable real-time spellchecking by default.
     */
    bool realTimeSpellchecking();
@@ -1228,6 +1220,18 @@ public:
    core::Error setShowHiddenFiles(bool val);
 
    /**
+    * List of file names (case sensitive) that are always shown in the Files Pane, regardless of whether hidden files are shown
+    */
+   core::json::Array alwaysShownFiles();
+   core::Error setAlwaysShownFiles(core::json::Array val);
+
+   /**
+    * List of file extensions (beginning with ., not case sensitive) that are always shown in the Files Pane, regardless of whether hidden files are shown
+    */
+   core::json::Array alwaysShownExtensions();
+   core::Error setAlwaysShownExtensions(core::json::Array val);
+
+   /**
     * Whether to sort file names naturally, so that e.g., file10.R comes after file9.R
     */
    bool sortFileNamesNaturally();
@@ -1240,13 +1244,13 @@ public:
    core::Error setJobsTabVisibility(std::string val);
 
    /**
-    * Whether to show the Launcher jobs tab in RStudio Pro.
+    * Whether to show the Launcher jobs tab in RStudio Pro and RStudio Workbench.
     */
    bool showLauncherJobsTab();
    core::Error setShowLauncherJobsTab(bool val);
 
    /**
-    * How to sort jobs in the Launcher tab in RStudio Pro.
+    * How to sort jobs in the Launcher tab in RStudio Pro and RStudio Workbench.
     */
    std::string launcherJobsSort();
    core::Error setLauncherJobsSort(std::string val);
@@ -1318,13 +1322,13 @@ public:
    core::Error setRootDocument(std::string val);
 
    /**
-    * When to show the server home page in RStudio Server Pro.
+    * When to show the server home page in RStudio Workbench.
     */
    std::string showUserHomePage();
    core::Error setShowUserHomePage(std::string val);
 
    /**
-    * Whether to reuse sessions when opening projects in RStudio Server Pro.
+    * Whether to reuse sessions when opening projects in RStudio Workbench.
     */
    bool reuseSessionsForProjectLinks();
    core::Error setReuseSessionsForProjectLinks(bool val);
@@ -1432,7 +1436,7 @@ public:
    core::Error setLatexShellEscape(bool val);
 
    /**
-    * Whether to restore the last version of R used by the project in RStudio Pro.
+    * Whether to restore the last version of R used by the project in RStudio Pro and RStudio Workbench.
     */
    bool restoreProjectRVersion();
    core::Error setRestoreProjectRVersion(bool val);
@@ -1484,6 +1488,12 @@ public:
     */
    bool tabKeyMoveFocus();
    core::Error setTabKeyMoveFocus(bool val);
+
+   /**
+    * In source editor find panel, tab key moves focus directly from find text to replace text.
+    */
+   bool findPanelLegacyTabSequence();
+   core::Error setFindPanelLegacyTabSequence(bool val);
 
    /**
     * Control with keyboard focus displays a visual focus indicator.
@@ -1682,6 +1692,24 @@ public:
     */
    bool commandPaletteMru();
    core::Error setCommandPaletteMru(bool val);
+
+   /**
+    * Whether to compute and show memory usage in the Environment Pane
+    */
+   bool showMemoryUsage();
+   core::Error setShowMemoryUsage(bool val);
+
+   /**
+    * How many seconds to wait between automatic requeries of memory statistics (0 to disable)
+    */
+   int memoryQueryIntervalSeconds();
+   core::Error setMemoryQueryIntervalSeconds(int val);
+
+   /**
+    * Enable Python terminal hooks. When enabled, the RStudio-configured version of Python will be placed on the PATH.
+    */
+   bool terminalPythonIntegration();
+   core::Error setTerminalPythonIntegration(bool val);
 
 };
 

@@ -66,18 +66,18 @@ public interface GitServerOperations extends VCSServerOperations
 
    void gitCreateBranch(String branch,
                         ServerRequestCallback<ConsoleProcess> requestCallback);
-   
+
    void gitListBranches(ServerRequestCallback<BranchesInfo> requestCallback);
-   
+
    void gitListRemotes(ServerRequestCallback<JsArray<RemotesInfo>> requestCallback);
-   
+
    void gitAddRemote(String name,
                      String url,
                      ServerRequestCallback<JsArray<RemotesInfo>> requestCallback);
 
    void gitCheckout(String id,
                     ServerRequestCallback<ConsoleProcess> requestCallback);
-   
+
    void gitCheckoutRemote(String branch,
                           String remote,
                           ServerRequestCallback<ConsoleProcess> requestCallback);
@@ -104,7 +104,7 @@ public interface GitServerOperations extends VCSServerOperations
    void gitApplyPatch(String patch, PatchMode mode, String sourceEncoding,
                       ServerRequestCallback<Void> requestCallback);
 
-   void gitHistoryCount(String spec, 
+   void gitHistoryCount(String spec,
                         FileSystemItem fileFilter,
                         String searchText,
                         ServerRequestCallback<CommitCount> requestCallback);
@@ -122,43 +122,43 @@ public interface GitServerOperations extends VCSServerOperations
    void gitShow(String rev,
                 boolean noSizeWarning,
                 ServerRequestCallback<String> requestCallback);
-   
-   void gitShowFile(String rev, 
+
+   void gitShowFile(String rev,
                     String filename,
                     ServerRequestCallback<String> requestCallback);
-   
+
    void gitExportFile(String rev,
                       String filename,
                       String targetPath,
                       ServerRequestCallback<Void> requestCallback);
 
    void gitPush(ServerRequestCallback<ConsoleProcess> requestCallback);
-   
+
    void gitPushBranch(String branch,
                       String remote,
                       ServerRequestCallback<ConsoleProcess> requestCallback);
 
    void gitPull(ServerRequestCallback<ConsoleProcess> requestCallback);
-   
+
    void gitPullRebase(ServerRequestCallback<ConsoleProcess> requestCallback);
-   
+
    void gitSshPublicKey(String privateKeyPath,
                         ServerRequestCallback<String> requestCallback);
-    
+
    void gitHasRepo(String directory,
                    ServerRequestCallback<Boolean> requestCallback);
-   
+
    void gitInitRepo(String directory,
                     ServerRequestCallback<Void> requestCallback);
-   
-   void gitGetIgnores(String path, 
+
+   void gitGetIgnores(String path,
                       ServerRequestCallback<ProcessResult> requestCallback);
 
    void gitSetIgnores(String path,
                       String ignores,
                       ServerRequestCallback<ProcessResult> requestCallback);
-   
-   void gitGithubRemoteUrl(String view, 
+
+   void gitGithubRemoteUrl(String view,
                            String path,
                            ServerRequestCallback<String> callback);
 }

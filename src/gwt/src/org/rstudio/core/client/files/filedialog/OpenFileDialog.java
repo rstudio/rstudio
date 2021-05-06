@@ -33,13 +33,13 @@ public class OpenFileDialog extends FileDialog
       super(title, null, Roles.getDialogRole(), label, false, false, false, context, filter, operation);
       canChooseDirectories_ = canChooseDirectories;
    }
-   
+
    @Override
    public boolean shouldAccept()
    {
       FileSystemItem item = browser_.getSelectedItem();
       String fileInput = browser_.getFilename().trim();
-      
+
       if (canChooseDirectories_)
       {
          // if we have no user input nor a selected item,
@@ -48,7 +48,7 @@ public class OpenFileDialog extends FileDialog
          if (item == null && fileInput.isEmpty())
             return true;
       }
-      
+
       // if the user has selected a directory, and there
       // is no user input, interpret that as a request to
       // navigate into that directory
@@ -57,31 +57,31 @@ public class OpenFileDialog extends FileDialog
          cd(item.getPath());
          return false;
       }
-      
+
       return super.shouldAccept();
    }
-   
+
    @Override
    public void onNavigated()
    {
       super.onNavigated();
       browser_.setFilename("");
    }
-   
+
    @Override
    protected FileSystemItem getSelectedItem()
    {
-      FileSystemItem item = browser_.getSelectedItem();
+      FileSystemItem item = super.getSelectedItem();
       if (item == null)
          item = browser_.getCurrentDirectory();
       return item;
    }
-   
+
    @Override
    public void onSelection(SelectionEvent<FileSystemItem> event)
    {
       super.onSelection(event);
-      
+
       // clear the active filename whenever a directory
       // is selected -- this allows us to disambiguate
       // 'fresh' from 'stale' user input; ie, tell whether
@@ -90,6 +90,6 @@ public class OpenFileDialog extends FileDialog
       if (event.getSelectedItem().isDirectory())
          browser_.setFilename("");
    }
-   
+
    protected final boolean canChooseDirectories_;
 }

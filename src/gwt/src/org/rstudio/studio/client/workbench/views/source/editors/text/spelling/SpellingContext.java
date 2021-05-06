@@ -1,33 +1,34 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.spelling;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 
 import org.rstudio.core.client.CsvReader;
 import org.rstudio.core.client.CsvWriter;
 import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.widget.NullProgressIndicator;
-import org.rstudio.studio.client.common.spelling.TypoSpellChecker;
+import org.rstudio.studio.client.common.spelling.RealtimeSpellChecker;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 import com.google.gwt.event.shared.HandlerRegistration;
 
-public abstract class SpellingContext implements TypoSpellChecker.Context
+public abstract class SpellingContext implements RealtimeSpellChecker.Context
 {
    public SpellingContext(DocUpdateSentinel docUpdateSentinel)
    {
       docUpdateSentinel_ = docUpdateSentinel;
-      typoSpellChecker_ = new TypoSpellChecker(this);
+      realtimeSpellChecker_ = new RealtimeSpellChecker(this);
    }
-   
+
    // Legacy checkSpelling function for popup dialog
    public void checkSpelling(SpellingDoc spellingDoc)
    {
       if (isSpellChecking_)
          return;
       isSpellChecking_ = true;
-      new CheckSpelling(typo(), spellingDoc,
+      new CheckSpelling(spellChecker(), spellingDoc,
                         new SpellingDialog(),
                         new InitialProgressDialog(1000),
                         new ResultCallback<Void, Exception>()
@@ -51,13 +52,13 @@ public abstract class SpellingContext implements TypoSpellChecker.Context
                            }
                         });
    }
-   
+
    public void onDismiss()
    {
       while (releaseOnDismiss_.size() > 0)
          releaseOnDismiss_.remove(0).removeHandler();
    }
-   
+
    @Override
    public ArrayList<String> readDictionary()
    {
@@ -69,8 +70,7 @@ public abstract class SpellingContext implements TypoSpellChecker.Context
          if (iterator.hasNext())
          {
             String[] words = iterator.next();
-            for (String word : words)
-               ignoredWords.add(word);
+            ignoredWords.addAll(Arrays.asList(words));
          }
       }
       return ignoredWords;
@@ -83,30 +83,29 @@ public abstract class SpellingContext implements TypoSpellChecker.Context
       for (String ignored : ignoredWords)
          csvWriter.writeValue(ignored);
       csvWriter.endLine();
-      docUpdateSentinel_.setProperty(IGNORED_WORDS, 
-                                     csvWriter.getValue(), 
-                                     new NullProgressIndicator());   
+      docUpdateSentinel_.setProperty(IGNORED_WORDS,
+                                     csvWriter.getValue(),
+                                     new NullProgressIndicator());
    }
 
    @Override
    public void releaseOnDismiss(HandlerRegistration handler)
    {
-      releaseOnDismiss_.add(handler);      
+      releaseOnDismiss_.add(handler);
    }
-   
-   protected TypoSpellChecker typo()
+
+   protected RealtimeSpellChecker spellChecker()
    {
-      return typoSpellChecker_;
+      return realtimeSpellChecker_;
    }
-   
-   
+
    private boolean isSpellChecking_;
-   
-   private final TypoSpellChecker typoSpellChecker_;
+
+   private final RealtimeSpellChecker realtimeSpellChecker_;
 
    private final DocUpdateSentinel docUpdateSentinel_;
-   
+
    private ArrayList<HandlerRegistration> releaseOnDismiss_ = new ArrayList<>();
-   
+
    private final static String IGNORED_WORDS = "ignored_words";
 }

@@ -85,9 +85,12 @@ public class ClassIds
    public final static String LEFT_RIGHT_TOGGLE_BTN = "lr_tg_btn";
    public final static String LEFT_TOGGLE_BTN = "left_tg_btn";
    public final static String RIGHT_TOGGLE_BTN = "right_tg_btn";
-   
+
    // FastSelectTable
    public final static String FAST_SELECT_TABLE = "fast_select_tbl";
+
+   // EnvironmentList
+   public final static String ENV_LIST_DATA_HDR = "env_list_data_hdr";
+   public final static String ENV_LIST_FUNCTIONS_HDR = "env_list_functions_hdr";
+   public final static String ENV_LIST_VALUES_HDR = "env_list_values_hdr";
 }
-   
-      

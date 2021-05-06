@@ -48,11 +48,35 @@ if(NOT "$ENV{RSTUDIO_VERSION_SUFFIX}" STREQUAL "" AND NOT "$ENV{RSTUDIO_VERSION_
    set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION}-$ENV{RSTUDIO_VERSION_SUFFIX}")
 endif()
 
+# detect architecture
+if(UNIX)
+
+   execute_process(
+      COMMAND uname -m
+      OUTPUT_VARIABLE UNAME_M
+      OUTPUT_STRIP_TRAILING_WHITESPACE)
+   message(STATUS "Machine architecture: ${UNAME_M}")
+
+endif()
+
 # default to debug builds
 if(NOT CMAKE_BUILD_TYPE)
-   message(STATUS "CMake build type not set; defaulting to debug build")
-   set(CMAKE_BUILD_TYPE "Debug")
+
+   foreach(BUILD_TYPE Debug Release RelWithDebInfo MinSizeRel)
+      if(CMAKE_BINARY_DIR MATCHES "${BUILD_TYPE}")
+         set(CMAKE_BUILD_TYPE "${BUILD_TYPE}")
+         break()
+      endif()
+   endforeach()
+
+   if(NOT CMAKE_BUILD_TYPE)
+      set(CMAKE_BUILD_TYPE Debug)
+   endif()
+
+
 endif()
+
+message(STATUS "CMake build type: ${CMAKE_BUILD_TYPE}")
 
 # enable testing on all builds unless explicitly disabled
 if (NOT RSTUDIO_UNIT_TESTS_DISABLED)
@@ -67,12 +91,24 @@ if(NOT RSTUDIO_TARGET)
 endif()
 
 # set desktop and server build flags
-if( NOT WIN32 AND ( (${RSTUDIO_TARGET} STREQUAL "Development") OR
-                    (${RSTUDIO_TARGET} STREQUAL "Server")) )
-   set(RSTUDIO_SERVER TRUE)
+if(NOT DEFINED RSTUDIO_SERVER)
+   if(NOT WIN32 AND (RSTUDIO_TARGET STREQUAL "Development" OR RSTUDIO_TARGET STREQUAL "Server"))
+      set(RSTUDIO_SERVER TRUE)
+   endif()
 endif()
-if( ${RSTUDIO_TARGET} STREQUAL "Development" OR ${RSTUDIO_TARGET} STREQUAL "Desktop" )
-   set(RSTUDIO_DESKTOP TRUE)
+
+if(NOT DEFINED RSTUDIO_DESKTOP)
+   if(APPLE AND UNAME_M STREQUAL arm64)
+      message(STATUS "Desktop builds not currently supported on arm64; disabling RSTUDIO_DESKTOP")
+      set(RSTUDIO_DESKTOP FALSE)
+   elseif(RSTUDIO_TARGET STREQUAL "Development" OR RSTUDIO_TARGET STREQUAL "Desktop")
+      set(RSTUDIO_DESKTOP TRUE)
+   endif()
+endif()
+
+# override if requested
+if(RSTUDIO_NO_DESKTOP)
+   set(RSTUDIO_DESKTOP FALSE)
 endif()
 
 # set session32 if specified
@@ -169,6 +205,25 @@ if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}")
    set(RSTUDIO_DEPENDENCIES_DIR "${ROOT_SRC_DIR}/dependencies")
 endif()
 
+# tools
+if(NOT DEFINED RSTUDIO_TOOLS_ROOT)
+   if(DEFINED ENV{RSTUDIO_TOOLS_ROOT})
+      set(RSTUDIO_TOOLS_ROOT $ENV{RSTUDIO_TOOLS_ROOT})
+   elseif(WIN32)
+      set(RSTUDIO_TOOLS_ROOT "${RSTUDIO_DEPENDENCIES_DIR}")
+   elseif(APPLE)
+      find_path(RSTUDIO_TOOLS_ROOT
+         NAMES boost
+         HINTS
+            "$ENV{HOME}/opt/rstudio-tools/${UNAME_M}"
+            "/opt/rstudio-tools/${UNAME_M}")
+   else()
+      set(RSTUDIO_TOOLS_ROOT "/opt/rstudio-tools/${UNAME_M}")
+   endif()
+endif()
+
+message(STATUS "Using RStudio tools root: ${RSTUDIO_TOOLS_ROOT}")
+
 # special install directories for apple desktop
 if (APPLE AND RSTUDIO_DESKTOP)
    set(RSTUDIO_INSTALL_BIN RStudio.app/Contents/MacOS)
@@ -183,16 +238,14 @@ else()
 endif()
 
 # if the install prefix is /usr/local then tweak as appropriate
-if(UNIX)
-   if(${CMAKE_INSTALL_PREFIX} STREQUAL "/usr/local")
-      if(APPLE AND RSTUDIO_DESKTOP)
-         set(CMAKE_INSTALL_PREFIX "/Applications")
+if(NOT DEFINED CMAKE_INSTALL_PREFIX)
+   if(APPLE)
+      set(CMAKE_INSTALL_PREFIX "/Applications")
+   elseif(UNIX)
+      if(RSTUDIO_DESKTOP)
+         set(CMAKE_INSTALL_PREFIX "/usr/local/lib/rstudio")
       else()
-         if(RSTUDIO_DESKTOP)
-            set(CMAKE_INSTALL_PREFIX "/usr/local/lib/rstudio")
-         else()
-            set(CMAKE_INSTALL_PREFIX "/usr/local/lib/rstudio-server")
-         endif()
+         set(CMAKE_INSTALL_PREFIX "/usr/local/lib/rstudio-server")
       endif()
    endif()
 endif()
@@ -287,3 +340,37 @@ macro(add_stripped_executable _target)
    endif()
    define_source_file_names("${_target}")
 endmacro(add_stripped_executable)
+
+if(APPLE)
+
+   # set Homebrew prefix directory
+   if(NOT DEFINED HOMEBREW_PREFIX)
+
+      if(UNAME_M STREQUAL arm64)
+         set(HOMEBREW_PREFIX_FALLBACK /opt/homebrew)
+      else()
+         set(HOMEBREW_PREFIX_FALLBACK /usr/local)
+      endif()
+      
+      find_path(HOMEBREW_PREFIX
+         NAMES bin/brew
+         HINTS
+            "$ENV{HOME}/homebrew/${UNAME_M}"
+            "${HOMEBREW_PREFIX_FALLBACK}")
+
+      message(STATUS "Using Homebrew: ${HOMEBREW_PREFIX}")
+
+   endif()
+
+   # help Boost find icu4c
+   if(RSTUDIO_USE_SYSTEM_BOOST)
+      link_directories(${HOMEBREW_PREFIX}/opt/icu4c/lib)
+   endif()
+
+   # set OPENSSL_ROOT_DIR if unset
+   if(NOT DEFINED OPENSSL_ROOT_DIR)
+      set(OPENSSL_ROOT_DIR "${HOMEBREW_PREFIX}/opt/openssl" CACHE INTERNAL "")
+   endif()
+
+endif()
+

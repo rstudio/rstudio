@@ -26,9 +26,9 @@ set(SERVER_SOURCE_FILES
    ServerBrowser.cpp
    ServerErrorCategory.cpp
    ServerEval.cpp
+   ServerEnvVars.cpp
    ServerInit.cpp
    ServerLoginPages.cpp
-   ServerMain.cpp
    ServerMainOverlay.cpp
    ServerMeta.cpp
    ServerOffline.cpp
@@ -41,6 +41,7 @@ set(SERVER_SOURCE_FILES
    ServerSessionProxy.cpp
    ServerSessionProxyOverlay.cpp
    ServerSessionManager.cpp
+   ServerXdgVars.cpp
    auth/ServerAuthHandler.cpp
    auth/ServerAuthCommon.cpp
    auth/ServerSecureUriHandler.cpp
@@ -113,34 +114,10 @@ endif()
 # include directories and libraries
 set(SERVER_SYSTEM_LIBRARIES ${DL_LIBRARIES})
 
-# handle El Capitan moving OpenSSL away
 if(APPLE)
-   if(${MACOSX_VERSION} VERSION_GREATER "10.10"
-         AND EXISTS "/usr/local/opt/openssl")
-
-      set(SERVER_SYSTEM_LIBRARIES
-         ${SERVER_SYSTEM_LIBRARIES}
-         -L/usr/local/opt/openssl/lib -lssl -lcrypto)
-
-      set(CORE_INCLUDE_DIRS
-         ${CORE_INCLUDE_DIRS}
-         /usr/local/opt/openssl/include)
-
-      if(NOT DEFINED OPENSSL_ROOT_DIR)
-         set(OPENSSL_ROOT_DIR
-            /usr/local/opt/openssl)
-      endif()
-   endif()
-
    find_package(OpenSSL REQUIRED QUIET)
-   set(SERVER_SYSTEM_LIBRARIES
-      ${SERVER_SYSTEM_LIBRARIES}
-      ${OPENSSL_LIBRARIES}
-   )
-   set(CORE_INCLUDE_DIRS
-      ${CORE_INCLUDE_DIRS}
-      ${OPENSSL_INCLUDE_DIR}
-   )
+   list(APPEND SERVER_SYSTEM_LIBRARIES ${OPENSSL_LIBRARIES})
+   list(APPEND CORE_INCLUDE_DIRS ${OPENSSL_INCLUDE_DIR})
 endif()
 
 # set include directories
@@ -154,10 +131,11 @@ include_directories(
    ${EXT_SOURCE_DIR}
    ${SESSION_SOURCE_DIR}/include
    ${SHARED_CORE_SOURCE_DIR}/include
+   ${TESTS_INCLUDE_DIR}
 )
 
 # define executable
-add_stripped_executable(rserver ${SERVER_SOURCE_FILES} ${SERVER_HEADER_FILES})
+add_stripped_executable(rserver ServerMain.cpp ${SERVER_SOURCE_FILES} ${SERVER_HEADER_FILES})
 
 # set link dependencies
 target_link_libraries(rserver
@@ -291,4 +269,31 @@ endif()
 # add overlay if it exists
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMakeOverlay.txt")
    include(CMakeOverlay.txt)
+endif()
+
+# test files
+if (RSTUDIO_UNIT_TESTS_ENABLED)
+
+  set(SERVER_TEST_FILES
+     ServerEnvVarsTests.cpp)
+
+  list(APPEND SERVER_SOURCE_FILES ${SERVER_TEST_FILES})
+
+  add_executable(rserver-tests
+     TestMain.cpp
+     ${SERVER_TEST_FILES}
+     ${SERVER_SOURCE_FILES}
+     ${CORE_HEADER_FILES}
+     ${SERVER_HEADER_FILES}
+  )
+
+  target_link_libraries(rserver-tests
+     rstudio-core
+     rstudio-server-core
+     rstudio-monitor
+     ${CRASHPAD_LIBRARIES}
+     ${SOCI_LIBRARIES}
+     ${SERVER_SYSTEM_LIBRARIES}
+  )
+
 endif()

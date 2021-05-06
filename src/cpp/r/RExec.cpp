@@ -595,15 +595,14 @@ IgnoreInterruptsScope::~IgnoreInterruptsScope()
    }
 }
 
-DisableDebugScope::DisableDebugScope(SEXP env): 
-   rdebug_(0), 
-   env_(nullptr)
+DisableDebugScope::DisableDebugScope(SEXP env)
+   : rdebug_(0), 
+     env_(nullptr)
 {
    // nothing to do if no environment 
-   if (env == nullptr) {
+   if (env == nullptr)
       return;
-   }
-
+   
    // check to see whether there's a debug flag set on this environment
    rdebug_ = RDEBUG(env);
 

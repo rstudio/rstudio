@@ -28,30 +28,30 @@ import org.rstudio.studio.client.workbench.exportplot.SavePlotAsImageOperation;
 public class ViewerPaneSaveAsImageDesktopOperation implements SavePlotAsImageOperation
 {
    @Override
-   public void attemptSave(final ProgressIndicator progressIndicator, 
+   public void attemptSave(final ProgressIndicator progressIndicator,
                            final FileSystemItem targetPath,
-                           final String format, 
+                           final String format,
                            final ExportPlotSizeEditor sizeEditor,
                            final boolean overwrite,
                            final boolean viewAfterSave,
                            final Operation onCompleted)
    {
       DesktopExport.export(
-            sizeEditor, 
+            sizeEditor,
             new OperationWithInput<Rectangle>() {
                @Override
                public void execute(Rectangle viewerRect)
                {
                   // perform the export
                   Desktop.getFrame().exportPageRegionToFile(
-                        StringUtil.notNull(targetPath.getPath()), 
-                        StringUtil.notNull(format), 
+                        StringUtil.notNull(targetPath.getPath()),
+                        StringUtil.notNull(format),
                         viewerRect.getLeft(),
                         viewerRect.getTop(),
                         viewerRect.getWidth(),
                         viewerRect.getHeight());
-                    
-                  if (viewAfterSave) 
+
+                  if (viewAfterSave)
                      Desktop.getFrame().showFile(StringUtil.notNull(targetPath.getPath()));
                }
             },

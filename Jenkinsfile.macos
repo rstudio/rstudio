@@ -1,10 +1,13 @@
 pipeline {
-  agent { label 'macos-v1.4' }
+
+  agent { label 'macos-v1.4-arm64' }
+
   options {
     timestamps()
     disableConcurrentBuilds()
     buildDiscarder(logRotator(numToKeepStr: '100'))
   }
+
   parameters {
       string(name: 'RSTUDIO_VERSION_MAJOR',  defaultValue: '1', description: 'RStudio Major Version')
       string(name: 'RSTUDIO_VERSION_MINOR',  defaultValue: '1', description: 'RStudio Minor Version')
@@ -12,56 +15,84 @@ pipeline {
       string(name: 'RSTUDIO_VERSION_SUFFIX', defaultValue: '0', description: 'RStudio Pro Suffix Version')
       string(name: 'SLACK_CHANNEL', defaultValue: '@steve', description: 'Slack channel to publish build message.')
   }
+
   environment {
-    PATH = '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin'
+    PATH = "$HOME/opt/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
     PACKAGE_OS = 'macOS'
   }
 
   stages {
+
     stage('dependencies') {
+
       environment {
         // boost won't compile without the brew version of openssl.
         // only add it to the dep resolve step though, or the ide build will compile against the wrong openssl
         PATH = '/usr/local/opt/openssl/bin:/usr/local/opt/openssl/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin'
       }
+
       steps {
         withCredentials([usernameColonPassword(credentialsId: 'github-rstudio-jenkins', variable: "GITHUB_LOGIN")]) {
           sh 'cd dependencies/osx && RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN ./install-dependencies-osx && cd ../..'
         }
       }
+
     }
-    stage('build'){
+
+    stage('build') {
+
       steps {
         script {
+
           // unlock keychain to ensure build gets signed.
           withCredentials([string(credentialsId: 'ide-keychain-passphrase', variable: 'KEYCHAIN_PASSPHRASE')]){
             sh 'security unlock-keychain -p $KEYCHAIN_PASSPHRASE && security set-keychain-settings' // turn off timeout
           }
+
+          // set requisite environment variables
           def env = "RSTUDIO_VERSION_MAJOR=${params.RSTUDIO_VERSION_MAJOR} RSTUDIO_VERSION_MINOR=${params.RSTUDIO_VERSION_MINOR} RSTUDIO_VERSION_PATCH=${params.RSTUDIO_VERSION_PATCH}"
           if (params.RSTUDIO_VERSION_SUFFIX != 0) {
             env = "${env} RSTUDIO_VERSION_SUFFIX=${params.RSTUDIO_VERSION_SUFFIX}" 
           }
+
+          // build rstudio
           sh 'cd package/osx && ${env} ./make-package clean && cd ../..'
+
         }
       }
+
     }
+
     stage('tests') {
+
+      environment {
+        PATH = "${env.HOME}/opt/bin:${env.PATH}"
+      }
+
       steps {
         script {
           try {
             // attempt to run cpp unit tests
             // problems with rsession finding openssl, so those tests
             // are disabled until we solve it (#6890)
-            sh "cd package/osx/build/src/cpp && ./rstudio-tests --scope core"
+            sh "cd package/osx/build/src/cpp && ./rstudio-tests"
           } catch(err) {
              currentBuild.result = "UNSTABLE"
           }
         }
       }
+
     }
+
     stage('notarize and upload') {
+
+      environment {
+        PATH = "${env.HOME}/opt/bin:${env.PATH}"
+      }
+      
       steps {
         script {
+
           // extract name of package to publish
           def packageFile = sh (
             script: "basename `ls package/osx/build/RStudio-*.dmg`",
@@ -105,9 +136,12 @@ pipeline {
             // upload C++ debug information
             sh "cd package/osx/build/src/cpp && sentry-cli --auth-token ${SENTRY_API_KEY} upload-dif --org rstudio --project ide-backend -t dsym ."
           }
+
         }
       }
+
     }
+
   }
 
   post {

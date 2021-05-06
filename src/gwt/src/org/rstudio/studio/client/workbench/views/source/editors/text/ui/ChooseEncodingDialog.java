@@ -22,7 +22,9 @@ import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.widget.FormCheckBox;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -92,7 +94,7 @@ public class ChooseEncodingDialog extends ModalDialog<String>
 
       setEncodings(commonEncodings_, currentEncoding_);
 
-      CheckBox showAll = new CheckBox("Show all encodings");
+      CheckBox showAll = new FormCheckBox("Show all encodings", ElementIds.ENC_SHOW_ALL);
       showAll.addValueChangeHandler(valueChangeEvent ->
       {
          if (valueChangeEvent.getValue())
@@ -108,8 +110,8 @@ public class ChooseEncodingDialog extends ModalDialog<String>
 
       if (includeSaveAsDefault_)
       {
-         saveAsDefault_ = new CheckBox("Set as default encoding for " +
-                                       "source files");
+         saveAsDefault_ = new FormCheckBox("Set as default encoding for source files",
+                                           ElementIds.ENC_SET_DEFAULT);
          setCheckBoxMargins(showAll, 8, 0);
          setCheckBoxMargins(saveAsDefault_, 3, 12);
          panel.add(saveAsDefault_);

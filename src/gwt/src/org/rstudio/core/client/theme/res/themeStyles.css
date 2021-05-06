@@ -196,9 +196,6 @@
 @url WARNINGDARK syntaxWarningDark2x;
 @url ERRORDARK syntaxErrorDark2x;
 
-@url HANDCURSOR handCursor;
-@url HANDCURSOR2X handCursor2x;
-
 @url MACCHECK macCheck2x;
 @url RADIOBUTTONON radioButtonOn2x;
 
@@ -352,16 +349,6 @@ button {
 
 .handCursor {
    cursor: pointer;
-}
-
-@if rstudio.desktop true {
-.linux button {
-   cursor: HANDCURSOR 8 4, pointer;
-}
-
-.linux .handCursor {
-   cursor: HANDCURSOR 8 4, pointer;
-}
 }
 
 textarea {
@@ -1343,7 +1330,7 @@ body.windows .toolbar {
 }
 
 .rstheme_toolbarWrapper {
-
+   height: 100%;
 }
 
 .rstudio-themes-flat .rstheme_toolbarWrapper {
@@ -1445,6 +1432,14 @@ body.windows .toolbar {
    white-space: nowrap;
 }
 
+.toolbarDotSeparator {
+   display: inline;
+   font-size: 9pt;
+}
+
+.rstudio-themes-flat .rstudio-themes-dark .toolbarDotSeparator {
+   color: rgb(169, 169, 169);
+}
 
 .rstheme_secondaryToolbar {
    background: TABBACKGROUND bottom repeat-x;
@@ -2278,6 +2273,7 @@ body.ubuntu_mono .searchBox {
 
 .logoAnchor {
    top: 12px;
+   z-index: 1;
 }
 
 .rstudio-themes-flat .logoAnchor {

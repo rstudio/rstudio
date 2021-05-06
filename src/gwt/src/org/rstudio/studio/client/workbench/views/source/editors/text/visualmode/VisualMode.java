@@ -522,9 +522,7 @@ public class VisualMode implements VisualModeEditorSync,
                      }
                      
                      // if we failed to extract a source capsule then don't switch (as the user will have lost data)
-                     // (note that this constant is also defined in rmd_chunk-capsule.ts)
-                     final String kRmdBlockCapsuleType = "f3175f2a-e8a0-4436-be12-b33925b6d220".toLowerCase();
-                     if (result.canonical.contains(kRmdBlockCapsuleType))
+                     if (hasSourceCapsule(result.canonical))
                      {
                         view_.showWarningBar("Unable to activate visual mode (error parsing code chunks out of document)");
                         allDone.execute(false);
@@ -569,6 +567,7 @@ public class VisualMode implements VisualModeEditorSync,
                                  // mode, so we do more coarse grained error handling here
                                  try
                                  {
+                                    panmirror_.spellingInvalidateAllWords();
                                     panmirror_.focus();
                                     panmirror_.setEditingLocation(
                                           visualModeLocation_.getSourceOutlineLocation(), 
@@ -626,12 +625,29 @@ public class VisualMode implements VisualModeEditorSync,
                                  (markdown) -> {
             if  (markdown != null) 
             {
-               if (!writerOptions.wrapChanged)
+               // ensure that no source capsules have snuck in
+               if (hasSourceCapsule(markdown))
+               {
+                  view_.showWarningBar("Unable to reformat to canonical markdown (parsing error, please report this to RStudio)");
+                  completed.execute(null);  
+               }
+               /*
+                 We saw at least one situation where the diffs produced by diff-match-patch 
+                 were not able to correctly capture the source changes (this has to do with
+                 a \begin{}/\end{} tex chunk being turned into a raw tex block right before
+                 an Rmd chunk). To be cautious we will now send the changes back as a single
+                 set of transformed markdown. Since the entire changeset is already merged
+                 into a single undo-able action by Ace, there shouldn't really be a 
+                 perceivable change in user behavior here.
+                */
+               /*
+               else if (!writerOptions.wrapChanged)
                {
                   PanmirrorUIToolsSource sourceTools = new PanmirrorUITools().source;
                   TextChange[] changes = sourceTools.diffChars(code, markdown, 1);
                   completed.execute(new PanmirrorChanges(null, changes));
                }
+               */
                else
                {
                   completed.execute(new PanmirrorChanges(markdown, null));
@@ -645,6 +661,7 @@ public class VisualMode implements VisualModeEditorSync,
       });
    }
    
+
    /**
     * Returns the width of the entire visual editor
     * 
@@ -823,7 +840,17 @@ public class VisualMode implements VisualModeEditorSync,
    {
       panmirror_.execCommand(PanmirrorCommands.GoToPreviousSection);
    }
-   
+
+   public void goToNextChunk()
+   {
+      panmirror_.execCommand(PanmirrorCommands.GoToNextChunk);
+   }
+
+   public void goToPreviousChunk()
+   {
+      panmirror_.execCommand(PanmirrorCommands.GoToPreviousChunk);
+   }
+
    public HasFindReplace getFindReplace()
    {
       if (panmirror_ != null) {
@@ -1710,11 +1737,7 @@ public class VisualMode implements VisualModeEditorSync,
       {
          return "You cannot enter visual mode while using realtime collaboration.";
       }
-      else if (BrowseCap.isInternetExplorer())
-      {
-         return "Visual mode is not supported in Internet Explorer.";
-      }
-      else 
+      else
       {
          return visualModeFormat_.validateSourceForVisualMode();
       }
@@ -1730,6 +1753,13 @@ public class VisualMode implements VisualModeEditorSync,
    {
       docUpdateSentinel_.setBoolProperty(TextEditingTarget.RMD_VISUAL_MODE, false);
       view_.showWarningBar(message);
+   }
+   
+   private boolean hasSourceCapsule(String markdown)
+   {
+      // (note that this constant is also defined in rmd_chunk-capsule.ts)
+      final String kRmdBlockCapsuleType = "f3175f2a-e8a0-4436-be12-b33925b6d220".toLowerCase();
+      return markdown.contains(kRmdBlockCapsuleType);
    }
    
    /**

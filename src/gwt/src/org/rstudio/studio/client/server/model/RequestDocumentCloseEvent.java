@@ -36,30 +36,12 @@ public class RequestDocumentCloseEvent extends GwtEvent<RequestDocumentCloseEven
       /*-{
          return this["save"];
       }-*/;
-      
-      public native final boolean getNotifyComplete()
-      /*-{
-            return this["notify_complete"];
-      }-*/;
+
    }
 
    public RequestDocumentCloseEvent(Data data)
    {
       data_ = data;
-   }
-
-   private static final native JavaScriptObject createData(String id)
-   /*-{
-      var result = {};
-      result["ids"] = [id];
-      result["save"] = true;
-      result["notify_complete"] = false;
-      return result;
-   }-*/;
-
-   public RequestDocumentCloseEvent(String id)
-   {
-      data_ = createData(id).cast();
    }
 
    public JsArrayString getDocumentIds()
@@ -70,11 +52,6 @@ public class RequestDocumentCloseEvent extends GwtEvent<RequestDocumentCloseEven
    public boolean getSave()
    {
       return data_.getSave();
-   }
-
-   public boolean getNotifyComplete()
-   {
-      return data_.getNotifyComplete();
    }
 
    private final Data data_;

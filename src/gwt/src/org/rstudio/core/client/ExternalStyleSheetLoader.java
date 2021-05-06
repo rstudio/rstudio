@@ -41,7 +41,7 @@ public class ExternalStyleSheetLoader
    {
       this(Document.get(), url);
    }
-   
+
    public ExternalStyleSheetLoader(Document document, String url)
    {
       document_ = document;

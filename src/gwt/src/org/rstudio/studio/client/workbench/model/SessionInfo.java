@@ -34,6 +34,7 @@ import org.rstudio.studio.client.workbench.views.buildtools.model.BuildState;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentContextData;
+import org.rstudio.studio.client.workbench.views.environment.model.MemoryUsage;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobState;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesState;
 import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersState;
@@ -641,7 +642,7 @@ public class SessionInfo extends JavaScriptObject
    }-*/;
 
    /**
-    * @return project identifier (only meaningful in RStudio Server Pro)
+    * @return project identifier (only meaningful in RStudio Workbench)
     */
    public final native String getProjectId() /*-{
       return this.project_id;
@@ -654,6 +655,10 @@ public class SessionInfo extends JavaScriptObject
    public final native boolean getPythonInitialized() /*-{
       return this.python_initialized;
    }-*/;
+   
+   public final native boolean getPythonReplActive() /*-{
+      return this.python_repl_active;
+   }-*/;
 
    public final native String getSessionNode() /*-{
       return this.session_node;
@@ -662,5 +667,8 @@ public class SessionInfo extends JavaScriptObject
    public final native String getReticulatePython() /*-{
       return this.reticulate_python;
    }-*/;
-   
+
+   public final native MemoryUsage getMemoryUsage() /*-{
+      return this.memory_usage;
+   }-*/;
 }

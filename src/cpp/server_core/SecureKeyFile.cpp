@@ -13,24 +13,31 @@
  *
  */
 
+#include <server_core/SecureKeyFile.hpp>
+
 #include <shared_core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 
 #include <core/system/PosixSystem.hpp>
 #include <core/system/Xdg.hpp>
 
-#include <server_core/SecureKeyFile.hpp>
+#include <shared_core/Hash.hpp>
 
 namespace rstudio {
 namespace core {
 namespace key_file {
 
 core::Error readSecureKeyFile(const FilePath& secureKeyPath,
-                              std::string* pContents)
+                              std::string* pContents,
+                              std::string* pContentsHash,
+                              std::string* pKeyPathUsed)
 {
    // read file if it already exists
    if (secureKeyPath.exists())
    {
+      *pKeyPathUsed = secureKeyPath.getAbsolutePath();
+      LOG_DEBUG_MESSAGE("Using secure key file: \"" + *pKeyPathUsed + "\"");
+
       // read the key
       std::string secureKey;
       core::Error error = core::readStringFromFile(secureKeyPath, &secureKey);
@@ -45,6 +52,9 @@ core::Error readSecureKeyFile(const FilePath& secureKeyPath,
          error.addProperty("path", secureKeyPath.getAbsolutePath());
          return error;
       }
+
+      *pContentsHash = hash::crc32HexHash(secureKey);
+      LOG_DEBUG_MESSAGE("Secure key hash: (" + *pContentsHash + ")");
 
       // save the key and return success
       *pContents = secureKey;
@@ -61,6 +71,11 @@ core::Error readSecureKeyFile(const FilePath& secureKeyPath,
       core::Error error = secureKeyPath.getParent().ensureDirectory();
       if (error)
          return error;
+
+      *pKeyPathUsed = secureKeyPath.getAbsolutePath();
+      *pContentsHash = hash::crc32HexHash(secureKey);
+      LOG_DEBUG_MESSAGE("Creating secure key file: \"" + *pKeyPathUsed + 
+                        "\" key hash: (" + *pContentsHash + ")");
 
       // attempt to write it
       error = writeStringToFile(secureKeyPath, secureKey);
@@ -81,7 +96,9 @@ core::Error readSecureKeyFile(const FilePath& secureKeyPath,
 }
 
 core::Error readSecureKeyFile(const std::string& filename,
-                              std::string* pContents)
+                              std::string* pContents,
+                              std::string* pContentsHash,
+                              std::string* pKeyPathUsed)
 {
    // determine path to use for secure cookie key file
    core::FilePath secureKeyPath;
@@ -96,7 +113,23 @@ core::Error readSecureKeyFile(const std::string& filename,
    else
       secureKeyPath = core::FilePath("/tmp/rstudio-server").completePath(filename);
 
-   return readSecureKeyFile(secureKeyPath, pContents);
+   return readSecureKeyFile(secureKeyPath, pContents, pContentsHash, pKeyPathUsed);
+}
+
+core::Error readSecureKeyFile(const FilePath& secureKeyPath,
+                              std::string* pContents)
+{
+   std::string keyFileUsed;
+   std::string contentsHash;
+   return readSecureKeyFile(secureKeyPath, pContents, &contentsHash, &keyFileUsed);
+}
+
+core::Error readSecureKeyFile(const std::string& filename,
+                              std::string* pContents)
+{
+   std::string keyFileUsed;
+   std::string contentsHash;
+   return readSecureKeyFile(filename, pContents, &contentsHash, &keyFileUsed);
 }
 
 } // namespace key_file

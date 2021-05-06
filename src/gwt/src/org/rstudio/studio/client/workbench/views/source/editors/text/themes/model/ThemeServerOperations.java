@@ -26,14 +26,14 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceT
 public interface ThemeServerOperations
 {
    void getThemes(ServerRequestCallback<JsArray<AceTheme>> requestCallback);
-   
+
    void addTheme(ServerRequestCallback<String> request, String themeLocation);
-   
+
    void removeTheme(ServerRequestCallback<Void> request, String themeName);
-   
+
    void getThemeName(ServerRequestCallback<String> request, String themeLocation);
-   
+
    void setComputedThemeColors(String foreground, String background, VoidServerRequestCallback callback);
-   
+
    void getInstalledFonts(ServerRequestCallback<JsArrayString> callback);
 }

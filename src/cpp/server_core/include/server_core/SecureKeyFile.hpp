@@ -35,6 +35,18 @@ core::Error readSecureKeyFile(const FilePath& secureKeyPath,
 core::Error readSecureKeyFile(const std::string& filename,
                               std::string* pContents);
 
+// Variants returning absolute path to the file ultimately read from
+// (or created) for the key and 1-way hash of the contents
+core::Error readSecureKeyFile(const FilePath& secureKeyPath,
+                              std::string* pContents,
+                              std::string* pContentsHash,
+                              std::string* pKeyFileUsed);
+
+core::Error readSecureKeyFile(const std::string& filename,
+                              std::string* pContents,
+                              std::string* pContentsHash,
+                              std::string* pKeyFileUsed);
+
 } // namespace key_file
 } // namespace server
 } // namespace rstudio

@@ -36,7 +36,7 @@ public class CopyViewerPlotToClipboardDesktopDialog
    protected void copyAsBitmap(Operation onCompleted)
    {
       DesktopExport.export(
-         getSizeEditor(), 
+         getSizeEditor(),
          new OperationWithInput<Rectangle>() {
 
             @Override
@@ -49,10 +49,10 @@ public class CopyViewerPlotToClipboardDesktopDialog
                      viewerRect.getHeight(),
                      onCompleted::execute);
             }
-         
+
          },
          onCompleted
       );
    }
-   
+
 }

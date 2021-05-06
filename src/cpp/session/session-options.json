@@ -44,6 +44,16 @@
             "description": "Verifies that the session installation is working correctly and exits."
          }
       ],
+      "version": [
+         {
+            "name": {"constant": "kVersionSessionOption", "value": "version"},
+            "memberName": "version_",
+            "type": "bool",
+            "defaultValue": false,
+            "implicitValue": true,
+            "description": "Prints the version number and exits."
+         }
+      ],
       "program": [
          {
             "name": {"constant": "kProgramModeSessionOption", "value": "program-mode"},
@@ -329,6 +339,13 @@
             "type": "string",
             "memberName": "envVarSaveBlacklist_",
             "description": "Specifies a list of environment variables that will not be saved when sessions suspend, separated by a colon character (:)."
+         },
+         {
+            "name": {"constant": "kSessionSuspendOnIncompleteStatement", "value": "session-suspend-on-incomplete-statement"},
+            "type": "bool",
+            "memberName": "suspendOnIncompleteStatement_",
+            "defaultValue": false,
+            "description": "Specifies whether the session should be allowed to suspend when a user has entered a partial R statement."
          }
       ],
       "allow": [

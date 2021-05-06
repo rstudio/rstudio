@@ -18,6 +18,7 @@
    PYTHON_INITIALIZED = "python_initialized",
    REPL_INITIALIZED   = "repl_initialized",
    REPL_ITERATION     = "repl_iteration",
+   REPL_BUSY          = "repl_busy",
    REPL_TEARDOWN      = "repl_teardown"
 ))
 
@@ -112,6 +113,14 @@
    engine <- tolower(Sys.getenv("MPLENGINE"))
    if (engine %in% c("", "qt5agg"))
       Sys.setenv(MPLENGINE = "tkAgg")
+   
+   # update default version of Python to be used when reticulate is laoded
+   .rs.registerPackageLoadHook("reticulate", function(...)
+   {
+      python <- .rs.readUiPref("python_path")
+      .rs.reticulate.usePython(python)
+   })
+   
 })
 
 .rs.addFunction("reticulate.onPythonInitialized", function()
@@ -220,10 +229,20 @@
 
 .rs.addFunction("reticulate.replInitialize", function()
 {
+   # compute interpreter info (only needs to be done once as the Python
+   # interpreter cannot be re-initialized again in the same session)
+   info <- .rs.getVar("python.activeInterpreterInfo")
+   if (is.null(info))
+   {
+      config <- reticulate::py_config()
+      info <- .rs.python.describeInterpreter(config$python)
+      .rs.setVar("python.activeInterpreterInfo", info)
+   }
+   
    # signal a switch to Python context
    .rs.reticulate.enqueueClientEvent(
       .rs.reticulateEvents$REPL_INITIALIZED,
-      list()
+      info
    )
    
 })
@@ -273,6 +292,13 @@
    FALSE
 })
 
+.rs.addFunction("reticulate.replBusy", function(busy)
+{
+   .rs.reticulate.enqueueClientEvent(
+      .rs.reticulateEvents$REPL_BUSY,
+      list(busy = .rs.scalar(busy))
+   )
+})
 
 .rs.addFunction("reticulate.replTeardown", function()
 {
@@ -1978,8 +2004,67 @@ options(reticulate.repl.hook = function(buffer, contents, trimmed)
    .rs.reticulate.replHook(buffer, contents, trimmed)
 })
 
+options(reticulate.repl.busy = function(busy)
+{
+   .rs.reticulate.replBusy(busy)
+})
+
 options(reticulate.repl.teardown = function()
 {
    .rs.reticulate.replTeardown()
 })
 
+# Attempts to infer the current Python interpreter used by reticulate
+.rs.addFunction("inferReticulatePython", function() {
+   
+   # Use existing RETICULATE_PYTHON if set
+   python <- Sys.getenv("RETICULATE_PYTHON", unset = NA)
+   if (!is.na(python))
+      return(python)
+   
+   # if reticulate is already loaded, check and see if it's already
+   # configured to use a particular copy of Python
+   loaded <-
+      "reticulate" %in% loadedNamespaces() &&
+      reticulate::py_available(initialize = FALSE)
+   
+   if (loaded) {
+      config <- reticulate::py_config()
+      return(config$python)
+   }
+
+   # if the user has configured RStudio to use a particular version
+   # of Python, then use that
+   python <- .rs.readUiPref("python_path")
+   if (!is.null(python))
+      return(path.expand(python))
+   
+   # if reticulate is installed, then try to load it and ask what
+   # version of Python it would choose to bind to.
+   #
+   # TODO: we might want to avoid loading reticulate if possible here?
+   if (.rs.isPackageInstalled("reticulate")) {
+      
+      # avoid miniconda prompts
+      prev_miniconda <- Sys.getenv("RETICULATE_MINICONDA_ENABLED")
+      Sys.setenv(RETICULATE_MINICONDA_ENABLED = "FALSE")
+
+      # Then perform a Python version scan/discovery
+      py_config <- NULL
+      tryCatch({
+         py_config <- reticulate::py_discover_config()
+      }, finally = {
+         Sys.setenv(RETICULATE_MINICONDA_ENABLED = prev_miniconda)
+      })
+
+      # Return a Python binary if we found one
+      if (!is.null(py_config) && !is.null(py_config$python)) {
+         return(py_config$python)
+      }
+      
+   }
+
+   # we didn't find any indication of the python version
+   ""
+   
+})

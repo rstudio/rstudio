@@ -185,10 +185,11 @@ const extension = (context: ExtensionContext): Extension | null => {
     },
 
     inputRules: (schema: Schema, filter: MarkInputRuleFilter) => {
+      const kInlineMathInputRulePattern = '\\$[^ ][^\\$]*?[^\\ ]?\\$';
       return [
         // inline math
         new InputRule(
-          new RegExp('(^|[^`])' + kInlineMathPattern + '$'),
+          new RegExp('(^|[^`])' + kInlineMathInputRulePattern + '$'),
           (state: EditorState, match: string[], start: number, end: number) => {
             if (!markIsActive(state, schema.marks.math) && filter(state, start, end)) {
               const tr = state.tr;

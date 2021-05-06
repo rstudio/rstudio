@@ -56,7 +56,7 @@ public class GitState extends VcsState
    {
       return remoteBranchInfo_;
    }
-   
+
    @Override
    protected boolean isInitialized()
    {
@@ -79,7 +79,7 @@ public class GitState extends VcsState
    {
       refresh(showError, null);
    }
-   
+
    public void refresh(final boolean showError, final Command onCompleted)
    {
       server_.gitAllStatus(new ServerRequestCallback<AllStatus>()

@@ -1411,7 +1411,6 @@ SEXP rs_requestDocumentClose(SEXP idsSEXP, SEXP saveSXP) {
    fillIds(idsSEXP, &jsonData);
 
    jsonData["save"] = r::sexp::asLogical(saveSXP);
-   jsonData["notify_complete"] = true;
 
    ClientEvent event(client_events::kRequestDocumentClose, jsonData);
    

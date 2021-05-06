@@ -200,6 +200,7 @@
 #include "modules/SessionRVersions.hpp"
 #include "modules/SessionTerminal.hpp"
 #include "modules/SessionFonts.hpp"
+#include "modules/SessionSystemResources.hpp"
 
 #include <session/SessionProjectTemplate.hpp>
 
@@ -301,7 +302,7 @@ namespace {
 
 // R browseUrl handlers
 std::vector<module_context::RBrowseUrlHandler> s_rBrowseUrlHandlers;
-   
+
 // R browseFile handlers
 std::vector<module_context::RBrowseFileHandler> s_rBrowseFileHandlers;
 
@@ -321,7 +322,7 @@ void detectChanges(module_context::ChangeSource source)
 {
    module_context::events().onDetectChanges(source);
 }
- 
+
 // allow console_input requests to come in when we aren't explicitly waiting
 // on them (i.e. waitForMethod("console_input")). place them into into a buffer
 // which is then checked by rConsoleRead prior to it calling waitForMethod
@@ -382,11 +383,11 @@ Error registerSignalHandlers()
    ExecBlock registerBlock;
 
    module_context::initializeConsoleCtrlHandler();
-   
+
    // SIGINT: set interrupt flag on R session
    registerBlock.addFunctions()
          (bind(handleSignal, SigInt, handleINT));
-   
+
    // USR1 and USR2: perform suspend in server mode
    if (rsession::options().programMode() == kSessionProgramModeServer)
    {
@@ -401,7 +402,7 @@ Error registerSignalHandlers()
          (bind(ignoreSignal, SigUsr1))
          (bind(ignoreSignal, SigUsr2));
    }
-   
+
    return registerBlock.execute();
 }
 
@@ -453,12 +454,12 @@ void exitEarly(int status)
    FileLock::cleanUp();
    ::exit(status);
 }
-      
-Error rInit(const rstudio::r::session::RInitInfo& rInitInfo) 
+
+Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
 {
    // save state we need to reference later
    suspend::setSessionResumed(rInitInfo.resumed);
-   
+
    // record built-in waitForMethod handlers
    module_context::registerWaitForMethod(kLocatorCompleted);
    module_context::registerWaitForMethod(kEditCompleted);
@@ -473,10 +474,10 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    using namespace rsession::module_context;
    ExecBlock initialize;
    initialize.addFunctions()
-   
+
       // client event service
       (startClientEventService)
-      
+
       // rpc methods
       (rpc::initialize)
 
@@ -510,13 +511,13 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
 
       // overlay R
       (bind(sourceModuleRFile, "SessionOverlay.R"))
-   
+
       // addins
       (addins::initialize)
 
       // console processes
       (console_process::initialize)
-         
+
       // r utils
       (r_utils::initialize)
 
@@ -603,6 +604,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::tutorial::initialize)
       (modules::graphics::initialize)
       (modules::fonts::initialize)
+      (modules::system_resources::initialize)
 
       // workers
       (workers::web_request::initialize)
@@ -610,7 +612,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       // R code
       (bind(sourceModuleRFile, "SessionCodeTools.R"))
       (bind(sourceModuleRFile, "SessionPatches.R"))
-   
+
       // unsupported functions
       (bind(rstudio::r::function_hook::registerUnsupported, "bug.report", "utils"))
       (bind(rstudio::r::function_hook::registerUnsupported, "help.request", "utils"))
@@ -619,7 +621,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    Error error = initialize.execute();
    if (error)
       return error;
-   
+
    // if we are in verify installation mode then we should exit (successfully) now
    if (rsession::options().verifyInstallation())
    {
@@ -632,7 +634,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
          if (!diagFile.isEmpty())
          {
             std::cout << "Diagnostics report written to: "
-                      << diagFile << std::endl 
+                      << diagFile << std::endl
                       << "Please audit the report and remove any sensitive information "
                       << "before submitting." << std::endl << std::endl;
 
@@ -653,13 +655,13 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       int result = tests::run();
       exitEarly(result);
    }
-   
+
    // register all of the json rpc methods implemented in R
    json::JsonRpcMethods rMethods;
    error = rstudio::r::json::getRpcMethods(&rMethods);
    if (error)
       return error;
-   
+
    for (json::JsonRpcMethod method : rMethods)
    {
       registerRpcMethod(json::adaptMethodToAsync(method));
@@ -739,20 +741,20 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
 void notifyIfRVersionChanged()
 {
    using namespace rstudio::r::session::state;
-   
+
    SessionStateInfo info = getSessionStateInfo();
-   
+
    if (info.activeRVersion != info.suspendedRVersion)
    {
       const char* fmt =
             "R version change [%1% -> %2%] detected when restoring session; "
             "search path not restored";
-      
+
       boost::format formatter(fmt);
       formatter
             % std::string(info.suspendedRVersion)
             % std::string(info.activeRVersion);
-      
+
       std::string msg = formatter.str();
       ::REprintf("%s\n", msg.c_str());
    }
@@ -765,7 +767,7 @@ void rSessionInitHook(bool newSession)
 
    // finish off initialization
    module_context::events().afterSessionInitHook(newSession);
-   
+
    // notify the user if the R version has changed
    notifyIfRVersionChanged();
 
@@ -777,13 +779,13 @@ void rSessionInitHook(bool newSession)
 void rDeferredInit(bool newSession)
 {
    module_context::events().onDeferredInit(newSession);
-   
+
    // schedule execution of the session init hook
    module_context::scheduleDelayedWork(
                         boost::posix_time::seconds(1),
                         boost::bind(rSessionInitHook, newSession));
 }
-   
+
 int rEditFile(const std::string& file)
 {
    // read file contents
@@ -798,12 +800,12 @@ int rEditFile(const std::string& file)
          return 1; // r will raise/report an error indicating edit failed
       }
    }
-   
+
    // fire edit event
    ClientEvent editEvent = rsession::showEditorEvent(fileContents, true, false);
    rsession::clientEventQueue().add(editEvent);
 
-   // wait for edit_completed 
+   // wait for edit_completed
    json::JsonRpcRequest request;
    bool succeeded = http_methods::waitForMethod(kEditCompleted,
                                         editEvent,
@@ -812,13 +814,13 @@ int rEditFile(const std::string& file)
 
    if (!succeeded)
       return false;
-   
+
    // user cancelled edit
    if (request.params[0].isNull())
    {
       return 0; // no-op, object will be re-parsed from original content
    }
-   
+
    // user confirmed edit
    else
    {
@@ -828,37 +830,37 @@ int rEditFile(const std::string& file)
       if (error)
       {
          LOG_ERROR(error);
-         return 1; // error (r will notify user via the console) 
+         return 1; // error (r will notify user via the console)
       }
-      
-      // write the content back to the file (append newline expected by R) 
+
+      // write the content back to the file (append newline expected by R)
       editedFileContents += "\n";
       Error writeError = core::writeStringToFile(filePath, editedFileContents);
       if (writeError)
       {
          LOG_ERROR(writeError);
-         return 1 ; // error (r will notify user via the console) 
+         return 1 ; // error (r will notify user via the console)
       }
-      
+
       // success!
       return 0;
    }
 }
-   
-   
+
+
 FilePath rChooseFile(bool newFile)
 {
    // fire choose file event
    ClientEvent chooseFileEvent(kChooseFile, newFile);
    rsession::clientEventQueue().add(chooseFileEvent);
-   
-   // wait for choose_file_completed 
+
+   // wait for choose_file_completed
    json::JsonRpcRequest request;
    bool succeeded = http_methods::waitForMethod(kChooseFileCompleted,
                                         chooseFileEvent,
                                         suspend::disallowSuspend,
                                         &request);
-   
+
    if (!succeeded)
       return FilePath();
 
@@ -869,7 +871,7 @@ FilePath rChooseFile(bool newFile)
       Error error = json::readParam(request.params, 0, &fileName);
       if (error)
          LOG_ERROR(error);
-      
+
       // resolve aliases and return it
       return module_context::resolveAliasedPath(fileName);
    }
@@ -892,8 +894,8 @@ void rBusy(bool busy)
    ClientEvent busyEvent(kBusy, busy);
    rsession::clientEventQueue().add(busyEvent);
 }
-      
-void rConsoleWrite(const std::string& output, int otype)   
+
+void rConsoleWrite(const std::string& output, int otype)
 {
    if (main_process::wasForked())
       return;
@@ -909,7 +911,7 @@ void rConsoleWrite(const std::string& output, int otype)
                   output);
 
 }
-   
+
 void rConsoleHistoryReset()
 {
    json::Array historyJson;
@@ -927,12 +929,12 @@ bool rLocator(double* x, double* y)
    // here (because we'll never get back to the REPL). this enables
    // identify() to correctly update the plot after each click
    detectChanges(module_context::ChangeSourceREPL);
-   
+
    // fire locator event
    ClientEvent locatorEvent(kLocator);
    rsession::clientEventQueue().add(locatorEvent);
-   
-   // wait for locator_completed 
+
+   // wait for locator_completed
    json::JsonRpcRequest request;
    bool succeeded = http_methods::waitForMethod(kLocatorCompleted,
                                         locatorEvent,
@@ -941,7 +943,7 @@ bool rLocator(double* x, double* y)
 
    if (!succeeded)
       return false;
-   
+
    // see if we got a point
    if ((request.params.getSize() > 0) && !request.params[0].isNull())
    {
@@ -954,7 +956,7 @@ bool rLocator(double* x, double* y)
          LOG_ERROR(error);
          return false;
       }
-      
+
       // return true
       return true;
    }
@@ -963,7 +965,7 @@ bool rLocator(double* x, double* y)
       return false;
    }
 }
-   
+
 void rShowFile(const std::string& title, const FilePath& filePath, bool del)
 {
    if (rsession::options().programMode() == kSessionProgramModeServer)
@@ -976,14 +978,14 @@ void rShowFile(const std::string& title, const FilePath& filePath, bool del)
       {
          module_context::showContent(title, filePath);
       }
-      
+
       // for files in the user's home directory and pdfs use an external browser
       else if (module_context::isVisibleUserFile(filePath) ||
           (filePath.getExtensionLowerCase() == ".pdf"))
       {
          module_context::showFile(filePath);
       }
-      
+
       // otherwise, show as content
       else
       {
@@ -1014,11 +1016,11 @@ void rShowFile(const std::string& title, const FilePath& filePath, bool del)
          LOG_ERROR(error);
    }
 }
-   
-void rBrowseURL(const std::string& url)   
+
+void rBrowseURL(const std::string& url)
 {
    // first see if any of our handlers want to take it
-   for (std::vector<module_context::RBrowseUrlHandler>::const_iterator 
+   for (std::vector<module_context::RBrowseUrlHandler>::const_iterator
             it = s_rBrowseUrlHandlers.begin();
             it != s_rBrowseUrlHandlers.end();
             ++it)
@@ -1026,15 +1028,15 @@ void rBrowseURL(const std::string& url)
       if ((*it)(url))
          return;
    }
-   
+
    // raise event to client
    rsession::clientEventQueue().add(browseUrlEvent(url));
 }
-   
+
 void rBrowseFile(const core::FilePath& filePath)
 {
    // see if any of our handlers want to take it
-   for (std::vector<module_context::RBrowseFileHandler>::const_iterator 
+   for (std::vector<module_context::RBrowseFileHandler>::const_iterator
             it = s_rBrowseFileHandlers.begin();
             it != s_rBrowseFileHandlers.end();
             ++it)
@@ -1060,13 +1062,13 @@ void rBrowseFile(const core::FilePath& filePath)
    }
 }
 
-void rShowHelp(const std::string& helpURL)   
+void rShowHelp(const std::string& helpURL)
 {
    ClientEvent showHelpEvent(kShowHelp, helpURL);
    rsession::clientEventQueue().add(showHelpEvent);
 }
-      
-void rShowMessage(const std::string& message)   
+
+void rShowMessage(const std::string& message)
 {
    ClientEvent event = showErrorMessageEvent("R Error", message);
    rsession::clientEventQueue().add(event);
@@ -1078,7 +1080,7 @@ void logExitEvent(const monitor::Event& precipitatingEvent)
    client().logEvent(precipitatingEvent);
    client().logEvent(Event(kSessionScope, kSessionExitEvent));
 }
-   
+
 void rSuspended(const rstudio::r::session::RSuspendOptions& options)
 {
    // log to monitor
@@ -1091,7 +1093,7 @@ void rSuspended(const rstudio::r::session::RSuspendOptions& options)
    // fire event
    module_context::onSuspended(options, &(persistentState().settings()));
 }
-   
+
 void rResumed()
 {
    module_context::onResumed(persistentState().settings());
@@ -1107,7 +1109,7 @@ bool rHandleUnsavedChanges()
    json::JsonRpcRequest request;
    bool succeeded = http_methods::waitForMethod(
                         kHandleUnsavedChangesCompleted,
-                        boost::bind(http_methods::waitForMethodInitFunction, 
+                        boost::bind(http_methods::waitForMethodInitFunction,
                                     event),
                         suspend::disallowSuspend,
                         &request);
@@ -1124,7 +1126,7 @@ bool rHandleUnsavedChanges()
 }
 
 void rQuit()
-{   
+{
    if (main_process::wasForked())
       return;
 
@@ -1156,7 +1158,7 @@ void rQuit()
    ClientEvent quitEvent(kQuit, jsonData);
    rsession::clientEventQueue().add(quitEvent);
 }
-   
+
 // NOTE: this event is never received on windows (because we can't
 // override suicide on windows)
 void rSuicide(const std::string& message)
@@ -1171,7 +1173,7 @@ void rSuicide(const std::string& message)
    // log the error if it was unexpected
    if (!message.empty())
       LOG_ERROR_MESSAGE("R SUICIDE: " + message);
-   
+
    // enque suicide event so the client knows
    ClientEvent suicideEvent(kSuicide, message);
    rsession::clientEventQueue().add(suicideEvent);
@@ -1223,7 +1225,7 @@ void rCleanup(bool terminatedNormally)
          // fire destroy event to modules
          module_context::events().onDestroyed();
       }
-      
+
       // clean up locks
       FileLock::cleanUp();
 
@@ -1264,8 +1266,8 @@ void rCleanup(bool terminatedNormally)
    }
    CATCH_UNEXPECTED_EXCEPTION
 
-}   
-   
+}
+
 void rSerialization(int action, const FilePath& targetPath)
 {
    json::Object serializationActionObject;
@@ -1275,12 +1277,12 @@ void rSerialization(int action, const FilePath& targetPath)
       serializationActionObject["targetPath"] =
                            module_context::createAliasedPath(targetPath);
    }
-   
+
    ClientEvent event(kSessionSerialization, serializationActionObject);
    rsession::clientEventQueue().add(event);
 }
 
-   
+
 void ensureRProfile()
 {
    // check if we need to create the profile (bail if we don't)
@@ -1292,7 +1294,7 @@ void ensureRProfile()
    if (!rProfilePath.exists() && !prefs::userState().autoCreatedProfile())
    {
       prefs::userState().setAutoCreatedProfile(true);
-      
+
       std::string p;
       p = "# .Rprofile -- commands to execute at the beginning of each R session\n"
           "#\n"
@@ -1301,13 +1303,13 @@ void ensureRProfile()
           "# NOTE: changes in this file won't be reflected until after you quit\n"
           "# and start a new session\n"
           "#\n\n";
-      
+
       Error error = writeStringToFile(rProfilePath, p);
       if (error)
          LOG_ERROR(error);
    }
 }
-      
+
 void ensurePublicFolder()
 {
    // check if we need to create the public folder (bail if we don't)
@@ -1433,7 +1435,7 @@ bool restoreWorkspaceOption()
       return false;
    else if (options().rRestoreWorkspace() == kRestoreWorkspaceYes)
       return true;
-   
+
    // allow project override
    const projects::ProjectContext& projContext = projects::projectContext();
    if (projContext.hasProject())
@@ -1492,15 +1494,15 @@ void loadCranRepos(const std::string& repos,
 
 // provide definition methods for rsession::module_context
 namespace rstudio {
-namespace session { 
+namespace session {
 namespace module_context {
-   
+
 Error registerRBrowseUrlHandler(const RBrowseUrlHandler& handler)
 {
    s_rBrowseUrlHandlers.push_back(handler);
    return Success();
 }
-   
+
 Error registerRBrowseFileHandler(const RBrowseFileHandler& handler)
 {
    s_rBrowseFileHandlers.push_back(handler);
@@ -1586,7 +1588,7 @@ int saveWorkspaceAction()
       return rstudio::r::session::kSaveActionNoSave;
    else if (action == kSaveWorkspaceAsk)
       return rstudio::r::session::kSaveActionAsk;
-   
+
    return rstudio::r::session::kSaveActionAsk;
 }
 
@@ -1722,7 +1724,7 @@ void initMonitorClient()
 } // anonymous namespace
 
 // run session
-int main (int argc, char * const argv[]) 
+int main (int argc, char * const argv[])
 {
    try
    {
@@ -1736,7 +1738,7 @@ int main (int argc, char * const argv[])
             boost::this_thread::sleep(boost::posix_time::seconds(sleepDuration));
          }
       }
-      
+
       // initialize log so we capture all errors including ones which occur
       // reading the config file (if we are in desktop mode then the log
       // will get re-initialized below)
@@ -1748,7 +1750,7 @@ int main (int argc, char * const argv[])
       Error error = core::system::ignoreSignal(core::system::SigPipe);
       if (error)
          LOG_ERROR(error);
-      
+
       // move to own process group
 #ifndef _WIN32
       ::setpgrp();
@@ -1763,13 +1765,13 @@ int main (int argc, char * const argv[])
       r_util::ensureLang();
 #endif
       s_printCharsetWarning = !ensureUtf8Charset();
-      
+
       // remove DYLD_INSERT_LIBRARIES variable (injected on macOS Desktop
       // to support restrictions with hardened runtime)
 #ifdef __APPLE__
       core::system::unsetenv("DYLD_INSERT_LIBRARIES");
 #endif
-      
+
       // fix up HOME / R_USER environment variables
       // (some users on Windows report these having trailing
       // slashes, which confuses a number of RStudio routines)
@@ -1784,7 +1786,7 @@ int main (int argc, char * const argv[])
                core::system::setenv(envvar, newVal);
          }
       }
-      
+
       // read program options
       std::ostringstream osWarnings;
       Options& options = rsession::options();
@@ -1796,6 +1798,16 @@ int main (int argc, char * const argv[])
 
       if (status.exit())
          return status.exitCode();
+
+      // print version if requested
+      if (options.version())
+      {
+         std::string gitCommit(RSTUDIO_GIT_COMMIT);
+         std::cout << RSTUDIO_VERSION ", \"" RSTUDIO_RELEASE_NAME "\" "
+                      "(" << gitCommit.substr(0, 8) << ", " RSTUDIO_BUILD_DATE ") "
+                      "for " RSTUDIO_PACKAGE_OS << std::endl;
+         return 0;
+      }
 
       // convenience flags for server and desktop mode
       bool desktopMode = options.programMode() == kSessionProgramModeDesktop;
@@ -1866,7 +1878,7 @@ int main (int argc, char * const argv[])
                safe_convert::numberToString(rstudio::r::options::kDefaultWidth));
 
       // set the rstudio user identity environment variable (can differ from
-      // username in debug configurations). this is provided so that 
+      // username in debug configurations). this is provided so that
       // rpostback knows what local stream to connect back to
       core::system::setenv(kRStudioUserIdentity, options.userIdentity());
       if (desktopMode)
@@ -1888,7 +1900,7 @@ int main (int argc, char * const argv[])
       {
          core::system::setenv(kRSessionStandalonePortNumber, options.wwwPort());
       }
-           
+
       // ensure we aren't being started as a low (priviliged) account
       if (serverMode &&
           !options.verifyInstallation() &&
@@ -2057,7 +2069,7 @@ int main (int argc, char * const argv[])
       // we've gotten through startup so let's log a start event
       using namespace monitor;
       client().logEvent(Event(kSessionScope, kSessionStartEvent));
-      
+
       // install home and doc dir overrides if requested (for debugger mode)
       if (!options.rHomeDirOverride().empty())
          core::system::setenv("R_HOME", options.rHomeDirOverride());
@@ -2162,7 +2174,8 @@ int main (int argc, char * const argv[])
       rOptions.packratEnabled = persistentState().settings().getBool("packratEnabled");
       rOptions.sessionScope = options.sessionScope();
       rOptions.runScript = options.runScript();
-      
+      rOptions.suspendOnIncompleteStatement = options.suspendOnIncompleteStatement();
+
       // r callbacks
       rstudio::r::session::RCallbacks rCallbacks;
       rCallbacks.init = rInit;
@@ -2197,15 +2210,12 @@ int main (int argc, char * const argv[])
           // return failure
           return sessionExitFailure(error, ERROR_LOCATION);
       }
-      
+
       // return success for good form
       return EXIT_SUCCESS;
    }
    CATCH_UNEXPECTED_EXCEPTION
-   
+
    // if we got this far we had an unexpected exception
    return EXIT_FAILURE;
 }
-
-
-

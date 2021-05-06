@@ -28,4 +28,6 @@ public interface RStudioAPIServerOperations extends CryptoServerOperations
                            boolean remember,
                            boolean changed,
                            ServerRequestCallback<Void> requestCallback);
+
+   void recordCommandExecution(String commandId, ServerRequestCallback<Void> requestCallback);
 }

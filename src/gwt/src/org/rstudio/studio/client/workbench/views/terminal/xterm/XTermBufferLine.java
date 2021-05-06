@@ -61,4 +61,3 @@ public class XTermBufferLine
    public native String translateToString(boolean trimRight, int startColumn, int endColumn);
    public native String translateToString();
 }
-

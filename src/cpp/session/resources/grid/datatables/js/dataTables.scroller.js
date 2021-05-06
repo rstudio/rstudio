@@ -308,6 +308,11 @@ Scroller.prototype = /** @lends Scroller.prototype */{
 	"fnFirstAndLastVisibleCells": function()
 	{
 		var scrollBody = document.getElementsByClassName("dataTables_scrollBody")[0];
+
+		// this may have been called prematurely
+		if (!scrollBody)
+			return [1,1];
+
 		var scrollBodyRect = scrollBody.getBoundingClientRect();
 
 		// we shift our selection x over a few pixels due to some invisible divs dataTables adds

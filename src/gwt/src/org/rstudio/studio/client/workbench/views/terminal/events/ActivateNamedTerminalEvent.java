@@ -32,10 +32,10 @@ public class ActivateNamedTerminalEvent extends CrossWindowEvent<Handler>
    public static class Data extends JavaScriptObject
    {
       protected Data() {}
-      
+
       public final native String getId() /*-{ return this["id"]; }-*/;
    }
-  
+
    public ActivateNamedTerminalEvent()
    {
    }
@@ -44,7 +44,7 @@ public class ActivateNamedTerminalEvent extends CrossWindowEvent<Handler>
    {
       this(data.getId());
    }
-   
+
    public ActivateNamedTerminalEvent(String id)
    {
       id_ = id;

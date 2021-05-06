@@ -81,4 +81,6 @@ public interface EnvironmentServerOperations
    void isFunctionMasked(String functionName,
                          String packageName,
                          ServerRequestCallback<Boolean> requestCallback);
+
+   void getMemoryUsageReport(ServerRequestCallback<MemoryUsageReport> requestCallback);
 }

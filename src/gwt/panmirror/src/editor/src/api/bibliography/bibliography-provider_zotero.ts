@@ -28,6 +28,7 @@ import {
 import { EditorUI } from '../ui';
 import { CSL } from '../csl';
 import { toBibTeX } from './bibDB';
+import { Editor } from '../../editor/editor';
 
 export const kZoteroProviderKey = '2509FBBE-5BB0-44C4-B119-6083A81ED673';
 
@@ -50,6 +51,7 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
   public requiresWritable: boolean = true;
 
   public async load(
+    _ui: EditorUI,
     docPath: string,
     _resourcePath: string,
     yamlBlocks: ParsedYaml[],

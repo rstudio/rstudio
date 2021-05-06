@@ -354,6 +354,11 @@
 })
 
 .rs.addFunction("odbcBundleReadIni", function(odbcinstPath) {
+
+   # return nothing if file doesn't exist
+   if (!file.exists(odbcinstPath))
+      return(list())
+
    lines <- readLines(odbcinstPath)
    data <- list()
    
@@ -361,7 +366,7 @@
    
    for (line in lines) {
       # Is header?
-      if (grepl(" *\\[[^]]+\\] *", line)) {
+      if (grepl("^ *\\[[^]]+\\] *", line)) {
          currentDriver <- gsub("^ *\\[|\\] *", "", line)
          data[[currentDriver]] <- ""
       }
