@@ -143,6 +143,8 @@ def limit_builds(containers) {
 def prepareWorkspace(){ // accessory to clean workspace and checkout
   step([$class: 'WsCleanup'])
   checkout scm
+  // record the commit for invoking downstream builds
+  rstudioBuildCommit = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
   sh 'git reset --hard && git clean -ffdx' // lifted from rstudio/connect
 }
 
@@ -151,6 +153,12 @@ rstudioVersionMajor  = 0
 rstudioVersionMinor  = 0
 rstudioVersionPatch  = 0
 rstudioVersionSuffix = 0
+rstudioBuildCommit   = ""
+
+// compute release branch by parsing the job name (env.GIT_BRANCH should work here but doesn't appear to), e.g.
+// "IDE/pro-pipeline/v4.3" => "v4.3"
+branchComponents = env.JOB_NAME.split("/")
+rstudioReleaseBranch = branchComponents[branchComponents.size() - 1]
 
 def trigger_external_build(build_name, wait = false) {
   // triggers downstream job passing along the important params from this build
@@ -158,6 +166,8 @@ def trigger_external_build(build_name, wait = false) {
                                                   string(name: 'RSTUDIO_VERSION_MINOR',  value: "${rstudioVersionMinor}"),
                                                   string(name: 'RSTUDIO_VERSION_PATCH',  value: "${rstudioVersionPatch}"),
                                                   string(name: 'RSTUDIO_VERSION_SUFFIX', value: "${rstudioVersionSuffix}"),
+                                                  string(name: 'GIT_REVISION', value: "${rstudioBuildCommit}"),
+                                                  string(name: 'BRANCH_NAME', value: "${rstudioReleaseBranch}"),
                                                   string(name: 'SLACK_CHANNEL', value: SLACK_CHANNEL)]
 }
 
@@ -375,32 +385,26 @@ try {
         }
 
         // trigger macos build if we're in open-source repo
-        if (env.JOB_NAME == 'IDE/open-source-pipeline/master') {
-          trigger_external_build('IDE/macos-v1.4')
-        }
-
-        else if (env.JOB_NAME == 'IDE/open-source-pipeline/v1.3') {
-          trigger_external_build('IDE/macos-v1.3')
+        if (env.JOB_NAME.startsWith('IDE/open-source-pipeline')) {
+          trigger_external_build('IDE/macos-pipeline')
         }
         parallel parallel_containers
 
-        if (env.JOB_NAME == 'IDE/open-source-pipeline/master') {
+        if (env.JOB_NAME.startsWith('IDE/open-source-pipeline')) {
           trigger_external_build('IDE/qa-opensource-automation')
         }
 
         // trigger downstream pro artifact builds if we're finished building
         // the pro variants
-        // additionally, run qa-autotest against the version we've just built
-        if (env.JOB_NAME == 'IDE/pro-pipeline/master') {
-          trigger_external_build('IDE/pro-docs-v1.4')
-          trigger_external_build('IDE/launcher-docs-v1.4')
-          trigger_external_build('IDE/pro-desktop-docs-v1.4')
-          trigger_external_build('IDE/qa-autotest')
+        // additionally, run qa-automation against the version we've just built
+        if (env.JOB_NAME.startsWith('IDE/pro-pipeline')) {
+          trigger_external_build('IDE/pro-docs-pipeline')
+          trigger_external_build('IDE/launcher-docs-pipeline')
+          trigger_external_build('IDE/pro-desktop-docs-pipeline')
           trigger_external_build('IDE/qa-automation')
-          trigger_external_build('IDE/monitor-v1.4')
-          trigger_external_build('IDE/macos-v1.4-pro')
-          trigger_external_build('IDE/windows-v1.4-pro')
-          trigger_external_build('IDE/session-v1.4')
+          trigger_external_build('IDE/monitor-pipeline')
+          trigger_external_build('IDE/macos-pro-pipeline')
+          trigger_external_build('IDE/session-pipeline')
         }
 
         slackSend channel: params.get('SLACK_CHANNEL', '#ide-builds'), color: 'good', message: "${messagePrefix} passed (${currentBuild.result})"
