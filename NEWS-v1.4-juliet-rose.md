@@ -147,3 +147,4 @@
 * Fixed error in visual mode spellcheck where underline would disappear when hitting backspace (#9187)
 * Fixed an issue where the Kubernetes Launcher can sometimes get in a state where communication with Kubernetes hangs until a restart (Pro #2548)
 * Fixed an issue where Kubernetes Launcher services could sometimes leak and never be cleaned up (Pro #2548)
+* Fixed an issue where login page could fail intermittently with slow network connections (Pro #2551)
