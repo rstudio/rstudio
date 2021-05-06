@@ -575,7 +575,7 @@
 {
    . <- environment()
    
-   if (inherits(object, "python.builtin.object"))
+   if (inherits(.$object, "python.builtin.object"))
    {
       attributes <- reticulate::dict()
       

@@ -37,6 +37,7 @@
 * Added new `rstudio-server reload` command to reload some server configuration settings without a restart (Pro #2139)
 * Added `pool-size` option in `database.conf` to control size of database connection pool; avoid creating a large pool on systems with many CPUs (Pro #2494)
 * Display hidden characters in filenames when logging config files with `run-diagnostics` (Pro #2509)
+* Add support for SSL communication between nodes when using load balancing (Pro #2565)
 
 ### Visual Studio Code
 
@@ -144,3 +145,5 @@
 * Fixed issue where uploading a .zip archive when unzip was not on PATH would cause a cryptic error. (#9151)
 * Errors that occur when R packages update the Connections pane are now better handled and reported (#9219)
 * Fixed error in visual mode spellcheck where underline would disappear when hitting backspace (#9187)
+* Fixed an issue where the Kubernetes Launcher can sometimes get in a state where communication with Kubernetes hangs until a restart (Pro #2548)
+* Fixed an issue where Kubernetes Launcher services could sometimes leak and never be cleaned up (Pro #2548)
