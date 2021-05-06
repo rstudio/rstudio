@@ -292,6 +292,8 @@ bool extractCommentHeader(const std::string& contents,
 
 std::string extractIndent(const std::string& line);
 
+std::string formatDouble(const double d, const int precision);
+
 } // namespace string_utils
 
 // wrappers for functions in <cctype>, as those functions normally

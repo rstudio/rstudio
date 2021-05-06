@@ -791,6 +791,14 @@ std::string extractIndent(const std::string& line)
    return line.substr(0, index);
 }
 
+std::string formatDouble(const double d, const int precision)
+{
+   std::stringstream out;
+   out.precision(precision);
+   out << d;
+   return out.str();
+}
+
 } // namespace string_utils
 } // namespace core 
 } // namespace rstudio

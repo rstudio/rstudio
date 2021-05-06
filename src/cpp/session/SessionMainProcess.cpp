@@ -21,6 +21,8 @@
 
 #include <session/SessionModuleContext.hpp>
 
+#include <r/RExec.hpp>
+
 namespace rstudio {
 namespace session {
 namespace main_process {
@@ -29,6 +31,8 @@ namespace {
 // fork state
 boost::thread::id s_mainThreadId;
 bool s_wasForked = false;
+
+boost::thread_specific_ptr<bool> t_isMainThread;
 
 } // anonymous namespace
 
@@ -75,9 +79,19 @@ void setupForkHandlers()
 }
 #endif
 
+bool isMainThread()
+{
+   return t_isMainThread.get();
+}
+
 void initThreadId()
 {
    s_mainThreadId = boost::this_thread::get_id();
+   t_isMainThread.reset(new bool{true});
+
+   // Give the R exec library a function it can call to validate the main thread for better diagnostics when
+   // R functions are run on the wrong thread
+   rstudio::r::exec::initMainThread(isMainThread);
 }
 
 bool haveActiveChildren()

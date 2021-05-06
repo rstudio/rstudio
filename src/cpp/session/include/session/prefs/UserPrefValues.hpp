@@ -387,6 +387,7 @@ namespace prefs {
 #define kShowMemoryUsage "show_memory_usage"
 #define kMemoryQueryIntervalSeconds "memory_query_interval_seconds"
 #define kTerminalPythonIntegration "terminal_python_integration"
+#define kSessionProtocolDebug "session_protocol_debug"
 
 class UserPrefValues: public Preferences
 {
@@ -1717,6 +1718,12 @@ public:
     */
    bool terminalPythonIntegration();
    core::Error setTerminalPythonIntegration(bool val);
+
+   /**
+    * Enable session protocol debug logging showing all session requests and events
+    */
+   bool sessionProtocolDebug();
+   core::Error setSessionProtocolDebug(bool val);
 
 };
 

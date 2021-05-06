@@ -116,6 +116,7 @@
 #include "SessionMainProcess.hpp"
 #include "SessionRpc.hpp"
 #include "SessionSuspend.hpp"
+#include "SessionOfflineService.hpp"
 
 #include <session/SessionRUtil.hpp>
 #include <session/SessionPackageProvidedExtension.hpp>
@@ -375,6 +376,11 @@ Error startClientEventService()
    return clientEventService().start(rsession::persistentState().activeClientId());
 }
 
+Error startOfflineService()
+{
+   return offlineService().start();
+}
+
 Error registerSignalHandlers()
 {
    using boost::bind;
@@ -518,6 +524,8 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       // console processes
       (console_process::initialize)
 
+      (http_methods::initialize)
+
       // r utils
       (r_utils::initialize)
 
@@ -612,6 +620,8 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       // R code
       (bind(sourceModuleRFile, "SessionCodeTools.R"))
       (bind(sourceModuleRFile, "SessionPatches.R"))
+
+      (startOfflineService)
 
       // unsupported functions
       (bind(rstudio::r::function_hook::registerUnsupported, "bug.report", "utils"))

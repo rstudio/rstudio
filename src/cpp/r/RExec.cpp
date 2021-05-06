@@ -50,6 +50,8 @@ namespace {
 
 bool s_wasInterrupted;
 
+MainThreadFunction s_mainThreadFunction;
+
 // create a scope for disabling any installed error handlers (e.g. recover)
 // we need to do this so that recover isn't invoked while we are running
 // R code within an r::exec scope -- when the user presses 0 to exit
@@ -132,7 +134,13 @@ Error evaluateExpressionsUnsafe(SEXP expr,
 {
    // detect if an error occurred (only relevant for EvalTry)
    int errorOccurred = 0;
-   
+
+   if (!isMainThread())
+   {
+      LOG_ERROR_MESSAGE("evaluateExpression called from thread other than main");
+      return rCodeExecutionError("Attempt to eval R on thread other than main", ERROR_LOCATION);
+   }
+
    // if we have an entire expression list, evaluate its contents one-by-one 
    // and return only the last one
    if (TYPEOF(expr) == EXPRSXP) 
@@ -229,6 +237,11 @@ void SEXPTopLevelExec(void *data)
    
 Error executeSafely(boost::function<void()> function)
 {
+   if (!isMainThread())
+   {
+      LOG_ERROR_MESSAGE("executeSafely called from thread other than main");
+      return rCodeExecutionError("execute function called from thread other than main", ERROR_LOCATION);
+   }
    // disable custom error handlers while we execute code
    DisableErrorHandlerScope disableErrorHandler;
    DisableDebugScope disableStepInto(R_GlobalEnv);
@@ -308,6 +321,11 @@ Error evaluateString(const std::string& str,
                      sexp::Protect* pProtect,
                      EvalFlags flags)
 {
+   if (!isMainThread())
+   {
+      LOG_ERROR_MESSAGE("evaluateString called from thread other than main: " + str);
+      return rCodeExecutionError("Attempt to eval R off of main thread", ERROR_LOCATION);
+   }
    // refresh source if necessary (no-op in production)
    r::sourceManager().reloadIfNecessary();
    
@@ -355,6 +373,20 @@ Error evaluateString(const std::string& str,
 bool atTopLevelContext() 
 {
    return context::RCntxt::begin()->callflag() == CTXT_TOPLEVEL;
+}
+
+// Returns true for all threads unless initMainThread was called from the main one
+bool isMainThread()
+{
+   if (!s_mainThreadFunction)
+      return true; // Not determined
+   return s_mainThreadFunction();
+}
+
+// Call this from the main thread to enable main-thread diagnostic checks.
+void initMainThread(MainThreadFunction fun)
+{
+   s_mainThreadFunction = fun;
 }
 
 RFunction::RFunction(SEXP functionSEXP)
@@ -431,7 +463,12 @@ Error RFunction::call(SEXP evalNS, bool safely, SEXP* pResultSEXP,
          error.addProperty("symbol", functionName_);
       return error;
    }
-   
+   if (!isMainThread())
+   {
+      LOG_ERROR_MESSAGE("Attempt to call R function: " + functionName_ + " on thread other than main");
+      return rCodeExecutionError("Attempt to call R function on thread other than main", ERROR_LOCATION);
+   }
+
    // create the call object (LANGSXP) with the correct number of elements
    SEXP callSEXP;
    pProtect->add(callSEXP = Rf_allocVector(LANGSXP, 1 + params_.size()));

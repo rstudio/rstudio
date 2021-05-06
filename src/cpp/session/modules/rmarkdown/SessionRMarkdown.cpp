@@ -75,6 +75,9 @@ namespace session {
 
 namespace {
 
+bool s_rmarkdownAvailable;
+bool s_rmarkdownAvailableInited;
+
 #ifdef _WIN32
 
 // TODO: promote to StringUtils?
@@ -153,6 +156,25 @@ Error detectWebsiteOutputDir(const std::string& siteDir,
 }
 
 std::string s_websiteOutputDir;
+
+bool haveMarkdownToHTMLOption()
+{
+   SEXP markdownToHTMLOption = r::options::getOption("rstudio.markdownToHTML");
+   return !r::sexp::isNull(markdownToHTMLOption);
+}
+
+void initRmarkdownPackageAvailable()
+{
+   s_rmarkdownAvailableInited = true;
+   if (!haveMarkdownToHTMLOption())
+   {
+      s_rmarkdownAvailable = r::util::hasRequiredVersion("3.0");
+   }
+   else
+   {
+      s_rmarkdownAvailable = false;
+   }
+}
 
 void initWebsiteOutputDir()
 {
@@ -953,11 +975,6 @@ void initEnvironment()
       LOG_ERROR(error);
 }
 
-bool haveMarkdownToHTMLOption()
-{
-   SEXP markdownToHTMLOption = r::options::getOption("rstudio.markdownToHTML");
-   return !r::sexp::isNull(markdownToHTMLOption);
-}
 
 // when the RMarkdown package is installed, give .Rmd files the extended type
 // "rmarkdown", unless there is a marker that indicates we should
@@ -1552,14 +1569,17 @@ bool pptAvailable()
 
 bool rmarkdownPackageAvailable()
 {
-   if (!haveMarkdownToHTMLOption())
+   if (!s_rmarkdownAvailableInited)
    {
-      return r::util::hasRequiredVersion("3.0");
+      if (!r::exec::isMainThread())
+      {
+         LOG_WARNING_MESSAGE(" Accessing rmarkdownPackageAvailable() from thread other than main");
+         return false;
+      }
+      initRmarkdownPackageAvailable();
    }
-   else
-   {
-      return false;
-   }
+
+   return s_rmarkdownAvailable;
 }
 
 bool isSiteProject(const std::string& site)

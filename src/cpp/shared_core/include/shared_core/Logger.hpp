@@ -108,6 +108,13 @@ void addLogDestination(const std::shared_ptr<ILogDestination>& in_destination);
 void addLogDestination(const std::shared_ptr<ILogDestination>& in_destination, const std::string& in_section);
 
 /**
+ * @brief Returns the reference to a default file log destination or an empty shared_ptr if there isn't one
+ *
+ * @return shared_ptr to the FileLogDestination.
+ */
+std::shared_ptr<ILogDestination> getFileLogDestination();
+
+/**
  * @brief Replaces logging delimiters with ' ' in the specified string.
  *
  * @param in_toClean    The string from which to clean logging delimiters.
