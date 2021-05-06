@@ -120,6 +120,7 @@ set(SESSION_SOURCE_FILES
    SessionUriHandlers.cpp
    SessionUrlPorts.cpp
    SessionWorkerContext.cpp
+   SessionOfflineService.cpp
    http/SessionHttpConnectionQueue.cpp
    http/SessionHttpConnectionUtils.cpp
    modules/RStudioAPI.cpp

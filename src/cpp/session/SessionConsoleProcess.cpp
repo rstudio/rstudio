@@ -27,6 +27,8 @@
 #include "modules/SessionWorkbench.hpp"
 #include "SessionConsoleProcessTable.hpp"
 
+#include "modules/SessionReticulate.hpp"
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -818,21 +820,12 @@ bool augmentTerminalProcessPython(ConsoleProcessPtr cp)
       return false;
    
    // find currently-configured version of Python
-   std::string reticulatePython = core::system::getenv("RETICULATE_PYTHON");
-   if (reticulatePython.empty())
+   std::string reticulatePython = modules::reticulate::reticulatePython();
+   if (!reticulatePython.empty())
    {
-      Error error = r::exec::RFunction(".rs.inferReticulatePython")
-            .call(&reticulatePython);
-
-      if (error)
-         LOG_ERROR(error);
-
-      if (!reticulatePython.empty())
-      {
-         cp->setenv("RETICULATE_PYTHON", reticulatePython);
-      }
+      cp->setenv("RETICULATE_PYTHON", reticulatePython);
    }
-   
+
    // return true if we have a configured version of python
    // (indicating that we want terminal hooks to be installed)
    return !reticulatePython.empty();

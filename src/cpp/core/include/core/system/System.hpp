@@ -174,6 +174,8 @@ void initializeLogConfigReload();
 Error initLog();
 Error reinitLog();
 
+void initFileLogDestination(const log::LogLevel level, const FilePath defaultLogDir);
+
 // exit
 int exitFailure(const Error& error, const ErrorLocation& loggedFromLocation);
 int exitFailure(const std::string& errMsg,

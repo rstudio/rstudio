@@ -61,7 +61,8 @@ public:
    HttpConnectionImpl(boost::asio::io_service& ioService,
                       const HeadersParsedHandler& headersParsed,
                       const Handler& handler)
-      : socket_(ioService), headersParsedHandler_(headersParsed), handler_(handler)
+      : socket_(ioService), headersParsedHandler_(headersParsed), handler_(handler),
+        receivedTime_(std::chrono::steady_clock::now())
    {
    }
 
@@ -127,6 +128,23 @@ public:
       CATCH_UNEXPECTED_EXCEPTION
    }
 
+   virtual void sendJsonRpcResponse(
+           core::json::JsonRpcResponse& jsonRpcResponse)
+   {
+      // setup response
+      core::http::Response response;
+
+      // automagic gzip support
+      if (request().acceptsEncoding(core::http::kGzipEncoding))
+         response.setContentEncoding(core::http::kGzipEncoding);
+
+      // set response
+      core::json::setJsonRpcResponse(jsonRpcResponse, &response);
+
+      // send the response
+      sendResponse(response);
+   }
+
    // close (occurs automatically after writeResponse, here in case it
    // need to be closed in other circumstances
    virtual void close()
@@ -169,6 +187,15 @@ public:
       requestParser_.setFormHandler(formHandler);
    }
 
+   virtual bool isAsyncRpc() const
+   {
+      return false;
+   }
+
+   virtual std::chrono::steady_clock::time_point receivedTime() const
+   {
+      return receivedTime_;
+   }
 
 private:
 
@@ -291,6 +318,7 @@ private:
    std::string requestId_;
    HeadersParsedHandler headersParsedHandler_;
    Handler handler_;
+   std::chrono::steady_clock::time_point receivedTime_;
 };
 
 } // namespace session

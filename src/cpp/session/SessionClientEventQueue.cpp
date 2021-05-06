@@ -24,6 +24,8 @@
 
 #include <r/session/RConsoleActions.hpp>
 
+#include "SessionHttpMethods.hpp"
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -71,7 +73,14 @@ bool ClientEventQueue::setActiveConsole(const std::string& console)
 }
 
 void ClientEventQueue::add(const ClientEvent& event)
-{ 
+{
+   if (http_methods::protocolDebugEnabled() && event.type() != client_events::kConsoleWriteError)
+   {
+      if (event.data().getType() == json::Type::STRING)
+         LOG_DEBUG_MESSAGE("Queued event: " + event.typeName() + ": " + event.data().getString());
+      else
+         LOG_DEBUG_MESSAGE("Queued event: " + event.typeName());
+   }
    LOCK_MUTEX(*pMutex_)
    {
       // console output is batched up for compactness/efficiency.
@@ -130,10 +139,10 @@ void ClientEventQueue::remove(std::vector<ClientEvent>* pEvents)
    
       // clear pending events
       pendingEvents_.clear();
-   } 
+   }
    END_LOCK_MUTEX
 }
-   
+
 void ClientEventQueue::clear()
 {
    LOCK_MUTEX(*pMutex_)

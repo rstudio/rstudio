@@ -3135,6 +3135,18 @@ public class UserPrefsAccessor extends Prefs
          true);
    }
 
+   /**
+    * Enable session protocol debug logging showing all session requests and events
+    */
+   public PrefValue<Boolean> sessionProtocolDebug()
+   {
+      return bool(
+         "session_protocol_debug",
+         "Session protocol debug logging", 
+         "Enable session protocol debug logging showing all session requests and events", 
+         false);
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -3579,6 +3591,8 @@ public class UserPrefsAccessor extends Prefs
          memoryQueryIntervalSeconds().setValue(layer, source.getInteger("memory_query_interval_seconds"));
       if (source.hasKey("terminal_python_integration"))
          terminalPythonIntegration().setValue(layer, source.getBool("terminal_python_integration"));
+      if (source.hasKey("session_protocol_debug"))
+         sessionProtocolDebug().setValue(layer, source.getBool("session_protocol_debug"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -3804,6 +3818,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(showMemoryUsage());
       prefs.add(memoryQueryIntervalSeconds());
       prefs.add(terminalPythonIntegration());
+      prefs.add(sessionProtocolDebug());
       return prefs;
    }
    

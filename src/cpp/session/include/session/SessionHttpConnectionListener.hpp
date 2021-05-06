@@ -99,6 +99,8 @@ public:
    // connection queues
    virtual HttpConnectionQueue& mainConnectionQueue() = 0;
    virtual HttpConnectionQueue& eventsConnectionQueue() = 0;
+
+   virtual bool eventsActive() = 0;
 };
 
 } // namespace session

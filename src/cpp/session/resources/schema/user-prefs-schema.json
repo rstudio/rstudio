@@ -1504,6 +1504,12 @@
             "title": "Enable terminal Python integration",
             "type": "boolean",
             "default": true
+        },
+        "session_protocol_debug": {
+            "description": "Enable session protocol debug logging showing all session requests and events",
+            "title": "Session protocol debug logging",
+            "type": "boolean",
+            "default": false
         }
     }
 }

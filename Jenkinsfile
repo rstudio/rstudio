@@ -391,7 +391,7 @@ try {
 
         parallel parallel_containers
 
-        if (env.JOB_NAME == 'IDE/open-source-pipeline/master') {
+        if (env.JOB_NAME == 'IDE/open-source-pipeline/main') {
           trigger_external_build('IDE/qa-opensource-automation')
         }
 

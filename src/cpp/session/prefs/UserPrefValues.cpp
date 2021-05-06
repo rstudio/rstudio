@@ -2896,6 +2896,19 @@ core::Error UserPrefValues::setTerminalPythonIntegration(bool val)
    return writePref("terminal_python_integration", val);
 }
 
+/**
+ * Enable session protocol debug logging showing all session requests and events
+ */
+bool UserPrefValues::sessionProtocolDebug()
+{
+   return readPref<bool>("session_protocol_debug");
+}
+
+core::Error UserPrefValues::setSessionProtocolDebug(bool val)
+{
+   return writePref("session_protocol_debug", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -3120,6 +3133,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kShowMemoryUsage,
       kMemoryQueryIntervalSeconds,
       kTerminalPythonIntegration,
+      kSessionProtocolDebug,
    });
 }
    

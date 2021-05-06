@@ -312,7 +312,7 @@ void onDetectChanges(module_context::ChangeSource source)
    // check for libPaths changes if we're evaluating a change from the REPL at
    // the top-level (i.e. not while debugging, as we don't want to mutate any
    // state that might be under inspection)
-   if (source == module_context::ChangeSourceREPL &&
+   if (source == module_context::ChangeSourceREPL && r::exec::isMainThread() &&
        r::exec::atTopLevelContext())
       detectLibPathsChanges();
 }

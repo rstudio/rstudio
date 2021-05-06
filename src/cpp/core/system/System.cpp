@@ -92,6 +92,8 @@ Error findProgramOnPath(const std::string& program,
       if (!path.empty())
       {
          FilePath candidatePath = FilePath(path).completeChildPath(program);
+         // TODO: check if program is executable - perhaps use boost::process::search_path() as it does this test for both
+         // unix and windows systems but right now we don't include the process module in our boost library
          if (candidatePath.exists())
          {
             *pProgramPath = candidatePath;
@@ -256,6 +258,7 @@ void initializeLogWriters()
    for (const std::string& loggerName : logSections)
       initializeLogWriter(loggerName);
 }
+
 } // anonymous namespace
 
 log::LoggerType loggerType(const std::string& in_sectionName)
@@ -356,6 +359,20 @@ Error initializeLog(const std::string& programIdentity,
       initializeLogConfigReload();
 
    return Success();
+}
+
+void initFileLogDestination(log::LogLevel level, FilePath defaultLogDir)
+{
+   std::shared_ptr<log::ILogDestination> fileLog = log::getFileLogDestination();
+   if (!fileLog)
+   {
+      log::FileLogOptions defaultOptions(defaultLogDir);
+      log::addLogDestination(std::shared_ptr<core::log::ILogDestination>(
+              new log::FileLogDestination(getNextFileLogId(),
+                                          level,
+                                          s_programIdentity,
+                                          defaultOptions)));
+   }
 }
 
 void log(log::LogLevel logLevel,

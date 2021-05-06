@@ -40,6 +40,34 @@ namespace {
 // has the Python session been initialized by reticulate yet?
 bool s_pythonInitialized = false;
 
+std::string s_reticulatePython;
+bool s_reticulatePythonInited = false;
+
+void updateReticulatePython(bool forInit)
+{
+   if (!forInit && s_pythonInitialized)
+      return;
+
+   s_reticulatePython = core::system::getenv("RETICULATE_PYTHON");
+   if (!r::exec::isMainThread())
+   {
+      if (!s_reticulatePythonInited)
+         LOG_WARNING_MESSAGE("reticulatePython needed for first time off main thread - value may not be accurate");
+   }
+   else
+   {
+      if (s_reticulatePython.empty())
+      {
+         Error error = r::exec::RFunction(".rs.inferReticulatePython")
+                 .call(&s_reticulatePython);
+
+         if (error)
+            LOG_ERROR(error);
+      }
+      s_reticulatePythonInited = true;
+   }
+}
+
 SEXP rs_reticulateInitialized()
 {
    // set initialized flag
@@ -52,6 +80,9 @@ SEXP rs_reticulateInitialized()
    // interrupts are still handled by R as expected
    module_context::initializeConsoleCtrlHandler();
 
+   // cache the final path to python for offline use
+   updateReticulatePython(true);
+
    return R_NilValue;
 }
 
@@ -60,6 +91,9 @@ void onDeferredInit(bool)
    Error error = r::exec::RFunction(".rs.reticulate.initialize").call();
    if (error)
       LOG_ERROR(error);
+
+   // update python path after all R init scripts
+   updateReticulatePython(false);
 }
 
 } // end anonymous namespace
@@ -76,6 +110,13 @@ bool isReplActive()
    if (error)
       LOG_ERROR(error);
    return active;
+}
+
+
+std::string reticulatePython()
+{
+   updateReticulatePython(false);
+   return s_reticulatePython;
 }
 
 Error initialize()
