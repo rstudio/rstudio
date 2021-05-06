@@ -37,6 +37,7 @@
 * Added new `rstudio-server reload` command to reload some server configuration settings without a restart (Pro #2139)
 * Added `pool-size` option in `database.conf` to control size of database connection pool; avoid creating a large pool on systems with many CPUs (Pro #2494)
 * Display hidden characters in filenames when logging config files with `run-diagnostics` (Pro #2509)
+* Add support for SSL communication between nodes when using load balancing (Pro #2565)
 
 ### Visual Studio Code
 
