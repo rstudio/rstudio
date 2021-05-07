@@ -186,13 +186,18 @@ core::Error ScriptJob::replay()
    }
 
    // reset the underlying job
-   job_->reset();
+   jobs::setJobStatus(job_, "Re-running");
+   error = job_->reset();
+   if (error)
+   {
+      return error;
+   }
 
    // return job to idle state and reset progress
    setJobState(job_, JobState::JobIdle);
    setJobProgress(job_, 0);
 
-   // job is now reset, start it again
+   // job is now reset, run the script again
    start();
 
    return Success();
