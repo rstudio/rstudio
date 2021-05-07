@@ -39,7 +39,7 @@
 * Display hidden characters in filenames when logging config files with `run-diagnostics` (Pro #2509)
 * Add support for SSL communication between nodes when using load balancing (Pro #2565)
 
-### Visual Studio Code
+### VS Code
 
 * Visual Studio Code is fully supported on RStudio Workbench and no longer in beta
 * Added support for Dash, Streamlit, and local web development servers in VS Code sessions
