@@ -13,7 +13,7 @@ pipeline {
       string(name: 'RSTUDIO_VERSION_MINOR',  defaultValue: '1', description: 'RStudio Minor Version')
       string(name: 'RSTUDIO_VERSION_PATCH',  defaultValue: '0', description: 'RStudio Patch Version')
       string(name: 'RSTUDIO_VERSION_SUFFIX', defaultValue: '0', description: 'RStudio Pro Suffix Version')
-      gitParameter(name: 'GIT_REVISION', type; 'PT_REVISION', defaultValue: 'main', description: 'Git revision to build')
+      string(name: 'GIT_REVISION', defaultValue: 'main', description: 'Git revision to build')
       string(name: 'BRANCH_NAME', defaultValue: 'origin/master', description: 'Branch name to build')
       string(name: 'SLACK_CHANNEL', defaultValue: '#ide-builds', description: 'Slack channel to publish build message.')
   }
