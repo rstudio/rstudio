@@ -71,13 +71,14 @@ module.exports = class Main {
     // attempt to detect R environment
     // let ldScriptPath = path.join(scriptsPath, '../session/r-ldpath');
 
-    // whole bunch of code...
+    // whole bunch of code..., hardcoded for prototype
     if (process.platform === 'darwin') {
-      process.env.R_HOME = '/Library/Frameworks/R.framework/Resources';
-      process.env.R_SHARE_DIR = '/Library/Frameworks/R.framework/Resources/share';
-      process.env.R_INCLUDE_DIR = '/Library/Frameworks/R.framework/Resources/include';
-      process.env.R_DOC_DIR = '/Library/Frameworks/R.framework/Resources/doc';
-      process.env.DYLD_FALLBACK_LIBRARY_PATH = '/Library/Frameworks/R.framework/Resources/lib:/Users/gary/lib:/usr/local/lib:/usr/lib:::/lib:/Library/Java/JavaVirtualMachines/jdk-11.0.1.jdk/Contents/Home/lib/server';
+      let rHome = '/usr/local/Cellar/r/4.0.5/lib/R';
+      process.env.R_HOME = rHome;
+      process.env.R_SHARE_DIR = `${rHome}/share`;
+      process.env.R_INCLUDE_DIR = `${rHome}/include`;
+      process.env.R_DOC_DIR = `${rHome}/doc`;
+      process.env.DYLD_FALLBACK_LIBRARY_PATH = `${rHome}/lib:/Users/gary/lib:/usr/local/lib:/usr/lib:::/lib:/Library/Java/JavaVirtualMachines/jdk-11.0.1.jdk/Contents/Home/lib/server`;
       process.env.RS_CRASH_HANDLER_PATH = '/opt/rstudio-tools/crashpad/crashpad/out/Default/crashpad_handler';
     } else if (process.platform === 'linux') {
       process.env.R_HOME = '/opt/R/3.6.3/lib/R';
