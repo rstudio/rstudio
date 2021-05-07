@@ -185,11 +185,16 @@ core::Error ScriptJob::replay()
       return error;
    }
 
-   // return job to idle state
-   setJobState(job_, JobState::JobIdle);
+   // reset the underlying job
+   job_->reset();
 
-   // job is finished, start it again
+   // return job to idle state and reset progress
+   setJobState(job_, JobState::JobIdle);
+   setJobProgress(job_, 0);
+
+   // job is now reset, start it again
    start();
+
    return Success();
 }
 
