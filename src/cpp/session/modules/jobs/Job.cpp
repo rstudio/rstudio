@@ -297,6 +297,9 @@ void Job::setState(JobState state)
    if (state_ == JobIdle && state != JobIdle && started_ == 0)
    {
       started_ = ::time(0);
+      
+      // clear completed time (in case it was set by a previous run of the job)
+      completed_ = 0;
    }
 
    // record new state

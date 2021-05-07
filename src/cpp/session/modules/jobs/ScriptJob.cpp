@@ -185,6 +185,9 @@ core::Error ScriptJob::replay()
       return error;
    }
 
+   // return job to idle state
+   setJobState(job_, JobState::JobIdle);
+
    // job is finished, start it again
    start();
    return Success();
