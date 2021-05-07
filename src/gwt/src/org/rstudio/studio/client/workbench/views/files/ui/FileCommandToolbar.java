@@ -55,6 +55,9 @@ public class FileCommandToolbar extends Toolbar
       moreMenu.addSeparator();
       moreMenu.addItem(commands.setAsWorkingDir().createMenuItem(false));
       moreMenu.addItem(commands.goToWorkingDir().createMenuItem(false));
+      moreMenu.addItem(new UserPrefMenuItem<>(prefs.syncFilesPaneWorkingDir(), true,
+         "Synchronize Working Directory", prefs));
+      moreMenu.addSeparator();
       moreMenu.addItem(commands.openNewTerminalAtFilePaneLocation().createMenuItem(false));
       moreMenu.addSeparator();
       moreMenu.addItem(commands.showFolder().createMenuItem(false));

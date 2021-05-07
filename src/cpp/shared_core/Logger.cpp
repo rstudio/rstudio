@@ -87,6 +87,17 @@ std::ostream& operator<<(std::ostream& io_ostream, LogLevel in_logLevel)
    return io_ostream;
 }
 
+std::string zeroPad(const std::string& in, const unsigned int width)
+{
+   if (in.length() >= width)
+      return in;
+
+   std::ostringstream oss;
+   oss << std::setw(width) << std::setfill('0') << in;
+
+   return oss.str();
+}
+
 std::string formatLogMessage(
    LogLevel in_logLevel,
    const std::string& in_message,
@@ -103,6 +114,7 @@ std::string formatLogMessage(
       ptime time = microsec_clock::universal_time();
 
       oss << system::date_time::format(time, "%d %b %Y %H:%M:%S")
+          << "." << zeroPad(std::to_string(time.time_of_day().total_milliseconds() % 1000), 3)
           << " [" << in_programId << "] ";
    }
 
@@ -121,6 +133,7 @@ std::string formatLogMessage(
 
    return oss.str();
 }
+
 
 } // anonymous namespace
 
@@ -484,6 +497,25 @@ std::ostream& writeError(const Error& in_error, std::ostream& io_os)
 std::string writeError(const Error& in_error)
 {
    return formatLogMessage(LogLevel::ERR, in_error.asString(), logger().ProgramId);
+}
+
+/** If there is a FileLogDestination configured, return it */
+std::shared_ptr<ILogDestination> getFileLogDestination()
+{
+   Logger& log = logger();
+   WRITE_LOCK_BEGIN(log.Mutex)
+      {
+         LogMap* logMap = &log.DefaultLogDestinations;
+
+         const auto destEnd = logMap->end();
+         for (auto iter = logMap->begin(); iter != destEnd; ++iter)
+         {
+            if (iter->second->isFileLogger())
+               return std::shared_ptr<ILogDestination>(iter->second);
+         }
+      }
+   RW_LOCK_END(false);
+   return std::shared_ptr<ILogDestination>();
 }
 
 } // namespace log

@@ -617,6 +617,8 @@ public class ElementIds
    public final static String TAB_CLOSE = "tab_close";
    public final static String TAB_RENAME_FILE = "tab_rename_file";
    public final static String TAB_COPY_PATH = "tab_copy_path";
+   public final static String TAB_SET_WORKING_DIR = "tab_set_working_dir";
+   public final static String TAB_SET_FILES_PANE = "tab_set_files_pane";
    public final static String TAB_CLOSE_ALL = "tab_close_all";
    public final static String TAB_CLOSE_OTHERS = "tab_close_others";
 

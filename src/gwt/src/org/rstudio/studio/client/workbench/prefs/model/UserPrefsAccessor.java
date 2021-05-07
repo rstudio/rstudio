@@ -1472,30 +1472,6 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * The maximum number of spelling words to check at once.
-    */
-   public PrefValue<Integer> maxSpellcheckWords()
-   {
-      return integer(
-         "max_spellcheck_words",
-         "Maximum number of words to spell check", 
-         "The maximum number of spelling words to check at once.", 
-         500);
-   }
-
-   /**
-    * The maximum number of spelling correction suggestions to prefetch.
-    */
-   public PrefValue<Integer> maxSpellcheckPrefetch()
-   {
-      return integer(
-         "max_spellcheck_prefetch",
-         "Number of words to prefetch for spell check", 
-         "The maximum number of spelling correction suggestions to prefetch.", 
-         20);
-   }
-
-   /**
     * Whether to enable real-time spellchecking by default.
     */
    public PrefValue<Boolean> realTimeSpellchecking()
@@ -2016,6 +1992,18 @@ public class UserPrefsAccessor extends Prefs
          "Sort file names naturally in Files pane", 
          "Whether to sort file names naturally, so that e.g., file10.R comes after file9.R", 
          true);
+   }
+
+   /**
+    * Whether to change the directory in the Files pane automatically when the working directory in R changes.
+    */
+   public PrefValue<Boolean> syncFilesPaneWorkingDir()
+   {
+      return bool(
+         "sync_files_pane_working_dir",
+         "Synchronize the Files pane with the current working directory", 
+         "Whether to change the directory in the Files pane automatically when the working directory in R changes.", 
+         false);
    }
 
    /**
@@ -3135,6 +3123,30 @@ public class UserPrefsAccessor extends Prefs
          10);
    }
 
+   /**
+    * Enable Python terminal hooks. When enabled, the RStudio-configured version of Python will be placed on the PATH.
+    */
+   public PrefValue<Boolean> terminalPythonIntegration()
+   {
+      return bool(
+         "terminal_python_integration",
+         "Enable terminal Python integration", 
+         "Enable Python terminal hooks. When enabled, the RStudio-configured version of Python will be placed on the PATH.", 
+         true);
+   }
+
+   /**
+    * Enable session protocol debug logging showing all session requests and events
+    */
+   public PrefValue<Boolean> sessionProtocolDebug()
+   {
+      return bool(
+         "session_protocol_debug",
+         "Session protocol debug logging", 
+         "Enable session protocol debug logging showing all session requests and events", 
+         false);
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -3343,10 +3355,6 @@ public class UserPrefsAccessor extends Prefs
          ignoreUppercaseWords().setValue(layer, source.getBool("ignore_uppercase_words"));
       if (source.hasKey("ignore_words_with_numbers"))
          ignoreWordsWithNumbers().setValue(layer, source.getBool("ignore_words_with_numbers"));
-      if (source.hasKey("max_spellcheck_words"))
-         maxSpellcheckWords().setValue(layer, source.getInteger("max_spellcheck_words"));
-      if (source.hasKey("max_spellcheck_prefetch"))
-         maxSpellcheckPrefetch().setValue(layer, source.getInteger("max_spellcheck_prefetch"));
       if (source.hasKey("real_time_spellchecking"))
          realTimeSpellchecking().setValue(layer, source.getBool("real_time_spellchecking"));
       if (source.hasKey("navigate_to_build_error"))
@@ -3423,6 +3431,8 @@ public class UserPrefsAccessor extends Prefs
          alwaysShownExtensions().setValue(layer, source.getObject("always_shown_extensions"));
       if (source.hasKey("sort_file_names_naturally"))
          sortFileNamesNaturally().setValue(layer, source.getBool("sort_file_names_naturally"));
+      if (source.hasKey("sync_files_pane_working_dir"))
+         syncFilesPaneWorkingDir().setValue(layer, source.getBool("sync_files_pane_working_dir"));
       if (source.hasKey("jobs_tab_visibility"))
          jobsTabVisibility().setValue(layer, source.getString("jobs_tab_visibility"));
       if (source.hasKey("show_launcher_jobs_tab"))
@@ -3579,6 +3589,10 @@ public class UserPrefsAccessor extends Prefs
          showMemoryUsage().setValue(layer, source.getBool("show_memory_usage"));
       if (source.hasKey("memory_query_interval_seconds"))
          memoryQueryIntervalSeconds().setValue(layer, source.getInteger("memory_query_interval_seconds"));
+      if (source.hasKey("terminal_python_integration"))
+         terminalPythonIntegration().setValue(layer, source.getBool("terminal_python_integration"));
+      if (source.hasKey("session_protocol_debug"))
+         sessionProtocolDebug().setValue(layer, source.getBool("session_protocol_debug"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -3686,8 +3700,6 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(documentLoadLintDelay());
       prefs.add(ignoreUppercaseWords());
       prefs.add(ignoreWordsWithNumbers());
-      prefs.add(maxSpellcheckWords());
-      prefs.add(maxSpellcheckPrefetch());
       prefs.add(realTimeSpellchecking());
       prefs.add(navigateToBuildError());
       prefs.add(packagesPaneEnabled());
@@ -3726,6 +3738,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(alwaysShownFiles());
       prefs.add(alwaysShownExtensions());
       prefs.add(sortFileNamesNaturally());
+      prefs.add(syncFilesPaneWorkingDir());
       prefs.add(jobsTabVisibility());
       prefs.add(showLauncherJobsTab());
       prefs.add(launcherJobsSort());
@@ -3804,6 +3817,8 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(commandPaletteMru());
       prefs.add(showMemoryUsage());
       prefs.add(memoryQueryIntervalSeconds());
+      prefs.add(terminalPythonIntegration());
+      prefs.add(sessionProtocolDebug());
       return prefs;
    }
    

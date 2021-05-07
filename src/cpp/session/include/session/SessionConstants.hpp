@@ -77,6 +77,10 @@
 #define kWwwResusePorts                   "www-reuse-ports"
 #define kTerminalPortOption               "terminal-port"
 #define kSessionSuspendOnIncompleteStatement "session-suspend-on-incomplete-statement"
+#define kSessionAsyncRpcEnabled           "session-async-rpc-enabled"
+#define kSessionAsyncRpcTimeoutMs         "session-async-rpc-timeout-ms"
+#define kSessionHandleOfflineEnabled      "session-handle-offline-enabled"
+#define kSessionHandleOfflineTimeoutMs    "session-handle-offline-timeout-ms"
 
 #define kLauncherSessionOption            "launcher-session"
 

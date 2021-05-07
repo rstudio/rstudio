@@ -13,6 +13,9 @@
  *
  */
 
+#ifndef SESSION_SUSPEND_HPP
+#define SESSION_SUSPEND_HPP
+
 #include <boost/function.hpp>
 
 namespace rstudio {
@@ -32,3 +35,5 @@ void setSessionResumed(bool resumed);
 } // namespace suspend
 } // namespace session
 } // namespace rstudio
+
+#endif /* SESSION_SUSPEND_HPP */

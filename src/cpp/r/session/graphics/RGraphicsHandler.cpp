@@ -114,6 +114,16 @@ void (*mode)(int mode, pDevDesc dev);
 
 void (*onBeforeExecute)(DeviceContext* pDC);
 
+// below added in version 14 (R 4.1.0)
+SEXP (*setPattern)(SEXP pattern, pDevDesc dd);
+void (*releasePattern)(SEXP ref, pDevDesc dd);
+
+SEXP (*setClipPath)(SEXP path, SEXP ref, pDevDesc dd);
+void (*releaseClipPath)(SEXP ref, pDevDesc dd);
+
+SEXP (*setMask)(SEXP path, SEXP ref, pDevDesc dd);
+void (*releaseMask)(SEXP ref, pDevDesc dd);
+
 } // namespace handler
 } // namespace graphics
 } // namespace session

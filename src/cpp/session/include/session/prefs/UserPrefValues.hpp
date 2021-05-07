@@ -187,8 +187,6 @@ namespace prefs {
 #define kDocumentLoadLintDelay "document_load_lint_delay"
 #define kIgnoreUppercaseWords "ignore_uppercase_words"
 #define kIgnoreWordsWithNumbers "ignore_words_with_numbers"
-#define kMaxSpellcheckWords "max_spellcheck_words"
-#define kMaxSpellcheckPrefetch "max_spellcheck_prefetch"
 #define kRealTimeSpellchecking "real_time_spellchecking"
 #define kNavigateToBuildError "navigate_to_build_error"
 #define kPackagesPaneEnabled "packages_pane_enabled"
@@ -250,6 +248,7 @@ namespace prefs {
 #define kAlwaysShownFiles "always_shown_files"
 #define kAlwaysShownExtensions "always_shown_extensions"
 #define kSortFileNamesNaturally "sort_file_names_naturally"
+#define kSyncFilesPaneWorkingDir "sync_files_pane_working_dir"
 #define kJobsTabVisibility "jobs_tab_visibility"
 #define kJobsTabVisibilityClosed "closed"
 #define kJobsTabVisibilityShown "shown"
@@ -387,6 +386,8 @@ namespace prefs {
 #define kCommandPaletteMru "command_palette_mru"
 #define kShowMemoryUsage "show_memory_usage"
 #define kMemoryQueryIntervalSeconds "memory_query_interval_seconds"
+#define kTerminalPythonIntegration "terminal_python_integration"
+#define kSessionProtocolDebug "session_protocol_debug"
 
 class UserPrefValues: public Preferences
 {
@@ -1011,18 +1012,6 @@ public:
    core::Error setIgnoreWordsWithNumbers(bool val);
 
    /**
-    * The maximum number of spelling words to check at once.
-    */
-   int maxSpellcheckWords();
-   core::Error setMaxSpellcheckWords(int val);
-
-   /**
-    * The maximum number of spelling correction suggestions to prefetch.
-    */
-   int maxSpellcheckPrefetch();
-   core::Error setMaxSpellcheckPrefetch(int val);
-
-   /**
     * Whether to enable real-time spellchecking by default.
     */
    bool realTimeSpellchecking();
@@ -1249,6 +1238,12 @@ public:
     */
    bool sortFileNamesNaturally();
    core::Error setSortFileNamesNaturally(bool val);
+
+   /**
+    * Whether to change the directory in the Files pane automatically when the working directory in R changes.
+    */
+   bool syncFilesPaneWorkingDir();
+   core::Error setSyncFilesPaneWorkingDir(bool val);
 
    /**
     * The visibility of the Jobs tab.
@@ -1717,6 +1712,18 @@ public:
     */
    int memoryQueryIntervalSeconds();
    core::Error setMemoryQueryIntervalSeconds(int val);
+
+   /**
+    * Enable Python terminal hooks. When enabled, the RStudio-configured version of Python will be placed on the PATH.
+    */
+   bool terminalPythonIntegration();
+   core::Error setTerminalPythonIntegration(bool val);
+
+   /**
+    * Enable session protocol debug logging showing all session requests and events
+    */
+   bool sessionProtocolDebug();
+   core::Error setSessionProtocolDebug(bool val);
 
 };
 

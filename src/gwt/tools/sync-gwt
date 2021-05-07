@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-BRANCH=rstudio/v1.4
+BRANCH=rstudio/v1.5
 #
 # RStudio fork of GWT started with BRANCH off of GWT 2.8.2 plus our changes.
 # That is, started life with:
@@ -16,13 +16,13 @@ BRANCH=rstudio/v1.4
 # build-gwt (after resolving any merge conflicts). Once successful, be sure to make PR of changes
 # to rstudio/gwt as well as to rstudio itself.
 #
-# To start work on a new release of RStudio, manually create a new branch, e.g. rstudio/v1.4,
+# To start work on a new release of RStudio, manually create a new branch, e.g. rstudio/v1.6,
 # from the desired starting commit (most likely the head of the prior rstudio/v1.x branch),
 # and update the BRANCH constant in this script. For example:
 #
-#   git branch rstudio/v1.4 rstudio/v1.3
-#   git checkout rstudio/v1.4
-#   git push --set-upstream origin rstudio/1.4
+#   git branch rstudio/v1.6 rstudio/v1.5
+#   git checkout rstudio/v1.6
+#   git push --set-upstream origin rstudio/1.6
 #
 
 # check out our copy of gwt and build tools

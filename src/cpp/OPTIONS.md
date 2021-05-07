@@ -73,7 +73,7 @@ The following sections list all of the properties that can be specified within a
 | namespace | The C++ namespace name to use. |
 | includeGuard | The C++ include guard to use for the header file. |
 | configFile | The name of the config file that these options are documenting. |
-| docDescription | The document description to use for the list of options being generated. This will appear verbatim as the text in the admin guide appendix preceeding the options documentation. |
+| docDescription | The document description to use for the list of options being generated. This will appear verbatim as the text in the admin guide appendix preceding the options documentation. |
 | outputSourceFile | The output file of the generated source. |
 | outputHeaderFile | The output file of the generated source header. Only necessary for generators that output a source and header file. Regular ProgramOptions generation only generates a header file, so `outputSourceFile` is used instead. Overlay options require both a source and a header file. |
 | outputDocFile | The output file of the generated Rmd documentation. |

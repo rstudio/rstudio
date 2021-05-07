@@ -7,32 +7,28 @@ read -r -d '' DEFAULT_ASANFLAGS <<- EOF
 -fno-omit-frame-pointer
 -fuse-ld=gold
 EOF
-DEFAULT_ASANFLAGS="$(echo ${DEFAULT_ASANFLAGS} | tr '\n' ' ')"
+DEFAULT_ASANFLAGS="$(echo "${DEFAULT_ASANFLAGS}" | tr '\n' ' ')"
+
+read -r -d '' DEFAULT_LDFLAGS <<- EOF
+-fsanitize=address,undefined
+EOF
+DEFAULT_LDFLAGS="$(echo "${DEFAULT_LDFLAGS}" | tr '\n' ' ')"
 
 : ${ASANFLAGS="${DEFAULT_ASANFLAGS}"}
-: ${CC="gcc-6"}
-: ${CXX="g++-6"}
+: ${LDFLAGS="${DEFAULT_LDFLAGS}"}
 : ${BUILD_DIR="gcc-ubsan-build"}
-: ${MAKEFLAGS="-j8"}
 : ${R_HOME="$(R RHOME)"}
-
-# NOTE: Boost 1.50.0 not compatible with gcc-6
-: ${RSTUDIO_USE_LIBCXX="No"}
-: ${RSTUDIO_USE_SYSTEM_BOOST="Yes"}
-: ${RSTUDIO_BOOST_REQUESTED_VERSION="1.54.0"}
 
 mkdir -p "${BUILD_DIR}"
 cd "${BUILD_DIR}"
-cmake ../cpp                                                               \
-    -DLIBR_HOME="${R_HOME}"                                                \
-    -DCMAKE_C_COMPILER="${CC}"                                             \
-    -DCMAKE_C_FLAGS="${ASANFLAGS} ${LDFLAGS}"                              \
-    -DCMAKE_CXX_COMPILER="${CXX}"                                          \
-    -DCMAKE_CXX_FLAGS="${ASANFLAGS} ${LDFLAGS}"                            \
-    -DRSTUDIO_USE_LIBCXX="${RSTUDIO_USE_LIBCXX}"                           \
-    -DRSTUDIO_USE_SYSTEM_BOOST="${RSTUDIO_USE_SYSTEM_BOOST}"               \
-    -DRSTUDIO_BOOST_REQUESTED_VERSION="${RSTUDIO_BOOST_REQUESTED_VERSION}" \
+rm -f CMakeCache.txt
+cmake ../cpp                              \
+    -DCMAKE_BUILD_TYPE=Debug              \
+    -DLIBR_HOME="${R_HOME}"               \
+    -DCMAKE_C_FLAGS="${ASANFLAGS}"        \
+    -DCMAKE_CXX_FLAGS="${ASANFLAGS}"      \
+    -DCMAKE_EXE_LINKER_FLAGS="${LDFLAGS}" \
     "$@"
 cd ..
 
-cmake --build "${BUILD_DIR}" -- "${MAKEFLAGS}"
+cmake --build "${BUILD_DIR}"

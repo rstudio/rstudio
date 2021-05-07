@@ -60,7 +60,11 @@
 
 .rs.addFunction("valueAsStringImpl", function(val)
 {
-   if (is.null(val))
+   if (missing(val))
+   {
+      "<missing>"
+   }
+   else if (is.null(val))
    {
       "NULL"
    }
@@ -223,9 +227,9 @@
    # R object. in such a case, we want to avoid deparsing the object as
    # it could be expensive (especially for large objects).
    if (is.call(expr))
-      .rs.deparse(expr)
-   else
-      .rs.valueDescription(expr)
+      return(.rs.deparse(expr))
+   
+   .rs.valueDescription(expr)
 })
 
 # used to create descriptions for language objects and symbols
@@ -407,7 +411,13 @@
       
       # sanitize each call entry separately
       for (i in seq_along(object))
-         object[[i]] <- .rs.sanitizeCallSummary(object[[i]])
+      {
+         # assigning NULL to object will remove that entry
+         # https://github.com/rstudio/rstudio/issues/9299
+         sanitized <- .rs.sanitizeCallSummary(object[[i]])
+         if (!is.null(sanitized))
+            object[[i]] <- sanitized
+      }
       
       # return object
       object
@@ -465,67 +475,75 @@
 .rs.addFunction("valueDescription", function(obj)
 {
    tryCatch(
+      .rs.valueDescriptionImpl(obj),
+      error = function(e) ""
+   )
+})
+
+.rs.addFunction("valueDescriptionImpl", function(obj)
+{
+   if (missing(obj))
    {
-      if (missing(obj))
+      return("Missing argument")
+   }
+   else if (is.null(obj))
+   {
+      return("NULL")
+   }
+   else if (is(obj, "ore.frame"))
+   {
+      sqlTable <- attr(obj, "sqlTable", exact = TRUE)
+      if (is.null(sqlTable))
+         return("Oracle R frame") 
+      else
+         return(paste("Oracle R frame:", sqlTable))
+   }
+   else if (.rs.isExternalPointer(obj))
+   {
+      class <- class(obj)
+      if (length(class) && !identical(class, "externalptr"))
       {
-        return("Missing argument")
-      }
-      else if (is(obj, "ore.frame"))
-      {
-        sqlTable <- attr(obj, "sqlTable", exact = TRUE)
-        if (is.null(sqlTable))
-          return("Oracle R frame") 
-        else
-          return(paste("Oracle R frame:", sqlTable))
-      }
-      else if (.rs.isExternalPointer(obj))
-      {
-         class <- class(obj)
-         if (length(class) && !identical(class, "externalptr"))
-         {
-            fmt <- "External pointer of class '%s'"
-            return(sprintf(fmt, class[[1]]))
-         }
-         else
-         {
-            return("External pointer")
-         }
-      }
-      else if (is.data.frame(obj))
-      {
-         return(paste(dim(obj)[1],
-                      "obs. of",
-                      dim(obj)[2],
-                      ifelse(dim(obj)[2] == 1, "variable", "variables"),
-                      sep=" "))
-      }
-      else if (is.environment(obj))
-      {
-         return("Environment")
-      }
-      else if (isS4(obj))
-      {
-         return(paste("Formal class ", is(obj)))
-      }
-      else if (is.list(obj))
-      {
-         return(paste("List of ", length(obj)))
-      }
-      else if (is.matrix(obj)
-              || is.numeric(obj)
-              || is.factor(obj)
-              || is.raw(obj) 
-              || is.character(obj)
-              || is.logical(obj))
-      {
-         return(.rs.valueFromStr(obj))
+         fmt <- "External pointer of class '%s'"
+         return(sprintf(fmt, class[[1]]))
       }
       else
-         return("")
-   },
-   error = function(e) print(e))
-
-   return ("")
+      {
+         return("External pointer")
+      }
+   }
+   else if (is.data.frame(obj))
+   {
+      return(paste(dim(obj)[1],
+                   "obs. of",
+                   dim(obj)[2],
+                   ifelse(dim(obj)[2] == 1, "variable", "variables"),
+                   sep=" "))
+   }
+   else if (is.environment(obj))
+   {
+      return("Environment")
+   }
+   else if (isS4(obj))
+   {
+      return(paste("Formal class ", is(obj)))
+   }
+   else if (is.list(obj))
+   {
+      return(paste("List of ", length(obj)))
+   }
+   else if (is.matrix(obj)
+            || is.numeric(obj)
+            || is.factor(obj)
+            || is.raw(obj) 
+            || is.character(obj)
+            || is.logical(obj))
+   {
+      return(.rs.valueFromStr(obj))
+   }
+   else
+   {
+      return("")
+   }
 })
 
 .rs.addFunction("editor", function(name, file = "", title = file, ...)

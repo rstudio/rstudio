@@ -35,7 +35,6 @@ import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.studio.client.common.spelling.SpellingService;
-import org.rstudio.studio.client.common.spelling.TypoSpellChecker;
 import org.rstudio.studio.client.common.spelling.ui.SpellingCustomDictionariesWidget;
 import org.rstudio.studio.client.common.spelling.ui.SpellingLanguageSelectWidget;
 import org.rstudio.studio.client.workbench.WorkbenchList;
@@ -76,25 +75,13 @@ public class SpellingPreferencesPane extends PreferencesPane
       
       add(headerLabel("Checking"));
       
-      boolean canRealtime = TypoSpellChecker.canRealtimeSpellcheckDict(prefs.spellingDictionaryLanguage().getValue());
       realtimeSpellcheckingCheckbox_ = checkboxPref("Use real time spell-checking", prefs.realTimeSpellchecking(), false);
-      realtimeSpellcheckingCheckbox_.getElement().getStyle().setOpacity(canRealtime ? 1.0 : 0.6);
       spaced(realtimeSpellcheckingCheckbox_);
       add(realtimeSpellcheckingCheckbox_);
 
-      blacklistWarning_ = new Label("Real time spell-checking currently unavailable for this dictionary");
-      blacklistWarning_.getElement().getStyle().setColor("red");
-      blacklistWarning_.setVisible(!canRealtime);
-
-      add(blacklistWarning_);
-
       languageWidget_.addChangeHandler((event) ->
       {
-         boolean canRealtimeCheck = TypoSpellChecker.canRealtimeSpellcheckDict(languageWidget_.getSelectedLanguage());
-         blacklistWarning_.setVisible(!canRealtimeCheck);
-         realtimeSpellcheckingCheckbox_.setValue(realtimeSpellcheckingCheckbox_.getValue() && canRealtimeCheck);
-         realtimeSpellcheckingCheckbox_.setEnabled(canRealtimeCheck);
-         realtimeSpellcheckingCheckbox_.getElement().getStyle().setOpacity(canRealtimeCheck ? 1.0 : 0.6);
+         realtimeSpellcheckingCheckbox_.setValue(realtimeSpellcheckingCheckbox_.getValue());
       });
    }   
    
@@ -212,6 +199,5 @@ public class SpellingPreferencesPane extends PreferencesPane
    private final UserPrefs uiPrefs_;
    private final SpellingLanguageSelectWidget languageWidget_;
    private final SpellingCustomDictionariesWidget customDictsWidget_;
-   private final Label blacklistWarning_;
    private final CheckBox realtimeSpellcheckingCheckbox_;
 }

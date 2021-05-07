@@ -38,6 +38,8 @@
 
 #include <core/FileSerializer.hpp>
 
+#include <core/StringUtils.hpp>
+
 #include <session/SessionOptions.hpp>
 #include <session/SessionConstants.hpp>
 
@@ -47,6 +49,8 @@
 
 #include "SessionHttpConnectionImpl.hpp"
 #include "../SessionUriHandlers.hpp"
+#include "../SessionHttpMethods.hpp"
+#include "../SessionRpc.hpp"
 
 
 namespace rstudio {
@@ -171,6 +175,11 @@ public:
    virtual HttpConnectionQueue& eventsConnectionQueue()
    {
       return eventsConnectionQueue_;
+   }
+
+   virtual bool eventsActive()
+   {
+      return eventsActive_;
    }
 
 protected:
@@ -321,9 +330,59 @@ private:
 
       // place the connection on the correct queue
       if (connection::isGetEvents(ptrHttpConnection))
+      {
+         eventsActive_ = true;
          eventsConnectionQueue_.enqueConnection(ptrHttpConnection);
+      }
       else
-         mainConnectionQueue_.enqueConnection(ptrHttpConnection);
+      {
+         // Turn off async rpc for the client upon seeing ClientInit until the first get_events arrives
+         // since the client is not listening at first
+         if (connection::isMethod(ptrHttpConnection, kClientInit))
+         {
+            eventsActive_ = false;
+         }
+         if (options().handleOfflineEnabled() && options().handleOfflineTimeoutMs() == 0 &&
+             rpc::isOfflineableRequest(ptrHttpConnection))
+         {
+            // TODO: handleOffline - should these be put into a separate queue and run in a dedicated thread?
+            if (http_methods::protocolDebugEnabled())
+            {
+               std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+               std::chrono::duration<double> beforeTime = now - ptrConnection->receivedTime();
+               LOG_DEBUG_MESSAGE("- Handle immediate:  " + ptrConnection->request().uri() +
+                                 " after: " + core::string_utils::formatDouble(beforeTime.count(), 2));
+               http_methods::handleConnection(ptrConnection, http_methods::ForegroundConnection);
+               std::chrono::duration<double> afterTime = std::chrono::steady_clock::now() - now;
+               LOG_DEBUG_MESSAGE("--- complete:        " + ptrConnection->request().uri() +
+                                 " in: " + core::string_utils::formatDouble(afterTime.count(), 2));
+            }
+            else
+               http_methods::handleConnection(ptrConnection, http_methods::ForegroundConnection);
+            return;
+         }
+         if (options().asyncRpcEnabled() &&
+             options().asyncRpcTimeoutMs() == 0 &&
+             http_methods::isAsyncJsonRpcRequest(ptrHttpConnection) && 
+             eventsActive_)
+         {
+            if (http_methods::protocolDebugEnabled())
+            {
+               std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+               std::chrono::duration<double> beforeTime = now - ptrConnection->receivedTime();
+               LOG_DEBUG_MESSAGE("Async imm reply:     " + ptrConnection->request().uri() +
+                                 " after: " + core::string_utils::formatDouble(beforeTime.count(), 2));
+            }
+            boost::shared_ptr<HttpConnection> asyncConnection = http_methods::handleAsyncRpc(ptrHttpConnection);
+            if (asyncConnection)
+               mainConnectionQueue_.enqueConnection(asyncConnection);
+            // else: error in handling the rpc request, nothing left to do
+         }
+         else
+         {
+            mainConnectionQueue_.enqueConnection(ptrHttpConnection);
+         }
+      }
    }
 
 private:
@@ -343,6 +402,8 @@ private:
 
    // flag indicating we've started
    bool started_;
+   // Set when the first get_events request is received - ensure async rpc not used until client is ready to listen
+   bool eventsActive_;
 };
 
 } // namespace session

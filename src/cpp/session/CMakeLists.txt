@@ -120,6 +120,7 @@ set(SESSION_SOURCE_FILES
    SessionUriHandlers.cpp
    SessionUrlPorts.cpp
    SessionWorkerContext.cpp
+   SessionOfflineService.cpp
    http/SessionHttpConnectionQueue.cpp
    http/SessionHttpConnectionUtils.cpp
    modules/RStudioAPI.cpp
@@ -615,6 +616,11 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
    # install tutorials
    install(DIRECTORY "resources/tutorial_resources"
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
+
+   # install terminal resources
+   install(
+      DIRECTORY "resources/terminal"
+      DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
    # install libclang
    if(WIN32)

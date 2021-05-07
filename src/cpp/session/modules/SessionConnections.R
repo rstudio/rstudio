@@ -61,18 +61,99 @@ assign(".rs.activeConnections",
 # given a connection type and host, find an active connection object, or NULL if
 # no connection was found
 .rs.addFunction("findActiveConnection", function(type, host) {
+   
    name <- .rs.findConnectionName(type, host)
    if (is.null(name))
       return(NULL)
-   return(get(name, envir = .rs.activeConnections))
+   
+   if (exists(name, envir = .rs.activeConnections))
+      get(name, envir = .rs.activeConnections)
+   
 })
 
-options(connectionObserver = list(
-   connectionOpened = function(type, host, displayName, icon = NULL, 
-                               connectCode, disconnect, listObjectTypes,
-                               listObjects, listColumns, previewObject, 
-                               connectionObject, actions = NULL) {
+.rs.addFunction("connectionObserver.traceback", function()
+{
+   .rs.getVar("connectionObserver.lastTraceback")
+})
 
+.rs.addFunction("connectionObserver.connectionError", function(error) {
+   
+   # save the error and calls
+   .rs.setVar("connectionObserver.lastTraceback", sys.calls())
+   
+   # be quiet if requested
+   suppressed <- getOption("rstudio.connectionObserver.errorsSuppressed", default = FALSE)
+   if (suppressed)
+      return()
+   
+   # try to figure out what the offending package is
+   package <- NULL
+   
+   frames <- sys.frames()
+   for (frame in rev(frames)) {
+      
+      parent <- parent.env(frame)
+      if (identical(parent, baseenv()) || identical(parent, .BaseNamespaceEnv))
+         next
+      
+      if (isNamespace(parent)) {
+         spec <- getNamespaceInfo(parent, "spec")
+         package <- spec[["name"]]
+         break
+      }
+      
+   }
+   
+   # make header
+   header <- if (is.null(package)) {
+      "An error occurred while updating the RStudio Connections pane:"
+   } else {
+      fmt <- "An error occurred while the '%s' package was updating the RStudio Connections pane:"
+      sprintf(fmt, package)
+   } 
+   
+   # make body
+   fmt <- "Error in %s: %s"
+   body <- sprintf(fmt, format(error$call), format(error$message))
+   
+   # make footer
+   footer <- "If necessary, these warnings can be squelched by setting `options(rstudio.connectionObserver.errorsSuppressed = TRUE)`."
+   
+   # notify user as message
+   all <- paste(c(header, body, footer), collapse = "\n")
+   message(all)
+   
+})
+
+.rs.addFunction(
+   "connectionObserver.connectionOpened",
+   function(type, host, displayName, icon = NULL, 
+            connectCode, disconnect, listObjectTypes,
+            listObjects, listColumns, previewObject, 
+            connectionObject, actions = NULL)
+   {
+      tryCatch(
+         
+         .rs.connectionObserver.connectionOpenedImpl(
+            type, host, displayName, icon, 
+            connectCode, disconnect, listObjectTypes,
+            listObjects, listColumns, previewObject, 
+            connectionObject, actions
+         ),
+         
+         error = .rs.connectionObserver.connectionError
+         
+      )
+   }
+)
+
+.rs.addFunction(
+   "connectionObserver.connectionOpenedImpl",
+   function(type, host, displayName, icon = NULL, 
+            connectCode, disconnect, listObjectTypes,
+            listObjects, listColumns, previewObject, 
+            connectionObject, actions = NULL)
+   {
       # execute the object types function once to get the list of known 
       # object types; this is presumed to be static over the lifetime of the
       # connection
@@ -80,27 +161,29 @@ options(connectionObserver = list(
          stop("listObjectTypes must be a function returning a list of object types", 
               call. = FALSE)
       }
-
+      
       # function to flatten the tree of object types for more convenient storage
       promote <- function(name, l) {
-        if (length(l) == 0)
-          return(list())
-        if (is.null(l$contains)) {
-          # plain data
-          return(list(list(name = name,
-                      icon = l$icon,
-                      contains = "data")))
-        } else {
-          # subtypes
-          return(unlist(append(list(list(list(
+         
+         if (length(l) == 0)
+            return(list())
+         
+         if (is.null(l$contains)) {
+            # plain data
+            return(list(list(name = name,
+                             icon = l$icon,
+                             contains = "data")))
+         } 
+         
+         # subtypes
+         return(unlist(append(list(list(list(
             name = name, 
             icon = l$icon, 
             contains = names(l$contains)))),
             lapply(names(l$contains), function(name) {
-              promote(name, l$contains[[name]])
+               promote(name, l$contains[[name]])
             })), recursive = FALSE))
-        }
-        return(list())
+         
       }
       
       # apply tree flattener to provided object tree
@@ -126,32 +209,72 @@ options(connectionObserver = list(
       )
       class(connection) <- "rstudioConnection"
       .rs.validateConnection(connection)
-
-      # generate an internal key for this connection in the local cache 
-      cacheKey <- paste(connection$type, connection$host, 
-                        .Call("rs_generateShortUuid"), 
-                        sep = "_")
+      
+      # generate an internal key for this connection in the local cache
+      uuid <- .Call("rs_generateShortUuid", PACKAGE = "(embedding)")
+      cacheKey <- paste(connection$type, connection$host, uuid, sep = "_")
       assign(cacheKey, value = connection, envir = .rs.activeConnections)
-
+      
       # serialize and generate client events
-      invisible(.Call("rs_connectionOpened", connection))
-   },
-   connectionClosed = function(type, host, ...) {
-      .rs.validateCharacterParams(list(type = type, host = host))
+      invisible(.Call("rs_connectionOpened", connection, PACKAGE = "(embedding)"))
+   }
+)
 
+.rs.addFunction(
+   "connectionObserver.connectionClosed",
+   function(type, host, ...)
+   {
+      tryCatch(
+         .rs.connectionObserver.connectionClosedImpl(type, host, ...),
+         error = .rs.connectionObserver.connectionError
+      )
+   }
+)
+
+.rs.addFunction(
+   "connectionObserver.connectionClosedImpl",
+   function(type, host, ...)
+   {
+      .rs.validateCharacterParams(list(type = type, host = host))
+      
       # clean up reference in environment
       name <- .rs.findConnectionName(type, host)
       if (!is.null(name))
          rm(list = name, envir = .rs.activeConnections)
-
-      invisible(.Call("rs_connectionClosed", type, host))
-   },
-   connectionUpdated = function(type, host, hint, ...) {
-      .rs.validateCharacterParams(list(type = type, host = host, hint = hint))
-      invisible(.Call("rs_connectionUpdated", type, host, hint))
+      
+      invisible(.Call("rs_connectionClosed", type, host, PACKAGE = "(embedding)"))
    }
-))
+)
 
+.rs.addFunction(
+   "connectionObserver.connectionUpdated",
+   function(type, host, hint, ...)
+   {
+      tryCatch(
+         .rs.connectionObserver.connectionUpdatedImpl(type, host, hint, ...),
+         error = .rs.connectionObserver.connectionError
+      )
+   }
+)
+
+
+.rs.addFunction(
+   "connectionObserver.connectionUpdatedImpl",
+   function(type, host, hint, ...)
+   {
+      .rs.validateCharacterParams(list(type = type, host = host, hint = hint))
+      invisible(.Call("rs_connectionUpdated", type, host, hint, PACKAGE = "(embedding)"))
+   }
+)
+
+
+options(
+   connectionObserver = list(
+      connectionOpened  = .rs.connectionObserver.connectionOpened,
+      connectionClosed  = .rs.connectionObserver.connectionClosed,
+      connectionUpdated = .rs.connectionObserver.connectionUpdated
+   )
+)
 
 .rs.addFunction("getConnectionObjectName", function(finder, host) {
    finderFunc <- eval(parse(text = finder))

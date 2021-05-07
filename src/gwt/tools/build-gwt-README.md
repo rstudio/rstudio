@@ -10,6 +10,9 @@ branch, based on GWT 2.8.2 (branched from `tags/2.8.2`).
 ## RStudio 1.4
 RStudio uses a custom build of GWT 2.9.0, in the `rstudio/v1.4` branch.
 
+## RStudio 1.5
+RStudio uses a custom build of GWT 2.9.0, in the `rstudio/v1.5` branch.
+
 ### Changing GWT
 To make GWT changes, use `./sync-gwt` to clone the repo into `./gwt/gwt`, and `./build-gwt` to
 compile the SDK and copy the results into the source tree.
