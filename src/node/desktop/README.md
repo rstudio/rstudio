@@ -1,4 +1,5 @@
 # Electron Prototype
+
 Proof-of-concept RStudio Desktop prototype using Electron instead of QtWebEngine.
 
 Only runnable within context of an RStudio development environment.
