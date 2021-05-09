@@ -6,12 +6,11 @@
   "main": "./src/main/app.js",
   "dependencies": {
     "babel-eslint": "^10.1.0",
-    "electron": "^11.2.3"
+    "electron": "^12.0.7",
+    "eslint": "^7.26.0"
   },
   "scripts": {
     "start": "electron ."
   },
-  "devDependencies": {
-    "eslint": "^7.20.0"
-  }
+  "devDependencies": {}
 }
