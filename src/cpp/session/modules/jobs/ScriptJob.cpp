@@ -187,7 +187,7 @@ core::Error ScriptJob::replay()
 
    // reset the underlying job
    jobs::setJobStatus(job_, "Re-running");
-   error = job_->reset();
+   error = reset();
    if (error)
    {
       return error;

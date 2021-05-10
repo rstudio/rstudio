@@ -67,6 +67,17 @@ void AsyncRJob::onStdout(const std::string& output)
       job_->addOutput(output, false);
 }
 
+Error AsyncRJob::reset()
+{
+   completed_ = false;
+   cancelled_ = false;
+   if (job_)
+   {
+      return job_->reset();
+   }
+   return Success();
+}
+
 Error AsyncRJob::replay()
 {
    // this base implementation does not know how to replay itself

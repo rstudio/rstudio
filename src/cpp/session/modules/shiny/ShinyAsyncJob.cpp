@@ -85,7 +85,7 @@ core::Error ShinyAsyncJob::replay()
    }
 
    // reset the underlying job
-   error = job_->reset();
+   error = reset();
    if (error)
    {
       return error;

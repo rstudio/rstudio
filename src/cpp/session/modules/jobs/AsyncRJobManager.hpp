@@ -53,6 +53,9 @@ public:
    // Add a callback for the job's exit
    void addOnComplete(boost::function<void()> onComplete);
 
+   // Reset's the job's state (generally in preparation for a replay)
+   core::Error reset();
+
    // Override default AsyncRProcess methods
    virtual void onStdout(const std::string& output);
    virtual void onStderr(const std::string& output);
