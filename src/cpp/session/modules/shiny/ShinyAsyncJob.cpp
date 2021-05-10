@@ -23,6 +23,7 @@
 #include <session/SessionUrlPorts.hpp>
 #include <session/SessionModuleContext.hpp>
 
+#include <shared_core/SafeConvert.hpp>
 
 using namespace rstudio::core;
 
@@ -156,7 +157,8 @@ void ShinyAsyncJob::onCompleted(int exitStatus)
       else
       {
          setJobState(job_, jobs::JobState::JobFailed);
-         onStdout("\nShiny application failed.\n\n");
+         onStdout("\nShiny application failed (exit status " +
+               safe_convert::numberToString(exitStatus) + ").\n\n");
       }
    }
 
