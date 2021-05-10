@@ -1,5 +1,17 @@
 #!/usr/bin/env sh
 
 if [ -f "${RETICULATE_PYTHON}" ]; then
-	PATH="$(dirname "${RETICULATE_PYTHON}"):${PATH}"
+
+	# check for an activate script in the same directory
+	# as the configured version of Python; if it exists,
+	# use that to activate Python
+	_RS_PYTHON_BIN=$(dirname "${RETICULATE_PYTHON}")
+	if [ -f "${_RS_PYTHON_BIN}/activate" ]; then
+		. "${_RS_PYTHON_BIN}/activate"
+	else
+		PATH="${_RS_PYTHON_BIN}:${PATH}"
+	fi
+	unset _RS_PYTHON_BIN
+
 fi
+
