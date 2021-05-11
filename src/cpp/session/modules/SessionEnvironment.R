@@ -397,7 +397,11 @@
 
 .rs.addFunction("sanitizeCallSummary", function(object)
 {
-   if (is.call(object))
+   if (missing(object))
+   {
+      return(object)
+   }
+   else if (is.call(object))
    {
       # if this is the concatenation of a large number of objects,
       # then just use a shorter representation of the call
@@ -415,7 +419,7 @@
          # assigning NULL to object will remove that entry
          # https://github.com/rstudio/rstudio/issues/9299
          sanitized <- .rs.sanitizeCallSummary(object[[i]])
-         if (!is.null(sanitized))
+         if (!missing(sanitized) && !is.null(sanitized))
             object[[i]] <- sanitized
       }
       
@@ -591,6 +595,10 @@
 .rs.addFunction("describeObject", function(env, objName, computeSize = TRUE)
 {
    obj <- get(objName, env)
+   
+   # https://github.com/rstudio/rstudio/issues/9328
+   if (missing(obj))
+      obj <- as.name("Missing argument")
    
    if (inherits(obj, "python.builtin.object"))
       return(.rs.reticulate.describeObject(objName, env))
