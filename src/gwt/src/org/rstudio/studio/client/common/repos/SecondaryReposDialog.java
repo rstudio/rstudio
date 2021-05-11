@@ -81,14 +81,14 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
          cranMirror.setName(nameTextBox_.getText());
          cranMirror.setURL(urlTextBox_.getText());
 
-         cranMirror.setHost("Custom");
+         cranMirror.setHost(cranMirror.getCustomEnumValue());
 
          return cranMirror;
       }
       else if (listBox_ != null && listBox_.getSelectedIndex() >= 0)
       {
          CRANMirror cranMirror = repos_.get(listBox_.getSelectedIndex());
-         cranMirror.setHost("Secondary");
+         cranMirror.setHost(cranMirror.getSecondaryEnumValue());
          return cranMirror;
       }
       else
@@ -136,7 +136,7 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
          return;
       }
 
-      if (input.getHost().equals("Custom"))
+      if (input.isCustom())
       {
          progressIndicator_.onProgress("Validating CRAN repository...");
 

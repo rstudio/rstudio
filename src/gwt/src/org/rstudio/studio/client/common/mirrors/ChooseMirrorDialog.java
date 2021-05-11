@@ -74,8 +74,7 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
          CRANMirror cranMirror = CRANMirror.empty();
          cranMirror.setURL(customTextBox_.getText());
 
-         cranMirror.setHost("Custom");
-         cranMirror.setName("Custom");
+         cranMirror.setAsCustom();
 
          return cranMirror;
       }
@@ -113,7 +112,7 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
          return;
       }
       
-      if (input.getHost().equals("Custom"))
+      if (input.isCustom())
       {
          progressIndicator_.onProgress("Validating CRAN repository...");
          

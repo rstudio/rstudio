@@ -82,18 +82,9 @@ public class PackagesPreferencesPane extends PreferencesPane
             cranMirror_ = cranMirror;
             cranMirrorTextBox_.setText(cranMirror_.getDisplay());
 
-            if (cranMirror_.getHost().equals("Custom"))
-            {
-               cranMirrorTextBox_.setText(cranMirror_.getURL());
-            }
-            else
-            {
-               cranMirrorTextBox_.setText(cranMirror_.getDisplay());
-            }
-
             secondaryReposWidget_.setCranRepoUrl(
                   cranMirror_.getURL(),
-                  cranMirror_.getHost().equals("Custom")
+                  cranMirror_.isCustom()
             );
          });
       };
@@ -247,17 +238,10 @@ public class PackagesPreferencesPane extends PreferencesPane
 
          secondaryReposWidget_.setCranRepoUrl(
             cranMirror_.getURL(),
-            cranMirror_.getHost().equals("Custom")
+            cranMirror_.isCustom()
          );
 
-         if (cranMirror_.getHost().equals("Custom"))
-         {
-            cranMirrorTextBox_.setText(cranMirror_.getURL());
-         }
-         else
-         {
-            cranMirrorTextBox_.setText(cranMirror_.getDisplay());
-         }
+         cranMirrorTextBox_.setText(cranMirror_.getDisplay());
 
          cranMirrorStored_ = cranMirrorTextBox_.getTextBox().getText();
 
@@ -364,6 +348,7 @@ public class PackagesPreferencesPane extends PreferencesPane
       String mirrorTextValue = cranMirrorTextBox_.getTextBox().getText();
 
       boolean cranRepoChanged = !mirrorTextValue.equals(cranMirrorStored_);
+      // TODO: Is this correct?  Custom doesn't require a leading http://, so this wont always match
       boolean cranRepoChangedToUrl = cranRepoChanged &&
                                       mirrorTextValue.startsWith("http");
 
@@ -373,8 +358,7 @@ public class PackagesPreferencesPane extends PreferencesPane
          {
             cranMirror_.setURL(mirrorTextValue);
 
-            cranMirror_.setHost("Custom");
-            cranMirror_.setName("Custom");
+            cranMirror_.setAsCustom();
          }
       }
 
