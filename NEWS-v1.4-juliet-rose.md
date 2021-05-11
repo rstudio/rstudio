@@ -39,14 +39,20 @@
 * Display hidden characters in filenames when logging config files with `run-diagnostics` (Pro #2509)
 * Add support for SSL communication between nodes when using load balancing (Pro #2565)
 
-### Visual Studio Code
+### VS Code
 
 * Visual Studio Code is fully supported on RStudio Workbench and no longer in beta
 * Added support for Dash, Streamlit, and local web development servers in VS Code sessions
 * Added RStudio Workbench navigation tools in VS Code sessions
 * Added support for code-server 3.4.0+ (Pro # 1984)
 * Added a new user settings template file for VSCode settings to allow administrators to specify a default user configuration for VSCode sessions (Pro #2014)
-* Set environment variables `RS_URI_SCHEME`, `RS_SESSION_URL`, and `RS_HOME_URL` when VSCode is launched (Pro #2346)
+* Set environment variables `RS_URI_SCHEME`, `RS_SESSION_URL`, `SERVER_URL`, and `RS_HOME_URL` when VSCode is launched (Pro #2346, Pro #2373)
+* Updated `rstudio-server install-vs-code` to install `code-server` 3.8.1 (Pro #2456)
+* Change the default behavior of `install-vs-code` to not configure a global extensions directory and allow users to manage their own extensions. If `install-vs-code` was run with a previous release and you'd like to change your configuration, the configuration can be manually removed from `vscode.conf` or the script can be rerun to regenerate `vscode.conf (Pro #2516) 
+* Added `rstudio-server install-vs-code-ext` script to install the RStudio Workbench VS Code extension in a global directory and upgrade `code-server` to 3.8.1 (Pro #2456)
+* When a global extensions directory isn't configured, install the RStudio Workbench extension on the first VS Code session launch per user (Pro #2376)
+* Disable the extensions marketplace in VS Code sessions when a global directory is configured that the user does not have write access to (Pro #2507)
+* Improved error messaging for VS Code session errors from `verify-installation` (Pro #2442)
 
 ### RStudio Server Open Source
 
@@ -73,7 +79,6 @@
 
 ### Misc
 
-* Improve detection for crashes that occur early in session initialization (#7983)
 * The mouse back / forward buttons can now be used to navigate within the Help pane (#8338)
 * Right-click on document tab provides menu with close, close all, close others (#1664)
 * Rename File added to document tab context menu (#8374)

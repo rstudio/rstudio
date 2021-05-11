@@ -142,6 +142,13 @@ case "$ACTION" in
         
     if [[ $OPEN_SOURCE = true ]]; then
 
+        # don't bump open source version if HEAD is already versioned
+        if [ "$PATCH_INDEX" == "0" ]; then
+            log "Not bumping version (HEAD is at $VERSION.$PATCH)"
+            echo "$VERSION.$PATCH"
+            exit 0
+        fi
+
         # increment to highest observed patch release
         PATCH=$(($MAX_PATCH+1))
 
