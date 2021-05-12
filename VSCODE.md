@@ -10,7 +10,21 @@ You can get started with development very quickly with Visual Studio Code amd Do
   containers. For example, if you have sufficuent resources, you may consider allocating
   8 CPUs and 6+GB RAM.
 
+## Open Project in VS Code
+
+1. From the Command Palette (CMD+Shift+P on Mac), choose "Remote-Containers: Clone Repository
+   in Named Container Volume".
+2. Enter the repository URL. For SSH, enter `git@github.com:rstudio/rstudio-pro.git`. For HTTPS, enter
+   `https://github.com/rstudio/rstudio-pro.git`. If you need to choose a non-default branch, you need
+   to first select the "Github" option before entering the HTTPS URL.
+3. Wait for the clone and for the development container to start up. If the docker image needs to be built, this could
+   take quite a while.
+4. Choose the GCC kit, optionally choose a target, and click the `Build` button
+
 ## Configure Git Credentials
+
+> This is not required for the open source RStudio repo. The documentation below will help
+> if you need to pull the RStudio source code from a private repo that requires authentication.
 
 Are you going to clone over SSH or over HTTPS? If you prefer to use HTTPS,
 make sure you have a Github PAT (personal access token).
@@ -42,14 +56,3 @@ git clone https://github.com/rstudio/rstudio-pro.git
 
 For SSH, you must be running an SSH agent. Simply add your SSH key to the SSH agent
 with `ssh-add ~/.ssh/<my-key>`.
-
-## Open Project in VS Code
-
-1. From the Command Palette (CMD+Shift+P on Mac), choose "Remote-Containers: Clone Repository
-   in Named Container Volume".
-2. Enter the repository URL. For SSH, enter `git@github.com:rstudio/rstudio-pro.git`. For HTTPS, enter
-   `https://github.com/rstudio/rstudio-pro.git`. If you need to choose a non-default branch, you need
-   to first select the "Github" option before entering the HTTPS URL.
-3. Wait for the clone and for the development container to start up. If the docker image needs to be built, this could
-   take quite a while.
-4. Choose the GCC kit, optionally choose a target, and click the `Build` button
