@@ -2,11 +2,25 @@
   "name": "RStudio-Focal-Amd64",
 
   "build": {
-    "dockerfile": "Dockerfile"
+    "dockerfile": "Dockerfile",
+    "context": ".."
   },
 
   "settings": {
-    "terminal.integrated.shell.linux": "/bin/bash"
+    "terminal.integrated.defaultProfile.linux": "/bin/bash",
+
+    "cmake.configureArgs": ["-DRSTUDIO_TARGET=Server"],
+    "cmake.configureEnvironment": {
+      "GWT_XMX": "-Xmx1000M",
+      "GWT_XSS": "-Xss16M",
+      "GWT_BUILD_ALL": "NO",
+    },
+    "cmake.parallelJobs": 4,
+
+    "C_Cpp.default.includePath": [
+      "${workspaceFolder}/src/cpp/**",
+      "/opt/rstudio-tools/x86_64/boost/boost_1_69_0/include"
+    ],
   },
 
   "extensions": [
@@ -14,14 +28,14 @@
     "ms-vscode.cpptools",
     "ms-vscode.cmake-tools",
     "twxs.cmake",
-    "vscjava.vscode-java-pack"
+    "vscjava.vscode-java-pack",
+    "ms-azuretools.vscode-docker",
+    "dbaeumer.vscode-eslint"
   ],
 
   "forwardPorts": [
     8787
   ],
-
-  "postStartCommand": "cd dependencies/linux && ./install-dependencies-debian",
 
   "remoteUser": "rstudio"
 }
