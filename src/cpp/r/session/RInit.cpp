@@ -349,6 +349,13 @@ Error initialize()
    error = r::sourceManager().sourceLocal(optionsFilePath);
    if (error)
       return error;
+   
+   // run tests if configured to do so
+   // (note that the callback will exit the process after tests have been run)
+   if (rCallbacks().runTests)
+   {
+      rCallbacks().runTests();
+   }
 
    // server specific R options options
    if (utils::isServerMode())
