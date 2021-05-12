@@ -14,8 +14,8 @@ You can get started with development very quickly with Visual Studio Code amd Do
 
 1. From the Command Palette (CMD+Shift+P on Mac), choose "Remote-Containers: Clone Repository
    in Named Container Volume".
-2. Enter the repository URL. For SSH, enter `git@github.com:rstudio/rstudio-pro.git`. For HTTPS, enter
-   `https://github.com/rstudio/rstudio-pro.git`. If you need to choose a non-default branch, you need
+2. Enter the repository URL. For SSH, enter `git@github.com:rstudio/rstudio.git`. For HTTPS, enter
+   `https://github.com/rstudio/rstudio.git`. If you need to choose a non-default branch, you need
    to first select the "Github" option before entering the HTTPS URL.
 3. Wait for the clone and for the development container to start up. If the docker image needs to be built, this could
    take quite a while.
@@ -49,7 +49,7 @@ Next, attempt a clone locally to populate the credentials in the helper:
 ```sh
 # Use your Github username and PAT (personal access token) as the password when prompted.
 # It's fine to cancel this process after you see the clone is starting successfully.
-git clone https://github.com/rstudio/rstudio-pro.git
+git clone https://github.com/rstudio/rstudio.git
 ```
 
 ### Using Git with SSH
