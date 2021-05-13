@@ -1,4 +1,4 @@
 @echo off
 cd install-soci
-R --vanilla --slave -f install-soci.R
+R --vanilla -s -f install-soci.R
 cd ..

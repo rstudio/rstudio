@@ -582,8 +582,8 @@ private:
       
       // build the roxygenize command
       shell_utils::ShellCommand cmd(rScriptPath);
-      cmd << "--slave";
       cmd << "--vanilla";
+      cmd << "-s";
       cmd << "-e";
       cmd << buildRoxygenizeCall();
 
@@ -1001,9 +1001,10 @@ private:
 
       // build args
       std::vector<std::string> args;
-      args.push_back("--slave");
       if (vanilla)
          args.push_back("--vanilla");
+
+      args.push_back("-s");
       args.push_back("-e");
       args.push_back(command);
 
@@ -1130,8 +1131,8 @@ private:
 
       // construct a shell command to execute
       shell_utils::ShellCommand cmd(rScriptPath);
-      cmd << "--slave";
       cmd << "--vanilla";
+      cmd << "-s";
       cmd << "-e";
       std::vector<std::string> rSourceCommands;
       
@@ -1139,7 +1140,7 @@ private:
          "setwd('%1%');"
          "files <- list.files(pattern = '[.][rR]$');"
          "invisible(lapply(files, function(x) {"
-         "    system(paste(shQuote('%2%'), '--vanilla --slave -f', shQuote(x)))"
+         "    system(paste(shQuote('%2%'), '--vanilla -s -f', shQuote(x)))"
          "}))"
       );
 
@@ -1170,8 +1171,8 @@ private:
 
       // construct a shell command to execute
       shell_utils::ShellCommand cmd(rScriptPath);
-      cmd << "--slave";
       cmd << "--vanilla";
+      cmd << "-s";
       cmd << "-e";
       std::vector<std::string> rSourceCommands;
       
@@ -1257,8 +1258,8 @@ private:
 
       // construct a shell command to execute
       shell_utils::ShellCommand cmd(rScriptPath);
-      cmd << "--slave";
       cmd << "--vanilla";
+      cmd << "-s";
       cmd << "-e";
       std::vector<std::string> rSourceCommands;
       

@@ -1,4 +1,4 @@
 @echo off
 cd install-crashpad
-R --vanilla --slave -f install-crashpad.R
+R --vanilla -s -f install-crashpad.R
 cd ..

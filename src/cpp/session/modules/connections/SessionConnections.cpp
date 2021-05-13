@@ -653,8 +653,8 @@ Error installOdbcDriver(const json::JsonRpcRequest& request,
 
    // build args
    std::vector<std::string> args;
-   args.push_back("--slave");
    args.push_back("--vanilla");
+   args.push_back("-s");
 
    // for windows we need to forward setInternet2
 #ifdef _WIN32
