@@ -9,5 +9,6 @@
 
 * Add option to synchronize the Files pane with the current working directory in R (#4615)
 * Add new *Set Working Directory* command to context menu for source files (#6781)
+* Improved display of R stack traces in R functions invoked internally by RStudio (#9307)
 * **BREAKING:** RStudio Desktop Pro only supports activation with license files (Pro #2300)
 
