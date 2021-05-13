@@ -305,9 +305,11 @@ bool ProcessSupervisor::hasRunningChildren()
 
 namespace {
 
-bool has_activity(const boost::shared_ptr<AsyncChildProcess>& childProc)
+bool hasActivity(const boost::shared_ptr<AsyncChildProcess>& childProc)
 {
-   return childProc->hasNonWhitelistSubprocess() || childProc->hasWhitelistSubprocess()||
+   return
+         childProc->hasNonWhitelistSubprocess() ||
+         childProc->hasWhitelistSubprocess() ||
          childProc->hasRecentOutput();
 }
 
@@ -315,7 +317,7 @@ bool has_activity(const boost::shared_ptr<AsyncChildProcess>& childProc)
 
 bool ProcessSupervisor::hasActiveChildren()
 {
-   return boost::algorithm::any_of(pImpl_->children, has_activity);
+   return boost::algorithm::any_of(pImpl_->children, hasActivity);
 }
 
 bool ProcessSupervisor::poll()
