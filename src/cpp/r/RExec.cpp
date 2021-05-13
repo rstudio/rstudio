@@ -457,7 +457,6 @@ Error RFunction::call(SEXP evalNS, bool safely, SEXP* pResultSEXP,
    // verify the function
    if (functionSEXP_ == R_UnboundValue)
    {
-      LOG_ERROR_MESSAGE("Failed to find function: '" + functionName_ + "'");
       Error error(errc::SymbolNotFoundError, ERROR_LOCATION);
       if (!functionName_.empty())
          error.addProperty("symbol", functionName_);

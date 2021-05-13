@@ -659,13 +659,6 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       exitEarly(exitCode);
    }
 
-   // run unit tests
-   if (rsession::options().runTests())
-   {
-      int result = tests::run();
-      exitEarly(result);
-   }
-
    // register all of the json rpc methods implemented in R
    json::JsonRpcMethods rMethods;
    error = rstudio::r::json::getRpcMethods(&rMethods);
@@ -735,7 +728,10 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    // set flag indicating we had an abnormal end (if this doesn't get
    // unset by the time we launch again then we didn't terminate normally
    // i.e. either the process dying unexpectedly or a call to R_Suicide)
-   rsession::persistentState().setAbend(true);
+   if (!rsession::options().runTests())
+   {
+      rsession::persistentState().setAbend(true);
+   }
 
    // begin session
    using namespace module_context;
@@ -1292,6 +1288,17 @@ void rSerialization(int action, const FilePath& targetPath)
    rsession::clientEventQueue().add(event);
 }
 
+void rRunTests()
+{
+   // run tests
+   int status = tests::run();
+   
+   // try to clean up session
+   rCleanup(true);
+   
+   // exit if we haven't already
+   exitEarly(status);
+}
 
 void ensureRProfile()
 {
@@ -2209,6 +2216,10 @@ int main (int argc, char * const argv[])
       rCallbacks.showHelp = rShowHelp;
       rCallbacks.showMessage = rShowMessage;
       rCallbacks.serialization = rSerialization;
+      
+      // set test callback if enabled
+      if (options.runTests())
+         rCallbacks.runTests = rRunTests;
 
       // run r (does not return, terminates process using exit)
       error = rstudio::r::session::run(rOptions, rCallbacks);
