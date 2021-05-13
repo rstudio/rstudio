@@ -646,7 +646,7 @@ private:
                      const FilePath& packagePath,
                      const core::system::ProcessOptions& options,
                      const core::system::ProcessCallbacks& cb)
-   {      
+   {
 
       // if this action is going to INSTALL the package then on
       // windows we need to unload the library first
@@ -812,6 +812,10 @@ private:
       {
          if (useDevtools())
          {
+            // redirect stderr to stdout for certain build types
+            // see: https://github.com/rstudio/rstudio/issues/5126
+            pkgOptions.redirectStdErrToStdOut = true;
+            
             devtoolsCheckPackage(packagePath, pkgOptions, cb);
          }
          else
@@ -826,11 +830,18 @@ private:
 
       else if (type == kTestPackage)
       {
-
          if (useDevtools())
+         {
+            // redirect stderr to stdout for certain build types
+            // see: https://github.com/rstudio/rstudio/issues/5126
+            pkgOptions.redirectStdErrToStdOut = true;
+            
             devtoolsTestPackage(packagePath, pkgOptions, cb);
+         }
          else
+         {
             testPackage(packagePath, pkgOptions, cb);
+         }
       }
 
       else if (type == kTestFile)
@@ -998,7 +1009,7 @@ private:
 
       // execute within the package directory
       pkgOptions.workingDir = workingDir;
-
+      
       // build args
       std::vector<std::string> args;
       if (vanilla)
@@ -1263,7 +1274,8 @@ private:
       cmd << "-e";
       std::vector<std::string> rSourceCommands;
       
-      if (type == kTestShiny) {
+      if (type == kTestShiny)
+      {
         boost::format fmt(
            "result <- shinytest::testApp('%1%');"
            "saveRDS(result, '%2%')"
@@ -1272,7 +1284,9 @@ private:
         cmd << boost::str(fmt %
                              shinyPath.getAbsolutePath() %
                           tempRdsFile.getAbsolutePath());
-      } else if (type == kTestShinyFile) {
+      }
+      else if (type == kTestShinyFile)
+      {
         boost::format fmt(
            "result <- shinytest::testApp('%1%', '%2%');"
            "saveRDS(result, '%3%')"
@@ -1282,7 +1296,9 @@ private:
                              shinyPath.getAbsolutePath() %
                           shinyTestName %
                           tempRdsFile.getAbsolutePath());
-      } else {
+      }
+      else
+      {
         terminateWithError("Shiny test type is unsupported.");
       }
 
