@@ -43,7 +43,7 @@
             padding: 4px;
         }
 
-        .kbCell {
+        .mbCell {
             text-align: right;
         }
 
