@@ -582,8 +582,8 @@ private:
       
       // build the roxygenize command
       shell_utils::ShellCommand cmd(rScriptPath);
-      cmd << "--slave";
       cmd << "--vanilla";
+      cmd << "-s";
       cmd << "-e";
       cmd << buildRoxygenizeCall();
 
@@ -646,7 +646,7 @@ private:
                      const FilePath& packagePath,
                      const core::system::ProcessOptions& options,
                      const core::system::ProcessCallbacks& cb)
-   {      
+   {
 
       // if this action is going to INSTALL the package then on
       // windows we need to unload the library first
@@ -812,6 +812,10 @@ private:
       {
          if (useDevtools())
          {
+            // redirect stderr to stdout for certain build types
+            // see: https://github.com/rstudio/rstudio/issues/5126
+            pkgOptions.redirectStdErrToStdOut = true;
+            
             devtoolsCheckPackage(packagePath, pkgOptions, cb);
          }
          else
@@ -826,11 +830,18 @@ private:
 
       else if (type == kTestPackage)
       {
-
          if (useDevtools())
+         {
+            // redirect stderr to stdout for certain build types
+            // see: https://github.com/rstudio/rstudio/issues/5126
+            pkgOptions.redirectStdErrToStdOut = true;
+            
             devtoolsTestPackage(packagePath, pkgOptions, cb);
+         }
          else
+         {
             testPackage(packagePath, pkgOptions, cb);
+         }
       }
 
       else if (type == kTestFile)
@@ -998,12 +1009,13 @@ private:
 
       // execute within the package directory
       pkgOptions.workingDir = workingDir;
-
+      
       // build args
       std::vector<std::string> args;
-      args.push_back("--slave");
       if (vanilla)
          args.push_back("--vanilla");
+
+      args.push_back("-s");
       args.push_back("-e");
       args.push_back(command);
 
@@ -1130,8 +1142,8 @@ private:
 
       // construct a shell command to execute
       shell_utils::ShellCommand cmd(rScriptPath);
-      cmd << "--slave";
       cmd << "--vanilla";
+      cmd << "-s";
       cmd << "-e";
       std::vector<std::string> rSourceCommands;
       
@@ -1139,7 +1151,7 @@ private:
          "setwd('%1%');"
          "files <- list.files(pattern = '[.][rR]$');"
          "invisible(lapply(files, function(x) {"
-         "    system(paste(shQuote('%2%'), '--vanilla --slave -f', shQuote(x)))"
+         "    system(paste(shQuote('%2%'), '--vanilla -s -f', shQuote(x)))"
          "}))"
       );
 
@@ -1170,8 +1182,8 @@ private:
 
       // construct a shell command to execute
       shell_utils::ShellCommand cmd(rScriptPath);
-      cmd << "--slave";
       cmd << "--vanilla";
+      cmd << "-s";
       cmd << "-e";
       std::vector<std::string> rSourceCommands;
       
@@ -1257,12 +1269,13 @@ private:
 
       // construct a shell command to execute
       shell_utils::ShellCommand cmd(rScriptPath);
-      cmd << "--slave";
       cmd << "--vanilla";
+      cmd << "-s";
       cmd << "-e";
       std::vector<std::string> rSourceCommands;
       
-      if (type == kTestShiny) {
+      if (type == kTestShiny)
+      {
         boost::format fmt(
            "result <- shinytest::testApp('%1%');"
            "saveRDS(result, '%2%')"
@@ -1271,7 +1284,9 @@ private:
         cmd << boost::str(fmt %
                              shinyPath.getAbsolutePath() %
                           tempRdsFile.getAbsolutePath());
-      } else if (type == kTestShinyFile) {
+      }
+      else if (type == kTestShinyFile)
+      {
         boost::format fmt(
            "result <- shinytest::testApp('%1%', '%2%');"
            "saveRDS(result, '%3%')"
@@ -1281,7 +1296,9 @@ private:
                              shinyPath.getAbsolutePath() %
                           shinyTestName %
                           tempRdsFile.getAbsolutePath());
-      } else {
+      }
+      else
+      {
         terminateWithError("Shiny test type is unsupported.");
       }
 

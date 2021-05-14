@@ -1899,8 +1899,8 @@ Error sourceModuleRFileWithResult(const std::string& rSourceFile,
 
    // vanilla execution of a single expression
    std::vector<std::string> args;
-   args.push_back("--slave");
    args.push_back("--vanilla");
+   args.push_back("-s");
    args.push_back("-e");
 
    // build source command

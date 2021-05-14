@@ -93,3 +93,12 @@ test_that("memory usage stats are reasonable", {
    r_total <- report$r$cons + report$r$vector
    expect_true(report$system$process$kb > r_total)
 })
+
+test_that("missing arguments can be described", {
+   
+   # simulate a missing value argument
+   delayedAssign("x", quote(expr = ))
+   desc <- .rs.describeObject(environment(), "x")
+   expect_identical(desc$name, .rs.scalar("x"))
+   
+})

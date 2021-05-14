@@ -593,7 +593,7 @@ else()
       if(LIBR_FOUND AND RSTUDIO_VERIFY_R_VERSION)
          set(CMAKE_REQUIRED_INCLUDES ${LIBR_INCLUDE_DIRS})
          execute_process(
-             COMMAND "${LIBR_EXECUTABLE}" "--vanilla" "--slave" "-e" "cat(as.character(getRversion()))"
+             COMMAND "${LIBR_EXECUTABLE}" "--vanilla" "-s" "-e" "cat(as.character(getRversion()))"
              OUTPUT_VARIABLE LIBR_VERSION)
          if (LIBR_VERSION VERSION_LESS "3.0.1")
             message(FATAL_ERROR "Minimum R version (${RSTUDIO_R_MAJOR_VERSION_REQUIRED}.${RSTUDIO_R_MINOR_VERSION_REQUIRED}.${RSTUDIO_R_PATCH_VERSION_REQUIRED}) not found; detected version is ${LIBR_VERSION}")

@@ -36,6 +36,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.console.Console.Language;
 import org.rstudio.studio.client.workbench.views.console.shell.Shell;
 import org.rstudio.studio.client.workbench.views.jobs.JobProgressPresenter;
 import org.rstudio.studio.client.workbench.views.jobs.model.LocalJobProgress;
@@ -54,7 +55,7 @@ public class ConsolePane extends WorkbenchPane
    @Inject
    public ConsolePane(Provider<Shell> consoleProvider,
                       Provider<JobProgressPresenter> progressProvider,
-                      final EventBus events,
+                      EventBus events,
                       Commands commands,
                       Session session)
    {
@@ -83,7 +84,7 @@ public class ConsolePane extends WorkbenchPane
       // is always created during startup
       ensureWidget();
 
-      new Console(this, events, commands);
+      new Console(this, events, session, commands);
    }
 
    public void setWorkingDirectory(String directory)
@@ -267,7 +268,20 @@ public class ConsolePane extends WorkbenchPane
          progress_.showProgress(progress);
       lastProgress_ = progress;
    }
-
+   
+   @Override
+   public void adaptToLanguage(Language language)
+   {
+      if (language == Language.R)
+      {
+         consoleInterruptButton_.setTitle("Interrupt R");
+      }
+      else if (language == Language.PYTHON)
+      {
+         consoleInterruptButton_.setTitle("Interrupt Python");
+      }
+   }
+   
    private void syncSecondaryToolbar()
    {      
       // show the toolbar if we're not in normal mode

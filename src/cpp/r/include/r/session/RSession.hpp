@@ -180,14 +180,14 @@ struct RSuspendOptions;
 struct RCallbacks
 {
    boost::function<core::Error(const RInitInfo&)> init;
-   boost::function<bool(const std::string&,bool,RConsoleInput*)> consoleRead;
+   boost::function<bool(const std::string&, bool, RConsoleInput*)> consoleRead;
    boost::function<void(const std::string&)> browseURL;
    boost::function<void(const core::FilePath&)> browseFile;
    boost::function<void(const std::string&)> showHelp;
    boost::function<void(const std::string&, core::FilePath&, bool)> showFile;
    boost::function<void(const std::string&, int)> consoleWrite;
    boost::function<void()> consoleHistoryReset;
-   boost::function<bool(double*,double*)> locator;
+   boost::function<bool(double*, double*)> locator;
    boost::function<core::FilePath(bool)> chooseFile;
    boost::function<int(const std::string&)> editFile;
    boost::function<void(const std::string&)> showMessage;
@@ -199,7 +199,8 @@ struct RCallbacks
    boost::function<void()> quit;
    boost::function<void(const std::string&)> suicide;
    boost::function<void(bool)> cleanup;
-   boost::function<void(int,const core::FilePath&)> serialization;
+   boost::function<void(int, const core::FilePath&)> serialization;
+   boost::function<void()> runTests;
 };
 
 // run the session   
