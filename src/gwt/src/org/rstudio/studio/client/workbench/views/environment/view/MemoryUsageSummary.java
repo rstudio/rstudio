@@ -40,7 +40,7 @@ public class MemoryUsageSummary extends Composite
 {
    interface Style extends CssResource
    {
-      String kbCell();
+      String mbCell();
       String stats();
       String header();
       String swatch();
@@ -202,12 +202,12 @@ public class MemoryUsageSummary extends Composite
 
       TableCellElement kbCell = Document.get().createTDElement();
       Element kbVal = Document.get().createElement("strong");
-      kbVal.setInnerText(StringUtil.prettyFormatNumber(kb));
+      kbVal.setInnerText(StringUtil.prettyFormatNumber(kb / 1024));
       kbCell.appendChild(kbVal);
       Element kbLabel = Document.get().createSpanElement();
-      kbLabel.setInnerText(" KiB");
+      kbLabel.setInnerText(" MiB");
       kbCell.appendChild(kbLabel);
-      kbCell.setClassName(style.kbCell());
+      kbCell.setClassName(style.mbCell());
       row.appendChild(kbCell);
 
       TableCellElement sourceCell = Document.get().createTDElement();
