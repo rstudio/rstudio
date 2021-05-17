@@ -551,7 +551,7 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
    bool hasTransform = false;
 
    // check to see if we have an ordered/filtered view we can build from
-   auto cachedFrame =  s_cachedFrames.find(cacheKey);
+   auto cachedFrame = s_cachedFrames.find(cacheKey);
    if (needsTransform)
    {
       if (cachedFrame != s_cachedFrames.end())
