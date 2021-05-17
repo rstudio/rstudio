@@ -6,6 +6,7 @@
 * Fixed issue where .md, .py, .sql, and .stan files had duplicate event handlers (#9106)
 * Fixed issue where output when running tests could be emitted in wrong order in Build pane (#5126)
 * Fixed issue where RStudio could crash when viewing a malformed data.frame (#9364)
+* Fixed issue where completion tooltip was erroneously shown in multi-line strings in some cases (#8677)
 
 ### Misc
 
