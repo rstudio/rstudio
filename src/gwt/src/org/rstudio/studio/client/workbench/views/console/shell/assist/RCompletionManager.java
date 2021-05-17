@@ -787,7 +787,14 @@ public class RCompletionManager implements CompletionManager
          boolean canAutoPopup = checkCanAutoPopup(c, userPrefs_.codeCompletionCharacters().getValue() - 1);
          
          // Attempt to pop up completions immediately after a function call.
-         if (c == '(' && !isLineInComment(docDisplay_.getCurrentLine()))
+         Token currentToken = docDisplay_.getTokenAt(docDisplay_.getCursorPosition());
+         boolean isFormingFunctionCall =
+               c == '(' &&
+               !isLineInComment(docDisplay_.getCurrentLine()) &&
+               currentToken != null &&
+               currentToken.hasType("identifier");
+         
+         if (isFormingFunctionCall)
          {
             String token = StringUtil.getToken(
                   docDisplay_.getCurrentLine(),
@@ -799,7 +806,10 @@ public class RCompletionManager implements CompletionManager
             if (token.matches("^(library|require|requireNamespace|data)\\s*$"))
                canAutoPopup = true;
             
-            Scheduler.get().scheduleDeferred(() -> sigTipManager_.resolveActiveFunctionAndDisplayToolTip());
+            Scheduler.get().scheduleDeferred(() ->
+            {
+               sigTipManager_.resolveActiveFunctionAndDisplayToolTip();
+            });
          }
          
          if (
