@@ -155,6 +155,20 @@ test_context("Comment extraction")
    }
 }
 
+test_context("String formatting")
+{
+   test_that("Some simple strings can be formatted")
+   {
+      std::string s;
+      
+      s = string_utils::sprintf("%s, %s!", "Hello", "world");
+      expect_true(s == "Hello, world!");
+      
+      s = string_utils::sprintf("%i + %i == %i", 2, 2, 2 + 2);
+      expect_true(s == "2 + 2 == 4");
+   }
+}
+
 } // end namespace string_utils
 } // end namespace core
 } // end namespace rstudio

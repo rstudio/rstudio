@@ -16,8 +16,9 @@
 #ifndef CORE_STRING_UTILS_HPP
 #define CORE_STRING_UTILS_HPP
 
-#include <string>
 #include <cctype>
+#include <cstdio>
+#include <string>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
@@ -293,6 +294,8 @@ bool extractCommentHeader(const std::string& contents,
 std::string extractIndent(const std::string& line);
 
 std::string formatDouble(const double d, const int precision);
+
+std::string sprintf(const char* fmt, ...);
 
 } // namespace string_utils
 
