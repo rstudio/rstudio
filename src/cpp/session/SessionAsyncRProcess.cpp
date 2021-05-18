@@ -276,6 +276,7 @@ void AsyncRProcess::onProcessCompleted(int exitStatus)
    markCompleted();
    ipcRequests_.removeIfExists();
    ipcResponse_.removeIfExists();
+   terminationRequested_ = false;
    onCompleted(exitStatus);
 }
 
