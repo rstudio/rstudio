@@ -15,6 +15,8 @@
 
 #include <core/StringUtils.hpp>
 
+#include <stdarg.h>
+
 #include <algorithm>
 #include <map>
 #include <ostream>
