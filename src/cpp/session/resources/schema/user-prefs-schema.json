@@ -230,8 +230,8 @@
         },
         "auto_detect_indentation": {
             "type": "boolean",
-            "default": true,
-            "title": "Autodetect indentation in files",
+            "default": false,
+            "title": "Auto-detect indentation in files",
             "description": "Whether to automatically detect indentation settings from file contents."
         },
         "show_margin": {
