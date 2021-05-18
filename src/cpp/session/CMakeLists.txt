@@ -48,12 +48,19 @@ else()
 
 endif()
 
-foreach(DEP "${RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR}"
-            "${RSTUDIO_DEPENDENCIES_MATHJAX_DIR}"
-            "${RSTUDIO_DEPENDENCIES_PANDOC_DIR}")
-   if(NOT EXISTS "${DEP}")
-      message(FATAL_ERROR "${DEP} not found (re-run install-dependencies script to install")
+# validate our dependencies exist
+foreach(VAR RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR
+            RSTUDIO_DEPENDENCIES_MATHJAX_DIR
+            RSTUDIO_DEPENDENCIES_PANDOC_DIR)
+
+   # validate existence
+   if(NOT EXISTS "${${VAR}}")
+      message(FATAL_ERROR "${${VAR}} not found (re-run install-dependencies script to install")
    endif()
+
+   # cache variables so they can be seen by configure_file
+   set("${VAR}" "${${VAR}}" CACHE INTERNAL "")
+   
 endforeach()
 
 # verify embedded packages are available
