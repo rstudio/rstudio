@@ -154,6 +154,7 @@
 * Fixed issue where Open File dialog would fail to open files whose names were explicitly typed (#4059)
 * Fixed issue causing Project Sharing to fail to set Access Control Lists when using NFS v4 and `username@domain` security principals (Pro #2415)
 * Fixed issue where dialog boxes [e.g. Git commit, Installing Pro Database drivers] could fail to show output with Limit Console Output turned on (Pro #2284)
-* Fixed issue where uploading a .zip archive when unzip was not on PATH would cause a cryptic error. (#9151)
+* Fixed issue where uploading a .zip archive when unzip was not on PATH would cause a cryptic error (#9151)
+* Fixed issue where RStudio occasionally reset the locale to the "default" locale on Windows (#9350)
 * Errors that occur when R packages update the Connections pane are now better handled and reported (#9219)
 * Fixed an issue where login page could fail intermittently with slow network connections (Pro #2551)

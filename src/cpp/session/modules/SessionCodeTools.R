@@ -2214,7 +2214,9 @@
       # https://bugs.r-project.org/bugzilla3/show_bug.cgi?id=17484
       # https://github.com/rstudio/rstudio/issues/3658
       #
-      Sys.setlocale()
+      if (getRversion() < "3.5.2")
+         Sys.setlocale()
+      
       return(character())
 
    }
