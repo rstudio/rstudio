@@ -19,6 +19,12 @@ import { platform } from "os";
 
 export default function scanForR(): string {
 
+  // if RSTUDIO_WHICH_R is set, then prefer using that
+  let rstudioWhichR = process.env.RSTUDIO_WHICH_R || "";
+  if (rstudioWhichR.length !== 0) {
+    return rstudioWhichR;
+  }
+
   // first look for R on the PATH
   let R = execSync("/usr/bin/which R", { encoding: "utf-8" }).trim();
   if (R.length !== 0) {
