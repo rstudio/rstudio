@@ -16,7 +16,7 @@
 import { execSync } from 'child_process';
 import { app } from 'electron';
 import fs from 'fs';
-import { existsSync } from 'original-fs';
+import { existsSync } from 'fs';
 import { platform } from 'os';
 import path from 'path';
 import scanForR from './r';
