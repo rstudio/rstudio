@@ -13,16 +13,22 @@
  *
  */
 
+import { execSync } from 'child_process';
 import { app } from 'electron';
 import fs from 'fs';
+import { existsSync } from 'fs';
+import { platform } from 'os';
 import path from 'path';
+import scanForR from './r';
 import SessionLauncher from './session-launcher';
 
 export default class Main {
+  
   constructor() {
   }
 
   run() {
+
     // look for a version check request; if we have one, just do that and exit
     if (process.argv.includes('--version', 1)) {
       console.log('RSTUDIO_VERSION is 0.0.0.0.00001');
@@ -59,6 +65,7 @@ export default class Main {
 
     let launcher = new SessionLauncher(sessionPath, confPath);
     launcher.launchFirstSession(installPath, devMode);
+
   }
 
   initializeSharedSecret() {
@@ -67,35 +74,53 @@ export default class Main {
 
   }
 
-  prepareEnvironment(scriptsPath: string) {
-    // attempt to detect R environment
-    // let ldScriptPath = path.join(scriptsPath, '../session/r-ldpath');
+  prepareEnvironmentLdPaths(rHome: string) {
 
-    // whole bunch of code..., hardcoded for prototype
-    if (process.platform === 'darwin') {
-      let rHome = '/usr/local/Cellar/r/4.0.5/lib/R';
-      process.env.R_HOME = rHome;
-      process.env.R_SHARE_DIR = `${rHome}/share`;
-      process.env.R_INCLUDE_DIR = `${rHome}/include`;
-      process.env.R_DOC_DIR = `${rHome}/doc`;
-      process.env.DYLD_FALLBACK_LIBRARY_PATH = `${rHome}/lib:/Users/gary/lib:/usr/local/lib:/usr/lib:::/lib:/Library/Java/JavaVirtualMachines/jdk-11.0.1.jdk/Contents/Home/lib/server`;
-      process.env.RS_CRASH_HANDLER_PATH = '/opt/rstudio-tools/crashpad/crashpad/out/Default/crashpad_handler';
-    } else if (process.platform === 'linux') {
-      process.env.R_HOME = '/opt/R/3.6.3/lib/R';
-      process.env.R_SHARE_DIR = '/opt/R/3.6.3/lib/R/share';
-      process.env.R_INCLUDE_DIR = '/opt/R/3.6.3/lib/R/include';
-      process.env.R_DOC_DIR = '/opt/R/3.6.3/lib/R/doc';
-    } else if (process.platform === 'win32') {
-      process.env.R_HOME = 'C:\\R\\R-35~1.0';
-      process.env.PATH = `C:\\R\\R-3.5.0\\bin\\x64;${process.env.PATH}`; 
-    } else {
-      console.log(`Unsupported platform ${process.platform}`);
+    // nothing to do on Windows
+    if (platform() === "win32") {
       return false;
     }
 
-    // uncomment to stall start of rsession for # seconds so you can attach debugger to it
-    // process.env.RSTUDIO_SESSION_SLEEP_ON_STARTUP = "15";
+    // get name of ld path variable
+    // on macOS, we need to set DYLD_FALLBACK_LIBRARY_PATH
+    // on Linux, we need to set LD_LIBRARY_PATH
+    let ldPathVar = (platform() === "darwin")
+      ? "DYLD_FALLBACK_LIBRARY_PATH"
+      : "LD_LIBRARY_PATH";
+    
+    // get path to ldpaths script
+    let ldPathsScript = `${rHome}/etc/ldpaths`;
+    if (!existsSync(ldPathsScript)) {
+      return false;
+    }
+     
+    // source it and read it
+    let command = `source "${ldPathsScript}" && echo "\${${ldPathVar}}"`;
+    let ldPath = execSync(command).toString().trim();
+    process.env[ldPathVar] = ldPath;
+    
+  }
+
+  prepareEnvironment(scriptsPath: string) {
+
+    // locate R, and then set up environment variables
+    let R = scanForR();
+    if (R.length === 0) {
+      console.log("Could not locate R (try placing the R binary on the PATH)");
+      return false;
+    }
+
+    // read some important environment variables
+    let rHome = execSync(`${R} --no-save --no-restore RHOME`).toString().trim();
+    process.env.R_HOME = `${rHome}`;
+    process.env.R_SHARE_DIR = `${rHome}/share`;
+    process.env.R_DOC_DIR = `${rHome}/doc`;
+
+    // read and execute ldpaths script from R
+    this.prepareEnvironmentLdPaths(rHome);
 
     return true;
+
   }
+
 };
