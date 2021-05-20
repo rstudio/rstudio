@@ -559,7 +559,7 @@
         },
         "limit_visible_console": {
             "type": "boolean",
-            "default": true,
+            "default": false,
             "title": "Limit visible console output",
             "description": "Whether to only show a limited window of the total console output"
         },
