@@ -284,7 +284,7 @@
    # to a particular version of Python.
    #
    # on Windows, Python is typically installed in 'Scripts/python.exe'
-   # for regular installations, and 'python.exe' for Anaconda installations
+   # for virtual environments, and 'python.exe' for Anaconda + standalone
    suffixes <- if (.rs.platform.isWindows) {
       c("Scripts/python.exe", "python.exe")
    } else {
