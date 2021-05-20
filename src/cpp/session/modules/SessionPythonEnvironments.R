@@ -281,7 +281,10 @@
    roots <- c(roots, getOption("rstudio.python.installationPath"))
       
    # check and see if any of these roots point directly
-   # to a particular version of Python. note that on Windows,
+   # to a particular version of Python.
+   #
+   # on Windows, Python is typically installed in 'Scripts/python.exe'
+   # for regular installations, and 'python.exe' for Anaconda installations
    suffixes <- if (.rs.platform.isWindows) {
       c("Scripts/python.exe", "python.exe")
    } else {
