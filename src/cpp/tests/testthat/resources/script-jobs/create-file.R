@@ -16,9 +16,6 @@
 # This is a script used by unit tests; it just writes a file to prove
 # that it has been run.
 
-if (is.missing(the_file)) {
-   stop("Set global variable the_file to indicate file to write.")
-}
-
 writeLines("Hello world", con = the_file)
 
+message("Wrote ", the_file)
