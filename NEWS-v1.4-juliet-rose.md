@@ -27,7 +27,6 @@
 * RStudio Server Pro has been renamed to RStudio Workbench to more accurately reflect its cross-language editing capabilities.
 * **BREAKING:** RStudio Workbench's Linux packages have new file names, `rstudio-workbench-*` instead of `rstudio-server-pro-*`. The operating system package name remains `rstudio-server`, so installs and upgrades will work correctly. Scripts which refer to the `.deb` or `.rpm` file names directly will need to be updated.
 * Added support for JupyterLab 3 (Pro #2022)
-* Improved a Slurm Session Launch Delay that may occur due to buffering when using Slurm job steps (Pro #2331)
 * Add support for using OpenID and SAML authentication schemes when a proxy is required for outbound requests (Pro #2427)
 * Updated product licensing engine (LimeLM) to TurboActivate and TurboFloat to v4.4.3.
 * Licenses can now be applied and updated without a restart (Pro #2468)
@@ -76,6 +75,17 @@
 * Fixed issue importing dataset author data from DOIs in the visual editor (#9059)
 * Fixed issue where the Insert Citation dialog in the visual editor would clear selected citation when typeahead searching (#8521)
 * Fixed issue where the bibliography path is assumed to be document relative when inserting citations in the visual editor (#8847)
+* Fixed error in visual mode spellcheck where underline would disappear when hitting backspace (#9187)
+
+### Job Launcher
+
+* Fixed an issue where the Kubernetes Launcher could hang in Azure Kubernetes Service (AKS) environments by lowering the watch-timeout-seconds parameter default down to 3 minutes instead of 5 (Pro #2312)
+* Fixed issue preventing Kubernetes sessions from starting due to incorrect SSL certificate checking on websocket connections; make websocket connections support the `verify-ssl-certs` option (Pro #2463)
+* Fixed an issue where the Kubernetes Launcher can sometimes get in a state where communication with Kubernetes hangs until a restart (Pro #2548)
+* Fixed an issue where Kubernetes Launcher services could sometimes leak and never be cleaned up (Pro #2548)
+* Fixed an issue causing Kubernetes plugin to fail to deserialize jobs from Kubernetes 1.19 (Pro #2605)
+* Improved a Slurm Session Launch Delay that may occur due to buffering when using Slurm job steps (Pro #2331)
+* Fixed an issue where Load Balanced Local Launcher instances could get into a state where they would no longer receive job updates from other nodes due to silent network drops (Pro #2281)
 
 ### Misc
 
@@ -128,11 +138,9 @@
 * Fix display of condition messages (errors and warnings) in some character encodings (#8546)
 * Fix out-of-date tooltip when renaming files (#8490, #8491)
 * Fix incorrect keyboard shortcuts shown in some places in the Command Palette (#8735)
-* Fixed an issue where Load Balanced Local Launcher instances could get into a state where they would no longer receive job updates from other nodes due to silent network drops (Pro #2281)
 * Fixed issue with formatting of closing braces when inserting newline in C++ code (#8770)
 * Add 'whole word' filter to Find in Files. (#8594)
 * Fixed issue where empty panes would remain open and pop open unexpectedly (#8460)
-* Fixed an issue where the Kubernetes Launcher could hang in Azure Kubernetes Service (AKS) environments by lowering the watch-timeout-seconds parameter default down to 3 minutes instead of 5 (Pro #2312)
 * Fixed issue where 'continue comment on newline' would treat Markdown headers as comments (#6421)
 * Fixed issue where Set Working Directory command could fail if path contained quotes (#6004)
 * Fixed issue where Pro database drivers will not install if `~/odbcinst.ini` is missing (Pro #2284)
@@ -146,10 +154,7 @@
 * Fixed issue where Open File dialog would fail to open files whose names were explicitly typed (#4059)
 * Fixed issue causing Project Sharing to fail to set Access Control Lists when using NFS v4 and `username@domain` security principals (Pro #2415)
 * Fixed issue where dialog boxes [e.g. Git commit, Installing Pro Database drivers] could fail to show output with Limit Console Output turned on (Pro #2284)
-* Fixed issue preventing Kubernetes sessions from starting due to incorrect SSL certificate checking on websocket connections; make websocket connections support the `verify-ssl-certs` option (Pro #2463)
-* Fixed issue where uploading a .zip archive when unzip was not on PATH would cause a cryptic error. (#9151)
+* Fixed issue where uploading a .zip archive when unzip was not on PATH would cause a cryptic error (#9151)
+* Fixed issue where RStudio occasionally reset the locale to the "default" locale on Windows (#9350)
 * Errors that occur when R packages update the Connections pane are now better handled and reported (#9219)
-* Fixed error in visual mode spellcheck where underline would disappear when hitting backspace (#9187)
-* Fixed an issue where the Kubernetes Launcher can sometimes get in a state where communication with Kubernetes hangs until a restart (Pro #2548)
-* Fixed an issue where Kubernetes Launcher services could sometimes leak and never be cleaned up (Pro #2548)
 * Fixed an issue where login page could fail intermittently with slow network connections (Pro #2551)

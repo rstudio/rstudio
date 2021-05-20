@@ -449,9 +449,9 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "auto_detect_indentation",
-         "Autodetect indentation in files", 
+         "Auto-detect indentation in files", 
          "Whether to automatically detect indentation settings from file contents.", 
-         true);
+         false);
    }
 
    /**
