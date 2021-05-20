@@ -247,9 +247,24 @@
    # Python root paths we'll search in
    roots <- if (.rs.platform.isWindows) {
       
+      # find path to Windows local app data folder
+      localAppData <- local({
+         
+         path <- Sys.getenv("LOCALAPPDATA", unset = NA)
+         if (!is.na(path))
+            return(path)
+         
+         profile <- Sys.getenv("USERPROFILE", unset = NA)
+         if (!is.na(profile))
+            return(file.path(profile, "AppData\\Local"))
+         
+         ""
+         
+      })
+      
       c(
-         paste0(Sys.getenv("SYSTEMDRIVE"), "/"),
-         file.path(Sys.getenv("LOCALAPPDATA"), "Programs/Python")
+         paste0(Sys.getenv("SYSTEMDRIVE", unset = "C:"), "/"),
+         file.path(localAppData, "Programs/Python")
       )
       
    } else {
