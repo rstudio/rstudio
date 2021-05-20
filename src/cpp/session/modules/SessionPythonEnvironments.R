@@ -130,6 +130,9 @@
    # prefer UTF-8 path when possible
    path <- enc2utf8(path)
    
+   # prefer unix-style slashes
+   path <- chartr("\\", "/", path)
+   
    # defaults for version, description
    valid <- TRUE
    version <- "[unknown]"
@@ -242,17 +245,36 @@
    pythonPaths <- character()
    
    # Python root paths we'll search in
-   roots <- c(
-      "/opt/python",
-      "/opt/local/python",
-      "/usr/local/opt/python",
-      getOption("rstudio.python.installationPath")
-   )
+   roots <- if (.rs.platform.isWindows) {
+      
+      c(
+         paste0(Sys.getenv("SYSTEMDRIVE"), "/"),
+         file.path(Sys.getenv("LOCALAPPDATA"), "Programs/Python")
+      )
+      
+   } else {
+      
+      c(
+         "/opt/python",
+         "/opt/local/python",
+         "/usr/local/opt/python"
+      )
+      
+   }
    
+   # also include those defined via option
+   roots <- c(roots, getOption("rstudio.python.installationPath"))
+      
    # check and see if any of these roots point directly
-   # to a particular version of Python
+   # to a particular version of Python. note that on Windows,
+   suffixes <- if (.rs.platform.isWindows) {
+      c("Scripts/python.exe", "python.exe")
+   } else {
+      c("bin/python", "bin/python3")
+   }
+   
    paths <- vapply(roots, function(root) {
-      paths <- file.path(root, c("bin/python", "bin/python3"))
+      paths <- file.path(root, suffixes)
       paths[file.exists(paths)][1]
    }, FUN.VALUE = character(1))
    
@@ -267,7 +289,7 @@
    # check and see if any of these roots point directly
    # to a particular version of Python
    paths <- vapply(roots, function(root) {
-      paths <- file.path(root, c("bin/python", "bin/python3"))
+      paths <- file.path(root, suffixes)
       paths[file.exists(paths)][1]
    }, FUN.VALUE = character(1))
    
