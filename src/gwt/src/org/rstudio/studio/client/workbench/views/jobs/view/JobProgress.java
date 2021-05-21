@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.jobs.view;
 
 import java.util.Date;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
@@ -65,6 +66,7 @@ public class JobProgress extends Composite
       
       progress_.setHeight("10px");
       stop_.setVisible(false);
+      replay_.setVisible(false);
    }
    
    @Override
@@ -98,6 +100,12 @@ public class JobProgress extends Composite
 
          // Detach any previous event handlers
          registrations_.removeHandler();
+
+         // Set new button IDs
+         ElementIds.assignElementId(stop_,
+            ElementIds.JOB_STOP + "_" + ElementIds.idSafeString(job.name));
+         ElementIds.assignElementId(replay_,
+            ElementIds.JOB_REPLAY + "_" + ElementIds.idSafeString(job.name));
 
          // Attach new handlers
          registrations_.add(

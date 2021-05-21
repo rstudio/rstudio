@@ -622,6 +622,10 @@ public class ElementIds
    public final static String TAB_CLOSE_ALL = "tab_close_all";
    public final static String TAB_CLOSE_OTHERS = "tab_close_others";
 
+   // Jobs pane
+   public final static String JOB_STOP = "job_stop";
+   public final static String JOB_REPLAY = "job_replay";
+
    // OpenProjectDialog
    public final static String OP_NEW_SESSION = "op_new_session";
 
