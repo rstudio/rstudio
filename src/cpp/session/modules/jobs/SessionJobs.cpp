@@ -80,6 +80,16 @@ SEXP rs_addJob(SEXP nameSEXP, SEXP statusSEXP, SEXP progressUnitsSEXP, SEXP acti
    return r::sexp::create(pJob->id(), &protect);
 }
 
+SEXP rs_getJobState(SEXP jobSEXP)
+{
+   boost::shared_ptr<Job> pJob;
+   if (!lookupJob(jobSEXP, &pJob))
+      return R_NilValue;
+   
+   r::sexp::Protect protect;
+   return r::sexp::create(Job::stateAsString(pJob->state()), &protect);
+}
+
 SEXP rs_isJobRunning(SEXP jobSEXP)
 {
    boost::shared_ptr<Job> pJob;
@@ -468,6 +478,7 @@ core::Error initialize()
    // register API handlers
    RS_REGISTER_CALL_METHOD(rs_addJob);
    RS_REGISTER_CALL_METHOD(rs_removeJob);
+   RS_REGISTER_CALL_METHOD(rs_getJobState);
    RS_REGISTER_CALL_METHOD(rs_isJobRunning);
    RS_REGISTER_CALL_METHOD(rs_setJobProgress);
    RS_REGISTER_CALL_METHOD(rs_addJobProgress);

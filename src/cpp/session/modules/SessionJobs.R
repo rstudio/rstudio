@@ -108,9 +108,14 @@
 .rs.addApiFunction("executeJobAction", function(job, action) {
    if (missing(job))
       stop("Must specify job ID to execute action for.")
-   .Call("rs_executeJobAction", job, action)
+   .Call("rs_executeJobAction", job, action, PACKAGE = "(embedding)")
 })
 
 .rs.addApiFunction("stopJob", function(job) {
    .rs.api.executeJobAction(job, "stop")
 })
+
+.rs.addApiFunction("getJobState", function(job) {
+   .Call("rs_getJobState", job, PACKAGE = "(embedding)")
+})
+
