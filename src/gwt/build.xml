@@ -150,7 +150,8 @@
             <path refid="project.class.path"/>
          </classpath>
          <!-- add jvmarg -Xss16M or similar if you see a StackOverflowError -->
-         <jvmarg value="-Xmx1536M"/>
+         <jvmarg value="${gwt.xmx}"/>
+         <jvmarg value="${gwt.xss}"/>
          <arg value="-war"/>
          <arg value="${www.dir}"/>
          <arg value="-localWorkers"/>

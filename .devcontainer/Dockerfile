@@ -68,8 +68,75 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Java 8 and 11 (not in official repo for focal)
 RUN add-apt-repository -y ppa:openjdk-r/ppa && \
     apt-get update && \
-    apt-get install -y openjdk-8-jdk openjdk-11-jdk
-RUN update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
+    apt-get install -y openjdk-11-jdk
+RUN update-alternatives --set java /usr/lib/jvm/java-11-openjdk-amd64/bin/java
+
+RUN apt-get -y  install apt-transport-https software-properties-common
+RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0x51716619e084dab9
+RUN add-apt-repository -y 'deb https://cran.rstudio.com/bin/linux/ubuntu focal-cran40/'
+RUN apt update
+RUN apt-get -y install r-base
+
+# copy common dependency installation scripts
+RUN mkdir -p /opt/rstudio-tools/dependencies/linux
+RUN mkdir -p /opt/rstudio-tools/dependencies/tools
+RUN mkdir -p /opt/rstudio-tools/dependencies/common
+COPY ./dependencies/tools/rstudio-tools.sh /opt/rstudio-tools/dependencies/tools/
+
+# copy panmirror project setup (so install-common can install needed deps)
+RUN mkdir -p /opt/rstudio-tools/panmirror
+COPY ./src/gwt/panmirror/src/editor/yarn.lock /opt/rstudio-tools/panmirror/
+COPY ./src/gwt/panmirror/src/editor/package.json /opt/rstudio-tools/panmirror/
+
+# install common dependencies
+# here, we deviate from the typical "./install-common" script and instead
+# call the individual dependency scripts for better layer caching.
+
+# crashpad
+COPY ./dependencies/common/install-crashpad /opt/rstudio-tools/dependencies/common
+RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-crashpad bionic
+
+# dictionaries
+COPY ./dependencies/common/install-dictionaries /opt/rstudio-tools/dependencies/common/
+RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-dictionaries
+
+# mathjax
+COPY ./dependencies/common/install-mathjax /opt/rstudio-tools/dependencies/common/
+RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-mathjax
+
+# boost
+COPY ./dependencies/common/install-boost /opt/rstudio-tools/dependencies/common/
+RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-boost
+
+# pandoc
+COPY ./dependencies/common/install-pandoc /opt/rstudio-tools/dependencies/common/
+RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-pandoc
+
+# R packages
+COPY ./dependencies/common/install-packages /opt/rstudio-tools/dependencies/common/
+RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-packages
+
+# sentry
+COPY ./dependencies/common/install-sentry-cli /opt/rstudio-tools/dependencies/common/
+RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-sentry-cli
+
+# NPM dependencies
+COPY ./dependencies/common/install-npm-dependencies /opt/rstudio-tools/dependencies/common/
+RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-npm-dependencies
+
+# soci
+COPY ./dependencies/common/install-soci /opt/rstudio-tools/dependencies/common/
+RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-soci
+
+# yaml-cpp
+COPY ./dependencies/common/install-yaml-cpp /opt/rstudio-tools/dependencies/common/
+RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-yaml-cpp
+
+# Qt SDK
+COPY ./dependencies/common/install-qt.sh /opt/rstudio-tools/dependencies/linux
+COPY ./dependencies/linux/install-qt-linux /opt/rstudio-tools/dependencies/linux
+RUN export QT_VERSION=5.12.8 && \
+    cd /opt/rstudio-tools/dependencies/linux && /bin/bash ./install-qt-linux
 
 # Create the user
 RUN groupadd --gid $USER_GID $USERNAME \
