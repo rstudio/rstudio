@@ -156,20 +156,24 @@ test_that("script jobs run", {
 
       # wait for the job to finish
       repeat {
-         running <- .rs.tryCatch(.Call("rs_isJobRunning", id, PACKAGE = "(embedding)"))
-         if (identical(running, NULL)) {
+         state <- .rs.tryCatch(.Call("rs_getJobState", id, PACKAGE = "(embedding)"))
+         if (identical(state, NULL)) {
             stop("Job ", id, " does not exist.")
-         } else if (identical(running, TRUE)) {
+         } else if (identical(state, "running") || identical(state, "idle")) {
             # don't wait more than 5s for a job to finish (so we don't hang the test in pathological
             # cases)
             tries <- tries + 1
             if (tries > 50) {
-               stop("Giving up on job ", id, " after 5 seconds")
+               stop("Giving up on job ", id, " after 5 seconds (state: ", state, ")")
                break
             }
 
             # wait 1/10th of a second before querying again (don't busy loop)
             Sys.sleep(0.1)
+
+            # force background processing (needed so the process supervisor notices that the process
+            # has exited)
+            .Call("rs_performBackgroundProcessing", FALSE, PACKAGE = "(embedding)")
          } else {
             # stop waiting 
             break

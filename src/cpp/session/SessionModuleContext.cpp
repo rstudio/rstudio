@@ -544,6 +544,12 @@ SEXP rs_setRpcDelay(SEXP delayMsSEXP)
    return delayMsSEXP;
 }
 
+SEXP rs_performBackgroundProcessing(SEXP isIdle)
+{
+   onBackgroundProcessing(r::sexp::asLogical(isIdle));
+   return R_NilValue;
+}
+
 } // anonymous namespace
 
 
@@ -2924,6 +2930,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_threadSleep);
    RS_REGISTER_CALL_METHOD(rs_userPrompt);
    RS_REGISTER_CALL_METHOD(rs_setRpcDelay);
+   RS_REGISTER_CALL_METHOD(rs_performBackgroundProcessing);
 
    // initialize monitored scratch dir
    initializeMonitoredUserScratchDir();
