@@ -149,7 +149,7 @@ test_that("job tags can be set and retrieved", {
    expect_true(sum(job[["tags"]] == theTags) == length(theTags))
 })
 
-test_that("script jobs run", {
+test_that("script jobs run and can be replayed", {
    # helper function to wait for a job to finish running
    wait_for_job <- function(id) {
       tries <- 0
@@ -172,7 +172,7 @@ test_that("script jobs run", {
             Sys.sleep(0.1)
 
             # force background processing (needed so the process supervisor notices that the process
-            # has exited)
+            # has exited and marks the job as completed)
             .Call("rs_performBackgroundProcessing", FALSE, PACKAGE = "(embedding)")
          } else {
             # stop waiting 
@@ -191,7 +191,23 @@ test_that("script jobs run", {
       name = "Test Job",
       importEnv = TRUE)
 
+   # wait for the script job to finish running
    wait_for_job(job_id)
    expect_true(file.exists(the_file))
+
+   # clean up the file it made and verify that it's gone
+   unlink(the_file)
+   expect_false(file.exists(the_file))
+
+   # now replay the job to put the file back
+   .rs.api.executeJobAction(job_id, "replay")
+   wait_for_job(job_id)
+
+   # it should be back
+   expect_true(file.exists(the_file))
+
+   # clean it up one last time
+   unlink(the_file)
 })
+
 
