@@ -81,7 +81,7 @@ public class JobProgress extends Composite
    /**
     * Adds or updates job information in the widget.
     *
-    * @param job
+    * @param job The job object to show or update.
     */
    @Override
    public void showJob(Job job)

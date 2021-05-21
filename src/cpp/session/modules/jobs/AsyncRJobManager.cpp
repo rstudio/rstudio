@@ -69,12 +69,16 @@ void AsyncRJob::onStdout(const std::string& output)
 
 Error AsyncRJob::reset()
 {
+   // clear progress-related state
    completed_ = false;
    cancelled_ = false;
+
+   // reset underlying job
    if (job_)
    {
       return job_->reset();
    }
+
    return Success();
 }
 
@@ -140,7 +144,8 @@ void AsyncRJob::addOnComplete(boost::function<void()> onComplete)
 Error registerAsyncRJob(boost::shared_ptr<AsyncRJob> job,
       std::string *pId)
 {
-   // create the job 
+   // create the job; note that once registered the job remains registered until the session ends,
+   // so that it can be replayed if requested
    job->registerJob();
 
    // return and register the job
