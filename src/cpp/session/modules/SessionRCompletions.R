@@ -2058,7 +2058,7 @@ assign(x = ".rs.acCompletionTypes",
    dropFirstArgument <- FALSE
    if (length(string))
    {
-      pipes <- c("%>%", "%<>%", "%T>%", "%>>%", "|>")
+      pipes <- c("%>%", "%<>%", "%T>%", "%>>%", "\\|>")
       pattern <- paste(pipes, collapse = "|")
       
       stringPipeMatches <- gregexpr(
