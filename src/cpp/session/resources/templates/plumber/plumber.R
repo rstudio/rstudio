@@ -39,6 +39,6 @@ function(a, b) {
 #* @plumber
 function(pr) {
     pr %>%
-        # Overwrite the default route serializer to unboxed JSON
+        # Overwrite the default serializer to return unboxed JSON
         pr_set_serializer(serializer_unboxed_json())
 }
