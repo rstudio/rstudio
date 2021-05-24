@@ -134,7 +134,7 @@
 * Fixed issue where Stan completion handlers were duplicated on save (#9106)
 * Improved checks for non-writable R library paths on startup (Pro #2184)
 * Fixed issue preventing R Notebook chunks from being queued for execution if they had never been previously run (#4238)
-* Fix various issues when the "Limit Console Output" performance setting was enabled, and enable it by default (#8544, #8504, #8529, #8552)
+* Fix various issues when the "Limit Console Output" performance setting was enabled (#8544, #8504, #8529, #8552)
 * Fix display of condition messages (errors and warnings) in some character encodings (#8546)
 * Fix out-of-date tooltip when renaming files (#8490, #8491)
 * Fix incorrect keyboard shortcuts shown in some places in the Command Palette (#8735)
