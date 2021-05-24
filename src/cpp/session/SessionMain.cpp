@@ -2120,11 +2120,11 @@ int main (int argc, char * const argv[])
       // 1. The user's personal preferences file (rstudio-prefs.json), if CRAN repo editing is
       //    permitted by policy
       // 2. The system-wide preferences file (rstudio-prefs.json)
-      // 2. The repo settings specified in the loaded version of R
-      // 3. The session's repo settings (in rsession.conf/repos.conf)
-      // 4. The server's repo settings
-      // 5. The default repo settings from the preferences schema (user-prefs-schema.json)
-      // 6. If all else fails, cran.rstudio.com
+      // 3. The repo settings specified in the loaded version of R
+      // 4. The session's repo settings (in rsession.conf/repos.conf)
+      // 5. The server's repo settings
+      // 6. The default repo settings from the preferences schema (user-prefs-schema.json)
+      // 7. If all else fails, cran.rstudio.com
       std::string layerName;
       auto val = prefs::userPrefs().readValue(kCranMirror, &layerName);
       if (val && ((options.allowCRANReposEdit() && layerName == kUserPrefsUserLayer) ||
