@@ -216,7 +216,7 @@ var RCodeModel = function(session, tokenizer,
 
    function pInfix(token)
    {
-      return /\binfix\b/.test(token.type);
+      return /\binfix\b/.test(token.type) || token.value === "|>";
    }
 
    this.getDplyrJoinContextFromInfixChain = function(cursor)
