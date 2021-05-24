@@ -180,13 +180,13 @@
 
 .rs.addFunction("python.findPythonInterpreters", function()
 {
-   interpreters <- c(
+   interpreters <- unname(c(
       .rs.python.findPythonSystemInterpreters(),
       .rs.python.findPythonInterpretersInKnownLocations(),
       .rs.python.findPythonPyenvInterpreters(),
       .rs.python.findPythonVirtualEnvironments(),
       .rs.python.findPythonCondaEnvironments()
-   )
+   ))
    
    default <- Sys.getenv("RETICULATE_PYTHON", unset = "")
    
