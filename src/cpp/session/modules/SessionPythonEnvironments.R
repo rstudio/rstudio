@@ -262,8 +262,12 @@
          
       })
       
+      # system-installs of Python might be in one of these folders
+      drive <- Sys.getenv("SYSTEMDRIVE", unset = "C:")
+      suffixes <- c("/", "/Program Files", "/Program Files (x86)")
+
       c(
-         paste0(Sys.getenv("SYSTEMDRIVE", unset = "C:"), "/"),
+         paste0(drive, suffixes),
          file.path(localAppData, "Programs/Python")
       )
       
