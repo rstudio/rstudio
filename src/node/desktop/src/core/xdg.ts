@@ -67,12 +67,11 @@ export function SHGetKnownFolderPath(folderId: WinFolderID): string {
  * Returns the hostname from the operating system
  */
 function getHostname(): string {
-
-  if (!getHostName.hostname)
-    getHostName.hostname = os.hostname();
-  return getHostName.hostname;
+  if (!getHostname.hostname)
+    getHostname.hostname = os.hostname();
+  return getHostname.hostname;
 }
-namespace getHostName {
+namespace getHostname {
    // Use a static string to store the hostname so we don't have to look it up
    // multiple times
   export let hostname = "";
