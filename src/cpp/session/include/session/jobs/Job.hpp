@@ -129,6 +129,10 @@ public:
    time_t started() const;
    time_t completed() const;
 
+   // resets a job; clears output, etc. usually done to discard the job state from a previous run
+   // and allow it to run again for replay.
+   core::Error reset();
+
    void setProgress(int units);
    void setProgressMax(int units);
    void setStatus(const std::string& status);

@@ -80,6 +80,7 @@ public:
    static boost::shared_ptr<ScriptJob> create(
          const ScriptLaunchSpec& spec);
    void start();
+   core::Error replay();
 
 private:
    ScriptJob(const ScriptLaunchSpec& spec);
@@ -101,6 +102,8 @@ core::Error startScriptJob(const ScriptLaunchSpec& spec,
       std::string *pId);
 
 core::Error stopScriptJob(const std::string& id);
+
+core::Error replayScriptJob(const std::string& id);
 
 } // namespace jobs
 } // namespace modules
