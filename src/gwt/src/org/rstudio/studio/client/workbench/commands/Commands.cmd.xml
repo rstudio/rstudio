@@ -133,6 +133,8 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="importDatasetFromSAV"/>
             <cmd refid="importDatasetFromSAS"/>
             <cmd refid="importDatasetFromStata"/>
+            <separator/>
+            <cmd refid="importDatasetFromArrow"/>
          </menu>
          <separator/>
          <cmd refid="saveSourceDoc"/>
@@ -2171,6 +2173,11 @@ well as menu structures (for main menu and popup menus).
          desc="Import data with readr"
          context="help"/>
 
+    <cmd id="openArrowCheatSheet"
+         menuLabel="_Import Data with Arrow"
+         desc="Import data with Arrow"
+         context="help"/>
+
     <cmd id="openDataWranglingCheatSheet"
          menuLabel="Data Manipulation with dplyr, tid_yr"
          desc="Data manipulation with dplyr and tidyr"
@@ -2806,6 +2813,12 @@ well as menu structures (for main menu and popup menus).
    <cmd id="importDatasetFromXLS"
         label="Import Dataset from Excel..."
         menuLabel="From _Excel..."
+        context="import"
+        windowMode="main"/>
+
+   <cmd id="importDatasetFromArrow"
+        label="From Arrow..."
+        menuLabel="From _Arrow..."
         context="import"
         windowMode="main"/>
 

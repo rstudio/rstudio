@@ -568,6 +568,8 @@ public class EnvironmentPane extends WorkbenchPane
       menu.addItem(commands_.importDatasetFromSAV().createMenuItem(false));
       menu.addItem(commands_.importDatasetFromSAS().createMenuItem(false));
       menu.addItem(commands_.importDatasetFromStata().createMenuItem(false));
+      menu.addSeparator();
+      menu.addItem(commands_.importDatasetFromArrow().createMenuItem(false));
 
       dataImportButton_ = new ToolbarMenuButton(
               "Import Dataset",

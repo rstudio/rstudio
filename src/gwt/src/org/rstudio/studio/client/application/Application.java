@@ -270,7 +270,7 @@ public class Application implements ApplicationEventHandlers
                {
                   buttonLabels.add("Go Home");
                   elementIds.add(ElementIds.DIALOG_HOME_BUTTON);
-                  buttonOperations.add(() -> 
+                  buttonOperations.add(() ->
                   {
                      Window.Location.assign(homepageLink);
                   });
@@ -1037,6 +1037,7 @@ public class Application implements ApplicationEventHandlers
          commands_.importDatasetFromSAS().remove();
          commands_.importDatasetFromStata().remove();
          commands_.importDatasetFromXLS().remove();
+         commands_.importDatasetFromArrow().remove();
       }
 
       Element el = Document.get().getElementById("rstudio_container");

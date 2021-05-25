@@ -368,6 +368,7 @@ public abstract class
    public abstract AppCommand importDatasetFromSAS();
    public abstract AppCommand importDatasetFromStata();
    public abstract AppCommand importDatasetFromXLS();
+   public abstract AppCommand importDatasetFromArrow();
 
    // Environment
    public abstract AppCommand activateEnvironment();
