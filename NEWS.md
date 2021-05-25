@@ -16,4 +16,5 @@
 * Improved display of R stack traces in R functions invoked internally by RStudio (#9307)
 * The "auto-detect indentation" preference is now off by default. (#9211) 
 * **BREAKING:** RStudio Desktop Pro only supports activation with license files (Pro #2300)
+* Added AWS Cognito support to openid integration (Pro #2313)
 
