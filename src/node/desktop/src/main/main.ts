@@ -22,7 +22,7 @@ import * as log from '../core/log';
 import { getenv, setenv } from '../core/environment';
 
 import { getRStudioVersion } from './product-info';
-import { Desktop } from './desktop-utils';
+import * as desktop from './desktop-utils';
 
 app.whenReady().then(() => {
   new Main().run();
@@ -60,11 +60,11 @@ export default class Main {
       return;
     }
 
-    Desktop.initializeLang();
+    desktop.initializeLang();
     Main.initializeRenderingEngine();
 
     // initialize log
-    initializeLog('rdesktop', log.LogLevel.WARN, Desktop.userLogPath());
+    initializeLog('rdesktop', log.LogLevel.WARN, desktop.userLogPath());
 
     // TODO: crash handling
     //       // catch unhandled exceptions
