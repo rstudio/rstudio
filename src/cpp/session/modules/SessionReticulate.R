@@ -1273,20 +1273,22 @@
 
 # Create HTML documentation object
 import pydoc
-html = pydoc.HTMLDoc()
+_rstudio_html = pydoc.HTMLDoc()
 
 # Override the heading function
-def _heading(title, fgcol, bgcol, extra = ''):
+def _rstudio_heading(title, fgcol, bgcol, extra = ''):
    return '''
 <table width=\"100%%\" cellspacing=0 cellpadding=2 border=0 summary=\"heading\">
 <tr><td><h2>%s</h2></td></tr>
 </table>
    ''' % (title)
 
-html.heading = _heading
-", local = TRUE)
+_rstudio_html.heading = _rstudio_heading
+")
    
-   html <- objects$html
+   html <- reticulate::py_get_item(objects, "_rstudio_html")
+   reticulate::py_del_item(objects, "_rstudio_html")
+   reticulate::py_del_item(objects, "_rstudio_heading")
    
    if (inherits(resolved, "numpy.ufunc"))
       page <- html$page(paste("numpy function", name), html$docroutine(resolved, name))
