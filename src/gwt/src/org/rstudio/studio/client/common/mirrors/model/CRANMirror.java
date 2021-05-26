@@ -135,7 +135,8 @@ public class CRANMirror extends UserPrefs.CranMirror
     */
    public final String getDisplay()
    {
-      if (isCustom()) {
+      if (isCustom()) 
+      {
          // Host is Custom with no standard Name/Host info.  Identify by URL
          return getURL();
       } else {
