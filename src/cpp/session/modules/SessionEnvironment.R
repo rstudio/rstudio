@@ -649,8 +649,11 @@
    {
       # defend against very large calls; e.g. those with R objects inlined
       # as part of the call (can happen in do.call contexts)
-      # note that we only show the first line of the call in the Environment
-      # pane anyhow
+      #
+      # this is primarily used for the Environment pane, where we try to display
+      # a single-line summary of an R object -- so we can enforce that when
+      # deparsing calls here as well
+      #
       # https://github.com/rstudio/rstudio/issues/5158
       sanitized <- .rs.sanitizeCall(obj)
       val1 <- deparse(sanitized, nlines = 1L)
