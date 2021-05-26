@@ -55,7 +55,7 @@ export default class Main {
 
     // look for a version check request; if we have one, just do that and exit
     if (app.commandLine.hasSwitch('version')) {
-      console.log(getRStudioVersion());
+      console.log(Main.getVersion());
       app.exit(0);
       return;
     }
@@ -1058,5 +1058,11 @@ export default class Main {
     //   return desktop::optionsPro().getSessionUrl();
     // #else // OPEN_SOURCE
     return '';
+  }
+
+  static getVersion(): string {
+    let componentVers: any = process.versions;
+    componentVers["rstudio"] = getRStudioVersion();
+    return componentVers;
   }
 }
