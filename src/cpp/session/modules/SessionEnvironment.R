@@ -230,7 +230,8 @@
       return(.rs.valueDescription(expr))
    
    # we have a call; try to deparse it
-   .rs.deparse(call)
+   sanitized <- .rs.sanitizeCall(call)
+   .rs.deparse(sanitized)
 })
 
 # used to create descriptions for language objects and symbols
@@ -308,7 +309,7 @@
      # the below number of lines, but in practice such a large highlight
      # would be unlikely to be useful
      # https://github.com/rstudio/rstudio/issues/5158
-     calltext <- deparse(call, nlines = 200L)
+     calltext <- .rs.deparse(call, nlines = 200L)
   }
   else
   {
@@ -404,7 +405,7 @@
    .rs.deparse(call[[1L]])
 })
 
-.rs.addFunction("sanitizeCallSummary", function(object)
+.rs.addFunction("sanitizeCall", function(object)
 {
    if (missing(object))
    {
@@ -427,7 +428,7 @@
       {
          # assigning NULL to object will remove that entry
          # https://github.com/rstudio/rstudio/issues/9299
-         sanitized <- .rs.sanitizeCallSummary(object[[i]])
+         sanitized <- .rs.sanitizeCall(object[[i]])
          if (!missing(sanitized) && !is.null(sanitized))
             object[[i]] <- sanitized
       }
@@ -480,9 +481,11 @@
    # where 'object' is something very large when deparsed. we avoid
    # issues by replacing such objects with a short identifier of their
    # type / class
-   call <- .rs.sanitizeCallSummary(call)
+   call <- .rs.sanitizeCall(call)
    
+   # deparse call
    .rs.deparse(call)
+   
 })
 
 .rs.addFunction("valueDescription", function(obj)
@@ -649,7 +652,7 @@
       # note that we only show the first line of the call in the Environment
       # pane anyhow
       # https://github.com/rstudio/rstudio/issues/5158
-      sanitized <- .rs.sanitizeCallSummary(obj)
+      sanitized <- .rs.sanitizeCall(obj)
       val1 <- deparse(sanitized, nlines = 1L)
       val2 <- deparse(sanitized, nlines = 2L)
       
