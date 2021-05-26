@@ -656,17 +656,14 @@
       #
       # https://github.com/rstudio/rstudio/issues/5158
       sanitized <- .rs.sanitizeCall(obj)
-      val1 <- deparse(sanitized, nlines = 1L)
-      val2 <- deparse(sanitized, nlines = 2L)
+      val1 <- .rs.deparse(sanitized, nlines = 1L)
+      val2 <- .rs.deparse(sanitized, nlines = 2L)
       
       # indicate if there is more output
       val <- if (!identical(val1, val2))
          paste(val1, "<...>")
       else
          val1
-      
-      # remove backticks on our embedded summaries
-      val <- gsub("`<(.*?)>`", "<\\1>", val, perl = TRUE)
 
    }
    else if (!hasNullPtr)
