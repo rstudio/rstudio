@@ -45,7 +45,7 @@ void onSuspended(const r::session::RSuspendOptions& options,
                  core::Settings* pPersistentState);
 void onResumed(const core::Settings& persistentState);
 
-// notify of backgound processing
+// notify of background processing
 void onBackgroundProcessing(bool isIdle);
 
 // source diagnostics

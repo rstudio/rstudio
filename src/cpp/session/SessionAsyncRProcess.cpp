@@ -276,6 +276,11 @@ void AsyncRProcess::onProcessCompleted(int exitStatus)
    markCompleted();
    ipcRequests_.removeIfExists();
    ipcResponse_.removeIfExists();
+
+   // we've terminated, so clear termination flag (this instance can be re-used if the process is
+   // started again)
+   terminationRequested_ = false;
+
    onCompleted(exitStatus);
 }
 

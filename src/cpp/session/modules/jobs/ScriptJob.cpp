@@ -165,6 +165,44 @@ void ScriptJob::start()
                                  options);
 }
 
+core::Error ScriptJob::replay()
+{
+   Error error;
+   if (!job_)
+   {
+      error = systemError(boost::system::errc::no_child_process, ERROR_LOCATION);
+      error.addProperty("name", name_);
+      error.addProperty("description", "Script job process is not running yet and cannot "
+            "be replayed.");
+      return error;
+   }
+   if (!job_->complete())
+   {
+      error = systemError(boost::system::errc::operation_in_progress, ERROR_LOCATION);
+      error.addProperty("id", job_->id());
+      error.addProperty("name", name_);
+      error.addProperty("description", "Script job is still running and cannot be replayed.");
+      return error;
+   }
+
+   // reset the underlying job
+   jobs::setJobStatus(job_, "Re-running");
+   error = reset();
+   if (error)
+   {
+      return error;
+   }
+
+   // return job to idle state and reset progress
+   setJobState(job_, JobState::JobIdle);
+   setJobProgress(job_, 0);
+
+   // job is now reset, run the script again
+   start();
+
+   return Success();
+}
+
 void ScriptJob::onStdout(const std::string& output)
 {
    // split into lines
@@ -420,6 +458,11 @@ core::Error startScriptJob(const ScriptLaunchSpec& spec,
 Error stopScriptJob(const std::string& id)
 {
    return stopAsyncRJob(id);
+}
+
+Error replayScriptJob(const std::string& id)
+{
+   return replayAsyncRJob(id);
 }
 
 } // namespace jobs

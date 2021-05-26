@@ -23,6 +23,7 @@
 #include <session/SessionUrlPorts.hpp>
 #include <session/SessionModuleContext.hpp>
 
+#include <shared_core/SafeConvert.hpp>
 
 using namespace rstudio::core;
 
@@ -61,6 +62,44 @@ void ShinyAsyncJob::start()
 
    // echo the command we submitted to R
    onStdout("=> " + runCmd_ + "\n\n");
+}
+
+core::Error ShinyAsyncJob::replay()
+{
+   Error error;
+   if (!job_)
+   {
+      error = systemError(boost::system::errc::no_child_process, ERROR_LOCATION);
+      error.addProperty("name", name_);
+      error.addProperty("description", "Shiny background job is not running yet and cannot "
+            "be replayed.");
+      return error;
+   }
+   if (!job_->complete())
+   {
+      error = systemError(boost::system::errc::operation_in_progress, ERROR_LOCATION);
+      error.addProperty("id", job_->id());
+      error.addProperty("name", name_);
+      error.addProperty("description", "You must stop the Shiny background job before attempting "
+            "to replay it.");
+      return error;
+   }
+
+   // reset the underlying job
+   error = reset();
+   if (error)
+   {
+      return error;
+   }
+
+   // return job to idle state
+   jobs::setJobStatus(job_, "Restarting");
+   jobs::setJobState(job_, jobs::JobState::JobIdle);
+
+   // job is now reset, run the Shiny app again
+   start();
+
+   return Success();
 }
 
 void ShinyAsyncJob::enqueueStateEvent(const std::string& state)
@@ -118,7 +157,8 @@ void ShinyAsyncJob::onCompleted(int exitStatus)
       else
       {
          setJobState(job_, jobs::JobState::JobFailed);
-         onStdout("\nShiny application failed.\n\n");
+         onStdout("\nShiny application failed (exit status " +
+               safe_convert::numberToString(exitStatus) + ").\n\n");
       }
    }
 

@@ -31,6 +31,7 @@ public:
          const std::string& viewerType, 
          const std::string& runCmd);
    void start();
+   core::Error replay();
 
 private:
    void enqueueStateEvent(const std::string& state);
