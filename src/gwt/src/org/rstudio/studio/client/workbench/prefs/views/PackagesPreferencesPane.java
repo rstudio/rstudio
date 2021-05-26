@@ -348,7 +348,6 @@ public class PackagesPreferencesPane extends PreferencesPane
       String mirrorTextValue = cranMirrorTextBox_.getTextBox().getText();
 
       boolean cranRepoChanged = !mirrorTextValue.equals(cranMirrorStored_);
-      // TODO: Is this correct?  Custom doesn't require a leading http://, so this wont always match
       boolean cranRepoChangedToUrl = cranRepoChanged &&
                                       mirrorTextValue.startsWith("http");
 
