@@ -180,13 +180,13 @@
 
 .rs.addFunction("python.findPythonInterpreters", function()
 {
-   interpreters <- c(
+   interpreters <- unname(c(
       .rs.python.findPythonSystemInterpreters(),
       .rs.python.findPythonInterpretersInKnownLocations(),
       .rs.python.findPythonPyenvInterpreters(),
       .rs.python.findPythonVirtualEnvironments(),
       .rs.python.findPythonCondaEnvironments()
-   )
+   ))
    
    default <- Sys.getenv("RETICULATE_PYTHON", unset = "")
    
@@ -262,8 +262,12 @@
          
       })
       
+      # system-installs of Python might be in one of these folders
+      drive <- Sys.getenv("SYSTEMDRIVE", unset = "C:")
+      suffixes <- c("/", "/Program Files", "/Program Files (x86)")
+
       c(
-         paste0(Sys.getenv("SYSTEMDRIVE", unset = "C:"), "/"),
+         paste0(drive, suffixes),
          file.path(localAppData, "Programs/Python")
       )
       
