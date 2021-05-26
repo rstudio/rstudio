@@ -74,6 +74,7 @@ import org.rstudio.studio.client.workbench.events.*;
 import org.rstudio.studio.client.workbench.events.ShowMainMenuEvent.Menu;
 import org.rstudio.studio.client.workbench.model.*;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.snippets.ui.EditSnippetsDialog;
 import org.rstudio.studio.client.workbench.views.choosefile.ChooseFile;
 import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
@@ -468,6 +469,12 @@ public class Workbench implements BusyEvent.Handler,
    public void onModifyKeyboardShortcuts()
    {
       new ModifyKeyboardShortcutsWidget().showModal();
+   }
+
+   @Handler
+   public void onEditCodeSnippets()
+   {
+      new EditSnippetsDialog().showModal();
    }
 
    @Handler
