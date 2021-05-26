@@ -226,10 +226,11 @@
    # do.call(), the 'expression' here might just be an already-evaluated
    # R object. in such a case, we want to avoid deparsing the object as
    # it could be expensive (especially for large objects).
-   if (is.call(expr))
-      return(.rs.deparse(expr))
+   if (!is.call(expr))
+      return(.rs.valueDescription(expr))
    
-   .rs.valueDescription(expr)
+   # we have a call; try to deparse it
+   .rs.deparse(call)
 })
 
 # used to create descriptions for language objects and symbols
@@ -295,12 +296,19 @@
     nchars <- nchars + nchar(slines[i]) + 1
     offsets[i] <- nchars
   }
-  singleline <- paste(slines, collapse=" ")
+  
+  singleline <- paste(slines, collapse = " ")
   
   if (is.null(calltext))
   {
      # No call text specified; deparse into a list of lines
-     calltext <- deparse(call)
+     # limit length of deparsed output to avoid issues with very large calls
+     # 
+     # this implies that we might be unable to highlight calls larger than
+     # the below number of lines, but in practice such a large highlight
+     # would be unlikely to be useful
+     # https://github.com/rstudio/rstudio/issues/5158
+     calltext <- deparse(call, nlines = 200L)
   }
   else
   {
@@ -311,7 +319,7 @@
 
   # Remove leading/trailing whitespace on each line, and collapse the lines
   calltext <- sub("\\s+$", "", sub("^\\s+", "", calltext))
-  calltext <- paste(calltext, collapse=" ")
+  calltext <- paste(calltext, collapse = " ")
 
   # Any call text supplied is presumed UTF-8 unless we know otherwise
   if (Encoding(calltext) == "unknown")
@@ -348,8 +356,8 @@
      return(c(0L, 0L, 0L, 0L, 0L, 0L))
 
   # Compute the starting and ending lines
-  firstline <- which(offsets >= pos, arr.ind = TRUE)[1] 
-  lastline <- which(offsets >= endpos, arr.ind = TRUE)[1]  
+  firstline <- which(offsets >= pos, arr.ind = TRUE)[1]
+  lastline <- which(offsets >= endpos, arr.ind = TRUE)[1]
   if (is.na(lastline))
      lastline <- length(offsets)
 
@@ -374,8 +382,9 @@
      lastchar <- lastchar + indents[lastline]
   }
 
-  result <- as.integer(c(firstline, firstchar, lastline, 
-                         lastchar, firstchar, lastchar))
+  result <- as.integer(c(firstline, firstchar,
+                         lastline,  lastchar,
+                         firstchar, lastchar))
   return(result)
 })
 
@@ -629,9 +638,30 @@
    contents_deferred <- FALSE
    
    # for language objects, don't evaluate, just show the expression
-   if (is.language(obj) || is.symbol(obj))
+   if (is.symbol(obj))
    {
-      val <- deparse(obj)
+      val <- as.character(obj)
+   }
+   else if (is.language(obj))
+   {
+      # defend against very large calls; e.g. those with R objects inlined
+      # as part of the call (can happen in do.call contexts)
+      # note that we only show the first line of the call in the Environment
+      # pane anyhow
+      # https://github.com/rstudio/rstudio/issues/5158
+      sanitized <- .rs.sanitizeCallSummary(obj)
+      val1 <- deparse(sanitized, nlines = 1L)
+      val2 <- deparse(sanitized, nlines = 2L)
+      
+      # indicate if there is more output
+      val <- if (!identical(val1, val2))
+         paste(val1, "<...>")
+      else
+         val1
+      
+      # remove backticks on our embedded summaries
+      val <- gsub("`<(.*?)>`", "<\\1>", val, perl = TRUE)
+
    }
    else if (!hasNullPtr)
    {
