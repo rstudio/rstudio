@@ -15,9 +15,11 @@
 
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
-import org.rstudio.core.client.widget.Operation;
+import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.studio.client.application.ApplicationUtils;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
+import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportPreviewResponse;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -25,10 +27,10 @@ import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.uibinder.client.UiBinder;
-import com.google.gwt.uibinder.client.UiFactory;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.ListBox;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 public class DataImportOptionsUiArrow extends DataImportOptionsUi
@@ -42,38 +44,14 @@ public class DataImportOptionsUiArrow extends DataImportOptionsUi
    {
    }
 
-   public DataImportOptionsUiArrow(DataImportModes mode)
+   public DataImportOptionsUiArrow()
    {
       initWidget(uiBinder.createAndBindUi(this));
 
-      initDefaults(mode);
+      initDefaults();
       initEvents();
-   }
 
-   void initDefaults(DataImportModes mode)
-   {
-      formatListBox_.addItem("Arrow", "Arrow");
-      formatListBox_.addItem("DTA", "dta");
-      formatListBox_.addItem("POR", "por");
-      formatListBox_.addItem("SAS", "sas");
-      formatListBox_.addItem("Stata", "stata");
-
-      switch(mode)
-      {
-      case SAS:
-         formatListBox_.setSelectedIndex(3);
-         break;
-      case Stata:
-         formatListBox_.setSelectedIndex(4);
-         break;
-      default:
-         formatListBox_.setSelectedIndex(0);
-         break;
-      }
-
-      openDataViewerCheckBox_.setValue(true);
-
-      updateEnabled();
+      DomUtils.setPlaceholder(rangeTextBox_, "A1:D10");
    }
 
    @Override
@@ -81,9 +59,13 @@ public class DataImportOptionsUiArrow extends DataImportOptionsUi
    {
       return DataImportOptionsArrow.create(
          nameTextBox_.getValue(),
-         !fileChooser_.getText().isEmpty() ? fileChooser_.getText() : null,
-         formatListBox_.getSelectedValue(),
-         openDataViewerCheckBox_.getValue().booleanValue()
+         !sheetListBox_.getSelectedValue().isEmpty() ? sheetListBox_.getSelectedValue() : null,
+         Integer.parseInt(skipTextBox_.getValue()),
+         columnNamesCheckBox_.getValue().booleanValue(),
+         !naTextBox_.getValue().isEmpty() ? naTextBox_.getValue() : null,
+         openDataViewerCheckBox_.getValue().booleanValue(),
+         !maxTextBox_.getValue().isEmpty() ? Integer.parseInt(maxTextBox_.getValue()) : null,
+         !rangeTextBox_.getValue().isEmpty() ? rangeTextBox_.getValue() : null
       );
    }
 
@@ -91,81 +73,75 @@ public class DataImportOptionsUiArrow extends DataImportOptionsUi
    public void setAssembleResponse(DataImportAssembleResponse response)
    {
       nameTextBox_.setText(response.getDataName());
-      updateEnabled();
+
+      if (ApplicationUtils.compareVersions(response.getPackageVersion(), "1.0.0") < 0) {
+         maxTextBox_.setEnabled(false);
+         rangeTextBox_.setEnabled(false);
+      }
+   }
+
+   @Override
+   public void setPreviewResponse(DataImportPreviewResponse response)
+   {
+      String[] sheets = getSheetsFromResponse(response);
+
+      if (sheetListBox_.getItemCount() <= 1)
+      {
+         sheetListBox_.clear();
+         sheetListBox_.addItem("Default", "");
+
+         for (String sheet : sheets){
+            sheetListBox_.addItem(sheet, sheet);
+         }
+      }
    }
 
    @Override
    public void clearOptions()
    {
       nameTextBox_.setText("");
-      updateEnabled();
-   }
-
-   @Override
-   public void setImportLocation(String importLocation)
-   {
-      nameTextBox_.setText("");
-
-      String[] components = importLocation.split("\\.");
-      if (components.length > 0)
-      {
-         String extension = components[components.length - 1].toLowerCase();
-         for (int idx = 0; idx < formatListBox_.getItemCount(); idx++)
-         {
-            if (formatListBox_.getValue(idx) == extension)
-            {
-               formatListBox_.setSelectedIndex(idx);
-            }
-         }
-      }
+      sheetListBox_.clear();
+      sheetListBox_.addItem("Default", "");
    }
 
    @Override
    public HelpLink getHelpLink()
    {
       return new HelpLink(
-         "Reading data using haven",
-         "import_haven",
+         "Reading Excel files using readxl",
+         "import_readxl",
          false,
          true);
    }
 
-   @UiFactory
-   DataImportFileChooser makeLocationChooser()
+   void initDefaults()
    {
-      DataImportFileChooser dataImportFileChooser = new DataImportFileChooser(
-         new Operation()
-         {
-            @Override
-            public void execute()
-            {
-               updateEnabled();
-               triggerChange();
-            }
-         },
-         false);
+      skipTextBox_.setText("0");
 
-      return dataImportFileChooser;
+      columnNamesCheckBox_.setValue(true);
+      openDataViewerCheckBox_.setValue(true);
+
+      sheetListBox_.addItem("Default", "");
    }
 
    void initEvents()
    {
       ValueChangeHandler<String> valueChangeHandler = new ValueChangeHandler<String>()
       {
+
          @Override
          public void onValueChange(ValueChangeEvent<String> arg0)
          {
-            updateEnabled();
             triggerChange();
          }
       };
 
       ChangeHandler changeHandler = new ChangeHandler()
       {
+
          @Override
          public void onChange(ChangeEvent arg0)
          {
-            updateEnabled();
             triggerChange();
          }
       };
@@ -176,34 +152,54 @@ public class DataImportOptionsUiArrow extends DataImportOptionsUi
          @Override
          public void onValueChange(ValueChangeEvent<Boolean> arg0)
          {
-            updateEnabled();
+            triggerChange();
+         }
+      };
+
+      ValueChangeHandler<String> rangeChangeHandler = new ValueChangeHandler<String>()
+      {
+
+         @Override
+         public void onValueChange(ValueChangeEvent<String> arg0)
+         {
+            maxTextBox_.setEnabled(rangeTextBox_.getValue().isEmpty());
+            skipTextBox_.setEnabled(rangeTextBox_.getValue().isEmpty());
             triggerChange();
          }
       };
 
       nameTextBox_.addValueChangeHandler(valueChangeHandler);
-      formatListBox_.addChangeHandler(changeHandler);
+      sheetListBox_.addChangeHandler(changeHandler);
+      columnNamesCheckBox_.addValueChangeHandler(booleanValueChangeHandler);
       openDataViewerCheckBox_.addValueChangeHandler(booleanValueChangeHandler);
-   }
-
-   void updateEnabled()
-   {
-      if (formatListBox_.getSelectedValue() == "sas")
-      {
-         fileChooser_.setEnabled(true);
-      }
-      else
-      {
-         fileChooser_.setEnabled(false);
-      }
+      naTextBox_.addValueChangeHandler(valueChangeHandler);
+      skipTextBox_.addValueChangeHandler(valueChangeHandler);
+      maxTextBox_.addValueChangeHandler(valueChangeHandler);
+      rangeTextBox_.addValueChangeHandler(rangeChangeHandler);
    }
 
    @UiField
-   ListBox formatListBox_;
+   ListBox sheetListBox_;
 
    @UiField
-   DataImportFileChooser fileChooser_;
+   TextBox skipTextBox_;
+
+   @UiField
+   CheckBox columnNamesCheckBox_;
+
+   @UiField
+   TextBox naTextBox_;
 
    @UiField
    CheckBox openDataViewerCheckBox_;
+
+   @UiField
+   TextBox maxTextBox_;
+
+   @UiField
+   TextBox rangeTextBox_;
+
+   private static native final String[] getSheetsFromResponse(DataImportPreviewResponse response) /*-{
+      return response && response.options && response.options.sheets ? response.options.sheets : [];
+   }-*/;
 }

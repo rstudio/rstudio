@@ -34,13 +34,13 @@ public class DataImportPresenter
       eventBus_ = eventBus;
       dependencyManager_ = dependencyManager;
    }
-   
+
    public Command getImportDatasetCommandFromMode(
       final DataImportModes dataImportMode,
       final String dialogTitle,
       final String path)
    {
-       return 
+       return
           new Command() {
              @Override
              public void execute()
@@ -54,30 +54,30 @@ public class DataImportPresenter
                    @Override
                    public void execute(final String importCode)
                    {
-                      eventBus_.fireEvent(new SendToConsoleEvent(importCode, true, true)); 
+                      eventBus_.fireEvent(new SendToConsoleEvent(importCode, true, true));
                    }
                 });
-                
+
                 dataImportDialog.showModal();
              }
           };
    }
-   
+
    public void openImportDatasetFromCSV(String path)
    {
       dependencyManager_.withDataImportCSV(
-            dataImportDependecyUserAction_, 
+            dataImportDependecyUserAction_,
             getImportDatasetCommandFromMode(
                   DataImportModes.Text,
                   "Import Text Data",
                   path)
       );
    }
-   
+
    public void openImportDatasetFromSAV(String path)
    {
       dependencyManager_.withDataImportSAV(
-            dataImportDependecyUserAction_, 
+            dataImportDependecyUserAction_,
             getImportDatasetCommandFromMode(
                   DataImportModes.SAV,
                   "Import Statistical Data",
@@ -88,7 +88,7 @@ public class DataImportPresenter
    public void openImportDatasetFromSAS(String path)
    {
       dependencyManager_.withDataImportSAV(
-            dataImportDependecyUserAction_, 
+            dataImportDependecyUserAction_,
             getImportDatasetCommandFromMode(
                   DataImportModes.SAS,
                   "Import Statistical Data",
@@ -99,7 +99,7 @@ public class DataImportPresenter
    public void openImportDatasetFromStata(String path)
    {
       dependencyManager_.withDataImportSAV(
-            dataImportDependecyUserAction_, 
+            dataImportDependecyUserAction_,
             getImportDatasetCommandFromMode(
                   DataImportModes.Stata,
                   "Import Statistical Data",
@@ -110,7 +110,7 @@ public class DataImportPresenter
    public void openImportDatasetFromXLS(String path)
    {
       dependencyManager_.withDataImportXLS(
-            dataImportDependecyUserAction_, 
+            dataImportDependecyUserAction_,
             getImportDatasetCommandFromMode(
                   DataImportModes.XLS,
                   "Import Excel Data",
@@ -118,8 +118,19 @@ public class DataImportPresenter
       );
    }
 
+   public void openImportDatasetFromArrow(String path)
+   {
+      dependencyManager_.withDataImportArrow(
+            dataImportDependecyUserAction_,
+            getImportDatasetCommandFromMode(
+                  DataImportModes.Arrow,
+                  "Import Arrow Data",
+                  path)
+      );
+   }
+
    private EventBus eventBus_;
    private DependencyManager dependencyManager_;
-   
+
    final String dataImportDependecyUserAction_ = "Preparing data import";
 }

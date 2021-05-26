@@ -202,8 +202,8 @@ public class DataImport extends Composite
          headerMessage =  "Is this a valid Excel file?\n\n";
          break;
       case Arrow:
-         headerMessage =  "Is this a valid Arrow file?\n\n";
-         break;
+        headerMessage =  "Is this a valid Arrow file?\n\n";
+        break;
       default:
          break;
       }

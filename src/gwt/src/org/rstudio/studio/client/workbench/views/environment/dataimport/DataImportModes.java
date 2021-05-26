@@ -22,4 +22,5 @@ public enum DataImportModes
    SAS,
    Stata,
    XLS,
+   Arrow
 }

@@ -1,69 +1,103 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-    xmlns:g="urn:import:com.google.gwt.user.client.ui"
-    xmlns:rsw="urn:import:org.rstudio.core.client.widget"
-    xmlns:rsdi="urn:import:org.rstudio.studio.client.workbench.views.environment.dataimport">
+    xmlns:rs="urn:import:org.rstudio.core.client.widget"
+    xmlns:g="urn:import:com.google.gwt.user.client.ui">
     <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
     <ui:style src="res/DataImportStyles.css"
         type="org.rstudio.studio.client.workbench.views.environment.dataimport.res.DataImportResources.Style">
-        .modelLabel {
-            margin-top: 6px;
-        }
-        .formatRow {
-            margin-top: 2px;
-        }
-        .formatLabel {
-            margin-top: 4px;
-        }
-        .formatListBox {
-            margin-top: 3px;
-            width: 85px;
-        }
-        .modelButton {
-        }
-        .optionsLeftBlock {
-            display: -ms-flexbox;
-            display: -webkit-flex;
-            display: flex;
+    .optionsColumn {
+        padding-left: 5px;
+        padding-right: 5px;
+    }
+    .columnNamesCheckBox_ {
+    }
+    .optionsListBox {
+    }
+    .paramsTextBox {
+        width: 65px;
+        padding-left: 5px;
+        padding-right: 5px;
+        text-align: right;
+    }
+    .optionsGrowListBox {
+        display: -ms-flexbox;
+        display: -webkit-flex;
+        display: flex;
 
-            -webkit-flex-direction: row;
-            -ms-flex-direction: row;
-            flex-direction: row;
-
-            height: 24px;
-        }
-        .optionsRightBlock {
-            margin-left: auto;
-            padding-top: 2px;
-        }
+        -ms-flex-grow: 1;
+        -webkit-flex-grow: 1;
+        flex-grow: 1;
+    }
+    .naLabel {
+        padding-right: 5px;
+    }
+    .firstRow {
+        margin-bottom: 6px;
+    }
+    .otherRow {
+        margin-bottom: 4px;
+    }
+    .optionSmallLabel {
+        width: 50px;
+        margin-top: 3px;
+    }
+    .optionLabel {
+        width: 70px;
+        margin-top: 3px;
+    }
     </ui:style>
     <g:HTMLPanel styleName="{style.mainPanel}">
-        <g:Label ui:field="optionsLabel_" text="Import Options:" styleName="{style.optionsLabel}"/>
-        <div ui:field="optionsGroup_" class="{style.optionsBlock}">
-            <div class="{style.optionsRow}">
-                <rsw:FormLabel styleName="{style.optionLabel} {style.nameLabel}" text="Name:"
-                               for="{ElementIds.getDataImportOptionsName}"/>
-                <rsw:FormTextBox ui:field="nameTextBox_" styleName="{style.nameTextBox}"
-                                 elementId="{ElementIds.getDataImportOptionsName}"/>
-            </div>
-            <div class="{style.optionsRow}">
-                <rsw:FormLabel text="Model:" styleName="{style.optionLabel} {style.modelLabel}"
-                               for="{ElementIds.getDataImportOptionsFilechooser}"/>
-                <rsdi:DataImportFileChooser ui:field="fileChooser_"
-                                            elementId="{ElementIds.getDataImportOptionsFilechooser}"
-                                            ariaLabelSuffix="Model"/>
-            </div>
-            <div class="{style.optionsRow} {style.formatRow}">
-                <div class="{style.optionsLeftBlock}">
-                    <rsw:FormLabel styleName="{style.optionLabel} {style.formatLabel}" text="Format:"
-                                   for="{ElementIds.getDataImportOptionsFormat}"/>
-                    <rsw:FormListBox ui:field="formatListBox_" styleName="{style.formatListBox}"
-                                     elementId="{ElementIds.getDataImportOptionsFormat}"/>
+        <rs:FormLabel ui:field="optionsLabel_" text="Import Options:" styleName="{style.optionsLabel}"/>
+        <div ui:field="optionsGroup_" class="{style.optionsBlock} {style.optionsDirectionRow}">
+            <div class="{style.optionsColumn}">
+                <div class="{style.optionsRow} {style.firstRow}">
+                    <rs:FormLabel styleName="{style.optionSmallLabel} {style.nameLabel}" text="Name:"
+                                  for="{ElementIds.getDataImportOptionsName}"/>
+                    <rs:FormTextBox ui:field="nameTextBox_" styleName="{style.nameTextBox}"
+                                    elementId="{ElementIds.getDataImportOptionsName}"/>
                 </div>
-                <div class="{style.optionsRightBlock}">
+                <div class="{style.optionsRow} {style.otherRow}">
+                    <rs:FormLabel styleName="{style.optionSmallLabel}" text="Sheet:"
+                                  for="{ElementIds.getDataImportOptionsSheet}"/>
+                    <rs:FormListBox ui:field="sheetListBox_" styleName="{style.optionsGrowListBox}"
+                                    elementId="{ElementIds.getDataImportOptionsSheet}"/>
+                </div>
+                <div class="{style.optionsRow} {style.otherRow}">
+                    <rs:FormLabel styleName="{style.optionSmallLabel} {style.nameLabel}" text="Range:"
+                                  for="{ElementIds.getDataImportOptionsRange}"/>
+                    <rs:FormTextBox ui:field="rangeTextBox_" styleName="{style.nameTextBox}"
+                                    elementId="{ElementIds.getDataImportOptionsRange}"/>
+                </div>
+            </div>
+            <div class="{style.optionsColumn}">
+                <div class="{style.optionsRow} {style.firstRow}">
+                    <rs:FormLabel styleName="{style.optionLabel}" text="Max Rows:"
+                                  for="{ElementIds.getDataImportOptionsMaxrows}"/>
+                    <rs:FormTextBox ui:field="maxTextBox_" styleName="{style.paramsTextBox}"
+                                    elementId="{ElementIds.getDataImportOptionsMaxrows}"/>
+                </div>
+                <div class="{style.optionsRow} {style.otherRow}">
+                    <rs:FormLabel styleName="{style.optionLabel}" text="Skip:"
+                                  for="{ElementIds.getDataImportOptionsSkip}"/>
+                    <rs:FormTextBox ui:field="skipTextBox_" styleName="{style.paramsTextBox}"
+                                    elementId="{ElementIds.getDataImportOptionsSkip}"/>
+                </div>
+                <div class="{style.optionsRow} {style.otherRow}">
+                    <rs:FormLabel styleName="{style.optionLabel}" text="NA:" for="{ElementIds.getDataImportOptionsNa}"/>
+                    <rs:FormTextBox ui:field="naTextBox_" styleName="{style.paramsTextBox}"
+                                    elementId="{ElementIds.getDataImportOptionsNa}"/>
+                </div>
+            </div>
+            <div class="{style.optionsColumn}">
+                <div class="{style.optionsRow} {style.firstRow}">
+                    <g:CheckBox ui:field="columnNamesCheckBox_" text="First Row as Names"/>
+                </div>
+                <div class="{style.optionsRow} {style.otherRow}">
                     <g:CheckBox ui:field="openDataViewerCheckBox_" text="Open Data Viewer"/>
+                </div>
+                <div class="{style.optionsRow} {style.otherRow}">
                 </div>
             </div>
         </div>
     </g:HTMLPanel>
-</ui:UiBinder>
+</ui:UiBinder> 

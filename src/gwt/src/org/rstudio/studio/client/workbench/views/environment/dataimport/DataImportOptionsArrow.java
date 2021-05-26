@@ -23,15 +23,24 @@ public class DataImportOptionsArrow extends DataImportOptions
 
    public final static native DataImportOptionsArrow create(
       String dataName,
-      String modelLocation,
-      String format,
-      boolean openDataViewer) /*-{
-      return {
-         "mode": "statistics",
-         "dataName": dataName,
-         "modelLocation": modelLocation,
-         "format": format,
-         "openDataViewer": openDataViewer
-      }
+      String sheet,
+      int skip,
+      boolean colNames,
+      String na,
+      boolean openDataViewer,
+      Integer nMax,
+      String range
+      ) /*-{
+         return {
+            "mode": "xls",
+            "dataName": dataName,
+            "sheet": sheet,
+            "skip": skip,
+            "columnNames": colNames,
+            "na": na,
+            "openDataViewer": openDataViewer,
+            "nMax": nMax,
+            "range": range
+       }
    }-*/;
 }
