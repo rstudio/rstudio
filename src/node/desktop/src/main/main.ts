@@ -60,6 +60,14 @@ export default class Main {
       return;
     }
 
+    // report extended version info and exit
+    if (app.commandLine.hasSwitch('version-json')) {
+      console.log(Main.getComponentVersions());
+      app.exit(0);
+      return;
+    }
+
+
     desktop.initializeLang();
     Main.initializeRenderingEngine();
 
@@ -1058,5 +1066,11 @@ export default class Main {
     //   return desktop::optionsPro().getSessionUrl();
     // #else // OPEN_SOURCE
     return '';
+  }
+
+  static getComponentVersions(): string {
+    let componentVers: any = process.versions;
+    componentVers["rstudio"] = getRStudioVersion();
+    return componentVers;
   }
 }

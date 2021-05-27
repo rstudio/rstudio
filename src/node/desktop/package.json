@@ -26,7 +26,7 @@
     "watch": "tsc -w",
     "lint": "eslint -c .eslintrc --ext .ts ./src",
     "start": "yarn run build && electron ./dist/main/main.js",
-    "show-version": "yarn run build && electron ./dist/main/main.js --version",
+    "show-version": "yarn run build && electron ./dist/main/main.js --version-json",
     "test": "nyc ./node_modules/.bin/mocha --require ts-node/register ./test/**/*.spec.ts"
   }
 }
