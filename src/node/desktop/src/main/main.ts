@@ -55,10 +55,18 @@ export default class Main {
 
     // look for a version check request; if we have one, just do that and exit
     if (app.commandLine.hasSwitch('version')) {
-      console.log(Main.getVersion());
+      console.log(getRStudioVersion());
       app.exit(0);
       return;
     }
+
+    // report extended version info and exit
+    if (app.commandLine.hasSwitch('version-json')) {
+      console.log(Main.getComponentVersions());
+      app.exit(0);
+      return;
+    }
+
 
     desktop.initializeLang();
     Main.initializeRenderingEngine();
@@ -1060,7 +1068,7 @@ export default class Main {
     return '';
   }
 
-  static getVersion(): string {
+  static getComponentVersions(): string {
     let componentVers: any = process.versions;
     componentVers["rstudio"] = getRStudioVersion();
     return componentVers;
