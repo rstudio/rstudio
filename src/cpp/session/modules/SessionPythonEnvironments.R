@@ -130,6 +130,9 @@
    # prefer UTF-8 path when possible
    path <- enc2utf8(path)
    
+   # prefer unix-style slashes
+   path <- chartr("\\", "/", path)
+   
    # defaults for version, description
    valid <- TRUE
    version <- "[unknown]"
@@ -177,13 +180,13 @@
 
 .rs.addFunction("python.findPythonInterpreters", function()
 {
-   interpreters <- c(
+   interpreters <- unname(c(
       .rs.python.findPythonSystemInterpreters(),
       .rs.python.findPythonInterpretersInKnownLocations(),
       .rs.python.findPythonPyenvInterpreters(),
       .rs.python.findPythonVirtualEnvironments(),
       .rs.python.findPythonCondaEnvironments()
-   )
+   ))
    
    default <- Sys.getenv("RETICULATE_PYTHON", unset = "")
    
@@ -242,17 +245,58 @@
    pythonPaths <- character()
    
    # Python root paths we'll search in
-   roots <- c(
-      "/opt/python",
-      "/opt/local/python",
-      "/usr/local/opt/python",
-      getOption("rstudio.python.installationPath")
-   )
+   roots <- if (.rs.platform.isWindows) {
+      
+      # find path to Windows local app data folder
+      localAppData <- local({
+         
+         path <- Sys.getenv("LOCALAPPDATA", unset = NA)
+         if (!is.na(path))
+            return(path)
+         
+         profile <- Sys.getenv("USERPROFILE", unset = NA)
+         if (!is.na(profile))
+            return(file.path(profile, "AppData\\Local"))
+         
+         ""
+         
+      })
+      
+      # system-installs of Python might be in one of these folders
+      drive <- Sys.getenv("SYSTEMDRIVE", unset = "C:")
+      suffixes <- c("/", "/Program Files", "/Program Files (x86)")
+
+      c(
+         paste0(drive, suffixes),
+         file.path(localAppData, "Programs/Python")
+      )
+      
+   } else {
+      
+      c(
+         "/opt/python",
+         "/opt/local/python",
+         "/usr/local/opt/python"
+      )
+      
+   }
    
+   # also include those defined via option
+   roots <- c(roots, getOption("rstudio.python.installationPath"))
+      
    # check and see if any of these roots point directly
-   # to a particular version of Python
+   # to a particular version of Python.
+   #
+   # on Windows, Python is typically installed in 'Scripts/python.exe'
+   # for virtual environments, and 'python.exe' for Anaconda + standalone
+   suffixes <- if (.rs.platform.isWindows) {
+      c("Scripts/python.exe", "python.exe")
+   } else {
+      c("bin/python", "bin/python3")
+   }
+   
    paths <- vapply(roots, function(root) {
-      paths <- file.path(root, c("bin/python", "bin/python3"))
+      paths <- file.path(root, suffixes)
       paths[file.exists(paths)][1]
    }, FUN.VALUE = character(1))
    
@@ -267,7 +311,7 @@
    # check and see if any of these roots point directly
    # to a particular version of Python
    paths <- vapply(roots, function(root) {
-      paths <- file.path(root, c("bin/python", "bin/python3"))
+      paths <- file.path(root, suffixes)
       paths[file.exists(paths)][1]
    }, FUN.VALUE = character(1))
    

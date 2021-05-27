@@ -53,10 +53,16 @@ public:
    // Add a callback for the job's exit
    void addOnComplete(boost::function<void()> onComplete);
 
+   // Reset's the job's state (generally in preparation for a replay)
+   core::Error reset();
+
    // Override default AsyncRProcess methods
    virtual void onStdout(const std::string& output);
    virtual void onStderr(const std::string& output);
    virtual void onCompleted(int exitStatus);
+
+   // Replay the job (run it again)
+   virtual core::Error replay();
 
 protected:
    // Whether the R process is complete
@@ -77,9 +83,15 @@ protected:
 core::Error registerAsyncRJob(boost::shared_ptr<AsyncRJob> job,
       std::string *pId);
 
+// Retrieves an asynchronous R job by ID
+core::Error getAsyncRJob(const std::string& id, boost::shared_ptr<AsyncRJob> *pJob);
+
 // Stops an asynchronous R job
 core::Error stopAsyncRJob(const std::string& id);
  
+// Replays an asynchronous R job
+core::Error replayAsyncRJob(const std::string& id);
+
 } // namespace jobs
 } // namespace modules
 } // namespace session
