@@ -98,7 +98,7 @@ runWatchdogProcess() {
       PRELOAD="LD_PRELOAD=${RSESSION_DIAGNOSTICS_LIBSEGFAULT}"
    fi
 
-   FULL_COMMAND="env SEGFAULT_SIGNALS='abrt segv' ${PRELOAD} ${command} $*; exit"
+   FULL_COMMAND="env SEGFAULT_SIGNALS=\"abrt segv\" ${PRELOAD} ${command} $*; exit"
 
    # centos6 doesn't support the --foreground option for timeout
    if [ "${OPERATING_SYSTEM}" = "centos_6" ] || [ -z "${TIMEOUT_CMD}" ]; then
