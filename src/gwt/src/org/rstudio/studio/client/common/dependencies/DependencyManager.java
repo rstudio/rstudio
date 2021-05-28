@@ -488,6 +488,26 @@ public class DependencyManager implements InstallShinyEvent.Handler,
      );
    }
 
+   public void withDataImportArrow(String userAction, final Command command)
+   {
+     withDependencies(
+        "Preparing Import from Arrow",
+        userAction,
+        getFeatureDescription("import_arrow"),
+        getFeatureDependencies("import_arrow"),
+        false,
+        new CommandWithArg<Boolean>()
+        {
+           @Override
+           public void execute(Boolean succeeded)
+           {
+              if (succeeded)
+                 command.execute();
+           }
+        }
+     );
+   }
+
    public void withDataImportXML(String userAction, final Command command)
    {
      withDependencies(

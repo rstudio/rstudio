@@ -54,7 +54,7 @@
             }
          }
       }
-   
+
    dataName
 })
 
@@ -100,7 +100,7 @@
             }
 
             return (paste(
-               ns, 
+               ns,
                "locale(",
                paste(c(
                   localeOrNull("date_names", "dateName"),
@@ -124,7 +124,7 @@
                col_assignedType <- col$assignedType[[1]]
                col_name <- col$name[[1]]
 
-               if ((!identical(dataImportOptions$columnsOnly, TRUE) && !identical(col_assignedType, NULL)) || 
+               if ((!identical(dataImportOptions$columnsOnly, TRUE) && !identical(col_assignedType, NULL)) ||
                   identical(col_only, TRUE))
                {
                   colType <- paste(ns, "col_guess()", sep = "")
@@ -516,6 +516,41 @@
             optionTypes = optionTypes,
             cacheFileExtension = c(".xls", ".xlsx")
          ))
+      },
+      "arrow" = function() {
+         # load parameters
+         options <- list()
+         options[["path"]] <- cacheOrFileFromOptions(dataImportOptions)
+         options[["sheet"]] <- dataImportOptions$sheet
+         options[["na"]] <- dataImportOptions$na
+         options[["col_names"]] <- dataImportOptions$columnNames
+         options[["skip"]] <- dataImportOptions$skip
+         options[["col_types"]] <- dataImportOptions$columnDefinitions
+         options[["n_max"]] <- dataImportOptions$nMax
+         options[["range"]] <- dataImportOptions$range
+
+         # set special parameter types
+         optionTypes <- list()
+         optionTypes[["path"]] <- cacheTypeOrFileTypeFromOptions(dataImportOptions)
+         optionTypes[["sheet"]] <- "character"
+         optionTypes[["na"]] <- "character"
+         optionTypes[["col_types"]] <- "columnDefinitionsReadXl"
+         optionTypes[["range"]] <- "character"
+
+         if (!is.null(options[["range"]]) && nchar(options[["range"]]) > 0) {
+            options[["skip"]] <- NULL
+            options[["n_max"]] <- NULL
+         }
+
+         return(list(
+            name = "read_dataset",
+            reference = arrow::read_dataset,
+            package = "arrow",
+            paramsPackage = NULL,
+            options = options,
+            optionTypes = optionTypes,
+            cacheFileExtension = c(".parquet", ".feather")
+         ))
       }
    )
 
@@ -606,7 +641,7 @@
    importCodeExpressions <- append(importCodeExpressions, importLocationCache$code)
    importCodeExpressions <- append(importCodeExpressions, modelLocationCache$code)
    importCodeExpressions <- append(importCodeExpressions, paste(dataName, " <- ", previewCodeNoNs, sep = ""))
-   
+
    if (dataImportOptions$openDataViewer) {
       importCodeExpressions <- append(importCodeExpressions, paste("View(", dataName, ")", sep = ""))
    }
@@ -653,7 +688,7 @@
       result <- .rs.assembleDataImport(dataImportOptions)
       Encoding(result$importCode) <- "UTF-8"
       Encoding(result$previewCode) <- "UTF-8"
-      
+
       return (result)
    }, error = function(e) {
       return(list(error = e))
@@ -661,7 +696,7 @@
 })
 
 .rs.addFunction("prepareViewerData", function(data, maxFactors, maxCols, maxRows) {
-   
+
    columns <- list()
    if (ncol(data)) {
       columns <- .rs.describeCols(data, maxFactors)
@@ -670,7 +705,7 @@
          data <- data[1:maxCols]
       }
    }
-   
+
    cnames <- names(data)
    size <- nrow(data)
 
@@ -698,7 +733,7 @@
 
    tryCatch({
       Encoding(dataImportOptions$importLocation) <- "UTF-8"
-     
+
       beforeImportFromOptions <- list(
          "text" = function() {
             # while previewing data, always return a column even if it will be skipped
