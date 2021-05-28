@@ -7,6 +7,7 @@
   "author": "RStudio PBC",
   "license": "AGPL-3.0-only",
   "devDependencies": {
+    "@tsconfig/node14": "^1.0.0",
     "@types/chai": "^4.2.18",
     "@types/mocha": "^8.2.2",
     "@types/node": "^15.6.1",
