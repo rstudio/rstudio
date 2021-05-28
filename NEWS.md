@@ -19,4 +19,4 @@
 * The "auto-detect indentation" preference is now off by default. (#9211) 
 * **BREAKING:** RStudio Desktop Pro only supports activation with license files (Pro #2300)
 * Added AWS Cognito support to openid integration (Pro #2313)
-
+* Add file uploads and downloads to session audit log (Pro #2226)

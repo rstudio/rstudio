@@ -52,6 +52,8 @@
 #include <r/RRoutines.hpp>
 #include <r/RErrorCategory.hpp>
 
+#include <monitor/MonitorClient.hpp>
+
 #include <session/SessionClientEvent.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
@@ -1119,6 +1121,10 @@ bool handleFileUploadRequestAsync(const http::Request& request,
    // properly by the browser/gwt on the client side
    response.setContentType("text/html");
 
+   // let the monitor client know we've started an upload
+   using namespace monitor;
+   client().logEvent(Event(kSessionScope, kSessionUploadEvent, pUploadState->fileName));
+
    cont(&response);
    cleanupState();
 
@@ -1211,6 +1217,13 @@ void handleMultipleFileExportRequest(const http::Request& request,
       pResponse->setError(error);
       return;
    }
+
+   for (std::string f: files)
+   {
+      // let the monitor client know the user has downloaded this file
+      using namespace monitor;
+      client().logEvent(Event(kSessionScope, kSessionDownloadEvent, f));
+   }
    
    // return attachment
    setAttachmentResponse(request, name, tempZipFilePath, pResponse);
@@ -1239,6 +1252,10 @@ void handleFileExportRequest(const http::Request& request,
          return;
       }
       
+      // let the monitor client know the user has downloaded this file
+      using namespace monitor;
+      client().logEvent(Event(kSessionScope, kSessionDownloadEvent, file));
+
       // download as attachment
       setAttachmentResponse(request, name, filePath, pResponse);
    }
