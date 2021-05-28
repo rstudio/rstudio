@@ -1,5 +1,5 @@
 /*
- * main.spec.ts
+ * desktop-utils.spec.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -16,24 +16,17 @@
 import { describe } from 'mocha';
 import { expect } from 'chai';
 
-import Main from '../../src/main/main';
+import * as Utils from '../../src/main/desktop-utils';
 
-interface Versions  {
-  electron: string;
-  rstudio: string;
-  node: string;
-  v8: string;
-}
-
-describe('Main', () => {
+describe('DesktopUtils', () => {
   describe('Static helpers', () => {
-    it('getComponentVersions returns expected JSON', () => {
-      let result = Main.getComponentVersions();
-      let json: Versions = JSON.parse(result);
-      expect(json.electron).length.is.greaterThan(0);
-      expect(json.rstudio).length.is.greaterThan(0);
-      expect(json.node).length.is.greaterThan(0);
-      expect(json.v8).length.is.greaterThan(0);
+    it('isMacOS detects... macOS', () => {
+      let result = Utils.isMacOS();
+      if (process.platform === 'darwin') {
+        expect(result).is.true;
+      } else {
+        expect(result).is.false;
+      }
     });
   });
 });

@@ -180,8 +180,7 @@ export function initializeLang() {
 // }
 
 export function isMacOS(): boolean {
-  // TODO
-  return true;
+  return process.platform === "darwin";
 }
 
 // bool isCentOS()
