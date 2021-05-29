@@ -37,7 +37,7 @@ function randomString() {
 
 describe('Xdg', () => {
   // store env values at start of each test so we can restore them
-  let xdgVars: Record<string, string> = {
+  const xdgVars: Record<string, string> = {
     RSTUDIO_CONFIG_HOME: '',
     RSTUDIO_CONFIG_DIR: '',
     RSTUDIO_DATA_HOME: '',
@@ -50,7 +50,7 @@ describe('Xdg', () => {
 
   // save and clear any XDG-related env vars
   beforeEach(() => {
-    for (let name in xdgVars) {
+    for (const name in xdgVars) {
       xdgVars[name] = process.env[name] ?? '';
       delete process.env[name];
     }
@@ -58,7 +58,7 @@ describe('Xdg', () => {
 
   // put back the original XDG env vars
   afterEach(() => {
-    for (let name in xdgVars) {
+    for (const name in xdgVars) {
       if (xdgVars[name]) {
         process.env[name] = xdgVars[name];
         xdgVars[name] = '';
@@ -149,8 +149,8 @@ describe('Xdg', () => {
       if (process.platform === 'win32') return; // not supported on Windows
 
       // path must end with 'rstudio' and exist to be returned
-      let baseDir = path.join(os.tmpdir(), randomString());
-      let fullDir = path.join(baseDir, 'rstudio');
+      const baseDir = path.join(os.tmpdir(), randomString());
+      const fullDir = path.join(baseDir, 'rstudio');
       fs.mkdirSync(fullDir, { recursive: true });
       expect(fs.existsSync(fullDir)).is.true;
       const p = `/once/upon/a/time:${baseDir}:/something/else/rstudio`;
@@ -173,20 +173,20 @@ describe('Xdg', () => {
       expect(result.getAbsolutePath().endsWith('fake-config-file.foo')).is.true;
     });
   });
-  describe("Misc helpers", () => {
-    it("SHGetKnownFolderPath returns a string", () => {
+  describe('Misc helpers', () => {
+    it('SHGetKnownFolderPath returns a string', () => {
       if (process.platform === 'win32') {
         // TODO, actually check results?
       } else {
-        let result = SHGetKnownFolderPath(WinFolderID.FOLDERID_LocalAppData);
+        const result = SHGetKnownFolderPath(WinFolderID.FOLDERID_LocalAppData);
         expect(result).equals('');
       }
     });
   });
-  describe("NYI placeholders", () => {
-    it("sync methods should throw exception", () => {
+  describe('NYI placeholders', () => {
+    it('sync methods should throw exception', () => {
       expect(() => Xdg.verifyUserDirs()).to.throw();
-      expect(() => Xdg.forwardXdgEnvVars({"FOO": "bar"})).to.throw();
+      expect(() => Xdg.forwardXdgEnvVars({'FOO': 'bar'})).to.throw();
     });
   });
- });
+});

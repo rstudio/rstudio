@@ -13,8 +13,8 @@
  *
  */
 
-import { describe } from "mocha";
-import { expect } from "chai";
+import { describe } from 'mocha';
+import { expect } from 'chai';
 
 import fs from 'fs';
 import os from 'os';
@@ -23,21 +23,21 @@ import { FilePath } from '../../src/core/file-path';
 import { initHook, initializeLog, userHomePath, username } from '../../src/core/system';
 import * as log from '../../src/core/log';
 
-describe("System", () => {
-  describe("User info", () => {
-    it("getUserHomePath returns a valid path", () => {
+describe('System', () => {
+  describe('User info', () => {
+    it('getUserHomePath returns a valid path', () => {
       expect(fs.existsSync(userHomePath().getAbsolutePath())).is.true;
     });
-    it("username returns a non-empty string", () => {
+    it('username returns a non-empty string', () => {
       expect(username().length).is.greaterThan(0);
     });
   });
-  describe("Assorted helper functions", () => {
-    it("initHook does something", () => {
+  describe('Assorted helper functions', () => {
+    it('initHook does something', () => {
       initHook();
       // TODO: once this does something, test it!
     });
-    it("initializeLog succeeds", () => {
+    it('initializeLog succeeds', () => {
       const err = initializeLog('rdesktop', log.LogLevel.WARN, new FilePath(os.tmpdir()));
       expect(!!err).is.false;
     });

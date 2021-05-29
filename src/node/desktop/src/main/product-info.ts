@@ -13,7 +13,7 @@
  *
  */
 
-export function getRStudioVersion() {
+export function getRStudioVersion(): string {
   // TODO: need to figure out how to consume build numbers for package build, etc.
-  return "1.5.0";
+  return '1.5.0';
 }

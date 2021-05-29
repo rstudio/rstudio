@@ -62,7 +62,7 @@ export function initializeLang() {
 
   // Next highest precedence: LANG environment variable.
   if (!lang) {
-    let envLang = getenv('LANG');
+    const envLang = getenv('LANG');
     if (!envLang) {
       lang = envLang;
     }
@@ -180,7 +180,7 @@ export function initializeLang() {
 // }
 
 export function isMacOS(): boolean {
-  return process.platform === "darwin";
+  return process.platform === 'darwin';
 }
 
 // bool isCentOS()

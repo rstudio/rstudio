@@ -13,8 +13,8 @@
  *
  */
 
-import os from "os";
-import { FilePath } from "./file-path";
+import os from 'os';
+import { FilePath } from './file-path';
 
 /**
  * Class which represents a system user.

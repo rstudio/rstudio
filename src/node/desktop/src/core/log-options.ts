@@ -13,35 +13,35 @@
  *
  */
 
-import { Err, Success } from "./err";
-import { LogLevel, LoggerType, FileLogOptions } from "./log";
+import { Err, Success } from './err';
+import { LogLevel, LoggerType, FileLogOptions } from './log';
 
 export class StdErrLogOptions {}
 export class SysLogOptions {}
 export type LoggerOptions = StdErrLogOptions | SysLogOptions | FileLogOptions
 
-const kLogLevel          = "log-level"
-const kLoggerType        = "logger-type"
-const kLogDir            = "log-dir"
-const kLogFileMode       = "log-file-mode"
-const kLogFileIncludePid = "log-file-include-pid"
-const kRotate            = "rotate"
-const kMaxSizeMb         = "max-size-mb"
-const kLogConfFile       = "logging.conf"
-const kLogConfEnvVar     = "RS_LOG_CONF_FILE"
+const kLogLevel          = 'log-level';
+const kLoggerType        = 'logger-type';
+const kLogDir            = 'log-dir';
+const kLogFileMode       = 'log-file-mode';
+const kLogFileIncludePid = 'log-file-include-pid';
+const kRotate            = 'rotate';
+const kMaxSizeMb         = 'max-size-mb';
+const kLogConfFile       = 'logging.conf';
+const kLogConfEnvVar     = 'RS_LOG_CONF_FILE';
 
-const kFileLogger        = "file"
-const kStdErrLogger      = "stderr"
-const kSysLogger         = "syslog"
+const kFileLogger        = 'file';
+const kStdErrLogger      = 'stderr';
+const kSysLogger         = 'syslog';
 
-const kLoggingLevelDebug = "debug"
-const kLoggingLevelInfo  = "info"
-const kLoggingLevelWarn  = "warn"
-const kLoggingLevelError = "error"
+const kLoggingLevelDebug = 'debug';
+const kLoggingLevelInfo  = 'info';
+const kLoggingLevelWarn  = 'warn';
+const kLoggingLevelError = 'error';
 
-const kBaseLevel         = 0
-const kBinaryLevel       = 1
-const kLogSectionLevel   = 2 
+const kBaseLevel         = 0;
+const kBinaryLevel       = 1;
+const kLogSectionLevel   = 2;
 
 export class LogOptions
 {
@@ -54,7 +54,7 @@ export class LogOptions
     this.initProfile();
   }
 
-  initProfile() {
+  initProfile(): void {
     // base level - * (applies to all loggers/binaries)
     // first override - @ (specific binary)
     // second override - (logger name)
@@ -71,7 +71,7 @@ export class LogOptions
     // // add logger-specific params
     // LoggerOptionsVisitor visitor(profile_);
     // boost::apply_visitor(visitor, defaultLoggerOptions_);
-   }
+  }
    
   read(): Err {
     return Success();
@@ -125,34 +125,34 @@ export class LogOptions
     //  }
   }
    
-   // gets the current log level
-   //LogLevel logLevel(const std::string& loggerName = std::string()) const;
+  // gets the current log level
+  //LogLevel logLevel(const std::string& loggerName = std::string()) const;
 
-   // gets the lowest log level defined
-   //LogLevel lowestLogLevel() const;
+  // gets the lowest log level defined
+  //LogLevel lowestLogLevel() const;
 
-   // gets the current logger type
-   //LoggerType loggerType(const std::string& loggerName = std::string()) const;
+  // gets the current logger type
+  //LoggerType loggerType(const std::string& loggerName = std::string()) const;
 
-   // gets the current logger's specific options
-   //LoggerOptions loggerOptions(const std::string& loggerName = std::string()) const;
+  // gets the current logger's specific options
+  //LoggerOptions loggerOptions(const std::string& loggerName = std::string()) const;
 
-   //std::vector<std::string> loggerOverrides() const;
+  //std::vector<std::string> loggerOverrides() const;
 
-//private:
-   //void initProfile();
+  //private:
+  //void initProfile();
 
-   //void setLowestLogLevel();
+  //void setLowestLogLevel();
 
-   //std::vector<ConfigProfile::Level> getLevels(const std::string& loggerName) const;
+  //std::vector<ConfigProfile::Level> getLevels(const std::string& loggerName) const;
 
-   //std::string executableName_;
+  //std::string executableName_;
 
-   //std::string defaultLogLevel_;
-   //std::string defaultLoggerType_;
-   //LoggerOptions defaultLoggerOptions_;
+  //std::string defaultLogLevel_;
+  //std::string defaultLoggerType_;
+  //LoggerOptions defaultLoggerOptions_;
 
-   //LogLevel lowestLogLevel_;
+  //LogLevel lowestLogLevel_;
 
-   //ConfigProfile profile_;
-};
+  //ConfigProfile profile_;
+}

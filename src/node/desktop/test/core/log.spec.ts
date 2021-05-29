@@ -13,18 +13,18 @@
  *
  */
 
-import { describe } from "mocha";
-import { expect } from "chai";
+import { describe } from 'mocha';
+import { expect } from 'chai';
 
 import fs from 'fs';
 
 import { FileLogOptions } from '../../src/core/log';
 
-describe("Log", () => {
-  describe("Constructions", () => {
-    it("FileLogOptions construction works", () => {
-      const flo = new FileLogOptions("/somewhere");
-      expect(flo.directory).to.equal("/somewhere");
+describe('Log', () => {
+  describe('Constructions', () => {
+    it('FileLogOptions construction works', () => {
+      const flo = new FileLogOptions('/somewhere');
+      expect(flo.directory).to.equal('/somewhere');
     });
   });
 });
