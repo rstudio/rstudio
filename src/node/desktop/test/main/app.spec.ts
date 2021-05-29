@@ -1,5 +1,5 @@
 /*
- * main.spec.ts
+ * app.spec.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -18,22 +18,8 @@ import { expect } from 'chai';
 
 import Main from '../../src/main/main';
 
-interface Versions  {
-  electron: string;
-  rstudio: string;
-  node: string;
-  v8: string;
-}
-
-describe('Main', () => {
-  describe('Static helpers', () => {
-    it('getComponentVersions returns expected JSON', () => {
-      let result = Main.getComponentVersions();
-      let json: Versions = JSON.parse(result);
-      expect(json.electron).length.is.greaterThan(0);
-      expect(json.rstudio).length.is.greaterThan(0);
-      expect(json.node).length.is.greaterThan(0);
-      expect(json.v8).length.is.greaterThan(0);
-    });
-  });
+// IMPORTANT: Cannot unit-test app.ts, because it will cause app.WhenReady() to
+// start up RStudio, instead of the tests!
+describe('App', () => {
+  describe('No tests (by design)', () => {});
 });

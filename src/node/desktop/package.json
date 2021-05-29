@@ -7,6 +7,7 @@
   "author": "RStudio PBC",
   "license": "AGPL-3.0-only",
   "devDependencies": {
+    "@tsconfig/node14": "^1.0.0",
     "@types/chai": "^4.2.18",
     "@types/mocha": "^8.2.2",
     "@types/node": "^15.6.1",
@@ -14,6 +15,7 @@
     "@typescript-eslint/parser": "^4.25.0",
     "chai": "^4.3.4",
     "electron": "^13.0.1",
+    "electron-mocha": "^10.0.0",
     "eslint": "^7.27.0",
     "mocha": "^8.4.0",
     "nyc": "^15.1.0",
@@ -25,8 +27,8 @@
     "build": "tsc",
     "watch": "tsc -w",
     "lint": "eslint -c .eslintrc --ext .ts ./src",
-    "start": "yarn run build && electron ./dist/main/main.js",
-    "show-version": "yarn run build && electron ./dist/main/main.js --version-json",
-    "test": "nyc ./node_modules/.bin/mocha --require ts-node/register ./test/**/*.spec.ts"
+    "start": "yarn run build && electron ./dist/main/app.js",
+    "show-version": "yarn run build && electron ./dist/main/app.js --version-json",
+    "test": "MOCHA_COLORS=1 nyc electron-mocha"
   }
 }

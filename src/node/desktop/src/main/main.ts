@@ -24,10 +24,6 @@ import { getenv, setenv } from '../core/environment';
 import { getRStudioVersion } from './product-info';
 import * as desktop from './desktop-utils';
 
-app.whenReady().then(() => {
-  new Main().run();
-});
-
 // QProcess* pRSessionProcess;
 // QString sharedSecret;
 
@@ -66,7 +62,6 @@ export default class Main {
       app.exit(0);
       return;
     }
-
 
     desktop.initializeLang();
     Main.initializeRenderingEngine();
@@ -1071,6 +1066,6 @@ export default class Main {
   static getComponentVersions(): string {
     let componentVers: any = process.versions;
     componentVers["rstudio"] = getRStudioVersion();
-    return componentVers;
+    return JSON.stringify(componentVers, null, 2);
   }
 }
