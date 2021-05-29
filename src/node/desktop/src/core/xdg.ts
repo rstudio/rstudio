@@ -48,33 +48,31 @@ export enum WinFolderID {
  * variables.
  */
 export function SHGetKnownFolderPath(folderId: WinFolderID): string {
-  let envVar = "";
+  let envVar = '';
   switch (folderId) {
-    case WinFolderID.FOLDERID_RoamingAppData:
-      envVar = "APPDATA";
-      break;
-    case WinFolderID.FOLDERID_LocalAppData:
-      envVar = "LOCALAPPDATA";
-      break;
-    case WinFolderID.FOLDERID_ProgramData:
-      envVar = "ProgramData";
-      break;
+  case WinFolderID.FOLDERID_RoamingAppData:
+    envVar = 'APPDATA';
+    break;
+  case WinFolderID.FOLDERID_LocalAppData:
+    envVar = 'LOCALAPPDATA';
+    break;
+  case WinFolderID.FOLDERID_ProgramData:
+    envVar = 'ProgramData';
+    break;
   }
   return getenv(envVar);
 }
+
+// Store the hostname so we don't have to look it up multiple times
+let hostname = '';
 
 /**
  * Returns the hostname from the operating system
  */
 function getHostname(): string {
-  if (!getHostname.hostname)
-    getHostname.hostname = os.hostname();
-  return getHostname.hostname;
-}
-namespace getHostname {
-   // Use a static string to store the hostname so we don't have to look it up
-   // multiple times
-  export let hostname = "";
+  if (!hostname)
+    hostname = os.hostname();
+  return hostname;
 }
 
 /**
@@ -107,7 +105,7 @@ function resolveXdgDir(
   let xdgHome = new FilePath();
   let finalPath = true;
 
-   // Look for the RStudio-specific environment variable
+  // Look for the RStudio-specific environment variable
   let env = getenv(rstudioEnvVar);
   if (!env) {
     // The RStudio environment variable specifies the final path; if it isn't
@@ -120,7 +118,7 @@ function resolveXdgDir(
     // No root specified for xdg home; we will need to generate one.
     if (process.platform === 'win32') {
       // On Windows, the default path is in Application Data/Roaming.
-      let path = SHGetKnownFolderPath(windowsFolderId);
+      const path = SHGetKnownFolderPath(windowsFolderId);
       if (path) {
         xdgHome = new FilePath(path);
       } else {
@@ -139,13 +137,13 @@ function resolveXdgDir(
   }
 
   // expand HOME, USER, and HOSTNAME if given
-  let environment: Environment = {
-    "HOME": homeDir ? homeDir.getAbsolutePath() : userHomePath().getAbsolutePath(),
-    "USER": user ? user : username()
+  const environment: Environment = {
+    'HOME': homeDir ? homeDir.getAbsolutePath() : userHomePath().getAbsolutePath(),
+    'USER': user ? user : username()
   };
 
   // check for manually specified hostname in environment variable
-  let hostname = getenv("HOSTNAME");
+  let hostname = getenv('HOSTNAME');
 
   // when omitted, look up the hostname using a system call
   if (!hostname)
@@ -177,10 +175,10 @@ export class Xdg {
    */
   static userConfigDir(user?: string, homeDir?: FilePath) {
     return resolveXdgDir(
-      "RSTUDIO_CONFIG_HOME",
-      "XDG_CONFIG_HOME",
+      'RSTUDIO_CONFIG_HOME',
+      'XDG_CONFIG_HOME',
       WinFolderID.FOLDERID_RoamingAppData,
-      "~/.config",
+      '~/.config',
       user,
       homeDir
     );
@@ -194,10 +192,10 @@ export class Xdg {
    */
   static userDataDir(user?: string, homeDir?: FilePath) {
     return resolveXdgDir(
-      "RSTUDIO_DATA_HOME",
-      "XDG_DATA_HOME",
+      'RSTUDIO_DATA_HOME',
+      'XDG_DATA_HOME',
       WinFolderID.FOLDERID_LocalAppData,
-      "~/.local/share",
+      '~/.local/share',
       user,
       homeDir
     );
@@ -214,7 +212,7 @@ export class Xdg {
     user?: string,
     homeDir?: FilePath
   ) {
-    throw Error("Xdg.verifyUserDirs is NYI");
+    throw Error('Xdg.verifyUserDirs is NYI');
   }
 
 
@@ -225,17 +223,17 @@ export class Xdg {
    * On Windows, this is `FOLDERID_ProgramData` (typically `C:/ProgramData`).
    */
   static systemConfigDir(): FilePath {
-    let result = "";
+    const result = '';
     if (process.platform !== 'win32') {
-      if (!getenv("RSTUDIO_CONFIG_DIR")) {
+      if (!getenv('RSTUDIO_CONFIG_DIR')) {
         // On POSIX operating systems, it's possible to specify multiple config
         // directories. We have to select one, so read the list and take the first
         // one that contains an "rstudio" folder.
-        const env = getenv("XDG_CONFIG_DIRS");
-        if (env.indexOf(":") >= 0) {
-          const dirs = env.split(":");
-          for (let dir of dirs) {
-            let resolved = new FilePath(dir).completePath("rstudio");
+        const env = getenv('XDG_CONFIG_DIRS');
+        if (env.indexOf(':') >= 0) {
+          const dirs = env.split(':');
+          for (const dir of dirs) {
+            const resolved = new FilePath(dir).completePath('rstudio');
             if (resolved.existsSync()) {
               return resolved;
             }
@@ -244,10 +242,10 @@ export class Xdg {
       }
     }
     return resolveXdgDir(
-      "RSTUDIO_CONFIG_DIR",
-      "XDG_CONFIG_DIRS",
+      'RSTUDIO_CONFIG_DIR',
+      'XDG_CONFIG_DIRS',
       WinFolderID.FOLDERID_ProgramData,
-      "/etc",
+      '/etc',
       undefined,  // no specific user
       undefined   // no home folder resolution
     );
@@ -263,14 +261,14 @@ export class Xdg {
       // Passthrough on Windows
       return Xdg.systemConfigDir().completeChildPath(filename);
     }
-    if (!getenv("RSTUDIO_CONFIG_DIR")) {
+    if (!getenv('RSTUDIO_CONFIG_DIR')) {
       // On POSIX, check for a search path.
-      const env = getenv("XDG_CONFIG_DIRS");
-      if (env.indexOf(":") >= 0) {
+      const env = getenv('XDG_CONFIG_DIRS');
+      if (env.indexOf(':') >= 0) {
         // This is a search path; check each element for the file.
-        const dirs = env.split(":");
-        for (let dir of dirs) {
-          let resolved = new FilePath(dir).completePath("rstudio").completeChildPath(filename);
+        const dirs = env.split(':');
+        for (const dir of dirs) {
+          const resolved = new FilePath(dir).completePath('rstudio').completeChildPath(filename);
           if (resolved.existsSync()) {
             return resolved;
           }
@@ -287,6 +285,6 @@ export class Xdg {
    * Sets relevant XDG environment variables
    */
   static forwardXdgEnvVars(pEnvironment: Environment) {
-    throw Error("forwardXdgEnvVars is NYI");
+    throw Error('forwardXdgEnvVars is NYI');
   }
 }

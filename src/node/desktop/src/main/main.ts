@@ -28,7 +28,6 @@ import * as desktop from './desktop-utils';
 // QString sharedSecret;
 
 export default class Main {
-  constructor() {}
 
   run() {
     initHook();
@@ -1064,8 +1063,8 @@ export default class Main {
   }
 
   static getComponentVersions(): string {
-    let componentVers: any = process.versions;
-    componentVers["rstudio"] = getRStudioVersion();
+    const componentVers: any = process.versions;
+    componentVers['rstudio'] = getRStudioVersion();
     return JSON.stringify(componentVers, null, 2);
   }
 }

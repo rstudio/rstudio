@@ -28,7 +28,7 @@ export function initHook() {
 }
 
 // logger's program identity (this process's binary name)
-export let s_programIdentity = "";
+export const s_programIdentity = '';
 
 // logging options representing the latest state of the logging configuration file
 // export let s_logOptions: LogOptions;
@@ -57,7 +57,7 @@ export function initializeLog(
   // s_logOptions = new LogOptions(programIdentity, logLevel, log.LoggerType.kFile, options);
   // s_programIdentity = programIdentity;
 
-  let error = initLog();
+  const error = initLog();
   if (error) {
     return error;
   }
@@ -74,5 +74,5 @@ export function username() {
 }
 
 export function userHomePath() {
-   return User.getUserHomePath();
+  return User.getUserHomePath();
 }

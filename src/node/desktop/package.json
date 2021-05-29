@@ -17,16 +17,20 @@
     "electron": "^13.0.1",
     "electron-mocha": "^10.0.0",
     "eslint": "^7.27.0",
+    "eslint-config-standard": "^16.0.3",
+    "eslint-plugin-import": "^2.23.3",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^5.1.0",
     "mocha": "^8.4.0",
     "nyc": "^15.1.0",
     "ts-node": "^10.0.0",
-    "typescript": "^4.2.4"
+    "typescript": "^4.3.2"
   },
   "dependencies": {},
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
-    "lint": "eslint -c .eslintrc --ext .ts ./src",
+    "lint": "eslint ./src",
     "start": "yarn run build && electron ./dist/main/app.js",
     "show-version": "yarn run build && electron ./dist/main/app.js --version-json",
     "test": "MOCHA_COLORS=1 nyc electron-mocha"

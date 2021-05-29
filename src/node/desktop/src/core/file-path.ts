@@ -35,7 +35,7 @@ export class FilePath {
   static homePathAlias = '~/';
   static homePathLeafAlias = '~';
 
-  constructor(path: string = '') {
+  constructor(path = '') {
     this.path = FilePath.fromString(path);
   }
 
@@ -58,7 +58,7 @@ export class FilePath {
    * Creates a path in which the user home path will be replaced by the ~ alias.
    */
   static createAliasedPath(filePath: FilePath, userHomePath: FilePath): string {
-    throw Error("createAliasedPath is NYI");
+    throw Error('createAliasedPath is NYI');
   }
 
   /**
@@ -69,7 +69,7 @@ export class FilePath {
       return false;
     }
 
-    let p = FilePath.fromString(filePath);
+    const p = FilePath.fromString(filePath);
     try {
       return fs.existsSync(p);
     } catch (err) {
@@ -86,7 +86,7 @@ export class FilePath {
       return false;
     }
 
-    let p = FilePath.fromString(filePath);
+    const p = FilePath.fromString(filePath);
     try {
       await fsPromises.access(p);
       return true;
@@ -101,21 +101,21 @@ export class FilePath {
    * if their absolute paths are equal.
    */
   static isEqualCaseInsensitive(filePath1: FilePath, filePath2: FilePath): boolean {
-    throw Error("isEqualCaseInsensitive is NYI");
+    throw Error('isEqualCaseInsensitive is NYI');
   }
 
   /**
    * Checks whether the specified path is a root path or a relative path.
    */
   static isRootPath(filePath: string): boolean {
-    throw Error("isRootPath is NYI");
+    throw Error('isRootPath is NYI');
   }
 
   /**
    * Changes the current working directory to the specified path.
    */
   static makeCurrent(filePath: string): Err {
-    throw Error("makeCurrent (static) is NYI");
+    throw Error('makeCurrent (static) is NYI');
   }
 
   /**
@@ -156,7 +156,7 @@ export class FilePath {
       safePath = User.getUserHomePath();
     }
 
-    let error = safePath.makeCurrentPath();
+    const error = safePath.makeCurrentPath();
     if (error) {
       FilePath.logError(error);
     }
@@ -183,7 +183,7 @@ export class FilePath {
       safePath = User.getUserHomePath();
     }
 
-    let error = safePath.makeCurrentPath();
+    const error = safePath.makeCurrentPath();
     if (error) {
       FilePath.logError(error);
     }
@@ -195,25 +195,25 @@ export class FilePath {
    * Creates a randomly named file in the temp directory.
    */
   static tempFilePath(extension?: string): FilePathWithError {
-    throw Error("tempFilePath is NYI");
+    throw Error('tempFilePath is NYI');
   }
 
   /**
    * Creates a file with a random name in the specified directory.
    */
   static uniqueFilePath(basePath: string, extension?: string): FilePathWithError {
-    throw Error("uniqueFilePath is NYI");
+    throw Error('uniqueFilePath is NYI');
   }
 
   /**
    * Changes the file mode to the specified file mode (Posix-only). Pass in the posix file mode
    * string, e.g. rwxr-xr-x
    */
-  changeFileMode(fileModeStr: string, setStickyBit: boolean = false): Err {
+  changeFileMode(fileModeStr: string, setStickyBit = false): Err {
     if (process.platform === 'win32')
       return Success(); // no-op on Windows
 
-    throw Error("changeFileMode is NYI");
+    throw Error('changeFileMode is NYI');
   }
 
   /**
@@ -234,8 +234,8 @@ export class FilePath {
    * refers to a path strictly within this one (i.e. ".." isn't allowed).
    */
   completeChildPath(filePath: string): FilePath {
-    let result = this.completeChildPathWithErrorResult(filePath);
-    if (!!result.err) {
+    const result = this.completeChildPathWithErrorResult(filePath);
+    if (result.err) {
       FilePath.logError(result.err);
     }
     return result.path;
@@ -255,12 +255,12 @@ export class FilePath {
       }
 
       // confirm this is a relative path
-      let relativePath = FilePath.fromString(filePath);
+      const relativePath = FilePath.fromString(filePath);
       if (path.isAbsolute(relativePath)) {
         throw Error('absolute path not permitted');
       }
 
-      let childPath = this.completePath(filePath);
+      const childPath = this.completePath(filePath);
 
       if (!childPath.isWithin(this)) {
         return { err: new Error('child path must be inside parent path'), path: this };
@@ -288,20 +288,20 @@ export class FilePath {
    * Copies this file path to the specified location.
    */
   copy(targetPath: FilePath, overwrite = false): Err {
-    throw Error("copy is NYI");
+    throw Error('copy is NYI');
   }
 
   /**
    * Copies this directory recursively to the specified location.
    */
   copyDirectoryRecursive(targetPath: FilePath, overwrite = false): Err {
-    throw Error("copyDirectoryRecursive is NYI");
+    throw Error('copyDirectoryRecursive is NYI');
   }
 
   /**
    * Creates the specified directory, relative to this directory.
    */
-  createDirectorySync(filePath: string = ''): Err {
+  createDirectorySync(filePath = ''): Err {
     let targetDirectory: string;
     if (!filePath) {
       targetDirectory = this.path;
@@ -320,7 +320,7 @@ export class FilePath {
   /**
    * Creates the specified directory, relative to this directory.
    */
-  async createDirectory(filePath: string = ''): Promise<Err> {
+  async createDirectory(filePath = ''): Promise<Err> {
     let targetDirectory: string;
     if (!filePath) {
       targetDirectory = this.path;
@@ -404,7 +404,7 @@ export class FilePath {
    * Gets the full absolute representation of this file path in native format.
    */
   getAbsolutePathNative(): string {
-    throw Error("getAbsolutePathNative is NYI");
+    throw Error('getAbsolutePathNative is NYI');
   }
 
   /**
@@ -413,7 +413,7 @@ export class FilePath {
    */
   getCanonicalPathSync(): string {
     if (this.isEmpty()) {
-      return "";
+      return '';
     }
 
     try {
@@ -422,7 +422,7 @@ export class FilePath {
     catch (err) {
       FilePath.logErrorWithPath(this.path, err);
     }
-    return "";
+    return '';
   }
 
   /**
@@ -431,7 +431,7 @@ export class FilePath {
    */
   async getCanonicalPath(): Promise<string> {
     if (this.isEmpty()) {
-      return "";
+      return '';
     }
 
     try {
@@ -440,21 +440,21 @@ export class FilePath {
     catch (err) {
       FilePath.logErrorWithPath(this.path, err);
     }
-    return "";
+    return '';
   }
 
   /**
    * Gets the children of this directory. Sub-directories will not be traversed.
    */
   getChildren(filePaths: Array<FilePath>): Err {
-    throw Error("getChildren is NYI");
+    throw Error('getChildren is NYI');
   }
 
   /**
    * Gets the children of this directory recursively. Sub-directories will be traversed.
    */
   getChildrenRecursive(/*iterationFunction: RecursiveIterationFunction*/): Err {
-    throw Error("getChildrenRecursive is NYI");
+    throw Error('getChildrenRecursive is NYI');
   }
 
   /**
@@ -477,7 +477,7 @@ export class FilePath {
    * Gets the posix file mode of this file or directory (Posix-only)
    */
   getFileMode(/*fileMode: FileMode*/): Err {
-    throw Error("getFileMode is NYI");
+    throw Error('getFileMode is NYI');
   }
 
   /**
@@ -504,15 +504,15 @@ export class FilePath {
   /**
    * Gets the mime content type of this file.
    */
-  getMimeContentType(defaultType = "text/plain"): string {
-    throw Error("getMimeContentType is NYI");
+  getMimeContentType(defaultType = 'text/plain'): string {
+    throw Error('getMimeContentType is NYI');
   }
 
   /**
    * Gets the parent directory of this file path.
    */
   getParent(): FilePath {
-    throw Error("getParent is NYI");
+    throw Error('getParent is NYI');
   }
 
   /**
@@ -527,56 +527,56 @@ export class FilePath {
    * Gets the representation of this path, relative to the provided path.
    */
   getRelativePath(parentPath: FilePath): string {
-    throw Error("getRelativePath is NYI");
+    throw Error('getRelativePath is NYI');
   }
 
   /**
    * Gets the size of this file path in bytes.
    */
   getSize(): number {
-    throw Error("getSize is NYI");
+    throw Error('getSize is NYI');
   }
 
   /**
    * Gets the size of this file path and all sub-directories and files in it, in bytes.
    */
   getSizeRecursive(): number {
-    throw Error("getSizeRecursive is NYI");
+    throw Error('getSizeRecursive is NYI');
   }
 
   /**
    * Gets only the name of the file, excluding the extension.
    */
   getStem(): string {
-    throw Error("getStem is NYI");
+    throw Error('getStem is NYI');
   }
 
   /**
    * Checks whether this file has the specified extension.
    */
   hasExtension(extension: string): boolean {
-    throw Error("hasExtension is NYI");
+    throw Error('hasExtension is NYI');
   }
 
   /**
    * Checks whether this file has the specified extension when it is converted to lower case.
    */
   hasExtensionLowerCase(extension: string): boolean {
-    throw Error("hasExtensionLowerCase is NYI");
+    throw Error('hasExtensionLowerCase is NYI');
   }
 
   /**
    * Checks whether this file has a text mime content type.
    */
   hasTextMimeType(): boolean {
-    throw Error("hasTextMimeType is NYI");
+    throw Error('hasTextMimeType is NYI');
   }
 
   /**
    * Checks whether this file path is a directory.
    */
   isDirectory(): boolean {
-    throw Error("isDirectory is NYI");
+    throw Error('isDirectory is NYI');
   }
 
   /**
@@ -591,14 +591,14 @@ export class FilePath {
    * the specified file path.
    */
   isEquivalentTo(other: FilePath): boolean {
-    throw Error("isEquivalentTo is NYI");
+    throw Error('isEquivalentTo is NYI');
   }
 
   /**
    * Checks whether this file path is a hidden file or directory.
    */
   isHidden(): boolean {
-    throw Error("isHidden is NYI");
+    throw Error('isHidden is NYI');
   }
 
   /**
@@ -607,7 +607,7 @@ export class FilePath {
    * @return True if this file path is a Windows junction; false otherwise.
    */
   isJunction(): boolean {
-    throw Error("isJunction is NYI");
+    throw Error('isJunction is NYI');
   }
 
   /**
@@ -619,21 +619,21 @@ export class FilePath {
    * @return Success if the readability of this file could be checked; Error otherwise. (e.g. EACCES).
    */
   isReadable(): Error | boolean {
-    throw Error("isReadable is NYI");
+    throw Error('isReadable is NYI');
   }
 
   /**
    * Checks whether this file path is a regular file.
    */
   isRegularFile(): boolean {
-    throw Error("isRegularFile is NYI");
+    throw Error('isRegularFile is NYI');
   }
 
   /**
    * Checks whether this file path is a symbolic link.
    */
   isSymlink(): boolean {
-    throw Error("isSymLink is NYI");
+    throw Error('isSymLink is NYI');
   }
 
   /**
@@ -651,8 +651,8 @@ export class FilePath {
     }
 
     // Make the paths lexically normal so that e.g. foo/../bar isn't considered a child of foo.
-    let child = new FilePath(this.getLexicallyNormalPath());
-    let parent = new FilePath(scopePath.getLexicallyNormalPath());
+    const child = new FilePath(this.getLexicallyNormalPath());
+    const parent = new FilePath(scopePath.getLexicallyNormalPath());
 
     // Easy test: We can't possibly be in this scope path if it has more components than we do
     if (parent.path.length > child.path.length) {
@@ -667,8 +667,8 @@ export class FilePath {
 
     // Find the first path element that differs. Stop when we reach the end of the parent
     // path, or a "." path component, which signifies the end of a directory (/foo/bar/.)
-    const childDirs = childDetail.dir.split(/[\/\\]/);
-    const parentDirs = parentDetail.dir.split(/[\/\\]/);
+    const childDirs = childDetail.dir.split(/[/\\]/);
+    const parentDirs = parentDetail.dir.split(/[/\\]/);
     childDirs.push(childDetail.base);
     parentDirs.push(parentDetail.base);
     for (let i = 0; i < parentDirs.length; i++) {
@@ -688,7 +688,7 @@ export class FilePath {
    * Checks whether this file path is writeable.
    */
   isWriteable(): boolean | Error {
-    throw Error("isWriteable is NYI");
+    throw Error('isWriteable is NYI');
   }
 
   /**
@@ -712,49 +712,49 @@ export class FilePath {
    * Moves the current directory to the specified directory.
    */
   move(/*targetPath: FilePath, type: MoveType = MoveCrossDevice, overwrite = false*/): Err {
-    throw Error("move is NYI");
+    throw Error('move is NYI');
   }
 
   /**
    * Performs an indirect move by copying this directory to the target and then deleting this directory.
    */
   moveIndirect(targetPath: FilePath, overwrite = false): Err {
-    throw Error("moveIndirect is NYI");
+    throw Error('moveIndirect is NYI');
   }
 
   /**
    * Opens this file for read.
    */
   openForRead(/*std:: shared_ptr<std:: istream>& out_stream*/): Err {
-    throw Error("openForRead is NYI");
+    throw Error('openForRead is NYI');
   }
 
   /**
    * Opens this file for write.
    */
   openForWrite(/*std:: shared_ptr<std:: ostream>& out_stream,*/ truncate = true): Err {
-    throw Error("openForWrite is NYI");
+    throw Error('openForWrite is NYI');
   }
 
   /**
    * Removes this file or directory from the filesystem.
    */
   remove(): Err {
-    throw Error("remove is NYI");
+    throw Error('remove is NYI');
   }
 
   /**
    * Removes this file or directory from the filesystem, if it exists.
    */
   removeIfExists(): Err {
-    throw Error("removeIfExists is NYI");
+    throw Error('removeIfExists is NYI');
   }
 
   /**
    * Removes the directory represented by this FilePath, if it exists, and recreates it.
    */
   resetDirectory(): Err {
-    throw Error("resetDirectory is NYI");
+    throw Error('resetDirectory is NYI');
   }
 
   /**
@@ -762,21 +762,21 @@ export class FilePath {
    * is not a symbolic link, the original FilePath is returned.
    */
   resolveSymlink(): FilePath {
-    throw Error("resolveSymlink is NYI");
+    throw Error('resolveSymlink is NYI');
   }
 
   /**
    * Sets the last time that this file was modified to the specified time.
    */
   setLastWriteTime(/*std::time_t in_time = ::time(nullptr)*/): void {
-    throw Error("setLastWriteTime is NYI");
+    throw Error('setLastWriteTime is NYI');
   }
 
   /**
    * Checks if a file can be written to by opening the file.
    */
   testWritePermissions(): Err {
-    throw Error("testWritePermissions is NYI");
+    throw Error('testWritePermissions is NYI');
   }
 
   // -------------------------

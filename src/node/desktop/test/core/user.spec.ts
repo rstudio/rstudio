@@ -13,16 +13,16 @@
  *
  */
 
-import { describe } from "mocha";
-import { expect } from "chai";
+import { describe } from 'mocha';
+import { expect } from 'chai';
 
 import fs from 'fs';
 
 import { User } from '../../src/core/user';
 
-describe("User", () => {
-  describe("Static helpers", () => {
-    it("getUserHomePath returns a valid path", () => {
+describe('User', () => {
+  describe('Static helpers', () => {
+    it('getUserHomePath returns a valid path', () => {
       const path = User.getUserHomePath();
       expect(fs.existsSync(path.getAbsolutePath())).is.true;
     });

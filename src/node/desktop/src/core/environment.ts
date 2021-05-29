@@ -20,21 +20,21 @@ export type Environment = Record<string, string>;
 /**
  * Get value of process environment variable; returns empty string it not found.
  */
-export function getenv(name: string) {
+export function getenv(name: string): string {
   return process.env[name] ?? '';
 }
 
 /**
  * Add given name=value to process environment.
  */
-export function setenv(name: string, value: string) {
+export function setenv(name: string, value: string): void {
   process.env[name] = value;
 }
 
 /**
  * Unset given environment variable in process environment.
  */
-export function unsetenv(name: string) {
+export function unsetenv(name: string): void {
   delete process.env[name];
 }
 
@@ -42,15 +42,15 @@ export function unsetenv(name: string) {
  * Expand environment variables in a string; for example /$USER/foo to
  * /bob/foo when USER=bob
  */
-export function expandEnvVars(environment: Environment, str: string) {
+export function expandEnvVars(environment: Environment, str: string): string {
   let result = str;
-  for (let name in environment) {
+  for (const name in environment) {
     // replace bare forms (/home/$USER)
-    let reVar = new RegExp('\\$\\b' + name + '\\b', 'g');
+    const reVar = new RegExp('\\$\\b' + name + '\\b', 'g');
     result = result.replace(reVar, environment[name]);
 
     // replace curly brace forms (/home/${USER})
-    let reBraceVar = new RegExp('\\${' + name + '}', 'g');
+    const reBraceVar = new RegExp('\\${' + name + '}', 'g');
     result = result.replace(reBraceVar, environment[name]);
   }
   return result;

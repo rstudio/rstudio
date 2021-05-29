@@ -13,7 +13,7 @@
  *
  */
 
-import { app } from "electron";
+import { app } from 'electron';
 
 import Main from './main';
 
