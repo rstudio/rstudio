@@ -9,6 +9,7 @@
         "ms-vscode.cmake-tools",
         "ms-vscode.cpptools",
         "twxs.cmake",
-        "vscjava.vscode-java-pack"
+        "vscjava.vscode-java-pack",
+        "waderyan.nodejs-extension-pack",
 	]
 }
