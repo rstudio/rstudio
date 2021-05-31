@@ -21,7 +21,7 @@ import * as Utils from '../../src/main/desktop-utils';
 describe('DesktopUtils', () => {
   describe('Static helpers', () => {
     it('isMacOS detects... macOS', () => {
-      let result = Utils.isMacOS();
+      const result = Utils.isMacOS();
       if (process.platform === 'darwin') {
         expect(result).is.true;
       } else {

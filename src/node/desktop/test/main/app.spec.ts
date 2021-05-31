@@ -21,5 +21,6 @@ import Main from '../../src/main/main';
 // IMPORTANT: Cannot unit-test app.ts, because it will cause app.WhenReady() to
 // start up RStudio, instead of the tests!
 describe('App', () => {
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
   describe('No tests (by design)', () => {});
 });

@@ -28,8 +28,8 @@ interface Versions  {
 describe('Main', () => {
   describe('Static helpers', () => {
     it('getComponentVersions returns expected JSON', () => {
-      let result = Main.getComponentVersions();
-      let json: Versions = JSON.parse(result);
+      const result = Main.getComponentVersions();
+      const json: Versions = JSON.parse(result);
       expect(json.electron).length.is.greaterThan(0);
       expect(json.rstudio).length.is.greaterThan(0);
       expect(json.node).length.is.greaterThan(0);

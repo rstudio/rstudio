@@ -29,7 +29,7 @@ import * as desktop from './desktop-utils';
 
 export default class Main {
 
-  run() {
+  run(): void {
     initHook();
 
     // TODO: how do we know if this is a package build or not?
@@ -653,7 +653,7 @@ export default class Main {
   // Static helper functions
   // -------------------------
 
-  static augmentCommandLineArguments() {
+  static augmentCommandLineArguments(): void {
     const user = getenv('RSTUDIO_CHROMIUM_ARGUMENTS');
     if (!user) {
       return;
@@ -694,7 +694,7 @@ export default class Main {
     return Math.trunc(Math.random() * 2147483647).toString();
   }
 
-  static initializeSharedSecret() {
+  static initializeSharedSecret(): void {
     const sharedSecret = Main.randomString() + Main.randomString() + Main.randomString();
     setenv('RS_SHARED_SECRET', sharedSecret);
   }

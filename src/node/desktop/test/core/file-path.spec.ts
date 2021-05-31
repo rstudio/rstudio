@@ -40,7 +40,10 @@ async function realpath(path: string): Promise<string> {
 const bogusPath = '/super/bogus/path/42';
 
 // A path that a non-elevated user cannot create
-const cannotCreatePath = process.platform === 'win32' ? '\\Program Files\\a_test_folder' : '/foo/bar/crazy';
+const cannotCreatePath = process.platform === 'win32' ? 'C:\\Program Files\\a_test_folder' : '/foo/bar/crazy';
+
+// An absolute path in generic format (see boost filesystem for description of "generic" format)
+const absolutePath = process.platform === 'win32' ? 'C:/Users/human/documents' : '/users/human/documents';
 
 describe('FilePath', () => {
   afterEach(() => {
@@ -65,6 +68,12 @@ describe('FilePath', () => {
       expect(path.getAbsolutePath().length).to.equal(0);
       expect(path.isEmpty());
     });
+    it('getAbsolutePathNative should convert generic path to Windows path', () => {
+      const expectedPath = 'C:\\Windows\\Was\\Here';
+      const fp1 = new FilePath(expectedPath);
+      const native = fp1.getAbsolutePathNative();
+      expect(native).equals(expectedPath);
+    });
   });
 
   describe('Comparisons', () => {
@@ -77,6 +86,11 @@ describe('FilePath', () => {
       const path1 = new FilePath('/hello/world');
       const path2 = new FilePath('/hello/../hello/world');
       expect(path1.equals(path2)).is.false;
+    });
+    it('equals should return true if both are empty', () => {
+      const path1 = new FilePath();
+      const path2 = new FilePath();
+      expect(path1.equals(path2)).is.true;
     });
     it('isWithin should handle detect simple path containment checks', () => {
       const pPath = new FilePath('/path/to');
@@ -538,7 +552,7 @@ describe('FilePath', () => {
     });
   });
 
-  describe('WIP Path resolutions', () => {
+  describe('Path resolutions', () => {
     it('resolveAliasedPathSync should return home if empty path provided', () => {
       const home = User.getUserHomePath();
       const result = FilePath.resolveAliasedPathSync('', home);
@@ -551,9 +565,7 @@ describe('FilePath', () => {
     });
     it('resolveAliasedPathSync should replace \'~\' in path', () => {
       const start = '~/foo/bar';
-      console.log(`getUserHomePath returns ${User.getUserHomePath()}`);
       const result = FilePath.resolveAliasedPathSync(start, User.getUserHomePath());
-      console.log(`result is ${result}`);
       const resultStr = result.getAbsolutePath();
       expect(resultStr.length).is.greaterThanOrEqual(start.length);
       expect(resultStr.charAt(0)).is.not.equals('~');
@@ -561,34 +573,33 @@ describe('FilePath', () => {
     });
     it('completePath should return absolute path as-is ignoring base', () => {
       const f1 = User.getUserHomePath();
-      const result = f1.completePath('/from/the/root');
-      expect(result.getAbsolutePath()).equals('/from/the/root');
+      const result = f1.completePath(absolutePath);
+      expect(result.getAbsolutePath()).equals(absolutePath);
     });
     it('completePath should resolve relative path to cwd when no base', () => {
       const f1 = new FilePath();
       const result = f1.completePath('some/path');
-      expect(result.getAbsolutePath()).equals(path.join(process.cwd(), 'some/path'));
+      const expected = new FilePath(path.join(process.cwd(), 'some/path'));
+      expect(result.getAbsolutePath()).equals(expected.getAbsolutePath());
     });
     it('completeChildPath should return same path when no child provided', () => {
       const aPath = new FilePath('/path/to/a');
       const result = aPath.completeChildPath('');
       expect(result.equals(aPath)).is.true;
     });
-    it('completeChildPath should correct handle a simple request', () => {
-      const aPath = new FilePath('/path/to/a');
-      const bPath = new FilePath('/path/to/a/b');
+    it('completeChildPath should correctly handle a simple request', () => {
+      const aPathStr = process.platform === 'win32' ? 'C:\\path\\to\\a' : '/path/to/a';
+      const bPathStr = process.platform === 'win32' ? 'C:\\path\\to\\a\\b' : '/path/to/a/b';
+      const aPath = new FilePath(aPathStr);
+      const bPath = new FilePath(bPathStr);
       const result = aPath.completeChildPath('b');
+      console.log(`result of completeChildPath is ${result.getAbsolutePath()}`);
       expect(result.equals(bPath)).is.true;
     });
     it('completeChildPath should not complete a path outside and instead return original path', () => {
       const cPath = new FilePath('/path/to/foo');
       expect(cPath.completeChildPath('../bar').equals(cPath)).is.true;
       expect(cPath.completeChildPath('/path/to/quux').equals(cPath));
-    });
-  });
-  describe('Static helpers', () => {
-    it('toString should return the string', () => {
-      expect(FilePath.toString('hello world')).equals('hello world');
     });
   });
   describe('NYI placeholders', () => {
@@ -602,14 +613,13 @@ describe('FilePath', () => {
       expect(() => FilePath.tempFilePath()).to.throw();
       expect(() => FilePath.uniqueFilePath('/')).to.throw();
       if (process.platform === 'win32') {
-        expect(fp1.changeFileMode('')).to.not.throw();
+        expect(() => fp1.changeFileMode('')).to.not.throw();
       } else {
         expect(() => fp1.changeFileMode('')).to.throw();
       }
       expect(() => fp1.copy(fp2)).to.throw();
       expect(() => fp1.copyDirectoryRecursive(fp2)).to.throw();
       expect(() => fp1.ensureFile()).to.throw();
-      expect(() => fp1.getAbsolutePathNative()).to.throw();
       expect(() => fp1.getChildren(new Array<FilePath>())).to.throw();
       expect(() => fp1.getChildrenRecursive()).to.throw();
       expect(() => fp1.getFileMode()).to.throw();
