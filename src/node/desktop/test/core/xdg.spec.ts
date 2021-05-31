@@ -35,6 +35,9 @@ function randomString() {
   return Math.trunc(Math.random() * 2147483647).toString();
 }
 
+const onceUponAPath = process.platform === 'win32' ?
+  'C:/once/upon/a/time/rstudio' : 'C:/once/upon/a/time/rstudio';
+
 describe('Xdg', () => {
   // store env values at start of each test so we can restore them
   const xdgVars: Record<string, string> = {
@@ -75,23 +78,28 @@ describe('Xdg', () => {
       expect(result.getAbsolutePath().length).is.greaterThan(folder().length);
     });
     it('userConfigDir returns path set with RSTUDIO_CONFIG_HOME', () => {
-      const p = '/once/upon/a/time/rstudio';
+      const p = onceUponAPath;
       process.env.RSTUDIO_CONFIG_HOME = p;
       const result = Xdg.userConfigDir();
       expect(result.getAbsolutePath()).equals(p);
     });
     it('userConfigDir returns path set with XDG_CONFIG_HOME', () => {
-      const p = '/once/upon/a/time';
+      const p = onceUponAPath;
       process.env.XDG_CONFIG_HOME = p;
       const result = Xdg.userConfigDir();
       expect(result.getAbsolutePath().startsWith(p)).is.true;
       expect(hasExpectedEnding(result)).is.true;
     });
-    it('userConfigDir expands placeholders', () => {
-      const p = '${HOME}/a/$USER/stuff';
+    it('WIP userConfigDir expands placeholders', () => {
+      let p = '${HOME}/a/$USER/stuff';
       const user = 'fred';
-      const home = '/somewhere/nifty';
-      const expected = '/somewhere/nifty/a/fred/stuff';
+      let home = '/somewhere/nifty';
+      let expected = '/somewhere/nifty/a/fred/stuff';
+      if (process.platform === 'win32') {
+        p = 'C:' + p;
+        home = 'C:' + home;
+        expected = 'C:' + expected;
+      }
       process.env.XDG_CONFIG_HOME = p;
       const result = Xdg.userConfigDir(user, new FilePath(home));
       expect(result.getAbsolutePath().startsWith(expected)).is.true;

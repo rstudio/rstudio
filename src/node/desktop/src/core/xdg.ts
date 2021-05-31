@@ -33,7 +33,7 @@
  */
 
 import os from 'os';
-import { Environment, expandEnvVars, getenv, setenv } from './environment';
+import { Environment, expandEnvVars, getenv } from './environment';
 import { username, userHomePath } from './system';
 import { FilePath } from './file-path';
 
@@ -141,7 +141,7 @@ function resolveXdgDir(
     'HOME': homeDir ? homeDir.getAbsolutePath() : userHomePath().getAbsolutePath(),
     'USER': user ? user : username()
   };
-
+  
   // check for manually specified hostname in environment variable
   let hostname = getenv('HOSTNAME');
 
@@ -173,7 +173,7 @@ export class Xdg {
    * On Unix-alikes, this is `~/.config/rstudio`, or `XDG_CONFIG_HOME`.
    * On Windows, this is `FOLDERID_RoamingAppData` (typically `AppData/Roaming`).
    */
-  static userConfigDir(user?: string, homeDir?: FilePath) {
+  static userConfigDir(user?: string, homeDir?: FilePath): FilePath {
     return resolveXdgDir(
       'RSTUDIO_CONFIG_HOME',
       'XDG_CONFIG_HOME',
@@ -190,7 +190,7 @@ export class Xdg {
    * On Unix-alikes, this is `~/.local/share/rstudio`, or `XDG_DATA_HOME`.
    * On Windows, this is `FOLDERID_LocalAppData` (typically `AppData/Local`).
    */
-  static userDataDir(user?: string, homeDir?: FilePath) {
+  static userDataDir(user?: string, homeDir?: FilePath): FilePath {
     return resolveXdgDir(
       'RSTUDIO_DATA_HOME',
       'XDG_DATA_HOME',
@@ -209,9 +209,11 @@ export class Xdg {
    * session log.
    */
   static verifyUserDirs(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     user?: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     homeDir?: FilePath
-  ) {
+  ): void {
     throw Error('Xdg.verifyUserDirs is NYI');
   }
 
@@ -223,7 +225,6 @@ export class Xdg {
    * On Windows, this is `FOLDERID_ProgramData` (typically `C:/ProgramData`).
    */
   static systemConfigDir(): FilePath {
-    const result = '';
     if (process.platform !== 'win32') {
       if (!getenv('RSTUDIO_CONFIG_DIR')) {
         // On POSIX operating systems, it's possible to specify multiple config
@@ -284,7 +285,8 @@ export class Xdg {
   /**
    * Sets relevant XDG environment variables
    */
-  static forwardXdgEnvVars(pEnvironment: Environment) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  static forwardXdgEnvVars(pEnvironment: Environment): void {
     throw Error('forwardXdgEnvVars is NYI');
   }
 }
