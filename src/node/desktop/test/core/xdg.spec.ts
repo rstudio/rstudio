@@ -36,7 +36,7 @@ function randomString() {
 }
 
 const onceUponAPath = process.platform === 'win32' ?
-  'C:/once/upon/a/time/rstudio' : 'C:/once/upon/a/time/rstudio';
+  'C:/once/upon/a/time/rstudio' : '/once/upon/a/time/rstudio';
 
 describe('Xdg', () => {
   // store env values at start of each test so we can restore them
