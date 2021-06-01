@@ -41,13 +41,13 @@ def compile_package(os, type, flavor, variant) {
   }
 }
 
-def run_tests(type, flavor, variant) {
+def run_tests(os, type, flavor) {
   try {
     // attempt to run ant (gwt) unit tests
     sh "cd package/linux/build-${flavor.capitalize()}-${type}/src/gwt && ./gwt-unit-tests.sh"
   } catch(err) {
     // mark build as unstable if it fails unit tests
-    currentBuild.result = "UNSTABLE"
+    unstable("GWT unit tests failed (${flavor.capitalize()} ${type} on ${os})")
   }
 
 
@@ -55,7 +55,7 @@ def run_tests(type, flavor, variant) {
     // attempt to run cpp unit tests
     sh "cd package/linux/build-${flavor.capitalize()}-${type}/src/cpp && ./rstudio-tests"
   } catch(err) {
-    currentBuild.result = "UNSTABLE"
+    unstable("C++ unit tests failed (${flavor.capitalize()} ${type} on ${os})")
   }
 }
 
@@ -312,7 +312,7 @@ try {
                                 compile_package(current_container.package_os, get_type_from_os(current_container.os), current_container.flavor, current_container.variant)
                             }
                             stage('run tests') {
-                                run_tests(get_type_from_os(current_container.os), current_container.flavor, current_container.variant)
+                                run_tests(current_container.os, get_type_from_os(current_container.os), current_container.flavor)
                             }
                             stage('sentry upload') {
                                 sentry_upload(get_type_from_os(current_container.os), current_container.flavor)
