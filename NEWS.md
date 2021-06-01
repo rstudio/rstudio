@@ -17,6 +17,7 @@
 * Local background jobs can now be replayed (#5548)
 * Improved display of R stack traces in R functions invoked internally by RStudio (#9307)
 * The "auto-detect indentation" preference is now off by default. (#9211) 
+* Prevent user preferences from setting CRAN repos when `allow-cran-repos-edit=0` (Pro #1301)
 * **BREAKING:** RStudio Desktop Pro only supports activation with license files (Pro #2300)
 * Added AWS Cognito support to openid integration (Pro #2313)
 * Add file uploads and downloads to session audit log (Pro #2226)
