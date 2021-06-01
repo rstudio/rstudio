@@ -33,7 +33,8 @@
     "lint": "eslint ./src",
     "start": "yarn run build && electron ./dist/main/app.js",
     "show-version": "yarn run build && electron ./dist/main/app.js --version-json",
-    "test": "nyc electron-mocha -c",
+    "test": "electron-mocha -c",
+    "testcover": "nyc electron-mocha -c",
     "testwip": "electron-mocha -c -g WIP"
   }
 }
