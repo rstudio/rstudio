@@ -19,7 +19,7 @@ import { Err, Success } from './err';
 import { User } from './user';
 import { FilePath } from './file-path';
 
-export function initHook() {
+export function initHook(): void {
   if (process.platform !== 'win32' ) {
     return;
   }
@@ -33,7 +33,7 @@ export const s_programIdentity = '';
 // logging options representing the latest state of the logging configuration file
 // export let s_logOptions: LogOptions;
 
-function initLog() {
+function initLog(): Err {
   // requires prior synchronization
 
   // Error error = s_logOptions.read();
@@ -68,11 +68,11 @@ export function initializeLog(
   return Success();
 }
 
-export function username() {
+export function username(): string {
   const userVar = process.platform === 'win32' ? 'USERNAME' : 'USER';
   return getenv(userVar);
 }
 
-export function userHomePath() {
+export function userHomePath(): FilePath {
   return User.getUserHomePath();
 }

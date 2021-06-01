@@ -15,16 +15,17 @@
 
 import { Xdg } from '../core/xdg';
 import { getenv } from '../core/environment';
+import { FilePath } from '../core/file-path';
 
-export function reattachConsoleIfNecessary() {
+export function reattachConsoleIfNecessary(): void {
   // TODO Windows-only
 }
 
-export function userLogPath() {
+export function userLogPath(): FilePath {
   return Xdg.userDataDir().completeChildPath('log');
 }
 
-export function userWebCachePath() {
+export function userWebCachePath(): FilePath {
   return Xdg.userDataDir().completeChildPath('web-cache');
 }
 
@@ -33,7 +34,7 @@ export function devicePixelRatio(/*QMainWindow * pMainWindow*/): number {
   return 1.0;
 }
 
-export function initializeLang() {
+export function initializeLang(): void {
   if (process.platform !== 'darwin') {
     return;
   }

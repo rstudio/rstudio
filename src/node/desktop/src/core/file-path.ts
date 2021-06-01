@@ -519,7 +519,7 @@ export class FilePath {
    * Gets the lexically normal representation of this file path, with . and ..
    * components resolved and/or removed.
    */
-  getLexicallyNormalPath() {
+  getLexicallyNormalPath(): string {
     return FilePath.boost_fs_path2str(path.normalize(this.path));
   }
 
@@ -783,12 +783,12 @@ export class FilePath {
   // Internal helper functions
   // -------------------------
 
-  static logErrorWithPath(path: string, error: Error) {
+  static logErrorWithPath(path: string, error: Error): void {
     // TODO logging
     // console.error(error.message + ": " + path);
   }
 
-  static logError(error: Error) {
+  static logError(error: Error): void {
     // TODO logging
     // console.error(error.message);
   }
