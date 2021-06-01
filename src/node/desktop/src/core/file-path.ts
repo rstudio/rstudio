@@ -15,6 +15,7 @@
 
 import fs from 'fs';
 import fsPromises from 'fs/promises';
+import { platform } from 'os';
 
 import path from 'path';
 import { Err, Success } from './err';
@@ -814,6 +815,10 @@ export class FilePath {
   }
 
   static boost_fs_path2strnative(p: string): string {
-    return FilePath.generic_string(p);
+    if (process.platform === 'win32') {
+      return p;
+    } else {
+      return FilePath.generic_string(p);
+    }
   }
 }

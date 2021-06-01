@@ -68,11 +68,12 @@ describe('FilePath', () => {
       expect(path.getAbsolutePath().length).to.equal(0);
       expect(path.isEmpty());
     });
-    it('getAbsolutePathNative should convert generic path to Windows path', () => {
-      const expectedPath = 'C:\\Windows\\Was\\Here';
-      const fp1 = new FilePath(expectedPath);
+    it('getAbsolutePathNative should return raw path on Windows', () => {
+      const originalPath = 'C:\\Windows\\Was\\Here';
+      const expectedPosix = 'C:/Windows/Was/Here';
+      const fp1 = new FilePath(originalPath);
       const native = fp1.getAbsolutePathNative();
-      expect(native).equals(expectedPath);
+      expect(native).equals(process.platform === 'win32' ? originalPath : expectedPosix);
     });
   });
 
