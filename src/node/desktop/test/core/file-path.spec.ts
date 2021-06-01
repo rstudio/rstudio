@@ -13,8 +13,8 @@
  *
  */
 
-import { describe, utils } from 'mocha';
-import { expect, assert } from 'chai';
+import { describe } from 'mocha';
+import { expect } from 'chai';
 
 import fs from 'fs';
 import fsPromises from 'fs/promises';
@@ -36,7 +36,14 @@ async function realpath(path: string): Promise<string> {
   return fsPromises.realpath(path);
 }
 
+// A path that should never exist
 const bogusPath = '/super/bogus/path/42';
+
+// A path that a non-elevated user cannot create
+const cannotCreatePath = process.platform === 'win32' ? 'C:\\Program Files\\a_test_folder' : '/foo/bar/crazy';
+
+// An absolute path in generic format (see boost filesystem for description of "generic" format)
+const absolutePath = process.platform === 'win32' ? 'C:/Users/human/documents' : '/users/human/documents';
 
 describe('FilePath', () => {
   afterEach(() => {
@@ -61,6 +68,12 @@ describe('FilePath', () => {
       expect(path.getAbsolutePath().length).to.equal(0);
       expect(path.isEmpty());
     });
+    it('getAbsolutePathNative should return raw path on Windows', () => {
+      const originalPath = 'C:\\Windows\\Was\\Here';
+      const fp1 = new FilePath(originalPath);
+      const native = fp1.getAbsolutePathNative();
+      expect(native).equals(originalPath);
+    });
   });
 
   describe('Comparisons', () => {
@@ -73,6 +86,11 @@ describe('FilePath', () => {
       const path1 = new FilePath('/hello/world');
       const path2 = new FilePath('/hello/../hello/world');
       expect(path1.equals(path2)).is.false;
+    });
+    it('equals should return true if both are empty', () => {
+      const path1 = new FilePath();
+      const path2 = new FilePath();
+      expect(path1.equals(path2)).is.true;
     });
     it('isWithin should handle detect simple path containment checks', () => {
       const pPath = new FilePath('/path/to');
@@ -189,7 +207,6 @@ describe('FilePath', () => {
     });
     it('safeCurrentPathSync should change to supplied safe path if it exists if cwd doesn\'t exist', () => {
       const origDir = new FilePath(process.cwd());
-
       // create a temp folder, chdir to it, then delete it
       let testDir = path.join(
         os.tmpdir(),
@@ -198,13 +215,24 @@ describe('FilePath', () => {
       fs.mkdirSync(testDir);
       process.chdir(testDir);
       testDir = realpathSync(testDir);
-      fs.rmdirSync(testDir);
+      try {
+        fs.rmdirSync(testDir);
+      }
+      catch (error) {
+        // On Windows, trying to remove current-working-directory may fail so can't 
+        // execute rest of this test case; cleanup and exit
+        expect(process.platform === 'win32').is.true;
+        expect(() => process.chdir(origDir.getAbsolutePath())).to.not.throw();
+        expect(() => fs.rmdirSync(testDir)).to.not.throw();
+        return;
+      }
 
       const currentPath = FilePath.safeCurrentPathSync(origDir);
       expect(realpathSync(origDir.getAbsolutePath())).to.equal(realpathSync(process.cwd()));
       expect(realpathSync(currentPath.getAbsolutePath())).to.equal(realpathSync(process.cwd()));
     });
     it('safeCurrentPathSync should change to home folder when both cwd and revert paths don\'t exist', () => {
+      const origDir = new FilePath(process.cwd());
       // create a temp folder, chdir to it, then delete it
       let testDir = path.join(
         os.tmpdir(),
@@ -213,7 +241,17 @@ describe('FilePath', () => {
       fs.mkdirSync(testDir);
       process.chdir(testDir);
       testDir = realpathSync(testDir);
-      fs.rmdirSync(testDir);
+      try {
+        fs.rmdirSync(testDir);
+      }
+      catch (error) {
+        // On Windows, trying to remove current-working-directory may fail so can't 
+        // execute rest of this test case; cleanup and exit
+        expect(process.platform === 'win32').is.true;
+        expect(() => process.chdir(origDir.getAbsolutePath())).to.not.throw();
+        expect(() => fs.rmdirSync(testDir)).to.not.throw();
+        return;
+      }
 
       const currentPath = FilePath.safeCurrentPathSync(new FilePath(bogusPath));
       expect(realpathSync(currentPath.getAbsolutePath())).to.equal(realpathSync(os.homedir()));
@@ -227,7 +265,6 @@ describe('FilePath', () => {
     });
     it('safeCurrentPath should change to supplied safe path if it exists if cwd doesn\'t exist', async () => {
       const origDir = new FilePath(process.cwd());
-
       // create a temp folder, chdir to it, then delete it
       let testDir = path.join(
         os.tmpdir(),
@@ -236,13 +273,24 @@ describe('FilePath', () => {
       await fsPromises.mkdir(testDir);
       process.chdir(testDir);
       testDir = await realpath(testDir);
-      await fsPromises.rmdir(testDir);
+      try {
+        await fsPromises.rmdir(testDir);
+      }
+      catch (error) {
+        // On Windows, trying to remove current-working-directory may fail so can't 
+        // execute rest of this test case; cleanup and exit
+        expect(process.platform === 'win32').is.true;
+        expect(() => process.chdir(origDir.getAbsolutePath())).to.not.throw();
+        expect(() => fs.rmdirSync(testDir)).to.not.throw();
+        return;
+      }
 
       const currentPath = await FilePath.safeCurrentPath(origDir);
       expect(await realpath(origDir.getAbsolutePath())).to.equal(await realpath(process.cwd()));
       expect(await realpath(currentPath.getAbsolutePath())).to.equal(await realpath(process.cwd()));
     });
     it('safeCurrentPath should change to home folder when both cwd and revert paths don\'t exist', async () => {
+      const origDir = new FilePath(process.cwd());
       // create a temp folder, chdir to it, then delete it
       let testDir = path.join(
         os.tmpdir(),
@@ -251,7 +299,17 @@ describe('FilePath', () => {
       await fsPromises.mkdir(testDir);
       process.chdir(testDir);
       testDir = await realpath(testDir);
-      await fsPromises.rmdir(testDir);
+      try {
+        await fsPromises.rmdir(testDir);
+      }
+      catch (error) {
+        // On Windows, trying to remove current-working-directory may fail so can't 
+        // execute rest of this test case; cleanup and exit
+        expect(process.platform === 'win32').is.true;
+        expect(() => process.chdir(origDir.getAbsolutePath())).to.not.throw();
+        expect(() => fs.rmdirSync(testDir)).to.not.throw();
+        return;
+      }
 
       const currentPath = await FilePath.safeCurrentPath(new FilePath(bogusPath));
       expect(await realpath(currentPath.getAbsolutePath())).to.equal(await realpath(os.homedir()));
@@ -348,14 +406,16 @@ describe('FilePath', () => {
       fs.rmdirSync(path.join(os.tmpdir(), firstLevel), { recursive: true });
     });
     it('createDirectorySync should fail when it cannot create the directory', () => {
-      const fp = new FilePath('/foo/bar/crazy');
+      const fp = new FilePath(cannotCreatePath);
+      expect(fp.existsSync()).is.false;
       let result = fp.createDirectorySync('');
       expect(!!result).is.true;
       result = fp.createDirectorySync('stuff');
       expect(!!result).is.true;
     });
     it('createDirectorySync should ignore base when given an absolute path', () => {
-      const fp = new FilePath('/foo/bar/crazy');
+      const fp = new FilePath(cannotCreatePath);
+      expect(fp.existsSync()).is.false;
       const target = path.join(os.tmpdir(), randomString());
       const result = fp.createDirectorySync(target);
       expect(!!result).is.false;
@@ -442,14 +502,14 @@ describe('FilePath', () => {
       await fsPromises.rmdir(path.join(os.tmpdir(), firstLevel), { recursive: true });
     });
     it('createDirectory should fail when it cannot create the directory', async () => {
-      const fp = new FilePath('/foo/bar/crazy');
+      const fp = new FilePath(cannotCreatePath);
       let result = await fp.createDirectory('');
       expect(!!result).is.true;
       result = await fp.createDirectory('stuff');
       expect(!!result).is.true;
     });
     it('createDirectory should ignore base when given an absolute path', async () => {
-      const fp = new FilePath('/foo/bar/crazy');
+      const fp = new FilePath(cannotCreatePath);
       const target = path.join(os.tmpdir(), randomString());
       const result = await fp.createDirectory(target);
       expect(!!result).is.false;
@@ -480,28 +540,30 @@ describe('FilePath', () => {
       expect(process.cwd()).equals(cwd);
     });
     it('makeCurrentPath with autocreate should create and change cwd to non-existent folder', () => {
+      const origCwd = process.cwd();
       const newFolder = path.join(os.tmpdir(), randomString());
       const f1 = new FilePath(newFolder);
       expect(fs.existsSync(newFolder)).is.false;
       const result = f1.makeCurrentPath(true);
       expect(!!result).is.false;
       expect(realpathSync(process.cwd())).equals(realpathSync(newFolder));
+      process.chdir(origCwd);
       fs.rmdirSync(newFolder);
     });
   });
 
   describe('Path resolutions', () => {
-    it('resolveAliasedPath should return home if empty path provided', () => {
+    it('resolveAliasedPathSync should return home if empty path provided', () => {
       const home = User.getUserHomePath();
       const result = FilePath.resolveAliasedPathSync('', home);
       expect(result.getAbsolutePath()).equals(home.getAbsolutePath());
     });
-    it('resolveAliasedPath should resolve \'~\' as home', () => {
+    it('resolveAliasedPathSync should resolve \'~\' as home', () => {
       const home = User.getUserHomePath();
       const result = FilePath.resolveAliasedPathSync('~', home);
       expect(result.getAbsolutePath()).equals(home.getAbsolutePath());
     });
-    it('resolveAliasedPath should replace \'~\' in path', () => {
+    it('resolveAliasedPathSync should replace \'~\' in path', () => {
       const start = '~/foo/bar';
       const result = FilePath.resolveAliasedPathSync(start, User.getUserHomePath());
       const resultStr = result.getAbsolutePath();
@@ -511,34 +573,33 @@ describe('FilePath', () => {
     });
     it('completePath should return absolute path as-is ignoring base', () => {
       const f1 = User.getUserHomePath();
-      const result = f1.completePath('/from/the/root');
-      expect(result.getAbsolutePath()).equals('/from/the/root');
+      const result = f1.completePath(absolutePath);
+      expect(result.getAbsolutePath()).equals(absolutePath);
     });
     it('completePath should resolve relative path to cwd when no base', () => {
       const f1 = new FilePath();
       const result = f1.completePath('some/path');
-      expect(result.getAbsolutePath()).equals(path.join(process.cwd(), 'some/path'));
+      const expected = new FilePath(path.join(process.cwd(), 'some/path'));
+      expect(result.getAbsolutePath()).equals(expected.getAbsolutePath());
     });
     it('completeChildPath should return same path when no child provided', () => {
       const aPath = new FilePath('/path/to/a');
       const result = aPath.completeChildPath('');
       expect(result.equals(aPath)).is.true;
     });
-    it('completeChildPath should correct handle a simple request', () => {
-      const aPath = new FilePath('/path/to/a');
-      const bPath = new FilePath('/path/to/a/b');
+    it('completeChildPath should correctly handle a simple request', () => {
+      const aPathStr = process.platform === 'win32' ? 'C:\\path\\to\\a' : '/path/to/a';
+      const bPathStr = process.platform === 'win32' ? 'C:\\path\\to\\a\\b' : '/path/to/a/b';
+      const aPath = new FilePath(aPathStr);
+      const bPath = new FilePath(bPathStr);
       const result = aPath.completeChildPath('b');
+      console.log(`result of completeChildPath is ${result.getAbsolutePath()}`);
       expect(result.equals(bPath)).is.true;
     });
     it('completeChildPath should not complete a path outside and instead return original path', () => {
       const cPath = new FilePath('/path/to/foo');
       expect(cPath.completeChildPath('../bar').equals(cPath)).is.true;
       expect(cPath.completeChildPath('/path/to/quux').equals(cPath));
-    });
-  });
-  describe('Static helpers', () => {
-    it('toString should return the string', () => {
-      expect(FilePath.toString('hello world')).equals('hello world');
     });
   });
   describe('NYI placeholders', () => {
@@ -552,14 +613,13 @@ describe('FilePath', () => {
       expect(() => FilePath.tempFilePath()).to.throw();
       expect(() => FilePath.uniqueFilePath('/')).to.throw();
       if (process.platform === 'win32') {
-        expect(fp1.changeFileMode('')).is.false;
+        expect(() => fp1.changeFileMode('')).to.not.throw();
       } else {
         expect(() => fp1.changeFileMode('')).to.throw();
       }
       expect(() => fp1.copy(fp2)).to.throw();
       expect(() => fp1.copyDirectoryRecursive(fp2)).to.throw();
       expect(() => fp1.ensureFile()).to.throw();
-      expect(() => fp1.getAbsolutePathNative()).to.throw();
       expect(() => fp1.getChildren(new Array<FilePath>())).to.throw();
       expect(() => fp1.getChildrenRecursive()).to.throw();
       expect(() => fp1.getFileMode()).to.throw();

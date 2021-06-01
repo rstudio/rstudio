@@ -15,6 +15,7 @@
 
 import fs from 'fs';
 import fsPromises from 'fs/promises';
+import { platform } from 'os';
 
 import path from 'path';
 import { Err, Success } from './err';
@@ -36,14 +37,14 @@ export class FilePath {
   static homePathLeafAlias = '~';
 
   constructor(path = '') {
-    this.path = FilePath.fromString(path);
+    this.path = path;
   }
 
   /**
    * Get string representation of object, for debugging purposes
    */
   toString(): string {
-    return this.path;
+    return this.getAbsolutePath();
   }
 
   /**
@@ -51,7 +52,7 @@ export class FilePath {
    * path (exact match).
    */
   equals(filePath: FilePath): boolean {
-    return this.path == filePath.path;
+    return FilePath.boost_fs_path2str(this.path) == FilePath.boost_fs_path2str(filePath.path);
   }
 
   /**
@@ -69,7 +70,7 @@ export class FilePath {
       return false;
     }
 
-    const p = FilePath.fromString(filePath);
+    const p = filePath;
     try {
       return fs.existsSync(p);
     } catch (err) {
@@ -86,7 +87,7 @@ export class FilePath {
       return false;
     }
 
-    const p = FilePath.fromString(filePath);
+    const p = filePath;
     try {
       await fsPromises.access(p);
       return true;
@@ -255,7 +256,7 @@ export class FilePath {
       }
 
       // confirm this is a relative path
-      const relativePath = FilePath.fromString(filePath);
+      const relativePath = filePath;
       if (path.isAbsolute(relativePath)) {
         throw Error('absolute path not permitted');
       }
@@ -278,7 +279,7 @@ export class FilePath {
    */
   completePath(filePath: string): FilePath {
     try {
-      return new FilePath(FilePath.fs_path2str(FilePath.fs_complete(filePath, this.path)));
+      return new FilePath(FilePath.boost_fs_path2str(FilePath.fs_complete(filePath, this.path)));
     } catch (err) {
       FilePath.logError(err);
       return this;
@@ -396,15 +397,15 @@ export class FilePath {
   /**
    * Gets the full absolute representation of this file path.
    */
-  getAbsolutePath() {
-    return FilePath.fs_path2str(this.path);
+  getAbsolutePath(): string {
+    return FilePath.boost_fs_path2str(this.path);
   }
 
   /**
    * Gets the full absolute representation of this file path in native format.
    */
   getAbsolutePathNative(): string {
-    throw Error('getAbsolutePathNative is NYI');
+    return FilePath.boost_fs_path2strnative(this.path);
   }
 
   /**
@@ -417,7 +418,7 @@ export class FilePath {
     }
 
     try {
-      return FilePath.fs_path2str(fs.realpathSync(this.path));
+      return FilePath.boost_fs_path2str(fs.realpathSync(this.path));
     }
     catch (err) {
       FilePath.logErrorWithPath(this.path, err);
@@ -435,7 +436,7 @@ export class FilePath {
     }
 
     try {
-      return FilePath.fs_path2str(await fsPromises.realpath(this.path));
+      return FilePath.boost_fs_path2str(await fsPromises.realpath(this.path));
     }
     catch (err) {
       FilePath.logErrorWithPath(this.path, err);
@@ -519,8 +520,8 @@ export class FilePath {
    * Gets the lexically normal representation of this file path, with . and ..
    * components resolved and/or removed.
    */
-  getLexicallyNormalPath() {
-    return FilePath.fs_path2str(path.normalize(this.path));
+  getLexicallyNormalPath(): string {
+    return FilePath.boost_fs_path2str(path.normalize(this.path));
   }
 
   /**
@@ -783,34 +784,41 @@ export class FilePath {
   // Internal helper functions
   // -------------------------
 
-  static logErrorWithPath(path: string, error: Error) {
+  static logErrorWithPath(path: string, error: Error): void {
     // TODO logging
     // console.error(error.message + ": " + path);
   }
 
-  static logError(error: Error) {
+  static logError(error: Error): void {
     // TODO logging
     // console.error(error.message);
   }
 
+  /**
+   * Return generic form of stored path (akin to boost's path.generic_string method)
+   */
+  static generic_string(p: string): string {
+    if (process.platform !== 'win32') {
+      return p;
+    } else {
+      return p.split(path.sep).join(path.posix.sep);
+    }
+  }
+
   // Analogous to BOOST_FS_COMPLETE in FilePath.cpp
-  static fs_complete(p: string, base: string) {
+  static fs_complete(p: string, base: string): string {
     return path.resolve(base, p);
   }
 
-  // Analogous to BOOST_FS_PATH2STR
-  static fs_path2str(p: string): string {
-    // TODO do we need this (i.e. on Windows?)
-    return p;
+  static boost_fs_path2str(p: string): string {
+    return FilePath.generic_string(p);
   }
 
-  static fromString(value: string): string {
-    // TODO do we need this (i.e. on Windows?)
-    return value;
-  }
-
-  static toString(value: string): string {
-    // TODO do we need this (i.e. on Windows?)
-    return value;
+  static boost_fs_path2strnative(p: string): string {
+    if (process.platform === 'win32') {
+      return p;
+    } else {
+      return FilePath.generic_string(p);
+    }
   }
 }
