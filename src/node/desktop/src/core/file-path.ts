@@ -15,7 +15,6 @@
 
 import fs from 'fs';
 import fsPromises from 'fs/promises';
-import { platform } from 'os';
 
 import path from 'path';
 import { Err, Success } from './err';
