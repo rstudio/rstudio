@@ -19,7 +19,7 @@ import { initHook, initializeLog } from '../core/system';
 import * as log from '../core/log';
 import { setenv } from '../core/environment';
 
-import * as desktop from './desktop-utils';
+import * as desktop from './utils';
 
 // QProcess* pRSessionProcess;
 // QString sharedSecret;

@@ -15,18 +15,40 @@
 
 import { app } from 'electron';
 import Main from './main';
-import * as Init from './init';
+import { getRStudioVersion } from './product-info';
+import { augmentCommandLineArguments, getComponentVersions, removeStaleOptionsLockfile } from './utils';
+
+/**
+ * Startup code run before app 'ready' event.
+ */
+
+// look for a version check request; if we have one, just do that and exit
+if (app.commandLine.hasSwitch('version')) {
+  console.log(getRStudioVersion());
+  app.exit(0);
+}
+
+// report extended version info and exit
+if (app.commandLine.hasSwitch('version-json')) {
+  console.log(getComponentVersions());
+  app.exit(0);
+}
+
+// attempt to remove stale lockfiles, as they can impede application startup
+try {
+  removeStaleOptionsLockfile();
+} catch (error) {
+  console.error(error);
+  app.exit(1);
+}
+
+// allow users to supply extra command-line arguments
+augmentCommandLineArguments();
 
 /**
  * Handlers for `app` events go here; otherwise do as little as possible in this
  * file (it cannot be unit-tested).
  */
-
-// Code to run before app 'ready' event
-if (!Init.beforeAppReadyEvent()) {
-  app.exit(0);
-} else {
-  app.whenReady().then(() => {
-    new Main().run();
-  });
-}
+app.whenReady().then(() => {
+  new Main().run();
+});
