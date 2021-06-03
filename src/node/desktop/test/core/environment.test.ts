@@ -1,5 +1,5 @@
 /*
- * environment.spec.ts
+ * environment.test.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *

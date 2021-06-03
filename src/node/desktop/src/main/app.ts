@@ -14,10 +14,19 @@
  */
 
 import { app } from 'electron';
-
 import Main from './main';
+import * as Init from './init';
 
-// Where it all begins
-app.whenReady().then(() => {
-  new Main().run();
-});
+/**
+ * Handlers for `app` events go here; otherwise do as little as possible in this
+ * file (it cannot be unit-tested).
+ */
+
+// Code to run before app 'ready' event
+if (!Init.beforeAppReadyEvent()) {
+  app.exit(0);
+} else {
+  app.whenReady().then(() => {
+    new Main().run();
+  });
+}

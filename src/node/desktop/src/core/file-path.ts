@@ -57,6 +57,7 @@ export class FilePath {
   /**
    * Creates a path in which the user home path will be replaced by the ~ alias.
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   static createAliasedPath(filePath: FilePath, userHomePath: FilePath): string {
     throw Error('createAliasedPath is NYI');
   }
@@ -100,6 +101,7 @@ export class FilePath {
    * Checks whether the two provided files are equal, ignoring case. Two files are equal 
    * if their absolute paths are equal.
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   static isEqualCaseInsensitive(filePath1: FilePath, filePath2: FilePath): boolean {
     throw Error('isEqualCaseInsensitive is NYI');
   }
@@ -107,6 +109,7 @@ export class FilePath {
   /**
    * Checks whether the specified path is a root path or a relative path.
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   static isRootPath(filePath: string): boolean {
     throw Error('isRootPath is NYI');
   }
@@ -114,6 +117,7 @@ export class FilePath {
   /**
    * Changes the current working directory to the specified path.
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   static makeCurrent(filePath: string): Err {
     throw Error('makeCurrent (static) is NYI');
   }
@@ -194,6 +198,7 @@ export class FilePath {
   /**
    * Creates a randomly named file in the temp directory.
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   static tempFilePath(extension?: string): FilePathWithError {
     throw Error('tempFilePath is NYI');
   }
@@ -201,6 +206,7 @@ export class FilePath {
   /**
    * Creates a file with a random name in the specified directory.
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   static uniqueFilePath(basePath: string, extension?: string): FilePathWithError {
     throw Error('uniqueFilePath is NYI');
   }
@@ -209,6 +215,7 @@ export class FilePath {
    * Changes the file mode to the specified file mode (Posix-only). Pass in the posix file mode
    * string, e.g. rwxr-xr-x
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   changeFileMode(fileModeStr: string, setStickyBit = false): Err {
     if (process.platform === 'win32')
       return Success(); // no-op on Windows
@@ -287,6 +294,7 @@ export class FilePath {
   /**
    * Copies this file path to the specified location.
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   copy(targetPath: FilePath, overwrite = false): Err {
     throw Error('copy is NYI');
   }
@@ -294,6 +302,7 @@ export class FilePath {
   /**
    * Copies this directory recursively to the specified location.
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   copyDirectoryRecursive(targetPath: FilePath, overwrite = false): Err {
     throw Error('copyDirectoryRecursive is NYI');
   }
@@ -446,6 +455,7 @@ export class FilePath {
   /**
    * Gets the children of this directory. Sub-directories will not be traversed.
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   getChildren(filePaths: Array<FilePath>): Err {
     throw Error('getChildren is NYI');
   }
@@ -504,6 +514,7 @@ export class FilePath {
   /**
    * Gets the mime content type of this file.
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   getMimeContentType(defaultType = 'text/plain'): string {
     throw Error('getMimeContentType is NYI');
   }
@@ -526,6 +537,7 @@ export class FilePath {
   /**
    * Gets the representation of this path, relative to the provided path.
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   getRelativePath(parentPath: FilePath): string {
     throw Error('getRelativePath is NYI');
   }
@@ -554,6 +566,7 @@ export class FilePath {
   /**
    * Checks whether this file has the specified extension.
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   hasExtension(extension: string): boolean {
     throw Error('hasExtension is NYI');
   }
@@ -561,6 +574,7 @@ export class FilePath {
   /**
    * Checks whether this file has the specified extension when it is converted to lower case.
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   hasExtensionLowerCase(extension: string): boolean {
     throw Error('hasExtensionLowerCase is NYI');
   }
@@ -582,7 +596,7 @@ export class FilePath {
   /**
    * Checks whether this file path contains a path or not.
    */
-  isEmpty() {
+  isEmpty(): boolean {
     return !this.path;
   }
 
@@ -590,6 +604,7 @@ export class FilePath {
    * Checks whether this file path points to the same location in the filesystem as 
    * the specified file path.
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   isEquivalentTo(other: FilePath): boolean {
     throw Error('isEquivalentTo is NYI');
   }
@@ -718,6 +733,7 @@ export class FilePath {
   /**
    * Performs an indirect move by copying this directory to the target and then deleting this directory.
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   moveIndirect(targetPath: FilePath, overwrite = false): Err {
     throw Error('moveIndirect is NYI');
   }
@@ -732,6 +748,7 @@ export class FilePath {
   /**
    * Opens this file for write.
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   openForWrite(/*std:: shared_ptr<std:: ostream>& out_stream,*/ truncate = true): Err {
     throw Error('openForWrite is NYI');
   }
@@ -783,11 +800,13 @@ export class FilePath {
   // Internal helper functions
   // -------------------------
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   static logErrorWithPath(path: string, error: Error): void {
     // TODO logging
     // console.error(error.message + ": " + path);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   static logError(error: Error): void {
     // TODO logging
     // console.error(error.message);

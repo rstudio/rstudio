@@ -1,5 +1,5 @@
 /*
- * app.spec.ts
+ * user.test.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -16,11 +16,16 @@
 import { describe } from 'mocha';
 import { expect } from 'chai';
 
-import Main from '../../src/main/main';
+import fs from 'fs';
 
-// IMPORTANT: Cannot unit-test app.ts, because it will cause app.WhenReady() to
-// start up RStudio, instead of the tests!
-describe('App', () => {
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  describe('No tests (by design)', () => {});
+import { User } from '../../src/core/user';
+
+describe('User', () => {
+  describe('Static helpers', () => {
+    it('getUserHomePath returns a valid path', () => {
+      const path = User.getUserHomePath();
+      expect(fs.existsSync(path.getAbsolutePath())).is.true;
+    });
+  });
 });
+ 

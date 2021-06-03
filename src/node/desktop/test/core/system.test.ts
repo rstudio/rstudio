@@ -1,5 +1,5 @@
 /*
- * system.spec.ts
+ * system.test.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *

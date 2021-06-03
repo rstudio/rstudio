@@ -34,6 +34,10 @@ export function devicePixelRatio(/*QMainWindow * pMainWindow*/): number {
   return 1.0;
 }
 
+export function randomString(): string {
+  return Math.trunc(Math.random() * 2147483647).toString();
+}
+
 export function initializeLang(): void {
   if (process.platform !== 'darwin') {
     return;

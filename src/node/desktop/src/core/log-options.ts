@@ -20,28 +20,28 @@ export class StdErrLogOptions {}
 export class SysLogOptions {}
 export type LoggerOptions = StdErrLogOptions | SysLogOptions | FileLogOptions
 
-const kLogLevel          = 'log-level';
-const kLoggerType        = 'logger-type';
-const kLogDir            = 'log-dir';
-const kLogFileMode       = 'log-file-mode';
-const kLogFileIncludePid = 'log-file-include-pid';
-const kRotate            = 'rotate';
-const kMaxSizeMb         = 'max-size-mb';
-const kLogConfFile       = 'logging.conf';
-const kLogConfEnvVar     = 'RS_LOG_CONF_FILE';
+// const kLogLevel          = 'log-level';
+// const kLoggerType        = 'logger-type';
+// const kLogDir            = 'log-dir';
+// const kLogFileMode       = 'log-file-mode';
+// const kLogFileIncludePid = 'log-file-include-pid';
+// const kRotate            = 'rotate';
+// const kMaxSizeMb         = 'max-size-mb';
+// const kLogConfFile       = 'logging.conf';
+// const kLogConfEnvVar     = 'RS_LOG_CONF_FILE';
 
-const kFileLogger        = 'file';
-const kStdErrLogger      = 'stderr';
-const kSysLogger         = 'syslog';
+// const kFileLogger        = 'file';
+// const kStdErrLogger      = 'stderr';
+// const kSysLogger         = 'syslog';
 
-const kLoggingLevelDebug = 'debug';
-const kLoggingLevelInfo  = 'info';
-const kLoggingLevelWarn  = 'warn';
-const kLoggingLevelError = 'error';
+// const kLoggingLevelDebug = 'debug';
+// const kLoggingLevelInfo  = 'info';
+// const kLoggingLevelWarn  = 'warn';
+// const kLoggingLevelError = 'error';
 
-const kBaseLevel         = 0;
-const kBinaryLevel       = 1;
-const kLogSectionLevel   = 2;
+// const kBaseLevel         = 0;
+// const kBinaryLevel       = 1;
+// const kLogSectionLevel   = 2;
 
 export class LogOptions
 {

@@ -1,5 +1,5 @@
 /*
- * user.spec.ts
+ * main.test.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -16,16 +16,16 @@
 import { describe } from 'mocha';
 import { expect } from 'chai';
 
-import fs from 'fs';
+import { getenv } from '../../src/core/environment';
+import Main from '../../src/main/main';
 
-import { User } from '../../src/core/user';
-
-describe('User', () => {
+describe('Main', () => {
   describe('Static helpers', () => {
-    it('getUserHomePath returns a valid path', () => {
-      const path = User.getUserHomePath();
-      expect(fs.existsSync(path.getAbsolutePath())).is.true;
+    it('initializeSharedSecret generates a random string in RS_SHARED_SECRET envvar_', () => {
+      const envvar = 'RS_SHARED_SECRET';
+      expect(getenv(envvar)).has.lengthOf(0);
+      Main.initializeSharedSecret();
+      expect(getenv(envvar).length).is.greaterThan(0);
     });
   });
 });
- 

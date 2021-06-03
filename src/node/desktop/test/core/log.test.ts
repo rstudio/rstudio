@@ -1,5 +1,5 @@
 /*
- * desktop-utils.spec.ts
+ * log.test.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -16,17 +16,14 @@
 import { describe } from 'mocha';
 import { expect } from 'chai';
 
-import * as Utils from '../../src/main/desktop-utils';
+import { FileLogOptions } from '../../src/core/log';
 
-describe('DesktopUtils', () => {
-  describe('Static helpers', () => {
-    it('isMacOS detects... macOS', () => {
-      const result = Utils.isMacOS();
-      if (process.platform === 'darwin') {
-        expect(result).is.true;
-      } else {
-        expect(result).is.false;
-      }
+describe('Log', () => {
+  describe('Constructions', () => {
+    it('FileLogOptions construction works', () => {
+      const flo = new FileLogOptions('/somewhere');
+      expect(flo.directory).to.equal('/somewhere');
     });
   });
 });
+ 
