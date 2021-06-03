@@ -30,7 +30,7 @@
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
-    "lint": "eslint ./src",
+    "lint": "eslint ./src ./test",
     "start": "yarn run build && electron ./dist/main/app.js",
     "show-version": "yarn run build && electron ./dist/main/app.js --version-json",
     "test": "electron-mocha -c",

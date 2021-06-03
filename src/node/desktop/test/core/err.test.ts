@@ -1,5 +1,5 @@
 /*
- * log.spec.ts
+ * err.test.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -16,15 +16,25 @@
 import { describe } from 'mocha';
 import { expect } from 'chai';
 
-import fs from 'fs';
+import { Err, Success } from '../../src/core/err';
 
-import { FileLogOptions } from '../../src/core/log';
+function beSuccessful(): Err {
+  return Success();
+}
 
-describe('Log', () => {
-  describe('Constructions', () => {
-    it('FileLogOptions construction works', () => {
-      const flo = new FileLogOptions('/somewhere');
-      expect(flo.directory).to.equal('/somewhere');
+function beUnsuccessful(): Err {
+  return new Error('Some error');
+}
+
+describe('Err', () => {
+  describe('Success helper', () => {
+    it('Success return should be falsy', () => {
+      expect(!!beSuccessful()).is.false;
+      expect(beSuccessful() == null);
+    });
+    it('Error return should be truthy', () => {
+      expect(!!beUnsuccessful()).is.true;
+      expect(beUnsuccessful() instanceof Error);
     });
   });
 });

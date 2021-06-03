@@ -1,5 +1,5 @@
 /*
- * err.spec.ts
+ * app.test.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -14,28 +14,10 @@
  */
 
 import { describe } from 'mocha';
-import { expect } from 'chai';
 
-import { Err, Success } from '../../src/core/err';
-
-function beSuccessful(): Err {
-  return Success();
-}
-
-function beUnsuccessful(): Err {
-  return new Error('Some error');
-}
-
-describe('Err', () => {
-  describe('Success helper', () => {
-    it('Success return should be falsy', () => {
-      expect(!!beSuccessful()).is.false;
-      expect(beSuccessful() == null);
-    });
-    it('Error return should be truthy', () => {
-      expect(!!beUnsuccessful()).is.true;
-      expect(beUnsuccessful() instanceof Error);
-    });
-  });
+// IMPORTANT: Cannot unit-test app.ts, because it will cause app.WhenReady() to
+// start up RStudio, instead of the tests!
+describe('App', () => {
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  describe('No tests (by design)', () => {});
 });
- 

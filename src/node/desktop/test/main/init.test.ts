@@ -1,5 +1,5 @@
 /*
- * main.spec.ts
+ * init.test.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -16,24 +16,33 @@
 import { describe } from 'mocha';
 import { expect } from 'chai';
 
-import Main from '../../src/main/main';
+import * as Init from '../../src/main/init';
+import { app } from 'electron';
+import * as env from '../../src/core/environment';
 
-interface Versions  {
-  electron: string;
-  rstudio: string;
-  node: string;
-  v8: string;
-}
-
-describe('Main', () => {
+describe('Init', () => {
   describe('Static helpers', () => {
     it('getComponentVersions returns expected JSON', () => {
-      const result = Main.getComponentVersions();
-      const json: Versions = JSON.parse(result);
+      const result = Init.getComponentVersions();
+      const json: Init.VersionInfo = JSON.parse(result);
       expect(json.electron).length.is.greaterThan(0);
       expect(json.rstudio).length.is.greaterThan(0);
       expect(json.node).length.is.greaterThan(0);
       expect(json.v8).length.is.greaterThan(0);
+    });
+    it('removeStaleOptionsLockfile does... something', () => {
+      Init.removeStaleOptionsLockfile();
+      if (process.platform === 'win32') {
+        // TODO
+      }
+    });
+    it('augmentCommandLineArguments adds contents of env var', () => {
+      expect(app.commandLine.hasSwitch('disable-gpu')).is.false;
+      expect(env.getenv('RSTUDIO_CHROMIUM_ARGUMENTS')).is.empty;
+      env.setenv('RSTUDIO_CHROMIUM_ARGUMENTS', '--disable-gpu');
+      Init.augmentCommandLineArguments();
+      expect(app.commandLine.hasSwitch('disable-gpu')).is.true;
+      env.unsetenv('RSTUDIO_CHROMIUM_ARGUMENTS');
     });
   });
 });

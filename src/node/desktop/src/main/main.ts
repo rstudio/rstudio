@@ -13,15 +13,12 @@
  *
  */
 
-import fs from 'fs';
-import path from 'path';
 import { app } from 'electron';
 
 import { initHook, initializeLog } from '../core/system';
 import * as log from '../core/log';
-import { getenv, setenv } from '../core/environment';
+import { setenv } from '../core/environment';
 
-import { getRStudioVersion } from './product-info';
 import * as desktop from './desktop-utils';
 
 // QProcess* pRSessionProcess;
@@ -29,6 +26,9 @@ import * as desktop from './desktop-utils';
 
 export default class Main {
 
+  /**
+   * Invoked when app 'ready' is received
+   */
   run(): void {
     initHook();
 
@@ -48,145 +48,14 @@ export default class Main {
     //       while (dir.cdUp());
     // #endif
 
-    // look for a version check request; if we have one, just do that and exit
-    if (app.commandLine.hasSwitch('version')) {
-      console.log(getRStudioVersion());
-      app.exit(0);
-      return;
-    }
-
-    // report extended version info and exit
-    if (app.commandLine.hasSwitch('version-json')) {
-      console.log(Main.getComponentVersions());
-      app.exit(0);
-      return;
-    }
-
     desktop.initializeLang();
     Main.initializeRenderingEngine();
 
     // initialize log
     initializeLog('rdesktop', log.LogLevel.WARN, desktop.userLogPath());
 
-    // TODO: crash handling
-    //       // catch unhandled exceptions
-    //       error = core::crash_handler::initialize(core::crash_handler::ProgramMode::Desktop);
-    //       if (error)
-    //          LOG_ERROR(error);
+    // TODO: crash handling, catch unhandled exceptions, etc. cpre::crash_handler::initialize
 
-    // attempt to remove stale lockfiles, as they can impede
-    // application startup
-    try {
-      Main.removeStaleOptionsLockfile();
-    } catch (error) {
-      console.log(error); // TODO: LOG_ERROR
-    }
-
-    //       // enable viewport meta (allows us to control / restrict
-    //       // certain touch gestures)
-    //       static char enableViewport[] = "--enable-viewport";
-    //       arguments.push_back(enableViewport);
-
-    //       // disable chromium renderer accessibility by default (it can cause
-    //       // slowdown when used in conjunction with some applications; see e.g.
-    //       // https://github.com/rstudio/rstudio/issues/1990)
-    //       bool accessibility = desktop::options().enableAccessibility();
-
-    //       if (!accessibility)
-    //       {
-    //          static char disableRendererAccessibility[] = "--disable-renderer-accessibility";
-    //          arguments.push_back(disableRendererAccessibility);
-    //       }
-
-    // #ifdef Q_OS_MAC
-    //       // don't prefer compositing to LCD text rendering. when enabled, this causes the compositor to
-    //       // be used too aggressively on Retina displays on macOS, with the side effect that the
-    //       // scrollbar doesn't auto-hide because a compositor layer is present.
-    //       // https://github.com/rstudio/rstudio/issues/1953
-    //       static char disableCompositorPref[] = "--disable-prefer-compositing-to-lcd-text";
-    //       arguments.push_back(disableCompositorPref);
-
-    //       // disable GPU features for certain machine configurations. see e.g.
-    //       //
-    //       // https://bugs.chromium.org/p/chromium/issues/detail?id=773705
-    //       // https://github.com/rstudio/rstudio/issues/2093
-    //       // https://github.com/rstudio/rstudio/issues/3148
-    //       //
-    //       // because the issue seems to only affect certain video cards on macOS
-    //       // High Sierra, we scope that change to that particular configuration
-    //       // for now (we can expand this list if more users report issues)
-    //       {
-    //          core::system::ProcessResult processResult;
-    //          core::system::runCommand(
-    //                   "/usr/sbin/system_profiler SPDisplaysDataType",
-    //                   core::system::ProcessOptions(),
-    //                   &processResult);
-
-    //          std::string stdOut = processResult.stdOut;
-    //          if (!stdOut.empty())
-    //          {
-    //             // NOTE: temporarily backed out as it appears the rasterization
-    //             // issues do not occur anymore with Qt 5.12.1; re-enable if we
-    //             // receive more reports in the wild.
-    //             //
-    //             // https://github.com/rstudio/rstudio/issues/2176
-
-    //             /*
-    //             std::vector<std::string> rasterBlacklist = {
-    //                "NVIDIA GeForce GT 650M",
-    //                "NVIDIA GeForce GT 750M",
-    //                "Intel Iris Graphics 6100"
-    //             };
-
-    //             for (const std::string& entry : rasterBlacklist)
-    //             {
-    //                if (stdOut.find(entry) != std::string::npos)
-    //                {
-    //                   static char disableGpuRasterization[] = "--disable-gpu-rasterization";
-    //                   arguments.push_back(disableGpuRasterization);
-    //                   break;
-    //                }
-    //             }
-    //             */
-
-    //             std::vector<std::string> gpuBlacklist = {};
-
-    //             for (const std::string& entry : gpuBlacklist)
-    //             {
-    //                if (stdOut.find(entry) != std::string::npos)
-    //                {
-    //                   static char disableGpu[] = "--disable-gpu";
-    //                   arguments.push_back(disableGpu);
-    //                   break;
-    //                }
-    //             }
-    //          }
-    //       }
-    // #endif
-
-    // #if defined(Q_OS_LINUX)
-
-    //       static char noSandbox[] = "--no-sandbox";
-
-    //       // is this root? if so, we need --no-sandbox on Linux.
-    //       // see https://crbug.com/638180.
-    //       if (core::system::effectiveUserIsRoot())
-    //       {
-    //          arguments.push_back(noSandbox);
-    //       }
-
-    // #endif
-
-    // #ifdef Q_OS_WIN32
-    // # if QT_VERSION > QT_VERSION_CHECK(5, 12, 0)
-    //       // allow AltGr key to be recognized separately on Windows
-    //       arguments.push_back("-platform");
-    //       arguments.push_back("windows:altgr");
-    // # endif
-    // #endif
-
-    // allow users to supply extra command-line arguments
-    Main.augmentCommandLineArguments();
 
     //       // prepare application for launch
     //       boost::scoped_ptr<QApplication> pApp;
@@ -653,49 +522,8 @@ export default class Main {
   // Static helper functions
   // -------------------------
 
-  static augmentCommandLineArguments(): void {
-    const user = getenv('RSTUDIO_CHROMIUM_ARGUMENTS');
-    if (!user) {
-      return;
-    }
-
-    const pieces = user.split(' ');
-    pieces.forEach((piece) => app.commandLine.appendArgument(piece));
-  }
-
-  // attempt to remove stale lockfiles that might inhibit
-  // RStudio startup (currently Windows only). Throws
-  // an error only when a stale lockfile exists, but
-  // we could not successfully remove it
-  private static removeStaleOptionsLockfile() {
-    if (process.platform !== 'win32') {
-      return;
-    }
-
-    const appData = getenv('APPDATA');
-    if (!appData) {
-      return;
-    }
-
-    const lockFilePath = path.join(appData, 'RStudio/desktop.ini.lock');
-    if (!fs.existsSync(lockFilePath)) {
-      return;
-    }
-
-    const diff = (Date.now() - fs.statSync(lockFilePath).mtimeMs) / 1000;
-    if (diff < 10) {
-      return;
-    }
-
-    fs.unlinkSync(lockFilePath);
-  }
-
-  private static randomString() {
-    return Math.trunc(Math.random() * 2147483647).toString();
-  }
-
   static initializeSharedSecret(): void {
-    const sharedSecret = Main.randomString() + Main.randomString() + Main.randomString();
+    const sharedSecret = desktop.randomString() + desktop.randomString() + desktop.randomString();
     setenv('RS_SHARED_SECRET', sharedSecret);
   }
 
@@ -1062,9 +890,4 @@ export default class Main {
     return '';
   }
 
-  static getComponentVersions(): string {
-    const componentVers: any = process.versions;
-    componentVers['rstudio'] = getRStudioVersion();
-    return JSON.stringify(componentVers, null, 2);
-  }
 }
