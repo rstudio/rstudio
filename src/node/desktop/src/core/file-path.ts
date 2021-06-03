@@ -26,14 +26,19 @@ export interface FilePathWithError {
   path: FilePath;
 }
 
+const homePathAlias = '~/';
+const homePathLeafAlias = '~';
+
+function normalizeSeparators(path: string, separator = '/') {
+  return path.replace(/[\\/]/g, separator);
+}
+
 /**
  * Class representing a path on the system. May be any type of file (e.g. directory, symlink,
  * regular file, etc.)
  */
 export class FilePath {
   private path: string;
-  static homePathAlias = '~/';
-  static homePathLeafAlias = '~';
 
   constructor(path = '') {
     this.path = path;
@@ -57,9 +62,27 @@ export class FilePath {
   /**
    * Creates a path in which the user home path will be replaced by the ~ alias.
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   static createAliasedPath(filePath: FilePath, userHomePath: FilePath): string {
-    throw Error('createAliasedPath is NYI');
+
+    // first, retrieve and normalize paths
+    const file = filePath.getAbsolutePath();
+    const home = userHomePath.getAbsolutePath();
+    if (file === home) {
+      return homePathLeafAlias;
+    }
+
+    // try to compute home-relative path -- if that fails,
+    // or the computed path does not appear to be relative,
+    // then just return the original file path
+    const relative = path.relative(home, file);
+    if (!relative || path.isAbsolute(relative) || relative.startsWith('..')) {
+      return file;
+    }
+
+    // we computed a relative path; prefix it with tilde
+    const aliased = homePathAlias + relative;
+    return normalizeSeparators(aliased);
+
   }
 
   /**
@@ -127,12 +150,12 @@ export class FilePath {
    */
   static resolveAliasedPathSync(aliasedPath: string, userHomePath: FilePath): FilePath {
     // Special case for empty string or "~"
-    if (!aliasedPath || aliasedPath == this.homePathLeafAlias) {
+    if (!aliasedPath || aliasedPath == homePathLeafAlias) {
       return userHomePath;
     }
 
     // if the path starts with the home alias then substitute the home path
-    if (aliasedPath.startsWith(this.homePathAlias)) {
+    if (aliasedPath.startsWith(homePathAlias)) {
       return new FilePath(path.join(userHomePath.getAbsolutePath(), aliasedPath.substr(1)));
     } else {
       // no aliasing, this is either an absolute path or path

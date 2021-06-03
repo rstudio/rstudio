@@ -602,11 +602,29 @@ describe('FilePath', () => {
       expect(cPath.completeChildPath('/path/to/quux').equals(cPath));
     });
   });
+
+  describe('Aliased paths', () => {
+
+    it('Paths are aliased correctly', () => {
+      const path = new FilePath('/Users/user/path/to/project');
+      const home = new FilePath('/Users/user');
+      const aliasedPath = FilePath.createAliasedPath(path, home);
+      expect(aliasedPath).to.equal('~/path/to/project');
+    });
+
+    it('Paths are aliased correctly, even with trailing slashes', () => {
+      const path = new FilePath('/Users/user/path/to/project');
+      const home = new FilePath('/Users/user/');
+      const aliasedPath = FilePath.createAliasedPath(path, home);
+      expect(aliasedPath).to.equal('~/path/to/project');
+    });
+
+  });
+
   describe('NYI placeholders', () => {
     it('sync methods should throw exception', () => {
       const fp1 = new FilePath();
       const fp2 = new FilePath();
-      expect(() => FilePath.createAliasedPath(fp1, fp2)).to.throw();
       expect(() => FilePath.isEqualCaseInsensitive(fp1, fp2)).to.throw();
       expect(() => FilePath.isRootPath('/')).to.throw();
       expect(() =>FilePath.makeCurrent('/')).to.throw();
