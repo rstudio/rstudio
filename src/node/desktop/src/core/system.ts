@@ -49,6 +49,7 @@ export function initializeLog(
   programIdentity: string,
   logLevel: log.LogLevel,
   logDir: FilePath,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   enableConfigReload = true
 ): Err {
   // // create default file logger options
