@@ -23,8 +23,12 @@ import { BuildType } from '../../src/config/config';
 describe('Config', () => {
 
   it('Should reflect active configuration', async () => {
-    // TODO: how should we communicate that the build type has changed?
-    expect(BuildType.Current).equals(BuildType.Development);
+    const contents = fs.readFileSync('src/config/config.ts', 'utf8');
+    if (contents.includes('Current = Development')) {
+      expect(BuildType.Current).equals(BuildType.Development);
+    } else {
+      expect(BuildType.Current).equals(BuildType.Release);
+    }
   });
 
 });
