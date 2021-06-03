@@ -23,16 +23,8 @@ import { BuildType } from '../../src/config/config';
 describe('Config', () => {
 
   it('Should reflect active configuration', async () => {
-
-    // since 'src/config' is a symlink to the 'active' build type,
-    // we resolve that for testing the 'active' build type
-    const configPath = fs.realpathSync('src/config');
-    if (configPath.includes('development')) {
-      expect(BuildType.Current).to.equal(BuildType.Development);
-    } else {
-      expect(BuildType.Current).to.equal(BuildType.Release);
-    }
-
+    // TODO: how should we communicate that the build type has changed?
+    expect(BuildType.Current).equals(BuildType.Development);
   });
 
 });
