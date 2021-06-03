@@ -26,7 +26,7 @@ describe('Config', () => {
 
     // since 'src/config' is a symlink to the 'active' build type,
     // we resolve that for testing the 'active' build type
-    let configPath = fs.realpathSync('src/config');
+    const configPath = fs.realpathSync('src/config');
     if (configPath.includes('development')) {
       expect(BuildType.Current).to.equal(BuildType.Development);
     } else {
