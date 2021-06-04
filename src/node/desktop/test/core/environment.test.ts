@@ -14,7 +14,7 @@
  */
 
 import { describe } from 'mocha';
-import { expect } from 'chai';
+import { assert } from 'chai';
 import * as env from '../../src/core/environment';
 
 const envVarName = 'BOGUS_FAKE_ENVIRONMENT_VARIABLE_FOR_ENV_TESTS';
@@ -24,23 +24,23 @@ describe('Environment', () => {
   describe('Get global environment variable', () => {
     it('Should return zero length string for non-existent variable', () => {
       const result = env.getenv(envVarName);
-      expect(result).to.equal('');
+      assert.isEmpty(result);
     });
     it('Should return value of a variable that exists', () => {
       const result = env.getenv('PATH');
-      expect(result).to.not.be.empty;
+      assert.isNotEmpty(result);
     });
   });
   describe('Set and unset global environment variable', () => {
     it('Should set a variable, fetch, then remove it', () => {
       let result = env.getenv(envVarName);
-      expect(result).to.equal('');
+      assert.isEmpty(result);
       env.setenv(envVarName, envValue);
       result = env.getenv(envVarName);
-      expect(result).to.equal(envValue);
+      assert.strictEqual(result, envValue);
       env.unsetenv(envVarName);
       result = env.getenv(envVarName);
-      expect(result).to.equal('');
+      assert.isEmpty(result);
     });
   });
   describe('Expand variables in a string using environment', () => {
@@ -48,32 +48,32 @@ describe('Environment', () => {
       const environment = { 'FOO': 'bar', 'ZOOM': 'car' };
       const input = '~/.local/share';
       const result = env.expandEnvVars(environment, input);
-      expect(result).to.equal(input);
+      assert.strictEqual(result, input);
     });
     it('Should return original string if environment contains no matching variables', () => {
       const environment = { 'FOO': 'bar', 'ZOOM': 'car' };
       const input = '$HOME/.local/share';
       const result = env.expandEnvVars(environment, input);
-      expect(result).to.equal(input);
+      assert.strictEqual(result, input);
     });
     it('Should substitute value from environment using bare form ($FOO)', () => {
       const environment = { 'FOO': 'bar', 'ZOOM': 'car' };
 
       const input = 'C:\\HELLO\\$FOO';
       const result = env.expandEnvVars(environment, input);
-      expect(result).to.equal('C:\\HELLO\\bar');
+      assert.strictEqual(result, 'C:\\HELLO\\bar');
     });
     it('Should substitute multiple values from environment using bare form ($FOO)', () => {
       const environment = { 'FOO': 'bar', 'ZOOM': 'car' };
       const input = '/usr/HELLO/$ZOOM/misc/$FOO/etc/';
       const result = env.expandEnvVars(environment, input);
-      expect(result).to.equal('/usr/HELLO/car/misc/bar/etc/');
+      assert.strictEqual(result, '/usr/HELLO/car/misc/bar/etc/');
     });
     it('Should substitute value from environment using curly brace form (${FOO})', () => {
       const environment = { 'FOO': 'bar', 'ZOOM': 'car' };
       const input = 'C:\\HELLO\\${FOO}';
       const result = env.expandEnvVars(environment, input);
-      expect(result).to.equal('C:\\HELLO\\bar');
+      assert.strictEqual(result, 'C:\\HELLO\\bar');
     });
     it('Should expand all instances of a variable', () => {
       const environment = {
@@ -87,14 +87,14 @@ describe('Environment', () => {
       const expanded =
         'Metasyntactic variables include foo, bar, and baz, ' + 'but foo is used most often.';
       const result = env.expandEnvVars(environment, input);
-      expect(result).to.equal(expanded);
+      assert.strictEqual(result, expanded);
     });
     it('Should not expand partially matching variables', () => {
       const environment = { 'VAR': 'foo' };
       const input = 'I think $VAR is a nice name for a $VARIABLE.';
       const expanded = 'I think foo is a nice name for a $VARIABLE.';
       const result = env.expandEnvVars(environment, input);
-      expect(result).to.equal(expanded);
+      assert.strictEqual(result, expanded);
     });
   });
 });
