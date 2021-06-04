@@ -1301,19 +1301,27 @@ Error getRmdTemplate(const json::JsonRpcRequest& request,
 
    json::Object jsonResult;
 
-   // locate the template skeleton on disk (if it doesn't exist we'll just
-   // return an empty string)
-   FilePath skeletonPath = FilePath(path).completePath("skeleton/skeleton.Rmd");
+   // locate the template skeleton on disk
+   // (return empty string if none found)
    std::string templateContent;
-   if (skeletonPath.exists())
+   for (auto&& path : { "skeleton/skeleton.Rmd", "skeleton/skeleton.rmd" })
    {
-      error = readStringFromFile(skeletonPath, &templateContent, string_utils::LineEndingPosix);
-      if (error)
-         return error;
-   }
-   jsonResult["content"] = templateContent;
-   pResponse->setResult(jsonResult);
+      FilePath skeletonPath = FilePath(path).completePath(path);
+      if (skeletonPath.exists())
+      {
+         error = readStringFromFile(skeletonPath, &templateContent, string_utils::LineEndingPosix);
+         if (error)
+         {
+            LOG_ERROR(error);
+            continue;
+         }
+      }
 
+      jsonResult["content"] = templateContent;
+      break;
+   }
+
+   pResponse->setResult(jsonResult);
    return Success();
 }
 
