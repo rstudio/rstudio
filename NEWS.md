@@ -9,6 +9,7 @@
 * Fixed issue where completion tooltip was erroneously shown in multi-line strings in some cases (#8677)
 * Fixed issue with autocompletion of column names within native-piped R expressions (#9385)
 * Fixed issue where help requests for Python objects would fail with reticulate 1.20 (#9311)
+* Fixed issue where busy sessions can't be interrupted and block basic file operations (#2038)
 
 ### Misc
 
