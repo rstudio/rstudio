@@ -35,8 +35,6 @@
     "show-version": "yarn run build && electron ./dist/main/app.js --version-json",
     "test": "electron-mocha -c",
     "testcover": "nyc electron-mocha -c",
-    "testwip": "electron-mocha -c -g WIP",
-    "use-release": "rm -rf src/config && ln -nfs ../config/release src/config",
-    "use-dev":     "rm -rf src/config && ln -nfs ../config/development src/config"
+    "testwip": "electron-mocha -c -g WIP"
   }
 }
