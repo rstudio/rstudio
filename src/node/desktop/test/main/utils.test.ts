@@ -14,7 +14,7 @@
  */
 
 import { describe } from 'mocha';
-import { expect } from 'chai';
+import { assert } from 'chai';
 
 import * as Utils from '../../src/main/utils';
 import { app } from 'electron';
@@ -29,13 +29,13 @@ describe('DesktopUtils', () => {
       }
     });
     it('userLogPath returns a non-empty string', () => {
-      expect(Utils.userLogPath()).to.not.be.empty;
+      assert.isNotEmpty(Utils.userLogPath());
     });
     it('usereWebCachePath returns a non-empty string', () => {
-      expect(Utils.userWebCachePath()).to.not.be.empty;
+      assert.isNotEmpty(Utils.userWebCachePath());
     });
     it('devicePixelRatio returns 1.0', () => {
-      expect(Utils.devicePixelRatio()).equals(1.0);
+      assert.strictEqual(Utils.devicePixelRatio(), 1.0);
     });
     it('initializeLang does... something', () => {
       Utils.initializeLang();
@@ -46,26 +46,26 @@ describe('DesktopUtils', () => {
     it('isMacOS detects... macOS', () => {
       const result = Utils.isMacOS();
       if (process.platform === 'darwin') {
-        expect(result).is.true;
+        assert.isTrue(result);
       } else {
-        expect(result).is.false;
+        assert.isTrue(result);
       }
     });
     it('randomString genereates a random string', () => {
       const str1 = Utils.randomString();
       const str2 = Utils.randomString();
       const str3 = Utils.randomString();
-      expect(str1).not.equal(str2);
-      expect(str1).not.equal(str3);
-      expect(str2).not.equal(str3);
+      assert.notEqual(str1, str2);
+      assert.notEqual(str1, str3);
+      assert.notEqual(str2, str3);
     });
     it('getComponentVersions returns expected JSON', () => {
       const result = Utils.getComponentVersions();
       const json: Utils.VersionInfo = JSON.parse(result);
-      expect(json.electron).length.is.greaterThan(0);
-      expect(json.rstudio).length.is.greaterThan(0);
-      expect(json.node).length.is.greaterThan(0);
-      expect(json.v8).length.is.greaterThan(0);
+      assert.isNotEmpty(json.electron);
+      assert.isNotEmpty(json.rstudio);
+      assert.isNotEmpty(json.node);
+      assert.isNotEmpty(json.v8);
     });
     it('removeStaleOptionsLockfile does... something', () => {
       Utils.removeStaleOptionsLockfile();
@@ -74,11 +74,11 @@ describe('DesktopUtils', () => {
       }
     });
     it('augmentCommandLineArguments adds contents of env var', () => {
-      expect(app.commandLine.hasSwitch('disable-gpu')).is.false;
-      expect(env.getenv('RSTUDIO_CHROMIUM_ARGUMENTS')).is.empty;
+      assert.isFalse(app.commandLine.hasSwitch('disable-gpu'));
+      assert.isEmpty(env.getenv('RSTUDIO_CHROMIUM_ARGUMENTS'));
       env.setenv('RSTUDIO_CHROMIUM_ARGUMENTS', '--disable-gpu');
       Utils.augmentCommandLineArguments();
-      expect(app.commandLine.hasSwitch('disable-gpu')).is.true;
+      assert.isTrue(app.commandLine.hasSwitch('disable-gpu'));
       env.unsetenv('RSTUDIO_CHROMIUM_ARGUMENTS');
     });  });
 });
