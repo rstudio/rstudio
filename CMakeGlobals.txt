@@ -48,6 +48,13 @@ if(NOT "$ENV{RSTUDIO_VERSION_SUFFIX}" STREQUAL "" AND NOT "$ENV{RSTUDIO_VERSION_
    set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION}-$ENV{RSTUDIO_VERSION_SUFFIX}")
 endif()
 
+# detect pro builds
+if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/upstream")
+   set(RSTUDIO_PRO_BUILD 1)
+else()
+   set(RSTUDIO_PRO_BUILD 0)
+endif()
+
 # detect architecture
 if(UNIX)
 
@@ -79,15 +86,25 @@ endif()
 message(STATUS "CMake build type: ${CMAKE_BUILD_TYPE}")
 
 # enable testing on all builds unless explicitly disabled
-if (NOT RSTUDIO_UNIT_TESTS_DISABLED)
+if(NOT RSTUDIO_UNIT_TESTS_DISABLED)
   set(RSTUDIO_UNIT_TESTS_ENABLED true)
   add_definitions(-DRSTUDIO_UNIT_TESTS_ENABLED)
 endif()
 
 # platform specific default for targets
 if(NOT RSTUDIO_TARGET)
-   set(RSTUDIO_TARGET "Development")
+
+   # for macOS pro builds, default to desktop as otherwise
+   # we will try (and fail) to build Linux-only launcher pieces
+   if(APPLE AND RSTUDIO_PRO_BUILD)
+      set(RSTUDIO_TARGET "Desktop")
+   else()
+      set(RSTUDIO_TARGET "Development")
+   endif()
+
+   # if no target was set, assume this is a development build
    set(RSTUDIO_DEVELOPMENT TRUE)
+
 endif()
 
 # set desktop and server build flags
