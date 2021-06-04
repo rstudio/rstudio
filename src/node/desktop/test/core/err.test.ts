@@ -26,14 +26,14 @@ function beUnsuccessful(): Err {
   return new Error('Some error');
 }
 
-describe('WIP Err', () => {
+describe('Err', () => {
   describe('Success helper', () => {
     it('Success return should be falsy', () => {
-      assert.isNotOk(beSuccessful());
+      assert.isTrue(beSuccessful() === Success());
       assert.isNull(beSuccessful());
     });
     it('Error return should be truthy', () => {
-      assert.isOk(beUnsuccessful());
+      assert.isTrue(beUnsuccessful() !== Success());
       assert.instanceOf(beUnsuccessful(), Error);
     });
   });
