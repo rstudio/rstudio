@@ -26,14 +26,14 @@ function beUnsuccessful(): Err {
   return new Error('Some error');
 }
 
-describe('Err Using Chai Asserts', () => {
+describe('WIP Err', () => {
   describe('Success helper', () => {
     it('Success return should be falsy', () => {
-      assert.isFalse(!!beSuccessful());
+      assert.isNotOk(beSuccessful());
       assert.isNull(beSuccessful());
     });
     it('Error return should be truthy', () => {
-      assert.isTrue(!!beUnsuccessful());
+      assert.isOk(beUnsuccessful());
       assert.instanceOf(beUnsuccessful(), Error);
     });
   });
