@@ -14,7 +14,7 @@
  */
 
 import { describe } from 'mocha';
-import { expect } from 'chai';
+import { assert } from 'chai';
 
 import { FileLogOptions } from '../../src/core/log';
 
@@ -22,7 +22,7 @@ describe('Log', () => {
   describe('Constructions', () => {
     it('FileLogOptions construction works', () => {
       const flo = new FileLogOptions('/somewhere');
-      expect(flo.directory).to.equal('/somewhere');
+      assert.strictEqual(flo.directory, '/somewhere');
     });
   });
 });
