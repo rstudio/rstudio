@@ -1304,9 +1304,9 @@ Error getRmdTemplate(const json::JsonRpcRequest& request,
    // locate the template skeleton on disk
    // (return empty string if none found)
    std::string templateContent;
-   for (auto&& path : { "skeleton/skeleton.Rmd", "skeleton/skeleton.rmd" })
+   for (auto&& suffix : { "skeleton/skeleton.Rmd", "skeleton/skeleton.rmd" })
    {
-      FilePath skeletonPath = FilePath(path).completePath(path);
+      FilePath skeletonPath = FilePath(path).completePath(suffix);
       if (skeletonPath.exists())
       {
          error = readStringFromFile(skeletonPath, &templateContent, string_utils::LineEndingPosix);
