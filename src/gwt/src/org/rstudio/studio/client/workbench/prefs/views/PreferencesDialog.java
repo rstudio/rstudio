@@ -80,13 +80,13 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
                   paneLayout,
                   packages,
                   rmarkdown,
+                  python,
                   compilePdf,
                   spelling,
                   sourceControl,
                   publishing,
                   terminal,
-                  accessibility,
-                  python));
+                  accessibility));
       
       session_ = session;
       server_ = server;
