@@ -1307,20 +1307,20 @@ Error getRmdTemplate(const json::JsonRpcRequest& request,
    for (auto&& suffix : { "skeleton/skeleton.Rmd", "skeleton/skeleton.rmd" })
    {
       FilePath skeletonPath = FilePath(path).completePath(suffix);
-      if (skeletonPath.exists())
+      if (!skeletonPath.exists())
+         continue;
+
+      Error error = readStringFromFile(skeletonPath, &templateContent, string_utils::LineEndingPosix);
+      if (error)
       {
-         error = readStringFromFile(skeletonPath, &templateContent, string_utils::LineEndingPosix);
-         if (error)
-         {
-            LOG_ERROR(error);
-            continue;
-         }
+         LOG_ERROR(error);
+         continue;
       }
 
-      jsonResult["content"] = templateContent;
       break;
    }
 
+   jsonResult["content"] = templateContent;
    pResponse->setResult(jsonResult);
    return Success();
 }
