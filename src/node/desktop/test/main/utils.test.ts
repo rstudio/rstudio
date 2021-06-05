@@ -1,5 +1,5 @@
 /*
- * desktop-utils.test.ts
+ * utils.test.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -48,7 +48,7 @@ describe('DesktopUtils', () => {
       if (process.platform === 'darwin') {
         assert.isTrue(result);
       } else {
-        assert.isTrue(result);
+        assert.isFalse(result);
       }
     });
     it('randomString genereates a random string', () => {
