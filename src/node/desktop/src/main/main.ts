@@ -13,7 +13,7 @@
  *
  */
 
-import { app } from 'electron';
+import { BrowserWindow } from 'electron';
 
 import { initHook, initializeLog } from '../core/system';
 import * as log from '../core/log';
@@ -25,6 +25,7 @@ import * as desktop from './utils';
 // QString sharedSecret;
 
 export default class Main {
+  mainWindow: BrowserWindow | null = null;
 
   /**
    * Invoked when app 'ready' is received
@@ -514,8 +515,9 @@ export default class Main {
     //    CATCH_UNEXPECTED_EXCEPTION
     // }
 
-    app.exit(0);
-    return;
+    // TEMPORARY, show a window so starting the app does something visible
+    this.mainWindow = new BrowserWindow({ width: 1024, height: 768 });
+    this.mainWindow.loadURL('https://rstudio.com');
   }
 
   // -------------------------
