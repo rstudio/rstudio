@@ -169,6 +169,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCompilePdfHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCppHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPresentationHelper;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetQuartoHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceBackgroundHighlighter;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorBackgroundLinkHighlighter;
@@ -237,6 +238,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(TextEditingTargetSqlHelper sqlHelper);
    void injectMembers(TextEditingTargetChunks chunks);
    void injectMembers(TextEditingTargetPackageDependencyHelper packageDependencyHelper);
+   void injectMembers(TextEditingTargetQuartoHelper quartoHelper);
    void injectMembers(EditingTargetCodeExecution codeExecution);
    void injectMembers(LocalRepositoriesWidget localRepositoriesWidget);
    void injectMembers(CppCompletionRequest request);

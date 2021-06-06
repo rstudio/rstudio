@@ -1058,6 +1058,34 @@ SEXP rs_getDocumentProperties(SEXP pathSEXP, SEXP includeContentsSEXP)
    return object;
 }
 
+SEXP rs_detectExtendedType(SEXP pathSEXP)
+{
+   Error error;
+   FilePath path = module_context::resolveAliasedPath(r::sexp::safeAsString(pathSEXP));
+
+   std::string id;
+   error = source_database::getId(path, &id);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return R_NilValue;
+   }
+
+   boost::shared_ptr<SourceDocument> pDoc(new SourceDocument);
+   error = source_database::get(id, pDoc);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return R_NilValue;
+   }
+
+   std::string extendedType =
+           module_context::events().onDetectSourceExtendedType(pDoc);
+   r::sexp::Protect protect;
+   return r::sexp::create(extendedType, &protect);
+}
+
+
 } // anonymous namespace
 
 Events& events()
@@ -1074,6 +1102,7 @@ Error initialize()
       return error;
 
    RS_REGISTER_CALL_METHOD(rs_getDocumentProperties, 2);
+   RS_REGISTER_CALL_METHOD(rs_detectExtendedType, 1);
 
    events().onDocUpdated.connect(onDocUpdated);
    events().onDocRemoved.connect(onDocRemoved);

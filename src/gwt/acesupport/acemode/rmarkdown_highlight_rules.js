@@ -210,7 +210,7 @@ oop.inherits(RMarkdownHighlightRules, TextHighlightRules);
    this.$reShChunkStartString         = engineRegex("(?:bash|sh)");
    this.$reStanChunkStartString       = engineRegex("stan");
    this.$reSqlChunkStartString        = engineRegex("sql");
-   this.$reJavaScriptChunkStartString = engineRegex("(?:d3|js)");
+   this.$reJavaScriptChunkStartString = engineRegex("(?:d3|js|observable)");
    
 }).call(RMarkdownHighlightRules.prototype);
 

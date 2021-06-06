@@ -93,6 +93,9 @@ public interface FileIconResources extends ClientBundle
 
    @Source("iconRmarkdown_2x.png")
    ImageResource iconRmarkdown2x();
+   
+   @Source("iconQuarto_2x.png")
+   ImageResource iconQuarto2x();
 
    @Source("iconC_2x.png")
    ImageResource iconC2x();

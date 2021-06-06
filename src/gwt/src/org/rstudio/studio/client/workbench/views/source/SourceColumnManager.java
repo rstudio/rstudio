@@ -2166,6 +2166,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       dynamicCommands_.add(commands_.sourceActiveDocument());
       dynamicCommands_.add(commands_.sourceActiveDocumentWithEcho());
       dynamicCommands_.add(commands_.knitDocument());
+      dynamicCommands_.add(commands_.quartoRenderDocument());
       dynamicCommands_.add(commands_.toggleRmdVisualMode());
       dynamicCommands_.add(commands_.enableProsemirrorDevTools());
       dynamicCommands_.add(commands_.previewHTML());

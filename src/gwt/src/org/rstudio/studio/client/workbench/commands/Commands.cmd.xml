@@ -142,6 +142,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="saveAllSourceDocs"/>
          <separator/>
          <cmd refid="knitDocument"/>
+         <cmd refid="quartoRenderDocument"/>
          <cmd refid="previewHTML"/>
          <cmd refid="compilePDF"/>
          <cmd refid="compileNotebook"/>
@@ -802,9 +803,11 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="compilePDF" value="Ctrl+Shift+K" disableModes="sublime"/>
          <shortcut refid="previewHTML" value="Ctrl+Shift+K" disableModes="sublime"/>
          <shortcut refid="knitDocument" value="Ctrl+Shift+K" disableModes="sublime"/>
+         <shortcut refid="quartoRenderDocument" value="Ctrl+Shift+K" disableModes="sublime"/>
          <shortcut refid="compilePDF" value="Meta+Shift+K" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="previewHTML" value="Meta+Shift+K" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="knitDocument" value="Meta+Shift+K" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="quartoRenderDocument" value="Meta+Shift+K" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="buildAll" value="Cmd+Shift+B"/>
          <shortcut refid="devtoolsLoadAll" value="Cmd+Shift+L" disableModes="sublime"/>
          <shortcut refid="devtoolsLoadAll" value="Ctrl+Shift+L" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
@@ -2211,6 +2214,13 @@ well as menu structures (for main menu and popup menus).
         buttonLabel="Knit"
         menuLabel="_Knit Document"
         desc="Knit the current document"
+        context="r"/>
+        
+   <cmd id="quartoRenderDocument"
+        label="Render Current Document"
+        buttonLabel="Render"
+        menuLabel="_Render Document"
+        desc="Render the current document"
         context="r"/>
 
    <cmd id="previewHTML"
