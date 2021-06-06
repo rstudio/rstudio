@@ -123,8 +123,13 @@ public abstract class ChunkContextUi implements ChunkContextToolbar.Host
       }
       toolbar_.setClassId(getLabel(row));
       
-      toolbar_.setShowOptions(
-            !outerEditor_.getExtendedFileType().equals(SourceDocument.XT_QUARTO_DOCUMENT));
+      syncOptions();
+   }
+   
+   public void syncOptions()
+   {
+      boolean showOptions = !outerEditor_.getExtendedFileType().equals(SourceDocument.XT_QUARTO_DOCUMENT);
+      toolbar_.setShowOptions(showOptions);
    }
 
    // ChunkContextToolbar.Host implementation ---------------------------------
