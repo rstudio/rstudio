@@ -27,4 +27,7 @@ public interface JobResources extends ClientBundle
 
    @Source("cancel_2x.png")
    ImageResource jobCancel();
+
+   @Source("replay_2x.png")
+   ImageResource jobReplay();
 }

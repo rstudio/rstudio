@@ -35,8 +35,23 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionC
 
 public class PythonCompletionManager extends CompletionManagerBase
                                      implements CompletionManager
-{  
-   public PythonCompletionManager(DocDisplay docDisplay,
+{
+   // Use a funstructor to create an instance in order to ensure toggleHandlers()
+   // is invoked after the object is fully instantiated
+   public static PythonCompletionManager create(DocDisplay docDisplay,
+                                                CompletionPopupDisplay popup,
+                                                CodeToolsServerOperations server,
+                                                CompletionContext context)
+   {
+      PythonCompletionManager retVal = new PythonCompletionManager(docDisplay, popup, server, context);
+
+      retVal.toggleHandlers(true);
+
+      return retVal;
+   }
+
+   // Use the create() funstructor above instead of invoking this constructor directly
+   private PythonCompletionManager(DocDisplay docDisplay,
                                   CompletionPopupDisplay popup,
                                   CodeToolsServerOperations server,
                                   CompletionContext context)

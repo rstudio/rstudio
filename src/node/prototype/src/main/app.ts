@@ -1,5 +1,5 @@
 /*
- * RScriptCallbacks.hpp
+ * app.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -13,22 +13,24 @@
  *
  */
 
-#ifndef R_SESSION_SCRIPT_CALLBACKS_HPP
-#define R_SESSION_SCRIPT_CALLBACKS_HPP
+import { app } from "electron";
 
-namespace rstudio {
-namespace r {
-namespace session {
+import DesktopInfo from './desktop-info';
+import Main from './main';
 
-void setRunScript(const std::string& runScript);
+// Where it all begins
+app.whenReady().then(() => {
 
-int RReadScript (const char *pmt, CONSOLE_BUFFER_CHAR* buf, int buflen, int hist);
+  (globalThis as any).rstudioGlobal = {
+    desktopInfo: new DesktopInfo()
+  };
 
-void RWriteStdout (const char *buf, int buflen, int otype);
+  new Main().run();
+});
 
-
-} // namespace session
-} // namespace r
-} // namespace rstudio
-
-#endif // R_SESSION_SCRIPT_CALLBACKS_HPP 
+app.on('window-all-closed', () => {
+  // Mac apps generally don't close when you close the last window, but RStudio does
+  // if (process.platform !== 'darwin') {
+    app.quit();
+  // }
+});

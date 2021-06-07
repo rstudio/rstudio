@@ -88,6 +88,7 @@ public class JobsPaneWidgets implements JobsPaneOperations
          // show progress
          progress_ = new JobProgress(events_);
          toolbar_.addLeftWidget(progress_);
+         toolbar_.setLeftWidgetWidth(progress_, "100%");
          progress_.showJob(job);
       }
    }

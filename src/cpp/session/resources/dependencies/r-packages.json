@@ -156,7 +156,7 @@
             "source": true
         },
         "plumber": {
-            "version": "0.4.6",
+            "version": "1.0.0",
             "location": "cran",
             "source": true
         },
@@ -206,7 +206,7 @@
             "source": false
         },
         "reticulate": {
-            "version": "1.16",
+            "version": "1.20",
             "location": "cran",
             "source": false
         },

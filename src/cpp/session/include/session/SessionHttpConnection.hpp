@@ -66,9 +66,8 @@ public:
 
    void sendJsonRpcError(const core::Error& error);
    void sendJsonRpcResponse();
-   void sendJsonRpcResponse(
-                  const core::json::JsonRpcResponse& jsonRpcResponse);
-
+   virtual void sendJsonRpcResponse(
+                  core::json::JsonRpcResponse& jsonRpcResponse) = 0;
 
    // close (occurs automatically after writeResponse, here in case it
    // need to be closed in other circumstances
@@ -78,6 +77,10 @@ public:
    virtual std::string requestId() const = 0;
 
    virtual void setUploadHandler(const core::http::UriAsyncUploadHandlerFunction& uploadHandler) = 0;
+
+   virtual bool isAsyncRpc() const = 0;
+
+   virtual std::chrono::steady_clock::time_point receivedTime() const = 0;
 };
 
 

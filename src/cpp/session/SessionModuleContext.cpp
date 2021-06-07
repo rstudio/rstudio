@@ -544,6 +544,14 @@ SEXP rs_setRpcDelay(SEXP delayMsSEXP)
    return delayMsSEXP;
 }
 
+// Force background processing to occur; used during testing since the user is never idle during
+// headless test execution
+SEXP rs_performBackgroundProcessing(SEXP isIdle)
+{
+   onBackgroundProcessing(r::sexp::asLogical(isIdle));
+   return R_NilValue;
+}
+
 } // anonymous namespace
 
 
@@ -1138,16 +1146,48 @@ FilePath tempDir()
 
 FilePath findProgram(const std::string& name)
 {
-   std::string which;
-   Error error = r::exec::RFunction("Sys.which", name).call(&which);
-   if (error)
+   // Added isMainThread() test here to allow the console to run offline.
+   // On starting a terminal, it does 'which svn' and adds that dir to the
+   // path if it find one
+   // FUTURE: Can we always use findProgramOnPath? It will be a lot faster since R's
+   // version seems to fork a process to call the shell's 'which'
+   // Be careful of Windows there are two copies of the environment so
+   // R's env might be out of sync with rsession's PATH.
+   if (!r::exec::isMainThread())
    {
-      LOG_ERROR(error);
-      return FilePath();
+      FilePath resultPath;
+      Error error = system::findProgramOnPath(name, &resultPath);
+      if (error)
+      {
+         return FilePath();
+      }
+      return resultPath;
    }
    else
    {
-      return FilePath(which);
+      std::string which;
+      FilePath resultPath;
+
+      // For now, going to check both ways and log warnings if they don't match
+      Error error = r::exec::RFunction("Sys.which", name).call(&which);
+      Error dbgError = system::findProgramOnPath(name, &resultPath);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return FilePath();
+      }
+      else
+      {
+         if (dbgError && which != "")
+         {
+            LOG_WARNING_MESSAGE("findProgramOnPath returns error: " + dbgError.asString() + " Sys.which returns: " + resultPath.getAbsolutePath());
+         }
+         else if (which != resultPath.getAbsolutePath())
+         {
+            LOG_WARNING_MESSAGE("findProgramOnPath returns wrong result: " + which + " != " + resultPath.getAbsolutePath());
+         }
+         return FilePath(which);
+      }
    }
 }
 
@@ -1867,8 +1907,8 @@ Error sourceModuleRFileWithResult(const std::string& rSourceFile,
 
    // vanilla execution of a single expression
    std::vector<std::string> args;
-   args.push_back("--slave");
    args.push_back("--vanilla");
+   args.push_back("-s");
    args.push_back("-e");
 
    // build source command
@@ -2254,7 +2294,6 @@ Events& events()
    static Events instance;
    return instance;
 }
-
 
 core::system::ProcessSupervisor& processSupervisor()
 {
@@ -2893,6 +2932,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_threadSleep);
    RS_REGISTER_CALL_METHOD(rs_userPrompt);
    RS_REGISTER_CALL_METHOD(rs_setRpcDelay);
+   RS_REGISTER_CALL_METHOD(rs_performBackgroundProcessing);
 
    // initialize monitored scratch dir
    initializeMonitoredUserScratchDir();

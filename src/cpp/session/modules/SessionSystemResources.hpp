@@ -70,6 +70,8 @@ core::Error getMemoryUsage(boost::shared_ptr<MemoryUsage> *pMemUsage);
 
 core::Error initialize();
 
+void emitMemoryChangedEvent();
+
 }  // namespace system_resources
 }  // namespace modules
 }  // namespace session

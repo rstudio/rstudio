@@ -230,8 +230,8 @@
         },
         "auto_detect_indentation": {
             "type": "boolean",
-            "default": true,
-            "title": "Autodetect indentation in files",
+            "default": false,
+            "title": "Auto-detect indentation in files",
             "description": "Whether to automatically detect indentation settings from file contents."
         },
         "show_margin": {
@@ -559,7 +559,7 @@
         },
         "limit_visible_console": {
             "type": "boolean",
-            "default": true,
+            "default": false,
             "title": "Limit visible console output",
             "description": "Whether to only show a limited window of the total console output"
         },
@@ -972,6 +972,12 @@
             "default": true,
             "title": "Sort file names naturally in Files pane",
             "description": "Whether to sort file names naturally, so that e.g., file10.R comes after file9.R"
+        },
+        "sync_files_pane_working_dir": {
+            "type": "boolean",
+            "default": false,
+            "title": "Synchronize the Files pane with the current working directory",
+            "description": "Whether to change the directory in the Files pane automatically when the working directory in R changes."
         },
         "jobs_tab_visibility": {
             "type": "string",
@@ -1498,6 +1504,12 @@
             "title": "Enable terminal Python integration",
             "type": "boolean",
             "default": true
+        },
+        "session_protocol_debug": {
+            "description": "Enable session protocol debug logging showing all session requests and events",
+            "title": "Session protocol debug logging",
+            "type": "boolean",
+            "default": false
         }
     }
 }

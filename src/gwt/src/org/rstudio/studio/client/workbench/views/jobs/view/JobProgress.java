@@ -16,6 +16,8 @@ package org.rstudio.studio.client.workbench.views.jobs.view;
 
 import java.util.Date;
 
+import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -49,16 +51,22 @@ public class JobProgress extends Composite
    @Inject
    public JobProgress(EventBus eventBus)
    {
-      // stop must be defined before calling createAndBindUi
+      // buttons must be defined before calling createAndBindUi
       stop_ = new ToolbarButton(ToolbarButton.NoText,
-                                "Stop job",
-                                new ImageResource2x(RESOURCES.jobCancel()));
+         "Stop job",
+         new ImageResource2x(RESOURCES.jobCancel()));
+      replay_ = new ToolbarButton(ToolbarButton.NoText,
+         "Replay job",
+         new ImageResource2x(RESOURCES.jobReplay()));
       initWidget(uiBinder.createAndBindUi(this));
       eventBus_ = eventBus;
       complete_ = false;
+      registrations_ = new HandlerRegistrations();
+      id_ = "";
       
       progress_.setHeight("10px");
       stop_.setVisible(false);
+      replay_.setVisible(false);
    }
    
    @Override
@@ -69,15 +77,44 @@ public class JobProgress extends Composite
       progress_.setLabel(progress.name());
       jobProgress_ = progress;
    }
-   
+
+   /**
+    * Adds or updates job information in the widget.
+    *
+    * @param job The job object to show or update.
+    */
    @Override
    public void showJob(Job job)
    {
       name_.setText(job.name);
       progress_.setLabel(job.name);
+
       String status = JobConstants.stateDescription(job.state);
-      stop_.addClickHandler(clickEvent ->
-         eventBus_.fireEvent(new JobExecuteActionEvent(job.id, JobConstants.ACTION_STOP)));
+
+      // If this job is different than the one we were looking at previously, update our handlers to fire events for
+      // the new job.
+      if (!StringUtil.equals(id_, job.id))
+      {
+         // Save new ID
+         id_ = job.id;
+
+         // Detach any previous event handlers
+         registrations_.removeHandler();
+
+         // Set new button IDs
+         ElementIds.assignElementId(stop_,
+            ElementIds.JOB_STOP + "_" + ElementIds.idSafeString(job.name));
+         ElementIds.assignElementId(replay_,
+            ElementIds.JOB_REPLAY + "_" + ElementIds.idSafeString(job.name));
+
+         // Attach new handlers
+         registrations_.add(
+            stop_.addClickHandler(clickEvent ->
+               eventBus_.fireEvent(new JobExecuteActionEvent(job.id, JobConstants.ACTION_STOP))));
+         registrations_.add(
+            replay_.addClickHandler(clickEvent ->
+               eventBus_.fireEvent(new JobExecuteActionEvent(job.id, JobConstants.ACTION_REPLAY))));
+      }
 
       if (job.completed > 0)
       {
@@ -86,6 +123,7 @@ public class JobProgress extends Composite
          status += " " + StringUtil.friendlyDateTime(new Date(job.completed * 1000));
          elapsed_.setText(StringUtil.conciseElaspedTime(job.completed - job.started));
          status_.setVisible(true);
+         replay_.setVisible(JsArrayUtil.jsArrayStringContains(job.actions, JobConstants.ACTION_REPLAY));
       }
       else if (job.max > 0)
       {
@@ -93,6 +131,7 @@ public class JobProgress extends Composite
          progress_.setVisible(true);
          progress_.setProgress(job.progress, job.max);
          status_.setVisible(false);
+         replay_.setVisible(false);
       }
       else
       {
@@ -104,6 +143,7 @@ public class JobProgress extends Composite
             // Still running; show its status
             status = job.status;
          }
+         replay_.setVisible(false);
       }
 
       // show stop button if job has a "stop" action, and is not completed
@@ -133,9 +173,12 @@ public class JobProgress extends Composite
    @UiField ProgressBar progress_;
    @UiField Label elapsed_;
    @UiField(provided=true) ToolbarButton stop_;
+   @UiField(provided=true) ToolbarButton replay_;
    @UiField Label status_;
-   
+
+   private HandlerRegistrations registrations_;
    private final EventBus eventBus_;
    private LocalJobProgress jobProgress_;
    private boolean complete_;
+   private String id_;
 }

@@ -358,7 +358,8 @@ void initSafeHosts()
    safeHosts_ = {
       ".youtube.com",
       ".vimeo.com",
-      ".c9.ms"
+      ".c9.ms",
+      ".google.com"
    };
 
    for (const SessionServer& server : sessionServerSettings().servers())

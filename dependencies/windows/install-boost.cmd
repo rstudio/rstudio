@@ -6,8 +6,8 @@ set PATH=%CD%\tools;%PATH%
 
 REM Build Boost.
 cd install-boost
-R --vanilla --slave -f install-boost.R --args debug static
-R --vanilla --slave -f install-boost.R --args release static
+R --vanilla -s -f install-boost.R --args debug static
+R --vanilla -s -f install-boost.R --args release static
 cd ..
 
 REM Build the Boost archive for upload to S3.

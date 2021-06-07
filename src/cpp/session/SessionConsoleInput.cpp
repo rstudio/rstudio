@@ -285,6 +285,11 @@ void popConsoleInput(rstudio::r::session::RConsoleInput* pConsoleInput)
    fixupPendingConsoleInput();
    *pConsoleInput = s_consoleInputBuffer.front();
    s_consoleInputBuffer.pop_front();
+
+   if (http_methods::protocolDebugEnabled())
+   {
+      LOG_DEBUG_MESSAGE("Handle console_input:     " + pConsoleInput->text);
+   }
 }
 
 } // end anonymous namespace

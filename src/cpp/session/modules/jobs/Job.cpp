@@ -108,6 +108,43 @@ Job::Job():
 {
 }
 
+Error Job::reset()
+{
+   // if the job is still running, we can't reset it
+   if (started_ > 0 && completed_ == 0)
+   {
+      Error error = systemError(boost::system::errc::operation_in_progress, ERROR_LOCATION);
+      error.addProperty("id", id());
+      error.addProperty("description", "Job cannot be reset while it is running.");
+      return error;
+   }
+
+   // remove the stored output (cache) from the previous run
+   outputCacheFile().removeIfExists();
+
+   // emit a formfeed as job output if the client is listening so that output from the previous run
+   // is cleared
+   if (listening_)
+   {
+      json::Array data;
+      data.push_back(id_);
+      data.push_back(module_context::kCompileOutputNormal);
+      data.push_back("\f");
+      module_context::enqueClientEvent(
+            ClientEvent(client_events::kJobOutput, data));
+   }
+
+   // reset run timers
+   completed_ = 0;
+   started_ = 0;
+
+   // reset progress and state
+   progress_ = 0;
+   state_ = JobIdle;
+
+   return Success();
+}
+
 std::string Job::id() const
 {
     return id_;

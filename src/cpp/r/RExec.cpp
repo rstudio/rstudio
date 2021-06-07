@@ -50,6 +50,8 @@ namespace {
 
 bool s_wasInterrupted;
 
+MainThreadFunction s_mainThreadFunction;
+
 // create a scope for disabling any installed error handlers (e.g. recover)
 // we need to do this so that recover isn't invoked while we are running
 // R code within an r::exec scope -- when the user presses 0 to exit
@@ -132,7 +134,13 @@ Error evaluateExpressionsUnsafe(SEXP expr,
 {
    // detect if an error occurred (only relevant for EvalTry)
    int errorOccurred = 0;
-   
+
+   if (!isMainThread())
+   {
+      LOG_ERROR_MESSAGE("evaluateExpression called from thread other than main");
+      return rCodeExecutionError("Attempt to eval R on thread other than main", ERROR_LOCATION);
+   }
+
    // if we have an entire expression list, evaluate its contents one-by-one 
    // and return only the last one
    if (TYPEOF(expr) == EXPRSXP) 
@@ -229,6 +237,11 @@ void SEXPTopLevelExec(void *data)
    
 Error executeSafely(boost::function<void()> function)
 {
+   if (!isMainThread())
+   {
+      LOG_ERROR_MESSAGE("executeSafely called from thread other than main");
+      return rCodeExecutionError("execute function called from thread other than main", ERROR_LOCATION);
+   }
    // disable custom error handlers while we execute code
    DisableErrorHandlerScope disableErrorHandler;
    DisableDebugScope disableStepInto(R_GlobalEnv);
@@ -308,6 +321,11 @@ Error evaluateString(const std::string& str,
                      sexp::Protect* pProtect,
                      EvalFlags flags)
 {
+   if (!isMainThread())
+   {
+      LOG_ERROR_MESSAGE("evaluateString called from thread other than main: " + str);
+      return rCodeExecutionError("Attempt to eval R off of main thread", ERROR_LOCATION);
+   }
    // refresh source if necessary (no-op in production)
    r::sourceManager().reloadIfNecessary();
    
@@ -357,6 +375,20 @@ bool atTopLevelContext()
    return context::RCntxt::begin()->callflag() == CTXT_TOPLEVEL;
 }
 
+// Returns true for all threads unless initMainThread was called from the main one
+bool isMainThread()
+{
+   if (!s_mainThreadFunction)
+      return true; // Not determined
+   return s_mainThreadFunction();
+}
+
+// Call this from the main thread to enable main-thread diagnostic checks.
+void initMainThread(MainThreadFunction fun)
+{
+   s_mainThreadFunction = fun;
+}
+
 RFunction::RFunction(SEXP functionSEXP)
 {
    functionSEXP_ = functionSEXP;
@@ -375,26 +407,28 @@ void RFunction::commonInit(const std::string& functionName)
    // record functionName (used later for diagnostics)
    functionName_ = functionName;
    
-   // get name & ns
-   std::string name, ns;
-   
-   // check for namespace qualifier
-   std::string nsQual(":::");
-   size_t pos = functionName_.find(nsQual);
-   if (pos != std::string::npos)
+   // handle empty function names up front
+   if (functionName.empty())
    {
-      ns = functionName_.substr(0, pos);
-      name = functionName_.substr(pos + nsQual.size());
+      functionSEXP_ = R_UnboundValue;
+      return;
+   }
+   
+   // otherwise, build call to function
+   // check for namespace qualifier and handle that if set
+   auto pos = functionName.find(":::");
+   if (pos == std::string::npos)
+   {
+      functionSEXP_ = Rf_install(functionName.c_str());
    }
    else
    {
-      name = functionName_;
-   }
-   
-   // lookup function
-   functionSEXP_ = sexp::findFunction(name, ns);
-   if (functionSEXP_ != R_UnboundValue)
+      functionSEXP_ = Rf_lang3(
+               Rf_install(":::"),
+               Rf_install(functionName.substr(0, pos).c_str()),
+               Rf_install(functionName.substr(pos + 3).c_str()));
       preserver_.add(functionSEXP_);
+   }
 }
    
 Error RFunction::callUnsafe()
@@ -419,19 +453,37 @@ Error RFunction::call(SEXP evalNS, SEXP* pResultSEXP, sexp::Protect* pProtect)
    return call(evalNS, true, pResultSEXP, pProtect);
 }
 
-Error RFunction::call(SEXP evalNS, bool safely, SEXP* pResultSEXP,
+Error RFunction::call(SEXP evalNS,
+                      bool safely,
+                      SEXP* pResultSEXP,
                       sexp::Protect* pProtect)
 {
+   // check that the function exists
+   if (functionSEXP_ != R_UnboundValue)
+   {
+      Error existsError = safely ?
+               evaluateExpressions(functionSEXP_, evalNS, pResultSEXP, pProtect) :
+               evaluateExpressionsUnsafe(functionSEXP_, evalNS, pResultSEXP, pProtect, EvalTry);
+      
+      if (existsError)
+         functionSEXP_ = R_UnboundValue;
+   }
+   
    // verify the function
    if (functionSEXP_ == R_UnboundValue)
    {
-      LOG_ERROR_MESSAGE("Failed to find function: '" + functionName_ + "'");
       Error error(errc::SymbolNotFoundError, ERROR_LOCATION);
       if (!functionName_.empty())
          error.addProperty("symbol", functionName_);
       return error;
    }
    
+   if (!isMainThread())
+   {
+      LOG_ERROR_MESSAGE("Attempt to call R function: " + functionName_ + " on thread other than main");
+      return rCodeExecutionError("Attempt to call R function on thread other than main", ERROR_LOCATION);
+   }
+
    // create the call object (LANGSXP) with the correct number of elements
    SEXP callSEXP;
    pProtect->add(callSEXP = Rf_allocVector(LANGSXP, 1 + params_.size()));

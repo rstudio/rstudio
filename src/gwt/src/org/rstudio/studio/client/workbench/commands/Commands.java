@@ -444,6 +444,7 @@ public abstract class
    public abstract AppCommand showPublishingOptions();
    public abstract AppCommand showPythonOptions();
    public abstract AppCommand modifyKeyboardShortcuts();
+   public abstract AppCommand editCodeSnippets();
    public abstract AppCommand showCommandPalette();
    public abstract AppCommand clearCommandPaletteMru();
 

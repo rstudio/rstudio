@@ -14,7 +14,8 @@
     "ms-vscode.cpptools",
     "ms-vscode.cmake-tools",
     "twxs.cmake",
-    "vscjava.vscode-java-pack"
+    "vscjava.vscode-java-pack",
+    "waderyan.nodejs-extension-pack"
   ],
 
   "forwardPorts": [

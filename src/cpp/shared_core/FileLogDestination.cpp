@@ -206,6 +206,11 @@ void FileLogDestination::reload()
    m_impl->closeLogFile();
 }
 
+bool FileLogDestination::isFileLogger() const
+{
+   return true;
+}
+
 void FileLogDestination::writeLog(LogLevel in_logLevel, const std::string& in_message)
 {
    // Don't write logs that are more detailed than the configured maximum.

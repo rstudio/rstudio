@@ -795,6 +795,18 @@ int main(int argc, char* argv[])
          scriptsPath = currentPath.completePath("desktop");
          devMode = true;
       }
+
+      // alternate debug config where cmake generation was run at root of repo; the
+      // config files will be in src/cpp relative to the current directory set earlier
+      // to location of CMakeCache.txt
+      else if (currentPath.completePath("src/cpp/conf/rdesktop-dev.conf").exists())
+      {
+         confPath = currentPath.completePath("src/cpp/conf/rdesktop-dev.conf");
+         sessionPath = currentPath.completePath("src/cpp/session/rsession");
+         scriptsPath = currentPath.completePath("src/cpp/desktop");
+         devMode = true;
+      }
+
       // Sometimes boost is returning the wrong current path, which leads to not discovering the conf files correctly.
       // This falls back to checking under the install path. If this file is present there, we probably want to be
       // running in developer mode.

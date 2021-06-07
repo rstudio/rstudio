@@ -109,6 +109,12 @@ std::string eventScopeAndIdAsString(const Event& event)
       case kSessionAdminTerminate:
          id = "admin_terminate";
          break;
+      case kSessionUploadEvent:
+         id = "file_upload";
+         break;
+      case kSessionDownloadEvent:
+         id = "file_download";
+         break;
       default:
          id = "<unknown>";
          break;

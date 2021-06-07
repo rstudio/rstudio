@@ -81,12 +81,12 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                   general,
                   editing,
                   rMarkdown, 
+                  python,
                   compilePdf,
                   spelling,
                   build,
                   source,
                   renv,
-                  python,
                   sharing));
 
       pSession_ = session;

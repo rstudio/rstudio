@@ -516,6 +516,7 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="helpKeyboardShortcuts"/>
          <cmd refid="modifyKeyboardShortcuts"/>
+         <cmd refid="editCodeSnippets"/>
          <cmd refid="showCommandPalette"/>
          <separator/>
          <cmd refid="projectOptions"/>
@@ -3084,6 +3085,11 @@ well as menu structures (for main menu and popup menus).
    <cmd id="modifyKeyboardShortcuts"
         menuLabel="_Modify Keyboard Shortcuts..."
         desc="Modify keyboard shortcuts"
+        windowMode="main"/>
+
+   <cmd id="editCodeSnippets"
+        menuLabel="_Edit Code Snippets..."
+        desc="Edit code snippets"
         windowMode="main"/>
 
    <cmd id="checkForUpdates"

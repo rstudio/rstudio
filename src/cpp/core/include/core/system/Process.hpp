@@ -24,6 +24,7 @@
 #include <boost/utility.hpp>
 #include <boost/function.hpp>
 #include <boost/scoped_ptr.hpp>
+#include <boost/thread.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 
 #include <core/system/System.hpp>
@@ -431,6 +432,7 @@ public:
 private:
    struct Impl;
    boost::scoped_ptr<Impl> pImpl_;
+   boost::recursive_mutex mutex_;
 };
 
 } // namespace system

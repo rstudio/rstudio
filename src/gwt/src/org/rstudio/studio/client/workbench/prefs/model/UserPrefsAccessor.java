@@ -449,9 +449,9 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "auto_detect_indentation",
-         "Autodetect indentation in files", 
+         "Auto-detect indentation in files", 
          "Whether to automatically detect indentation settings from file contents.", 
-         true);
+         false);
    }
 
    /**
@@ -1155,7 +1155,7 @@ public class UserPrefsAccessor extends Prefs
          "limit_visible_console",
          "Limit visible console output", 
          "Whether to only show a limited window of the total console output", 
-         true);
+         false);
    }
 
    /**
@@ -1992,6 +1992,18 @@ public class UserPrefsAccessor extends Prefs
          "Sort file names naturally in Files pane", 
          "Whether to sort file names naturally, so that e.g., file10.R comes after file9.R", 
          true);
+   }
+
+   /**
+    * Whether to change the directory in the Files pane automatically when the working directory in R changes.
+    */
+   public PrefValue<Boolean> syncFilesPaneWorkingDir()
+   {
+      return bool(
+         "sync_files_pane_working_dir",
+         "Synchronize the Files pane with the current working directory", 
+         "Whether to change the directory in the Files pane automatically when the working directory in R changes.", 
+         false);
    }
 
    /**
@@ -3123,6 +3135,18 @@ public class UserPrefsAccessor extends Prefs
          true);
    }
 
+   /**
+    * Enable session protocol debug logging showing all session requests and events
+    */
+   public PrefValue<Boolean> sessionProtocolDebug()
+   {
+      return bool(
+         "session_protocol_debug",
+         "Session protocol debug logging", 
+         "Enable session protocol debug logging showing all session requests and events", 
+         false);
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -3407,6 +3431,8 @@ public class UserPrefsAccessor extends Prefs
          alwaysShownExtensions().setValue(layer, source.getObject("always_shown_extensions"));
       if (source.hasKey("sort_file_names_naturally"))
          sortFileNamesNaturally().setValue(layer, source.getBool("sort_file_names_naturally"));
+      if (source.hasKey("sync_files_pane_working_dir"))
+         syncFilesPaneWorkingDir().setValue(layer, source.getBool("sync_files_pane_working_dir"));
       if (source.hasKey("jobs_tab_visibility"))
          jobsTabVisibility().setValue(layer, source.getString("jobs_tab_visibility"));
       if (source.hasKey("show_launcher_jobs_tab"))
@@ -3565,6 +3591,8 @@ public class UserPrefsAccessor extends Prefs
          memoryQueryIntervalSeconds().setValue(layer, source.getInteger("memory_query_interval_seconds"));
       if (source.hasKey("terminal_python_integration"))
          terminalPythonIntegration().setValue(layer, source.getBool("terminal_python_integration"));
+      if (source.hasKey("session_protocol_debug"))
+         sessionProtocolDebug().setValue(layer, source.getBool("session_protocol_debug"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -3710,6 +3738,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(alwaysShownFiles());
       prefs.add(alwaysShownExtensions());
       prefs.add(sortFileNamesNaturally());
+      prefs.add(syncFilesPaneWorkingDir());
       prefs.add(jobsTabVisibility());
       prefs.add(showLauncherJobsTab());
       prefs.add(launcherJobsSort());
@@ -3789,6 +3818,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(showMemoryUsage());
       prefs.add(memoryQueryIntervalSeconds());
       prefs.add(terminalPythonIntegration());
+      prefs.add(sessionProtocolDebug());
       return prefs;
    }
    

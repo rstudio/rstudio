@@ -2068,9 +2068,24 @@
  
 })
 
-.rs.addFunction("deparse", function(object)
+# like deparse(), but always deparsed to a length-one character vector
+.rs.addFunction("deparse", function(object,
+                                    width.cutoff = 500L,
+                                    nlines       = -1L,
+                                    collapse     = " ")
 {
-   paste(deparse(object, width.cutoff = 500L), collapse = " ")
+   # deparse the call
+   deparsed <- deparse(
+      expr         = object,
+      width.cutoff = width.cutoff,
+      nlines       = nlines
+   )
+   
+   # un-escape our inline R objects
+   deparsed <- gsub("`<(.*?)>`", "<\\1>", deparsed, perl = TRUE)
+   
+   # paste to return as length-one character vector
+   paste(deparsed, collapse = collapse)
 })
 
 .rs.addFunction("ensureScalarCharacter", function(object)
@@ -2214,7 +2229,9 @@
       # https://bugs.r-project.org/bugzilla3/show_bug.cgi?id=17484
       # https://github.com/rstudio/rstudio/issues/3658
       #
-      Sys.setlocale()
+      if (getRversion() < "3.5.2")
+         Sys.setlocale()
+      
       return(character())
 
    }

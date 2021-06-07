@@ -116,6 +116,7 @@
 #include "SessionMainProcess.hpp"
 #include "SessionRpc.hpp"
 #include "SessionSuspend.hpp"
+#include "SessionOfflineService.hpp"
 
 #include <session/SessionRUtil.hpp>
 #include <session/SessionPackageProvidedExtension.hpp>
@@ -376,6 +377,11 @@ Error startClientEventService()
    return clientEventService().start(rsession::persistentState().activeClientId());
 }
 
+Error startOfflineService()
+{
+   return offlineService().start();
+}
+
 Error registerSignalHandlers()
 {
    using boost::bind;
@@ -519,6 +525,8 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       // console processes
       (console_process::initialize)
 
+      (http_methods::initialize)
+
       // r utils
       (r_utils::initialize)
 
@@ -615,6 +623,8 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (bind(sourceModuleRFile, "SessionCodeTools.R"))
       (bind(sourceModuleRFile, "SessionPatches.R"))
 
+      (startOfflineService)
+
       // unsupported functions
       (bind(rstudio::r::function_hook::registerUnsupported, "bug.report", "utils"))
       (bind(rstudio::r::function_hook::registerUnsupported, "help.request", "utils"))
@@ -649,13 +659,6 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
 
       int exitCode = modules::overlay::verifyInstallation();
       exitEarly(exitCode);
-   }
-
-   // run unit tests
-   if (rsession::options().runTests())
-   {
-      int result = tests::run();
-      exitEarly(result);
    }
 
    // register all of the json rpc methods implemented in R
@@ -727,7 +730,10 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    // set flag indicating we had an abnormal end (if this doesn't get
    // unset by the time we launch again then we didn't terminate normally
    // i.e. either the process dying unexpectedly or a call to R_Suicide)
-   rsession::persistentState().setAbend(true);
+   if (!rsession::options().runTests())
+   {
+      rsession::persistentState().setAbend(true);
+   }
 
    // begin session
    using namespace module_context;
@@ -1284,6 +1290,17 @@ void rSerialization(int action, const FilePath& targetPath)
    rsession::clientEventQueue().add(event);
 }
 
+void rRunTests()
+{
+   // run tests
+   int status = tests::run();
+   
+   // try to clean up session
+   rCleanup(true);
+   
+   // exit if we haven't already
+   exitEarly(status);
+}
 
 void ensureRProfile()
 {
@@ -2097,23 +2114,29 @@ int main (int argc, char * const argv[])
       if (!desktopMode) // ignore r-libs-user in desktop mode
          rOptions.rLibsUser = options.rLibsUser();
 
+      // name of the source of the CRAN repo value (for logging)
+      std::string source;
+
       // CRAN repos configuration follows; order of precedence is:
       //
-      // 1. The user's personal preferences file (rstudio-prefs.json) or system-level version of
-      //    same
-      // 2. The repo settings specified in the loaded version of R
-      // 3. The session's repo settings (in rsession.conf/repos.conf)
-      // 4. The server's repo settings
-      // 5. The default repo settings from the preferences schema (user-prefs-schema.json)
-      // 6. If all else fails, cran.rstudio.com
+      // 1. The user's personal preferences file (rstudio-prefs.json), if CRAN repo editing is
+      //    permitted by policy
+      // 2. The system-wide preferences file (rstudio-prefs.json)
+      // 3. The repo settings specified in the loaded version of R
+      // 4. The session's repo settings (in rsession.conf/repos.conf)
+      // 5. The server's repo settings
+      // 6. The default repo settings from the preferences schema (user-prefs-schema.json)
+      // 7. If all else fails, cran.rstudio.com
       std::string layerName;
       auto val = prefs::userPrefs().readValue(kCranMirror, &layerName);
-      if (val && (layerName == kUserPrefsUserLayer ||
+      if (val && ((options.allowCRANReposEdit() && layerName == kUserPrefsUserLayer) ||
                   layerName == kUserPrefsSystemLayer))
       {
-         // There is a user-scoped value, so use it
+         // If we got here, either (a) there is a user value and the user is allowed to set their
+         // own CRAN repos, or (b) there's a system value, which we always respect
          rOptions.rCRANUrl = prefs::userPrefs().getCRANMirror().url;
          rOptions.rCRANSecondary = prefs::userPrefs().getCRANMirror().secondary;
+         source = layerName + "-level preference file";
       }
       else if (!core::system::getenv("RSTUDIO_R_REPO").empty())
       {
@@ -2126,34 +2149,43 @@ int main (int argc, char * const argv[])
          {
             std::string reposConfig = Options::parseReposConfig(reposFile);
             loadCranRepos(reposConfig, &rOptions);
+            source = reposFile.getAbsolutePath() + " via RSTUDIO_R_REPO environment variable";
          }
          else
          {
             rOptions.rCRANUrl = repo;
+            source = "RSTUDIO_R_REPO environment variable";
          }
       }
       else if (!options.rCRANMultipleRepos().empty())
       {
          // repo was specified in a repos file
          loadCranRepos(options.rCRANMultipleRepos(), &rOptions);
+         source = "repos file";
       }
       else if (!options.rCRANUrl().empty())
       {
          // Global server option
          rOptions.rCRANUrl = options.rCRANUrl();
+         source = "global session option";
       }
       else if (val && layerName == kUserPrefsDefaultLayer)
       {
          // If we found defaults in the prefs schema, use them.
          rOptions.rCRANUrl = prefs::userPrefs().getCRANMirror().url;
          rOptions.rCRANSecondary = prefs::userPrefs().getCRANMirror().secondary;
+         source = "preference defaults";
       }
       else
       {
          // Hard-coded repo of last resort so we don't wind up without a repo setting (users will
          // not be able to install packages without one)
          rOptions.rCRANUrl = "https://cran.rstudio.com/";
+         source = "hard-coded default";
       }
+
+      LOG_INFO_MESSAGE("Set CRAN URL for session to '" + rOptions.rCRANUrl + "' (source: " +
+            source + ")");
 
       rOptions.useInternet2 = prefs::userPrefs().useInternet2();
       rOptions.rCompatibleGraphicsEngineVersion =
@@ -2201,6 +2233,10 @@ int main (int argc, char * const argv[])
       rCallbacks.showHelp = rShowHelp;
       rCallbacks.showMessage = rShowMessage;
       rCallbacks.serialization = rSerialization;
+      
+      // set test callback if enabled
+      if (options.runTests())
+         rCallbacks.runTests = rRunTests;
 
       // run r (does not return, terminates process using exit)
       error = rstudio::r::session::run(rOptions, rCallbacks);

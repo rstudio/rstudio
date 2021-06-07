@@ -46,6 +46,8 @@ enum EventScope
 #define kSessionExitEvent        2005
 #define kSessionAdminSuspend     2006
 #define kSessionAdminTerminate   2007
+#define kSessionUploadEvent      2008
+#define kSessionDownloadEvent    2009
 
 // after username max size
 #define kMaxEventDataSize     32

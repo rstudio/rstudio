@@ -7,7 +7,7 @@ properties([
                               daysToKeepStr: '',
                               numToKeepStr: '100')),
     parameters([string(name: 'RSTUDIO_VERSION_MAJOR', defaultValue: '1', description: 'RStudio Major Version'),
-                string(name: 'RSTUDIO_VERSION_MINOR', defaultValue: '4', description: 'RStudio Minor Version'),
+                string(name: 'RSTUDIO_VERSION_MINOR', defaultValue: '5', description: 'RStudio Minor Version'),
                 string(name: 'SLACK_CHANNEL', defaultValue: '#ide-builds', description: 'Slack channel to publish build message.'),
                 string(name: 'OS_FILTER', defaultValue: '', description: 'Pattern to limit builds by matching OS'),
                 string(name: 'ARCH_FILTER', defaultValue: '', description: 'Pattern to limit builds by matching ARCH'),
@@ -17,22 +17,22 @@ properties([
 
 def compile_package(os, type, flavor, variant) {
   // start with major, minor, and patch versions
-  def env = "RSTUDIO_VERSION_MAJOR=${rstudioVersionMajor} RSTUDIO_VERSION_MINOR=${rstudioVersionMinor} RSTUDIO_VERSION_PATCH=${rstudioVersionPatch}"
+  def envVars = "RSTUDIO_VERSION_MAJOR=${rstudioVersionMajor} RSTUDIO_VERSION_MINOR=${rstudioVersionMinor} RSTUDIO_VERSION_PATCH=${rstudioVersionPatch}"
 
   // add version suffix if present
   if (rstudioVersionSuffix != 0) {
-   env = "${env} RSTUDIO_VERSION_SUFFIX=${rstudioVersionSuffix}"
+   envVars = "${envVars} RSTUDIO_VERSION_SUFFIX=${rstudioVersionSuffix}"
   }
 
   // add OS that the package was built for
-  env = "${env} PACKAGE_OS=\"${os}\""
+  envVars = "${envVars} PACKAGE_OS=\"${os}\""
 
   // currently our nodes have access to 4 cores, so spread out the compile job
   // a little (currently using up all 4 cores causes problems)
-  env = "${env} MAKEFLAGS=-j2"
+  envVars = "${envVars} MAKEFLAGS=-j2"
 
   // perform the compilation
-  sh "cd package/linux && ${env} ./make-${flavor}-package ${type} clean ${variant} && cd ../.."
+  sh "cd package/linux && ${envVars} ./make-${flavor}-package ${type} clean ${variant} && cd ../.."
 
   // sign the new package
   withCredentials([file(credentialsId: 'gpg-codesign-private-key', variable: 'codesignKey'),
@@ -41,13 +41,13 @@ def compile_package(os, type, flavor, variant) {
   }
 }
 
-def run_tests(type, flavor, variant) {
+def run_tests(os, type, flavor) {
   try {
     // attempt to run ant (gwt) unit tests
     sh "cd package/linux/build-${flavor.capitalize()}-${type}/src/gwt && ./gwt-unit-tests.sh"
   } catch(err) {
     // mark build as unstable if it fails unit tests
-    currentBuild.result = "UNSTABLE"
+    unstable("GWT unit tests failed (${flavor.capitalize()} ${type} on ${os})")
   }
 
 
@@ -55,7 +55,7 @@ def run_tests(type, flavor, variant) {
     // attempt to run cpp unit tests
     sh "cd package/linux/build-${flavor.capitalize()}-${type}/src/cpp && ./rstudio-tests"
   } catch(err) {
-    currentBuild.result = "UNSTABLE"
+    unstable("C++ unit tests failed (${flavor.capitalize()} ${type} on ${os})")
   }
 }
 
@@ -143,6 +143,8 @@ def limit_builds(containers) {
 def prepareWorkspace(){ // accessory to clean workspace and checkout
   step([$class: 'WsCleanup'])
   checkout scm
+  // record the commit for invoking downstream builds
+  rstudioBuildCommit = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
   sh 'git reset --hard && git clean -ffdx' // lifted from rstudio/connect
 }
 
@@ -151,6 +153,12 @@ rstudioVersionMajor  = 0
 rstudioVersionMinor  = 0
 rstudioVersionPatch  = 0
 rstudioVersionSuffix = 0
+rstudioBuildCommit   = ""
+
+// compute release branch by parsing the job name (env.GIT_BRANCH should work here but doesn't appear to), e.g.
+// "IDE/pro-pipeline/v4.3" => "v4.3"
+branchComponents = env.JOB_NAME.split("/")
+rstudioReleaseBranch = branchComponents[branchComponents.size() - 1]
 
 def trigger_external_build(build_name, wait = false) {
   // triggers downstream job passing along the important params from this build
@@ -158,6 +166,8 @@ def trigger_external_build(build_name, wait = false) {
                                                   string(name: 'RSTUDIO_VERSION_MINOR',  value: "${rstudioVersionMinor}"),
                                                   string(name: 'RSTUDIO_VERSION_PATCH',  value: "${rstudioVersionPatch}"),
                                                   string(name: 'RSTUDIO_VERSION_SUFFIX', value: "${rstudioVersionSuffix}"),
+                                                  string(name: 'GIT_REVISION', value: "${rstudioBuildCommit}"),
+                                                  string(name: 'BRANCH_NAME', value: "${rstudioReleaseBranch}"),
                                                   string(name: 'SLACK_CHANNEL', value: SLACK_CHANNEL)]
 }
 
@@ -173,14 +183,12 @@ try {
           [os: 'opensuse15', arch: 'x86_64', flavor: 'server',  variant: '',    package_os: 'OpenSUSE 15'],
           [os: 'centos7',    arch: 'x86_64', flavor: 'desktop', variant: '',    package_os: 'CentOS 7'],
           [os: 'centos7',    arch: 'x86_64', flavor: 'server',  variant: '',    package_os: 'CentOS 7'],
-          [os: 'xenial',     arch: 'amd64',  flavor: 'server',  variant: '',    package_os: 'Ubuntu Xenial'],
-          [os: 'xenial',     arch: 'amd64',  flavor: 'desktop', variant: '',    package_os: 'Ubuntu Xenial'],
           [os: 'bionic',     arch: 'amd64',  flavor: 'server',  variant: '',    package_os: 'Ubuntu Bionic'],
           [os: 'bionic',     arch: 'amd64',  flavor: 'desktop', variant: '',    package_os: 'Ubuntu Bionic'],
           [os: 'debian9',    arch: 'x86_64', flavor: 'server',  variant: '',    package_os: 'Debian 9'],
           [os: 'debian9',    arch: 'x86_64', flavor: 'desktop', variant: '',    package_os: 'Debian 9'],
-          [os: 'centos8',    arch: 'x86_64', flavor: 'server',  variant: '',     package_os: 'CentOS 8'],
-          [os: 'centos8',    arch: 'x86_64', flavor: 'desktop', variant: '',     package_os: 'CentOS 8']
+          [os: 'centos8',    arch: 'x86_64', flavor: 'server',  variant: '',    package_os: 'CentOS 8'],
+          [os: 'centos8',    arch: 'x86_64', flavor: 'desktop', variant: '',    package_os: 'CentOS 8']
         ]
         containers = limit_builds(containers)
 
@@ -223,7 +231,7 @@ try {
         for (int i = 0; i < containers.size(); i++) {
             // derive the tag for this image
             def current_image = containers[i]
-            def image_tag = "${current_image.os}-${current_image.arch}-${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}"
+            def image_tag = "${current_image.os}-${current_image.arch}-${rstudioReleaseBranch}"
 
             // ensure that this image tag has not already been built (since we
             // recycle tags for many platforms to e.g. build desktop and server
@@ -260,7 +268,7 @@ try {
                 docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:jenkins-aws') {
                   def image_cache
                   def image_name = "jenkins/ide"
-                  def image_tag = "windows-${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}"
+                  def image_tag = "windows-${rstudioReleaseBranch}"
                   def cache_tag = image_tag
                   def build_args = github_args
                   def docker_context = '.'
@@ -296,7 +304,7 @@ try {
                     docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:jenkins-aws') {
                         stage('prepare ws/container') {
                           prepareWorkspace()
-                          def image_tag = "${current_container.os}-${current_container.arch}-${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}"
+                          def image_tag = "${current_container.os}-${current_container.arch}-${rstudioReleaseBranch}"
                           current_image = docker.image("jenkins/ide:" + image_tag)
                         }
                         current_image.inside("--privileged") {
@@ -304,7 +312,7 @@ try {
                                 compile_package(current_container.package_os, get_type_from_os(current_container.os), current_container.flavor, current_container.variant)
                             }
                             stage('run tests') {
-                                run_tests(get_type_from_os(current_container.os), current_container.flavor, current_container.variant)
+                                run_tests(current_container.os, get_type_from_os(current_container.os), current_container.flavor)
                             }
                             stage('sentry upload') {
                                 sentry_upload(get_type_from_os(current_container.os), current_container.flavor)
@@ -323,7 +331,7 @@ try {
             stage('prepare container') {
                checkout scm
                docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:jenkins-aws') {
-                 def image_tag = "windows-${rstudioVersionMajor}.${rstudioVersionMinor}"
+                 def image_tag = "windows-${rstudioReleaseBranch}"
                  windows_image = docker.image("jenkins/ide:" + image_tag)
                }
             }
@@ -375,16 +383,13 @@ try {
         }
 
         // trigger macos build if we're in open-source repo
-        if (env.JOB_NAME == 'IDE/open-source-pipeline/master') {
-          trigger_external_build('IDE/macos-v1.4')
+        if (env.JOB_NAME.startsWith('IDE/open-source-pipeline')) {
+          trigger_external_build('IDE/macos-pipeline')
         }
 
-        else if (env.JOB_NAME == 'IDE/open-source-pipeline/v1.3') {
-          trigger_external_build('IDE/macos-v1.3')
-        }
         parallel parallel_containers
 
-        if (env.JOB_NAME == 'IDE/open-source-pipeline/master') {
+        if (env.JOB_NAME == 'IDE/open-source-pipeline/main') {
           trigger_external_build('IDE/qa-opensource-automation')
         }
 
@@ -392,15 +397,8 @@ try {
         // the pro variants
         // additionally, run qa-autotest against the version we've just built
         if (env.JOB_NAME == 'IDE/pro-pipeline/master') {
-          trigger_external_build('IDE/pro-docs-v1.4')
-          trigger_external_build('IDE/launcher-docs-v1.4')
-          trigger_external_build('IDE/pro-desktop-docs-v1.4')
           trigger_external_build('IDE/qa-autotest')
           trigger_external_build('IDE/qa-automation')
-          trigger_external_build('IDE/monitor-v1.4')
-          trigger_external_build('IDE/macos-v1.4-pro')
-          trigger_external_build('IDE/windows-v1.4-pro')
-          trigger_external_build('IDE/session-v1.4')
         }
 
         slackSend channel: params.get('SLACK_CHANNEL', '#ide-builds'), color: 'good', message: "${messagePrefix} passed (${currentBuild.result})"

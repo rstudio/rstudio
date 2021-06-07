@@ -14,39 +14,39 @@
    .host
    {
       width: 100%;
-      table-layout: fixed;
+      display: flex;
+      overflow: hidden;
+      align-items: center;
    }
-   
+
+   .host div
+   {
+      margin-left: 2px;
+      margin-right: 2px;
+   }
+
+   .progress {
+      flex: auto;
+      text-align: right;
+   }
+
    .elapsed
    {
       padding-right: 5px;
       padding-right: 5px;
    }
-   
+
    </ui:style>
-   <g:HorizontalPanel styleName="{style.host}">
-      <g:cell horizontalAlignment="ALIGN_LEFT" 
-              verticalAlignment="ALIGN_MIDDLE"
-              width="20%">
-         <g:Label styleName="{style.name}" ui:field="name_"></g:Label>
-      </g:cell>
-      <g:cell horizontalAlignment="ALIGN_RIGHT" 
-              verticalAlignment="ALIGN_MIDDLE"
-              width="70%">
-         <g:HTMLPanel styleName="{style.host}">
-            <g:Label styleName="{style.status}" ui:field="status_"></g:Label>
-            <rw:ProgressBar ui:field="progress_"></rw:ProgressBar>
-         </g:HTMLPanel>
-      </g:cell>
-      <g:cell horizontalAlignment="ALIGN_CENTER" 
-              verticalAlignment="ALIGN_MIDDLE"
-              width="5%" >
+   <g:HTMLPanel styleName="{style.host}">
+      <g:Label styleName="{style.name}" ui:field="name_"></g:Label>
+      <g:HTMLPanel styleName="{style.progress}">
+         <g:Label styleName="{style.status}" ui:field="status_"></g:Label>
+         <rw:ProgressBar ui:field="progress_"></rw:ProgressBar>
+      </g:HTMLPanel>
+      <g:HTMLPanel>
          <rw:ToolbarButton ui:field="stop_"></rw:ToolbarButton>
-      </g:cell>
-      <g:cell horizontalAlignment="ALIGN_RIGHT" 
-              verticalAlignment="ALIGN_MIDDLE"
-              width="5%">
-         <g:Label styleName="{style.elapsed}" ui:field="elapsed_"></g:Label>
-      </g:cell>
-   </g:HorizontalPanel>
-</ui:UiBinder> 
+         <rw:ToolbarButton ui:field="replay_"></rw:ToolbarButton>
+      </g:HTMLPanel>
+      <g:Label styleName="{style.elapsed}" ui:field="elapsed_"></g:Label>
+   </g:HTMLPanel>
+</ui:UiBinder>

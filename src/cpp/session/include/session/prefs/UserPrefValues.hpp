@@ -248,6 +248,7 @@ namespace prefs {
 #define kAlwaysShownFiles "always_shown_files"
 #define kAlwaysShownExtensions "always_shown_extensions"
 #define kSortFileNamesNaturally "sort_file_names_naturally"
+#define kSyncFilesPaneWorkingDir "sync_files_pane_working_dir"
 #define kJobsTabVisibility "jobs_tab_visibility"
 #define kJobsTabVisibilityClosed "closed"
 #define kJobsTabVisibilityShown "shown"
@@ -386,6 +387,7 @@ namespace prefs {
 #define kShowMemoryUsage "show_memory_usage"
 #define kMemoryQueryIntervalSeconds "memory_query_interval_seconds"
 #define kTerminalPythonIntegration "terminal_python_integration"
+#define kSessionProtocolDebug "session_protocol_debug"
 
 class UserPrefValues: public Preferences
 {
@@ -1238,6 +1240,12 @@ public:
    core::Error setSortFileNamesNaturally(bool val);
 
    /**
+    * Whether to change the directory in the Files pane automatically when the working directory in R changes.
+    */
+   bool syncFilesPaneWorkingDir();
+   core::Error setSyncFilesPaneWorkingDir(bool val);
+
+   /**
     * The visibility of the Jobs tab.
     */
    std::string jobsTabVisibility();
@@ -1710,6 +1718,12 @@ public:
     */
    bool terminalPythonIntegration();
    core::Error setTerminalPythonIntegration(bool val);
+
+   /**
+    * Enable session protocol debug logging showing all session requests and events
+    */
+   bool sessionProtocolDebug();
+   core::Error setSessionProtocolDebug(bool val);
 
 };
 

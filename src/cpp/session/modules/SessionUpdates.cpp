@@ -79,14 +79,16 @@ void beginUpdateCheck(bool manual,
 
    // Arguments
    std::vector<std::string> args;
-   args.push_back("--slave");
    args.push_back("--vanilla");
+
 #if defined(_WIN32)
    if (prefs::userPrefs().useInternet2())
    {
       args.push_back("--internet2");
    }
 #endif
+
+   args.push_back("-s");
    args.push_back("-e");
    
    // Build the command to send to R

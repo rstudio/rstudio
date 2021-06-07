@@ -789,17 +789,26 @@ public class RCompletionManager implements CompletionManager
          // Attempt to pop up completions immediately after a function call.
          if (c == '(' && !isLineInComment(docDisplay_.getCurrentLine()))
          {
-            String token = StringUtil.getToken(
-                  docDisplay_.getCurrentLine(),
-                  input_.getCursorPosition().getColumn(),
-                  "[" + RegexUtil.wordCharacter() + "._]",
-                  false,
-                  true);
-            
-            if (token.matches("^(library|require|requireNamespace|data)\\s*$"))
-               canAutoPopup = true;
-            
-            Scheduler.get().scheduleDeferred(() -> sigTipManager_.resolveActiveFunctionAndDisplayToolTip());
+            // further validate that we're not working within a string
+            // https://github.com/rstudio/rstudio/issues/8677
+            Token currentToken = docDisplay_.getTokenAt(docDisplay_.getCursorPosition());
+            if (currentToken != null && currentToken.hasType("identifier"))
+            {
+               String token = StringUtil.getToken(
+                     docDisplay_.getCurrentLine(),
+                     input_.getCursorPosition().getColumn(),
+                     "[" + RegexUtil.wordCharacter() + "._]",
+                     false,
+                     true);
+               
+               if (token.matches("^(library|require|requireNamespace|data)\\s*$"))
+                  canAutoPopup = true;
+               
+               Scheduler.get().scheduleDeferred(() -> 
+               {
+                  sigTipManager_.resolveActiveFunctionAndDisplayToolTip();
+               });
+            }
          }
          
          if (

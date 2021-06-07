@@ -507,7 +507,7 @@ bool detectRLocationsUsingR(const std::string& rScriptPath,
    // only be the case when a module is specified
    std::string rCommand = !rScriptPath.empty() ? rScriptPath : "R";
    std::string command =  rCommand +
-     " --slave --vanilla -e \"cat(paste("
+     " --vanilla -s -e \"cat(paste("
             "R.home('home'),"
             "R.home('share'),"
             "R.home('include'),"
@@ -887,7 +887,7 @@ Error rVersion(const FilePath& rHomePath,
    core::system::ProcessResult result;
 
    std::string rCommand = !rScriptPath.isEmpty() ? rScriptPath.getAbsolutePath() : "R";
-   std::string command = rCommand + " --slave --vanilla -e 'cat(R.Version()$major,R.Version()$minor, sep=\".\")'";
+   std::string command = rCommand + " --vanilla -s -e 'cat(R.Version()$major,R.Version()$minor, sep=\".\")'";
    std::string fullCommand = createSourcedCommand(prelaunchScript,
                                                   module,
                                                   moduleBinaryPath,

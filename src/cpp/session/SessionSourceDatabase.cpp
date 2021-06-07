@@ -41,6 +41,7 @@
 #include <r/RSexp.hpp>
 #include <r/RRoutines.hpp>
 #include <r/session/RSession.hpp>
+#include <r/RExec.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
@@ -1033,6 +1034,11 @@ void onRemoveAll()
 
 SEXP rs_getDocumentProperties(SEXP pathSEXP, SEXP includeContentsSEXP)
 {
+   if (!r::exec::isMainThread())
+   {
+      LOG_ERROR_MESSAGE("rs_getDocumentProperties called from non main thread");
+      return R_NilValue;
+   }
    Error error;
    FilePath path = module_context::resolveAliasedPath(r::sexp::safeAsString(pathSEXP));
    bool includeContents = r::sexp::asLogical(includeContentsSEXP);

@@ -68,6 +68,14 @@ public:
    virtual void reload() = 0;
 
    /**
+    * @brief Returns true for FileSystem loggers
+    */
+   virtual bool isFileLogger() const
+   {
+      return false;
+   }
+
+   /**
     * @brief Gets the maximum level of logs that will be written to this log destination.
     *
     * @return This log destination's maximum log level.

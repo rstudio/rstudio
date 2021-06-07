@@ -619,7 +619,7 @@ Error RCompilationDatabase::executeSourceCpp(
 
    // always run as a slave
    std::vector<std::string> args;
-   args.push_back("--slave");
+   args.push_back("-s");
 
    // for packrat projects we execute the profile and set the working
    // directory to the project directory; for other contexts we just
