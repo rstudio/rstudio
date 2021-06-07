@@ -15,7 +15,7 @@
 
 import { describe } from 'mocha';
 import { assert } from 'chai';
-import * as env from '../../src/core/environment';
+import * as env from '../../../src/core/environment';
 
 const envVarName = 'BOGUS_FAKE_ENVIRONMENT_VARIABLE_FOR_ENV_TESTS';
 const envValue = 'Value used for testing environment variables';

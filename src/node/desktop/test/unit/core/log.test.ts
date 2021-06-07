@@ -16,7 +16,7 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 
-import { FileLogOptions } from '../../src/core/log';
+import { FileLogOptions } from '../../../src/core/log';
 
 describe('Log', () => {
   describe('Constructions', () => {

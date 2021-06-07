@@ -16,9 +16,9 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 
-import * as Utils from '../../src/main/utils';
+import * as Utils from '../../../src/main/utils';
 import { app } from 'electron';
-import * as env from '../../src/core/environment';
+import * as env from '../../../src/core/environment';
 
 describe('DesktopUtils', () => {
   describe('Static helpers', () => {

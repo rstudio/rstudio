@@ -16,8 +16,8 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 
-import { getenv } from '../../src/core/environment';
-import Main from '../../src/main/main';
+import { getenv } from '../../../src/core/environment';
+import Main from '../../../src/main/main';
 
 describe('Main', () => {
   describe('Static helpers', () => {
