@@ -37,6 +37,13 @@ restore-java-home () {
    fi
 }
 
+# ensure JAVA_HOME restored on exit if necessary
+on-exit () {
+   restore-java-home
+}
+
+trap on-exit EXIT
+
 # build / install directories
 GWT_SRC_DIR="${PKG_DIR}/../../src/gwt"
 
