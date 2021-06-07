@@ -14,7 +14,7 @@
  */
 
 import { describe } from 'mocha';
-import { expect } from 'chai';
+import { assert } from 'chai';
 
 import fs from 'fs';
 import os from 'os';
@@ -26,10 +26,10 @@ import * as log from '../../src/core/log';
 describe('System', () => {
   describe('User info', () => {
     it('getUserHomePath returns a valid path', () => {
-      expect(fs.existsSync(userHomePath().getAbsolutePath())).is.true;
+      assert.isTrue(fs.existsSync(userHomePath().getAbsolutePath()));
     });
     it('username returns a non-empty string', () => {
-      expect(username().length).is.greaterThan(0);
+      assert.isNotEmpty(username());
     });
   });
   describe('Assorted helper functions', () => {
@@ -39,7 +39,7 @@ describe('System', () => {
     });
     it('initializeLog succeeds', () => {
       const err = initializeLog('rdesktop', log.LogLevel.WARN, new FilePath(os.tmpdir()));
-      expect(!!err).is.false;
+      assert.isFalse(!!err);
     });
   });
 });

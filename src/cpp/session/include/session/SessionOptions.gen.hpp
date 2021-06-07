@@ -210,16 +210,16 @@ protected:
       value<bool>(&suspendOnIncompleteStatement_)->default_value(false),
       "Specifies whether the session should be allowed to suspend when a user has entered a partial R statement.")
       (kSessionAsyncRpcEnabled,
-      value<bool>(&asyncRpcEnabled_)->default_value(false),
+      value<bool>(&asyncRpcEnabled_)->default_value(true),
       "Enables async responses to rpc requests to prevent connection logjams in the browser, allowing interrupt of busy sessions")
       (kSessionAsyncRpcTimeoutMs,
-      value<int>(&asyncRpcTimeoutMs_)->default_value(1000),
+      value<int>(&asyncRpcTimeoutMs_)->default_value(200),
       "Duration in millis before requests are converted to async - i.e. how fast will the server free up connections when it's busy")
       (kSessionHandleOfflineEnabled,
-      value<bool>(&handleOfflineEnabled_)->default_value(false),
+      value<bool>(&handleOfflineEnabled_)->default_value(true),
       "Enables offline request handling. When the R session is busy, some requests are allowed to run")
       (kSessionHandleOfflineTimeoutMs,
-      value<int>(&handleOfflineTimeoutMs_)->default_value(5000),
+      value<int>(&handleOfflineTimeoutMs_)->default_value(200),
       "Duration in millis before requests that can be handled offline are processed by the offline handler thread.");
 
    pAllow->add_options()

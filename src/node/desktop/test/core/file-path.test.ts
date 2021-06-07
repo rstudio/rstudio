@@ -57,23 +57,23 @@ describe('FilePath', () => {
       const path2 = '~/foo';
       const path3 = '/once/upon/a/time';
       const path4 = '~';
-      expect(new FilePath(path1).getAbsolutePath()).to.equal(path1);
-      expect(new FilePath(path2).getAbsolutePath()).to.equal(path2);
-      expect(new FilePath(path3).getAbsolutePath()).to.equal(path3);
-      expect(new FilePath(path4).getAbsolutePath()).to.equal(path4);
-      expect(new FilePath(path3).toString()).to.equal(path3);
+      assert.strictEqual(new FilePath(path1).getAbsolutePath(), path1);
+      assert.strictEqual(new FilePath(path2).getAbsolutePath(), path2);
+      assert.strictEqual(new FilePath(path3).getAbsolutePath(), path3);
+      assert.strictEqual(new FilePath(path4).getAbsolutePath(), path4);
+      assert.strictEqual(new FilePath(path3).toString(), path3);
     });
     it('Should create empty path when given no arguments', () => {
       const path = new FilePath();
-      expect(path.getAbsolutePath().length).to.equal(0);
-      expect(path.isEmpty());
+      assert.isEmpty(path.getAbsolutePath());
+      assert.isTrue(path.isEmpty());
     });
     it('getAbsolutePathNative should return raw path on Windows', () => {
       if (process.platform === 'win32') {
         const originalPath = 'C:\\Windows\\Was\\Here';
         const fp1 = new FilePath(originalPath);
         const native = fp1.getAbsolutePathNative();
-        expect(native).equals(originalPath);
+        assert(native === originalPath);
       }
     });
   });
@@ -82,120 +82,120 @@ describe('FilePath', () => {
     it('equals should return true if storing exact same path string', () => {
       const path1 = new FilePath('/hello/world');
       const path2 = new FilePath('/hello/world');
-      expect(path1.equals(path2)).is.true;
+      assert.isTrue(path1.equals(path2));
     });
     it('equals should return false if they are storing different path strings', () => {
       const path1 = new FilePath('/hello/world');
       const path2 = new FilePath('/hello/../hello/world');
-      expect(path1.equals(path2)).is.false;
+      assert.isFalse(path1.equals(path2));
     });
     it('equals should return true if both are empty', () => {
       const path1 = new FilePath();
       const path2 = new FilePath();
-      expect(path1.equals(path2)).is.true;
+      assert.isTrue(path1.equals(path2));
     });
     it('isWithin should handle detect simple path containment checks', () => {
       const pPath = new FilePath('/path/to');
       const aPath = new FilePath('/path/to/a');
       const bPath = new FilePath('/path/to/b');
-      expect(aPath.isWithin(pPath)).is.true;
-      expect(bPath.isWithin(pPath)).is.true;
-      expect(aPath.isWithin(bPath)).is.false;
+      assert.isTrue(aPath.isWithin(pPath));
+      assert.isTrue(bPath.isWithin(pPath));
+      assert.isFalse(aPath.isWithin(bPath));
     });
     it('isWithin should not be fooled by directory traversal', () => {
       // the first path is not inside the second even though it appears to be lexically
       const aPath = new FilePath('/path/to/a/../b');
       const bPath = new FilePath('path/to/a');
-      expect(!!aPath.isWithin(bPath)).is.false;
+      assert.isFalse(!!aPath.isWithin(bPath));
     });
     it('isWithin should not be fooled by substrings', () => {
       const cPath = new FilePath('/path/to/foo');
       const dPath = new FilePath('path/to/foobar');
-      expect(dPath.isWithin(cPath)).is;
+      assert.isFalse(dPath.isWithin(cPath));
     });
   });
 
   describe('Retrieval methods', () => {
     it('getCanonicalPathSync should return empty results for empty path', () => {
       const f = new FilePath();
-      expect(f.existsSync()).is.false;
-      expect(!!f.getAbsolutePath()).is.false;
-      expect(!!f.isEmpty()).is.true;
-      expect(!!f.isWithin(f)).is.true;
-      expect(!!f.isWithin(new FilePath('/some/path'))).is.false;
-      expect(f.getCanonicalPathSync()).is.empty;
-      expect(f.getExtension()).is.empty;
-      expect(f.getExtensionLowerCase()).is.empty;
-      expect(f.getFilename()).is.empty;
+      assert.isFalse(f.existsSync());
+      assert.isFalse(!!f.getAbsolutePath());
+      assert.isTrue(!!f.isEmpty());
+      assert.isTrue(!!f.isWithin(f));
+      assert.isFalse(!!f.isWithin(new FilePath('/some/path')));
+      assert.isEmpty(f.getCanonicalPathSync());
+      assert.isEmpty(f.getExtension());
+      assert.isEmpty(f.getExtensionLowerCase());
+      assert.isEmpty(f.getFilename());
     });
     it('getCanonicalPathSync should return a non-empty path for a path that exists', () => {
       const f = new FilePath(os.tmpdir());
-      expect(f.existsSync()).is.true;
+      assert.isTrue(f.existsSync());
       const result = f.getCanonicalPathSync();
-      expect(result).length.is.greaterThan(0);
+      assert.isNotEmpty(result);
     });
     it('getCanonicalPathSync should return an empty path for a path that doesn\'t exist', () => {
       const f = new FilePath('/some/really/bogus/path');
-      expect(f.existsSync()).is.false;
+      assert.isFalse(f.existsSync());
       const result = f.getCanonicalPathSync();
-      expect(result).length.lessThanOrEqual(0);
+      assert.isEmpty(result);
     });
     it('getCanonicalPath should return empty results for empty path', async () => {
       const f = new FilePath();
-      expect(await f.exists()).is.false;
-      expect(!!f.getAbsolutePath()).is.false;
-      expect(!!f.isEmpty()).is.true;
-      expect(!!f.isWithin(f)).is.true;
-      expect(!!f.isWithin(new FilePath('/some/path'))).is.false;
-      expect(await f.getCanonicalPath()).is.empty;
+      assert.isFalse(await f.exists());
+      assert.isFalse(!!f.getAbsolutePath());
+      assert.isTrue(!!f.isEmpty());
+      assert.isTrue(!!f.isWithin(f));
+      assert.isFalse(!!f.isWithin(new FilePath('/some/path')));
+      assert.isEmpty(await f.getCanonicalPath());
     });
     it('getCanonicalPath should return a non-empty path for a path that exists', async () => {
       const f = new FilePath(os.tmpdir());
-      expect(await f.exists()).is.true;
+      assert.isTrue(await f.exists());
       const result = await f.getCanonicalPath();
-      expect(result).length.is.greaterThan(0);
+      assert.isNotEmpty(result);
     });
     it('getCanonicalPath should return an empty path for a path that doesn\'t exist', async () => {
       const f = new FilePath('/some/really/bogus/path');
-      expect(await f.exists()).is.false;
+      assert.isFalse(await f.exists());
       const result = await f.getCanonicalPath();
-      expect(result).length.lessThanOrEqual(0);
+      assert.isEmpty(result);
     });
     it('getExtension should return the extension including leading period', () => {
       const f = new FilePath('/some/stuff/hello.tXt');
-      expect(f.getExtension()).equals('.tXt');
+      assert.strictEqual(f.getExtension(), '.tXt');
     });
     it('getExtension should return no extension for extension-only filename', () => {
       const f = new FilePath('/some/stuff/.foo');
-      expect(f.getExtension()).is.empty;
+      assert.isEmpty(f.getExtension());
     });
     it('getExtension should return blank extension for file without extension', () => {
       const f = new FilePath('/some/stuff/hello');
-      expect(f.getExtension()).is.empty;
+      assert.isEmpty(f.getExtension());
     });
     it('getExtensionLowerCase should return the extension in lowercase', () => {
       const f = new FilePath('/some/stuff/hello.tXt');
-      expect(f.getExtensionLowerCase()).equals('.txt');
+      assert.strictEqual(f.getExtensionLowerCase(), '.txt');
     });
     it('getExtensionLowerCase should return blank extension for file without extension', () => {
       const f = new FilePath('/some/stuff/hello');
-      expect(f.getExtension()).is.empty;
+      assert.isEmpty(f.getExtension());
     });
     it('getFilename should return filename including extension', () => {
       const f = new FilePath('/etc/foo/hello.txt.world');
-      expect(f.getFilename()).equals('hello.txt.world');
+      assert.strictEqual(f.getFilename(), 'hello.txt.world');
     });
     it('getFilename should return filename when there is no extension', () => {
       const f = new FilePath('/etc/foo/hello');
-      expect(f.getFilename()).equals('hello');
+      assert.strictEqual(f.getFilename(), 'hello');
     });
     it('getFilename should return filename for extension-only filename', () => {
       const f = new FilePath('/etc/foo/.hello');
-      expect(f.getFilename()).equals('.hello');
+      assert.strictEqual(f.getFilename(), '.hello');
     });
     it('getLastWriteTimeSync should return zero for non-existent file', () => {
       const f = new FilePath('/some/file/that/will/not/exist');
-      expect(f.getLastWriteTimeSync()).equals(0);
+      assert.strictEqual(f.getLastWriteTimeSync(), 0);
     });
   });
 
@@ -204,8 +204,8 @@ describe('FilePath', () => {
       const cwd = new FilePath(process.cwd());
       const rootPath = new FilePath('/');
       const currentPath = FilePath.safeCurrentPathSync(rootPath);
-      expect(currentPath.getAbsolutePath()).to.equal(cwd.getAbsolutePath());
-      expect(realpathSync(cwd.getAbsolutePath())).to.equal(realpathSync(process.cwd()));
+      assert.strictEqual(currentPath.getAbsolutePath(), cwd.getAbsolutePath());
+      assert.strictEqual(realpathSync(cwd.getAbsolutePath()), realpathSync(process.cwd()));
     });
     it('safeCurrentPathSync should change to supplied safe path if it exists if cwd doesn\'t exist', () => {
       const origDir = new FilePath(process.cwd());
@@ -223,15 +223,15 @@ describe('FilePath', () => {
       catch (error) {
         // On Windows, trying to remove current-working-directory may fail so can't 
         // execute rest of this test case; cleanup and exit
-        expect(process.platform === 'win32').is.true;
-        expect(() => process.chdir(origDir.getAbsolutePath())).to.not.throw();
-        expect(() => fs.rmdirSync(testDir)).to.not.throw();
+        assert.isTrue(process.platform === 'win32');
+        assert.doesNotThrow(() => process.chdir(origDir.getAbsolutePath()));
+        assert.doesNotThrow(() => fs.rmdirSync(testDir));
         return;
       }
 
       const currentPath = FilePath.safeCurrentPathSync(origDir);
-      expect(realpathSync(origDir.getAbsolutePath())).to.equal(realpathSync(process.cwd()));
-      expect(realpathSync(currentPath.getAbsolutePath())).to.equal(realpathSync(process.cwd()));
+      assert.strictEqual(realpathSync(origDir.getAbsolutePath()), realpathSync(process.cwd()));
+      assert.strictEqual(realpathSync(currentPath.getAbsolutePath()), realpathSync(process.cwd()));
     });
     it('safeCurrentPathSync should change to home folder when both cwd and revert paths don\'t exist', () => {
       const origDir = new FilePath(process.cwd());
@@ -249,21 +249,21 @@ describe('FilePath', () => {
       catch (error) {
         // On Windows, trying to remove current-working-directory may fail so can't 
         // execute rest of this test case; cleanup and exit
-        expect(process.platform === 'win32').is.true;
-        expect(() => process.chdir(origDir.getAbsolutePath())).to.not.throw();
-        expect(() => fs.rmdirSync(testDir)).to.not.throw();
+        assert.isTrue(process.platform === 'win32');
+        assert.doesNotThrow(() => process.chdir(origDir.getAbsolutePath()));
+        assert.doesNotThrow(() => fs.rmdirSync(testDir));
         return;
       }
 
       const currentPath = FilePath.safeCurrentPathSync(new FilePath(bogusPath));
-      expect(realpathSync(currentPath.getAbsolutePath())).to.equal(realpathSync(os.homedir()));
+      assert.strictEqual(realpathSync(currentPath.getAbsolutePath()), realpathSync(os.homedir()));
     });
     it('safeCurrentPath should return current working directory if it exists', async () => {
       const cwd = new FilePath(process.cwd());
       const rootPath = new FilePath('/');
       const currentPath = await FilePath.safeCurrentPath(rootPath);
-      expect(currentPath.getAbsolutePath()).to.equal(cwd.getAbsolutePath());
-      expect(await realpath(cwd.getAbsolutePath())).to.equal(await realpath(process.cwd()));
+      assert.strictEqual(currentPath.getAbsolutePath(), cwd.getAbsolutePath());
+      assert.strictEqual(await realpath(cwd.getAbsolutePath()), await realpath(process.cwd()));
     });
     it('safeCurrentPath should change to supplied safe path if it exists if cwd doesn\'t exist', async () => {
       const origDir = new FilePath(process.cwd());
@@ -281,15 +281,15 @@ describe('FilePath', () => {
       catch (error) {
         // On Windows, trying to remove current-working-directory may fail so can't 
         // execute rest of this test case; cleanup and exit
-        expect(process.platform === 'win32').is.true;
-        expect(() => process.chdir(origDir.getAbsolutePath())).to.not.throw();
-        expect(() => fs.rmdirSync(testDir)).to.not.throw();
+        assert.isTrue(process.platform === 'win32');
+        assert.doesNotThrow(() => process.chdir(origDir.getAbsolutePath()));
+        assert.doesNotThrow(() => fs.rmdirSync(testDir));
         return;
       }
 
       const currentPath = await FilePath.safeCurrentPath(origDir);
-      expect(await realpath(origDir.getAbsolutePath())).to.equal(await realpath(process.cwd()));
-      expect(await realpath(currentPath.getAbsolutePath())).to.equal(await realpath(process.cwd()));
+      assert.strictEqual(await realpath(origDir.getAbsolutePath()), await realpath(process.cwd()));
+      assert.strictEqual(await realpath(currentPath.getAbsolutePath()), await realpath(process.cwd()));
     });
     it('safeCurrentPath should change to home folder when both cwd and revert paths don\'t exist', async () => {
       const origDir = new FilePath(process.cwd());
@@ -307,56 +307,56 @@ describe('FilePath', () => {
       catch (error) {
         // On Windows, trying to remove current-working-directory may fail so can't 
         // execute rest of this test case; cleanup and exit
-        expect(process.platform === 'win32').is.true;
-        expect(() => process.chdir(origDir.getAbsolutePath())).to.not.throw();
-        expect(() => fs.rmdirSync(testDir)).to.not.throw();
+        assert.isTrue(process.platform === 'win32');
+        assert.doesNotThrow(() => process.chdir(origDir.getAbsolutePath()));
+        assert.doesNotThrow(() => fs.rmdirSync(testDir));
         return;
       }
 
       const currentPath = await FilePath.safeCurrentPath(new FilePath(bogusPath));
-      expect(await realpath(currentPath.getAbsolutePath())).to.equal(await realpath(os.homedir()));
+      assert.strictEqual(await realpath(currentPath.getAbsolutePath()), await realpath(os.homedir()));
     });
   });
 
   describe('Path existence checks', () => {
     it('isEmpty should detect if this object\'s path is empty', () => {
-      expect(new FilePath().isEmpty()).is.true;
+      assert.isTrue(new FilePath().isEmpty());
     });
     it('existsSync should detect when object\'s path exists', () => {
-      expect(new FilePath(os.tmpdir()).existsSync()).is.true;
+      assert.isTrue(new FilePath(os.tmpdir()).existsSync());
     });
     it('existsSync should return false for empty path', () => {
-      expect(new FilePath('').existsSync()).is.false;
+      assert.isFalse(new FilePath('').existsSync());
     });
     it('existsSync should detect when object\'s path doesn\'t exist', () => {
-      expect(new FilePath(bogusPath).existsSync()).is.false;
+      assert.isFalse(new FilePath(bogusPath).existsSync());
     });
     it('existsSync should detect when a supplied path exists', () => {
-      expect(FilePath.existsSync(os.tmpdir())).is.true;
+      assert.isTrue(FilePath.existsSync(os.tmpdir()));
     });
     it('existsSync should detect when a supplied path doesn\'t exist', () => {
-      expect(FilePath.existsSync(bogusPath)).is.false;
+      assert.isFalse(FilePath.existsSync(bogusPath));
     });
     it('existsSync should return false for existence of a null path', () => {
-      expect(new FilePath().existsSync()).is.false;
+      assert.isFalse(new FilePath().existsSync());
     });
     it('exists should return false for empty path', async () => {
-      expect(await new FilePath().exists()).is.false;
+      assert.isFalse(await new FilePath().exists());
     });
     it('exists should detect when object\'s path exists', async () => {
-      expect(await new FilePath(os.tmpdir()).exists()).is.true;
+      assert.isTrue(await new FilePath(os.tmpdir()).exists());
     });
     it('exists should detect when object\'s path doesn\'t exist', async () => {
-      expect(await new FilePath(bogusPath).exists()).is.false;
+      assert.isFalse(await new FilePath(bogusPath).exists());
     });
     it('exists should detect when a supplied path exists', async () => {
-      expect(await FilePath.exists(os.tmpdir())).is.true;
+      assert.isTrue(await FilePath.exists(os.tmpdir()));
     });
     it('exists should detect when a supplied path doesn\'t exist', async () => {
-      expect(await FilePath.exists(bogusPath)).is.false;
+      assert.isFalse(await FilePath.exists(bogusPath));
     });
     it('exists should return false for existence of a null path', async () => {
-      expect(await new FilePath().exists()).is.false;
+      assert.isFalse(await new FilePath().exists());
     });
   });
 
@@ -365,35 +365,35 @@ describe('FilePath', () => {
       const target = path.join(os.tmpdir(), randomString());
       const fp = new FilePath(target);
       const result = fp.createDirectorySync();
-      expect(!!result).is.false;
-      expect(fp.existsSync()).is.true;
+      assert.isFalse(!!result);
+      assert.isTrue(fp.existsSync());
       fs.rmdirSync(target);
     });
     it('createDirectorySync should succeed if directory in FilePath already exists', () => {
       const target = path.join(os.tmpdir(), randomString());
       const fp = new FilePath(target);
       let result = fp.createDirectorySync();
-      expect(fp.existsSync()).is.true;
+      assert.isTrue(fp.existsSync());
       result = fp.createDirectorySync();
-      expect(!!result).is.false;
-      expect(fp.existsSync()).is.true;
+      assert.isFalse(!!result);
+      assert.isTrue(fp.existsSync());
       fs.rmdirSync(target);
     });
     it('createDirectorySync should create directory relative to path in FilePath', () => {
       const target = randomString();
       const fp = new FilePath(os.tmpdir());
       const result = fp.createDirectorySync(target);
-      expect(!!result).is.false;
+      assert.isFalse(!!result);
       const newPath = path.join(os.tmpdir(), target);
-      expect(fs.existsSync(newPath)).is.true;
+      assert.isTrue(fs.existsSync(newPath));
       fs.rmdirSync(newPath);
     });
     it('createDirectorySync should recursively create directories', () => {
       const target = path.join(os.tmpdir(), randomString(), randomString());
       const fp = new FilePath(target);
       const result = fp.createDirectorySync();
-      expect(!!result).is.false;
-      expect(fp.existsSync()).is.true;
+      assert.isFalse(!!result);
+      assert.isTrue(fp.existsSync());
       fs.rmdirSync(target);
     });
     it('createDirectorySync should recursively create directories relative to path in FilePath', () => {
@@ -402,56 +402,56 @@ describe('FilePath', () => {
       const target = path.join(os.tmpdir(), firstLevel, randomString());
       const fp = new FilePath(target);
       const result = fp.createDirectorySync(extraFolder);
-      expect(!!result).is.false;
+      assert.isFalse(!!result);
       const newPath = path.join(target, extraFolder);
-      expect(fs.existsSync(newPath)).is.true;
+      assert.isTrue(fs.existsSync(newPath));
       fs.rmdirSync(path.join(os.tmpdir(), firstLevel), { recursive: true });
     });
     it('createDirectorySync should fail when it cannot create the directory', () => {
       const fp = new FilePath(cannotCreatePath);
-      expect(fp.existsSync()).is.false;
+      assert.isFalse(fp.existsSync());
       let result = fp.createDirectorySync('');
-      expect(!!result).is.true;
+      assert.isTrue(!!result);
       result = fp.createDirectorySync('stuff');
-      expect(!!result).is.true;
+      assert.isTrue(!!result);
     });
     it('createDirectorySync should ignore base when given an absolute path', () => {
       const fp = new FilePath(cannotCreatePath);
-      expect(fp.existsSync()).is.false;
+      assert.isFalse(fp.existsSync());
       const target = path.join(os.tmpdir(), randomString());
       const result = fp.createDirectorySync(target);
-      expect(!!result).is.false;
-      expect(fs.existsSync(target));
+      assert.isFalse(!!result);
+      assert.isTrue(fs.existsSync(target));
       fs.rmdirSync(target);
     });
     it('ensureDirectorySync should return success when asked to ensure existing directory exists', () => {
       const existingFolder = new FilePath(os.homedir());
-      expect(existingFolder.existsSync()).is.true;
+      assert.isTrue(existingFolder.existsSync());
       const result = existingFolder.ensureDirectorySync();
-      expect(!!result).is.false;
+      assert.isFalse(!!result);
     });
     it('ensureDirectorySync should create directory when asked to ensure it exists', () => {
       const newFolder = path.join(os.tmpdir(), randomString());
       const newFilePath = new FilePath(newFolder);
-      expect(fs.existsSync(newFolder)).is.false;
+      assert.isFalse(fs.existsSync(newFolder));
       const result = newFilePath.ensureDirectorySync();
-      expect(!!result).is.false;
-      expect(fs.existsSync(newFolder)).is.true;
+      assert.isFalse(!!result);
+      assert.isTrue(fs.existsSync(newFolder));
       fs.rmdirSync(newFolder);
     });
     it('ensureDirectory should return success when asked to ensure existing directory exists', async () => {
       const existingFolder = new FilePath(os.homedir());
-      expect(await existingFolder.exists()).is.true;
+      assert.isTrue(await existingFolder.exists());
       const result = await existingFolder.ensureDirectory();
-      expect(!!result).is.false;
+      assert.isFalse(!!result);
     });
     it('ensureDirectory should create directory when asked to ensure it exists', async () => {
       const newFolder = path.join(os.tmpdir(), randomString());
       const newFilePath = new FilePath(newFolder);
-      expect(await FilePath.exists(newFolder)).is.false;
+      assert.isFalse(await FilePath.exists(newFolder));
       const result = await newFilePath.ensureDirectory();
-      expect(!!result).is.false;
-      expect(await FilePath.exists(newFolder)).is.true;
+      assert.isFalse(!!result);
+      assert.isTrue(await FilePath.exists(newFolder));
       await fsPromises.rmdir(newFolder);
     });
   });
@@ -461,35 +461,35 @@ describe('FilePath', () => {
       const target = path.join(os.tmpdir(), randomString());
       const fp = new FilePath(target);
       const result = await fp.createDirectory();
-      expect(!!result).is.false;
-      expect(await fp.exists()).is.true;
+      assert.isFalse(!!result);
+      assert.isTrue(await fp.exists());
       await fsPromises.rmdir(target);
     });
     it('createDirectory should succeed if directory in FilePath already exists', async () => {
       const target = path.join(os.tmpdir(), randomString());
       const fp = new FilePath(target);
       let result = await fp.createDirectory();
-      expect(await fp.exists()).is.true;
+      assert.isTrue(await fp.exists());
       result = await fp.createDirectory();
-      expect(!!result).is.false;
-      expect(await fp.exists()).is.true;
+      assert.isFalse(!!result);
+      assert.isTrue(await fp.exists());
       await fsPromises.rmdir(target);
     });
     it('createDirectory should create directory relative to path in FilePath', async () => {
       const target = randomString();
       const fp = new FilePath(os.tmpdir());
       const result = await fp.createDirectory(target);
-      expect(!!result).is.false;
+      assert.isFalse(!!result);
       const newPath = path.join(os.tmpdir(), target);
-      expect(await FilePath.exists(newPath)).is.true;
+      assert.isTrue(await FilePath.exists(newPath));
       await fsPromises.rmdir(newPath);
     });
     it('createDirectory should recursively create directories', async () => {
       const target = path.join(os.tmpdir(), randomString(), randomString());
       const fp = new FilePath(target);
       const result = await fp.createDirectory();
-      expect(!!result).is.false;
-      expect(await fp.exists()).is.true;
+      assert.isFalse(!!result);
+      assert.isTrue(await fp.exists());
       await fsPromises.rmdir(target);
     });
     it('createDirectory should recursively create directories relative to path in FilePath', async () => {
@@ -498,24 +498,24 @@ describe('FilePath', () => {
       const target = path.join(os.tmpdir(), firstLevel, randomString());
       const fp = new FilePath(target);
       const result = await fp.createDirectory(extraFolder);
-      expect(!!result).is.false;
+      assert.isFalse(!!result);
       const newPath = path.join(target, extraFolder);
-      expect(await FilePath.exists(newPath)).is.true;
+      assert.isTrue(await FilePath.exists(newPath));
       await fsPromises.rmdir(path.join(os.tmpdir(), firstLevel), { recursive: true });
     });
     it('createDirectory should fail when it cannot create the directory', async () => {
       const fp = new FilePath(cannotCreatePath);
       let result = await fp.createDirectory('');
-      expect(!!result).is.true;
+      assert.isTrue(!!result);
       result = await fp.createDirectory('stuff');
-      expect(!!result).is.true;
+      assert.isTrue(!!result);
     });
     it('createDirectory should ignore base when given an absolute path', async () => {
       const fp = new FilePath(cannotCreatePath);
       const target = path.join(os.tmpdir(), randomString());
       const result = await fp.createDirectory(target);
-      expect(!!result).is.false;
-      expect(await FilePath.exists(target));
+      assert.isFalse(!!result);
+      assert.isTrue(await FilePath.exists(target));
       await fsPromises.rmdir(target);
     });
   });
@@ -527,8 +527,8 @@ describe('FilePath', () => {
       fs.mkdirSync(newFolder);
       const newFilePath = new FilePath(newFolder);
       const result = newFilePath.makeCurrentPath();
-      expect(!!result).is.false;
-      expect(realpathSync(process.cwd())).equals(realpathSync(newFolder));
+      assert.isFalse(!!result);
+      assert.strictEqual(realpathSync(process.cwd()), realpathSync(newFolder));
       process.chdir(cwd.getAbsolutePath());
       fs.rmdirSync(newFolder);
     });
@@ -536,19 +536,19 @@ describe('FilePath', () => {
       const cwd = process.cwd();
       const newFolder = path.join(os.tmpdir(), randomString());
       const f1 = new FilePath(newFolder);
-      expect(fs.existsSync(newFolder)).is.false;
+      assert.isFalse(fs.existsSync(newFolder));
       const result = f1.makeCurrentPath();
-      expect(!!result).is.true;
-      expect(process.cwd()).equals(cwd);
+      assert.isTrue(!!result);
+      assert.strictEqual(process.cwd(), cwd);
     });
     it('makeCurrentPath with autocreate should create and change cwd to non-existent folder', () => {
       const origCwd = process.cwd();
       const newFolder = path.join(os.tmpdir(), randomString());
       const f1 = new FilePath(newFolder);
-      expect(fs.existsSync(newFolder)).is.false;
+      assert.isFalse(fs.existsSync(newFolder));
       const result = f1.makeCurrentPath(true);
-      expect(!!result).is.false;
-      expect(realpathSync(process.cwd())).equals(realpathSync(newFolder));
+      assert.isFalse(!!result);
+      assert.strictEqual(realpathSync(process.cwd()), realpathSync(newFolder));
       process.chdir(origCwd);
       fs.rmdirSync(newFolder);
     });
@@ -558,36 +558,36 @@ describe('FilePath', () => {
     it('resolveAliasedPathSync should return home if empty path provided', () => {
       const home = User.getUserHomePath();
       const result = FilePath.resolveAliasedPathSync('', home);
-      expect(result.getAbsolutePath()).equals(home.getAbsolutePath());
+      assert.strictEqual(result.getAbsolutePath(), home.getAbsolutePath());
     });
     it('resolveAliasedPathSync should resolve \'~\' as home', () => {
       const home = User.getUserHomePath();
       const result = FilePath.resolveAliasedPathSync('~', home);
-      expect(result.getAbsolutePath()).equals(home.getAbsolutePath());
+      assert.strictEqual(result.getAbsolutePath(), home.getAbsolutePath());
     });
     it('resolveAliasedPathSync should replace \'~\' in path', () => {
       const start = '~/foo/bar';
       const result = FilePath.resolveAliasedPathSync(start, User.getUserHomePath());
       const resultStr = result.getAbsolutePath();
-      expect(resultStr.length).is.greaterThanOrEqual(start.length);
-      expect(resultStr.charAt(0)).is.not.equals('~');
-      expect(resultStr.lastIndexOf('/foo/bar')).is.greaterThan(-1);
+      assert.isAtLeast(resultStr.length, start.length);
+      assert.notEqual(resultStr.charAt(0), '~');
+      assert.isAbove(resultStr.lastIndexOf('/foo/bar'), -1);
     });
     it('completePath should return absolute path as-is ignoring base', () => {
       const f1 = User.getUserHomePath();
       const result = f1.completePath(absolutePath);
-      expect(result.getAbsolutePath()).equals(absolutePath);
+      assert.strictEqual(result.getAbsolutePath(), absolutePath);
     });
     it('completePath should resolve relative path to cwd when no base', () => {
       const f1 = new FilePath();
       const result = f1.completePath('some/path');
       const expected = new FilePath(path.join(process.cwd(), 'some/path'));
-      expect(result.getAbsolutePath()).equals(expected.getAbsolutePath());
+      assert.strictEqual(result.getAbsolutePath(), expected.getAbsolutePath());
     });
     it('completeChildPath should return same path when no child provided', () => {
       const aPath = new FilePath('/path/to/a');
       const result = aPath.completeChildPath('');
-      expect(result.equals(aPath)).is.true;
+      assert.isTrue(result.equals(aPath));
     });
     it('completeChildPath should correctly handle a simple request', () => {
       const aPathStr = process.platform === 'win32' ? 'C:\\path\\to\\a' : '/path/to/a';
@@ -596,12 +596,12 @@ describe('FilePath', () => {
       const bPath = new FilePath(bPathStr);
       const result = aPath.completeChildPath('b');
       console.log(`result of completeChildPath is ${result.getAbsolutePath()}`);
-      expect(result.equals(bPath)).is.true;
+      assert.isTrue(result.equals(bPath));
     });
     it('completeChildPath should not complete a path outside and instead return original path', () => {
       const cPath = new FilePath('/path/to/foo');
-      expect(cPath.completeChildPath('../bar').equals(cPath)).is.true;
-      expect(cPath.completeChildPath('/path/to/quux').equals(cPath));
+      assert.strictEqual(cPath.completeChildPath('../bar'), cPath);
+      assert.strictEqual(cPath.completeChildPath('/path/to/quux'), cPath);
     });
   });
 
@@ -648,48 +648,49 @@ describe('FilePath', () => {
     it('sync methods should throw exception', () => {
       const fp1 = new FilePath();
       const fp2 = new FilePath();
-      expect(() => FilePath.isEqualCaseInsensitive(fp1, fp2)).to.throw();
-      expect(() => FilePath.isRootPath('/')).to.throw();
-      expect(() =>FilePath.makeCurrent('/')).to.throw();
-      expect(() => FilePath.tempFilePath()).to.throw();
-      expect(() => FilePath.uniqueFilePath('/')).to.throw();
+      assert.throws(() => FilePath.createAliasedPath(fp1, fp2));
+      assert.throws(() => FilePath.isEqualCaseInsensitive(fp1, fp2));
+      assert.throws(() => FilePath.isRootPath('/'));
+      assert.throws(() =>FilePath.makeCurrent('/'));
+      assert.throws(() => FilePath.tempFilePath());
+      assert.throws(() => FilePath.uniqueFilePath('/'));
       if (process.platform === 'win32') {
-        expect(() => fp1.changeFileMode('')).to.not.throw();
+        assert.doesNotThrow(() => fp1.changeFileMode(''));
       } else {
-        expect(() => fp1.changeFileMode('')).to.throw();
+        assert.throws(() => fp1.changeFileMode(''));
       }
-      expect(() => fp1.copy(fp2)).to.throw();
-      expect(() => fp1.copyDirectoryRecursive(fp2)).to.throw();
-      expect(() => fp1.ensureFile()).to.throw();
-      expect(() => fp1.getChildren(new Array<FilePath>())).to.throw();
-      expect(() => fp1.getChildrenRecursive()).to.throw();
-      expect(() => fp1.getFileMode()).to.throw();
-      expect(() => fp1.getMimeContentType()).to.throw();
-      expect(() => fp1.getParent()).to.throw();
-      expect(() => fp1.getRelativePath(fp2)).to.throw();
-      expect(() => fp1.getSize()).to.throw();
-      expect(() => fp1.getSizeRecursive()).to.throw();
-      expect(() => fp1.getStem()).to.throw();
-      expect(() => fp1.hasExtension('.txt')).to.throw();
-      expect(() => fp1.hasExtensionLowerCase('.txt')).to.throw();
-      expect(() => fp1.hasTextMimeType()).to.throw();
-      expect(() => fp1.isDirectory()).to.throw();
-      expect(() => fp1.isEquivalentTo(fp2)).to.throw();
-      expect(() => fp1.isHidden()).to.throw();
-      expect(() => fp1.isJunction()).to.throw();
-      expect(() => fp1.isReadable()).to.throw();
-      expect(() => fp1.isRegularFile()).to.throw();
-      expect(() => fp1.isSymlink()).to.throw();
-      expect(() => fp1.move()).to.throw();
-      expect(() => fp1.moveIndirect(fp2)).to.throw();
-      expect(() => fp1.openForRead()).to.throw();
-      expect(() => fp1.openForWrite()).to.throw();
-      expect(() => fp1.remove()).to.throw();
-      expect(() => fp1.removeIfExists()).to.throw();
-      expect(() => fp1.resetDirectory()).to.throw();
-      expect(() => fp1.resolveSymlink()).to.throw();
-      expect(() => fp1.setLastWriteTime()).to.throw();
-      expect(() => fp1.testWritePermissions()).to.throw();
+      assert.throws(() => fp1.copy(fp2));
+      assert.throws(() => fp1.copyDirectoryRecursive(fp2));
+      assert.throws(() => fp1.ensureFile());
+      assert.throws(() => fp1.getChildren(new Array<FilePath>()));
+      assert.throws(() => fp1.getChildrenRecursive());
+      assert.throws(() => fp1.getFileMode());
+      assert.throws(() => fp1.getMimeContentType());
+      assert.throws(() => fp1.getParent());
+      assert.throws(() => fp1.getRelativePath(fp2));
+      assert.throws(() => fp1.getSize());
+      assert.throws(() => fp1.getSizeRecursive());
+      assert.throws(() => fp1.getStem());
+      assert.throws(() => fp1.hasExtension('.txt'));
+      assert.throws(() => fp1.hasExtensionLowerCase('.txt'));
+      assert.throws(() => fp1.hasTextMimeType());
+      assert.throws(() => fp1.isDirectory());
+      assert.throws(() => fp1.isEquivalentTo(fp2));
+      assert.throws(() => fp1.isHidden());
+      assert.throws(() => fp1.isJunction());
+      assert.throws(() => fp1.isReadable());
+      assert.throws(() => fp1.isRegularFile());
+      assert.throws(() => fp1.isSymlink());
+      assert.throws(() => fp1.move());
+      assert.throws(() => fp1.moveIndirect(fp2));
+      assert.throws(() => fp1.openForRead());
+      assert.throws(() => fp1.openForWrite());
+      assert.throws(() => fp1.remove());
+      assert.throws(() => fp1.removeIfExists());
+      assert.throws(() => fp1.resetDirectory());
+      assert.throws(() => fp1.resolveSymlink());
+      assert.throws(() => fp1.setLastWriteTime());
+      assert.throws(() => fp1.testWritePermissions());
     });
   });
 });

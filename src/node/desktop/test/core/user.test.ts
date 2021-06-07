@@ -14,7 +14,7 @@
  */
 
 import { describe } from 'mocha';
-import { expect } from 'chai';
+import { assert } from 'chai';
 
 import fs from 'fs';
 
@@ -24,7 +24,7 @@ describe('User', () => {
   describe('Static helpers', () => {
     it('getUserHomePath returns a valid path', () => {
       const path = User.getUserHomePath();
-      expect(fs.existsSync(path.getAbsolutePath())).is.true;
+      assert.isTrue(fs.existsSync(path.getAbsolutePath()));
     });
   });
 });
