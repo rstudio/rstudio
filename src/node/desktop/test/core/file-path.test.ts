@@ -14,7 +14,7 @@
  */
 
 import { describe } from 'mocha';
-import { expect } from 'chai';
+import { assert, expect } from 'chai';
 
 import fs from 'fs';
 import fsPromises from 'fs/promises';
@@ -611,14 +611,35 @@ describe('FilePath', () => {
       const path = new FilePath('/Users/user/path/to/project');
       const home = new FilePath('/Users/user');
       const aliasedPath = FilePath.createAliasedPath(path, home);
-      expect(aliasedPath).to.equal('~/path/to/project');
+      assert(aliasedPath === '~/path/to/project');
     });
 
     it('Paths are aliased correctly, even with trailing slashes', () => {
       const path = new FilePath('/Users/user/path/to/project');
       const home = new FilePath('/Users/user/');
       const aliasedPath = FilePath.createAliasedPath(path, home);
-      expect(aliasedPath).to.equal('~/path/to/project');
+      assert(aliasedPath === '~/path/to/project');
+    });
+
+    it('Paths with differing slashes are aliased correctly', () => {
+      const path = new FilePath('//server/home/user/path/to/project');
+      const home = new FilePath('\\\\server\\home\\user');
+      const aliasedPath = FilePath.createAliasedPath(path, home);
+      assert(aliasedPath === '~/path/to/project');
+    });
+
+    it('DOS paths are handled', () => {
+      const path = new FilePath('C:/Users/user/path/to/project');
+      const home = new FilePath('C:\\Users\\user');
+      const aliasedPath = FilePath.createAliasedPath(path, home);
+      assert(aliasedPath === '~/path/to/project');
+    });
+
+    it('Original path returned is aliasing fails', () => {
+      const path = new FilePath('/home/other/path/to/project');
+      const home = new FilePath('/home/user');
+      const aliasedPath = FilePath.createAliasedPath(path, home);
+      assert(new FilePath(aliasedPath).getAbsolutePath() === path.getAbsolutePath());
     });
 
   });

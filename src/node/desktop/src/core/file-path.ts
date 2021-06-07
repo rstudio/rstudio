@@ -98,7 +98,7 @@ export class FilePath {
     }
 
     // we computed a relative path; prefix it with tilde
-    const aliased = homePathAlias + relative;
+    const aliased = path.join(homePathLeafAlias, relative);
     return normalizeSeparators(aliased);
 
   }
