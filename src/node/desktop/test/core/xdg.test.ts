@@ -184,7 +184,17 @@ describe('Xdg', () => {
   describe('Misc helpers', () => {
     it('SHGetKnownFolderPath returns a string', () => {
       if (process.platform === 'win32') {
-        // TODO, actually check results?
+        const user = os.userInfo().username
+        const expectedLocalAppData = `C:\\Users\\${user}\\AppData\\Local`;
+        const expectedProgramData = 'C:\\ProgramData';
+        const expectedRoamingAppData = `C:\\Users\\${user}\\AppData\\Roaming`;
+        
+        var result = SHGetKnownFolderPath(WinFolderID.FOLDERID_LocalAppData);
+        assert.strictEqual(result, expectedLocalAppData);
+        result = SHGetKnownFolderPath(WinFolderID.FOLDERID_ProgramData);
+        assert.strictEqual(result, expectedProgramData);
+        result = SHGetKnownFolderPath(WinFolderID.FOLDERID_RoamingAppData);
+        assert.strictEqual(result, expectedRoamingAppData);
       } else {
         const result = SHGetKnownFolderPath(WinFolderID.FOLDERID_LocalAppData);
         assert.strictEqual(result, '');
