@@ -181,6 +181,7 @@
 #include "modules/rmarkdown/SessionRMarkdown.hpp"
 #include "modules/rmarkdown/SessionRmdNotebook.hpp"
 #include "modules/rmarkdown/SessionBookdown.hpp"
+#include "modules/quarto/SessionQuarto.hpp"
 #include "modules/shiny/SessionShiny.hpp"
 #include "modules/sql/SessionSql.hpp"
 #include "modules/stan/SessionStan.hpp"
@@ -559,6 +560,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::cran_mirrors::initialize)
       (modules::profiler::initialize)
       (modules::viewer::initialize)
+      (modules::quarto::initialize)
       (modules::rmarkdown::initialize)
       (modules::rmarkdown::notebook::initialize)
       (modules::rmarkdown::templates::initialize)

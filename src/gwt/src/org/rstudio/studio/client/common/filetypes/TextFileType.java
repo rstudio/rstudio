@@ -211,7 +211,8 @@ public class TextFileType extends EditableFileType
    
    public boolean isRmd()
    {
-      return FileTypeRegistry.RMARKDOWN.getTypeId().equals(getTypeId());
+      return FileTypeRegistry.RMARKDOWN.getTypeId().equals(getTypeId()) ||
+             isQuartoMarkdown();
    }
    
    public boolean isRhtml()
@@ -244,7 +245,13 @@ public class TextFileType extends EditableFileType
    public boolean isMarkdown()
    {
       return FileTypeRegistry.RMARKDOWN.getTypeId().equals(getTypeId()) ||
+             isQuartoMarkdown() ||
              FileTypeRegistry.MARKDOWN.getTypeId().equals(getTypeId());
+   }
+   
+   public boolean isQuartoMarkdown()
+   {
+      return FileTypeRegistry.QUARTO.getTypeId().equals(getTypeId());
    }
    
    public boolean isPlainMarkdown()
@@ -387,9 +394,14 @@ public class TextFileType extends EditableFileType
          results.add(commands.notebookExpandAllOutput());
          results.add(commands.executeSetupChunk());
       }
+    
       if (canKnitToHTML() || canCompileNotebook())
       {
          results.add(commands.knitDocument());
+      }
+      if (canKnitToHTML())
+      {
+         results.add(commands.quartoRenderDocument());
       }
       if (canPreviewHTML())
       {

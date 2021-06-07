@@ -516,6 +516,7 @@ public class TextEditingTarget implements
       presentationHelper_ = new TextEditingTargetPresentationHelper(
                                                                   docDisplay_);
       rHelper_ = new TextEditingTargetRHelper(docDisplay_);
+      quartoHelper_ = new TextEditingTargetQuartoHelper(this, docDisplay_);
 
       docDisplay_.setRnwCompletionContext(compilePdfHelper_);
       docDisplay_.setCppCompletionContext(cppCompletionContext_);
@@ -2025,11 +2026,13 @@ public class TextEditingTarget implements
       );
 
       // populate the popup menu with a list of available formats
-      if (extendedType_.startsWith(SourceDocument.XT_RMARKDOWN_PREFIX))
+      if (extendedType_.startsWith(SourceDocument.XT_RMARKDOWN_PREFIX) ||
+          extendedType_.equals(SourceDocument.XT_QUARTO_DOCUMENT))
       {
          updateRmdFormatList();
          setRMarkdownBehaviorEnabled(true);
       }
+     
 
       // provide find replace button to view
       view_.addVisualModeFindReplaceButton(visualMode_.getFindReplaceButton());
@@ -2527,7 +2530,7 @@ public class TextEditingTarget implements
       {
          commands.add(commands_.renameSourceDoc());
       }
-
+      
       return commands;
    }
 
@@ -2538,7 +2541,11 @@ public class TextEditingTarget implements
          notebook_.manageCommands();
 
       if (fileType_.isMarkdown())
+      {
          visualMode_.manageCommands();
+         quartoHelper_.manageCommands();
+      }
+      
    }
 
    @Override
@@ -3427,8 +3434,11 @@ public class TextEditingTarget implements
       }
 
       view_.adaptToExtendedFileType(extendedType);
-      if (extendedType.startsWith(SourceDocument.XT_RMARKDOWN_PREFIX))
+      if (extendedType.startsWith(SourceDocument.XT_RMARKDOWN_PREFIX) ||
+          extendedType.equals(SourceDocument.XT_QUARTO_DOCUMENT))
+      {
          updateRmdFormatList();
+      }
       extendedType_ = extendedType;
    }
 
@@ -5534,6 +5544,12 @@ public class TextEditingTarget implements
    @Handler
    void onInsertChunk()
    {
+      if (fileType_.isQuartoMarkdown())
+      {
+         onQuartoInsertChunk();
+         return;
+      }
+      
       InsertChunkInfo info = docDisplay_.getInsertChunkInfo();
       if (info == null)
          return;
@@ -5612,6 +5628,33 @@ public class TextEditingTarget implements
             onInsertChunk("```{d3 data=}\n\n```\n", 0, 12);
          }
       }
+   }
+   
+   // for qmd files, we default to python unless there is already an
+   // r or observable chunk in the file
+   void onQuartoInsertChunk()
+   {
+      JsArrayString lines = docDisplay_.getLines();
+      for (int i=0; i<lines.length(); i++)
+      {
+         Match match = RegexUtil.RE_RMARKDOWN_CHUNK_BEGIN.match(lines.get(i), 0);
+         if (match != null)
+         {
+            String engine = match.getGroup(1);
+            if (engine == "r")
+            {
+               onInsertChunkR();
+               return;
+            }
+            else if (engine == "observable")
+            {
+               onInsertChunk("```{observable}\n\n```\n", 1, 0);
+               return;
+            }
+         }
+      }
+      // no other qualifying previous chunks, use python
+      onInsertChunkPython();   
    }
 
    @Handler
@@ -6450,6 +6493,12 @@ public class TextEditingTarget implements
    void onKnitDocument()
    {
       onPreviewHTML();
+   }
+   
+   @Handler
+   void onQuartoRenderDocument()
+   {
+      renderRmd();
    }
 
    @Handler
@@ -8442,6 +8491,7 @@ public class TextEditingTarget implements
    private final TextEditingTargetPresentationHelper presentationHelper_;
    private final TextEditingTargetRHelper rHelper_;
    private VisualMode visualMode_;
+   private final TextEditingTargetQuartoHelper quartoHelper_;
    private TextEditingTargetIdleMonitor bgIdleMonitor_;
    private TextEditingTargetThemeHelper themeHelper_;
    private boolean ignoreDeletes_;
