@@ -1301,11 +1301,6 @@ public class TextEditingTargetWidget
       {
          setFormatText("");
       }
-      
-      if (extendedType_ == SourceDocument.XT_QUARTO_DOCUMENT)
-      {
-         
-      }
 
       setRmdFormatButtonVisible(showRmdFormatMenu);
       rmdFormatButton_.setEnabled(showRmdFormatMenu);
