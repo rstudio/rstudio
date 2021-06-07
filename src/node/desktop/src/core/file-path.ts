@@ -38,15 +38,6 @@ function normalizeSeparatorsNative(path: string) {
   return normalizeSeparators(path, separator);
 }
 
-
-function generic_string(p: string): string {
-  if (process.platform !== 'win32') {
-    return p;
-  } else {
-    return p.split(path.sep).join(path.posix.sep);
-  }
-}
-
 /**
  * Class representing a path on the system. May be any type of file (e.g. directory, symlink,
  * regular file, etc.)
