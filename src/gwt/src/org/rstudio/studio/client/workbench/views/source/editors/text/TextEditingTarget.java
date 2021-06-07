@@ -2026,15 +2026,13 @@ public class TextEditingTarget implements
       );
 
       // populate the popup menu with a list of available formats
-      if (extendedType_.startsWith(SourceDocument.XT_RMARKDOWN_PREFIX))
+      if (extendedType_.startsWith(SourceDocument.XT_RMARKDOWN_PREFIX) ||
+          extendedType_.equals(SourceDocument.XT_QUARTO_DOCUMENT))
       {
          updateRmdFormatList();
          setRMarkdownBehaviorEnabled(true);
       }
-      else if (extendedType_.equals(SourceDocument.XT_QUARTO_DOCUMENT)) 
-      {
-         setRMarkdownBehaviorEnabled(true);
-      }
+     
 
       // provide find replace button to view
       view_.addVisualModeFindReplaceButton(visualMode_.getFindReplaceButton());
@@ -3436,8 +3434,11 @@ public class TextEditingTarget implements
       }
 
       view_.adaptToExtendedFileType(extendedType);
-      if (extendedType.startsWith(SourceDocument.XT_RMARKDOWN_PREFIX))
+      if (extendedType.startsWith(SourceDocument.XT_RMARKDOWN_PREFIX) ||
+          extendedType.equals(SourceDocument.XT_QUARTO_DOCUMENT))
+      {
          updateRmdFormatList();
+      }
       extendedType_ = extendedType;
    }
 

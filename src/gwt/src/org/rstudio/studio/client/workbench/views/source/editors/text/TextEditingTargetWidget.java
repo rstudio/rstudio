@@ -1414,6 +1414,11 @@ public class TextEditingTargetWidget
                   commands_.knitDocument().getShortcutPrettyHtml()) + ")");
       knitDocumentButton_.setText(knitCommandText_);
       knitDocumentButton_.setLeftImage(new ImageResource2x(StandardIcons.INSTANCE.run2x()));
+      
+      quartoCommandText_ = knitCommandText_;
+      quartoRenderButton_.setTitle(knitDocumentButton_.getTitle());
+      quartoRenderButton_.setText(quartoCommandText_);
+      quartoRenderButton_.setLeftImage(new ImageResource2x(StandardIcons.INSTANCE.run2x()));
 
       runDocumentMenuButton_.setVisible(isShinyPrerendered);
       setKnitDocumentMenuVisible(isShinyPrerendered);

@@ -551,7 +551,9 @@ public class TextEditingTargetRMarkdownHelper
 
    public boolean isRuntimeShinyPrerendered(String yaml)
    {
-      return getRuntime(yaml) == RmdFrontMatter.SHINY_PRERENDERED_RUNTIME;
+      String runtime = getRuntime(yaml);
+      return runtime == RmdFrontMatter.SHINY_PRERENDERED_RUNTIME ||
+             runtime == RmdFrontMatter.SHINY_RMD_RUNTIME;
    }
 
    public boolean isRuntimeShiny(String yaml)
