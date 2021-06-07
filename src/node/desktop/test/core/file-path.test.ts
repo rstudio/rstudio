@@ -14,12 +14,12 @@
  */
 
 import { describe } from 'mocha';
-import { assert } from 'chai';
+import { assert, expect } from 'chai';
 
 import fs from 'fs';
 import fsPromises from 'fs/promises';
 import path from 'path';
-import os from 'os';
+import os, { platform } from 'os';
 
 import { FilePath } from '../../src/core/file-path';
 import { User } from '../../src/core/user';
@@ -69,10 +69,12 @@ describe('FilePath', () => {
       assert.isTrue(path.isEmpty());
     });
     it('getAbsolutePathNative should return raw path on Windows', () => {
-      const originalPath = 'C:\\Windows\\Was\\Here';
-      const fp1 = new FilePath(originalPath);
-      const native = fp1.getAbsolutePathNative();
-      assert.strictEqual(native, originalPath);
+      if (process.platform === 'win32') {
+        const originalPath = 'C:\\Windows\\Was\\Here';
+        const fp1 = new FilePath(originalPath);
+        const native = fp1.getAbsolutePathNative();
+        assert(native === originalPath);
+      }
     });
   });
 
@@ -602,14 +604,53 @@ describe('FilePath', () => {
       assert.strictEqual(cPath.completeChildPath('/path/to/quux'), cPath);
     });
   });
+
+  describe('Aliased paths', () => {
+
+    it('Paths are aliased correctly', () => {
+      const path = new FilePath('/Users/user/path/to/project');
+      const home = new FilePath('/Users/user');
+      const aliasedPath = FilePath.createAliasedPath(path, home);
+      assert(aliasedPath === '~/path/to/project');
+    });
+
+    it('Paths are aliased correctly, even with trailing slashes', () => {
+      const path = new FilePath('/Users/user/path/to/project');
+      const home = new FilePath('/Users/user/');
+      const aliasedPath = FilePath.createAliasedPath(path, home);
+      assert(aliasedPath === '~/path/to/project');
+    });
+
+    it('Paths with differing slashes are aliased correctly', () => {
+      const path = new FilePath('//server/home/user/path/to/project');
+      const home = new FilePath('\\\\server\\home\\user');
+      const aliasedPath = FilePath.createAliasedPath(path, home);
+      assert(aliasedPath === '~/path/to/project');
+    });
+
+    it('DOS paths are handled', () => {
+      const path = new FilePath('C:/Users/user/path/to/project');
+      const home = new FilePath('C:\\Users\\user');
+      const aliasedPath = FilePath.createAliasedPath(path, home);
+      assert(aliasedPath === '~/path/to/project');
+    });
+
+    it('Original path returned is aliasing fails', () => {
+      const path = new FilePath('/home/other/path/to/project');
+      const home = new FilePath('/home/user');
+      const aliasedPath = FilePath.createAliasedPath(path, home);
+      assert(new FilePath(aliasedPath).getAbsolutePath() === path.getAbsolutePath());
+    });
+
+  });
+
   describe('NYI placeholders', () => {
     it('sync methods should throw exception', () => {
       const fp1 = new FilePath();
       const fp2 = new FilePath();
-      assert.throws(() => FilePath.createAliasedPath(fp1, fp2));
       assert.throws(() => FilePath.isEqualCaseInsensitive(fp1, fp2));
       assert.throws(() => FilePath.isRootPath('/'));
-      assert.throws(() =>FilePath.makeCurrent('/'));
+      assert.throws(() => FilePath.makeCurrent('/'));
       assert.throws(() => FilePath.tempFilePath());
       assert.throws(() => FilePath.uniqueFilePath('/'));
       if (process.platform === 'win32') {
