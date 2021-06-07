@@ -19,7 +19,7 @@ import { expect } from 'chai';
 import fs from 'fs';
 import fsPromises from 'fs/promises';
 import path from 'path';
-import os from 'os';
+import os, { platform } from 'os';
 
 import { FilePath } from '../../src/core/file-path';
 import { User } from '../../src/core/user';
@@ -69,10 +69,12 @@ describe('FilePath', () => {
       expect(path.isEmpty());
     });
     it('getAbsolutePathNative should return raw path on Windows', () => {
-      const originalPath = 'C:\\Windows\\Was\\Here';
-      const fp1 = new FilePath(originalPath);
-      const native = fp1.getAbsolutePathNative();
-      expect(native).equals(originalPath);
+      if (process.platform === 'win32') {
+        const originalPath = 'C:\\Windows\\Was\\Here';
+        const fp1 = new FilePath(originalPath);
+        const native = fp1.getAbsolutePathNative();
+        expect(native).equals(originalPath);
+      }
     });
   });
 
