@@ -20,8 +20,8 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { FilePath } from '../../src/core/file-path';
-import { Xdg, SHGetKnownFolderPath, WinFolderID } from '../../src/core/xdg';
+import { FilePath } from '../../../src/core/file-path';
+import { Xdg, SHGetKnownFolderPath, WinFolderID } from '../../../src/core/xdg';
 
 function folder() {
   return process.platform === 'win32' ? 'RStudio' : 'rstudio';
@@ -184,12 +184,12 @@ describe('Xdg', () => {
   describe('Misc helpers', () => {
     it('SHGetKnownFolderPath returns a string', () => {
       if (process.platform === 'win32') {
-        const user = os.userInfo().username
+        const user = os.userInfo().username;
         const expectedLocalAppData = `C:\\Users\\${user}\\AppData\\Local`;
         const expectedProgramData = 'C:\\ProgramData';
         const expectedRoamingAppData = `C:\\Users\\${user}\\AppData\\Roaming`;
         
-        var result = SHGetKnownFolderPath(WinFolderID.FOLDERID_LocalAppData);
+        let result = SHGetKnownFolderPath(WinFolderID.FOLDERID_LocalAppData);
         assert.strictEqual(result, expectedLocalAppData);
         result = SHGetKnownFolderPath(WinFolderID.FOLDERID_ProgramData);
         assert.strictEqual(result, expectedProgramData);

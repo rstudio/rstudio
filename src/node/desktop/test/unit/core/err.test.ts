@@ -1,5 +1,5 @@
 /*
- * user.test.ts
+ * err.test.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -16,16 +16,25 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 
-import fs from 'fs';
+import { Err, Success } from '../../../src/core/err';
 
-import { User } from '../../src/core/user';
+function beSuccessful(): Err {
+  return Success();
+}
 
-describe('User', () => {
-  describe('Static helpers', () => {
-    it('getUserHomePath returns a valid path', () => {
-      const path = User.getUserHomePath();
-      assert.isTrue(fs.existsSync(path.getAbsolutePath()));
+function beUnsuccessful(): Err {
+  return new Error('Some error');
+}
+
+describe('Err', () => {
+  describe('Success helper', () => {
+    it('Success return should be falsy', () => {
+      assert.isTrue(beSuccessful() === Success());
+      assert.isNull(beSuccessful());
+    });
+    it('Error return should be truthy', () => {
+      assert.isTrue(beUnsuccessful() !== Success());
+      assert.instanceOf(beUnsuccessful(), Error);
     });
   });
 });
- 

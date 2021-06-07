@@ -14,15 +14,15 @@
  */
 
 import { describe } from 'mocha';
-import { assert, expect } from 'chai';
+import { assert } from 'chai';
 
 import fs from 'fs';
 import fsPromises from 'fs/promises';
 import path from 'path';
-import os, { platform } from 'os';
+import os from 'os';
 
-import { FilePath } from '../../src/core/file-path';
-import { User } from '../../src/core/user';
+import { FilePath } from '../../../src/core/file-path';
+import { User } from '../../../src/core/user';
 
 function randomString() {
   return Math.trunc(Math.random() * 2147483647).toString();
