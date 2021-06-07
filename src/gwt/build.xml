@@ -151,7 +151,6 @@
          </classpath>
          <!-- add jvmarg -Xss16M or similar if you see a StackOverflowError -->
          <jvmarg value="-Xmx1536M"/>
-         <jvmarg value="--illegal-access=permit"/>
          <arg value="-war"/>
          <arg value="${www.dir}"/>
          <arg value="-localWorkers"/>
