@@ -648,10 +648,9 @@ describe('FilePath', () => {
     it('sync methods should throw exception', () => {
       const fp1 = new FilePath();
       const fp2 = new FilePath();
-      assert.throws(() => FilePath.createAliasedPath(fp1, fp2));
       assert.throws(() => FilePath.isEqualCaseInsensitive(fp1, fp2));
       assert.throws(() => FilePath.isRootPath('/'));
-      assert.throws(() =>FilePath.makeCurrent('/'));
+      assert.throws(() => FilePath.makeCurrent('/'));
       assert.throws(() => FilePath.tempFilePath());
       assert.throws(() => FilePath.uniqueFilePath('/'));
       if (process.platform === 'win32') {
