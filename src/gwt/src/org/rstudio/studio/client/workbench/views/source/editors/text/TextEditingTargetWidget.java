@@ -360,8 +360,6 @@ public class TextEditingTargetWidget
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(previewHTMLButton_ =
          mgr.getSourceCommand(commands_.previewHTML(), column_).createToolbarButton());
-      toolbar.addLeftWidget(quartoRenderButton_ =
-         mgr.getSourceCommand(commands_.quartoRenderDocument(), column_).createUnsyncedToolbarButton());
       knitDocumentButton_ =
          mgr.getSourceCommand(commands_.knitDocument(), column_).createUnsyncedToolbarButton();
       knitDocumentButton_.getElement().getStyle().setMarginRight(0, Unit.PX);
@@ -834,11 +832,8 @@ public class TextEditingTargetWidget
       boolean isPlainMarkdown = fileType.isPlainMarkdown();
       boolean isCpp = fileType.isCpp();
       boolean isScript = fileType.isScript();
-      boolean isQuarto = extendedType_ != null && 
-             extendedType_.equals(SourceDocument.XT_QUARTO_DOCUMENT);
       boolean isRMarkdown2 = extendedType_ != null && 
-                             (extendedType_.startsWith(SourceDocument.XT_RMARKDOWN_PREFIX) ||
-                              isQuarto);
+                             extendedType_.startsWith(SourceDocument.XT_RMARKDOWN_PREFIX);
       boolean isMarkdown = editor_.getFileType().isMarkdown();
       boolean canPreviewFromR = fileType.canPreviewFromR();
       boolean terminalAllowed = session_.getSessionInfo().getAllowShell();
@@ -855,10 +850,10 @@ public class TextEditingTargetWidget
       runLastButton_.setVisible(runButton_.isVisible() && !canExecuteChunks && !isScript);
 
       // show insertion options for various knitr engines in rmarkdown v2
-      insertChunkMenu_.setVisible(isRMarkdown2 && !isQuarto);
+      insertChunkMenu_.setVisible(isRMarkdown2);
 
       // otherwise just show the regular insert chunk button
-      insertChunkButton_.setVisible(canExecuteChunks && (!isRMarkdown2 || isQuarto));
+      insertChunkButton_.setVisible(canExecuteChunks && !isRMarkdown2);
 
       goToPrevButton_.setVisible(fileType.canGoNextPrevSection());
       goToNextButton_.setVisible(fileType.canGoNextPrevSection());
@@ -893,10 +888,9 @@ public class TextEditingTargetWidget
       findReplaceButton_.setVisible(!visualRmdMode);
 
 
-      knitDocumentButton_.setVisible(canKnitToHTML && !isQuarto);
-      quartoRenderButton_.setVisible(canKnitToHTML && isQuarto);
+      knitDocumentButton_.setVisible(canKnitToHTML);
 
-      setRmdFormatButtonVisible(isRMarkdown2 && !isQuarto);
+      setRmdFormatButtonVisible(isRMarkdown2);
       rmdOptionsButton_.setVisible(isRMarkdown2);
       rmdOptionsButton_.setEnabled(isRMarkdown2);
 
@@ -1051,7 +1045,6 @@ public class TextEditingTargetWidget
       compilePdfButton_.setText(width >= 450, "Compile PDF");
       previewHTMLButton_.setText(width >= 450, previewCommandText_);
       knitDocumentButton_.setText(width >= 450, knitCommandText_);
-      quartoRenderButton_.setText(width >= 450, quartoCommandText_);
 
       if (editor_.getFileType().isRd() || editor_.getFileType().isJS() ||
           editor_.getFileType().isSql() || editor_.getFileType().canPreviewFromR())
@@ -1414,11 +1407,6 @@ public class TextEditingTargetWidget
                   commands_.knitDocument().getShortcutPrettyHtml()) + ")");
       knitDocumentButton_.setText(knitCommandText_);
       knitDocumentButton_.setLeftImage(new ImageResource2x(StandardIcons.INSTANCE.run2x()));
-      
-      quartoCommandText_ = knitCommandText_;
-      quartoRenderButton_.setTitle(knitDocumentButton_.getTitle());
-      quartoRenderButton_.setText(quartoCommandText_);
-      quartoRenderButton_.setLeftImage(new ImageResource2x(StandardIcons.INSTANCE.run2x()));
 
       runDocumentMenuButton_.setVisible(isShinyPrerendered);
       setKnitDocumentMenuVisible(isShinyPrerendered);
@@ -1495,10 +1483,6 @@ public class TextEditingTargetWidget
                   false // not static
                   );
          }
-         else if (type.equals(SourceDocument.XT_QUARTO_DOCUMENT))
-         {
-            publishButton_.setRmd(publishPath, true);
-         }
          else if (type == SourceDocument.XT_PLUMBER_API)
          {
             publishButton_.setContentPath(publishPath, "");
@@ -1539,15 +1523,10 @@ public class TextEditingTargetWidget
       knitDocumentButton_.setLeftImage(
             commands_.knitDocument().getImageResource());
       knitDocumentButton_.setTitle(commands_.knitDocument().getTooltip());
-      quartoCommandText_ = "Render";
-      quartoRenderButton_.setText(quartoCommandText_);
-      quartoRenderButton_.setLeftImage(
-            commands_.quartoRenderDocument().getImageResource());
-      quartoRenderButton_.setTitle(commands_.quartoRenderDocument().getTooltip());
       previewCommandText_ = "Preview" + text;
       previewHTMLButton_.setText(previewCommandText_);
    }
-   
+
    private void setSourceButtonFromScriptState(TextFileType fileType,
                                                boolean canPreviewFromR,
                                                String previewButtonText)
@@ -1927,7 +1906,6 @@ public class TextEditingTargetWidget
    private ToolbarButton compilePdfButton_;
    private ToolbarButton previewHTMLButton_;
    private ToolbarButton knitDocumentButton_;
-   private ToolbarButton quartoRenderButton_;
    private ToolbarMenuButton insertChunkMenu_;
    private ToolbarButton insertChunkButton_;
    private ToolbarButton goToPrevButton_;
@@ -1968,7 +1946,6 @@ public class TextEditingTargetWidget
    private String plumberAPIState_ = PlumberAPIParams.STATE_STOPPED;
    private String sourceCommandText_ = "Source";
    private String knitCommandText_ = "Knit";
-   private String quartoCommandText_ = "Render";
    private String previewCommandText_ = "Preview";
 
 }

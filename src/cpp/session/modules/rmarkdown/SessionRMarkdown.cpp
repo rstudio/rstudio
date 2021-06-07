@@ -475,14 +475,9 @@ private:
       std::string renderFunc;
       if (isShiny_)
       {
-         std::string extendedType;
-         Error error = source_database::detectExtendedType(targetFile_, &extendedType);
-         if (error)
-            LOG_ERROR(error);
-         if (extendedType == "quarto-document")
-            renderFunc = "quarto run";
-         else
-            renderFunc = kShinyRenderFunc;
+         // if a Shiny render was requested, use the Shiny render function
+         // regardless of what was specified in the doc
+         renderFunc = kShinyRenderFunc;
       }
       else
       {

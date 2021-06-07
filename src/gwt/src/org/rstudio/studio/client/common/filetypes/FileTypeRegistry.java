@@ -106,8 +106,6 @@ public class FileTypeRegistry
    public static final RWebContentFileType RNOTEBOOK =
          new RWebContentFileType("r_notebook", "R Notebook", EditorLanguage.LANG_RMARKDOWN,
                                  ".nb.html", new ImageResource2x(ICONS.iconRnotebook2x()), true);
-   
-   public static final QuartoFileType QUARTO = new QuartoFileType();
 
    public static final RWebContentFileType RPRESENTATION = new RPresentationFileType();
 
@@ -387,7 +385,6 @@ public class FileTypeRegistry
       register("*.ts", JS, new ImageResource2x(icons.iconJavascript2x()));
       register("*.json", JSON, new ImageResource2x(icons.iconJavascript2x()));
       register("*.rmd", RMARKDOWN, new ImageResource2x(icons.iconRmarkdown2x()));
-      register("*.qmd", QUARTO, new ImageResource2x(icons.iconQuarto2x()));
       register("*.rmarkdown", RMARKDOWN, new ImageResource2x(icons.iconRmarkdown2x()));
       register("*.nb.html", RNOTEBOOK, new ImageResource2x(icons.iconRnotebook2x()));
       register("*.rpres", RPRESENTATION, new ImageResource2x(icons.iconRpresentation2x()));

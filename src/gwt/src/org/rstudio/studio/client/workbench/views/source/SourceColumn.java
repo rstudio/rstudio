@@ -861,7 +861,6 @@ public class SourceColumn implements BeforeShowEvent.Handler,
                  (getNextActiveEditor().getExtendedFileType() != null &&
                     (getNextActiveEditor().getExtendedFileType().startsWith(SourceDocument.XT_SHINY_PREFIX) ||
                      getNextActiveEditor().getExtendedFileType().startsWith(SourceDocument.XT_RMARKDOWN_PREFIX) ||
-                     getNextActiveEditor().getExtendedFileType().equals(SourceDocument.XT_QUARTO_DOCUMENT) ||
                      getNextActiveEditor().getExtendedFileType() == SourceDocument.XT_PLUMBER_API));
       boolean cmdEnabled = rsCommandsAvailable && active;
 

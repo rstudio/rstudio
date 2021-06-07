@@ -58,7 +58,7 @@ public class RenderRmdOutputTab
                              Commands commands,
                              final Session session)
    {
-      super("Render", shim);
+      super("R Markdown", shim);
       shim_ = shim;
 
       GWT.<Binder>create(Binder.class).bind(commands, shim_);

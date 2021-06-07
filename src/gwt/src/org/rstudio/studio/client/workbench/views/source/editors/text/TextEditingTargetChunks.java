@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -315,8 +314,7 @@ public class TextEditingTargetChunks
       if (target_.getDocDisplay().showChunkOutputInline())
       {
          // treat all chunks as executable in notebook mode
-         List<String> dontRunEngines = Arrays.asList("js", "css", "observable");
-         return !dontRunEngines.contains(engine);
+         return true;
       }
       else
       {

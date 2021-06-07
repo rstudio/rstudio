@@ -120,7 +120,6 @@ public abstract class
    public abstract AppCommand browseCheatSheets();
    public abstract AppCommand toggleRmdVisualMode();
    public abstract AppCommand enableProsemirrorDevTools();
-   public abstract AppCommand quartoRenderDocument();
    public abstract AppCommand knitDocument();
    public abstract AppCommand previewHTML();
    public abstract AppCommand publishHTML();

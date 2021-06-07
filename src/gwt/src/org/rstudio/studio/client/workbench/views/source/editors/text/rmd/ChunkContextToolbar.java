@@ -125,11 +125,6 @@ public class ChunkContextToolbar extends Composite
          ClassIds.assignClassId(this, classId_);
       }
    }
-   
-   public void setShowOptions(boolean show)
-   {
-      options_.setVisible(show);
-   }
 
    // Private methods ---------------------------------------------------------
 
