@@ -1304,23 +1304,23 @@ Error getRmdTemplate(const json::JsonRpcRequest& request,
    // locate the template skeleton on disk
    // (return empty string if none found)
    std::string templateContent;
-   for (auto&& path : { "skeleton/skeleton.Rmd", "skeleton/skeleton.rmd" })
+   for (auto&& suffix : { "skeleton/skeleton.Rmd", "skeleton/skeleton.rmd" })
    {
-      FilePath skeletonPath = FilePath(path).completePath(path);
-      if (skeletonPath.exists())
+      FilePath skeletonPath = FilePath(path).completePath(suffix);
+      if (!skeletonPath.exists())
+         continue;
+
+      Error error = readStringFromFile(skeletonPath, &templateContent, string_utils::LineEndingPosix);
+      if (error)
       {
-         error = readStringFromFile(skeletonPath, &templateContent, string_utils::LineEndingPosix);
-         if (error)
-         {
-            LOG_ERROR(error);
-            continue;
-         }
+         LOG_ERROR(error);
+         continue;
       }
 
-      jsonResult["content"] = templateContent;
       break;
    }
 
+   jsonResult["content"] = templateContent;
    pResponse->setResult(jsonResult);
    return Success();
 }
