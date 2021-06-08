@@ -40,21 +40,24 @@ public:
    /**
     * @brief Constructor.
     *
+    * @param in_id          The unique ID of this log destination.
     * @param in_logLevel    The most detailed level of logs to be written to stderr.
+    * @param in_formatType  The format type for log messages.
+    * @param in_reloadable  Whether or not the destination is reloadable. If so, reloading of logging configuration
+    *                       will cause the log destination to be removed. Set this to true only for log destinations
+    *                       that are intended to be hot-reconfigurable, such as the global default logger.
     */
-   explicit StderrLogDestination(LogLevel in_logLevel);
+   explicit StderrLogDestination(const std::string& in_id,
+                                 LogLevel in_logLevel,
+                                 LogMessageFormatType in_formatType,
+                                 bool in_reloadable = false);
 
    /**
-    * @brief Gets the unique ID of the stderr destination.
+    * @brief Refreshes the log destintation. Ensures that the log does not have any stale file handles.
     *
-    * @return The unique ID of the stderr destination.
+    * @param in_refreshParams Refresh params to use when refreshing the log destinations (if applicable).
     */
-   unsigned int getId() const override;
-
-   /**
-    * @brief Reloads the log destintation. Ensures that the log does not have any stale file handles.
-    */
-   void reload() override;
+   void refresh(const RefreshParams& in_refreshParams = RefreshParams()) override;
 
    /**
     * @brief Writes a message to stderr.

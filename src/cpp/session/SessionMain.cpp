@@ -1763,7 +1763,7 @@ int main (int argc, char * const argv[])
       // will get re-initialized below)
       std::string programId = "rsession-" + core::system::username();
       core::log::setProgramId(programId);
-      core::system::initializeSystemLog(programId, core::log::LogLevel::WARN);
+      core::system::initializeLog(programId, core::log::LogLevel::WARN);
 
       // ignore SIGPIPE
       Error error = core::system::ignoreSignal(core::system::SigPipe);
@@ -1847,7 +1847,10 @@ int main (int argc, char * const argv[])
       // reflect stderr logging
       if (options.logStderr())
          log::addLogDestination(
-            std::shared_ptr<log::ILogDestination>(new log::StderrLogDestination(log::LogLevel::WARN)));
+            std::shared_ptr<log::ILogDestination>(new log::StderrLogDestination(
+                                                     core::system::generateShortenedUuid(),
+                                                     log::LogLevel::WARN,
+                                                     log::LogMessageFormatType::PRETTY)));
 
       // initialize monitor but stop its thread on exit
       initMonitorClient();
@@ -1861,7 +1864,7 @@ int main (int argc, char * const argv[])
       if (!options.standalone() && !options.verifyInstallation())
       {
          core::log::addLogDestination(
-            monitor::client().createLogDestination(log::LogLevel::WARN, options.programIdentity()));
+            monitor::client().createLogDestination(core::system::generateShortenedUuid(), log::LogLevel::WARN, options.programIdentity()));
       }
 
       // initialize file lock config

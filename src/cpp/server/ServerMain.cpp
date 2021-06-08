@@ -25,6 +25,7 @@
 
 #include <core/text/TemplateFilter.hpp>
 
+#include <core/system/PosixChildProcess.hpp>
 #include <core/system/PosixSystem.hpp>
 #include <core/system/Crypto.hpp>
 
@@ -68,6 +69,7 @@
 #include "ServerPAMAuth.hpp"
 #include "ServerREnvironment.hpp"
 #include "ServerXdgVars.hpp"
+#include "ServerLogVars.hpp"
 
 using namespace rstudio;
 using namespace rstudio::core;
@@ -302,16 +304,11 @@ void httpServerAddHandlers()
    uri_handlers::setBlockingDefault(blockingFileHandler());
 }
 
-Error initLog()
-{
-   return core::system::initializeSystemLog(kProgramIdentity, core::log::LogLevel::WARN, false);
-}
-
 bool reloadLoggingConfiguration()
 {
    LOG_INFO_MESSAGE("Reloading logging configuration...");
 
-   Error error = initLog();
+   Error error = core::system::reinitLog();
    if (error)
    {
       LOG_ERROR_MESSAGE("Failed to reload logging configuration");
@@ -438,6 +435,24 @@ Error waitForSignals()
       else if (sig == SIGHUP)
       {
          reloadConfiguration();
+
+         // forward signal to specific RStudio child processes
+         // this will allow them to also reload their configuration / logging if applicable
+         // care is taken not to send errant SIGHUP signals to processes we don't control
+         std::set<std::string> reloadableProcs =  {"rsession",
+                                                   "rserver-launcher",
+                                                   "rstudio-launcher",
+                                                   "rworkspaces",
+                                                   "rserver-monitor"};
+
+         Error error = core::system::sendSignalToSpecifiedChildProcesses(reloadableProcs, SIGHUP);
+         if (error)
+         {
+            error.addProperty("description", "Error occurred while notifying child processes of SIGHUP");
+            LOG_ERROR(error);
+         }
+         else
+            LOG_INFO_MESSAGE("Successfully notified children of SIGHUP");
       }
 
       // Unexpected signal
@@ -527,7 +542,7 @@ int main(int argc, char * const argv[])
 {
    try
    {
-      Error error = initLog();
+      Error error = core::system::initializeLog(kProgramIdentity, core::log::LogLevel::WARN, false);
       if (error)
       {
          core::log::writeError(error, std::cerr);
@@ -573,8 +588,8 @@ int main(int argc, char * const argv[])
          if (error)
             return core::system::exitFailure(error, ERROR_LOCATION);
 
-         // Reload the loggers after succesful daemonize to clear out old FDs.
-         core::log::reloadAllLogDestinations();
+         // Refresh the loggers after succesful daemonize to clear out old FDs
+         core::log::refreshAllLogDestinations();
 
          // set file creation mask to 022 (might have inherted 0 from init)
          if (options.serverSetUmask())
@@ -719,11 +734,16 @@ int main(int argc, char * const argv[])
       {
          // add a monitor log writer
          core::log::addLogDestination(
-            monitor::client().createLogDestination(core::log::LogLevel::WARN, kProgramIdentity));
+            monitor::client().createLogDestination(core::system::generateShortenedUuid(), core::log::LogLevel::WARN, kProgramIdentity));
       }
 
       // initialize XDG var insertion
       error = xdg_vars::initialize();
+      if (error)
+         return core::system::exitFailure(error, ERROR_LOCATION);
+
+      // initialize log var insertion
+      error = log_vars::initialize();
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 

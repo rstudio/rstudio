@@ -33,7 +33,6 @@
 #include <boost/numeric/conversion/cast.hpp>
 #include <boost/optional.hpp>
 
-#include <shared_core/Logger.hpp>
 #include <shared_core/Error.hpp>
 
 namespace rstudio {

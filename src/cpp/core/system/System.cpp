@@ -142,36 +142,13 @@ boost::recursive_mutex s_loggingMutex;
 
 namespace {
 
-int getNextFileLogId()
-{
-   static std::atomic_uint fileLogId(3);
-   return fileLogId.fetch_add(1);
-}
-
-std::shared_ptr<log::ILogDestination> getStdErrLogDest(log::LogLevel logLevel)
-{
-   using namespace log;
-   static std::shared_ptr<ILogDestination> stdErrLogDest(new StderrLogDestination(logLevel));
-   return stdErrLogDest;
-}
-
-#ifndef _WIN32
-
-std::shared_ptr<log::ILogDestination> getSysLogDest(log::LogLevel logLevel)
-{
-   using namespace log;
-   static std::shared_ptr<ILogDestination> syslogDest(new SyslogDestination(logLevel, s_programIdentity));
-   return syslogDest;
-}
-
-#endif
-
 void initializeLogWriter()
 {
    using namespace log;
 
    // requires prior synchronization
    LoggerType loggerType = s_logOptions->loggerType();
+   LogMessageFormatType formatType = s_logOptions->logMessageFormatType();
 
    // options currently only used for file logging
    LoggerOptions options = s_logOptions->loggerOptions();
@@ -184,22 +161,35 @@ void initializeLogWriter()
       {
          addLogDestination(
             std::shared_ptr<ILogDestination>(new FileLogDestination(
-               getNextFileLogId(),
+               generateShortenedUuid(),
                logLevel,
+               formatType,
                s_programIdentity,
-               boost::get<FileLogOptions>(options))));
+               boost::get<FileLogOptions>(options),
+               true)));
          break;
       }
       case LoggerType::kStdErr:
       {
-         addLogDestination(getStdErrLogDest(logLevel));
+         addLogDestination(
+            std::shared_ptr<ILogDestination>(new StderrLogDestination(
+               generateShortenedUuid(),
+               logLevel,
+               formatType,
+               true)));
          break;
       }
       case LoggerType::kSysLog:
       default:
       {
 #ifndef _WIN32
-         addLogDestination(getSysLogDest(logLevel));
+         addLogDestination(
+            std::shared_ptr<ILogDestination>(new SyslogDestination(
+               generateShortenedUuid(),
+               logLevel,
+               formatType,
+               s_programIdentity,
+               true)));
 #endif
       }
    }
@@ -211,6 +201,7 @@ void initializeLogWriter(const std::string& logSection)
 
    // requires prior synchronization
    LoggerType loggerType = s_logOptions->loggerType(logSection);
+   LogMessageFormatType formatType = s_logOptions->logMessageFormatType(logSection);
 
    // options currently only used for file logging
    LoggerOptions options = s_logOptions->loggerOptions(logSection);
@@ -223,23 +214,35 @@ void initializeLogWriter(const std::string& logSection)
       {
          addLogDestination(
             std::shared_ptr<ILogDestination>(new FileLogDestination(
-               getNextFileLogId(),
+               generateShortenedUuid(),
                logLevel,
+               formatType,
                s_programIdentity,
-               boost::get<FileLogOptions>(options))),
-               logSection);
+               boost::get<FileLogOptions>(options),
+               true)), logSection);
          break;
       }
       case LoggerType::kStdErr:
       {
-         addLogDestination(getStdErrLogDest(logLevel), logSection);
+         addLogDestination(
+            std::shared_ptr<ILogDestination>(new StderrLogDestination(
+               generateShortenedUuid(),
+               logLevel,
+               formatType,
+               true)), logSection);
          break;
       }
       case LoggerType::kSysLog:
       default:
       {
 #ifndef _WIN32
-         addLogDestination(getSysLogDest(logLevel), logSection);
+         addLogDestination(
+            std::shared_ptr<ILogDestination>(new SyslogDestination(
+               generateShortenedUuid(),
+               logLevel,
+               formatType,
+               s_programIdentity,
+               true)), logSection);
 #endif
       }
    }
@@ -307,6 +310,7 @@ Error reinitLog()
 {
    RECURSIVE_LOCK_MUTEX(s_loggingMutex)
    {
+      log::removeReloadableLogDestinations();
       return initLog();
    }
    END_LOCK_MUTEX
@@ -322,7 +326,7 @@ Error initializeStderrLog(const std::string& programIdentity,
    {
       // create default stderr logger options
       log::StdErrLogOptions options;
-      s_logOptions.reset(new log::LogOptions(programIdentity, logLevel, log::LoggerType::kStdErr, options));
+      s_logOptions.reset(new log::LogOptions(programIdentity, logLevel, log::LoggerType::kStdErr, log::LogMessageFormatType::PRETTY, options));
       s_programIdentity = programIdentity;
 
       Error error = initLog();
@@ -346,7 +350,7 @@ Error initializeLog(const std::string& programIdentity,
    {
       // create default file logger options
       log::FileLogOptions options(logDir);
-      s_logOptions.reset(new log::LogOptions(programIdentity, logLevel, log::LoggerType::kFile, options));
+      s_logOptions.reset(new log::LogOptions(programIdentity, logLevel, log::LoggerType::kFile, log::LogMessageFormatType::PRETTY, options));
       s_programIdentity = programIdentity;
 
       Error error = initLog();
@@ -361,15 +365,22 @@ Error initializeLog(const std::string& programIdentity,
    return Success();
 }
 
+Error initializeLog(const std::string& programIdentity,
+                    log::LogLevel logLevel,
+                    bool enableConfigReload)
+{
+   return initializeLog(programIdentity, logLevel, log::LogOptions::defaultLogDirectory(), enableConfigReload);
+}
+
 void initFileLogDestination(log::LogLevel level, FilePath defaultLogDir)
 {
-   std::shared_ptr<log::ILogDestination> fileLog = log::getFileLogDestination();
-   if (!fileLog)
+   if (!log::hasFileLogDestination())
    {
       log::FileLogOptions defaultOptions(defaultLogDir);
       log::addLogDestination(std::shared_ptr<core::log::ILogDestination>(
-              new log::FileLogDestination(getNextFileLogId(),
+              new log::FileLogDestination(generateShortenedUuid(),
                                           level,
+                                          log::LogMessageFormatType::PRETTY,
                                           s_programIdentity,
                                           defaultOptions)));
    }

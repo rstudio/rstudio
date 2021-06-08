@@ -26,19 +26,22 @@
 #include <cassert>
 #include <sstream>
 
+#include <boost/algorithm/string.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/optional.hpp>
 
 #include <shared_core/DateTime.hpp>
 #include <shared_core/Error.hpp>
-#include <shared_core/ILogDestination.hpp>
+#include <shared_core/FileLogDestination.hpp>
+#include <shared_core/json/Json.hpp>
 #include <shared_core/ReaderWriterMutex.hpp>
+#include <shared_core/StderrLogDestination.hpp>
 
 namespace rstudio {
 namespace core {
 namespace log {
 
-typedef std::map<unsigned int, std::shared_ptr<ILogDestination> > LogMap;
+typedef std::map<std::string, std::shared_ptr<ILogDestination>> LogMap;
 typedef std::map<std::string, LogMap> SectionLogMap;
 
 namespace {
@@ -87,51 +90,50 @@ std::ostream& operator<<(std::ostream& io_ostream, LogLevel in_logLevel)
    return io_ostream;
 }
 
-std::string zeroPad(const std::string& in, const unsigned int width)
-{
-   if (in.length() >= width)
-      return in;
-
-   std::ostringstream oss;
-   oss << std::setw(width) << std::setfill('0') << in;
-
-   return oss.str();
-}
-
 std::string formatLogMessage(
    LogLevel in_logLevel,
    const std::string& in_message,
    const std::string& in_programId,
-   const ErrorLocation& in_loggedFrom = ErrorLocation(),
-   bool in_formatForSyslog = false)
+   bool humanReadableFormat,
+   const ErrorLocation& in_loggedFrom = ErrorLocation())
 {
-   std::ostringstream oss;
+   using namespace boost::posix_time;
+   ptime time = microsec_clock::universal_time();
 
-   if (!in_formatForSyslog)
+   // Don't allow newlines in messages since each log message should be one distinct line
+   std::string message = boost::algorithm::trim_right_copy(in_message);
+   boost::algorithm::replace_all(message, "\n", "|||");
+
+   if (humanReadableFormat)
    {
-      // Add the time.
-      using namespace boost::posix_time;
-      ptime time = microsec_clock::universal_time();
+      std::ostringstream oss;
 
-      oss << system::date_time::format(time, "%d %b %Y %H:%M:%S")
-          << "." << zeroPad(std::to_string(time.time_of_day().total_milliseconds() % 1000), 3)
+      oss << core::date_time::format(time, core::date_time::kIso8601Format)
           << " [" << in_programId << "] ";
+
+      oss << in_logLevel << " " << message;
+
+      if (in_loggedFrom.hasLocation())
+         oss << s_delim << " " << s_loggedFrom << ": " << cleanDelimiters(in_loggedFrom.asString());
+
+      oss << std::endl;
+
+      return oss.str();
    }
-
-   oss << in_logLevel << " " << in_message;
-
-   if (in_loggedFrom.hasLocation())
-      oss << s_delim << " " << s_loggedFrom << ": " << cleanDelimiters(in_loggedFrom.asString());
-
-   oss << std::endl;
-
-   if (in_formatForSyslog)
+   else
    {
-      // Newlines delimit logs in syslog, so replace them with |||
-      return boost::replace_all_copy(oss.str(), "\n", "|||");
-   }
+      json::Object logObject;
+      logObject["time"] = core::date_time::format(time, core::date_time::kIso8601Format);
+      logObject["service"] = in_programId;
 
-   return oss.str();
+      std::ostringstream logLevel;
+      logLevel << in_logLevel;
+      logObject["level"] = logLevel.str();
+
+      logObject["message"] = message;
+
+      return logObject.write() + "\n";
+   }
 }
 
 
@@ -210,20 +212,38 @@ void Logger::writeMessageToDestinations(
    LogMap* logMap = &DefaultLogDestinations;
    if (!in_section.empty())
    {
-      // Don't log anything if there is no logger for this section.
-      if (SectionedLogDestinations.find(in_section) == SectionedLogDestinations.end())
-         return;
-      auto logDestIter = SectionedLogDestinations.find(in_section);
-      logMap = &logDestIter->second;
+      // override the logger if the destination was configured, otherwise log it
+      // to the default log destinations
+      if (SectionedLogDestinations.find(in_section) != SectionedLogDestinations.end())
+      {
+         auto logDestIter = SectionedLogDestinations.find(in_section);
+         logMap = &logDestIter->second;
+      }
    }
 
    // Preformat the message for non-syslog loggers.
-   std::string formattedMessage = formatLogMessage(in_logLevel, in_message, ProgramId, in_loggedFrom);
-
    const auto destEnd = logMap->end();
+   bool prettyFormat, jsonFormat = false;
    for (auto iter = logMap->begin(); iter != destEnd; ++iter)
    {
-      iter->second->writeLog(in_logLevel, formattedMessage);
+      if (iter->second->getLogMessageFormatType() == LogMessageFormatType::JSON)
+         jsonFormat = true;
+      else
+         prettyFormat = true;
+   }
+
+   std::string prettyMessage, jsonMessage;
+   if (prettyFormat)
+      prettyMessage = formatLogMessage(in_logLevel, in_message, ProgramId, true, in_loggedFrom);
+   if (jsonFormat)
+      jsonMessage = formatLogMessage(in_logLevel, in_message, ProgramId, false, in_loggedFrom);
+
+
+   for (auto iter = logMap->begin(); iter != destEnd; ++iter)
+   {
+      std::string& messageToWrite = iter->second->getLogMessageFormatType() == LogMessageFormatType::PRETTY ?
+               prettyMessage : jsonMessage;
+      iter->second->writeLog(in_logLevel, messageToWrite);
    }
 
    RW_LOCK_END(false)
@@ -259,7 +279,7 @@ void addLogDestination(const std::shared_ptr<ILogDestination>& in_destination)
 
    logDebugMessage(
       "Attempted to register a log destination that has already been registered with id " +
-      std::to_string(in_destination->getId()));
+      in_destination->getId());
 }
 
 void addLogDestination(const std::shared_ptr<ILogDestination>& in_destination, const std::string& in_section)
@@ -286,7 +306,7 @@ void addLogDestination(const std::shared_ptr<ILogDestination>& in_destination, c
 
    logDebugMessage(
       "Attempted to register a log destination that has already been registered with id " +
-      std::to_string(in_destination->getId()) +
+      in_destination->getId() +
       " to section " +
       in_section);
 }
@@ -392,25 +412,25 @@ void logInfoMessage(const std::string& in_message, const std::string& in_section
    logger().writeMessageToDestinations(LogLevel::INFO, in_message, in_section, in_loggedFrom);
 }
 
-void reloadAllLogDestinations()
+void refreshAllLogDestinations(const log::RefreshParams& in_refreshParams)
 {
    Logger& log = logger();
 
    WRITE_LOCK_BEGIN(log.Mutex)
    {
       for (auto& dest : log.DefaultLogDestinations)
-         dest.second->reload();
+         dest.second->refresh(in_refreshParams);
 
       for (auto& section : log.SectionedLogDestinations)
       {
          for (auto& dest : section.second)
-            dest.second->reload();
+            dest.second->refresh(in_refreshParams);
       }
    }
    RW_LOCK_END(false);
 }
 
-void removeLogDestination(unsigned int in_destinationId, const std::string& in_section)
+void removeLogDestination(const std::string& in_destinationId, const std::string& in_section)
 {
    Logger& log = logger();
    if (in_section.empty())
@@ -453,7 +473,7 @@ void removeLogDestination(unsigned int in_destinationId, const std::string& in_s
       {
          logDebugMessage(
             "Attempted to unregister a log destination that has not been registered with id" +
-            std::to_string(in_destinationId));
+            in_destinationId);
       }
    }
    else if (log.SectionedLogDestinations.find(in_section) != log.SectionedLogDestinations.end())
@@ -477,7 +497,7 @@ void removeLogDestination(unsigned int in_destinationId, const std::string& in_s
          "Attempted to unregister a log destination that has not been registered to the specified section (" +
          in_section +
          ") with id " +
-         std::to_string(in_destinationId));
+         in_destinationId);
    }
    else
    {
@@ -485,8 +505,36 @@ void removeLogDestination(unsigned int in_destinationId, const std::string& in_s
          "Attempted to unregister a log destination that has not been registered to the specified section (" +
          in_section +
          ") with id " +
-         std::to_string(in_destinationId));
+         in_destinationId);
    }
+}
+
+void removeReloadableLogDestinations()
+{
+   WRITE_LOCK_BEGIN(logger().Mutex)
+   {
+      for (auto iter = logger().DefaultLogDestinations.begin(); iter != logger().DefaultLogDestinations.end();)
+      {
+         if (iter->second->isReloadable())
+            iter = logger().DefaultLogDestinations.erase(iter);
+         else
+            ++iter;
+      }
+
+      for (auto iter = logger().SectionedLogDestinations.begin(); iter != logger().SectionedLogDestinations.end(); ++iter)
+      {
+         for (auto sectionIter = iter->second.begin(); sectionIter != iter->second.end();)
+         {
+            if (sectionIter->second->isReloadable())
+               sectionIter = iter->second.erase(sectionIter);
+            else
+               ++sectionIter;
+         }
+      }
+   }
+   RW_LOCK_END(false)
+
+   logDebugMessage("Cleared all previously registered log destinations marked as reloadable");
 }
 
 std::ostream& writeError(const Error& in_error, std::ostream& io_os)
@@ -496,11 +544,13 @@ std::ostream& writeError(const Error& in_error, std::ostream& io_os)
 
 std::string writeError(const Error& in_error)
 {
-   return formatLogMessage(LogLevel::ERR, in_error.asString(), logger().ProgramId);
+   return formatLogMessage(LogLevel::ERR, in_error.asString(), logger().ProgramId, true);
 }
 
-/** If there is a FileLogDestination configured, return it */
-std::shared_ptr<ILogDestination> getFileLogDestination()
+namespace {
+
+template <typename T>
+bool hasLogDestination()
 {
    Logger& log = logger();
    WRITE_LOCK_BEGIN(log.Mutex)
@@ -510,12 +560,24 @@ std::shared_ptr<ILogDestination> getFileLogDestination()
          const auto destEnd = logMap->end();
          for (auto iter = logMap->begin(); iter != destEnd; ++iter)
          {
-            if (iter->second->isFileLogger())
-               return std::shared_ptr<ILogDestination>(iter->second);
+            if (std::dynamic_pointer_cast<T, ILogDestination>(iter->second) != nullptr)
+               return true;
          }
       }
    RW_LOCK_END(false);
-   return std::shared_ptr<ILogDestination>();
+   return false;
+}
+
+} // anonymous namespace
+
+bool hasFileLogDestination()
+{
+   return hasLogDestination<FileLogDestination>();
+}
+
+bool hasStderrLogDestination()
+{
+   return hasLogDestination<StderrLogDestination>();
 }
 
 } // namespace log

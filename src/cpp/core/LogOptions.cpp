@@ -17,6 +17,8 @@
 
 #include <vector>
 
+#include <boost/format.hpp>
+
 #include <core/system/Environment.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Xdg.hpp>
@@ -30,32 +32,45 @@ namespace log {
 
 #define kLogLevel          "log-level"
 #define kLoggerType        "logger-type"
+#define kLogMessageFormat  "log-message-format"
 #define kLogDir            "log-dir"
 #define kLogFileMode       "log-file-mode"
 #define kLogFileIncludePid "log-file-include-pid"
 #define kRotate            "rotate"
 #define kMaxSizeMb         "max-size-mb"
+#define kRotateDays        "rotate-days"
+#define kMaxRotations      "max-rotations"
+#define kDeleteDays        "delete-days"
+#define kWarnSyslog        "warn-syslog"
 #define kLogConfFile       "logging.conf"
+
+#define kLogLevelEnvVar    "RS_LOG_LEVEL"
+#define kLogTypeEnvVar     "RS_LOGGER_TYPE"
+#define kLogFormatEnvVar   "RS_LOG_MESSAGE_FORMAT"
+#define kLogDirEnvVar      "RS_LOG_DIR"
 #define kLogConfEnvVar     "RS_LOG_CONF_FILE"
 
 #define kFileLogger        "file"
 #define kStdErrLogger      "stderr"
 #define kSysLogger         "syslog"
 
+#define kLogMessageFormatPretty  "pretty"
+#define kLogMessageFormatJson    "json"
+
 #define kLoggingLevelDebug "debug"
 #define kLoggingLevelInfo  "info"
 #define kLoggingLevelWarn  "warn"
 #define kLoggingLevelError "error"
 
-#define kBaseLevel       0
-#define kBinaryLevel     1
-#define kLogSectionLevel 2
+#define kBaseLevel         0
+#define kBinaryLevel       1
+#define kLogSectionLevel   2
 
 namespace {
 
 // pick default log path location
 #ifdef RSTUDIO_SERVER
-const FilePath kDefaultLogPath("/var/log/rstudio-server");
+const FilePath kDefaultLogPath("/var/log/rstudio/rstudio-server");
 #else
 // desktop - store logs under user dir
 const FilePath kDefaultLogPath = core::system::xdg::userDataDir().completePath("log");
@@ -94,15 +109,27 @@ std::string loggerTypeToString(LoggerType loggerType)
    }
 }
 
+std::string logMessageFormatTypeToString(LogMessageFormatType formatType)
+{
+   switch (formatType)
+   {
+      case LogMessageFormatType::JSON:
+         return kLogMessageFormatJson;
+      case LogMessageFormatType::PRETTY:
+      default:
+         return kLogMessageFormatPretty;
+   }
+}
+
 LogLevel strToLogLevel(const std::string& logLevelStr)
 {
-   if (logLevelStr == kLoggingLevelWarn)
+   if (boost::iequals(logLevelStr, kLoggingLevelWarn))
       return LogLevel::WARN;
-   else if (logLevelStr == kLoggingLevelError)
+   else if (boost::iequals(logLevelStr, kLoggingLevelError))
        return LogLevel::ERR;
-   else if (logLevelStr == kLoggingLevelInfo)
+   else if (boost::iequals(logLevelStr, kLoggingLevelInfo))
        return LogLevel::INFO;
-   else if (logLevelStr == kLoggingLevelDebug)
+   else if (boost::iequals(logLevelStr, kLoggingLevelDebug))
        return LogLevel::DEBUG;
    else
        return LogLevel::WARN;
@@ -110,14 +137,22 @@ LogLevel strToLogLevel(const std::string& logLevelStr)
 
 LoggerType strToLoggerType(const std::string& loggerTypeStr)
 {
-   if (loggerTypeStr == kSysLogger)
+   if (boost::iequals(loggerTypeStr, kSysLogger))
       return LoggerType::kSysLog;
-   else if (loggerTypeStr == kFileLogger)
+   else if (boost::iequals(loggerTypeStr, kFileLogger))
       return LoggerType::kFile;
-   else if (loggerTypeStr == kStdErrLogger)
+   else if (boost::iequals(loggerTypeStr, kStdErrLogger))
       return LoggerType::kStdErr;
    else
       return LoggerType::kSysLog;
+}
+
+LogMessageFormatType strToLogMessageFormatType(const std::string& logMessageFormatTypeStr)
+{
+   if (boost::iequals(logMessageFormatTypeStr, kLogMessageFormatJson))
+      return LogMessageFormatType::JSON;
+   else
+      return LogMessageFormatType::PRETTY;
 }
 
 struct LoggerOptionsVisitor : boost::static_visitor<>
@@ -135,7 +170,11 @@ struct LoggerOptionsVisitor : boost::static_visitor<>
          kLogFileMode, defaultOptions.getFileMode(),
          kRotate, defaultOptions.doRotation(),
          kLogFileIncludePid, defaultOptions.includePid(),
-         kMaxSizeMb, defaultOptions.getMaxSizeMb());
+         kMaxSizeMb, defaultOptions.getMaxSizeMb(),
+         kRotateDays, defaultOptions.getRotationDays(),
+         kMaxRotations, defaultOptions.getMaxRotations(),
+         kDeleteDays, defaultOptions.getDeletionDays(),
+         kWarnSyslog, defaultOptions.warnSyslog());
    }
 
    void operator()(const StdErrLogOptions& options)
@@ -156,7 +195,11 @@ struct LoggerOptionsVisitor : boost::static_visitor<>
          kRotate, options.doRotation(),
          kMaxSizeMb, options.getMaxSizeMb(),
          kLogFileIncludePid, options.includePid(),
-         kLogFileMode, options.getFileMode());
+         kLogFileMode, options.getFileMode(),
+         kRotateDays, options.getRotationDays(),
+         kMaxRotations, options.getMaxRotations(),
+         kDeleteDays, options.getDeletionDays(),
+         kWarnSyslog, options.warnSyslog());
    }
 
    ConfigProfile& profile_;
@@ -169,6 +212,7 @@ LogOptions::LogOptions(const std::string& executableName) :
    executableName_(executableName),
    defaultLogLevel_(logLevelToString(LogLevel::WARN)),
    defaultLoggerType_(loggerTypeToString(LoggerType::kSysLog)),
+   defaultMessageFormatType_(logMessageFormatTypeToString(LogMessageFormatType::PRETTY)),
    defaultLoggerOptions_(SysLogOptions()),
    lowestLogLevel_(LogLevel::WARN)
 {
@@ -178,14 +222,21 @@ LogOptions::LogOptions(const std::string& executableName) :
 LogOptions::LogOptions(const std::string& executableName,
                        LogLevel logLevel,
                        LoggerType loggerType,
+                       LogMessageFormatType messageFormatType,
                        const LoggerOptions& options) :
    executableName_(executableName),
    defaultLogLevel_(logLevelToString(logLevel)),
    defaultLoggerType_(loggerTypeToString(loggerType)),
+   defaultMessageFormatType_(logMessageFormatTypeToString(messageFormatType)),
    defaultLoggerOptions_(options),
    lowestLogLevel_(logLevel)
 {
    initProfile();
+}
+
+FilePath LogOptions::defaultLogDirectory()
+{
+   return kDefaultLogPath;
 }
 
 void LogOptions::initProfile()
@@ -201,7 +252,8 @@ void LogOptions::initProfile()
    // add base params
    profile_.addParams(
       kLogLevel, defaultLogLevel_,
-      kLoggerType, defaultLoggerType_);
+      kLoggerType, defaultLoggerType_,
+      kLogMessageFormat, defaultMessageFormatType_);
 
    // add logger-specific params
    LoggerOptionsVisitor visitor(profile_);
@@ -210,7 +262,7 @@ void LogOptions::initProfile()
 
 Error LogOptions::read()
 {
-   // first, look for config file in a specific environment variable
+   // look for config file in a specific environment variable
    FilePath optionsFile(core::system::getenv(kLogConfEnvVar));
    if (!optionsFile.exists())
    {
@@ -222,11 +274,11 @@ Error LogOptions::read()
       if (!optionsFile.exists())
             optionsFile = core::system::xdg::systemConfigFile(kLogConfFile);
    #endif
-   }
 
-   // if the options file does not exist, that's fine - we'll just use default values
-   if (!optionsFile.exists())
-      return Success();
+      // if the options file does not exist, that's fine - we'll just use default values
+      if (!optionsFile.exists())
+         return Success();
+   }
 
    Error error = profile_.load(optionsFile);
    if (error)
@@ -240,14 +292,23 @@ Error LogOptions::read()
 void LogOptions::setLowestLogLevel()
 {
    // first, set the log level for this particular binary
+   // override with env var setting if set
    std::string logLevel;
-   profile_.getParam(
-      kLogLevel, &logLevel, {{ kBaseLevel,   std::string() },
-                             { kBinaryLevel, executableName_ }});
+   std::string envValue = core::system::getenv(kLogLevelEnvVar);
+   if (!envValue.empty())
+      logLevel = envValue;
+   else
+   {
+      profile_.getParam(
+         kLogLevel, &logLevel, {{ kBaseLevel,   std::string() },
+                                { kBinaryLevel, executableName_ }});
+   }
+
    lowestLogLevel_ = strToLogLevel(logLevel);
 
    // break out early if we are already at debug level (since we cannot go lower)
-   if (lowestLogLevel_ == LogLevel::DEBUG)
+   // or if the env var was set (the env var overrides all named loggers)
+   if (lowestLogLevel_ == LogLevel::DEBUG || !envValue.empty())
       return;
 
    // now, override it with the lowest log level specified for named loggers
@@ -273,7 +334,11 @@ LogLevel LogOptions::logLevel(const std::string& loggerName) const
 
    std::string logLevel = defaultLogLevel_;
 
-   profile_.getParam(kLogLevel, &logLevel, levels);
+   std::string envValue = core::system::getenv(kLogLevelEnvVar);
+   if (!envValue.empty())
+      logLevel = envValue;
+   else
+      profile_.getParam(kLogLevel, &logLevel, levels);
 
    return strToLogLevel(logLevel);
 }
@@ -289,9 +354,28 @@ LoggerType LogOptions::loggerType(const std::string& loggerName) const
 
    std::string loggerType = defaultLoggerType_;
 
-   profile_.getParam(kLoggerType, &loggerType, levels);
+   std::string envValue = core::system::getenv(kLogTypeEnvVar);
+   if (!envValue.empty())
+      loggerType = envValue;
+   else
+      profile_.getParam(kLoggerType, &loggerType, levels);
 
    return strToLoggerType(loggerType);
+}
+
+LogMessageFormatType LogOptions::logMessageFormatType(const std::string& loggerName) const
+{
+   std::vector<ConfigProfile::Level> levels = getLevels(loggerName);
+
+   std::string messageFormatStr;
+
+   std::string envValue = core::system::getenv(kLogFormatEnvVar);
+   if (!envValue.empty())
+      messageFormatStr = envValue;
+   else
+      profile_.getParam(kLogMessageFormat, &messageFormatStr, levels);
+
+   return strToLogMessageFormatType(messageFormatStr);
 }
 
 LoggerOptions LogOptions::loggerOptions(const std::string& loggerName) const
@@ -304,17 +388,26 @@ LoggerOptions LogOptions::loggerOptions(const std::string& loggerName) const
       {
          std::vector<ConfigProfile::Level> levels = getLevels(loggerName);
 
-         std::string logDir, fileMode;
-         bool rotate, includePid;
+         std::string logDir, fileMode, messageFormatStr;
+         bool rotate, includePid, warnSyslog;
          double maxSizeMb;
+         int rotateDays, maxRotations, deleteDays;
 
          profile_.getParam(kLogDir, &logDir, levels);
          profile_.getParam(kRotate, &rotate, levels);
          profile_.getParam(kMaxSizeMb, &maxSizeMb, levels);
          profile_.getParam(kLogFileIncludePid, &includePid, levels);
          profile_.getParam(kLogFileMode, &fileMode, levels);
+         profile_.getParam(kRotateDays, &rotateDays, levels);
+         profile_.getParam(kMaxRotations, &maxRotations, levels);
+         profile_.getParam(kDeleteDays, &deleteDays, levels);
+         profile_.getParam(kWarnSyslog, &warnSyslog, levels);
 
-         return FileLogOptions(FilePath(logDir), fileMode, maxSizeMb, rotate, includePid);
+         std::string logDirOverride = core::system::getenv(kLogDirEnvVar);
+         if (!logDirOverride.empty())
+            logDir = logDirOverride;
+
+         return FileLogOptions(FilePath(logDir), fileMode, maxSizeMb, rotateDays, maxRotations, deleteDays, rotate, includePid, warnSyslog);
       }
 
       case LoggerType::kStdErr:
@@ -340,6 +433,15 @@ std::vector<ConfigProfile::Level> LogOptions::getLevels(const std::string& logge
 std::vector<std::string> LogOptions::loggerOverrides() const
 {
    return profile_.getLevelNames(kLogSectionLevel);
+}
+
+void forwardLogOptionsEnvVars(core::system::Options* pEnvironment)
+{
+   // forward relevant log configuration environment variables (i.e. all those we respect above)
+   core::system::forwardEnvVars({kLogLevelEnvVar, kLogTypeEnvVar,
+                                 kLogFormatEnvVar,   kLogDirEnvVar,
+                                 kLogConfEnvVar},
+                                pEnvironment);
 }
 
 } // namespace log
