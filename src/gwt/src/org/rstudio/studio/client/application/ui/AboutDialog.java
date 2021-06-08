@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.application.ui;
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.ThemedButton;
@@ -33,13 +34,13 @@ public class AboutDialog extends ModalDialogBase
       super(Roles.getDialogRole());
       RStudioGinjector.INSTANCE.injectMembers(this);
 
-      setText("About " + editionInfo_.editionName());
-      ThemedButton OKButton = new ThemedButton("OK", (ClickEvent) -> closeDialog());
+      setText(messages_.title(editionInfo_.editionName()));
+      ThemedButton OKButton = new ThemedButton(constants_.okBtn(), (ClickEvent) -> closeDialog());
       addOkButton(OKButton);
 
       if (editionInfo_.proLicense() && Desktop.hasDesktopFrame())
       {
-         ThemedButton licenseButton = new ThemedButton("Manage License...", (ClickEvent) ->  {
+         ThemedButton licenseButton = new ThemedButton(constants_.manageLicenseBtn(), (ClickEvent) ->  {
             closeDialog();
             editionInfo_.showLicense();
          });
@@ -47,7 +48,7 @@ public class AboutDialog extends ModalDialogBase
       }
       contents_ = new AboutDialogContents(info, editionInfo_);
       setARIADescribedBy(contents_.getDescriptionElement());
-      setWidth("600px");
+      setWidth("600px"); //$NON-NLS-1$
    }
 
    @Override
@@ -70,4 +71,7 @@ public class AboutDialog extends ModalDialogBase
 
    private AboutDialogContents contents_;
    private ProductEditionInfo editionInfo_;
+
+   private AboutDialogConstants constants_ = GWT.create(AboutDialogConstants.class);
+   private AboutDialogMessages messages_ = GWT.create(AboutDialogMessages.class);
 }
