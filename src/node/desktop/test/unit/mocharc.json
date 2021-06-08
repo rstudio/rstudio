@@ -1,5 +1,5 @@
 {
   "extension": ["ts"],
-  "spec": "./test/**/*.test.ts",
+  "spec": "./test/unit/**/*.test.ts",
   "require": "ts-node/register"
 }

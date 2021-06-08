@@ -25,6 +25,7 @@
     "eslint-plugin-promise": "^5.1.0",
     "mocha": "^8.4.0",
     "nyc": "^15.1.0",
+    "spectron": "^15.0.0",
     "ts-node": "^10.0.0",
     "typescript": "^4.3.2"
   },
@@ -32,12 +33,14 @@
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
-    "package": "electron-packager ./ --prune --package-manager=yarn --out=./package --overwrite --ignore tsconfig.tsbuildinfo",
+    "package": "yarn run build && electron-packager ./ --prune --package-manager=yarn --out=./package --overwrite --ignore tsconfig.tsbuildinfo",
     "lint": "eslint ./src ./test",
     "start": "yarn run build && electron ./dist/main/app.js",
     "show-version": "yarn run build && electron ./dist/main/app.js --version-json",
-    "test": "electron-mocha -c",
-    "testcover": "nyc electron-mocha -c",
-    "testwip": "electron-mocha -c -g WIP"
+    "test": "electron-mocha -c --config ./test/unit/mocharc.json",
+    "testcover": "nyc electron-mocha -c --config ./test/unit/mocharc.json",
+    "testwip": "electron-mocha -c -g WIP --config ./test/unit/mocharc.json",
+    "test-int": "mocha -c --config ./test/integration/mocharc.json",
+    "test-int-cover": "nyc mocha -c --config ./test/integration/mocharc.json"
   }
 }
