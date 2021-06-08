@@ -359,7 +359,7 @@ public class TextEditingTargetWidget
 
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(previewHTMLButton_ =
-         mgr.getSourceCommand(commands_.previewHTML(), column_).createToolbarButton());
+         mgr.getSourceCommand(commands_.previewHTML(), column_).createUnsyncedToolbarButton());
       toolbar.addLeftWidget(quartoRenderButton_ =
          mgr.getSourceCommand(commands_.quartoRenderDocument(), column_).createUnsyncedToolbarButton());
       knitDocumentButton_ =
@@ -892,9 +892,9 @@ public class TextEditingTargetWidget
 
       findReplaceButton_.setVisible(!visualRmdMode);
 
-
       knitDocumentButton_.setVisible(canKnitToHTML && !isQuarto);
-      quartoRenderButton_.setVisible(canKnitToHTML && isQuarto);
+      previewHTMLButton_.setVisible(fileType.canPreviewHTML() && !isQuarto);
+      quartoRenderButton_.setVisible(isQuarto);
 
       setRmdFormatButtonVisible(isRMarkdown2 && !isQuarto);
       rmdOptionsButton_.setVisible(isRMarkdown2);

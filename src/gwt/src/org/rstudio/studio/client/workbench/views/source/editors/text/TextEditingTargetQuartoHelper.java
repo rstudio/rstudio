@@ -42,8 +42,6 @@ public class TextEditingTargetQuartoHelper
    
    public void manageCommands()
    {
-      
-      
       boolean isQuartoDoc = SourceDocument.XT_QUARTO_DOCUMENT
                                 .equals(editingTarget_.getExtendedFileType());
       boolean hasQuartoExt = docDisplay_.getFileType().isQuartoMarkdown();
@@ -52,12 +50,13 @@ public class TextEditingTargetQuartoHelper
       commands_.quartoRenderDocument().setVisible(isQuartoDoc);
       
       // disable traditional rmd knit commands for quarto docs
-      commands_.knitDocument().setVisible(!isQuartoDoc);
-      commands_.knitWithParameters().setVisible(!isQuartoDoc);
-      commands_.clearKnitrCache().setVisible(!isQuartoDoc);
+      commands_.previewHTML().setVisible(!isQuartoDoc && docDisplay_.getFileType().canPreviewHTML());
+      commands_.knitDocument().setVisible(!isQuartoDoc && docDisplay_.getFileType().canKnitToHTML());
+      commands_.knitWithParameters().setVisible(!isQuartoDoc && docDisplay_.getFileType().canKnitToHTML());
+      commands_.clearKnitrCache().setVisible(!isQuartoDoc && docDisplay_.getFileType().canKnitToHTML());
       
       // disable some rmd file specific stuff for quarto ext
-      commands_.executeSetupChunk().setVisible(!hasQuartoExt);
+      commands_.executeSetupChunk().setVisible(!hasQuartoExt && docDisplay_.getFileType().canKnitToHTML());
       
    }
    

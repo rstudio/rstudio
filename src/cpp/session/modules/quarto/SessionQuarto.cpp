@@ -82,7 +82,7 @@ std::string onDetectQuartoSourceType(
             return kQuartoXt;
          }
          // project has quarto config in build target dir
-         else if (filePath.isWithin(projects::projectContext().buildTargetPath()) && projectIsQuarto())
+         else if (filePath.isWithin(projects::projectContext().directory()) && projectIsQuarto())
          {
             return kQuartoXt;
 
@@ -139,7 +139,7 @@ bool projectIsQuarto()
    const ProjectContext& context = projectContext();
    if (context.hasProject())
    {
-      return pathHasQuartoConfig(context.buildTargetPath());
+      return pathHasQuartoConfig(context.directory());
    } else {
       return false;
    }

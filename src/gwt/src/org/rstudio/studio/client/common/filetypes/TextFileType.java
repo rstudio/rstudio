@@ -399,13 +399,13 @@ public class TextFileType extends EditableFileType
       {
          results.add(commands.knitDocument());
       }
-      if (canKnitToHTML())
-      {
-         results.add(commands.quartoRenderDocument());
-      }
       if (canPreviewHTML())
       {
          results.add(commands.previewHTML());
+      }
+      if (canKnitToHTML() || canPreviewHTML())
+      {
+         results.add(commands.quartoRenderDocument());
       }
       if (canCompilePDF())
       {

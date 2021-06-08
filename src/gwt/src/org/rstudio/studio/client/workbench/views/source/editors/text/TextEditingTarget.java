@@ -3433,6 +3433,7 @@ public class TextEditingTarget implements
          return;
       }
 
+      
       view_.adaptToExtendedFileType(extendedType);
       if (extendedType.startsWith(SourceDocument.XT_RMARKDOWN_PREFIX) ||
           extendedType.equals(SourceDocument.XT_QUARTO_DOCUMENT))
@@ -3440,6 +3441,8 @@ public class TextEditingTarget implements
          updateRmdFormat();
       }
       extendedType_ = extendedType;
+      
+      quartoHelper_.manageCommands();
    }
 
    @Override
