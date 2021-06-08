@@ -34,4 +34,4 @@
 * **BREAKING:** RStudio Desktop Pro only supports activation with license files (Pro #2300)
 * Added AWS Cognito support to openid integration (Pro #2313)
 * Add file uploads and downloads to session audit log (Pro #2226)
-* Remove undocumented keyboard shortcut (Cmd+Shift+0) for restarting session on MacOS (#7695)
+* Make Cmd+Shift+0 the shortcut for restarting session on MacOS (#7695)
