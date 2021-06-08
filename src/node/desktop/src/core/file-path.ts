@@ -26,14 +26,24 @@ export interface FilePathWithError {
   path: FilePath;
 }
 
+const homePathAlias = '~/';
+const homePathLeafAlias = '~';
+
+function normalizeSeparators(path: string, separator = '/') {
+  return path.replace(/[\\/]/g, separator);
+}
+
+function normalizeSeparatorsNative(path: string) {
+  const separator = process.platform === 'win32' ? '\\' : '/';
+  return normalizeSeparators(path, separator);
+}
+
 /**
  * Class representing a path on the system. May be any type of file (e.g. directory, symlink,
  * regular file, etc.)
  */
 export class FilePath {
   private path: string;
-  static homePathAlias = '~/';
-  static homePathLeafAlias = '~';
 
   constructor(path = '') {
     this.path = path;
@@ -49,17 +59,39 @@ export class FilePath {
   /**
    * Compare this object with another; returns true if they refer to the same
    * path (exact match).
+   * 
+   * Note that paths which resolve to the same path, but are not stored the
+   * same, are considered different -- for example, /a/b and /a/b/../b are
+   * not considered identical.
    */
   equals(filePath: FilePath): boolean {
-    return FilePath.boost_fs_path2str(this.path) == FilePath.boost_fs_path2str(filePath.path);
+    return normalizeSeparators(this.path) === normalizeSeparators(filePath.path);
   }
 
   /**
    * Creates a path in which the user home path will be replaced by the ~ alias.
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   static createAliasedPath(filePath: FilePath, userHomePath: FilePath): string {
-    throw Error('createAliasedPath is NYI');
+
+    // first, retrieve and normalize paths
+    const file = filePath.getAbsolutePath();
+    const home = userHomePath.getAbsolutePath();
+    if (file === home) {
+      return homePathLeafAlias;
+    }
+
+    // try to compute home-relative path -- if that fails,
+    // or the computed path does not appear to be relative,
+    // then just return the original file path
+    const relative = path.relative(home, file);
+    if (!relative || path.isAbsolute(relative) || relative.startsWith('..')) {
+      return file;
+    }
+
+    // we computed a relative path; prefix it with tilde
+    const aliased = path.join(homePathLeafAlias, relative);
+    return normalizeSeparators(aliased);
+
   }
 
   /**
@@ -127,12 +159,12 @@ export class FilePath {
    */
   static resolveAliasedPathSync(aliasedPath: string, userHomePath: FilePath): FilePath {
     // Special case for empty string or "~"
-    if (!aliasedPath || aliasedPath == this.homePathLeafAlias) {
+    if (!aliasedPath || aliasedPath == homePathLeafAlias) {
       return userHomePath;
     }
 
     // if the path starts with the home alias then substitute the home path
-    if (aliasedPath.startsWith(this.homePathAlias)) {
+    if (aliasedPath.startsWith(homePathAlias)) {
       return new FilePath(path.join(userHomePath.getAbsolutePath(), aliasedPath.substr(1)));
     } else {
       // no aliasing, this is either an absolute path or path
@@ -283,9 +315,9 @@ export class FilePath {
    * Completes the provided path relative to this path. If the provided path is not relative,
    * it will be returned as is. Relative paths such as ".." are permitted.
    */
-  completePath(filePath: string): FilePath {
+  completePath(stem: string): FilePath {
     try {
-      return new FilePath(FilePath.boost_fs_path2str(FilePath.fs_complete(filePath, this.path)));
+      return new FilePath(normalizeSeparators(path.resolve(this.path, stem)));
     } catch (err) {
       FilePath.logError(err);
       return this;
@@ -315,7 +347,7 @@ export class FilePath {
     if (!filePath) {
       targetDirectory = this.path;
     } else {
-      targetDirectory = FilePath.fs_complete(filePath, this.path);
+      targetDirectory = path.resolve(this.path, filePath);
     }
 
     try {
@@ -334,7 +366,7 @@ export class FilePath {
     if (!filePath) {
       targetDirectory = this.path;
     } else {
-      targetDirectory = FilePath.fs_complete(filePath, this.path);
+      targetDirectory = path.resolve(this.path, filePath);
     }
 
     try {
@@ -406,14 +438,14 @@ export class FilePath {
    * Gets the full absolute representation of this file path.
    */
   getAbsolutePath(): string {
-    return FilePath.boost_fs_path2str(this.path);
+    return normalizeSeparators(this.path);
   }
 
   /**
    * Gets the full absolute representation of this file path in native format.
    */
   getAbsolutePathNative(): string {
-    return FilePath.boost_fs_path2strnative(this.path);
+    return normalizeSeparatorsNative(this.path);
   }
 
   /**
@@ -426,9 +458,8 @@ export class FilePath {
     }
 
     try {
-      return FilePath.boost_fs_path2str(fs.realpathSync(this.path));
-    }
-    catch (err) {
+      return normalizeSeparators(fs.realpathSync(this.path));
+    } catch (err) {
       FilePath.logErrorWithPath(this.path, err);
     }
     return '';
@@ -439,17 +470,19 @@ export class FilePath {
    * canonical location on disk can be obtained.
    */
   async getCanonicalPath(): Promise<string> {
+    
     if (this.isEmpty()) {
       return '';
     }
 
     try {
-      return FilePath.boost_fs_path2str(await fsPromises.realpath(this.path));
-    }
-    catch (err) {
+      return await fsPromises.realpath(this.path);
+    } catch (err) {
       FilePath.logErrorWithPath(this.path, err);
     }
+
     return '';
+
   }
 
   /**
@@ -531,7 +564,7 @@ export class FilePath {
    * components resolved and/or removed.
    */
   getLexicallyNormalPath(): string {
-    return FilePath.boost_fs_path2str(path.normalize(this.path));
+    return normalizeSeparators(path.normalize(this.path));
   }
 
   /**
@@ -660,43 +693,24 @@ export class FilePath {
    *  or if the two paths are equal; false otherwise.
    */
   isWithin(scopePath: FilePath): boolean {
+
     // Technically, we contain ourselves.
     if (this.equals(scopePath)) {
       return true;
     }
 
-    // Make the paths lexically normal so that e.g. foo/../bar isn't considered a child of foo.
-    const child = new FilePath(this.getLexicallyNormalPath());
-    const parent = new FilePath(scopePath.getLexicallyNormalPath());
+    // Try to resolve scopePath within our parent 
+    const parent = path.resolve(scopePath.path);
+    const child  = path.resolve(this.path);
 
-    // Easy test: We can't possibly be in this scope path if it has more components than we do
-    if (parent.path.length > child.path.length) {
+    // Form relative path.
+    const relative = path.relative(parent, child);
+    if (!relative) {
       return false;
     }
 
-    const childDetail = path.parse(child.path);
-    const parentDetail = path.parse(parent.path);
-    if (childDetail.root !== parentDetail.root) {
-      return false;
-    }
+    return !relative.startsWith('..') && !path.isAbsolute(relative);
 
-    // Find the first path element that differs. Stop when we reach the end of the parent
-    // path, or a "." path component, which signifies the end of a directory (/foo/bar/.)
-    const childDirs = childDetail.dir.split(/[/\\]/);
-    const parentDirs = parentDetail.dir.split(/[/\\]/);
-    childDirs.push(childDetail.base);
-    parentDirs.push(parentDetail.base);
-    for (let i = 0; i < parentDirs.length; i++) {
-      if (parentDirs[i] === '.') {
-        break;
-      }
-      if (parentDirs[i] !== childDirs[i]) {
-        return false;
-      }
-    }
-
-    // No differing path element found
-    return true;
   }
 
   /**
@@ -812,31 +826,4 @@ export class FilePath {
     // console.error(error.message);
   }
 
-  /**
-   * Return generic form of stored path (akin to boost's path.generic_string method)
-   */
-  static generic_string(p: string): string {
-    if (process.platform !== 'win32') {
-      return p;
-    } else {
-      return p.split(path.sep).join(path.posix.sep);
-    }
-  }
-
-  // Analogous to BOOST_FS_COMPLETE in FilePath.cpp
-  static fs_complete(p: string, base: string): string {
-    return path.resolve(base, p);
-  }
-
-  static boost_fs_path2str(p: string): string {
-    return FilePath.generic_string(p);
-  }
-
-  static boost_fs_path2strnative(p: string): string {
-    if (process.platform === 'win32') {
-      return p;
-    } else {
-      return FilePath.generic_string(p);
-    }
-  }
 }

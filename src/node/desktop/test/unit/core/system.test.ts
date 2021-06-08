@@ -19,9 +19,9 @@ import { assert } from 'chai';
 import fs from 'fs';
 import os from 'os';
 
-import { FilePath } from '../../src/core/file-path';
-import { initHook, initializeLog, userHomePath, username } from '../../src/core/system';
-import * as log from '../../src/core/log';
+import { FilePath } from '../../../src/core/file-path';
+import { initHook, initializeLog, userHomePath, username } from '../../../src/core/system';
+import * as log from '../../../src/core/log';
 
 describe('System', () => {
   describe('User info', () => {
