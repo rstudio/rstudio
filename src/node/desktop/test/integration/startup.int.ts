@@ -1,5 +1,5 @@
 /*
- * main.test.ts
+ * startup.int.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
