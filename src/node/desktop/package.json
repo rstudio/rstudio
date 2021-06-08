@@ -1,8 +1,9 @@
 {
   "name": "rstudio",
+  "productName": "RStudio",
   "version": "0.0.1",
   "description": "RStudio",
-  "main": "index.js",
+  "main": "./dist/main/app.js",
   "repository": "https://github.com/rstudio/rstudio",
   "author": "RStudio PBC",
   "license": "AGPL-3.0-only",
@@ -16,6 +17,7 @@
     "chai": "^4.3.4",
     "electron": "^13.0.1",
     "electron-mocha": "^10.0.0",
+    "electron-packager": "^15.2.0",
     "eslint": "^7.27.0",
     "eslint-config-standard": "^16.0.3",
     "eslint-plugin-import": "^2.23.3",
@@ -23,6 +25,7 @@
     "eslint-plugin-promise": "^5.1.0",
     "mocha": "^8.4.0",
     "nyc": "^15.1.0",
+    "spectron": "^15.0.0",
     "ts-node": "^10.0.0",
     "typescript": "^4.3.2"
   },
@@ -30,13 +33,14 @@
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
+    "package": "yarn run build && electron-packager ./ --prune --package-manager=yarn --out=./package --overwrite --ignore tsconfig.tsbuildinfo",
     "lint": "eslint ./src ./test",
     "start": "yarn run build && electron ./dist/main/app.js",
     "show-version": "yarn run build && electron ./dist/main/app.js --version-json",
-    "test": "electron-mocha -c",
-    "testcover": "nyc electron-mocha -c",
-    "testwip": "electron-mocha -c -g WIP",
-    "use-release": "rm -rf src/config && ln -nfs ../config/release src/config",
-    "use-dev":     "rm -rf src/config && ln -nfs ../config/development src/config"
+    "test": "electron-mocha -c --config ./test/unit/mocharc.json",
+    "testcover": "nyc electron-mocha -c --config ./test/unit/mocharc.json",
+    "testwip": "electron-mocha -c -g WIP --config ./test/unit/mocharc.json",
+    "test-int": "mocha -c --config ./test/integration/mocharc.json",
+    "test-int-cover": "nyc mocha -c --config ./test/integration/mocharc.json"
   }
 }

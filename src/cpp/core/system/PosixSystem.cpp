@@ -187,7 +187,7 @@ Error initializeSystemLog(const std::string& programIdentity,
    {
       // create default syslog logger options
       log::SysLogOptions options;
-      s_logOptions.reset(new log::LogOptions(programIdentity, logLevel, log::LoggerType::kSysLog, options));
+      s_logOptions.reset(new log::LogOptions(programIdentity, logLevel, log::LoggerType::kSysLog, log::LogMessageFormatType::PRETTY, options));
       s_programIdentity = programIdentity;
 
       Error error = initLog();
@@ -201,6 +201,8 @@ Error initializeSystemLog(const std::string& programIdentity,
 
    return Success();
 }
+
+boost::function<void()> s_sighupHandler;
 
 namespace {
 
@@ -228,6 +230,10 @@ void logConfigReloadThreadFunc(sigset_t waitMask)
          {
             LOG_INFO_MESSAGE("Successfully reloaded logging configuration");
          }
+
+         // call previously registered SIGHUP handlder
+         if (s_sighupHandler)
+            s_sighupHandler();
       }
    }
 }
@@ -247,6 +253,12 @@ void initializeLogConfigReload()
 
    // start a thread to handle the SIGHUP signal
    boost::thread thread(boost::bind(logConfigReloadThreadFunc, waitMask));
+}
+
+
+void registerSighupHandler(const boost::function<void()>& sighupHandler)
+{
+   s_sighupHandler = sighupHandler;
 }
    
 Error ignoreTerminalSignals()
@@ -2371,14 +2383,15 @@ bool effectiveUserIsRoot()
 
 Error temporarilyDropPriv(const std::string& newUsername)
 {
-   // clear error state
-   errno = 0;
-
    // get user info
    User user;
    Error error = User::getUserFromIdentifier(newUsername, user);
    if (error)
       return error;
+
+   // before changing the process user, ensure it becomes the new
+   // owner of any file logs so we can ensure that we can keep writing to them
+   core::log::refreshAllLogDestinations(core::log::RefreshParams{ user });
 
    return posix::temporarilyDropPrivileges(user);
 }
@@ -2393,14 +2406,18 @@ Error restorePriv()
 
 Error permanentlyDropPriv(const std::string& newUsername)
 {
-   // clear error state
-   errno = 0;
-
    // get user info
    User user;
    Error error = User::getUserFromIdentifier(newUsername, user);
    if (error)
       return error;
+
+   // before changing the process user, ensure it becomes the new
+   // owner of any file logs so we can ensure that we can keep writing to them
+   core::log::refreshAllLogDestinations(core::log::RefreshParams{ user });
+
+   // clear error state
+   errno = 0;
 
    // supplemental group list
    if (::initgroups(user.getUsername().c_str(), user.getGroupId()) < 0)

@@ -1,5 +1,5 @@
 /*
- * user.test.ts
+ * QuartoFileType.java
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -13,19 +13,21 @@
  *
  */
 
-import { describe } from 'mocha';
-import { expect } from 'chai';
+package org.rstudio.studio.client.common.filetypes;
 
-import fs from 'fs';
 
-import { User } from '../../src/core/user';
+import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.studio.client.common.reditor.EditorLanguage;
 
-describe('User', () => {
-  describe('Static helpers', () => {
-    it('getUserHomePath returns a valid path', () => {
-      const path = User.getUserHomePath();
-      expect(fs.existsSync(path.getAbsolutePath())).is.true;
-    });
-  });
-});
- 
+public class QuartoFileType extends RWebContentFileType
+{
+   public QuartoFileType()
+   {
+      super("quarto_markdown", 
+            "Quarto", 
+            EditorLanguage.LANG_RMARKDOWN,
+            ".qmd", 
+            new ImageResource2x(FileIconResources.INSTANCE.iconQuarto2x()), 
+            true);
+   }
+}

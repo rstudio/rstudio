@@ -1,5 +1,5 @@
 /*
- * config.ts
+ * user.test.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -13,4 +13,19 @@
  *
  */
 
-export enum BuildType { Development, Release, Current = Release }
+import { describe } from 'mocha';
+import { assert } from 'chai';
+
+import fs from 'fs';
+
+import { User } from '../../../src/core/user';
+
+describe('User', () => {
+  describe('Static helpers', () => {
+    it('getUserHomePath returns a valid path', () => {
+      const path = User.getUserHomePath();
+      assert.isTrue(fs.existsSync(path.getAbsolutePath()));
+    });
+  });
+});
+ 

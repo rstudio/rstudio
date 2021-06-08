@@ -127,4 +127,7 @@ dist/
 tmp/
 temp/
 
+# electron-packager output
+package/
+
 # End of https://www.toptal.com/developers/gitignore/api/node

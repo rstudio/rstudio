@@ -33,6 +33,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display.DefaultChunkOptionsPopupPanel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display.SetupChunkOptionsPopupPanel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.events.InterruptChunkEvent;
+import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 import com.google.gwt.core.client.JsArrayString;
 
@@ -121,6 +122,14 @@ public abstract class ChunkContextUi implements ChunkContextToolbar.Host
          toolbar_.setEngine(engine);
       }
       toolbar_.setClassId(getLabel(row));
+      
+      syncOptions();
+   }
+   
+   public void syncOptions()
+   {
+      boolean showOptions = !outerEditor_.getExtendedFileType().equals(SourceDocument.XT_QUARTO_DOCUMENT);
+      toolbar_.setShowOptions(showOptions);
    }
 
    // ChunkContextToolbar.Host implementation ---------------------------------

@@ -1,5 +1,5 @@
 /*
- * main.test.ts
+ * log.test.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -14,18 +14,16 @@
  */
 
 import { describe } from 'mocha';
-import { expect } from 'chai';
+import { assert } from 'chai';
 
-import { getenv } from '../../src/core/environment';
-import Main from '../../src/main/main';
+import { FileLogOptions } from '../../../src/core/log';
 
-describe('Main', () => {
-  describe('Static helpers', () => {
-    it('initializeSharedSecret generates a random string in RS_SHARED_SECRET envvar_', () => {
-      const envvar = 'RS_SHARED_SECRET';
-      expect(getenv(envvar)).has.lengthOf(0);
-      Main.initializeSharedSecret();
-      expect(getenv(envvar).length).is.greaterThan(0);
+describe('Log', () => {
+  describe('Constructions', () => {
+    it('FileLogOptions construction works', () => {
+      const flo = new FileLogOptions('/somewhere');
+      assert.strictEqual(flo.directory, '/somewhere');
     });
   });
 });
+ 

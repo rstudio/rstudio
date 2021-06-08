@@ -1,5 +1,5 @@
 /*
- * config.ts
+ * SessionQuarto.hpp
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -13,4 +13,28 @@
  *
  */
 
-export enum BuildType { Development, Release, Current = Development }
+#ifndef SESSION_QUARTO_HPP
+#define SESSION_QUARTO_HPP
+
+namespace rstudio {
+namespace core {
+   class Error;
+}
+}
+
+namespace rstudio {
+namespace session {
+namespace modules {
+namespace quarto {
+
+bool isInstalled(bool check = false);
+bool projectIsQuarto();
+
+core::Error initialize();
+   
+} // namespace quarto
+} // namespace modules
+} // namespace session
+} // namespace rstudio
+
+#endif

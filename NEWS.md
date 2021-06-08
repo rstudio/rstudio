@@ -1,6 +1,17 @@
 
 ## RStudio 1.5 "Ghost Orchid" Release Notes
 
+### Logging
+
+* In an effort to help make the RStudio Team products more cohesive, logging has been changed significantly.
+* By default, server logs will now be written to file instead of syslog. Warnings and errors will still log to syslog. This can be controlled by the `warn-syslog` parameter in `logging.conf`.
+* By default, server logs will now be written under `/var/log/rstudio/rstudio-server`.
+* Logs can now be written in JSON lines format.
+* Reloading the logging.conf configuration by sending a SIGHUP to the `rserver` process will now cause all RStudio managed subprocesses to also refresh their logging configuration.
+* Logging can now be partially configured using environment variables (`RS_LOGGER_TYPE`, `RS_LOG_LEVEL`, `RS_LOG_MESSAGE_FORMAT`, and `RS_LOG_DIR`).
+* Log files will now rotate by time in addition to the existing rotation by file size. This can be controlled by the `rotate-days` parameter in `logging.conf`.
+* For more information, see section 2 of the Admin Guide.
+
 ### Bugfixes
 
 * Fixed issue where .md, .py, .sql, and .stan files had duplicate event handlers (#9106)
@@ -9,6 +20,8 @@
 * Fixed issue where completion tooltip was erroneously shown in multi-line strings in some cases (#8677)
 * Fixed issue with autocompletion of column names within native-piped R expressions (#9385)
 * Fixed issue where help requests for Python objects would fail with reticulate 1.20 (#9311)
+* Fixed issue where busy sessions can't be interrupted and block basic file operations (#2038)
+* Fixed issue where R Markdown template skeletons with a '.rmd' extension were not discovered (Pro #1607)
 
 ### Misc
 

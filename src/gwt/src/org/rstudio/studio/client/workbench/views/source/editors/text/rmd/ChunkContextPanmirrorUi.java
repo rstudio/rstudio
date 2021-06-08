@@ -41,6 +41,8 @@ public class ChunkContextPanmirrorUi extends ChunkContextUi
       style.setTop(15, Unit.PX);
       style.setRight(0, Unit.PX);
       style.setWidth(100, Unit.PX);
+      
+      syncOptions();
    }
 
    @Override

@@ -477,7 +477,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
 
          // open a new one with the same parameters
          outputFrame_ = createOutputFrame(newViewerType);
-         outputFrame_.showRmdPreview(params, true);
+         if (outputFrame_ != null)
+            outputFrame_.showRmdPreview(params, true);
       }
       else if (outputFrame_ != null &&
                outputFrame_.getWindowObject() == null &&

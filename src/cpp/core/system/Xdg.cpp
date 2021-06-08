@@ -326,30 +326,11 @@ FilePath systemConfigFile(const std::string& filename)
 void forwardXdgEnvVars(Options *pEnvironment)
 {
    // forward relevant XDG environment variables (i.e. all those we respect above)
-   for (auto&& xdgVar: {"RSTUDIO_CONFIG_HOME", "RSTUDIO_CONFIG_DIR",
-                        "RSTUDIO_DATA_HOME",   "RSTUDIO_DATA_DIR",
-                        "XDG_CONFIG_HOME",     "XDG_CONFIG_DIRS",
-                        "XDG_DATA_HOME",       "XDG_DATA_DIRS"})
-   {
-      // only forward value if non-empty; avoid overwriting a previously set
-      // value with an empty one
-      std::string val = core::system::getenv(xdgVar);
-      if (!val.empty())
-      {
-         // warn if we're changing values; we typically are forwarding values in
-         // order to ensure a consistent view of configuration and state across
-         // RStudio processes, which merits overwriting, but it's also hard to
-         // imagine that these vars would be set unintentionally in the existing
-         // environment.
-         std::string oldVal = core::system::getenv(*pEnvironment, xdgVar);
-         if (!oldVal.empty() && oldVal != val)
-         {
-             LOG_WARNING_MESSAGE("Overriding " + std::string(xdgVar) +
-                                 ": '" + oldVal + "' => '" + val + "'");
-         }
-         core::system::setenv(pEnvironment, xdgVar, val);
-      }
-   }
+   core::system::forwardEnvVars({"RSTUDIO_CONFIG_HOME", "RSTUDIO_CONFIG_DIR",
+                                 "RSTUDIO_DATA_HOME",   "RSTUDIO_DATA_DIR",
+                                 "XDG_CONFIG_HOME",     "XDG_CONFIG_DIRS",
+                                 "XDG_DATA_HOME",       "XDG_DATA_DIRS"},
+                                pEnvironment);
 }
 
 

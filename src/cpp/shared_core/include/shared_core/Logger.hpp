@@ -29,6 +29,10 @@
 #include <ostream>
 #include <string>
 
+#include <boost/optional.hpp>
+
+#include <shared_core/system/User.hpp>
+
 #include "PImpl.hpp"
 
 namespace rstudio {
@@ -53,6 +57,23 @@ namespace log {
 class ILogDestination;
 
 /**
+ * @brief A struct encapsulating various params to pass when refreshing log destinations.
+ *        This carries data that some loggers may be interested in consuming to determine
+ *        how the refresh should be carried out. See the FileLogDestination for a concrete
+ *        example of this.
+ */
+struct RefreshParams
+{
+#ifndef _WIN32
+   /**
+    * @brief An optional user to become the new owner of any open file logs. Used when
+    *        changing process running user to ensure logs can still be written to.
+    */
+   boost::optional<core::system::User> newUser;
+#endif
+};
+
+/**
  * @brief Log delimiting character which may be used for custom log formatting.
  */
 constexpr char s_delim = ';';
@@ -68,6 +89,16 @@ enum class LogLevel
    WARN = 2,      // Warning and error messages will be logged.
    INFO = 3,      // Info, warning, and error messages will be logged.
    DEBUG = 4      // All messages will be logged.
+};
+
+/**
+ * @enum LogMessageFormatType
+ * @brief Enum which represents the format type for log messages.
+ */
+enum class LogMessageFormatType
+{
+   PRETTY = 0,   // A human-readable single line log message format
+   JSON   = 1    // A JSON format, one JSON object per line
 };
 
 /**
@@ -104,15 +135,23 @@ void addLogDestination(const std::shared_ptr<ILogDestination>& in_destination);
  *
  * @param in_destination    The destination to add.
  * @param in_section        The name of the log section to which this logger is assigned.
+ *
  */
 void addLogDestination(const std::shared_ptr<ILogDestination>& in_destination, const std::string& in_section);
 
 /**
- * @brief Returns the reference to a default file log destination or an empty shared_ptr if there isn't one
+ * @brief Returns whether or not a file log destination is configured.
  *
- * @return shared_ptr to the FileLogDestination.
+ * @return Whether or not a file log destination is configured.
  */
-std::shared_ptr<ILogDestination> getFileLogDestination();
+bool hasFileLogDestination();
+
+/**
+ * @brief Returns whether or not a stderr log destination is configured.
+ *
+ * @return Whether or not a stderr log destination is configured.
+ */
+bool hasStderrLogDestination();
 
 /**
  * @brief Replaces logging delimiters with ' ' in the specified string.
@@ -311,9 +350,11 @@ void logInfoMessage(const std::string& in_message, const ErrorLocation& in_logge
 void logInfoMessage(const std::string& in_message, const std::string& in_section, const ErrorLocation& in_loggedFrom);
 
 /**
- * @brief Reloads all log destinations. May be used after fork to prevent stale file handles.
+ * @brief Refreshes all log destinations. May be used after fork to prevent stale file handles.
+ *
+ * @param in_refreshParams   Refresh params to use when refreshing the log destinations (if applicable).
  */
-void reloadAllLogDestinations();
+void refreshAllLogDestinations(const log::RefreshParams& in_refreshParams = log::RefreshParams());
 
 /**
  * @brief Removes a log destination from the logger.
@@ -325,7 +366,13 @@ void reloadAllLogDestinations();
  * @param in_destinationId   The ID of the destination to remove.
  * @param in_section         The name of the section from which to remove the log. Default: all sections.
  */
-void removeLogDestination(unsigned int in_destinationId, const std::string& in_section = std::string());
+void removeLogDestination(const std::string& in_destinationId, const std::string& in_section = std::string());
+
+/**
+ * @brief Removes log destinations that are marked as reloadable from the logger. These loggers can then be reinitialized
+ *        and re-registered with the logger to update the desired changes to the logging system.
+ */
+void removeReloadableLogDestinations();
 
 /**
  * @brief Writes an error to the specified output stream.

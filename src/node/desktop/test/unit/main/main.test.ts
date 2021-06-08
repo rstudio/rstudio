@@ -1,5 +1,5 @@
 /*
- * config.test.ts
+ * main.test.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -14,25 +14,18 @@
  */
 
 import { describe } from 'mocha';
-import { expect } from 'chai';
+import { assert } from 'chai';
 
-import fs from 'fs';
+import { getenv } from '../../../src/core/environment';
+import Main from '../../../src/main/main';
 
-import { BuildType } from '../../src/config/config';
-
-describe('Config', () => {
-
-  it('Should reflect active configuration', async () => {
-
-    // since 'src/config' is a symlink to the 'active' build type,
-    // we resolve that for testing the 'active' build type
-    const configPath = fs.realpathSync('src/config');
-    if (configPath.includes('development')) {
-      expect(BuildType.Current).to.equal(BuildType.Development);
-    } else {
-      expect(BuildType.Current).to.equal(BuildType.Release);
-    }
-
+describe('Main', () => {
+  describe('Static helpers', () => {
+    it('initializeSharedSecret generates a random string in RS_SHARED_SECRET envvar_', () => {
+      const envvar = 'RS_SHARED_SECRET';
+      assert.equal(getenv(envvar).length, 0);
+      Main.initializeSharedSecret();
+      assert.isAtLeast(getenv(envvar).length, 0);
+    });
   });
-
 });

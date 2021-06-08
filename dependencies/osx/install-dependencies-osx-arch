@@ -42,6 +42,7 @@ FORMULAS=(
    gettext
    krb5
    libpq
+   openjdk@11
    openssl
    ninja
    pidof

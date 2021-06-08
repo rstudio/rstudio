@@ -267,6 +267,10 @@ FilePath currentWorkingDirViaLsof(PidType pid);
 FilePath currentWorkingDirViaProcFs(PidType pid);
 #endif // !__APPLE__
 
+// used to register a SIGHUP handler - only use if the system previously created a SIGHUP
+// handler on your behalf, such as when initializing logging with config reload enabled
+void registerSighupHandler(const boost::function<void()>& sighupHandler);
+
 } // namespace system
 } // namespace core
 } // namespace rstudio

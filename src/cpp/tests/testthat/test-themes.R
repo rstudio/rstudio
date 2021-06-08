@@ -1415,27 +1415,19 @@ test_that("parseTmTheme handles incorrect input", {
       fixed = TRUE)
    expect_error(
       .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "Malformed1.tmTheme")),
-      sprintf(
-         "error parsing attribute name [68]",
-         inputFileLocation),
+      "error parsing attribute name [68]",
       fixed = TRUE)
    expect_error(
       .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "Malformed2.tmTheme")),
-      sprintf(
-         "Opening and ending tag mismatch: string line 223 and notstring [76]",
-         inputFileLocation),
+      "Opening and ending tag mismatch: string line 223 and notstring [76]",
       fixed = TRUE)
    expect_error(
       .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "Malformed3.tmTheme")),
-      sprintf(
-         "StartTag: invalid element name [68]",
-         inputFileLocation),
+      "StartTag: invalid element name [68]",
       fixed = TRUE)
    expect_error(
       .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "Malformed4.tmTheme")),
-      sprintf(
-         "StartTag: invalid element name [68]",
-         inputFileLocation),
+      "StartTag: invalid element name [68]",
       fixed = TRUE)
    expect_error(
       .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "MissingKeyEnd.tmTheme")),
