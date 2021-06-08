@@ -2029,7 +2029,7 @@ public class TextEditingTarget implements
       if (extendedType_.startsWith(SourceDocument.XT_RMARKDOWN_PREFIX) ||
           extendedType_.equals(SourceDocument.XT_QUARTO_DOCUMENT))
       {
-         updateRmdFormatList();
+         updateRmdFormat();
          setRMarkdownBehaviorEnabled(true);
       }
      
@@ -3437,7 +3437,7 @@ public class TextEditingTarget implements
       if (extendedType.startsWith(SourceDocument.XT_RMARKDOWN_PREFIX) ||
           extendedType.equals(SourceDocument.XT_QUARTO_DOCUMENT))
       {
-         updateRmdFormatList();
+         updateRmdFormat();
       }
       extendedType_ = extendedType;
    }
@@ -4622,7 +4622,7 @@ public class TextEditingTarget implements
                {
                   // when the dialog is cancelled, update the view's format list
                   // (to cancel in-place changes)
-                  updateRmdFormatList();
+                  updateRmdFormat();
                }
             });
       dialog.showModal();
@@ -4667,7 +4667,7 @@ public class TextEditingTarget implements
          applied = YamlFrontMatter.applyFrontMatter(docDisplay_, yaml);
       }
       if (applied)
-         updateRmdFormatList();
+         updateRmdFormat();
    }
 
    private RmdSelectedTemplate getSelectedTemplate()
@@ -4691,7 +4691,7 @@ public class TextEditingTarget implements
       return formats;
    }
 
-   private void updateRmdFormatList()
+   private void updateRmdFormat()
    {
       String formatUiName = "";
       List<String> formatList = new ArrayList<>();
@@ -4699,7 +4699,20 @@ public class TextEditingTarget implements
       List<String> extensionList = new ArrayList<>();
 
       RmdSelectedTemplate selTemplate = getSelectedTemplate();
-      if (selTemplate != null && selTemplate.isShiny)
+      
+      // skip all of the format stuff for quarto docs
+      if (extendedType_.equals(SourceDocument.XT_QUARTO_DOCUMENT) && fileType_.isRmd())
+      {
+         if (isShinyPrerenderedDoc()) 
+         {
+            view_.setIsShinyFormat(false, false, true);  
+         }
+         else
+         {
+            view_.setIsNotShinyFormat();
+         }
+      }
+      else if (selTemplate != null && selTemplate.isShiny)
       {
          view_.setIsShinyFormat(selTemplate.format != null,
                                 selTemplate.format != null &&
