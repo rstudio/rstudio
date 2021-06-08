@@ -16,10 +16,12 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.rmarkdown.events.ChunkExecStateChangedEvent;
@@ -47,10 +49,12 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChunkHeaderParser;
 import org.rstudio.studio.client.workbench.views.source.events.ChunkChangeEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.user.client.Command;
 
 public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
                                            ChunkExecStateChangedEvent.Handler
@@ -578,22 +582,73 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
             notebook_.getCommitMode(), notebook_.getPlotWidth(), charWidth_);
    }
    
+   private void withQueueDependencies(Command command)
+   {
+      boolean requiresPython = false;
+      
+      for (NotebookQueueUnit unit : JsUtil.asIterable(queue_.getUnits()))
+      {
+         String code = unit.getCode();
+         if (StringUtil.isNullOrEmpty(code))
+            continue;
+         
+         String header = code.substring(0, code.indexOf('\n'));
+         Map<String, String> chunkOptions = RChunkHeaderParser.parse(header);
+         if (!chunkOptions.containsKey("engine"))
+            continue;
+         
+         // the chunk header parser preserves quotes around options,
+         // and since the engine is technically supplied as a string,
+         // we detect the different quoted variants here.
+         String engine = chunkOptions.get("engine");
+         for (String python : new String[] { "python", "'python'", "\"python\"" })
+         {
+            if (StringUtil.equals(engine, python))
+            {
+               requiresPython = true;
+               break;
+            }
+         }
+         
+         // break early if we can
+         if (requiresPython)
+            break;
+         
+      }
+      
+      if (requiresPython)
+      {
+         RStudioGinjector.INSTANCE.getDependencyManager().withReticulate(
+               "Executing chunks",
+               "Executing Python chunks",
+               command);
+      }
+      else
+      {
+         command.execute();
+      }
+   }
+   
    private void executeQueue()
    {
-      server_.executeNotebookChunks(queue_, new ServerRequestCallback<Void>()
+      // check whether queue required Python to execute
+      withQueueDependencies(() ->
       {
-         @Override
-         public void onResponseReceived(Void v)
+         server_.executeNotebookChunks(queue_, new ServerRequestCallback<Void>()
          {
-            renderQueueState(false);
-         }
+            @Override
+            public void onResponseReceived(Void v)
+            {
+               renderQueueState(false);
+            }
 
-         @Override
-         public void onError(ServerError error)
-         {
-            RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-                  "Can't execute " + queue_.getJobDesc(), error.getMessage());
-         }
+            @Override
+            public void onError(ServerError error)
+            {
+               RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
+                     "Can't execute " + queue_.getJobDesc(), error.getMessage());
+            }
+         });
       });
    }
    
