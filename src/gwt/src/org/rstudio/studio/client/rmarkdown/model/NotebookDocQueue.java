@@ -96,7 +96,7 @@ public class NotebookDocQueue extends JavaScriptObject
    }-*/;
 
    public final native JsArray<NotebookQueueUnit> getUnits() /*-{
-      return this.units;
+      return this.units || [];
    }-*/;
    
    public final native JsArray<NotebookQueueUnit> getCompletedUnits() /*-{
