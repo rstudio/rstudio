@@ -48,6 +48,7 @@ FileLogOptions::FileLogOptions(FilePath in_directory) :
    m_fileMode(s_defaultFileMode),
    m_maxSizeMb(s_defaultMaxSizeMb),
    m_rotationDays(s_defaultRotationDays),
+   m_maxRotations(s_defaultMaxRotations),
    m_deletionDays(s_defaultDeletionDays),
    m_doRotation(s_defaultDoRotation),
    m_includePid(s_defaultIncludePid),
@@ -62,6 +63,7 @@ FileLogOptions::FileLogOptions(FilePath in_directory,
    m_maxSizeMb(s_defaultMaxSizeMb),
    m_rotationDays(s_defaultRotationDays),
    m_maxRotations(s_defaultRotationDays),
+   m_deletionDays(s_defaultDeletionDays),
    m_doRotation(s_defaultDoRotation),
    m_includePid(s_defaultIncludePid),
    m_warnSyslog(in_warnSyslog)
@@ -83,6 +85,7 @@ FileLogOptions::FileLogOptions(
       m_maxSizeMb(in_maxSizeMb),
       m_rotationDays(in_rotationDays),
       m_maxRotations(in_maxRotations),
+      m_deletionDays(in_deletionDays),
       m_doRotation(in_doRotation),
       m_includePid(in_includePid),
       m_warnSyslog(in_warnSyslog)
