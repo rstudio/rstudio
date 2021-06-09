@@ -22,6 +22,7 @@
 * Fixed issue where help requests for Python objects would fail with reticulate 1.20 (#9311)
 * Fixed issue where busy sessions can't be interrupted and block basic file operations (#2038)
 * Fixed issue where R Markdown template skeletons with a '.rmd' extension were not discovered (Pro #1607)
+* Removed the breaking change introduced in Juliet Rose that changed the behavior of the X-Forwarded-Proto header when RSW is behind a proxy server (Pro #2657)
 
 ### Misc
 
@@ -34,3 +35,4 @@
 * **BREAKING:** RStudio Desktop Pro only supports activation with license files (Pro #2300)
 * Added AWS Cognito support to openid integration (Pro #2313)
 * Add file uploads and downloads to session audit log (Pro #2226)
+* Make Cmd+Shift+0 the shortcut for restarting session on MacOS (#7695)
