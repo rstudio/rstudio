@@ -37,6 +37,8 @@
 #define kSourceDocumentTypeSQL       "sql"
 #define kSourceDocumentTypeShell     "sh"
 #define kSourceDocumentTypeSweave    "sweave"
+#define kSourceDocumentTypeQuartoMarkdown "quarto_markdown"
+
 
 
 namespace rstudio {
@@ -138,7 +140,8 @@ public:
       type_ = type;
    }
    
-   bool isRMarkdownDocument() const { return type_ == kSourceDocumentTypeRMarkdown; }
+   bool isRMarkdownDocument() const { return type_ == kSourceDocumentTypeRMarkdown ||
+                                             type_ == kSourceDocumentTypeQuartoMarkdown; }
    
    // is this an R, or potentially R-containing, source file?
    // TODO: Export these types as an 'enum' and provide converters.
@@ -148,6 +151,7 @@ public:
                type_ == kSourceDocumentTypeSweave ||
                type_ == kSourceDocumentTypeRSource ||
                type_ == kSourceDocumentTypeRMarkdown ||
+               type_ == kSourceDocumentTypeQuartoMarkdown ||
                type_ == kSourceDocumentTypeRHTML ||
                type_ == kSourceDocumentTypeCpp);
    }

@@ -146,6 +146,7 @@ MimeType s_mimeTypes[] =
       { "Rmd",          "text/x-r-markdown" },
       { "Rhtml",        "text/x-r-html" },
       { "Rpres",        "text/x-r-presentation" },
+      { "qmd",          "text/x-quarto-markdown"},
       { "Rout",         "text/plain" },
       { "po",           "text/plain" },
       { "pot",          "text/plain" },

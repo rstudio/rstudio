@@ -913,7 +913,7 @@ private:
       std::string filename = filePath.getFilename();
       return !filePath.isDirectory() &&
               (ext == ".r" || ext == ".rnw" || ext == ".rtex" ||
-               ext == ".rmd" || ext == ".rmarkdown" ||
+               ext == ".rmd" || ext == ".rmarkdown" || ext == ".qmd" ||
                ext == ".rhtml" || ext == ".rd" ||
                ext == ".h" || ext == ".hpp" ||
                ext == ".c" || ext == ".cpp" ||
