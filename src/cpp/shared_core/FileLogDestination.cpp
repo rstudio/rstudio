@@ -222,6 +222,15 @@ struct FileLogDestination::Impl
       closeLogFile();
    }
 
+   bool verifyLogFilePath()
+   {
+      Error error = LogOptions.getDirectory().completeChildPath(LogName, LogFile);
+      if (error)
+         return false;
+
+      return true;
+   }
+
    void closeLogFile()
    {
       if (LogOutputStream)
@@ -235,11 +244,7 @@ struct FileLogDestination::Impl
    bool openLogFile()
    {
       // We can't safely log in this function.
-      Error error = LogOptions.getDirectory().completeChildPath(LogName, LogFile);
-      if (error)
-         return false;
-
-      error = LogFile.ensureFile();
+      Error error = LogFile.ensureFile();
       if (error)
          return false;
 
@@ -387,7 +392,7 @@ struct FileLogDestination::Impl
          if (pos != std::string::npos)
          {
             timeStr = line.substr(0, pos - 1);
-            if (core::date_time::parseUtcTimeFromFormatString(timeStr, "%d %b %Y %H:%M:%S.%Z", &time))
+            if (core::date_time::parseUtcTimeFromFormatString(timeStr, "%d %b %Y %H:%M:%S", &time))
                return time;
          }
       }
@@ -470,12 +475,7 @@ struct FileLogDestination::Impl
       {
          if (LogFile.getSize() >= maxSize || shouldTimeRotate())
          {
-            closeLogFile();
-
             if (!rotateLogFileImpl(LogFile))
-               return false;
-
-            if (!openLogFile())
                return false;
          }
 
@@ -559,13 +559,20 @@ void FileLogDestination::writeLog(LogLevel in_logLevel, const std::string& in_me
    {
       boost::lock_guard<boost::mutex> lock(m_impl->Mutex);
 
-      // Open the log file if it's not open. If it fails to open, log nothing.
-      if (!m_impl->openLogFile())
+      // Check to make sure path to file is valid. If not, log nothing.
+      if (!m_impl->verifyLogFilePath())
          return;
 
       // Rotate the log file if necessary. If it fails to rotate, log nothing.
       if (!m_impl->rotateLogFile())
          return;
+
+      // Open the log file. If it fails to open, log nothing.
+      if (!m_impl->openLogFile())
+      {
+         m_impl->closeLogFile();
+         return;
+      }
 
       (*m_impl->LogOutputStream) << in_message;
       m_impl->LogOutputStream->flush();
@@ -575,11 +582,16 @@ void FileLogDestination::writeLog(LogLevel in_logLevel, const std::string& in_me
       if (!m_impl->LogOutputStream->good())
       {
          if (!m_impl->openLogFile())
+         {
+            m_impl->closeLogFile();
             return;
+         }
 
          (*m_impl->LogOutputStream) << in_message;
          m_impl->LogOutputStream->flush();
       }
+
+      m_impl->closeLogFile();
 
 #ifndef _WIN32
       // Finally, send warn and error to syslog if configured

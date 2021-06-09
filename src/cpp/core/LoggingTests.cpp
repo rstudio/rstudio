@@ -147,6 +147,7 @@ test_context("Logging")
                   obj["message"].getString() == "Error message"));
       }
 
+#ifndef _WIN32
       test_that("Can reload logging configuration")
       {
          FilePath tmpConfPath;
@@ -209,6 +210,7 @@ test_context("Logging")
 
          REQUIRE(success);
       }
+#endif
 
       test_that("Can log to named loggers")
       {
@@ -547,7 +549,7 @@ test_context("Logging")
          REQUIRE_FALSE(core::system::initializeStderrLog("logging-tests-" + id, log::LogLevel::WARN, true));
          REQUIRE_FALSE(core::system::reinitLog());
 
-         for (int i = 0; i < 1000; ++i)
+         for (int i = 0; i < 50; ++i)
          {
             std::string logStr = "Log line " + safe_convert::numberToString(i);
             LOG_INFO_MESSAGE(logStr);
@@ -564,12 +566,12 @@ test_context("Logging")
             std::string logContents;
             REQUIRE_FALSE(core::readStringFromFile(rotatedLogFile, &logContents));
 
-            std::string logStr = "Log line " + safe_convert::numberToString(999 - i) + "\n";
+            std::string logStr = "Log line " + safe_convert::numberToString(49 - i) + "\n";
             REQUIRE(boost::ends_with(logContents, logStr));
          }
 
          // No more log files should exist because we capped number of rotations at 15
-         for (int i = 16; i < 1000; ++i)
+         for (int i = 16; i < 50; ++i)
          {
             FilePath rotatedLogFile = tmpConfPath.getParent().completeChildPath("logging-tests-" + id + "." + safe_convert::numberToString(i) + ".log");
             REQUIRE_FALSE(rotatedLogFile.exists());
@@ -599,7 +601,7 @@ test_context("Logging")
          REQUIRE_FALSE(core::system::initializeStderrLog("logging-tests-" + id, log::LogLevel::WARN, true));
          REQUIRE_FALSE(core::system::reinitLog());
 
-         for (int i = 0; i < 200; ++i)
+         for (int i = 0; i < 100; ++i)
          {
             std::string logStr = "Log line " + safe_convert::numberToString(i);
             LOG_INFO_MESSAGE(logStr);
@@ -608,7 +610,7 @@ test_context("Logging")
          FilePath logFile = tmpConfPath.getParent().completeChildPath("logging-tests-" + id + ".log");
          REQUIRE(logFile.exists());
 
-         for (int i = 1; i < 199; ++i)
+         for (int i = 1; i < 99; ++i)
          {
             FilePath rotatedLogFile = tmpConfPath.getParent().completeChildPath("logging-tests-" + id + "." + safe_convert::numberToString(i) + ".log");
             REQUIRE(rotatedLogFile.exists());
@@ -616,7 +618,7 @@ test_context("Logging")
             std::string logContents;
             REQUIRE_FALSE(core::readStringFromFile(rotatedLogFile, &logContents));
 
-            std::string logStr = "Log line " + safe_convert::numberToString(199 - i) + "\n";
+            std::string logStr = "Log line " + safe_convert::numberToString(99 - i) + "\n";
             REQUIRE(boost::ends_with(logContents, logStr));
          }
       }
