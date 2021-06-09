@@ -74,7 +74,8 @@ Error extractRCode(const std::string& fileContents,
    
    if (documentType == kSourceDocumentTypeRSource)
       *pCode = fileContents;
-   else if (documentType == kSourceDocumentTypeRMarkdown)
+   else if (documentType == kSourceDocumentTypeRMarkdown ||
+            documentType == kSourceDocumentTypeQuartoMarkdown)
       error = extractRCode(fileContents,
                            "^\\s*[`]{3}{\\s*[Rr](?:}|[\\s,].*})\\s*$",
                            "^\\s*[`]{3}\\s*$",

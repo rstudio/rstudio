@@ -495,8 +495,11 @@ struct FileLogDestination::Impl
    std::string LogName;
    boost::mutex Mutex;
    std::shared_ptr<std::ostream> LogOutputStream;
-   std::shared_ptr<core::system::SyslogDestination> SyslogDest;
    boost::optional<boost::posix_time::ptime> FirstLogLineTime;
+
+#ifndef _WIN32
+   std::shared_ptr<core::system::SyslogDestination> SyslogDest;
+#endif
 };
 
 FileLogDestination::FileLogDestination(
@@ -578,9 +581,11 @@ void FileLogDestination::writeLog(LogLevel in_logLevel, const std::string& in_me
          m_impl->LogOutputStream->flush();
       }
 
+#ifndef _WIN32
       // Finally, send warn and error to syslog if configured
       if (in_logLevel <= LogLevel::WARN && m_impl->SyslogDest)
          m_impl->SyslogDest->writeLog(in_logLevel, in_message);
+#endif
    }
    catch (...)
    {
