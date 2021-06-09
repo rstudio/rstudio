@@ -223,7 +223,7 @@ void Logger::writeMessageToDestinations(
 
    // Preformat the message for non-syslog loggers.
    const auto destEnd = logMap->end();
-   bool prettyFormat, jsonFormat = false;
+   bool prettyFormat = false, jsonFormat = false;
    for (auto iter = logMap->begin(); iter != destEnd; ++iter)
    {
       if (iter->second->getLogMessageFormatType() == LogMessageFormatType::JSON)
