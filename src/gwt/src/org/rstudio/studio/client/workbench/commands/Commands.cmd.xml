@@ -2796,11 +2796,13 @@ well as menu structures (for main menu and popup menus).
         context="import"
         windowMode="main"/>
 
-   <cmd id="importDatasetFromSAV"
-        label="Import Dataset from SAV..."
-        menuLabel="From _SAV..."
-        context="import"
-        windowMode="main"/>
+<!--   This has a duplicate ID to below.  Is that intentional?  Effect seems to be that below overwrites this command-->
+<!--   Commented out for now as i18n cannot translate the same id to two different strings-->
+<!--   <cmd id="importDatasetFromSAV"-->
+<!--        label="Import Dataset from SAV..."-->
+<!--        menuLabel="From _SAV..."-->
+<!--        context="import"-->
+<!--        windowMode="main"/>-->
 
    <cmd id="importDatasetFromSAV"
         label="Import Dataset from SPSS..."
