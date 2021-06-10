@@ -55,6 +55,7 @@ import org.rstudio.studio.client.common.synctex.Synctex;
 import org.rstudio.studio.client.events.GetEditorContextEvent;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
+import org.rstudio.studio.client.quarto.model.QuartoConfig;
 import org.rstudio.studio.client.rmarkdown.model.RmdChosenTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdOutputFormat;
@@ -67,8 +68,10 @@ import org.rstudio.studio.client.server.model.DocumentCloseAllNoSaveEvent;
 import org.rstudio.studio.client.server.model.DocumentCloseEvent;
 import org.rstudio.studio.client.workbench.FileMRUList;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -213,6 +216,13 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       events_.addHandler(DebugModeChangedEvent.TYPE, this);
       events_.addHandler(DocumentCloseAllNoSaveEvent.TYPE, this);
       events_.addHandler(DocumentCloseEvent.TYPE, this);
+      
+      events_.addHandler(SessionInitEvent.TYPE, (SessionInitEvent sie) ->
+      {
+         SessionInfo sessionInfo = session.getSessionInfo();
+         QuartoConfig quartoConfig = sessionInfo.getQuartoConfig();
+         commands_.newQuartoDoc().setVisible(quartoConfig.installed);
+      });
 
       WindowEx.addFocusHandler(new FocusHandler()
       {
@@ -1206,6 +1216,18 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                }
             }
          });
+   }
+   
+   public void newQuartoDoc()
+   {
+      newSourceDocWithTemplate(FileTypeRegistry.QUARTO,
+         "",
+         "quarto.qmd",
+         Position.create(6, 0),
+         (target) -> {
+            
+         }
+      );
    }
 
    private void newDocFromRmdTemplate(final NewRMarkdownDialog.Result result)

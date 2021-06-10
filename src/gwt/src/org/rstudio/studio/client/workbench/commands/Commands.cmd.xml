@@ -47,8 +47,9 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="newSourceDoc"/>
             <separator/>
             <cmd refid="newRNotebook"/>
-            <separator/>
             <cmd refid="newRMarkdownDoc"/>
+            <cmd refid="newQuartoDoc"/>
+            <separator/>
             <cmd refid="newRShinyApp"/>
             <cmd refid="newRPlumberDoc"/>
             <separator/>
@@ -1095,6 +1096,11 @@ well as menu structures (for main menu and popup menus).
         menuLabel="R _Markdown..."
         desc="Create a new R Markdown document"
         rebindable="false"/>
+        
+   <cmd id="newQuartoDoc"
+        menuLabel="_Quarto Doc..."
+        desc="Create a new Quarto document"
+        rebindable="false"/>
 
    <cmd id="newRShinyApp"
         menuLabel="Shiny _Web App..."
@@ -1117,7 +1123,7 @@ well as menu structures (for main menu and popup menus).
         rebindable="false"/>
 
    <cmd id="newSqlDoc"
-        menuLabel="S_QL Script"
+        menuLabel="SQ_L Script"
         desc="Create a new SQL script"
         rebindable="false"/>
 

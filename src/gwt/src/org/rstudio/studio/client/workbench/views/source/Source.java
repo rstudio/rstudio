@@ -1092,6 +1092,13 @@ public class Source implements InsertSourceEvent.Handler,
       else
          columnManager_.newRMarkdownV1Doc();
    }
+   
+   @Handler
+   public void onNewQuartoDoc()
+   {
+     columnManager_.newQuartoDoc();
+   }
+   
 
    private void doNewRShinyApp(NewShinyWebApplication.Result result)
    {

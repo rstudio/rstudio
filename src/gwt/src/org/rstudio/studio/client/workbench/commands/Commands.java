@@ -45,6 +45,7 @@ public abstract class
    public abstract AppCommand newD3Doc();
    public abstract AppCommand newSweaveDoc();
    public abstract AppCommand newRMarkdownDoc();
+   public abstract AppCommand newQuartoDoc();
    public abstract AppCommand newRShinyApp();
    public abstract AppCommand newRHTMLDoc();
    public abstract AppCommand newRDocumentationDoc();

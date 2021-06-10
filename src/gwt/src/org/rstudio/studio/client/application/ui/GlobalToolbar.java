@@ -57,8 +57,9 @@ public class GlobalToolbar extends Toolbar
       newMenu_.addItem(commands.newSourceDoc().createMenuItem(false));
       newMenu_.addSeparator();
       newMenu_.addItem(commands.newRNotebook().createMenuItem(false));
-      newMenu_.addSeparator();
       newMenu_.addItem(commands.newRMarkdownDoc().createMenuItem(false));
+      newMenu_.addItem(commands.newQuartoDoc().createMenuItem(false));
+      newMenu_.addSeparator();
       newMenu_.addItem(commands.newRShinyApp().createMenuItem(false));
       newMenu_.addItem(commands.newRPlumberDoc().createMenuItem(false));
       newMenu_.addSeparator();

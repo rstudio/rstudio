@@ -26,6 +26,7 @@ import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.debugging.model.ErrorManagerState;
 import org.rstudio.studio.client.common.dependencies.model.DependencyList;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
+import org.rstudio.studio.client.quarto.model.QuartoConfig;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.prefs.model.PrefLayer;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -343,6 +344,10 @@ public class SessionInfo extends JavaScriptObject
 
    public final native boolean getIsDistillProject() /*-{
       return this.is_distill_project;
+   }-*/;
+   
+   public final native QuartoConfig getQuartoConfig() /*-{
+      return this.quarto_config;
    }-*/;
 
    public final native boolean getHasPackageSrcDir() /*-{

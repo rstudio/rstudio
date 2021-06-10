@@ -48,6 +48,12 @@ bool pathHasQuartoConfig(const FilePath& filePath)
 std::string onDetectQuartoSourceType(
       boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
+   // short circuit everything if this is already marked as a quarto markdown doc
+   if (pDoc->type() == "quarto_markdown")
+   {
+      return kQuartoXt;
+   }
+
    if (!pDoc->path().empty())
    {
       FilePath filePath = module_context::resolveAliasedPath(pDoc->path());
@@ -123,15 +129,23 @@ std::string onDetectQuartoSourceType(
 
 } // anonymous namespace
 
-bool isInstalled(bool check)
+bool isInstalled(bool refresh)
 {
-   if (check)
+   if (refresh)
    {
       s_quartoInstalled = !module_context::findProgram("quarto").isEmpty();
    }
 
    return s_quartoInstalled;
 }
+
+json::Object quartoConfig(bool refresh)
+{
+   json::Object jsonConfig;
+   jsonConfig["installed"] = isInstalled(refresh);
+   return jsonConfig;
+}
+
 
 bool projectIsQuarto()
 {

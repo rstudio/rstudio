@@ -1,5 +1,5 @@
 /*
- * SessionQuarto.hpp
+ * QuartoConfig.java
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -12,33 +12,12 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+package org.rstudio.studio.client.quarto.model;
 
-#ifndef SESSION_QUARTO_HPP
-#define SESSION_QUARTO_HPP
+import jsinterop.annotations.JsType;
 
-#include <shared_core/json/Json.hpp>
-
-namespace rstudio {
-namespace core {
-   class Error;
+@JsType
+public class QuartoConfig
+{
+   public boolean installed;
 }
-}
-
-namespace rstudio {
-namespace session {
-namespace modules {
-namespace quarto {
-
-bool isInstalled(bool refresh = false);
-bool projectIsQuarto();
-
-core::json::Object quartoConfig(bool refresh = false);
-
-core::Error initialize();
-   
-} // namespace quarto
-} // namespace modules
-} // namespace session
-} // namespace rstudio
-
-#endif

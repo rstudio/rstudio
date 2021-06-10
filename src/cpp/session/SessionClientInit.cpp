@@ -23,6 +23,7 @@
 #include "modules/rmarkdown/SessionRMarkdown.hpp"
 #include "modules/rmarkdown/SessionBlogdown.hpp"
 #include "modules/rmarkdown/SessionBookdown.hpp"
+#include "modules/quarto/SessionQuarto.hpp"
 #include "modules/connections/SessionConnections.hpp"
 #include "modules/SessionBreakpoints.hpp"
 #include "modules/SessionDependencyList.hpp"
@@ -420,6 +421,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["blogdown_config"] = modules::rmarkdown::blogdown::blogdownConfig();
    sessionInfo["is_bookdown_project"] = module_context::isBookdownProject();
    sessionInfo["is_distill_project"] = module_context::isDistillProject();
+
+   sessionInfo["quarto_config"] = modules::quarto::quartoConfig();
    
    sessionInfo["graphics_backends"] = modules::graphics::supportedBackends();
 
