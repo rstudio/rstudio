@@ -2018,7 +2018,6 @@ public class RCompletionManager implements CompletionManager
          }
 
          String value = qualifiedName.name;
-         String source = qualifiedName.source;
          boolean shouldQuote = qualifiedName.shouldQuote;
          
          

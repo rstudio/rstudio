@@ -17,7 +17,6 @@ package org.rstudio.core.client.theme;
 
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.client.ui.MenuItem;
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ClassIds;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Point;

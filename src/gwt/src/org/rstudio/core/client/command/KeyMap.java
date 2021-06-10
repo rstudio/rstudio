@@ -20,7 +20,6 @@ package org.rstudio.core.client.command;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.gwt.user.client.Command;
 import org.rstudio.core.client.CommandWith2Args;
 import org.rstudio.core.client.DirectedGraph;
 import org.rstudio.core.client.Mutable;

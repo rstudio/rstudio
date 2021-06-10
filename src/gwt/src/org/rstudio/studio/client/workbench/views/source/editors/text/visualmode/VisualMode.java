@@ -18,7 +18,6 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode
 import java.util.ArrayList;
 import java.util.List;
 
-import org.rstudio.core.client.BrowseCap;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.DebouncedCommand;

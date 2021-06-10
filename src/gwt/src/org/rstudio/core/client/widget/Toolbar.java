@@ -30,7 +30,6 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConstant;
 
-import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.SeparatorManager;
 import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -38,7 +37,6 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 
 import java.util.AbstractList;
-import java.util.List;
 
 public class Toolbar extends ResizeComposite implements HasResizeHandlers
 {

@@ -16,7 +16,6 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
@@ -33,9 +32,8 @@ public class TextEditingTargetQuartoHelper
    }
    
    @Inject
-   void initialize(GlobalDisplay display, Commands commands)
+   void initialize(Commands commands)
    {
-      display_ = display;
       commands_ = commands;
    }
    
@@ -65,6 +63,4 @@ public class TextEditingTargetQuartoHelper
    private Commands commands_;
    private DocDisplay docDisplay_;
    private EditingTarget editingTarget_;
-   
-   private GlobalDisplay display_;
 }

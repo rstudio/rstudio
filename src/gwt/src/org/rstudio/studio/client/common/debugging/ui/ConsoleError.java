@@ -19,7 +19,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Style;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;

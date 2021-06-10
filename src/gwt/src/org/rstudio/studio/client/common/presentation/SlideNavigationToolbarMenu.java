@@ -15,7 +15,6 @@
 
 package org.rstudio.studio.client.common.presentation;
 
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;

@@ -1488,8 +1488,8 @@ public class PaneManager
       }
       // Currently we cannot zoom on left widgets
       if (!unZooming)
-      {
-         for (Widget w : leftList_)
+      {  
+         for (int i=0; i<leftList_.size(); i++)
             leftTargetSize.add(0.0);
       }
 
@@ -1612,6 +1612,7 @@ public class PaneManager
       return panesByName_.get(name).getNormal();
    }
 
+   @SuppressWarnings("unlikely-arg-type")
    public void closeSourceWindow(String name)
    {
       // hide the original source window

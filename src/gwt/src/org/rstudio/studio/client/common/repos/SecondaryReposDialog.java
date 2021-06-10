@@ -81,14 +81,14 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
          cranMirror.setName(nameTextBox_.getText());
          cranMirror.setURL(urlTextBox_.getText());
 
-         cranMirror.setHost(cranMirror.getCustomEnumValue());
+         cranMirror.setHost(CRANMirror.getCustomEnumValue());
 
          return cranMirror;
       }
       else if (listBox_ != null && listBox_.getSelectedIndex() >= 0)
       {
          CRANMirror cranMirror = repos_.get(listBox_.getSelectedIndex());
-         cranMirror.setHost(cranMirror.getSecondaryEnumValue());
+         cranMirror.setHost(CRANMirror.getSecondaryEnumValue());
          return cranMirror;
       }
       else
