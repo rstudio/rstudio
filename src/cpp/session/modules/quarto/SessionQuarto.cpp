@@ -18,7 +18,12 @@
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
 
+#include <core/Exec.hpp>
 #include <core/YamlUtil.hpp>
+
+#include <core/json/JsonRpc.hpp>
+
+#include <core/system/Process.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
@@ -37,7 +42,7 @@ namespace {
 
 const char * const kQuartoXt = "quarto-document";
 
-bool s_quartoInstalled = false;
+FilePath s_quartoPath;
 
 bool pathHasQuartoConfig(const FilePath& filePath)
 {
@@ -126,6 +131,68 @@ std::string onDetectQuartoSourceType(
    return "";
 }
 
+core::system::ProcessOptions quartoOptions()
+{
+   core::system::ProcessOptions options;
+#ifdef _WIN32
+   options.createNewConsole = true;
+#else
+   options.terminateChildren = true;
+#endif
+   return options;
+}
+
+Error runQuarto(const std::vector<std::string>& args, const std::string& input, core::system::ProcessResult* pResult)
+{
+   return core::system::runProgram(
+      string_utils::utf8ToSystem(s_quartoPath.getAbsolutePath()),
+      args,
+      input,
+      quartoOptions(),
+      pResult
+   );
+}
+
+
+bool quartoCaptureOutput(const std::vector<std::string>& args,
+                         const std::string& input,
+                         std::string* pOutput,
+                         json::JsonRpcResponse* pResponse)
+{
+   // run pandoc
+   core::system::ProcessResult result;
+   Error error = runQuarto(args, input, &result);
+   if (error)
+   {
+      json::setErrorResponse(error, pResponse);
+      return false;
+   }
+   else if (result.exitStatus != EXIT_SUCCESS)
+   {
+      json::setProcessErrorResponse(result, ERROR_LOCATION, pResponse);
+      return false;
+   }
+   else
+   {
+      *pOutput = result.stdOut;
+      return true;
+   }
+}
+
+Error quartoCapabilities(const json::JsonRpcRequest&,
+                         json::JsonRpcResponse* pResponse)
+{
+   std::string output;
+   if (quartoCaptureOutput({"capabilities"}, "", &output, pResponse))
+   {
+      json::Object jsonCapabilities;
+      if (json::parseJsonForResponse(output, &jsonCapabilities, pResponse))
+         pResponse->setResult(jsonCapabilities);
+   }
+
+   return Success();
+}
+
 
 } // anonymous namespace
 
@@ -133,10 +200,10 @@ bool isInstalled(bool refresh)
 {
    if (refresh)
    {
-      s_quartoInstalled = !module_context::findProgram("quarto").isEmpty();
+      s_quartoPath = module_context::findProgram("quarto");
    }
 
-   return s_quartoInstalled;
+   return !s_quartoPath.isEmpty();
 }
 
 json::Object quartoConfig(bool refresh)
@@ -167,7 +234,13 @@ Error initialize()
    module_context::events().onDetectSourceExtendedType
                                         .connect(onDetectQuartoSourceType);
 
-   return Success();
+   // register rpc functions
+
+   ExecBlock initBlock;
+   initBlock.addFunctions()
+     (boost::bind(module_context::registerRpcMethod, "quarto_capabilities", quartoCapabilities))
+   ;
+   return initBlock.execute();
 }
 
 } // namespace quarto

@@ -99,6 +99,7 @@ import org.rstudio.studio.client.projects.model.RProjectVcsOptions;
 import org.rstudio.studio.client.projects.model.SharedProjectDetails;
 import org.rstudio.studio.client.projects.model.SharingConfigResult;
 import org.rstudio.studio.client.projects.model.SharingResult;
+import org.rstudio.studio.client.quarto.model.QuartoCapabilities;
 import org.rstudio.studio.client.rmarkdown.model.NotebookCreateResult;
 import org.rstudio.studio.client.rmarkdown.model.NotebookDocQueue;
 import org.rstudio.studio.client.rmarkdown.model.NotebookQueueUnit;
@@ -6363,6 +6364,13 @@ public class RemoteServer implements Server
       params.set(1, new JSONString(id));
       sendRequest(RPC_SCOPE, XREF_FOR_ID, params, callback);
    }
+   
+   @Override
+   public void quartoCapabilities(ServerRequestCallback<QuartoCapabilities> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, QUARTO_CAPABILITIES, requestCallback);
+      
+   }
 
    @Override
    public void getInstalledFonts(ServerRequestCallback<JsArrayString> callback)
@@ -6897,5 +6905,8 @@ public class RemoteServer implements Server
 
    private static final String XREF_INDEX_FOR_FILE = "xref_index_for_file";
    private static final String XREF_FOR_ID = "xref_for_id";
+   
+   private static final String QUARTO_CAPABILITIES = "quarto_capabilities";
+   
 
 }

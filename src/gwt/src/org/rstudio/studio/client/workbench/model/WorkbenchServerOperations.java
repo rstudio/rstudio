@@ -31,6 +31,7 @@ import org.rstudio.studio.client.packrat.model.PackratServerOperations;
 import org.rstudio.studio.client.panmirror.server.PanmirrorServerOperations;
 import org.rstudio.studio.client.projects.model.ProjectTemplateServerOperations;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
+import org.rstudio.studio.client.quarto.model.QuartoServerOperations;
 import org.rstudio.studio.client.renv.model.RenvServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -101,6 +102,7 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    DependencyServerOperations,
                                                    PackratServerOperations,
                                                    RenvServerOperations,
+                                                   QuartoServerOperations,
                                                    MarkersServerOperations,
                                                    LintServerOperations,
                                                    RoxygenServerOperations,
