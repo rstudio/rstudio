@@ -151,6 +151,8 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
          updateDescription();
       }, BlurEvent.getType());
       
+      // save the contents of the text box on focus
+      // (we'll restore the value if the user blurs via the Escape key)
       tbPythonInterpreter_.getTextBox().addFocusHandler((FocusEvent event) ->
       {
          lastValue_ = tbPythonInterpreter_.getText();
