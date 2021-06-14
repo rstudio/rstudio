@@ -1,5 +1,8 @@
-from lxml import etree
+#!/usr/bin/env python
+
+import os
 import argparse
+from lxml import etree
 from xml_to_i18n import xml_to_interface, xml_to_properties
 from xml_to_i18n import DEFAULT_PARSERS as SUPPORTED_TYPES_TO_PARSE
 
@@ -54,7 +57,8 @@ def parse_args():
 def generate_constants(root, element_type, output_path, prefix=""):
     print(f"Creating constant interface for {element_type} with prefix '{prefix}'\nOutputting to {output_path}")
     interface_name = parser_name_to_interface_name(element_type)
-    constants = xml_to_interface(interface_name, root, element_type=element_type, prefix=prefix)
+    basename = os.path.basename(output_path)
+    constants = xml_to_interface(interface_name, root, element_type=element_type, filename=basename, prefix=prefix)
     for package in args.packages:
         constants.add_package(package)
     constants.write(output_path)

@@ -10,11 +10,11 @@ DEFAULT_PARSERS = {
 }
 
 
-def xml_to_interface(interface_name, root_element: ElementTree, element_type, element_parser=None, prefix: str = ""):
+def xml_to_interface(interface_name, root_element: ElementTree, element_type, filename, element_parser=None, prefix: str = ""):
     if element_parser is None:
         element_parser = DEFAULT_PARSERS[element_type]
     interface = I18NGwtConstantsInterfaceGenerator(interface_name)
-    interface.add_header_auto_generated()
+    interface.add_header_auto_generated(filename)
 
     # Get cmd's that are direct children of root element
     for element_xml in element_parser.grep_from_element_tree(root_element):
