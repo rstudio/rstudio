@@ -181,6 +181,7 @@
 .rs.addFunction("python.findPythonInterpreters", function()
 {
    interpreters <- unname(c(
+      .rs.python.findPythonProjectInterpreters(),
       .rs.python.findPythonSystemInterpreters(),
       .rs.python.findPythonInterpretersInKnownLocations(),
       .rs.python.findPythonPyenvInterpreters(),
@@ -195,6 +196,24 @@
       default_interpreter = .rs.scalar(default)
    )
    
+})
+
+.rs.addFunction("python.findPythonProjectInterpreters", function()
+{
+   projectDir <- .rs.getProjectDirectory()
+   if (is.null(projectDir))
+      return(list())
+   
+   candidateDirs <- list.files(
+      path = projectDir,
+      all.files = TRUE,
+      full.names = TRUE
+   )
+   
+   pythonSuffix <- if (.rs.platform.isWindows) "Scripts/python.exe" else "bin/python"
+   candidatePaths <- file.path(candidateDirs, pythonSuffix)
+   pythonPaths <- Filter(file.exists, candidatePaths)
+   lapply(pythonPaths, .rs.python.getPythonInfo, strict = TRUE)
 })
 
 .rs.addFunction("python.findPythonSystemInterpreters", function()
