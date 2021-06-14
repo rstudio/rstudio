@@ -1217,18 +1217,6 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
             }
          });
    }
-   
-   public void newQuartoDoc()
-   {
-      newSourceDocWithTemplate(FileTypeRegistry.QUARTO,
-         "",
-         "quarto.qmd",
-         Position.create(6, 0),
-         (target) -> {
-            
-         }
-      );
-   }
 
    private void newDocFromRmdTemplate(final NewRMarkdownDialog.Result result)
    {
