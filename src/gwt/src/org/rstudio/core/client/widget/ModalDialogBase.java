@@ -567,23 +567,30 @@ public abstract class ModalDialogBase extends DialogBox
          NativeEvent nativeEvent = event.getNativeEvent();
          switch (nativeEvent.getKeyCode())
          {
+         
          case KeyCodes.KEY_ENTER:
+         {
 
             if (enterDisabled_)
                break;
 
             // allow Enter on textareas, buttons, or anchors (including custom links)
             Element e = DomUtils.getActiveElement();
-            if (e.hasTagName("TEXTAREA") ||
+            
+            boolean enterAllowed =
+                  e.hasTagName("TEXTAREA") ||
                   e.hasTagName("A") ||
                   e.hasTagName("BUTTON") ||
                   e.hasClassName(ALLOW_ENTER_KEY_CLASS) ||
-                  (e.hasAttribute("role") && StringUtil.equals(e.getAttribute("role"), "link")))
+                  (e.hasAttribute("role") && StringUtil.equals(e.getAttribute("role"), "link"));
+            
+            if (enterAllowed)
                return;
 
             ThemedButton defaultButton = defaultOverrideButton_ == null
                   ? okButton_
                   : defaultOverrideButton_;
+            
             if ((defaultButton != null) && defaultButton.isEnabled())
             {
                nativeEvent.preventDefault();
@@ -591,14 +598,26 @@ public abstract class ModalDialogBase extends DialogBox
                event.cancel();
                defaultButton.click();
             }
+            
             break;
+         }
+            
          case KeyCodes.KEY_ESCAPE:
+         {
+            
             if (escapeDisabled_)
                break;
+            
+            Element e = DomUtils.getActiveElement();
+            if (e.hasClassName(ALLOW_ESCAPE_KEY_CLASS))
+               break;
+            
             onEscapeKeyDown(event);
             break;
-
+         }
+         
          case KeyCodes.KEY_TAB:
+         {
             if (nativeEvent.getShiftKey() && focus_.isFirst(DomUtils.getActiveElement()))
             {
                nativeEvent.preventDefault();
@@ -614,6 +633,8 @@ public abstract class ModalDialogBase extends DialogBox
                focusFirstControl();
             }
             break;
+         }
+         
          }
       }
    }
@@ -827,4 +848,5 @@ public abstract class ModalDialogBase extends DialogBox
    private final FocusHelper focus_;
    
    public static final String ALLOW_ENTER_KEY_CLASS = "__rstudio_modal_allow_enter_key";
+   public static final String ALLOW_ESCAPE_KEY_CLASS = "__rstudio_modal_allow_escape_key";
 }

@@ -35,9 +35,11 @@ import org.rstudio.studio.client.workbench.prefs.views.python.PythonInterpreterL
 import org.rstudio.studio.client.workbench.prefs.views.python.PythonInterpreterSelectionDialog;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -67,10 +69,12 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
       
       tbPythonInterpreter_ = new TextBoxWithButton(
             "Python interpreter:",
+            null,
             placeholderText_,
             "Select...",
             null,
             ElementIds.TextBoxButtonId.PYTHON_PATH,
+            true,
             true,
             new ClickHandler()
             {
@@ -94,7 +98,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
                                        @Override
                                        public void execute(PythonInterpreter input)
                                        {
-                                          String path = input.getPath();
+                                          String path = input == null ? "" : input.getPath();
                                           tbPythonInterpreter_.setText(path);
                                        }
                                     });
@@ -129,6 +133,14 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
             event.preventDefault();
             tbPythonInterpreter_.blur();
          }
+         else if (event.getNativeKeyCode() == KeyCodes.KEY_ESCAPE)
+         {
+            event.stopPropagation();
+            event.preventDefault();
+            if (lastValue_ != null)
+               tbPythonInterpreter_.setText(lastValue_);
+            tbPythonInterpreter_.blur();
+         }
       }, KeyDownEvent.getType());
       
       tbPythonInterpreter_.addDomHandler((BlurEvent event) ->
@@ -136,8 +148,14 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
          updateDescription();
       }, BlurEvent.getType());
       
-      tbPythonInterpreter_.getTextBox().getElement().addClassName(
-            ModalDialogBase.ALLOW_ENTER_KEY_CLASS);
+      tbPythonInterpreter_.getTextBox().addFocusHandler((FocusEvent event) ->
+      {
+         lastValue_ = tbPythonInterpreter_.getText();
+      });
+      
+      Element tbEl = tbPythonInterpreter_.getTextBox().getElement();
+      tbEl.addClassName(ModalDialogBase.ALLOW_ENTER_KEY_CLASS);
+      tbEl.addClassName(ModalDialogBase.ALLOW_ESCAPE_KEY_CLASS);
       
       tbPythonInterpreter_.setWidth(width);
       tbPythonInterpreter_.setText(placeholderText_);
@@ -423,6 +441,8 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
    protected PythonServerOperations server_;
    protected Session session_;
    protected UserPrefs prefs_;
+   
+   private String lastValue_ = null;
    
    
    protected static Resources RES = GWT.create(Resources.class);

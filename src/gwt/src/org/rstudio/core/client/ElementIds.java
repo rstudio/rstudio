@@ -156,6 +156,7 @@ public class ElementIds
    public final static String DIALOG_APPLY_BUTTON = "dlg_apply";
    public final static String DIALOG_RETRY_BUTTON = "dlg_retry";
    public final static String DIALOG_HOME_BUTTON = "dlg_home";
+   public final static String DIALOG_CLEAR_BUTTON = "dlg_clear";
    public final static String SELECT_ALL_BUTTON = "select_all";
    public final static String SELECT_NONE_BUTTON = "select_none";
    public final static String ABOUT_MANAGE_LICENSE_BUTTON = "about_manage_license";
@@ -253,6 +254,7 @@ public class ElementIds
    // TextBoxWithButton and subclasses -- prefixes for button/text/help, combined with suffixes
    public final static String TBB_TEXT = "tbb_text";
    public final static String TBB_BUTTON = "tbb_button";
+   public final static String TBB_CLEAR_BUTTON = "tbb_clear_button";
    public final static String TBB_HELP = "tbb_help";
 
    // TextBoxWithButton and subclasses -- unique suffix added to text field, button, and help link;

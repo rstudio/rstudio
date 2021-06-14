@@ -17,11 +17,13 @@ package org.rstudio.studio.client.workbench.prefs.views.python;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.core.client.widget.WidgetListBox;
 import org.rstudio.studio.client.workbench.prefs.views.PythonInterpreter;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.user.client.ui.Widget;
 
 public class PythonInterpreterSelectionDialog extends ModalDialog<PythonInterpreter>
@@ -39,12 +41,26 @@ public class PythonInterpreterSelectionDialog extends ModalDialog<PythonInterpre
       for (PythonInterpreter interpreter : JsUtil.asIterable(interpreters))
          if (interpreter.isValid())
             widgets_.addItem(new PythonInterpreterListEntryUi(interpreter));
+ 
+      // allow double-click to select the requested interpreter
+      widgets_.addDoubleClickHandler((DoubleClickEvent event) ->
+      {
+         if (widgets_.getSelectedItem() != null)
+         {
+            clickOkButton();
+         }
+      });
+      
    }
    
    @Override
    protected PythonInterpreter collectInput()
    {
-      return widgets_.getSelectedItem().getInterpreter();
+      PythonInterpreterListEntryUi item = widgets_.getSelectedItem();
+      if (item == null)
+         return null;
+      
+      return item.getInterpreter();
    }
 
    @Override
@@ -54,4 +70,5 @@ public class PythonInterpreterSelectionDialog extends ModalDialog<PythonInterpre
    }
    
    WidgetListBox<PythonInterpreterListEntryUi> widgets_;
+   ThemedButton useDefaultBtn_;
 }
