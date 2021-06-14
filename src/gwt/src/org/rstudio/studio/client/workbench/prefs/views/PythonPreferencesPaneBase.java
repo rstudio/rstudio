@@ -47,6 +47,7 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.inject.Inject;
@@ -54,7 +55,8 @@ import com.google.inject.Inject;
 public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPaneBase<T>
 {
    public PythonPreferencesPaneBase(String width,
-                                    String placeholderText)
+                                    String placeholderText,
+                                    boolean isProjectOptions)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
@@ -163,8 +165,22 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
       tbPythonInterpreter_.setReadOnly(false);
       add(spaced(tbPythonInterpreter_));
       
-      add(container_);
+      add(interpreterDescription_);
       
+      if (!isProjectOptions)
+      {
+         cbAutoUseProjectInterpreter_ =
+               new CheckBox("Automatically activate project Python environments");
+         
+         cbAutoUseProjectInterpreter_.setValue(
+               prefs_.pythonProjectEnvironmentAutomaticActivate().getGlobalValue());
+         
+         cbAutoUseProjectInterpreter_.getElement().setTitle(
+               "When enabled, the Python environment in the active project's .venv folder " +
+               "(if any) will be automatically activated on startup.");
+
+         add(lessSpaced(cbAutoUseProjectInterpreter_));
+      }
    }
    
    @Inject
@@ -181,7 +197,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
    
    protected void clearDescription()
    {
-      container_.setWidget(new FlowPanel());
+      interpreterDescription_.setWidget(new FlowPanel());
    }
    
    protected void updateDescription()
@@ -250,7 +266,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
          
          InfoBar bar = new InfoBar(InfoBar.WARNING);
          bar.setText(reason);
-         container_.setWidget(bar);
+         interpreterDescription_.setWidget(bar);
       }
       else
       {
@@ -277,7 +293,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
          }
          
          ui.getPath().setText("[" + type + "]");
-         container_.setWidget(ui);
+         interpreterDescription_.setWidget(ui);
       }
    }
    
@@ -431,7 +447,9 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
    
    protected final InfoBar mismatchWarningBar_;
    protected final TextBoxWithButton tbPythonInterpreter_;
-   protected final SimplePanel container_ = new SimplePanel();
+   protected final SimplePanel interpreterDescription_ = new SimplePanel();
+   
+   protected CheckBox cbAutoUseProjectInterpreter_;
    
    protected String initialPythonPath_;
    protected PythonInterpreter interpreter_;

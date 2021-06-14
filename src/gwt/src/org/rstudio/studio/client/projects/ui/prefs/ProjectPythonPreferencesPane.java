@@ -30,7 +30,7 @@ public class ProjectPythonPreferencesPane extends PythonPreferencesPaneBase<RPro
    public ProjectPythonPreferencesPane(PythonDialogResources res,
                                        PythonServerOperations server)
    {
-      super("380px", "(Use default)");
+      super("380px", "(Use default)", true);
    }
 
    @Override
