@@ -57,12 +57,13 @@
    if (!identical(activate, TRUE))
       return()
    
-   # get path to configured version of python
-   pythonPath <- Sys.getenv("RETICULATE_PYTHON", unset = NA)
-   if (is.na(pythonPath))
-      pythonPath <- .rs.python.projectInterpreterPath(projectDir)
+   # if the user has set RETICULATE_PYTHON, assume they're taking control
+   reticulatePython <- Sys.getenv("RETICULATE_PYTHON", unset = NA)
+   if (!is.na(reticulatePython))
+      return()
    
-   # bail if it doesn't exist
+   # get path to project interpreter (bail if it doesn't exist)
+   pythonPath <- .rs.python.projectInterpreterPath(projectDir)
    if (!file.exists(pythonPath))
       return()
    
