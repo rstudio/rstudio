@@ -57,6 +57,10 @@
    if (!identical(activate, TRUE))
       return()
    
+   # nothing to do if we don't have a project
+   if (is.null(projectDir) || !file.exists(projectDir))
+      return()
+   
    # if the user has set RETICULATE_PYTHON, assume they're taking control
    reticulatePython <- Sys.getenv("RETICULATE_PYTHON", unset = NA)
    if (!is.na(reticulatePython))
