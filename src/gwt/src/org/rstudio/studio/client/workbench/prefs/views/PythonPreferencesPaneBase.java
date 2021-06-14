@@ -22,6 +22,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.prefs.PreferencesDialogPaneBase;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.InfoBar;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -72,7 +73,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
             null,
             placeholderText_,
             "Select...",
-            null,
+            new HelpButton("using_python", "Using Python in RStudio"),
             ElementIds.TextBoxButtonId.PYTHON_PATH,
             true,
             true,
