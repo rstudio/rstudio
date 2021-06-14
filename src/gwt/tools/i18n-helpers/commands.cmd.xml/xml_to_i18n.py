@@ -14,6 +14,7 @@ def xml_to_interface(interface_name, root_element: ElementTree, element_type, el
     if element_parser is None:
         element_parser = DEFAULT_PARSERS[element_type]
     interface = I18NGwtConstantsInterfaceGenerator(interface_name)
+    interface.add_header_auto_generated()
 
     # Get cmd's that are direct children of root element
     for element_xml in element_parser.grep_from_element_tree(root_element):
@@ -28,7 +29,8 @@ def xml_to_properties(root_element, element_type, element_parser=None, prefix: s
     # TODO: Add descriptive header
     if element_parser is None:
         element_parser = DEFAULT_PARSERS[element_type]
-    properties = I18NGwtPropertiesGenerator(header="# Auto generated file - do not change manually")
+    properties = I18NGwtPropertiesGenerator()
+    properties.add_header_auto_generated()
 
     # Get cmd's that are direct children of root element
     for element_xml in element_parser.grep_from_element_tree(root_element):
