@@ -1,4 +1,6 @@
-# Creates a "_dev" locale, which is a copy of the _en locale with PREFIX prepended 
+#!/usr/bin/env bash
+
+# Creates a "_dev" locale, which is a copy of the _en locale with PREFIX prepended
 # onto all strings for easy spotting in the UI
 # 
 # Running this script will result in a "XXX_dev.properties" file for each 
@@ -9,7 +11,7 @@
 
 PREFIX="@"
 
-for src in $(find -name "*en.properties"); do
+for src in $(find . -name "*en.properties"); do
   tgt=$(echo "$src" | sed -e 's/_en.properties$/_dev.properties/')
   echo "Copying $src -> $tgt"
   if [ -f "$tgt" ]; then
