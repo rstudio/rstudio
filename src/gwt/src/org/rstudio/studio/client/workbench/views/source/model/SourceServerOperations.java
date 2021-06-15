@@ -25,6 +25,7 @@ import org.rstudio.studio.client.events.GetEditorContextEvent;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewServerOperations;
 import org.rstudio.studio.client.notebook.CompileNotebookOptions;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
+import org.rstudio.studio.client.quarto.model.QuartoServerOperations;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -59,6 +60,7 @@ public interface SourceServerOperations extends FilesServerOperations,
                                                 RSConnectServerOperations,
                                                 ObjectExplorerServerOperations,
                                                 TestServerOperations,
+                                                QuartoServerOperations,
                                                 CryptoServerOperations
 {
    /**
