@@ -15,13 +15,17 @@
 
 package org.rstudio.studio.client.quarto;
 
+import java.util.ArrayList;
+
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.quarto.model.QuartoCapabilities;
 import org.rstudio.studio.client.quarto.model.QuartoServerOperations;
+import org.rstudio.studio.client.quarto.ui.QuartoNewDocumentDialog;
 import org.rstudio.studio.client.server.ServerError;
 
 import com.google.inject.Inject;
@@ -54,12 +58,9 @@ public class QuartoNewDocument
                public void onResponseReceived(QuartoCapabilities caps)
                {
                   indicator.onCompleted();
-                  onResult.execute("---\n" + 
-                        "title: \"Untitled\"\n" + 
-                        "format: html\n" + 
-                        "---\n" + 
-                        "\n" + 
-                        "");
+                  new QuartoNewDocumentDialog(caps, (result) -> {
+                     onResult.execute(generateDoc(caps, result));
+                  }).showModal();;
                }
    
                @Override
@@ -68,6 +69,49 @@ public class QuartoNewDocument
                   indicator.onError(error.getUserMessage());
                }
             }); 
+   }
+   
+   private String generateDoc(QuartoCapabilities caps, 
+                              QuartoNewDocumentDialog.Result result)
+   {
+      ArrayList<String> lines = new ArrayList<String>();
+      lines.add("---");
+      lines.add("title: \"" + result.getTitle() + "\"");
+      boolean simpleFormat = !result.getFormat().equals("html") && 
+                             !result.getTableOfContents() && 
+                             !result.getNumberSections();
+      if (simpleFormat)
+      {
+         lines.add("format: " + result.getFormat());
+      }
+      else
+      {
+         lines.add("format:");
+         lines.add("  " + result.getFormat() + ":");
+         if (result.getFormat().equals("html"))
+            lines.add("    theme: " + result.getTheme());
+         if (result.getTableOfContents())
+            lines.add("    toc: true");
+         if (result.getNumberSections())
+            lines.add("    number-sections: true");
+      }
+      
+      if (result.getEngine().equals("jupyter"))
+         lines.add("jupyter: " + result.getKernel());
+      lines.add("---");
+            
+      if (result.getLanguage() != null)
+      {
+         lines.add("");
+         lines.add("```{" + result.getLanguage() + "}");
+         lines.add("");
+         lines.add("```");
+      }
+      
+      lines.add("");
+      lines.add("");
+      return StringUtil.join(lines, "\n");
+      
    }
    
    
