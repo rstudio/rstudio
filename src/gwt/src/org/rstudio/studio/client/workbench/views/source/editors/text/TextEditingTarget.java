@@ -2225,7 +2225,7 @@ public class TextEditingTarget implements
             // files when knitr isn't installed)
             boolean addCurrentType = true;
             final StatusBarPopupMenu menu = new StatusBarPopupMenu();
-            TextFileType[] fileTypes = fileTypeCommands_.statusBarFileTypes();
+            List<TextFileType> fileTypes = fileTypeCommands_.statusBarFileTypes();
             for (TextFileType type : fileTypes)
             {
                menu.addItem(createMenuItemForType(type));
