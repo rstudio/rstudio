@@ -53,32 +53,31 @@ void onPrefsChanged(const std::string& /* layerName */,
    }
 }
 
-void onDeferredInit(bool)
-{
-   if (!projects::projectContext().hasProject())
-      return;
-   
-   Error error = r::exec::RFunction(".rs.python.initialize")
-         .addUtf8Param(projects::projectContext().directory())
-         .call();
-   
-   if (error)
-      LOG_ERROR(error);
-}
-
 } // end anonymous namespace
 
 Error initialize()
 {
    using namespace module_context;
    
-   events().onDeferredInit.connect(onDeferredInit);
-   
    prefs::userPrefs().onChanged.connect(onPrefsChanged);
 
    ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(sourceModuleRFile, "SessionPythonEnvironments.R"));
+   
+   Error error = initBlock.execute();
+   if (error)
+      return error;
+   
+   if (projects::projectContext().hasProject())
+   {
+      projects::projectContext().directory();
+      Error error = r::exec::RFunction(".rs.python.initialize")
+            .addUtf8Param(projects::projectContext().directory())
+            .call();
+      if (error)
+         LOG_ERROR(error);
+   }
    
    return initBlock.execute();
 }
