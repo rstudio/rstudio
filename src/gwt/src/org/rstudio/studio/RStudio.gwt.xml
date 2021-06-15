@@ -137,4 +137,15 @@
 
    <!-- work around incompatibility between GWT 2.8 and Gin 2.1.2 -->
    <set-configuration-property name="gin.classloading.exceptedPackages" value="com.google.gwt.core.client"/>
+
+   <!-- internationalization -->
+   <inherits name="com.google.gwt.i18n.I18N"/>
+   <set-configuration-property name="locale.useragent" value="Y"/>
+   <!-- Set order of precidence for locale settings -->
+   <set-configuration-property name="locale.searchorder" value="queryparam,cookie,useragent,meta"/>
+   <!-- Set only locale and default locale to en to ensure English content only -->
+   <extend-property name="locale" values="en"/>
+   <set-property name="locale" value="en"/>
+   <set-property-fallback name="locale" value="en"/>
+
 </module>

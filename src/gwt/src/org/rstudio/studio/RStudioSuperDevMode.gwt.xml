@@ -5,5 +5,6 @@
    <set-property name="compiler.stackMode" value="native"/>
    <set-property name="rstudio.desktop" value="false"/>
    <set-property name="user.agent" value="safari"/>
-   <set-property name="locale" value="default"/>
+   <!-- dev language for i18n development -->
+   <extend-property name="locale" values="dev"/>
 </module>
