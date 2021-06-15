@@ -54,7 +54,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class QuartoNewDocumentDialog extends ModalDialog<QuartoNewDocumentDialog.Result>
 {
-  // extends JavaScriptObject for easy serialization (as client state)
+   // extends JavaScriptObject for easy serialization (as client state)
    public static class Result extends JavaScriptObject
    {
       protected Result() {}
@@ -97,8 +97,6 @@ public class QuartoNewDocumentDialog extends ModalDialog<QuartoNewDocumentDialog
       public final native String getKernel() /*-{ return this["kernel"]; }-*/;
       public final native String getLanguage() /*-{ return this["language"]; }-*/;
    }
-   
-  
    
    public QuartoNewDocumentDialog(QuartoCapabilities caps,
                                   OperationWithInput<Result> operation)
@@ -160,7 +158,6 @@ public class QuartoNewDocumentDialog extends ModalDialog<QuartoNewDocumentDialog
       kernelSelect_ = createListBox(kernelDisplayNames, kernelNames);
       setListBoxValue(kernelSelect_, lastResult_.getKernel());
       
-      
       // Add them to parent
       grid_ = new LayoutGrid(7, 2);
       grid_.setCellPadding(2);
@@ -169,7 +166,6 @@ public class QuartoNewDocumentDialog extends ModalDialog<QuartoNewDocumentDialog
       grid_.setWidget(ROW_TITLE, 1, titleTextBox_);
       grid_.setWidget(ROW_AUTHOR, 0, authorLabel);
       grid_.setWidget(ROW_AUTHOR, 1, authorTextBox_);
-     
       
       grid_.setWidget(ROW_FORMAT, 0, formatSelectLabel);
       grid_.setWidget(ROW_FORMAT, 1, formatSelect_);
@@ -234,7 +230,6 @@ public class QuartoNewDocumentDialog extends ModalDialog<QuartoNewDocumentDialog
       }
       
       return true;   
-      
    }
 
    @Override
@@ -393,8 +388,7 @@ public class QuartoNewDocumentDialog extends ModalDialog<QuartoNewDocumentDialog
                         value.getString("language")
                         );
       }
-
-      
+ 
       @Override
       protected JsObject getValue()
       {
@@ -410,7 +404,6 @@ public class QuartoNewDocumentDialog extends ModalDialog<QuartoNewDocumentDialog
    private static QuartoNewDocumentClientState clientStateValue_;
    private static Result lastResult_ = Result.createDefault();
 
-   
    private final String FORMAT_HTML = "html";
    
    private final String ENGINE_NONE = "none";
@@ -433,7 +426,6 @@ public class QuartoNewDocumentDialog extends ModalDialog<QuartoNewDocumentDialog
    private final CheckBox numberSectionsCheckBox_;
    private final ListBox engineSelect_;
    private final ListBox kernelSelect_;
-   
    
    private final LayoutGrid grid_;
    private final VerticalPanel mainPanel_;
