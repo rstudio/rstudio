@@ -17,7 +17,11 @@ for src in $(find . -name "*en.properties"); do
   if [ -f "$tgt" ]; then
   	echo "WARNING: Target $tgt already exists - skipping"
   else
-  	# "copy" src with sed, replacing all lines of "X = Y" with "X = {PREFIX}Y"
-	sed -E "s/^([^\n=]*)=([ ]*)([^\n]*)\$/\1=\2${PREFIX}\3/" $src > $tgt
+    # "copy" src with sed, replacing all lines of "X = Y" with "X = {PREFIX}Y"
+    if [[ "$OSTYPE" = "darwin"* ]]; then
+      sed -E "s/^([^\x0D=]*)=([ ]*)([^\x0D]*)/\1=\2${PREFIX}\3/" $src > $tgt
+    else
+      sed -E "s/^([^\n=]*)=([ ]*)([^\n]*)\$/\1=\2${PREFIX}\3/" $src > $tgt
+    fi
   fi
 done
