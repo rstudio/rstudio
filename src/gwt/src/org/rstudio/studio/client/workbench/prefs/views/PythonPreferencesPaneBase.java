@@ -172,7 +172,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
       if (!isProjectOptions)
       {
          cbAutoUseProjectInterpreter_ =
-               new CheckBox("Automatically activate project Python environments");
+               new CheckBox("Automatically activate project-local Python environments");
          
          cbAutoUseProjectInterpreter_.setValue(
                prefs_.pythonProjectEnvironmentAutomaticActivate().getGlobalValue());

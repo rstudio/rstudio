@@ -53,7 +53,7 @@ void onPrefsChanged(const std::string& /* layerName */,
    }
 }
 
-void onDeferredInit(bool)
+void onInitComplete()
 {
    if (!projects::projectContext().hasProject())
       return;
@@ -72,7 +72,7 @@ Error initialize()
 {
    using namespace module_context;
    
-   events().onDeferredInit.connect(onDeferredInit);
+   events().onInitComplete.connect(onInitComplete);
    
    prefs::userPrefs().onChanged.connect(onPrefsChanged);
 
