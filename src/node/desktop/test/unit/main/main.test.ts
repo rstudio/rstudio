@@ -15,7 +15,9 @@
 
 import { describe } from 'mocha';
 
-describe('Main', () => {
+// IMPORTANT: Cannot unit-test main.ts, because it will cause app.WhenReady() to
+// start up RStudio, instead of electron-mocha!
+describe('main', () => {
   // eslint-disable-next-line @typescript-eslint/no-empty-function
-  describe('No tests yet', () => {});
+  describe('No tests (by design)', () => {});
 });

@@ -1,5 +1,5 @@
 /*
- * app.test.ts
+ * application.test.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -15,9 +15,7 @@
 
 import { describe } from 'mocha';
 
-// IMPORTANT: Cannot unit-test app.ts, because it will cause app.WhenReady() to
-// start up RStudio, instead of the tests!
-describe('App', () => {
+describe('Application', () => {
   // eslint-disable-next-line @typescript-eslint/no-empty-function
-  describe('No tests (by design)', () => {});
+  describe('No tests yet', () => {});
 });
