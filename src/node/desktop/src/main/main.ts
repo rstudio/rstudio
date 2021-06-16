@@ -1,5 +1,5 @@
 /*
- * app.ts
+ * main.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
