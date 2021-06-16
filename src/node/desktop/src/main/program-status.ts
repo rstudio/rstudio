@@ -1,5 +1,5 @@
 /*
- * app.ts
+ * program-status.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -13,20 +13,22 @@
  *
  */
 
-import { app } from 'electron';
-import { Main } from './main';
+export const EXIT_SUCCESS = 0;
+export const EXIT_FAILURE = 1;
 
-const rstudio: Main = new Main();
-
-const initStatus = rstudio.beforeAppReady();
-if (initStatus.exit) {
-  app.exit(initStatus.exitCode);
+export interface ProgramStatus {
+  exit: boolean;
+  exitCode: number;
 }
 
-/**
- * Handlers for `app` events go here; otherwise do as little as possible in this
- * file (it cannot be unit-tested).
- */
-app.whenReady().then(() => {
-  rstudio.run();
-});
+export function run(): ProgramStatus {
+  return { exit: false, exitCode: EXIT_SUCCESS };
+}
+
+export function exitSuccess(): ProgramStatus {
+  return { exit: true, exitCode: EXIT_SUCCESS };
+}
+
+export function exitFailure(): ProgramStatus {
+  return { exit: true, exitCode: EXIT_FAILURE };
+}
