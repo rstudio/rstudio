@@ -18,7 +18,7 @@ import fsPromises from 'fs/promises';
 
 import path from 'path';
 import { Err, Success } from './err';
-import { User } from './user';
+import { userHomePath } from './user';
 
 
 export interface FilePathWithError {
@@ -189,7 +189,7 @@ export class FilePath {
     // take the user home path from the system
     let safePath = revertToPath;
     if (!fs.existsSync(safePath.path)) {
-      safePath = User.getUserHomePath();
+      safePath = userHomePath();
     }
 
     const error = safePath.makeCurrentPath();
@@ -216,7 +216,7 @@ export class FilePath {
     // take the user home path from the system
     let safePath = revertToPath;
     if (! await FilePath.exists(safePath.path)) {
-      safePath = User.getUserHomePath();
+      safePath = userHomePath();
     }
 
     const error = safePath.makeCurrentPath();

@@ -34,7 +34,7 @@
 
 import os from 'os';
 import { Environment, expandEnvVars, getenv } from './environment';
-import { username, userHomePath } from './system';
+import { username, userHomePath } from './user';
 import { FilePath } from './file-path';
 
 export enum WinFolderID {

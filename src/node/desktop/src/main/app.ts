@@ -14,7 +14,7 @@
  */
 
 import { app } from 'electron';
-import Main from './main';
+import { Main } from './main';
 import { getRStudioVersion } from './product-info';
 import { augmentCommandLineArguments, getComponentVersions, removeStaleOptionsLockfile } from './utils';
 

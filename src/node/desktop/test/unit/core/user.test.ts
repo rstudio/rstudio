@@ -18,13 +18,16 @@ import { assert } from 'chai';
 
 import fs from 'fs';
 
-import { User } from '../../../src/core/user';
+import { userHomePath, username } from '../../../src/core/user';
 
 describe('User', () => {
   describe('Static helpers', () => {
     it('getUserHomePath returns a valid path', () => {
-      const path = User.getUserHomePath();
+      const path = userHomePath();
       assert.isTrue(fs.existsSync(path.getAbsolutePath()));
+    });
+    it('username returns a non-empty string', () => {
+      assert.isNotEmpty(username());
     });
   });
 });
