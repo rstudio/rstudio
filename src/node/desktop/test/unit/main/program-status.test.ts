@@ -1,5 +1,5 @@
 /*
- * log.test.ts
+ * program-status.test.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -16,14 +16,22 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 
-import { FileLogOptions } from '../../../src/core/log';
+import { exitFailure, exitSuccess, run } from '../../../src/main/program-status';
 
-describe('Log', () => {
-  describe('Constructions', () => {
-    it('FileLogOptions construction works', () => {
-      const flo = new FileLogOptions('/somewhere');
-      assert.strictEqual(flo.directory, '/somewhere');
+describe('ProgramStatus', () => {
+  describe('Helper functions', () => {
+    it('run will continue', () => {
+      assert.isFalse(run().exit);
+    });
+    it('exitFailure will exit with non-zero', () => {
+      const result = exitFailure();
+      assert.isTrue(result.exit);
+      assert.notEqual(result.exitCode, 0);
+    });
+    it('exitSuccess will exit with zero', () => {
+      const result = exitSuccess();
+      assert.isTrue(result.exit);
+      assert.equal(result.exitCode, 0);
     });
   });
 });
- 

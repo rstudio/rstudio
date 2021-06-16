@@ -1,5 +1,5 @@
 /*
- * main.ts
+ * application.test.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -13,20 +13,9 @@
  *
  */
 
-import { app } from 'electron';
-import { Application } from './application';
+import { describe } from 'mocha';
 
-const rstudio: Application = new Application();
-
-const initStatus = rstudio.beforeAppReady();
-if (initStatus.exit) {
-  app.exit(initStatus.exitCode);
-}
-
-/**
- * Handlers for `app` events go here; otherwise do as little as possible in this
- * file (it cannot be unit-tested).
- */
-app.whenReady().then(() => {
-  rstudio.run();
+describe('Application', () => {
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  describe('No tests yet', () => {});
 });

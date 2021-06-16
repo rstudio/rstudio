@@ -22,7 +22,7 @@ import path from 'path';
 import os from 'os';
 
 import { FilePath } from '../../../src/core/file-path';
-import { User } from '../../../src/core/user';
+import { userHomePath } from '../../../src/core/user';
 
 function randomString() {
   return Math.trunc(Math.random() * 2147483647).toString();
@@ -556,25 +556,25 @@ describe('FilePath', () => {
 
   describe('Path resolutions', () => {
     it('resolveAliasedPathSync should return home if empty path provided', () => {
-      const home = User.getUserHomePath();
+      const home = userHomePath();
       const result = FilePath.resolveAliasedPathSync('', home);
       assert.strictEqual(result.getAbsolutePath(), home.getAbsolutePath());
     });
     it('resolveAliasedPathSync should resolve \'~\' as home', () => {
-      const home = User.getUserHomePath();
+      const home = userHomePath();
       const result = FilePath.resolveAliasedPathSync('~', home);
       assert.strictEqual(result.getAbsolutePath(), home.getAbsolutePath());
     });
     it('resolveAliasedPathSync should replace \'~\' in path', () => {
       const start = '~/foo/bar';
-      const result = FilePath.resolveAliasedPathSync(start, User.getUserHomePath());
+      const result = FilePath.resolveAliasedPathSync(start, userHomePath());
       const resultStr = result.getAbsolutePath();
       assert.isAtLeast(resultStr.length, start.length);
       assert.notEqual(resultStr.charAt(0), '~');
       assert.isAbove(resultStr.lastIndexOf('/foo/bar'), -1);
     });
     it('completePath should return absolute path as-is ignoring base', () => {
-      const f1 = User.getUserHomePath();
+      const f1 = userHomePath();
       const result = f1.completePath(absolutePath);
       assert.strictEqual(result.getAbsolutePath(), absolutePath);
     });

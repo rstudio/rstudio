@@ -1,5 +1,5 @@
 /*
- * app.test.ts
+ * program-status.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -13,11 +13,22 @@
  *
  */
 
-import { describe } from 'mocha';
+export const EXIT_SUCCESS = 0;
+export const EXIT_FAILURE = 1;
 
-// IMPORTANT: Cannot unit-test app.ts, because it will cause app.WhenReady() to
-// start up RStudio, instead of the tests!
-describe('App', () => {
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  describe('No tests (by design)', () => {});
-});
+export interface ProgramStatus {
+  exit: boolean;
+  exitCode: number;
+}
+
+export function run(): ProgramStatus {
+  return { exit: false, exitCode: EXIT_SUCCESS };
+}
+
+export function exitSuccess(): ProgramStatus {
+  return { exit: true, exitCode: EXIT_SUCCESS };
+}
+
+export function exitFailure(): ProgramStatus {
+  return { exit: true, exitCode: EXIT_FAILURE };
+}

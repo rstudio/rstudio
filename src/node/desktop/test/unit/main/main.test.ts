@@ -14,18 +14,10 @@
  */
 
 import { describe } from 'mocha';
-import { assert } from 'chai';
 
-import { getenv } from '../../../src/core/environment';
-import Main from '../../../src/main/main';
-
-describe('Main', () => {
-  describe('Static helpers', () => {
-    it('initializeSharedSecret generates a random string in RS_SHARED_SECRET envvar_', () => {
-      const envvar = 'RS_SHARED_SECRET';
-      assert.equal(getenv(envvar).length, 0);
-      Main.initializeSharedSecret();
-      assert.isAtLeast(getenv(envvar).length, 0);
-    });
-  });
+// IMPORTANT: Cannot unit-test main.ts, because it will cause app.WhenReady() to
+// start up RStudio, instead of electron-mocha!
+describe('main', () => {
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  describe('No tests (by design)', () => {});
 });
