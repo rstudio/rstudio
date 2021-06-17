@@ -21,6 +21,7 @@
 
 #include <session/prefs/UserPrefs.hpp>
 #include <session/prefs/UserPrefValues.hpp>
+#include <session/projects/SessionProjects.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -52,11 +53,26 @@ void onPrefsChanged(const std::string& /* layerName */,
    }
 }
 
+void onInitComplete()
+{
+   if (!projects::projectContext().hasProject())
+      return;
+   
+   Error error = r::exec::RFunction(".rs.python.initialize")
+         .addUtf8Param(projects::projectContext().directory())
+         .call();
+   
+   if (error)
+      LOG_ERROR(error);
+}
+
 } // end anonymous namespace
 
 Error initialize()
 {
    using namespace module_context;
+   
+   events().onInitComplete.connect(onInitComplete);
    
    prefs::userPrefs().onChanged.connect(onPrefsChanged);
 

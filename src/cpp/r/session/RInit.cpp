@@ -350,28 +350,29 @@ Error initialize()
    if (error)
       return error;
    
+   // set server options
+#ifdef __linux__
+   if (utils::isServerMode())
+   {
+      FilePath serverOptionsFilePath =
+            utils::rSourcePath().completePath("ServerOptions.R");
+      
+      Error error = r::sourceManager().sourceLocal(serverOptionsFilePath);
+      if (error)
+         return error;
+   }
+#endif
+   
+   // now run hooks for those waiting for session to be fully initialized
+   if (rCallbacks().initComplete)
+      rCallbacks().initComplete();
+   
    // run tests if configured to do so
    // (note that the callback will exit the process after tests have been run)
    if (rCallbacks().runTests)
-   {
       rCallbacks().runTests();
-   }
-
-   // server specific R options options
-   if (utils::isServerMode())
-   {
-#ifndef __APPLE__
-      FilePath serverOptionsFilePath = utils::rSourcePath().completePath(
-         "ServerOptions.R");
-      return r::sourceManager().sourceLocal(serverOptionsFilePath);
-#else
-      return Success();
-#endif
-   }
-   else
-   {
-      return Success();
-   }
+   
+   return Success();
 }
 
 void ensureDeserialized()

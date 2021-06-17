@@ -43,6 +43,60 @@
    .rs.python.describeInterpreter(pythonPath)
 })
 
+.rs.addFunction("python.projectInterpreterPath", function(projectDir)
+{
+   venvPath <- file.path(projectDir, ".venv")
+   pythonSuffix <- if (.rs.platform.isWindows) "Scripts/python.exe" else "bin/python"
+   file.path(venvPath, pythonSuffix)
+})
+
+.rs.addFunction("python.initialize", function(projectDir)
+{
+   # do nothing if the user hasn't opted in
+   activate <- .rs.readUiPref("python_project_environment_automatic_activate")
+   if (!identical(activate, TRUE))
+      return()
+   
+   # nothing to do if we don't have a project
+   if (is.null(projectDir) || !file.exists(projectDir))
+      return()
+   
+   # if the user has set RETICULATE_PYTHON, assume they're taking control
+   reticulatePython <- Sys.getenv("RETICULATE_PYTHON", unset = NA)
+   if (!is.na(reticulatePython))
+      return()
+   
+   # get path to project interpreter (bail if it doesn't exist)
+   pythonPath <- .rs.python.projectInterpreterPath(projectDir)
+   if (!file.exists(pythonPath))
+      return()
+   
+   # normalize path (avoid following symlinks)
+   pythonPath <- file.path(
+      normalizePath(dirname(pythonPath), winslash = "/", mustWork = FALSE),
+      basename(pythonPath)
+   )
+ 
+   # add the Python directory to the PATH
+   oldPath <- Sys.getenv("PATH")
+   pythonBin <- normalizePath(dirname(pythonPath))
+   newPath <- paste(pythonBin, oldPath, sep = .Platform$path.sep)
+   Sys.setenv(PATH = newPath)
+   
+   # if this is a virtual environment, set VIRTUAL_ENV
+   pythonInfo <- .rs.python.getPythonInfo(pythonPath, strict = TRUE)
+   if (identical(pythonInfo$type, "virtualenv")) {
+      envPath <- dirname(dirname(pythonPath))
+      Sys.setenv(VIRTUAL_ENV = envPath)
+   }
+   
+   # also set RETICULATE_PYTHON so this python is used by default
+   Sys.setenv(RETICULATE_PYTHON = pythonPath)
+   
+   # return path to python
+   invisible(pythonPath)
+})
+
 .rs.addFunction("python.execute", function(python, code)
 {
    python <- normalizePath(python, winslash = "/", mustWork = TRUE)
@@ -181,6 +235,7 @@
 .rs.addFunction("python.findPythonInterpreters", function()
 {
    interpreters <- unname(c(
+      .rs.python.findPythonProjectInterpreters(),
       .rs.python.findPythonSystemInterpreters(),
       .rs.python.findPythonInterpretersInKnownLocations(),
       .rs.python.findPythonPyenvInterpreters(),
@@ -195,6 +250,24 @@
       default_interpreter = .rs.scalar(default)
    )
    
+})
+
+.rs.addFunction("python.findPythonProjectInterpreters", function()
+{
+   projectDir <- .rs.getProjectDirectory()
+   if (is.null(projectDir))
+      return(list())
+   
+   candidateDirs <- list.files(
+      path = projectDir,
+      all.files = TRUE,
+      full.names = TRUE
+   )
+   
+   pythonSuffix <- if (.rs.platform.isWindows) "Scripts/python.exe" else "bin/python"
+   candidatePaths <- file.path(candidateDirs, pythonSuffix)
+   pythonPaths <- Filter(file.exists, candidatePaths)
+   lapply(pythonPaths, .rs.python.getPythonInfo, strict = TRUE)
 })
 
 .rs.addFunction("python.findPythonSystemInterpreters", function()

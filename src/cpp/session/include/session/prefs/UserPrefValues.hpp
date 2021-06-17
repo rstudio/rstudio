@@ -388,6 +388,7 @@ namespace prefs {
 #define kMemoryQueryIntervalSeconds "memory_query_interval_seconds"
 #define kTerminalPythonIntegration "terminal_python_integration"
 #define kSessionProtocolDebug "session_protocol_debug"
+#define kPythonProjectEnvironmentAutomaticActivate "python_project_environment_automatic_activate"
 
 class UserPrefValues: public Preferences
 {
@@ -1724,6 +1725,12 @@ public:
     */
    bool sessionProtocolDebug();
    core::Error setSessionProtocolDebug(bool val);
+
+   /**
+    * When enabled, if the active project contains a Python virtual environment located within the project's .venv folder, then RStudio will automatically activate this environment on startup.
+    */
+   bool pythonProjectEnvironmentAutomaticActivate();
+   core::Error setPythonProjectEnvironmentAutomaticActivate(bool val);
 
 };
 

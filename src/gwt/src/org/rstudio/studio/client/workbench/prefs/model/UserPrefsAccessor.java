@@ -3147,6 +3147,18 @@ public class UserPrefsAccessor extends Prefs
          false);
    }
 
+   /**
+    * When enabled, if the active project contains a Python virtual environment located within the project's .venv folder, then RStudio will automatically activate this environment on startup.
+    */
+   public PrefValue<Boolean> pythonProjectEnvironmentAutomaticActivate()
+   {
+      return bool(
+         "python_project_environment_automatic_activate",
+         "Automatically activate project Python environments", 
+         "When enabled, if the active project contains a Python virtual environment located within the project's .venv folder, then RStudio will automatically activate this environment on startup.", 
+         true);
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -3593,6 +3605,8 @@ public class UserPrefsAccessor extends Prefs
          terminalPythonIntegration().setValue(layer, source.getBool("terminal_python_integration"));
       if (source.hasKey("session_protocol_debug"))
          sessionProtocolDebug().setValue(layer, source.getBool("session_protocol_debug"));
+      if (source.hasKey("python_project_environment_automatic_activate"))
+         pythonProjectEnvironmentAutomaticActivate().setValue(layer, source.getBool("python_project_environment_automatic_activate"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -3819,6 +3833,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(memoryQueryIntervalSeconds());
       prefs.add(terminalPythonIntegration());
       prefs.add(sessionProtocolDebug());
+      prefs.add(pythonProjectEnvironmentAutomaticActivate());
       return prefs;
    }
    

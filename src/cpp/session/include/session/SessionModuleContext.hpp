@@ -328,32 +328,29 @@ struct firstNonEmpty
 // session events
 struct Events : boost::noncopyable
 {
-   RSTUDIO_BOOST_SIGNAL<void (core::json::Object*)> onSessionInfo;
-   RSTUDIO_BOOST_SIGNAL<void ()>                    onClientInit;
-   RSTUDIO_BOOST_SIGNAL<void ()>                    onBeforeExecute;
-   RSTUDIO_BOOST_SIGNAL<void(const std::string&)>   onConsolePrompt;
-   RSTUDIO_BOOST_SIGNAL<void(const std::string&)>   onConsoleInput;
-   RSTUDIO_BOOST_SIGNAL<void(const std::string&, const std::string&)>  
-                                             onActiveConsoleChanged;
-   RSTUDIO_BOOST_SIGNAL<void (ConsoleOutputType, const std::string&)>
-                                             onConsoleOutput;
-   RSTUDIO_BOOST_SIGNAL<void()>                     onUserInterrupt;
-   RSTUDIO_BOOST_SIGNAL<void (ChangeSource)>        onDetectChanges;
-   RSTUDIO_BOOST_SIGNAL<void (core::FilePath)>      onSourceEditorFileSaved;
-   RSTUDIO_BOOST_SIGNAL<void(bool)>                 onDeferredInit;
-   RSTUDIO_BOOST_SIGNAL<void(bool)>                 afterSessionInitHook;
-   RSTUDIO_BOOST_SIGNAL<void(bool)>                 onBackgroundProcessing;
-   RSTUDIO_BOOST_SIGNAL<void(bool)>                 onShutdown;
-   RSTUDIO_BOOST_SIGNAL<void ()>                    onQuit;
-   RSTUDIO_BOOST_SIGNAL<void ()>                    onDestroyed;
-   RSTUDIO_BOOST_SIGNAL<void (const std::vector<std::string>&)>
-                                             onLibPathsChanged;
-   RSTUDIO_BOOST_SIGNAL<void (const std::string&)>  onPackageLoaded;
-   RSTUDIO_BOOST_SIGNAL<void ()>                    onPackageLibraryMutated;
-   RSTUDIO_BOOST_SIGNAL<void ()>                    onPreferencesSaved;
-   RSTUDIO_BOOST_SIGNAL<void (const core::DistributedEvent&)>
-                                             onDistributedEvent;
-   RSTUDIO_BOOST_SIGNAL<void (core::FilePath)>      onPermissionsChanged;
+   RSTUDIO_BOOST_SIGNAL<void(core::json::Object*)>                    onSessionInfo;
+   RSTUDIO_BOOST_SIGNAL<void()>                                       onClientInit;
+   RSTUDIO_BOOST_SIGNAL<void()>                                       onInitComplete;
+   RSTUDIO_BOOST_SIGNAL<void(bool)>                                   onDeferredInit;
+   RSTUDIO_BOOST_SIGNAL<void(bool)>                                   afterSessionInitHook;
+   RSTUDIO_BOOST_SIGNAL<void()>                                       onBeforeExecute;
+   RSTUDIO_BOOST_SIGNAL<void(const std::string&)>                     onConsolePrompt;
+   RSTUDIO_BOOST_SIGNAL<void(const std::string&)>                     onConsoleInput;
+   RSTUDIO_BOOST_SIGNAL<void(const std::string&, const std::string&)> onActiveConsoleChanged;
+   RSTUDIO_BOOST_SIGNAL<void(ConsoleOutputType, const std::string&)>  onConsoleOutput;
+   RSTUDIO_BOOST_SIGNAL<void()>                                       onUserInterrupt;
+   RSTUDIO_BOOST_SIGNAL<void(ChangeSource)>                           onDetectChanges;
+   RSTUDIO_BOOST_SIGNAL<void(core::FilePath)>                         onSourceEditorFileSaved;
+   RSTUDIO_BOOST_SIGNAL<void(bool)>                                   onBackgroundProcessing;
+   RSTUDIO_BOOST_SIGNAL<void(const std::vector<std::string>&)>        onLibPathsChanged;
+   RSTUDIO_BOOST_SIGNAL<void(const std::string&)>                     onPackageLoaded;
+   RSTUDIO_BOOST_SIGNAL<void()>                                       onPackageLibraryMutated;
+   RSTUDIO_BOOST_SIGNAL<void()>                                       onPreferencesSaved;
+   RSTUDIO_BOOST_SIGNAL<void(const core::DistributedEvent&)>          onDistributedEvent;
+   RSTUDIO_BOOST_SIGNAL<void(core::FilePath)>                         onPermissionsChanged;
+   RSTUDIO_BOOST_SIGNAL<void(bool)>                                   onShutdown;
+   RSTUDIO_BOOST_SIGNAL<void()>                                       onQuit;
+   RSTUDIO_BOOST_SIGNAL<void()>                                       onDestroyed;
 
    // signal for detecting extended type of documents
    RSTUDIO_BOOST_SIGNAL<std::string(boost::shared_ptr<source_database::SourceDocument>),
