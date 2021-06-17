@@ -725,7 +725,15 @@ private:
       FilePath outputFile = module_context::extractOutputFileCreated
                                                    (targetFile_, allOutput_);
       if (!outputFile.isEmpty())
-         outputFile_ = outputFile;
+      {
+         // we don't want to show a preview if we are in a quarto website or book project
+         // check for this before setting the output file
+         if (module_context::isQuartoWebsiteDoc(targetFile_))
+            viewerType_ = kRmdViewerTypeNone;
+
+          outputFile_ = outputFile;
+      }
+
 
       // the process may be terminated normally by the IDE (e.g. to stop the
       // Shiny server); alternately, a termination is considered normal if

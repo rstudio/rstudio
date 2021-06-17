@@ -875,6 +875,8 @@ void initializeConsoleCtrlHandler();
 
 bool isPythonReplActive();
 
+bool isQuartoWebsiteDoc(const core::FilePath& filePath);
+
 std::string getActiveLanguage();
 core::Error adaptToLanguage(const std::string& language);
 

@@ -20,6 +20,7 @@
 
 #include <core/Exec.hpp>
 #include <core/YamlUtil.hpp>
+#include <core/FileSerializer.hpp>
 
 #include <core/json/JsonRpc.hpp>
 
@@ -36,19 +37,60 @@ using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
-namespace modules {
-namespace quarto {
+
 namespace {
 
 const char * const kQuartoXt = "quarto-document";
 
 FilePath s_quartoPath;
 
+core::FilePath quartoConfigFilePath(const FilePath& dirPath)
+{
+   FilePath quartoYml = dirPath.completePath("_quarto.yml");
+   if (quartoYml.exists())
+      return quartoYml;
+
+   FilePath quartoYaml = dirPath.completePath("_quarto.yaml");
+   if (quartoYaml.exists())
+      return quartoYaml;
+
+   return FilePath();
+}
+
+
 bool pathHasQuartoConfig(const FilePath& filePath)
 {
-   return filePath.completePath("_quarto.yml").exists() ||
-          filePath.completePath("_quarto.yaml").exists();
+   return !quartoConfigFilePath(filePath).isEmpty();
 }
+
+core::FilePath quartoProjectConfigFile(const core::FilePath& filePath)
+{
+   // list all paths up to root from home dir
+   // if we hit the anchor path, or any parent directory of that path
+   FilePath anchorPath = module_context::userHomePath();
+   std::vector<FilePath> anchorPaths;
+   for (; anchorPath.exists(); anchorPath = anchorPath.getParent())
+      anchorPaths.push_back(anchorPath);
+
+   // scan through parents
+   for (FilePath targetPath = filePath.getParent(); targetPath.exists(); targetPath = targetPath.getParent())
+   {
+      // bail if we've hit our anchor
+      for (const FilePath& anchorPath : anchorPaths)
+      {
+         if (targetPath == anchorPath)
+            return FilePath();
+      }
+
+      // see if we have a config
+      FilePath configFile = quartoConfigFilePath(targetPath);
+      if (!configFile.isEmpty())
+         return configFile;
+   }
+
+   return FilePath();
+}
+
 
 std::string onDetectQuartoSourceType(
       boost::shared_ptr<source_database::SourceDocument> pDoc)
@@ -93,36 +135,13 @@ std::string onDetectQuartoSourceType(
             return kQuartoXt;
          }
          // project has quarto config in build target dir
-         else if (filePath.isWithin(projects::projectContext().directory()) && projectIsQuarto())
+         else if (filePath.isWithin(projects::projectContext().directory()) && modules::quarto::projectIsQuarto())
          {
             return kQuartoXt;
 
          // file has a parent directory with a quarto config
-         } else if (isInstalled()) {
-
-            // list all paths up to root from home dir
-            // if we hit the anchor path, or any parent directory of that path
-            FilePath anchorPath = module_context::userHomePath();
-            std::vector<FilePath> anchorPaths;
-            for (; anchorPath.exists(); anchorPath = anchorPath.getParent())
-               anchorPaths.push_back(anchorPath);
-
-            // scan through parents
-            for (FilePath targetPath = filePath.getParent(); targetPath.exists(); targetPath = targetPath.getParent())
-            {
-               // bail if we've hit our anchor
-               for (const FilePath& anchorPath : anchorPaths)
-               {
-                  if (targetPath == anchorPath)
-                     return "";
-               }
-
-               // see if we have a config
-               if (pathHasQuartoConfig(targetPath))
-               {
-                  return kQuartoXt;
-               }
-            }
+         } else if (modules::quarto::isInstalled() && !quartoProjectConfigFile(filePath).isEmpty()) {
+            return kQuartoXt;
          }
       }
    }
@@ -130,6 +149,7 @@ std::string onDetectQuartoSourceType(
    // quarto type not detected
    return "";
 }
+
 
 core::system::ProcessOptions quartoOptions()
 {
@@ -193,8 +213,53 @@ Error quartoCapabilities(const json::JsonRpcRequest&,
    return Success();
 }
 
+}
 
-} // anonymous namespace
+namespace module_context {
+
+bool isQuartoWebsiteDoc(const core::FilePath& filePath)
+{
+   if (modules::quarto::isInstalled())
+   {
+      std::string extendedType;
+      Error error = source_database::detectExtendedType(filePath, &extendedType);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return false;
+      }
+      if (extendedType == kQuartoXt)
+      {
+         FilePath configFile = quartoProjectConfigFile(filePath);
+         if (configFile.isEmpty())
+            return false;
+         std::string config;
+         Error error = core::readStringFromFile(configFile, &config);
+         if (error)
+         {
+            LOG_ERROR(error);
+            return false;
+         }
+         static const boost::regex reSite("\\s{2,}type:\\s+(site|book)");
+         return regex_utils::search(config.begin(), config.end(), reSite);
+      }
+      else
+      {
+         return false;
+      }
+   }
+   else
+   {
+      return false;
+   }
+
+}
+
+
+}
+
+namespace modules {
+namespace quarto {
 
 bool isInstalled(bool refresh)
 {
