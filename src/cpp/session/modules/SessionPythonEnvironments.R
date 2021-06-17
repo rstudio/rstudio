@@ -43,11 +43,92 @@
    .rs.python.describeInterpreter(pythonPath)
 })
 
+.rs.addFunction("python.findCondaForEnvironment", function(envPath)
+{
+   # locate history file
+   historyFile <- file.path(envPath, "conda-meta/history")
+   if (!file.exists(historyFile))
+      return("")
+   
+   # read first few lines
+   contents <- readLines(historyFile, n = 2L, warn = FALSE)
+   if (length(contents) < 2L)
+    return("")
+
+   # parse conda path
+   line <- substring(contents[2L], 8L)
+   index <- regexpr(" ", line, fixed = TRUE)
+   if (index == -1L)
+      return("")
+
+   conda <- substring(line, 1L, index - 1L)
+   if (.rs.platform.isWindows)
+      conda <- file.path(dirname(conda), "conda.exe")
+
+   # prefer condabin if it exists
+   condabin <- file.path(dirname(conda), "../condabin", basename(conda))
+   if (file.exists(condabin))
+      conda <- condabin
+   
+   # bail if conda wasn't found
+   if (!file.exists(conda))
+      return("")
+   
+   .rs.canonicalizePath(conda)
+  
+})
+
+.rs.addFunction("python.configuredInterpreterPath", function(projectDir)
+{
+   # check some pre-defined environment variables
+   vars <- c("RENV_PYTHON", "RETICULATE_PYTHON")
+   for (var in vars) {
+      value <- Sys.getenv(var, unset = NA)
+      if (!is.na(value))
+         return(value)
+   }
+   
+   # if this project has a local interpreter, use it
+   if (!is.null(projectDir))
+   {
+      projectPython <- .rs.python.projectInterpreterPath(projectDir)
+      if (file.exists(projectPython))
+         return(projectPython)
+   }
+   
+   # check version of Python configured by user
+   prefsPython <- .rs.readUiPref("python_path")
+   if (file.exists(prefsPython))
+      return(path.expand(prefsPython))
+   
+   # no python found; return empty string placeholder
+   ""
+   
+})
+
 .rs.addFunction("python.projectInterpreterPath", function(projectDir)
 {
+   # check for .venv
    venvPath <- file.path(projectDir, ".venv")
-   pythonSuffix <- if (.rs.platform.isWindows) "Scripts/python.exe" else "bin/python"
-   file.path(venvPath, pythonSuffix)
+   if (file.exists(venvPath))
+   {
+      pythonSuffix <- if (.rs.platform.isWindows) "Scripts/python.exe" else "bin/python"
+      pythonPath <- file.path(venvPath, pythonSuffix)
+      return(pythonPath)
+   }
+   
+   # check for .condaenv
+   condaenvPath <- file.path(projectDir, ".condaenv")
+   if (file.exists(condaenvPath))
+   {
+      pythonSuffix <- if (.rs.platform.isWindows) "python.exe" else "bin/python"
+      pythonPath <- file.path(condaenvPath, pythonSuffix)
+      return(pythonPath)
+   }
+   
+   # nothing found
+   ""
+   
 })
 
 .rs.addFunction("python.initialize", function(projectDir)
@@ -57,17 +138,8 @@
    if (!identical(activate, TRUE))
       return()
    
-   # nothing to do if we don't have a project
-   if (is.null(projectDir) || !file.exists(projectDir))
-      return()
-   
-   # if the user has set RETICULATE_PYTHON, assume they're taking control
-   reticulatePython <- Sys.getenv("RETICULATE_PYTHON", unset = NA)
-   if (!is.na(reticulatePython))
-      return()
-   
-   # get path to project interpreter (bail if it doesn't exist)
-   pythonPath <- .rs.python.projectInterpreterPath(projectDir)
+   # find path to python interpreter for this project
+   pythonPath <- .rs.python.configuredInterpreterPath(projectDir)
    if (!file.exists(pythonPath))
       return()
    
@@ -78,16 +150,37 @@
    )
  
    # add the Python directory to the PATH
-   oldPath <- Sys.getenv("PATH")
-   pythonBin <- normalizePath(dirname(pythonPath))
-   newPath <- paste(pythonBin, oldPath, sep = .Platform$path.sep)
-   Sys.setenv(PATH = newPath)
+   pythonBin <- dirname(pythonPath)
+   .rs.prependToPath(pythonBin)
+   
+   # if we have a Scripts directory, place that on the PATH as well
+   # (primarily for Windows + conda environments)
+   scriptsPath <- file.path(pythonBin, "Scripts")
+   if (file.exists(scriptsPath))
+      .rs.prependToPath(scriptsPath)
+   
+   pythonInfo <- .rs.python.getPythonInfo(pythonPath, strict = TRUE)
    
    # if this is a virtual environment, set VIRTUAL_ENV
-   pythonInfo <- .rs.python.getPythonInfo(pythonPath, strict = TRUE)
-   if (identical(pythonInfo$type, "virtualenv")) {
+   if (identical(pythonInfo$type, "virtualenv"))
+   {
       envPath <- dirname(dirname(pythonPath))
       Sys.setenv(VIRTUAL_ENV = envPath)
+   }
+   
+   # if this is a conda environment, set CONDA_PREFIX
+   if (identical(pythonInfo$type, "conda"))
+   {
+      condaPrefix <- pythonBin
+      if (!.rs.platform.isWindows)
+         condaPrefix <- dirname(condaPrefix)
+      
+      Sys.setenv(CONDA_PREFIX = condaPrefix)
+      
+      # also ensure that conda is placed on the PATH
+      condaPath <- .rs.python.findCondaForEnvironment(condaPrefix)
+      if (file.exists(condaPath))
+         .rs.prependToPath(dirname(condaPath))
    }
    
    # also set RETICULATE_PYTHON so this python is used by default
