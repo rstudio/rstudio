@@ -62,6 +62,9 @@ void launchProcess(const std::string& absPath,
    process->setArguments(argList);
    
 #ifdef Q_OS_DARWIN
+   
+   QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
+   
    // on macOS with the hardened runtime, we can no longer rely on dyld
    // to lazy-load symbols from libR.dylib; to resolve this, we use
    // DYLD_INSERT_LIBRARIES to inject the library we wish to use on
@@ -70,14 +73,27 @@ void launchProcess(const std::string& absPath,
    FilePath rLib = rHome.completeChildPath("lib/libR.dylib");
    if (rLib.exists())
    {
-      QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
-      
       environment.insert(
                QStringLiteral("DYLD_INSERT_LIBRARIES"),
                QString::fromStdString(rLib.getAbsolutePathNative()));
       
-      process->setProcessEnvironment(environment);
    }
+   
+   // similarly, we need to set a fallback library path for conda
+   std::string libraryPath = tempnam("/tmp", "rstudio-fallback-library-");
+   QString dyldFallbackLibraryPath = environment.value(QStringLiteral("DYLD_FALLBACK_LIBRARY_PATH"));
+   dyldFallbackLibraryPath.append(QStringLiteral(":"));
+   dyldFallbackLibraryPath.append(QString::fromStdString(libraryPath));
+   environment.insert(
+            QStringLiteral("DYLD_FALLBACK_LIBRARY_PATH"),
+            dyldFallbackLibraryPath);
+   
+   environment.insert(
+            QStringLiteral("RSTUDIO_FALLBACK_LIBRARY_PATH"),
+            QString::fromStdString(libraryPath));
+   
+   process->setProcessEnvironment(environment);
+   
 #endif
    
    if (options().runDiagnostics())

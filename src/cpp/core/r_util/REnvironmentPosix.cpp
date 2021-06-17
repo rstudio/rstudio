@@ -818,30 +818,44 @@ std::string rLibraryPath(const FilePath& rHomePath,
                          const FilePath& ldPathsScript,
                          const std::string& ldLibraryPath)
 {
-   // determine library path (existing + r lib dir + r extra lib dirs)
-   std::string libraryPath = core::system::getenv(kLibraryPathEnvVariable);
-#ifdef __APPLE__
-   // if this isn't set explicitly then initalize it with the default
-   // of $HOME/lib:/usr/local/lib:/usr/lib. See documentation here:
-   // http://developer.apple.com/library/ios/#documentation/system/conceptual/manpages_iphoneos/man3/dlopen.3.html
-   if (libraryPath.empty())
-   {
-      boost::format fmt("%1%/lib:/usr/local/lib:/usr/lib");
-      libraryPath = boost::str(fmt % core::system::getenv("HOME"));
-   }
-#endif
-   if (!libraryPath.empty())
-      libraryPath.append(":");
-   libraryPath.append(ldLibraryPath);
-   if (!libraryPath.empty())
-      libraryPath.append(":");
-   libraryPath = rLibPath.getAbsolutePath() + ":" + libraryPath;
-   std::string extraPaths = extraLibraryPaths(ldPathsScript,
-                                              rHomePath.getAbsolutePath());
-   if (!extraPaths.empty())
-      libraryPath.append(":" + extraPaths);
+   std::vector<std::string> libraryPaths;
    
-   return libraryPath;
+   // place R library path at front
+   libraryPaths.push_back(rLibPath.getAbsolutePath());
+   
+   // pass along default (inheritted) library paths
+   std::string defaultLibraryPaths = core::system::getenv(kLibraryPathEnvVariable);
+   if (defaultLibraryPaths.empty())
+   {
+#ifdef __APPLE__
+      // if this isn't set explicitly then initalize it with the default
+      // of $HOME/lib:/usr/local/lib:/usr/lib. See documentation here:
+      // http://developer.apple.com/library/ios/#documentation/system/conceptual/manpages_iphoneos/man3/dlopen.3.html
+      boost::format fmt("%1%/lib:/usr/local/lib:/usr/lib");
+      defaultLibraryPaths = boost::str(fmt % core::system::getenv("HOME"));
+#endif
+   }
+   
+   if (!defaultLibraryPaths.empty())
+      libraryPaths.push_back(defaultLibraryPaths);
+   
+   // add LD_LIBRARY_PATH
+   if (!ldLibraryPath.empty())
+      libraryPaths.push_back(ldLibraryPath);
+   
+   // compute and add extra library paths (if any)
+   std::string extraPaths = extraLibraryPaths(ldPathsScript, rHomePath.getAbsolutePath());
+   if (!extraPaths.empty())
+      libraryPaths.push_back(extraPaths);
+   
+   // join into path
+   std::string fullPath = boost::algorithm::join(libraryPaths, ":");
+   
+   // remove duplicated colons
+   boost::regex reColons("[:]+");
+   boost::replace_all(fullPath, reColons, ":");
+   
+   return fullPath;
 }
 
 Error rVersion(const FilePath& rHomePath,
