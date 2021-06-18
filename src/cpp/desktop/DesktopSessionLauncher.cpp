@@ -88,10 +88,6 @@ void launchProcess(const std::string& absPath,
             QStringLiteral("DYLD_FALLBACK_LIBRARY_PATH"),
             dyldFallbackLibraryPath);
    
-   environment.insert(
-            QStringLiteral("RSTUDIO_FALLBACK_LIBRARY_PATH"),
-            QString::fromStdString(libraryPath));
-   
    process->setProcessEnvironment(environment);
    
 #endif
