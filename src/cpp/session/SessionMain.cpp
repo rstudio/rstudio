@@ -239,6 +239,20 @@ using namespace rsession::client_events;
 namespace rstudio {
 namespace session {
 
+namespace {
+
+std::string s_fallbackLibraryPath;
+
+void onExit()
+{
+   if (!s_fallbackLibraryPath.empty())
+   {
+      ::remove(s_fallbackLibraryPath.c_str());
+   }
+}
+
+}
+
 bool disableExecuteRprofile()
 {
    // check for session-specific override
@@ -1748,10 +1762,16 @@ void initMonitorClient()
 } // anonymous namespace
 
 // run session
-int main (int argc, char * const argv[])
+int main(int argc, char * const argv[])
 {
    try
    {
+      // save fallback library path
+      s_fallbackLibraryPath = core::system::getenv("RSTUDIO_FALLBACK_LIBRARY_PATH");
+      
+      // set up exit hooks
+      ::atexit(onExit);
+      
       // sleep on startup if requested (mainly for debugging)
       std::string sleepOnStartup = core::system::getenv("RSTUDIO_SESSION_SLEEP_ON_STARTUP");
       if (!sleepOnStartup.empty())

@@ -79,8 +79,15 @@ void launchProcess(const std::string& absPath,
       
    }
    
-   // similarly, we need to set a fallback library path for conda
+   // create fallback library path
    std::string libraryPath = tempnam("/tmp", "rstudio-fallback-library-");
+   
+   // set it in environment variable (to be used by R)
+   environment.insert(
+            QStringLiteral("RSTUDIO_FALLBACK_LIBRARY_PATH"),
+            QString::fromStdString(libraryPath));
+   
+   // and ensure it's placed on the fallback library path
    QString dyldFallbackLibraryPath = environment.value(QStringLiteral("DYLD_FALLBACK_LIBRARY_PATH"));
    dyldFallbackLibraryPath.append(QStringLiteral(":"));
    dyldFallbackLibraryPath.append(QString::fromStdString(libraryPath));
