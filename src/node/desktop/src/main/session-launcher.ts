@@ -1,5 +1,5 @@
 /*
- * main.ts
+ * session-launcher.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -13,23 +13,6 @@
  *
  */
 
-import { app } from 'electron';
-import { Application } from './application';
-import { setApplication } from './app-state';
+export class SessionLauncher {
 
-/**
- * Application entrypoint
- * 
- * Note, do as little here as possible; can't unit test this file.
- */
-const rstudio = new Application();
-setApplication(rstudio);
-
-const initStatus = rstudio.beforeAppReady();
-if (initStatus.exit) {
-  app.exit(initStatus.exitCode);
 }
-
-app.whenReady().then(() => {
-  rstudio.run();
-});

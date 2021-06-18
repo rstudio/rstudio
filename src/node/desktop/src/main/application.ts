@@ -13,31 +13,39 @@
  *
  */
 
-import { app, BrowserWindow } from 'electron';
+import { BrowserWindow } from 'electron';
 import { getenv, setenv } from '../core/environment';
 import { getRStudioVersion } from './product-info';
 import { initializeSharedSecret } from './utils';
 import { augmentCommandLineArguments, getComponentVersions, removeStaleOptionsLockfile } from './utils';
 import { exitFailure, exitSuccess, run, ProgramStatus } from './program-status';
+import { ApplicationLaunch } from './application-launch';
+import { AppState } from './app-state';
 
-export class Application {
-  mainWindow: BrowserWindow | null = null;
+// RStudio command-line switches
+export const kRunDiagnosticsOption = '--run-diagnostics';
+export const kSessionServerOption = '--session-server';
+export const kSessionServerUrlOption = '--session-url';
+export const kTempCookiesOption = '--use-temp-cookies';
+export const kVersion = '--version';
+export const kVersionJson = '--version-json';
+
+/**
+ * The main RStudio application
+ */
+export class Application implements AppState {
+  mainWindow?: BrowserWindow;
+  runDiagnostics = false;
+
+  appLaunch?: ApplicationLaunch;
 
   /**
    * Startup code run before app 'ready' event.
    */
   beforeAppReady(): ProgramStatus {
-
-    // look for a version check request; if we have one, just do that and exit
-    if (app.commandLine.hasSwitch('version')) {
-      console.log(getRStudioVersion());
-      return exitSuccess();
-    }
-
-    // report extended version info and exit
-    if (app.commandLine.hasSwitch('version-json')) {
-      console.log(getComponentVersions());
-      return exitSuccess();
+    const status = this.initCommandLine(process.argv);
+    if (status.exit) {
+      return status;
     }
 
     // attempt to remove stale lockfiles, as they can impede application startup
@@ -57,8 +65,11 @@ export class Application {
 
     initializeSharedSecret();
 
-    // allow users to supply extra command-line arguments
+    // allow users to supply extra command-line arguments for Chromium
     augmentCommandLineArguments();
+
+    // prepare application for launch
+    this.appLaunch = ApplicationLaunch.init();
 
     return run();
   }
@@ -80,5 +91,25 @@ export class Application {
 
     });
     this.mainWindow.loadURL('https://rstudio.com');
+  }
+
+  initCommandLine(argv: string[]): ProgramStatus {
+    // look for a version check request; if we have one, just do that and exit
+    if (argv.indexOf(kVersion) > -1) {
+      console.log(getRStudioVersion());
+      return exitSuccess();
+    }
+
+    // report extended version info and exit
+    if (argv.indexOf(kVersionJson) > -1) {
+      console.log(getComponentVersions());
+      return exitSuccess();
+    }
+
+    if (argv.indexOf(kRunDiagnosticsOption) > -1) {
+      this.runDiagnostics = true;
+    }
+
+    return run();
   }
 }

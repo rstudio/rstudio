@@ -20,7 +20,7 @@ import * as Utils from '../../../src/main/utils';
 import { app } from 'electron';
 import { getenv, setenv, unsetenv } from '../../../src/core/environment';
 
-describe('DesktopUtils', () => {
+describe('Utils', () => {
   describe('Helper functions', () => {
     it('userLogPath returns a non-empty string', () => {
       assert.isNotEmpty(Utils.userLogPath());

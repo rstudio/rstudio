@@ -1,5 +1,5 @@
 /*
- * main.ts
+ * application-launch.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -13,23 +13,13 @@
  *
  */
 
-import { app } from 'electron';
-import { Application } from './application';
-import { setApplication } from './app-state';
-
 /**
- * Application entrypoint
- * 
- * Note, do as little here as possible; can't unit test this file.
+ * Not clear yet if we'll need this class from the Qt implementation, but keeping
+ * it for now. If it ends up being useful, probably need to create an interface
+ * describing behavior (for easier unit testing).
  */
-const rstudio = new Application();
-setApplication(rstudio);
-
-const initStatus = rstudio.beforeAppReady();
-if (initStatus.exit) {
-  app.exit(initStatus.exitCode);
+export class ApplicationLaunch {
+  static init(): ApplicationLaunch {
+    return new ApplicationLaunch();
+  }
 }
-
-app.whenReady().then(() => {
-  rstudio.run();
-});
