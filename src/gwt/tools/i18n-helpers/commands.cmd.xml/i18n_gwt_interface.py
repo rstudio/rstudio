@@ -181,7 +181,7 @@ class I18NGwtPropertiesGenerator:
             fout.writelines(lines)
 
 
-DEFAULT_STRING_TEMPLATE = '@DefaultStringValue("{text}")'
+DEFAULT_STRING_TEMPLATE = '@DefaultStringValue("{text}") // $NON-NLS-1$'
 PROPERTY_DEFINITION_TEMPLATE = 'String {name}();'
 
 

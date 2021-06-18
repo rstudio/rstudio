@@ -68,7 +68,7 @@ TODO: Mention shortcuts
 
 See `commands_xml_to_i18n.py -h` for more details on options.
 
-Typical usage (from this subfolder) is:
+Typical usage (from the `commands.cmd.xml` subfolder) is:
 
 ```shell
 CMD_DIR="../../../src/org/rstudio/studio/client/workbench/commands/"
