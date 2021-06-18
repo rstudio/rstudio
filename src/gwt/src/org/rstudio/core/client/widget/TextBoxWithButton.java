@@ -266,7 +266,7 @@ public class TextBoxWithButton extends Composite
       // prevent duplicates.
       ElementIds.assignElementId(textBox_, ElementIds.TBB_TEXT + uniqueId_);
       ElementIds.assignElementId(themedButton_, ElementIds.TBB_BUTTON + uniqueId_);
-      ElementIds.assignElementId(themedButton_, ElementIds.TBB_CLEAR_BUTTON + uniqueId_);
+      ElementIds.assignElementId(clearButton_, ElementIds.TBB_CLEAR_BUTTON + uniqueId_);
       if (helpButton_ != null)
          ElementIds.assignElementId(helpButton_, ElementIds.TBB_HELP + uniqueId_);
       if (lblCaption_ != null)
