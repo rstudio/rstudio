@@ -13,23 +13,42 @@
  *
  */
 
-import { app } from 'electron';
+import { app, dialog } from 'electron';
 import { Application } from './application';
 import { setApplication } from './app-state';
 
 /**
- * Application entrypoint
- * 
- * Note, do as little here as possible; can't unit test this file.
+ * RStudio entrypoint
  */
-const rstudio = new Application();
-setApplication(rstudio);
+class RStudioMain {
 
-const initStatus = rstudio.beforeAppReady();
-if (initStatus.exit) {
-  app.exit(initStatus.exitCode);
+  async main(): Promise<void> {
+    try {
+      await this.startup();
+    } catch (error) {
+      if (!app.isPackaged) {
+        dialog.showErrorBox('Unhandled exception', error.message);
+      }
+      console.error(error.message);
+      app.exit(1);
+    }
+  }
+
+  private async startup(): Promise<void> {
+    const rstudio = new Application();
+    setApplication(rstudio);
+
+    const initStatus = await rstudio.beforeAppReady();
+    if (initStatus.exit) {
+      app.exit(initStatus.exitCode);
+    } else {
+      app.whenReady().then(() => {
+        rstudio.run();
+      });
+    }
+  }
 }
 
-app.whenReady().then(() => {
-  rstudio.run();
-});
+// Startup
+const main = new RStudioMain();
+main.main();

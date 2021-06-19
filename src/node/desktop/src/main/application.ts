@@ -13,10 +13,13 @@
  *
  */
 
-import { BrowserWindow } from 'electron';
+import { app, dialog, BrowserWindow } from 'electron';
+
 import { getenv, setenv } from '../core/environment';
+import { FilePath } from '../core/file-path';
+
 import { getRStudioVersion } from './product-info';
-import { initializeSharedSecret } from './utils';
+import { findComponents, initializeSharedSecret } from './utils';
 import { augmentCommandLineArguments, getComponentVersions, removeStaleOptionsLockfile } from './utils';
 import { exitFailure, exitSuccess, run, ProgramStatus } from './program-status';
 import { ApplicationLaunch } from './application-launch';
@@ -31,18 +34,19 @@ export const kVersion = '--version';
 export const kVersionJson = '--version-json';
 
 /**
- * The main RStudio application
+ * The RStudio application
  */
 export class Application implements AppState {
   mainWindow?: BrowserWindow;
   runDiagnostics = false;
+  scriptsPath?: FilePath;
 
   appLaunch?: ApplicationLaunch;
 
   /**
    * Startup code run before app 'ready' event.
    */
-  beforeAppReady(): ProgramStatus {
+  async beforeAppReady(): Promise<ProgramStatus> {
     const status = this.initCommandLine(process.argv);
     if (status.exit) {
       return status;
@@ -71,13 +75,29 @@ export class Application implements AppState {
     // prepare application for launch
     this.appLaunch = ApplicationLaunch.init();
 
+    // determine paths to config file, rsession, and desktop scripts
+    const [confPath, sessionPath, scriptsPath] = findComponents();
+    this.scriptsPath = scriptsPath;
+
+    if (!app.isPackaged) {
+      // sanity checking for dev config
+      if (!confPath.existsSync()) {
+        dialog.showErrorBox('Dev Mode Config', `conf: ${confPath.getAbsolutePath()} not found.'`);
+        return exitFailure();
+      }
+      if (!sessionPath.existsSync()) {
+        dialog.showErrorBox('Dev Mode Config', `rsession: ${sessionPath.getAbsolutePath()} not found.'`);
+        return exitFailure();
+      }
+    }
+
     return run();
   }
 
   /**
    * Invoked when app 'ready' is received
    */
-  run(): void {
+  async run(): Promise<void> {
     // TEMPORARY, show a window so starting the app does something visible
     this.mainWindow = new BrowserWindow({
       width: 1024,

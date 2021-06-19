@@ -15,6 +15,8 @@
 
 import { BrowserWindow } from 'electron';
 
+import { FilePath } from '../core/file-path';
+
 import { Application } from './application';
 
 /**
@@ -23,6 +25,7 @@ import { Application } from './application';
 export interface AppState {
   mainWindow?: BrowserWindow;
   runDiagnostics: boolean;
+  scriptsPath?: FilePath;
 }
 
 let rstudio: Application | null = null;
