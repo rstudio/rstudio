@@ -16,6 +16,7 @@
 import { app, dialog } from 'electron';
 import { Application } from './application';
 import { setApplication } from './app-state';
+import { parseStatus } from './program-status';
 
 /**
  * RStudio entrypoint
@@ -38,13 +39,13 @@ class RStudioMain {
     const rstudio = new Application();
     setApplication(rstudio);
 
-    const initStatus = await rstudio.beforeAppReady();
-    if (initStatus.exit) {
-      app.exit(initStatus.exitCode);
-    } else {
-      app.whenReady().then(() => {
-        rstudio.run();
-      });
+    if (!parseStatus(await rstudio.beforeAppReady())) {
+      return;
+    }
+
+    await app.whenReady();
+    if (!parseStatus(await rstudio.run())) {
+      return;
     }
   }
 }

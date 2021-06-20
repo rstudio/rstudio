@@ -40,6 +40,7 @@ export class Application implements AppState {
   mainWindow?: BrowserWindow;
   runDiagnostics = false;
   scriptsPath?: FilePath;
+  supportPath?: FilePath;
 
   appLaunch?: ApplicationLaunch;
 
@@ -72,6 +73,14 @@ export class Application implements AppState {
     // allow users to supply extra command-line arguments for Chromium
     augmentCommandLineArguments();
 
+    return run();
+  }
+
+  /**
+   * Invoked when Electron app is 'ready'
+   */
+  async run(): Promise<ProgramStatus> {
+
     // prepare application for launch
     this.appLaunch = ApplicationLaunch.init();
 
@@ -91,13 +100,6 @@ export class Application implements AppState {
       }
     }
 
-    return run();
-  }
-
-  /**
-   * Invoked when app 'ready' is received
-   */
-  async run(): Promise<void> {
     // TEMPORARY, show a window so starting the app does something visible
     this.mainWindow = new BrowserWindow({
       width: 1024,
@@ -111,6 +113,7 @@ export class Application implements AppState {
 
     });
     this.mainWindow.loadURL('https://rstudio.com');
+    return run();
   }
 
   initCommandLine(argv: string[]): ProgramStatus {
@@ -131,5 +134,20 @@ export class Application implements AppState {
     }
 
     return run();
+  }
+
+  supportingFilePath(): FilePath {
+    if (!this.supportPath) {
+      // default to install path
+      this.supportPath = new FilePath(app.getAppPath());
+
+      // adapt for OSX resource bundles
+      if (process.platform === 'darwin') {
+        if (this.supportPath.completePath('Info.plist').exists()) {
+          this.supportPath = this.supportPath.completePath('Resources');
+        }
+      }
+    }
+    return this.supportPath;
   }
 }

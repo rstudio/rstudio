@@ -26,6 +26,7 @@ export interface AppState {
   mainWindow?: BrowserWindow;
   runDiagnostics: boolean;
   scriptsPath?: FilePath;
+  supportingFilePath(): FilePath;
 }
 
 let rstudio: Application | null = null;
