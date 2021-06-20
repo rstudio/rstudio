@@ -27,7 +27,7 @@ public class PythonPreferencesPane extends PythonPreferencesPaneBase<UserPrefs>
    public PythonPreferencesPane(PythonDialogResources res,
                                 PythonServerOperations server)
    {
-      super("420px", "(No interpreter selected)");
+      super("420px", "(No interpreter selected)", false);
       
       overrideLabel_ = new Label();
       add(overrideLabel_);

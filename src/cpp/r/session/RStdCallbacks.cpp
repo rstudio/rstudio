@@ -267,10 +267,10 @@ InternalCallbacks* stdInternalCallbacks()
    return &s_internalCallbacks;
 }
 
-int RReadConsole (const char *pmt,
-                  CONSOLE_BUFFER_CHAR* buf,
-                  int buflen,
-                  int hist)
+int RReadConsole(const char *pmt,
+                 CONSOLE_BUFFER_CHAR* buf,
+                 int buflen,
+                 int hist)
 {
    try
    {

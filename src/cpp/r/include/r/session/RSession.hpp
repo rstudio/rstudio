@@ -180,6 +180,7 @@ struct RSuspendOptions;
 struct RCallbacks
 {
    boost::function<core::Error(const RInitInfo&)> init;
+   boost::function<void()> initComplete;
    boost::function<bool(const std::string&, bool, RConsoleInput*)> consoleRead;
    boost::function<void(const std::string&)> browseURL;
    boost::function<void(const core::FilePath&)> browseFile;

@@ -2909,6 +2909,19 @@ core::Error UserPrefValues::setSessionProtocolDebug(bool val)
    return writePref("session_protocol_debug", val);
 }
 
+/**
+ * When enabled, if the active project contains a Python virtual environment located within the project's .venv folder, then RStudio will automatically activate this environment on startup.
+ */
+bool UserPrefValues::pythonProjectEnvironmentAutomaticActivate()
+{
+   return readPref<bool>("python_project_environment_automatic_activate");
+}
+
+core::Error UserPrefValues::setPythonProjectEnvironmentAutomaticActivate(bool val)
+{
+   return writePref("python_project_environment_automatic_activate", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -3134,6 +3147,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kMemoryQueryIntervalSeconds,
       kTerminalPythonIntegration,
       kSessionProtocolDebug,
+      kPythonProjectEnvironmentAutomaticActivate,
    });
 }
    

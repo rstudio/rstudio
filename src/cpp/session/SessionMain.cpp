@@ -746,6 +746,11 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    return Success();
 }
 
+void rInitComplete()
+{
+   module_context::events().onInitComplete();
+}
+
 void notifyIfRVersionChanged()
 {
    using namespace rstudio::r::session::state;
@@ -2216,6 +2221,7 @@ int main (int argc, char * const argv[])
       // r callbacks
       rstudio::r::session::RCallbacks rCallbacks;
       rCallbacks.init = rInit;
+      rCallbacks.initComplete = rInitComplete;
       rCallbacks.consoleRead = console_input::rConsoleRead;
       rCallbacks.editFile = rEditFile;
       rCallbacks.showFile = rShowFile;
