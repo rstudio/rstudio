@@ -917,6 +917,7 @@ private:
               file.find("/env/") != std::string::npos ||
               file.find("/renv/library/") != std::string::npos ||
               file.find("/renv/python/") != std::string::npos ||
+              file.find("/renv/staging/") != std::string::npos ||
               file.find("/.Rhistory") != std::string::npos);
    }
 
