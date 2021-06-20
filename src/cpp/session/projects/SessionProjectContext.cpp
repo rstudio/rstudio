@@ -496,6 +496,9 @@ std::vector<std::string> fileMonitorIgnoredComponents()
       // don't monitor things in .Rproj.user
       "/.Rproj.user",
 
+      // don't monitor things in .quarto
+      "/.quarto",
+
       // ignore things within a .git folder
       "/.git",
       
@@ -505,8 +508,11 @@ std::vector<std::string> fileMonitorIgnoredComponents()
 
       // ignore files within an renv or packrat library
       "/renv/library",
+      "/renv/python",
       "/renv/staging",
+      "/env",
       "/packrat/lib",
+      "/packrat/src"
       
       // ignore things marked .noindex
       ".noindex"
