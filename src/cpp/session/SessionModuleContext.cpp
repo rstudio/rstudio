@@ -2660,6 +2660,17 @@ bool isUserFile(const FilePath& filePath)
             return false;
       }
 
+      // if we are in a quarto project then screen the output dir
+      auto quartoOutputDir = module_context::quartoConfig().project_output_dir;
+      if (!quartoOutputDir.empty())
+      {
+         FilePath projDir = projects::projectContext().directory();
+         std::string projRelative = filePath.getRelativePath(projDir);
+         if (boost::algorithm::starts_with(
+                projRelative, quartoOutputDir + "/"))
+            return false;
+      }
+
       // screen our various virtual environment directories
       std::vector<std::string> dirs({"packrat/", "renv/", "env/"});
       FilePath projPath = projects::projectContext().directory();

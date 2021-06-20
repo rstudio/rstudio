@@ -940,6 +940,10 @@ private:
       if (!websiteOutputDir.empty())
          websiteOutputDir = "/" + websiteOutputDir + "/";
 
+      std::string quartoOutputDir = module_context::quartoConfig().project_output_dir;
+      if (!quartoOutputDir.empty())
+         quartoOutputDir = "/" + quartoOutputDir + "/";
+
       stdOutBuf_.append(data);
       size_t nextLineStart = 0;
       size_t pos = -1;
@@ -969,7 +973,10 @@ private:
 
             if (shouldSkipFile(file) ||
                 (!websiteOutputDir.empty() &&
-                 file.find(websiteOutputDir) != std::string::npos))
+                 file.find(websiteOutputDir) != std::string::npos) ||
+                (!quartoOutputDir.empty() &&
+                 file.find(quartoOutputDir) != std::string::npos)
+                )
                continue;
 
             int lineNum = safe_convert::stringTo<int>(std::string(match[2]), -1);

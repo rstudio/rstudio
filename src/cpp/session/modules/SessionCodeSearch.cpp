@@ -83,6 +83,7 @@ bool isWithinIgnoredDirectory(const FilePath& filePath)
    FilePath projDir = projectContext().directory();
    FilePath parentPath = filePath.getParent();
    std::string websiteDir = module_context::websiteOutputDir();
+   std::string quartoProjectOutputDir = module_context::quartoConfig().project_output_dir;
    bool isPackageProject = projectContext().isPackageProject();
    
    // allow plain files living within the 'revdep' folder
@@ -110,12 +111,32 @@ bool isWithinIgnoredDirectory(const FilePath& filePath)
       // websites
       if (parentName == websiteDir)
          return true;
+
+      // quarto projects
+      if (parentName == quartoProjectOutputDir)
+         return true;
       
       // packrat
       if (parentName == "packrat" &&
          parentPath.completeChildPath("packrat.lock").exists())
          return true;
       
+      // packrat
+      if (parentName == "packrat" &&
+         parentPath.completeChildPath("packrat.lock").exists())
+         return true;
+
+      // renv
+      if (parentName == "renv" &&
+         parentPath.completeChildPath("settings.dcf").exists())
+         return true;
+
+      // env
+      if (parentName == "env" &&
+         (parentPath.completeChildPath("pyvenv.cfg").exists() ||
+          parentPath.completeChildPath("conda-meta").exists()))
+         return true;
+
       // cmake build directory
       if (parentPath.completeChildPath("cmake_install.cmake").exists())
          return true;

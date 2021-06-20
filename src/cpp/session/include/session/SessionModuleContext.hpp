@@ -872,6 +872,17 @@ void initializeConsoleCtrlHandler();
 
 bool isPythonReplActive();
 
+struct QuartoConfig
+{
+   QuartoConfig() : empty(true), installed(false), is_project(false) {}
+   bool empty;
+   bool installed;
+   bool is_project;
+   std::string project_type;
+   std::string project_output_dir;
+};
+
+QuartoConfig quartoConfig(bool refresh = false);
 bool isQuartoWebsiteDoc(const core::FilePath& filePath);
 
 std::string getActiveLanguage();

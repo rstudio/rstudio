@@ -422,7 +422,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["is_bookdown_project"] = module_context::isBookdownProject();
    sessionInfo["is_distill_project"] = module_context::isDistillProject();
 
-   sessionInfo["quarto_config"] = modules::quarto::quartoConfig();
+   sessionInfo["quarto_config"] = modules::quarto::quartoConfigJSON();
    
    sessionInfo["graphics_backends"] = modules::graphics::supportedBackends();
 
