@@ -2660,11 +2660,14 @@ bool isUserFile(const FilePath& filePath)
             return false;
       }
 
-      // screen the packrat directory
+      // screen our various virtual environment directories
+      std::vector<std::string> dirs({"packrat/", "renv/", "env/"});
       FilePath projPath = projects::projectContext().directory();
       std::string pkgRelative = filePath.getRelativePath(projPath);
-      if (boost::algorithm::starts_with(pkgRelative, "packrat/"))
-         return false;
+      for (auto dir : dirs) {
+         if (boost::algorithm::starts_with(pkgRelative, dir))
+            return false;
+      }
    }
 
    return true;
