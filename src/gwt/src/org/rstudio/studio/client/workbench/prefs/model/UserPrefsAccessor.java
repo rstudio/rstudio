@@ -3148,14 +3148,14 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * When enabled, if the active project contains a Python virtual environment located within the project's .venv folder, then RStudio will automatically activate this environment on startup.
+    * When enabled, if the active project contains a Python virtual environment located within the project's env folder, then RStudio will automatically activate this environment on startup.
     */
    public PrefValue<Boolean> pythonProjectEnvironmentAutomaticActivate()
    {
       return bool(
          "python_project_environment_automatic_activate",
          "Automatically activate project Python environments", 
-         "When enabled, if the active project contains a Python virtual environment located within the project's .venv folder, then RStudio will automatically activate this environment on startup.", 
+         "When enabled, if the active project contains a Python virtual environment located within the project's env folder, then RStudio will automatically activate this environment on startup.", 
          true);
    }
 

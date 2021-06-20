@@ -2992,6 +2992,20 @@ Error addFilesToGitIgnore(const FilePath& gitIgnoreFile,
    return Success();
 }
 
+std::string pythonEnvIgnore(const FilePath& gitIgnoreFile)
+{
+   FilePath gitIgnoreParent = gitIgnoreFile.getParent();
+   if (gitIgnoreParent.completeChildPath("env/pyvenv.cfg").exists() ||
+       gitIgnoreParent.completeChildPath("env/conda-meta").exists())
+   {
+      return "env/";
+   }
+   else
+   {
+      return "";
+   }
+}
+
 Error augmentGitIgnore(const FilePath& gitIgnoreFile)
 {
    // Add stuff to .gitignore
@@ -3005,6 +3019,11 @@ Error augmentGitIgnore(const FilePath& gitIgnoreFile)
       filesToIgnore.push_back(".Rhistory");
       filesToIgnore.push_back(".RData");
       filesToIgnore.push_back(".Ruserdata");
+
+      // python env
+      std::string pythonEnv = pythonEnvIgnore(gitIgnoreFile);
+      if (!pythonEnv.empty())
+         filesToIgnore.push_back(pythonEnv);
 
       // if this is a package dir with a src directory then
       // also ignore native code build artifacts
@@ -3047,6 +3066,12 @@ Error augmentGitIgnore(const FilePath& gitIgnoreFile)
 
       if (!regex_utils::search(strIgnore, boost::regex(R"(^/?\.Rproj\.user/?$)")))
          filesToIgnore.push_back(".Rproj.user");
+
+      // python env
+      std::string pythonEnv = pythonEnvIgnore(gitIgnoreFile);
+      if (!pythonEnv.empty() && !regex_utils::search(strIgnore, boost::regex("^" + pythonEnv + "$")))
+         filesToIgnore.push_back(pythonEnv);
+
 
       if (session::options().packageOutputInPackageFolder())
       {

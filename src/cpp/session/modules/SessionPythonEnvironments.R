@@ -45,7 +45,7 @@
 
 .rs.addFunction("python.projectInterpreterPath", function(projectDir)
 {
-   venvPath <- file.path(projectDir, ".venv")
+   venvPath <- file.path(projectDir, "env")
    pythonSuffix <- if (.rs.platform.isWindows) "Scripts/python.exe" else "bin/python"
    file.path(venvPath, pythonSuffix)
 })

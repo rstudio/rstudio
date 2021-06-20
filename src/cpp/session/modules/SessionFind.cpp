@@ -909,11 +909,14 @@ private:
    bool shouldSkipFile(std::string file)
    {
       return (file.find("/.Rproj.user/") != std::string::npos ||
+              file.find("/.quarto/") != std::string::npos ||
               file.find("/.git/") != std::string::npos ||
               file.find("/.svn/") != std::string::npos ||
               file.find("/packrat/lib/") != std::string::npos ||
               file.find("/packrat/src/") != std::string::npos ||
+              file.find("/env/") != std::string::npos ||
               file.find("/renv/library/") != std::string::npos ||
+              file.find("/renv/python/") != std::string::npos ||
               file.find("/.Rhistory") != std::string::npos);
    }
 
