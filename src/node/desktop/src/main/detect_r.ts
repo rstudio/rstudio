@@ -23,6 +23,8 @@ import { appState } from './app-state';
 import { Environment, getenv, setVars } from '../core/environment';
 import { FilePath } from '../core/file-path';
 
+const asyncExec = promisify(exec);
+
 function showRNotFoundError(msg: string): void {
   dialog.showErrorBox('R Not Found', msg);
 }
@@ -65,8 +67,8 @@ export async function prepareEnvironment(): Promise<boolean> {
   }
 
   // attempt to detect R environment
-  const detectResult = detectREnvironment(rWhichRPath, rLdScriptPath, '');
-  if (!detectResult.success || !detectResult.rScriptPath) {
+  const detectResult = await detectREnvironment(rWhichRPath, rLdScriptPath, '');
+  if (!detectResult.success) {
     showRNotFoundError(detectResult.errMsg ?? 'Unknown error');
     return false;
   }
@@ -90,8 +92,6 @@ export async function scanForR(rstudioWhichR: FilePath): Promise<FilePath> {
     // For now must set env var to run on Windows
     return new FilePath();
   }
-
-  const asyncExec = promisify(exec);
 
   // first look for R on the PATH
   const { stdout } = await asyncExec('/usr/bin/which R', { encoding: 'utf-8' });
@@ -130,12 +130,30 @@ interface REnvironment {
   errMsg?: string,
 }
 
-function detectREnvironment(
+async function detectREnvironment(
   whichRScript: FilePath,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   ldPathsScript: FilePath,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   ldLibraryPath: string
-): REnvironment {
-  return { success: false, errMsg: 'nyi' };
+): Promise<REnvironment> {
+
+  const scanResult = await scanForR(whichRScript);
+  if (scanResult.isEmpty()) {
+    return { success: false, errMsg: 'Did not find R' };
+  }
+  const R = scanResult.getAbsolutePath();
+
+  // read some important environment variables
+  const { stdout } = await asyncExec(`${R} --no-save --no-restore RHOME`);
+  const rHome = stdout.trim();
+  const rEnv = {
+    R_HOME: `${rHome}`,
+    R_SHARE_DIR: `${rHome}/share`,
+    R_DOC_DIR: `${rHome}/doc`
+  };
+
+  return { success: true, rScriptPath: scanResult.getAbsolutePath(), envVars: rEnv };
 }
 
 function setREnvironmentVars(vars: Environment) {

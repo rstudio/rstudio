@@ -24,6 +24,7 @@ import { augmentCommandLineArguments, getComponentVersions, removeStaleOptionsLo
 import { exitFailure, exitSuccess, run, ProgramStatus } from './program-status';
 import { ApplicationLaunch } from './application-launch';
 import { AppState } from './app-state';
+import { prepareEnvironment } from './detect_r';
 
 // RStudio command-line switches
 export const kRunDiagnosticsOption = '--run-diagnostics';
@@ -98,6 +99,10 @@ export class Application implements AppState {
         dialog.showErrorBox('Dev Mode Config', `rsession: ${sessionPath.getAbsolutePath()} not found.'`);
         return exitFailure();
       }
+    }
+
+    if (!prepareEnvironment()) {
+      return exitFailure();
     }
 
     // TEMPORARY, show a window so starting the app does something visible
