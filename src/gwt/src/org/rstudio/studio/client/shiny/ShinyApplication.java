@@ -19,7 +19,6 @@ import java.util.List;
 
 import com.google.gwt.event.shared.HandlerRegistration;
 import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
@@ -141,26 +140,35 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
       }
       else if (event.getParams().getState() == ShinyApplicationParams.STATE_STOPPED)
       {
-         Debug.devlog("received notification that shiny application stopped");
          // If this Shiny application was running in the background, we're responsible for ending the job.
          if (event.getParams().isBackgroundApp())
          {
-            for (ShinyApplicationParams params: params_)
+            if (StringUtil.equals(stoppingId_, event.getParams().getId()))
             {
-               if (StringUtil.equals(params.getId(), event.getParams().getId()))
+               // This application ended because we asked it to; no need to stop the job (it's already in the process
+               // of stopping)
+               stoppingId_ = null;
+            }
+            else
+            {
+               for (ShinyApplicationParams params: params_)
                {
-                  // If we got here, the Shiny application that was stopped corresponds to a background job. If the job
-                  // is still running, stop it.
-                  Job job = jobManager_.getJob(params.getId());
-                  if (job != null)
+                  if (StringUtil.equals(params.getId(), event.getParams().getId()))
                   {
-                     if (job.state == JobConstants.STATE_RUNNING)
+                     // If we got here, the Shiny application that was stopped corresponds to a background job. If the
+                     // job is still running, stop it.
+                     Job job = jobManager_.getJob(params.getId());
+                     if (job != null)
                      {
-                        Debug.devlog("stopping running shiny background job (was running)");
-                        stopShinyBackgroundJob(params.getId(), null);
-                        break;
+                        if (job.state == JobConstants.STATE_RUNNING)
+                        {
+                           params.setState(ShinyApplicationParams.STATE_STOPPING);
+                           stopShinyBackgroundJob(params.getId(), null);
+                        }
                      }
                   }
+
+                  break;
                }
             }
          }
@@ -326,13 +334,14 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
          }
          else if (StringUtil.equals(destination, BACKGROUND_APP) && params.isBackgroundApp())
          {
-            // This app is running in the background; stop and then replay the background job
+            // This app is running in the background; we need to restart it. This is a multi-step process
+            // since it is not possible to replay a currently running job; we must first stop it and wait
+            // for it to terminate, and only then initiate a replay.
 
             // Stop the background job -- this returns immediately (it's an async call)
-            Debug.devlog("stopping running shiny background job (for replay)");
+            params.setState(ShinyApplicationParams.STATE_STOPPING);
             stopShinyBackgroundJob(params.getId(), () ->
             {
-               Debug.devlog("stop complete, waiting for job status update");
                // Now wait for a JobUpdatedEvent that tells us that the job has actually stopped.
                final Value<HandlerRegistration> reg = new Value<>(null);
                reg.setValue(eventBus_.addHandler(JobUpdatedEvent.TYPE, evt ->
@@ -340,7 +349,6 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
                   if (StringUtil.equals(params.getId(), evt.getData().job.id) &&
                      evt.getData().job.state != JobConstants.STATE_RUNNING)
                   {
-                     Debug.devlog("replaying!");
                      // The job is now stopped; replay it
                      jobsServer_.executeJobAction(params.getId(), JobConstants.ACTION_REPLAY,
                         new VoidServerRequestCallback()
@@ -377,7 +385,6 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
    private void notifyShinyAppDisconnected(JavaScriptObject params)
    {
       ShinyApplicationParams appState = params.cast();
-      Debug.devlog("got shiny disconnect notification: " + appState.getId() + " @ " + appState.getPath());
       if (params_ == null || params_.isEmpty())
          return;
       
@@ -460,7 +467,9 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
     */
    private void stopShinyBackgroundJob(String id, Command onSuccess)
    {
-      Debug.devlog("stopping shiny background job");
+      // Save the ID of the job we are stopping; this allows us to distinguish between jobs that we stopped ourselves
+      // and jobs that were ended for other reasons.
+      stoppingId_ = id;
       jobsServer_.executeJobAction(id, JobConstants.ACTION_STOP,
          new VoidServerRequestCallback()
          {
@@ -659,6 +668,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
    private boolean stopOnNextClose_ = true;
    private String satelliteClosePath_ = null;
    private String currentViewType_;
+   private String stoppingId_ = null;
 
    public static final String FOREGROUND_APP = "foreground";
    public static final String BACKGROUND_APP = "background";
