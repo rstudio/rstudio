@@ -1247,7 +1247,7 @@ Error writeProjectFile(const FilePath& projectFilePath,
       contents.append(boost::str(pythonConfig));
    }
 
-   // add spelling dictioanry if present
+   // add spelling dictionary if present
    if (!config.spellingDictionary.empty())
    {
       boost::format fmt("\nSpellingDictionary: %1%\n");

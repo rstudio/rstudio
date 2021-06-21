@@ -825,17 +825,30 @@ std::string rLibraryPath(const FilePath& rHomePath,
    
    // pass along default (inheritted) library paths
    std::string defaultLibraryPaths = core::system::getenv(kLibraryPathEnvVariable);
+ 
+   // on macOS, we need to initialize with a default set of library paths
+   // if the path was already empty
+#ifdef __APPLE__
    if (defaultLibraryPaths.empty())
    {
-#ifdef __APPLE__
       // if this isn't set explicitly then initalize it with the default
       // of $HOME/lib:/usr/local/lib:/usr/lib. See documentation here:
       // http://developer.apple.com/library/ios/#documentation/system/conceptual/manpages_iphoneos/man3/dlopen.3.html
+      //
+      // NOTE (kevin): the above documentation now appears to be old; 'man dyld' has:
+      // 
+      // DYLD_FALLBACK_LIBRARY_PATH This is a colon separated list of
+      // directories that contain libraries. If a dylib is not found at its
+      // install path, dyld uses this as a list of directories to search for
+      // the dylib. By default, it is set to /usr/local/lib:/usr/lib.
+      //
+      // we keep $HOME/lib on the path for backwards compatibility, just in case
       boost::format fmt("%1%/lib:/usr/local/lib:/usr/lib");
       defaultLibraryPaths = boost::str(fmt % core::system::getenv("HOME"));
-#endif
    }
+#endif
    
+   // now add our default library paths
    if (!defaultLibraryPaths.empty())
       libraryPaths.push_back(defaultLibraryPaths);
    

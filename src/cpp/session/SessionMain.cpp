@@ -243,15 +243,7 @@ namespace {
 
 std::string s_fallbackLibraryPath;
 
-void onExit()
-{
-   if (!s_fallbackLibraryPath.empty())
-   {
-      ::remove(s_fallbackLibraryPath.c_str());
-   }
-}
-
-}
+} // end anonymous namespace
 
 bool disableExecuteRprofile()
 {
@@ -473,6 +465,7 @@ void exitEarly(int status)
 {
    stopMonitorWorkerThread();
    FileLock::cleanUp();
+   FilePath(s_fallbackLibraryPath).removeIfExists();
    ::exit(status);
 }
 
@@ -1768,9 +1761,6 @@ int main(int argc, char * const argv[])
    {
       // save fallback library path
       s_fallbackLibraryPath = core::system::getenv("RSTUDIO_FALLBACK_LIBRARY_PATH");
-      
-      // set up exit hooks
-      ::atexit(onExit);
       
       // sleep on startup if requested (mainly for debugging)
       std::string sleepOnStartup = core::system::getenv("RSTUDIO_SESSION_SLEEP_ON_STARTUP");

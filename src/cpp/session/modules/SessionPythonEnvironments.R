@@ -108,27 +108,28 @@
 
 .rs.addFunction("python.projectInterpreterPath", function(projectDir)
 {
-   # check for .venv
-   venvPath <- file.path(projectDir, ".venv")
-   if (file.exists(venvPath))
+   # check for virtual environments / conda environments
+   for (envName in c("env", ".venv", ".virtualenv", ".condaenv"))
    {
-      pythonSuffix <- if (.rs.platform.isWindows) "Scripts/python.exe" else "bin/python"
-      pythonPath <- file.path(venvPath, pythonSuffix)
-      return(pythonPath)
-   }
-   
-   # check for .condaenv
-   condaenvPath <- file.path(projectDir, ".condaenv")
-   if (file.exists(condaenvPath))
-   {
-      pythonSuffix <- if (.rs.platform.isWindows) "python.exe" else "bin/python"
-      pythonPath <- file.path(condaenvPath, pythonSuffix)
-      return(pythonPath)
+      envPath <- file.path(projectDir, envName)
+      if (!file.exists(envPath))
+         next
+      
+      pythonSuffixes <- if (.rs.platform.isWindows)
+         c("Scripts/python.exe", "python.exe")
+      else
+         c("bin/python", "bin/python3")
+      
+      for (pythonSuffix in pythonSuffixes)
+      {
+         pythonPath <- file.path(envPath, pythonSuffix)
+         if (file.exists(pythonPath))
+            return(pythonPath)
+      }
    }
    
    # nothing found
    ""
-   
 })
 
 .rs.addFunction("python.initialize", function(projectDir)
