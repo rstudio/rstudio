@@ -12,12 +12,10 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-// import { contextBridge } from 'electron';
-// import getMenuBridge from './menu-bridge';
-// import getDesktopBridge from './desktop-bridge';
-// import getDesktopInfoBridge from './desktop-info-bridge';
-
-// Bring over this stuff from the prototype when needed
+import { contextBridge } from 'electron';
+import { getMenuBridge } from './menu-bridge';
+import { getDesktopBridge } from './desktop-bridge';
+import { getDesktopInfoBridge } from './desktop-info-bridge';
 
 /**
  * The preload script is run in the renderer before our GWT code and enables
@@ -33,9 +31,9 @@
  * Actual implementation happens in the main process, reached via ipcRenderer.
  */
 
-// contextBridge.exposeInMainWorld('desktop', getDesktopBridge());
-// contextBridge.exposeInMainWorld('desktopInfo', getDesktopInfoBridge());
-// contextBridge.exposeInMainWorld('desktopMenuCallback', getMenuBridge());
+contextBridge.exposeInMainWorld('desktop', getDesktopBridge());
+contextBridge.exposeInMainWorld('desktopInfo', getDesktopInfoBridge());
+contextBridge.exposeInMainWorld('desktopMenuCallback', getMenuBridge());
 
 // RDP-only
-// contextBridge.exposeInMainWorld('remoteDesktop', {});
+//contextBridge.exposeInMainWorld('remoteDesktop', {});

@@ -25,6 +25,8 @@ import { exitFailure, exitSuccess, run, ProgramStatus } from './program-status';
 import { ApplicationLaunch } from './application-launch';
 import { AppState } from './app-state';
 import { prepareEnvironment } from './detect_r';
+import { SessionLauncher } from './session-launcher';
+import { DesktopActivation } from './activation-overlay';
 
 // RStudio command-line switches
 export const kRunDiagnosticsOption = '--run-diagnostics';
@@ -41,9 +43,12 @@ export class Application implements AppState {
   mainWindow?: BrowserWindow;
   runDiagnostics = false;
   scriptsPath?: FilePath;
+  sessionPath?: FilePath;
   supportPath?: FilePath;
 
   appLaunch?: ApplicationLaunch;
+  sessionLauncher?: SessionLauncher;
+  activationInst?: DesktopActivation;
 
   /**
    * Startup code run before app 'ready' event.
@@ -87,6 +92,7 @@ export class Application implements AppState {
 
     // determine paths to config file, rsession, and desktop scripts
     const [confPath, sessionPath, scriptsPath] = findComponents();
+    this.sessionPath = sessionPath;
     this.scriptsPath = scriptsPath;
 
     if (!app.isPackaged) {
@@ -95,29 +101,22 @@ export class Application implements AppState {
         dialog.showErrorBox('Dev Mode Config', `conf: ${confPath.getAbsolutePath()} not found.'`);
         return exitFailure();
       }
-      if (!sessionPath.existsSync()) {
-        dialog.showErrorBox('Dev Mode Config', `rsession: ${sessionPath.getAbsolutePath()} not found.'`);
+      if (!this.sessionPath.existsSync()) {
+        dialog.showErrorBox('Dev Mode Config', `rsession: ${this.sessionPath.getAbsolutePath()} not found.'`);
         return exitFailure();
       }
     }
 
-    if (!prepareEnvironment()) {
+    if (!await prepareEnvironment()) {
       return exitFailure();
     }
 
-    // TEMPORARY, show a window so starting the app does something visible
-    this.mainWindow = new BrowserWindow({
-      width: 1024,
-      height: 768,
-      backgroundColor: '#fff', // https://github.com/electron/electron/blob/master/docs/faq.md#the-font-looks-blurry-what-is-this-and-what-can-i-do
-      webPreferences: {
-        enableRemoteModule: false,
-        nodeIntegration: false,
-        contextIsolation: true
-      }
+    // TODO: desktop pro session handling
+    // TODO: 'file/project' file open handling (e.g. launch by double-clicking a .R or .Rproj file)
 
-    });
-    this.mainWindow.loadURL('https://rstudio.com');
+    // launch a local session
+    this.sessionLauncher = new SessionLauncher(this.sessionPath, confPath, new FilePath(), this.appLaunch);
+    this.sessionLauncher.launchFirstSession();
     return run();
   }
 
@@ -154,5 +153,12 @@ export class Application implements AppState {
       }
     }
     return this.supportPath;
+  }
+
+  activation(): DesktopActivation {
+    if (!this.activationInst) {
+      this.activationInst = new DesktopActivation();
+    }
+    return this.activationInst;
   }
 }

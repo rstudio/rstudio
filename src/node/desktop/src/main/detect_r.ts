@@ -22,6 +22,7 @@ import { existsSync } from 'fs';
 import { appState } from './app-state';
 import { Environment, getenv, setVars } from '../core/environment';
 import { FilePath } from '../core/file-path';
+import { assert } from 'console';
 
 const asyncExec = promisify(exec);
 
@@ -36,10 +37,15 @@ function showRNotFoundError(msg: string): void {
  */
 export async function prepareEnvironment(): Promise<boolean> {
   if (process.platform === 'win32') {
-    // TODO: current implementation in DesktopWin32DetectRHome.cpp
-    dialog.showErrorBox('NYI', 'R detection and environment setup NYI on Windows, cannot continue');
-    return false;
+    return await prepareEnvironmentWin32();
+  } else {
+    return await prepareEnvironmentPosix();
   }
+}
+
+async function prepareEnvironmentPosix(): Promise<boolean> {
+
+  assert((process.platform !== 'win32'));
 
   // check for which R override
   let rWhichRPath = new FilePath();
@@ -56,7 +62,7 @@ export async function prepareEnvironment(): Promise<boolean> {
         rLdScriptPath = new FilePath(app.getAppPath()).completePath('r-ldpath');
       }
     } else {
-      rLdScriptPath = appState().scriptsPath?.completePath('../session/r-ldpath') ?? new FilePath();
+      rLdScriptPath = appState().sessionPath?.completePath('../r-ldpath') ?? new FilePath();
     }
   } else {
     // determine rLdPaths script location
@@ -77,20 +83,36 @@ export async function prepareEnvironment(): Promise<boolean> {
     console.log(`Using R script: ${detectResult.rScriptPath}`);
   }
 
-  // set environment and return true
   setREnvironmentVars(detectResult.envVars ?? {});
+
+  if (process.platform === 'darwin') {
+    // TODO: deal with selection of x86_64 or arm64 build of R
+  }
+
   return true;
 }
 
-export async function scanForR(rstudioWhichR: FilePath): Promise<FilePath> {
+async function prepareEnvironmentWin32(): Promise<boolean> {
+  assert((process.platform === 'win32'));
+
+  dialog.showErrorBox('NYI', 'R detection and environment setup NYI on Windows, cannot continue');
+  return false;
+}
+
+async function scanForR(rstudioWhichR: FilePath): Promise<FilePath> {
+  if (process.platform === 'win32') {
+    return await scanForRWin32(rstudioWhichR);
+  } else {
+    return await scanForRPosix(rstudioWhichR);
+  }
+}
+
+async function scanForRPosix(rstudioWhichR: FilePath): Promise<FilePath> {
+  assert((process.platform !== 'win32'));
+
   // prefer RSTUDIO_WHICH_R
   if (!rstudioWhichR.isEmpty()) {
     return rstudioWhichR;
-  }
-
-  if (process.platform === 'win32') {
-    // For now must set env var to run on Windows
-    return new FilePath();
   }
 
   // first look for R on the PATH
@@ -119,6 +141,18 @@ export async function scanForR(rstudioWhichR: FilePath): Promise<FilePath> {
   }
 
   // nothing found
+  return new FilePath();
+}
+
+export async function scanForRWin32(rstudioWhichR: FilePath): Promise<FilePath> {
+  assert((process.platform === 'win32'));
+
+  // prefer RSTUDIO_WHICH_R
+  if (!rstudioWhichR.isEmpty()) {
+    return rstudioWhichR;
+  }
+
+  // For now must set env var to run on Windows
   return new FilePath();
 }
 
@@ -152,6 +186,8 @@ async function detectREnvironment(
     R_SHARE_DIR: `${rHome}/share`,
     R_DOC_DIR: `${rHome}/doc`
   };
+
+  // TODO: detect and return R version 
 
   return { success: true, rScriptPath: scanResult.getAbsolutePath(), envVars: rEnv };
 }
