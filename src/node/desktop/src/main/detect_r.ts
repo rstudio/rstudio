@@ -56,7 +56,7 @@ export async function prepareEnvironment(): Promise<boolean> {
         rLdScriptPath = new FilePath(app.getAppPath()).completePath('r-ldpath');
       }
     } else {
-      rLdScriptPath = appState().scriptsPath?.completePath('../session/r-ldpath') ?? new FilePath();
+      rLdScriptPath = appState().sessionPath?.completePath('../r-ldpath') ?? new FilePath();
     }
   } else {
     // determine rLdPaths script location

@@ -41,6 +41,7 @@ export class Application implements AppState {
   mainWindow?: BrowserWindow;
   runDiagnostics = false;
   scriptsPath?: FilePath;
+  sessionPath?: FilePath;
   supportPath?: FilePath;
 
   appLaunch?: ApplicationLaunch;
@@ -87,6 +88,7 @@ export class Application implements AppState {
 
     // determine paths to config file, rsession, and desktop scripts
     const [confPath, sessionPath, scriptsPath] = findComponents();
+    this.sessionPath = sessionPath;
     this.scriptsPath = scriptsPath;
 
     if (!app.isPackaged) {
@@ -95,8 +97,8 @@ export class Application implements AppState {
         dialog.showErrorBox('Dev Mode Config', `conf: ${confPath.getAbsolutePath()} not found.'`);
         return exitFailure();
       }
-      if (!sessionPath.existsSync()) {
-        dialog.showErrorBox('Dev Mode Config', `rsession: ${sessionPath.getAbsolutePath()} not found.'`);
+      if (!this.sessionPath.existsSync()) {
+        dialog.showErrorBox('Dev Mode Config', `rsession: ${this.sessionPath.getAbsolutePath()} not found.'`);
         return exitFailure();
       }
     }

@@ -25,6 +25,7 @@ import { Application } from './application';
 export interface AppState {
   mainWindow?: BrowserWindow;
   runDiagnostics: boolean;
+  sessionPath?: FilePath;
   scriptsPath?: FilePath;
   supportingFilePath(): FilePath;
 }
