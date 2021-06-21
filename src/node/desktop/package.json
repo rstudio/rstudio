@@ -35,6 +35,7 @@
     "package": "yarn run build && electron-packager ./ --prune --package-manager=yarn --out=./package --overwrite --ignore tsconfig.tsbuildinfo",
     "lint": "eslint ./src ./test",
     "start": "yarn run build && electron ./dist/main/main.js",
+    "start-diag": "yarn run build && electron ./dist/main/main.js --run-diagnostics",
     "show-version": "yarn run build && electron ./dist/main/main.js --version-json",
     "test": "electron-mocha -c --config ./test/unit/mocharc.json",
     "testcover": "nyc electron-mocha -c --config ./test/unit/mocharc.json",
