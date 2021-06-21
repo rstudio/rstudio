@@ -25,6 +25,8 @@ import { exitFailure, exitSuccess, run, ProgramStatus } from './program-status';
 import { ApplicationLaunch } from './application-launch';
 import { AppState } from './app-state';
 import { prepareEnvironment } from './detect_r';
+import { SessionLauncher } from './session-launcher';
+import { DesktopActivation } from './activation-overlay';
 
 // RStudio command-line switches
 export const kRunDiagnosticsOption = '--run-diagnostics';
@@ -45,6 +47,8 @@ export class Application implements AppState {
   supportPath?: FilePath;
 
   appLaunch?: ApplicationLaunch;
+  sessionLauncher?: SessionLauncher;
+  activationInst?: DesktopActivation;
 
   /**
    * Startup code run before app 'ready' event.
@@ -107,6 +111,13 @@ export class Application implements AppState {
       return exitFailure();
     }
 
+    // TODO: desktop pro session handling
+    // TODO: 'file/project' file open handling (e.g. launch by double-clicking a .R or .Rproj file)
+
+    // launch a local session
+    this.sessionLauncher = new SessionLauncher(this.sessionPath, confPath, new FilePath(), this.appLaunch);
+    this.sessionLauncher.launchFirstSession();
+
     // TEMPORARY, show a window so starting the app does something visible
     this.mainWindow = new BrowserWindow({
       width: 1024,
@@ -156,5 +167,12 @@ export class Application implements AppState {
       }
     }
     return this.supportPath;
+  }
+
+  activation(): DesktopActivation {
+    if (!this.activationInst) {
+      this.activationInst = new DesktopActivation();
+    }
+    return this.activationInst;
   }
 }
