@@ -43,10 +43,8 @@ function normalizeSeparatorsNative(path: string) {
  * regular file, etc.)
  */
 export class FilePath {
-  private path: string;
 
-  constructor(path = '') {
-    this.path = path;
+  constructor(private path:string = '') {
   }
 
   /**

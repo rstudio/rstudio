@@ -13,20 +13,43 @@
  *
  */
 
-import { app } from 'electron';
+import { app, dialog } from 'electron';
 import { Application } from './application';
-
-const rstudio: Application = new Application();
-
-const initStatus = rstudio.beforeAppReady();
-if (initStatus.exit) {
-  app.exit(initStatus.exitCode);
-}
+import { setApplication } from './app-state';
+import { parseStatus } from './program-status';
 
 /**
- * Handlers for `app` events go here; otherwise do as little as possible in this
- * file (it cannot be unit-tested).
+ * RStudio entrypoint
  */
-app.whenReady().then(() => {
-  rstudio.run();
-});
+class RStudioMain {
+
+  async main(): Promise<void> {
+    try {
+      await this.startup();
+    } catch (error) {
+      if (!app.isPackaged) {
+        dialog.showErrorBox('Unhandled exception', error.message);
+      }
+      console.error(error.message);
+      app.exit(1);
+    }
+  }
+
+  private async startup(): Promise<void> {
+    const rstudio = new Application();
+    setApplication(rstudio);
+
+    if (!parseStatus(await rstudio.beforeAppReady())) {
+      return;
+    }
+
+    await app.whenReady();
+    if (!parseStatus(await rstudio.run())) {
+      return;
+    }
+  }
+}
+
+// Startup
+const main = new RStudioMain();
+main.main();

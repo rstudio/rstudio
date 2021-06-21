@@ -15,18 +15,31 @@
 
 import { describe } from 'mocha';
 import { assert } from 'chai';
+import { saveAndClear, restore } from '../unit-utils';
 
 import * as Utils from '../../../src/main/utils';
 import { app } from 'electron';
 import { getenv, setenv, unsetenv } from '../../../src/core/environment';
 
-describe('DesktopUtils', () => {
+describe('Utils', () => {
+  const envVars: Record<string, string> = {
+    RSTUDIO_CPP_BUILD_OUTPUT: '',
+  };
+
+  beforeEach(() => {
+    saveAndClear(envVars);
+  });
+
+  afterEach(() => {
+    restore(envVars);
+  });
+
   describe('Helper functions', () => {
     it('userLogPath returns a non-empty string', () => {
-      assert.isNotEmpty(Utils.userLogPath());
+      assert.isNotEmpty(Utils.userLogPath().getAbsolutePath());
     });
     it('usereWebCachePath returns a non-empty string', () => {
-      assert.isNotEmpty(Utils.userWebCachePath());
+      assert.isNotEmpty(Utils.userWebCachePath().getAbsolutePath());
     });
     it('devicePixelRatio returns 1.0', () => {
       assert.strictEqual(Utils.devicePixelRatio(), 1.0);
@@ -55,14 +68,24 @@ describe('DesktopUtils', () => {
       assert.isTrue(app.commandLine.hasSwitch('disable-gpu'));
       unsetenv('RSTUDIO_CHROMIUM_ARGUMENTS');
     });
-  });
-
-  describe('Static helpers', () => {
     it('initializeSharedSecret generates a random string in RS_SHARED_SECRET envvar_', () => {
       const envvar = 'RS_SHARED_SECRET';
       assert.equal(getenv(envvar).length, 0);
       Utils.initializeSharedSecret();
       assert.isAtLeast(getenv(envvar).length, 0);
+    });
+    it('rsessionExeName returns non-empty string', () => {
+      assert.isNotEmpty(Utils.rsessionExeName());
+    });
+    it('removeStaleOptionsLockfile is callable', () => {
+      Utils.removeStaleOptionsLockfile();
+      assert(true);
+    });
+    it('findComponents returns session and scripts paths', () => {
+      process.env.RSTUDIO_CPP_BUILD_OUTPUT = '/somewhere/interesting/';
+      const [, session, scripts] = Utils.findComponents();
+      assert.isNotEmpty(session.getAbsolutePath());
+      assert.isNotEmpty(scripts.getAbsolutePath());
     });
   });
 });
