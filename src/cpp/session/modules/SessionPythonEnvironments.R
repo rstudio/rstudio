@@ -109,16 +109,16 @@
 .rs.addFunction("python.projectInterpreterPath", function(projectDir)
 {
    # check for virtual environments / conda environments
+   pythonSuffixes <- if (.rs.platform.isWindows)
+      c("Scripts/python.exe", "python.exe")
+   else
+      c("bin/python", "bin/python3")
+      
    for (envName in c("env", ".venv", ".virtualenv", ".condaenv"))
    {
       envPath <- file.path(projectDir, envName)
       if (!file.exists(envPath))
          next
-      
-      pythonSuffixes <- if (.rs.platform.isWindows)
-         c("Scripts/python.exe", "python.exe")
-      else
-         c("bin/python", "bin/python3")
       
       for (pythonSuffix in pythonSuffixes)
       {
