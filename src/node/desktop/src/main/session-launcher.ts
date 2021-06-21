@@ -41,8 +41,8 @@ export class SessionLauncher {
   ) { }
 
   launchFirstSession(): void {
-    appState().activation().on(ActivationEvents.LAUNCH_FIRST_SESSION, this.onLaunchFirstSession);
-    appState().activation().on(ActivationEvents.LAUNCH_ERROR, this.onLaunchError);
+    appState().activation().on(ActivationEvents.LAUNCH_FIRST_SESSION, this.onLaunchFirstSession.bind(this));
+    appState().activation().on(ActivationEvents.LAUNCH_ERROR, this.onLaunchError.bind(this));
     appState().activation().getInitialLicense();
   }
 

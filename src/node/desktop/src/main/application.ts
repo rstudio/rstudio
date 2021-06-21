@@ -107,7 +107,7 @@ export class Application implements AppState {
       }
     }
 
-    if (!prepareEnvironment()) {
+    if (!await prepareEnvironment()) {
       return exitFailure();
     }
 
@@ -117,20 +117,6 @@ export class Application implements AppState {
     // launch a local session
     this.sessionLauncher = new SessionLauncher(this.sessionPath, confPath, new FilePath(), this.appLaunch);
     this.sessionLauncher.launchFirstSession();
-
-    // TEMPORARY, show a window so starting the app does something visible
-    this.mainWindow = new BrowserWindow({
-      width: 1024,
-      height: 768,
-      backgroundColor: '#fff', // https://github.com/electron/electron/blob/master/docs/faq.md#the-font-looks-blurry-what-is-this-and-what-can-i-do
-      webPreferences: {
-        enableRemoteModule: false,
-        nodeIntegration: false,
-        contextIsolation: true
-      }
-
-    });
-    this.mainWindow.loadURL('https://rstudio.com');
     return run();
   }
 
