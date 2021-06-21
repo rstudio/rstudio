@@ -166,9 +166,9 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
                            stopShinyBackgroundJob(params.getId(), null);
                         }
                      }
-                  }
 
-                  break;
+                     break;
+                  }
                }
             }
          }

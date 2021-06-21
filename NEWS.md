@@ -29,6 +29,7 @@
 * Fixed issue where help requests for Python objects would fail with reticulate 1.20 (#9311)
 * Fixed issue where busy sessions can't be interrupted and block basic file operations (#2038)
 * Fixed issue where R Markdown template skeletons with a '.rmd' extension were not discovered (Pro #1607)
+* Fixed issues causing multiple background jobs to be created when running Shiny applications in the background (#8746, #6904)
 * Removed the breaking change introduced in Juliet Rose that changed the behavior of the X-Forwarded-Proto header when RSW is behind a proxy server (Pro #2657)
 
 
