@@ -1194,19 +1194,6 @@ core::Error UserPrefValues::setSourceWithEcho(bool val)
 }
 
 /**
- * Whether to initialize new projects with a Git repo by default.
- */
-bool UserPrefValues::newProjectGitInit()
-{
-   return readPref<bool>("new_project_git_init");
-}
-
-core::Error UserPrefValues::setNewProjectGitInit(bool val)
-{
-   return writePref("new_project_git_init", val);
-}
-
-/**
  * The default engine to use when processing Sweave documents.
  */
 std::string UserPrefValues::defaultSweaveEngine()
@@ -3015,7 +3002,6 @@ std::vector<std::string> UserPrefValues::allKeys()
       kToolbarVisible,
       kDefaultProjectLocation,
       kSourceWithEcho,
-      kNewProjectGitInit,
       kDefaultSweaveEngine,
       kDefaultLatexProgram,
       kUseRoxygen,

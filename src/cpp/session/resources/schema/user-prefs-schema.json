@@ -635,12 +635,6 @@
             "title": "Source with echo by default",
             "description": "Whether to echo R code when sourcing it."
         },
-        "new_project_git_init": {
-            "type": "boolean",
-            "default": false,
-            "title": "Initialize new projects with Git",
-            "description": "Whether to initialize new projects with a Git repo by default."
-        },
         "default_sweave_engine": {
             "type": "string",
             "default": "Sweave",

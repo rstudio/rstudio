@@ -1303,18 +1303,6 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether to initialize new projects with a Git repo by default.
-    */
-   public PrefValue<Boolean> newProjectGitInit()
-   {
-      return bool(
-         "new_project_git_init",
-         "Initialize new projects with Git", 
-         "Whether to initialize new projects with a Git repo by default.", 
-         false);
-   }
-
-   /**
     * The default engine to use when processing Sweave documents.
     */
    public PrefValue<String> defaultSweaveEngine()
@@ -3341,8 +3329,6 @@ public class UserPrefsAccessor extends Prefs
          defaultProjectLocation().setValue(layer, source.getString("default_project_location"));
       if (source.hasKey("source_with_echo"))
          sourceWithEcho().setValue(layer, source.getBool("source_with_echo"));
-      if (source.hasKey("new_project_git_init"))
-         newProjectGitInit().setValue(layer, source.getBool("new_project_git_init"));
       if (source.hasKey("default_sweave_engine"))
          defaultSweaveEngine().setValue(layer, source.getString("default_sweave_engine"));
       if (source.hasKey("default_latex_program"))
@@ -3701,7 +3687,6 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(toolbarVisible());
       prefs.add(defaultProjectLocation());
       prefs.add(sourceWithEcho());
-      prefs.add(newProjectGitInit());
       prefs.add(defaultSweaveEngine());
       prefs.add(defaultLatexProgram());
       prefs.add(useRoxygen());

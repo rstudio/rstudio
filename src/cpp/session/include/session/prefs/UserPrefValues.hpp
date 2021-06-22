@@ -169,7 +169,6 @@ namespace prefs {
 #define kToolbarVisible "toolbar_visible"
 #define kDefaultProjectLocation "default_project_location"
 #define kSourceWithEcho "source_with_echo"
-#define kNewProjectGitInit "new_project_git_init"
 #define kDefaultSweaveEngine "default_sweave_engine"
 #define kDefaultLatexProgram "default_latex_program"
 #define kUseRoxygen "use_roxygen"
@@ -933,12 +932,6 @@ public:
     */
    bool sourceWithEcho();
    core::Error setSourceWithEcho(bool val);
-
-   /**
-    * Whether to initialize new projects with a Git repo by default.
-    */
-   bool newProjectGitInit();
-   core::Error setNewProjectGitInit(bool val);
 
    /**
     * The default engine to use when processing Sweave documents.
