@@ -48,6 +48,9 @@ enum JobType {
    JobTypeLauncher = 2 // cluster job via job launcher
 };
 
+typedef std::function<void(const std::string&)> JobAction;
+typedef std::vector<std::pair<std::string,JobAction>> JobActions;
+
 class Job
 {
 public:
@@ -67,6 +70,7 @@ public:
        const std::string& cluster,
        bool autoRemove,
        SEXP actions,
+       JobActions cppActions,
        bool show,
        bool saveOutput,
        const std::vector<std::string>& tags);
@@ -175,6 +179,7 @@ private:
    bool show_;
 
    r::sexp::PreservedSEXP actions_;
+   JobActions cppActions_;
 
    std::vector<std::string> tags_;
 };

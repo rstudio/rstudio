@@ -67,6 +67,7 @@ Job::Job(const std::string& id,
          const std::string& cluster,
          bool autoRemove,
          SEXP actions,
+         JobActions cppActions,
          bool show,
          bool saveOutput,
          const std::vector<std::string>& tags):
@@ -87,6 +88,7 @@ Job::Job(const std::string& id,
    saveOutput_(saveOutput),
    show_(show),
    actions_(actions),
+   cppActions_(cppActions),
    tags_(tags)
 {
    setState(state);
@@ -239,9 +241,9 @@ json::Object Job::toJson() const
    json::Array actions;
 
    // if this job has custom actions, send the list to the client
+   std::vector<std::string> names;
    if (!actions_.isNil())
    {
-      std::vector<std::string> names;
       error = r::sexp::getNames(actions_.get(), &names);
       if (!error)
       {
@@ -252,6 +254,8 @@ json::Object Job::toJson() const
             [](const std::string& val) { return json::Value(val); });
       }
    }
+   std::transform(cppActions_.begin(), cppActions_.end(), std::back_inserter(names),
+                  [](const JobActions::value_type& pair) { return pair.first; });
 
    job["actions"] = actions;
    job[kJobTags] = json::toJsonArray(tags_);
@@ -542,6 +546,17 @@ JobState Job::stringAsState(const std::string& state)
 
 Error Job::executeAction(const std::string& action)
 {
+   // first look in the cpp actions
+   JobActions::const_iterator it = std::find_if(cppActions_.begin(), cppActions_.end(),
+                                                [&action](const JobActions::value_type& pair) {
+      return boost::iequals(action, pair.first);
+   });
+   if (it != cppActions_.end())
+   {
+      it->second(id());
+      return Success();
+   }
+
    // find the action in the list of named actions
    SEXP method = R_NilValue;
    Error error = r::sexp::getNamedListSEXP(actions_.get(), action, &method);
