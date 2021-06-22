@@ -379,7 +379,8 @@
    paths <- strsplit(Sys.getenv("PATH"), split = .Platform$path.sep, fixed = TRUE)[[1]]
    paths <- unique(normalizePath(paths, winslash = "/", mustWork = FALSE))
    
-   for (path in paths) {
+   for (path in paths)
+   {
       
       # skip fake broken Windows Python interpreters
       skip <-
@@ -402,9 +403,20 @@
          full.names = TRUE
       )
       
-      # loop over interpreters and add
+      # loop over interpreters and add them
       for (python in pythons)
       {
+         # skip simple symlinks. the intention here is to avoid adding
+         # all of python, python3, and python3.9 if they all ultimately
+         # resolve to the same python executable
+         if (!.rs.platform.isWindows)
+         {
+            link <- Sys.readlink(python)
+            if (grepl(pattern, link))
+               next
+         }
+         
+         # add the interpreter
          info <- .rs.python.getPythonInfo(python, strict = TRUE)
          interpreters[[length(interpreters) + 1]] <- info
       }

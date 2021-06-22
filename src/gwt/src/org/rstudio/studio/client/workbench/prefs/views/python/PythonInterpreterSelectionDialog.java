@@ -76,11 +76,15 @@ public class PythonInterpreterSelectionDialog extends ModalDialog<PythonInterpre
       // add interpreters to their appropriate buckets
       for (PythonInterpreter interpreter : JsUtil.asIterable(interpreters))
       {
-         if (!interpreter.isValid())
+         if (interpreter == null || !interpreter.isValid())
             continue;
          
          String type = interpreter.getType();
          if (type == null)
+            continue;
+         
+         String version = interpreter.getVersion();
+         if (version == null || version.startsWith("2"))
             continue;
          
          if (StringUtil.equals(type, "system"))
