@@ -429,7 +429,7 @@ export function getDesktopBridge(): DesktopBridge {
     filterText: (text: string, callback: VoidCallback<string>) => {
       ipcRenderer
         .invoke('desktop_filter_text', text)
-        .then(filtered => callback(text));
+        .then(filtered => callback(filtered));
     },
 
     cleanClipboard: (stripHtml: boolean) => {

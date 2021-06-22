@@ -26,7 +26,7 @@ export class MenuCallback {
 
   constructor(public mainWindow: MainWindow) {
 
-    ipcMain.on('menu_begin_main', (event) => {
+    ipcMain.on('menu_begin_main', () => {
       this.mainMenu = new Menu();
       if (process.platform === 'darwin') {
         this.mainMenu.append(new MenuItem({role: 'appMenu'}));
@@ -60,9 +60,11 @@ export class MenuCallback {
     });
 
     ipcMain.on('menu_add_command', (event, cmdId, label, tooltip, shortcut, checkable) => {
-      const menuItemOpts: MenuItemConstructorOptions = {label: label, id: cmdId, click: (menuItem, browserWindow, event) => {
-        this.actionInvoked(menuItem.id);
-      }};
+      const menuItemOpts: MenuItemConstructorOptions = {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        label: label, id: cmdId, click: (menuItem, browserWindow, event) => {
+          this.actionInvoked(menuItem.id);
+        }};
 
       if (checkable) {
         menuItemOpts.checked = false;
@@ -98,12 +100,12 @@ export class MenuCallback {
       this.addToCurrentMenu(menuItem);
     });
 
-    ipcMain.on('menu_add_separator', (event) => {
+    ipcMain.on('menu_add_separator', () => {
       const separator = new MenuItem({type: 'separator'});
       this.addToCurrentMenu(separator);
     });
 
-    ipcMain.on('menu_end', (event) => {
+    ipcMain.on('menu_end', () => {
       if (this.lastWasDiagnostics) {
         this.lastWasDiagnostics = false;
         this.addToCurrentMenu(new MenuItem({role: 'toggleDevTools'}));
@@ -121,7 +123,7 @@ export class MenuCallback {
       }
     });
 
-    ipcMain.on('menu_end_main', (event) => {
+    ipcMain.on('menu_end_main', () => {
       if (this.mainMenu)
         Menu.setApplicationMenu(this.mainMenu);
     });
@@ -148,7 +150,7 @@ export class MenuCallback {
     });
 
     // eslint-disable-next-line @typescript-eslint/no-empty-function
-    ipcMain.on('menu_set_main_menu_enabled', (event, enabled) => {
+    ipcMain.on('menu_set_main_menu_enabled', () => {
     });
 
     ipcMain.on('menu_set_command_label', (event, commandId, label) => {
@@ -165,14 +167,14 @@ export class MenuCallback {
     }
   }
 
-  getMenuItemById(id: string) {
+  getMenuItemById(id: string): MenuItem {
     return this.actions.get(id);
   }
 
   /**
    * Convert RStudio shortcut string to Electron Accelerator
    */
-  convertShortcut(shortcut: string) {
+  convertShortcut(shortcut: string): string {
     return shortcut.split('+').map(key => {
       if (key === 'Cmd') {
         return 'CommandOrControl';
@@ -184,7 +186,7 @@ export class MenuCallback {
     }).join('+');
   }
 
-  actionInvoked(commandId: string) {
+  actionInvoked(commandId: string): void {
     this.mainWindow.invokeCommand(commandId);
   }
 }

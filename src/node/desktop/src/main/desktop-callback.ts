@@ -547,7 +547,7 @@ export class DesktopCallback {
     });
   }
 
-  static unimpl(ipcName: string) {
+  static unimpl(ipcName: string): void {
 
     const focusedWindow = BrowserWindow.getFocusedWindow();
     if (focusedWindow) {
@@ -563,7 +563,7 @@ export class DesktopCallback {
     }
   }
 
-  collectPendingQuitRequest() {
+  collectPendingQuitRequest(): number {
     if (this.pendingQuit != PendingQuit.PendingQuitNone) {
       const currentPendingQuit = this.pendingQuit;
       this.pendingQuit = PendingQuit.PendingQuitNone;
@@ -573,7 +573,7 @@ export class DesktopCallback {
     }
   }
 
-  convertMessageBoxType(type: number) {
+  convertMessageBoxType(type: number): string {
     // map QMessageBox types to Electron values
     switch (type) {
     case 1:
@@ -588,7 +588,7 @@ export class DesktopCallback {
     }
   }
 
-  convertButtons(buttons: string) {
+  convertButtons(buttons: string): string[] {
     return buttons.split('|');
   }
 }

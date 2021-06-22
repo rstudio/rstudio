@@ -15,6 +15,7 @@
 
 import { BrowserWindow, session } from 'electron';
 import path from 'path';
+import { ChildProcess } from 'child_process';
 
 import { DesktopCallback } from './desktop-callback';
 import { MenuCallback } from './menu-callback';
@@ -24,13 +25,13 @@ import { SessionLauncher } from './session-launcher';
 
 // corresponds to DesktopMainWindow.cpp/hpp
 export class MainWindow {
-  sessionLauncher_: SessionLauncher|null = null;
-  sessionProcess_: any = null;
-  window: BrowserWindow|null = null;
+  sessionLauncher?: SessionLauncher;
+  sessionProcess?: ChildProcess;
+  window?: BrowserWindow;
   desktopCallback: DesktopCallback;
   menuCallback: MenuCallback;
   quitConfirmed = false;
-  workbenchInitialized_ = false;
+  workbenchInitialized = false;
   pendingWindows = new Array<PendingWindow>();
 
   constructor(public url: string, public isRemoteDesktop: boolean) {
@@ -40,23 +41,7 @@ export class MainWindow {
     RCommandEvaluator.setMainWindow(this);
   }
 
-  set sessionLauncher(value) {
-    this.sessionLauncher_ = value;
-  }
-
-  get sessionLauncher() {
-    return this.sessionLauncher_;
-  }
-
-  set sessionProcess(value) {
-    this.sessionProcess_ = value;
-  }
-
-  get sessionProcess() {
-    return this.sessionProcess_;
-  }
-
-  load(url: string) {
+  load(url: string): void {
     // show the window
     this.window = this.createWindow(1400, 1024);
  
@@ -70,7 +55,7 @@ export class MainWindow {
     });
 
     this.window.webContents.on('new-window',
-      (event, url, frameName, disposition, options, additionalFeatures, referrer, postBody) => {
+      (event, url /*, frameName, disposition, options, additionalFeatures, referrer, postBody*/) => {
 
         event.preventDefault();
 
@@ -87,21 +72,21 @@ export class MainWindow {
     // this.window.webContents.openDevTools();
   }
 
-  quit() {
+  quit(): void {
     RCommandEvaluator.setMainWindow(null);
     this.quitConfirmed = true;
     this.window?.close();
   }
 
-  invokeCommand(cmdId: string) {
+  invokeCommand(cmdId: string): void {
     this.window?.webContents.executeJavaScript(`window.desktopHooks.invokeCommand("${cmdId}")`)
       .catch(() => {
         console.error(`Error: failed to execute desktopHooks.invokeCommand("${cmdId}")`);
       });
   }
 
-  onWorkbenchInitialized() {
-    this.workbenchInitialized_ = true;
+  onWorkbenchInitialized(): void {
+    this.workbenchInitialized = true;
     this.window?.webContents.executeJavaScript('window.desktopHooks.getActiveProjectDir()')
       .then(projectDir => {
         if (projectDir.length > 0) {
@@ -115,16 +100,11 @@ export class MainWindow {
       });
   }
 
-  collectPendingQuitRequest() {
+  collectPendingQuitRequest(): number {
     return this.desktopCallback.collectPendingQuitRequest();
   }
 
-  get workbenchInitialized() {
-    return this.workbenchInitialized_;
- 
-  }
-
-  createWindow(width: number, height: number) {
+  createWindow(width: number, height: number): BrowserWindow {
     return new BrowserWindow({
       width: width,
       height: height,
@@ -139,7 +119,7 @@ export class MainWindow {
     });
   }
 
-  prepareForWindow(pendingWindow: PendingWindow) {
+  prepareForWindow(pendingWindow: PendingWindow): void {
     this.pendingWindows.push(pendingWindow);
   }
 }
