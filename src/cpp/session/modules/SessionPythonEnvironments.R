@@ -45,9 +45,16 @@
 
 .rs.addFunction("python.projectInterpreterPath", function(projectDir)
 {
-   venvPath <- file.path(projectDir, ".venv")
-   pythonSuffix <- if (.rs.platform.isWindows) "Scripts/python.exe" else "bin/python"
-   file.path(venvPath, pythonSuffix)
+   projectSubdirs <- list.dirs(recursive = FALSE, full.names = FALSE)
+   for (subdir in projectSubdirs) {
+      if (file.exists(file.path(subdir, "pyvenv.cfg"))) {
+         venvPath <- file.path(projectDir, subdir)
+         pythonSuffix <- if (.rs.platform.isWindows) "Scripts/python.exe" else "bin/python"
+         return (file.path(venvPath, pythonSuffix))
+      }
+   }
+   # no interpreter found
+   ""
 })
 
 .rs.addFunction("python.initialize", function(projectDir)

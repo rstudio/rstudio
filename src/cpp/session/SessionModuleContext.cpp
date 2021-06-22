@@ -2650,21 +2650,19 @@ bool isUserFile(const FilePath& filePath)
              return false;
       }
 
-      // if we are in a website project then screen the output dir
-      if (!module_context::websiteOutputDir().empty())
-      {
-         FilePath sitePath = projects::projectContext().buildTargetPath();
-         std::string siteRelative = filePath.getRelativePath(sitePath);
-         if (boost::algorithm::starts_with(
-                siteRelative, module_context::websiteOutputDir() + "/"))
+      // screen our various virtual environment directories + standard content ignores
+      FilePath projPath = projects::projectContext().directory();
+      std::vector<std::string> dirs({"packrat/", "renv/"});
+      const std::vector<FilePath>& ignoreDirs = module_context::ignoreContentDirs();
+      std::transform(ignoreDirs.begin(), ignoreDirs.end(), std::back_inserter(dirs),
+                     [&projPath](const FilePath& ignorePath) {
+         return ignorePath.getRelativePath(projPath) + "/";
+      });
+      std::string pkgRelative = filePath.getRelativePath(projPath);
+      for (const auto& dir : dirs) {
+         if (boost::algorithm::starts_with(pkgRelative, dir))
             return false;
       }
-
-      // screen the packrat directory
-      FilePath projPath = projects::projectContext().directory();
-      std::string pkgRelative = filePath.getRelativePath(projPath);
-      if (boost::algorithm::starts_with(pkgRelative, "packrat/"))
-         return false;
    }
 
    return true;
@@ -2840,6 +2838,44 @@ void checkXcodeLicense()
    
 #endif
 }
+
+std::vector<FilePath> ignoreContentDirs()
+{
+   std::vector<FilePath> ignoreDirs;
+   if (projects::projectContext().hasProject()) {
+      // python virtual environments
+      ignoreDirs = projects::projectContext().pythonEnvs();
+      module_context::QuartoConfig quartoConf = module_context::quartoConfig();
+      // quarto site output dir
+      if (quartoConf.is_project) {
+         FilePath projDir = projects::projectContext().directory();
+         ignoreDirs.push_back(projDir.completeChildPath(quartoConf.project_output_dir));
+         ignoreDirs.push_back(projDir.completeChildPath("_freeze"));
+      }
+      // rmarkdown site output dir
+      if (module_context::isWebsiteProject())
+      {
+         FilePath buildTargetPath = projects::projectContext().buildTargetPath();
+         std::string outputDir = module_context::websiteOutputDir();
+         if (!outputDir.empty())
+            ignoreDirs.push_back(buildTargetPath.completeChildPath(outputDir));
+         else
+            ignoreDirs.push_back(buildTargetPath);
+      }
+
+   }
+   return ignoreDirs;
+}
+
+bool isIgnoredContent(const core::FilePath& filePath,
+                      const std::vector<core::FilePath>& ignoreDirs)
+{
+   auto it = std::find_if(ignoreDirs.begin(), ignoreDirs.end(), [&filePath](const FilePath& dir) {
+      return dir.exists() && filePath.isWithin(dir);
+   });
+   return it != ignoreDirs.end();
+}
+
 
 std::string getActiveLanguage()
 {
