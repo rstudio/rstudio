@@ -1512,7 +1512,7 @@
             "default": false
         },
         "python_project_environment_automatic_activate": {
-            "description": "When enabled, if the active project contains a Python virtual environment located within the project's env folder, then RStudio will automatically activate this environment on startup.",
+            "description": "When enabled, if the active project contains a Python virtual environment, then RStudio will automatically activate this environment on startup.",
             "title": "Automatically activate project Python environments",
             "type": "boolean",
             "default": true

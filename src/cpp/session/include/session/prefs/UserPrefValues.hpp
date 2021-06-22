@@ -1727,7 +1727,7 @@ public:
    core::Error setSessionProtocolDebug(bool val);
 
    /**
-    * When enabled, if the active project contains a Python virtual environment located within the project's env folder, then RStudio will automatically activate this environment on startup.
+    * When enabled, if the active project contains a Python virtual environment, then RStudio will automatically activate this environment on startup.
     */
    bool pythonProjectEnvironmentAutomaticActivate();
    core::Error setPythonProjectEnvironmentAutomaticActivate(bool val);

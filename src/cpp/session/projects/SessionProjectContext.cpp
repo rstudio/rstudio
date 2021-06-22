@@ -260,6 +260,19 @@ Error ProjectContext::startup(const FilePath& projectFile,
    sharedScratchPath_ = sharedScratchPath;
    config_ = config;
 
+   // look for directories that contain python environments
+   std::vector<FilePath> children;
+   error = directory_.getChildren(children);
+   if (error)
+      LOG_ERROR(error);
+   algorithm::copy_if(children.begin(), children.end(),
+                      std::back_inserter(pythonEnvs_), [](const FilePath& child) {
+      return child.isDirectory() &&
+            (child.completeChildPath("pyvenv.cfg").exists() ||
+             child.completeChildPath("conda-meta").exists());
+   });
+
+
    // assume true so that the initial files pane listing doesn't register
    // a duplicate monitor. if it turns out to be false then this can be
    // repaired by a single refresh of the files pane
@@ -510,7 +523,6 @@ std::vector<std::string> fileMonitorIgnoredComponents()
       "/renv/library",
       "/renv/python",
       "/renv/staging",
-      "/env",
       "/packrat/lib",
       "/packrat/src"
       
@@ -524,6 +536,15 @@ std::vector<std::string> fileMonitorIgnoredComponents()
    for (auto&& userIgnore : userIgnores)
       if (userIgnore.isString())
          ignores.push_back(userIgnore.getString());
+
+   // don't monitor python envs
+   if (projects::projectContext().hasProject())
+   {
+      const std::vector<FilePath>& envs = projects::projectContext().pythonEnvs();
+      std::transform(envs.begin(), envs.end(), std::back_inserter(ignores), [](const FilePath& envPath) {
+         return "/" + envPath.getRelativePath(projects::projectContext().directory());
+      });
+   }
    
    // return vector of ignored components
    return ignores;

@@ -72,7 +72,7 @@ namespace code_search {
 
 namespace {
 
-bool isWithinIgnoredDirectory(const FilePath& filePath)
+bool isWithinIgnoredDirectory(const FilePath& filePath, const std::vector<FilePath>& ignoreDirs)
 {
    using namespace projects;
    
@@ -82,8 +82,6 @@ bool isWithinIgnoredDirectory(const FilePath& filePath)
    
    FilePath projDir = projectContext().directory();
    FilePath parentPath = filePath.getParent();
-   std::string websiteDir = module_context::websiteOutputDir();
-   std::string quartoProjectOutputDir = module_context::quartoConfig().project_output_dir;
    bool isPackageProject = projectContext().isPackageProject();
    
    // allow plain files living within the 'revdep' folder
@@ -94,6 +92,10 @@ bool isWithinIgnoredDirectory(const FilePath& filePath)
       return false;
    }
    
+   // check if it's ignored content
+   if (module_context::isIgnoredContent(filePath, ignoreDirs))
+      return false;
+
    // look through parent directories recursively to see
    // if this is an ignored folder
    // TODO: it would be better to encode this as a filter that
@@ -107,20 +109,7 @@ bool isWithinIgnoredDirectory(const FilePath& filePath)
       // node_modules
       if (parentName == "node_modules")
          return true;
-      
-      // websites
-      if (parentName == websiteDir)
-         return true;
-
-      // quarto projects
-      if (parentName == quartoProjectOutputDir)
-         return true;
-      
-      // packrat
-      if (parentName == "packrat" &&
-         parentPath.completeChildPath("packrat.lock").exists())
-         return true;
-      
+            
       // packrat
       if (parentName == "packrat" &&
          parentPath.completeChildPath("packrat.lock").exists())
@@ -128,13 +117,7 @@ bool isWithinIgnoredDirectory(const FilePath& filePath)
 
       // renv
       if (parentName == "renv" &&
-         parentPath.completeChildPath("settings.dcf").exists())
-         return true;
-
-      // env
-      if (parentName == "env" &&
-         (parentPath.completeChildPath("pyvenv.cfg").exists() ||
-          parentPath.completeChildPath("conda-meta").exists()))
+         parentPath.completeChildPath("activate.R").exists())
          return true;
 
       // cmake build directory
@@ -870,7 +853,7 @@ private:
       FilePath filePath(fileInfo.absolutePath());
 
       // filter certain directories (e.g. those that exist in build directories)
-      if (isWithinIgnoredDirectory(filePath))
+      if (isWithinIgnoredDirectory(filePath, module_context::ignoreContentDirs()))
          return;
 
       if (isIndexableSourceFile(fileInfo))
@@ -1062,14 +1045,14 @@ RSourceIndexes& rSourceIndex()
 namespace {
 
 // if we have a project active then restrict results to the project
-bool sourceDatabaseFilter(const r_util::RSourceIndex& index)
+bool sourceDatabaseFilter(const r_util::RSourceIndex& index, const std::vector<FilePath>& ignoreDirs)
 {
    if (projects::projectContext().hasProject())
    {
       // get file path
       FilePath docPath = module_context::resolveAliasedPath(index.context());
       return docPath.isWithin(projects::projectContext().directory()) &&
-            !isWithinIgnoredDirectory(docPath);
+            !isWithinIgnoredDirectory(docPath, ignoreDirs);
    }
    else
    {
@@ -1082,6 +1065,9 @@ bool findGlobalFunctionInSourceDatabase(
                         r_util::RSourceItem* pFunctionItem,
                         std::set<std::string>* pContextsSearched)
 {
+   // get ignore dirs
+   std::vector<FilePath> ignoreDirs = module_context::ignoreContentDirs();
+
    // get all of the source indexes
    std::vector<boost::shared_ptr<r_util::RSourceIndex> > indexes =
                                                    rSourceIndex().indexes();
@@ -1090,7 +1076,7 @@ bool findGlobalFunctionInSourceDatabase(
    for (boost::shared_ptr<r_util::RSourceIndex>& pIndex : indexes)
    {
       // apply the filter
-      if (!sourceDatabaseFilter(*pIndex))
+      if (!sourceDatabaseFilter(*pIndex, ignoreDirs))
          continue;
 
       // record this context
@@ -1123,11 +1109,11 @@ void searchSourceDatabase(const std::string& term,
    // get all of the source indexes
    std::vector<boost::shared_ptr<r_util::RSourceIndex> > indexes
                                                 = rSourceIndex().indexes();
-
+   std::vector<FilePath> ignoreDirs = module_context::ignoreContentDirs();
    for (boost::shared_ptr<r_util::RSourceIndex>& pIndex : indexes)
    {
       // apply the filter
-      if (!sourceDatabaseFilter(*pIndex))
+      if (!sourceDatabaseFilter(*pIndex, ignoreDirs))
          continue;
 
       // record this context

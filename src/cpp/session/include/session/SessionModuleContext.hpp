@@ -885,6 +885,9 @@ struct QuartoConfig
 QuartoConfig quartoConfig(bool refresh = false);
 bool isQuartoWebsiteDoc(const core::FilePath& filePath);
 
+std::vector<core::FilePath> ignoreContentDirs();
+bool isIgnoredContent(const core::FilePath& filePath, const std::vector<core::FilePath>& ignoreDirs);
+
 std::string getActiveLanguage();
 core::Error adaptToLanguage(const std::string& language);
 

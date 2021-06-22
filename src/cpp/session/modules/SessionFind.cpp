@@ -914,7 +914,6 @@ private:
               file.find("/.svn/") != std::string::npos ||
               file.find("/packrat/lib/") != std::string::npos ||
               file.find("/packrat/src/") != std::string::npos ||
-              file.find("/env/") != std::string::npos ||
               file.find("/renv/library/") != std::string::npos ||
               file.find("/renv/python/") != std::string::npos ||
               file.find("/renv/staging/") != std::string::npos ||
@@ -934,15 +933,10 @@ private:
 
       int recordsToProcess = MAX_COUNT + 1 - findResults().resultCount();
       if (recordsToProcess < 0)
-         recordsToProcess = 0;
+         recordsToProcess = 0; 
 
-      std::string websiteOutputDir = module_context::websiteOutputDir();
-      if (!websiteOutputDir.empty())
-         websiteOutputDir = "/" + websiteOutputDir + "/";
-
-      std::string quartoOutputDir = module_context::quartoConfig().project_output_dir;
-      if (!quartoOutputDir.empty())
-         quartoOutputDir = "/" + quartoOutputDir + "/";
+      // directories that should be ignored (e.g. virtual envs, website outpu
+      std::vector<FilePath> ignoreDirs = module_context::ignoreContentDirs();
 
       stdOutBuf_.append(data);
       size_t nextLineStart = 0;
@@ -971,12 +965,13 @@ private:
                file.insert(0, findResults().path());
             }
 
-            if (shouldSkipFile(file) ||
-                (!websiteOutputDir.empty() &&
-                 file.find(websiteOutputDir) != std::string::npos) ||
-                (!quartoOutputDir.empty() &&
-                 file.find(quartoOutputDir) != std::string::npos)
-                )
+            // normal skip heuristics
+            if (shouldSkipFile(file))
+               continue;
+
+            // contained in content dir
+            FilePath fullPath(module_context::resolveAliasedPath(file));
+            if (module_context::isIgnoredContent(fullPath, ignoreDirs))
                continue;
 
             int lineNum = safe_convert::stringTo<int>(std::string(match[2]), -1);
@@ -1008,7 +1003,6 @@ private:
                 !(findResults().preview() &&
                   findResults().replacePattern().empty()))
             {
-               FilePath fullPath(module_context::resolveAliasedPath(file));
                // check if we are looking at a new file
                if (currentFile_.empty() || currentFile_ != fullPath.getAbsolutePath())
                {
