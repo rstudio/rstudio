@@ -123,6 +123,8 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
                }
             });
       
+      tbPythonInterpreter_.autosize();
+      
       tbPythonInterpreter_.addValueChangeHandler((ValueChangeEvent<String> event) ->
       {
          updateDescription();

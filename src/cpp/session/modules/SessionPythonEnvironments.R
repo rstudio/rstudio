@@ -334,6 +334,7 @@
 
 .rs.addFunction("python.findPythonInterpreters", function()
 {
+   # get interpreters from all known sources
    interpreters <- unname(c(
       .rs.python.findPythonProjectInterpreters(),
       .rs.python.findPythonSystemInterpreters(),
@@ -376,6 +377,8 @@
    
    # look for interpreters on the PATH
    paths <- strsplit(Sys.getenv("PATH"), split = .Platform$path.sep, fixed = TRUE)[[1]]
+   paths <- unique(normalizePath(paths, winslash = "/", mustWork = FALSE))
+   
    for (path in paths) {
       
       # skip fake broken Windows Python interpreters
@@ -521,23 +524,90 @@
    
 })
 
+.rs.addFunction("python.findCondaBinary", function()
+{
+   # read from option (primarily for internal use / testing)
+   conda <- getOption("rstudio.conda.binary")
+   if (!is.null(conda))
+   {
+      conda <- Sys.which(conda)
+      if (nzchar(conda))
+         return(conda)
+   }
+   
+   # look on PATH
+   conda <- Sys.which("conda")
+   if (nzchar(conda))
+      return(conda)
+   
+   # look in some default locations
+   if (.rs.platform.isWindows)
+   {
+      condaRoots <- c(
+         file.path(Sys.getenv("USERPROFILE"), "anaconda3"),
+         file.path(Sys.getenv("SYSTEMDRIVE"), "ProgramData/anaconda3")
+      )
+   }
+   else
+   {
+      condaRoots <- c(
+         "~/opt/anaconda3",
+         "~/anaconda3",
+         "~/opt/miniconda3",
+         "~/miniconda3",
+         "/anaconda3",
+         "/miniconda3"
+      )
+   }
+   
+   condaSuffix <- if (.rs.platform.isWindows)
+      "condabin/conda.bat"
+   else
+      "condabin/conda"
+   
+   condaPaths <- file.path(condaRoots, condaSuffix)
+   for (condaPath in condaPaths)
+      if (file.exists(condaPath))
+         return(condaPath)
+   
+   ""
+   
+})
+
 .rs.addFunction("python.findPythonCondaEnvironments", function()
 {
-   envs <- tryCatch(
-      reticulate::conda_list(),
-      error = identity
-   )
+   # look for conda
+   conda <- .rs.python.findCondaBinary()
+   if (!file.exists(conda))
+      return(NULL)
    
-   if (inherits(envs, "error"))
-      return(list())
+   # ask it for environments
+   args <- c("env", "list", "--json", "--quiet")
+   output <- system2(conda, args, stdout = TRUE, stderr = FALSE)
+   json <- .rs.fromJSON(paste(output, collapse = "\n"))
+   envList <- unlist(json$envs)
    
-   # ignore environments found in revdep folders
-   envs <- envs[grep("/revdep/", envs$python, invert = TRUE), ]
+   # prefer unix separators
+   if (.rs.platform.isWindows)
+      envList <- chartr("\\", "/", envList)
    
-   # ignore basilisk environments
-   envs <- envs[grep("/basilisk/", envs$python, invert = TRUE), ]
+   # ignore certain special environments
+   ignorePatterns <- c("/revdep/", "/basilisk/", "/renv/python/condaenvs/")
+   pattern <- sprintf("(?:%s)", paste(ignorePatterns, collapse = "|"))
+   envList <- grep(pattern, envList, value = TRUE, invert = TRUE)
    
-   lapply(envs$python, .rs.python.getCondaEnvironmentInfo)
+   # get paths to Python in each environment
+   pythonSuffix <- if (.rs.platform.isWindows) "python.exe" else "bin/python"
+   pythonPaths <- file.path(envList, pythonSuffix)
+   
+   # only keep existing
+   pythonPaths <- Filter(file.exists, pythonPaths)
+   
+   # drop duplicates, just in case
+   pythonPaths <- unique(normalizePath(pythonPaths, winslash = "/"))
+   
+   # get information for each environment
+   lapply(pythonPaths, .rs.python.getCondaEnvironmentInfo)
 })
 
 .rs.addFunction("python.getCondaEnvironmentInfo", function(pythonPath)
