@@ -635,12 +635,6 @@
             "title": "Source with echo by default",
             "description": "Whether to echo R code when sourcing it."
         },
-        "new_project_git_init": {
-            "type": "boolean",
-            "default": false,
-            "title": "Initialize new projects with Git",
-            "description": "Whether to initialize new projects with a Git repo by default."
-        },
         "default_sweave_engine": {
             "type": "string",
             "default": "Sweave",
@@ -1059,6 +1053,12 @@
             "default": false,
             "title": "Create a Git repo in new projects",
             "description": "Whether a git repo should be initialized inside new projects by default."
+        },
+        "new_proj_use_renv": {
+            "type": "boolean",
+            "default": false,
+            "title": "Create an renv environment in new projects",
+            "description": "Whether an renv environment should be created inside new projects by default."
         },
         "root_document": {
             "type": "string",
@@ -1512,7 +1512,7 @@
             "default": false
         },
         "python_project_environment_automatic_activate": {
-            "description": "When enabled, if the active project contains a Python virtual environment located within the project's .venv folder, then RStudio will automatically activate this environment on startup.",
+            "description": "When enabled, if the active project contains a Python virtual environment, then RStudio will automatically activate this environment on startup.",
             "title": "Automatically activate project Python environments",
             "type": "boolean",
             "default": true

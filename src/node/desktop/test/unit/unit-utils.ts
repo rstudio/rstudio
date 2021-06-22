@@ -1,5 +1,5 @@
 /*
- * SessionQuarto.hpp
+ * unit-utils.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -13,32 +13,26 @@
  *
  */
 
-#ifndef SESSION_QUARTO_HPP
-#define SESSION_QUARTO_HPP
-
-#include <shared_core/json/Json.hpp>
-
-namespace rstudio {
-namespace core {
-   class Error;
+/**
+ * save and clear specific env vars
+ */
+export function saveAndClear(vars: Record<string, string>): void {
+  for (const name in vars) {
+    vars[name] = process.env[name] ?? '';
+    delete process.env[name];
+  }
 }
+
+/**
+ * put back original env vars
+ */
+export function restore(vars: Record<string, string>): void {
+  for (const name in vars) {
+    if (vars[name]) {
+      process.env[name] = vars[name];
+      vars[name] = '';
+    } else {
+      delete process.env[name];
+    }
+  }
 }
-
-namespace rstudio {
-namespace session {
-namespace modules {
-namespace quarto {
-
-bool isInstalled(bool refresh = false);
-bool projectIsQuarto();
-
-core::json::Object quartoConfigJSON(bool refresh = false);
-
-core::Error initialize();
-   
-} // namespace quarto
-} // namespace modules
-} // namespace session
-} // namespace rstudio
-
-#endif

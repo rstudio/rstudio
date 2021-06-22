@@ -128,7 +128,6 @@
       }
    }
    
-   # nothing found
    ""
 })
 

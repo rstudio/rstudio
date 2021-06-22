@@ -15,6 +15,8 @@
 
 #include "SessionQuarto.hpp"
 
+#include <yaml-cpp/yaml.h>
+
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
 
@@ -230,18 +232,8 @@ bool isQuartoWebsiteDoc(const core::FilePath& filePath)
       }
       if (extendedType == kQuartoXt)
       {
-         FilePath configFile = quartoProjectConfigFile(filePath);
-         if (configFile.isEmpty())
-            return false;
-         std::string config;
-         Error error = core::readStringFromFile(configFile, &config);
-         if (error)
-         {
-            LOG_ERROR(error);
-            return false;
-         }
-         static const boost::regex reSite("\\s{2,}type:\\s+(site|book)");
-         return regex_utils::search(config.begin(), config.end(), reSite);
+         auto config = quartoConfig();
+         return (config.project_type == "site" || config.project_type == "book");
       }
       else
       {
@@ -253,6 +245,66 @@ bool isQuartoWebsiteDoc(const core::FilePath& filePath)
       return false;
    }
 
+}
+
+QuartoConfig quartoConfig(bool refresh)
+{
+   static module_context::QuartoConfig s_quartoConfig;
+
+   if (refresh || s_quartoConfig.empty)
+   {
+      s_quartoConfig = QuartoConfig();
+      s_quartoConfig.installed = modules::quarto::isInstalled(true);
+      using namespace session::projects;
+      const ProjectContext& context = projectContext();
+      if (context.hasProject())
+      {
+         FilePath configFile = quartoConfigFilePath(context.directory());
+         if (configFile.exists())
+         {
+            // confirm that it's a project
+            s_quartoConfig.is_project = true;
+
+            // read the config
+            std::string config;
+            Error error = core::readStringFromFile(configFile, &config);
+            if (!error)
+            {
+               try
+               {
+                  YAML::Node node = YAML::Load(config);
+                  for (auto it = node.begin(); it != node.end(); ++it)
+                  {
+                     std::string key = it->first.as<std::string>();
+                     if (key == "project" && it->second.Type() == YAML::NodeType::Map)
+                     {
+                        for (auto projIt = it->second.begin(); projIt != it->second.end(); ++projIt)
+                        {
+                           if (projIt->second.Type() == YAML::NodeType::Scalar)
+                           {
+                              std::string projKey = projIt->first.as<std::string>();
+                              std::string projValue = projIt->second.Scalar();
+                              if (projKey == "type")
+                                 s_quartoConfig.project_type = projValue;
+                              else if (projKey == "output-dir")
+                                 s_quartoConfig.project_output_dir = projValue;
+                           }
+                        }
+                        // got the project config so break
+                        break;
+                     }
+                  }
+               }
+               CATCH_UNEXPECTED_EXCEPTION;
+            }
+            else
+            {
+               LOG_ERROR(error);
+            }
+         }
+      }
+   }
+   return s_quartoConfig;
 }
 
 
@@ -271,13 +323,18 @@ bool isInstalled(bool refresh)
    return !s_quartoPath.isEmpty();
 }
 
-json::Object quartoConfig(bool refresh)
-{
-   json::Object jsonConfig;
-   jsonConfig["installed"] = isInstalled(refresh);
-   return jsonConfig;
-}
 
+
+json::Object quartoConfigJSON(bool refresh)
+{
+   module_context::QuartoConfig config = module_context::quartoConfig(refresh);
+   json::Object quartoConfigJSON;
+   quartoConfigJSON["installed"] = config.installed;
+   quartoConfigJSON["is_project"] = config.is_project;
+   quartoConfigJSON["project_type"] = config.project_type;
+   quartoConfigJSON["project_output_dir"] = config.project_output_dir;
+   return quartoConfigJSON;
+}
 
 bool projectIsQuarto()
 {

@@ -1,5 +1,5 @@
 /*
- * SessionQuarto.hpp
+ * pending-window.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -13,32 +13,19 @@
  *
  */
 
-#ifndef SESSION_QUARTO_HPP
-#define SESSION_QUARTO_HPP
+export class PendingWindow {
+  isSatellite = true;
+  allowExternalNavigate = false; // for RDP
+  showToolbar = false;
 
-#include <shared_core/json/Json.hpp>
+  constructor(public name: string,
+              public x: number,
+              public y: number,
+              public width: number,
+              public height: number) {
+  }
 
-namespace rstudio {
-namespace core {
-   class Error;
+  get isEmpty(): boolean {
+    return !this.name;
+  }
 }
-}
-
-namespace rstudio {
-namespace session {
-namespace modules {
-namespace quarto {
-
-bool isInstalled(bool refresh = false);
-bool projectIsQuarto();
-
-core::json::Object quartoConfigJSON(bool refresh = false);
-
-core::Error initialize();
-   
-} // namespace quarto
-} // namespace modules
-} // namespace session
-} // namespace rstudio
-
-#endif

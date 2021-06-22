@@ -1,5 +1,5 @@
 /*
- * SessionQuarto.hpp
+ * application-launch.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -13,32 +13,13 @@
  *
  */
 
-#ifndef SESSION_QUARTO_HPP
-#define SESSION_QUARTO_HPP
-
-#include <shared_core/json/Json.hpp>
-
-namespace rstudio {
-namespace core {
-   class Error;
+/**
+ * Not clear yet if we'll need this class from the Qt implementation, but keeping
+ * it for now. If it ends up being useful, probably need to create an interface
+ * describing behavior (for easier unit testing).
+ */
+export class ApplicationLaunch {
+  static init(): ApplicationLaunch {
+    return new ApplicationLaunch();
+  }
 }
-}
-
-namespace rstudio {
-namespace session {
-namespace modules {
-namespace quarto {
-
-bool isInstalled(bool refresh = false);
-bool projectIsQuarto();
-
-core::json::Object quartoConfigJSON(bool refresh = false);
-
-core::Error initialize();
-   
-} // namespace quarto
-} // namespace modules
-} // namespace session
-} // namespace rstudio
-
-#endif

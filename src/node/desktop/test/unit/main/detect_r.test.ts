@@ -1,5 +1,5 @@
 /*
- * SessionQuarto.hpp
+ * detect_r.test.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -13,32 +13,20 @@
  *
  */
 
-#ifndef SESSION_QUARTO_HPP
-#define SESSION_QUARTO_HPP
+import { describe } from 'mocha';
 
-#include <shared_core/json/Json.hpp>
+import { saveAndClear, restore } from '../unit-utils';
 
-namespace rstudio {
-namespace core {
-   class Error;
-}
-}
+describe('detect_r', () => {
+  const vars: Record<string, string> = {
+    RSTUDIO_WHICH_R: ''
+  };
+ 
+  beforeEach(() => {
+    saveAndClear(vars);
+  });
 
-namespace rstudio {
-namespace session {
-namespace modules {
-namespace quarto {
-
-bool isInstalled(bool refresh = false);
-bool projectIsQuarto();
-
-core::json::Object quartoConfigJSON(bool refresh = false);
-
-core::Error initialize();
-   
-} // namespace quarto
-} // namespace modules
-} // namespace session
-} // namespace rstudio
-
-#endif
+  afterEach(() => {
+    restore(vars);
+  });
+});

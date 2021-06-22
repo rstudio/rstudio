@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.shiny.model;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsObject;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -77,4 +78,14 @@ public class ShinyApplicationParams extends JavaScriptObject
    public final native void setViewerType(String viewerType) /*-{
       this.viewer = viewerType;
    }-*/;
+
+   public final boolean isBackgroundApp()
+   {
+      return !isForegroundApp();
+   }
+
+   public final boolean isForegroundApp()
+   {
+      return StringUtil.equals(getId(), ID_FOREGROUND);
+   }
 }

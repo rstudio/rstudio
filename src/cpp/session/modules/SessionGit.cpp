@@ -2992,6 +2992,7 @@ Error addFilesToGitIgnore(const FilePath& gitIgnoreFile,
    return Success();
 }
 
+
 Error augmentGitIgnore(const FilePath& gitIgnoreFile)
 {
    // Add stuff to .gitignore

@@ -55,3 +55,21 @@ export function expandEnvVars(environment: Environment, str: string): string {
   }
   return result;
 }
+
+/**
+ * Apply Environment to current process environment
+ * 
+ * @param vars Environment to set
+ */
+export function setVars(vars: Environment): void {
+  for (const name in vars) {
+    setenv(name, vars[name]);
+  } 
+}
+
+export function logEnvVar(name: string): void {
+  const value = getenv(name);
+  if (value) {
+    console.log(` . ${name} = ${value}`);
+  }
+}
