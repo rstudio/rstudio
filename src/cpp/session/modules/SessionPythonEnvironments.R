@@ -113,8 +113,15 @@
       c("Scripts/python.exe", "python.exe")
    else
       c("bin/python", "bin/python3")
-      
-   for (envName in c("env", ".venv", ".virtualenv", ".condaenv"))
+   
+   # look within all top-level directories for an environment
+   envNames <- list.dirs(
+      path = projectDir,
+      full.names = TRUE,
+      recursive = FALSE
+   )
+   
+   for (envName in envNames)
    {
       envPath <- file.path(projectDir, envName)
       if (!file.exists(envPath))
