@@ -350,8 +350,8 @@ bool projectIsQuarto()
 
 Error initialize()
 {
-   // update status at startup
-   isInstalled(true);
+   // initialize config at startup
+   module_context::quartoConfig(true);
 
    module_context::events().onDetectSourceExtendedType
                                         .connect(onDetectQuartoSourceType);
