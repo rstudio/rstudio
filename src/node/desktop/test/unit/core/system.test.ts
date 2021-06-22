@@ -16,24 +16,28 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 
-import { generateShortenedUuid, generateUuid } from '../../../src/core/system';
+import { generateRandomPort, generateShortenedUuid, generateUuid } from '../../../src/core/system';
 
 describe('System', () => {
-  describe('uuid generation', () => {
-    it('generateUuid returns uuid string with dashes', () => {
-      const uuid = generateUuid();
-      assert(uuid.indexOf('-') >= 0);
-    });
-    it('generateUuid returns uuid string without dashes', () => {
-      const uuid = generateUuid(false);
-      assert(uuid.length > 0);
-      assert(uuid.indexOf('-') < 0);
-    });
+  it('generateUuid returns uuid string with dashes', () => {
+    const uuid = generateUuid();
+    assert.isTrue(uuid.indexOf('-') >= 0);
   });
-  describe('hash functions', () => {
+  it('generateUuid returns uuid string without dashes', () => {
+    const uuid = generateUuid(false);
+    assert.isTrue(uuid.length > 0);
+    assert.isTrue(uuid.indexOf('-') < 0);
+  });
+  it('generateShortenedUuid returns character string', () => {
     const crc32 = generateShortenedUuid();
-    assert(crc32.length === 8);
-    assert(crc32.indexOf('-') < 0);
+    assert.isNotEmpty(crc32);
+    assert.isTrue(crc32.indexOf('-') < 0);
+  });
+  it('generateRandomPort returns random positive number', () => {
+    const port1 = generateRandomPort();
+    const port2 = generateRandomPort();
+    assert.notEqual(port1, port2);
+    assert.isAbove(port1, 0);
+    assert.isAbove(port2, 0);
   });
 });
- 

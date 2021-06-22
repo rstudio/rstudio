@@ -17,7 +17,7 @@ import { app, dialog } from 'electron';
 import { spawn, ChildProcess } from 'child_process';
 
 import { FilePath } from '../core/file-path';
-import { generateShortenedUuid } from '../core/system';
+import { generateShortenedUuid, localPeer } from '../core/system';
 import { Err } from '../core/err';
 import { getenv, logEnvVar, setenv } from '../core/environment';
 
@@ -28,12 +28,18 @@ import { EXIT_FAILURE } from './program-status';
 import { MainWindow } from './main-window';
 import { PendingQuit } from './desktop-callback';
 
+export interface LaunchContext {
+  host: string;
+  port: number;
+  url: string;
+  argList: string[]
+}
+ 
 export class SessionLauncher {
   host = '127.0.0.1';
-  private port?: string;
-  private launcherToken?: string;
   sessionProcess?: ChildProcess;
   mainWindow?: MainWindow;
+  static launcherToken = generateShortenedUuid();
 
   constructor(
     private sessionPath: FilePath,
@@ -131,6 +137,11 @@ export class SessionLauncher {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   launchNextSession(reload: boolean): Err {
+
+    // build a new launch context -- re-use the same port if we aren't reloading
+    /* const launchContext = */ this.buildLaunchContext(!reload);
+
+    // TODO: nyi
     return Error('launchNextSession NYI');
   }
 
@@ -171,17 +182,27 @@ export class SessionLauncher {
     }
   }
 
-  buildLaunchContext(): { host: string, port: string, url: string, argList: string[] } {
-    const port = this.newPortNumber();
+  buildLaunchContext(reusePort = true): LaunchContext {
+    if (!reusePort) {
+      appState().generateNewPort();
+    }
+
+    // recalculate the local peer and set RS_LOCAL_PEER so that
+    // rsession and it's children can use it
+    if (process.platform === 'win32') {
+      setenv('RS_LOCAL_PEER', localPeer(appState().port));
+    }
+
+    const portStr = appState().port.toString();
     return {
       host: this.host,
-      port: port,
-      url: `http://${this.host}:${port}`,
+      port: appState().port,
+      url: `http://${this.host}:${portStr}`,
       argList: [
         '--config-file', this.confPath.getAbsolutePath(),
         '--program-mode', 'desktop',
-        '--www-port', port,
-        '--launcher-token', this.getLauncherToken(),
+        '--www-port', portStr,
+        '--launcher-token', SessionLauncher.launcherToken
       ],
     };
   }
@@ -192,35 +213,5 @@ export class SessionLauncher {
 
   closeAllSatellites(): void {
     console.log('CloseAllSatellites not implemented');
-  }
-
-  getLauncherToken(): string {
-    if (!this.launcherToken) {
-      this.launcherToken = generateShortenedUuid();
-    }
-    return this.launcherToken;
-  }
-
-  getPort(): string {
-    if (!this.port) {
-      // Use a random-ish port number to avoid collisions between different
-      // instances of rdesktop-launched rsessions; not a cryptographically
-      // secure technique so don't copy/paste for such purposes.
-      const base = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
-      this.port = ((base % 40000) + 8080).toString();
-
-      // recalculate the local peer and set RS_LOCAL_PEER so that
-      // rsession and it's children can use it
-      if (process.platform === 'win32') {
-        const localPeer = '\\\\.\\pipe\\' + this.port + '-rsession';
-        setenv('RS_LOCAL_PEER', localPeer);
-      }
-    }
-    return this.port;
-  }
-
-  newPortNumber(): string {
-    this.port = '';
-    return this.getPort();
   }
 }

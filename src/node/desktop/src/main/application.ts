@@ -17,6 +17,7 @@ import { app, dialog, BrowserWindow } from 'electron';
 
 import { getenv, setenv } from '../core/environment';
 import { FilePath } from '../core/file-path';
+import { generateRandomPort } from '../core/system';
 
 import { getRStudioVersion } from './product-info';
 import { findComponents, initializeSharedSecret } from './utils';
@@ -45,6 +46,7 @@ export class Application implements AppState {
   scriptsPath?: FilePath;
   sessionPath?: FilePath;
   supportPath?: FilePath;
+  port = generateRandomPort();
 
   appLaunch?: ApplicationLaunch;
   sessionLauncher?: SessionLauncher;
@@ -160,5 +162,9 @@ export class Application implements AppState {
       this.activationInst = new DesktopActivation();
     }
     return this.activationInst;
+  }
+
+  generateNewPort(): void {
+    this.port = generateRandomPort();
   }
 }

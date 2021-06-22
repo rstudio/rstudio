@@ -22,6 +22,8 @@ import { getenv } from '../../../src/core/environment';
 
 import { SessionLauncher } from '../../../src/main/session-launcher';
 import { ApplicationLaunch } from '../../../src/main/application-launch';
+import { Application } from '../../../src/main/application';
+import { appState, clearApplicationSingleton, setApplication } from '../../../src/main/app-state';
 
 function getNewLauncher(): SessionLauncher {
   return new SessionLauncher(new FilePath(), new FilePath(), new FilePath(), new ApplicationLaunch());
@@ -33,40 +35,44 @@ describe('session-launcher', () => {
   };
 
   beforeEach(() => {
+    clearApplicationSingleton();
+    setApplication(new Application());
     saveAndClear(saveVars);
   });
 
   afterEach(() => {
+    clearApplicationSingleton();
     restore(saveVars);
   });
 
   it('generates and stores launcher token', () => {
-    const launcher = getNewLauncher();
-    const token = launcher.getLauncherToken();
+    const token = SessionLauncher.launcherToken;
     assert.isNotEmpty(token);
-    assert.strictEqual(launcher.getLauncherToken(), token);
+    assert.strictEqual(SessionLauncher.launcherToken, token);
   });
-  it('generates and stores port', () => {
+  it('buildLaunchContext sets RS_LOCAL_PEER on Win32', () => {
     const launcher = getNewLauncher();
-    const port = launcher.getPort();
-    assert.isNotEmpty(port);
-    assert.strictEqual(launcher.getPort(), port);
-  });
-  it('generates new port', () => {
-    const launcher = getNewLauncher();
-    const origPort = launcher.getPort();
-    const newPort = launcher.newPortNumber();
-    assert.notStrictEqual(origPort, newPort);
-  });
-  it('sets RS_LOCAL_PEER on Win32', () => {
-    const launcher = getNewLauncher();
-    const port = launcher.getPort();
+    launcher.buildLaunchContext();
     const localPeer = getenv('RS_LOCAL_PEER');
     if (process.platform === 'win32') {
       assert.isNotEmpty(localPeer);
-      assert.isAbove(-1, localPeer.indexOf(port));
+      assert.isAbove(-1, localPeer.indexOf(appState().port.toString()));
     } else {
       assert.isEmpty(localPeer);
     }
+  });
+  it('buildLaunchContext reuses same port', () => {
+    const launcher = getNewLauncher();
+    const origPort = appState().port;
+    launcher.buildLaunchContext(true);
+    const newPort = appState().port;
+    assert.equal(origPort, newPort);
+  });
+  it('buildLaunchContext triggers new port number', () => {
+    const launcher = getNewLauncher();
+    const origPort = appState().port;
+    launcher.buildLaunchContext(false);
+    const newPort = appState().port;
+    assert.notEqual(origPort, newPort);
   });
 });

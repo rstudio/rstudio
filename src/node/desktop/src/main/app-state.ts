@@ -30,6 +30,8 @@ export interface AppState {
   scriptsPath?: FilePath;
   supportingFilePath(): FilePath;
   activation(): DesktopActivation;
+  port: number;
+  generateNewPort(): void;
 }
 
 let rstudio: Application | null = null;
