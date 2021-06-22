@@ -1054,6 +1054,12 @@
             "title": "Create a Git repo in new projects",
             "description": "Whether a git repo should be initialized inside new projects by default."
         },
+        "new_proj_use_renv": {
+            "type": "boolean",
+            "default": false,
+            "title": "Create an renv environment in new projects",
+            "description": "Whether an renv environment should be created inside new projects by default."
+        },
         "root_document": {
             "type": "string",
             "default": "",

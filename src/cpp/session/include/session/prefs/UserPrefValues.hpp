@@ -281,6 +281,7 @@ namespace prefs {
 #define kGitDiffIgnoreWhitespace "git_diff_ignore_whitespace"
 #define kConsoleDoubleClickSelect "console_double_click_select"
 #define kNewProjGitInit "new_proj_git_init"
+#define kNewProjUseRenv "new_proj_use_renv"
 #define kRootDocument "root_document"
 #define kShowUserHomePage "show_user_home_page"
 #define kShowUserHomePageAlways "always"
@@ -1316,6 +1317,12 @@ public:
     */
    bool newProjGitInit();
    core::Error setNewProjGitInit(bool val);
+
+   /**
+    * Whether an renv environment should be created inside new projects by default.
+    */
+   bool newProjUseRenv();
+   core::Error setNewProjUseRenv(bool val);
 
    /**
     * The root document to use when compiling PDF documents.

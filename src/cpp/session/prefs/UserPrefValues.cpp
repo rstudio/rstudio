@@ -2026,6 +2026,19 @@ core::Error UserPrefValues::setNewProjGitInit(bool val)
 }
 
 /**
+ * Whether an renv environment should be created inside new projects by default.
+ */
+bool UserPrefValues::newProjUseRenv()
+{
+   return readPref<bool>("new_proj_use_renv");
+}
+
+core::Error UserPrefValues::setNewProjUseRenv(bool val)
+{
+   return writePref("new_proj_use_renv", val);
+}
+
+/**
  * The root document to use when compiling PDF documents.
  */
 std::string UserPrefValues::rootDocument()
@@ -3066,6 +3079,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kGitDiffIgnoreWhitespace,
       kConsoleDoubleClickSelect,
       kNewProjGitInit,
+      kNewProjUseRenv,
       kRootDocument,
       kShowUserHomePage,
       kReuseSessionsForProjectLinks,

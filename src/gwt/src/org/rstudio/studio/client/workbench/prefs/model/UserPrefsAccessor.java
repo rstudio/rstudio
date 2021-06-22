@@ -2212,6 +2212,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether an renv environment should be created inside new projects by default.
+    */
+   public PrefValue<Boolean> newProjUseRenv()
+   {
+      return bool(
+         "new_proj_use_renv",
+         "Create an renv environment in new projects", 
+         "Whether an renv environment should be created inside new projects by default.", 
+         false);
+   }
+
+   /**
     * The root document to use when compiling PDF documents.
     */
    public PrefValue<String> rootDocument()
@@ -3457,6 +3469,8 @@ public class UserPrefsAccessor extends Prefs
          consoleDoubleClickSelect().setValue(layer, source.getBool("console_double_click_select"));
       if (source.hasKey("new_proj_git_init"))
          newProjGitInit().setValue(layer, source.getBool("new_proj_git_init"));
+      if (source.hasKey("new_proj_use_renv"))
+         newProjUseRenv().setValue(layer, source.getBool("new_proj_use_renv"));
       if (source.hasKey("root_document"))
          rootDocument().setValue(layer, source.getString("root_document"));
       if (source.hasKey("show_user_home_page"))
@@ -3751,6 +3765,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(gitDiffIgnoreWhitespace());
       prefs.add(consoleDoubleClickSelect());
       prefs.add(newProjGitInit());
+      prefs.add(newProjUseRenv());
       prefs.add(rootDocument());
       prefs.add(showUserHomePage());
       prefs.add(reuseSessionsForProjectLinks());
