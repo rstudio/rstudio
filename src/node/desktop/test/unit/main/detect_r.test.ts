@@ -14,7 +14,7 @@
  */
 
 import { describe } from 'mocha';
-import { assert } from 'chai';
+
 import { saveAndClear, restore } from '../unit-utils';
 
 describe('detect_r', () => {
