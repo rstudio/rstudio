@@ -486,6 +486,15 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    }
 })
 
+.rs.addFunction("canonicalizePath", function(path, winslash = "/")
+{
+   file.path(
+      normalizePath(dirname(path), winslash = winslash, mustWork = FALSE),
+      basename(path),
+      fsep = winslash
+   )
+})
+
 # alias for normalizePath function
 .rs.addFunction("normalizePath", normalizePath)
 
@@ -1215,6 +1224,13 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
       action   = "append"
    )
       
+})
+
+.rs.addFunction("prependToPath", function(entry)
+{
+   oldPath <- Sys.getenv("PATH")
+   newPath <- paste(normalizePath(entry), oldPath, sep = .Platform$path.sep)
+   Sys.setenv(PATH = newPath)
 })
 
 .rs.addFunction("initTools", function()

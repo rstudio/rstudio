@@ -317,7 +317,9 @@ bool isInstalled(bool refresh)
 {
    if (refresh)
    {
-      s_quartoPath = module_context::findProgram("quarto");
+      Error error = core::system::findProgramOnPath("quarto", &s_quartoPath);
+      if (error)
+         LOG_ERROR(error);
    }
 
    return !s_quartoPath.isEmpty();
