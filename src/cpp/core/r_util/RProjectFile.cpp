@@ -52,6 +52,7 @@ const char * const kBuildTypePackage = "Package";
 const char * const kBuildTypeMakefile = "Makefile";
 const char * const kBuildTypeWebsite = "Website";
 const char * const kBuildTypeCustom = "Custom";
+const char * const kBuildTypeQuarto = "Quarto";
 
 const char * const kMarkdownWrapUseDefault = "Default";
 const char * const kMarkdownWrapNone = "None";

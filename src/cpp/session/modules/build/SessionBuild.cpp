@@ -363,6 +363,12 @@ private:
          options.workingDir = buildTargetPath.getParent();
          executeCustomBuild(type, buildTargetPath, options, cb);
       }
+      else if (module_context::quartoConfig().is_project)
+      {
+         options.environment = environment;
+         options.workingDir = projects::projectContext().directory();
+         executeQuartoBuild(options, cb);
+      }
       else
       {
          terminateWithError("Unrecognized build type: " + config.buildType);
@@ -1465,6 +1471,14 @@ private:
                            shell_utils::ShellCommand(customScriptPath),
                            options,
                            cb);
+   }
+
+   void executeQuartoBuild(const core::system::ProcessOptions& options,
+                           const core::system::ProcessCallbacks& cb)
+   {
+       auto cmd = shell_utils::ShellCommand("quarto");
+       cmd << "render";
+       module_context::processSupervisor().runCommand(cmd, options,cb);
    }
 
 
