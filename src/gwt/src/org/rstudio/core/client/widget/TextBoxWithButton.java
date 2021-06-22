@@ -17,8 +17,6 @@ package org.rstudio.core.client.widget;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -188,6 +186,10 @@ public class TextBoxWithButton extends Composite
       {
          textBox_.setText(text);
       }
+      else if (useNativePlaceholder_)
+      {
+         textBox_.setText("");
+      }
       else
       {
          textBox_.setText(emptyLabel_);
@@ -201,7 +203,9 @@ public class TextBoxWithButton extends Composite
       String text = textBox_.getText();
       
       if (StringUtil.equals(text, emptyLabel_))
+      {
          return "";
+      }
       
       if (text.startsWith(USE_DEFAULT_PREFIX))
       {
@@ -258,48 +262,12 @@ public class TextBoxWithButton extends Composite
       textBox_.setFocus(false);
    }
    
-   public void autosize()
+   public void useNativePlaceholder()
    {
-      textBox_.addKeyDownHandler((KeyDownEvent event) ->
-      {
-         updateFontSize();
-      });
-      
-      textBox_.addKeyUpHandler((KeyUpEvent event) ->
-      {
-         updateFontSize();
-      });
-      
-      textBox_.addValueChangeHandler((ValueChangeEvent<String> event) ->
-      {
-         updateFontSize();
-      });
-      
-      updateFontSize();
-   }
-
-   private void updateFontSize()
-   {
-      String value = textBox_.getText();
-
-      double fontSize = -1;
-      if (value.length() > 60)
-      {
-         fontSize = 7;
-      }
-      else if (value.length() > 40)
-      {
-         fontSize = 7.5;
-      }
-      else
-      {
-         fontSize = 8;
-      }
-
-      textBox_.getElement().getStyle().setFontSize(fontSize, Unit.PT);
+      useNativePlaceholder_ = true;
+      textBox_.getElement().setAttribute("placeholder", emptyLabel_);
    }
    
-
    @Override
    protected void onAttach()
    {
@@ -327,6 +295,7 @@ public class TextBoxWithButton extends Composite
    private final String emptyLabel_;
    private String useDefaultValue_;
    private String uniqueId_;
+   private boolean useNativePlaceholder_;
    
    private static final String USE_DEFAULT_PREFIX = "[Use Default]";
 }
