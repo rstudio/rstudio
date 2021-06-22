@@ -17,9 +17,6 @@ import { describe } from 'mocha';
 import { assert } from 'chai';
 import { saveAndClear, restore } from '../unit-utils';
 
-import { scanForR } from '../../../src/main/detect_r';
-import { FilePath } from '../../../src/core/file-path';
-
 describe('detect_r', () => {
   const vars: Record<string, string> = {
     RSTUDIO_WHICH_R: ''
@@ -31,11 +28,5 @@ describe('detect_r', () => {
 
   afterEach(() => {
     restore(vars);
-  });
-
-  it('scanForR uses RSTUDIO_WHICH_R', async () => {
-    const rstudioWhichR = new FilePath('/usr/local/R');
-    const result = await scanForR(rstudioWhichR);
-    assert.equal(result, rstudioWhichR);
   });
 });
