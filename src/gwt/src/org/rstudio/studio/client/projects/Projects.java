@@ -389,8 +389,9 @@ public class Projects implements OpenProjectFileEvent.Handler,
 
             // update default project location pref if necessary
             if ((newProject.getNewDefaultProjectLocation() != null) ||
-                (newProject.getCreateGitRepo() !=
-                 userPrefs.newProjGitInit().getValue()))
+                (newProject.getCreateGitRepo() != userPrefs.newProjGitInit().getValue()) ||
+                (newProject.getUseRenv() != userPrefs.newProjUseRenv().getValue()))
+
             {
                indicator.onProgress("Saving defaults...");
 
@@ -405,6 +406,13 @@ public class Projects implements OpenProjectFileEvent.Handler,
                {
                   userPrefs.newProjGitInit().setGlobalValue(
                                           newProject.getCreateGitRepo());
+               }
+
+               if (newProject.getUseRenv() !=
+                  userPrefs.newProjUseRenv().getValue())
+               {
+                  userPrefs.newProjUseRenv().setGlobalValue(
+                     newProject.getUseRenv());
                }
 
                // call the server -- in all cases continue on with
