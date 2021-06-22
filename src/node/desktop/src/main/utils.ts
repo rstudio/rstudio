@@ -20,6 +20,7 @@ import { app } from 'electron';
 import { Xdg } from '../core/xdg';
 import { getenv, setenv } from '../core/environment';
 import { FilePath } from '../core/file-path';
+
 import { getRStudioVersion } from './product-info';
 
 export function initializeSharedSecret(): void {

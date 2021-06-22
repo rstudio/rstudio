@@ -14,6 +14,7 @@
  */
 import { ipcMain, Menu, MenuItem } from 'electron';
 import { MenuItemConstructorOptions } from 'electron/main';
+
 import { MainWindow } from './main-window';
 
 export class MenuCallback {
