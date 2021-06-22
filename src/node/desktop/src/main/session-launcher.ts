@@ -13,23 +13,25 @@
  *
  */
 
+import { app, dialog } from 'electron';
 import { spawn, ChildProcess } from 'child_process';
 
 import { FilePath } from '../core/file-path';
-import { ApplicationLaunch } from './application-launch';
+import { generateShortenedUuid } from '../core/system';
 import { Err } from '../core/err';
+import { getenv, logEnvVar, setenv } from '../core/environment';
+
+import { ApplicationLaunch } from './application-launch';
 import { appState } from './app-state';
 import { ActivationEvents } from './activation-overlay';
-import { app, dialog } from 'electron';
 import { EXIT_FAILURE } from './program-status';
-import { getenv, logEnvVar, setenv } from '../core/environment';
 import { MainWindow } from './main-window';
 import { PendingQuit } from './desktop-callback';
 
 export class SessionLauncher {
-  host = '';
-  port = '40810'; // TODO: see DesktopOptions.cpp portNumber() for how to randomly generate
-  launcherToken = '7F83A8BD'; // TODO: generate short uuid
+  host = '127.0.0.1';
+  private port?: string;
+  private launcherToken?: string;
   sessionProcess?: ChildProcess;
   mainWindow?: MainWindow;
 
@@ -169,17 +171,17 @@ export class SessionLauncher {
     }
   }
 
-  buildLaunchContext(): {host: string, port: string, url: string, argList: string[]} {
-    this.host = '127.0.0.1';
+  buildLaunchContext(): { host: string, port: string, url: string, argList: string[] } {
+    const port = this.newPortNumber();
     return {
       host: this.host,
-      port: `${this.port}`,
-      url: `http://${this.host}:${this.port}`,
+      port: port,
+      url: `http://${this.host}:${port}`,
       argList: [
         '--config-file', this.confPath.getAbsolutePath(),
         '--program-mode', 'desktop',
-        '--www-port', this.port,
-        '--launcher-token', this.launcherToken,
+        '--www-port', port,
+        '--launcher-token', this.getLauncherToken(),
       ],
     };
   }
@@ -190,5 +192,35 @@ export class SessionLauncher {
 
   closeAllSatellites(): void {
     console.log('CloseAllSatellites not implemented');
+  }
+
+  getLauncherToken(): string {
+    if (!this.launcherToken) {
+      this.launcherToken = generateShortenedUuid();
+    }
+    return this.launcherToken;
+  }
+
+  getPort(): string {
+    if (!this.port) {
+      // Use a random-ish port number to avoid collisions between different
+      // instances of rdesktop-launched rsessions; not a cryptographically
+      // secure technique so don't copy/paste for such purposes.
+      const base = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
+      this.port = ((base % 40000) + 8080).toString();
+
+      // recalculate the local peer and set RS_LOCAL_PEER so that
+      // rsession and it's children can use it
+      if (process.platform === 'win32') {
+        const localPeer = '\\\\.\\pipe\\' + this.port + '-rsession';
+        setenv('RS_LOCAL_PEER', localPeer);
+      }
+    }
+    return this.port;
+  }
+
+  newPortNumber(): string {
+    this.port = '';
+    return this.getPort();
   }
 }

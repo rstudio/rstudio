@@ -16,8 +16,8 @@
 import { BrowserWindow } from 'electron';
 
 import { FilePath } from '../core/file-path';
-import { DesktopActivation } from './activation-overlay';
 
+import { DesktopActivation } from './activation-overlay';
 import { Application } from './application';
 
 /**
