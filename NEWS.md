@@ -42,6 +42,7 @@
 * High DPI ("Retina") plots are now supported on RStudio Server (#3896)
 * The "auto-detect indentation" preference is now off by default (#9211) 
 * Prevent user preferences from setting CRAN repos when `allow-cran-repos-edit=0` (Pro #1301)
+* Make the *Use renv with this project* option sticky, and allow setting by admins (Pro #2671)
 * Updated embedded nginx in Server Pro to 1.20.1 (Pro #2676)
 * **BREAKING:** RStudio Desktop Pro only supports activation with license files (Pro #2300)
 * Added AWS Cognito support to openid integration (Pro #2313)
