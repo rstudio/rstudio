@@ -118,7 +118,7 @@ private:
       // hit onCompleted (becuase our status won't be "running"). if we passed shared_from_this
       // then we'd be keeping this object around forever (because jobs are never discarded).
       jobActions.push_back(std::make_pair("stop", boost::bind(&QuartoServe::stop, this)));
-      pJob_ = addJob("quarto serve", "", "", 0, false, JobRunning, JobTypeSession, false, R_NilValue, jobActions, true, {});
+      pJob_ = addJob("quarto serve", "", "", 0, JobRunning, JobTypeSession, false, R_NilValue, jobActions, true, {});
       pJob_->addOutput("\n", true);
 
       // return success

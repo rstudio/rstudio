@@ -52,7 +52,7 @@ void AsyncRJob::registerJob()
       LOG_ERROR(error);
 
    // add the job -- currently idle until we get some content from it
-   job_ = addJob(name_, "", "", 0, true, JobIdle, JobTypeSession, false, actions, JobActions(), true, {});
+   job_ = addJob(name_, "", "", 0, JobIdle, JobTypeSession, false, actions, JobActions(), true, {});
 }
 
 void AsyncRJob::onStderr(const std::string& output)

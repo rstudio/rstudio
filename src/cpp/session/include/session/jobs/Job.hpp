@@ -65,7 +65,6 @@ public:
        const std::string& group,
        int progress, 
        int max,
-       bool hasProgress,
        JobState state,
        JobType type,
        const std::string& cluster,
@@ -93,9 +92,6 @@ public:
 
    // the total number of progress units
    int max() const;
-
-   // does progress even apply to this job type?
-   bool hasProgress() const;
 
    // the current state of the job
    JobState state() const;
@@ -172,7 +168,6 @@ private:
 
    int progress_;
    int max_;
-   bool hasProgress_;
 
    time_t recorded_;   // when the job was added
    time_t started_;    // when the job began executing

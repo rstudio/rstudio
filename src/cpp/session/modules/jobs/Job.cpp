@@ -29,7 +29,6 @@
 #define kJobStatus      "status"
 #define kJobProgress    "progress"
 #define kJobMax         "max"
-#define kJobHasProgress "has_progress"
 #define kJobState       "state"
 #define kJobType        "type"
 #define kJobCluster     "cluster"
@@ -63,7 +62,6 @@ Job::Job(const std::string& id,
          const std::string& group,
          int progress, 
          int max,
-         bool hasProgress,
          JobState state,
          JobType type,
          const std::string& cluster,
@@ -82,7 +80,6 @@ Job::Job(const std::string& id,
    cluster_(cluster),
    progress_(progress),
    max_(max),
-   hasProgress_(hasProgress),
    recorded_(recorded),
    started_(started),
    completed_(completed),
@@ -102,7 +99,6 @@ Job::Job():
    type_(JobTypeSession),
    progress_(0),
    max_(0),
-   hasProgress_(true),
    recorded_(::time(0)),
    started_(0),
    completed_(0),
@@ -181,11 +177,6 @@ int Job::max() const
     return max_;
 }
 
-bool Job::hasProgress() const
-{
-   return hasProgress_;
-}
-
 JobState Job::state() const
 {
     return state_;
@@ -218,7 +209,6 @@ json::Object Job::toJson() const
    job[kJobStatus]     = status_;
    job[kJobProgress]   = progress_;
    job[kJobMax]        = max_;
-   job[kJobHasProgress]= hasProgress_;
    job[kJobState]      = static_cast<int>(state_);
    job[kJobType]       = static_cast<int>(type_);
    job[kJobCluster]    = cluster_;
@@ -296,10 +286,6 @@ Error Job::fromJson(const json::Object& src, boost::shared_ptr<Job> *pJobOut)
       kJobTags,      pJob->tags_);
    if (error)
       return error;
-
-   // has progress added to schema later so tolerate it being missing
-   pJob->hasProgress_ = true;
-   json::readObject(src, kJobHasProgress, pJob->hasProgress_);
    
    error = json::readObject(src,
       kJobSaveOutput, pJob->saveOutput_,

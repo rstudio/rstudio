@@ -47,9 +47,6 @@ public class Job
    // the total number of progress units to be completed
    public int max;
    
-   // does this job logically support progress (e.g. a dev server wouldn't)
-   public boolean has_progress;
-   
    // the time the job was recorded in the system
    public int recorded;
    
