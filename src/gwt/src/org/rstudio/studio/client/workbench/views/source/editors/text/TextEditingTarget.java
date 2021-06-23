@@ -370,7 +370,7 @@ public class TextEditingTarget implements
             setRMarkdownBehaviorEnabled(newFileType_.isRmd());
 
             events_.fireEvent(new FileTypeChangedEvent());
-            if (!fileType_.canSourceOnSave() && docUpdateSentinel_.sourceOnSave())
+            if (!isSourceOnSaveEnabled() && docUpdateSentinel_.sourceOnSave())
             {
                view_.getSourceOnSave().setValue(false, true);
             }
@@ -3397,8 +3397,9 @@ public class TextEditingTarget implements
          ((getPath() == null) && docDisplay_.getCode().isEmpty()) ||
 
          // source on save is active
-         (fileType_.canSourceOnSave() && docUpdateSentinel_.sourceOnSave());
+         (isSourceOnSaveEnabled() && docUpdateSentinel_.sourceOnSave());
    }
+
 
    @Override
    public void forceSaveCommandActive()
@@ -4083,6 +4084,12 @@ public class TextEditingTarget implements
               }
             }
       );
+   }
+   
+   
+   private boolean isSourceOnSaveEnabled()
+   {
+      return fileType_.canSourceOnSave() || StringUtil.equals(extendedType_, SourceDocument.XT_QUARTO_DOCUMENT);
    }
 
    private boolean checkSelectionAndAlert(String refactoringName,
@@ -7459,7 +7466,7 @@ public class TextEditingTarget implements
                                              docDisplay_.getCursorPosition()));
 
             // check for source on save
-            if (fileType_.canSourceOnSave() && docUpdateSentinel_.sourceOnSave())
+            if (isSourceOnSaveEnabled() && docUpdateSentinel_.sourceOnSave())
             {
                if (fileType_.isRd())
                {
@@ -7478,6 +7485,11 @@ public class TextEditingTarget implements
                else if (fileType_.canPreviewFromR())
                {
                   previewFromR();
+               }
+               else if (extendedType_ == SourceDocument.XT_RMARKDOWN_DOCUMENT ||
+                        extendedType_ == SourceDocument.XT_QUARTO_DOCUMENT)
+               {
+                  renderRmd();
                }
                else
                {

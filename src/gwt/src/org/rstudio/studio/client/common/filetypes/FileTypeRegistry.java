@@ -101,7 +101,7 @@ public class FileTypeRegistry
 
    public static final RWebContentFileType RMARKDOWN =
          new RWebContentFileType("r_markdown", "R Markdown", EditorLanguage.LANG_RMARKDOWN,
-                              ".Rmd", new ImageResource2x(ICONS.iconRmarkdown2x()), true);
+                              ".Rmd", new ImageResource2x(ICONS.iconRmarkdown2x()), true, true, true);
 
    public static final RWebContentFileType RNOTEBOOK =
          new RWebContentFileType("r_notebook", "R Notebook", EditorLanguage.LANG_RMARKDOWN,
