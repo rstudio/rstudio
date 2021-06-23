@@ -214,7 +214,7 @@ public class JobManager implements JobRefreshEvent.Handler,
     */
    public static LocalJobProgress summarizeProgress(JobState state)
    {
-      boolean running = false;
+      boolean showProgress = false;
 
       // flatten job list to an array while looking for a running job
       ArrayList<Job> jobs = new ArrayList<>();
@@ -228,13 +228,13 @@ public class JobManager implements JobRefreshEvent.Handler,
          // push session jobs into array
          jobs.add(job);
 
-         // remember if we found a running job
-         if (job.state == JobConstants.STATE_RUNNING)
-            running = true;
+         // remember if we found a running job that has progress
+         if (job.state == JobConstants.STATE_RUNNING && job.max > 0)
+            showProgress = true;
       }
 
       // if we didn't find any running job, then we have no progress to report
-      if (!running)
+      if (!showProgress)
       {
          return null;
       }
