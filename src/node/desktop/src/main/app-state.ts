@@ -16,8 +16,8 @@
 import { BrowserWindow } from 'electron';
 
 import { FilePath } from '../core/file-path';
-import { DesktopActivation } from './activation-overlay';
 
+import { DesktopActivation } from './activation-overlay';
 import { Application } from './application';
 
 /**
@@ -30,6 +30,8 @@ export interface AppState {
   scriptsPath?: FilePath;
   supportingFilePath(): FilePath;
   activation(): DesktopActivation;
+  port: number;
+  generateNewPort(): void;
 }
 
 let rstudio: Application | null = null;

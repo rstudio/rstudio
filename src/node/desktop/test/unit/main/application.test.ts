@@ -29,4 +29,18 @@ describe('Application', () => {
       assert.isTrue(app.runDiagnostics);
     });
   });
+  describe('Assorted helpers', () => {
+    it('generates and stores port', () => {
+      const app = new Application();
+      const port = app.port;
+      assert.isAbove(port, 0);
+      assert.strictEqual(app.port, port);
+    });
+    it('generates new port', () => {
+      const app = new Application();
+      const origPort = app.port;
+      app.generateNewPort();
+      assert.notStrictEqual(origPort, app.port);
+    });
+  });
 });

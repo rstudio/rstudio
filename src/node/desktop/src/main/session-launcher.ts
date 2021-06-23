@@ -13,25 +13,33 @@
  *
  */
 
+import { app, dialog } from 'electron';
 import { spawn, ChildProcess } from 'child_process';
 
 import { FilePath } from '../core/file-path';
-import { ApplicationLaunch } from './application-launch';
+import { generateShortenedUuid, localPeer } from '../core/system';
 import { Err } from '../core/err';
+import { getenv, logEnvVar, setenv } from '../core/environment';
+
+import { ApplicationLaunch } from './application-launch';
 import { appState } from './app-state';
 import { ActivationEvents } from './activation-overlay';
-import { app, dialog } from 'electron';
 import { EXIT_FAILURE } from './program-status';
-import { getenv, logEnvVar, setenv } from '../core/environment';
 import { MainWindow } from './main-window';
 import { PendingQuit } from './desktop-callback';
 
+export interface LaunchContext {
+  host: string;
+  port: number;
+  url: string;
+  argList: string[]
+}
+ 
 export class SessionLauncher {
-  host = '';
-  port = '40810'; // TODO: see DesktopOptions.cpp portNumber() for how to randomly generate
-  launcherToken = '7F83A8BD'; // TODO: generate short uuid
+  host = '127.0.0.1';
   sessionProcess?: ChildProcess;
   mainWindow?: MainWindow;
+  static launcherToken = generateShortenedUuid();
 
   constructor(
     private sessionPath: FilePath,
@@ -129,6 +137,11 @@ export class SessionLauncher {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   launchNextSession(reload: boolean): Err {
+
+    // build a new launch context -- re-use the same port if we aren't reloading
+    /* const launchContext = */ this.buildLaunchContext(!reload);
+
+    // TODO: nyi
     return Error('launchNextSession NYI');
   }
 
@@ -169,17 +182,27 @@ export class SessionLauncher {
     }
   }
 
-  buildLaunchContext(): {host: string, port: string, url: string, argList: string[]} {
-    this.host = '127.0.0.1';
+  buildLaunchContext(reusePort = true): LaunchContext {
+    if (!reusePort) {
+      appState().generateNewPort();
+    }
+
+    // recalculate the local peer and set RS_LOCAL_PEER so that
+    // rsession and it's children can use it
+    if (process.platform === 'win32') {
+      setenv('RS_LOCAL_PEER', localPeer(appState().port));
+    }
+
+    const portStr = appState().port.toString();
     return {
       host: this.host,
-      port: `${this.port}`,
-      url: `http://${this.host}:${this.port}`,
+      port: appState().port,
+      url: `http://${this.host}:${portStr}`,
       argList: [
         '--config-file', this.confPath.getAbsolutePath(),
         '--program-mode', 'desktop',
-        '--www-port', this.port,
-        '--launcher-token', this.launcherToken,
+        '--www-port', portStr,
+        '--launcher-token', SessionLauncher.launcherToken
       ],
     };
   }

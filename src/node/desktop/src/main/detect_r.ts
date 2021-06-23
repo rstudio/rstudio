@@ -18,11 +18,11 @@ import { app, dialog } from 'electron';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { existsSync } from 'fs';
+import { assert } from 'console';
 
 import { appState } from './app-state';
 import { Environment, getenv, setVars } from '../core/environment';
 import { FilePath } from '../core/file-path';
-import { assert } from 'console';
 
 const asyncExec = promisify(exec);
 

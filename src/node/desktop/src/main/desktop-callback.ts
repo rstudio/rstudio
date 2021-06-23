@@ -18,10 +18,10 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 
 import { ipcMain, dialog, BrowserWindow } from 'electron';
+import { MessageBoxOptions, OpenDialogOptions } from 'electron/main';
 
 import { PendingWindow } from './pending-window';
 import { MainWindow } from './main-window';
-import { MessageBoxOptions, OpenDialogOptions } from 'electron/main';
 
 export const PendingQuit = {
   'PendingQuitNone': 0,

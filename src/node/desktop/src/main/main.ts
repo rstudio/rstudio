@@ -14,6 +14,7 @@
  */
 
 import { app, dialog } from 'electron';
+
 import { Application } from './application';
 import { setApplication } from './app-state';
 import { parseStatus } from './program-status';
