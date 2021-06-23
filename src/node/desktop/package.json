@@ -13,6 +13,7 @@
     "@types/crc": "^3.4.0",
     "@types/mocha": "^8.2.2",
     "@types/node": "^15.6.1",
+    "@types/sinon": "^10.0.2",
     "@types/uuid": "^8.3.0",
     "@typescript-eslint/eslint-plugin": "^4.25.0",
     "@typescript-eslint/parser": "^4.25.0",
@@ -27,6 +28,7 @@
     "eslint-plugin-promise": "^5.1.0",
     "mocha": "^8.4.0",
     "nyc": "^15.1.0",
+    "sinon": "^11.1.1",
     "ts-node": "^10.0.0",
     "typescript": "^4.3.2"
   },
