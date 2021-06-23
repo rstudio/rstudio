@@ -34,7 +34,7 @@ export interface AppState {
   generateNewPort(): void;
 }
 
-let rstudio: Application | null = null;
+let rstudio: AppState | null = null;
 
 /**
  * @returns Global application state
