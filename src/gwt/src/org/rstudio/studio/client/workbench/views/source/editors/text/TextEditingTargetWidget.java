@@ -825,7 +825,7 @@ public class TextEditingTargetWidget
       boolean canSourceWithEcho = fileType.canSourceWithEcho();
       boolean isQuarto = extendedType_ != null && 
             extendedType_.equals(SourceDocument.XT_QUARTO_DOCUMENT);
-      boolean canSourceOnSave = (fileType.canSourceOnSave() || isQuarto) &&
+      boolean canSourceOnSave = fileType.canSourceOnSave() &&
             !userPrefs_.autoSaveEnabled();
       if (canSourceOnSave && fileType.isJS())
          canSourceOnSave = (extendedType_.equals(SourceDocument.XT_JS_PREVIEWABLE));
