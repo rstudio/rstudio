@@ -879,6 +879,7 @@ struct QuartoConfig
    bool installed;
    bool is_project;
    std::string project_type;
+   std::string project_dir;
    std::string project_output_dir;
 };
 

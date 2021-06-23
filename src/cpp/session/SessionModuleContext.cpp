@@ -2848,9 +2848,9 @@ std::vector<FilePath> ignoreContentDirs()
       module_context::QuartoConfig quartoConf = module_context::quartoConfig();
       // quarto site output dir
       if (quartoConf.is_project) {
-         FilePath projDir = projects::projectContext().directory();
-         ignoreDirs.push_back(projDir.completeChildPath(quartoConf.project_output_dir));
-         ignoreDirs.push_back(projDir.completeChildPath("_freeze"));
+         FilePath quartoProjDir = module_context::resolveAliasedPath(quartoConf.project_dir);
+         ignoreDirs.push_back(quartoProjDir.completeChildPath(quartoConf.project_output_dir));
+         ignoreDirs.push_back(quartoProjDir.completeChildPath("_freeze"));
       }
       // rmarkdown site output dir
       if (module_context::isWebsiteProject())

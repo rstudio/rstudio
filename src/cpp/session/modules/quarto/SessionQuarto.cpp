@@ -59,12 +59,6 @@ core::FilePath quartoConfigFilePath(const FilePath& dirPath)
    return FilePath();
 }
 
-
-bool pathHasQuartoConfig(const FilePath& filePath)
-{
-   return !quartoConfigFilePath(filePath).isEmpty();
-}
-
 core::FilePath quartoProjectConfigFile(const core::FilePath& filePath)
 {
    // list all paths up to root from home dir
@@ -259,11 +253,20 @@ QuartoConfig quartoConfig(bool refresh)
       const ProjectContext& context = projectContext();
       if (context.hasProject())
       {
+         // look for a config file in the project directory
          FilePath configFile = quartoConfigFilePath(context.directory());
+
+         // if we don't find one, then chase up the directory heirarchy until we find one
+         if (!configFile.exists())
+            configFile = quartoProjectConfigFile(context.directory());
+
          if (configFile.exists())
          {
             // confirm that it's a project
             s_quartoConfig.is_project = true;
+
+            // record the project directory as an aliased path
+            s_quartoConfig.project_dir = module_context::createAliasedPath(configFile.getParent());
 
             // read the config
             std::string config;
@@ -344,7 +347,7 @@ bool projectIsQuarto()
    const ProjectContext& context = projectContext();
    if (context.hasProject())
    {
-      return pathHasQuartoConfig(context.directory());
+      return module_context::quartoConfig().is_project;
    } else {
       return false;
    }

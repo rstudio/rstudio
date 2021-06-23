@@ -21,6 +21,7 @@ public class QuartoConfig
 {
    public boolean installed;
    public boolean is_project;
+   public String project_dir;
    public String project_type;
    public String project_output_dir;
 }
