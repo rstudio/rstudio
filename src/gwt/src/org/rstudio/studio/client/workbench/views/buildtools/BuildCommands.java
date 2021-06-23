@@ -65,6 +65,11 @@ public class BuildCommands
          commands.cleanAll().remove();
       }
       
+      if (type != SessionInfo.BUILD_TOOLS_QUARTO)
+      {
+         commands.serveQuartoSite().remove();
+      }
+      
       if (type == SessionInfo.BUILD_TOOLS_QUARTO)
       {
          String projType = "Project";
@@ -83,6 +88,8 @@ public class BuildCommands
          commands.buildAll().setButtonLabel("Render " + projType);
          commands.buildAll().setDesc("Render " + projType.toLowerCase());
          commands.buildAll().setImageResource(commands.quartoRenderDocument().getImageResource());
+         commands.serveQuartoSite().setMenuLabel("_Serve " + projType);
+         commands.serveQuartoSite().setButtonLabel("Serve " + projType);
       }
       
       // remove all other commands if there are no build tools

@@ -305,6 +305,11 @@ public class BuildPresenter extends BasePresenter
          });
       }, () -> {}, "Build");
    }
+   
+   void onServeQuartoSite()
+   {
+      eventBus_.fireEvent(new SendToConsoleEvent("quarto::quarto_serve()", true, true));
+   }
 
    void onBuildSourcePackage()
    {

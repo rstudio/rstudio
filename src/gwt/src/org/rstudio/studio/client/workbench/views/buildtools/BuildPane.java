@@ -84,6 +84,7 @@ public class BuildPane extends WorkbenchPane
       boolean pkg = type == SessionInfo.BUILD_TOOLS_PACKAGE;
       boolean makefile = type == SessionInfo.BUILD_TOOLS_MAKEFILE;
       boolean website = type == SessionInfo.BUILD_TOOLS_WEBSITE;
+      boolean quarto = type == SessionInfo.BUILD_TOOLS_QUARTO;
 
       // always include build all
       ToolbarButton buildAllButton = commands_.buildAll().createToolbarButton();
@@ -111,6 +112,13 @@ public class BuildPane extends WorkbenchPane
       }
 
       toolbar.addLeftSeparator();
+      
+      // quarto gets serve site
+      if (quarto)
+      {
+         toolbar.addLeftWidget(commands_.serveQuartoSite().createToolbarButton());
+         toolbar.addLeftSeparator();
+      }
 
       // packages get check package
       if (pkg)

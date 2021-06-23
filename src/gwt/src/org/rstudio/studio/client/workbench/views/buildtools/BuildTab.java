@@ -58,6 +58,8 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
       public abstract void onTestTestthatFile();
       @Handler
       public abstract void onTestShinytestFile();
+      @Handler
+      public abstract void onServeQuartoSite();
 
       abstract void initialize(BuildState buildState);
    }
