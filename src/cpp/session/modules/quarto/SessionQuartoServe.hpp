@@ -20,6 +20,7 @@
 namespace rstudio {
 namespace core {
    class Error;
+   class FilePath;
 }
 }
 
@@ -28,6 +29,8 @@ namespace session {
 namespace modules {
 namespace quarto {
 namespace serve {
+
+void previewDoc(const core::FilePath& docPath);
 
 core::Error initialize();
    

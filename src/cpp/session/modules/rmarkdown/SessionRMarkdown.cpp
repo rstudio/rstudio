@@ -726,12 +726,11 @@ private:
                                                    (targetFile_, allOutput_);
       if (!outputFile.isEmpty())
       {
-         // we don't want to show a preview if we are in a quarto website or book project
-         // check for this before setting the output file
-         if (module_context::isQuartoWebsiteDoc(targetFile_))
+         // see if another module wants to handle the preview
+         if (module_context::onHandleRmdPreview(targetFile_))
             viewerType_ = kRmdViewerTypeNone;
 
-          outputFile_ = outputFile;
+         outputFile_ = outputFile;
       }
 
 

@@ -34,6 +34,8 @@
 #include <session/SessionSourceDatabase.hpp>
 #include <session/projects/SessionProjects.hpp>
 
+#include <session/prefs/UserPrefs.hpp>
+
 #include "SessionQuartoServe.hpp"
 
 using namespace rstudio::core;
@@ -210,36 +212,100 @@ Error quartoCapabilities(const json::JsonRpcRequest&,
    return Success();
 }
 
+
+void readQuartoProjectConfig(const FilePath& configFile, std::string* pType, std::string* pOutputDir)
+{
+   // read the config
+   std::string configText;
+   Error error = core::readStringFromFile(configFile, &configText);
+   if (!error)
+   {
+      try
+      {
+         YAML::Node node = YAML::Load(configText);
+         for (auto it = node.begin(); it != node.end(); ++it)
+         {
+            std::string key = it->first.as<std::string>();
+            if (key == "project" && it->second.Type() == YAML::NodeType::Map)
+            {
+               for (auto projIt = it->second.begin(); projIt != it->second.end(); ++projIt)
+               {
+                  if (projIt->second.Type() == YAML::NodeType::Scalar)
+                  {
+                     std::string projKey = projIt->first.as<std::string>();
+                     std::string projValue = projIt->second.Scalar();
+                     if (projKey == "type")
+                        *pType = projValue;
+                     else if (projKey == "output-dir")
+                        *pOutputDir = projValue;
+                  }
+               }
+               // got the project config so break
+               break;
+            }
+         }
+      }
+      CATCH_UNEXPECTED_EXCEPTION;
+   }
+   else
+   {
+      LOG_ERROR(error);
+   }
+}
+
 }
 
 namespace module_context {
 
-bool isQuartoWebsiteDoc(const core::FilePath& filePath)
+bool onHandleRmdPreview(const core::FilePath& filePath)
 {
-   if (modules::quarto::isInstalled())
+   // don't do anyting if user prefs are set to no preview
+   if (prefs::userPrefs().rmdViewerType() == kRmdViewerTypeNone)
+      return false;
+
+   // don't do anything if there is no quarto
+   if (!modules::quarto::isInstalled())
+      return false;
+
+   // don't do anything if this isn't a quarto doc
+   std::string extendedType;
+   Error error = source_database::detectExtendedType(filePath, &extendedType);
+   if (error)
    {
-      std::string extendedType;
-      Error error = source_database::detectExtendedType(filePath, &extendedType);
-      if (error)
-      {
-         LOG_ERROR(error);
-         return false;
-      }
-      if (extendedType == kQuartoXt)
-      {
-         auto config = quartoConfig();
-         return (config.project_type == "site" || config.project_type == "book");
-      }
-      else
-      {
-         return false;
-      }
-   }
-   else
-   {
+      LOG_ERROR(error);
       return false;
    }
+   if (extendedType != kQuartoXt)
+      return false;
 
+   // if the current project is a site or book and this file is within it,
+   // then initiate a preview (one might be already running)
+   auto config = quartoConfig();
+   if ((config.project_type == kQuartoProjectSite || config.project_type == kQuartoProjectBook) &&
+       filePath.isWithin(module_context::resolveAliasedPath(config.project_dir)))
+   {
+      // preview the doc (but schedule it for later so we can get out of the onCompleted
+      // handler this was called from -- launching a new process in the supervisor when
+      // an old one is in the middle of executing onCompleted doesn't work
+      module_context::scheduleDelayedWork(boost::posix_time::milliseconds(10),
+                                          boost::bind( modules::quarto::serve::previewDoc, filePath),
+                                          false);
+      return true;
+   }
+
+   // if this file is within another quarto site or book project then no preview at all
+   // (as it will more than likely be broken)
+   FilePath configFile = quartoProjectConfigFile(filePath);
+   if (!configFile.isEmpty())
+   {
+      std::string type, outputDir;
+      readQuartoProjectConfig(configFile, &type, &outputDir);
+      if (type == kQuartoProjectSite || type == kQuartoProjectBook)
+         return true;
+   }
+
+   // continue with preview
+   return false;
 }
 
 
@@ -253,6 +319,7 @@ QuartoConfig quartoConfig(bool refresh)
 
    if (refresh || s_quartoConfig.empty)
    {
+
       s_quartoConfig = QuartoConfig();
       s_quartoConfig.installed = modules::quarto::isInstalled(true);
       using namespace session::projects;
@@ -274,42 +341,8 @@ QuartoConfig quartoConfig(bool refresh)
             // record the project directory as an aliased path
             s_quartoConfig.project_dir = module_context::createAliasedPath(configFile.getParent());
 
-            // read the config
-            std::string config;
-            Error error = core::readStringFromFile(configFile, &config);
-            if (!error)
-            {
-               try
-               {
-                  YAML::Node node = YAML::Load(config);
-                  for (auto it = node.begin(); it != node.end(); ++it)
-                  {
-                     std::string key = it->first.as<std::string>();
-                     if (key == "project" && it->second.Type() == YAML::NodeType::Map)
-                     {
-                        for (auto projIt = it->second.begin(); projIt != it->second.end(); ++projIt)
-                        {
-                           if (projIt->second.Type() == YAML::NodeType::Scalar)
-                           {
-                              std::string projKey = projIt->first.as<std::string>();
-                              std::string projValue = projIt->second.Scalar();
-                              if (projKey == "type")
-                                 s_quartoConfig.project_type = projValue;
-                              else if (projKey == "output-dir")
-                                 s_quartoConfig.project_output_dir = projValue;
-                           }
-                        }
-                        // got the project config so break
-                        break;
-                     }
-                  }
-               }
-               CATCH_UNEXPECTED_EXCEPTION;
-            }
-            else
-            {
-               LOG_ERROR(error);
-            }
+            // read additional config from yaml
+            readQuartoProjectConfig(configFile, &s_quartoConfig.project_type, &s_quartoConfig.project_output_dir);
          }
       }
    }

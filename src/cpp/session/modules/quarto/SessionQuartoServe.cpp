@@ -41,9 +41,9 @@ class QuartoServe : boost::noncopyable,
                     public boost::enable_shared_from_this<QuartoServe>
 {
 public:
-   static Error create(boost::shared_ptr<QuartoServe>* pServe)
+   static Error create(const core::FilePath& initialDocPath, boost::shared_ptr<QuartoServe>* pServe)
    {
-      pServe->reset(new QuartoServe());
+      pServe->reset(new QuartoServe(initialDocPath));
       return (*pServe)->start();
    }
 
@@ -71,8 +71,8 @@ public:
    }
 
 private:
-   explicit QuartoServe()
-      : stopRequested_(false)
+   explicit QuartoServe(const core::FilePath& initialDocPath)
+      : stopRequested_(false), initialDocPath_(initialDocPath)
    {
    }
 
@@ -89,8 +89,21 @@ private:
 
       // options
       core::system::ProcessOptions options;
+#ifdef _WIN32
+      options.createNewConsole = true;
+#else
       options.terminateChildren = true;
+#endif
       options.workingDir = module_context::resolveAliasedPath(module_context::quartoConfig().project_dir);
+
+      // set initial doc path if we have one
+      if (!initialDocPath_.isEmpty())
+      {
+         core::system::Options childEnv;
+         core::system::environment(&childEnv);
+         core::system::setenv(&childEnv, "QUARTO_SERVE_PREVIEW_DOC", initialDocPath_.getAbsolutePath());
+         options.environment = childEnv;
+      }
 
       // callbacks
       core::system::ProcessCallbacks cb;
@@ -141,12 +154,15 @@ private:
       pJob_->addOutput(error, true);
 
       // detect browse directive
-      boost::regex browseRe("http:\\/\\/localhost:(\\d{2,})\\/");
+      boost::regex browseRe("http:\\/\\/localhost:(\\d{2,})\\/(.*\\.html)?");
       boost::smatch match;
       if (regex_utils::search(error, match, browseRe))
       {
          std::string port = match[1];
-         module_context::viewer("http://localhost:" + port + "/", -1);
+         std::string url = "http://localhost:" + port + "/";
+         if (match.size() > 2)
+            url = url + match[2];
+         module_context::viewer(url, -1);
       }
 
    }
@@ -171,18 +187,16 @@ private:
 private:
 
    bool stopRequested_;
+   FilePath initialDocPath_;
    boost::shared_ptr<jobs::Job> pJob_;
 
 };
 
+// serve singleton
+static boost::shared_ptr<QuartoServe> s_pServe;
 
-
-Error quartoServe(const json::JsonRpcRequest&,
-                  json::JsonRpcResponse*)
+Error quartoServe(const core::FilePath& docPath = FilePath())
 {
-   // serve singleton
-   static boost::shared_ptr<QuartoServe> s_pServe;
-
    // stop any running server and remove the job
    if (s_pServe)
    {
@@ -195,10 +209,31 @@ Error quartoServe(const json::JsonRpcRequest&,
    }
 
    // start a new server
-   return QuartoServe::create(&s_pServe);
+   return QuartoServe::create(docPath, &s_pServe);
+}
+
+Error quartoServeRpc(const json::JsonRpcRequest&,
+                  json::JsonRpcResponse*)
+{
+   return quartoServe();
 }
 
 
+
+}
+
+void previewDoc(const core::FilePath& docPath)
+{
+   if (!s_pServe || !s_pServe->isRunning())
+   {
+      Error error = quartoServe(docPath);
+      if (error)
+         LOG_ERROR(error);
+   }
+   else
+   {
+      module_context::activatePane("viewer");
+   }
 }
 
 Error initialize()
@@ -208,7 +243,7 @@ Error initialize()
 
    ExecBlock initBlock;
    initBlock.addFunctions()
-     (boost::bind(module_context::registerRpcMethod, "quarto_serve", quartoServe))
+     (boost::bind(module_context::registerRpcMethod, "quarto_serve", quartoServeRpc))
    ;
    return initBlock.execute();
 }
