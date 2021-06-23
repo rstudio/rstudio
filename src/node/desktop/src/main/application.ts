@@ -18,6 +18,7 @@ import { app, dialog, BrowserWindow } from 'electron';
 import { getenv, setenv } from '../core/environment';
 import { FilePath } from '../core/file-path';
 import { generateRandomPort } from '../core/system';
+import { logger } from '../core/logger';
 
 import { getRStudioVersion } from './product-info';
 import { findComponents, initializeSharedSecret } from './utils';
@@ -65,7 +66,7 @@ export class Application implements AppState {
     try {
       removeStaleOptionsLockfile();
     } catch (error) {
-      console.error(error);
+      logger().logError(error);
       return exitFailure();
     }
 
@@ -125,13 +126,13 @@ export class Application implements AppState {
   initCommandLine(argv: string[]): ProgramStatus {
     // look for a version check request; if we have one, just do that and exit
     if (argv.indexOf(kVersion) > -1) {
-      console.log(getRStudioVersion());
+      logger().logInfo(getRStudioVersion());
       return exitSuccess();
     }
 
     // report extended version info and exit
     if (argv.indexOf(kVersionJson) > -1) {
-      console.log(getComponentVersions());
+      logger().logInfo(getComponentVersions());
       return exitSuccess();
     }
 

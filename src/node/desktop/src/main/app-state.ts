@@ -62,3 +62,4 @@ export function setApplication(app: Application): void {
 export function clearApplicationSingleton(): void {
   rstudio = null;
 }
+
