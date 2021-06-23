@@ -67,9 +67,3 @@ export function setVars(vars: Environment): void {
   } 
 }
 
-export function logEnvVar(name: string): void {
-  const value = getenv(name);
-  if (value) {
-    console.log(` . ${name} = ${value}`);
-  }
-}

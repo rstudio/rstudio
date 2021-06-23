@@ -15,6 +15,9 @@
 
 import { app, dialog } from 'electron';
 
+import { ConsoleLogger } from '../core/console-logger';
+import { setLogger } from '../core/logger';
+
 import { Application } from './application';
 import { setApplication } from './app-state';
 import { parseStatus } from './program-status';
@@ -31,12 +34,13 @@ class RStudioMain {
       if (!app.isPackaged) {
         dialog.showErrorBox('Unhandled exception', error.message);
       }
-      console.error(error.message);
+      console.error(error.message); // logging possibly not available this early in startup
       app.exit(1);
     }
   }
 
   private async startup(): Promise<void> {
+    setLogger(new ConsoleLogger());
     const rstudio = new Application();
     setApplication(rstudio);
 

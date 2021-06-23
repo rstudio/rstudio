@@ -16,6 +16,7 @@
 import fs from 'fs';
 import fsPromises from 'fs/promises';
 
+import { logger } from './logger';
 import path from 'path';
 import { Err, Success } from './err';
 import { userHomePath } from './user';
@@ -104,7 +105,7 @@ export class FilePath {
     try {
       return fs.existsSync(p);
     } catch (err) {
-      FilePath.logErrorWithPath(p, err);
+      logger().logError(err);
       return false;
     }
   }
@@ -122,7 +123,7 @@ export class FilePath {
       await fsPromises.access(p);
       return true;
     } catch (err) {
-      FilePath.logErrorWithPath(p, err);
+      logger().logError(err);
       return false;
     }
   }
@@ -180,7 +181,7 @@ export class FilePath {
     try {
       return new FilePath(process.cwd());
     } catch (err) {
-      FilePath.logError(err);
+      logger().logError(err);
     }
 
     // revert to the specified path if it exists, otherwise
@@ -192,7 +193,7 @@ export class FilePath {
 
     const error = safePath.makeCurrentPath();
     if (error) {
-      FilePath.logError(error);
+      logger().logError(error);
     }
 
     return safePath;
@@ -207,7 +208,7 @@ export class FilePath {
     try {
       return new FilePath(process.cwd());
     } catch (err) {
-      FilePath.logError(err);
+      logger().logError(err);
     }
 
     // revert to the specified path if it exists, otherwise
@@ -219,7 +220,7 @@ export class FilePath {
 
     const error = safePath.makeCurrentPath();
     if (error) {
-      FilePath.logError(error);
+      logger().logError(error);
     }
 
     return safePath;
@@ -273,7 +274,7 @@ export class FilePath {
   completeChildPath(filePath: string): FilePath {
     const result = this.completeChildPathWithErrorResult(filePath);
     if (result.err) {
-      FilePath.logError(result.err);
+      logger().logError(result.err);
     }
     return result.path;
   }
@@ -317,7 +318,7 @@ export class FilePath {
     try {
       return new FilePath(normalizeSeparators(path.resolve(this.path, stem)));
     } catch (err) {
-      FilePath.logError(err);
+      logger().logError(err);
       return this;
     }
   }
@@ -411,7 +412,7 @@ export class FilePath {
     try {
       return !this.isEmpty() && fs.existsSync(this.path);
     } catch (err) {
-      FilePath.logErrorWithPath(this.path, err);
+      logger().logError(err);
       return false;
     }
   }
@@ -427,7 +428,7 @@ export class FilePath {
       await fsPromises.access(this.path);
       return true;
     } catch (err) {
-      FilePath.logErrorWithPath(this.path, err);
+      logger().logError(err);
       return false;
     }
   }
@@ -458,7 +459,7 @@ export class FilePath {
     try {
       return normalizeSeparators(fs.realpathSync(this.path));
     } catch (err) {
-      FilePath.logErrorWithPath(this.path, err);
+      logger().logError(err);
     }
     return '';
   }
@@ -476,7 +477,7 @@ export class FilePath {
     try {
       return await fsPromises.realpath(this.path);
     } catch (err) {
-      FilePath.logErrorWithPath(this.path, err);
+      logger().logError(err);
     }
 
     return '';
@@ -807,21 +808,4 @@ export class FilePath {
   testWritePermissions(): Err {
     throw Error('testWritePermissions is NYI');
   }
-
-  // -------------------------
-  // Internal helper functions
-  // -------------------------
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  static logErrorWithPath(path: string, error: Error): void {
-    // TODO logging
-    // console.error(error.message + ": " + path);
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  static logError(error: Error): void {
-    // TODO logging
-    // console.error(error.message);
-  }
-
 }

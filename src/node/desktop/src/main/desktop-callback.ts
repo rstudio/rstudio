@@ -45,13 +45,12 @@ export class DesktopCallback {
       (event, caption, label, dir, filter, canChooseDirectories, focusOwner) => {
 
         // TODO: apply filter
-        const openDialogOptions: OpenDialogOptions =
-      {
-        properties: [canChooseDirectories ? 'openDirectory' : 'openFile'],
-        title: caption,
-        defaultPath: dir,
-        buttonLabel: label,
-      };
+        const openDialogOptions: OpenDialogOptions = {
+          properties: [canChooseDirectories ? 'openDirectory' : 'openFile'],
+          title: caption,
+          defaultPath: dir,
+          buttonLabel: label,
+        };
 
         const focusedWindow = BrowserWindow.getFocusedWindow();
         if (focusedWindow) {
