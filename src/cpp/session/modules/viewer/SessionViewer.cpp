@@ -38,10 +38,10 @@ using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
-namespace modules { 
-namespace viewer {
 
 namespace {
+
+using namespace modules::viewer;
 
 // track the current viewed url and whether it is a static widget
 std::string s_currentUrl;
@@ -277,73 +277,9 @@ SEXP rs_viewer(SEXP urlSEXP, SEXP heightSEXP)
       int height = 0;
       if (!r::sexp::isNull(heightSEXP))
          height = r::sexp::asInteger(heightSEXP);
-
-      // transform the url to a localhost:<port>/session one if it's
-      // a path to a file within the R session temporary directory
       std::string url = r::sexp::safeAsString(urlSEXP);
-      if (!boost::algorithm::starts_with(url, "http"))
-      {
-         // get the path to the tempdir and the file
-         FilePath tempDir = module_context::tempDir();
-         FilePath filePath = module_context::resolveAliasedPath(url);
 
-         // canoncialize paths for comparison
-         Error error = core::system::realPath(tempDir, &tempDir);
-         if (error)
-            LOG_ERROR(error);
-         error = core::system::realPath(filePath, &filePath);
-         if (error)
-            LOG_ERROR(error);
-
-         // if it's in the temp dir then we can serve it via the help server,
-         // otherwise we need to show it in an external browser
-         if (filePath.isWithin(tempDir))
-         {
-            // calculate the relative path
-            std::string path = filePath.getRelativePath(tempDir);
-
-            // add to history and treat as a widget if appropriate
-            if (isHTMLWidgetPath(filePath))
-            {
-               // add it to our history
-               viewerHistory().add(module_context::ViewerHistoryEntry(path));
-
-               // view it
-               viewerNavigate(viewerHistory().current().url(),
-                              height,
-                              true,
-                              true);
-            }
-            else
-            {
-               viewerNavigate(module_context::sessionTempDirUrl(path),
-                              height,
-                              false,
-                              true);
-            }
-         }
-         else
-         {
-            module_context::showFile(filePath);
-         }
-      }
-      else
-      {
-         // in desktop mode make sure we have the right version of httpuv
-         if (options().programMode() == kSessionProgramModeDesktop)
-         {
-            if (!module_context::isPackageVersionInstalled("httpuv", "1.2"))
-            {
-               module_context::consoleWriteError("\nWARNING: To run "
-                 "applications within the RStudio Viewer pane you need to "
-                 "install the latest version of the httpuv package from "
-                 "CRAN (version 1.2 or higher is required).\n\n");
-            }
-         }
-
-         // navigate the viewer
-         viewerNavigate(url, height, false, true);
-      }
+      module_context::viewer(url, height);
    }
    CATCH_UNEXPECTED_EXCEPTION
 
@@ -381,6 +317,9 @@ void onClientInit()
 
 } // anonymous namespace
 
+namespace modules {
+namespace viewer {
+
 Error initialize()
 {
    RS_REGISTER_CALL_METHOD(rs_viewer);
@@ -416,6 +355,81 @@ Error initialize()
 
 } // namespace viewer
 } // namespace modules
+
+namespace module_context {
+
+void viewer(const std::string& url, int height)
+{
+   // transform the url to a localhost:<port>/session one if it's
+   // a path to a file within the R session temporary directory
+
+   if (!boost::algorithm::starts_with(url, "http"))
+   {
+      // get the path to the tempdir and the file
+      FilePath tempDir = module_context::tempDir();
+      FilePath filePath = module_context::resolveAliasedPath(url);
+
+      // canoncialize paths for comparison
+      Error error = core::system::realPath(tempDir, &tempDir);
+      if (error)
+         LOG_ERROR(error);
+      error = core::system::realPath(filePath, &filePath);
+      if (error)
+         LOG_ERROR(error);
+
+      // if it's in the temp dir then we can serve it via the help server,
+      // otherwise we need to show it in an external browser
+      if (filePath.isWithin(tempDir))
+      {
+         // calculate the relative path
+         std::string path = filePath.getRelativePath(tempDir);
+
+         // add to history and treat as a widget if appropriate
+         if (isHTMLWidgetPath(filePath))
+         {
+            // add it to our history
+            viewerHistory().add(module_context::ViewerHistoryEntry(path));
+
+            // view it
+            viewerNavigate(viewerHistory().current().url(),
+                           height,
+                           true,
+                           true);
+         }
+         else
+         {
+            viewerNavigate(module_context::sessionTempDirUrl(path),
+                           height,
+                           false,
+                           true);
+         }
+      }
+      else
+      {
+         module_context::showFile(filePath);
+      }
+   }
+   else
+   {
+      // in desktop mode make sure we have the right version of httpuv
+      if (options().programMode() == kSessionProgramModeDesktop)
+      {
+         if (!module_context::isPackageVersionInstalled("httpuv", "1.2"))
+         {
+            module_context::consoleWriteError("\nWARNING: To run "
+              "applications within the RStudio Viewer pane you need to "
+              "install the latest version of the httpuv package from "
+              "CRAN (version 1.2 or higher is required).\n\n");
+         }
+      }
+
+      // navigate the viewer
+      viewerNavigate(url, height, false, true);
+   }
+}
+
+} // module_context
+
 } // namespace session
 } // namespace rstudio
 

@@ -42,6 +42,7 @@ import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarkerList;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -308,7 +309,7 @@ public class BuildPresenter extends BasePresenter
    
    void onServeQuartoSite()
    {
-      eventBus_.fireEvent(new SendToConsoleEvent("quarto::quarto_serve()", true, true));
+      server_.quartoServe(new SimpleRequestCallback<Void>("Quarto Serve Error"));
    }
 
    void onBuildSourcePackage()

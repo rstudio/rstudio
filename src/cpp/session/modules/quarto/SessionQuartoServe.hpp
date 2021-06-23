@@ -1,5 +1,5 @@
 /*
- * QuartoServerOperations.java
+ * SessionQuartoServe.hpp
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -12,14 +12,29 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.quarto.model;
 
-import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+#ifndef SESSION_QUARTO_SERVE_HPP
+#define SESSION_QUARTO_SERVE_HPP
 
 
-public interface QuartoServerOperations 
-{
-   void quartoCapabilities(ServerRequestCallback<QuartoCapabilities> requestCallback);
-   void quartoServe(ServerRequestCallback<Void> requestCallback);
+namespace rstudio {
+namespace core {
+   class Error;
 }
+}
+
+namespace rstudio {
+namespace session {
+namespace modules {
+namespace quarto {
+namespace serve {
+
+core::Error initialize();
+   
+} // namespace serve
+} // namespace quarto
+} // namespace modules
+} // namespace session
+} // namespace rstudio
+
+#endif

@@ -6371,6 +6371,12 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, QUARTO_CAPABILITIES, requestCallback);
       
    }
+   
+   @Override
+   public void quartoServe(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, QUARTO_SERVE, requestCallback);
+   }
 
    @Override
    public void getInstalledFonts(ServerRequestCallback<JsArrayString> callback)
@@ -6907,6 +6913,7 @@ public class RemoteServer implements Server
    private static final String XREF_FOR_ID = "xref_for_id";
    
    private static final String QUARTO_CAPABILITIES = "quarto_capabilities";
+   private static final String QUARTO_SERVE = "quarto_serve";
    
 
 }

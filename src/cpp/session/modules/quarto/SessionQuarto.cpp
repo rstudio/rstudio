@@ -15,6 +15,8 @@
 
 #include "SessionQuarto.hpp"
 
+#include <string>
+
 #include <yaml-cpp/yaml.h>
 
 #include <shared_core/Error.hpp>
@@ -32,8 +34,7 @@
 #include <session/SessionSourceDatabase.hpp>
 #include <session/projects/SessionProjects.hpp>
 
-#include <string>
-
+#include "SessionQuartoServe.hpp"
 
 using namespace rstudio::core;
 
@@ -241,6 +242,11 @@ bool isQuartoWebsiteDoc(const core::FilePath& filePath)
 
 }
 
+
+const char* const kQuartoProjectSite = "site";
+const char* const kQuartoProjectBook = "book";
+
+
 QuartoConfig quartoConfig(bool refresh)
 {
    static module_context::QuartoConfig s_quartoConfig;
@@ -361,11 +367,11 @@ Error initialize()
    module_context::events().onDetectSourceExtendedType
                                         .connect(onDetectQuartoSourceType);
 
-   // register rpc functions
-
+   // additional initialization
    ExecBlock initBlock;
    initBlock.addFunctions()
      (boost::bind(module_context::registerRpcMethod, "quarto_capabilities", quartoCapabilities))
+     (boost::bind(quarto::serve::initialize))
    ;
    return initBlock.execute();
 }

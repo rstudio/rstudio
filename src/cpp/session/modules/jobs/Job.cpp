@@ -241,9 +241,10 @@ json::Object Job::toJson() const
    json::Array actions;
 
    // if this job has custom actions, send the list to the client
-   std::vector<std::string> names;
+
    if (!actions_.isNil())
    {
+      std::vector<std::string> names;
       error = r::sexp::getNames(actions_.get(), &names);
       if (!error)
       {
@@ -254,8 +255,9 @@ json::Object Job::toJson() const
             [](const std::string& val) { return json::Value(val); });
       }
    }
-   std::transform(cppActions_.begin(), cppActions_.end(), std::back_inserter(names),
-                  [](const JobActions::value_type& pair) { return pair.first; });
+   std::transform(cppActions_.begin(), cppActions_.end(), std::back_inserter(actions),
+                  [](const JobActions::value_type& pair) { return json::Value(pair.first); });
+
 
    job["actions"] = actions;
    job[kJobTags] = json::toJsonArray(tags_);

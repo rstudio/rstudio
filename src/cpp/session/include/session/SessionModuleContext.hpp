@@ -752,6 +752,10 @@ private:
 
 void addViewerHistoryEntry(const ViewerHistoryEntry& entry);
 
+// pass 0 for no height change
+// pass -1 for maximize
+void viewer(const std::string& url, int height = 0);
+
 core::Error recursiveCopyDirectory(const core::FilePath& fromDir,
                                    const core::FilePath& toDir);
 
@@ -871,6 +875,10 @@ void onBackgroundProcessing(bool isIdle);
 void initializeConsoleCtrlHandler();
 
 bool isPythonReplActive();
+
+
+extern const char* const kQuartoProjectSite;
+extern const char* const kQuartoProjectBook;
 
 struct QuartoConfig
 {
