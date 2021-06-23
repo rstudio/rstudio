@@ -15,47 +15,60 @@
 
 import { describe } from 'mocha';
 import { assert } from 'chai';
+import sinon from 'sinon';
 
 import { ConsoleLogger } from '../../../src/core/console-logger';
 
 describe('Console-logger', () => {
-  it('can be created', () => {
-    const logger = new ConsoleLogger();
-    assert.isNotNull(logger);
+  let fakeConsoleLog = sinon.fake();
+  beforeEach(() => {
+    fakeConsoleLog = sinon.fake();
+    sinon.replace(console, 'log', fakeConsoleLog);
   });
-  it('logError', () => {
+
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  it('logError writes error', () => {
     const logger = new ConsoleLogger();
-    logger.logError(new Error('test Errormessage'));
-    assert.isTrue(true);
+    const err = new Error('test Errormessage');
+    logger.logError(err);
+    assert.isTrue(fakeConsoleLog.calledWithMatch(err));
   });
   it('logErrorMessage', () => {
     const logger = new ConsoleLogger();
-    logger.logErrorMessage('test error message');
-    assert.isTrue(true);
+    const msg = 'test error message';
+    logger.logErrorMessage(msg);
+    assert.isTrue(fakeConsoleLog.calledWith(msg));
   });
   it('logInfo', () => {
     const logger = new ConsoleLogger();
-    logger.logInfo('test info message');
-    assert.isTrue(true);
+    const msg = 'test info message';
+    logger.logInfo(msg);
+    assert.isTrue(fakeConsoleLog.calledWith(msg));
   });
   it('logWarning', () => {
     const logger = new ConsoleLogger();
-    logger.logWarning('test warning message');
-    assert.isTrue(true);
+    const msg = 'test warning message';
+    logger.logWarning(msg);
+    assert.isTrue(fakeConsoleLog.calledWith(msg));
   });
   it('logDebug', () => {
     const logger = new ConsoleLogger();
-    logger.logDebug('test debug message');
-    assert.isTrue(true);
+    const msg = 'test debug message';
+    logger.logDebug(msg);
+    assert.isTrue(fakeConsoleLog.calledWith(msg));
   });
   it('logDiagnostic', () => {
     const logger = new ConsoleLogger();
-    logger.logDiagnostic('test diagnostic message');
-    assert.isTrue(true);
+    const msg = 'test diagnostic message';
+    logger.logDiagnostic(msg);
+    assert.isTrue(fakeConsoleLog.calledWith(msg));
   });
   it('logDiagnosticEnvVar', () => {
     const logger = new ConsoleLogger();
     logger.logDiagnosticEnvVar('PATH');
-    assert.isTrue(true);
+    assert.isTrue(fakeConsoleLog.calledOnce);
   });
 });
