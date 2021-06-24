@@ -51,6 +51,8 @@ const absolutePath = process.platform === 'win32' ? 'C:/Users/human/documents' :
 describe('FilePath', () => {
   before(() => {
     setLogger(new ConsoleLogger());
+
+    // some tests trigger ERR logging; this is expected and don't want to see it during tests
     setLoggerLevel(LogLevel.OFF);
   });
   after(() => {
