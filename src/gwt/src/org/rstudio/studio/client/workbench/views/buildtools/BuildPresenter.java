@@ -383,7 +383,8 @@ public class BuildPresenter extends BasePresenter
 
    private void executeBuild(final String type, final String subType)
    {
-      if (type != "build-all" && type != "rebuild-all")
+      if ((type != "build-all" && type != "rebuild-all") ||
+            session_.getSessionInfo().getBuildToolsType() == SessionInfo.BUILD_TOOLS_QUARTO)
       {
          executeBuildNoBusyCheck(type, subType);
          return;
