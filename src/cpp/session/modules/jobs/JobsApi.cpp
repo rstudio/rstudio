@@ -82,6 +82,7 @@ boost::shared_ptr<Job> addJob(
       const std::string& status,
       const std::string& group,
       int progress,
+      bool confirmTermination,
       JobState state,
       JobType type,
       bool autoRemove,
@@ -100,7 +101,7 @@ boost::shared_ptr<Job> addJob(
          ::time(0), /*recorded*/
          0, /*started*/
          0, /*completed*/
-         name, status, group, progress, state, type,
+         name, status, group, progress, confirmTermination, state, type,
          "" /*cluster*/,
          autoRemove, actions, cppActions, show,
          true, /*saveOutput*/ 
@@ -116,6 +117,7 @@ boost::shared_ptr<Job> addJob(
       const std::string& status,
       const std::string& group,
       int progress,
+      bool confirmTermination,
       JobState state,
       JobType type,
       const std::string& cluster,
@@ -129,7 +131,7 @@ boost::shared_ptr<Job> addJob(
    // create the job!
    boost::shared_ptr<Job> pJob = boost::make_shared<Job>(
          id, recorded, started, completed, name, status, group, 0 /* completed units */,
-         progress, state, type, cluster, autoRemove, actions, cppActions, show, saveOutput, tags);
+         progress, confirmTermination, state, type, cluster, autoRemove, actions, cppActions, show, saveOutput, tags);
 
    // cache job and notify client
    s_jobs[id] = pJob;

@@ -65,6 +65,7 @@ public:
        const std::string& group,
        int progress, 
        int max,
+       bool confirmTermination,
        JobState state,
        JobType type,
        const std::string& cluster,
@@ -92,6 +93,9 @@ public:
 
    // the total number of progress units
    int max() const;
+
+   // is it okay to exit this job w/o confirmation
+   bool confirmTermination() const;
 
    // the current state of the job
    JobState state() const;
@@ -168,6 +172,7 @@ private:
 
    int progress_;
    int max_;
+   bool confirmTermination_;
 
    time_t recorded_;   // when the job was added
    time_t started_;    // when the job began executing

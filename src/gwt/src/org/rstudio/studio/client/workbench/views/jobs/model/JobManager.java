@@ -233,7 +233,7 @@ public class JobManager implements JobRefreshEvent.Handler,
             showProgress = true;
       }
 
-      // if we didn't find any running job, then we have no progress to report
+      // if we didn't find any jobs with reportable progress, then we have no progress to report
       if (!showProgress)
       {
          return null;
@@ -356,7 +356,9 @@ public class JobManager implements JobRefreshEvent.Handler,
       for (String id: state_.iterableKeys())
       {
          Job job = state_.getJob(id);
-         if (job.type == JobConstants.JOB_TYPE_SESSION && job.completed == 0)
+         if ((job.type == JobConstants.JOB_TYPE_SESSION) && 
+             (job.completed == 0) && 
+             job.confirm_term)
          {
             running.add(job);
          }
