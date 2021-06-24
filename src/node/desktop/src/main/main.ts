@@ -16,7 +16,7 @@
 import { app, dialog } from 'electron';
 
 import { ConsoleLogger } from '../core/console-logger';
-import { setLogger } from '../core/logger';
+import { LogLevel, setLogger, setLoggerLevel } from '../core/logger';
 
 import { Application } from './application';
 import { setApplication } from './app-state';
@@ -41,6 +41,7 @@ class RStudioMain {
 
   private async startup(): Promise<void> {
     setLogger(new ConsoleLogger());
+    setLoggerLevel(LogLevel.ERR);
     const rstudio = new Application();
     setApplication(rstudio);
 

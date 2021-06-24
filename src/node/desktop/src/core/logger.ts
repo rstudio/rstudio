@@ -15,24 +15,54 @@
 
 import { coreState } from './core-state';
 
+/**
+ * Enum representing logging detail level
+ */
+export enum LogLevel {
+  OFF = 0,       // No messages will be logged
+  ERR = 1,       // Error messages will be logged
+  WARN = 2,      // Warning and error messages will be logged
+  INFO = 3,      // Info, warning, and error messages will be logged
+  DEBUG = 4      // All messages will be logged
+}
+
 export interface Logger {
   logError(err: Error): void;
   logErrorMessage(message: string): void;
-  logInfo(message: string): void;
   logWarning(warning: string): void;
+  logInfo(message: string): void;
   logDebug(message: string): void;
   logDiagnostic(message: string): void;
   logDiagnosticEnvVar(name: string): void;
 }
 
+export interface LogOptions {
+  logger?: Logger;
+  logLevel: LogLevel;
+}
+
 export function logger(): Logger {
-  const logger = coreState().logger;
+  const logger = coreState().logOptions.logger;
   if (!logger) {
     throw Error('Logger not set');
   }
   return logger;
 }
 
+/**
+ * @returns Current logging level
+ */
+export function logLevel(): LogLevel {
+  return coreState().logOptions.logLevel;
+}
+
 export function setLogger(logger: Logger): void {
-  coreState().logger = logger;
+  coreState().logOptions.logger = logger;
+}
+
+/**
+ * @param level minimum logging level
+ */
+export function setLoggerLevel(level: LogLevel): void {
+  coreState().logOptions.logLevel = level;
 }
