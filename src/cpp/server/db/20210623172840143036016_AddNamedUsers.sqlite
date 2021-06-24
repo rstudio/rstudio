@@ -1,0 +1,16 @@
+/* Stores users that have used RStudio Server */
+CREATE TABLE licensed_users (
+   /* An autoincremented internal ID for the user, for FK releationships */
+   id integer AUTOINCREMENT,
+
+   /* The username associated with the user */
+   user_name text NOT NULL,
+
+   /* The operating system's ID for the user */
+   user_id integer NOT NULL,
+
+   /* The date time when the user last signed in */
+   last_sign_in text NOT NULL,
+
+   PRIMARY KEY (id)
+)
