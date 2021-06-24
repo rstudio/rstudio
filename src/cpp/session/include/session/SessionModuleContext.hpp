@@ -755,6 +755,7 @@ void addViewerHistoryEntry(const ViewerHistoryEntry& entry);
 // pass 0 for no height change
 // pass -1 for maximize
 void viewer(const std::string& url, int height = 0);
+std::string viewerCurrentUrl(bool mapped = true);
 
 core::Error recursiveCopyDirectory(const core::FilePath& fromDir,
                                    const core::FilePath& toDir);
@@ -894,7 +895,8 @@ struct QuartoConfig
 QuartoConfig quartoConfig(bool refresh = false);
 
 // ability for modules to handle rmd previews
-bool onHandleRmdPreview(const core::FilePath& filePath);
+bool onHandleRmdPreview(const core::FilePath& sourceFile,
+                        const core::FilePath& outputFile);
 
 std::vector<core::FilePath> ignoreContentDirs();
 bool isIgnoredContent(const core::FilePath& filePath, const std::vector<core::FilePath>& ignoreDirs);

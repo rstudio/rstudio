@@ -726,11 +726,12 @@ private:
                                                    (targetFile_, allOutput_);
       if (!outputFile.isEmpty())
       {
-         // see if another module wants to handle the preview
-         if (module_context::onHandleRmdPreview(targetFile_))
-            viewerType_ = kRmdViewerTypeNone;
-
+         // record ouptut file
          outputFile_ = outputFile;
+
+         // see if another module wants to handle the preview
+         if (module_context::onHandleRmdPreview(targetFile_, outputFile_))
+            viewerType_ = kRmdViewerTypeNone;
       }
 
 

@@ -44,6 +44,7 @@ namespace {
 using namespace modules::viewer;
 
 // track the current viewed url and whether it is a static widget
+std::string s_currentUnmappedUrl;
 std::string s_currentUrl;
 bool s_isHTMLWidget = false;
 
@@ -53,6 +54,7 @@ void viewerNavigate(const std::string& url,
                     bool bringToFront)
 {
    // record the url (for reloads)
+   s_currentUnmappedUrl = url;
    s_currentUrl = url_ports::mapUrlPorts(url);
    s_isHTMLWidget = isHTMLWidget;
 
@@ -79,6 +81,7 @@ Error viewerStopped(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
 {
    // clear current state
+   s_currentUnmappedUrl.clear();
    s_currentUrl.clear();
    s_isHTMLWidget = false;
 
@@ -357,6 +360,14 @@ Error initialize()
 } // namespace modules
 
 namespace module_context {
+
+std::string viewerCurrentUrl(bool mapped)
+{
+   if (mapped)
+      return s_currentUrl;
+   else
+      return s_currentUnmappedUrl;
+}
 
 void viewer(const std::string& url, int height)
 {

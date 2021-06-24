@@ -54,6 +54,24 @@ public:
       return pJob_->state() == jobs::JobRunning;
    }
 
+   std::string serverUrl(const FilePath& ouptutFile = FilePath())
+   {
+      // url w. port
+      std::string url = "http://localhost:" + port_ + "/";
+
+      // append doc path if we have one
+      if (!ouptutFile.isEmpty())
+      {
+         std::string outputDir = quartoConfig().project_output_dir;
+         std::string path = initialDocPath_.getRelativePath(quartoProjectDir_.completeChildPath(outputDir));
+         url = url + path;
+      }
+
+      // return url
+      return url;
+
+   }
+
    void stop()
    {
       stopRequested_ = true;
@@ -76,6 +94,9 @@ private:
    explicit QuartoServe(const core::FilePath& initialDocPath)
       : stopRequested_(false), initialDocPath_(initialDocPath)
    {
+      quartoProjectDir_ = module_context::resolveAliasedPath(
+         module_context::quartoConfig().project_dir
+      );
    }
 
    Error start()
@@ -96,16 +117,7 @@ private:
 #else
       options.terminateChildren = true;
 #endif
-      options.workingDir = module_context::resolveAliasedPath(module_context::quartoConfig().project_dir);
-
-      // set initial doc path if we have one
-      if (!initialDocPath_.isEmpty())
-      {
-         core::system::Options childEnv;
-         core::system::environment(&childEnv);
-         core::system::setenv(&childEnv, "QUARTO_SERVE_PREVIEW_DOC", initialDocPath_.getAbsolutePath());
-         options.environment = childEnv;
-      }
+      options.workingDir = quartoProjectDir_;
 
       // callbacks
       core::system::ProcessCallbacks cb;
@@ -160,15 +172,15 @@ private:
       pJob_->addOutput(error, true);
 
       // detect browse directive
-      boost::regex browseRe("http:\\/\\/localhost:(\\d{2,})\\/(.*\\.html)?");
+      boost::regex browseRe("http:\\/\\/localhost:(\\d{2,})\\/");
       boost::smatch match;
       if (regex_utils::search(error, match, browseRe))
       {
-         std::string port = match[1];
-         std::string url = "http://localhost:" + port + "/";
-         if (match.size() > 2)
-            url = url + match[2];
-         module_context::viewer(url, -1);
+         // save port
+         port_ = match[1];
+
+         // launch viewer
+         module_context::viewer(serverUrl(initialDocPath_), -1);
 
          // now that the dev server is running restore the console tab
          ClientEvent activateConsoleEvent(client_events::kConsoleActivate, false);
@@ -196,6 +208,8 @@ private:
 private:
 
    bool stopRequested_;
+   std::string port_;
+   FilePath quartoProjectDir_;
    FilePath initialDocPath_;
    boost::shared_ptr<jobs::Job> pJob_;
 
@@ -256,7 +270,16 @@ void previewDoc(const core::FilePath& docPath)
    }
    else
    {
-      module_context::activatePane("viewer");
+      // if the viewer is already on the site just activate it
+      if (boost::algorithm::starts_with(
+             module_context::viewerCurrentUrl(false), s_pServe->serverUrl()))
+      {
+         module_context::activatePane("viewer");
+      }
+      else
+      {
+         module_context::viewer(s_pServe->serverUrl(docPath), -1);
+      }
    }
 }
 

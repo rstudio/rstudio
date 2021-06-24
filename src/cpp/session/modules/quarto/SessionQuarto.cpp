@@ -257,7 +257,8 @@ void readQuartoProjectConfig(const FilePath& configFile, std::string* pType, std
 
 namespace module_context {
 
-bool onHandleRmdPreview(const core::FilePath& filePath)
+bool onHandleRmdPreview(const core::FilePath& sourceFile,
+                        const core::FilePath& outputFile)
 {
    // don't do anyting if user prefs are set to no preview
    if (prefs::userPrefs().rmdViewerType() == kRmdViewerTypeNone)
@@ -269,7 +270,7 @@ bool onHandleRmdPreview(const core::FilePath& filePath)
 
    // don't do anything if this isn't a quarto doc
    std::string extendedType;
-   Error error = source_database::detectExtendedType(filePath, &extendedType);
+   Error error = source_database::detectExtendedType(sourceFile, &extendedType);
    if (error)
    {
       LOG_ERROR(error);
@@ -282,20 +283,20 @@ bool onHandleRmdPreview(const core::FilePath& filePath)
    // then initiate a preview (one might be already running)
    auto config = quartoConfig();
    if ((config.project_type == kQuartoProjectSite || config.project_type == kQuartoProjectBook) &&
-       filePath.isWithin(module_context::resolveAliasedPath(config.project_dir)))
+       sourceFile.isWithin(module_context::resolveAliasedPath(config.project_dir)))
    {
       // preview the doc (but schedule it for later so we can get out of the onCompleted
       // handler this was called from -- launching a new process in the supervisor when
       // an old one is in the middle of executing onCompleted doesn't work
       module_context::scheduleDelayedWork(boost::posix_time::milliseconds(10),
-                                          boost::bind( modules::quarto::serve::previewDoc, filePath),
+                                          boost::bind( modules::quarto::serve::previewDoc, outputFile),
                                           false);
       return true;
    }
 
    // if this file is within another quarto site or book project then no preview at all
    // (as it will more than likely be broken)
-   FilePath configFile = quartoProjectConfigFile(filePath);
+   FilePath configFile = quartoProjectConfigFile(sourceFile);
    if (!configFile.isEmpty())
    {
       std::string type, outputDir;
