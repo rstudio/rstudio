@@ -165,8 +165,11 @@ private:
          if (match.size() > 2)
             url = url + match[2];
          module_context::viewer(url, -1);
-      }
 
+         // now that the dev server is running restore the console tab
+         ClientEvent activateConsoleEvent(client_events::kConsoleActivate, false);
+         module_context::enqueClientEvent(activateConsoleEvent);
+      }
    }
 
    void onCompleted(int exitStatus)
@@ -255,10 +258,8 @@ void previewDoc(const core::FilePath& docPath)
 
 Error initialize()
 {
-
    // register rpc functions
-
-   ExecBlock initBlock;
+  ExecBlock initBlock;
    initBlock.addFunctions()
      (boost::bind(module_context::registerRpcMethod, "quarto_serve", quartoServeRpc))
    ;

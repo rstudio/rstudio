@@ -271,6 +271,8 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
          type = session::client_events::kEnvironmentChanged;
       else if (name == "command_callbacks_changed")
          type = session::client_events::kCommandCallbacksChanged;
+      else if (name == "console_activate")
+         type = session::client_events::kConsoleActivate;
 
       if (type != -1)
       {
