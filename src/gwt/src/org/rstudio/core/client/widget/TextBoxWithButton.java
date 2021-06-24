@@ -186,6 +186,10 @@ public class TextBoxWithButton extends Composite
       {
          textBox_.setText(text);
       }
+      else if (useNativePlaceholder_)
+      {
+         textBox_.setText("");
+      }
       else
       {
          textBox_.setText(emptyLabel_);
@@ -199,7 +203,9 @@ public class TextBoxWithButton extends Composite
       String text = textBox_.getText();
       
       if (StringUtil.equals(text, emptyLabel_))
+      {
          return "";
+      }
       
       if (text.startsWith(USE_DEFAULT_PREFIX))
       {
@@ -255,7 +261,13 @@ public class TextBoxWithButton extends Composite
    {
       textBox_.setFocus(false);
    }
-
+   
+   public void useNativePlaceholder()
+   {
+      useNativePlaceholder_ = true;
+      textBox_.getElement().setAttribute("placeholder", emptyLabel_);
+   }
+   
    @Override
    protected void onAttach()
    {
@@ -283,6 +295,7 @@ public class TextBoxWithButton extends Composite
    private final String emptyLabel_;
    private String useDefaultValue_;
    private String uniqueId_;
+   private boolean useNativePlaceholder_;
    
    private static final String USE_DEFAULT_PREFIX = "[Use Default]";
 }
