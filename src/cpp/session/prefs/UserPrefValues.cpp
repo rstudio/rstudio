@@ -2922,6 +2922,19 @@ core::Error UserPrefValues::setPythonProjectEnvironmentAutomaticActivate(bool va
    return writePref("python_project_environment_automatic_activate", val);
 }
 
+/**
+ * When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further.
+ */
+bool UserPrefValues::checkNullExternalPointers()
+{
+   return readPref<bool>("check_null_external_pointers");
+}
+
+core::Error UserPrefValues::setCheckNullExternalPointers(bool val)
+{
+   return writePref("check_null_external_pointers", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -3148,6 +3161,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kTerminalPythonIntegration,
       kSessionProtocolDebug,
       kPythonProjectEnvironmentAutomaticActivate,
+      kCheckNullExternalPointers,
    });
 }
    

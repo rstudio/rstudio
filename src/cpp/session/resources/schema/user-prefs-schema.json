@@ -1516,6 +1516,12 @@
             "title": "Automatically activate project Python environments",
             "type": "boolean",
             "default": true
+        },
+        "check_null_external_pointers": {
+            "description": "When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further.",
+            "title": "Examine R objects for null external pointers",
+            "type": "boolean",
+            "default": false
         }
     }
 }
