@@ -404,6 +404,7 @@ Error initialize()
    ExecBlock initBlock;
    initBlock.addFunctions()
      (boost::bind(module_context::registerRpcMethod, "quarto_capabilities", quartoCapabilities))
+     (boost::bind(module_context::sourceModuleRFile, "SessionQuarto.R"));
      (boost::bind(quarto::serve::initialize))
    ;
    return initBlock.execute();

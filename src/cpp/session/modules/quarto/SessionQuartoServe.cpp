@@ -22,6 +22,8 @@
 #include <core/json/JsonRpc.hpp>
 #include <core/system/Process.hpp>
 
+#include <r/RExec.hpp>
+
 #include <session/SessionModuleContext.hpp>
 #include <session/jobs/JobsApi.hpp>
 
@@ -219,12 +221,27 @@ Error quartoServeRpc(const json::JsonRpcRequest&,
 }
 
 
+bool isServeRunning()
+{
+   // our job-based server
+   if (s_pServe && s_pServe->isRunning())
+      return true;
 
+   // quarto package server
+   bool running = false;
+   Error error = r::exec::RFunction(".rs.quarto.isServeRunning")
+         .call(&running);
+   if (error)
+      LOG_ERROR(error);
+   return running;
 }
+
+
+} // anonymous namespace
 
 void previewDoc(const core::FilePath& docPath)
 {
-   if (!s_pServe || !s_pServe->isRunning())
+   if (!isServeRunning())
    {
       Error error = quartoServe(docPath);
       if (error)
