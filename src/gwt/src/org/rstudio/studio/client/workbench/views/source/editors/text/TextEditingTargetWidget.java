@@ -1073,7 +1073,7 @@ public class TextEditingTargetWidget
             (extendedType_.startsWith(SourceDocument.XT_RMARKDOWN_PREFIX) || extendedType_.equals(SourceDocument.XT_QUARTO_DOCUMENT)) )
       {
          return  extendedType_.equals(SourceDocument.XT_QUARTO_DOCUMENT) ?
-            "Render" : "Knit";
+            "Render" : fileType.isRmd() ?  "Knit" : fileType.getPreviewButtonText();
       }
       else
       {
