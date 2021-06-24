@@ -14,7 +14,7 @@
  */
 
 import { getenv } from './environment';
-import { Logger } from './logger';
+import { Logger, LogLevel, logLevel } from './logger';
 
 /**
  * A Logger using console.log()
@@ -22,33 +22,47 @@ import { Logger } from './logger';
 export class ConsoleLogger implements Logger {
 
   logError(err: Error): void {
-    console.log(err);
+    if (logLevel() >= LogLevel.ERR) {
+      console.log(err);
+    }
   }
 
   logErrorMessage(message: string): void {
-    console.log(message);
-  }
-
-  logInfo(message: string): void {
-    console.log(message);
+    if (logLevel() >= LogLevel.ERR) {
+      console.log(message);
+    }
   }
 
   logWarning(warning: string): void {
-    console.log(warning);
+    if (logLevel() >= LogLevel.WARN) {
+      console.log(warning);
+    }
+  }
+
+  logInfo(message: string): void {
+    if (logLevel() >= LogLevel.INFO) {
+      console.log(message);
+    }
   }
 
   logDebug(message: string): void {
-    console.log(message);
+    if (logLevel() >= LogLevel.DEBUG) {
+      console.log(message);
+    }
   }
 
   logDiagnostic(message: string): void {
-    console.log(message);
+    if (logLevel() >= LogLevel.OFF) {
+      console.log(message);
+    }
   }
 
   logDiagnosticEnvVar(name: string): void {
-    const value = getenv(name);
-    if (value) {
-      this.logDiagnostic(` . ${name} = ${value}`);
+    if (logLevel() >= LogLevel.OFF) {
+      const value = getenv(name);
+      if (value) {
+        this.logDiagnostic(` . ${name} = ${value}`);
+      }
     }
   }
 }

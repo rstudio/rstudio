@@ -13,13 +13,13 @@
  *
  */
 
-import { Logger } from './logger';
+import { LogOptions, LogLevel } from './logger';
 
 /**
  * Global singleton containing state for 'core' routines
  */
 export interface CoreState {
-  logger?: Logger;
+  logOptions: LogOptions;
   instance: number; // for unit-testing
 }
 
@@ -44,10 +44,11 @@ export function clearCoreSingleton(): void {
 }
 
 class CoreStateImpl implements CoreState {
-  logger?: Logger;
+  logOptions: LogOptions;
   instance: number;
 
   constructor() {
     this.instance = coreStateInstanceCounter++;
+    this.logOptions = { logLevel: LogLevel.ERR};
   }
 }

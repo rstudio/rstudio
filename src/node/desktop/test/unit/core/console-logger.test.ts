@@ -18,6 +18,7 @@ import { assert } from 'chai';
 import sinon from 'sinon';
 
 import { ConsoleLogger } from '../../../src/core/console-logger';
+import { setLoggerLevel, LogLevel } from '../../../src/core/logger';
 
 describe('Console-logger', () => {
   let fakeConsoleLog = sinon.fake();
@@ -31,34 +32,81 @@ describe('Console-logger', () => {
   });
 
   it('logError writes error', () => {
+    setLoggerLevel(LogLevel.ERR);
+    const logger = new ConsoleLogger();
+    const err = new Error('test Errormessage');
+    logger.logError(err);
+    assert.isTrue(fakeConsoleLog.calledWithMatch(err));
+  });
+  it('logError output suppressed when LogLevel = OFF', () => {
+    setLoggerLevel(LogLevel.OFF);
+    const logger = new ConsoleLogger();
+    const err = new Error('test Errormessage');
+    logger.logError(err);
+    assert.isFalse(fakeConsoleLog.called);
+  });
+  it('logError writes error when LogLevel = DEBUG', () => {
+    setLoggerLevel(LogLevel.DEBUG);
     const logger = new ConsoleLogger();
     const err = new Error('test Errormessage');
     logger.logError(err);
     assert.isTrue(fakeConsoleLog.calledWithMatch(err));
   });
   it('logErrorMessage', () => {
+    setLoggerLevel(LogLevel.ERR);
     const logger = new ConsoleLogger();
     const msg = 'test error message';
     logger.logErrorMessage(msg);
     assert.isTrue(fakeConsoleLog.calledWith(msg));
   });
+  it('logErrorMessage suppressed when LogLevel = OFF', () => {
+    setLoggerLevel(LogLevel.OFF);
+    const logger = new ConsoleLogger();
+    const msg = 'test error message';
+    logger.logErrorMessage(msg);
+    assert.isFalse(fakeConsoleLog.called);
+  });
   it('logInfo', () => {
+    setLoggerLevel(LogLevel.INFO);
     const logger = new ConsoleLogger();
     const msg = 'test info message';
     logger.logInfo(msg);
     assert.isTrue(fakeConsoleLog.calledWith(msg));
   });
+  it('logInfo suppressed when LogLevel = WARN', () => {
+    setLoggerLevel(LogLevel.WARN);
+    const logger = new ConsoleLogger();
+    const msg = 'test info message';
+    logger.logInfo(msg);
+    assert.isFalse(fakeConsoleLog.called);
+  });
   it('logWarning', () => {
+    setLoggerLevel(LogLevel.WARN);
     const logger = new ConsoleLogger();
     const msg = 'test warning message';
     logger.logWarning(msg);
     assert.isTrue(fakeConsoleLog.calledWith(msg));
   });
+  it('logWarning suppressed when LogLevel = ERR', () => {
+    setLoggerLevel(LogLevel.ERR);
+    const logger = new ConsoleLogger();
+    const msg = 'test warning message';
+    logger.logWarning(msg);
+    assert.isFalse(fakeConsoleLog.called);
+  });
   it('logDebug', () => {
+    setLoggerLevel(LogLevel.DEBUG);
     const logger = new ConsoleLogger();
     const msg = 'test debug message';
     logger.logDebug(msg);
     assert.isTrue(fakeConsoleLog.calledWith(msg));
+  });
+  it('logDebug suppressed whebn LogLevel = INFO', () => {
+    setLoggerLevel(LogLevel.INFO);
+    const logger = new ConsoleLogger();
+    const msg = 'test debug message';
+    logger.logDebug(msg);
+    assert.isFalse(fakeConsoleLog.called);
   });
   it('logDiagnostic', () => {
     const logger = new ConsoleLogger();
