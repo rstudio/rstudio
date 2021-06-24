@@ -35,6 +35,7 @@
 
 ### Misc
 
+* Improved ordering of completion results within `library()` calls (#9293)
 * Add option to synchronize the Files pane with the current working directory in R (#4615)
 * Add new *Set Working Directory* command to context menu for source files (#6781)
 * Local background jobs can now be replayed (#5548)
