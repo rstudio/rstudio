@@ -17,6 +17,8 @@ import { BrowserWindow, session } from 'electron';
 import path from 'path';
 import { ChildProcess } from 'child_process';
 
+import { logger } from '../core/logger';
+
 import { DesktopCallback } from './desktop-callback';
 import { MenuCallback } from './menu-callback';
 import { PendingWindow } from './pending-window';
@@ -81,7 +83,7 @@ export class MainWindow {
   invokeCommand(cmdId: string): void {
     this.window?.webContents.executeJavaScript(`window.desktopHooks.invokeCommand("${cmdId}")`)
       .catch(() => {
-        console.error(`Error: failed to execute desktopHooks.invokeCommand("${cmdId}")`);
+        logger().logErrorMessage(`Error: failed to execute desktopHooks.invokeCommand("${cmdId}")`);
       });
   }
 

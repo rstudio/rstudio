@@ -34,7 +34,7 @@ export interface AppState {
   generateNewPort(): void;
 }
 
-let rstudio: Application | null = null;
+let rstudio: AppState | null = null;
 
 /**
  * @returns Global application state
@@ -62,3 +62,4 @@ export function setApplication(app: Application): void {
 export function clearApplicationSingleton(): void {
   rstudio = null;
 }
+

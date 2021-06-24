@@ -16,10 +16,11 @@
 import { app, dialog } from 'electron';
 import { spawn, ChildProcess } from 'child_process';
 
+import { logger } from '../core/logger';
 import { FilePath } from '../core/file-path';
 import { generateShortenedUuid, localPeer } from '../core/system';
 import { Err } from '../core/err';
-import { getenv, logEnvVar, setenv } from '../core/environment';
+import { getenv, setenv } from '../core/environment';
 
 import { ApplicationLaunch } from './application-launch';
 import { appState } from './app-state';
@@ -96,20 +97,20 @@ export class SessionLauncher {
     launchContext.argList.push('--show-help-home', '1');
 
     if (appState().runDiagnostics) {
-      console.log('\nAttempting to launch R session...');
-      logEnvVar('RSTUDIO_WHICH_R');
-      logEnvVar('R_HOME');
-      logEnvVar('R_DOC_DIR');
-      logEnvVar('R_INCLUDE_DIR');
-      logEnvVar('R_SHARE_DIR');
-      logEnvVar('R_LIBS');
-      logEnvVar('R_LIBS_USER');
-      logEnvVar('DYLD_LIBRARY_PATH');
-      logEnvVar('DYLD_FALLBACK_LIBRARY_PATH');
-      logEnvVar('LD_LIBRARY_PATH');
-      logEnvVar('PATH');
-      logEnvVar('HOME');
-      logEnvVar('R_USER');
+      logger().logDiagnostic('\nAttempting to launch R session...');
+      logger().logDiagnosticEnvVar('RSTUDIO_WHICH_R');
+      logger().logDiagnosticEnvVar('R_HOME');
+      logger().logDiagnosticEnvVar('R_DOC_DIR');
+      logger().logDiagnosticEnvVar('R_INCLUDE_DIR');
+      logger().logDiagnosticEnvVar('R_SHARE_DIR');
+      logger().logDiagnosticEnvVar('R_LIBS');
+      logger().logDiagnosticEnvVar('R_LIBS_USER');
+      logger().logDiagnosticEnvVar('DYLD_LIBRARY_PATH');
+      logger().logDiagnosticEnvVar('DYLD_FALLBACK_LIBRARY_PATH');
+      logger().logDiagnosticEnvVar('LD_LIBRARY_PATH');
+      logger().logDiagnosticEnvVar('PATH');
+      logger().logDiagnosticEnvVar('HOME');
+      logger().logDiagnosticEnvVar('R_USER');
     }
 
     // launch the process

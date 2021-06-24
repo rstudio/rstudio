@@ -14,15 +14,16 @@
  */
 
 import { app, dialog } from 'electron';
-
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { existsSync } from 'fs';
 import { assert } from 'console';
 
-import { appState } from './app-state';
+import { logger } from '../core/logger';
 import { Environment, getenv, setVars } from '../core/environment';
 import { FilePath } from '../core/file-path';
+
+import { appState } from './app-state';
 
 const asyncExec = promisify(exec);
 
@@ -80,7 +81,7 @@ async function prepareEnvironmentPosix(): Promise<boolean> {
   }
 
   if (appState().runDiagnostics) {
-    console.log(`Using R script: ${detectResult.rScriptPath}`);
+    logger().logDiagnostic(`Using R script: ${detectResult.rScriptPath}`);
   }
 
   setREnvironmentVars(detectResult.envVars ?? {});
