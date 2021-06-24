@@ -177,8 +177,8 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
                prefs_.pythonProjectEnvironmentAutomaticActivate().getGlobalValue());
          
          cbAutoUseProjectInterpreter_.getElement().setTitle(
-               "When enabled, the Python environment in the active project's .venv folder " +
-               "(if any) will be automatically activated on startup.");
+               "When enabled, RStudio will automatically find and activate a " +
+               "Python environment located within the project root directory (if any).");
 
          add(lessSpaced(cbAutoUseProjectInterpreter_));
       }
