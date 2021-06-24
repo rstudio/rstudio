@@ -367,7 +367,7 @@ private:
       {
          options.environment = environment;
          options.workingDir = projects::projectContext().directory();
-         executeQuartoBuild(options, cb);
+         executeQuartoBuild(subType, options, cb);
       }
       else
       {
@@ -1473,11 +1473,14 @@ private:
                            cb);
    }
 
-   void executeQuartoBuild(const core::system::ProcessOptions& options,
+   void executeQuartoBuild(const std::string& subType,
+                           const core::system::ProcessOptions& options,
                            const core::system::ProcessCallbacks& cb)
    {
        auto cmd = shell_utils::ShellCommand("quarto");
        cmd << "render";
+       if (!subType.empty())
+          cmd << "--to" << subType;
        module_context::processSupervisor().runCommand(cmd, options,cb);
    }
 

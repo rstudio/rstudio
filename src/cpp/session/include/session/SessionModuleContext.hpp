@@ -890,6 +890,7 @@ struct QuartoConfig
    std::string project_type;
    std::string project_dir;
    std::string project_output_dir;
+   std::vector<std::string> project_formats;
 };
 
 QuartoConfig quartoConfig(bool refresh = false);

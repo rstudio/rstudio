@@ -24,4 +24,5 @@ public class QuartoConfig
    public String project_dir;
    public String project_type;
    public String project_output_dir;
+   public String[] project_formats;
 }

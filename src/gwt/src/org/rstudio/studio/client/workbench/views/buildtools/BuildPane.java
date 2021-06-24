@@ -20,6 +20,7 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -44,6 +45,7 @@ import org.rstudio.studio.client.common.compile.CompileOutputBufferWithHighlight
 import org.rstudio.studio.client.common.compile.CompilePanel;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
+import org.rstudio.studio.client.quarto.model.QuartoConfig;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
@@ -102,14 +104,24 @@ public class BuildPane extends WorkbenchPane
       toolbar.addLeftWidget(buildAllButton);
 
       // book build menu
+      BookBuildPopupMenu bookBuildMenu = null;
+      QuartoConfig quartoConfig = session_.getSessionInfo().getQuartoConfig();
       if (sessionInfo.getBuildToolsBookdownWebsite())
       {
-         BookdownBuildPopupMenu buildPopupMenu = new BookdownBuildPopupMenu();
+         bookBuildMenu = new BookdownBuildPopupMenu();
+      }
+      else if (quartoConfig.project_type == "book")
+      {
+         bookBuildMenu = new QuartoBookBuildPopupMenu();
+      }
+      if (bookBuildMenu != null)
+      {
          ToolbarMenuButton buildMenuButton = new ToolbarMenuButton(ToolbarButton.NoText,
-               "Build book options", buildPopupMenu, true);
+               "Build book options", bookBuildMenu, true);
          ElementIds.assignElementId(buildMenuButton, ElementIds.BUILD_BOOKDOWN_MENUBUTTON);
          toolbar.addLeftWidget(buildMenuButton);
       }
+      
 
       toolbar.addLeftSeparator();
       
@@ -184,34 +196,19 @@ public class BuildPane extends WorkbenchPane
    {
        compilePanel_.clearAll();
    }
-
-   class BookdownBuildPopupMenu extends ToolbarPopupMenu
+   
+   abstract class BookBuildPopupMenu extends ToolbarPopupMenu
    {
       @Override
       public void getDynamicPopupMenu(final ToolbarPopupMenu.DynamicPopupMenuCallback callback)
       {
          clearItems();
-
-         server_.getBookdownFormats(new SimpleRequestCallback<BookdownFormats>()
-         {
-            @Override
-            public void onResponseReceived(BookdownFormats formats)
-            {
-               String defaultFormat = formats.getOutputFormat();
-               JsArrayString allFormats = formats.getAllOututFormats();
-               MenuItem allMenu = new FormatMenuItem(
-                  "all", "All Formats", defaultFormat == "all");
-               addItem(allMenu);
-               addSeparator();
-               for (int i = 0; i < allFormats.length(); i++)
-               {
-                  String format = allFormats.get(i);
-                  addItem(new FormatMenuItem(format, defaultFormat == format));
-               }
-               callback.onPopupMenu(BookdownBuildPopupMenu.this);
-            }
+         buildMenu(() -> {
+            callback.onPopupMenu(BookBuildPopupMenu.this);
          });
       }
+      
+      abstract protected void buildMenu(Command onComplete) ;
 
       class FormatMenuItem extends CheckableMenuItem
       {
@@ -252,6 +249,69 @@ public class BuildPane extends WorkbenchPane
          private final boolean isChecked_;
       }
    }
+   
+   class BookdownBuildPopupMenu extends BookBuildPopupMenu
+   {
+      @Override
+      protected void buildMenu(Command onComplete)
+      {
+         server_.getBookdownFormats(new SimpleRequestCallback<BookdownFormats>()
+         {
+            @Override
+            public void onResponseReceived(BookdownFormats formats)
+            {
+               String defaultFormat = formats.getOutputFormat();
+               JsArrayString allFormats = formats.getAllOututFormats();
+               MenuItem allMenu = new FormatMenuItem(
+                  "all", "All Formats", defaultFormat == "all");
+               addItem(allMenu);
+               addSeparator();
+               for (int i = 0; i < allFormats.length(); i++)
+               {
+                  String format = allFormats.get(i);
+                  addItem(new FormatMenuItem(format, defaultFormat == format));
+               }
+               onComplete.execute();
+            }
+         });
+      }  
+   }
+   
+   class QuartoBookBuildPopupMenu extends BookBuildPopupMenu
+   {
+
+      @Override
+      protected void buildMenu(Command onComplete)
+      {
+         MenuItem allMenu = new FormatMenuItem(
+               "all", "All Formats", true);
+         addItem(allMenu);
+         addSeparator();
+         String[] formats = session_.getSessionInfo().getQuartoConfig().project_formats;
+         for (int i=0; i<formats.length; i++) 
+         {
+            addItem(new FormatMenuItem(formats[i], formatLabel(formats[i]), false));
+         }
+         onComplete.execute();
+      }
+      
+      String formatLabel(String format)
+      {
+         String label = format;
+         if (format == "html")
+            label = "HTML";
+         else if (format == "pdf")
+            label = "PDF";
+         else if (format == "docx")
+            label = "Word";
+         else if (format == "epub")
+            label = "EPUB";
+         return label + " Format";
+      }
+      
+   }
+
+
 
    @Override
    protected Widget createMainWidget()

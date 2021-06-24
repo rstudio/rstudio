@@ -213,7 +213,10 @@ Error quartoCapabilities(const json::JsonRpcRequest&,
 }
 
 
-void readQuartoProjectConfig(const FilePath& configFile, std::string* pType, std::string* pOutputDir)
+void readQuartoProjectConfig(const FilePath& configFile,
+                             std::string* pType,
+                             std::string* pOutputDir,
+                             std::vector<std::string>* pFormats)
 {
    // read the config
    std::string configText;
@@ -240,8 +243,20 @@ void readQuartoProjectConfig(const FilePath& configFile, std::string* pType, std
                         *pOutputDir = projValue;
                   }
                }
-               // got the project config so break
-               break;
+            }
+            else if (key == "format")
+            {
+               if (it->second.Type() == YAML::NodeType::Scalar)
+               {
+                  pFormats->push_back(it->second.as<std::string>());
+               }
+               else if (it->second.Type() == YAML::NodeType::Map)
+               {
+                  for (auto formatIt = it->second.begin(); formatIt != it->second.end(); ++formatIt)
+                  {
+                     pFormats->push_back(formatIt->first.as<std::string>());
+                  }
+               }
             }
          }
       }
@@ -300,7 +315,8 @@ bool onHandleRmdPreview(const core::FilePath& sourceFile,
    if (!configFile.isEmpty())
    {
       std::string type, outputDir;
-      readQuartoProjectConfig(configFile, &type, &outputDir);
+      std::vector<std::string> formats;
+      readQuartoProjectConfig(configFile, &type, &outputDir, &formats);
       if (type == kQuartoProjectSite || type == kQuartoProjectBook)
          return true;
    }
@@ -343,7 +359,10 @@ QuartoConfig quartoConfig(bool refresh)
             s_quartoConfig.project_dir = module_context::createAliasedPath(configFile.getParent());
 
             // read additional config from yaml
-            readQuartoProjectConfig(configFile, &s_quartoConfig.project_type, &s_quartoConfig.project_output_dir);
+            readQuartoProjectConfig(configFile,
+                                    &s_quartoConfig.project_type,
+                                    &s_quartoConfig.project_output_dir,
+                                    &s_quartoConfig.project_formats);
          }
       }
    }
@@ -378,6 +397,7 @@ json::Object quartoConfigJSON(bool refresh)
    quartoConfigJSON["is_project"] = config.is_project;
    quartoConfigJSON["project_type"] = config.project_type;
    quartoConfigJSON["project_output_dir"] = config.project_output_dir;
+   quartoConfigJSON["project_formats"] = json::toJsonArray(config.project_formats);
    return quartoConfigJSON;
 }
 
