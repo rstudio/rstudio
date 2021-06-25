@@ -3,7 +3,7 @@
 
 ### Python
 
-* Projects containing a Python environment in the '.venv' folder are now automatically activated (#9489)
+* Projects containing a Python environment are now automatically activated (#9489)
 
 
 ### Logging
@@ -35,6 +35,7 @@
 
 ### Misc
 
+* **BREAKING:** RStudio Desktop Pro only supports activation with license files (Pro #2300)
 * Improved ordering of completion results within `library()` calls (#9293)
 * Add option to synchronize the Files pane with the current working directory in R (#4615)
 * Add new *Set Working Directory* command to context menu for source files (#6781)
@@ -45,7 +46,7 @@
 * Prevent user preferences from setting CRAN repos when `allow-cran-repos-edit=0` (Pro #1301)
 * Make the *Use renv with this project* option sticky, and allow setting by admins (Pro #2671)
 * Updated embedded nginx in Server Pro to 1.20.1 (Pro #2676)
-* **BREAKING:** RStudio Desktop Pro only supports activation with license files (Pro #2300)
 * Added AWS Cognito support to openid integration (Pro #2313)
 * Add file uploads and downloads to session audit log (Pro #2226)
+* RStudio no longer treats R objects containing null external pointers specially when building Environment pane (#5546)
 * Make Cmd+Shift+0 the shortcut for restarting session on MacOS (#7695)

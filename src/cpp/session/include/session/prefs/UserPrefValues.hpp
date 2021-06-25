@@ -389,6 +389,7 @@ namespace prefs {
 #define kTerminalPythonIntegration "terminal_python_integration"
 #define kSessionProtocolDebug "session_protocol_debug"
 #define kPythonProjectEnvironmentAutomaticActivate "python_project_environment_automatic_activate"
+#define kCheckNullExternalPointers "check_null_external_pointers"
 
 class UserPrefValues: public Preferences
 {
@@ -1731,6 +1732,12 @@ public:
     */
    bool pythonProjectEnvironmentAutomaticActivate();
    core::Error setPythonProjectEnvironmentAutomaticActivate(bool val);
+
+   /**
+    * When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further.
+    */
+   bool checkNullExternalPointers();
+   core::Error setCheckNullExternalPointers(bool val);
 
 };
 

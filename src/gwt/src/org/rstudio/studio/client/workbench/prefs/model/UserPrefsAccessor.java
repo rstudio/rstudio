@@ -3159,6 +3159,18 @@ public class UserPrefsAccessor extends Prefs
          true);
    }
 
+   /**
+    * When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further.
+    */
+   public PrefValue<Boolean> checkNullExternalPointers()
+   {
+      return bool(
+         "check_null_external_pointers",
+         "Check values in the Environment pane for null external pointers", 
+         "When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further.", 
+         false);
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -3607,6 +3619,8 @@ public class UserPrefsAccessor extends Prefs
          sessionProtocolDebug().setValue(layer, source.getBool("session_protocol_debug"));
       if (source.hasKey("python_project_environment_automatic_activate"))
          pythonProjectEnvironmentAutomaticActivate().setValue(layer, source.getBool("python_project_environment_automatic_activate"));
+      if (source.hasKey("check_null_external_pointers"))
+         checkNullExternalPointers().setValue(layer, source.getBool("check_null_external_pointers"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -3834,6 +3848,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(terminalPythonIntegration());
       prefs.add(sessionProtocolDebug());
       prefs.add(pythonProjectEnvironmentAutomaticActivate());
+      prefs.add(checkNullExternalPointers());
       return prefs;
    }
    
