@@ -3166,7 +3166,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "check_null_external_pointers",
-         "Examine R objects for null external pointers", 
+         "Check values in the Environment pane for null external pointers", 
          "When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further.", 
          false);
    }
