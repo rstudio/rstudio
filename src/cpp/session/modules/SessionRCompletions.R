@@ -1548,7 +1548,7 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("listIndexedPackages", function()
 {
-   .Call("rs_listIndexedPackages")
+   .Call("rs_listIndexedPackages", PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("getCompletionsPackages", function(token,
@@ -1556,7 +1556,7 @@ assign(x = ".rs.acCompletionTypes",
                                                    excludeOtherCompletions = FALSE,
                                                    quote = !appendColons)
 {
-   allPackages <- basename(.rs.listIndexedPackages())
+   allPackages <- sort(basename(.rs.listIndexedPackages()))
    
    # In case indexing is disabled, include any loaded namespaces by default
    allPackages <- union(allPackages, loadedNamespaces())
@@ -1573,16 +1573,25 @@ assign(x = ".rs.acCompletionTypes",
    }
    
    # Construct our completions, and we're done
-   completions <- .rs.selectFuzzyMatches(allPackages, token)
-   .rs.makeCompletions(token = token,
-                       results = if (appendColons && length(completions))
-                          paste(completions, "::", sep = "")
-                       else
-                          completions,
-                       packages = completions,
-                       quote = quote,
-                       type = .rs.acCompletionTypes$PACKAGE,
-                       excludeOtherCompletions = excludeOtherCompletions)
+   matches <- .rs.selectFuzzyMatches(allPackages, token)
+   results <- if (appendColons && length(matches))
+      paste(matches, "::", sep = "")
+   else
+      matches
+   
+   completions <- .rs.makeCompletions(
+      token = token,
+      results = results,
+      packages = matches,
+      quote = quote,
+      type = .rs.acCompletionTypes$PACKAGE,
+      excludeOtherCompletions = excludeOtherCompletions
+   )
+   
+   .rs.sortCompletions(
+      completions   = completions,
+      token         = token
+   )
 })
 
 .rs.addFunction("getCompletionsData", function(token)
