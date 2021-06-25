@@ -70,11 +70,7 @@ import org.rstudio.studio.client.workbench.views.terminal.TerminalHelper;
 
 public class BuildPresenter extends BasePresenter
 {
-   public interface QuartoBookTypeDisplay extends HasSelectionCommitHandlers<String>
-   {
-      String getBookType();
-      void setBookType(String type);
-   }
+  
    
    public interface Display extends WorkbenchView
    {
@@ -94,7 +90,10 @@ public class BuildPresenter extends BasePresenter
       
       HasSelectionCommitHandlers<CodeNavigationTarget> errorList();
 
-      QuartoBookTypeDisplay quartoBookType();
+      String getBookType();
+      void setBookType(String type);
+      void onBookTypeChanged(Command onChanged);
+      
       
       HasSelectionCommitHandlers<String> buildSubType();
 
@@ -263,10 +262,10 @@ public class BuildPresenter extends BasePresenter
       {
          startBuild("build-all", event.getSelectedItem());
       });
-      view_.quartoBookType().addSelectionCommitHandler((SelectionCommitEvent<String> event) ->
-      {
-         startBuild("build-all", event.getSelectedItem());
+      view_.onBookTypeChanged(() -> {
+         startBuild("build-all", view_.getBookType());
       });
+   
 
       view_.stopButton().addClickHandler(new ClickHandler() {
          @Override
@@ -284,12 +283,12 @@ public class BuildPresenter extends BasePresenter
          protected void onInit(String value)
          {
             value = value != null ? value : "all";
-            view_.quartoBookType().setBookType(value);
+            view_.setBookType(value);
          }
          @Override
          protected String getValue()
          {
-            return view_.quartoBookType().getBookType();
+            return view_.getBookType();
          }
       };
 
@@ -412,7 +411,7 @@ public class BuildPresenter extends BasePresenter
       else if (subType.isEmpty() && 
                session_.getSessionInfo().getBuildToolsType() == SessionInfo.BUILD_TOOLS_QUARTO)
       {
-         executeBuild(type, view_.quartoBookType().getBookType());
+         executeBuild(type, view_.getBookType());
       }
       else
       {

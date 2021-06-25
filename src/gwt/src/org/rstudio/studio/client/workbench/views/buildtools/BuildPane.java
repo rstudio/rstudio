@@ -20,6 +20,7 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.Widget;
@@ -50,7 +51,6 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
-import org.rstudio.studio.client.workbench.views.buildtools.BuildPresenter.QuartoBookTypeDisplay;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BookdownFormats;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
 
@@ -275,7 +275,7 @@ public class BuildPane extends WorkbenchPane
    
   
    
-   class QuartoBookBuildPopupMenu extends ToolbarPopupMenu implements BuildPresenter.QuartoBookTypeDisplay
+   class QuartoBookBuildPopupMenu extends ToolbarPopupMenu
    {
       public QuartoBookBuildPopupMenu()
       {
@@ -325,15 +325,8 @@ public class BuildPane extends WorkbenchPane
             label = "EPUB";
          return label + " Format";
       }
-      
+   
 
-      @Override
-      public HandlerRegistration addSelectionCommitHandler(SelectionCommitEvent.Handler<String> handler)
-      {
-         return BuildPane.this.addHandler(handler, SelectionCommitEvent.getType());
-      }
-
-      @Override
       public String getBookType()
       {
          for (MenuItem item : getMenuItems())
@@ -346,8 +339,6 @@ public class BuildPane extends WorkbenchPane
          return "all";
       }
 
-
-      @Override
       public void setBookType(String type)
       {
          for (MenuItem item : getMenuItems())
@@ -398,7 +389,8 @@ public class BuildPane extends WorkbenchPane
          public void onInvoked()
          {
             QuartoBookBuildPopupMenu.this.setBookType(format_);
-            SelectionCommitEvent.fire(QuartoBookBuildPopupMenu.this, format_);
+            if (onQuartoBookBuildTypeChanged_ != null)
+               onQuartoBookBuildTypeChanged_.execute();
          }
 
          private final String format_;
@@ -487,10 +479,23 @@ public class BuildPane extends WorkbenchPane
    }
    
    @Override
-   public QuartoBookTypeDisplay quartoBookType()
+   public String getBookType()
    {
-      return quartoBookBuildPopupMenu_;
+     return quartoBookBuildPopupMenu_.getBookType();
    }
+
+   @Override
+   public void setBookType(String type)
+   {
+      quartoBookBuildPopupMenu_.setBookType(type);
+   }
+
+   @Override
+   public void onBookTypeChanged(Command onChanged)
+   {
+      onQuartoBookBuildTypeChanged_ = onChanged;
+   }
+
 
    @Override
    public String errorsBuildType()
@@ -510,9 +515,11 @@ public class BuildPane extends WorkbenchPane
    private final BuildServerOperations server_;
    private String errorsBuildType_;
    private QuartoBookBuildPopupMenu quartoBookBuildPopupMenu_;
+   private Command onQuartoBookBuildTypeChanged_;
 
    private final CompilePanel compilePanel_;
 
+   
   
 
   
