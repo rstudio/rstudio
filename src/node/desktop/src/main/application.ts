@@ -18,7 +18,7 @@ import { app, dialog, BrowserWindow } from 'electron';
 import { getenv, setenv } from '../core/environment';
 import { FilePath } from '../core/file-path';
 import { generateRandomPort } from '../core/system';
-import { logger } from '../core/logger';
+import { logger, enableDiagnosticsOutput } from '../core/logger';
 
 import { getRStudioVersion } from './product-info';
 import { findComponents, initializeSharedSecret } from './utils';
@@ -138,6 +138,7 @@ export class Application implements AppState {
 
     if (argv.indexOf(kRunDiagnosticsOption) > -1) {
       this.runDiagnostics = true;
+      enableDiagnosticsOutput();
     }
 
     return run();

@@ -23,7 +23,7 @@ import os from 'os';
 
 import { FilePath } from '../../../src/core/file-path';
 import { userHomePath } from '../../../src/core/user';
-import { logLevel, setLogger, setLoggerLevel, LogLevel } from '../../../src/core/logger';
+import { setLogger, setLoggerLevel, LogLevel } from '../../../src/core/logger';
 import { ConsoleLogger } from '../../../src/core/console-logger';
 import { clearCoreSingleton } from '../../../src/core/core-state';
 

@@ -39,6 +39,7 @@ export interface Logger {
 export interface LogOptions {
   logger?: Logger;
   logLevel: LogLevel;
+  showDiagnostics: boolean;
 }
 
 export function logger(): Logger {
@@ -58,6 +59,14 @@ export function logLevel(): LogLevel {
 
 export function setLogger(logger: Logger): void {
   coreState().logOptions.logger = logger;
+}
+
+export function enableDiagnosticsOutput(): void {
+  coreState().logOptions.showDiagnostics = true;
+}
+
+export function showDiagnosticsOutput(): boolean {
+  return coreState().logOptions.showDiagnostics;
 }
 
 /**

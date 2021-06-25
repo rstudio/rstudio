@@ -13,13 +13,24 @@
  *
  */
 
+import { MainWindow } from './main-window';
+
 /**
  * Not clear yet if we'll need this class from the Qt implementation, but keeping
  * it for now. If it ends up being useful, probably need to create an interface
  * describing behavior (for easier unit testing).
  */
 export class ApplicationLaunch {
+  mainWindow?: MainWindow;
   static init(): ApplicationLaunch {
     return new ApplicationLaunch();
+  }
+
+  setActivationWindow(window: MainWindow): void {
+    this.mainWindow = window;
+  }
+
+  activateWindow(): void {
+    // TODO - reimplement (if needed at all)
   }
 }

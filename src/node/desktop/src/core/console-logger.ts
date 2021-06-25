@@ -14,7 +14,7 @@
  */
 
 import { getenv } from './environment';
-import { Logger, LogLevel, logLevel } from './logger';
+import { Logger, LogLevel, logLevel, showDiagnosticsOutput } from './logger';
 
 /**
  * A Logger using console.log()
@@ -52,13 +52,13 @@ export class ConsoleLogger implements Logger {
   }
 
   logDiagnostic(message: string): void {
-    if (logLevel() >= LogLevel.OFF) {
+    if (showDiagnosticsOutput()) {
       console.log(message);
     }
   }
 
   logDiagnosticEnvVar(name: string): void {
-    if (logLevel() >= LogLevel.OFF) {
+    if (showDiagnosticsOutput()) {
       const value = getenv(name);
       if (value) {
         this.logDiagnostic(` . ${name} = ${value}`);
