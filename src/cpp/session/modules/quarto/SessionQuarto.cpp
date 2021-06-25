@@ -287,10 +287,7 @@ bool onHandleRmdPreview(const core::FilePath& sourceFile,
    std::string extendedType;
    Error error = source_database::detectExtendedType(sourceFile, &extendedType);
    if (error)
-   {
-      LOG_ERROR(error);
       return false;
-   }
    if (extendedType != kQuartoXt)
       return false;
 

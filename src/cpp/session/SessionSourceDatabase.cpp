@@ -1087,10 +1087,7 @@ SEXP rs_detectExtendedType(SEXP pathSEXP)
    std::string extendedType;
    Error error = source_database::detectExtendedType(path, &extendedType);
    if (error)
-   {
-      LOG_ERROR(error);
       return R_NilValue;
-   }
 
    r::sexp::Protect protect;
    return r::sexp::create(extendedType, &protect);
