@@ -1477,6 +1477,10 @@ private:
                            const core::system::ProcessOptions& options,
                            const core::system::ProcessCallbacks& cb)
    {
+      // show preview on complete
+      successFunction_ = boost::bind(&Build::showQuartoSitePreview,
+                                     Build::shared_from_this());
+
        auto cmd = shell_utils::ShellCommand("quarto");
        cmd << "render";
        if (!subType.empty())
@@ -1534,9 +1538,9 @@ private:
    {
       // determine source file
       std::string output = outputAsText();
-      FilePath sourceFile = websitePath.completeChildPath("index.Rmd");
-      if (!sourceFile.exists())
-         sourceFile = websitePath.completeChildPath("index.md");
+      FilePath sourceFile = websiteSourceFile(websitePath);
+      if (sourceFile.isEmpty())
+         return;
 
       // look for Output created message
       FilePath outputFile = module_context::extractOutputFileCreated(sourceFile,
@@ -1551,6 +1555,26 @@ private:
          ClientEvent event(client_events::kPreviewRmd, previewRmdJson);
          enqueClientEvent(event);
       }
+   }
+
+   void showQuartoSitePreview()
+   {
+      showWebsitePreview(projects::projectContext().directory());
+   }
+
+   FilePath websiteSourceFile(const FilePath& websiteDir)
+   {
+      FilePath sourceFile = websiteDir.completeChildPath("index.Rmd");
+      if (!sourceFile.exists())
+         sourceFile = websiteDir.completeChildPath("index.rmd");
+      if (!sourceFile.exists())
+         sourceFile = websiteDir.completeChildPath("index.md");
+      if (!sourceFile.exists())
+         sourceFile = websiteDir.completeChildPath("index.qmd");
+      if (sourceFile.exists())
+         return sourceFile;
+      else
+         return FilePath();
    }
 
    void terminateWithErrorStatus(int exitStatus)
