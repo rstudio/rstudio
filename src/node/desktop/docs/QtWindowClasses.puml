@@ -1,5 +1,8 @@
 @startuml
 title Qt Desktop Window Classes
+legend top center
+Major classes related to top-level windows and QtWebEngine in RStudio Desktop.
+endlegend
 
 hide empty members
 
@@ -7,7 +10,6 @@ skinparam class {
 BackgroundColor<<Qt>> PaleGreen
 BorderColor<<Qt>> SpringGreen
 }
-skinparam stereotypeCBackgroundColor<< Qt >> DimGray
 
 class QMainWindow << Qt >>
 class QWebEngineView << Qt >>

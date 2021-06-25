@@ -11,4 +11,5 @@ Install the plantuml extension in Visual Studio Code to view and edit. Use Quick
 Open a .puml file and use "PlantUml: Preview Current Diagram" command.
 
 ## References
-* PlantUml: https://plantuml.com/
+
+* PlantUml: <https://plantuml.com/>

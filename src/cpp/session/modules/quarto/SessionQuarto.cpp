@@ -361,8 +361,8 @@ bool isInstalled(bool refresh)
    if (refresh)
    {
       Error error = core::system::findProgramOnPath("quarto", &s_quartoPath);
-      if (error && !isFileNotFoundError(error))
-         LOG_ERROR(error);
+      if (error)
+         s_quartoPath = FilePath();
    }
 
    return !s_quartoPath.isEmpty();

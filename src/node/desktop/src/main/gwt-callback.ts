@@ -1,5 +1,5 @@
 /*
- * desktop-callback.ts
+ * gwt-callback.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -30,15 +30,15 @@ export const PendingQuit = {
   'PendingQuitRestartAndReload': 3
 };
 
-export class DesktopCallback {
+export class GwtCallback {
   pendingQuit: number = PendingQuit.PendingQuitNone;
 
-  constructor(public mainWindow: MainWindow,
-              public ownerWindow: MainWindow,
-              public isRemoteDesktop: boolean) {
-
+  constructor(
+    public mainWindow: MainWindow,
+    public isRemoteDesktop: boolean
+  ) {
     ipcMain.on('desktop_browse_url', (event, url) => {
-      DesktopCallback.unimpl('desktop_browser_url');
+      GwtCallback.unimpl('desktop_browser_url');
     });
 
     ipcMain.handle('desktop_get_open_file_name',
@@ -67,69 +67,69 @@ export class DesktopCallback {
       defaultExtension,
       forceDefaultExtension,
       focusOwner) => {
-      DesktopCallback.unimpl('desktop_get_save_file_name');
+      GwtCallback.unimpl('desktop_get_save_file_name');
       return '';
     });
 
     ipcMain.handle('desktop_get_existing_directory', (caption, label, dir, focusOwner) => {
-      DesktopCallback.unimpl('desktop_get_existing_directory');
+      GwtCallback.unimpl('desktop_get_existing_directory');
       return '';
     });
 
     ipcMain.on('desktop_on_clipboard_selection_changed', (event) => {
-      DesktopCallback.unimpl('desktop_on_clipboard_selection_changed');
+      GwtCallback.unimpl('desktop_on_clipboard_selection_changed');
     });
 
     ipcMain.on('desktop_undo', (event) => {
-      DesktopCallback.unimpl('desktop_undo');
+      GwtCallback.unimpl('desktop_undo');
     });
 
     ipcMain.on('desktop_redo', (event) => {
-      DesktopCallback.unimpl('desktop_redo');
+      GwtCallback.unimpl('desktop_redo');
     });
 
     ipcMain.on('desktop_clipboard_cut', (event) => {
-      DesktopCallback.unimpl('desktop_clipboard_cut');
+      GwtCallback.unimpl('desktop_clipboard_cut');
     });
 
     ipcMain.on('desktop_clipboard_copy', (event) => {
-      DesktopCallback.unimpl('desktop_clipboard_copy');
+      GwtCallback.unimpl('desktop_clipboard_copy');
     });
 
     ipcMain.on('desktop_clipboard_paste', (event) => {
-      DesktopCallback.unimpl('desktop_clipboard_paste');
+      GwtCallback.unimpl('desktop_clipboard_paste');
     });
 
     ipcMain.on('desktop_set_clipboard_text', (event, text) => {
-      DesktopCallback.unimpl('desktop_set_clipboard_text');
+      GwtCallback.unimpl('desktop_set_clipboard_text');
     });
 
     ipcMain.handle('desktop_get_clipboard_text', (event) => {
-      DesktopCallback.unimpl('desktop_get_clipboard_text');
+      GwtCallback.unimpl('desktop_get_clipboard_text');
       return '';
     });
 
     ipcMain.handle('desktop_get_clipboard_uris', (event) => {
-      DesktopCallback.unimpl('desktop_get_clipboard_uris');
+      GwtCallback.unimpl('desktop_get_clipboard_uris');
       return '';
     });
 
     ipcMain.handle('desktop_get_clipboard_image', (event) => {
-      DesktopCallback.unimpl('desktop_get_clipboard_image');
+      GwtCallback.unimpl('desktop_get_clipboard_image');
       return '';
     });
 
     ipcMain.on('desktop_set_global_mouse_selection', (event, selection) => {
-      DesktopCallback.unimpl('desktop_set_global_mouse_selection');
+      GwtCallback.unimpl('desktop_set_global_mouse_selection');
     });
 
     ipcMain.handle('desktop_get_global_mouse_selection', (event) => {
-      DesktopCallback.unimpl('desktop_get_global_mouse_selection');
+      GwtCallback.unimpl('desktop_get_global_mouse_selection');
       return '';
     });
 
     ipcMain.handle('desktop_get_cursor_position', (event) => {
-      DesktopCallback.unimpl('desktop_get_cursor_position');
+      GwtCallback.unimpl('desktop_get_cursor_position');
       return {x: 20, y: 20};
     });
 
@@ -142,31 +142,31 @@ export class DesktopCallback {
     });
 
     ipcMain.on('desktop_show_folder', (event, path) => {
-      DesktopCallback.unimpl('desktop_show_folder');
+      GwtCallback.unimpl('desktop_show_folder');
     });
 
     ipcMain.on('desktop_show_file', (event, file) => {
-      DesktopCallback.unimpl('desktop_show_file');
+      GwtCallback.unimpl('desktop_show_file');
     });
 
     ipcMain.on('desktop_show_word_doc', (event, wordDoc) => {
-      DesktopCallback.unimpl('desktop_show_word_doc');
+      GwtCallback.unimpl('desktop_show_word_doc');
     });
 
     ipcMain.on('desktop_show_ppt_presentation', (event, pptDoc) => {
-      DesktopCallback.unimpl('desktop_show_ppt_presentation');
+      GwtCallback.unimpl('desktop_show_ppt_presentation');
     });
 
     ipcMain.on('desktop_show_pdf', (event, path, pdfPage) => {
-      DesktopCallback.unimpl('desktop_show_pdf');
+      GwtCallback.unimpl('desktop_show_pdf');
     });
 
     ipcMain.on('desktop_prepare_show_word_doc', (event) => {
-      DesktopCallback.unimpl('desktop_prepare_show_word_doc');
+      GwtCallback.unimpl('desktop_prepare_show_word_doc');
     });
 
     ipcMain.on('desktop_prepare_show_ppt_presentation', (event) => {
-      DesktopCallback.unimpl('desktop_prepare_show_ppt_presentation');
+      GwtCallback.unimpl('desktop_prepare_show_ppt_presentation');
     });
 
     ipcMain.handle('desktop_get_r_version', (event) => {
@@ -174,21 +174,21 @@ export class DesktopCallback {
     });
 
     ipcMain.handle('desktop_choose_r_version', (event) => {
-      DesktopCallback.unimpl('desktop_choose_r_version');
+      GwtCallback.unimpl('desktop_choose_r_version');
       return '';
     });
 
     ipcMain.handle('desktop_device_pixel_ratio', (event) => {
-      DesktopCallback.unimpl('desktop_device_pixel_ratio');
+      GwtCallback.unimpl('desktop_device_pixel_ratio');
       return 1.0;
     });
 
     ipcMain.on('desktop_open_minimal_window', (event, name, url, width, height) => {
-      DesktopCallback.unimpl('desktop_open_minimal_window');
+      GwtCallback.unimpl('desktop_open_minimal_window');
     });
 
     ipcMain.on('desktop_activate_minimal_window', (event, name) => {
-      DesktopCallback.unimpl('desktop_activate_minimal_window');
+      GwtCallback.unimpl('desktop_activate_minimal_window');
     });
 
     ipcMain.on('desktop_activate_satellite_window', (event, name) => {
@@ -204,27 +204,27 @@ export class DesktopCallback {
     });
 
     ipcMain.on('desktop_close_named_window', (event, name) => {
-      DesktopCallback.unimpl('desktop_close_named_window');
+      GwtCallback.unimpl('desktop_close_named_window');
     });
 
     ipcMain.on('desktop_copy_page_region_to_clipboard', (event, left, top, width, height) => {
-      DesktopCallback.unimpl('desktop_copy_page_region_to_clipboard');
+      GwtCallback.unimpl('desktop_copy_page_region_to_clipboard');
     });
 
     ipcMain.on('desktop_export_page_region_to_file', (event, targetPath, format, left, top, width, height) => {
-      DesktopCallback.unimpl('desktop_export_page_region_to_file');
+      GwtCallback.unimpl('desktop_export_page_region_to_file');
     });
 
     ipcMain.on('desktop_print_text', (event, text) => {
-      DesktopCallback.unimpl('desktop_print_text');
+      GwtCallback.unimpl('desktop_print_text');
     });
 
     ipcMain.on('desktop_paint_print_text', (event, printer) => {
-      DesktopCallback.unimpl('desktop_paint_print_text');
+      GwtCallback.unimpl('desktop_paint_print_text');
     });
 
     ipcMain.on('desktop_print_finished', (event, result) => {
-      DesktopCallback.unimpl('desktop_print_finished');
+      GwtCallback.unimpl('desktop_print_finished');
     });
 
     ipcMain.handle('desktop_supports_clipboard_metafile', (event) => {
@@ -251,7 +251,7 @@ export class DesktopCallback {
     ipcMain.handle('desktop_prompt_for_text', (event, title, caption, defaultValue, type, 
       rememberPasswordPrompt, rememberByDefault,
       selectionStart, selectionLength, okButtonCaption) => {
-      DesktopCallback.unimpl('desktop_prompt_for_text');
+      GwtCallback.unimpl('desktop_prompt_for_text');
       return ''; 
     });
 
@@ -259,7 +259,7 @@ export class DesktopCallback {
     });
 
     ipcMain.on('desktop_bring_main_frame_behind_active', (event) => {
-      DesktopCallback.unimpl('desktop_bring_main_frame_behind_active');
+      GwtCallback.unimpl('desktop_bring_main_frame_behind_active');
     });
 
     ipcMain.handle('desktop_rendering_engine', (event) => {
@@ -267,16 +267,16 @@ export class DesktopCallback {
     });
 
     ipcMain.on('desktop_set_desktop_rendering_engine', (event, engine) => {
-      DesktopCallback.unimpl('desktop_set_desktop_rendering_engine');
+      GwtCallback.unimpl('desktop_set_desktop_rendering_engine');
     });
 
     ipcMain.handle('desktop_filter_text', (event, text) => {
-      DesktopCallback.unimpl('desktop_filter_text');
+      GwtCallback.unimpl('desktop_filter_text');
       return text;
     });
 
     ipcMain.on('desktop_clean_clipboard', (event, stripHtml) => {
-      DesktopCallback.unimpl('desktop_clean_clipboard');
+      GwtCallback.unimpl('desktop_clean_clipboard');
     });
 
     ipcMain.on('desktop_set_pending_quit', (event, pendingQuit) => {
@@ -284,55 +284,55 @@ export class DesktopCallback {
     });
 
     ipcMain.on('desktop_open_project_in_new_window', (event, projectFilePath) => {
-      DesktopCallback.unimpl('desktop_open_project_in_new_window');
+      GwtCallback.unimpl('desktop_open_project_in_new_window');
     });
 
     ipcMain.on('desktop_open_session_in_new_window', (event, workingDirectoryPath) => {
-      DesktopCallback.unimpl('desktop_open_session_in_new_window');
+      GwtCallback.unimpl('desktop_open_session_in_new_window');
     });
 
     ipcMain.on('desktop_open_terminal', (event, terminalPath, workingDirectory, extraPathEntries, shellType) => {
-      DesktopCallback.unimpl('desktop_open_terminal');
+      GwtCallback.unimpl('desktop_open_terminal');
     });
 
     ipcMain.handle('desktop_get_fixed_width_font_list', (event) => {
-      DesktopCallback.unimpl('desktop_get_fixed_width_font_list');
+      GwtCallback.unimpl('desktop_get_fixed_width_font_list');
       return '';
     });
 
     ipcMain.handle('desktop_get_fixed_width_font', (event) => {
-      DesktopCallback.unimpl('desktop_get_fixed_width_font');
+      GwtCallback.unimpl('desktop_get_fixed_width_font');
       return '';
     });
 
     ipcMain.on('desktop_set_fixed_width_font', (event, font) => {
-      DesktopCallback.unimpl('desktop_set_fixed_width_font');
+      GwtCallback.unimpl('desktop_set_fixed_width_font');
     });
 
     ipcMain.handle('desktop_get_zoom_levels', (event) => {
-      DesktopCallback.unimpl('desktop_get_zoom_levels');
+      GwtCallback.unimpl('desktop_get_zoom_levels');
       return '';
     });
 
     ipcMain.handle('desktop_get_zoom_level', (event) => {
-      DesktopCallback.unimpl('desktop_get_zoom_level');
+      GwtCallback.unimpl('desktop_get_zoom_level');
       return 1.0;
     });
 
     ipcMain.on('desktop_set_zoom_level', (event, zoomLevel) => {
-      DesktopCallback.unimpl('desktop_set_zoom_level');
+      GwtCallback.unimpl('desktop_set_zoom_level');
     });
 
     ipcMain.on('desktop_zoom_in', (event) => {
-      DesktopCallback.unimpl('desktop_zoom_in');
+      GwtCallback.unimpl('desktop_zoom_in');
     });
 
     ipcMain.on('desktop_zoom_out', (event) => {
-      DesktopCallback.unimpl('desktop_zoom_out');
+      GwtCallback.unimpl('desktop_zoom_out');
     });
 
     ipcMain.on('desktop_zoom_actual_size', (event) => {
-      DesktopCallback.unimpl('desktop_zoom_actual_size');
+      GwtCallback.unimpl('desktop_zoom_actual_size');
     });
 
     ipcMain.on('desktop_set_background_color', (event, rgbColor) => {
@@ -345,21 +345,21 @@ export class DesktopCallback {
     });
 
     ipcMain.handle('desktop_get_enable_accessibility', (event) => {
-      DesktopCallback.unimpl('desktop_get_enable_accessibility');
+      GwtCallback.unimpl('desktop_get_enable_accessibility');
       return true;
     });
 
     ipcMain.on('desktop_set_enable_accessibility', (event, enable) => {
-      DesktopCallback.unimpl('desktop_set_enable_accessibility');
+      GwtCallback.unimpl('desktop_set_enable_accessibility');
     });
 
     ipcMain.handle('desktop_get_clipboard_monitoring', (event) => {
-      DesktopCallback.unimpl('desktop_get_clipboard_monitoring');
+      GwtCallback.unimpl('desktop_get_clipboard_monitoring');
       return false;
     });
 
     ipcMain.on('desktop_set_clipboard_monitoring', (event, monitoring) => {
-      DesktopCallback.unimpl('desktop_set_clipboard_monitoring');
+      GwtCallback.unimpl('desktop_set_clipboard_monitoring');
     });
 
     ipcMain.handle('desktop_get_ignore_gpu_blacklist', (event, ignore) => {
@@ -367,7 +367,7 @@ export class DesktopCallback {
     });
 
     ipcMain.on('desktop_set_ignore_gpu_blacklist', (event, ignore) => {
-      DesktopCallback.unimpl('desktop_set_ignore_gpu_blacklist');
+      GwtCallback.unimpl('desktop_set_ignore_gpu_blacklist');
     });
 
     ipcMain.handle('desktop_get_disable_gpu_driver_bug_workarounds', (event) => {
@@ -375,15 +375,15 @@ export class DesktopCallback {
     });
 
     ipcMain.on('desktop_set_disable_gpu_driver_bug_workarounds', (event, disable) => {
-      DesktopCallback.unimpl('desktop_set_disable_gpu_driver_bug_workarounds');
+      GwtCallback.unimpl('desktop_set_disable_gpu_driver_bug_workarounds');
     });
 
     ipcMain.on('desktop_show_license_dialog', (event) => {
-      DesktopCallback.unimpl('desktop_show_license_dialog');
+      GwtCallback.unimpl('desktop_show_license_dialog');
     });
 
     ipcMain.on('desktop_show_session_server_options_dialog', (event) => {
-      DesktopCallback.unimpl('desktop_show_session_server_options_dialog');
+      GwtCallback.unimpl('desktop_show_session_server_options_dialog');
     });
 
     ipcMain.handle('desktop_get_init_messages', (event) => {
@@ -391,66 +391,66 @@ export class DesktopCallback {
     });
 
     ipcMain.handle('desktop_get_license_status_message', (event) => {
-      DesktopCallback.unimpl('desktop_get_license_status_messages');
+      GwtCallback.unimpl('desktop_get_license_status_messages');
       return '';
     });
 
     ipcMain.handle('desktop_allow_product_usage', (event) => {
-      DesktopCallback.unimpl('desktop_allow_product_usage');
+      GwtCallback.unimpl('desktop_allow_product_usage');
       return true;
     });
 
     ipcMain.handle('desktop_get_desktop_synctex_viewer', (event) => {
-      DesktopCallback.unimpl('desktop_get_desktop_synctex_viewer');
+      GwtCallback.unimpl('desktop_get_desktop_synctex_viewer');
       return '';
     });
 
     ipcMain.on('desktop_external_synctex_preview', (event, pdfPath, page) => {
-      DesktopCallback.unimpl('desktop_external_synctex_preview');
+      GwtCallback.unimpl('desktop_external_synctex_preview');
     });
 
     ipcMain.on('desktop_external_synctex_view', (event, pdfFile, srcFile, line, column) => {
-      DesktopCallback.unimpl('desktop_external_synctex_view');
+      GwtCallback.unimpl('desktop_external_synctex_view');
     });
 
     ipcMain.handle('desktop_supports_fullscreen_mode', (event) => {
-      DesktopCallback.unimpl('desktop_supports_fullscreen_mode');
+      GwtCallback.unimpl('desktop_supports_fullscreen_mode');
       return true;
     });
 
     ipcMain.on('desktop_toggle_fullscreen_mode', (event) => {
-      DesktopCallback.unimpl('desktop_toggle_fullscreen_mode');
+      GwtCallback.unimpl('desktop_toggle_fullscreen_mode');
     });
 
     ipcMain.on('desktop_show_keyboard_shortcut_help', (event) => {
-      DesktopCallback.unimpl('desktop_show_keyboard_shortcut_help');
+      GwtCallback.unimpl('desktop_show_keyboard_shortcut_help');
     });
 
     ipcMain.on('desktop_launch_session', (event, reload) => {
-      DesktopCallback.unimpl('desktop_launch)_session');
+      GwtCallback.unimpl('desktop_launch)_session');
     });
 
     ipcMain.on('desktop_reload_zoom_window', (event) => {
     });
 
     ipcMain.on('desktop_set_tutorial_url', (event, url) => {
-      DesktopCallback.unimpl('desktop_set_tutorial_url');
+      GwtCallback.unimpl('desktop_set_tutorial_url');
     });
   
     ipcMain.on('desktop_set_viewer_url', (event, url) => {
-      DesktopCallback.unimpl('desktop_set_viewer_url');
+      GwtCallback.unimpl('desktop_set_viewer_url');
     });
 
     ipcMain.on('desktop_reload_viewer_zoom_window', (event, url) => {
-      DesktopCallback.unimpl('desktop_reload_viewer_zoom_window');
+      GwtCallback.unimpl('desktop_reload_viewer_zoom_window');
     });
 
     ipcMain.on('desktop_set_shiny_dialog_url', (event, url) => {
-      DesktopCallback.unimpl('desktop_set_shiny_dialog_url');
+      GwtCallback.unimpl('desktop_set_shiny_dialog_url');
     });
 
     ipcMain.handle('desktop_get_scrolling_compensation_type', (event) => {
-      DesktopCallback.unimpl('desktop_get_scrolling_compensation_type');
+      GwtCallback.unimpl('desktop_get_scrolling_compensation_type');
       return '';
     });
 
@@ -470,7 +470,7 @@ export class DesktopCallback {
     });
 
     ipcMain.on('desktop_install_rtools', (event, version, installerPath) => {
-      DesktopCallback.unimpl('desktop_install_rtools');
+      GwtCallback.unimpl('desktop_install_rtools');
     });
 
     ipcMain.handle('desktop_get_display_dpi', (event) => {
@@ -478,11 +478,11 @@ export class DesktopCallback {
     });
 
     ipcMain.on('desktop_on_session_quit', (event) => {
-      DesktopCallback.unimpl('desktop_on_session_quit');
+      GwtCallback.unimpl('desktop_on_session_quit');
     });
 
     ipcMain.handle('desktop_get_session_server', (event) => {
-      DesktopCallback.unimpl('desktop_get_session_server');
+      GwtCallback.unimpl('desktop_get_session_server');
       return {};
     });
 
@@ -491,57 +491,57 @@ export class DesktopCallback {
     });
 
     ipcMain.on('desktop_reconnect_to_session_server', (event, sessionServerJson) => {
-      DesktopCallback.unimpl('desktop_reconnect_to_session_server');
+      GwtCallback.unimpl('desktop_reconnect_to_session_server');
     });
 
     ipcMain.handle('desktop_set_launcher_server', (event, sessionServerJson) => {
-      DesktopCallback.unimpl('desktop_set_launcher_server');
+      GwtCallback.unimpl('desktop_set_launcher_server');
       return false;
     });
 
     ipcMain.on('desktop_connect_to_launcher_server', (event) => {
-      DesktopCallback.unimpl('desktop_connect_to_launcher_server');
+      GwtCallback.unimpl('desktop_connect_to_launcher_server');
     });
 
     ipcMain.handle('desktop_get_launcher_server', (event) => {
-      DesktopCallback.unimpl('desktop_get_launcher_server');
+      GwtCallback.unimpl('desktop_get_launcher_server');
       return {};
     });
 
     ipcMain.on('desktop_start_launcher_job_status_stream', (event, jobId) => {
-      DesktopCallback.unimpl('desktop_start_launcher_job_status_stream');
+      GwtCallback.unimpl('desktop_start_launcher_job_status_stream');
     });
 
     ipcMain.on('desktop_stop_launcher_job_status_stream', (event, jobId) => {
-      DesktopCallback.unimpl('desktop_stop_launcher_job_status_stream');
+      GwtCallback.unimpl('desktop_stop_launcher_job_status_stream');
     });
 
     ipcMain.on('desktop_start_launcher_job_output_stream', (event, jobId) => {
-      DesktopCallback.unimpl('desktop_start_launcher_job_output_stream');
+      GwtCallback.unimpl('desktop_start_launcher_job_output_stream');
     });
 
     ipcMain.on('desktop_stop_launcher_job_output_stream', (event, jobId) => {
-      DesktopCallback.unimpl('desktop_stop_launcher_job_output_stream');
+      GwtCallback.unimpl('desktop_stop_launcher_job_output_stream');
     });
 
     ipcMain.on('desktop_control_launcher_job', (event, jobId, operation) => {
-      DesktopCallback.unimpl('desktop_control_launcher_job');
+      GwtCallback.unimpl('desktop_control_launcher_job');
     });
 
     ipcMain.on('desktop_submit_launcher_job', (event, job) => {
-      DesktopCallback.unimpl('desktop_submit_launcher_job');
+      GwtCallback.unimpl('desktop_submit_launcher_job');
     });
 
     ipcMain.on('desktop_get_job_container_user', (event) => {
-      DesktopCallback.unimpl('desktop_get_job_container_user');
+      GwtCallback.unimpl('desktop_get_job_container_user');
     });
 
     ipcMain.on('desktop_validate_jobs_config', (event) => {
-      DesktopCallback.unimpl('desktop_validate_jobs_config');
+      GwtCallback.unimpl('desktop_validate_jobs_config');
     });
 
     ipcMain.handle('desktop_get_proxy_port_number', (event) => {
-      DesktopCallback.unimpl('desktop_get_proxy_port_number');
+      GwtCallback.unimpl('desktop_get_proxy_port_number');
       return -1;
     });
   }
@@ -591,5 +591,3 @@ export class DesktopCallback {
     return buttons.split('|');
   }
 }
-
-module.exports = {PendingQuit, DesktopCallback};

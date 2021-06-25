@@ -19,7 +19,7 @@ import { spawn, ChildProcess } from 'child_process';
 import { logger } from '../core/logger';
 import { FilePath } from '../core/file-path';
 import { generateShortenedUuid, localPeer } from '../core/system';
-import { Err } from '../core/err';
+import { Err, Success } from '../core/err';
 import { getenv, setenv } from '../core/environment';
 
 import { ApplicationLaunch } from './application-launch';
@@ -27,7 +27,8 @@ import { appState } from './app-state';
 import { ActivationEvents } from './activation-overlay';
 import { EXIT_FAILURE } from './program-status';
 import { MainWindow } from './main-window';
-import { PendingQuit } from './desktop-callback';
+import { PendingQuit } from './gwt-callback';
+import { finalPlatformInitialize } from './utils';
 
 export interface LaunchContext {
   host: string;
@@ -52,10 +53,99 @@ export class SessionLauncher {
   launchFirstSession(): void {
     appState().activation().on(ActivationEvents.LAUNCH_FIRST_SESSION, this.onLaunchFirstSession.bind(this));
     appState().activation().on(ActivationEvents.LAUNCH_ERROR, this.onLaunchError.bind(this));
+
+    // This will ultimately trigger one of the above events to continue with startup (or failure).
     appState().activation().getInitialLicense();
   }
 
-  private launchSession(argList: string[]): ChildProcess {
+  // Porting note: In the C++ code this was an overload of launchFirstSession(), but
+  // but that isn't a thing in TypeScript (at least not without some ugly workarounds)
+  // so giving a different name.
+  private async launchFirst(): Promise<Err> {
+    // build a new new launch context
+    const launchContext = this.buildLaunchContext();
+
+    // show help home on first run
+    launchContext.argList.push('--show-help-home', '1');
+
+    logger().logDiagnostic('\nAttempting to launch R session...');
+    logger().logDiagnosticEnvVar('RSTUDIO_WHICH_R');
+    logger().logDiagnosticEnvVar('R_HOME');
+    logger().logDiagnosticEnvVar('R_DOC_DIR');
+    logger().logDiagnosticEnvVar('R_INCLUDE_DIR');
+    logger().logDiagnosticEnvVar('R_SHARE_DIR');
+    logger().logDiagnosticEnvVar('R_LIBS');
+    logger().logDiagnosticEnvVar('R_LIBS_USER');
+    logger().logDiagnosticEnvVar('DYLD_LIBRARY_PATH');
+    logger().logDiagnosticEnvVar('DYLD_FALLBACK_LIBRARY_PATH');
+    logger().logDiagnosticEnvVar('LD_LIBRARY_PATH');
+    logger().logDiagnosticEnvVar('PATH');
+    logger().logDiagnosticEnvVar('HOME');
+    logger().logDiagnosticEnvVar('R_USER');
+    logger().logDiagnosticEnvVar('RSTUDIO_CPP_BUILD_OUTPUT');
+
+    // launch the process
+    try {
+      this.sessionProcess = await this.launchSession(launchContext.argList);
+    } catch (err) {
+      return err;
+    }
+
+    logger().logDiagnostic( `\nR session launched, attempting to connect on port ${launchContext.port}...`);
+
+    this.mainWindow = new MainWindow(launchContext.url, false);
+    this.mainWindow.sessionLauncher = this;
+    this.mainWindow.sessionProcess = this.sessionProcess;
+    this.mainWindow.appLauncher = this.appLaunch;
+    this.appLaunch.setActivationWindow(this.mainWindow);
+
+    // TODO - reimplement
+    // desktop::options().restoreMainWindowBounds(pMainWindow_);
+
+    logger().logDiagnostic('\nConnected to R session, attempting to initialize...\n');
+
+    // TODO - reimplement
+    // one-time workbench initialized hook for startup file association
+    // if (!filename_.isNull() && !filename_.isEmpty()) {
+    //   StringSlotBinder* filenameBinder = new StringSlotBinder(filename_);
+    //   pMainWindow_->connect(pMainWindow_,
+    //                         SIGNAL(firstWorkbenchInitialized()),
+    //                         filenameBinder,
+    //                         SLOT(trigger()));
+    //   pMainWindow_->connect(filenameBinder,
+    //                         SIGNAL(triggered(QString)),
+    //                         pMainWindow_,
+    //                         SLOT(openFileInRStudio(QString)));
+    // }
+
+    // TODO - reimplement
+    // pMainWindow_->connect(pAppLaunch_,
+    //                       SIGNAL(openFileRequest(QString)),
+    //                       pMainWindow_,
+    //                       SLOT(openFileInRStudio(QString)));
+    // pMainWindow_->connect(pRSessionProcess_,
+    //                       SIGNAL(finished(int,QProcess::ExitStatus)),
+    //                       this, SLOT(onRSessionExited(int,QProcess::ExitStatus)));
+    // pMainWindow_->connect(&activation(),
+    //                       SIGNAL(licenseLost(QString)),
+    //                       pMainWindow_,
+    //                       SLOT(onLicenseLost(QString)));
+    // pMainWindow_->connect(&activation(), &DesktopActivation::updateLicenseWarningBar,
+    //                       pMainWindow_, &MainWindow::onUpdateLicenseWarningBar);
+
+
+    // show the window (but don't if we are doing a --run-diagnostics)
+    if (!appState().runDiagnostics) {
+      finalPlatformInitialize(this.mainWindow);
+      this.mainWindow.window?.show(); // TODO - don't show until 'ready-to-show' event to avoid flashing?
+      appState().activation().setMainWindow(this.mainWindow.window);
+      this.appLaunch.activateWindow();
+      this.mainWindow.load(launchContext.url);
+    }
+    return Success();
+  }
+
+  private async launchSession(argList: string[]): Promise<ChildProcess> {
     if (process.platform === 'darwin') {
       // on macOS with the hardened runtime, we can no longer rely on dyld
       // to lazy-load symbols from libR.dylib; to resolve this, we use
@@ -90,39 +180,12 @@ export class SessionLauncher {
     return sessionProc;
   }
 
-  private onLaunchFirstSession(): void {
-    const launchContext = this.buildLaunchContext();
-
-    // show help home on first run
-    launchContext.argList.push('--show-help-home', '1');
-
-    if (appState().runDiagnostics) {
-      logger().logDiagnostic('\nAttempting to launch R session...');
-      logger().logDiagnosticEnvVar('RSTUDIO_WHICH_R');
-      logger().logDiagnosticEnvVar('R_HOME');
-      logger().logDiagnosticEnvVar('R_DOC_DIR');
-      logger().logDiagnosticEnvVar('R_INCLUDE_DIR');
-      logger().logDiagnosticEnvVar('R_SHARE_DIR');
-      logger().logDiagnosticEnvVar('R_LIBS');
-      logger().logDiagnosticEnvVar('R_LIBS_USER');
-      logger().logDiagnosticEnvVar('DYLD_LIBRARY_PATH');
-      logger().logDiagnosticEnvVar('DYLD_FALLBACK_LIBRARY_PATH');
-      logger().logDiagnosticEnvVar('LD_LIBRARY_PATH');
-      logger().logDiagnosticEnvVar('PATH');
-      logger().logDiagnosticEnvVar('HOME');
-      logger().logDiagnosticEnvVar('R_USER');
+  private async onLaunchFirstSession(): Promise<void> {
+    const error = await this.launchFirst();
+    if (error) {
+      logger().logError(error);
+      appState().activation().emitLaunchError(this.launchFailedErrorMessage());
     }
-
-    // launch the process
-    this.sessionProcess = this.launchSession(launchContext.argList);
-
-    this.mainWindow = new MainWindow(launchContext.url, false);
-    this.mainWindow.sessionLauncher = this;
-    this.mainWindow.sessionProcess = this.sessionProcess;
-
-    // show the window
-    this.mainWindow.load(launchContext.url);
-   
   }
 
   onLaunchError(message: string): void {
@@ -163,10 +226,10 @@ export class SessionLauncher {
       if (!this.mainWindow?.workbenchInitialized) {
         // If the R session exited without initializing the workbench, treat it as
         // a boot failure.
-        this.showLaunchErrorPage(); 
+        this.showLaunchErrorPage();
       }
 
-    // quit and exit means close the main window
+      // quit and exit means close the main window
     } else if (pendingQuit === PendingQuit.PendingQuitAndExit) {
       this.mainWindow?.quit();
     }
@@ -184,8 +247,21 @@ export class SessionLauncher {
   }
 
   buildLaunchContext(reusePort = true): LaunchContext {
+    const argList: string[] = [];
+
     if (!reusePort) {
       appState().generateNewPort();
+    }
+
+    if (!this.confPath.isEmpty()) {
+      argList.push('--config-file');
+      argList.push(this.confPath.getAbsolutePath());
+    } else {
+      // explicitly pass "none" so that rsession doesn't read an
+      // /etc/rstudio/rsession.conf file which may be sitting around
+      // from a previous configuration or install
+      argList.push('--config-file');
+      argList.push('none');
     }
 
     // recalculate the local peer and set RS_LOCAL_PEER so that
@@ -214,5 +290,54 @@ export class SessionLauncher {
 
   closeAllSatellites(): void {
     console.log('CloseAllSatellites not implemented');
+  }
+
+  collectAbendLogMessage(): string {
+    const contents = '';
+
+    // TODO - reimplement
+    // FilePath abendLog = abendLogPath();
+    // if (abendLog.exists()) {
+    //   Error error = core:: readStringFromFile(abendLog, & contents);
+    //   if (error)
+    //     LOG_ERROR(error);
+
+    //   error = abendLog.removeIfExists();
+    //   if (error)
+    //     LOG_ERROR(error);
+    // }
+    return contents;
+  }
+
+  launchFailedErrorMessage(): string {
+    const errMsg = 'The R session had a fatal error.';
+
+    // check for abend log
+    /* const abendLogMessage = */ this.collectAbendLogMessage();
+
+    /// TODO - reimplement
+    // // check for R version mismatch
+    // if (abendLogMessage.contains(QString:: fromUtf8("arguments passed to .Internal"))) {
+    //   errMsg.append(QString:: fromUtf8("\n\nThis error was very likely caused "
+    //                 "by R attempting to load packages from a different "
+    //                 "incompatible version of R on your system. Please remove "
+    //                 "other versions of R and/or remove environment variables "
+    //                 "that reference libraries from other versions of R "
+    //                 "before proceeding."));
+    // }
+
+    // if (!abendLogMessage.isEmpty())
+    //   errMsg.append(QString:: fromUtf8("\n\n").append(abendLogMessage));
+
+    // // check for stderr
+    // if (pRSessionProcess_) {
+    //   QString errmsgs = QString:: fromLocal8Bit(
+    //     pRSessionProcess_ -> readAllStandardError());
+    //   if (errmsgs.size()) {
+    //     errMsg = errMsg.append(QString:: fromUtf8("\n\n")).append(errmsgs);
+    //   }
+    // }
+
+    return errMsg;
   }
 }

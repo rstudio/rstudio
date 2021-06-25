@@ -18,7 +18,7 @@ import { assert } from 'chai';
 import sinon from 'sinon';
 
 import { ConsoleLogger } from '../../../src/core/console-logger';
-import { setLoggerLevel, LogLevel } from '../../../src/core/logger';
+import { setLoggerLevel, LogLevel, enableDiagnosticsOutput } from '../../../src/core/logger';
 
 describe('Console-logger', () => {
   let fakeConsoleLog = sinon.fake();
@@ -108,14 +108,27 @@ describe('Console-logger', () => {
     logger.logDebug(msg);
     assert.isFalse(fakeConsoleLog.called);
   });
-  it('logDiagnostic', () => {
+  it('logDiagnostic silent by default', () => {
     const logger = new ConsoleLogger();
+    const msg = 'test diagnostic message';
+    logger.logDiagnostic(msg);
+    assert.isFalse(fakeConsoleLog.called);
+  });
+  it('logDiagnosticEnvVar silent by default', () => {
+    const logger = new ConsoleLogger();
+    logger.logDiagnosticEnvVar('PATH');
+    assert.isFalse(fakeConsoleLog.called);
+  });
+  it('logDiagnostic obeys setting', () => {
+    const logger = new ConsoleLogger();
+    enableDiagnosticsOutput();
     const msg = 'test diagnostic message';
     logger.logDiagnostic(msg);
     assert.isTrue(fakeConsoleLog.calledWith(msg));
   });
-  it('logDiagnosticEnvVar', () => {
+  it('logDiagnosticEnvVar obeys setting', () => {
     const logger = new ConsoleLogger();
+    enableDiagnosticsOutput();
     logger.logDiagnosticEnvVar('PATH');
     assert.isTrue(fakeConsoleLog.calledOnce);
   });

@@ -13,15 +13,19 @@
 #
 #
 
-.rs.addFunction("quarto.isServeRunning", function() {
+.rs.addFunction("quarto.servePort", function() {
    if (requireNamespace("quarto", quietly = TRUE)) {
-      if (!is.null(quarto:::quarto$ps)) {
-         quarto:::quarto$ps$is_alive()
+      if (!is.null(quarto:::quarto$ps) && quarto:::quarto$ps$is_alive()) {
+         if (is.numeric(quarto:::quarto$port)) {
+            quarto:::quarto$port
+         } else {
+            0
+         }
       } else {
-         FALSE
+         0
       }
    } else {
-      FALSE
+      0
    }
 })
 

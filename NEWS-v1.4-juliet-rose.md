@@ -47,6 +47,7 @@
 * Added a new user settings template file for VSCode settings to allow administrators to specify a default user configuration for VSCode sessions (Pro #2014)
 * Set environment variables `RS_URI_SCHEME`, `RS_SESSION_URL`, `SERVER_URL`, and `RS_HOME_URL` when VSCode is launched (Pro #2346, Pro #2373)
 * Updated `rstudio-server install-vs-code` to install `code-server` 3.9.3 (Pro #2576)
+* **BREAKING** `code-server` 3.3.0 moves the executable to a `bin` directory. After upgrading `code-server`, the `exe` setting in `vscode.conf` may need to be updated to include `bin` in the path. This happens if the upgrade is not done by `install-vs-code-ext` or if `vscode.conf` is being programatically managed. If not updated, VS Code sessions will launch with "wrong version number" message. [Related `code-server` change](https://github.com/cdr/code-server/releases/tag/v3.3.0)
 * Change the default behavior of `install-vs-code` to not configure a global extensions directory and allow users to manage their own extensions. If `install-vs-code` was run with a previous release and you'd like to change your configuration, the configuration can be manually removed from `vscode.conf` or the script can be rerun to regenerate `vscode.conf (Pro #2516) 
 * Added `rstudio-server install-vs-code-ext` script to install the RStudio Workbench VS Code extension in a global directory and upgrade `code-server` to 3.9.3 (Pro #2456)
 * When a global extensions directory isn't configured, install the RStudio Workbench extension on the first VS Code session launch per user (Pro #2376)

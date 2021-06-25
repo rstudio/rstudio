@@ -22,6 +22,7 @@ import { getenv, setenv } from '../core/environment';
 import { FilePath } from '../core/file-path';
 
 import { getRStudioVersion } from './product-info';
+import { MainWindow } from './main-window';
 
 export function initializeSharedSecret(): void {
   const sharedSecret = randomString() + randomString() + randomString();
@@ -135,4 +136,9 @@ export function findComponents(): [FilePath, FilePath, FilePath] {
     sessionPath = buildRoot.completePath(`session/${rsessionExeName()}`);
   }
   return [confPath, sessionPath, new FilePath(app.getAppPath())];
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function finalPlatformInitialize(mainWindow: MainWindow): void {
+  // TODO - reimplement for each platform
 }
