@@ -49,6 +49,6 @@ class CoreStateImpl implements CoreState {
 
   constructor() {
     this.instance = coreStateInstanceCounter++;
-    this.logOptions = { logLevel: LogLevel.ERR};
+    this.logOptions = { logLevel: LogLevel.ERR, showDiagnostics: false };
   }
 }
