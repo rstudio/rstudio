@@ -1063,7 +1063,6 @@ SEXP rs_getDocumentProperties(SEXP pathSEXP, SEXP includeContentsSEXP)
    error = source_database::getId(path, &id);
    if (error)
    {
-      LOG_ERROR(error);
       return R_NilValue;
    }
 
