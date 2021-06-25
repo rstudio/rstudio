@@ -332,13 +332,6 @@ public class BuildPane extends WorkbenchPane
       {
          return BuildPane.this.addHandler(handler, SelectionCommitEvent.getType());
       }
-      
-      @Override
-      public void fireEvent(GwtEvent<?> event)
-      {
-         BuildPane.this.fireEvent(event);
-      }
-
 
       @Override
       public String getBookType()
