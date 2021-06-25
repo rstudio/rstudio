@@ -260,7 +260,7 @@ void readQuartoProjectConfig(const FilePath& configFile,
             }
          }
       }
-      CATCH_UNEXPECTED_EXCEPTION;
+      CATCH_UNEXPECTED_EXCEPTION
    }
    else
    {

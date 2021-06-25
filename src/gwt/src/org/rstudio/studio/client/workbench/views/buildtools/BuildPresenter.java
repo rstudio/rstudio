@@ -46,8 +46,11 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.ClientInitState;
+import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
 import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.model.PrefLayer;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -67,6 +70,12 @@ import org.rstudio.studio.client.workbench.views.terminal.TerminalHelper;
 
 public class BuildPresenter extends BasePresenter
 {
+   public interface QuartoBookTypeDisplay extends HasSelectionCommitHandlers<String>
+   {
+      String getBookType();
+      void setBookType(String type);
+   }
+   
    public interface Display extends WorkbenchView
    {
       void buildStarted();
@@ -82,8 +91,11 @@ public class BuildPresenter extends BasePresenter
                       String buildType);
       void buildCompleted();
 
+      
       HasSelectionCommitHandlers<CodeNavigationTarget> errorList();
 
+      QuartoBookTypeDisplay quartoBookType();
+      
       HasSelectionCommitHandlers<String> buildSubType();
 
       HasClickHandlers stopButton();
@@ -251,6 +263,10 @@ public class BuildPresenter extends BasePresenter
       {
          startBuild("build-all", event.getSelectedItem());
       });
+      view_.quartoBookType().addSelectionCommitHandler((SelectionCommitEvent<String> event) ->
+      {
+         startBuild("build-all", event.getSelectedItem());
+      });
 
       view_.stopButton().addClickHandler(new ClickHandler() {
          @Override
@@ -259,6 +275,24 @@ public class BuildPresenter extends BasePresenter
             commands.stopBuild().execute();
          }
       });
+      
+      SessionInfo sessionInfo = session.getSessionInfo();
+      ClientInitState clientState = sessionInfo.getClientState();
+
+      new StringStateValue(MODULE_BUILD, QUARTO_BOOK_TYPE, ClientState.PROJECT_PERSISTENT, clientState) {
+         @Override
+         protected void onInit(String value)
+         {
+            value = value != null ? value : "all";
+            view_.quartoBookType().setBookType(value);
+         }
+         @Override
+         protected String getValue()
+         {
+            return view_.quartoBookType().getBookType();
+         }
+      };
+
    }
 
    public void initialize(BuildState buildState)
@@ -374,6 +408,11 @@ public class BuildPresenter extends BasePresenter
                executeBuild(type, subType);
             }
           });
+      }
+      else if (subType.isEmpty() && 
+               session_.getSessionInfo().getBuildToolsType() == SessionInfo.BUILD_TOOLS_QUARTO)
+      {
+         executeBuild(type, view_.quartoBookType().getBookType());
       }
       else
       {
@@ -496,4 +535,7 @@ public class BuildPresenter extends BasePresenter
    private final WorkbenchContext workbenchContext_;
    private final TerminalHelper terminalHelper_;
    private final Provider<JobManager> pJobManager_;
+   
+   private static final String MODULE_BUILD = "build-pane";
+   private static final String QUARTO_BOOK_TYPE = "quarto-book-type";
 }
