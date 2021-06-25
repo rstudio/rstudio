@@ -39,6 +39,34 @@ namespace serve {
 
 namespace {
 
+FilePath quartoProjectDir()
+{
+   return module_context::resolveAliasedPath(
+      module_context::quartoConfig().project_dir
+   );
+}
+
+std::string serverUrl(long port, const FilePath& outputFile = FilePath())
+{
+   // url w. port
+   std::string url = "http://localhost:" + safe_convert::numberToString(port) + "/";
+
+   // append doc path if we have one
+   if (!outputFile.isEmpty())
+   {
+      FilePath quartoProjectOutputDir = quartoProjectDir().completeChildPath(
+         quartoConfig().project_output_dir
+      );
+      std::string path = outputFile.isWithin(quartoProjectOutputDir)
+                            ? outputFile.getRelativePath(quartoProjectOutputDir)
+                            :  std::string();
+      url = url + path;
+   }
+
+   // return url
+   return url;
+}
+
 class QuartoServe : boost::noncopyable,
                     public boost::enable_shared_from_this<QuartoServe>
 {
@@ -54,22 +82,9 @@ public:
       return pJob_->state() == jobs::JobRunning;
    }
 
-   std::string serverUrl(const FilePath& ouptutFile = FilePath())
+   long port()
    {
-      // url w. port
-      std::string url = "http://localhost:" + port_ + "/";
-
-      // append doc path if we have one
-      if (!ouptutFile.isEmpty())
-      {
-         std::string outputDir = quartoConfig().project_output_dir;
-         std::string path = initialDocPath_.getRelativePath(quartoProjectDir_.completeChildPath(outputDir));
-         url = url + path;
-      }
-
-      // return url
-      return url;
-
+      return port_;
    }
 
    void stop()
@@ -92,11 +107,8 @@ public:
 
 private:
    explicit QuartoServe(const core::FilePath& initialDocPath)
-      : stopRequested_(false), initialDocPath_(initialDocPath)
+      : initialDocPath_(initialDocPath), stopRequested_(false)
    {
-      quartoProjectDir_ = module_context::resolveAliasedPath(
-         module_context::quartoConfig().project_dir
-      );
    }
 
    Error start()
@@ -117,7 +129,7 @@ private:
 #else
       options.terminateChildren = true;
 #endif
-      options.workingDir = quartoProjectDir_;
+      options.workingDir = quartoProjectDir();
 
       // callbacks
       core::system::ProcessCallbacks cb;
@@ -177,10 +189,10 @@ private:
       if (regex_utils::search(error, match, browseRe))
       {
          // save port
-         port_ = match[1];
+         port_ = safe_convert::stringTo<int>(match[1], 0);
 
          // launch viewer
-         module_context::viewer(serverUrl(initialDocPath_), -1);
+         module_context::viewer(serverUrl(port_, initialDocPath_), -1);
 
          // now that the dev server is running restore the console tab
          ClientEvent activateConsoleEvent(client_events::kConsoleActivate, false);
@@ -206,11 +218,9 @@ private:
    }
 
 private:
-
-   bool stopRequested_;
-   std::string port_;
-   FilePath quartoProjectDir_;
+   long port_;
    FilePath initialDocPath_;
+   bool stopRequested_;
    boost::shared_ptr<jobs::Job> pJob_;
 
 };
@@ -241,20 +251,35 @@ Error quartoServeRpc(const json::JsonRpcRequest&,
    return quartoServe();
 }
 
-
-bool isServeRunning()
+bool isJobServeRunning()
 {
-   // our job-based server
-   if (s_pServe && s_pServe->isRunning())
-      return true;
+   return s_pServe && s_pServe->isRunning();
+}
 
+long pkgServePort()
+{
    // quarto package server
-   bool running = false;
-   Error error = r::exec::RFunction(".rs.quarto.isServeRunning")
-         .call(&running);
+   double port = 0;
+   Error error = r::exec::RFunction(".rs.quarto.servePort")
+         .call(&port);
    if (error)
       LOG_ERROR(error);
-   return running;
+   return std::lround(port);
+}
+
+
+void navigateToViewer(long port, const core::FilePath& docPath)
+{
+   // if the viewer is already on the site just activate it
+   if (boost::algorithm::starts_with(
+          module_context::viewerCurrentUrl(false), serverUrl(port)))
+   {
+      module_context::activatePane("viewer");
+   }
+   else
+   {
+      module_context::viewer(serverUrl(port, docPath), -1);
+   }
 }
 
 
@@ -262,24 +287,23 @@ bool isServeRunning()
 
 void previewDoc(const core::FilePath& docPath)
 {
-   if (!isServeRunning())
+   if (isJobServeRunning())
    {
-      Error error = quartoServe(docPath);
-      if (error)
-         LOG_ERROR(error);
+      navigateToViewer(s_pServe->port(), docPath);
    }
    else
    {
-      // if the viewer is already on the site just activate it
-      if (boost::algorithm::starts_with(
-             module_context::viewerCurrentUrl(false), s_pServe->serverUrl()))
-      {
-         module_context::activatePane("viewer");
-      }
-      else
-      {
-         module_context::viewer(s_pServe->serverUrl(docPath), -1);
-      }
+       long port = pkgServePort();
+       if (port > 0)
+       {
+         navigateToViewer(port, docPath);
+       }
+       else
+       {
+          Error error = quartoServe(docPath);
+          if (error)
+             LOG_ERROR(error);
+       }
    }
 }
 
