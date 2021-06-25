@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -191,26 +192,25 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       PaneConfig paneConfig = userPrefs.panes().getGlobalValue().cast();
       additionalColumnCount_ = paneConfig.getAdditionalSourceColumns();
 
-      add(new Label("Choose the layout of the panels in RStudio by selecting from the controls in" +
-         " each panel. Add up to three additional Source Columns to the left side of the layout. " +
-         "When a column is removed, all saved files within the column are closed and any unsaved " +
-         "files are moved to the main Source Pane.",
+      add(new Label(constants_.paneLayoutText() + " " +
+         constants_.paneLayoutAddText() +
+         constants_.paneLayoutRemoveText() +
+         constants_.paneLayoutMoveText(),
          true));
 
-      Toolbar columnToolbar = new Toolbar("Manage Column Display");
+      Toolbar columnToolbar = new Toolbar(constants_.columnToolbarLabel());
       columnToolbar.setStyleName(res_.styles().newSection());
 
       ToolbarButton addButton = new ToolbarButton(
-         "Add Column",
-         "Add column",
+         constants_.addButtonText(),
+         constants_.addButtonLabel(),
          res_.iconAddSourcePane());
       if (displayColumnCount_ > PaneManager.MAX_COLUMN_COUNT - 1 ||
          !userPrefs.allowSourceColumns().getGlobalValue())
          addButton.setEnabled(false);
 
       ToolbarButton removeButton = new ToolbarButton(
-         "Remove Column",
-         "Remove column",
+         constants_.removeButtonText(), constants_.removeButtonLabel(),
          res_.iconRemoveSourcePane());
       removeButton.setEnabled(additionalColumnCount_ > 0);
 
@@ -245,13 +245,13 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       String[] visiblePanes = PaneConfig.getVisiblePanes();
 
       leftTop_ = new ListBox();
-      Roles.getListboxRole().setAriaLabelProperty(leftTop_.getElement(), "Top left panel");
+      Roles.getListboxRole().setAriaLabelProperty(leftTop_.getElement(), constants_.leftTopPanelText());
       leftBottom_ = new ListBox();
-      Roles.getListboxRole().setAriaLabelProperty(leftBottom_.getElement(), "Bottom left panel");
+      Roles.getListboxRole().setAriaLabelProperty(leftBottom_.getElement(), constants_.leftBottomPanelText());
       rightTop_ = new ListBox();
-      Roles.getListboxRole().setAriaLabelProperty(rightTop_.getElement(), "Top right panel");
+      Roles.getListboxRole().setAriaLabelProperty(rightTop_.getElement(), constants_.rightTopPanelText());
       rightBottom_ = new ListBox();
-      Roles.getListboxRole().setAriaLabelProperty(rightBottom_.getElement(), "Bottom right panel");
+      Roles.getListboxRole().setAriaLabelProperty(rightBottom_.getElement(), constants_.rightBottomPanelText());
       visiblePanes_ = new ListBox[]{leftTop_, leftBottom_, rightTop_, rightBottom_};
       for (ListBox lb : visiblePanes_)
       {
@@ -268,7 +268,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          boolean success = selectByValue(visiblePanes_[i], origPanes.get(i));
          if (!success)
          {
-            Debug.log("Bad config! Falling back to a reasonable default");
+            Debug.log(constants_.debugLogText());
             leftTop_.setSelectedIndex(0);
             leftBottom_.setSelectedIndex(1);
             rightTop_.setSelectedIndex(2);
@@ -380,7 +380,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          grid_.addStyleName(res_.styles().paneLayoutTable());
          grid_.setCellSpacing(GRID_CELL_SPACING);
          grid_.setCellPadding(GRID_CELL_PADDING);
-         Roles.getGridRole().setAriaLabelProperty(grid_.getElement(), "Columns and Panes Layout");
+         Roles.getGridRole().setAriaLabelProperty(grid_.getElement(), constants_.createGridLabel());
 
          // the two rows have a different number of columns
          // because the source columns only use one
@@ -456,7 +456,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
 
       ScrollPanel sp = new ScrollPanel();
       sp.add(verticalPanel);
-      Roles.getTextboxRole().setAriaLabelProperty(sp.getElement(), "Additional source column");
+      Roles.getTextboxRole().setAriaLabelProperty(sp.getElement(), constants_.createColumnLabel());
 
       return sp;
    }
@@ -545,7 +545,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    @Override
    public String getName()
    {
-      return "Pane Layout";
+      return constants_.paneLayoutLabel();
    }
 
    private void updateTabSetPositions()
@@ -615,4 +615,5 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    private final static int TABLE_WIDTH = 435;
    private final static int GRID_PANE_COUNT = 2;
    private final static int GRID_SELECT_PADDING = 10; // must match CSS file
+   private final PaneLayoutPreferencesPaneConstants constants_ = GWT.create(PaneLayoutPreferencesPaneConstants.class);
 }

@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
@@ -55,7 +56,7 @@ public class SpellingPreferencesPane extends PreferencesPane
       res_ = res;
       uiPrefs_ = prefs;
       
-      add(headerLabel("Dictionaries"));
+      add(headerLabel(constants_.spellingPreferencesPaneHeader()));
 
       languageWidget_ = new SpellingLanguageSelectWidget(spellingService);
       spaced(languageWidget_);
@@ -68,21 +69,21 @@ public class SpellingPreferencesPane extends PreferencesPane
 
       addUserDictionariesEditor(workbenchListManager);
       
-      add(headerLabel("Ignore"));
+      add(headerLabel(constants_.ignoreHeader()));
       
-      add(checkboxPref("Ignore words in UPPERCASE", prefs.ignoreUppercaseWords()));
-      add(mediumSpaced(checkboxPref("Ignore words with numbers", prefs.ignoreWordsWithNumbers(), false)));
+      add(checkboxPref(constants_.ignoreWordsUppercaseLabel(), prefs.ignoreUppercaseWords()));
+      add(mediumSpaced(checkboxPref(constants_.ignoreWordsNumbersLabel(), prefs.ignoreWordsWithNumbers(), false)));
 
       
-      add(headerLabel("Checking"));
+      add(headerLabel(constants_.checkingHeader()));
       
       boolean canRealtime = TypoSpellChecker.canRealtimeSpellcheckDict(prefs.spellingDictionaryLanguage().getValue());
-      realtimeSpellcheckingCheckbox_ = checkboxPref("Use real time spell-checking", prefs.realTimeSpellchecking(), false);
+      realtimeSpellcheckingCheckbox_ = checkboxPref(constants_.realTimeSpellcheckingCheckboxLabel(), prefs.realTimeSpellchecking(), false);
       realtimeSpellcheckingCheckbox_.getElement().getStyle().setOpacity(canRealtime ? 1.0 : 0.6);
       spaced(realtimeSpellcheckingCheckbox_);
       add(realtimeSpellcheckingCheckbox_);
 
-      blacklistWarning_ = new Label("Real time spell-checking currently unavailable for this dictionary");
+      blacklistWarning_ = new Label(constants_.blacklistWarningLabel());
       blacklistWarning_.getElement().getStyle().setColor("red");
       blacklistWarning_.setVisible(!canRealtime);
 
@@ -100,10 +101,10 @@ public class SpellingPreferencesPane extends PreferencesPane
    
    private void addUserDictionariesEditor(WorkbenchListManager workbenchListManager)
    {
-      final String kUserDictionary = "User dictionary: ";
+      final String kUserDictionary = constants_.kUserDictionaryLabel();
       final Label userDictLabel = new Label(kUserDictionary);
       final Consumer<Integer> setUserDictLabel = (Integer entries) -> {
-         userDictLabel.setText(kUserDictionary + StringUtil.formatGeneralNumber(entries) + " words");
+         userDictLabel.setText(kUserDictionary + StringUtil.formatGeneralNumber(entries) +" "+ constants_.kUserDictionaryWordsLabel());
       };
       
       final ArrayList<String> userDictWords = new ArrayList<>();
@@ -118,12 +119,12 @@ public class SpellingPreferencesPane extends PreferencesPane
       HorizontalPanel userDictPanel = new HorizontalPanel();
       userDictPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
       userDictPanel.add(userDictLabel);
-      SmallButton editUserDict = new SmallButton("Edit User Dictionary...");
+      SmallButton editUserDict = new SmallButton(constants_.editUserDictLabel());
       editUserDict.addStyleName(res_.styles().userDictEditButton());
       editUserDict.addClickHandler((e) -> {
          EditDialog editDialog = new EditDialog(
-            "Edit User Dictionary",
-            "Save",
+            constants_.editUserDictCaption(),
+            constants_.editUserDictSaveCaption(),
             String.join("\n", userDictWords),
             Roles.getDialogRole(),
             false,
@@ -203,7 +204,7 @@ public class SpellingPreferencesPane extends PreferencesPane
    @Override
    public String getName()
    {
-      return "Spelling";
+      return constants_.spellingPaneLabel();
    }
 
 
@@ -214,4 +215,5 @@ public class SpellingPreferencesPane extends PreferencesPane
    private final SpellingCustomDictionariesWidget customDictsWidget_;
    private final Label blacklistWarning_;
    private final CheckBox realtimeSpellcheckingCheckbox_;
+   private final SpellingPreferencesPaneConstants constants_ = GWT.create(SpellingPreferencesPaneConstants.class);
 }
