@@ -19,25 +19,29 @@ import { ChildProcess } from 'child_process';
 
 import { logger } from '../core/logger';
 
-import { DesktopCallback } from './desktop-callback';
+import { GwtCallback } from './gwt-callback';
 import { MenuCallback } from './menu-callback';
 import { PendingWindow } from './pending-window';
 import { RCommandEvaluator } from './r-command-evaluator';
 import { SessionLauncher } from './session-launcher';
+import { ApplicationLaunch } from './application-launch';
+import { GwtWindow } from './gwt-window';
 
 // corresponds to DesktopMainWindow.cpp/hpp
-export class MainWindow {
+export class MainWindow extends GwtWindow {
   sessionLauncher?: SessionLauncher;
   sessionProcess?: ChildProcess;
+  appLauncher?: ApplicationLaunch;
   window?: BrowserWindow;
-  desktopCallback: DesktopCallback;
+  desktopCallback: GwtCallback;
   menuCallback: MenuCallback;
   quitConfirmed = false;
   workbenchInitialized = false;
   pendingWindows = new Array<PendingWindow>();
 
   constructor(public url: string, public isRemoteDesktop: boolean) {
-    this.desktopCallback = new DesktopCallback(this, this, isRemoteDesktop);
+    super();
+    this.desktopCallback = new GwtCallback(this, isRemoteDesktop);
     this.menuCallback = new MenuCallback(this);
 
     RCommandEvaluator.setMainWindow(this);

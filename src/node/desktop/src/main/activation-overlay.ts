@@ -13,6 +13,7 @@
  *
  */
 
+import { BrowserWindow } from 'electron';
 import { EventEmitter } from 'events';
 
 export enum ActivationEvents {
@@ -31,32 +32,68 @@ export class DesktopActivation extends EventEmitter {
     return true;
   }
 
+  /**
+   * @returns License state description if expired or within certain time window before
+   * expiring, otherwise empty string.
+   */
+  currentLicenseStateMessage(): string {
+    // TODO - reimplement
+    return '';
+  }
+
+  /**
+   * @returns Description of license state
+   */
+  licenseStatus(): string {
+    // TODO - reimplement
+    return '';
+  }
+
+  /** 
+    * Set main window, so we can supply it as default parent of message boxes
+    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  setMainWindow(window?: BrowserWindow): void {
+  }
+
+  /**
+   * @returns Name of product edition, for use in UI
+   */
   editionName(): string {
     return 'RStudio';
   }
 
-  // license has been lost while using the program
+  /**
+   * license has been lost while using the program
+   */
   emitLicenseLostSignal(): void {
   }
 
-  // no longer need to show a license warning bar
+  /**
+   * no longer need to show a license warning bar
+   */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   emitUpdateLicenseWarningBarSignal(message: string): void {
   }
 
-  // start a session after validating initial license
+  /**
+   * start a session after validating initial license
+   */
   emitLaunchFirstSession(): void {
     this.emit(ActivationEvents.LAUNCH_FIRST_SESSION);
   }
 
-  // show a messagebox (if message is non-empty) then exit the program
+  /**
+   * show a messagebox (if message is non-empty) then exit the program
+   */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   emitLaunchError(message: string): void {
     this.emit(ActivationEvents.LAUNCH_ERROR, message);
   }
 
-  // detect (or re-detect) license status
+  /**
+   * detect (or re-detect) license status
+   */
   emitDetectLicense(): void {
   }
-
 }

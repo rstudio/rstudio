@@ -80,9 +80,7 @@ async function prepareEnvironmentPosix(): Promise<boolean> {
     return false;
   }
 
-  if (appState().runDiagnostics) {
-    logger().logDiagnostic(`Using R script: ${detectResult.rScriptPath}`);
-  }
+  logger().logDiagnostic(`Using R script: ${detectResult.rScriptPath}`);
 
   setREnvironmentVars(detectResult.envVars ?? {});
 
