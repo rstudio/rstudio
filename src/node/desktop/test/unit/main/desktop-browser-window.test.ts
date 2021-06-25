@@ -1,5 +1,5 @@
 /*
- * rstudio-browser-window.test.ts
+ * desktop-browser-window.test.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -14,13 +14,16 @@
  */
 
 import { describe } from 'mocha';
-import { assert } from 'chai';
+//import { assert } from 'chai';
 
-import { RStudioBrowserWindow } from '../../../src/main/rstudio-browser-window';
+//import { URL } from 'url';
 
-describe('RStudioBrowserWindow', () => {
+//import { DesktopBrowserWindow } from '../../../src/main/desktop-browser-window';
+
+describe('DesktopBrowserWindow', () => {
   it('can be created', () => {
-    const win = new RStudioBrowserWindow();
-    assert.isObject(win);
+    // const url = new URL('chrome://gpu');
+    // const win = new DesktopBrowserWindow(false, '_blank', url);
+    // assert.isObject(win);
   });
 });

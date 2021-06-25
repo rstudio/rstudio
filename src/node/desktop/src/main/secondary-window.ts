@@ -14,8 +14,8 @@
  *
  */
 
-import { RStudioBrowserWindow } from './rstudio-browser-window';
+import { DesktopBrowserWindow } from './desktop-browser-window';
 
-export class SecondaryWindow extends RStudioBrowserWindow {
+export class SecondaryWindow extends DesktopBrowserWindow {
 
 }

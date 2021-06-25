@@ -25,10 +25,8 @@ import { PendingWindow } from './pending-window';
 import { RCommandEvaluator } from './r-command-evaluator';
 import { SessionLauncher } from './session-launcher';
 import { ApplicationLaunch } from './application-launch';
-import { GwtWindow } from './gwt-window';
 
-// corresponds to DesktopMainWindow.cpp/hpp
-export class MainWindow extends GwtWindow {
+export class MainWindow { // TODO: extends GwtWindow
   sessionLauncher?: SessionLauncher;
   sessionProcess?: ChildProcess;
   appLauncher?: ApplicationLaunch;
@@ -40,7 +38,6 @@ export class MainWindow extends GwtWindow {
   pendingWindows = new Array<PendingWindow>();
 
   constructor(public url: string, public isRemoteDesktop: boolean) {
-    super();
     this.desktopCallback = new GwtCallback(this, isRemoteDesktop);
     this.menuCallback = new MenuCallback(this);
 
