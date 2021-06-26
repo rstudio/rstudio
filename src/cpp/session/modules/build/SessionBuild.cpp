@@ -1534,6 +1534,17 @@ private:
       rExecute(command, websitePath, options, false /* --vanilla */, cb);
    }
 
+   void enquePreviewRmdEvent(const FilePath& sourceFile, const FilePath& outputFile)
+   {
+      json::Object previewRmdJson;
+      using namespace module_context;
+      previewRmdJson["source_file"] = createAliasedPath(sourceFile);
+      previewRmdJson["encoding"] = projects::projectContext().config().encoding;
+      previewRmdJson["output_file"] = createAliasedPath(outputFile);
+      ClientEvent event(client_events::kPreviewRmd, previewRmdJson);
+      enqueClientEvent(event);
+   }
+
    void showWebsitePreview(const FilePath& websitePath)
    {
       // determine source file
@@ -1547,19 +1558,43 @@ private:
                                                                      output);
       if (!outputFile.isEmpty())
       {
-         json::Object previewRmdJson;
-         using namespace module_context;
-         previewRmdJson["source_file"] = createAliasedPath(sourceFile);
-         previewRmdJson["encoding"] = projects::projectContext().config().encoding;
-         previewRmdJson["output_file"] = createAliasedPath(outputFile);
-         ClientEvent event(client_events::kPreviewRmd, previewRmdJson);
-         enqueClientEvent(event);
+         enquePreviewRmdEvent(sourceFile, outputFile);
       }
    }
 
    void showQuartoSitePreview()
    {
-      showWebsitePreview(projects::projectContext().directory());
+      // determine source file
+      auto quartoProjectDir = projects::projectContext().directory();
+      std::string output = outputAsText();
+      FilePath sourceFile = websiteSourceFile(quartoProjectDir);
+      if (sourceFile.isEmpty())
+         return;
+
+      // look for Output created message
+      FilePath outputFile = module_context::extractOutputFileCreated(sourceFile,
+                                                                     output);
+
+      if (!outputFile.isEmpty())
+      {
+         if (outputFile.hasExtensionLowerCase(".html"))
+         {
+            // NOTE: right now this is treated the same as the other code paths
+            // (show the preview). Since it's HTML and this preview won't be
+            // using the dev server we could consider making this smarter (e.g.
+            // activate viewer pane if dev server is running, actually run the
+            // dev server, etc.). This is a bit trickly b/c as it currently stands
+            // the dev server needs to run it's own render (to get the resource
+            // files from the render result) so this would result in a double
+            // render. Mostly I think this is treatment is fine but just wanted
+            // to note the possibility of another one.
+            enquePreviewRmdEvent(sourceFile, outputFile);
+         }
+         else
+         {
+            enquePreviewRmdEvent(sourceFile, outputFile);
+         }
+      }
    }
 
    FilePath websiteSourceFile(const FilePath& websiteDir)
