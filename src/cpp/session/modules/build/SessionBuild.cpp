@@ -1554,7 +1554,7 @@ private:
          return;
 
       // look for Output created message
-      FilePath outputFile = module_context::extractOutputFileCreated(sourceFile,
+      FilePath outputFile = module_context::extractOutputFileCreated(sourceFile.getParent(),
                                                                      output);
       if (!outputFile.isEmpty())
       {
@@ -1565,29 +1565,27 @@ private:
    void showQuartoSitePreview()
    {
       // determine source file
-      auto quartoProjectDir = projects::projectContext().directory();
+      auto config = module_context::quartoConfig();
+      auto quartoProjectDir = module_context::resolveAliasedPath(config.project_dir);
       std::string output = outputAsText();
       FilePath sourceFile = websiteSourceFile(quartoProjectDir);
       if (sourceFile.isEmpty())
          return;
 
       // look for Output created message
-      FilePath outputFile = module_context::extractOutputFileCreated(sourceFile,
-                                                                     output);
+      FilePath outputFile = module_context::extractOutputFileCreated(
+         projects::projectContext().directory(),
+         output
+      );
 
       if (!outputFile.isEmpty())
       {
          if (outputFile.hasExtensionLowerCase(".html"))
          {
-            // NOTE: right now this is treated the same as the other code paths
-            // (show the preview). Since it's HTML and this preview won't be
-            // using the dev server we could consider making this smarter (e.g.
-            // activate viewer pane if dev server is running, actually run the
-            // dev server, etc.). This is a bit trickly b/c as it currently stands
-            // the dev server needs to run it's own render (to get the resource
-            // files from the render result) so this would result in a double
-            // render. Mostly I think this is treatment is fine but just wanted
-            // to note the possibility of another one.
+            // since this is a file=based preview, we need to always show the index
+            // file for the site rather than whatever output file was generated
+            FilePath outputDir = quartoProjectDir.completeChildPath(config.project_output_dir);
+            outputFile = outputDir.completeChildPath("index.html");
             enquePreviewRmdEvent(sourceFile, outputFile);
          }
          else

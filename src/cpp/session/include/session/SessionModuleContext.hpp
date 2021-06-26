@@ -866,7 +866,7 @@ std::vector<std::string> bookdownZoteroCollections();
 core::json::Value bookdownXRefIndex();
 core::FilePath bookdownCSL();
 
-core::FilePath extractOutputFileCreated(const core::FilePath& inputFile,
+core::FilePath extractOutputFileCreated(const core::FilePath& inputDir,
                                         const std::string& output);
 
 bool isPathViewAllowed(const core::FilePath& path);

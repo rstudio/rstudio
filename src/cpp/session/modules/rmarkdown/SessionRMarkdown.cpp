@@ -200,7 +200,7 @@ void initWebsiteOutputDir()
 
 namespace module_context {
 
-FilePath extractOutputFileCreated(const FilePath& inputFile,
+FilePath extractOutputFileCreated(const FilePath& inputDir,
                                   const std::string& output)
 {
    // check each line of the emitted output; if it starts with a token
@@ -225,7 +225,7 @@ FilePath extractOutputFileCreated(const FilePath& inputFile,
 
             // if the path looks absolute, use it as-is; otherwise, presume
             // it to be in the same directory as the input file
-            FilePath outputFile = inputFile.getParent().completePath(fileName);
+            FilePath outputFile = inputDir.completePath(fileName);
 
             // if it's a plain .md file and we are in a Hugo project then
             // don't preview it (as the user is likely running a Hugo preview)
@@ -723,7 +723,7 @@ private:
    {
       // see if we can determine the output file
       FilePath outputFile = module_context::extractOutputFileCreated
-                                                   (targetFile_, allOutput_);
+                                                   (targetFile_.getParent(), allOutput_);
       if (!outputFile.isEmpty())
       {
          // record ouptut file
