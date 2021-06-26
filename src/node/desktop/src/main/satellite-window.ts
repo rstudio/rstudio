@@ -13,8 +13,16 @@
  *
  */
 
+import { WebContents } from 'electron';
 import { GwtWindow } from './gwt-window';
+import { MainWindow } from './main-window';
 
 export class SatelliteWindow extends GwtWindow {
-
+  constructor(
+    mainWindow: MainWindow,
+    name: string,
+    opener: WebContents
+  ) {
+    super(true, name, undefined, undefined, opener, mainWindow.isRemoteDesktop);
+  }
 }

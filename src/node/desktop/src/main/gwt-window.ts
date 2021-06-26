@@ -13,8 +13,21 @@
  *
  */
 
-import { RStudioBrowserWindow } from './rstudio-browser-window';
+import { WebContents } from 'electron';
+import { URL } from 'url';
 
-export class GwtWindow extends RStudioBrowserWindow {
+import { DesktopBrowserWindow } from './desktop-browser-window';
 
+
+export class GwtWindow extends DesktopBrowserWindow {
+  constructor(
+    adjustTitle: boolean,
+    name: string,
+    baseUrl?: URL,
+    parent?: DesktopBrowserWindow,
+    opener?: WebContents,
+    isRemoteDesktop = false
+  ) {
+    super(adjustTitle, name, baseUrl, parent, opener, isRemoteDesktop);
+  }
 }

@@ -1,6 +1,5 @@
-
 /*
- * secondary-window.ts
+ * desktop-bridge.test.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -14,8 +13,9 @@
  *
  */
 
-import { DesktopBrowserWindow } from './desktop-browser-window';
+import { describe } from 'mocha';
 
-export class SecondaryWindow extends DesktopBrowserWindow {
-
-}
+describe('DesktopBridge', () => {
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  describe('Currently no tests', () => {});
+});

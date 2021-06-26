@@ -1,6 +1,5 @@
-
 /*
- * secondary-window.ts
+ * product-info.test.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -14,8 +13,14 @@
  *
  */
 
-import { DesktopBrowserWindow } from './desktop-browser-window';
+import { describe } from 'mocha';
+import { assert } from 'chai';
 
-export class SecondaryWindow extends DesktopBrowserWindow {
+import { getRStudioVersion } from '../../../src/main/product-info';
 
-}
+describe('ProductInfo', () => {
+  it('getRStudioVersion returns version string', () => {
+    const ver = getRStudioVersion();
+    assert.isNotEmpty(ver);
+  });
+});

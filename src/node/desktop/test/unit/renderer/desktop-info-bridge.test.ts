@@ -1,5 +1,5 @@
 /*
- * rstudio-browser-window.ts
+ * desktop-info-bridge.test.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -13,8 +13,9 @@
  *
  */
 
-import { BrowserWindow } from 'electron';
+import { describe } from 'mocha';
 
-export class RStudioBrowserWindow {
-  window?: BrowserWindow;
-}
+describe('DesktopInfoBridge', () => {
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  describe('Currently no tests', () => {});
+});

@@ -1,6 +1,5 @@
-
 /*
- * secondary-window.ts
+ * secondary-window.test.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -14,8 +13,14 @@
  *
  */
 
-import { DesktopBrowserWindow } from './desktop-browser-window';
+import { describe } from 'mocha';
+//import { assert } from 'chai';
 
-export class SecondaryWindow extends DesktopBrowserWindow {
+//import { SecondaryWindow } from '../../../src/main/secondary-window';
 
-}
+describe('SecondaryWindow', () => {
+  it('can be created', () => {
+    // const secondaryWin = new SecondaryWindow(false, 'blank_');
+    // assert.isObject(secondaryWin);
+  });
+});

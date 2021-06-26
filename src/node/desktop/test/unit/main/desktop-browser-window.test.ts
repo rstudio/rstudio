@@ -1,6 +1,5 @@
-
 /*
- * secondary-window.ts
+ * desktop-browser-window.test.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -14,8 +13,17 @@
  *
  */
 
-import { DesktopBrowserWindow } from './desktop-browser-window';
+import { describe } from 'mocha';
+//import { assert } from 'chai';
 
-export class SecondaryWindow extends DesktopBrowserWindow {
+//import { URL } from 'url';
 
-}
+//import { DesktopBrowserWindow } from '../../../src/main/desktop-browser-window';
+
+describe('DesktopBrowserWindow', () => {
+  it('can be created', () => {
+    // const url = new URL('chrome://gpu');
+    // const win = new DesktopBrowserWindow(false, '_blank', url);
+    // assert.isObject(win);
+  });
+});
