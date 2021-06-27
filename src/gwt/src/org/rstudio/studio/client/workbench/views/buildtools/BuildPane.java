@@ -89,19 +89,20 @@ public class BuildPane extends WorkbenchPane
       boolean quarto = type == SessionInfo.BUILD_TOOLS_QUARTO;
 
       // always include build all
-      ToolbarButton buildAllButton = commands_.buildAll().createToolbarButton();
+      buildAllButton_ = commands_.buildAll().createToolbarButton();
       if (website)
       {
          if (sessionInfo.getBuildToolsBookdownWebsite())
          {
-            buildAllButton.setText("Build Book");
+            buildAllButton_.setText("Build Book");
          }
          else
          {
-            buildAllButton.setText("Build Website");
+            buildAllButton_.setText("Build Website");
          }
       }
-      toolbar.addLeftWidget(buildAllButton);
+      toolbar.addLeftWidget(buildAllButton_);
+
 
       // book build menu
       ToolbarPopupMenu bookBuildMenu = null;
@@ -122,6 +123,9 @@ public class BuildPane extends WorkbenchPane
          ElementIds.assignElementId(buildMenuButton, ElementIds.BUILD_BOOKDOWN_MENUBUTTON);
          toolbar.addLeftWidget(buildMenuButton);
       }
+      
+      // sync build all button caption
+      syncBuildAllButtonText();
       
 
       toolbar.addLeftSeparator();
@@ -272,8 +276,7 @@ public class BuildPane extends WorkbenchPane
       
    }
    
-  
-   
+
    class QuartoBookBuildPopupMenu extends ToolbarPopupMenu
    {
       public QuartoBookBuildPopupMenu()
@@ -284,25 +287,9 @@ public class BuildPane extends WorkbenchPane
          String[] formats = session_.getSessionInfo().getQuartoConfig().project_formats;
          for (int i=0; i<formats.length; i++) 
          {
-            addItem(new FormatMenuItem(formats[i], formatLabel(formats[i]), false));
+            addItem(new FormatMenuItem(formats[i], formatName(formats[i]) + " Format", false));
          }
       }
-      
-      
-      private String formatLabel(String format)
-      {
-         String label = format;
-         if (format == "html")
-            label = "HTML";
-         else if (format == "pdf")
-            label = "PDF";
-         else if (format == "docx")
-            label = "Word";
-         else if (format == "epub")
-            label = "EPUB";
-         return label + " Format";
-      }
-   
 
       public String getBookType()
       {
@@ -318,13 +305,13 @@ public class BuildPane extends WorkbenchPane
 
       public void setBookType(String type)
       {
+         // sync menu
          for (MenuItem item : getMenuItems())
          {
             FormatMenuItem fmtItem = (FormatMenuItem)item;
-            
             fmtItem.setIsChecked(fmtItem.getFormat().equals(type));
          }
-         
+         syncBuildAllButtonText();
       }
       
       class FormatMenuItem extends CheckableMenuItem
@@ -485,12 +472,65 @@ public class BuildPane extends WorkbenchPane
    {
       compilePanel_.scrollToBottom();
    }
+   
+   private void syncBuildAllButtonText()
+   {
+      SessionInfo sessionInfo =  session_.getSessionInfo();
+      String type = sessionInfo.getBuildToolsType();
+      if (type == SessionInfo.BUILD_TOOLS_WEBSITE)
+      {
+         if (sessionInfo.getBuildToolsBookdownWebsite())
+         {
+            buildAllButton_.setText("Build Book");
+         }
+         else 
+         {
+            buildAllButton_.setText("Build Website");
+         }
+      }
+      else if (type == SessionInfo.BUILD_TOOLS_QUARTO)
+      {
+         QuartoConfig config = sessionInfo.getQuartoConfig();
+         if (config.project_type == SessionInfo.QUARTO_PROJECT_TYPE_SITE)
+         {
+            buildAllButton_.setText("Render Site");
+         }
+         else if (config.project_type == SessionInfo.QUARTO_PROJECT_TYPE_BOOK)
+         {
+            if (getBookType() == "all")
+               buildAllButton_.setText("Render All Formats");
+            else
+               buildAllButton_.setText("Render " + formatName(getBookType()));
+         }
+         else
+         {
+            buildAllButton_.setText("Render Project");
+         }
+      }
+   }
+
+   
+   private String formatName(String format)
+   {
+      if (format == "html")
+         return "HTML";
+      else if (format == "pdf")
+         return "PDF";
+      else if (format == "docx")
+         return "DOCX";
+      else if (format == "epub")
+         return "EPUB";
+      else
+         return format;
+   }
+
 
    private ToolbarButton clearBuildButton_;
    private final Commands commands_;
    private final Session session_;
    private final BuildServerOperations server_;
    private String errorsBuildType_;
+   private ToolbarButton buildAllButton_;
    private QuartoBookBuildPopupMenu quartoBookBuildPopupMenu_;
    private Command onQuartoBookBuildTypeChanged_;
 
