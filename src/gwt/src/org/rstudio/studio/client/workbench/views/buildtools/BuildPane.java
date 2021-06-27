@@ -21,7 +21,6 @@ import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -279,38 +278,16 @@ public class BuildPane extends WorkbenchPane
    {
       public QuartoBookBuildPopupMenu()
       {
-         initMenu("all");
-      }
-      
-      @Override
-      public void getDynamicPopupMenu(final ToolbarPopupMenu.DynamicPopupMenuCallback callback)
-      {
-         String format = getBookType();
-         
-         clearItems();
-         
-         new Timer() {
-            @Override
-            public void run()
-            {
-               initMenu(format);
-               callback.onPopupMenu(QuartoBookBuildPopupMenu.this);
-            }
-            
-         }.schedule(50);
-      }
-      
-      private void initMenu(String format)
-      {
-         MenuItem allMenu = new FormatMenuItem("all", "All Formats", format == "all");
+         MenuItem allMenu = new FormatMenuItem("all", "All Formats", true);
          addItem(allMenu);
          addSeparator();
          String[] formats = session_.getSessionInfo().getQuartoConfig().project_formats;
          for (int i=0; i<formats.length; i++) 
          {
-            addItem(new FormatMenuItem(formats[i], formatLabel(formats[i]), format == formats[i]));
+            addItem(new FormatMenuItem(formats[i], formatLabel(formats[i]), false));
          }
       }
+      
       
       private String formatLabel(String format)
       {
