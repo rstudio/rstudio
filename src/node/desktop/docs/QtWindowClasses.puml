@@ -15,6 +15,7 @@ class QMainWindow << Qt >>
 class QWebEngineView << Qt >>
 class QWebEnginePage << Qt >>
 class QToolBar << Qt >>
+class QWebChannel << Qt >>
 
 class WindowTracker
 class BrowserWindow extends QMainWindow
@@ -24,10 +25,22 @@ class GwtWindow extends BrowserWindow
 class MainWindow extends GwtWindow
 class SatelliteWindow extends GwtWindow
 class SecondaryWindow extends BrowserWindow
+class GwtCallback
+class DesktopInfo
+class MenuCallback
 
 BrowserWindow *-- QToolBar : pToolbar_
 BrowserWindow *-- WebView : pView_
 WebView *-- WebPage : pWebPage_
-WindowTracker -- BrowserWindow : tracks >
+WindowTracker .. BrowserWindow : tracks >
+MainWindow *-- GwtCallback
+MainWindow *-- MenuCallback
+QWebEnginePage *-- QWebChannel
+QWebChannel *-- DesktopInfo : desktopInfo
+QWebChannel *-- GwtCallback: desktop
+QWebChannel *-- MenuCallback : desktopMenuCallback
+BrowserWindow .. DesktopInfo : creates >
+BrowserWindow .. QWebChannel : creates >
+SatelliteWindow *-- GwtCallback
 
 @enduml
