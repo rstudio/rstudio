@@ -120,7 +120,7 @@ private:
          return error;
 
       // args
-      std::vector<std::string> args({"serve", "--no-browse", "--debug"});
+      std::vector<std::string> args({"serve", "--no-browse"});
 
       // options
       core::system::ProcessOptions options;
