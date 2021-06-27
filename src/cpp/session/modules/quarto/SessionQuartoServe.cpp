@@ -39,6 +39,8 @@ namespace serve {
 
 namespace {
 
+const char * const kRenderNone = "none";
+
 FilePath quartoProjectDir()
 {
    return module_context::resolveAliasedPath(
@@ -71,10 +73,12 @@ class QuartoServe : boost::noncopyable,
                     public boost::enable_shared_from_this<QuartoServe>
 {
 public:
-   static Error create(const core::FilePath& initialDocPath, boost::shared_ptr<QuartoServe>* pServe)
+   static Error create(const std::string& render,
+                       const core::FilePath& initialDocPath,
+                       boost::shared_ptr<QuartoServe>* pServe)
    {
       pServe->reset(new QuartoServe(initialDocPath));
-      return (*pServe)->start();
+      return (*pServe)->start(render);
    }
 
    bool isRunning()
@@ -111,7 +115,7 @@ private:
    {
    }
 
-   Error start()
+   Error start(const std::string& render)
    {
       // quarto binary
       FilePath quartoProgramPath;
@@ -121,6 +125,11 @@ private:
 
       // args
       std::vector<std::string> args({"serve", "--no-browse"});
+      if (render != kRenderNone)
+      {
+         args.push_back("--render");
+         args.push_back(render);
+      }
 
       // options
       core::system::ProcessOptions options;
@@ -152,7 +161,7 @@ private:
 
       // determine job name
       const std::string type = quartoConfig().project_type == kQuartoProjectBook ? "Book" : "Site";
-      const std::string name = "Serve " + type;
+      const std::string name = (render != kRenderNone ? "Render and " : "")  + std::string("Serve ") + type;
 
       // create job and emit some output (to prevent the "has not emitted output" message)
       using namespace jobs;
@@ -228,7 +237,8 @@ private:
 // serve singleton
 static boost::shared_ptr<QuartoServe> s_pServe;
 
-Error quartoServe(const core::FilePath& docPath = FilePath())
+Error quartoServe(const std::string& render = kRenderNone,
+                  const core::FilePath& docPath = FilePath())
 {
    // stop any running server and remove the job
    if (s_pServe)
@@ -242,13 +252,19 @@ Error quartoServe(const core::FilePath& docPath = FilePath())
    }
 
    // start a new server
-   return QuartoServe::create(docPath, &s_pServe);
+   return QuartoServe::create(render, docPath, &s_pServe);
 }
 
-Error quartoServeRpc(const json::JsonRpcRequest&,
-                  json::JsonRpcResponse*)
+Error quartoServeRpc(const json::JsonRpcRequest& request,
+                     json::JsonRpcResponse*)
 {
-   return quartoServe();
+   // read params
+   std::string render;
+   Error error = json::readParams(request.params, &render);
+   if (error)
+      return error;
+
+   return quartoServe(render);
 }
 
 bool isJobServeRunning()
@@ -300,7 +316,7 @@ void previewDoc(const core::FilePath& docPath)
        }
        else
        {
-          Error error = quartoServe(docPath);
+          Error error = quartoServe(kRenderNone, docPath);
           if (error)
              LOG_ERROR(error);
        }

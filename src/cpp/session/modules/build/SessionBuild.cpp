@@ -1577,22 +1577,8 @@ private:
          projects::projectContext().directory(),
          output
       );
-
       if (!outputFile.isEmpty())
-      {
-         if (outputFile.hasExtensionLowerCase(".html"))
-         {
-            // since this is a file=based preview, we need to always show the index
-            // file for the site rather than whatever output file was generated
-            FilePath outputDir = quartoProjectDir.completeChildPath(config.project_output_dir);
-            outputFile = outputDir.completeChildPath("index.html");
-            enquePreviewRmdEvent(sourceFile, outputFile);
-         }
-         else
-         {
-            enquePreviewRmdEvent(sourceFile, outputFile);
-         }
-      }
+         enquePreviewRmdEvent(sourceFile, outputFile);
    }
 
    FilePath websiteSourceFile(const FilePath& websiteDir)

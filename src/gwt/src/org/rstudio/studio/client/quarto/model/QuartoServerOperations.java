@@ -21,5 +21,5 @@ import org.rstudio.studio.client.server.Void;
 public interface QuartoServerOperations 
 {
    void quartoCapabilities(ServerRequestCallback<QuartoCapabilities> requestCallback);
-   void quartoServe(ServerRequestCallback<Void> requestCallback);
+   void quartoServe(String render, ServerRequestCallback<Void> requestCallback);
 }

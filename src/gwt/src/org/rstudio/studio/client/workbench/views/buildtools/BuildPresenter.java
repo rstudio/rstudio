@@ -40,6 +40,7 @@ import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarkerList;
+import org.rstudio.studio.client.quarto.model.QuartoConfig;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -263,7 +264,7 @@ public class BuildPresenter extends BasePresenter
          startBuild("build-all", event.getSelectedItem());
       });
       view_.onBookTypeChanged(() -> {
-         startBuild("build-all", view_.getBookType());
+         startQuartoBookBuild();
       });
    
 
@@ -342,7 +343,7 @@ public class BuildPresenter extends BasePresenter
    
    void onServeQuartoSite()
    {
-      server_.quartoServe(new SimpleRequestCallback<Void>("Quarto Serve Error"));
+      quartoServeBook(null);
    }
 
    void onBuildSourcePackage()
@@ -411,13 +412,24 @@ public class BuildPresenter extends BasePresenter
       else if (subType.isEmpty() && 
                session_.getSessionInfo().getBuildToolsType() == SessionInfo.BUILD_TOOLS_QUARTO)
       {
-         executeBuild(type, view_.getBookType());
+         // books get a render and serve if the target is html
+         QuartoConfig config = session_.getSessionInfo().getQuartoConfig();
+         if (config.project_type.equals(SessionInfo.QUARTO_PROJECT_TYPE_BOOK))
+         {
+            startQuartoBookBuild();
+         }
+         // websites always get a render and serve
+         else
+         {
+            quartoServeBook("default");
+         }
       }
       else
       {
          executeBuild(type, subType);
       }
    }
+
 
    private void executeBuild(final String type, final String subType)
    {
@@ -516,6 +528,44 @@ public class BuildPresenter extends BasePresenter
          });
       }
 
+   }
+   
+   private void startQuartoBookBuild()
+   {
+   // if the type is "html" or the type is "all" and there is an html format
+      // then kickoff a render and serve, otherwise do a normal render (preview
+      // of pdf, epub, etc. will occur based on normal build pane output scanning)
+      String bookType = view_.getBookType();
+      if (shouldRenderAndServeBook(bookType))
+         quartoServeBook(bookType);
+      else
+         executeBuild("build-all", view_.getBookType());
+   }
+   
+   private boolean shouldRenderAndServeBook(String bookType)
+   {
+      QuartoConfig config = session_.getSessionInfo().getQuartoConfig();
+      if (bookType.startsWith("html"))
+      {
+         return true;
+      }
+      else if (bookType == "all")
+      {
+         for (int i=0; i<config.project_formats.length; i++) 
+         {
+            if (config.project_formats[i].startsWith("html"))
+               return true;
+         }
+      }
+     
+      // fallthrough
+      return false;
+      
+   }
+   
+   private void quartoServeBook(String bookType)
+   {
+      server_.quartoServe(bookType, new SimpleRequestCallback<Void>("Quarto Serve Error"));
    }
 
    private String devtoolsLoadAllPath_ = null;
