@@ -118,14 +118,14 @@ public class BuildPane extends WorkbenchPane
       }
       if (bookBuildMenu != null)
       {
-         ToolbarMenuButton buildMenuButton = new ToolbarMenuButton(ToolbarButton.NoText,
+         buildMenuButton_ = new ToolbarMenuButton(ToolbarButton.NoText,
                "Build book options", bookBuildMenu, true);
-         ElementIds.assignElementId(buildMenuButton, ElementIds.BUILD_BOOKDOWN_MENUBUTTON);
-         toolbar.addLeftWidget(buildMenuButton);
+         ElementIds.assignElementId(buildMenuButton_, ElementIds.BUILD_BOOKDOWN_MENUBUTTON);
+         toolbar.addLeftWidget(buildMenuButton_);
       }
       
       // sync build all button caption
-      syncBuildAllButtonText();
+      syncBuildAllUI();
       
 
       toolbar.addLeftSeparator();
@@ -311,7 +311,7 @@ public class BuildPane extends WorkbenchPane
             FormatMenuItem fmtItem = (FormatMenuItem)item;
             fmtItem.setIsChecked(fmtItem.getFormat().equals(type));
          }
-         syncBuildAllButtonText();
+         syncBuildAllUI();
       }
       
       class FormatMenuItem extends CheckableMenuItem
@@ -473,7 +473,7 @@ public class BuildPane extends WorkbenchPane
       compilePanel_.scrollToBottom();
    }
    
-   private void syncBuildAllButtonText()
+   private void syncBuildAllUI()
    {
       SessionInfo sessionInfo =  session_.getSessionInfo();
       String type = sessionInfo.getBuildToolsType();
@@ -497,10 +497,19 @@ public class BuildPane extends WorkbenchPane
          }
          else if (config.project_type == SessionInfo.QUARTO_PROJECT_TYPE_BOOK)
          {
-            if (getBookType() == "all")
-               buildAllButton_.setText("Render All Formats");
+            if (config.project_formats.length == 1)
+            {
+               buildMenuButton_.setVisible(false);
+               buildAllButton_.setText("Render Book");
+            }
             else
-               buildAllButton_.setText("Render " + formatName(getBookType()));
+            {
+               buildMenuButton_.setVisible(true);
+               if (getBookType() == "all")
+                  buildAllButton_.setText("Render All Formats");
+               else
+                  buildAllButton_.setText("Render " + formatName(getBookType()));
+            }
          }
          else
          {
@@ -531,6 +540,7 @@ public class BuildPane extends WorkbenchPane
    private final BuildServerOperations server_;
    private String errorsBuildType_;
    private ToolbarButton buildAllButton_;
+   private ToolbarMenuButton buildMenuButton_;
    private QuartoBookBuildPopupMenu quartoBookBuildPopupMenu_;
    private Command onQuartoBookBuildTypeChanged_;
 
