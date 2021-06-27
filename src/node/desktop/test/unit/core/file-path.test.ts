@@ -608,7 +608,6 @@ describe('FilePath', () => {
       const aPath = new FilePath(aPathStr);
       const bPath = new FilePath(bPathStr);
       const result = aPath.completeChildPath('b');
-      console.log(`result of completeChildPath is ${result.getAbsolutePath()}`);
       assert.isTrue(result.equals(bPath));
     });
     it('completeChildPath should not complete a path outside and instead return original path', () => {

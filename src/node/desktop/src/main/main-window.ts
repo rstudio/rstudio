@@ -117,6 +117,7 @@ export class MainWindow { // TODO: extends GwtWindow
         enableRemoteModule: false,
         nodeIntegration: false,
         contextIsolation: true,
+        additionalArguments: ['desktop|desktopInfo|desktopMenuCallback'],
         preload: path.join(__dirname, '../renderer/preload.js'),
       },
     });

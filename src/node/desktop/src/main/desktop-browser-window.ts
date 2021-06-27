@@ -48,8 +48,10 @@ export class DesktopBrowserWindow {
         enableRemoteModule: false,
         nodeIntegration: false,
         contextIsolation: true,
+        additionalArguments: ['desktopInfo'],
         preload: path.join(__dirname, '../renderer/preload.js'),
       },
+      show: false
     });
   }
 }
