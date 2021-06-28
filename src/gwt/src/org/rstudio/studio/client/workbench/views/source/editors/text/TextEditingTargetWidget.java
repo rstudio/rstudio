@@ -894,7 +894,7 @@ public class TextEditingTargetWidget
       previewHTMLButton_.setVisible(fileType.canPreviewHTML() && !isQuarto);
       quartoRenderButton_.setVisible(isQuarto);
 
-      setRmdFormatButtonVisible(isRMarkdown2 && !isQuarto);
+      setRmdFormatButtonVisible(isRMarkdown2);
       rmdOptionsButton_.setVisible(isRMarkdown2);
       rmdOptionsButton_.setEnabled(isRMarkdown2);
 
@@ -1394,6 +1394,28 @@ public class TextEditingTargetWidget
 
       if (publishButton_ != null)
          publishButton_.setIsStatic(true);
+   }
+   
+   @Override
+   public void setQuartoFormatOptions(TextFileType fileType, 
+                                      boolean showRmdFormatMenu,
+                                      List<String> formats)
+   {
+      showRmdFormatMenu = showRmdFormatMenu && formats.size() > 1;
+      setRmdFormatButtonVisible(showRmdFormatMenu);
+      rmdFormatButton_.setEnabled(showRmdFormatMenu);
+      rmdFormatButton_.clearMenu();
+      
+      for (int i = 0; i < formats.size(); i++)
+      {
+         String format = formats.get(i);
+         ScheduledCommand cmd = () -> handlerManager_.fireEvent(
+               new RmdOutputFormatChangedEvent(format, true));
+         ImageResource img = fileTypeRegistry_.getIconForFilename("output." + format)
+               .getImageResource();
+         MenuItem item = ImageMenuItem.create(img, "Render " + format, cmd, 2);
+         rmdFormatButton_.addMenuItem(item, format);
+      }
    }
 
    private void addClearKnitrCacheMenu(ToolbarPopupMenuButton menuButton)

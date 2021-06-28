@@ -259,6 +259,7 @@ public class TextEditingTarget implements
                             List<String> values,
                             List<String> extensions,
                             String selected);
+      void setQuartoFormatOptions(TextFileType fileType, boolean showRmdFormatMenu, List<String> formats);
       HandlerRegistration addRmdFormatChangedHandler(
             RmdOutputFormatChangedEvent.Handler handler);
 
@@ -1979,7 +1980,10 @@ public class TextEditingTarget implements
          @Override
          public void onRmdOutputFormatChanged(RmdOutputFormatChangedEvent event)
          {
-            setRmdFormat(event.getFormat());
+            if (event.isQuarto())
+               setQuartoFormat(event.getFormat());
+            else
+               setRmdFormat(event.getFormat());
          }
       });
 
@@ -4700,6 +4704,18 @@ public class TextEditingTarget implements
          formats = new ArrayList<>();
       return formats;
    }
+   
+   
+   private List<String> getQuartoOutputFormats()
+   {
+      String yaml = getRmdFrontMatter();
+      if (yaml == null)
+         return new ArrayList<>();
+      List<String> formats = TextEditingTargetRMarkdownHelper.getQuartoOutputFormats(yaml);
+      if (formats == null)
+         formats = new ArrayList<>();
+      return formats;
+   }
 
    private void updateRmdFormat()
    {
@@ -4720,7 +4736,13 @@ public class TextEditingTarget implements
          else
          {
             view_.setIsNotShinyFormat();
+            
+            List<String> formats = getQuartoOutputFormats();
+            view_.setQuartoFormatOptions(fileType_, 
+                                         getCustomKnit().length() == 0,
+                                         formats);
          }
+        
       }
       else if (selTemplate != null && selTemplate.isShiny)
       {
@@ -4839,6 +4861,22 @@ public class TextEditingTarget implements
             docDisplay_.setShowChunkOutputInline(false);
       }
    }
+   
+   private void setQuartoFormat(String formatName)
+   {
+      // see if we need to change the format
+      List<String> outputFormats = getQuartoOutputFormats();
+      if (outputFormats.size() == 0 || !outputFormats.get(0).equals(formatName))
+      {
+         String yaml = rmarkdownHelper_.setOuartoOutputFormat(getRmdFrontMatter(), formatName);
+         if (yaml != null)
+            applyRmdFrontMatter(yaml);
+      }
+      
+      // render
+      renderRmd();
+   }
+   
 
    private void setRmdFormat(String formatName)
    {
