@@ -293,14 +293,23 @@ public class BuildPane extends WorkbenchPane
 
       public String getBookType()
       {
-         for (MenuItem item : getMenuItems())
+         // if there is only one format then return that
+         String[] formats = session_.getSessionInfo().getQuartoConfig().project_formats;
+         if (formats.length == 1)
          {
-            FormatMenuItem fmtItem = (FormatMenuItem)item;
-            
-            if (fmtItem.isChecked())
-               return fmtItem.getFormat();
+            return formats[0];
          }
-         return "all";
+         else
+         {
+            for (MenuItem item : getMenuItems())
+            {
+               FormatMenuItem fmtItem = (FormatMenuItem)item;
+               
+               if (fmtItem.isChecked())
+                  return fmtItem.getFormat();
+            }
+            return "all";
+         }
       }
 
       public void setBookType(String type)
