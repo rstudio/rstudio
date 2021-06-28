@@ -26,8 +26,9 @@ export class GwtWindow extends DesktopBrowserWindow {
     baseUrl?: URL,
     parent?: DesktopBrowserWindow,
     opener?: WebContents,
-    isRemoteDesktop = false
+    isRemoteDesktop = false,
+    addedCallbacks: string[] = []
   ) {
-    super(adjustTitle, name, baseUrl, parent, opener, isRemoteDesktop);
+    super(adjustTitle, name, baseUrl, parent, opener, isRemoteDesktop, addedCallbacks);
   }
 }

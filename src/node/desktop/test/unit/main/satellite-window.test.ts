@@ -14,20 +14,21 @@
  */
 
 import { describe } from 'mocha';
-//import { assert } from 'chai';
-//import sinon from 'sinon';
+import { assert } from 'chai';
+import sinon from 'sinon';
 
-//import { WebContents } from 'electron';
+import { BrowserWindow } from 'electron';
 
-//import { SatelliteWindow } from '../../../src/main/satellite-window';
-//import { MainWindow } from '../../../src/main/main-window';
+import { SatelliteWindow } from '../../../src/main/satellite-window';
+import { MainWindow } from '../../../src/main/main-window';
 
 describe('SatelliteWindow', () => {
-  it('can be created', () => {
-    // const mainWindowStub = sinon.createStubInstance(MainWindow);
-    // const name = 'blank_';
-    // const openerStub = sinon.createStubInstance(WebContents);
-    // const satelliteWin = new SatelliteWindow(mainWindowStub, name, openerStub);
-    // assert.isObject(satelliteWin);
+  it('construction creates a hidden BrowserWindow', () => {
+    const mainWindowStub = sinon.createStubInstance(MainWindow);
+    const browserWin = new BrowserWindow({show: false});
+    const win = new SatelliteWindow(mainWindowStub, 'satellite window', browserWin.webContents);
+    assert.isObject(win);
+    assert.isObject(win.window);
+    assert.isFalse(win.window?.isVisible());
   });
 });

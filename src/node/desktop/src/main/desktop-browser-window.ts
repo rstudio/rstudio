@@ -32,6 +32,7 @@ export class DesktopBrowserWindow {
    * @param parent 
    * @param opener 
    * @param allowExternalNavigate 
+   * @param addApiKeys
    */
   constructor(
     private adjustTitle: boolean,
@@ -39,8 +40,11 @@ export class DesktopBrowserWindow {
     private baseUrl?: URL,
     private parent?: DesktopBrowserWindow,
     private opener?: WebContents,
-    private allowExternalNavigate = false
+    private allowExternalNavigate = false,
+    addApiKeys: string[] = []
   ) {
+    const apiKeys = ['desktopInfo', ...addApiKeys];
+
     this.window = new BrowserWindow({
       // https://github.com/electron/electron/blob/master/docs/faq.md#the-font-looks-blurry-what-is-this-and-what-can-i-do
       backgroundColor: '#fff', 
@@ -48,7 +52,7 @@ export class DesktopBrowserWindow {
         enableRemoteModule: false,
         nodeIntegration: false,
         contextIsolation: true,
-        additionalArguments: ['desktopInfo'],
+        additionalArguments: apiKeys,
         preload: path.join(__dirname, '../renderer/preload.js'),
       },
       show: false
