@@ -1578,7 +1578,17 @@ private:
          output
       );
       if (!outputFile.isEmpty())
-         enquePreviewRmdEvent(sourceFile, outputFile);
+      {
+         // it will be html if we did a sub-project render.
+         if (outputFile.hasExtensionLowerCase(".html"))
+         {
+            module_context::handleQuartoPreview(sourceFile, outputFile, false);
+         }
+         else
+         {
+            enquePreviewRmdEvent(sourceFile, outputFile);
+         }
+      }
    }
 
    FilePath websiteSourceFile(const FilePath& websiteDir)

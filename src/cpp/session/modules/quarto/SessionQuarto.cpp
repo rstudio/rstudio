@@ -272,8 +272,9 @@ void readQuartoProjectConfig(const FilePath& configFile,
 
 namespace module_context {
 
-bool onHandleRmdPreview(const core::FilePath& sourceFile,
-                        const core::FilePath& outputFile)
+bool handleQuartoPreview(const core::FilePath& sourceFile,
+                         const core::FilePath& outputFile,
+                         bool validateExtendedType)
 {
    // don't do anyting if user prefs are set to no preview
    if (prefs::userPrefs().rmdViewerType() == kRmdViewerTypeNone)
@@ -284,12 +285,15 @@ bool onHandleRmdPreview(const core::FilePath& sourceFile,
       return false;
 
    // don't do anything if this isn't a quarto doc
-   std::string extendedType;
-   Error error = source_database::detectExtendedType(sourceFile, &extendedType);
-   if (error)
-      return false;
-   if (extendedType != kQuartoXt)
-      return false;
+   if (validateExtendedType)
+   {
+      std::string extendedType;
+      Error error = source_database::detectExtendedType(sourceFile, &extendedType);
+      if (error)
+         return false;
+      if (extendedType != kQuartoXt)
+         return false;
+   }
 
    // if the current project is a site or book and this file is within it,
    // then initiate a preview (one might be already running)
@@ -360,6 +364,15 @@ QuartoConfig quartoConfig(bool refresh)
                                     &s_quartoConfig.project_type,
                                     &s_quartoConfig.project_output_dir,
                                     &s_quartoConfig.project_formats);
+
+            // provide default output dirs
+            if (s_quartoConfig.project_output_dir.length() == 0)
+            {
+               if (s_quartoConfig.project_type == kQuartoProjectSite)
+                  s_quartoConfig.project_output_dir = "_site";
+               else if (s_quartoConfig.project_type == kQuartoProjectBook)
+                  s_quartoConfig.project_output_dir = "_book";
+            }
          }
       }
    }
@@ -392,6 +405,7 @@ json::Object quartoConfigJSON(bool refresh)
    json::Object quartoConfigJSON;
    quartoConfigJSON["installed"] = config.installed;
    quartoConfigJSON["is_project"] = config.is_project;
+   quartoConfigJSON["project_dir"] = config.project_dir;
    quartoConfigJSON["project_type"] = config.project_type;
    quartoConfigJSON["project_output_dir"] = config.project_output_dir;
    quartoConfigJSON["project_formats"] = json::toJsonArray(config.project_formats);

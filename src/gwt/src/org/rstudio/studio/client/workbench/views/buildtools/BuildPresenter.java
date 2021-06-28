@@ -418,8 +418,11 @@ public class BuildPresenter extends BasePresenter
          {
             startQuartoBookBuild();
          }
-         // websites always get a render and serve
-         else
+         else if (isQuartoSubProject(config))
+         {
+            executeBuild(type, "");
+         }
+         else 
          {
             quartoServeBook("default");
          }
@@ -532,7 +535,7 @@ public class BuildPresenter extends BasePresenter
    
    private void startQuartoBookBuild()
    {
-   // if the type is "html" or the type is "all" and there is an html format
+      // if the type is "html" or the type is "all" and there is an html format
       // then kickoff a render and serve, otherwise do a normal render (preview
       // of pdf, epub, etc. will occur based on normal build pane output scanning)
       String bookType = view_.getBookType();
@@ -544,7 +547,13 @@ public class BuildPresenter extends BasePresenter
    
    private boolean shouldRenderAndServeBook(String bookType)
    {
+      // don't do a serve if this is a sub-project (as that might cause an over-render)
       QuartoConfig config = session_.getSessionInfo().getQuartoConfig();
+      if (isQuartoSubProject(config)) {
+         return false;
+      }
+      
+      
       if (bookType.startsWith("html"))
       {
          return true;
@@ -561,6 +570,11 @@ public class BuildPresenter extends BasePresenter
       // fallthrough
       return false;
       
+   }
+   
+   private boolean isQuartoSubProject(QuartoConfig config)
+   {
+      return !config.project_dir.equals(workbenchContext_.getActiveProjectDir().getPath());
    }
    
    private void quartoServeBook(String bookType)

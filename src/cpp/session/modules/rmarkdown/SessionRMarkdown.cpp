@@ -226,6 +226,8 @@ FilePath extractOutputFileCreated(const FilePath& inputDir,
             // if the path looks absolute, use it as-is; otherwise, presume
             // it to be in the same directory as the input file
             FilePath outputFile = inputDir.completePath(fileName);
+            if (outputFile.exists())
+               core::system::realPath(outputFile, &outputFile);
 
             // if it's a plain .md file and we are in a Hugo project then
             // don't preview it (as the user is likely running a Hugo preview)
@@ -729,8 +731,8 @@ private:
          // record ouptut file
          outputFile_ = outputFile;
 
-         // see if another module wants to handle the preview
-         if (module_context::onHandleRmdPreview(targetFile_, outputFile_))
+         // see if the quarto module wants to handle the preview
+         if (module_context::handleQuartoPreview(targetFile_, outputFile_, true))
             viewerType_ = kRmdViewerTypeNone;
       }
 

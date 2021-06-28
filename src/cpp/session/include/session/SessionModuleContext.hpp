@@ -895,9 +895,10 @@ struct QuartoConfig
 
 QuartoConfig quartoConfig(bool refresh = false);
 
-// ability for modules to handle rmd previews
-bool onHandleRmdPreview(const core::FilePath& sourceFile,
-                        const core::FilePath& outputFile);
+// see if quarto wants to handle the preview
+bool handleQuartoPreview(const core::FilePath& sourceFile,
+                         const core::FilePath& outputFile,
+                         bool validateExtendedType);
 
 std::vector<core::FilePath> ignoreContentDirs();
 bool isIgnoredContent(const core::FilePath& filePath, const std::vector<core::FilePath>& ignoreDirs);
