@@ -21,6 +21,9 @@
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
+#include <shared_core/json/Json.hpp>
+
+#include <r/RExec.hpp>
 
 #include <core/Exec.hpp>
 #include <core/YamlUtil.hpp>
@@ -46,6 +49,11 @@ namespace session {
 namespace {
 
 const char * const kQuartoXt = "quarto-document";
+
+const char* const kQuartoProjectSite = "site";
+const char* const kQuartoProjectBook = "book";
+
+
 
 FilePath s_quartoPath;
 
@@ -212,6 +220,21 @@ Error quartoCapabilities(const json::JsonRpcRequest&,
    return Success();
 }
 
+Error quartoMetadata(const std::string& path,
+                     json::Object *pResultObject)
+{
+   // Run quarto and retrieve metadata
+   std::string output;
+   core::system::ProcessResult result;
+   Error error = runQuarto({"metadata", path, "--json"}, "", &result);
+   if (error)
+   {
+      return error;
+   }
+
+   // Parse JSON result
+   return pResultObject->parse(result.stdOut);
+}
 
 void readQuartoProjectConfig(const FilePath& configFile,
                              std::string* pType,
@@ -268,6 +291,131 @@ void readQuartoProjectConfig(const FilePath& configFile,
    }
 }
 
+Error getQmdPublishDetails(const json::JsonRpcRequest& request,
+                           json::JsonRpcResponse* pResponse)
+{
+   std::string target;
+   Error error = json::readParams(request.params, &target);
+
+   /*
+    "result": {
+    "is_multi_rmd": false,
+    "is_shiny_rmd": false,
+    "is_self_contained": true,
+    "title": "My First Quarto",
+    "has_connect_account": false,
+    "website_dir": "",
+    "website_output_dir": ""
+  },
+  */
+
+   if (error)
+   {
+       return error;
+   }
+   FilePath qmdPath = module_context::resolveAliasedPath(target);
+
+   // Ask Quarto to get the metadata for the Qmd
+   json::Object metadata;
+   error = quartoMetadata(qmdPath.getAbsolutePath(), &metadata);
+   if (error)
+   {
+       return error;
+   }
+
+   auto format = (*metadata.begin()).getValue().getObject();
+
+   json::Object result;
+
+   auto formatMeta = format.find("metadata");
+
+   // Establish output vars
+   std::string title = qmdPath.getStem();
+   bool isShinyQmd = false;
+   bool selfContained = false;
+
+   if (formatMeta != format.end())
+   {
+      json::Object formatMetadata = (*formatMeta).getValue().getObject();
+
+      // Attempt to read file title; use stem as a fallback
+      json::readObject(formatMetadata, "title", title);
+
+      // Attempt to read file title; use stem as a fallback
+      std::string runtime;
+      error = json::readObject(formatMetadata, "runtime", runtime);
+      if (!error)
+      {
+         isShinyQmd = runtime == "shinyrmd" || runtime == "shiny_prerendered";
+      }
+   }
+
+
+   auto pandoc = format.find("pandoc");
+   if (pandoc != format.end())
+   {
+       json::Object pandocMetadata = (*pandoc).getValue().getObject();
+       json::readObject(pandocMetadata, "self-contained", selfContained);
+   }
+
+
+   std::string websiteDir, websiteOutputDir;
+   FilePath quartoConfig = quartoProjectConfigFile(qmdPath);
+   if (!quartoConfig.isEmpty())
+   {
+       std::string type, outputDir;
+       std::vector<std::string> formats;
+       readQuartoProjectConfig(quartoConfig,
+                               &type,
+                               &outputDir,
+                               &formats);
+       if (type == kQuartoProjectBook || type == kQuartoProjectSite)
+       {
+          FilePath configPath = quartoConfig.getParent();
+          websiteDir = configPath.getAbsolutePath();
+          if (outputDir.empty())
+          {
+              if (type == kQuartoProjectBook)
+              {
+                  outputDir = "_book";
+              }
+              else
+              {
+                  outputDir = "_site";
+              }
+          }
+          websiteOutputDir = configPath.completeChildPath(outputDir).getAbsolutePath();
+       }
+   }
+
+   r::sexp::Protect protect;
+   SEXP sexpHasAccount;
+   bool hasAccount = true;
+   error = r::exec::RFunction(".rs.hasConnectAccount").call(&sexpHasAccount, &protect);
+   if (error)
+   {
+      LOG_WARNING_MESSAGE("Couldn't determine whether Connect account is present");
+      LOG_ERROR(error);
+   }
+   else
+   {
+       hasAccount = r::sexp::asLogical(sexpHasAccount);
+   }
+
+
+   // build result object
+   result["is_self_contained"] = selfContained;
+   result["title"] = title;
+   result["is_shiny_qmd"] = isShinyQmd;
+   result["website_dir"] = websiteDir;
+   result["website_output_dir"] = websiteOutputDir;
+   result["has_connect_account"] = hasAccount;
+
+   pResponse->setResult(result);
+
+   return Success();
+}
+
 }
 
 namespace module_context {
@@ -321,10 +469,6 @@ bool onHandleRmdPreview(const core::FilePath& sourceFile,
    // continue with preview
    return false;
 }
-
-
-const char* const kQuartoProjectSite = "site";
-const char* const kQuartoProjectBook = "book";
 
 
 QuartoConfig quartoConfig(bool refresh)
@@ -422,6 +566,7 @@ Error initialize()
    ExecBlock initBlock;
    initBlock.addFunctions()
      (boost::bind(module_context::registerRpcMethod, "quarto_capabilities", quartoCapabilities))
+     (boost::bind(module_context::registerRpcMethod, "get_qmd_publish_details", getQmdPublishDetails))
      (boost::bind(module_context::sourceModuleRFile, "SessionQuarto.R"))
      (boost::bind(quarto::serve::initialize))
    ;

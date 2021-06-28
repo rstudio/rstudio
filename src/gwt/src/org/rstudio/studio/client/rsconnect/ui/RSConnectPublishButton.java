@@ -256,10 +256,15 @@ public class RSConnectPublishButton extends Composite
          applyVisibility();
       }
    }
-   
+
+   public void setQmd(String qmd)
+   {
+      docPreview_ = new RenderedDocPreview(qmd, "", false, true);
+   }
+
    public void setRmd(String rmd, boolean isStatic)
    {
-      docPreview_ = new RenderedDocPreview(rmd, "", isStatic);
+      docPreview_ = new RenderedDocPreview(rmd, "", isStatic, false);
       setContentPath(rmd, "");
 
       SessionInfo sessionInfo = session_.getSessionInfo();
@@ -914,7 +919,8 @@ public class RSConnectPublishButton extends Composite
       // prevent re-entrancy
       if (rmdInfoPending_)
          return;
-      
+
+      // TODO: handle for Quarto
       if (StringUtil.isNullOrEmpty(docPreview_.getOutputFile()))
       {
          rmdInfoPending_ = true;
@@ -925,7 +931,7 @@ public class RSConnectPublishButton extends Composite
                   public void onResponseReceived(RmdOutputInfo response)
                   {
                      RenderedDocPreview preview = new RenderedDocPreview(contentPath_,
-                           response.output_file_exists ? response.output_file : "", true);
+                           response.output_file_exists ? response.output_file : "", true, false);
                      events_.fireEvent(RSConnectActionEvent.DeployDocEvent(
                            preview, contentType_, previous));
                      rmdInfoPending_ = false;

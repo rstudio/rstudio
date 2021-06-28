@@ -47,12 +47,13 @@ public class RenderedDocPreview
    }
    
    public RenderedDocPreview(String sourceFile, String outputFile, 
-                             boolean isStatic)
+                             boolean isStatic, boolean isQuarto)
    {
       sourceFile_ = sourceFile;
       outputFile_ = outputFile;
       isStatic_ = isStatic;
       websiteDir_ = null;
+      isQuarto_ = isQuarto;
    }
    
    public String getSourceFile()
@@ -74,6 +75,11 @@ public class RenderedDocPreview
    {
       return isStatic_;
    }
+
+   public boolean isQuarto()
+   {
+      return isQuarto_;
+   }
    
    public void setIsStatic(boolean isStatic)
    {
@@ -89,4 +95,5 @@ public class RenderedDocPreview
    private final String outputFile_;
    private final String websiteDir_;
    private boolean isStatic_;
+   private boolean isQuarto_ = false;
 }

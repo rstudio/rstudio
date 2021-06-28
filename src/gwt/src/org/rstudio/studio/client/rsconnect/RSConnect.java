@@ -49,6 +49,7 @@ import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentCompletedEv
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentFailedEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentStartedEvent;
 import org.rstudio.studio.client.rsconnect.model.PlotPublishMRUList;
+import org.rstudio.studio.client.rsconnect.model.QmdPublishDetails;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDirectoryState;
@@ -1132,7 +1133,44 @@ public class RSConnect implements SessionInitEvent.Handler,
          final String docPath,
          final CommandWithArg<RSConnectPublishInput> onComplete)
    {
-      server_.getRmdPublishDetails(
+      boolean isQuarto = false;
+      if (input.getOriginatingEvent() != null &&
+          input.getOriginatingEvent().getFromPreview() != null)
+      {
+         isQuarto = input.getOriginatingEvent().getFromPreview().isQuarto();
+      }
+
+      if (isQuarto)
+      {
+         server_.quartoPublishDetails(
+            docPath,
+            new ServerRequestCallback<QmdPublishDetails>()
+            {
+               @Override
+               public void onResponseReceived(QmdPublishDetails details)
+               {
+                  // TODO: input needs Quarto flag
+                  input.setIsMultiRmd(false);
+                  input.setIsShiny(details.is_shiny_qmd);
+                  input.setIsSelfContained(details.is_self_contained);
+                  input.setHasConnectAccount(details.has_connect_account);
+                  input.setWebsiteDir(details.website_dir);
+                  input.setWebsiteOutputDir(details.website_output_dir);
+
+                  onComplete.execute(input);
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  // TODO: An error handler
+               }
+            }
+         );
+      }
+      else
+      {
+         server_.getRmdPublishDetails(
             docPath,
             new ServerRequestCallback<RmdPublishDetails>()
             {
@@ -1152,12 +1190,11 @@ public class RSConnect implements SessionInitEvent.Handler,
                         // set the description from the document title, if we
                         // have it
                         input.setDescription(details.title);
-                     }
-                     else
+                     } else
                      {
                         // set the description from the document name
                         input.setDescription(
-                              FilePathUtils.fileNameSansExtension(docPath));
+                           FilePathUtils.fileNameSansExtension(docPath));
                      }
                   }
                   onComplete.execute(input);
@@ -1170,10 +1207,11 @@ public class RSConnect implements SessionInitEvent.Handler,
                   // we can't offer the right choices in the wizard if we
                   // don't know what we're working with.
                   display_.showErrorMessage("Could Not Publish",
-                        error.getMessage());
+                     error.getMessage());
                   onComplete.execute(null);
                }
             });
+      }
    }
 
    private final Commands commands_;
