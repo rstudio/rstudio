@@ -14,16 +14,15 @@
  */
 
 import { describe } from 'mocha';
-//import { assert } from 'chai';
+import { assert } from 'chai';
 
-//import { URL } from 'url';
-
-//import { DesktopBrowserWindow } from '../../../src/main/desktop-browser-window';
+import { DesktopBrowserWindow } from '../../../src/main/desktop-browser-window';
 
 describe('DesktopBrowserWindow', () => {
-  it('can be created', () => {
-    // const url = new URL('chrome://gpu');
-    // const win = new DesktopBrowserWindow(false, '_blank', url);
-    // assert.isObject(win);
+  it('construction creates a hidden BrowserWindow', () => {
+    const win = new DesktopBrowserWindow(false, '_blank');
+    assert.isObject(win);
+    assert.isObject(win.window);
+    assert.isFalse(win.window?.isVisible());
   });
 });

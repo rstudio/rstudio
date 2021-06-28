@@ -14,18 +14,15 @@
  */
 
 import { describe } from 'mocha';
-//import { assert } from 'chai';
+import { assert } from 'chai';
 
-//import { URL } from 'url';
-
-//import { GwtWindow } from '../../../src/main/gwt-window';
+import { GwtWindow } from '../../../src/main/gwt-window';
 
 describe('GwtWindow', () => {
-  it('can be created', () => {
-    // const adjustTitle = false;
-    // const name = 'blank_';
-    // const url = new URL('about:blank');
-    // const gwtWin = new GwtWindow(adjustTitle, name, url);
-    // assert.isObject(gwtWin);
+  it('construction creates a hidden BrowserWindow', () => {
+    const gwtWin = new GwtWindow(false, 'some name');
+    assert.isObject(gwtWin);
+    assert.isObject(gwtWin.window);
+    assert.isFalse(gwtWin.window?.isVisible());
   });
 });

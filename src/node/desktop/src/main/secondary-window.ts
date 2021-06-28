@@ -14,8 +14,18 @@
  *
  */
 
+import { WebContents } from 'electron';
+import { URL } from 'url';
 import { DesktopBrowserWindow } from './desktop-browser-window';
 
 export class SecondaryWindow extends DesktopBrowserWindow {
-
+  constructor(
+    name: string,
+    baseUrl?: URL,
+    parent?: DesktopBrowserWindow,
+    opener?: WebContents,
+    allowExternalNavigate = false
+  ) {
+    super(true, name, baseUrl, parent, opener, allowExternalNavigate);
+  }
 }
