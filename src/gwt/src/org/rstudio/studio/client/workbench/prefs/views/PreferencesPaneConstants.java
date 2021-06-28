@@ -5,10 +5,10 @@ package org.rstudio.studio.client.workbench.prefs.views;
  * 	'/home/scribs/code_git_backed/daaas/rstudio/rstudio-cascribner/src/gwt/src/org/rstudio/studio/client/workbench/prefs/views/PreferencesPaneConstants.properties'.
  */
 public interface PreferencesPaneConstants extends com.google.gwt.i18n.client.Constants {
-  
+
   /**
    * Translated "Other Languages".
-   * 
+   *
    * @return translated "Other Languages"
    */
   @DefaultStringValue("Other Languages")
@@ -17,7 +17,7 @@ public interface PreferencesPaneConstants extends com.google.gwt.i18n.client.Con
 
   /**
    * Translated "Show Diagnostics".
-   * 
+   *
    * @return translated "Show Diagnostics"
    */
   @DefaultStringValue("Show Diagnostics")
@@ -26,7 +26,7 @@ public interface PreferencesPaneConstants extends com.google.gwt.i18n.client.Con
 
   /**
    * Translated "R Diagnostics".
-   * 
+   *
    * @return translated "R Diagnostics"
    */
   @DefaultStringValue("R Diagnostics")
@@ -35,7 +35,7 @@ public interface PreferencesPaneConstants extends com.google.gwt.i18n.client.Con
 
   /**
    * Translated "General".
-   * 
+   *
    * @return translated "General"
    */
   @DefaultStringValue("General")
@@ -44,7 +44,7 @@ public interface PreferencesPaneConstants extends com.google.gwt.i18n.client.Con
 
   /**
    * Translated "Modify Keyboard Shortcuts...".
-   * 
+   *
    * @return translated "Modify Keyboard Shortcuts..."
    */
   @DefaultStringValue("Modify Keyboard Shortcuts...")
@@ -53,7 +53,7 @@ public interface PreferencesPaneConstants extends com.google.gwt.i18n.client.Con
 
   /**
    * Translated "Edit Snippets...".
-   * 
+   *
    * @return translated "Edit Snippets..."
    */
   @DefaultStringValue("Edit Snippets...")
@@ -62,7 +62,7 @@ public interface PreferencesPaneConstants extends com.google.gwt.i18n.client.Con
 
   /**
    * Translated "Execution".
-   * 
+   *
    * @return translated "Execution"
    */
   @DefaultStringValue("Execution")
@@ -71,7 +71,7 @@ public interface PreferencesPaneConstants extends com.google.gwt.i18n.client.Con
 
   /**
    * Translated "Completion Delay".
-   * 
+   *
    * @return translated "Completion Delay"
    */
   @DefaultStringValue("Completion Delay")
@@ -80,7 +80,7 @@ public interface PreferencesPaneConstants extends com.google.gwt.i18n.client.Con
 
   /**
    * Translated "Other Languages".
-   * 
+   *
    * @return translated "Other Languages"
    */
   @DefaultStringValue("Other Languages")
@@ -89,7 +89,7 @@ public interface PreferencesPaneConstants extends com.google.gwt.i18n.client.Con
 
   /**
    * Translated "Keyword and text-based completions are supported for several other languages including JavaScript, HTML, CSS, Python, and SQL.".
-   * 
+   *
    * @return translated "Keyword and text-based completions are supported for several other languages including JavaScript, HTML, CSS, Python, and SQL."
    */
   @DefaultStringValue("Keyword and text-based completions are supported for several other languages including JavaScript, HTML, CSS, Python, and SQL.")
@@ -98,7 +98,7 @@ public interface PreferencesPaneConstants extends com.google.gwt.i18n.client.Con
 
   /**
    * Translated "General".
-   * 
+   *
    * @return translated "General"
    */
   @DefaultStringValue("General")
@@ -107,7 +107,7 @@ public interface PreferencesPaneConstants extends com.google.gwt.i18n.client.Con
 
   /**
    * Translated "Change...".
-   * 
+   *
    * @return translated "Change..."
    */
   @DefaultStringValue("Change...")
@@ -116,7 +116,7 @@ public interface PreferencesPaneConstants extends com.google.gwt.i18n.client.Con
 
   /**
    * Translated "Auto-save".
-   * 
+   *
    * @return translated "Auto-save"
    */
   @DefaultStringValue("Auto-save")
@@ -125,7 +125,7 @@ public interface PreferencesPaneConstants extends com.google.gwt.i18n.client.Con
 
   /**
    * Translated "Serialization".
-   * 
+   *
    * @return translated "Serialization"
    */
   @DefaultStringValue("Serialization")
@@ -134,7 +134,7 @@ public interface PreferencesPaneConstants extends com.google.gwt.i18n.client.Con
 
   /**
    * Translated "code_snippets".
-   * 
+   *
    * @return translated "code_snippets"
    */
   @DefaultStringValue("code_snippets")
@@ -143,7 +143,7 @@ public interface PreferencesPaneConstants extends com.google.gwt.i18n.client.Con
 
   /**
    * Translated "Help on code snippets".
-   * 
+   *
    * @return translated "Help on code snippets"
    */
   @DefaultStringValue("Help on code snippets")
@@ -152,7 +152,7 @@ public interface PreferencesPaneConstants extends com.google.gwt.i18n.client.Con
 
   /**
    * Translated "Snippets".
-   * 
+   *
    * @return translated "Snippets"
    */
   @DefaultStringValue("Snippets")
@@ -161,7 +161,7 @@ public interface PreferencesPaneConstants extends com.google.gwt.i18n.client.Con
 
   /**
    * Translated "Editing".
-   * 
+   *
    * @return translated "Editing"
    */
   @DefaultStringValue("Editing")
@@ -170,7 +170,7 @@ public interface PreferencesPaneConstants extends com.google.gwt.i18n.client.Con
 
   /**
    * Translated "Completion".
-   * 
+   *
    * @return translated "Completion"
    */
   @DefaultStringValue("Completion")
@@ -179,7 +179,7 @@ public interface PreferencesPaneConstants extends com.google.gwt.i18n.client.Con
 
   /**
    * Translated "Diagnostics".
-   * 
+   *
    * @return translated "Diagnostics"
    */
   @DefaultStringValue("Diagnostics")
@@ -188,7 +188,7 @@ public interface PreferencesPaneConstants extends com.google.gwt.i18n.client.Con
 
   /**
    * Translated "Display".
-   * 
+   *
    * @return translated "Display"
    */
   @DefaultStringValue("Display")
@@ -197,7 +197,7 @@ public interface PreferencesPaneConstants extends com.google.gwt.i18n.client.Con
 
   /**
    * Translated "Editing".
-   * 
+   *
    * @return translated "Editing"
    */
   @DefaultStringValue("Editing")
@@ -206,7 +206,7 @@ public interface PreferencesPaneConstants extends com.google.gwt.i18n.client.Con
 
   /**
    * Translated "Saving".
-   * 
+   *
    * @return translated "Saving"
    */
   @DefaultStringValue("Saving")
@@ -230,5 +230,4 @@ public interface PreferencesPaneConstants extends com.google.gwt.i18n.client.Con
   @DefaultStringValue("General")
   @Key("Editing_header")
   String Editing_header();
-
 }

@@ -1834,6 +1834,4 @@ public interface UserPrefsAccessorConstants extends Constants {
    @DefaultStringValue("How many seconds to wait between automatic requeries of memory statistics (0 to disable)")
    String memoryQueryIntervalSecondsDescription();
 
-
-
 }
