@@ -556,14 +556,17 @@ private:
          renderOptions = "render_args = list(" + renderOptions + ")";
       }
 
-      // fallback for non-function
-      r::sexp::Protect rProtect;
-      SEXP renderFuncSEXP;
-      error = r::exec::evaluateString(renderFunc, &renderFuncSEXP, &rProtect);
-      if (error || !r::sexp::isFunction((renderFuncSEXP)))
+      // fallback for custom render function that isn't actually a function
+      if (renderFunc != kStandardRenderFunc && renderFunc != kShinyRenderFunc)
       {
-         boost::format fmt("(function(input, ...) { invisible(system(paste0('%1% \"', input, '\"'))) })");
-         renderFunc = boost::str(fmt % renderFunc);
+         r::sexp::Protect rProtect;
+         SEXP renderFuncSEXP;
+         error = r::exec::evaluateString(renderFunc, &renderFuncSEXP, &rProtect);
+         if (error || !r::sexp::isFunction((renderFuncSEXP)))
+         {
+            boost::format fmt("(function(input, ...) { invisible(system(paste0('%1% \"', input, '\"'))) })");
+            renderFunc = boost::str(fmt % renderFunc);
+         }
       }
 
       // render command
