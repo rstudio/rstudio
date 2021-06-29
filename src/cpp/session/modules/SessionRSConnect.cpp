@@ -348,6 +348,8 @@ Error rsconnectPublish(const json::JsonRpcRequest& request,
       return error;
 
    // read publish source information
+
+   // TODO: this now has an is_quarto field we need to insert into metadata
    std::string sourceDir, sourceDoc, sourceFile, contentCategory, websiteDir;
    error = json::readObject(source, "deploy_dir",       sourceDir,
                                     "deploy_file",      sourceFile,

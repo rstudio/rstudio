@@ -87,6 +87,7 @@ public class RSConnectPublishSource
       deployFile_ = preview.getOutputFile();
       sourceFile_ = preview.getSourceFile();
       description_ = description;
+      isQuarto_ = preview.isQuarto();
       isSelfContained_ = isSelfContained;
       isStatic_ = isStatic;
       isShiny_ = isShiny;
@@ -213,6 +214,7 @@ public class RSConnectPublishSource
       obj.setString("content_category", StringUtil.notNull(
             getContentCategory()));
       obj.setString("website_dir", StringUtil.notNull(getWebsiteDir()));
+      obj.setBoolean("is_quarto", isQuarto_);
       return obj.cast();
    }
    
@@ -226,4 +228,5 @@ public class RSConnectPublishSource
    private final boolean isShiny_;
    private final boolean isSingleFileShiny_;
    private final boolean isStatic_;
+   private boolean isQuarto_ = false;
 }
