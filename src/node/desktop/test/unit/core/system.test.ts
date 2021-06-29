@@ -16,31 +16,28 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 
-import fs from 'fs';
-import os from 'os';
-
-import { FilePath } from '../../../src/core/file-path';
-import { initHook, initializeLog, userHomePath, username } from '../../../src/core/system';
-import * as log from '../../../src/core/log';
+import { generateRandomPort, generateShortenedUuid, generateUuid } from '../../../src/core/system';
 
 describe('System', () => {
-  describe('User info', () => {
-    it('getUserHomePath returns a valid path', () => {
-      assert.isTrue(fs.existsSync(userHomePath().getAbsolutePath()));
-    });
-    it('username returns a non-empty string', () => {
-      assert.isNotEmpty(username());
-    });
+  it('generateUuid returns uuid string with dashes', () => {
+    const uuid = generateUuid();
+    assert.isTrue(uuid.indexOf('-') >= 0);
   });
-  describe('Assorted helper functions', () => {
-    it('initHook does something', () => {
-      initHook();
-      // TODO: once this does something, test it!
-    });
-    it('initializeLog succeeds', () => {
-      const err = initializeLog('rdesktop', log.LogLevel.WARN, new FilePath(os.tmpdir()));
-      assert.isFalse(!!err);
-    });
+  it('generateUuid returns uuid string without dashes', () => {
+    const uuid = generateUuid(false);
+    assert.isTrue(uuid.length > 0);
+    assert.isTrue(uuid.indexOf('-') < 0);
+  });
+  it('generateShortenedUuid returns character string', () => {
+    const crc32 = generateShortenedUuid();
+    assert.isNotEmpty(crc32);
+    assert.isTrue(crc32.indexOf('-') < 0);
+  });
+  it('generateRandomPort returns random positive number', () => {
+    const port1 = generateRandomPort();
+    const port2 = generateRandomPort();
+    assert.notEqual(port1, port2);
+    assert.isAbove(port1, 0);
+    assert.isAbove(port2, 0);
   });
 });
- 

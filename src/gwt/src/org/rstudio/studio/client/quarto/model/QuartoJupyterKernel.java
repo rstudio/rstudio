@@ -23,6 +23,14 @@ public class QuartoJupyterKernel extends JavaScriptObject
    {
    }
    
+   public native static QuartoJupyterKernel defaultKernel() /*-{
+      return {
+        "display_name": "Python 3",
+        "language": "python",
+        "name": "python3"
+      };
+   }-*/;
+   
    public final native String getName() /*-{
       return this.name;
    }-*/;

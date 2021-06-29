@@ -15,6 +15,7 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -51,7 +52,7 @@ public class TextBoxWithButton extends Composite
                             boolean readOnly,
                             ClickHandler handler)
    {
-      this(label, null, emptyLabel, action, helpButton, uniqueId, readOnly, handler);
+      this(label, null, emptyLabel, action, helpButton, uniqueId, readOnly, false, handler);
    }
 
    /**
@@ -69,17 +70,18 @@ public class TextBoxWithButton extends Composite
                             boolean readOnly,
                             ClickHandler handler)
    {
-      this(null, existingLabel, emptyLabel, action, null, uniqueId, readOnly, handler);
+      this(null, existingLabel, emptyLabel, action, null, uniqueId, readOnly, false, handler);
    }
 
-   protected TextBoxWithButton(String label,
-                               FormLabel existingLabel,
-                               String emptyLabel,
-                               String action,
-                               HelpButton helpButton,
-                               ElementIds.TextBoxButtonId uniqueId,
-                               boolean readOnly,
-                               ClickHandler handler)
+   public TextBoxWithButton(String label,
+                            FormLabel existingLabel,
+                            String emptyLabel,
+                            String action,
+                            HelpButton helpButton,
+                            ElementIds.TextBoxButtonId uniqueId,
+                            boolean readOnly,
+                            boolean addClearButton,
+                            ClickHandler handler)
    {
       emptyLabel_ = StringUtil.isNullOrEmpty(emptyLabel) ? "" : emptyLabel;
       uniqueId_ = "_" + uniqueId;
@@ -97,10 +99,24 @@ public class TextBoxWithButton extends Composite
 
       // prevent button from triggering "submit" when hosted in a form, such as in FileUploadDialog
       themedButton_.getElement().setAttribute("type", "button");
+      
+      clearButton_ = new ThemedButton("Clear", (ClickEvent event) ->
+      {
+         setText("");
+      });
+      
+      clearButton_.getElement().getStyle().setMarginLeft(0, Unit.PX);
+      clearButton_.getElement().setAttribute("type", "button");
 
       inner_ = new HorizontalPanel();
       inner_.add(textBox_);
       inner_.add(themedButton_);
+      
+      if (addClearButton)
+      {
+         inner_.add(clearButton_);
+      }
+      
       inner_.setCellWidth(textBox_, "100%");
       inner_.setWidth("100%");
 
@@ -170,6 +186,10 @@ public class TextBoxWithButton extends Composite
       {
          textBox_.setText(text);
       }
+      else if (useNativePlaceholder_)
+      {
+         textBox_.setText("");
+      }
       else
       {
          textBox_.setText(emptyLabel_);
@@ -183,7 +203,9 @@ public class TextBoxWithButton extends Composite
       String text = textBox_.getText();
       
       if (StringUtil.equals(text, emptyLabel_))
+      {
          return "";
+      }
       
       if (text.startsWith(USE_DEFAULT_PREFIX))
       {
@@ -239,7 +261,13 @@ public class TextBoxWithButton extends Composite
    {
       textBox_.setFocus(false);
    }
-
+   
+   public void useNativePlaceholder()
+   {
+      useNativePlaceholder_ = true;
+      textBox_.getElement().setAttribute("placeholder", emptyLabel_);
+   }
+   
    @Override
    protected void onAttach()
    {
@@ -250,6 +278,7 @@ public class TextBoxWithButton extends Composite
       // prevent duplicates.
       ElementIds.assignElementId(textBox_, ElementIds.TBB_TEXT + uniqueId_);
       ElementIds.assignElementId(themedButton_, ElementIds.TBB_BUTTON + uniqueId_);
+      ElementIds.assignElementId(clearButton_, ElementIds.TBB_CLEAR_BUTTON + uniqueId_);
       if (helpButton_ != null)
          ElementIds.assignElementId(helpButton_, ElementIds.TBB_HELP + uniqueId_);
       if (lblCaption_ != null)
@@ -262,9 +291,11 @@ public class TextBoxWithButton extends Composite
    private final TextBox textBox_;
    private HelpButton helpButton_;
    private final ThemedButton themedButton_;
+   private final ThemedButton clearButton_;
    private final String emptyLabel_;
    private String useDefaultValue_;
    private String uniqueId_;
+   private boolean useNativePlaceholder_;
    
    private static final String USE_DEFAULT_PREFIX = "[Use Default]";
 }

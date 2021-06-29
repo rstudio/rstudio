@@ -1303,18 +1303,6 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether to initialize new projects with a Git repo by default.
-    */
-   public PrefValue<Boolean> newProjectGitInit()
-   {
-      return bool(
-         "new_project_git_init",
-         "Initialize new projects with Git", 
-         "Whether to initialize new projects with a Git repo by default.", 
-         false);
-   }
-
-   /**
     * The default engine to use when processing Sweave documents.
     */
    public PrefValue<String> defaultSweaveEngine()
@@ -2220,6 +2208,18 @@ public class UserPrefsAccessor extends Prefs
          "new_proj_git_init",
          "Create a Git repo in new projects", 
          "Whether a git repo should be initialized inside new projects by default.", 
+         false);
+   }
+
+   /**
+    * Whether an renv environment should be created inside new projects by default.
+    */
+   public PrefValue<Boolean> newProjUseRenv()
+   {
+      return bool(
+         "new_proj_use_renv",
+         "Create an renv environment in new projects", 
+         "Whether an renv environment should be created inside new projects by default.", 
          false);
    }
 
@@ -3147,6 +3147,30 @@ public class UserPrefsAccessor extends Prefs
          false);
    }
 
+   /**
+    * When enabled, if the active project contains a Python virtual environment, then RStudio will automatically activate this environment on startup.
+    */
+   public PrefValue<Boolean> pythonProjectEnvironmentAutomaticActivate()
+   {
+      return bool(
+         "python_project_environment_automatic_activate",
+         "Automatically activate project Python environments", 
+         "When enabled, if the active project contains a Python virtual environment, then RStudio will automatically activate this environment on startup.", 
+         true);
+   }
+
+   /**
+    * When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further.
+    */
+   public PrefValue<Boolean> checkNullExternalPointers()
+   {
+      return bool(
+         "check_null_external_pointers",
+         "Check values in the Environment pane for null external pointers", 
+         "When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further.", 
+         false);
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -3329,8 +3353,6 @@ public class UserPrefsAccessor extends Prefs
          defaultProjectLocation().setValue(layer, source.getString("default_project_location"));
       if (source.hasKey("source_with_echo"))
          sourceWithEcho().setValue(layer, source.getBool("source_with_echo"));
-      if (source.hasKey("new_project_git_init"))
-         newProjectGitInit().setValue(layer, source.getBool("new_project_git_init"));
       if (source.hasKey("default_sweave_engine"))
          defaultSweaveEngine().setValue(layer, source.getString("default_sweave_engine"));
       if (source.hasKey("default_latex_program"))
@@ -3459,6 +3481,8 @@ public class UserPrefsAccessor extends Prefs
          consoleDoubleClickSelect().setValue(layer, source.getBool("console_double_click_select"));
       if (source.hasKey("new_proj_git_init"))
          newProjGitInit().setValue(layer, source.getBool("new_proj_git_init"));
+      if (source.hasKey("new_proj_use_renv"))
+         newProjUseRenv().setValue(layer, source.getBool("new_proj_use_renv"));
       if (source.hasKey("root_document"))
          rootDocument().setValue(layer, source.getString("root_document"));
       if (source.hasKey("show_user_home_page"))
@@ -3593,6 +3617,10 @@ public class UserPrefsAccessor extends Prefs
          terminalPythonIntegration().setValue(layer, source.getBool("terminal_python_integration"));
       if (source.hasKey("session_protocol_debug"))
          sessionProtocolDebug().setValue(layer, source.getBool("session_protocol_debug"));
+      if (source.hasKey("python_project_environment_automatic_activate"))
+         pythonProjectEnvironmentAutomaticActivate().setValue(layer, source.getBool("python_project_environment_automatic_activate"));
+      if (source.hasKey("check_null_external_pointers"))
+         checkNullExternalPointers().setValue(layer, source.getBool("check_null_external_pointers"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -3687,7 +3715,6 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(toolbarVisible());
       prefs.add(defaultProjectLocation());
       prefs.add(sourceWithEcho());
-      prefs.add(newProjectGitInit());
       prefs.add(defaultSweaveEngine());
       prefs.add(defaultLatexProgram());
       prefs.add(useRoxygen());
@@ -3752,6 +3779,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(gitDiffIgnoreWhitespace());
       prefs.add(consoleDoubleClickSelect());
       prefs.add(newProjGitInit());
+      prefs.add(newProjUseRenv());
       prefs.add(rootDocument());
       prefs.add(showUserHomePage());
       prefs.add(reuseSessionsForProjectLinks());
@@ -3819,6 +3847,8 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(memoryQueryIntervalSeconds());
       prefs.add(terminalPythonIntegration());
       prefs.add(sessionProtocolDebug());
+      prefs.add(pythonProjectEnvironmentAutomaticActivate());
+      prefs.add(checkNullExternalPointers());
       return prefs;
    }
    

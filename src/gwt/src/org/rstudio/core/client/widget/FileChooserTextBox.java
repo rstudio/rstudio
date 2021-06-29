@@ -76,6 +76,7 @@ public class FileChooserTextBox extends TextBoxWithButton
             null, /* helpButton */
             uniqueId,
             true, /* readOnly */
+            false,
             null /* clickHandler */);
 
       if (buttonDisabled)

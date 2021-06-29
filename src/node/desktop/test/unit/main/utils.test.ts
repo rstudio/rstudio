@@ -15,41 +15,34 @@
 
 import { describe } from 'mocha';
 import { assert } from 'chai';
+import { saveAndClear, restore } from '../unit-utils';
 
 import * as Utils from '../../../src/main/utils';
 import { app } from 'electron';
-import * as env from '../../../src/core/environment';
+import { getenv, setenv, unsetenv } from '../../../src/core/environment';
 
-describe('DesktopUtils', () => {
-  describe('Static helpers', () => {
-    it('reattachConsoleIfNecessary does... something', () => {
-      Utils.reattachConsoleIfNecessary();
-      if (process.platform === 'win32') {
-        // TODO 
-      }
-    });
+describe('Utils', () => {
+  const envVars: Record<string, string> = {
+    RSTUDIO_CPP_BUILD_OUTPUT: '',
+  };
+
+  beforeEach(() => {
+    saveAndClear(envVars);
+  });
+
+  afterEach(() => {
+    restore(envVars);
+  });
+
+  describe('Helper functions', () => {
     it('userLogPath returns a non-empty string', () => {
-      assert.isNotEmpty(Utils.userLogPath());
+      assert.isNotEmpty(Utils.userLogPath().getAbsolutePath());
     });
     it('usereWebCachePath returns a non-empty string', () => {
-      assert.isNotEmpty(Utils.userWebCachePath());
+      assert.isNotEmpty(Utils.userWebCachePath().getAbsolutePath());
     });
     it('devicePixelRatio returns 1.0', () => {
       assert.strictEqual(Utils.devicePixelRatio(), 1.0);
-    });
-    it('initializeLang does... something', () => {
-      Utils.initializeLang();
-      if (process.platform === 'darwin') {
-        // TODO
-      }
-    });
-    it('isMacOS detects... macOS', () => {
-      const result = Utils.isMacOS();
-      if (process.platform === 'darwin') {
-        assert.isTrue(result);
-      } else {
-        assert.isFalse(result);
-      }
     });
     it('randomString genereates a random string', () => {
       const str1 = Utils.randomString();
@@ -67,18 +60,32 @@ describe('DesktopUtils', () => {
       assert.isNotEmpty(json.node);
       assert.isNotEmpty(json.v8);
     });
-    it('removeStaleOptionsLockfile does... something', () => {
-      Utils.removeStaleOptionsLockfile();
-      if (process.platform === 'win32') {
-        // TODO
-      }
-    });
     it('augmentCommandLineArguments adds contents of env var', () => {
       assert.isFalse(app.commandLine.hasSwitch('disable-gpu'));
-      assert.isEmpty(env.getenv('RSTUDIO_CHROMIUM_ARGUMENTS'));
-      env.setenv('RSTUDIO_CHROMIUM_ARGUMENTS', '--disable-gpu');
+      assert.isEmpty(getenv('RSTUDIO_CHROMIUM_ARGUMENTS'));
+      setenv('RSTUDIO_CHROMIUM_ARGUMENTS', '--disable-gpu');
       Utils.augmentCommandLineArguments();
       assert.isTrue(app.commandLine.hasSwitch('disable-gpu'));
-      env.unsetenv('RSTUDIO_CHROMIUM_ARGUMENTS');
-    });  });
+      unsetenv('RSTUDIO_CHROMIUM_ARGUMENTS');
+    });
+    it('initializeSharedSecret generates a random string in RS_SHARED_SECRET envvar_', () => {
+      const envvar = 'RS_SHARED_SECRET';
+      assert.equal(getenv(envvar).length, 0);
+      Utils.initializeSharedSecret();
+      assert.isAtLeast(getenv(envvar).length, 0);
+    });
+    it('rsessionExeName returns non-empty string', () => {
+      assert.isNotEmpty(Utils.rsessionExeName());
+    });
+    it('removeStaleOptionsLockfile is callable', () => {
+      Utils.removeStaleOptionsLockfile();
+      assert(true);
+    });
+    it('findComponents returns session and scripts paths', () => {
+      process.env.RSTUDIO_CPP_BUILD_OUTPUT = '/somewhere/interesting/';
+      const [, session, scripts] = Utils.findComponents();
+      assert.isNotEmpty(session.getAbsolutePath());
+      assert.isNotEmpty(scripts.getAbsolutePath());
+    });
+  });
 });

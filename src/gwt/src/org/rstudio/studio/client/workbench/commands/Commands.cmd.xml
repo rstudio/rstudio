@@ -405,6 +405,8 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="rebuildAll"/>
          <cmd refid="cleanAll"/>
          <separator/>
+         <cmd refid="serveQuartoSite"/>
+         <separator/>
          <cmd refid="testPackage"/>
          <separator/>
          <cmd refid="checkPackage"/>
@@ -1096,11 +1098,16 @@ well as menu structures (for main menu and popup menus).
         menuLabel="R _Markdown..."
         desc="Create a new R Markdown document"
         rebindable="false"/>
-        
+
    <cmd id="newQuartoDoc"
         menuLabel="_Quarto Doc..."
         desc="Create a new Quarto document"
         rebindable="false"/>
+        
+   <cmd id="serveQuartoSite"
+        menuLabel="_Serve Site"
+        desc="Run development server for Quarto site"
+        rebindable="false"/>      
 
    <cmd id="newRShinyApp"
         menuLabel="Shiny _Web App..."
@@ -2793,12 +2800,6 @@ well as menu structures (for main menu and popup menus).
    <cmd id="importDatasetFromCsvUsingBase"
         label="From Text (base)..."
         menuLabel="From Text (_base)..."
-        context="import"
-        windowMode="main"/>
-
-   <cmd id="importDatasetFromSAV"
-        label="Import Dataset from SAV..."
-        menuLabel="From _SAV..."
         context="import"
         windowMode="main"/>
 

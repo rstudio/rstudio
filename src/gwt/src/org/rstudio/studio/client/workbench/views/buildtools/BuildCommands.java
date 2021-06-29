@@ -52,15 +52,44 @@ public class BuildCommands
       
       // remove makefile commands if this isn't a makefile
       if (type == SessionInfo.BUILD_TOOLS_CUSTOM ||
-          type == SessionInfo.BUILD_TOOLS_WEBSITE)
+          type == SessionInfo.BUILD_TOOLS_WEBSITE ||
+          type == SessionInfo.BUILD_TOOLS_QUARTO)
       {
          commands.rebuildAll().remove();
       }
       
       if (type == SessionInfo.BUILD_TOOLS_CUSTOM ||
-          type == SessionInfo.BUILD_TOOLS_PACKAGE)
+          type == SessionInfo.BUILD_TOOLS_PACKAGE ||
+          type == SessionInfo.BUILD_TOOLS_QUARTO)
       {
          commands.cleanAll().remove();
+      }
+      
+      if (type != SessionInfo.BUILD_TOOLS_QUARTO)
+      {
+         commands.serveQuartoSite().remove();
+      }
+      
+      if (type == SessionInfo.BUILD_TOOLS_QUARTO)
+      {
+         String projType = "Project";
+         
+         if (sessionInfo.getQuartoConfig().project_type.equals(
+                      SessionInfo.QUARTO_PROJECT_TYPE_BOOK)) 
+         {
+            projType = "Book";
+         }
+         if (sessionInfo.getQuartoConfig().project_type.equals(
+               SessionInfo.QUARTO_PROJECT_TYPE_SITE)) 
+         {
+            projType = "Site";
+         }
+         commands.buildAll().setMenuLabel("_Render " + projType);
+         commands.buildAll().setButtonLabel("Render " + projType);
+         commands.buildAll().setDesc("Render " + projType.toLowerCase());
+         commands.buildAll().setImageResource(commands.quartoRenderDocument().getImageResource());
+         commands.serveQuartoSite().setMenuLabel("_Serve " + projType);
+         commands.serveQuartoSite().setButtonLabel("Serve " + projType);
       }
       
       // remove all other commands if there are no build tools

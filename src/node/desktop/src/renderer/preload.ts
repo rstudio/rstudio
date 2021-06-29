@@ -12,19 +12,20 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-// import { contextBridge } from 'electron';
-// import getMenuBridge from './menu-bridge';
-// import getDesktopBridge from './desktop-bridge';
-// import getDesktopInfoBridge from './desktop-info-bridge';
+import { contextBridge } from 'electron';
 
-// Bring over this stuff from the prototype when needed
+import { removeDups } from '../core/string-utils';
+
+import { getDesktopInfoBridge } from './desktop-info-bridge';
+import { getMenuBridge } from './menu-bridge';
+import { getDesktopBridge } from './desktop-bridge';
 
 /**
  * The preload script is run in the renderer before our GWT code and enables
  * setting up a bridge between the main process and the renderer process via
  * the contextBridge mechanism.
  * 
- * Code in here has access to powerful node.js and Electron APIs even though
+ * Preload code has access to powerful node.js and Electron APIs even though
  * the renderer itself is configured with node disabled and context isolation.
  * 
  * Be careful to only expose the exact APIs desired; DO NOT expose general-purpose
@@ -33,9 +34,23 @@
  * Actual implementation happens in the main process, reached via ipcRenderer.
  */
 
-// contextBridge.exposeInMainWorld('desktop', getDesktopBridge());
-// contextBridge.exposeInMainWorld('desktopInfo', getDesktopInfoBridge());
-// contextBridge.exposeInMainWorld('desktopMenuCallback', getMenuBridge());
-
-// RDP-only
-// contextBridge.exposeInMainWorld('remoteDesktop', {});
+// Last argument contains list of apiKeys to expose, separated by '|'.
+const apiKeys = removeDups(process.argv.slice(-1)[0].split('|'));
+for (const apiKey of apiKeys) {
+  switch (apiKey) {
+  case 'desktop':
+    contextBridge.exposeInMainWorld(apiKey, getDesktopBridge());
+    break;
+  case 'desktopInfo':
+    contextBridge.exposeInMainWorld(apiKey, getDesktopInfoBridge());
+    break;
+  case 'desktopMenuCallback':
+    contextBridge.exposeInMainWorld(apiKey, getMenuBridge());
+    break;
+  // case 'remoteDesktop':
+  //   // TODO: RDP-only
+  //   break;
+  default:
+    console.error(`Preload ignoring unsupported apiKey: ${apiKey}`);
+  }
+}

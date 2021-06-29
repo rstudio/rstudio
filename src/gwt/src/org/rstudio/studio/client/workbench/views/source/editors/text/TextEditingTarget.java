@@ -259,6 +259,7 @@ public class TextEditingTarget implements
                             List<String> values,
                             List<String> extensions,
                             String selected);
+      void setQuartoFormatOptions(TextFileType fileType, boolean showRmdFormatMenu, List<String> formats);
       HandlerRegistration addRmdFormatChangedHandler(
             RmdOutputFormatChangedEvent.Handler handler);
 
@@ -370,7 +371,7 @@ public class TextEditingTarget implements
             setRMarkdownBehaviorEnabled(newFileType_.isRmd());
 
             events_.fireEvent(new FileTypeChangedEvent());
-            if (!fileType_.canSourceOnSave() && docUpdateSentinel_.sourceOnSave())
+            if (!isSourceOnSaveEnabled() && docUpdateSentinel_.sourceOnSave())
             {
                view_.getSourceOnSave().setValue(false, true);
             }
@@ -1979,7 +1980,10 @@ public class TextEditingTarget implements
          @Override
          public void onRmdOutputFormatChanged(RmdOutputFormatChangedEvent event)
          {
-            setRmdFormat(event.getFormat());
+            if (event.isQuarto())
+               setQuartoFormat(event.getFormat());
+            else
+               setRmdFormat(event.getFormat());
          }
       });
 
@@ -2225,7 +2229,7 @@ public class TextEditingTarget implements
             // files when knitr isn't installed)
             boolean addCurrentType = true;
             final StatusBarPopupMenu menu = new StatusBarPopupMenu();
-            TextFileType[] fileTypes = fileTypeCommands_.statusBarFileTypes();
+            List<TextFileType> fileTypes = fileTypeCommands_.statusBarFileTypes();
             for (TextFileType type : fileTypes)
             {
                menu.addItem(createMenuItemForType(type));
@@ -3397,8 +3401,9 @@ public class TextEditingTarget implements
          ((getPath() == null) && docDisplay_.getCode().isEmpty()) ||
 
          // source on save is active
-         (fileType_.canSourceOnSave() && docUpdateSentinel_.sourceOnSave());
+         (isSourceOnSaveEnabled() && docUpdateSentinel_.sourceOnSave());
    }
+
 
    @Override
    public void forceSaveCommandActive()
@@ -4084,6 +4089,12 @@ public class TextEditingTarget implements
             }
       );
    }
+   
+   
+   private boolean isSourceOnSaveEnabled()
+   {
+      return fileType_.canSourceOnSave() || StringUtil.equals(extendedType_, SourceDocument.XT_QUARTO_DOCUMENT);
+   }
 
    private boolean checkSelectionAndAlert(String refactoringName,
                                           String pleaseSelectCodeMessage,
@@ -4693,6 +4704,18 @@ public class TextEditingTarget implements
          formats = new ArrayList<>();
       return formats;
    }
+   
+   
+   private List<String> getQuartoOutputFormats()
+   {
+      String yaml = getRmdFrontMatter();
+      if (yaml == null)
+         return new ArrayList<>();
+      List<String> formats = TextEditingTargetRMarkdownHelper.getQuartoOutputFormats(yaml);
+      if (formats == null)
+         formats = new ArrayList<>();
+      return formats;
+   }
 
    private void updateRmdFormat()
    {
@@ -4713,7 +4736,13 @@ public class TextEditingTarget implements
          else
          {
             view_.setIsNotShinyFormat();
+            
+            List<String> formats = getQuartoOutputFormats();
+            view_.setQuartoFormatOptions(fileType_, 
+                                         getCustomKnit().length() == 0,
+                                         formats);
          }
+        
       }
       else if (selTemplate != null && selTemplate.isShiny)
       {
@@ -4832,6 +4861,22 @@ public class TextEditingTarget implements
             docDisplay_.setShowChunkOutputInline(false);
       }
    }
+   
+   private void setQuartoFormat(String formatName)
+   {
+      // see if we need to change the format
+      List<String> outputFormats = getQuartoOutputFormats();
+      if (outputFormats.size() == 0 || !outputFormats.get(0).equals(formatName))
+      {
+         String yaml = rmarkdownHelper_.setOuartoOutputFormat(getRmdFrontMatter(), formatName);
+         if (yaml != null)
+            applyRmdFrontMatter(yaml);
+      }
+      
+      // render
+      renderRmd();
+   }
+   
 
    private void setRmdFormat(String formatName)
    {
@@ -7459,7 +7504,7 @@ public class TextEditingTarget implements
                                              docDisplay_.getCursorPosition()));
 
             // check for source on save
-            if (fileType_.canSourceOnSave() && docUpdateSentinel_.sourceOnSave())
+            if (isSourceOnSaveEnabled() && docUpdateSentinel_.sourceOnSave())
             {
                if (fileType_.isRd())
                {
@@ -7478,6 +7523,11 @@ public class TextEditingTarget implements
                else if (fileType_.canPreviewFromR())
                {
                   previewFromR();
+               }
+               else if (extendedType_ == SourceDocument.XT_RMARKDOWN_DOCUMENT ||
+                        extendedType_ == SourceDocument.XT_QUARTO_DOCUMENT)
+               {
+                  renderRmd();
                }
                else
                {

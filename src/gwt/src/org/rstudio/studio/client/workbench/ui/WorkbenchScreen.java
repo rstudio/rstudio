@@ -277,14 +277,11 @@ public class WorkbenchScreen extends Composite
                Math.max(deckPanelSize.width, 0),
                Math.max(deckPanelSize.height - Toolbar.DEFAULT_HEIGHT, 0));
 
-      double devicePixelRatio = 1.0;
-      if (BrowseCap.isMacintoshDesktop())
-         devicePixelRatio = BrowseCap.devicePixelRatio();
-      WorkbenchMetrics metrics = WorkbenchMetrics.create(consoleWidth,
+     WorkbenchMetrics metrics = WorkbenchMetrics.create(consoleWidth,
                                                          buildConsoleWidth,
                                                          plotsSize.width,
                                                          plotsSize.height,
-                                                         devicePixelRatio);
+                                                         BrowseCap.devicePixelRatio());
 
       // make sure we don't send very similar metrics values twice (it is
       // an expensive operation since it involves at least 2 http requests)

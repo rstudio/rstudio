@@ -158,8 +158,6 @@ public class BrowseCap
 
    public static double devicePixelRatio()
    {
-      // TODO: validate that we can rely on browser to report even
-      // on desktop clients
       return getDevicePixelRatio();
    }
 
@@ -195,6 +193,7 @@ public class BrowseCap
    private static native final double getDevicePixelRatio() /*-{
       try
       {
+         // use explicitly declared device pixel ratio if present
          if ('devicePixelRatio' in $wnd)
             return $wnd.devicePixelRatio;
          else

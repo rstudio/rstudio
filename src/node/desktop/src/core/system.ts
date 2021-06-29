@@ -13,67 +13,30 @@
  *
  */
 
-import { getenv } from './environment';
-import * as log from './log';
-import { Err, Success } from './err';
-import { User } from './user';
-import { FilePath } from './file-path';
+import { v4 as uuidv4 } from 'uuid';
+import crc from 'crc';
 
-export function initHook(): void {
-  if (process.platform !== 'win32' ) {
-    return;
+export function generateUuid(includeDashes = true): string {
+  let uuid = uuidv4();
+  if (!includeDashes) {
+    uuid = uuid.replace(/-/g, '');
   }
-
-  // TODO: Windows implementation from Win32System.cpp
+  return uuid;
 }
 
-// logger's program identity (this process's binary name)
-export const s_programIdentity = '';
-
-// logging options representing the latest state of the logging configuration file
-// export let s_logOptions: LogOptions;
-
-function initLog(): Err {
-  // requires prior synchronization
-
-  // Error error = s_logOptions.read();
-  // if (error)
-  //   return error;
-
-  // initializeLogWriters();
-
-  return Success();
+export function generateShortenedUuid(): string {
+  return crc.crc32(generateUuid(false)).toString(16);
 }
 
-export function initializeLog(
-  programIdentity: string,
-  logLevel: log.LogLevel,
-  logDir: FilePath,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  enableConfigReload = true
-): Err {
-  // // create default file logger options
-  // const options = new log.FileLogOptions(logDir);
-
-  // s_logOptions = new LogOptions(programIdentity, logLevel, log.LoggerType.kFile, options);
-  // s_programIdentity = programIdentity;
-
-  const error = initLog();
-  if (error) {
-    return error;
-  }
-
-  // if (enableConfigReload)
-  //   initializeLogConfigReload();
-
-  return Success();
+export function generateRandomPort(): number {
+  // Create a random-ish port number to avoid collisions between different
+  // instances of rdesktop-launched rsessions; not a cryptographically
+  // secure technique so don't copy/paste for such purposes.
+  const base = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
+  return (base % 40000) + 8080;
 }
 
-export function username(): string {
-  const userVar = process.platform === 'win32' ? 'USERNAME' : 'USER';
-  return getenv(userVar);
-}
-
-export function userHomePath(): FilePath {
-  return User.getUserHomePath();
+export function localPeer(port: number): string {
+  // local peer used for named-pipe communcation on Windows
+  return `\\\\.\\pipe\\${port.toString()}-rsession`;
 }

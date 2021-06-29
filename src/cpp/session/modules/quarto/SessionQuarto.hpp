@@ -32,7 +32,7 @@ namespace quarto {
 bool isInstalled(bool refresh = false);
 bool projectIsQuarto();
 
-core::json::Object quartoConfig(bool refresh = false);
+core::json::Object quartoConfigJSON(bool refresh = false);
 
 core::Error initialize();
    

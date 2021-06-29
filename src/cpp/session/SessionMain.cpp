@@ -239,6 +239,12 @@ using namespace rsession::client_events;
 namespace rstudio {
 namespace session {
 
+namespace {
+
+std::string s_fallbackLibraryPath;
+
+} // end anonymous namespace
+
 bool disableExecuteRprofile()
 {
    // check for session-specific override
@@ -459,6 +465,7 @@ void exitEarly(int status)
 {
    stopMonitorWorkerThread();
    FileLock::cleanUp();
+   FilePath(s_fallbackLibraryPath).removeIfExists();
    ::exit(status);
 }
 
@@ -744,6 +751,11 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
 
    // success!
    return Success();
+}
+
+void rInitComplete()
+{
+   module_context::events().onInitComplete();
 }
 
 void notifyIfRVersionChanged()
@@ -1743,10 +1755,13 @@ void initMonitorClient()
 } // anonymous namespace
 
 // run session
-int main (int argc, char * const argv[])
+int main(int argc, char * const argv[])
 {
    try
    {
+      // save fallback library path
+      s_fallbackLibraryPath = core::system::getenv("RSTUDIO_FALLBACK_LIBRARY_PATH");
+      
       // sleep on startup if requested (mainly for debugging)
       std::string sleepOnStartup = core::system::getenv("RSTUDIO_SESSION_SLEEP_ON_STARTUP");
       if (!sleepOnStartup.empty())
@@ -1898,7 +1913,7 @@ int main (int argc, char * const argv[])
       // Mirror the R getOptions("width") value in an environment variable
       core::system::setenv("RSTUDIO_CONSOLE_WIDTH",
                safe_convert::numberToString(rstudio::r::options::kDefaultWidth));
-
+ 
       // set the rstudio user identity environment variable (can differ from
       // username in debug configurations). this is provided so that
       // rpostback knows what local stream to connect back to
@@ -2216,6 +2231,7 @@ int main (int argc, char * const argv[])
       // r callbacks
       rstudio::r::session::RCallbacks rCallbacks;
       rCallbacks.init = rInit;
+      rCallbacks.initComplete = rInitComplete;
       rCallbacks.consoleRead = console_input::rConsoleRead;
       rCallbacks.editFile = rEditFile;
       rCallbacks.showFile = rShowFile;

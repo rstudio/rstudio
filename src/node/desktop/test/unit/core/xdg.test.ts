@@ -15,6 +15,7 @@
 
 import { describe } from 'mocha';
 import { assert } from 'chai';
+import { saveAndClear, restore } from '../unit-utils';
 
 import fs from 'fs';
 import os from 'os';
@@ -58,22 +59,12 @@ describe('Xdg', () => {
 
   // save and clear any XDG-related env vars
   beforeEach(() => {
-    for (const name in xdgVars) {
-      xdgVars[name] = process.env[name] ?? '';
-      delete process.env[name];
-    }
+    saveAndClear(xdgVars);
   });
 
   // put back the original XDG env vars
   afterEach(() => {
-    for (const name in xdgVars) {
-      if (xdgVars[name]) {
-        process.env[name] = xdgVars[name];
-        xdgVars[name] = '';
-      } else {
-        delete process.env[name];
-      }
-    }
+    restore(xdgVars);
   });
 
   describe('Fetch Xdg paths', () => {

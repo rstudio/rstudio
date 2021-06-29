@@ -15,11 +15,16 @@
 
 #include "SessionQuarto.hpp"
 
+#include <string>
+
+#include <yaml-cpp/yaml.h>
+
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
 
 #include <core/Exec.hpp>
 #include <core/YamlUtil.hpp>
+#include <core/FileSerializer.hpp>
 
 #include <core/json/JsonRpc.hpp>
 
@@ -29,26 +34,62 @@
 #include <session/SessionSourceDatabase.hpp>
 #include <session/projects/SessionProjects.hpp>
 
-#include <string>
+#include <session/prefs/UserPrefs.hpp>
 
+#include "SessionQuartoServe.hpp"
 
 using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
-namespace modules {
-namespace quarto {
+
 namespace {
 
 const char * const kQuartoXt = "quarto-document";
 
 FilePath s_quartoPath;
 
-bool pathHasQuartoConfig(const FilePath& filePath)
+core::FilePath quartoConfigFilePath(const FilePath& dirPath)
 {
-   return filePath.completePath("_quarto.yml").exists() ||
-          filePath.completePath("_quarto.yaml").exists();
+   FilePath quartoYml = dirPath.completePath("_quarto.yml");
+   if (quartoYml.exists())
+      return quartoYml;
+
+   FilePath quartoYaml = dirPath.completePath("_quarto.yaml");
+   if (quartoYaml.exists())
+      return quartoYaml;
+
+   return FilePath();
 }
+
+core::FilePath quartoProjectConfigFile(const core::FilePath& filePath)
+{
+   // list all paths up to root from home dir
+   // if we hit the anchor path, or any parent directory of that path
+   FilePath anchorPath = module_context::userHomePath();
+   std::vector<FilePath> anchorPaths;
+   for (; anchorPath.exists(); anchorPath = anchorPath.getParent())
+      anchorPaths.push_back(anchorPath);
+
+   // scan through parents
+   for (FilePath targetPath = filePath.getParent(); targetPath.exists(); targetPath = targetPath.getParent())
+   {
+      // bail if we've hit our anchor
+      for (const FilePath& anchorPath : anchorPaths)
+      {
+         if (targetPath == anchorPath)
+            return FilePath();
+      }
+
+      // see if we have a config
+      FilePath configFile = quartoConfigFilePath(targetPath);
+      if (!configFile.isEmpty())
+         return configFile;
+   }
+
+   return FilePath();
+}
+
 
 std::string onDetectQuartoSourceType(
       boost::shared_ptr<source_database::SourceDocument> pDoc)
@@ -93,36 +134,13 @@ std::string onDetectQuartoSourceType(
             return kQuartoXt;
          }
          // project has quarto config in build target dir
-         else if (filePath.isWithin(projects::projectContext().directory()) && projectIsQuarto())
+         else if (filePath.isWithin(projects::projectContext().directory()) && modules::quarto::projectIsQuarto())
          {
             return kQuartoXt;
 
          // file has a parent directory with a quarto config
-         } else if (isInstalled()) {
-
-            // list all paths up to root from home dir
-            // if we hit the anchor path, or any parent directory of that path
-            FilePath anchorPath = module_context::userHomePath();
-            std::vector<FilePath> anchorPaths;
-            for (; anchorPath.exists(); anchorPath = anchorPath.getParent())
-               anchorPaths.push_back(anchorPath);
-
-            // scan through parents
-            for (FilePath targetPath = filePath.getParent(); targetPath.exists(); targetPath = targetPath.getParent())
-            {
-               // bail if we've hit our anchor
-               for (const FilePath& anchorPath : anchorPaths)
-               {
-                  if (targetPath == anchorPath)
-                     return "";
-               }
-
-               // see if we have a config
-               if (pathHasQuartoConfig(targetPath))
-               {
-                  return kQuartoXt;
-               }
-            }
+         } else if (modules::quarto::isInstalled() && !quartoProjectConfigFile(filePath).isEmpty()) {
+            return kQuartoXt;
          }
       }
    }
@@ -130,6 +148,7 @@ std::string onDetectQuartoSourceType(
    // quarto type not detected
    return "";
 }
+
 
 core::system::ProcessOptions quartoOptions()
 {
@@ -194,25 +213,204 @@ Error quartoCapabilities(const json::JsonRpcRequest&,
 }
 
 
-} // anonymous namespace
+void readQuartoProjectConfig(const FilePath& configFile,
+                             std::string* pType,
+                             std::string* pOutputDir,
+                             std::vector<std::string>* pFormats)
+{
+   // read the config
+   std::string configText;
+   Error error = core::readStringFromFile(configFile, &configText);
+   if (!error)
+   {
+      try
+      {
+         YAML::Node node = YAML::Load(configText);
+         for (auto it = node.begin(); it != node.end(); ++it)
+         {
+            std::string key = it->first.as<std::string>();
+            if (key == "project" && it->second.Type() == YAML::NodeType::Map)
+            {
+               for (auto projIt = it->second.begin(); projIt != it->second.end(); ++projIt)
+               {
+                  if (projIt->second.Type() == YAML::NodeType::Scalar)
+                  {
+                     std::string projKey = projIt->first.as<std::string>();
+                     std::string projValue = projIt->second.Scalar();
+                     if (projKey == "type")
+                        *pType = projValue;
+                     else if (projKey == "output-dir")
+                        *pOutputDir = projValue;
+                  }
+               }
+            }
+            else if (key == "format")
+            {
+               if (it->second.Type() == YAML::NodeType::Scalar)
+               {
+                  pFormats->push_back(it->second.as<std::string>());
+               }
+               else if (it->second.Type() == YAML::NodeType::Map)
+               {
+                  for (auto formatIt = it->second.begin(); formatIt != it->second.end(); ++formatIt)
+                  {
+                     pFormats->push_back(formatIt->first.as<std::string>());
+                  }
+               }
+            }
+         }
+      }
+      CATCH_UNEXPECTED_EXCEPTION
+   }
+   else
+   {
+      LOG_ERROR(error);
+   }
+}
+
+}
+
+namespace module_context {
+
+bool handleQuartoPreview(const core::FilePath& sourceFile,
+                         const core::FilePath& outputFile,
+                         bool validateExtendedType)
+{
+   // don't do anyting if user prefs are set to no preview
+   if (prefs::userPrefs().rmdViewerType() == kRmdViewerTypeNone)
+      return false;
+
+   // don't do anything if there is no quarto
+   if (!modules::quarto::isInstalled())
+      return false;
+
+   // don't do anything if this isn't a quarto doc
+   if (validateExtendedType)
+   {
+      std::string extendedType;
+      Error error = source_database::detectExtendedType(sourceFile, &extendedType);
+      if (error)
+         return false;
+      if (extendedType != kQuartoXt)
+         return false;
+   }
+
+   // if the current project is a site or book and this file is within it,
+   // then initiate a preview (one might be already running)
+   auto config = quartoConfig();
+   if ((config.project_type == kQuartoProjectSite || config.project_type == kQuartoProjectBook) &&
+       sourceFile.isWithin(module_context::resolveAliasedPath(config.project_dir)))
+   {
+      // preview the doc (but schedule it for later so we can get out of the onCompleted
+      // handler this was called from -- launching a new process in the supervisor when
+      // an old one is in the middle of executing onCompleted doesn't work
+      module_context::scheduleDelayedWork(boost::posix_time::milliseconds(10),
+                                          boost::bind( modules::quarto::serve::previewDoc, outputFile),
+                                          false);
+      return true;
+   }
+
+   // if this file is within another quarto site or book project then no preview at all
+   // (as it will more than likely be broken)
+   FilePath configFile = quartoProjectConfigFile(sourceFile);
+   if (!configFile.isEmpty())
+   {
+      std::string type, outputDir;
+      std::vector<std::string> formats;
+      readQuartoProjectConfig(configFile, &type, &outputDir, &formats);
+      if (type == kQuartoProjectSite || type == kQuartoProjectBook)
+         return true;
+   }
+
+   // continue with preview
+   return false;
+}
+
+
+const char* const kQuartoProjectSite = "site";
+const char* const kQuartoProjectBook = "book";
+
+
+QuartoConfig quartoConfig(bool refresh)
+{
+   static module_context::QuartoConfig s_quartoConfig;
+
+   if (refresh || s_quartoConfig.empty)
+   {
+
+      s_quartoConfig = QuartoConfig();
+      s_quartoConfig.installed = modules::quarto::isInstalled(true);
+      using namespace session::projects;
+      const ProjectContext& context = projectContext();
+      if (context.hasProject())
+      {
+         // look for a config file in the project directory
+         FilePath configFile = quartoConfigFilePath(context.directory());
+
+         // if we don't find one, then chase up the directory heirarchy until we find one
+         if (!configFile.exists())
+            configFile = quartoProjectConfigFile(context.directory());
+
+         if (configFile.exists())
+         {
+            // confirm that it's a project
+            s_quartoConfig.is_project = true;
+
+            // record the project directory as an aliased path
+            s_quartoConfig.project_dir = module_context::createAliasedPath(configFile.getParent());
+
+            // read additional config from yaml
+            readQuartoProjectConfig(configFile,
+                                    &s_quartoConfig.project_type,
+                                    &s_quartoConfig.project_output_dir,
+                                    &s_quartoConfig.project_formats);
+
+            // provide default output dirs
+            if (s_quartoConfig.project_output_dir.length() == 0)
+            {
+               if (s_quartoConfig.project_type == kQuartoProjectSite)
+                  s_quartoConfig.project_output_dir = "_site";
+               else if (s_quartoConfig.project_type == kQuartoProjectBook)
+                  s_quartoConfig.project_output_dir = "_book";
+            }
+         }
+      }
+   }
+   return s_quartoConfig;
+}
+
+
+}
+
+namespace modules {
+namespace quarto {
 
 bool isInstalled(bool refresh)
 {
    if (refresh)
    {
-      s_quartoPath = module_context::findProgram("quarto");
+      Error error = core::system::findProgramOnPath("quarto", &s_quartoPath);
+      if (error)
+         s_quartoPath = FilePath();
    }
 
    return !s_quartoPath.isEmpty();
 }
 
-json::Object quartoConfig(bool refresh)
-{
-   json::Object jsonConfig;
-   jsonConfig["installed"] = isInstalled(refresh);
-   return jsonConfig;
-}
 
+
+json::Object quartoConfigJSON(bool refresh)
+{
+   module_context::QuartoConfig config = module_context::quartoConfig(refresh);
+   json::Object quartoConfigJSON;
+   quartoConfigJSON["installed"] = config.installed;
+   quartoConfigJSON["is_project"] = config.is_project;
+   quartoConfigJSON["project_dir"] = config.project_dir;
+   quartoConfigJSON["project_type"] = config.project_type;
+   quartoConfigJSON["project_output_dir"] = config.project_output_dir;
+   quartoConfigJSON["project_formats"] = json::toJsonArray(config.project_formats);
+   return quartoConfigJSON;
+}
 
 bool projectIsQuarto()
 {
@@ -220,7 +418,7 @@ bool projectIsQuarto()
    const ProjectContext& context = projectContext();
    if (context.hasProject())
    {
-      return pathHasQuartoConfig(context.directory());
+      return module_context::quartoConfig().is_project;
    } else {
       return false;
    }
@@ -228,17 +426,18 @@ bool projectIsQuarto()
 
 Error initialize()
 {
-   // update status at startup
-   isInstalled(true);
+   // initialize config at startup
+   module_context::quartoConfig(true);
 
    module_context::events().onDetectSourceExtendedType
                                         .connect(onDetectQuartoSourceType);
 
-   // register rpc functions
-
+   // additional initialization
    ExecBlock initBlock;
    initBlock.addFunctions()
      (boost::bind(module_context::registerRpcMethod, "quarto_capabilities", quartoCapabilities))
+     (boost::bind(module_context::sourceModuleRFile, "SessionQuarto.R"))
+     (boost::bind(quarto::serve::initialize))
    ;
    return initBlock.execute();
 }

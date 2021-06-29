@@ -1984,6 +1984,12 @@ def _rstudio_html_generator_():
    if (reticulate::py_available(initialize = FALSE))
       return(FALSE)
    
+   # if we're working in an renv project that is already
+   # managing the default version of python, then do nothing
+   renvPython <- Sys.getenv("RENV_PYTHON", unset = NA)
+   if (!is.na(renvPython))
+      return(FALSE)
+
    # ok, request use of Python
    reticulate::use_python(python, required = TRUE)
 })

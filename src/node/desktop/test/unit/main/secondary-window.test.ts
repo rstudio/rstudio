@@ -1,5 +1,5 @@
 /*
- * log.test.ts
+ * secondary-window.test.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -16,14 +16,13 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 
-import { FileLogOptions } from '../../../src/core/log';
+import { SecondaryWindow } from '../../../src/main/secondary-window';
 
-describe('Log', () => {
-  describe('Constructions', () => {
-    it('FileLogOptions construction works', () => {
-      const flo = new FileLogOptions('/somewhere');
-      assert.strictEqual(flo.directory, '/somewhere');
-    });
+describe('SecondaryWindow', () => {
+  it('construction creates a hidden BrowserWindow', () => {
+    const win = new SecondaryWindow('some name');
+    assert.isObject(win);
+    assert.isObject(win.window);
+    assert.isFalse(win.window?.isVisible());
   });
 });
- 

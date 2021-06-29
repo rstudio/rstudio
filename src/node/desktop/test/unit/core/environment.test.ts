@@ -15,6 +15,8 @@
 
 import { describe } from 'mocha';
 import { assert } from 'chai';
+import { saveAndClear, restore } from '../unit-utils';
+
 import * as env from '../../../src/core/environment';
 
 const envVarName = 'BOGUS_FAKE_ENVIRONMENT_VARIABLE_FOR_ENV_TESTS';
@@ -29,6 +31,17 @@ describe('Environment', () => {
     it('Should return value of a variable that exists', () => {
       const result = env.getenv('PATH');
       assert.isNotEmpty(result);
+    });
+    it('Should apply all from an Environment object', () => {
+      const testEnv = { RSTUDIO_TESTVAR_ONE: '', RSTUDIO_TESTVAR_TWO: '' };
+      saveAndClear(testEnv);
+      const input = { RSTUDIO_TESTVAR_ONE: 'one', RSTUDIO_TESTVAR_TWO: 'two' };
+      assert.isEmpty(env.getenv('RSTUDIO_TESTVAR_ONE'));
+      assert.isEmpty(env.getenv('RSTUDIO_TESTVAR_TWO'));
+      env.setVars(input);
+      assert.isNotEmpty(env.getenv('RSTUDIO_TESTVAR_ONE'));
+      assert.isNotEmpty(env.getenv('RSTUDIO_TESTVAR_TWO'));
+      restore(testEnv);
     });
   });
   describe('Set and unset global environment variable', () => {

@@ -33,8 +33,10 @@
  */
 
 import os from 'os';
+
+import { logger } from './logger';
 import { Environment, expandEnvVars, getenv } from './environment';
-import { username, userHomePath } from './system';
+import { username, userHomePath } from './user';
 import { FilePath } from './file-path';
 
 export enum WinFolderID {
@@ -122,8 +124,7 @@ function resolveXdgDir(
       if (path) {
         xdgHome = new FilePath(path);
       } else {
-        // TODO: LOG_ERROR_MESSAGE
-        // console.error(`Unable to retrieve app settings path (${windowsFolderId}).`);
+        logger().logError(new Error(`Unable to retrieve app settings path (${windowsFolderId}).`));
       }
     }
     if (xdgHome.isEmpty()) {

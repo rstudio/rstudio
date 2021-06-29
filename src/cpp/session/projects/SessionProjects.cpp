@@ -674,6 +674,12 @@ Error writeProjectConfig(const json::Object& configJson)
    
    if (error)
       return error;
+   
+   // ensure Python path is project-relative
+   FilePath projectDir = s_projectContext.directory();
+   FilePath pythonPath = module_context::resolveAliasedPath(config.pythonPath);
+   if (pythonPath.isWithin(projectDir))
+      config.pythonPath = pythonPath.getRelativePath(projectDir);
 
    // read spelling options
    error = json::readObject(configJson,

@@ -146,6 +146,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
       
       // Initialize project with renv
       chkRenvInit_ = new CheckBox("Use renv with this project");
+      chkRenvInit_.setValue(userState.newProjUseRenv().getValue());
       ElementIds.assignElementId(chkRenvInit_,
          ElementIds.idWithPrefix(getTitle(), ElementIds.NEW_PROJECT_RENV));
       chkRenvInit_.addValueChangeHandler((ValueChangeEvent<Boolean> event) -> {

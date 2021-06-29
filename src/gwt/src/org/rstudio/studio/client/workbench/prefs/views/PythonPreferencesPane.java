@@ -28,7 +28,9 @@ public class PythonPreferencesPane extends PythonPreferencesPaneBase<UserPrefs>
    public PythonPreferencesPane(PythonDialogResources res,
                                 PythonServerOperations server)
    {
-      super("420px", constants_.pythonPreferencesText());
+
+      super("420px", constants_.pythonPreferencesText(), false);
+
       
       overrideLabel_ = new Label();
       add(overrideLabel_);

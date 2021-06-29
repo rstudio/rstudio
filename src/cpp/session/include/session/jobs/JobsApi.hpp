@@ -38,11 +38,13 @@ boost::shared_ptr<Job> addJob(
       const std::string& status,
       const std::string& group,
       int progress,
+      bool confirmTermination,
       JobState state,
       JobType type,
       const std::string& cluster,
       bool autoRemove,
       SEXP actions,
+      JobActions cppActions,
       bool show,
       bool saveOutput,
       std::vector<std::string> tags);
@@ -52,10 +54,12 @@ boost::shared_ptr<Job> addJob(
       const std::string& status,
       const std::string& group,
       int progress,
+      bool confirmTermination,
       JobState state,
       JobType type,
       bool autoRemove,
       SEXP actions,
+      JobActions cppActions,
       bool show,
       std::vector<std::string> tags);
 

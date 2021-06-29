@@ -100,6 +100,7 @@ import org.rstudio.studio.client.events.ReplaceRangesEvent;
 import org.rstudio.studio.client.events.ReplaceRangesEvent.ReplacementData;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
+import org.rstudio.studio.client.quarto.QuartoNewDocument;
 import org.rstudio.studio.client.events.SetSelectionRangesEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -1096,7 +1097,9 @@ public class Source implements InsertSourceEvent.Handler,
    @Handler
    public void onNewQuartoDoc()
    {
-     columnManager_.newQuartoDoc();
+      new QuartoNewDocument().newDocument((contents) -> {
+         columnManager_.newDoc(FileTypeRegistry.QUARTO, contents, null);
+      });
    }
    
 
