@@ -1142,6 +1142,9 @@ public class RSConnect implements SessionInitEvent.Handler,
 
       if (isQuarto)
       {
+         final ProgressIndicator indicator = display_.getProgressIndicator("Error");
+         indicator.onProgress("Preparing for Publish...");
+
          server_.quartoPublishDetails(
             docPath,
             new ServerRequestCallback<QmdPublishDetails>()
@@ -1149,6 +1152,7 @@ public class RSConnect implements SessionInitEvent.Handler,
                @Override
                public void onResponseReceived(QmdPublishDetails details)
                {
+                  indicator.onCompleted();
                   if (!details.output_file.isEmpty())
                   {
                      input.getOriginatingEvent().getFromPreview().setOutputFile(details.output_file);
@@ -1167,7 +1171,7 @@ public class RSConnect implements SessionInitEvent.Handler,
                @Override
                public void onError(ServerError error)
                {
-                  // TODO: An error handler
+                  indicator.onError(error.getMessage());
                }
             }
          );
