@@ -823,6 +823,8 @@ public class TextEditingTargetWidget
       boolean canCompileNotebook = fileType.canCompileNotebook();
       boolean canSource = fileType.canSource();
       boolean canSourceWithEcho = fileType.canSourceWithEcho();
+      boolean isQuarto = extendedType_ != null && 
+            extendedType_.equals(SourceDocument.XT_QUARTO_DOCUMENT);
       boolean canSourceOnSave = fileType.canSourceOnSave() &&
             !userPrefs_.autoSaveEnabled();
       if (canSourceOnSave && fileType.isJS())
@@ -834,8 +836,6 @@ public class TextEditingTargetWidget
       boolean isPlainMarkdown = fileType.isPlainMarkdown();
       boolean isCpp = fileType.isCpp();
       boolean isScript = fileType.isScript();
-      boolean isQuarto = extendedType_ != null && 
-             extendedType_.equals(SourceDocument.XT_QUARTO_DOCUMENT);
       boolean isRMarkdown2 = extendedType_ != null && 
                              (extendedType_.startsWith(SourceDocument.XT_RMARKDOWN_PREFIX) ||
                               isQuarto);
@@ -865,10 +865,8 @@ public class TextEditingTargetWidget
 
       sourceOnSave_.setVisible(canSourceOnSave);
       srcOnSaveLabel_.setVisible(canSourceOnSave);
-      if (fileType.isRd() || fileType.isJS() || canPreviewFromR || fileType.isSql())
-         srcOnSaveLabel_.setText(fileType.getPreviewButtonText() + " on Save");
-      else
-         srcOnSaveLabel_.setText("Source on Save");
+      String action = getSourceOnSaveAction();
+      srcOnSaveLabel_.setText(action + " on Save");
       codeTransform_.setVisible(
             (canExecuteCode && !isScript && !fileType.canAuthorContent()) ||
             fileType.isC() || fileType.isStan());
@@ -896,7 +894,7 @@ public class TextEditingTargetWidget
       previewHTMLButton_.setVisible(fileType.canPreviewHTML() && !isQuarto);
       quartoRenderButton_.setVisible(isQuarto);
 
-      setRmdFormatButtonVisible(isRMarkdown2 && !isQuarto);
+      setRmdFormatButtonVisible(isRMarkdown2);
       rmdOptionsButton_.setVisible(isRMarkdown2);
       rmdOptionsButton_.setEnabled(isRMarkdown2);
 
@@ -1046,6 +1044,8 @@ public class TextEditingTargetWidget
       if (width == 0)
          return;
 
+      
+      
       texToolbarButton_.setText(width >= 520, "Format");
       runButton_.setText(((width >= 480) && !isShinyFile()), "Run");
       compilePdfButton_.setText(width >= 450, "Compile PDF");
@@ -1053,19 +1053,34 @@ public class TextEditingTargetWidget
       knitDocumentButton_.setText(width >= 450, knitCommandText_);
       quartoRenderButton_.setText(width >= 450, quartoCommandText_);
 
-      if (editor_.getFileType().isRd() || editor_.getFileType().isJS() ||
-          editor_.getFileType().isSql() || editor_.getFileType().canPreviewFromR())
+      String action = getSourceOnSaveAction();
+      srcOnSaveLabel_.setText(width < 450 ? action : action + " on Save");
+      sourceButton_.setText(width >= 400, sourceCommandText_);
+      
+      goToNextButton_.setVisible(commands_.goToNextChunk().isVisible() && width >= 650);
+      goToPrevButton_.setVisible(commands_.goToPrevChunk().isVisible() && width >= 650);
+      toolbar_.invalidateSeparators();
+   }
+   
+   private String getSourceOnSaveAction()
+   {
+      TextFileType fileType = editor_.getFileType();
+      if (fileType.isRd() || fileType.isJS() || fileType.canPreviewFromR() || fileType.isSql())
       {
-         String preview = editor_.getFileType().getPreviewButtonText();
-         srcOnSaveLabel_.setText(width < 450 ? preview : preview + " on Save");
+         return fileType.getPreviewButtonText();
+      }
+      else if (extendedType_ != null && 
+            (extendedType_.startsWith(SourceDocument.XT_RMARKDOWN_PREFIX) || extendedType_.equals(SourceDocument.XT_QUARTO_DOCUMENT)) )
+      {
+         return  extendedType_.equals(SourceDocument.XT_QUARTO_DOCUMENT) ?
+            "Render" : fileType.isRmd() ?  "Knit" : fileType.getPreviewButtonText();
       }
       else
       {
-         srcOnSaveLabel_.setText(width < 450 ? "Source" : "Source on Save");
+         return "Source";
       }
-
-      sourceButton_.setText(width >= 400, sourceCommandText_);
    }
+   
 
 
    private void showWarningImpl(final Command command)
@@ -1379,6 +1394,28 @@ public class TextEditingTargetWidget
 
       if (publishButton_ != null)
          publishButton_.setIsStatic(true);
+   }
+   
+   @Override
+   public void setQuartoFormatOptions(TextFileType fileType, 
+                                      boolean showRmdFormatMenu,
+                                      List<String> formats)
+   {
+      showRmdFormatMenu = showRmdFormatMenu && formats.size() > 1;
+      setRmdFormatButtonVisible(showRmdFormatMenu);
+      rmdFormatButton_.setEnabled(showRmdFormatMenu);
+      rmdFormatButton_.clearMenu();
+      
+      for (int i = 0; i < formats.size(); i++)
+      {
+         String format = formats.get(i);
+         ScheduledCommand cmd = () -> handlerManager_.fireEvent(
+               new RmdOutputFormatChangedEvent(format, true));
+         ImageResource img = fileTypeRegistry_.getIconForFilename("output." + format)
+               .getImageResource();
+         MenuItem item = ImageMenuItem.create(img, "Render " + format, cmd, 2);
+         rmdFormatButton_.addMenuItem(item, format);
+      }
    }
 
    private void addClearKnitrCacheMenu(ToolbarPopupMenuButton menuButton)

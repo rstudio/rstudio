@@ -60,8 +60,6 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
-      placeholderText_ = placeholderText;
-      
       add(headerLabel("Python"));
       
       mismatchWarningBar_ = new InfoBar(InfoBar.WARNING);
@@ -73,7 +71,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
       tbPythonInterpreter_ = new TextBoxWithButton(
             "Python interpreter:",
             null,
-            placeholderText_,
+            placeholderText,
             "Select...",
             new HelpButton("using_python", "Using Python in RStudio"),
             ElementIds.TextBoxButtonId.PYTHON_PATH,
@@ -123,6 +121,8 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
                }
             });
       
+      tbPythonInterpreter_.useNativePlaceholder();
+      
       tbPythonInterpreter_.addValueChangeHandler((ValueChangeEvent<String> event) ->
       {
          updateDescription();
@@ -163,7 +163,6 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
       tbEl.addClassName(ModalDialogBase.ALLOW_ESCAPE_KEY_CLASS);
       
       tbPythonInterpreter_.setWidth(width);
-      tbPythonInterpreter_.setText(placeholderText_);
       tbPythonInterpreter_.setReadOnly(false);
       add(spaced(tbPythonInterpreter_));
       
@@ -178,8 +177,8 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
                prefs_.pythonProjectEnvironmentAutomaticActivate().getGlobalValue());
          
          cbAutoUseProjectInterpreter_.getElement().setTitle(
-               "When enabled, the Python environment in the active project's .venv folder " +
-               "(if any) will be automatically activated on startup.");
+               "When enabled, RStudio will automatically find and activate a " +
+               "Python environment located within the project root directory (if any).");
 
          add(lessSpaced(cbAutoUseProjectInterpreter_));
       }
@@ -226,14 +225,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
       // reset to default when empty
       if (StringUtil.isNullOrEmpty(path))
       {
-         tbPythonInterpreter_.setText(placeholderText_);
-         clearDescription();
-         return;
-      }
-      
-      // clear description when using default
-      if (StringUtil.equals(path, placeholderText_))
-      {
+         tbPythonInterpreter_.setText("");
          clearDescription();
          return;
       }
@@ -264,7 +256,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
       {
          String reason = info.getInvalidReason();
          if (StringUtil.isNullOrEmpty(reason))
-            reason = "The selected Python interpreter appears to be invalid.";
+            reason = "The selected Python interpreter does not appear to be valid.";
          
          InfoBar bar = new InfoBar(InfoBar.WARNING);
          bar.setText(reason);
@@ -310,9 +302,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
       
       // nothing to do if the user hasn't changed the configured Python
       String requestedPath = tbPythonInterpreter_.getText();
-      boolean isSet =
-            !StringUtil.isNullOrEmpty(requestedPath) &&
-            !StringUtil.equals(requestedPath, placeholderText_);
+      boolean isSet = !StringUtil.isNullOrEmpty(requestedPath);
       
       if (!isSet)
       {
@@ -384,10 +374,8 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
    {
       RestartRequirement requirement = new RestartRequirement();
       
-      // read current Python path (normalize placeholder text if set)
+      // read current Python path
       String newValue = tbPythonInterpreter_.getText().trim();
-      if (StringUtil.equals(newValue, placeholderText_))
-         newValue = "";
       
       // for project preferences, use project-relative path to interpreter
       if (isProjectPrefs)
@@ -445,8 +433,6 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
       Styles styles();
    }
 
-   protected final String placeholderText_;
-   
    protected final InfoBar mismatchWarningBar_;
    protected final TextBoxWithButton tbPythonInterpreter_;
    protected final SimplePanel interpreterDescription_ = new SimplePanel();

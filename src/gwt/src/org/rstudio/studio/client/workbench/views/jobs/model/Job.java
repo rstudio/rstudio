@@ -47,6 +47,9 @@ public class Job
    // the total number of progress units to be completed
    public int max;
    
+   // do we need to confirm before terminating this job?
+   public boolean confirm_term;
+   
    // the time the job was recorded in the system
    public int recorded;
    

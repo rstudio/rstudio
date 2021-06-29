@@ -100,7 +100,7 @@ public class QuartoNewDocument
          lines.add("jupyter: " + result.getKernel());
       lines.add("---");
             
-      if (result.getLanguage() != null)
+      if (!result.getEngine().equals("none") && result.getLanguage() != null)
       {
          lines.add("");
          lines.add("```{" + result.getLanguage() + "}");

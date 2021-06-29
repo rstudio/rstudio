@@ -1063,7 +1063,6 @@ SEXP rs_getDocumentProperties(SEXP pathSEXP, SEXP includeContentsSEXP)
    error = source_database::getId(path, &id);
    if (error)
    {
-      LOG_ERROR(error);
       return R_NilValue;
    }
 
@@ -1087,10 +1086,7 @@ SEXP rs_detectExtendedType(SEXP pathSEXP)
    std::string extendedType;
    Error error = source_database::detectExtendedType(path, &extendedType);
    if (error)
-   {
-      LOG_ERROR(error);
       return R_NilValue;
-   }
 
    r::sexp::Protect protect;
    return r::sexp::create(extendedType, &protect);

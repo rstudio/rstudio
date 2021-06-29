@@ -16,7 +16,7 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 
-import { exitFailure, exitSuccess, run } from '../../../src/main/program-status';
+import { exitFailure, exitSuccess, parseStatus, run } from '../../../src/main/program-status';
 
 describe('ProgramStatus', () => {
   describe('Helper functions', () => {
@@ -32,6 +32,9 @@ describe('ProgramStatus', () => {
       const result = exitSuccess();
       assert.isTrue(result.exit);
       assert.equal(result.exitCode, 0);
+    });
+    it('parseStatus returns true if program should continue', () => {
+      assert.isTrue(parseStatus(run()));
     });
   });
 });

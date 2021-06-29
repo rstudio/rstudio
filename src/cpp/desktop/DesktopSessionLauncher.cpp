@@ -53,6 +53,37 @@ namespace {
 
 std::string s_launcherToken;
 
+#ifdef Q_OS_DARWIN
+
+std::string fallbackLibraryPathImpl()
+{
+   // The macOS documentation for tempnam state:
+   //
+   //    The tempnam() function is similar to tmpnam(), but provides the ability
+   //    to specify the directory which will contain the temporary file and the
+   //    file name prefix.
+   //
+   //    The environment variable TMPDIR (if set), the argument dir (if non-NULL),
+   //    the directory P_tmpdir, and the directory /tmp are tried, in the listed
+   //    order, as directories in which to store the temporary file.
+   //
+   // but that does not appear to actually be true (TMPDIR is ignored)
+   // so we explicitly read it and use it here.
+   const char* dir = ::getenv("TMPDIR");
+   if (dir == nullptr)
+      dir = P_tmpdir;
+   
+   return tempnam(dir, "rstudio-fallback-library-path-");
+}
+
+std::string fallbackLibraryPath()
+{
+   static std::string instance = fallbackLibraryPathImpl();
+   return instance;
+}
+
+#endif
+
 void launchProcess(const std::string& absPath,
                    const QStringList& argList,
                    QProcess** ppProc)
@@ -62,6 +93,9 @@ void launchProcess(const std::string& absPath,
    process->setArguments(argList);
    
 #ifdef Q_OS_DARWIN
+   
+   QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
+   
    // on macOS with the hardened runtime, we can no longer rely on dyld
    // to lazy-load symbols from libR.dylib; to resolve this, we use
    // DYLD_INSERT_LIBRARIES to inject the library we wish to use on
@@ -70,14 +104,30 @@ void launchProcess(const std::string& absPath,
    FilePath rLib = rHome.completeChildPath("lib/libR.dylib");
    if (rLib.exists())
    {
-      QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
-      
       environment.insert(
                QStringLiteral("DYLD_INSERT_LIBRARIES"),
                QString::fromStdString(rLib.getAbsolutePathNative()));
       
-      process->setProcessEnvironment(environment);
    }
+   
+   // create fallback library path (use TMPDIR so it's user-specific)
+   std::string libraryPath = fallbackLibraryPath();
+
+   // set it in environment variable (to be used by R)
+   environment.insert(
+            QStringLiteral("RSTUDIO_FALLBACK_LIBRARY_PATH"),
+            QString::fromStdString(libraryPath));
+
+   // and ensure it's placed on the fallback library path
+   QString dyldFallbackLibraryPath = environment.value(QStringLiteral("DYLD_FALLBACK_LIBRARY_PATH"));
+   dyldFallbackLibraryPath.append(QStringLiteral(":"));
+   dyldFallbackLibraryPath.append(QString::fromStdString(libraryPath));
+   environment.insert(
+            QStringLiteral("DYLD_FALLBACK_LIBRARY_PATH"),
+            dyldFallbackLibraryPath);
+   
+   process->setProcessEnvironment(environment);
+   
 #endif
    
    if (options().runDiagnostics())

@@ -628,6 +628,18 @@ public class TextEditingTargetRMarkdownHelper
          }
       });
    }
+   
+   public String setOuartoOutputFormat(String yaml,  String format)
+   {
+      YamlTree tree = new YamlTree(yaml);
+      List<String> formats = getQuartoOutputFormats(tree);
+      if (formats != null && formats.contains(format))
+      {
+         tree.reorder(Arrays.asList(format));
+         return tree.toString();
+      }
+      return null;
+   }
 
    public void createDraftFromTemplate(final RmdChosenTemplate template)
    {
@@ -1053,10 +1065,21 @@ public class TextEditingTargetRMarkdownHelper
 
    public static List<String> getOutputFormats(String yaml)
    {
+      return getOutputFormats(yaml, RmdFrontMatter.OUTPUT_KEY);
+   }
+
+   public static List<String> getQuartoOutputFormats(String yaml)
+   {
+      return getOutputFormats(yaml, RmdFrontMatter.FORMAT_KEY);
+   }
+   
+   
+   public static List<String> getOutputFormats(String yaml, String outputKey)
+   {
       try
       {
          YamlTree tree = new YamlTree(yaml);
-         return getOutputFormats(tree);
+         return getOutputFormats(tree, outputKey);
       }
       catch (Exception e)
       {
@@ -1064,15 +1087,27 @@ public class TextEditingTargetRMarkdownHelper
       }
       return null;
    }
+   
 
-   private static List<String> getOutputFormats(YamlTree tree)
+   private static List<String> getOutputFormats(YamlTree tree, String outputKey)
    {
-      List<String> outputs = tree.getChildKeys(RmdFrontMatter.OUTPUT_KEY);
+      List<String> outputs = tree.getChildKeys(outputKey);
+      
       if (outputs == null)
          return null;
       if (outputs.isEmpty())
-         outputs.add(tree.getKeyValue(RmdFrontMatter.OUTPUT_KEY));
+         outputs.add(tree.getKeyValue(outputKey));
       return outputs;
+   }
+   
+   private static List<String> getOutputFormats(YamlTree tree)
+   {
+      return getOutputFormats(tree, RmdFrontMatter.OUTPUT_KEY);
+   }
+   
+   private static List<String> getQuartoOutputFormats(YamlTree tree)
+   {
+      return getOutputFormats(tree, RmdFrontMatter.FORMAT_KEY);
    }
 
    public void showNewRMarkdownDialog(

@@ -73,7 +73,7 @@ SEXP rs_addJob(SEXP nameSEXP, SEXP statusSEXP, SEXP progressUnitsSEXP, SEXP acti
 
    // add the job
    boost::shared_ptr<Job> pJob =  
-      addJob(name, status, group, progress, state, type, autoRemove, actionsSEXP, show, tags);
+      addJob(name, status, group, progress, true, state, type, autoRemove, actionsSEXP, JobActions(), show, tags);
 
    // return job id
    r::sexp::Protect protect;

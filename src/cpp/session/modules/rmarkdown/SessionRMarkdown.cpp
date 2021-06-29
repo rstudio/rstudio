@@ -200,7 +200,7 @@ void initWebsiteOutputDir()
 
 namespace module_context {
 
-FilePath extractOutputFileCreated(const FilePath& inputFile,
+FilePath extractOutputFileCreated(const FilePath& inputDir,
                                   const std::string& output)
 {
    // check each line of the emitted output; if it starts with a token
@@ -225,7 +225,9 @@ FilePath extractOutputFileCreated(const FilePath& inputFile,
 
             // if the path looks absolute, use it as-is; otherwise, presume
             // it to be in the same directory as the input file
-            FilePath outputFile = inputFile.getParent().completePath(fileName);
+            FilePath outputFile = inputDir.completePath(fileName);
+            if (outputFile.exists())
+               core::system::realPath(outputFile, &outputFile);
 
             // if it's a plain .md file and we are in a Hugo project then
             // don't preview it (as the user is likely running a Hugo preview)
@@ -554,14 +556,17 @@ private:
          renderOptions = "render_args = list(" + renderOptions + ")";
       }
 
-      // fallback for non-function
-      r::sexp::Protect rProtect;
-      SEXP renderFuncSEXP;
-      error = r::exec::evaluateString(renderFunc, &renderFuncSEXP, &rProtect);
-      if (error || !r::sexp::isFunction((renderFuncSEXP)))
+      // fallback for custom render function that isn't actually a function
+      if (renderFunc != kStandardRenderFunc && renderFunc != kShinyRenderFunc)
       {
-         boost::format fmt("(function(input, ...) { invisible(system(paste0('%1% \"', input, '\"'))) })");
-         renderFunc = boost::str(fmt % renderFunc);
+         r::sexp::Protect rProtect;
+         SEXP renderFuncSEXP;
+         error = r::exec::evaluateString(renderFunc, &renderFuncSEXP, &rProtect);
+         if (error || !r::sexp::isFunction((renderFuncSEXP)))
+         {
+            boost::format fmt("(function(input, ...) { invisible(system(paste0('%1% \"', input, '\"'))) })");
+            renderFunc = boost::str(fmt % renderFunc);
+         }
       }
 
       // render command
@@ -723,15 +728,15 @@ private:
    {
       // see if we can determine the output file
       FilePath outputFile = module_context::extractOutputFileCreated
-                                                   (targetFile_, allOutput_);
+                                                   (targetFile_.getParent(), allOutput_);
       if (!outputFile.isEmpty())
       {
-         // we don't want to show a preview if we are in a quarto website or book project
-         // check for this before setting the output file
-         if (module_context::isQuartoWebsiteDoc(targetFile_))
-            viewerType_ = kRmdViewerTypeNone;
+         // record ouptut file
+         outputFile_ = outputFile;
 
-          outputFile_ = outputFile;
+         // see if the quarto module wants to handle the preview
+         if (module_context::handleQuartoPreview(targetFile_, outputFile_, true))
+            viewerType_ = kRmdViewerTypeNone;
       }
 
 

@@ -28,6 +28,8 @@ public class QuartoFileType extends RWebContentFileType
             EditorLanguage.LANG_RMARKDOWN,
             ".qmd", 
             new ImageResource2x(FileIconResources.INSTANCE.iconQuarto2x()), 
+            true,
+            true,
             true);
    }
 }

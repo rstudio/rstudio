@@ -44,6 +44,7 @@ extern const char * const kBuildTypePackage;
 extern const char * const kBuildTypeMakefile;
 extern const char * const kBuildTypeWebsite;
 extern const char * const kBuildTypeCustom;
+extern const char * const kBuildTypeQuarto;
 
 extern const char * const kMarkdownWrapUseDefault;
 extern const char * const kMarkdownWrapNone;

@@ -36,12 +36,24 @@ public class RWebContentFileType extends TextFileType
    }
    
    RWebContentFileType(String id,
+         String label,
+         EditorLanguage editorLanguage,
+         String defaultExtension,
+         ImageResource icon,
+         boolean isMarkdown,
+         boolean previewIsKnit)
+   {
+      this(id, label, editorLanguage, defaultExtension, icon, isMarkdown, previewIsKnit, false);
+   }
+   
+   RWebContentFileType(String id,
                        String label,
                        EditorLanguage editorLanguage,
                        String defaultExtension,
                        ImageResource icon,
                        boolean isMarkdown,
-                       boolean previewIsKnit)
+                       boolean previewIsKnit,
+                       boolean sourceOnSave)
    {
       super(id, 
             label, 
@@ -49,7 +61,7 @@ public class RWebContentFileType extends TextFileType
             defaultExtension,
             icon,
             true,    // word-wrap
-            false, 
+            sourceOnSave, 
             true, 
             true, 
             false,

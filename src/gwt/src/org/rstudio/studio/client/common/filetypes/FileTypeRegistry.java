@@ -101,7 +101,7 @@ public class FileTypeRegistry
 
    public static final RWebContentFileType RMARKDOWN =
          new RWebContentFileType("r_markdown", "R Markdown", EditorLanguage.LANG_RMARKDOWN,
-                              ".Rmd", new ImageResource2x(ICONS.iconRmarkdown2x()), true);
+                              ".Rmd", new ImageResource2x(ICONS.iconRmarkdown2x()), true, true, true);
 
    public static final RWebContentFileType RNOTEBOOK =
          new RWebContentFileType("r_notebook", "R Notebook", EditorLanguage.LANG_RMARKDOWN,
@@ -113,7 +113,7 @@ public class FileTypeRegistry
 
    public static final WebContentFileType MARKDOWN =
       new WebContentFileType("markdown", "Markdown", EditorLanguage.LANG_MARKDOWN,
-                           ".md", new ImageResource2x(ICONS.iconMarkdown2x()), true);
+                           ".md", new ImageResource2x(ICONS.iconMarkdown2x()), true, true);
 
 
    public static final RWebContentFileType RHTML =
@@ -122,7 +122,7 @@ public class FileTypeRegistry
 
    public static final WebContentFileType HTML =
          new WebContentFileType("html", "HTML", EditorLanguage.LANG_HTML,
-                              ".html", new ImageResource2x(ICONS.iconHTML2x()), false);
+                              ".html", new ImageResource2x(ICONS.iconHTML2x()), false, true);
 
    public static final TextFileType CSS =
          new TextFileType("css", "CSS", EditorLanguage.LANG_CSS, ".css",
