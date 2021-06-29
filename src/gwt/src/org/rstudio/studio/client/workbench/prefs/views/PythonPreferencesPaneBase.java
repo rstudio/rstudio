@@ -459,5 +459,4 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
    }
    private final PythonPreferencesPaneConstants constants_ = GWT.create(PythonPreferencesPaneConstants.class);
 
- 
 }

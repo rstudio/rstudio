@@ -425,4 +425,3 @@ public class PublishingPreferencesPane extends PreferencesPane
    private final PublishingPreferencesPaneConstants constants_ = GWT.create(PublishingPreferencesPaneConstants.class);
 
 }
-
