@@ -140,7 +140,7 @@ public class RSConnectPublishSource
       return isSourceExt("rmd") || isSourceExt("md") || isSourceExt("html") ||
              isSourceExt("htm") || isSourceExt("rpres") || isSourceExt("pdf") ||
              isSourceExt("docx") || isSourceExt("odt") || isSourceExt("rtf") ||
-             isSourceExt("pptx");
+             isSourceExt("pptx") || isSourceExt("qmd");
    }
    
    public String getDeployKey()

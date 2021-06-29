@@ -363,7 +363,7 @@
 .rs.addFunction("makeDeploymentList", function(target, asMultipleDoc, 
                                                max_size) {
    ext <- tolower(tools::file_ext(target))
-   if (ext %in% c("rmd", "html", "htm", "md"))
+   if (ext %in% c("qmd", "rmd", "html", "htm", "md"))
      .rs.docDeployList(target, asMultipleDoc)
    else
      rsconnect::listBundleFiles(appDir = target)
