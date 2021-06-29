@@ -420,6 +420,8 @@ Changes that do not require rebuilding the interfaces/properties files:
          <cmd refid="rebuildAll"/>
          <cmd refid="cleanAll"/>
          <separator/>
+         <cmd refid="serveQuartoSite"/>
+         <separator/>
          <cmd refid="testPackage"/>
          <separator/>
          <cmd refid="checkPackage"/>
@@ -1111,10 +1113,15 @@ Changes that do not require rebuilding the interfaces/properties files:
         menuLabel="R _Markdown..."
         desc="Create a new R Markdown document"
         rebindable="false"/>
-        
+
    <cmd id="newQuartoDoc"
         menuLabel="_Quarto Doc..."
         desc="Create a new Quarto document"
+        rebindable="false"/>
+
+   <cmd id="serveQuartoSite"
+        menuLabel="_Serve Site"
+        desc="Run development server for Quarto site"
         rebindable="false"/>
 
    <cmd id="newRShinyApp"
@@ -2810,14 +2817,6 @@ Changes that do not require rebuilding the interfaces/properties files:
         menuLabel="From Text (_base)..."
         context="import"
         windowMode="main"/>
-
-<!--   This has a duplicate ID to below.  Is that intentional?  Effect seems to be that below overwrites this command-->
-<!--   Commented out for now as i18n cannot translate the same id to two different strings-->
-<!--   <cmd id="importDatasetFromSAV"-->
-<!--        label="Import Dataset from SAV..."-->
-<!--        menuLabel="From _SAV..."-->
-<!--        context="import"-->
-<!--        windowMode="main"/>-->
 
    <cmd id="importDatasetFromSAV"
         label="Import Dataset from SPSS..."

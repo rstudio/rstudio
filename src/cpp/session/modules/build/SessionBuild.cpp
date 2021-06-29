@@ -363,6 +363,12 @@ private:
          options.workingDir = buildTargetPath.getParent();
          executeCustomBuild(type, buildTargetPath, options, cb);
       }
+      else if (module_context::quartoConfig().is_project)
+      {
+         options.environment = environment;
+         options.workingDir = projects::projectContext().directory();
+         executeQuartoBuild(subType, options, cb);
+      }
       else
       {
          terminateWithError("Unrecognized build type: " + config.buildType);
@@ -1467,6 +1473,21 @@ private:
                            cb);
    }
 
+   void executeQuartoBuild(const std::string& subType,
+                           const core::system::ProcessOptions& options,
+                           const core::system::ProcessCallbacks& cb)
+   {
+      // show preview on complete
+      successFunction_ = boost::bind(&Build::showQuartoSitePreview,
+                                     Build::shared_from_this());
+
+       auto cmd = shell_utils::ShellCommand("quarto");
+       cmd << "render";
+       if (!subType.empty())
+          cmd << "--to" << subType;
+       module_context::processSupervisor().runCommand(cmd, options,cb);
+   }
+
 
    void executeWebsiteBuild(const std::string& type,
                             const std::string& subType,
@@ -1513,27 +1534,76 @@ private:
       rExecute(command, websitePath, options, false /* --vanilla */, cb);
    }
 
+   void enquePreviewRmdEvent(const FilePath& sourceFile, const FilePath& outputFile)
+   {
+      json::Object previewRmdJson;
+      using namespace module_context;
+      previewRmdJson["source_file"] = createAliasedPath(sourceFile);
+      previewRmdJson["encoding"] = projects::projectContext().config().encoding;
+      previewRmdJson["output_file"] = createAliasedPath(outputFile);
+      ClientEvent event(client_events::kPreviewRmd, previewRmdJson);
+      enqueClientEvent(event);
+   }
+
    void showWebsitePreview(const FilePath& websitePath)
    {
       // determine source file
       std::string output = outputAsText();
-      FilePath sourceFile = websitePath.completeChildPath("index.Rmd");
-      if (!sourceFile.exists())
-         sourceFile = websitePath.completeChildPath("index.md");
+      FilePath sourceFile = websiteSourceFile(websitePath);
+      if (sourceFile.isEmpty())
+         return;
 
       // look for Output created message
-      FilePath outputFile = module_context::extractOutputFileCreated(sourceFile,
+      FilePath outputFile = module_context::extractOutputFileCreated(sourceFile.getParent(),
                                                                      output);
       if (!outputFile.isEmpty())
       {
-         json::Object previewRmdJson;
-         using namespace module_context;
-         previewRmdJson["source_file"] = createAliasedPath(sourceFile);
-         previewRmdJson["encoding"] = projects::projectContext().config().encoding;
-         previewRmdJson["output_file"] = createAliasedPath(outputFile);
-         ClientEvent event(client_events::kPreviewRmd, previewRmdJson);
-         enqueClientEvent(event);
+         enquePreviewRmdEvent(sourceFile, outputFile);
       }
+   }
+
+   void showQuartoSitePreview()
+   {
+      // determine source file
+      auto config = module_context::quartoConfig();
+      auto quartoProjectDir = module_context::resolveAliasedPath(config.project_dir);
+      std::string output = outputAsText();
+      FilePath sourceFile = websiteSourceFile(quartoProjectDir);
+      if (sourceFile.isEmpty())
+         return;
+
+      // look for Output created message
+      FilePath outputFile = module_context::extractOutputFileCreated(
+         projects::projectContext().directory(),
+         output
+      );
+      if (!outputFile.isEmpty())
+      {
+         // it will be html if we did a sub-project render.
+         if (outputFile.hasExtensionLowerCase(".html"))
+         {
+            module_context::handleQuartoPreview(sourceFile, outputFile, false);
+         }
+         else
+         {
+            enquePreviewRmdEvent(sourceFile, outputFile);
+         }
+      }
+   }
+
+   FilePath websiteSourceFile(const FilePath& websiteDir)
+   {
+      FilePath sourceFile = websiteDir.completeChildPath("index.Rmd");
+      if (!sourceFile.exists())
+         sourceFile = websiteDir.completeChildPath("index.rmd");
+      if (!sourceFile.exists())
+         sourceFile = websiteDir.completeChildPath("index.md");
+      if (!sourceFile.exists())
+         sourceFile = websiteDir.completeChildPath("index.qmd");
+      if (sourceFile.exists())
+         return sourceFile;
+      else
+         return FilePath();
    }
 
    void terminateWithErrorStatus(int exitStatus)

@@ -10,8 +10,11 @@
   "devDependencies": {
     "@tsconfig/node14": "^1.0.0",
     "@types/chai": "^4.2.18",
+    "@types/crc": "^3.4.0",
     "@types/mocha": "^8.2.2",
     "@types/node": "^15.6.1",
+    "@types/sinon": "^10.0.2",
+    "@types/uuid": "^8.3.0",
     "@typescript-eslint/eslint-plugin": "^4.25.0",
     "@typescript-eslint/parser": "^4.25.0",
     "chai": "^4.3.4",
@@ -25,16 +28,21 @@
     "eslint-plugin-promise": "^5.1.0",
     "mocha": "^8.4.0",
     "nyc": "^15.1.0",
+    "sinon": "^11.1.1",
     "ts-node": "^10.0.0",
     "typescript": "^4.3.2"
   },
-  "dependencies": {},
+  "dependencies": {
+    "crc": "^3.8.0",
+    "uuid": "^8.3.2"
+  },
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
     "package": "yarn run build && electron-packager ./ --prune --package-manager=yarn --out=./package --overwrite --ignore tsconfig.tsbuildinfo",
     "lint": "eslint ./src ./test",
-    "start": "yarn run build && electron ./dist/main/main.js",
+    "start": "yarn run build && electron --trace-warnings ./dist/main/main.js",
+    "start-diag": "yarn run build && electron --trace-warnings ./dist/main/main.js --run-diagnostics",
     "show-version": "yarn run build && electron ./dist/main/main.js --version-json",
     "test": "electron-mocha -c --config ./test/unit/mocharc.json",
     "testcover": "nyc electron-mocha -c --config ./test/unit/mocharc.json",

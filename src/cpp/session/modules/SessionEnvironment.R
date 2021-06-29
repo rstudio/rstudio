@@ -615,9 +615,22 @@
    if (inherits(obj, "python.builtin.object"))
       return(.rs.reticulate.describeObject(objName, env))
    
-   # objects containing null external pointers can crash when
-   # evaluated--display generically (see case 4092)
-   hasNullPtr <- .Call("rs_hasExternalPointer", obj, TRUE, PACKAGE = "(embedding)")
+   # NOTE (kevin): we previously screened R objects for null pointers here,
+   # as we had seen in the distant past that attempting to introspect such
+   # objects would cause an R session crash. that no longer appears to be
+   # the case so we now no longer perform this check here.
+   #
+   # https://github.com/rstudio/rstudio/issues/4741
+   # https://github.com/rstudio/rstudio/issues/5546
+   #
+   # however, just in case some users are still effected, we allow users to
+   # opt-in to checking for null pointers if required.
+   checkNullPtr <- .rs.readUiPref("check_null_external_pointers")
+   hasNullPtr <- if (identical(checkNullPtr, TRUE))
+      .Call("rs_hasExternalPointer", obj, TRUE, PACKAGE = "(embedding)")
+   else
+      FALSE
+   
    if (hasNullPtr) 
    {
       val <- "<Object with null pointer>"

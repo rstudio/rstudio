@@ -13,6 +13,8 @@
  *
  */
 
+import { app } from 'electron';
+
 export const EXIT_SUCCESS = 0;
 export const EXIT_FAILURE = 1;
 
@@ -31,4 +33,18 @@ export function exitSuccess(): ProgramStatus {
 
 export function exitFailure(): ProgramStatus {
   return { exit: true, exitCode: EXIT_FAILURE };
+}
+
+/**
+ * Operate on a ProgramStatus result, exiting if requested.
+ * 
+ * @param result result to check
+ * @returns true if app should continue
+ */
+export function parseStatus(result: ProgramStatus): boolean {
+  if (result.exit) {
+    app.exit(result.exitCode);
+    return false;
+  }
+  return true;
 }

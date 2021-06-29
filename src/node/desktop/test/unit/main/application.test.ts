@@ -14,8 +14,33 @@
  */
 
 import { describe } from 'mocha';
+import { assert } from 'chai';
+
+import { Application, kRunDiagnosticsOption } from '../../../src/main/application';
 
 describe('Application', () => {
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  describe('No tests yet', () => {});
+  describe('Command line switches', () => {
+    it('run-diagnostics sets diag mode and continues', () => {
+      const app = new Application();
+      assert.isFalse(app.runDiagnostics);
+      const argv = [kRunDiagnosticsOption];
+      const result = app.initCommandLine(argv);
+      assert.isFalse(result.exit);
+      assert.isTrue(app.runDiagnostics);
+    });
+  });
+  describe('Assorted helpers', () => {
+    it('generates and stores port', () => {
+      const app = new Application();
+      const port = app.port;
+      assert.isAbove(port, 0);
+      assert.strictEqual(app.port, port);
+    });
+    it('generates new port', () => {
+      const app = new Application();
+      const origPort = app.port;
+      app.generateNewPort();
+      assert.notStrictEqual(origPort, app.port);
+    });
+  });
 });

@@ -23,6 +23,9 @@ import os from 'os';
 
 import { FilePath } from '../../../src/core/file-path';
 import { userHomePath } from '../../../src/core/user';
+import { setLogger, setLoggerLevel, LogLevel } from '../../../src/core/logger';
+import { ConsoleLogger } from '../../../src/core/console-logger';
+import { clearCoreSingleton } from '../../../src/core/core-state';
 
 function randomString() {
   return Math.trunc(Math.random() * 2147483647).toString();
@@ -46,6 +49,16 @@ const cannotCreatePath = process.platform === 'win32' ? 'C:\\Program Files\\a_te
 const absolutePath = process.platform === 'win32' ? 'C:/Users/human/documents' : '/users/human/documents';
 
 describe('FilePath', () => {
+  before(() => {
+    setLogger(new ConsoleLogger());
+
+    // some tests trigger ERR logging; this is expected and don't want to see it during tests
+    setLoggerLevel(LogLevel.OFF);
+  });
+  after(() => {
+    clearCoreSingleton();
+  });
+
   afterEach(() => {
     // make sure we leave cwd in a valid place
     process.chdir(__dirname);
@@ -595,7 +608,6 @@ describe('FilePath', () => {
       const aPath = new FilePath(aPathStr);
       const bPath = new FilePath(bPathStr);
       const result = aPath.completeChildPath('b');
-      console.log(`result of completeChildPath is ${result.getAbsolutePath()}`);
       assert.isTrue(result.equals(bPath));
     });
     it('completeChildPath should not complete a path outside and instead return original path', () => {

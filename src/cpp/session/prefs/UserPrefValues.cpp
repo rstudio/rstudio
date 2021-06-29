@@ -1194,19 +1194,6 @@ core::Error UserPrefValues::setSourceWithEcho(bool val)
 }
 
 /**
- * Whether to initialize new projects with a Git repo by default.
- */
-bool UserPrefValues::newProjectGitInit()
-{
-   return readPref<bool>("new_project_git_init");
-}
-
-core::Error UserPrefValues::setNewProjectGitInit(bool val)
-{
-   return writePref("new_project_git_init", val);
-}
-
-/**
  * The default engine to use when processing Sweave documents.
  */
 std::string UserPrefValues::defaultSweaveEngine()
@@ -2036,6 +2023,19 @@ bool UserPrefValues::newProjGitInit()
 core::Error UserPrefValues::setNewProjGitInit(bool val)
 {
    return writePref("new_proj_git_init", val);
+}
+
+/**
+ * Whether an renv environment should be created inside new projects by default.
+ */
+bool UserPrefValues::newProjUseRenv()
+{
+   return readPref<bool>("new_proj_use_renv");
+}
+
+core::Error UserPrefValues::setNewProjUseRenv(bool val)
+{
+   return writePref("new_proj_use_renv", val);
 }
 
 /**
@@ -2910,7 +2910,7 @@ core::Error UserPrefValues::setSessionProtocolDebug(bool val)
 }
 
 /**
- * When enabled, if the active project contains a Python virtual environment located within the project's .venv folder, then RStudio will automatically activate this environment on startup.
+ * When enabled, if the active project contains a Python virtual environment, then RStudio will automatically activate this environment on startup.
  */
 bool UserPrefValues::pythonProjectEnvironmentAutomaticActivate()
 {
@@ -2920,6 +2920,19 @@ bool UserPrefValues::pythonProjectEnvironmentAutomaticActivate()
 core::Error UserPrefValues::setPythonProjectEnvironmentAutomaticActivate(bool val)
 {
    return writePref("python_project_environment_automatic_activate", val);
+}
+
+/**
+ * When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further.
+ */
+bool UserPrefValues::checkNullExternalPointers()
+{
+   return readPref<bool>("check_null_external_pointers");
+}
+
+core::Error UserPrefValues::setCheckNullExternalPointers(bool val)
+{
+   return writePref("check_null_external_pointers", val);
 }
 
 std::vector<std::string> UserPrefValues::allKeys()
@@ -3015,7 +3028,6 @@ std::vector<std::string> UserPrefValues::allKeys()
       kToolbarVisible,
       kDefaultProjectLocation,
       kSourceWithEcho,
-      kNewProjectGitInit,
       kDefaultSweaveEngine,
       kDefaultLatexProgram,
       kUseRoxygen,
@@ -3080,6 +3092,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kGitDiffIgnoreWhitespace,
       kConsoleDoubleClickSelect,
       kNewProjGitInit,
+      kNewProjUseRenv,
       kRootDocument,
       kShowUserHomePage,
       kReuseSessionsForProjectLinks,
@@ -3148,6 +3161,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kTerminalPythonIntegration,
       kSessionProtocolDebug,
       kPythonProjectEnvironmentAutomaticActivate,
+      kCheckNullExternalPointers,
    });
 }
    

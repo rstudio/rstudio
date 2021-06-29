@@ -20,7 +20,9 @@ import { app } from 'electron';
 import { Xdg } from '../core/xdg';
 import { getenv, setenv } from '../core/environment';
 import { FilePath } from '../core/file-path';
+
 import { getRStudioVersion } from './product-info';
+import { MainWindow } from './main-window';
 
 export function initializeSharedSecret(): void {
   const sharedSecret = randomString() + randomString() + randomString();
@@ -104,4 +106,39 @@ export function removeStaleOptionsLockfile(): void {
   }
 
   fs.unlinkSync(lockFilePath);
+}
+
+export function rsessionExeName(): string {
+  return process.platform === 'win32' ? 'rsession.exe' : 'rsession';
+}
+
+/**
+ * @returns Paths to config file, rsession, and desktop scripts.
+ */
+export function findComponents(): [FilePath, FilePath, FilePath] {
+
+  // determine paths to config file, rsession, and desktop scripts
+  let confPath: FilePath = new FilePath();
+  let sessionPath: FilePath = new FilePath();
+
+  const binRoot = new FilePath(app.getAppPath());
+  if (app.isPackaged) {
+    // confPath is intentionally left empty for a package build
+    sessionPath = binRoot.completePath(`bin/${rsessionExeName()}`);
+  } else {
+    const buildRootEnv = getenv('RSTUDIO_CPP_BUILD_OUTPUT');
+    if (!buildRootEnv) {
+      throw Error('RSTUDIO_CPP_BUILD_OUTPUT env var must contain ' +
+        'path where src/cpp was built (dev config).');
+    }
+    const buildRoot = new FilePath(buildRootEnv);
+    confPath = buildRoot.completePath('conf/rdesktop-dev.conf');
+    sessionPath = buildRoot.completePath(`session/${rsessionExeName()}`);
+  }
+  return [confPath, sessionPath, new FilePath(app.getAppPath())];
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function finalPlatformInitialize(mainWindow: MainWindow): void {
+  // TODO - reimplement for each platform
 }

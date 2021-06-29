@@ -385,7 +385,12 @@ void handleClientInit(const boost::function<void()>& initFunction,
    if (projects::projectContext().hasProject())
    {
       std::string type = projects::projectContext().config().buildType;
+      if (type == r_util::kBuildTypeNone && module_context::quartoConfig().is_project)
+      {
+         type = r_util::kBuildTypeQuarto;
+      }
       sessionInfo["build_tools_type"] = type;
+
 
       sessionInfo["build_tools_bookdown_website"] =
                               module_context::isBookdownWebsite();
@@ -422,7 +427,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["is_bookdown_project"] = module_context::isBookdownProject();
    sessionInfo["is_distill_project"] = module_context::isDistillProject();
 
-   sessionInfo["quarto_config"] = modules::quarto::quartoConfig();
+   sessionInfo["quarto_config"] = modules::quarto::quartoConfigJSON();
    
    sessionInfo["graphics_backends"] = modules::graphics::supportedBackends();
 

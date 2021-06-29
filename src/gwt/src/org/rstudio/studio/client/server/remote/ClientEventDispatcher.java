@@ -1101,6 +1101,11 @@ public class ClientEventDispatcher
             JsArrayString commands = event.getData();
             eventBus_.dispatchEvent(new CommandCallbacksChangedEvent(commands));
          }
+         else if (type == ClientEvent.ConsoleActivate)
+         {
+            boolean focusWindow = event.<Bool>getData().getValue();
+            eventBus_.dispatchEvent(new ConsoleActivateEvent(focusWindow));
+         }
          else
          {
             GWT.log("WARNING: Server event not dispatched: " + type, null);

@@ -66,7 +66,7 @@ public class PythonInterpreterListEntryUi extends Composite
    
    private final Label createUiPath()
    {
-      return new Label("[" + interpreter_.getPath() + "]");
+      return new Label(interpreter_.getPath());
    }
    
    public final Image getIcon()

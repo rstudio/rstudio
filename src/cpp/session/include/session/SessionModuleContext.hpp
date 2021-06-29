@@ -752,6 +752,11 @@ private:
 
 void addViewerHistoryEntry(const ViewerHistoryEntry& entry);
 
+// pass 0 for no height change
+// pass -1 for maximize
+void viewer(const std::string& url, int height = 0);
+std::string viewerCurrentUrl(bool mapped = true);
+
 core::Error recursiveCopyDirectory(const core::FilePath& fromDir,
                                    const core::FilePath& toDir);
 
@@ -861,7 +866,7 @@ std::vector<std::string> bookdownZoteroCollections();
 core::json::Value bookdownXRefIndex();
 core::FilePath bookdownCSL();
 
-core::FilePath extractOutputFileCreated(const core::FilePath& inputFile,
+core::FilePath extractOutputFileCreated(const core::FilePath& inputDir,
                                         const std::string& output);
 
 bool isPathViewAllowed(const core::FilePath& path);
@@ -872,7 +877,31 @@ void initializeConsoleCtrlHandler();
 
 bool isPythonReplActive();
 
-bool isQuartoWebsiteDoc(const core::FilePath& filePath);
+
+extern const char* const kQuartoProjectSite;
+extern const char* const kQuartoProjectBook;
+
+struct QuartoConfig
+{
+   QuartoConfig() : empty(true), installed(false), is_project(false) {}
+   bool empty;
+   bool installed;
+   bool is_project;
+   std::string project_type;
+   std::string project_dir;
+   std::string project_output_dir;
+   std::vector<std::string> project_formats;
+};
+
+QuartoConfig quartoConfig(bool refresh = false);
+
+// see if quarto wants to handle the preview
+bool handleQuartoPreview(const core::FilePath& sourceFile,
+                         const core::FilePath& outputFile,
+                         bool validateExtendedType);
+
+std::vector<core::FilePath> ignoreContentDirs();
+bool isIgnoredContent(const core::FilePath& filePath, const std::vector<core::FilePath>& ignoreDirs);
 
 std::string getActiveLanguage();
 core::Error adaptToLanguage(const std::string& language);

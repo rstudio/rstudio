@@ -3,7 +3,7 @@
 
 ### Python
 
-* Projects containing a Python environment in the '.venv' folder are now automatically activated (#9489)
+* Projects containing a Python environment are now automatically activated (#9489)
 
 
 ### Logging
@@ -29,11 +29,14 @@
 * Fixed issue where help requests for Python objects would fail with reticulate 1.20 (#9311)
 * Fixed issue where busy sessions can't be interrupted and block basic file operations (#2038)
 * Fixed issue where R Markdown template skeletons with a '.rmd' extension were not discovered (Pro #1607)
+* Fixed issues causing multiple background jobs to be created when running Shiny applications in the background (#8746, #6904)
 * Removed the breaking change introduced in Juliet Rose that changed the behavior of the X-Forwarded-Proto header when RSW is behind a proxy server (Pro #2657)
 
 
 ### Misc
 
+* **BREAKING:** RStudio Desktop Pro only supports activation with license files (Pro #2300)
+* Improved ordering of completion results within `library()` calls (#9293)
 * Add option to synchronize the Files pane with the current working directory in R (#4615)
 * Add new *Set Working Directory* command to context menu for source files (#6781)
 * Local background jobs can now be replayed (#5548)
@@ -41,8 +44,9 @@
 * High DPI ("Retina") plots are now supported on RStudio Server (#3896)
 * The "auto-detect indentation" preference is now off by default (#9211) 
 * Prevent user preferences from setting CRAN repos when `allow-cran-repos-edit=0` (Pro #1301)
+* Make the *Use renv with this project* option sticky, and allow setting by admins (Pro #2671)
 * Updated embedded nginx in Server Pro to 1.20.1 (Pro #2676)
-* **BREAKING:** RStudio Desktop Pro only supports activation with license files (Pro #2300)
 * Added AWS Cognito support to openid integration (Pro #2313)
 * Add file uploads and downloads to session audit log (Pro #2226)
+* RStudio no longer treats R objects containing null external pointers specially when building Environment pane (#5546)
 * Make Cmd+Shift+0 the shortcut for restarting session on MacOS (#7695)

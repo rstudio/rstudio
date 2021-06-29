@@ -566,11 +566,7 @@ void errorCall(SEXP call, const std::string& message)
    
 std::string getErrorMessage()
 {
-   std::string errMessage;
-   Error callError = RFunction("geterrmessage").call(&errMessage);
-   if (callError)
-      LOG_ERROR(callError);
-   return errMessage;
+   return R_curErrorBuf();
 }
    
 

@@ -52,6 +52,7 @@ const char * const kBuildTypePackage = "Package";
 const char * const kBuildTypeMakefile = "Makefile";
 const char * const kBuildTypeWebsite = "Website";
 const char * const kBuildTypeCustom = "Custom";
+const char * const kBuildTypeQuarto = "Quarto";
 
 const char * const kMarkdownWrapUseDefault = "Default";
 const char * const kMarkdownWrapNone = "None";
@@ -1247,7 +1248,7 @@ Error writeProjectFile(const FilePath& projectFilePath,
       contents.append(boost::str(pythonConfig));
    }
 
-   // add spelling dictioanry if present
+   // add spelling dictionary if present
    if (!config.spellingDictionary.empty())
    {
       boost::format fmt("\nSpellingDictionary: %1%\n");

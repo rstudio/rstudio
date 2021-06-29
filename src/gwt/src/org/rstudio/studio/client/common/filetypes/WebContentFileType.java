@@ -29,7 +29,8 @@ public class WebContentFileType extends TextFileType
                       EditorLanguage editorLanguage,
                       String defaultExtension,
                       ImageResource icon,
-                      boolean isMarkdown)
+                      boolean isMarkdown,
+                      boolean canSourceOnSave)
    {
       super(id, 
             label, 
@@ -37,7 +38,7 @@ public class WebContentFileType extends TextFileType
             defaultExtension,
             icon,
             true,    // word-wrap
-            false, 
+            canSourceOnSave, 
             isMarkdown, // allow code execution in markdown 
             false, 
             false,

@@ -58,6 +58,8 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
       public abstract void onTestTestthatFile();
       @Handler
       public abstract void onTestShinytestFile();
+      @Handler
+      public abstract void onServeQuartoSite();
 
       abstract void initialize(BuildState buildState);
    }
@@ -70,7 +72,8 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
                    EventBus eventBus,
                    UserPrefs uiPrefs)
    {
-      super("Build", shim);
+      super("Build",  shim);
+      
       session_ = session;
       binder.bind(commands, shim);
 
