@@ -260,6 +260,9 @@ public class RSConnectPublishButton extends Composite
    public void setQmd(String qmd)
    {
       docPreview_ = new RenderedDocPreview(qmd, "", false, true);
+      setContentPath(qmd, "");
+      setContentType(RSConnect.CONTENT_TYPE_DOCUMENT);
+      applyVisibility();
    }
 
    public void setRmd(String rmd, boolean isStatic)
@@ -931,7 +934,7 @@ public class RSConnectPublishButton extends Composite
                   public void onResponseReceived(RmdOutputInfo response)
                   {
                      RenderedDocPreview preview = new RenderedDocPreview(contentPath_,
-                           response.output_file_exists ? response.output_file : "", true, false);
+                           response.output_file_exists ? response.output_file : "", true, docPreview_.isQuarto());
                      events_.fireEvent(RSConnectActionEvent.DeployDocEvent(
                            preview, contentType_, previous));
                      rmdInfoPending_ = false;
