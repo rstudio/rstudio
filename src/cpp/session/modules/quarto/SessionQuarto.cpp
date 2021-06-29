@@ -50,11 +50,6 @@ namespace {
 
 const char * const kQuartoXt = "quarto-document";
 
-const char* const kQuartoProjectSite = "site";
-const char* const kQuartoProjectBook = "book";
-
-
-
 FilePath s_quartoPath;
 
 core::FilePath quartoConfigFilePath(const FilePath& dirPath)
@@ -296,6 +291,7 @@ Error getQmdPublishDetails(const json::JsonRpcRequest& request,
 {
    std::string target;
    Error error = json::readParams(request.params, &target);
+   using namespace module_context;
 
    /*
     "result": {
@@ -432,6 +428,7 @@ Error getQmdPublishDetails(const json::JsonRpcRequest& request,
 
 namespace module_context {
 
+
 bool handleQuartoPreview(const core::FilePath& sourceFile,
                          const core::FilePath& outputFile,
                          bool validateExtendedType)
@@ -486,6 +483,8 @@ bool handleQuartoPreview(const core::FilePath& sourceFile,
    return false;
 }
 
+const char* const kQuartoProjectSite = "site";
+const char* const kQuartoProjectBook = "book";
 
 QuartoConfig quartoConfig(bool refresh)
 {
