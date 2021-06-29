@@ -31,6 +31,7 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.TextBox;
+import org.rstudio.studio.client.workbench.prefs.views.SourceControlPreferencesPaneConstants;
 
 public class SshKeyWidget extends Composite
 {
@@ -51,14 +52,14 @@ public class SshKeyWidget extends Composite
       HorizontalPanel captionPanel = new HorizontalPanel();
       captionPanel.addStyleName(RES.styles().captionPanel());
       captionPanel.setWidth(textWidth);
-      FormLabel sshKeyPathLabel = new FormLabel("SSH RSA key:", txtSshKeyPath_);
+      FormLabel sshKeyPathLabel = new FormLabel(constants_.sshKeyPathLabel(), txtSshKeyPath_);
       captionPanel.add(sshKeyPathLabel);
       captionPanel.setCellHorizontalAlignment(
             sshKeyPathLabel,
             HasHorizontalAlignment.ALIGN_LEFT);
 
       HorizontalPanel linkPanel = new HorizontalPanel();
-      publicKeyLink_ = new HyperlinkLabel("View public key", () -> viewPublicKey());
+      publicKeyLink_ = new HyperlinkLabel(constants_.publicKeyLinkCaption(), () -> viewPublicKey());
       publicKeyLink_.addStyleName(RES.styles().viewPublicKeyLink());
       linkPanel.add(publicKeyLink_);
       captionPanel.add(publicKeyLink_);
@@ -73,7 +74,7 @@ public class SshKeyWidget extends Composite
       HorizontalPanel sshButtonPanel = new HorizontalPanel();
       sshButtonPanel.addStyleName(RES.styles().sshButtonPanel());
       SmallButton createKeyButton = new SmallButton();
-      createKeyButton.setText("Create RSA Key...");
+      createKeyButton.setText(constants_.createKeyButtonLabel());
       createKeyButton.addClickHandler(event -> showCreateKeyDialog());
       sshButtonPanel.add(createKeyButton);
       panel.add(sshButtonPanel);
@@ -127,7 +128,7 @@ public class SshKeyWidget extends Composite
 
    private void viewPublicKey()
    {
-      progressIndicator_.onProgress("Reading public key...");
+      progressIndicator_.onProgress(constants_.progressIndicatorLabel());
 
       // compute path to public key
       FileSystemItem privKey = 
@@ -143,14 +144,14 @@ public class SshKeyWidget extends Composite
          {
             progressIndicator_.onCompleted();
             
-            new ShowPublicKeyDialog("Public Key",
+            new ShowPublicKeyDialog(constants_.showPublicKeyDialogCaption(),
                                     publicKeyContents).showModal();
          }
 
          @Override
          public void onError(ServerError error)
          {
-            String msg = "Error attempting to read key '" + keyPath + "' (" +
+            String msg = constants_.onErrorMessage() + keyPath + "' (" +
                          error.getUserMessage() + ")";
             progressIndicator_.onError(msg);
          }
@@ -186,4 +187,6 @@ public class SshKeyWidget extends Composite
    private String rsaSshKeyPath_;
 
    private static final String NONE = "(None)";
+   private final SourceControlPreferencesPaneConstants constants_ = GWT.create(SourceControlPreferencesPaneConstants.class);
+
 }

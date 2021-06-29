@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.application;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
@@ -24,6 +25,7 @@ import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.views.AccessibilityPreferencesPaneConstants;
 
 import javax.inject.Inject;
 import java.util.HashMap;
@@ -68,20 +70,20 @@ public class AriaLiveService
       pUserPrefs_ = pUserPrefs;
 
       announcements_ = new HashMap<>();
-      announcements_.put(CONSOLE_CLEARED, "Console cleared");
-      announcements_.put(CONSOLE_LOG, "Console output (requires restart)");
-      announcements_.put(CONSOLE_COMMAND, "Console command (requires restart)");
-      announcements_.put(FILTERED_LIST, "Filtered result count");
-      announcements_.put(GIT_MESSAGE_LENGTH, "Commit message length");
-      announcements_.put(INACCESSIBLE_FEATURE, "Inaccessible feature warning");
-      announcements_.put(INFO_BAR, "Info bars");
-      announcements_.put(PROGRESS_COMPLETION, "Task completion");
-      announcements_.put(PROGRESS_LOG, "Task progress details");
-      announcements_.put(SCREEN_READER_NOT_ENABLED, "Screen reader not enabled");
-      announcements_.put(SESSION_STATE, "Changes in session state");
-      announcements_.put(TAB_KEY_MODE, "Tab key focus mode change");
-      announcements_.put(TOOLBAR_VISIBILITY, "Toolbar visibility change");
-      announcements_.put(WARNING_BAR, "Warning bars");
+      announcements_.put(CONSOLE_CLEARED, constants_.consoleClearedLabel());
+      announcements_.put(CONSOLE_LOG, constants_.consoleOutputLabel());
+      announcements_.put(CONSOLE_COMMAND, constants_.consoleCommandLabel());
+      announcements_.put(FILTERED_LIST, constants_.filteredResultCountLabel());
+      announcements_.put(GIT_MESSAGE_LENGTH, constants_.commitMessageLengthLabel());
+      announcements_.put(INACCESSIBLE_FEATURE, constants_.featureWarningLabel());
+      announcements_.put(INFO_BAR, constants_.infoBarsLabel());
+      announcements_.put(PROGRESS_COMPLETION, constants_.taskCompletionLabel());
+      announcements_.put(PROGRESS_LOG, constants_.taskProgressLabel());
+      announcements_.put(SCREEN_READER_NOT_ENABLED, constants_.screenReaderLabel());
+      announcements_.put(SESSION_STATE, constants_.changesSessionStateLabel());
+      announcements_.put(TAB_KEY_MODE, constants_.tabKeyFocusLabel());
+      announcements_.put(TOOLBAR_VISIBILITY, constants_.toolbarVisibilityLabel());
+      announcements_.put(WARNING_BAR, constants_.warningBarsLabel());
 
       alwaysEnabledAnnouncements_ = new HashSet<>();
       alwaysEnabledAnnouncements_.add(ON_DEMAND);
@@ -134,4 +136,6 @@ public class AriaLiveService
    // injected
    private final EventBus eventBus_;
    private final Provider<UserPrefs> pUserPrefs_;
+   private final AccessibilityPreferencesPaneConstants constants_ = GWT.create(AccessibilityPreferencesPaneConstants.class);
+
 }

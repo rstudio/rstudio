@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -54,604 +55,572 @@ import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
-public class GeneralPreferencesPane extends PreferencesPane
-{
-   @Inject
-   public GeneralPreferencesPane(RemoteFileSystemContext fsContext,
-                                 FileDialogs fileDialogs,
-                                 UserPrefs prefs,
-                                 Session session,
-                                 GlobalDisplay globalDisplay,
-                                 WorkbenchContext context)
-   {
-      fsContext_ = fsContext;
-      fileDialogs_ = fileDialogs;
-      prefs_ = prefs;
-      session_ = session;
+public class GeneralPreferencesPane extends PreferencesPane {
+    @Inject
+    public GeneralPreferencesPane(RemoteFileSystemContext fsContext,
+                                  FileDialogs fileDialogs,
+                                  UserPrefs prefs,
+                                  Session session,
+                                  GlobalDisplay globalDisplay,
+                                  WorkbenchContext context) {
+        fsContext_ = fsContext;
+        fileDialogs_ = fileDialogs;
+        prefs_ = prefs;
+        session_ = session;
 
-      RVersionsInfo versionsInfo = context.getRVersionsInfo();
-      VerticalTabPanel basic = new VerticalTabPanel(ElementIds.GENERAL_BASIC_PREFS);
+        RVersionsInfo versionsInfo = context.getRVersionsInfo();
+        VerticalTabPanel basic = new VerticalTabPanel(ElementIds.GENERAL_BASIC_PREFS);
 
-      basic.add(headerLabel("R Sessions"));
-      if (BrowseCap.isWindowsDesktop())
-      {
-         rVersion_ = new TextBoxWithButton(
-               "R version:",
-               "",
-               "Change...",
-               null,
-               ElementIds.TextBoxButtonId.R_VERSION,
-               true,
-               new ClickHandler()
-               {
-                  @Override
-                  public void onClick(ClickEvent event)
-                  {
-                     Desktop.getFrame().chooseRVersion(ver ->
-                     {
-                        if (!StringUtil.isNullOrEmpty(ver))
-                        {
-                           rVersion_.setText(ver);
+        basic.add(headerLabel(constants_.rSessionsTitle()));
+        if (BrowseCap.isWindowsDesktop()) {
+            rVersion_ = new TextBoxWithButton(
+                    constants_.rVersionTitle(),
+                    "",
+                    constants_.rVersionChangeTitle(),
+                    null,
+                    ElementIds.TextBoxButtonId.R_VERSION,
+                    true,
+                    new ClickHandler() {
+                        @Override
+                        public void onClick(ClickEvent event) {
+                            Desktop.getFrame().chooseRVersion(ver ->
+                            {
+                                if (!StringUtil.isNullOrEmpty(ver)) {
+                                    rVersion_.setText(ver);
 
-                           globalDisplay.showMessage(MessageDialog.INFO,
-                                 "Change R Version",
-                                 "You need to quit and re-open RStudio " +
-                                       "in order for this change to take effect.");
+                                    globalDisplay.showMessage(MessageDialog.INFO,
+                                            constants_.rChangeVersionMessage(),
+                                            constants_.rQuitReOpenMessage() +
+                                                    constants_.rTakeEffectMessage());
+                                }
+                            });
                         }
-                     });
-                  }
-               });
-         rVersion_.setWidth("100%");
-         rVersion_.setText("Loading...");
-         rVersion_.getElement().getStyle().setMarginLeft(2, Unit.PX);
-         Desktop.getFrame().getRVersion(version -> {
-            rVersion_.setText(version);
-         });
-         spaced(rVersion_);
-         basic.add(rVersion_);
-      }
-      if (versionsInfo.isMultiVersion())
-      {
-         rServerRVersion_ = new RVersionSelectWidget(
-                                       versionsInfo.getAvailableRVersions());
-         basic.add(tight(rServerRVersion_));
-
-         rememberRVersionForProjects_ =
-                        new CheckBox("Restore last used R version for projects");
-
-         rememberRVersionForProjects_.setValue(true);
-         Style style = rememberRVersionForProjects_.getElement().getStyle();
-         style.setMarginTop(5, Unit.PX);
-         style.setMarginBottom(12, Unit.PX);
-         basic.add(rememberRVersionForProjects_);
-      }
-
-      dirChooser_ = new DirectoryChooserTextBox(
-            "Default working directory (when not in a project):",
-            ElementIds.TextBoxButtonId.DEFAULT_WORKING_DIR,
-            null,
-            fileDialogs_,
-            fsContext_);
-      
-      spaced(dirChooser_);
-      nudgeRight(dirChooser_);
-      textBoxWithChooser(dirChooser_);
-      basic.add(dirChooser_);
-
-      restoreLastProject_ = new CheckBox("Restore most recently opened project at startup");
-      lessSpaced(restoreLastProject_);
-      basic.add(restoreLastProject_);
-
-      basic.add(checkboxPref("Restore previously open source documents at startup", prefs_.restoreSourceDocuments()));
-
-      rProfileOnResume_ = new CheckBox("Run Rprofile when resuming suspended session");
-      if (!Desktop.isDesktop())
-         basic.add(rProfileOnResume_);
-
-      basic.add(spacedBefore(headerLabel("Workspace")));
-      basic.add(loadRData_ = new CheckBox("Restore .RData into workspace at startup"));
-      lessSpaced(loadRData_);
-
-      saveWorkspace_ = new SelectWidget(
-            "Save workspace to .RData on exit:",
-            new String[]
-            {
-               "Always",
-               "Never",
-               "Ask"
-            },
-            new String[]
-            {
-               UserPrefs.SAVE_WORKSPACE_ALWAYS,
-               UserPrefs.SAVE_WORKSPACE_NEVER,
-               UserPrefs.SAVE_WORKSPACE_ASK
-            }, false, true, false);
-      spaced(saveWorkspace_);
-      basic.add(saveWorkspace_);
-
-      basic.add(headerLabel("History"));
-      alwaysSaveHistory_ = new CheckBox(
-            "Always save history (even when not saving .RData)");
-      lessSpaced(alwaysSaveHistory_);
-      basic.add(alwaysSaveHistory_);
-
-      removeHistoryDuplicates_ = new CheckBox(
-                                 "Remove duplicate entries in history");
-      basic.add(removeHistoryDuplicates_);
-
-      basic.add(spacedBefore(headerLabel("Other")));
-
-      basic.add(checkboxPref(
-            "Wrap around when navigating to previous/next tab",
-            prefs_.wrapTabNavigation(),
-            true /*defaultSpaced*/));
-
-      // provide check for updates option in desktop mode when not
-      // already globally disabled
-      if (Desktop.isDesktop() &&
-          !session.getSessionInfo().getDisableCheckForUpdates())
-      {
-         basic.add(checkboxPref("Automatically notify me of updates to RStudio",
-                   prefs_.checkForUpdates(), true /*defaultSpaced*/));
-      }
-
-      // crash reporting - only show in desktop mode
-      enableCrashReporting_ = checkboxPref("Send automated crash reports to RStudio",
-            prefs_.submitCrashReports());
-      if (Desktop.isDesktop())
-      {
-         lessSpaced(enableCrashReporting_);
-         enableCrashReporting_.setEnabled(session.getSessionInfo().getCrashHandlerSettingsModifiable());
-         basic.add(enableCrashReporting_);
-      }
-
-      VerticalTabPanel graphics = new VerticalTabPanel(ElementIds.GENERAL_GRAPHICS_PREFS);
-
-      initializeGraphicsBackendWidget();
-      graphics.add(headerLabel("Graphics Device"));
-      graphics.add(graphicsBackend_);
-
-      graphicsAntialias_ = new SelectWidget(
-            "Antialiasing:",
-            new String[] {
-                  "(Default)",
-                  "None",
-                  "Gray",
-                  "Subpixel"
-            },
-            new String[] {
-                  UserPrefs.GRAPHICS_ANTIALIASING_DEFAULT,
-                  UserPrefs.GRAPHICS_ANTIALIASING_NONE,
-                  UserPrefs.GRAPHICS_ANTIALIASING_GRAY,
-                  UserPrefs.GRAPHICS_ANTIALIASING_SUBPIXEL
-            },
-            false,
-            true,
-            false);
-
-      graphics.add(graphicsAntialias_);
-
-      VerticalTabPanel advanced = new VerticalTabPanel(ElementIds.GENERAL_ADVANCED_PREFS);
-
-      showServerHomePage_ = new SelectWidget(
-            "Show server home page:",
-            new String[] {
-                  "Multiple active sessions",
-                  "Always",
-                  "Never"
-            },
-            new String[] {
-                 "sessions",
-                 "always",
-                 "never"
-            },
-            false,
-            true,
-            false);
-
-      reuseSessionsForProjectLinks_ = new CheckBox("Re-use idle sessions for project links");
-      lessSpaced(reuseSessionsForProjectLinks_);
-      boolean firstHeader = true;
-
-      if (!Desktop.hasDesktopFrame())
-      {
-         if (session_.getSessionInfo().getShowUserHomePage() ||
-             session_.getSessionInfo().getMultiSession())
-         {
-            Label homePageLabel = headerLabel("Home Page");
-            spacedBefore(homePageLabel);
-            advanced.add(homePageLabel);
-            firstHeader = false;
-         }
-         if (session_.getSessionInfo().getShowUserHomePage())
-         {
-            tight(showServerHomePage_);
-            advanced.add(showServerHomePage_);
-         }
-         if (session_.getSessionInfo().getMultiSession())
-            advanced.add(reuseSessionsForProjectLinks_);
-      }
-
-     Label debuggingLabel = headerLabel("Debugging");
-     if (!firstHeader)
-     {
-        spacedBefore(debuggingLabel);
-        firstHeader = false;
-     }
-     advanced.add(debuggingLabel);
-     advanced.add(checkboxPref(
-           "Use debug error handler only when my code contains errors",
-           prefs_.handleErrorsInUserCodeOnly()));
-
-      if (Desktop.hasDesktopFrame())
-      {
-         Label osLabel = headerLabel("OS Integration");
-         spacedBefore(osLabel);
-         advanced.add(osLabel);
-
-         renderingEngineWidget_ = new SelectWidget("Rendering engine:", new String[] {});
-         renderingEngineWidget_.addChoice("Auto-detect (recommended)", ENGINE_AUTO);
-         renderingEngineWidget_.addChoice("Desktop OpenGL", ENGINE_DESKTOP);
-         if (BrowseCap.isLinuxDesktop())
-         {
-            renderingEngineWidget_.addChoice("OpenGL for Embedded Systems", ENGINE_GLES);
-         }
-         renderingEngineWidget_.addChoice("Software", ENGINE_SOFTWARE);
-         advanced.add(spaced(renderingEngineWidget_));
-
-         Desktop.getFrame().desktopRenderingEngine((String engine) -> {
-            if (StringUtil.isNullOrEmpty(engine))
-               return;
-            renderingEngineWidget_.setValue(engine);
-            renderingEngine_ = engine;
-         });
-
-         useGpuBlacklist_ = new CheckBox("Use GPU blacklist (recommended)");
-         advanced.add(lessSpaced(useGpuBlacklist_));
-         Desktop.getFrame().getIgnoreGpuBlacklist((Boolean ignore) -> {
-            desktopIgnoreGpuBlacklist_ = ignore;
-            useGpuBlacklist_.setValue(!ignore);
-         });
-
-         useGpuDriverBugWorkarounds_ = new CheckBox("Use GPU driver bug workarounds (recommended)");
-         advanced.add(lessSpaced(useGpuDriverBugWorkarounds_));
-         Desktop.getFrame().getDisableGpuDriverBugWorkarounds((Boolean disable) -> {
-            desktopDisableGpuDriverBugWorkarounds_ = disable;
-            useGpuDriverBugWorkarounds_.setValue(!disable);
-         });
-
-         if (BrowseCap.isLinuxDesktop())
-         {
-            clipboardMonitoring_ = new CheckBox("Enable X11 clipboard monitoring");
-            advanced.add(lessSpaced(clipboardMonitoring_));
-            Desktop.getFrame().getClipboardMonitoring(monitoring ->
-            {
-               desktopMonitoring_ = monitoring;
-               clipboardMonitoring_.setValue(monitoring);
+                    });
+            rVersion_.setWidth("100%");
+            rVersion_.setText(constants_.rVersionLoadingText());
+            rVersion_.getElement().getStyle().setMarginLeft(2, Unit.PX);
+            Desktop.getFrame().getRVersion(version -> {
+                rVersion_.setText(version);
             });
-         }
+            spaced(rVersion_);
+            basic.add(rVersion_);
+        }
+        if (versionsInfo.isMultiVersion()) {
+            rServerRVersion_ = new RVersionSelectWidget(
+                    versionsInfo.getAvailableRVersions());
+            basic.add(tight(rServerRVersion_));
 
-         fullPathInTitle_ = new CheckBox("Show full path to project in window title");
-         advanced.add(lessSpaced(fullPathInTitle_));
-      }
+            rememberRVersionForProjects_ =
+                    new CheckBox(constants_.rRestoreLabel());
 
-      Label otherLabel = headerLabel("Other");
-      spacedBefore(otherLabel);
-      advanced.add(otherLabel);
+            rememberRVersionForProjects_.setValue(true);
+            Style style = rememberRVersionForProjects_.getElement().getStyle();
+            style.setMarginTop(5, Unit.PX);
+            style.setMarginBottom(12, Unit.PX);
+            basic.add(rememberRVersionForProjects_);
+        }
 
-      showLastDotValue_ = new CheckBox("Show .Last.value in environment listing");
-      lessSpaced(showLastDotValue_);
-      advanced.add(showLastDotValue_);
+        dirChooser_ = new DirectoryChooserTextBox(
+                constants_.rDefaultDirectoryTitle(),
+                ElementIds.TextBoxButtonId.DEFAULT_WORKING_DIR,
+                null,
+                fileDialogs_,
+                fsContext_);
 
-      String[] labels = {"7", "8", "9", "10", "11", "12", "13", "14", "16", "18", "24", "36"};
-      String[] values = new String[labels.length];
-      for (int i = 0; i < labels.length; i++)
-         values[i] = Double.parseDouble(labels[i]) + "";
+        spaced(dirChooser_);
+        nudgeRight(dirChooser_);
+        textBoxWithChooser(dirChooser_);
+        basic.add(dirChooser_);
 
-      helpFontSize_ = new SelectWidget("Help panel font size:",
-                                       labels,
-                                       values,
-                                       false, /* Multi select */
-                                       true, /* Horizontal label */
-                                       false /* List on left */);
-      if (!helpFontSize_.setValue(prefs_.helpFontSizePoints().getValue() + ""))
-         helpFontSize_.getListBox().setSelectedIndex(3);
-      advanced.add(helpFontSize_);
+        restoreLastProject_ = new CheckBox(constants_.rRestorePreviousTitle());
+        lessSpaced(restoreLastProject_);
+        basic.add(restoreLastProject_);
 
-      showServerHomePage_.setEnabled(false);
-      reuseSessionsForProjectLinks_.setEnabled(false);
-      saveWorkspace_.setEnabled(false);
-      loadRData_.setEnabled(false);
-      dirChooser_.setEnabled(false);
-      alwaysSaveHistory_.setEnabled(false);
-      removeHistoryDuplicates_.setEnabled(false);
-      rProfileOnResume_.setEnabled(false);
-      showLastDotValue_.setEnabled(false);
-      restoreLastProject_.setEnabled(false);
+        basic.add(checkboxPref(constants_.rRestorePreviousOpenTitle(), prefs_.restoreSourceDocuments()));
 
-      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("General");
-      tabPanel.setSize("435px", "533px");
-      tabPanel.add(basic, "Basic", basic.getBasePanelId());
-      tabPanel.add(graphics, "Graphics", graphics.getBasePanelId());
-      tabPanel.add(advanced, "Advanced", advanced.getBasePanelId());
-      tabPanel.selectTab(0);
-      add(tabPanel);
-   }
+        rProfileOnResume_ = new CheckBox(constants_.rRunProfileTitle());
+        if (!Desktop.isDesktop())
+            basic.add(rProfileOnResume_);
 
-   @Override
-   protected void initialize(UserPrefs prefs)
-   {
-      boolean isLauncherSession = session_.getSessionInfo().getLauncherSession();
-      showServerHomePage_.setEnabled(!isLauncherSession);
+        basic.add(spacedBefore(headerLabel(constants_.workspaceCaption())));
+        basic.add(loadRData_ = new CheckBox(constants_.workspaceLabel()));
+        lessSpaced(loadRData_);
 
-      reuseSessionsForProjectLinks_.setEnabled(true);
-      saveWorkspace_.setEnabled(true);
-      loadRData_.setEnabled(true);
-      dirChooser_.setEnabled(true);
+        saveWorkspace_ = new SelectWidget(
+                constants_.saveWorkSpaceLabel(),
+                new String[]
+                        {
+                                constants_.saveWorkAlways(),
+                                constants_.saveWorkNever(),
+                                constants_.saveWorkAsk()
+                        },
+                new String[]
+                        {
+                                UserPrefs.SAVE_WORKSPACE_ALWAYS,
+                                UserPrefs.SAVE_WORKSPACE_NEVER,
+                                UserPrefs.SAVE_WORKSPACE_ASK
+                        }, false, true, false);
+        spaced(saveWorkspace_);
+        basic.add(saveWorkspace_);
 
-      if (!isLauncherSession)
-         showServerHomePage_.setValue(prefs.showUserHomePage().getValue());
-      else
-         showServerHomePage_.setValue(UserPrefs.SHOW_USER_HOME_PAGE_ALWAYS);
+        basic.add(headerLabel(constants_.historyCaption()));
+        alwaysSaveHistory_ = new CheckBox(
+                constants_.alwaysSaveHistoryLabel());
+        lessSpaced(alwaysSaveHistory_);
+        basic.add(alwaysSaveHistory_);
 
-      reuseSessionsForProjectLinks_.setValue(prefs.reuseSessionsForProjectLinks().getValue());
+        removeHistoryDuplicates_ = new CheckBox(
+                constants_.removeDuplicatesLabel());
+        basic.add(removeHistoryDuplicates_);
 
-      int saveWorkspaceIndex;
-      switch (prefs.saveWorkspace().getValue())
-      {
-         case UserPrefs.SAVE_WORKSPACE_NEVER:
-            saveWorkspaceIndex = 1;
-            break;
-         case UserPrefs.SAVE_WORKSPACE_ALWAYS:
-            saveWorkspaceIndex = 0;
-            break;
-         case UserPrefs.SAVE_WORKSPACE_ASK:
-         default:
-            saveWorkspaceIndex = 2;
-            break;
-      }
-      saveWorkspace_.getListBox().setSelectedIndex(saveWorkspaceIndex);
+        basic.add(spacedBefore(headerLabel(constants_.otherCaption())));
 
-      loadRData_.setValue(prefs.loadWorkspace().getValue());
-      
-      // NOTE: we intentionally ignore sessionInfo's version of the
-      // initial working directory here as that might reference a
-      // project-specific location, and we don't want that to end up
-      // encoded as part of the user's global preferences
-      String workingDir = prefs.initialWorkingDirectory().getValue();
-      if (StringUtil.isNullOrEmpty(workingDir))
-         workingDir = "~";
-      
-      dirChooser_.setText(workingDir);
+        basic.add(checkboxPref(
+                constants_.otherWrapAroundLabel(),
+                prefs_.wrapTabNavigation(),
+                true /*defaultSpaced*/));
 
-      alwaysSaveHistory_.setEnabled(true);
-      removeHistoryDuplicates_.setEnabled(true);
+        // provide check for updates option in desktop mode when not
+        // already globally disabled
+        if (Desktop.isDesktop() &&
+                !session.getSessionInfo().getDisableCheckForUpdates()) {
+            basic.add(checkboxPref(constants_.otherNotifyMeLabel(),
+                    prefs_.checkForUpdates(), true /*defaultSpaced*/));
+        }
 
-      alwaysSaveHistory_.setValue(prefs.alwaysSaveHistory().getValue());
-      removeHistoryDuplicates_.setValue(prefs.removeHistoryDuplicates().getValue());
+        // crash reporting - only show in desktop mode
+        enableCrashReporting_ = checkboxPref(constants_.otherSendReportsLabel(),
+                prefs_.submitCrashReports());
+        if (Desktop.isDesktop()) {
+            lessSpaced(enableCrashReporting_);
+            enableCrashReporting_.setEnabled(session.getSessionInfo().getCrashHandlerSettingsModifiable());
+            basic.add(enableCrashReporting_);
+        }
 
-      rProfileOnResume_.setValue(prefs.runRprofileOnResume().getValue());
-      rProfileOnResume_.setEnabled(true);
+        VerticalTabPanel graphics = new VerticalTabPanel(ElementIds.GENERAL_GRAPHICS_PREFS);
 
-      showLastDotValue_.setValue(prefs.showLastDotValue().getValue());
-      showLastDotValue_.setEnabled(true);
+        initializeGraphicsBackendWidget();
+        graphics.add(headerLabel(constants_.graphicsDeviceCaption()));
+        graphics.add(graphicsBackend_);
 
-      if (rServerRVersion_ != null)
-         rServerRVersion_.setRVersion(prefs.defaultRVersion().getValue().cast());
+        graphicsAntialias_ = new SelectWidget(
+                constants_.graphicsAntialiasingLabel(),
+                new String[]{
+                        constants_.antialiasingDefaultOption(),
+                        constants_.antialiasingNoneOption(),
+                        constants_.antialiasingGrayOption(),
+                        constants_.antialiasingSubpixelOption()
+                },
+                new String[]{
+                        UserPrefs.GRAPHICS_ANTIALIASING_DEFAULT,
+                        UserPrefs.GRAPHICS_ANTIALIASING_NONE,
+                        UserPrefs.GRAPHICS_ANTIALIASING_GRAY,
+                        UserPrefs.GRAPHICS_ANTIALIASING_SUBPIXEL
+                },
+                false,
+                true,
+                false);
 
-      if (rememberRVersionForProjects_ != null)
-      {
-         rememberRVersionForProjects_.setValue(
-                                   prefs.restoreProjectRVersion().getValue());
-      }
+        graphics.add(graphicsAntialias_);
 
-      if (fullPathInTitle_ != null)
-         fullPathInTitle_.setValue(prefs.fullProjectPathInWindowTitle().getValue());
+        VerticalTabPanel advanced = new VerticalTabPanel(ElementIds.GENERAL_ADVANCED_PREFS);
 
-      enableCrashReporting_.setValue(prefs.submitCrashReports().getValue());
+        showServerHomePage_ = new SelectWidget(
+                constants_.serverHomePageLabel(),
+                new String[]{
+                        constants_.serverHomePageActiveSessionsOption(),
+                        constants_.serverHomePageAlwaysOption(),
+                        constants_.serverHomePageNeverOption()
+                },
+                new String[]{
+                        constants_.serverHomePageSessions(),
+                        constants_.serverHomePageAlways(),
+                        constants_.serverHomePageNever()
+                },
+                false,
+                true,
+                false);
 
-      // projects prefs
-      restoreLastProject_.setEnabled(true);
-      restoreLastProject_.setValue(prefs.restoreLastProject().getValue());
+        reuseSessionsForProjectLinks_ = new CheckBox(constants_.reUseIdleSessionLabel());
+        lessSpaced(reuseSessionsForProjectLinks_);
+        boolean firstHeader = true;
 
-      // graphics prefs
-      graphicsBackend_.setValue(prefs.graphicsBackend().getValue());
-      graphicsAntialias_.setValue(prefs.graphicsAntialiasing().getValue());
-   }
+        if (!Desktop.hasDesktopFrame()) {
+            if (session_.getSessionInfo().getShowUserHomePage() ||
+                    session_.getSessionInfo().getMultiSession()) {
+                Label homePageLabel = headerLabel(constants_.desktopCaption());
+                spacedBefore(homePageLabel);
+                advanced.add(homePageLabel);
+                firstHeader = false;
+            }
+            if (session_.getSessionInfo().getShowUserHomePage()) {
+                tight(showServerHomePage_);
+                advanced.add(showServerHomePage_);
+            }
+            if (session_.getSessionInfo().getMultiSession())
+                advanced.add(reuseSessionsForProjectLinks_);
+        }
+
+        Label debuggingLabel = headerLabel(constants_.advancedDebuggingCaption());
+        if (!firstHeader) {
+            spacedBefore(debuggingLabel);
+            firstHeader = false;
+        }
+        advanced.add(debuggingLabel);
+        advanced.add(checkboxPref(
+                constants_.advancedDebuggingLabel(),
+                prefs_.handleErrorsInUserCodeOnly()));
+
+        if (Desktop.hasDesktopFrame()) {
+            Label osLabel = headerLabel(constants_.advancedOsIntegrationCaption());
+            spacedBefore(osLabel);
+            advanced.add(osLabel);
+
+            renderingEngineWidget_ = new SelectWidget(constants_.advancedRenderingEngineLabel(), new String[]{});
+            renderingEngineWidget_.addChoice(constants_.renderingEngineAutoDetectOption(), ENGINE_AUTO);
+            renderingEngineWidget_.addChoice(constants_.renderingEngineDesktopOption(), ENGINE_DESKTOP);
+            if (BrowseCap.isLinuxDesktop()) {
+                renderingEngineWidget_.addChoice(constants_.renderingEngineLinuxDesktopOption(), ENGINE_GLES);
+            }
+            renderingEngineWidget_.addChoice(constants_.renderingEngineSoftwareOption(), ENGINE_SOFTWARE);
+            advanced.add(spaced(renderingEngineWidget_));
+
+            Desktop.getFrame().desktopRenderingEngine((String engine) -> {
+                if (StringUtil.isNullOrEmpty(engine))
+                    return;
+                renderingEngineWidget_.setValue(engine);
+                renderingEngine_ = engine;
+            });
+
+            useGpuBlacklist_ = new CheckBox(constants_.useGpuBlacklistLabel());
+            advanced.add(lessSpaced(useGpuBlacklist_));
+            Desktop.getFrame().getIgnoreGpuBlacklist((Boolean ignore) -> {
+                desktopIgnoreGpuBlacklist_ = ignore;
+                useGpuBlacklist_.setValue(!ignore);
+            });
+
+            useGpuDriverBugWorkarounds_ = new CheckBox(constants_.useGpuDriverBugWorkaroundsLabel());
+            advanced.add(lessSpaced(useGpuDriverBugWorkarounds_));
+            Desktop.getFrame().getDisableGpuDriverBugWorkarounds((Boolean disable) -> {
+                desktopDisableGpuDriverBugWorkarounds_ = disable;
+                useGpuDriverBugWorkarounds_.setValue(!disable);
+            });
+
+            if (BrowseCap.isLinuxDesktop()) {
+                clipboardMonitoring_ = new CheckBox(constants_.clipboardMonitoringLabel());
+                advanced.add(lessSpaced(clipboardMonitoring_));
+                Desktop.getFrame().getClipboardMonitoring(monitoring ->
+                {
+                    desktopMonitoring_ = monitoring;
+                    clipboardMonitoring_.setValue(monitoring);
+                });
+            }
+
+            fullPathInTitle_ = new CheckBox(constants_.fullPathInTitleLabel());
+            advanced.add(lessSpaced(fullPathInTitle_));
+        }
+
+        Label otherLabel = headerLabel(constants_.otherLabel());
+        spacedBefore(otherLabel);
+        advanced.add(otherLabel);
+
+        showLastDotValue_ = new CheckBox(constants_.otherShowLastDotValueLabel());
+        lessSpaced(showLastDotValue_);
+        advanced.add(showLastDotValue_);
+
+        String[] labels = {"7", "8", "9", "10", "11", "12", "13", "14", "16", "18", "24", "36"};
+        String[] values = new String[labels.length];
+        for (int i = 0; i < labels.length; i++)
+            values[i] = Double.parseDouble(labels[i]) + "";
+
+        helpFontSize_ = new SelectWidget(constants_.helpFontSizeLabel(),
+                labels,
+                values,
+                false, /* Multi select */
+                true, /* Horizontal label */
+                false /* List on left */);
+        if (!helpFontSize_.setValue(prefs_.helpFontSizePoints().getValue() + ""))
+            helpFontSize_.getListBox().setSelectedIndex(3);
+        advanced.add(helpFontSize_);
+
+        showServerHomePage_.setEnabled(false);
+        reuseSessionsForProjectLinks_.setEnabled(false);
+        saveWorkspace_.setEnabled(false);
+        loadRData_.setEnabled(false);
+        dirChooser_.setEnabled(false);
+        alwaysSaveHistory_.setEnabled(false);
+        removeHistoryDuplicates_.setEnabled(false);
+        rProfileOnResume_.setEnabled(false);
+        showLastDotValue_.setEnabled(false);
+        restoreLastProject_.setEnabled(false);
+
+        DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel(constants_.generalTablistLabel());
+        tabPanel.setSize("435px", "533px");
+        tabPanel.add(basic, constants_.generalTablListBasicOption(), basic.getBasePanelId());
+        tabPanel.add(graphics, constants_.generalTablListGraphicsOption(), graphics.getBasePanelId());
+        tabPanel.add(advanced, constants_.generalTabListAdvancedOption(), advanced.getBasePanelId());
+        tabPanel.selectTab(0);
+        add(tabPanel);
+    }
+
+    @Override
+    protected void initialize(UserPrefs prefs) {
+        boolean isLauncherSession = session_.getSessionInfo().getLauncherSession();
+        showServerHomePage_.setEnabled(!isLauncherSession);
+
+        reuseSessionsForProjectLinks_.setEnabled(true);
+        saveWorkspace_.setEnabled(true);
+        loadRData_.setEnabled(true);
+        dirChooser_.setEnabled(true);
+
+        if (!isLauncherSession)
+            showServerHomePage_.setValue(prefs.showUserHomePage().getValue());
+        else
+            showServerHomePage_.setValue(UserPrefs.SHOW_USER_HOME_PAGE_ALWAYS);
+
+        reuseSessionsForProjectLinks_.setValue(prefs.reuseSessionsForProjectLinks().getValue());
+
+        int saveWorkspaceIndex;
+        switch (prefs.saveWorkspace().getValue()){
+            case UserPrefs.SAVE_WORKSPACE_NEVER:
+                saveWorkspaceIndex = 1;
+                break;
+            case UserPrefs.SAVE_WORKSPACE_ALWAYS:
+                saveWorkspaceIndex = 0;
+                break;
+            case UserPrefs.SAVE_WORKSPACE_ASK:
+            default:
+                saveWorkspaceIndex = 2;
+                break;
+        }
+        saveWorkspace_.getListBox().setSelectedIndex(saveWorkspaceIndex);
+
+        loadRData_.setValue(prefs.loadWorkspace().getValue());
+
+        // NOTE: we intentionally ignore sessionInfo's version of the
+        // initial working directory here as that might reference a
+        // project-specific location, and we don't want that to end up
+        // encoded as part of the user's global preferences
+        String workingDir = prefs.initialWorkingDirectory().getValue();
+        if (StringUtil.isNullOrEmpty(workingDir))
+            workingDir = "~";
+
+        dirChooser_.setText(workingDir);
+
+        alwaysSaveHistory_.setEnabled(true);
+        removeHistoryDuplicates_.setEnabled(true);
+
+        alwaysSaveHistory_.setValue(prefs.alwaysSaveHistory().getValue());
+        removeHistoryDuplicates_.setValue(prefs.removeHistoryDuplicates().getValue());
+
+        rProfileOnResume_.setValue(prefs.runRprofileOnResume().getValue());
+        rProfileOnResume_.setEnabled(true);
+
+        showLastDotValue_.setValue(prefs.showLastDotValue().getValue());
+        showLastDotValue_.setEnabled(true);
+
+        if (rServerRVersion_ != null)
+            rServerRVersion_.setRVersion(prefs.defaultRVersion().getValue().cast());
+
+        if (rememberRVersionForProjects_ != null) {
+            rememberRVersionForProjects_.setValue(
+                    prefs.restoreProjectRVersion().getValue());
+        }
+
+        if (fullPathInTitle_ != null)
+            fullPathInTitle_.setValue(prefs.fullProjectPathInWindowTitle().getValue());
+
+        enableCrashReporting_.setValue(prefs.submitCrashReports().getValue());
+
+        // projects prefs
+        restoreLastProject_.setEnabled(true);
+        restoreLastProject_.setValue(prefs.restoreLastProject().getValue());
+
+        // graphics prefs
+        graphicsBackend_.setValue(prefs.graphicsBackend().getValue());
+        graphicsAntialias_.setValue(prefs.graphicsAntialiasing().getValue());
+    }
 
 
-   @Override
-   public ImageResource getIcon()
-   {
-      return new ImageResource2x(PreferencesDialogBaseResources.INSTANCE.iconR2x());
-   }
+    @Override
+    public ImageResource getIcon() {
+        return new ImageResource2x(PreferencesDialogBaseResources.INSTANCE.iconR2x());
+    }
 
-   @Override
-   public RestartRequirement onApply(UserPrefs prefs)
-   {
-      RestartRequirement restartRequirement = super.onApply(prefs);
+    @Override
+    public RestartRequirement onApply(UserPrefs prefs) {
+        RestartRequirement restartRequirement = super.onApply(prefs);
 
-      {
-         double helpFontSize = Double.parseDouble(helpFontSize_.getValue());
-         prefs.helpFontSizePoints().setGlobalValue(helpFontSize);
-      }
+        {
+            double helpFontSize = Double.parseDouble(helpFontSize_.getValue());
+            prefs.helpFontSizePoints().setGlobalValue(helpFontSize);
+        }
 
-      if (clipboardMonitoring_ != null &&
-          desktopMonitoring_ != clipboardMonitoring_.getValue())
-      {
-         // set monitoring property if changed
-         restartRequirement.setDesktopRestartRequired(true);
-         boolean desktopMonitoring = clipboardMonitoring_.getValue();
-         desktopMonitoring_ = desktopMonitoring;
-         Desktop.getFrame().setClipboardMonitoring(desktopMonitoring);
-      }
+        if (clipboardMonitoring_ != null &&
+                desktopMonitoring_ != clipboardMonitoring_.getValue()) {
+            // set monitoring property if changed
+            restartRequirement.setDesktopRestartRequired(true);
+            boolean desktopMonitoring = clipboardMonitoring_.getValue();
+            desktopMonitoring_ = desktopMonitoring;
+            Desktop.getFrame().setClipboardMonitoring(desktopMonitoring);
+        }
 
-      if (fullPathInTitle_ != null &&
-         fullPathInTitle_.getValue() != prefs.fullProjectPathInWindowTitle().getValue())
-      {
-         restartRequirement.setDesktopRestartRequired(true);
-         prefs.fullProjectPathInWindowTitle().setGlobalValue(fullPathInTitle_.getValue());
-      }
+        if (fullPathInTitle_ != null &&
+                fullPathInTitle_.getValue() != prefs.fullProjectPathInWindowTitle().getValue()) {
+            restartRequirement.setDesktopRestartRequired(true);
+            prefs.fullProjectPathInWindowTitle().setGlobalValue(fullPathInTitle_.getValue());
+        }
 
-      if (renderingEngineWidget_ != null &&
-          !StringUtil.equals(renderingEngineWidget_.getValue(), renderingEngine_))
-      {
-         // set desktop renderer when changed
-         restartRequirement.setDesktopRestartRequired(true);
-         String renderingEngine = renderingEngineWidget_.getValue();
-         renderingEngine_ = renderingEngine;
-         Desktop.getFrame().setDesktopRenderingEngine(renderingEngine);
-      }
+        if (renderingEngineWidget_ != null &&
+                !StringUtil.equals(renderingEngineWidget_.getValue(), renderingEngine_)) {
+            // set desktop renderer when changed
+            restartRequirement.setDesktopRestartRequired(true);
+            String renderingEngine = renderingEngineWidget_.getValue();
+            renderingEngine_ = renderingEngine;
+            Desktop.getFrame().setDesktopRenderingEngine(renderingEngine);
+        }
 
-      if (useGpuBlacklist_ != null &&
-          desktopIgnoreGpuBlacklist_ != !useGpuBlacklist_.getValue())
-      {
-         restartRequirement.setDesktopRestartRequired(true);
-         boolean ignore = !useGpuBlacklist_.getValue();
-         desktopIgnoreGpuBlacklist_ = ignore;
-         Desktop.getFrame().setIgnoreGpuBlacklist(ignore);
-      }
+        if (useGpuBlacklist_ != null &&
+                desktopIgnoreGpuBlacklist_ != !useGpuBlacklist_.getValue()) {
+            restartRequirement.setDesktopRestartRequired(true);
+            boolean ignore = !useGpuBlacklist_.getValue();
+            desktopIgnoreGpuBlacklist_ = ignore;
+            Desktop.getFrame().setIgnoreGpuBlacklist(ignore);
+        }
 
-      if (useGpuDriverBugWorkarounds_ != null &&
-          desktopDisableGpuDriverBugWorkarounds_ != !useGpuDriverBugWorkarounds_.getValue())
-      {
-         restartRequirement.setDesktopRestartRequired(true);
-         boolean disable = !useGpuDriverBugWorkarounds_.getValue();
-         desktopDisableGpuDriverBugWorkarounds_ = disable;
-         Desktop.getFrame().setDisableGpuDriverBugWorkarounds(disable);
-      }
+        if (useGpuDriverBugWorkarounds_ != null &&
+                desktopDisableGpuDriverBugWorkarounds_ != !useGpuDriverBugWorkarounds_.getValue()) {
+            restartRequirement.setDesktopRestartRequired(true);
+            boolean disable = !useGpuDriverBugWorkarounds_.getValue();
+            desktopDisableGpuDriverBugWorkarounds_ = disable;
+            Desktop.getFrame().setDisableGpuDriverBugWorkarounds(disable);
+        }
 
-      if (saveWorkspace_.isEnabled())
-      {
-         prefs.saveWorkspace().setGlobalValue(saveWorkspace_.getValue());
-      }
+        if (saveWorkspace_.isEnabled()) {
+            prefs.saveWorkspace().setGlobalValue(saveWorkspace_.getValue());
+        }
 
-      prefs.loadWorkspace().setGlobalValue(loadRData_.getValue());
-      prefs.runRprofileOnResume().setGlobalValue(rProfileOnResume_.getValue());
-      prefs.initialWorkingDirectory().setGlobalValue(dirChooser_.getText());
-      prefs.showLastDotValue().setGlobalValue(showLastDotValue_.getValue());
-      prefs.alwaysSaveHistory().setGlobalValue(alwaysSaveHistory_.getValue());
-      prefs.removeHistoryDuplicates().setGlobalValue(removeHistoryDuplicates_.getValue());
-      prefs.restoreLastProject().setGlobalValue(restoreLastProject_.getValue());
-      prefs.graphicsBackend().setGlobalValue(graphicsBackend_.getValue());
-      prefs.graphicsAntialiasing().setGlobalValue(graphicsAntialias_.getValue());
+        prefs.loadWorkspace().setGlobalValue(loadRData_.getValue());
+        prefs.runRprofileOnResume().setGlobalValue(rProfileOnResume_.getValue());
+        prefs.initialWorkingDirectory().setGlobalValue(dirChooser_.getText());
+        prefs.showLastDotValue().setGlobalValue(showLastDotValue_.getValue());
+        prefs.alwaysSaveHistory().setGlobalValue(alwaysSaveHistory_.getValue());
+        prefs.removeHistoryDuplicates().setGlobalValue(removeHistoryDuplicates_.getValue());
+        prefs.restoreLastProject().setGlobalValue(restoreLastProject_.getValue());
+        prefs.graphicsBackend().setGlobalValue(graphicsBackend_.getValue());
+        prefs.graphicsAntialiasing().setGlobalValue(graphicsAntialias_.getValue());
 
-      // Pro specific
-      if (showServerHomePage_ != null && showServerHomePage_.isEnabled())
-         prefs.showUserHomePage().setGlobalValue(showServerHomePage_.getValue());
-      if (reuseSessionsForProjectLinks_ != null && reuseSessionsForProjectLinks_.isEnabled())
-         prefs.reuseSessionsForProjectLinks().setGlobalValue(reuseSessionsForProjectLinks_.getValue());
-      if (rServerRVersion_ != null && rServerRVersion_.isEnabled())
-         prefs.defaultRVersion().setGlobalValue(rServerRVersion_.getRVersion());
-      if (rememberRVersionForProjects_ != null && rememberRVersionForProjects_.isEnabled())
-         prefs.restoreProjectRVersion().setGlobalValue(rememberRVersionForProjects_.getValue());
+        // Pro specific
+        if (showServerHomePage_ != null && showServerHomePage_.isEnabled())
+            prefs.showUserHomePage().setGlobalValue(showServerHomePage_.getValue());
+        if (reuseSessionsForProjectLinks_ != null && reuseSessionsForProjectLinks_.isEnabled())
+            prefs.reuseSessionsForProjectLinks().setGlobalValue(reuseSessionsForProjectLinks_.getValue());
+        if (rServerRVersion_ != null && rServerRVersion_.isEnabled())
+            prefs.defaultRVersion().setGlobalValue(rServerRVersion_.getRVersion());
+        if (rememberRVersionForProjects_ != null && rememberRVersionForProjects_.isEnabled())
+            prefs.restoreProjectRVersion().setGlobalValue(rememberRVersionForProjects_.getValue());
 
-      return restartRequirement;
-   }
+        return restartRequirement;
+    }
 
-   @Override
-   public String getName()
-   {
-      return "General";
-   }
+    @Override
+    public String getName() {
+        return constants_.generalTablListGraphicsOption();
+    }
 
-   @SuppressWarnings("unused")
-   private RVersionSpec getDefaultRVersion()
-   {
-      if (rServerRVersion_ != null)
-         return rServerRVersion_.getRVersion();
-      else
-         return RVersionSpec.createEmpty();
-   }
+    @SuppressWarnings("unused")
+    private RVersionSpec getDefaultRVersion() {
+        if (rServerRVersion_ != null)
+            return rServerRVersion_.getRVersion();
+        else
+            return RVersionSpec.createEmpty();
+    }
 
-   @SuppressWarnings("unused")
-   private boolean getRestoreProjectRVersion()
-   {
-      if (rememberRVersionForProjects_ != null)
-         return rememberRVersionForProjects_.getValue();
-      else
-         return false;
-   }
+    @SuppressWarnings("unused")
+    private boolean getRestoreProjectRVersion() {
+        if (rememberRVersionForProjects_ != null)
+            return rememberRVersionForProjects_.getValue();
+        else
+            return false;
+    }
 
-   private void initializeGraphicsBackendWidget()
-   {
-      Map<String, String> valuesToLabelsMap = new HashMap<>();
-      valuesToLabelsMap.put(UserPrefs.GRAPHICS_BACKEND_DEFAULT, " (Default)");
-      valuesToLabelsMap.put(UserPrefs.GRAPHICS_BACKEND_QUARTZ,    "Quartz");
-      valuesToLabelsMap.put(UserPrefs.GRAPHICS_BACKEND_WINDOWS,   "Windows");
-      valuesToLabelsMap.put(UserPrefs.GRAPHICS_BACKEND_CAIRO,     "Cairo");
-      valuesToLabelsMap.put(UserPrefs.GRAPHICS_BACKEND_CAIRO_PNG, "Cairo PNG");
-      valuesToLabelsMap.put(UserPrefs.GRAPHICS_BACKEND_RAGG,      "AGG");
+    private void initializeGraphicsBackendWidget() {
+        Map<String, String> valuesToLabelsMap = new HashMap<>();
+        valuesToLabelsMap.put(UserPrefs.GRAPHICS_BACKEND_DEFAULT, constants_.graphicsBackEndDefaultOption());
+        valuesToLabelsMap.put(UserPrefs.GRAPHICS_BACKEND_QUARTZ, constants_.graphicsBackEndQuartzOption());
+        valuesToLabelsMap.put(UserPrefs.GRAPHICS_BACKEND_WINDOWS, constants_.graphicsBackEndWindowsOption());
+        valuesToLabelsMap.put(UserPrefs.GRAPHICS_BACKEND_CAIRO, constants_.graphicsBackEndCairoOption());
+        valuesToLabelsMap.put(UserPrefs.GRAPHICS_BACKEND_CAIRO_PNG, constants_.graphicsBackEndCairoPNGOption());
+        valuesToLabelsMap.put(UserPrefs.GRAPHICS_BACKEND_RAGG, constants_.graphicsBackEndAGGOption());
 
-      JsArrayString supportedBackends =
-            session_.getSessionInfo().getGraphicsBackends();
+        JsArrayString supportedBackends =
+                session_.getSessionInfo().getGraphicsBackends();
 
-      String[] values = new String[supportedBackends.length() + 1];
-      values[0] = "default";
-      for (int i = 0; i < supportedBackends.length(); i++)
-         values[i + 1] = supportedBackends.get(i);
+        String[] values = new String[supportedBackends.length() + 1];
+        values[0] = constants_.defaultLabel();
+        for (int i = 0; i < supportedBackends.length(); i++)
+            values[i + 1] = supportedBackends.get(i);
 
-      String[] labels = new String[supportedBackends.length() + 1];
-      for (int i = 0; i < labels.length; i++)
-         labels[i] = valuesToLabelsMap.get(values[i]);
+        String[] labels = new String[supportedBackends.length() + 1];
+        for (int i = 0; i < labels.length; i++)
+            labels[i] = valuesToLabelsMap.get(values[i]);
 
-      graphicsBackend_ =
-            new SelectWidget("Backend:", labels, values, false, true, false);
+        graphicsBackend_ =
+                new SelectWidget(constants_.graphicsBackendLabel(), labels, values, false, true, false);
 
-      graphicsBackend_.addChangeHandler((ChangeEvent event) ->
-      {
-         String backend = graphicsBackend_.getValue();
-         if (StringUtil.equals(backend, UserPrefs.GRAPHICS_BACKEND_RAGG))
-         {
-            RStudioGinjector.INSTANCE.getDependencyManager().withRagg(
-                  "Using the AGG renderer",
-                  (Boolean succeeded) ->
-                  {
-                     if (!succeeded)
-                     {
-                        graphicsBackend_.setValue(UserPrefs.GRAPHICS_BACKEND_DEFAULT);
-                     }
-                  });
-         }
-      });
-   }
+        graphicsBackend_.addChangeHandler((ChangeEvent event) ->
+        {
+            String backend = graphicsBackend_.getValue();
+            if (StringUtil.equals(backend, UserPrefs.GRAPHICS_BACKEND_RAGG)) {
+                RStudioGinjector.INSTANCE.getDependencyManager().withRagg(
+                        constants_.graphicsBackendUserAction(),
+                        (Boolean succeeded) ->
+                        {
+                            if (!succeeded) {
+                                graphicsBackend_.setValue(UserPrefs.GRAPHICS_BACKEND_DEFAULT);
+                            }
+                        });
+            }
+        });
+    }
 
-   private static final String ENGINE_AUTO        = "auto";
-   private static final String ENGINE_DESKTOP     = "desktop";
-   private static final String ENGINE_GLES        = "gles";
-   private static final String ENGINE_SOFTWARE    = "software";
+    private static final String ENGINE_AUTO = "auto";
+    private static final String ENGINE_DESKTOP = "desktop";
+    private static final String ENGINE_GLES = "gles";
+    private static final String ENGINE_SOFTWARE = "software";
 
-   private boolean desktopMonitoring_ = false;
-   private boolean desktopIgnoreGpuBlacklist_ = false;
-   private boolean desktopDisableGpuDriverBugWorkarounds_ = false;
+    private boolean desktopMonitoring_ = false;
+    private boolean desktopIgnoreGpuBlacklist_ = false;
+    private boolean desktopDisableGpuDriverBugWorkarounds_ = false;
 
-   private final FileSystemContext fsContext_;
-   private final FileDialogs fileDialogs_;
-   private RVersionSelectWidget rServerRVersion_ = null;
-   private CheckBox rememberRVersionForProjects_ = null;
-   private CheckBox reuseSessionsForProjectLinks_ = null;
-   private SelectWidget helpFontSize_;
-   private CheckBox clipboardMonitoring_ = null;
-   private CheckBox fullPathInTitle_ = null;
-   private CheckBox useGpuBlacklist_ = null;
-   private CheckBox useGpuDriverBugWorkarounds_ = null;
-   private SelectWidget renderingEngineWidget_ = null;
-   private String renderingEngine_ = null;
+    private final FileSystemContext fsContext_;
+    private final FileDialogs fileDialogs_;
+    private RVersionSelectWidget rServerRVersion_ = null;
+    private CheckBox rememberRVersionForProjects_ = null;
+    private CheckBox reuseSessionsForProjectLinks_ = null;
+    private SelectWidget helpFontSize_;
+    private CheckBox clipboardMonitoring_ = null;
+    private CheckBox fullPathInTitle_ = null;
+    private CheckBox useGpuBlacklist_ = null;
+    private CheckBox useGpuDriverBugWorkarounds_ = null;
+    private SelectWidget renderingEngineWidget_ = null;
+    private String renderingEngine_ = null;
 
-   private SelectWidget graphicsBackend_;
-   private SelectWidget graphicsAntialias_;
+    private SelectWidget graphicsBackend_;
+    private SelectWidget graphicsAntialias_;
 
-   private SelectWidget showServerHomePage_;
-   private SelectWidget saveWorkspace_;
-   private TextBoxWithButton rVersion_;
-   private TextBoxWithButton dirChooser_;
-   private CheckBox loadRData_;
-   private final CheckBox alwaysSaveHistory_;
-   private final CheckBox removeHistoryDuplicates_;
-   private CheckBox restoreLastProject_;
-   private CheckBox rProfileOnResume_;
-   private CheckBox showLastDotValue_;
-   private CheckBox enableCrashReporting_;
-   private final UserPrefs prefs_;
-   private final Session session_;
+    private SelectWidget showServerHomePage_;
+    private SelectWidget saveWorkspace_;
+    private TextBoxWithButton rVersion_;
+    private TextBoxWithButton dirChooser_;
+    private CheckBox loadRData_;
+    private final CheckBox alwaysSaveHistory_;
+    private final CheckBox removeHistoryDuplicates_;
+    private CheckBox restoreLastProject_;
+    private CheckBox rProfileOnResume_;
+    private CheckBox showLastDotValue_;
+    private CheckBox enableCrashReporting_;
+    private final UserPrefs prefs_;
+    private final Session session_;
+    private final GeneralPreferencesPaneConstants constants_ = GWT.create(GeneralPreferencesPaneConstants.class);
 }

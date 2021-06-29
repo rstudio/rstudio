@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -27,7 +28,7 @@ public class PythonPreferencesPane extends PythonPreferencesPaneBase<UserPrefs>
    public PythonPreferencesPane(PythonDialogResources res,
                                 PythonServerOperations server)
    {
-      super("420px", "(No interpreter selected)");
+      super("420px", constants_.pythonPreferencesText());
       
       overrideLabel_ = new Label();
       add(overrideLabel_);
@@ -45,9 +46,9 @@ public class PythonPreferencesPane extends PythonPreferencesPaneBase<UserPrefs>
       if (hasProjectOverride)
       {
          String text =
-               "(NOTE: This project has already been configured with " +
-               "its own Python interpreter. Use the Project Options " +
-               "dialog to change the version of Python used in this project.)";
+                 constants_.overrideText() +
+                 constants_.overrideInterpreterText() +
+                 constants_.overrideChangeVersionText();
          
          overrideLabel_.setText(text);
          overrideLabel_.setVisible(true);
@@ -81,4 +82,6 @@ public class PythonPreferencesPane extends PythonPreferencesPaneBase<UserPrefs>
    }
    
    private final Label overrideLabel_;
+   private static final PythonPreferencesPaneConstants constants_ = GWT.create(PythonPreferencesPaneConstants.class);
+
 }

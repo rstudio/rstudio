@@ -57,18 +57,18 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
       
       placeholderText_ = placeholderText;
       
-      add(headerLabel("Python"));
+      add(headerLabel(constants_.headerPythonLabel()));
       
       mismatchWarningBar_ = new InfoBar(InfoBar.WARNING);
       mismatchWarningBar_.setText(
-            "The active Python interpreter has been changed by an R startup script.");
+            constants_.mismatchWarningBarText());
       mismatchWarningBar_.setVisible(false);
       add(mismatchWarningBar_);
       
       tbPythonInterpreter_ = new TextBoxWithButton(
-            "Python interpreter:",
+            constants_.tbPythonInterpreterText(),
             placeholderText_,
-            "Select...",
+            constants_.tbPythonActionText(),
             null,
             ElementIds.TextBoxButtonId.PYTHON_PATH,
             true,
@@ -77,7 +77,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
                @Override
                public void onClick(ClickEvent event)
                {
-                  getProgressIndicator().onProgress("Finding interpreters...");
+                  getProgressIndicator().onProgress(constants_.progressIndicatorText());
                   
                   server_.pythonFindInterpreters(new ServerRequestCallback<PythonInterpreters>()
                   {
@@ -106,7 +106,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
                      public void onError(ServerError error)
                      {
                         String message =
-                              "Error finding Python interpreters: " +
+                              constants_.onErrorMessage() +
                               error.getUserMessage();
                         getProgressIndicator().onError(message);
                         
@@ -227,7 +227,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
       {
          String reason = info.getInvalidReason();
          if (StringUtil.isNullOrEmpty(reason))
-            reason = "The selected Python interpreter appears to be invalid.";
+            reason = constants_.invalidReasonLabel();
          
          InfoBar bar = new InfoBar(InfoBar.WARNING);
          bar.setText(reason);
@@ -313,7 +313,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
    @Override
    public String getName()
    {
-      return "Python";
+      return constants_.headerPythonLabel();
    }
    
    protected void initialize(String pythonPath)
@@ -430,6 +430,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
    {
       RES.styles().ensureInjected();
    }
+   private final PythonPreferencesPaneConstants constants_ = GWT.create(PythonPreferencesPaneConstants.class);
 
  
 }
