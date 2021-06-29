@@ -60,8 +60,6 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
 
-      placeholderText_ = placeholderText;
-      
       add(headerLabel(constants_.headerPythonLabel()));
       
       mismatchWarningBar_ = new InfoBar(InfoBar.WARNING);
@@ -69,19 +67,17 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
             constants_.mismatchWarningBarText());
       mismatchWarningBar_.setVisible(false);
       add(mismatchWarningBar_);
-      
+
       tbPythonInterpreter_ = new TextBoxWithButton(
-            constants_.tbPythonInterpreterText(),
-            placeholderText_,
-            constants_.tbPythonActionText(),
-            null,
-            placeholderText,
-            "Select...",
-            new HelpButton("using_python", "Using Python in RStudio"),
-            ElementIds.TextBoxButtonId.PYTHON_PATH,
-            true,
-            true,
-            new ClickHandler()
+              constants_.tbPythonInterpreterText(),
+              null,
+              placeholderText,
+              constants_.tbPythonActionText(),
+              new HelpButton("using_python", constants_.helpButtonLabel()),
+              ElementIds.TextBoxButtonId.PYTHON_PATH,
+              true,
+              true,
+              new ClickHandler()
             {
                @Override
                public void onClick(ClickEvent event)

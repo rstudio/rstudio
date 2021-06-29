@@ -100,4 +100,13 @@ public interface PythonPreferencesPaneConstants extends com.google.gwt.i18n.clie
     @DefaultStringValue("The selected Python interpreter appears to be invalid.")
     @Key("invalidReasonLabel")
     String invalidReasonLabel();
+
+    /**
+     * Translated "Using Python in RStudio".
+     *
+     * @return translated "Using Python in RStudio"
+     */
+    @DefaultStringValue("Using Python in RStudio")
+    @Key("helpButtonLabel")
+    String helpButtonLabel();
 }
