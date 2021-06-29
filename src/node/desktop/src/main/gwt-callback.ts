@@ -24,6 +24,7 @@ import { appState } from './app-state';
 import { PendingWindow } from './pending-window';
 import { MainWindow } from './main-window';
 import { DesktopBrowserWindow } from './desktop-browser-window';
+import { openMinimalWindow } from './minimal-window';
 
 export const PendingQuit = {
   'PendingQuitNone': 0,
@@ -192,48 +193,10 @@ export class GwtCallback {
       width: number,
       height: number
     ) => {
-      const named = !(name.length === 0) && name !== '_blank';
-
-      let browser: DesktopBrowserWindow|undefined = undefined;
-      if (named) {
-        browser = appState().windowTracker.getWindow(name);
-      }
-
-      if (!browser) {
-        const isViewerZoomWindow = name === '_rstudio_viewer_zoom';
-
-        // create the new browser window; pass along our own base URL so that the new window's
-        // WebProfile knows how to apply the appropriate headers
-        browser = new DesktopBrowserWindow(!isViewerZoomWindow, name,
-          // TODO
-          // pMainWindow_->webView()->baseUrl(), nullptr, pMainWindow_->webPage());
-          undefined);
-      
-        //     // ensure minimal windows can be closed with Ctrl+W (Cmd+W on macOS)
-        //     QAction* closeWindow = new QAction(browser);
-        //     closeWindow->setShortcut(Qt::CTRL + Qt::Key_W);
-        //     connect(closeWindow, &QAction::triggered,
-        //             browser, &BrowserWindow::close);
-        //     browser->addAction(closeWindow);
-      
-        //     connect(this, &GwtCallback::destroyed, browser, &BrowserWindow::close);
-      
-        if (named) {
-          appState().windowTracker.addWindow(name, browser);
-        }
-
-        // set title for viewer zoom
-        if (isViewerZoomWindow) {
-          browser.window?.setTitle('Viewer Zoom');
-        }
-      }
-
-      browser.window?.loadURL(url);
-      browser.window?.setSize(width, height);
-      browser.window?.once('ready-to-show', () => {
-        browser?.window?.show();
+      const minimalWindow = openMinimalWindow(name, url, width, height, this.mainWindow);
+      minimalWindow.window?.once('ready-to-show', () => {
+        minimalWindow?.window?.show();
       });
-      // TODO browser.window?.activate();
     });
 
     ipcMain.on('desktop_activate_minimal_window', (event, name) => {
