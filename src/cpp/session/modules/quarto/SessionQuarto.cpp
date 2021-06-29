@@ -333,6 +333,7 @@ Error getQmdPublishDetails(const json::JsonRpcRequest& request,
    std::string title = qmdPath.getStem();
    bool isShinyQmd = false;
    bool selfContained = false;
+   std::string outputFile;
 
    if (formatMeta != format.end())
    {
@@ -356,6 +357,14 @@ Error getQmdPublishDetails(const json::JsonRpcRequest& request,
    {
        json::Object pandocMetadata = (*pandoc).getValue().getObject();
        json::readObject(pandocMetadata, "self-contained", selfContained);
+
+       std::string pandocOutput;
+       json::readObject(pandocMetadata, "output-file", pandocOutput);
+       auto outputFilePath = qmdPath.completeChildPath(pandocOutput);
+       if (outputFilePath.exists())
+       {
+           outputFile = outputFilePath.getAbsolutePath();
+       }
    }
 
 
@@ -410,6 +419,9 @@ Error getQmdPublishDetails(const json::JsonRpcRequest& request,
    result["website_dir"] = websiteDir;
    result["website_output_dir"] = websiteOutputDir;
    result["has_connect_account"] = hasAccount;
+   result["output_file"] = outputFile;
+
+   // TODO: Add output file
 
    pResponse->setResult(result);
 

@@ -1149,8 +1149,12 @@ public class RSConnect implements SessionInitEvent.Handler,
                @Override
                public void onResponseReceived(QmdPublishDetails details)
                {
-                  // TODO: input needs Quarto flag
+                  if (!details.output_file.isEmpty())
+                  {
+                     input.getOriginatingEvent().getFromPreview().setOutputFile(details.output_file);
+                  }
                   input.setIsMultiRmd(false);
+                  input.setIsQuarto(true);
                   input.setIsShiny(details.is_shiny_qmd);
                   input.setIsSelfContained(details.is_self_contained);
                   input.setHasConnectAccount(details.has_connect_account);
@@ -1180,6 +1184,7 @@ public class RSConnect implements SessionInitEvent.Handler,
                   input.setIsMultiRmd(details.is_multi_rmd);
                   input.setIsShiny(details.is_shiny_rmd);
                   input.setIsSelfContained(details.is_self_contained);
+                  input.setIsQuarto(false);
                   input.setHasConnectAccount(details.has_connect_account);
                   input.setWebsiteDir(details.website_dir);
                   input.setWebsiteOutputDir(details.website_output_dir);

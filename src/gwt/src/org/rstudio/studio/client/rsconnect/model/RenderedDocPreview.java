@@ -65,7 +65,12 @@ public class RenderedDocPreview
    {
       return outputFile_;
    }
-   
+
+   public void setOutputFile(String outputFile)
+   {
+      outputFile_ = outputFile;
+   }
+
    public String getWebsiteDir()
    {
       return websiteDir_;
@@ -92,8 +97,8 @@ public class RenderedDocPreview
    }
    
    private final String sourceFile_;
-   private final String outputFile_;
    private final String websiteDir_;
+   private String outputFile_;
    private boolean isStatic_;
    private boolean isQuarto_ = false;
 }
