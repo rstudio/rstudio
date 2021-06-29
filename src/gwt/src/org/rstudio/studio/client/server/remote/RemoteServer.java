@@ -6813,7 +6813,7 @@ public class RemoteServer implements Server
    private static final String REGISTER_USER_TOKEN = "register_user_token";
    private static final String GET_RSCONNECT_LINT_RESULTS = "get_rsconnect_lint_results";
    private static final String GET_RMD_PUBLISH_DETAILS = "get_rmd_publish_details";
-   private static final String GET_QMD_PUBLISH_DETAILS = "get_rmd_publish_details";
+   private static final String GET_QMD_PUBLISH_DETAILS = "get_qmd_publish_details";
    private static final String HAS_ORPHANED_ACCOUNTS = "has_orphaned_accounts";
 
    private static final String RENDER_RMD = "render_rmd";
