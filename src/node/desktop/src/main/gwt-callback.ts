@@ -18,10 +18,11 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 
 import { ipcMain, dialog, BrowserWindow } from 'electron';
-import { MessageBoxOptions, OpenDialogOptions } from 'electron/main';
+import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions } from 'electron/main';
 
 import { PendingWindow } from './pending-window';
 import { MainWindow } from './main-window';
+import { openMinimalWindow } from './minimal-window';
 
 export const PendingQuit = {
   'PendingQuitNone': 0,
@@ -37,177 +38,186 @@ export class GwtCallback {
     public mainWindow: MainWindow,
     public isRemoteDesktop: boolean
   ) {
-    ipcMain.on('desktop_browse_url', (event, url) => {
+    ipcMain.on('desktop_browse_url', (event, url: string) => {
       GwtCallback.unimpl('desktop_browser_url');
     });
 
-    ipcMain.handle('desktop_get_open_file_name',
-      (event, caption, label, dir, filter, canChooseDirectories, focusOwner) => {
+    ipcMain.handle('desktop_get_open_file_name', (event, caption: string, label: string,
+      dir: string, filter: string, canChooseDirectories: boolean, focusOwner: boolean
+    ) => {
+      // TODO: apply filter
+      const openDialogOptions: OpenDialogOptions = {
+        properties: [canChooseDirectories ? 'openDirectory' : 'openFile'],
+        title: caption,
+        defaultPath: dir,
+        buttonLabel: label,
+      };
 
-        // TODO: apply filter
-        const openDialogOptions: OpenDialogOptions = {
-          properties: [canChooseDirectories ? 'openDirectory' : 'openFile'],
-          title: caption,
-          defaultPath: dir,
-          buttonLabel: label,
-        };
+      const focusedWindow = BrowserWindow.getFocusedWindow();
+      if (focusedWindow) {
+        return dialog.showOpenDialog(focusedWindow, openDialogOptions);
+      } else {
+        return dialog.showOpenDialog(openDialogOptions);
+      }
+    });
 
-        const focusedWindow = BrowserWindow.getFocusedWindow();
-        if (focusedWindow) {
-          return dialog.showOpenDialog(focusedWindow, openDialogOptions);
-        } else {
-          return dialog.showOpenDialog(openDialogOptions);
-        }
-      });
-
-    ipcMain.handle('desktop_get_save_file_name', (event,
-      caption,
-      label,
-      dir,
-      defaultExtension,
-      forceDefaultExtension,
-      focusOwner) => {
+    ipcMain.handle('desktop_get_save_file_name', (event, caption: string, label: string,
+      dir: string, defaultExtension: string, forceDefaultExtension: boolean,
+      focusOwner: boolean
+    ) => {
       GwtCallback.unimpl('desktop_get_save_file_name');
       return '';
     });
 
-    ipcMain.handle('desktop_get_existing_directory', (caption, label, dir, focusOwner) => {
+    ipcMain.handle('desktop_get_existing_directory', (event, caption: string, label: string,
+      dir: string, focusOwner: boolean
+    ) => {
       GwtCallback.unimpl('desktop_get_existing_directory');
       return '';
     });
 
-    ipcMain.on('desktop_on_clipboard_selection_changed', (event) => {
+    ipcMain.on('desktop_on_clipboard_selection_changed', () => {
       GwtCallback.unimpl('desktop_on_clipboard_selection_changed');
     });
 
-    ipcMain.on('desktop_undo', (event) => {
+    ipcMain.on('desktop_undo', () => {
       GwtCallback.unimpl('desktop_undo');
     });
 
-    ipcMain.on('desktop_redo', (event) => {
+    ipcMain.on('desktop_redo', () => {
       GwtCallback.unimpl('desktop_redo');
     });
 
-    ipcMain.on('desktop_clipboard_cut', (event) => {
+    ipcMain.on('desktop_clipboard_cut', () => {
       GwtCallback.unimpl('desktop_clipboard_cut');
     });
 
-    ipcMain.on('desktop_clipboard_copy', (event) => {
+    ipcMain.on('desktop_clipboard_copy', () => {
       GwtCallback.unimpl('desktop_clipboard_copy');
     });
 
-    ipcMain.on('desktop_clipboard_paste', (event) => {
+    ipcMain.on('desktop_clipboard_paste', () => {
       GwtCallback.unimpl('desktop_clipboard_paste');
     });
 
-    ipcMain.on('desktop_set_clipboard_text', (event, text) => {
+    ipcMain.on('desktop_set_clipboard_text', (event, text: string) => {
       GwtCallback.unimpl('desktop_set_clipboard_text');
     });
 
-    ipcMain.handle('desktop_get_clipboard_text', (event) => {
+    ipcMain.handle('desktop_get_clipboard_text', () => {
       GwtCallback.unimpl('desktop_get_clipboard_text');
       return '';
     });
 
-    ipcMain.handle('desktop_get_clipboard_uris', (event) => {
+    ipcMain.handle('desktop_get_clipboard_uris', () => {
       GwtCallback.unimpl('desktop_get_clipboard_uris');
       return '';
     });
 
-    ipcMain.handle('desktop_get_clipboard_image', (event) => {
+    ipcMain.handle('desktop_get_clipboard_image', () => {
       GwtCallback.unimpl('desktop_get_clipboard_image');
       return '';
     });
 
-    ipcMain.on('desktop_set_global_mouse_selection', (event, selection) => {
+    ipcMain.on('desktop_set_global_mouse_selection', (event, selection: string) => {
       GwtCallback.unimpl('desktop_set_global_mouse_selection');
     });
 
-    ipcMain.handle('desktop_get_global_mouse_selection', (event) => {
+    ipcMain.handle('desktop_get_global_mouse_selection', () => {
       GwtCallback.unimpl('desktop_get_global_mouse_selection');
       return '';
     });
 
-    ipcMain.handle('desktop_get_cursor_position', (event) => {
+    ipcMain.handle('desktop_get_cursor_position', () => {
       GwtCallback.unimpl('desktop_get_cursor_position');
       return {x: 20, y: 20};
     });
 
-    ipcMain.handle('desktop_does_window_exist_at_cursor_position', (event) => {
+    ipcMain.handle('desktop_does_window_exist_at_cursor_position', () => {
       return false;
     });
 
-    ipcMain.on('desktop_on_workbench_initialized', (event, scratchPath) => {
+    ipcMain.on('desktop_on_workbench_initialized', (event, scratchPath: string) => {
       this.mainWindow.onWorkbenchInitialized();
     });
 
-    ipcMain.on('desktop_show_folder', (event, path) => {
+    ipcMain.on('desktop_show_folder', (event, path: string) => {
       GwtCallback.unimpl('desktop_show_folder');
     });
 
-    ipcMain.on('desktop_show_file', (event, file) => {
+    ipcMain.on('desktop_show_file', (event, file: string) => {
       GwtCallback.unimpl('desktop_show_file');
     });
 
-    ipcMain.on('desktop_show_word_doc', (event, wordDoc) => {
+    ipcMain.on('desktop_show_word_doc', (event, wordDoc: string) => {
       GwtCallback.unimpl('desktop_show_word_doc');
     });
 
-    ipcMain.on('desktop_show_ppt_presentation', (event, pptDoc) => {
+    ipcMain.on('desktop_show_ppt_presentation', (event, pptDoc: string) => {
       GwtCallback.unimpl('desktop_show_ppt_presentation');
     });
 
-    ipcMain.on('desktop_show_pdf', (event, path, pdfPage) => {
+    ipcMain.on('desktop_show_pdf', (event, path: string, pdfPage: string) => {
       GwtCallback.unimpl('desktop_show_pdf');
     });
 
-    ipcMain.on('desktop_prepare_show_word_doc', (event) => {
+    ipcMain.on('desktop_prepare_show_word_doc', () => {
       GwtCallback.unimpl('desktop_prepare_show_word_doc');
     });
 
-    ipcMain.on('desktop_prepare_show_ppt_presentation', (event) => {
+    ipcMain.on('desktop_prepare_show_ppt_presentation', () => {
       GwtCallback.unimpl('desktop_prepare_show_ppt_presentation');
     });
 
-    ipcMain.handle('desktop_get_r_version', (event) => {
+    ipcMain.handle('desktop_get_r_version', () => {
       return '';
     });
 
-    ipcMain.handle('desktop_choose_r_version', (event) => {
+    ipcMain.handle('desktop_choose_r_version', () => {
       GwtCallback.unimpl('desktop_choose_r_version');
       return '';
     });
 
-    ipcMain.handle('desktop_device_pixel_ratio', (event) => {
+    ipcMain.handle('desktop_device_pixel_ratio', () => {
       GwtCallback.unimpl('desktop_device_pixel_ratio');
       return 1.0;
     });
 
-    ipcMain.on('desktop_open_minimal_window', (event, name, url, width, height) => {
-      GwtCallback.unimpl('desktop_open_minimal_window');
+    ipcMain.on('desktop_open_minimal_window', (event: IpcMainEvent, name: string, url: string,
+      width: number, height: number
+    ) => {
+      const minimalWindow = openMinimalWindow(name, url, width, height, this.mainWindow);
+      minimalWindow.window.once('ready-to-show', () => {
+        minimalWindow.window?.show();
+      });
     });
 
-    ipcMain.on('desktop_activate_minimal_window', (event, name) => {
+    ipcMain.on('desktop_activate_minimal_window', (event, name: string) => {
       GwtCallback.unimpl('desktop_activate_minimal_window');
     });
 
-    ipcMain.on('desktop_activate_satellite_window', (event, name) => {
+    ipcMain.on('desktop_activate_satellite_window', (event, name: string) => {
       console.log(`activate_satellite_window ${name}`);
     });
 
-    ipcMain.handle('desktop_prepare_for_satellite_window', (event, name, x, y, width, height) => {
+    ipcMain.handle('desktop_prepare_for_satellite_window', (event, name: string, x: number,
+      y: number, width: number, height: number
+    ) => {
       this.mainWindow.prepareForWindow(new PendingWindow(name, x, y, width, height));
     });
 
-    ipcMain.handle('desktop_prepare_for_named_window', (event, name, allowExternalNavigate, showToolbar) => {
+    ipcMain.handle('desktop_prepare_for_named_window', (event, name: string,
+      allowExternalNavigate: boolean, showToolbar: boolean) => {
       console.log(`prepare_for_named_window ${name}`);
     });
 
-    ipcMain.on('desktop_close_named_window', (event, name) => {
+    ipcMain.on('desktop_close_named_window', (event, name: string) => {
       GwtCallback.unimpl('desktop_close_named_window');
     });
 
-    ipcMain.on('desktop_copy_page_region_to_clipboard', (event, left, top, width, height) => {
+    ipcMain.on('desktop_copy_page_region_to_clipboard', (event, left: number, top: number,
+      width: number, height: number
+    ) => {
       GwtCallback.unimpl('desktop_copy_page_region_to_clipboard');
     });
 
@@ -227,7 +237,7 @@ export class GwtCallback {
       GwtCallback.unimpl('desktop_print_finished');
     });
 
-    ipcMain.handle('desktop_supports_clipboard_metafile', (event) => {
+    ipcMain.handle('desktop_supports_clipboard_metafile', () => {
       return false;
     });
 
@@ -255,14 +265,14 @@ export class GwtCallback {
       return ''; 
     });
 
-    ipcMain.on('desktop_bring_main_frame_to_front', (event) => {
+    ipcMain.on('desktop_bring_main_frame_to_front', () => {
     });
 
-    ipcMain.on('desktop_bring_main_frame_behind_active', (event) => {
+    ipcMain.on('desktop_bring_main_frame_behind_active', () => {
       GwtCallback.unimpl('desktop_bring_main_frame_behind_active');
     });
 
-    ipcMain.handle('desktop_rendering_engine', (event) => {
+    ipcMain.handle('desktop_rendering_engine', () => {
       return '';
     });
 
@@ -295,12 +305,12 @@ export class GwtCallback {
       GwtCallback.unimpl('desktop_open_terminal');
     });
 
-    ipcMain.handle('desktop_get_fixed_width_font_list', (event) => {
+    ipcMain.handle('desktop_get_fixed_width_font_list', () => {
       GwtCallback.unimpl('desktop_get_fixed_width_font_list');
       return '';
     });
 
-    ipcMain.handle('desktop_get_fixed_width_font', (event) => {
+    ipcMain.handle('desktop_get_fixed_width_font', () => {
       GwtCallback.unimpl('desktop_get_fixed_width_font');
       return '';
     });
@@ -309,12 +319,12 @@ export class GwtCallback {
       GwtCallback.unimpl('desktop_set_fixed_width_font');
     });
 
-    ipcMain.handle('desktop_get_zoom_levels', (event) => {
+    ipcMain.handle('desktop_get_zoom_levels', () => {
       GwtCallback.unimpl('desktop_get_zoom_levels');
       return '';
     });
 
-    ipcMain.handle('desktop_get_zoom_level', (event) => {
+    ipcMain.handle('desktop_get_zoom_level', () => {
       GwtCallback.unimpl('desktop_get_zoom_level');
       return 1.0;
     });
@@ -323,15 +333,15 @@ export class GwtCallback {
       GwtCallback.unimpl('desktop_set_zoom_level');
     });
 
-    ipcMain.on('desktop_zoom_in', (event) => {
+    ipcMain.on('desktop_zoom_in', () => {
       GwtCallback.unimpl('desktop_zoom_in');
     });
 
-    ipcMain.on('desktop_zoom_out', (event) => {
+    ipcMain.on('desktop_zoom_out', () => {
       GwtCallback.unimpl('desktop_zoom_out');
     });
 
-    ipcMain.on('desktop_zoom_actual_size', (event) => {
+    ipcMain.on('desktop_zoom_actual_size', () => {
       GwtCallback.unimpl('desktop_zoom_actual_size');
     });
 
@@ -344,7 +354,7 @@ export class GwtCallback {
     ipcMain.on('desktop_sync_to_editor_theme', (event, isDark) => {
     });
 
-    ipcMain.handle('desktop_get_enable_accessibility', (event) => {
+    ipcMain.handle('desktop_get_enable_accessibility', () => {
       GwtCallback.unimpl('desktop_get_enable_accessibility');
       return true;
     });
@@ -353,7 +363,7 @@ export class GwtCallback {
       GwtCallback.unimpl('desktop_set_enable_accessibility');
     });
 
-    ipcMain.handle('desktop_get_clipboard_monitoring', (event) => {
+    ipcMain.handle('desktop_get_clipboard_monitoring', () => {
       GwtCallback.unimpl('desktop_get_clipboard_monitoring');
       return false;
     });
@@ -370,7 +380,7 @@ export class GwtCallback {
       GwtCallback.unimpl('desktop_set_ignore_gpu_blacklist');
     });
 
-    ipcMain.handle('desktop_get_disable_gpu_driver_bug_workarounds', (event) => {
+    ipcMain.handle('desktop_get_disable_gpu_driver_bug_workarounds', () => {
       return false;
     });
 
@@ -378,29 +388,29 @@ export class GwtCallback {
       GwtCallback.unimpl('desktop_set_disable_gpu_driver_bug_workarounds');
     });
 
-    ipcMain.on('desktop_show_license_dialog', (event) => {
+    ipcMain.on('desktop_show_license_dialog', () => {
       GwtCallback.unimpl('desktop_show_license_dialog');
     });
 
-    ipcMain.on('desktop_show_session_server_options_dialog', (event) => {
+    ipcMain.on('desktop_show_session_server_options_dialog', () => {
       GwtCallback.unimpl('desktop_show_session_server_options_dialog');
     });
 
-    ipcMain.handle('desktop_get_init_messages', (event) => {
+    ipcMain.handle('desktop_get_init_messages', () => {
       return '';
     });
 
-    ipcMain.handle('desktop_get_license_status_message', (event) => {
+    ipcMain.handle('desktop_get_license_status_message', () => {
       GwtCallback.unimpl('desktop_get_license_status_messages');
       return '';
     });
 
-    ipcMain.handle('desktop_allow_product_usage', (event) => {
+    ipcMain.handle('desktop_allow_product_usage', () => {
       GwtCallback.unimpl('desktop_allow_product_usage');
       return true;
     });
 
-    ipcMain.handle('desktop_get_desktop_synctex_viewer', (event) => {
+    ipcMain.handle('desktop_get_desktop_synctex_viewer', () => {
       GwtCallback.unimpl('desktop_get_desktop_synctex_viewer');
       return '';
     });
@@ -413,16 +423,16 @@ export class GwtCallback {
       GwtCallback.unimpl('desktop_external_synctex_view');
     });
 
-    ipcMain.handle('desktop_supports_fullscreen_mode', (event) => {
+    ipcMain.handle('desktop_supports_fullscreen_mode', () => {
       GwtCallback.unimpl('desktop_supports_fullscreen_mode');
       return true;
     });
 
-    ipcMain.on('desktop_toggle_fullscreen_mode', (event) => {
+    ipcMain.on('desktop_toggle_fullscreen_mode', () => {
       GwtCallback.unimpl('desktop_toggle_fullscreen_mode');
     });
 
-    ipcMain.on('desktop_show_keyboard_shortcut_help', (event) => {
+    ipcMain.on('desktop_show_keyboard_shortcut_help', () => {
       GwtCallback.unimpl('desktop_show_keyboard_shortcut_help');
     });
 
@@ -430,7 +440,7 @@ export class GwtCallback {
       GwtCallback.unimpl('desktop_launch)_session');
     });
 
-    ipcMain.on('desktop_reload_zoom_window', (event) => {
+    ipcMain.on('desktop_reload_zoom_window', () => {
     });
 
     ipcMain.on('desktop_set_tutorial_url', (event, url) => {
@@ -449,23 +459,25 @@ export class GwtCallback {
       GwtCallback.unimpl('desktop_set_shiny_dialog_url');
     });
 
-    ipcMain.handle('desktop_get_scrolling_compensation_type', (event) => {
+    ipcMain.handle('desktop_get_scrolling_compensation_type', () => {
       GwtCallback.unimpl('desktop_get_scrolling_compensation_type');
       return '';
     });
 
-    ipcMain.handle('desktop_is_macos', (event) => {
+    ipcMain.handle('desktop_is_macos', () => {
+      // TODO
       return true;
     });
 
-    ipcMain.handle('desktop_is_centos', (event) => {
+    ipcMain.handle('desktop_is_centos', () => {
+      // TODO
       return false;
     });
 
     ipcMain.on('desktop_set_busy', (event, busy) => {
     });
 
-    ipcMain.on('desktop_set_window_title', (event, title) => {
+    ipcMain.on('desktop_set_window_title', (event, title: string) => {
       this.mainWindow.window?.setTitle(`${title} - RStudio`);
     });
 
@@ -473,20 +485,20 @@ export class GwtCallback {
       GwtCallback.unimpl('desktop_install_rtools');
     });
 
-    ipcMain.handle('desktop_get_display_dpi', (event) => {
+    ipcMain.handle('desktop_get_display_dpi', () => {
       return '72';
     });
 
-    ipcMain.on('desktop_on_session_quit', (event) => {
+    ipcMain.on('desktop_on_session_quit', () => {
       GwtCallback.unimpl('desktop_on_session_quit');
     });
 
-    ipcMain.handle('desktop_get_session_server', (event) => {
+    ipcMain.handle('desktop_get_session_server', () => {
       GwtCallback.unimpl('desktop_get_session_server');
       return {};
     });
 
-    ipcMain.handle('desktop_get_session_servers', (event) => {
+    ipcMain.handle('desktop_get_session_servers', () => {
       return [];
     });
 
@@ -499,11 +511,11 @@ export class GwtCallback {
       return false;
     });
 
-    ipcMain.on('desktop_connect_to_launcher_server', (event) => {
+    ipcMain.on('desktop_connect_to_launcher_server', () => {
       GwtCallback.unimpl('desktop_connect_to_launcher_server');
     });
 
-    ipcMain.handle('desktop_get_launcher_server', (event) => {
+    ipcMain.handle('desktop_get_launcher_server', () => {
       GwtCallback.unimpl('desktop_get_launcher_server');
       return {};
     });
@@ -532,15 +544,15 @@ export class GwtCallback {
       GwtCallback.unimpl('desktop_submit_launcher_job');
     });
 
-    ipcMain.on('desktop_get_job_container_user', (event) => {
+    ipcMain.on('desktop_get_job_container_user', () => {
       GwtCallback.unimpl('desktop_get_job_container_user');
     });
 
-    ipcMain.on('desktop_validate_jobs_config', (event) => {
+    ipcMain.on('desktop_validate_jobs_config', () => {
       GwtCallback.unimpl('desktop_validate_jobs_config');
     });
 
-    ipcMain.handle('desktop_get_proxy_port_number', (event) => {
+    ipcMain.handle('desktop_get_proxy_port_number', () => {
       GwtCallback.unimpl('desktop_get_proxy_port_number');
       return -1;
     });

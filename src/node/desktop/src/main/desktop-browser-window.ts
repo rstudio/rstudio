@@ -23,7 +23,7 @@ import path from 'path';
  * SatelliteWindow, and MainWindow.
  */
 export class DesktopBrowserWindow {
-  window?: BrowserWindow;
+  window: BrowserWindow;
 
   /**
    * @param adjustTitle 

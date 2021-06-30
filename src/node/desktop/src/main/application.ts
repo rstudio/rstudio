@@ -29,6 +29,7 @@ import { AppState } from './app-state';
 import { prepareEnvironment } from './detect_r';
 import { SessionLauncher } from './session-launcher';
 import { DesktopActivation } from './activation-overlay';
+import { WindowTracker } from './window-tracker';
 
 // RStudio command-line switches
 export const kRunDiagnosticsOption = '--run-diagnostics';
@@ -48,6 +49,7 @@ export class Application implements AppState {
   sessionPath?: FilePath;
   supportPath?: FilePath;
   port = generateRandomPort();
+  windowTracker = new WindowTracker();
 
   appLaunch?: ApplicationLaunch;
   sessionLauncher?: SessionLauncher;

@@ -19,6 +19,7 @@ import { FilePath } from '../core/file-path';
 
 import { DesktopActivation } from './activation-overlay';
 import { Application } from './application';
+import { WindowTracker } from './window-tracker';
 
 /**
  * Global application state
@@ -32,6 +33,7 @@ export interface AppState {
   activation(): DesktopActivation;
   port: number;
   generateNewPort(): void;
+  windowTracker: WindowTracker;
 }
 
 let rstudio: AppState | null = null;
