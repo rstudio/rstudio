@@ -100,7 +100,8 @@ export class SessionLauncher {
     this.appLaunch.setActivationWindow(this.mainWindow);
 
     // TODO - reimplement
-    // desktop::options().restoreMainWindowBounds(pMainWindow_);
+    // desktop::options().restoreMainWindowBounds(this.mainWindow);
+    this.mainWindow.window.setSize(1200, 900); // TEMP
 
     logger().logDiagnostic('\nConnected to R session, attempting to initialize...\n');
 
@@ -137,11 +138,16 @@ export class SessionLauncher {
     // show the window (but don't if we are doing a --run-diagnostics)
     if (!appState().runDiagnostics) {
       finalPlatformInitialize(this.mainWindow);
-      this.mainWindow.window?.show(); // TODO - don't show until 'ready-to-show' event to avoid flashing?
+      this.mainWindow.window.once('ready-to-show', () => {
+        this.mainWindow?.window.show();
+      });
       appState().activation().setMainWindow(this.mainWindow.window);
       this.appLaunch.activateWindow();
-      this.mainWindow.load(launchContext.url);
+      this.mainWindow.loadUrl(launchContext.url);
     }
+
+    // TODO
+    // qApp->setQuitOnLastWindowClosed(true);
     return Success();
   }
 
@@ -217,7 +223,7 @@ export class SessionLauncher {
 
       // closeAllSatellites();
 
-      this.mainWindow?.window?.webContents.executeJavaScript('window.desktopHooks.notifyRCrashed()')
+      this.mainWindow?.window.webContents.executeJavaScript('window.desktopHooks.notifyRCrashed()')
         .catch(() => {
           // The above can throw if the window has no desktop hooks; this is normal
           // if we haven't loaded the initial session.

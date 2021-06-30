@@ -15,13 +15,12 @@
  */
 
 import { WebContents } from 'electron';
-import { URL } from 'url';
 import { DesktopBrowserWindow } from './desktop-browser-window';
 
 export class SecondaryWindow extends DesktopBrowserWindow {
   constructor(
     name: string,
-    baseUrl?: URL,
+    baseUrl?: string,
     parent?: DesktopBrowserWindow,
     opener?: WebContents,
     allowExternalNavigate = false

@@ -15,7 +15,6 @@
 
 import { BrowserWindow, WebContents } from 'electron';
 
-import { URL } from 'url';
 import path from 'path';
 
 /**
@@ -37,14 +36,13 @@ export class DesktopBrowserWindow {
   constructor(
     private adjustTitle: boolean,
     private name: string,
-    private baseUrl?: URL,
+    private baseUrl?: string,
     private parent?: DesktopBrowserWindow,
     private opener?: WebContents,
     private allowExternalNavigate = false,
     addApiKeys: string[] = []
   ) {
-    const apiKeys = ['desktopInfo', ...addApiKeys];
-
+    const apiKeys = [['desktopInfo', ...addApiKeys].join('|')];
     this.window = new BrowserWindow({
       // https://github.com/electron/electron/blob/master/docs/faq.md#the-font-looks-blurry-what-is-this-and-what-can-i-do
       backgroundColor: '#fff', 

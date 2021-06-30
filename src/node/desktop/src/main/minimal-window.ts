@@ -26,7 +26,6 @@ export function openMinimalWindow(
   mainWindow: MainWindow
 ): DesktopBrowserWindow {
 
-  const urlStr = url.toString();
   const named = !!name && name !== '_blank';
 
   let browser: DesktopBrowserWindow|undefined = undefined;
@@ -65,7 +64,7 @@ export function openMinimalWindow(
     }
   }
 
-  browser.window.loadURL(urlStr);
+  browser.window.loadURL(url);
   browser.window.setSize(width, height);
   return browser;
 }

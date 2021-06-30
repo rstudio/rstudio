@@ -13,6 +13,8 @@
  *
  */
 
+import { createStubInstance, StubbableType, SinonStubbedInstance, SinonStubbedMember } from 'sinon';
+
 /**
  * save and clear specific env vars
  */
@@ -35,4 +37,16 @@ export function restore(vars: Record<string, string>): void {
       delete process.env[name];
     }
   }
+}
+
+// From: https://github.com/sinonjs/sinon/issues/1963
+// Sinon can't stub members marked with TypeScript "private" or "protected"
+export type StubbedClass<T> = SinonStubbedInstance<T> & T;
+
+export function createSinonStubInstance<T>(
+  constructor: StubbableType<T>,
+  overrides?: { [K in keyof T]?: SinonStubbedMember<T[K]> },
+): StubbedClass<T> {
+  const stub = createStubInstance<T>(constructor, overrides);
+  return stub as unknown as StubbedClass<T>;
 }
