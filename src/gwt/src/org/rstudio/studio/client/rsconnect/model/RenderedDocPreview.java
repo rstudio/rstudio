@@ -28,6 +28,7 @@ public class RenderedDocPreview
       outputFile_ = params.getOutputFile();
       isStatic_ = !params.isShinyDocument();
       websiteDir_ = params.getWebsiteDir();
+      isQuarto_ = params.getResult() != null && params.getResult().isQuarto();
    }
    
    public RenderedDocPreview(HTMLPreviewResult result)
@@ -44,6 +45,7 @@ public class RenderedDocPreview
       outputFile_ = result.getOutputFile();
       isStatic_ = !result.isShinyDocument();
       websiteDir_ = null;
+      isQuarto_ = result.isQuarto();
    }
    
    public RenderedDocPreview(String sourceFile, String outputFile, 
