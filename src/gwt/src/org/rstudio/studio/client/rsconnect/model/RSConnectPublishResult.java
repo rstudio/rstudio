@@ -106,7 +106,7 @@ public class RSConnectPublishResult
       return isUpdate_;
    }
 
-   private final String appName_; 
+   private final String appName_;
    private final String appTitle_; 
    private final String appId_;
    private final RSConnectAccount account_; 

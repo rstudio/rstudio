@@ -268,6 +268,11 @@ public class RSConnect implements SessionInitEvent.Handler,
                   {
                      if (arg == null)
                         return;
+                     boolean isQuarto = false;
+                     if (event.getFromPreview() != null)
+                     {
+                        isQuarto = event.getFromPreview().isQuarto();
+                     }
 
                      if (event.getFromPrevious().getAsStatic())
                         publishAsFiles(event,
@@ -278,6 +283,7 @@ public class RSConnect implements SessionInitEvent.Handler,
                                     arg.isSelfContained(),
                                     true,
                                     arg.isShiny(),
+                                    isQuarto,
                                     arg.getDescription(),
                                     event.getContentType()));
                      else
@@ -424,6 +430,7 @@ public class RSConnect implements SessionInitEvent.Handler,
          if (StringUtil.getExtension(event.getPath()).equalsIgnoreCase("r"))
          {
             FileSystemItem rFile = FileSystemItem.createFile(event.getPath());
+
             // use the directory for the deployment record when publishing APIs or
             // directory-based apps; use the file itself when publishing
             // single-file apps
@@ -432,6 +439,7 @@ public class RSConnect implements SessionInitEvent.Handler,
                         rFile.getName() :
                         rFile.getParentPathString(),
                         isAPI);
+
          }
          else
          {
@@ -443,7 +451,13 @@ public class RSConnect implements SessionInitEvent.Handler,
       else
       {
          source = new RSConnectPublishSource(event.getPath(), websiteDir,
-            false, false, isShiny, null, event.getContentType());
+            false, false, isShiny, false, null, event.getContentType());
+      }
+
+      // detect quarto
+      if (event.getFromPreview() != null)
+      {
+         source.setIsQuarto(event.getFromPreview().isQuarto());
       }
 
       publishAsFiles(event, source);
@@ -471,6 +485,7 @@ public class RSConnect implements SessionInitEvent.Handler,
                input.isSelfContained(),
                true,
                input.isShiny(),
+               input.isQuarto(),
                input.getDescription(),
                input.getContentType());
       }
@@ -773,12 +788,13 @@ public class RSConnect implements SessionInitEvent.Handler,
          boolean isShiny,
          boolean asMultiple,
          boolean asStatic,
+         boolean isQuarto,
          boolean launch,
          JavaScriptObject record) /*-{
       $wnd.opener.deployToRSConnect(sourceFile, deployDir, deployFile,
                                     websiteDir, description, deployFiles,
                                     additionalFiles, ignoredFiles, isSelfContained,
-                                    isShiny, asMultiple, asStatic, launch,
+                                    isShiny, asMultiple, asStatic, isQuarto, launch,
                                     record);
    }-*/;
 
@@ -834,6 +850,7 @@ public class RSConnect implements SessionInitEvent.Handler,
                result.getSource().isShiny(),
                result.getSettings().getAsMultiple(),
                result.getSettings().getAsStatic(),
+               result.getSource().isQuarto(),
                launchBrowser,
                RSConnectDeploymentRecord.create(result.getAppName(),
                      result.getAppTitle(), result.getAppId(), result.getAccount(), ""));
@@ -1086,7 +1103,7 @@ public class RSConnect implements SessionInitEvent.Handler,
       var thiz = this;
       $wnd.deployToRSConnect = $entry(
          function(sourceFile, deployDir, deployFile, websiteDir, description, deployFiles, additionalFiles, ignoredFiles, isSelfContained, isShiny, asMultiple, asStatic, launch, record) {
-            thiz.@org.rstudio.studio.client.rsconnect.RSConnect::deployToRSConnect(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;ZZZZZLcom/google/gwt/core/client/JavaScriptObject;)(sourceFile, deployDir, deployFile, websiteDir, description, deployFiles, additionalFiles, ignoredFiles, isSelfContained, isShiny, asMultiple, asStatic, launch, record);
+            thiz.@org.rstudio.studio.client.rsconnect.RSConnect::deployToRSConnect(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;ZZZZZZLcom/google/gwt/core/client/JavaScriptObject;)(sourceFile, deployDir, deployFile, websiteDir, description, deployFiles, additionalFiles, ignoredFiles, isSelfContained, isShiny, asMultiple, asStatic, isQuarto, launch, record);
          }
       );
    }-*/;
@@ -1103,6 +1120,7 @@ public class RSConnect implements SessionInitEvent.Handler,
                                   boolean isShiny,
                                   boolean asMultiple,
                                   boolean asStatic,
+                                  boolean isQuarto,
                                   boolean launch,
                                   JavaScriptObject jsoRecord)
    {
@@ -1123,7 +1141,7 @@ public class RSConnect implements SessionInitEvent.Handler,
       RSConnectDeploymentRecord record = jsoRecord.cast();
       events_.fireEvent(new RSConnectDeployInitiatedEvent(
             new RSConnectPublishSource(sourceFile, deployDir, deployFile,
-                  websiteDir, isSelfContained, asStatic, isShiny, description),
+                  websiteDir, isSelfContained, asStatic, isShiny, isQuarto, description),
             new RSConnectPublishSettings(deployFilesList,
                   additionalFilesList, ignoredFilesList, asMultiple, asStatic),
             launch, record));

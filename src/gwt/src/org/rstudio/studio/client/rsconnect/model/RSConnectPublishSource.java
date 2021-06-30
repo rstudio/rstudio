@@ -39,16 +39,16 @@ public class RSConnectPublishSource
    }
 
    public RSConnectPublishSource(String sourceFile, String websiteDir, 
-         boolean isSelfContained, boolean isStatic, boolean isShiny, 
+         boolean isSelfContained, boolean isStatic, boolean isShiny, boolean isQuarto,
          String description, int type)
    {
       this(sourceFile, sourceFile, websiteDir, null, isSelfContained, isStatic, 
-            isShiny, description, type);
+            isShiny, isQuarto, description, type);
    }
    
    public RSConnectPublishSource(String sourceFile, String outputFile, 
          String websiteDir, String websiteOutputDir, boolean isSelfContained, boolean isStatic, 
-         boolean isShiny, String description, int type)
+         boolean isShiny, boolean isQuarto, String description, int type)
    {
       deployFile_ = outputFile;
       sourceFile_ = sourceFile;
@@ -58,6 +58,7 @@ public class RSConnectPublishSource
       isStatic_ = isStatic;
       isSingleFileShiny_ = false;
       websiteDir_ = websiteDir;
+      isQuarto_ = isQuarto;
 
       String category = null;
       if (type == RSConnect.CONTENT_TYPE_WEBSITE)
@@ -101,7 +102,7 @@ public class RSConnectPublishSource
    
    public RSConnectPublishSource(String sourceFile, String deployDir, 
          String deployFile, String websiteDir, boolean isSelfContained, 
-         boolean isStatic, boolean isShiny, String description)
+         boolean isStatic, boolean isShiny, boolean isQuarto, String description)
    {
       sourceFile_ = sourceFile;
       deployDir_ = deployDir;
@@ -110,6 +111,7 @@ public class RSConnectPublishSource
       isSelfContained_ = isSelfContained;
       isStatic_ = isStatic;
       isShiny_ = isShiny;
+      isQuarto_ = isQuarto;
       isSingleFileShiny_ = false;
       description_ = description;
       contentCategory_ = !StringUtil.isNullOrEmpty(websiteDir) ? 
@@ -197,6 +199,16 @@ public class RSConnectPublishSource
    public boolean isStatic()
    {
       return isStatic_;
+   }
+
+   public boolean isQuarto()
+   {
+      return isQuarto_;
+   }
+
+   public void setIsQuarto(boolean quarto)
+   {
+      isQuarto_ = quarto;
    }
    
    public JavaScriptObject toJso()
