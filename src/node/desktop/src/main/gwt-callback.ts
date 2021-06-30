@@ -20,10 +20,8 @@
 import { ipcMain, dialog, BrowserWindow } from 'electron';
 import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions } from 'electron/main';
 
-import { appState } from './app-state';
 import { PendingWindow } from './pending-window';
 import { MainWindow } from './main-window';
-import { DesktopBrowserWindow } from './desktop-browser-window';
 import { openMinimalWindow } from './minimal-window';
 
 export const PendingQuit = {
@@ -194,8 +192,8 @@ export class GwtCallback {
       height: number
     ) => {
       const minimalWindow = openMinimalWindow(name, url, width, height, this.mainWindow);
-      minimalWindow.window?.once('ready-to-show', () => {
-        minimalWindow?.window?.show();
+      minimalWindow.window.once('ready-to-show', () => {
+        minimalWindow.window?.show();
       });
     });
 

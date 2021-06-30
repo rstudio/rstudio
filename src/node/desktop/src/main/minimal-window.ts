@@ -61,11 +61,11 @@ export function openMinimalWindow(
 
     // set title for viewer zoom
     if (isViewerZoomWindow) {
-      browser.window?.setTitle('Viewer Zoom');
+      browser.window.setTitle('Viewer Zoom');
     }
   }
 
-  browser.window?.loadURL(urlStr);
-  browser.window?.setSize(width, height);
+  browser.window.loadURL(urlStr);
+  browser.window.setSize(width, height);
   return browser;
 }
