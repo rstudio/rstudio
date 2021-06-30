@@ -25,29 +25,27 @@ import { PendingWindow } from './pending-window';
 import { RCommandEvaluator } from './r-command-evaluator';
 import { SessionLauncher } from './session-launcher';
 import { ApplicationLaunch } from './application-launch';
+import { GwtWindow } from './gwt-window';
 
-export class MainWindow { // TODO: extends GwtWindow
+export class MainWindow extends GwtWindow {
   sessionLauncher?: SessionLauncher;
   sessionProcess?: ChildProcess;
   appLauncher?: ApplicationLaunch;
-  window?: BrowserWindow;
   desktopCallback: GwtCallback;
   menuCallback: MenuCallback;
   quitConfirmed = false;
   workbenchInitialized = false;
   pendingWindows = new Array<PendingWindow>();
 
-  constructor(public url: string, public isRemoteDesktop: boolean) {
+  constructor(url: string, public isRemoteDesktop: boolean) {
+    super(false, '', url, undefined, undefined, isRemoteDesktop, ['desktop', 'desktopMenuCallback']);
     this.desktopCallback = new GwtCallback(this, isRemoteDesktop);
     this.menuCallback = new MenuCallback(this);
 
     RCommandEvaluator.setMainWindow(this);
   }
 
-  load(url: string): void {
-    // show the window
-    this.window = this.createWindow(1400, 1024);
- 
+  loadUrl(url: string): void {
     // pass along the shared secret with every request
     const filter = {
       urls: [`${url}/*`]
@@ -72,17 +70,16 @@ export class MainWindow { // TODO: extends GwtWindow
       });
 
     this.window.loadURL(url);
-    // this.window.webContents.openDevTools();
   }
 
   quit(): void {
     RCommandEvaluator.setMainWindow(null);
     this.quitConfirmed = true;
-    this.window?.close();
+    this.window.close();
   }
 
   invokeCommand(cmdId: string): void {
-    this.window?.webContents.executeJavaScript(`window.desktopHooks.invokeCommand("${cmdId}")`)
+    this.window.webContents.executeJavaScript(`window.desktopHooks.invokeCommand("${cmdId}")`)
       .catch(() => {
         logger().logErrorMessage(`Error: failed to execute desktopHooks.invokeCommand("${cmdId}")`);
       });
@@ -90,12 +87,12 @@ export class MainWindow { // TODO: extends GwtWindow
 
   onWorkbenchInitialized(): void {
     this.workbenchInitialized = true;
-    this.window?.webContents.executeJavaScript('window.desktopHooks.getActiveProjectDir()')
+    this.window.webContents.executeJavaScript('window.desktopHooks.getActiveProjectDir()')
       .then(projectDir => {
         if (projectDir.length > 0) {
-          this.window?.setTitle(`${projectDir} - RStudio`);
+          this.window.setTitle(`${projectDir} - RStudio`);
         } else {
-          this.window?.setTitle('RStudio');
+          this.window.setTitle('RStudio');
         }
       })
       // eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -117,7 +114,7 @@ export class MainWindow { // TODO: extends GwtWindow
         enableRemoteModule: false,
         nodeIntegration: false,
         contextIsolation: true,
-        additionalArguments: ['desktop|desktopInfo|desktopMenuCallback'],
+        additionalArguments: ['desktop|desktopInfo'],
         preload: path.join(__dirname, '../renderer/preload.js'),
       },
     });

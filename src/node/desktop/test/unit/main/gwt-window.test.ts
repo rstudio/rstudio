@@ -23,6 +23,6 @@ describe('GwtWindow', () => {
     const gwtWin = new GwtWindow(false, 'some name');
     assert.isObject(gwtWin);
     assert.isObject(gwtWin.window);
-    assert.isFalse(gwtWin.window?.isVisible());
+    assert.isFalse(gwtWin.window.isVisible());
   });
 });

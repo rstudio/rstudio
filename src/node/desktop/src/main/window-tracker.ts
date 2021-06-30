@@ -27,7 +27,7 @@ export class WindowTracker {
 
   addWindow(key: string, browserWindow: DesktopBrowserWindow): void {
     this.nameMap.set(key, browserWindow);
-    browserWindow.window?.addListener('closed', () => {
+    browserWindow.window.addListener('closed', () => {
       this.onWindowDestroyed(key);
     });
   }

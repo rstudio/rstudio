@@ -60,7 +60,7 @@ describe('window-tracker', () => {
     const tracker = new WindowTracker();
     const oneWin = new DesktopBrowserWindow(false, 'some name');
     tracker.addWindow('one', oneWin);
-    oneWin.window?.close();
+    oneWin.window.close();
     assert.equal(tracker.length(), 0);
   });
 });

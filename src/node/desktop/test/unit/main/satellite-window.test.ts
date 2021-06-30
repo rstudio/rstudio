@@ -16,6 +16,7 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 import sinon from 'sinon';
+import { createSinonStubInstance } from '../unit-utils';
 
 import { BrowserWindow } from 'electron';
 
@@ -23,12 +24,16 @@ import { SatelliteWindow } from '../../../src/main/satellite-window';
 import { MainWindow } from '../../../src/main/main-window';
 
 describe('SatelliteWindow', () => {
+  afterEach(() => {
+    sinon.restore();
+  });
+
   it('construction creates a hidden BrowserWindow', () => {
-    const mainWindowStub = sinon.createStubInstance(MainWindow);
+    const mainWindowStub = createSinonStubInstance(MainWindow);
     const browserWin = new BrowserWindow({show: false});
     const win = new SatelliteWindow(mainWindowStub, 'satellite window', browserWin.webContents);
     assert.isObject(win);
     assert.isObject(win.window);
-    assert.isFalse(win.window?.isVisible());
+    assert.isFalse(win.window.isVisible());
   });
 });

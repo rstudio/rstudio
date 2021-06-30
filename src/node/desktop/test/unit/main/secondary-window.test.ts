@@ -23,6 +23,6 @@ describe('SecondaryWindow', () => {
     const win = new SecondaryWindow('some name');
     assert.isObject(win);
     assert.isObject(win.window);
-    assert.isFalse(win.window?.isVisible());
+    assert.isFalse(win.window.isVisible());
   });
 });

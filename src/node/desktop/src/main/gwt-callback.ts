@@ -188,7 +188,7 @@ export class GwtCallback {
     ) => {
       const minimalWindow = openMinimalWindow(name, url, width, height, this.mainWindow);
       minimalWindow.window.once('ready-to-show', () => {
-        minimalWindow.window?.show();
+        minimalWindow.window.show();
       });
     });
 
@@ -478,7 +478,7 @@ export class GwtCallback {
     });
 
     ipcMain.on('desktop_set_window_title', (event, title: string) => {
-      this.mainWindow.window?.setTitle(`${title} - RStudio`);
+      this.mainWindow.window.setTitle(`${title} - RStudio`);
     });
 
     ipcMain.on('desktop_install_rtools', (event, version, installerPath) => {
