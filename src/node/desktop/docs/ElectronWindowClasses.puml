@@ -19,10 +19,14 @@ BrowserWindow *-- "1" WebContents : webContents
 WebContents *-- "1" WebFrameMain : mainFrame
 
 class RStudioBrowserWindow 
+desktopInfo ()- RStudioBrowserWindow 
 class GwtWindow extends RStudioBrowserWindow
 class SecondaryWindow extends RStudioBrowserWindow
 class SatelliteWindow extends GwtWindow
+desktop ()- SatelliteWindow
 class MainWindow extends GwtWindow
+desktop ()- MainWindow
+menu ()- MainWindow
 
 RStudioBrowserWindow *-- "1" BrowserWindow
 
