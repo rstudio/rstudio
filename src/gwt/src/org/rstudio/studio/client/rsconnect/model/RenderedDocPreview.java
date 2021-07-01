@@ -77,7 +77,12 @@ public class RenderedDocPreview
    {
       return websiteDir_;
    }
-   
+
+   public void setWebsiteDir(String websiteDir)
+   {
+      websiteDir_ = websiteDir;
+   }
+
    public boolean isStatic()
    {
       return isStatic_;
@@ -97,9 +102,9 @@ public class RenderedDocPreview
    {
       return !StringUtil.isNullOrEmpty(websiteDir_);
    }
-   
+
    private final String sourceFile_;
-   private final String websiteDir_;
+   private String websiteDir_;
    private String outputFile_;
    private boolean isStatic_;
    private boolean isQuarto_ = false;

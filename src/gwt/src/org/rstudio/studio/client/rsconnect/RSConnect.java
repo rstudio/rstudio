@@ -59,6 +59,7 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSettings;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSource;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
+import org.rstudio.studio.client.rsconnect.model.RenderedDocPreview;
 import org.rstudio.studio.client.rsconnect.model.RmdPublishDetails;
 import org.rstudio.studio.client.rsconnect.ui.RSAccountConnector;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectDeployDialog;
@@ -1171,9 +1172,14 @@ public class RSConnect implements SessionInitEvent.Handler,
                public void onResponseReceived(QmdPublishDetails details)
                {
                   indicator.onCompleted();
-                  if (!details.output_file.isEmpty())
+                  RenderedDocPreview previewParams = input.getOriginatingEvent().getFromPreview();
+                  if (previewParams != null)
                   {
-                     input.getOriginatingEvent().getFromPreview().setOutputFile(details.output_file);
+                     if (StringUtil.isNullOrEmpty(details.website_output_dir))
+                        previewParams.setOutputFile(details.output_file);
+                     else
+                        previewParams.setOutputFile(details.website_output_dir);
+                     previewParams.setWebsiteDir(details.website_dir);
                   }
                   input.setIsMultiRmd(false);
                   input.setIsQuarto(true);

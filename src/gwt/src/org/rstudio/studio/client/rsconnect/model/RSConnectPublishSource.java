@@ -96,8 +96,10 @@ public class RSConnectPublishSource
       contentCategory_ = !StringUtil.isNullOrEmpty(websiteDir) ? 
             RSConnect.CONTENT_CATEGORY_SITE : null;
       websiteDir_ = websiteDir;
-      deployDir_ = FileSystemItem.createFile(preview.getOutputFile())
-            .getParentPathString();
+      if (StringUtil.isNullOrEmpty(preview.getWebsiteDir()))
+         deployDir_ = FileSystemItem.createFile(preview.getOutputFile()).getParentPathString();
+      else
+         deployDir_ = preview.getOutputFile();
    }
    
    public RSConnectPublishSource(String sourceFile, String deployDir, 
