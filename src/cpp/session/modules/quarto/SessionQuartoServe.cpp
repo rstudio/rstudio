@@ -201,7 +201,7 @@ private:
          port_ = safe_convert::stringTo<int>(match[1], 0);
 
          // launch viewer
-         module_context::viewer(serverUrl(port_, initialDocPath_), -1);
+         module_context::viewer(serverUrl(port_, initialDocPath_), true /* Quarto website */, -1);
 
          // now that the dev server is running restore the console tab
          ClientEvent activateConsoleEvent(client_events::kConsoleActivate, false);
@@ -294,7 +294,7 @@ void navigateToViewer(long port, const core::FilePath& docPath)
    }
    else
    {
-      module_context::viewer(serverUrl(port, docPath), -1);
+      module_context::viewer(serverUrl(port, docPath), true /* Quarto website */, -1);
    }
 }
 
