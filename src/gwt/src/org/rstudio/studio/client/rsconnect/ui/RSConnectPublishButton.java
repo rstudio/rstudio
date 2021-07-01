@@ -287,6 +287,15 @@ public class RSConnectPublishButton extends Composite
       applyVisibility();
    }
 
+   public void setQuartoSitePreview()
+   {
+      QuartoConfig config = session_.getSessionInfo().getQuartoConfig();
+      FileSystemItem projectDir = FileSystemItem.createDir(config.project_dir);
+      setContentPath(config.project_dir, projectDir.completePath(config.project_output_dir));
+      setContentType(RSConnect.CONTENT_TYPE_QUARTO_WEBSITE);
+      applyVisibility();
+   }
+
    public void setRmd(String rmd, boolean isStatic)
    {
       docPreview_ = new RenderedDocPreview(rmd, "", isStatic, false);
@@ -342,7 +351,8 @@ public class RSConnectPublishButton extends Composite
              contentType == RSConnect.CONTENT_TYPE_APP ||
              contentType == RSConnect.CONTENT_TYPE_APP_SINGLE ||
              contentType == RSConnect.CONTENT_TYPE_PLUMBER_API ||
-             contentType == RSConnect.CONTENT_TYPE_WEBSITE)
+             contentType == RSConnect.CONTENT_TYPE_WEBSITE ||
+             contentType == RSConnect.CONTENT_TYPE_QUARTO_WEBSITE)
             populateDeployments(true);
          
          // moving to a raw HTML type: erase the deployment list
@@ -541,12 +551,15 @@ public class RSConnectPublishButton extends Composite
          // All R Markdown variants (single/multiple and static/Shiny)
          if (docPreview_.getSourceFile() == null)
          {
-            display_.showErrorMessage("Unsaved Document", 
+            display_.showErrorMessage("Unsaved Document",
                   "Unsaved documents cannot be published. Save the document " +
                   "before publishing it.");
             break;
          }
          fireDeployDocEvent(previous);
+         break;
+      case RSConnect.CONTENT_TYPE_QUARTO_WEBSITE:
+         RSConnectActionEvent.DeployAppEvent(contentPath_, contentType_, previous);
          break;
       case RSConnect.CONTENT_TYPE_PLUMBER_API:
          events_.fireEvent(RSConnectActionEvent.DeployAPIEvent(contentPath_, contentType_, previous));
@@ -945,8 +958,7 @@ public class RSConnectPublishButton extends Composite
       if (rmdInfoPending_)
          return;
 
-      // TODO: handle for Quarto
-      if (StringUtil.isNullOrEmpty(docPreview_.getOutputFile()) && contentType_ != RSConnect.CONTENT_TYPE_WEBSITE)
+      if (StringUtil.isNullOrEmpty(docPreview_.getOutputFile()))
       {
          rmdInfoPending_ = true;
          rmdServer_.getRmdOutputInfo(contentPath_,

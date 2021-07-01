@@ -166,7 +166,8 @@ public class RSConnect implements SessionInitEvent.Handler,
       dependencyManager_.withRSConnect(
          "Publishing content",
          event.getContentType() == CONTENT_TYPE_DOCUMENT ||
-         event.getContentType() == CONTENT_TYPE_WEBSITE,
+         event.getContentType() == CONTENT_TYPE_WEBSITE ||
+         event.getContentType() == CONTENT_TYPE_QUARTO_WEBSITE ,
          null, new CommandWithArg<Boolean>() {
             @Override
             public void execute(Boolean succeeded)
@@ -294,6 +295,23 @@ public class RSConnect implements SessionInitEvent.Handler,
                });
             }
             break;
+            case CONTENT_TYPE_QUARTO_WEBSITE:
+               if (event.getFromPrevious().getAsStatic())
+                  publishAsFiles(event,
+                     new RSConnectPublishSource(event.getPath(),
+                        event.getHtmlFile(),
+                        input.getWebsiteDir(),
+                        input.getWebsiteOutputDir(),
+                        input.isSelfContained(),
+                        true, // isStatic
+                        false, // isShiny
+                        true, // isQuarto
+                        input.getDescription(),
+                        event.getContentType()));
+               else
+                  publishAsCode(event, input.getWebsiteDir(), false /* isShiny */);
+               break;
+
             case CONTENT_TYPE_PLUMBER_API:
                publishAsCode(event, null, false);
                break;
@@ -351,10 +369,10 @@ public class RSConnect implements SessionInitEvent.Handler,
             publishAsStatic(input);
          }
       }
-      else if (input.getContentType() == CONTENT_TYPE_WEBSITE ||
+      else if (input.isWebsiteContentType() ||
                (input.getContentType() == CONTENT_TYPE_DOCUMENT && input.isWebsiteRmd()))
       {
-         if (input.hasDocOutput() || input.getContentType() == CONTENT_TYPE_WEBSITE)
+         if (input.hasDocOutput() || input.isWebsiteContentType())
          {
             publishWithWizard(input);
          }
@@ -468,7 +486,7 @@ public class RSConnect implements SessionInitEvent.Handler,
    {
       RSConnectPublishSource source = null;
       if (input.getContentType() == RSConnect.CONTENT_TYPE_DOCUMENT ||
-          input.getContentType() == RSConnect.CONTENT_TYPE_WEBSITE)
+          input.isWebsiteContentType())
       {
          source = new RSConnectPublishSource(
                      input.getOriginatingEvent().getFromPreview(),
@@ -824,6 +842,8 @@ public class RSConnect implements SessionInitEvent.Handler,
          return "Website";
       case RSConnect.CONTENT_TYPE_PLUMBER_API:
          return "API";
+      case RSConnect.CONTENT_TYPE_QUARTO_WEBSITE:
+         return "Quarto Website";
       }
       return "Content";
    }
@@ -1299,6 +1319,9 @@ public class RSConnect implements SessionInitEvent.Handler,
 
    // Plumber API
    public final static int CONTENT_TYPE_PLUMBER_API    = 8;
+
+   // A Quarto website
+   public final static int CONTENT_TYPE_QUARTO_WEBSITE = 9;
 
    public final static String CONTENT_CATEGORY_PLOT = "plot";
    public final static String CONTENT_CATEGORY_SITE = "site";

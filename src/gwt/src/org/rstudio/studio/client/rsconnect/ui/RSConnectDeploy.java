@@ -1095,7 +1095,8 @@ public class RSConnectDeploy extends Composite
 
             setUnsanitizedAppName(appTitle);
          }
-         else if (contentType_ == RSConnect.CONTENT_TYPE_WEBSITE)
+         else if (contentType_ == RSConnect.CONTENT_TYPE_WEBSITE ||
+            contentType_ == RSConnect.CONTENT_TYPE_QUARTO_WEBSITE)
          {
             setUnsanitizedAppName(FilePathUtils.fileNameSansExtension(
                   source_.getWebsiteDir()));
@@ -1109,7 +1110,8 @@ public class RSConnectDeploy extends Composite
          illustration = new ImageResource2x(RESOURCES.publishPlotIllustration2x());
       else if (contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT)
          illustration = new ImageResource2x(RESOURCES.publishRmdIllustration2x());
-      else if (contentType_ == RSConnect.CONTENT_TYPE_HTML || contentType_ == RSConnect.CONTENT_TYPE_WEBSITE)
+      else if (contentType_ == RSConnect.CONTENT_TYPE_HTML || contentType_ == RSConnect.CONTENT_TYPE_WEBSITE ||
+               contentType_ == RSConnect.CONTENT_TYPE_QUARTO_WEBSITE)
          illustration = new ImageResource2x(RESOURCES.publishHTMLIllustration2x());
       else if (contentType_ == RSConnect.CONTENT_TYPE_PRES)
          illustration = new ImageResource2x(RESOURCES.publishPresentationIllustration2x());

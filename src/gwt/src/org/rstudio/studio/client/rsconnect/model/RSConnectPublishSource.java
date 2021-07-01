@@ -59,9 +59,10 @@ public class RSConnectPublishSource
       isSingleFileShiny_ = false;
       websiteDir_ = websiteDir;
       isQuarto_ = isQuarto;
+      boolean isWebsite = type == RSConnect.CONTENT_TYPE_WEBSITE || type == RSConnect.CONTENT_TYPE_QUARTO_WEBSITE;
 
       String category = null;
-      if (type == RSConnect.CONTENT_TYPE_WEBSITE)
+      if (isWebsite)
       {
          // websites are always deployed as sites
          category = RSConnect.CONTENT_CATEGORY_SITE;
@@ -75,7 +76,7 @@ public class RSConnectPublishSource
       }
       contentCategory_ = category;
 
-      if (type == RSConnect.CONTENT_TYPE_WEBSITE && isStatic && !StringUtil.isNullOrEmpty(websiteOutputDir))
+      if (isWebsite && isStatic && !StringUtil.isNullOrEmpty(websiteOutputDir))
          deployDir_ = FileSystemItem.createFile(websiteOutputDir).getPath();
       else
          deployDir_ = FileSystemItem.createFile(outputFile).getParentPathString();

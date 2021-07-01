@@ -127,6 +127,12 @@ public class RSConnectPublishInput
       return getOriginatingEvent().getContentType();
    }
 
+   public boolean isWebsiteContentType()
+   {
+      return getContentType() == RSConnect.CONTENT_TYPE_WEBSITE ||
+         getContentType() == RSConnect.CONTENT_TYPE_QUARTO_WEBSITE;
+   }
+
    public RSConnectActionEvent getOriginatingEvent()
    {
       return originatingEvent_;
