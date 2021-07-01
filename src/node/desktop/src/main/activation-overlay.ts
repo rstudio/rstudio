@@ -53,7 +53,7 @@ export class DesktopActivation extends EventEmitter {
     * Set main window, so we can supply it as default parent of message boxes
     */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  setMainWindow(window?: BrowserWindow): void {
+  setMainWindow(window: BrowserWindow): void {
   }
 
   /**

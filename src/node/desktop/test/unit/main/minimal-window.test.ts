@@ -1,5 +1,5 @@
 /*
- * menu-callback.test.ts
+ * minimal-window.test.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -18,18 +18,23 @@ import { assert } from 'chai';
 import sinon from 'sinon';
 import { createSinonStubInstance } from '../unit-utils';
 
-import { MenuCallback } from '../../../src/main/menu-callback';
 import { MainWindow } from '../../../src/main/main-window';
+import { openMinimalWindow } from '../../../src/main/minimal-window';
+import { clearApplicationSingleton, setApplication } from '../../../src/main/app-state';
+import { Application } from '../../../src/main/application';
 
-describe('MenuCallback', () => {
+describe('minimal-window', () => {
+  beforeEach(() => {
+    setApplication(new Application());
+  });
   afterEach(() => {
+    clearApplicationSingleton();
     sinon.restore();
   });
 
   it('can be constructed', () => {
     const mainWindowStub = createSinonStubInstance(MainWindow);
-    const callback = new MenuCallback(mainWindowStub);
-    assert.isNull(callback.mainMenu);
-    assert.equal(callback.mainWindow, mainWindowStub);
+    const minWin = openMinimalWindow('test-win', 'about:blank', 640, 480, mainWindowStub);
+    assert.isObject(minWin);
   });
 });

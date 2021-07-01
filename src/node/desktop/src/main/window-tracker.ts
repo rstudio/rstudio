@@ -1,6 +1,5 @@
-
 /*
- * secondary-window.ts
+ * window-tracker.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -14,17 +13,30 @@
  *
  */
 
-import { WebContents } from 'electron';
 import { DesktopBrowserWindow } from './desktop-browser-window';
 
-export class SecondaryWindow extends DesktopBrowserWindow {
-  constructor(
-    name: string,
-    baseUrl?: string,
-    parent?: DesktopBrowserWindow,
-    opener?: WebContents,
-    allowExternalNavigate = false
-  ) {
-    super(true, name, baseUrl, parent, opener, allowExternalNavigate);
+/**
+ * Tracks DesktopBrowserWindow objects by name.
+ */
+export class WindowTracker {
+  private nameMap = new Map<string, DesktopBrowserWindow>();
+
+  getWindow(key: string): DesktopBrowserWindow | undefined {
+    return this.nameMap.get(key);
+  }
+
+  addWindow(key: string, browserWindow: DesktopBrowserWindow): void {
+    this.nameMap.set(key, browserWindow);
+    browserWindow.window.addListener('closed', () => {
+      this.onWindowDestroyed(key);
+    });
+  }
+
+  onWindowDestroyed(key: string): void {
+    this.nameMap.delete(key);
+  }
+
+  length(): number {
+    return this.nameMap.size;
   }
 }

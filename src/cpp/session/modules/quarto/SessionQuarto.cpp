@@ -115,10 +115,10 @@ std::string onDetectQuartoSourceType(
       {
          // if we have a format: or knit: quarto render then it's a quarto document
          std::string yamlHeader = yaml::extractYamlHeader(pDoc->contents());
-         static const boost::regex reOutput("output:\\s*");
-         static const boost::regex reFormat("format:\\s*");
-         static const boost::regex reJupyter("jupyter:\\s*");
-         static const boost::regex reKnitQuarto("knit:\\s*quarto\\s+render");
+         static const boost::regex reOutput("(^|\\n)output:\\s*");
+         static const boost::regex reFormat("(^|\\n)format:\\s*");
+         static const boost::regex reJupyter("(^|\\n)jupyter:\\s*");
+         static const boost::regex reKnitQuarto("(^|\\n)knit:\\s*quarto\\s+render");
          // format: without output:
          if (regex_utils::search(yamlHeader.begin(), yamlHeader.end(), reFormat) &&
              !regex_utils::search(yamlHeader.begin(), yamlHeader.end(), reOutput))
@@ -127,12 +127,6 @@ std::string onDetectQuartoSourceType(
          }
          // knit: quarto render
          else if (regex_utils::search(yamlHeader.begin(), yamlHeader.end(), reKnitQuarto))
-         {
-            return kQuartoXt;
-         }
-         // jupyter:
-         else if (filePath.getExtensionLowerCase() == ".md" &&
-                  regex_utils::search(yamlHeader.begin(), yamlHeader.end(), reJupyter))
          {
             return kQuartoXt;
          }

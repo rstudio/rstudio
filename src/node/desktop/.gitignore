@@ -130,4 +130,7 @@ temp/
 # electron-packager output
 package/
 
+# plantuml exports
+out/docs/
+
 # End of https://www.toptal.com/developers/gitignore/api/node

@@ -17,6 +17,7 @@ import { WebContents } from 'electron';
 
 import { GwtWindow } from './gwt-window';
 import { MainWindow } from './main-window';
+import { appState } from './app-state';
 
 export class SatelliteWindow extends GwtWindow {
   constructor(
@@ -25,5 +26,6 @@ export class SatelliteWindow extends GwtWindow {
     opener: WebContents
   ) {
     super(true, name, undefined, undefined, opener, mainWindow.isRemoteDesktop, ['desktop']);
+    appState().gwtCallback?.registerOwner(this);
   }
 }

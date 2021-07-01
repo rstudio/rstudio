@@ -24,132 +24,8 @@ interface CursorPosition {
   y: number
 }
 
-export interface DesktopBridge {
-  browseUrl(url: string): void;
-  getOpenFileName(
-    caption: string, label: string, dir: string, filter: string, canChooseDirectories: boolean,
-    focusOwner: boolean, callback: VoidCallback<string>): void;
-  getSaveFileName(
-    caption: string, label: string, dir: string, defaultExtension: string,
-    forceDefaultExtension: boolean, focusOwner: boolean, callback: VoidCallback<string>): void;
-  getExistingDirectory(
-    caption: string, label: string, dir: string, focusOwner: boolean, callback: VoidCallback<string>): void;
-  onClipboardSelectionChanged(): void;
-  undo(): void;
-  redo(): void;
-  clipboardCut(): void;
-  clipboardCopy(): void;
-  clipboardPaste(): void;
-  setClipboardText(text: string): void;
-  getClipboardText(callback: VoidCallback<string>): void;
-  getClipboardUris(callback: VoidCallback<string>): void;
-  getClipboardImage(callback: VoidCallback<string>): void;
-  setGlobalMouseSelection(selection: string): void;
-  getGlobalMouseSelection(callback: VoidCallback<string>): void;
-  getCursorPosition(callback: VoidCallback<CursorPosition>): void;
-  doesWindowExistAtCursorPosition(callback: VoidCallback<boolean>): void;
-  onWorkbenchInitialized(scratchPath: string): void;
-  showFolder(path: string): void;
-  showFile(file: string): void;
-  showWordDoc(wordDoc: string): void;
-  showPptPresentation(pptDoc: string): void;
-  showPDF(path: string, pdfPage: string): void;
-  prepareShowWordDoc(): void;
-  prepareShowPptPresentation(): void;
-  getRVersion(callback: VoidCallback<string>): void;
-  chooseRVersion(callback: VoidCallback<string>): void;
-  devicePixelRatio(callback: VoidCallback<number>): void;
-  openMinimalWindow(name: string, url: string, width: number, height: number): void;
-  activateMinimalWindow(name: string): void;
-  activateSatelliteWindow(name: string): void;
-  prepareForSatelliteWindow(name: string, x: number, y: number, width: number, height: number, callback: () => void): void;
-  prepareForNamedWindow(name: string, allowExternalNavigate: boolean, showToolbar: boolean, callback: () => void): void;
-  closeNamedWindow(name: string): void;
-  copyPageRegionToClipboard(left: number, top: number, width: number, height: number): void;
-  exportPageRegionToFile(targetPath: string, format: string, left: number, top: number, width: number, height: number): void;
-  printText(text: string): void;
-  paintPrintText(printer: string): void;
-  printFinished(result: number): void;
-  supportsClipboardMetafile(callback: VoidCallback<boolean>): void;
-  showMessageBox(type: number, caption: string, message: string, buttons: string, defaultButton: number,
-    cancelButton: number, callback: VoidCallback<number>): void;
-  promptForText(title: string, caption: string, defaultValue: string, type: number, rememberPasswordPrompt: boolean,
-    rememberByDefault: boolean, selectionStart: number, selectionLength: number, okButtonCaption: string,
-    callback: VoidCallback<string>): void;
-  bringMainFrameToFront(): void;
-  bringMainFrameBehindActive(): void;
-  desktopRenderingEngine(callback: VoidCallback<string>): void;
-  setDesktopRenderingEngine(engine: string): void;
-  filterText(text: string, callback: VoidCallback<string>): void;
-  cleanClipboard(stripHtml: boolean): void;
-  setPendingQuit(pendingQuit: number): void;
-  openProjectInNewWindow(projectFilePath: string): void;
-  openSessionInNewWindow(workingDirectoryPath: string): void;
-  openTerminal(terminalPath: string, workingDirectory: string, extraPathEntries: string, shellType: string): void;
-  getFixedWidthFontList(callback: VoidCallback<string>): void;
-  getFixedWidthFont(callback: VoidCallback<string>): void;
-  setFixedWidthFont(font: string): void;
-  getZoomLevels(callback: VoidCallback<string>): void;
-  getZoomLevel(callback: VoidCallback<number>): void;
-  setZoomLevel(zoomLevel: number): void;
-  zoomIn(): void;
-  zoomOut(): void;
-  zoomActualSize(): void;
-  setBackgroundColor(rgbColor: Record<string, unknown>[]): void;
-  changeTitleBarColor(red: number, green: number, blue: number): void;
-  syncToEditorTheme(isDark: boolean): void;
-  getEnableAccessibility(callback: VoidCallback<boolean>): void;
-  setEnableAccessibility(enable: boolean): void;
-  getClipboardMonitoring(callback: VoidCallback<boolean>): void;
-  setClipboardMonitoring(monitoring: boolean): void;
-  getIgnoreGpuBlacklist(callback: VoidCallback<boolean>): void;
-  setIgnoreGpuBlacklist(ignore: boolean): void;
-  getDisableGpuDriverBugWorkarounds(callback: VoidCallback<boolean>): void;
-  setDisableGpuDriverBugWorkarounds(disable: boolean): void;
-  showLicenseDialog(): void;
-  showSessionServerOptionsDialog(): void;
-  getInitMessages(callback: VoidCallback<string>): void;
-  getLicenseStatusMessage(callback: VoidCallback<string>): void;
-  allowProductUsage(callback: VoidCallback<boolean>): void;
-  getDesktopSynctexViewer(callback: VoidCallback<string>): void;
-  externalSynctexPreview(pdfPath: string, page: number): void;
-  externalSynctexView(pdfFile: string, srcFile: string, line: number, column: number): void;
-  supportsFullscreenMode(callback: VoidCallback<boolean>): void;
-  toggleFullscreenMode(): void;
-  showKeyboardShortcutHelp(): void;
-  launchSession(reload: boolean): void;
-  reloadZoomWindow(): void;
-  setTutorialUrl(url: string): void;
-  setViewerUrl(url: string): void;
-  reloadViewerZoomWindow(url: string): void;
-  setShinyDialogUrl(url: string): void;
-  getScrollingCompensationType(callback: VoidCallback<string>): void;
-  isMacOS(callback: VoidCallback<boolean>): void;
-  isCentOS(callback: VoidCallback<boolean>): void;
-  setBusy(busy: boolean): void;
-  setWindowTitle(title: string): void;
-  installRtools(version: string, installerPath: string): void;
-  getDisplayDpi(callback: VoidCallback<string>): void;
-  onSessionQuit(): void;
-  getSessionServer(callback: VoidCallback<Record<string, unknown>>): void;
-  getSessionServers(callback: VoidCallback<Record<string, unknown>[]>): void;
-  reconnectToSessionServer(sessionServerJson: Record<string, unknown>): void;
-  setLauncherServer(sessionServerJson: Record<string, unknown>, callback: VoidCallback<boolean>): void;
-  connectToLauncherServer(): void;
-  getLauncherServer(callback: VoidCallback<string>): void;
-  startLauncherJobStatusStream(jobId: string): void;
-  stopLauncherJobStatusStream(jobId: string): void;
-  startLauncherJobOutputStream(jobId: string): void;
-  stopLauncherJobOutputStream(jobId: string): void;
-  controlLauncherJob(jobId: string, operation: string): void;
-  submitLauncherJob(job: Record<string, unknown>): void;
-  getJobContainerUser(): void;
-  validateJobsConfig(): void;
-  getProxyPortNumber(callback: VoidCallback<number>): void;
-  signOut(): void;
-}
-
-export function getDesktopBridge(): DesktopBridge {
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+export function getDesktopBridge() {
   return {
     browseUrl: (url: string) => {
       ipcRenderer.send('desktop_browse_url', url);
@@ -175,6 +51,9 @@ export function getDesktopBridge(): DesktopBridge {
           } else {
             callback(result.filePaths[0]);
           }
+        })
+        .catch(error => {
+          console.log(`getOpenFileName bridge: ${error}`); // TODO real logging here?
         });
     },
 

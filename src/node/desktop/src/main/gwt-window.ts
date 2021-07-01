@@ -14,7 +14,6 @@
  */
 
 import { WebContents } from 'electron';
-import { URL } from 'url';
 
 import { DesktopBrowserWindow } from './desktop-browser-window';
 
@@ -23,7 +22,7 @@ export class GwtWindow extends DesktopBrowserWindow {
   constructor(
     adjustTitle: boolean,
     name: string,
-    baseUrl?: URL,
+    baseUrl?: string,
     parent?: DesktopBrowserWindow,
     opener?: WebContents,
     isRemoteDesktop = false,

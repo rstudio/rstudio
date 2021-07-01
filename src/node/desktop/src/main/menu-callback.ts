@@ -34,7 +34,7 @@ export class MenuCallback {
       }
     });
 
-    ipcMain.on('menu_begin', (event, label) => {
+    ipcMain.on('menu_begin', (event, label: string) => {
       const subMenu = new Menu();
       const opts: MenuItemConstructorOptions = {submenu: subMenu, label: label};
       if (label === '&File') {
@@ -60,7 +60,9 @@ export class MenuCallback {
       this.menuStack.push(subMenu);
     });
 
-    ipcMain.on('menu_add_command', (event, cmdId, label, tooltip, shortcut, checkable) => {
+    ipcMain.on('menu_add_command', (event, cmdId: string, label: string, tooltip: string,
+      shortcut: string, checkable: boolean
+    ) => {
       const menuItemOpts: MenuItemConstructorOptions = {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         label: label, id: cmdId, click: (menuItem, browserWindow, event) => {
@@ -129,21 +131,21 @@ export class MenuCallback {
         Menu.setApplicationMenu(this.mainMenu);
     });
 
-    ipcMain.on('menu_set_command_visible', (event, commandId, visible) => {
+    ipcMain.on('menu_set_command_visible', (event, commandId: string, visible: boolean) => {
       const item = this.getMenuItemById(commandId);
       if (item) {
         item.visible = visible;
       }
     });
 
-    ipcMain.on('menu_set_command_enabled', (event, commandId, enabled) => {
+    ipcMain.on('menu_set_command_enabled', (event, commandId: string, enabled: boolean) => {
       const item = this.getMenuItemById(commandId);
       if (item) {
         item.enabled = enabled;
       }
     });
 
-    ipcMain.on('menu_set_command_checked', (event, commandId, checked) => {
+    ipcMain.on('menu_set_command_checked', (event, commandId: string, checked: boolean) => {
       const item = this.getMenuItemById(commandId);
       if (item) {
         item.checked = checked;
@@ -154,7 +156,7 @@ export class MenuCallback {
     ipcMain.on('menu_set_main_menu_enabled', () => {
     });
 
-    ipcMain.on('menu_set_command_label', (event, commandId, label) => {
+    ipcMain.on('menu_set_command_label', (event, commandId: string, label: string) => {
       const item = this.getMenuItemById(commandId);
       if (item) {
         item.label = label;

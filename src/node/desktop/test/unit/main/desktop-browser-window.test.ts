@@ -23,6 +23,6 @@ describe('DesktopBrowserWindow', () => {
     const win = new DesktopBrowserWindow(false, '_blank');
     assert.isObject(win);
     assert.isObject(win.window);
-    assert.isFalse(win.window?.isVisible());
+    assert.isFalse(win.window.isVisible());
   });
 });

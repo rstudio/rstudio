@@ -16,15 +16,20 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 import sinon from 'sinon';
+import { createSinonStubInstance } from '../unit-utils';
 
 import { GwtCallback } from '../../../src/main/gwt-callback';
 import { MainWindow } from '../../../src/main/main-window';
 
 describe('DesktopCallback', () => {
+  afterEach(() => {
+    sinon.restore();
+  });
+
   it('can be constructed', () => {
     const isRemoteDesktop = false;
-    const mainWindowStub = sinon.createStubInstance(MainWindow);
-    const callback = new GwtCallback(mainWindowStub, isRemoteDesktop);
+    const mainWindow = createSinonStubInstance(MainWindow);
+    const callback = new GwtCallback(mainWindow, isRemoteDesktop);
     assert.equal(callback.isRemoteDesktop, isRemoteDesktop);
   });
 });

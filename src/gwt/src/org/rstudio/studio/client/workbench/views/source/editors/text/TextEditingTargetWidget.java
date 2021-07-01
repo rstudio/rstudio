@@ -1072,8 +1072,9 @@ public class TextEditingTargetWidget
       else if (extendedType_ != null && 
             (extendedType_.startsWith(SourceDocument.XT_RMARKDOWN_PREFIX) || extendedType_.equals(SourceDocument.XT_QUARTO_DOCUMENT)) )
       {
-         return  extendedType_.equals(SourceDocument.XT_QUARTO_DOCUMENT) ?
-            "Render" : fileType.isRmd() ?  "Knit" : fileType.getPreviewButtonText();
+         boolean isQuarto = extendedType_.equals(SourceDocument.XT_QUARTO_DOCUMENT);
+         String commandText = (isQuarto ? quartoCommandText_ : knitCommandText_).split(" ")[0];
+         return isQuarto || fileType.isRmd() ? commandText : fileType.getPreviewButtonText();
       }
       else
       {
