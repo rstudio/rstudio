@@ -312,7 +312,6 @@ Error getQmdPublishDetails(const json::JsonRpcRequest& request,
    {
        return error;
    }
-
    auto format = (*metadata.begin()).getValue().getObject();
 
    json::Object result;
@@ -350,7 +349,7 @@ Error getQmdPublishDetails(const json::JsonRpcRequest& request,
 
        std::string pandocOutput;
        json::readObject(pandocMetadata, "output-file", pandocOutput);
-       auto outputFilePath = qmdPath.completeChildPath(pandocOutput);
+       auto outputFilePath = qmdPath.getParent().completeChildPath(pandocOutput);
        if (outputFilePath.exists())
        {
            outputFile = outputFilePath.getAbsolutePath();
@@ -410,8 +409,6 @@ Error getQmdPublishDetails(const json::JsonRpcRequest& request,
    result["website_output_dir"] = websiteOutputDir;
    result["has_connect_account"] = hasAccount;
    result["output_file"] = outputFile;
-
-   // TODO: Add output file
 
    pResponse->setResult(result);
 
