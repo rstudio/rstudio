@@ -13,7 +13,7 @@
  *
  */
 
-import { app, dialog, BrowserWindow } from 'electron';
+import { app, dialog } from 'electron';
 
 import { getenv, setenv } from '../core/environment';
 import { FilePath } from '../core/file-path';
@@ -30,6 +30,7 @@ import { prepareEnvironment } from './detect_r';
 import { SessionLauncher } from './session-launcher';
 import { DesktopActivation } from './activation-overlay';
 import { WindowTracker } from './window-tracker';
+import { GwtCallback } from './gwt-callback';
 
 // RStudio command-line switches
 export const kRunDiagnosticsOption = '--run-diagnostics';
@@ -43,13 +44,13 @@ export const kVersionJson = '--version-json';
  * The RStudio application
  */
 export class Application implements AppState {
-  mainWindow?: BrowserWindow;
   runDiagnostics = false;
   scriptsPath?: FilePath;
   sessionPath?: FilePath;
   supportPath?: FilePath;
   port = generateRandomPort();
   windowTracker = new WindowTracker();
+  gwtCallback?: GwtCallback;
 
   appLaunch?: ApplicationLaunch;
   sessionLauncher?: SessionLauncher;

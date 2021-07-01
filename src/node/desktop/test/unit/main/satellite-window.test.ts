@@ -22,9 +22,16 @@ import { BrowserWindow } from 'electron';
 
 import { SatelliteWindow } from '../../../src/main/satellite-window';
 import { MainWindow } from '../../../src/main/main-window';
+import { clearApplicationSingleton, setApplication } from '../../../src/main/app-state';
+import { Application } from '../../../src/main/application';
 
 describe('SatelliteWindow', () => {
+  beforeEach(() => {
+    setApplication(new Application());
+  });
+
   afterEach(() => {
+    clearApplicationSingleton();
     sinon.restore();
   });
 
@@ -32,8 +39,8 @@ describe('SatelliteWindow', () => {
     const mainWindowStub = createSinonStubInstance(MainWindow);
     const browserWin = new BrowserWindow({show: false});
     const win = new SatelliteWindow(mainWindowStub, 'satellite window', browserWin.webContents);
-    assert.isObject(win);
-    assert.isObject(win.window);
-    assert.isFalse(win.window.isVisible());
+    assert.isObject(win, 'failed isObject test');
+    assert.isObject(win.window, 'failed has window test');
+    assert.isFalse(win.window.isVisible(), 'failed window not visible test');
   });
 });

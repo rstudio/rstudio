@@ -23,6 +23,9 @@ describe('Appstate', () => {
   beforeEach(() => {
     clearApplicationSingleton();
   });
+  afterEach(() => {
+    clearApplicationSingleton();
+  });
 
   it('fetching appstate before created throws', () => {
     assert.throws(() => appState());

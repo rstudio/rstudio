@@ -51,6 +51,9 @@ export function getDesktopBridge() {
           } else {
             callback(result.filePaths[0]);
           }
+        })
+        .catch(error => {
+          console.log(`getOpenFileName bridge: ${error}`); // TODO real logging here?
         });
     },
 
