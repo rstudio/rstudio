@@ -16,3 +16,11 @@
 export function removeDups(strings: string[]): string[] {
   return [...new Set(strings)];
 }
+
+export function jsonLiteralEscape(str: string): string {
+  return str
+    .replace('\\', '\\\\')
+    .replace('"', '\\"')
+    .replace('\r', '\\r')
+    .replace('\n', '\\n');
+}

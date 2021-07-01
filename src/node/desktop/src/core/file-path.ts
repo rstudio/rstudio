@@ -14,6 +14,7 @@
  */
 
 import fs from 'fs';
+import WriteStream from 'fs'
 import fsPromises from 'fs/promises';
 
 import { logger } from './logger';
@@ -622,7 +623,11 @@ export class FilePath {
    * Checks whether this file path is a directory.
    */
   isDirectory(): boolean {
-    throw Error('isDirectory is NYI');
+    if (!this.existsSync()) {
+      return false;
+    }
+
+    return fs.statSync(this.path).isDirectory();
   }
 
   /**

@@ -1,8 +1,8 @@
 /*
- * user.test.ts
- *
+ * string-utils.ts
+ * 
  * Copyright (C) 2021 by RStudio, PBC
- *
+ * 
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
  * this program is licensed to you under the terms of version 3 of the
@@ -16,7 +16,7 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 
-import { removeDups } from '../../../src/core/string-utils';
+import { removeDups, jsonLiteralEscape } from '../../../src/core/string-utils';
 
 describe('string-util', () => {
   it('removeDups is a no-op on empty array', () => {
@@ -44,6 +44,11 @@ describe('string-util', () => {
     const expected = ['one', 'two', 'three'];
     const result = removeDups(orig);
     assert.deepEqual(result, expected);
+  });
+  it('escapes strings', () => {
+    const unescapedString = 'this\n is" my\r string\\';
+    const escapedString = 'this\\n is\\" my\\r string\\\\';
+    assert.equal(jsonLiteralEscape(unescapedString), escapedString);
   });
 });
  
