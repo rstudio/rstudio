@@ -198,8 +198,8 @@ export class SessionLauncher {
     if (message) {
       dialog.showErrorBox(appState().activation().editionName(), message);
     }
-    if (appState().mainWindow) {
-      appState().mainWindow?.close();
+    if (this.mainWindow) {
+      this.mainWindow.window.close();
     } else {
       app.exit(EXIT_FAILURE);
     }

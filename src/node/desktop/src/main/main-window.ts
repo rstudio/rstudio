@@ -19,19 +19,19 @@ import { ChildProcess } from 'child_process';
 
 import { logger } from '../core/logger';
 
-import { GwtCallback } from './gwt-callback';
+import { GwtCallback, PendingQuit } from './gwt-callback';
 import { MenuCallback } from './menu-callback';
 import { PendingWindow } from './pending-window';
 import { RCommandEvaluator } from './r-command-evaluator';
 import { SessionLauncher } from './session-launcher';
 import { ApplicationLaunch } from './application-launch';
 import { GwtWindow } from './gwt-window';
+import { appState } from './app-state';
 
 export class MainWindow extends GwtWindow {
   sessionLauncher?: SessionLauncher;
   sessionProcess?: ChildProcess;
   appLauncher?: ApplicationLaunch;
-  desktopCallback: GwtCallback;
   menuCallback: MenuCallback;
   quitConfirmed = false;
   workbenchInitialized = false;
@@ -39,7 +39,7 @@ export class MainWindow extends GwtWindow {
 
   constructor(url: string, public isRemoteDesktop: boolean) {
     super(false, '', url, undefined, undefined, isRemoteDesktop, ['desktop', 'desktopMenuCallback']);
-    this.desktopCallback = new GwtCallback(this, isRemoteDesktop);
+    appState().gwtCallback = new GwtCallback(this, isRemoteDesktop);
     this.menuCallback = new MenuCallback(this);
 
     RCommandEvaluator.setMainWindow(this);
@@ -101,7 +101,7 @@ export class MainWindow extends GwtWindow {
   }
 
   collectPendingQuitRequest(): number {
-    return this.desktopCallback.collectPendingQuitRequest();
+    return appState().gwtCallback?.collectPendingQuitRequest() ?? PendingQuit.PendingQuitNone;
   }
 
   createWindow(width: number, height: number): BrowserWindow {

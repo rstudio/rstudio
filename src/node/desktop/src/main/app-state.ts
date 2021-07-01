@@ -13,19 +13,17 @@
  *
  */
 
-import { BrowserWindow } from 'electron';
-
 import { FilePath } from '../core/file-path';
 
 import { DesktopActivation } from './activation-overlay';
 import { Application } from './application';
+import { GwtCallback } from './gwt-callback';
 import { WindowTracker } from './window-tracker';
 
 /**
  * Global application state
  */
 export interface AppState {
-  mainWindow?: BrowserWindow;
   runDiagnostics: boolean;
   sessionPath?: FilePath;
   scriptsPath?: FilePath;
@@ -34,6 +32,7 @@ export interface AppState {
   port: number;
   generateNewPort(): void;
   windowTracker: WindowTracker;
+  gwtCallback?: GwtCallback;
 }
 
 let rstudio: AppState | null = null;

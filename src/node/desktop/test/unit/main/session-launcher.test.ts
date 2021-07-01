@@ -35,7 +35,6 @@ describe('session-launcher', () => {
   };
 
   beforeEach(() => {
-    clearApplicationSingleton();
     setApplication(new Application());
     saveAndClear(saveVars);
   });

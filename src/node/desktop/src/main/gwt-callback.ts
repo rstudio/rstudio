@@ -19,10 +19,13 @@
 
 import { ipcMain, dialog, BrowserWindow } from 'electron';
 import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions } from 'electron/main';
+import assert from 'assert';
 
 import { PendingWindow } from './pending-window';
 import { MainWindow } from './main-window';
+import { GwtWindow } from './gwt-window';
 import { openMinimalWindow } from './minimal-window';
+import { appState } from './app-state';
 
 export const PendingQuit = {
   'PendingQuitNone': 0,
@@ -31,13 +34,16 @@ export const PendingQuit = {
   'PendingQuitRestartAndReload': 3
 };
 
+/**
+ * This is the main-process side of the GwtCallbacks; dispatched from renderer processes
+ * via the ContextBridge.
+ */
 export class GwtCallback {
   pendingQuit: number = PendingQuit.PendingQuitNone;
+  private owners = new Set<GwtWindow>();
 
-  constructor(
-    public mainWindow: MainWindow,
-    public isRemoteDesktop: boolean
-  ) {
+  constructor(public mainWindow: MainWindow, public isRemoteDesktop: boolean) {
+    this.owners.add(mainWindow);
     ipcMain.on('desktop_browse_url', (event, url: string) => {
       GwtCallback.unimpl('desktop_browser_url');
     });
@@ -280,7 +286,7 @@ export class GwtCallback {
       GwtCallback.unimpl('desktop_set_desktop_rendering_engine');
     });
 
-    ipcMain.handle('desktop_filter_text', (event, text) => {
+    ipcMain.handle('desktop_filter_text', (event, text: string) => {
       GwtCallback.unimpl('desktop_filter_text');
       return text;
     });
@@ -289,7 +295,7 @@ export class GwtCallback {
       GwtCallback.unimpl('desktop_clean_clipboard');
     });
 
-    ipcMain.on('desktop_set_pending_quit', (event, pendingQuit) => {
+    ipcMain.on('desktop_set_pending_quit', (event, pendingQuit: number) => {
       this.pendingQuit = pendingQuit;
     });
 
@@ -441,6 +447,10 @@ export class GwtCallback {
     });
 
     ipcMain.on('desktop_reload_zoom_window', () => {
+      const browser = appState().windowTracker.getWindow('_rstudio_zoom');
+      if (browser) {
+        browser.window.webContents.reload();
+      }
     });
 
     ipcMain.on('desktop_set_tutorial_url', (event, url) => {
@@ -452,7 +462,10 @@ export class GwtCallback {
     });
 
     ipcMain.on('desktop_reload_viewer_zoom_window', (event, url) => {
-      GwtCallback.unimpl('desktop_reload_viewer_zoom_window');
+      const browser = appState().windowTracker.getWindow('_rstudio_viewer_zoom');
+      if (browser) {
+        browser.window.webContents.loadURL(url);
+      }
     });
 
     ipcMain.on('desktop_set_shiny_dialog_url', (event, url) => {
@@ -558,6 +571,10 @@ export class GwtCallback {
     });
   }
 
+  setRemoteDesktop(isRemoteDesktop: boolean): void {
+    this.isRemoteDesktop = isRemoteDesktop;
+  }
+
   static unimpl(ipcName: string): void {
 
     const focusedWindow = BrowserWindow.getFocusedWindow();
@@ -601,5 +618,36 @@ export class GwtCallback {
 
   convertButtons(buttons: string): string[] {
     return buttons.split('|');
+  }
+
+  /**
+   * Register a GwtWindow as a possible GwtCallback recipient
+   * 
+   * @param owner GwtWindow to register for GwtCallbacks
+   */
+  registerOwner(owner: GwtWindow): void {
+    this.owners.add(owner);
+  }
+
+  /**
+   * Unregister a GwtWindow from receiving GwtCallbacks
+   * 
+   * @param owner A GwtWindow that previously registered for GwtCallbacks
+   */
+  unregisterOwner(owner: GwtWindow): void {
+    this.owners.delete(owner);
+  }
+
+  /**
+   * @param event
+   * @returns Registered GwtWindow that sent the event (or undefined if not found)
+   */
+  getOwner(processId: number): GwtWindow | undefined {
+    for (const win of this.owners) {
+      if (win.window.webContents.getProcessId() === processId) {
+        return win;
+      }
+    }
+    return undefined;
   }
 }

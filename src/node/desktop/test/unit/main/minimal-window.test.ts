@@ -25,15 +25,14 @@ import { Application } from '../../../src/main/application';
 
 describe('minimal-window', () => {
   beforeEach(() => {
-    clearApplicationSingleton();
+    setApplication(new Application());
   });
   afterEach(() => {
+    clearApplicationSingleton();
     sinon.restore();
   });
 
-
   it('can be constructed', () => {
-    setApplication(new Application());
     const mainWindowStub = createSinonStubInstance(MainWindow);
     const minWin = openMinimalWindow('test-win', 'about:blank', 640, 480, mainWindowStub);
     assert.isObject(minWin);
