@@ -19,12 +19,13 @@ import { DesktopBrowserWindow } from './desktop-browser-window';
 
 export class SecondaryWindow extends DesktopBrowserWindow {
   constructor(
+    showToolbar: boolean,
     name: string,
     baseUrl?: string,
     parent?: DesktopBrowserWindow,
     opener?: WebContents,
     allowExternalNavigate = false
   ) {
-    super(true, name, baseUrl, parent, opener, allowExternalNavigate);
+    super(showToolbar, true, name, baseUrl, parent, opener, allowExternalNavigate);
   }
 }

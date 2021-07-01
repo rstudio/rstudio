@@ -14,9 +14,11 @@ BorderColor<<Electron>> SpringGreen
 class BrowserWindow << Electron >>
 class WebContents << Electron >>
 class WebFrameMain << Electron >>
+class Session << Electron >>
 
-BrowserWindow *-- "1" WebContents : webContents
-WebContents *-- "1" WebFrameMain : mainFrame
+BrowserWindow *-- WebContents : webContents
+WebContents *-- WebFrameMain : mainFrame
+WebContents *-- Session : session
 
 class RStudioBrowserWindow 
 desktopInfo ()- RStudioBrowserWindow 

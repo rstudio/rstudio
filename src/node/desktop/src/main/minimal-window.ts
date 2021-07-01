@@ -39,7 +39,7 @@ export function openMinimalWindow(
     // TODO
     // create the new browser window; pass along our own base URL so that the new window's
     // WebProfile knows how to apply the appropriate headers
-    browser = new DesktopBrowserWindow(!isViewerZoomWindow, name,
+    browser = new DesktopBrowserWindow(false, !isViewerZoomWindow, name,
       // TODO
       // pMainWindow_->webView()->baseUrl(), nullptr, pMainWindow_->webPage());
       undefined);

@@ -20,7 +20,7 @@ import { GwtWindow } from '../../../src/main/gwt-window';
 
 describe('GwtWindow', () => {
   it('construction creates a hidden BrowserWindow', () => {
-    const gwtWin = new GwtWindow(false, 'some name');
+    const gwtWin = new GwtWindow(false, false, 'some name');
     assert.isObject(gwtWin);
     assert.isObject(gwtWin.window);
     assert.isFalse(gwtWin.window.isVisible());

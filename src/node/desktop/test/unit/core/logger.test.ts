@@ -19,28 +19,22 @@ import { assert } from 'chai';
 import { Logger, logger, setLogger } from '../../../src/core/logger';
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-empty-function */
 class FakeLogger implements Logger {
   uniqueId = 123;
   logError(err: Error): void {
-    throw new Error('Method not implemented.');
   }
   logErrorMessage(message: string): void {
-    throw new Error('Method not implemented.');
   }
   logInfo(message: string): void {
-    throw new Error('Method not implemented.');
   }
   logWarning(warning: string): void {
-    throw new Error('Method not implemented.');
   }
   logDebug(message: string): void {
-    throw new Error('Method not implemented.');
   }
   logDiagnostic(message: string): void {
-    throw new Error('Method not implemented.');
   }
   logDiagnosticEnvVar(name: string): void {
-    throw new Error('Method not implemented.');
   }
 }
 
