@@ -166,19 +166,19 @@ export class SessionLauncher {
 
     const sessionProc = spawn(this.sessionPath.getAbsolutePath(), argList);
     sessionProc.stdout.on('data', (data) => {
-      console.log(`rsession stdout: ${data}`);
+      logger().logDebug(`rsession stdout: ${data}`);
     });
     sessionProc.stderr.on('data', (data) => {
-      console.log(`rsession stderr: ${data}`);
+      logger().logDebug(`rsession stderr: ${data}`);
     });
     sessionProc.on('exit', (code, signal) => {
       if (code !== null) {
-        console.log(`rsession exited: code=${code}`);
+        logger().logDebug(`rsession exited: code=${code}`);
         if (code !== 0) {
-          console.log(`${this.sessionPath} ${argList}`);
+          logger().logDebug(`${this.sessionPath} ${argList}`);
         }
       } else {
-        console.log(`rsession terminated: signal=${signal}`);
+        logger().logDebug(`rsession terminated: signal=${signal}`);
       }
       this.onRSessionExited();
     });

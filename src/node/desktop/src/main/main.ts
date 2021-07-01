@@ -41,7 +41,7 @@ class RStudioMain {
 
   private async startup(): Promise<void> {
     setLogger(new ConsoleLogger());
-    setLoggerLevel(LogLevel.ERR);
+    setLoggerLevel(LogLevel.DEBUG);
     const rstudio = new Application();
     setApplication(rstudio);
 

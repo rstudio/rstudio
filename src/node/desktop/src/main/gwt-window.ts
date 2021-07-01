@@ -20,6 +20,7 @@ import { DesktopBrowserWindow } from './desktop-browser-window';
 
 export class GwtWindow extends DesktopBrowserWindow {
   constructor(
+    showToolbar: boolean,
     adjustTitle: boolean,
     name: string,
     baseUrl?: string,
@@ -28,6 +29,6 @@ export class GwtWindow extends DesktopBrowserWindow {
     isRemoteDesktop = false,
     addedCallbacks: string[] = []
   ) {
-    super(adjustTitle, name, baseUrl, parent, opener, isRemoteDesktop, addedCallbacks);
+    super(showToolbar, adjustTitle, name, baseUrl, parent, opener, isRemoteDesktop, addedCallbacks);
   }
 }

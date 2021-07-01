@@ -26,6 +26,7 @@ import { MainWindow } from './main-window';
 import { GwtWindow } from './gwt-window';
 import { openMinimalWindow } from './minimal-window';
 import { appState } from './app-state';
+import { logger } from '../core/logger';
 
 export const PendingQuit = {
   'PendingQuitNone': 0,
@@ -347,8 +348,13 @@ export class GwtCallback {
       GwtCallback.unimpl('desktop_zoom_out');
     });
 
-    ipcMain.on('desktop_zoom_actual_size', () => {
-      GwtCallback.unimpl('desktop_zoom_actual_size');
+    ipcMain.on('desktop_zoom_actual_size', (event) => {
+      const owner = this.getOwner(event.processId, event.frameId);
+      if (owner) {
+        owner.window.webContents.zoomFactor = 1.0;
+      } else {
+        logger().logWarning('received zoom_actual_size from unknown window');
+      }
     });
 
     ipcMain.on('desktop_set_background_color', (event, rgbColor) => {
@@ -430,12 +436,13 @@ export class GwtCallback {
     });
 
     ipcMain.handle('desktop_supports_fullscreen_mode', () => {
-      GwtCallback.unimpl('desktop_supports_fullscreen_mode');
-      return true;
+      return process.platform === 'darwin';
     });
 
     ipcMain.on('desktop_toggle_fullscreen_mode', () => {
-      GwtCallback.unimpl('desktop_toggle_fullscreen_mode');
+      if (process.platform === 'darwin') {
+        this.mainWindow.window.fullScreen = !this.mainWindow.window.fullScreen;
+      }
     });
 
     ipcMain.on('desktop_show_keyboard_shortcut_help', () => {
@@ -443,7 +450,7 @@ export class GwtCallback {
     });
 
     ipcMain.on('desktop_launch_session', (event, reload) => {
-      GwtCallback.unimpl('desktop_launch)_session');
+      GwtCallback.unimpl('desktop_launch_session');
     });
 
     ipcMain.on('desktop_reload_zoom_window', () => {
@@ -642,7 +649,7 @@ export class GwtCallback {
    * @param event
    * @returns Registered GwtWindow that sent the event (or undefined if not found)
    */
-  getOwner(processId: number): GwtWindow | undefined {
+  getOwner(processId: number, frameId: number): GwtWindow | undefined {
     for (const win of this.owners) {
       if (win.window.webContents.getProcessId() === processId) {
         return win;

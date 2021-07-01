@@ -38,7 +38,7 @@ export class MainWindow extends GwtWindow {
   pendingWindows = new Array<PendingWindow>();
 
   constructor(url: string, public isRemoteDesktop: boolean) {
-    super(false, '', url, undefined, undefined, isRemoteDesktop, ['desktop', 'desktopMenuCallback']);
+    super(false, false, '', url, undefined, undefined, isRemoteDesktop, ['desktop', 'desktopMenuCallback']);
     appState().gwtCallback = new GwtCallback(this, isRemoteDesktop);
     this.menuCallback = new MenuCallback(this);
 
@@ -94,9 +94,10 @@ export class MainWindow extends GwtWindow {
         } else {
           this.window.setTitle('RStudio');
         }
+        this.avoidMoveCursorIfNecessary();
       })
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
-      .catch(() => {
+      .catch((error) => {
+        logger().logError(error);
       });
   }
 
