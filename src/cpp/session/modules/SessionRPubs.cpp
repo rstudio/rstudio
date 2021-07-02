@@ -379,6 +379,56 @@ Error rpubsUpload(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
+   bool selfContained = false;
+   FilePath filePath = module_context::resolveAliasedPath(htmlFile);
+   if (filePath.getSize() > 1024 * 1024)
+   {
+      // Presume that HTML files over 1MB are self-contained
+      selfContained = true;
+   }
+   else
+   {
+      // Check the file's contents for self-contained smells
+      std::string contents;
+      error = readStringFromFile(filePath, &contents);
+
+      if (error)
+      {
+        // Log and proceed as though the file was not self contained (transformation is idempotent)
+        LOG_ERROR(error);
+      }
+      else
+      {
+        auto pos = contents.find("script src=\"data:");
+        if (pos != std::string::npos)
+        {
+           // has self contained scripts
+           selfContained = true;
+        }
+      }
+   }
+
+   if (!selfContained)
+   {
+      FilePath tempFile = module_context::tempFile("rpubs-", "html");
+      error = module_context::createSelfContainedHtml(filePath, tempFile);
+      if (error)
+      {
+         // If we didn't succeed in converting to self-contained, log and try to publish anyway
+         LOG_ERROR(error);
+      }
+      else
+      {
+         // We succeeded, try to copy the self-contained version over the original.
+         error = tempFile.move(filePath, FilePath::MoveCrossDevice, true /* overwrite */);
+         if (error)
+         {
+            // Again, if we can't do this, proceed with attempting to publish the original
+            LOG_ERROR(error);
+         }
+      }
+   }
+
    if (isUploadRunning(contextId))
    {
       pResponse->setResult(false);
@@ -389,7 +439,6 @@ Error rpubsUpload(const json::JsonRpcRequest& request,
       if (title.empty())
          title = "Untitled";
 
-      FilePath filePath = module_context::resolveAliasedPath(htmlFile);
       FilePath rmdPath = originalRmd.empty() ? FilePath() :
          module_context::resolveAliasedPath(originalRmd);
       s_pCurrentUploads[contextId] = RPubsUpload::create(contextId,
