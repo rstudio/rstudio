@@ -17,6 +17,7 @@ import { BrowserWindow, WebContents } from 'electron';
 
 import path from 'path';
 import { logger } from '../core/logger';
+import { executeJavaScript } from './utils';
 
 /**
  * Base class for browser-based windows. Subclasses include GwtWindow, SecondaryWindow,
@@ -70,6 +71,7 @@ export class DesktopBrowserWindow {
     this.window.webContents.on('did-fail-load', () => {
       this.finishLoading(false);
     });
+    this.window.on('close', this.closeEvent.bind(this));
 
     // set zoom factor
     // TODO: double zoomLevel = options().zoomLevel();
@@ -80,6 +82,33 @@ export class DesktopBrowserWindow {
       logger().logDebug('toolbar NYI');
       // TODO: add another BrowserView to hold an HTML-based toolbar?
     }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  closeEvent(event: Electron.Event): void {
+    if (!this.opener) {
+      // if we don't know where we were opened from, check window.opener
+      // (note that this could also be empty)
+      const cmd =
+        `if (window.opener && window.opener.unregisterDesktopChildWindow)
+           window.opener.unregisterDesktopChildWindow('${this.name}');`;
+      this.executeJavaScript(cmd).catch((error) => {
+        logger().logError(error);
+      });
+    } else {
+      // if we do know where we were opened from and it has the appropriate
+      // handlers, let it know we're closing
+      const cmd =
+        `if (window.unregisterDesktopChildWindow)
+           window.unregisterDesktopChildWindow('${this.name}');`;
+      this.executeJavaScript(cmd).catch((error) => {
+        logger().logError(error);
+      });
+    }
+
+    // forward the close event to the page
+    // TODO
+    // webPage()->event(event);
   }
 
   adjustWindowTitle(title: string, explicitSet: boolean): void {
@@ -105,13 +134,29 @@ export class DesktopBrowserWindow {
       const cmd =
         `if (window.opener && window.opener.registerDesktopChildWindow)
          window.opener.registerDesktopChildWindow('${this.name}', window);`;
-      this.window.webContents.executeJavaScript(cmd);
+      this.executeJavaScript(cmd).catch((error) => {
+        logger().logError(error);
+      });
     }
   }
 
   avoidMoveCursorIfNecessary(): void {
     if (process.platform === 'darwin') {
-      this.window.webContents.executeJavaScript('document.body.className = document.body.className + \' avoid-move-cursor\'');
+      this.executeJavaScript('document.body.className = document.body.className + \' avoid-move-cursor\'')
+        .catch((error) => {
+          logger().logError(error);
+        });
     }
+  }
+
+  /**
+   * Execute javascript in this window's page
+   * 
+   * @param cmd javascript to execute in this window
+   * @returns promise with result of execution
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  executeJavaScript(cmd: string): Promise<any> {
+    return executeJavaScript(this.window.webContents, cmd);
   }
 }

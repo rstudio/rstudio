@@ -39,6 +39,7 @@ export const kSessionServerUrlOption = '--session-url';
 export const kTempCookiesOption = '--use-temp-cookies';
 export const kVersion = '--version';
 export const kVersionJson = '--version-json';
+export const kLogLevel = 'log-level';
 
 /**
  * The RStudio application

@@ -79,15 +79,15 @@ export class MainWindow extends GwtWindow {
   }
 
   invokeCommand(cmdId: string): void {
-    this.window.webContents.executeJavaScript(`window.desktopHooks.invokeCommand("${cmdId}")`)
-      .catch(() => {
-        logger().logErrorMessage(`Error: failed to execute desktopHooks.invokeCommand("${cmdId}")`);
+    this.executeJavaScript(`window.desktopHooks.invokeCommand("${cmdId}")`)
+      .catch((error) => {
+        logger().logError(error);
       });
   }
 
   onWorkbenchInitialized(): void {
     this.workbenchInitialized = true;
-    this.window.webContents.executeJavaScript('window.desktopHooks.getActiveProjectDir()')
+    this.executeJavaScript('window.desktopHooks.getActiveProjectDir()')
       .then(projectDir => {
         if (projectDir.length > 0) {
           this.window.setTitle(`${projectDir} - RStudio`);
