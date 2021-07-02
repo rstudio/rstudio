@@ -55,7 +55,7 @@ describe('session-launcher', () => {
     const localPeer = getenv('RS_LOCAL_PEER');
     if (process.platform === 'win32') {
       assert.isNotEmpty(localPeer);
-      assert.isAbove(-1, localPeer.indexOf(appState().port.toString()));
+      assert.isAbove(localPeer.indexOf(appState().port.toString()), -1);
     } else {
       assert.isEmpty(localPeer);
     }
