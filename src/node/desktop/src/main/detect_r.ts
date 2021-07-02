@@ -94,8 +94,32 @@ async function prepareEnvironmentPosix(): Promise<boolean> {
 async function prepareEnvironmentWin32(): Promise<boolean> {
   assert((process.platform === 'win32'));
 
-  dialog.showErrorBox('NYI', 'R detection and environment setup NYI on Windows, cannot continue');
-  return false;
+  // TODO: this is just a hacked-together placeholder for dev purposes
+
+  // check for which R override
+  let rWhichRPath = new FilePath();
+  const whichROverride = getenv('RSTUDIO_WHICH_R');
+  if (!whichROverride) {
+    dialog.showErrorBox(
+      'RSTUDIO_WHICH_R Not Set',
+      'Temporary: RSTUDIO_WHICH_R environment variable must point to R installation folder. Cannot continue.');
+    return false;
+  }
+
+  rWhichRPath = new FilePath(whichROverride);
+  if (!rWhichRPath.existsSync()) {
+    dialog.showErrorBox(
+      'RSTUDIO_WHICH_R Incorrect',
+      `RSTUDIO_WHICH_R environment variable set incorrectly; ${rWhichRPath.getAbsolutePathNative()} not found. Cannot continue.`);
+    return false;
+  }
+
+
+  process.env.R_HOME = rWhichRPath.getAbsolutePathNative();
+  const rPath = rWhichRPath.completeChildPath('bin\\x64');
+  process.env.PATH = `${rPath};${process.env.PATH}`;
+
+  return true;
 }
 
 async function scanForR(rstudioWhichR: FilePath): Promise<FilePath> {
