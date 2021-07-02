@@ -42,6 +42,7 @@ import org.rstudio.studio.client.common.rpubs.RPubsUploader;
 import org.rstudio.studio.client.common.rpubs.model.RPubsServerOperations;
 import org.rstudio.studio.client.common.rpubs.ui.RPubsUploadDialog;
 import org.rstudio.studio.client.common.satellite.Satellite;
+import org.rstudio.studio.client.quarto.model.QuartoConfig;
 import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeployInitiatedEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentCancelledEvent;
@@ -293,24 +294,32 @@ public class RSConnect implements SessionInitEvent.Handler,
                               arg.isShiny());
                   }
                });
-            }
-            break;
+               }
+               break;
             case CONTENT_TYPE_QUARTO_WEBSITE:
+               QuartoConfig config = session_.getSessionInfo().getQuartoConfig();
+               FileSystemItem projectDir = FileSystemItem.createDir(config.project_dir);
+               String websiteOutputDir = projectDir.completePath(config.project_output_dir);
                if (event.getFromPrevious().getAsStatic())
+               {
                   publishAsFiles(event,
                      new RSConnectPublishSource(event.getPath(),
-                        event.getHtmlFile(),
-                        input.getWebsiteDir(),
-                        input.getWebsiteOutputDir(),
+                        config.project_dir,
+                        config.project_dir,
+                        websiteOutputDir,
                         input.isSelfContained(),
                         true, // isStatic
                         false, // isShiny
                         true, // isQuarto
                         input.getDescription(),
                         event.getContentType()));
+               }
                else
-                  publishAsCode(event, input.getWebsiteDir(), false /* isShiny */);
+               {
+                  publishAsCode(event, config.project_dir, false /* isShiny */);
+               }
                break;
+
 
             case CONTENT_TYPE_PLUMBER_API:
                publishAsCode(event, null, false);
@@ -341,6 +350,17 @@ public class RSConnect implements SessionInitEvent.Handler,
                   showPublishUI(arg);
                }
             });
+         }
+         else if (event.getContentType() == RSConnect.CONTENT_TYPE_QUARTO_WEBSITE)
+         {
+            QuartoConfig config = session_.getSessionInfo().getQuartoConfig();
+            FileSystemItem projectDir = FileSystemItem.createDir(config.project_dir);
+
+            // fill publish input from session
+            input.setIsQuarto(true);
+            input.setWebsiteDir(config.project_dir);
+            input.setWebsiteOutputDir(projectDir.completePath(config.project_output_dir));
+            showPublishUI(input);
          }
          else
          {
@@ -470,7 +490,8 @@ public class RSConnect implements SessionInitEvent.Handler,
       else
       {
          source = new RSConnectPublishSource(event.getPath(), websiteDir,
-            false, false, isShiny, false, null, event.getContentType());
+            false, false, isShiny,
+            event.getContentType() == RSConnect.CONTENT_TYPE_QUARTO_WEBSITE, null, event.getContentType());
       }
 
       // detect quarto

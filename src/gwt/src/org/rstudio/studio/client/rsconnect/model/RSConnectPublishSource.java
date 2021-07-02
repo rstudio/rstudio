@@ -76,10 +76,21 @@ public class RSConnectPublishSource
       }
       contentCategory_ = category;
 
-      if (isWebsite && isStatic && !StringUtil.isNullOrEmpty(websiteOutputDir))
-         deployDir_ = FileSystemItem.createFile(websiteOutputDir).getPath();
+      if (isWebsite)
+      {
+         if (isStatic && !StringUtil.isNullOrEmpty(websiteOutputDir))
+         {
+            deployDir_ = FileSystemItem.createFile(websiteOutputDir).getPath();
+         }
+         else
+         {
+            deployDir_ = FileSystemItem.createFile(websiteDir).getPath();
+         }
+      }
       else
+      {
          deployDir_ = FileSystemItem.createFile(outputFile).getParentPathString();
+      }
    }
    
    public RSConnectPublishSource(RenderedDocPreview preview, 
@@ -143,6 +154,11 @@ public class RSConnectPublishSource
    
    public boolean isDocument()
    {
+      if (StringUtil.isNullOrEmpty(deployFile_))
+      {
+         // Happens for websites (where no particular file is being deployed)
+         return false;
+      }
       return isSourceExt("rmd") || isSourceExt("md") || isSourceExt("html") ||
              isSourceExt("htm") || isSourceExt("rpres") || isSourceExt("pdf") ||
              isSourceExt("docx") || isSourceExt("odt") || isSourceExt("rtf") ||

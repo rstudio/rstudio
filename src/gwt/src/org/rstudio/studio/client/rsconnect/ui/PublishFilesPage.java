@@ -70,7 +70,10 @@ public class PublishFilesPage
          else
          {
             contents_.setPublishSource(
-               new RSConnectPublishSource(input.getSourceRmd().getPath(),
+               new RSConnectPublishSource(
+                  input.getContentType() == RSConnect.CONTENT_TYPE_QUARTO_WEBSITE ?
+                     input.getWebsiteDir() :
+                     input.getSourceRmd().getPath(),
                   input.getWebsiteDir(),
                   input.isSelfContained(),
                   asStatic,

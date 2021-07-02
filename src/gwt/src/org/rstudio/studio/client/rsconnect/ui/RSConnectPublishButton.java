@@ -542,7 +542,10 @@ public class RSConnectPublishButton extends Composite
          break;
       case RSConnect.CONTENT_TYPE_APP:
       case RSConnect.CONTENT_TYPE_APP_SINGLE:
-         // Shiny application
+         events_.fireEvent(RSConnectActionEvent.DeployAppEvent(
+            contentPath_, contentType_, previous));
+         break;
+      case RSConnect.CONTENT_TYPE_QUARTO_WEBSITE:
          events_.fireEvent(RSConnectActionEvent.DeployAppEvent(
                contentPath_, contentType_, previous));
          break;
@@ -558,10 +561,7 @@ public class RSConnectPublishButton extends Composite
          }
          fireDeployDocEvent(previous);
          break;
-      case RSConnect.CONTENT_TYPE_QUARTO_WEBSITE:
-         RSConnectActionEvent.DeployAppEvent(contentPath_, contentType_, previous);
-         break;
-      case RSConnect.CONTENT_TYPE_PLUMBER_API:
+         case RSConnect.CONTENT_TYPE_PLUMBER_API:
          events_.fireEvent(RSConnectActionEvent.DeployAPIEvent(contentPath_, contentType_, previous));
          break;
       default: 
