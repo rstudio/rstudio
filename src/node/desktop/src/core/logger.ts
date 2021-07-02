@@ -42,6 +42,25 @@ export interface LogOptions {
   showDiagnostics: boolean;
 }
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-empty-function */
+export class NullLogger implements Logger {
+  logError(err: Error): void {
+  }
+  logErrorMessage(message: string): void {
+  }
+  logInfo(message: string): void {
+  }
+  logWarning(warning: string): void {
+  }
+  logDebug(message: string): void {
+  }
+  logDiagnostic(message: string): void {
+  }
+  logDiagnosticEnvVar(name: string): void {
+  }
+}
+
 export function logger(): Logger {
   const logger = coreState().logOptions.logger;
   if (!logger) {
@@ -74,4 +93,29 @@ export function showDiagnosticsOutput(): boolean {
  */
 export function setLoggerLevel(level: LogLevel): void {
   coreState().logOptions.logLevel = level;
+}
+
+/**
+ * Convert a string log level (e.g. 'WARN') to LogLevel enum.
+ * 
+ * @param level String representation of log level
+ * @param defaultLevel Default logging level if unable to parse input
+ * @returns LogLevel enum value 
+ */
+export function parseCommandLineLogLevel(level: string, defaultLevel: LogLevel): LogLevel {
+  level = level.toUpperCase();
+  switch (level) {
+  case 'OFF':
+    return LogLevel.OFF;
+  case 'ERR':
+    return LogLevel.ERR;
+  case 'WARN':
+    return LogLevel.WARN;
+  case 'INFO':
+    return LogLevel.INFO;
+  case 'DEBUG':
+    return LogLevel.DEBUG;
+  default:
+    return defaultLevel;
+  }
 }

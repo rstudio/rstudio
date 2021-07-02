@@ -16,11 +16,20 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 
+import { NullLogger, setLogger } from '../../../src/core/logger';
+
 import { WindowTracker } from '../../../src/main/window-tracker';
 import { DesktopBrowserWindow } from '../../../src/main/desktop-browser-window';
 import { GwtWindow } from '../../../src/main/gwt-window';
+import { clearCoreSingleton } from '../../../src/core/core-state';
 
 describe('window-tracker', () => {
+  beforeEach(() => {
+    clearCoreSingleton();
+    const f = new NullLogger();
+    setLogger(f);
+  });
+
   it('empty after creation', () => {
     assert.equal(new WindowTracker().length(), 0);
   });
