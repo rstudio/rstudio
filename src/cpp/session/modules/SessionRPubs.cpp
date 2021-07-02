@@ -379,6 +379,9 @@ Error rpubsUpload(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
+   // The HTML file may not be self-contained, but we can only publish self-contained content to
+   // Rpubs. Attempt to determine whether the document is self-contained, and if it does not appear
+   // to be, attempt to convert it before we publish it.
    bool selfContained = false;
    FilePath filePath = module_context::resolveAliasedPath(htmlFile);
    if (filePath.getSize() > 1024 * 1024)
@@ -410,6 +413,7 @@ Error rpubsUpload(const json::JsonRpcRequest& request,
 
    if (!selfContained)
    {
+      // Doesn't appear to be self-contained; attempt conversion.
       FilePath tempFile = module_context::tempFile("rpubs-", "html");
       error = module_context::createSelfContainedHtml(filePath, tempFile);
       if (error)

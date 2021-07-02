@@ -502,6 +502,7 @@ private:
             isShiny_ = true;
       }
 
+      // if we are using a quarto command to render, we must be a quarto doc
       if (renderFunc == "quarto run" || renderFunc == "quarto render")
       {
           isQuarto_ = true;

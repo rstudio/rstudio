@@ -260,9 +260,15 @@ public class RSConnectPublishButton extends Composite
 
    public void setQmd(String qmd)
    {
+      // Used to create the Publish button on the text editor when it has a
+      // Quarto file loaded. Create a synthetic "preview" containing just the
+      // source file w/ no output
       docPreview_ = new RenderedDocPreview(qmd, "", false, true);
       setContentPath(qmd, "");
 
+      // Determine whether or not this Quarto file is part of a website; we
+      // presume it to be if it's inside the current project and the current project is a 
+      // Quarto website project or book
       boolean isWebsite = false;
       if (!StringUtil.isNullOrEmpty(qmd))
       {
@@ -280,6 +286,10 @@ public class RSConnectPublishButton extends Composite
          }
       }
 
+      // Set the content type accordingly. Note that
+      // CONTENT_TYPE_QUARTO_WEBSITE is used just for publishing Quarto
+      // websites from the Viewer pane (where we don't have the source file
+      // context we do here)
       setContentType(isWebsite ?
          RSConnect.CONTENT_TYPE_WEBSITE :
          RSConnect.CONTENT_TYPE_DOCUMENT);
@@ -289,6 +299,7 @@ public class RSConnectPublishButton extends Composite
 
    public void setQuartoSitePreview()
    {
+      // Used to create the Publish button on the Viewer pane when it has a Quarto website loaded.
       QuartoConfig config = session_.getSessionInfo().getQuartoConfig();
       FileSystemItem projectDir = FileSystemItem.createDir(config.project_dir);
       setContentPath(config.project_dir, projectDir.completePath(config.project_output_dir));
@@ -542,10 +553,13 @@ public class RSConnectPublishButton extends Composite
          break;
       case RSConnect.CONTENT_TYPE_APP:
       case RSConnect.CONTENT_TYPE_APP_SINGLE:
+         // Shiny application
          events_.fireEvent(RSConnectActionEvent.DeployAppEvent(
             contentPath_, contentType_, previous));
          break;
       case RSConnect.CONTENT_TYPE_QUARTO_WEBSITE:
+         // Quarto website -- deployed just like Shiny, since it's based on a
+         // directory rather than a file
          events_.fireEvent(RSConnectActionEvent.DeployAppEvent(
                contentPath_, contentType_, previous));
          break;
@@ -561,7 +575,7 @@ public class RSConnectPublishButton extends Composite
          }
          fireDeployDocEvent(previous);
          break;
-         case RSConnect.CONTENT_TYPE_PLUMBER_API:
+      case RSConnect.CONTENT_TYPE_PLUMBER_API:
          events_.fireEvent(RSConnectActionEvent.DeployAPIEvent(contentPath_, contentType_, previous));
          break;
       default: 

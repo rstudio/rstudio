@@ -878,8 +878,6 @@ public class RSConnectDeploy extends Composite
                   source_.getDeployFile() : 
             source_.getDeployDir();
 
-      // TODO: This doesn't work when publishing Quarto websites as code; we need them to have a fileSource set to the website output dir
-                  
       // getDeploymentFiles fails if we don't give it a source -- this should
       // never happen, but if it does this error message will be more useful
       if (StringUtil.isNullOrEmpty(fileSource))

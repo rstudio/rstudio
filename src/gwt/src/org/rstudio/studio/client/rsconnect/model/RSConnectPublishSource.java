@@ -80,10 +80,12 @@ public class RSConnectPublishSource
       {
          if (isStatic && !StringUtil.isNullOrEmpty(websiteOutputDir))
          {
+            // publishing static output from a website: use the output directory if we have it
             deployDir_ = FileSystemItem.createFile(websiteOutputDir).getPath();
          }
          else
          {
+            // for all other website publishing purposes, publish the website directory
             deployDir_ = FileSystemItem.createFile(websiteDir).getPath();
          }
       }

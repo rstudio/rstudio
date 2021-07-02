@@ -209,6 +209,7 @@ Error quartoCapabilities(const json::JsonRpcRequest&,
    return Success();
 }
 
+// Given a path to a Quarto file (usually .qmd), attempt to extract its metadata as a JSON object
 Error quartoMetadata(const std::string& path,
                      json::Object *pResultObject)
 {
@@ -283,29 +284,18 @@ void readQuartoProjectConfig(const FilePath& configFile,
 Error getQmdPublishDetails(const json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)
 {
+   using namespace module_context;
+   
    std::string target;
    Error error = json::readParams(request.params, &target);
-   using namespace module_context;
-
-   /*
-    "result": {
-    "is_multi_rmd": false,
-    "is_shiny_rmd": false,
-    "is_self_contained": true,
-    "title": "My First Quarto",
-    "has_connect_account": false,
-    "website_dir": "",
-    "website_output_dir": ""
-  },
-  */
-
    if (error)
    {
        return error;
    }
+
    FilePath qmdPath = module_context::resolveAliasedPath(target);
 
-   // Ask Quarto to get the metadata for the Qmd
+   // Ask Quarto to get the metadata for the file
    json::Object metadata;
    error = quartoMetadata(qmdPath.getAbsolutePath(), &metadata);
    if (error)
@@ -324,6 +314,7 @@ Error getQmdPublishDetails(const json::JsonRpcRequest& request,
    bool selfContained = false;
    std::string outputFile;
 
+   // If we were able to get the format's metadata, read it
    if (formatMeta != format.end())
    {
       json::Object formatMetadata = (*formatMeta).getValue().getObject();
@@ -341,6 +332,7 @@ Error getQmdPublishDetails(const json::JsonRpcRequest& request,
    }
 
 
+   // If we were able to get the format's pandoc parameters, read them as well
    auto pandoc = format.find("pandoc");
    if (pandoc != format.end())
    {
@@ -357,6 +349,8 @@ Error getQmdPublishDetails(const json::JsonRpcRequest& request,
    }
 
 
+   // Look up configuration for this Quarto project, if this file is part of a Quarto book or
+   // website.
    std::string websiteDir, websiteOutputDir;
    FilePath quartoConfig = quartoProjectConfigFile(qmdPath);
    if (!quartoConfig.isEmpty())
@@ -371,6 +365,7 @@ Error getQmdPublishDetails(const json::JsonRpcRequest& request,
        {
           FilePath configPath = quartoConfig.getParent();
           websiteDir = configPath.getAbsolutePath();
+          // Infer output directory 
           if (outputDir.empty())
           {
               if (type == kQuartoProjectBook)
@@ -386,6 +381,8 @@ Error getQmdPublishDetails(const json::JsonRpcRequest& request,
        }
    }
 
+   // Attempt to determine whether or not the user has an active publishing account; used on the
+   // client to trigger an account setup step if necessary
    r::sexp::Protect protect;
    SEXP sexpHasAccount;
    bool hasAccount = true;
@@ -401,7 +398,7 @@ Error getQmdPublishDetails(const json::JsonRpcRequest& request,
    }
 
 
-   // build result object
+   // Build result object
    result["is_self_contained"] = selfContained;
    result["title"] = title;
    result["is_shiny_qmd"] = isShinyQmd;
@@ -418,7 +415,6 @@ Error getQmdPublishDetails(const json::JsonRpcRequest& request,
 }
 
 namespace module_context {
-
 
 bool handleQuartoPreview(const core::FilePath& sourceFile,
                          const core::FilePath& outputFile,
@@ -474,8 +470,10 @@ bool handleQuartoPreview(const core::FilePath& sourceFile,
    return false;
 }
 
+
 const char* const kQuartoProjectSite = "site";
 const char* const kQuartoProjectBook = "book";
+
 
 QuartoConfig quartoConfig(bool refresh)
 {

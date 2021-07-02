@@ -271,6 +271,7 @@ public class RSConnect implements SessionInitEvent.Handler,
                   {
                      if (arg == null)
                         return;
+                     
                      boolean isQuarto = false;
                      if (event.getFromPreview() != null)
                      {
@@ -297,9 +298,11 @@ public class RSConnect implements SessionInitEvent.Handler,
                }
                break;
             case CONTENT_TYPE_QUARTO_WEBSITE:
+               // Quarto website publishing metadata is extracted from the active Quarto project
                QuartoConfig config = session_.getSessionInfo().getQuartoConfig();
                FileSystemItem projectDir = FileSystemItem.createDir(config.project_dir);
                String websiteOutputDir = projectDir.completePath(config.project_output_dir);
+
                if (event.getFromPrevious().getAsStatic())
                {
                   publishAsFiles(event,
@@ -1202,6 +1205,8 @@ public class RSConnect implements SessionInitEvent.Handler,
 
       if (isQuarto)
       {
+         // Quarto metadata lookup can take a couple of seconds; ensure the
+         // user can see some progress while we're doing it
          final ProgressIndicator indicator = display_.getProgressIndicator("Error");
          indicator.onProgress("Preparing for Publish...");
 
@@ -1237,6 +1242,7 @@ public class RSConnect implements SessionInitEvent.Handler,
                public void onError(ServerError error)
                {
                   indicator.onError(error.getMessage());
+                  onComplete.execute(null);
                }
             }
          );
@@ -1264,11 +1270,12 @@ public class RSConnect implements SessionInitEvent.Handler,
                         // set the description from the document title, if we
                         // have it
                         input.setDescription(details.title);
-                     } else
+                     }
+                     else
                      {
                         // set the description from the document name
                         input.setDescription(
-                           FilePathUtils.fileNameSansExtension(docPath));
+                              FilePathUtils.fileNameSansExtension(docPath));
                      }
                   }
                   onComplete.execute(input);
