@@ -15,15 +15,12 @@
 
 import { appState } from './app-state';
 import { DesktopBrowserWindow } from './desktop-browser-window';
-import { MainWindow } from './main-window';
 
 export function openMinimalWindow(
   name: string,
   url: string,
   width: number,
-  height: number,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  mainWindow: MainWindow
+  height: number
 ): DesktopBrowserWindow {
 
   const named = !!name && name !== '_blank';

@@ -193,7 +193,7 @@ export class GwtCallback {
     ipcMain.on('desktop_open_minimal_window', (event: IpcMainEvent, name: string, url: string,
       width: number, height: number
     ) => {
-      const minimalWindow = openMinimalWindow(name, url, width, height, this.mainWindow);
+      const minimalWindow = openMinimalWindow(name, url, width, height);
       minimalWindow.window.once('ready-to-show', () => {
         minimalWindow.window.show();
       });
@@ -465,7 +465,10 @@ export class GwtCallback {
     });
   
     ipcMain.on('desktop_set_viewer_url', (event, url) => {
-      GwtCallback.unimpl('desktop_set_viewer_url');
+      const owner = this.getOwner(event.processId, event.frameId);
+      if (owner) {
+        owner.setViewerUrl(url);
+      }
     });
 
     ipcMain.on('desktop_reload_viewer_zoom_window', (event, url) => {
@@ -650,6 +653,7 @@ export class GwtCallback {
    * @returns Registered GwtWindow that sent the event (or undefined if not found)
    */
   getOwner(processId: number, frameId: number): GwtWindow | undefined {
+    // TODO: probably(?) need to use both processId and frameId to make this determination
     for (const win of this.owners) {
       if (win.window.webContents.getProcessId() === processId) {
         return win;

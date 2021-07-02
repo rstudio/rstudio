@@ -15,10 +15,7 @@
 
 import { describe } from 'mocha';
 import { assert } from 'chai';
-import sinon from 'sinon';
-import { createSinonStubInstance } from '../unit-utils';
 
-import { MainWindow } from '../../../src/main/main-window';
 import { openMinimalWindow } from '../../../src/main/minimal-window';
 import { clearApplicationSingleton, setApplication } from '../../../src/main/app-state';
 import { Application } from '../../../src/main/application';
@@ -29,12 +26,10 @@ describe('minimal-window', () => {
   });
   afterEach(() => {
     clearApplicationSingleton();
-    sinon.restore();
   });
 
   it('can be constructed', () => {
-    const mainWindowStub = createSinonStubInstance(MainWindow);
-    const minWin = openMinimalWindow('test-win', 'about:blank', 640, 480, mainWindowStub);
+    const minWin = openMinimalWindow('test-win', 'about:blank', 640, 480);
     assert.isObject(minWin);
   });
 });
