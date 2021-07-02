@@ -68,7 +68,7 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
                             UserPrefs userPrefs,
                             UserState userState)
    {
-      super("Options",
+      super(constants_.Options_menu_caption(),
             res.styles().panelContainer(),
             res.styles().panelContainerNoChooser(),
             true,
@@ -182,4 +182,5 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
    private final UserState state_;
    private final ApplicationQuit quit_;
    private final GlobalDisplay globalDisplay_;
+   private static final PreferencesPaneConstants constants_ = GWT.create(PreferencesPaneConstants.class);
 }

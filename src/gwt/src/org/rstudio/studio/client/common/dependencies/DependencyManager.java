@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.CommandWith2Args;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
@@ -38,6 +39,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.prefs.views.PublishingPreferencesPaneConstants;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleActivateEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobConstants;
@@ -147,7 +149,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    public void withThemes(String userAction, final Command command)
    {
       withDependencies(
-         "Converting Theme",
+         constants_.withThemesCaption(),
          userAction,
          getFeatureDescription("theme_conversion"),
          getFeatureDependencies("theme_conversion"),
@@ -235,7 +237,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
          deps.addAll(getFeatureDependencies("rmarkdown"));
 
       withDependencies(
-        "Publishing",
+        constants_.publishingPaneHeader(),
         userAction,
         getFeatureDescription("rsconnect"),
         userPrompt,
@@ -247,7 +249,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
 
    public void withRMarkdown(String userAction, final Command command)
    {
-      withRMarkdown("R Markdown", userAction, command);
+      withRMarkdown(constants_.withRMarkdownCaption(), userAction, command);
    }
 
    public void withRMarkdown(String progressCaption, String userAction,
@@ -302,9 +304,9 @@ public class DependencyManager implements InstallShinyEvent.Handler,
          {
             globalDisplay_.showYesNoMessage(
               MessageDialog.QUESTION,
-              "Install Shiny Package",
-              userAction + " requires installation of an updated version " +
-              "of the shiny package.\n\nDo you want to install shiny now?",
+              constants_.installShinyCaption(),
+              userAction + " " + constants_.installShinyUserAction() +
+              constants_.installShinyMessage(),
                   false, // include cancel
                   new Operation()
                   {
@@ -328,7 +330,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
 
        // perform dependency resolution
        withDependencies(
-          "Checking installed packages",
+          constants_.installPkgsCaption(),
           userPrompt,
           getFeatureDependencies("shiny"),
           true,
@@ -347,8 +349,8 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    public void withShinyAddins(final Command command)
    {
       withDependencies(
-        "Checking installed packages",
-        "Executing addins",
+        constants_.withShinyAddinsCaption(),
+        constants_.withShinyAddinsUserAction(),
         getFeatureDescription("shiny_addins"),
         getFeatureDependencies("shiny_addins"),
         false,
@@ -431,7 +433,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    public void withDataImportCSV(String userAction, final Command command)
    {
      withDependencies(
-        "Preparing Import from CSV",
+        constants_.withDataImportCSVCaption(),
         userAction,
         getFeatureDescription("import_csv"),
         getFeatureDependencies("import_csv"),
@@ -451,7 +453,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    public void withDataImportSAV(String userAction, final Command command)
    {
      withDependencies(
-        "Preparing Import from SPSS, SAS and Stata",
+        constants_.withDataImportSAV(),
         userAction,
         getFeatureDescription("import_sav"),
         getFeatureDependencies("import_sav"),
@@ -471,7 +473,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    public void withDataImportXLS(String userAction, final Command command)
    {
      withDependencies(
-        "Preparing Import from Excel",
+        constants_.withDataImportXLS(),
         userAction,
         getFeatureDescription("import_xls"),
         getFeatureDependencies("import_xls"),
@@ -491,7 +493,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    public void withDataImportXML(String userAction, final Command command)
    {
      withDependencies(
-        "Preparing Import from XML",
+        constants_.withDataImportXML(),
         userAction,
         getFeatureDescription("import_xml"),
         getFeatureDependencies("import_xml"),
@@ -511,7 +513,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    public void withDataImportJSON(String userAction, final Command command)
    {
      withDependencies(
-        "Preparing Import from JSON",
+        constants_.withDataImportJSON(),
         userAction,
         getFeatureDescription("import_json"),
         getFeatureDependencies("import_json"),
@@ -531,7 +533,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    public void withDataImportJDBC(String userAction, final Command command)
    {
      withDependencies(
-        "Preparing Import from JDBC",
+        constants_.withDataImportJDBC(),
         userAction,
         getFeatureDescription("import_jdbc"),
         getFeatureDependencies("import_jdbc"),
@@ -551,7 +553,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    public void withDataImportODBC(String userAction, final Command command)
    {
      withDependencies(
-        "Preparing Import from ODBC",
+        constants_.withDataImportODBC(),
         userAction,
         getFeatureDescription("import_odbc"),
         getFeatureDependencies("import_odbc"),
@@ -591,7 +593,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    public void withProfvis(String userAction, final Command command)
    {
      withDependencies(
-        "Preparing Profiler",
+        constants_.withProfvis(),
         userAction,
         getFeatureDescription("profvis"),
         getFeatureDependencies("profvis"),
@@ -614,9 +616,9 @@ public class DependencyManager implements InstallShinyEvent.Handler,
                                      final Operation operation)
    {
      withDependencies(
-        "Preparing Connection",
+        constants_.withConnectionPackage(),
         connectionName,
-        "Database Connectivity",
+        constants_.withConnectionPackageContext(),
         connectionPackageDependencies(packageName, packageVersion),
         false,
         new CommandWithArg<Boolean>()
@@ -634,8 +636,8 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    public void withKeyring(final Command command)
    {
      withDependencies(
-        "Preparing Keyring",
-        "Using keyring",
+        constants_.withKeyring(),
+        constants_.withKeyringUserAction(),
         getFeatureDescription("keyring"),
         getFeatureDependencies("keyring"),
         true, // update keyring if needed
@@ -654,8 +656,8 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    public void withOdbc(final Command command, final String name)
    {
      withDependencies(
-        "Preparing " + name,
-        "Using " + name,
+        constants_.withOdbc() + name,
+        constants_.withOdbcUserAction() + name,
         getFeatureDescription("odbc"),
         getFeatureDependencies("odbc"),
         true, // update odbc if needed
@@ -748,8 +750,8 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    public void withTutorialDependencies(final Command command)
    {
       withDependencies(
-            "Starting tutorial",
-            "Starting a tutorial",
+            constants_.withTutorialDependencies(),
+            constants_.withTutorialDependenciesUserAction(),
             getFeatureDescription("tutorial"),
             getFeatureDependencies("tutorial"),
             true,
@@ -764,7 +766,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    {
       withDependencies(
             "AGG",
-            "Using the AGG renderer",
+            constants_.withRagg(),
             getFeatureDescription("ragg"),
             getFeatureDependencies("ragg"),
             true,
@@ -885,10 +887,10 @@ public class DependencyManager implements InstallShinyEvent.Handler,
                        " " + unsatisfiedDeps.get(i).getVersion();
                   String version = unsatisfiedDeps.get(i).getAvailableVersion();
                   if (version.isEmpty())
-                     unsatisfiedVersions += " is not available\n";
+                     unsatisfiedVersions += " " + constants_.unsatisfiedVersions();
                   else
-                     unsatisfiedVersions += " is required but " + version +
-                        " is available\n";
+                     unsatisfiedVersions += " " + constants_.requiredVersion() + version +
+                        " " + constants_.requiredAvailableVersion();
                }
             }
 
@@ -897,11 +899,11 @@ public class DependencyManager implements InstallShinyEvent.Handler,
                // error if we can't satisfy requirements
                globalDisplay_.showErrorMessage(
                      StringUtil.isNullOrEmpty(req.userAction) ?
-                           "Packages Not Found" : req.userAction,
-                     "Required package versions could not be found:\n\n" +
+                           constants_.packageNotFoundUserAction() : req.userAction,
+                     constants_.packageNotFoundMessage() +
                      unsatisfiedVersions + "\n" +
-                     "Check that getOption(\"repos\") refers to a CRAN " +
-                     "repository that contains the needed package versions.");
+                     constants_.packageNotFound() +
+                     constants_.neededPackageMessage());
                if (req.onComplete != null)
                   req.onComplete.execute(false);
             }
@@ -1036,7 +1038,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
             {
                Debug.logError(error);
                globalDisplay_.showErrorMessage(
-                     "Dependency installation failed",
+                     constants_.onErrorMessage(),
                      error.getUserMessage());
                if (onComplete != null)
                   onComplete.execute(false);
@@ -1064,7 +1066,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
            {
               Debug.logError(error);
               globalDisplay_.showErrorMessage(
-                    "Could not determine available packages",
+                    constants_.availablePackageErrorMessage(),
                     error.getUserMessage());
               if (onComplete != null)
                  onComplete.execute(false);
@@ -1080,23 +1082,23 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       String msg = null;
       if (dependencies.length() == 1)
       {
-         msg = "requires an updated version of the " +
-               dependencies.get(0).getName() + " package. " +
-               "\n\nDo you want to install this package now?";
+         msg = constants_.confirmPackageInstallation() +
+               dependencies.get(0).getName() + " " + constants_.packageMessage() +
+               constants_.installPackageMessage();
       }
       else
       {
 
-         msg = "requires updated versions of the following packages: " +
+         msg = constants_.updatedVersionMessage() +
                describeDepPkgs(dependencies) + ". " +
-               "\n\nDo you want to install these packages now?";
+               constants_.installPkgMessage();
       }
 
       if (userAction != null)
       {
          globalDisplay_.showYesNoMessage(
             MessageDialog.QUESTION,
-            "Install Required Packages",
+            constants_.installRequiredCaption(),
             userAction + " " + msg,
             false,
             new Operation() {
@@ -1259,4 +1261,5 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    private final Session session_;
    private final Commands commands_;
    private final EventBus events_;
+   private final PublishingPreferencesPaneConstants constants_ = GWT.create(PublishingPreferencesPaneConstants.class);
 }

@@ -213,7 +213,4 @@ public interface UserStateAccessorConstants extends Constants {
    String zoteroDataDirTitle();
    @DefaultStringValue("@dDirectory containing Zotero data files")
    String zoteroDataDirDescription();
-
-
-
 }

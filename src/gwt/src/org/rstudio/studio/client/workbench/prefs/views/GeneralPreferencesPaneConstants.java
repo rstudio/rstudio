@@ -588,11 +588,11 @@ public interface GeneralPreferencesPaneConstants extends com.google.gwt.i18n.cli
     String graphicsBackEndAGGOption();
 
     /**
-     * Translated "Backend".
+     * Translated "Backend:".
      *
-     * @return "Backend"
+     * @return "Backend:"
      */
-    @DefaultStringValue("Backend")
+    @DefaultStringValue("Backend:")
     @Key("graphicsBackendLabel")
     String graphicsBackendLabel();
 
@@ -613,4 +613,23 @@ public interface GeneralPreferencesPaneConstants extends com.google.gwt.i18n.cli
     @DefaultStringValue("default")
     @Key("defaultLabel")
     String defaultLabel();
+
+    /**
+     * Translated "Browse...".
+     *
+     * @return "Browse..."
+     */
+    @DefaultStringValue("Browse...")
+    @Key("browseLabel")
+    String browseLabel();
+
+    /**
+     * Translated "Choose Directory".
+     *
+     * @return "Choose Directory"
+     */
+    @DefaultStringValue("Choose Directory")
+    @Key("directoryLabel")
+    String directoryLabel();
+
 }

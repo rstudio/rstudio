@@ -163,4 +163,40 @@ public interface CompiledPdfPreferencesPaneConstants extends com.google.gwt.i18n
     @DefaultStringValue("System Viewer")
     @Key("pdfPreviewSystemViewerOption")
     String pdfPreviewSystemViewerOption();
+
+    /**
+     * Translated "Weave Rnw files using:".
+     *
+     * @return translated "Weave Rnw files using:"
+     */
+    @DefaultStringValue("Weave Rnw files using:")
+    @Key("rnwWeaveSelectLabel")
+    String rnwWeaveSelectLabel();
+
+    /**
+     * Translated "Help on weaving Rnw files".
+     *
+     * @return translated "Help on weaving Rnw files"
+     */
+    @DefaultStringValue("Help on weaving Rnw files")
+    @Key("helpButtonLabel")
+    String helpButtonLabel();
+
+    /**
+     * Translated "Typeset LaTeX into PDF using:".
+     *
+     * @return translated "Typeset LaTeX into PDF using:"
+     */
+    @DefaultStringValue("Typeset LaTeX into PDF using:")
+    @Key("latexProgramSelectLabel")
+    String latexProgramSelectLabel();
+
+    /**
+     * Translated "Help on customizing LaTeX options".
+     *
+     * @return translated "Help on customizing LaTeX options"
+     */
+    @DefaultStringValue("Help on customizing LaTeX options")
+    @Key("helpLaxtexButtonLabel")
+    String helpLaxtexButtonLabel();
 }

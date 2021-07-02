@@ -246,13 +246,13 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       String[] visiblePanes = PaneConfig.getVisiblePanes();
 
       leftTop_ = new ListBox();
-      Roles.getListboxRole().setAriaLabelProperty(leftTop_.getElement(), constants_.leftTopPanelText());
+      Roles.getListboxRole().setAriaLabelProperty(leftTop_.getElement(), "Top left panel");
       leftBottom_ = new ListBox();
-      Roles.getListboxRole().setAriaLabelProperty(leftBottom_.getElement(), constants_.leftBottomPanelText());
+      Roles.getListboxRole().setAriaLabelProperty(leftBottom_.getElement(), "Bottom left panel");
       rightTop_ = new ListBox();
-      Roles.getListboxRole().setAriaLabelProperty(rightTop_.getElement(), constants_.rightTopPanelText());
+      Roles.getListboxRole().setAriaLabelProperty(rightTop_.getElement(), "Top right panel");
       rightBottom_ = new ListBox();
-      Roles.getListboxRole().setAriaLabelProperty(rightBottom_.getElement(), constants_.rightBottomPanelText());
+      Roles.getListboxRole().setAriaLabelProperty(rightBottom_.getElement(), "Bottom right panel");
       visiblePanes_ = new ListBox[]{leftTop_, leftBottom_, rightTop_, rightBottom_};
       for (ListBox lb : visiblePanes_)
       {

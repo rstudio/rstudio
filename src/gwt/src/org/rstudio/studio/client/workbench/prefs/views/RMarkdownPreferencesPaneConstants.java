@@ -514,4 +514,40 @@ public interface RMarkdownPreferencesPaneConstants extends com.google.gwt.i18n.c
     @DefaultStringValue("R Markdown")
     @Key("tabPanelTitle")
     String tabPanelTitle();
+
+    /**
+     * Translated "Basic".
+     *
+     * @return translated "Basic"
+     */
+    @DefaultStringValue("Basic")
+    @Key("tabPanelBasic")
+    String tabPanelBasic();
+
+    /**
+     * Translated "Advanced".
+     *
+     * @return translated "Advanced"
+     */
+    @DefaultStringValue("Advanced")
+    @Key("tabPanelAdvanced")
+    String tabPanelAdvanced();
+
+    /**
+     * Translated "Visual".
+     *
+     * @return translated "Visual"
+     */
+    @DefaultStringValue("Visual")
+    @Key("tabPanelVisual")
+    String tabPanelVisual();
+
+    /**
+     * Translated "Citations".
+     *
+     * @return translated "Citations"
+     */
+    @DefaultStringValue("Citations")
+    @Key("tabPanelCitations")
+    String tabPanelCitations();
 }

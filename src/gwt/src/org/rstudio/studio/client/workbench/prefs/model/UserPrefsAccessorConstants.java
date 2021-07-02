@@ -1834,6 +1834,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    @DefaultStringValue("@dHow many seconds to wait between automatic requeries of memory statistics (0 to disable)")
    String memoryQueryIntervalSecondsDescription();
 
-
-
+   @DefaultStringValue("Choose Encoding")
+   String chooseEncodingDialogCaption();
+   @DefaultStringValue("Show all encodings")
+   String showAllEncodings();
+   @DefaultStringValue("Set as default encoding for source files")
+   String saveAsDefaultLabel();
+   @DefaultStringValue("OK")
+   String okButton();
+   @DefaultStringValue("Apply")
+   String applyButton();
 }

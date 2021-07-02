@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.prefs.views.python;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
@@ -32,6 +33,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.studio.client.workbench.prefs.views.PythonPreferencesPaneConstants;
 
 public class PythonInterpreterSelectionDialog extends ModalDialog<PythonInterpreter>
 {
@@ -42,8 +44,8 @@ public class PythonInterpreterSelectionDialog extends ModalDialog<PythonInterpre
    public PythonInterpreterSelectionDialog(final JsArray<PythonInterpreter> interpreters,
                                            final OperationWithInput<PythonInterpreter> operation)
    {
-      super("Python Interpreters", Roles.getDialogRole(), operation);
-      setOkButtonCaption("Select");
+      super(constants_.interpretersCaption(), Roles.getDialogRole(), operation);
+      setOkButtonCaption(constants_.okButtonCaption());
       
       // initialize widget list boxes
       widgets_ = new HashMap<>();
@@ -53,7 +55,7 @@ public class PythonInterpreterSelectionDialog extends ModalDialog<PythonInterpre
          listBox.setSize("598px", "468px");
          listBox.setAriaLabel(label);
          
-         listBox.setEmptyText("(None available)");
+         listBox.setEmptyText(constants_.noneAvailableListBox());
          
          // allow double-click to select the requested interpreter
          listBox.addDoubleClickHandler((DoubleClickEvent event) ->
@@ -102,7 +104,7 @@ public class PythonInterpreterSelectionDialog extends ModalDialog<PythonInterpre
       }
  
       // initialize tab panel
-      tabPanel_ = new DialogTabLayoutPanel("General");
+      tabPanel_ = new DialogTabLayoutPanel(constants_.tabPanelCaption());
       tabPanel_.setSize("620px", "520px");
       for (Map.Entry<String, WidgetListBox<PythonInterpreterListEntryUi>> entry : widgets_.entrySet())
       {
@@ -134,4 +136,5 @@ public class PythonInterpreterSelectionDialog extends ModalDialog<PythonInterpre
    
    PythonInterpreterListEntryUi selectedItem_;
    ThemedButton useDefaultBtn_;
+   private static final PythonPreferencesPaneConstants constants_ = GWT.create(PythonPreferencesPaneConstants.class);
 }

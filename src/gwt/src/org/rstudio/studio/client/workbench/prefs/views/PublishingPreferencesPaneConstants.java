@@ -379,4 +379,364 @@ public interface PublishingPreferencesPaneConstants extends com.google.gwt.i18n.
     @DefaultStringValue("Connect ShinyApps.io Account")
     @Key("newRSConnectCloudPageCaption")
     String newRSConnectCloudPageCaption();
+
+    /**
+     * Translated "Converting Theme".
+     *
+     * @return translated "Converting Theme"
+     */
+    @DefaultStringValue("Converting Theme")
+    @Key("withThemesCaption")
+    String withThemesCaption();
+
+    /**
+     * Translated "R Markdown".
+     *
+     * @return translated "R Markdown"
+     */
+    @DefaultStringValue("R Markdown")
+    @Key("withRMarkdownCaption")
+    String withRMarkdownCaption();
+
+    /**
+     * Translated "Install Shiny Package".
+     *
+     * @return translated "Install Shiny Package"
+     */
+    @DefaultStringValue("Install Shiny Package")
+    @Key("installShinyCaption")
+    String installShinyCaption();
+
+    /**
+     * Translated "requires installation of an updated version ".
+     *
+     * @return translated "requires installation of an updated version "
+     */
+    @DefaultStringValue("requires installation of an updated version ")
+    @Key("installShinyUserAction")
+    String installShinyUserAction();
+
+    /**
+     * Translated "of the shiny package.\n\nDo you want to install shiny now?".
+     *
+     * @return translated "of the shiny package.\n\nDo you want to install shiny now?"
+     */
+    @DefaultStringValue("of the shiny package.\\n\\nDo you want to install shiny now?")
+    @Key("installShinyMessage")
+    String installShinyMessage();
+
+    /**
+     * Translated "Checking installed packages".
+     *
+     * @return translated "Checking installed packages"
+     */
+    @DefaultStringValue("Checking installed packages")
+    @Key("installPkgsCaption")
+    String installPkgsCaption();
+
+    /**
+     * Translated "Checking installed packages".
+     *
+     * @return translated "Checking installed packages"
+     */
+    @DefaultStringValue("Checking installed packages")
+    @Key("withShinyAddinsCaption")
+    String withShinyAddinsCaption();
+
+    /**
+     * Translated "Checking installed packages".
+     *
+     * @return translated "Checking installed packages"
+     */
+    @DefaultStringValue("Executing addins")
+    @Key("withShinyAddinsUserAction")
+    String withShinyAddinsUserAction();
+
+    /**
+     * Translated "Preparing Import from CSV".
+     *
+     * @return translated "Preparing Import from CSV"
+     */
+    @DefaultStringValue("Preparing Import from CSV")
+    @Key("withDataImportCSVCaption")
+    String withDataImportCSVCaption();
+
+    /**
+     * Translated "Preparing Import from SPSS, SAS and Stata".
+     *
+     * @return translated "Preparing Import from SPSS, SAS and Stata"
+     */
+    @DefaultStringValue("Preparing Import from SPSS, SAS and Stata")
+    @Key("withDataImportSAV")
+    String withDataImportSAV();
+
+    /**
+     * Translated "Preparing Import from Excel".
+     *
+     * @return translated "Preparing Import from Excel"
+     */
+    @DefaultStringValue("Preparing Import from Excel")
+    @Key("withDataImportXLS")
+    String withDataImportXLS();
+
+    /**
+     * Translated "Preparing Import from XML".
+     *
+     * @return translated "Preparing Import from XML"
+     */
+    @DefaultStringValue("Preparing Import from XML")
+    @Key("withDataImportXML")
+    String withDataImportXML();
+
+    /**
+     * Translated "Preparing Import from JSON".
+     *
+     * @return translated "Preparing Import from JSON"
+     */
+    @DefaultStringValue("Preparing Import from JSON")
+    @Key("withDataImportJSON")
+    String withDataImportJSON();
+
+    /**
+     * Translated "Preparing Import from JDBC".
+     *
+     * @return translated "Preparing Import from JDBC"
+     */
+    @DefaultStringValue("Preparing Import from JDBC")
+    @Key("withDataImportJDBC")
+    String withDataImportJDBC();
+
+    /**
+     * Translated "Preparing Import from ODBC".
+     *
+     * @return translated "Preparing Import from ODBC"
+     */
+    @DefaultStringValue("Preparing Import from ODBC")
+    @Key("withDataImportODBC")
+    String withDataImportODBC();
+
+    /**
+     * Translated "Preparing Profiler".
+     *
+     * @return translated "Preparing Profiler"
+     */
+    @DefaultStringValue("Preparing Profiler")
+    @Key("withProfvis")
+    String withProfvis();
+
+    /**
+     * Translated "Preparing Connection".
+     *
+     * @return translated "Preparing Connection"
+     */
+    @DefaultStringValue("Preparing Connection")
+    @Key("withConnectionPackage")
+    String withConnectionPackage();
+
+    /**
+     * Translated "Database Connectivity".
+     *
+     * @return translated "Database Connectivity"
+     */
+    @DefaultStringValue("Database Connectivity")
+    @Key("withConnectionPackageContext")
+    String withConnectionPackageContext();
+
+    /**
+     * Translated "Preparing Keyring".
+     *
+     * @return translated "Preparing Keyring"
+     */
+    @DefaultStringValue("Preparing Keyring")
+    @Key("withKeyring")
+    String withKeyring();
+
+    /**
+     * Translated "Using keyring".
+     *
+     * @return translated "Using keyring"
+     */
+    @DefaultStringValue("Using keyring")
+    @Key("withKeyringUserAction")
+    String withKeyringUserAction();
+
+    /**
+     * Translated "Preparing ".
+     *
+     * @return translated "Preparing "
+     */
+    @DefaultStringValue("Preparing ")
+    @Key("withOdbc")
+    String withOdbc();
+
+    /**
+     * Translated "Preparing ".
+     *
+     * @return translated "Preparing "
+     */
+    @DefaultStringValue("Using ")
+    @Key("withOdbcUserAction")
+    String withOdbcUserAction();
+
+    /**
+     * Translated "Starting tutorial".
+     *
+     * @return translated "Starting tutorial"
+     */
+    @DefaultStringValue("Starting tutorial")
+    @Key("withTutorialDependencies")
+    String withTutorialDependencies();
+
+    /**
+     * Translated "Starting a tutorial".
+     *
+     * @return translated "Starting a tutorial"
+     */
+    @DefaultStringValue("Starting a tutorial")
+    @Key("withTutorialDependenciesUserAction")
+    String withTutorialDependenciesUserAction();
+
+    /**
+     * Translated "Using the AGG renderer".
+     *
+     * @return translated "Using the AGG renderer"
+     */
+    @DefaultStringValue("Using the AGG renderer")
+    @Key("withRagg")
+    String withRagg();
+
+    /**
+     * Translated "is not available\n".
+     *
+     * @return translated "is not available\n"
+     */
+    @DefaultStringValue("is not available\n")
+    @Key("unsatisfiedVersions")
+    String unsatisfiedVersions();
+
+    /**
+     * Translated "is required but ".
+     *
+     * @return translated "is required but "
+     */
+    @DefaultStringValue("is required but ")
+    @Key("requiredVersion")
+    String requiredVersion();
+
+    /**
+     * Translated "is available".
+     *
+     * @return translated "is available"
+     */
+    @DefaultStringValue("is available")
+    @Key("requiredAvailableVersion")
+    String requiredAvailableVersion();
+
+    /**
+     * Translated "Packages Not Found".
+     *
+     * @return translated "Packages Not Found"
+     */
+    @DefaultStringValue("Packages Not Found")
+    @Key("packageNotFoundUserAction")
+    String packageNotFoundUserAction();
+
+    /**
+     * Translated "Required package versions could not be found:\n\n".
+     *
+     * @return translated "Required package versions could not be found:\n\n"
+     */
+    @DefaultStringValue("Required package versions could not be found:\n\n")
+    @Key("packageNotFoundMessage")
+    String packageNotFoundMessage();
+
+    /**
+     * Translated "Check that getOption("repos") refers to a CRAN ".
+     *
+     * @return translated "Check that getOption("repos") refers to a CRAN "
+     */
+    @DefaultStringValue("Check that getOption(\"repos\") refers to a CRAN ")
+    @Key("packageNotFound")
+    String packageNotFound();
+
+    /**
+     * Translated "repository that contains the needed package versions.".
+     *
+     * @return translated "repository that contains the needed package versions."
+     */
+    @DefaultStringValue("repository that contains the needed package versions.")
+    @Key("neededPackageMessage")
+    String neededPackageMessage();
+
+    /**
+     * Translated "Dependency installation failed".
+     *
+     * @return translated "Dependency installation failed"
+     */
+    @DefaultStringValue("Dependency installation failed")
+    @Key("onErrorMessage")
+    String onErrorMessage();
+
+    /**
+     * Translated "Could not determine available packages".
+     *
+     * @return translated "Could not determine available packages"
+     */
+    @DefaultStringValue("Could not determine available packages")
+    @Key("availablePackageErrorMessage")
+    String availablePackageErrorMessage();
+
+    /**
+     * Translated "requires an updated version of the ".
+     *
+     * @return translated "requires an updated version of the "
+     */
+    @DefaultStringValue("requires an updated version of the ")
+    @Key("confirmPackageInstallation")
+    String confirmPackageInstallation();
+
+    /**
+     * Translated "package. ".
+     *
+     * @return translated "package. "
+     */
+    @DefaultStringValue("package. ")
+    @Key("packageMessage")
+    String packageMessage();
+
+    /**
+     * Translated "\n\nDo you want to install this package now?".
+     *
+     * @return translated "\n\nDo you want to install this package now?"
+     */
+    @DefaultStringValue("\n\nDo you want to install this package now?")
+    @Key("installPackageMessage")
+    String installPackageMessage();
+
+    /**
+     * Translated "requires updated versions of the following packages: ".
+     *
+     * @return translated "requires updated versions of the following packages: "
+     */
+    @DefaultStringValue("requires updated versions of the following packages: ")
+    @Key("updatedVersionMessage")
+    String updatedVersionMessage();
+
+    /**
+     * Translated "\n\nDo you want to install these packages now?".
+     *
+     * @return translated "\n\nDo you want to install these packages now?"
+     */
+    @DefaultStringValue("\n\n Do you want to install these packages now?")
+    @Key("installPkgMessage")
+    String installPkgMessage();
+
+    /**
+     * Translated "Install Required Packages".
+     *
+     * @return translated "Install Required Packages"
+     */
+    @DefaultStringValue("Install Required Packages")
+    @Key("installRequiredCaption")
+    String installRequiredCaption();
 }

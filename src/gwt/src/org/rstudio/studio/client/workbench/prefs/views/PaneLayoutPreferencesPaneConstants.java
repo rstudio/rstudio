@@ -12,9 +12,9 @@ public interface PaneLayoutPreferencesPaneConstants extends com.google.gwt.i18n.
     String paneLayoutText();
 
     /**
-     * Translated " each panel. Add up to three additional Source Columns to the left side of the layout. ".
+     * Translated "each panel. Add up to three additional Source Columns to the left side of the layout. ".
      *
-     * @return translated " each panel. Add up to three additional Source Columns to the left side of the layout. "
+     * @return translated "each panel. Add up to three additional Source Columns to the left side of the layout. "
      */
     @DefaultStringValue("each panel. Add up to three additional Source Columns to the left side of the layout. ")
     @Key("paneLayoutAddText")

@@ -89,6 +89,7 @@ import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
 import org.rstudio.studio.client.workbench.addins.AddinsKeyBindingsChangedEvent;
 import org.rstudio.studio.client.workbench.addins.AddinsServerOperations;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.prefs.views.PreferencesPaneConstants;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PopupPositioner;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommand;
 
@@ -238,7 +239,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       table_ = new RStudioDataGrid<>(1000, RES, KEY_PROVIDER);
       
       FlowPanel emptyWidget = new FlowPanel();
-      Label emptyLabel = new Label("No bindings available");
+      Label emptyLabel = new Label(constants_.Editing_keyboard_shortcuts());
       emptyLabel.getElement().getStyle().setMarginTop(20, Unit.PX);
       emptyLabel.getElement().getStyle().setColor("#888");
       emptyWidget.add(emptyLabel);
@@ -324,8 +325,8 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       addColumns();
       addHandlers();
       
-      setText("Keyboard Shortcuts");
-      addOkButton(new ThemedButton("Apply", new ClickHandler()
+      setText(constants_.Editing_keyboard_text());
+      addOkButton(new ThemedButton(constants_.Editing_keyboard_apply(), new ClickHandler()
       {
          @Override
          public void onClick(ClickEvent event)
@@ -336,7 +337,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       
       addCancelButton();
       
-      radioAll_ = radioButton("All", new ClickHandler()
+      radioAll_ = radioButton(constants_.Editing_radio_all(), new ClickHandler()
       {
          @Override
          public void onClick(ClickEvent event)
@@ -345,7 +346,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          }
       });
       
-      radioCustomized_ = radioButton("Customized", new ClickHandler()
+      radioCustomized_ = radioButton(constants_.Editing_radio_customized(), new ClickHandler()
       {
          @Override
          public void onClick(ClickEvent event)
@@ -375,24 +376,24 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          }
       });
       
-      filterWidget_.setPlaceholderText("Filter...");
+      filterWidget_.setPlaceholderText(constants_.Editing_filter_widget());
       
-      addLeftWidget(new ThemedButton("Reset...", new ClickHandler()
+      addLeftWidget(new ThemedButton(constants_.Editing_reset_text(), new ClickHandler()
       {
          @Override
          public void onClick(ClickEvent event)
          {
             globalDisplay_.showYesNoMessage(
                   GlobalDisplay.MSG_QUESTION,
-                  "Reset Keyboard Shortcuts",
-                  "Are you sure you want to reset keyboard shortcuts to their default values? " +
-                  "This action cannot be undone.",
+                  constants_.Editing_global_display(),
+                  constants_.Editing_global_caption() +
+                  constants_.Editing_global_message(),
                   new ProgressOperation()
                   {
                      @Override
                      public void execute(final ProgressIndicator indicator)
                      {
-                        indicator.onProgress("Resetting Keyboard Shortcuts...");
+                        indicator.onProgress(constants_.Editing_progress_message());
                         appCommands_.resetBindings(new CommandWithArg<EditorKeyBindings>()
                         {
                            @Override
@@ -978,7 +979,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       
       FlowPanel headerPanel = new FlowPanel();
       
-      Label radioLabel = new Label("Show:");
+      Label radioLabel = new Label(constants_.Editing_radio_label());
       radioLabel.getElement().getStyle().setFloat(Style.Float.LEFT);
       radioLabel.getElement().getStyle().setMarginRight(8, Unit.PX);
 
@@ -998,7 +999,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       headerPanel.add(filterWidget_);
       
       helpLink_ = new HelpLink(
-            "Customizing Keyboard Shortcuts",
+            constants_.Editing_help_link(),
             "custom_keyboard_shortcuts");
       helpLink_.getElement().getStyle().setFloat(Style.Float.RIGHT);
       headerPanel.add(helpLink_);
@@ -1488,5 +1489,6 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    static {
       RES.dataGridStyle().ensureInjected();
    }
-   
+   private final PreferencesPaneConstants constants_ = GWT.create(PreferencesPaneConstants.class);
+
 }

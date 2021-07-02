@@ -105,8 +105,8 @@ public class PaneConfig extends UserPrefsAccessor.Panes
    {
       // A list of all the tabs. Order matters; the Presentation tab must be the
       // last element in this array that's part of the first tabset (ts1)
-      return new String[] {constants_.environmentTab(), constants_.historyTab(), constants_.filesTab(), constants_.plotsTab(), constants_.connectionsTab(),
-                           constants_.packagesTab(), constants_.helpTab(), constants_.buildTab(), constants_.vcsTab(), constants_.tutorialTab(), constants_.viewerTab(), constants_.presentationTab()};
+      return new String[] {"Environment", "History", "Files", "Plots", "Connections",
+              "Packages", "Help", "Build", "VCS", "Tutorial", "Viewer", "Presentation"};
    }
 
    // Tabs that have been replaced by newer versions/replaceable supersets

@@ -17,6 +17,7 @@ package org.rstudio.core.client.prefs;
 
 import com.google.gwt.aria.client.Id;
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
@@ -35,6 +36,8 @@ import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.events.ReloadEvent;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessorConstants;
+import org.rstudio.studio.client.workbench.prefs.model.UserStateAccessorConstants;
 
 public abstract class PreferencesDialogBase<T> extends ModalDialogBase
 {
@@ -56,14 +59,14 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
       sectionChooser_ = new SectionChooser(caption);
 
       ThemedButton okButton = new ThemedButton(
-            "OK",
+            _constants.okButton(),
             clickEvent -> attemptSaveChanges(() -> closeDialog()));
       addOkButton(okButton, ElementIds.PREFERENCES_CONFIRM);
       addCancelButton();
 
       if (showApplyButton)
       {
-         addButton(new ThemedButton("Apply",
+         addButton(new ThemedButton(_constants.applyButton(),
                                     clickEvent -> attemptSaveChanges()),
                                     ElementIds.DIALOG_APPLY_BUTTON);
       }
@@ -305,4 +308,5 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
    private final SectionChooser sectionChooser_;
    private final String panelContainerStyle_;
    private final String panelContainerStyleNoChooser_;
+   private UserPrefsAccessorConstants _constants = GWT.create(UserPrefsAccessorConstants.class);
 }

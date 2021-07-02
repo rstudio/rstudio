@@ -109,4 +109,76 @@ public interface PythonPreferencesPaneConstants extends com.google.gwt.i18n.clie
     @DefaultStringValue("Using Python in RStudio")
     @Key("helpButtonLabel")
     String helpButtonLabel();
+
+    /**
+     * Translated "Automatically activate project-local Python environments".
+     *
+     * @return translated "Automatically activate project-local Python environments"
+     */
+    @DefaultStringValue("Automatically activate project-local Python environments")
+    @Key("cbAutoUseProjectInterpreter")
+    String cbAutoUseProjectInterpreter();
+
+    /**
+     * Translated "When enabled, RStudio will automatically find and activate a ".
+     *
+     * @return translated "When enabled, RStudio will automatically find and activate a "
+     */
+    @DefaultStringValue("When enabled, RStudio will automatically find and activate a ")
+    @Key("cbAutoUseProjectInterpreterMessage")
+    String cbAutoUseProjectInterpreterMessage();
+
+    /**
+     * Translated "Python environment located within the project root directory (if any).".
+     *
+     * @return translated "Python environment located within the project root directory (if any)."
+     */
+    @DefaultStringValue("Python environment located within the project root directory (if any).")
+    @Key("cbAutoUseProjectInterpreterMsg")
+    String cbAutoUseProjectInterpreterMsg();
+
+    /**
+     * Translated "Python Interpreters".
+     *
+     * @return translated "Python Interpreters"
+     */
+    @DefaultStringValue("Python Interpreters")
+    @Key("interpretersCaption")
+    String interpretersCaption();
+
+    /**
+     * Translated "Select".
+     *
+     * @return translated "Select"
+     */
+    @DefaultStringValue("Select")
+    @Key("okButtonCaption")
+    String okButtonCaption();
+
+    /**
+     * Translated "(None available)".
+     *
+     * @return translated "(None available)"
+     */
+    @DefaultStringValue("(None available)")
+    @Key("noneAvailableListBox")
+    String noneAvailableListBox();
+
+    /**
+     * Translated "General".
+     *
+     * @return translated "General"
+     */
+    @DefaultStringValue("General")
+    @Key("tabPanelCaption")
+    String tabPanelCaption();
+
+    /**
+     * Translated "Clear".
+     *
+     * @return translated "Clear"
+     */
+    @DefaultStringValue("Clear")
+    @Key("clearLabel")
+    String clearLabel();
 }

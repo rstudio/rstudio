@@ -557,7 +557,7 @@ public class GeneralPreferencesPane extends PreferencesPane {
                 session_.getSessionInfo().getGraphicsBackends();
 
         String[] values = new String[supportedBackends.length() + 1];
-        values[0] = constants_.defaultLabel();
+        values[0] = "default";
         for (int i = 0; i < supportedBackends.length(); i++)
             values[i + 1] = supportedBackends.get(i);
 

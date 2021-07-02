@@ -465,10 +465,10 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel(constants_.tabPanelTitle());
       tabPanel.setSize("435px", "533px");
-      tabPanel.add(basic, "Basic", basic.getBasePanelId());
-      tabPanel.add(advanced, "Advanced", advanced.getBasePanelId());
-      tabPanel.add(visualMode, "Visual", visualMode.getBasePanelId());
-      tabPanel.add(citations, "Citations", citations.getBasePanelId());
+      tabPanel.add(basic, constants_.tabPanelBasic(), basic.getBasePanelId());
+      tabPanel.add(advanced, constants_.tabPanelAdvanced(), advanced.getBasePanelId());
+      tabPanel.add(visualMode, constants_.tabPanelVisual(), visualMode.getBasePanelId());
+      tabPanel.add(citations, constants_.tabPanelCitations(), citations.getBasePanelId());
       tabPanel.selectTab(0);
       add(tabPanel);
    }

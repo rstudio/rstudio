@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import javax.inject.Inject;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Size;
@@ -39,6 +40,7 @@ import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.views.PreferencesPaneConstants;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetData;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
@@ -69,11 +71,11 @@ public class EditSnippetsDialog extends ModalDialogBase implements TextDisplay
    public EditSnippetsDialog()
    {
       super(Roles.getDialogRole());
-      setText("Edit Snippets");
+      setText(constants_.Editing_edit_snippets_caption());
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       addCancelButton();
-      ThemedButton saveButton = new ThemedButton("Save", new ClickHandler() {
+      ThemedButton saveButton = new ThemedButton(constants_.Editing_save_button_label(), new ClickHandler() {
          public void onClick(ClickEvent event) 
          {
             attemptSaveAndClose();
@@ -81,7 +83,7 @@ public class EditSnippetsDialog extends ModalDialogBase implements TextDisplay
       });
       addButton(saveButton, ElementIds.DIALOG_OK_BUTTON);
       
-      addLeftWidget(new HelpLink("Using Code Snippets", "code_snippets"));
+      addLeftWidget(new HelpLink(constants_.Editing_snippet_helplink(), "code_snippets"));
    }
    
    @Inject
@@ -313,6 +315,6 @@ public class EditSnippetsDialog extends ModalDialogBase implements TextDisplay
    private FontSizeManager fontSizeManager_;
    private UserPrefs uiPrefs_;
    private LintServerOperations server_;
-  
+   private final PreferencesPaneConstants constants_ = GWT.create(PreferencesPaneConstants.class);
 
 }

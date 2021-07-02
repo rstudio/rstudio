@@ -171,14 +171,14 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
       if (!isProjectOptions)
       {
          cbAutoUseProjectInterpreter_ =
-               new CheckBox("Automatically activate project-local Python environments");
+               new CheckBox(constants_.cbAutoUseProjectInterpreter());
          
          cbAutoUseProjectInterpreter_.setValue(
                prefs_.pythonProjectEnvironmentAutomaticActivate().getGlobalValue());
          
          cbAutoUseProjectInterpreter_.getElement().setTitle(
-               "When enabled, RStudio will automatically find and activate a " +
-               "Python environment located within the project root directory (if any).");
+               constants_.cbAutoUseProjectInterpreterMessage() +
+               constants_.cbAutoUseProjectInterpreterMsg());
 
          add(lessSpaced(cbAutoUseProjectInterpreter_));
       }
@@ -458,5 +458,4 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
       RES.styles().ensureInjected();
    }
    private final PythonPreferencesPaneConstants constants_ = GWT.create(PythonPreferencesPaneConstants.class);
-
 }

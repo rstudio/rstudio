@@ -307,4 +307,139 @@ public interface PackagesPreferencesPaneConstants extends com.google.gwt.i18n.cl
     @DefaultStringValue("Choose Primary Repository")
     @Key("headerLabel")
     String headerLabel();
+
+    /**
+     * Translated "Add...".
+     *
+     * @return translated "Add..."
+     */
+    @DefaultStringValue("Add...")
+    @Key("buttonAddLabel")
+    String buttonAddLabel();
+
+    /**
+     * Translated "Remove...".
+     *
+     * @return translated "Remove..."
+     */
+    @DefaultStringValue("Remove...")
+    @Key("buttonRemoveLabel")
+    String buttonRemoveLabel();
+
+    /**
+     * Translated "Up".
+     *
+     * @return translated "Up"
+     */
+    @DefaultStringValue("Up")
+    @Key("buttonUpLabel")
+    String buttonUpLabel();
+
+    /**
+     * Translated "Down".
+     *
+     * @return translated "Down"
+     */
+    @DefaultStringValue("Down")
+    @Key("buttonDownLabel")
+    String buttonDownLabel();
+
+    /**
+     * Translated "Developing Packages".
+     *
+     * @return translated "Developing Packages"
+     */
+    @DefaultStringValue("Developing Packages")
+    @Key("developingPkgHelpLink")
+    String developingPkgHelpLink();
+
+    /**
+     * Translated "Retrieving list of secondary repositories...".
+     *
+     * @return translated "Retrieving list of secondary repositories..."
+     */
+    @DefaultStringValue("Retrieving list of secondary repositories...")
+    @Key("secondaryReposDialog")
+    String secondaryReposDialog();
+
+    /**
+     * Translated "Please select or input a CRAN repository".
+     *
+     * @return translated "Please select or input a CRAN repository"
+     */
+    @DefaultStringValue("Please select or input a CRAN repository")
+    @Key("validateSyncLabel")
+    String validateSyncLabel();
+
+    /**
+     * Translated "The repository ".
+     *
+     * @return translated "The repository "
+     */
+    @DefaultStringValue("The repository ")
+    @Key("showErrorRepoMessage")
+    String showErrorRepoMessage();
+
+    /**
+     * Translated "is already included".
+     *
+     * @return translated "is already included"
+     */
+    @DefaultStringValue("is already included")
+    @Key("alreadyIncludedMessage")
+    String alreadyIncludedMessage();
+
+    /**
+     * Translated "Validating CRAN repository...".
+     *
+     * @return translated "Validating CRAN repository..."
+     */
+    @DefaultStringValue("Validating CRAN repository...")
+    @Key("validateAsyncProgress")
+    String validateAsyncProgress();
+
+    /**
+     * Translated "The given URL does not appear to be a valid CRAN repository".
+     *
+     * @return translated "The given URL does not appear to be a valid CRAN repository"
+     */
+    @DefaultStringValue("The given URL does not appear to be a valid CRAN repository")
+    @Key("onResponseReceived")
+    String onResponseReceived();
+
+    /**
+     * Translated "Name:".
+     *
+     * @return translated "Name:"
+     */
+    @DefaultStringValue("Name:")
+    @Key("nameLabel")
+    String nameLabel();
+
+    /**
+     * Translated "Url:".
+     *
+     * @return translated "Url:"
+     */
+    @DefaultStringValue("Url:")
+    @Key("urlLabel")
+    String urlLabel();
+
+    /**
+     * Translated "Available repositories:".
+     *
+     * @return translated "Available repositories:"
+     */
+    @DefaultStringValue("Available repositories:")
+    @Key("reposLabel")
+    String reposLabel();
+
+    /**
+     * Translated "Add Secondary Repository".
+     *
+     * @return translated "Add Secondary Repository"
+     */
+    @DefaultStringValue("Add Secondary Repository")
+    @Key("secondaryRepoLabel")
+    String secondaryRepoLabel();
 }

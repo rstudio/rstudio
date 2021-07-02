@@ -15,10 +15,14 @@
 
 package org.rstudio.studio.client.common;
 
+import com.google.gwt.core.client.GWT;
+import org.rstudio.studio.client.workbench.prefs.views.PackagesPreferencesPaneConstants;
+
 public class PackagesHelpLink extends HelpLink
 {
    public PackagesHelpLink()
    {
-      super("Developing Packages", "building_packages");
+      super(constants_.developingPkgHelpLink(), "building_packages");
    }
+   private static final PackagesPreferencesPaneConstants constants_ = GWT.create(PackagesPreferencesPaneConstants.class);
 }
