@@ -216,6 +216,12 @@ export class SessionLauncher {
   }
 
   onRSessionExited(): void {
+    // if this is a verify-installation session then just quit
+    if (appState().runDiagnostics) {
+      this.mainWindow?.quit();
+      return;
+    }
+
     const pendingQuit = this.mainWindow?.collectPendingQuitRequest();
 
     // if there was no pending quit set then this is a crash
