@@ -16,37 +16,30 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 
-import { Logger, logger, setLogger } from '../../../src/core/logger';
+import { NullLogger, logger, LogLevel, parseCommandLineLogLevel, setLogger } from '../../../src/core/logger';
+import { clearCoreSingleton } from '../../../src/core/core-state';
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-empty-function */
-class FakeLogger implements Logger {
-  uniqueId = 123;
-  logError(err: Error): void {
-  }
-  logErrorMessage(message: string): void {
-  }
-  logInfo(message: string): void {
-  }
-  logWarning(warning: string): void {
-  }
-  logDebug(message: string): void {
-  }
-  logDiagnostic(message: string): void {
-  }
-  logDiagnosticEnvVar(name: string): void {
-  }
-}
 
 describe('Logger', () => {
+  beforeEach(() => {
+    clearCoreSingleton();
+  });
+
   it('throws if unset', () => {
     assert.throws(() => { logger(); });
   });
   it('can be set and fetched', () => {
-    const f = new FakeLogger();
+    const f = new NullLogger();
     setLogger(f);
     const fetched = logger();
     assert.exists(logger());
     assert.deepEqual(f, fetched);
+  });
+  it('log level can be parsed from string representation', () => {
+    assert.equal(parseCommandLineLogLevel('OFF', LogLevel.DEBUG), LogLevel.OFF);
+    assert.equal(parseCommandLineLogLevel('ERR', LogLevel.DEBUG), LogLevel.ERR);
+    assert.equal(parseCommandLineLogLevel('WARN', LogLevel.DEBUG), LogLevel.WARN);
+    assert.equal(parseCommandLineLogLevel('INFO', LogLevel.DEBUG), LogLevel.INFO);
+    assert.equal(parseCommandLineLogLevel('DEBUG', LogLevel.OFF), LogLevel.DEBUG);
   });
 });

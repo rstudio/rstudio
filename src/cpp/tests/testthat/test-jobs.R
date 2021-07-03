@@ -154,6 +154,9 @@ test_that("script jobs run and can be replayed", {
    wait_for_job <- function(id) {
       tries <- 0
 
+      # wait 1/10th of a second before first query (have observed timing failures if we don't)
+      Sys.sleep(0.1)
+
       # wait for the job to finish
       repeat {
          state <- .rs.tryCatch(.Call("rs_getJobState", id, PACKAGE = "(embedding)"))
