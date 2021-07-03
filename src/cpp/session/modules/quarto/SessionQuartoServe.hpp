@@ -16,6 +16,7 @@
 #ifndef SESSION_QUARTO_SERVE_HPP
 #define SESSION_QUARTO_SERVE_HPP
 
+#include <string>
 
 namespace rstudio {
 namespace core {
@@ -30,7 +31,7 @@ namespace modules {
 namespace quarto {
 namespace serve {
 
-void previewDoc(const core::FilePath& docPath);
+void previewDoc(const std::string& renderOutput, const core::FilePath& docPath);
 
 core::Error initialize();
    

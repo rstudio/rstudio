@@ -268,6 +268,7 @@ namespace module_context {
 
 bool handleQuartoPreview(const core::FilePath& sourceFile,
                          const core::FilePath& outputFile,
+                         const std::string& renderOutput,
                          bool validateExtendedType)
 {
    // don't do anyting if user prefs are set to no preview
@@ -299,7 +300,8 @@ bool handleQuartoPreview(const core::FilePath& sourceFile,
       // handler this was called from -- launching a new process in the supervisor when
       // an old one is in the middle of executing onCompleted doesn't work
       module_context::scheduleDelayedWork(boost::posix_time::milliseconds(10),
-                                          boost::bind( modules::quarto::serve::previewDoc, outputFile),
+                                          boost::bind(modules::quarto::serve::previewDoc,
+                                                      renderOutput, outputFile),
                                           false);
       return true;
    }

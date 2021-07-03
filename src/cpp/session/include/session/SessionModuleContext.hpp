@@ -898,6 +898,7 @@ QuartoConfig quartoConfig(bool refresh = false);
 // see if quarto wants to handle the preview
 bool handleQuartoPreview(const core::FilePath& sourceFile,
                          const core::FilePath& outputFile,
+                         const std::string& renderOutput,
                          bool validateExtendedType);
 
 std::vector<core::FilePath> ignoreContentDirs();
