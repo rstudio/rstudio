@@ -23,6 +23,7 @@
 #include <shared_core/FilePath.hpp>
 
 #include <core/Exec.hpp>
+#include <core/Version.hpp>
 #include <core/YamlUtil.hpp>
 #include <core/FileSerializer.hpp>
 
@@ -331,9 +332,8 @@ QuartoConfig quartoConfig(bool refresh)
 {
    static module_context::QuartoConfig s_quartoConfig;
 
-   if (refresh || s_quartoConfig.empty)
+   if (refresh)
    {
-
       s_quartoConfig = QuartoConfig();
       s_quartoConfig.installed = modules::quarto::isInstalled(true);
       using namespace session::projects;
@@ -385,9 +385,76 @@ bool isInstalled(bool refresh)
 {
    if (refresh)
    {
-      Error error = core::system::findProgramOnPath("quarto", &s_quartoPath);
-      if (error)
-         s_quartoPath = FilePath();
+      // reset
+      s_quartoPath = FilePath();
+
+      // see if quarto is on the path
+      FilePath quartoPath;
+      Error error = core::system::findProgramOnPath("quarto", &quartoPath);
+      if (!error)
+      {
+         // convert to real path
+         error = core::system::realPath(quartoPath, &quartoPath);
+         if (!error)
+         {
+            // read version file -- if it doesn't exist we are running the dev
+            // version so are free to proceed
+            FilePath versionFile = quartoPath
+               .getParent()
+               .getParent()
+               .completeChildPath("share")
+               .completeChildPath("version");
+            if (versionFile.exists())
+            {
+               std::string contents;
+               error = core::readStringFromFile(versionFile, &contents);
+               if (!error)
+               {
+                  const Version kQuartoRequiredVersion("0.1.319");
+                  boost::algorithm::trim(contents);
+                  Version quartoVersion(contents);
+                  if (quartoVersion >= kQuartoRequiredVersion)
+                  {
+                     s_quartoPath = quartoPath;
+                  }
+                  else
+                  {
+                     // enque a warning
+                     const char * const kUpdateURL = "https://github.com/quarto-dev/quarto-cli/releases/latest";
+                     json::Object msgJson;
+                     msgJson["severe"] = false;
+                     boost::format fmt(
+                       "Quarto CLI version %1% is installed, however RStudio requires version %2%. "
+                       "Please update to the latest version at <a href=\"%3%\" target=\"_blank\">%3%</a>"
+                     );
+                     msgJson["message"] = boost::str(fmt %
+                                                     std::string(quartoVersion) %
+                                                     std::string(kQuartoRequiredVersion) %
+                                                     kUpdateURL);
+                     ClientEvent event(client_events::kShowWarningBar, msgJson);
+                     module_context::enqueClientEvent(event);
+                  }
+               }
+               else
+               {
+                  LOG_ERROR(error);
+               }
+            }
+            // no version file means dev version, so we are okay
+            else
+            {
+               s_quartoPath = quartoPath;
+            }
+         }
+         else
+         {
+            LOG_ERROR(error);
+         }
+      }
+      else
+      {
+         LOG_ERROR(error);
+      }
    }
 
    return !s_quartoPath.isEmpty();
