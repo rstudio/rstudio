@@ -19,6 +19,7 @@ import { assert } from 'chai';
 import { openMinimalWindow } from '../../../src/main/minimal-window';
 import { clearApplicationSingleton, setApplication } from '../../../src/main/app-state';
 import { Application } from '../../../src/main/application';
+import { GwtWindow } from '../../../src/main/gwt-window';
 
 describe('minimal-window', () => {
   beforeEach(() => {
@@ -29,7 +30,8 @@ describe('minimal-window', () => {
   });
 
   it('can be constructed', () => {
-    const minWin = openMinimalWindow('test-win', 'about:blank', 640, 480);
+    const gwtWindow = new GwtWindow(false, false, '');
+    const minWin = openMinimalWindow(gwtWindow, 'test-win', 'about:blank', 640, 480);
     assert.isObject(minWin);
   });
 });

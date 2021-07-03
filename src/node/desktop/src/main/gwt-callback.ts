@@ -193,7 +193,12 @@ export class GwtCallback {
     ipcMain.on('desktop_open_minimal_window', (event: IpcMainEvent, name: string, url: string,
       width: number, height: number
     ) => {
-      const minimalWindow = openMinimalWindow(name, url, width, height);
+      const sender = this.getSender(event.processId, event.frameId);
+      if (!sender) {
+        logger().logWarning('received open_minimal_window from unknown window');
+        return;
+      }
+      const minimalWindow = openMinimalWindow(sender, name, url, width, height);
       minimalWindow.window.once('ready-to-show', () => {
         minimalWindow.window.show();
       });
@@ -349,9 +354,9 @@ export class GwtCallback {
     });
 
     ipcMain.on('desktop_zoom_actual_size', (event) => {
-      const owner = this.getOwner(event.processId, event.frameId);
-      if (owner) {
-        owner.window.webContents.zoomFactor = 1.0;
+      const sender = this.getSender(event.processId, event.frameId);
+      if (sender) {
+        sender.window.webContents.zoomFactor = 1.0;
       } else {
         logger().logWarning('received zoom_actual_size from unknown window');
       }
@@ -465,9 +470,9 @@ export class GwtCallback {
     });
   
     ipcMain.on('desktop_set_viewer_url', (event, url) => {
-      const owner = this.getOwner(event.processId, event.frameId);
-      if (owner) {
-        owner.setViewerUrl(url);
+      const sender = this.getSender(event.processId, event.frameId);
+      if (sender) {
+        sender.setViewerUrl(url);
       }
     });
 
@@ -652,7 +657,7 @@ export class GwtCallback {
    * @param event
    * @returns Registered GwtWindow that sent the event (or undefined if not found)
    */
-  getOwner(processId: number, frameId: number): GwtWindow | undefined {
+  getSender(processId: number, frameId: number): GwtWindow | undefined {
     // TODO: probably(?) need to use both processId and frameId to make this determination
     for (const win of this.owners) {
       if (win.window.webContents.getProcessId() === processId) {
