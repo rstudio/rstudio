@@ -159,4 +159,9 @@ export class DesktopBrowserWindow {
   executeJavaScript(cmd: string): Promise<any> {
     return executeJavaScript(this.window.webContents, cmd);
   }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  setViewerUrl(url: string): void {
+    // TODO: in the Qt version this is implemented in webPage()
+  }
 }

@@ -15,15 +15,14 @@
 
 import { appState } from './app-state';
 import { DesktopBrowserWindow } from './desktop-browser-window';
-import { MainWindow } from './main-window';
+import { GwtWindow } from './gwt-window';
 
 export function openMinimalWindow(
+  sender: GwtWindow,
   name: string,
   url: string,
   width: number,
-  height: number,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  mainWindow: MainWindow
+  height: number
 ): DesktopBrowserWindow {
 
   const named = !!name && name !== '_blank';
@@ -34,26 +33,32 @@ export function openMinimalWindow(
   }
 
   if (!browser) {
-    const isViewerZoomWindow = name === '_rstudio_viewer_zoom';
+    const isViewerZoomWindow = (name === '_rstudio_viewer_zoom');
 
-    // TODO
     // create the new browser window; pass along our own base URL so that the new window's
     // WebProfile knows how to apply the appropriate headers
-    browser = new DesktopBrowserWindow(false, !isViewerZoomWindow, name,
-      // TODO
-      // pMainWindow_->webView()->baseUrl(), nullptr, pMainWindow_->webPage());
-      undefined);
-      
-    // TODO  https://www.electronjs.org/docs/tutorial/keyboard-shortcuts#shortcuts-within-a-browserwindow
-    //     // ensure minimal windows can be closed with Ctrl+W (Cmd+W on macOS)
-    //     QAction* closeWindow = new QAction(browser);
-    //     closeWindow->setShortcut(Qt::CTRL + Qt::Key_W);
-    //     connect(closeWindow, &QAction::triggered,
-    //             browser, &BrowserWindow::close);
-    //     browser->addAction(closeWindow);
-      
-    //     connect(this, &GwtCallback::destroyed, browser, &BrowserWindow::close);
-      
+    browser = new DesktopBrowserWindow(
+      false,
+      !isViewerZoomWindow,
+      name,
+      '', // TODO pMainWindow_->webView()->baseUrl()
+      sender,
+      undefined /* opener */);
+
+    // ensure minimal windows can be closed with Ctrl+W (Cmd+W on macOS)
+    browser.window.webContents.on('before-input-event', (event, input) => {
+      const ctrlOrMeta = (process.platform === 'darwin') ? input.meta : input.control;
+      if (ctrlOrMeta && input.key.toLowerCase() === 'w') {
+        event.preventDefault();
+        browser?.window.close();
+      }
+    });
+
+    // ensure minimal window closes when creating window closes
+    sender.window.on('closed', () => {
+      browser?.window.close();
+    });
+
     if (named) {
       appState().windowTracker.addWindow(name, browser);
     }
