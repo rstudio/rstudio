@@ -48,7 +48,7 @@ constexpr const char* kDefaultSqliteDatabaseDirectory = "/var/lib/rstudio-server
 constexpr const char* kDatabaseHost = "host";
 constexpr const char* kDefaultDatabaseHost = "localhost";
 constexpr const char* kDatabaseName = "database";
-constexpr const char* kDefaultDatabaseName = "rstudio";
+constexpr const char* kDefaultDatabaseName = "rstudio-os";
 constexpr const char* kDatabasePort = "port";
 constexpr const char* kDefaultPostgresqlDatabasePort = "5432";
 constexpr const char* kDatabaseUsername = "username";
@@ -122,7 +122,7 @@ Error readOptions(const std::string& databaseConfigFile,
 
       // get the database directory - if not specified, we fallback to a hardcoded default path
       FilePath databaseDirectory = FilePath(settings.get(kSqliteDatabaseDirectory, kDefaultSqliteDatabaseDirectory));
-      FilePath databaseFile = databaseDirectory.completeChildPath("rstudio.sqlite");
+      FilePath databaseFile = databaseDirectory.completeChildPath(std::string(kDefaultDatabaseName) + ".sqlite");
       options.file = databaseFile.getAbsolutePath();
       options.poolSize = settings.getInt(kConnectionPoolSize, 0);
 
