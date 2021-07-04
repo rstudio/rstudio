@@ -24,7 +24,7 @@ import { getenv, setenv } from '../core/environment';
 
 import { ApplicationLaunch } from './application-launch';
 import { appState } from './app-state';
-import { ActivationEvents } from './activation-overlay';
+import { DesktopActivation } from './activation-overlay';
 import { EXIT_FAILURE } from './program-status';
 import { MainWindow } from './main-window';
 import { PendingQuit } from './gwt-callback';
@@ -51,8 +51,8 @@ export class SessionLauncher {
   ) { }
 
   launchFirstSession(): void {
-    appState().activation().on(ActivationEvents.LAUNCH_FIRST_SESSION, this.onLaunchFirstSession.bind(this));
-    appState().activation().on(ActivationEvents.LAUNCH_ERROR, this.onLaunchError.bind(this));
+    appState().activation().on(DesktopActivation.LAUNCH_FIRST_SESSION, this.onLaunchFirstSession.bind(this));
+    appState().activation().on(DesktopActivation.LAUNCH_ERROR, this.onLaunchError.bind(this));
 
     // This will ultimately trigger one of the above events to continue with startup (or failure).
     appState().activation().getInitialLicense();
