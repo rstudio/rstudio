@@ -16,8 +16,10 @@
 import { BrowserWindow, WebContents } from 'electron';
 
 import path from 'path';
+import { EventEmitter } from 'stream';
 import { logger } from '../core/logger';
 import { executeJavaScript } from './utils';
+import { WebView } from './web-view';
 
 /**
  * Base class for browser-based windows. Subclasses include GwtWindow, SecondaryWindow,
@@ -26,12 +28,15 @@ import { executeJavaScript } from './utils';
  * Porting note: This corresponds to a combination of the QMainWindow/BrowserWindow and 
  * QWebEngineView/WebView in the Qt desktop app.
  */
-export class DesktopBrowserWindow {
+export class DesktopBrowserWindow extends EventEmitter {
+  static WINDOW_DESTROYED = 'desktop-browser-window_destroyed';
+
   window: BrowserWindow;
+  webView: WebView;
 
   /**
    * @param adjustTitle Automatically set window title to match web page title
-   * @param name 
+   * @param name  Internal window name (or an empty string)
    * @param baseUrl 
    * @param parent 
    * @param opener 
@@ -41,13 +46,14 @@ export class DesktopBrowserWindow {
   constructor(
     private showToolbar: boolean,
     private adjustTitle: boolean,
-    private name: string,
+    protected name: string,
     private baseUrl?: string,
     private parent?: DesktopBrowserWindow,
     private opener?: WebContents,
     private allowExternalNavigate = false,
     addApiKeys: string[] = []
   ) {
+    super();
     const apiKeys = [['desktopInfo', ...addApiKeys].join('|')];
     this.window = new BrowserWindow({
       // https://github.com/electron/electron/blob/master/docs/faq.md#the-font-looks-blurry-what-is-this-and-what-can-i-do
@@ -62,21 +68,25 @@ export class DesktopBrowserWindow {
       show: false
     });
 
-    this.window.webContents.on('page-title-updated', (event, title, explicitSet) => {
+    this.webView = new WebView(this.window.webContents, baseUrl, allowExternalNavigate);
+    this.webView.webContents.on('page-title-updated', (event, title, explicitSet) => {
       this.adjustWindowTitle(title, explicitSet);
     });
-    this.window.webContents.on('did-finish-load', () => {
+    this.webView.webContents.on('did-finish-load', () => {
       this.finishLoading(true);
     });
-    this.window.webContents.on('did-fail-load', () => {
+    this.webView.webContents.on('did-fail-load', () => {
       this.finishLoading(false);
     });
     this.window.on('close', this.closeEvent.bind(this));
+    this.window.on('closed', () => {
+      this.emit(DesktopBrowserWindow.WINDOW_DESTROYED);
+    });
 
     // set zoom factor
     // TODO: double zoomLevel = options().zoomLevel();
     const zoomLevel = 1.0;
-    this.window.webContents.setZoomFactor(zoomLevel);
+    this.webView.webContents.setZoomFactor(zoomLevel);
 
     if (this.showToolbar) {
       logger().logDebug('toolbar NYI');
@@ -119,7 +129,7 @@ export class DesktopBrowserWindow {
 
   syncWindowTitle(): void {
     if (this.adjustTitle) {
-      this.window.setTitle(this.window.webContents.getTitle());
+      this.window.setTitle(this.webView.webContents.getTitle());
     }
   }
 
@@ -157,7 +167,7 @@ export class DesktopBrowserWindow {
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   executeJavaScript(cmd: string): Promise<any> {
-    return executeJavaScript(this.window.webContents, cmd);
+    return executeJavaScript(this.webView.webContents, cmd);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
