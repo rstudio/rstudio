@@ -895,6 +895,8 @@ struct QuartoConfig
 
 QuartoConfig quartoConfig(bool refresh = false);
 
+core::json::Value quartoCapabilities();
+
 // see if quarto wants to handle the preview
 bool handleQuartoPreview(const core::FilePath& sourceFile,
                          const core::FilePath& outputFile,

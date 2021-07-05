@@ -168,6 +168,29 @@ Error runQuarto(const std::vector<std::string>& args, const std::string& input, 
 }
 
 
+Error quartoCaptureOutput(const std::vector<std::string>& args,
+                          const std::string& input,
+                          std::string* pOutput)
+{
+   // run pandoc
+   core::system::ProcessResult result;
+   Error error = runQuarto(args, input, &result);
+   if (error)
+   {
+      return error;
+   }
+   else if (result.exitStatus != EXIT_SUCCESS)
+   {
+      Error error = systemError(boost::system::errc::state_not_recoverable, result.stdErr, ERROR_LOCATION);
+      return error;
+   }
+   else
+   {
+      *pOutput = result.stdOut;
+      return Success();
+   }
+}
+
 bool quartoCaptureOutput(const std::vector<std::string>& args,
                          const std::string& input,
                          std::string* pOutput,
@@ -193,8 +216,8 @@ bool quartoCaptureOutput(const std::vector<std::string>& args,
    }
 }
 
-Error quartoCapabilities(const json::JsonRpcRequest&,
-                         json::JsonRpcResponse* pResponse)
+Error quartoCapabilitiesRpc(const json::JsonRpcRequest&,
+                            json::JsonRpcResponse* pResponse)
 {
    std::string output;
    if (quartoCaptureOutput({"capabilities"}, "", &output, pResponse))
@@ -266,6 +289,39 @@ void readQuartoProjectConfig(const FilePath& configFile,
 }
 
 namespace module_context {
+
+json::Value quartoCapabilities()
+{
+   if (module_context::quartoConfig().installed)
+   {
+      std::string output;
+      Error error = quartoCaptureOutput({ "capabilities" }, "", &output);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return json::Value();
+      }
+      json::Value jsonCapabilities;
+      error = jsonCapabilities.parse(output);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return json::Value();
+      }
+      if (!jsonCapabilities.isObject())
+      {
+         LOG_ERROR_MESSAGE("Unexpected quarto capabilities json: " + output);
+         return json::Value();
+      }
+      return jsonCapabilities;
+   }
+   else
+   {
+      return json::Value();
+   }
+
+
+}
 
 bool handleQuartoPreview(const core::FilePath& sourceFile,
                          const core::FilePath& outputFile,
@@ -498,7 +554,7 @@ Error initialize()
    // additional initialization
    ExecBlock initBlock;
    initBlock.addFunctions()
-     (boost::bind(module_context::registerRpcMethod, "quarto_capabilities", quartoCapabilities))
+     (boost::bind(module_context::registerRpcMethod, "quarto_capabilities", quartoCapabilitiesRpc))
      (boost::bind(module_context::sourceModuleRFile, "SessionQuarto.R"))
      (boost::bind(quarto::serve::initialize))
    ;

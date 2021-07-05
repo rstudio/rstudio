@@ -41,6 +41,7 @@ public interface ProjectsServerOperations extends PrefsServerOperations,
    void createProject(String projectFile,
                       NewPackageOptions newPackageOptions,
                       NewShinyAppOptions newShinyAppOptions,
+                      NewQuartoProjectOptions newQuartoProjectOptions,
                       ProjectTemplateOptions projectTemplateOptions,
                       ServerRequestCallback<String> callback);
    

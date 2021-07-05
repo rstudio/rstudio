@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.projects.model;
 
+import org.rstudio.studio.client.quarto.model.QuartoCapabilities;
+
 import com.google.gwt.core.client.JavaScriptObject;
 
 public class NewProjectContext extends JavaScriptObject
@@ -28,6 +30,10 @@ public class NewProjectContext extends JavaScriptObject
    
    public native final boolean isPackratAvailable() /*-{
       return this.packrat_available;
+   }-*/;
+   
+   public native final QuartoCapabilities getQuartoCapabilities() /*-{
+      return this.quarto_capabilities;
    }-*/;
    
    public native final String getWorkingDirectory() /*-{

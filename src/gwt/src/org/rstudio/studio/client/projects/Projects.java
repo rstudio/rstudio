@@ -233,11 +233,17 @@ public class Projects implements OpenProjectFileEvent.Handler,
            @Override
            public void onReadyToQuit(final boolean saveChanges)
            {
+              final ProgressIndicator indicator =
+                    globalDisplay_.getProgressIndicator("Error");
+                 indicator.onProgress("New Project...");
+              
               projServer_.getNewProjectContext(
                 new SimpleRequestCallback<NewProjectContext>() {
                    @Override
                    public void onResponseReceived(NewProjectContext context)
                    {
+                      indicator.onCompleted();
+                      
                       NewProjectWizard wiz = new NewProjectWizard(
                          session_.getSessionInfo(),
                          pUserPrefs_.get(),
@@ -261,6 +267,14 @@ public class Projects implements OpenProjectFileEvent.Handler,
                       });
                       wiz.showModal();
                    }
+                   
+                   @Override
+                   public void onError(ServerError error)
+                   {
+                      indicator.onCompleted();
+                      super.onError(error);
+                   }
+                   
               });
            }
       });
@@ -305,6 +319,7 @@ public class Projects implements OpenProjectFileEvent.Handler,
                options,
                null /*newPackageOptions*/,
                null /*newShinyAppOptions*/,
+               null /*newQuartoProjectOptions*/,
                null /*projectTemplateOptions*/,
                event.getCallContext());
 
@@ -329,6 +344,7 @@ public class Projects implements OpenProjectFileEvent.Handler,
                null/*vcsCloneOptions*/,
                null/*newPackageOptions*/,
                null/*newShinyAppOptions*/,
+               null/*newQuartoProjectOptions*/,
                null/*projectTemplateOptions*/,
                event.getCallContext());
 
@@ -532,6 +548,7 @@ public class Projects implements OpenProjectFileEvent.Handler,
                         newProject.getProjectFile(),
                         newProject.getNewPackageOptions(),
                         newProject.getNewShinyAppOptions(),
+                        newProject.getNewQuartoProjectOptions(),
                         newProject.getProjectTemplateOptions(),
                         new ServerRequestCallback<String>()
                         {

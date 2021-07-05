@@ -196,6 +196,7 @@ Error getNewProjectContext(const json::JsonRpcRequest& request,
    contextJson["packrat_available"] =
          module_context::packratContext().available &&
          module_context::canBuildCpp();
+   contextJson["quarto_capabilities"] = module_context::quartoCapabilities();
    contextJson["working_directory"] = module_context::createAliasedPath(
          r::session::utils::safeCurrentPath());
 
@@ -237,11 +238,13 @@ Error createProject(const json::JsonRpcRequest& request,
    std::string projectFile;
    json::Value newPackageJson;
    json::Value newShinyAppJson;
+   json::Value newQuartoProjectJson;
    json::Value projectTemplateOptions;
    Error error = json::readParams(request.params,
                                   &projectFile,
                                   &newPackageJson,
                                   &newShinyAppJson,
+                                  &newQuartoProjectJson,
                                   &projectTemplateOptions);
    if (error)
       return error;

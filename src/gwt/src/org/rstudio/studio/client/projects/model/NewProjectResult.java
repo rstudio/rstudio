@@ -27,6 +27,7 @@ public class NewProjectResult
                            VcsCloneOptions vcsCloneOptions,
                            NewPackageOptions newPackageOptions,
                            NewShinyAppOptions newShinyAppOptions,
+                           NewQuartoProjectOptions newQuartoProjectOptions,
                            ProjectTemplateOptions projectTemplateOptions,
                            TutorialApiCallContext callContext)
    {
@@ -38,6 +39,7 @@ public class NewProjectResult
       vcsCloneOptions_ = vcsCloneOptions;
       newPackageOptions_ = newPackageOptions;
       newShinyAppOptions_ = newShinyAppOptions;
+      newQuartoProjectOptions_ = newQuartoProjectOptions;
       projectTemplateOptions_ = projectTemplateOptions;
       callContext_ = callContext;
    }
@@ -102,6 +104,11 @@ public class NewProjectResult
       return newShinyAppOptions_;
    }
    
+   public NewQuartoProjectOptions getNewQuartoProjectOptions()
+   {
+      return newQuartoProjectOptions_;
+   }
+   
    public ProjectTemplateOptions getProjectTemplateOptions()
    {
       return projectTemplateOptions_;
@@ -124,6 +131,7 @@ public class NewProjectResult
    private final VcsCloneOptions vcsCloneOptions_;
    private final NewPackageOptions newPackageOptions_;
    private final NewShinyAppOptions newShinyAppOptions_;
+   private final NewQuartoProjectOptions newQuartoProjectOptions_;
    private final ProjectTemplateOptions projectTemplateOptions_;
    private final TutorialApiCallContext callContext_;
 }

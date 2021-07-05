@@ -30,6 +30,7 @@ import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.projects.model.NewPackageOptions;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
+import org.rstudio.studio.client.projects.model.NewQuartoProjectOptions;
 import org.rstudio.studio.client.projects.model.NewShinyAppOptions;
 import org.rstudio.studio.client.projects.model.ProjectTemplateOptions;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -117,7 +118,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
       addWidget(newProjectParent_);
       
       // if git is available then add git init
-      UserPrefs userState = RStudioGinjector.INSTANCE.getUserPrefs();
+      UserPrefs userPrefs = RStudioGinjector.INSTANCE.getUserPrefs();
       SessionInfo sessionInfo = 
          RStudioGinjector.INSTANCE.getSession().getSessionInfo();
       
@@ -131,7 +132,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
          ElementIds.idSafeString(getTitle()) + "_" + ElementIds.NEW_PROJECT_GIT_REPO);
       if (sessionInfo.isVcsAvailable(VCSConstants.GIT_ID))
       {  
-         chkGitInit_.setValue(userState.newProjGitInit().getValue());
+         chkGitInit_.setValue(userPrefs.newProjGitInit().getValue());
          chkGitInit_.getElement().getStyle().setMarginRight(7, Unit.PX);
          if (optionsPanel != null)
          {
@@ -146,7 +147,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
       
       // Initialize project with renv
       chkRenvInit_ = new CheckBox("Use renv with this project");
-      chkRenvInit_.setValue(userState.newProjUseRenv().getValue());
+      chkRenvInit_.setValue(userPrefs.newProjUseRenv().getValue());
       ElementIds.assignElementId(chkRenvInit_,
          ElementIds.idWithPrefix(getTitle(), ElementIds.NEW_PROJECT_RENV));
       chkRenvInit_.addValueChangeHandler((ValueChangeEvent<Boolean> event) -> {
@@ -159,22 +160,28 @@ public class NewDirectoryPage extends NewProjectWizardPage
          
       });
       
-      if (optionsPanel != null)
+      if (getProvideRenvOption())
       {
-         optionsPanel.add(chkRenvInit_);
+         if (optionsPanel != null)
+         {
+            optionsPanel.add(chkRenvInit_);
+         }
+         else
+         {
+            addSpacer();
+            addWidget(chkRenvInit_);
+         }
+         
+         
+         if (optionsPanel != null)
+         {
+            addSpacer();
+            addWidget(optionsPanel);
+         }
       }
-      else
-      {
-         addSpacer();
-         addWidget(chkRenvInit_);
-      }
+    
+      onAddBottomWidgets();
       
-      
-      if (optionsPanel != null)
-      {
-         addSpacer();
-         addWidget(optionsPanel);
-      }
    }
 
    protected String getDirNameLabel()
@@ -187,6 +194,11 @@ public class NewDirectoryPage extends NewProjectWizardPage
       return false;
    }
    
+   protected boolean getProvideRenvOption()
+   {
+      return true;
+   }
+   
    protected void onAddTopPanelWidgets(HorizontalPanel panel)
    {
    }
@@ -195,12 +207,22 @@ public class NewDirectoryPage extends NewProjectWizardPage
    {
    }
    
+   protected void onAddBottomWidgets()
+   {
+      
+   }
+   
    protected NewPackageOptions getNewPackageOptions()
    {
       return null;
    }
    
    protected NewShinyAppOptions getNewShinyAppOptions()
+   {
+      return null;
+   }
+   
+   protected NewQuartoProjectOptions getNewQuartoProjectOptions()
    {
       return null;
    }
@@ -262,6 +284,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
                                      null,
                                      getNewPackageOptions(),
                                      getNewShinyAppOptions(),
+                                     getNewQuartoProjectOptions(),
                                      getProjectTemplateOptions(),
                                      null);
       }
