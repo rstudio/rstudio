@@ -17,6 +17,30 @@ import { MenuItemConstructorOptions } from 'electron/main';
 
 import { MainWindow } from './main-window';
 
+/**
+ * Show dummy menu bar to deal with the fact that the real menu bar isn't ready until well
+ * after startup.
+ */
+export function showPlaceholderMenu(): void {
+  if (process.platform === 'darwin') {
+    return;
+  }
+
+  const mainMenuStub = new Menu();
+  mainMenuStub.append(new MenuItem({submenu: mainMenuStub, label: 'File'}));
+  mainMenuStub.append(new MenuItem({submenu: mainMenuStub, label: 'Edit'}));
+  mainMenuStub.append(new MenuItem({submenu: mainMenuStub, label: 'Code'}));
+  mainMenuStub.append(new MenuItem({submenu: mainMenuStub, label: 'View'}));
+  mainMenuStub.append(new MenuItem({submenu: mainMenuStub, label: 'Plots'}));
+  mainMenuStub.append(new MenuItem({submenu: mainMenuStub, label: 'Session'}));
+  mainMenuStub.append(new MenuItem({submenu: mainMenuStub, label: 'Build'}));
+  mainMenuStub.append(new MenuItem({submenu: mainMenuStub, label: 'Debug'}));
+  mainMenuStub.append(new MenuItem({submenu: mainMenuStub, label: 'Profile'}));
+  mainMenuStub.append(new MenuItem({submenu: mainMenuStub, label: 'Tools'}));
+  mainMenuStub.append(new MenuItem({submenu: mainMenuStub, label: 'Help'}));
+  Menu.setApplicationMenu(mainMenuStub);
+}
+
 export class MenuCallback {
   mainMenu?: Menu|null = null;
   menuStack: Menu[] = [];

@@ -20,7 +20,7 @@ import { ChildProcess } from 'child_process';
 import { logger } from '../core/logger';
 
 import { GwtCallback, PendingQuit } from './gwt-callback';
-import { MenuCallback } from './menu-callback';
+import { MenuCallback, showPlaceholderMenu } from './menu-callback';
 import { PendingWindow } from './pending-window';
 import { RCommandEvaluator } from './r-command-evaluator';
 import { SessionLauncher } from './session-launcher';
@@ -37,12 +37,33 @@ export class MainWindow extends GwtWindow {
   workbenchInitialized = false;
   pendingWindows = new Array<PendingWindow>();
 
+  // TODO
+  //#ifdef _WIN32
+  // HWINEVENTHOOK eventHook_ = nullptr;
+  //#endif
+
   constructor(url: string, public isRemoteDesktop: boolean) {
     super(false, false, '', url, undefined, undefined, isRemoteDesktop, ['desktop', 'desktopMenuCallback']);
+
     appState().gwtCallback = new GwtCallback(this, isRemoteDesktop);
     this.menuCallback = new MenuCallback(this);
 
     RCommandEvaluator.setMainWindow(this);
+
+    if (this.isRemoteDesktop) {
+      // TODO - determine if we need to replicate this
+      // since the object registration is asynchronous, during the GWT setup code
+      // there is a race condition where the initialization can happen before the
+      // remoteDesktop object is registered, making the GWT application think that
+      // it should use regular desktop objects - to circumvent this, we use a custom
+      // user agent string that the GWT code can detect with 100% success rate to
+      // get around this race condition
+      // QString userAgent = webPage()->profile()->httpUserAgent().append(QStringLiteral("; RStudio Remote Desktop"));
+      // webPage()->profile()->setHttpUserAgent(userAgent);
+      // channel->registerObject(QStringLiteral("remoteDesktop"), &gwtCallback_);
+    }
+
+    showPlaceholderMenu();
   }
 
   loadUrl(url: string): void {
