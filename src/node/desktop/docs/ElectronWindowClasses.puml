@@ -29,6 +29,7 @@ desktop ()- SatelliteWindow
 class MainWindow extends GwtWindow
 desktop ()- MainWindow
 menu ()- MainWindow
+class MinimalWindow extends RStudioBrowserWindow
 
 RStudioBrowserWindow *-- "1" BrowserWindow
 

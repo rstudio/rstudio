@@ -23,6 +23,12 @@ import { DesktopBrowserWindow } from '../../../src/main/desktop-browser-window';
 import { GwtWindow } from '../../../src/main/gwt-window';
 import { clearCoreSingleton } from '../../../src/core/core-state';
 
+class TestGwtWindow extends GwtWindow {
+  onActivated(): void {
+    throw new Error('Method not implemented.');
+  }
+}
+
 describe('window-tracker', () => {
   beforeEach(() => {
     clearCoreSingleton();
@@ -59,7 +65,7 @@ describe('window-tracker', () => {
     const tracker = new WindowTracker();
     const oneWin = new DesktopBrowserWindow(false, false, 'some name');
     tracker.addWindow('one', oneWin);
-    const twoWin = new GwtWindow(false, false, 'the gwt window');
+    const twoWin = new TestGwtWindow(false, false, 'the gwt window');
     tracker.addWindow('one', twoWin);
     assert.equal(tracker.length(), 1);
     const result = tracker.getWindow('one');

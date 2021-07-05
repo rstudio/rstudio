@@ -124,4 +124,8 @@ export class MainWindow extends GwtWindow {
   prepareForWindow(pendingWindow: PendingWindow): void {
     this.pendingWindows.push(pendingWindow);
   }
+
+  onActivated(): void {
+    // intentionally left blank
+  }
 }
