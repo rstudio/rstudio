@@ -13,7 +13,7 @@
  *
  */
 
-import { BrowserWindow, session } from 'electron';
+import { BrowserWindow, Menu, session } from 'electron';
 import path from 'path';
 import { ChildProcess } from 'child_process';
 
@@ -46,7 +46,7 @@ export class MainWindow extends GwtWindow {
     super(false, false, '', url, undefined, undefined, isRemoteDesktop, ['desktop', 'desktopMenuCallback']);
 
     appState().gwtCallback = new GwtCallback(this, isRemoteDesktop);
-    this.menuCallback = new MenuCallback(this);
+    this.menuCallback = new MenuCallback();
 
     RCommandEvaluator.setMainWindow(this);
 
@@ -64,6 +64,13 @@ export class MainWindow extends GwtWindow {
     }
 
     showPlaceholderMenu();
+
+    this.menuCallback.on(MenuCallback.MENUBAR_COMPLETED, (menu: Menu) => {
+      Menu.setApplicationMenu(menu);
+    });
+    this.menuCallback.on(MenuCallback.COMMAND_INVOKED, (commandId) => {
+      this.invokeCommand(commandId);
+    });
   }
 
   loadUrl(url: string): void {
@@ -100,7 +107,20 @@ export class MainWindow extends GwtWindow {
   }
 
   invokeCommand(cmdId: string): void {
-    this.executeJavaScript(`window.desktopHooks.invokeCommand("${cmdId}")`)
+    let cmd = '';
+    if (process.platform === 'darwin') {
+      cmd = ` 
+        var wnd;
+        try {
+          wnd = window.$RStudio.last_focused_window;
+        } catch (e) {
+          wnd = window;
+        }
+        (wnd || window).desktopHooks.invokeCommand('${cmdId}');`;
+    } else {
+      cmd = `window.desktopHooks.invokeCommand("${cmdId}")`;
+    }
+    this.executeJavaScript(cmd)
       .catch((error) => {
         logger().logError(error);
       });

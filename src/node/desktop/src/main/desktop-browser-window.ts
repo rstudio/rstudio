@@ -135,9 +135,10 @@ export class DesktopBrowserWindow extends EventEmitter {
 
   finishLoading(succeeded: boolean): void {
     logger().logDebug(`window finished loading: success=${succeeded}`);
-    this.syncWindowTitle();
 
     if (succeeded) {
+      this.syncWindowTitle();
+
       // TODO: Qt version sets up a tiny resize of the window here in response to the
       // window being shown on a different screen. Need to test if this is necessary.
 
