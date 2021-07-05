@@ -19,18 +19,17 @@ import { MainWindow } from './main-window';
 
 /**
  * Show dummy menu bar to deal with the fact that the real menu bar isn't ready until well
- * after startup. This is a no-op on Mac.
+ * after startup.
  */
 export function showPlaceholderMenu(): void {
-  if (process.platform === 'darwin') {
-    return;
-  }
-
   const addPlaceholderMenuItem = function(mainMenu: Menu, label: string): void {
     mainMenu.append(new MenuItem({ submenu: new Menu(), label: label }));
   };
 
   const mainMenuStub = new Menu();
+  if (process.platform === 'darwin') {
+    mainMenuStub.append(new MenuItem({role: 'appMenu'}));
+  }
   addPlaceholderMenuItem(mainMenuStub, 'File');
   addPlaceholderMenuItem(mainMenuStub, 'Edit');
   addPlaceholderMenuItem(mainMenuStub, 'Code');
@@ -41,6 +40,9 @@ export function showPlaceholderMenu(): void {
   addPlaceholderMenuItem(mainMenuStub, 'Debug');
   addPlaceholderMenuItem(mainMenuStub, 'Profile');
   addPlaceholderMenuItem(mainMenuStub, 'Tools');
+  if (process.platform === 'darwin') {
+    addPlaceholderMenuItem(mainMenuStub, 'Window');
+  }
   addPlaceholderMenuItem(mainMenuStub, 'Help');
   Menu.setApplicationMenu(mainMenuStub);
 }
