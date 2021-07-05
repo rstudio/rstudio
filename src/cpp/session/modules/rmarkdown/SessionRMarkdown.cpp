@@ -335,13 +335,14 @@ std::string assignOutputUrl(const std::string& outputFile)
 
 void getOutputFormat(const std::string& path,
                      const std::string& encoding,
+                     const std::string& rFunction,
                      json::Object* pResultJson)
 {
    // query rmarkdown for the output format
    json::Object& resultJson = *pResultJson;
    r::sexp::Protect protect;
    SEXP sexpOutputFormat;
-   Error error = r::exec::RFunction("rmarkdown:::default_output_format",
+   Error error = r::exec::RFunction(rFunction,
                                     string_utils::utf8ToSystem(path), encoding)
                                    .call(&sexpOutputFormat, &protect);
    if (error)
@@ -374,6 +375,20 @@ void getOutputFormat(const std::string& path,
 
       resultJson["self_contained"] = selfContained;
    }
+}
+
+void getRMarkdownOutputFormat(const std::string& path,
+                              const std::string& encoding,
+                              json::Object* pResultJson)
+{
+   getOutputFormat(path, encoding, "rmarkdown:::default_output_format", pResultJson);
+}
+
+void getQuartoOutputFormat(const std::string& path,
+                           const std::string& encoding,
+                           json::Object* pResultJson)
+{
+   getOutputFormat(path, encoding, ".rs.quarto.defaultOutputFormat", pResultJson);
 }
 
 
@@ -462,14 +477,6 @@ private:
               const std::string& workingDir,
               const std::string& viewerType)
    {
-      Error error;
-      json::Object dataJson;
-      getOutputFormat(targetFile_.getAbsolutePath(), encoding, &outputFormat_);
-      dataJson["output_format"] = outputFormat_;
-      dataJson["target_file"] = module_context::createAliasedPath(targetFile_);
-      ClientEvent event(client_events::kRmdRenderStarted, dataJson);
-      module_context::enqueClientEvent(event);
-
       // save encoding and viewer type
       encoding_ = encoding;
       viewerType_ = viewerType;
@@ -489,7 +496,7 @@ private:
       else
       {
          // see if the input file has a custom render function
-         error = r::exec::RFunction(
+         Error error = r::exec::RFunction(
             ".rs.getCustomRenderFunction",
             string_utils::utf8ToSystem(targetFile_.getAbsolutePath())).call(
                                                                   &renderFunc);
@@ -505,8 +512,27 @@ private:
       // if we are using a quarto command to render, we must be a quarto doc
       if (renderFunc == "quarto run" || renderFunc == "quarto render")
       {
-          isQuarto_ = true;
+          isQuarto_ = true;  
       }
+
+      // determine output format
+      Error error;
+      json::Object dataJson;
+      if (isQuarto_)
+      {
+          getQuartoOutputFormat(targetFile_.getAbsolutePath(), encoding, &outputFormat_);
+      }
+      else
+      {
+          getRMarkdownOutputFormat(targetFile_.getAbsolutePath(), encoding, &outputFormat_);
+      }
+
+      // notify client of render started
+      dataJson["output_format"] = outputFormat_;
+      dataJson["target_file"] = module_context::createAliasedPath(targetFile_);
+      ClientEvent event(client_events::kRmdRenderStarted, dataJson);
+      module_context::enqueClientEvent(event);
+
 
       std::string extraParams;
       std::string targetFile =
