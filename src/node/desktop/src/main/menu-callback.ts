@@ -19,28 +19,35 @@ import { MainWindow } from './main-window';
 
 /**
  * Show dummy menu bar to deal with the fact that the real menu bar isn't ready until well
- * after startup.
+ * after startup. This is a no-op on Mac.
  */
 export function showPlaceholderMenu(): void {
   if (process.platform === 'darwin') {
     return;
   }
 
+  const addPlaceholderMenuItem = function(mainMenu: Menu, label: string): void {
+    mainMenu.append(new MenuItem({ submenu: new Menu(), label: label }));
+  };
+
   const mainMenuStub = new Menu();
-  mainMenuStub.append(new MenuItem({submenu: mainMenuStub, label: 'File'}));
-  mainMenuStub.append(new MenuItem({submenu: mainMenuStub, label: 'Edit'}));
-  mainMenuStub.append(new MenuItem({submenu: mainMenuStub, label: 'Code'}));
-  mainMenuStub.append(new MenuItem({submenu: mainMenuStub, label: 'View'}));
-  mainMenuStub.append(new MenuItem({submenu: mainMenuStub, label: 'Plots'}));
-  mainMenuStub.append(new MenuItem({submenu: mainMenuStub, label: 'Session'}));
-  mainMenuStub.append(new MenuItem({submenu: mainMenuStub, label: 'Build'}));
-  mainMenuStub.append(new MenuItem({submenu: mainMenuStub, label: 'Debug'}));
-  mainMenuStub.append(new MenuItem({submenu: mainMenuStub, label: 'Profile'}));
-  mainMenuStub.append(new MenuItem({submenu: mainMenuStub, label: 'Tools'}));
-  mainMenuStub.append(new MenuItem({submenu: mainMenuStub, label: 'Help'}));
+  addPlaceholderMenuItem(mainMenuStub, 'File');
+  addPlaceholderMenuItem(mainMenuStub, 'Edit');
+  addPlaceholderMenuItem(mainMenuStub, 'Code');
+  addPlaceholderMenuItem(mainMenuStub, 'View');
+  addPlaceholderMenuItem(mainMenuStub, 'Plots');
+  addPlaceholderMenuItem(mainMenuStub, 'Session');
+  addPlaceholderMenuItem(mainMenuStub, 'Build');
+  addPlaceholderMenuItem(mainMenuStub, 'Debug');
+  addPlaceholderMenuItem(mainMenuStub, 'Profile');
+  addPlaceholderMenuItem(mainMenuStub, 'Tools');
+  addPlaceholderMenuItem(mainMenuStub, 'Help');
   Menu.setApplicationMenu(mainMenuStub);
 }
 
+/**
+ * Callbacks from renderer to create application menu.
+ */
 export class MenuCallback {
   mainMenu?: Menu|null = null;
   menuStack: Menu[] = [];
