@@ -35,3 +35,11 @@ export type Err = Error | null;
 export function Success(): null {
   return null;
 }
+
+export function isSuccessful(error: Err): boolean {
+  return !error;
+}
+
+export function isFailure(error: Err): boolean {
+  return !!error;
+}

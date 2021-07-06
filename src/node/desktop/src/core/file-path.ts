@@ -769,15 +769,49 @@ export class FilePath {
   /**
    * Removes this file or directory from the filesystem.
    */
-  remove(): Err {
-    throw Error('remove is NYI');
+  async remove(): Promise<Err> {
+    try {
+      await fsPromises.rm(this.path, { recursive: true });
+    } catch (err) {
+      return err;
+    }
+    return Success();
   }
 
   /**
    * Removes this file or directory from the filesystem, if it exists.
    */
-  removeIfExists(): Err {
-    throw Error('removeIfExists is NYI');
+  async removeIfExists(): Promise<Err> {
+    try {
+      await fsPromises.rm(this.path, { force: true, recursive: true });
+    } catch (err) {
+      return err;
+    }
+    return Success();
+  }
+
+  /**
+   * Removes this file or directory from the filesystem.
+   */
+  removeSync(): Err {
+    try {
+      fs.rmSync(this.path, { recursive: true });
+    } catch (err) {
+      return err;
+    }
+    return Success();
+  }
+
+  /**
+   * Removes this file or directory from the filesystem, if it exists.
+   */
+  removeIfExistsSync(): Err {
+    try {
+      fs.rmSync(this.path, { force: true, recursive: true });
+    } catch (err) {
+      return err;
+    }
+    return Success();
   }
 
   /**

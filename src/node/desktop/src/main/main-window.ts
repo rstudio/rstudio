@@ -71,6 +71,47 @@ export class MainWindow extends GwtWindow {
     this.menuCallback.on(MenuCallback.COMMAND_INVOKED, (commandId) => {
       this.invokeCommand(commandId);
     });
+
+    // TODO
+    // connect(&menuCallback_, SIGNAL(zoomActualSize()), this, SLOT(zoomActualSize()));
+    // connect(&menuCallback_, SIGNAL(zoomIn()), this, SLOT(zoomIn()));
+    // connect(&menuCallback_, SIGNAL(zoomOut()), this, SLOT(zoomOut()));
+    // connect(&gwtCallback_, SIGNAL(workbenchInitialized()),
+    //         this, SIGNAL(firstWorkbenchInitialized()));
+
+    appState().gwtCallback?.on(GwtCallback.WORKBENCH_INITIALIZED, () => {
+      this.onWorkbenchInitialized();
+    });
+
+    // connect(&gwtCallback_, SIGNAL(sessionQuit()),
+    //         this, SLOT(onSessionQuit()));
+
+    // connect(webView(), SIGNAL(onCloseWindowShortcut()),
+    //         this, SLOT(onCloseWindowShortcut()));
+
+    // connect(webView(), &WebView::urlChanged,
+    //         this, &MainWindow::onUrlChanged);
+   
+    this.webView.webContents.on('did-finish-load', () => {
+      this.onLoadFinished(true);
+    });
+    this.webView.webContents.on('did-fail-load', () => {
+      this.onLoadFinished(false);
+    });
+
+    // TODO
+    // connect(webPage(), &QWebEnginePage::loadFinished,
+    //         &menuCallback_, &MenuCallback::cleanUpActions);
+
+    // connect(&desktopInfo(), &DesktopInfo::fixedWidthFontListChanged, [this]() {
+    //    QString js = QStringLiteral(
+    //       "if (typeof window.onFontListReady === 'function') window.onFontListReady()");
+    //    this->webPage()->runJavaScript(js);
+    // });
+
+    // connect(qApp, SIGNAL(commitDataRequest(QSessionManager&)),
+    //         this, SLOT(commitDataRequest(QSessionManager&)),
+    //         Qt::DirectConnection);
   }
 
   loadUrl(url: string): void {
@@ -168,5 +209,9 @@ export class MainWindow extends GwtWindow {
 
   onActivated(): void {
     // intentionally left blank
+  }
+
+  onLoadFinished(ok: boolean): void {
+    // TODO
   }
 }
