@@ -231,6 +231,19 @@ Error initializeProjectFromTemplate(const FilePath& projectFilePath,
 
 }
 
+void addFirstRunDocs(const FilePath& projectFilePath, const std::vector<std::string>& docs)
+{
+   FilePath scratchPath, sharedScratchPath;
+   Error error = computeScratchPaths(
+            projectFilePath,
+            &scratchPath,
+            &sharedScratchPath);
+
+   for(auto doc : docs) {
+      addFirstRunDoc(scratchPath, doc);
+   }
+}
+
 Error createProject(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
 {
@@ -250,10 +263,10 @@ Error createProject(const json::JsonRpcRequest& request,
       return error;
    FilePath projectFilePath = module_context::resolveAliasedPath(projectFile);
 
-   // Shiny application
-   if (!newShinyAppJson.isNull())
+   // new shiny or quarto project
+   if (!newShinyAppJson.isNull() || !newQuartoProjectJson.isNull())
    {
-      // error if the shiny app dir already exists
+      // error if the dir already exists
       FilePath appDir = projectFilePath.getParent();
       if (appDir.exists())
          return core::fileExistsError(ERROR_LOCATION);
@@ -263,16 +276,53 @@ Error createProject(const json::JsonRpcRequest& request,
       if (error)
          return error;
 
-      // copy app.R into the project
-      FilePath shinyDir = session::options().rResourcesPath()
-                                            .completeChildPath("templates/shiny");
-      
-      error = shinyDir.completeChildPath("app.R").copy(appDir.completeChildPath("app.R"));
-      if (error)
-         LOG_ERROR(error);
+      // new shiny project
+      if (!newShinyAppJson.isNull())
+      {
+         // copy app.R into the project
+         FilePath shinyDir = session::options().rResourcesPath()
+                                               .completeChildPath("templates/shiny");
 
-      // add first run actions for the source files
-      addFirstRunDoc(projectFilePath, "app.R");
+         error = shinyDir.completeChildPath("app.R").copy(appDir.completeChildPath("app.R"));
+         if (error)
+            LOG_ERROR(error);
+
+         // add first run actions for the source files
+         addFirstRunDocs(projectFilePath, { "app.R" });
+      }
+
+      // new quarto project
+      if (newQuartoProjectJson.isObject())
+      {
+         std::string type, engine, kernel, venv;
+         error = json::readObject(newQuartoProjectJson.getObject(),
+                                  "type", type,
+                                  "engine", engine,
+                                  "kernel", kernel,
+                                  "venv", venv);
+         if (error)
+         {
+            LOG_ERROR(error);
+            return error;
+         }
+
+         std::vector<std::string> projFiles;
+         error = module_context::createQuartoProject(appDir,
+                                                     type,
+                                                     engine,
+                                                     kernel,
+                                                     venv,
+                                                     &projFiles);
+         if (error)
+         {
+            LOG_ERROR(error);
+            return error;
+         }
+
+         // add first run actions
+         addFirstRunDocs(projectFilePath, projFiles);
+      }
+
 
       std::string existingProjectFilePath;
       if (!findProjectFile(projectFilePath.getParent().getAbsolutePath(), &existingProjectFilePath))
@@ -287,8 +337,10 @@ Error createProject(const json::JsonRpcRequest& request,
          pResponse->setResult(existingProjectFilePath);
          return Success();
       }
-      
+
+
    }
+
    
    // if we have a custom project template, call that first
    if (!projectTemplateOptions.isNull() &&

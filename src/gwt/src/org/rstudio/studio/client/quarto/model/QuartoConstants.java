@@ -20,7 +20,7 @@ public class QuartoConstants
    public final static String FORMAT_HTML = "html";
    
    public final static String PROJECT_DEFAULT = "default";
-   public final static String PROJECT_WEBSITE = "website";
+   public final static String PROJECT_WEBSITE = "site";
    public final static String PROJECT_BOOK = "book";
    
    public final static String ENGINE_MARKDOWN = "markdown";

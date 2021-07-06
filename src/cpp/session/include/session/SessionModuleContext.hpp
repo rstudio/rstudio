@@ -877,7 +877,7 @@ void initializeConsoleCtrlHandler();
 
 bool isPythonReplActive();
 
-
+extern const char* const kQuartoProjectDefault;
 extern const char* const kQuartoProjectSite;
 extern const char* const kQuartoProjectBook;
 
@@ -902,6 +902,13 @@ bool handleQuartoPreview(const core::FilePath& sourceFile,
                          const core::FilePath& outputFile,
                          const std::string& renderOutput,
                          bool validateExtendedType);
+
+core::Error createQuartoProject(const core::FilePath& projDir,
+                                const std::string& type,
+                                const std::string& engine,
+                                const std::string& kernel,
+                                const std::string& venv,
+                                std::vector<std::string>* pProjFiles);
 
 std::vector<core::FilePath> ignoreContentDirs();
 bool isIgnoredContent(const core::FilePath& filePath, const std::vector<core::FilePath>& ignoreDirs);

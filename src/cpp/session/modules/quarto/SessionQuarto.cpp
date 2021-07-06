@@ -25,6 +25,7 @@
 #include <core/Exec.hpp>
 #include <core/Version.hpp>
 #include <core/YamlUtil.hpp>
+#include <core/StringUtils.hpp>
 #include <core/FileSerializer.hpp>
 
 #include <core/json/JsonRpc.hpp>
@@ -156,62 +157,69 @@ core::system::ProcessOptions quartoOptions()
    return options;
 }
 
-Error runQuarto(const std::vector<std::string>& args, const std::string& input, core::system::ProcessResult* pResult)
+Error runQuarto(const std::vector<std::string>& args,
+                const core::FilePath& workingDir,
+                core::system::ProcessResult* pResult)
 {
+   core::system::ProcessOptions options = quartoOptions();
+   if (!workingDir.isEmpty())
+      options.workingDir = workingDir;
+
    return core::system::runProgram(
       string_utils::utf8ToSystem(s_quartoPath.getAbsolutePath()),
       args,
-      input,
-      quartoOptions(),
+      "",
+      options,
       pResult
    );
 }
 
 
-Error quartoCaptureOutput(const std::vector<std::string>& args,
-                          const std::string& input,
-                          std::string* pOutput)
+Error quartoExec(const std::vector<std::string>& args,
+                 const core::FilePath& workingDir,
+                 core::system::ProcessResult* pResult)
 {
    // run pandoc
-   core::system::ProcessResult result;
-   Error error = runQuarto(args, input, &result);
+   Error error = runQuarto(args, workingDir, pResult);
    if (error)
    {
       return error;
    }
-   else if (result.exitStatus != EXIT_SUCCESS)
+   else if (pResult->exitStatus != EXIT_SUCCESS)
    {
-      Error error = systemError(boost::system::errc::state_not_recoverable, result.stdErr, ERROR_LOCATION);
+      Error error = systemError(boost::system::errc::state_not_recoverable, pResult->stdErr, ERROR_LOCATION);
       return error;
    }
    else
    {
-      *pOutput = result.stdOut;
       return Success();
    }
 }
 
-bool quartoCaptureOutput(const std::vector<std::string>& args,
-                         const std::string& input,
-                         std::string* pOutput,
-                         json::JsonRpcResponse* pResponse)
+Error quartoExec(const std::vector<std::string>& args,
+                 core::system::ProcessResult* pResult)
+{
+   return quartoExec(args, FilePath(), pResult);
+}
+
+bool quartoExec(const std::vector<std::string>& args,
+                core::system::ProcessResult* pResult,
+                json::JsonRpcResponse* pResponse)
 {
    // run pandoc
-   core::system::ProcessResult result;
-   Error error = runQuarto(args, input, &result);
+   Error error = runQuarto(args, FilePath(), pResult);
    if (error)
    {
       json::setErrorResponse(error, pResponse);
       return false;
    }
-   else if (result.exitStatus != EXIT_SUCCESS)
+   else if (pResult->exitStatus != EXIT_SUCCESS)
    {
-      json::setProcessErrorResponse(result, ERROR_LOCATION, pResponse);
+      json::setProcessErrorResponse(*pResult, ERROR_LOCATION, pResponse);
       return false;
    }
    else
    {
-      *pOutput = result.stdOut;
       return true;
    }
 }
@@ -219,11 +227,11 @@ bool quartoCaptureOutput(const std::vector<std::string>& args,
 Error quartoCapabilitiesRpc(const json::JsonRpcRequest&,
                             json::JsonRpcResponse* pResponse)
 {
-   std::string output;
-   if (quartoCaptureOutput({"capabilities"}, "", &output, pResponse))
+   core::system::ProcessResult result;
+   if (quartoExec({"capabilities"}, &result, pResponse))
    {
       json::Object jsonCapabilities;
-      if (json::parseJsonForResponse(output, &jsonCapabilities, pResponse))
+      if (json::parseJsonForResponse(result.stdOut, &jsonCapabilities, pResponse))
          pResponse->setResult(jsonCapabilities);
    }
 
@@ -294,15 +302,15 @@ json::Value quartoCapabilities()
 {
    if (module_context::quartoConfig().installed)
    {
-      std::string output;
-      Error error = quartoCaptureOutput({ "capabilities" }, "", &output);
+      core::system::ProcessResult result;
+      Error error = quartoExec({ "capabilities" }, &result);
       if (error)
       {
          LOG_ERROR(error);
          return json::Value();
       }
       json::Value jsonCapabilities;
-      error = jsonCapabilities.parse(output);
+      error = jsonCapabilities.parse(result.stdOut);
       if (error)
       {
          LOG_ERROR(error);
@@ -310,7 +318,7 @@ json::Value quartoCapabilities()
       }
       if (!jsonCapabilities.isObject())
       {
-         LOG_ERROR_MESSAGE("Unexpected quarto capabilities json: " + output);
+         LOG_ERROR_MESSAGE("Unexpected quarto capabilities json: " + result.stdErr);
          return json::Value();
       }
       return jsonCapabilities;
@@ -319,8 +327,52 @@ json::Value quartoCapabilities()
    {
       return json::Value();
    }
+}
 
+Error createQuartoProject(const core::FilePath& projDir,
+                          const std::string& type,
+                          const std::string& engine,
+                          const std::string& kernel,
+                          const std::string&,
+                          std::vector<std::string>* pProjFiles)
+{
+   // create-project command
+   std::vector<std::string> args = {"create-project"};
 
+   // project type (optional)
+   if (!type.empty())
+   {
+      args.push_back("--type");
+      args.push_back(type);
+   }
+
+   // project engine/kernel (optional)
+   if (!engine.empty())
+   {
+      std::string qualifiedEngine = engine;
+      if (engine == "jupyter" && !kernel.empty())
+         qualifiedEngine = qualifiedEngine + ":" + kernel;
+      args.push_back("--engine");
+      args.push_back(qualifiedEngine);
+   }
+
+   core::system::ProcessResult result;
+   Error error = quartoExec(args, projDir, &result);
+   if (error)
+      return error;
+
+   // initial files to open
+   const char * const kSiteQmd = "index.qmd";
+   std::string fileQmd = projDir.getFilename() + ".qmd";
+   if (boost::algorithm::contains(result.stdErr,kSiteQmd))
+      pProjFiles->push_back(kSiteQmd);
+   else if (boost::algorithm::contains(result.stdErr, fileQmd))
+      pProjFiles->push_back(fileQmd);
+
+   pProjFiles->push_back("_quarto.yml");
+
+   // success!
+   return Success();
 }
 
 bool handleQuartoPreview(const core::FilePath& sourceFile,
@@ -380,6 +432,7 @@ bool handleQuartoPreview(const core::FilePath& sourceFile,
 }
 
 
+const char* const kQuartoProjectDefault = "default";
 const char* const kQuartoProjectSite = "site";
 const char* const kQuartoProjectBook = "book";
 
