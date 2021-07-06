@@ -330,6 +330,27 @@ Error getQmdPublishDetails(const json::JsonRpcRequest& request,
       {
          isShinyQmd = runtime == "shinyrmd" || runtime == "shiny_prerendered";
       }
+      if (!isShinyQmd)
+      {
+         json::Value serverJson;
+         error = json::readObject(formatMetadata, "server", serverJson);
+         if (!error)
+         {
+            if (serverJson.isString() && serverJson.getString() == "shiny")
+            {
+               isShinyQmd = true;
+            }
+            else if (serverJson.isObject())
+            {
+               std::string type;
+               error = json::readObject(serverJson.getObject(), "type", type);
+               if (type == "shiny")
+               {
+                  isShinyQmd = true;
+               }
+            }
+         }
+      }
    }
 
 
