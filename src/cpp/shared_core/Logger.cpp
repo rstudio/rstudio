@@ -580,6 +580,11 @@ bool hasStderrLogDestination()
    return hasLogDestination<StderrLogDestination>();
 }
 
+bool needsDebugLog()
+{
+   return logger().MaxLogLevel >= LogLevel::DEBUG;
+}
+
 } // namespace log
 } // namespace core
 } // namespace rstudio

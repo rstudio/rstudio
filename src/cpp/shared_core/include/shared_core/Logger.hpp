@@ -374,6 +374,8 @@ void removeLogDestination(const std::string& in_destinationId, const std::string
  */
 void removeReloadableLogDestinations();
 
+bool needsDebugLog();
+
 /**
  * @brief Writes an error to the specified output stream.
  *
