@@ -2135,8 +2135,9 @@ Error runProcess(const std::string& path,
                  ProcessConfig& config,
                  ProcessConfigFilter configFilter)
 {
-   // change user here if requested
-   if (!runAsUser.empty())
+   // change user here if requested and we have privilege. if we don't have privilege, we can only
+   // "run as" the current user (we'll check that later)
+   if (!runAsUser.empty() && posix::realUserIsRoot())
    {
       // restore root
       Error error = restorePriv();
@@ -2170,6 +2171,18 @@ Error runProcess(const std::string& path,
    error = User::getCurrentUser(user);
    if (error)
       return error;
+
+   // if we don't have privilege, the only user we can run as is ourselves, so if runAsUser is
+   // specified, make sure it's the same account we're running from.
+   if (!posix::realUserIsRoot() && !runAsUser.empty())
+   {
+      if (runAsUser != user.getUsername())
+      {
+         return systemError(EPERM, "Attempt to run process '" + path + "' as user '" +
+               runAsUser + "' from unprivileged user account '" + user.getUsername() + "'",
+               ERROR_LOCATION);
+      }
+   }
 
    // close all open file descriptors other than std streams
    error = closeNonStdFileDescriptors();
