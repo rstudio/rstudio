@@ -55,7 +55,8 @@ export class Application implements AppState {
 
   appLaunch?: ApplicationLaunch;
   sessionLauncher?: SessionLauncher;
-  activationInst?: DesktopActivation;
+  private activationInst?: DesktopActivation;
+  private scratchPath?: FilePath;
 
   /**
    * Startup code run before app 'ready' event.
@@ -172,5 +173,21 @@ export class Application implements AppState {
 
   generateNewPort(): void {
     this.port = generateRandomPort();
+  }
+
+  setScratchTempDir(path: FilePath): void {
+    this.scratchPath = path;
+  }
+
+  scratchTempDir(defaultPath: FilePath): FilePath {
+    let dir = this.scratchPath;
+    if (!dir?.isEmpty() && dir?.existsSync()) {
+      dir = dir.completeChildPath('tmp');
+      const error = dir.ensureDirectorySync();
+      if (!error) {
+        return dir;
+      }
+    }
+    return defaultPath;
   }
 }

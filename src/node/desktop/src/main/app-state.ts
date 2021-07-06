@@ -33,6 +33,8 @@ export interface AppState {
   generateNewPort(): void;
   windowTracker: WindowTracker;
   gwtCallback?: GwtCallback;
+  setScratchTempDir(path: FilePath): void;
+  scratchTempDir(defaultPath: FilePath): FilePath;
 }
 
 let rstudio: AppState | null = null;

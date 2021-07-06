@@ -16,7 +16,7 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 
-import { Err, Success } from '../../../src/core/err';
+import { Err, isFailure, isSuccessful, Success } from '../../../src/core/err';
 
 function beSuccessful(): Err {
   return Success();
@@ -27,14 +27,28 @@ function beUnsuccessful(): Err {
 }
 
 describe('Err', () => {
-  describe('Success helper', () => {
-    it('Success return should be falsy', () => {
-      assert.isTrue(beSuccessful() === Success());
-      assert.isNull(beSuccessful());
-    });
-    it('Error return should be truthy', () => {
-      assert.isTrue(beUnsuccessful() !== Success());
-      assert.instanceOf(beUnsuccessful(), Error);
-    });
+  it('Success return should be falsy', () => {
+    assert.isTrue(beSuccessful() === Success());
+    assert.isNull(beSuccessful());
+  });
+  it('Error return should be truthy', () => {
+    assert.isTrue(beUnsuccessful() !== Success());
+    assert.instanceOf(beUnsuccessful(), Error);
+  });
+  it('isSuccessful returns true for success', () => {
+    const result: Err = Success();
+    assert.isTrue(isSuccessful(result));
+  });
+  it('isSuccessful returns false for failure', () => {
+    const result: Err = new Error('oh no');
+    assert.isFalse(isSuccessful(result));
+  });
+  it('isFailure returns true for failure', () => {
+    const result: Err = new Error('whoop');
+    assert.isTrue(isFailure(result));
+  });
+  it('isFailure returns false for success', () => {
+    const result: Err = Success();
+    assert.isFalse(isFailure(result));
   });
 });

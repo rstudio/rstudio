@@ -16,9 +16,28 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 
+import path from 'path';
+import os from 'os';
+
 import { Application, kRunDiagnosticsOption } from '../../../src/main/application';
+import { NullLogger, setLogger } from '../../../src/core/logger';
+import { clearCoreSingleton } from '../../../src/core/core-state';
+import { randomString } from '../../../src/main/utils';
+import { FilePath } from '../../../src/core/file-path';
 
 describe('Application', () => {
+  before(() => {
+    setLogger(new NullLogger());
+  });
+  after(() => {
+    clearCoreSingleton();
+  });
+
+  function testDir(): FilePath {
+    return new FilePath(
+      path.join(os.tmpdir(), 'temp-folder-for-Application-tests-' + randomString()));
+  }
+
   describe('Command line switches', () => {
     it('run-diagnostics sets diag mode and continues', () => {
       const app = new Application();
@@ -42,5 +61,32 @@ describe('Application', () => {
       app.generateNewPort();
       assert.notStrictEqual(origPort, app.port);
     });
+    it('returns default if scratch path not set or doesn\'t exist', () => {
+      const app = new Application();
+      const tmpDir = testDir();
+      const result = app.scratchTempDir(tmpDir);
+      assert.equal(result, tmpDir);
+    });
+    it('returns set scratch path plus \'tmp\' if it exists', async () => {
+      const app = new Application();
+      const tmpDir = testDir();
+
+      app.setScratchTempDir(tmpDir);
+      console.log(`setting ${tmpDir.getAbsolutePath()}`);
+      assert.isFalse(await tmpDir.exists());
+      assert.isFalse(!! await tmpDir.ensureDirectory());
+
+      const expectedDir = tmpDir.completeChildPath('tmp');
+      assert.isFalse(await expectedDir.exists());
+      console.log(`expected is ${expectedDir.getAbsolutePath()}`);
+
+      // note, every testDir call returns different random path 
+      const scratch = app.scratchTempDir(testDir());
+      assert.equal(scratch.getAbsolutePath(), expectedDir.getAbsolutePath());
+
+      expectedDir.removeIfExists();
+      tmpDir.removeIfExists();
+    });
+
   });
 });

@@ -19,14 +19,17 @@
 
 import { ipcMain, dialog, BrowserWindow, webFrameMain } from 'electron';
 import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions } from 'electron/main';
-import assert from 'assert';
+
+import EventEmitter from 'events';
+
+import { logger } from '../core/logger';
+import { FilePath } from '../core/file-path';
 
 import { PendingWindow } from './pending-window';
 import { MainWindow } from './main-window';
 import { GwtWindow } from './gwt-window';
 import { openMinimalWindow } from './minimal-window';
 import { appState } from './app-state';
-import { logger } from '../core/logger';
 
 export const PendingQuit = {
   'PendingQuitNone': 0,
@@ -39,11 +42,14 @@ export const PendingQuit = {
  * This is the main-process side of the GwtCallbacks; dispatched from renderer processes
  * via the ContextBridge.
  */
-export class GwtCallback {
+export class GwtCallback extends EventEmitter {
+  static WORKBENCH_INITIALIZED = 'gwt-callback-workbench_initialized';
+
   pendingQuit: number = PendingQuit.PendingQuitNone;
   private owners = new Set<GwtWindow>();
 
   constructor(public mainWindow: MainWindow, public isRemoteDesktop: boolean) {
+    super();
     this.owners.add(mainWindow);
     ipcMain.on('desktop_browse_url', (event, url: string) => {
       GwtCallback.unimpl('desktop_browser_url');
@@ -145,7 +151,8 @@ export class GwtCallback {
     });
 
     ipcMain.on('desktop_on_workbench_initialized', (event, scratchPath: string) => {
-      this.mainWindow.onWorkbenchInitialized();
+      this.emit(GwtCallback.WORKBENCH_INITIALIZED);
+      appState().setScratchTempDir(new FilePath(scratchPath));
     });
 
     ipcMain.on('desktop_show_folder', (event, path: string) => {
