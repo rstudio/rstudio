@@ -14,6 +14,7 @@
  */
 
 #include <server_core/ServerDatabase.hpp>
+#include <server_core/ServerLicense.hpp>
 #include <server_core/ServerKeyObfuscation.hpp>
 #include <server_core/http/SecureCookie.hpp>
 
@@ -48,7 +49,8 @@ constexpr const char* kDefaultSqliteDatabaseDirectory = "/var/lib/rstudio-server
 constexpr const char* kDatabaseHost = "host";
 constexpr const char* kDefaultDatabaseHost = "localhost";
 constexpr const char* kDatabaseName = "database";
-constexpr const char* kDefaultDatabaseName = "rstudio-os";
+constexpr const char* kDefaultWorkbenchDatabaseName = "rstudio";
+constexpr const char* kDefaultOpenSourceDatabaseName = "rstudio-os";
 constexpr const char* kDatabasePort = "port";
 constexpr const char* kDefaultPostgresqlDatabasePort = "5432";
 constexpr const char* kDatabaseUsername = "username";
@@ -116,13 +118,23 @@ Error readOptions(const std::string& databaseConfigFile,
 
    bool checkConfFilePermissions = false;
 
+   std::string defaultDatabaseName;
+   if (license::isProfessionalEdition()) 
+   {
+      defaultDatabaseName = kDefaultWorkbenchDatabaseName;
+   }
+   else 
+   {
+      defaultDatabaseName = kDefaultOpenSourceDatabaseName;
+   }
+
    if (boost::iequals(databaseProvider, kDatabaseProviderSqlite))
    {
       SqliteConnectionOptions options;
 
       // get the database directory - if not specified, we fallback to a hardcoded default path
       FilePath databaseDirectory = FilePath(settings.get(kSqliteDatabaseDirectory, kDefaultSqliteDatabaseDirectory));
-      FilePath databaseFile = databaseDirectory.completeChildPath(std::string(kDefaultDatabaseName) + ".sqlite");
+      FilePath databaseFile = databaseDirectory.completeChildPath(defaultDatabaseName + ".sqlite");
       options.file = databaseFile.getAbsolutePath();
       options.poolSize = settings.getInt(kConnectionPoolSize, 0);
 
@@ -148,7 +160,8 @@ Error readOptions(const std::string& databaseConfigFile,
    else if (boost::iequals(databaseProvider, kDatabaseProviderPostgresql))
    {
       PostgresqlConnectionOptions options;
-      options.database = settings.get(kDatabaseName, kDefaultDatabaseName);
+
+      options.database = settings.get(kDatabaseName, defaultDatabaseName);
       options.host = settings.get(kDatabaseHost, kDefaultDatabaseHost);
       options.username = settings.get(kDatabaseUsername, kDefaultPostgresqlDatabaseUsername);
       options.password = settings.get(kDatabasePassword, std::string());
@@ -165,7 +178,7 @@ Error readOptions(const std::string& databaseConfigFile,
       *pOptions = options;
 
       if (!options.connectionUri.empty() &&
-          (options.database != kDefaultDatabaseName ||
+          (options.database != defaultDatabaseName ||
            options.host != kDefaultDatabaseHost ||
            options.username != kDefaultPostgresqlDatabaseUsername ||
            options.port != kDefaultPostgresqlDatabasePort ||
