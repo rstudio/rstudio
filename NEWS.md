@@ -17,8 +17,8 @@
 * Log files will now rotate by time in addition to the existing rotation by file size. This can be controlled by the `rotate-days` parameter in `logging.conf`.
 * For more information, see section 2 of the Admin Guide.
 
-### Internal Databse
-* Add a separate schema for OS Server instances (`rstudio-os`) and Workbench instances (`rstudio`) to avoid conflicts (Pro #2725)
+### Internal Database
+* Use separate database schema for open source RStudio Server instances (`rstudio-os`) and RStudio Workbench instances (`rstudio`) to avoid conflicts (Pro #2725)
 
 ### Bugfixes
 
