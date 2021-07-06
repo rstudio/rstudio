@@ -32,6 +32,8 @@
 
 #include <core/system/Process.hpp>
 
+#include <r/RExec.hpp>
+
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
 #include <session/projects/SessionProjects.hpp>
@@ -337,7 +339,10 @@ Error createQuartoProject(const core::FilePath& projDir,
                           std::vector<std::string>* pProjFiles)
 {
    // create-project command
-   std::vector<std::string> args = {"create-project"};
+   std::vector<std::string> args({
+      "create-project",
+      string_utils::utf8ToSystem(projDir.getAbsolutePath())
+   });
 
    // project type (optional)
    if (!type.empty())
@@ -356,19 +361,23 @@ Error createQuartoProject(const core::FilePath& projDir,
       args.push_back(qualifiedEngine);
    }
 
-   core::system::ProcessResult result;
-   Error error = quartoExec(args, projDir, &result);
+   // run using R system2 so the user can see the ouptut
+   r::exec::RFunction system2("system2",
+                              string_utils::utf8ToSystem(s_quartoPath.getAbsolutePath()),
+                              args);
+   int exitCode;
+   Error error = system2.call(&exitCode);
    if (error)
       return error;
+   if (exitCode != 0)
+      return systemError(boost::system::errc::state_not_recoverable, ERROR_LOCATION);
 
    // initial files to open
-   const char * const kSiteQmd = "index.qmd";
-   std::string fileQmd = projDir.getFilename() + ".qmd";
-   if (boost::algorithm::contains(result.stdErr,kSiteQmd))
-      pProjFiles->push_back(kSiteQmd);
-   else if (boost::algorithm::contains(result.stdErr, fileQmd))
-      pProjFiles->push_back(fileQmd);
-
+   using namespace module_context;
+   if (type == kQuartoProjectSite || type == kQuartoProjectBook)
+      pProjFiles->push_back("index.qmd");
+  else
+      pProjFiles->push_back(projDir.getFilename() + ".qmd");
    pProjFiles->push_back("_quarto.yml");
 
    // success!
