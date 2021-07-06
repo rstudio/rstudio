@@ -19,6 +19,7 @@
 #include <core/Thread.hpp>
 #include <shared_core/FilePath.hpp>
 
+#include <boost/assign.hpp>
 #include <boost/optional.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/variant.hpp>
@@ -260,6 +261,24 @@ public:
 private:
    boost::shared_ptr<IConnection> connection_;
    soci::transaction transaction_;
+};
+
+struct SchemaVersion {
+   public:
+      std::string Date;
+      std::string Flower;   
+
+      bool isEmpty() const;
+
+      bool operator<(const SchemaVersion& other) const;
+      bool operator<=(const SchemaVersion& other) const;
+      bool operator>(const SchemaVersion& other) const;
+      bool operator>=(const SchemaVersion& other) const;
+      bool operator==(const SchemaVersion& other) const;
+      bool operator!=(const SchemaVersion& other) const;
+
+   private:
+      static const std::map<std::string, int>& versionMap();
 };
 
 class SchemaUpdater

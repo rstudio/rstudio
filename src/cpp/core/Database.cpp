@@ -702,6 +702,76 @@ void Transaction::rollback()
    transaction_.rollback();
 }
 
+bool SchemaVersion::isEmpty() const 
+{
+   return false;
+}
+
+bool SchemaVersion::operator<(const SchemaVersion& other) const 
+{
+   if (*this == other)
+      return false;
+
+   if (isEmpty())
+      return true;
+
+   if (other.isEmpty()) 
+      return false;
+
+   const std::map<std::string, int>& flowerOrder = versionMap();
+   int thisFlowerIndex = (flowerOrder.find(Flower) != flowerOrder.end()) ? flowerOrder.at(Flower) : -1; 
+   int otherFlowerIndex = (flowerOrder.find(other.Flower) != flowerOrder.end()) ? flowerOrder.at(other.Flower) : -1;
+
+   if (thisFlowerIndex < otherFlowerIndex)
+      return true;
+   else if (otherFlowerIndex < thisFlowerIndex)
+      return false;
+
+   if (Date < other.Date)
+      return true;
+
+   return false;
+}
+
+bool SchemaVersion::operator<=(const SchemaVersion& other) const
+{
+   return (*this == other) || (*this < other);
+}
+
+bool SchemaVersion::operator>(const SchemaVersion& other) const
+{
+   return (other < *this);
+}
+
+bool SchemaVersion::operator>=(const SchemaVersion& other) const
+{
+   return !(*this < other);
+}
+
+bool SchemaVersion::operator==(const SchemaVersion& other) const
+{
+   return (this == &other) || ((Date == other.Date) && (Flower == other.Flower));
+}
+
+const std::map<std::string, int>& SchemaVersion::versionMap()
+{
+   static boost::mutex m;
+   static std::map<std::string, int> versions;
+
+   // Check if the map is empty before locking the mutex to avoid the cost of locking on every access
+   // But if it _is_ empty, lock and then double check that it's still empty before modifying it.
+   if (versions.empty()) {
+      LOCK_MUTEX(m)
+      { 
+         if (versions.empty()) {
+            versions["GhostOrchid"] = 1;
+         }
+      } END_LOCK_MUTEX
+   }
+
+   return versions;
+}
+
 SchemaUpdater::SchemaUpdater(const boost::shared_ptr<IConnection>& connection,
                              const FilePath& migrationsPath) :
    connection_(connection),
