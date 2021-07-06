@@ -50,3 +50,4 @@
 * Add file uploads and downloads to session audit log (Pro #2226)
 * RStudio no longer treats R objects containing null external pointers specially when building Environment pane (#5546)
 * Make Cmd+Shift+0 the shortcut for restarting session on MacOS (#7695)
+* RStudio Workbench can now run without root access in a single-user mode (Pro #9496)
