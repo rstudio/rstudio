@@ -110,6 +110,7 @@ MimeType s_mimeTypes[] =
       { "stan",         "text/x-stan" },
       { "clj",          "text/x-clojure" },
       { "ts",           "text/x-typescript"},
+      { "ojs",          "text/javascript" },
       { "lua",          "text/x-lua"},
 
       // other types we are likely to serve

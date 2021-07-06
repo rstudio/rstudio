@@ -743,7 +743,7 @@ private:
          outputFile_ = outputFile;
 
          // see if the quarto module wants to handle the preview
-         if (module_context::handleQuartoPreview(targetFile_, outputFile_, true))
+         if (module_context::handleQuartoPreview(targetFile_, outputFile_, allOutput_, true))
             viewerType_ = kRmdViewerTypeNone;
       }
 

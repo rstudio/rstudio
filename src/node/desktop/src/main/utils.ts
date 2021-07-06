@@ -15,11 +15,12 @@
 
 import fs from 'fs';
 import path from 'path';
-import { app } from 'electron';
+import { app, WebContents } from 'electron';
 
 import { Xdg } from '../core/xdg';
 import { getenv, setenv } from '../core/environment';
 import { FilePath } from '../core/file-path';
+import { logger } from '../core/logger';
 
 import { getRStudioVersion } from './product-info';
 import { MainWindow } from './main-window';
@@ -141,4 +142,10 @@ export function findComponents(): [FilePath, FilePath, FilePath] {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function finalPlatformInitialize(mainWindow: MainWindow): void {
   // TODO - reimplement for each platform
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function executeJavaScript(web: WebContents, cmd: string): Promise<any> {
+  logger().logDebug(`executeJavaScript(${cmd})`);
+  return web.executeJavaScript(cmd);
 }

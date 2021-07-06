@@ -25,7 +25,11 @@ export class SatelliteWindow extends GwtWindow {
     name: string,
     opener: WebContents
   ) {
-    super(true, name, undefined, undefined, opener, mainWindow.isRemoteDesktop, ['desktop']);
+    super(false, true, name, undefined, undefined, opener, mainWindow.isRemoteDesktop, ['desktop']);
     appState().gwtCallback?.registerOwner(this);
+  }
+
+  onActivated(): void {
+    // TODO
   }
 }

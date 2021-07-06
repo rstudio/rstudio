@@ -19,8 +19,10 @@
 
 #include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
+#include <core/RegexUtils.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/system/Process.hpp>
+#include <core/WaitUtils.hpp>
 
 #include <r/RExec.hpp>
 
@@ -237,10 +239,9 @@ private:
 // serve singleton
 static boost::shared_ptr<QuartoServe> s_pServe;
 
-Error quartoServe(const std::string& render = kRenderNone,
-                  const core::FilePath& docPath = FilePath())
+// stop any running server and remove the job
+void stopServer()
 {
-   // stop any running server and remove the job
    if (s_pServe)
    {
       // stop the job if it's running
@@ -250,6 +251,13 @@ Error quartoServe(const std::string& render = kRenderNone,
       // remove the job (will be replaced by a new quarto serve)
       s_pServe->remove();
    }
+}
+
+Error quartoServe(const std::string& render = kRenderNone,
+                  const core::FilePath& docPath = FilePath())
+{
+   // stop any running server
+   stopServer();
 
    // start a new server
    return QuartoServe::create(render, docPath, &s_pServe);
@@ -298,12 +306,18 @@ void navigateToViewer(long port, const core::FilePath& docPath)
    }
 }
 
+bool isNewQuartoBuild(const std::string& renderOutput)
+{
+   static const boost::regex quartoBuildRe("file:\\/.*?\\/src\\/quarto.ts\\s");
+   return regex_utils::textMatches(renderOutput, quartoBuildRe, false, true);
+}
+
 
 } // anonymous namespace
 
-void previewDoc(const core::FilePath& docPath)
+void previewDoc(const std::string& renderOutput, const core::FilePath& docPath)
 {
-   if (isJobServeRunning())
+   if (isJobServeRunning() && !isNewQuartoBuild(renderOutput))
    {
       navigateToViewer(s_pServe->port(), docPath);
    }

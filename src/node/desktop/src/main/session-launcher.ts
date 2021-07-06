@@ -24,7 +24,7 @@ import { getenv, setenv } from '../core/environment';
 
 import { ApplicationLaunch } from './application-launch';
 import { appState } from './app-state';
-import { ActivationEvents } from './activation-overlay';
+import { DesktopActivation } from './activation-overlay';
 import { EXIT_FAILURE } from './program-status';
 import { MainWindow } from './main-window';
 import { PendingQuit } from './gwt-callback';
@@ -51,8 +51,8 @@ export class SessionLauncher {
   ) { }
 
   launchFirstSession(): void {
-    appState().activation().on(ActivationEvents.LAUNCH_FIRST_SESSION, this.onLaunchFirstSession.bind(this));
-    appState().activation().on(ActivationEvents.LAUNCH_ERROR, this.onLaunchError.bind(this));
+    appState().activation().on(DesktopActivation.LAUNCH_FIRST_SESSION, this.onLaunchFirstSession.bind(this));
+    appState().activation().on(DesktopActivation.LAUNCH_ERROR, this.onLaunchError.bind(this));
 
     // This will ultimately trigger one of the above events to continue with startup (or failure).
     appState().activation().getInitialLicense();
@@ -166,19 +166,19 @@ export class SessionLauncher {
 
     const sessionProc = spawn(this.sessionPath.getAbsolutePath(), argList);
     sessionProc.stdout.on('data', (data) => {
-      console.log(`rsession stdout: ${data}`);
+      logger().logDebug(`rsession stdout: ${data}`);
     });
     sessionProc.stderr.on('data', (data) => {
-      console.log(`rsession stderr: ${data}`);
+      logger().logDebug(`rsession stderr: ${data}`);
     });
     sessionProc.on('exit', (code, signal) => {
       if (code !== null) {
-        console.log(`rsession exited: code=${code}`);
+        logger().logDebug(`rsession exited: code=${code}`);
         if (code !== 0) {
-          console.log(`${this.sessionPath} ${argList}`);
+          logger().logDebug(`${this.sessionPath} ${argList}`);
         }
       } else {
-        console.log(`rsession terminated: signal=${signal}`);
+        logger().logDebug(`rsession terminated: signal=${signal}`);
       }
       this.onRSessionExited();
     });
@@ -216,6 +216,12 @@ export class SessionLauncher {
   }
 
   onRSessionExited(): void {
+    // if this is a verify-installation session then just quit
+    if (appState().runDiagnostics) {
+      this.mainWindow?.quit();
+      return;
+    }
+
     const pendingQuit = this.mainWindow?.collectPendingQuitRequest();
 
     // if there was no pending quit set then this is a crash

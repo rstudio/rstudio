@@ -1,5 +1,5 @@
 /*
- * desktop-browser-window.test.ts
+ * web-view.test.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -16,13 +16,13 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 
-import { DesktopBrowserWindow } from '../../../src/main/desktop-browser-window';
+import { WebView } from '../../../src/main/web-view';
+import { BrowserWindow } from 'electron';
 
-describe('DesktopBrowserWindow', () => {
-  it('construction creates a hidden BrowserWindow', () => {
-    const win = new DesktopBrowserWindow(false, false, '_blank');
-    assert.isObject(win);
-    assert.isObject(win.window);
-    assert.isFalse(win.window.isVisible());
+describe('WebView', () => {
+  it('can be created', () => {
+    const window = new BrowserWindow({ show: false });
+    const webView = new WebView(window.webContents);
+    assert.isObject(webView);
   });
 });

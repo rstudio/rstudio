@@ -1582,7 +1582,7 @@ private:
          // it will be html if we did a sub-project render.
          if (outputFile.hasExtensionLowerCase(".html"))
          {
-            module_context::handleQuartoPreview(sourceFile, outputFile, false);
+            module_context::handleQuartoPreview(sourceFile, outputFile, output, false);
          }
          else
          {

@@ -13,17 +13,53 @@
  *
  */
 
+import { WebContents } from 'electron';
+
 import { appState } from './app-state';
 import { DesktopBrowserWindow } from './desktop-browser-window';
-import { MainWindow } from './main-window';
+import { GwtWindow } from './gwt-window';
+
+class MinimalWindow extends DesktopBrowserWindow {
+  constructor(
+    adjustTitle: boolean,
+    name: string,
+    baseUrl?: string,
+    parent?: DesktopBrowserWindow,
+    opener?: WebContents,
+    allowExternalNavigate = false
+  ) {
+    super(false, adjustTitle, name, baseUrl, parent, opener, allowExternalNavigate);
+
+    // ensure minimal windows can be closed with Ctrl+W (Cmd+W on macOS)
+    this.window.webContents.on('before-input-event', (event, input) => {
+      const ctrlOrMeta = (process.platform === 'darwin') ? input.meta : input.control;
+      if (ctrlOrMeta && input.key.toLowerCase() === 'w') {
+        event.preventDefault();
+        this?.window.close();
+      }
+    });
+
+    // ensure this window closes when the creating window closes
+    this.parentWindowDestroyed = this.parentWindowDestroyed.bind(this);
+    parent?.on(DesktopBrowserWindow.WINDOW_DESTROYED, this.parentWindowDestroyed);
+
+    this.window.on('close', () => {
+      // release external event listeners
+      parent?.removeListener(DesktopBrowserWindow.WINDOW_DESTROYED, this.parentWindowDestroyed);
+    });
+  }
+
+  parentWindowDestroyed(): void {
+    this.window.close();
+  }
+}
 
 export function openMinimalWindow(
+  sender: GwtWindow,
   name: string,
   url: string,
   width: number,
-  height: number,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  mainWindow: MainWindow
+  height: number
 ): DesktopBrowserWindow {
 
   const named = !!name && name !== '_blank';
@@ -34,26 +70,17 @@ export function openMinimalWindow(
   }
 
   if (!browser) {
-    const isViewerZoomWindow = name === '_rstudio_viewer_zoom';
+    const isViewerZoomWindow = (name === '_rstudio_viewer_zoom');
 
-    // TODO
-    // create the new browser window; pass along our own base URL so that the new window's
-    // WebProfile knows how to apply the appropriate headers
-    browser = new DesktopBrowserWindow(!isViewerZoomWindow, name,
-      // TODO
-      // pMainWindow_->webView()->baseUrl(), nullptr, pMainWindow_->webPage());
-      undefined);
-      
-    // TODO  https://www.electronjs.org/docs/tutorial/keyboard-shortcuts#shortcuts-within-a-browserwindow
-    //     // ensure minimal windows can be closed with Ctrl+W (Cmd+W on macOS)
-    //     QAction* closeWindow = new QAction(browser);
-    //     closeWindow->setShortcut(Qt::CTRL + Qt::Key_W);
-    //     connect(closeWindow, &QAction::triggered,
-    //             browser, &BrowserWindow::close);
-    //     browser->addAction(closeWindow);
-      
-    //     connect(this, &GwtCallback::destroyed, browser, &BrowserWindow::close);
-      
+    // pass along our own base URL so that the new window's WebProfile knows how to 
+    // apply the appropriate headers
+    browser = new MinimalWindow(
+      !isViewerZoomWindow,
+      name,
+      '', // TODO pMainWindow_->webView()->baseUrl()
+      sender,
+      undefined /* opener */);
+
     if (named) {
       appState().windowTracker.addWindow(name, browser);
     }

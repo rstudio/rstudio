@@ -17,7 +17,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-empty-function */
 
-import { ipcMain, dialog, BrowserWindow } from 'electron';
+import { ipcMain, dialog, BrowserWindow, webFrameMain } from 'electron';
 import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions } from 'electron/main';
 import assert from 'assert';
 
@@ -26,6 +26,7 @@ import { MainWindow } from './main-window';
 import { GwtWindow } from './gwt-window';
 import { openMinimalWindow } from './minimal-window';
 import { appState } from './app-state';
+import { logger } from '../core/logger';
 
 export const PendingQuit = {
   'PendingQuitNone': 0,
@@ -192,7 +193,8 @@ export class GwtCallback {
     ipcMain.on('desktop_open_minimal_window', (event: IpcMainEvent, name: string, url: string,
       width: number, height: number
     ) => {
-      const minimalWindow = openMinimalWindow(name, url, width, height, this.mainWindow);
+      const sender = this.getSender('desktop_open_minimal_window', event.processId, event.frameId);
+      const minimalWindow = openMinimalWindow(sender, name, url, width, height);
       minimalWindow.window.once('ready-to-show', () => {
         minimalWindow.window.show();
       });
@@ -339,16 +341,16 @@ export class GwtCallback {
       GwtCallback.unimpl('desktop_set_zoom_level');
     });
 
-    ipcMain.on('desktop_zoom_in', () => {
-      GwtCallback.unimpl('desktop_zoom_in');
+    ipcMain.on('desktop_zoom_in', (event) => {
+      this.getSender('desktop_zoom_in', event.processId, event.frameId).zoomIn();
     });
 
-    ipcMain.on('desktop_zoom_out', () => {
-      GwtCallback.unimpl('desktop_zoom_out');
+    ipcMain.on('desktop_zoom_out', (event) => {
+      this.getSender('desktop_zoom_out', event.processId, event.frameId).zoomOut();
     });
 
-    ipcMain.on('desktop_zoom_actual_size', () => {
-      GwtCallback.unimpl('desktop_zoom_actual_size');
+    ipcMain.on('desktop_zoom_actual_size', (event) => {
+      this.getSender('desktop_zoom_actual_size', event.processId, event.frameId).zoomActualSize();
     });
 
     ipcMain.on('desktop_set_background_color', (event, rgbColor) => {
@@ -430,12 +432,13 @@ export class GwtCallback {
     });
 
     ipcMain.handle('desktop_supports_fullscreen_mode', () => {
-      GwtCallback.unimpl('desktop_supports_fullscreen_mode');
-      return true;
+      return process.platform === 'darwin';
     });
 
     ipcMain.on('desktop_toggle_fullscreen_mode', () => {
-      GwtCallback.unimpl('desktop_toggle_fullscreen_mode');
+      if (process.platform === 'darwin') {
+        this.mainWindow.window.fullScreen = !this.mainWindow.window.fullScreen;
+      }
     });
 
     ipcMain.on('desktop_show_keyboard_shortcut_help', () => {
@@ -443,7 +446,7 @@ export class GwtCallback {
     });
 
     ipcMain.on('desktop_launch_session', (event, reload) => {
-      GwtCallback.unimpl('desktop_launch)_session');
+      GwtCallback.unimpl('desktop_launch_session');
     });
 
     ipcMain.on('desktop_reload_zoom_window', () => {
@@ -458,7 +461,7 @@ export class GwtCallback {
     });
   
     ipcMain.on('desktop_set_viewer_url', (event, url) => {
-      GwtCallback.unimpl('desktop_set_viewer_url');
+      this.getSender('desktop_set_viewer_url', event.processId, event.frameId).setViewerUrl(url);
     });
 
     ipcMain.on('desktop_reload_viewer_zoom_window', (event, url) => {
@@ -640,14 +643,19 @@ export class GwtCallback {
 
   /**
    * @param event
-   * @returns Registered GwtWindow that sent the event (or undefined if not found)
+   * @returns Registered GwtWindow that sent the event (throws if not found)
    */
-  getOwner(processId: number): GwtWindow | undefined {
-    for (const win of this.owners) {
-      if (win.window.webContents.getProcessId() === processId) {
-        return win;
+  getSender(message: string, processId: number, frameId: number): GwtWindow {
+    const frame = webFrameMain.fromId(processId, frameId);
+    if (frame) {
+      for (const win of this.owners) {
+        if (win.window.webContents.mainFrame === frame) {
+          return win;
+        }
       }
     }
-    return undefined;
+    const err = new Error(`Received callback ${message} from unknown window`);
+    logger().logError(err);
+    throw err;
   }
 }
