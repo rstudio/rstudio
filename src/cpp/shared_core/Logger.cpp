@@ -412,6 +412,11 @@ void logInfoMessage(const std::string& in_message, const std::string& in_section
    logger().writeMessageToDestinations(LogLevel::INFO, in_message, in_section, in_loggedFrom);
 }
 
+bool isLogLevel(LogLevel in_logLevel)
+{
+   return logger().MaxLogLevel >= in_logLevel;
+}
+
 void refreshAllLogDestinations(const log::RefreshParams& in_refreshParams)
 {
    Logger& log = logger();
@@ -578,11 +583,6 @@ bool hasFileLogDestination()
 bool hasStderrLogDestination()
 {
    return hasLogDestination<StderrLogDestination>();
-}
-
-bool needsDebugLog()
-{
-   return logger().MaxLogLevel >= LogLevel::DEBUG;
 }
 
 } // namespace log
