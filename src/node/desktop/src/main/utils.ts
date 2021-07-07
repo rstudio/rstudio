@@ -14,7 +14,9 @@
  */
 
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
+import { sep } from 'path';
 import { app, WebContents } from 'electron';
 
 import { Xdg } from '../core/xdg';
@@ -148,4 +150,27 @@ export function finalPlatformInitialize(mainWindow: MainWindow): void {
 export function executeJavaScript(web: WebContents, cmd: string): Promise<any> {
   logger().logDebug(`executeJavaScript(${cmd})`);
   return web.executeJavaScript(cmd);
+}
+
+/**
+ * Return a "probably unique" folder name in the system tempdir, with a user-provided
+ * prefix string followed by a randomly generated component.
+ * 
+ * The folder is not created by this call so possible someone else could create it, thus the
+ * "probably unique" nature of this call.
+ * 
+ * @param folderPrefix Custom prefix string to include at the beginning of the folder name.
+ * @returns A fully qualified path in the temporary folder (not actually created).
+ */
+export function getCurrentlyUniqueFolderName(folderPrefix: string): FilePath {
+  const prefix = `${os.tmpdir()}${sep}${folderPrefix}`;
+
+  // should be highly unlikely to ever get stuck in the loop, but just in case...
+  for (let tries = 0; tries < 10; tries++) {
+    const fallbackPath = new FilePath(`${prefix}${randomString()}`);
+    if (!fallbackPath.existsSync()) {
+      return fallbackPath;
+    }
+  }
+  return new FilePath();
 }

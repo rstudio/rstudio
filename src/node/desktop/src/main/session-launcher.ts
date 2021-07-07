@@ -28,7 +28,7 @@ import { DesktopActivation } from './activation-overlay';
 import { EXIT_FAILURE } from './program-status';
 import { MainWindow } from './main-window';
 import { PendingQuit } from './gwt-callback';
-import { finalPlatformInitialize, userLogPath } from './utils';
+import { finalPlatformInitialize, getCurrentlyUniqueFolderName, userLogPath } from './utils';
 import { productInfo } from './product-info';
 
 export interface LaunchContext {
@@ -36,6 +36,53 @@ export interface LaunchContext {
   port: number;
   url: string;
   argList: string[]
+}
+
+let fallbackInstance: string | null = null;
+
+/**
+ * @returns A "probably unique" temporary folder name (folder isn't created by this call)
+ */
+function fallbackLibraryPath(): string {
+  if (!fallbackInstance) {
+    fallbackInstance = getCurrentlyUniqueFolderName('rstudio-fallback-library-path-').getAbsolutePath();
+  }
+  return fallbackInstance;
+}
+
+function launchProcess(absPath: FilePath, argList: string[]): ChildProcess {
+  if (process.platform === 'darwin') {
+    // on macOS with the hardened runtime, we can no longer rely on dyld
+    // to lazy-load symbols from libR.dylib; to resolve this, we use
+    // DYLD_INSERT_LIBRARIES to inject the library we wish to use on
+    // launch 
+    const rHome = new FilePath(getenv('R_HOME'));
+    const rLib = rHome.completePath('lib/libR.dylib');
+    if (rLib.existsSync()) {
+      setenv('DYLD_INSERT_LIBRARIES', rLib.getAbsolutePath());
+    }
+   
+    // Create fallback library path (use TMPDIR so it's user-specific):
+    // Reticulate needs to do some DYLD_FALLBACK_LIBRARY_PATH shenanigans to work with Anaconda Python;
+    // the solution is to have RStudio launch with a special DYLD_FALLBACK_LIBRARY_PATH, and let 
+    // reticulate set the associated path to a symlink of its choosing on load.
+    const libraryPath = fallbackLibraryPath();
+
+    // set it in environment variable (to be used by R)
+    setenv('RSTUDIO_FALLBACK_LIBRARY_PATH', libraryPath);
+
+    // and ensure it's placed on the fallback library path
+    const dyldFallbackLibraryPath =
+      `${getenv('DYLD_FALLBACK_LIBRARY_PATH')}:${libraryPath}`;
+    setenv('DYLD_FALLBACK_LIBRARY_PATH', dyldFallbackLibraryPath);
+  }
+   
+  if (!appState().runDiagnostics) {
+    return spawn(absPath.getAbsolutePath(), argList);
+  } else {
+    // for diagnostics, redirect child process stdio to this process
+    return spawn(absPath.getAbsolutePath(), argList, { stdio: 'inherit' });
+  }
 }
 
 function abendLogPath(): FilePath {
@@ -157,29 +204,21 @@ export class SessionLauncher {
   }
 
   private launchSession(argList: string[]): ChildProcess {
-    if (process.platform === 'darwin') {
-      // on macOS with the hardened runtime, we can no longer rely on dyld
-      // to lazy-load symbols from libR.dylib; to resolve this, we use
-      // DYLD_INSERT_LIBRARIES to inject the library we wish to use on
-      // launch 
-      const rHome = new FilePath(getenv('R_HOME'));
-      const rLib = rHome.completePath('lib/libR.dylib');
-      if (rLib.existsSync()) {
-        setenv('DYLD_INSERT_LIBRARIES', rLib.getAbsolutePath());
-      }
+    // always remove the abend log path before launching
+    const error = abendLogPath().removeIfExistsSync();
+    if (error) {
+      logger().logError(error);
     }
 
-    const sessionProc = spawn(this.sessionPath.getAbsolutePath(), argList);
+    // TODO
+    // we need indirection through arch to handle arm64
+    // see C++ sources...
+
+    const sessionProc = launchProcess(this.sessionPath, argList);
     sessionProc.on('error', (err) => {
-      // Unable to start rsession (at all); treat as though it started and exited
+      // Unable to start rsession (at all)
       logger().logError(err);
       this.onRSessionExited();
-    });
-    sessionProc.stdout.on('data', (data) => {
-      logger().logDebug(`rsession stdout: ${data}`);
-    });
-    sessionProc.stderr.on('data', (data) => {
-      logger().logDebug(`rsession stderr: ${data}`);
     });
     sessionProc.on('exit', (code, signal) => {
       if (code !== null) {
@@ -328,7 +367,11 @@ export class SessionLauncher {
     }
 
     // Collect the rsession process exit code
-    vars.set('exit_code', '1'); // TODO safe_convert::numberToString(pRSessionProcess_->exitCode()));
+    let exitCode = EXIT_FAILURE;
+    if (this.sessionProcess && this.sessionProcess.exitCode) {
+      exitCode = this.sessionProcess.exitCode;
+    }
+    vars.set('exit_code', exitCode.toString());
 
     // Read standard output and standard error streams
     let procStdout = ''; // TODO pRSessionProcess_->readAllStandardOutput().toStdString();

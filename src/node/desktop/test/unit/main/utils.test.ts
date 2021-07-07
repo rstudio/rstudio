@@ -34,58 +34,66 @@ describe('Utils', () => {
     restore(envVars);
   });
 
-  describe('Helper functions', () => {
-    it('userLogPath returns a non-empty string', () => {
-      assert.isNotEmpty(Utils.userLogPath().getAbsolutePath());
-    });
-    it('usereWebCachePath returns a non-empty string', () => {
-      assert.isNotEmpty(Utils.userWebCachePath().getAbsolutePath());
-    });
-    it('devicePixelRatio returns 1.0', () => {
-      assert.strictEqual(Utils.devicePixelRatio(), 1.0);
-    });
-    it('randomString genereates a random string', () => {
-      const str1 = Utils.randomString();
-      const str2 = Utils.randomString();
-      const str3 = Utils.randomString();
-      assert.notEqual(str1, str2);
-      assert.notEqual(str1, str3);
-      assert.notEqual(str2, str3);
-    });
-    it('getComponentVersions returns expected JSON', () => {
-      const result = Utils.getComponentVersions();
-      const json: Utils.VersionInfo = JSON.parse(result);
-      assert.isNotEmpty(json.electron);
-      assert.isNotEmpty(json.rstudio);
-      assert.isNotEmpty(json.node);
-      assert.isNotEmpty(json.v8);
-    });
-    it('augmentCommandLineArguments adds contents of env var', () => {
-      assert.isFalse(app.commandLine.hasSwitch('disable-gpu'));
-      assert.isEmpty(getenv('RSTUDIO_CHROMIUM_ARGUMENTS'));
-      setenv('RSTUDIO_CHROMIUM_ARGUMENTS', '--disable-gpu');
-      Utils.augmentCommandLineArguments();
-      assert.isTrue(app.commandLine.hasSwitch('disable-gpu'));
-      unsetenv('RSTUDIO_CHROMIUM_ARGUMENTS');
-    });
-    it('initializeSharedSecret generates a random string in RS_SHARED_SECRET envvar_', () => {
-      const envvar = 'RS_SHARED_SECRET';
-      assert.equal(getenv(envvar).length, 0);
-      Utils.initializeSharedSecret();
-      assert.isAtLeast(getenv(envvar).length, 0);
-    });
-    it('rsessionExeName returns non-empty string', () => {
-      assert.isNotEmpty(Utils.rsessionExeName());
-    });
-    it('removeStaleOptionsLockfile is callable', () => {
-      Utils.removeStaleOptionsLockfile();
-      assert(true);
-    });
-    it('findComponents returns session and scripts paths', () => {
-      process.env.RSTUDIO_CPP_BUILD_OUTPUT = '/somewhere/interesting/';
-      const [, session, scripts] = Utils.findComponents();
-      assert.isNotEmpty(session.getAbsolutePath());
-      assert.isNotEmpty(scripts.getAbsolutePath());
-    });
+  it('userLogPath returns a non-empty string', () => {
+    assert.isNotEmpty(Utils.userLogPath().getAbsolutePath());
+  });
+  it('usereWebCachePath returns a non-empty string', () => {
+    assert.isNotEmpty(Utils.userWebCachePath().getAbsolutePath());
+  });
+  it('devicePixelRatio returns 1.0', () => {
+    assert.strictEqual(Utils.devicePixelRatio(), 1.0);
+  });
+  it('randomString genereates a random string', () => {
+    const str1 = Utils.randomString();
+    const str2 = Utils.randomString();
+    const str3 = Utils.randomString();
+    assert.notEqual(str1, str2);
+    assert.notEqual(str1, str3);
+    assert.notEqual(str2, str3);
+  });
+  it('getComponentVersions returns expected JSON', () => {
+    const result = Utils.getComponentVersions();
+    const json: Utils.VersionInfo = JSON.parse(result);
+    assert.isNotEmpty(json.electron);
+    assert.isNotEmpty(json.rstudio);
+    assert.isNotEmpty(json.node);
+    assert.isNotEmpty(json.v8);
+  });
+  it('augmentCommandLineArguments adds contents of env var', () => {
+    assert.isFalse(app.commandLine.hasSwitch('disable-gpu'));
+    assert.isEmpty(getenv('RSTUDIO_CHROMIUM_ARGUMENTS'));
+    setenv('RSTUDIO_CHROMIUM_ARGUMENTS', '--disable-gpu');
+    Utils.augmentCommandLineArguments();
+    assert.isTrue(app.commandLine.hasSwitch('disable-gpu'));
+    unsetenv('RSTUDIO_CHROMIUM_ARGUMENTS');
+  });
+  it('initializeSharedSecret generates a random string in RS_SHARED_SECRET envvar_', () => {
+    const envvar = 'RS_SHARED_SECRET';
+    assert.equal(getenv(envvar).length, 0);
+    Utils.initializeSharedSecret();
+    assert.isAtLeast(getenv(envvar).length, 0);
+  });
+  it('rsessionExeName returns non-empty string', () => {
+    assert.isNotEmpty(Utils.rsessionExeName());
+  });
+  it('removeStaleOptionsLockfile is callable', () => {
+    Utils.removeStaleOptionsLockfile();
+    assert(true);
+  });
+  it('findComponents returns session and scripts paths', () => {
+    process.env.RSTUDIO_CPP_BUILD_OUTPUT = '/somewhere/interesting/';
+    const [, session, scripts] = Utils.findComponents();
+    assert.isNotEmpty(session.getAbsolutePath());
+    assert.isNotEmpty(scripts.getAbsolutePath());
+  });
+  it('getCurrentlyUniqueFolderName returns a unique foldername with prefix', () => {
+    const folder1 = Utils.getCurrentlyUniqueFolderName('my-prefix-');
+    assert.isFalse(folder1.existsSync()); // shouldn't create folder
+    assert.isTrue(folder1.getAbsolutePath().indexOf('my-prefix-') >= 0); // contains prefix
+  });
+  it('getCurrentlyUniqueFolderName returns a unique foldername for each call', () => {
+    const folder1 = Utils.getCurrentlyUniqueFolderName('my-prefix-');
+    const folder2 = Utils.getCurrentlyUniqueFolderName('my-prefix-');
+    assert.notEqual(folder1, folder2);
   });
 });
