@@ -21,6 +21,9 @@
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
+#include <shared_core/json/Json.hpp>
+
+#include <r/RExec.hpp>
 
 #include <core/Exec.hpp>
 #include <core/Version.hpp>
@@ -207,6 +210,22 @@ Error quartoCapabilities(const json::JsonRpcRequest&,
    return Success();
 }
 
+// Given a path to a Quarto file (usually .qmd), attempt to extract its metadata as a JSON object
+Error quartoMetadata(const std::string& path,
+                     json::Object *pResultObject)
+{
+   // Run quarto and retrieve metadata
+   std::string output;
+   core::system::ProcessResult result;
+   Error error = runQuarto({"metadata", path, "--json"}, "", &result);
+   if (error)
+   {
+      return error;
+   }
+
+   // Parse JSON result
+   return pResultObject->parse(result.stdOut);
+}
 
 void readQuartoProjectConfig(const FilePath& configFile,
                              std::string* pType,
@@ -261,6 +280,154 @@ void readQuartoProjectConfig(const FilePath& configFile,
    {
       LOG_ERROR(error);
    }
+}
+
+Error getQmdPublishDetails(const json::JsonRpcRequest& request,
+                           json::JsonRpcResponse* pResponse)
+{
+   using namespace module_context;
+   
+   std::string target;
+   Error error = json::readParams(request.params, &target);
+   if (error)
+   {
+       return error;
+   }
+
+   FilePath qmdPath = module_context::resolveAliasedPath(target);
+
+   // Ask Quarto to get the metadata for the file
+   json::Object metadata;
+   error = quartoMetadata(qmdPath.getAbsolutePath(), &metadata);
+   if (error)
+   {
+       return error;
+   }
+   auto format = (*metadata.begin()).getValue().getObject();
+
+   json::Object result;
+
+   auto formatMeta = format.find("metadata");
+
+   // Establish output vars
+   std::string title = qmdPath.getStem();
+   bool isShinyQmd = false;
+   bool selfContained = false;
+   std::string outputFile;
+
+   // If we were able to get the format's metadata, read it
+   if (formatMeta != format.end())
+   {
+      json::Object formatMetadata = (*formatMeta).getValue().getObject();
+
+      // Attempt to read file title; use stem as a fallback
+      json::readObject(formatMetadata, "title", title);
+
+      // Attempt to read file title; use stem as a fallback
+      std::string runtime;
+      error = json::readObject(formatMetadata, "runtime", runtime);
+      if (!error)
+      {
+         isShinyQmd = runtime == "shinyrmd" || runtime == "shiny_prerendered";
+      }
+      if (!isShinyQmd)
+      {
+         std::string server;
+         json::readObject(formatMetadata, "server", server);
+         isShinyQmd = server == "shiny";
+         if (!isShinyQmd)
+         {
+            json::Object serverJson;
+            error = json::readObject(formatMetadata, "server", serverJson);
+            if (!error)
+            {
+               std::string type;
+               error = json::readObject(serverJson, "type", type);
+               isShinyQmd = type == "shiny";
+            }
+         }
+      }
+   }
+
+
+   // If we were able to get the format's pandoc parameters, read them as well
+   auto pandoc = format.find("pandoc");
+   if (pandoc != format.end())
+   {
+       json::Object pandocMetadata = (*pandoc).getValue().getObject();
+       json::readObject(pandocMetadata, "self-contained", selfContained);
+
+       std::string pandocOutput;
+       json::readObject(pandocMetadata, "output-file", pandocOutput);
+       auto outputFilePath = qmdPath.getParent().completeChildPath(pandocOutput);
+       if (outputFilePath.exists())
+       {
+           outputFile = outputFilePath.getAbsolutePath();
+       }
+   }
+
+
+   // Look up configuration for this Quarto project, if this file is part of a Quarto book or
+   // website.
+   std::string websiteDir, websiteOutputDir;
+   FilePath quartoConfig = quartoProjectConfigFile(qmdPath);
+   if (!quartoConfig.isEmpty())
+   {
+       std::string type, outputDir;
+       std::vector<std::string> formats;
+       readQuartoProjectConfig(quartoConfig,
+                               &type,
+                               &outputDir,
+                               &formats);
+       if (type == kQuartoProjectBook || type == kQuartoProjectSite)
+       {
+          FilePath configPath = quartoConfig.getParent();
+          websiteDir = configPath.getAbsolutePath();
+          // Infer output directory 
+          if (outputDir.empty())
+          {
+              if (type == kQuartoProjectBook)
+              {
+                  outputDir = "_book";
+              }
+              else
+              {
+                  outputDir = "_site";
+              }
+          }
+          websiteOutputDir = configPath.completeChildPath(outputDir).getAbsolutePath();
+       }
+   }
+
+   // Attempt to determine whether or not the user has an active publishing account; used on the
+   // client to trigger an account setup step if necessary
+   r::sexp::Protect protect;
+   SEXP sexpHasAccount;
+   bool hasAccount = true;
+   error = r::exec::RFunction(".rs.hasConnectAccount").call(&sexpHasAccount, &protect);
+   if (error)
+   {
+      LOG_WARNING_MESSAGE("Couldn't determine whether Connect account is present");
+      LOG_ERROR(error);
+   }
+   else
+   {
+       hasAccount = r::sexp::asLogical(sexpHasAccount);
+   }
+
+
+   // Build result object
+   result["is_self_contained"] = selfContained;
+   result["title"] = title;
+   result["is_shiny_qmd"] = isShinyQmd;
+   result["website_dir"] = websiteDir;
+   result["website_output_dir"] = websiteOutputDir;
+   result["has_connect_account"] = hasAccount;
+   result["output_file"] = outputFile;
+
+   pResponse->setResult(result);
+
+   return Success();
 }
 
 }
@@ -499,6 +666,7 @@ Error initialize()
    ExecBlock initBlock;
    initBlock.addFunctions()
      (boost::bind(module_context::registerRpcMethod, "quarto_capabilities", quartoCapabilities))
+     (boost::bind(module_context::registerRpcMethod, "get_qmd_publish_details", getQmdPublishDetails))
      (boost::bind(module_context::sourceModuleRFile, "SessionQuarto.R"))
      (boost::bind(quarto::serve::initialize))
    ;

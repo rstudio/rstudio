@@ -1,5 +1,5 @@
 /*
- * RmdPublishDetails.java
+ * QmdPublishDetails.java
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -19,13 +19,13 @@ import jsinterop.annotations.JsType;
 import jsinterop.annotations.JsPackage;
 
 @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
-public class RmdPublishDetails
+public class QmdPublishDetails
 {
-   public boolean is_multi_rmd;
-   public boolean is_shiny_rmd;
+   public boolean is_shiny_qmd;
    public boolean is_self_contained;
    public String title;
    public boolean has_connect_account;
    public String website_dir;
    public String website_output_dir;
+   public String output_file;
 }

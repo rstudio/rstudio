@@ -60,6 +60,7 @@ public class PublishFilesPage
                               input.isSelfContained(),
                               asStatic,
                               input.isShiny(),
+                              input.isQuarto(),
                               input.getDescription(),
                               input.getContentType());
             }
@@ -67,16 +68,22 @@ public class PublishFilesPage
                   asMultiple, true);
          }
          else
+         {
             contents_.setPublishSource(
-                  new RSConnectPublishSource(input.getSourceRmd().getPath(),
-                        input.getWebsiteDir(),
-                        input.isSelfContained(),
-                        asStatic, 
-                        input.isShiny(),
-                        input.getDescription(),
-                        input.getContentType()),
-                  input.getContentType(),
-                  asMultiple, false);
+               new RSConnectPublishSource(
+                  input.getContentType() == RSConnect.CONTENT_TYPE_QUARTO_WEBSITE ?
+                     input.getWebsiteDir() :
+                     input.getSourceRmd().getPath(),
+                  input.getWebsiteDir(),
+                  input.isSelfContained(),
+                  asStatic,
+                  input.isShiny(),
+                  input.isQuarto(),
+                  input.getDescription(),
+                  input.getContentType()),
+               input.getContentType(),
+               asMultiple, false);
+         }
       }
    }
 

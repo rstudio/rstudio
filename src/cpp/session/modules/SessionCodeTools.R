@@ -2293,10 +2293,13 @@
 
          # check for runtime: shiny or parameters (requires the Shiny R package)
          runtime <- front[["runtime"]]
+         server <- front[["server"]]
          params  <- front[["params"]]
          if (identical(runtime, "shiny") || 
              identical(runtime, "shinyrmd") ||
              identical(runtime, "shiny_prerendered") ||
+             identical(server, "shiny") ||
+             (is.list(server) && identical(server[["type"]], "shiny")) ||
              !is.null(params))
          {
             discoveries[["shiny"]] <- TRUE

@@ -214,6 +214,15 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    }
 
    @Override
+   public void previewQuartoSite(String url)
+   {
+      navigate(url, true);
+      publishButton_.setManuallyHidden(false);
+      publishButton_.setQuartoSitePreview();
+      toolbar_.invalidateSeparators();
+   }
+
+   @Override
    public void setExportEnabled(boolean exportEnabled)
    {
       exportButton_.setVisible(exportEnabled);
