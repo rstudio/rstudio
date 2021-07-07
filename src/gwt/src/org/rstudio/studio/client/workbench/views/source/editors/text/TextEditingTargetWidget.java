@@ -1535,7 +1535,7 @@ public class TextEditingTargetWidget
          }
          else if (type.equals(SourceDocument.XT_QUARTO_DOCUMENT))
          {
-            publishButton_.setRmd(publishPath, true);
+            publishButton_.setQmd(publishPath);
          }
          else if (type == SourceDocument.XT_PLUMBER_API)
          {

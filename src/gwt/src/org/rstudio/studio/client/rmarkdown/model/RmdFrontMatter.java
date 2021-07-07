@@ -168,6 +168,7 @@ public class RmdFrontMatter extends JavaScriptObject
    public final static String OUTPUT_KEY = "output";
    public final static String FORMAT_KEY = "format";
    public final static String RUNTIME_KEY = "runtime";
+   public final static String SERVER_KEY = "server";
    public final static String KNIT_KEY = "knit";
 
    public final static String DEFAULT_FORMAT = "default";

@@ -49,6 +49,11 @@ public class ViewerNavigateEvent extends GwtEvent<ViewerNavigateEvent.Handler>
       public native final boolean bringToFront() /*-{
          return this.bring_to_front;
       }-*/;
+
+      public native final boolean isQuartoSite() /*-{
+         return this.quarto_site;
+      }-*/;
+
    }
 
    public interface Handler extends EventHandler
@@ -74,6 +79,11 @@ public class ViewerNavigateEvent extends GwtEvent<ViewerNavigateEvent.Handler>
    public boolean isHTMLWidget()
    {
       return data_.isHTMLWidget();
+   }
+
+   public boolean isQuartoSite()
+   {
+      return data_.isQuartoSite();
    }
 
    public boolean getHasNext()

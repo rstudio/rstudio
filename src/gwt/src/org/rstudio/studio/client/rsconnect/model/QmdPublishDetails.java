@@ -1,5 +1,5 @@
 /*
- * menu-callback.test.ts
+ * QmdPublishDetails.java
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -13,14 +13,19 @@
  *
  */
 
-import { describe } from 'mocha';
-import { assert } from 'chai';
+package org.rstudio.studio.client.rsconnect.model;
 
-import { MenuCallback } from '../../../src/main/menu-callback';
+import jsinterop.annotations.JsType;
+import jsinterop.annotations.JsPackage;
 
-describe('MenuCallback', () => {
-  it('can be constructed', () => {
-    const callback = new MenuCallback();
-    assert.isObject(callback);
-  });
-});
+@JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+public class QmdPublishDetails
+{
+   public boolean is_shiny_qmd;
+   public boolean is_self_contained;
+   public String title;
+   public boolean has_connect_account;
+   public String website_dir;
+   public String website_output_dir;
+   public String output_file;
+}

@@ -40,6 +40,7 @@ public class RmdRenderResult extends RmdSlideNavigationInfo
         is_shiny_document: true,
         preview_slide: doc.preview_slide,
         slide_navigation: doc.slide_navigation,
+        is_quarto: doc.is_quarto,
         runtime: doc.runtime,
         viewed: false
      };
@@ -55,6 +56,10 @@ public class RmdRenderResult extends RmdSlideNavigationInfo
    
    public native final String getTargetEncoding() /*-{
       return this.target_encoding;
+   }-*/;
+
+   public native final boolean isQuarto() /*-{
+      return this.is_quarto;
    }-*/;
    
    public native final int getTargetLine() /*-{

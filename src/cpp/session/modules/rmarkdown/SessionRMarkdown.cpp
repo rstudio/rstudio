@@ -502,6 +502,12 @@ private:
             isShiny_ = true;
       }
 
+      // if we are using a quarto command to render, we must be a quarto doc
+      if (renderFunc == "quarto run" || renderFunc == "quarto render")
+      {
+          isQuarto_ = true;
+      }
+
       std::string extraParams;
       std::string targetFile =
             utf8ToConsole(targetFile_.getAbsolutePath());
@@ -707,6 +713,8 @@ private:
 
                startedJson["runtime"] = getRuntime(targetFile_);
 
+               startedJson["is_quarto"] = isQuarto_;
+
                module_context::enqueClientEvent(ClientEvent(
                            client_events::kRmdShinyDocStarted,
                            startedJson));
@@ -792,6 +800,7 @@ private:
 
       resultJson["is_shiny_document"] = isShiny_;
       resultJson["has_shiny_content"] = hasShinyContent_;
+      resultJson["is_quarto"] = isQuarto_;
 
       resultJson["runtime"] = getRuntime(targetFile_);
 
@@ -883,6 +892,7 @@ private:
    RenderTerminateType terminateType_;
    bool isShiny_;
    bool hasShinyContent_;
+   bool isQuarto_ = false;
    FilePath targetFile_;
    int sourceLine_;
    FilePath outputFile_;

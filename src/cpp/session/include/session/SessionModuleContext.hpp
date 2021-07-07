@@ -754,7 +754,7 @@ void addViewerHistoryEntry(const ViewerHistoryEntry& entry);
 
 // pass 0 for no height change
 // pass -1 for maximize
-void viewer(const std::string& url, int height = 0);
+void viewer(const std::string& url, bool isQuartoWebsite = false, int height = 0);
 std::string viewerCurrentUrl(bool mapped = true);
 
 core::Error recursiveCopyDirectory(const core::FilePath& fromDir,

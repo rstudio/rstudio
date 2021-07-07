@@ -22,7 +22,7 @@ import { getenv, setenv } from '../core/environment';
 import { FilePath } from '../core/file-path';
 import { logger } from '../core/logger';
 
-import { getRStudioVersion } from './product-info';
+import { productInfo } from './product-info';
 import { MainWindow } from './main-window';
 
 export function initializeSharedSecret(): void {
@@ -56,7 +56,7 @@ export interface VersionInfo  {
 
 export function getComponentVersions(): string {
   const componentVers: VersionInfo = process.versions;
-  componentVers['rstudio'] = getRStudioVersion();
+  componentVers['rstudio'] = productInfo().RSTUDIO_VERSION;
   return JSON.stringify(componentVers, null, 2);
 }
 

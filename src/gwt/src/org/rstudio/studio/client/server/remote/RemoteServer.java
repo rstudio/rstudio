@@ -113,6 +113,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdOutputInfo;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateContent;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlResult;
+import org.rstudio.studio.client.rsconnect.model.QmdPublishDetails;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAppName;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
@@ -5169,6 +5170,18 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void quartoPublishDetails(String target,
+                                    ServerRequestCallback<QmdPublishDetails> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(target));
+      sendRequest(RPC_SCOPE,
+         GET_QMD_PUBLISH_DETAILS,
+         params,
+         requestCallback);
+   }
+
+   @Override
    public void hasOrphanedAccounts(
          ServerRequestCallback<Double> requestCallback)
    {
@@ -6804,6 +6817,7 @@ public class RemoteServer implements Server
    private static final String REGISTER_USER_TOKEN = "register_user_token";
    private static final String GET_RSCONNECT_LINT_RESULTS = "get_rsconnect_lint_results";
    private static final String GET_RMD_PUBLISH_DETAILS = "get_rmd_publish_details";
+   private static final String GET_QMD_PUBLISH_DETAILS = "get_qmd_publish_details";
    private static final String HAS_ORPHANED_ACCOUNTS = "has_orphaned_accounts";
 
    private static final String RENDER_RMD = "render_rmd";

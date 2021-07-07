@@ -20,7 +20,7 @@ import { FilePath } from '../core/file-path';
 import { generateRandomPort } from '../core/system';
 import { logger, enableDiagnosticsOutput } from '../core/logger';
 
-import { getRStudioVersion } from './product-info';
+import { productInfo } from './product-info';
 import { findComponents, initializeSharedSecret } from './utils';
 import { augmentCommandLineArguments, getComponentVersions, removeStaleOptionsLockfile } from './utils';
 import { exitFailure, exitSuccess, run, ProgramStatus } from './program-status';
@@ -55,7 +55,8 @@ export class Application implements AppState {
 
   appLaunch?: ApplicationLaunch;
   sessionLauncher?: SessionLauncher;
-  activationInst?: DesktopActivation;
+  private activationInst?: DesktopActivation;
+  private scratchPath?: FilePath;
 
   /**
    * Startup code run before app 'ready' event.
@@ -130,7 +131,7 @@ export class Application implements AppState {
   initCommandLine(argv: string[]): ProgramStatus {
     // look for a version check request; if we have one, just do that and exit
     if (argv.indexOf(kVersion) > -1) {
-      logger().logInfo(getRStudioVersion());
+      logger().logInfo(productInfo().RSTUDIO_VERSION);
       return exitSuccess();
     }
 
@@ -172,5 +173,21 @@ export class Application implements AppState {
 
   generateNewPort(): void {
     this.port = generateRandomPort();
+  }
+
+  setScratchTempDir(path: FilePath): void {
+    this.scratchPath = path;
+  }
+
+  scratchTempDir(defaultPath: FilePath): FilePath {
+    let dir = this.scratchPath;
+    if (!dir?.isEmpty() && dir?.existsSync()) {
+      dir = dir.completeChildPath('tmp');
+      const error = dir.ensureDirectorySync();
+      if (!error) {
+        return dir;
+      }
+    }
+    return defaultPath;
   }
 }

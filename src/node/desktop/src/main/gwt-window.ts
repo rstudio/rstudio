@@ -20,7 +20,7 @@ import { nextHighest, nextLowest } from '../core/array-utils';
 import { DesktopBrowserWindow } from './desktop-browser-window';
 
 
-export class GwtWindow extends DesktopBrowserWindow {
+export abstract class GwtWindow extends DesktopBrowserWindow {
 
   fakeZoomLevelPersistence = 1.0; // TODO: temporary fake zoom persistence
 
@@ -76,9 +76,7 @@ export class GwtWindow extends DesktopBrowserWindow {
     }
   }
 
-  onActivated(): void {
-    // override in subclasses
-  }
+  abstract onActivated(): void;
 
   onCloseWindowShortcut(): void {
     // check to see if the window has desktop hooks (not all GWT windows do); if it does, check to

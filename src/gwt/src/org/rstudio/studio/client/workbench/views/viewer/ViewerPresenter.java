@@ -88,6 +88,7 @@ public class ViewerPresenter extends BasePresenter
       void previewRmd(RmdPreviewParams params);
       void previewShiny(ShinyApplicationParams params);
       void previewPlumber(PlumberAPIParams params);
+      void previewQuartoSite(String url);
       HandlerRegistration addLoadHandler(LoadHandler handler);
       String getUrl();
       String getTitle();
@@ -191,7 +192,10 @@ public class ViewerPresenter extends BasePresenter
          else if (ensureHeight > 0)
             display_.ensureHeight(ensureHeight);
 
-         navigate(event.getURL());
+         if (event.isQuartoSite())
+            previewQuartoSite(event.getURL());
+         else
+            navigate(event.getURL());
 
          if (event.isHTMLWidget())
             updateZoomWindow(display_.getUrl());
@@ -494,6 +498,13 @@ public class ViewerPresenter extends BasePresenter
       if (Desktop.hasDesktopFrame())
          Desktop.getFrame().setViewerUrl(StringUtil.notNull(url));
       display_.navigate(url);
+   }
+
+   private void previewQuartoSite(String url)
+   {
+      if (Desktop.hasDesktopFrame())
+         Desktop.getFrame().setViewerUrl(StringUtil.notNull(url));
+      display_.previewQuartoSite(url);
    }
 
    private void updateZoomWindow(String url)

@@ -21,6 +21,12 @@ import { clearApplicationSingleton, setApplication } from '../../../src/main/app
 import { Application } from '../../../src/main/application';
 import { GwtWindow } from '../../../src/main/gwt-window';
 
+class TestGwtWindow extends GwtWindow {
+  onActivated(): void {
+    throw new Error('Method not implemented.');
+  }
+}
+
 describe('minimal-window', () => {
   beforeEach(() => {
     setApplication(new Application());
@@ -30,7 +36,7 @@ describe('minimal-window', () => {
   });
 
   it('can be constructed', () => {
-    const gwtWindow = new GwtWindow(false, false, '');
+    const gwtWindow = new TestGwtWindow(false, false, '');
     const minWin = openMinimalWindow(gwtWindow, 'test-win', 'about:blank', 640, 480);
     assert.isObject(minWin);
   });

@@ -96,6 +96,7 @@ public:
          const json::Array& ignoredFilesList,
          bool asMultiple,
          bool asStatic,
+         bool isQuarto,
          boost::shared_ptr<RSConnectPublish>* pDeployOut)
    {
       boost::shared_ptr<RSConnectPublish> pDeploy(new RSConnectPublish(file));
@@ -184,7 +185,8 @@ public:
          std::string extension = docFile.getExtensionLowerCase();
          if (extension == ".rmd" || extension == ".html" || extension == ".r" ||
              extension == ".pdf" || extension == ".docx" || extension == ".rtf" || 
-             extension == ".odt" || extension == ".pptx") 
+             extension == ".odt" || extension == ".pptx" || extension == ".qmd" ||
+             extension == ".md")
          {
             primaryDoc = string_utils::utf8ToSystem(file);
          }
@@ -229,6 +231,7 @@ public:
              "}, "
              "lint = FALSE,"
              "metadata = list(" 
+             "   isQuarto = " + (isQuarto ? "TRUE" : "FALSE") + ", "
              "   asMultiple = " + (asMultiple ? "TRUE" : "FALSE") + ", "
              "   asStatic = " + (asStatic ? "TRUE" : "FALSE") + 
                  (additionalFiles.empty() ? "" : ", additionalFiles = '" + 
@@ -349,11 +352,13 @@ Error rsconnectPublish(const json::JsonRpcRequest& request,
 
    // read publish source information
    std::string sourceDir, sourceDoc, sourceFile, contentCategory, websiteDir;
+   bool isQuarto;
    error = json::readObject(source, "deploy_dir",       sourceDir,
                                     "deploy_file",      sourceFile,
                                     "source_file",      sourceDoc,
                                     "content_category", contentCategory,
-                                    "website_dir",      websiteDir);
+                                    "website_dir",      websiteDir,
+                                    "is_quarto",        isQuarto);
    if (error)
       return error;
 
@@ -381,7 +386,7 @@ Error rsconnectPublish(const json::JsonRpcRequest& request,
                                        contentCategory,
                                        websiteDir,
                                        additionalFiles,
-                                       ignoredFiles, asMultiple, asStatic,
+                                       ignoredFiles, asMultiple, asStatic, isQuarto,
                                        &s_pRSConnectPublish_);
       if (error)
          return error;
