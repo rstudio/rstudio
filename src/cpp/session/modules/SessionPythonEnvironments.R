@@ -115,18 +115,14 @@
       c("bin/python", "bin/python3")
    
    # look within all top-level directories for an environment
-   envNames <- list.dirs(
+   envPaths <- list.dirs(
       path = projectDir,
       full.names = TRUE,
       recursive = FALSE
    )
    
-   for (envName in envNames)
+   for (envPath in envPaths)
    {
-      envPath <- file.path(projectDir, envName)
-      if (!file.exists(envPath))
-         next
-      
       for (pythonSuffix in pythonSuffixes)
       {
          pythonPath <- file.path(envPath, pythonSuffix)
