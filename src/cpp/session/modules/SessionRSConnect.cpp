@@ -513,8 +513,11 @@ Error getRmdPublishDetails(const json::JsonRpcRequest& request,
    // extract publish details we can discover with R
    r::sexp::Protect protect;
    SEXP sexpDetails;
-   error = r::exec::RFunction(".rs.getRmdPublishDetails",
-                              target, encoding).call(&sexpDetails, &protect);
+   error = r::exec::RFunction(".rs.getRmdPublishDetails")
+         .addUtf8Param(target)
+         .addParam(encoding)
+         .call(&sexpDetails, &protect);
+   
    if (error)
       return error;
 
