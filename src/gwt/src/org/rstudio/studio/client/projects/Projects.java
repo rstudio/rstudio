@@ -62,6 +62,7 @@ import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.ui.newproject.NewProjectWizard;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesDialog;
+import org.rstudio.studio.client.quarto.model.QuartoConstants;
 import org.rstudio.studio.client.renv.model.RenvServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -683,7 +684,7 @@ public class Projects implements OpenProjectFileEvent.Handler,
          }, false);
       }
 
-      if (newProject.getUseRenv())
+      if (initializeRenv(newProject))
       {
          createProjectCmds.addCommand((final Command continuation) -> {
             indicator.onProgress("Initializing renv...");
@@ -1043,6 +1044,16 @@ public class Projects implements OpenProjectFileEvent.Handler,
             }
          }
       });
+   }
+   
+   // initialize renv if requested AND this isn't a quarto project with 
+   // an engine incompatible with renv
+   private boolean initializeRenv(NewProjectResult newProject)
+   {
+      return newProject.getUseRenv() &&
+             (newProject.getNewQuartoProjectOptions() == null ||
+             newProject.getNewQuartoProjectOptions().getEngine()
+                .equals(QuartoConstants.ENGINE_KNITR));
    }
 
    private void showOpenProjectDialog(

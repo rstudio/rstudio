@@ -106,7 +106,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
       panel.add(namePanel);
       addWidget(panel);
       
-      onAddBodyWidgets();
+      onAddTopWidgets();
       
       addSpacer();
       
@@ -116,6 +116,8 @@ public class NewDirectoryPage extends NewProjectWizardPage
             ElementIds.TextBoxButtonId.PROJECT_PARENT,
             txtProjectName_);
       addWidget(newProjectParent_);
+      
+      onAddMiddleWidgets();
       
       // if git is available then add git init
       UserPrefs userPrefs = RStudioGinjector.INSTANCE.getUserPrefs();
@@ -160,25 +162,24 @@ public class NewDirectoryPage extends NewProjectWizardPage
          
       });
       
-      if (getProvideRenvOption())
+    
+      if (optionsPanel != null)
       {
-         if (optionsPanel != null)
-         {
-            optionsPanel.add(chkRenvInit_);
-         }
-         else
-         {
-            addSpacer();
-            addWidget(chkRenvInit_);
-         }
-         
-         
-         if (optionsPanel != null)
-         {
-            addSpacer();
-            addWidget(optionsPanel);
-         }
+         optionsPanel.add(chkRenvInit_);
       }
+      else
+      {
+         addSpacer();
+         addWidget(chkRenvInit_);
+      }
+      
+      
+      if (optionsPanel != null)
+      {
+         addSpacer();
+         addWidget(optionsPanel);
+      }
+      
     
       onAddBottomWidgets();
       
@@ -194,22 +195,28 @@ public class NewDirectoryPage extends NewProjectWizardPage
       return false;
    }
    
-   protected boolean getProvideRenvOption()
-   {
-      return true;
-   }
    
    protected void onAddTopPanelWidgets(HorizontalPanel panel)
    {
    }
    
-   protected void onAddBodyWidgets()
+   protected void onAddTopWidgets()
    {
+   }
+   
+   protected void onAddMiddleWidgets()
+   {
+      
    }
    
    protected void onAddBottomWidgets()
    {
       
+   }
+   
+   protected void setUseRenvVisible(boolean visible)
+   {
+      chkRenvInit_.setVisible(visible);
    }
    
    protected NewPackageOptions getNewPackageOptions()

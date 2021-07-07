@@ -39,7 +39,7 @@ public class NewShinyAppPage extends NewDirectoryPage
    }
    
    @Override
-   protected void onAddBodyWidgets()
+   protected void onAddTopWidgets()
    {
      
    }

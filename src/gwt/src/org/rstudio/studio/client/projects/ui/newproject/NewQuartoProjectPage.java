@@ -14,12 +14,15 @@
  */
 package org.rstudio.studio.client.projects.ui.newproject;
 
+import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.studio.client.projects.model.NewQuartoProjectOptions;
+import org.rstudio.studio.client.quarto.model.QuartoCapabilities;
 import org.rstudio.studio.client.quarto.model.QuartoConstants;
 import org.rstudio.studio.client.quarto.model.QuartoJupyterKernel;
 import org.rstudio.studio.client.workbench.model.ClientState;
@@ -27,6 +30,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.inject.Inject;
 
@@ -52,11 +56,6 @@ public class NewQuartoProjectPage extends NewDirectoryPage
    }
       
    
-   @Override
-   protected boolean getProvideRenvOption()
-   {
-      return false;
-   }
    
    @Override
    protected void onAddTopPanelWidgets(HorizontalPanel panel)
@@ -77,13 +76,12 @@ public class NewQuartoProjectPage extends NewDirectoryPage
     
  
    @Override
-   protected void onAddBottomWidgets()
+   protected void onAddMiddleWidgets()
    {
       addSpacer();
       addSpacer();
       
       HorizontalPanel panel = new HorizontalPanel();     
-      
       
       engineSelect_ = new SelectWidget("Engine:", 
             new String[] {"(None)", "Knitr", "Jupyter"},
@@ -101,8 +99,16 @@ public class NewQuartoProjectPage extends NewDirectoryPage
       panel.add(kernelSelect_);
       
       addWidget(panel);
-      
-      
+   
+   }
+   
+   @Override
+   protected void onAddBottomWidgets()
+   {
+      chkUseVenv_ = new CheckBox("Use venv with this project");
+      ElementIds.assignElementId(chkUseVenv_,
+         ElementIds.idWithPrefix(getTitle(), ElementIds.NEW_PROJECT_VENV));
+      addWidget(chkUseVenv_);
    }
    
    @Override 
@@ -120,8 +126,8 @@ public class NewQuartoProjectPage extends NewDirectoryPage
       });
       
       // popuplate kernel list from caps
-      JsArray<QuartoJupyterKernel> kernels = input.getContext()
-            .getQuartoCapabilities().jupyterKernels();
+      quartoCaps_ = input.getContext().getQuartoCapabilities();
+      JsArray<QuartoJupyterKernel> kernels = quartoCaps_.jupyterKernels();
       
       String[] kernelNames = new String[kernels.length()];
       String[] kernelDisplayNames = new String[kernels.length()];
@@ -133,6 +139,8 @@ public class NewQuartoProjectPage extends NewDirectoryPage
       }
       kernelSelect_.setChoices(kernelDisplayNames, kernelNames);
       kernelSelect_.setValue(lastOptions_.getKernel());
+   
+      chkUseVenv_.setValue(canUseVenv() && !StringUtil.isNullOrEmpty(lastOptions_.getVenv()));
       
       manageControls();
       
@@ -140,7 +148,18 @@ public class NewQuartoProjectPage extends NewDirectoryPage
    
    private void manageControls()
    {
-      kernelSelect_.setVisible(engineSelect_.getValue().equals(QuartoConstants.ENGINE_JUPYTER));
+      boolean isKnitr =  engineSelect_.getValue().equals(QuartoConstants.ENGINE_KNITR);
+      boolean isJupyter = engineSelect_.getValue().equals(QuartoConstants.ENGINE_JUPYTER);
+      kernelSelect_.setVisible(isJupyter);
+      chkUseVenv_.setVisible(isJupyter && canUseVenv());
+      setUseRenvVisible(isKnitr);
+   }
+   
+   private boolean canUseVenv()
+   {
+      return quartoCaps_ != null &&
+             quartoCaps_.getPythonCapabilities() != null &&
+             quartoCaps_.getPythonCapabilities().getVenv();
    }
    
  
@@ -151,7 +170,7 @@ public class NewQuartoProjectPage extends NewDirectoryPage
             projectTypeSelect_.getValue(), 
             engineSelect_.getValue(), 
             kernelSelect_.getValue(), 
-            ""
+            chkUseVenv_.getValue() ? "venv" : ""
       );
       
       return lastOptions_;
@@ -167,8 +186,9 @@ public class NewQuartoProjectPage extends NewDirectoryPage
    private SelectWidget projectTypeSelect_;
    private SelectWidget engineSelect_;
    private SelectWidget kernelSelect_;
+   private CheckBox chkUseVenv_;
    private Session session_;
-   
+   private QuartoCapabilities quartoCaps_ = null;
 
    
    private class ClientStateValue extends JSObjectStateValue

@@ -335,7 +335,7 @@ Error createQuartoProject(const core::FilePath& projDir,
                           const std::string& type,
                           const std::string& engine,
                           const std::string& kernel,
-                          const std::string&,
+                          const std::string& venv,
                           std::vector<std::string>* pProjFiles)
 {
    // create-project command
@@ -359,6 +359,12 @@ Error createQuartoProject(const core::FilePath& projDir,
          qualifiedEngine = qualifiedEngine + ":" + kernel;
       args.push_back("--engine");
       args.push_back(qualifiedEngine);
+   }
+
+   // create venv (optional)
+   if (!venv.empty())
+   {
+      args.push_back("--with-venv");
    }
 
    // run using R system2 so the user can see the ouptut
