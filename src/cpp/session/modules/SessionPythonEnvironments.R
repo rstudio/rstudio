@@ -101,6 +101,29 @@
    if (file.exists(prefsPython))
       return(path.expand(prefsPython))
    
+   # on Windows, help users find a default version of Python if possible
+   if (.rs.platform.isWindows && nzchar(Sys.which("py")))
+   {
+      # NOTE: ideally, we would just parse the output of 'py --list-paths',
+      # but for whatever reason the '*' indicating the default version of
+      # Python is omitted when run from RStudio, so we try to explicitly
+      # run Python here and then ask where the executable lives.
+      #
+      # We pass '
+      pythonPath <- .rs.tryCatch(
+         system2(
+            command = "py",
+            args    = c("-3", "-E"),
+            input   = "import sys; print(sys.executable)",
+            stdout  = TRUE,
+            stderr  = TRUE
+         )
+      )
+      
+      if (!inherits(pythonPath, "error") && file.exists(pythonPath))
+         return(pythonPath)
+   }
+   
    # no python found; return empty string placeholder
    ""
    
