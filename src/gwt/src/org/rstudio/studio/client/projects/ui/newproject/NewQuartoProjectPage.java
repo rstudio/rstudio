@@ -114,6 +114,7 @@ public class NewQuartoProjectPage extends NewDirectoryPage
          ElementIds.idWithPrefix(getTitle(), ElementIds.NEW_PROJECT_VENV));
       venvPanel_.add(chkUseVenv_);
       txtVenvPackages_ = new TextBox();
+      txtVenvPackages_.getElement().setAttribute("placeholder", "(none)");
       txtVenvPackages_.addStyleName(NewProjectResources.INSTANCE.styles().quartoVenvPackages());
       DomUtils.disableSpellcheck(txtVenvPackages_);
       FontSizer.applyNormalFontSize(txtVenvPackages_.getElement());
