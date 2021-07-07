@@ -36,6 +36,7 @@ export class MainWindow extends GwtWindow {
   quitConfirmed = false;
   workbenchInitialized = false;
   pendingWindows = new Array<PendingWindow>();
+  private isErrorDisplayed = false;
 
   // TODO
   //#ifdef _WIN32
@@ -211,7 +212,12 @@ export class MainWindow extends GwtWindow {
     // intentionally left blank
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onLoadFinished(ok: boolean): void {
     // TODO
+  }
+
+  setErrorDisplayed(): void {
+    this.isErrorDisplayed = true;
   }
 }

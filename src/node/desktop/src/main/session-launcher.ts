@@ -28,7 +28,8 @@ import { DesktopActivation } from './activation-overlay';
 import { EXIT_FAILURE } from './program-status';
 import { MainWindow } from './main-window';
 import { PendingQuit } from './gwt-callback';
-import { finalPlatformInitialize } from './utils';
+import { finalPlatformInitialize, userLogPath } from './utils';
+import { productInfo } from './product-info';
 
 export interface LaunchContext {
   host: string;
@@ -36,7 +37,11 @@ export interface LaunchContext {
   url: string;
   argList: string[]
 }
- 
+
+function abendLogPath(): FilePath {
+  return userLogPath().completePath('rsession_abort_msg.log');
+}
+
 export class SessionLauncher {
   host = '127.0.0.1';
   sessionProcess?: ChildProcess;
@@ -61,7 +66,7 @@ export class SessionLauncher {
   // Porting note: In the C++ code this was an overload of launchFirstSession(), but
   // but that isn't a thing in TypeScript (at least not without some ugly workarounds)
   // so giving a different name.
-  private async launchFirst(): Promise<Err> {
+  private launchFirst(): Err {
     // build a new new launch context
     const launchContext = this.buildLaunchContext();
 
@@ -86,7 +91,7 @@ export class SessionLauncher {
 
     // launch the process
     try {
-      this.sessionProcess = await this.launchSession(launchContext.argList);
+      this.sessionProcess = this.launchSession(launchContext.argList);
     } catch (err) {
       return err;
     }
@@ -151,7 +156,7 @@ export class SessionLauncher {
     return Success();
   }
 
-  private async launchSession(argList: string[]): Promise<ChildProcess> {
+  private launchSession(argList: string[]): ChildProcess {
     if (process.platform === 'darwin') {
       // on macOS with the hardened runtime, we can no longer rely on dyld
       // to lazy-load symbols from libR.dylib; to resolve this, we use
@@ -165,6 +170,11 @@ export class SessionLauncher {
     }
 
     const sessionProc = spawn(this.sessionPath.getAbsolutePath(), argList);
+    sessionProc.on('error', (err) => {
+      // Unable to start rsession (at all); treat as though it started and exited
+      logger().logError(err);
+      this.onRSessionExited();
+    });
     sessionProc.stdout.on('data', (data) => {
       logger().logDebug(`rsession stdout: ${data}`);
     });
@@ -186,8 +196,8 @@ export class SessionLauncher {
     return sessionProc;
   }
 
-  private async onLaunchFirstSession(): Promise<void> {
-    const error = await this.launchFirst();
+  private onLaunchFirstSession(): void {
+    const error = this.launchFirst();
     if (error) {
       logger().logError(error);
       appState().activation().emitLaunchError(this.launchFailedErrorMessage());
@@ -227,7 +237,7 @@ export class SessionLauncher {
     // if there was no pending quit set then this is a crash
     if (pendingQuit === PendingQuit.PendingQuitNone) {
 
-      // closeAllSatellites();
+      this.closeAllSatellites();
 
       this.mainWindow?.window.webContents.executeJavaScript('window.desktopHooks.notifyRCrashed()')
         .catch(() => {
@@ -297,7 +307,62 @@ export class SessionLauncher {
   }
 
   showLaunchErrorPage(): void {
-    console.log('Launch error page not implemented');
+    // RS_CALL_ONCE(); TODO, do we need to guard against multiple calls in Electron version?
+
+    // String mapping of template codes to diagnostic information
+    const vars = new Map<string, string>();
+
+    const info = productInfo();
+    const gitCommit = info.RSTUDIO_GIT_COMMIT.substr(0, 8);
+
+    // Create version string
+    const ss =
+      `RStudio ${info.RSTUDIO_VERSION} "${info.RSTUDIO_RELEASE_NAME} " (${gitCommit}, ${info.RSTUDIO_BUILD_DATE}) for ${info.RSTUDIO_PACKAGE_OS}`;
+    vars.set('version', ss);
+
+    // Collect message from the abnormal end log path
+    if (abendLogPath().exists()) {
+      vars.set('launch_failed', this.launchFailedErrorMessage());
+    } else {
+      vars.set('launch_failed', '[No error available]');
+    }
+
+    // Collect the rsession process exit code
+    vars.set('exit_code', '1'); // TODO safe_convert::numberToString(pRSessionProcess_->exitCode()));
+
+    // Read standard output and standard error streams
+    let procStdout = ''; // TODO pRSessionProcess_->readAllStandardOutput().toStdString();
+    if (!procStdout) {
+      procStdout = '[No output emitted]';
+    }
+    vars.set('process_output', procStdout);
+
+    let procStderr = ''; // TODO pRSessionProcess_->readAllStandardError().toStdString();
+    if (!procStderr) {
+      procStderr = '[No errors emitted]';
+    }
+    vars.set('process_error', procStderr);
+
+    // Read recent entries from the rsession log file
+    const logFile = '[TODO]';
+    const logContent = '[TODO]';
+    // TODO const error = getRecentSessionLogs(&logFile, &logContent);
+    // if (error) {
+    //   logger().logError(error);
+    // }
+    vars.set('log_file', logFile);
+    vars.set('log_content', logContent);
+
+    // TODO Read text template, substitute variables, and load HTML into the main window
+    // std::ostringstream oss;
+    // error = text::renderTemplate(options().resourcesPath().completePath("html/error.html"), vars, oss);
+    // if (error) {
+    //   LOG_ERROR(error);
+    // } else {
+    this.mainWindow?.setErrorDisplayed();
+    this.mainWindow?.loadUrl('data:text/html;charset=utf-8,<head> <meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> <meta name="viewport" content="width=device-width, initial-scale=1.0" /> <title>Session Load Failed</title> </head><body>Failed to load session.</body>');
+    // TODO pMainWindow_->loadHtml(QString::fromStdString(oss.str()));
+    // }
   }
 
   closeAllSatellites(): void {
