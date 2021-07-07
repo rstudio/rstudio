@@ -72,13 +72,11 @@ describe('Application', () => {
       const tmpDir = testDir();
 
       app.setScratchTempDir(tmpDir);
-      console.log(`setting ${tmpDir.getAbsolutePath()}`);
       assert.isFalse(await tmpDir.exists());
       assert.isFalse(!! await tmpDir.ensureDirectory());
 
       const expectedDir = tmpDir.completeChildPath('tmp');
       assert.isFalse(await expectedDir.exists());
-      console.log(`expected is ${expectedDir.getAbsolutePath()}`);
 
       // note, every testDir call returns different random path 
       const scratch = app.scratchTempDir(testDir());
