@@ -1,4 +1,8 @@
 
+@eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
+
+@external fixedWidthFont;
+
 .wizardWidget {
    margin-left: 2px;
 }
@@ -65,3 +69,10 @@
 .quartoEngineSelect {
    margin-right: 8px;
 }
+
+.quartoVenvPackages[type="text"] {
+  font-family: fixedWidthFont;
+  margin-top: -1px;
+  margin-left: 6px;
+}
+

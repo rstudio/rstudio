@@ -16,8 +16,10 @@ package org.rstudio.studio.client.projects.ui.newproject;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
@@ -32,6 +34,7 @@ import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.inject.Inject;
 
 public class NewQuartoProjectPage extends NewDirectoryPage
@@ -105,10 +108,19 @@ public class NewQuartoProjectPage extends NewDirectoryPage
    @Override
    protected void onAddBottomWidgets()
    {
-      chkUseVenv_ = new CheckBox("Use venv with this project");
+      venvPanel_ = new HorizontalPanel();
+      chkUseVenv_ = new CheckBox("Use venv with packages: ");
       ElementIds.assignElementId(chkUseVenv_,
          ElementIds.idWithPrefix(getTitle(), ElementIds.NEW_PROJECT_VENV));
-      addWidget(chkUseVenv_);
+      venvPanel_.add(chkUseVenv_);
+      txtVenvPackages_ = new TextBox();
+      txtVenvPackages_.addStyleName(NewProjectResources.INSTANCE.styles().quartoVenvPackages());
+      DomUtils.disableSpellcheck(txtVenvPackages_);
+      FontSizer.applyNormalFontSize(txtVenvPackages_.getElement());
+      ElementIds.assignElementId(txtVenvPackages_,
+         ElementIds.idWithPrefix(getTitle(), ElementIds.NEW_PROJECT_VENV_PACKAGES));
+      venvPanel_.add(txtVenvPackages_);
+      addWidget(venvPanel_);
    }
    
    @Override 
@@ -141,6 +153,7 @@ public class NewQuartoProjectPage extends NewDirectoryPage
       kernelSelect_.setValue(lastOptions_.getKernel());
    
       chkUseVenv_.setValue(canUseVenv() && !StringUtil.isNullOrEmpty(lastOptions_.getVenv()));
+      txtVenvPackages_.setValue(lastOptions_.getPackages());
       
       manageControls();
       
@@ -151,7 +164,7 @@ public class NewQuartoProjectPage extends NewDirectoryPage
       boolean isKnitr =  engineSelect_.getValue().equals(QuartoConstants.ENGINE_KNITR);
       boolean isJupyter = engineSelect_.getValue().equals(QuartoConstants.ENGINE_JUPYTER);
       kernelSelect_.setVisible(isJupyter);
-      chkUseVenv_.setVisible(isJupyter && canUseVenv());
+      venvPanel_.setVisible(isJupyter && canUseVenv());
       setUseRenvVisible(isKnitr);
    }
    
@@ -170,7 +183,8 @@ public class NewQuartoProjectPage extends NewDirectoryPage
             projectTypeSelect_.getValue(), 
             engineSelect_.getValue(), 
             kernelSelect_.getValue(), 
-            chkUseVenv_.getValue() ? "venv" : ""
+            chkUseVenv_.getValue() ? "venv" : "",
+            txtVenvPackages_.getText().trim()
       );
       
       return lastOptions_;
@@ -187,6 +201,8 @@ public class NewQuartoProjectPage extends NewDirectoryPage
    private SelectWidget engineSelect_;
    private SelectWidget kernelSelect_;
    private CheckBox chkUseVenv_;
+   private TextBox txtVenvPackages_;
+   private HorizontalPanel venvPanel_;
    private Session session_;
    private QuartoCapabilities quartoCaps_ = null;
 
@@ -196,7 +212,7 @@ public class NewQuartoProjectPage extends NewDirectoryPage
       public ClientStateValue()
       {
          super("quarto",
-               "quarto-new-project",
+               "new-project",
                ClientState.PERSISTENT,
                session_.getSessionInfo().getClientState(),
                false);
@@ -211,7 +227,8 @@ public class NewQuartoProjectPage extends NewDirectoryPage
                         value.getString("type"),
                         value.getString("engine"),
                         value.getString("kernel"),
-                        value.getString("venv")
+                        value.getString("venv"),
+                        value.getString("packages")
                   );
       }
  

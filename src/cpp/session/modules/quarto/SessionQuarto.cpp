@@ -503,6 +503,7 @@ Error createQuartoProject(const core::FilePath& projDir,
                           const std::string& engine,
                           const std::string& kernel,
                           const std::string& venv,
+                          const std::string& packages,
                           std::vector<std::string>* pProjFiles)
 {
    // create-project command
@@ -532,6 +533,15 @@ Error createQuartoProject(const core::FilePath& projDir,
    if (!venv.empty())
    {
       args.push_back("--with-venv");
+      if (!packages.empty())
+      {
+         std::vector<std::string> pkgVector;
+         boost::algorithm::split(pkgVector,
+                                 packages,
+                                 boost::algorithm::is_any_of(", "));
+         args.push_back(boost::algorithm::join(pkgVector, ","));
+      }
+
    }
 
    // run using R system2 so the user can see the ouptut
@@ -548,10 +558,14 @@ Error createQuartoProject(const core::FilePath& projDir,
    // initial files to open
    using namespace module_context;
    if (type == kQuartoProjectSite || type == kQuartoProjectBook)
+   {
       pProjFiles->push_back("index.qmd");
-  else
+      pProjFiles->push_back("_quarto.yml");
+   }
+   else
+   {
       pProjFiles->push_back(projDir.getFilename() + ".qmd");
-   pProjFiles->push_back("_quarto.yml");
+   }
 
    // success!
    return Success();

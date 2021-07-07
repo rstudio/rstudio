@@ -294,12 +294,13 @@ Error createProject(const json::JsonRpcRequest& request,
       // new quarto project
       if (newQuartoProjectJson.isObject())
       {
-         std::string type, engine, kernel, venv;
+         std::string type, engine, kernel, venv, packages;
          error = json::readObject(newQuartoProjectJson.getObject(),
                                   "type", type,
                                   "engine", engine,
                                   "kernel", kernel,
-                                  "venv", venv);
+                                  "venv", venv,
+                                  "packages", packages);
          if (error)
          {
             LOG_ERROR(error);
@@ -312,6 +313,7 @@ Error createProject(const json::JsonRpcRequest& request,
                                                      engine,
                                                      kernel,
                                                      venv,
+                                                     packages,
                                                      &projFiles);
          if (error)
          {

@@ -26,16 +26,17 @@ public class NewQuartoProjectOptions extends JavaScriptObject
    
    public final static NewQuartoProjectOptions createDefault()
    {
-      return create(QuartoConstants.PROJECT_DEFAULT, QuartoConstants.ENGINE_KNITR, "python3", "");
+      return create(QuartoConstants.PROJECT_DEFAULT, QuartoConstants.ENGINE_KNITR, "python3", "", "matplotlib pandas");
    }
    
-   public native final static NewQuartoProjectOptions create(String type, String engine, String kernel, String venv) 
+   public native final static NewQuartoProjectOptions create(String type, String engine, String kernel, String venv, String packages) 
    /*-{
       var options = new Object();
       options.type = type;
       options.engine = engine;
       options.kernel = kernel;
       options.venv= venv;
+      options.packages = packages;
       return options;
    }-*/;
    
@@ -43,4 +44,5 @@ public class NewQuartoProjectOptions extends JavaScriptObject
    public final native String getEngine() /*-{ return this["engine"]; }-*/;
    public final native String getKernel() /*-{ return this["kernel"]; }-*/;
    public final native String getVenv() /*-{ return this["venv"]; }-*/;
+   public final native String getPackages() /*-{ return this["packages"] || ""; }-*/ ;
 }

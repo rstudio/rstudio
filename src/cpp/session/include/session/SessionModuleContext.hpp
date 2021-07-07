@@ -908,6 +908,7 @@ core::Error createQuartoProject(const core::FilePath& projDir,
                                 const std::string& engine,
                                 const std::string& kernel,
                                 const std::string& venv,
+                                const std::string& packages,
                                 std::vector<std::string>* pProjFiles);
 
 std::vector<core::FilePath> ignoreContentDirs();

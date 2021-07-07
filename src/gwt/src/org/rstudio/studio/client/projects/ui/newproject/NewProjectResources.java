@@ -90,6 +90,7 @@ public interface NewProjectResources extends ClientBundle
       String invalidPkgName();
       String quartoProjectTypeSelect();
       String quartoEngineSelect();
+      String quartoVenvPackages();
    }
 
    @Source("NewProjectWizard.css")
