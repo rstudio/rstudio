@@ -131,13 +131,13 @@ export class Application implements AppState {
   initCommandLine(argv: string[]): ProgramStatus {
     // look for a version check request; if we have one, just do that and exit
     if (argv.indexOf(kVersion) > -1) {
-      logger().logInfo(productInfo().RSTUDIO_VERSION);
+      console.log(productInfo().RSTUDIO_VERSION);
       return exitSuccess();
     }
 
     // report extended version info and exit
     if (argv.indexOf(kVersionJson) > -1) {
-      logger().logInfo(getComponentVersions());
+      console.log(getComponentVersions());
       return exitSuccess();
     }
 
