@@ -758,7 +758,11 @@ bool isInstalled(bool refresh)
       }
       else
       {
-         LOG_ERROR(error);
+         // path not found errors are okay here (just means quarto isn't installed)
+         if (!isNotFoundError(error))
+         {
+            LOG_ERROR(error);
+         }
       }
    }
 
