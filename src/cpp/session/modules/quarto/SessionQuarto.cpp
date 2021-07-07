@@ -332,22 +332,18 @@ Error getQmdPublishDetails(const json::JsonRpcRequest& request,
       }
       if (!isShinyQmd)
       {
-         json::Value serverJson;
-         error = json::readObject(formatMetadata, "server", serverJson);
-         if (!error)
+         std::string server;
+         json::readObject(formatMetadata, "server", server);
+         isShinyQmd = server == "shiny";
+         if (!isShinyQmd)
          {
-            if (serverJson.isString() && serverJson.getString() == "shiny")
-            {
-               isShinyQmd = true;
-            }
-            else if (serverJson.isObject())
+            json::Object serverJson;
+            error = json::readObject(formatMetadata, "server", serverJson);
+            if (!error)
             {
                std::string type;
-               error = json::readObject(serverJson.getObject(), "type", type);
-               if (type == "shiny")
-               {
-                  isShinyQmd = true;
-               }
+               error = json::readObject(serverJson, "type", type);
+               isShinyQmd = type == "shiny";
             }
          }
       }
