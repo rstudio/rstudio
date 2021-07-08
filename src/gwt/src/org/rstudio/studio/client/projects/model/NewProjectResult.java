@@ -17,6 +17,7 @@ package org.rstudio.studio.client.projects.model;
 import org.rstudio.studio.client.application.model.RVersionSpec;
 import org.rstudio.studio.client.application.model.TutorialApiCallContext;
 import org.rstudio.studio.client.common.vcs.VcsCloneOptions;
+import org.rstudio.studio.client.quarto.model.QuartoNewProjectOptions;
 
 public class NewProjectResult
 {
@@ -27,7 +28,7 @@ public class NewProjectResult
                            VcsCloneOptions vcsCloneOptions,
                            NewPackageOptions newPackageOptions,
                            NewShinyAppOptions newShinyAppOptions,
-                           NewQuartoProjectOptions newQuartoProjectOptions,
+                           QuartoNewProjectOptions newQuartoProjectOptions,
                            ProjectTemplateOptions projectTemplateOptions,
                            TutorialApiCallContext callContext)
    {
@@ -104,7 +105,7 @@ public class NewProjectResult
       return newShinyAppOptions_;
    }
    
-   public NewQuartoProjectOptions getNewQuartoProjectOptions()
+   public QuartoNewProjectOptions getNewQuartoProjectOptions()
    {
       return newQuartoProjectOptions_;
    }
@@ -131,7 +132,7 @@ public class NewProjectResult
    private final VcsCloneOptions vcsCloneOptions_;
    private final NewPackageOptions newPackageOptions_;
    private final NewShinyAppOptions newShinyAppOptions_;
-   private final NewQuartoProjectOptions newQuartoProjectOptions_;
+   private final QuartoNewProjectOptions newQuartoProjectOptions_;
    private final ProjectTemplateOptions projectTemplateOptions_;
    private final TutorialApiCallContext callContext_;
 }

@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.quarto.model;
 
+import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.rsconnect.model.QmdPublishDetails;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -23,5 +24,8 @@ public interface QuartoServerOperations
 {
    void quartoCapabilities(ServerRequestCallback<QuartoCapabilities> requestCallback);
    void quartoServe(String render, ServerRequestCallback<Void> requestCallback);
+   void quartoCreateProject(String projectFile, 
+                            QuartoNewProjectOptions options, 
+                            ServerRequestCallback<ConsoleProcess> requestCallback);
    void quartoPublishDetails(String target, ServerRequestCallback<QmdPublishDetails> resultCallback);
 }

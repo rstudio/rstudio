@@ -23,10 +23,10 @@ import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
-import org.rstudio.studio.client.projects.model.NewQuartoProjectOptions;
 import org.rstudio.studio.client.quarto.model.QuartoCapabilities;
 import org.rstudio.studio.client.quarto.model.QuartoConstants;
 import org.rstudio.studio.client.quarto.model.QuartoJupyterKernel;
+import org.rstudio.studio.client.quarto.model.QuartoNewProjectOptions;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
@@ -178,9 +178,9 @@ public class NewQuartoProjectPage extends NewDirectoryPage
    
  
    @Override
-   protected NewQuartoProjectOptions getNewQuartoProjectOptions()
+   protected QuartoNewProjectOptions getNewQuartoProjectOptions()
    {
-      lastOptions_ = NewQuartoProjectOptions.create(
+      lastOptions_ = QuartoNewProjectOptions.create(
             projectTypeSelect_.getValue(), 
             engineSelect_.getValue(), 
             kernelSelect_.getValue(), 
@@ -223,8 +223,8 @@ public class NewQuartoProjectPage extends NewDirectoryPage
       protected void onInit(JsObject value)
       {
          lastOptions_ = (value == null) ?
-            NewQuartoProjectOptions.createDefault() :
-               NewQuartoProjectOptions.create(
+            QuartoNewProjectOptions.createDefault() :
+               QuartoNewProjectOptions.create(
                         value.getString("type"),
                         value.getString("engine"),
                         value.getString("kernel"),
@@ -246,6 +246,6 @@ public class NewQuartoProjectPage extends NewDirectoryPage
          clientStateValue_ = new ClientStateValue();
    }
    private static ClientStateValue clientStateValue_;
-   private static NewQuartoProjectOptions lastOptions_ = NewQuartoProjectOptions.createDefault();
+   private static QuartoNewProjectOptions lastOptions_ = QuartoNewProjectOptions.createDefault();
 
 }

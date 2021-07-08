@@ -1,5 +1,5 @@
 /*
- * NewQuartoProjectOptions.java
+ * QuartoNewProjectOptions.java
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -12,24 +12,22 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.projects.model;
-
-import org.rstudio.studio.client.quarto.model.QuartoConstants;
+package org.rstudio.studio.client.quarto.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-public class NewQuartoProjectOptions extends JavaScriptObject
+public class QuartoNewProjectOptions extends JavaScriptObject
 {
-   protected NewQuartoProjectOptions()
+   protected QuartoNewProjectOptions()
    {
    }
    
-   public final static NewQuartoProjectOptions createDefault()
+   public final static QuartoNewProjectOptions createDefault()
    {
       return create(QuartoConstants.PROJECT_DEFAULT, QuartoConstants.ENGINE_KNITR, "python3", "", "matplotlib pandas");
    }
    
-   public native final static NewQuartoProjectOptions create(String type, String engine, String kernel, String venv, String packages) 
+   public native final static QuartoNewProjectOptions create(String type, String engine, String kernel, String venv, String packages) 
    /*-{
       var options = new Object();
       options.type = type;

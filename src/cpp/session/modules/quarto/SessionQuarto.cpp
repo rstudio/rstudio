@@ -40,6 +40,7 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
+#include <session/SessionConsoleProcess.hpp>
 #include <session/projects/SessionProjects.hpp>
 
 #include <session/prefs/UserPrefs.hpp>
@@ -491,50 +492,64 @@ SEXP rs_quartoFileResources(SEXP targetSEXP)
    return r::sexp::create(resources, &protect);
 }
 
-
-} // anonymous namespace
-
-namespace module_context {
-
-json::Value quartoCapabilities()
+Error quartoCreateProject(const json::JsonRpcRequest& request,
+                          json::JsonRpcResponse* pResponse)
 {
-   if (module_context::quartoConfig().installed)
+   std::string projectFile;
+   json::Object projectOptionsJson;
+   Error error = json::readParams(request.params,
+                                  &projectFile,
+                                  &projectOptionsJson);
+   if (error)
+      return error;
+   FilePath projectFilePath = module_context::resolveAliasedPath(projectFile);
+
+   // error if the dir already exists
+   FilePath projDir = projectFilePath.getParent();
+   if (projDir.exists())
+      return core::fileExistsError(ERROR_LOCATION);
+
+   // now create it
+   error = projDir.ensureDirectory();
+   if (error)
+      return error;
+
+   std::string type, engine, kernel, venv, packages;
+   error = json::readObject(projectOptionsJson,
+                            "type", type,
+                            "engine", engine,
+                            "kernel", kernel,
+                            "venv", venv,
+                            "packages", packages);
+   if (error)
    {
-      core::system::ProcessResult result;
-      Error error = quartoExec({ "capabilities" }, &result);
-      if (error)
-      {
-         LOG_ERROR(error);
-         return json::Value();
-      }
-      json::Value jsonCapabilities;
-      error = jsonCapabilities.parse(result.stdOut);
-      if (error)
-      {
-         LOG_ERROR(error);
-         return json::Value();
-      }
-      if (!jsonCapabilities.isObject())
-      {
-         LOG_ERROR_MESSAGE("Unexpected quarto capabilities json: " + result.stdErr);
-         return json::Value();
-      }
-      return jsonCapabilities;
+      LOG_ERROR(error);
+      return error;
+   }
+
+   // add some first run files
+   using namespace module_context;
+   std::vector<std::string> projFiles;
+   if (type == kQuartoProjectSite || type == kQuartoProjectBook)
+   {
+      projFiles.push_back("index.qmd");
+      projFiles.push_back("_quarto.yml");
    }
    else
    {
-      return json::Value();
+      projFiles.push_back(projDir.getFilename() + ".qmd");
    }
-}
+   projects::addFirstRunDocs(projectFilePath, projFiles);
 
-Error createQuartoProject(const core::FilePath& projDir,
-                          const std::string& type,
-                          const std::string& engine,
-                          const std::string& kernel,
-                          const std::string& venv,
-                          const std::string& packages,
-                          std::vector<std::string>* pProjFiles)
-{
+   // create the project file
+   using namespace projects;
+   error = r_util::writeProjectFile(projectFilePath,
+                                    ProjectContext::buildDefaults(),
+                                    ProjectContext::defaultConfig());
+   if (error)
+      LOG_ERROR(error);
+
+
    // create-project command
    std::vector<std::string> args({
       "create-project",
@@ -570,34 +585,62 @@ Error createQuartoProject(const core::FilePath& projDir,
                                  boost::algorithm::is_any_of(", "));
          args.push_back(boost::algorithm::join(pkgVector, ","));
       }
-
    }
 
-   // run using R system2 so the user can see the ouptut
-   r::exec::RFunction system2("system2",
-                              string_utils::utf8ToSystem(s_quartoPath.getAbsolutePath()),
-                              args);
-   int exitCode;
-   Error error = system2.call(&exitCode);
-   if (error)
-      return error;
-   if (exitCode != 0)
-      return systemError(boost::system::errc::state_not_recoverable, ERROR_LOCATION);
+   // create the console process
+   using namespace console_process;
+   core::system::ProcessOptions options = quartoOptions();
+#ifdef _WIN32
+   options.detachProcess = true;
+#endif
+   boost::shared_ptr<ConsoleProcessInfo> pCPI =
+         boost::make_shared<ConsoleProcessInfo>("Creating project...",
+                                                console_process::InteractionNever);
+   boost::shared_ptr<console_process::ConsoleProcess> pCP = ConsoleProcess::create(
+     string_utils::utf8ToSystem(s_quartoPath.getAbsolutePath()),
+      args,
+      options,
+      pCPI);
 
-   // initial files to open
-   using namespace module_context;
-   if (type == kQuartoProjectSite || type == kQuartoProjectBook)
+   pResponse->setResult(pCP->toJson(console_process::ClientSerialization));
+   return Success();
+}
+
+
+
+} // anonymous namespace
+
+namespace module_context {
+
+json::Value quartoCapabilities()
+{
+   if (module_context::quartoConfig().installed)
    {
-      pProjFiles->push_back("index.qmd");
-      pProjFiles->push_back("_quarto.yml");
+      core::system::ProcessResult result;
+      Error error = quartoExec({ "capabilities" }, &result);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return json::Value();
+      }
+      json::Value jsonCapabilities;
+      error = jsonCapabilities.parse(result.stdOut);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return json::Value();
+      }
+      if (!jsonCapabilities.isObject())
+      {
+         LOG_ERROR_MESSAGE("Unexpected quarto capabilities json: " + result.stdErr);
+         return json::Value();
+      }
+      return jsonCapabilities;
    }
    else
    {
-      pProjFiles->push_back(projDir.getFilename() + ".qmd");
+      return json::Value();
    }
-
-   // success!
-   return Success();
 }
 
 bool handleQuartoPreview(const core::FilePath& sourceFile,
@@ -840,6 +883,7 @@ Error initialize()
    initBlock.addFunctions()
      (boost::bind(module_context::registerRpcMethod, "quarto_capabilities", quartoCapabilitiesRpc))
      (boost::bind(module_context::registerRpcMethod, "get_qmd_publish_details", getQmdPublishDetails))
+     (boost::bind(module_context::registerRpcMethod, "quarto_create_project", quartoCreateProject))
      (boost::bind(module_context::sourceModuleRFile, "SessionQuarto.R"))
      (boost::bind(quarto::serve::initialize))
    ;

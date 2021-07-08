@@ -30,9 +30,9 @@ import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.projects.model.NewPackageOptions;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
-import org.rstudio.studio.client.projects.model.NewQuartoProjectOptions;
 import org.rstudio.studio.client.projects.model.NewShinyAppOptions;
 import org.rstudio.studio.client.projects.model.ProjectTemplateOptions;
+import org.rstudio.studio.client.quarto.model.QuartoNewProjectOptions;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -229,7 +229,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
       return null;
    }
    
-   protected NewQuartoProjectOptions getNewQuartoProjectOptions()
+   protected QuartoNewProjectOptions getNewQuartoProjectOptions()
    {
       return null;
    }

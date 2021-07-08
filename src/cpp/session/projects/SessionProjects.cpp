@@ -231,19 +231,6 @@ Error initializeProjectFromTemplate(const FilePath& projectFilePath,
 
 }
 
-void addFirstRunDocs(const FilePath& projectFilePath, const std::vector<std::string>& docs)
-{
-   FilePath scratchPath, sharedScratchPath;
-   Error error = computeScratchPaths(
-            projectFilePath,
-            &scratchPath,
-            &sharedScratchPath);
-
-   for(auto doc : docs) {
-      addFirstRunDoc(scratchPath, doc);
-   }
-}
-
 Error createProject(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
 {
@@ -251,20 +238,18 @@ Error createProject(const json::JsonRpcRequest& request,
    std::string projectFile;
    json::Value newPackageJson;
    json::Value newShinyAppJson;
-   json::Value newQuartoProjectJson;
    json::Value projectTemplateOptions;
    Error error = json::readParams(request.params,
                                   &projectFile,
                                   &newPackageJson,
                                   &newShinyAppJson,
-                                  &newQuartoProjectJson,
                                   &projectTemplateOptions);
    if (error)
       return error;
    FilePath projectFilePath = module_context::resolveAliasedPath(projectFile);
 
    // new shiny or quarto project
-   if (!newShinyAppJson.isNull() || !newQuartoProjectJson.isNull())
+   if (!newShinyAppJson.isNull())
    {
       // error if the dir already exists
       FilePath appDir = projectFilePath.getParent();
@@ -277,53 +262,17 @@ Error createProject(const json::JsonRpcRequest& request,
          return error;
 
       // new shiny project
-      if (!newShinyAppJson.isNull())
-      {
-         // copy app.R into the project
-         FilePath shinyDir = session::options().rResourcesPath()
-                                               .completeChildPath("templates/shiny");
 
-         error = shinyDir.completeChildPath("app.R").copy(appDir.completeChildPath("app.R"));
-         if (error)
-            LOG_ERROR(error);
+      // copy app.R into the project
+      FilePath shinyDir = session::options().rResourcesPath()
+                                            .completeChildPath("templates/shiny");
 
-         // add first run actions for the source files
-         addFirstRunDocs(projectFilePath, { "app.R" });
-      }
+      error = shinyDir.completeChildPath("app.R").copy(appDir.completeChildPath("app.R"));
+      if (error)
+         LOG_ERROR(error);
 
-      // new quarto project
-      if (newQuartoProjectJson.isObject())
-      {
-         std::string type, engine, kernel, venv, packages;
-         error = json::readObject(newQuartoProjectJson.getObject(),
-                                  "type", type,
-                                  "engine", engine,
-                                  "kernel", kernel,
-                                  "venv", venv,
-                                  "packages", packages);
-         if (error)
-         {
-            LOG_ERROR(error);
-            return error;
-         }
-
-         std::vector<std::string> projFiles;
-         error = module_context::createQuartoProject(appDir,
-                                                     type,
-                                                     engine,
-                                                     kernel,
-                                                     venv,
-                                                     packages,
-                                                     &projFiles);
-         if (error)
-         {
-            LOG_ERROR(error);
-            return error;
-         }
-
-         // add first run actions
-         addFirstRunDocs(projectFilePath, projFiles);
-      }
+      // add first run actions for the source files
+      addFirstRunDocs(projectFilePath, { "app.R" });
 
 
       std::string existingProjectFilePath;
@@ -1138,6 +1087,20 @@ ProjectContext& projectContext()
 {
    return s_projectContext;
 }
+
+void addFirstRunDocs(const FilePath& projectFilePath, const std::vector<std::string>& docs)
+{
+   FilePath scratchPath, sharedScratchPath;
+   Error error = computeScratchPaths(
+            projectFilePath,
+            &scratchPath,
+            &sharedScratchPath);
+
+   for(auto doc : docs) {
+      addFirstRunDoc(scratchPath, doc);
+   }
+}
+
 
 json::Array websiteOutputFormatsJson()
 {

@@ -88,7 +88,6 @@ import org.rstudio.studio.client.panmirror.server.PanmirrorZoteroCollectionSpec;
 import org.rstudio.studio.client.plumber.model.PlumberRunCmd;
 import org.rstudio.studio.client.projects.model.NewPackageOptions;
 import org.rstudio.studio.client.projects.model.NewProjectContext;
-import org.rstudio.studio.client.projects.model.NewQuartoProjectOptions;
 import org.rstudio.studio.client.projects.model.NewShinyAppOptions;
 import org.rstudio.studio.client.projects.model.ProjectTemplateOptions;
 import org.rstudio.studio.client.projects.model.ProjectTemplateRegistry;
@@ -101,6 +100,7 @@ import org.rstudio.studio.client.projects.model.SharedProjectDetails;
 import org.rstudio.studio.client.projects.model.SharingConfigResult;
 import org.rstudio.studio.client.projects.model.SharingResult;
 import org.rstudio.studio.client.quarto.model.QuartoCapabilities;
+import org.rstudio.studio.client.quarto.model.QuartoNewProjectOptions;
 import org.rstudio.studio.client.rmarkdown.model.NotebookCreateResult;
 import org.rstudio.studio.client.rmarkdown.model.NotebookDocQueue;
 import org.rstudio.studio.client.rmarkdown.model.NotebookQueueUnit;
@@ -2007,7 +2007,6 @@ public class RemoteServer implements Server
    public void createProject(String projectFile,
                              NewPackageOptions newPackageOptions,
                              NewShinyAppOptions newShinyAppOptions,
-                             NewQuartoProjectOptions newQuartoProjectOptions,
                              ProjectTemplateOptions projectTemplateOptions,
                              ServerRequestCallback<String> requestCallback)
    {
@@ -2017,9 +2016,7 @@ public class RemoteServer implements Server
                new JSONObject(newPackageOptions) : JSONNull.getInstance());
       params.set(2, newShinyAppOptions != null ?
             new JSONObject(newShinyAppOptions) : JSONNull.getInstance());
-      params.set(3, newQuartoProjectOptions != null ?
-         new JSONObject(newQuartoProjectOptions) : JSONNull.getInstance());
-      params.set(4, projectTemplateOptions != null ?
+      params.set(3, projectTemplateOptions != null ?
             new JSONObject(projectTemplateOptions) : JSONNull.getInstance());
       sendRequest(RPC_SCOPE, CREATE_PROJECT, params, requestCallback);
    }
@@ -6398,6 +6395,18 @@ public class RemoteServer implements Server
       params.set(0, new JSONString(StringUtil.isNullOrEmpty(render) ? "none" : render));
       sendRequest(RPC_SCOPE, QUARTO_SERVE, params, callback);
    }
+   
+   @Override
+   public void quartoCreateProject(String projectFile, 
+                                   QuartoNewProjectOptions options, 
+                                   ServerRequestCallback<ConsoleProcess> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(projectFile));
+      params.set(1, new JSONObject(options));
+      sendRequest(RPC_SCOPE, QUARTO_CREATE_PROJECT, params, 
+                  new ConsoleProcessCallbackAdapter(callback));
+   }
 
    @Override
    public void getInstalledFonts(ServerRequestCallback<JsArrayString> callback)
@@ -6936,6 +6945,7 @@ public class RemoteServer implements Server
    
    private static final String QUARTO_CAPABILITIES = "quarto_capabilities";
    private static final String QUARTO_SERVE = "quarto_serve";
+   private static final String QUARTO_CREATE_PROJECT = "quarto_create_project";
    
 
 }
