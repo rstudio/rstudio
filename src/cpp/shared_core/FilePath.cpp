@@ -402,9 +402,9 @@ FilePath::FilePath(const char* in_absolutePath) :
 }
 
 #ifdef _WIN32
-FilePath::FilePath(const wchar* in_absolutePath)
+FilePath::FilePath(const wchar_t* in_absolutePath)
    : m_impl(in_absolutePath ? 
-         new Impl(absolutePath): 
+         new Impl(in_absolutePath):
          new Impl())
 {
 }

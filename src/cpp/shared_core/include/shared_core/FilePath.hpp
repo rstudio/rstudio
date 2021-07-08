@@ -125,7 +125,7 @@ public:
    explicit FilePath(const char* in_absolutePath);
 
 #ifdef _WIN32
-   explicit FilePath(const wchar* in_absolutePath);
+   explicit FilePath(const wchar_t* in_absolutePath);
 #endif
 
    /**
