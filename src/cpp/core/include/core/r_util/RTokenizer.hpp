@@ -213,11 +213,10 @@ private:
    Error matchRawStringLiteral(RToken* pToken);
    
    RToken matchWhitespace();
-   RToken matchStringLiteral();
    RToken matchNumber();
    RToken matchIdentifier();
-   RToken matchQuotedIdentifier();
    RToken matchComment();
+   RToken matchDelimited();
    RToken matchUserOperator();
    RToken matchOperator();
    bool eol();
