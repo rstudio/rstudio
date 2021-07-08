@@ -118,6 +118,17 @@ public:
 #endif
 
    /**
+    * @brief Constructor.
+    *
+    * @param in_absolutePath    The string representation of the path.
+    */
+   explicit FilePath(const char* in_absolutePath);
+
+#ifdef _WIN32
+   explicit FilePath(const wchar* in_absolutePath);
+#endif
+
+   /**
     * @brief Comparison operator. File paths are equal if their absolute representations are equal.
     *
     * @param in_other   The file path to compare with this file path.

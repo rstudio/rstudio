@@ -394,6 +394,22 @@ FilePath::FilePath(const std::wstring& absolutePath)
 }
 #endif
 
+FilePath::FilePath(const char* in_absolutePath) :
+   m_impl(in_absolutePath ? 
+            new Impl(fromString(in_absolutePath)) :
+            new Impl())
+{
+}
+
+#ifdef _WIN32
+FilePath::FilePath(const wchar* in_absolutePath)
+   : m_impl(in_absolutePath ? 
+         new Impl(absolutePath): 
+         new Impl())
+{
+}
+#endif
+
 bool FilePath::operator==(const FilePath& in_other) const
 {
    return m_impl->Path == in_other.m_impl->Path;
