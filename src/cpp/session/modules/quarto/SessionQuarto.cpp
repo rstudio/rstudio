@@ -243,14 +243,14 @@ Error quartoCapabilitiesRpc(const json::JsonRpcRequest&,
    return Success();
 }
 
-// Given a path to a Quarto file (usually .qmd), attempt to extract its metadata as a JSON object
-Error quartoMetadata(const std::string& path,
-                     json::Object *pResultObject)
+// Given a path to a Quarto file (usually .qmd), attempt to inspect it
+Error quartoInspect(const std::string& path,
+                    json::Object *pResultObject)
 {
    // Run quarto and retrieve metadata
    std::string output;
    core::system::ProcessResult result;
-   Error error = runQuarto({"metadata", path, "--json"}, FilePath(), &result);
+   Error error = runQuarto({"inspect", path}, FilePath(), &result);
    if (error)
    {
       return error;
@@ -330,13 +330,15 @@ Error getQmdPublishDetails(const json::JsonRpcRequest& request,
    FilePath qmdPath = module_context::resolveAliasedPath(target);
 
    // Ask Quarto to get the metadata for the file
-   json::Object metadata;
-   error = quartoMetadata(qmdPath.getAbsolutePath(), &metadata);
+   json::Object inspect;
+   error = quartoInspect(qmdPath.getAbsolutePath(), &inspect);
    if (error)
    {
        return error;
    }
-   auto format = (*metadata.begin()).getValue().getObject();
+
+   auto formats = inspect["formats"].getObject();
+   auto format = (*formats.begin()).getValue().getObject();
 
    json::Object result;
 
