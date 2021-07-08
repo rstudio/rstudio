@@ -88,6 +88,17 @@ TEST_CASE("Empty File Path tests")
       CHECK(aPath.getRelativePath(pPath) == "a");
    }
 
+   SECTION("Raw string construction")
+   {
+      const char* path = "/a/path";
+      FilePath f1(path);
+      CHECK(f1.getAbsolutePath() == std::string(path));
+
+      const char* empty = NULL;
+      FilePath f2(empty);
+      CHECK(f2.isEmpty());
+   }
+
    SECTION("Comparison (equal, true)")
    {
       FilePath f1, f2;
