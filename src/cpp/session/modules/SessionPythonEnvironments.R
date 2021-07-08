@@ -109,11 +109,12 @@
       # Python is omitted when run from RStudio, so we try to explicitly
       # run Python here and then ask where the executable lives.
       #
-      # We pass '
+      # We pass '-E' here just to avoid things like PYTHONPATH potentially
+      # influencing how the python session is launched
       pythonPath <- .rs.tryCatch(
          system2(
             command = "py",
-            args    = c("-3", "-E"),
+            args    = c("-E"),
             input   = "import sys; print(sys.executable)",
             stdout  = TRUE,
             stderr  = TRUE
