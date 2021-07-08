@@ -996,7 +996,7 @@ public class RSConnectDeploy extends Composite
                         display_.showMessage(GlobalDisplay.MSG_INFO, 
                               "Cannot Add File", 
                               "Only files in the same folder as the " +
-                              "document (" + sourceDir + ") or one of its " +
+                              "document (" + sourceDir.getPath() + ") or one of its " +
                               "sub-folders may be added.");
                         return;
                      }
