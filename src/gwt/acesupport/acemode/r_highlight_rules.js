@@ -42,7 +42,6 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
   {
     var rules = {};
 
-
     rules["start"] = [
       {
         // escaped '@' sign
@@ -317,7 +316,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
     rules["#quoted-identifier"] = [
       {
         token : "identifier",
-        regex : "`.*?`",
+        regex : "[`](?:(?:\\\\.)|(?:[^`\\\\]))*?[`]",
         merge : false,
         next  : "start"
       }
