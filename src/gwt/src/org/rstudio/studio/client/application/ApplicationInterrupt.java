@@ -24,6 +24,7 @@ import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleBusyEvent;
 import org.rstudio.studio.client.application.events.InterruptStatusEvent;
 import org.rstudio.studio.client.application.events.ReloadEvent;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
@@ -43,7 +44,8 @@ import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 @Singleton
-public class ApplicationInterrupt
+public class ApplicationInterrupt implements ConsoleBusyEvent.Handler
+
 {
    public interface Binder extends CommandBinder<Commands, ApplicationInterrupt> {}
    
@@ -67,10 +69,13 @@ public class ApplicationInterrupt
       server_ = server;
       pWorkbenchContext_ = pWorkbenchContext;
       errorManager_ = errorManager;
+      isBusy_ = false;
+      pendingInterruptHandler_ = null;
+
+      eventBus_.addHandler(ConsoleBusyEvent.TYPE, this);
       
       // bind to commands
       binder.bind(commands, this);
-
    }
    
    public void interruptR(final InterruptHandler handler)
@@ -95,9 +100,20 @@ public class ApplicationInterrupt
             @Override
             public void onResponseReceived(Boolean response)
             {
-               eventBus_.fireEvent(new InterruptStatusEvent(
-                     InterruptStatusEvent.INTERRUPT_COMPLETED));
-               finishInterrupt(handler);
+               // Now with async rpc, the server responds right away to the interrupt so it's not
+               // a reliable way to tell that the console is not busy anymore. We listen for the
+               // the busy events and call the handler when we see it's not busy now.
+               if (!isBusy_)
+               {
+                  eventBus_.fireEvent(new InterruptStatusEvent(
+                        InterruptStatusEvent.INTERRUPT_COMPLETED));
+                  finishInterrupt(handler);
+               }
+               else
+               {
+                  pendingInterrupt_ = true;
+                  pendingInterruptHandler_ = handler;
+               }
             }
 
             @Override
@@ -186,6 +202,19 @@ public class ApplicationInterrupt
             "\n\n" +
             "Are you sure you want to terminate R?");
    }
+
+   @Override
+   public void onConsoleBusy(ConsoleBusyEvent event)
+   {
+      isBusy_ = event.isBusy();
+
+      if (!isBusy_ && pendingInterrupt_)
+      {
+         eventBus_.fireEvent(new InterruptStatusEvent(
+               InterruptStatusEvent.INTERRUPT_COMPLETED));
+         finishInterrupt(pendingInterruptHandler_);
+      }
+   }
    
    private void showInterruptUnresponsiveDialog()
    {
@@ -256,6 +285,8 @@ public class ApplicationInterrupt
    {
       interruptRequestCounter_ = 0;
       interruptUnresponsiveTimer_.cancel(); 
+      pendingInterrupt_ = false;
+      pendingInterruptHandler_ = null;
       if (handler != null)
       {
          handler.onInterruptFinished();
@@ -264,6 +295,9 @@ public class ApplicationInterrupt
    
    private int interruptRequestCounter_ = 0;
    private Timer interruptUnresponsiveTimer_ = null;
+   private boolean isBusy_;
+   private InterruptHandler pendingInterruptHandler_ = null;
+   private boolean pendingInterrupt_ = false;
    
    private final GlobalDisplay globalDisplay_;
    private final EventBus eventBus_;
