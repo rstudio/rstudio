@@ -717,7 +717,7 @@ bool isInstalled(bool refresh)
                error = core::readStringFromFile(versionFile, &contents);
                if (!error)
                {
-                  const Version kQuartoRequiredVersion("0.1.319");
+                  const Version kQuartoRequiredVersion("0.1.331");
                   boost::algorithm::trim(contents);
                   Version quartoVersion(contents);
                   if (quartoVersion >= kQuartoRequiredVersion)
