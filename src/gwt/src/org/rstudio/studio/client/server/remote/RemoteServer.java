@@ -5134,11 +5134,13 @@ public class RemoteServer implements Server
    @Override
    public void getDeploymentFiles(String dir,
          boolean asMultipleRmd,
+         String quartoSrcFile,
          ServerRequestCallback<RSConnectDeploymentFiles> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(dir));
       params.set(1, JSONBoolean.getInstance(asMultipleRmd));
+      params.set(2, new JSONString(quartoSrcFile));
       sendRequest(RPC_SCOPE,
             GET_DEPLOYMENT_FILES,
             params,

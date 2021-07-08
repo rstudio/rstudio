@@ -47,6 +47,7 @@ public interface RSConnectServerOperations extends QuartoServerOperations
    
    void getDeploymentFiles (String target, 
                boolean asMultipleRmd,
+               String quartoSrcFile,
                ServerRequestCallback<RSConnectDeploymentFiles> requestCallback);
    
    void publishContent(RSConnectPublishSource source, 

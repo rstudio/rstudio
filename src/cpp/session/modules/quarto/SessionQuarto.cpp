@@ -24,6 +24,7 @@
 #include <shared_core/json/Json.hpp>
 
 #include <r/RExec.hpp>
+#include <r/RRoutines.hpp>
 
 #include <core/Exec.hpp>
 #include <core/Version.hpp>
@@ -465,7 +466,33 @@ Error getQmdPublishDetails(const json::JsonRpcRequest& request,
    return Success();
 }
 
+SEXP rs_quartoFileResources(SEXP targetSEXP)
+{
+   std::vector<std::string> resources;
+   std::string target = r::sexp::safeAsString(targetSEXP);
+   if (!target.empty())
+   {
+      FilePath qmdPath = module_context::resolveAliasedPath(target);
+      json::Object jsonInspect;
+      Error error = quartoInspect(
+        string_utils::utf8ToSystem(qmdPath.getAbsolutePath()), &jsonInspect
+      );
+      if (!error)
+      {
+         jsonInspect["resources"].getArray().toVectorString(resources);
+      }
+      else
+      {
+         LOG_ERROR(error);
+      }
+   }
+
+   r::sexp::Protect protect;
+   return r::sexp::create(resources, &protect);
 }
+
+
+} // anonymous namespace
 
 namespace module_context {
 
@@ -800,6 +827,8 @@ bool projectIsQuarto()
 
 Error initialize()
 {
+   RS_REGISTER_CALL_METHOD(rs_quartoFileResources, 1);
+
    // initialize config at startup
    module_context::quartoConfig(true);
 

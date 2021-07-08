@@ -893,6 +893,7 @@ public class RSConnectDeploy extends Composite
       server_.getDeploymentFiles(
             fileSource,
             asMultipleRmd_,
+            source_.isQuarto() ? source_.getSourceFile() : "",
             new ServerRequestCallback<RSConnectDeploymentFiles>()
             {
                @Override 
