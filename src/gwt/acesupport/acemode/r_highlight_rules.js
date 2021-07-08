@@ -439,6 +439,14 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
       }
     ];
 
+    rules["#knitr-embed"] = [
+      {
+        token: "constant.language",
+        regex: "^[<][<][^>]+[>][>]$",
+        merge: false
+      }
+    ];
+
     rules["#text"] = [
       {
         token : "text",
@@ -451,7 +459,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
       "#comment", "#string", "#number",
       "#package-access", "#quoted-identifier",
       "#function-call-or-keyword", "#keyword-or-identifier",
-      "#operator", "#text"
+      "#knitr-embed", "#operator", "#text"
     ]);
 
     rules["afterDollar"] = include([

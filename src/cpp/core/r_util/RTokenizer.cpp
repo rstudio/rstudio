@@ -219,6 +219,11 @@ RToken RTokenizer::nextToken()
      // match on number.
      return matchIdentifier();
   }
+  
+  // check for embedded knitr chunks
+  RToken embeddedChunk = matchKnitrEmbeddedChunk();
+  if (embeddedChunk)
+     return embeddedChunk;
 
   RToken oper = matchOperator();
   if (oper)
@@ -438,6 +443,35 @@ RToken RTokenizer::matchUserOperator()
       return consumeToken(RToken::UOPER, length);
 }
 
+RToken RTokenizer::matchKnitrEmbeddedChunk()
+{
+   wchar_t ch;
+   
+   // bail if we don't start with '<<' here
+   if (peek(0) != L'<' ||
+       peek(1) != L'<')
+   {
+      return RToken();
+   }
+   
+   // consume the chunk label, looking for '>>'
+   for (int offset = 1; ; offset++)
+   {
+      // give up on newlines or EOF
+      ch = peek(offset);
+      if (ch == 0 || ch == L'\n')
+         return RToken();
+      
+      // look for closing '>>'
+      if (peek(offset + 0) == L'>' &&
+          peek(offset + 1) == L'>')
+      {
+         return consumeToken(RToken::STRING, offset + 2);
+      }
+   }
+   
+   return RToken();
+}
 
 RToken RTokenizer::matchOperator()
 {

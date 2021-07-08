@@ -218,6 +218,7 @@ private:
    RToken matchComment();
    RToken matchDelimited();
    RToken matchUserOperator();
+   RToken matchKnitrEmbeddedChunk();
    RToken matchOperator();
    bool eol();
    wchar_t peek();
