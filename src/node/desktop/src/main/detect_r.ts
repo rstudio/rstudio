@@ -139,10 +139,14 @@ async function scanForRPosix(rstudioWhichR: FilePath): Promise<FilePath> {
   }
 
   // first look for R on the PATH
-  const { stdout } = await asyncExec('/usr/bin/which R', { encoding: 'utf-8' });
-  const R = stdout.trim();
-  if (R) {
-    return new FilePath(R);
+  try {
+    const { stdout } = await asyncExec('/usr/bin/which R', { encoding: 'utf-8' });
+    const R = stdout.trim();
+    if (R) {
+      return new FilePath(R);
+    }
+  } catch (error) {
+    logger().logError(error);
   }
 
   // otherwise, look in some hard-coded locations

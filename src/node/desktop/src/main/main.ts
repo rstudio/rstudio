@@ -31,9 +31,7 @@ class RStudioMain {
     try {
       await this.startup();
     } catch (error) {
-      if (!app.isPackaged) {
-        dialog.showErrorBox('Unhandled exception', error.message);
-      }
+      dialog.showErrorBox('Unhandled Exception', error.message);
       console.error(error.message); // logging possibly not available this early in startup
       app.exit(1);
     }
