@@ -265,10 +265,18 @@ private:
 
 struct SchemaVersion {
    public:
+      SchemaVersion() = default;
+      SchemaVersion(std::string date, std::string flower);
+      SchemaVersion(const SchemaVersion& other);
+      SchemaVersion(SchemaVersion&& other);
+
       std::string Date;
       std::string Flower;   
 
       bool isEmpty() const;
+
+      SchemaVersion& operator=(const SchemaVersion& other);
+      SchemaVersion& operator=(SchemaVersion&& other);
 
       bool operator<(const SchemaVersion& other) const;
       bool operator<=(const SchemaVersion& other) const;
@@ -292,13 +300,13 @@ public:
 
    // updates the database schema to the specified version if it is contained
    // within the migration schemas, or no higher than that version if it is not present
-   Error updateToVersion(const std::string& maxVersion);
+   Error updateToVersion(const SchemaVersion& maxVersion);
 
    // returns whether or not the schema is up-to-date with the latest schema version
    Error isUpToDate(bool* pUpToDate);
 
    // gets the current database schema version
-   Error databaseSchemaVersion(std::string* pVersion);
+   Error databaseSchemaVersion(SchemaVersion* pVersion);
 
 private:
    static constexpr const char* SCHEMA_TABLE = "schema_version";
@@ -309,12 +317,16 @@ private:
    // returns whether or not a schema version is present in the database
    Error isSchemaVersionPresent(bool* pIsPresent);
 
+   Error getSchemaTableColumnCount(int* pColumnCount);
+
    // returns the highest version that can be migrated to with the migrations
    // specified when constructing this SchemaUpdater
-   Error highestMigrationVersion(std::string* pVersion);
+   Error highestMigrationVersion(SchemaVersion* pVersion);
 
    // gets the actual migration files from the migration path
    Error migrationFiles(std::vector<FilePath>* pMigrationFiles);
+
+   Error createOrUpdateSchemaTable();
 
    boost::shared_ptr<IConnection> connection_;
    FilePath migrationsPath_;

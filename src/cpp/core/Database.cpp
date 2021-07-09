@@ -30,6 +30,8 @@
 #include <soci/postgresql/soci-postgresql.h>
 #include <soci/sqlite3/soci-sqlite3.h>
 
+#include "config.h"
+
 // Database Boost Errors
 // Declare soci errors as boost errors.
 // =================================================================================================================
@@ -702,9 +704,47 @@ void Transaction::rollback()
    transaction_.rollback();
 }
 
+SchemaVersion::SchemaVersion(std::string date, std::string flower) :
+   Date(std::move(date)),
+   Flower(std::move(flower))
+{
+}
+
+SchemaVersion::SchemaVersion(SchemaVersion&& other) :
+   Date(std::move(other.Date)),
+   Flower(std::move(other.Flower))
+{
+}
+
+SchemaVersion::SchemaVersion(const SchemaVersion& other) :
+   Date(other.Date),
+   Flower(other.Flower)
+{
+}
+
 bool SchemaVersion::isEmpty() const 
 {
    return false;
+}
+
+SchemaVersion& SchemaVersion::operator=(const SchemaVersion& other) 
+{
+   if (this != &other)
+   {
+      Date = other.Date;
+      Flower = other.Flower;
+   }
+   return *this;
+}
+
+SchemaVersion& SchemaVersion::operator=(SchemaVersion&& other) 
+{
+   if (this != &other)
+   {
+      Date = std::move(other.Date);
+      Flower = std::move(other.Flower);
+   }
+   return *this;
 }
 
 bool SchemaVersion::operator<(const SchemaVersion& other) const 
@@ -800,7 +840,7 @@ Error SchemaUpdater::migrationFiles(std::vector<FilePath>* pMigrationFiles)
    return Success();
 }
 
-Error SchemaUpdater::highestMigrationVersion(std::string* pVersion)
+Error SchemaUpdater::highestMigrationVersion(SchemaVersion* pVersion)
 {
    std::vector<FilePath> files;
    Error error = migrationFiles(&files);
@@ -811,7 +851,6 @@ Error SchemaUpdater::highestMigrationVersion(std::string* pVersion)
    {
       // no migration files - we do not consider this an error, but instead
       // simply consider that this database cannot be migrated past version 0
-      *pVersion = "0";
       return Success();
    }
 
@@ -822,7 +861,15 @@ Error SchemaUpdater::highestMigrationVersion(std::string* pVersion)
    };
    std::sort(files.begin(), files.end(), comparator);
 
-   *pVersion = files.at(0).getStem();
+   pVersion->Flower = RSTUDIO_RELEASE_NAME;
+
+   std::string fName = files.at(0).getStem();
+   std::vector<std::string> splitFname;
+   boost::split(splitFname, fName, boost::is_any_of("_"));
+   if (splitFname.size() > 0)
+   {
+      pVersion->Date = splitFname[0];
+   }
    return Success();
 }
 
@@ -854,7 +901,31 @@ Error SchemaUpdater::isSchemaVersionPresent(bool* pIsPresent)
    return Success();
 }
 
-Error SchemaUpdater::databaseSchemaVersion(std::string* pVersion)
+Error SchemaUpdater::getSchemaTableColumnCount(int* pColumnCount)
+{
+   std::string queryStr;
+   if (connection_->driverName() == SQLITE_DRIVER) 
+   {
+      queryStr = std::string("SELECT COUNT(*) FROM PRAGMA_TABLE_INFO('") + SCHEMA_TABLE + "'";
+   }
+   else 
+   {
+      queryStr = std::string("SELECT COUNT(*) FROM information_schema.columns WHERE table_name='") + SCHEMA_TABLE +
+                 "' AND table_schema = current_schema";
+   }
+
+   int columnCount = 0;
+   Query query = connection_->query(queryStr).withOutput(columnCount);
+   Error error = connection_->execute(query);
+   if (error)
+      return error;
+
+   *pColumnCount = columnCount;
+   return Success();
+}
+
+
+Error SchemaUpdater::createOrUpdateSchemaTable() 
 {
    bool versionPresent = false;
    Error error = isSchemaVersionPresent(&versionPresent);
@@ -866,39 +937,58 @@ Error SchemaUpdater::databaseSchemaVersion(std::string* pVersion)
    {
       // no schema version present - add the table to the database so it is available
       // for updating whenever migrations occur
-      error = connection_->executeStr(std::string("CREATE TABLE \"") + SCHEMA_TABLE + "\" (current_version text)");
+      error = connection_->executeStr(std::string("CREATE TABLE \"") + SCHEMA_TABLE + "\" (current_version text, flower text)");
       if (error)
          return error;
 
-      Query query = connection_->query(std::string("INSERT INTO \"") + SCHEMA_TABLE + "\" VALUES (:val)")
-            .withInput(currentSchemaVersion);
+      Query query = connection_->query(std::string("INSERT INTO \"") + SCHEMA_TABLE + "\" VALUES (:date, :flower)")
+            .withInput(currentSchemaVersion, "date")
+            .withInput(std::string(RSTUDIO_RELEASE_NAME), "flower");
       error = connection_->execute(query);
       if (error)
          return error;
+   }
+   else 
+   {
+      int count = 0;
+      error = getSchemaTableColumnCount(&count);
+      if (error)
+         return error;
 
-      *pVersion = currentSchemaVersion;
-      return Success();
+      if (count == 1) 
+      {
+         error = connection_->executeStr(std::string("ALTER TABLE \"") + SCHEMA_TABLE + "\" ADD flower");
+         if (error)
+            return error;
+      }
    }
 
-   Query query = connection_->query(std::string("SELECT current_version FROM \"") + SCHEMA_TABLE + "\"")
-         .withOutput(currentSchemaVersion);
+   return Success();
+}
 
-   error = connection_->execute(query);
+Error SchemaUpdater::databaseSchemaVersion(SchemaVersion* pVersion)
+{
+   SchemaVersion version;
+   Query query = connection_->query(std::string("SELECT current_version, flower FROM \"") + SCHEMA_TABLE + "\"")
+         .withOutput(version.Date)
+         .withOutput(version.Flower);
+
+   Error error = connection_->execute(query);
    if (error)
       return error;
 
-   *pVersion = currentSchemaVersion;
+   *pVersion = version;
    return Success();
 }
 
 Error SchemaUpdater::isUpToDate(bool* pUpToDate)
 {
-   std::string version;
+   SchemaVersion version;
    Error error = databaseSchemaVersion(&version);
    if (error)
       return error;
 
-   std::string migrationVersion;
+   SchemaVersion migrationVersion;
    error = highestMigrationVersion(&migrationVersion);
    if (error)
       return error;
@@ -909,12 +999,12 @@ Error SchemaUpdater::isUpToDate(bool* pUpToDate)
 
 Error SchemaUpdater::update()
 {
-   std::string migrationVersion;
+   SchemaVersion migrationVersion;
    Error error = highestMigrationVersion(&migrationVersion);
    if (error)
       return error;
 
-   std::string currentVersion;
+   SchemaVersion currentVersion;
    error = databaseSchemaVersion(&currentVersion);
    if (currentVersion < migrationVersion)
       return updateToVersion(migrationVersion);
@@ -922,7 +1012,7 @@ Error SchemaUpdater::update()
       return Success();
 }
 
-Error SchemaUpdater::updateToVersion(const std::string& maxVersion)
+Error SchemaUpdater::updateToVersion(const SchemaVersion& maxVersion)
 {
    // create a transaction to perform the following steps:
    // 1. Check the current database schema version
@@ -944,7 +1034,7 @@ Error SchemaUpdater::updateToVersion(const std::string& maxVersion)
          return error;
    }
 
-   std::string currentVersion;
+   SchemaVersion currentVersion;
    Error error = databaseSchemaVersion(&currentVersion);
    if (error)
       return error;
@@ -966,14 +1056,14 @@ Error SchemaUpdater::updateToVersion(const std::string& maxVersion)
 
    for (const FilePath& migrationFile : files)
    {
-      // if the version has already been applied (database version is newer or same)
-      // then skip this particular migration
-      if (migrationFile.getStem() <= currentVersion)
-         continue;
+      // // if the version has already been applied (database version is newer or same)
+      // // then skip this particular migration
+      // if (migrationFile.getStem() <= currentVersion)
+      //    continue;
 
-      // if the migration file version is higher than the max specified version, we're done
-      if (migrationFile.getStem() > maxVersion)
-         break;
+      // // if the migration file version is higher than the max specified version, we're done
+      // if (migrationFile.getStem() > maxVersion)
+      //    break;
 
       bool applyMigration = false;
 
@@ -1009,8 +1099,9 @@ Error SchemaUpdater::updateToVersion(const std::string& maxVersion)
 
       // record the new version in the version table
       std::string version = migrationFile.getStem();
-      Query updateVersionQuery = connection_->query(std::string("UPDATE \"") + SCHEMA_TABLE + "\" SET current_version = (:ver)")
-            .withInput(version);
+      Query updateVersionQuery = connection_->query(std::string("UPDATE \"") + SCHEMA_TABLE + "\" SET current_version = (:ver), flower = (:flower)")
+            .withInput(version, "ver")
+            .withInput(std::string(RSTUDIO_RELEASE_NAME), "flower");
       error = connection_->execute(updateVersionQuery);
       if (error)
          return error;
