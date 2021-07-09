@@ -31,6 +31,7 @@
     "ini": "^2.0.0",
     "mocha": "^8.4.0",
     "nyc": "^15.1.0",
+    "playwright": "^1.12.3",
     "sinon": "^11.1.1",
     "ts-node": "^10.0.0",
     "typescript": "^4.3.2"
@@ -49,6 +50,7 @@
     "show-version": "yarn run build && electron ./dist/main/main.js --version-json",
     "test": "electron-mocha -c --config ./test/unit/mocharc.json",
     "testcover": "nyc electron-mocha -c --config ./test/unit/mocharc.json",
-    "testwip": "electron-mocha -c -g WIP --config ./test/unit/mocharc.json"
+    "testwip": "electron-mocha -c -g WIP --config ./test/unit/mocharc.json",
+    "testint": "mocha -c --config ./test/int/mocharc.json"
   }
 }
