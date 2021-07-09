@@ -15,36 +15,78 @@
  */
 
 import Store from 'electron-store';
-
+import { MainWindow } from './main-window';
+ 
 // exported for unit testing
 export const kDesktopOptionDefaults = {
   zoomLevel: 1.0,
   windowBounds: {width: 1200, height: 900}
 };
-
-export class DesktopOptions {
-  private _config = new Store({defaults: kDesktopOptionDefaults});
-
-  // Filename exposed for unit testing
-  constructor(filename = '') {
-    if (filename.length != 0) {
-      this._config = new Store({defaults: kDesktopOptionDefaults, cwd: filename});
-    }
+ 
+let options: DesktopOptionsImpl | null = null;
+ 
+export function DesktopOptions(): DesktopOptionsImpl {
+  if (!options) {
+    options = new DesktopOptionsImpl();
   }
+  return options;
+}
 
-  public setZoomLevel(zoom: number): void {
-    this._config.set('zoomLevel', zoom);
+/**
+  * Desktop Options using a specific file. Intended for unit testing only
+  * 
+  * @param directory The path/to/config/ to use for testing. Config file will
+  * be placed in {directory}/config.json
+  * 
+  * @returns The options singleton to use for unit testing
+  */
+export function TestDesktopOptions(directory: string): DesktopOptionsImpl {
+  if(!options) {
+    options = new DesktopOptionsImpl(directory);
   }
+  return options;
+}
+ 
+/**
+  * Clear the options singleton. For unit testing only
+  */
+export function clearOptionsSingleton(): void {
+  options = null;
+}
+ 
+/**
+ * Desktop Options class for storing/restoring user desktop options.
+ * 
+ * Exported for unit testing only, use the DesktopOptions()
+ */
+export class DesktopOptionsImpl {
+   private _config = new Store({defaults: kDesktopOptionDefaults});
+ 
+   // Filename exposed for unit testing
+   constructor(filename = '') {
+     if (filename.length != 0) {
+       this._config = new Store({defaults: kDesktopOptionDefaults, cwd: filename});
+     }
+   }
+ 
+   public setZoomLevel(zoom: number): void {
+     this._config.set('zoomLevel', zoom);
+   }
+ 
+   public zoomLevel(): number {
+     return this._config.get('zoomLevel');
+   }
+ 
+   public saveWindowBounds(size: {width: number, height: number}): void {
+     this._config.set('windowBounds', size);
+   }
+ 
+   public windowBounds(): {width: number, height: number} {
+     return this._config.get('windowBounds');
+   }
 
-  public zoomLevel(): number {
-    return this._config.get('zoomLevel');
-  }
-
-  public setWindowBounds(size: {width: number, height: number}): void {
-    this._config.set('windowBounds', size);
-  }
-
-  public windowBounds(): {width: number, height: number} {
-    return this._config.get('windowBounds');
-  }
+   public restoreMainWindowBounds(mainWindow: MainWindow): void {
+     const size = this.windowBounds(); 
+     mainWindow.window.setSize(Math.max(300, size.width) , Math.max(200, size.height));
+   }
 }

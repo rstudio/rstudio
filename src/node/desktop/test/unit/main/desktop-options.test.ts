@@ -15,24 +15,25 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 
-import { DesktopOptions, kDesktopOptionDefaults } from '../../../src/main/desktop-options';
+import { TestDesktopOptions, DesktopOptionsImpl, kDesktopOptionDefaults, clearOptionsSingleton } from '../../../src/main/desktop-options';
 import { FilePath } from '../../../src/core/file-path';
-import { Err, Success } from '../../../src/core/err';
+import { Err, isSuccessful } from '../../../src/core/err';
 
-const kTestingConfigFilename = process.cwd() + 'DesktopOptionsTesting.json';
+const kTestingConfigFilename = process.cwd() + 'DesktopOptionsTesting';
 
-function testingDesktopOptions(): DesktopOptions {
-  return new DesktopOptions(kTestingConfigFilename);
+function testingDesktopOptions(): DesktopOptionsImpl {
+  return TestDesktopOptions(kTestingConfigFilename);
 }
 
 function deleteTestingDesktopOptions(): Err {
+  clearOptionsSingleton();
   const filepath = new FilePath(kTestingConfigFilename);
-  return filepath.remove();
+  return filepath.removeSync();
 }
 
 describe('DesktopOptions', () => {
   afterEach(() => {
-    assert.equal(deleteTestingDesktopOptions(), Success());
+    assert(isSuccessful(deleteTestingDesktopOptions()));
   });
 
   it('use default values', () => {
@@ -47,7 +48,7 @@ describe('DesktopOptions', () => {
     const newWindowBounds = {width: 123, height: 321};
 
     options.setZoomLevel(newZoom);
-    options.setWindowBounds(newWindowBounds);
+    options.saveWindowBounds(newWindowBounds);
 
     assert.equal(options.zoomLevel(), newZoom);
     assert.deepEqual(options.windowBounds(), newWindowBounds);
@@ -60,6 +61,7 @@ describe('DesktopOptions', () => {
     options1.setZoomLevel(newZoom);
     assert.equal(options1.zoomLevel(), newZoom);
 
+    clearOptionsSingleton();
     const options2 = testingDesktopOptions();
     assert.equal(options2.zoomLevel(), newZoom);
   });
