@@ -786,8 +786,19 @@ bool isUserFile(const core::FilePath& filePath);
 struct SourceMarker
 {
    enum Type {
-      Error = 0, Warning = 1, Box = 2, Info = 3, Style = 4, Usage = 5
+      Error   = 0,
+      Warning = 1,
+      Box     = 2,
+      Info    = 3,
+      Style   = 4, 
+      Usage   = 5,
+      Empty   = 99
    };
+
+   SourceMarker()
+      : type(Empty)
+   {
+   }
 
    SourceMarker(Type type,
                 const core::FilePath& path,
@@ -795,9 +806,18 @@ struct SourceMarker
                 int column,
                 const core::html_utils::HTML& message,
                 bool showErrorList)
-      : type(type), path(path), line(line), column(column), message(message),
+      : type(type),
+        path(path),
+        line(line),
+        column(column),
+        message(message),
         showErrorList(showErrorList)
    {
+   }
+   
+   explicit operator bool() const
+   {
+      return type != Empty;
    }
 
    Type type;
