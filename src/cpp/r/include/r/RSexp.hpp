@@ -322,15 +322,9 @@ public:
    SEXP get() const { return sexp_; }
    bool isNil() const { return sexp_ == R_NilValue; }
 
-   typedef void (*unspecified_bool_type)();
-   static void unspecified_bool_true() {}
-   operator unspecified_bool_type() const
+   explicit operator bool() const
    {
-      return isNil() ? 0 : unspecified_bool_true;
-   }
-   bool operator!() const
-   {
-      return isNil();
+      return !isNil();
    }
 
    void releaseNow();

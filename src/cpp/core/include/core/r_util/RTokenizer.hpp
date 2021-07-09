@@ -141,17 +141,9 @@ public:
    }
    
    // allow direct use in conditional statements (nullability)
-   typedef void (*unspecified_bool_type)();
-   static void unspecified_bool_true() {}
-   operator unspecified_bool_type() const
+   explicit operator bool() const
    {
-      return offset_ == static_cast<std::size_t>(-1) ?
-                                             0 :
-                                             unspecified_bool_true;
-   }
-   bool operator!() const
-   {
-      return offset_ == static_cast<std::size_t>(-1);
+      return offset_ != static_cast<std::size_t>(-1);
    }
    
    std::wstring::const_iterator begin() const
