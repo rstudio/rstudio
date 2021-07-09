@@ -758,9 +758,9 @@ bool SchemaVersion::operator<(const SchemaVersion& other) const
    if (other.isEmpty()) 
       return false;
 
-   const std::map<std::string, int>& flowerOrder = versionMap();
-   int thisFlowerIndex = (flowerOrder.find(Flower) != flowerOrder.end()) ? flowerOrder.at(Flower) : -1; 
-   int otherFlowerIndex = (flowerOrder.find(other.Flower) != flowerOrder.end()) ? flowerOrder.at(other.Flower) : -1;
+   const auto& versions = versionMap();
+   int thisFlowerIndex = (versions.find(Flower) != versions.end()) ? std::get<0>(versions.at(Flower)) : -1; 
+   int otherFlowerIndex = (versions.find(other.Flower) != versions.end()) ? std::get<0>(versions.at(other.Flower)) : -1;
 
    if (thisFlowerIndex < otherFlowerIndex)
       return true;
@@ -793,10 +793,34 @@ bool SchemaVersion::operator==(const SchemaVersion& other) const
    return (this == &other) || ((Date == other.Date) && (Flower == other.Flower));
 }
 
-const std::map<std::string, int>& SchemaVersion::versionMap()
+const std::string& SchemaVersion::currentAlterFile() const
+{
+   static const std::string empty;
+   const auto& versions = versionMap();
+   if (versions.find(Flower) != versions.end())
+   {
+      return std::get<2>(versions.at(Flower));
+   }
+
+   return empty;
+}
+
+const std::string& SchemaVersion::nextAlterFile() const
+{
+   static const std::string empty;
+   const auto& versions = versionMap();
+   if (versions.find(Flower) != versions.end())
+   {
+      return std::get<1>(versions.at(Flower));
+   }
+
+   return empty;
+}
+
+const std::map<std::string, std::tuple<int, std::string, std::string>  >& SchemaVersion::versionMap()
 {
    static boost::mutex m;
-   static std::map<std::string, int> versions;
+   static std::map<std::string, std::tuple<int, std::string, std::string> > versions;
 
    // Check if the map is empty before locking the mutex to avoid the cost of locking on every access
    // But if it _is_ empty, lock and then double check that it's still empty before modifying it.
@@ -804,7 +828,8 @@ const std::map<std::string, int>& SchemaVersion::versionMap()
       LOCK_MUTEX(m)
       { 
          if (versions.empty()) {
-            versions["GhostOrchid"] = 1;
+            versions[""] = { 0, "", "JR_GO" };
+            versions["Ghost Orchid"] = { 1, "JR_GO", "GO_PT" };
          }
       } END_LOCK_MUTEX
    }

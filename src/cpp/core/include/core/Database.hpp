@@ -285,8 +285,11 @@ struct SchemaVersion {
       bool operator==(const SchemaVersion& other) const;
       bool operator!=(const SchemaVersion& other) const;
 
+      const std::string& currentAlterFile() const;
+      const std::string& nextAlterFile() const;
+
    private:
-      static const std::map<std::string, int>& versionMap();
+      static const std::map<std::string, std::tuple<int, std::string, std::string>  >& versionMap();
 };
 
 class SchemaUpdater
