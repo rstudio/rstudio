@@ -233,7 +233,7 @@ public class EnvironmentPresenter extends BasePresenter
          @Override
          public void onEnvironmentObjectAssigned(EnvironmentObjectAssignedEvent event)
          {
-            // ignore changes in R environment when Python is running
+            // ignore changes in R environment when Python is active in Environment pane
             if (StringUtil.equalsIgnoreCase(view_.getActiveLanguage(), "R"))
             {
                view_.addObject(event.getObjectInfo());
@@ -247,7 +247,7 @@ public class EnvironmentPresenter extends BasePresenter
          @Override
          public void onEnvironmentObjectRemoved(EnvironmentObjectRemovedEvent event)
          {
-            // ignore changes in R environment when Python is running
+            // ignore changes in R environment when Python is active in Environment pane
             if (StringUtil.equalsIgnoreCase(view_.getActiveLanguage(), "R"))
             {
                view_.removeObject(event.getObjectName());
