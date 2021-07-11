@@ -8,8 +8,7 @@ then
    exit 1
 fi
 
-filename=$(date '+%Y%m%d%H%M%S%N')
-filename="${filename}_${1}"
+filename=$(date -u '+%Y%m%d%H%M%S%N')
 
 if [ -z "$2" ]
 then
