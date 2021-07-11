@@ -1130,6 +1130,10 @@ public class TextEditingTargetRMarkdownHelper
          return null;
       if (outputs.isEmpty())
          outputs.add(tree.getKeyValue(outputKey));
+      
+      // filter commented out outputs
+      outputs.removeIf(output -> output.startsWith("#"));
+      
       return outputs;
    }
    
