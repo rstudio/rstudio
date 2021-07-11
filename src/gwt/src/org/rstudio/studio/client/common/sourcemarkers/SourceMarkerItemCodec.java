@@ -90,7 +90,7 @@ public class SourceMarkerItemCodec
 
       TableCellElement tdMsg = Document.get().createTDElement();
       tdMsg.setClassName(resources_.styles().messageCell());
-      tdMsg.setInnerHTML(entry.getMessage());
+      tdMsg.setInnerHTML(entry.getMessage().trim());
       tr.appendChild(tdMsg);
       
       TableCellElement tdDiscButton = maybeCreateDisclosureButton(entry);

@@ -793,7 +793,14 @@ private:
 
       std::string outputFile = createAliasedPath(outputFile_);
       resultJson["output_file"] = outputFile;
-      resultJson["knitr_errors"] = sourceMarkersAsJson(knitrErrors_);
+      
+      std::vector<SourceMarker> knitrErrors;
+      if (renderErrorMarker_)
+      {
+         renderErrorMarker_.message = core::html_utils::HTML(renderErrorMessage_.str());
+         knitrErrors.push_back(renderErrorMarker_);
+      }
+      resultJson["knitr_errors"] = sourceMarkersAsJson(knitrErrors);
 
       resultJson["output_url"] = assignOutputUrl(outputFile);
       resultJson["output_format"] = outputFormat_;
@@ -863,29 +870,42 @@ private:
                           const std::string& output)
    {
       using namespace module_context;
-      if (type == module_context::kCompileOutputError &&  sourceNavigation_)
+      
+      if (type == kCompileOutputError && sourceNavigation_)
       {
-         // this is an error, parse it to see if it looks like a knitr error
-         const boost::regex knitrErr(
-                  "^Quitting from lines (\\d+)-(\\d+) \\(([^)]+)\\)(.*)");
-         boost::smatch matches;
-         if (regex_utils::match(output, matches, knitrErr))
+         if (renderErrorMarker_)
          {
-            // looks like a knitr error; compose a compile error object and
-            // emit it to the client when the render is complete
-            SourceMarker err(
-                     SourceMarker::Error,
-                     targetFile_.getParent().completePath(matches[3].str()),
-                     boost::lexical_cast<int>(matches[1].str()),
-                     1,
-                     core::html_utils::HTML(matches[4].str()),
-                     true);
-            knitrErrors_.push_back(err);
+            // if an error occurred during rendering, then any
+            // subsequent output should be gathered as part of
+            // that error
+            renderErrorMessage_ << output;
+         }
+         else
+         {
+            // check whether an error occurred while rendering the document and
+            // if knitr is about to exit. look for a specific quit marker and
+            // parse to to gather information for a source marker
+            const char* renderErrorPattern =
+                  "(?:.*?)Quitting from lines (\\d+)-(\\d+) \\(([^)]+)\\)(.*)";
+            
+            boost::regex reRenderError(renderErrorPattern);
+            boost::smatch matches;
+            if (regex_utils::match(output, matches, reRenderError))
+            {
+               // looks like a knitr error; compose a compile error object and
+               // emit it to the client when the render is complete
+               int line = boost::lexical_cast<int>(matches[1].str());
+               FilePath file = targetFile_.getParent().completePath(matches[3].str());
+               renderErrorMarker_ = SourceMarker(SourceMarker::Error, file, line, 1, {}, true);
+               renderErrorMessage_ << matches[4].str();
+            }
          }
       }
+      
       CompileOutput compileOutput(type, output);
-      ClientEvent event(client_events::kRmdRenderOutput,
-                        compileOutputAsJson(compileOutput));
+      ClientEvent event(
+               client_events::kRmdRenderOutput,
+               compileOutputAsJson(compileOutput));
       module_context::enqueClientEvent(event);
    }
 
@@ -900,7 +920,8 @@ private:
    std::string viewerType_;
    bool sourceNavigation_;
    json::Object outputFormat_;
-   std::vector<module_context::SourceMarker> knitrErrors_;
+   module_context::SourceMarker renderErrorMarker_;
+   std::stringstream renderErrorMessage_;
    std::string allOutput_;
 };
 
