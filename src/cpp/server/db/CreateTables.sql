@@ -1,3 +1,12 @@
+/* Stores the version of the schema. */
+CREATE TABLE schema_version(
+   /* The date at which this schema version was created. */
+   current_version text NOT NULL,
+
+   /* The name of the release to which this version of the schema belongs. */
+   release_name text NOT NULL
+)
+
 /* Stores revoked auth cookies - cookies that are not yet expired, but
    have been invalidated due to a user signing out. These cookies will
    not be allowed to be used again for sign-in purposes.
@@ -17,3 +26,5 @@ CREATE TABLE revoked_cookie(
 
 /* Index to be used for sorting revoked cookies by expiration */
 CREATE INDEX revoked_cookie_expiration_index ON revoked_cookie(expiration);
+
+INSERT INTO schmea_version('20200226141952248123456', 'Juliet Rose');
