@@ -21,14 +21,13 @@
 #include <core/Exec.hpp>
 #include <core/RegexUtils.hpp>
 #include <core/json/JsonRpc.hpp>
-#include <core/system/Process.hpp>
 #include <core/WaitUtils.hpp>
 
 #include <r/RExec.hpp>
 
 #include <session/SessionModuleContext.hpp>
-#include <session/jobs/JobsApi.hpp>
 
+#include "SessionQuartoJob.hpp"
 
 using namespace rstudio::core;
 using namespace rstudio::session::module_context;
@@ -71,21 +70,19 @@ std::string serverUrl(long port, const FilePath& outputFile = FilePath())
    return url;
 }
 
-class QuartoServe : boost::noncopyable,
-                    public boost::enable_shared_from_this<QuartoServe>
+class QuartoServe : public QuartoJob
 {
 public:
    static Error create(const std::string& render,
                        const core::FilePath& initialDocPath,
                        boost::shared_ptr<QuartoServe>* pServe)
    {
-      pServe->reset(new QuartoServe(initialDocPath));
-      return (*pServe)->start(render);
+      pServe->reset(new QuartoServe(render, initialDocPath));
+      return (*pServe)->start();
    }
 
-   bool isRunning()
+   virtual ~QuartoServe()
    {
-      return pJob_->state() == jobs::JobRunning;
    }
 
    long port()
@@ -93,115 +90,44 @@ public:
       return port_;
    }
 
-   void stop()
-   {
-      stopRequested_ = true;
-   }
 
-   void remove()
-   {
-      // only remove if we are still in the list
-      boost::shared_ptr<jobs::Job> pJob;
-      if (jobs::lookupJob(pJob_->id(), &pJob))
-         jobs::removeJob(pJob_);
-   }
-
-
-   virtual ~QuartoServe()
+protected:
+   explicit QuartoServe(const std::string& render, const core::FilePath& initialDocPath)
+      : QuartoJob(), render_(render), initialDocPath_(initialDocPath)
    {
    }
 
-private:
-   explicit QuartoServe(const core::FilePath& initialDocPath)
-      : initialDocPath_(initialDocPath), stopRequested_(false)
+   virtual std::string name()
    {
+      const std::string type = quartoConfig().project_type == kQuartoProjectBook ? "Book" : "Site";
+      const std::string name = (render_ != kRenderNone ? "Render and " : "")  + std::string("Serve ") + type;
+      return name;
    }
 
-   Error start(const std::string& render)
+   virtual std::vector<std::string> args()
    {
-      // quarto binary
-      FilePath quartoProgramPath;
-      Error error = core::system::findProgramOnPath("quarto", &quartoProgramPath);
-      if (error)
-         return error;
-
-      // args
       std::vector<std::string> args({"serve", "--no-browse"});
-      if (render != kRenderNone)
+      if (render_ != kRenderNone)
       {
          args.push_back("--render");
-         args.push_back(render);
+         args.push_back(render_);
       }
-
-      // options
-      core::system::ProcessOptions options;
-#ifdef _WIN32
-      options.createNewConsole = true;
-#else
-      options.terminateChildren = true;
-#endif
-      options.workingDir = quartoProjectDir();
-
-      // callbacks
-      core::system::ProcessCallbacks cb;
-      cb.onContinue = boost::bind(&QuartoServe::onContinue,
-                                  QuartoServe::shared_from_this());
-      cb.onStdout = boost::bind(&QuartoServe::onStdOut,
-                                QuartoServe::shared_from_this(), _2);
-      cb.onStderr = boost::bind(&QuartoServe::onStdErr,
-                                QuartoServe::shared_from_this(), _2);
-      cb.onExit =  boost::bind(&QuartoServe::onCompleted,
-                                QuartoServe::shared_from_this(), _1);
-
-      error = processSupervisor().runProgram(string_utils::utf8ToSystem(quartoProgramPath.getAbsolutePath()),
-                                     args,
-                                     options,
-                                     cb);
-
-      if (error)
-         return error;
-
-      // determine job name
-      const std::string type = quartoConfig().project_type == kQuartoProjectBook ? "Book" : "Site";
-      const std::string name = (render != kRenderNone ? "Render and " : "")  + std::string("Serve ") + type;
-
-      // create job and emit some output (to prevent the "has not emitted output" message)
-      using namespace jobs;
-      JobActions jobActions;
-      // note that we pass raw 'this' b/c the "stop" action will never be executed after we
-      // hit onCompleted (becuase our status won't be "running"). if we passed shared_from_this
-      // then we'd be keeping this object around forever (because jobs are never discarded).
-      jobActions.push_back(std::make_pair("stop", boost::bind(&QuartoServe::stop, this)));
-      pJob_ = addJob(name, "", "", 0, false, JobRunning, JobTypeSession, false, R_NilValue, jobActions, true, {});
-      pJob_->addOutput("\n", true);
-
-      // return success
-      return Success();
+      return args;
    }
 
-   bool onContinue()
+   virtual core::FilePath workingDir()
    {
-      return !stopRequested_;
+      return quartoProjectDir();
    }
 
-   void onStdOut(const std::string& output)
+   virtual void onStdErr(const std::string& error)
    {
-      pJob_->addOutput(output, false);
-
-   }
-
-   void onStdErr(const std::string& error)
-   {
-      pJob_->addOutput(error, true);
+      QuartoJob::onStdErr(error);
 
       // detect browse directive
-      boost::regex browseRe("http:\\/\\/localhost:(\\d{2,})\\/");
-      boost::smatch match;
-      if (regex_utils::search(error, match, browseRe))
+      port_ = quartoServerPortFromOutput(error);
+      if (port_ > 0)
       {
-         // save port
-         port_ = safe_convert::stringTo<int>(match[1], 0);
-
          // launch viewer
          module_context::viewer(serverUrl(port_, initialDocPath_), true /* Quarto website */, -1);
 
@@ -211,29 +137,10 @@ private:
       }
    }
 
-   void onCompleted(int exitStatus)
-   {
-      if (stopRequested_)
-      {
-         setJobState(pJob_, jobs::JobCancelled);
-         remove();
-      }
-      else if (exitStatus == EXIT_SUCCESS)
-      {
-         setJobState(pJob_, jobs::JobSucceeded);
-      }
-      else
-      {
-         setJobState(pJob_, jobs::JobFailed);
-      }
-   }
-
 private:
    long port_;
+   std::string render_;
    FilePath initialDocPath_;
-   bool stopRequested_;
-   boost::shared_ptr<jobs::Job> pJob_;
-
 };
 
 // serve singleton

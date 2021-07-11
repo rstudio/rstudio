@@ -24,6 +24,7 @@ public interface QuartoServerOperations
 {
    void quartoCapabilities(ServerRequestCallback<QuartoCapabilities> requestCallback);
    void quartoServe(String render, ServerRequestCallback<Void> requestCallback);
+   void quartoPreview(String file, ServerRequestCallback<Void> reqestCallback);
    void quartoCreateProject(String projectFile, 
                             QuartoNewProjectOptions options, 
                             ServerRequestCallback<ConsoleProcess> requestCallback);

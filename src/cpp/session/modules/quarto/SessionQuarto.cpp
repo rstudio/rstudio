@@ -45,6 +45,7 @@
 
 #include <session/prefs/UserPrefs.hpp>
 
+#include "SessionQuartoPreview.hpp"
 #include "SessionQuartoServe.hpp"
 
 using namespace rstudio::core;
@@ -868,6 +869,7 @@ bool projectIsQuarto()
    }
 }
 
+
 Error initialize()
 {
    RS_REGISTER_CALL_METHOD(rs_quartoFileResources, 1);
@@ -885,6 +887,7 @@ Error initialize()
      (boost::bind(module_context::registerRpcMethod, "get_qmd_publish_details", getQmdPublishDetails))
      (boost::bind(module_context::registerRpcMethod, "quarto_create_project", quartoCreateProject))
      (boost::bind(module_context::sourceModuleRFile, "SessionQuarto.R"))
+     (boost::bind(quarto::preview::initialize))
      (boost::bind(quarto::serve::initialize))
    ;
    return initBlock.execute();

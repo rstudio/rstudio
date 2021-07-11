@@ -192,6 +192,7 @@ import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsViewOnGitH
 import org.rstudio.studio.client.workbench.views.vcs.common.model.GitHubViewRequest;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -6703,18 +6704,26 @@ public class TextEditingTarget implements
             {
                visualMode_.syncSourceOutlineLocation();
             }
-
-            rmarkdownHelper_.renderRMarkdown(
-                  docUpdateSentinel_.getPath(),
-                  docDisplay_.getCursorPosition().getRow() + 1,
-                  null,
-                  docUpdateSentinel_.getEncoding(),
-                  paramsFile,
-                  asTempfile,
-                  type,
-                  false,
-                  rmarkdownHelper_.getKnitWorkingDir(docUpdateSentinel_),
-                  viewerType);
+            
+            // see if we should be using quarto preview
+            if (useQuartoPreview())
+            {
+               server_.quartoPreview(docUpdateSentinel_.getPath(), new VoidServerRequestCallback());
+            }
+            else
+            {
+               rmarkdownHelper_.renderRMarkdown(
+                     docUpdateSentinel_.getPath(),
+                     docDisplay_.getCursorPosition().getRow() + 1,
+                     null,
+                     docUpdateSentinel_.getEncoding(),
+                     paramsFile,
+                     asTempfile,
+                     type,
+                     false,
+                     rmarkdownHelper_.getKnitWorkingDir(docUpdateSentinel_),
+                     viewerType);
+            }
          }
       };
 
@@ -6805,6 +6814,36 @@ public class TextEditingTarget implements
          return "";
       }
    }
+   
+   
+   private boolean useQuartoPreview()
+   {
+      if (extendedType_ == SourceDocument.XT_QUARTO_DOCUMENT && 
+          !isShinyDoc() && !isRmdNotebook())
+      {
+         List<String> outputFormats = getQuartoOutputFormats();
+         if (outputFormats.size() == 0)
+         {
+            return true;
+         }
+         else
+         {
+            String format = outputFormats.get(0);
+            final ArrayList<String> previewFormats = new ArrayList<String>(
+                  Arrays.asList("pdf", "beamer", "html", "revealjs", "slidy"));
+            return previewFormats.stream()
+               .filter(fmt -> format.startsWith(fmt))
+               .findAny()
+               .isPresent();
+         }   
+      }
+      else
+      {
+         return false;
+      }
+     
+   }
+   
 
    void previewHTML()
    {
