@@ -44,9 +44,10 @@ class QuartoPreview : public QuartoJob
 {
 public:
    static Error create(const core::FilePath& previewFile,
+                       const std::string& format,
                        boost::shared_ptr<QuartoPreview>* ppPreview)
    {
-      ppPreview->reset(new QuartoPreview(previewFile));
+      ppPreview->reset(new QuartoPreview(previewFile, format));
       return (*ppPreview)->start();
    }
 
@@ -57,6 +58,11 @@ public:
    FilePath previewFile()
    {
       return previewFile_;
+   }
+
+   std::string format()
+   {
+      return format_;
    }
 
    long port()
@@ -71,8 +77,8 @@ public:
    }
 
 protected:
-   explicit QuartoPreview(const FilePath& previewFile)
-      : QuartoJob(), previewFile_(previewFile), port_(0)
+   explicit QuartoPreview(const FilePath& previewFile, const std::string& format)
+      : QuartoJob(), previewFile_(previewFile), format_(format), port_(0)
    {
    }
 
@@ -171,6 +177,7 @@ private:
 
 private:
    FilePath previewFile_;
+   std::string format_;
    long port_;
    std::string path_;
 };
@@ -180,13 +187,24 @@ private:
 std::vector<boost::shared_ptr<QuartoPreview>> s_previews;
 
 
+// create a preview job
+Error createPreview(const FilePath& previewFilePath, const std::string& format)
+{
+   boost::shared_ptr<QuartoPreview> pPreview;
+   Error error = QuartoPreview::create(previewFilePath, format, &pPreview);
+   if (error)
+      return error;
+   s_previews.push_back(pPreview);
+   return Success();
+}
+
 
 Error quartoPreviewRpc(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse*)
 {
    // read params
-   std::string previewFile;
-   Error error = json::readParams(request.params, &previewFile);
+   std::string previewFile, format;
+   Error error = json::readParams(request.params, &previewFile, &format);
    if (error)
       return error;
    FilePath previewFilePath = module_context::resolveAliasedPath(previewFile);
@@ -198,20 +216,34 @@ Error quartoPreviewRpc(const json::JsonRpcRequest& request,
    });
    if (preview != s_previews.end())
    {
-      module_context::enqueClientEvent(ClientEvent(client_events::kJobsActivate));
-      return (*preview)->render();
+      boost::shared_ptr<QuartoPreview> pPreview = *preview;
+
+      // if we have the same format then just re-render
+      if (format == pPreview->format())
+      {
+         module_context::enqueClientEvent(ClientEvent(client_events::kJobsActivate));
+         return pPreview->render();
+      }
+      else
+      {
+          // erase from our list
+          s_previews.erase(preview);
+
+         // otherwise kill the job and remove it
+         if (pPreview->isRunning())
+            pPreview->stop();
+         pPreview->remove();
+
+         // new preview
+         return createPreview(previewFilePath, format);
+      }
+
+
    }
    else
    {
-      boost::shared_ptr<QuartoPreview> pPreview;
-      error = QuartoPreview::create(previewFilePath, &pPreview);
-      if (error)
-         return error;
-      s_previews.push_back(pPreview);
-      return Success();
+      return createPreview(previewFilePath, format);
    }
-
-
 }
 
 

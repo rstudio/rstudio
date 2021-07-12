@@ -6706,9 +6706,11 @@ public class TextEditingTarget implements
             }
             
             // see if we should be using quarto preview
-            if (useQuartoPreview())
+            String quartoFormat = useQuartoPreview();
+            if (quartoFormat != null)
             {
-               server_.quartoPreview(docUpdateSentinel_.getPath(), new VoidServerRequestCallback());
+               TextEditingTarget.this.getQuartoOutputFormats();
+               server_.quartoPreview(docUpdateSentinel_.getPath(), quartoFormat, new VoidServerRequestCallback());
             }
             else
             {
@@ -6816,7 +6818,7 @@ public class TextEditingTarget implements
    }
    
    
-   private boolean useQuartoPreview()
+   private String useQuartoPreview()
    {
       if (extendedType_ == SourceDocument.XT_QUARTO_DOCUMENT && 
           !isShinyDoc() && !isRmdNotebook())
@@ -6824,7 +6826,7 @@ public class TextEditingTarget implements
          List<String> outputFormats = getQuartoOutputFormats();
          if (outputFormats.size() == 0)
          {
-            return true;
+            return "html";
          }
          else
          {
@@ -6834,12 +6836,13 @@ public class TextEditingTarget implements
             return previewFormats.stream()
                .filter(fmt -> format.startsWith(fmt))
                .findAny()
-               .isPresent();
+               .orElse(null);
+            
          }   
       }
       else
       {
-         return false;
+         return null;
       }
      
    }

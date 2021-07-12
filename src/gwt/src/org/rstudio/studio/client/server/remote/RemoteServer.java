@@ -6388,10 +6388,11 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void quartoPreview(String file, ServerRequestCallback<Void> requestCallback)
+   public void quartoPreview(String file, String format, ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(file));
+      params.set(1,  new JSONString(format));
       sendRequest(RPC_SCOPE, QUARTO_PREVIEW, params, requestCallback);
    }
    
