@@ -158,7 +158,7 @@ private:
 };
 
 // serve singleton
-static boost::shared_ptr<QuartoServe> s_pServe;
+boost::shared_ptr<QuartoServe> s_pServe;
 
 // stop any running server and remove the job
 void stopServer()
