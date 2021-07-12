@@ -1,7 +1,10 @@
 /* Stores the version of the schema. */
 CREATE TABLE schema_version(
    /* The date at which this schema version was created. */
-   current_version text NOT NULL
+   current_version text NOT NULL,
+
+   /* The name of the release to which this version of the schema belongs. */
+   release_name text NOT NULL
 )
 
 /* Stores revoked auth cookies - cookies that are not yet expired, but
@@ -24,4 +27,4 @@ CREATE TABLE revoked_cookie(
 /* Index to be used for sorting revoked cookies by expiration */
 CREATE INDEX revoked_cookie_expiration_index ON revoked_cookie(expiration);
 
-INSERT INTO schema_version('20200226141952248123456');
+INSERT INTO schema_version('20210712182145921760944', 'Ghost Orchid');
