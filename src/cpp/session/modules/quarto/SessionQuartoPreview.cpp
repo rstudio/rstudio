@@ -65,7 +65,7 @@ public:
       return format_;
    }
 
-   long port()
+   int port()
    {
       return port_;
    }
@@ -178,7 +178,7 @@ private:
 private:
    FilePath previewFile_;
    std::string format_;
-   long port_;
+   int port_;
    std::string path_;
 };
 

@@ -85,7 +85,7 @@ public:
    {
    }
 
-   long port()
+   int port()
    {
       return port_;
    }
@@ -152,7 +152,7 @@ protected:
    }
 
 private:
-   long port_;
+   int port_;
    std::string render_;
    FilePath initialDocPath_;
 };
