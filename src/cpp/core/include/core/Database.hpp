@@ -326,7 +326,8 @@ private:
    Error highestMigrationVersion(SchemaVersion* pVersion);
 
    // gets the actual migration files from the migration path
-   Error migrationFiles(std::vector<FilePath>* pMigrationFiles);
+
+   Error createSchema();
 
    bool parseVersionOfFile(const FilePath& file, SchemaVersion* pVersion);
 

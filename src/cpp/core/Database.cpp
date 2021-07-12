@@ -998,6 +998,41 @@ Error SchemaUpdater::update()
       return Success();
 }
 
+Error SchemaUpdater::createSchema()
+{
+   Transaction transaction(connection_);
+
+   FilePath createTablesFile;
+   Error error = migrationsPath_.completeChildPath(std::string(CREATE_TABLES_STEM) + std::string(SQL_EXTENSION), createTablesFile);
+
+   if (error)
+   {
+      if (connection_->driverName() == POSTGRESQL_DRIVER)
+      {
+         error = migrationsPath_.completeChildPath(std::string(CREATE_TABLES_STEM) + std::string(POSTGRESQL_EXTENSION), createTablesFile);
+         if (error)
+            return error;
+      }
+      else
+      {
+         error = migrationsPath_.completeChildPath(std::string(CREATE_TABLES_STEM) + std::string(SQLITE_EXTENSION), createTablesFile);
+         if (error)
+            return error;
+      }
+   }
+
+   std::string fileContents;
+   error = readStringFromFile(createTablesFile, &fileContents);
+   if (error)
+      return error;
+
+   error = connection_->executeStr(fileContents);
+   if (error)
+      return error;
+
+   return Success();
+}
+
 Error SchemaUpdater::updateToVersion(const SchemaVersion& maxVersion)
 {
    // create a transaction to perform the following steps:
