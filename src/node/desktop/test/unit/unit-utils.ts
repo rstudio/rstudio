@@ -66,7 +66,7 @@ export function createSinonStubInstance<T>(
  * @returns The FilePath to the randomly generated directory
  */
 export function tempDirectory(label = ''): FilePath {
-  const tempName = label ? path.join(os.tmpdir(), label + randomString()) : path.join(os.tmpdir(), randomString());
+  const tempName = label ? path.join(os.tmpdir(), label + '-' + randomString()) : path.join(os.tmpdir(), randomString());
   return new FilePath(tempName);
 }
 
