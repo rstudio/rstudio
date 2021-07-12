@@ -933,46 +933,23 @@ Error SchemaUpdater::getSchemaTableColumnCount(int* pColumnCount)
    return Success();
 }
 
-
-Error SchemaUpdater::createOrUpdateSchemaTable() 
+bool SchemaUpdater::parseVersionOfFile(const FilePath& file, SchemaVersion* pVersion)
 {
-   bool versionPresent = false;
-   Error error = isSchemaVersionPresent(&versionPresent);
-   if (error)
-      return error;
-
-   std::string currentSchemaVersion = "0";
-   if (!versionPresent)
+   std::string fileStem = file.getStem();
+   if (fileStem == CREATE_TABLES_STEM)
+      return false;
+   
+   std::vector<std::string> split;
+   boost::split(split, fileStem, boost::is_any_of("_"));
+   if (split.size() != 3)
    {
-      // no schema version present - add the table to the database so it is available
-      // for updating whenever migrations occur
-      error = connection_->executeStr(std::string("CREATE TABLE \"") + SCHEMA_TABLE + "\" (current_version text, flower text)");
-      if (error)
-         return error;
-
-      Query query = connection_->query(std::string("INSERT INTO \"") + SCHEMA_TABLE + "\" VALUES (:date, :flower)")
-            .withInput(currentSchemaVersion, "date")
-            .withInput(std::string(RSTUDIO_RELEASE_NAME), "flower");
-      error = connection_->execute(query);
-      if (error)
-         return error;
-   }
-   else 
-   {
-      int count = 0;
-      error = getSchemaTableColumnCount(&count);
-      if (error)
-         return error;
-
-      if (count == 1) 
-      {
-         error = connection_->executeStr(std::string("ALTER TABLE \"") + SCHEMA_TABLE + "\" ADD flower");
-         if (error)
-            return error;
-      }
+      LOG_WARNING_MESSAGE("Unrecognized file in the db folder, it will be skipped: " + file.getAbsolutePath());
+      return false;
    }
 
-   return Success();
+   *pVersion = SchemaVersion(split[0], boost::replace_all_copy(split[1], "-", " "));
+
+   return true;
 }
 
 Error SchemaUpdater::databaseSchemaVersion(SchemaVersion* pVersion)

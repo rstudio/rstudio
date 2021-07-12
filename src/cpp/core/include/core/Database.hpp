@@ -313,6 +313,8 @@ private:
    static constexpr const char* SQL_EXTENSION = ".sql";
    static constexpr const char* SQLITE_EXTENSION = ".sqlite";
    static constexpr const char* POSTGRESQL_EXTENSION = ".postgresql";
+   static constexpr const char* CREATE_TABLES_STEM = "CreateTables";
+   static constexpr const char* ALTER_TABLES_STEM = "AlterTables";
 
    // returns whether or not a schema version is present in the database
    Error isSchemaVersionPresent(bool* pIsPresent);
@@ -326,7 +328,7 @@ private:
    // gets the actual migration files from the migration path
    Error migrationFiles(std::vector<FilePath>* pMigrationFiles);
 
-   Error createOrUpdateSchemaTable();
+   bool parseVersionOfFile(const FilePath& file, SchemaVersion* pVersion);
 
    boost::shared_ptr<IConnection> connection_;
    FilePath migrationsPath_;
