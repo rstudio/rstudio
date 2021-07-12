@@ -23,6 +23,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobUpdatedEvent;
+import org.rstudio.studio.client.workbench.views.jobs.events.JobsActivateEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobElapsedTickEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobOutputEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobSelectionEvent;
@@ -89,6 +90,12 @@ public class JobsPresenter extends BasePresenter
    }
    
    @Override
+   public void onJobsActivate(JobsActivateEvent event)
+   {
+      jobEventHandler_.onJobsActivate(event);
+   }
+   
+   @Override
    public void onJobElapsedTick(JobElapsedTickEvent event)
    {
       jobEventHandler_.onJobElapsedTick(event);
@@ -141,4 +148,5 @@ public class JobsPresenter extends BasePresenter
    private final GlobalDisplay globalDisplay_;
    private final Commands commands_;
    private final Provider<JobManager> pJobManager_;
+  
 }

@@ -1,5 +1,5 @@
 /*
- * JobsPresenterEventHandlers.java
+ * JobsActivateEvent.java
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -14,13 +14,32 @@
  */
 package org.rstudio.studio.client.workbench.views.jobs.events;
 
-import org.rstudio.studio.client.workbench.views.jobs.model.JobState;
+import com.google.gwt.event.shared.EventHandler;
+import com.google.gwt.event.shared.GwtEvent;
 
-public interface JobsPresenterEventHandlers extends JobUpdatedEvent.Handler,
-                                                    JobOutputEvent.Handler,
-                                                    JobSelectionEvent.Handler,
-                                                    JobElapsedTickEvent.Handler,
-                                                    JobsActivateEvent.Handler
+public class JobsActivateEvent extends GwtEvent<JobsActivateEvent.Handler>
 {
-   void setInitialJobs(JobState state);
+   public interface Handler extends EventHandler
+   {
+      void onJobsActivate(JobsActivateEvent event);
+   }
+
+   public JobsActivateEvent()
+   {
+   }
+
+  
+   @Override
+   public Type<Handler> getAssociatedType()
+   {
+      return TYPE;
+   }
+
+   @Override
+   protected void dispatch(Handler handler)
+   {
+      handler.onJobsActivate(this);
+   }
+
+   public static final Type<Handler> TYPE = new Type<>();
 }

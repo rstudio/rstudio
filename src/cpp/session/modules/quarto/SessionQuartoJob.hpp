@@ -127,7 +127,23 @@ private:
    boost::shared_ptr<jobs::Job> pJob_;
 };
 
-std::pair<int,std::string> quartoServerLocationFromOutput(const std::string& output);
+struct ParsedServerLocation
+{
+   ParsedServerLocation(int port, const std::string& path, const std::string& filteredOutput)
+      : port(port), path(path), filteredOutput(filteredOutput)
+   {
+   }
+   explicit ParsedServerLocation(const std::string& filteredOutput = "")
+      : port(0), filteredOutput(filteredOutput)
+   {
+   }
+   int port;
+   std::string path;
+   std::string filteredOutput;
+};
+
+
+ParsedServerLocation quartoServerLocationFromOutput(const std::string& output);
 
    
 } // namespace quarto

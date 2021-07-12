@@ -80,7 +80,7 @@ Error QuartoJob::start()
    return Success();
 }
 
-std::pair<int,std::string> quartoServerLocationFromOutput(const std::string& output)
+ParsedServerLocation quartoServerLocationFromOutput(const std::string& output)
 {
    boost::regex browseRe("http:\\/\\/localhost:(\\d{2,})\\/(pdf\\/viewer\\.html)?");
    boost::smatch match;
@@ -88,11 +88,12 @@ std::pair<int,std::string> quartoServerLocationFromOutput(const std::string& out
    {
       int port = safe_convert::stringTo<int>(match[1], 0);
       std::string path = match.size() > 2 ? std::string(match[2]) : "";
-      return std::make_pair(port, path);
+      std::string filteredOutput =  boost::regex_replace(output, browseRe, "");
+      return ParsedServerLocation(port, path, filteredOutput);
    }
    else
    {
-      return std::make_pair(0, "");
+      return ParsedServerLocation(output);
    }
 }
 

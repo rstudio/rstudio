@@ -102,33 +102,77 @@ protected:
 
 private:
 
-   virtual void onStdErr(const std::string& error)
+   virtual void onStdErr(const std::string& output)
    {
-      QuartoJob::onStdErr(error);
-
       // detect browse directive
       if (port_ == 0) {
-         auto location = quartoServerLocationFromOutput(error);
-         if (location.first > 0)
+         auto location = quartoServerLocationFromOutput(output);
+         if (location.port > 0)
          {
-            // save port
-            port_ = location.first;
+            // save port and path
+            port_ = location.port;
+            path_ = location.path;
 
-            // launch viewer
-            std::string url = "http://localhost:" + safe_convert::numberToString(port_) + "/" + location.second;
-            module_context::viewer(url, false,  -1);
+            // show in viewer
+            showInViewer();
 
             // restore the console tab after render
-            ClientEvent activateConsoleEvent(client_events::kConsoleActivate, false);
-            module_context::enqueClientEvent(activateConsoleEvent);
+            activateConsole();
+
+            // emit filtered output if we are on rstudio server
+            if (session::options().programMode() == kSessionProgramModeServer)
+            {
+               QuartoJob::onStdErr(location.filteredOutput);
+            }
+            else
+            {
+               QuartoJob::onStdErr(output);
+            }
+            return;
          }
       }
+
+      if (output.find("Watching files for changes") != std::string::npos)
+      {
+         // activate the console
+         activateConsole();
+
+         // if the viewer is already on the site just activate it
+         if (boost::algorithm::starts_with(
+                module_context::viewerCurrentUrl(false), viewerUrl()))
+         {
+            module_context::activatePane("viewer");
+         }
+         else
+         {
+            showInViewer();
+         }
+      }
+
+      // standard output forwarding
+      QuartoJob::onStdErr(output);
    }
 
+   void activateConsole()
+   {
+      ClientEvent activateConsoleEvent(client_events::kConsoleActivate, false);
+      module_context::enqueClientEvent(activateConsoleEvent);
+   }
+
+   void showInViewer()
+   {
+      module_context::viewer(viewerUrl(), false,  -1);
+   }
+
+   std::string viewerUrl()
+   {
+      return "http://localhost:" + safe_convert::numberToString(port_) + "/" + path_;
+   }
 
 private:
    FilePath previewFile_;
    long port_;
+   std::string path_;
 };
 
 
@@ -147,13 +191,14 @@ Error quartoPreviewRpc(const json::JsonRpcRequest& request,
       return error;
    FilePath previewFilePath = module_context::resolveAliasedPath(previewFile);
 
-   // see if there is an existing preview we shoudl re-render
+   // see if there is an existing preview we should re-render
    auto preview = std::find_if(s_previews.begin(), s_previews.end(),
                                [&previewFilePath](boost::shared_ptr<QuartoPreview> pPreview) {
       return (pPreview->previewFile() == previewFilePath) && pPreview->isRunning();
    });
    if (preview != s_previews.end())
    {
+      module_context::enqueClientEvent(ClientEvent(client_events::kJobsActivate));
       return (*preview)->render();
    }
    else

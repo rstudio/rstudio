@@ -137,6 +137,13 @@ public class JobsPresenterEventHandlersImpl implements JobsPresenterEventHandler
       }
    }
    
+   @Override
+   public void onJobsActivate(JobsActivateEvent event)
+   {
+      display_.bringToFront();
+      
+   }
+   
    private boolean isSupportedJobType(int jobType)
    {
       return jobType == jobType_;
@@ -220,4 +227,5 @@ public class JobsPresenterEventHandlersImpl implements JobsPresenterEventHandler
    private Provider<JobManager> pJobManager_;
    private Provider<LauncherJobManager> pLauncherJobManager_;
    private EventBus eventBus_;
+  
 }

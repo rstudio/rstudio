@@ -122,16 +122,14 @@ protected:
 
    virtual void onStdErr(const std::string& error)
    {
-      QuartoJob::onStdErr(error);
-
       // detect browse directive
       if (port_ == 0)
       {
          auto location = quartoServerLocationFromOutput(error);
-         if (location.first > 0)
+         if (location.port > 0)
          {
             // set port
-            port_ = location.first;
+            port_ = location.port;
 
             // launch viewer
             module_context::viewer(serverUrl(port_, initialDocPath_), true /* Quarto website */, -1);
@@ -139,8 +137,18 @@ protected:
             // now that the dev server is running restore the console tab
             ClientEvent activateConsoleEvent(client_events::kConsoleActivate, false);
             module_context::enqueClientEvent(activateConsoleEvent);
+
+            // emit filtered output if we are on rstudio server
+            if (session::options().programMode() == kSessionProgramModeServer)
+            {
+               QuartoJob::onStdErr(location.filteredOutput);
+               return;
+            }
          }
       }
+
+      // standard output forwarding
+      QuartoJob::onStdErr(error);
    }
 
 private:

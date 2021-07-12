@@ -22,6 +22,7 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.CommandCallbacksChangedEvent;
 import org.rstudio.core.client.events.ExecuteAppCommandEvent;
 import org.rstudio.core.client.events.HighlightEvent;
@@ -151,6 +152,7 @@ import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobOutputEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobRefreshEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobUpdatedEvent;
+import org.rstudio.studio.client.workbench.views.jobs.events.JobsActivateEvent;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobState;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobUpdate;
 import org.rstudio.studio.client.workbench.views.output.data.events.DataOutputCompletedEvent;
@@ -1105,6 +1107,10 @@ public class ClientEventDispatcher
          {
             boolean focusWindow = event.<Bool>getData().getValue();
             eventBus_.dispatchEvent(new ConsoleActivateEvent(focusWindow));
+         }
+         else if (type == ClientEvent.JobsActivate)
+         {
+            eventBus_.dispatchEvent(new JobsActivateEvent());
          }
          else
          {
