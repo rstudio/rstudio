@@ -952,11 +952,24 @@ bool SchemaUpdater::parseVersionOfFile(const FilePath& file, SchemaVersion* pVer
 Error SchemaUpdater::databaseSchemaVersion(SchemaVersion* pVersion)
 {
    SchemaVersion version;
-   Query query = connection_->query(std::string("SELECT current_version, flower FROM \"") + SCHEMA_TABLE + "\"")
-         .withOutput(version.Date)
-         .withOutput(version.Flower);
+   int schemaColumnCount = 0;
+   Error error = getSchemaTableColumnCount(&schemaColumnCount);
+   if (error)
+      return error;
 
-   Error error = connection_->execute(query);
+   static const std::string currentVersionCol = "current_version";
+   static const std::string releaseNameCol = "release_name";
+   std::string stmt;
+   if (schemaColumnCount == 2)
+      stmt = std::string("SELECT " + currentVersionCol + ", " + releaseNameCol + " FROM \"") + SCHEMA_TABLE + "\"";
+   else
+      stmt = std::string("SELECT " + currentVersionCol + " FROM \"") + SCHEMA_TABLE + "\"";
+
+   Query query = connection_->query(stmt).withOutput(version.Date);
+   if (schemaColumnCount == 2)
+      query.withOutput(version.Flower);
+
+   error = connection_->execute(query);
    if (error)
       return error;
 
