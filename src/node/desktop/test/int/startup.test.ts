@@ -16,18 +16,7 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 
-import { ElectronApplication, _electron } from 'playwright';
-
-import path from 'path';
-
-// Find path to RStudio entrypoint
-function getMain(): string {
-  return path.join(__dirname, '../../dist/main/main.js');
-}
-
-async function launch(): Promise<ElectronApplication> {
-  return await _electron.launch({ args: [getMain()] });
-}
+import { launch } from './int-utils';
 
 describe('Startup and Exit', async function () {
   this.timeout(15000);
