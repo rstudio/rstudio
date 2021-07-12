@@ -78,7 +78,7 @@ protected:
 
    virtual std::string name()
    {
-      return "Render and preview: " + previewFile_.getFilename();
+      return "Preview: " + previewFile_.getFilename();
    }
 
    virtual std::vector<std::string> args()
@@ -108,11 +108,14 @@ private:
 
       // detect browse directive
       if (port_ == 0) {
-         port_ = quartoServerPortFromOutput(error);
-         if (port_ > 0)
+         auto location = quartoServerLocationFromOutput(error);
+         if (location.first > 0)
          {
+            // save port
+            port_ = location.first;
+
             // launch viewer
-            std::string url = "http://localhost:" + safe_convert::numberToString(port_) + "/";
+            std::string url = "http://localhost:" + safe_convert::numberToString(port_) + "/" + location.second;
             module_context::viewer(url, false,  -1);
 
             // restore the console tab after render

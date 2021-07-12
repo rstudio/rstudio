@@ -127,7 +127,7 @@ private:
    boost::shared_ptr<jobs::Job> pJob_;
 };
 
-int quartoServerPortFromOutput(const std::string& output);
+std::pair<int,std::string> quartoServerLocationFromOutput(const std::string& output);
 
    
 } // namespace quarto

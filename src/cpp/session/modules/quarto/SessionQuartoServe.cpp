@@ -127,9 +127,12 @@ protected:
       // detect browse directive
       if (port_ == 0)
       {
-         port_ = quartoServerPortFromOutput(error);
-         if (port_ > 0)
+         auto location = quartoServerLocationFromOutput(error);
+         if (location.first > 0)
          {
+            // set port
+            port_ = location.first;
+
             // launch viewer
             module_context::viewer(serverUrl(port_, initialDocPath_), true /* Quarto website */, -1);
 

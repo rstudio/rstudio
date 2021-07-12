@@ -80,17 +80,19 @@ Error QuartoJob::start()
    return Success();
 }
 
-int quartoServerPortFromOutput(const std::string& output)
+std::pair<int,std::string> quartoServerLocationFromOutput(const std::string& output)
 {
-   boost::regex browseRe("http:\\/\\/localhost:(\\d{2,})\\/");
+   boost::regex browseRe("http:\\/\\/localhost:(\\d{2,})\\/(pdf\\/viewer\\.html)?");
    boost::smatch match;
    if (regex_utils::search(output, match, browseRe))
    {
-      return safe_convert::stringTo<int>(match[1], 0);
+      int port = safe_convert::stringTo<int>(match[1], 0);
+      std::string path = match.size() > 2 ? std::string(match[2]) : "";
+      return std::make_pair(port, path);
    }
    else
    {
-      return 0;
+      return std::make_pair(0, "");
    }
 }
 
