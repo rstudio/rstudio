@@ -25,23 +25,16 @@ export const kDesktopOptionDefaults = {
  
 let options: DesktopOptionsImpl | null = null;
  
-export function DesktopOptions(): DesktopOptionsImpl {
-  if (!options) {
-    options = new DesktopOptionsImpl();
-  }
-  return options;
-}
-
 /**
-  * Desktop Options using a specific file. Intended for unit testing only
-  * 
-  * @param directory The path/to/config/ to use for testing. Config file will
-  * be placed in {directory}/config.json
-  * 
-  * @returns The options singleton to use for unit testing
-  */
-export function TestDesktopOptions(directory: string): DesktopOptionsImpl {
-  if(!options) {
+ * Creates or returns the DesktopOptions singleton
+ * 
+ * @param directory Intended for unit testing only. The directory to 
+ * place the config.json
+ * 
+ * @returns The DesktopOptions singleton
+ */
+export function DesktopOptions(directory = ''): DesktopOptionsImpl {
+  if (!options) {
     options = new DesktopOptionsImpl(directory);
   }
   return options;
@@ -57,32 +50,33 @@ export function clearOptionsSingleton(): void {
 /**
  * Desktop Options class for storing/restoring user desktop options.
  * 
- * Exported for unit testing only, use the DesktopOptions()
+ * Exported for unit testing only, use the DesktopOptions() function
+ * for creating/getting a DesktopOptionsImpl instance
  */
 export class DesktopOptionsImpl {
-   private _config = new Store({defaults: kDesktopOptionDefaults});
+   private config = new Store({defaults: kDesktopOptionDefaults});
  
-   // Filename exposed for unit testing
-   constructor(filename = '') {
-     if (filename.length != 0) {
-       this._config = new Store({defaults: kDesktopOptionDefaults, cwd: filename});
+   // Directory exposed for unit testing
+   constructor(directory = '') {
+     if (directory.length != 0) {
+       this.config = new Store({defaults: kDesktopOptionDefaults, cwd: directory});
      }
    }
  
    public setZoomLevel(zoom: number): void {
-     this._config.set('zoomLevel', zoom);
+     this.config.set('zoomLevel', zoom);
    }
  
    public zoomLevel(): number {
-     return this._config.get('zoomLevel');
+     return this.config.get('zoomLevel');
    }
  
    public saveWindowBounds(size: {width: number, height: number}): void {
-     this._config.set('windowBounds', size);
+     this.config.set('windowBounds', size);
    }
  
    public windowBounds(): {width: number, height: number} {
-     return this._config.get('windowBounds');
+     return this.config.get('windowBounds');
    }
 
    public restoreMainWindowBounds(mainWindow: MainWindow): void {

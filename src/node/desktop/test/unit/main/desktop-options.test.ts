@@ -15,19 +15,20 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 
-import { TestDesktopOptions, DesktopOptionsImpl, kDesktopOptionDefaults, clearOptionsSingleton } from '../../../src/main/desktop-options';
+import { DesktopOptions, DesktopOptionsImpl, kDesktopOptionDefaults, clearOptionsSingleton } from '../../../src/main/desktop-options';
 import { FilePath } from '../../../src/core/file-path';
 import { Err, isSuccessful } from '../../../src/core/err';
+import { tempDirectory } from '../unit-utils';
 
-const kTestingConfigFilename = process.cwd() + 'DesktopOptionsTesting';
+const kTestingConfigDirectory = tempDirectory('DesktopOptionsTesting').toString();
 
 function testingDesktopOptions(): DesktopOptionsImpl {
-  return TestDesktopOptions(kTestingConfigFilename);
+  return DesktopOptions(kTestingConfigDirectory);
 }
 
 function deleteTestingDesktopOptions(): Err {
   clearOptionsSingleton();
-  const filepath = new FilePath(kTestingConfigFilename);
+  const filepath = new FilePath(kTestingConfigDirectory);
   return filepath.removeSync();
 }
 

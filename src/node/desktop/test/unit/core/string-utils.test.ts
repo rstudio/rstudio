@@ -16,7 +16,7 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 
-import { removeDups, jsonLiteralEscape } from '../../../src/core/string-utils';
+import { removeDups } from '../../../src/core/string-utils';
 
 describe('string-util', () => {
   it('removeDups is a no-op on empty array', () => {
@@ -44,11 +44,6 @@ describe('string-util', () => {
     const expected = ['one', 'two', 'three'];
     const result = removeDups(orig);
     assert.deepEqual(result, expected);
-  });
-  it('escapes strings', () => {
-    const unescapedString = 'this\n is" my\r string\\';
-    const escapedString = 'this\\n is\\" my\\r string\\\\';
-    assert.equal(jsonLiteralEscape(unescapedString), escapedString);
   });
 });
  

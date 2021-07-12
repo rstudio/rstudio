@@ -622,7 +622,7 @@ export class FilePath {
    * Checks whether this file path is a directory.
    */
   isDirectory(): boolean {
-    throw Error ('isDirectory is NYI');
+    throw Error('isDirectory is NYI');
   }
 
   /**
