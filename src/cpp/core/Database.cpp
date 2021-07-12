@@ -767,6 +767,13 @@ bool SchemaVersion::operator<(const SchemaVersion& other) const
    else if (otherFlowerIndex < thisFlowerIndex)
       return false;
 
+   // If the date is empty, we should treat this like "the latest version at this flower"
+   if (Date.empty() && !other.Date.empty())
+      return false;
+   
+   if (other.Date.empty())
+      return true;
+
    if (Date < other.Date)
       return true;
 
