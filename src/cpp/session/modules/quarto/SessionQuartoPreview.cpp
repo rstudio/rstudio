@@ -107,16 +107,18 @@ private:
       QuartoJob::onStdErr(error);
 
       // detect browse directive
-      port_ = quartoServerPortFromOutput(error);
-      if (port_ > 0)
-      {
-         // launch viewer
-         std::string url = "http://localhost:" + safe_convert::numberToString(port_) + "/";
-         module_context::viewer(url, false,  -1);
+      if (port_ == 0) {
+         port_ = quartoServerPortFromOutput(error);
+         if (port_ > 0)
+         {
+            // launch viewer
+            std::string url = "http://localhost:" + safe_convert::numberToString(port_) + "/";
+            module_context::viewer(url, false,  -1);
 
-         // restore the console tab after render
-         ClientEvent activateConsoleEvent(client_events::kConsoleActivate, false);
-         module_context::enqueClientEvent(activateConsoleEvent);
+            // restore the console tab after render
+            ClientEvent activateConsoleEvent(client_events::kConsoleActivate, false);
+            module_context::enqueClientEvent(activateConsoleEvent);
+         }
       }
    }
 

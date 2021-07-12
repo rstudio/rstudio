@@ -93,7 +93,7 @@ public:
 
 protected:
    explicit QuartoServe(const std::string& render, const core::FilePath& initialDocPath)
-      : QuartoJob(), render_(render), initialDocPath_(initialDocPath)
+      : QuartoJob(), port_(0), render_(render), initialDocPath_(initialDocPath)
    {
    }
 
@@ -125,15 +125,18 @@ protected:
       QuartoJob::onStdErr(error);
 
       // detect browse directive
-      port_ = quartoServerPortFromOutput(error);
-      if (port_ > 0)
+      if (port_ == 0)
       {
-         // launch viewer
-         module_context::viewer(serverUrl(port_, initialDocPath_), true /* Quarto website */, -1);
+         port_ = quartoServerPortFromOutput(error);
+         if (port_ > 0)
+         {
+            // launch viewer
+            module_context::viewer(serverUrl(port_, initialDocPath_), true /* Quarto website */, -1);
 
-         // now that the dev server is running restore the console tab
-         ClientEvent activateConsoleEvent(client_events::kConsoleActivate, false);
-         module_context::enqueClientEvent(activateConsoleEvent);
+            // now that the dev server is running restore the console tab
+            ClientEvent activateConsoleEvent(client_events::kConsoleActivate, false);
+            module_context::enqueClientEvent(activateConsoleEvent);
+         }
       }
    }
 
