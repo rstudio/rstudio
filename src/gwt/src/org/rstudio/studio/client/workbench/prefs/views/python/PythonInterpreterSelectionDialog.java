@@ -37,9 +37,9 @@ import org.rstudio.studio.client.workbench.prefs.views.PythonPreferencesPaneCons
 
 public class PythonInterpreterSelectionDialog extends ModalDialog<PythonInterpreter>
 {
-   private static final String LABEL_SYSTEM  = "System";
-   private static final String LABEL_VIRTUAL = "Virtual Environments";
-   private static final String LABEL_CONDA   = "Conda Environments";
+   private final String LABEL_SYSTEM  = constants_.systemTab();
+   private final String LABEL_VIRTUAL = constants_.virtualEnvTab();
+   private final String LABEL_CONDA   = constants_.condaEnvTab();
    
    public PythonInterpreterSelectionDialog(final JsArray<PythonInterpreter> interpreters,
                                            final OperationWithInput<PythonInterpreter> operation)

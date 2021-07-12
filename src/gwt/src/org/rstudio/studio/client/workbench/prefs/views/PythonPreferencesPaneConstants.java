@@ -181,4 +181,31 @@ public interface PythonPreferencesPaneConstants extends com.google.gwt.i18n.clie
     @DefaultStringValue("Clear")
     @Key("clearLabel")
     String clearLabel();
+
+    /**
+     * Translated "System".
+     *
+     * @return translated "System"
+     */
+    @DefaultStringValue("System")
+    @Key("systemTab")
+    String systemTab();
+
+    /**
+     * Translated "Virtual Environments".
+     *
+     * @return translated "Virtual Environments"
+     */
+    @DefaultStringValue("Virtual Environments")
+    @Key("virtualEnvTab")
+    String virtualEnvTab();
+
+    /**
+     * Translated "Conda Environments".
+     *
+     * @return translated "Conda Environments"
+     */
+    @DefaultStringValue("Conda Environments")
+    @Key("condaEnvTab")
+    String condaEnvTab();
 }

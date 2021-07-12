@@ -550,4 +550,49 @@ public interface RMarkdownPreferencesPaneConstants extends com.google.gwt.i18n.c
     @DefaultStringValue("Citations")
     @Key("tabPanelCitations")
     String tabPanelCitations();
+
+    /**
+     * Translated "(None)".
+     *
+     * @return translated "(None)"
+     */
+    @DefaultStringValue("(None)")
+    @Key("noneOption")
+    String noneOption();
+
+    /**
+     * Translated "Local".
+     *
+     * @return translated "Local"
+     */
+    @DefaultStringValue("Local")
+    @Key("localOption")
+    String localOption();
+
+    /**
+     * Translated "Web".
+     *
+     * @return translated "Web"
+     */
+    @DefaultStringValue("Web")
+    @Key("webOption")
+    String webOption();
+
+    /**
+     * Translated "Zotero Library:".
+     *
+     * @return translated "Zotero Library:"
+     */
+    @DefaultStringValue("Zotero Library:")
+    @Key("zoteroLibLabel")
+    String zoteroLibLabel();
+
+    /**
+     * Translated "Using Zotero".
+     *
+     * @return translated "Using Zotero"
+     */
+    @DefaultStringValue("Using Zotero")
+    @Key("zoteroHelpLink")
+    String zoteroHelpLink();
 }

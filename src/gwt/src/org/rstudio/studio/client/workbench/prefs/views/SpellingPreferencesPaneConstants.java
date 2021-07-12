@@ -127,4 +127,31 @@ public interface SpellingPreferencesPaneConstants extends com.google.gwt.i18n.cl
     @DefaultStringValue("Use real time spell-checking")
     @Key("realtimeSpellcheckingCheckbox")
     String realtimeSpellcheckingCheckbox();
+
+    /**
+     * Translated "Edit".
+     *
+     * @return translated "Edit"
+     */
+    @DefaultStringValue("Edit")
+    @Key("editDialog")
+    String editDialog();
+
+    /**
+     * Translated "Save".
+     *
+     * @return translated "Save"
+     */
+    @DefaultStringValue("Save")
+    @Key("saveDialog")
+    String saveDialog();
+
+    /**
+     * Translated "Save".
+     *
+     * @return translated "Save"
+     */
+    @DefaultStringValue("Cancel")
+    @Key("cancelButton")
+    String cancelButton();
 }

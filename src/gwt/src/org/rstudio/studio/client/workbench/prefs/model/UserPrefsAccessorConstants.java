@@ -1844,4 +1844,18 @@ public interface UserPrefsAccessorConstants extends Constants {
    String okButton();
    @DefaultStringValue("Apply")
    String applyButton();
+   @DefaultStringValue("Line ending conversion:")
+   String lineEndingsSelectWidgetLabel();
+   @DefaultStringValue("(Use Default)")
+   String useDefaultOption();
+   @DefaultStringValue("None")
+   String noneOption();
+   @DefaultStringValue("Platform Native")
+   String platformNativeOption();
+   @DefaultStringValue("Posix (LF)")
+   String posixOption();
+   @DefaultStringValue("Windows (CR/LF)")
+   String windowsOption();
+   @DefaultStringValue("Using Code Diagnostics")
+   String codeDiagnosticsLabel();
 }
