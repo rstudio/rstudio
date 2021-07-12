@@ -912,7 +912,7 @@ Error SchemaUpdater::getSchemaTableColumnCount(int* pColumnCount)
    std::string queryStr;
    if (connection_->driverName() == SQLITE_DRIVER)
    {
-      queryStr = std::string("SELECT COUNT(*) FROM PRAGMA_TABLE_INFO('") + SCHEMA_TABLE + "'";
+      queryStr = std::string("SELECT COUNT(*) FROM PRAGMA_TABLE_INFO('") + SCHEMA_TABLE + "')";
    }
    else
    {
@@ -972,6 +972,15 @@ Error SchemaUpdater::databaseSchemaVersion(SchemaVersion* pVersion)
    error = connection_->execute(query);
    if (error)
       return error;
+
+   // Previously the table name was included in the schema version - parse it out.
+   if (schemaColumnCount == 1)
+   {
+      std::vector<std::string> split;
+      boost::split(split, version.Date, boost::is_any_of("_"));
+      if (split.size() >= 1)
+         version.Date = split[0];
+   }
 
    *pVersion = version;
    return Success();
