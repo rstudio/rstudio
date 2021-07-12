@@ -186,15 +186,32 @@ private:
 // keep a list of previews so we can re-render, re-activate
 std::vector<boost::shared_ptr<QuartoPreview>> s_previews;
 
+// preview singleton
+boost::shared_ptr<QuartoPreview> s_pPreview;
+
+// stop any running preview
+void stopPreview()
+{
+   if (s_pPreview)
+   {
+      // stop the job if it's running
+      if (s_pPreview->isRunning())
+         s_pPreview->stop();
+
+      // remove the job (will be replaced by a new quarto serve)
+      s_pPreview->remove();
+   }
+}
 
 // create a preview job
 Error createPreview(const FilePath& previewFilePath, const std::string& format)
 {
-   boost::shared_ptr<QuartoPreview> pPreview;
-   Error error = QuartoPreview::create(previewFilePath, format, &pPreview);
+   // stop any running preview
+   stopPreview();
+
+   Error error = QuartoPreview::create(previewFilePath, format, &s_pPreview);
    if (error)
       return error;
-   s_previews.push_back(pPreview);
    return Success();
 }
 
@@ -209,36 +226,12 @@ Error quartoPreviewRpc(const json::JsonRpcRequest& request,
       return error;
    FilePath previewFilePath = module_context::resolveAliasedPath(previewFile);
 
-   // see if there is an existing preview we should re-render
-   auto preview = std::find_if(s_previews.begin(), s_previews.end(),
-                               [&previewFilePath](boost::shared_ptr<QuartoPreview> pPreview) {
-      return (pPreview->previewFile() == previewFilePath) && pPreview->isRunning();
-   });
-   if (preview != s_previews.end())
+   if (s_pPreview && s_pPreview->isRunning() &&
+       (s_pPreview->previewFile() == previewFilePath) &&
+       (s_pPreview->format() == format))
    {
-      boost::shared_ptr<QuartoPreview> pPreview = *preview;
-
-      // if we have the same format then just re-render
-      if (format == pPreview->format())
-      {
-         module_context::enqueClientEvent(ClientEvent(client_events::kJobsActivate));
-         return pPreview->render();
-      }
-      else
-      {
-          // erase from our list
-          s_previews.erase(preview);
-
-         // otherwise kill the job and remove it
-         if (pPreview->isRunning())
-            pPreview->stop();
-         pPreview->remove();
-
-         // new preview
-         return createPreview(previewFilePath, format);
-      }
-
-
+      module_context::enqueClientEvent(ClientEvent(client_events::kJobsActivate));
+      return s_pPreview->render();
    }
    else
    {
