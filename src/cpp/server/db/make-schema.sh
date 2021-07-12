@@ -11,6 +11,8 @@ fi
 filename=$(date -u '+%Y%m%d%H%M%S%N')
 filename="${filename}_${1}_AlterTables"
 
+filename=$(echo "${filename}" | tr ' ' '-')
+
 if [ -z "$2" ]
 then
    filename1="${filename}.sqlite"
