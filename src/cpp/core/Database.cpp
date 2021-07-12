@@ -722,12 +722,12 @@ SchemaVersion::SchemaVersion(const SchemaVersion& other) :
 {
 }
 
-bool SchemaVersion::isEmpty() const 
+bool SchemaVersion::isEmpty() const
 {
    return false;
 }
 
-SchemaVersion& SchemaVersion::operator=(const SchemaVersion& other) 
+SchemaVersion& SchemaVersion::operator=(const SchemaVersion& other)
 {
    if (this != &other)
    {
@@ -737,7 +737,7 @@ SchemaVersion& SchemaVersion::operator=(const SchemaVersion& other)
    return *this;
 }
 
-SchemaVersion& SchemaVersion::operator=(SchemaVersion&& other) 
+SchemaVersion& SchemaVersion::operator=(SchemaVersion&& other)
 {
    if (this != &other)
    {
@@ -747,7 +747,7 @@ SchemaVersion& SchemaVersion::operator=(SchemaVersion&& other)
    return *this;
 }
 
-bool SchemaVersion::operator<(const SchemaVersion& other) const 
+bool SchemaVersion::operator<(const SchemaVersion& other) const
 {
    if (*this == other)
       return false;
@@ -755,11 +755,11 @@ bool SchemaVersion::operator<(const SchemaVersion& other) const
    if (isEmpty())
       return true;
 
-   if (other.isEmpty()) 
+   if (other.isEmpty())
       return false;
 
    const auto& versions = versionMap();
-   int thisFlowerIndex = (versions.find(Flower) != versions.end()) ? versions.at(Flower) : -1; 
+   int thisFlowerIndex = (versions.find(Flower) != versions.end()) ? versions.at(Flower) : -1;
    int otherFlowerIndex = (versions.find(other.Flower) != versions.end()) ? versions.at(other.Flower) : -1;
 
    if (thisFlowerIndex < otherFlowerIndex)
@@ -770,7 +770,7 @@ bool SchemaVersion::operator<(const SchemaVersion& other) const
    // If the date is empty, we should treat this like "the latest version at this flower"
    if (Date.empty() && !other.Date.empty())
       return false;
-   
+
    if (other.Date.empty())
       return true;
 
@@ -805,17 +805,20 @@ const std::map<std::string, int>& SchemaVersion::versionMap()
    static boost::mutex m;
    static std::map<std::string, int> versions;
 
-   // Check if the map is empty before locking the mutex to avoid the cost of locking on every access
-   // But if it _is_ empty, lock and then double check that it's still empty before modifying it.
-   if (versions.empty()) {
+   // Check if the map is empty before locking the mutex to avoid the cost of
+   // locking on every access But if it _is_ empty, lock and then double check
+   // that it's still empty before modifying it.
+   if (versions.empty())
+   {
       LOCK_MUTEX(m)
-      { 
-         if (versions.empty()) 
+      {
+         if (versions.empty())
          {
             versions[""] = 0;
-            versions["Ghost Orchid"] = 1; 
+            versions["Ghost Orchid"] = 1;
          }
-      } END_LOCK_MUTEX
+      }
+      END_LOCK_MUTEX
    }
 
    return versions;
@@ -828,7 +831,7 @@ SchemaUpdater::SchemaUpdater(const boost::shared_ptr<IConnection>& connection,
 {
 }
 
-Error SchemaUpdater::migrationFiles(std::vector<FilePath>* pMigrationFiles)
+Error SchemaUpdater::migrationFiles(std::vector<std::pair<SchemaVersion, FilePath>>* pMigrationFiles)
 {
    std::vector<FilePath> children;
    Error error = migrationsPath_.getChildren(children);
@@ -842,16 +845,26 @@ Error SchemaUpdater::migrationFiles(std::vector<FilePath>* pMigrationFiles)
           extension == SQLITE_EXTENSION ||
           extension == POSTGRESQL_EXTENSION)
       {
-         pMigrationFiles->push_back(file);
+         SchemaVersion version;
+         if (parseVersionOfFile(file, &version))
+         {
+            pMigrationFiles->emplace_back(version, file);
+         }
       }
    }
+
+   // sort descending - highest version filename wins
+   auto comparator = [](const std::pair<SchemaVersion, FilePath>& a,
+                        const std::pair<SchemaVersion, FilePath>& b)
+   { return a.first > b.first; };
+   std::sort(pMigrationFiles->begin(), pMigrationFiles->end(), comparator);
 
    return Success();
 }
 
 Error SchemaUpdater::highestMigrationVersion(SchemaVersion* pVersion)
 {
-   std::vector<FilePath> files;
+   std::vector<std::pair<SchemaVersion, FilePath>> files;
    Error error = migrationFiles(&files);
    if (error)
       return error;
@@ -863,22 +876,7 @@ Error SchemaUpdater::highestMigrationVersion(SchemaVersion* pVersion)
       return Success();
    }
 
-   // sort descending - highest version filename wins
-   auto comparator = [](const FilePath& a, const FilePath& b)
-   {
-      return a.getStem() > b.getStem();
-   };
-   std::sort(files.begin(), files.end(), comparator);
-
-   pVersion->Flower = RSTUDIO_RELEASE_NAME;
-
-   std::string fName = files.at(0).getStem();
-   std::vector<std::string> splitFname;
-   boost::split(splitFname, fName, boost::is_any_of("_"));
-   if (splitFname.size() > 0)
-   {
-      pVersion->Date = splitFname[0];
-   }
+   *pVersion = files.at(0).first;
    return Success();
 }
 
@@ -900,8 +898,7 @@ Error SchemaUpdater::isSchemaVersionPresent(bool* pIsPresent)
    }
 
    int count = 0;
-   Query query = connection_->query(queryStr)
-         .withOutput(count);
+   Query query = connection_->query(queryStr).withOutput(count);
    Error error = connection_->execute(query);
    if (error)
       return error;
@@ -913,11 +910,11 @@ Error SchemaUpdater::isSchemaVersionPresent(bool* pIsPresent)
 Error SchemaUpdater::getSchemaTableColumnCount(int* pColumnCount)
 {
    std::string queryStr;
-   if (connection_->driverName() == SQLITE_DRIVER) 
+   if (connection_->driverName() == SQLITE_DRIVER)
    {
       queryStr = std::string("SELECT COUNT(*) FROM PRAGMA_TABLE_INFO('") + SCHEMA_TABLE + "'";
    }
-   else 
+   else
    {
       queryStr = std::string("SELECT COUNT(*) FROM information_schema.columns WHERE table_name='") + SCHEMA_TABLE +
                  "' AND table_schema = current_schema";
@@ -938,7 +935,7 @@ bool SchemaUpdater::parseVersionOfFile(const FilePath& file, SchemaVersion* pVer
    std::string fileStem = file.getStem();
    if (fileStem == CREATE_TABLES_STEM)
       return false;
-   
+
    std::vector<std::string> split;
    boost::split(split, fileStem, boost::is_any_of("_"));
    if (split.size() != 3)
@@ -985,17 +982,27 @@ Error SchemaUpdater::isUpToDate(bool* pUpToDate)
 
 Error SchemaUpdater::update()
 {
-   SchemaVersion migrationVersion;
-   Error error = highestMigrationVersion(&migrationVersion);
+   bool schemaPresent = false;
+   Error error = isSchemaVersionPresent(&schemaPresent);
    if (error)
       return error;
 
-   SchemaVersion currentVersion;
-   error = databaseSchemaVersion(&currentVersion);
-   if (currentVersion < migrationVersion)
-      return updateToVersion(migrationVersion);
+   if (schemaPresent)
+   {
+      SchemaVersion migrationVersion;
+      error = highestMigrationVersion(&migrationVersion);
+      if (error)
+         return error;
+
+      SchemaVersion currentVersion;
+      error = databaseSchemaVersion(&currentVersion);
+      if (currentVersion < migrationVersion)
+         return updateToVersion(migrationVersion);
+      else
+         return Success();
+   }
    else
-      return Success();
+      return createSchema();
 }
 
 Error SchemaUpdater::createSchema()
@@ -1063,19 +1070,12 @@ Error SchemaUpdater::updateToVersion(const SchemaVersion& maxVersion)
    if (currentVersion >= maxVersion)
       return Success();
 
-   std::vector<FilePath> files;
+   std::vector<std::pair<SchemaVersion, FilePath>> files;
    error = migrationFiles(&files);
    if (error)
       return error;
 
-   // sort ascending
-   auto comparator = [](const FilePath& a, const FilePath& b)
-   {
-      return a.getStem() < b.getStem();
-   };
-   std::sort(files.begin(), files.end(), comparator);
-
-   for (const FilePath& migrationFile : files)
+   for (const std::pair<SchemaVersion, FilePath>& migrationFile : files)
    {
       // // if the version has already been applied (database version is newer or same)
       // // then skip this particular migration
@@ -1088,17 +1088,17 @@ Error SchemaUpdater::updateToVersion(const SchemaVersion& maxVersion)
 
       bool applyMigration = false;
 
-      if (migrationFile.getExtensionLowerCase() == SQL_EXTENSION)
+      if (migrationFile.second.getExtensionLowerCase() == SQL_EXTENSION)
       {
          // plain sql - apply the migration
          applyMigration = true;
       }
-      else if (migrationFile.getExtensionLowerCase() == SQLITE_EXTENSION)
+      else if (migrationFile.second.getExtensionLowerCase() == SQLITE_EXTENSION)
       {
          // sqlite file - only apply migration if we are connected to a SQLite database
          applyMigration = connection_->driverName() == SQLITE_DRIVER;
       }
-      else if (migrationFile.getExtensionLowerCase() == POSTGRESQL_EXTENSION)
+      else if (migrationFile.second.getExtensionLowerCase() == POSTGRESQL_EXTENSION)
       {
          // postgresql file - only apply migration if we are connected to a PostgreSQL database
          applyMigration = connection_->driverName() == POSTGRESQL_DRIVER;
@@ -1110,20 +1110,11 @@ Error SchemaUpdater::updateToVersion(const SchemaVersion& maxVersion)
       // we are clear to apply the migration
       // load the file and execute its SQL contents
       std::string fileContents;
-      error = readStringFromFile(migrationFile, &fileContents);
+      error = readStringFromFile(migrationFile.second, &fileContents);
       if (error)
          return error;
 
       error = connection_->executeStr(fileContents);
-      if (error)
-         return error;
-
-      // record the new version in the version table
-      std::string version = migrationFile.getStem();
-      Query updateVersionQuery = connection_->query(std::string("UPDATE \"") + SCHEMA_TABLE + "\" SET current_version = (:ver), flower = (:flower)")
-            .withInput(version, "ver")
-            .withInput(std::string(RSTUDIO_RELEASE_NAME), "flower");
-      error = connection_->execute(updateVersionQuery);
       if (error)
          return error;
    }
