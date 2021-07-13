@@ -724,7 +724,7 @@ SchemaVersion::SchemaVersion(const SchemaVersion& other) :
 
 bool SchemaVersion::isEmpty() const
 {
-   return false;
+   return Date.empty() && Flower.empty();
 }
 
 SchemaVersion& SchemaVersion::operator=(const SchemaVersion& other)
@@ -752,7 +752,7 @@ bool SchemaVersion::operator<(const SchemaVersion& other) const
    if (*this == other)
       return false;
 
-   if (isEmpty())
+   if (isEmpty() && !other.isEmpty())
       return true;
 
    if (other.isEmpty())
@@ -1099,14 +1099,6 @@ Error SchemaUpdater::updateToVersion(const SchemaVersion& maxVersion)
 
    for (const std::pair<SchemaVersion, FilePath>& migrationFile : files)
    {
-      // // if the version has already been applied (database version is newer or same)
-      // // then skip this particular migration
-      // if (migrationFile.getStem() <= currentVersion)
-      //    continue;
-
-      // // if the migration file version is higher than the max specified version, we're done
-      // if (migrationFile.getStem() > maxVersion)
-      //    break;
 
       bool applyMigration = false;
 
