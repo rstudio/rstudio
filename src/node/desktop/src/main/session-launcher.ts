@@ -208,146 +208,9 @@ export class SessionLauncher {
     }
   }
 
-  private launchSession(argList: string[]): ChildProcess {
-    // always remove the abend log path before launching
-    const error = abendLogPath().removeIfExistsSync();
-    if (error) {
-      logger().logError(error);
-    }
-
+  getRecentSessionLogs(): Err {
     // TODO
-    // we need indirection through arch to handle arm64
-    // see C++ sources...
-
-    const sessionProc = launchProcess(this.sessionPath, argList);
-    sessionProc.on('error', (err) => {
-      // Unable to start rsession (at all)
-      logger().logError(err);
-      this.onRSessionExited();
-    });
-    sessionProc.on('exit', (code, signal) => {
-      if (code !== null) {
-        logger().logDebug(`rsession exited: code=${code}`);
-        if (code !== 0) {
-          logger().logDebug(`${this.sessionPath} ${argList}`);
-        }
-      } else {
-        logger().logDebug(`rsession terminated: signal=${signal}`);
-      }
-      this.onRSessionExited();
-    });
-
-    return sessionProc;
-  }
-
-  private onLaunchFirstSession(): void {
-    const error = this.launchFirst();
-    if (error) {
-      logger().logError(error);
-      appState().activation().emitLaunchError(this.launchFailedErrorMessage());
-    }
-  }
-
-  onLaunchError(message: string): void {
-    if (message) {
-      dialog.showErrorBox(appState().activation().editionName(), message);
-    }
-    if (this.mainWindow) {
-      this.mainWindow.window.close();
-    } else {
-      app.exit(EXIT_FAILURE);
-    }
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  launchNextSession(reload: boolean): Err {
-
-    // build a new launch context -- re-use the same port if we aren't reloading
-    /* const launchContext = */ this.buildLaunchContext(!reload);
-
-    // TODO: nyi
-    return Error('launchNextSession NYI');
-  }
-
-  onRSessionExited(): void {
-    // if this is a verify-installation session then just quit
-    if (appState().runDiagnostics) {
-      this.mainWindow?.quit();
-      return;
-    }
-
-    const pendingQuit = this.mainWindow?.collectPendingQuitRequest();
-
-    // if there was no pending quit set then this is a crash
-    if (pendingQuit === PendingQuit.PendingQuitNone) {
-
-      this.closeAllSatellites();
-
-      this.mainWindow?.window.webContents.executeJavaScript('window.desktopHooks.notifyRCrashed()')
-        .catch(() => {
-          // The above can throw if the window has no desktop hooks; this is normal
-          // if we haven't loaded the initial session.
-        });
-
-      if (!this.mainWindow?.workbenchInitialized) {
-        // If the R session exited without initializing the workbench, treat it as
-        // a boot failure.
-        this.showLaunchErrorPage();
-      }
-
-      // quit and exit means close the main window
-    } else if (pendingQuit === PendingQuit.PendingQuitAndExit) {
-      this.mainWindow?.quit();
-    }
-
-    // otherwise this is a restart so we need to launch the next session
-    else {
-      const reload = (pendingQuit === PendingQuit.PendingQuitRestartAndReload);
-      if (reload) {
-        this.closeAllSatellites();
-      }
-
-      // launch next session
-      this.launchNextSession(reload);
-    }
-  }
-
-  buildLaunchContext(reusePort = true): LaunchContext {
-    const argList: string[] = [];
-
-    if (!reusePort) {
-      appState().generateNewPort();
-    }
-
-    if (!this.confPath.isEmpty()) {
-      argList.push('--config-file');
-      argList.push(this.confPath.getAbsolutePath());
-    } else {
-      // explicitly pass "none" so that rsession doesn't read an
-      // /etc/rstudio/rsession.conf file which may be sitting around
-      // from a previous configuration or install
-      argList.push('--config-file');
-      argList.push('none');
-    }
-
-    // recalculate the local peer and set RS_LOCAL_PEER so that
-    // rsession and it's children can use it
-    if (process.platform === 'win32') {
-      setenv('RS_LOCAL_PEER', localPeer(appState().port));
-    }
-
-    const portStr = appState().port.toString();
-    return {
-      host: this.host,
-      port: appState().port,
-      url: `http://${this.host}:${portStr}`,
-      argList: [
-        '--config-file', this.confPath.getAbsolutePath(),
-        '--program-mode', 'desktop',
-        '--www-port', portStr,
-        '--launcher-token', SessionLauncher.launcherToken
-      ],
-    };
+    return new Error('not implemented');
   }
 
   showLaunchErrorPage(): void {
@@ -413,6 +276,145 @@ export class SessionLauncher {
     // }
   }
 
+  onRSessionExited(): void {
+    // if this is a verify-installation session then just quit
+    if (appState().runDiagnostics) {
+      this.mainWindow?.quit();
+      return;
+    }
+
+    const pendingQuit = this.mainWindow?.collectPendingQuitRequest();
+
+    // if there was no pending quit set then this is a crash
+    if (pendingQuit === PendingQuit.PendingQuitNone) {
+
+      this.closeAllSatellites();
+
+      this.mainWindow?.window.webContents.executeJavaScript('window.desktopHooks.notifyRCrashed()')
+        .catch(() => {
+          // The above can throw if the window has no desktop hooks; this is normal
+          // if we haven't loaded the initial session.
+        });
+
+      if (!this.mainWindow?.workbenchInitialized) {
+        // If the R session exited without initializing the workbench, treat it as
+        // a boot failure.
+        this.showLaunchErrorPage();
+      }
+
+      // quit and exit means close the main window
+    } else if (pendingQuit === PendingQuit.PendingQuitAndExit) {
+      this.mainWindow?.quit();
+    }
+
+    // otherwise this is a restart so we need to launch the next session
+    else {
+
+      // TODO
+      // if (!activation().allowProductUsage())
+      // {
+      //    std::string message = "Unable to obtain a license. Please restart RStudio to try again.";
+      //    std::string licenseMessage = activation().currentLicenseStateMessage();
+      //    if (licenseMessage.empty())
+      //       licenseMessage = "None Available";
+      //    message += "\n\nDetails: ";
+      //    message += licenseMessage;
+      //    showMessageBox(QMessageBox::Critical,
+      //                   pMainWindow_,
+      //                   desktop::activation().editionName(),
+      //                   QString::fromUtf8(message.c_str()), QString());
+      //    closeAllSatellites();
+      //    pMainWindow_->quit();
+      //    return;
+      // }
+
+      // close all satellite windows if we are reloading
+      const reload = (pendingQuit === PendingQuit.PendingQuitRestartAndReload);
+      if (reload) {
+        this.closeAllSatellites();
+      }
+
+      // launch next session
+      const error = this.launchNextSession(reload);
+      if (error) {
+        logger().logError(error);
+
+        // TODO
+        //  showMessageBox(QMessageBox::Critical,
+        //                 pMainWindow_,
+        //                 desktop::activation().editionName(),
+        //                 launchFailedErrorMessage(), QString());
+
+        this.mainWindow?.quit();
+      }
+    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  launchNextSession(reload: boolean): Err {
+
+    // build a new launch context -- re-use the same port if we aren't reloading
+    /* const launchContext = */ this.buildLaunchContext(!reload);
+
+    // TODO: nyi
+    return Error('launchNextSession NYI');
+  }
+
+  onReloadFrameForNextSession(): void {
+    // TODO
+  }
+
+  private onLaunchFirstSession(): void {
+    const error = this.launchFirst();
+    if (error) {
+      logger().logError(error);
+      appState().activation().emitLaunchError(this.launchFailedErrorMessage());
+    }
+  }
+
+  private launchSession(argList: string[]): ChildProcess {
+    // always remove the abend log path before launching
+    const error = abendLogPath().removeIfExistsSync();
+    if (error) {
+      logger().logError(error);
+    }
+
+    // TODO
+    // we need indirection through arch to handle arm64
+    // see C++ sources...
+
+    const sessionProc = launchProcess(this.sessionPath, argList);
+    sessionProc.on('error', (err) => {
+      // Unable to start rsession (at all)
+      logger().logError(err);
+      this.onRSessionExited();
+    });
+    sessionProc.on('exit', (code, signal) => {
+      if (code !== null) {
+        logger().logDebug(`rsession exited: code=${code}`);
+        if (code !== 0) {
+          logger().logDebug(`${this.sessionPath} ${argList}`);
+        }
+      } else {
+        logger().logDebug(`rsession terminated: signal=${signal}`);
+      }
+      this.onRSessionExited();
+    });
+
+    return sessionProc;
+  }
+
+  onLaunchError(message: string): void {
+    if (message) {
+      dialog.showErrorBox(appState().activation().editionName(), message);
+    }
+    if (this.mainWindow) {
+      this.mainWindow.window.close();
+    } else {
+      app.exit(EXIT_FAILURE);
+    }
+  }
+
   collectAbendLogMessage(): string {
     const contents = '';
 
@@ -460,5 +462,45 @@ export class SessionLauncher {
     // }
 
     return errMsg;
+  }
+
+  buildLaunchContext(reusePort = true): LaunchContext {
+    const argList: string[] = [];
+
+    if (!reusePort) {
+      appState().generateNewPort();
+    }
+
+    if (!this.confPath.isEmpty()) {
+      argList.push('--config-file', this.confPath.getAbsolutePath());
+    } else {
+      // explicitly pass "none" so that rsession doesn't read an
+      // /etc/rstudio/rsession.conf file which may be sitting around
+      // from a previous configuration or install
+      argList.push('--config-file', 'none');
+    }
+
+    const portStr = appState().port.toString();
+
+    argList.push('--program-mode', 'desktop');
+    argList.push('--www-port', portStr);
+    argList.push('--launcher-token', SessionLauncher.launcherToken);
+
+    // recalculate the local peer and set RS_LOCAL_PEER so that
+    // rsession and it's children can use it
+    if (process.platform === 'win32') {
+      setenv('RS_LOCAL_PEER', localPeer(appState().port));
+    }
+
+    if (appState().runDiagnostics) {
+      argList.push('--verify-installation', '1');
+    }
+
+    return {
+      host: this.host,
+      port: appState().port,
+      url: `http://${this.host}:${portStr}`,
+      argList
+    };
   }
 }
