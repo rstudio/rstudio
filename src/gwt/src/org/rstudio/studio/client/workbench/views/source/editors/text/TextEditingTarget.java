@@ -98,6 +98,8 @@ import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.plumber.events.LaunchPlumberAPIEvent;
 import org.rstudio.studio.client.plumber.events.PlumberAPIStatusEvent;
 import org.rstudio.studio.client.plumber.model.PlumberAPIParams;
+import org.rstudio.studio.client.quarto.QuartoHelper;
+import org.rstudio.studio.client.quarto.model.QuartoConfig;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.events.ConvertToShinyDocEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdOutputFormatChangedEvent;
@@ -6821,8 +6823,8 @@ public class TextEditingTarget implements
    private String useQuartoPreview()
    {
       if (extendedType_ == SourceDocument.XT_QUARTO_DOCUMENT && 
-          !isShinyDoc() && !isRmdNotebook())
-      {
+          !isShinyDoc() && !isRmdNotebook() && !isQuartoWebsiteDoc())
+      {  
          List<String> outputFormats = getQuartoOutputFormats();
          if (outputFormats.size() == 0)
          {
@@ -6845,6 +6847,12 @@ public class TextEditingTarget implements
          return null;
       }
      
+   }
+   
+   private boolean isQuartoWebsiteDoc()
+   {
+      QuartoConfig config = session_.getSessionInfo().getQuartoConfig();
+      return QuartoHelper.isQuartoWebsiteDoc(docUpdateSentinel_.getPath(), config);
    }
    
 

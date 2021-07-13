@@ -37,6 +37,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.rpubs.events.RPubsUploadStatusEvent;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewResult;
 import org.rstudio.studio.client.plumber.model.PlumberAPIParams;
+import org.rstudio.studio.client.quarto.QuartoHelper;
 import org.rstudio.studio.client.quarto.model.QuartoConfig;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdOutputInfo;
@@ -272,18 +273,7 @@ public class RSConnectPublishButton extends Composite
       boolean isWebsite = false;
       if (!StringUtil.isNullOrEmpty(qmd))
       {
-         QuartoConfig config = session_.getSessionInfo().getQuartoConfig();
-         if (config.is_project &&
-            (config.project_type == SessionInfo.QUARTO_PROJECT_TYPE_SITE ||
-               config.project_type == SessionInfo.QUARTO_PROJECT_TYPE_BOOK))
-         {
-            FileSystemItem projectDir = FileSystemItem.createDir(config.project_dir);
-            FileSystemItem qmdFile = FileSystemItem.createFile(qmd);
-            if (qmdFile.getPathRelativeTo(projectDir) != null)
-            {
-               isWebsite = true;
-            }
-         }
+         isWebsite = QuartoHelper.isQuartoWebsiteDoc(qmd, session_.getSessionInfo().getQuartoConfig());
       }
 
       // Set the content type accordingly. Note that
