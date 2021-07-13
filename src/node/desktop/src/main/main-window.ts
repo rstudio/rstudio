@@ -27,6 +27,7 @@ import { SessionLauncher } from './session-launcher';
 import { ApplicationLaunch } from './application-launch';
 import { GwtWindow } from './gwt-window';
 import { appState } from './app-state';
+import { DesktopOptions } from './desktop-options';
 
 export function closeAllSatellites(mainWindow: BrowserWindow): void {
   const topLevels = BrowserWindow.getAllWindows();
@@ -122,6 +123,11 @@ export class MainWindow extends GwtWindow {
     // connect(qApp, SIGNAL(commitDataRequest(QSessionManager&)),
     //         this, SLOT(commitDataRequest(QSessionManager&)),
     //         Qt::DirectConnection);
+    
+    this.window.on('close', () => {
+      const size = this.window.getSize();
+      DesktopOptions().saveWindowBounds({width: size[0], height: size[1]});
+    });
   }
 
   launchSession(reload: boolean): void {
