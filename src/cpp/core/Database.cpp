@@ -1141,6 +1141,8 @@ Error SchemaUpdater::updateToVersion(const SchemaVersion& maxVersion)
       if (!applyMigration)
          continue;
 
+      LOG_DEBUG_MESSAGE("Applying database schema alter file " + migrationFile.second.getAbsolutePath());
+
       // we are clear to apply the migration
       // load the file and execute its SQL contents
       std::string fileContents;
