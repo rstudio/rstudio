@@ -253,7 +253,8 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       }
       else if (frame_ != null &&
           frame_.getIFrame().getCurrentUrl() != null &&
-          !StringUtil.equals(frame_.getIFrame().getCurrentUrl(), getUrl()))
+          !StringUtil.equals(urlWithoutHash(frame_.getIFrame().getCurrentUrl()), 
+                             urlWithoutHash(getUrl())))
       {
          // Typically we navigate to the unmodified URL (i.e. without the
          // viewer_pane=1 query params, etc.) However, if the URL currently
@@ -303,6 +304,18 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
          return;
 
       publishButton_.setShowCaption(width > 500);
+   }
+   
+   private String urlWithoutHash(String url)
+   {
+      if (!StringUtil.isNullOrEmpty(url))
+      {
+         return url.split("#")[0];
+      }
+      else
+      {
+         return url;
+      }
    }
 
    private native static String getOrigin() /*-{
