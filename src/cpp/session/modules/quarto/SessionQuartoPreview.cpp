@@ -70,6 +70,11 @@ public:
       return port_;
    }
 
+   std::string jobId()
+   {
+      return pJob_->id();
+   }
+
    Error render()
    {
       return r::exec::RFunction(".rs.quarto.renderPreview",
@@ -240,7 +245,9 @@ Error quartoPreviewRpc(const json::JsonRpcRequest& request,
        (s_pPreview->previewFile() == previewFilePath) &&
        (s_pPreview->format() == format))
    {
-      module_context::enqueClientEvent(ClientEvent(client_events::kJobsActivate));
+      json::Object eventJson;
+      eventJson["id"] = s_pPreview->jobId();
+      module_context::enqueClientEvent(ClientEvent(client_events::kJobsActivate, eventJson));
       return s_pPreview->render();
    }
    else

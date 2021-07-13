@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.jobs.events;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
@@ -23,11 +24,23 @@ public class JobsActivateEvent extends GwtEvent<JobsActivateEvent.Handler>
    {
       void onJobsActivate(JobsActivateEvent event);
    }
-
-   public JobsActivateEvent()
+   
+   public static class Data extends JavaScriptObject
    {
+      protected Data() {}
+
+      public final native String getId() /*-{ return this["id"]; }-*/;
    }
 
+   public JobsActivateEvent(Data data)
+   {
+      jobId_ = data.getId();
+   }
+
+   public String getJobId()
+   {
+      return jobId_;
+   }
   
    @Override
    public Type<Handler> getAssociatedType()
@@ -42,4 +55,6 @@ public class JobsActivateEvent extends GwtEvent<JobsActivateEvent.Handler>
    }
 
    public static final Type<Handler> TYPE = new Type<>();
+   
+   private final String jobId_;
 }
