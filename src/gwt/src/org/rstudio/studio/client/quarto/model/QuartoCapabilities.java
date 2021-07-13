@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.quarto.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 
 
@@ -36,4 +37,15 @@ public class QuartoCapabilities extends JavaScriptObject
    public final native QuartoPythonCapabilities getPythonCapabilities() /*-{
       return this.python;
    }-*/;
+   
+   public final JsArray<QuartoJupyterKernel> jupyterKernels()
+   {
+      QuartoPythonCapabilities pythonCaps = getPythonCapabilities();
+      JsArray<QuartoJupyterKernel> kernels = JsArray.createArray().cast();
+      if (pythonCaps != null && pythonCaps.getKernels() != null)
+         kernels = pythonCaps.getKernels();
+      else
+         kernels.push(QuartoJupyterKernel.defaultKernel());
+      return kernels;
+   }
 }

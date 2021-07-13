@@ -88,6 +88,7 @@ import org.rstudio.studio.client.projects.model.ProjectTemplateRegistryProvider;
 import org.rstudio.studio.client.projects.ui.newproject.CodeFilesList;
 import org.rstudio.studio.client.projects.ui.newproject.NewDirectoryPage;
 import org.rstudio.studio.client.projects.ui.newproject.NewPackagePage;
+import org.rstudio.studio.client.projects.ui.newproject.NewQuartoProjectPage;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesPane;
 import org.rstudio.studio.client.projects.ui.prefs.buildtools.BuildToolsPackagePanel;
 import org.rstudio.studio.client.quarto.QuartoNewDocument;
@@ -346,6 +347,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(ConsoleInterpreterVersion version);
    void injectMembers(QuartoNewDocument quartoNewDocument);
    void injectMembers(QuartoNewDocumentDialog quartoNewDocumentDialog);
+   void injectMembers(NewQuartoProjectPage newProjectPage);
 
 
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);

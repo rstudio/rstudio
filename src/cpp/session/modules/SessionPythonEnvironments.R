@@ -101,6 +101,30 @@
    if (file.exists(prefsPython))
       return(path.expand(prefsPython))
    
+   # on Windows, help users find a default version of Python if possible
+   if (.rs.platform.isWindows && nzchar(Sys.which("py")))
+   {
+      # NOTE: ideally, we would just parse the output of 'py --list-paths',
+      # but for whatever reason the '*' indicating the default version of
+      # Python is omitted when run from RStudio, so we try to explicitly
+      # run Python here and then ask where the executable lives.
+      #
+      # We pass '-E' here just to avoid things like PYTHONPATH potentially
+      # influencing how the python session is launched
+      pythonPath <- .rs.tryCatch(
+         system2(
+            command = "py",
+            args    = c("-E"),
+            input   = "import sys; print(sys.executable)",
+            stdout  = TRUE,
+            stderr  = TRUE
+         )
+      )
+      
+      if (!inherits(pythonPath, "error") && file.exists(pythonPath))
+         return(pythonPath)
+   }
+   
    # no python found; return empty string placeholder
    ""
    
@@ -115,18 +139,14 @@
       c("bin/python", "bin/python3")
    
    # look within all top-level directories for an environment
-   envNames <- list.dirs(
+   envPaths <- list.dirs(
       path = projectDir,
       full.names = TRUE,
       recursive = FALSE
    )
    
-   for (envName in envNames)
+   for (envPath in envPaths)
    {
-      envPath <- file.path(projectDir, envName)
-      if (!file.exists(envPath))
-         next
-      
       for (pythonSuffix in pythonSuffixes)
       {
          pythonPath <- file.path(envPath, pythonSuffix)

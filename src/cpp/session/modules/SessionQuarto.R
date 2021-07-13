@@ -29,3 +29,9 @@
    }
 })
 
+.rs.addFunction("quarto.renderPreview", function(port) {
+   utils::download.file(paste0("http://localhost:", port, "/quarto-render/"),
+                        destfile = tempfile(),
+                        quiet = TRUE,
+                        cacheOK = FALSE)
+})

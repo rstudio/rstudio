@@ -277,6 +277,8 @@ set(SESSION_SOURCE_FILES
    modules/rmarkdown/RMarkdownPresentation.cpp
    modules/rmarkdown/RMarkdownTemplates.cpp
    modules/quarto/SessionQuarto.cpp
+   modules/quarto/SessionQuartoJob.cpp
+   modules/quarto/SessionQuartoPreview.cpp
    modules/quarto/SessionQuartoServe.cpp
    modules/shiny/SessionShiny.cpp
    modules/shiny/ShinyAsyncJob.cpp

@@ -151,6 +151,7 @@ import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobOutputEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobRefreshEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobUpdatedEvent;
+import org.rstudio.studio.client.workbench.views.jobs.events.JobsActivateEvent;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobState;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobUpdate;
 import org.rstudio.studio.client.workbench.views.output.data.events.DataOutputCompletedEvent;
@@ -1105,6 +1106,10 @@ public class ClientEventDispatcher
          {
             boolean focusWindow = event.<Bool>getData().getValue();
             eventBus_.dispatchEvent(new ConsoleActivateEvent(focusWindow));
+         }
+         else if (type == ClientEvent.JobsActivate)
+         {
+            eventBus_.dispatchEvent(new JobsActivateEvent());
          }
          else
          {

@@ -29,7 +29,6 @@ namespace session {
 namespace modules {
 namespace quarto {
 
-bool isInstalled(bool refresh = false);
 bool projectIsQuarto();
 
 core::json::Object quartoConfigJSON(bool refresh = false);

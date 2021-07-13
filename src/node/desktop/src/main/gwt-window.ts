@@ -15,10 +15,20 @@
 
 import { WebContents } from 'electron';
 
+import { nextHighest, nextLowest } from '../core/array-utils';
+
 import { DesktopBrowserWindow } from './desktop-browser-window';
+import { DesktopOptions } from './desktop-options';
 
 
-export class GwtWindow extends DesktopBrowserWindow {
+export abstract class GwtWindow extends DesktopBrowserWindow {
+
+  // initialize zoom levels (synchronize with AppearancePreferencesPane.java)
+  zoomLevels = [
+    0.25, 0.50, 0.75, 0.80, 0.90,
+    1.00, 1.10, 1.25, 1.50, 1.75,
+    2.00, 2.50, 3.00, 4.00, 5.00];
+
   constructor(
     showToolbar: boolean,
     adjustTitle: boolean,
@@ -30,5 +40,55 @@ export class GwtWindow extends DesktopBrowserWindow {
     addedCallbacks: string[] = []
   ) {
     super(showToolbar, adjustTitle, name, baseUrl, parent, opener, isRemoteDesktop, addedCallbacks);
+
+    this.window.on('focus', this.onActivated.bind(this));
+  }
+
+  zoomActualSize(): void {
+    this.setWindowZoomLevel(1);
+  }
+
+  setZoomLevel(zoomLevel: number): void {
+    this.setWindowZoomLevel(zoomLevel);
+  }
+
+  zoomIn(): void {
+    const zoomLevel = DesktopOptions().zoomLevel();
+
+    // get next greatest value
+    const newZoomLevel = nextHighest(zoomLevel, this.zoomLevels);
+    if (newZoomLevel != zoomLevel) {
+      this.setWindowZoomLevel(newZoomLevel);
+    }
+  }
+
+  zoomOut(): void {
+    // get next smallest value
+    const zoomLevel = DesktopOptions().zoomLevel();
+    const newZoomLevel = nextLowest(zoomLevel, this.zoomLevels);
+    if (newZoomLevel != zoomLevel) {
+      this.setWindowZoomLevel(newZoomLevel);
+    }
+  }
+
+  abstract onActivated(): void;
+
+  onCloseWindowShortcut(): void {
+    // check to see if the window has desktop hooks (not all GWT windows do); if it does, check to
+    // see whether it has a closeSourceDoc() command we should be executing instead
+    this.executeJavaScript(
+      `if (window.desktopHooks)
+           window.desktopHooks.isCommandEnabled('closeSourceDoc');
+         else false`)
+      .then((closeSourceDocEnabled) => {
+        if (!closeSourceDocEnabled.toBool()) {
+          this.window.close();
+        }
+      });
+  }
+
+  private setWindowZoomLevel(zoomLevel: number): void {
+    DesktopOptions().setZoomLevel(zoomLevel);
+    this.webView.webContents.setZoomFactor(zoomLevel);
   }
 }

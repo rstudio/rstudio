@@ -17,33 +17,41 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-empty-function */
 
-import { ipcMain, dialog, BrowserWindow } from 'electron';
+import { ipcMain, dialog, BrowserWindow, webFrameMain } from 'electron';
 import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions } from 'electron/main';
-import assert from 'assert';
+
+import EventEmitter from 'events';
+
+import { logger } from '../core/logger';
+import { FilePath } from '../core/file-path';
 
 import { PendingWindow } from './pending-window';
 import { MainWindow } from './main-window';
 import { GwtWindow } from './gwt-window';
 import { openMinimalWindow } from './minimal-window';
 import { appState } from './app-state';
-import { logger } from '../core/logger';
+import { resolveAliasedPath } from './utils';
 
-export const PendingQuit = {
-  'PendingQuitNone': 0,
-  'PendingQuitAndExit': 1,
-  'PendingQuitAndRestart': 2,
-  'PendingQuitRestartAndReload': 3
-};
+export enum PendingQuit {
+  PendingQuitNone,
+  PendingQuitAndExit,
+  PendingQuitAndRestart,
+  PendingQuitRestartAndReload
+}
 
 /**
  * This is the main-process side of the GwtCallbacks; dispatched from renderer processes
  * via the ContextBridge.
  */
-export class GwtCallback {
+export class GwtCallback extends EventEmitter {
+  static WORKBENCH_INITIALIZED = 'gwt-callback-workbench_initialized';
+  static SESSION_QUIT = 'gwt-callback-session_quit';
+
   pendingQuit: number = PendingQuit.PendingQuitNone;
   private owners = new Set<GwtWindow>();
 
   constructor(public mainWindow: MainWindow, public isRemoteDesktop: boolean) {
+    super();
     this.owners.add(mainWindow);
     ipcMain.on('desktop_browse_url', (event, url: string) => {
       GwtCallback.unimpl('desktop_browser_url');
@@ -145,7 +153,8 @@ export class GwtCallback {
     });
 
     ipcMain.on('desktop_on_workbench_initialized', (event, scratchPath: string) => {
-      this.mainWindow.onWorkbenchInitialized();
+      this.emit(GwtCallback.WORKBENCH_INITIALIZED);
+      appState().setScratchTempDir(new FilePath(scratchPath));
     });
 
     ipcMain.on('desktop_show_folder', (event, path: string) => {
@@ -193,11 +202,7 @@ export class GwtCallback {
     ipcMain.on('desktop_open_minimal_window', (event: IpcMainEvent, name: string, url: string,
       width: number, height: number
     ) => {
-      const sender = this.getSender(event.processId, event.frameId);
-      if (!sender) {
-        logger().logWarning('received open_minimal_window from unknown window');
-        return;
-      }
+      const sender = this.getSender('desktop_open_minimal_window', event.processId, event.frameId);
       const minimalWindow = openMinimalWindow(sender, name, url, width, height);
       minimalWindow.window.once('ready-to-show', () => {
         minimalWindow.window.show();
@@ -306,11 +311,23 @@ export class GwtCallback {
     });
 
     ipcMain.on('desktop_open_project_in_new_window', (event, projectFilePath) => {
-      GwtCallback.unimpl('desktop_open_project_in_new_window');
+      if (!this.isRemoteDesktop) {
+        const args = [resolveAliasedPath(projectFilePath)];
+        this.mainWindow.launchRStudio(args);
+      } else {
+        // start new Remote Desktop RStudio process with the session URL
+        this.mainWindow.launchRemoteRStudioProject(projectFilePath);
+      }
     });
 
     ipcMain.on('desktop_open_session_in_new_window', (event, workingDirectoryPath) => {
-      GwtCallback.unimpl('desktop_open_session_in_new_window');
+      if (!this.isRemoteDesktop) {
+        workingDirectoryPath = resolveAliasedPath(workingDirectoryPath);
+        this.mainWindow.launchRStudio([], workingDirectoryPath);
+      } else {
+        // start the new session on the currently connected server
+        this.mainWindow.launchRemoteRStudio();
+      }
     });
 
     ipcMain.on('desktop_open_terminal', (event, terminalPath, workingDirectory, extraPathEntries, shellType) => {
@@ -345,21 +362,16 @@ export class GwtCallback {
       GwtCallback.unimpl('desktop_set_zoom_level');
     });
 
-    ipcMain.on('desktop_zoom_in', () => {
-      GwtCallback.unimpl('desktop_zoom_in');
+    ipcMain.on('desktop_zoom_in', (event) => {
+      this.getSender('desktop_zoom_in', event.processId, event.frameId).zoomIn();
     });
 
-    ipcMain.on('desktop_zoom_out', () => {
-      GwtCallback.unimpl('desktop_zoom_out');
+    ipcMain.on('desktop_zoom_out', (event) => {
+      this.getSender('desktop_zoom_out', event.processId, event.frameId).zoomOut();
     });
 
     ipcMain.on('desktop_zoom_actual_size', (event) => {
-      const sender = this.getSender(event.processId, event.frameId);
-      if (sender) {
-        sender.window.webContents.zoomFactor = 1.0;
-      } else {
-        logger().logWarning('received zoom_actual_size from unknown window');
-      }
+      this.getSender('desktop_zoom_actual_size', event.processId, event.frameId).zoomActualSize();
     });
 
     ipcMain.on('desktop_set_background_color', (event, rgbColor) => {
@@ -455,7 +467,7 @@ export class GwtCallback {
     });
 
     ipcMain.on('desktop_launch_session', (event, reload) => {
-      GwtCallback.unimpl('desktop_launch_session');
+      this.mainWindow.launchSession(reload);
     });
 
     ipcMain.on('desktop_reload_zoom_window', () => {
@@ -470,10 +482,7 @@ export class GwtCallback {
     });
   
     ipcMain.on('desktop_set_viewer_url', (event, url) => {
-      const sender = this.getSender(event.processId, event.frameId);
-      if (sender) {
-        sender.setViewerUrl(url);
-      }
+      this.getSender('desktop_set_viewer_url', event.processId, event.frameId).setViewerUrl(url);
     });
 
     ipcMain.on('desktop_reload_viewer_zoom_window', (event, url) => {
@@ -518,7 +527,7 @@ export class GwtCallback {
     });
 
     ipcMain.on('desktop_on_session_quit', () => {
-      GwtCallback.unimpl('desktop_on_session_quit');
+      this.emit(GwtCallback.SESSION_QUIT);
     });
 
     ipcMain.handle('desktop_get_session_server', () => {
@@ -606,7 +615,7 @@ export class GwtCallback {
     }
   }
 
-  collectPendingQuitRequest(): number {
+  collectPendingQuitRequest(): PendingQuit {
     if (this.pendingQuit != PendingQuit.PendingQuitNone) {
       const currentPendingQuit = this.pendingQuit;
       this.pendingQuit = PendingQuit.PendingQuitNone;
@@ -655,15 +664,19 @@ export class GwtCallback {
 
   /**
    * @param event
-   * @returns Registered GwtWindow that sent the event (or undefined if not found)
+   * @returns Registered GwtWindow that sent the event (throws if not found)
    */
-  getSender(processId: number, frameId: number): GwtWindow | undefined {
-    // TODO: probably(?) need to use both processId and frameId to make this determination
-    for (const win of this.owners) {
-      if (win.window.webContents.getProcessId() === processId) {
-        return win;
+  getSender(message: string, processId: number, frameId: number): GwtWindow {
+    const frame = webFrameMain.fromId(processId, frameId);
+    if (frame) {
+      for (const win of this.owners) {
+        if (win.window.webContents.mainFrame === frame) {
+          return win;
+        }
       }
     }
-    return undefined;
+    const err = new Error(`Received callback ${message} from unknown window`);
+    logger().logError(err);
+    throw err;
   }
 }

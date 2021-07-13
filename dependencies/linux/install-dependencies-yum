@@ -62,6 +62,6 @@ fi
 
 # common
 cd ../common
-./install-common
+./install-common $1
 cd ../linux
 

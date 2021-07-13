@@ -189,6 +189,11 @@ bool RCntxt::operator==(const RCntxt& other) const
    return other.pCntxt_ == pCntxt_;
 }
 
+bool RCntxt::operator!=(const RCntxt& other) const
+{
+   return other.pCntxt_ != pCntxt_;
+}
+
 RCntxt::iterator RCntxt::begin()
 {
    return RCntxt::iterator(globalContext());

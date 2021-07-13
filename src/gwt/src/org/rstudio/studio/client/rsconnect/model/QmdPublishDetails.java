@@ -1,5 +1,5 @@
 /*
- * app.ts
+ * QmdPublishDetails.java
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -13,24 +13,19 @@
  *
  */
 
-import { app } from "electron";
+package org.rstudio.studio.client.rsconnect.model;
 
-import DesktopInfo from './desktop-info';
-import Main from './main';
+import jsinterop.annotations.JsType;
+import jsinterop.annotations.JsPackage;
 
-// Where it all begins
-app.whenReady().then(() => {
-
-  (globalThis as any).rstudioGlobal = {
-    desktopInfo: new DesktopInfo()
-  };
-
-  new Main().run();
-});
-
-app.on('window-all-closed', () => {
-  // Mac apps generally don't close when you close the last window, but RStudio does
-  // if (process.platform !== 'darwin') {
-    app.quit();
-  // }
-});
+@JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+public class QmdPublishDetails
+{
+   public boolean is_shiny_qmd;
+   public boolean is_self_contained;
+   public String title;
+   public boolean has_connect_account;
+   public String website_dir;
+   public String website_output_dir;
+   public String output_file;
+}

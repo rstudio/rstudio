@@ -20,6 +20,7 @@ import jsinterop.annotations.JsType;
 public class QuartoConfig
 {
    public boolean installed;
+   public String version;
    public boolean is_project;
    public String project_dir;
    public String project_type;

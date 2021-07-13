@@ -35,4 +35,8 @@ public class RmdShinyDocInfo extends RmdSlideNavigationInfo
    public native final String getRuntime() /*-{
       return this.runtime;
    }-*/;
+
+   public native final boolean isQuarto() /*-{
+      return this.is_quarto;
+   }-*/;
 }

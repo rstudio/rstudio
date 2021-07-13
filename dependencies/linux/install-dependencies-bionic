@@ -89,6 +89,6 @@ fi
 
 # common
 cd ../common
-./install-common
+./install-common bionic
 cd ../linux
 

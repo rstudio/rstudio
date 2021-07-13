@@ -19,7 +19,8 @@ import org.rstudio.studio.client.workbench.views.jobs.model.JobState;
 public interface JobsPresenterEventHandlers extends JobUpdatedEvent.Handler,
                                                     JobOutputEvent.Handler,
                                                     JobSelectionEvent.Handler,
-                                                    JobElapsedTickEvent.Handler
+                                                    JobElapsedTickEvent.Handler,
+                                                    JobsActivateEvent.Handler
 {
    void setInitialJobs(JobState state);
 }

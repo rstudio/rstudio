@@ -40,8 +40,7 @@ public class RSConnectPublishWizard
          return new PublishMultiplePage("Publish", "Publish", null, input);
       }
       else if (input.isWebsiteRmd() || !input.isMultiRmd() && 
-               (!input.isExternalUIEnabled() || !input.isSelfContained() ||
-                 input.isWebsiteRmd()))
+               (!input.isExternalUIEnabled() || input.isWebsiteRmd()))
       {
          // a single doc, but it can't go to RPubs because RPubs is disabled,
          // or because the doc is not self-contained, or is a website

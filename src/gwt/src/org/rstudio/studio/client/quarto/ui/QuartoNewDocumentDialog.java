@@ -28,8 +28,8 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.quarto.model.QuartoCapabilities;
+import org.rstudio.studio.client.quarto.model.QuartoConstants;
 import org.rstudio.studio.client.quarto.model.QuartoJupyterKernel;
-import org.rstudio.studio.client.quarto.model.QuartoPythonCapabilities;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
@@ -140,12 +140,16 @@ public class QuartoNewDocumentDialog extends ModalDialog<QuartoNewDocumentDialog
       Label engineLabel = createLabel("Engine:");
       engineSelect_ = createListBox(
          new String[] {"(None)", "Knitr", "Jupyter"},
-         new String[] {ENGINE_NONE, ENGINE_KNITR, ENGINE_JUPYTER}
+         new String[] {
+           QuartoConstants.ENGINE_MARKDOWN, 
+           QuartoConstants.ENGINE_KNITR, 
+           QuartoConstants.ENGINE_JUPYTER
+         }
       );
       setListBoxValue(engineSelect_, lastResult_.getEngine());
             
       Label kernelLabel = createLabel("Kernel:");
-      JsArray<QuartoJupyterKernel> kernels = kernelsFromCaps(caps);
+      JsArray<QuartoJupyterKernel> kernels = caps.jupyterKernels();
       
       String[] kernelNames = new String[kernels.length()];
       String[] kernelDisplayNames = new String[kernels.length()];
@@ -252,7 +256,7 @@ public class QuartoNewDocumentDialog extends ModalDialog<QuartoNewDocumentDialog
       }
       else
       {
-         JsArray<QuartoJupyterKernel> kernels = kernelsFromCaps(caps_);
+         JsArray<QuartoJupyterKernel> kernels = caps_.jupyterKernels();
          for (int i=0; i<kernels.length(); i++)
          {
             if (kernels.get(i).getName().equals(kernel))
@@ -277,8 +281,8 @@ public class QuartoNewDocumentDialog extends ModalDialog<QuartoNewDocumentDialog
    private void manageControls()
    {
       RowFormatter rowFmt = grid_.getRowFormatter();
-      rowFmt.setVisible(ROW_THEME, formatSelect_.getSelectedValue().equals(FORMAT_HTML));
-      rowFmt.setVisible(ROW_KERNEL, engineSelect_.getSelectedValue().equals(ENGINE_JUPYTER));
+      rowFmt.setVisible(ROW_THEME, formatSelect_.getSelectedValue().equals(QuartoConstants.FORMAT_HTML));
+      rowFmt.setVisible(ROW_KERNEL, engineSelect_.getSelectedValue().equals(QuartoConstants.ENGINE_JUPYTER));
    }
    
    private FormLabel createFormLabel(String caption, Widget w)
@@ -349,16 +353,6 @@ public class QuartoNewDocumentDialog extends ModalDialog<QuartoNewDocumentDialog
       session_.persistClientState();
    }
    
-   private JsArray<QuartoJupyterKernel> kernelsFromCaps(QuartoCapabilities caps)
-   {
-      QuartoPythonCapabilities pythonCaps = caps.getPythonCapabilities();
-      JsArray<QuartoJupyterKernel> kernels = JsArray.createArray().cast();
-      if (pythonCaps != null && pythonCaps.getKernels() != null)
-         kernels = pythonCaps.getKernels();
-      else
-         kernels.push(QuartoJupyterKernel.defaultKernel());
-      return kernels;
-   }
    
    private class QuartoNewDocumentClientState extends JSObjectStateValue
    {
@@ -403,12 +397,6 @@ public class QuartoNewDocumentDialog extends ModalDialog<QuartoNewDocumentDialog
    }
    private static QuartoNewDocumentClientState clientStateValue_;
    private static Result lastResult_ = Result.createDefault();
-
-   private final String FORMAT_HTML = "html";
-   
-   private final String ENGINE_NONE = "none";
-   private final String ENGINE_KNITR = "knitr";
-   private final String ENGINE_JUPYTER = "jupyter";
 
    private final int ROW_TITLE = 0;
    private final int ROW_AUTHOR = 1;

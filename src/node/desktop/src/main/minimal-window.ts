@@ -13,9 +13,46 @@
  *
  */
 
+import { WebContents } from 'electron';
+
 import { appState } from './app-state';
 import { DesktopBrowserWindow } from './desktop-browser-window';
 import { GwtWindow } from './gwt-window';
+
+class MinimalWindow extends DesktopBrowserWindow {
+  constructor(
+    adjustTitle: boolean,
+    name: string,
+    baseUrl?: string,
+    parent?: DesktopBrowserWindow,
+    opener?: WebContents,
+    allowExternalNavigate = false
+  ) {
+    super(false, adjustTitle, name, baseUrl, parent, opener, allowExternalNavigate);
+
+    // ensure minimal windows can be closed with Ctrl+W (Cmd+W on macOS)
+    this.window.webContents.on('before-input-event', (event, input) => {
+      const ctrlOrMeta = (process.platform === 'darwin') ? input.meta : input.control;
+      if (ctrlOrMeta && input.key.toLowerCase() === 'w') {
+        event.preventDefault();
+        this?.window.close();
+      }
+    });
+
+    // ensure this window closes when the creating window closes
+    this.parentWindowDestroyed = this.parentWindowDestroyed.bind(this);
+    parent?.on(DesktopBrowserWindow.WINDOW_DESTROYED, this.parentWindowDestroyed);
+
+    this.window.on('close', () => {
+      // release external event listeners
+      parent?.removeListener(DesktopBrowserWindow.WINDOW_DESTROYED, this.parentWindowDestroyed);
+    });
+  }
+
+  parentWindowDestroyed(): void {
+    this.window.close();
+  }
+}
 
 export function openMinimalWindow(
   sender: GwtWindow,
@@ -35,29 +72,14 @@ export function openMinimalWindow(
   if (!browser) {
     const isViewerZoomWindow = (name === '_rstudio_viewer_zoom');
 
-    // create the new browser window; pass along our own base URL so that the new window's
-    // WebProfile knows how to apply the appropriate headers
-    browser = new DesktopBrowserWindow(
-      false,
+    // pass along our own base URL so that the new window's WebProfile knows how to 
+    // apply the appropriate headers
+    browser = new MinimalWindow(
       !isViewerZoomWindow,
       name,
       '', // TODO pMainWindow_->webView()->baseUrl()
       sender,
       undefined /* opener */);
-
-    // ensure minimal windows can be closed with Ctrl+W (Cmd+W on macOS)
-    browser.window.webContents.on('before-input-event', (event, input) => {
-      const ctrlOrMeta = (process.platform === 'darwin') ? input.meta : input.control;
-      if (ctrlOrMeta && input.key.toLowerCase() === 'w') {
-        event.preventDefault();
-        browser?.window.close();
-      }
-    });
-
-    // ensure minimal window closes when creating window closes
-    sender.window.on('closed', () => {
-      browser?.window.close();
-    });
 
     if (named) {
       appState().windowTracker.addWindow(name, browser);

@@ -62,6 +62,7 @@ public class PublishRPubsPage
                   initialData_.isSelfContained(),
                   true, // as static
                   initialData_.isShiny(),
+                  initialData_.isQuarto(),
                   initialData_.getDescription(),
                   initialData_.getContentType()));
    }

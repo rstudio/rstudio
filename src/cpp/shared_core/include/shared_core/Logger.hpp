@@ -102,22 +102,6 @@ enum class LogMessageFormatType
 };
 
 /**
- * @brief Helper function which cleans the log delimiter character from a string.
- *
- * @param in_str    The string to be cleaned
- *
- * @return The cleaned string.
- */
-std::string cleanDelimiters(const std::string& in_str);
-
-/**
- * @brief Sets the program ID for the logger.
- *
- * @param in_programId       The ID of the program.
- */
-void setProgramId(const std::string& in_programId);
-
-/**
  * @brief Adds an un-sectioned log destination to the logger.
  *
  * If a duplicate destination is added, the duplicate will be ignored.
@@ -140,6 +124,15 @@ void addLogDestination(const std::shared_ptr<ILogDestination>& in_destination);
 void addLogDestination(const std::shared_ptr<ILogDestination>& in_destination, const std::string& in_section);
 
 /**
+ * @brief Helper function which cleans the log delimiter character from a string.
+ *
+ * @param in_str    The string to be cleaned
+ *
+ * @return The cleaned string.
+ */
+std::string cleanDelimiters(const std::string& in_str);
+
+/**
  * @brief Returns whether or not a file log destination is configured.
  *
  * @return Whether or not a file log destination is configured.
@@ -153,14 +146,13 @@ bool hasFileLogDestination();
  */
 bool hasStderrLogDestination();
 
-/**
- * @brief Replaces logging delimiters with ' ' in the specified string.
- *
- * @param in_toClean    The string from which to clean logging delimiters.
- *
- * @return The cleaned string.
+/** 
+ * @brief Use to write code conditioned on whether logging is configured or not
+ * 
+ * @return true if log messages at this level will be displayed.
  */
-std::string cleanDelims(const std::string& in_toClean);
+bool isLogLevel(log::LogLevel level);
+
 /**
  * @brief Logs an error to all registered destinations.
  *
@@ -373,6 +365,13 @@ void removeLogDestination(const std::string& in_destinationId, const std::string
  *        and re-registered with the logger to update the desired changes to the logging system.
  */
 void removeReloadableLogDestinations();
+
+/**
+ * @brief Sets the program ID for the logger.
+ *
+ * @param in_programId       The ID of the program.
+ */
+void setProgramId(const std::string& in_programId);
 
 /**
  * @brief Writes an error to the specified output stream.

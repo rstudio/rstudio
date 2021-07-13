@@ -51,6 +51,7 @@ bool s_isHTMLWidget = false;
 void viewerNavigate(const std::string& url,
                     int height,
                     bool isHTMLWidget,
+                    bool isQuartoSite,
                     bool bringToFront)
 {
    // record the url (for reloads)
@@ -63,11 +64,22 @@ void viewerNavigate(const std::string& url,
    dataJson["url"] = s_currentUrl;
    dataJson["height"] = height;
    dataJson["html_widget"] = isHTMLWidget;
+   dataJson["quarto_site"] = isQuartoSite;
    dataJson["has_next"] = isHTMLWidget && viewerHistory().hasNext();
    dataJson["has_previous"] = isHTMLWidget && viewerHistory().hasPrevious();
    dataJson["bring_to_front"] = bringToFront;
    ClientEvent event(client_events::kViewerNavigate, dataJson);
    module_context::enqueClientEvent(event);
+}
+
+// overload for non-Quarto navigation
+void viewerNavigate(const std::string& url,
+                    int height,
+                    bool isHTMLWidget,
+                    bool bringToFront)
+{
+
+   viewerNavigate(url, height, isHTMLWidget, false, bringToFront);
 }
 
 void viewerNavigateToCurrent(bool bringToFront = true)
@@ -369,7 +381,7 @@ std::string viewerCurrentUrl(bool mapped)
       return s_currentUnmappedUrl;
 }
 
-void viewer(const std::string& url, int height)
+void viewer(const std::string& url, bool isQuartoWebsite, int height)
 {
    // transform the url to a localhost:<port>/session one if it's
    // a path to a file within the R session temporary directory
@@ -404,7 +416,8 @@ void viewer(const std::string& url, int height)
             // view it
             viewerNavigate(viewerHistory().current().url(),
                            height,
-                           true,
+                           true,  // is HTML widget
+                           false, // is Quarto website
                            true);
          }
          else
@@ -412,6 +425,7 @@ void viewer(const std::string& url, int height)
             viewerNavigate(module_context::sessionTempDirUrl(path),
                            height,
                            false,
+                           isQuartoWebsite,
                            true);
          }
       }
@@ -435,7 +449,7 @@ void viewer(const std::string& url, int height)
       }
 
       // navigate the viewer
-      viewerNavigate(url, height, false, true);
+      viewerNavigate(url, height, false, isQuartoWebsite, true);
    }
 }
 

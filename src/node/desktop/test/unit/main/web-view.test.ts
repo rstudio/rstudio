@@ -1,5 +1,5 @@
 /*
- * pending-window.ts
+ * web-view.test.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -13,21 +13,16 @@
  *
  */
 
+import { describe } from 'mocha';
+import { assert } from 'chai';
 
-export default class PendingWindow {
-  isSatellite = true;
-  allowExternalNavigate = false; // for RDP
-  showToolbar = false;
+import { WebView } from '../../../src/main/web-view';
+import { BrowserWindow } from 'electron';
 
-  constructor(public name: string,
-              public x: number,
-              public y: number,
-              public width: number,
-              public height: number) {
-  }
-
-  get isEmpty() {
-    return !this.name;
-  }
-};
- 
+describe('WebView', () => {
+  it('can be created', () => {
+    const window = new BrowserWindow({ show: false });
+    const webView = new WebView(window.webContents);
+    assert.isObject(webView);
+  });
+});

@@ -241,8 +241,9 @@
    current <- fileExists && 
       file.info(outputPath)$mtime >= file.info(target)$mtime
    
+   # return named list and alias paths (this data goes to the client)
    list(
-      output_file = .rs.scalar(outputPath),
+      output_file = .rs.scalar(.rs.createAliasedPath(outputPath)),
       is_current  = .rs.scalar(current),
       output_file_exists = .rs.scalar(fileExists)
    )

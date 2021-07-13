@@ -754,7 +754,7 @@ void addViewerHistoryEntry(const ViewerHistoryEntry& entry);
 
 // pass 0 for no height change
 // pass -1 for maximize
-void viewer(const std::string& url, int height = 0);
+void viewer(const std::string& url, bool isQuartoWebsite = false, int height = 0);
 std::string viewerCurrentUrl(bool mapped = true);
 
 core::Error recursiveCopyDirectory(const core::FilePath& fromDir,
@@ -877,7 +877,7 @@ void initializeConsoleCtrlHandler();
 
 bool isPythonReplActive();
 
-
+extern const char* const kQuartoProjectDefault;
 extern const char* const kQuartoProjectSite;
 extern const char* const kQuartoProjectBook;
 
@@ -886,6 +886,7 @@ struct QuartoConfig
    QuartoConfig() : empty(true), installed(false), is_project(false) {}
    bool empty;
    bool installed;
+   std::string version;
    bool is_project;
    std::string project_type;
    std::string project_dir;
@@ -894,6 +895,8 @@ struct QuartoConfig
 };
 
 QuartoConfig quartoConfig(bool refresh = false);
+
+core::json::Value quartoCapabilities();
 
 // see if quarto wants to handle the preview
 bool handleQuartoPreview(const core::FilePath& sourceFile,

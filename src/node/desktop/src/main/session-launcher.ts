@@ -24,11 +24,13 @@ import { getenv, setenv } from '../core/environment';
 
 import { ApplicationLaunch } from './application-launch';
 import { appState } from './app-state';
-import { ActivationEvents } from './activation-overlay';
+import { DesktopActivation } from './activation-overlay';
 import { EXIT_FAILURE } from './program-status';
-import { MainWindow } from './main-window';
+import { closeAllSatellites, MainWindow } from './main-window';
 import { PendingQuit } from './gwt-callback';
-import { finalPlatformInitialize } from './utils';
+import { finalPlatformInitialize, getCurrentlyUniqueFolderName, userLogPath } from './utils';
+import { productInfo } from './product-info';
+import { DesktopOptions } from './desktop-options';
 
 export interface LaunchContext {
   host: string;
@@ -36,7 +38,58 @@ export interface LaunchContext {
   url: string;
   argList: string[]
 }
- 
+
+let fallbackInstance: string | null = null;
+
+/**
+ * @returns A "probably unique" temporary folder name (folder isn't created by this call)
+ */
+function fallbackLibraryPath(): string {
+  if (!fallbackInstance) {
+    fallbackInstance = getCurrentlyUniqueFolderName('rstudio-fallback-library-path-').getAbsolutePath();
+  }
+  return fallbackInstance;
+}
+
+function launchProcess(absPath: FilePath, argList: string[]): ChildProcess {
+  if (process.platform === 'darwin') {
+    // on macOS with the hardened runtime, we can no longer rely on dyld
+    // to lazy-load symbols from libR.dylib; to resolve this, we use
+    // DYLD_INSERT_LIBRARIES to inject the library we wish to use on
+    // launch 
+    const rHome = new FilePath(getenv('R_HOME'));
+    const rLib = rHome.completePath('lib/libR.dylib');
+    if (rLib.existsSync()) {
+      setenv('DYLD_INSERT_LIBRARIES', rLib.getAbsolutePath());
+    }
+   
+    // Create fallback library path (use TMPDIR so it's user-specific):
+    // Reticulate needs to do some DYLD_FALLBACK_LIBRARY_PATH shenanigans to work with Anaconda Python;
+    // the solution is to have RStudio launch with a special DYLD_FALLBACK_LIBRARY_PATH, and let 
+    // reticulate set the associated path to a symlink of its choosing on load.
+    const libraryPath = fallbackLibraryPath();
+
+    // set it in environment variable (to be used by R)
+    setenv('RSTUDIO_FALLBACK_LIBRARY_PATH', libraryPath);
+
+    // and ensure it's placed on the fallback library path
+    const dyldFallbackLibraryPath =
+      `${getenv('DYLD_FALLBACK_LIBRARY_PATH')}:${libraryPath}`;
+    setenv('DYLD_FALLBACK_LIBRARY_PATH', dyldFallbackLibraryPath);
+  }
+   
+  if (!appState().runDiagnostics) {
+    return spawn(absPath.getAbsolutePath(), argList);
+  } else {
+    // for diagnostics, redirect child process stdio to this process
+    return spawn(absPath.getAbsolutePath(), argList, { stdio: 'inherit' });
+  }
+}
+
+function abendLogPath(): FilePath {
+  return userLogPath().completePath('rsession_abort_msg.log');
+}
+
 export class SessionLauncher {
   host = '127.0.0.1';
   sessionProcess?: ChildProcess;
@@ -51,8 +104,8 @@ export class SessionLauncher {
   ) { }
 
   launchFirstSession(): void {
-    appState().activation().on(ActivationEvents.LAUNCH_FIRST_SESSION, this.onLaunchFirstSession.bind(this));
-    appState().activation().on(ActivationEvents.LAUNCH_ERROR, this.onLaunchError.bind(this));
+    appState().activation().on(DesktopActivation.LAUNCH_FIRST_SESSION, this.onLaunchFirstSession.bind(this));
+    appState().activation().on(DesktopActivation.LAUNCH_ERROR, this.onLaunchError.bind(this));
 
     // This will ultimately trigger one of the above events to continue with startup (or failure).
     appState().activation().getInitialLicense();
@@ -61,7 +114,7 @@ export class SessionLauncher {
   // Porting note: In the C++ code this was an overload of launchFirstSession(), but
   // but that isn't a thing in TypeScript (at least not without some ugly workarounds)
   // so giving a different name.
-  private async launchFirst(): Promise<Err> {
+  private launchFirst(): Err {
     // build a new new launch context
     const launchContext = this.buildLaunchContext();
 
@@ -86,22 +139,20 @@ export class SessionLauncher {
 
     // launch the process
     try {
-      this.sessionProcess = await this.launchSession(launchContext.argList);
+      this.sessionProcess = this.launchSession(launchContext.argList);
     } catch (err) {
       return err;
     }
 
     logger().logDiagnostic( `\nR session launched, attempting to connect on port ${launchContext.port}...`);
 
-    this.mainWindow = new MainWindow(launchContext.url, false);
+    this.mainWindow = new MainWindow(launchContext.url);
     this.mainWindow.sessionLauncher = this;
     this.mainWindow.sessionProcess = this.sessionProcess;
     this.mainWindow.appLauncher = this.appLaunch;
     this.appLaunch.setActivationWindow(this.mainWindow);
 
-    // TODO - reimplement
-    // desktop::options().restoreMainWindowBounds(this.mainWindow);
-    this.mainWindow.window.setSize(1200, 900); // TEMP
+    DesktopOptions().restoreMainWindowBounds(this.mainWindow);
 
     logger().logDiagnostic('\nConnected to R session, attempting to initialize...\n');
 
@@ -151,68 +202,78 @@ export class SessionLauncher {
     return Success();
   }
 
-  private async launchSession(argList: string[]): Promise<ChildProcess> {
-    if (process.platform === 'darwin') {
-      // on macOS with the hardened runtime, we can no longer rely on dyld
-      // to lazy-load symbols from libR.dylib; to resolve this, we use
-      // DYLD_INSERT_LIBRARIES to inject the library we wish to use on
-      // launch 
-      const rHome = new FilePath(getenv('R_HOME'));
-      const rLib = rHome.completePath('lib/libR.dylib');
-      if (rLib.existsSync()) {
-        setenv('DYLD_INSERT_LIBRARIES', rLib.getAbsolutePath());
-      }
-    }
-
-    const sessionProc = spawn(this.sessionPath.getAbsolutePath(), argList);
-    sessionProc.stdout.on('data', (data) => {
-      logger().logDebug(`rsession stdout: ${data}`);
-    });
-    sessionProc.stderr.on('data', (data) => {
-      logger().logDebug(`rsession stderr: ${data}`);
-    });
-    sessionProc.on('exit', (code, signal) => {
-      if (code !== null) {
-        logger().logDebug(`rsession exited: code=${code}`);
-        if (code !== 0) {
-          logger().logDebug(`${this.sessionPath} ${argList}`);
-        }
-      } else {
-        logger().logDebug(`rsession terminated: signal=${signal}`);
-      }
-      this.onRSessionExited();
-    });
-
-    return sessionProc;
-  }
-
-  private async onLaunchFirstSession(): Promise<void> {
-    const error = await this.launchFirst();
-    if (error) {
-      logger().logError(error);
-      appState().activation().emitLaunchError(this.launchFailedErrorMessage());
-    }
-  }
-
-  onLaunchError(message: string): void {
-    if (message) {
-      dialog.showErrorBox(appState().activation().editionName(), message);
-    }
+  closeAllSatellites(): void {
     if (this.mainWindow) {
-      this.mainWindow.window.close();
-    } else {
-      app.exit(EXIT_FAILURE);
+      closeAllSatellites(this.mainWindow.window);
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  launchNextSession(reload: boolean): Err {
+  getRecentSessionLogs(): Err {
+    // TODO
+    return new Error('not implemented');
+  }
 
-    // build a new launch context -- re-use the same port if we aren't reloading
-    /* const launchContext = */ this.buildLaunchContext(!reload);
+  showLaunchErrorPage(): void {
+    // RS_CALL_ONCE(); TODO, do we need to guard against multiple calls in Electron version?
 
-    // TODO: nyi
-    return Error('launchNextSession NYI');
+    // String mapping of template codes to diagnostic information
+    const vars = new Map<string, string>();
+
+    const info = productInfo();
+    const gitCommit = info.RSTUDIO_GIT_COMMIT.substr(0, 8);
+
+    // Create version string
+    const ss =
+      `RStudio ${info.RSTUDIO_VERSION} "${info.RSTUDIO_RELEASE_NAME} " (${gitCommit}, ${info.RSTUDIO_BUILD_DATE}) for ${info.RSTUDIO_PACKAGE_OS}`;
+    vars.set('version', ss);
+
+    // Collect message from the abnormal end log path
+    if (abendLogPath().exists()) {
+      vars.set('launch_failed', this.launchFailedErrorMessage());
+    } else {
+      vars.set('launch_failed', '[No error available]');
+    }
+
+    // Collect the rsession process exit code
+    let exitCode = EXIT_FAILURE;
+    if (this.sessionProcess && this.sessionProcess.exitCode) {
+      exitCode = this.sessionProcess.exitCode;
+    }
+    vars.set('exit_code', exitCode.toString());
+
+    // Read standard output and standard error streams
+    let procStdout = ''; // TODO pRSessionProcess_->readAllStandardOutput().toStdString();
+    if (!procStdout) {
+      procStdout = '[No output emitted]';
+    }
+    vars.set('process_output', procStdout);
+
+    let procStderr = ''; // TODO pRSessionProcess_->readAllStandardError().toStdString();
+    if (!procStderr) {
+      procStderr = '[No errors emitted]';
+    }
+    vars.set('process_error', procStderr);
+
+    // Read recent entries from the rsession log file
+    const logFile = '[TODO]';
+    const logContent = '[TODO]';
+    // TODO const error = getRecentSessionLogs(&logFile, &logContent);
+    // if (error) {
+    //   logger().logError(error);
+    // }
+    vars.set('log_file', logFile);
+    vars.set('log_content', logContent);
+
+    // TODO Read text template, substitute variables, and load HTML into the main window
+    // std::ostringstream oss;
+    // error = text::renderTemplate(options().resourcesPath().completePath("html/error.html"), vars, oss);
+    // if (error) {
+    //   LOG_ERROR(error);
+    // } else {
+    this.mainWindow?.setErrorDisplayed();
+    this.mainWindow?.loadUrl('data:text/html;charset=utf-8,<head> <meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> <meta name="viewport" content="width=device-width, initial-scale=1.0" /> <title>Session Load Failed</title> </head><body>Failed to load session.</body>');
+    // TODO pMainWindow_->loadHtml(QString::fromStdString(oss.str()));
+    // }
   }
 
   onRSessionExited(): void {
@@ -227,7 +288,7 @@ export class SessionLauncher {
     // if there was no pending quit set then this is a crash
     if (pendingQuit === PendingQuit.PendingQuitNone) {
 
-      // closeAllSatellites();
+      this.closeAllSatellites();
 
       this.mainWindow?.window.webContents.executeJavaScript('window.desktopHooks.notifyRCrashed()')
         .catch(() => {
@@ -248,60 +309,110 @@ export class SessionLauncher {
 
     // otherwise this is a restart so we need to launch the next session
     else {
+
+      // TODO
+      // if (!activation().allowProductUsage())
+      // {
+      //    std::string message = "Unable to obtain a license. Please restart RStudio to try again.";
+      //    std::string licenseMessage = activation().currentLicenseStateMessage();
+      //    if (licenseMessage.empty())
+      //       licenseMessage = "None Available";
+      //    message += "\n\nDetails: ";
+      //    message += licenseMessage;
+      //    showMessageBox(QMessageBox::Critical,
+      //                   pMainWindow_,
+      //                   desktop::activation().editionName(),
+      //                   QString::fromUtf8(message.c_str()), QString());
+      //    closeAllSatellites();
+      //    pMainWindow_->quit();
+      //    return;
+      // }
+
+      // close all satellite windows if we are reloading
       const reload = (pendingQuit === PendingQuit.PendingQuitRestartAndReload);
       if (reload) {
         this.closeAllSatellites();
       }
 
       // launch next session
-      this.launchNextSession(reload);
+      const error = this.launchNextSession(reload);
+      if (error) {
+        logger().logError(error);
+
+        // TODO
+        //  showMessageBox(QMessageBox::Critical,
+        //                 pMainWindow_,
+        //                 desktop::activation().editionName(),
+        //                 launchFailedErrorMessage(), QString());
+
+        this.mainWindow?.quit();
+      }
     }
   }
 
-  buildLaunchContext(reusePort = true): LaunchContext {
-    const argList: string[] = [];
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  launchNextSession(reload: boolean): Err {
 
-    if (!reusePort) {
-      appState().generateNewPort();
+    // build a new launch context -- re-use the same port if we aren't reloading
+    /* const launchContext = */ this.buildLaunchContext(!reload);
+
+    // TODO: nyi
+    return Error('launchNextSession NYI');
+  }
+
+  onReloadFrameForNextSession(): void {
+    // TODO
+  }
+
+  private onLaunchFirstSession(): void {
+    const error = this.launchFirst();
+    if (error) {
+      logger().logError(error);
+      appState().activation().emitLaunchError(this.launchFailedErrorMessage());
+    }
+  }
+
+  private launchSession(argList: string[]): ChildProcess {
+    // always remove the abend log path before launching
+    const error = abendLogPath().removeIfExistsSync();
+    if (error) {
+      logger().logError(error);
     }
 
-    if (!this.confPath.isEmpty()) {
-      argList.push('--config-file');
-      argList.push(this.confPath.getAbsolutePath());
+    // TODO
+    // we need indirection through arch to handle arm64
+    // see C++ sources...
+
+    const sessionProc = launchProcess(this.sessionPath, argList);
+    sessionProc.on('error', (err) => {
+      // Unable to start rsession (at all)
+      logger().logError(err);
+      this.onRSessionExited();
+    });
+    sessionProc.on('exit', (code, signal) => {
+      if (code !== null) {
+        logger().logDebug(`rsession exited: code=${code}`);
+        if (code !== 0) {
+          logger().logDebug(`${this.sessionPath} ${argList}`);
+        }
+      } else {
+        logger().logDebug(`rsession terminated: signal=${signal}`);
+      }
+      this.onRSessionExited();
+    });
+
+    return sessionProc;
+  }
+
+  onLaunchError(message: string): void {
+    if (message) {
+      dialog.showErrorBox(appState().activation().editionName(), message);
+    }
+    if (this.mainWindow) {
+      this.mainWindow.window.close();
     } else {
-      // explicitly pass "none" so that rsession doesn't read an
-      // /etc/rstudio/rsession.conf file which may be sitting around
-      // from a previous configuration or install
-      argList.push('--config-file');
-      argList.push('none');
+      app.exit(EXIT_FAILURE);
     }
-
-    // recalculate the local peer and set RS_LOCAL_PEER so that
-    // rsession and it's children can use it
-    if (process.platform === 'win32') {
-      setenv('RS_LOCAL_PEER', localPeer(appState().port));
-    }
-
-    const portStr = appState().port.toString();
-    return {
-      host: this.host,
-      port: appState().port,
-      url: `http://${this.host}:${portStr}`,
-      argList: [
-        '--config-file', this.confPath.getAbsolutePath(),
-        '--program-mode', 'desktop',
-        '--www-port', portStr,
-        '--launcher-token', SessionLauncher.launcherToken
-      ],
-    };
-  }
-
-  showLaunchErrorPage(): void {
-    console.log('Launch error page not implemented');
-  }
-
-  closeAllSatellites(): void {
-    console.log('CloseAllSatellites not implemented');
   }
 
   collectAbendLogMessage(): string {
@@ -351,5 +462,45 @@ export class SessionLauncher {
     // }
 
     return errMsg;
+  }
+
+  buildLaunchContext(reusePort = true): LaunchContext {
+    const argList: string[] = [];
+
+    if (!reusePort) {
+      appState().generateNewPort();
+    }
+
+    if (!this.confPath.isEmpty()) {
+      argList.push('--config-file', this.confPath.getAbsolutePath());
+    } else {
+      // explicitly pass "none" so that rsession doesn't read an
+      // /etc/rstudio/rsession.conf file which may be sitting around
+      // from a previous configuration or install
+      argList.push('--config-file', 'none');
+    }
+
+    const portStr = appState().port.toString();
+
+    argList.push('--program-mode', 'desktop');
+    argList.push('--www-port', portStr);
+    argList.push('--launcher-token', SessionLauncher.launcherToken);
+
+    // recalculate the local peer and set RS_LOCAL_PEER so that
+    // rsession and it's children can use it
+    if (process.platform === 'win32') {
+      setenv('RS_LOCAL_PEER', localPeer(appState().port));
+    }
+
+    if (appState().runDiagnostics) {
+      argList.push('--verify-installation', '1');
+    }
+
+    return {
+      host: this.host,
+      port: appState().port,
+      url: `http://${this.host}:${portStr}`,
+      argList
+    };
   }
 }

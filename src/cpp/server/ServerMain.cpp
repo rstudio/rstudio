@@ -806,14 +806,17 @@ int main(int argc, char * const argv[])
          }
       }
 
-      // give up root privilige if requested
-      std::string runAsUser = options.serverUser();
-      if (!runAsUser.empty())
+      // give up root privilege if requested and running as root
+      if (core::system::realUserIsRoot())
       {
-         // drop root priv
-         error = core::system::temporarilyDropPriv(runAsUser);
-         if (error)
-            return core::system::exitFailure(error, ERROR_LOCATION);
+         std::string runAsUser = options.serverUser();
+         if (!runAsUser.empty())
+         {
+            // drop root priv
+            error = core::system::temporarilyDropPriv(runAsUser);
+            if (error)
+               return core::system::exitFailure(error, ERROR_LOCATION);
+         }
       }
 
       // run special verify installation mode if requested

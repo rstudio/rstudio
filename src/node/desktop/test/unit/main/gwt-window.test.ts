@@ -18,9 +18,15 @@ import { assert } from 'chai';
 
 import { GwtWindow } from '../../../src/main/gwt-window';
 
+class TestGwtWindow extends GwtWindow {
+  onActivated(): void {
+    throw new Error('Method not implemented.');
+  }
+}
+
 describe('GwtWindow', () => {
   it('construction creates a hidden BrowserWindow', () => {
-    const gwtWin = new GwtWindow(false, false, 'some name');
+    const gwtWin = new TestGwtWindow(false, false, 'some name');
     assert.isObject(gwtWin);
     assert.isObject(gwtWin.window);
     assert.isFalse(gwtWin.window.isVisible());
