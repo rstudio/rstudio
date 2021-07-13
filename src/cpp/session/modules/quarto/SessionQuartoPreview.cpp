@@ -239,6 +239,25 @@ Error quartoPreviewRpc(const json::JsonRpcRequest& request,
    }
 }
 
+void onSourceDocRemoved(const std::string& id, const std::string& path)
+{
+   // resolve source database path
+   FilePath resolvedPath = module_context::resolveAliasedPath(path);
+
+   // if this is our active preview then terminate it
+   if (s_pPreview && s_pPreview->isRunning() &&
+       (s_pPreview->previewFile() == resolvedPath))
+   {
+      stopPreview();
+   }
+
+}
+
+void onAllSourceDocsRemoved()
+{
+   stopPreview();
+}
+
 
 } // anonymous namespace
 
@@ -246,6 +265,10 @@ Error quartoPreviewRpc(const json::JsonRpcRequest& request,
 
 Error initialize()
 {
+   source_database::events().onDocRemoved.connect(onSourceDocRemoved);
+   source_database::events().onRemoveAll.connect(onAllSourceDocsRemoved);
+
+
    // register rpc functions
   ExecBlock initBlock;
    initBlock.addFunctions()
