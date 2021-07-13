@@ -5,7 +5,7 @@ CREATE TABLE schema_version(
 
    /* The name of the release to which this version of the schema belongs. */
    release_name text NOT NULL
-)
+);
 
 /* Stores revoked auth cookies - cookies that are not yet expired, but
    have been invalidated due to a user signing out. These cookies will
