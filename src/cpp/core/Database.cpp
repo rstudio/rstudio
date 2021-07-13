@@ -1034,7 +1034,7 @@ Error SchemaUpdater::createSchema()
    FilePath createTablesFile;
    Error error = migrationsPath_.completeChildPath(std::string(CREATE_TABLES_STEM) + std::string(SQL_EXTENSION), createTablesFile);
 
-   if (error)
+   if (error || !createTablesFile.exists())
    {
       if (connection_->driverName() == POSTGRESQL_DRIVER)
       {
