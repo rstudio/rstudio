@@ -35,6 +35,7 @@ import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.plumber.model.PlumberAPIParams;
+import org.rstudio.studio.client.quarto.model.QuartoNavigate;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.model.PublishHtmlSource;
@@ -214,11 +215,14 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    }
 
    @Override
-   public void previewQuartoSite(String url)
+   public void previewQuarto(String url, QuartoNavigate quartoNav)
    {
       navigate(url, true);
       publishButton_.setManuallyHidden(false);
-      publishButton_.setQuartoSitePreview();
+      if (quartoNav.isWebsite())
+         publishButton_.setQuartoSitePreview();
+      else
+         publishButton_.setQuartoDocPreview(quartoNav.getSourceFile(), quartoNav.getOutputFile());
       toolbar_.invalidateSeparators();
    }
 

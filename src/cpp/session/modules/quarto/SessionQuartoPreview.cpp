@@ -182,7 +182,11 @@ private:
       {
           minHeight = 500;
       }
-      module_context::viewer(viewerUrl(), false,  minHeight);
+      std::string sourceFile = module_context::createAliasedPath(previewFile_);
+      // TODO: figure this out dynamically
+      std::string outputFile = module_context::createAliasedPath(previewFile().getParent().completeChildPath(previewFile().getStem() + ".html"));
+      QuartoNavigate quartoNav = QuartoNavigate::navDoc(sourceFile, "");
+      module_context::viewer(viewerUrl(),  minHeight, quartoNav);
    }
 
    std::string viewerUrl()

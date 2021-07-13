@@ -232,6 +232,7 @@ public class RSConnectPublishButton extends Composite
       }
       applyVisibility();
    }
+
    
    public void setShinyPreview(ShinyApplicationParams params)
    {
@@ -284,6 +285,14 @@ public class RSConnectPublishButton extends Composite
          RSConnect.CONTENT_TYPE_WEBSITE :
          RSConnect.CONTENT_TYPE_DOCUMENT);
 
+      applyVisibility();
+   }
+   
+   public void setQuartoDocPreview(String qmd, String outputFile)
+   {
+      setContentPath(qmd, outputFile);
+      setContentType(RSConnect.CONTENT_TYPE_DOCUMENT);
+      docPreview_ = new RenderedDocPreview(qmd, outputFile, true, true);
       applyVisibility();
    }
 
