@@ -1,5 +1,5 @@
 /*
- * config.h.in
+ * QuartoNavigate.java
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -13,17 +13,26 @@
  *
  */
 
-#ifndef RSTUDIO_VERSION
-#define RSTUDIO_VERSION "${CPACK_PACKAGE_VERSION}"
-#endif
+package org.rstudio.studio.client.quarto.model;
 
-#define RSTUDIO_RELEASE_NAME "${RSTUDIO_RELEASE_NAME}"
+import com.google.gwt.core.client.JavaScriptObject;
 
-#cmakedefine HAVE_SA_NOCLDWAIT
-#cmakedefine HAVE_INOTIFY_INIT1
-#cmakedefine HAVE_SO_PEERCRED
-#cmakedefine HAVE_GETPEEREID
-#cmakedefine HAVE_PROCSELF
-#cmakedefine HAVE_SETRESUID
-#cmakedefine HAVE_SCANDIR_POSIX
-#cmakedefine RSTUDIO_SERVER
+public class QuartoNavigate extends JavaScriptObject
+{
+   protected QuartoNavigate()
+   {
+   }
+   
+   public native final boolean isWebsite() /*-{
+      return this.is_website;
+   }-*/;
+
+   public native final String getSourceFile() /*-{
+      return this.source_file;
+   }-*/;
+
+   public native final String getOutputFile() /*-{
+      return this.output_file;
+   }-*/;
+
+}

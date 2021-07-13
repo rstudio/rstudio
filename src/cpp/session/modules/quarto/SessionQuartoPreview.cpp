@@ -70,8 +70,17 @@ public:
       return port_;
    }
 
+   std::string jobId()
+   {
+      return pJob_->id();
+   }
+
    Error render()
    {
+      // reset output file
+      outputFile_ = FilePath();
+
+      // render
       return r::exec::RFunction(".rs.quarto.renderPreview",
                                 safe_convert::numberToString(port())).call();
    }
@@ -110,6 +119,12 @@ private:
 
    virtual void onStdErr(const std::string& output)
    {
+      // always be looking for an output file
+      FilePath outputFile =
+         module_context::extractOutputFileCreated(previewFile_.getParent(), output);
+      if (!outputFile.isEmpty())
+         outputFile_ = outputFile;
+
       // detect browse directive
       if (port_ == 0) {
          auto location = quartoServerLocationFromOutput(output);
@@ -167,7 +182,22 @@ private:
 
    void showInViewer()
    {
-      module_context::viewer(viewerUrl(), false,  -1);
+      int minHeight = -1; // maximize
+      if (boost::algorithm::starts_with(format_, "revealjs") ||
+          boost::algorithm::starts_with(format_, "slidy"))
+      {
+         minHeight = 450;
+      }
+      else if (boost::algorithm::starts_with(format_, "beamer"))
+      {
+          minHeight = 500;
+      }
+      std::string sourceFile = module_context::createAliasedPath(previewFile_);
+      std::string outputFile;
+      if (!outputFile_.isEmpty())
+         outputFile = module_context::createAliasedPath(outputFile_);
+      QuartoNavigate quartoNav = QuartoNavigate::navDoc(sourceFile, outputFile);
+      module_context::viewer(viewerUrl(),  minHeight, quartoNav);
    }
 
    std::string viewerUrl()
@@ -177,6 +207,7 @@ private:
 
 private:
    FilePath previewFile_;
+   FilePath outputFile_;
    std::string format_;
    int port_;
    std::string path_;
@@ -230,7 +261,9 @@ Error quartoPreviewRpc(const json::JsonRpcRequest& request,
        (s_pPreview->previewFile() == previewFilePath) &&
        (s_pPreview->format() == format))
    {
-      module_context::enqueClientEvent(ClientEvent(client_events::kJobsActivate));
+      json::Object eventJson;
+      eventJson["id"] = s_pPreview->jobId();
+      module_context::enqueClientEvent(ClientEvent(client_events::kJobsActivate, eventJson));
       return s_pPreview->render();
    }
    else

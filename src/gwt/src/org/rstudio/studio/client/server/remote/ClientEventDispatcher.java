@@ -1109,7 +1109,8 @@ public class ClientEventDispatcher
          }
          else if (type == ClientEvent.JobsActivate)
          {
-            eventBus_.dispatchEvent(new JobsActivateEvent());
+            JobsActivateEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new JobsActivateEvent(data));
          }
          else
          {

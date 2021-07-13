@@ -45,6 +45,7 @@ import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.zoom.ZoomUtils;
 import org.rstudio.studio.client.plumber.events.PlumberAPIStatusEvent;
 import org.rstudio.studio.client.plumber.model.PlumberAPIParams;
+import org.rstudio.studio.client.quarto.model.QuartoNavigate;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -88,7 +89,7 @@ public class ViewerPresenter extends BasePresenter
       void previewRmd(RmdPreviewParams params);
       void previewShiny(ShinyApplicationParams params);
       void previewPlumber(PlumberAPIParams params);
-      void previewQuartoSite(String url);
+      void previewQuarto(String url, QuartoNavigate quartoNav);
       HandlerRegistration addLoadHandler(LoadHandler handler);
       String getUrl();
       String getTitle();
@@ -192,8 +193,10 @@ public class ViewerPresenter extends BasePresenter
          else if (ensureHeight > 0)
             display_.ensureHeight(ensureHeight);
 
-         if (event.isQuartoSite())
-            previewQuartoSite(event.getURL());
+         
+         QuartoNavigate quartoNav = event.getQuartoNavigate();
+         if (quartoNav != null)
+            navigateQuarto(event.getURL(), quartoNav);
          else
             navigate(event.getURL());
 
@@ -500,11 +503,11 @@ public class ViewerPresenter extends BasePresenter
       display_.navigate(url);
    }
 
-   private void previewQuartoSite(String url)
+   private void navigateQuarto(String url, QuartoNavigate quartoNav)
    {
       if (Desktop.hasDesktopFrame())
          Desktop.getFrame().setViewerUrl(StringUtil.notNull(url));
-      display_.previewQuartoSite(url);
+      display_.previewQuarto(url, quartoNav);
    }
 
    private void updateZoomWindow(String url)

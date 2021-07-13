@@ -85,7 +85,6 @@ void detectQuartoInstallation()
          std::string contents;
          if (versionFile.exists())
          {
-            std::string contents;
             error = core::readStringFromFile(versionFile, &contents);
             if (error)
             {

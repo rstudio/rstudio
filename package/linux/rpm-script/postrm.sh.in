@@ -27,6 +27,9 @@ then
    rm -rf /tmp/rstudio-rsession
    rm -rf /tmp/rstudio-rserver
 
+   # remove database files
+   rm -rf /usr/lib/rstudio-server/db/*
+
    # stop and remove service under systemd
    if test "$INIT_SYSTEM" = "systemd"
    then

@@ -141,6 +141,9 @@ public class JobsPresenterEventHandlersImpl implements JobsPresenterEventHandler
    public void onJobsActivate(JobsActivateEvent event)
    {
       display_.bringToFront();
+      String jobId = event.getJobId();
+      if (jobId != null)
+         selectJob(jobId, false, false);;
       
    }
    
