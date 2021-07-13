@@ -328,7 +328,7 @@
    )
    
    writeLines(paste(getOption("prompt"), format(call), sep = ""))
-   install.packages(missing)
+   eval(call, envir = globalenv())
    
 })
 

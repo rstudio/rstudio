@@ -30,6 +30,7 @@ import { MainWindow } from './main-window';
 import { PendingQuit } from './gwt-callback';
 import { finalPlatformInitialize, getCurrentlyUniqueFolderName, userLogPath } from './utils';
 import { productInfo } from './product-info';
+import { DesktopOptions } from './desktop-options';
 
 export interface LaunchContext {
   host: string;
@@ -151,9 +152,7 @@ export class SessionLauncher {
     this.mainWindow.appLauncher = this.appLaunch;
     this.appLaunch.setActivationWindow(this.mainWindow);
 
-    // TODO - reimplement
-    // desktop::options().restoreMainWindowBounds(this.mainWindow);
-    this.mainWindow.window.setSize(1200, 900); // TEMP
+    DesktopOptions().restoreMainWindowBounds(this.mainWindow);
 
     logger().logDiagnostic('\nConnected to R session, attempting to initialize...\n');
 

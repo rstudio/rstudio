@@ -18,11 +18,10 @@ import { WebContents } from 'electron';
 import { nextHighest, nextLowest } from '../core/array-utils';
 
 import { DesktopBrowserWindow } from './desktop-browser-window';
+import { DesktopOptions } from './desktop-options';
 
 
 export abstract class GwtWindow extends DesktopBrowserWindow {
-
-  fakeZoomLevelPersistence = 1.0; // TODO: temporary fake zoom persistence
 
   // initialize zoom levels (synchronize with AppearancePreferencesPane.java)
   zoomLevels = [
@@ -46,32 +45,28 @@ export abstract class GwtWindow extends DesktopBrowserWindow {
   }
 
   zoomActualSize(): void {
-    this.fakeOptionsSetZoomLevel(1);
     this.setWindowZoomLevel(1);
   }
 
   setZoomLevel(zoomLevel: number): void {
-    this.fakeOptionsSetZoomLevel(zoomLevel);
     this.setWindowZoomLevel(zoomLevel);
   }
 
   zoomIn(): void {
-    const zoomLevel = this.fakeOptionsZoomLevel();
+    const zoomLevel = DesktopOptions().zoomLevel();
 
     // get next greatest value
     const newZoomLevel = nextHighest(zoomLevel, this.zoomLevels);
     if (newZoomLevel != zoomLevel) {
-      this.fakeOptionsSetZoomLevel(newZoomLevel);
       this.setWindowZoomLevel(newZoomLevel);
     }
   }
 
   zoomOut(): void {
     // get next smallest value
-    const zoomLevel = this.fakeOptionsZoomLevel();
+    const zoomLevel = DesktopOptions().zoomLevel();
     const newZoomLevel = nextLowest(zoomLevel, this.zoomLevels);
     if (newZoomLevel != zoomLevel) {
-      this.fakeOptionsSetZoomLevel(newZoomLevel);
       this.setWindowZoomLevel(newZoomLevel);
     }
   }
@@ -93,16 +88,7 @@ export abstract class GwtWindow extends DesktopBrowserWindow {
   }
 
   private setWindowZoomLevel(zoomLevel: number): void {
+    DesktopOptions().setZoomLevel(zoomLevel);
     this.webView.webContents.setZoomFactor(zoomLevel);
-  }
-
-  // TODO: this is a placeholder for options().setZoomLevel() in the C++ code
-  fakeOptionsSetZoomLevel(zoomLevel: number): void {
-    this.fakeZoomLevelPersistence = zoomLevel;
-  }
-
-  // TODO: this is a placeholder for options().zoomLevel() in the C++ code
-  fakeOptionsZoomLevel(): number {
-    return this.fakeZoomLevelPersistence;
   }
 }

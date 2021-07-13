@@ -1,8 +1,8 @@
 /*
- * user.test.ts
- *
+ * string-utils.ts
+ * 
  * Copyright (C) 2021 by RStudio, PBC
- *
+ * 
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
  * this program is licensed to you under the terms of version 3 of the
