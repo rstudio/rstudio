@@ -16,10 +16,13 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 import { saveAndClear, restore } from '../unit-utils';
+import { app } from 'electron';
+
+import { FilePath } from '../../../src/core/file-path';
+import { getenv, setenv, unsetenv } from '../../../src/core/environment';
 
 import * as Utils from '../../../src/main/utils';
-import { app } from 'electron';
-import { getenv, setenv, unsetenv } from '../../../src/core/environment';
+import { userHomePath } from '../../../src/core/user';
 
 describe('Utils', () => {
   const envVars: Record<string, string> = {
@@ -95,5 +98,13 @@ describe('Utils', () => {
     const folder1 = Utils.getCurrentlyUniqueFolderName('my-prefix-');
     const folder2 = Utils.getCurrentlyUniqueFolderName('my-prefix-');
     assert.notEqual(folder1, folder2);
+  });
+  it('resolveAliasedPathSync replaces tilde with home', () => {
+    const start = '~/foo/bar';
+    const result = FilePath.resolveAliasedPathSync(start, userHomePath());
+    const resultStr = result.getAbsolutePath();
+    assert.isAtLeast(resultStr.length, start.length);
+    assert.notEqual(resultStr.charAt(0), '~');
+    assert.isAbove(resultStr.lastIndexOf('/foo/bar'), -1);
   });
 });

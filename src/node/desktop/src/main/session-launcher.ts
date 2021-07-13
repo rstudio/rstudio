@@ -26,7 +26,7 @@ import { ApplicationLaunch } from './application-launch';
 import { appState } from './app-state';
 import { DesktopActivation } from './activation-overlay';
 import { EXIT_FAILURE } from './program-status';
-import { MainWindow } from './main-window';
+import { closeAllSatellites, MainWindow } from './main-window';
 import { PendingQuit } from './gwt-callback';
 import { finalPlatformInitialize, getCurrentlyUniqueFolderName, userLogPath } from './utils';
 import { productInfo } from './product-info';
@@ -146,7 +146,7 @@ export class SessionLauncher {
 
     logger().logDiagnostic( `\nR session launched, attempting to connect on port ${launchContext.port}...`);
 
-    this.mainWindow = new MainWindow(launchContext.url, false);
+    this.mainWindow = new MainWindow(launchContext.url);
     this.mainWindow.sessionLauncher = this;
     this.mainWindow.sessionProcess = this.sessionProcess;
     this.mainWindow.appLauncher = this.appLaunch;
@@ -200,6 +200,12 @@ export class SessionLauncher {
     // TODO
     // qApp->setQuitOnLastWindowClosed(true);
     return Success();
+  }
+
+  closeAllSatellites(): void {
+    if (this.mainWindow) {
+      closeAllSatellites(this.mainWindow.window);
+    }
   }
 
   private launchSession(argList: string[]): ChildProcess {
@@ -405,10 +411,6 @@ export class SessionLauncher {
     this.mainWindow?.loadUrl('data:text/html;charset=utf-8,<head> <meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> <meta name="viewport" content="width=device-width, initial-scale=1.0" /> <title>Session Load Failed</title> </head><body>Failed to load session.</body>');
     // TODO pMainWindow_->loadHtml(QString::fromStdString(oss.str()));
     // }
-  }
-
-  closeAllSatellites(): void {
-    console.log('CloseAllSatellites not implemented');
   }
 
   collectAbendLogMessage(): string {
