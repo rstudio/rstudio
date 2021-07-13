@@ -273,6 +273,8 @@ struct SchemaVersion {
       std::string Date;
       std::string Flower;   
 
+      std::string toString() const;
+
       bool isEmpty() const;
 
       SchemaVersion& operator=(const SchemaVersion& other);

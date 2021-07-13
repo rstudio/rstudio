@@ -727,6 +727,11 @@ bool SchemaVersion::isEmpty() const
    return Date.empty() && Flower.empty();
 }
 
+std::string SchemaVersion::toString() const
+{
+   return Date + "_" + Flower;
+}
+
 SchemaVersion& SchemaVersion::operator=(const SchemaVersion& other)
 {
    if (this != &other)
