@@ -77,6 +77,10 @@ public:
 
    Error render()
    {
+      // reset output file
+      outputFile_ = FilePath();
+
+      // render
       return r::exec::RFunction(".rs.quarto.renderPreview",
                                 safe_convert::numberToString(port())).call();
    }
@@ -115,6 +119,12 @@ private:
 
    virtual void onStdErr(const std::string& output)
    {
+      // always be looking for an output file
+      FilePath outputFile =
+         module_context::extractOutputFileCreated(previewFile_.getParent(), output);
+      if (!outputFile.isEmpty())
+         outputFile_ = outputFile;
+
       // detect browse directive
       if (port_ == 0) {
          auto location = quartoServerLocationFromOutput(output);
@@ -183,9 +193,10 @@ private:
           minHeight = 500;
       }
       std::string sourceFile = module_context::createAliasedPath(previewFile_);
-      // TODO: figure this out dynamically
-      std::string outputFile = module_context::createAliasedPath(previewFile().getParent().completeChildPath(previewFile().getStem() + ".html"));
-      QuartoNavigate quartoNav = QuartoNavigate::navDoc(sourceFile, "");
+      std::string outputFile;
+      if (!outputFile_.isEmpty())
+         outputFile = module_context::createAliasedPath(outputFile_);
+      QuartoNavigate quartoNav = QuartoNavigate::navDoc(sourceFile, outputFile);
       module_context::viewer(viewerUrl(),  minHeight, quartoNav);
    }
 
@@ -196,6 +207,7 @@ private:
 
 private:
    FilePath previewFile_;
+   FilePath outputFile_;
    std::string format_;
    int port_;
    std::string path_;
