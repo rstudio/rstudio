@@ -886,6 +886,7 @@ struct QuartoConfig
    QuartoConfig() : empty(true), installed(false), is_project(false) {}
    bool empty;
    bool installed;
+   std::string version;
    bool is_project;
    std::string project_type;
    std::string project_dir;
