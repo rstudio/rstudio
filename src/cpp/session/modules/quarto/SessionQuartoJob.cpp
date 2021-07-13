@@ -82,7 +82,7 @@ Error QuartoJob::start()
 
 ParsedServerLocation quartoServerLocationFromOutput(const std::string& output)
 {
-   boost::regex browseRe("http:\\/\\/localhost:(\\d{2,})\\/(pdf\\/viewer\\.html)?");
+   boost::regex browseRe("http:\\/\\/localhost:(\\d{2,})\\/(web\\/viewer\\.html)?");
    boost::smatch match;
    if (regex_utils::search(output, match, browseRe))
    {
