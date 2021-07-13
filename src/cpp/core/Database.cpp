@@ -1024,12 +1024,25 @@ Error SchemaUpdater::update()
       SchemaVersion currentVersion;
       error = databaseSchemaVersion(&currentVersion);
       if (currentVersion < migrationVersion)
+      {
+         LOG_INFO_MESSAGE(
+            "Updating database schema version from version " +
+            currentVersion.toString() +
+            " to version " +
+            migrationVersion.toString());
          return updateToVersion(migrationVersion);
+      }
       else
+      {
+         LOG_INFO_MESSAGE("Database schema version is up to date.");
          return Success();
+      }
    }
    else
+   {
+      LOG_INFO_MESSAGE("Database schema has not been created yet. Creating database schema...");
       return createSchema();
+   }
 }
 
 Error SchemaUpdater::createSchema()
@@ -1069,6 +1082,8 @@ Error SchemaUpdater::createSchema()
 
 Error SchemaUpdater::updateToVersion(const SchemaVersion& maxVersion)
 {
+
+
    // create a transaction to perform the following steps:
    // 1. Check the current database schema version
    // 2. Check if we need to update
