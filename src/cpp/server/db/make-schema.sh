@@ -4,7 +4,7 @@ if [ -z "$1" ]
 then
    echo "Must specify at least one argument."
    echo "Invocation: ./make-schema.sh [upgradeVersion] [sql]"
-   echo "Ex: ./make-schema.sh GO_PT sql"
+   echo "Ex: ./make-schema.sh \"Ghost Orchid\" sql"
    exit 1
 fi
 
