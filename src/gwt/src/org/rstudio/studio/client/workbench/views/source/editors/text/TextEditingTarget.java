@@ -6685,7 +6685,8 @@ public class TextEditingTarget implements
 
    void renderRmd(final String paramsFile)
    {
-      events_.fireEvent(new RmdRenderPendingEvent(docUpdateSentinel_.getId()));
+      if (extendedType_ != SourceDocument.XT_QUARTO_DOCUMENT)
+         events_.fireEvent(new RmdRenderPendingEvent(docUpdateSentinel_.getId()));
 
       final int type = isShinyDoc() ? RmdOutput.TYPE_SHINY:
                                       isRmdNotebook() ? RmdOutput.TYPE_NOTEBOOK:
@@ -6711,8 +6712,9 @@ public class TextEditingTarget implements
             String quartoFormat = useQuartoPreview();
             if (quartoFormat != null)
             {
-               TextEditingTarget.this.getQuartoOutputFormats();
-               server_.quartoPreview(docUpdateSentinel_.getPath(), quartoFormat, new VoidServerRequestCallback());
+               server_.quartoPreview(docUpdateSentinel_.getPath(), 
+                                     quartoFormat, 
+                                     new VoidServerRequestCallback());
             }
             else
             {
