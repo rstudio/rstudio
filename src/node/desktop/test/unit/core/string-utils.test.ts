@@ -16,7 +16,7 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 
-import { removeDups } from '../../../src/core/string-utils';
+import { htmlEscape, jsLiteralEscape, removeDups } from '../../../src/core/string-utils';
 
 describe('string-util', () => {
   it('removeDups is a no-op on empty array', () => {
@@ -44,6 +44,36 @@ describe('string-util', () => {
     const expected = ['one', 'two', 'three'];
     const result = removeDups(orig);
     assert.deepEqual(result, expected);
+  });
+  it('htmlEscape non-attr escapes expected characters', () => {
+    const source =
+      '6 is > 5 and < than 12. Time for some R&R. "Some" \'quotes\'. Don\'t /slash/ and burn!';
+    const expected =
+      '6 is &gt; 5 and &lt; than 12. Time for some R&amp;R. &quot;Some&quot; &#x27;quotes&#x27;. Don&#x27;t &#x2F;slash&#x2F; and burn!';
+    const result = htmlEscape(source, false);
+    assert.equal(result, expected);
+  });
+  it('htmlEscape attr escapes expected characters', () => {
+    const source =
+      '6 is > 5 and < than 12. Time for some R&R. "Some" \'quotes\'. Don\'t /slash/ and burn!';
+    const expected =
+      '6 is &gt; 5 and &lt; than 12. Time for some R&amp;R. &quot;Some&quot; &#x27;quotes&#x27;. Don&#x27;t &#x2F;slash&#x2F; and burn!';
+    const result = htmlEscape(source, true);
+    assert.equal(result, expected);
+  });
+  it('htmlEscape attr escapes line endings', () => {
+    const source =
+      '6 is > 5 and < than 12.\nTime for some R&R.\r"Some" \'quotes\'.';
+    const expected =
+      '6 is &gt; 5 and &lt; than 12.&#10;Time for some R&amp;R.&#13;&quot;Some&quot; &#x27;quotes&#x27;.';
+    const result = htmlEscape(source, true);
+    assert.equal(result, expected);
+  });
+  it('jsLiteralEscape escapes expected characters', () => {
+    const source = '"hello" \'goodbye\' </script>';
+    const expected = '\\"hello\\" \\\'goodbye\\\' \\074/script>';
+    const result = jsLiteralEscape(source);
+    assert.equal(result, expected);
   });
 });
  

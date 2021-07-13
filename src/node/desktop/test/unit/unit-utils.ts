@@ -17,8 +17,11 @@ import path from 'path';
 import os from 'os';
 
 import { createStubInstance, StubbableType, SinonStubbedInstance, SinonStubbedMember } from 'sinon';
-import { randomString } from '../../src/main/utils';
 import { FilePath } from '../../src/core/file-path';
+
+export function randomString(): string {
+  return Math.trunc(Math.random() * 2147483647).toString();
+}
 
 /**
  * save and clear specific env vars
