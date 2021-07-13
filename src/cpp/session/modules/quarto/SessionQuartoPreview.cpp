@@ -167,7 +167,17 @@ private:
 
    void showInViewer()
    {
-      module_context::viewer(viewerUrl(), false,  -1);
+      int minHeight = -1; // maximize
+      if (boost::algorithm::starts_with(format_, "revealjs") ||
+          boost::algorithm::starts_with(format_, "slidy"))
+      {
+         minHeight = 450;
+      }
+      else if (boost::algorithm::starts_with(format_, "beamer"))
+      {
+          minHeight = 500;
+      }
+      module_context::viewer(viewerUrl(), false,  minHeight);
    }
 
    std::string viewerUrl()
