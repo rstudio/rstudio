@@ -13,7 +13,7 @@
  *
  */
 
-import { BrowserWindow, Menu, session } from 'electron';
+import { BrowserWindow, dialog, Menu, session } from 'electron';
 import path from 'path';
 import { ChildProcess } from 'child_process';
 
@@ -27,6 +27,15 @@ import { SessionLauncher } from './session-launcher';
 import { ApplicationLaunch } from './application-launch';
 import { GwtWindow } from './gwt-window';
 import { appState } from './app-state';
+
+export function closeAllSatellites(mainWindow: BrowserWindow): void {
+  const topLevels = BrowserWindow.getAllWindows();
+  for (const win of topLevels) {
+    if (win !== mainWindow) {
+      win.close();
+    }
+  }
+}
 
 export class MainWindow extends GwtWindow {
   sessionLauncher?: SessionLauncher;
@@ -43,7 +52,7 @@ export class MainWindow extends GwtWindow {
   // HWINEVENTHOOK eventHook_ = nullptr;
   //#endif
 
-  constructor(url: string, public isRemoteDesktop: boolean) {
+  constructor(url: string, public isRemoteDesktop = false) {
     super(false, false, '', url, undefined, undefined, isRemoteDesktop, ['desktop', 'desktopMenuCallback']);
 
     appState().gwtCallback = new GwtCallback(this, isRemoteDesktop);
@@ -83,9 +92,9 @@ export class MainWindow extends GwtWindow {
     appState().gwtCallback?.on(GwtCallback.WORKBENCH_INITIALIZED, () => {
       this.onWorkbenchInitialized();
     });
-
-    // connect(&gwtCallback_, SIGNAL(sessionQuit()),
-    //         this, SLOT(onSessionQuit()));
+    appState().gwtCallback?.on(GwtCallback.SESSION_QUIT, () => {
+      this.onSessionQuit();
+    });
 
     // connect(webView(), SIGNAL(onCloseWindowShortcut()),
     //         this, SLOT(onCloseWindowShortcut()));
@@ -113,6 +122,38 @@ export class MainWindow extends GwtWindow {
     // connect(qApp, SIGNAL(commitDataRequest(QSessionManager&)),
     //         this, SLOT(commitDataRequest(QSessionManager&)),
     //         Qt::DirectConnection);
+  }
+
+  launchSession(reload: boolean): void {
+    // we're about to start another session, so clear the workbench init flag
+    // (will get set again once the new session has initialized the workbench)
+    this.workbenchInitialized = false;
+
+    const error = this.sessionLauncher?.launchNextSession(reload);
+    if (error) {
+      logger().logError(error);
+
+      dialog.showMessageBoxSync(this.window,
+        {
+          message: 'The R session failed to start.',
+          type: 'error',
+          title: appState().activation().editionName(),
+        });
+      this.quit();
+    }
+  }
+
+  launchRStudio(args: string[] = [], initialDir = ''): void {
+    this.appLauncher?.launchRStudio(args, initialDir);
+  }
+
+  launchRemoteRStudio(): void {
+    // TODO
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  launchRemoteRStudioProject(projectUrl: string): void {
+    // TODO
   }
 
   loadUrl(url: string): void {
@@ -168,6 +209,16 @@ export class MainWindow extends GwtWindow {
       });
   }
 
+  onSessionQuit(): void {
+    if (this.isRemoteDesktop) {
+      const pendingQuit = this.collectPendingQuitRequest();
+      if (pendingQuit === PendingQuit.PendingQuitAndExit || this.quitConfirmed) {
+        closeAllSatellites(this.window);
+        this.quit();
+      }
+    }
+  }
+
   onWorkbenchInitialized(): void {
     this.workbenchInitialized = true;
     this.executeJavaScript('window.desktopHooks.getActiveProjectDir()')
@@ -184,7 +235,7 @@ export class MainWindow extends GwtWindow {
       });
   }
 
-  collectPendingQuitRequest(): number {
+  collectPendingQuitRequest(): PendingQuit {
     return appState().gwtCallback?.collectPendingQuitRequest() ?? PendingQuit.PendingQuitNone;
   }
 

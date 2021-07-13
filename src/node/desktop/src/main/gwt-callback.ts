@@ -30,13 +30,14 @@ import { MainWindow } from './main-window';
 import { GwtWindow } from './gwt-window';
 import { openMinimalWindow } from './minimal-window';
 import { appState } from './app-state';
+import { resolveAliasedPath } from './utils';
 
-export const PendingQuit = {
-  'PendingQuitNone': 0,
-  'PendingQuitAndExit': 1,
-  'PendingQuitAndRestart': 2,
-  'PendingQuitRestartAndReload': 3
-};
+export enum PendingQuit {
+  PendingQuitNone,
+  PendingQuitAndExit,
+  PendingQuitAndRestart,
+  PendingQuitRestartAndReload
+}
 
 /**
  * This is the main-process side of the GwtCallbacks; dispatched from renderer processes
@@ -44,6 +45,7 @@ export const PendingQuit = {
  */
 export class GwtCallback extends EventEmitter {
   static WORKBENCH_INITIALIZED = 'gwt-callback-workbench_initialized';
+  static SESSION_QUIT = 'gwt-callback-session_quit';
 
   pendingQuit: number = PendingQuit.PendingQuitNone;
   private owners = new Set<GwtWindow>();
@@ -309,11 +311,23 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_open_project_in_new_window', (event, projectFilePath) => {
-      GwtCallback.unimpl('desktop_open_project_in_new_window');
+      if (!this.isRemoteDesktop) {
+        const args = [resolveAliasedPath(projectFilePath)];
+        this.mainWindow.launchRStudio(args);
+      } else {
+        // start new Remote Desktop RStudio process with the session URL
+        this.mainWindow.launchRemoteRStudioProject(projectFilePath);
+      }
     });
 
     ipcMain.on('desktop_open_session_in_new_window', (event, workingDirectoryPath) => {
-      GwtCallback.unimpl('desktop_open_session_in_new_window');
+      if (!this.isRemoteDesktop) {
+        workingDirectoryPath = resolveAliasedPath(workingDirectoryPath);
+        this.mainWindow.launchRStudio([], workingDirectoryPath);
+      } else {
+        // start the new session on the currently connected server
+        this.mainWindow.launchRemoteRStudio();
+      }
     });
 
     ipcMain.on('desktop_open_terminal', (event, terminalPath, workingDirectory, extraPathEntries, shellType) => {
@@ -453,7 +467,7 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_launch_session', (event, reload) => {
-      GwtCallback.unimpl('desktop_launch_session');
+      this.mainWindow.launchSession(reload);
     });
 
     ipcMain.on('desktop_reload_zoom_window', () => {
@@ -513,7 +527,7 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_on_session_quit', () => {
-      GwtCallback.unimpl('desktop_on_session_quit');
+      this.emit(GwtCallback.SESSION_QUIT);
     });
 
     ipcMain.handle('desktop_get_session_server', () => {
@@ -601,7 +615,7 @@ export class GwtCallback extends EventEmitter {
     }
   }
 
-  collectPendingQuitRequest(): number {
+  collectPendingQuitRequest(): PendingQuit {
     if (this.pendingQuit != PendingQuit.PendingQuitNone) {
       const currentPendingQuit = this.pendingQuit;
       this.pendingQuit = PendingQuit.PendingQuitNone;
