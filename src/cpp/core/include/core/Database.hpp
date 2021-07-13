@@ -243,7 +243,7 @@ private:
    void returnConnection(const boost::shared_ptr<Connection>& connection);
    void testAndReconnect(boost::shared_ptr<Connection>& connection);
 
-   thread::ThreadsafeQueue<boost::shared_ptr<Connection>> connections_;
+   thread::ThreadsafeQueue<boost::shared_ptr<Connection> > connections_;
    ConnectionOptions connectionOptions_;
 };
 

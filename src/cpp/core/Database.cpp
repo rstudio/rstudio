@@ -831,7 +831,7 @@ SchemaUpdater::SchemaUpdater(const boost::shared_ptr<IConnection>& connection,
 {
 }
 
-Error SchemaUpdater::migrationFiles(std::vector<std::pair<SchemaVersion, FilePath>>* pMigrationFiles)
+Error SchemaUpdater::migrationFiles(std::vector<std::pair<SchemaVersion, FilePath> >* pMigrationFiles)
 {
    std::vector<FilePath> children;
    Error error = migrationsPath_.getChildren(children);
@@ -864,7 +864,7 @@ Error SchemaUpdater::migrationFiles(std::vector<std::pair<SchemaVersion, FilePat
 
 Error SchemaUpdater::highestMigrationVersion(SchemaVersion* pVersion)
 {
-   std::vector<std::pair<SchemaVersion, FilePath>> files;
+   std::vector<std::pair<SchemaVersion, FilePath> > files;
    Error error = migrationFiles(&files);
    if (error)
       return error;
@@ -1092,7 +1092,7 @@ Error SchemaUpdater::updateToVersion(const SchemaVersion& maxVersion)
    if (currentVersion >= maxVersion)
       return Success();
 
-   std::vector<std::pair<SchemaVersion, FilePath>> files;
+   std::vector<std::pair<SchemaVersion, FilePath> > files;
    error = migrationFiles(&files);
    if (error)
       return error;
