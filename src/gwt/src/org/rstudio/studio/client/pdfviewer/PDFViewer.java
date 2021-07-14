@@ -127,8 +127,11 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
       }
          
       lastSuccessfulPdfPath_ = result.getPdfPath();
-      openPdfUrl(result.getViewPdfUrl(), result.isSynctexAvailable(), 
-                 pdfLocation == null);
+      openPdfUrl(
+            result.getViewPdfUrl(),
+            result.getPdfPath(),
+            result.isSynctexAvailable(), 
+            pdfLocation == null);
    }
 
    @Override
@@ -189,7 +192,15 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
       }
    }
    
-   public void viewPdfUrl(final String url, final Integer initialPage)
+   public void viewPdfUrl(final String url,
+                          final Integer initialPage)
+   {
+      viewPdfUrl(url, null, initialPage);
+   }
+   
+   public void viewPdfUrl(final String url,
+                          final String path,
+                          final Integer initialPage)
    {
       if (initialPage != null)
       {
@@ -202,13 +213,15 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
             }
          };
       }
-      lastSuccessfulPdfPath_ = null;
-      openPdfUrl(url, false, initialPage == null);
+      lastSuccessfulPdfPath_ = path;
+      openPdfUrl(url, path, false, initialPage == null);
    }
   
    // Private methods ---------------------------------------------------------
    
-   private void openPdfUrl(final String url, final boolean synctex, 
+   private void openPdfUrl(final String url,
+                           final String path,
+                           final boolean synctex, 
                            boolean restorePosition)
    {
       int width = 1070;
@@ -216,7 +229,9 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
       Point pos = null;
       
       // if there's a window open, restore the position when we're done
-      if (restorePosition && url == lastSuccessfulPdfUrl_)
+      if (restorePosition && (
+            url == lastSuccessfulPdfUrl_ ||
+            path == lastSuccessfulPdfPath_))
       {
          // if we don't have an active window, we'll use the hash stored when
          // the window closed
