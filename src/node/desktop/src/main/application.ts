@@ -166,7 +166,7 @@ export class Application implements AppState {
 
   resourcesPath(): FilePath {
     if (app.isPackaged) {
-      return new FilePath(); // TODO
+      return new FilePath(app.getAppPath());
     } else {
       return new FilePath(app.getAppPath()).completePath('../..');
     }
