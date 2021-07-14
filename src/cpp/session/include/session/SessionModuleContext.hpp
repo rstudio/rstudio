@@ -929,6 +929,10 @@ bool handleQuartoPreview(const core::FilePath& sourceFile,
                          const std::string& renderOutput,
                          bool validateExtendedType);
 
+// returns -1 if no error was found in the output
+int jupyterErrorLineNumber(const std::vector<std::string>& srcLines,
+                           const std::string& output);
+
 std::vector<core::FilePath> ignoreContentDirs();
 bool isIgnoredContent(const core::FilePath& filePath, const std::vector<core::FilePath>& ignoreDirs);
 
