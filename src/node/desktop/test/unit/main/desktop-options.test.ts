@@ -55,8 +55,8 @@ describe('DesktopOptions', () => {
     assert.deepEqual(options.ignoredUpdateVersions(), kDesktopOptionDefaults.General.IgnoredUpdateVersions);
     assert.equal(options.clipboardMonitoring(), kDesktopOptionDefaults.General.ClipboardMonitoring);
     if (process.platform === 'win32') {
-      assert.equal(options.rBinDir(), kDesktopOptionDefaults.WindowsOnly.RBinDir);
-      assert.equal(options.peferR64(), kDesktopOptionDefaults.WindowsOnly.PreferR64);
+      assert.equal(options.rBinDir(), kDesktopOptionDefaults.Platform.Windows.RBinDir);
+      assert.equal(options.peferR64(), kDesktopOptionDefaults.Platform.Windows.PreferR64);
     } else {
       assert.equal(options.rBinDir(), nonWindowsRBinDir);
       assert.equal(options.peferR64(), nonWindowsPreferR64);
@@ -77,8 +77,8 @@ describe('DesktopOptions', () => {
     const newIgnoredUpdateVersions = ['test', 'Ignored', 'Update', 'Versions'];
     const newClipboardMonitoring = !kDesktopOptionDefaults.General.ClipboardMonitoring;
     const newRBinDir = 'testRBinDir';
-    const newPeferR64 = !kDesktopOptionDefaults.WindowsOnly.PreferR64;
-    
+    const newPeferR64 = !kDesktopOptionDefaults.Platform.Windows.PreferR64;
+
     const nonWindowsRBinDir = '';
     const nonWindowsPreferR64 = false;
 

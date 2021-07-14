@@ -32,8 +32,8 @@ const kTempAuthCookies = 'Session.TempAuthCookies';
 const kIgnoredUpdateVersions = 'General.IgnoredUpdateVersions';
 const kClipboardMonitoring = 'General.ClipboardMonitoring';
 
-const kRBinDir = 'WindowsOnly.RBinDir';
-const kPreferR64 = 'WindowsOnly.PreferR64';
+const kRBinDir = 'Platform.Windows.RBinDir';
+const kPreferR64 = 'Platform.Windows.PreferR64';
 
 // exported for unit testing
 export const kDesktopOptionDefaults = {
@@ -56,9 +56,11 @@ export const kDesktopOptionDefaults = {
     IgnoredUpdateVersions: [],
     ClipboardMonitoring: true,
   },
-  WindowsOnly: {
-    RBinDir: '',
-    PreferR64: true
+  Platform: {
+    Windows: {
+      RBinDir: '',
+      PreferR64: true
+    }
   }
 };
  
