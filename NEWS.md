@@ -37,6 +37,7 @@
 ### Misc
 
 * **BREAKING:** RStudio Desktop Pro only supports activation with license files (Pro #2300)
+* Support highlight of 'css' and 'asis' chunks in R Markdown documents (#4821)
 * Improved ordering of completion results within `library()` calls (#9293)
 * Syntax support for embedded knitr chunks (#9579)
 * Added support for publishing Quarto documents and websites (#9556)
