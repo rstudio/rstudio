@@ -17,13 +17,13 @@
 import Store from 'electron-store';
 import { MainWindow } from './main-window';
  
-const kProportionalFont = 'Font.Proportional';
-const kFixWidthFont = 'Font.FixedWidth';
-const kUseFontConfigDb = 'Font.UseFontConfigDatabase';
+const kProportionalFont = 'Font.ProportionalFont';
+const kFixWidthFont = 'Font.FixWidthFont';
+const kUseFontConfigDb = 'Font.UseFontConfigDb';
 
-const kWindowBounds = 'View.WindowBounds';
 const kZoomLevel = 'View.ZoomLevel';
-const kAccessibility = 'View.EnableAccessibility';
+const kWindowBounds = 'View.WindowBounds';
+const kAccessibility = 'View.Accessibility';
 
 const kLastRemoteSessionUrl = 'Session.LastRemoteSessionUrl';
 const kAuthCookies = 'Session.AuthCookies';
@@ -33,12 +33,33 @@ const kIgnoredUpdateVersions = 'General.IgnoredUpdateVersions';
 const kClipboardMonitoring = 'General.ClipboardMonitoring';
 
 const kRBinDir = 'WindowsOnly.RBinDir';
-const kPeferR64 = 'WindowsOnly.PreferR64';
+const kPreferR64 = 'WindowsOnly.PreferR64';
 
 // exported for unit testing
 export const kDesktopOptionDefaults = {
-  ZoomLevel: 1.0,
-  WindowBounds: {width: 1200, height: 900}
+  Font: {
+    ProportionalFont: '',
+    FixWidthFont: '',
+    UseFontConfigDb: true,
+  },
+  View: {
+    ZoomLevel: 1.0,
+    WindowBounds: {width: 1200, height: 900},
+    Accessibility: false,
+  },
+  Session: {
+    LastRemoteSessionUrl: '',
+    AuthCookies: [],
+    TempAuthCookies: [],
+  },
+  General: {
+    IgnoredUpdateVersions: [],
+    ClipboardMonitoring: true,
+  },
+  WindowsOnly: {
+    RBinDir: '',
+    PreferR64: true
+  }
 };
  
 let options: DesktopOptionsImpl | null = null;
@@ -88,6 +109,22 @@ export class DesktopOptionsImpl {
   public proportionalFont(): string {
     return this.config.get(kProportionalFont);
   }
+  
+  public setFixWidthFont(fixWidthFont: string): void {
+    this.config.set(kFixWidthFont, fixWidthFont);
+  }
+  
+  public fixWidthFont(): string {
+    return this.config.get(kFixWidthFont);
+  }
+  
+  public setUseFontConfigDb(useFontConfigDb: boolean): void {
+    this.config.set(kUseFontConfigDb, useFontConfigDb);
+  }
+  
+  public useFontConfigDb(): boolean {
+    return this.config.get(kUseFontConfigDb);
+  }
 
   public setZoomLevel(zoom: number): void {
     this.config.set(kZoomLevel, zoom);
@@ -108,22 +145,6 @@ export class DesktopOptionsImpl {
   public restoreMainWindowBounds(mainWindow: MainWindow): void {
     const size = this.windowBounds(); 
     mainWindow.window.setSize(Math.max(300, size.width) , Math.max(200, size.height));
-  }
-  
-  public setFixWidthFont(fixWidthFont: string): void {
-    this.config.set(kFixWidthFont, fixWidthFont);
-  }
-  
-  public fixWidthFont(): string {
-    return this.config.get(kFixWidthFont);
-  }
-  
-  public setUseFontConfigDb(useFontConfigDb: boolean): void {
-    this.config.set(kUseFontConfigDb, useFontConfigDb);
-  }
-  
-  public useFontConfigDb(): boolean {
-    return this.config.get(kUseFontConfigDb);
   }
   
   public setAccessibility(accessibility: boolean): void {
@@ -196,7 +217,7 @@ export class DesktopOptionsImpl {
     if (process.platform !== 'win32') {
       return;
     }
-    this.config.set(kPeferR64, peferR64);
+    this.config.set(kPreferR64, peferR64);
   }
 
   // Windows-only option
@@ -205,6 +226,6 @@ export class DesktopOptionsImpl {
     if (process.platform !== 'win32' || !process.arch.includes('64')) {
       return false;
     }
-    return this.config.get(kPeferR64);
+    return this.config.get(kPreferR64);
   }
 }
