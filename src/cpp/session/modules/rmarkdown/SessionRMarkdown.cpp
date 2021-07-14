@@ -911,6 +911,9 @@ private:
             }
           }
       }
+      // always enque quarto as normal output (it does it's own colorizing of error output)
+      if (isQuarto_)
+         type = module_context::kCompileOutputNormal;
       CompileOutput compileOutput(type, output);
       ClientEvent event(client_events::kRmdRenderOutput,
                         compileOutputAsJson(compileOutput));
