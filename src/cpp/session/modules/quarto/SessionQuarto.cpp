@@ -67,12 +67,11 @@ void detectQuartoInstallation()
    s_quartoVersion = "";
 
    // see if quarto is on the path
-   FilePath quartoPath;
-   Error error = core::system::findProgramOnPath("quarto", &quartoPath);
-   if (!error)
+   FilePath quartoPath = module_context::findProgram("quarto");
+   if (!quartoPath.isEmpty())
    {
       // convert to real path
-      error = core::system::realPath(quartoPath, &quartoPath);
+      Error error = core::system::realPath(quartoPath, &quartoPath);
       if (!error)
       {
          // read version file -- if it doesn't exist we are running the dev
@@ -123,18 +122,6 @@ void detectQuartoInstallation()
             ClientEvent event(client_events::kShowWarningBar, msgJson);
             module_context::enqueClientEvent(event);
          }
-      }
-      else
-      {
-         LOG_ERROR(error);
-      }
-   }
-   else
-   {
-      // path not found errors are okay here (just means quarto isn't installed)
-      if (!isNotFoundError(error))
-      {
-         LOG_ERROR(error);
       }
    }
 }
@@ -882,6 +869,11 @@ json::Object quartoConfigJSON(bool refresh)
    quartoConfigJSON["project_output_dir"] = config.project_output_dir;
    quartoConfigJSON["project_formats"] = json::toJsonArray(config.project_formats);
    return quartoConfigJSON;
+}
+
+FilePath quartoBinary()
+{
+    return s_quartoPath;
 }
 
 bool projectIsQuarto()
