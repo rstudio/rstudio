@@ -841,6 +841,29 @@ QuartoConfig quartoConfig(bool refresh)
    return s_quartoConfig;
 }
 
+int jupyterErrorLineNumber(const std::vector<std::string>& srcLines, const std::string& output)
+{
+   static boost::regex jupypterErrorRe("An error occurred while executing the following cell:\\s+(-{3,})\\s+([\\S\\s]+?)\\r?\\n(\\1)[\\S\\s]+line (\\d+)\\)");
+   boost::smatch matches;
+   if (regex_utils::search(output, matches, jupypterErrorRe))
+   {
+      // extract the cell lines
+      std::string cellText = matches[2].str();
+      string_utils::convertLineEndings(&cellText, string_utils::LineEndingPosix);
+      std::vector<std::string> cellLines = algorithm::split(cellText, "\n");
+
+      // find the line number of the cell
+      auto it = std::search(srcLines.begin(), srcLines.end(), cellLines.begin(), cellLines.end());
+      if (it != srcLines.end())
+      {
+         int cellLine = static_cast<int>(std::distance(srcLines.begin(), it));
+         return cellLine + safe_convert::stringTo<int>(matches[4].str(), 0);
+      }
+   }
+
+   // no error
+   return -1;
+}
 
 }
 

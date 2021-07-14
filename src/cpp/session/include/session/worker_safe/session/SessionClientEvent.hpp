@@ -210,6 +210,7 @@ extern const int kMemoryUsageChanged;
 extern const int kCommandCallbacksChanged;
 extern const int kConsoleActivate;
 extern const int kJobsActivate;
+extern const int kOpenSourceFile;
 }
    
 class ClientEvent

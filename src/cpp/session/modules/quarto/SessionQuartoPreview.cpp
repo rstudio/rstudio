@@ -20,6 +20,7 @@
 #include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
 #include <core/RegexUtils.hpp>
+#include <core/FileSerializer.hpp>
 #include <core/json/JsonRpc.hpp>
 
 #include <r/RExec.hpp>
@@ -77,8 +78,10 @@ public:
 
    Error render()
    {
-      // reset output file
+      // reset output and re-read input file
       outputFile_ = FilePath();
+      allOutput_.clear();
+      readInputFileLines();
 
       // render
       return r::exec::RFunction(".rs.quarto.renderPreview",
@@ -89,6 +92,7 @@ protected:
    explicit QuartoPreview(const FilePath& previewFile, const std::string& format)
       : QuartoJob(), previewFile_(previewFile), format_(format), port_(0)
    {
+     readInputFileLines();
    }
 
    virtual std::string name()
@@ -119,6 +123,9 @@ private:
 
    virtual void onStdErr(const std::string& output)
    {
+      // accumulate output (used for error scanning)
+      allOutput_ += output;
+
       // always be looking for an output file
       FilePath outputFile =
          module_context::extractOutputFileCreated(previewFile_.getParent(), output);
@@ -170,6 +177,40 @@ private:
          }
       }
 
+      // look for an error and do source navigation as necessary
+      int errLine = -1;
+      FilePath errFile = previewFile_;
+
+      // look for knitr error
+      const boost::regex knitrErr("Quitting from lines (\\d+)-(\\d+) \\(([^)]+)\\)");
+      boost::smatch matches;
+      if (regex_utils::search(output, matches, knitrErr))
+      {
+         errLine = safe_convert::stringTo<int>(matches[1].str(), 1);
+         errFile = previewFile_.getParent().completePath(matches[3].str());
+         if (previewFile_.getExtensionLowerCase() == ".qmd" &&
+             previewFile().getParent() == errFile.getParent() &&
+             previewFile().getStem() == errFile.getStem())
+         {
+            errFile = errFile.getParent().completeChildPath(errFile.getStem() + ".qmd");
+         }
+      }
+
+      // look for jupyter error
+      if (errLine == -1)
+         errLine = jupyterErrorLineNumber(previewFileLines_, allOutput_);
+
+      // if there was an error then navigate to it
+      if (errLine != -1)
+      {
+         json::Object openFile;
+         openFile["file_name"] = module_context::createAliasedPath(errFile);
+         openFile["line_number"] = errLine;
+         openFile["column_number"] = 1;
+         ClientEvent openEvent(client_events::kOpenSourceFile, openFile);
+         module_context::enqueClientEvent(openEvent);
+      }
+
       // standard output forwarding
       QuartoJob::onStdErr(output);
    }
@@ -205,9 +246,18 @@ private:
       return "http://localhost:" + safe_convert::numberToString(port_) + "/" + path_;
    }
 
+   void readInputFileLines()
+   {
+      Error error = core::readStringVectorFromFile(previewFile_, &previewFileLines_, false);
+      if (error)
+         LOG_ERROR(error);
+   }
+
 private:
    FilePath previewFile_;
+   std::vector<std::string> previewFileLines_;
    FilePath outputFile_;
+   std::string allOutput_;
    std::string format_;
    int port_;
    std::string path_;
