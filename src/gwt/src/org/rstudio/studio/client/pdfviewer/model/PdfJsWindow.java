@@ -237,8 +237,21 @@ public class PdfJsWindow extends WindowEx
    }-*/;
    
    public final native void applyLocationHash(String hash) /*-{
-      if (hash !== null)
-         this.PDFView.setHash(hash);
+      
+      // ignore empty hashes
+      if (hash == null || hash.length === 0) {
+         return;
+      }
+      
+      // add an event listener that waits until the page has been rendered
+      var self = this;
+      var callback = function(event) {
+         self.PDFView.pdfLinkService.setHash(hash);
+         self.removeEventListener(callback);
+      };
+      
+      self.addEventListener("documentload", callback);
+            
    }-*/;
    
    public final native float getCurrentScale() /*-{
