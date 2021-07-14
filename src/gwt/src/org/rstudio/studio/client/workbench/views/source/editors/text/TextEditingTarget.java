@@ -6824,7 +6824,8 @@ public class TextEditingTarget implements
    
    private String useQuartoPreview()
    {
-      if (extendedType_ == SourceDocument.XT_QUARTO_DOCUMENT && 
+      if (session_.getSessionInfo().getQuartoConfig().installed &&
+          (extendedType_ == SourceDocument.XT_QUARTO_DOCUMENT) && 
           !isShinyDoc() && !isRmdNotebook() && !isQuartoWebsiteDoc())
       {  
          List<String> outputFormats = getQuartoOutputFormats();
