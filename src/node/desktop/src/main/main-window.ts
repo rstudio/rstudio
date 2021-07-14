@@ -15,9 +15,12 @@
 
 import { BrowserWindow, dialog, Menu, session } from 'electron';
 import path from 'path';
+import fs from 'fs';
+import os from 'os';
 import { ChildProcess } from 'child_process';
 
 import { logger } from '../core/logger';
+import { renderTemplateFile } from '../core/template-filter';
 
 import { GwtCallback, PendingQuit } from './gwt-callback';
 import { MenuCallback, showPlaceholderMenu } from './menu-callback';
@@ -27,6 +30,7 @@ import { SessionLauncher } from './session-launcher';
 import { ApplicationLaunch } from './application-launch';
 import { GwtWindow } from './gwt-window';
 import { appState } from './app-state';
+import { RemoteDesktopSessionLauncher } from './remote-desktop-session-launcher-overlay';
 
 export function closeAllSatellites(mainWindow: BrowserWindow): void {
   const topLevels = BrowserWindow.getAllWindows();
@@ -48,6 +52,7 @@ const reloadWaitDuration = 200;
 
 export class MainWindow extends GwtWindow {
   sessionLauncher?: SessionLauncher;
+  remoteSessionLauncher?: RemoteDesktopSessionLauncher;
   sessionProcess?: ChildProcess;
   appLauncher?: ApplicationLaunch;
   menuCallback: MenuCallback;
@@ -252,8 +257,12 @@ export class MainWindow extends GwtWindow {
   }
 
   loadHtml(html: string): void {
-    html;
-    // TODO
+    const prefix = path.join(os.tmpdir(), 'rstudioTmpPage');
+    const uniqueDir = fs.mkdtempSync(prefix);
+    const uniqueFile = path.join(uniqueDir, 'tmp.html');
+    fs.writeFileSync(uniqueFile, html);
+    this.window.loadFile(uniqueFile);
+    // TODO: cleanup temp files?
   }
 
   quit(): void {
@@ -336,22 +345,8 @@ export class MainWindow extends GwtWindow {
         // the load failed, but we haven't yet received word that the
         // session has failed to load. let the user know that the R
         // session is still initializing, and then reload the page.
-        // TODO
-        // std:: map < std:: string, std:: string > vars = { };
-
-        // std:: ostringstream oss;
-        // const error = text:: renderTemplate(
-        //   options().resourcesPath().completePath("html/loading.html"),
-        //   vars,
-        //   oss);
-
-        // if (error) {
-        //   logger().logError(error);
-        // }
-
-        // this.loadHtml(QString:: fromStdString(oss.str()));
-        this.loadUrl('data:text/html;charset=utf-8,<head> <meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> <meta name="viewport" content="width=device-width, initial-scale=1.0" /> <title>Still loading...</title> </head><body>Waiting for rsession...</body>');
-
+        const vars = new Map<string, string>();
+        this.loadHtml(renderTemplateFile(appState().resourcesPath().completePath('html/loading.html'), vars));
         setTimeout(this.reload.bind(this), reloadWaitDuration * reloadCount);
       } else {
         reloadCount = 0;
@@ -361,7 +356,16 @@ export class MainWindow extends GwtWindow {
   }
 
   onLoadFailed(): void {
-    // TODO
+    if (this.remoteSessionLauncher || this.isErrorDisplayed) {
+      return;
+    }
+
+    const vars = new Map<string, string>([
+      ['url', this.webView.baseUrl ?? '']
+    ]);
+
+    this.loadHtml(
+      renderTemplateFile(appState().resourcesPath().completePath('html/connect.html'), vars));
   }
 
   setErrorDisplayed(): void {

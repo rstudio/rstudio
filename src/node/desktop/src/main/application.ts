@@ -164,6 +164,14 @@ export class Application implements AppState {
     return this.supportPath;
   }
 
+  resourcesPath(): FilePath {
+    if (app.isPackaged) {
+      return new FilePath(); // TODO
+    } else {
+      return new FilePath(app.getAppPath()).completePath('../..');
+    }
+  }
+
   activation(): DesktopActivation {
     if (!this.activationInst) {
       this.activationInst = new DesktopActivation();
