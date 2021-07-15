@@ -336,10 +336,12 @@ Error quartoInspect(const std::string& path,
    return pResultObject->parse(result.stdOut);
 }
 
+
 void readQuartoProjectConfig(const FilePath& configFile,
                              std::string* pType,
                              std::string* pOutputDir,
-                             std::vector<std::string>* pFormats)
+                             std::vector<std::string>* pFormats,
+                             std::vector<std::string>* pBibliographies)
 {
    // read the config
    std::string configText;
@@ -349,6 +351,11 @@ void readQuartoProjectConfig(const FilePath& configFile,
       try
       {
          YAML::Node node = YAML::Load(configText);
+         if (!node.IsMap())
+         {
+            LOG_ERROR_MESSAGE("Unexpected type for config file yaml (expected a map)");
+            return;
+         }
          for (auto it = node.begin(); it != node.end(); ++it)
          {
             std::string key = it->first.as<std::string>();
@@ -369,15 +376,31 @@ void readQuartoProjectConfig(const FilePath& configFile,
             }
             else if (key == "format")
             {
-               if (it->second.Type() == YAML::NodeType::Scalar)
+               auto node = it->second;
+               if (node.Type() == YAML::NodeType::Scalar)
                {
-                  pFormats->push_back(it->second.as<std::string>());
+                  pFormats->push_back(node.as<std::string>());
                }
-               else if (it->second.Type() == YAML::NodeType::Map)
+               else if (node.Type() == YAML::NodeType::Map)
                {
-                  for (auto formatIt = it->second.begin(); formatIt != it->second.end(); ++formatIt)
+                  for (auto formatIt = node.begin(); formatIt != node.end(); ++formatIt)
                   {
                      pFormats->push_back(formatIt->first.as<std::string>());
+                  }
+               }
+            }
+            else if (key == "bibliography")
+            {
+               auto node = it->second;
+               if (node.Type() == YAML::NodeType::Scalar)
+               {
+                  pBibliographies->push_back(node.as<std::string>());
+               }
+               else if (node.Type() == YAML::NodeType::Sequence)
+               {
+                  for (auto formatIt = node.begin(); formatIt != node.end(); ++formatIt)
+                  {
+                     pBibliographies->push_back(formatIt->as<std::string>());
                   }
                }
             }
@@ -485,11 +508,12 @@ Error getQmdPublishDetails(const json::JsonRpcRequest& request,
    if (!quartoConfig.isEmpty())
    {
        std::string type, outputDir;
-       std::vector<std::string> formats;
+       std::vector<std::string> formats, biblios;
        readQuartoProjectConfig(quartoConfig,
                                &type,
                                &outputDir,
-                               &formats);
+                               &formats,
+                               &biblios);
        if (type == kQuartoProjectBook || type == kQuartoProjectSite)
        {
           FilePath configPath = quartoConfig.getParent();
@@ -763,8 +787,8 @@ bool handleQuartoPreview(const core::FilePath& sourceFile,
    if (!configFile.isEmpty())
    {
       std::string type, outputDir;
-      std::vector<std::string> formats;
-      readQuartoProjectConfig(configFile, &type, &outputDir, &formats);
+      std::vector<std::string> formats, biblios;
+      readQuartoProjectConfig(configFile, &type, &outputDir, &formats, &biblios);
       if (type == kQuartoProjectSite || type == kQuartoProjectBook)
          return true;
    }
@@ -812,7 +836,8 @@ QuartoConfig quartoConfig(bool refresh)
             readQuartoProjectConfig(configFile,
                                     &s_quartoConfig.project_type,
                                     &s_quartoConfig.project_output_dir,
-                                    &s_quartoConfig.project_formats);
+                                    &s_quartoConfig.project_formats,
+                                    &s_quartoConfig.project_bibliographies);
 
             // provide default output dirs
             if (s_quartoConfig.project_output_dir.length() == 0)

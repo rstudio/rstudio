@@ -917,6 +917,7 @@ struct QuartoConfig
    std::string project_dir;
    std::string project_output_dir;
    std::vector<std::string> project_formats;
+   std::vector<std::string> project_bibliographies;
 };
 
 QuartoConfig quartoConfig(bool refresh = false);
