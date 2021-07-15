@@ -118,6 +118,11 @@ const extension = (context: ExtensionContext): Extension => {
         attr_edit: () => ({
           type: (schema: Schema) => schema.nodes.figure,
           editFn: () => imageCommand(ui, imageAttr),
+          offset: {
+            top: 2,
+            right: 0
+          },
+          preferHidden: true
         }),
       },
     ],

@@ -22,6 +22,7 @@ export interface AttrEditOptions {
   tags?: (node: ProsemirrorNode) => string[];
   editFn?: () => CommandFn;
   noDecorator?: boolean;
+  preferHidden?: boolean;
   offset?: {
     top: number;
     right: number;

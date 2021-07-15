@@ -46,6 +46,7 @@
 
 .pm-attr-edit-decoration .attr-edit-button {
   margin-top: 1px;
+  user-select: none;
 }
 
 .pm-attr-edit-decoration .attr-edit-button img {
