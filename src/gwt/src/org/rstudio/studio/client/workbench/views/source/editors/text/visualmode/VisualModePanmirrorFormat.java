@@ -41,6 +41,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
+import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 import com.google.inject.Inject;
 
@@ -82,9 +83,17 @@ public class VisualModePanmirrorFormat
             
             // see if we have a format comment
             PanmirrorPandocFormatConfig formatComment = formatTools.parseFormatConfig(getEditorCode(), true);
-              
+            
             // doctypes
-            if (formatComment.doctypes == null || formatComment.doctypes.length == 0)
+            if (formatComment.doctypes != null)
+            {
+               format.docTypes = formatComment.doctypes;
+            }
+            else if (target_.getExtendedFileType() == SourceDocument.XT_QUARTO_DOCUMENT)
+            {
+               format.docTypes = new String[] { PanmirrorExtendedDocType.quarto };
+            }
+            else if (formatComment.doctypes == null || formatComment.doctypes.length == 0)
             {
                List<String> configDocTypes = new ArrayList<>();
                if (isBookdownProjectDocument())
@@ -92,10 +101,6 @@ public class VisualModePanmirrorFormat
                if (isHugoProjectDocument() || isHugodownDocument())
                   configDocTypes.add(PanmirrorExtendedDocType.hugo);
                format.docTypes = configDocTypes.toArray(new String[] {});
-            }
-            else if (formatComment.doctypes != null)
-            {
-               format.docTypes = formatComment.doctypes;
             }
             else
             {
@@ -122,11 +127,15 @@ public class VisualModePanmirrorFormat
             else
             {
                format.pandocMode = "markdown";
-               format.pandocExtensions = "+autolink_bare_uris+tex_math_single_backslash";
+               if (target_.getExtendedFileType() != SourceDocument.XT_QUARTO_DOCUMENT)
+               { 
+                  format.pandocExtensions = "+autolink_bare_uris+tex_math_single_backslash";
+               }
                if (formatComment.extensions != null)
                   format.pandocExtensions += formatComment.extensions;
             }
               
+            
             // rmdExtensions
             
             // get any rmd extensions declared by the user in the format comment
