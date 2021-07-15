@@ -123,7 +123,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
       events_.addHandler(FileTypeChangedEvent.TYPE, event -> manageCommands(false));
       events_.addHandler(SourceOnSaveChangedEvent.TYPE, event -> manageSaveCommands(isActive()));
-      events_.addHandler(SynctexStatusChangedEvent.TYPE, event -> manageSaveCommands(isActive()));
+      events_.addHandler(SynctexStatusChangedEvent.TYPE, event -> manageSynctexCommands(isActive()));
 
       initialized_ = true;
    }

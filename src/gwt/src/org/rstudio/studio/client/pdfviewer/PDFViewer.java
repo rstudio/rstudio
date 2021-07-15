@@ -54,22 +54,24 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
                                   WindowOpenedEvent.Handler
 {
    @Inject
-   public PDFViewer(EventBus eventBus,
+   public PDFViewer(final EventBus events,
                     final ApplicationServerOperations server,
                     final GlobalDisplay display,
                     final SatelliteManager satelliteManager,
                     final Synctex synctex,
                     final UserPrefs prefs)
-   {  
+   {
+      events_ = events;
       display_ = display;
       server_ = server;
       synctex_ = synctex;
       prefs_ = prefs;
       
-      eventBus.addHandler(CompilePdfCompletedEvent.TYPE, this);
-      eventBus.addHandler(SynctexViewPdfEvent.TYPE, this);
-      eventBus.addHandler(PDFLoadEvent.TYPE, this);
-      eventBus.addHandler(WindowOpenedEvent.TYPE, this);
+      events_.addHandler(CompilePdfCompletedEvent.TYPE, this);
+      events_.addHandler(SynctexViewPdfEvent.TYPE, this);
+      events_.addHandler(PDFLoadEvent.TYPE, this);
+      events_.addHandler(WindowOpenedEvent.TYPE, this);
+      
       PdfJsWindow.addPDFLoadHandler(this);
       PdfJsWindow.addPageClickHandler(this);
       PdfJsWindow.addWindowClosedHandler(this);
@@ -83,8 +85,10 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
          public void onClose(CloseEvent<Window> event)
          {
             if (pdfJsWindow_ != null)
+            {
                pdfJsWindow_.close();
-            pdfJsWindow_ = null;
+               pdfJsWindow_ = null;
+            }
          }
       });
    }
@@ -344,6 +348,7 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
    private Operation executeOnPdfJsLoad_;
    private Operation executeOnPdfLoad_;
 
+   private final EventBus events_;
    private final GlobalDisplay display_;
    private final ApplicationServerOperations server_;
    private final Synctex synctex_;
