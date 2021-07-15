@@ -59,17 +59,15 @@ public class PdfJsWindow extends WindowEx
          rstudioCss.href = "viewer-rstudio.css";
          win.document.head.appendChild(rstudioCss);
       
-         // hide the Open File and Bookmark buttons; these don't make sense in
-         // our context
-         var openFileButton = win.document.getElementById("openFile");
-         if (openFileButton) {
-            openFileButton.style.display = "none";
+         // hide some buttons that aren't relevant to RStudio
+         var hideIds = ["openFile", "secondaryOpenFile", "viewBookmark"];
+         for (var i = 0, n = hideIds.length; i < n; i++) {
+            var el = win.document.getElementById(hideIds[i]);
+            if (el) {
+               el.setAttribute("hidden", true);
+            }
          }
-         var bookmarkButton = win.document.getElementById("viewBookmark");
-         if (bookmarkButton) {
-            bookmarkButton.style.display = "none";
-         }
-
+         
          // create a Jump to Source toolbar button
          // (image and style are applied in viewer-rstudio.css)
          //
