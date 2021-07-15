@@ -4730,7 +4730,7 @@ public class TextEditingTarget implements
       RmdSelectedTemplate selTemplate = getSelectedTemplate();
       
       // skip all of the format stuff for quarto docs
-      if (extendedType_.equals(SourceDocument.XT_QUARTO_DOCUMENT) && fileType_.isRmd())
+      if (extendedType_.equals(SourceDocument.XT_QUARTO_DOCUMENT))
       {
          if (isShinyPrerenderedDoc()) 
          {
