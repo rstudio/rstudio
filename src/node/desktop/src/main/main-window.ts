@@ -30,6 +30,7 @@ import { SessionLauncher } from './session-launcher';
 import { ApplicationLaunch } from './application-launch';
 import { GwtWindow } from './gwt-window';
 import { appState } from './app-state';
+import { DesktopOptions } from './desktop-options';
 import { RemoteDesktopSessionLauncher } from './remote-desktop-session-launcher-overlay';
 
 export function closeAllSatellites(mainWindow: BrowserWindow): void {
@@ -150,6 +151,11 @@ export class MainWindow extends GwtWindow {
     //             QString());
     //   ::_exit(EXIT_FAILURE);
     // }
+    
+    this.window.on('close', () => {
+      const size = this.window.getSize();
+      DesktopOptions().saveWindowBounds({width: size[0], height: size[1]});
+    });
   }
 
   launchSession(reload: boolean): void {
