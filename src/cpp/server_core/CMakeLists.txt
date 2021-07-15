@@ -24,6 +24,7 @@ set (SERVER_CORE_SOURCE_FILES
    RVersionsScanner.cpp
    SecureKeyFile.cpp
    ServerDatabase.cpp
+   ServerLicense.cpp
    sessions/SessionSignature.cpp
    system/Pam.cpp
    UrlPorts.cpp
