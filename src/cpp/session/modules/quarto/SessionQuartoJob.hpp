@@ -121,10 +121,11 @@ protected:
       }
    }
 
+protected:
+   boost::shared_ptr<jobs::Job> pJob_;
 
 private:
    bool stopRequested_;
-   boost::shared_ptr<jobs::Job> pJob_;
 };
 
 struct ParsedServerLocation

@@ -452,7 +452,8 @@ private:
       targetFile_(targetFile),
       sourceLine_(sourceLine),
       sourceNavigation_(sourceNavigation)
-   {}
+   {
+   }
 
    void start(const std::string& format,
               const std::string& encoding,
@@ -502,10 +503,14 @@ private:
             isShiny_ = true;
       }
 
-      // if we are using a quarto command to render, we must be a quarto doc
+      // if we are using a quarto command to render, we must be a quarto doc. read
+      // all of the input file lines to be used in error navigation
       if (renderFunc == "quarto run" || renderFunc == "quarto render")
       {
           isQuarto_ = true;
+          Error error = core::readStringVectorFromFile(targetFile_, &targetFileLines_, false);
+          if (error)
+             LOG_ERROR(error);
       }
 
       std::string extraParams;
@@ -863,30 +868,66 @@ private:
                           const std::string& output)
    {
       using namespace module_context;
-      if (type == module_context::kCompileOutputError &&  sourceNavigation_)
+      if ((type == module_context::kCompileOutputError || isQuarto_) &&  sourceNavigation_)
       {
          // this is an error, parse it to see if it looks like a knitr error
          const boost::regex knitrErr(
-                  "^Quitting from lines (\\d+)-(\\d+) \\(([^)]+)\\)(.*)");
+                  "Quitting from lines (\\d+)-(\\d+) \\(([^)]+)\\)(.*)");
          boost::smatch matches;
-         if (regex_utils::match(output, matches, knitrErr))
+         if (regex_utils::search(output, matches, knitrErr))
          {
             // looks like a knitr error; compose a compile error object and
             // emit it to the client when the render is complete
-            SourceMarker err(
-                     SourceMarker::Error,
-                     targetFile_.getParent().completePath(matches[3].str()),
-                     boost::lexical_cast<int>(matches[1].str()),
-                     1,
-                     core::html_utils::HTML(matches[4].str()),
-                     true);
-            knitrErrors_.push_back(err);
+            if (isQuarto_)
+            {
+               FilePath errFile = targetFile_.getParent().completePath(matches[3].str());
+               if (targetFile_.getExtensionLowerCase() == ".qmd" &&
+                   targetFile_.getParent() == errFile.getParent() &&
+                   targetFile_.getStem() == errFile.getStem())
+               {
+                  errFile = errFile.getParent().completeChildPath(errFile.getStem() + ".qmd");
+               }
+               navigateToTarget(errFile, boost::lexical_cast<int>(matches[1].str()));
+            }
+            else
+            {
+               SourceMarker err(
+                        SourceMarker::Error,
+                        targetFile_.getParent().completePath(matches[3].str()),
+                        boost::lexical_cast<int>(matches[1].str()),
+                        1,
+                        core::html_utils::HTML(matches[4].str()),
+                        true);
+               knitrErrors_.push_back(err);
+            }
          }
+         // check for a jupyter error if this is quarto
+         else if (isQuarto_)
+         {
+            int errLine = module_context::jupyterErrorLineNumber(targetFileLines_, allOutput_);
+            if (errLine != -1)
+            {
+               navigateToTarget(targetFile_, errLine);
+            }
+          }
       }
+      // always enque quarto as normal output (it does it's own colorizing of error output)
+      if (isQuarto_)
+         type = module_context::kCompileOutputNormal;
       CompileOutput compileOutput(type, output);
       ClientEvent event(client_events::kRmdRenderOutput,
                         compileOutputAsJson(compileOutput));
       module_context::enqueClientEvent(event);
+   }
+
+   void navigateToTarget(const FilePath& filePath, int lineNumber)
+   {
+      json::Object openFile;
+      openFile["file_name"] = module_context::createAliasedPath(filePath);
+      openFile["line_number"] = lineNumber;
+      openFile["column_number"] = 1;
+      ClientEvent openEvent(client_events::kOpenSourceFile, openFile);
+      module_context::enqueClientEvent(openEvent);
    }
 
    RenderTerminateType terminateType_;
@@ -894,6 +935,7 @@ private:
    bool hasShinyContent_;
    bool isQuarto_ = false;
    FilePath targetFile_;
+   std::vector<std::string> targetFileLines_;
    int sourceLine_;
    FilePath outputFile_;
    std::string encoding_;

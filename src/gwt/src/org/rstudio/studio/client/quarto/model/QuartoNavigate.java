@@ -1,5 +1,5 @@
 /*
- * SessionQuarto.hpp
+ * QuartoNavigate.java
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -13,34 +13,26 @@
  *
  */
 
-#ifndef SESSION_QUARTO_HPP
-#define SESSION_QUARTO_HPP
+package org.rstudio.studio.client.quarto.model;
 
-#include <shared_core/json/Json.hpp>
+import com.google.gwt.core.client.JavaScriptObject;
 
-namespace rstudio {
-namespace core {
-   class Error;
-   class FilePath;
-}
-}
-
-namespace rstudio {
-namespace session {
-namespace modules {
-namespace quarto {
-
-core::FilePath quartoBinary();
-
-bool projectIsQuarto();
-
-core::json::Object quartoConfigJSON(bool refresh = false);
-
-core::Error initialize();
+public class QuartoNavigate extends JavaScriptObject
+{
+   protected QuartoNavigate()
+   {
+   }
    
-} // namespace quarto
-} // namespace modules
-} // namespace session
-} // namespace rstudio
+   public native final boolean isWebsite() /*-{
+      return this.is_website;
+   }-*/;
 
-#endif
+   public native final String getSourceFile() /*-{
+      return this.source_file;
+   }-*/;
+
+   public native final String getOutputFile() /*-{
+      return this.output_file;
+   }-*/;
+
+}

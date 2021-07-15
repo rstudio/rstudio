@@ -67,12 +67,11 @@ void detectQuartoInstallation()
    s_quartoVersion = "";
 
    // see if quarto is on the path
-   FilePath quartoPath;
-   Error error = core::system::findProgramOnPath("quarto", &quartoPath);
-   if (!error)
+   FilePath quartoPath = module_context::findProgram("quarto");
+   if (!quartoPath.isEmpty())
    {
       // convert to real path
-      error = core::system::realPath(quartoPath, &quartoPath);
+      Error error = core::system::realPath(quartoPath, &quartoPath);
       if (!error)
       {
          // read version file -- if it doesn't exist we are running the dev
@@ -85,7 +84,6 @@ void detectQuartoInstallation()
          std::string contents;
          if (versionFile.exists())
          {
-            std::string contents;
             error = core::readStringFromFile(versionFile, &contents);
             if (error)
             {
@@ -124,18 +122,6 @@ void detectQuartoInstallation()
             ClientEvent event(client_events::kShowWarningBar, msgJson);
             module_context::enqueClientEvent(event);
          }
-      }
-      else
-      {
-         LOG_ERROR(error);
-      }
-   }
-   else
-   {
-      // path not found errors are okay here (just means quarto isn't installed)
-      if (!isNotFoundError(error))
-      {
-         LOG_ERROR(error);
       }
    }
 }
@@ -842,6 +828,29 @@ QuartoConfig quartoConfig(bool refresh)
    return s_quartoConfig;
 }
 
+int jupyterErrorLineNumber(const std::vector<std::string>& srcLines, const std::string& output)
+{
+   static boost::regex jupypterErrorRe("An error occurred while executing the following cell:\\s+(-{3,})\\s+([\\S\\s]+?)\\r?\\n(\\1)[\\S\\s]+line (\\d+)\\)");
+   boost::smatch matches;
+   if (regex_utils::search(output, matches, jupypterErrorRe))
+   {
+      // extract the cell lines
+      std::string cellText = matches[2].str();
+      string_utils::convertLineEndings(&cellText, string_utils::LineEndingPosix);
+      std::vector<std::string> cellLines = algorithm::split(cellText, "\n");
+
+      // find the line number of the cell
+      auto it = std::search(srcLines.begin(), srcLines.end(), cellLines.begin(), cellLines.end());
+      if (it != srcLines.end())
+      {
+         int cellLine = static_cast<int>(std::distance(srcLines.begin(), it));
+         return cellLine + safe_convert::stringTo<int>(matches[4].str(), 0);
+      }
+   }
+
+   // no error
+   return -1;
+}
 
 }
 
@@ -860,6 +869,11 @@ json::Object quartoConfigJSON(bool refresh)
    quartoConfigJSON["project_output_dir"] = config.project_output_dir;
    quartoConfigJSON["project_formats"] = json::toJsonArray(config.project_formats);
    return quartoConfigJSON;
+}
+
+FilePath quartoBinary()
+{
+    return s_quartoPath;
 }
 
 bool projectIsQuarto()

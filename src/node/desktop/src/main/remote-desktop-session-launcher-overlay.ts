@@ -1,5 +1,5 @@
 /*
- * SessionQuarto.hpp
+ * remote-desktop-session-launcher-overlay.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -13,34 +13,6 @@
  *
  */
 
-#ifndef SESSION_QUARTO_HPP
-#define SESSION_QUARTO_HPP
+export class RemoteDesktopSessionLauncher {
 
-#include <shared_core/json/Json.hpp>
-
-namespace rstudio {
-namespace core {
-   class Error;
-   class FilePath;
 }
-}
-
-namespace rstudio {
-namespace session {
-namespace modules {
-namespace quarto {
-
-core::FilePath quartoBinary();
-
-bool projectIsQuarto();
-
-core::json::Object quartoConfigJSON(bool refresh = false);
-
-core::Error initialize();
-   
-} // namespace quarto
-} // namespace modules
-} // namespace session
-} // namespace rstudio
-
-#endif

@@ -21,6 +21,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/jobs/JobsApi.hpp>
 
+#include "SessionQuarto.hpp"
 
 using namespace rstudio::core;
 using namespace rstudio::session::module_context;
@@ -32,12 +33,6 @@ namespace quarto {
 
 Error QuartoJob::start()
 {
-   // quarto binary
-   FilePath quartoProgramPath;
-   Error error = core::system::findProgramOnPath("quarto", &quartoProgramPath);
-   if (error)
-      return error;
-
    // options
    core::system::ProcessOptions options;
 #ifdef _WIN32
@@ -58,7 +53,7 @@ Error QuartoJob::start()
    cb.onExit =  boost::bind(&QuartoJob::onCompleted,
                              QuartoJob::shared_from_this(), _1);
 
-   error = processSupervisor().runProgram(string_utils::utf8ToSystem(quartoProgramPath.getAbsolutePath()),
+   Error error = processSupervisor().runProgram(string_utils::utf8ToSystem(quartoBinary().getAbsolutePath()),
                                   args(),
                                   options,
                                   cb);
@@ -82,7 +77,7 @@ Error QuartoJob::start()
 
 ParsedServerLocation quartoServerLocationFromOutput(const std::string& output)
 {
-   boost::regex browseRe("http:\\/\\/localhost:(\\d{2,})\\/(pdf\\/viewer\\.html)?");
+   boost::regex browseRe("http:\\/\\/localhost:(\\d{2,})\\/(web\\/viewer\\.html)?");
    boost::smatch match;
    if (regex_utils::search(output, match, browseRe))
    {

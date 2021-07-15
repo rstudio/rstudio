@@ -752,9 +752,34 @@ private:
 
 void addViewerHistoryEntry(const ViewerHistoryEntry& entry);
 
-// pass 0 for no height change
-// pass -1 for maximize
-void viewer(const std::string& url, bool isQuartoWebsite = false, int height = 0);
+struct QuartoNavigate
+{
+   QuartoNavigate() : website(false) {}
+   bool empty() const { return !website && source.empty(); }
+   static QuartoNavigate navWebsite()
+   {
+      QuartoNavigate nav;
+      nav.website = true;
+      return nav;
+   }
+   static QuartoNavigate navDoc(const std::string& source, const std::string& output)
+   {
+      QuartoNavigate nav;
+      nav.website = false;
+      nav.source = source;
+      nav.output = output;
+      return nav;
+   }
+   bool website;
+   std::string source;
+   std::string output;
+};
+
+
+void viewer(const std::string& url,
+            int height = 0, // pass 0 for no height change, // pass -1 for maximize
+            const QuartoNavigate& quartoNav = QuartoNavigate());
+
 std::string viewerCurrentUrl(bool mapped = true);
 
 core::Error recursiveCopyDirectory(const core::FilePath& fromDir,
@@ -903,6 +928,10 @@ bool handleQuartoPreview(const core::FilePath& sourceFile,
                          const core::FilePath& outputFile,
                          const std::string& renderOutput,
                          bool validateExtendedType);
+
+// returns -1 if no error was found in the output
+int jupyterErrorLineNumber(const std::vector<std::string>& srcLines,
+                           const std::string& output);
 
 std::vector<core::FilePath> ignoreContentDirs();
 bool isIgnoredContent(const core::FilePath& filePath, const std::vector<core::FilePath>& ignoreDirs);

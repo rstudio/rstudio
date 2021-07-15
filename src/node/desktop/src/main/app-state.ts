@@ -28,6 +28,7 @@ export interface AppState {
   sessionPath?: FilePath;
   scriptsPath?: FilePath;
   supportingFilePath(): FilePath;
+  resourcesPath(): FilePath;
   activation(): DesktopActivation;
   port: number;
   generateNewPort(): void;

@@ -37,6 +37,7 @@
 ### Misc
 
 * **BREAKING:** RStudio Desktop Pro only supports activation with license files (Pro #2300)
+* Fixed an issue where scroll position in PDFs was not preserved on re-render (#9603)
 * Improved ordering of completion results within `library()` calls (#9293)
 * Syntax support for embedded knitr chunks (#9579)
 * Added support for publishing Quarto documents and websites (#9556)
