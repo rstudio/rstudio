@@ -247,7 +247,7 @@ public class PdfJsWindow extends WindowEx
       var self = this;
       var callback = function(event) {
          self.PDFView.pdfLinkService.setHash(hash);
-         self.removeEventListener(callback);
+         self.removeEventListener("documentload", callback);
       };
       
       self.addEventListener("documentload", callback);
