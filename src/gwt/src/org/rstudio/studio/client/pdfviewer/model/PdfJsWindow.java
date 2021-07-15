@@ -70,25 +70,33 @@ public class PdfJsWindow extends WindowEx
             bookmarkButton.style.display = "none";
          }
 
-         // create a Jump to Source toolbar button (image and style are applied
-         // in viewer-rstudio.css)
-         var jumpToSource = win.document.createElement("button");
-         jumpToSource.className = "toolbarButton";
-         jumpToSource.id = "jumpToSource";
-         jumpToSource.title = "Sync editor location to PDF view";
-         jumpToSource.addEventListener("click", function(evt) {
-            @org.rstudio.studio.client.pdfviewer.model.PdfJsWindow::fireLookupCurrentViewEvent(Lorg/rstudio/studio/client/pdfviewer/model/PdfJsWindow;)(win);
+         // create a Jump to Source toolbar button
+         // (image and style are applied in viewer-rstudio.css)
+         //
+         // inject UI on PDF document load, as otherwise pdf.js may attempt
+         // to mutate the toolbar and remove our custom button in the process
+         // ('documentload' is a custom pdf.js event)
+         win.addEventListener("documentload", function() {
+            
+            var jumpToSource = win.document.createElement("button");
+            jumpToSource.className = "toolbarButton";
+            jumpToSource.id = "jumpToSource";
+            jumpToSource.title = "Sync editor location to PDF view";
+            jumpToSource.addEventListener("click", function(evt) {
+               @org.rstudio.studio.client.pdfviewer.model.PdfJsWindow::fireLookupCurrentViewEvent(*)(win);
+            });
+
+            var jumpToSourceContent = win.document.createElement("span");
+            jumpToSourceContent.innerText = "Jump to Source Location";
+            jumpToSource.appendChild(jumpToSourceContent);
+
+            // put the Jump to Source button on the right toolbar
+            var toolbarRight = win.document.getElementById("toolbarViewerRight");
+            if (toolbarRight) {
+               toolbarRight.insertBefore(jumpToSource, toolbarRight.firstChild);
+            }
+         
          });
-
-         var jumpToSourceContent = win.document.createElement("span");
-         jumpToSourceContent.innerText = "Jump to Source Location";
-         jumpToSource.appendChild(jumpToSourceContent);
-
-         // put the Jump to Source button on the right toolbar
-         var toolbarRight = win.document.getElementById("toolbarViewerRight");
-         if (toolbarRight) {
-            toolbarRight.insertBefore(jumpToSource, toolbarRight.firstChild);
-         }
          
          // make the sidebar open by default
          win.PDFView.switchSidebarView('thumbs');
