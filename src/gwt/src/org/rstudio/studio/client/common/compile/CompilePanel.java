@@ -155,12 +155,16 @@ public class CompilePanel extends Composite
                           boolean alwaysShowList,
                           boolean openErrors)
    {
+      openErrors = openErrors && (alwaysShowList || SourceMarker.showErrorList(errors));
+      
       errorList_.showMarkers(targetFileName_,
                              basePath,
                              errors,
-                             autoSelect);
+                             autoSelect,
+                             openErrors);
+      
 
-      if (openErrors && (alwaysShowList || SourceMarker.showErrorList(errors)))
+      if (openErrors)
       {
          panel_.setWidget(errorList_);
          showOutputButton_.setVisible(true);
