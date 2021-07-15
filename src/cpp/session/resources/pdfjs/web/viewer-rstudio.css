@@ -12,3 +12,9 @@
    }
 }
 
+
+html[dir="ltr"] .secondaryToolbarButton > span {
+   padding-left:  4px;
+   padding-right: 4px;
+}
+
