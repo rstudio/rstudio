@@ -237,8 +237,7 @@ private:
 
    void readInputFileLines()
    {
-      previewFileLines_.clear();
-      Error error = core::readStringVectorFromFile(previewFile_, &previewFileLines_, false);
+      Error error = core::readLinesFromFile(previewFile_, &previewFileLines_);
       if (error)
          LOG_ERROR(error);
    }

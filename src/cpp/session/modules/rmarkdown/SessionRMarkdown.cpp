@@ -508,7 +508,7 @@ private:
       if (renderFunc == "quarto run" || renderFunc == "quarto render")
       {
           isQuarto_ = true;
-          Error error = core::readStringVectorFromFile(targetFile_, &targetFileLines_, false);
+          Error error = core::readLinesFromFile(targetFile_, &targetFileLines_);
           if (error)
              LOG_ERROR(error);
       }
