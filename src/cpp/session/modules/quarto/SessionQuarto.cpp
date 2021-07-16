@@ -856,13 +856,16 @@ QuartoConfig quartoConfig(bool refresh)
 
 int jupyterErrorLineNumber(const std::vector<std::string>& srcLines, const std::string& output)
 {
+   // strip ansi codes before searching
+   std::string plainOutput = output;
+   text::stripAnsiCodes(&plainOutput);
+
    static boost::regex jupypterErrorRe("An error occurred while executing the following cell:\\s+(-{3,})\\s+([\\S\\s]+?)\\r?\\n(\\1)[\\S\\s]+line (\\d+)\\)");
    boost::smatch matches;
-   if (regex_utils::search(output, matches, jupypterErrorRe))
+   if (regex_utils::search(plainOutput, matches, jupypterErrorRe))
    {
       // extract the cell lines
       std::string cellText = matches[2].str();
-      core::text::stripAnsiCodes(&cellText);
       string_utils::convertLineEndings(&cellText, string_utils::LineEndingPosix);
       std::vector<std::string> cellLines = algorithm::split(cellText, "\n");
 
