@@ -49,7 +49,6 @@ import org.rstudio.studio.client.common.debugging.events.PackageUnloadedEvent;
 import org.rstudio.studio.client.common.debugging.events.UnhandledErrorEvent;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.common.dependencies.events.InstallShinyEvent;
-import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
 import org.rstudio.studio.client.common.rpubs.events.RPubsUploadStatusEvent;
 import org.rstudio.studio.client.common.rstudioapi.events.AskSecretEvent;
 import org.rstudio.studio.client.common.rstudioapi.events.RStudioAPIShowDialogEvent;
@@ -358,8 +357,8 @@ public class ClientEventDispatcher
          }
          else if (type == ClientEvent.FileEdit)
          {
-            FileSystemItem file = event.getData();
-            eventBus_.dispatchEvent(new FileEditEvent(file));
+            FileEditEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new FileEditEvent(data));
          }
          else if (type == ClientEvent.ShowContent)
          {
@@ -1112,11 +1111,6 @@ public class ClientEventDispatcher
          {
             JobsActivateEvent.Data data = event.getData();
             eventBus_.dispatchEvent(new JobsActivateEvent(data));
-         }
-         else if (type == ClientEvent.OpenSourceFile)
-         {
-            OpenSourceFileEvent.Data data = event.getData();
-            eventBus_.dispatchEvent(OpenSourceFileEvent.fromData(data));
          }
          else
          {

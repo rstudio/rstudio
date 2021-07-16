@@ -31,6 +31,7 @@
 #include <core/YamlUtil.hpp>
 #include <core/StringUtils.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/text/AnsiCodeParser.hpp>
 
 #include <core/json/JsonRpc.hpp>
 
@@ -861,15 +862,27 @@ int jupyterErrorLineNumber(const std::vector<std::string>& srcLines, const std::
    {
       // extract the cell lines
       std::string cellText = matches[2].str();
+      core::text::stripAnsiCodes(&cellText);
       string_utils::convertLineEndings(&cellText, string_utils::LineEndingPosix);
       std::vector<std::string> cellLines = algorithm::split(cellText, "\n");
+
+      // strip out leading yaml (reading/writing of yaml can lead to src differences)
+      int yamlLines = 0;
+      for (auto line : cellLines)
+      {
+         if (boost::algorithm::starts_with(line, "#| "))
+            yamlLines++;
+         else
+            break;
+      }
+      cellLines = std::vector<std::string>(cellLines.begin() + yamlLines, cellLines.end());
 
       // find the line number of the cell
       auto it = std::search(srcLines.begin(), srcLines.end(), cellLines.begin(), cellLines.end());
       if (it != srcLines.end())
       {
          int cellLine = static_cast<int>(std::distance(srcLines.begin(), it));
-         return cellLine + safe_convert::stringTo<int>(matches[4].str(), 0);
+         return cellLine + safe_convert::stringTo<int>(matches[4].str(), 0) - yamlLines;
       }
    }
 

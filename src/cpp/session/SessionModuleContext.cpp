@@ -1342,6 +1342,29 @@ bool isTextFile(const FilePath& targetPath)
 
 }
 
+void editFile(const core::FilePath& filePath, int lineNumber)
+{
+   // construct file system item (also tag with mime type) and position
+   json::Object fileJson = module_context::createFileSystemItem(filePath);
+   fileJson["mime_type"] = filePath.getMimeContentType();
+
+   json::Value positionJsonValue;
+   if (lineNumber >= 0)
+   {
+      json::Object positionJson;
+      positionJson["line"] = lineNumber;
+      positionJson["column"] = 1;
+      positionJsonValue = positionJson;
+   }
+
+   // fire event
+   json::Object eventJson;
+   eventJson["file"] = fileJson;
+   eventJson["position"] = positionJsonValue;
+   ClientEvent event(client_events::kFileEdit, eventJson);
+   module_context::enqueClientEvent(event);
+}
+
 Error rBinDir(core::FilePath* pRBinDirPath)
 {
    std::string rHomeBin;
