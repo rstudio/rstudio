@@ -22,6 +22,7 @@
 #include <core/RegexUtils.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/json/JsonRpc.hpp>
+#include <core/system/Environment.hpp>
 
 #include <r/RExec.hpp>
 
@@ -111,6 +112,22 @@ protected:
       args.push_back("--no-browse");
 
       return args;
+   }
+
+   virtual void environment(core::system::Options* pEnv)
+   {
+      // if this file isn't in a project then add the QUARTO_CROSSREF_INDEX_PATH
+      if (!module_context::isFileInSessionQuartoProject(previewFile_))
+      {
+         FilePath indexPath;
+         Error error = module_context::perFilePathStorage(kQuartoCrossrefScope, previewFile_, false, &indexPath);
+         if (error)
+         {
+            LOG_ERROR(error);
+            return;
+         }
+         core::system::setenv(pEnv, "QUARTO_CROSSREF_INDEX_PATH", indexPath.getAbsolutePath());
+      }
    }
 
    virtual core::FilePath workingDir()

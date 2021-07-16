@@ -48,6 +48,7 @@
 
 #include "SessionQuartoPreview.hpp"
 #include "SessionQuartoServe.hpp"
+#include "SessionQuartoXRefs.hpp"
 
 using namespace rstudio::core;
 
@@ -98,7 +99,7 @@ void detectQuartoInstallation()
             contents = "99.9.9";
          }
 
-         const Version kQuartoRequiredVersion("0.1.344");
+         const Version kQuartoRequiredVersion("0.2.13");
          boost::algorithm::trim(contents);
          Version quartoVersion(contents);
          if (quartoVersion >= kQuartoRequiredVersion)
@@ -798,7 +799,7 @@ bool handleQuartoPreview(const core::FilePath& sourceFile,
    return false;
 }
 
-
+const char* const kQuartoCrossrefScope = "quarto-crossref";
 const char* const kQuartoProjectDefault = "default";
 const char* const kQuartoProjectSite = "site";
 const char* const kQuartoProjectBook = "book";
@@ -893,6 +894,22 @@ int jupyterErrorLineNumber(const std::vector<std::string>& srcLines, const std::
    return -1;
 }
 
+bool isFileInSessionQuartoProject(const core::FilePath& file)
+{
+   module_context::QuartoConfig config = module_context::quartoConfig();
+   if (config.is_project)
+   {
+      FilePath projDir = module_context::resolveAliasedPath(config.project_dir);
+      return file.isWithin(projDir);
+   }
+   else
+   {
+      return false;
+   }
+
+}
+
+
 }
 
 namespace modules {
@@ -949,6 +966,7 @@ Error initialize()
      (boost::bind(module_context::sourceModuleRFile, "SessionQuarto.R"))
      (boost::bind(quarto::preview::initialize))
      (boost::bind(quarto::serve::initialize))
+     (boost::bind(quarto::xrefs::initialize))
    ;
    return initBlock.execute();
 }

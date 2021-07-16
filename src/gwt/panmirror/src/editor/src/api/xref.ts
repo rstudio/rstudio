@@ -24,6 +24,8 @@ import { kTexFormat } from './raw';
 export interface XRefServer {
   indexForFile: (file: string) => Promise<XRefs>;
   xrefForId: (file: string, id: string) => Promise<XRefs>;
+  quartoIndexForFile: (file: string) => Promise<XRefs>;
+  quartoXrefForId: (file: string, id: string) => Promise<XRefs>;
 }
 
 export interface XRefs {

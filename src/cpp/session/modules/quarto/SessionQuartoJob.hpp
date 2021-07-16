@@ -22,6 +22,7 @@
 #include <boost/enable_shared_from_this.hpp>
 
 #include <shared_core/FilePath.hpp>
+#include <core/system/Types.hpp>
 
 #include <session/jobs/JobsApi.hpp>
 
@@ -79,6 +80,10 @@ protected:
    virtual std::vector<std::string> args()
    {
       return std::vector<std::string>();
+   }
+
+   virtual void environment(core::system::Options*)
+   {
    }
 
    virtual core::FilePath workingDir()

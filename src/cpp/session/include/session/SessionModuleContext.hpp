@@ -905,6 +905,13 @@ void initializeConsoleCtrlHandler();
 
 bool isPythonReplActive();
 
+
+core::Error perFilePathStorage(const std::string& scope,
+                               core::FilePath& filePath,
+                               bool directory,
+                               core::FilePath* pStorage);
+
+extern const char* const kQuartoCrossrefScope;
 extern const char* const kQuartoProjectDefault;
 extern const char* const kQuartoProjectSite;
 extern const char* const kQuartoProjectBook;
@@ -932,6 +939,8 @@ bool handleQuartoPreview(const core::FilePath& sourceFile,
                          const core::FilePath& outputFile,
                          const std::string& renderOutput,
                          bool validateExtendedType);
+
+bool isFileInSessionQuartoProject(const core::FilePath& file);
 
 // returns -1 if no error was found in the output
 int jupyterErrorLineNumber(const std::vector<std::string>& srcLines,

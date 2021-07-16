@@ -488,10 +488,9 @@ void pandocGetBibliography(const json::JsonRpcRequest& request,
       {
          isProjectFile = filePath.isWithin(projects::projectContext().buildTargetPath());
       }
-      else if (module_context::quartoConfig().is_project)
+      else
       {
-         FilePath projDir = module_context::resolveAliasedPath(module_context::quartoConfig().project_dir);
-         isProjectFile = filePath.isWithin(projDir);
+         isProjectFile = module_context::isFileInSessionQuartoProject(filePath);
       }
    }
 

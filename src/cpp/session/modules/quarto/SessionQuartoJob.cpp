@@ -17,6 +17,7 @@
 
 #include <shared_core/Error.hpp>
 #include <core/system/Process.hpp>
+#include <core/system/Environment.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/jobs/JobsApi.hpp>
@@ -41,6 +42,12 @@ Error QuartoJob::start()
    options.terminateChildren = true;
 #endif
    options.workingDir = workingDir();
+
+   // set environment variables
+   core::system::Options env;
+   core::system::environment(&env);
+   environment(&env);
+   options.environment = env;
 
    // callbacks
    core::system::ProcessCallbacks cb;
