@@ -880,14 +880,9 @@ private:
             // emit it to the client when the render is complete
             if (isQuarto_)
             {
+               int errLine = boost::lexical_cast<int>(matches[1].str());
                FilePath errFile = targetFile_.getParent().completePath(matches[3].str());
-               if (targetFile_.getExtensionLowerCase() == ".qmd" &&
-                   targetFile_.getParent() == errFile.getParent() &&
-                   targetFile_.getStem() == errFile.getStem())
-               {
-                  errFile = errFile.getParent().completeChildPath(errFile.getStem() + ".qmd");
-               }
-               module_context::editFile(errFile, boost::lexical_cast<int>(matches[1].str()));
+               module_context::editFile(errFile, errLine);
             }
             else
             {

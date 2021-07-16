@@ -188,12 +188,6 @@ private:
       {
          errLine = safe_convert::stringTo<int>(matches[1].str(), 1);
          errFile = previewFile_.getParent().completePath(matches[3].str());
-         if (previewFile_.getExtensionLowerCase() == ".qmd" &&
-             previewFile().getParent() == errFile.getParent() &&
-             previewFile().getStem() == errFile.getStem())
-         {
-            errFile = errFile.getParent().completeChildPath(errFile.getStem() + ".qmd");
-         }
       }
 
       // look for jupyter error
