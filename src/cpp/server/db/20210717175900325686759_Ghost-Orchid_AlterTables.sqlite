@@ -10,7 +10,7 @@ CREATE TABLE schema_version(
 );
 
 /* Stores users of RStudio Server */
-CREATE TABLE  IF NOT EXISTS licensed_users(
+CREATE TABLE IF NOT EXISTS licensed_users(
 
    /* The username associated with the user */
    user_name text NOT NULL,
