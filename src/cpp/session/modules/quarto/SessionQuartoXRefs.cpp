@@ -21,6 +21,7 @@
 #include <shared_core/json/Json.hpp>
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/system/FileScanner.hpp>
 #include <core/json/JsonRpc.hpp>
 
 #include <session/projects/SessionProjects.hpp>
@@ -43,8 +44,15 @@ namespace xrefs {
 
 namespace {
 
+FilePath quartoCrossrefDir(const FilePath& projectDir)
+{
+   return projectDir
+       .completeChildPath(".quarto")
+       .completeChildPath("crossref");
+}
 
-json::Array readXRefIndex(const FilePath& srcFile, const FilePath& indexPath)
+
+json::Array readXRefIndex(const FilePath& indexPath, const std::string& filename = "")
 {
    // read the index as a string
    std::string index;
@@ -54,6 +62,10 @@ json::Array readXRefIndex(const FilePath& srcFile, const FilePath& indexPath)
       LOG_ERROR(error);
       return json::Array();
    }
+
+   // tolerate an empty file
+   if (boost::algorithm::trim_copy(index).empty())
+      return json::Array();
 
    // parse json w/ validation
    json::Object quartoIndexJson;
@@ -80,7 +92,7 @@ json::Array readXRefIndex(const FilePath& srcFile, const FilePath& indexPath)
       if (boost::regex_search(key, match, keyRegex))
       {
          json::Object xref;
-         xref["file"] = srcFile.getFilename();
+         xref["file"] = filename;
          xref["type"] = match[1].str();
          xref["id"] = match[2].str();
          xref["suffix"] = (match.length() > 3) ? match[3].str() : "";
@@ -89,6 +101,105 @@ json::Array readXRefIndex(const FilePath& srcFile, const FilePath& indexPath)
       }
    }
    return xrefs;
+}
+
+json::Array readProjectXRefIndex(const FilePath& indexPath, bool filenames = false)
+{
+   if (indexPath.isDirectory())
+   {
+      // there will be one or more json files in here (for each format). just
+      // pick the most recently written one
+      std::vector<FilePath> indexFiles;
+      Error error = indexPath.getChildren(indexFiles);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return json::Array();
+      }
+      FilePath mostRecentIndex;
+      for (auto indexFile : indexFiles)
+      {
+         if (indexFile.getExtensionLowerCase() == ".json")
+         {
+            if (mostRecentIndex.isEmpty())
+            {
+               mostRecentIndex = indexFile;
+            }
+            else if (indexFile.getLastWriteTime() > mostRecentIndex.getLastWriteTime())
+            {
+               mostRecentIndex = indexFile;
+            }
+         }
+      }
+      if (!mostRecentIndex.isEmpty())
+      {
+         std::string filename = filenames ? mostRecentIndex.getFilename() : "";
+         return readXRefIndex(mostRecentIndex, filename);
+      }
+      else
+      {
+         return json::Array();
+      }
+   }
+   else
+   {
+      return json::Array();
+   }
+}
+
+json::Array readProjectXRefIndex(const FilePath& projectDir, const FilePath& srcFile)
+{
+   std::string projRelative = srcFile.getRelativePath(projectDir);
+   FilePath indexPath = quartoCrossrefDir(projectDir).completeChildPath(projRelative);
+   return readProjectXRefIndex(indexPath);
+
+}
+
+bool projectXRefIndexFilter(const FilePath& projectDir,
+                            const FilePath& crossrefDir,
+                            const FileInfo& fileInfo)
+{
+   if (fileInfo.isDirectory())
+   {
+      // see if this corresponds to an actual source file
+      std::string relativePath = FilePath(fileInfo.absolutePath()).getRelativePath(crossrefDir);
+      FilePath srcFilePath = projectDir.completeChildPath(relativePath);
+      return srcFilePath.exists();
+   }
+   else
+   {
+      return false;
+   }
+}
+
+json::Array readAllProjectXRefIndexes(const core::FilePath& projectDir, bool filenames = false)
+{
+   FilePath crossrefDir = quartoCrossrefDir(projectDir);
+   if (!crossrefDir.exists())
+      return json::Array();
+
+   core::system::FileScannerOptions options;
+   options.recursive = true;
+   options.filter = boost::bind(projectXRefIndexFilter, projectDir, crossrefDir, _1);
+
+   // scan for directories
+   tree<FileInfo> indexFiles;
+   Error error = scanFiles(FileInfo(crossrefDir), options, &indexFiles);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return json::Array();
+   }
+
+   // now read the indexes
+   json::Array projectXRefs;
+   for (auto indexFile : indexFiles)
+   {
+      json::Array xrefs = readProjectXRefIndex(FilePath(indexFile.absolutePath()), filenames);
+      std::copy(xrefs.begin(), xrefs.end(), std::back_inserter(projectXRefs));
+   }
+
+   return projectXRefs;
 }
 
 Error xrefIndexForFile(const json::JsonRpcRequest& request,
@@ -117,7 +228,8 @@ Error xrefIndexForFile(const json::JsonRpcRequest& request,
       // set project dir
       projectDir = projectConfig.getParent();
 
-      // short circuit for this being in the current project context (so we already have the config)
+      // check whether this is a booo short circuit for this being in the current project
+      // (since we already have the config)
       if (isFileInSessionQuartoProject(filePath))
       {
          isBook = quartoConfig().project_type == kQuartoProjectBook;
@@ -128,12 +240,16 @@ Error xrefIndexForFile(const json::JsonRpcRequest& request,
          readQuartoProjectConfig(projectConfig, &type);
          isBook = type == kQuartoProjectBook;
       }
-   }
 
-   // handle projects one way, and standalone files another way
-   if (!projectDir.isEmpty())
-   {
-
+      // books get the entire index, non-books get just the file
+      if (isBook)
+      {
+         indexJson["refs"] = readAllProjectXRefIndexes(projectDir, true);
+      }
+      else
+      {
+         indexJson["refs"] = readProjectXRefIndex(projectDir, filePath);
+      }
    }
    else
    {
@@ -145,10 +261,9 @@ Error xrefIndexForFile(const json::JsonRpcRequest& request,
          LOG_ERROR(error);
          return error;
       }
-
       if (indexPath.exists())
       {
-         indexJson["refs"] = readXRefIndex(filePath, indexPath);
+         indexJson["refs"] = readXRefIndex(indexPath);
       }
    }
 
