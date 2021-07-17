@@ -21,6 +21,7 @@
 namespace rstudio {
 namespace core {
    class Error;
+   class FilePath;
 }
 }
 
@@ -28,6 +29,8 @@ namespace rstudio {
 namespace session {
 namespace modules {
 namespace quarto {
+
+core::FilePath quartoBinary();
 
 bool projectIsQuarto();
 

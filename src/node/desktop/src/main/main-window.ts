@@ -15,9 +15,12 @@
 
 import { BrowserWindow, dialog, Menu, session } from 'electron';
 import path from 'path';
+import fs from 'fs';
+import os from 'os';
 import { ChildProcess } from 'child_process';
 
 import { logger } from '../core/logger';
+import { renderTemplateFile } from '../core/template-filter';
 
 import { GwtCallback, PendingQuit } from './gwt-callback';
 import { MenuCallback, showPlaceholderMenu } from './menu-callback';
@@ -27,6 +30,8 @@ import { SessionLauncher } from './session-launcher';
 import { ApplicationLaunch } from './application-launch';
 import { GwtWindow } from './gwt-window';
 import { appState } from './app-state';
+import { DesktopOptions } from './desktop-options';
+import { RemoteDesktopSessionLauncher } from './remote-desktop-session-launcher-overlay';
 
 export function closeAllSatellites(mainWindow: BrowserWindow): void {
   const topLevels = BrowserWindow.getAllWindows();
@@ -37,12 +42,23 @@ export function closeAllSatellites(mainWindow: BrowserWindow): void {
   }
 }
 
+// number of times we've tried to reload in startup
+let reloadCount = 0;
+
+// maximum number of times to try reloading
+const maxReloadCount = 10;
+
+// amount of time to wait before each reload, in milliseconds
+const reloadWaitDuration = 200;
+
 export class MainWindow extends GwtWindow {
   sessionLauncher?: SessionLauncher;
+  remoteSessionLauncher?: RemoteDesktopSessionLauncher;
   sessionProcess?: ChildProcess;
   appLauncher?: ApplicationLaunch;
   menuCallback: MenuCallback;
   quitConfirmed = false;
+  geometrySaved = false;
   workbenchInitialized = false;
   pendingWindows = new Array<PendingWindow>();
   private isErrorDisplayed = false;
@@ -82,7 +98,7 @@ export class MainWindow extends GwtWindow {
       this.invokeCommand(commandId);
     });
 
-    // TODO
+    // TODO -- see comment in menu-callback.ts about: "probably need to not use the roles here"
     // connect(&menuCallback_, SIGNAL(zoomActualSize()), this, SLOT(zoomActualSize()));
     // connect(&menuCallback_, SIGNAL(zoomIn()), this, SLOT(zoomIn()));
     // connect(&menuCallback_, SIGNAL(zoomOut()), this, SLOT(zoomOut()));
@@ -122,6 +138,24 @@ export class MainWindow extends GwtWindow {
     // connect(qApp, SIGNAL(commitDataRequest(QSessionManager&)),
     //         this, SLOT(commitDataRequest(QSessionManager&)),
     //         Qt::DirectConnection);
+
+    // setWindowIcon(QIcon(QString::fromUtf8(":/icons/RStudio.ico")));
+    // setWindowTitle(desktop::activation().editionName());
+
+    // Error error = pLauncher_->initialize();
+    // if (error) {
+    //   LOG_ERROR(error);
+    //   showError(nullptr,
+    //             QStringLiteral("Initialization error"),
+    //             QStringLiteral("Could not initialize Job Launcher"),
+    //             QString());
+    //   ::_exit(EXIT_FAILURE);
+    // }
+    
+    this.window.on('close', () => {
+      const size = this.window.getSize();
+      DesktopOptions().saveWindowBounds({width: size[0], height: size[1]});
+    });
   }
 
   launchSession(reload: boolean): void {
@@ -147,6 +181,10 @@ export class MainWindow extends GwtWindow {
     this.appLauncher?.launchRStudio(args, initialDir);
   }
 
+  saveRemoteAuthCookies(): void {
+    // TODO
+  }
+
   launchRemoteRStudio(): void {
     // TODO
   }
@@ -155,6 +193,47 @@ export class MainWindow extends GwtWindow {
   launchRemoteRStudioProject(projectUrl: string): void {
     // TODO
   }
+
+  onWorkbenchInitialized(): void {
+    // reset state (in case this occurred in response to a manual reload
+    // or reload for a new project context)
+    this.quitConfirmed = false;
+    this.geometrySaved = false;
+    this.workbenchInitialized = true;
+
+    this.executeJavaScript('window.desktopHooks.getActiveProjectDir()')
+      .then(projectDir => {
+        if (projectDir.length > 0) {
+          this.window.setTitle(`${projectDir} - RStudio`);
+        } else {
+          this.window.setTitle('RStudio');
+        }
+        this.avoidMoveCursorIfNecessary();
+      })
+      .catch((error) => {
+        logger().logError(error);
+      });
+  }
+
+  resetMargins(): void {
+    // TODO
+    // setContentsMargins(0, 0, 0, 0);
+  }
+
+  // TODO - REVIEW
+  // https://github.com/electron/electron/issues/9613
+  // https://github.com/electron/electron/issues/8762
+  // this notification occurs when windows or X11 is shutting
+  // down -- in this case we want to be a good citizen and just
+  // exit right away so we notify the gwt callback that a legit
+  // quit and exit is on the way and we set the quitConfirmed_
+  // flag so no prompting occurs (note that source documents
+  // have already been auto-saved so will be restored next time
+  // the current project context is opened)
+  // commitDataRequest(QSessionManager &manager) {
+  //   gwtCallback_.setPendingQuit(PendingQuitAndExit);
+  //   quitConfirmed_ = true;
+  // }
 
   loadUrl(url: string): void {
     // pass along the shared secret with every request
@@ -181,6 +260,15 @@ export class MainWindow extends GwtWindow {
       });
 
     this.window.loadURL(url);
+  }
+
+  loadHtml(html: string): void {
+    const prefix = path.join(os.tmpdir(), 'rstudioTmpPage');
+    const uniqueDir = fs.mkdtempSync(prefix);
+    const uniqueFile = path.join(uniqueDir, 'tmp.html');
+    fs.writeFileSync(uniqueFile, html);
+    this.window.loadFile(uniqueFile);
+    // TODO: cleanup temp files?
   }
 
   quit(): void {
@@ -219,22 +307,6 @@ export class MainWindow extends GwtWindow {
     }
   }
 
-  onWorkbenchInitialized(): void {
-    this.workbenchInitialized = true;
-    this.executeJavaScript('window.desktopHooks.getActiveProjectDir()')
-      .then(projectDir => {
-        if (projectDir.length > 0) {
-          this.window.setTitle(`${projectDir} - RStudio`);
-        } else {
-          this.window.setTitle('RStudio');
-        }
-        this.avoidMoveCursorIfNecessary();
-      })
-      .catch((error) => {
-        logger().logError(error);
-      });
-  }
-
   collectPendingQuitRequest(): PendingQuit {
     return appState().gwtCallback?.collectPendingQuitRequest() ?? PendingQuit.PendingQuitNone;
   }
@@ -263,9 +335,43 @@ export class MainWindow extends GwtWindow {
     // intentionally left blank
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  reload(): void {
+    reloadCount++;
+    this.loadUrl(this.webView.baseUrl ?? '');
+  }
+
   onLoadFinished(ok: boolean): void {
-    // TODO
+    if (ok) {
+      // we've successfully loaded!
+    } else if (this.isErrorDisplayed) {
+      // the session failed to launch and we're already showing
+      // an error page to the user; nothing else to do here.
+    } else {
+      if (reloadCount < maxReloadCount) {
+        // the load failed, but we haven't yet received word that the
+        // session has failed to load. let the user know that the R
+        // session is still initializing, and then reload the page.
+        const vars = new Map<string, string>();
+        this.loadHtml(renderTemplateFile(appState().resourcesPath().completePath('html/loading.html'), vars));
+        setTimeout(this.reload.bind(this), reloadWaitDuration * reloadCount);
+      } else {
+        reloadCount = 0;
+        this.onLoadFailed();
+      }
+    }
+  }
+
+  onLoadFailed(): void {
+    if (this.remoteSessionLauncher || this.isErrorDisplayed) {
+      return;
+    }
+
+    const vars = new Map<string, string>([
+      ['url', this.webView.baseUrl ?? '']
+    ]);
+
+    this.loadHtml(
+      renderTemplateFile(appState().resourcesPath().completePath('html/connect.html'), vars));
   }
 
   setErrorDisplayed(): void {

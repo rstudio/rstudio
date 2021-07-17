@@ -452,10 +452,13 @@ void viewer(const std::string& url,
       {
          if (!module_context::isPackageVersionInstalled("httpuv", "1.2"))
          {
-            module_context::consoleWriteError("\nWARNING: To run "
-              "applications within the RStudio Viewer pane you need to "
-              "install the latest version of the httpuv package from "
-              "CRAN (version 1.2 or higher is required).\n\n");
+            if (quartoNav.empty())
+            {
+               module_context::consoleWriteError("\nWARNING: To run "
+                 "applications within the RStudio Viewer pane you need to "
+                 "install the latest version of the httpuv package from "
+                 "CRAN (version 1.2 or higher is required).\n\n");
+            }
          }
       }
 

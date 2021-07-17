@@ -1,5 +1,5 @@
 /*
- * div-styles.css
+ * remote-desktop-session-launcher-overlay.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -13,17 +13,6 @@
  *
  */
 
- 
-.ProseMirror .pm-div {
-  position: relative;
+export class RemoteDesktopSessionLauncher {
+
 }
-
-.ProseMirror .pm-div[class*="callout-"] .pm-heading {
-  font-size: 1.2em !important;
-  margin-top: 0.25em;
-  margin-bottom: 0.5em;
-}
-
-
-
-

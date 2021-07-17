@@ -188,12 +188,6 @@ private:
       {
          errLine = safe_convert::stringTo<int>(matches[1].str(), 1);
          errFile = previewFile_.getParent().completePath(matches[3].str());
-         if (previewFile_.getExtensionLowerCase() == ".qmd" &&
-             previewFile().getParent() == errFile.getParent() &&
-             previewFile().getStem() == errFile.getStem())
-         {
-            errFile = errFile.getParent().completeChildPath(errFile.getStem() + ".qmd");
-         }
       }
 
       // look for jupyter error
@@ -203,12 +197,7 @@ private:
       // if there was an error then navigate to it
       if (errLine != -1)
       {
-         json::Object openFile;
-         openFile["file_name"] = module_context::createAliasedPath(errFile);
-         openFile["line_number"] = errLine;
-         openFile["column_number"] = 1;
-         ClientEvent openEvent(client_events::kOpenSourceFile, openFile);
-         module_context::enqueClientEvent(openEvent);
+         module_context::editFile(errFile, errLine);
       }
 
       // standard output forwarding
@@ -248,7 +237,7 @@ private:
 
    void readInputFileLines()
    {
-      Error error = core::readStringVectorFromFile(previewFile_, &previewFileLines_, false);
+      Error error = core::readLinesFromFile(previewFile_, &previewFileLines_);
       if (error)
          LOG_ERROR(error);
    }

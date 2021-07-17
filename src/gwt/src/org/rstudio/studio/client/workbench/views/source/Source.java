@@ -2220,7 +2220,7 @@ public class Source implements InsertSourceEvent.Handler,
       {
          FileSystemItem file = event.getFile();
          file.setFocusOnNavigate(true);
-         fileTypeRegistry_.editFile(file);
+         fileTypeRegistry_.editFile(file, event.getFilePosition());
       }
    }
 

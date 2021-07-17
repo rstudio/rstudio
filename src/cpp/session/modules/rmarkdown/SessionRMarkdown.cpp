@@ -508,7 +508,7 @@ private:
       if (renderFunc == "quarto run" || renderFunc == "quarto render")
       {
           isQuarto_ = true;
-          Error error = core::readStringVectorFromFile(targetFile_, &targetFileLines_, false);
+          Error error = core::readLinesFromFile(targetFile_, &targetFileLines_);
           if (error)
              LOG_ERROR(error);
       }
@@ -880,14 +880,9 @@ private:
             // emit it to the client when the render is complete
             if (isQuarto_)
             {
+               int errLine = boost::lexical_cast<int>(matches[1].str());
                FilePath errFile = targetFile_.getParent().completePath(matches[3].str());
-               if (targetFile_.getExtensionLowerCase() == ".qmd" &&
-                   targetFile_.getParent() == errFile.getParent() &&
-                   targetFile_.getStem() == errFile.getStem())
-               {
-                  errFile = errFile.getParent().completeChildPath(errFile.getStem() + ".qmd");
-               }
-               navigateToTarget(errFile, boost::lexical_cast<int>(matches[1].str()));
+               module_context::editFile(errFile, errLine);
             }
             else
             {
@@ -907,24 +902,17 @@ private:
             int errLine = module_context::jupyterErrorLineNumber(targetFileLines_, allOutput_);
             if (errLine != -1)
             {
-               navigateToTarget(targetFile_, errLine);
+               module_context::editFile(targetFile_, errLine);
             }
           }
       }
+      // always enque quarto as normal output (it does it's own colorizing of error output)
+      if (isQuarto_)
+         type = module_context::kCompileOutputNormal;
       CompileOutput compileOutput(type, output);
       ClientEvent event(client_events::kRmdRenderOutput,
                         compileOutputAsJson(compileOutput));
       module_context::enqueClientEvent(event);
-   }
-
-   void navigateToTarget(const FilePath& filePath, int lineNumber)
-   {
-      json::Object openFile;
-      openFile["file_name"] = module_context::createAliasedPath(filePath);
-      openFile["line_number"] = lineNumber;
-      openFile["column_number"] = 1;
-      ClientEvent openEvent(client_events::kOpenSourceFile, openFile);
-      module_context::enqueClientEvent(openEvent);
    }
 
    RenderTerminateType terminateType_;

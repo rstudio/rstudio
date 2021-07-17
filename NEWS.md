@@ -17,6 +17,8 @@
 * Log files will now rotate by time in addition to the existing rotation by file size. This can be controlled by the `rotate-days` parameter in `logging.conf`.
 * For more information, see section 2 of the Admin Guide.
 
+### Internal Database
+* Use separate database schema for open source RStudio Server instances (`rstudio-os`) and RStudio Workbench instances (`rstudio`) to avoid conflicts (Pro #2725)
 
 ### Bugfixes
 
@@ -37,6 +39,7 @@
 ### Misc
 
 * **BREAKING:** RStudio Desktop Pro only supports activation with license files (Pro #2300)
+* Fixed an issue where scroll position in PDFs was not preserved on re-render (#9603)
 * Improved ordering of completion results within `library()` calls (#9293)
 * Syntax support for embedded knitr chunks (#9579)
 * Added support for publishing Quarto documents and websites (#9556)

@@ -4730,7 +4730,7 @@ public class TextEditingTarget implements
       RmdSelectedTemplate selTemplate = getSelectedTemplate();
       
       // skip all of the format stuff for quarto docs
-      if (extendedType_.equals(SourceDocument.XT_QUARTO_DOCUMENT) && fileType_.isRmd())
+      if (extendedType_.equals(SourceDocument.XT_QUARTO_DOCUMENT))
       {
          if (isShinyPrerenderedDoc()) 
          {
@@ -6824,7 +6824,8 @@ public class TextEditingTarget implements
    
    private String useQuartoPreview()
    {
-      if (extendedType_ == SourceDocument.XT_QUARTO_DOCUMENT && 
+      if (session_.getSessionInfo().getQuartoConfig().installed &&
+          (extendedType_ == SourceDocument.XT_QUARTO_DOCUMENT) && 
           !isShinyDoc() && !isRmdNotebook() && !isQuartoWebsiteDoc())
       {  
          List<String> outputFormats = getQuartoOutputFormats();

@@ -31,6 +31,7 @@
 #include <core/YamlUtil.hpp>
 #include <core/StringUtils.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/text/AnsiCodeParser.hpp>
 
 #include <core/json/JsonRpc.hpp>
 
@@ -67,12 +68,11 @@ void detectQuartoInstallation()
    s_quartoVersion = "";
 
    // see if quarto is on the path
-   FilePath quartoPath;
-   Error error = core::system::findProgramOnPath("quarto", &quartoPath);
-   if (!error)
+   FilePath quartoPath = module_context::findProgram("quarto");
+   if (!quartoPath.isEmpty())
    {
       // convert to real path
-      error = core::system::realPath(quartoPath, &quartoPath);
+      Error error = core::system::realPath(quartoPath, &quartoPath);
       if (!error)
       {
          // read version file -- if it doesn't exist we are running the dev
@@ -123,18 +123,6 @@ void detectQuartoInstallation()
             ClientEvent event(client_events::kShowWarningBar, msgJson);
             module_context::enqueClientEvent(event);
          }
-      }
-      else
-      {
-         LOG_ERROR(error);
-      }
-   }
-   else
-   {
-      // path not found errors are okay here (just means quarto isn't installed)
-      if (!isNotFoundError(error))
-      {
-         LOG_ERROR(error);
       }
    }
 }
@@ -349,10 +337,12 @@ Error quartoInspect(const std::string& path,
    return pResultObject->parse(result.stdOut);
 }
 
+
 void readQuartoProjectConfig(const FilePath& configFile,
                              std::string* pType,
                              std::string* pOutputDir,
-                             std::vector<std::string>* pFormats)
+                             std::vector<std::string>* pFormats,
+                             std::vector<std::string>* pBibliographies)
 {
    // read the config
    std::string configText;
@@ -362,6 +352,11 @@ void readQuartoProjectConfig(const FilePath& configFile,
       try
       {
          YAML::Node node = YAML::Load(configText);
+         if (!node.IsMap())
+         {
+            LOG_ERROR_MESSAGE("Unexpected type for config file yaml (expected a map)");
+            return;
+         }
          for (auto it = node.begin(); it != node.end(); ++it)
          {
             std::string key = it->first.as<std::string>();
@@ -382,15 +377,31 @@ void readQuartoProjectConfig(const FilePath& configFile,
             }
             else if (key == "format")
             {
-               if (it->second.Type() == YAML::NodeType::Scalar)
+               auto node = it->second;
+               if (node.Type() == YAML::NodeType::Scalar)
                {
-                  pFormats->push_back(it->second.as<std::string>());
+                  pFormats->push_back(node.as<std::string>());
                }
-               else if (it->second.Type() == YAML::NodeType::Map)
+               else if (node.Type() == YAML::NodeType::Map)
                {
-                  for (auto formatIt = it->second.begin(); formatIt != it->second.end(); ++formatIt)
+                  for (auto formatIt = node.begin(); formatIt != node.end(); ++formatIt)
                   {
                      pFormats->push_back(formatIt->first.as<std::string>());
+                  }
+               }
+            }
+            else if (key == "bibliography")
+            {
+               auto node = it->second;
+               if (node.Type() == YAML::NodeType::Scalar)
+               {
+                  pBibliographies->push_back(node.as<std::string>());
+               }
+               else if (node.Type() == YAML::NodeType::Sequence)
+               {
+                  for (auto formatIt = node.begin(); formatIt != node.end(); ++formatIt)
+                  {
+                     pBibliographies->push_back(formatIt->as<std::string>());
                   }
                }
             }
@@ -498,11 +509,12 @@ Error getQmdPublishDetails(const json::JsonRpcRequest& request,
    if (!quartoConfig.isEmpty())
    {
        std::string type, outputDir;
-       std::vector<std::string> formats;
+       std::vector<std::string> formats, biblios;
        readQuartoProjectConfig(quartoConfig,
                                &type,
                                &outputDir,
-                               &formats);
+                               &formats,
+                               &biblios);
        if (type == kQuartoProjectBook || type == kQuartoProjectSite)
        {
           FilePath configPath = quartoConfig.getParent();
@@ -776,8 +788,8 @@ bool handleQuartoPreview(const core::FilePath& sourceFile,
    if (!configFile.isEmpty())
    {
       std::string type, outputDir;
-      std::vector<std::string> formats;
-      readQuartoProjectConfig(configFile, &type, &outputDir, &formats);
+      std::vector<std::string> formats, biblios;
+      readQuartoProjectConfig(configFile, &type, &outputDir, &formats, &biblios);
       if (type == kQuartoProjectSite || type == kQuartoProjectBook)
          return true;
    }
@@ -825,7 +837,8 @@ QuartoConfig quartoConfig(bool refresh)
             readQuartoProjectConfig(configFile,
                                     &s_quartoConfig.project_type,
                                     &s_quartoConfig.project_output_dir,
-                                    &s_quartoConfig.project_formats);
+                                    &s_quartoConfig.project_formats,
+                                    &s_quartoConfig.project_bibliographies);
 
             // provide default output dirs
             if (s_quartoConfig.project_output_dir.length() == 0)
@@ -843,21 +856,36 @@ QuartoConfig quartoConfig(bool refresh)
 
 int jupyterErrorLineNumber(const std::vector<std::string>& srcLines, const std::string& output)
 {
+   // strip ansi codes before searching
+   std::string plainOutput = output;
+   text::stripAnsiCodes(&plainOutput);
+
    static boost::regex jupypterErrorRe("An error occurred while executing the following cell:\\s+(-{3,})\\s+([\\S\\s]+?)\\r?\\n(\\1)[\\S\\s]+line (\\d+)\\)");
    boost::smatch matches;
-   if (regex_utils::search(output, matches, jupypterErrorRe))
+   if (regex_utils::search(plainOutput, matches, jupypterErrorRe))
    {
       // extract the cell lines
       std::string cellText = matches[2].str();
       string_utils::convertLineEndings(&cellText, string_utils::LineEndingPosix);
       std::vector<std::string> cellLines = algorithm::split(cellText, "\n");
 
+      // strip out leading yaml (reading/writing of yaml can lead to src differences)
+      int yamlLines = 0;
+      for (auto line : cellLines)
+      {
+         if (boost::algorithm::starts_with(line, "#| "))
+            yamlLines++;
+         else
+            break;
+      }
+      cellLines = std::vector<std::string>(cellLines.begin() + yamlLines, cellLines.end());
+
       // find the line number of the cell
       auto it = std::search(srcLines.begin(), srcLines.end(), cellLines.begin(), cellLines.end());
       if (it != srcLines.end())
       {
          int cellLine = static_cast<int>(std::distance(srcLines.begin(), it));
-         return cellLine + safe_convert::stringTo<int>(matches[4].str(), 0);
+         return cellLine + safe_convert::stringTo<int>(matches[4].str(), 0) - yamlLines;
       }
    }
 
@@ -882,6 +910,11 @@ json::Object quartoConfigJSON(bool refresh)
    quartoConfigJSON["project_output_dir"] = config.project_output_dir;
    quartoConfigJSON["project_formats"] = json::toJsonArray(config.project_formats);
    return quartoConfigJSON;
+}
+
+FilePath quartoBinary()
+{
+    return s_quartoPath;
 }
 
 bool projectIsQuarto()
