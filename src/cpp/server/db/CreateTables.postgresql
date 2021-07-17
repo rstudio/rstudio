@@ -45,7 +45,7 @@ CREATE TABLE licensed_users(
    user_id integer NOT NULL DEFAULT -1, 
 
    /* Auto incrementing ID for each user for internal FK relationships. */
-   id integer AUTOINCREMENT NOT NULL
+   id SERIAL NOT NULL,
 
    PRIMARY KEY (id)
 );

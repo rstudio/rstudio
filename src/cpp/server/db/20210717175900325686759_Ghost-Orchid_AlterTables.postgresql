@@ -2,7 +2,7 @@
 ALTER TABLE schema_version ADD COLUMN IF NOT EXISTS release_name text NOT NULL DEFAULT '';
 
 /* Stores users of RStudio Server */
-CREATE TABLE licensed_users(
+CREATE TABLE IF NOT EXISTS licensed_users(
 
    /* The username associated with the user */
    user_name text NOT NULL,
@@ -20,7 +20,7 @@ CREATE TABLE licensed_users(
    user_id integer NOT NULL DEFAULT -1, 
 
    /* Auto incrementing ID for each user for internal FK relationships. */
-   id integer AUTOINCREMENT NOT NULL
+   id SERIAL NOT NULL,
 
    PRIMARY KEY (id)
 );
