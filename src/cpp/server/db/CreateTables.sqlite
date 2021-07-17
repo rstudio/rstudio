@@ -43,7 +43,7 @@ CREATE TABLE licensed_users(
    user_id integer NOT NULL DEFAULT -1,
 
    /* Auto incrementing ID for each user for internal FK relationships. */
-   id integer PRIMARY KEY AUTOINCREMENT
+   id integer PRIMARY KEY
 );
 
 /* Index to be used for sorting revoked cookies by expiration */
