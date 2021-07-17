@@ -597,7 +597,7 @@ Error quartoCreateProject(const json::JsonRpcRequest& request,
    }
 
    // create venv (optional)
-   if (!venv.empty())
+   if (engine == "jupyter" && !venv.empty())
    {
       args.push_back("--with-venv");
       if (!packages.empty())
