@@ -22,6 +22,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/jobs/JobsApi.hpp>
 
+#include <session/SessionQuarto.hpp>
 #include "SessionQuarto.hpp"
 
 using namespace rstudio::core;
@@ -29,6 +30,9 @@ using namespace rstudio::session::module_context;
 
 namespace rstudio {
 namespace session {
+
+using namespace quarto;
+
 namespace modules {
 namespace quarto {
 

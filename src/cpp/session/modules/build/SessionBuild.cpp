@@ -51,6 +51,7 @@
 
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionQuarto.hpp>
 #include <session/prefs/UserPrefs.hpp>
 
 #include "SessionBuildErrors.hpp"
@@ -363,7 +364,7 @@ private:
          options.workingDir = buildTargetPath.getParent();
          executeCustomBuild(type, buildTargetPath, options, cb);
       }
-      else if (module_context::quartoConfig().is_project)
+      else if (quarto::quartoConfig().is_project)
       {
          options.environment = environment;
          options.workingDir = projects::projectContext().directory();
@@ -1565,7 +1566,7 @@ private:
    void showQuartoSitePreview()
    {
       // determine source file
-      auto config = module_context::quartoConfig();
+      auto config = quarto::quartoConfig();
       auto quartoProjectDir = module_context::resolveAliasedPath(config.project_dir);
       std::string output = outputAsText();
       FilePath sourceFile = websiteSourceFile(quartoProjectDir);
@@ -1582,7 +1583,7 @@ private:
          // it will be html if we did a sub-project render.
          if (outputFile.hasExtensionLowerCase(".html"))
          {
-            module_context::handleQuartoPreview(sourceFile, outputFile, output, false);
+            quarto::handleQuartoPreview(sourceFile, outputFile, output, false);
          }
          else
          {

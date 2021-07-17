@@ -26,6 +26,7 @@
 #include <r/RExec.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionQuarto.hpp>
 
 #include "SessionQuartoJob.hpp"
 
@@ -34,6 +35,9 @@ using namespace rstudio::session::module_context;
 
 namespace rstudio {
 namespace session {
+
+using namespace quarto;
+
 namespace modules {
 namespace quarto {
 namespace serve {
@@ -45,7 +49,7 @@ const char * const kRenderNone = "none";
 FilePath quartoProjectDir()
 {
    return module_context::resolveAliasedPath(
-      module_context::quartoConfig().project_dir
+      quartoConfig().project_dir
    );
 }
 
@@ -99,7 +103,10 @@ protected:
 
    virtual std::string name()
    {
-      const std::string type = quartoConfig().project_type == kQuartoProjectBook ? "Book" : "Site";
+      const std::string type =
+         quartoConfig().project_type == kQuartoProjectBook
+            ? "Book"
+            : "Site";
       const std::string name = (render_ != kRenderNone ? "Render and " : "")  + std::string("Serve ") + type;
       return name;
    }

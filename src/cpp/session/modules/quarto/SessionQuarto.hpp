@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef SESSION_QUARTO_HPP
-#define SESSION_QUARTO_HPP
+#ifndef SESSION_MODULES_QUARTO_HPP
+#define SESSION_MODULES_QUARTO_HPP
 
 #include <shared_core/json/Json.hpp>
 
@@ -30,12 +30,6 @@ namespace session {
 namespace modules {
 namespace quarto {
 
-core::FilePath quartoBinary();
-
-bool projectIsQuarto();
-
-core::json::Object quartoConfigJSON(bool refresh = false);
-
 core::Error initialize();
    
 } // namespace quarto
@@ -43,4 +37,4 @@ core::Error initialize();
 } // namespace session
 } // namespace rstudio
 
-#endif
+#endif // SESSION_MODULES_QUARTO_HPP

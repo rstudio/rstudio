@@ -27,6 +27,7 @@
 #include <r/RExec.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionQuarto.hpp>
 
 #include "SessionQuartoJob.hpp"
 
@@ -35,6 +36,9 @@ using namespace rstudio::session::module_context;
 
 namespace rstudio {
 namespace session {
+
+using namespace quarto;
+
 namespace modules {
 namespace quarto {
 namespace preview {
@@ -117,10 +121,12 @@ protected:
    virtual void environment(core::system::Options* pEnv)
    {
       // if this file isn't in a project then add the QUARTO_CROSSREF_INDEX_PATH
-      if (!module_context::isFileInSessionQuartoProject(previewFile_))
+      if (!isFileInSessionQuartoProject(previewFile_))
       {
          FilePath indexPath;
-         Error error = module_context::perFilePathStorage(kQuartoCrossrefScope, previewFile_, false, &indexPath);
+         Error error = module_context::perFilePathStorage(
+            kQuartoCrossrefScope, previewFile_, false, &indexPath
+         );
          if (error)
          {
             LOG_ERROR(error);

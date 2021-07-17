@@ -27,7 +27,7 @@ namespace rstudio {
 namespace session {
 namespace module_context {
 
-Error perFilePathStorage(const std::string& scope, FilePath& filePath, bool directory, FilePath* pStorage)
+Error perFilePathStorage(const std::string& scope, const FilePath& filePath, bool directory, FilePath* pStorage)
 {
    // url escape path (so we can use key=value persistence)
    std::string escapedPath = http::util::urlEncode(filePath.getAbsolutePath());

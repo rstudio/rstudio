@@ -23,8 +23,11 @@
 #include <core/FileSerializer.hpp>
 #include <core/json/JsonRpc.hpp>
 
-
+#include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionQuarto.hpp>
+
+#include "SessionQuarto.hpp"
 
 using namespace rstudio::core;
 using namespace rstudio::session::module_context;
@@ -32,7 +35,61 @@ using namespace rstudio::session::module_context;
 namespace rstudio {
 namespace session {
 
+using namespace quarto;
+
+namespace modules {
+namespace quarto {
+namespace xrefs {
+
 namespace {
+
+
+json::Array readXRefIndex(const FilePath& srcFile, const FilePath& indexPath)
+{
+   // read the index as a string
+   std::string index;
+   Error error = core::readStringFromFile(indexPath, &index);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return json::Array();
+   }
+
+   // parse json w/ validation
+   json::Object quartoIndexJson;
+   error = quartoIndexJson.parseAndValidate(
+      index,
+      resourceFileAsString("schema/quarto-xref.json")
+   );
+   if (error)
+   {
+      LOG_ERROR(error);
+      return json::Array();
+   }
+
+   // read xrefs (already validated so don't need to dance around types/existence)
+   json::Array xrefs;
+   boost::regex keyRegex("^(\\w+)-(.*?)(?:-(\\d+))?$");
+   json::Array entries = quartoIndexJson["entries"].getArray();
+   for (const json::Value& entry : entries)
+   {
+      json::Object valObject = entry.getObject();
+      std::string key, caption;
+      json::readObject(valObject, "key", key, "caption", caption);
+      boost::smatch match;
+      if (boost::regex_search(key, match, keyRegex))
+      {
+         json::Object xref;
+         xref["file"] = srcFile.getFilename();
+         xref["type"] = match[1].str();
+         xref["id"] = match[2].str();
+         xref["suffix"] = (match.length() > 3) ? match[3].str() : "";
+         xref["title"] = caption;
+         xrefs.push_back(xref);
+      }
+   }
+   return xrefs;
+}
 
 Error xrefIndexForFile(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
@@ -51,53 +108,48 @@ Error xrefIndexForFile(const json::JsonRpcRequest& request,
    indexJson["baseDir"] = createAliasedPath(filePath.getParent());
    indexJson["refs"] = json::Array();
 
-   // get storage for this file
-   FilePath indexPath;
-   error = perFilePathStorage(kQuartoCrossrefScope, filePath, false, &indexPath);
-   if (error)
+   // is this file in a project and is it a book project?
+   FilePath projectDir;
+   bool isBook = false;
+   FilePath projectConfig = quartoProjectConfigFile(filePath);
+   if (!projectConfig.isEmpty())
    {
-      LOG_ERROR(error);
-      return error;
+      // set project dir
+      projectDir = projectConfig.getParent();
+
+      // short circuit for this being in the current project context (so we already have the config)
+      if (isFileInSessionQuartoProject(filePath))
+      {
+         isBook = quartoConfig().project_type == kQuartoProjectBook;
+      }
+      else
+      {
+         std::string type;
+         readQuartoProjectConfig(projectConfig, &type);
+         isBook = type == kQuartoProjectBook;
+      }
    }
 
-   if (indexPath.exists())
+   // handle projects one way, and standalone files another way
+   if (!projectDir.isEmpty())
    {
-      std::string index;
-      error = core::readStringFromFile(indexPath, &index);
+
+   }
+   else
+   {
+      // get storage for this file
+      FilePath indexPath;
+      error = perFilePathStorage(kQuartoCrossrefScope, filePath, false, &indexPath);
       if (error)
       {
          LOG_ERROR(error);
          return error;
       }
 
-      json::Object quartoIndexJson;
-      error = quartoIndexJson.parse(index);
-      if (error)
+      if (indexPath.exists())
       {
-         LOG_ERROR(error);
-         return error;
+         indexJson["refs"] = readXRefIndex(filePath, indexPath);
       }
-
-      json::Array xrefs;
-      json::Array entries = quartoIndexJson["entries"].getArray();
-      std::transform(entries.begin(), entries.end(), std::back_inserter(xrefs), [&filePath](const json::Value& val) {
-         json::Object valObject = val.getObject();
-         std::string key, caption;
-         Error error = json::readObject(valObject, "key", key, "caption", caption);
-         if (error)
-            LOG_ERROR(error);
-         json::Object xref;
-         // TODO: More robust parsing and json validation + support suffixes
-         xref["file"] = filePath.getFilename();
-         std::size_t dashPos = key.find_first_of('-');
-         xref["type"] = key.substr(0,dashPos);
-         xref["id"] = key.substr(dashPos + 1);
-         xref["suffix"] = "";
-         xref["title"] = caption;
-         return xref;
-      });
-      indexJson["refs"] = xrefs;
-
    }
 
    // return success
@@ -106,7 +158,7 @@ Error xrefIndexForFile(const json::JsonRpcRequest& request,
 }
 
 Error xrefForId(const json::JsonRpcRequest& request,
-                json::JsonRpcResponse* pResponse)
+                json::JsonRpcResponse*)
 {
    // read params
    std::string file, id;
@@ -120,10 +172,6 @@ Error xrefForId(const json::JsonRpcRequest& request,
 }
 
 } // anonymous namespace
-
-namespace modules {
-namespace quarto {
-namespace xrefs {
 
 Error initialize()
 {
