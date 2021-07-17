@@ -23,9 +23,12 @@
 #include <core/DateTime.hpp>
 #include <core/FileLock.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/Log.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/system/PosixUser.hpp>
 #include <core/Thread.hpp>
+
+#include <shared_core/system/User.hpp>
 
 #include <server_core/ServerDatabase.hpp>
 
@@ -267,6 +270,31 @@ bool isCookieRevoked(const std::string& cookie)
    return false;
 }
 
+Error updateLastSignin(const boost::shared_ptr<IConnection>& connection,
+                       const int id,
+                       const std::string& username)
+{
+   std::string currentTime = date_time::format(boost::posix_time::microsec_clock::universal_time(),
+                                               date_time::kIso8601Format);
+
+   std::string queryText;
+   if (!username.empty())
+      queryText = "UPDATE licensed_users SET last_sign_in = :val, user_name = :uname WHERE id = :id";
+   else
+      queryText = "UPDATE licensed_users SET last_sign_in = :val WHERE id = :id";
+
+   Query updateSignin =
+         connection->query(queryText)
+            .withInput(currentTime);
+         
+   if (!username.empty())
+      updateSignin.withInput(username);
+            
+   updateSignin.withInput(id);
+
+   return connection->execute(updateSignin);
+}
+
 } // anonymous namespace
 
 namespace overlay {
@@ -285,6 +313,73 @@ Error isUserLicensed(const std::string& username,
                      bool* pLicensed)
 {
    *pLicensed = true;
+
+   // Record the user's login.
+   // Users are always licensed, this info is nice to have only.
+   // If a failure occurs during this process, log the error as a warning and return success.
+   system::User user;
+   Error error = system::User::getUserFromIdentifier(username, user);
+   if (error)
+   {
+      log::logErrorAsWarning(error);
+      return Success();
+   }
+
+   boost::shared_ptr<IConnection> connection;
+   if (!server_core::database::getConnection(boost::posix_time::seconds(10), &connection))
+   {
+      LOG_WARNING_MESSAGE("Unable to update record about user " + username + " because the database could not be reached.");
+      return Success();
+   }
+
+   // TODO: Do we want to support uname changes assuming UID is the same, UID changes for a given uname, or both?
+   std::string uname;
+   int id;
+   Query query = connection->query("SELECT user_name, id FROM licensed_users WHERE user_id = :uid")
+      .withInput(user.getUserId())
+      .withOutput(uname)
+      .withOutput(id);
+
+   bool rowFound = false;
+   error = connection->execute(query, &rowFound);
+   if (error)
+   {
+      log::logErrorAsWarning(error);
+      return Success();
+   }
+
+
+   // Set up a transaction for the insert/update statement.
+   Transaction transaction(connection);
+   if (rowFound)
+   {
+      // If the username has changed, update it as well
+      error = updateLastSignin(connection, id, (uname != username) ?  username : "");
+      if (error)
+      {
+         log::logErrorAsWarning(error);
+         return Success();
+      }
+   }
+   else 
+   {
+      std::string currentTime = date_time::format(boost::posix_time::microsec_clock::universal_time(),
+                                                  date_time::kIso8601Format);
+
+      Query insertQuery = connection->query("INSERT INTO licensed_users (user_name, last_sign_in, user_id) VALUES (:un, :ls, :ui)")
+         .withInput(username)
+         .withInput(currentTime)
+         .withInput(user.getUserId());
+      
+      error = connection->execute(insertQuery);
+      if (error)
+      {
+         log::logErrorAsWarning(error);
+         return Success();
+      }
+   }
+
+   transaction.commit();
    return Success();
 }
 
