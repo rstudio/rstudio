@@ -103,7 +103,7 @@ void detectQuartoInstallation()
             contents = "99.9.9";
          }
 
-         const Version kQuartoRequiredVersion("0.2.13");
+         const Version kQuartoRequiredVersion("0.2.16");
          boost::algorithm::trim(contents);
          Version quartoVersion(contents);
          if (quartoVersion >= kQuartoRequiredVersion)
