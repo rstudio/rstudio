@@ -77,6 +77,8 @@ void readQuartoProjectConfig(const core::FilePath& configFile,
                              std::vector<std::string>* pFormats = nullptr,
                              std::vector<std::string>* pBibliographies = nullptr);
 
+core::json::Value quartoXRefIndex();
+
 } // namespace quarto
 } // namespace session
 } // namespace rstudio

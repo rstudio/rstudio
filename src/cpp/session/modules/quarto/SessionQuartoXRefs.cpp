@@ -38,10 +38,6 @@ namespace session {
 
 using namespace quarto;
 
-namespace modules {
-namespace quarto {
-namespace xrefs {
-
 namespace {
 
 FilePath quartoCrossrefDir(const FilePath& projectDir)
@@ -52,7 +48,7 @@ FilePath quartoCrossrefDir(const FilePath& projectDir)
 }
 
 
-json::Array readXRefIndex(const FilePath& indexPath, const std::string& filename = "")
+json::Array readXRefIndex(const FilePath& indexPath, const std::string& filename)
 {
    // read the index as a string
    std::string index;
@@ -81,7 +77,7 @@ json::Array readXRefIndex(const FilePath& indexPath, const std::string& filename
 
    // read xrefs (already validated so don't need to dance around types/existence)
    json::Array xrefs;
-   boost::regex keyRegex("^(\\w+)-(.*?)(?:-(\\d+))?$");
+   boost::regex keyRegex("^(\\w+)-(.*?)(-\\d+)?$");
    json::Array entries = quartoIndexJson["entries"].getArray();
    for (const json::Value& entry : entries)
    {
@@ -103,7 +99,7 @@ json::Array readXRefIndex(const FilePath& indexPath, const std::string& filename
    return xrefs;
 }
 
-json::Array readProjectXRefIndex(const FilePath& indexPath, bool filenames = false)
+json::Array readProjectXRefIndex(const FilePath& indexPath, std::string filename)
 {
    if (indexPath.isDirectory())
    {
@@ -133,7 +129,6 @@ json::Array readProjectXRefIndex(const FilePath& indexPath, bool filenames = fal
       }
       if (!mostRecentIndex.isEmpty())
       {
-         std::string filename = filenames ? mostRecentIndex.getFilename() : "";
          return readXRefIndex(mostRecentIndex, filename);
       }
       else
@@ -151,7 +146,7 @@ json::Array readProjectXRefIndex(const FilePath& projectDir, const FilePath& src
 {
    std::string projRelative = srcFile.getRelativePath(projectDir);
    FilePath indexPath = quartoCrossrefDir(projectDir).completeChildPath(projRelative);
-   return readProjectXRefIndex(indexPath);
+   return readProjectXRefIndex(indexPath, projRelative);
 
 }
 
@@ -172,7 +167,7 @@ bool projectXRefIndexFilter(const FilePath& projectDir,
    }
 }
 
-json::Array readAllProjectXRefIndexes(const core::FilePath& projectDir, bool filenames = false)
+json::Array readAllProjectXRefIndexes(const core::FilePath& projectDir)
 {
    FilePath crossrefDir = quartoCrossrefDir(projectDir);
    if (!crossrefDir.exists())
@@ -195,12 +190,22 @@ json::Array readAllProjectXRefIndexes(const core::FilePath& projectDir, bool fil
    json::Array projectXRefs;
    for (auto indexFile : indexFiles)
    {
-      json::Array xrefs = readProjectXRefIndex(FilePath(indexFile.absolutePath()), filenames);
+      FilePath indexFilePath(indexFile.absolutePath());
+      std::string projRelative = indexFilePath.getRelativePath(crossrefDir);
+      json::Array xrefs = readProjectXRefIndex(FilePath(indexFile.absolutePath()), projRelative);
       std::copy(xrefs.begin(), xrefs.end(), std::back_inserter(projectXRefs));
    }
 
    return projectXRefs;
 }
+
+} // anonymous namespace
+
+namespace modules {
+namespace quarto {
+namespace xrefs {
+
+namespace {
 
 Error xrefIndexForFile(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
@@ -216,7 +221,6 @@ Error xrefIndexForFile(const json::JsonRpcRequest& request,
 
    // index entries
    json::Object indexJson;
-   indexJson["baseDir"] = createAliasedPath(filePath.getParent());
    indexJson["refs"] = json::Array();
 
    // is this file in a project and is it a book project?
@@ -225,8 +229,9 @@ Error xrefIndexForFile(const json::JsonRpcRequest& request,
    FilePath projectConfig = quartoProjectConfigFile(filePath);
    if (!projectConfig.isEmpty())
    {
-      // set project dir
+      // set base dir
       projectDir = projectConfig.getParent();
+      indexJson["baseDir"] = createAliasedPath(projectDir);
 
       // check whether this is a booo short circuit for this being in the current project
       // (since we already have the config)
@@ -244,7 +249,7 @@ Error xrefIndexForFile(const json::JsonRpcRequest& request,
       // books get the entire index, non-books get just the file
       if (isBook)
       {
-         indexJson["refs"] = readAllProjectXRefIndexes(projectDir, true);
+         indexJson["refs"] = readAllProjectXRefIndexes(projectDir);
       }
       else
       {
@@ -253,6 +258,9 @@ Error xrefIndexForFile(const json::JsonRpcRequest& request,
    }
    else
    {
+      // basedir is this file's parent dir
+      indexJson["baseDir"] = createAliasedPath(filePath.getParent());
+
       // get storage for this file
       FilePath indexPath;
       error = perFilePathStorage(kQuartoCrossrefScope, filePath, false, &indexPath);
@@ -263,7 +271,7 @@ Error xrefIndexForFile(const json::JsonRpcRequest& request,
       }
       if (indexPath.exists())
       {
-         indexJson["refs"] = readXRefIndex(indexPath);
+         indexJson["refs"] = readXRefIndex(indexPath, filePath.getFilename());
       }
    }
 
@@ -307,15 +315,28 @@ Error initialize()
 } // namespace quarto
 } // namespace modules
 
-namespace module_context {
+namespace quarto {
 
 core::json::Value quartoXRefIndex()
 {
-
-    return json::Value();
+   QuartoConfig config = quarto::quartoConfig();
+   if (config.is_project)
+   {
+      json::Object indexJson;
+      indexJson["baseDir"] = config.project_dir;
+      indexJson["refs"] =  readAllProjectXRefIndexes(
+         module_context::resolveAliasedPath(config.project_dir)
+      );
+      json::Value resultValue = indexJson;
+      return resultValue;
+   }
+   else
+   {
+      return json::Value();
+   }
 }
 
-} // namespace module_context
+} // namespace quarto
 
 } // namespace session
 } // namespace rstudio
