@@ -1,44 +1,19 @@
-/* Stores the version of the schema. */
-CREATE TABLE schema_version(
-   /* The date at which this schema version was created. */
-   current_version text NOT NULL,
-
-   /* The name of the release to which this version of the schema belongs. */
-   release_name text NOT NULL
-);
-
-LOCK schema_version IN ACCESS EXCLUSIVE MODE;
-
-/* Stores revoked auth cookies - cookies that are not yet expired, but
-   have been invalidated due to a user signing out. These cookies will
-   not be allowed to be used again for sign-in purposes.
-*/
-CREATE TABLE revoked_cookie(
-   /* The expiration date string at which this cookie expires. Derivative of the CookieData,
-      used for sorting purposes
-   */
-   expiration text NOT NULL,
-   
-   /* The actual cookie data */
-   cookie_data text NOT NULL,
-
-   /* Primary key is the actual cookie data itself (no duplicate cookies can be issued) */
-   PRIMARY KEY (cookie_data)
-);
+/* Adds the release_name column to the schema_version table. */
+ALTER TABLE schema_version ADD COLUMN IF NOT EXISTS release_name text NOT NULL DEFAULT '';
 
 /* Stores users of RStudio Server */
-CREATE TABLE licensed_users(
+CREATE TABLE IF NOT EXISTS licensed_users(
 
    /* The username associated with the user */
    user_name text NOT NULL,
 
-   /* Always false column, to keep the order the same as in Workbench */
+   /* Whether or not the user is locked (disabled from signing in) */
    locked boolean NOT NULL DEFAULT false,
 
    /* The date time when the user last signed in */
    last_sign_in text NOT NULL,
 
-   /* Always false column, to keep the order the same as in Workbench */
+   /* Indicates whether the user is an admin to the licensed_users table */
    is_admin boolean NOT NULL DEFAULT false,
 
    /* The Posix/Operating-System-Level ID of the user */
@@ -51,7 +26,7 @@ CREATE TABLE licensed_users(
 );
 
 /* Stores metadata about actvie sessions */ 
-CREATE TABLE active_session_metadata(
+CREATE TABLE IF NOT EXISTS active_session_metadata(
 
    /* The ID of the session which this row describes */
    session_id text NOT NULL,
@@ -104,7 +79,5 @@ CREATE TABLE active_session_metadata(
    FOREIGN KEY (user_id) REFERENCES licensed_users(id) ON DELETE CASCADE
 );
 
-/* Index to be used for sorting revoked cookies by expiration */
-CREATE INDEX revoked_cookie_expiration_index ON revoked_cookie(expiration);
-
-INSERT INTO schema_version VALUES ('20210717193822451129454', 'Ghost Orchid');
+/* Update the version to the latest after all alter statements are applied. */
+UPDATE schema_version SET current_version='20210717193822451129454', release_name = 'Ghost Orchid';
