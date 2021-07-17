@@ -30,13 +30,13 @@ CREATE TABLE licensed_users(
    /* The username associated with the user */
    user_name text NOT NULL,
 
-   /* Whether or not the user is locked (disabled from signing in) */
+   /* Always false column, to keep the order the same as in Workbench */
    locked boolean NOT NULL DEFAULT 0,
 
    /* The date time when the user last signed in */
    last_sign_in text NOT NULL,
 
-   /* Indicates whether the user is an admin to the licensed_users table */
+   /* Always false column, to keep the order the same as in Workbench */
    is_admin boolean NOT NULL DEFAULT 0, 
 
    /* The Posix/Operating-System-Level ID of the user */
