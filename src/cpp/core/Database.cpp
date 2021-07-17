@@ -1077,6 +1077,7 @@ Error SchemaUpdater::createSchema()
    if (error)
       return error;
 
+   transaction.commit();
    return Success();
 }
 
