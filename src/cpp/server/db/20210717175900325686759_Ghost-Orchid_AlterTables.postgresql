@@ -26,4 +26,4 @@ CREATE TABLE licensed_users(
 );
 
 /* Update the version to the latest after all alter statements are applied. */
-UPDATE schema_version SET current_version='20210712182145921760944', release_name = 'Ghost Orchid';
+UPDATE schema_version SET current_version='20210717175900325686759', release_name = 'Ghost Orchid';

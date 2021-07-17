@@ -28,8 +28,8 @@ CREATE TABLE licensed_users(
    user_id integer NOT NULL DEFAULT -1,
 
    /* Auto incrementing ID for each user for internal FK relationships. */
-   id integer PRIMARY KEY
+   id integer PRIMARY KEY AUTOINCREMENT
 );
 
 /* Update the version to the latest after all alter statements are applied. */
-INSERT INTO schema_version VALUES ('20210712182145921760944', 'Ghost Orchid');
+INSERT INTO schema_version VALUES ('20210717175900325686759', 'Ghost Orchid');
