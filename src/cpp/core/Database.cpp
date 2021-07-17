@@ -1077,14 +1077,21 @@ Error SchemaUpdater::createSchema()
    if (error)
       return error;
 
+   // Enable foreign key constraints in sqlite dbs.
+   if (connection_->driverName() == SQLITE_DRIVER)
+   {
+      Query query = connection_->query("PRAGMA foreign_keys = ON");
+      error = connection_->execute(query);
+      if (error)
+         return error;
+   }
+
    transaction.commit();
    return Success();
 }
 
 Error SchemaUpdater::updateToVersion(const SchemaVersion& maxVersion)
 {
-
-
    // create a transaction to perform the following steps:
    // 1. Check the current database schema version
    // 2. Check if we need to update
@@ -1100,6 +1107,14 @@ Error SchemaUpdater::updateToVersion(const SchemaVersion& maxVersion)
    if (connection_->driverName() == POSTGRESQL_DRIVER)
    {
       Query query = connection_->query(std::string("LOCK \"") + SCHEMA_TABLE + "\" IN ACCESS EXCLUSIVE MODE");
+      Error error = connection_->execute(query);
+      if (error)
+         return error;
+   }
+   // For sqlite, disable foreign keys until the update is complete.
+   else if (connection_->driverName() == SQLITE_DRIVER)
+   {
+      Query query = connection_->query("PRAGMA foreign_keys = OFF");
       Error error = connection_->execute(query);
       if (error)
          return error;
@@ -1150,6 +1165,15 @@ Error SchemaUpdater::updateToVersion(const SchemaVersion& maxVersion)
          return error;
 
       error = connection_->executeStr(fileContents);
+      if (error)
+         return error;
+   }
+
+   // Now that the update is complete, re-enable foreign key constraints in sqlite dbs.
+   if (connection_->driverName() == SQLITE_DRIVER)
+   {
+      Query query = connection_->query("PRAGMA foreign_keys = ON");
+      error = connection_->execute(query);
       if (error)
          return error;
    }
