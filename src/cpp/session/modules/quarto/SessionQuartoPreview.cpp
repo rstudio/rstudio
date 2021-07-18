@@ -22,10 +22,12 @@
 #include <core/RegexUtils.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/json/JsonRpc.hpp>
+#include <core/system/Environment.hpp>
 
 #include <r/RExec.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionQuarto.hpp>
 
 #include "SessionQuartoJob.hpp"
 
@@ -34,6 +36,9 @@ using namespace rstudio::session::module_context;
 
 namespace rstudio {
 namespace session {
+
+using namespace quarto;
+
 namespace modules {
 namespace quarto {
 namespace preview {
@@ -111,6 +116,24 @@ protected:
       args.push_back("--no-browse");
 
       return args;
+   }
+
+   virtual void environment(core::system::Options* pEnv)
+   {
+      // if this file isn't in a project then add the QUARTO_CROSSREF_INDEX_PATH
+      if (!isFileInSessionQuartoProject(previewFile_))
+      {
+         FilePath indexPath;
+         Error error = module_context::perFilePathStorage(
+            kQuartoCrossrefScope, previewFile_, false, &indexPath
+         );
+         if (error)
+         {
+            LOG_ERROR(error);
+            return;
+         }
+         core::system::setenv(pEnv, "QUARTO_CROSSREF_INDEX_PATH", indexPath.getAbsolutePath());
+      }
    }
 
    virtual core::FilePath workingDir()

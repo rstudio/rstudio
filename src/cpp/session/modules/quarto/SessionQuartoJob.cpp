@@ -17,10 +17,12 @@
 
 #include <shared_core/Error.hpp>
 #include <core/system/Process.hpp>
+#include <core/system/Environment.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/jobs/JobsApi.hpp>
 
+#include <session/SessionQuarto.hpp>
 #include "SessionQuarto.hpp"
 
 using namespace rstudio::core;
@@ -28,6 +30,9 @@ using namespace rstudio::session::module_context;
 
 namespace rstudio {
 namespace session {
+
+using namespace quarto;
+
 namespace modules {
 namespace quarto {
 
@@ -41,6 +46,12 @@ Error QuartoJob::start()
    options.terminateChildren = true;
 #endif
    options.workingDir = workingDir();
+
+   // set environment variables
+   core::system::Options env;
+   core::system::environment(&env);
+   environment(&env);
+   options.environment = env;
 
    // callbacks
    core::system::ProcessCallbacks cb;

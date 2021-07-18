@@ -26,6 +26,7 @@
 
 #include <core/system/Process.hpp>
 
+#include <session/SessionQuarto.hpp>
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
 
@@ -43,11 +44,11 @@ namespace {
 std::vector<FileInfo> projectBibliographies()
 {
    std::vector<FilePath> projectBibs;
-   auto config = module_context::quartoConfig();
+   auto config = quarto::quartoConfig();
    if (config.is_project)
    {
       FilePath projDir = module_context::resolveAliasedPath(config.project_dir);
-      auto biblios = module_context::quartoConfig().project_bibliographies;
+      auto biblios = config.project_bibliographies;
       std::transform(biblios.begin(), biblios.end(), std::back_inserter(projectBibs),
                      [&projDir](const std::string& biblio) {
          return projDir.completeChildPath(biblio);
@@ -314,7 +315,7 @@ json::Object createBiblioJson(const json::Array& jsonCitations, bool project)
    json::Array projectBiblios;
 
    // quarto config
-   auto quartoConfig = module_context::quartoConfig();
+   auto quartoConfig = quarto::quartoConfig();
    if (quartoConfig.is_project)
    {
       projectBiblios = json::toJsonArray(quartoConfig.project_bibliographies);
@@ -488,10 +489,9 @@ void pandocGetBibliography(const json::JsonRpcRequest& request,
       {
          isProjectFile = filePath.isWithin(projects::projectContext().buildTargetPath());
       }
-      else if (module_context::quartoConfig().is_project)
+      else
       {
-         FilePath projDir = module_context::resolveAliasedPath(module_context::quartoConfig().project_dir);
-         isProjectFile = filePath.isWithin(projDir);
+         isProjectFile = quarto::isFileInSessionQuartoProject(filePath);
       }
    }
 
@@ -769,7 +769,7 @@ Error pandocAddToBibliography(const json::JsonRpcRequest& request, json::JsonRpc
    FilePath bibliographyPath;
    if (project && projects::projectContext().hasProject())
    {
-      auto quartoConfig = module_context::quartoConfig();
+      auto quartoConfig = quarto::quartoConfig();
       if (quartoConfig.is_project)
       {
          FilePath projDir = module_context::resolveAliasedPath(quartoConfig.project_dir);

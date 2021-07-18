@@ -42,17 +42,22 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
 #include <session/SessionConsoleProcess.hpp>
+#include <session/SessionQuarto.hpp>
 #include <session/projects/SessionProjects.hpp>
 
 #include <session/prefs/UserPrefs.hpp>
+#include <session/SessionQuarto.hpp>
 
 #include "SessionQuartoPreview.hpp"
 #include "SessionQuartoServe.hpp"
+#include "SessionQuartoXRefs.hpp"
 
 using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
+
+using namespace quarto;
 
 namespace {
 
@@ -98,7 +103,7 @@ void detectQuartoInstallation()
             contents = "99.9.9";
          }
 
-         const Version kQuartoRequiredVersion("0.1.344");
+         const Version kQuartoRequiredVersion("0.2.16");
          boost::algorithm::trim(contents);
          Version quartoVersion(contents);
          if (quartoVersion >= kQuartoRequiredVersion)
@@ -212,7 +217,7 @@ std::string onDetectQuartoSourceType(
             return kQuartoXt;
          }
          // project has quarto config in build target dir
-         else if (filePath.isWithin(projects::projectContext().directory()) && modules::quarto::projectIsQuarto())
+         else if (filePath.isWithin(projects::projectContext().directory()) && projectIsQuarto())
          {
             return kQuartoXt;
 
@@ -338,82 +343,6 @@ Error quartoInspect(const std::string& path,
 }
 
 
-void readQuartoProjectConfig(const FilePath& configFile,
-                             std::string* pType,
-                             std::string* pOutputDir,
-                             std::vector<std::string>* pFormats,
-                             std::vector<std::string>* pBibliographies)
-{
-   // read the config
-   std::string configText;
-   Error error = core::readStringFromFile(configFile, &configText);
-   if (!error)
-   {
-      try
-      {
-         YAML::Node node = YAML::Load(configText);
-         if (!node.IsMap())
-         {
-            LOG_ERROR_MESSAGE("Unexpected type for config file yaml (expected a map)");
-            return;
-         }
-         for (auto it = node.begin(); it != node.end(); ++it)
-         {
-            std::string key = it->first.as<std::string>();
-            if (key == "project" && it->second.Type() == YAML::NodeType::Map)
-            {
-               for (auto projIt = it->second.begin(); projIt != it->second.end(); ++projIt)
-               {
-                  if (projIt->second.Type() == YAML::NodeType::Scalar)
-                  {
-                     std::string projKey = projIt->first.as<std::string>();
-                     std::string projValue = projIt->second.Scalar();
-                     if (projKey == "type")
-                        *pType = projValue;
-                     else if (projKey == "output-dir")
-                        *pOutputDir = projValue;
-                  }
-               }
-            }
-            else if (key == "format")
-            {
-               auto node = it->second;
-               if (node.Type() == YAML::NodeType::Scalar)
-               {
-                  pFormats->push_back(node.as<std::string>());
-               }
-               else if (node.Type() == YAML::NodeType::Map)
-               {
-                  for (auto formatIt = node.begin(); formatIt != node.end(); ++formatIt)
-                  {
-                     pFormats->push_back(formatIt->first.as<std::string>());
-                  }
-               }
-            }
-            else if (key == "bibliography")
-            {
-               auto node = it->second;
-               if (node.Type() == YAML::NodeType::Scalar)
-               {
-                  pBibliographies->push_back(node.as<std::string>());
-               }
-               else if (node.Type() == YAML::NodeType::Sequence)
-               {
-                  for (auto formatIt = node.begin(); formatIt != node.end(); ++formatIt)
-                  {
-                     pBibliographies->push_back(formatIt->as<std::string>());
-                  }
-               }
-            }
-         }
-      }
-      CATCH_UNEXPECTED_EXCEPTION
-   }
-   else
-   {
-      LOG_ERROR(error);
-   }
-}
 
 Error getQmdPublishDetails(const json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)
@@ -509,12 +438,7 @@ Error getQmdPublishDetails(const json::JsonRpcRequest& request,
    if (!quartoConfig.isEmpty())
    {
        std::string type, outputDir;
-       std::vector<std::string> formats, biblios;
-       readQuartoProjectConfig(quartoConfig,
-                               &type,
-                               &outputDir,
-                               &formats,
-                               &biblios);
+       readQuartoProjectConfig(quartoConfig, &type, &outputDir);
        if (type == kQuartoProjectBook || type == kQuartoProjectSite)
        {
           FilePath configPath = quartoConfig.getParent();
@@ -705,15 +629,13 @@ Error quartoCreateProject(const json::JsonRpcRequest& request,
    return Success();
 }
 
-
-
 } // anonymous namespace
 
-namespace module_context {
+namespace quarto {
 
 json::Value quartoCapabilities()
 {
-   if (module_context::quartoConfig().installed)
+   if (quartoConfig().installed)
    {
       core::system::ProcessResult result;
       Error error = quartoExec({ "capabilities" }, &result);
@@ -787,9 +709,8 @@ bool handleQuartoPreview(const core::FilePath& sourceFile,
    FilePath configFile = quartoProjectConfigFile(sourceFile);
    if (!configFile.isEmpty())
    {
-      std::string type, outputDir;
-      std::vector<std::string> formats, biblios;
-      readQuartoProjectConfig(configFile, &type, &outputDir, &formats, &biblios);
+      std::string type;
+      readQuartoProjectConfig(configFile, &type);
       if (type == kQuartoProjectSite || type == kQuartoProjectBook)
          return true;
    }
@@ -798,7 +719,7 @@ bool handleQuartoPreview(const core::FilePath& sourceFile,
    return false;
 }
 
-
+const char* const kQuartoCrossrefScope = "quarto-crossref";
 const char* const kQuartoProjectDefault = "default";
 const char* const kQuartoProjectSite = "site";
 const char* const kQuartoProjectBook = "book";
@@ -806,7 +727,7 @@ const char* const kQuartoProjectBook = "book";
 
 QuartoConfig quartoConfig(bool refresh)
 {
-   static module_context::QuartoConfig s_quartoConfig;
+   static QuartoConfig s_quartoConfig;
 
    if (refresh)
    {
@@ -854,6 +775,163 @@ QuartoConfig quartoConfig(bool refresh)
    return s_quartoConfig;
 }
 
+bool isFileInSessionQuartoProject(const core::FilePath& file)
+{
+   QuartoConfig config = quartoConfig();
+   if (config.is_project)
+   {
+      FilePath projDir = module_context::resolveAliasedPath(config.project_dir);
+      return file.isWithin(projDir);
+   }
+   else
+   {
+      return false;
+   }
+
+}
+
+json::Object quartoConfigJSON(bool refresh)
+{
+   QuartoConfig config = quartoConfig(refresh);
+   json::Object quartoConfigJSON;
+   quartoConfigJSON["installed"] = config.installed;
+   quartoConfigJSON["version"] = config.version;
+   quartoConfigJSON["is_project"] = config.is_project;
+   quartoConfigJSON["project_dir"] = config.project_dir;
+   quartoConfigJSON["project_type"] = config.project_type;
+   quartoConfigJSON["project_output_dir"] = config.project_output_dir;
+   quartoConfigJSON["project_formats"] = json::toJsonArray(config.project_formats);
+   return quartoConfigJSON;
+}
+
+FilePath quartoBinary()
+{
+    return s_quartoPath;
+}
+
+bool projectIsQuarto()
+{
+   using namespace session::projects;
+   const ProjectContext& context = projectContext();
+   if (context.hasProject())
+   {
+      return quartoConfig().is_project;
+   } else {
+      return false;
+   }
+}
+
+FilePath quartoProjectConfigFile(const core::FilePath& filePath)
+{
+   // list all paths up to root from home dir
+   // if we hit the anchor path, or any parent directory of that path
+   FilePath anchorPath = module_context::userHomePath();
+   std::vector<FilePath> anchorPaths;
+   for (; anchorPath.exists(); anchorPath = anchorPath.getParent())
+      anchorPaths.push_back(anchorPath);
+
+   // scan through parents
+   for (FilePath targetPath = filePath.getParent(); targetPath.exists(); targetPath = targetPath.getParent())
+   {
+      // bail if we've hit our anchor
+      for (const FilePath& anchorPath : anchorPaths)
+      {
+         if (targetPath == anchorPath)
+            return FilePath();
+      }
+
+      // see if we have a config
+      FilePath configFile = quartoConfigFilePath(targetPath);
+      if (!configFile.isEmpty())
+         return configFile;
+   }
+
+   return FilePath();
+}
+
+void readQuartoProjectConfig(const FilePath& configFile,
+                             std::string* pType,
+                             std::string* pOutputDir,
+                             std::vector<std::string>* pFormats,
+                             std::vector<std::string>* pBibliographies)
+{
+   // read the config
+   std::string configText;
+   Error error = core::readStringFromFile(configFile, &configText);
+   if (!error)
+   {
+      try
+      {
+         YAML::Node node = YAML::Load(configText);
+         if (!node.IsMap())
+         {
+            LOG_ERROR_MESSAGE("Unexpected type for config file yaml (expected a map)");
+            return;
+         }
+         for (auto it = node.begin(); it != node.end(); ++it)
+         {
+            std::string key = it->first.as<std::string>();
+            if (key == "project" && it->second.Type() == YAML::NodeType::Map)
+            {
+               for (auto projIt = it->second.begin(); projIt != it->second.end(); ++projIt)
+               {
+                  if (projIt->second.Type() == YAML::NodeType::Scalar)
+                  {
+                     std::string projKey = projIt->first.as<std::string>();
+                     std::string projValue = projIt->second.Scalar();
+                     if (projKey == "type")
+                        *pType = projValue;
+                     else if (projKey == "output-dir" && pOutputDir != nullptr)
+                        *pOutputDir = projValue;
+                  }
+               }
+            }
+            else if (key == "format" && pFormats != nullptr)
+            {
+               auto node = it->second;
+               if (node.Type() == YAML::NodeType::Scalar)
+               {
+                  pFormats->push_back(node.as<std::string>());
+               }
+               else if (node.Type() == YAML::NodeType::Map)
+               {
+                  for (auto formatIt = node.begin(); formatIt != node.end(); ++formatIt)
+                  {
+                     pFormats->push_back(formatIt->first.as<std::string>());
+                  }
+               }
+            }
+            else if (key == "bibliography" && pBibliographies != nullptr)
+            {
+               auto node = it->second;
+               if (node.Type() == YAML::NodeType::Scalar)
+               {
+                  pBibliographies->push_back(node.as<std::string>());
+               }
+               else if (node.Type() == YAML::NodeType::Sequence)
+               {
+                  for (auto formatIt = node.begin(); formatIt != node.end(); ++formatIt)
+                  {
+                     pBibliographies->push_back(formatIt->as<std::string>());
+                  }
+               }
+            }
+         }
+      }
+      CATCH_UNEXPECTED_EXCEPTION
+   }
+   else
+   {
+      LOG_ERROR(error);
+   }
+}
+
+
+
+} // namesace quarto
+
+namespace module_context  {
+
 int jupyterErrorLineNumber(const std::vector<std::string>& srcLines, const std::string& output)
 {
    // strip ansi codes before searching
@@ -893,49 +971,18 @@ int jupyterErrorLineNumber(const std::vector<std::string>& srcLines, const std::
    return -1;
 }
 
-}
+} // namespace module_context
+
 
 namespace modules {
 namespace quarto {
-
-json::Object quartoConfigJSON(bool refresh)
-{
-   module_context::QuartoConfig config = module_context::quartoConfig(refresh);
-   json::Object quartoConfigJSON;
-   quartoConfigJSON["installed"] = config.installed;
-   quartoConfigJSON["version"] = config.version;
-   quartoConfigJSON["is_project"] = config.is_project;
-   quartoConfigJSON["project_dir"] = config.project_dir;
-   quartoConfigJSON["project_type"] = config.project_type;
-   quartoConfigJSON["project_output_dir"] = config.project_output_dir;
-   quartoConfigJSON["project_formats"] = json::toJsonArray(config.project_formats);
-   return quartoConfigJSON;
-}
-
-FilePath quartoBinary()
-{
-    return s_quartoPath;
-}
-
-bool projectIsQuarto()
-{
-   using namespace session::projects;
-   const ProjectContext& context = projectContext();
-   if (context.hasProject())
-   {
-      return module_context::quartoConfig().is_project;
-   } else {
-      return false;
-   }
-}
-
 
 Error initialize()
 {
    RS_REGISTER_CALL_METHOD(rs_quartoFileResources, 1);
 
    // initialize config at startup
-   module_context::quartoConfig(true);
+   quartoConfig(true);
 
    module_context::events().onDetectSourceExtendedType
                                         .connect(onDetectQuartoSourceType);
@@ -949,6 +996,7 @@ Error initialize()
      (boost::bind(module_context::sourceModuleRFile, "SessionQuarto.R"))
      (boost::bind(quarto::preview::initialize))
      (boost::bind(quarto::serve::initialize))
+     (boost::bind(quarto::xrefs::initialize))
    ;
    return initBlock.execute();
 }

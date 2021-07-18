@@ -23,7 +23,6 @@
 #include "modules/rmarkdown/SessionRMarkdown.hpp"
 #include "modules/rmarkdown/SessionBlogdown.hpp"
 #include "modules/rmarkdown/SessionBookdown.hpp"
-#include "modules/quarto/SessionQuarto.hpp"
 #include "modules/connections/SessionConnections.hpp"
 #include "modules/SessionBreakpoints.hpp"
 #include "modules/SessionDependencyList.hpp"
@@ -71,6 +70,7 @@
 #include <session/SessionOptions.hpp>
 #include <session/SessionPackageProvidedExtension.hpp>
 #include <session/SessionPersistentState.hpp>
+#include <session/SessionQuarto.hpp>
 #include <session/projects/SessionProjectSharing.hpp>
 #include <session/prefs/UserPrefs.hpp>
 #include <session/prefs/UserState.hpp>
@@ -385,7 +385,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    if (projects::projectContext().hasProject())
    {
       std::string type = projects::projectContext().config().buildType;
-      if (type == r_util::kBuildTypeNone && module_context::quartoConfig().is_project)
+      if ((type == r_util::kBuildTypeNone) && quarto::quartoConfig().is_project)
       {
          type = r_util::kBuildTypeQuarto;
       }
@@ -427,7 +427,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["is_bookdown_project"] = module_context::isBookdownProject();
    sessionInfo["is_distill_project"] = module_context::isDistillProject();
 
-   sessionInfo["quarto_config"] = modules::quarto::quartoConfigJSON();
+   sessionInfo["quarto_config"] = quarto::quartoConfigJSON();
    
    sessionInfo["graphics_backends"] = modules::graphics::supportedBackends();
 

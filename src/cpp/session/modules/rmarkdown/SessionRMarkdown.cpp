@@ -50,6 +50,7 @@
 #include <session/SessionConsoleProcess.hpp>
 #include <session/SessionAsyncRProcess.hpp>
 #include <session/SessionUrlPorts.hpp>
+#include <session/SessionQuarto.hpp>
 
 #include <session/projects/SessionProjects.hpp>
 #include <session/prefs/UserPrefs.hpp>
@@ -748,7 +749,7 @@ private:
          outputFile_ = outputFile;
 
          // see if the quarto module wants to handle the preview
-         if (module_context::handleQuartoPreview(targetFile_, outputFile_, allOutput_, true))
+         if (quarto::handleQuartoPreview(targetFile_, outputFile_, allOutput_, true))
             viewerType_ = kRmdViewerTypeNone;
       }
 

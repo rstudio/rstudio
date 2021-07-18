@@ -77,6 +77,7 @@
 
 #include <session/SessionConstants.hpp>
 #include <session/SessionContentUrls.hpp>
+#include <session/SessionQuarto.hpp>
 
 #include <session/prefs/UserPrefs.hpp>
 #include <session/prefs/UserState.hpp>
@@ -2870,7 +2871,7 @@ std::vector<FilePath> ignoreContentDirs()
    if (projects::projectContext().hasProject()) {
       // python virtual environments
       ignoreDirs = projects::projectContext().pythonEnvs();
-      module_context::QuartoConfig quartoConf = module_context::quartoConfig();
+      quarto::QuartoConfig quartoConf = quarto::quartoConfig();
       // quarto site output dir
       if (quartoConf.is_project) {
          FilePath quartoProjDir = module_context::resolveAliasedPath(quartoConf.project_dir);

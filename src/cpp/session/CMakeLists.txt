@@ -118,6 +118,7 @@ set(SESSION_SOURCE_FILES
    SessionOptionsOverlay.cpp
    SessionPandoc.cpp
    SessionPasswordManager.cpp
+   SessionPerFilePathStorage.cpp
    SessionPersistentState.cpp
    SessionPostback.cpp
    SessionSSH.cpp
@@ -280,6 +281,7 @@ set(SESSION_SOURCE_FILES
    modules/quarto/SessionQuartoJob.cpp
    modules/quarto/SessionQuartoPreview.cpp
    modules/quarto/SessionQuartoServe.cpp
+   modules/quarto/SessionQuartoXRefs.cpp
    modules/shiny/SessionShiny.cpp
    modules/shiny/ShinyAsyncJob.cpp
    modules/sql/SessionSql.cpp

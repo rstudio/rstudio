@@ -905,33 +905,11 @@ void initializeConsoleCtrlHandler();
 
 bool isPythonReplActive();
 
-extern const char* const kQuartoProjectDefault;
-extern const char* const kQuartoProjectSite;
-extern const char* const kQuartoProjectBook;
 
-struct QuartoConfig
-{
-   QuartoConfig() : empty(true), installed(false), is_project(false) {}
-   bool empty;
-   bool installed;
-   std::string version;
-   bool is_project;
-   std::string project_type;
-   std::string project_dir;
-   std::string project_output_dir;
-   std::vector<std::string> project_formats;
-   std::vector<std::string> project_bibliographies;
-};
-
-QuartoConfig quartoConfig(bool refresh = false);
-
-core::json::Value quartoCapabilities();
-
-// see if quarto wants to handle the preview
-bool handleQuartoPreview(const core::FilePath& sourceFile,
-                         const core::FilePath& outputFile,
-                         const std::string& renderOutput,
-                         bool validateExtendedType);
+core::Error perFilePathStorage(const std::string& scope,
+                               const core::FilePath& filePath,
+                               bool directory,
+                               core::FilePath* pStorage);
 
 // returns -1 if no error was found in the output
 int jupyterErrorLineNumber(const std::vector<std::string>& srcLines,

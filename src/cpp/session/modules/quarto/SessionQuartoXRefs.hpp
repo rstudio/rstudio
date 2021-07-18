@@ -1,5 +1,5 @@
 /*
- * SessionQuarto.hpp
+ * SessionQuartoXRefs.hpp
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -12,29 +12,27 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-
-#ifndef SESSION_MODULES_QUARTO_HPP
-#define SESSION_MODULES_QUARTO_HPP
-
-#include <shared_core/json/Json.hpp>
+#ifndef SESSION_SESSION_QUARTO_XREFS_HPP
+#define SESSION_SESSION_QUARTO_XREFS_HPP
 
 namespace rstudio {
-namespace core {
-   class Error;
-   class FilePath;
-}
+   namespace core {
+      class Error;
+   }
 }
 
 namespace rstudio {
 namespace session {
 namespace modules {
 namespace quarto {
+namespace xrefs {
 
 core::Error initialize();
-   
+
+} // namespace xrefs
 } // namespace quarto
 } // namespace modules
 } // namespace session
 } // namespace rstudio
 
-#endif // SESSION_MODULES_QUARTO_HPP
+#endif // SESSION_SESSION_QUARTO_XREFS_HPP
