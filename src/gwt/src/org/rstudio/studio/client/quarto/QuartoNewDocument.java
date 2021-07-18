@@ -24,6 +24,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.quarto.model.QuartoCapabilities;
+import org.rstudio.studio.client.quarto.model.QuartoConstants;
 import org.rstudio.studio.client.quarto.model.QuartoServerOperations;
 import org.rstudio.studio.client.quarto.ui.QuartoNewDocumentDialog;
 import org.rstudio.studio.client.server.ServerError;
@@ -96,11 +97,12 @@ public class QuartoNewDocument
             lines.add("    number-sections: true");
       }
       
-      if (result.getEngine().equals("jupyter"))
+      if (result.getEngine().equals(QuartoConstants.ENGINE_JUPYTER))
          lines.add("jupyter: " + result.getKernel());
       lines.add("---");
             
-      if (!result.getEngine().equals("none") && result.getLanguage() != null)
+      if (!result.getEngine().equals(QuartoConstants.ENGINE_MARKDOWN) && 
+          result.getLanguage() != null)
       {
          lines.add("");
          lines.add("```{" + result.getLanguage() + "}");
