@@ -40,6 +40,14 @@ using namespace quarto;
 
 namespace {
 
+const char * const kBaseDir = "baseDir";
+const char * const kRefs = "refs";
+const char * const kFile = "file";
+const char * const kType = "type";
+const char * const kId = "id";
+const char * const kSuffix = "suffix";
+const char * const kTitle = "title";
+
 FilePath quartoCrossrefDir(const FilePath& projectDir)
 {
    return projectDir
@@ -88,11 +96,11 @@ json::Array readXRefIndex(const FilePath& indexPath, const std::string& filename
       if (boost::regex_search(key, match, keyRegex))
       {
          json::Object xref;
-         xref["file"] = filename;
-         xref["type"] = match[1].str();
-         xref["id"] = match[2].str();
-         xref["suffix"] = (match.length() > 3) ? match[3].str() : "";
-         xref["title"] = caption;
+         xref[kFile] = filename;
+         xref[kType] = match[1].str();
+         xref[kId] = match[2].str();
+         xref[kSuffix] = (match.length() > 3) ? match[3].str() : "";
+         xref[kTitle] = caption;
          xrefs.push_back(xref);
       }
    }
@@ -207,21 +215,10 @@ namespace xrefs {
 
 namespace {
 
-Error xrefIndexForFile(const json::JsonRpcRequest& request,
-                       json::JsonRpcResponse* pResponse)
+
+Error xrefIndexForFile(const FilePath& filePath, json::Object& indexJson)
 {
-   // read params
-   std::string file;
-   Error error = json::readParams(request.params, &file);
-   if (error)
-      return error;
-
-   // resolve path
-   FilePath filePath = resolveAliasedPath(file);
-
-   // index entries
-   json::Object indexJson;
-   indexJson["refs"] = json::Array();
+   indexJson[kRefs] = json::Array();
 
    // is this file in a project and is it a book project?
    FilePath projectDir;
@@ -231,7 +228,7 @@ Error xrefIndexForFile(const json::JsonRpcRequest& request,
    {
       // set base dir
       projectDir = projectConfig.getParent();
-      indexJson["baseDir"] = createAliasedPath(projectDir);
+      indexJson[kBaseDir] = createAliasedPath(projectDir);
 
       // check whether this is a booo short circuit for this being in the current project
       // (since we already have the config)
@@ -249,21 +246,21 @@ Error xrefIndexForFile(const json::JsonRpcRequest& request,
       // books get the entire index, non-books get just the file
       if (isBook)
       {
-         indexJson["refs"] = readAllProjectXRefIndexes(projectDir);
+         indexJson[kRefs] = readAllProjectXRefIndexes(projectDir);
       }
       else
       {
-         indexJson["refs"] = readProjectXRefIndex(projectDir, filePath);
+         indexJson[kRefs] = readProjectXRefIndex(projectDir, filePath);
       }
    }
    else
    {
       // basedir is this file's parent dir
-      indexJson["baseDir"] = createAliasedPath(filePath.getParent());
+      indexJson[kBaseDir] = createAliasedPath(filePath.getParent());
 
       // get storage for this file
       FilePath indexPath;
-      error = perFilePathStorage(kQuartoCrossrefScope, filePath, false, &indexPath);
+      Error error = perFilePathStorage(kQuartoCrossrefScope, filePath, false, &indexPath);
       if (error)
       {
          LOG_ERROR(error);
@@ -271,17 +268,38 @@ Error xrefIndexForFile(const json::JsonRpcRequest& request,
       }
       if (indexPath.exists())
       {
-         indexJson["refs"] = readXRefIndex(indexPath, filePath.getFilename());
+         indexJson[kRefs] = readXRefIndex(indexPath, filePath.getFilename());
       }
    }
+   return Success();
+}
+
+
+Error quartoXRefIndexForFile(const json::JsonRpcRequest& request,
+                          json::JsonRpcResponse* pResponse)
+{
+   // read params
+   std::string file;
+   Error error = json::readParams(request.params, &file);
+   if (error)
+      return error;
+
+   // resolve path
+   FilePath filePath = resolveAliasedPath(file);
+
+   // read index
+   json::Object indexJson;
+   error = xrefIndexForFile(filePath, indexJson);
+   if (error)
+      return error;
 
    // return success
    pResponse->setResult(indexJson);
    return Success();
 }
 
-Error xrefForId(const json::JsonRpcRequest& request,
-                json::JsonRpcResponse*)
+Error quartoXRefForId(const json::JsonRpcRequest& request,
+                      json::JsonRpcResponse* pResponse)
 {
    // read params
    std::string file, id;
@@ -289,7 +307,36 @@ Error xrefForId(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
+   // resolve path
+   FilePath filePath = resolveAliasedPath(file);
 
+   // read index
+   json::Object indexJson;
+   error = xrefIndexForFile(filePath, indexJson);
+   if (error)
+      return error;
+
+   // search it the id
+   const json::Array& xrefs = indexJson[kRefs].getArray();
+   auto it = std::find_if(xrefs.begin(), xrefs.end(), [&id](const json::Value& xref) {
+      json::Object xrefJson = xref.getObject();
+      std::string xrefId = xrefJson[kType].getString() + "-" +
+                           xrefJson[kId].getString() +
+                           xrefJson[kSuffix].getString();
+      return xrefId == id;
+   });
+   if (it != xrefs.end())
+   {
+      json::Array xrefArray;
+      xrefArray.push_back(*it);
+      indexJson[kRefs] = xrefArray;
+   }
+   else
+   {
+      indexJson[kRefs] = json::Array();
+   }
+
+   pResponse->setResult(indexJson);
 
    return Success();
 }
@@ -298,17 +345,13 @@ Error xrefForId(const json::JsonRpcRequest& request,
 
 Error initialize()
 {
-
-
    // register rpc functions
    ExecBlock initBlock;
    initBlock.addFunctions()
-     (boost::bind(registerRpcMethod, "quarto_xref_index_for_file", xrefIndexForFile))
-     (boost::bind(registerRpcMethod, "quarto_xref_for_id", xrefForId))
+     (boost::bind(registerRpcMethod, "quarto_xref_index_for_file", quartoXRefIndexForFile))
+     (boost::bind(registerRpcMethod, "quarto_xref_for_id", quartoXRefForId))
    ;
    return initBlock.execute();
-
-
 }
 
 } // namespace xrefs
@@ -323,8 +366,8 @@ core::json::Value quartoXRefIndex()
    if (config.is_project)
    {
       json::Object indexJson;
-      indexJson["baseDir"] = config.project_dir;
-      indexJson["refs"] =  readAllProjectXRefIndexes(
+      indexJson[kBaseDir] = config.project_dir;
+      indexJson[kRefs] =  readAllProjectXRefIndexes(
          module_context::resolveAliasedPath(config.project_dir)
       );
       json::Value resultValue = indexJson;
