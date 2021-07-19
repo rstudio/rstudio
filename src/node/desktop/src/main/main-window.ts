@@ -123,9 +123,12 @@ export class MainWindow extends GwtWindow {
       this.onLoadFinished(false);
     });
 
-    // TODO
-    // connect(webPage(), &QWebEnginePage::loadFinished,
-    //         &menuCallback_, &MenuCallback::cleanUpActions);
+    this.webView.webContents.on('did-finish-load', () => {
+      this.menuCallback.cleanUpActions();
+    });
+    this.webView.webContents.on('did-fail-load', () => {
+      this.menuCallback.cleanUpActions();
+    });
 
     // connect(&desktopInfo(), &DesktopInfo::fixedWidthFontListChanged, [this]() {
     //    QString js = QStringLiteral(
