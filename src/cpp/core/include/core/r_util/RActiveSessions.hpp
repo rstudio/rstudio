@@ -43,14 +43,17 @@ private:
    {
    }
 
-   explicit ActiveSession(const std::string& id, const FilePath& scratchPath)
+   ActiveSession(const std::string& id, const FilePath& scratchPath)
       : id_(id), scratchPath_(scratchPath)
    {
       core::Error error = scratchPath_.ensureDirectory();
       if (error)
          LOG_ERROR(error);
 
-      propertiesPath_ = scratchPath_.completeChildPath("properites");
+      error = scratchPath_.completeChildPath("properites", propertiesPath_);
+      if (error)
+         LOG_ERROR(error);
+
       error = propertiesPath_.ensureDirectory();
       if (error)
          LOG_ERROR(error);
