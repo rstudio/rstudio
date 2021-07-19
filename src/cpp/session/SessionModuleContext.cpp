@@ -2354,6 +2354,7 @@ FilePath sourceDiagnostics()
 }
    
 namespace {
+
 void beginRpcHandler(json::JsonRpcFunction function,
                      json::JsonRpcRequest request,
                      std::string asyncHandle)
@@ -2364,9 +2365,11 @@ void beginRpcHandler(json::JsonRpcFunction function,
       Error error = function(request, &response);
       BOOST_ASSERT(!response.hasAfterResponse());
       if (error)
-      {
          response.setError(error);
-      }
+      
+      if (!response.hasField(kEventsPending))
+         response.setField(kEventsPending, "false");
+      
       json::Object value;
       value["handle"] = asyncHandle;
       value["response"] = response.getRawResponse();
@@ -2376,6 +2379,7 @@ void beginRpcHandler(json::JsonRpcFunction function,
    CATCH_UNEXPECTED_EXCEPTION
 
 }
+
 } // anonymous namespace
 
 core::Error executeAsync(const json::JsonRpcFunction& function,

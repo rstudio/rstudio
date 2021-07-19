@@ -402,7 +402,12 @@ public:
    void setField(const std::string& name, const Value& value)
    { 
       response_[name] = value;
-   }             
+   }
+   
+   bool hasField(const std::string& name)
+   {
+      return response_.hasMember(name);
+   }
                 
    template <typename T>
    void setField(const std::string& name, const T& value) 
@@ -411,8 +416,7 @@ public:
    }
 
    template <typename T>
-   Error getField(const std::string& name,
-                 T* pValue)
+   Error getField(const std::string& name, T* pValue)
    {
       return readObject(response_, name, *pValue);
    }

@@ -259,9 +259,11 @@ void endHandleRpcRequestIndirect(
            pJsonRpcResponse ? *pJsonRpcResponse : temp;
 
    if (executeError)
-   {
       jsonRpcResponse.setError(executeError);
-   }
+   
+   if (!jsonRpcResponse.hasField(kEventsPending))
+      jsonRpcResponse.setField(kEventsPending, "false");
+   
    json::Object value;
    value["handle"] = asyncHandle;
    value["response"] = jsonRpcResponse.getRawResponse();
