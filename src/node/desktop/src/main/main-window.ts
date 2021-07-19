@@ -15,8 +15,6 @@
 
 import { BrowserWindow, dialog, Menu, session } from 'electron';
 import path from 'path';
-import fs from 'fs';
-import os from 'os';
 import { ChildProcess } from 'child_process';
 
 import { logger } from '../core/logger';
@@ -260,15 +258,6 @@ export class MainWindow extends GwtWindow {
       });
 
     this.window.loadURL(url);
-  }
-
-  loadHtml(html: string): void {
-    const prefix = path.join(os.tmpdir(), 'rstudioTmpPage');
-    const uniqueDir = fs.mkdtempSync(prefix);
-    const uniqueFile = path.join(uniqueDir, 'tmp.html');
-    fs.writeFileSync(uniqueFile, html);
-    this.window.loadFile(uniqueFile);
-    // TODO: cleanup temp files?
   }
 
   quit(): void {
