@@ -799,7 +799,14 @@ private:
 
       std::string outputFile = createAliasedPath(outputFile_);
       resultJson["output_file"] = outputFile;
-      resultJson["knitr_errors"] = sourceMarkersAsJson(knitrErrors_);
+      
+      std::vector<SourceMarker> knitrErrors;
+      if (renderErrorMarker_)
+      {
+         renderErrorMarker_.message = core::html_utils::HTML(renderErrorMessage_.str());
+         knitrErrors.push_back(renderErrorMarker_);
+      }
+      resultJson["knitr_errors"] = sourceMarkersAsJson(knitrErrors);
 
       resultJson["output_url"] = assignOutputUrl(outputFile);
       resultJson["output_format"] = outputFormat_;
@@ -869,50 +876,55 @@ private:
                           const std::string& output)
    {
       using namespace module_context;
-      if ((type == module_context::kCompileOutputError || isQuarto_) &&  sourceNavigation_)
+      
+      if (type == kCompileOutputError && sourceNavigation_)
       {
-         // this is an error, parse it to see if it looks like a knitr error
-         const boost::regex knitrErr(
-                  "Quitting from lines (\\d+)-(\\d+) \\(([^)]+)\\)(.*)");
-         boost::smatch matches;
-         if (regex_utils::search(output, matches, knitrErr))
+         if (renderErrorMarker_)
          {
-            // looks like a knitr error; compose a compile error object and
-            // emit it to the client when the render is complete
-            if (isQuarto_)
-            {
-               int errLine = boost::lexical_cast<int>(matches[1].str());
-               FilePath errFile = targetFile_.getParent().completePath(matches[3].str());
-               module_context::editFile(errFile, errLine);
-            }
-            else
-            {
-               SourceMarker err(
-                        SourceMarker::Error,
-                        targetFile_.getParent().completePath(matches[3].str()),
-                        boost::lexical_cast<int>(matches[1].str()),
-                        1,
-                        core::html_utils::HTML(matches[4].str()),
-                        true);
-               knitrErrors_.push_back(err);
-            }
+            // if an error occurred during rendering, then any
+            // subsequent output should be gathered as part of
+            // that error
+            renderErrorMessage_ << output;
          }
-         // check for a jupyter error if this is quarto
          else if (isQuarto_)
          {
+            // check for a jupyter error if this is quarto
             int errLine = module_context::jupyterErrorLineNumber(targetFileLines_, allOutput_);
             if (errLine != -1)
             {
                module_context::editFile(targetFile_, errLine);
             }
-          }
+         }
+         else
+         {
+            // check whether an error occurred while rendering the document and
+            // if knitr is about to exit. look for a specific quit marker and
+            // parse to to gather information for a source marker
+            const char* renderErrorPattern =
+                  "(?:.*?)Quitting from lines (\\d+)-(\\d+) \\(([^)]+)\\)(.*)";
+            
+            boost::regex reRenderError(renderErrorPattern);
+            boost::smatch matches;
+            if (regex_utils::match(output, matches, reRenderError))
+            {
+               // looks like a knitr error; compose a compile error object and
+               // emit it to the client when the render is complete
+               int line = core::safe_convert::stringTo<int>(matches[1].str(), -1);
+               FilePath file = targetFile_.getParent().completePath(matches[3].str());
+               renderErrorMarker_ = SourceMarker(SourceMarker::Error, file, line, 1, {}, true);
+               renderErrorMessage_ << matches[4].str();
+            }
+         }
       }
+      
       // always enque quarto as normal output (it does it's own colorizing of error output)
       if (isQuarto_)
          type = module_context::kCompileOutputNormal;
+
       CompileOutput compileOutput(type, output);
-      ClientEvent event(client_events::kRmdRenderOutput,
-                        compileOutputAsJson(compileOutput));
+      ClientEvent event(
+               client_events::kRmdRenderOutput,
+               compileOutputAsJson(compileOutput));
       module_context::enqueClientEvent(event);
    }
 
@@ -928,7 +940,8 @@ private:
    std::string viewerType_;
    bool sourceNavigation_;
    json::Object outputFormat_;
-   std::vector<module_context::SourceMarker> knitrErrors_;
+   module_context::SourceMarker renderErrorMarker_;
+   std::stringstream renderErrorMessage_;
    std::string allOutput_;
 };
 
