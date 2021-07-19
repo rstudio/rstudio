@@ -894,7 +894,7 @@ private:
             {
                // looks like a knitr error; compose a compile error object and
                // emit it to the client when the render is complete
-               int line = boost::lexical_cast<int>(matches[1].str());
+               int line = core::safe_convert::stringTo<int>(matches[1].str(), -1);
                FilePath file = targetFile_.getParent().completePath(matches[3].str());
                renderErrorMarker_ = SourceMarker(SourceMarker::Error, file, line, 1, {}, true);
                renderErrorMessage_ << matches[4].str();
