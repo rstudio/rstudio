@@ -50,6 +50,7 @@
 #include <session/SessionConsoleProcess.hpp>
 #include <session/SessionAsyncRProcess.hpp>
 #include <session/SessionUrlPorts.hpp>
+#include <session/SessionQuarto.hpp>
 
 #include <session/projects/SessionProjects.hpp>
 #include <session/prefs/UserPrefs.hpp>
@@ -452,7 +453,8 @@ private:
       targetFile_(targetFile),
       sourceLine_(sourceLine),
       sourceNavigation_(sourceNavigation)
-   {}
+   {
+   }
 
    void start(const std::string& format,
               const std::string& encoding,
@@ -502,10 +504,14 @@ private:
             isShiny_ = true;
       }
 
-      // if we are using a quarto command to render, we must be a quarto doc
+      // if we are using a quarto command to render, we must be a quarto doc. read
+      // all of the input file lines to be used in error navigation
       if (renderFunc == "quarto run" || renderFunc == "quarto render")
       {
           isQuarto_ = true;
+          Error error = core::readLinesFromFile(targetFile_, &targetFileLines_);
+          if (error)
+             LOG_ERROR(error);
       }
 
       std::string extraParams;
@@ -743,7 +749,7 @@ private:
          outputFile_ = outputFile;
 
          // see if the quarto module wants to handle the preview
-         if (module_context::handleQuartoPreview(targetFile_, outputFile_, allOutput_, true))
+         if (quarto::handleQuartoPreview(targetFile_, outputFile_, allOutput_, true))
             viewerType_ = kRmdViewerTypeNone;
       }
 
@@ -880,6 +886,15 @@ private:
             // that error
             renderErrorMessage_ << output;
          }
+         else if (isQuarto_)
+         {
+            // check for a jupyter error if this is quarto
+            int errLine = module_context::jupyterErrorLineNumber(targetFileLines_, allOutput_);
+            if (errLine != -1)
+            {
+               module_context::editFile(targetFile_, errLine);
+            }
+         }
          else
          {
             // check whether an error occurred while rendering the document and
@@ -902,6 +917,10 @@ private:
          }
       }
       
+      // always enque quarto as normal output (it does it's own colorizing of error output)
+      if (isQuarto_)
+         type = module_context::kCompileOutputNormal;
+
       CompileOutput compileOutput(type, output);
       ClientEvent event(
                client_events::kRmdRenderOutput,
@@ -914,6 +933,7 @@ private:
    bool hasShinyContent_;
    bool isQuarto_ = false;
    FilePath targetFile_;
+   std::vector<std::string> targetFileLines_;
    int sourceLine_;
    FilePath outputFile_;
    std::string encoding_;

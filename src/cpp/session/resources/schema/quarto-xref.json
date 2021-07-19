@@ -1,0 +1,23 @@
+{
+  "$id": "http://rstudio.org/schemas/quarto-xref.json",
+  "$schema": "http://json-schema.org/schema#",
+  "title": "Quarto Crossref Index Schema",
+  "type": "object",
+  "properties": {
+    "entries": {
+      "type": "array",  
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "caption": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      }
+    }
+  }
+}

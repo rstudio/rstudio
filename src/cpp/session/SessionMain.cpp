@@ -691,8 +691,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    using namespace rsession::client_events;
    if (rsession::persistentState().hadAbend() && !options().standalone())
    {
-      LOG_ERROR_MESSAGE("session hadabend");
-
+      LOG_ERROR_MESSAGE("The previous R session terminated abnormally");
       ClientEvent abendWarningEvent(kAbendWarning);
       rsession::clientEventQueue().add(abendWarningEvent);
    }

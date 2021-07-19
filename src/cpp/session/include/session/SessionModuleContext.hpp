@@ -125,6 +125,9 @@ bool isPdfLatexInstalled();
 // is the file a text file
 bool isTextFile(const core::FilePath& targetPath);
 
+// edit a file
+void editFile(const core::FilePath& targetPath, int lineNumber = -1);
+
 // find the location of the R script
 core::Error rBinDir(core::FilePath* pRBinDirPath);
 core::Error rScriptPath(core::FilePath* pRScriptPath);
@@ -752,9 +755,34 @@ private:
 
 void addViewerHistoryEntry(const ViewerHistoryEntry& entry);
 
-// pass 0 for no height change
-// pass -1 for maximize
-void viewer(const std::string& url, bool isQuartoWebsite = false, int height = 0);
+struct QuartoNavigate
+{
+   QuartoNavigate() : website(false) {}
+   bool empty() const { return !website && source.empty(); }
+   static QuartoNavigate navWebsite()
+   {
+      QuartoNavigate nav;
+      nav.website = true;
+      return nav;
+   }
+   static QuartoNavigate navDoc(const std::string& source, const std::string& output)
+   {
+      QuartoNavigate nav;
+      nav.website = false;
+      nav.source = source;
+      nav.output = output;
+      return nav;
+   }
+   bool website;
+   std::string source;
+   std::string output;
+};
+
+
+void viewer(const std::string& url,
+            int height = 0, // pass 0 for no height change, // pass -1 for maximize
+            const QuartoNavigate& quartoNav = QuartoNavigate());
+
 std::string viewerCurrentUrl(bool mapped = true);
 
 core::Error recursiveCopyDirectory(const core::FilePath& fromDir,
@@ -897,31 +925,15 @@ void initializeConsoleCtrlHandler();
 
 bool isPythonReplActive();
 
-extern const char* const kQuartoProjectDefault;
-extern const char* const kQuartoProjectSite;
-extern const char* const kQuartoProjectBook;
 
-struct QuartoConfig
-{
-   QuartoConfig() : empty(true), installed(false), is_project(false) {}
-   bool empty;
-   bool installed;
-   bool is_project;
-   std::string project_type;
-   std::string project_dir;
-   std::string project_output_dir;
-   std::vector<std::string> project_formats;
-};
+core::Error perFilePathStorage(const std::string& scope,
+                               const core::FilePath& filePath,
+                               bool directory,
+                               core::FilePath* pStorage);
 
-QuartoConfig quartoConfig(bool refresh = false);
-
-core::json::Value quartoCapabilities();
-
-// see if quarto wants to handle the preview
-bool handleQuartoPreview(const core::FilePath& sourceFile,
-                         const core::FilePath& outputFile,
-                         const std::string& renderOutput,
-                         bool validateExtendedType);
+// returns -1 if no error was found in the output
+int jupyterErrorLineNumber(const std::vector<std::string>& srcLines,
+                           const std::string& output);
 
 std::vector<core::FilePath> ignoreContentDirs();
 bool isIgnoredContent(const core::FilePath& filePath, const std::vector<core::FilePath>& ignoreDirs);

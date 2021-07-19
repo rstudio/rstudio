@@ -20,7 +20,7 @@ import { setTextSelection } from 'prosemirror-utils';
 
 import { PandocOutput, PandocTokenType, PandocToken, stringifyTokens, ProsemirrorWriter } from '../api/pandoc';
 
-import { kHugoDocType } from '../api/format';
+import { kHugoDocType, kQuartoDocType } from '../api/format';
 
 import { Extension, ExtensionContext } from '../api/extension';
 import { codeNodeSpec } from '../api/code';
@@ -99,8 +99,9 @@ const extension = (context: ExtensionContext): Extension | null => {
     ],
 
     commands: (schema: Schema) => {
-      // only create command for hugo doc types
-      if (!format.docTypes.includes(kHugoDocType)) {
+      // only create command for hugo anq quarto doc types
+      if (!format.docTypes.includes(kHugoDocType) && 
+          !format.docTypes.includes(kQuartoDocType)) {
         return [];
       }
 

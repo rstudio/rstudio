@@ -32,6 +32,7 @@
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
 #include <core/StringUtils.hpp>
+#include <core/Algorithm.hpp>
 
 namespace rstudio {
 namespace core {
@@ -356,6 +357,17 @@ Error readStringFromFile(
     return Success();
 }
 
+inline core::Error readLinesFromFile(const core::FilePath& filePath, std::vector<std::string>* pLines)
+{
+   std::string contents;
+   Error error = core::readStringFromFile(filePath, &contents);
+   if (error)
+      return error;
+
+   string_utils::convertLineEndings(&contents, string_utils::LineEndingPosix);
+   *pLines = algorithm::split(contents, "\n");
+   return Success();
+}
 
 
 bool stripBOM(std::string* pStr);

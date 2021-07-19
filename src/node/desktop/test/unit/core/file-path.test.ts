@@ -15,6 +15,7 @@
 
 import { describe } from 'mocha';
 import { assert } from 'chai';
+import { randomString } from '../unit-utils';
 
 import fs from 'fs';
 import fsPromises from 'fs/promises';
@@ -26,10 +27,6 @@ import { userHomePath } from '../../../src/core/user';
 import { setLogger, NullLogger } from '../../../src/core/logger';
 import { clearCoreSingleton } from '../../../src/core/core-state';
 import { isFailure, isSuccessful } from '../../../src/core/err';
-
-function randomString() {
-  return Math.trunc(Math.random() * 2147483647).toString();
-}
 
 function realpathSync(path: string): string {
   return fs.realpathSync(path);

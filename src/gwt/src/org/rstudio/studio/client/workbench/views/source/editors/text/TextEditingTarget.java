@@ -98,6 +98,8 @@ import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.plumber.events.LaunchPlumberAPIEvent;
 import org.rstudio.studio.client.plumber.events.PlumberAPIStatusEvent;
 import org.rstudio.studio.client.plumber.model.PlumberAPIParams;
+import org.rstudio.studio.client.quarto.QuartoHelper;
+import org.rstudio.studio.client.quarto.model.QuartoConfig;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.events.ConvertToShinyDocEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdOutputFormatChangedEvent;
@@ -192,6 +194,7 @@ import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsViewOnGitH
 import org.rstudio.studio.client.workbench.views.vcs.common.model.GitHubViewRequest;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -4727,7 +4730,7 @@ public class TextEditingTarget implements
       RmdSelectedTemplate selTemplate = getSelectedTemplate();
       
       // skip all of the format stuff for quarto docs
-      if (extendedType_.equals(SourceDocument.XT_QUARTO_DOCUMENT) && fileType_.isRmd())
+      if (extendedType_.equals(SourceDocument.XT_QUARTO_DOCUMENT))
       {
          if (isShinyPrerenderedDoc()) 
          {
@@ -6682,7 +6685,8 @@ public class TextEditingTarget implements
 
    void renderRmd(final String paramsFile)
    {
-      events_.fireEvent(new RmdRenderPendingEvent(docUpdateSentinel_.getId()));
+      if (extendedType_ != SourceDocument.XT_QUARTO_DOCUMENT)
+         events_.fireEvent(new RmdRenderPendingEvent(docUpdateSentinel_.getId()));
 
       final int type = isShinyDoc() ? RmdOutput.TYPE_SHINY:
                                       isRmdNotebook() ? RmdOutput.TYPE_NOTEBOOK:
@@ -6703,18 +6707,29 @@ public class TextEditingTarget implements
             {
                visualMode_.syncSourceOutlineLocation();
             }
-
-            rmarkdownHelper_.renderRMarkdown(
-                  docUpdateSentinel_.getPath(),
-                  docDisplay_.getCursorPosition().getRow() + 1,
-                  null,
-                  docUpdateSentinel_.getEncoding(),
-                  paramsFile,
-                  asTempfile,
-                  type,
-                  false,
-                  rmarkdownHelper_.getKnitWorkingDir(docUpdateSentinel_),
-                  viewerType);
+            
+            // see if we should be using quarto preview
+            String quartoFormat = useQuartoPreview();
+            if (quartoFormat != null)
+            {
+               server_.quartoPreview(docUpdateSentinel_.getPath(), 
+                                     quartoFormat, 
+                                     new VoidServerRequestCallback());
+            }
+            else
+            {
+               rmarkdownHelper_.renderRMarkdown(
+                     docUpdateSentinel_.getPath(),
+                     docDisplay_.getCursorPosition().getRow() + 1,
+                     null,
+                     docUpdateSentinel_.getEncoding(),
+                     paramsFile,
+                     asTempfile,
+                     type,
+                     false,
+                     rmarkdownHelper_.getKnitWorkingDir(docUpdateSentinel_),
+                     viewerType);
+            }
          }
       };
 
@@ -6805,6 +6820,44 @@ public class TextEditingTarget implements
          return "";
       }
    }
+   
+   
+   private String useQuartoPreview()
+   {
+      if (session_.getSessionInfo().getQuartoConfig().installed &&
+          (extendedType_ == SourceDocument.XT_QUARTO_DOCUMENT) && 
+          !isShinyDoc() && !isRmdNotebook() && !isQuartoWebsiteDoc())
+      {  
+         List<String> outputFormats = getQuartoOutputFormats();
+         if (outputFormats.size() == 0)
+         {
+            return "html";
+         }
+         else
+         {
+            String format = outputFormats.get(0);
+            final ArrayList<String> previewFormats = new ArrayList<String>(
+                  Arrays.asList("pdf", "beamer", "html", "revealjs", "slidy"));
+            return previewFormats.stream()
+               .filter(fmt -> format.startsWith(fmt))
+               .findAny()
+               .orElse(null);
+            
+         }   
+      }
+      else
+      {
+         return null;
+      }
+     
+   }
+   
+   private boolean isQuartoWebsiteDoc()
+   {
+      QuartoConfig config = session_.getSessionInfo().getQuartoConfig();
+      return QuartoHelper.isQuartoWebsiteDoc(docUpdateSentinel_.getPath(), config);
+   }
+   
 
    void previewHTML()
    {

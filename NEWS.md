@@ -17,6 +17,8 @@
 * Log files will now rotate by time in addition to the existing rotation by file size. This can be controlled by the `rotate-days` parameter in `logging.conf`.
 * For more information, see section 2 of the Admin Guide.
 
+### Internal Database
+* Use separate database schema for open source RStudio Server instances (`rstudio-os`) and RStudio Workbench instances (`rstudio`) to avoid conflicts (Pro #2725)
 
 ### Bugfixes
 
@@ -31,12 +33,14 @@
 * Fixed issue where R Markdown error output was not properly formatted when displayed (#9390)
 * Fixed issue where R Markdown template skeletons with a '.rmd' extension were not discovered (Pro #1607)
 * Fixed issues causing multiple background jobs to be created when running Shiny applications in the background (#8746, #6904)
+* Fixed issue causing an error when adding files to static content published to RStudio Connect (#9571)
 * Removed the breaking change introduced in Juliet Rose that changed the behavior of the X-Forwarded-Proto header when RSW is behind a proxy server (Pro #2657)
 
 
 ### Misc
 
 * **BREAKING:** RStudio Desktop Pro only supports activation with license files (Pro #2300)
+* Fixed an issue where scroll position in PDFs was not preserved on re-render (#9603)
 * Improved ordering of completion results within `library()` calls (#9293)
 * Syntax support for embedded knitr chunks (#9579)
 * Added support for publishing Quarto documents and websites (#9556)

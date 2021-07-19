@@ -35,5 +35,6 @@ export interface EditorHugoExtensions {
 
 export const kBookdownDocType = 'bookdown';
 export const kHugoDocType = 'hugo';
+export const kQuartoDocType = 'quarto';
 
-export type EditorExtendedDocType = 'bookdown' | 'hugo';
+export type EditorExtendedDocType = 'bookdown' | 'hugo' | 'quarto';

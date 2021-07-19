@@ -60,6 +60,28 @@ public class PanmirrorXRefServer
          );
       });
    }
+   
+   public Promise<JavaScriptObject> quartoIndexForFile(String file)
+   {
+      return new Promise<>((ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
+         server_.quartoXrefIndexForFile(
+            file,
+            new PromiseServerRequestCallback<>(resolve, reject)
+         );
+      });
+   }
+   
+   public Promise<JavaScriptObject> quartoXrefForId(String file, String id)
+   {
+      return new Promise<>((ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
+         server_.quartoXrefForId(
+            file,
+            id,
+            new PromiseServerRequestCallback<>(resolve, reject)
+         );
+      });
+   }
+   
 
    private PanmirrorXRefServerOperations server_;
 }

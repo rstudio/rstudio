@@ -1,5 +1,5 @@
 /*
- * app.ts
+ * QuartoNavigate.java
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -13,24 +13,26 @@
  *
  */
 
-import { app } from "electron";
+package org.rstudio.studio.client.quarto.model;
 
-import DesktopInfo from './desktop-info';
-import Main from './main';
+import com.google.gwt.core.client.JavaScriptObject;
 
-// Where it all begins
-app.whenReady().then(() => {
+public class QuartoNavigate extends JavaScriptObject
+{
+   protected QuartoNavigate()
+   {
+   }
+   
+   public native final boolean isWebsite() /*-{
+      return this.is_website;
+   }-*/;
 
-  (globalThis as any).rstudioGlobal = {
-    desktopInfo: new DesktopInfo()
-  };
+   public native final String getSourceFile() /*-{
+      return this.source_file;
+   }-*/;
 
-  new Main().run();
-});
+   public native final String getOutputFile() /*-{
+      return this.output_file;
+   }-*/;
 
-app.on('window-all-closed', () => {
-  // Mac apps generally don't close when you close the last window, but RStudio does
-  // if (process.platform !== 'darwin') {
-    app.quit();
-  // }
-});
+}

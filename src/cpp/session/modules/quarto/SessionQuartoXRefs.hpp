@@ -1,5 +1,5 @@
 /*
- * desktop-info.ts
+ * SessionQuartoXRefs.hpp
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -12,8 +12,27 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+#ifndef SESSION_SESSION_QUARTO_XREFS_HPP
+#define SESSION_SESSION_QUARTO_XREFS_HPP
 
-export default class DesktopInfo {
-  constructor() {
-  }
-};
+namespace rstudio {
+   namespace core {
+      class Error;
+   }
+}
+
+namespace rstudio {
+namespace session {
+namespace modules {
+namespace quarto {
+namespace xrefs {
+
+core::Error initialize();
+
+} // namespace xrefs
+} // namespace quarto
+} // namespace modules
+} // namespace session
+} // namespace rstudio
+
+#endif // SESSION_SESSION_QUARTO_XREFS_HPP

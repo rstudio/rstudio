@@ -62,7 +62,8 @@ public class MarkersOutputPane extends WorkbenchPane
          markerList_.showMarkers(null,
                                  markersSet.getBasePath(),
                                  markersSet.getMarkers(), 
-                                 autoSelect);
+                                 autoSelect,
+                                 false);
               
          markerSetsToolbarButton_.updateAvailableMarkerSets(
                JsUtil.toStringArray(markerState.getMarkersSetNames()));

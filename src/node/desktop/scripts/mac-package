@@ -132,4 +132,5 @@ if ${START}; then
   start 
 else
   package
+  open ./package/RStudio-darwin-x64/
 fi

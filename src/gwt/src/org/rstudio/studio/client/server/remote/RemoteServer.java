@@ -6382,10 +6382,33 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void quartoXrefIndexForFile(String file, ServerRequestCallback<JavaScriptObject> callback)
+   {
+      sendRequest(RPC_SCOPE, QUARTO_XREF_INDEX_FOR_FILE, file, callback);
+   }
+
+   @Override
+   public void quartoXrefForId(String file, String id, ServerRequestCallback<JavaScriptObject> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(file));
+      params.set(1, new JSONString(id));
+      sendRequest(RPC_SCOPE, QUARTO_XREF_FOR_ID, params, callback);
+   }
+   
+   @Override
    public void quartoCapabilities(ServerRequestCallback<QuartoCapabilities> requestCallback)
    {
       sendRequest(RPC_SCOPE, QUARTO_CAPABILITIES, requestCallback);
-      
+   }
+   
+   @Override
+   public void quartoPreview(String file, String format, ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(file));
+      params.set(1,  new JSONString(format));
+      sendRequest(RPC_SCOPE, QUARTO_PREVIEW, params, requestCallback);
    }
    
    @Override
@@ -6940,10 +6963,15 @@ public class RemoteServer implements Server
 
    private static final String DOI_FETCH_CSL = "doi_fetch_csl";
 
+   
    private static final String XREF_INDEX_FOR_FILE = "xref_index_for_file";
    private static final String XREF_FOR_ID = "xref_for_id";
    
+   private static final String QUARTO_XREF_INDEX_FOR_FILE = "quarto_xref_index_for_file";
+   private static final String QUARTO_XREF_FOR_ID = "quarto_xref_for_id";
+   
    private static final String QUARTO_CAPABILITIES = "quarto_capabilities";
+   private static final String QUARTO_PREVIEW = "quarto_preview";
    private static final String QUARTO_SERVE = "quarto_serve";
    private static final String QUARTO_CREATE_PROJECT = "quarto_create_project";
    

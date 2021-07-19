@@ -118,7 +118,8 @@ public class SourceMarkerList extends Composite
    public void showMarkers(String targetFile,
                            String basePath,
                            JsArray<SourceMarker> errors,
-                           int autoSelect)
+                           int autoSelect,
+                           boolean autoNavigate)
    {
       boolean showFileHeaders = false;
       ArrayList<SourceMarker> errorList = new ArrayList<>();
@@ -148,6 +149,8 @@ public class SourceMarkerList extends Composite
          if (firstErrorIndex != -1)
             errorTable_.setSelected(firstErrorIndex, 1, true);
       }
+      if (autoNavigate)
+         fireSelectionCommittedEvent();
    }
 
    public void ensureSelection()

@@ -23,6 +23,7 @@ import { Xdg } from '../core/xdg';
 import { getenv, setenv } from '../core/environment';
 import { FilePath } from '../core/file-path';
 import { logger } from '../core/logger';
+import { userHomePath } from '../core/user';
 
 import { productInfo } from './product-info';
 import { MainWindow } from './main-window';
@@ -173,4 +174,9 @@ export function getCurrentlyUniqueFolderName(folderPrefix: string): FilePath {
     }
   }
   return new FilePath();
+}
+
+export function resolveAliasedPath(path: string): string {
+  const resolved = FilePath.resolveAliasedPathSync(path, userHomePath());
+  return resolved.getAbsolutePath();
 }

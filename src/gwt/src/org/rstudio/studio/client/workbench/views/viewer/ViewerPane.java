@@ -35,6 +35,7 @@ import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.plumber.model.PlumberAPIParams;
+import org.rstudio.studio.client.quarto.model.QuartoNavigate;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.model.PublishHtmlSource;
@@ -214,11 +215,14 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    }
 
    @Override
-   public void previewQuartoSite(String url)
+   public void previewQuarto(String url, QuartoNavigate quartoNav)
    {
-      navigate(url, true);
+      navigate(url, quartoNav.isWebsite());
       publishButton_.setManuallyHidden(false);
-      publishButton_.setQuartoSitePreview();
+      if (quartoNav.isWebsite())
+         publishButton_.setQuartoSitePreview();
+      else
+         publishButton_.setQuartoDocPreview(quartoNav.getSourceFile(), quartoNav.getOutputFile());
       toolbar_.invalidateSeparators();
    }
 
@@ -253,7 +257,8 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       }
       else if (frame_ != null &&
           frame_.getIFrame().getCurrentUrl() != null &&
-          !StringUtil.equals(frame_.getIFrame().getCurrentUrl(), getUrl()))
+          !StringUtil.equals(urlWithoutHash(frame_.getIFrame().getCurrentUrl()), 
+                             urlWithoutHash(getUrl())))
       {
          // Typically we navigate to the unmodified URL (i.e. without the
          // viewer_pane=1 query params, etc.) However, if the URL currently
@@ -303,6 +308,18 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
          return;
 
       publishButton_.setShowCaption(width > 500);
+   }
+   
+   private String urlWithoutHash(String url)
+   {
+      if (!StringUtil.isNullOrEmpty(url))
+      {
+         return url.split("#")[0];
+      }
+      else
+      {
+         return url;
+      }
    }
 
    private native static String getOrigin() /*-{

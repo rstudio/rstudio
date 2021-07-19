@@ -18,4 +18,12 @@
   position: relative;
 }
 
+.ProseMirror .pm-div[class*="callout-"] .pm-heading {
+  font-size: 1.2em !important;
+  margin-top: 0.25em;
+  margin-bottom: 0.5em;
+}
+
+
+
 

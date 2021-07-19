@@ -77,6 +77,7 @@
 
 #include <session/SessionConstants.hpp>
 #include <session/SessionContentUrls.hpp>
+#include <session/SessionQuarto.hpp>
 
 #include <session/prefs/UserPrefs.hpp>
 #include <session/prefs/UserState.hpp>
@@ -1340,6 +1341,29 @@ bool isTextFile(const FilePath& targetPath)
 
 #endif
 
+}
+
+void editFile(const core::FilePath& filePath, int lineNumber)
+{
+   // construct file system item (also tag with mime type) and position
+   json::Object fileJson = module_context::createFileSystemItem(filePath);
+   fileJson["mime_type"] = filePath.getMimeContentType();
+
+   json::Value positionJsonValue;
+   if (lineNumber >= 0)
+   {
+      json::Object positionJson;
+      positionJson["line"] = lineNumber;
+      positionJson["column"] = 1;
+      positionJsonValue = positionJson;
+   }
+
+   // fire event
+   json::Object eventJson;
+   eventJson["file"] = fileJson;
+   eventJson["position"] = positionJsonValue;
+   ClientEvent event(client_events::kFileEdit, eventJson);
+   module_context::enqueClientEvent(event);
 }
 
 Error rBinDir(core::FilePath* pRBinDirPath)
@@ -2847,7 +2871,7 @@ std::vector<FilePath> ignoreContentDirs()
    if (projects::projectContext().hasProject()) {
       // python virtual environments
       ignoreDirs = projects::projectContext().pythonEnvs();
-      module_context::QuartoConfig quartoConf = module_context::quartoConfig();
+      quarto::QuartoConfig quartoConf = quarto::quartoConfig();
       // quarto site output dir
       if (quartoConf.is_project) {
          FilePath quartoProjDir = module_context::resolveAliasedPath(quartoConf.project_dir);
