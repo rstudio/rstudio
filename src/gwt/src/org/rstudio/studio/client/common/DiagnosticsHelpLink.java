@@ -15,10 +15,14 @@
 
 package org.rstudio.studio.client.common;
 
+import com.google.gwt.core.client.GWT;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessorConstants;
+
 public class DiagnosticsHelpLink extends HelpLink
 {
    public DiagnosticsHelpLink()
    {
-      super("Using Code Diagnostics", "code_diagnostics");
+      super(constants_.codeDiagnosticsLabel(), "code_diagnostics");
    }
+   private static final UserPrefsAccessorConstants constants_ = GWT.create(UserPrefsAccessorConstants.class);
 }

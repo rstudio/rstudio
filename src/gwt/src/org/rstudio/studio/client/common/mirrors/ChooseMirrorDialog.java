@@ -44,6 +44,7 @@ import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.studio.client.workbench.prefs.views.PackagesPreferencesPaneConstants;
 
 public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
 {
@@ -59,7 +60,7 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
                              OperationWithInput<CRANMirror> inputOperation,
                              MirrorsServerOperations mirrorOperations)
    {
-      super("Retrieving list of CRAN mirrors...", Roles.getDialogRole(), inputOperation);
+      super(constants_.chooseMirrorDialogMessage(), Roles.getDialogRole(), inputOperation);
       globalDisplay_ = globalDisplay;
       mirrorSource_ = mirrorSource;
       mirrorOperations_ = mirrorOperations;
@@ -92,8 +93,8 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
    {
       if (input == null)
       {
-         globalDisplay_.showErrorMessage("Error", 
-                                         "Please select a CRAN Mirror");
+         globalDisplay_.showErrorMessage(constants_.showErrorCaption(),
+                                         constants_.showErrorMessage());
          return false;
       }
       else
@@ -114,7 +115,7 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
       
       if (input.isCustom())
       {
-         progressIndicator_.onProgress("Validating CRAN repository...");
+         progressIndicator_.onProgress(constants_.progressIndicatorMessage());
          
          mirrorOperations_.validateCranRepo(
             new ServerRequestCallback<Boolean>()
@@ -125,7 +126,7 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
                   
                   if (!validated)
                   {
-                     progressIndicator_.onError("The given URL does not appear to be a valid CRAN repository");
+                     progressIndicator_.onError(constants_.progressIndicatorError());
                      onValidated.execute(false);
                   }
                   else
@@ -160,11 +161,11 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
 
       customTextBox_ = new TextBox();
       customTextBox_.setStylePrimaryName(RESOURCES.styles().customRepo());
-      FormLabel customLabel = new FormLabel("Custom:", customTextBox_);
+      FormLabel customLabel = new FormLabel(constants_.customLabel(), customTextBox_);
       root.add(customLabel);
       root.add(customTextBox_);
 
-      FormLabel mirrorsLabel = new FormLabel("CRAN Mirrors:");
+      FormLabel mirrorsLabel = new FormLabel(constants_.mirrorsLabel());
       mirrorsLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
       root.add(mirrorsLabel);
 
@@ -215,7 +216,7 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
             panel.setWidget(listBox_);
             
             // set caption
-            setText("Choose Primary Repository");
+            setText(constants_.headerLabel());
           
             // update ok button on changed
             listBox_.addDoubleClickHandler(new DoubleClickHandler() {
@@ -269,4 +270,6 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
    private TextBox customTextBox_ = null;
    private final MirrorsServerOperations mirrorOperations_;
    private final ProgressIndicator progressIndicator_;
+   private static final PackagesPreferencesPaneConstants constants_ = GWT.create(PackagesPreferencesPaneConstants.class);
+
 }

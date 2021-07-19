@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
@@ -71,17 +72,17 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       
       VerticalTabPanel basic = new VerticalTabPanel(ElementIds.RMARKDOWN_BASIC_PREFS);
 
-      basic.add(headerLabel("R Markdown"));
+      basic.add(headerLabel(constants_.rMarkdownHeaderLabel()));
 
-      basic.add(checkboxPref("Show document outline by default", prefs_.showDocOutlineRmd()));
-      basic.add(checkboxPref("Soft-wrap R Markdown files", prefs_.softWrapRmdFiles()));
+      basic.add(checkboxPref(constants_.rMarkdownShowLabel(), prefs_.showDocOutlineRmd()));
+      basic.add(checkboxPref(constants_.rMarkdownSoftWrapLabel(), prefs_.softWrapRmdFiles()));
 
       docOutlineDisplay_ = new SelectWidget(
-            "Show in document outline: ",
+            constants_.docOutlineDisplayLabel(),
             new String[] {
-                  "Sections Only",
-                  "Sections and Named Chunks",
-                  "Sections and All Chunks"
+                  constants_.docOutlineSectionsOption(),
+                  constants_.docOutlineSectionsNamedChunksOption(),
+                  constants_.docOutlineSectionsAllChunksOption()
             },
             new String[] {
                  UserPrefs.DOC_OUTLINE_SHOW_SECTIONS_ONLY,
@@ -94,11 +95,11 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       basic.add(docOutlineDisplay_);
 
       rmdViewerMode_ = new SelectWidget(
-            "Show output preview in: ",
+            constants_.rmdViewerModeLabel(),
             new String[] {
-                  "Window",
-                  "Viewer Pane",
-                  "(None)"
+                  constants_.rmdViewerModeWindowOption(),
+                  constants_.rmdViewerModeViewerPaneOption(),
+                  constants_.rmdViewerModeNoneOption()
             },
             new String[] {
                   UserPrefs.RMD_VIEWER_TYPE_WINDOW,
@@ -113,17 +114,17 @@ public class RMarkdownPreferencesPane extends PreferencesPane
 
       // show output inline for all Rmds
       final CheckBox rmdInlineOutput = checkboxPref(
-            "Show output inline for all R Markdown documents",
+            constants_.rmdInlineOutputLabel(),
             prefs_.rmdChunkOutputInline());
       basic.add(rmdInlineOutput);
 
       // behavior for latex and image preview popups
       latexPreviewWidget_ = new SelectWidget(
-            "Show equation and image previews: ",
+            constants_.latexPreviewWidgetLabel(),
             new String[] {
-                  "Never",
-                  "In a popup",
-                  "Inline"
+                  constants_.latexPreviewWidgetNeverOption(),
+                  constants_.latexPreviewWidgetPopupOption(),
+                  constants_.latexPreviewWidgetInlineOption()
             },
             new String[] {
                   UserPrefs.LATEX_PREVIEW_ON_CURSOR_IDLE_NEVER,
@@ -138,11 +139,11 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       if (session.getSessionInfo().getKnitWorkingDirAvailable())
       {
          knitWorkingDir_ = new SelectWidget(
-               "Evaluate chunks in directory: ",
+               constants_.knitWorkingDirLabel(),
                new String[] {
-                     "Document",
-                     "Current",
-                     "Project"
+                     constants_.knitWorkingDirDocumentOption(),
+                     constants_.knitWorkingDirCurrentOption(),
+                     constants_.knitWorkingDirProjectOption()
                },
                new String[] {
                      UserPrefs.KNIT_WORKING_DIR_DEFAULT,
@@ -159,43 +160,43 @@ public class RMarkdownPreferencesPane extends PreferencesPane
          knitWorkingDir_ = null;
       }
 
-      basic.add(spacedBefore(headerLabel("R Notebooks")));
+      basic.add(spacedBefore(headerLabel(constants_.rNotebooksCaption())));
 
       // auto-execute the setup chunk
       final CheckBox autoExecuteSetupChunk = checkboxPref(
-            "Execute setup chunk automatically in notebooks",
+            constants_.autoExecuteSetupChunkLabel(),
             prefs_.autoRunSetupChunk());
       basic.add(autoExecuteSetupChunk);
 
       // hide console when executing notebook chunks
       final CheckBox notebookHideConsole = checkboxPref(
-            "Hide console automatically when executing " +
-            "notebook chunks",
+              constants_.notebookHideConsoleLabel() +
+            constants_.notebookHideConsoleChunksLabel(),
             prefs_.hideConsoleOnChunkExecute());
       basic.add(notebookHideConsole);
 
-      basic.add(spacedBefore(new HelpLink("Using R Notebooks", "using_notebooks")));
+      basic.add(spacedBefore(new HelpLink(constants_.helpLinkLabel(), "using_notebooks")));
 
       VerticalTabPanel advanced = new VerticalTabPanel(ElementIds.RMARKDOWN_ADVANCED_PREFS);
-      advanced.add(headerLabel("Display"));
-      advanced.add(checkboxPref("Enable chunk background highlight", prefs_.highlightCodeChunks()));
-      advanced.add(checkboxPref("Show inline toolbar for R code chunks", prefs_.showInlineToolbarForRCodeChunks()));
-      final CheckBox showRmdRenderCommand = checkboxPref( "Display render command in R Markdown tab",
+      advanced.add(headerLabel(constants_.advancedHeaderLabel()));
+      advanced.add(checkboxPref(constants_.advancedEnableChunkLabel(), prefs_.highlightCodeChunks()));
+      advanced.add(checkboxPref(constants_.advancedShowInlineLabel(), prefs_.showInlineToolbarForRCodeChunks()));
+      final CheckBox showRmdRenderCommand = checkboxPref( constants_.advancedDisplayRender(),
             prefs_.showRmdRenderCommand());
       advanced.add(showRmdRenderCommand);
 
       VerticalTabPanel visualMode = new VerticalTabPanel(ElementIds.RMARKDOWN_VISUAL_MODE_PREFS);
 
-      visualMode.add(headerLabel("General"));
+      visualMode.add(headerLabel(constants_.visualModeGeneralCaption()));
         
       CheckBox visualMarkdownIsDefault = checkboxPref(
-            "Use visual editor by default for new documents",
+            constants_.visualModeUseVisualEditorLabel(),
             prefs_.visualMarkdownEditingIsDefault());
       visualMarkdownIsDefault.getElement().getStyle().setMarginBottom(10, Unit.PX);
       visualMode.add(visualMarkdownIsDefault);
       
       HelpLink visualModeHelpLink = new HelpLink(
-         "Learn more about visual editing mode",
+         constants_.visualModeHelpLink(),
          "visual_markdown_editing",
          false // no version info
       );
@@ -204,7 +205,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       visualMode.add(visualModeHelpLink);
       
 
-      visualMode.add(headerLabel("Display"));
+      visualMode.add(headerLabel(constants_.visualModeHeaderLabel()));
       
       
       VerticalPanel visualModeOptions = new VerticalPanel();
@@ -213,7 +214,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       
       // show outline
       CheckBox visualEditorShowOutline = checkboxPref(
-            "Show document outline by default",
+            constants_.visualEditorShowOutlineLabel(),
             prefs_.visualMarkdownEditingShowDocOutline(),
             false);
       lessSpaced(visualEditorShowOutline);
@@ -221,7 +222,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       
       // show margin
       CheckBox visualEditorShowMargin = checkboxPref(
-            "Show margin column indicator in code blocks",
+            constants_.visualEditorShowMarginLabel(),
             prefs_.visualMarkdownEditingShowMargin(),
             false);
       lessSpaced(visualEditorShowMargin);
@@ -230,7 +231,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
 
       // content width
       visualModeContentWidth_ = numericPref(
-            "Editor content width (px):",
+            constants_.visualModeContentWidthLabel(),
             100,
             NumericValueWidget.NoMaximum,
             prefs_.visualMarkdownEditingMaxContentWidth(),
@@ -252,7 +253,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
          else
             values[i] = Double.parseDouble(labels[i]) + "";
       }
-      visualModeFontSize_ = new SelectWidget("Editor font size:", labels, values, false, true, false);
+      visualModeFontSize_ = new SelectWidget(constants_.visualModeFontSizeLabel(), labels, values, false, true, false);
       if (!visualModeFontSize_.setValue(prefs_.visualMarkdownEditingFontSizePoints().getGlobalValue() + ""))
          visualModeFontSize_.getListBox().setSelectedIndex(0);
       visualModeFontSize_.getElement().getStyle().setMarginTop(3, Unit.PX);
@@ -260,7 +261,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       visualModeOptions.add(visualModeFontSize_);
 
      
-      visualModeOptions.add(headerLabel("Markdown"));
+      visualModeOptions.add(headerLabel(constants_.visualModeOptionsMarkdownCaption()));
 
       
       // list spacing
@@ -268,7 +269,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
          UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_LIST_SPACING_TIGHT,
          UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_LIST_SPACING_SPACED
       };
-      visualModeListSpacing_ = new SelectWidget("Default spacing between list items: ", 
+      visualModeListSpacing_ = new SelectWidget(constants_.visualModeListSpacingLabel(),
             listSpacingValues, listSpacingValues, 
             false, true, false);
       visualModeListSpacing_.getElement().getStyle().setMarginBottom(10, Unit.PX);
@@ -282,15 +283,15 @@ public class RMarkdownPreferencesPane extends PreferencesPane
          UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_WRAP_COLUMN,
          UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_WRAP_SENTENCE
       };
-      visualModeWrap_ = new SelectWidget("Automatic text wrapping (line breaks): ", wrapValues, wrapValues, false, true, false);
+      visualModeWrap_ = new SelectWidget(constants_.visualModeWrapLabel(), wrapValues, wrapValues, false, true, false);
       if (!visualModeWrap_.setValue(prefs_.visualMarkdownEditingWrap().getGlobalValue()))
          visualModeWrap_.getListBox().setSelectedIndex(0);
-      HelpButton.addHelpButton(visualModeWrap_, "visual_markdown_editing-line-wrapping", "Learn more about automatic line wrapping", 0);
+      HelpButton.addHelpButton(visualModeWrap_, "visual_markdown_editing-line-wrapping", constants_.visualModeWrapHelpLabel(), 0);
       visualModeWrap_.addStyleName(res.styles().visualModeWrapSelectWidget());
       visualModeOptions.add(visualModeWrap_);
       
       visualModeOptions.add(indent(visualModeWrapColumn_ = numericPref(
-          "Wrap at column:", 1, UserPrefs.MAX_WRAP_COLUMN,
+          constants_.visualModeOptionsLabel(), 1, UserPrefs.MAX_WRAP_COLUMN,
           prefs.visualMarkdownEditingWrapAtColumn()
       )));
       visualModeWrapColumn_.getElement().getStyle().setMarginBottom(8, Unit.PX);
@@ -312,7 +313,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
          UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_REFERENCES_LOCATION_SECTION,
          UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_REFERENCES_LOCATION_DOCUMENT
       };
-      visualModeReferences_ = new SelectWidget("Write references at end of current: ", referencesValues, referencesValues, false, true, false);
+      visualModeReferences_ = new SelectWidget(constants_.visualModeReferencesLabel(), referencesValues, referencesValues, false, true, false);
       if (!visualModeReferences_.setValue(prefs_.visualMarkdownEditingReferencesLocation().getGlobalValue()))
          visualModeReferences_.getListBox().setSelectedIndex(0);
       spaced(visualModeReferences_);
@@ -320,7 +321,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
 
       // canonical mode
       CheckBox visualModeCanonical = checkboxPref(
-            "Write canonical visual mode markdown in source mode",
+            constants_.visualModeCanonicalLabel(),
             prefs_.visualMarkdownEditingCanonical(),
             false);
       spaced(visualModeCanonical);
@@ -330,11 +331,11 @@ public class RMarkdownPreferencesPane extends PreferencesPane
          {
             RStudioGinjector.INSTANCE.getGlobalDisplay().showYesNoMessage(
                MessageDisplay.MSG_WARNING, 
-               "Visual Mode Preferences", 
-               "Are you sure you want to write canonical markdown from source mode for all R Markdown files?\n\n" +
-               "This preference should generally only be used at a project level (to prevent " +
-               "re-writing of markdown source that you or others don't intend to use with visual mode).\n\n" +
-               "Change this preference now?",
+               constants_.visualModeCanonicalMessageCaption(),
+                    constants_.visualModeCanonicalPreferenceMessage()+"\n\n" +
+                            constants_.visualModeCanonicalMessageDesc() +
+               constants_.visualModeCanonicalMessageRewrite()+"\n\n" +
+               constants_.visualModeCanonicalChangeMessage(),
                false, 
                new Operation() {
                   @Override
@@ -352,7 +353,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       
       // help on per-file markdown options
       HelpLink markdownPerFileOptions = new HelpLink(
-         "Learn more about markdown writer options",
+         constants_.markdownPerFileOptionsHelpLink(),
          "visual_markdown_editing-writer-options",
          false // no version info
       );
@@ -364,20 +365,20 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       
       VerticalTabPanel citations = new VerticalTabPanel(ElementIds.RMARKDOWN_CITATIONS_PREFS);
  
-      Label citationsLabel = new Label("Citation features are available within R Markdown visual mode.");
+      Label citationsLabel = new Label(constants_.citationsLabel());
       spaced(citationsLabel);
       citations.add(citationsLabel);
       
       // help on per-file markdown options
       HelpLink citationsHelpLink = new HelpLink(
-         "Learn more about using citations with visual editing mode",
+         constants_.citationsHelpLink(),
          "visual_markdown_editing-citations",
          false // no version info
       );
       spaced(citationsHelpLink);
       citations.add(citationsHelpLink);
       
-      citations.add(headerLabel("Zotero"));
+      citations.add(headerLabel(constants_.zoteroHeaderLabel()));
       
       zoteroConnection_ = new ZoteroConnectionWidget(res, false);
       spaced(zoteroConnection_);
@@ -390,8 +391,8 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       citations.add(zoteroApiKey_);
       
       zoteroDataDir_ = new DirectoryChooserTextBox(
-         "Zotero Data Directory:",
-         "(None Detected)",
+         constants_.zoteroDataDirLabel(),
+         constants_.zoteroDataDirNotDectedLabel(),
          ElementIds.TextBoxButtonId.ZOTERO_DATA_DIRECTORY,
          null,
          fileDialogs,
@@ -412,7 +413,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       citations.add(zoteroLibs_);
       
       zoteroUseBetterBibtex_ = checkboxPref(
-         "Use Better BibTeX for citation keys and BibTeX export",
+         constants_.zoteroUseBetterBibtexLabel(),
          state_.zoteroUseBetterBibtex(),
          false);
       spaced(zoteroUseBetterBibtex_);
@@ -462,12 +463,12 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       });
       
    
-      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("R Markdown");
+      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel(constants_.tabPanelTitle());
       tabPanel.setSize("435px", "533px");
-      tabPanel.add(basic, "Basic", basic.getBasePanelId());
-      tabPanel.add(advanced, "Advanced", advanced.getBasePanelId());
-      tabPanel.add(visualMode, "Visual", visualMode.getBasePanelId());
-      tabPanel.add(citations, "Citations", citations.getBasePanelId());
+      tabPanel.add(basic, constants_.tabPanelBasic(), basic.getBasePanelId());
+      tabPanel.add(advanced, constants_.tabPanelAdvanced(), advanced.getBasePanelId());
+      tabPanel.add(visualMode, constants_.tabPanelVisual(), visualMode.getBasePanelId());
+      tabPanel.add(citations, constants_.tabPanelCitations(), citations.getBasePanelId());
       tabPanel.selectTab(0);
       add(tabPanel);
    }
@@ -489,7 +490,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    @Override
    public String getName()
    {
-      return "R Markdown";
+      return constants_.tabPanelTitle();
    }
 
    @Override
@@ -608,4 +609,5 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    private final CheckBox zoteroUseBetterBibtex_;
    private PanmirrorZoteroLocalConfig zoteroLocalConfig_ = new PanmirrorZoteroLocalConfig();
    private boolean zoteroIsAuto_ = false;
+   private final RMarkdownPreferencesPaneConstants constants_ = GWT.create(RMarkdownPreferencesPaneConstants.class);
 }

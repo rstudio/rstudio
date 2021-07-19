@@ -14,20 +14,23 @@
  */
 package org.rstudio.studio.client.common.latex;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.workbench.prefs.views.CompiledPdfPreferencesPaneConstants;
 
 public class LatexProgramSelectWidget extends SelectWidget
 {
    public LatexProgramSelectWidget()
    {
-      super("Typeset LaTeX into PDF using:", latexProgramRegistry_.getTypeNames());
+      super(constants_.latexProgramSelectLabel(), latexProgramRegistry_.getTypeNames());
          
-      HelpButton.addHelpButton(this, "latex_program", "Help on customizing LaTeX options");
+      HelpButton.addHelpButton(this, "latex_program", constants_.helpLaxtexButtonLabel());
    }
    
    
    public static final LatexProgramRegistry latexProgramRegistry_ = 
          RStudioGinjector.INSTANCE.getLatexProgramRegistry();
+   private static final CompiledPdfPreferencesPaneConstants constants_ = GWT.create(CompiledPdfPreferencesPaneConstants.class);
 }

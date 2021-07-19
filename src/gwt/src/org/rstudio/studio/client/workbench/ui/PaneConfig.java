@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.ui;
 
 import com.google.gwt.core.client.JsArrayString;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
@@ -105,7 +106,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       // A list of all the tabs. Order matters; the Presentation tab must be the
       // last element in this array that's part of the first tabset (ts1)
       return new String[] {"Environment", "History", "Files", "Plots", "Connections",
-                           "Packages", "Help", "Build", "VCS", "Tutorial", "Viewer", "Presentation"};
+              "Packages", "Help", "Build", "VCS", "Tutorial", "Viewer", "Presentation"};
    }
 
    // Tabs that have been replaced by newer versions/replaceable supersets
@@ -219,7 +220,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
          }
          else
          {
-            Debug.logToConsole("Invaliding tabset config (Presentation index)");
+            Debug.logToConsole(constants_.validateAndAutoCorrect());
             return false;
          }
       }
@@ -304,4 +305,6 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       // function remains to maintain the structure if validation needs to be added in the future.
      return true;
    }
+   private static final PaneConfigConstants constants_ = GWT.create(PaneConfigConstants.class);
+
 }

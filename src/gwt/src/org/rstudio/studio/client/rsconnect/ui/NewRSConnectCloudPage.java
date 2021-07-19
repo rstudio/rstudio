@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.rsconnect.ui;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.rsconnect.RSConnect;
@@ -21,6 +22,7 @@ import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountInput;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult;
 
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.studio.client.workbench.prefs.views.PublishingPreferencesPaneConstants;
 
 public class NewRSConnectCloudPage 
             extends WizardPage<NewRSConnectAccountInput,
@@ -29,9 +31,9 @@ public class NewRSConnectCloudPage
    public NewRSConnectCloudPage()
    {
       super(RSConnect.CLOUD_SERVICE_NAME,
-            "A cloud service run by RStudio. Publish Shiny applications " +
-            "and interactive documents to the Internet.",
-            "Connect ShinyApps.io Account",
+            constants_.newRSConnectCloudPageSubTitle() +
+            constants_.newRSConnectCloudPageSub(),
+            constants_.newRSConnectCloudPageCaption(),
             new ImageResource2x(RSConnectResources.INSTANCE.cloudAccountIcon2x()), 
             new ImageResource2x(RSConnectResources.INSTANCE.cloudAccountIconLarge2x()));
    }
@@ -71,4 +73,6 @@ public class NewRSConnectCloudPage
    }
    
    private RSConnectCloudAccount accountWidget_;
+   private static final PublishingPreferencesPaneConstants constants_ = GWT.create(PublishingPreferencesPaneConstants.class);
+
 }

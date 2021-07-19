@@ -230,9 +230,9 @@
         },
         "auto_detect_indentation": {
             "type": "boolean",
-            "default": false,
-            "title": "Auto-detect indentation in files",
-            "description": "Whether to automatically detect indentation settings from file contents."
+            "default": true,
+            "title": "Autodetect indentation in files",
+            "description": "When enabled, the indentation for documents not part of an RStudio project will be automatically detected."
         },
         "show_margin": {
             "type": "boolean",
@@ -268,16 +268,18 @@
             "type": "boolean",
             "default": false,
             "title": "Continue comments after adding new line",
-            "description": "Whether continue comments (by inserting the comment character) after adding a new line."
+            "description": "Whether to continue comments (by inserting the comment character) after adding a new line.  Press Shift + Enter to exit a comment."
         },
         "highlight_web_link": {
             "type": "boolean",
             "default": true,
-            "description": "Whether web links in comments are clickable."
+            "title": "Hyperlinks in comments will be underlined and clickable",
+            "description": "Hyperlinks in comments will be underlined and clickable"
         },
         "editor_keybindings": {
             "type": "string",
             "enum": ["default", "vim", "emacs", "sublime"],
+            "enumReadable": ["Default", "Vim", "Emacs", "Sublime Text"],
             "default": "default",
             "title": "Keybinding set for editor",
             "description": "The keybindings to use in the RStudio code editor."
@@ -321,8 +323,9 @@
         "surround_selection": {
             "type": "string",
             "enum": ["never", "quotes", "quotes_and_brackets"],
+            "enumReadable": ["Never", "Quotes", "Quotes & Brackets"],
             "default": "quotes_and_brackets",
-            "title": "Surround selections with",
+            "title": "Surround selections with delimiter insertion",
             "description": "Which kinds of delimiters can be used to surround the current selection."
         },
         "enable_snippets": {
@@ -334,6 +337,7 @@
         "code_completion": {
             "type": "string",
             "enum": ["always", "never", "triggered", "manual"],
+            "enumReadable": ["Automatically", "Never", "When triggered ($, ::)", "Manually (tab)"],
             "default": "always",
             "title": "Use code completion for R",
             "description": "When to use auto-completion for R code in the RStudio code editor."
@@ -341,6 +345,7 @@
         "code_completion_other": {
             "type": "string",
             "enum": ["always", "triggered", "manual"],
+            "enumReadable": ["Automatically", "When triggered", "Manually (ctrl+space)"],
             "default": "always",
             "title": "Use code completion for other languages",
             "description": "When to use auto-completion for other languages (such as JavaScript and SQL) in the RStudio code editor."
@@ -498,6 +503,7 @@
         "fold_style": {
             "type": "string",
             "enum": ["begin-only", "begin-and-end"],
+            "enumReadable": ["Start Only", "Start and End"],
             "default": "begin-and-end",
             "title": "Fold style in editor",
             "description": "The style of folding to use."
@@ -559,7 +565,7 @@
         },
         "limit_visible_console": {
             "type": "boolean",
-            "default": false,
+            "default": true,
             "title": "Limit visible console output",
             "description": "Whether to only show a limited window of the total console output"
         },
@@ -635,6 +641,12 @@
             "title": "Source with echo by default",
             "description": "Whether to echo R code when sourcing it."
         },
+        "new_project_git_init": {
+            "type": "boolean",
+            "default": false,
+            "title": "Initialize new projects with Git",
+            "description": "Whether to initialize new projects with a Git repo by default."
+        },
         "default_sweave_engine": {
             "type": "string",
             "default": "Sweave",
@@ -707,6 +719,18 @@
             "default": true,
             "title": "Ignore words with numbers in spell check",
             "description": "Whether to ignore words with numbers in them when spell checking."
+        },
+        "max_spellcheck_words": {
+            "type": "integer",
+            "default": 500,
+            "title": "Maximum number of words to spell check",
+            "description": "The maximum number of spelling words to check at once."
+        },
+        "max_spellcheck_prefetch": {
+            "type": "integer",
+            "default": 20,
+            "title": "Number of words to prefetch for spell check",
+            "description": "The maximum number of spelling correction suggestions to prefetch."
         },
         "real_time_spellchecking": {
             "type": "boolean",
@@ -852,6 +876,7 @@
         "execution_behavior": {
             "type": "string",
             "enum": ["line", "statement", "paragraph"],
+            "enumReadable": ["Current line", "Multi-line R statement", "Multiple consecutive R lines"],
             "default": "statement",
             "title": "Unit of R code execution",
             "description": "The unit of R code to execute when the Execute command is invoked."
@@ -967,12 +992,6 @@
             "title": "Sort file names naturally in Files pane",
             "description": "Whether to sort file names naturally, so that e.g., file10.R comes after file9.R"
         },
-        "sync_files_pane_working_dir": {
-            "type": "boolean",
-            "default": false,
-            "title": "Synchronize the Files pane with the current working directory",
-            "description": "Whether to change the directory in the Files pane automatically when the working directory in R changes."
-        },
         "jobs_tab_visibility": {
             "type": "string",
             "enum": ["closed", "shown", "default"],
@@ -1053,12 +1072,6 @@
             "default": false,
             "title": "Create a Git repo in new projects",
             "description": "Whether a git repo should be initialized inside new projects by default."
-        },
-        "new_proj_use_renv": {
-            "type": "boolean",
-            "default": false,
-            "title": "Create an renv environment in new projects",
-            "description": "Whether an renv environment should be created inside new projects by default."
         },
         "root_document": {
             "type": "string",
@@ -1264,6 +1277,7 @@
         "auto_save_on_idle": {
             "type": "string",
             "enum": ["commit", "backup", "none"],
+            "enumReadable": ["Save and write changes", "Backup unsaved changes", "Do nothing"],
             "default": "backup",
             "title": "Autosave mode on idle",
             "description": "How to deal with changes to documents on idle."
@@ -1498,30 +1512,6 @@
             "title": "Interval for requerying memory stats (seconds)",
             "type": "integer",
             "default": 10
-        },
-        "terminal_python_integration": {
-            "description": "Enable Python terminal hooks. When enabled, the RStudio-configured version of Python will be placed on the PATH.",
-            "title": "Enable terminal Python integration",
-            "type": "boolean",
-            "default": true
-        },
-        "session_protocol_debug": {
-            "description": "Enable session protocol debug logging showing all session requests and events",
-            "title": "Session protocol debug logging",
-            "type": "boolean",
-            "default": false
-        },
-        "python_project_environment_automatic_activate": {
-            "description": "When enabled, if the active project contains a Python virtual environment, then RStudio will automatically activate this environment on startup.",
-            "title": "Automatically activate project Python environments",
-            "type": "boolean",
-            "default": true
-        },
-        "check_null_external_pointers": {
-            "description": "When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further.",
-            "title": "Check values in the Environment pane for null external pointers",
-            "type": "boolean",
-            "default": false
         }
     }
 }

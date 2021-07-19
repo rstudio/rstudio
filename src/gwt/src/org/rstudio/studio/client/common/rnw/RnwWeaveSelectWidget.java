@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.common.rnw;
 
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.MessageDialog;
@@ -26,6 +27,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.TexCapabilities;
+import org.rstudio.studio.client.workbench.prefs.views.CompiledPdfPreferencesPaneConstants;
 import org.rstudio.studio.client.workbench.views.source.model.TexServerOperations;
 
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -37,9 +39,9 @@ public class RnwWeaveSelectWidget extends SelectWidget
 {
    public RnwWeaveSelectWidget()
    { 
-      super("Weave Rnw files using:", rnwWeaveRegistry_.getTypeNames());
+      super(constants_.rnwWeaveSelectLabel(), rnwWeaveRegistry_.getTypeNames());
   
-      HelpButton.addHelpButton(this, "rnw_weave_method", "Help on weaving Rnw files");
+      HelpButton.addHelpButton(this, "rnw_weave_method", constants_.helpButtonLabel());
       
       RStudioGinjector.INSTANCE.injectMembers(this);
       
@@ -122,4 +124,5 @@ public class RnwWeaveSelectWidget extends SelectWidget
    
    public static final RnwWeaveRegistry rnwWeaveRegistry_ = 
                            RStudioGinjector.INSTANCE.getRnwWeaveRegistry();
+   private static final CompiledPdfPreferencesPaneConstants constants_ = GWT.create(CompiledPdfPreferencesPaneConstants.class);
 }

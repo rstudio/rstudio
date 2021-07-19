@@ -36,6 +36,7 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
+import org.rstudio.studio.client.workbench.prefs.views.PackagesPreferencesPaneConstants;
 
 public class SecondaryReposWidget extends Composite
 {
@@ -58,19 +59,19 @@ public class SecondaryReposWidget extends Composite
       VerticalPanel buttonPanel = new VerticalPanel();
       buttonPanel.addStyleName(RES.styles().buttonPanel());
 
-      buttonAdd_ = createButton("Add...");
+      buttonAdd_ = createButton(constants_.buttonAddLabel());
       buttonAdd_.addClickHandler(addButtonClicked_);
       buttonPanel.add(buttonAdd_);
 
-      buttonRemove_ = createButton("Remove...");
+      buttonRemove_ = createButton(constants_.buttonRemoveLabel());
       buttonRemove_.addClickHandler(removeButtonClicked_);
       buttonPanel.add(buttonRemove_);
 
-      buttonUp_ = createButton("Up");
+      buttonUp_ = createButton(constants_.buttonUpLabel());
       buttonUp_.addClickHandler(upButtonClicked_);
       buttonPanel.add(buttonUp_);
 
-      buttonDown_ = createButton("Down");
+      buttonDown_ = createButton(constants_.buttonDownLabel());
       buttonDown_.addClickHandler(downButtonClicked_);
       buttonPanel.add(buttonDown_);
 
@@ -237,4 +238,5 @@ public class SecondaryReposWidget extends Composite
    {
       RES.styles().ensureInjected();
    }
+   private final PackagesPreferencesPaneConstants constants_ = GWT.create(PackagesPreferencesPaneConstants.class);
 }

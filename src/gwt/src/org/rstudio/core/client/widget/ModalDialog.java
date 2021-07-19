@@ -15,12 +15,14 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.aria.client.DialogRole;
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.Debug;
 import org.rstudio.studio.client.common.HelpLink;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Command;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessorConstants;
 
 
 public abstract class ModalDialog<T> extends ModalDialogBase
@@ -40,7 +42,7 @@ public abstract class ModalDialog<T> extends ModalDialogBase
       super(role);
       progressIndicator_ = null;
     
-      ThemedButton okButton = new ThemedButton("OK", new ClickHandler() {
+      ThemedButton okButton = new ThemedButton(_constants.okButton(), new ClickHandler() {
          public void onClick(ClickEvent event) {
             final T input = collectInput();
             validateAndGo(input, new Command()
@@ -81,7 +83,7 @@ public abstract class ModalDialog<T> extends ModalDialogBase
 
       progressIndicator_ = addProgressIndicator();
       
-      ThemedButton okButton = new ThemedButton("OK", new ClickHandler() {
+      ThemedButton okButton = new ThemedButton(_constants.okButton(), new ClickHandler() {
          public void onClick(ClickEvent event) {
             final T input = collectInput();
             validateAndGo(input, new Command()
@@ -184,4 +186,6 @@ public abstract class ModalDialog<T> extends ModalDialogBase
    private final ProgressIndicator progressIndicator_;
    private boolean validating_ = false;
    private HelpLink helpLink_ = null;
+   private static final UserPrefsAccessorConstants _constants = GWT.create(UserPrefsAccessorConstants.class);
+
 }

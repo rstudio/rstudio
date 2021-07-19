@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -30,6 +31,7 @@ import com.google.gwt.user.client.ui.TextBox;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.studio.client.workbench.prefs.views.PythonPreferencesPaneConstants;
 
 public class TextBoxWithButton extends Composite
                                implements HasValueChangeHandlers<String>,
@@ -100,7 +102,7 @@ public class TextBoxWithButton extends Composite
       // prevent button from triggering "submit" when hosted in a form, such as in FileUploadDialog
       themedButton_.getElement().setAttribute("type", "button");
       
-      clearButton_ = new ThemedButton("Clear", (ClickEvent event) ->
+      clearButton_ = new ThemedButton(constants_.clearLabel(), (ClickEvent event) ->
       {
          setText("");
       });
@@ -298,4 +300,5 @@ public class TextBoxWithButton extends Composite
    private boolean useNativePlaceholder_;
    
    private static final String USE_DEFAULT_PREFIX = "[Use Default]";
+   private static final PythonPreferencesPaneConstants constants_ = GWT.create(PythonPreferencesPaneConstants.class);
 }

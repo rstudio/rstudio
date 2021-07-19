@@ -16,6 +16,7 @@
 
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -68,10 +69,10 @@ public class PackagesPreferencesPane extends PreferencesPane
       VerticalTabPanel management = new VerticalTabPanel(ElementIds.PACKAGE_MANAGEMENT_PREFS);
       VerticalTabPanel development = new VerticalTabPanel(ElementIds.PACKAGE_DEVELOPMENT_PREFS);
 
-      management.add(headerLabel("Package Management"));
+      management.add(headerLabel(constants_.packageManagementTitle()));
 
       infoBar_ = new InfoBar(InfoBar.WARNING);
-      infoBar_.setText("CRAN repositories modified outside package preferences.");
+      infoBar_.setText(constants_.packagesInfoBarText());
       infoBar_.addStyleName(res_.styles().themeInfobar());
       spaced(infoBar_);
 
@@ -90,9 +91,9 @@ public class PackagesPreferencesPane extends PreferencesPane
       };
 
       cranMirrorTextBox_ = new TextBoxWithButton(
-            "Primary CRAN repository:",
+            constants_.cranMirrorTextBoxTitle(),
             "",
-            "Change...",
+            constants_.cranMirrorChangeLabel(),
             null,
             ElementIds.TextBoxButtonId.PRIMARY_CRAN,
             true,
@@ -118,7 +119,7 @@ public class PackagesPreferencesPane extends PreferencesPane
          management.add(cranMirrorTextBox_);
 
          FormLabel secondaryReposLabel = new FormLabel(
-               "Secondary repositories:",
+               constants_.secondaryReposTitle(),
                secondaryReposWidget_.getLabeledWidget());
          secondaryReposLabel.getElement().getStyle().setMarginLeft(2, Unit.PX);
          secondaryReposLabel.getElement().getStyle().setMarginBottom(2, Unit.PX);
@@ -127,7 +128,7 @@ public class PackagesPreferencesPane extends PreferencesPane
          management.add(secondaryReposWidget_);
       }
 
-      CheckBox chkEnablePackages = checkboxPref("Enable packages pane",
+      CheckBox chkEnablePackages = checkboxPref(constants_.chkEnablePackagesTitle(),
          uiPrefs.packagesPaneEnabled());
 
       chkEnablePackages.addValueChangeHandler(event -> reloadRequired_ = true);
@@ -138,14 +139,14 @@ public class PackagesPreferencesPane extends PreferencesPane
       }
 
       useSecurePackageDownload_ = new CheckBox(
-            "Use secure download method for HTTP");
+            constants_.useSecurePackageDownloadTitle());
       HorizontalPanel secureDownloadPanel = checkBoxWithHelp(
-                        useSecurePackageDownload_, "secure_download", "Help on secure package downloads for R");
+                        useSecurePackageDownload_, constants_.useSecurePackageTopic(), constants_.useSecurePackageTitle());
       lessSpaced(secureDownloadPanel);
       management.add(secureDownloadPanel);
 
       useInternet2_ = new CheckBox(
-                        "Use Internet Explorer library/proxy for HTTP",
+                        constants_.useInternetTitle(),
                         true);
       if (BrowseCap.isWindowsDesktop())
       {
@@ -159,32 +160,32 @@ public class PackagesPreferencesPane extends PreferencesPane
          useSecurePackageDownload_.getElement().getStyle().setMarginBottom(12, Unit.PX);
       }
 
-      management.add(spacedBefore(new HelpLink("Managing Packages", "managing_packages")));
+      management.add(spacedBefore(new HelpLink(constants_.managePackagesTitle(), "managing_packages")));
 
-      development.add(headerLabel("Package Development"));
+      development.add(headerLabel(constants_.developmentTitle()));
 
-      useDevtools_ = new CheckBox("Use devtools package functions if available");
+      useDevtools_ = new CheckBox(constants_.useDevtoolsLabel());
       lessSpaced(useDevtools_);
       development.add(useDevtools_);
 
-      development.add(checkboxPref("Save all files prior to building packages", uiPrefs.saveFilesBeforeBuild()));
-      development.add(checkboxPref("Automatically navigate editor to build errors", uiPrefs.navigateToBuildError()));
+      development.add(checkboxPref(constants_.developmentSaveLabel(), uiPrefs.saveFilesBeforeBuild()));
+      development.add(checkboxPref(constants_.developmentNavigateLabel(), uiPrefs.navigateToBuildError()));
 
-      hideObjectFiles_ = new CheckBox("Hide object files in package src directory");
+      hideObjectFiles_ = new CheckBox(constants_.developmentHideLabel());
       lessSpaced(hideObjectFiles_);
       development.add(hideObjectFiles_);
 
-      cleanupAfterCheckSuccess_ = new CheckBox("Cleanup output after successful R CMD check");
+      cleanupAfterCheckSuccess_ = new CheckBox(constants_.developmentCleanupLabel());
       lessSpaced(cleanupAfterCheckSuccess_);
       development.add(cleanupAfterCheckSuccess_);
 
-      viewDirAfterCheckFailure_ = new CheckBox("View Rcheck directory after failed R CMD check");
+      viewDirAfterCheckFailure_ = new CheckBox(constants_.developmentViewLabel());
       lessSpaced(viewDirAfterCheckFailure_);
       development.add(viewDirAfterCheckFailure_);
 
-      development.add(checkboxPref("Use Rcpp template when creating C++ files", uiPrefs.useRcppTemplate()));
+      development.add(checkboxPref(constants_.developmentRcppLabel(), uiPrefs.useRcppTemplate()));
 
-      useNewlineInMakefiles_ = new CheckBox("Always use LF line-endings in Unix Makefiles");
+      useNewlineInMakefiles_ = new CheckBox(constants_.developmentUseLFLabel());
       lessSpaced(useNewlineInMakefiles_);
       development.add(useNewlineInMakefiles_);
 
@@ -201,10 +202,10 @@ public class PackagesPreferencesPane extends PreferencesPane
       useDevtools_.setEnabled(false);
       useSecurePackageDownload_.setEnabled(false);
 
-      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("Packages");
+      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel(constants_.tabPackagesPanelTitle());
       tabPanel.setSize("435px", "533px");
-      tabPanel.add(management, "Management", management.getBasePanelId());
-      tabPanel.add(development, "Development", development.getBasePanelId());
+      tabPanel.add(management, constants_.managementPanelTitle(), management.getBasePanelId());
+      tabPanel.add(development, constants_.developmentManagementPanelTitle(), development.getBasePanelId());
       tabPanel.selectTab(0);
       add(tabPanel);
    }
@@ -224,7 +225,7 @@ public class PackagesPreferencesPane extends PreferencesPane
    @Override
    public String getName()
    {
-      return "Packages";
+      return constants_.tabPackagesPanelTitle();
    }
 
    @Override
@@ -252,9 +253,9 @@ public class PackagesPreferencesPane extends PreferencesPane
       useInternet2_.setValue(prefs.useInternet2().getValue());
       useInternet2_.addValueChangeHandler(event -> globalDisplay_.showMessage(
             MessageDialog.INFO,
-            "Restart R Required",
-            "You must restart your R session for this setting " +
-            "to take effect.")
+            constants_.cranMirrorTextBoxRestartCaption(),
+            constants_.cranMirrorTextBoxRestartMessage() +
+            constants_.cranMirrorTextBoxMessage())
       );
 
       cleanupAfterCheckSuccess_.setEnabled(true);
@@ -394,4 +395,5 @@ public class PackagesPreferencesPane extends PreferencesPane
    private boolean reloadRequired_ = false;
    private String cranMirrorStored_;
    private final SecondaryReposWidget secondaryReposWidget_;
+   private final PackagesPreferencesPaneConstants constants_ = GWT.create(PackagesPreferencesPaneConstants.class);
 }

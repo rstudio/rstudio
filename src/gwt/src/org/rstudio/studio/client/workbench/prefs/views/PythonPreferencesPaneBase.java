@@ -59,30 +59,30 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
                                     boolean isProjectOptions)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
-      
-      add(headerLabel("Python"));
+
+      add(headerLabel(constants_.headerPythonLabel()));
       
       mismatchWarningBar_ = new InfoBar(InfoBar.WARNING);
       mismatchWarningBar_.setText(
-            "The active Python interpreter has been changed by an R startup script.");
+            constants_.mismatchWarningBarText());
       mismatchWarningBar_.setVisible(false);
       add(mismatchWarningBar_);
-      
+
       tbPythonInterpreter_ = new TextBoxWithButton(
-            "Python interpreter:",
-            null,
-            placeholderText,
-            "Select...",
-            new HelpButton("using_python", "Using Python in RStudio"),
-            ElementIds.TextBoxButtonId.PYTHON_PATH,
-            true,
-            true,
-            new ClickHandler()
+              constants_.tbPythonInterpreterText(),
+              null,
+              placeholderText,
+              constants_.tbPythonActionText(),
+              new HelpButton("using_python", constants_.helpButtonLabel()),
+              ElementIds.TextBoxButtonId.PYTHON_PATH,
+              true,
+              true,
+              new ClickHandler()
             {
                @Override
                public void onClick(ClickEvent event)
                {
-                  getProgressIndicator().onProgress("Finding interpreters...");
+                  getProgressIndicator().onProgress(constants_.progressIndicatorText());
                   
                   server_.pythonFindInterpreters(new ServerRequestCallback<PythonInterpreters>()
                   {
@@ -111,7 +111,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
                      public void onError(ServerError error)
                      {
                         String message =
-                              "Error finding Python interpreters: " +
+                              constants_.onErrorMessage() +
                               error.getUserMessage();
                         getProgressIndicator().onError(message);
                         
@@ -171,14 +171,14 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
       if (!isProjectOptions)
       {
          cbAutoUseProjectInterpreter_ =
-               new CheckBox("Automatically activate project-local Python environments");
+               new CheckBox(constants_.cbAutoUseProjectInterpreter());
          
          cbAutoUseProjectInterpreter_.setValue(
                prefs_.pythonProjectEnvironmentAutomaticActivate().getGlobalValue());
          
          cbAutoUseProjectInterpreter_.getElement().setTitle(
-               "When enabled, RStudio will automatically find and activate a " +
-               "Python environment located within the project root directory (if any).");
+               constants_.cbAutoUseProjectInterpreterMessage() +
+               constants_.cbAutoUseProjectInterpreterMsg());
 
          add(lessSpaced(cbAutoUseProjectInterpreter_));
       }
@@ -256,7 +256,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
       {
          String reason = info.getInvalidReason();
          if (StringUtil.isNullOrEmpty(reason))
-            reason = "The selected Python interpreter does not appear to be valid.";
+            reason = constants_.invalidReasonLabel();
          
          InfoBar bar = new InfoBar(InfoBar.WARNING);
          bar.setText(reason);
@@ -340,7 +340,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
    @Override
    public String getName()
    {
-      return "Python";
+      return constants_.headerPythonLabel();
    }
    
    protected void initialize(String pythonPath)
@@ -457,6 +457,5 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
    {
       RES.styles().ensureInjected();
    }
-
- 
+   private final PythonPreferencesPaneConstants constants_ = GWT.create(PythonPreferencesPaneConstants.class);
 }

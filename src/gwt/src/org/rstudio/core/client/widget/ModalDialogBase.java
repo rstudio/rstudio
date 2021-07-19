@@ -53,6 +53,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.Timers;
+import org.rstudio.studio.client.workbench.prefs.views.PreferencesPaneConstants;
 
 import java.util.ArrayList;
 
@@ -373,7 +374,7 @@ public abstract class ModalDialogBase extends DialogBox
 
    protected ThemedButton createCancelButton(final Operation cancelOperation)
    {
-      return new ThemedButton("Cancel", clickEvent ->
+      return new ThemedButton(constants_.Editing_cancel_shortcuts(), clickEvent ->
       {
          if (cancelOperation != null)
             cancelOperation.execute();
@@ -849,4 +850,5 @@ public abstract class ModalDialogBase extends DialogBox
    
    public static final String ALLOW_ENTER_KEY_CLASS = "__rstudio_modal_allow_enter_key";
    public static final String ALLOW_ESCAPE_KEY_CLASS = "__rstudio_modal_allow_escape_key";
+   private final PreferencesPaneConstants constants_ = GWT.create(PreferencesPaneConstants.class);
 }

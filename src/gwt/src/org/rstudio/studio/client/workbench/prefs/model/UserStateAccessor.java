@@ -28,6 +28,9 @@ import com.google.gwt.core.client.JsArray;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.core.client.GWT;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessorConstants;
+
 /**
  * Accessor class for user state.
  */ 
@@ -46,8 +49,8 @@ public class UserStateAccessor extends Prefs
    {
       return string(
          "context_id",
-         "", 
-         "A unique identifier representing the user and machine.", 
+         _constants.contextIdTitle(), 
+         _constants.contextIdDescription(), 
          "");
    }
 
@@ -58,8 +61,8 @@ public class UserStateAccessor extends Prefs
    {
       return bool(
          "auto_created_profile",
-         "", 
-         "Whether we have automatically created an .Rprofile for this user.", 
+         _constants.autoCreatedProfileTitle(), 
+         _constants.autoCreatedProfileDescription(), 
          false);
    }
 
@@ -70,8 +73,8 @@ public class UserStateAccessor extends Prefs
    {
       return object(
          "theme",
-         "", 
-         "The color theme to apply.", 
+         _constants.themeTitle(), 
+         _constants.themeDescription(), 
          null);
    }
 
@@ -100,8 +103,8 @@ public class UserStateAccessor extends Prefs
    {
       return string(
          "default_project_location",
-         "", 
-         "The directory path under which to place new projects by default. Shadows a uipref.", 
+         _constants.defaultProjectLocationTitle(), 
+         _constants.defaultProjectLocationDescription(), 
          "");
    }
 
@@ -112,8 +115,8 @@ public class UserStateAccessor extends Prefs
    {
       return bool(
          "clear_hidden",
-         "", 
-         "Whether to clear hidden objects along with visible objects when clearing the workspace. Set automatically to remember last action.", 
+         _constants.clearHiddenTitle(), 
+         _constants.clearHiddenDescription(), 
          true);
    }
 
@@ -124,8 +127,8 @@ public class UserStateAccessor extends Prefs
    {
       return object(
          "export_plot_options",
-         "", 
-         "The most recently used plot export options.", 
+         _constants.exportPlotOptionsTitle(), 
+         _constants.exportPlotOptionsDescription(), 
          null);
    }
 
@@ -166,8 +169,8 @@ public class UserStateAccessor extends Prefs
    {
       return object(
          "export_viewer_options",
-         "", 
-         "The most recently used viewer export options.", 
+         _constants.exportViewerOptionsTitle(), 
+         _constants.exportViewerOptionsDescription(), 
          null);
    }
 
@@ -208,8 +211,8 @@ public class UserStateAccessor extends Prefs
    {
       return object(
          "save_plot_as_pdf_options",
-         "", 
-         "The most recently used options for saving a plot as a PDF.", 
+         _constants.savePlotAsPdfOptionsTitle(), 
+         _constants.savePlotAsPdfOptionsDescription(), 
          null);
    }
 
@@ -246,8 +249,8 @@ public class UserStateAccessor extends Prefs
    {
       return object(
          "compile_r_notebook_prefs",
-         "", 
-         "Most recently used settings for compiling a notebook from an R script.", 
+         _constants.compileRNotebookPrefsTitle(), 
+         _constants.compileRNotebookPrefsDescription(), 
          null);
    }
 
@@ -272,8 +275,8 @@ public class UserStateAccessor extends Prefs
    {
       return object(
          "compile_r_markdown_notebook_prefs",
-         "", 
-         "Most recently used settings for compiling a notebook using R Markdown.", 
+         _constants.compileRMarkdownNotebookPrefsTitle(), 
+         _constants.compileRMarkdownNotebookPrefsDescription(), 
          null);
    }
 
@@ -294,8 +297,8 @@ public class UserStateAccessor extends Prefs
    {
       return bool(
          "show_publish_ui",
-         "", 
-         "Whether to show UI for publishing content.", 
+         _constants.showPublishUiTitle(), 
+         _constants.showPublishUiDescription(), 
          true);
    }
 
@@ -306,8 +309,8 @@ public class UserStateAccessor extends Prefs
    {
       return bool(
          "enable_rsconnect_publish_ui",
-         "", 
-         "Whether to show UI for publishing content to RStudio Connect.", 
+         _constants.enableRsconnectPublishUiTitle(), 
+         _constants.enableRsconnectPublishUiDescription(), 
          true);
    }
 
@@ -318,8 +321,8 @@ public class UserStateAccessor extends Prefs
    {
       return object(
          "publish_account",
-         "", 
-         "The default (last) account used for publishing", 
+         _constants.publishAccountTitle(), 
+         _constants.publishAccountDescription(), 
          null);
    }
 
@@ -344,8 +347,8 @@ public class UserStateAccessor extends Prefs
    {
       return integer(
          "document_outline_width",
-         "", 
-         "The preferred width, in pixels, of the document outline pane.", 
+         _constants.documentOutlineWidthTitle(), 
+         _constants.documentOutlineWidthDescription(), 
          110);
    }
 
@@ -356,8 +359,8 @@ public class UserStateAccessor extends Prefs
    {
       return enumeration(
          "connect_via",
-         "", 
-         "How to create new connections to data sources.", 
+         _constants.connectViaTitle(), 
+         _constants.connectViaDescription(), 
          new String[] {
             CONNECT_VIA_CONNECT_R_CONSOLE,
             CONNECT_VIA_CONNECT_NEW_R_SCRIPT,
@@ -379,8 +382,8 @@ public class UserStateAccessor extends Prefs
    {
       return enumeration(
          "error_handler_type",
-         "", 
-         "The kind of handler to invoke when errors occur.", 
+         _constants.errorHandlerTypeTitle(), 
+         _constants.errorHandlerTypeDescription(), 
          new String[] {
             ERROR_HANDLER_TYPE_MESSAGE,
             ERROR_HANDLER_TYPE_TRACEBACK,
@@ -404,8 +407,8 @@ public class UserStateAccessor extends Prefs
    {
       return bool(
          "using_mingw_gcc49",
-         "", 
-         "Whether or not the MinGW compiler with GCC 4.9 is used.", 
+         _constants.usingMingwGcc49Title(), 
+         _constants.usingMingwGcc49Description(), 
          false);
    }
 
@@ -416,8 +419,8 @@ public class UserStateAccessor extends Prefs
    {
       return bool(
          "visual_mode_confirmed",
-         "", 
-         "Whether or not the use of Visual Mode has been confirmed.", 
+         _constants.visualModeConfirmedTitle(), 
+         _constants.visualModeConfirmedDescription(), 
          false);
    }
 
@@ -428,8 +431,8 @@ public class UserStateAccessor extends Prefs
    {
       return enumeration(
          "bibliography_default_type",
-         "", 
-         "The default type for new bibliographies.", 
+         _constants.bibliographyDefaultTypeTitle(), 
+         _constants.bibliographyDefaultTypeDescription(), 
          new String[] {
             BIBLIOGRAPHY_DEFAULT_TYPE_BIB,
             BIBLIOGRAPHY_DEFAULT_TYPE_YAML,
@@ -449,8 +452,8 @@ public class UserStateAccessor extends Prefs
    {
       return bool(
          "citation_default_in_text",
-         "", 
-         "The default style for inserting citations.", 
+         _constants.citationDefaultInTextTitle(), 
+         _constants.citationDefaultInTextDescription(), 
          false);
    }
 
@@ -461,8 +464,8 @@ public class UserStateAccessor extends Prefs
    {
       return enumeration(
          "zotero_connection_type",
-         "Zotero connection type", 
-         "Zotero connection type (local or web)", 
+         _constants.zoteroConnectionTypeTitle(), 
+         _constants.zoteroConnectionTypeDescription(), 
          new String[] {
             ZOTERO_CONNECTION_TYPE_AUTO,
             ZOTERO_CONNECTION_TYPE_NONE,
@@ -484,8 +487,8 @@ public class UserStateAccessor extends Prefs
    {
       return bool(
          "zotero_use_better_bibtex",
-         "Use Better BibTeX for citation keys and BibTeX export", 
-         "Whether to use Better BibTeX when suggesting citation keys and writing citations to BibTeX bibliographies", 
+         _constants.zoteroUseBetterBibtexTitle(), 
+         _constants.zoteroUseBetterBibtexDescription(), 
          false);
    }
 
@@ -496,8 +499,8 @@ public class UserStateAccessor extends Prefs
    {
       return string(
          "zotero_api_key",
-         "Zotero API Key", 
-         "Key for making Zotero API calls", 
+         _constants.zoteroApiKeyTitle(), 
+         _constants.zoteroApiKeyDescription(), 
          "");
    }
 
@@ -508,8 +511,8 @@ public class UserStateAccessor extends Prefs
    {
       return string(
          "zotero_data_dir",
-         "Zotero Data Directory", 
-         "Directory containing Zotero data files", 
+         _constants.zoteroDataDirTitle(), 
+         _constants.zoteroDataDirDescription(), 
          "");
    }
 
@@ -609,4 +612,6 @@ public class UserStateAccessor extends Prefs
    public static final int LAYER_DEFAULT  = 0;
    public static final int LAYER_COMPUTED = 1;
    public static final int LAYER_USER     = 2;
+
+   private UserStateAccessorConstants _constants = GWT.create(UserStateAccessorConstants.class);
 }
