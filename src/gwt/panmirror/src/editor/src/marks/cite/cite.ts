@@ -204,10 +204,10 @@ const extension = (context: ExtensionContext): Extension | null => {
                   output.writeRawMarkdown('[');
                   output.writeInlines(cite);
                   output.writeRawMarkdown(']');
-                
-                
-                // if it starts with a valid cite id prefix and ends with a close
-                // bracket then it might be an in-text citation with a suffix
+
+
+                  // if it starts with a valid cite id prefix and ends with a close
+                  // bracket then it might be an in-text citation with a suffix
                 } else if (parentText.match(kInTextCiteWithSuffixRegEx)) {
 
                   // find the position of the begin bracket that matches the end bracket
@@ -255,7 +255,7 @@ const extension = (context: ExtensionContext): Extension | null => {
       return [{
         name: 'cite-id-join',
         append: (tr: Transaction) => {
-          const range = getMarkRange(tr.doc.resolve(tr.selection.head-1), schema.marks.cite_id);
+          const range = getMarkRange(tr.doc.resolve(tr.selection.head - 1), schema.marks.cite_id);
           if (range) {
             const text = tr.doc.textBetween(range.from, tr.selection.$head.after());
             const citeIdLen = citeIdLength(text);
@@ -274,13 +274,13 @@ const extension = (context: ExtensionContext): Extension | null => {
       const kFindInTextCiteRegex = new RegExp(kCiteIdBasePattern, 'g');
       const kFindInTextCiteWithSuffixRegex = new RegExp(kInTextCiteWithSuffixPattern, 'g');
       const kFindFullCiteRegex = new RegExp(kNoteCiteRegex.source, 'g');
-      
+
       return [
         {
           // 'break' cite marks if they are no longer valid. note that this will still preserve
           // the mark up to the length that it is valid. 
           name: 'cite-marks',
-          filter: (node: ProsemirrorNode, transactions: Transaction[]) =>  {
+          filter: (node: ProsemirrorNode, transactions: Transaction[]) => {
 
             // if the transaction added any cite id marks then we need to lay off
             // (mostly so that input rules can be reversed)
@@ -291,9 +291,9 @@ const extension = (context: ExtensionContext): Extension | null => {
             }))) {
               return false;
 
-            /// otherwise proceed if this node is a textblock that allows cites
+              /// otherwise proceed if this node is a textblock that allows cites
             } else {
-          
+
               return node.isTextblock && node.type.allowsMarkType(schema.marks.cite);
             }
           },
@@ -317,8 +317,8 @@ const extension = (context: ExtensionContext): Extension | null => {
                 );
               });
             }
-           
-            
+
+
           },
         },
         {
@@ -383,7 +383,7 @@ function handlePaste(ui: EditorUI, bibManager: BibliographyManager, server: Pand
         const source = bibManager.findDoiInLocalBibliography(parsedDOI.token);
         if (!source && bibManager.allowsWrites()) {
           insertCitation(view, parsedDOI.token, bibManager, parsedDOI.pos, ui, server);
-        } 
+        }
         return true;
       } else {
         // This is just content, accept any text and try pasting that
@@ -416,7 +416,7 @@ function citeIdInputRule(schema: Schema) {
       const { parent, parentOffset } = state.selection.$head;
       const text = match[0] + parent.textContent.slice(parentOffset);
       const textBefore = parent.textContent.slice(0, parentOffset);
-      
+
       // reject unless the right prefix is there
       if (textBefore.length && !textBefore.match(/[\xA0 \t\-\[]$/)) {
         return null;
@@ -427,24 +427,24 @@ function citeIdInputRule(schema: Schema) {
 
       // insert the @
       const tr = state.tr;
-      tr.insertText(match[0]); 
+      tr.insertText(match[0]);
 
       // insert a pairing end bracket if we started with [
       if (citeIdLen === 1 && textBefore.match(/\[-?$/) && text[1] !== ']') {
         tr.insertText(']');
         setTextSelection(tr.selection.head - 1)(tr);
       }
-     
+
       if (citeIdLen) {
         // offset mark for incidence of '-' prefix
         const offset = textBefore.endsWith('-') ? 1 : 0;
         const citeStart = start - offset;
-        const citeEnd = citeStart + citeIdLen + offset ;
+        const citeEnd = citeStart + citeIdLen + offset;
         tr.addMark(citeStart, citeEnd, schema.marks.cite_id.create());
       }
 
       return tr;
-    } 
+    }
     return null;
   });
 }
@@ -466,7 +466,7 @@ function citeIdDashInputRule(schema: Schema) {
 // read pandoc citation, creating requisite cite and cite_id marks as we go
 function readPandocCite(schema: Schema) {
   return (writer: ProsemirrorWriter, tok: PandocToken) => {
-    
+
     // create and open the mark
     const citeMark = schema.marks.cite.create();
     writer.openMark(citeMark);
@@ -503,7 +503,7 @@ function readPandocCite(schema: Schema) {
     // look for a single in-text citation
     if (citations.length === 1 && citations[0].citationMode.t === CitationMode.AuthorInText) {
       writeCitation(citations[0]);
-    // non-in text and/or multiple citations
+      // non-in text and/or multiple citations
     } else {
       writer.writeText('[');
       citations.forEach((citation: Citation, index: number) => {
@@ -546,8 +546,8 @@ function encloseInCiteMark(tr: Transaction, start: number, end: number) {
 
 function citeLength(text: string) {
   if (text.match(kNoteCiteRegex) ||
-      text.match(kInTextCiteRegex) ||
-      text.match(kInTextCiteWithSuffixRegEx)) {
+    text.match(kInTextCiteRegex) ||
+    text.match(kInTextCiteWithSuffixRegEx)) {
     return text.length;
   } else {
     return 0;
@@ -583,7 +583,7 @@ export function parseCitation(context: EditorState | Transaction): ParsedCitatio
 
     // make sure there is no text directly ahead (except bracket, space, semicolon)
     const nextChar = context.doc.textBetween(context.selection.head, context.selection.head + 1);
-    if (!nextChar || [';', ' ', ']'].includes(nextChar) ) {
+    if (!nextChar || [';', ' ', ']'].includes(nextChar)) {
       // look for a cite id that terminates at the cursor (including spaces/text after the id,
       // but before any semicolon delimiter)
       const match = citeText.match(kCompletionCiteIdRegEx);
@@ -592,7 +592,7 @@ export function parseCitation(context: EditorState | Transaction): ParsedCitatio
         const pos = range.from + match.index! + match[1].length;
         return { token, pos, offset: -match[1].length };
       }
-    }   
+    }
   }
   return null;
 }
@@ -642,9 +642,9 @@ export async function insertCitation(
       csl,
       citeUI: csl
         ? {
-            suggestedId: csl.id || suggestCiteId(existingIds, csl),
-            previewFields: formatForPreview(csl),
-          }
+          suggestedId: csl.id || suggestCiteId(existingIds, csl),
+          previewFields: formatForPreview(csl),
+        }
         : undefined,
     };
 
