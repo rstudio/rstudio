@@ -59,6 +59,7 @@ sudo apt-get -y install \
   libxslt1-dev \
   lsof \
   ninja-build \
+  p7zip-full \
   patchelf \
   pkg-config \
   python \

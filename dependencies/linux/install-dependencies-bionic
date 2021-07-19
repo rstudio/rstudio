@@ -58,6 +58,7 @@ sudo apt-get -y install \
   libuser1-dev \
   libxslt1-dev \
   lsof \
+  p7zip-full \
   patchelf \
   pkg-config \
   python \

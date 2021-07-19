@@ -60,6 +60,7 @@ sudo apt-get -y install \
   make \
   mesa-common-dev \
   openjdk-8-jdk  \
+  p7zip-full \
   patchelf \
   python \
   r-base \
