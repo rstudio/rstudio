@@ -203,8 +203,8 @@ protected:
       ("directory-view-whitelist",
       value<std::string>(&directoryViewWhitelist_)->default_value(std::string()),
       "Specifies a list of directories exempt from directory view restrictions, separated by a colon character (:).")
-      (kSessionEnvVarSaveBlacklist,
-      value<std::string>(&envVarSaveBlacklist_)->default_value(std::string()),
+      (kSessionEphemeralEnvVars,
+      value<std::string>(&ephemeralEnvVars_)->default_value(std::string()),
       "Specifies a list of environment variables that will not be saved when sessions suspend, separated by a colon character (:).")
       (kSessionSuspendOnIncompleteStatement,
       value<bool>(&suspendOnIncompleteStatement_)->default_value(false),
@@ -443,7 +443,7 @@ public:
    rstudio::core::http::Cookie::SameSite sameSite() const { return sameSite_; }
    bool restrictDirectoryView() const { return restrictDirectoryView_; }
    std::string directoryViewWhitelist() const { return directoryViewWhitelist_; }
-   std::string envVarSaveBlacklist() const { return envVarSaveBlacklist_; }
+   std::string ephemeralEnvVars() const { return ephemeralEnvVars_; }
    bool suspendOnIncompleteStatement() const { return suspendOnIncompleteStatement_; }
    bool asyncRpcEnabled() const { return asyncRpcEnabled_; }
    int asyncRpcTimeoutMs() const { return asyncRpcTimeoutMs_; }
@@ -544,7 +544,7 @@ protected:
    rstudio::core::http::Cookie::SameSite sameSite_;
    bool restrictDirectoryView_;
    std::string directoryViewWhitelist_;
-   std::string envVarSaveBlacklist_;
+   std::string ephemeralEnvVars_;
    bool suspendOnIncompleteStatement_;
    bool asyncRpcEnabled_;
    int asyncRpcTimeoutMs_;

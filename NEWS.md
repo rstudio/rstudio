@@ -41,6 +41,7 @@
 ### Misc
 
 * **BREAKING:** RStudio Desktop Pro only supports activation with license files (Pro #2300)
+* **BREAKING:** The `session-env-var-save-blacklist` option has been renamed to `session-ephemeral-env-vars`.
 * Fixed an issue where scroll position in PDFs was not preserved on re-render (#9603)
 * Support highlight of 'css' and 'asis' chunks in R Markdown documents (#4821)
 * Improved ordering of completion results within `library()` calls (#9293)

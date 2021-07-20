@@ -335,9 +335,9 @@
             "description": "Specifies a list of directories exempt from directory view restrictions, separated by a colon character (:)."
          },
          {
-            "name": {"constant": "kSessionEnvVarSaveBlacklist", "value": "session-env-var-save-blacklist"},
+            "name": {"constant": "kSessionEphemeralEnvVars", "value": "session-ephemeral-env-vars"},
             "type": "string",
-            "memberName": "envVarSaveBlacklist_",
+            "memberName": "ephemeralEnvVars_",
             "description": "Specifies a list of environment variables that will not be saved when sessions suspend, separated by a colon character (:)."
          },
          {

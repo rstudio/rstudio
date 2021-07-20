@@ -1228,7 +1228,7 @@ assign(x = ".rs.acCompletionTypes",
    completions
 })
 
-.rs.addFunction("blackListEvaluationDataTable", function(token, string, functionCall, envir)
+.rs.addFunction("excludeEvaluationDataTable", function(token, string, functionCall, envir)
 {
    tryCatch({
       # NOTE: We don't retrieve the name from the function call as this could
@@ -1258,9 +1258,9 @@ assign(x = ".rs.acCompletionTypes",
    
 })
 
-.rs.addFunction("blackListEvaluation", function(token, string, functionCall, envir)
+.rs.addFunction("excludeEvaluation", function(token, string, functionCall, envir)
 {
-   if (!is.null(result <- .rs.blackListEvaluationDataTable(token, string, functionCall, envir)))
+   if (!is.null(result <- .rs.excludeEvaluationDataTable(token, string, functionCall, envir)))
       return(result)
    
    NULL
@@ -1272,11 +1272,11 @@ assign(x = ".rs.acCompletionTypes",
 {
    result <- .rs.emptyCompletions(excludeOtherCompletions = TRUE)
    
-   ## Blacklist certain evaluations
-   if (!is.null(blacklist <- .rs.blackListEvaluation(token, string, functionCall, envir)))
+   ## Exclude certain evaluations
+   if (!is.null(exclusions <- .rs.excludeEvaluation(token, string, functionCall, envir)))
    {
-      blacklist$excludeOtherCompletions <- .rs.scalar(TRUE)
-      return(blacklist)
+      exclusions$excludeOtherCompletions <- .rs.scalar(TRUE)
+      return(exclusions)
    }
    
    object <- .rs.getAnywhere(string, envir)
@@ -1457,8 +1457,8 @@ assign(x = ".rs.acCompletionTypes",
 {
    result <- .rs.emptyCompletions()
    
-   ## Blacklist certain evaluations
-   if (!is.null(result <- .rs.blackListEvaluation(token, string, functionCall, envir)))
+   ## Exclude certain evaluations
+   if (!is.null(result <- .rs.excludeEvaluation(token, string, functionCall, envir)))
       return(result)
    
    object <- .rs.getAnywhere(string, envir)
@@ -1519,8 +1519,8 @@ assign(x = ".rs.acCompletionTypes",
 {
    result <- .rs.emptyCompletions()
    
-   ## Blacklist certain evaluations
-   if (!is.null(result <- .rs.blackListEvaluation(token, string, functionCall, envir)))
+   ## Exclude certain evaluations
+   if (!is.null(result <- .rs.excludeEvaluation(token, string, functionCall, envir)))
       return(result)
    
    object <- .rs.getAnywhere(string, envir)
@@ -2510,14 +2510,14 @@ assign(x = ".rs.acCompletionTypes",
    {
       if (type[[i]] %in% c(.rs.acContextTypes$FUNCTION, .rs.acContextTypes$UNKNOWN))
       {
-         ## Blacklist certain functions
+         ## Exclude certain functions
          if (string[[i]] %in% c("help", "str", "args", "debug", "debugonce", "trace"))
          {
             completions$overrideInsertParens <- .rs.scalar(TRUE)
          }
          else
          {
-            ## Blacklist based on formals of the function
+            ## Exclude based on formals of the function
             object <- .rs.getAnywhere(string[[i]], envir)
             if (is.function(object))
             {

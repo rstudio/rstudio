@@ -77,7 +77,7 @@ bool suspendSession(bool force, int status)
    r::session::ensureDeserialized();
 
    // perform the suspend (does not return if successful)
-   return r::session::suspend(force, status, session::options().envVarSaveBlacklist());
+   return r::session::suspend(force, status, session::options().ephemeralEnvVars());
 }
 
 void suspendIfRequested(const boost::function<bool()>& allowSuspend)
