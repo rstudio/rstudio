@@ -498,11 +498,9 @@ generateProgramOptions <- function (optionsJson, overlayOptionsJson) {
    binary <- str_replace(configFile, fixed(".conf"), "")
    buildOptions <- paste0(buildOptions,
                           "\n\n",
-                          sprintf("   FilePath defaultConfigPath = core::system::xdg::systemConfigFile(\"%s\");\n", configFile),
+                          sprintf("   FilePath defaultConfigPath = core::system::xdg::findSystemConfigFile(\"%s configuration\", \"%s\");\n", binary, configFile),
                           "   std::string configFile = defaultConfigPath.exists() ?\n",
                           "      defaultConfigPath.getAbsolutePath() : \"\";\n",
-                          "   if (!configFile.empty())\n",
-                          sprintf("      LOG_INFO_MESSAGE(\"Reading %s configuration from \" + configFile);\n\n", binary),
                           sprintf("   return program_options::OptionsDescription(\"%s\", configFile);", binary))
    
    # close out the buildOptions function

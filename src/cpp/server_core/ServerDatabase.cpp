@@ -105,7 +105,7 @@ Error readOptions(const std::string& databaseConfigFile,
    // if not specified, fall back to system configuration
    FilePath optionsFile = !databaseConfigFile.empty() ?
             FilePath(databaseConfigFile) :
-            core::system::xdg::systemConfigFile(kConfigFile);
+            core::system::xdg::findSystemConfigFile("database configuration", kConfigFile);
    
    Settings settings;
    Error error = settings.initialize(optionsFile);

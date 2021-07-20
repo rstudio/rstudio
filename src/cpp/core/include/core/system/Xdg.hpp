@@ -77,8 +77,15 @@ FilePath systemConfigDir();
 
 // Convenience method for finding a configuration file. Checks all the
 // directories in XDG_CONFIG_DIRS for the file. If it doesn't find it,
-// the path where we expected to find it is returned instead.
+// the path where we expected to find it is returned instead. Doesn't
+// do any logging.
 FilePath systemConfigFile(const std::string& filename);
+
+// Convenience method for finding a configuration file. Given a context such as
+// "load balancer config" or "secure header", it will log, at the INFO level,
+// where the config file was found, where it was expected to be found it wasn't,
+// and why.
+FilePath findSystemConfigFile(const std::string& context, const std::string& filename);
 
 // Sets relevant XDG environment varibles
 void forwardXdgEnvVars(Options *pEnvironment);
