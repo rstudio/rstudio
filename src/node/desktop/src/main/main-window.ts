@@ -299,6 +299,74 @@ export class MainWindow extends GwtWindow {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  closeEvent(event: Electron.Event): void {
+    if (process.platform === 'win32') {
+      // TODO
+      // if (eventHook_) {
+      // :: UnhookWinEvent(eventHook_);
+      // }
+    }
+
+    // desktopInfo().onClose();
+    // saveRemoteAuthCookies(boost::bind(&Options::authCookies, &options()),
+    //                      boost::bind(&Options::setAuthCookies, &options(), _1),
+    //                      false);
+
+    if (!this.geometrySaved) {
+      const size = this.window.getSize();
+      DesktopOptions().saveWindowBounds({width: size[0], height: size[1]});
+      this.geometrySaved = true;
+    }
+
+    // CloseServerSessions close = sessionServerSettings().closeServerSessionsOnExit();
+
+    // if (this.quitConfirmed || (!this.isRemoteDesktop && !this.sessionProcess) ||
+    //   (!this.isRemoteDesktop && this.sessionProcess -> state() != QProcess:: Running)) {
+
+    //   closeAllSatellites(this.window);
+    //   pEvent->accept();
+    //   return;
+    // }
+
+    // auto quit = [this]() {
+    //   closeAllSatellites(this);
+    //   this->quit();
+    // };
+
+    // pEvent->ignore();
+    // webPage()->runJavaScript(
+    //         QStringLiteral("!!window.desktopHooks"),
+    //         [=](QVariant hasQuitR) {
+
+    //   if (!hasQuitR.toBool()) {
+    //      LOG_ERROR_MESSAGE("Main window closed unexpectedly");
+
+    //      // exit to avoid user having to kill/force-close the application
+    //      quit();
+    //   } else {
+    //      if (!isRemoteDesktop_ ||
+    //          close == CloseServerSessions::Always) {
+    //         webPage()->runJavaScript(
+    //                  QStringLiteral("window.desktopHooks.quitR()"),
+    //                  [=](QVariant ignored) {
+    //            quitConfirmed_ = true;
+    //         });
+    //      }
+    //      else if (close == CloseServerSessions::Never) {
+    //         quit();
+    //      }
+    //      else {
+    //         webPage()->runJavaScript(
+    //                  QStringLiteral("window.desktopHooks.promptToQuitR()"),
+    //                  [=](QVariant ignored) {
+    //            quitConfirmed_ = true;
+    //         });
+    //      }
+    //   }
+    // });
+  }
+ 
   collectPendingQuitRequest(): PendingQuit {
     return appState().gwtCallback?.collectPendingQuitRequest() ?? PendingQuit.PendingQuitNone;
   }
