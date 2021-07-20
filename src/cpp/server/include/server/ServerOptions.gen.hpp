@@ -225,12 +225,9 @@ protected:
       value<int>(&monitorIntervalSeconds_)->default_value(60),
       "The interval in seconds at which the monitor is probed for new data.");
 
-   FilePath defaultConfigPath = core::system::xdg::systemConfigFile("rserver.conf");
+   FilePath defaultConfigPath = core::system::xdg::findSystemConfigFile("rserver configuration", "rserver.conf");
    std::string configFile = defaultConfigPath.exists() ?
       defaultConfigPath.getAbsolutePath() : "";
-   if (!configFile.empty())
-      LOG_INFO_MESSAGE("Reading rserver configuration from " + configFile);
-
    return program_options::OptionsDescription("rserver", configFile);
 }
 

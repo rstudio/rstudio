@@ -52,7 +52,8 @@ void forwardHttpProxyVars(core::system::Options *pEnvironment)
 
 Error initialize()
 {
-   FilePath envConfPath = core::system::xdg::systemConfigFile("env-vars");
+   FilePath envConfPath = core::system::xdg::findSystemConfigFile(
+         "environment variables", "env-vars");
 
    // No work to do if we don't have a file specifying server environment variables
    if (!envConfPath.exists())
