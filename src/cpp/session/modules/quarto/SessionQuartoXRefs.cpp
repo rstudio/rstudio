@@ -83,8 +83,6 @@ json::Array readXRefIndex(const FilePath& indexPath, const std::string& filename
       return json::Array();
    }
 
-   std::cerr << "HELLO THERE" << std::endl;
-
    // read xrefs (already validated so don't need to dance around types/existence)
    json::Array xrefs;
    boost::regex keyRegex("^(\\w+)-(.*?)(-\\d+)?$");
