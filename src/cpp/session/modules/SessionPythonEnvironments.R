@@ -101,6 +101,27 @@
    if (file.exists(prefsPython))
       return(path.expand(prefsPython))
    
+   # check for Python on the PATH -- if we have an appropriate version of
+   # python3 or python on the PATH, then use it. we ignore python installations
+   # in /usr/bin because we primarily want to target python installations that
+   # appear to have been "intentionally" installed by the user. in addition,
+   # many Linux package managers install "minimized" versions of Python onto
+   # the system path that will fail to work without extra supporting packages
+   # installed, and managing and communicating all that state to the user is
+   # challenging
+   python3 <- Sys.which("python3")
+   if (nzchar(python3) && python3 != "/usr/bin/python3")
+      return(python3)
+   
+   # use a plain 'python' executable if it's not python 2
+   python <- Sys.which("python")
+   if (nzchar(python) && python != "/usr/bin/python") {
+      info <- .rs.python.interpreterInfo(python, NULL)
+      version <- numeric_version(info$version, strict = FALSE)
+      if (!is.na(version) && version >= "3.2")
+         return(python)
+   }
+   
    # on Windows, help users find a default version of Python if possible
    if (.rs.platform.isWindows && nzchar(Sys.which("py")))
    {
@@ -123,6 +144,16 @@
       
       if (!inherits(pythonPath, "error") && file.exists(pythonPath))
          return(pythonPath)
+   }
+   
+   # if the user has Anaconda installed, then try auto-activating
+   # the base environment of that Anaconda installation
+   conda <- .rs.python.findCondaBinary()
+   if (file.exists(conda)) {
+      pythonPath <- if (.rs.platform.isWindows) "../python.exe" else "../bin/python"
+      python <- file.path(dirname(conda), pythonPath)
+      if (file.exists(python))
+         return(python)
    }
    
    # no python found; return empty string placeholder
