@@ -27,13 +27,16 @@ import { searchPlaceholderDecoration } from '../../api/placeholder';
 import { EditorUI } from '../../api/ui';
 import { CompletionItemView } from '../../api/widgets/completion';
 
-import { PandocServer } from '../../api/pandoc';
+import { EditorServer } from '../../api/server';
 import { EditorEvents } from '../../api/events';
 
 import { parseCitation } from './cite';
 
 import './cite-completion.css';
 import { bibliographyCiteCompletionProvider } from './cite-completion-bibliography';
+import { EditorFormat, kQuartoDocType } from '../../api/format';
+import { quartoXrefCiteCompletionProvider } from './cite-completion-quarto-xref';
+
 
 const kAuthorMaxChars = 28;
 const kMaxCitationCompletions = 100;
@@ -54,7 +57,7 @@ export interface CiteCompletionEntry {
   detailText: string;
   image?: string;
   imageAdornment?: string;
-  replace: (view: EditorView, pos: number, server: PandocServer) => Promise<void>;
+  replace: (view: EditorView, pos: number, server: EditorServer) => Promise<void>;
 }
 
 export interface CiteCompletionProvider {
@@ -70,20 +73,28 @@ export function citationCompletionHandler(
   ui: EditorUI,
   _events: EditorEvents,
   bibManager: BibliographyManager,
-  server: PandocServer,
+  server: EditorServer,
+  format: EditorFormat
 ): CompletionHandler<CiteCompletionEntry> {
 
-  const completionProvider = bibliographyCiteCompletionProvider(ui, bibManager);
+  const completionProviders = [quartoXrefCiteCompletionProvider(ui, server)];
 
+  server.xref.quartoIndexForFile(ui.context.getDocumentPath() || "").then(xref => console.log(xref));
+  /*
+  const completionProviders = [bibliographyCiteCompletionProvider(ui, bibManager)];
+  if (format.docTypes.includes(kQuartoDocType)) {
+    completionProviders.push(quartoXrefCiteCompletionProvider(ui, server));
+  }
+  */
   return {
     id: 'AB9D4F8C-DA00-403A-AB4A-05373906FD8C',
 
     scope: kCitationCompleteScope,
 
-    completions: citationCompletions(ui, completionProvider),
+    completions: citationCompletions(ui, completionProviders),
 
     filter: (entries: CiteCompletionEntry[], state: EditorState, token: string) => {
-      return filterCitations(token, completionProvider, entries, ui, state.doc);
+      return filterCitations(token, completionProviders, entries, ui, state.doc);
     },
 
     replace(view: EditorView, pos: number, entry: CiteCompletionEntry | null) {
@@ -104,12 +115,12 @@ export function citationCompletionHandler(
 
     view: {
       header: () => {
-        const waringMessage = completionProvider.warningMessage();
-        if (waringMessage) {
+        const warningProvider = completionProviders.find(provider => provider.warningMessage() !== undefined);
+        if (warningProvider) {
           return {
             component: CompletionWarningHeaderView,
             height: kHeaderHeight,
-            message: waringMessage,
+            message: warningProvider.warningMessage(),
           };
         }
       },
@@ -123,25 +134,29 @@ export function citationCompletionHandler(
   };
 }
 
-function filterCitations(token: string, completionProvider: CiteCompletionProvider, entries: CiteCompletionEntry[], ui: EditorUI, doc: ProsemirrorNode) {
+function filterCitations(token: string, completionProviders: CiteCompletionProvider[], entries: CiteCompletionEntry[], ui: EditorUI, doc: ProsemirrorNode) {
   // Empty query or DOI
   if (token.trim().length === 0 || hasDOI(token)) {
     return entries;
   }
-
   // Filter an exact match - if its exact match to an entry in the bibliography already, skip completion
   // Ignore any punctuation at the end of the token
   const tokenWithoutEndPunctuation = token.match(/.*[^\,\!\?\.\:]/);
   const completionId = tokenWithoutEndPunctuation ? tokenWithoutEndPunctuation[0] : token;
-  if (completionProvider.exactMatch(completionId)) {
+  if (completionProviders.some(provider => provider.exactMatch(completionId))) {
     return [];
   }
 
   // Perform a search
-  const searchResults = completionProvider.search(token, kMaxCitationCompletions);
+  const searchResults: CiteCompletionEntry[] = [];
+  completionProviders.forEach(provider => {
+    const results = provider.search(token, kMaxCitationCompletions);
+    if (results) {
+      searchResults.push(...results);
+    }
+  });
   return dedupe(searchResults || []);
 }
-
 
 function dedupe(entries: CiteCompletionEntry[]): CiteCompletionEntry[] {
   return uniqby(entries, (entry: CiteCompletionEntry) => `${entry.id}${entry.type}`);;
@@ -152,7 +167,7 @@ function sortEntries(entries: CiteCompletionEntry[]): CiteCompletionEntry[] {
   return dedupedSources.sort((a, b) => a.id.localeCompare(b.id));
 }
 
-function citationCompletions(ui: EditorUI, completionProvider: CiteCompletionProvider) {
+function citationCompletions(ui: EditorUI, completionProviders: CiteCompletionProvider[]) {
   return (_text: string, context: EditorState | Transaction): CompletionResult<CiteCompletionEntry> | null => {
 
 
@@ -164,14 +179,23 @@ function citationCompletions(ui: EditorUI, completionProvider: CiteCompletionPro
         offset: parsed.offset,
         completions: async (_state: EditorState) => {
 
-          // otherwise, do search and provide results when ready
-          const currentEntries = completionProvider.currentEntries();
-          if (currentEntries) {
+          // otherwise, do search and provide results when ready     
+          let currentEntries: CiteCompletionEntry[] | undefined;
+          completionProviders.map(provider => {
+            const entries = provider.currentEntries();
+            if (entries) {
+              currentEntries = currentEntries || [];
+              currentEntries.push(...entries);
+            }
+          });
 
+          if (currentEntries) {
             // kick off another load which we'll stream in by setting entries
             let loadedEntries: CiteCompletionEntry[] | null = null;
-            completionProvider.streamEntries(context.doc, (entries: CiteCompletionEntry[]) => {
-              loadedEntries = sortEntries(entries);
+            completionProviders.forEach(provider => {
+              provider.streamEntries(context.doc, (entries: CiteCompletionEntry[]) => {
+                loadedEntries = sortEntries(entries);
+              });
             });
 
             // return stream
@@ -181,7 +205,12 @@ function citationCompletions(ui: EditorUI, completionProvider: CiteCompletionPro
             };
 
           } else {
-            return completionProvider.awaitEntries(context.doc);
+            const promises = completionProviders.map(provider => provider.awaitEntries(context.doc));
+            return Promise.all(promises).then(values => {
+              const results: CiteCompletionEntry[] = [];
+              values.forEach(value => results.push(...value));
+              return sortEntries(results);
+            });
           }
         },
         decorations:
