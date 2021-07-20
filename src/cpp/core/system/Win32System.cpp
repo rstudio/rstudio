@@ -187,6 +187,31 @@ void initializeLogConfigReload()
 {
 }
 
+Error findProgramOnPath(const std::string& program,
+                        core::FilePath* pProgramPath)
+{
+   std::string path = core::system::getenv("PATH");
+   auto paths = core::algorithm::split(path, ";");
+
+   for (auto&& path : paths)
+   {
+      if (path.empty())
+         continue;
+
+      for (auto&& ext : { ".com", ".exe", ".bat", ".cmd" })
+      {
+         FilePath programPath = FilePath(path).completeChildPath(program + ext);
+         if (!programPath.exists())
+            continue;
+
+         *pProgramPath = programPath;
+         return Success();
+      }
+   }
+
+   return fileNotFoundError(program, ERROR_LOCATION);
+}
+
 bool isWin64()
 {
    return !getenv("PROCESSOR_ARCHITEW6432").empty()
