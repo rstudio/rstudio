@@ -20,7 +20,7 @@ import { DecorationSet, EditorView } from 'prosemirror-view';
 import React from 'react';
 import uniqby from 'lodash.uniqby';
 
-import { BibliographyManager, BibliographySource } from '../../api/bibliography/bibliography';
+import { BibliographyManager } from '../../api/bibliography/bibliography';
 import { CompletionHandler, CompletionResult, CompletionHeaderProps } from '../../api/completion';
 import { hasDOI } from '../../api/doi';
 import { searchPlaceholderDecoration } from '../../api/placeholder';
@@ -33,7 +33,7 @@ import { EditorEvents } from '../../api/events';
 import { parseCitation } from './cite';
 
 import './cite-completion.css';
-import { bibliographyCiteCompletionProvider, CiteCompletionProvider } from './cite-completion-bibliography';
+import { bibliographyCiteCompletionProvider } from './cite-completion-bibliography';
 
 const kAuthorMaxChars = 28;
 const kMaxCitationCompletions = 100;
@@ -46,7 +46,7 @@ export const kCitationCompleteScope = 'CitationScope';
 
 // An entry which includes the source as well
 // additional metadata for displaying a bibliograph item
-export interface ReferenceEntry {
+export interface CiteCompletionEntry {
   id: string;
   type: string;
   primaryText: string;
@@ -57,13 +57,21 @@ export interface ReferenceEntry {
   replace: (view: EditorView, pos: number, server: PandocServer) => Promise<void>;
 }
 
+export interface CiteCompletionProvider {
+  exactMatch: (searchTerm: string) => boolean;
+  search: (searchTerm: string, maxCompletions: number) => CiteCompletionEntry[];
+  currentEntries: () => CiteCompletionEntry[] | undefined;
+  streamEntries: (doc: ProsemirrorNode, onStreamReady: (entries: CiteCompletionEntry[]) => void) => void;
+  awaitEntries: (doc: ProsemirrorNode) => Promise<CiteCompletionEntry[]>;
+  warningMessage(): string | undefined;
+}
 
 export function citationCompletionHandler(
   ui: EditorUI,
   _events: EditorEvents,
   bibManager: BibliographyManager,
   server: PandocServer,
-): CompletionHandler<ReferenceEntry> {
+): CompletionHandler<CiteCompletionEntry> {
 
   const completionProvider = bibliographyCiteCompletionProvider(ui, bibManager);
 
@@ -74,16 +82,19 @@ export function citationCompletionHandler(
 
     completions: citationCompletions(ui, completionProvider),
 
-    filter: (entries: ReferenceEntry[], state: EditorState, token: string) => {
+    filter: (entries: CiteCompletionEntry[], state: EditorState, token: string) => {
       return filterCitations(token, completionProvider, entries, ui, state.doc);
     },
 
-    replace(view: EditorView, pos: number, entry: ReferenceEntry | null) {
-      entry?.replace(view, pos, server);
+    replace(view: EditorView, pos: number, entry: CiteCompletionEntry | null) {
+      // If there is an entry selected, insert it into the document
+      if (entry) {
+        entry.replace(view, pos, server);
+      }
       return Promise.resolve();
     },
 
-    replacement(_schema: Schema, entry: ReferenceEntry | null): string | ProsemirrorNode | null {
+    replacement(_schema: Schema, entry: CiteCompletionEntry | null): string | ProsemirrorNode | null {
       if (entry) {
         return entry.id;
       } else {
@@ -93,15 +104,16 @@ export function citationCompletionHandler(
 
     view: {
       header: () => {
-        if (bibManager.warning()) {
+        const waringMessage = completionProvider.warningMessage();
+        if (waringMessage) {
           return {
             component: CompletionWarningHeaderView,
             height: kHeaderHeight,
-            message: bibManager.warning(),
+            message: waringMessage,
           };
         }
       },
-      component: ReferenceCompletionItemView,
+      component: CiteCompletionItemView,
       key: entry => entry.id,
       width: kCiteCompletionWidth,
       height: 54,
@@ -111,7 +123,7 @@ export function citationCompletionHandler(
   };
 }
 
-function filterCitations(token: string, completionProvider: CiteCompletionProvider, entries: ReferenceEntry[], ui: EditorUI, doc: ProsemirrorNode) {
+function filterCitations(token: string, completionProvider: CiteCompletionProvider, entries: CiteCompletionEntry[], ui: EditorUI, doc: ProsemirrorNode) {
   // Empty query or DOI
   if (token.trim().length === 0 || hasDOI(token)) {
     return entries;
@@ -131,17 +143,17 @@ function filterCitations(token: string, completionProvider: CiteCompletionProvid
 }
 
 
-function dedupe(entries: ReferenceEntry[]): ReferenceEntry[] {
-  return uniqby(entries, (entry: ReferenceEntry) => `${entry.id}${entry.type}`);;
+function dedupe(entries: CiteCompletionEntry[]): CiteCompletionEntry[] {
+  return uniqby(entries, (entry: CiteCompletionEntry) => `${entry.id}${entry.type}`);;
 }
 
-function sortEntries(entries: ReferenceEntry[]): ReferenceEntry[] {
+function sortEntries(entries: CiteCompletionEntry[]): CiteCompletionEntry[] {
   const dedupedSources = dedupe(entries);
   return dedupedSources.sort((a, b) => a.id.localeCompare(b.id));
 }
 
 function citationCompletions(ui: EditorUI, completionProvider: CiteCompletionProvider) {
-  return (_text: string, context: EditorState | Transaction): CompletionResult<ReferenceEntry> | null => {
+  return (_text: string, context: EditorState | Transaction): CompletionResult<CiteCompletionEntry> | null => {
 
 
     const parsed = parseCitation(context);
@@ -157,8 +169,8 @@ function citationCompletions(ui: EditorUI, completionProvider: CiteCompletionPro
           if (currentEntries) {
 
             // kick off another load which we'll stream in by setting entries
-            let loadedEntries: ReferenceEntry[] | null = null;
-            completionProvider.streamEntries(context.doc, (entries: ReferenceEntry[]) => {
+            let loadedEntries: CiteCompletionEntry[] | null = null;
+            completionProvider.streamEntries(context.doc, (entries: CiteCompletionEntry[]) => {
               loadedEntries = sortEntries(entries);
             });
 
@@ -186,7 +198,7 @@ function citationCompletions(ui: EditorUI, completionProvider: CiteCompletionPro
 
 // The title may contain spans to control case specifically - consequently, we need
 // to render the title as HTML rather than as a string
-export const ReferenceCompletionItemView: React.FC<ReferenceEntry> = entry => {
+export const CiteCompletionItemView: React.FC<CiteCompletionEntry> = entry => {
   return (
     <CompletionItemView
       width={kCiteCompletionWidth - kCiteCompletionItemPadding}

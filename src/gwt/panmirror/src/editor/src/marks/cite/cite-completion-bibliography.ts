@@ -12,27 +12,18 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+import { Node as ProsemirrorNode } from 'prosemirror-model';
+import { EditorView } from 'prosemirror-view';
 
 import { BibliographySource, BibliographyManager } from '../../api/bibliography/bibliography';
-import { Node as ProsemirrorNode } from 'prosemirror-model';
-import { EditorUI } from '../../api/ui';
-import { imageForType } from '../../api/csl';
-import { formatAuthors, formatIssuedDate } from '../../api/cite';
 import { kZoteroProviderKey } from '../../api/bibliography/bibliography-provider_zotero';
-import { EditorView } from 'prosemirror-view';
-import { insertCitation as insertSingleCitation, performCiteCompletionReplacement } from './cite';
+import { formatAuthors, formatIssuedDate } from '../../api/cite';
+import { imageForType } from '../../api/csl';
 import { PandocServer } from '../../api/pandoc';
-import { ReferenceEntry } from './cite-completion';
+import { EditorUI } from '../../api/ui';
 
-
-export interface CiteCompletionProvider {
-  exactMatch: (searchTerm: string) => boolean;
-  search: (searchTerm: string, maxCompletions: number) => ReferenceEntry[];
-  currentEntries: () => ReferenceEntry[] | undefined;
-  streamEntries: (doc: ProsemirrorNode, onStreamReady: (entries: ReferenceEntry[]) => void) => void;
-  awaitEntries: (doc: ProsemirrorNode) => Promise<ReferenceEntry[]>;
-}
-
+import { insertCitation as insertSingleCitation, performCiteCompletionReplacement } from './cite';
+import { CiteCompletionEntry, CiteCompletionProvider } from './cite-completion';
 
 export function bibliographyCiteCompletionProvider(ui: EditorUI, bibliographyManager: BibliographyManager): CiteCompletionProvider {
   return {
@@ -56,7 +47,7 @@ export function bibliographyCiteCompletionProvider(ui: EditorUI, bibliographyMan
         return undefined;
       }
     },
-    streamEntries: (doc: ProsemirrorNode, onStreamReady: (entries: ReferenceEntry[]) => void) => {
+    streamEntries: (doc: ProsemirrorNode, onStreamReady: (entries: CiteCompletionEntry[]) => void) => {
       bibliographyManager.load(ui, doc).then(() => {
         onStreamReady(bibliographyManager.allSources().map(source => referenceEntryForSource(source, ui, bibliographyManager)));
       });
@@ -64,11 +55,15 @@ export function bibliographyCiteCompletionProvider(ui: EditorUI, bibliographyMan
     awaitEntries: async (doc: ProsemirrorNode) => {
       await bibliographyManager.load(ui, doc);
       return bibliographyManager.allSources().map(source => referenceEntryForSource(source, ui, bibliographyManager));
+    },
+    warningMessage: () => {
+      return bibliographyManager.warning();
     }
+
   };
 }
 
-export function referenceEntryForSource(source: BibliographySource, ui: EditorUI, bibManager: BibliographyManager, forceLightMode?: boolean): ReferenceEntry {
+function referenceEntryForSource(source: BibliographySource, ui: EditorUI, bibManager: BibliographyManager, forceLightMode?: boolean): CiteCompletionEntry {
 
   return {
     id: source.id,
