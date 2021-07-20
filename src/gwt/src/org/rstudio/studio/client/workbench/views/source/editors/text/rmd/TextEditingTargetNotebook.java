@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
@@ -71,6 +72,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChunkHeaderParser;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteCacheEditorStyleEvent;
@@ -425,13 +427,22 @@ public class TextEditingTargetNotebook
 
    public void executeChunk(final Scope chunk)
    {
-      // note that all chunks (including Python chunks) execute
-      // within the 'R' scope. this primarily implies ensuring
-      // that a reticulate REPL (if any) is deactivated before
-      // attempting to run a chunk of code, and the underlying
-      // notebook logic will ensure Python chunks use reticulate
+      // ensure we're executing in R context by default
+      String language = ConsoleLanguageTracker.LANGUAGE_R;
+      
+      // if we're executing a Python chunk, we'll need to activate
+      // the Python REPL first
+      String header = docDisplay_.getLine(chunk.getPreamble().getRow());
+      Map<String, String> chunkOptions = RChunkHeaderParser.parse(header);
+      if (chunkOptions.containsKey("engine"))
+      {
+         String engine = chunkOptions.get("engine");
+         if (engine.contains("python"))
+            language = ConsoleLanguageTracker.LANGUAGE_PYTHON;
+      }
+      
       languageTracker_.adaptToLanguage(
-            ConsoleLanguageTracker.LANGUAGE_R,
+            language,
             () -> { executeChunkImpl(chunk); });
    }
 

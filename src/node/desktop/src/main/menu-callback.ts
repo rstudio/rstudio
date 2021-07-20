@@ -220,6 +220,10 @@ export class MenuCallback extends EventEmitter {
     return this.actions.get(id);
   }
 
+  cleanUpActions(): void {
+    // TODO
+  }
+
   /**
    * Convert RStudio shortcut string to Electron Accelerator
    */

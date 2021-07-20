@@ -71,6 +71,20 @@ public:
       return format_;
    }
 
+   bool hasModifiedProject()
+   {
+      if (!projectFile_.empty())
+      {
+         return FilePath(projectFile_.absolutePath()).getLastWriteTime() >
+                projectFile_.lastWriteTime();
+      }
+      else
+      {
+         return false;
+      }
+   }
+
+
    int port()
    {
       return port_;
@@ -98,6 +112,10 @@ protected:
       : QuartoJob(), previewFile_(previewFile), format_(format), port_(0)
    {
      readInputFileLines();
+
+     FilePath projectFile = quartoProjectConfigFile(previewFile_);
+     if (!projectFile.isEmpty())
+        projectFile_ = FileInfo(projectFile);
    }
 
    virtual std::string name()
@@ -267,6 +285,7 @@ private:
 
 private:
    FilePath previewFile_;
+   FileInfo projectFile_;
    std::vector<std::string> previewFileLines_;
    FilePath outputFile_;
    std::string allOutput_;
@@ -321,7 +340,8 @@ Error quartoPreviewRpc(const json::JsonRpcRequest& request,
 
    if (s_pPreview && s_pPreview->isRunning() &&
        (s_pPreview->previewFile() == previewFilePath) &&
-       (s_pPreview->format() == format))
+       (s_pPreview->format() == format &&
+        !s_pPreview->hasModifiedProject()))
    {
       json::Object eventJson;
       eventJson["id"] = s_pPreview->jobId();

@@ -15,7 +15,10 @@
 
 import { BrowserWindow, WebContents } from 'electron';
 
+import fs from 'fs';
+import os from 'os';
 import path from 'path';
+
 import { EventEmitter } from 'stream';
 import { logger } from '../core/logger';
 import { executeJavaScript } from './utils';
@@ -174,5 +177,14 @@ export class DesktopBrowserWindow extends EventEmitter {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   setViewerUrl(url: string): void {
     // TODO: in the Qt version this is implemented in webPage()
+  }
+
+  loadHtml(html: string): void {
+    const prefix = path.join(os.tmpdir(), 'rstudioTmpPage');
+    const uniqueDir = fs.mkdtempSync(prefix);
+    const uniqueFile = path.join(uniqueDir, 'tmp.html');
+    fs.writeFileSync(uniqueFile, html);
+    this.window.loadFile(uniqueFile);
+    // TODO: cleanup temp files?
   }
 }
