@@ -23,36 +23,48 @@ import { EditorServer } from '../../api/server';
 import { XRef } from '../../api/xref';
 import { kXRefTypes } from '../xref/xref-completion';
 
+const kCiteCompletionTypeXref = "xref";
+
 export function quartoXrefCiteCompletionProvider(ui: EditorUI, server: EditorServer): CiteCompletionProvider {
   const referenceEntryForXref = (xref: XRef, forceLightMode?: boolean): CiteCompletionEntry => {
 
     // The type (e.g. fig)
     const type = kXRefTypes[xref.type];
 
-    // The image
-    const image = type?.image(ui) || ui.images.omni_insert?.generic!;
-
     // The id (e.g. fig-foobar)
     const id = `${xref.type}-${xref.id}`;
+
+    // The display text for the entry
+    const primaryText = id;
+    const secondaryText = (len: number) => {
+      return xref.file;
+    };
+    const detailText = xref.title || "";
+
+    // The image and adornment
+    const image = type?.image(ui) || ui.images.omni_insert?.generic!;
+    const imageAdornment = undefined;
+
+    // Insert item
+    const replace = (view: EditorView, pos: number, _server: EditorServer) => {
+      // It's already in the bibliography, just write the id
+      const tr = view.state.tr;
+      const schema = view.state.schema;
+      const idMark = schema.text(id, [schema.marks.cite_id.create()]);
+      performCiteCompletionReplacement(tr, pos, idMark);
+      view.dispatch(tr);
+      return Promise.resolve();
+    };
+
     return {
       id,
-      type: "xref",
-      primaryText: id,
-      secondaryText: (len: number) => {
-        return xref.file;
-      },
-      detailText: xref.title || "",
+      type: kCiteCompletionTypeXref,
+      primaryText,
+      secondaryText,
+      detailText,
       image,
-      imageAdornment: undefined,
-      replace: (view: EditorView, pos: number, _server: EditorServer) => {
-        // It's already in the bibliography, just write the id
-        const tr = view.state.tr;
-        const schema = view.state.schema;
-        const idMark = schema.text(id, [schema.marks.cite_id.create()]);
-        performCiteCompletionReplacement(tr, pos, idMark);
-        view.dispatch(tr);
-        return Promise.resolve();
-      }
+      imageAdornment,
+      replace
     };
   };
 

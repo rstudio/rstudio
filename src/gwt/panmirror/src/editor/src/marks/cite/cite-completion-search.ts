@@ -19,15 +19,9 @@ import { CiteCompletionEntry } from "./cite-completion";
 
 const searchFields: Fuse.FuseOptionKeyObject[] = [
   { name: 'id', weight: 30 },
+  { name: 'index.secondary', weight: 30 },
+  { name: 'index.tertiary', weight: 5 },
 ];
-
-const searchOptions = {
-  isCaseSensitive: false,
-  shouldSort: true,
-  includeMatches: false,
-  includeScore: false,
-  keys: searchFields,
-};
 
 export interface CiteCompletionSearch {
   setEntries: (entries: CiteCompletionEntry[]) => void;
@@ -38,21 +32,29 @@ export interface CiteCompletionSearch {
 export function completionIndex(defaultEntries?: CiteCompletionEntry[]): CiteCompletionSearch {
   // build search index
   const options = {
-    ...searchOptions,
-    keys: searchFields.map(field => field.name),
+    isCaseSensitive: false,
+    shouldSort: true,
+    includeMatches: true,
+    includeScore: true,
+    minMatchCharLength: 3,
+    threshold: 0.475,
+    keys: searchFields,
   };
 
   defaultEntries = defaultEntries || [];
-  const index = Fuse.createIndex<CiteCompletionEntry>(options.keys, defaultEntries);
+  const index = Fuse.createIndex<CiteCompletionEntry>(searchFields, defaultEntries);
   const fuse = new Fuse(defaultEntries, options, index);
   let indexedEntries: CiteCompletionEntry[] = [];
+
   return {
     setEntries: (entries: CiteCompletionEntry[]) => {
       fuse.setCollection(entries);
       indexedEntries = entries;
     },
     search: (searchTerm: string): CiteCompletionEntry[] => {
-      return fuse.search(searchTerm).map(result => result.item);
+      const results = fuse.search('^' + searchTerm, { ...options, limit: 100 });
+      console.log(results);
+      return results.map(result => result.item);
     },
     exactMatch: (searchTerm: string): boolean => {
       return indexedEntries.some(entry => entry.id === searchTerm);

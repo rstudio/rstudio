@@ -59,6 +59,10 @@ export interface CiteCompletionEntry {
   image?: string;
   imageAdornment?: string;
   replace: (view: EditorView, pos: number, server: EditorServer) => Promise<void>;
+  index?: {
+    secondary?: string;
+    tertiary?: string;
+  };
 }
 
 export interface CiteCompletionProvider {
@@ -162,7 +166,6 @@ function sortEntries(entries: CiteCompletionEntry[]): CiteCompletionEntry[] {
 
 function citationCompletions(ui: EditorUI, completionProviders: CiteCompletionProvider[], citeSearch: CiteCompletionSearch) {
   return (_text: string, context: EditorState | Transaction): CompletionResult<CiteCompletionEntry> | null => {
-
 
     const parsed = parseCitation(context);
     if (parsed) {

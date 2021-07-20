@@ -18,54 +18,88 @@ import { EditorView } from 'prosemirror-view';
 import { BibliographySource, BibliographyManager } from '../../api/bibliography/bibliography';
 import { kZoteroProviderKey } from '../../api/bibliography/bibliography-provider_zotero';
 import { formatAuthors, formatIssuedDate } from '../../api/cite';
-import { imageForType } from '../../api/csl';
+import { imageForType, CSLName } from '../../api/csl';
 import { EditorUI } from '../../api/ui';
 
 import { insertCitation as insertSingleCitation, performCiteCompletionReplacement } from './cite';
 import { CiteCompletionEntry, CiteCompletionProvider } from './cite-completion';
 import { EditorServer } from '../../api/server';
 
+const kCiteCompletionTypeBibliography = "bibl";
+
 export function bibliographyCiteCompletionProvider(ui: EditorUI, bibliographyManager: BibliographyManager): CiteCompletionProvider {
 
   const referenceEntryForSource = (source: BibliographySource, forceLightMode?: boolean): CiteCompletionEntry => {
-    return {
-      id: source.id,
-      type: "citation",
-      primaryText: source.id,
-      secondaryText: (len: number) => {
-        const authorStr = formatAuthors(source.author, len - source.id.length);
-        const date = source.issued ? formatIssuedDate(source.issued) : '';
-        const detail = `${authorStr} ${date}`;
-        return detail;
-      },
-      detailText: source.title || source['short-title'] || source['container-title'] || source.type,
-      image: imageForType(ui.images, source.type)[ui.prefs.darkMode() && !forceLightMode ? 1 : 0],
-      imageAdornment: source.providerKey === kZoteroProviderKey ? ui.images.citations?.zoteroOverlay : undefined,
-      replace: (view: EditorView, pos: number, server: EditorServer) => {
-        if (source && bibliographyManager.findIdInLocalBibliography(source.id)) {
-          // It's already in the bibliography, just write the id
-          const tr = view.state.tr;
-          const schema = view.state.schema;
-          const id = schema.text(source.id, [schema.marks.cite_id.create()]);
-          performCiteCompletionReplacement(tr, pos, id);
-          view.dispatch(tr);
-          return Promise.resolve();
-        } else if (source) {
-          // It isn't in the bibliography, show the insert cite dialog
-          return insertSingleCitation(
-            view,
-            source.DOI || '',
-            bibliographyManager,
-            pos,
-            ui,
-            server.pandoc,
-            source,
-            bibliographyManager.providerName(source.providerKey),
-          );
-        } else {
-          return Promise.resolve();
-        }
+
+    // Core item metadata
+    const id = source.id;
+    const primaryText = id;
+    const detailText = source.title || source['short-title'] || source['container-title'] || source.type;
+    const image = imageForType(ui.images, source.type)[ui.prefs.darkMode() && !forceLightMode ? 1 : 0];
+    const imageAdornment = source.providerKey === kZoteroProviderKey ? ui.images.citations?.zoteroOverlay : undefined;
+
+    // The author text (and index representation)
+    const secondaryText = (len: number) => {
+      const authorStr = formatAuthors(source.author, len - source.id.length);
+      const date = source.issued ? formatIssuedDate(source.issued) : '';
+      const detail = `${authorStr} ${date}`;
+      return detail;
+    };
+    const authorIndexStr = (cslName: CSLName) => {
+      const names: string[] = [];
+      if (cslName.family) {
+        names.push(cslName.family);
       }
+      if (cslName.given) {
+        names.push(cslName.given);
+      }
+      if (cslName.literal) {
+        names.push(cslName.literal);
+      }
+      return names.join(" ");
+    }
+    const secondaryIndex = source.author?.map(authorIndexStr).join(" ");
+
+    // The function to insert this entry
+    const replace = (view: EditorView, pos: number, server: EditorServer) => {
+      if (source && bibliographyManager.findIdInLocalBibliography(source.id)) {
+        // It's already in the bibliography, just write the id
+        const tr = view.state.tr;
+        const schema = view.state.schema;
+        const citeIdMark = schema.text(source.id, [schema.marks.cite_id.create()]);
+        performCiteCompletionReplacement(tr, pos, citeIdMark);
+        view.dispatch(tr);
+        return Promise.resolve();
+      } else if (source) {
+        // It isn't in the bibliography, show the insert cite dialog
+        return insertSingleCitation(
+          view,
+          source.DOI || '',
+          bibliographyManager,
+          pos,
+          ui,
+          server.pandoc,
+          source,
+          bibliographyManager.providerName(source.providerKey),
+        );
+      } else {
+        return Promise.resolve();
+      }
+    };
+
+    return {
+      id,
+      type: kCiteCompletionTypeBibliography,
+      primaryText,
+      secondaryText,
+      detailText,
+      image,
+      imageAdornment,
+      index: {
+        secondary: secondaryIndex,
+        tertiary: detailText
+      },
+      replace
     };
   };
 
