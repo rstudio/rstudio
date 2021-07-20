@@ -593,6 +593,10 @@ public class TextEditingTarget implements
                if (commands_.interruptR().isEnabled())
                   commands_.interruptR().execute();
             }
+            else if (continueSpecialCommentOnNewline(ne))
+            {
+               // nothing to do; continueSpecialCommentOnNewline() does all the magic
+            }
             else if (
                   prefs_.continueCommentsOnNewline().getValue() &&
                   !docDisplay_.isPopupVisible() &&
@@ -8580,6 +8584,54 @@ public class TextEditingTarget implements
             }
          });
       }
+   }
+   
+   private boolean continueSpecialCommentOnNewline(NativeEvent event)
+   {
+      // only handle plain Enter insertions
+      if (event.getKeyCode() != KeyCodes.KEY_ENTER)
+         return false;
+      
+      int modifier = KeyboardShortcut.getModifierValue(event);
+      if (modifier != KeyboardShortcut.NONE)
+         return false;
+      
+      String line = docDisplay_.getCurrentLineUpToCursor();
+
+      // validate that this line is composed of only comments and whitespace
+      // (necessary to check token type for e.g. Markdown documents)
+      // https://github.com/rstudio/rstudio/issues/6421
+      JsArray<Token> tokens =
+            docDisplay_.getTokens(docDisplay_.getCursorPosition().getRow());
+               
+      for (int i = 0, n = tokens.length(); i < n; i++)
+      {
+         Token token = tokens.get(i);
+
+         // allow for empty whitespace tokens
+         String value = token.getValue();
+         if (value.trim().isEmpty())
+            continue;
+
+         // if this isn't a comment, bail
+         // allow tokens explicitly declared as comments
+         if (!token.hasType("comment"))
+            return false;
+      }
+      
+      // NOTE: we are generous with our pattern definition here
+      // as we've already validated this is a comment token above
+      Pattern pattern = Pattern.create("^(\\s*(?:#+|%+|//+)['*>|]\\s*)");
+      Match match = pattern.match(line, 0);
+      if (match == null)
+         return false;
+      
+      event.preventDefault();
+      event.stopPropagation();
+      docDisplay_.insertCode("\n" + match.getGroup(1));
+      docDisplay_.ensureCursorVisible();
+      
+      return true;
    }
 
    private StatusBar statusBar_;

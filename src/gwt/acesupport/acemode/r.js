@@ -96,23 +96,6 @@ define("mode/r", ["require", "exports", "module"], function(require, exports, mo
          return "";
       };
 
-      this.transformAction = function(state, action, editor, session, text) {
-
-         if (action === 'insertion' && text === "\n") {
-
-            // Continue certain special comments by default
-            var pos = editor.getSelectionRange().start;
-            var docLine = session.doc.getLine(pos.row);
-            var match = /^((\s*#+['>*|])\s*)/.exec(docLine);
-            if (match && editor.getSelectionRange().start.column >= match[2].length) {
-               return {text: "\n" + match[1]};
-            }
-         }
-
-         return false;
-
-      };
-
       this.$id = "mode/r";
    }).call(Mode.prototype);
    exports.Mode = Mode;
