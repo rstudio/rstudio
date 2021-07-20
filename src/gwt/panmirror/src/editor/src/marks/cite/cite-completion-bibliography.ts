@@ -69,21 +69,7 @@ export function bibliographyCiteCompletionProvider(ui: EditorUI, bibliographyMan
     };
   };
 
-
   return {
-    exactMatch: (searchTerm: string) => {
-      if (bibliographyManager.localSources().find(source => source.id === searchTerm)) {
-        return true;
-      } else {
-        return false;
-      }
-    },
-    search: (searchTerm: string, maxCompletions: number) => {
-      const results = bibliographyManager.searchAllSources(searchTerm, maxCompletions).map(entry =>
-        referenceEntryForSource(entry),
-      );
-      return results;
-    },
     currentEntries: () => {
       if (bibliographyManager.hasSources()) {
         return bibliographyManager.allSources().map(source => referenceEntryForSource(source));

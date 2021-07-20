@@ -36,6 +36,7 @@ import './cite-completion.css';
 import { bibliographyCiteCompletionProvider } from './cite-completion-bibliography';
 import { EditorFormat, kQuartoDocType } from '../../api/format';
 import { quartoXrefCiteCompletionProvider } from './cite-completion-quarto-xref';
+import { completionIndex, CiteCompletionSearch } from './cite-completion-search';
 
 
 const kAuthorMaxChars = 28;
@@ -61,12 +62,10 @@ export interface CiteCompletionEntry {
 }
 
 export interface CiteCompletionProvider {
-  exactMatch: (searchTerm: string) => boolean;
-  search: (searchTerm: string, maxCompletions: number) => CiteCompletionEntry[];
   currentEntries: () => CiteCompletionEntry[] | undefined;
   streamEntries: (doc: ProsemirrorNode, onStreamReady: (entries: CiteCompletionEntry[]) => void) => void;
   awaitEntries: (doc: ProsemirrorNode) => Promise<CiteCompletionEntry[]>;
-  warningMessage(): string | undefined;
+  warningMessage: () => string | undefined;
 }
 
 export function citationCompletionHandler(
@@ -77,20 +76,24 @@ export function citationCompletionHandler(
   format: EditorFormat
 ): CompletionHandler<CiteCompletionEntry> {
 
+  // Load the providers
   const completionProviders = [bibliographyCiteCompletionProvider(ui, bibManager)];
   if (format.docTypes.includes(kQuartoDocType)) {
+    // If this is a Quarto doc, use the quartoXref provider
     completionProviders.push(quartoXrefCiteCompletionProvider(ui, server));
   }
+  // create the search index
+  const searchIndex = completionIndex();
 
   return {
     id: 'AB9D4F8C-DA00-403A-AB4A-05373906FD8C',
 
     scope: kCitationCompleteScope,
 
-    completions: citationCompletions(ui, completionProviders),
+    completions: citationCompletions(ui, completionProviders, searchIndex),
 
     filter: (entries: CiteCompletionEntry[], state: EditorState, token: string) => {
-      return filterCitations(token, completionProviders, entries, ui, state.doc);
+      return filterCitations(token, completionProviders, searchIndex, entries, ui, state.doc);
     },
 
     replace(view: EditorView, pos: number, entry: CiteCompletionEntry | null) {
@@ -130,7 +133,7 @@ export function citationCompletionHandler(
   };
 }
 
-function filterCitations(token: string, completionProviders: CiteCompletionProvider[], entries: CiteCompletionEntry[], ui: EditorUI, doc: ProsemirrorNode) {
+function filterCitations(token: string, completionProviders: CiteCompletionProvider[], citeSearch: CiteCompletionSearch, entries: CiteCompletionEntry[], ui: EditorUI, doc: ProsemirrorNode) {
   // Empty query or DOI
   if (token.trim().length === 0 || hasDOI(token)) {
     return entries;
@@ -139,18 +142,12 @@ function filterCitations(token: string, completionProviders: CiteCompletionProvi
   // Ignore any punctuation at the end of the token
   const tokenWithoutEndPunctuation = token.match(/.*[^\,\!\?\.\:]/);
   const completionId = tokenWithoutEndPunctuation ? tokenWithoutEndPunctuation[0] : token;
-  if (completionProviders.some(provider => provider.exactMatch(completionId))) {
+  if (citeSearch.exactMatch(completionId)) {
     return [];
   }
 
   // Perform a search
-  const searchResults: CiteCompletionEntry[] = [];
-  completionProviders.forEach(provider => {
-    const results = provider.search(token, kMaxCitationCompletions);
-    if (results) {
-      searchResults.push(...results);
-    }
-  });
+  const searchResults = citeSearch.search(token);
   return dedupe(searchResults || []);
 }
 
@@ -163,7 +160,7 @@ function sortEntries(entries: CiteCompletionEntry[]): CiteCompletionEntry[] {
   return dedupedSources.sort((a, b) => a.id.localeCompare(b.id));
 }
 
-function citationCompletions(ui: EditorUI, completionProviders: CiteCompletionProvider[]) {
+function citationCompletions(ui: EditorUI, completionProviders: CiteCompletionProvider[], citeSearch: CiteCompletionSearch) {
   return (_text: string, context: EditorState | Transaction): CompletionResult<CiteCompletionEntry> | null => {
 
 
@@ -175,22 +172,34 @@ function citationCompletions(ui: EditorUI, completionProviders: CiteCompletionPr
         offset: parsed.offset,
         completions: async (_state: EditorState) => {
 
-          // otherwise, do search and provide results when ready     
-          let currentEntries: CiteCompletionEntry[] | undefined;
-          completionProviders.map(provider => {
-            const entries = provider.currentEntries();
-            if (entries) {
-              currentEntries = currentEntries || [];
-              currentEntries.push(...entries);
-            }
-          });
+          // If all providers have entries already loaded, we can use those and stream any updates
+          const hasCurrentEntries = completionProviders.every(provider => provider.currentEntries());
+          if (hasCurrentEntries) {
 
-          if (currentEntries) {
+            let currentEntries: CiteCompletionEntry[] = [];
+            completionProviders.forEach(provider => {
+              const entries = provider.currentEntries();
+              if (entries) {
+                currentEntries = currentEntries || [];
+                currentEntries.push(...entries);
+              }
+            });
+
+            // Index the current Entries
+            citeSearch.setEntries(currentEntries);
+
             // kick off another load which we'll stream in by setting entries
-            let loadedEntries: CiteCompletionEntry[] | null = null;
+            let loadedEntries: CiteCompletionEntry[] = [];
+            let providerCount = 0;
             completionProviders.forEach(provider => {
               provider.streamEntries(context.doc, (entries: CiteCompletionEntry[]) => {
-                loadedEntries = sortEntries(entries);
+                providerCount = providerCount + 1;
+
+                loadedEntries.push(...entries);
+                if (providerCount >= completionProviders.length) {
+                  loadedEntries = sortEntries(loadedEntries);
+                  citeSearch.setEntries(loadedEntries);
+                }
               });
             });
 
@@ -201,10 +210,15 @@ function citationCompletions(ui: EditorUI, completionProviders: CiteCompletionPr
             };
 
           } else {
+            // Otherwise, we need to wait and load the entries
             const promises = completionProviders.map(provider => provider.awaitEntries(context.doc));
             return Promise.all(promises).then(values => {
               const results: CiteCompletionEntry[] = [];
+
               values.forEach(value => results.push(...value));
+
+              // Index the current Entries
+              citeSearch.setEntries(results);
               return sortEntries(results);
             });
           }

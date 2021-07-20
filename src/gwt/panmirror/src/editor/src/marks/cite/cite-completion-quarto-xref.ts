@@ -58,12 +58,6 @@ export function quartoXrefCiteCompletionProvider(ui: EditorUI, server: EditorSer
 
   let loadedEntries: CiteCompletionEntry[] | undefined;
   return {
-    exactMatch: (searchTerm: string) => {
-      return loadedEntries?.some(entry => entry.id === searchTerm) || false;
-    },
-    search: (searchTerm: string, maxCompletions: number) => {
-      return loadedEntries?.filter(entry => entry.id.startsWith(searchTerm)) || [];
-    },
     currentEntries: () => {
       return loadedEntries;
     },
@@ -89,7 +83,6 @@ export function quartoXrefCiteCompletionProvider(ui: EditorUI, server: EditorSer
     warningMessage: () => {
       return undefined;
     }
-
   };
 }
 
