@@ -399,6 +399,10 @@ FilePath::FilePath(const char* in_absolutePath) :
             new Impl(fromString(in_absolutePath)) :
             new Impl())
 {
+   if (in_absolutePath == nullptr)
+   {
+      log::logDebugMessage("Creating an empty FilePath from a null path", ERROR_LOCATION);
+   }
 }
 
 #ifdef _WIN32
@@ -407,6 +411,10 @@ FilePath::FilePath(const wchar_t* in_absolutePath)
          new Impl(in_absolutePath):
          new Impl())
 {
+   if (in_absolutePath == nullptr)
+   {
+      log::logDebugMessage("Creating an empty FilePath from a null path", ERROR_LOCATION);
+   }
 }
 #endif
 
