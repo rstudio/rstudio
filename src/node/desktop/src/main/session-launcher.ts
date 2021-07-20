@@ -379,6 +379,10 @@ export class SessionLauncher {
       logger().logError(error);
     }
 
+    if (appState().sessionStartDelaySeconds > 0) {
+      setenv('RSTUDIO_SESSION_SLEEP_ON_STARTUP', appState().sessionStartDelaySeconds.toString());
+    }
+
     // TODO
     // we need indirection through arch to handle arm64
     // see C++ sources...
