@@ -30,9 +30,11 @@
 * Fixed issue with autocompletion of column names within native-piped R expressions (#9385)
 * Fixed issue where help requests for Python objects would fail with reticulate 1.20 (#9311)
 * Fixed issue where busy sessions can't be interrupted and block basic file operations (#2038)
+* Fixed issue where R Markdown error output was not properly formatted when displayed (#9390)
 * Fixed issue where R Markdown template skeletons with a '.rmd' extension were not discovered (Pro #1607)
 * Fixed issues causing multiple background jobs to be created when running Shiny applications in the background (#8746, #6904)
 * Fixed issue causing an error when adding files to static content published to RStudio Connect (#9571)
+* Fixed issue where R banner could be displayed twice on startup (#6907)
 * Removed the breaking change introduced in Juliet Rose that changed the behavior of the X-Forwarded-Proto header when RSW is behind a proxy server (Pro #2657)
 
 
@@ -40,6 +42,7 @@
 
 * **BREAKING:** RStudio Desktop Pro only supports activation with license files (Pro #2300)
 * Fixed an issue where scroll position in PDFs was not preserved on re-render (#9603)
+* Support highlight of 'css' and 'asis' chunks in R Markdown documents (#4821)
 * Improved ordering of completion results within `library()` calls (#9293)
 * Syntax support for embedded knitr chunks (#9579)
 * Added support for publishing Quarto documents and websites (#9556)

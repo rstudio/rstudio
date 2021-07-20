@@ -15,8 +15,6 @@
 
 import { BrowserWindow, dialog, Menu, session } from 'electron';
 import path from 'path';
-import fs from 'fs';
-import os from 'os';
 import { ChildProcess } from 'child_process';
 
 import { logger } from '../core/logger';
@@ -125,9 +123,12 @@ export class MainWindow extends GwtWindow {
       this.onLoadFinished(false);
     });
 
-    // TODO
-    // connect(webPage(), &QWebEnginePage::loadFinished,
-    //         &menuCallback_, &MenuCallback::cleanUpActions);
+    this.webView.webContents.on('did-finish-load', () => {
+      this.menuCallback.cleanUpActions();
+    });
+    this.webView.webContents.on('did-fail-load', () => {
+      this.menuCallback.cleanUpActions();
+    });
 
     // connect(&desktopInfo(), &DesktopInfo::fixedWidthFontListChanged, [this]() {
     //    QString js = QStringLiteral(
@@ -260,15 +261,6 @@ export class MainWindow extends GwtWindow {
       });
 
     this.window.loadURL(url);
-  }
-
-  loadHtml(html: string): void {
-    const prefix = path.join(os.tmpdir(), 'rstudioTmpPage');
-    const uniqueDir = fs.mkdtempSync(prefix);
-    const uniqueFile = path.join(uniqueDir, 'tmp.html');
-    fs.writeFileSync(uniqueFile, html);
-    this.window.loadFile(uniqueFile);
-    // TODO: cleanup temp files?
   }
 
   quit(): void {
