@@ -158,7 +158,7 @@ Error realPath(const FilePath& filePath, FilePath* pRealPath)
 
 Error realPath(const std::string& path, FilePath* pRealPath)
 {
-   char buffer[PATH_MAX*2];
+   char buffer[PATH_MAX * 2];
    char* realPath = ::realpath(path.c_str(), buffer);
    if (realPath == nullptr)
    {
@@ -166,12 +166,39 @@ Error realPath(const std::string& path, FilePath* pRealPath)
       error.addProperty("path", path);
       return error;
    }
+   
   *pRealPath = FilePath(realPath);
    return Success();
 }
      
 void initHook()
 {
+}
+
+Error findProgramOnPath(const std::string& program,
+                        core::FilePath* pProgramPath)
+{
+   std::string path = core::system::getenv("PATH");
+   auto paths = core::algorithm::split(path, ":");
+
+   for (auto&& path : paths)
+   {
+      if (path.empty())
+         continue;
+      
+      FilePath candidatePath = FilePath(path).completeChildPath(program);
+      
+      // verify that the file exists and is executable
+      struct stat sb;
+      int status = ::stat(candidatePath.getAbsolutePath().c_str(), &sb);
+      if (status || (sb.st_mode & S_IXUSR) == 0)
+         continue;
+      
+      *pProgramPath = candidatePath;
+      return Success();
+   }
+
+   return fileNotFoundError(program, ERROR_LOCATION);
 }
 
 // statics defined in System.cpp
