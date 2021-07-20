@@ -226,7 +226,7 @@ function heading3OmniInsert(ui: EditorUI) {
 }
 
 function heading4OmniInsert(ui: EditorUI) {
-  return headingOmniInsert(ui, 4, ui.context.translateText('Smaller heading'), [
+  return headingOmniInsert(ui, 4, ui.context.translateText('Small heading'), [
     ui.images.omni_insert?.heading4!,
     ui.images.omni_insert?.heading4_dark!,
   ]);
@@ -235,6 +235,7 @@ function heading4OmniInsert(ui: EditorUI) {
 function headingOmniInsert(ui: EditorUI, level: number, description: string, images: [string, string]): OmniInsert {
   return {
     name: headingName(ui, level),
+    keywords: ["h" + level],
     description,
     group: OmniInsertGroup.Headings,
     image: () => (ui.prefs.darkMode() ? images[1] : images[0]),
