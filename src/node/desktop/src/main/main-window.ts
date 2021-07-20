@@ -152,11 +152,6 @@ export class MainWindow extends GwtWindow {
     //             QString());
     //   ::_exit(EXIT_FAILURE);
     // }
-    
-    this.window.on('close', () => {
-      const size = this.window.getSize();
-      DesktopOptions().saveWindowBounds({width: size[0], height: size[1]});
-    });
   }
 
   launchSession(reload: boolean): void {
