@@ -77,15 +77,11 @@ export function citationCompletionHandler(
   format: EditorFormat
 ): CompletionHandler<CiteCompletionEntry> {
 
-  const completionProviders = [quartoXrefCiteCompletionProvider(ui, server)];
-
-  server.xref.quartoIndexForFile(ui.context.getDocumentPath() || "").then(xref => console.log(xref));
-  /*
   const completionProviders = [bibliographyCiteCompletionProvider(ui, bibManager)];
   if (format.docTypes.includes(kQuartoDocType)) {
     completionProviders.push(quartoXrefCiteCompletionProvider(ui, server));
   }
-  */
+
   return {
     id: 'AB9D4F8C-DA00-403A-AB4A-05373906FD8C',
 

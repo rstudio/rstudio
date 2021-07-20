@@ -26,13 +26,18 @@ import { kXRefTypes } from '../xref/xref-completion';
 export function quartoXrefCiteCompletionProvider(ui: EditorUI, server: EditorServer): CiteCompletionProvider {
   const referenceEntryForXref = (xref: XRef, forceLightMode?: boolean): CiteCompletionEntry => {
 
+    // The type (e.g. fig)
     const type = kXRefTypes[xref.type];
+
+    // The image
     const image = type?.image(ui) || ui.images.omni_insert?.generic!;
 
+    // The id (e.g. fig-foobar)
+    const id = `${xref.type}-${xref.id}`;
     return {
-      id: xref.id,
-      type: "citation",
-      primaryText: xref.id,
+      id,
+      type: "xref",
+      primaryText: id,
       secondaryText: (len: number) => {
         return xref.file;
       },
@@ -43,8 +48,8 @@ export function quartoXrefCiteCompletionProvider(ui: EditorUI, server: EditorSer
         // It's already in the bibliography, just write the id
         const tr = view.state.tr;
         const schema = view.state.schema;
-        const id = schema.text(xref.id, [schema.marks.cite_id.create()]);
-        performCiteCompletionReplacement(tr, pos, id);
+        const idMark = schema.text(id, [schema.marks.cite_id.create()]);
+        performCiteCompletionReplacement(tr, pos, idMark);
         view.dispatch(tr);
         return Promise.resolve();
       }
@@ -57,8 +62,6 @@ export function quartoXrefCiteCompletionProvider(ui: EditorUI, server: EditorSer
       return loadedEntries?.some(entry => entry.id === searchTerm) || false;
     },
     search: (searchTerm: string, maxCompletions: number) => {
-      console.log(`Search: ${searchTerm}`);
-      console.log(loadedEntries);
       return loadedEntries?.filter(entry => entry.id.startsWith(searchTerm)) || [];
     },
     currentEntries: () => {
@@ -67,11 +70,8 @@ export function quartoXrefCiteCompletionProvider(ui: EditorUI, server: EditorSer
     streamEntries: (doc: ProsemirrorNode, onStreamReady: (entries: CiteCompletionEntry[]) => void) => {
       const docPath = ui.context.getDocumentPath();
       if (docPath) {
-        console.log(docPath);
         server.xref.quartoIndexForFile(docPath).then(xrefs => {
           loadedEntries = xrefs.refs.map(ref => referenceEntryForXref(ref));
-          console.log("STREAM");
-          console.log(loadedEntries);
           onStreamReady(loadedEntries);
         });
       }
@@ -81,9 +81,6 @@ export function quartoXrefCiteCompletionProvider(ui: EditorUI, server: EditorSer
       if (docPath) {
         const index = await server.xref.quartoIndexForFile(docPath);
         loadedEntries = index.refs.map(ref => referenceEntryForXref(ref));
-        console.log("AWAIT");
-        console.log(loadedEntries);
-
         return loadedEntries;
       } else {
         return Promise.resolve([]);
