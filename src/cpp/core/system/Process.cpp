@@ -308,8 +308,8 @@ namespace {
 bool hasActivity(const boost::shared_ptr<AsyncChildProcess>& childProc)
 {
    return
-         childProc->hasNonWhitelistSubprocess() ||
-         childProc->hasWhitelistSubprocess() ||
+         childProc->hasNonIgnoredSubprocess() ||
+         childProc->hasIgnoredSubprocess() ||
          childProc->hasRecentOutput();
 }
 

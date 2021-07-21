@@ -72,7 +72,7 @@ void buildFontDatabaseImpl()
 #ifdef _WIN32
       // screen out annoying Qt warnings when attempting to
       // initialize incompatible fonts
-      static std::set<std::string> blacklist = {
+      static std::set<std::string> ignored = {
          "8514oem",
          "Fixedsys",
          "Modern",
@@ -85,7 +85,7 @@ void buildFontDatabaseImpl()
          "Terminal"
       };
 
-      if (blacklist.count(family.toStdString()))
+      if (ignored.count(family.toStdString()))
          continue;
 #endif
 
