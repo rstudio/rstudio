@@ -61,44 +61,36 @@ export function xrefKey(xref: XRef, xrefType?: XRefType) {
   }
 }
 
-export function xrefPosition(doc: ProsemirrorNode, xref: string, xrefType: XRefType): number {
-  // Select the xref locator implementation appropriate for the type
-  // of xref that we're dealing with
-
-  // TODO: note that the strings that we receive here always look like bookdown cross references
-  const locatorImpl = xrefType === "quarto" ?
-    {
-      parseXRef: parseBookdownXRef,
-      xrefPositionLocators: quartoXrefPositionLocators
-    } :
-    {
-      parseXRef: parseBookdownXRef,
-      xrefPositionLocators: bookdownXrefPositionLocators
+export function parseQuartoXRef(xref: string) {
+  const dashPos = xref.indexOf('-');
+  if (dashPos !== -1) {
+    return {
+      type: xref.substring(0, dashPos),
+      id: xref.substring(dashPos + 1),
     };
-
-  // Locate the xref
-  return xrefPositionBase(doc, xref, locatorImpl);
+  } else {
+    return null;
+  }
 }
 
-// Implements parsing the xref string and provides
-// locators that can be used when find a specific id
-interface XRefLocatorImpl {
-  parseXRef: (xref: string) => {
-    id: string,
-    type: string
-  } | null;
-  xrefPositionLocators: { [key: string]: XRefPositionLocator };
+export function xrefPosition(doc: ProsemirrorNode, xref: string, xrefType: XRefType): number {
+
+  if (xrefType === 'quarto') {
+    return xrefPositionLocate(doc, xref, quartoXrefPositionLocators);
+  } else {
+    return xrefPositionLocate(doc, xref, bookdownXrefPositionLocators);
+  }
 }
 
-function xrefPositionBase(doc: ProsemirrorNode, xref: string, locatorImpl: XRefLocatorImpl) {
+function xrefPositionLocate(doc: ProsemirrorNode, xref: string, locators: Record<string, XRefPositionLocator>) {
   // -1 if not found
   let xrefPos = -1;
 
   // get type and id
-  const xrefInfo = locatorImpl.parseXRef(xref);
+  const xrefInfo = parseBookdownXRef(xref);
   if (xrefInfo) {
     const { type, id } = xrefInfo;
-    const locator = locatorImpl.xrefPositionLocators[type];
+    const locator = locators[type];
     if (locator) {
       // if this locator finds by mark then look at doc for marks
       if (locator.markType) {
@@ -143,18 +135,6 @@ function parseBookdownXRef(xref: string) {
     return {
       type: xref.substring(0, colonPos),
       id: xref.substring(colonPos + 1),
-    };
-  } else {
-    return null;
-  }
-}
-
-export function parseQuartoXRef(xref: string) {
-  const dashPos = xref.indexOf('-');
-  if (dashPos !== -1) {
-    return {
-      type: xref.substring(0, dashPos),
-      id: xref.substring(dashPos + 1),
     };
   } else {
     return null;
