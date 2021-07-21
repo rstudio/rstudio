@@ -41,28 +41,62 @@ export interface XRef {
   title?: string;
 }
 
-export function xrefKey(xref: XRef) {
-  // headings don't include their type in the key
-  const key = /^h\d$/.test(xref.type)
-    ? xref.id
-    : // no colon if there is no type
-    xref.type.length > 0
-    ? `${xref.type}:${xref.id}`
-    : xref.id;
+export type XRefType = "quarto" | "bookdown";
 
-  // return key with suffix
-  return key + xref.suffix;
+export function xrefKey(xref: XRef, xrefType?: XRefType) {
+  if (xrefType === "quarto") {
+    // Quarto keys are merely type-id
+    return `${xref.type}-${xref.id}`;
+  } else {
+    // headings don't include their type in the key
+    const key = /^h\d$/.test(xref.type)
+      ? xref.id
+      : // no colon if there is no type
+      xref.type.length > 0
+        ? `${xref.type}:${xref.id}`
+        : xref.id;
+
+    // return key with suffix
+    return key + xref.suffix;
+  }
 }
 
-export function xrefPosition(doc: ProsemirrorNode, xref: string): number {
+export function xrefPosition(doc: ProsemirrorNode, xref: string, xrefType: XRefType): number {
+  // Select the xref locator implementation appropriate for the type
+  // of xref that we're dealing with
+  const locatorImpl = xrefType === "quarto" ?
+    {
+      parseXRef: parseQuartoXRef,
+      xrefPositionLocators: quartoXrefPositionLocators
+    } :
+    {
+      parseXRef: parseBookdownXRef,
+      xrefPositionLocators: bookdownXrefPositionLocators
+    };
+
+  // Locate the xref
+  return xrefPositionBase(doc, xref, locatorImpl);
+}
+
+// Implements parsing the xref string and provides
+// locators that can be used when find a specific id
+interface XRefLocatorImpl {
+  parseXRef: (xref: string) => {
+    id: string,
+    type: string
+  } | null;
+  xrefPositionLocators: { [key: string]: XRefPositionLocator };
+}
+
+function xrefPositionBase(doc: ProsemirrorNode, xref: string, locatorImpl: XRefLocatorImpl) {
   // -1 if not found
   let xrefPos = -1;
 
   // get type and id
-  const xrefInfo = xrefTypeAndId(xref);
+  const xrefInfo = locatorImpl.parseXRef(xref);
   if (xrefInfo) {
     const { type, id } = xrefInfo;
-    const locator = xrefPositionLocators[type];
+    const locator = locatorImpl.xrefPositionLocators[type];
     if (locator) {
       // if this locator finds by mark then look at doc for marks
       if (locator.markType) {
@@ -79,7 +113,7 @@ export function xrefPosition(doc: ProsemirrorNode, xref: string): number {
             xrefPos = markedNode.pos;
           }
         });
-      } 
+      }
       if (xrefPos === -1 && locator.nodeTypes) {
         // otherwise recursively examine nodes to find the xref
         doc.descendants((node, pos) => {
@@ -101,12 +135,24 @@ export function xrefPosition(doc: ProsemirrorNode, xref: string): number {
   return xrefPos;
 }
 
-function xrefTypeAndId(xref: string) {
+function parseBookdownXRef(xref: string) {
   const colonPos = xref.indexOf(':');
   if (colonPos !== -1) {
     return {
       type: xref.substring(0, colonPos),
       id: xref.substring(colonPos + 1),
+    };
+  } else {
+    return null;
+  }
+}
+
+function parseQuartoXRef(xref: string) {
+  const dashPos = xref.indexOf('-');
+  if (dashPos !== -1) {
+    return {
+      type: xref.substring(0, dashPos),
+      id: xref.substring(dashPos + 1),
     };
   } else {
     return null;
@@ -119,7 +165,51 @@ interface XRefPositionLocator {
   hasXRef: (node: ProsemirrorNode, id: string, markType?: MarkType) => boolean;
 }
 
-const xrefPositionLocators: { [key: string]: XRefPositionLocator } = {
+const quartoXrefPositionLocators: { [key: string]: XRefPositionLocator } = {
+  sec: quartoHeadingLocator(),
+  fig: quartoDivLocator("fig"),
+  tbl: quartoTableLocator(),
+  eq: quartoDivLocator("eq"),
+  lst: quartoDivLocator("lst"),
+  thm: quartoDivLocator("thm"),
+  lem: quartoDivLocator("lem"),
+  cor: quartoDivLocator("cor"),
+  prp: quartoDivLocator("prp"),
+  cnj: quartoDivLocator("cnj"),
+  def: quartoDivLocator("def"),
+  exm: quartoDivLocator("exm"),
+  exr: quartoDivLocator("exr"),
+};
+
+// TODO: Provide real implementations of these locators
+function quartoDivLocator(type: string) {
+  return {
+    nodeTypes: ['div'],
+    hasXRef: (node: ProsemirrorNode, id: string) => {
+      return node.attrs.id === `${type}-${id}`;
+    },
+  };
+}
+
+function quartoHeadingLocator() {
+  return {
+    nodeTypes: ['heading'],
+    hasXRef: (node: ProsemirrorNode, id: string) => {
+      return node.attrs.id === `sec-${id}`;
+    },
+  };
+}
+
+function quartoTableLocator() {
+  return {
+    nodeTypes: ['caption'],
+    hasXRef: (node: ProsemirrorNode, id: string) => {
+      return node.attrs.id === `tbl-${id}`;
+    },
+  };
+}
+
+const bookdownXrefPositionLocators: { [key: string]: XRefPositionLocator } = {
   h1: headingLocator(),
   h2: headingLocator(),
   h3: headingLocator(),

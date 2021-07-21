@@ -20,7 +20,7 @@ import { EditorUI } from '../../api/ui';
 import { performCiteCompletionReplacement } from './cite';
 import { CiteCompletionEntry, CiteCompletionProvider } from './cite-completion';
 import { EditorServer } from '../../api/server';
-import { XRef } from '../../api/xref';
+import { XRef, xrefKey } from '../../api/xref';
 import { kXRefTypes } from '../xref/xref-completion';
 
 const kCiteCompletionTypeXref = "xref";
@@ -32,7 +32,7 @@ export function quartoXrefCiteCompletionProvider(ui: EditorUI, server: EditorSer
     const type = kXRefTypes[xref.type];
 
     // The id (e.g. fig-foobar)
-    const id = `${xref.type}-${xref.id}`;
+    const id = xrefKey(xref, "quarto");
 
     // The display text for the entry
     const primaryText = id;
