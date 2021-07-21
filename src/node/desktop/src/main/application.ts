@@ -40,6 +40,7 @@ export const kTempCookiesOption = '--use-temp-cookies';
 export const kVersion = '--version';
 export const kVersionJson = '--version-json';
 export const kLogLevel = 'log-level';
+export const kDelaySessionSeconds = 'session-delay-seconds';
 
 /**
  * The RStudio application
@@ -52,6 +53,7 @@ export class Application implements AppState {
   port = generateRandomPort();
   windowTracker = new WindowTracker();
   gwtCallback?: GwtCallback;
+  sessionStartDelaySeconds = 0;
 
   appLaunch?: ApplicationLaunch;
   sessionLauncher?: SessionLauncher;
@@ -112,6 +114,14 @@ export class Application implements AppState {
       if (!this.sessionPath.existsSync()) {
         dialog.showErrorBox('Dev Mode Config', `rsession: ${this.sessionPath.getAbsolutePath()} not found.'`);
         return exitFailure();
+      }
+    }
+
+    // switch for setting a session start delay in seconds (used for testing, troubleshooting)
+    if (app.commandLine.hasSwitch(kDelaySessionSeconds)) {
+      const delay = parseInt(app.commandLine.getSwitchValue(kDelaySessionSeconds), 10);
+      if (!isNaN(delay) && delay > 0) {
+        this.sessionStartDelaySeconds = delay;
       }
     }
 

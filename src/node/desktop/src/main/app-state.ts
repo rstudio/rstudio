@@ -36,6 +36,7 @@ export interface AppState {
   gwtCallback?: GwtCallback;
   setScratchTempDir(path: FilePath): void;
   scratchTempDir(defaultPath: FilePath): FilePath;
+  sessionStartDelaySeconds: number;
 }
 
 let rstudio: AppState | null = null;

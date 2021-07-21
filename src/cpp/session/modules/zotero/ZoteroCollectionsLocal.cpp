@@ -383,20 +383,27 @@ ZoteroCollectionSpecs getCollections(boost::shared_ptr<database::IConnection> pC
    ZoteroCollectionSpecs specs;
    Error error = execQuery(pConnection, sql, [&specs](const database::Row& row) {
 
-      ZoteroCollectionSpec spec;
-      spec.name = row.get<std::string>("collectionName");
-      spec.key = readString(row, "collectionKey", "-1");
-
-      std::string versionStr = readString(row, "version", "0");
-      spec.version = safe_convert::stringTo<int>(versionStr, 0);
-
-      const soci::indicator indicator = row.get_indicator("parentCollectionKey");
-      if (indicator == soci::i_ok)
+      // had this issue: https://github.com/rstudio/rstudio/issues/8861
+      // perhaps a corrupted collection or a collection using an older
+      // schema that was unversioned?
+      try
       {
-         // If the parent key is not null, this is a child collection
-         spec.parentKey = row.get<std::string>("parentCollectionKey");
+         ZoteroCollectionSpec spec;
+         spec.name = row.get<std::string>("collectionName");
+         spec.key = readString(row, "collectionKey", "-1");
+
+         std::string versionStr = readString(row, "version", "0");
+         spec.version = safe_convert::stringTo<int>(versionStr, 0);
+
+         const soci::indicator indicator = row.get_indicator("parentCollectionKey");
+         if (indicator == soci::i_ok)
+         {
+            // If the parent key is not null, this is a child collection
+            spec.parentKey = row.get<std::string>("parentCollectionKey");
+         }
+         specs.push_back(spec);
       }
-      specs.push_back(spec);
+      CATCH_UNEXPECTED_EXCEPTION
    });
 
    if (error)

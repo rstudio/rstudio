@@ -395,12 +395,9 @@ protected:
 
    pMisc->add_options();
 
-   FilePath defaultConfigPath = core::system::xdg::systemConfigFile("rsession.conf");
+   FilePath defaultConfigPath = core::system::xdg::findSystemConfigFile("rsession configuration", "rsession.conf");
    std::string configFile = defaultConfigPath.exists() ?
       defaultConfigPath.getAbsolutePath() : "";
-   if (!configFile.empty())
-      LOG_INFO_MESSAGE("Reading rsession configuration from " + configFile);
-
    return program_options::OptionsDescription("rsession", configFile);
 }
 

@@ -627,7 +627,7 @@ public class VisualMode implements VisualModeEditorSync,
                // ensure that no source capsules have snuck in
                if (hasSourceCapsule(markdown))
                {
-                  view_.showWarningBar("Unable to reformat to canonical markdown (parsing error, please report this to RStudio)");
+                  view_.showWarningBar("Unable to parse markdown (please report at https://github.com/rstudio/rstudio/issues/new)");
                   completed.execute(null);  
                }
                /*

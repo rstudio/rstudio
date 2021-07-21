@@ -124,7 +124,7 @@ Error readConfigJSON(const core::json::JsonRpcRequest& request,
    }
 
    // System config is always in the XDG location (if it exists at all)
-   FilePath systemConfig = core::system::xdg::systemConfigFile(path);
+   FilePath systemConfig = core::system::xdg::findSystemConfigFile(path, path);
 
    // If neither config file exists, no work to do; raise an error if requested.
    if (!userConfig.exists() && !systemConfig.exists())

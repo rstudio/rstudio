@@ -176,6 +176,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ui.RMarkdow
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualMode;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualMode.SyncType;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeChunk;
+import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeUtil;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 import org.rstudio.studio.client.workbench.views.source.events.CollabExternalEditEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocFocusedEvent;
@@ -3259,6 +3260,13 @@ public class TextEditingTarget implements
       {
          // check canonical pref
          boolean canonical = prefs_.visualMarkdownEditingCanonical().getValue();
+         
+         // if we are cannonical but the global value isn't canonical then make sure this
+         // file is in the current project
+         if (canonical && !prefs_.visualMarkdownEditingCanonical().getGlobalValue())
+         {
+            canonical = VisualModeUtil.isDocInProject(workbenchContext_, docUpdateSentinel_);
+         }
 
          // check for a file based canonical setting
          String yaml = YamlFrontMatter.getFrontMatter(docDisplay_);

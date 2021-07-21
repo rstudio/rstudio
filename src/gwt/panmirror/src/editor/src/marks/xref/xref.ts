@@ -211,7 +211,7 @@ function atRefInputRule() {
 
 function refPrefixInputRule() {
   return new InputRule(
-    /(^|[^`])(Chapter|Section|Figure|Table|Equation) $/,
+    /(^|[^`])(Chapter|Chapters|Appendix|Section|Figure|Table|Equation) $/,
     (state: EditorState, match: string[], start: number, end: number) => {
       const tr = state.tr;
       tr.insertText(' ');
