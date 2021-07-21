@@ -20,6 +20,9 @@ import { findChildrenByMark } from 'prosemirror-utils';
 import { pandocAutoIdentifier } from './pandoc_id';
 import { rmdChunkEngineAndLabel } from './rmd';
 import { kTexFormat } from './raw';
+import { getMarkRange } from './mark';
+import { NodeCommand } from './command';
+import { findChildrenByType } from 'prosemirror-utils';
 
 export interface XRefServer {
   indexForFile: (file: string) => Promise<XRefs>;
@@ -168,18 +171,19 @@ function quartoMathLocator() {
   return {
     nodeTypes: ['paragraph'],
     hasXRef: (node: ProsemirrorNode, id: string) => {
-      let hasMath = false;
-      node.forEach((child, offset, index) => {
-        if (child.type.name === 'text' && child.marks.find(mark => mark.type.name === 'math')) {
-          hasMath = true;
+      const mathType = node.type.schema.marks.math;
+      let prevNodeMath = false;
+      for (let i = 0; i < node.childCount; i++) {
+        const childNode = node.child(i);
+        if (prevNodeMath) {
+          const text = childNode.textContent;
+          if (!!text.match(/^\s*\{\#eq\-.*\}/)) {
+            return true;
+          }
         }
-      });
-
-      if (hasMath) {
-        const lastChild = node.lastChild;
-        if (lastChild) {
-          return lastChild.textContent.match(/\{\#eq\-.*\}/) !== null;
-        }
+        prevNodeMath = !!childNode.marks.find(
+          mark => mark.type === mathType && mark.attrs.type === "DisplayMath"
+        );
       }
       return false;
     },
@@ -209,10 +213,9 @@ function quartoTableLocator() {
     nodeTypes: ['table_container'],
     hasXRef: (node: ProsemirrorNode, id: string) => {
       // Look for a table which has a table caption that contains the id
-      const lastChild = node.lastChild;
-      if (lastChild && lastChild.type.name === 'table_caption') {
-        const captionText = node.textContent;
-        return captionText.match(/\{\#tbl\-.*\}/) !== null;
+      const captions = findChildrenByType(node, node.type.schema.nodes.table_caption);
+      if (captions.length) {
+        return !!captions[0].node.textContent.match(/\{\#tbl\-.*\}/);
       }
       return false;
     },
@@ -230,10 +233,10 @@ function quartoDivLocator(type: string) {
 
 function quartoListingLocator() {
   return {
-    nodeTypes: ['code'],
+    nodeTypes: ['code_block'],
     hasXRef: (node: ProsemirrorNode, id: string) => {
       const attrs = node.attrs;
-      return attrs.id === `$lst-${id}` && attrs['lst.cap'] !== undefined;
+      return attrs.id === `lst-${id}`;
     },
   };
 }
