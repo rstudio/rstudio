@@ -24,6 +24,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/range/as_array.hpp>
 #include <boost/bind/bind.hpp>
+#include <boost/scope_exit.hpp>
 
 #include <signal.h>
 #include <fcntl.h>
@@ -183,13 +184,21 @@ Error findProgramOnPath(const std::string& program,
 
    for (auto&& path : paths)
    {
-      if (path.empty())
+      // get file descriptor for path entry
+      int fd = ::open(path.c_str(), 0);
+      if (fd == -1)
          continue;
       
-      FilePath candidatePath = FilePath(path).completeChildPath(program);
+      // clean up when we're done
+      BOOST_SCOPE_EXIT( (&fd) )
+      {
+         ::close(fd);
+      }
+      BOOST_SCOPE_EXIT_END;
       
+      // confirm that it's a regular file
       struct stat sb;
-      int status = ::stat(candidatePath.getAbsolutePath().c_str(), &sb);
+      int status = ::fstatat(fd, program.c_str(), &sb, 0);
       if (status == -1)
          continue;
       
@@ -197,12 +206,15 @@ Error findProgramOnPath(const std::string& program,
       if (!isRegularFile)
          continue;
       
-      // use ::faccess() here to ensure we respect effective UID / GID
-      status = ::faccessat(0, candidatePath.getAbsolutePath().c_str(), X_OK, AT_EACCESS);
+      // confirm that it's executable
+      // note that we use AT_EACCESS to ensure checks are done using
+      // the effective user id
+      status = ::faccessat(fd, program.c_str(), X_OK, AT_EACCESS);
       if (status == -1)
          continue;
       
-      *pProgramPath = candidatePath;
+      // all checks passed; return full path
+      *pProgramPath = FilePath(path).completeChildPath(program);
       return Success();
    }
 
