@@ -21,6 +21,7 @@ import { FilePath } from '../core/file-path';
 import { generateShortenedUuid, localPeer } from '../core/system';
 import { Err, Success } from '../core/err';
 import { getenv, setenv } from '../core/environment';
+import { renderTemplateFile } from '../core/template-filter';
 
 import { ApplicationLaunch } from './application-launch';
 import { appState } from './app-state';
@@ -264,16 +265,8 @@ export class SessionLauncher {
     vars.set('log_file', logFile);
     vars.set('log_content', logContent);
 
-    // TODO Read text template, substitute variables, and load HTML into the main window
-    // std::ostringstream oss;
-    // error = text::renderTemplate(options().resourcesPath().completePath("html/error.html"), vars, oss);
-    // if (error) {
-    //   LOG_ERROR(error);
-    // } else {
+    this.mainWindow?.loadHtml(renderTemplateFile(appState().resourcesPath().completePath('html/error.html'), vars));
     this.mainWindow?.setErrorDisplayed();
-    this.mainWindow?.loadUrl('data:text/html;charset=utf-8,<head> <meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> <meta name="viewport" content="width=device-width, initial-scale=1.0" /> <title>Session Load Failed</title> </head><body>Failed to load session.</body>');
-    // TODO pMainWindow_->loadHtml(QString::fromStdString(oss.str()));
-    // }
   }
 
   onRSessionExited(): void {

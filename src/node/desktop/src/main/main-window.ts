@@ -397,6 +397,9 @@ export class MainWindow extends GwtWindow {
   }
 
   reload(): void {
+    if (this.isErrorDisplayed) {
+      return;
+    }
     reloadCount++;
     this.loadUrl(this.webView.baseUrl ?? '');
   }
