@@ -382,6 +382,9 @@ export class SessionLauncher {
     if (appState().sessionStartDelaySeconds > 0) {
       setenv('RSTUDIO_SESSION_SLEEP_ON_STARTUP', appState().sessionStartDelaySeconds.toString());
     }
+    if (appState().sessionEarlyExitCode !== 0) {
+      setenv('RSTUDIO_SESSION_EXIT_ON_STARTUP', appState().sessionEarlyExitCode.toString());
+    }
 
     // TODO
     // we need indirection through arch to handle arm64
