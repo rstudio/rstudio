@@ -134,6 +134,14 @@ const extension = (context: ExtensionContext): Extension | null => {
               output.writeToken(PandocTokenType.Para, () => {
                 output.writeRawMarkdown(node.textContent);
               });
+
+            // html with embedded ``` (e.g. a commented out Rmd code chunk) needs
+            // an extra backtick on the outside to prevent the rmd chunk end backticks
+            // from being considered the end of the raw html block.
+            } else if (node.attrs.format === kHTMLFormat && node.textContent.includes("\n```")) {
+              output.writeToken(PandocTokenType.Para, () => {
+                output.writeRawMarkdown("````{=html}\n" + node.textContent + "\n````\n");
+              });
             } else {
               output.writeToken(PandocTokenType.RawBlock, () => {
                 output.write(node.attrs.format);
