@@ -147,7 +147,7 @@ function parseBookdownXRef(xref: string) {
   }
 }
 
-function parseQuartoXRef(xref: string) {
+export function parseQuartoXRef(xref: string) {
   const dashPos = xref.indexOf('-');
   if (dashPos !== -1) {
     return {

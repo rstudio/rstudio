@@ -24,7 +24,7 @@ import { textPopupDecorationPlugin, TextPopupTarget } from '../../api/text-popup
 import { WidgetProps } from '../../api/widgets/react';
 import { Popup } from '../../api/widgets/popup';
 import { EditorServer } from '../../api/server';
-import { XRef, xrefKey } from '../../api/xref';
+import { XRef, xrefKey, parseQuartoXRef } from '../../api/xref';
 import { LinkButton } from '../../api/widgets/button';
 
 import './cite-popup-xref.css';
@@ -44,24 +44,26 @@ export function citeXrefPopupPlugin(schema: Schema, ui: EditorUI, server: Editor
       if (docPath) {
 
         const citeId = target.text.replace(/^-@|^@/, '');
-        const [type, id] = citeId.split("-");
+        const parsed = parseQuartoXRef(citeId);
+        if (parsed) {
+          const { id, type } = parsed;
+          const quartoIndex = await server.xref.quartoIndexForFile(docPath);
+          const matchedXref = quartoIndex.refs.find(ref => ref.id === id && ref.type === type);
 
-        const quartoIndex = await server.xref.quartoIndexForFile(docPath);
-        const matchedXref = quartoIndex.refs.find(ref => ref.id === id && ref.type === type);
+          if (matchedXref) {
+            const xrefs = await server.xref.quartoXrefForId(docPath, `${type}-${id}`);
 
-        if (matchedXref) {
-          const xrefs = await server.xref.quartoXrefForId(docPath, `${type}-${id}`);
+            if (xrefs.refs.length) {
+              const xref = xrefs.refs[0];
 
-          if (xrefs.refs.length) {
-            const xref = xrefs.refs[0];
+              // click handler
+              const onClick = () => {
+                const file = xrefs.baseDir + '/' + xref.file;
+                ui.display.navigateToXRef(file, xref);
+              };
 
-            // click handler
-            const onClick = () => {
-              const file = xrefs.baseDir + '/' + xref.file;
-              ui.display.navigateToXRef(file, xref);
-            };
-
-            return <XrefCitefPopup xref={xref} onClick={onClick} style={style} />;
+              return <XrefCitefPopup xref={xref} onClick={onClick} style={style} />;
+            }
           }
         }
       }
@@ -88,7 +90,9 @@ const XrefCitefPopup: React.FC<XRefCitePopupProps> = props => {
           classes={['pm-cite-xref-popup-key pm-fixedwidth-font']}
         />
       </div>
-      <div className="pm-cite-xref-popup-text" >{props.xref.title} </div>
+      {props.xref.title ? (
+        <div className="pm-cite-xref-popup-text" >{props.xref.title} </div>
+      ) : null}
       <div className="pm-cite-xref-popup-file" >{props.xref.file} </div>
     </Popup>
   );
