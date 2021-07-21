@@ -14,6 +14,7 @@
  * 
  */
 
+import { Rectangle, screen } from 'electron';
 import Store from 'electron-store';
 import { MainWindow } from './main-window';
  
@@ -87,6 +88,22 @@ export function DesktopOptions(directory = ''): DesktopOptionsImpl {
 export function clearOptionsSingleton(): void {
   options = null;
 }
+
+/**
+ * Check if one rectangle is inside (shared border inclusive) the other.
+ * 
+ * @param inner The rectangle assumed to be the smaller, inner rectangle
+ * @param outer The rectangle assumed to be the larger, outer rectangle
+ * 
+ * @returns True if the inner rectangle is inside (shared border inclusive) 
+ * the outer rectangle, false otherwise
+ */
+export function firstIsInsideSecond(inner: Rectangle, outer: Rectangle): boolean {
+  return inner.x >= outer.x &&
+         inner.y >= outer.y &&
+         inner.x + inner.width <= outer.x + outer.width &&
+         inner.y + inner.height <= outer.y + outer.height;
+}
  
 /**
  * Desktop Options class for storing/restoring user desktop options.
@@ -136,17 +153,46 @@ export class DesktopOptionsImpl {
     return this.config.get(kZoomLevel);
   }
 
-  public saveWindowBounds(size: {width: number, height: number}): void {
-    this.config.set(kWindowBounds, size);
+  public saveWindowBounds(bounds: Rectangle): void {
+    this.config.set(kWindowBounds, bounds);
   }
 
-  public windowBounds(): {width: number, height: number} {
+  public windowBounds(): Rectangle {
     return this.config.get(kWindowBounds);
   }
 
+  // Note: screen can only be used after the 'ready' event has been emitted
   public restoreMainWindowBounds(mainWindow: MainWindow): void {
-    const size = this.windowBounds(); 
-    mainWindow.window.setSize(Math.max(300, size.width) , Math.max(200, size.height));
+    const savedBounds = this.windowBounds(); 
+
+    // Check if saved bounds is still in one of the available displays
+    const goodDisplays = screen.getAllDisplays().find((display) => {
+      return firstIsInsideSecond(savedBounds, display.workArea);
+    });
+
+    // Restore it to previous location if possible, or center of primary display otherwise
+    if (goodDisplays) {
+      mainWindow.window.setBounds(savedBounds);
+    } else {
+      const primaryBounds = screen.getPrimaryDisplay().bounds;
+      const newSize = {width: Math.min(kDesktopOptionDefaults.View.WindowBounds.width, primaryBounds.width), 
+        height: Math.min(kDesktopOptionDefaults.View.WindowBounds.height, primaryBounds.height)};
+
+      mainWindow.window.setSize(newSize.width, newSize.height);
+      
+      // window.center() doesn't consistently pick the primary display, 
+      // so manually calculating the center of the primary display
+      mainWindow.window.setPosition(
+        primaryBounds.x + ((primaryBounds.width - newSize.width) / 2), 
+        primaryBounds.y + ((primaryBounds.height - newSize.height) / 2));
+    }
+
+    // ensure a minimum size for the window on restore
+    const currSize = mainWindow.window.getSize();
+    mainWindow.window.setSize(
+      Math.max(300, currSize[0]),
+      Math.max(200, currSize[1])
+    );
   }
   
   public setAccessibility(accessibility: boolean): void {
