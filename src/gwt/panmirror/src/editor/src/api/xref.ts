@@ -171,20 +171,20 @@ const quartoXrefPositionLocators: { [key: string]: XRefPositionLocator } = {
   sec: quartoHeadingLocator(),
   fig: quartoFigureLocator(),
   tbl: quartoTableLocator(),
-  eq: quartoEquationLocator("eq"),
-  lst: quartoEquationLocator("lst"),
-  thm: quartoEquationLocator("thm"),
-  lem: quartoEquationLocator("lem"),
-  cor: quartoEquationLocator("cor"),
-  prp: quartoEquationLocator("prp"),
-  cnj: quartoEquationLocator("cnj"),
-  def: quartoEquationLocator("def"),
-  exm: quartoEquationLocator("exm"),
-  exr: quartoEquationLocator("exr"),
+  eq: quartoMathLocator(),
+  lst: quartoListingLocator(),
+  thm: quartoDivLocator("thm"),
+  lem: quartoDivLocator("lem"),
+  cor: quartoDivLocator("cor"),
+  prp: quartoDivLocator("prp"),
+  cnj: quartoDivLocator("cnj"),
+  def: quartoDivLocator("def"),
+  exm: quartoDivLocator("exm"),
+  exr: quartoDivLocator("exr"),
 };
 
 
-function quartoEquationLocator(type: string) {
+function quartoMathLocator() {
   return {
     nodeTypes: ['paragraph'],
     hasXRef: (node: ProsemirrorNode, id: string) => {
@@ -198,14 +198,12 @@ function quartoEquationLocator(type: string) {
       if (hasMath) {
         const lastChild = node.lastChild;
         if (lastChild) {
-          const regexStr = `\\{\\#${type}\\-.*\\}`;
-          return lastChild.textContent.match(RegExp(regexStr)) !== null;
+          return lastChild.textContent.match(/\{\#eq\-.*\}/) !== null;
         }
       }
       return false;
     },
   };
-
 }
 
 function quartoFigureLocator() {
@@ -237,6 +235,25 @@ function quartoTableLocator() {
         return captionText.match(/\{\#tbl\-.*\}/) !== null;
       }
       return false;
+    },
+  };
+}
+
+function quartoDivLocator(type: string) {
+  return {
+    nodeTypes: ['div'],
+    hasXRef: (node: ProsemirrorNode, id: string) => {
+      return node.attrs.id === `${type}-${id}`;
+    },
+  };
+}
+
+function quartoListingLocator() {
+  return {
+    nodeTypes: ['code'],
+    hasXRef: (node: ProsemirrorNode, id: string) => {
+      const attrs = node.attrs;
+      return attrs.id === `$lst-${id}` && attrs['lst.cap'] !== undefined;
     },
   };
 }
