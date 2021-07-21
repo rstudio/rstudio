@@ -59,7 +59,7 @@ public:
          boost::posix_time::milliseconds checkSubprocDelay,
          boost::posix_time::milliseconds checkCwdDelay,
          boost::function<std::vector<SubprocInfo> (PidType pid)> subProcCheck,
-         const std::vector<std::string>& subProcWhitelist,
+         const std::vector<std::string>& ignoredSubProcs,
          boost::function<core::FilePath (PidType pid)> cwdCheck);
 
    virtual ~ChildProcessSubprocPoll() {}
@@ -69,8 +69,8 @@ public:
 
    void stop();
 
-   bool hasNonWhitelistSubprocess() const;
-   bool hasWhitelistSubprocess() const;
+   bool hasNonIgnoredSubprocess() const;
+   bool hasIgnoredSubprocess() const;
    bool hasRecentOutput() const;
    core::FilePath getCwd() const;
 
@@ -92,7 +92,7 @@ private:
 
    // results of most recent checks
    bool hasSubprocess_;
-   bool hasWhitelistSubprocess_;
+   bool hasIgnoredSubprocess_;
    bool hasRecentOutput_;
    core::FilePath cwd_;
 
@@ -114,7 +114,7 @@ private:
    boost::function<std::vector<SubprocInfo> (PidType pid)> subProcCheck_;
 
    // list of processes that aren't reported when checking for subprocesses
-   std::vector<std::string> subProcWhitelist_;
+   std::vector<std::string> ignoredSubProcs_;
 
    // function used to update current working directory; if NULL then cwd
    // updating will not be done

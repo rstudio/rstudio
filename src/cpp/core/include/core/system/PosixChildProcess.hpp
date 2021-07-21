@@ -69,8 +69,8 @@ public:
 
    virtual Error terminate();
 
-   virtual bool hasNonWhitelistSubprocess() const;
-   virtual bool hasWhitelistSubprocess() const;
+   virtual bool hasNonIgnoredSubprocess() const;
+   virtual bool hasIgnoredSubprocess() const;
    virtual core::FilePath getCwd() const;
    virtual bool hasRecentOutput() const;
 

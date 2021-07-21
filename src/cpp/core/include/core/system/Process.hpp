@@ -49,7 +49,7 @@ enum Mode
 {
    Always = 0,
    Never = 1,
-   Whitelist = 2,
+   List = 2,
 };
 
 } // BusyDetectionMode
@@ -175,7 +175,7 @@ struct ProcessOptions
    bool reportHasSubprocs;
 
    // Ignore these subprocesses when reporting
-   std::vector<std::string> subprocWhitelist;
+   std::vector<std::string> ignoredSubprocs;
 
    // Periodically track process' current working directory
    bool trackCwd;
@@ -337,7 +337,7 @@ struct ProcessCallbacks
    // comment above for potential values)
    boost::function<void(int)> onExit;
 
-   // Called periodically to report if this process has subprocesses (non-whitelist, whitelist)
+   // Called periodically to report if this process has subprocesses (non-ignored, ignored)
    boost::function<void(bool, bool)> onHasSubprocs;
 
    // Called periodically to report current working directory of process

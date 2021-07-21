@@ -2577,11 +2577,11 @@ bool isPathViewAllowed(const FilePath& filePath)
       }
    }
 
-   // Check session option for explicitly whitelisted directories
-   std::string whitelistDirs = session::options().directoryViewWhitelist();
-   if (!whitelistDirs.empty())
+   // Check session option for explicitly allowed directories
+   std::string allowDirs = session::options().directoryViewAllowList();
+   if (!allowDirs.empty())
    {
-      std::vector<std::string> dirs = core::algorithm::split(whitelistDirs, ":");
+      std::vector<std::string> dirs = core::algorithm::split(allowDirs, ":");
       for (const auto& dir: dirs)
       {
          if (filePath.isWithin(FilePath(dir)))

@@ -407,14 +407,14 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_set_clipboard_monitoring', monitoring);
     },
 
-    getIgnoreGpuBlacklist: (callback: VoidCallback<boolean>) => {
+    getIgnoreGpuExclusionList: (callback: VoidCallback<boolean>) => {
       ipcRenderer
-        .invoke('desktop_get_ignore_gpu_blacklist')
+        .invoke('desktop_get_ignore_gpu_exclusion_list')
         .then(ignore => callback(ignore));
     },
 
-    setIgnoreGpuBlacklist: (ignore: boolean) => {
-      ipcRenderer.send('desktop_set_ignore_gpu_blacklist', ignore);
+    setIgnoreGpuExclusionList: (ignore: boolean) => {
+      ipcRenderer.send('desktop_set_ignore_gpu_exclusion_list', ignore);
     },
 
     getDisableGpuDriverBugWorkarounds: (callback: VoidCallback<boolean>) => {

@@ -259,8 +259,8 @@ namespace prefs {
 #define kBusyDetection "busy_detection"
 #define kBusyDetectionAlways "always"
 #define kBusyDetectionNever "never"
-#define kBusyDetectionWhitelist "whitelist"
-#define kBusyWhitelist "busy_whitelist"
+#define kBusyDetectionList "list"
+#define kBusyExclusionList "busy_exclusion_list"
 #define kKnitWorkingDir "knit_working_dir"
 #define kKnitWorkingDirDefault "default"
 #define kKnitWorkingDirCurrent "current"
@@ -1266,10 +1266,10 @@ public:
    core::Error setBusyDetection(std::string val);
 
    /**
-    * A whitelist of apps that should not be considered busy in the Terminal.
+    * A list of apps that should not be considered busy in the Terminal.
     */
-   core::json::Array busyWhitelist();
-   core::Error setBusyWhitelist(core::json::Array val);
+   core::json::Array busyExclusionList();
+   core::Error setBusyExclusionList(core::json::Array val);
 
    /**
     * The working directory to use when knitting R Markdown documents.

@@ -236,13 +236,13 @@ public class TerminalPreferencesPane extends PreferencesPane
          closing.add(busyMode_);
          busyMode_.setEnabled(false);
          busyMode_.addChangeHandler(event -> manageBusyModeControlVisibility());
-         busyWhitelist_ = new TextBox();
-         DomUtils.disableSpellcheck(busyWhitelist_);
-         busyWhitelist_.setWidth(textboxWidth);
-         busyWhitelistLabel_ = new FormLabel("Don't ask before killing:", busyWhitelist_);
-         closing.add(busyWhitelistLabel_);
-         closing.add(busyWhitelist_);
-         busyWhitelist_.setEnabled(false);
+         busyExclusionList_ = new TextBox();
+         DomUtils.disableSpellcheck(busyExclusionList_);
+         busyExclusionList_.setWidth(textboxWidth);
+         busyExclusionListLabel_ = new FormLabel("Don't ask before killing:", busyExclusionList_);
+         closing.add(busyExclusionListLabel_);
+         closing.add(busyExclusionList_);
+         busyExclusionList_.setEnabled(false);
       }
 
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("Terminal");
@@ -318,7 +318,7 @@ public class TerminalPreferencesPane extends PreferencesPane
          busyMode_.getListBox().clear();
          busyMode_.addChoice("Always", UserPrefs.BUSY_DETECTION_ALWAYS);
          busyMode_.addChoice("Never", UserPrefs.BUSY_DETECTION_NEVER);
-         busyMode_.addChoice("Always except for whitelist", UserPrefs.BUSY_DETECTION_WHITELIST);
+         busyMode_.addChoice("Always except for list", UserPrefs.BUSY_DETECTION_LIST);
          busyMode_.setEnabled(true);
 
          prefs_.busyDetection().getValue();
@@ -330,25 +330,25 @@ public class TerminalPreferencesPane extends PreferencesPane
             }
          }
 
-         List<String> whitelistArray = JsArrayUtil.fromJsArrayString(
-               prefs_.busyWhitelist().getValue());
+         List<String> exclusionArray = JsArrayUtil.fromJsArrayString(
+               prefs_.busyExclusionList().getValue());
 
-         StringBuilder whitelist = new StringBuilder();
-         for (String entry: whitelistArray)
+         StringBuilder exclusionList = new StringBuilder();
+         for (String entry: exclusionArray)
          {
             if (entry.trim().isEmpty())
             {
                continue;
             }
-            if (whitelist.length() > 0)
+            if (exclusionList.length() > 0)
             {
-               whitelist.append(" ");
+               exclusionList.append(" ");
             }
-            whitelist.append(entry.trim());
+            exclusionList.append(entry.trim());
          }
 
-         busyWhitelist_.setText(whitelist.toString());
-         busyWhitelist_.setEnabled(true);
+         busyExclusionList_.setText(exclusionList.toString());
+         busyExclusionList_.setEnabled(true);
 
          manageBusyModeControlVisibility();
       }
@@ -371,7 +371,7 @@ public class TerminalPreferencesPane extends PreferencesPane
 
       if (haveBusyDetectionPref())
       {
-         prefs_.busyWhitelist().setGlobalValue(StringUtil.split(busyWhitelist_.getText(), " "));
+         prefs_.busyExclusionList().setGlobalValue(StringUtil.split(busyExclusionList_.getText(), " "));
          prefs_.busyDetection().setGlobalValue(selectedBusyMode());
       }
 
@@ -475,9 +475,9 @@ public class TerminalPreferencesPane extends PreferencesPane
 
    private void manageBusyModeControlVisibility()
    {
-      boolean whitelistEnabled = selectedBusyMode() == UserPrefs.BUSY_DETECTION_WHITELIST;
-      busyWhitelistLabel_.setVisible(whitelistEnabled);
-      busyWhitelist_.setVisible(whitelistEnabled);
+      boolean exclusionListEnabled = selectedBusyMode() == UserPrefs.BUSY_DETECTION_LIST;
+      busyExclusionListLabel_.setVisible(exclusionListEnabled);
+      busyExclusionList_.setVisible(exclusionListEnabled);
    }
 
    private void addTextBoxChooser(Panel panel, String textWidth, FormLabel captionLabel, TextBoxWithButton chooser)
@@ -512,8 +512,8 @@ public class TerminalPreferencesPane extends PreferencesPane
 
    private SelectWidget autoClosePref_;
    private SelectWidget busyMode_;
-   private FormLabel busyWhitelistLabel_;
-   private TextBox busyWhitelist_;
+   private FormLabel busyExclusionListLabel_;
+   private TextBox busyExclusionList_;
 
    // Injected ----
    private final UserPrefs prefs_;

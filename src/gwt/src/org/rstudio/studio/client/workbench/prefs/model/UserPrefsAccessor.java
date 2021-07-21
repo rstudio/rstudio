@@ -2058,24 +2058,24 @@ public class UserPrefsAccessor extends Prefs
          new String[] {
             BUSY_DETECTION_ALWAYS,
             BUSY_DETECTION_NEVER,
-            BUSY_DETECTION_WHITELIST
+            BUSY_DETECTION_LIST
          },
          "always");
    }
 
    public final static String BUSY_DETECTION_ALWAYS = "always";
    public final static String BUSY_DETECTION_NEVER = "never";
-   public final static String BUSY_DETECTION_WHITELIST = "whitelist";
+   public final static String BUSY_DETECTION_LIST = "list";
 
    /**
-    * A whitelist of apps that should not be considered busy in the Terminal.
+    * A list of apps that should not be considered busy in the Terminal.
     */
-   public PrefValue<JsArrayString> busyWhitelist()
+   public PrefValue<JsArrayString> busyExclusionList()
    {
       return object(
-         "busy_whitelist",
+         "busy_exclusion_list",
          "", 
-         "A whitelist of apps that should not be considered busy in the Terminal.", 
+         "A list of apps that should not be considered busy in the Terminal.", 
          JsArrayUtil.createStringArray("tmux", "screen"));
    }
 
@@ -3463,8 +3463,8 @@ public class UserPrefsAccessor extends Prefs
          launcherJobsSort().setValue(layer, source.getString("launcher_jobs_sort"));
       if (source.hasKey("busy_detection"))
          busyDetection().setValue(layer, source.getString("busy_detection"));
-      if (source.hasKey("busy_whitelist"))
-         busyWhitelist().setValue(layer, source.getObject("busy_whitelist"));
+      if (source.hasKey("busy_exclusion_list"))
+         busyExclusionList().setValue(layer, source.getObject("busy_exclusion_list"));
       if (source.hasKey("knit_working_dir"))
          knitWorkingDir().setValue(layer, source.getString("knit_working_dir"));
       if (source.hasKey("doc_outline_show"))
@@ -3770,7 +3770,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(showLauncherJobsTab());
       prefs.add(launcherJobsSort());
       prefs.add(busyDetection());
-      prefs.add(busyWhitelist());
+      prefs.add(busyExclusionList());
       prefs.add(knitWorkingDir());
       prefs.add(docOutlineShow());
       prefs.add(latexPreviewOnCursorIdle());
