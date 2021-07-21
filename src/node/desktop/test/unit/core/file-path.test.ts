@@ -36,6 +36,10 @@ async function realpath(path: string): Promise<string> {
   return fsPromises.realpath(path);
 }
 
+function getTestDir(): FilePath {
+  return new FilePath(path.join(os.tmpdir(), 'temp-folder-for-FilePath-tests-' + randomString()));
+}
+
 // A path that should never exist
 const bogusPath = '/super/bogus/path/42';
 
@@ -214,10 +218,7 @@ describe('FilePath', () => {
     it('safeCurrentPathSync should change to supplied safe path if it exists if cwd doesn\'t exist', () => {
       const origDir = new FilePath(process.cwd());
       // create a temp folder, chdir to it, then delete it
-      let testDir = path.join(
-        os.tmpdir(),
-        'temp-folder-for-FilePath-tests-' + randomString()
-      );
+      let testDir = getTestDir().getAbsolutePath();
       fs.mkdirSync(testDir);
       process.chdir(testDir);
       testDir = realpathSync(testDir);
@@ -240,10 +241,7 @@ describe('FilePath', () => {
     it('safeCurrentPathSync should change to home folder when both cwd and revert paths don\'t exist', () => {
       const origDir = new FilePath(process.cwd());
       // create a temp folder, chdir to it, then delete it
-      let testDir = path.join(
-        os.tmpdir(),
-        'temp-folder-for-FilePath-tests-' + randomString()
-      );
+      let testDir = getTestDir().getAbsolutePath();
       fs.mkdirSync(testDir);
       process.chdir(testDir);
       testDir = realpathSync(testDir);
@@ -272,10 +270,7 @@ describe('FilePath', () => {
     it('safeCurrentPath should change to supplied safe path if it exists if cwd doesn\'t exist', async () => {
       const origDir = new FilePath(process.cwd());
       // create a temp folder, chdir to it, then delete it
-      let testDir = path.join(
-        os.tmpdir(),
-        'temp-folder-for-FilePath-tests-' + randomString()
-      );
+      let testDir = getTestDir().getAbsolutePath();
       await fsPromises.mkdir(testDir);
       process.chdir(testDir);
       testDir = await realpath(testDir);
@@ -298,10 +293,7 @@ describe('FilePath', () => {
     it('safeCurrentPath should change to home folder when both cwd and revert paths don\'t exist', async () => {
       const origDir = new FilePath(process.cwd());
       // create a temp folder, chdir to it, then delete it
-      let testDir = path.join(
-        os.tmpdir(),
-        'temp-folder-for-FilePath-tests-' + randomString()
-      );
+      let testDir = getTestDir().getAbsolutePath();
       await fsPromises.mkdir(testDir);
       process.chdir(testDir);
       testDir = await realpath(testDir);
@@ -644,55 +636,119 @@ describe('FilePath', () => {
 
   describe('Remove file and folders', () => {
     it('remove deletes an existing folder', async () => {
-      const testDir = new FilePath(path.join(os.tmpdir(), 'temp-folder-for-FilePath-tests-' + randomString()));
+      const testDir = getTestDir();
       await testDir.createDirectory();
       assert.isTrue(await testDir.exists());
       assert(isSuccessful(await testDir.remove()));
       assert.isFalse(await testDir.exists());
     });
     it('remove fails if asked to delete a non-existing folder', async () => {
-      const testDir = new FilePath(path.join(os.tmpdir(), 'temp-folder-for-FilePath-tests-' + randomString()));
+      const testDir = getTestDir();
       assert.isFalse(await testDir.exists());
       assert(isFailure(await testDir.remove()));
     });
 
     it('removeSync deletes an existing folder', () => {
-      const testDir = new FilePath(path.join(os.tmpdir(), 'temp-folder-for-FilePath-tests-' + randomString()));
+      const testDir = getTestDir();
       testDir.createDirectorySync();
       assert.isTrue(testDir.existsSync());
       assert(isSuccessful(testDir.removeSync()));
       assert.isFalse(testDir.existsSync());
     });
     it('removeSync fails if asked to delete a non-existing folder', () => {
-      const testDir = new FilePath(path.join(os.tmpdir(), 'temp-folder-for-FilePath-tests-' + randomString()));
+      const testDir = getTestDir();
       assert.isFalse(testDir.existsSync());
       assert(isFailure(testDir.removeSync()));
     });
 
     it('removeIfExists deletes an existing folder', async () => {
-      const testDir = new FilePath(path.join(os.tmpdir(), 'temp-folder-for-FilePath-tests-' + randomString()));
+      const testDir = getTestDir();
       await testDir.createDirectory();
       assert.isTrue(await testDir.exists());
       assert(isSuccessful(await testDir.removeIfExists()));
       assert.isFalse(await testDir.exists());
     });
     it('removeIfExists returns success if asked to delete a non-existing folder', async () => {
-      const testDir = new FilePath(path.join(os.tmpdir(), 'temp-folder-for-FilePath-tests-' + randomString()));
+      const testDir = getTestDir();
       assert.isFalse(await testDir.exists());
       assert(isSuccessful(await testDir.removeIfExists()));
     });
 
     it('removeIfExistsSync deletes an existing folder', () => {
-      const testDir = new FilePath(path.join(os.tmpdir(), 'temp-folder-for-FilePath-tests-' + randomString()));
+      const testDir = getTestDir();
       testDir.createDirectorySync();
       assert.isTrue(testDir.existsSync());
       assert(isSuccessful(testDir.removeIfExistsSync()));
       assert.isFalse(testDir.existsSync());
     });
     it('removeIfExistsSync returns success if asked to delete a non-existing folder', () => {
-      const testDir = new FilePath(path.join(os.tmpdir(), 'temp-folder-for-FilePath-tests-' + randomString()));
+      const testDir = getTestDir();
       assert.isFalse(testDir.existsSync());
       assert(isSuccessful(testDir.removeIfExistsSync()));
+    });
+  });
+
+  describe('enumerate children', () => {
+    it('getChildren returns error if it doesn\'t exist', () => {
+      const testDir = getTestDir();
+      const children: FilePath[] = [];
+      assert(isFailure(testDir.getChildren(children)));
+    });
+    it('getChildren returns error if it isn\' a directory', () => {
+      const testDir = getTestDir();
+      testDir.createDirectorySync();
+      const fileName = testDir.completeChildPath(randomString());
+      fs.writeFileSync(fileName.getAbsolutePath(), 'This is a test file.');
+      const children: FilePath[] = [];
+      assert(isFailure(fileName.getChildren(children)));
+      fileName.removeIfExistsSync();
+      testDir.removeIfExistsSync();
+    });
+    it('getChildren handles case with no children', () => {
+      const testDir = getTestDir();
+      testDir.createDirectorySync();
+      const children: FilePath[] = [];
+      assert(isSuccessful(testDir.getChildren(children)));
+      assert.equal(0, children.length);
+      testDir.removeIfExistsSync();
+    });
+    it('getChildren handles case with single child file', () => {
+      const testDir = getTestDir();
+      testDir.createDirectorySync();
+      const fileName = testDir.completeChildPath(randomString());
+      fs.writeFileSync(fileName.getAbsolutePath(), 'This is a test file.');
+      const children: FilePath[] = [];
+      assert(isSuccessful(testDir.getChildren(children)));
+      assert.equal(1, children.length);
+      assert.equal(fileName.getAbsolutePath(), children[0].getAbsolutePath());
+      fileName.removeIfExistsSync();
+      testDir.removeIfExistsSync();
+    });
+    it('getChildren handles case with multiple child files', () => {
+      const testDir = getTestDir();
+      testDir.createDirectorySync();
+      const fileName1 = testDir.completeChildPath(randomString());
+      fs.writeFileSync(fileName1.getAbsolutePath(), 'This is test file one.');
+      const fileName2 = testDir.completeChildPath(randomString());
+      fs.writeFileSync(fileName2.getAbsolutePath(), 'This is test file two.');
+      const children: FilePath[] = [];
+      assert(isSuccessful(testDir.getChildren(children)));
+      assert.equal(2, children.length);
+      fileName1.removeIfExistsSync();
+      fileName2.removeIfExistsSync();
+      testDir.removeIfExistsSync();
+    });
+    it('getChildren handles case with child directory', () => {
+      const testDir = getTestDir();
+      testDir.createDirectorySync();
+      const subDir = testDir.completeChildPath(randomString());
+      fs.mkdirSync(subDir.getAbsolutePath());
+      const children: FilePath[] = [];
+      assert(isSuccessful(testDir.getChildren(children)));
+      assert.equal(1, children.length);
+      assert.equal(subDir.getAbsolutePath(), children[0].getAbsolutePath());
+      subDir.removeIfExistsSync();
+      testDir.removeIfExistsSync();
     });
   });
 
@@ -713,7 +769,6 @@ describe('FilePath', () => {
       assert.throws(() => fp1.copy(fp2));
       assert.throws(() => fp1.copyDirectoryRecursive(fp2));
       assert.throws(() => fp1.ensureFile());
-      assert.throws(() => fp1.getChildren(new Array<FilePath>()));
       assert.throws(() => fp1.getChildrenRecursive());
       assert.throws(() => fp1.getFileMode());
       assert.throws(() => fp1.getMimeContentType());
