@@ -542,6 +542,14 @@ int main(int argc, char * const argv[])
 {
    try
    {
+      // read environment variables from config file; we have to do this before initializing logging
+      // so that logging environment variables like RS_LOG_LEVEL stored in this file will be
+      // respected when logging is initialized (below).
+      //
+      // note that we can't emit any logs or errors while reading this config file since logging
+      // isn't initialized yet, so we suppress logging in this step
+      env_vars::readEnvConfigFile(false /* suppress logs */);
+
       Error error = core::system::initializeLog(kProgramIdentity, core::log::LogLevel::WARN, false);
       if (error)
       {
