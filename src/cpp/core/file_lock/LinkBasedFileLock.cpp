@@ -251,11 +251,10 @@ LockRegistration& lockRegistration()
    return instance;
 }
 
-Error writeLockFile(const FilePath& lockFilePath)
-{
-
 #ifndef _WIN32
 
+Error writeLockFile(const FilePath& lockFilePath)
+{
    // generate proxy lockfile
    FilePath proxyPath = lockFilePath.getParent().completePath(proxyLockFileName());
    
@@ -267,8 +266,8 @@ Error writeLockFile(const FilePath& lockFilePath)
       LOG_ERROR(error);
    
    // ensure the proxy file is created, and remove it when we're done
+   // (only for hard links)
    std::string pid = pidString();
-   RemoveOnExitScope scope(proxyPath, ERROR_LOCATION);
    error = core::writeStringToFile(proxyPath, pid);
    if (error)
    {
@@ -278,40 +277,57 @@ Error writeLockFile(const FilePath& lockFilePath)
       return error;
    }
    
-   // attempt to link to the desired location -- ignore return value
-   // and just stat our original link after, as that's a more reliable
-   // indicator of success on old NFS systems
-   int status = ::link(
-      proxyPath.getAbsolutePathNative().c_str(),
-            lockFilePath.getAbsolutePathNative().c_str());
+   int status = -1;
+   
+   if (FileLock::useSymlinks())
+   {
+      status = ::symlink(
+          proxyPath.getAbsolutePathNative().c_str(),
+          lockFilePath.getAbsolutePathNative().c_str());
+   }
+   else
+   {
+      // attempt to link to the desired location -- ignore return value
+      // and just stat our original link after, as that's a more reliable
+      // indicator of success on old NFS systems
+      status = ::link(
+          proxyPath.getAbsolutePathNative().c_str(),
+          lockFilePath.getAbsolutePathNative().c_str());
+   }
    
    // detect link failure
    if (status == -1)
    {
       // verbose logging
       int errorNumber = errno;
-      LOG("ERROR: ::link() failed (errno " << errorNumber << ")" << std::endl <<
-          "Attempted to link:" << std::endl << " - " <<
-          "'" << proxyPath.getAbsolutePathNative() << "'" <<
-          " => " <<
-          "'" << lockFilePath.getAbsolutePathNative() << "'");
+      
+      std::string msg = string_utils::sprintf(
+         "ERROR: %s() failed (errno %i) [%s => %s]\n",
+          (FileLock::useSymlinks() ? "symlink" : "link"),
+          errorNumber,
+          proxyPath.getAbsolutePathNative().c_str(),
+          lockFilePath.getAbsolutePathNative().c_str());
+      
+      LOG(msg);
       
       // if this failed, we should still make a best-effort attempt to acquire
       // a lock by creating a file using O_CREAT | O_EXCL. note that we prefer
       // ::link() since older NFSes provide more guarantees as to its atomicity,
       // but not all NFS support ::link()
       int fd = ::open(
-         lockFilePath.getAbsolutePathNative().c_str(),
-               O_WRONLY | O_CREAT | O_EXCL,
-               0755);
+          lockFilePath.getAbsolutePathNative().c_str(),
+          O_WRONLY | O_CREAT | O_EXCL,
+          0755);
       
       if (fd == -1)
       {
          // verbose logging
          int errorNumber = errno;
-         LOG("ERROR: ::open() failed (errno " << errorNumber << ")" <<
-                                              std::endl << "Attempted to open:" << std::endl << " - " <<
-                                              "'" << lockFilePath.getAbsolutePathNative() << "'");
+         std::string msg = string_utils::sprintf(
+             "ERROR: open() failed (errno %i) [%s]\n",
+             errorNumber,
+             lockFilePath.getAbsolutePathNative().c_str());
+         LOG(msg);
          
          Error error = systemError(errorNumber, ERROR_LOCATION);
          error.addProperty("lock-file", lockFilePath);
@@ -336,41 +352,91 @@ Error writeLockFile(const FilePath& lockFilePath)
       
       return Success();
    }
-
-   struct stat info;
-   int errc = ::stat(proxyPath.getAbsolutePathNative().c_str(), &info);
-   if (errc)
+   else
    {
-      int errorNumber = errno;
-      
-      // verbose logging
-      LOG("ERROR: ::stat() failed (errno " << errorNumber << ")" << std::endl <<
-                                           "Attempted to stat:" << std::endl << " - " <<
-                                           "'" << proxyPath.getAbsolutePathNative() << "'");
-      
-      // log the error since it isn't expected and could get swallowed
-      // upstream by a caller ignoring lock_not_available errors
-      Error error = systemError(errorNumber, ERROR_LOCATION);
-      LOG_ERROR(error);
-      return error;
-   }
-   
-   // assume that a failure here is the result of someone else
-   // acquiring the lock before we could
-   if (info.st_nlink != 2)
-   {
-      LOG("WARNING: Failed to acquire lock (info.st_nlink == " << info.st_nlink << ")");
-      return fileExistsError(ERROR_LOCATION);
+      // we successfully created our link; do some post-hoc validation
+      if (FileLock::useSymlinks())
+      {
+         // double-check that the created symlink points at our proxy file
+         char resolvedPath[PATH_MAX + 1];
+         char* path = ::realpath(
+             lockFilePath.getAbsolutePathNative().c_str(),
+             resolvedPath);
+         
+         if (path == nullptr)
+         {
+            Error error = systemCallError("realpath", errno, ERROR_LOCATION);
+            error.addProperty("lock-file", lockFilePath);
+            LOG_ERROR(error);
+            return error;
+         }
+         
+         if (proxyPath.getAbsolutePathNative() != resolvedPath)
+         {
+            // verbose logging
+            std::string msg = string_utils::sprintf(
+                "ERROR: ::realpath() returned unexpected path [%s != %s]\n",
+                resolvedPath,
+                proxyPath.getAbsolutePathNative().c_str());
+            LOG(msg);
+            
+            Error error = fileExistsError(ERROR_LOCATION);
+            error.addProperty("lock-file", proxyPath);
+            error.addProperty("symlink", resolvedPath);
+            return error;
+         }
+      }
+      else
+      {
+         // we successfully created a hard link; we can remove that on exit now
+         RemoveOnExitScope scope(proxyPath, ERROR_LOCATION);
+         
+         struct stat info;
+         int errc = ::stat(proxyPath.getAbsolutePathNative().c_str(), &info);
+         if (errc)
+         {
+            // verbose logging
+            int errorNumber = errno;
+            std::string msg = string_utils::sprintf(
+                "ERROR: stat() failed (errno %i) [%s]\n",
+                errorNumber,
+                proxyPath.getAbsolutePathNative().c_str());
+            LOG(msg);
+            
+            // log the error since it isn't expected and could get swallowed
+            // upstream by a caller ignoring lock_not_available errors
+            Error error = systemError(errorNumber, ERROR_LOCATION);
+            LOG_ERROR(error);
+            return error;
+         }
+         
+         // assume that a failure here is the result of someone else
+         // acquiring the lock before we could
+         if (info.st_nlink != 2)
+         {
+            std::string msg = string_utils::sprintf(
+                "WARNING: failed to acquire lock (info.st_nlink == %i)\n",
+                info.st_nlink);
+            LOG(msg);
+            
+            Error error = fileExistsError(ERROR_LOCATION);
+            error.addProperty("st_nlink", info.st_nlink);
+            return error;
+         }
+      }
    }
    
    return Success();
-   
+}
+
 #else
 
+Error writeLockFile(const FilePath& lockFilePath)
+{
    return systemError(boost::system::errc::function_not_supported, ERROR_LOCATION);
+}
 
 #endif
-}
 
 } // end anonymous namespace
 
