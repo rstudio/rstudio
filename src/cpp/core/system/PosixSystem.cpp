@@ -188,10 +188,18 @@ Error findProgramOnPath(const std::string& program,
       
       FilePath candidatePath = FilePath(path).completeChildPath(program);
       
-      // verify that the file exists and is executable
       struct stat sb;
       int status = ::stat(candidatePath.getAbsolutePath().c_str(), &sb);
-      if (status || (sb.st_mode & S_IXUSR) == 0)
+      if (status == -1)
+         continue;
+      
+      bool isRegularFile = S_ISREG(sb.st_mode);
+      if (!isRegularFile)
+         continue;
+      
+      // use ::faccess() here to ensure we respect effective UID / GID
+      status = ::faccessat(0, candidatePath.getAbsolutePath().c_str(), X_OK, AT_EACCESS);
+      if (status == -1)
          continue;
       
       *pProgramPath = candidatePath;
