@@ -64,9 +64,11 @@ export function xrefKey(xref: XRef, xrefType?: XRefType) {
 export function xrefPosition(doc: ProsemirrorNode, xref: string, xrefType: XRefType): number {
   // Select the xref locator implementation appropriate for the type
   // of xref that we're dealing with
+
+  // TODO: note that the strings that we receive here always look like bookdown cross references
   const locatorImpl = xrefType === "quarto" ?
     {
-      parseXRef: parseQuartoXRef,
+      parseXRef: parseBookdownXRef,
       xrefPositionLocators: quartoXrefPositionLocators
     } :
     {
@@ -167,26 +169,50 @@ interface XRefPositionLocator {
 
 const quartoXrefPositionLocators: { [key: string]: XRefPositionLocator } = {
   sec: quartoHeadingLocator(),
-  fig: quartoDivLocator("fig"),
+  fig: quartoFigureLocator(),
   tbl: quartoTableLocator(),
-  eq: quartoDivLocator("eq"),
-  lst: quartoDivLocator("lst"),
-  thm: quartoDivLocator("thm"),
-  lem: quartoDivLocator("lem"),
-  cor: quartoDivLocator("cor"),
-  prp: quartoDivLocator("prp"),
-  cnj: quartoDivLocator("cnj"),
-  def: quartoDivLocator("def"),
-  exm: quartoDivLocator("exm"),
-  exr: quartoDivLocator("exr"),
+  eq: quartoEquationLocator("eq"),
+  lst: quartoEquationLocator("lst"),
+  thm: quartoEquationLocator("thm"),
+  lem: quartoEquationLocator("lem"),
+  cor: quartoEquationLocator("cor"),
+  prp: quartoEquationLocator("prp"),
+  cnj: quartoEquationLocator("cnj"),
+  def: quartoEquationLocator("def"),
+  exm: quartoEquationLocator("exm"),
+  exr: quartoEquationLocator("exr"),
 };
 
-// TODO: Provide real implementations of these locators
-function quartoDivLocator(type: string) {
+
+function quartoEquationLocator(type: string) {
   return {
-    nodeTypes: ['div'],
+    nodeTypes: ['paragraph'],
     hasXRef: (node: ProsemirrorNode, id: string) => {
-      return node.attrs.id === `${type}-${id}`;
+      let hasMath = false;
+      node.forEach((child, offset, index) => {
+        if (child.type.name === 'text' && child.marks.find(mark => mark.type.name === 'math')) {
+          hasMath = true;
+        }
+      });
+
+      if (hasMath) {
+        const lastChild = node.lastChild;
+        if (lastChild) {
+          const regexStr = `\\{\\#${type}\\-.*\\}`;
+          return lastChild.textContent.match(RegExp(regexStr)) !== null;
+        }
+      }
+      return false;
+    },
+  };
+
+}
+
+function quartoFigureLocator() {
+  return {
+    nodeTypes: ['figure'],
+    hasXRef: (node: ProsemirrorNode, id: string) => {
+      return node.attrs.id === `fig-${id}`;
     },
   };
 }
@@ -202,9 +228,15 @@ function quartoHeadingLocator() {
 
 function quartoTableLocator() {
   return {
-    nodeTypes: ['caption'],
+    nodeTypes: ['table_container'],
     hasXRef: (node: ProsemirrorNode, id: string) => {
-      return node.attrs.id === `tbl-${id}`;
+      // Look for a table which has a table caption that contains the id
+      const lastChild = node.lastChild;
+      if (lastChild && lastChild.type.name === 'table_caption') {
+        const captionText = node.textContent;
+        return captionText.match(/\{\#tbl\-.*\}/) !== null;
+      }
+      return false;
     },
   };
 }
