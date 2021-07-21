@@ -1909,16 +1909,16 @@ core::Error UserPrefValues::setBusyDetection(std::string val)
 }
 
 /**
- * A whitelist of apps that should not be considered busy in the Terminal.
+ * A list of apps that should not be considered busy in the Terminal.
  */
-core::json::Array UserPrefValues::busyWhitelist()
+core::json::Array UserPrefValues::busyExclusionList()
 {
-   return readPref<core::json::Array>("busy_whitelist");
+   return readPref<core::json::Array>("busy_exclusion_list");
 }
 
-core::Error UserPrefValues::setBusyWhitelist(core::json::Array val)
+core::Error UserPrefValues::setBusyExclusionList(core::json::Array val)
 {
-   return writePref("busy_whitelist", val);
+   return writePref("busy_exclusion_list", val);
 }
 
 /**
@@ -3083,7 +3083,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kShowLauncherJobsTab,
       kLauncherJobsSort,
       kBusyDetection,
-      kBusyWhitelist,
+      kBusyExclusionList,
       kKnitWorkingDir,
       kDocOutlineShow,
       kLatexPreviewOnCursorIdle,
