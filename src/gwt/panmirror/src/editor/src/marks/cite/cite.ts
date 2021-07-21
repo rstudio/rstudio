@@ -358,7 +358,7 @@ const extension = (context: ExtensionContext): Extension | null => {
         }),
         citeHighlightPlugin(schema),
         citeXrefPopupPlugin(schema, ui, context.server),
-        citePopupPlugin(schema, ui, bibliographyManager, context.server.pandoc),
+        citePopupPlugin(schema, ui, bibliographyManager, context.server),
 
       ];
     },
