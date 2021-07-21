@@ -308,7 +308,7 @@ public class GeneralPreferencesPane extends PreferencesPane
 
          useGpuExclusions_ = new CheckBox("Use GPU exclusion list (recommended)");
          advanced.add(lessSpaced(useGpuExclusions_));
-         Desktop.getFrame().getIgnoreGpuExclusions((Boolean ignore) -> {
+         Desktop.getFrame().getIgnoreGpuExclusionList((Boolean ignore) -> {
             desktopIgnoreGpuExclusions_ = ignore;
             useGpuExclusions_.setValue(!ignore);
          });

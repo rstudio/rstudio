@@ -89,7 +89,7 @@ public class ZoteroLibrariesWidget extends Composite
    {
       if (libraries != null)
       {
-         // set select widget based on whether we have a library whitelist
+         // set select widget based on whether we have a list of included libraries
          if (libraries.length() == 0)
             selectedLibs_.setValue(MY_LIBRARY); // migrate from 'All Libraries'
          else if (libraries.length() == 1 && libraries.get(0).equals(MY_LIBRARY))

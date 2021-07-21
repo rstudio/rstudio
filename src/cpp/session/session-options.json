@@ -329,9 +329,9 @@
             "description": "Indicates whether or not to restrict the directories that can be viewed within the IDE."
          },
          {
-            "name": "directory-view-whitelist",
+            "name": "directory-view-allow-list",
             "type": "string",
-            "memberName": "directoryViewWhitelist_",
+            "memberName": "directoryViewAllowList_",
             "description": "Specifies a list of directories exempt from directory view restrictions, separated by a colon character (:)."
          },
          {

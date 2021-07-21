@@ -486,7 +486,7 @@ void getLocalCollectionSpecs(std::string key, std::vector<std::string> collectio
    // get all collections
    ZoteroCollectionSpecs specs = getCollections(pConnection);
 
-   // filter the specs if there is a collections whitelist
+   // filter the specs if specific connections are being queried
    ZoteroCollectionSpecs filteredSpecs;
    if (collections.size() > 0)
    {

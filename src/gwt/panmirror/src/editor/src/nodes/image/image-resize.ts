@@ -639,7 +639,7 @@ export function updateImageViewSize(
 
         // apply selected other styles to the image view (we don't just forward the entire
         // style attribute b/c that would interfere with setting of style props in the
-        // width and height cases below). here we should whitelist in all styles we think
+        // width and height cases below). here we should enumerate all styles we think
         // users might want to see in the editor
         const liftImgStyle = (attrib: string, val: string) => img.style.setProperty(attrib, val);
         value = removeStyleAttrib(value, 'border(?:[\\w\\-])*', liftImgStyle);

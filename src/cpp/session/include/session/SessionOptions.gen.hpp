@@ -200,8 +200,8 @@ protected:
       ("restrict-directory-view",
       value<bool>(&restrictDirectoryView_)->default_value(false),
       "Indicates whether or not to restrict the directories that can be viewed within the IDE.")
-      ("directory-view-whitelist",
-      value<std::string>(&directoryViewWhitelist_)->default_value(std::string()),
+      ("directory-view-allow-list",
+      value<std::string>(&directoryViewAllowList_)->default_value(std::string()),
       "Specifies a list of directories exempt from directory view restrictions, separated by a colon character (:).")
       (kSessionEphemeralEnvVars,
       value<std::string>(&ephemeralEnvVars_)->default_value(std::string()),
@@ -442,7 +442,7 @@ public:
    bool useSecureCookies() const { return useSecureCookies_; }
    rstudio::core::http::Cookie::SameSite sameSite() const { return sameSite_; }
    bool restrictDirectoryView() const { return restrictDirectoryView_; }
-   std::string directoryViewWhitelist() const { return directoryViewWhitelist_; }
+   std::string directoryViewAllowList() const { return directoryViewAllowList_; }
    std::string ephemeralEnvVars() const { return ephemeralEnvVars_; }
    bool suspendOnIncompleteStatement() const { return suspendOnIncompleteStatement_; }
    bool asyncRpcEnabled() const { return asyncRpcEnabled_; }
@@ -543,7 +543,7 @@ protected:
    bool useSecureCookies_;
    rstudio::core::http::Cookie::SameSite sameSite_;
    bool restrictDirectoryView_;
-   std::string directoryViewWhitelist_;
+   std::string directoryViewAllowList_;
    std::string ephemeralEnvVars_;
    bool suspendOnIncompleteStatement_;
    bool asyncRpcEnabled_;

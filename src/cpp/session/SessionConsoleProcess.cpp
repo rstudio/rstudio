@@ -112,11 +112,11 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
    options.cols = procInfo.getCols();
    options.rows = procInfo.getRows();
 
-   if (prefs::userPrefs().busyDetection() == kBusyDetectionWhitelist)
+   if (prefs::userPrefs().busyDetection() == kBusyDetectionList)
    {
-      std::vector<std::string> whitelist;
-      prefs::userPrefs().busyWhitelist().toVectorString(whitelist);
-      options.subprocWhitelist = whitelist;
+      std::vector<std::string> exclusionList;
+      prefs::userPrefs().busyExclusionList().toVectorString(exclusionList);
+      options.ignoredSubprocs = exclusionList;
    }
 
    // set path to shell
@@ -697,12 +697,12 @@ void ConsoleProcess::onExit(int exitCode)
    onExit_(exitCode);
 }
 
-void ConsoleProcess::onHasSubprocs(bool hasNonWhitelistSubprocs, bool hasWhitelistSubprocs)
+void ConsoleProcess::onHasSubprocs(bool hasNonIgnoredSubprocs, bool hasIgnoredSubprocs)
 {
-   whitelistChildProc_ = hasWhitelistSubprocs;
-   if (hasNonWhitelistSubprocs != procInfo_->getHasChildProcs() || !childProcsSent_)
+   ignoredChildProc_ = hasIgnoredSubprocs;
+   if (hasNonIgnoredSubprocs != procInfo_->getHasChildProcs() || !childProcsSent_)
    {
-      procInfo_->setHasChildProcs(hasNonWhitelistSubprocs);
+      procInfo_->setHasChildProcs(hasNonIgnoredSubprocs);
 
       json::Object subProcs;
       subProcs["handle"] = handle();
