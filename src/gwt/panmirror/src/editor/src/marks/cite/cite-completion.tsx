@@ -198,8 +198,8 @@ function citationCompletions(ui: EditorUI, completionProviders: CiteCompletionPr
               provider.streamEntries(context.doc, (entries: CiteCompletionEntry[]) => {
                 providerCount = providerCount + 1;
 
-                loadedEntries.push(...entries);
-                loadedEntries = sortEntries(loadedEntries);
+                const updatedEntries = [...loadedEntries, ...entries];
+                loadedEntries = sortEntries(updatedEntries);
                 if (providerCount >= completionProviders.length) {
                   citeSearch.setEntries(loadedEntries);
                 }

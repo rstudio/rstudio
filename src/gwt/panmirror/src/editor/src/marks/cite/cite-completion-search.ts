@@ -34,10 +34,10 @@ export function completionIndex(defaultEntries?: CiteCompletionEntry[]): CiteCom
   const options = {
     isCaseSensitive: false,
     shouldSort: true,
-    includeMatches: true,
-    includeScore: true,
+    includeMatches: false,
+    includeScore: false,
     minMatchCharLength: 3,
-    threshold: 0.475,
+    threshold: 0.5,
     keys: searchFields,
   };
 
