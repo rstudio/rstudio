@@ -53,7 +53,6 @@ export function completionIndex(defaultEntries?: CiteCompletionEntry[]): CiteCom
     },
     search: (searchTerm: string): CiteCompletionEntry[] => {
       const results = fuse.search('^' + searchTerm, { ...options, limit: 100 });
-      console.log(results);
       return results.map(result => result.item);
     },
     exactMatch: (searchTerm: string): boolean => {

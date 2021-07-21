@@ -199,8 +199,8 @@ function citationCompletions(ui: EditorUI, completionProviders: CiteCompletionPr
                 providerCount = providerCount + 1;
 
                 loadedEntries.push(...entries);
+                loadedEntries = sortEntries(loadedEntries);
                 if (providerCount >= completionProviders.length) {
-                  loadedEntries = sortEntries(loadedEntries);
                   citeSearch.setEntries(loadedEntries);
                 }
               });
