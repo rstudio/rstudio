@@ -14,7 +14,7 @@
  */
 
 import { Schema } from 'prosemirror-model';
-import { Selection, PluginKey } from 'prosemirror-state';
+import { PluginKey } from 'prosemirror-state';
 import { DecorationSet, EditorView } from 'prosemirror-view';
 
 import React from 'react';
@@ -47,12 +47,9 @@ export function citeXrefPopupPlugin(schema: Schema, ui: EditorUI, server: Editor
         const parsed = parseQuartoXRef(citeId);
         if (parsed) {
           const { id, type } = parsed;
-          const quartoIndex = await server.xref.quartoIndexForFile(docPath);
-          const matchedXref = quartoIndex.refs.find(ref => ref.id === id && ref.type === type);
 
-          if (matchedXref) {
-            const xrefs = await server.xref.quartoXrefForId(docPath, `${type}-${id}`);
-
+          const xrefs = await server.xref.quartoXrefForId(docPath, `${type}-${id}`);
+          if (xrefs.refs.length > 0) {
             if (xrefs.refs.length) {
               const xref = xrefs.refs[0];
 
