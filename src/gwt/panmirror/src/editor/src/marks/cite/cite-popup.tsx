@@ -14,7 +14,7 @@
  */
 
 import { Schema } from 'prosemirror-model';
-import { PluginKey } from 'prosemirror-state';
+import { PluginKey, Selection } from 'prosemirror-state';
 import { DecorationSet, EditorView } from 'prosemirror-view';
 
 import React from 'react';

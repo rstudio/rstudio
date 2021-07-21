@@ -43,6 +43,7 @@ import { citePopupPlugin } from './cite-popup';
 import { InsertCitationCommand } from './cite-commands';
 import { setTextSelection } from 'prosemirror-utils';
 import { AddMarkStep } from 'prosemirror-transform';
+import { citeXrefPopupPlugin } from './cite-popup-xref';
 
 const kCiteCitationsIndex = 0;
 
@@ -356,7 +357,9 @@ const extension = (context: ExtensionContext): Extension | null => {
           },
         }),
         citeHighlightPlugin(schema),
+        citeXrefPopupPlugin(schema, ui, context.server),
         citePopupPlugin(schema, ui, bibliographyManager, context.server.pandoc),
+
       ];
     },
   };
