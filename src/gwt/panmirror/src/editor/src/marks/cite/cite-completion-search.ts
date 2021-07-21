@@ -25,7 +25,7 @@ const searchFields: Fuse.FuseOptionKeyObject[] = [
 
 export interface CiteCompletionSearch {
   setEntries: (entries: CiteCompletionEntry[]) => void;
-  search: (searchTerm: string) => CiteCompletionEntry[];
+  search: (searchTerm: string, limit: number) => CiteCompletionEntry[];
   exactMatch: (searchTerm: string) => boolean;
 }
 
@@ -51,8 +51,8 @@ export function completionIndex(defaultEntries?: CiteCompletionEntry[]): CiteCom
       fuse.setCollection(entries);
       indexedEntries = entries;
     },
-    search: (searchTerm: string): CiteCompletionEntry[] => {
-      const results = fuse.search('^' + searchTerm, { ...options, limit: 100 });
+    search: (searchTerm: string, limit: number): CiteCompletionEntry[] => {
+      const results = fuse.search('^' + searchTerm, { ...options, limit });
       return results.map(result => result.item);
     },
     exactMatch: (searchTerm: string): boolean => {

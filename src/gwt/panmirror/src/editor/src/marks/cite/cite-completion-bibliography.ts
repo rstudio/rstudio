@@ -25,7 +25,7 @@ import { insertCitation as insertSingleCitation, performCiteCompletionReplacemen
 import { CiteCompletionEntry, CiteCompletionProvider } from './cite-completion';
 import { EditorServer } from '../../api/server';
 
-const kCiteCompletionTypeBibliography = "bibl";
+export const kCiteCompletionTypeBibliography = "bibl";
 
 export function bibliographyCiteCompletionProvider(ui: EditorUI, bibliographyManager: BibliographyManager): CiteCompletionProvider {
 

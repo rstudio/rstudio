@@ -35,7 +35,7 @@ import { parseCitation } from './cite';
 import './cite-completion.css';
 import { bibliographyCiteCompletionProvider } from './cite-completion-bibliography';
 import { EditorFormat, kQuartoDocType } from '../../api/format';
-import { quartoXrefCiteCompletionProvider } from './cite-completion-quarto-xref';
+import { quartoXrefCiteCompletionProvider, kCiteCompletionTypeXref } from './cite-completion-quarto-xref';
 import { completionIndex, CiteCompletionSearch } from './cite-completion-search';
 
 
@@ -151,12 +151,23 @@ function filterCitations(token: string, completionProviders: CiteCompletionProvi
   }
 
   // Perform a search
-  const searchResults = citeSearch.search(token);
-  return dedupe(searchResults || []);
+  const searchResults = citeSearch.search(token, kMaxCitationCompletions);
+  return searchResults || [];
 }
 
 function dedupe(entries: CiteCompletionEntry[]): CiteCompletionEntry[] {
-  return uniqby(entries, (entry: CiteCompletionEntry) => `${entry.id}${entry.type}`);;
+  // Move the xrefs to the front to ensure that they are kept
+  const orderedByType = entries.sort((a, b) => {
+    if (a.type === b.type) {
+      return 0;
+    } else if (a.type === kCiteCompletionTypeXref) {
+      return -1;
+    } else {
+      return 1;
+    }
+  });
+
+  return uniqby(orderedByType, (entry: CiteCompletionEntry) => entry.id);
 }
 
 function sortEntries(entries: CiteCompletionEntry[]): CiteCompletionEntry[] {
@@ -221,8 +232,9 @@ function citationCompletions(ui: EditorUI, completionProviders: CiteCompletionPr
               values.forEach(value => results.push(...value));
 
               // Index the current Entries
-              citeSearch.setEntries(results);
-              return sortEntries(results);
+              const sortedEntries = sortEntries(results);
+              citeSearch.setEntries(sortedEntries);
+              return sortedEntries;
             });
           }
         },

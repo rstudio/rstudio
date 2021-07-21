@@ -23,7 +23,7 @@ import { EditorServer } from '../../api/server';
 import { XRef, xrefKey } from '../../api/xref';
 import { kXRefTypes } from '../xref/xref-completion';
 
-const kCiteCompletionTypeXref = "xref";
+export const kCiteCompletionTypeXref = "xref";
 
 export function quartoXrefCiteCompletionProvider(ui: EditorUI, server: EditorServer): CiteCompletionProvider {
   const referenceEntryForXref = (xref: XRef, forceLightMode?: boolean): CiteCompletionEntry => {
