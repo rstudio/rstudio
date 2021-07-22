@@ -156,17 +156,11 @@
    if (!.rs.platform.isWindows)
    {
       python3 <- Sys.which("python3")
-      if (nzchar(python3) &&
-          python3 != "/usr/bin/python3" &&
-          .rs.python.isModuleAvailable(python3, "pip"))
-      {
+      if (nzchar(python3) && python3 != "/usr/bin/python3")
          return(python3)
-      }
       
       python <- Sys.which("python")
-      if (nzchar(python) &&
-          python != "/usr/bin/python" &&
-          .rs.python.isModuleAvailable(python, "pip"))
+      if (nzchar(python) && python != "/usr/bin/python")
       {
          info <- .rs.python.interpreterInfo(python, NULL)
          version <- numeric_version(info$version, strict = FALSE)
@@ -190,17 +184,11 @@
    if (!.rs.platform.isWindows)
    {
       python3 <- Sys.which("python3")
-      if (nzchar(python3) &&
-          python3 == "/usr/bin/python3" &&
-          .rs.python.isModuleAvailable(python3, "pip"))
-      {
+      if (nzchar(python3) && python3 == "/usr/bin/python3")
          return(python3)
-      }
       
       python <- Sys.which("python")
-      if (nzchar(python) &&
-          python == "/usr/bin/python" &&
-          .rs.python.isModuleAvailable(python, "pip"))
+      if (nzchar(python) && python == "/usr/bin/python")
       {
          info <- .rs.python.interpreterInfo(python, NULL)
          version <- numeric_version(info$version, strict = FALSE)
@@ -773,18 +761,4 @@
 {
    info <- .rs.python.getPythonInfo(pythonPath, strict = TRUE)
    .rs.scalarListFromList(info)
-})
-
-.rs.addFunction("python.isModuleAvailable", function(pythonPath, module)
-{
-   fmt <- "from importlib.util import find_spec; exit(find_spec(\"%s\") is None)"
-   code <- sprintf(fmt, module)
-   status <- system2(
-      command = pythonPath,
-      args = c("-E", "-c", shQuote(code)),
-      stdout = FALSE,
-      stderr = FALSE
-   )
-   
-   status == 0L
 })
