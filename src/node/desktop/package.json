@@ -11,6 +11,7 @@
     "@tsconfig/node14": "^1.0.0",
     "@types/chai": "^4.2.18",
     "@types/crc": "^3.4.0",
+    "@types/line-reader": "^0.0.34",
     "@types/mocha": "^8.2.2",
     "@types/node": "^15.14.0",
     "@types/sinon": "^10.0.2",
@@ -36,6 +37,7 @@
   "dependencies": {
     "crc": "^3.8.0",
     "electron-store": "^8.0.0",
+    "line-reader": "^0.4.0",
     "uuid": "^8.3.2"
   },
   "scripts": {
