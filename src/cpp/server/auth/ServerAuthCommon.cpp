@@ -461,7 +461,8 @@ std::string userIdentifierToLocalUsername(const std::string& userIdentifier)
       if (error)
       {
          // log the error and return the original user identifier as a fallback
-         LOG_ERROR_MESSAGE("Error converting userIdentifier to username: " + error.asString());
+         error.addProperty("description", "Error converting userIdentifier to username");
+         LOG_ERROR(error);
       }
       else
       {
@@ -471,7 +472,8 @@ std::string userIdentifierToLocalUsername(const std::string& userIdentifier)
          if (error)
          {
             // log the error and return the original user identifier as a fallback
-            LOG_ERROR_MESSAGE("Error converting uid to username: " + error.asString());
+            error.addProperty("description", "Error converting uid to username");
+            LOG_ERROR(error);
          }
          else
          {
