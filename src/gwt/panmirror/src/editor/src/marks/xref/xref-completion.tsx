@@ -196,7 +196,7 @@ const kEqType = {
     ui.prefs.darkMode() ? ui.images.omni_insert?.math_display_dark : ui.images.omni_insert?.math_display,
 };
 
-const kXRefTypes: { [key: string]: { image: (ui: EditorUI) => string | undefined } } = {
+export const kXRefTypes: { [key: string]: { image: (ui: EditorUI) => string | undefined } } = {
   h1: {
     image: (ui: EditorUI) =>
       ui.prefs.darkMode() ? ui.images.omni_insert?.heading1_dark : ui.images.omni_insert?.heading1,
