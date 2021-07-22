@@ -268,7 +268,7 @@ export class SessionLauncher {
     vars.set('version', ss);
 
     // Collect message from the abnormal end log path
-    if (abendLogPath().exists()) {
+    if (abendLogPath().existsSync()) {
       vars.set('launch_failed', this.launchFailedErrorMessage());
     } else {
       vars.set('launch_failed', '[No error available]');

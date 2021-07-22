@@ -177,7 +177,7 @@ export class Application implements AppState {
 
       // adapt for OSX resource bundles
       if (process.platform === 'darwin') {
-        if (this.supportPath.completePath('Info.plist').exists()) {
+        if (this.supportPath.completePath('Info.plist').existsSync()) {
           this.supportPath = this.supportPath.completePath('Resources');
         }
       }
