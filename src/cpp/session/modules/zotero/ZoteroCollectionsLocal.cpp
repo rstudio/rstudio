@@ -575,10 +575,16 @@ void getLocalCollections(std::string key,
          if (it != cacheSpecs.end())
          {
             ZoteroCollectionSpec collectionSpec(name, key, parentKey, version);
-            if (it->version != version)
+            // If the version is 0 this is a local instance that isn't incrementing version numbers, do not cache
+            if (it->version != version || it->version == 0)
+            {
+               TRACE("Need to update collection " + name);
                downloadCollections.push_back(std::make_pair(name, collectionSpec));
-            else
+            }
+            else {
+               TRACE("Collection " + name + " is up to date.");
                upToDateCollections.push_back(ZoteroCollection(collectionSpec));
+            }
          }
          else
          {
