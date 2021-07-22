@@ -77,6 +77,17 @@ public class AboutDialogContents extends Composite
       productName.setText(editionInfo.editionName());
       copyrightYearLabel.setText("2009-" + info.copyright_year);
 
+      // Warn that dailies and previews aren't supported
+      if (info.build_type.equals("Daily") || info.build_type.equals("Preview")) {
+         supportNotice.setText(
+            "This " +
+            info.build_type +
+            " build of " +
+            editionInfo.editionName() +
+            " is provided by RStudio, PBC for testing purposes only and is not an officially supported release."
+         );
+      }
+
       showNoticelink_.setClickHandler(() ->
       {
          RStudioGinjector.INSTANCE.getServer().getProductNotice(new ServerRequestCallback<ProductNotice>()
@@ -130,6 +141,7 @@ public class AboutDialogContents extends Composite
    @UiField TextArea licenseBox;
    @UiField Label productName;
    @UiField HTMLPanel productInfo;
+   @UiField InlineLabel supportNotice;
    @UiField Anchor gplLink;
    @UiField Label gplLinkLabel;
 }
