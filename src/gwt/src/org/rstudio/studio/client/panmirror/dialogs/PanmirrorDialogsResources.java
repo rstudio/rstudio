@@ -50,6 +50,8 @@ public interface PanmirrorDialogsResources extends ClientBundle
       String flexTablePreviewValue();
       String disabled();
       String listBox();
+      String numericSizeInput();
+      String unitsSelectInput();
    }
 
    @Source("PanmirrorDialogsStyles.css")

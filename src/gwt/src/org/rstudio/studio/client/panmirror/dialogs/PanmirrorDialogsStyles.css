@@ -44,7 +44,15 @@
 }
 
 .lockRatioCheckbox {
-    margin-left: 3px;
+	margin-left: 3px;
+}
+
+.numericSizeInput {
+  width: 55px;
+}
+
+.unitsSelectInput {
+   width: 43px;
 }
 
 .dialog .fullWidth {
