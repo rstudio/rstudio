@@ -51,6 +51,7 @@
     "test": "electron-mocha -c --config ./test/unit/mocharc.json",
     "testcover": "nyc electron-mocha -c --config ./test/unit/mocharc.json",
     "testwip": "electron-mocha -c -g WIP --config ./test/unit/mocharc.json",
-    "testint": "mocha -c --config ./test/int/mocharc.json"
+    "testint": "mocha -c --config ./test/int/mocharc.json",
+    "testintwip": "mocha -c -g WIP  --config ./test/int/mocharc.json"
   }
 }
