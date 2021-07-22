@@ -19,6 +19,7 @@
 #include <boost/asio/io_service.hpp>
 #include <boost/function.hpp>
 #include <shared_core/json/Json.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 #define kServerRpcSecretHeader        "X-RS-Session-Server-RPC-Secret"
 #define kServerRpcSecretEnvVar        "RS_SESSION_SERVER_RPC_SECRET"
@@ -60,6 +61,7 @@ core::Error invokeRpc(const std::string& address,
                       const std::string& port,
                       bool useSsl,
                       bool verifySslCerts,
+                      const boost::posix_time::time_duration& connectionTimeout,
                       const std::string& endpoint,
                       const core::json::Object& request,
                       core::json::Value* pResult);
@@ -69,6 +71,7 @@ void invokeRpcAsync(boost::asio::io_service& ioService,
                     const std::string& port,
                     bool useSsl,
                     bool verifySslCerts,
+                    const boost::posix_time::time_duration& connectionTimeout,
                     const std::string& endpoint,
                     const core::json::Object& request,
                     const RpcResultHandler& onResult,

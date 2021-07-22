@@ -104,6 +104,7 @@ Error sendRequest(const std::string& address,
                   const std::string& port,
                   bool useSsl,
                   bool verifySslCerts,
+                  const boost::posix_time::time_duration& connectionTimeout,
                   const std::string& endpoint,
                   const http::Request& request,
                   json::Value* pResult)
@@ -160,6 +161,7 @@ void sendRequestAsync(boost::asio::io_service& ioService,
                       const std::string& port,
                       bool useSsl,
                       bool verifySslCerts,
+                      const boost::posix_time::time_duration& connectionTimeout,
                       const std::string& endpoint,
                       const http::Request& request,
                       const RpcResultHandler& onResult,
@@ -172,13 +174,16 @@ void sendRequestAsync(boost::asio::io_service& ioService,
       pClient.reset(new http::TcpIpAsyncClientSsl(ioService,
                                                   address,
                                                   port,
-                                                  verifySslCerts));
+                                                  verifySslCerts, 
+                                                  std::string(), // cert authority
+                                                  connectionTimeout));
    }
    else
    {
       pClient.reset(new http::TcpIpAsyncClient(ioService,
                                                address,
-                                               port));
+                                               port,
+                                               connectionTimeout));
    }
 
    pClient->request().assign(request);
@@ -244,13 +249,14 @@ Error invokeRpc(const std::string& address,
                 const std::string& port,
                 bool useSsl,
                 bool verifySslCerts,
+                const boost::posix_time::time_duration& connectionTimeout,
                 const std::string& endpoint,
                 const json::Object& request,
                 json::Value *pResult)
 {
    http::Request req;
    constructTcpRequest(address, endpoint, request, &req);
-   return sendRequest(address, port, useSsl, verifySslCerts, endpoint, req, pResult);
+   return sendRequest(address, port, useSsl, verifySslCerts, connectionTimeout, endpoint, req, pResult);
 }
 
 void invokeRpcAsync(boost::asio::io_service& ioService,
@@ -258,6 +264,7 @@ void invokeRpcAsync(boost::asio::io_service& ioService,
                     const std::string& port,
                     bool useSsl,
                     bool verifySslCerts,
+                    const boost::posix_time::time_duration& connectionTimeout,
                     const std::string& endpoint,
                     const json::Object& request,
                     const RpcResultHandler& onResult,
@@ -265,7 +272,7 @@ void invokeRpcAsync(boost::asio::io_service& ioService,
 {
    http::Request req;
    constructTcpRequest(address, endpoint, request, &req);
-   sendRequestAsync(ioService, address, port, useSsl, verifySslCerts, endpoint, req, onResult, onError);
+   sendRequestAsync(ioService, address, port, useSsl, verifySslCerts, connectionTimeout, endpoint, req, onResult, onError);
 }
 
 Error initialize()
