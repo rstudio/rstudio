@@ -1,5 +1,5 @@
 /*
- * node_attr.tsx
+ * xref-popup-xref.css
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -13,19 +13,25 @@
  *
  */
 
-import { Node as ProsemirrorNode, NodeType, Schema } from 'prosemirror-model';
+.pm-cite-xref-popup {
+  max-width: 350px; /* also in xref-popup.tsx */
+}
 
-import { CommandFn } from './command';
+.pm-cite-xref-popup-key {
+  cursor: pointer !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: wrap;
+}
 
-export interface AttrEditOptions {
-  type: (schema: Schema) => NodeType;
-  tags?: (node: ProsemirrorNode) => string[];
-  noKeyvalueTags?: boolean;
-  editFn?: () => CommandFn;
-  noDecorator?: boolean;
-  preferHidden?: boolean;
-  offset?: {
-    top: number;
-    right: number;
-  };
+.pm-cite-xref-popup-text {
+  opacity: 0.9;
+  font-size: 0.9em;
+  margin-top: 3px;
+}
+
+.pm-cite-xref-popup-file {
+  opacity: 0.6;
+  font-size: 0.9em;
+  margin-top: 3px;
 }

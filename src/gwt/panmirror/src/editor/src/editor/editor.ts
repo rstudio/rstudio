@@ -515,7 +515,7 @@ export class Editor {
         // eat exceptions that might result from an invalid position
         try {
           setTextSelection(loc.pos)(tr);
-        } catch(e) {
+        } catch (e) {
           // do-nothing, this error can happen and shouldn't result in 
           // a failure to setMarkdown
         }
@@ -704,7 +704,7 @@ export class Editor {
 
   public navigate(type: NavigationType, location: string, recordCurrent = true, animate = false) {
     // perform navigation
-    const nav = navigateTo(this.view, type, location, animate);
+    const nav = navigateTo(this.view, this.format, type, location, animate);
 
     // emit event
     if (nav !== null) {

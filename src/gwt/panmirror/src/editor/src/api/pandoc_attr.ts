@@ -47,8 +47,10 @@ export const pandocAttrSpec = {
   keyvalue: { default: [] },
 };
 
-export function pandocAttrAvailable(attrs: any) {
-  return !!attrs.id || (attrs.classes && attrs.classes.length > 0) || (attrs.keyvalue && attrs.keyvalue.length > 0);
+export function pandocAttrAvailable(attrs: any, keyvalue = true) {
+  return !!attrs.id || 
+         (attrs.classes && attrs.classes.length > 0) || 
+         (keyvalue && attrs.keyvalue && attrs.keyvalue.length > 0);
 }
 
 export function pandocAttrFrom(attrs: any) {

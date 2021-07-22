@@ -113,4 +113,4 @@ for RPKG in rmarkdown renv testthat xml2 yaml; do
 done
 
 # back to install-dir
-cd $INSTALL_DIR
+cd "$INSTALL_DIR"

@@ -1630,7 +1630,7 @@ void fillFromCrossrefs(const std::string& term,
       {
          sourceType = SourceItem::Figure;
       }
-      else if (type == "tab" || type == "tbl")
+      else if (type == "tab" || type == "tbl" || type == "lst")
       {
          sourceType = SourceItem::Table;
       }
@@ -1649,18 +1649,26 @@ void fillFromCrossrefs(const std::string& term,
       // form appropriate text for display
       std::string displayText;
       
-      switch (sourceType)
+      if (isQuarto)
       {
-      case SourceItem::Figure:
-      case SourceItem::Table:
-      case SourceItem::Math:
-         displayText = type + (isQuarto ? "-" : ":") + id;
-         break;
-         
-      default:
-         displayText = title;
-         break;
+         displayText = type + "-" + id;
       }
+      else
+      {
+         switch (sourceType)
+         {
+         case SourceItem::Figure:
+         case SourceItem::Table:
+         case SourceItem::Math:
+            displayText = type + ":" + id;
+            break;
+
+         default:
+            displayText = title;
+            break;
+         }
+      }
+
       
       // check to see if this is a subsequence match of the
       // user-provided search term

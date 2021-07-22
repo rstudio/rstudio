@@ -370,6 +370,7 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
       input.setMin(1);
       input.setMax(10000);
       input.addStyleName(RES.styles().horizontalInput());
+      input.addStyleName(RES.styles().numericSizeInput());
       input.getElement().setId(id);
       label.setFor(input);
       panel.add(label);
@@ -383,6 +384,7 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
       String[] options = uiTools_.validUnits();
       ListBox units = new ListBox();
       units.addStyleName(RES.styles().horizontalInput());
+      units.addStyleName(RES.styles().unitsSelectInput());
       for (int i = 0; i < options.length; i++)
          units.addItem(options[i], options[i]);
       units.getElement().setId(ElementIds.VISUAL_MD_IMAGE_UNITS);

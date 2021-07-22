@@ -122,6 +122,7 @@ const extension = (context: ExtensionContext): Extension => {
             top: 2,
             right: 0
           },
+          noKeyvalueTags: true,
           preferHidden: true
         }),
       },

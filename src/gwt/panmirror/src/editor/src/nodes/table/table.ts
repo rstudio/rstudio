@@ -15,20 +15,18 @@
 
 import { Schema } from 'prosemirror-model';
 import { EditorView } from 'prosemirror-view';
-import { Transaction } from 'prosemirror-state';
+import { Transaction, EditorState } from 'prosemirror-state';
 import { Transform } from 'prosemirror-transform';
 import { tableEditing, columnResizing, goToNextCell, deleteColumn, deleteRow } from 'prosemirror-tables';
+import { sinkListItem, liftListItem } from 'prosemirror-schema-list';
 
 import { findChildrenByType } from 'prosemirror-utils';
 
-import { EditorUI } from '../../api/ui';
 import { Extension, ExtensionContext } from '../../api/extension';
-import { PandocExtensions } from '../../api/pandoc';
 import { BaseKey } from '../../api/basekeys';
 import { ProsemirrorCommand, EditorCommandId, exitNode } from '../../api/command';
 import { TableCapabilities } from '../../api/table';
 import { trTransform } from '../../api/transaction';
-import { PandocCapabilities } from '../../api/pandoc_capabilities';
 
 import {
   insertTable,
@@ -138,8 +136,8 @@ const extension = (context: ExtensionContext): Extension | null => {
       const keys = [
         { key: BaseKey.Backspace, command: deleteTableCaption() },
         { key: BaseKey.Enter, command: exitNode(schema.nodes.table_caption, -2, false) },
-        { key: BaseKey.Tab, command: goToNextCell(1) },
-        { key: BaseKey.ShiftTab, command: goToNextCell(-1) },
+        { key: BaseKey.Tab, command: tableTabKey },
+        { key: BaseKey.ShiftTab, command: tableShiftTabKey },
       ];
 
       // turn enter key variations into tab if we don't support multi-line
@@ -169,6 +167,22 @@ const extension = (context: ExtensionContext): Extension | null => {
     },
   };
 };
+
+export function tableTabKey(state: EditorState, dispatch?: (tr: Transaction) => void): boolean {
+  if (sinkListItem(state.schema.nodes.list_item)(state)) {
+    return false;
+  } else {
+    return goToNextCell(1)(state, dispatch);
+  }
+}
+
+export function tableShiftTabKey(state: EditorState, dispatch?: (tr: Transaction) => void): boolean {
+  if (liftListItem(state.schema.nodes.list_item)(state)) {
+    return false;
+  } else {
+    return goToNextCell(-1)(state, dispatch);
+  }
+}
 
 function tableRepairTransform(tr: Transform) {
   const schema = tr.doc.type.schema;

@@ -32,10 +32,12 @@ sudo apt-get -y install \
   build-essential \
   clang \
   cmake \
+  curl \
   debsigs \
   dpkg-sig \
   expect \
   fakeroot \
+  git \
   gnupg1 \
   libacl1-dev \
   libattr1-dev \
@@ -57,6 +59,7 @@ sudo apt-get -y install \
   libxslt1-dev \
   lsof \
   ninja-build \
+  p7zip-full \
   patchelf \
   pkg-config \
   python \
