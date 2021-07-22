@@ -24,7 +24,7 @@ import * as React from 'react';
 import { EditorUI } from '../../api/ui';
 import { AttrEditOptions } from '../../api/attr_edit';
 import { ImageButton } from '../../api/widgets/button';
-import { CommandFn, EditorCommandId } from '../../api/command';
+import { CommandFn } from '../../api/command';
 import { AttrProps } from '../../api/ui-dialogs';
 import { WidgetProps, reactRenderForEditorView } from '../../api/widgets/react';
 import { PandocExtensions } from '../../api/pandoc';
@@ -114,7 +114,7 @@ export class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
       // if we prefer hidden and have no attributes then bail
       const range = { from: pos, to: pos + node.nodeSize };
       if (editor.preferHidden && 
-          !pandocAttrAvailable(node.attrs) && 
+          !pandocAttrAvailable(node.attrs, !editor.noKeyvalueTags) && 
           !selectionIsWithinRange(selection, range)) {
         return undefined;
       }
@@ -129,7 +129,7 @@ export class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
           if (editorNode.attrs.classes && editorNode.attrs.classes.length) {
             attrTags.push(`${editorNode.attrs.classes.map((clz: string) => '.' + clz).join(' ')}`);
           }
-          if (editorNode.attrs.keyvalue && editorNode.attrs.keyvalue.length) {
+          if (!editor.noKeyvalueTags && editorNode.attrs.keyvalue && editorNode.attrs.keyvalue.length) {
             attrTags.push(`${editorNode.attrs.keyvalue.map(
               (kv: [string,string]) => kv[0] + '="' + (kv[1] || '1') + '"').join(' ')}
             `);
