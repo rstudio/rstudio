@@ -97,6 +97,8 @@ export class SessionLauncher {
   sessionProcess?: ChildProcess;
   mainWindow?: MainWindow;
   static launcherToken = generateShortenedUuid();
+  sessionStdout: string[] = [];
+  sessionStderr: string[] = [];
 
   constructor(
     private sessionPath: FilePath,
@@ -280,13 +282,13 @@ export class SessionLauncher {
     vars.set('exit_code', exitCode.toString());
 
     // Read standard output and standard error streams
-    let procStdout = ''; // TODO pRSessionProcess_->readAllStandardOutput().toStdString();
+    let procStdout = this.sessionStdout.join();
     if (!procStdout) {
       procStdout = '[No output emitted]';
     }
     vars.set('process_output', procStdout);
 
-    let procStderr = ''; // TODO pRSessionProcess_->readAllStandardError().toStdString();
+    let procStderr = this.sessionStderr.join();
     if (!procStderr) {
       procStderr = '[No errors emitted]';
     }
@@ -409,6 +411,9 @@ export class SessionLauncher {
       logger().logError(error);
     }
 
+    this.sessionStdout = [];
+    this.sessionStderr = [];
+
     if (appState().sessionStartDelaySeconds > 0) {
       setenv('RSTUDIO_SESSION_SLEEP_ON_STARTUP', appState().sessionStartDelaySeconds.toString());
     }
@@ -436,6 +441,14 @@ export class SessionLauncher {
         logger().logDebug(`rsession terminated: signal=${signal}`);
       }
       this.onRSessionExited();
+    });
+
+    // capture stdout and stderr for diagnostics
+    sessionProc.stdout?.on('data', (data) => {
+      this.sessionStdout.push(data);
+    });
+    sessionProc.stderr?.on('data', (data) => {
+      this.sessionStderr.push(data);
     });
 
     return sessionProc;
