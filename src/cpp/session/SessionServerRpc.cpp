@@ -106,25 +106,49 @@ Error invokeServerRpc(const std::string& endpoint,
        return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
 #else
       FilePath rpcSocket(core::system::getenv(kServerRpcSocketPathEnvVar));
+      LOG_DEBUG_MESSAGE("Invoking rserver RPC '" + endpoint + "' on socket " + 
+            rpcSocket.getAbsolutePath());
       return socket_rpc::invokeRpc(rpcSocket, endpoint, request, pResult);
 #endif
    }
    else
    {
       http::URL url(serverAddress);
-
+      int timeout = safe_convert::stringTo<int>(
+            options().getOverlayOption(kRServerConnectionTimeout), 10);
+      
       if (!url.isValid())
       {
          // not a valid url - we assume this is just a hostname or IP address
          std::string tcpPort = options().getOverlayOption(kRServerTcpPort);
-         return socket_rpc::invokeRpc(serverAddress, tcpPort, false, false, endpoint, request, pResult);
+         LOG_DEBUG_MESSAGE("Invoking rserver RPC '" + endpoint + "' on host " + 
+               serverAddress + ":" + tcpPort);
+         return socket_rpc::invokeRpc(
+               serverAddress, 
+               tcpPort, 
+               false, // no SSL 
+               false, // no cert verification
+               boost::posix_time::seconds(timeout), 
+               endpoint, 
+               request, 
+               pResult);
       }
       else
       {
          // valid url - combine url path with requested endpoint
          bool verifySslCerts = options().getOverlayOption(kRServerVerifySslCerts) == "1";
-         return socket_rpc::invokeRpc(url.hostname(), url.portStr(), url.protocol() == "https",
-                                      verifySslCerts, url.path() + endpoint, request, pResult);
+         LOG_DEBUG_MESSAGE("Invoking rserver RPC '" + endpoint + "' on URL " + 
+               serverAddress +
+               (verifySslCerts ? "" : " without SSL validation"));
+         return socket_rpc::invokeRpc(
+               url.hostname(), 
+               url.portStr(), 
+               url.protocol() == "https", // SSL flag
+               verifySslCerts, // skip SSL verification if requested
+               boost::posix_time::seconds(timeout), 
+               url.path() + endpoint, 
+               request, 
+               pResult);
       }
    }
 }
@@ -151,6 +175,8 @@ void invokeServerRpcAsync(const std::string& endpoint,
        return;
 #else
       FilePath rpcSocket(core::system::getenv(kServerRpcSocketPathEnvVar));
+      LOG_DEBUG_MESSAGE("Invoking rserver async RPC '" + endpoint + "' on socket " + 
+            rpcSocket.getAbsolutePath());
       return socket_rpc::invokeRpcAsync(s_ioService,
                                         rpcSocket,
                                         endpoint,
@@ -162,16 +188,21 @@ void invokeServerRpcAsync(const std::string& endpoint,
    else
    {
       http::URL url(serverAddress);
+      int timeout = safe_convert::stringTo<int>(
+            options().getOverlayOption(kRServerConnectionTimeout), 10);
 
       if (!url.isValid())
       {
          // not a valid url - we assume this is just a hostname or IP address
          std::string tcpPort = options().getOverlayOption(kRServerTcpPort);
+         LOG_DEBUG_MESSAGE("Invoking async rserver RPC '" + endpoint + "' on host " + 
+               serverAddress + ":" + tcpPort);
          return socket_rpc::invokeRpcAsync(s_ioService,
                                            serverAddress,
                                            tcpPort,
-                                           false,
-                                           false,
+                                           false, // no SSL
+                                           false, // no cert verification
+                                           boost::posix_time::seconds(timeout),
                                            endpoint,
                                            request,
                                            onResult,
@@ -181,11 +212,15 @@ void invokeServerRpcAsync(const std::string& endpoint,
       {
          // valid url - combine url path with requested endpoint
          bool verifySslCerts = options().getOverlayOption(kRServerVerifySslCerts) == "1";
+         LOG_DEBUG_MESSAGE("Invoking async rserver RPC '" + endpoint + "' on URL " + 
+               serverAddress +
+               (verifySslCerts ? "" : " without SSL validation"));
          return socket_rpc::invokeRpcAsync(s_ioService,
                                            url.hostname(),
                                            url.portStr(),
                                            url.protocol() == "https",
                                            verifySslCerts,
+                                           boost::posix_time::seconds(timeout),
                                            url.path() + endpoint,
                                            request,
                                            onResult,
