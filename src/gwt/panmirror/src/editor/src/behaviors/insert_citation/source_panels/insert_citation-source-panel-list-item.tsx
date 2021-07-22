@@ -64,6 +64,13 @@ export const CitationSourcePanelListItem = (props: ListChildComponentProps) => {
     citationListData.onConfirm();
   };
 
+  let authors = "";
+  try {
+    authors = citationEntry.authors(authorWidth);
+  } catch (er) {
+    // Failed to format the authors, just ignore this.
+  }
+
   return (
     <div
       onMouseDown={onItemClick}
@@ -80,8 +87,8 @@ export const CitationSourcePanelListItem = (props: ListChildComponentProps) => {
                 src={citationEntry.imageAdornment}
               />
             ) : (
-              undefined
-            )}
+                undefined
+              )}
             <img
               className="pm-insert-citation-source-panel-item-icon pm-block-border-color"
               src={citationEntry.image}
@@ -91,7 +98,7 @@ export const CitationSourcePanelListItem = (props: ListChildComponentProps) => {
             <div className="pm-insert-citation-source-panel-item-id">
               <div className="pm-insert-citation-source-panel-item-title pm-fixedwidth-font pm-text-color">{id}</div>
               <div className="pm-insert-citation-source-panel-item-detail pm-text-color">
-                {citationEntry.authors(authorWidth)} {citationEntry.date}
+                {authors} {citationEntry.date}
               </div>
             </div>
             <div className="pm-insert-citation-source-panel-item-subtitle-text pm-text-color">
