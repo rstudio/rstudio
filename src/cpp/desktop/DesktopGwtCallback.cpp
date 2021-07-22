@@ -1362,14 +1362,14 @@ void GwtCallback::setClipboardMonitoring(bool monitoring)
    options().setClipboardMonitoring(monitoring);
 }
 
-bool GwtCallback::getIgnoreGpuBlacklist()
+bool GwtCallback::getIgnoreGpuExclusionList()
 {
-   return options().ignoreGpuBlacklist();
+   return options().ignoreGpuExclusionList();
 }
 
-void GwtCallback::setIgnoreGpuBlacklist(bool ignore)
+void GwtCallback::setIgnoreGpuExclusionList(bool ignore)
 {
-   options().setIgnoreGpuBlacklist(ignore);
+   options().setIgnoreGpuExclusionList(ignore);
 }
 
 bool GwtCallback::getDisableGpuDriverBugWorkarounds()

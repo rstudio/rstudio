@@ -115,8 +115,15 @@ generateRmd <- function (optionsJson, overlayOptionsJson) {
       stop(sprintf("No outputDocFile specified for %s config", configFile))
    }
    
-   rmd <- sprintf("## %s\n", configFile)
-   
+   # header for Quarto file
+   rmd <- paste("---",
+                paste0("title: \"", configFile, "\""),
+                "aliases:",
+                paste0("\t- /rstudio-configuration-1.html#", configFile),
+                "---",
+                "",
+                sep = "\n")
+
    docDescription <- metadata$docDescription
    if (is.null(docDescription)) {
       docDescription <- 

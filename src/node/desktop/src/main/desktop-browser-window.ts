@@ -37,6 +37,12 @@ export class DesktopBrowserWindow extends EventEmitter {
   window: BrowserWindow;
   webView: WebView;
 
+  private tempDirs: string[] = [];
+
+  // if loading fails and emits `did-fail-load` it will be followed by a 
+  // 'did-finish-load'; use this bool to differentiate
+  private failLoad = false;
+
   /**
    * @param adjustTitle Automatically set window title to match web page title
    * @param name  Internal window name (or an empty string)
@@ -76,9 +82,14 @@ export class DesktopBrowserWindow extends EventEmitter {
       this.adjustWindowTitle(title, explicitSet);
     });
     this.webView.webContents.on('did-finish-load', () => {
-      this.finishLoading(true);
+      if (!this.failLoad) {
+        this.finishLoading(true);
+      } else {
+        this.failLoad = false;
+      }
     });
     this.webView.webContents.on('did-fail-load', () => {
+      this.failLoad = true;
       this.finishLoading(false);
     });
     this.window.on('close', this.closeEvent.bind(this));
@@ -137,8 +148,6 @@ export class DesktopBrowserWindow extends EventEmitter {
   }
 
   finishLoading(succeeded: boolean): void {
-    logger().logDebug(`window finished loading: success=${succeeded}`);
-
     if (succeeded) {
       this.syncWindowTitle();
 
@@ -151,6 +160,7 @@ export class DesktopBrowserWindow extends EventEmitter {
       this.executeJavaScript(cmd).catch((error) => {
         logger().logError(error);
       });
+      this.cleanupTmpFiles(false);
     }
   }
 
@@ -185,6 +195,28 @@ export class DesktopBrowserWindow extends EventEmitter {
     const uniqueFile = path.join(uniqueDir, 'tmp.html');
     fs.writeFileSync(uniqueFile, html);
     this.window.loadFile(uniqueFile);
-    // TODO: cleanup temp files?
+
+    // Track the temporary directory for later cleanup; can't delete
+    // while it is loaded
+    this.tempDirs.push(uniqueDir);
+  }
+
+  /**
+   * Cleanup pages written to temp dir by loadHtml method.
+   * 
+   * @param keepLast don't delete most recently loaded tmpfile (can't delete the currently
+   * loaded page)
+   */
+  cleanupTmpFiles(keepLast: boolean): void {
+    let i = keepLast ? this.tempDirs.length - 2 : this.tempDirs.length - 1;
+    while ( i >= 0) {
+      try {
+        fs.rmSync(this.tempDirs[i], { force: true, recursive: true });
+        this.tempDirs.pop();
+      } catch (err) {
+        logger().logDebug(`Failed to delete ${this.tempDirs[i]}`);
+      }
+      i--;
+    }
   }
 }

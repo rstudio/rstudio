@@ -135,12 +135,16 @@ const extension = (context: ExtensionContext): Extension | null => {
                 output.writeRawMarkdown(node.textContent);
               });
 
-            // html with embedded ``` (e.g. a commented out Rmd code chunk) needs
-            // an extra backtick on the outside to prevent the rmd chunk end backticks
+            // raw block with embedded ``` (e.g. a commented out Rmd code chunk) needs
+            // extra backticks on the outside to prevent the rmd chunk end backticks
             // from being considered the end of the raw html block.
-            } else if (node.attrs.format === kHTMLFormat && node.textContent.includes("\n```")) {
+            } else if (node.textContent.includes("\n```")) {
+              // find the ``` standing by itself on a line
+              const match = node.textContent.matchAll(/\n(`{3,})\s*?\n/g);
+              const matchRev = Array.from(match || []).reverse();
+              const ticks = (matchRev.length > 0 ? matchRev[0][1] : "```") + "`";
               output.writeToken(PandocTokenType.Para, () => {
-                output.writeRawMarkdown("````{=html}\n" + node.textContent + "\n````\n");
+                output.writeRawMarkdown(`${ticks}{=${node.attrs.format}}\n${node.textContent}\n${ticks}\n`);
               });
             } else {
               output.writeToken(PandocTokenType.RawBlock, () => {
@@ -201,14 +205,14 @@ function readPandocRawBlock(schema: Schema, tok: PandocToken, writer: Prosemirro
     writer.closeNode();
 
     // similarly, single lines of tex should be read as inline tex
-  } else if (format === kTexFormat && isSingleLineTex(textTrimmed)) {
+  } /* else if (format === kTexFormat && isSingleLineTex(textTrimmed)) {
     writer.openNode(schema.nodes.paragraph, {});
     const rawTexMark = schema.marks.raw_tex.create();
     writer.openMark(rawTexMark);
     writer.writeText(textTrimmed);
     writer.closeMark(rawTexMark);
     writer.closeNode();
-  } else {
+  } */ else {
     writer.openNode(schema.nodes.raw_block, { format });
     writer.writeText(text);
     writer.closeNode();

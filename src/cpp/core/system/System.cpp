@@ -20,23 +20,21 @@
 
 #include <boost/variant.hpp>
 
-#include <core/system/System.hpp>
-
-#include <core/Algorithm.hpp>
 #include <shared_core/Hash.hpp>
-#include <core/Log.hpp>
-#include <core/LogOptions.hpp>
-
-#include <core/system/Environment.hpp>
+#include <shared_core/FileLogDestination.hpp>
+#include <shared_core/FilePath.hpp>
+#include <shared_core/SafeConvert.hpp>
+#include <shared_core/StderrLogDestination.hpp>
 
 #ifndef _WIN32
 #include <shared_core/system/SyslogDestination.hpp>
 #endif
 
-#include <shared_core/FileLogDestination.hpp>
-#include <shared_core/FilePath.hpp>
-#include <shared_core/SafeConvert.hpp>
-#include <shared_core/StderrLogDestination.hpp>
+#include <core/Algorithm.hpp>
+#include <core/Log.hpp>
+#include <core/LogOptions.hpp>
+#include <core/system/System.hpp>
+#include <core/system/Environment.hpp>
 
 namespace rstudio {
 namespace core {
@@ -79,32 +77,6 @@ void addToSystemPath(const FilePath& path, bool prepend)
       systemPath = systemPath + kPathSeparator + path.getAbsolutePath();
    system::setenv("PATH", systemPath);
 }
-
-Error findProgramOnPath(const std::string& program,
-                        core::FilePath* pProgramPath)
-{
-   auto paths = core::algorithm::split(
-            core::system::getenv("PATH"),
-            kPathSeparator);
-
-   for (auto&& path : paths)
-   {
-      if (!path.empty())
-      {
-         FilePath candidatePath = FilePath(path).completeChildPath(program);
-         // TODO: check if program is executable - perhaps use boost::process::search_path() as it does this test for both
-         // unix and windows systems but right now we don't include the process module in our boost library
-         if (candidatePath.exists())
-         {
-            *pProgramPath = candidatePath;
-            return Success();
-         }
-      }
-   }
-
-   return fileNotFoundError(program, ERROR_LOCATION);
-}
-
 
 int exitFailure(const Error& error, const ErrorLocation& loggedFromLocation)
 {

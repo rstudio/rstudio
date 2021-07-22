@@ -401,12 +401,12 @@ export class GwtCallback extends EventEmitter {
       GwtCallback.unimpl('desktop_set_clipboard_monitoring');
     });
 
-    ipcMain.handle('desktop_get_ignore_gpu_blacklist', (event, ignore) => {
+    ipcMain.handle('desktop_get_ignore_gpu_exclusion_list', (event, ignore) => {
       return true;
     });
 
-    ipcMain.on('desktop_set_ignore_gpu_blacklist', (event, ignore) => {
-      GwtCallback.unimpl('desktop_set_ignore_gpu_blacklist');
+    ipcMain.on('desktop_set_ignore_gpu_exclusion_list', (event, ignore) => {
+      GwtCallback.unimpl('desktop_set_ignore_gpu_exclusion_list');
     });
 
     ipcMain.handle('desktop_get_disable_gpu_driver_bug_workarounds', () => {

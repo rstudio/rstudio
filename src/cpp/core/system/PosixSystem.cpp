@@ -24,6 +24,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/range/as_array.hpp>
 #include <boost/bind/bind.hpp>
+#include <boost/scope_exit.hpp>
 
 #include <signal.h>
 #include <fcntl.h>
@@ -158,7 +159,7 @@ Error realPath(const FilePath& filePath, FilePath* pRealPath)
 
 Error realPath(const std::string& path, FilePath* pRealPath)
 {
-   char buffer[PATH_MAX*2];
+   char buffer[PATH_MAX * 2];
    char* realPath = ::realpath(path.c_str(), buffer);
    if (realPath == nullptr)
    {
@@ -166,12 +167,58 @@ Error realPath(const std::string& path, FilePath* pRealPath)
       error.addProperty("path", path);
       return error;
    }
+   
   *pRealPath = FilePath(realPath);
    return Success();
 }
      
 void initHook()
 {
+}
+
+Error findProgramOnPath(const std::string& program,
+                        core::FilePath* pProgramPath)
+{
+   std::string path = core::system::getenv("PATH");
+   auto paths = core::algorithm::split(path, ":");
+
+   for (auto&& path : paths)
+   {
+      // get file descriptor for path entry
+      int fd = ::open(path.c_str(), 0);
+      if (fd == -1)
+         continue;
+      
+      // clean up when we're done
+      BOOST_SCOPE_EXIT( (&fd) )
+      {
+         ::close(fd);
+      }
+      BOOST_SCOPE_EXIT_END;
+      
+      // confirm that it's a regular file
+      struct stat sb;
+      int status = ::fstatat(fd, program.c_str(), &sb, 0);
+      if (status == -1)
+         continue;
+      
+      bool isRegularFile = S_ISREG(sb.st_mode);
+      if (!isRegularFile)
+         continue;
+      
+      // confirm that it's executable
+      // note that we use AT_EACCESS to ensure checks are done using
+      // the effective user id
+      status = ::faccessat(fd, program.c_str(), X_OK, AT_EACCESS);
+      if (status == -1)
+         continue;
+      
+      // all checks passed; return full path
+      *pProgramPath = FilePath(path).completeChildPath(program);
+      return Success();
+   }
+
+   return fileNotFoundError(program, ERROR_LOCATION);
 }
 
 // statics defined in System.cpp

@@ -68,6 +68,9 @@
 
 #include <gsl/gsl>
 
+extern "C" {
+int Rf_countContexts(int, int);
+}
 #define CTXT_BROWSER 16
 
 // get rid of windows TRUE and FALSE definitions
@@ -493,7 +496,7 @@ bool isSuspendable(const std::string& currentPrompt)
     
    return true;
 }
-   
+
 
 bool browserContextActive()
 {

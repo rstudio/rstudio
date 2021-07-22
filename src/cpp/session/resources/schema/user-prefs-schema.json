@@ -993,14 +993,14 @@
         },
         "busy_detection": {
             "type": "string",
-            "enum": ["always", "never", "whitelist"],
+            "enum": ["always", "never", "list"],
             "default": "always",
             "description": "How to detect busy status in the Terminal."
         },
-        "busy_whitelist": {
+        "busy_exclusion_list": {
             "type": "array",
             "default": ["tmux", "screen"],
-            "description": "A whitelist of apps that should not be considered busy in the Terminal."
+            "description": "A list of apps that should not be considered busy in the Terminal."
         },
         "knit_working_dir": {
             "type": "string",

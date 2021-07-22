@@ -174,8 +174,8 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void getClipboardMonitoring(CommandWithArg<Boolean> callback);
    void setClipboardMonitoring(boolean monitoring);
    
-   void getIgnoreGpuBlacklist(CommandWithArg<Boolean> callback);
-   void setIgnoreGpuBlacklist(boolean ignore);
+   void getIgnoreGpuExclusionList(CommandWithArg<Boolean> callback);
+   void setIgnoreGpuExclusionList(boolean ignore);
    
    void getDisableGpuDriverBugWorkarounds(CommandWithArg<Boolean> callback);
    void setDisableGpuDriverBugWorkarounds(boolean disable);
