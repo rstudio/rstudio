@@ -22,6 +22,7 @@ import { generateShortenedUuid, localPeer } from '../core/system';
 import { Err, Success } from '../core/err';
 import { getenv, setenv } from '../core/environment';
 import { renderTemplateFile } from '../core/template-filter';
+import { readStringArrayFromFile } from '../core/file-serializer';
 
 import { ApplicationLaunch } from './application-launch';
 import { appState } from './app-state';
@@ -209,14 +210,50 @@ export class SessionLauncher {
     }
   }
 
-  getRecentSessionLogs(): Err {
-    // TODO
-    return new Error('not implemented');
+  /**
+   * @returns [logFileName, logContents]
+   */
+  async getRecentSessionLogs(): Promise<[string, string]> {
+    // Collect R session logs
+    const logs = new Array<FilePath>();
+
+    const error = userLogPath().getChildren(logs);
+    if (error) {
+      throw error;
+    }
+
+    // Sort by recency in case there are several session logs --
+    // inverse sort so most recent logs are first
+    logs.sort((a, b) => {
+      return b.getLastWriteTimeSync() - a.getLastWriteTimeSync();
+    });
+
+    let logFile = '';
+
+    // Loop over all the log files and stop when we find a session log
+    // (desktop logs are also in this folder)
+    for (const log of logs) {
+      if (log.getFilename().includes('rsession')) {
+        // Record the path where we found the log file
+        logFile = log.getAbsolutePath();
+
+        // Read all the lines from a file into a string vector
+        const lines = await readStringArrayFromFile(log);
+
+        // Combine the three most recent lines
+        let logContents = '';
+        for (let i = Math.max(lines.length - 3, 0); i < lines.length; i++) {
+          logContents += lines[i] + '\n';
+        }
+        return [logFile, logContents];
+      }
+    }
+ 
+    // No logs found
+    return ['Log File', '[No logs available]'];
   }
 
-  showLaunchErrorPage(): void {
-    // RS_CALL_ONCE(); TODO, do we need to guard against multiple calls in Electron version?
-
+  async showLaunchErrorPage(): Promise<void> {
     // String mapping of template codes to diagnostic information
     const vars = new Map<string, string>();
 
@@ -256,12 +293,12 @@ export class SessionLauncher {
     vars.set('process_error', procStderr);
 
     // Read recent entries from the rsession log file
-    const logFile = '[TODO]';
-    const logContent = '[TODO]';
-    // TODO const error = getRecentSessionLogs(&logFile, &logContent);
-    // if (error) {
-    //   logger().logError(error);
-    // }
+    let [logFile, logContent] = ['', ''];
+    try {
+      [logFile, logContent] = await this.getRecentSessionLogs();
+    } catch (error) {
+      logger().logError(error);
+    }
     vars.set('log_file', logFile);
     vars.set('log_content', logContent);
 
