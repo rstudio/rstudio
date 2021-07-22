@@ -74,39 +74,7 @@ std::string getUserIdentifier(const core::http::Request& request)
 
 std::string userIdentifierToLocalUsername(const std::string& userIdentifier)
 {
-   static core::thread::ThreadsafeMap<std::string, std::string> cache;
-   std::string username = userIdentifier;
-
-   if (cache.contains(userIdentifier)) 
-   {
-      username = cache.get(userIdentifier);
-   }
-   else
-   {
-      // The username returned from this function is eventually used to create
-      // a local stream path, so it's important that it agree with the system
-      // view of the username (as that's what the session uses to form the
-      // stream path), which is why we do a username => username transform
-      // here. See case 5413 for details.
-      core::system::User user;
-      Error error = core::system::User::getUserFromIdentifier(userIdentifier, user);
-      if (error)
-      {
-         // log the error and return the PAM user identifier as a fallback
-         LOG_ERROR(error);
-      }
-      else
-      {
-         username = user.getUsername();
-      }
-
-      // cache the username -- we do this even if the lookup fails since
-      // otherwise we're likely to keep hitting (and logging) the error on
-      // every request
-      cache.set(userIdentifier, username);
-   }
-
-   return username;
+   return auth::common::userIdentifierToLocalUsername(userIdentifier);
 }
 
 void signIn(const http::Request& request,
@@ -162,7 +130,7 @@ void doSignIn(const http::Request& request,
                                                             &plainText);
       if (error)
       {
-         LOG_ERROR(error);
+         LOG_ERROR_MESSAGE("Failed sign-in - unable to decrypt password - error: " + error.asString());
          redirectToLoginPage(request, pResponse, appUri, kErrorServer);
          return;
       }
@@ -170,7 +138,7 @@ void doSignIn(const http::Request& request,
       size_t splitAt = plainText.find('\n');
       if (splitAt == std::string::npos)
       {
-         LOG_ERROR_MESSAGE("Didn't find newline in plaintext");
+         LOG_ERROR_MESSAGE("Failed sign-in - missing newline in plaintext");
          redirectToLoginPage(request, pResponse, appUri, kErrorServer);
          return;
       }
@@ -245,6 +213,8 @@ bool pamLogin(const std::string& username, const std::string& password)
    core::system::ProcessOptions options;
    options.onAfterFork = assumeRootPriv;
 
+   LOG_DEBUG_MESSAGE("PAM login start - running: " + pamHelperPath.getAbsolutePath() + " " + boost::algorithm::join(args, " ") + " <pw>");
+
    // run pam helper
    core::system::ProcessResult result;
    Error error = core::system::runProgram(
@@ -255,12 +225,14 @@ bool pamLogin(const std::string& username, const std::string& password)
       &result);
    if (error)
    {
-      LOG_ERROR(error);
+      LOG_ERROR_MESSAGE("Error running pamHelper: " + pamHelperPath.getAbsolutePath() + ": " + error.asString());
       return false;
    }
 
    // check for success
-   return result.exitStatus == 0;
+   bool res = result.exitStatus == 0;
+   LOG_DEBUG_MESSAGE("PAM login result: for username: " + username + " returns: " + (res ? "authenticated" : "auth failed"));
+   return res;
 }
 
 Error initialize()
