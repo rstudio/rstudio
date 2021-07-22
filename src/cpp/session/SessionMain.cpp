@@ -1776,6 +1776,10 @@ int main(int argc, char * const argv[])
       std::string exitOnStartup = core::system::getenv("RSTUDIO_SESSION_EXIT_ON_STARTUP");
       if (!exitOnStartup.empty())
       {
+         int exitCode = core::safe_convert::stringTo<int>(exitOnStartup, EXIT_FAILURE);
+
+         std::cerr << "RSession terminating with exit code " << exitCode << " as requested.\n";
+         std::cout << "RSession will now exit.\n";
          return core::safe_convert::stringTo<int>(exitOnStartup, EXIT_FAILURE);
       }
 
