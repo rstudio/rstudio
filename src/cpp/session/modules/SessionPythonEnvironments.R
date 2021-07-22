@@ -80,6 +80,10 @@
 
 .rs.addFunction("python.findWindowsPython", function()
 {
+   # if 'py' is not available, nothing we can do
+   if (!nzchar(Sys.which("py")))
+      return("")
+   
    # NOTE: ideally, we would just parse the output of 'py --list-paths',
    # but for whatever reason the '*' indicating the default version of
    # Python is omitted when run from RStudio, so we try to explicitly
@@ -107,7 +111,7 @@
 {
    # on Windows, check if PY_PYTHON is defined; if it is, we should use 'py'
    # to determine the version of python to be used
-   if (.rs.platform.isWindows && nzchar(Sys.which("py")))
+   if (.rs.platform.isWindows)
    {
       pyPython <- Sys.getenv("PY_PYTHON", unset = NA)
       if (!is.na(pyPython))
@@ -141,7 +145,7 @@
       return(path.expand(prefsPython))
    
    # on Windows, help users find a default version of Python if possible
-   if (.rs.platform.isWindows && nzchar(Sys.which("py")))
+   if (.rs.platform.isWindows)
    {
       pythonPath <- .rs.python.findWindowsPython()
       if (file.exists(pythonPath))
