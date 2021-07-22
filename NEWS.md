@@ -36,7 +36,7 @@
 * Fixed issue causing an error when adding files to static content published to RStudio Connect (#9571)
 * Fixed issue where R banner could be displayed twice on startup (#6907)
 * Removed the breaking change introduced in Juliet Rose that changed the behavior of the X-Forwarded-Proto header when RSW is behind a proxy server (Pro #2657)
-
+* Fixed issue where adjacent links in the Visual Editor could merge into a single link (#8471)
 
 ### Misc
 
