@@ -151,6 +151,14 @@ bool isLockFileOrphaned(const FilePath& lockFilePath)
 
 bool LinkBasedFileLock::isLockFileStale(const FilePath& lockFilePath)
 {
+   // treat broken symlinks as stale
+   if (lockFilePath.isSymlink())
+   {
+      FilePath resolvedPath = lockFilePath.resolveSymlink();
+      if (!resolvedPath.exists())
+         return true;
+   }
+   
    // TODO: currently, we write the process ID of the owning process to the
    // lockfile, in order to detect whether the owning process has crashed
    // and the lockfile is orphaned. in load-balanced configurations, this is
@@ -169,6 +177,27 @@ bool LinkBasedFileLock::isLockFileStale(const FilePath& lockFilePath)
 
 namespace {
 
+Error removeLockFile(const FilePath& lockFilePath)
+{
+   // if this is a symlink, we need to remove both the symlink
+   // and the file it's pointing at. note that we don't use
+   // removeIfExists() here as the symlink itself may be broken
+   if (lockFilePath.isSymlink())
+   {
+      FilePath resolvedPath = lockFilePath.resolveSymlink();
+      Error error = resolvedPath.remove();
+      if (error && !isFileNotFoundError(error))
+         LOG_ERROR(error);
+   }
+   
+   // remove the original file
+   Error error = lockFilePath.remove();
+   if (error && !isFileNotFoundError(error))
+      return error;
+   
+   return Success();
+}
+
 void cleanStaleLockfiles(const FilePath& dir)
 {
    std::vector<FilePath> children;
@@ -176,12 +205,12 @@ void cleanStaleLockfiles(const FilePath& dir)
    if (error)
       LOG_ERROR(error);
 
-   for (const FilePath& filePath : children )
+   for (const FilePath& filePath : children)
    {
       if (boost::algorithm::starts_with(filePath.getFilename(), kFileLockPrefix) &&
           isLockFileStale(filePath))
       {
-         Error error = filePath.removeIfExists();
+         Error error = removeLockFile(filePath);
          if (error)
             LOG_ERROR(error);
       }
@@ -229,9 +258,10 @@ public:
       {
          for (const FilePath& lockFilePath : registration_)
          {
-            Error error = lockFilePath.removeIfExists();
+            Error error = removeLockFile(lockFilePath);
             if (error)
                LOG_ERROR(error);
+            
             LOG("Clearing lock: " << lockFilePath.getAbsolutePath());
          }
          registration_.clear();
@@ -261,8 +291,8 @@ Error writeLockFile(const FilePath& lockFilePath)
    // since the proxy lockfile should be unique, it should _never_ be possible
    // for a collision to be found. if that does happen, it must be a leftover
    // from a previous process that crashed in this stage
-   Error error = proxyPath.removeIfExists();
-   if (error)
+   Error error = proxyPath.remove();
+   if (error && !isFileNotFoundError(error))
       LOG_ERROR(error);
    
    // ensure the proxy file is created, and remove it when we're done
@@ -281,6 +311,15 @@ Error writeLockFile(const FilePath& lockFilePath)
    
    if (FileLock::useSymlinks())
    {
+      // if lockFilePath is a broken symlink, remove it now
+      if (lockFilePath.isSymlink())
+      {
+         FilePath resolvedPath = lockFilePath.resolveSymlink();
+         if (!resolvedPath.exists())
+            lockFilePath.remove();
+      }
+      
+      // now try to create the symlink
       status = ::symlink(
           proxyPath.getAbsolutePathNative().c_str(),
           lockFilePath.getAbsolutePathNative().c_str());
@@ -302,7 +341,7 @@ Error writeLockFile(const FilePath& lockFilePath)
       int errorNumber = errno;
       
       std::string msg = string_utils::sprintf(
-         "ERROR: %s() failed (errno %i) [%s => %s]\n",
+          "ERROR: %s() failed (errno %i) [%s => %s]\n",
           (FileLock::useSymlinks() ? "symlink" : "link"),
           errorNumber,
           proxyPath.getAbsolutePathNative().c_str(),
@@ -481,7 +520,7 @@ Error LinkBasedFileLock::acquire(const FilePath& lockFilePath)
          // note that multiple processes may attempt to remove this
          // file at the same time, so errors shouldn't be fatal
          LOG("Removing stale lockfile: " << lockFilePath.getAbsolutePath());
-         Error error = lockFilePath.remove();
+         Error error = removeLockFile(lockFilePath);
          if (error)
             LOG_ERROR(error);
       }
@@ -530,7 +569,7 @@ Error LinkBasedFileLock::release()
    const FilePath& lockFilePath = pImpl_->lockFilePath;
    LOG("Released lock: " << lockFilePath.getAbsolutePath());
    
-   Error error = lockFilePath.remove();
+   Error error = removeLockFile(lockFilePath);
    if (error)
       LOG_ERROR(error);
    
