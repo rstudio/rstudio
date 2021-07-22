@@ -37,7 +37,7 @@ async function realpath(path: string): Promise<string> {
 }
 
 function getTestDir(): FilePath {
-  return new FilePath(path.join(os.tmpdir(), 'temp-folder-for-FilePath-tests-' + randomString()));
+  return new FilePath(path.join(os.tmpdir(), 'rstudio-temp-tests-' + randomString()));
 }
 
 // A path that should never exist
