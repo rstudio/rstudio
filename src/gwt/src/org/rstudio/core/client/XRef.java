@@ -32,6 +32,7 @@ public class XRef extends JavaScriptObject
       return !!this.type && !!this.id;
    }-*/;
 
+   // TODO: Need to deal with conversion to this string
    public final native String getXRefString()
    /*-{
       return this.type + ":" + this.id;
