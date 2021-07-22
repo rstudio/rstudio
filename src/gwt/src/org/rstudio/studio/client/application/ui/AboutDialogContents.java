@@ -62,7 +62,7 @@ public class AboutDialogContents extends Composite
    public AboutDialogContents(ProductInfo info, ProductEditionInfo editionInfo)
    {
       initWidget(uiBinder.createAndBindUi(this));
-      versionLabel.setText(info.version);
+      versionLabel.setText(info.build_type + " Version " + info.version);
 
       // a11y
       productInfo.getElement().setId("productinfo");
