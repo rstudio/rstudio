@@ -15,6 +15,7 @@
 
 import { app, dialog } from 'electron';
 import { spawn, ChildProcess } from 'child_process';
+import fs from 'fs';
 
 import { logger } from '../core/logger';
 import { FilePath } from '../core/file-path';
@@ -466,50 +467,46 @@ export class SessionLauncher {
   }
 
   collectAbendLogMessage(): string {
-    const contents = '';
-
-    // TODO - reimplement
-    // FilePath abendLog = abendLogPath();
-    // if (abendLog.exists()) {
-    //   Error error = core:: readStringFromFile(abendLog, & contents);
-    //   if (error)
-    //     LOG_ERROR(error);
-
-    //   error = abendLog.removeIfExists();
-    //   if (error)
-    //     LOG_ERROR(error);
-    // }
+    let contents = '';
+    const abendLog = abendLogPath();
+    if (abendLog.existsSync()) {
+      try {
+        contents = fs.readFileSync(abendLog.getAbsolutePath(), 'utf8');
+      } catch (error) {
+        logger().logError(error);
+      } finally {
+        abendLog.removeIfExistsSync();
+      }
+    }
     return contents;
   }
 
   launchFailedErrorMessage(): string {
-    const errMsg = 'The R session had a fatal error.';
+    let errMsg = 'The R session had a fatal error.';
 
     // check for abend log
-    /* const abendLogMessage = */ this.collectAbendLogMessage();
+    const abendLogMessage = this.collectAbendLogMessage();
 
-    /// TODO - reimplement
-    // // check for R version mismatch
-    // if (abendLogMessage.contains(QString:: fromUtf8("arguments passed to .Internal"))) {
-    //   errMsg.append(QString:: fromUtf8("\n\nThis error was very likely caused "
-    //                 "by R attempting to load packages from a different "
-    //                 "incompatible version of R on your system. Please remove "
-    //                 "other versions of R and/or remove environment variables "
-    //                 "that reference libraries from other versions of R "
-    //                 "before proceeding."));
-    // }
+    // check for R version mismatch
+    if (abendLogMessage.includes('arguments passed to .Internal')) {
+      errMsg = errMsg +
+        '\n\nThis error was very likely caused ' +
+        'by R attempting to load packages from a different ' +
+        'incompatible version of R on your system. Please remove ' +
+        'other versions of R and/or remove environment variables ' +
+        'that reference libraries from other versions of R ' +
+        'before proceeding.';
+    }
 
-    // if (!abendLogMessage.isEmpty())
-    //   errMsg.append(QString:: fromUtf8("\n\n").append(abendLogMessage));
+    if (abendLogMessage) {
+      errMsg += '\n\n' + abendLogMessage;
+    }
 
-    // // check for stderr
-    // if (pRSessionProcess_) {
-    //   QString errmsgs = QString:: fromLocal8Bit(
-    //     pRSessionProcess_ -> readAllStandardError());
-    //   if (errmsgs.size()) {
-    //     errMsg = errMsg.append(QString:: fromUtf8("\n\n")).append(errmsgs);
-    //   }
-    // }
+    // check for stderr
+    const errmsgs = this.sessionStderr.join();
+    if (errmsgs) {
+      errMsg += '\n\n' + errmsgs;
+    }
 
     return errMsg;
   }
