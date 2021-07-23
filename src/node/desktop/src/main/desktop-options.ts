@@ -14,7 +14,7 @@
  * 
  */
 
-import { Rectangle, screen } from 'electron';
+import { BrowserWindow, Rectangle, screen } from 'electron';
 import Store from 'electron-store';
 import { MainWindow } from './main-window';
  
@@ -162,7 +162,7 @@ export class DesktopOptionsImpl {
   }
 
   // Note: screen can only be used after the 'ready' event has been emitted
-  public restoreMainWindowBounds(mainWindow: MainWindow): void {
+  public restoreMainWindowBounds(mainWindow: BrowserWindow): void {
     const savedBounds = this.windowBounds(); 
 
     // Check if saved bounds is still in one of the available displays
@@ -172,24 +172,24 @@ export class DesktopOptionsImpl {
 
     // Restore it to previous location if possible, or center of primary display otherwise
     if (goodDisplays) {
-      mainWindow.window.setBounds(savedBounds);
+      mainWindow.setBounds(savedBounds);
     } else {
       const primaryBounds = screen.getPrimaryDisplay().bounds;
       const newSize = {width: Math.min(kDesktopOptionDefaults.View.WindowBounds.width, primaryBounds.width), 
         height: Math.min(kDesktopOptionDefaults.View.WindowBounds.height, primaryBounds.height)};
 
-      mainWindow.window.setSize(newSize.width, newSize.height);
+      mainWindow.setSize(newSize.width, newSize.height);
       
       // window.center() doesn't consistently pick the primary display, 
       // so manually calculating the center of the primary display
-      mainWindow.window.setPosition(
+      mainWindow.setPosition(
         primaryBounds.x + ((primaryBounds.width - newSize.width) / 2), 
         primaryBounds.y + ((primaryBounds.height - newSize.height) / 2));
     }
 
     // ensure a minimum size for the window on restore
-    const currSize = mainWindow.window.getSize();
-    mainWindow.window.setSize(
+    const currSize = mainWindow.getSize();
+    mainWindow.setSize(
       Math.max(300, currSize[0]),
       Math.max(200, currSize[1])
     );
