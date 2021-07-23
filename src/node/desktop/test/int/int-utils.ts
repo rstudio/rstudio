@@ -24,7 +24,7 @@ interface LaunchArgs {
 }
 
 // Find path to RStudio entrypoint
-function getLaunchArgs(): LaunchArgs {
+function getLaunchArgs(extraArgs?: string[]): LaunchArgs {
   // use the package build if it exists
   let isPackaged = true;
   const result: LaunchArgs = {};
@@ -42,10 +42,14 @@ function getLaunchArgs(): LaunchArgs {
   if (!fs.existsSync(entryPoint)) {
     // otherwise try the dev build
     isPackaged = false;
-    entryPoint =  path.join(__dirname, '../../dist/main/main.js');
+    entryPoint = path.join(__dirname, '../../dist/main/main.js');
+    cwd = path.join(__dirname, '../..');
   }
 
   result.args = [entryPoint];
+  if (extraArgs) {
+    result.args = result.args.concat(extraArgs);
+  }
   result.cwd = cwd;
 
   if (isPackaged) {
@@ -60,10 +64,9 @@ function getLaunchArgs(): LaunchArgs {
     result.executablePath = executable;
   }
 
-  console.log(result);
   return result;
 }
 
-export async function launch(): Promise<ElectronApplication> {
-  return await _electron.launch(getLaunchArgs());
+export async function launch(extraArgs?: string[]): Promise<ElectronApplication> {
+  return await _electron.launch(getLaunchArgs(extraArgs));
 }

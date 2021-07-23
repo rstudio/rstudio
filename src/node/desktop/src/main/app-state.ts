@@ -37,6 +37,7 @@ export interface AppState {
   setScratchTempDir(path: FilePath): void;
   scratchTempDir(defaultPath: FilePath): FilePath;
   sessionStartDelaySeconds: number;
+  sessionEarlyExitCode: number;
 }
 
 let rstudio: AppState | null = null;

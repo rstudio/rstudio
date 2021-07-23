@@ -382,6 +382,13 @@
   resolved "https://registry.yarnpkg.com/@types/json-schema/-/json-schema-7.0.8.tgz#edf1bf1dbf4e04413ca8e5b17b3b7d7d54b59818"
   integrity sha512-YSBPTLTVm2e2OoQIDYx8HaeWJ5tTToLH67kXR7zYNGupXMEHa2++G8k+DczX2cFVgalypqtyZIcU19AFcmOpmg==
 
+"@types/line-reader@^0.0.34":
+  version "0.0.34"
+  resolved "https://registry.yarnpkg.com/@types/line-reader/-/line-reader-0.0.34.tgz#f5b73305c5610aec62b10c2d7743f8788460960d"
+  integrity sha512-r6RzbnrY+IoBgDIO4P6l2a+/ad+YCLe/htv7hp+Oqsqeb7cJbV3keKpg07ZlLlk3ZJz9xozNO8lFOiKRux234Q==
+  dependencies:
+    "@types/node" "*"
+
 "@types/minimatch@*":
   version "3.0.5"
   resolved "https://registry.yarnpkg.com/@types/minimatch/-/minimatch-3.0.5.tgz#1001cc5e6a3704b83c236027e77f2f58ea010f40"
@@ -2400,6 +2407,11 @@ levn@^0.4.1:
   dependencies:
     prelude-ls "^1.2.1"
     type-check "~0.4.0"
+
+line-reader@^0.4.0:
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/line-reader/-/line-reader-0.4.0.tgz#17e44818da0ac335675ba300954f94ef670e66fd"
+  integrity sha1-F+RIGNoKwzVnW6MAlU+U72cOZv0=
 
 load-json-file@^2.0.0:
   version "2.0.0"

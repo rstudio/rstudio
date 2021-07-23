@@ -34,4 +34,17 @@ describe('Startup and Exit', async function () {
     // exit app
     await electronApp.close();
   });
+  it('Shows launch failure page if session fails to launch', async function () {
+    const electronApp = await launch(['--session-exit-code=1']);
+    
+    // wait for a window
+    const window = await electronApp.firstWindow();
+
+    // check that page is loaded with H1 containing "Error Starting R"
+    const h1 = await window.innerText('h1');
+    assert.equal(h1, 'Error Starting R');
+
+    // exit app
+    await electronApp.close();
+  });
 });

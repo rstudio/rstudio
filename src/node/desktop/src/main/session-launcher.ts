@@ -15,12 +15,15 @@
 
 import { app, dialog } from 'electron';
 import { spawn, ChildProcess } from 'child_process';
+import fs from 'fs';
 
 import { logger } from '../core/logger';
 import { FilePath } from '../core/file-path';
 import { generateShortenedUuid, localPeer } from '../core/system';
 import { Err, Success } from '../core/err';
 import { getenv, setenv } from '../core/environment';
+import { renderTemplateFile } from '../core/template-filter';
+import { readStringArrayFromFile } from '../core/file-serializer';
 
 import { ApplicationLaunch } from './application-launch';
 import { appState } from './app-state';
@@ -95,6 +98,8 @@ export class SessionLauncher {
   sessionProcess?: ChildProcess;
   mainWindow?: MainWindow;
   static launcherToken = generateShortenedUuid();
+  sessionStdout: string[] = [];
+  sessionStderr: string[] = [];
 
   constructor(
     private sessionPath: FilePath,
@@ -208,14 +213,50 @@ export class SessionLauncher {
     }
   }
 
-  getRecentSessionLogs(): Err {
-    // TODO
-    return new Error('not implemented');
+  /**
+   * @returns [logFileName, logContents]
+   */
+  async getRecentSessionLogs(): Promise<[string, string]> {
+    // Collect R session logs
+    const logs = new Array<FilePath>();
+
+    const error = userLogPath().getChildren(logs);
+    if (error) {
+      throw error;
+    }
+
+    // Sort by recency in case there are several session logs --
+    // inverse sort so most recent logs are first
+    logs.sort((a, b) => {
+      return b.getLastWriteTimeSync() - a.getLastWriteTimeSync();
+    });
+
+    let logFile = '';
+
+    // Loop over all the log files and stop when we find a session log
+    // (desktop logs are also in this folder)
+    for (const log of logs) {
+      if (log.getFilename().includes('rsession')) {
+        // Record the path where we found the log file
+        logFile = log.getAbsolutePath();
+
+        // Read all the lines from a file into a string vector
+        const lines = await readStringArrayFromFile(log);
+
+        // Combine the three most recent lines
+        let logContents = '';
+        for (let i = Math.max(lines.length - 3, 0); i < lines.length; i++) {
+          logContents += lines[i] + '\n';
+        }
+        return [logFile, logContents];
+      }
+    }
+ 
+    // No logs found
+    return ['Log File', '[No logs available]'];
   }
 
-  showLaunchErrorPage(): void {
-    // RS_CALL_ONCE(); TODO, do we need to guard against multiple calls in Electron version?
-
+  async showLaunchErrorPage(): Promise<void> {
     // String mapping of template codes to diagnostic information
     const vars = new Map<string, string>();
 
@@ -228,7 +269,7 @@ export class SessionLauncher {
     vars.set('version', ss);
 
     // Collect message from the abnormal end log path
-    if (abendLogPath().exists()) {
+    if (abendLogPath().existsSync()) {
       vars.set('launch_failed', this.launchFailedErrorMessage());
     } else {
       vars.set('launch_failed', '[No error available]');
@@ -242,38 +283,30 @@ export class SessionLauncher {
     vars.set('exit_code', exitCode.toString());
 
     // Read standard output and standard error streams
-    let procStdout = ''; // TODO pRSessionProcess_->readAllStandardOutput().toStdString();
+    let procStdout = this.sessionStdout.join();
     if (!procStdout) {
       procStdout = '[No output emitted]';
     }
     vars.set('process_output', procStdout);
 
-    let procStderr = ''; // TODO pRSessionProcess_->readAllStandardError().toStdString();
+    let procStderr = this.sessionStderr.join();
     if (!procStderr) {
       procStderr = '[No errors emitted]';
     }
     vars.set('process_error', procStderr);
 
     // Read recent entries from the rsession log file
-    const logFile = '[TODO]';
-    const logContent = '[TODO]';
-    // TODO const error = getRecentSessionLogs(&logFile, &logContent);
-    // if (error) {
-    //   logger().logError(error);
-    // }
+    let [logFile, logContent] = ['', ''];
+    try {
+      [logFile, logContent] = await this.getRecentSessionLogs();
+    } catch (error) {
+      logger().logError(error);
+    }
     vars.set('log_file', logFile);
     vars.set('log_content', logContent);
 
-    // TODO Read text template, substitute variables, and load HTML into the main window
-    // std::ostringstream oss;
-    // error = text::renderTemplate(options().resourcesPath().completePath("html/error.html"), vars, oss);
-    // if (error) {
-    //   LOG_ERROR(error);
-    // } else {
+    this.mainWindow?.loadHtml(renderTemplateFile(appState().resourcesPath().completePath('html/error.html'), vars));
     this.mainWindow?.setErrorDisplayed();
-    this.mainWindow?.loadUrl('data:text/html;charset=utf-8,<head> <meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> <meta name="viewport" content="width=device-width, initial-scale=1.0" /> <title>Session Load Failed</title> </head><body>Failed to load session.</body>');
-    // TODO pMainWindow_->loadHtml(QString::fromStdString(oss.str()));
-    // }
   }
 
   onRSessionExited(): void {
@@ -379,8 +412,14 @@ export class SessionLauncher {
       logger().logError(error);
     }
 
+    this.sessionStdout = [];
+    this.sessionStderr = [];
+
     if (appState().sessionStartDelaySeconds > 0) {
       setenv('RSTUDIO_SESSION_SLEEP_ON_STARTUP', appState().sessionStartDelaySeconds.toString());
+    }
+    if (appState().sessionEarlyExitCode !== 0) {
+      setenv('RSTUDIO_SESSION_EXIT_ON_STARTUP', appState().sessionEarlyExitCode.toString());
     }
 
     // TODO
@@ -405,6 +444,14 @@ export class SessionLauncher {
       this.onRSessionExited();
     });
 
+    // capture stdout and stderr for diagnostics
+    sessionProc.stdout?.on('data', (data) => {
+      this.sessionStdout.push(data);
+    });
+    sessionProc.stderr?.on('data', (data) => {
+      this.sessionStderr.push(data);
+    });
+
     return sessionProc;
   }
 
@@ -420,50 +467,46 @@ export class SessionLauncher {
   }
 
   collectAbendLogMessage(): string {
-    const contents = '';
-
-    // TODO - reimplement
-    // FilePath abendLog = abendLogPath();
-    // if (abendLog.exists()) {
-    //   Error error = core:: readStringFromFile(abendLog, & contents);
-    //   if (error)
-    //     LOG_ERROR(error);
-
-    //   error = abendLog.removeIfExists();
-    //   if (error)
-    //     LOG_ERROR(error);
-    // }
+    let contents = '';
+    const abendLog = abendLogPath();
+    if (abendLog.existsSync()) {
+      try {
+        contents = fs.readFileSync(abendLog.getAbsolutePath(), 'utf8');
+      } catch (error) {
+        logger().logError(error);
+      } finally {
+        abendLog.removeIfExistsSync();
+      }
+    }
     return contents;
   }
 
   launchFailedErrorMessage(): string {
-    const errMsg = 'The R session had a fatal error.';
+    let errMsg = 'The R session had a fatal error.';
 
     // check for abend log
-    /* const abendLogMessage = */ this.collectAbendLogMessage();
+    const abendLogMessage = this.collectAbendLogMessage();
 
-    /// TODO - reimplement
-    // // check for R version mismatch
-    // if (abendLogMessage.contains(QString:: fromUtf8("arguments passed to .Internal"))) {
-    //   errMsg.append(QString:: fromUtf8("\n\nThis error was very likely caused "
-    //                 "by R attempting to load packages from a different "
-    //                 "incompatible version of R on your system. Please remove "
-    //                 "other versions of R and/or remove environment variables "
-    //                 "that reference libraries from other versions of R "
-    //                 "before proceeding."));
-    // }
+    // check for R version mismatch
+    if (abendLogMessage.includes('arguments passed to .Internal')) {
+      errMsg = errMsg +
+        '\n\nThis error was very likely caused ' +
+        'by R attempting to load packages from a different ' +
+        'incompatible version of R on your system. Please remove ' +
+        'other versions of R and/or remove environment variables ' +
+        'that reference libraries from other versions of R ' +
+        'before proceeding.';
+    }
 
-    // if (!abendLogMessage.isEmpty())
-    //   errMsg.append(QString:: fromUtf8("\n\n").append(abendLogMessage));
+    if (abendLogMessage) {
+      errMsg += '\n\n' + abendLogMessage;
+    }
 
-    // // check for stderr
-    // if (pRSessionProcess_) {
-    //   QString errmsgs = QString:: fromLocal8Bit(
-    //     pRSessionProcess_ -> readAllStandardError());
-    //   if (errmsgs.size()) {
-    //     errMsg = errMsg.append(QString:: fromUtf8("\n\n")).append(errmsgs);
-    //   }
-    // }
+    // check for stderr
+    const errmsgs = this.sessionStderr.join();
+    if (errmsgs) {
+      errMsg += '\n\n' + errmsgs;
+    }
 
     return errMsg;
   }
