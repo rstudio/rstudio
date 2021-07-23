@@ -251,7 +251,7 @@ function isParagraphWrappingRawLatexBeginOrEnd(tok: PandocToken) {
   return isSingleChildParagraph(tok) &&
          (tok.c[0].t === PandocTokenType.RawInline &&
          tok.c[0].c[kRawInlineFormat] === kTexFormat &&
-         isLatexBeginOrEnd(tok.c[0].c[kRawInlineContent]))
+         isLatexBeginOrEnd(tok.c[0].c[kRawInlineContent]));
 }
 
 function isLatexBeginOrEnd(str: string) {
