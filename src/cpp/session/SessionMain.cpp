@@ -1772,6 +1772,17 @@ int main(int argc, char * const argv[])
          }
       }
 
+      // terminate immediately with given exit code (for testing/debugging)
+      std::string exitOnStartup = core::system::getenv("RSTUDIO_SESSION_EXIT_ON_STARTUP");
+      if (!exitOnStartup.empty())
+      {
+         int exitCode = core::safe_convert::stringTo<int>(exitOnStartup, EXIT_FAILURE);
+
+         std::cerr << "RSession terminating with exit code " << exitCode << " as requested.\n";
+         std::cout << "RSession will now exit.\n";
+         return core::safe_convert::stringTo<int>(exitOnStartup, EXIT_FAILURE);
+      }
+
       // initialize log so we capture all errors including ones which occur
       // reading the config file (if we are in desktop mode then the log
       // will get re-initialized below)

@@ -61,6 +61,10 @@ export class MainWindow extends GwtWindow {
   pendingWindows = new Array<PendingWindow>();
   private isErrorDisplayed = false;
 
+  // if loading fails and emits `did-fail-load` it will be followed by a 
+  // 'did-finish-load'; use this bool to differentiate
+  private mainFailLoad = false;
+
   // TODO
   //#ifdef _WIN32
   // HWINEVENTHOOK eventHook_ = nullptr;
@@ -117,16 +121,18 @@ export class MainWindow extends GwtWindow {
     //         this, &MainWindow::onUrlChanged);
    
     this.webView.webContents.on('did-finish-load', () => {
-      this.onLoadFinished(true);
+      if (!this.mainFailLoad) {
+        this.onLoadFinished(true);
+      } else {
+        this.mainFailLoad = false;
+      }
     });
     this.webView.webContents.on('did-fail-load', () => {
+      this.mainFailLoad = true;
       this.onLoadFinished(false);
     });
 
     this.webView.webContents.on('did-finish-load', () => {
-      this.menuCallback.cleanUpActions();
-    });
-    this.webView.webContents.on('did-fail-load', () => {
       this.menuCallback.cleanUpActions();
     });
 
@@ -391,6 +397,9 @@ export class MainWindow extends GwtWindow {
   }
 
   reload(): void {
+    if (this.isErrorDisplayed) {
+      return;
+    }
     reloadCount++;
     this.loadUrl(this.webView.baseUrl ?? '');
   }
