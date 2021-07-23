@@ -119,12 +119,29 @@ export function rsessionExeName(): string {
 // used to help find built C++ sources in developer configurations
 function findBuildRoot(): string {
 
+  const rootPaths = [
+    path.normalize(`${process.cwd()}/../..`),
+    path.normalize(`${process.cwd()}/../../../..`),
+  ];
+
+  for (const rootPath of rootPaths) {
+    const buildRoot = findBuildRootImpl(rootPath);
+    if (buildRoot) {
+      return buildRoot;
+    }
+  }
+
+  throw rsessionNotFoundError();
+
+}
+
+function findBuildRootImpl(rootDir: string): string {
+
   // list all files + directories in the folder
-  const rootDir = path.resolve(`${process.cwd()}/../..`);
+  const files = fs.readdirSync(rootDir);
 
   // collect those that appear to be build directories
   const buildDirs = [];
-  const files = fs.readdirSync(rootDir);
   for (const file of files) {
     if (file.startsWith('build')) {
       const stat = fs.statSync(`${rootDir}/${file}`);
@@ -134,6 +151,7 @@ function findBuildRoot(): string {
     }
   }
 
+  // if we didn't find anything, bail here
   if (buildDirs.length === 0) {
     return '';
   }
@@ -147,6 +165,17 @@ function findBuildRoot(): string {
   const buildRoot = `${rootDir}/${buildDirs[0].file}`;
   console.log(`Using build root: ${buildRoot}`);
   return buildRoot;
+
+}
+
+function rsessionNotFoundError(): Error {
+  
+  const message =
+    'Could not find rsession executable. ' +
+    'Try setting the "RSTUDIO_CPP_BUILD_OUTPUT" environment variable ' +
+    'to the location where src/cpp was built.';
+
+  return Error(message);
 
 }
 
@@ -166,33 +195,31 @@ export function findComponents(): [FilePath, FilePath, FilePath] {
     return [confPath, sessionPath, new FilePath(app.getAppPath())];
   }
 
-  // non-package build -- first, check for envvar
+  // developer builds -- first, check for environment variable
+  // providing path to built C++ sources; if not set, then do
+  // some primitive scanning for common developer workflows
   let buildRoot = getenv('RSTUDIO_CPP_BUILD_OUTPUT');
   if (!buildRoot) {
     buildRoot = findBuildRoot();
   }
 
+  // if we still don't have a root, bail
   if (!buildRoot) {
-    const message =
-      'Could not find rsession executable. ' +
-      'Try setting the "RSTUDIO_CPP_BUILD_OUTPUT" environment variable ' +
-      'to the location where src/cpp was built.';
-    throw Error(message);
+    throw rsessionNotFoundError();
   }
 
-  // check for build root in 'src/cpp' sub-folder
+  // try to find rsession in build root
   const buildRootPath = new FilePath(buildRoot);
-  sessionPath = buildRootPath.completePath(`session/${rsessionExeName()}`);
-  confPath = buildRootPath.completePath('conf/rdesktop-dev.conf');
-
-  // check for build root at root of repository
-  // (so C++ sources are built in 'src/cpp' sub-folder)
-  if (!sessionPath.existsSync()) {
-    sessionPath = buildRootPath.completePath(`src/cpp/session/${rsessionExeName()}`);
-    confPath = buildRootPath.completePath('src/cpp/conf/rdesktop-dev.conf');
+  for (const subdir of ['.', 'src/cpp']) {
+    const sessionPath = buildRootPath.completePath(`${subdir}/session/${rsessionExeName()}`);
+    if (sessionPath.exists()) {
+      confPath = buildRootPath.completePath(`${subdir}/conf/rdesktop-dev.conf`);
+      return [confPath, sessionPath, new FilePath(app.getAppPath())];
+    }
   }
 
-  return [confPath, sessionPath, new FilePath(app.getAppPath())];
+  // we found a build root, but not rsession -- throw an error
+  throw rsessionNotFoundError();
 
 }
 
