@@ -395,7 +395,7 @@ try {
 
                 def packageName = "RStudio-${buildType}-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}-RelWithDebInfo"
                 if (buildType == "release") {
-                  def packageName = "RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}-RelWithDebInfo"
+                  packageName = "RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}-RelWithDebInfo"
                 }
 
                 // windows docker container cannot reach instance-metadata endpoint. supply credentials at upload.
