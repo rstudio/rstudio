@@ -13,9 +13,16 @@ if [ -f "${RETICULATE_PYTHON}" ]; then
 	# check for an activate script in the same directory
 	# as the configured version of Python; if it exists,
 	# use that to activate Python (mainly for venv)
+	#
+	# note that this might also discover a conda activate
+	# script; unfortunately, running that isn't sufficient
+	# to update the PATH so we make that check below as well
 	if [ -f "${_RS_PYTHON_BIN}/activate" ]; then
 		. "${_RS_PYTHON_BIN}/activate"
-	else
+	fi
+
+	# ensure that our python was placed on the PATH
+	if [ "$(echo "${PATH}" | cut -d":" -f"1")" != "${_RS_PYTHON_BIN}" ]; then
 		PATH="${_RS_PYTHON_BIN}:${PATH}"
 	fi
 	
