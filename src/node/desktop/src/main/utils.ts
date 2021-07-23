@@ -116,6 +116,40 @@ export function rsessionExeName(): string {
   return process.platform === 'win32' ? 'rsession.exe' : 'rsession';
 }
 
+// used to help find built C++ sources in developer configurations
+function findBuildRoot(): string {
+
+  // list all files + directories in the folder
+  const rootDir = path.resolve(`${process.cwd()}/../..`);
+
+  // collect those that appear to be build directories
+  const buildDirs = [];
+  const files = fs.readdirSync(rootDir);
+  for (const file of files) {
+    if (file.startsWith('build')) {
+      const stat = fs.statSync(`${rootDir}/${file}`);
+      if (stat.isDirectory()) {
+        buildDirs.push({ file: file, stat: stat });
+      }
+    }
+  }
+
+  if (buildDirs.length === 0) {
+    return '';
+  }
+
+  // sort build directories by last modified time
+  buildDirs.sort((lhs, rhs) => {
+    return rhs.stat.mtime.getTime() - lhs.stat.mtime.getTime();
+  });
+
+  // return the newest one
+  const buildRoot = `${rootDir}/${buildDirs[0].file}`;
+  console.log(`Using build root: ${buildRoot}`);
+  return buildRoot;
+
+}
+
 /**
  * @returns Paths to config file, rsession, and desktop scripts.
  */
@@ -129,17 +163,37 @@ export function findComponents(): [FilePath, FilePath, FilePath] {
   if (app.isPackaged) {
     // confPath is intentionally left empty for a package build
     sessionPath = binRoot.completePath(`bin/${rsessionExeName()}`);
-  } else {
-    const buildRootEnv = getenv('RSTUDIO_CPP_BUILD_OUTPUT');
-    if (!buildRootEnv) {
-      throw Error('RSTUDIO_CPP_BUILD_OUTPUT env var must contain ' +
-        'path where src/cpp was built (dev config).');
-    }
-    const buildRoot = new FilePath(buildRootEnv);
-    confPath = buildRoot.completePath('conf/rdesktop-dev.conf');
-    sessionPath = buildRoot.completePath(`session/${rsessionExeName()}`);
+    return [confPath, sessionPath, new FilePath(app.getAppPath())];
   }
+
+  // non-package build -- first, check for envvar
+  let buildRoot = getenv('RSTUDIO_CPP_BUILD_OUTPUT');
+  if (!buildRoot) {
+    buildRoot = findBuildRoot();
+  }
+
+  if (!buildRoot) {
+    const message =
+      'Could not find rsession executable. ' +
+      'Try setting the "RSTUDIO_CPP_BUILD_OUTPUT" environment variable ' +
+      'to the location where src/cpp was built.';
+    throw Error(message);
+  }
+
+  // check for build root in 'src/cpp' sub-folder
+  const buildRootPath = new FilePath(buildRoot);
+  sessionPath = buildRootPath.completePath(`session/${rsessionExeName()}`);
+  confPath = buildRootPath.completePath('conf/rdesktop-dev.conf');
+
+  // check for build root at root of repository
+  // (so C++ sources are built in 'src/cpp' sub-folder)
+  if (!sessionPath.existsSync()) {
+    sessionPath = buildRootPath.completePath(`src/cpp/session/${rsessionExeName()}`);
+    confPath = buildRootPath.completePath('src/cpp/conf/rdesktop-dev.conf');
+  }
+
   return [confPath, sessionPath, new FilePath(app.getAppPath())];
+
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
