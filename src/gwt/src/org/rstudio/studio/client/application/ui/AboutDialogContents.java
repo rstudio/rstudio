@@ -78,7 +78,7 @@ public class AboutDialogContents extends Composite
       copyrightYearLabel.setText("2009-" + info.copyright_year);
 
       // Warn that dailies and previews aren't supported
-      if (info.build_type.equals("Daily") || info.build_type.equals("Preview")) {
+      if (!info.build_type.equals("Release")) {
          supportNotice.setText(
             "This " +
             info.build_type +
