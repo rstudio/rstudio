@@ -210,8 +210,13 @@ try {
                 container = pullBuildPush(image_name: 'jenkins/ide', dockerfile: "docker/jenkins/Dockerfile.versioning", image_tag: "rstudio-versioning", build_args: jenkins_user_build_args())
                 container.inside() {
                     stage('bump version') {
+                        def FLOWER = sh (
+                          script: "cat RELEASE | tr ' ' '-'",
+                          returnStdout: true
+                        ).trim().toLowerCase()
+
                         def rstudioVersion = sh (
-                          script: "docker/jenkins/rstudio-version.sh bump ${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}",
+                          script: "docker/jenkins/rstudio-version.sh bump ${FLOWER} ${params.RSTUDIO_VERSION_MINOR}",
                           returnStdout: true
                         ).trim()
                         echo "RStudio build version: ${rstudioVersion}"
