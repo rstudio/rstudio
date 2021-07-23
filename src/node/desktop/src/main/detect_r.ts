@@ -14,7 +14,7 @@
  */
 
 import { app, dialog } from 'electron';
-import { exec } from 'child_process';
+import { exec, execSync } from 'child_process';
 import { promisify } from 'util';
 import { existsSync } from 'fs';
 import { assert } from 'console';
@@ -55,6 +55,7 @@ async function prepareEnvironmentPosix(): Promise<boolean> {
     rWhichRPath = new FilePath(whichROverride);
   }
 
+  // determine rLdPaths script location
   let rLdScriptPath = new FilePath();
   if (process.platform === 'darwin') {
     if (app.isPackaged) {
@@ -66,7 +67,6 @@ async function prepareEnvironmentPosix(): Promise<boolean> {
       rLdScriptPath = appState().sessionPath?.completePath('../r-ldpath') ?? new FilePath();
     }
   } else {
-    // determine rLdPaths script location
     rLdScriptPath = appState().supportingFilePath().completePath('bin/r-ldpath');
     if (!rLdScriptPath.existsSync()) {
       rLdScriptPath = appState().supportingFilePath().completePath('session/r-ldpath');
@@ -122,20 +122,27 @@ async function prepareEnvironmentWin32(): Promise<boolean> {
   return true;
 }
 
-async function scanForR(rstudioWhichR: FilePath): Promise<FilePath> {
+async function scanForR(rsessionWhichR: FilePath): Promise<FilePath> {
   if (process.platform === 'win32') {
-    return await scanForRWin32(rstudioWhichR);
+    return await scanForRWin32(rsessionWhichR);
   } else {
-    return await scanForRPosix(rstudioWhichR);
+    return await scanForRPosix(rsessionWhichR);
   }
 }
 
-async function scanForRPosix(rstudioWhichR: FilePath): Promise<FilePath> {
+async function scanForRPosix(rsessionWhichR: FilePath): Promise<FilePath> {
   assert((process.platform !== 'win32'));
 
-  // prefer RSTUDIO_WHICH_R
-  if (!rstudioWhichR.isEmpty()) {
-    return rstudioWhichR;
+  // if an override has been supplied (typically from rsession-which-r)
+  // then prefer that
+  if (!rsessionWhichR.isEmpty()) {
+    return rsessionWhichR;
+  }
+
+  // if the RSTUDIO_WHICH_R environment variable is set, use that
+  const rstudioWhichR = getenv('RSTUDIO_WHICH_R');
+  if (rstudioWhichR) {
+    return new FilePath(rstudioWhichR);
   }
 
   // first look for R on the PATH
@@ -171,12 +178,33 @@ async function scanForRPosix(rstudioWhichR: FilePath): Promise<FilePath> {
   return new FilePath();
 }
 
-export async function scanForRWin32(rstudioWhichR: FilePath): Promise<FilePath> {
+export async function scanForRWin32(rsessionWhichR: FilePath): Promise<FilePath> {
+
   assert((process.platform === 'win32'));
 
-  // prefer RSTUDIO_WHICH_R
-  if (!rstudioWhichR.isEmpty()) {
-    return rstudioWhichR;
+  // if an override has been supplied (typically from rsession-which-r)
+  // then prefer that
+  if (!rsessionWhichR.isEmpty()) {
+    return rsessionWhichR;
+  }
+
+  // if the RSTUDIO_WHICH_R environment variable is set, use that
+  const rstudioWhichR = getenv('RSTUDIO_WHICH_R');
+  if (rstudioWhichR) {
+    return new FilePath(rstudioWhichR);
+  }
+
+  // read default version information from registry
+  const keyName = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\R-Core\\R64';
+  const regOutput = execSync(`reg query ${keyName} /v InstallPath`, { encoding: 'utf-8'});
+
+  const lines = regOutput.split('\n');
+  for (const line of lines) {
+    const match = /^\s*InstallPath\s*REG_SZ\s*(.*)$/.exec(line);
+    if (match != null) {
+      const installPath = match[1];
+      return new FilePath(installPath);
+    }
   }
 
   // For now must set env var to run on Windows
