@@ -296,9 +296,14 @@ ZoteroCollection getCollection(boost::shared_ptr<database::IConnection> pConnect
       }
 
       // update version
-      int rowVersion = row.get<int>("version");
-      if (rowVersion > version)
-         version = rowVersion;
+      // further fix for https://github.com/rstudio/rstudio/issues/8861
+      try
+      {
+         int rowVersion = row.get<int>("version");
+         if (rowVersion > version)
+            version = rowVersion;
+      }
+      CATCH_UNEXPECTED_EXCEPTION
 
       // read the csl name value pairs
       soci::indicator nameIndicator = row.get_indicator("name");
