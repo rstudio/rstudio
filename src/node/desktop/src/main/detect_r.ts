@@ -57,20 +57,20 @@ export async function prepareEnvironment(): Promise<boolean> {
 async function prepareEnvironmentImpl(): Promise<boolean> {
 
   // attempt to detect R environment
-  var detectResult : REnvironment;
+  var rEnvironment : REnvironment;
   try {
-    detectResult = await detectREnvironment();
+    rEnvironment = await detectREnvironment();
   } catch (error) {
     showRNotFoundError(error ?? 'An unknown error occurred.');
     return false;
   }
 
   // set environment variables from R
-  setVars(detectResult.envVars);
+  setVars(rEnvironment.envVars);
 
   // on Windows, ensure R is on the PATH so that companion DLLs
   // in the same directory can be resolved
-  const scriptPath = detectResult.rScriptPath || '';
+  const scriptPath = rEnvironment.rScriptPath;
   if (process.platform === 'win32') {
     const binDir = dirname(scriptPath);
     process.env.PATH = `${binDir};${process.env.PATH}`;
