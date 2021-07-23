@@ -8643,7 +8643,8 @@ public class TextEditingTarget implements
             
             event.stopPropagation();
             event.preventDefault();
-            docDisplay_.replaceRange(range, "\n");
+            docDisplay_.replaceRange(range, "\n\n");
+            docDisplay_.moveCursorBackward();
             docDisplay_.ensureCursorVisible();
             return true;
          }
