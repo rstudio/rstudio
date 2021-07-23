@@ -129,7 +129,7 @@ public class VisualModePanmirrorFormat
                format.pandocMode = "markdown";
                if (target_.getExtendedFileType() != SourceDocument.XT_QUARTO_DOCUMENT)
                { 
-                  format.pandocExtensions = "+autolink_bare_uris+tex_math_single_backslash";
+                  format.pandocExtensions = "+autolink_bare_uris";
                }
                if (formatComment.extensions != null)
                   format.pandocExtensions += formatComment.extensions;
