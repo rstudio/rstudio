@@ -13,16 +13,14 @@
  *
  */
 
-import { app, dialog } from 'electron';
-import { exec, execSync } from 'child_process';
+import { dialog } from 'electron';
+import { execSync } from 'child_process';
 import { existsSync } from 'fs';
 
 import { logger } from '../core/logger';
-import { Environment, getenv, setenv, setVars } from '../core/environment';
-import { FilePath } from '../core/file-path';
+import { Environment, getenv, setVars } from '../core/environment';
 
-import { appState } from './app-state';
-import path, { dirname } from 'path';
+import { dirname } from 'path';
 
 interface REnvironment {
   rScriptPath: string,
@@ -31,7 +29,7 @@ interface REnvironment {
 }
 
 function rNotFoundErrorMessage(): string {
-  return "Could not locate an R installation on the system.";
+  return 'Could not locate an R installation on the system.';
 }
 
 function showRNotFoundError(msg: string): void {
@@ -57,7 +55,7 @@ export async function prepareEnvironment(): Promise<boolean> {
 async function prepareEnvironmentImpl(): Promise<boolean> {
 
   // attempt to detect R environment
-  var rEnvironment : REnvironment;
+  let rEnvironment : REnvironment;
   try {
     rEnvironment = await detectREnvironment();
   } catch (error) {
@@ -188,14 +186,14 @@ export async function scanForRWin32(): Promise<string> {
 
   // look for a 64-bit version of R
   if (process.arch !== 'x32') {
-    const x64InstallPath = findDefaultInstallPathWin32("R64");
+    const x64InstallPath = findDefaultInstallPathWin32('R64');
     if (x64InstallPath) {
       return `${x64InstallPath}/bin/x64/R.exe`;
     }
   }
 
   // look for a 32-bit version of R
-  const i386InstallPath = findDefaultInstallPathWin32("R");
+  const i386InstallPath = findDefaultInstallPathWin32('R');
   if (i386InstallPath) {
     return `${i386InstallPath}/bin/i386/R.exe`;
   }
