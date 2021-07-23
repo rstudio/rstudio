@@ -228,15 +228,21 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
         next  : "start"
       },
       {
+        // R Markdown chunk metadata comments
+        token : "comment.doc.tag",
+        regex : "#[|].*$",
+        next  : "start"
+      },
+      {
         // Begin Roxygen with todo
         token : ["comment", "comment.keyword.operator"],
-        regex : "(#+'\\s*)(TODO|FIXME)\\b",
+        regex : "(#+['*]\\s*)(TODO|FIXME)\\b",
         next  : "rd-start"
       },
       {
         // Roxygen
         token : "comment",
-        regex : "#+'",
+        regex : "#+['*]",
         next  : "rd-start"
       },
       {

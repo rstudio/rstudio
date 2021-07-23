@@ -62,7 +62,7 @@ public class AboutDialogContents extends Composite
    public AboutDialogContents(ProductInfo info, ProductEditionInfo editionInfo)
    {
       initWidget(uiBinder.createAndBindUi(this));
-      versionLabel.setText(info.version);
+      versionLabel.setText(info.build_type + " Version " + info.version);
 
       // a11y
       productInfo.getElement().setId("productinfo");
@@ -76,6 +76,17 @@ public class AboutDialogContents extends Composite
            info.date + ") for " + info.os);
       productName.setText(editionInfo.editionName());
       copyrightYearLabel.setText("2009-" + info.copyright_year);
+
+      // Warn that dailies and previews aren't supported
+      if (!info.build_type.equals("Release")) {
+         supportNotice.setText(
+            "This " +
+            info.build_type +
+            " build of " +
+            editionInfo.editionName() +
+            " is provided by RStudio, PBC for testing purposes only and is not an officially supported release."
+         );
+      }
 
       showNoticelink_.setClickHandler(() ->
       {
@@ -130,6 +141,7 @@ public class AboutDialogContents extends Composite
    @UiField TextArea licenseBox;
    @UiField Label productName;
    @UiField HTMLPanel productInfo;
+   @UiField InlineLabel supportNotice;
    @UiField Anchor gplLink;
    @UiField Label gplLinkLabel;
 }

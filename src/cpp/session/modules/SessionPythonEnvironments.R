@@ -78,11 +78,54 @@
   
 })
 
+.rs.addFunction("python.findWindowsPython", function()
+{
+   # if 'py' is not available, nothing we can do
+   if (!nzchar(Sys.which("py")))
+      return("")
+   
+   # NOTE: ideally, we would just parse the output of 'py --list-paths',
+   # but for whatever reason the '*' indicating the default version of
+   # Python is omitted when run from RStudio, so we try to explicitly
+   # run Python here and then ask where the executable lives.
+   #
+   # We pass '-E' here just to avoid things like PYTHONPATH potentially
+   # influencing how the python session is launched
+   pythonPath <- .rs.tryCatch(
+      system2(
+         command = "py",
+         args    = c("-E"),
+         input   = "import sys; print(sys.executable)",
+         stdout  = TRUE,
+         stderr  = TRUE
+      )
+   )
+   
+   if (inherits(pythonPath, "error"))
+      return("")
+   
+   pythonPath
+})
+
 .rs.addFunction("python.configuredInterpreterPath", function(projectDir)
 {
+   # on Windows, check if PY_PYTHON is defined; if it is, we should use 'py'
+   # to determine the version of python to be used
+   if (.rs.platform.isWindows)
+   {
+      pyPython <- Sys.getenv("PY_PYTHON", unset = NA)
+      if (!is.na(pyPython))
+      {
+         python <- .rs.python.findWindowsPython()
+         if (file.exists(python))
+            return(python)
+      }
+   }
+   
    # check some pre-defined environment variables
    vars <- c("RENV_PYTHON", "RETICULATE_PYTHON")
-   for (var in vars) {
+   for (var in vars)
+   {
       value <- Sys.getenv(var, unset = NA)
       if (!is.na(value))
          return(value)
@@ -102,27 +145,56 @@
       return(path.expand(prefsPython))
    
    # on Windows, help users find a default version of Python if possible
-   if (.rs.platform.isWindows && nzchar(Sys.which("py")))
+   if (.rs.platform.isWindows)
    {
-      # NOTE: ideally, we would just parse the output of 'py --list-paths',
-      # but for whatever reason the '*' indicating the default version of
-      # Python is omitted when run from RStudio, so we try to explicitly
-      # run Python here and then ask where the executable lives.
-      #
-      # We pass '-E' here just to avoid things like PYTHONPATH potentially
-      # influencing how the python session is launched
-      pythonPath <- .rs.tryCatch(
-         system2(
-            command = "py",
-            args    = c("-E"),
-            input   = "import sys; print(sys.executable)",
-            stdout  = TRUE,
-            stderr  = TRUE
-         )
-      )
-      
-      if (!inherits(pythonPath, "error") && file.exists(pythonPath))
+      pythonPath <- .rs.python.findWindowsPython()
+      if (file.exists(pythonPath))
          return(pythonPath)
+   }
+   
+   # look for python + python3 on the PATH
+   if (!.rs.platform.isWindows)
+   {
+      python3 <- Sys.which("python3")
+      if (nzchar(python3) && python3 != "/usr/bin/python3")
+         return(python3)
+      
+      python <- Sys.which("python")
+      if (nzchar(python) && python != "/usr/bin/python")
+      {
+         info <- .rs.python.interpreterInfo(python, NULL)
+         version <- numeric_version(info$version, strict = FALSE)
+         if (!is.na(version) && version >= "3.2")
+            return(python)
+      }
+   }
+   
+   # if the user has Anaconda installed, then try auto-activating
+   # the base environment of that Anaconda installation
+   conda <- .rs.python.findCondaBinary()
+   if (file.exists(conda))
+   {
+      pythonPath <- if (.rs.platform.isWindows) "../python.exe" else "../bin/python"
+      python <- file.path(dirname(conda), pythonPath)
+      if (file.exists(python))
+         return(python)
+   }
+   
+   # fall back to versions of python in /usr/bin if available
+   if (!.rs.platform.isWindows)
+   {
+      python3 <- Sys.which("python3")
+      if (nzchar(python3) && python3 == "/usr/bin/python3")
+         return(python3)
+      
+      python <- Sys.which("python")
+      if (nzchar(python) && python == "/usr/bin/python")
+      {
+         info <- .rs.python.interpreterInfo(python, NULL)
+         version <- numeric_version(info$version, strict = FALSE)
+         if (!is.na(version) && version >= "3.2")
+            return(python)
+      }
    }
    
    # no python found; return empty string placeholder

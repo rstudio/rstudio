@@ -217,11 +217,6 @@ export class MainWindow extends GwtWindow {
       });
   }
 
-  resetMargins(): void {
-    // TODO
-    // setContentsMargins(0, 0, 0, 0);
-  }
-
   // TODO - REVIEW
   // https://github.com/electron/electron/issues/9613
   // https://github.com/electron/electron/issues/8762

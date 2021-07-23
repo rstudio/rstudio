@@ -83,6 +83,8 @@ void prepareHandler(handler::Handler& handler,
                     UserIdentifierToLocalUsernameGetter userIdentifierToLocalUsername,
                     UserIdentifierGetter getUserIdentifier = NULL);
 
+std::string userIdentifierToLocalUsername(const std::string& userIdentifier);
+
 } // namespace common
 } // namespace auth
 } // namespace server
