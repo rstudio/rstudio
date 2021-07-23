@@ -46,6 +46,10 @@ export function showPlaceholderMenu(): void {
   Menu.setApplicationMenu(mainMenuStub);
 }
 
+function menuIdFromLabel(label: string): string {
+  return label.replace('&', '');
+}
+
 /**
  * Callbacks from renderer to create application menu.
  */
@@ -75,7 +79,7 @@ export class MenuCallback extends EventEmitter {
 
     ipcMain.on('menu_begin', (event, label: string) => {
       const subMenu = new Menu();
-      const opts: MenuItemConstructorOptions = {submenu: subMenu, label: label};
+      const opts: MenuItemConstructorOptions = { submenu: subMenu, label: label, id: menuIdFromLabel(label) };
       if (label === '&File') {
         opts.role = 'fileMenu';
       } else if (label === '&Edit') {
