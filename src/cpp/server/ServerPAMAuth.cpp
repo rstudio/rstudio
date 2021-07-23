@@ -130,7 +130,8 @@ void doSignIn(const http::Request& request,
                                                             &plainText);
       if (error)
       {
-         LOG_ERROR_MESSAGE("Failed sign-in - unable to decrypt password - error: " + error.asString());
+         error.addProperty("description", "Failed sign-in - unable to decrypt password - error");
+         LOG_ERROR(error);
          redirectToLoginPage(request, pResponse, appUri, kErrorServer);
          return;
       }
@@ -225,7 +226,7 @@ bool pamLogin(const std::string& username, const std::string& password)
       &result);
    if (error)
    {
-      LOG_ERROR_MESSAGE("Error running pamHelper: " + pamHelperPath.getAbsolutePath() + ": " + error.asString());
+      LOG_ERROR(error);
       return false;
    }
 
