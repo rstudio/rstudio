@@ -118,7 +118,11 @@ Error sendRequest(const std::string& address,
       error = http::sendRequest(address, port, request, &response);
 
    if (error)
+   {
+      error.addProperty("address", address);
+      error.addProperty("port", port);
       return error;
+   }
 
    return handleResponse(endpoint, response, pResult);
 }
