@@ -16,7 +16,6 @@
 
 import { BrowserWindow, Rectangle, screen } from 'electron';
 import Store from 'electron-store';
-import { MainWindow } from './main-window';
  
 const kProportionalFont = 'Font.ProportionalFont';
 const kFixWidthFont = 'Font.FixWidthFont';

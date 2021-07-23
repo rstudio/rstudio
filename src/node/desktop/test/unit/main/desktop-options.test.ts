@@ -147,6 +147,7 @@ describe('DesktopOptions', () => {
     testMainWindow.setBounds.withArgs(savedWinBounds);
     testMainWindow.getSize.returns([savedWinBounds.width, savedWinBounds.height]);
     
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     DesktopOptions().restoreMainWindowBounds(testMainWindow as any);
 
     sandbox.assert.calledOnceWithExactly(testMainWindow.setBounds, savedWinBounds);
@@ -172,6 +173,7 @@ describe('DesktopOptions', () => {
     // Make sure some bounds are already saved
     DesktopOptions().saveWindowBounds(savedWinBounds);
     
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     DesktopOptions().restoreMainWindowBounds(testMainWindow as any);
 
     sandbox.assert.calledTwice(testMainWindow.setSize);
