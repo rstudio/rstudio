@@ -87,7 +87,7 @@ async function detectREnvironment(): Promise<REnvironment> {
   }
 
   // get R_HOME + other related R environment variables
-  const stdout = execSync(`${R} RHOME`, { encoding: 'utf-8'});
+  const stdout = execSync(`${R} RHOME`, { encoding: 'utf-8' });
   const home = stdout.trim();
   const envvars = {
     R_HOME:        `${home}`,
