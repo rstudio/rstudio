@@ -83,7 +83,7 @@ def s3_upload(type, flavor, os, arch) {
 
   def buildDest =  "s3://rstudio-ide-build/${flavor}/${os}/${arch}/"
   if (buildType != "daily") {
-    buildDest =  "s3://rstudio-ide-build-private/${buildType}/${flavor}/${os}/${arch}/"
+    buildDest =  "s3://rstudio-ide-build-internal/${buildType}/${flavor}/${os}/${arch}/"
   }
 
   // copy installer to s3
@@ -390,7 +390,7 @@ try {
 
                 def buildDest =  "s3://rstudio-ide-build/desktop/windows/"
                 if (buildType != "daily") {
-                  buildDest =  "s3://rstudio-ide-build-private/${buildType}/desktop/windows/"
+                  buildDest =  "s3://rstudio-ide-build-internal/${buildType}/desktop/windows/"
                 }
 
                 def packageName = "RStudio-${buildType}-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}-RelWithDebInfo"
