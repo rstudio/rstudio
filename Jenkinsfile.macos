@@ -101,13 +101,23 @@ pipeline {
             returnStdout: true
           ).trim()
 
+          def buildType = sh (
+            script: "cat BUILDTYPE",
+            returnStdout: true
+          ).trim().toLowerCase()
+
+          def buildDest =  "s3://rstudio-ide-build/desktop/macos/"
+          if (buildType != "daily") {
+            buildDest =  "s3://rstudio-ide-build-private/${buildType}/desktop/macos/"
+          }
+
           withCredentials([usernamePassword(credentialsId: 'ide-apple-notarizer', usernameVariable: 'APPLE_ID', passwordVariable: 'APPLE_ID_PASSWORD')]) {
             sh "docker/jenkins/notarize-release.sh package/osx/build/${packageFile}"
           }
 
           // this job is going to run on a macOS slave, which cannot use an instance-profile
           withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'jenkins-aws']]) {
-            sh "aws s3 cp package/osx/build/${packageFile} s3://rstudio-ide-build/desktop/macos/"
+            sh "aws s3 cp package/osx/build/${packageFile} ${buildDest}"
           }
 
           // upload daily build redirects

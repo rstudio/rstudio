@@ -76,8 +76,18 @@ def s3_upload(type, flavor, os, arch) {
   sh "mv ${buildFolder}/${packageFile} ${buildFolder}/${renamedFile}"
   packageFile = renamedFile
 
+  def buildType = sh (
+    script: "cat BUILDTYPE",
+    returnStdout: true
+  ).trim().toLowerCase()
+
+  def buildDest =  "s3://rstudio-ide-build/${flavor}/${os}/${arch}/"
+  if (buildType != "daily") {
+    buildDest =  "s3://rstudio-ide-build-private/${buildType}/${flavor}/${os}/${arch}/"
+  }
+
   // copy installer to s3
-  sh "aws s3 cp ${buildFolder}/${packageFile} s3://rstudio-ide-build/${flavor}/${os}/${arch}/"
+  sh "aws s3 cp ${buildFolder}/${packageFile} ${buildDest}"
 
   // add installer-less tarball if desktop
   if (flavor == "desktop") {
@@ -94,7 +104,7 @@ def s3_upload(type, flavor, os, arch) {
     sh "mv ${buildFolder}/_CPack_Packages/Linux/${type}/${tarballFile} ${buildFolder}/_CPack_Packages/Linux/${type}/${renamedTarballFile}"
     tarballFile = renamedTarballFile
 
-    sh "aws s3 cp ${buildFolder}/_CPack_Packages/Linux/${type}/${tarballFile} s3://rstudio-ide-build/${flavor}/${os}/${arch}/"
+    sh "aws s3 cp ${buildFolder}/_CPack_Packages/Linux/${type}/${tarballFile} ${buildDest}"
   }
 
   // update daily build redirect
@@ -372,10 +382,26 @@ try {
                 }
               }
               stage('upload') {
+
+                def buildType = bat (
+                  script: "type BUILDTYPE",
+                  returnStdout: true
+                ).trim().toLowerCase()
+
+                def buildDest =  "s3://rstudio-ide-build/desktop/windows/"
+                if (buildType != "daily") {
+                  buildDest =  "s3://rstudio-ide-build-private/${buildType}/desktop/windows/"
+                }
+
+                def packageName = "RStudio-${buildType}-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}-RelWithDebInfo"
+                if (buildType == "release") {
+                  def packageName = "RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}-RelWithDebInfo"
+                }
+
                 // windows docker container cannot reach instance-metadata endpoint. supply credentials at upload.
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'jenkins-aws']]) {
-                  bat "aws s3 cp package\\win32\\build\\RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}-RelWithDebInfo.exe s3://rstudio-ide-build/desktop/windows/RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}.exe"
-                  bat "aws s3 cp package\\win32\\build\\RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}-RelWithDebInfo.zip s3://rstudio-ide-build/desktop/windows/RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}.zip"
+                  bat "aws s3 cp package\\win32\\build\\${packageName}.exe ${buildDest}"
+                  bat "aws s3 cp package\\win32\\build\\${packageName}.zip ${buildDest}"
                 }
               }
             }
