@@ -200,6 +200,7 @@ function citationCompletions(ui: EditorUI, completionProviders: CiteCompletionPr
             });
 
             // Index the current Entries
+            currentEntries = sortEntries(currentEntries);
             citeSearch.setEntries(currentEntries);
 
             // kick off another load which we'll stream in by setting entries
@@ -219,7 +220,7 @@ function citationCompletions(ui: EditorUI, completionProviders: CiteCompletionPr
 
             // return stream
             return {
-              items: sortEntries(currentEntries),
+              items: currentEntries,
               stream: () => loadedEntries,
             };
 
