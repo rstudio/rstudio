@@ -344,7 +344,9 @@ class PandocWriter implements PandocOutput {
         // inner iteration to find nodes that have this mark
         while (currentChild < fragment.childCount) {
           next = nextNode();
-          if (mark.type.isInSet(next.marks)) {
+          // If the next node shares the same mark with the current node
+          // then add this next node node as a child of the current node
+          if (next.marks.some(nextMark => nextMark.eq(mark))) {
             markedNodes.push(next.node);
           } else {
             // no mark found, "put back" the node
