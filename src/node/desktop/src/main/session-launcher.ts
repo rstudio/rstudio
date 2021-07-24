@@ -157,7 +157,7 @@ export class SessionLauncher {
     this.mainWindow.appLauncher = this.appLaunch;
     this.appLaunch.setActivationWindow(this.mainWindow);
 
-    DesktopOptions().restoreMainWindowBounds(this.mainWindow);
+    DesktopOptions().restoreMainWindowBounds(this.mainWindow.window);
 
     logger().logDiagnostic('\nConnected to R session, attempting to initialize...\n');
 

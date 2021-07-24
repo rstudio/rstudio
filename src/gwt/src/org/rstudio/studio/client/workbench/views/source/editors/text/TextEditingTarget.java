@@ -6720,17 +6720,12 @@ public class TextEditingTarget implements
                visualMode_.syncSourceOutlineLocation();
             }
             
-            // see if we should be using quarto preview
-            String quartoFormat = useQuartoPreview();
-            if (quartoFormat != null)
-            {
-               server_.quartoPreview(docUpdateSentinel_.getPath(), 
-                                     quartoFormat, 
-                                     new VoidServerRequestCallback());
-            }
-            else
-            {
-               rmarkdownHelper_.renderRMarkdown(
+            // Command we can use to do an R Markdown render
+            Command renderCmd = new Command() {
+               @Override
+               public void execute()
+               {
+                  rmarkdownHelper_.renderRMarkdown(
                      docUpdateSentinel_.getPath(),
                      docDisplay_.getCursorPosition().getRow() + 1,
                      null,
@@ -6741,6 +6736,34 @@ public class TextEditingTarget implements
                      false,
                      rmarkdownHelper_.getKnitWorkingDir(docUpdateSentinel_),
                      viewerType);
+                  
+               }
+               
+            };
+            
+            
+            // see if we should be using quarto preview
+            String quartoFormat = useQuartoPreview();
+            if (quartoFormat != null)
+            {
+               // quarto preview can reject the preview (e.g. if it turns
+               // out this file is part of a website or book project)
+               server_.quartoPreview(docUpdateSentinel_.getPath(), 
+                                     quartoFormat, 
+                                     new SimpleRequestCallback<Boolean>() {
+                  @Override
+                  public void onResponseReceived(Boolean previewed)
+                  {
+                     if (!previewed) 
+                     {
+                        renderCmd.execute();
+                     }
+                  }
+               });
+            }
+            else
+            {
+               renderCmd.execute();
             }
          }
       };

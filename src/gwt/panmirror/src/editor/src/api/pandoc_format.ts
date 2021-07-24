@@ -73,7 +73,18 @@ function pandocFormatConfigFromYamlInCode(code: string, isRmd: boolean): PandocF
   // did we find yaml?
   if (yaml) {
     // see if we have any md_extensions defined
-    const mdExtensions = isRmd ? findValue('md_extensions', yaml?.output) : undefined;
+    let mdExtensions : string | undefined = isRmd ? findValue('md_extensions', yaml?.output) : undefined;
+    if (!mdExtensions) {
+      // look for quarto 'from'
+      const from = findValue('from', yaml);
+      if (from) {
+        const fromStr = String(from);
+        const extensions = fromStr.match(/^\w+([+-][\w+-]+)$/);
+        if (extensions) {
+          mdExtensions = extensions[1];
+        }
+      }
+    }
 
     // see if we have any markdown options defined
     let yamlFormatConfig: PandocFormatConfig | undefined;

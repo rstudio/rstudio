@@ -310,8 +310,8 @@ export class MainWindow extends GwtWindow {
     //                      false);
 
     if (!this.geometrySaved) {
-      const size = this.window.getSize();
-      DesktopOptions().saveWindowBounds({width: size[0], height: size[1]});
+      const bounds = this.window.getBounds();
+      DesktopOptions().saveWindowBounds(bounds);
       this.geometrySaved = true;
     }
 

@@ -53,6 +53,9 @@ struct QuartoConfig
 
 QuartoConfig quartoConfig(bool refresh = false);
 
+core::Error quartoInspect(const std::string& path,
+                          core::json::Object *pResultObject);
+
 core::json::Object quartoConfigJSON(bool refresh = false);
 
 core::json::Value quartoCapabilities();

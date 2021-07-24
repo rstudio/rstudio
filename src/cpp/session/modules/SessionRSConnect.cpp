@@ -30,6 +30,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionAsyncRProcess.hpp>
 #include <session/SessionSourceDatabase.hpp>
+#include <session/SessionQuarto.hpp>
 #include <session/projects/SessionProjects.hpp>
 #include <session/prefs/UserPrefs.hpp>
 
@@ -75,6 +76,51 @@ std::string quotedFilesFromArray(json::Array array, bool quoted)
 json::Value toJsonString(const core::FilePath& filePath)
 {
    return json::Value(module_context::createAliasedPath(filePath));
+}
+
+std::string quartoMetadata(const std::string& dir,
+                           const std::string& file,
+                           const std::string& contentCategory)
+{
+   std::string quartoMetadata;
+
+   FilePath dirPath = module_context::resolveAliasedPath(dir);
+   FilePath filePath = dirPath.completeChildPath(file);
+   FilePath inspectTarget = contentCategory == "site" ? dirPath : filePath;
+
+   json::Object jsonInspect;
+   Error error = session::quarto::quartoInspect(
+     string_utils::utf8ToSystem(inspectTarget.getAbsolutePath()), &jsonInspect
+   );
+   if (!error)
+   {
+      json::Object quartoJson;
+      json::Array enginesJson;
+      error = json::readObject(jsonInspect, "quarto", quartoJson, "engines", enginesJson);
+      if (!error)
+      {
+         std::string version;
+         error = json::readObject(quartoJson, "version", version);
+         if (!error)
+         {
+            std::vector<std::string> engines;
+            std::transform(enginesJson.begin(), enginesJson.end(), std::back_inserter(engines), [](const json::Value& engine) {
+               return "'" + string_utils::singleQuotedStrEscape(engine.getString()) + "'";
+            });
+            quartoMetadata += " quarto = list(version = '" +
+                              string_utils::singleQuotedStrEscape(version) + "', " +
+                              "engines = I(c(" + boost::algorithm::join(engines, ", ") + "))), ";
+         }
+      }
+   }
+
+   if (error)
+   {
+      LOG_ERROR(error);
+   }
+
+
+   return quartoMetadata;
 }
 
 class RSConnectPublish : public async_r::AsyncRProcess
@@ -206,6 +252,10 @@ public:
       if (appDir == "~")
          appDir = "~/";
 
+
+      // determine quarto version and engines
+      std::string quarto = (isQuarto && !asStatic) ? quartoMetadata(dir, file, contentCategory) : "";
+
       // form the deploy command to hand off to the async deploy process
       cmd += "rsconnect::deployApp("
              "appDir = '" + string_utils::singleQuotedStrEscape(appDir) + "'," +
@@ -230,8 +280,8 @@ public:
              "   message('" kFinishedMarker "', url) "
              "}, "
              "lint = FALSE,"
-             "metadata = list(" 
-             "   isQuarto = " + (isQuarto ? "TRUE" : "FALSE") + ", "
+             "metadata = list(" +
+                 quarto +
              "   asMultiple = " + (asMultiple ? "TRUE" : "FALSE") + ", "
              "   asStatic = " + (asStatic ? "TRUE" : "FALSE") + 
                  (additionalFiles.empty() ? "" : ", additionalFiles = '" + 
