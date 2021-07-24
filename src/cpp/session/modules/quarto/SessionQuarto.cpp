@@ -103,7 +103,7 @@ void detectQuartoInstallation()
             contents = "99.9.9";
          }
 
-         const Version kQuartoRequiredVersion("0.2.16");
+         const Version kQuartoRequiredVersion("0.2.28");
          boost::algorithm::trim(contents);
          Version quartoVersion(contents);
          if (quartoVersion >= kQuartoRequiredVersion)
@@ -324,24 +324,6 @@ Error quartoCapabilitiesRpc(const json::JsonRpcRequest&,
 
    return Success();
 }
-
-// Given a path to a Quarto file (usually .qmd), attempt to inspect it
-Error quartoInspect(const std::string& path,
-                    json::Object *pResultObject)
-{
-   // Run quarto and retrieve metadata
-   std::string output;
-   core::system::ProcessResult result;
-   Error error = runQuarto({"inspect", path}, FilePath(), &result);
-   if (error)
-   {
-      return error;
-   }
-
-   // Parse JSON result
-   return pResultObject->parse(result.stdOut);
-}
-
 
 
 Error getQmdPublishDetails(const json::JsonRpcRequest& request,
@@ -663,6 +645,25 @@ json::Value quartoCapabilities()
       return json::Value();
    }
 }
+
+// Given a path to a Quarto file (usually .qmd), attempt to inspect it
+Error quartoInspect(const std::string& path,
+                    json::Object *pResultObject)
+{
+   // Run quarto and retrieve metadata
+   std::string output;
+   core::system::ProcessResult result;
+   Error error = runQuarto({"inspect", path}, FilePath(), &result);
+   if (error)
+   {
+      return error;
+   }
+
+   // Parse JSON result
+   return pResultObject->parse(result.stdOut);
+}
+
+
 
 bool handleQuartoPreview(const core::FilePath& sourceFile,
                          const core::FilePath& outputFile,
