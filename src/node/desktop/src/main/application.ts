@@ -41,6 +41,7 @@ export const kVersion = '--version';
 export const kVersionJson = '--version-json';
 export const kLogLevel = 'log-level';
 export const kDelaySessionSeconds = 'session-delay-seconds';
+export const kSessionExitCode = 'session-exit-code';
 
 /**
  * The RStudio application
@@ -54,6 +55,7 @@ export class Application implements AppState {
   windowTracker = new WindowTracker();
   gwtCallback?: GwtCallback;
   sessionStartDelaySeconds = 0;
+  sessionEarlyExitCode = 0;
 
   appLaunch?: ApplicationLaunch;
   sessionLauncher?: SessionLauncher;
@@ -125,6 +127,15 @@ export class Application implements AppState {
       }
     }
 
+    // switch for forcing rsession to exit immediately with given exit code (testing, troubleshooting)
+    // (will happen after session start delay above, if also specified)
+    if (app.commandLine.hasSwitch(kSessionExitCode)) {
+      const exitCode = parseInt(app.commandLine.getSwitchValue(kSessionExitCode), 0);
+      if (!isNaN(exitCode) && exitCode !== 0) {
+        this.sessionEarlyExitCode = exitCode;
+      }
+    }
+
     if (!await prepareEnvironment()) {
       return exitFailure();
     }
@@ -166,7 +177,7 @@ export class Application implements AppState {
 
       // adapt for OSX resource bundles
       if (process.platform === 'darwin') {
-        if (this.supportPath.completePath('Info.plist').exists()) {
+        if (this.supportPath.completePath('Info.plist').existsSync()) {
           this.supportPath = this.supportPath.completePath('Resources');
         }
       }

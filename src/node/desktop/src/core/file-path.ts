@@ -487,9 +487,26 @@ export class FilePath {
   /**
    * Gets the children of this directory. Sub-directories will not be traversed.
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   getChildren(filePaths: Array<FilePath>): Err {
-    throw Error('getChildren is NYI');
+    if (!this.existsSync()) {
+      return new Error(`File not found: ${this.getAbsolutePath()}`);
+    }
+
+    let dir: fs.Dir | undefined = undefined;
+    try {
+      dir = fs.opendirSync(this.getAbsolutePath());
+      const files = fs.readdirSync(this.getAbsolutePath());
+      for (const file of files) {
+        filePaths.push(this.completeChildPath(file));
+      }
+    } catch (err) {
+      return err;
+    } finally {
+      if (dir) {
+        dir.closeSync();
+      }
+    }
+    return Success();
   }
 
   /**

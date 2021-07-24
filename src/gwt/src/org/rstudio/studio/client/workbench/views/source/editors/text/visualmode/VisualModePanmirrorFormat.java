@@ -89,9 +89,13 @@ public class VisualModePanmirrorFormat
             {
                format.docTypes = formatComment.doctypes;
             }
-            else if (target_.getExtendedFileType() == SourceDocument.XT_QUARTO_DOCUMENT)
+            else if (isQuartoDocument())
             {
-               format.docTypes = new String[] { PanmirrorExtendedDocType.quarto };
+               List<String> quartoDocTypes = new ArrayList<>();
+               quartoDocTypes.add(PanmirrorExtendedDocType.quarto);
+               if (getOutputFormats().contains("hugo"))
+                  quartoDocTypes.add(PanmirrorExtendedDocType.hugo);
+               format.docTypes = quartoDocTypes.toArray(new String[] {}); 
             }
             else if (formatComment.doctypes == null || formatComment.doctypes.length == 0)
             {
@@ -127,9 +131,9 @@ public class VisualModePanmirrorFormat
             else
             {
                format.pandocMode = "markdown";
-               if (target_.getExtendedFileType() != SourceDocument.XT_QUARTO_DOCUMENT)
+               if (!isQuartoDocument())
                { 
-                  format.pandocExtensions = "+autolink_bare_uris+tex_math_single_backslash";
+                  format.pandocExtensions = "+autolink_bare_uris";
                }
                if (formatComment.extensions != null)
                   format.pandocExtensions += formatComment.extensions;
@@ -180,6 +184,11 @@ public class VisualModePanmirrorFormat
             return format;
          }
       };
+   }
+   
+   public boolean isQuartoDocument()
+   {
+      return target_.getExtendedFileType() == SourceDocument.XT_QUARTO_DOCUMENT;
    }
    
    
@@ -234,13 +243,16 @@ public class VisualModePanmirrorFormat
       }
       else
       {
-         List<String> formats = TextEditingTargetRMarkdownHelper.getOutputFormats(yaml);
+         List<String> formats = isQuartoDocument() 
+            ? TextEditingTargetRMarkdownHelper.getQuartoOutputFormats(yaml)
+            : TextEditingTargetRMarkdownHelper.getOutputFormats(yaml);
          if (formats == null)
             return new ArrayList<>();
          else
             return formats;   
       }
    }
+   
    private PanmirrorRmdExtensions rmdExtensionsFromFormatConfig(PanmirrorPandocFormatConfig config)
    {
       PanmirrorRmdExtensions rmdExtensions = new PanmirrorRmdExtensions();
@@ -266,7 +278,10 @@ public class VisualModePanmirrorFormat
    
    private boolean isGitHubDocument()
    {
-      return getOutputFormats().contains("github_document") || isGitREADME();
+      List<String> formats = getOutputFormats();
+      return formats.contains("github_document") || 
+             formats.contains("gfm") ||
+             isGitREADME();
    }
    
    private boolean isGitREADME()
@@ -371,7 +386,7 @@ public class VisualModePanmirrorFormat
          );
          
          // if it's a blogdown document
-         if (isBlogdownProjectDocument())
+         if (isBlogdownProjectDocument() && !isQuartoDocument())
          {
             // if it has an extension indicating hugo will render markdown
             String extension = FileSystemItem.getExtensionFromPath(docPath);

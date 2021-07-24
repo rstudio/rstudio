@@ -41,6 +41,7 @@ Error productInfo(const json::JsonRpcRequest& request,
    result["commit"] = RSTUDIO_GIT_COMMIT;
    result["build"] = RSTUDIO_BUILD_ID;
    result["release_name"] = RSTUDIO_RELEASE_NAME;
+   result["build_type"] = RSTUDIO_BUILD_TYPE;
    result["date"] = RSTUDIO_BUILD_DATE;
    result["copyright_year"] = RSTUDIO_COPYRIGHT_YEAR;
    result["os"] = RSTUDIO_PACKAGE_OS;

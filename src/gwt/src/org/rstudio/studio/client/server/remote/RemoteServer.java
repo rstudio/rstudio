@@ -6403,7 +6403,7 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void quartoPreview(String file, String format, ServerRequestCallback<Void> requestCallback)
+   public void quartoPreview(String file, String format, ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(file));

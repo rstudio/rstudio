@@ -86,7 +86,6 @@
                         altText="RStudio Logo"/>
                <g:Label ui:field="productName" text="RStudio" styleName="{style.productName}"></g:Label>
                <g:HTMLPanel styleName="{style.productVersion}">
-                  <g:InlineLabel text="Version "></g:InlineLabel>
                   <g:InlineLabel ui:field="versionLabel"></g:InlineLabel>
                </g:HTMLPanel>
                <g:HTMLPanel styleName="{style.productVersion}">
@@ -101,6 +100,9 @@
          </g:HTMLPanel>
          <g:HTMLPanel styleName="{style.userAgent}">
             <g:InlineLabel ui:field="userAgentLabel"></g:InlineLabel>
+         </g:HTMLPanel>
+         <g:HTMLPanel styleName="{style.notice}">
+            <g:InlineLabel ui:field="supportNotice"></g:InlineLabel>
          </g:HTMLPanel>
          <g:HTMLPanel ui:field="gplNotice">
             <g:InlineLabel

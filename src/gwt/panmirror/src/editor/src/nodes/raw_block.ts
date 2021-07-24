@@ -36,8 +36,8 @@ import { ProsemirrorCommand, EditorCommandId } from '../api/command';
 import { EditorUI } from '../api/ui';
 import { isSingleLineHTML } from '../api/html';
 import { kHTMLFormat, kTexFormat, editRawBlockCommand, isRawHTMLFormat } from '../api/raw';
-import { isSingleLineTex } from '../api/tex';
 import { OmniInsert, OmniInsertGroup } from '../api/omni_insert';
+import { kRawInlineFormat, kRawInlineContent } from '../marks/raw_inline/raw_inline';
 
 const extension = (context: ExtensionContext): Extension | null => {
   const { pandocExtensions, pandocCapabilities, ui } = context;
@@ -125,6 +125,12 @@ const extension = (context: ExtensionContext): Extension | null => {
               const content = rawTok.c[kRawBlockContent];
               writer.addNode(schema.nodes.raw_block, { format }, [schema.text(content)]);
               return true;
+            } else if (isParagraphWrappingLatexBeginOrEnd(tok)) {
+              writer.addNode(schema.nodes.raw_block, { format: kTexFormat }, [schema.text(tok.c[0].c)]);
+              return true;
+            } else if (isParagraphWrappingRawLatexBeginOrEnd(tok)) {
+              writer.addNode(schema.nodes.raw_block, { format: kTexFormat }, [schema.text(tok.c[0].c[kRawInlineContent])]);
+              return true;
             } else {
               return false;
             }
@@ -204,18 +210,28 @@ function readPandocRawBlock(schema: Schema, tok: PandocToken, writer: Prosemirro
     writer.writeInlineHTML(textTrimmed);
     writer.closeNode();
 
-    // similarly, single lines of tex should be read as inline tex
-  } /* else if (format === kTexFormat && isSingleLineTex(textTrimmed)) {
+    // similarly, single lines of tex (that aren't begin or end) should be read as inline tex
+  } else if (format === kTexFormat && readAsInlineTex(textTrimmed)) {
     writer.openNode(schema.nodes.paragraph, {});
     const rawTexMark = schema.marks.raw_tex.create();
     writer.openMark(rawTexMark);
     writer.writeText(textTrimmed);
     writer.closeMark(rawTexMark);
     writer.closeNode();
-  } */ else {
+  } else {
     writer.openNode(schema.nodes.raw_block, { format });
     writer.writeText(text);
     writer.closeNode();
+  }
+}
+
+
+export function readAsInlineTex(tex: string) {
+  tex = tex.trimRight();
+  if (tex.split('\n').length === 1){
+    return !isLatexBeginOrEnd(tex);
+  } else {
+    return false;
   }
 }
 
@@ -223,6 +239,23 @@ function isParagraphWrappingMultilineRaw(tok: PandocToken) {
   return isSingleChildParagraph(tok) && 
          tok.c[0].t === PandocTokenType.RawInline &&
          isMultilineString(tok.c[0].c[kRawBlockContent]);
+}
+
+function isParagraphWrappingLatexBeginOrEnd(tok: PandocToken) {
+  return isSingleChildParagraph(tok) &&
+         tok.c[0].t === PandocTokenType.Str &&
+         isLatexBeginOrEnd(tok.c[0].c);
+}
+
+function isParagraphWrappingRawLatexBeginOrEnd(tok: PandocToken) {
+  return isSingleChildParagraph(tok) &&
+         (tok.c[0].t === PandocTokenType.RawInline &&
+         tok.c[0].c[kRawInlineFormat] === kTexFormat &&
+         isLatexBeginOrEnd(tok.c[0].c[kRawInlineContent]));
+}
+
+function isLatexBeginOrEnd(str: string) {
+  return str && str.trimLeft().match(/\\(begin|end)/);
 }
 
 function isSingleChildParagraph(tok: PandocToken) {

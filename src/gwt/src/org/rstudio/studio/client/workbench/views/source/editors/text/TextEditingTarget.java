@@ -593,6 +593,10 @@ public class TextEditingTarget implements
                if (commands_.interruptR().isEnabled())
                   commands_.interruptR().execute();
             }
+            else if (continueSpecialCommentOnNewline(ne))
+            {
+               // nothing to do; continueSpecialCommentOnNewline() does all the magic
+            }
             else if (
                   prefs_.continueCommentsOnNewline().getValue() &&
                   !docDisplay_.isPopupVisible() &&
@@ -6716,17 +6720,12 @@ public class TextEditingTarget implements
                visualMode_.syncSourceOutlineLocation();
             }
             
-            // see if we should be using quarto preview
-            String quartoFormat = useQuartoPreview();
-            if (quartoFormat != null)
-            {
-               server_.quartoPreview(docUpdateSentinel_.getPath(), 
-                                     quartoFormat, 
-                                     new VoidServerRequestCallback());
-            }
-            else
-            {
-               rmarkdownHelper_.renderRMarkdown(
+            // Command we can use to do an R Markdown render
+            Command renderCmd = new Command() {
+               @Override
+               public void execute()
+               {
+                  rmarkdownHelper_.renderRMarkdown(
                      docUpdateSentinel_.getPath(),
                      docDisplay_.getCursorPosition().getRow() + 1,
                      null,
@@ -6737,6 +6736,34 @@ public class TextEditingTarget implements
                      false,
                      rmarkdownHelper_.getKnitWorkingDir(docUpdateSentinel_),
                      viewerType);
+                  
+               }
+               
+            };
+            
+            
+            // see if we should be using quarto preview
+            String quartoFormat = useQuartoPreview();
+            if (quartoFormat != null)
+            {
+               // quarto preview can reject the preview (e.g. if it turns
+               // out this file is part of a website or book project)
+               server_.quartoPreview(docUpdateSentinel_.getPath(), 
+                                     quartoFormat, 
+                                     new SimpleRequestCallback<Boolean>() {
+                  @Override
+                  public void onResponseReceived(Boolean previewed)
+                  {
+                     if (!previewed) 
+                     {
+                        renderCmd.execute();
+                     }
+                  }
+               });
+            }
+            else
+            {
+               renderCmd.execute();
             }
          }
       };
@@ -8580,6 +8607,85 @@ public class TextEditingTarget implements
             }
          });
       }
+   }
+   
+   private boolean continueSpecialCommentOnNewline(NativeEvent event)
+   {
+      // don't do anything if we have a completion popup showing
+      if (docDisplay_.isPopupVisible())
+         return false;
+      
+      // only handle plain Enter insertions
+      if (event.getKeyCode() != KeyCodes.KEY_ENTER)
+         return false;
+      
+      int modifier = KeyboardShortcut.getModifierValue(event);
+      if (modifier != KeyboardShortcut.NONE)
+         return false;
+      
+      String line = docDisplay_.getCurrentLineUpToCursor();
+
+      // validate that this line begins with a comment character
+      // (necessary to check token type for e.g. Markdown documents)
+      // https://github.com/rstudio/rstudio/issues/6421
+      //
+      // note that we don't check all tokens here since we provide
+      // special token styling within some comments (e.g. roxygen)
+      JsArray<Token> tokens =
+            docDisplay_.getTokens(docDisplay_.getCursorPosition().getRow());
+               
+      for (int i = 0, n = tokens.length(); i < n; i++)
+      {
+         Token token = tokens.get(i);
+
+         // skip initial whitespace tokens if any
+         String value = token.getValue();
+         if (value.trim().isEmpty())
+            continue;
+
+         // check that we have a comment
+         if (token.hasType("comment"))
+            break;
+         
+         // the token isn't a comment; we shouldn't take action here
+         return false;
+      }
+      
+      // if this is an R Markdown chunk metadata comment, and this
+      // line is blank other than the comment prefix, remove that
+      // prefix and insert a newline (terminating the block)
+      {
+         Pattern pattern = Pattern.create("^\\s*#[|]\\s*$", "");
+         Match match = pattern.match(line, 0);
+         if (match != null)
+         {
+            Position cursorPos = docDisplay_.getCursorPosition();
+            Range range = Range.create(
+                  cursorPos.getRow(), 0,
+                  cursorPos.getRow() + 1, 0);
+            
+            event.stopPropagation();
+            event.preventDefault();
+            docDisplay_.replaceRange(range, "\n\n");
+            docDisplay_.moveCursorBackward();
+            docDisplay_.ensureCursorVisible();
+            return true;
+         }
+      }
+      
+      // NOTE: we are generous with our pattern definition here
+      // as we've already validated this is a comment token above
+      Pattern pattern = Pattern.create("^(\\s*(?:#+|%+|//+)['*+>|]\\s*)");
+      Match match = pattern.match(line, 0);
+      if (match == null)
+         return false;
+      
+      event.preventDefault();
+      event.stopPropagation();
+      docDisplay_.insertCode("\n" + match.getGroup(1));
+      docDisplay_.ensureCursorVisible();
+      
+      return true;
    }
 
    private StatusBar statusBar_;

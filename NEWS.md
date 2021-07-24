@@ -1,5 +1,7 @@
 
-## RStudio 1.5 "Ghost Orchid" Release Notes
+## RStudio 2021-08 "Ghost Orchid" Release Notes
+
+* Changed from semantic versioning to calendar based versioning (Pro #2652)
 
 ### Python
 
@@ -37,6 +39,7 @@
 * Fixed issue where R banner could be displayed twice on startup (#6907)
 * Removed the breaking change introduced in Juliet Rose that changed the behavior of the X-Forwarded-Proto header when RSW is behind a proxy server (Pro #2657)
 * Fixed issue where adjacent links in the Visual Editor could merge into a single link (#8471)
+* Fixed Issue where items deleted from a local Zotero Collection would still appear in the Visual Editor's Insert Citation dialog.
 
 ### Misc
 

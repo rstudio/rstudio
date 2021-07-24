@@ -329,7 +329,7 @@ Error createPreview(const FilePath& previewFilePath, const std::string& format)
 
 
 Error quartoPreviewRpc(const json::JsonRpcRequest& request,
-                       json::JsonRpcResponse*)
+                       json::JsonRpcResponse* pResponse)
 {
    // read params
    std::string previewFile, format;
@@ -338,19 +338,41 @@ Error quartoPreviewRpc(const json::JsonRpcRequest& request,
       return error;
    FilePath previewFilePath = module_context::resolveAliasedPath(previewFile);
 
-   if (s_pPreview && s_pPreview->isRunning() &&
-       (s_pPreview->previewFile() == previewFilePath) &&
-       (s_pPreview->format() == format &&
-        !s_pPreview->hasModifiedProject()))
+   // first check to see if this file is in a website or book project
+   // (if so then return false as preview will fail)
+   bool canPreview = true;
+   FilePath quartoConfig = session::quarto::quartoProjectConfigFile(previewFilePath);
+   if (!quartoConfig.isEmpty())
    {
-      json::Object eventJson;
-      eventJson["id"] = s_pPreview->jobId();
-      module_context::enqueClientEvent(ClientEvent(client_events::kJobsActivate, eventJson));
-      return s_pPreview->render();
+      std::string type;
+      readQuartoProjectConfig(quartoConfig, &type);
+      canPreview = type != session::quarto::kQuartoProjectSite &&
+                   type != session::quarto::kQuartoProjectBook;
+   }
+
+   // set result
+   pResponse->setResult(canPreview);
+
+   if (canPreview)
+   {
+      if (s_pPreview && s_pPreview->isRunning() &&
+          (s_pPreview->previewFile() == previewFilePath) &&
+          (s_pPreview->format() == format &&
+           !s_pPreview->hasModifiedProject()))
+      {
+         json::Object eventJson;
+         eventJson["id"] = s_pPreview->jobId();
+         module_context::enqueClientEvent(ClientEvent(client_events::kJobsActivate, eventJson));
+         return s_pPreview->render();
+      }
+      else
+      {
+         return createPreview(previewFilePath, format);
+      }
    }
    else
    {
-      return createPreview(previewFilePath, format);
+      return Success();
    }
 }
 
