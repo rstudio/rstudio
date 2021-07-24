@@ -18,7 +18,6 @@ import { assert } from 'chai';
 import { ElectronApplication, Page } from 'playwright';
 
 import { launch } from './int-utils';
-import { app, MenuItem } from 'electron';
 
 describe('Startup and Exit', async function () {
   let electronApp: ElectronApplication;
