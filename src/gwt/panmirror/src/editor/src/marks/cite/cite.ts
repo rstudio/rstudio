@@ -74,10 +74,10 @@ const kInTextCiteRegex = new RegExp(`${kCiteIdBasePattern}$`);
 
 // Note Style: [@foo2019]
 const kBeginCitePattern = `(.* ${kCiteIdPrefixPattern}|${kCiteIdPrefixPattern})`;
-const kNoteCiteRegex = new RegExp(`\\[${kBeginCitePattern}${kCiteIdCharsPattern}.*\\]`);
+const kNoteCiteRegex = new RegExp(`\\[${kBeginCitePattern}${kCiteIdCharsPattern}.*?\\]`);
 
 // In Text with Suffix: @foo2019 [p 35]
-const kInTextCiteWithSuffixPattern = `${kCiteIdPrefixPattern}${kCiteIdCharsPattern}.*?\\[.*?\\]`;
+const kInTextCiteWithSuffixPattern = `${kCiteIdPrefixPattern}${kCiteIdCharsPattern}\\s+\\[.*?\\]`;
 const kInTextCiteWithSuffixRegEx = new RegExp(`^${kInTextCiteWithSuffixPattern}$`);
 
 enum CitationMode {
