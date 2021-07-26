@@ -211,6 +211,13 @@ export function findComponents(): [FilePath, FilePath, FilePath] {
   // providing path to built C++ sources; if not set, then do
   // some primitive scanning for common developer workflows
   let buildRoot = getenv('RSTUDIO_CPP_BUILD_OUTPUT');
+  if (buildRoot && !existsSync(buildRoot)) {
+    console.log("RSTUDIO_CPP_BUILD_OUTPUT is set but doesn't point anywhere useful");
+    buildRoot = '';
+  }
+
+  // if we couldn't resolve the build root from RSTUDIO_CPP_BUILD_OUTPUT,
+  // then fall back to lookup heuristics
   if (!buildRoot) {
     buildRoot = findBuildRoot();
   }
