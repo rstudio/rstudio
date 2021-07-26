@@ -13,7 +13,7 @@
  *
  */
 
-import fs from 'fs';
+import fs, { existsSync } from 'fs';
 import os from 'os';
 import path from 'path';
 import { sep } from 'path';
@@ -119,15 +119,17 @@ export function rsessionExeName(): string {
 // used to help find built C++ sources in developer configurations
 function findBuildRoot(): string {
 
-  const rootPaths = [
-    path.normalize(`${process.cwd()}/../..`),
-    path.normalize(`${process.cwd()}/../../../..`),
-  ];
-
-  for (const rootPath of rootPaths) {
-    const buildRoot = findBuildRootImpl(rootPath);
-    if (buildRoot) {
-      return buildRoot;
+  // look for the project root directory. note that the current
+  // working directory may differ depending on how we are launched
+  // (e.g. unit tests will have their parent folder as the working directory)
+  for (let parentDir = process.cwd();
+       parentDir !== path.dirname(parentDir);
+       parentDir = path.dirname(parentDir))
+  {
+    // check for release file
+    const releaseFile = path.join(parentDir, 'RELEASE');
+    if (existsSync(releaseFile)) {
+      return findBuildRootImpl(parentDir);
     }
   }
 
@@ -137,16 +139,25 @@ function findBuildRoot(): string {
 
 function findBuildRootImpl(rootDir: string): string {
 
-  // list all files + directories in the folder
-  const files = fs.readdirSync(rootDir);
-
-  // collect those that appear to be build directories
+  // array of discovered build directories
   const buildDirs = [];
-  for (const file of files) {
-    if (file.startsWith('build')) {
-      const stat = fs.statSync(`${rootDir}/${file}`);
-      if (stat.isDirectory()) {
-        buildDirs.push({ file: file, stat: stat });
+
+  // root directories to search
+  const buildDirParents = [
+    `${rootDir}`,
+    `${rootDir}/src`,
+  ];
+
+  // list all files + directories in root folder
+  for (const buildDirParent of buildDirParents) {
+    const buildDirFiles = fs.readdirSync(buildDirParent);
+    for (const file of buildDirFiles) {
+      if (file.startsWith('build')) {
+        const path = `${buildDirParent}/${file}`;
+        const stat = fs.statSync(path);
+        if (stat.isDirectory()) {
+          buildDirs.push({ path: path, stat: stat });
+        }
       }
     }
   }
@@ -162,7 +173,7 @@ function findBuildRootImpl(rootDir: string): string {
   });
 
   // return the newest one
-  const buildRoot = `${rootDir}/${buildDirs[0].file}`;
+  const buildRoot = buildDirs[0].path;
   console.log(`Using build root: ${buildRoot}`);
   return buildRoot;
 
@@ -173,7 +184,8 @@ function rsessionNotFoundError(): Error {
   const message =
     'Could not find rsession executable. ' +
     'Try setting the "RSTUDIO_CPP_BUILD_OUTPUT" environment variable ' +
-    'to the location where src/cpp was built.';
+    'to the location where src/cpp was built.\n' +
+    '(Working directory: ' + process.cwd() + ')';
 
   return Error(message);
 
