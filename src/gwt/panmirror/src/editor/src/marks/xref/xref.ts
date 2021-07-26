@@ -198,13 +198,12 @@ const extension = (context: ExtensionContext): Extension | null => {
 
               // Show the insert Xref dialog
               if (dispatch) {
-                insertXref(ui, state.doc, server, (xref: XRef) => {
+                insertXref(ui, state.doc, server, (text: string) => {
                   // An xref was selected, insert it
                   const tr = state.tr;
                   const trSchema = tr.doc.type.schema;
                   const selection = tr.selection;
-                  const refText = `@${xrefKey(xref, "quarto")}`;
-                  tr.replaceSelectionWith(schema.text(refText, trSchema.marks.cite_id.create()), false);
+                  tr.replaceSelectionWith(schema.text(text, trSchema.marks.cite_id.create()), false);
                   setTextSelection(tr.mapping.map(selection.head))(tr);
                   dispatch(tr);
                 });

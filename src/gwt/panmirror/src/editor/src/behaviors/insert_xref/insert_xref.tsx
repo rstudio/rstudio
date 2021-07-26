@@ -18,11 +18,38 @@ import { kQuartoXRefTypes } from '../../marks/xref/xref-completion';
 import { xrefIndex } from './insert_xref_index';
 import debounce from 'lodash.debounce';
 
+
+export interface XRefStyle {
+  key: string;
+  fn: (key: string) => string;
+}
+export const kXRefStyles: XRefStyle[] = [
+  {
+    key: "Default",
+    fn: (key: string) => {
+      return `@${key}`;
+    }
+  },
+  {
+    key: "Capitalize",
+    fn: (key: string) => {
+      return `@${key.charAt(0).toUpperCase() + key.slice(1)}`;
+    }
+  },
+  {
+    key: "None",
+    fn: (key: string) => {
+      return `-@${key}`;
+    }
+  },
+];
+let lastSelectedStyleIndex = 0;
+
 export async function insertXref(
   ui: EditorUI,
   doc: ProsemirrorNode,
   server: EditorServer,
-  onInsertXref: (xref: XRef) => void
+  onInsertXref: (test: string) => void
 ) {
   await ui.dialogs.htmlDialog(
     'Insert Cross Reference',
@@ -58,8 +85,8 @@ export async function insertXref(
         return (await server.xref.quartoIndexForFile(docPath)).refs;
       };
 
-      const onInsert = (xref: XRef) => {
-        onInsertXref(xref);
+      const onInsert = (xref: XRef, style: XRefStyle) => {
+        onInsertXref(style.fn(xrefKey(xref, "quarto")));
         confirm();
       };
 
@@ -97,7 +124,7 @@ interface InsertXrefPanelProps extends WidgetProps {
   height: number;
   width: number;
   loadXRefs: () => Promise<XRef[]>;
-  onOk: (xref: XRef) => void;
+  onOk: (xref: XRef, style: XRefStyle) => void;
   onCancel: () => void;
 }
 
@@ -174,6 +201,7 @@ export const InsertXrefPanel: React.FC<InsertXrefPanelProps> = props => {
   const textRef = React.useRef<HTMLInputElement>(null);
   const selectRef = React.useRef<HTMLSelectElement>(null);
   const fixedList = React.useRef<FixedSizeList>(null);
+  const styleSelectRef = React.useRef<HTMLSelectElement>(null);
 
   // Load the cross ref data when the dialog loads
   React.useEffect(() => {
@@ -199,6 +227,9 @@ export const InsertXrefPanel: React.FC<InsertXrefPanelProps> = props => {
 
     setTimeout(() => {
       textRef.current?.focus();
+      if (styleSelectRef.current) {
+        styleSelectRef.current.selectedIndex = lastSelectedStyleIndex;
+      }
     });
   }, []);
 
@@ -217,6 +248,14 @@ export const InsertXrefPanel: React.FC<InsertXrefPanelProps> = props => {
     return xrefTypes.map(xrefType => (
       <option key={xrefType.type} value={xrefType.type}>
         {props.ui.context.translateText(xrefType.type)}
+      </option>
+    ));
+  };
+
+  const styleOptions = () => {
+    return kXRefStyles.map(style => (
+      <option key={style.key} value={style.key}>
+        {props.ui.context.translateText(style.key)}
       </option>
     ));
   };
@@ -305,14 +344,22 @@ export const InsertXrefPanel: React.FC<InsertXrefPanelProps> = props => {
     setSelectedIndex(index);
   };
 
+  const currentStyle = () => {
+    const styleIndex = styleSelectRef.current?.selectedIndex || 0;
+    const option = styleSelectRef.current?.options[styleIndex];
+    const key = option?.value || "";
+    return kXRefStyles.find(style => style.key === key) || kXRefStyles[0];
+  };
+
   // Insert the item
   const handleItemDoubleClicked = (index: number) => {
     const xref = displayXrefs[index];
-    props.onOk(xref);
+    props.onOk(xref, currentStyle());
   };
 
   const acceptSelected = () => {
-    props.onOk(displayXrefs[currentIndex]);
+    lastSelectedStyleIndex = styleSelectRef.current?.selectedIndex || 0;
+    props.onOk(displayXrefs[currentIndex], currentStyle());
   };
 
   // The user typed some text
@@ -390,13 +437,26 @@ export const InsertXrefPanel: React.FC<InsertXrefPanelProps> = props => {
           )}
 
       </div>
-      <div>
-        <DialogButtons
-          okLabel={props.ui.context.translateText('Insert')}
-          cancelLabel={props.ui.context.translateText('Cancel')}
-          onOk={acceptSelected}
-          onCancel={props.onCancel}
-        />
+      <div className='pm-insert-xref-insert-options'>
+
+        <div className='pm-insert-xref-prefix'>
+          <div>{[props.ui.context.translateText("Prefix")]}</div>
+          <SelectInput
+            tabIndex={0}
+            ref={styleSelectRef}
+            className="pm-insert-xref-select-style"
+          >
+            {styleOptions()}
+          </SelectInput>
+        </div>
+        <div>
+          <DialogButtons
+            okLabel={props.ui.context.translateText('Insert')}
+            cancelLabel={props.ui.context.translateText('Cancel')}
+            onOk={acceptSelected}
+            onCancel={props.onCancel}
+          />
+        </div>
       </div>
     </div>
   );

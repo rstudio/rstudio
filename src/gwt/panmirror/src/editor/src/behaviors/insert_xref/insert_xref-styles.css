@@ -100,3 +100,19 @@
   opacity: 0.8;
   font-style: italic;
 }
+
+.pm-insert-xref-insert-options {
+  display: flex;
+  justify-content: space-between;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.pm-insert-xref-prefix {
+  display: flex;
+  align-items: center;
+}
+
+.pm-insert-xref-prefix select {
+  margin-left: 8px;
+}
