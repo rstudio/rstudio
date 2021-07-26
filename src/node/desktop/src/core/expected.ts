@@ -13,12 +13,16 @@
  *
  */
 
-export type Expected<T> = [ T | null, Error | null ];
+export type Expected<T> = [ T, Error | null ];
 
 export function ok<T>(value: T): Expected<T> {
   return [value, null];
 }
 
-export function unexpected<T>(error: Error): Expected<T> {
-  return [null, error];
+// NOTE: we intentionally lie to the type checker here; the intention is that
+// users of Expected should only use the resulting value T if error is null or
+// unset. Effectively, this implies that "correct" usages of Expected will never
+// give the user a non-T value.
+export function err<T>(error?: Error): Expected<T> {
+  return [null as unknown as T, error ?? new Error()];
 }

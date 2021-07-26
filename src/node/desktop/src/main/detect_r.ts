@@ -21,7 +21,7 @@ import { logger } from '../core/logger';
 import { Environment, getenv, setVars } from '../core/environment';
 
 import { dirname } from 'path';
-import { Expected, ok, unexpected } from '../core/expected';
+import { Expected, ok, err } from '../core/expected';
 
 interface REnvironment {
   rScriptPath: string,
@@ -29,12 +29,9 @@ interface REnvironment {
   envVars: Environment,
 }
 
-function rNotFoundErrorMessage(): string {
-  return 'Could not locate an R installation on the system.';
-}
-
-function showRNotFoundError(msg: string): void {
-  dialog.showErrorBox('R not found', msg);
+function showRNotFoundError(error?: Error): void {
+  const message = error?.message ?? 'Could not locate an R installation on the system.';
+  dialog.showErrorBox('R not found', message);
 }
 
 /**
@@ -48,7 +45,7 @@ export function prepareEnvironment(): Expected<REnvironment> {
     return prepareEnvironmentImpl();
   } catch (error) {
     logger().logError(error);
-    return unexpected(error);
+    return err(error);
   }
 
 }
@@ -56,12 +53,10 @@ export function prepareEnvironment(): Expected<REnvironment> {
 function prepareEnvironmentImpl(): Expected<REnvironment> {
 
   // attempt to detect R environment
-  let rEnvironment : REnvironment;
-  try {
-    rEnvironment = detectREnvironment();
-  } catch (error) {
-    showRNotFoundError(error ?? 'An unknown error occurred.');
-    return unexpected(error);
+  const [rEnvironment, error] = detectREnvironment();
+  if (error) {
+    showRNotFoundError(error);
+    return err(error);
   }
 
   // set environment variables from R
@@ -79,12 +74,13 @@ function prepareEnvironmentImpl(): Expected<REnvironment> {
 
 }
 
-function detectREnvironment(): REnvironment {
+function detectREnvironment(): Expected<REnvironment> {
 
   // scan for R
-  const R = scanForR();
-  if (!R) {
-    throw rNotFoundErrorMessage();
+  const [R, error] = scanForR();
+  if (error) {
+    showRNotFoundError();
+    return err(error);
   }
 
   // get R_HOME + other related R environment variables
@@ -103,21 +99,23 @@ function detectREnvironment(): REnvironment {
     { encoding: 'utf-8' }
   );
 
-  return {
+  const result = {
     rScriptPath: R,
     version:     rVersion,
     envVars:     envvars
   };
 
+  return ok(result);
+
 }
 
-function scanForR(): string {
+function scanForR(): Expected<string> {
 
   // if the RSTUDIO_WHICH_R environment variable is set, use that
   const rstudioWhichR = getenv('RSTUDIO_WHICH_R');
   if (rstudioWhichR) {
     logger().logDiagnostic(`Using RSTUDIO_WHICH_R: ${rstudioWhichR}`);
-    return rstudioWhichR;
+    return ok(rstudioWhichR);
   }
 
   // otherwise, use platform-specific lookup strategies
@@ -129,13 +127,13 @@ function scanForR(): string {
 
 }
 
-function scanForRPosix(): string {
+function scanForRPosix(): Expected<string> {
 
   // first, look for R on the PATH
   const stdout = execSync('/usr/bin/which R', { encoding: 'utf-8' });
   const R = stdout.trim();
   if (R) {
-    return R;
+    return ok(R);
   }
 
   // otherwise, look in some hard-coded locations
@@ -152,16 +150,16 @@ function scanForRPosix(): string {
 
   for (const location of defaultLocations) {
     if (existsSync(location)) {
-      return location;
+      return ok(location);
     }
   }
 
   // nothing found
-  return '';
+  return err();
 
 }
 
-function findDefaultInstallPathWin32(version: string): string {
+function findDefaultInstallPathWin32(version: string): Expected<string> {
 
   const keyName = `HKEY_LOCAL_MACHINE\\SOFTWARE\\R-Core\\${version}`;
   const regOutput = execSync(`reg query ${keyName} /v InstallPath`, { encoding: 'utf-8'});
@@ -170,37 +168,37 @@ function findDefaultInstallPathWin32(version: string): string {
   for (const line of lines) {
     const match = /^\s*InstallPath\s*REG_SZ\s*(.*)$/.exec(line);
     if (match != null) {
-      return match[1];
+      return ok(match[1]);
     }
   }
 
-  return '';
+  return err();
 
 }
 
-function scanForRWin32():string {
+function scanForRWin32(): Expected<string> {
 
   // if the RSTUDIO_WHICH_R environment variable is set, use that
   const rstudioWhichR = getenv('RSTUDIO_WHICH_R');
   if (rstudioWhichR) {
-    return rstudioWhichR;
+    return ok(rstudioWhichR);
   }
 
   // look for a 64-bit version of R
   if (process.arch !== 'x32') {
     const x64InstallPath = findDefaultInstallPathWin32('R64');
     if (x64InstallPath) {
-      return `${x64InstallPath}/bin/x64/R.exe`;
+      return ok(`${x64InstallPath}/bin/x64/R.exe`);
     }
   }
 
   // look for a 32-bit version of R
   const i386InstallPath = findDefaultInstallPathWin32('R');
   if (i386InstallPath) {
-    return `${i386InstallPath}/bin/i386/R.exe`;
+    return ok(`${i386InstallPath}/bin/i386/R.exe`);
   }
 
   // nothing found; return empty filepath
-  return '';
+  return err();
 
 }
