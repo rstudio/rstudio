@@ -81,7 +81,7 @@ export abstract class GwtWindow extends DesktopBrowserWindow {
            window.desktopHooks.isCommandEnabled('closeSourceDoc');
          else false`)
       .then((closeSourceDocEnabled) => {
-        if (!closeSourceDocEnabled.toBool()) {
+        if (!(closeSourceDocEnabled as boolean)) {
           this.window.close();
         }
       });

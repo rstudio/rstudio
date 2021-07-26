@@ -46,7 +46,7 @@ export function getDesktopBridge() {
           canChooseDirectories,
           focusOwner)
         .then(result => {
-          if (result.canceled) {
+          if (result.canceled as boolean) {
             callback('');
           } else {
             callback(result.filePaths[0]);
