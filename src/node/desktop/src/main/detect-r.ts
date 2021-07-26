@@ -1,5 +1,5 @@
 /*
- * detect_r.ts
+ * detect-r.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -14,14 +14,14 @@
  */
 
 import { dialog } from 'electron';
+import { dirname } from 'path';
 import { execSync } from 'child_process';
 import { existsSync } from 'fs';
 
-import { logger } from '../core/logger';
 import { Environment, getenv, setVars } from '../core/environment';
-
-import { dirname } from 'path';
 import { Expected, ok, err } from '../core/expected';
+import { logger } from '../core/logger';
+
 
 interface REnvironment {
   rScriptPath: string,
@@ -53,9 +53,11 @@ function executeCommand(command: string): Expected<string> {
 }
 
 /**
- * Detect R and prepare environment for launching rsession.
+ * Detect R and prepare environment for launching the rsession process.
  * 
- * @returns true if startup should continue, false on fatal error
+ * This entails setting environment variables relevant to R on startup
+ * // (for example, R_HOME) and other platform-specific work required
+ * for R to launch.
  */
 export function prepareEnvironment(): Expected<REnvironment> {
 
