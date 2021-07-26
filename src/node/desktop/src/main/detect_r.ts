@@ -139,7 +139,7 @@ function scanForR(): Expected<string> {
   // if the RSTUDIO_WHICH_R environment variable is set, use that
   const rstudioWhichR = getenv('RSTUDIO_WHICH_R');
   if (rstudioWhichR) {
-    logger().logDiagnostic(`Using RSTUDIO_WHICH_R: ${rstudioWhichR}`);
+    logger().logDiagnostic(`Using ${rstudioWhichR} (found by RSTUDIO_WHICH_R environment variable)`);
     return ok(rstudioWhichR);
   }
 
