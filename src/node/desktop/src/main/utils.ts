@@ -144,6 +144,7 @@ function findBuildRootImpl(rootDir: string): string {
   const buildDirParents = [
     `${rootDir}`,
     `${rootDir}/src`,
+    `${rootDir}/src/cpp`
   ];
 
   // list all files + directories in root folder
