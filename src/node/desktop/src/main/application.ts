@@ -26,7 +26,7 @@ import { augmentCommandLineArguments, getComponentVersions, removeStaleOptionsLo
 import { exitFailure, exitSuccess, run, ProgramStatus } from './program-status';
 import { ApplicationLaunch } from './application-launch';
 import { AppState } from './app-state';
-import { prepareEnvironment } from './detect_r';
+import { prepareEnvironment } from './detect-r';
 import { SessionLauncher } from './session-launcher';
 import { DesktopActivation } from './activation-overlay';
 import { WindowTracker } from './window-tracker';
@@ -136,7 +136,8 @@ export class Application implements AppState {
       }
     }
 
-    if (!await prepareEnvironment()) {
+    const [, error] = prepareEnvironment();
+    if (error) {
       return exitFailure();
     }
 
