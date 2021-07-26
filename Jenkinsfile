@@ -369,7 +369,7 @@ try {
               }
               stage('sign') {
                 def buildType = bat (
-                  script: "type BUILDTYPE",
+                  script: "@type BUILDTYPE",
                   returnStdout: true
                 ).trim().toLowerCase()
 
@@ -398,7 +398,7 @@ try {
               stage('upload') {
 
                 def buildType = bat (
-                  script: "type BUILDTYPE",
+                  script: "@type BUILDTYPE",
                   returnStdout: true
                 ).trim().toLowerCase()
 
