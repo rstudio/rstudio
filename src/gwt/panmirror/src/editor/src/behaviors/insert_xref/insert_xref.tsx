@@ -284,7 +284,7 @@ export const InsertXrefPanel: React.FC<InsertXrefPanelProps> = props => {
       case 'Enter':
         acceptSelected();
         event.preventDefault();
-      case 'Esc':
+      case 'Escape':
         props.onCancel();
         event.preventDefault();
         break;
@@ -361,13 +361,12 @@ export const InsertXrefPanel: React.FC<InsertXrefPanelProps> = props => {
             onKeyDown={handleKeyboardEvent}
             tabIndex={0}
           >
-
             <FixedSizeList
               className="pm-insert-xref-list pm-block-border-color pm-background-color"
               height={props.height}
               width="100%"
               itemCount={displayXrefs.length}
-              itemSize={60}
+              itemSize={66}
               itemData={{
                 xrefs: displayXrefs,
                 selectedIndex: currentIndex,
