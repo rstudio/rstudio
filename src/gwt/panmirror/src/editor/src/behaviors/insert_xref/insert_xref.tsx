@@ -15,6 +15,8 @@ import uniqBy from 'lodash.uniqby';
 
 import './insert_xref-styles.css';
 import { kQuartoXRefTypes } from '../../marks/xref/xref-completion';
+import { xrefIndex } from './insert_xref_index';
+import debounce from 'lodash.debounce';
 
 export async function insertXref(
   ui: EditorUI,
@@ -22,7 +24,7 @@ export async function insertXref(
   server: EditorServer,
   onInsertXref: (xref: XRef) => void
 ) {
-  const performInsert = await ui.dialogs.htmlDialog(
+  await ui.dialogs.htmlDialog(
     'Insert Cross Reference',
     'Insert',
     (
@@ -232,7 +234,8 @@ export const InsertXrefPanel: React.FC<InsertXrefPanelProps> = props => {
     }
 
     if (filterText) {
-      filtered = filtered.filter(xref => `${xref.id}-${xref.type}`.match(filterText) || xref.title?.match(filterText));
+      const search = xrefIndex(filtered);
+      filtered = search.search(filterText, 1000);
     }
 
     return filtered;
@@ -241,13 +244,10 @@ export const InsertXrefPanel: React.FC<InsertXrefPanelProps> = props => {
   // Ensure that selection stays within the filtered range
   const displayXrefs = filteredXrefs();
 
-  const handleTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setFilterText(event?.target.value);
-  };
-
-
+  // The current index (adjusted to ensure it is in bounds)
   const currentIndex = Math.min(selectedIndex, displayXrefs.length - 1);
 
+  // Increments or decrements the index
   const incrementIndex = (increment: number) => {
     let newIndex = currentIndex;
     if (increment > 0) {
@@ -300,21 +300,38 @@ export const InsertXrefPanel: React.FC<InsertXrefPanelProps> = props => {
     setSelectedType(xrefType?.prefix || "");
   };
 
+  // Select the item
   const handleItemClicked = (index: number) => {
     setSelectedIndex(index);
   };
 
-  const placeholderText = xrefs === undefined ? "Loading Cross References" : "No Cross References Found.";
+  // Insert the item
+  const handleItemDoubleClicked = (index: number) => {
+    const xref = displayXrefs[index];
+    props.onOk(xref);
+  };
 
   const acceptSelected = () => {
     props.onOk(displayXrefs[currentIndex]);
   };
 
-  // TODO: debounce text input?
-  // TODO: Search via fuse
-  // TODO: Actually insert the xref
-  // TODO: keyboard handling for list
+  // The user typed some text
+  const handleTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    memoizedTextFilter(event?.target.value);
+  };
 
+  // debounce the text filtering
+  const memoizedTextFilter = React.useCallback(
+    debounce(
+      (txt: string) => {
+        setFilterText(txt);
+      },
+      30,
+    ),
+    [],
+  );
+
+  const placeholderText = xrefs === undefined ? props.ui.context.translateText("Loading Cross References") : props.ui.context.translateText("No Cross References Found.");
   return (
     <div className="pm-insert-xref">
       <div className="pm-insert-xref-search-container">
@@ -339,7 +356,7 @@ export const InsertXrefPanel: React.FC<InsertXrefPanelProps> = props => {
       </div>
 
       <div className="pm-insert-xref-list-container">
-        {xrefs && xrefs.length > 0 ? (
+        {displayXrefs && displayXrefs.length > 0 ? (
           <div
             onKeyDown={handleKeyboardEvent}
             tabIndex={0}
@@ -356,6 +373,7 @@ export const InsertXrefPanel: React.FC<InsertXrefPanelProps> = props => {
                 selectedIndex: currentIndex,
                 ui: props.ui,
                 onclick: handleItemClicked,
+                ondoubleclick: handleItemDoubleClicked
               }}
               ref={fixedList}
             >
@@ -380,11 +398,8 @@ export const InsertXrefPanel: React.FC<InsertXrefPanelProps> = props => {
           onOk={acceptSelected}
           onCancel={props.onCancel}
         />
-
       </div>
     </div>
-
-
   );
 };
 
@@ -393,7 +408,8 @@ interface XRefItemProps extends ListChildComponentProps {
     xrefs: XRef[],
     selectedIndex: number
     ui: EditorUI,
-    onclick: (index: number) => void
+    onclick: (index: number) => void,
+    ondoubleclick: (index: number) => void
   };
 }
 
@@ -414,16 +430,20 @@ const XRefItem = (props: XRefItemProps) => {
   // The image and adornment
   const image = type?.image(props.data.ui) || props.data.ui.images.omni_insert?.generic!;
 
-  // Click handler
+  // Click handlers
   const onItemClick = () => {
     props.data.onclick(props.index);
+  };
+
+  const onItemDoubleClick = () => {
+    props.data.ondoubleclick(props.index);
   };
 
   // Whether this node is selected
   const selected = props.data.selectedIndex === props.index;
   const selectedClassName = `pm-xref-item${selected ? ' pm-list-item-selected' : ''}`;
   return (
-    <div key={thisXref.id} style={props.style} className={selectedClassName} onClick={onItemClick}>
+    <div key={thisXref.id} style={props.style} className={selectedClassName} onClick={onItemClick} onDoubleClick={onItemDoubleClick}>
       <div className="pm-xref-item-image-container">
         <img src={image} className={'pm-xref-item-image pm-border-color'} />
       </div>
