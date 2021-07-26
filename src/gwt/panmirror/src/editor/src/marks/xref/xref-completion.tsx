@@ -229,3 +229,27 @@ export const kXRefTypes: { [key: string]: { image: (ui: EditorUI) => string | un
   exm: kGenericType,
   exr: kGenericType,
 };
+
+export const kQuartoXRefTypes: { [key: string]: { image: (ui: EditorUI) => string | undefined } } = {
+  sec: {
+    image: (ui: EditorUI) => ui.images.omni_insert?.generic
+  },
+  fig: {
+    image: (ui: EditorUI) => (ui.prefs.darkMode() ? ui.images.omni_insert?.image_dark : ui.images.omni_insert?.image),
+  },
+  tbl: {
+    image: (ui: EditorUI) => (ui.prefs.darkMode() ? ui.images.omni_insert?.table_dark : ui.images.omni_insert?.table),
+  },
+  lst: {
+    image: (ui: EditorUI) => ui.images.omni_insert?.generic
+  },
+  eq: kEqType,
+  thm: kEqType,
+  lem: kEqType,
+  cor: kEqType,
+  prp: kEqType,
+  cnj: kEqType,
+  def: kEqType,
+  exm: kGenericType,
+  exr: kGenericType,
+};
