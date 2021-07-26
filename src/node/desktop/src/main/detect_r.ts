@@ -34,6 +34,24 @@ function showRNotFoundError(error?: Error): void {
   dialog.showErrorBox('R not found', message);
 }
 
+function showQueryError(command: string, error: Error): void {
+  const title = 'Error starting R';
+  const message = 
+    `RStudio was unable to invoke R during startup (${command} had error ${error.message})`;
+  dialog.showErrorBox(title, message);
+}
+
+function executeCommand(command: string): Expected<string> {
+
+  try {
+    const output = execSync(command, { encoding: 'utf-8'});
+    return ok(output.trim());
+  } catch (error) {
+    return err(error);
+  }
+
+}
+
 /**
  * Detect R and prepare environment for launching rsession.
  * 
@@ -77,27 +95,34 @@ function prepareEnvironmentImpl(): Expected<REnvironment> {
 function detectREnvironment(): Expected<REnvironment> {
 
   // scan for R
-  const [R, error] = scanForR();
-  if (error) {
+  const [R, scanError] = scanForR();
+  if (scanError) {
     showRNotFoundError();
-    return err(error);
+    return err(scanError);
   }
 
   // get R_HOME + other related R environment variables
-  const stdout = execSync(`${R} RHOME`, { encoding: 'utf-8' });
-  const home = stdout.trim();
+  const rHomeCommand = `${R} RHOME`;
+  const [rHome, rHomeError] = executeCommand(rHomeCommand);
+  if (rHomeError) {
+    showQueryError(rHomeCommand, rHomeError);
+    return err(rHomeError);
+  }
+
   const envvars = {
-    R_HOME:        `${home}`,
-    R_SHARE_DIR:   `${home}/share`,
-    R_INCLUDE_DIR: `${home}/include`,
-    R_DOC_DIR:     `${home}/doc`
+    R_HOME:        `${rHome}`,
+    R_SHARE_DIR:   `${rHome}/share`,
+    R_INCLUDE_DIR: `${rHome}/include`,
+    R_DOC_DIR:     `${rHome}/doc`
   };
 
   // get R version string
-  const rVersion = execSync(
-    `${R} --vanilla -s -e "cat(format(getRversion()))"`,
-    { encoding: 'utf-8' }
-  );
+  const rVersionCommand = `${R} --vanilla -s -e "cat(format(getRversion()))"`;
+  const [rVersion, rVersionError] = executeCommand(rVersionCommand);
+  if (rVersionError) {
+    showQueryError(rVersionCommand, rVersionError);
+    return err(rVersionError);
+  }
 
   const result = {
     rScriptPath: R,
@@ -130,10 +155,10 @@ function scanForR(): Expected<string> {
 function scanForRPosix(): Expected<string> {
 
   // first, look for R on the PATH
-  const stdout = execSync('/usr/bin/which R', { encoding: 'utf-8' });
-  const R = stdout.trim();
-  if (R) {
-    return ok(R);
+  const [rLocation, error] = executeCommand('/usr/bin/which R');
+  if (!error && rLocation) {
+    logger().logDiagnostic(`Using ${rLocation} (found by /usr/bin/which/R)`);
+    return ok(rLocation);
   }
 
   // otherwise, look in some hard-coded locations
@@ -150,6 +175,7 @@ function scanForRPosix(): Expected<string> {
 
   for (const location of defaultLocations) {
     if (existsSync(location)) {
+      logger().logDiagnostic(`Using ${rLocation} (found by searching known locations)`);
       return ok(location);
     }
   }
@@ -162,13 +188,19 @@ function scanForRPosix(): Expected<string> {
 function findDefaultInstallPathWin32(version: string): Expected<string> {
 
   const keyName = `HKEY_LOCAL_MACHINE\\SOFTWARE\\R-Core\\${version}`;
-  const regOutput = execSync(`reg query ${keyName} /v InstallPath`, { encoding: 'utf-8'});
+  const regQueryCommand = `reg query ${keyName} /v InstallPath`;
+  const [output, error] = executeCommand(regQueryCommand);
+  if (error) {
+    return err(error);
+  }
 
-  const lines = regOutput.split('\r\n');
+  const lines = output.split('\r\n');
   for (const line of lines) {
     const match = /^\s*InstallPath\s*REG_SZ\s*(.*)$/.exec(line);
     if (match != null) {
-      return ok(match[1]);
+      const rLocation = match[1];
+      logger().logDiagnostic(`Using ${rLocation} (found by searching registry`);
+      return ok(rLocation);
     }
   }
 
