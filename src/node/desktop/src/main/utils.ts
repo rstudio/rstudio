@@ -122,14 +122,12 @@ function findBuildRoot(): string {
   // look for the project root directory. note that the current
   // working directory may differ depending on how we are launched
   // (e.g. unit tests will have their parent folder as the working directory)
-  for (let parentDir = process.cwd();
-       parentDir !== path.dirname(parentDir);
-       parentDir = path.dirname(parentDir))
+  for (let dir = process.cwd(); dir !== path.dirname(dir); dir = path.dirname(dir))
   {
     // check for release file
-    const releaseFile = path.join(parentDir, 'RELEASE');
+    const releaseFile = path.join(dir, 'RELEASE');
     if (existsSync(releaseFile)) {
-      return findBuildRootImpl(parentDir);
+      return findBuildRootImpl(dir);
     }
   }
 
@@ -212,7 +210,7 @@ export function findComponents(): [FilePath, FilePath, FilePath] {
   // some primitive scanning for common developer workflows
   let buildRoot = getenv('RSTUDIO_CPP_BUILD_OUTPUT');
   if (buildRoot && !existsSync(buildRoot)) {
-    console.log("RSTUDIO_CPP_BUILD_OUTPUT is set but doesn't point anywhere useful");
+    console.log(`RSTUDIO_CPP_BUILD_OUTPUT is set (${buildRoot}) but does not exist`);
     buildRoot = '';
   }
 
