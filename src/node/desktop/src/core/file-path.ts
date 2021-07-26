@@ -112,8 +112,22 @@ export class FilePath {
 
   /**
    * Checks whether the specified path exists.
+   * 
+   * Returns Promise<boolean>; do not use without 'await' or * .then().
+   * 
+   * For example, this can give the WRONG result:
+   * 
+   * if (FilePath.existsAync(file)) { WRONG USAGE always true, a Promise is truthy }
+   *
+   * Use either:
+   * 
+   * if (await FilePath.existsAsync(file)) { ...}
+   * 
+   * or
+   * 
+   * if (FilePath.existsAsync(file).then((result) => { if (result) { ... } }
    */
-  static async exists(filePath: string): Promise<boolean> {
+  static async existsAsync(filePath: string): Promise<boolean> {
     if (!filePath) {
       return false;
     }
@@ -214,7 +228,7 @@ export class FilePath {
     // revert to the specified path if it exists, otherwise
     // take the user home path from the system
     let safePath = revertToPath;
-    if (! await FilePath.exists(safePath.path)) {
+    if (! await FilePath.existsAsync(safePath.path)) {
       safePath = userHomePath();
     }
 
@@ -391,7 +405,7 @@ export class FilePath {
    * Creates this directory, if it does not exist.
    */
   async ensureDirectory(): Promise<Err> {
-    if (!await this.exists()) {
+    if (!await this.existsAsync()) {
       return await this.createDirectory();
     } else {
       return Success();
@@ -419,8 +433,22 @@ export class FilePath {
 
   /**
    * Checks whether this file path exists in the file system.
+   * 
+   * Returns Promise<boolean>; do not use without 'await' or * .then().
+   * 
+   * For example, this can give the WRONG result:
+   * 
+   * if (file.existsAync()) { WRONG USAGE always true, a Promise is truthy }
+   *
+   * Use either:
+   * 
+   * if (await file.existsAsync()) { ...}
+   * 
+   * or
+   * 
+   * if (file.existsAsync().then((result) => { if (result) { ... } }
    */
-  async exists(): Promise<boolean> {
+  async existsAsync(): Promise<boolean> {
     try {
       if (this.isEmpty()) {
         return false;
