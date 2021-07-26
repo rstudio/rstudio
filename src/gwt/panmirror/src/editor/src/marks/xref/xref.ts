@@ -31,6 +31,9 @@ import { PandocOutput } from '../../api/pandoc';
 import { OmniInsertGroup } from '../../api/omni_insert';
 import { xrefCompletionHandler } from './xref-completion';
 import { xrefPopupPlugin } from './xref-popup';
+import { kQuartoDocType } from '../../api/format';
+import { insertXref } from '../../behaviors/insert_xref/insert_xref';
+import { XRef, xrefKey } from '../../api/xref';
 
 const kRefRegExDetectAndApply = /(?:^|[^`])(\\?@ref\([ A-Za-z0-9:-]*\))/g;
 
@@ -182,6 +185,46 @@ const extension = (context: ExtensionContext): Extension | null => {
             },
           ),
         ];
+      } else if (format.docTypes.includes(kQuartoDocType)) {
+        return [
+          new ProsemirrorCommand(
+            EditorCommandId.CrossReference,
+            [],
+            (state: EditorState, dispatch?: (tr: Transaction<any>) => void) => {
+              // enable/disable command
+              if (!canInsertNode(state, schema.nodes.text) || !toggleMarkType(schema.marks.cite_id)(state)) {
+                return false;
+              }
+
+              // Show the insert Xref dialog
+              if (dispatch) {
+                insertXref(ui, state.doc, server, (xref: XRef) => {
+                  // An xref was selected, insert it
+                  const tr = state.tr;
+                  const trSchema = tr.doc.type.schema;
+                  const selection = tr.selection;
+                  const refText = `@${xrefKey(xref, "quarto")}`;
+                  tr.replaceSelectionWith(schema.text(refText, trSchema.marks.cite_id.create()), false);
+                  setTextSelection(tr.mapping.map(selection.head))(tr);
+                  dispatch(tr);
+                });
+              }
+              return true;
+            },
+            {
+              name: ui.context.translateText('Cross Reference'),
+              description: ui.context.translateText('Reference to related content'),
+              group: OmniInsertGroup.References,
+              priority: 0,
+              image: () =>
+                ui.prefs.darkMode()
+                  ? ui.images.omni_insert!.cross_reference_dark!
+                  : ui.images.omni_insert!.cross_reference!,
+            },
+          ),
+        ];
+
+
       } else {
         return [];
       }
