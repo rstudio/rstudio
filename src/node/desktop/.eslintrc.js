@@ -7,7 +7,7 @@ module.exports = {
     "node": true
   },
 
-  "parser": '@typescript-eslint/parser',
+  "parser": "@typescript-eslint/parser",
 
   "parserOptions": {
     "project": "./tsconfig.json",
@@ -20,8 +20,8 @@ module.exports = {
   ],
 
   "extends": [
-    'eslint:recommended',
-    'plugin:@typescript-eslint/recommended',
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
   ],
 
   "rules": {
