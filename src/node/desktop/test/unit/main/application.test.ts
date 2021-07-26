@@ -72,11 +72,11 @@ describe('Application', () => {
       const tmpDir = testDir();
 
       app.setScratchTempDir(tmpDir);
-      assert.isFalse(await tmpDir.exists());
+      assert.isFalse(await tmpDir.existsAsync());
       assert.isFalse(!! await tmpDir.ensureDirectory());
 
       const expectedDir = tmpDir.completeChildPath('tmp');
-      assert.isFalse(await expectedDir.exists());
+      assert.isFalse(await expectedDir.existsAsync());
 
       // note, every testDir call returns different random path 
       const scratch = app.scratchTempDir(testDir());

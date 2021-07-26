@@ -151,7 +151,7 @@ describe('FilePath', () => {
     });
     it('getCanonicalPath should return empty results for empty path', async () => {
       const f = new FilePath();
-      assert.isFalse(await f.exists());
+      assert.isFalse(await f.existsAsync());
       assert.isFalse(!!f.getAbsolutePath());
       assert.isTrue(f.isEmpty());
       assert.isTrue(f.isWithin(f));
@@ -160,12 +160,12 @@ describe('FilePath', () => {
     });
     it('getCanonicalPath should return a non-empty path for a path that exists', async () => {
       const f = new FilePath(os.tmpdir());
-      assert.isTrue(await f.exists());
+      assert.isTrue(await f.existsAsync());
       assert.isNotEmpty(await f.getCanonicalPath());
     });
     it('getCanonicalPath should return an empty path for a path that doesn\'t exist', async () => {
       const f = new FilePath('/some/really/bogus/path');
-      assert.isFalse(await f.exists());
+      assert.isFalse(await f.existsAsync());
       const result = await f.getCanonicalPath();
       assert.isEmpty(result);
     });
@@ -337,22 +337,22 @@ describe('FilePath', () => {
       assert.isFalse(new FilePath().existsSync());
     });
     it('exists should return false for empty path', async () => {
-      assert.isFalse(await new FilePath().exists());
+      assert.isFalse(await new FilePath().existsAsync());
     });
     it('exists should detect when object\'s path exists', async () => {
-      assert.isTrue(await new FilePath(os.tmpdir()).exists());
+      assert.isTrue(await new FilePath(os.tmpdir()).existsAsync());
     });
     it('exists should detect when object\'s path doesn\'t exist', async () => {
-      assert.isFalse(await new FilePath(bogusPath).exists());
+      assert.isFalse(await new FilePath(bogusPath).existsAsync());
     });
     it('exists should detect when a supplied path exists', async () => {
-      assert.isTrue(await FilePath.exists(os.tmpdir()));
+      assert.isTrue(await FilePath.existsAsync(os.tmpdir()));
     });
     it('exists should detect when a supplied path doesn\'t exist', async () => {
-      assert.isFalse(await FilePath.exists(bogusPath));
+      assert.isFalse(await FilePath.existsAsync(bogusPath));
     });
     it('exists should return false for existence of a null path', async () => {
-      assert.isFalse(await new FilePath().exists());
+      assert.isFalse(await new FilePath().existsAsync());
     });
   });
 
@@ -433,17 +433,17 @@ describe('FilePath', () => {
     });
     it('ensureDirectory should return success when asked to ensure existing directory exists', async () => {
       const existingFolder = new FilePath(os.homedir());
-      assert.isTrue(await existingFolder.exists());
+      assert.isTrue(await existingFolder.existsAsync());
       const result = await existingFolder.ensureDirectory();
       assert(isSuccessful(result));
     });
     it('ensureDirectory should create directory when asked to ensure it exists', async () => {
       const newFolder = path.join(os.tmpdir(), randomString());
       const newFilePath = new FilePath(newFolder);
-      assert.isFalse(await FilePath.exists(newFolder));
+      assert.isFalse(await FilePath.existsAsync(newFolder));
       const result = await newFilePath.ensureDirectory();
       assert(isSuccessful(result));
-      assert.isTrue(await FilePath.exists(newFolder));
+      assert.isTrue(await FilePath.existsAsync(newFolder));
       await fsPromises.rmdir(newFolder);
     });
   });
@@ -454,17 +454,17 @@ describe('FilePath', () => {
       const fp = new FilePath(target);
       const result = await fp.createDirectory();
       assert(isSuccessful(result));
-      assert.isTrue(await fp.exists());
+      assert.isTrue(await fp.existsAsync());
       await fsPromises.rmdir(target);
     });
     it('createDirectory should succeed if directory in FilePath already exists', async () => {
       const target = path.join(os.tmpdir(), randomString());
       const fp = new FilePath(target);
       let result = await fp.createDirectory();
-      assert.isTrue(await fp.exists());
+      assert.isTrue(await fp.existsAsync());
       result = await fp.createDirectory();
       assert(isSuccessful(result));
-      assert.isTrue(await fp.exists());
+      assert.isTrue(await fp.existsAsync());
       await fsPromises.rmdir(target);
     });
     it('createDirectory should create directory relative to path in FilePath', async () => {
@@ -472,7 +472,7 @@ describe('FilePath', () => {
       const fp = new FilePath(os.tmpdir());
       assert(isSuccessful(await fp.createDirectory(target)));
       const newPath = path.join(os.tmpdir(), target);
-      assert.isTrue(await FilePath.exists(newPath));
+      assert.isTrue(await FilePath.existsAsync(newPath));
       await fsPromises.rmdir(newPath);
     });
     it('createDirectory should recursively create directories', async () => {
@@ -480,7 +480,7 @@ describe('FilePath', () => {
       const fp = new FilePath(target);
       const result = await fp.createDirectory();
       assert(isSuccessful(result));
-      assert.isTrue(await fp.exists());
+      assert.isTrue(await fp.existsAsync());
       await fsPromises.rmdir(target);
     });
     it('createDirectory should recursively create directories relative to path in FilePath', async () => {
@@ -491,7 +491,7 @@ describe('FilePath', () => {
       const result = await fp.createDirectory(extraFolder);
       assert(isSuccessful(result));
       const newPath = path.join(target, extraFolder);
-      assert.isTrue(await FilePath.exists(newPath));
+      assert.isTrue(await FilePath.existsAsync(newPath));
       await fsPromises.rmdir(path.join(os.tmpdir(), firstLevel), { recursive: true });
     });
     it('createDirectory should fail when it cannot create the directory', async () => {
@@ -506,7 +506,7 @@ describe('FilePath', () => {
       const target = path.join(os.tmpdir(), randomString());
       const result = await fp.createDirectory(target);
       assert(isSuccessful(result));
-      assert.isTrue(await FilePath.exists(target));
+      assert.isTrue(await FilePath.existsAsync(target));
       await fsPromises.rmdir(target);
     });
   });
@@ -638,13 +638,13 @@ describe('FilePath', () => {
     it('remove deletes an existing folder', async () => {
       const testDir = getTestDir();
       await testDir.createDirectory();
-      assert.isTrue(await testDir.exists());
+      assert.isTrue(await testDir.existsAsync());
       assert(isSuccessful(await testDir.remove()));
-      assert.isFalse(await testDir.exists());
+      assert.isFalse(await testDir.existsAsync());
     });
     it('remove fails if asked to delete a non-existing folder', async () => {
       const testDir = getTestDir();
-      assert.isFalse(await testDir.exists());
+      assert.isFalse(await testDir.existsAsync());
       assert(isFailure(await testDir.remove()));
     });
 
@@ -664,13 +664,13 @@ describe('FilePath', () => {
     it('removeIfExists deletes an existing folder', async () => {
       const testDir = getTestDir();
       await testDir.createDirectory();
-      assert.isTrue(await testDir.exists());
+      assert.isTrue(await testDir.existsAsync());
       assert(isSuccessful(await testDir.removeIfExists()));
-      assert.isFalse(await testDir.exists());
+      assert.isFalse(await testDir.existsAsync());
     });
     it('removeIfExists returns success if asked to delete a non-existing folder', async () => {
       const testDir = getTestDir();
-      assert.isFalse(await testDir.exists());
+      assert.isFalse(await testDir.existsAsync());
       assert(isSuccessful(await testDir.removeIfExists()));
     });
 
