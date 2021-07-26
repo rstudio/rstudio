@@ -107,9 +107,8 @@ std::string quartoMetadata(const std::string& dir,
             std::transform(enginesJson.begin(), enginesJson.end(), std::back_inserter(engines), [](const json::Value& engine) {
                return "'" + string_utils::singleQuotedStrEscape(engine.getString()) + "'";
             });
-            quartoMetadata += " quarto = list(version = '" +
-                              string_utils::singleQuotedStrEscape(version) + "', " +
-                              "engines = I(c(" + boost::algorithm::join(engines, ", ") + "))), ";
+            quartoMetadata += "quarto_version = '" + string_utils::singleQuotedStrEscape(version) + "', " +
+                              "quarto_engines = I(c(" + boost::algorithm::join(engines, ", ") + ")), ";
          }
       }
    }
