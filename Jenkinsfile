@@ -368,6 +368,11 @@ try {
                 }
               }
               stage('sign') {
+                def buildType = bat (
+                  script: "type BUILDTYPE",
+                  returnStdout: true
+                ).trim().toLowerCase()
+
                 def packageName = "RStudio-${buildType}-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}-RelWithDebInfo"
                 if (buildType == "release") {
                   packageName = "RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}-RelWithDebInfo"
