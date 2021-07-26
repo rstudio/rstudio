@@ -48,7 +48,7 @@ export function citeXrefPopupPlugin(schema: Schema, ui: EditorUI, server: Editor
         if (parsed) {
           const { id, type } = parsed;
 
-          const xrefs = await server.xref.quartoXrefForId(docPath, `${type}-${id}`);
+          const xrefs = await server.xref.quartoXrefForId(docPath, `${type.toLowerCase()}-${id}`);
           if (xrefs.refs.length > 0) {
             if (xrefs.refs.length) {
               const xref = xrefs.refs[0];
