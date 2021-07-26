@@ -212,7 +212,7 @@ export function findComponents(): [FilePath, FilePath, FilePath] {
   const buildRootPath = new FilePath(buildRoot);
   for (const subdir of ['.', 'src/cpp']) {
     const sessionPath = buildRootPath.completePath(`${subdir}/session/${rsessionExeName()}`);
-    if (sessionPath.exists()) {
+    if (sessionPath.existsSync()) {
       confPath = buildRootPath.completePath(`${subdir}/conf/rdesktop-dev.conf`);
       return [confPath, sessionPath, new FilePath(app.getAppPath())];
     }
