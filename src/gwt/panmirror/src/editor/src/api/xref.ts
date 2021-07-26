@@ -20,8 +20,6 @@ import { findChildrenByMark } from 'prosemirror-utils';
 import { pandocAutoIdentifier } from './pandoc_id';
 import { rmdChunkEngineAndLabel } from './rmd';
 import { kTexFormat } from './raw';
-import { getMarkRange } from './mark';
-import { NodeCommand } from './command';
 import { findChildrenByType } from 'prosemirror-utils';
 
 export interface XRefServer {
@@ -49,7 +47,11 @@ export type XRefType = "quarto" | "bookdown";
 export function xrefKey(xref: XRef, xrefType?: XRefType) {
   if (xrefType === "quarto") {
     // Quarto keys are merely type-id
-    return `${xref.type}-${xref.id}`;
+    if (xref.suffix) {
+      return `${xref.type}-${xref.id}-${xref.suffix}`;
+    } else {
+      return `${xref.type}-${xref.id}`;
+    }
   } else {
     // headings don't include their type in the key
     const key = /^h\d$/.test(xref.type)
