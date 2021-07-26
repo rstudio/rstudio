@@ -136,7 +136,8 @@ export class Application implements AppState {
       }
     }
 
-    if (!await prepareEnvironment()) {
+    const [, error] = prepareEnvironment();
+    if (error) {
       return exitFailure();
     }
 

@@ -21,6 +21,7 @@ import { logger } from '../core/logger';
 import { Environment, getenv, setVars } from '../core/environment';
 
 import { dirname } from 'path';
+import { Expected, ok, unexpected } from '../core/expected';
 
 interface REnvironment {
   rScriptPath: string,
@@ -41,26 +42,26 @@ function showRNotFoundError(msg: string): void {
  * 
  * @returns true if startup should continue, false on fatal error
  */
-export async function prepareEnvironment(): Promise<boolean> {
+export function prepareEnvironment(): Expected<REnvironment> {
 
   try {
     return prepareEnvironmentImpl();
   } catch (error) {
     logger().logError(error);
-    return false;
+    return unexpected(error);
   }
 
 }
 
-async function prepareEnvironmentImpl(): Promise<boolean> {
+function prepareEnvironmentImpl(): Expected<REnvironment> {
 
   // attempt to detect R environment
   let rEnvironment : REnvironment;
   try {
-    rEnvironment = await detectREnvironment();
+    rEnvironment = detectREnvironment();
   } catch (error) {
     showRNotFoundError(error ?? 'An unknown error occurred.');
-    return false;
+    return unexpected(error);
   }
 
   // set environment variables from R
@@ -74,14 +75,14 @@ async function prepareEnvironmentImpl(): Promise<boolean> {
     process.env.PATH = `${binDir};${process.env.PATH}`;
   }
 
-  return true;
+  return ok(rEnvironment);
 
 }
 
-async function detectREnvironment(): Promise<REnvironment> {
+function detectREnvironment(): REnvironment {
 
   // scan for R
-  const R = await scanForR();
+  const R = scanForR();
   if (!R) {
     throw rNotFoundErrorMessage();
   }
@@ -110,24 +111,25 @@ async function detectREnvironment(): Promise<REnvironment> {
 
 }
 
-async function scanForR(): Promise<string> {
+function scanForR(): string {
 
   // if the RSTUDIO_WHICH_R environment variable is set, use that
   const rstudioWhichR = getenv('RSTUDIO_WHICH_R');
   if (rstudioWhichR) {
-    logger().logDiagnostic(`Using RSTUDIO_WHICH_R: ${rstudioWhichR}`)
+    logger().logDiagnostic(`Using RSTUDIO_WHICH_R: ${rstudioWhichR}`);
     return rstudioWhichR;
   }
 
   // otherwise, use platform-specific lookup strategies
   if (process.platform === 'win32') {
-    return await scanForRWin32();
+    return scanForRWin32();
   } else {
-    return await scanForRPosix();
+    return scanForRPosix();
   }
+
 }
 
-async function scanForRPosix(): Promise<string> {
+function scanForRPosix(): string {
 
   // first, look for R on the PATH
   const stdout = execSync('/usr/bin/which R', { encoding: 'utf-8' });
@@ -176,7 +178,7 @@ function findDefaultInstallPathWin32(version: string): string {
 
 }
 
-export async function scanForRWin32(): Promise<string> {
+function scanForRWin32():string {
 
   // if the RSTUDIO_WHICH_R environment variable is set, use that
   const rstudioWhichR = getenv('RSTUDIO_WHICH_R');
