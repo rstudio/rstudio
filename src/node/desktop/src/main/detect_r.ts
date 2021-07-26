@@ -44,7 +44,7 @@ function showQueryError(command: string, error: Error): void {
 function executeCommand(command: string): Expected<string> {
 
   try {
-    const output = execSync(command, { encoding: 'utf-8'});
+    const output = execSync(command, { encoding: 'utf-8' });
     return ok(output.trim());
   } catch (error) {
     return err(error);
@@ -185,26 +185,29 @@ function scanForRPosix(): Expected<string> {
 
 }
 
-function findDefaultInstallPathWin32(version: string): Expected<string> {
+function findDefaultInstallPathWin32(version: string): string {
 
+  // query registry for R install path
   const keyName = `HKEY_LOCAL_MACHINE\\SOFTWARE\\R-Core\\${version}`;
   const regQueryCommand = `reg query ${keyName} /v InstallPath`;
   const [output, error] = executeCommand(regQueryCommand);
   if (error) {
-    return err(error);
+    logger().logError(error);
+    return '';
   }
 
+  // parse the actual path from the output
   const lines = output.split('\r\n');
   for (const line of lines) {
     const match = /^\s*InstallPath\s*REG_SZ\s*(.*)$/.exec(line);
     if (match != null) {
       const rLocation = match[1];
       logger().logDiagnostic(`Using ${rLocation} (found by searching registry`);
-      return ok(rLocation);
+      return rLocation;
     }
   }
 
-  return err();
+  return '';
 
 }
 
@@ -219,14 +222,14 @@ function scanForRWin32(): Expected<string> {
   // look for a 64-bit version of R
   if (process.arch !== 'x32') {
     const x64InstallPath = findDefaultInstallPathWin32('R64');
-    if (x64InstallPath) {
+    if (x64InstallPath && existsSync(x64InstallPath)) {
       return ok(`${x64InstallPath}/bin/x64/R.exe`);
     }
   }
 
   // look for a 32-bit version of R
   const i386InstallPath = findDefaultInstallPathWin32('R');
-  if (i386InstallPath) {
+  if (i386InstallPath && existsSync(i386InstallPath)) {
     return ok(`${i386InstallPath}/bin/i386/R.exe`);
   }
 
