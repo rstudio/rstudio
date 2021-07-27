@@ -324,7 +324,8 @@ Error gitExec(const ShellArgs& args,
 
    // initialize process options
    core::system::ProcessOptions options = procOptions();
-   options.workingDir = workingDir;
+   if (!workingDir.isEmpty())
+      options.workingDir = workingDir;
 
    // Important to ensure SSH_ASKPASS works
 #ifdef _WIN32
@@ -354,8 +355,14 @@ Error gitExec(const ShellArgs& args,
 #endif
 
    return error;
-      
 }
+
+Error gitExec(const ShellArgs& args,
+              core::system::ProcessResult* pResult)
+{
+   return gitExec(args, FilePath(), pResult);
+}
+
 
 bool commitIsMatch(const std::vector<std::string>& patterns,
                    const CommitInfo& commit)
@@ -3080,9 +3087,7 @@ bool isGitInstalled()
       return false;
 
    core::system::ProcessResult result;
-   Error error = core::system::runCommand(git() << "--version",
-                                          procOptions(),
-                                          &result);
+   Error error = gitExec(gitArgs() << "--version", &result);
    if (error)
       return false;
    
