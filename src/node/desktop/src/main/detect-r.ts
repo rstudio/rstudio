@@ -21,6 +21,7 @@ import { existsSync } from 'fs';
 import { Environment, getenv, setVars } from '../core/environment';
 import { Expected, ok, err } from '../core/expected';
 import { logger } from '../core/logger';
+import { Err, Success } from '../core/err';
 
 
 interface REnvironment {
@@ -59,24 +60,24 @@ function executeCommand(command: string): Expected<string> {
  * // (for example, R_HOME) and other platform-specific work required
  * for R to launch.
  */
-export function prepareEnvironment(): Expected<REnvironment> {
+export function prepareEnvironment(): Err {
 
   try {
     return prepareEnvironmentImpl();
   } catch (error) {
     logger().logError(error);
-    return err(error);
+    return error;
   }
 
 }
 
-function prepareEnvironmentImpl(): Expected<REnvironment> {
+function prepareEnvironmentImpl(): Err {
 
   // attempt to detect R environment
   const [rEnvironment, error] = detectREnvironment();
   if (error) {
     showRNotFoundError(error);
-    return err(error);
+    return error;
   }
 
   // set environment variables from R
@@ -90,7 +91,7 @@ function prepareEnvironmentImpl(): Expected<REnvironment> {
     process.env.PATH = `${binDir};${process.env.PATH}`;
   }
 
-  return ok(rEnvironment);
+  return Success();
 
 }
 
