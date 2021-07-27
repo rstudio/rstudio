@@ -23,11 +23,18 @@ import { Expected, ok, err } from '../core/expected';
 import { logger } from '../core/logger';
 import { Err, Success } from '../core/err';
 
+let kLdLibraryPathVariable : string;
+if (process.platform === 'darwin') {
+  kLdLibraryPathVariable = 'DYLD_FALLBACK_LIBRARY_PATH';
+} else {
+  kLdLibraryPathVariable = 'LD_LIBRARY_PATH';
+}
 
 interface REnvironment {
   rScriptPath: string,
   version: string,
   envVars: Environment,
+  ldLibraryPath: string
 }
 
 function showRNotFoundError(error?: Error): void {
@@ -83,6 +90,11 @@ function prepareEnvironmentImpl(): Err {
   // set environment variables from R
   setVars(rEnvironment.envVars);
 
+  // on Linux + macOS, forward LD_LIBRARY_PATH and friends
+  if (process.platform !== 'win32') {
+    process.env[kLdLibraryPathVariable] = rEnvironment.ldLibraryPath;
+  }
+
   // on Windows, ensure R is on the PATH so that companion DLLs
   // in the same directory can be resolved
   const scriptPath = rEnvironment.rScriptPath;
@@ -104,33 +116,42 @@ function detectREnvironment(): Expected<REnvironment> {
     return err(scanError);
   }
 
-  // get R_HOME + other related R environment variables
-  const rHomeCommand = `${R} RHOME`;
-  const [rHome, rHomeError] = executeCommand(rHomeCommand);
-  if (rHomeError) {
-    showQueryError(rHomeCommand, rHomeError);
-    return err(rHomeError);
-  }
+  // generate small script for querying information about R
+  const rQueryScript = String.raw`writeLines(c(
+  format(getRversion()),
+  R.home(),
+  R.home("doc"),
+  R.home("include"),
+  R.home("share"),
+  Sys.getenv("${kLdLibraryPathVariable}")
+))`;
 
-  const envvars = {
-    R_HOME:        `${rHome}`,
-    R_SHARE_DIR:   `${rHome}/share`,
-    R_INCLUDE_DIR: `${rHome}/include`,
-    R_DOC_DIR:     `${rHome}/doc`
-  };
+  const rQueryResult = execSync(`${R} --vanilla -s`, {
+    encoding: 'utf-8',
+    input: rQueryScript,
+  });
 
-  // get R version string
-  const rVersionCommand = `${R} --vanilla -s -e "cat(format(getRversion()))"`;
-  const [rVersion, rVersionError] = executeCommand(rVersionCommand);
-  if (rVersionError) {
-    showQueryError(rVersionCommand, rVersionError);
-    return err(rVersionError);
-  }
+  // unwrap query results
+  const [
+    rVersion,
+    rHome,
+    rDocDir,
+    rIncludeDir,
+    rShareDir,
+    rLdLibraryPath,
+  ] = rQueryResult.split('\n');
 
+  // put it all together
   const result = {
     rScriptPath: R,
-    version:     rVersion,
-    envVars:     envvars
+    version: rVersion,
+    envVars: {
+      R_HOME:        rHome,
+      R_DOC_DIR:     rDocDir,
+      R_INCLUDE_DIR: rIncludeDir,
+      R_SHARE_DIR:   rShareDir,
+    },
+    ldLibraryPath: rLdLibraryPath,
   };
 
   return ok(result);
