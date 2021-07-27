@@ -946,6 +946,7 @@
    
    # interleave super classes after the corresponding original classes
    classes <- unlist(lapply(class(object), classAndSuper), recursive = TRUE)
+   
    # either remove or add an explicit (=non-mode) list/environment class
    classes <- if (excludeBaseClasses)
       setdiff(classes, c("list", "environment"))
@@ -954,12 +955,24 @@
    
    for (class in classes)
    {
-      method <- utils::getS3method(
-         f = ".DollarNames",
-         class = class,
-         envir = envir,
-         optional = TRUE
-      )
+      # support older getS3method() definitions (without envir)
+      method <- if ("envir" %in% names(formals(utils::getS3method)))
+      {
+         utils::getS3method(
+            f = ".DollarNames",
+            class = class,
+            optional = TRUE,
+            envir = envir
+         )
+      }
+      else
+      {
+         utils::getS3method(
+            f = ".DollarNames",
+            class = class,
+            optional = TRUE
+         )
+      }
       
       if (!is.null(method))
          return(method)
