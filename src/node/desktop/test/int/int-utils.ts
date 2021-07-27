@@ -68,5 +68,5 @@ function getLaunchArgs(extraArgs?: string[]): LaunchArgs {
 }
 
 export async function launch(extraArgs?: string[]): Promise<ElectronApplication> {
-  return await _electron.launch(getLaunchArgs(extraArgs));
+  return _electron.launch(getLaunchArgs(extraArgs));
 }

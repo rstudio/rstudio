@@ -14,6 +14,7 @@
  */
 
 import { WebContents } from 'electron';
+import { logger } from '../core/logger';
 
 import { nextHighest, nextLowest } from '../core/array-utils';
 
@@ -84,7 +85,8 @@ export abstract class GwtWindow extends DesktopBrowserWindow {
         if (!(closeSourceDocEnabled as boolean)) {
           this.window.close();
         }
-      });
+      })
+      .catch(error => logger().logError(error));
   }
 
   private setWindowZoomLevel(zoomLevel: number): void {

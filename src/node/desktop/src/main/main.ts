@@ -56,4 +56,4 @@ class RStudioMain {
 
 // Startup
 const main = new RStudioMain();
-main.main();
+void main.main();

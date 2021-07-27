@@ -180,7 +180,7 @@ export class DesktopBrowserWindow extends EventEmitter {
    * @returns promise with result of execution
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  executeJavaScript(cmd: string): Promise<any> {
+  async executeJavaScript(cmd: string): Promise<any> {
     return executeJavaScript(this.webView.webContents, cmd);
   }
 
@@ -194,7 +194,7 @@ export class DesktopBrowserWindow extends EventEmitter {
     const uniqueDir = fs.mkdtempSync(prefix);
     const uniqueFile = path.join(uniqueDir, 'tmp.html');
     fs.writeFileSync(uniqueFile, html);
-    this.window.loadFile(uniqueFile);
+    this.window.loadFile(uniqueFile).catch(logger().logError);
 
     // Track the temporary directory for later cleanup; can't delete
     // while it is loaded

@@ -82,8 +82,8 @@ describe('Application', () => {
       const scratch = app.scratchTempDir(testDir());
       assert.equal(scratch.getAbsolutePath(), expectedDir.getAbsolutePath());
 
-      expectedDir.removeIfExists();
-      tmpDir.removeIfExists();
+      await expectedDir.removeIfExists();
+      await tmpDir.removeIfExists();
     });
 
   });

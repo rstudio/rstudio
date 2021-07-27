@@ -412,7 +412,7 @@ export class FilePath {
    */
   async ensureDirectory(): Promise<Err> {
     if (!await this.existsAsync()) {
-      return await this.createDirectory();
+      return this.createDirectory();
     } else {
       return Success();
     }

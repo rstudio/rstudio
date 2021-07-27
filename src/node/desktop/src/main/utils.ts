@@ -247,7 +247,7 @@ export function finalPlatformInitialize(mainWindow: MainWindow): void {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function executeJavaScript(web: WebContents, cmd: string): Promise<any> {
+export async function executeJavaScript(web: WebContents, cmd: string): Promise<any> {
   logger().logDebug(`executeJavaScript(${cmd})`);
   return web.executeJavaScript(cmd);
 }

@@ -91,7 +91,7 @@ export function openMinimalWindow(
     }
   }
 
-  browser.window.loadURL(url);
+  void browser.window.loadURL(url);
   browser.window.setSize(width, height);
   return browser;
 }
