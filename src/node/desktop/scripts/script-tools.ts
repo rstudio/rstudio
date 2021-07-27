@@ -16,7 +16,7 @@
 import path from 'path';
 
 export function getProjectRootDir(): string {
-  return path.dirname(path.dirname(__dirname));
+  return path.dirname(__dirname);
 }
 
 export function getBuildOutputDir(): string {
