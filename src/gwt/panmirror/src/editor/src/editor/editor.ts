@@ -134,6 +134,9 @@ export interface EditorSetMarkdownResult {
   // unrecoginized pandoc tokens
   unrecognized: string[];
 
+  // example lists?
+  example_lists: boolean;
+
   // unparsed meta
   unparsed_meta: { [key: string]: any };
 
@@ -485,7 +488,7 @@ export class Editor {
   ): Promise<EditorSetMarkdownResult> {
     // get the result
     const result = await this.pandocConverter.toProsemirror(markdown, this.pandocFormat);
-    const { doc, line_wrapping, unrecognized, unparsed_meta } = result;
+    const { doc, line_wrapping, unrecognized, example_lists, unparsed_meta } = result;
 
     // if we are preserving history but the existing doc is empty then create a new state
     // (resets the undo stack so that the initial setting of the document can't be undone)
@@ -545,6 +548,7 @@ export class Editor {
       canonical,
       line_wrapping,
       unrecognized,
+      example_lists,
       unparsed_meta,
       location
     };

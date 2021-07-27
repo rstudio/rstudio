@@ -26,6 +26,7 @@ public class PanmirrorSetMarkdownResult
    public String canonical;
    public String line_wrapping;
    public String[] unrecognized;
+   public boolean example_lists;
    public JsObject unparsed_meta;
    public PanmirrorEditingOutlineLocation location;
    
