@@ -35,7 +35,7 @@ class MinimalWindow extends DesktopBrowserWindow {
       const ctrlOrMeta = (process.platform === 'darwin') ? input.meta : input.control;
       if (ctrlOrMeta && input.key.toLowerCase() === 'w') {
         event.preventDefault();
-        this?.window.close();
+        this.window.close();
       }
     });
 

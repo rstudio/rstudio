@@ -19,7 +19,7 @@ import { ElectronApplication, Page } from 'playwright';
 
 import { launch } from './int-utils';
 
-describe('Startup With Failing RSession', async function () {
+describe('Startup With Failing RSession', () => {
   let electronApp: ElectronApplication;
   let window: Page;
 
