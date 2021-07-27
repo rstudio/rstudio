@@ -31,7 +31,6 @@ var YamlHighlightRules = require("mode/yaml_highlight_rules").YamlHighlightRules
 var ShHighlightRules = require("mode/sh_highlight_rules").ShHighlightRules;
 var StanHighlightRules = require("mode/stan_highlight_rules").StanHighlightRules;
 var SqlHighlightRules = require("mode/sql_highlight_rules").SqlHighlightRules;
-var HtmlHighlightRules = require("ace/mode/html_highlight_rules").HtmlHighlightRules;
 var JavaScriptHighlightRules = require("ace/mode/javascript_highlight_rules").JavaScriptHighlightRules;
 var CssHighlightRules = require("ace/mode/css_highlight_rules").CssHighlightRules;
 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
@@ -159,16 +158,6 @@ var RMarkdownHighlightRules = function() {
       ["start", "listblock", "allowBlock"]
    );
 
-   // Embed Html highlighting rules
-   Utils.embedRules(
-      this,
-      HtmlHighlightRules,
-      "html",
-      this.$reHtmlChunkStartString,
-      this.$reChunkEndString,
-      ["start", "listblock", "allowBlock"]
-   );
-
    // Embed JavaScript highlighting rules
    Utils.embedRules(
       this,
@@ -246,7 +235,6 @@ oop.inherits(RMarkdownHighlightRules, TextHighlightRules);
    this.$reShChunkStartString         = engineRegex("(?:bash|sh)");
    this.$reStanChunkStartString       = engineRegex("stan");
    this.$reSqlChunkStartString        = engineRegex("sql");
-   this.$reHtmlChunkStartString       = engineRegex("html");
    this.$reJavaScriptChunkStartString = engineRegex("(?:d3|js|ojs|observable)");
    this.$reCssChunkStartString        = engineRegex("css");
    this.$reTextChunkStartString       = engineRegex("(?:asis|text)");

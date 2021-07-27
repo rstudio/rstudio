@@ -19,7 +19,7 @@ import { ElectronApplication, Page } from 'playwright';
 
 import { launch } from './int-utils';
 
-describe('Startup and Exit', async function () {
+describe('Startup and Exit', () => {
   let electronApp: ElectronApplication;
   let window: Page;
 

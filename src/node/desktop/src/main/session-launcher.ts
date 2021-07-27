@@ -332,7 +332,7 @@ export class SessionLauncher {
       if (!this.mainWindow?.workbenchInitialized) {
         // If the R session exited without initializing the workbench, treat it as
         // a boot failure.
-        this.showLaunchErrorPage();
+        void this.showLaunchErrorPage();
       }
 
       // quit and exit means close the main window

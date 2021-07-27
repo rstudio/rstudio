@@ -1,5 +1,5 @@
 /*
- * detect_r.test.ts
+ * detect-r.test.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -17,7 +17,7 @@ import { describe } from 'mocha';
 
 import { saveAndClear, restore } from '../unit-utils';
 
-describe('detect_r', () => {
+describe('detect-r', () => {
   const vars: Record<string, string> = {
     RSTUDIO_WHICH_R: ''
   };

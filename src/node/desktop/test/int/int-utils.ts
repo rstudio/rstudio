@@ -33,7 +33,7 @@ function getLaunchArgs(extraArgs?: string[]): LaunchArgs {
   let cwd = '';
 
   if (process.platform === 'darwin') {
-    entryPoint = path.join(__dirname, '../../package/RStudio-darwin-x64/RStudio.app/Contents/Resources/app/dist/main/main.js');
+    entryPoint = path.join(__dirname, '../../package/RStudio-darwin-x64/RStudio.app/Contents/Resources/app/dist/src/main/main.js');
     cwd = path.join(__dirname, '../../package/RStudio-darwin-x64/');
   } else {
     // TODO -- other platforms!
@@ -42,7 +42,7 @@ function getLaunchArgs(extraArgs?: string[]): LaunchArgs {
   if (!fs.existsSync(entryPoint)) {
     // otherwise try the dev build
     isPackaged = false;
-    entryPoint = path.join(__dirname, '../../dist/main/main.js');
+    entryPoint = path.join(__dirname, '../../dist/src/main/main.js');
     cwd = path.join(__dirname, '../..');
   }
 
@@ -68,5 +68,5 @@ function getLaunchArgs(extraArgs?: string[]): LaunchArgs {
 }
 
 export async function launch(extraArgs?: string[]): Promise<ElectronApplication> {
-  return await _electron.launch(getLaunchArgs(extraArgs));
+  return _electron.launch(getLaunchArgs(extraArgs));
 }
