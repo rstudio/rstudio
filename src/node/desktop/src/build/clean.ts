@@ -19,6 +19,7 @@ import { getBuildOutputDir, getPackageOutputDir } from './script-tools';
 try {
   fs.rmSync(getBuildOutputDir(), { recursive: true, force: true });
   fs.rmSync(getPackageOutputDir(), { recursive: true, force: true });
+  process.exit(0);
 } catch (error) {
   console.error(error);
   process.exit(1);
