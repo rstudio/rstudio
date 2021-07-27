@@ -26,3 +26,15 @@ export function getBuildOutputDir(): string {
 export function getPackageOutputDir(): string {
   return path.join(getProjectRootDir(), 'package');
 }
+
+export function section(message: string): string {
+  return '\x1b[1m\x1b[36m==>\x1b[39m ' + message + '\x1b[0m';
+}
+
+export function info(message: string): string {
+  return '\x1b[1m[I]\x1b[0m ' + message;
+}
+
+export function warn(message: string): string {
+  return '\x1b[1m\x1b[31m[W]\x1b[0m ' + message;
+}
