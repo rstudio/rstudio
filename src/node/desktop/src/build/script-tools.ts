@@ -1,5 +1,5 @@
 /*
- * script-tools.js
+ * script-tools.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
