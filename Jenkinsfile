@@ -171,7 +171,8 @@ rstudioReleaseBranch = branchComponents[branchComponents.size() - 1]
 
 def trigger_external_build(build_name, wait = false) {
   // triggers downstream job passing along the important params from this build
-  build job: build_name, wait: wait, parameters: [string(name: 'RSTUDIO_VERSION_MINOR',  value: "${rstudioVersionMinor}"),
+  build job: build_name, wait: wait, parameters: [string(name: 'RSTUDIO_VERSION_MAJOR',  value: "${rstudioVersionMajor}"),
+                                                  string(name: 'RSTUDIO_VERSION_MINOR',  value: "${rstudioVersionMinor}"),
                                                   string(name: 'RSTUDIO_VERSION_PATCH',  value: "${rstudioVersionPatch}"),
                                                   string(name: 'RSTUDIO_VERSION_SUFFIX', value: "${rstudioVersionSuffix}"),
                                                   string(name: 'GIT_REVISION', value: "${rstudioBuildCommit}"),
