@@ -345,6 +345,7 @@ function listAttrEdit(type: string, capabilities: ListCapabilities, ui: EditorUI
         top: 5,
         right: 5,
       },
+      preferHidden: true
     };
   };
 }
