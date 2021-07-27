@@ -6,6 +6,8 @@ Sys.setenv(PATH = paste(dirname(args[1]), Sys.getenv("PATH"), sep = ";"))
 # Find R DLLs.
 dlls <- list.files(R.home("bin"), pattern = "dll$", full.names = TRUE)
 
+message("Generating .lib files for DLLs in ", R.home("bin"))
+
 # Generate corresponding 'lib' file for each DLL.
 for (dll in dlls) {
    
@@ -16,6 +18,7 @@ for (dll in dlls) {
    
    # Call it on R.dll to generate exports.
    command <- sprintf("dumpbin.exe /EXPORTS /NOLOGO %s", dll)
+   message("> ", command)
    output <- system(paste(command), intern = TRUE)
    
    # Remove synonyms.
