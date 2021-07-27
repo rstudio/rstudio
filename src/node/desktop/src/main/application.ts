@@ -190,7 +190,7 @@ export class Application implements AppState {
     if (app.isPackaged) {
       return new FilePath(app.getAppPath());
     } else {
-      return new FilePath(app.getAppPath()).completePath('../..');
+      return new FilePath(app.getAppPath()).completePath('../../..');
     }
   }
 

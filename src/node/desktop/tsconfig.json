@@ -15,8 +15,7 @@
     "test/**/*"
   ],
   "exclude": [
-    "node_modules",
-    "src/build/**"
+    "node_modules"
   ],
   "ts-node": {
     "transpileOnly": true
