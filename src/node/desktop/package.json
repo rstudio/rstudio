@@ -42,7 +42,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "clean": "ts-node src/build/clean.ts",
+    "clean": "ts-node scripts/clean.ts",
     "watch": "tsc -w",
     "package": "yarn run build && electron-packager ./ --prune --package-manager=yarn --out=./package --overwrite --ignore tsconfig.tsbuildinfo",
     "lint": "eslint ./src ./test",
