@@ -18,117 +18,49 @@ import { kQuartoXRefTypes } from '../../marks/xref/xref-completion';
 import { xrefIndex } from './insert_xref_index';
 import debounce from 'lodash.debounce';
 
+// Keep the most recently used selected style around
+let lastSelectedStyleIndex = 0;
 
-export interface XRefStyle {
-  key: string;
-  fn: (key: string) => string;
-}
-export const kXRefStyles: XRefStyle[] = [
+// constants
+const kStyleDefault = "Default";
+const kStyleCustom = "Custom";
+const kStyleCapital = "Capitalize";
+const kStyleNone = "No Prefix";
+
+// Styles used for xrefs
+const kXRefStyles: XRefStyle[] = [
   {
-    key: "Default",
+    key: kStyleDefault,
     fn: (key: string) => {
       return `@${key}`;
     }
   },
   {
-    key: "Capitalize",
+    key: kStyleCapital,
     fn: (key: string) => {
       return `@${key.charAt(0).toUpperCase() + key.slice(1)}`;
     }
   },
   {
-    key: "None",
+    key: kStyleNone,
     fn: (key: string) => {
       return `-@${key}`;
     }
   },
+  {
+    key: kStyleCustom,
+    fn: (key: string) => {
+      return `@${key}`;
+    }
+  },
 ];
-let lastSelectedStyleIndex = 0;
 
-export async function insertXref(
-  ui: EditorUI,
-  doc: ProsemirrorNode,
-  server: EditorServer,
-  onInsertXref: (test: string) => void
-) {
-  await ui.dialogs.htmlDialog(
-    'Insert Cross Reference',
-    'Insert',
-    (
-      containerWidth: number,
-      containerHeight: number,
-      confirm: VoidFunction,
-      cancel: VoidFunction,
-      _showProgress: (message: string) => void,
-      _hideProgress: VoidFunction,
-    ) => {
-      const kMaxHeight = 400;
-      const kMaxWidth = 650;
-      const kMaxHeightProportion = 0.9;
-      const kdialogPaddingIncludingButtons = 70;
-
-      const windowHeight = containerHeight;
-      const windowWidth = containerWidth;
-
-      const height = Math.min(kMaxHeight, windowHeight * kMaxHeightProportion - kdialogPaddingIncludingButtons);
-      const width = Math.max(Math.min(kMaxWidth, windowWidth * 0.9), 550);
-
-      const container = window.document.createElement('div');
-      container.className = 'pm-default-theme';
-      container.style.width = width + 'px';
-
-      // Look up the document and initialize the state
-      const docPath = ui.context.getDocumentPath() || "";
-
-      // Read the xrefs
-      const loadXRefs = async () => {
-        return (await server.xref.quartoIndexForFile(docPath)).refs;
-      };
-
-      const onInsert = (xref: XRef, style: XRefStyle) => {
-        onInsertXref(style.fn(xrefKey(xref, "quarto")));
-        confirm();
-      };
-
-      // REnder the panel
-      ReactDOM.render(
-        <InsertXrefPanel
-          height={height}
-          width={width}
-          onOk={onInsert}
-          onCancel={cancel}
-          doc={doc}
-          ui={ui}
-          loadXRefs={loadXRefs}
-        />,
-        container,
-      );
-      return container;
-    },
-    () => {
-      // Focus
-      // dealt with in the React Component itself
-    },
-    () => {
-      // Validation
-      // User has to select a citation, everything else we can use defaults
-      return null;
-    },
-  );
+interface XRefStyle {
+  key: string;
+  fn: (key: string) => string;
 }
 
-
-interface InsertXrefPanelProps extends WidgetProps {
-  ui: EditorUI;
-  doc: ProsemirrorNode;
-  height: number;
-  width: number;
-  loadXRefs: () => Promise<XRef[]>;
-  onOk: (xref: XRef, style: XRefStyle) => void;
-  onCancel: () => void;
-}
-
-
+// Types (prefix + display) for xrefs
 const xRefTypes = [
   {
     type: "All Types",
@@ -189,12 +121,99 @@ const xRefTypes = [
 ];
 
 
+export async function insertXref(
+  ui: EditorUI,
+  doc: ProsemirrorNode,
+  server: EditorServer,
+  onInsertXref: (key: string, prefix?: string) => void
+) {
+  await ui.dialogs.htmlDialog(
+    'Insert Cross Reference',
+    'Insert',
+    (
+      containerWidth: number,
+      containerHeight: number,
+      confirm: VoidFunction,
+      cancel: VoidFunction,
+      _showProgress: (message: string) => void,
+      _hideProgress: VoidFunction,
+    ) => {
+      const kMaxHeight = 400;
+      const kMaxWidth = 650;
+      const kMaxHeightProportion = 0.9;
+      const kdialogPaddingIncludingButtons = 70;
+
+      const windowHeight = containerHeight;
+      const windowWidth = containerWidth;
+
+      const height = Math.min(kMaxHeight, windowHeight * kMaxHeightProportion - kdialogPaddingIncludingButtons);
+      const width = Math.max(Math.min(kMaxWidth, windowWidth * 0.9), 550);
+
+      const container = window.document.createElement('div');
+      container.className = 'pm-default-theme';
+      container.style.width = width + 'px';
+
+      // Look up the document and initialize the state
+      const docPath = ui.context.getDocumentPath() || "";
+
+      // Read the xrefs
+      const loadXRefs = async () => {
+        return (await server.xref.quartoIndexForFile(docPath)).refs;
+      };
+
+      const onInsert = (xref: XRef, style: XRefStyle, prefix?: string) => {
+        onInsertXref(style.fn(xrefKey(xref, "quarto")), prefix);
+        confirm();
+      };
+
+      // REnder the panel
+      ReactDOM.render(
+        <InsertXrefPanel
+          height={height}
+          width={width}
+          styleIndex={lastSelectedStyleIndex}
+          onOk={onInsert}
+          onCancel={cancel}
+          doc={doc}
+          ui={ui}
+          loadXRefs={loadXRefs}
+        />,
+        container,
+      );
+      return container;
+    },
+    () => {
+      // Focus
+      // dealt with in the React Component itself
+    },
+    () => {
+      // Validation
+      // User has to select a citation, everything else we can use defaults
+      return null;
+    },
+  );
+}
+
+
+interface InsertXrefPanelProps extends WidgetProps {
+  ui: EditorUI;
+  doc: ProsemirrorNode;
+  height: number;
+  width: number;
+  styleIndex: number;
+  loadXRefs: () => Promise<XRef[]>;
+  onOk: (xref: XRef, style: XRefStyle, prefix?: string) => void;
+  onCancel: () => void;
+}
+
+
 export const InsertXrefPanel: React.FC<InsertXrefPanelProps> = props => {
 
   // State
   const [xrefs, setXrefs] = React.useState<XRef[]>();
   const [selectedIndex, setSelectedIndex] = React.useState<number>(0);
   const [selectedType, setSelectedType] = React.useState<string>("");
+  const [styleIndex, setStyleIndex] = React.useState<number>(props.styleIndex);
   const [filterText, setFilterText] = React.useState<string>("");
 
   // References to key controls
@@ -202,6 +221,7 @@ export const InsertXrefPanel: React.FC<InsertXrefPanelProps> = props => {
   const selectRef = React.useRef<HTMLSelectElement>(null);
   const fixedList = React.useRef<FixedSizeList>(null);
   const styleSelectRef = React.useRef<HTMLSelectElement>(null);
+  const prefixRef = React.useRef<HTMLInputElement>(null);
 
   // Load the cross ref data when the dialog loads
   React.useEffect(() => {
@@ -234,14 +254,13 @@ export const InsertXrefPanel: React.FC<InsertXrefPanelProps> = props => {
   }, []);
 
   // The types
-  const options = () => {
+  const typeOptions = () => {
     if (!xrefs) {
       return [];
     }
-
     const xrefTypes = xRefTypes.filter(xrefType => {
       return xrefType.prefix === "" || xrefs.find(xref => {
-        return xref.type === xrefType.prefix;
+        return xref.type === xrefType.prefix; d
       });
     });
 
@@ -252,6 +271,7 @@ export const InsertXrefPanel: React.FC<InsertXrefPanelProps> = props => {
     ));
   };
 
+  // The styles
   const styleOptions = () => {
     return kXRefStyles.map(style => (
       <option key={style.key} value={style.key}>
@@ -267,7 +287,6 @@ export const InsertXrefPanel: React.FC<InsertXrefPanelProps> = props => {
     }
 
     let filtered = xrefs;
-
     if (selectedType) {
       filtered = filtered.filter(xref => xref.type === selectedType);
     }
@@ -276,7 +295,6 @@ export const InsertXrefPanel: React.FC<InsertXrefPanelProps> = props => {
       const search = xrefIndex(filtered);
       filtered = search.search(filterText, 1000);
     }
-
     return filtered;
   };
 
@@ -299,6 +317,36 @@ export const InsertXrefPanel: React.FC<InsertXrefPanelProps> = props => {
       fixedList.current?.scrollToItem(newIndex);
     }
   };
+
+  const currentStyle = () => {
+    const option = styleSelectRef.current?.options[styleIndex];
+    const key = option?.value || "";
+    return kXRefStyles.find(style => style.key === key) || kXRefStyles[0];
+  };
+
+  const currentPrefix = () => {
+    return prefixRef.current?.value || undefined;
+  };
+
+  // Insert the item
+  const insertItem = (index: number) => {
+    lastSelectedStyleIndex = styleSelectRef.current?.selectedIndex || 0;
+    const xref = displayXrefs[index];
+    const style = currentStyle();
+    const prefix = style.key === kStyleCustom ? currentPrefix() : undefined;
+    props.onOk(xref, style, prefix);
+  };
+
+  // debounce the text filtering
+  const memoizedTextFilter = React.useCallback(
+    debounce(
+      (txt: string) => {
+        setFilterText(txt);
+      },
+      30,
+    ),
+    [],
+  );
 
   const kPageSize = 5;
   const handleKeyboardEvent = (event: React.KeyboardEvent<HTMLElement>) => {
@@ -344,22 +392,13 @@ export const InsertXrefPanel: React.FC<InsertXrefPanelProps> = props => {
     setSelectedIndex(index);
   };
 
-  const currentStyle = () => {
-    const styleIndex = styleSelectRef.current?.selectedIndex || 0;
-    const option = styleSelectRef.current?.options[styleIndex];
-    const key = option?.value || "";
-    return kXRefStyles.find(style => style.key === key) || kXRefStyles[0];
-  };
 
-  // Insert the item
   const handleItemDoubleClicked = (index: number) => {
-    const xref = displayXrefs[index];
-    props.onOk(xref, currentStyle());
+    insertItem(index);
   };
 
   const acceptSelected = () => {
-    lastSelectedStyleIndex = styleSelectRef.current?.selectedIndex || 0;
-    props.onOk(displayXrefs[currentIndex], currentStyle());
+    insertItem(currentIndex);
   };
 
   // The user typed some text
@@ -367,18 +406,12 @@ export const InsertXrefPanel: React.FC<InsertXrefPanelProps> = props => {
     memoizedTextFilter(event?.target.value);
   };
 
-  // debounce the text filtering
-  const memoizedTextFilter = React.useCallback(
-    debounce(
-      (txt: string) => {
-        setFilterText(txt);
-      },
-      30,
-    ),
-    [],
-  );
+  // Handle the updating type selection
+  const handleStyleChanged = (event: ChangeEvent<Element>) => {
+    const index = (event.target as HTMLSelectElement).selectedOptions[0].index;
+    setStyleIndex(index);
+  };
 
-  const placeholderText = xrefs === undefined ? props.ui.context.translateText("Loading Cross References") : props.ui.context.translateText("No Cross References Found.");
   return (
     <div className="pm-insert-xref">
       <div className="pm-insert-xref-search-container">
@@ -398,7 +431,7 @@ export const InsertXrefPanel: React.FC<InsertXrefPanelProps> = props => {
           className="pm-insert-xref-select-type"
           onChange={handleSelectChanged}
         >
-          {options()}
+          {typeOptions()}
         </SelectInput>
       </div>
 
@@ -432,7 +465,9 @@ export const InsertXrefPanel: React.FC<InsertXrefPanelProps> = props => {
               className="pm-insert-xref-list-loading pm-block-border-color pm-background-color"
               style={{ width: "100%", height: props.height + "px" }}
             >
-              <div>{placeholderText}</div>
+              <div>{xrefs === undefined ?
+                props.ui.context.translateText("Loading Cross References") :
+                props.ui.context.translateText("No Cross References Found.")}</div>
             </div>
           )}
 
@@ -445,9 +480,20 @@ export const InsertXrefPanel: React.FC<InsertXrefPanelProps> = props => {
             tabIndex={0}
             ref={styleSelectRef}
             className="pm-insert-xref-select-style"
+            onChange={handleStyleChanged}
           >
             {styleOptions()}
           </SelectInput>
+          {styleIndex === 3 ? (
+            <TextInput
+              width={20 + 'ch'}
+              tabIndex={0}
+              className="pm-insert-xref-custom-prefix"
+              placeholder={props.ui.context.translateText("Enter Prefix")}
+              ref={prefixRef}
+            />) : (
+              null
+            )}
         </div>
         <div>
           <DialogButtons

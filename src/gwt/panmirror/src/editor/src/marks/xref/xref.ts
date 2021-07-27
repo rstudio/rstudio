@@ -198,14 +198,40 @@ const extension = (context: ExtensionContext): Extension | null => {
 
               // Show the insert Xref dialog
               if (dispatch) {
-                insertXref(ui, state.doc, server, (text: string) => {
+                insertXref(ui, state.doc, server, (key: string, prefix?: string) => {
                   // An xref was selected, insert it
                   const tr = state.tr;
-                  const trSchema = tr.doc.type.schema;
-                  const selection = tr.selection;
-                  tr.replaceSelectionWith(schema.text(text, trSchema.marks.cite_id.create()), false);
-                  setTextSelection(tr.mapping.map(selection.head))(tr);
-                  dispatch(tr);
+                  const xref = schema.text(key, [schema.marks.cite_id.create()]);
+
+                  // If there is a custom prefix, create a full cite
+                  if (prefix !== undefined) {
+                    const start = tr.selection.from;
+                    const wrapperText = schema.text('[]');
+                    tr.replaceSelectionWith(wrapperText);
+
+                    // move the selection into the wrapper
+                    setTextSelection(tr.selection.from - 1)(tr);
+
+                    // Insert the prefix
+                    tr.insertText(`${prefix} `, tr.selection.from);
+
+
+                    // Insert the xref
+                    tr.insert(tr.selection.from, xref);
+
+                    // Add the cite mark
+                    const citeMark = schema.marks.cite.create();
+                    tr.addMark(start, tr.selection.from + 1, citeMark);
+
+                    setTextSelection(tr.selection.from + 1)(tr);
+                    dispatch(tr);
+
+                  } else {
+                    // otherwise, create simple cite_id
+                    tr.replaceSelectionWith(xref, false);
+                    setTextSelection(tr.selection.from)(tr);
+                    dispatch(tr);
+                  }
                 });
               }
               return true;
