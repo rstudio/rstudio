@@ -50,6 +50,7 @@
 * Removed the breaking change introduced in Juliet Rose that changed the behavior of the X-Forwarded-Proto header when RSW is behind a proxy server (Pro #2657)
 * Fixed issue where adjacent links in the Visual Editor could merge into a single link (#8471)
 * Fixed Issue where items deleted from a local Zotero Collection would still appear in the Visual Editor's Insert Citation dialog.
+* Fixed issue where Console width was computed incorrectly with some custom fonts (#8696)
 
 ### Misc
 
