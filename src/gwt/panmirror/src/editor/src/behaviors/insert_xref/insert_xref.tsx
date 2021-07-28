@@ -31,6 +31,7 @@ import { kQuartoXRefTypes } from '../../marks/xref/xref-completion';
 
 import { xrefIndex } from './insert_xref_index';
 import './insert_xref-styles.css';
+import { kAlertTypeError } from '../../api/ui-dialogs';
 
 // Keep the most recently used selected style around
 let lastSelectedStyleIndex = 0;
@@ -162,10 +163,8 @@ export async function insertXref(
       };
 
       const onInsert = (xref: XRef, style: XRefStyle, prefix?: string) => {
-        if (xref !== undefined) {
-          onInsertXref(style.fn(xrefKey(xref, "quarto")), prefix);
-          confirm();
-        }
+        onInsertXref(style.fn(xrefKey(xref, "quarto")), prefix);
+        confirm();
       };
 
       // REnder the panel
@@ -338,11 +337,33 @@ const InsertXrefPanel: React.FC<InsertXrefPanelProps> = props => {
 
   // Insert the item
   const insertItem = (index: number) => {
-    lastSelectedStyleIndex = styleSelectRef.current?.selectedIndex || 0;
     const xref = filteredXrefs[index];
     const style = currentStyle();
     const prefix = style.key === kStyleCustom ? currentPrefix() : undefined;
-    props.onOk(xref, style, prefix);
+
+    if (xref === undefined) {
+      // There is no item selected
+      props.ui.dialogs
+        .alert(
+          props.ui.context.translateText("Please select a cross reference to insert."),
+          props.ui.context.translateText('Validation Error'),
+          kAlertTypeError,
+        );
+    } else if (style.key === kStyleCustom && !prefix) {
+      // Custom was selected, but no prefix provided
+      props.ui.dialogs
+        .alert(
+          props.ui.context.translateText("Please enter a custom prefix for this reference."),
+          props.ui.context.translateText('Validation Error'),
+          kAlertTypeError,
+        )
+        .then(() => {
+          prefixRef.current?.focus();
+        });
+    } else {
+      lastSelectedStyleIndex = styleSelectRef.current?.selectedIndex || 0;
+      props.onOk(xref, style, prefix);
+    }
   };
 
   // debounce the text filtering
