@@ -42,13 +42,6 @@ function showRNotFoundError(error?: Error): void {
   dialog.showErrorBox('R not found', message);
 }
 
-function showQueryError(command: string, error: Error): void {
-  const title = 'Error starting R';
-  const message = 
-    `RStudio was unable to invoke R during startup (${command} had error ${error.message})`;
-  dialog.showErrorBox(title, message);
-}
-
 function executeCommand(command: string): Expected<string> {
 
   try {
