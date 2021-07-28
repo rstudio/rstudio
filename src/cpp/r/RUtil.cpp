@@ -74,9 +74,6 @@ bool versionTest(const std::string& comparator, const std::string& version)
 
 std::string expandFileName(const std::string& name)
 {
-   if (name.empty())
-      return name;
-   
    return std::string(R_ExpandFileName(name.c_str()));
 }
 
