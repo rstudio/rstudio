@@ -189,7 +189,7 @@ const extension = (context: ExtensionContext): Extension | null => {
         return [
           new ProsemirrorCommand(
             EditorCommandId.CrossReference,
-            ['Shift-Mod-F9'],
+            ['Shift-Mod-F10'],
             (state: EditorState, dispatch?: (tr: Transaction<any>) => void) => {
               // enable/disable command
               if (!canInsertNode(state, schema.nodes.text) || !toggleMarkType(schema.marks.cite_id)(state)) {
