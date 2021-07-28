@@ -32,7 +32,7 @@ export type Err = Error | null;
  * Convenience function for returning "no error" state from a function that
  * can return an Error.
  */
-export function Success(): null {
+export function success(): null {
   return null;
 }
 

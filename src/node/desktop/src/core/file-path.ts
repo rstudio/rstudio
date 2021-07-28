@@ -18,7 +18,7 @@ import fsPromises from 'fs/promises';
 
 import { logger } from './logger';
 import path from 'path';
-import { Err, Success } from './err';
+import { Err, success } from './err';
 import { userHomePath } from './user';
 import { err, Expected, ok } from './expected';
 
@@ -268,7 +268,7 @@ export class FilePath {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   changeFileMode(fileModeStr: string, setStickyBit = false): Err {
     if (process.platform === 'win32')
-      return Success(); // no-op on Windows
+      return success(); // no-op on Windows
 
     throw Error('changeFileMode is NYI');
   }
@@ -374,7 +374,7 @@ export class FilePath {
     } catch (err) {
       return err;
     }
-    return Success();
+    return success();
   }
 
   /**
@@ -393,7 +393,7 @@ export class FilePath {
     } catch (err) {
       return err;
     }
-    return Success();
+    return success();
   }
 
   /**
@@ -403,7 +403,7 @@ export class FilePath {
     if (!this.existsSync()) {
       return this.createDirectorySync();
     } else {
-      return Success();
+      return success();
     }
   }
 
@@ -414,7 +414,7 @@ export class FilePath {
     if (!await this.existsAsync()) {
       return this.createDirectory();
     } else {
-      return Success();
+      return success();
     }
   }
 
@@ -540,7 +540,7 @@ export class FilePath {
         dir.closeSync();
       }
     }
-    return Success();
+    return success();
   }
 
   /**
@@ -781,7 +781,7 @@ export class FilePath {
 
     try {
       process.chdir(this.path);
-      return Success();
+      return success();
     } catch (err) {
       return err;
     }
@@ -826,7 +826,7 @@ export class FilePath {
     } catch (err) {
       return err;
     }
-    return Success();
+    return success();
   }
 
   /**
@@ -838,7 +838,7 @@ export class FilePath {
     } catch (err) {
       return err;
     }
-    return Success();
+    return success();
   }
 
   /**
@@ -850,7 +850,7 @@ export class FilePath {
     } catch (err) {
       return err;
     }
-    return Success();
+    return success();
   }
 
   /**
@@ -862,7 +862,7 @@ export class FilePath {
     } catch (err) {
       return err;
     }
-    return Success();
+    return success();
   }
 
   /**
