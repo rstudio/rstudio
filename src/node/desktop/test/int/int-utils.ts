@@ -15,7 +15,7 @@
 import { ElectronApplication, _electron } from 'playwright';
 import path from 'path';
 import fs from 'fs';
-
+import util from 'util';
 
 interface LaunchArgs {
   args?: string[],
@@ -70,3 +70,5 @@ function getLaunchArgs(extraArgs?: string[]): LaunchArgs {
 export async function launch(extraArgs?: string[]): Promise<ElectronApplication> {
   return _electron.launch(getLaunchArgs(extraArgs));
 }
+
+export const setTimeoutPromise = util.promisify(setTimeout);
