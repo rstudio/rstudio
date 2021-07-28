@@ -1,31 +1,48 @@
-
+/*
+ * insert_xref.ts
+ *
+ * Copyright (C) 2021 by RStudio, PBC
+ *
+ * Unless you have received this program directly from RStudio pursuant
+ * to the terms of a commercial license agreement with RStudio, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
 import { Node as ProsemirrorNode } from 'prosemirror-model';
+import React, { ChangeEvent } from 'react';
+import ReactDOM from 'react-dom';
+import { FixedSizeList, ListChildComponentProps } from 'react-window';
+import uniqBy from 'lodash.uniqby';
+import debounce from 'lodash.debounce';
 
 import { EditorUI } from "../../api/ui";
 import { EditorServer } from "../../api/server";
 import { WidgetProps } from '../../api/widgets/react';
-import React, { ChangeEvent } from 'react';
 import { DialogButtons } from '../../api/widgets/dialog-buttons';
-import ReactDOM from 'react-dom';
 import { XRef, xrefKey } from '../../api/xref';
-import { FixedSizeList, ListChildComponentProps } from 'react-window';
 import { TextInput } from '../../api/widgets/text';
 import { SelectInput } from '../../api/widgets/select';
-import uniqBy from 'lodash.uniqby';
-
-import './insert_xref-styles.css';
+import { NavigationTree, NavigationTreeNode } from '../../api/widgets/navigation-tree';
 import { kQuartoXRefTypes } from '../../marks/xref/xref-completion';
+
 import { xrefIndex } from './insert_xref_index';
-import debounce from 'lodash.debounce';
+import './insert_xref-styles.css';
 
 // Keep the most recently used selected style around
 let lastSelectedStyleIndex = 0;
+
+// Height of textbox including border
+const kXrefSearchBoxHeight = 30;
 
 // constants
 const kStyleDefault = "Default";
 const kStyleCustom = "Custom";
 const kStyleCapital = "Capitalize";
-const kStyleNone = "No Prefix";
+const kStyleNone = "(None)";
 
 // Styles used for xrefs
 const kXRefStyles: XRefStyle[] = [
@@ -42,15 +59,15 @@ const kXRefStyles: XRefStyle[] = [
     }
   },
   {
-    key: kStyleNone,
-    fn: (key: string) => {
-      return `-@${key}`;
-    }
-  },
-  {
     key: kStyleCustom,
     fn: (key: string) => {
       return `@${key}`;
+    }
+  },
+  {
+    key: kStyleNone,
+    fn: (key: string) => {
+      return `-@${key}`;
     }
   },
 ];
@@ -60,63 +77,46 @@ interface XRefStyle {
   fn: (key: string) => string;
 }
 
-// Types (prefix + display) for xrefs
+interface XRefType {
+  type: string;
+  prefix: string[];
+}
+
+// Types (prefixes + display) for xrefs
+const kTheoremTypes = ["thm", "lem", "cor", "prp", "cnj", "def", "exm", "exr"];
+const kSecType = "sec";
+const kFigType = "fig";
+const kTableType = "tbl";
+const kEquationType = "eq";
+const kListingtype = "lst";
 const xRefTypes = [
   {
     type: "All Types",
-    prefix: ""
+    prefix: [kSecType, kFigType, kTableType, kEquationType, kListingtype, ...kTheoremTypes]
   },
   {
-    type: "Section",
-    prefix: "sec"
+    type: "Sections",
+    prefix: [kSecType]
   },
   {
-    type: "Figure",
-    prefix: "fig"
+    type: "Figures",
+    prefix: [kFigType]
   },
   {
-    type: "Table",
-    prefix: "tbl"
+    type: "Tables",
+    prefix: [kTableType]
   },
   {
-    type: "Equation",
-    prefix: "eg"
+    type: "Equations",
+    prefix: [kEquationType]
   },
   {
-    type: "Listing",
-    prefix: "lst"
+    type: "Listings",
+    prefix: [kListingtype]
   },
   {
-    type: "Theorem",
-    prefix: "thm"
-  },
-  {
-    type: "Lemma",
-    prefix: "lem"
-  },
-  {
-    type: "Corollary",
-    prefix: "cor"
-  },
-  {
-    type: "Proposition",
-    prefix: "prp"
-  },
-  {
-    type: "Conjecture",
-    prefix: "cnj"
-  },
-  {
-    type: "Definition",
-    prefix: "def"
-  },
-  {
-    type: "Example",
-    prefix: "exm"
-  },
-  {
-    type: "Exercise",
-    prefix: "exr"
+    type: "Theorems",
+    prefix: kTheoremTypes
   },
 ];
 
@@ -162,8 +162,10 @@ export async function insertXref(
       };
 
       const onInsert = (xref: XRef, style: XRefStyle, prefix?: string) => {
-        onInsertXref(style.fn(xrefKey(xref, "quarto")), prefix);
-        confirm();
+        if (xref !== undefined) {
+          onInsertXref(style.fn(xrefKey(xref, "quarto")), prefix);
+          confirm();
+        }
       };
 
       // REnder the panel
@@ -188,12 +190,10 @@ export async function insertXref(
     },
     () => {
       // Validation
-      // User has to select a citation, everything else we can use defaults
       return null;
     },
   );
 }
-
 
 interface InsertXrefPanelProps extends WidgetProps {
   ui: EditorUI;
@@ -206,22 +206,29 @@ interface InsertXrefPanelProps extends WidgetProps {
   onCancel: () => void;
 }
 
-
-export const InsertXrefPanel: React.FC<InsertXrefPanelProps> = props => {
+const InsertXrefPanel: React.FC<InsertXrefPanelProps> = props => {
 
   // State
   const [xrefs, setXrefs] = React.useState<XRef[]>();
-  const [selectedIndex, setSelectedIndex] = React.useState<number>(0);
-  const [selectedType, setSelectedType] = React.useState<string>("");
-  const [styleIndex, setStyleIndex] = React.useState<number>(props.styleIndex);
+  const [selectedXRefIndex, setSelectedXRefIndex] = React.useState<number>(0);
+  const [selectedTypeIndex, setSelectedTypeIndex] = React.useState<number>(0);
+  const [selectedStyleIndex, setSelectedStyleIndex] = React.useState<number>(props.styleIndex);
   const [filterText, setFilterText] = React.useState<string>("");
 
   // References to key controls
   const textRef = React.useRef<HTMLInputElement>(null);
-  const selectRef = React.useRef<HTMLSelectElement>(null);
   const fixedList = React.useRef<FixedSizeList>(null);
   const styleSelectRef = React.useRef<HTMLSelectElement>(null);
   const prefixRef = React.useRef<HTMLInputElement>(null);
+
+  // Focus the custom prefix textbox when the user selects custom
+  React.useEffect(() => {
+    const option = styleSelectRef.current?.options[selectedStyleIndex];
+    const key = option?.value || "";
+    if (key === kStyleCustom) {
+      prefixRef.current?.focus();
+    }
+  }, [selectedStyleIndex]);
 
   // Load the cross ref data when the dialog loads
   React.useEffect(() => {
@@ -253,42 +260,23 @@ export const InsertXrefPanel: React.FC<InsertXrefPanelProps> = props => {
     });
   }, []);
 
-  // The types
-  const typeOptions = () => {
-    if (!xrefs) {
-      return [];
-    }
-    const xrefTypes = xRefTypes.filter(xrefType => {
-      return xrefType.prefix === "" || xrefs.find(xref => {
-        return xref.type === xrefType.prefix; d
-      });
-    });
-
-    return xrefTypes.map(xrefType => (
-      <option key={xrefType.type} value={xrefType.type}>
-        {props.ui.context.translateText(xrefType.type)}
-      </option>
-    ));
-  };
-
   // The styles
-  const styleOptions = () => {
-    return kXRefStyles.map(style => (
-      <option key={style.key} value={style.key}>
-        {props.ui.context.translateText(style.key)}
-      </option>
-    ));
-  };
+  const styleOptions = kXRefStyles.map(style => (
+    <option key={style.key} value={style.key}>
+      {props.ui.context.translateText(style.key)}
+    </option>
+  ));
+
 
   // Filter the xrefs (by type or matching user typed text)
-  const filteredXrefs = () => {
+  const filterXrefs = () => {
     if (!xrefs) {
       return [];
     }
 
     let filtered = xrefs;
-    if (selectedType) {
-      filtered = filtered.filter(xref => xref.type === selectedType);
+    if (selectedTypeIndex !== 0) {
+      filtered = filtered.filter(xref => xRefTypes[selectedTypeIndex].prefix.includes(xref.type));
     }
 
     if (filterText) {
@@ -297,29 +285,42 @@ export const InsertXrefPanel: React.FC<InsertXrefPanelProps> = props => {
     }
     return filtered;
   };
+  const filteredXrefs = filterXrefs();
 
-  // Ensure that selection stays within the filtered range
-  const displayXrefs = filteredXrefs();
+
+  // The Types
+  const typeNodes = xRefTypes.map(type => {
+    return {
+      key: type.type,
+      //      image?: string;
+      name: type.type,
+      type: type.type,
+      children: [],
+      expanded: true,
+    };
+  });
+  const selectedNode = typeNodes[selectedTypeIndex];
+
 
   // The current index (adjusted to ensure it is in bounds)
-  const currentIndex = Math.min(selectedIndex, displayXrefs.length - 1);
+  const currentIndex = Math.min(selectedXRefIndex, filteredXrefs.length - 1);
 
   // Increments or decrements the index
   const incrementIndex = (increment: number) => {
     let newIndex = currentIndex;
     if (increment > 0) {
-      newIndex = Math.min(currentIndex + increment, displayXrefs.length - 1);
+      newIndex = Math.min(currentIndex + increment, filteredXrefs.length - 1);
     } else {
       newIndex = Math.max(currentIndex + increment, 0);
     }
     if (newIndex !== currentIndex) {
-      setSelectedIndex(newIndex);
+      setSelectedXRefIndex(newIndex);
       fixedList.current?.scrollToItem(newIndex);
     }
   };
 
   const currentStyle = () => {
-    const option = styleSelectRef.current?.options[styleIndex];
+    const option = styleSelectRef.current?.options[selectedStyleIndex];
     const key = option?.value || "";
     return kXRefStyles.find(style => style.key === key) || kXRefStyles[0];
   };
@@ -328,10 +329,17 @@ export const InsertXrefPanel: React.FC<InsertXrefPanelProps> = props => {
     return prefixRef.current?.value || undefined;
   };
 
+  const placeholderText = () => {
+    if (xrefs === undefined) {
+      return props.ui.context.translateText("Loading Cross References");
+    }
+    return props.ui.context.translateText("No Matching Cross References Found.");
+  };
+
   // Insert the item
   const insertItem = (index: number) => {
     lastSelectedStyleIndex = styleSelectRef.current?.selectedIndex || 0;
-    const xref = displayXrefs[index];
+    const xref = filteredXrefs[index];
     const style = currentStyle();
     const prefix = style.key === kStyleCustom ? currentPrefix() : undefined;
     props.onOk(xref, style, prefix);
@@ -380,16 +388,9 @@ export const InsertXrefPanel: React.FC<InsertXrefPanelProps> = props => {
     }
   };
 
-  // Handle the updating type selection
-  const handleSelectChanged = (event: ChangeEvent<Element>) => {
-    const value: string = (event.target as HTMLSelectElement).selectedOptions[0].value;
-    const xrefType = xRefTypes.find(xType => xType.type === value);
-    setSelectedType(xrefType?.prefix || "");
-  };
-
   // Select the item
   const handleItemClicked = (index: number) => {
-    setSelectedIndex(index);
+    setSelectedXRefIndex(index);
   };
 
 
@@ -409,68 +410,72 @@ export const InsertXrefPanel: React.FC<InsertXrefPanelProps> = props => {
   // Handle the updating type selection
   const handleStyleChanged = (event: ChangeEvent<Element>) => {
     const index = (event.target as HTMLSelectElement).selectedOptions[0].index;
-    setStyleIndex(index);
+    setSelectedStyleIndex(index);
+  };
+
+  const handleNodeSelected = (node: NavigationTreeNode) => {
+    setSelectedTypeIndex(xRefTypes.findIndex(type => type.type === node.key));
   };
 
   return (
     <div className="pm-insert-xref">
-      <div className="pm-insert-xref-search-container">
-        <TextInput
-          onKeyDown={handleKeyboardEvent}
-          width={20 + 'ch'}
-          iconAdornment={props.ui.images.search}
-          tabIndex={0}
-          className="pm-insert-xref-search-textbox"
-          placeholder={props.ui.context.translateText("Search for Cross Reference")}
-          onChange={handleTextChange}
-          ref={textRef}
-        />
-        <SelectInput
-          tabIndex={0}
-          ref={selectRef}
-          className="pm-insert-xref-select-type"
-          onChange={handleSelectChanged}
-        >
-          {typeOptions()}
-        </SelectInput>
-      </div>
+      <div className="pm-insert-xref-container">
+        <div className="pm-insert-xref-type-container pm-block-border-color pm-background-color">
+          <NavigationTree
+            height={props.height + kXrefSearchBoxHeight}
+            nodes={typeNodes}
+            selectedNode={selectedNode}
+            onSelectedNodeChanged={handleNodeSelected}
+          />
+        </div>
 
-      <div className="pm-insert-xref-list-container">
-        {displayXrefs && displayXrefs.length > 0 ? (
-          <div
+        <div className="pm-insert-xref-list-container">
+          <TextInput
             onKeyDown={handleKeyboardEvent}
+            width={20 + 'ch'}
+            iconAdornment={props.ui.images.search}
             tabIndex={0}
-          >
-            <FixedSizeList
-              className="pm-insert-xref-list pm-block-border-color pm-background-color"
-              height={props.height}
-              width="100%"
-              itemCount={displayXrefs.length}
-              itemSize={66}
-              itemData={{
-                xrefs: displayXrefs,
-                selectedIndex: currentIndex,
-                ui: props.ui,
-                onclick: handleItemClicked,
-                ondoubleclick: handleItemDoubleClicked
-              }}
-              ref={fixedList}
-            >
-              {XRefItem}
-            </FixedSizeList>
-          </div>
+            className="pm-insert-xref-search-textbox"
+            placeholder={props.ui.context.translateText("Search for Cross Reference")}
+            onChange={handleTextChange}
+            ref={textRef}
+          />
 
-        ) : (
+
+          {filteredXrefs && filteredXrefs.length > 0 ? (
             <div
-              className="pm-insert-xref-list-loading pm-block-border-color pm-background-color"
-              style={{ width: "100%", height: props.height + "px" }}
+              onKeyDown={handleKeyboardEvent}
+              tabIndex={0}
             >
-              <div>{xrefs === undefined ?
-                props.ui.context.translateText("Loading Cross References") :
-                props.ui.context.translateText("No Cross References Found.")}</div>
+              <FixedSizeList
+                className="pm-insert-xref-list pm-block-border-color pm-background-color"
+                height={props.height}
+                width="100%"
+                itemCount={filteredXrefs.length}
+                itemSize={66}
+                itemData={{
+                  xrefs: filteredXrefs,
+                  selectedIndex: currentIndex,
+                  ui: props.ui,
+                  onclick: handleItemClicked,
+                  ondoubleclick: handleItemDoubleClicked
+                }}
+                ref={fixedList}
+              >
+                {XRefItem}
+              </FixedSizeList>
             </div>
-          )}
 
+          ) : (
+              <div
+                className="pm-insert-xref-list-loading pm-block-border-color pm-background-color"
+                style={{ width: "100%", height: props.height + "px" }}
+              >
+                <div>{placeholderText()}</div>
+              </div>
+            )}
+
+        </div>
       </div>
       <div className='pm-insert-xref-insert-options'>
 
@@ -482,9 +487,9 @@ export const InsertXrefPanel: React.FC<InsertXrefPanelProps> = props => {
             className="pm-insert-xref-select-style"
             onChange={handleStyleChanged}
           >
-            {styleOptions()}
+            {styleOptions}
           </SelectInput>
-          {styleIndex === 3 ? (
+          {kXRefStyles[selectedStyleIndex].key === kStyleCustom ? (
             <TextInput
               width={20 + 'ch'}
               tabIndex={0}
@@ -561,6 +566,31 @@ const XRefItem = (props: XRefItemProps) => {
           <div className="pm-xref-item-detail">{detailText}</div>
         </div>
       </div>
+    </div>
+  );
+};
+
+interface XRefTypeProps extends ListChildComponentProps {
+  data: {
+    types: XRefType[],
+    selectedIndex: number
+    ui: EditorUI,
+    onclick: (index: number) => void,
+  };
+}
+
+
+const XRefTypeItem = (props: XRefTypeProps) => {
+  const thisType = props.data.types[props.index];
+  const selected = props.data.selectedIndex === props.index;
+
+  const handleClick = () => {
+    props.data.onclick(props.index);
+  };
+
+  return (
+    <div className={`pm-insert-xref-type${selected ? ' pm-list-item-selected' : ''}`} onClick={handleClick}>
+      {thisType.type}
     </div>
   );
 };

@@ -4,9 +4,13 @@
   margin-bottom: 12px;
 }
 
+.pm-insert-xref-container {
+  display: flex;
+}
+
 .pm-insert-xref-list-container {
-  padding-left: 10px;
-  padding-right: 10px;
+  padding-left: 8px;
+  flex-grow: 3;
 }
 
 .pm-xref-item {
@@ -57,7 +61,6 @@
 }
 .pm-insert-xref .pm-dialog-buttons-panel {
   justify-content: flex-end;
-  padding-right: 8px;
 }
 
 .pm-insert-xref-search-container {
@@ -68,21 +71,13 @@
   padding-bottom: 10px;
 }
 
-.pm-insert-xref-search-container .pm-textinput-container {
-  flex-grow: 2;
-  flex-shrink: 1;
-  width: 100%;
-  margin-right: 10px;
-}
-
 .pm-insert-xref-search-textbox {
   width: 100%;
 }
 
-.pm-insert-xref-select-type {
-  width: 225px;
-  flex-shrink: 0;
-  margin-left: 10px;
+.pm-insert-xref-list-container .pm-textinput-container {
+  width: 100%;
+  margin-bottom: 6px;
 }
 
 .pm-insert-xref-list-loading {
@@ -104,8 +99,7 @@
 .pm-insert-xref-insert-options {
   display: flex;
   justify-content: space-between;
-  padding-left: 10px;
-  padding-right: 10px;
+  padding-left: 4px;
 }
 
 .pm-insert-xref-prefix {
@@ -114,6 +108,14 @@
 }
 
 .pm-insert-xref-prefix select {
-  margin-left: 8px;
+  margin-left: 10px;
   margin-right: 8px;
+  width: 100px;
+}
+
+.pm-insert-xref-type-container {
+  border: solid 1px;
+  border-radius: 3px;
+  flex-grow: 1;
+  margin-bottom: 12px;
 }
