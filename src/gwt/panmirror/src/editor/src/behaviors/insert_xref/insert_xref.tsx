@@ -489,8 +489,8 @@ const InsertXrefPanel: React.FC<InsertXrefPanelProps> = props => {
 
           ) : (
               <div
-                className="pm-insert-xref-list-loading pm-block-border-color pm-background-color"
-                style={{ width: "100%", height: props.height + "px" }}
+                className="pm-insert-xref-list-placeholder pm-block-border-color pm-background-color"
+                style={{ height: props.height + "px" }}
               >
                 <div>{placeholderText()}</div>
               </div>
