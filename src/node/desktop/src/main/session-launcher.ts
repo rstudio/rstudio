@@ -202,8 +202,6 @@ export class SessionLauncher {
       this.mainWindow.loadUrl(launchContext.url);
     }
 
-    // TODO
-    // qApp->setQuitOnLastWindowClosed(true);
     return Success();
   }
 
@@ -241,7 +239,10 @@ export class SessionLauncher {
         logFile = log.getAbsolutePath();
 
         // Read all the lines from a file into a string vector
-        const lines = await readStringArrayFromFile(log);
+        const [lines, error] = await readStringArrayFromFile(log);
+        if (error) {
+          throw error;
+        }
 
         // Combine the three most recent lines
         let logContents = '';

@@ -43,19 +43,22 @@ function writeTestFile(lineCount: number, includeBlanks: boolean): FilePath {
 describe('file-serializer', () => {
   it('readStringArrayFromFile reads a simple file including blank lines', async () => {
     const tmpFile = writeTestFile(100, true);
-    const result = await readStringArrayFromFile(tmpFile, false);
+    const [result, error] = await readStringArrayFromFile(tmpFile, false);
+    assert.isNull(error);
     assert.equal(100, result.length);
     tmpFile.removeSync();
   });
   it('readStringArrayFromFile reads a simple file without any blank lines', async () => {
     const tmpFile = writeTestFile(100, false);
-    const result = await readStringArrayFromFile(tmpFile, false);
+    const [result, error] = await readStringArrayFromFile(tmpFile, false);
+    assert.isNull(error);
     assert.equal(100, result.length);
     tmpFile.removeSync();
   });
   it('readStringArrayFromFile skips blank lines when requested', async () => {
     const tmpFile = writeTestFile(100, true);
-    const result = await readStringArrayFromFile(tmpFile, true);
+    const [result, error] = await readStringArrayFromFile(tmpFile, true);
+    assert.isNull(error);
     assert.equal(66, result.length);
     for (const line in result) {
       assert.isFalse(line.length === 0);
@@ -64,7 +67,8 @@ describe('file-serializer', () => {
   });
   it('readStringArrayFromFile with skip set works when no blank lines', async () => {
     const tmpFile = writeTestFile(100, false);
-    const result = await readStringArrayFromFile(tmpFile, true);
+    const [result, error] = await readStringArrayFromFile(tmpFile, true);
+    assert.isNull(error);
     assert.equal(100, result.length);
     tmpFile.removeSync();
   });

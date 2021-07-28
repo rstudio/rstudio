@@ -14,6 +14,7 @@
  */
 
 import lineReader from 'line-reader';
+import { err, Expected, ok } from './expected';
 
 import { FilePath } from './file-path';
 
@@ -40,18 +41,20 @@ const eachLine = async function(filename: string, iteratee: (line: string) => vo
 export async function readStringArrayFromFile(
   filePath: FilePath,
   trimAndIgnoreBlankLines = true
-): Promise<Array<string>> {
+): Promise<Expected<Array<string>>> {
 
   const result: string[] = [];
-  await eachLine(filePath.getAbsolutePath(), (line: string) => {
-    if (trimAndIgnoreBlankLines) {
-      line = line.trim();
-    }
-    if (line.length > 0) {
-      result.push(line);
-    }
-  }).catch((error) => {
-    throw error;
-  });
-  return result;
+  try {
+    await eachLine(filePath.getAbsolutePath(), (line: string) => {
+      if (trimAndIgnoreBlankLines) {
+        line = line.trim();
+      }
+      if (line.length > 0) {
+        result.push(line);
+      }
+    });
+  } catch (error) {
+    return err(error);
+  }
+  return ok(result);
 }
