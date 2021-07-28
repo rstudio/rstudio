@@ -90,34 +90,56 @@ const kFigType = "fig";
 const kTableType = "tbl";
 const kEquationType = "eq";
 const kListingtype = "lst";
+
 const xRefTypes = [
   {
     type: "All Types",
-    prefix: [kSecType, kFigType, kTableType, kEquationType, kListingtype, ...kTheoremTypes]
+    prefix: [kSecType, kFigType, kTableType, kEquationType, kListingtype, ...kTheoremTypes],
+    image: (ui: EditorUI) => {
+      return ui.images.xrefs?.type_listing;
+    }
   },
   {
     type: "Sections",
-    prefix: [kSecType]
+    prefix: [kSecType],
+    image: (ui: EditorUI) => {
+      return ui.images.xrefs?.type_section;
+    }
   },
   {
     type: "Figures",
-    prefix: [kFigType]
+    prefix: [kFigType],
+    image: (ui: EditorUI) => {
+      return ui.images.xrefs?.type_figure;
+    }
   },
   {
     type: "Tables",
-    prefix: [kTableType]
+    prefix: [kTableType],
+    image: (ui: EditorUI) => {
+      return ui.images.xrefs?.type_table;
+    }
   },
   {
     type: "Equations",
-    prefix: [kEquationType]
+    prefix: [kEquationType],
+    image: (ui: EditorUI) => {
+      return ui.images.xrefs?.type_equation;
+    }
   },
   {
     type: "Listings",
-    prefix: [kListingtype]
+    prefix: [kListingtype],
+    image: (ui: EditorUI) => {
+      return ui.images.xrefs?.type_listing;
+    }
   },
   {
     type: "Theorems",
-    prefix: kTheoremTypes
+    prefix: kTheoremTypes,
+    image: (ui: EditorUI) => {
+      return ui.images.xrefs?.type_theorem;
+    }
   },
 ];
 
@@ -286,12 +308,11 @@ const InsertXrefPanel: React.FC<InsertXrefPanelProps> = props => {
   };
   const filteredXrefs = filterXrefs();
 
-
   // The Types
   const typeNodes = xRefTypes.map(type => {
     return {
       key: type.type,
-      //      image?: string;
+      image: type.image(props.ui),
       name: type.type,
       type: type.type,
       children: [],
@@ -575,7 +596,7 @@ const XRefItem = (props: XRefItemProps) => {
   const selectedClassName = `pm-xref-item${selected ? ' pm-list-item-selected' : ''}`;
   return (
     <div key={thisXref.id} style={props.style} className={selectedClassName} onClick={onItemClick} onDoubleClick={onItemDoubleClick}>
-      <div className="pm-xref-item-image-container">
+      <div className={`pm-xref-item-image-container ${thisXref.type}`}>
         <img src={image} className={'pm-xref-item-image pm-border-color'} />
       </div>
       <div className={'pm-xref-item-body pm-text-color'}>
@@ -587,31 +608,6 @@ const XRefItem = (props: XRefItemProps) => {
           <div className="pm-xref-item-detail">{detailText}</div>
         </div>
       </div>
-    </div>
-  );
-};
-
-interface XRefTypeProps extends ListChildComponentProps {
-  data: {
-    types: XRefType[],
-    selectedIndex: number
-    ui: EditorUI,
-    onclick: (index: number) => void,
-  };
-}
-
-
-const XRefTypeItem = (props: XRefTypeProps) => {
-  const thisType = props.data.types[props.index];
-  const selected = props.data.selectedIndex === props.index;
-
-  const handleClick = () => {
-    props.data.onclick(props.index);
-  };
-
-  return (
-    <div className={`pm-insert-xref-type${selected ? ' pm-list-item-selected' : ''}`} onClick={handleClick}>
-      {thisType.type}
     </div>
   );
 };

@@ -40,8 +40,6 @@ import orderedListImage from './images/omni_insert/ordered_list.png';
 import orderedListDarkImage from './images/omni_insert/ordered_list_dark.png';
 import blockquoteImage from './images/omni_insert/blockquote.png';
 import blockquoteDarkImage from './images/omni_insert/blockquote_dark.png';
-import equationImage from './images/omni_insert/equation.png';
-import equationDarkImage from './images/omni_insert/equation_dark.png';
 import mathInlineImage from './images/omni_insert/math_inline.png';
 import mathInlineDarkImage from './images/omni_insert/math_inline_dark.png';
 import mathDisplayImage from './images/omni_insert/math_display.png';
@@ -82,8 +80,6 @@ import rawBlockImage from './images/omni_insert/raw_block.png';
 import rawBlockDarkImage from './images/omni_insert/raw_block_dark.png';
 import rawInlineImage from './images/omni_insert/raw_inline.png';
 import rawInlineDarkImage from './images/omni_insert/raw_inline_dark.png';
-import sectionImage from './images/omni_insert/section.png';
-import sectionDarkImage from './images/omni_insert/section_dark.png';
 import texBlockImage from './images/omni_insert/tex_block.png';
 import texBlockDarkImage from './images/omni_insert/tex_block_dark.png';
 import yamlBlockImage from './images/omni_insert/yaml_block.png';
@@ -135,6 +131,26 @@ import crossRefImage from './images/citations/insert/crossref.png';
 import pubmedImage from './images/citations/insert/pubmed.png';
 import dataciteImage from './images/citations/insert/datacite.png';
 
+import equationXRefImage from './images/xref/equation.png';
+import equationXRefDarkImage from './images/xref/equation_dark.png';
+import sectionXRefImage from './images/xref/section.png';
+import sectionXRefDarkImage from './images/xref/section_dark.png';
+import listingXRefImage from './images/xref/listing.png';
+import listingXRefDarkImage from './images/xref/listing.png';
+import tableXRefImage from './images/xref/table.png';
+import tableXRefDarkImage from './images/xref/table_dark.png';
+import figureXRefImage from './images/xref/figure.png';
+import figureXRefDarkImage from './images/xref/figure_dark.png';
+import theoremXRefImage from './images/xref/theorem.png';
+import theoremXRefDarkImage from './images/xref/theorem_dark.png';
+
+import equationXRefInsertImage from './images/xref/insert/equation.png';
+import sectionXRefInsertImage from './images/xref/insert/section.png';
+import listingXRefInsertImage from './images/xref/insert/listing.png';
+import tableXRefInsertImage from './images/xref/insert/table.png';
+import figureXRefInsertImage from './images/xref/insert/figure.png';
+import theoremXRefInsertImage from './images/xref/insert/theorem.png';
+
 import tagDelete from './images/widgets/tag-delete.png';
 import tagEdit from './images/widgets/tag-edit.png';
 
@@ -165,8 +181,6 @@ export function defaultEditorUIImages(): EditorUIImages {
       ordered_list_dark: orderedListDarkImage,
       blockquote: blockquoteImage,
       blockquote_dark: blockquoteDarkImage,
-      equation: equationImage,
-      equation_dark: equationDarkImage,
       math_inline: mathInlineImage,
       math_inline_dark: mathInlineDarkImage,
       math_display: mathDisplayImage,
@@ -207,8 +221,6 @@ export function defaultEditorUIImages(): EditorUIImages {
       raw_block_dark: rawBlockDarkImage,
       raw_inline: rawInlineImage,
       raw_inline_dark: rawInlineDarkImage,
-      section: sectionImage,
-      section_dark: sectionDarkImage,
       tex_block: texBlockImage,
       tex_block_dark: texBlockDarkImage,
       yaml_block: yamlBlockImage,
@@ -260,6 +272,26 @@ export function defaultEditorUIImages(): EditorUIImages {
       crossref: crossRefImage,
       pubmed: pubmedImage,
       datacite: dataciteImage,
+    },
+    xrefs: {
+      section: sectionXRefImage,
+      section_dark: sectionXRefDarkImage,
+      figure: figureXRefImage,
+      figure_dark: figureXRefDarkImage,
+      table: tableXRefImage,
+      table_dark: tableXRefDarkImage,
+      listing: listingXRefImage,
+      listing_dark: listingXRefDarkImage,
+      equation: equationXRefImage,
+      equation_dark: equationXRefDarkImage,
+      theorem: theoremXRefImage,
+      theorem_dark: theoremXRefDarkImage,
+      type_section: sectionXRefInsertImage,
+      type_equation: equationXRefInsertImage,
+      type_figure: figureXRefInsertImage,
+      type_table: tableXRefInsertImage,
+      type_listing: listingXRefInsertImage,
+      type_theorem: theoremXRefInsertImage
     },
     widgets: {
       tag_delete: tagDelete,

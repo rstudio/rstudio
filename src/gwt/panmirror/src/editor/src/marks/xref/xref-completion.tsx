@@ -230,28 +230,33 @@ export const kXRefTypes: { [key: string]: { image: (ui: EditorUI) => string | un
   exr: kGenericType,
 };
 
+const kTheoremType = {
+  image: (ui: EditorUI) => (ui.prefs.darkMode() ? ui.images.xrefs?.theorem_dark : ui.images.xrefs?.theorem)
+};
+
+
 export const kQuartoXRefTypes: { [key: string]: { image: (ui: EditorUI) => string | undefined } } = {
   sec: {
-    image: (ui: EditorUI) => (ui.prefs.darkMode() ? ui.images.omni_insert?.section_dark : ui.images.omni_insert?.section)
+    image: (ui: EditorUI) => (ui.prefs.darkMode() ? ui.images.xrefs?.section_dark : ui.images.xrefs?.section)
   },
   fig: {
-    image: (ui: EditorUI) => (ui.prefs.darkMode() ? ui.images.omni_insert?.image_dark : ui.images.omni_insert?.image),
+    image: (ui: EditorUI) => (ui.prefs.darkMode() ? ui.images.xrefs?.figure_dark : ui.images.xrefs?.figure),
   },
   tbl: {
-    image: (ui: EditorUI) => (ui.prefs.darkMode() ? ui.images.omni_insert?.table_dark : ui.images.omni_insert?.table),
+    image: (ui: EditorUI) => (ui.prefs.darkMode() ? ui.images.xrefs?.table_dark : ui.images.xrefs?.table),
   },
   lst: {
-    image: (ui: EditorUI) => ui.images.omni_insert?.generic
+    image: (ui: EditorUI) => (ui.prefs.darkMode() ? ui.images.xrefs?.listing_dark : ui.images.xrefs?.listing),
   },
   eq: {
-    image: (ui: EditorUI) => (ui.prefs.darkMode() ? ui.images.omni_insert?.equation_dark : ui.images.omni_insert?.equation)
+    image: (ui: EditorUI) => (ui.prefs.darkMode() ? ui.images.xrefs?.equation_dark : ui.images.xrefs?.equation)
   },
-  thm: kEqType,
-  lem: kEqType,
-  cor: kEqType,
-  prp: kEqType,
-  cnj: kEqType,
-  def: kEqType,
-  exm: kGenericType,
-  exr: kGenericType,
+  thm: kTheoremType,
+  lem: kTheoremType,
+  cor: kTheoremType,
+  prp: kTheoremType,
+  cnj: kTheoremType,
+  def: kTheoremType,
+  exm: kTheoremType,
+  exr: kTheoremType,
 };
