@@ -403,20 +403,20 @@ try {
                   returnStdout: true
                 ).trim().toLowerCase()
 
-                def buildDest =  "s3://rstudio-ide-build/desktop/windows/"
+                def buildDest = "s3://rstudio-ide-build/desktop/windows"
                 if (buildType != "daily") {
-                  buildDest =  "s3://rstudio-ide-build-internal/${buildType}/desktop/windows/"
+                  buildDest = "s3://rstudio-ide-build-internal/${buildType}/desktop/windows"
                 }
 
-                def packageName = "RStudio-${buildType}-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}-RelWithDebInfo"
+                def packageName = "RStudio-${buildType}-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}"
                 if (buildType == "release") {
-                  packageName = "RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}-RelWithDebInfo"
+                  packageName = "RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}"
                 }
 
                 // windows docker container cannot reach instance-metadata endpoint. supply credentials at upload.
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'jenkins-aws']]) {
-                  bat "aws s3 cp package\\win32\\build\\${packageName}.exe ${buildDest}"
-                  bat "aws s3 cp package\\win32\\build\\${packageName}.zip ${buildDest}"
+                  bat "aws s3 cp package\\win32\\build\\${packageName}-RelWithDebInfo.exe ${buildDest}/${packageName}.exe"
+                  bat "aws s3 cp package\\win32\\build\\${packageName}-RelWithDebInfo.zip ${buildDest}/${packageName}.zip"
                 }
               }
             }
