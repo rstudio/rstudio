@@ -72,3 +72,17 @@ export async function launch(extraArgs?: string[]): Promise<ElectronApplication>
 }
 
 export const setTimeoutPromise = util.promisify(setTimeout);
+
+/**
+ * @returns Array of window titles
+ */
+export async function getWindowTitles(electronApp: ElectronApplication): Promise<string[]> {
+  return electronApp.evaluate(async ({ BrowserWindow } ): Promise<string[]> => {
+    const titles = Array<string>();
+    const windows = BrowserWindow.getAllWindows();
+    for (const window of windows) {
+      titles.push(window.getTitle());
+    }
+    return titles;
+  });
+}

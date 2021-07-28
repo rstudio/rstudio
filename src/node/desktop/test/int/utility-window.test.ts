@@ -17,7 +17,7 @@ import { describe } from 'mocha';
 import { assert } from 'chai';
 import { ElectronApplication, Page } from 'playwright';
 
-import { launch, setTimeoutPromise } from './int-utils';
+import { getWindowTitles, launch, setTimeoutPromise } from './int-utils';
 
 
 describe('Display secondary utility windows', () => {
@@ -41,5 +41,14 @@ describe('Display secondary utility windows', () => {
     await setTimeoutPromise(500);
     const windows = electronApp.windows();
     assert.equal(windows.length, 2);
+    const titles = await getWindowTitles(electronApp);
+    let found = false;
+    for (const title of titles) {
+      if (title === 'chrome://gpu') {
+        found = true;
+        break;
+      }
+    }
+    assert.isTrue(found);
   });
 });
