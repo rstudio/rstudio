@@ -40,6 +40,8 @@ import orderedListImage from './images/omni_insert/ordered_list.png';
 import orderedListDarkImage from './images/omni_insert/ordered_list_dark.png';
 import blockquoteImage from './images/omni_insert/blockquote.png';
 import blockquoteDarkImage from './images/omni_insert/blockquote_dark.png';
+import equationImage from './images/omni_insert/equation.png';
+import equationDarkImage from './images/omni_insert/equation_dark.png';
 import mathInlineImage from './images/omni_insert/math_inline.png';
 import mathInlineDarkImage from './images/omni_insert/math_inline_dark.png';
 import mathDisplayImage from './images/omni_insert/math_display.png';
@@ -80,6 +82,8 @@ import rawBlockImage from './images/omni_insert/raw_block.png';
 import rawBlockDarkImage from './images/omni_insert/raw_block_dark.png';
 import rawInlineImage from './images/omni_insert/raw_inline.png';
 import rawInlineDarkImage from './images/omni_insert/raw_inline_dark.png';
+import sectionImage from './images/omni_insert/section.png';
+import sectionDarkImage from './images/omni_insert/section_dark.png';
 import texBlockImage from './images/omni_insert/tex_block.png';
 import texBlockDarkImage from './images/omni_insert/tex_block_dark.png';
 import yamlBlockImage from './images/omni_insert/yaml_block.png';
@@ -161,6 +165,8 @@ export function defaultEditorUIImages(): EditorUIImages {
       ordered_list_dark: orderedListDarkImage,
       blockquote: blockquoteImage,
       blockquote_dark: blockquoteDarkImage,
+      equation: equationImage,
+      equation_dark: equationDarkImage,
       math_inline: mathInlineImage,
       math_inline_dark: mathInlineDarkImage,
       math_display: mathDisplayImage,
@@ -201,6 +207,8 @@ export function defaultEditorUIImages(): EditorUIImages {
       raw_block_dark: rawBlockDarkImage,
       raw_inline: rawInlineImage,
       raw_inline_dark: rawInlineDarkImage,
+      section: sectionImage,
+      section_dark: sectionDarkImage,
       tex_block: texBlockImage,
       tex_block_dark: texBlockDarkImage,
       yaml_block: yamlBlockImage,

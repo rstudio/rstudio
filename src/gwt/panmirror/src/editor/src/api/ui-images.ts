@@ -39,6 +39,8 @@ export interface EditorUIImages {
     bullet_list_dark?: string;
     blockquote?: string;
     blockquote_dark?: string;
+    equation?: string;
+    equation_dark?: string;
     math_inline?: string;
     math_inline_dark?: string;
     math_display?: string;
@@ -79,6 +81,8 @@ export interface EditorUIImages {
     raw_block_dark?: string;
     raw_inline?: string;
     raw_inline_dark?: string;
+    section_dark?: string;
+    section?: string;
     tex_block?: string;
     tex_block_dark?: string;
     yaml_block?: string;
