@@ -21,7 +21,7 @@ import { existsSync } from 'fs';
 import { Environment, getenv, setVars } from '../core/environment';
 import { Expected, ok, err } from '../core/expected';
 import { logger } from '../core/logger';
-import { Err, Success } from '../core/err';
+import { Err, success } from '../core/err';
 
 let kLdLibraryPathVariable : string;
 if (process.platform === 'darwin') {
@@ -96,7 +96,7 @@ function prepareEnvironmentImpl(): Err {
     process.env.PATH = `${binDir};${process.env.PATH}`;
   }
 
-  return Success();
+  return success();
 
 }
 

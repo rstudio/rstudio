@@ -20,7 +20,7 @@ import fs from 'fs';
 import { logger } from '../core/logger';
 import { FilePath } from '../core/file-path';
 import { generateShortenedUuid, localPeer } from '../core/system';
-import { Err, Success } from '../core/err';
+import { Err, success } from '../core/err';
 import { getenv, setenv } from '../core/environment';
 import { renderTemplateFile } from '../core/template-filter';
 import { readStringArrayFromFile } from '../core/file-serializer';
@@ -202,7 +202,7 @@ export class SessionLauncher {
       this.mainWindow.loadUrl(launchContext.url);
     }
 
-    return Success();
+    return success();
   }
 
   closeAllSatellites(): void {
