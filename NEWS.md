@@ -53,6 +53,7 @@
 * Fixed Issue where items deleted from a local Zotero Collection would still appear in the Visual Editor's Insert Citation dialog.
 * Fixed issue where Console width was computed incorrectly with some custom fonts (#8696)
 * Fixed two 502 errors with load balancing: quick session restart, and failover for non-launcher sessions (Pro #2696)
+* Fixed problem with backspace in terminal causing incorrect display (#9249)
 
 ### Misc
 
