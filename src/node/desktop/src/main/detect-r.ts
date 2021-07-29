@@ -13,10 +13,12 @@
  *
  */
 
-import { dialog } from 'electron';
-import { dirname } from 'path';
+import path from 'path';
+
 import { execSync } from 'child_process';
+import { dialog } from 'electron';
 import { existsSync } from 'fs';
+import { EOL } from 'os';
 
 import { Environment, getenv, setVars } from '../core/environment';
 import { Expected, ok, err } from '../core/expected';
@@ -92,7 +94,7 @@ function prepareEnvironmentImpl(): Err {
   // in the same directory can be resolved
   const scriptPath = rEnvironment.rScriptPath;
   if (process.platform === 'win32') {
-    const binDir = dirname(scriptPath);
+    const binDir = path.dirname(scriptPath);
     process.env.PATH = `${binDir};${process.env.PATH}`;
   }
 
@@ -103,11 +105,14 @@ function prepareEnvironmentImpl(): Err {
 function detectREnvironment(): Expected<REnvironment> {
 
   // scan for R
-  const [R, scanError] = scanForR();
+  let [R, scanError] = scanForR();
   if (scanError) {
     showRNotFoundError();
     return err(scanError);
   }
+
+  // normalize separators
+  R = path.normalize(R);
 
   // generate small script for querying information about R
   const rQueryScript = String.raw`writeLines(c(
@@ -132,7 +137,7 @@ function detectREnvironment(): Expected<REnvironment> {
     rIncludeDir,
     rShareDir,
     rLdLibraryPath,
-  ] = rQueryResult.split('\n');
+  ] = rQueryResult.split(EOL);
 
   // put it all together
   const result = {
@@ -147,6 +152,8 @@ function detectREnvironment(): Expected<REnvironment> {
     ldLibraryPath: rLdLibraryPath,
   };
 
+  logger().logDebug(JSON.stringify(result, null, 2));
+
   return ok(result);
 
 }
@@ -156,7 +163,7 @@ function scanForR(): Expected<string> {
   // if the RSTUDIO_WHICH_R environment variable is set, use that
   const rstudioWhichR = getenv('RSTUDIO_WHICH_R');
   if (rstudioWhichR) {
-    logger().logDiagnostic(`Using ${rstudioWhichR} (found by RSTUDIO_WHICH_R environment variable)`);
+    logger().logDebug(`Using ${rstudioWhichR} (found by RSTUDIO_WHICH_R environment variable)`);
     return ok(rstudioWhichR);
   }
 
@@ -174,7 +181,7 @@ function scanForRPosix(): Expected<string> {
   // first, look for R on the PATH
   const [rLocation, error] = executeCommand('/usr/bin/which R');
   if (!error && rLocation) {
-    logger().logDiagnostic(`Using ${rLocation} (found by /usr/bin/which/R)`);
+    logger().logDebug(`Using ${rLocation} (found by /usr/bin/which/R)`);
     return ok(rLocation);
   }
 
@@ -192,7 +199,7 @@ function scanForRPosix(): Expected<string> {
 
   for (const location of defaultLocations) {
     if (existsSync(location)) {
-      logger().logDiagnostic(`Using ${rLocation} (found by searching known locations)`);
+      logger().logDebug(`Using ${rLocation} (found by searching known locations)`);
       return ok(location);
     }
   }
@@ -214,12 +221,11 @@ function findDefaultInstallPathWin32(version: string): string {
   }
 
   // parse the actual path from the output
-  const lines = output.split('\r\n');
+  const lines = output.split(EOL);
   for (const line of lines) {
     const match = /^\s*InstallPath\s*REG_SZ\s*(.*)$/.exec(line);
     if (match != null) {
       const rLocation = match[1];
-      logger().logDiagnostic(`Using ${rLocation} (found by searching registry`);
       return rLocation;
     }
   }
@@ -233,6 +239,7 @@ function scanForRWin32(): Expected<string> {
   // if the RSTUDIO_WHICH_R environment variable is set, use that
   const rstudioWhichR = getenv('RSTUDIO_WHICH_R');
   if (rstudioWhichR) {
+    logger().logDebug(`Using R ${rstudioWhichR} (found by RSTUDIO_WHICH_R environment variable)`);
     return ok(rstudioWhichR);
   }
 
@@ -240,17 +247,22 @@ function scanForRWin32(): Expected<string> {
   if (process.arch !== 'x32') {
     const x64InstallPath = findDefaultInstallPathWin32('R64');
     if (x64InstallPath && existsSync(x64InstallPath)) {
-      return ok(`${x64InstallPath}/bin/x64/R.exe`);
+      const rPath = `${x64InstallPath}/bin/x64/R.exe`;
+      logger().logDebug(`Using R ${rPath} (found via registry)`);
+      return ok(rPath);
     }
   }
 
   // look for a 32-bit version of R
   const i386InstallPath = findDefaultInstallPathWin32('R');
   if (i386InstallPath && existsSync(i386InstallPath)) {
-    return ok(`${i386InstallPath}/bin/i386/R.exe`);
+      const rPath = `${i386InstallPath}/bin/i386/R.exe`;
+      logger().logDebug(`Using R ${rPath} (found via registry)`);
+      return ok(rPath);
   }
 
   // nothing found; return empty filepath
+  logger().logDebug("Failed to discover R");
   return err();
 
 }
