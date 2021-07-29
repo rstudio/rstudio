@@ -21,9 +21,10 @@ import { logger } from '../core/logger';
 import { FilePath } from '../core/file-path';
 import { generateShortenedUuid, localPeer } from '../core/system';
 import { Err, success } from '../core/err';
-import { getenv, setenv } from '../core/environment';
+import { getenv, setenv, unsetenv } from '../core/environment';
 import { renderTemplateFile } from '../core/template-filter';
 import { readStringArrayFromFile } from '../core/file-serializer';
+import { kRStudioInitialProject } from '../core/r-user-data';
 
 import { ApplicationLaunch } from './application-launch';
 import { appState } from './app-state';
@@ -153,7 +154,7 @@ export class SessionLauncher {
 
     this.mainWindow = new MainWindow(launchContext.url);
     this.mainWindow.sessionLauncher = this;
-    this.mainWindow.sessionProcess = this.sessionProcess;
+    this.mainWindow.setSessionProcess(this.sessionProcess);
     this.mainWindow.appLauncher = this.appLaunch;
     this.appLaunch.setActivationWindow(this.mainWindow);
 
@@ -165,10 +166,8 @@ export class SessionLauncher {
     // one-time workbench initialized hook for startup file association
     // if (!filename_.isNull() && !filename_.isEmpty()) {
     //   StringSlotBinder* filenameBinder = new StringSlotBinder(filename_);
-    //   pMainWindow_->connect(pMainWindow_,
-    //                         SIGNAL(firstWorkbenchInitialized()),
-    //                         filenameBinder,
-    //                         SLOT(trigger()));
+    //   // use 'once' here so it only fires for the first session
+    //   this.mainWindow?.once(MainWindow.FIRST_WORKBENCH_INITIALIZED, filenameBinder);
     //   pMainWindow_->connect(filenameBinder,
     //                         SIGNAL(triggered(QString)),
     //                         pMainWindow_,
@@ -387,11 +386,58 @@ export class SessionLauncher {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   launchNextSession(reload: boolean): Err {
 
-    // build a new launch context -- re-use the same port if we aren't reloading
-    /* const launchContext = */ this.buildLaunchContext(!reload);
+    // unset the initial project environment variable it this doesn't
+    // pollute future sessions
+    unsetenv(kRStudioInitialProject);
 
-    // TODO: nyi
-    return Error('launchNextSession NYI');
+    // disconnect the firstWorkbenchInitialized event so it doesn't occur
+    // again when we launch the next session
+    // porting note: this is handled by using 'once' for the connection
+
+    // delete the old process object
+    this.mainWindow?.setSessionProcess(undefined);
+
+    // TODO REVIEW: the C++ code is potentially relying on destructor here; do we need
+    // to do more work directly here to disconnect events, etc?
+    this.sessionProcess = undefined;
+
+    // build a new launch context -- re-use the same port if we aren't reloading
+    const launchContext = this.buildLaunchContext(!reload);
+
+    // launch the process
+    try {
+      this.sessionProcess = this.launchSession(launchContext.argList);
+    } catch (err) {
+      return err;
+    }
+
+    // update the main window's reference to the process object
+    this.mainWindow?.setSessionProcess(this.sessionProcess);
+
+    // TODO REVIEW, still needed?
+    // connect to quit event
+    // this.mainWindow?.connect(pRSessionProcess_,
+    //   SIGNAL(finished(int, QProcess:: ExitStatus)),
+    //   this,
+    //   SLOT(onRSessionExited(int, QProcess:: ExitStatus)));
+    //
+    if (reload) {
+      logger().logErrorMessage('reloading a session not yet fully implemented');
+      // TODO: this mechanism, once recreated, might also be usable for dealing with the
+      // initial loading retries, per: https://github.com/rstudio/rstudio/issues/9627
+      //     const error = core::waitWithTimeout(
+      //              boost::bind(serverReady, host.toStdString(), port.toStdString()),
+      //              50,
+      //              25,
+      //              10);
+      //     if (error)
+      //        LOG_ERROR(error);
+      
+    //     nextSessionUrl_ = url;
+    //     QTimer::singleShot(0, this, SLOT(onReloadFrameForNextSession()));
+    }
+
+    return success();
   }
 
   onReloadFrameForNextSession(): void {

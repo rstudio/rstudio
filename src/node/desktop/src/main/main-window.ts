@@ -50,15 +50,19 @@ const maxReloadCount = 10;
 const reloadWaitDuration = 200;
 
 export class MainWindow extends GwtWindow {
+  static FIRST_WORKBENCH_INITIALIZED = 'main-window-first_workbench_initialized';
+  static URL_CHANGED = 'main-window-url_changed';
+
   sessionLauncher?: SessionLauncher;
   remoteSessionLauncher?: RemoteDesktopSessionLauncher;
-  sessionProcess?: ChildProcess;
   appLauncher?: ApplicationLaunch;
   menuCallback: MenuCallback;
   quitConfirmed = false;
   geometrySaved = false;
   workbenchInitialized = false;
   pendingWindows = new Array<PendingWindow>();
+
+  private sessionProcess?: ChildProcess;
   private isErrorDisplayed = false;
 
   // if loading fails and emits `did-fail-load` it will be followed by a 
@@ -104,9 +108,10 @@ export class MainWindow extends GwtWindow {
     // connect(&menuCallback_, SIGNAL(zoomActualSize()), this, SLOT(zoomActualSize()));
     // connect(&menuCallback_, SIGNAL(zoomIn()), this, SLOT(zoomIn()));
     // connect(&menuCallback_, SIGNAL(zoomOut()), this, SLOT(zoomOut()));
-    // connect(&gwtCallback_, SIGNAL(workbenchInitialized()),
-    //         this, SIGNAL(firstWorkbenchInitialized()));
 
+    appState().gwtCallback?.on(GwtCallback.WORKBENCH_INITIALIZED, () => {
+      this.emit(MainWindow.FIRST_WORKBENCH_INITIALIZED);
+    });
     appState().gwtCallback?.on(GwtCallback.WORKBENCH_INITIALIZED, () => {
       this.onWorkbenchInitialized();
     });
@@ -293,6 +298,31 @@ export class MainWindow extends GwtWindow {
         this.quit();
       }
     }
+  }
+
+  setSessionProcess(sessionProcess: ChildProcess | undefined): void {
+    this.sessionProcess = sessionProcess;
+
+    // TODO implement Win32 eventHook
+    // when R creates dialogs (e.g. through utils::askYesNo), their first
+    // invocation might show behind the RStudio window. this allows us
+    // to detect when those Windows are opened and focused, and raise them
+    // to the front.
+    // if (process.platform === 'win32') {
+    //   if (eventHook_) {
+    //     ::UnhookWinEvent(eventHook_);
+    //   }
+
+    //   if (this.sessionProcess) {
+    //     eventHook_ = ::SetWinEventHook(
+    //       EVENT_SYSTEM_DIALOGSTART, EVENT_SYSTEM_DIALOGSTART,
+    //       nullptr,
+    //       onDialogStart,
+    //       pSessionProcess -> processId(),
+    //       0,
+    //       WINEVENT_OUTOFCONTEXT);
+    //   }
+    // }
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
