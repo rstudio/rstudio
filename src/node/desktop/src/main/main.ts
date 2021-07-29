@@ -21,7 +21,6 @@ import { LogLevel, parseCommandLineLogLevel, setLogger, setLoggerLevel } from '.
 import { Application, kLogLevel } from './application';
 import { setApplication } from './app-state';
 import { parseStatus } from './program-status';
-import { chooseRInstallation } from './select-r';
 
 /**
  * RStudio entrypoint
@@ -60,17 +59,6 @@ class RStudioMain {
     }
 
     await app.whenReady();
-
-    // TODO: most appropriate place for this?
-    try {
-      const path = await chooseRInstallation();
-      if (path) {
-        process.env['RSTUDIO_WHICH_R'] = path;
-      }
-    } catch (error) {
-      // an error here implies the user closed or cancelled; bail
-      return;
-    }
 
     if (!parseStatus(await rstudio.run())) {
       return;

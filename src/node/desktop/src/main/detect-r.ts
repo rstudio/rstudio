@@ -20,10 +20,11 @@ import { dialog } from 'electron';
 import { existsSync } from 'fs';
 import { EOL } from 'os';
 
-import { Environment, getenv, setVars } from '../core/environment';
+import { Environment, getenv, setenv, setVars } from '../core/environment';
 import { Expected, ok, err } from '../core/expected';
 import { logger } from '../core/logger';
 import { Err, success } from '../core/err';
+import { chooseRInstallation } from './select-r';
 
 let kLdLibraryPathVariable : string;
 if (process.platform === 'darwin') {
@@ -55,6 +56,31 @@ function executeCommand(command: string): Expected<string> {
 
 }
 
+export async function prepareEnvironmentPreflight(): Promise<Err> {
+
+  // currently only needed for Windows
+  if (process.platform !== 'win32') {
+    return success();
+  }
+
+  // nothing to do if RSTUDIO_WHICH_R is set
+  const rstudioWhichR = getenv('RSTUDIO_WHICH_R');
+  if (rstudioWhichR) {
+    return success();
+  }
+
+  // ask the user what version of R they'd like to use
+  let path;
+  try {
+    path = await chooseRInstallation();
+  } catch (error) {
+    return error;
+  }
+
+  setenv('RSTUDIO_WHICH_R', path);
+  return success();
+
+}
 /**
  * Detect R and prepare environment for launching the rsession process.
  * 
@@ -151,8 +177,6 @@ function detectREnvironment(): Expected<REnvironment> {
     },
     ldLibraryPath: rLdLibraryPath,
   };
-
-  logger().logDebug(JSON.stringify(result, null, 2));
 
   return ok(result);
 

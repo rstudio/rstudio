@@ -18,19 +18,19 @@ import { contextBridge, ipcRenderer } from 'electron';
 contextBridge.exposeInMainWorld('callbacks', {
   
   useDefault32bit: () => {
-    ipcRenderer.send('choose-r-dialog-channel', 'use-default-32bit');
+    ipcRenderer.send('choose-r-dialog', 'use-default-32bit');
   },
 
   useDefault64bit: () => {
-    ipcRenderer.send('choose-r-dialog-channel', 'use-default-64bit');
+    ipcRenderer.send('choose-r-dialog', 'use-default-64bit');
   },
 
   use: (version: string) => {
-    ipcRenderer.send('choose-r-dialog-channel', 'use', version);
+    ipcRenderer.send('choose-r-dialog', 'use', version);
   },
 
   cancel: () => {
-    ipcRenderer.send('choose-r-dialog-channel', 'cancel');
+    ipcRenderer.send('choose-r-dialog', 'cancel');
   },
 
 });

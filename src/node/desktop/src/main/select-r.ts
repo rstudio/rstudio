@@ -13,9 +13,8 @@
  *
  */
 
-import { app, BrowserWindow, ipcMain, ipcRenderer } from 'electron';
+import { BrowserWindow, ipcMain } from 'electron';
 import { existsSync } from 'fs';
-import { EOL } from 'os';
 import path from 'path';
 import { logger } from '../core/logger';
 import { findDefault32Bit, findDefault64Bit, findRInstallationsWin32 } from './detect-r';
@@ -66,12 +65,12 @@ function buildHtmlContent(rInstalls: string[]): string {
       vertical-align: 2px;
     }
 
-    .r-select-widget {
+    .select {
       margin-top: 4px;
       width: 100%;
     }
 
-    .r-select-widget option {
+    .select option {
       font-size: 9pt;
       padding: 2px 4px;
     }
@@ -98,21 +97,21 @@ function buildHtmlContent(rInstalls: string[]): string {
     <p>Please select the version of R to use.</p>
 
     <div>
-      <input type="radio" id="default-r-64" name="default-r" value="default-r-64" checked>
-      <label for="default-r-64">Use your machine's default 64-bit version of R</label>
+      <input type="radio" id="use-default-64" name="r" value="use-default-64" checked>
+      <label for="use-default-64">Use your machine's default 64-bit version of R</label>
     </div>
 
     <div>
-      <input type="radio" id="default-r-32" name="default-r" value="default-r-32">
-      <label for="default-r-32">Use your machine's default 32-bit version of R</label>
+      <input type="radio" id="use-default-32" name="r" value="use-default-32">
+      <label for="use-default-32">Use your machine's default 32-bit version of R</label>
     </div>
 
     <div>
-      <input type="radio" id="choose-r" name="default-r" value="choose-r">
-      <label for="choose-r">Choose a specific version of R:</label>
+      <input type="radio" id="use-custom" name="r" value="use-custom">
+      <label for="use-custom">Choose a specific version of R:</label>
     </div>
 
-    <select id="r-select-widget" class="r-select-widget" name="r-select-widget" size="5">
+    <select id="select" class="select" name="select" size="5">
     ${rHtml}
     </select>
 
@@ -123,30 +122,46 @@ function buildHtmlContent(rInstalls: string[]): string {
 
     <script type="text/javascript">
 
+    // ensure that the custom select box is only enabled when the associated
+    // radio button is checked
+    const selectWidget = document.getElementById("select");
+    const radioButtons = document.querySelectorAll("input[type='radio']");
+    const radioChooseCustom = document.getElementById("use-custom");
+
+    selectWidget.disabled = !radioChooseCustom.checked;
+    for (const radioButton of radioButtons) {
+      radioButton.addEventListener("click", function(event) {
+        selectWidget.disabled = !radioChooseCustom.checked;
+      })
+    }
+
+    // set up callbacks for OK + Cancel buttons
     const buttonOk = document.getElementById("button-ok");
     const buttonCancel = document.getElementById("button-cancel");
 
     buttonOk.addEventListener("click", function(event) {
 
-      var useDefault32 = document.getElementById("default-r-32");
+      var useDefault32 = document.getElementById("use-default-32");
       if (useDefault32.checked) {
-        return window.callbacks.useDefault32bit();
+         window.callbacks.useDefault32bit();
+         window.close();
+         return;
       }
 
-      var useDefault64 = document.getElementById("default-r-64");
+      var useDefault64 = document.getElementById("use-default-64");
       if (useDefault64.checked) {
-        return window.callbacks.useDefault64bit();
+        window.callbacks.useDefault64bit();
+        window.close();
+        return;
       }
 
-      var choose = document.getElementById("choose-r");
+      var choose = document.getElementById("use-custom");
       if (choose.checked) {
-        var selectWidget = document.getElementById("r-select-widget");
+        var selectWidget = document.getElementById("select");
         var selection = selectWidget.value;
         window.callbacks.use(selection);
+        window.close();
       }
-
-      // close when we're done
-      window.close();
 
     });
 
@@ -190,28 +205,28 @@ export async function chooseRInstallation(): Promise<string> {
 
   // load the HTML
   await dialog.loadURL(`data:text/html;charset=utf-8,${html}`);
-  dialog.webContents.openDevTools();
 
   // show the page
   dialog.show();
 
   return new Promise((resolve, reject) => {
 
-    ipcMain.on('choose-r-dialog-channel', (event, message, data) => {
+    ipcMain.on('choose-r-dialog', (event, message, data) => {
+
       switch (message) {
         
       // use default 32bit version of R
       case 'use-default-32bit': {
         const path = findDefault32Bit();
         logger().logDebug(`Using default 32-bit R (${path})`);
-        return resolve(path);
+        return resolve(`${path}/bin/i386/R.exe`);
       }
 
       // use default 64bit version of R
       case 'use-default-64bit': {
         const path = findDefault64Bit();
         logger().logDebug(`Using default 64-bit R (${path})`);
-        return resolve(path);
+        return resolve(`${path}/bin/x64/R.exe`);
       }
 
       // use selected version of R

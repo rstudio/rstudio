@@ -26,11 +26,13 @@ import { augmentCommandLineArguments, getComponentVersions, removeStaleOptionsLo
 import { exitFailure, exitSuccess, run, ProgramStatus } from './program-status';
 import { ApplicationLaunch } from './application-launch';
 import { AppState } from './app-state';
-import { prepareEnvironment } from './detect-r';
+import { prepareEnvironment, prepareEnvironmentPreflight } from './detect-r';
 import { SessionLauncher } from './session-launcher';
 import { DesktopActivation } from './activation-overlay';
 import { WindowTracker } from './window-tracker';
 import { GwtCallback } from './gwt-callback';
+import { chooseRInstallation } from './select-r';
+import { platform } from 'os';
 
 // RStudio command-line switches
 export const kRunDiagnosticsOption = '--run-diagnostics';
@@ -137,14 +139,21 @@ export class Application implements AppState {
       }
     }
 
+    // ask the user what version of R they'd like to use
+    const preflightError = await prepareEnvironmentPreflight();
+    if (preflightError) {
+      return exitFailure();
+    }
+
     // prepare the R environment
-    const error = prepareEnvironment();
-    if (error) {
+    const prepareError = prepareEnvironment();
+    if (prepareError) {
       return exitFailure();
     }
 
     // TODO: desktop pro session handling
     // TODO: 'file/project' file open handling (e.g. launch by double-clicking a .R or .Rproj file)
+    // TODO: select 32bit session for 32bit R on Windows
 
     // launch a local session
     this.sessionLauncher = new SessionLauncher(this.sessionPath, confPath, new FilePath(), this.appLaunch);
