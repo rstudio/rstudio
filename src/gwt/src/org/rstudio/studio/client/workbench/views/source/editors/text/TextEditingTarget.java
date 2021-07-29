@@ -5707,7 +5707,7 @@ public class TextEditingTarget implements
    }
    
    // for qmd files, we default to python unless there is already an
-   // r or observable chunk in the file
+   // r or ojs chunk in the file
    void onQuartoInsertChunk()
    {
       JsArrayString lines = docDisplay_.getLines();
@@ -5717,20 +5717,18 @@ public class TextEditingTarget implements
          if (match != null)
          {
             String engine = match.getGroup(1);
-            if (engine == "r")
+            Match matchName = RegexUtil.RE_RMARKDOWN_ENGINE_NAME.match(engine, 0);
+            if (matchName != null)
             {
-               onInsertChunkR();
+               onInsertChunk("```{" + matchName.getValue() + "}\n\n```\n", 1, 0);
                return;
             }
-            else if (engine == "observable")
-            {
-               onInsertChunk("```{observable}\n\n```\n", 1, 0);
-               return;
-            }
+            
          }
       }
-      // no other qualifying previous chunks, use python
-      onInsertChunkPython();   
+      
+      // no other qualifying previous chunks, use r
+      onInsertChunkR();  
    }
 
    @Handler
