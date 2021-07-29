@@ -105,14 +105,14 @@ function prepareEnvironmentImpl(): Err {
 function detectREnvironment(): Expected<REnvironment> {
 
   // scan for R
-  let [R, scanError] = scanForR();
+  const [RLocation, scanError] = scanForR();
   if (scanError) {
     showRNotFoundError();
     return err(scanError);
   }
 
   // normalize separators
-  R = path.normalize(R);
+  const R = path.normalize(RLocation);
 
   // generate small script for querying information about R
   const rQueryScript = String.raw`writeLines(c(
@@ -256,13 +256,13 @@ function scanForRWin32(): Expected<string> {
   // look for a 32-bit version of R
   const i386InstallPath = findDefaultInstallPathWin32('R');
   if (i386InstallPath && existsSync(i386InstallPath)) {
-      const rPath = `${i386InstallPath}/bin/i386/R.exe`;
-      logger().logDebug(`Using R ${rPath} (found via registry)`);
-      return ok(rPath);
+    const rPath = `${i386InstallPath}/bin/i386/R.exe`;
+    logger().logDebug(`Using R ${rPath} (found via registry)`);
+    return ok(rPath);
   }
 
   // nothing found; return empty filepath
-  logger().logDebug("Failed to discover R");
+  logger().logDebug('Failed to discover R');
   return err();
 
 }

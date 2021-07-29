@@ -18,6 +18,7 @@ import { assert } from 'chai';
 import { ElectronApplication, Page } from 'playwright';
 
 import { launch } from './int-utils';
+import { waitForConsoleReady } from './console';
 
 describe('Startup and Exit', () => {
   let electronApp: ElectronApplication;
@@ -33,13 +34,8 @@ describe('Startup and Exit', () => {
     await electronApp.close();
   });
 
-  it('Shows a window with Console tab', async function () {
-    // check that Console tab has role=tab
-    const consoleTabRole = await window.getAttribute('#rstudio_workbench_tab_console', 'role');
-    assert.equal(consoleTabRole, 'tab');
-  });
   it('Shows a window with expected main menu', async function () {
-    await window.click('#rstudio_workbench_tab_console');
+    await waitForConsoleReady(window);
 
     assert.isTrue(await electronApp.evaluate(async ({ app }): Promise<boolean> => {
       return !!app.applicationMenu?.getMenuItemById('File');
