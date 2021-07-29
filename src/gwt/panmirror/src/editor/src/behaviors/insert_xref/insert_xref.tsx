@@ -96,7 +96,7 @@ const xRefTypes = [
     type: "All Types",
     prefix: [kSecType, kFigType, kTableType, kEquationType, kListingtype, ...kTheoremTypes],
     image: (ui: EditorUI) => {
-      return ui.images.xrefs?.type_listing;
+      return ui.images.xrefs?.type_all;
     }
   },
   {

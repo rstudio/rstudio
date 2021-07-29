@@ -144,6 +144,7 @@ import figureXRefDarkImage from './images/xref/figure_dark.png';
 import theoremXRefImage from './images/xref/theorem.png';
 import theoremXRefDarkImage from './images/xref/theorem_dark.png';
 
+import allXRefInsertImage from './images/xref/insert/all.png';
 import equationXRefInsertImage from './images/xref/insert/equation.png';
 import sectionXRefInsertImage from './images/xref/insert/section.png';
 import listingXRefInsertImage from './images/xref/insert/listing.png';
@@ -286,6 +287,7 @@ export function defaultEditorUIImages(): EditorUIImages {
       equation_dark: equationXRefDarkImage,
       theorem: theoremXRefImage,
       theorem_dark: theoremXRefDarkImage,
+      type_all: allXRefInsertImage,
       type_section: sectionXRefInsertImage,
       type_equation: equationXRefInsertImage,
       type_figure: figureXRefInsertImage,

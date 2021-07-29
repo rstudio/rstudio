@@ -144,6 +144,7 @@ export interface EditorUIImages {
     theorem_dark?: string;
     figure?: string;
     figure_dark?: string;
+    type_all?: string;
     type_section?: string;
     type_figure?: string;
     type_table?: string;
