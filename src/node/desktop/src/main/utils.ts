@@ -173,7 +173,7 @@ function findBuildRootImpl(rootDir: string): string {
 
   // return the newest one
   const buildRoot = buildDirs[0].path;
-  console.log(`Using build root: ${buildRoot}`);
+  logger().logDebug(`Using build root: ${buildRoot}`);
   return buildRoot;
 
 }

@@ -267,7 +267,7 @@ const InsertXrefPanel: React.FC<InsertXrefPanelProps> = props => {
 
       // Ensure that the items are unique
       const unique = uniqBy(sorted, (xref => {
-        return `${xref.type}-${xref.id}`;
+        return `${xref.type}-${xref.id}${xref.suffix}`;
       }));
 
       setXrefs(unique);

@@ -479,6 +479,7 @@ export class SessionLauncher {
       logger().logError(err);
       this.onRSessionExited();
     });
+
     sessionProc.on('exit', (code, signal) => {
       if (code !== null) {
         logger().logDebug(`rsession exited: code=${code}`);
@@ -495,6 +496,7 @@ export class SessionLauncher {
     sessionProc.stdout?.on('data', (data) => {
       this.sessionStdout.push(data);
     });
+
     sessionProc.stderr?.on('data', (data) => {
       this.sessionStderr.push(data);
     });
