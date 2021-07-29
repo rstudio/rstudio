@@ -274,6 +274,9 @@ export interface ProsemirrorWriter {
   // log an unrecoginzed token type
   logUnrecognized(token: string): void;
 
+  // log the presence of example lists
+  logExampleList(): void;
+
   // query whether a given node type is open
   // (useful for e.g. conditional behavior when in a list or table)
   isNodeOpen(type: NodeType): boolean;

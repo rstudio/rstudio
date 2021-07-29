@@ -16,6 +16,7 @@ import { BrowserWindow, Rectangle, screen } from 'electron';
 import { describe } from 'mocha';
 import { assert } from 'chai';
 import sinon from 'sinon';
+import { createSinonStubInstanceForSandbox } from '../unit-utils';
 
 import { DesktopOptions, DesktopOptionsImpl, kDesktopOptionDefaults, clearOptionsSingleton, firstIsInsideSecond } from '../../../src/main/desktop-options';
 import { FilePath } from '../../../src/core/file-path';
@@ -143,12 +144,11 @@ describe('DesktopOptions', () => {
 
     const sandbox = sinon.createSandbox();
     sandbox.stub(screen, 'getAllDisplays').returns(displays as Display[]);
-    const testMainWindow = sandbox.createStubInstance(BrowserWindow);
+    const testMainWindow = createSinonStubInstanceForSandbox(sandbox, BrowserWindow);
     testMainWindow.setBounds.withArgs(savedWinBounds);
     testMainWindow.getSize.returns([savedWinBounds.width, savedWinBounds.height]);
     
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    DesktopOptions().restoreMainWindowBounds(testMainWindow as any);
+    DesktopOptions().restoreMainWindowBounds(testMainWindow);
 
     sandbox.assert.calledOnceWithExactly(testMainWindow.setBounds, savedWinBounds);
     sandbox.assert.calledOnce(testMainWindow.setSize);
@@ -165,7 +165,7 @@ describe('DesktopOptions', () => {
     const sandbox = sinon.createSandbox();
     sandbox.stub(screen, 'getAllDisplays').returns([]);
     sandbox.stub(screen, 'getPrimaryDisplay').returns(defaultDisplay as Display);
-    const testMainWindow = sandbox.createStubInstance(BrowserWindow);
+    const testMainWindow = createSinonStubInstanceForSandbox(sandbox, BrowserWindow);
     testMainWindow.setSize
       .withArgs(defaultWinWidth, defaultWinHeight);
     testMainWindow.getSize.returns([defaultWinWidth, defaultWinHeight]);
@@ -173,8 +173,7 @@ describe('DesktopOptions', () => {
     // Make sure some bounds are already saved
     DesktopOptions().saveWindowBounds(savedWinBounds);
     
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    DesktopOptions().restoreMainWindowBounds(testMainWindow as any);
+    DesktopOptions().restoreMainWindowBounds(testMainWindow);
 
     sandbox.assert.calledTwice(testMainWindow.setSize);
     sandbox.assert.alwaysCalledWith(testMainWindow.setSize, defaultWinWidth, defaultWinHeight);

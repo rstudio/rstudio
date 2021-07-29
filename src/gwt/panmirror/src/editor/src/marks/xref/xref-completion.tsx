@@ -196,6 +196,10 @@ const kEqType = {
     ui.prefs.darkMode() ? ui.images.omni_insert?.math_display_dark : ui.images.omni_insert?.math_display,
 };
 
+const kTableType =  {
+  image: (ui: EditorUI) => (ui.prefs.darkMode() ? ui.images.omni_insert?.table_dark : ui.images.omni_insert?.table),
+};
+
 export const kXRefTypes: { [key: string]: { image: (ui: EditorUI) => string | undefined } } = {
   h1: {
     image: (ui: EditorUI) =>
@@ -216,9 +220,8 @@ export const kXRefTypes: { [key: string]: { image: (ui: EditorUI) => string | un
   fig: {
     image: (ui: EditorUI) => (ui.prefs.darkMode() ? ui.images.omni_insert?.image_dark : ui.images.omni_insert?.image),
   },
-  tab: {
-    image: (ui: EditorUI) => (ui.prefs.darkMode() ? ui.images.omni_insert?.table_dark : ui.images.omni_insert?.table),
-  },
+  tab: kTableType,
+  tbl:kTableType,
   eq: kEqType,
   thm: kEqType,
   lem: kEqType,

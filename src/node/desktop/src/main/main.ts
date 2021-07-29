@@ -38,6 +38,17 @@ class RStudioMain {
   }
 
   private async startup(): Promise<void> {
+
+    // NOTE: On Linux it looks like Electron prefers using ANGLE for GPU rendering;
+    // however, we've seen in at least one case (Ubuntu 20.04 in Parallels VM) fails
+    // to render in that case (we just get a white screen). Prefer 'desktop' by default,
+    // but we'll need to respect the user-defined property as well.
+    if (process.platform === 'linux') {
+      if (!app.commandLine.hasSwitch('use-gl')) {
+        app.commandLine.appendSwitch('use-gl', 'desktop');
+      }
+    }
+
     const rstudio = new Application();
     setLogger(new ConsoleLogger());
     setLoggerLevel(parseCommandLineLogLevel(app.commandLine.getSwitchValue(kLogLevel), LogLevel.ERR));
@@ -56,4 +67,4 @@ class RStudioMain {
 
 // Startup
 const main = new RStudioMain();
-main.main();
+void main.main();

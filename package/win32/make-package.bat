@@ -67,6 +67,9 @@ if not "%1" == "quick" cpack -C "%CMAKE_BUILD_TYPE%" -G NSIS
 if "%CMAKE_BUILD_TYPE%" == "RelWithDebInfo" cpack -C "%CMAKE_BUILD_TYPE%" -G ZIP
 cd ..
 
+REM emit NSIS error output if present
+if exist "%BUILD_DIR%\_CPack_Packages\win64\NSIS\NSISOutput.log" type "%BUILD_DIR%\_CPack_Packages\win64\NSIS\NSISOutput.log"
+
 REM reset modified environment variables (PATH)
 endlocal
 goto :EOF

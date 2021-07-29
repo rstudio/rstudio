@@ -20,7 +20,7 @@ import fs from 'fs';
 import { logger } from '../core/logger';
 import { FilePath } from '../core/file-path';
 import { generateShortenedUuid, localPeer } from '../core/system';
-import { Err, Success } from '../core/err';
+import { Err, success } from '../core/err';
 import { getenv, setenv } from '../core/environment';
 import { renderTemplateFile } from '../core/template-filter';
 import { readStringArrayFromFile } from '../core/file-serializer';
@@ -202,9 +202,7 @@ export class SessionLauncher {
       this.mainWindow.loadUrl(launchContext.url);
     }
 
-    // TODO
-    // qApp->setQuitOnLastWindowClosed(true);
-    return Success();
+    return success();
   }
 
   closeAllSatellites(): void {
@@ -241,7 +239,10 @@ export class SessionLauncher {
         logFile = log.getAbsolutePath();
 
         // Read all the lines from a file into a string vector
-        const lines = await readStringArrayFromFile(log);
+        const [lines, error] = await readStringArrayFromFile(log);
+        if (error) {
+          throw error;
+        }
 
         // Combine the three most recent lines
         let logContents = '';
@@ -332,7 +333,7 @@ export class SessionLauncher {
       if (!this.mainWindow?.workbenchInitialized) {
         // If the R session exited without initializing the workbench, treat it as
         // a boot failure.
-        this.showLaunchErrorPage();
+        void this.showLaunchErrorPage();
       }
 
       // quit and exit means close the main window

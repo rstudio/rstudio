@@ -16,7 +16,7 @@
 import path from 'path';
 import os from 'os';
 
-import { createStubInstance, StubbableType, SinonStubbedInstance, SinonStubbedMember } from 'sinon';
+import { createStubInstance, StubbableType, SinonStubbedInstance, SinonStubbedMember, SinonSandbox } from 'sinon';
 import { FilePath } from '../../src/core/file-path';
 
 export function randomString(): string {
@@ -58,6 +58,16 @@ export function createSinonStubInstance<T>(
   const stub = createStubInstance<T>(constructor, overrides);
   return stub as unknown as StubbedClass<T>;
 }
+
+export function createSinonStubInstanceForSandbox<T>(
+  sandbox: SinonSandbox,
+  constructor: StubbableType<T>,
+  overrides?: { [K in keyof T]?: SinonStubbedMember<T[K]> },
+): StubbedClass<T> {
+  const stub = sandbox.createStubInstance<T>(constructor, overrides);
+  return stub as unknown as StubbedClass<T>;
+}
+
 
 /**
  * Creates a random directory name located inside the temp directory

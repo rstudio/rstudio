@@ -19,8 +19,16 @@
 * Log files will now rotate by time in addition to the existing rotation by file size. This can be controlled by the `rotate-days` parameter in `logging.conf`.
 * For more information, see section 2 of the Admin Guide.
 
-### Internal Database
+### RStudio Workbench
+
+* Load-balancing configuration is now automatic and doesn't require editing config files (Pro #2167)
+* Added AWS Cognito support to OpenID integration (Pro #2313)
+* Add file uploads and downloads to session audit log (Pro #2226)
+* RStudio Workbench can now run without root access in a single-user mode (Pro #9496)
+* Updated embedded nginx in Server Pro to 1.20.1 (Pro #2676)
 * Use separate database schema for open source RStudio Server instances (`rstudio-os`) and RStudio Workbench instances (`rstudio`) to avoid conflicts (Pro #2725)
+* Prevent user preferences from setting CRAN repos when `allow-cran-repos-edit=0` (Pro #1301)
+* Ensure that improperly configured `launcher-sessions-callback-address` values can't hang user sessions (Pro #2532)
 
 ### Bugfixes
 
@@ -34,18 +42,22 @@
 * Fixed issue where busy sessions can't be interrupted and block basic file operations (#2038)
 * Fixed issue where R Markdown error output was not properly formatted when displayed (#9390)
 * Fixed issue where R Markdown template skeletons with a '.rmd' extension were not discovered (Pro #1607)
+* Fixed issue where autocompletion system could emit errors with R (< 3.3.0). (Pro #2680)
 * Fixed issues causing multiple background jobs to be created when running Shiny applications in the background (#8746, #6904)
 * Fixed issue causing an error when adding files to static content published to RStudio Connect (#9571)
 * Fixed issue where R banner could be displayed twice on startup (#6907)
+* Fixed issue where RStudio was unable to initialize a Git repository in UNC paths on Windows (#4137)
 * Removed the breaking change introduced in Juliet Rose that changed the behavior of the X-Forwarded-Proto header when RSW is behind a proxy server (Pro #2657)
 * Fixed issue where adjacent links in the Visual Editor could merge into a single link (#8471)
 * Fixed Issue where items deleted from a local Zotero Collection would still appear in the Visual Editor's Insert Citation dialog.
+* Fixed issue where Console width was computed incorrectly with some custom fonts (#8696)
 
 ### Misc
 
 * **BREAKING:** RStudio Desktop Pro only supports activation with license files (Pro #2300)
 * **BREAKING:** The `session-env-var-save-blacklist` option has been renamed to `session-ephemeral-env-vars`.
 * **BREAKING:** The `directory-view-whitelist` option has been renamed to `directory-view-allow-list`.
+* Update bundled Pandoc to version 2.14.1 
 * Fixed an issue where scroll position in PDFs was not preserved on re-render (#9603)
 * Support highlight of 'css' and 'asis' chunks in R Markdown documents (#4821)
 * Improved ordering of completion results within `library()` calls (#9293)
@@ -57,11 +69,7 @@
 * Improved display of R stack traces in R functions invoked internally by RStudio (#9307)
 * High DPI ("Retina") plots are now supported on RStudio Server (#3896)
 * The "auto-detect indentation" preference is now off by default (#9211) 
-* Prevent user preferences from setting CRAN repos when `allow-cran-repos-edit=0` (Pro #1301)
 * Make the *Use renv with this project* option sticky, and allow setting by admins (Pro #2671)
-* Updated embedded nginx in Server Pro to 1.20.1 (Pro #2676)
-* Added AWS Cognito support to openid integration (Pro #2313)
-* Add file uploads and downloads to session audit log (Pro #2226)
 * RStudio no longer treats R objects containing null external pointers specially when building Environment pane (#5546)
 * Make Cmd+Shift+0 the shortcut for restarting session on MacOS (#7695)
-* RStudio Workbench can now run without root access in a single-user mode (Pro #9496)
+* Update Plumber file template for Plumber 1.0 (#9402)

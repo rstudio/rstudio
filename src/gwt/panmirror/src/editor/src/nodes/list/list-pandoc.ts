@@ -76,6 +76,15 @@ export function readPandocList(nodeType: NodeType, capabilities: ListCapabilitie
 
   const listItemNodeType = schema.nodes.list_item;
   return (writer: ProsemirrorWriter, tok: PandocToken) => {
+
+    // determine if this is an example list and log if it is
+    if ((nodeType === schema.nodes.ordered_list) && capabilities.fancy) {
+      const style = tok.c[LIST_ATTRIBS][LIST_ATTRIB_NUMBER_STYLE].t;
+      if (style === ListNumberStyle.Example) {
+        writer.logExampleList();
+      }
+    }
+    
     const children = getChildren(tok);
     const attrs = getAttrs(tok);
     attrs.tight = children.length && children[0].length && children[0][0].t === 'Plain';

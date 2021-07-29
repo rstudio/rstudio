@@ -16,10 +16,10 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 
-import { Err, isFailure, isSuccessful, Success } from '../../../src/core/err';
+import { Err, isFailure, isSuccessful, success } from '../../../src/core/err';
 
 function beSuccessful(): Err {
-  return Success();
+  return success();
 }
 
 function beUnsuccessful(): Err {
@@ -28,15 +28,15 @@ function beUnsuccessful(): Err {
 
 describe('Err', () => {
   it('Success return should be falsy', () => {
-    assert.isTrue(beSuccessful() === Success());
+    assert.isTrue(beSuccessful() === success());
     assert.isNull(beSuccessful());
   });
   it('Error return should be truthy', () => {
-    assert.isTrue(beUnsuccessful() !== Success());
+    assert.isTrue(beUnsuccessful() !== success());
     assert.instanceOf(beUnsuccessful(), Error);
   });
   it('isSuccessful returns true for success', () => {
-    const result: Err = Success();
+    const result: Err = success();
     assert.isTrue(isSuccessful(result));
   });
   it('isSuccessful returns false for failure', () => {
@@ -48,7 +48,7 @@ describe('Err', () => {
     assert.isTrue(isFailure(result));
   });
   it('isFailure returns false for success', () => {
-    const result: Err = Success();
+    const result: Err = success();
     assert.isFalse(isFailure(result));
   });
 });

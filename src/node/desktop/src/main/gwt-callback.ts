@@ -24,6 +24,7 @@ import EventEmitter from 'events';
 
 import { logger } from '../core/logger';
 import { FilePath } from '../core/file-path';
+import { isCentOS } from '../core/system';
 
 import { PendingWindow } from './pending-window';
 import { MainWindow } from './main-window';
@@ -57,7 +58,7 @@ export class GwtCallback extends EventEmitter {
       GwtCallback.unimpl('desktop_browser_url');
     });
 
-    ipcMain.handle('desktop_get_open_file_name', (event, caption: string, label: string,
+    ipcMain.handle('desktop_get_open_file_name', async (event, caption: string, label: string,
       dir: string, filter: string, canChooseDirectories: boolean, focusOwner: boolean
     ) => {
       // TODO: apply filter
@@ -258,7 +259,7 @@ export class GwtCallback extends EventEmitter {
       return false;
     });
 
-    ipcMain.handle('desktop_show_message_box', (event, type, caption, message, buttons, defaultButton, cancelButton) => {
+    ipcMain.handle('desktop_show_message_box', async (event, type, caption, message, buttons, defaultButton, cancelButton) => {
       const openDialogOptions: MessageBoxOptions =
       {
         type: this.convertMessageBoxType(type),
@@ -488,7 +489,7 @@ export class GwtCallback extends EventEmitter {
     ipcMain.on('desktop_reload_viewer_zoom_window', (event, url) => {
       const browser = appState().windowTracker.getWindow('_rstudio_viewer_zoom');
       if (browser) {
-        browser.window.webContents.loadURL(url);
+        void browser.window.webContents.loadURL(url);
       }
     });
 
@@ -502,13 +503,11 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.handle('desktop_is_macos', () => {
-      // TODO
-      return true;
+      return process.platform === 'darwin';
     });
 
     ipcMain.handle('desktop_is_centos', () => {
-      // TODO
-      return false;
+      return isCentOS();
     });
 
     ipcMain.on('desktop_set_busy', (event, busy) => {
@@ -603,12 +602,12 @@ export class GwtCallback extends EventEmitter {
 
     const focusedWindow = BrowserWindow.getFocusedWindow();
     if (focusedWindow) {
-      dialog.showMessageBox(focusedWindow, {
+      void dialog.showMessageBox(focusedWindow, {
         title: 'Unimplemented',
         message: `${ipcName} callback NYI`
       });
     } else {
-      dialog.showMessageBox({
+      void dialog.showMessageBox({
         title: 'Unimplemented',
         message: `${ipcName} callback NYI`
       });

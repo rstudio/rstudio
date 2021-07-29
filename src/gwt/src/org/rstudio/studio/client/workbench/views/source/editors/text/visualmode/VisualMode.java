@@ -527,6 +527,14 @@ public class VisualMode implements VisualModeEditorSync,
                         allDone.execute(false);
                         return;
                      }
+                     
+                     // if we have example lists then don't switdch
+                     if (result.example_lists)
+                     {
+                        view_.showWarningBar("Unable to activate visual mode (document contains example lists which are not currently supported)");
+                        allDone.execute(false);
+                        return;
+                     }
 
                      // clear progress (for possible dialog overlays created by confirmation)
                      progress_.endProgressOperation();

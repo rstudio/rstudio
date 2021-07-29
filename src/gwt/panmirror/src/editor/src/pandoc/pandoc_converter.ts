@@ -45,6 +45,7 @@ export interface PandocToProsemirrorResult {
   doc: ProsemirrorNode;
   line_wrapping: PandocLineWrapping;
   unrecognized: string[];
+  example_lists: boolean;
   unparsed_meta: { [key: string]: any };
 }
 

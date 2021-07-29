@@ -16,7 +16,7 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 
-import { generateRandomPort, generateShortenedUuid, generateUuid } from '../../../src/core/system';
+import { generateRandomPort, generateShortenedUuid, generateUuid, isCentOS } from '../../../src/core/system';
 
 describe('System', () => {
   it('generateUuid returns uuid string with dashes', () => {
@@ -39,5 +39,16 @@ describe('System', () => {
     assert.notEqual(port1, port2);
     assert.isAbove(port1, 0);
     assert.isAbove(port2, 0);
+  });
+  it('isCentOS returns reasonable result on this platform', () => {
+    // Can't fully test this without reimplementing it here; but we can make sure it
+    // is in the ballpark!
+    const centOS = isCentOS();
+    if (centOS) {
+      assert.isTrue(process.platform === 'linux');
+    }
+    if (process.platform !== 'linux') {
+      assert.isFalse(centOS);
+    }
   });
 });

@@ -220,7 +220,7 @@ export class MenuCallback extends EventEmitter {
     }
   }
 
-  getMenuItemById(id: string): MenuItem {
+  getMenuItemById(id: string): MenuItem | undefined {
     return this.actions.get(id);
   }
 

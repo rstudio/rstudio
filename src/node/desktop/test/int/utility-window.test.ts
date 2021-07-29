@@ -1,5 +1,5 @@
 /*
- * startup-fail-session.test.ts
+ * utility-window.test.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -17,15 +17,15 @@ import { describe } from 'mocha';
 import { assert } from 'chai';
 import { ElectronApplication, Page } from 'playwright';
 
-import { launch } from './int-utils';
+import { getWindowTitles, launch, setTimeoutPromise } from './int-utils';
 
-describe('Startup With Failing RSession', () => {
+
+describe('Display secondary utility windows', () => {
   let electronApp: ElectronApplication;
   let window: Page;
 
   beforeEach(async () => {
-    // tell the rsession to immediately terminate with exit code of 1
-    electronApp = await launch(['--session-exit-code=1']);
+    electronApp = await launch();
     window = await electronApp.firstWindow();
     window.setDefaultTimeout(5000);
   });
@@ -34,9 +34,21 @@ describe('Startup With Failing RSession', () => {
     await electronApp.close();
   });
 
-  it('Shows launch failure page if session fails to launch', async function () {
-    // check that page is loaded with H1 containing "Error Starting R"
-    const h1 = await window.innerText('h1');
-    assert.equal(h1, 'Error Starting R');
+  it('Shows GPU utility window', async function () {
+    await window.click('#rstudio_workbench_tab_console');
+    await window.type('#rstudio_console_input', '.rs.api.executeCommand(\'showGpuDiagnostics\')');
+    await window.press('#rstudio_console_input', 'Enter');
+    await setTimeoutPromise(500);
+    const windows = electronApp.windows();
+    assert.equal(windows.length, 2);
+    const titles = await getWindowTitles(electronApp);
+    let found = false;
+    for (const title of titles) {
+      if (title === 'chrome://gpu') {
+        found = true;
+        break;
+      }
+    }
+    assert.isTrue(found);
   });
 });

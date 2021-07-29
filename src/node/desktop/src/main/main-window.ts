@@ -251,12 +251,12 @@ export class MainWindow extends GwtWindow {
         const pendingWindow = this.pendingWindows.pop();
         if (pendingWindow) {
           const newWindow = this.createWindow(pendingWindow.width, pendingWindow.height);
-          newWindow.loadURL(url);
+          void newWindow.loadURL(url);
           newWindow.webContents.openDevTools();
         }
       });
 
-    this.window.loadURL(url);
+    void this.window.loadURL(url);
   }
 
   quit(): void {

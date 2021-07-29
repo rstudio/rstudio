@@ -111,6 +111,11 @@ else()
             message(STATUS "Unable to locate R home (not written to registry)")
          endif()
 
+         # make sure path exists
+         if (NOT EXISTS "${LIBR_HOME}")
+            message(STATUS "Path to R found in registry '${LIBR_HOME}' doesn't exist")
+         endif()
+
       endif()
 
       # set other R paths based on home path
