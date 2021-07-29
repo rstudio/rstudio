@@ -204,7 +204,7 @@ const extension = (context: ExtensionContext): Extension | null => {
                   const xref = schema.text(key, [schema.marks.cite_id.create()]);
 
                   // If there is a custom prefix, create a full cite
-                  if (prefix !== undefined) {
+                  if (prefix !== undefined || key.startsWith('-')) {
                     const start = tr.selection.from;
                     const wrapperText = schema.text('[]');
                     tr.replaceSelectionWith(wrapperText);
@@ -213,8 +213,9 @@ const extension = (context: ExtensionContext): Extension | null => {
                     setTextSelection(tr.selection.from - 1)(tr);
 
                     // Insert the prefix
-                    tr.insertText(`${prefix} `, tr.selection.from);
-
+                    if (prefix !== undefined) {
+                      tr.insertText(`${prefix} `, tr.selection.from);
+                    }
 
                     // Insert the xref
                     tr.insert(tr.selection.from, xref);
