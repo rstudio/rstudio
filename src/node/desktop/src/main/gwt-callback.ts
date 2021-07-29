@@ -24,6 +24,7 @@ import EventEmitter from 'events';
 
 import { logger } from '../core/logger';
 import { FilePath } from '../core/file-path';
+import { isCentOS } from '../core/system';
 
 import { PendingWindow } from './pending-window';
 import { MainWindow } from './main-window';
@@ -502,13 +503,11 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.handle('desktop_is_macos', () => {
-      // TODO
-      return true;
+      return process.platform === 'darwin';
     });
 
     ipcMain.handle('desktop_is_centos', () => {
-      // TODO
-      return false;
+      return isCentOS();
     });
 
     ipcMain.on('desktop_set_busy', (event, busy) => {
