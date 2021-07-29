@@ -26,7 +26,7 @@ contextBridge.exposeInMainWorld('callbacks', {
   },
 
   use: (version: string) => {
-    ipcRenderer.send('choose-r-dialog', 'use', version);
+    ipcRenderer.send('choose-r-dialog', 'use-custom', version);
   },
 
   cancel: () => {

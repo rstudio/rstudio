@@ -258,7 +258,6 @@ export function findRInstallationsWin32() {
     }
   }
 
-  logger().logDebug(JSON.stringify(rInstallations, null, 2));
   return rInstallations;
 
 }

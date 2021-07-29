@@ -21,13 +21,25 @@ import { findDefault32Bit, findDefault64Bit, findRInstallationsWin32 } from './d
 
 function buildHtmlContent(rInstalls: string[]): string {
 
+  const visitedInstallations: { [index: string]: boolean } = {};
   const rListEntries: string[] = [];
+
+  // sort so that newer versions are shown first
+  rInstalls.sort((lhs, rhs) => {
+    return rhs.localeCompare(lhs);
+  });
 
   // make the HTML for each installation entry
   rInstalls.forEach(rInstall => {
 
     // normalize separators, etc
-    rInstall = path.normalize(rInstall);
+    rInstall = path.normalize(rInstall).replaceAll(/[/\\]+$/g, '');
+
+    // skip if we've already seen this
+    if (visitedInstallations[rInstall]) {
+      return;
+    }
+    visitedInstallations[rInstall] = true;
 
     // check for 64 bit executable
     const r64 = `${rInstall}/bin/x64/R.exe`;
@@ -36,6 +48,7 @@ function buildHtmlContent(rInstalls: string[]): string {
       rListEntries.push(html);
     }
 
+    // check for 32 bit executable
     const r32 = `${rInstall}/bin/i386/R.exe`;
     if (existsSync(r32)) {
       const html = `<option value="${r32}">[32-bit] ${rInstall}</option>`;
@@ -45,7 +58,7 @@ function buildHtmlContent(rInstalls: string[]): string {
   });
 
   // collapse into single HTML string
-  const rHtml = `<table class="r-table">${rListEntries.join('')}</table>`;
+  const rOptionsHtml = rListEntries.join('');
 
   return String.raw`<!DOCTYPE html>
 <html>
@@ -112,7 +125,7 @@ function buildHtmlContent(rInstalls: string[]): string {
     </div>
 
     <select id="select" class="select" name="select" size="5">
-    ${rHtml}
+    ${rOptionsHtml}
     </select>
 
     <div class="footer">
@@ -230,7 +243,7 @@ export async function chooseRInstallation(): Promise<string> {
       }
 
       // use selected version of R
-      case 'use': {
+      case 'use-custom': {
         logger().logDebug(`Using user-selected version of R (${data})`);
         return resolve(data);
       }
