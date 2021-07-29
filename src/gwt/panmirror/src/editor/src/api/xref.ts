@@ -48,7 +48,7 @@ export function xrefKey(xref: XRef, xrefType?: XRefType) {
   if (xrefType === "quarto") {
     // Quarto keys are merely type-id
     if (xref.suffix) {
-      return `${xref.type}-${xref.id}-${xref.suffix}`;
+      return `${xref.type}-${xref.id}${xref.suffix}`;
     } else {
       return `${xref.type}-${xref.id}`;
     }
