@@ -25,8 +25,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.FontSizer;
 
 /**
- * Contains colors to theme the terminal with (ITheme).
- * https://github.com/xtermjs/xterm.js/blob/4.7.0/typings/xterm.d.ts
+ * xterm.js ITheme
  */
 @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
 public class XTermTheme
