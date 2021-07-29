@@ -29,6 +29,7 @@
 * Use separate database schema for open source RStudio Server instances (`rstudio-os`) and RStudio Workbench instances (`rstudio`) to avoid conflicts (Pro #2725)
 * Prevent user preferences from setting CRAN repos when `allow-cran-repos-edit=0` (Pro #1301)
 * Ensure that improperly configured `launcher-sessions-callback-address` values can't hang user sessions (Pro #2532)
+* Support username aliases, where two usernames map to the same uid (Pro #2736)
 
 ### Bugfixes
 
@@ -51,6 +52,7 @@
 * Fixed issue where adjacent links in the Visual Editor could merge into a single link (#8471)
 * Fixed Issue where items deleted from a local Zotero Collection would still appear in the Visual Editor's Insert Citation dialog.
 * Fixed issue where Console width was computed incorrectly with some custom fonts (#8696)
+* Fixed two 502 errors with load balancing: quick session restart, and failover for non-launcher sessions (Pro #2696)
 
 ### Misc
 
@@ -73,3 +75,4 @@
 * RStudio no longer treats R objects containing null external pointers specially when building Environment pane (#5546)
 * Make Cmd+Shift+0 the shortcut for restarting session on MacOS (#7695)
 * Update Plumber file template for Plumber 1.0 (#9402)
+* Support creating supplemental groups when create-container-user=1 (Pro #2276)
