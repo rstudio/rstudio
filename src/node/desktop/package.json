@@ -46,7 +46,7 @@
     "watch": "tsc -w",
     "package": "yarn run build && electron-packager ./ --prune --package-manager=yarn --out=./package --overwrite --ignore tsconfig.tsbuildinfo",
     "lint": "eslint ./src ./test",
-    "start": "yarn run build && electron --trace-warnings --log-level=debug ./dist/src/main/main.js",
+    "start": "yarn run build && electron --trace-warnings ./dist/src/main/main.js",
     "start-diag": "yarn run build && electron --trace-warnings ./dist/src/main/main.js --run-diagnostics",
     "show-version": "yarn run build && electron ./dist/src/main/main.js --version-json",
     "test": "electron-mocha -c --config ./test/unit/mocharc.json",

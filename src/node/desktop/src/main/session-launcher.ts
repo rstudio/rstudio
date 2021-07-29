@@ -383,7 +383,6 @@ export class SessionLauncher {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   launchNextSession(reload: boolean): Err {
 
     // unset the initial project environment variable it this doesn't

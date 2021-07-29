@@ -211,7 +211,7 @@ export function findComponents(): [FilePath, FilePath, FilePath] {
   // some primitive scanning for common developer workflows
   let buildRoot = getenv('RSTUDIO_CPP_BUILD_OUTPUT');
   if (buildRoot && !existsSync(buildRoot)) {
-    console.log(`RSTUDIO_CPP_BUILD_OUTPUT is set (${buildRoot}) but does not exist`);
+    logger().logDebug(`RSTUDIO_CPP_BUILD_OUTPUT is set (${buildRoot}) but does not exist`);
     buildRoot = '';
   }
 

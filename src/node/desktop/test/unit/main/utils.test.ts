@@ -20,6 +20,8 @@ import { app } from 'electron';
 
 import { FilePath } from '../../../src/core/file-path';
 import { getenv, setenv, unsetenv } from '../../../src/core/environment';
+import { clearCoreSingleton } from '../../../src/core/core-state';
+import { NullLogger, setLogger } from '../../../src/core/logger';
 
 import * as Utils from '../../../src/main/utils';
 import { userHomePath } from '../../../src/core/user';
@@ -31,6 +33,9 @@ describe('Utils', () => {
 
   beforeEach(() => {
     saveAndClear(envVars);
+    clearCoreSingleton();
+    const f = new NullLogger();
+    setLogger(f);
   });
 
   afterEach(() => {
