@@ -22,6 +22,13 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 
 public class QuartoHelper
 {
+   public static boolean isQuartoWebsiteConfig(QuartoConfig config)
+   {
+      return config.is_project &&
+            (config.project_type == SessionInfo.QUARTO_PROJECT_TYPE_SITE ||
+            config.project_type == SessionInfo.QUARTO_PROJECT_TYPE_BOOK);
+   }
+   
    public static boolean isQuartoWebsiteDoc(String qmd, QuartoConfig config)
    {
       // Determine whether or not this Quarto file is part of a website; we
@@ -30,9 +37,7 @@ public class QuartoHelper
       boolean isWebsite = false;
       if (!StringUtil.isNullOrEmpty(qmd))
       {
-         if (config.is_project &&
-            (config.project_type == SessionInfo.QUARTO_PROJECT_TYPE_SITE ||
-               config.project_type == SessionInfo.QUARTO_PROJECT_TYPE_BOOK))
+         if (isQuartoWebsiteConfig(config))
          {
             FileSystemItem projectDir = FileSystemItem.createDir(config.project_dir);
             FileSystemItem qmdFile = FileSystemItem.createFile(qmd);
