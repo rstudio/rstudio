@@ -1,5 +1,5 @@
 /*
- * utility-window.test.ts
+ * session-restart.test.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -14,14 +14,13 @@
  */
 
 import { describe } from 'mocha';
-import { assert } from 'chai';
 import { ElectronApplication, Page } from 'playwright';
 
-import { getWindowTitles, launch, setTimeoutPromise } from './int-utils';
-import { typeConsoleCommand } from './console';
+import { launch } from './int-utils';
+import { clearConsole, typeConsoleCommand } from './console';
 
 
-describe('Display secondary utility windows', () => {
+describe('Session restart scenarios', () => {
   let electronApp: ElectronApplication;
   let window: Page;
 
@@ -35,19 +34,11 @@ describe('Display secondary utility windows', () => {
     await electronApp.close();
   });
 
-  it('Shows GPU utility window', async function () {
-    await typeConsoleCommand(window, '.rs.api.executeCommand(\'showGpuDiagnostics\')');
-    await setTimeoutPromise(500); // TODO: yuck, find a better way to do this
-    const windows = electronApp.windows();
-    assert.equal(windows.length, 2);
-    const titles = await getWindowTitles(electronApp);
-    let found = false;
-    for (const title of titles) {
-      if (title === 'chrome://gpu') {
-        found = true;
-        break;
-      }
-    }
-    assert.isTrue(found);
+  it('Restart current session', async function () {
+    await clearConsole(window);
+    await typeConsoleCommand(window, '.rs.api.executeCommand(\'restartR\')');
+
+    // TODO: figure out how to assert that 'Restarting R session...' is present in 
+    // the console output
   });
 });
