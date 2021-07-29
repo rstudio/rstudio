@@ -209,6 +209,41 @@ function scanForRPosix(): Expected<string> {
 
 }
 
+export function findRInstallationsWin32() {
+
+  const rInstallations : string[] = [];
+
+  // list all installed versions from registry
+  const keyName = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\R-Core';
+  const regQueryCommand = `reg query ${keyName} /s /v InstallPath`;
+  const [output, error] = executeCommand(regQueryCommand);
+  if (error) {
+    logger().logError(error);
+    return rInstallations;
+  }
+
+  // parse the actual path from the output
+  const lines = output.split(EOL);
+  for (const line of lines) {
+    const match = /^\s*InstallPath\s*REG_SZ\s*(.*)$/.exec(line);
+    if (match != null) {
+      const rInstallation = match[1];
+      if (isValidInstallationWin32(rInstallation)) {
+        rInstallations.push(rInstallation);
+      }
+    }
+  }
+
+  logger().logDebug(JSON.stringify(rInstallations, null, 2));
+  return rInstallations;
+
+}
+
+function isValidInstallationWin32(installPath: string): boolean {
+  const rBinPath = path.normalize(`${installPath}/bin/R.exe`);
+  return existsSync(rBinPath);
+}
+
 function findDefaultInstallPathWin32(version: string): string {
 
   // query registry for R install path
@@ -265,4 +300,12 @@ function scanForRWin32(): Expected<string> {
   logger().logDebug('Failed to discover R');
   return err();
 
+}
+
+export function findDefault32Bit() {
+  return findDefaultInstallPathWin32('R');
+}
+
+export function findDefault64Bit() {
+  return findDefaultInstallPathWin32('R64');
 }

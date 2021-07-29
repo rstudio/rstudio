@@ -66,6 +66,7 @@ export class Application implements AppState {
    * Startup code run before app 'ready' event.
    */
   async beforeAppReady(): Promise<ProgramStatus> {
+
     const status = this.initCommandLine(process.argv);
     if (status.exit) {
       return status;
@@ -136,6 +137,7 @@ export class Application implements AppState {
       }
     }
 
+    // prepare the R environment
     const error = prepareEnvironment();
     if (error) {
       return exitFailure();
