@@ -26,6 +26,10 @@ export abstract class ModalWindow<T> extends BrowserWindow {
   constructor(widgetDir: string) {
     
     super({
+      minWidth: 400,
+      minHeight: 400,
+      width: 400,
+      height: 400,
       show: false,
       webPreferences: {
         preload: path.join(widgetDir, 'preload.js'),
@@ -40,6 +44,7 @@ export abstract class ModalWindow<T> extends BrowserWindow {
     this.setMinimizable(false);
     this.setMaximizable(false);
     this.setFullScreenable(false);
+
 
   }
 

@@ -15,7 +15,7 @@
 
 import path from 'path';
 
-import { execSync } from 'child_process';
+import { execSync, spawnSync } from 'child_process';
 import { dialog } from 'electron';
 import { existsSync } from 'fs';
 import { EOL } from 'os';
@@ -133,14 +133,11 @@ function prepareEnvironmentImpl(): Err {
 function detectREnvironment(): Expected<REnvironment> {
 
   // scan for R
-  const [RLocation, scanError] = scanForR();
+  const [R, scanError] = scanForR();
   if (scanError) {
     showRNotFoundError();
     return err(scanError);
   }
-
-  // normalize separators
-  const R = path.normalize(RLocation);
 
   // generate small script for querying information about R
   const rQueryScript = String.raw`writeLines(c(
@@ -152,10 +149,14 @@ function detectREnvironment(): Expected<REnvironment> {
   Sys.getenv("${kLdLibraryPathVariable}")
 ))`;
 
-  const rQueryResult = execSync(`${R} --vanilla -s`, {
+  const result = spawnSync(R, ['--vanilla', '-s'], {
     encoding: 'utf-8',
     input: rQueryScript,
   });
+  
+  if (result.error) {
+    return err(result.error);
+  }
 
   // unwrap query results
   const [
@@ -165,10 +166,10 @@ function detectREnvironment(): Expected<REnvironment> {
     rIncludeDir,
     rShareDir,
     rLdLibraryPath,
-  ] = rQueryResult.split(EOL);
+  ] = result.stdout.split(EOL);
 
   // put it all together
-  const result = {
+  return ok({
     rScriptPath: R,
     version: rVersion,
     envVars: {
@@ -178,9 +179,7 @@ function detectREnvironment(): Expected<REnvironment> {
       R_SHARE_DIR:   rShareDir,
     },
     ldLibraryPath: rLdLibraryPath,
-  };
-
-  return ok(result);
+  });
 
 }
 
@@ -235,7 +234,7 @@ function scanForRPosix(): Expected<string> {
 
 }
 
-export function findRInstallationsWin32() {
+function findRInstallationsWin32() {
 
   const rInstallations : string[] = [];
 
@@ -327,10 +326,10 @@ function scanForRWin32(): Expected<string> {
 
 }
 
-export function findDefault32Bit() {
+export function findDefault32Bit(): string {
   return findDefaultInstallPathWin32('R');
 }
 
-export function findDefault64Bit() {
+export function findDefault64Bit(): string {
   return findDefaultInstallPathWin32('R64');
 }
