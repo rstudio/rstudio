@@ -13,7 +13,7 @@
  *
  */
 
-import { BrowserWindow, ipcMain } from 'electron';
+import { BrowserWindow } from 'electron';
 import { existsSync, readFileSync } from 'fs';
 import path from 'path';
 import { err, Expected, ok } from '../core/expected';

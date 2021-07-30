@@ -30,9 +30,6 @@ export class ChooseRModalWindow extends ModalWindow<string> {
 
   async onShowModal(): Promise<string> {
 
-    // for debugging
-    this.webContents.openDevTools();
-
     // initialize the select widget
     this.webContents.send('initialize', this.rInstalls);
 
