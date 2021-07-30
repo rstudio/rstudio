@@ -31,7 +31,7 @@ import { MainWindow } from './main-window';
 import { GwtWindow } from './gwt-window';
 import { openMinimalWindow } from './minimal-window';
 import { appState } from './app-state';
-import { resolveAliasedPath } from './utils';
+import { filterFromQFileDialogFilter, resolveAliasedPath } from './utils';
 
 export enum PendingQuit {
   PendingQuitNone,
@@ -61,15 +61,29 @@ export class GwtCallback extends EventEmitter {
     ipcMain.handle('desktop_get_open_file_name', async (event, caption: string, label: string,
       dir: string, filter: string, canChooseDirectories: boolean, focusOwner: boolean
     ) => {
-      // TODO: apply filter
       const openDialogOptions: OpenDialogOptions = {
-        properties: [canChooseDirectories ? 'openDirectory' : 'openFile'],
         title: caption,
         defaultPath: dir,
         buttonLabel: label,
       };
 
-      const focusedWindow = BrowserWindow.getFocusedWindow();
+      openDialogOptions.properties = ['openFile'];
+
+      // FileOpen dialog can't be both a file opener and a directory opener on Windows
+      // and Linux; so prefer the file opener (selecting a directory will just navigate into it
+      // without selecting it.
+      if (canChooseDirectories && process.platform === 'darwin') {
+        openDialogOptions.properties.push('openDirectory');
+      }
+
+      if (filter) {
+        openDialogOptions.filters = filterFromQFileDialogFilter(filter);
+      }
+
+      let focusedWindow = BrowserWindow.getFocusedWindow();
+      if (focusOwner) {
+        focusedWindow = this.getSender('desktop_open_minimal_window', event.processId, event.frameId).window;
+      }
       if (focusedWindow) {
         return dialog.showOpenDialog(focusedWindow, openDialogOptions);
       } else {

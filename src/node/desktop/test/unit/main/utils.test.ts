@@ -25,6 +25,7 @@ import { NullLogger, setLogger } from '../../../src/core/logger';
 
 import * as Utils from '../../../src/main/utils';
 import { userHomePath } from '../../../src/core/user';
+import { FileFilter } from 'electron/main';
 
 describe('Utils', () => {
   const envVars: Record<string, string> = {
@@ -111,5 +112,26 @@ describe('Utils', () => {
     assert.isAtLeast(resultStr.length, start.length);
     assert.notEqual(resultStr.charAt(0), '~');
     assert.isAbove(resultStr.lastIndexOf('/foo/bar'), -1);
+  });
+  it('filterFromQFileDialogFilter converts file filter with one extension', () => {
+    const input = 'R Projects (*.Rproj)';
+    const expected: FileFilter[] = [{ name: 'R Projects', extensions: ['Rproj'] }];
+    const result = Utils.filterFromQFileDialogFilter(input);
+    assert.deepEqual(expected, result);
+  });
+  it('filterFromQFileDialogFilter converts file filter with multiple extensions', () => {
+    const input = 'Theme Files (*.tmTheme *.rstheme)';
+    const expected: FileFilter[] = [{ name: 'Theme Files', extensions: ['tmTheme', 'rstheme'] }];
+    const result = Utils.filterFromQFileDialogFilter(input);
+    assert.deepEqual(expected, result);
+  });
+  it('filterFromQFileDialogFilter converts file filter with file types', () => {
+    const input = 'Images (*.png *.xpm *.jpg);;Text files (*.txt);;XML files (*.xml)';
+    const expected: FileFilter[] = [
+      { name: 'Images', extensions: ['png', 'xpm', 'jpg'] },
+      { name: 'Text files', extensions: ['txt'] },
+      { name: 'XML files', extensions: ['xml']} ];
+    const result = Utils.filterFromQFileDialogFilter(input);
+    assert.deepEqual(expected, result);
   });
 });
