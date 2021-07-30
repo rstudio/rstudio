@@ -96,35 +96,3 @@ contextBridge.exposeInMainWorld('callbacks', {
   },
 
 });
-
-/*
-import { BrowserWindow, ipcMain } from 'electron';
-import { existsSync } from 'fs';
-import path from 'path';
-import { ModalWindow } from 'src/ui/modal';
-import { logger } from '../../../core/logger';
-import { findDefault32Bit, findDefault64Bit, findRInstallationsWin32 } from '../../../main/detect-r';
-
-function buildHtmlContent(rInstalls: string[]): string {
-
-}
-
-export async function chooseRInstallation(): Promise<string> {
-
-  const dialog = new ModalWindow();
-  dialog.setWidth(400);
-  dialog.setHeight(300);
-
-  // find R installations, and generate the HTML using that
-  const rInstalls = findRInstallationsWin32();
-  const html = buildHtmlContent(rInstalls);
-
-  // load the HTML
-  await dialog.loadURL(`data:text/html;charset=utf-8,${html}`);
-
-  // show the page
-  dialog.show();
-
-
-}
-*/
