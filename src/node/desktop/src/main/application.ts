@@ -13,7 +13,8 @@
  *
  */
 
-import { app, dialog } from 'electron';
+import { app, dialog, globalShortcut } from 'electron';
+import util from 'util';
 
 import { getenv, setenv } from '../core/environment';
 import { FilePath } from '../core/file-path';
@@ -42,6 +43,9 @@ export const kVersionJson = '--version-json';
 export const kLogLevel = 'log-level';
 export const kDelaySessionSeconds = 'session-delay-seconds';
 export const kSessionExitCode = 'session-exit-code';
+
+// This should be made a core utility function (also exists in int-utils.ts)
+const setTimeoutPromise = util.promisify(setTimeout);
 
 /**
  * The RStudio application
@@ -99,6 +103,14 @@ export class Application implements AppState {
    */
   async run(): Promise<ProgramStatus> {
 
+    // test to see if we can detect a shortcut during initial startup
+    const testShortcut = 'Control+Alt+R';
+    let shortcutPressed = false;
+    globalShortcut.register(testShortcut, () => {
+      shortcutPressed = true;
+      globalShortcut.unregister(testShortcut);
+    });
+
     // prepare application for launch
     this.appLaunch = ApplicationLaunch.init();
 
@@ -143,6 +155,17 @@ export class Application implements AppState {
 
     // TODO: desktop pro session handling
     // TODO: 'file/project' file open handling (e.g. launch by double-clicking a .R or .Rproj file)
+
+    // for this to "really" work we'd need to make more of the subsequent startup code truly
+    // async to give more opportunity for shortcut to be detected before it is too
+    // late (without simply pausing like we're doing here). Maybe via setImmediate that tries
+    // several times (until the "too late" code, whatever that is, is reached).
+    await setTimeoutPromise(1000).then(() => {
+      if (shortcutPressed) {
+        dialog.showMessageBoxSync({ message: `You were holding ${testShortcut}` });
+      }
+      globalShortcut.unregister(testShortcut);
+    });
 
     // launch a local session
     this.sessionLauncher = new SessionLauncher(this.sessionPath, confPath, new FilePath(), this.appLaunch);
