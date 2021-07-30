@@ -76,3 +76,4 @@
 * Make Cmd+Shift+0 the shortcut for restarting session on MacOS (#7695)
 * Update Plumber file template for Plumber 1.0 (#9402)
 * Support creating supplemental groups when create-container-user=1 (Pro #2276)
+* RStudio addins installed within `tools:::R_user_dir(<pkg>, "config")` are now discovered by RStudio. (#9648)
