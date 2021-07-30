@@ -35,6 +35,7 @@ radioButtons.forEach((radioButton) => {
 // set up callbacks for OK + Cancel buttons
 const buttonOk = document.getElementById('button-ok')! as HTMLButtonElement;
 const buttonCancel = document.getElementById('button-cancel') as HTMLButtonElement;
+const buttonBrowse = document.getElementById('button-browse') as HTMLButtonElement;
 
 buttonOk.addEventListener('click', () => {
 
@@ -65,4 +66,8 @@ buttonOk.addEventListener('click', () => {
 buttonCancel.addEventListener('click', () => {
   window.callbacks.cancel();
   window.close();
+});
+
+buttonBrowse.addEventListener('click', () => {
+  window.callbacks.browse();
 });

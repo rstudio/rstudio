@@ -1,5 +1,5 @@
 /*
- * modal.ts
+ * modal-dialog.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -18,7 +18,7 @@ import { existsSync, readFileSync } from 'fs';
 import path from 'path';
 import { err, Expected, ok } from '../core/expected';
 
-export abstract class ModalWindow<T> extends BrowserWindow {
+export abstract class ModalDialog<T> extends BrowserWindow {
 
   abstract onShowModal(): Promise<T>;
 
@@ -81,10 +81,7 @@ export abstract class ModalWindow<T> extends BrowserWindow {
     // show the window after loading everything
     this.show();
 
-    // delegate to subclass
     const result = await this.onShowModal();
-
-    // return result
     return result;
 
   }

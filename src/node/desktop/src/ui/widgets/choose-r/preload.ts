@@ -17,7 +17,6 @@ import { existsSync } from 'fs';
 import path from 'path';
 
 ipcRenderer.on('css', (event, data) => {
-  console.log(data);
   const styleEl = document.createElement('style');
   styleEl.setAttribute('language', 'text/css');
   styleEl.innerText = data;
@@ -94,5 +93,9 @@ contextBridge.exposeInMainWorld('callbacks', {
   cancel: () => {
     ipcRenderer.send('cancel');
   },
+
+  browse: () => {
+    ipcRenderer.send('browse');
+  }
 
 });

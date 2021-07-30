@@ -13,28 +13,29 @@
  *
  */
 
-import { ipcMain } from 'electron';
+import { dialog, ipcMain } from 'electron';
 import path from 'path';
 import { findDefault32Bit, findDefault64Bit } from '../../main/detect-r';
 import { logger } from '../../core/logger';
-import { ModalWindow } from '../modal';
+import { ModalDialog } from '../modal-dialog';
 
-export class ChooseRModalWindow extends ModalWindow<string> {
+export class ChooseRModalWindow extends ModalDialog<string | null> {
 
   private rInstalls: string[];
+  private isAccepted = false;
 
   constructor(rInstalls: string[]) {
     super(path.join(__dirname, 'choose-r'));
     this.rInstalls = rInstalls;
   }
 
-  async onShowModal(): Promise<string> {
+  async onShowModal(): Promise<string | null> {
 
     // initialize the select widget
     this.webContents.send('initialize', this.rInstalls);
 
     // listen for messages from the window
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
 
       ipcMain.on('use-default-32bit', () => {
         const path = findDefault32Bit();
@@ -53,12 +54,29 @@ export class ChooseRModalWindow extends ModalWindow<string> {
         return resolve(data);
       });
 
+      ipcMain.on('browse', () => {
+        
+        const response = dialog.showOpenDialogSync(this, {
+          title: 'Choose R Executable',
+          properties: ['openFile'],
+          filters: [
+            { name: 'R Executable', extensions: ['exe']}
+          ],
+        });
+
+        if (response) {
+          logger().logDebug(`Using user-selected version of R (${response[0]})`);
+          return resolve(response[0]);
+        }
+
+      });
+
       ipcMain.on('cancel', () => {
-        return reject(new Error('The dialog was closed by the user.'));
+        return resolve(null);
       });
 
       this.on('closed', () => {
-        reject(new Error('The dialog was closed by the user.'));
+        return resolve(null);
       });
 
     });
