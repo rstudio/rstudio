@@ -30,28 +30,20 @@ module.exports = {
     "quotes": ["error", "single"],
     "semi":   ["error", "always"],
 
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/no-non-null-assertion": "off",
+
     "@typescript-eslint/await-thenable": ["error"],
     "@typescript-eslint/no-base-to-string": ["error"],
     "@typescript-eslint/no-confusing-non-null-assertion": ["error"],
     "@typescript-eslint/no-floating-promises": ["warn"],
     "@typescript-eslint/no-invalid-void-type": ["error"],
-    "@typescript-eslint/no-misused-promises": ["error" ],
-    "@typescript-eslint/no-throw-literal": ["error" ],
+    "@typescript-eslint/no-misused-promises": ["error"],
+    "@typescript-eslint/no-throw-literal": ["error"],
     "@typescript-eslint/no-unnecessary-condition": ["error"],
     "@typescript-eslint/promise-function-async": ["warn"],
     "@typescript-eslint/require-array-sort-compare": ["error"],
     "@typescript-eslint/return-await": ["warn"],
-
-    "@typescript-eslint/strict-boolean-expressions": [
-      "error", {
-        "allowString": true,
-        "allowNumber": true,
-        "allowNullableObject": true,
-        "allowNullableBoolean": true,
-        "allowNullableString": true,
-        "allowNullableNumber": true,
-      }
-    ],
 
   }
   

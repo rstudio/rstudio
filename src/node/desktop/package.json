@@ -41,8 +41,9 @@
     "uuid": "^8.3.2"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && yarn run copy-files",
     "clean": "ts-node scripts/clean.ts",
+    "copy-files": "ts-node scripts/copy-files.ts",
     "watch": "tsc -w",
     "package": "yarn run build && electron-packager ./ --prune --package-manager=yarn --out=./package --overwrite --ignore tsconfig.tsbuildinfo",
     "lint": "eslint ./src ./test",

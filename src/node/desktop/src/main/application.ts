@@ -31,8 +31,6 @@ import { SessionLauncher } from './session-launcher';
 import { DesktopActivation } from './activation-overlay';
 import { WindowTracker } from './window-tracker';
 import { GwtCallback } from './gwt-callback';
-import { chooseRInstallation } from './select-r';
-import { platform } from 'os';
 
 // RStudio command-line switches
 export const kRunDiagnosticsOption = '--run-diagnostics';

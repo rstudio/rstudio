@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+    <title>Choose R Installation</title>
+
+    <style>
+    
+    body {
+      background-color: rgb(240, 240, 240);
+      font-size: 9pt;
+      font-family: "Helvetica", "Arial", sans-serif;
+    }
+
+    label {
+      vertical-align: 2px;
+    }
+
+    .select {
+      margin-top: 6px;
+      width: 100%;
+    }
+
+    .select option {
+      font-size: 9pt;
+      padding: 2px 4px;
+    }
+
+    .footer-left {
+      position: fixed;
+      bottom: 8px;
+      left: 12px;
+    }
+
+    .footer-right {
+      position: fixed;
+      bottom: 8px;
+      right: 12px;
+    }
+
+    .button {
+      width: 72px;
+      padding: 3px 4px;
+      margin: 4px 0 4px 4px;
+      font-size: 8pt;
+    }
+
+    </style>
+
+  </head>
+
+  <body>
+
+    <p>RStudio requires an existing installation of R.</p>
+    <p>Please select the version of R to use.</p>
+
+    <div>
+      <input type="radio" id="use-default-64" name="r" value="use-default-64" checked>
+      <label for="use-default-64">Use your machine's default 64-bit version of R</label>
+    </div>
+
+    <div>
+      <input type="radio" id="use-default-32" name="r" value="use-default-32">
+      <label for="use-default-32">Use your machine's default 32-bit version of R</label>
+    </div>
+
+    <div>
+      <input type="radio" id="use-custom" name="r" value="use-custom">
+      <label for="use-custom">Choose a specific version of R:</label>
+    </div>
+
+    <select id="select" class="select" name="select" size="7">
+    </select>
+
+    <div class="footer-left">
+      <button id="button-browse" class="button" type="button">Browse...</button>
+    </div>
+
+    <div class="footer-right">
+      <button id="button-ok" class="button" type="button">OK</button>
+      <button id="button-cancel" class="button" type="button">Cancel</button>
+    </div>
+
+  </body>
+
+</html>

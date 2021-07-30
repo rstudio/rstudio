@@ -24,7 +24,7 @@ import { Environment, getenv, setenv, setVars } from '../core/environment';
 import { Expected, ok, err } from '../core/expected';
 import { logger } from '../core/logger';
 import { Err, success } from '../core/err';
-import { chooseRInstallation } from './select-r';
+import { ChooseRModalWindow } from '..//ui/widgets/choose-r';
 
 let kLdLibraryPathVariable : string;
 if (process.platform === 'darwin') {
@@ -69,11 +69,13 @@ export async function prepareEnvironmentPreflight(): Promise<Err> {
     return success();
   }
 
+  // discover available R installations
+  const rInstalls = findRInstallationsWin32();
+
   // ask the user what version of R they'd like to use
-  let path;
-  try {
-    path = await chooseRInstallation();
-  } catch (error) {
+  const dialog = new ChooseRModalWindow(rInstalls);
+  const [path, error] = await dialog.showModal();
+  if (error) {
     return error;
   }
 
