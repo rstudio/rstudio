@@ -17,7 +17,7 @@ import fs from "fs";
 import path from "path";
 
 function isResourceFile(path: string) {
-  return path.endsWith('.html');
+  return /[.](html|css)$/.test(path);
 }
 
 function copyRecursive(dir: string) {
@@ -32,9 +32,14 @@ function copyRecursive(dir: string) {
     if (dirent.isDirectory()) {
       copyRecursive(path.join(dir, dirent.name));
     } else if (dirent.isFile() && isResourceFile(dirent.name)) {
+
       const source = path.join(dir, dirent.name);
       const target = path.join('dist', source);
-      if (fs.statSync(source).mtime > fs.statSync(target).mtime) {
+      const upToDate =
+        fs.existsSync(target) &&
+        fs.statSync(source).mtime <= fs.statSync(target).mtime;
+
+      if (!upToDate) {
         fs.copyFileSync(source, target);
       }
     }

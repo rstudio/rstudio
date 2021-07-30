@@ -16,6 +16,14 @@ import { contextBridge, ipcRenderer } from 'electron';
 import { existsSync } from 'fs';
 import path from 'path';
 
+ipcRenderer.on('css', (event, data) => {
+  console.log(data);
+  const styleEl = document.createElement('style');
+  styleEl.setAttribute('language', 'text/css');
+  styleEl.innerText = data;
+  document.head.appendChild(styleEl);
+});
+
 // initialize select input
 ipcRenderer.on('initialize', (event, data) => {
 

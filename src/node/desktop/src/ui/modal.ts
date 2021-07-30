@@ -13,7 +13,7 @@
  *
  */
 
-import { BrowserWindow } from 'electron';
+import { BrowserWindow, ipcMain } from 'electron';
 import { existsSync, readFileSync } from 'fs';
 import path from 'path';
 import { err, Expected, ok } from '../core/expected';
@@ -59,7 +59,12 @@ export abstract class ModalWindow<T> extends BrowserWindow {
     // load the associated HTML
     await this.loadFile(path.join(this.widgetDir, 'ui.html'));
 
-    // TODO: allow loading of CSS?
+    // load any bundled CSS
+    const cssStylesPath = path.join(this.widgetDir, 'styles.css');
+    if (existsSync(cssStylesPath)) {
+      const cssStylesContents = readFileSync(cssStylesPath, { encoding: 'utf-8' });
+      this.webContents.send('css', cssStylesContents);
+    }
 
     // load any bundled JavaScript
     const jsLoadPath = path.join(this.widgetDir, 'load.js');
