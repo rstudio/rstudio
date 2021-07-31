@@ -29,24 +29,31 @@ public class QuartoHelper
             config.project_type == SessionInfo.QUARTO_PROJECT_TYPE_BOOK);
    }
    
+   public static boolean isQuartoBookConfig(QuartoConfig config)
+   {
+      return config.is_project &&
+             config.project_type == SessionInfo.QUARTO_PROJECT_TYPE_BOOK;
+   }
+   
    public static boolean isQuartoWebsiteDoc(String qmd, QuartoConfig config)
    {
-      // Determine whether or not this Quarto file is part of a website; we
-      // presume it to be if it's inside the current project and the current project is a 
-      // Quarto website project or book
-      boolean isWebsite = false;
-      if (!StringUtil.isNullOrEmpty(qmd))
-      {
-         if (isQuartoWebsiteConfig(config))
-         {
-            FileSystemItem projectDir = FileSystemItem.createDir(config.project_dir);
-            FileSystemItem qmdFile = FileSystemItem.createFile(qmd);
-            if (qmdFile.getPathRelativeTo(projectDir) != null)
-            {
-               isWebsite = true;
-            }
-         }
-      }
-      return isWebsite;
+      return !StringUtil.isNullOrEmpty(qmd) &&
+             isQuartoWebsiteConfig(config) &&
+             isWithinQuartoProjectDir(qmd, config);
+   }
+   
+   public static boolean isQuartoBookDoc(String qmd, QuartoConfig config)
+   {
+      return !StringUtil.isNullOrEmpty(qmd) &&
+             isQuartoBookConfig(config) &&
+             isWithinQuartoProjectDir(qmd, config);
+   }
+   
+   
+   private static boolean isWithinQuartoProjectDir(String qmd, QuartoConfig config)
+   {
+      FileSystemItem projectDir = FileSystemItem.createDir(config.project_dir);
+      FileSystemItem qmdFile = FileSystemItem.createFile(qmd);
+      return qmdFile.getPathRelativeTo(projectDir) != null;
    }
 }
