@@ -223,6 +223,11 @@ public class DefaultGlobalDisplay extends GlobalDisplay
       return SlideLabel.show(message, false, true, RootLayoutPanel.get());
    }
 
+   public Command showProgressAbortable(String message, Operation onCancel)
+   {
+      return SlideLabel.showAbortable(message, false, true, RootLayoutPanel.get(), onCancel);
+   }
+
    public void showLicenseWarningBar(boolean severe, String message)
    {
       view_.get().showLicenseWarning(severe, message);
@@ -250,7 +255,10 @@ public class DefaultGlobalDisplay extends GlobalDisplay
          public void onProgress(String message, Operation onCancel)
          {
             dismissProgress();
-            dismissProgress_ = showProgress(message);
+            if (onCancel == null)
+               dismissProgress_ = showProgress(message);
+            else
+               dismissProgress_ = showProgressAbortable(message, onCancel);
          }
          
          public void clearProgress()

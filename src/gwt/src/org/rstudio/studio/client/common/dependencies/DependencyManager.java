@@ -851,8 +851,15 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       // create progress indicator
       final ProgressIndicator progress = new GlobalProgressDelayer(
             globalDisplay_,
-            250,
-            req.progressCaption + "...").getIndicator();
+            0,
+            req.progressCaption + "...",
+            new Operation() {
+                 @Override
+                 public void execute() {
+                    commands_.interruptR().setEnabled(true, true);
+                    commands_.interruptR().execute();
+                 }
+            }).getIndicator();
 
       // query for unsatisfied dependencies
       server_.unsatisfiedDependencies(

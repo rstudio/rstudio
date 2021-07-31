@@ -165,6 +165,7 @@ public abstract class GlobalDisplay extends MessageDisplay
     * to dismiss.
     */
    public abstract Command showProgress(String message);
+   public abstract Command showProgressAbortable(String message, Operation onCancel);
 
    public abstract void showLicenseWarningBar(boolean severe, String message);
    public abstract void showWarningBar(boolean severe, String message);

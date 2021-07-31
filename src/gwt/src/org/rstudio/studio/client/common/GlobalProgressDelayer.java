@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.common;
 
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 
 import com.google.gwt.user.client.Timer;
@@ -24,18 +25,31 @@ public class GlobalProgressDelayer
                                 final int delayMillis,
                                 String progressMessage)
    {
+      this(globalDisplay, delayMillis, progressMessage, null);
+   }
+
+   public GlobalProgressDelayer(GlobalDisplay globalDisplay,
+                                final int delayMillis,
+                                String progressMessage,
+                                Operation onCancel)
+   {
       globalDisplay_ = globalDisplay;
       progressMessage_ = progressMessage;
+      onCancel_ = onCancel;
 
-      timer_ = new Timer()
+      if (delayMillis > 0)
       {
-         @Override
-         public void run()
-         {
-            ensureIndicator();
-         }
-      };
-      timer_.schedule(delayMillis);
+         timer_ = new Timer() {
+            @Override
+            public void run() {
+               ensureIndicator();
+            }
+         };
+         timer_.schedule(delayMillis);
+      }
+      else {
+         ensureIndicator();
+      }
    }
 
    // NOTE: auto-creates the indicator if it doesn't already exist
@@ -48,7 +62,7 @@ public class GlobalProgressDelayer
    public void setMessage(String progressMessage)
    {
       if (indicator_ != null)
-         indicator_.onProgress(progressMessage);
+         indicator_.onProgress(progressMessage, onCancel_);
       else
          progressMessage_ = progressMessage;
    }
@@ -73,12 +87,13 @@ public class GlobalProgressDelayer
       if (indicator_ == null)
       {
          indicator_ = globalDisplay_.getProgressIndicator("Error");
-         indicator_.onProgress(progressMessage_);
+         indicator_.onProgress(progressMessage_, onCancel_);
       }
    }
 
-   private final GlobalDisplay globalDisplay_;
+   protected final GlobalDisplay globalDisplay_;
    private String progressMessage_;
-   private Timer timer_;
+   private Timer timer_ = null;
    private ProgressIndicator indicator_ = null;
+   private Operation onCancel_ = null;
 }

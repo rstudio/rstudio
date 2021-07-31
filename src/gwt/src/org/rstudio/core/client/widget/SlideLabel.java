@@ -126,6 +126,27 @@ public class SlideLabel extends Composite
       });
    }
 
+   public static Command showAbortable(String label,
+                                    boolean asHtml,
+                                    boolean showProgressSpinner,
+                                    final LayoutPanel panel,
+                                    Operation onCancel)
+   {
+      final SlideLabel slideLabel = showInternal(label,
+                                                 asHtml,
+                                                 showProgressSpinner,
+                                                 panel);
+      slideLabel.onCancel(onCancel);
+      slideLabel.show();
+      return new Command()
+      {
+         public void execute()
+         {
+            panel.remove(slideLabel);
+         }
+      };
+   }
+
    private static SlideLabel showInternal(String label,
                                           boolean asHtml,
                                           boolean showProgressSpinner,
