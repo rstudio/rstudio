@@ -30,6 +30,7 @@
     "mocha": "^8.4.0",
     "nyc": "^15.1.0",
     "playwright": "^1.12.3",
+    "recursive-copy": "^2.0.13",
     "sinon": "^11.1.1",
     "ts-node": "^10.0.0",
     "typescript": "^4.3.5"
@@ -44,7 +45,8 @@
     "build": "tsc",
     "clean": "ts-node scripts/clean.ts",
     "watch": "tsc -w",
-    "package": "yarn run build && electron-packager ./ --prune --package-manager=yarn --out=./package --overwrite --ignore tsconfig.tsbuildinfo",
+    "package": "yarn run clean && yarn run build && electron-packager ./ --prune --package-manager=yarn --out=./package --overwrite --ignore tsconfig.tsbuildinfo",
+    "win-package": "yarn run package && ts-node scripts/package-helper",
     "lint": "eslint ./src ./test",
     "start": "yarn run build && electron --trace-warnings ./dist/src/main/main.js",
     "start-diag": "yarn run build && electron --trace-warnings ./dist/src/main/main.js --run-diagnostics",
