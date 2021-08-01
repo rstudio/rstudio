@@ -236,7 +236,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
       {
         // Begin Roxygen with todo
         token : ["comment", "comment.keyword.operator"],
-        regex : "(#+['*]\\s*)(TODO|FIXME)\\b",
+        regex : "(#+['*]\\s*)(TODO|FIXME|CHECKME|DOCME|TESTME|DISCUSS|REVIEW)\\b",
         next  : "rd-start"
       },
       {
@@ -248,7 +248,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
       {
         // todo in plain comment
         token : ["comment", "comment.keyword.operator", "comment"],
-        regex : "(#+\\s*)(TODO|FIXME)\\b(.*)$",
+        regex : "(#+\\s*)(TODO|FIXME|CHECKME|DOCME|TESTME|DISCUSS|REVIEW)\\b(.*)$",
         next  : "start"
       },
       {
