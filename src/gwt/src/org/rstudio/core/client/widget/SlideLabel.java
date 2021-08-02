@@ -189,6 +189,7 @@ public class SlideLabel extends Composite
             if (onCancel_ != null)
             {
                onCancel_.execute();
+               hide();
             }
          }
       });
