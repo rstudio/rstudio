@@ -18,7 +18,7 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 
 import { ipcMain, dialog, BrowserWindow, webFrameMain } from 'electron';
-import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions } from 'electron/main';
+import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions } from 'electron/main';
 
 import EventEmitter from 'events';
 
@@ -91,12 +91,22 @@ export class GwtCallback extends EventEmitter {
       }
     });
 
-    ipcMain.handle('desktop_get_save_file_name', (event, caption: string, label: string,
+    ipcMain.handle('desktop_get_save_file_name', async (event, caption: string, label: string,
       dir: string, defaultExtension: string, forceDefaultExtension: boolean,
       focusOwner: boolean
     ) => {
-      GwtCallback.unimpl('desktop_get_save_file_name');
-      return '';
+      const saveDialogOptions: SaveDialogOptions = {
+        title: caption,
+        defaultPath: dir,
+        buttonLabel: label
+      };
+
+      const focusedWindow = BrowserWindow.getFocusedWindow();
+      if (focusedWindow) {
+        return dialog.showSaveDialog(focusedWindow, saveDialogOptions);
+      } else {
+        return dialog.showSaveDialog(saveDialogOptions);
+      }
     });
 
     ipcMain.handle('desktop_get_existing_directory', (event, caption: string, label: string,

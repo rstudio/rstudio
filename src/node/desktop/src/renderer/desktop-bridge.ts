@@ -73,7 +73,13 @@ export function getDesktopBridge() {
           defaultExtension,
           forceDefaultExtension,
           focusOwner)
-        .then(filename => callback(filename))
+        .then(result => {
+          if (result.canceled as boolean) {
+            callback('');
+          } else {
+            callback(result.filePath);
+          }
+        })
         .catch(error => reportIpcError('getSaveFileName', error));
     },
 
