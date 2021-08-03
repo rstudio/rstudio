@@ -55,8 +55,8 @@ mkdir -p "${INSTALL_DIR}"
 
 # build RStudio version suffix
 RSTUDIO_VERSION_ARRAY=(
-   "${RSTUDIO_VERSION_MAJOR-99}"
-   "${RSTUDIO_VERSION_MINOR-9}"
+   "${RSTUDIO_VERSION_MAJOR-$(date -u '+%Y-%m')}"
+   "${RSTUDIO_VERSION_MINOR-99}"
    "${RSTUDIO_VERSION_PATCH-9}"
 )
 
@@ -67,11 +67,16 @@ if [ -n "${RSTUDIO_VERSION_SUFFIX}" ] && [ "${RSTUDIO_VERSION_SUFFIX}" != "0" ];
    RSTUDIO_VERSION_FULL+="-${RSTUDIO_VERSION_SUFFIX}"
 fi
 
+RSTUDIO_PRO_SUFFIX="-$(cat "${PKG_DIR}/../../BUILDTYPE" | tr -d ' ' | tr '{A-Z}' '{a-z}')"
+if [ "${RSTUDIO_PRO_SUFFIX}" == "-release" ]; then
+   RSTUDIO_PRO_SUFFIX=""
+fi
+
 # build bundle name (handle Pro builds as well)
 if [ -f "${PKG_DIR}/CMakeOverlay.txt" ]; then
-   RSTUDIO_PRO_SUFFIX="-pro"
+   RSTUDIO_PRO_SUFFIX+="-pro"
 else
-   RSTUDIO_PRO_SUFFIX=""
+   RSTUDIO_PRO_SUFFIX+=""
 fi
 
 RSTUDIO_BUNDLE_NAME="RStudio${RSTUDIO_PRO_SUFFIX}-${RSTUDIO_VERSION_FULL}"
