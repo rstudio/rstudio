@@ -59,7 +59,12 @@ if [[ $DEBUG = false ]]; then
     EXTRA_CP_ARGS=--quiet
 fi
 
-MAJOR_VERSION="$(date -u '+%Y-%m')"
+if [ -e "RELEASE_VERSION" ]; then
+    MAJOR_VERSION="$(cat RELEASE_VERSION | tr -d ' ')"
+else
+    MAJOR_VERSION="$(date -u '+%Y-%m')"
+fi
+
 VERSION="${MAJOR_VERSION}.${PATCH}"
 
 # get historical open source patch versions from AWS; this file is a CSV that
