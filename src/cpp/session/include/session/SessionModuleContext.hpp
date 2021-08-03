@@ -783,6 +783,7 @@ void viewer(const std::string& url,
             int height = 0, // pass 0 for no height change, // pass -1 for maximize
             const QuartoNavigate& quartoNav = QuartoNavigate());
 
+void clearViewerCurrentUrl();
 std::string viewerCurrentUrl(bool mapped = true);
 
 core::Error recursiveCopyDirectory(const core::FilePath& fromDir,

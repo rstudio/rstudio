@@ -383,6 +383,12 @@ Error initialize()
 
 namespace module_context {
 
+void clearViewerCurrentUrl()
+{
+   s_currentUrl = "";
+   s_currentUnmappedUrl = "";
+}
+
 std::string viewerCurrentUrl(bool mapped)
 {
    if (mapped)
