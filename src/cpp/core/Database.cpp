@@ -945,7 +945,7 @@ bool SchemaUpdater::parseVersionOfFile(const FilePath& file, SchemaVersion* pVer
    boost::split(split, fileStem, boost::is_any_of("_"));
    if (split.size() != 3)
    {
-      LOG_WARNING_MESSAGE("Unrecognized file in the db folder, it will be skipped: " + file.getAbsolutePath());
+      LOG_DEBUG_MESSAGE("Unrecognized file in /usr/lib/rstudio-server/db, it will be skipped: " + file.getAbsolutePath());
       return false;
    }
 
