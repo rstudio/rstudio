@@ -945,7 +945,10 @@ bool SchemaUpdater::parseVersionOfFile(const FilePath& file, SchemaVersion* pVer
    boost::split(split, fileStem, boost::is_any_of("_"));
    if (split.size() != 3)
    {
-      LOG_WARNING_MESSAGE("Unrecognized file in the db folder, it will be skipped: " + file.getAbsolutePath());
+     if (split.size() == 2)
+         LOG_DEBUG_MESSAGE("Not applying sql schema file from previous release: " + file.getAbsolutePath());
+     else
+         LOG_DEBUG_MESSAGE("Not applying unrecognized sql schema file: " + file.getAbsolutePath());
       return false;
    }
 
