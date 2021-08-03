@@ -93,7 +93,13 @@ export function getDesktopBridge() {
           label,
           dir,
           focusOwner)
-        .then(directory => callback(directory))
+        .then(result => {
+          if (result.canceled as boolean) {
+            callback('');
+          } else {
+            callback(result.filePaths[0]);
+          }
+        })
         .catch(error => reportIpcError('getExistingDirectory', error));
     },
 
