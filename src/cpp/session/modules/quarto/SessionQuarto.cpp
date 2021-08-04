@@ -103,7 +103,7 @@ void detectQuartoInstallation()
             contents = "99.9.9";
          }
 
-         const Version kQuartoRequiredVersion("0.2.47");
+         const Version kQuartoRequiredVersion("0.2.53");
          boost::algorithm::trim(contents);
          Version quartoVersion(contents);
          if (quartoVersion >= kQuartoRequiredVersion)
@@ -416,30 +416,35 @@ Error getQmdPublishDetails(const json::JsonRpcRequest& request,
    // Look up configuration for this Quarto project, if this file is part of a Quarto book or
    // website.
    std::string websiteDir, websiteOutputDir;
-   FilePath quartoConfig = quartoProjectConfigFile(qmdPath);
-   if (!quartoConfig.isEmpty())
+   auto projectMeta = inspect.find("project");
+   if (projectMeta != inspect.end())
    {
-       std::string type, outputDir;
-       readQuartoProjectConfig(quartoConfig, &type, &outputDir);
-       if (type == kQuartoProjectBook || type == kQuartoProjectSite)
-       {
-          FilePath configPath = quartoConfig.getParent();
-          websiteDir = configPath.getAbsolutePath();
-          // Infer output directory 
-          if (outputDir.empty())
+      FilePath quartoConfig = quartoProjectConfigFile(qmdPath);
+      if (!quartoConfig.isEmpty())
+      {
+          std::string type, outputDir;
+          readQuartoProjectConfig(quartoConfig, &type, &outputDir);
+          if (type == kQuartoProjectBook || type == kQuartoProjectSite)
           {
-              if (type == kQuartoProjectBook)
-              {
-                  outputDir = "_book";
-              }
-              else
-              {
-                  outputDir = "_site";
-              }
+             FilePath configPath = quartoConfig.getParent();
+             websiteDir = configPath.getAbsolutePath();
+             // Infer output directory
+             if (outputDir.empty())
+             {
+                 if (type == kQuartoProjectBook)
+                 {
+                     outputDir = "_book";
+                 }
+                 else
+                 {
+                     outputDir = "_site";
+                 }
+             }
+             websiteOutputDir = configPath.completeChildPath(outputDir).getAbsolutePath();
           }
-          websiteOutputDir = configPath.completeChildPath(outputDir).getAbsolutePath();
-       }
+      }
    }
+
 
    // Attempt to determine whether or not the user has an active publishing account; used on the
    // client to trigger an account setup step if necessary
