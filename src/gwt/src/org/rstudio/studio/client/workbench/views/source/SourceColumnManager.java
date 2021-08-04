@@ -746,7 +746,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       // the active column is always managed last because any column can disable a command, but
       // only the active one can enable a command
       if (activeColumn_.isInitialized())
-         activeColumn_.manageCommands(forceSync, activeColumn_);
+         activeColumn_.manageCommands(forceSync, activeColumn_); 
 
       if (!session_.getSessionInfo().getAllowShell())
          commands_.sendToTerminal().setVisible(false);
@@ -2175,6 +2175,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       dynamicCommands_.add(commands_.previewSql());
       dynamicCommands_.add(commands_.sourceActiveDocument());
       dynamicCommands_.add(commands_.sourceActiveDocumentWithEcho());
+      dynamicCommands_.add(commands_.runDocumentFromServerDotR());
       dynamicCommands_.add(commands_.knitDocument());
       dynamicCommands_.add(commands_.quartoRenderDocument());
       dynamicCommands_.add(commands_.toggleRmdVisualMode());

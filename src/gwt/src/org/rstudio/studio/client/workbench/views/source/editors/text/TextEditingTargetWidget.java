@@ -366,6 +366,9 @@ public class TextEditingTargetWidget
          mgr.getSourceCommand(commands_.knitDocument(), column_).createUnsyncedToolbarButton();
       knitDocumentButton_.getElement().getStyle().setMarginRight(0, Unit.PX);
       toolbar.addLeftWidget(knitDocumentButton_);
+      
+      toolbar.addLeftWidget(
+         mgr.getSourceCommand(commands_.runDocumentFromServerDotR(), column_).createToolbarButton());
 
       ToolbarPopupMenu shinyTestMenu = shinyTestMenu_;
       if (fileType.canKnitToHTML()) {
@@ -1704,6 +1707,12 @@ public class TextEditingTargetWidget
    {
       return handlerManager_.addHandler(
             RmdOutputFormatChangedEvent.TYPE, handler);
+   }
+   
+   @Override
+   public SourceColumn getSourceColumn()
+   {
+      return column_;
    }
 
    private void showRmdViewerMenuItems(boolean show, boolean showOutputOptions,

@@ -70,6 +70,7 @@ public abstract class
    public abstract AppCommand previewSql();
    public abstract AppCommand sourceActiveDocument();
    public abstract AppCommand sourceActiveDocumentWithEcho();
+   public abstract AppCommand runDocumentFromServerDotR();
    public abstract AppCommand executeCode();
    public abstract AppCommand executeCodeWithoutMovingCursor();
    public abstract AppCommand executeCodeWithoutFocus();

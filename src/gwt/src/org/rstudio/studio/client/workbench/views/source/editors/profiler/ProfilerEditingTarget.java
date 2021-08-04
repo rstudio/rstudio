@@ -148,6 +148,12 @@ public class ProfilerEditingTarget implements EditingTarget,
    {
       return null;
    }
+   
+   @Override 
+   public boolean isShinyPrerenderedDoc()
+   {
+      return false;
+   }
 
    public HasValue<String> getName()
    {
