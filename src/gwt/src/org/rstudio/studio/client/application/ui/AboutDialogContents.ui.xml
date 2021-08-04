@@ -7,14 +7,31 @@
    <ui:style>
       @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
       .productName {
-         font-size: 16pt;
+         font-size: 18pt;
          font-weight: bold;
          margin-bottom: 3px;
       }
       
-      .productVersion {
-         font-size: 10pt;
+      .productVersion, .productCopyright {
          margin-bottom: 3px;
+      }
+
+      .majorVersion, .buildNumber {
+         font-size: 14pt;
+      }
+
+      .buildNumber {
+         margin-left: 10px;
+         color: #404040;
+      }
+
+      .majorVersion {
+         font-weight: bold;
+      }
+
+      .productCopyright {
+         margin-top: 10px;
+         font-size: 10pt;
       }
 
       .buildInfo {
@@ -26,20 +43,27 @@
          font-size: 8pt;
          margin-bottom: 3px;
          user-select: text;
+         color: #404040;
       }
       
       .userAgent {
          margin-bottom: 15px;
       }
-      .notice {
-         text-align: center;
+
+      .notice, .supportNotice {
          margin-top: 15px;
          margin-bottom: 15px;
       }
+
+      .notice {
+         text-align: center;
+      }
+
       .noticeLink {
          font-size: 10pt;
          text-decoration: underline;
       }
+
       .licenseBox {
          clear: both;
          width: 100%;
@@ -74,57 +98,92 @@
          font-weight: bold;
          text-align: center;
       }
+
+      /* These negative margins are a hack to allow the "pre-release build" ribbon, when present,
+         to cover the whole dialog (otherwise GWT's dialog margins cause it to get cut off before
+         the edge). */
+      .dialogWrapper {
+         position: relative;
+         overflow: hidden;
+         margin-top: -12px;
+         margin-left: -9px;
+      }
+
+      .dialogContents {
+         padding-top: 12px;
+         padding-bottom: 12px;
+         margin-left: 9px;
+         margin-right: 9px;
+      }
+
+      .preReleaseRibbon {
+         width: 175px;
+         padding: 5px;
+         position: absolute;
+         text-align: center;
+         color: #f0f0f0;
+         top: 40px;
+         left: -40px;
+         transform: rotate(-45deg);
+         background-color: #d47066;
+      }
    </ui:style>
-   <g:HTMLPanel>
-      <g:HTMLPanel ui:field="productInfo">
-         <g:HTMLPanel styleName="{style.outerProductInfo}">
-            <g:HTMLPanel styleName="{style.productInfo}">
-               <g:Image resource='{res.rstudioLarge2x}'
-                        styleName="{style.logo}"
-                        width="48"
-                        height="48"
-                        altText="RStudio Logo"/>
-               <g:Label ui:field="productName" text="RStudio" styleName="{style.productName}"></g:Label>
-               <g:HTMLPanel styleName="{style.productVersion}">
-                  <g:InlineLabel ui:field="versionLabel"></g:InlineLabel>
-               </g:HTMLPanel>
-               <g:HTMLPanel styleName="{style.productVersion}">
-                       <g:InlineLabel text="&copy;"></g:InlineLabel>
-                       <g:InlineLabel ui:field="copyrightYearLabel"></g:InlineLabel>
-                       <g:InlineLabel text="RStudio, PBC"></g:InlineLabel>
+   <g:HTMLPanel styleName="{style.dialogWrapper}">
+      <g:HTMLPanel ui:field="preReleaseRibbon" styleName="{style.preReleaseRibbon}">
+         PRE-RELEASE BUILD
+      </g:HTMLPanel>
+      <g:HTMLPanel styleName="{style.dialogContents}">
+         <g:HTMLPanel ui:field="productInfo">
+            <g:HTMLPanel styleName="{style.outerProductInfo}">
+               <g:HTMLPanel styleName="{style.productInfo}">
+                  <g:Image resource='{res.rstudioLarge2x}'
+                           styleName="{style.logo}"
+                           width="48"
+                           height="48"
+                           altText="RStudio Logo"/>
+                  <g:Label ui:field="productName" text="RStudio" styleName="{style.productName}"></g:Label>
+                  <g:HTMLPanel styleName="{style.productVersion}">
+                     <g:InlineLabel styleName="{style.majorVersion}" ui:field="versionMajorLabel"></g:InlineLabel>
+                     <g:InlineLabel styleName="{style.buildNumber}" ui:field="versionBuildLabel"></g:InlineLabel>
+                  </g:HTMLPanel>
+                  <g:HTMLPanel styleName="{style.productCopyright}">
+                          <g:InlineLabel text="&copy;"></g:InlineLabel>
+                          <g:InlineLabel ui:field="copyrightYearLabel"></g:InlineLabel>
+                          <g:InlineLabel text="RStudio, PBC"></g:InlineLabel>
+                  </g:HTMLPanel>
                </g:HTMLPanel>
             </g:HTMLPanel>
-         </g:HTMLPanel>
-         <g:HTMLPanel styleName="{style.buildInfo}">
-            <g:InlineLabel ui:field="buildLabel"></g:InlineLabel>
-         </g:HTMLPanel>
-         <g:HTMLPanel styleName="{style.userAgent}">
-            <g:InlineLabel ui:field="userAgentLabel"></g:InlineLabel>
+            <g:HTMLPanel styleName="{style.buildInfo}">
+               <g:InlineLabel ui:field="buildLabel"></g:InlineLabel>
+            </g:HTMLPanel>
+            <g:HTMLPanel styleName="{style.userAgent}">
+               <g:InlineLabel ui:field="userAgentLabel"></g:InlineLabel>
+            </g:HTMLPanel>
+            <g:HTMLPanel styleName="{style.supportNotice}">
+               <g:InlineLabel ui:field="supportNotice"></g:InlineLabel>
+            </g:HTMLPanel>
+            <g:HTMLPanel ui:field="gplNotice">
+               <g:InlineLabel
+                  text="Unless you have received this program directly from RStudio pursuant to the terms of a commercial license agreement with RStudio, then this program is licensed to you under the terms of version 3 of the GNU"></g:InlineLabel>
+               <g:Anchor ui:field="gplLink" href="http://www.gnu.org/licenses/agpl-3.0.txt"
+                  text="Affero General Public License."
+                  target="_blank"></g:Anchor>
+               <g:InlineLabel ui:field="gplLinkLabel" text="(opens in new window)" styleName="{res.themeStyles.visuallyHidden}"></g:InlineLabel>
+            </g:HTMLPanel>
          </g:HTMLPanel>
          <g:HTMLPanel styleName="{style.notice}">
-            <g:InlineLabel ui:field="supportNotice"></g:InlineLabel>
+            <rw:HyperlinkLabel
+                  text="Open Source Components"
+                  addStyleNames="{style.noticeLink} {res.themeStyles.handCursor}"
+                  ui:field="showNoticelink_"/>
          </g:HTMLPanel>
-         <g:HTMLPanel ui:field="gplNotice">
-            <g:InlineLabel
-               text="Unless you have received this program directly from RStudio pursuant to the terms of a commercial license agreement with RStudio, then this program is licensed to you under the terms of version 3 of the GNU"></g:InlineLabel>
-            <g:Anchor ui:field="gplLink" href="http://www.gnu.org/licenses/agpl-3.0.txt"
-               text="Affero General Public License."
-               target="_blank"></g:Anchor>
-            <g:InlineLabel ui:field="gplLinkLabel" text="(opens in new window)" styleName="{res.themeStyles.visuallyHidden}"></g:InlineLabel>
+         <g:HTMLPanel ui:field="licenseLabel" visible="false">
+            <rw:FormLabel text="RStudio Pro License Status" styleName="{style.licenseLabel}"
+               for="{ElementIds.getAboutLicenseInfo}"/>
          </g:HTMLPanel>
+         <rw:FormTextArea ui:field="licenseBox" styleName="{style.licenseBox}"
+            visibleLines="10" visible="false" readOnly="true" elementId="{ElementIds.getAboutLicenseInfo}"/>
       </g:HTMLPanel>
-      <g:HTMLPanel styleName="{style.notice}">
-         <rw:HyperlinkLabel
-               text="Open Source Components"
-               addStyleNames="{style.noticeLink} {res.themeStyles.handCursor}"
-               ui:field="showNoticelink_"/>
-      </g:HTMLPanel>
-      <g:HTMLPanel ui:field="licenseLabel" visible="false">
-         <rw:FormLabel text="RStudio Pro License Status" styleName="{style.licenseLabel}"
-            for="{ElementIds.getAboutLicenseInfo}"/>
-      </g:HTMLPanel>
-      <rw:FormTextArea ui:field="licenseBox" styleName="{style.licenseBox}"
-         visibleLines="10" visible="false" readOnly="true" elementId="{ElementIds.getAboutLicenseInfo}"/>
    </g:HTMLPanel>
-</ui:UiBinder> 
+</ui:UiBinder>
 

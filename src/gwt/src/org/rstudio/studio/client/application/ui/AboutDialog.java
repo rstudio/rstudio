@@ -16,7 +16,10 @@
 package org.rstudio.studio.client.application.ui;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.Window;
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -26,6 +29,7 @@ import org.rstudio.studio.client.application.model.ProductInfo;
 
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import org.rstudio.studio.client.common.GlobalDisplay;
 
 public class AboutDialog extends ModalDialogBase
 {
@@ -35,12 +39,26 @@ public class AboutDialog extends ModalDialogBase
       RStudioGinjector.INSTANCE.injectMembers(this);
 
       setText(messages_.title(editionInfo_.editionName()));
+
+      ThemedButton copyVersionButton = new ThemedButton("Copy Version", (ClickEvent) ->
+      {
+         DomUtils.copyToClipboard("RStudio " + info.version + " " +
+            "\"" + info.release_name + "\" " + info.build_type +
+            " (" + info.commit + ", " + info.date + ") " +
+            "for " + info.os + "\n" +
+            Window.Navigator.getUserAgent());
+         RStudioGinjector.INSTANCE.getGlobalDisplay().showMessage(GlobalDisplay.MSG_INFO, "Version Copied",
+            "Version information copied to clipboard.");
+      });
+      addButton(copyVersionButton, "Copy Version");
+
       ThemedButton OKButton = new ThemedButton(constants_.okBtn(), (ClickEvent) -> closeDialog());
       addOkButton(OKButton);
 
       if (editionInfo_.proLicense() && Desktop.hasDesktopFrame())
       {
-         ThemedButton licenseButton = new ThemedButton(constants_.manageLicenseBtn(), (ClickEvent) ->  {
+         ThemedButton licenseButton = new ThemedButton(constants_.manageLicenseBtn(), (ClickEvent) ->
+         {
             closeDialog();
             editionInfo_.showLicense();
          });

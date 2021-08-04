@@ -19,6 +19,7 @@ import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Anchor;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
@@ -62,7 +63,9 @@ public class AboutDialogContents extends Composite
    public AboutDialogContents(ProductInfo info, ProductEditionInfo editionInfo)
    {
       initWidget(uiBinder.createAndBindUi(this));
-      versionLabel.setText(info.build_type + " Version " + info.version);
+      versionMajorLabel.setText(info.version_major + "." + info.version_minor);
+      versionBuildLabel.setText("Build " + info.version_patch +
+         (StringUtil.isNullOrEmpty(info.version_suffix) ? "" : "-" + info.version_suffix));
 
       // a11y
       productInfo.getElement().setId("productinfo");
@@ -72,7 +75,7 @@ public class AboutDialogContents extends Composite
       userAgentLabel.setText(
             Window.Navigator.getUserAgent());
       buildLabel.setText(
-           "\"" + info.release_name + "\" (" + info.commit.substring(0, 8) + ", " +
+           "\"" + info.release_name + "\" " + info.build_type + " (" + info.commit.substring(0, 8) + ", " +
            info.date + ") for " + info.os);
       productName.setText(editionInfo.editionName());
       copyrightYearLabel.setText("2009-" + info.copyright_year);
@@ -87,6 +90,11 @@ public class AboutDialogContents extends Composite
             " is provided by RStudio, PBC for testing purposes only and is not an officially supported release."
          );
       }
+      else
+      {
+         preReleaseRibbon.setVisible(false);
+      }
+
 
       showNoticelink_.setClickHandler(() ->
       {
@@ -131,13 +139,15 @@ public class AboutDialogContents extends Composite
       return productInfo.getElement();
    }
 
-   @UiField InlineLabel versionLabel;
+   @UiField InlineLabel versionMajorLabel;
+   @UiField InlineLabel versionBuildLabel;
    @UiField InlineLabel userAgentLabel;
    @UiField InlineLabel buildLabel;
    @UiField InlineLabel copyrightYearLabel;
    @UiField HyperlinkLabel showNoticelink_;
    @UiField HTMLPanel gplNotice;
    @UiField HTMLPanel licenseLabel;
+   @UiField HTMLPanel preReleaseRibbon;
    @UiField TextArea licenseBox;
    @UiField Label productName;
    @UiField HTMLPanel productInfo;
