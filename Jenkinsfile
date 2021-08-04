@@ -370,7 +370,7 @@ try {
               }
               stage('sign') {
 
-                def packageName = "RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}"
+                def packageName = "RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}-RelWithDebInfo"
 
                 withCredentials([file(credentialsId: 'ide-windows-signing-pfx', variable: 'pfx-file'), string(credentialsId: 'ide-pfx-passphrase', variable: 'pfx-passphrase')]) {
                   bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.17134.0\\x86\\signtool\" sign /f %pfx-file% /p %pfx-passphrase% /v /ac package\\win32\\cert\\After_10-10-10_MSCV-VSClass3.cer /n \"RStudio, Inc.\" /t http://timestamp.digicert.com  package\\win32\\build\\${packageName}.exe"
@@ -430,4 +430,3 @@ try {
    slackSend channel: params.get('SLACK_CHANNEL', '#ide-builds'), color: 'bad', message: "${messagePrefix} failed: ${err}"
    error("failed: ${err}")
 }
-
