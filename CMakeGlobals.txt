@@ -296,7 +296,7 @@ file(TO_CMAKE_PATH "${CMAKE_INSTALL_PREFIX}" CMAKE_INSTALL_PREFIX)
 # set(RSTUDIO_EMBEDDED_PACKAGES "" CACHE INTERNAL "Embedded R Packages")
 
 # embedded packages
-set(RSTUDIO_EMBEDDED_PACKAGES rmarkdown rsconnect CACHE INTERNAL "Embedded R Packages")
+set(RSTUDIO_EMBEDDED_PACKAGES rmarkdown CACHE INTERNAL "Embedded R Packages")
 
 # include utilities
 include(RStudioCMakeUtils)
