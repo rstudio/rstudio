@@ -18,20 +18,23 @@ import { ElectronApplication, Page } from 'playwright';
 
 import { launch } from './int-utils';
 import { clearConsole, typeConsoleCommand } from './console';
+import { assert } from 'chai';
 
 
-describe('Session restart scenarios', () => {
+describe('Session restart scenarios', async function () {
   let electronApp: ElectronApplication;
   let window: Page;
+  this.timeout(10000);
 
-  beforeEach(async () => {
+  beforeEach(async function () {
     electronApp = await launch();
     window = await electronApp.firstWindow();
-    window.setDefaultTimeout(5000);
   });
 
-  afterEach(async () => {
-    await electronApp.close();
+  afterEach(async function () {
+    electronApp.close().then( (result) => {
+      assert.isTrue(true);
+    }).catch(() => {console.log(this.test?.fullTitle + ': App did not close properly')});
   });
 
   it('Restart current session', async function () {

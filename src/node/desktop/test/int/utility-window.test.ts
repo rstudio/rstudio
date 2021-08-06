@@ -21,18 +21,20 @@ import { getWindowTitles, launch, setTimeoutPromise } from './int-utils';
 import { typeConsoleCommand } from './console';
 
 
-describe('Display secondary utility windows', () => {
+describe('Display secondary utility windows', async function () {
   let electronApp: ElectronApplication;
   let window: Page;
+  this.timeout(10000);
 
-  beforeEach(async () => {
+  beforeEach(async function () {
     electronApp = await launch();
     window = await electronApp.firstWindow();
-    window.setDefaultTimeout(5000);
   });
 
-  afterEach(async () => {
-    await electronApp.close();
+  afterEach(async function () {
+    electronApp.close().then( (result) => {
+      assert.isTrue(true);
+    }).catch(() => {console.log(this.test?.fullTitle + ': App did not close properly')});
   });
 
   it('Shows GPU utility window', async function () {
