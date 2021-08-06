@@ -201,6 +201,10 @@ export class SessionLauncher {
       this.mainWindow.loadUrl(launchContext.url);
     }
 
+    this.mainWindow?.window.on('close', () => {
+      this.sessionProcess?.kill()
+    })
+
     return success();
   }
 

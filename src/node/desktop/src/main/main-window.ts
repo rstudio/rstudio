@@ -345,6 +345,11 @@ export class MainWindow extends GwtWindow {
       this.geometrySaved = true;
     }
 
+    const cmd = 'window.desktopHooks.quitR()';
+    this.executeJavaScript(cmd).catch((error) => {
+      logger().logError(error);
+    });
+
     // CloseServerSessions close = sessionServerSettings().closeServerSessionsOnExit();
 
     // if (this.quitConfirmed || (!this.isRemoteDesktop && !this.sessionProcess) ||
