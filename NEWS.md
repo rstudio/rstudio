@@ -21,7 +21,8 @@
 
 ### RStudio Workbench
 
-* Load-balancing configuration is now automatic and doesn't require editing config files (Pro #2167)
+* Load-balancing configuration is now automatic, stored in the internal database, and doesn't require editing config files. Added supporting `rstudio-server list-nodes` command to show users the node's status according to the database. (Pro #2167)
+* Added `rstudio-server delete-node` command to allow users to remove a load-balancing node from the database (Pro #2800)
 * Added AWS Cognito support to OpenID integration (Pro #2313)
 * Add file uploads and downloads to session audit log (Pro #2226)
 * RStudio Workbench can now run without root access in a single-user mode (Pro #9496)
