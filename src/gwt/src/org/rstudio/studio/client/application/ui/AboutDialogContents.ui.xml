@@ -12,7 +12,7 @@
          margin-bottom: 3px;
       }
       
-      .productVersion, .productCopyright {
+      .productVersion {
          margin-bottom: 3px;
       }
 
@@ -30,7 +30,8 @@
       }
 
       .productCopyright {
-         margin-top: 10px;
+         margin-bottom: 10px;
+         margin-top: 5px;
          font-size: 10pt;
       }
 
@@ -82,15 +83,19 @@
       .productInfo {
          text-align: left;
          overflow: hidden;
-         margin-left: auto;
-         margin-right: auto;
-         width: 55%;
          user-select: text;
       }
       
       .outerProductInfo {
-         text-align: center;
          width: 580px;
+         display: flex;
+         flex-direction: column;
+         align-items: center;
+      }
+
+      .innerProductInfo {
+         display: flex;
+         flex-direction: column;
       }
 
       .licenseLabel {
@@ -141,15 +146,17 @@
                            width="48"
                            height="48"
                            altText="RStudio Logo"/>
-                  <g:Label ui:field="productName" text="RStudio" styleName="{style.productName}"></g:Label>
-                  <g:HTMLPanel styleName="{style.productVersion}">
-                     <g:InlineLabel styleName="{style.majorVersion}" ui:field="versionMajorLabel"></g:InlineLabel>
-                     <g:InlineLabel styleName="{style.buildNumber}" ui:field="versionBuildLabel"></g:InlineLabel>
-                  </g:HTMLPanel>
-                  <g:HTMLPanel styleName="{style.productCopyright}">
-                          <g:InlineLabel text="&copy;"></g:InlineLabel>
-                          <g:InlineLabel ui:field="copyrightYearLabel"></g:InlineLabel>
-                          <g:InlineLabel text="RStudio, PBC"></g:InlineLabel>
+                  <g:HTMLPanel styleName="{style.innerProductInfo}">
+                     <g:Label ui:field="productName" text="RStudio" styleName="{style.productName}"></g:Label>
+                     <g:HTMLPanel styleName="{style.productVersion}">
+                        <g:InlineLabel styleName="{style.majorVersion}" ui:field="versionMajorLabel"></g:InlineLabel>
+                        <g:InlineLabel styleName="{style.buildNumber}" ui:field="versionBuildLabel"></g:InlineLabel>
+                     </g:HTMLPanel>
+                     <g:HTMLPanel styleName="{style.productCopyright}">
+                         <g:InlineLabel text="&copy;"></g:InlineLabel>
+                         <g:InlineLabel ui:field="copyrightYearLabel"></g:InlineLabel>
+                         <g:InlineLabel text="RStudio, PBC"></g:InlineLabel>
+                     </g:HTMLPanel>
                   </g:HTMLPanel>
                </g:HTMLPanel>
             </g:HTMLPanel>
