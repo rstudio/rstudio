@@ -2472,10 +2472,6 @@ Error permanentlyDropPriv(const std::string& newUsername)
    if (error)
       return error;
 
-   // before changing the process user, ensure it becomes the new
-   // owner of any file logs so we can ensure that we can keep writing to them
-   core::log::refreshAllLogDestinations(core::log::RefreshParams{ user });
-
    // clear error state
    errno = 0;
 
