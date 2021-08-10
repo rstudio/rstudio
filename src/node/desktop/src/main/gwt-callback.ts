@@ -101,6 +101,12 @@ export class GwtCallback extends EventEmitter {
         buttonLabel: label
       };
 
+      if (defaultExtension) {
+        saveDialogOptions['filters'] = [
+          {name: '', extensions: [defaultExtension.replace('.', '')]}
+        ];
+      }
+
       let focusedWindow = BrowserWindow.getFocusedWindow();
       if (focusOwner) {
         focusedWindow = this.getSender('desktop_open_minimal_window', event.processId, event.frameId).window;
@@ -200,10 +206,9 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_show_folder', (event, path: string) => {
-      void shell.openPath(path)
-        .then((value) => {
-          if (value)
-            logger().logErrorMessage(value);
+      shell.openPath(path)
+        .catch((value) => {
+          logger().logErrorMessage(value);
         });
     });
 

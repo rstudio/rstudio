@@ -14,6 +14,7 @@
  */
 
 import { ipcRenderer } from 'electron';
+import { FilePath } from '../core/file-path';
 
 interface VoidCallback<Type> {
   (result: Type): void;
@@ -77,7 +78,16 @@ export function getDesktopBridge() {
           if (result.canceled as boolean) {
             callback('');
           } else {
-            callback(result.filePath);
+
+            // Add default extension, if it's missing
+            const fp = new FilePath(result.filePath);
+            if ((fp.getExtension().length == 0) ||
+               (forceDefaultExtension &&
+               (fp.getExtension() !== defaultExtension))) {
+              callback(fp.getFileStem() + defaultExtension);
+            } else {
+              callback(result.filePath);
+            }
           }
         })
         .catch(error => reportIpcError('getSaveFileName', error));

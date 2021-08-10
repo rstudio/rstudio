@@ -582,6 +582,14 @@ export class FilePath {
   }
 
   /**
+   * Gets only the name of the file, not encluding the extension
+   */
+  getFileStem(): string {
+    const components = path.parse(this.path);
+    return components.name;
+  }
+
+  /**
    * Get the last time this file path was written.
    */
   getLastWriteTimeSync(): number {
