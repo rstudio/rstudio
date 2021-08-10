@@ -17,8 +17,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-empty-function */
 
-import { ipcMain, dialog, BrowserWindow, webFrameMain } from 'electron';
-import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions } from 'electron/main';
+import { ipcMain, dialog, BrowserWindow, webFrameMain, shell } from 'electron';
+import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions } from 'electron/main';
 
 import EventEmitter from 'events';
 
@@ -91,19 +91,52 @@ export class GwtCallback extends EventEmitter {
       }
     });
 
-    ipcMain.handle('desktop_get_save_file_name', (event, caption: string, label: string,
+    ipcMain.handle('desktop_get_save_file_name', async (event, caption: string, label: string,
       dir: string, defaultExtension: string, forceDefaultExtension: boolean,
       focusOwner: boolean
     ) => {
-      GwtCallback.unimpl('desktop_get_save_file_name');
-      return '';
+      const saveDialogOptions: SaveDialogOptions = {
+        title: caption,
+        defaultPath: dir,
+        buttonLabel: label
+      };
+
+      if (defaultExtension) {
+        saveDialogOptions['filters'] = [
+          {name: '', extensions: [defaultExtension.replace('.', '')]}
+        ];
+      }
+
+      let focusedWindow = BrowserWindow.getFocusedWindow();
+      if (focusOwner) {
+        focusedWindow = this.getSender('desktop_open_minimal_window', event.processId, event.frameId).window;
+      }
+      if (focusedWindow) {
+        return dialog.showSaveDialog(focusedWindow, saveDialogOptions);
+      } else {
+        return dialog.showSaveDialog(saveDialogOptions);
+      }
     });
 
-    ipcMain.handle('desktop_get_existing_directory', (event, caption: string, label: string,
+    ipcMain.handle('desktop_get_existing_directory', async (event, caption: string, label: string,
       dir: string, focusOwner: boolean
     ) => {
-      GwtCallback.unimpl('desktop_get_existing_directory');
-      return '';
+      const openDialogOptions: OpenDialogOptions = {
+        title: caption,
+        defaultPath: dir,
+        buttonLabel: label,
+        properties: ['openDirectory', 'createDirectory', 'promptToCreate']
+      };
+
+      let focusedWindow = BrowserWindow.getFocusedWindow();
+      if (focusOwner) {
+        focusedWindow = this.getSender('desktop_open_minimal_window', event.processId, event.frameId).window;
+      }
+      if (focusedWindow) {
+        return dialog.showOpenDialog(focusedWindow, openDialogOptions);
+      } else {
+        return dialog.showOpenDialog(openDialogOptions);
+      }
     });
 
     ipcMain.on('desktop_on_clipboard_selection_changed', () => {
@@ -173,11 +206,14 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_show_folder', (event, path: string) => {
-      GwtCallback.unimpl('desktop_show_folder');
+      shell.openPath(path)
+        .catch((value) => {
+          logger().logErrorMessage(value);
+        });
     });
 
     ipcMain.on('desktop_show_file', (event, file: string) => {
-      GwtCallback.unimpl('desktop_show_file');
+      shell.showItemInFolder(file);
     });
 
     ipcMain.on('desktop_show_word_doc', (event, wordDoc: string) => {

@@ -14,6 +14,7 @@
  */
 
 import { ipcRenderer } from 'electron';
+import { FilePath } from '../core/file-path';
 
 interface VoidCallback<Type> {
   (result: Type): void;
@@ -73,7 +74,22 @@ export function getDesktopBridge() {
           defaultExtension,
           forceDefaultExtension,
           focusOwner)
-        .then(filename => callback(filename))
+        .then(result => {
+          if (result.canceled as boolean) {
+            callback('');
+          } else {
+
+            // Add default extension, if it's missing
+            const fp = new FilePath(result.filePath);
+            if ((fp.getExtension().length == 0) ||
+               (forceDefaultExtension &&
+               (fp.getExtension() !== defaultExtension))) {
+              callback(fp.getStem() + defaultExtension);
+            } else {
+              callback(result.filePath);
+            }
+          }
+        })
         .catch(error => reportIpcError('getSaveFileName', error));
     },
 
@@ -87,7 +103,13 @@ export function getDesktopBridge() {
           label,
           dir,
           focusOwner)
-        .then(directory => callback(directory))
+        .then(result => {
+          if (result.canceled as boolean) {
+            callback('');
+          } else {
+            callback(result.filePaths[0]);
+          }
+        })
         .catch(error => reportIpcError('getExistingDirectory', error));
     },
 
