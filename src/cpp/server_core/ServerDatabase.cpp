@@ -152,6 +152,7 @@ Error readOptions(const std::string& databaseConfigFile,
          error = databaseFile.changeOwnership(databaseFileUser.get());
          if (error)
          {
+            error.addProperty("server-user", databaseFileUser.get().getUsername());
             error.addProperty("description", "Unable to change ownership of database file");
             return error;
          }
