@@ -16,7 +16,7 @@
 import { describe } from 'mocha';
 import { ElectronApplication, Page } from 'playwright';
 
-import { launch } from './int-utils';
+import { launch, setTimeoutPromise } from './int-utils';
 import { clearConsole, typeConsoleCommand } from './console';
 
 
@@ -27,7 +27,7 @@ describe('Session restart scenarios', () => {
   beforeEach(async () => {
     electronApp = await launch();
     window = await electronApp.firstWindow();
-    window.setDefaultTimeout(5000);
+    window.setDefaultTimeout(9000);
   });
 
   afterEach(async () => {
@@ -37,6 +37,7 @@ describe('Session restart scenarios', () => {
   it('Restart current session', async function () {
     await clearConsole(window);
     await typeConsoleCommand(window, '.rs.api.executeCommand(\'restartR\')');
+    await setTimeoutPromise(900); // TODO: yuck, find a better way to do this
 
     // TODO: figure out how to assert that 'Restarting R session...' is present in 
     // the console output
