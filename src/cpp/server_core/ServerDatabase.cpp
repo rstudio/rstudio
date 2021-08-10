@@ -151,7 +151,23 @@ Error readOptions(const std::string& databaseConfigFile,
          // always ensure the database file user is correct, if specified
          error = databaseFile.changeOwnership(databaseFileUser.get());
          if (error)
+         {
+            error.addProperty("description", "Unable to change ownership of database file");
             return error;
+         }
+
+#ifndef _WIN32
+         error = databaseDirectory.changeOwnership(databaseFileUser.get());
+         if (error)
+         {
+            bool writable = false;
+            Error writableError = databaseDirectory.isWriteable(writable);
+            if (writableError || !writable)
+            {
+                LOG_ERROR_MESSAGE("Sqllite database directory: " + databaseDirectory.getAbsolutePath() + " must be writable by: " + databaseFileUser.get().getUsername());
+            }
+         }
+#endif
       }
 
       LOG_INFO_MESSAGE("Connecting to sqlite3 database at " + options.file);
