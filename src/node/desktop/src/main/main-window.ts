@@ -30,6 +30,7 @@ import { GwtWindow } from './gwt-window';
 import { appState } from './app-state';
 import { DesktopOptions } from './desktop-options';
 import { RemoteDesktopSessionLauncher } from './remote-desktop-session-launcher-overlay';
+import { CloseServerSessions } from './session-servers-overlay';
 
 export function closeAllSatellites(mainWindow: BrowserWindow): void {
   const topLevels = BrowserWindow.getAllWindows();
@@ -325,7 +326,6 @@ export class MainWindow extends GwtWindow {
     // }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   closeEvent(event: Electron.Event): void {
     if (process.platform === 'win32') {
       // TODO
@@ -345,52 +345,44 @@ export class MainWindow extends GwtWindow {
       this.geometrySaved = true;
     }
 
-    // CloseServerSessions close = sessionServerSettings().closeServerSessionsOnExit();
+    const close: CloseServerSessions = 'Always'; // TODO sessionServerSettings().closeServerSessionsOnExit();
 
-    // if (this.quitConfirmed || (!this.isRemoteDesktop && !this.sessionProcess) ||
-    //   (!this.isRemoteDesktop && this.sessionProcess -> state() != QProcess:: Running)) {
+    if (this.quitConfirmed || (!this.isRemoteDesktop && !this.sessionProcess) ||
+      (!this.isRemoteDesktop && (!this.sessionProcess || this.sessionProcess.exitCode !== null))) {
 
-    //   closeAllSatellites(this.window);
-    //   pEvent->accept();
-    //   return;
-    // }
+      closeAllSatellites(this.window);
+      return;
+    }
 
-    // auto quit = [this]() {
-    //   closeAllSatellites(this);
-    //   this->quit();
-    // };
+    const quit = () => {
+      closeAllSatellites(this.window);
+      this.quit();
+    };
 
-    // pEvent->ignore();
-    // webPage()->runJavaScript(
-    //         QStringLiteral("!!window.desktopHooks"),
-    //         [=](QVariant hasQuitR) {
+    event.preventDefault();
+    this.executeJavaScript('!!window.desktopHooks')
+      .then((hasQuitR: boolean) => {
+        if (!hasQuitR) {
+          logger().logErrorMessage('Main window closed unexpectedly');
 
-    //   if (!hasQuitR.toBool()) {
-    //      LOG_ERROR_MESSAGE("Main window closed unexpectedly");
-
-    //      // exit to avoid user having to kill/force-close the application
-    //      quit();
-    //   } else {
-    //      if (!isRemoteDesktop_ ||
-    //          close == CloseServerSessions::Always) {
-    //         webPage()->runJavaScript(
-    //                  QStringLiteral("window.desktopHooks.quitR()"),
-    //                  [=](QVariant ignored) {
-    //            quitConfirmed_ = true;
-    //         });
-    //      }
-    //      else if (close == CloseServerSessions::Never) {
-    //         quit();
-    //      }
-    //      else {
-    //         webPage()->runJavaScript(
-    //                  QStringLiteral("window.desktopHooks.promptToQuitR()"),
-    //                  [=](QVariant ignored) {
-    //            quitConfirmed_ = true;
-    //         });
-    //      }
-    //   }
-    // });
+          // exit to avoid user having to kill/force-close the application
+          quit();
+        } else {
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+          if (!this.isRemoteDesktop || close === 'Always') {
+            this.executeJavaScript('window.desktopHooks.quitR()')
+              .then(() => this.quitConfirmed = true)
+              .catch(logger().logError);
+          } else if (close === 'Never') {
+            quit();
+          } else {
+            this.executeJavaScript('window.desktopHooks.promptToQuitR()')
+              .then(() => this.quitConfirmed = true)
+              .catch(logger().logError);
+          }
+        }
+      })
+      .catch(logger().logError);
   }
  
   collectPendingQuitRequest(): PendingQuit {
