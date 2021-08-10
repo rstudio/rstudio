@@ -574,6 +574,12 @@ void FileLogDestination::writeLog(LogLevel in_logLevel, const std::string& in_me
       if (!m_impl->openLogFile())
       {
          m_impl->closeLogFile();
+
+#ifndef _WIN32
+         // Still write to syslog even if main file is no good
+         if (in_logLevel <= LogLevel::WARN && m_impl->SyslogDest)
+            m_impl->SyslogDest->writeLog(in_logLevel, in_message);
+#endif
          return;
       }
 
