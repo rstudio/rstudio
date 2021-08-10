@@ -582,14 +582,6 @@ export class FilePath {
   }
 
   /**
-   * Gets only the name of the file, not encluding the extension
-   */
-  getFileStem(): string {
-    const components = path.parse(this.path);
-    return components.name;
-  }
-
-  /**
    * Get the last time this file path was written.
    */
   getLastWriteTimeSync(): number {
@@ -651,7 +643,13 @@ export class FilePath {
    * Gets only the name of the file, excluding the extension.
    */
   getStem(): string {
-    throw Error('getStem is NYI');
+    // If this is just a path to a directory, then there is no filename or stem.
+    if (this.path.endsWith('/') || this.path.endsWith('\\')) {
+      return '';
+    }
+    
+    const components = path.parse(this.path);
+    return components.name;
   }
 
   /**

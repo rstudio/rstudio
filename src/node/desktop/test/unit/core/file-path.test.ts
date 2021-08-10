@@ -750,6 +750,20 @@ describe('FilePath', () => {
       subDir.removeIfExistsSync();
       testDir.removeIfExistsSync();
     });
+    it('WIPgetStem returns the file stem', () => {
+      assert.equal(new FilePath('/path/to/file.txt').getStem(), 'file');
+      assert.equal(new FilePath('file.txt').getStem(), 'file');
+      assert.equal(new FilePath('noExtension').getStem(), 'noExtension');
+      assert.equal(new FilePath('.hiddenFile.txt').getStem(), '.hiddenFile');
+      assert.equal(new FilePath('.hiddenFileNoExtension').getStem(), '.hiddenFileNoExtension');
+      
+      // You could debate that this should only return 'file'. Including test here to show current behavior
+      assert.equal(new FilePath('/path/to/file.extra.txt').getStem(), 'file.extra');
+
+      // A full path to a file with no extension is ambiguous. Including test here to show current behavior
+      assert.equal(new FilePath('/path/to/noExtensionOrDirectory').getStem(), 'noExtensionOrDirectory');
+      assert.equal(new FilePath('/path/to/directory/').getStem(), '');
+    });
   });
 
   describe('NYI placeholders', () => {
@@ -776,7 +790,6 @@ describe('FilePath', () => {
       assert.throws(() => fp1.getRelativePath(fp2));
       assert.throws(() => fp1.getSize());
       assert.throws(() => fp1.getSizeRecursive());
-      assert.throws(() => fp1.getStem());
       assert.throws(() => fp1.hasExtension('.txt'));
       assert.throws(() => fp1.hasExtensionLowerCase('.txt'));
       assert.throws(() => fp1.hasTextMimeType());

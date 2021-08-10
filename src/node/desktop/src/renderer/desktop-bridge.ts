@@ -84,7 +84,7 @@ export function getDesktopBridge() {
             if ((fp.getExtension().length == 0) ||
                (forceDefaultExtension &&
                (fp.getExtension() !== defaultExtension))) {
-              callback(fp.getFileStem() + defaultExtension);
+              callback(fp.getStem() + defaultExtension);
             } else {
               callback(result.filePath);
             }
