@@ -66,7 +66,6 @@
 * Support highlight of 'css' and 'asis' chunks in R Markdown documents (#4821)
 * Improved ordering of completion results within `library()` calls (#9293)
 * Syntax support for embedded knitr chunks (#9579)
-* Added support for publishing Quarto documents and websites (#9556)
 * Add option to synchronize the Files pane with the current working directory in R (#4615)
 * Add new *Set Working Directory* command to context menu for source files (#6781)
 * Local background jobs can now be replayed (#5548)
