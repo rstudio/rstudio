@@ -923,9 +923,9 @@ Error SchemaUpdater::getSchemaTableColumnCount(int* pColumnCount)
    Error error;
    if (connection_->driverName() == SQLITE_DRIVER)
    {
-      Query query = connection_->query("SELECT * FROM PRAGMA_TABLE_INFO('") + SCHEMA_TABLE + "')");
+      Query query = connection_->query(std::string("SELECT * FROM ") + SCHEMA_TABLE);
       Rowset rows;
-      error = connection->execute(query, rows);
+      error = connection_->execute(query, rows);
       columnCount = rows.columnCount();
    }
    else
