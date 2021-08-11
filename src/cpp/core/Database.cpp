@@ -921,7 +921,7 @@ Error SchemaUpdater::getSchemaTableColumnCount(int* pColumnCount)
    }
    else
    {
-      queryStr = std::string("SELECT COUNT(*) FROM information_schema.columns WHERE table_name='") + SCHEMA_TABLE +
+      queryStr = std::string("SELECT COUNT(1) FROM information_schema.columns WHERE table_name='") + SCHEMA_TABLE +
                  "' AND table_schema = current_schema";
    }
 
