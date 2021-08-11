@@ -19,6 +19,7 @@ import { ChildProcess } from 'child_process';
 
 import { logger } from '../core/logger';
 import { renderTemplateFile } from '../core/template-filter';
+import { Err } from '../core/err';
 
 import { GwtCallback, PendingQuit } from './gwt-callback';
 import { MenuCallback, showPlaceholderMenu } from './menu-callback';
@@ -31,6 +32,7 @@ import { appState } from './app-state';
 import { DesktopOptions } from './desktop-options';
 import { RemoteDesktopSessionLauncher } from './remote-desktop-session-launcher-overlay';
 import { CloseServerSessions } from './session-servers-overlay';
+import { waitForUrlWithTimeout } from './utils';
 
 export function closeAllSatellites(mainWindow: BrowserWindow): void {
   const topLevels = BrowserWindow.getAllWindows();
@@ -43,9 +45,6 @@ export function closeAllSatellites(mainWindow: BrowserWindow): void {
 
 // number of times we've tried to reload in startup
 let reloadCount = 0;
-
-// maximum number of times to try reloading
-const maxReloadCount = 10;
 
 // amount of time to wait before each reload, in milliseconds
 const reloadWaitDuration = 200;
@@ -428,13 +427,24 @@ export class MainWindow extends GwtWindow {
       // the session failed to launch and we're already showing
       // an error page to the user; nothing else to do here.
     } else {
-      if (reloadCount < maxReloadCount) {
+      if (reloadCount === 0) {
         // the load failed, but we haven't yet received word that the
         // session has failed to load. let the user know that the R
         // session is still initializing, and then reload the page.
         const vars = new Map<string, string>();
         this.loadHtml(renderTemplateFile(appState().resourcesPath().completePath('html/loading.html'), vars));
-        setTimeout(this.reload.bind(this), reloadWaitDuration * reloadCount);
+        waitForUrlWithTimeout(this.webView.baseUrl ?? '', reloadWaitDuration, reloadWaitDuration, 10)
+          .then((error: Err) => {
+            if (error) {
+              logger().logError(error);
+            }
+          })
+          .catch((error) => {
+            logger().logError(error);
+          })
+          .finally(() => {
+            this.reload();
+          });
       } else {
         reloadCount = 0;
         this.onLoadFailed();
