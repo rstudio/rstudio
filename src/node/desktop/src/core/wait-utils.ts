@@ -24,7 +24,7 @@ export class WaitResult {
   type: WaitResultType;
   error: Err;
 
-  constructor(type: WaitResultType, error: Err) {
+  constructor(type: WaitResultType, error: Err = null) {
     this.type = type;
     this.error = error;
   }
@@ -32,6 +32,14 @@ export class WaitResult {
 
 export type WaitTimeoutFn = () => Promise<WaitResult>;
 
+/**
+ * Helper routine 
+ * @param waitFunction Function invoked on each retry
+ * @param initialWaitMs Delay first first try
+ * @param incrementWaitMs Delay between subsequent tries
+ * @param maxWaitSec Maximum time to keep trying
+ * @returns 
+ */
 export async function waitWithTimeout(
   waitFunction: WaitTimeoutFn,
   initialWaitMs: number,

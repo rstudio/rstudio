@@ -16,7 +16,6 @@
 import { app, dialog } from 'electron';
 import { spawn, ChildProcess } from 'child_process';
 import fs from 'fs';
-import http from 'http';
 
 import { logger } from '../core/logger';
 import { FilePath } from '../core/file-path';
@@ -26,7 +25,6 @@ import { getenv, setenv, unsetenv } from '../core/environment';
 import { renderTemplateFile } from '../core/template-filter';
 import { readStringArrayFromFile } from '../core/file-serializer';
 import { kRStudioInitialProject } from '../core/r-user-data';
-import { WaitResult, WaitTimeoutFn, waitWithTimeout } from '../core/wait-utils';
 
 import { ApplicationLaunch } from './application-launch';
 import { appState } from './app-state';
@@ -34,7 +32,7 @@ import { DesktopActivation } from './activation-overlay';
 import { EXIT_FAILURE } from './program-status';
 import { closeAllSatellites, MainWindow } from './main-window';
 import { PendingQuit } from './gwt-callback';
-import { finalPlatformInitialize, getCurrentlyUniqueFolderName, userLogPath } from './utils';
+import { finalPlatformInitialize, getCurrentlyUniqueFolderName, userLogPath, waitForUrlWithTimeout } from './utils';
 import { productInfo } from './product-info';
 import { DesktopOptions } from './desktop-options';
 
@@ -410,44 +408,21 @@ export class SessionLauncher {
       return err;
     }
 
-    const serverReady: WaitTimeoutFn = async () => {
-      const options = {
-        hostname: launchContext.host,
-        port: launchContext.port,
-        path: '/',
-        method: 'GET',
-        headers: {
-          'Accept': '*/*',
-          'Connection': 'close'
-        }
-      };
- 
-      return new Promise((resolve) => {
-        http.request(options, (res) => {
-          res.on('error', () => {
-            resolve(new WaitResult('WaitContinue', null));
-          });
-          res.on('end', () => {
-            resolve(new WaitResult('WaitSuccess', null));
-          });
-        });
-      });
-    };
-
     // update the main window's reference to the process object
     this.mainWindow?.setSessionProcess(this.sessionProcess);
     if (reload) {
-      waitWithTimeout(serverReady, 50, 25, 10)
+      waitForUrlWithTimeout(launchContext.url, 50, 25, 10)
         .then((error: Err) => {
           if (error) {
             logger().logError(error);
-            return;
           }
-          this.nextSessionUrl = launchContext.url;
-          setImmediate(this.onReloadFrameForNextSession.bind(this));
         })
         .catch((error) => {
           logger().logError(error);
+        })
+        .finally(() => {
+          this.nextSessionUrl = launchContext.url;
+          setImmediate(this.onReloadFrameForNextSession.bind(this));
         });
     }
 
