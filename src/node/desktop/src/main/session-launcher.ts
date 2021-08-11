@@ -16,6 +16,7 @@
 import { app, dialog } from 'electron';
 import { spawn, ChildProcess } from 'child_process';
 import fs from 'fs';
+import http from 'http';
 
 import { logger } from '../core/logger';
 import { FilePath } from '../core/file-path';
@@ -25,6 +26,7 @@ import { getenv, setenv, unsetenv } from '../core/environment';
 import { renderTemplateFile } from '../core/template-filter';
 import { readStringArrayFromFile } from '../core/file-serializer';
 import { kRStudioInitialProject } from '../core/r-user-data';
+import { WaitResult, WaitTimeoutFn, waitWithTimeout } from '../core/wait-utils';
 
 import { ApplicationLaunch } from './application-launch';
 import { appState } from './app-state';
@@ -101,6 +103,7 @@ export class SessionLauncher {
   static launcherToken = generateShortenedUuid();
   sessionStdout: string[] = [];
   sessionStderr: string[] = [];
+  private nextSessionUrl?: string;
 
   constructor(
     private sessionPath: FilePath,
@@ -179,9 +182,6 @@ export class SessionLauncher {
     //                       SIGNAL(openFileRequest(QString)),
     //                       pMainWindow_,
     //                       SLOT(openFileInRStudio(QString)));
-    // pMainWindow_->connect(pRSessionProcess_,
-    //                       SIGNAL(finished(int,QProcess::ExitStatus)),
-    //                       this, SLOT(onRSessionExited(int,QProcess::ExitStatus)));
     // pMainWindow_->connect(&activation(),
     //                       SIGNAL(licenseLost(QString)),
     //                       pMainWindow_,
@@ -410,37 +410,55 @@ export class SessionLauncher {
       return err;
     }
 
+    const serverReady: WaitTimeoutFn = async () => {
+      const options = {
+        hostname: launchContext.host,
+        port: launchContext.port,
+        path: '/',
+        method: 'GET',
+        headers: {
+          'Accept': '*/*',
+          'Connection': 'close'
+        }
+      };
+ 
+      return new Promise((resolve) => {
+        http.request(options, (res) => {
+          res.on('error', () => {
+            resolve(new WaitResult('WaitContinue', null));
+          });
+          res.on('end', () => {
+            resolve(new WaitResult('WaitSuccess', null));
+          });
+        });
+      });
+    };
+
     // update the main window's reference to the process object
     this.mainWindow?.setSessionProcess(this.sessionProcess);
-
-    // TODO REVIEW, still needed?
-    // connect to quit event
-    // this.mainWindow?.connect(pRSessionProcess_,
-    //   SIGNAL(finished(int, QProcess:: ExitStatus)),
-    //   this,
-    //   SLOT(onRSessionExited(int, QProcess:: ExitStatus)));
-    //
     if (reload) {
-      logger().logErrorMessage('reloading a session not yet fully implemented');
-      // TODO: this mechanism, once recreated, might also be usable for dealing with the
-      // initial loading retries, per: https://github.com/rstudio/rstudio/issues/9627
-      //     const error = core::waitWithTimeout(
-      //              boost::bind(serverReady, host.toStdString(), port.toStdString()),
-      //              50,
-      //              25,
-      //              10);
-      //     if (error)
-      //        LOG_ERROR(error);
-      
-    //     nextSessionUrl_ = url;
-    //     QTimer::singleShot(0, this, SLOT(onReloadFrameForNextSession()));
+      waitWithTimeout(serverReady, 50, 25, 10)
+        .then((error: Err) => {
+          if (error) {
+            logger().logError(error);
+            return;
+          }
+          this.nextSessionUrl = launchContext.url;
+          setImmediate(this.onReloadFrameForNextSession.bind(this));
+        })
+        .catch((error) => {
+          logger().logError(error);
+        });
     }
 
     return success();
   }
 
   onReloadFrameForNextSession(): void {
-    // TODO
+    if (this.nextSessionUrl) {
+      this.mainWindow?.loadUrl(this.nextSessionUrl);
+      this.nextSessionUrl = undefined;
+    }
   }
 
   private onLaunchFirstSession(): void {
