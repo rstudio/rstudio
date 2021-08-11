@@ -18,12 +18,15 @@ import os from 'os';
 import path from 'path';
 import { sep } from 'path';
 import { app, FileFilter, WebContents } from 'electron';
+import http from 'http';
 
 import { Xdg } from '../core/xdg';
 import { getenv, setenv } from '../core/environment';
 import { FilePath } from '../core/file-path';
 import { logger } from '../core/logger';
 import { userHomePath } from '../core/user';
+import { WaitResult, WaitTimeoutFn, waitWithTimeout } from '../core/wait-utils';
+import { Err } from '../core/err';
 
 import { productInfo } from './product-info';
 import { MainWindow } from './main-window';
@@ -313,3 +316,29 @@ export function filterFromQFileDialogFilter(qtFilters: string): FileFilter[] {
   }
   return result;
 }
+
+/**
+ * Wait for a URL to respond, with retries and timeout
+ */
+export async function waitForUrlWithTimeout(
+  url: string,
+  initialWaitMs: number,
+  incrementWaitMs: number,
+  maxWaitSec: number
+): Promise<Err> {
+
+  const checkReady: WaitTimeoutFn = async () => {
+    return new Promise((resolve) => {
+      http.get(url, (res) => {
+        res.resume(); // consume response data to free up memory
+        resolve(new WaitResult('WaitSuccess'));
+      }).on('error', (e) => {
+        logger().logDebug(`Connection to ${url} failed: ${e.message}`);
+        resolve(new WaitResult('WaitContinue'));
+      });
+    });
+  };
+
+  return waitWithTimeout(checkReady, initialWaitMs, incrementWaitMs, maxWaitSec);
+}
+
