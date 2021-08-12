@@ -140,12 +140,16 @@ export class Application implements AppState {
     // ask the user what version of R they'd like to use
     const preflightError = await prepareEnvironmentPreflight();
     if (preflightError) {
+      dialog.showErrorBox('Error Finding R', 'RStudio failed to find any R installations on the system.');
+      console.log(preflightError);
       return exitFailure();
     }
 
     // prepare the R environment
     const prepareError = prepareEnvironment();
     if (prepareError) {
+      dialog.showErrorBox('Error Finding R', 'RStudio failed to find any R installations on the system.');
+      console.log(prepareError);
       return exitFailure();
     }
 

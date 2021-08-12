@@ -53,6 +53,7 @@ function copyRecursive(dir: string) {
 try {
   process.chdir(path.join(__dirname, '..'));
   copyRecursive('src');
+  process.exit(0);
 } catch (error) {
   console.log(error);
   process.exit(error);

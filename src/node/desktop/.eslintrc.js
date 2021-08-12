@@ -42,6 +42,17 @@ module.exports = {
     "@typescript-eslint/require-array-sort-compare": ["error"],
     "@typescript-eslint/return-await": ["warn"],
 
+    "@typescript-eslint/strict-boolean-expressions": [
+      "error", {
+        "allowString": true,
+        "allowNumber": true,
+        "allowNullableObject": true,
+        "allowNullableBoolean": true,
+        "allowNullableString": true,
+        "allowNullableNumber": true,
+      }
+    ],
+
   }
   
 };

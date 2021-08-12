@@ -75,10 +75,16 @@ export async function prepareEnvironmentPreflight(): Promise<Err> {
   // ask the user what version of R they'd like to use
   const dialog = new ChooseRModalWindow(rInstalls);
   const [path, error] = await dialog.showModal();
-  if (error || path == null) {
-    return error || new Error('Operation cancelled by user.');
+  if (error) {
+    return error;
   }
 
+  // if path is null, the operation was cancelled
+  if (path == null) {
+    return null;
+  }
+
+  // set RSTUDIO_WHICH_R to signal which version of R to be used
   setenv('RSTUDIO_WHICH_R', path);
   return success();
 
