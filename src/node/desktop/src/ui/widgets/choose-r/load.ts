@@ -13,10 +13,14 @@
  *
  */
 
-// extend Window object with 'callbacks', injected via preload script
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-interface Window {
-  callbacks: any;
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
+import { Callbacks } from './preload';
+
+declare global {
+  interface Window {
+    callbacks: Callbacks;
+  }
 }
 
 // ensure that the custom select box is only enabled when the associated

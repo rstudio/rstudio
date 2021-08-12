@@ -16,6 +16,30 @@ import { contextBridge, ipcRenderer } from 'electron';
 import { existsSync } from 'fs';
 import path from 'path';
 
+export class Callbacks {
+
+  useDefault32bit(): void {
+    ipcRenderer.send('use-default-32bit');
+  }
+
+  useDefault64bit(): void {
+    ipcRenderer.send('use-default-64bit');
+  }
+
+  use(version: string): void{
+    ipcRenderer.send('use-custom', version);
+  }
+
+  cancel(): void {
+    ipcRenderer.send('cancel');
+  }
+
+  browse(): void {
+    ipcRenderer.send('browse');
+  }
+
+}
+
 ipcRenderer.on('css', (event, data) => {
   const styleEl = document.createElement('style');
   styleEl.setAttribute('language', 'text/css');
@@ -77,7 +101,7 @@ ipcRenderer.on('initialize', (event, data) => {
 
 // export callbacks
 contextBridge.exposeInMainWorld('callbacks', {
-  
+
   useDefault32bit: () => {
     ipcRenderer.send('use-default-32bit');
   },

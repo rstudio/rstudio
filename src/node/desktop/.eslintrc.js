@@ -30,9 +30,6 @@ module.exports = {
     "quotes": ["error", "single"],
     "semi":   ["error", "always"],
 
-    "@typescript-eslint/no-explicit-any": "off",
-    "@typescript-eslint/no-non-null-assertion": "off",
-
     "@typescript-eslint/await-thenable": ["error"],
     "@typescript-eslint/no-base-to-string": ["error"],
     "@typescript-eslint/no-confusing-non-null-assertion": ["error"],
@@ -48,4 +45,3 @@ module.exports = {
   }
   
 };
-
