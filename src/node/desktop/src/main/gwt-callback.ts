@@ -306,7 +306,7 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.handle('desktop_supports_clipboard_metafile', () => {
-      return false;
+      return process.platform === 'win32';
     });
 
     ipcMain.handle('desktop_show_message_box', async (event, type, caption, message, buttons, defaultButton, cancelButton) => {
