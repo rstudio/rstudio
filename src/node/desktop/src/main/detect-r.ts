@@ -56,17 +56,17 @@ function executeCommand(command: string): Expected<string> {
 
 }
 
-export async function prepareEnvironmentPreflight(): Promise<Err> {
+export async function prepareEnvironmentPreflight(): Promise<Expected<string | null>> {
 
   // currently only needed for Windows
   if (process.platform !== 'win32') {
-    return success();
+    return ok('');
   }
 
   // nothing to do if RSTUDIO_WHICH_R is set
   const rstudioWhichR = getenv('RSTUDIO_WHICH_R');
   if (rstudioWhichR) {
-    return success();
+    return ok(rstudioWhichR);
   }
 
   // discover available R installations
@@ -76,17 +76,17 @@ export async function prepareEnvironmentPreflight(): Promise<Err> {
   const dialog = new ChooseRModalWindow(rInstalls);
   const [path, error] = await dialog.showModal();
   if (error) {
-    return error;
+    return err(error);
   }
 
   // if path is null, the operation was cancelled
   if (path == null) {
-    return null;
+    return ok(null);
   }
 
   // set RSTUDIO_WHICH_R to signal which version of R to be used
   setenv('RSTUDIO_WHICH_R', path);
-  return success();
+  return ok(path);
 
 }
 /**
