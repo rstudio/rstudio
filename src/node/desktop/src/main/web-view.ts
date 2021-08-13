@@ -13,9 +13,12 @@
  *
  */
 
-import { WebContents } from 'electron';
+import { shell, WebContents } from 'electron';
 import { EventEmitter } from 'stream';
 
+import { logger } from '../core/logger';
+
+import { appState } from './app-state';
 import { PendingWindow } from './pending-window';
 
 // Porting note: this class mirrors DesktopWebPage and DesktopWebView in the C++ code.
@@ -32,6 +35,8 @@ export class WebView extends EventEmitter {
     this.webContents.on('before-input-event', (event, input) => {
       this.keyPressEvent(event, input);
     });
+
+    this.webContents.setWindowOpenHandler(this.createWindow.bind(this));
   }
 
   keyPressEvent(event: Electron.Event, input: Electron.Input): void {
@@ -46,5 +51,17 @@ export class WebView extends EventEmitter {
 
   prepareForWindow(pendingWindow: PendingWindow): void {
     this.pendingWindows.push(pendingWindow);
+  }
+
+  createWindow(details: Electron.HandlerDetails): { action: 'deny' } | { action: 'allow', overrideBrowserWindowOptions?: Electron.BrowserWindowConstructorOptions | undefined } {
+
+    // check if this is target="_blank" from an IDE window
+    if (this.baseUrl && (details.disposition === 'foreground-tab' || details.disposition === 'background-tab')) {
+      void shell.openExternal(details.url);
+      return { action: 'deny' };
+    }
+
+    // TODO: handle satellite windows and secondary-windows
+    return { action: 'deny' };
   }
 }
