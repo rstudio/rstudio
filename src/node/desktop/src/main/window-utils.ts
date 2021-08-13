@@ -78,7 +78,6 @@ export function createSatelliteWindow(
     });
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function createSecondaryWindow(
   webContents: WebContents,
   pendingSecondary: PendingSecondaryWindow,
