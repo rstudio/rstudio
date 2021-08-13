@@ -218,6 +218,11 @@ struct FileLogDestination::Impl
 #else
       LogOptions.getDirectory().ensureDirectory();
 #endif
+
+      // initialize LogFile path here - this ensures that it is set properly
+      // in case we attempt to chown the file (due to permissions changing) before
+      // attempting to write to the log file for the first time during this process run
+      verifyLogFilePath();
    }
 
    ~Impl()
