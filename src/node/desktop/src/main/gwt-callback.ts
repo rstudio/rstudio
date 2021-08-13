@@ -53,8 +53,10 @@ export class GwtCallback extends EventEmitter {
   constructor(public mainWindow: MainWindow, public isRemoteDesktop: boolean) {
     super();
     this.owners.add(mainWindow);
+
     ipcMain.on('desktop_browse_url', (event, url: string) => {
-      GwtCallback.unimpl('desktop_browser_url');
+      // TODO: review if we need additional validation of URL
+      void shell.openExternal(url);
     });
 
     ipcMain.handle('desktop_get_open_file_name', async (event, caption: string, label: string,
