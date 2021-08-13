@@ -20,17 +20,10 @@ import { createSinonStubInstance } from '../unit-utils';
 
 import { PendingWindow } from '../../../src/main/pending-window';
 import { MainWindow } from '../../../src/main/main-window';
-import { clearApplicationSingleton, setApplication } from '../../../src/main/app-state';
-import { Application } from '../../../src/main/application';
 
 
 describe('PendingWindow', () => {
-  beforeEach(() => {
-    setApplication(new Application());
-  });
-
   afterEach(() => {
-    clearApplicationSingleton();
     sinon.restore();
   });
 
