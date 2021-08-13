@@ -26,7 +26,6 @@ import { logger } from '../core/logger';
 import { FilePath } from '../core/file-path';
 import { isCentOS } from '../core/system';
 
-import { PendingWindow } from './pending-window';
 import { MainWindow } from './main-window';
 import { GwtWindow } from './gwt-window';
 import { openMinimalWindow } from './minimal-window';
@@ -271,7 +270,7 @@ export class GwtCallback extends EventEmitter {
     ipcMain.handle('desktop_prepare_for_satellite_window', (event, name: string, x: number,
       y: number, width: number, height: number
     ) => {
-      this.mainWindow.webView.prepareForWindow({
+      this.mainWindow.prepareForWindow({
         type: 'satellite',
         name: name,
         mainWindow: this.mainWindow,
@@ -283,7 +282,7 @@ export class GwtCallback extends EventEmitter {
     ipcMain.handle('desktop_prepare_for_named_window', (event, name: string,
       allowExternalNavigate: boolean, showToolbar: boolean
     ) => {
-      this.mainWindow.webView.prepareForWindow({
+      this.mainWindow.prepareForWindow({
         type: 'secondary',
         name: name,
         allowExternalNavigate: allowExternalNavigate,
