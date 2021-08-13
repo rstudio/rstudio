@@ -13,7 +13,7 @@
  *
  */
 
-import { BrowserWindow, dialog, Menu, session, shell } from 'electron';
+import { BrowserWindow, dialog, Menu, session } from 'electron';
 import { ChildProcess } from 'child_process';
 
 import { logger } from '../core/logger';
@@ -22,7 +22,6 @@ import { Err } from '../core/err';
 
 import { GwtCallback, PendingQuit } from './gwt-callback';
 import { MenuCallback, showPlaceholderMenu } from './menu-callback';
-import { PendingWindow } from './pending-window';
 import { RCommandEvaluator } from './r-command-evaluator';
 import { SessionLauncher } from './session-launcher';
 import { ApplicationLaunch } from './application-launch';
@@ -31,9 +30,7 @@ import { appState } from './app-state';
 import { DesktopOptions } from './desktop-options';
 import { RemoteDesktopSessionLauncher } from './remote-desktop-session-launcher-overlay';
 import { CloseServerSessions } from './session-servers-overlay';
-import { raiseAndActivateWindow, waitForUrlWithTimeout } from './utils';
-import { DesktopBrowserWindow } from './desktop-browser-window';
-import { createSatelliteWindow, createSecondaryWindow } from './window-utils';
+import { waitForUrlWithTimeout } from './utils';
 
 export function closeAllSatellites(mainWindow: BrowserWindow): void {
   const topLevels = BrowserWindow.getAllWindows();
@@ -61,7 +58,6 @@ export class MainWindow extends GwtWindow {
   quitConfirmed = false;
   geometrySaved = false;
   workbenchInitialized = false;
-  pendingWindows = new Array<PendingWindow>();
 
   private sessionProcess?: ChildProcess;
   private isErrorDisplayed = false;
@@ -140,11 +136,6 @@ export class MainWindow extends GwtWindow {
 
     this.window.webContents.on('did-finish-load', () => {
       this.menuCallback.cleanUpActions();
-    });
-
-    // Handler for opening new secondary and satellite windows
-    this.addListener(DesktopBrowserWindow.CREATE_PENDING_WINDOW, (details: Electron.HandlerDetails) => {
-      this.createWindow(details);
     });
 
     // connect(&desktopInfo(), &DesktopInfo::fixedWidthFontListChanged, [this]() {
@@ -382,10 +373,6 @@ export class MainWindow extends GwtWindow {
     return appState().gwtCallback?.collectPendingQuitRequest() ?? PendingQuit.PendingQuitNone;
   }
 
-  prepareForWindow(pendingWindow: PendingWindow): void {
-    this.pendingWindows.push(pendingWindow);
-  }
-
   onActivated(): void {
     // intentionally left blank
   }
@@ -445,43 +432,5 @@ export class MainWindow extends GwtWindow {
 
   setErrorDisplayed(): void {
     this.isErrorDisplayed = true;
-  }
-
-  /**
-   * Creates external (web browser), Secondary, or Satellite windows.
-   */
-  createWindow(details: Electron.HandlerDetails): void {
-
-    // check if this is target="_blank" from an IDE window
-    if (this.baseUrl && (details.disposition === 'foreground-tab' || details.disposition === 'background-tab')) {
-      // TODO: validation/restrictions on the URLs?
-      void shell.openExternal(details.url);
-      return;
-    }
-
-    // check if we have a pending window waiting to come up
-    const pendingWindow = this.pendingWindows.shift();
-    if (pendingWindow) {
-
-      // check for an existing window of this name
-      const existingWindow = appState().windowTracker.getWindow(pendingWindow.name)?.window;
-      if (existingWindow) {
-        // activate the existing window then deny creation of new window
-        raiseAndActivateWindow(existingWindow);
-        return;
-      }
-
-      if (pendingWindow.type === 'satellite') {
-        createSatelliteWindow(this.window.webContents, pendingWindow, details);
-      } else {
-        createSecondaryWindow(this.window.webContents, pendingWindow, details, this.baseUrl);
-      }
-    } else {
-      // No pending window, create a generic secondary window
-      createSecondaryWindow(
-        this.window.webContents,
-        { type: 'secondary', name: '', allowExternalNavigate: false, showToolbar: true },
-        details, this.baseUrl);
-    }
   }
 }

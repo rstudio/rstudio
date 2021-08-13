@@ -13,7 +13,7 @@
  *
  */
 
-import { app, dialog } from 'electron';
+import { app, dialog, shell, WebContents } from 'electron';
 
 import { getenv, setenv } from '../core/environment';
 import { FilePath } from '../core/file-path';
@@ -21,7 +21,7 @@ import { generateRandomPort } from '../core/system';
 import { logger, enableDiagnosticsOutput } from '../core/logger';
 
 import { productInfo } from './product-info';
-import { findComponents, initializeSharedSecret } from './utils';
+import { findComponents, initializeSharedSecret, raiseAndActivateWindow } from './utils';
 import { augmentCommandLineArguments, getComponentVersions, removeStaleOptionsLockfile } from './utils';
 import { exitFailure, exitSuccess, run, ProgramStatus } from './program-status';
 import { ApplicationLaunch } from './application-launch';
@@ -31,6 +31,8 @@ import { SessionLauncher } from './session-launcher';
 import { DesktopActivation } from './activation-overlay';
 import { WindowTracker } from './window-tracker';
 import { GwtCallback } from './gwt-callback';
+import { PendingWindow } from './pending-window';
+import { createSatelliteWindow, createSecondaryWindow } from './window-utils';
 
 // RStudio command-line switches
 export const kRunDiagnosticsOption = '--run-diagnostics';
@@ -56,6 +58,7 @@ export class Application implements AppState {
   gwtCallback?: GwtCallback;
   sessionStartDelaySeconds = 0;
   sessionEarlyExitCode = 0;
+  pendingWindows = new Array<PendingWindow>();
 
   appLaunch?: ApplicationLaunch;
   sessionLauncher?: SessionLauncher;
@@ -147,6 +150,7 @@ export class Application implements AppState {
     // launch a local session
     this.sessionLauncher = new SessionLauncher(this.sessionPath, confPath, new FilePath(), this.appLaunch);
     this.sessionLauncher.launchFirstSession();
+
     return run();
   }
 
@@ -220,4 +224,45 @@ export class Application implements AppState {
     }
     return defaultPath;
   }
-}
+
+  prepareForWindow(pendingWindow: PendingWindow): void {
+    this.pendingWindows.push(pendingWindow);
+  }
+
+  /**
+   * Creates external (web browser), Secondary, or Satellite windows.
+   */
+  createWindow(details: Electron.HandlerDetails, webContents: WebContents, baseUrl?: string): void {
+
+    // check if this is target="_blank" from an IDE window
+    if (baseUrl && (details.disposition === 'foreground-tab' || details.disposition === 'background-tab')) {
+      // TODO: validation/restrictions on the URLs?
+      void shell.openExternal(details.url);
+      return;
+    }
+
+    // check if we have a pending window waiting to come up
+    const pendingWindow = this.pendingWindows.shift();
+    if (pendingWindow) {
+
+      // check for an existing window of this name
+      const existingWindow = this.windowTracker.getWindow(pendingWindow.name)?.window;
+      if (existingWindow) {
+        // activate the existing window then deny creation of new window
+        raiseAndActivateWindow(existingWindow);
+        return;
+      }
+
+      if (pendingWindow.type === 'satellite') {
+        createSatelliteWindow(webContents, pendingWindow, details);
+      } else {
+        createSecondaryWindow(webContents, pendingWindow, details, baseUrl);
+      }
+    } else {
+      // No pending window, create a generic secondary window
+      createSecondaryWindow(
+        webContents,
+        { type: 'secondary', name: '', allowExternalNavigate: false, showToolbar: true },
+        details, baseUrl);
+    }
+  }}

@@ -13,7 +13,7 @@
  *
  */
 
-import { BrowserWindow, WebContents } from 'electron';
+import { BrowserWindow, shell, WebContents } from 'electron';
 
 import fs from 'fs';
 import os from 'os';
@@ -21,6 +21,7 @@ import path from 'path';
 
 import { EventEmitter } from 'stream';
 import { logger } from '../core/logger';
+import { appState } from './app-state';
 import { executeJavaScript } from './utils';
 
 /**
@@ -33,7 +34,6 @@ import { executeJavaScript } from './utils';
 export class DesktopBrowserWindow extends EventEmitter {
   static WINDOW_DESTROYED = 'desktop-browser-window_destroyed';
   static CLOSE_WINDOW_SHORTCUT = 'desktop-browser-close_window_shortcut';
-  static CREATE_PENDING_WINDOW = 'desktop-browser-create_pending_window';
 
   window: BrowserWindow;
   private tempDirs: string[] = [];
@@ -82,8 +82,15 @@ export class DesktopBrowserWindow extends EventEmitter {
     });
 
     this.window.webContents.setWindowOpenHandler((details) => {
-      this.emit(DesktopBrowserWindow.CREATE_PENDING_WINDOW, details);
+      appState().createWindow(details, this.window.webContents, this.baseUrl);
       return { action: 'deny' };
+    });
+
+    this.window.webContents.on('will-navigate', (event, url) => {
+      if (!this.allowExternalNavigate) {
+        event.preventDefault();
+        void shell.openExternal(url);
+      }
     });
 
     this.window.webContents.on('page-title-updated', (event, title, explicitSet) => {
