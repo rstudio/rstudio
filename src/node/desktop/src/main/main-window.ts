@@ -14,7 +14,6 @@
  */
 
 import { BrowserWindow, dialog, Menu, session } from 'electron';
-import path from 'path';
 import { ChildProcess } from 'child_process';
 
 import { logger } from '../core/logger';
@@ -23,7 +22,6 @@ import { Err } from '../core/err';
 
 import { GwtCallback, PendingQuit } from './gwt-callback';
 import { MenuCallback, showPlaceholderMenu } from './menu-callback';
-import { PendingWindow } from './pending-window';
 import { RCommandEvaluator } from './r-command-evaluator';
 import { SessionLauncher } from './session-launcher';
 import { ApplicationLaunch } from './application-launch';
@@ -60,7 +58,6 @@ export class MainWindow extends GwtWindow {
   quitConfirmed = false;
   geometrySaved = false;
   workbenchInitialized = false;
-  pendingWindows = new Array<PendingWindow>();
 
   private sessionProcess?: ChildProcess;
   private isErrorDisplayed = false;
@@ -247,21 +244,9 @@ export class MainWindow extends GwtWindow {
       callback({ requestHeaders: details.requestHeaders});
     });
 
-    this.window.webContents.on('new-window',
-      (event, url /*, frameName, disposition, options, additionalFeatures, referrer, postBody*/) => {
-
-        event.preventDefault();
-
-        // check if we have a satellite window waiting to come up
-        const pendingWindow = this.pendingWindows.pop();
-        if (pendingWindow) {
-          const newWindow = this.createWindow(pendingWindow.width, pendingWindow.height);
-          void newWindow.loadURL(url);
-          newWindow.webContents.openDevTools();
-        }
-      });
-
-    void this.window.loadURL(url);
+    this.window.loadURL(url).catch((reason) => {
+      logger().logErrorMessage(`Failed to load ${url}: ${reason}`);
+    });
   }
 
   quit(): void {
@@ -386,26 +371,6 @@ export class MainWindow extends GwtWindow {
  
   collectPendingQuitRequest(): PendingQuit {
     return appState().gwtCallback?.collectPendingQuitRequest() ?? PendingQuit.PendingQuitNone;
-  }
-
-  createWindow(width: number, height: number): BrowserWindow {
-    return new BrowserWindow({
-      width: width,
-      height: height,
-      // https://github.com/electron/electron/blob/master/docs/faq.md#the-font-looks-blurry-what-is-this-and-what-can-i-do
-      backgroundColor: '#fff', 
-      webPreferences: {
-        enableRemoteModule: false,
-        nodeIntegration: false,
-        contextIsolation: true,
-        additionalArguments: ['desktop|desktopInfo'],
-        preload: path.join(__dirname, '../renderer/preload.js'),
-      },
-    });
-  }
-
-  prepareForWindow(pendingWindow: PendingWindow): void {
-    this.pendingWindows.push(pendingWindow);
   }
 
   onActivated(): void {

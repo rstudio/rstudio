@@ -16,8 +16,12 @@
 import { WebContents } from 'electron';
 import { EventEmitter } from 'stream';
 
+import { PendingWindow } from './pending-window';
+
+// Porting note: this class mirrors DesktopWebPage and DesktopWebView in the C++ code.
 export class WebView extends EventEmitter {
   static CLOSE_WINDOW_SHORTCUT = 'webview-close_window_shortcut';
+  pendingWindows = new Array<PendingWindow>();
 
   constructor(
     public webContents: WebContents,
@@ -38,5 +42,9 @@ export class WebView extends EventEmitter {
         event.preventDefault();
       }
     }
+  }
+
+  prepareForWindow(pendingWindow: PendingWindow): void {
+    this.pendingWindows.push(pendingWindow);
   }
 }

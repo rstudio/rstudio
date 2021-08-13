@@ -271,12 +271,24 @@ export class GwtCallback extends EventEmitter {
     ipcMain.handle('desktop_prepare_for_satellite_window', (event, name: string, x: number,
       y: number, width: number, height: number
     ) => {
-      this.mainWindow.prepareForWindow(new PendingWindow(name, x, y, width, height));
+      this.mainWindow.webView.prepareForWindow({
+        type: 'satellite',
+        name: name,
+        mainWindow: this.mainWindow,
+        screenX: x, screenY: y, width: width, height: height,
+        allowExternalNavigate: this.mainWindow.isRemoteDesktop
+      });
     });
 
     ipcMain.handle('desktop_prepare_for_named_window', (event, name: string,
-      allowExternalNavigate: boolean, showToolbar: boolean) => {
-      console.log(`prepare_for_named_window ${name}`);
+      allowExternalNavigate: boolean, showToolbar: boolean
+    ) => {
+      this.mainWindow.webView.prepareForWindow({
+        type: 'secondary',
+        name: name,
+        allowExternalNavigate: allowExternalNavigate,
+        showToolbar: showToolbar
+      });
     });
 
     ipcMain.on('desktop_close_named_window', (event, name: string) => {
