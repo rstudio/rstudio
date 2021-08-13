@@ -22,7 +22,6 @@ import path from 'path';
 import { EventEmitter } from 'stream';
 import { logger } from '../core/logger';
 import { executeJavaScript } from './utils';
-import { WebView } from './web-view';
 
 /**
  * Base class for browser-based windows. Subclasses include GwtWindow, SecondaryWindow,
@@ -33,15 +32,16 @@ import { WebView } from './web-view';
  */
 export class DesktopBrowserWindow extends EventEmitter {
   static WINDOW_DESTROYED = 'desktop-browser-window_destroyed';
+  static CLOSE_WINDOW_SHORTCUT = 'desktop-browser-close_window_shortcut';
+  static CREATE_PENDING_WINDOW = 'desktop-browser-create_pending_window';
 
   window: BrowserWindow;
-  webView: WebView;
-
   private tempDirs: string[] = [];
 
   // if loading fails and emits `did-fail-load` it will be followed by a 
   // 'did-finish-load'; use this bool to differentiate
   private failLoad = false;
+
 
   /**
    * @param adjustTitle Automatically set window title to match web page title
@@ -56,7 +56,7 @@ export class DesktopBrowserWindow extends EventEmitter {
     private showToolbar: boolean,
     private adjustTitle: boolean,
     protected name: string,
-    private baseUrl?: string,
+    readonly baseUrl?: string,
     private parent?: DesktopBrowserWindow,
     private opener?: WebContents,
     private allowExternalNavigate = false,
@@ -77,18 +77,26 @@ export class DesktopBrowserWindow extends EventEmitter {
       show: false
     });
 
-    this.webView = new WebView(this.window.webContents, baseUrl, allowExternalNavigate);
-    this.webView.webContents.on('page-title-updated', (event, title, explicitSet) => {
+    this.window.webContents.on('before-input-event', (event, input) => {
+      this.keyPressEvent(event, input);
+    });
+
+    this.window.webContents.setWindowOpenHandler((details) => {
+      this.emit(DesktopBrowserWindow.CREATE_PENDING_WINDOW, details);
+      return { action: 'deny' };
+    });
+
+    this.window.webContents.on('page-title-updated', (event, title, explicitSet) => {
       this.adjustWindowTitle(title, explicitSet);
     });
-    this.webView.webContents.on('did-finish-load', () => {
+    this.window.webContents.on('did-finish-load', () => {
       if (!this.failLoad) {
         this.finishLoading(true);
       } else {
         this.failLoad = false;
       }
     });
-    this.webView.webContents.on('did-fail-load', () => {
+    this.window.webContents.on('did-fail-load', () => {
       this.failLoad = true;
       this.finishLoading(false);
     });
@@ -100,7 +108,7 @@ export class DesktopBrowserWindow extends EventEmitter {
     // set zoom factor
     // TODO: double zoomLevel = options().zoomLevel();
     const zoomLevel = 1.0;
-    this.webView.webContents.setZoomFactor(zoomLevel);
+    this.window.webContents.setZoomFactor(zoomLevel);
 
     if (this.showToolbar) {
       logger().logDebug('toolbar NYI');
@@ -143,7 +151,7 @@ export class DesktopBrowserWindow extends EventEmitter {
 
   syncWindowTitle(): void {
     if (this.adjustTitle) {
-      this.window.setTitle(this.webView.webContents.getTitle());
+      this.window.setTitle(this.window.webContents.getTitle());
     }
   }
 
@@ -181,7 +189,7 @@ export class DesktopBrowserWindow extends EventEmitter {
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async executeJavaScript(cmd: string): Promise<any> {
-    return executeJavaScript(this.webView.webContents, cmd);
+    return executeJavaScript(this.window.webContents, cmd);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -217,6 +225,16 @@ export class DesktopBrowserWindow extends EventEmitter {
         logger().logDebug(`Failed to delete ${this.tempDirs[i]}`);
       }
       i--;
+    }
+  }
+
+  keyPressEvent(event: Electron.Event, input: Electron.Input): void {
+    if (process.platform === 'darwin') {
+      if (input.meta && input.key.toLowerCase() === 'w') {
+        // on macOS, intercept Cmd+W and emit the window close signal
+        this.emit(DesktopBrowserWindow.CLOSE_WINDOW_SHORTCUT);
+        event.preventDefault();
+      }
     }
   }
 }

@@ -17,7 +17,7 @@ import fs, { existsSync } from 'fs';
 import os from 'os';
 import path from 'path';
 import { sep } from 'path';
-import { app, FileFilter, WebContents } from 'electron';
+import { app, BrowserWindow, FileFilter, WebContents } from 'electron';
 import http from 'http';
 
 import { Xdg } from '../core/xdg';
@@ -342,3 +342,16 @@ export async function waitForUrlWithTimeout(
   return waitWithTimeout(checkReady, initialWaitMs, incrementWaitMs, maxWaitSec);
 }
 
+export function raiseAndActivateWindow(window: BrowserWindow): void {
+  if (window.isMinimized()) {
+    window.restore();
+  }
+  window.focus();
+}
+
+export function getDpiZoomScaling(): number {
+  // TODO: because Qt is already high-DPI aware and automatically
+  // scales in most scenarios, we no longer need to detect and
+  // apply a custom scale -- but more testing is warranted
+  return 1.0;
+}

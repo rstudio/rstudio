@@ -13,8 +13,7 @@
  *
  */
 
-import { BrowserWindow, dialog, Menu, session } from 'electron';
-import path from 'path';
+import { BrowserWindow, dialog, Menu, session, shell } from 'electron';
 import { ChildProcess } from 'child_process';
 
 import { logger } from '../core/logger';
@@ -32,7 +31,9 @@ import { appState } from './app-state';
 import { DesktopOptions } from './desktop-options';
 import { RemoteDesktopSessionLauncher } from './remote-desktop-session-launcher-overlay';
 import { CloseServerSessions } from './session-servers-overlay';
-import { waitForUrlWithTimeout } from './utils';
+import { raiseAndActivateWindow, waitForUrlWithTimeout } from './utils';
+import { DesktopBrowserWindow } from './desktop-browser-window';
+import { createSatelliteWindow, createSecondaryWindow } from './window-utils';
 
 export function closeAllSatellites(mainWindow: BrowserWindow): void {
   const topLevels = BrowserWindow.getAllWindows();
@@ -125,20 +126,25 @@ export class MainWindow extends GwtWindow {
     // connect(webView(), &WebView::urlChanged,
     //         this, &MainWindow::onUrlChanged);
    
-    this.webView.webContents.on('did-finish-load', () => {
+    this.window.webContents.on('did-finish-load', () => {
       if (!this.mainFailLoad) {
         this.onLoadFinished(true);
       } else {
         this.mainFailLoad = false;
       }
     });
-    this.webView.webContents.on('did-fail-load', () => {
+    this.window.webContents.on('did-fail-load', () => {
       this.mainFailLoad = true;
       this.onLoadFinished(false);
     });
 
-    this.webView.webContents.on('did-finish-load', () => {
+    this.window.webContents.on('did-finish-load', () => {
       this.menuCallback.cleanUpActions();
+    });
+
+    // Handler for opening new secondary and satellite windows
+    this.addListener(DesktopBrowserWindow.CREATE_PENDING_WINDOW, (details: Electron.HandlerDetails) => {
+      this.createWindow(details);
     });
 
     // connect(&desktopInfo(), &DesktopInfo::fixedWidthFontListChanged, [this]() {
@@ -247,21 +253,9 @@ export class MainWindow extends GwtWindow {
       callback({ requestHeaders: details.requestHeaders});
     });
 
-    this.window.webContents.on('new-window',
-      (event, url /*, frameName, disposition, options, additionalFeatures, referrer, postBody*/) => {
-
-        event.preventDefault();
-
-        // check if we have a satellite window waiting to come up
-        const pendingWindow = this.pendingWindows.pop();
-        if (pendingWindow) {
-          const newWindow = this.createWindow(pendingWindow.width, pendingWindow.height);
-          void newWindow.loadURL(url);
-          newWindow.webContents.openDevTools();
-        }
-      });
-
-    void this.window.loadURL(url);
+    this.window.loadURL(url).catch((reason) => {
+      logger().logErrorMessage(`Failed to load ${url}: ${reason}`);
+    });
   }
 
   quit(): void {
@@ -388,22 +382,6 @@ export class MainWindow extends GwtWindow {
     return appState().gwtCallback?.collectPendingQuitRequest() ?? PendingQuit.PendingQuitNone;
   }
 
-  createWindow(width: number, height: number): BrowserWindow {
-    return new BrowserWindow({
-      width: width,
-      height: height,
-      // https://github.com/electron/electron/blob/master/docs/faq.md#the-font-looks-blurry-what-is-this-and-what-can-i-do
-      backgroundColor: '#fff', 
-      webPreferences: {
-        enableRemoteModule: false,
-        nodeIntegration: false,
-        contextIsolation: true,
-        additionalArguments: ['desktop|desktopInfo'],
-        preload: path.join(__dirname, '../renderer/preload.js'),
-      },
-    });
-  }
-
   prepareForWindow(pendingWindow: PendingWindow): void {
     this.pendingWindows.push(pendingWindow);
   }
@@ -417,7 +395,7 @@ export class MainWindow extends GwtWindow {
       return;
     }
     reloadCount++;
-    this.loadUrl(this.webView.baseUrl ?? '');
+    this.loadUrl(this.baseUrl ?? '');
   }
 
   onLoadFinished(ok: boolean): void {
@@ -433,7 +411,7 @@ export class MainWindow extends GwtWindow {
         // session is still initializing, and then reload the page.
         const vars = new Map<string, string>();
         this.loadHtml(renderTemplateFile(appState().resourcesPath().completePath('html/loading.html'), vars));
-        waitForUrlWithTimeout(this.webView.baseUrl ?? '', reloadWaitDuration, reloadWaitDuration, 10)
+        waitForUrlWithTimeout(this.baseUrl ?? '', reloadWaitDuration, reloadWaitDuration, 10)
           .then((error: Err) => {
             if (error) {
               logger().logError(error);
@@ -458,7 +436,7 @@ export class MainWindow extends GwtWindow {
     }
 
     const vars = new Map<string, string>([
-      ['url', this.webView.baseUrl ?? '']
+      ['url', this.baseUrl ?? '']
     ]);
 
     this.loadHtml(
@@ -467,5 +445,43 @@ export class MainWindow extends GwtWindow {
 
   setErrorDisplayed(): void {
     this.isErrorDisplayed = true;
+  }
+
+  /**
+   * Creates external (web browser), Secondary, or Satellite windows.
+   */
+  createWindow(details: Electron.HandlerDetails): void {
+
+    // check if this is target="_blank" from an IDE window
+    if (this.baseUrl && (details.disposition === 'foreground-tab' || details.disposition === 'background-tab')) {
+      // TODO: validation/restrictions on the URLs?
+      void shell.openExternal(details.url);
+      return;
+    }
+
+    // check if we have a pending window waiting to come up
+    const pendingWindow = this.pendingWindows.shift();
+    if (pendingWindow) {
+
+      // check for an existing window of this name
+      const existingWindow = appState().windowTracker.getWindow(pendingWindow.name)?.window;
+      if (existingWindow) {
+        // activate the existing window then deny creation of new window
+        raiseAndActivateWindow(existingWindow);
+        return;
+      }
+
+      if (pendingWindow.type === 'satellite') {
+        createSatelliteWindow(this.window.webContents, pendingWindow, details);
+      } else {
+        createSecondaryWindow(this.window.webContents, pendingWindow, details, this.baseUrl);
+      }
+    } else {
+      // No pending window, create a generic secondary window
+      createSecondaryWindow(
+        this.window.webContents,
+        { type: 'secondary', name: '', allowExternalNavigate: false, showToolbar: true },
+        details, this.baseUrl);
+    }
   }
 }
