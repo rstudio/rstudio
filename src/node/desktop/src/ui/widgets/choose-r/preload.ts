@@ -16,28 +16,12 @@ import { contextBridge, ipcRenderer } from 'electron';
 import { existsSync } from 'fs';
 import path from 'path';
 
-export class Callbacks {
-
-  useDefault32bit(): void {
-    ipcRenderer.send('use-default-32bit');
-  }
-
-  useDefault64bit(): void {
-    ipcRenderer.send('use-default-64bit');
-  }
-
-  use(version: string): void{
-    ipcRenderer.send('use-custom', version);
-  }
-
-  cancel(): void {
-    ipcRenderer.send('cancel');
-  }
-
-  browse(): void {
-    ipcRenderer.send('browse');
-  }
-
+export interface Callbacks {
+  useDefault32bit(): void;
+  useDefault64bit(): void;
+  use(version: string): void;
+  cancel(): void;
+  browse(): void;
 }
 
 ipcRenderer.on('css', (event, data) => {
@@ -100,7 +84,7 @@ ipcRenderer.on('initialize', (event, data) => {
 });
 
 // export callbacks
-contextBridge.exposeInMainWorld('callbacks', {
+const callbacks: Callbacks = {
 
   useDefault32bit: () => {
     ipcRenderer.send('use-default-32bit');
@@ -122,4 +106,6 @@ contextBridge.exposeInMainWorld('callbacks', {
     ipcRenderer.send('browse');
   }
 
-});
+};
+
+contextBridge.exposeInMainWorld('callbacks', callbacks);
