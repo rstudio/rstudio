@@ -272,7 +272,7 @@ export class GwtCallback extends EventEmitter {
     ipcMain.handle('desktop_prepare_for_satellite_window', (event, name: string, x: number,
       y: number, width: number, height: number
     ) => {
-      this.mainWindow.prepareForWindow({
+      appState().prepareForWindow({
         type: 'satellite',
         name: name,
         mainWindow: this.mainWindow,
@@ -284,7 +284,7 @@ export class GwtCallback extends EventEmitter {
     ipcMain.handle('desktop_prepare_for_named_window', (event, name: string,
       allowExternalNavigate: boolean, showToolbar: boolean
     ) => {
-      this.mainWindow.prepareForWindow({
+      appState().prepareForWindow({
         type: 'secondary',
         name: name,
         allowExternalNavigate: allowExternalNavigate,
