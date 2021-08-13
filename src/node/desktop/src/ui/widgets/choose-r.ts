@@ -22,7 +22,6 @@ import { ModalDialog } from '../modal-dialog';
 export class ChooseRModalWindow extends ModalDialog<string | null> {
 
   private rInstalls: string[];
-  private isAccepted = false;
 
   constructor(rInstalls: string[]) {
     super(path.join(__dirname, 'choose-r'));

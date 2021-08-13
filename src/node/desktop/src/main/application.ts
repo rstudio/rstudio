@@ -26,11 +26,11 @@ import { augmentCommandLineArguments, getComponentVersions, removeStaleOptionsLo
 import { exitFailure, exitSuccess, run, ProgramStatus } from './program-status';
 import { ApplicationLaunch } from './application-launch';
 import { AppState } from './app-state';
-import { prepareEnvironment, prepareEnvironmentPreflight } from './detect-r';
 import { SessionLauncher } from './session-launcher';
 import { DesktopActivation } from './activation-overlay';
 import { WindowTracker } from './window-tracker';
 import { GwtCallback } from './gwt-callback';
+import { prepareEnvironment, promptUserForR } from './detect-r';
 
 // RStudio command-line switches
 export const kRunDiagnosticsOption = '--run-diagnostics';
@@ -137,18 +137,21 @@ export class Application implements AppState {
       }
     }
 
-    // ask the user what version of R they'd like to use
-    const [path, preflightError] = await prepareEnvironmentPreflight();
-    if (preflightError) {
-      dialog.showErrorBox('Error Finding R', 'RStudio failed to find any R installations on the system.');
-      console.log(preflightError);
-      return exitFailure();
-    }
+    // on Windows, ask the user what version of R they'd like to use
+    if (process.platform === 'win32') {
 
-    // if no path was selected, bail
-    // (this implies the user canceled the dialog)
-    if (path == null) {
-      return exitFailure();
+      const [path, preflightError] = await promptUserForR();
+      if (preflightError) {
+        dialog.showErrorBox('Error Finding R', 'RStudio failed to find any R installations on the system.');
+        console.log(preflightError);
+        return exitFailure();
+      }
+
+      // if no path was selected, bail (implies dialog was canceled)
+      if (path == null) {
+        return exitFailure();
+      }
+
     }
 
     // prepare the R environment

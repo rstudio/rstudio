@@ -56,12 +56,7 @@ function executeCommand(command: string): Expected<string> {
 
 }
 
-export async function prepareEnvironmentPreflight(): Promise<Expected<string | null>> {
-
-  // currently only needed for Windows
-  if (process.platform !== 'win32') {
-    return ok('');
-  }
+export async function promptUserForR(): Promise<Expected<string | null>> {
 
   // nothing to do if RSTUDIO_WHICH_R is set
   const rstudioWhichR = getenv('RSTUDIO_WHICH_R');
@@ -71,6 +66,9 @@ export async function prepareEnvironmentPreflight(): Promise<Expected<string | n
 
   // discover available R installations
   const rInstalls = findRInstallationsWin32();
+  if (rInstalls.length === 0) {
+    return err();
+  }
 
   // ask the user what version of R they'd like to use
   const dialog = new ChooseRModalWindow(rInstalls);
@@ -89,6 +87,7 @@ export async function prepareEnvironmentPreflight(): Promise<Expected<string | n
   return ok(path);
 
 }
+
 /**
  * Detect R and prepare environment for launching the rsession process.
  * 
