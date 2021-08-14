@@ -61,7 +61,7 @@ export function createSatelliteWindow(
     const moveX = currentX + (currentWidth / 2) - (width / 2);
 
     // perform move
-    window.window.setPosition(moveX, moveY);
+    window.window.setPosition(Math.trunc(moveX), Math.trunc(moveY));
   }
 
   // if we have a name set, start tracking this window
