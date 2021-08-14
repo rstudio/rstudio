@@ -13,7 +13,7 @@
  *
  */
 
-import { app, dialog, shell, WebContents } from 'electron';
+import { app, BrowserWindow, dialog, WebContents } from 'electron';
 
 import { getenv, setenv } from '../core/environment';
 import { FilePath } from '../core/file-path';
@@ -32,7 +32,7 @@ import { DesktopActivation } from './activation-overlay';
 import { WindowTracker } from './window-tracker';
 import { GwtCallback } from './gwt-callback';
 import { PendingWindow } from './pending-window';
-import { createSatelliteWindow, createSecondaryWindow } from './window-utils';
+import { configureSatelliteWindow, configureSecondaryWindow } from './window-utils';
 
 // RStudio command-line switches
 export const kRunDiagnosticsOption = '--run-diagnostics';
@@ -230,16 +230,13 @@ export class Application implements AppState {
   }
 
   /**
-   * Creates external (web browser), Secondary, or Satellite windows.
+   * Configures new Secondary or Satellite window
    */
-  createWindow(details: Electron.HandlerDetails, webContents: WebContents, baseUrl?: string): void {
-
-    // check if this is target="_blank" from an IDE window
-    if (baseUrl && (details.disposition === 'foreground-tab' || details.disposition === 'background-tab')) {
-      // TODO: validation/restrictions on the URLs?
-      void shell.openExternal(details.url);
-      return;
-    }
+  windowCreated(
+    details: Electron.DidCreateWindowDetails,
+    newWindow: BrowserWindow,
+    owner: WebContents,
+    baseUrl?: string): void {
 
     // check if we have a pending window waiting to come up
     const pendingWindow = this.pendingWindows.shift();
@@ -254,15 +251,15 @@ export class Application implements AppState {
       }
 
       if (pendingWindow.type === 'satellite') {
-        createSatelliteWindow(webContents, pendingWindow, details);
+        configureSatelliteWindow(pendingWindow, newWindow, owner, details);
       } else {
-        createSecondaryWindow(webContents, pendingWindow, details, baseUrl);
+        configureSecondaryWindow(pendingWindow, newWindow, details, owner, baseUrl);
       }
     } else {
-      // No pending window, create a generic secondary window
-      createSecondaryWindow(
-        webContents,
+      // No pending window, make it a generic secondary window
+      configureSecondaryWindow(
         { type: 'secondary', name: '', allowExternalNavigate: false, showToolbar: true },
-        details, baseUrl);
+        newWindow, details, owner, baseUrl);
     }
-  }}
+  }
+}

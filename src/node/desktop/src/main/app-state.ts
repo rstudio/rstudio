@@ -13,7 +13,7 @@
  *
  */
 
-import { WebContents } from 'electron';
+import { BrowserWindow, WebContents } from 'electron';
 import { FilePath } from '../core/file-path';
 
 import { DesktopActivation } from './activation-overlay';
@@ -41,7 +41,7 @@ export interface AppState {
   sessionStartDelaySeconds: number;
   sessionEarlyExitCode: number;
   prepareForWindow(pendingWindow: PendingWindow): void;
-  createWindow(details: Electron.HandlerDetails, webContents: WebContents, baseUrl?: string): void;
+  windowCreated(details: Electron.DidCreateWindowDetails, newWindow: BrowserWindow, owner: WebContents, baseUrl?: string): void;
 }
 
 let rstudio: AppState | null = null;
