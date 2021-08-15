@@ -20,9 +20,10 @@ import os from 'os';
 import path from 'path';
 
 import { EventEmitter } from 'stream';
+import { URL } from 'url';
 import { logger } from '../core/logger';
 import { appState } from './app-state';
-import { executeJavaScript } from './utils';
+import { executeJavaScript, isSafeHost } from './utils';
 
 /**
  * Base class for browser-based windows. Subclasses include GwtWindow, SecondaryWindow,
@@ -65,11 +66,17 @@ export class DesktopBrowserWindow extends EventEmitter {
           enableRemoteModule: false,
           nodeIntegration: false,
           contextIsolation: true,
+          sandbox: false,
+          nativeWindowOpen: true,
           additionalArguments: apiKeys,
           preload: path.join(__dirname, '../renderer/preload.js'),
         },
         show: false
       });
+
+      // Uncomment to have all windows show dev tools by default
+      // this.window.webContents.openDevTools();
+
     }
 
     this.window.webContents.on('before-input-event', (event, input) => {
@@ -83,9 +90,9 @@ export class DesktopBrowserWindow extends EventEmitter {
         void shell.openExternal(details.url);
         return { action: 'deny' };
       }
-      
-      // proceed with window creation; we'll perform additional configuration upon 
-      // receipt of 'did-create-window' below
+
+      // proceed with window creation; we'll associate the created BrowserWindow with our 
+      // window wrapper type upon receipt of 'did-create-window' below
       return { action: 'allow' };
     });
 
@@ -94,9 +101,41 @@ export class DesktopBrowserWindow extends EventEmitter {
     });
 
     this.window.webContents.on('will-navigate', (event, url) => {
-      if (!this.allowExternalNavigate) {
+
+      // TODO: this is a partial implementation of DesktopWebPage.cpp::acceptNavigationRequest;
+      // all the other details need to be implemented
+
+      let targetUrl: URL;
+      try {
+        targetUrl = new URL(url);
+      } catch (err) {
+        // malformed URL will cause exception
+        logger().logError(err);
         event.preventDefault();
-        void shell.openExternal(url);
+        return;
+      }
+
+      // determine if this is a local request (handle internally only if local)
+      const host = targetUrl.hostname;
+      const isLocal = host === 'localhost' || host == '127.0.0.1' || host == '::1';
+      if (isLocal) {
+        return;
+      }
+
+      if (!this.allowExternalNavigate) {
+        try {
+          const targetUrl: URL = new URL(url);
+          if (!isSafeHost(targetUrl.host)) {
+            // when not allowing external navigation, open an external browser
+            // to view the URL
+            event.preventDefault();
+            void shell.openExternal(url);
+          }
+        } catch (err) {
+          // malformed URL will cause exception
+          logger().logError(err);
+          event.preventDefault();
+        }
       }
     });
 
