@@ -14,7 +14,6 @@
  */
 
 import { BrowserWindow, WebContents } from 'electron';
-import { logger } from '../core/logger';
 import { appState } from './app-state';
 import { PendingSatelliteWindow, PendingSecondaryWindow } from './pending-window';
 import { SatelliteWindow } from './satellite-window';
@@ -24,8 +23,7 @@ import { getDpiZoomScaling } from './utils';
 export function configureSatelliteWindow(
   pendingSatellite: PendingSatelliteWindow,
   newWindow: BrowserWindow,
-  owner: WebContents,
-  details: Electron.DidCreateWindowDetails): void {
+  owner: WebContents): void {
 
   // get width and height, and adjust for high DPI
   const dpiZoomScaling = getDpiZoomScaling();
@@ -68,22 +66,18 @@ export function configureSatelliteWindow(
   if (pendingSatellite.name) {
     appState().windowTracker.addWindow(pendingSatellite.name, window);
   }
-
-  window.window.loadURL(details.url)
-    .then(() => {
-      window.window.show();
-    })
-    .catch((reason) => {
-      logger().logErrorMessage(reason);
-    });
 }
 
 export function configureSecondaryWindow(
   pendingSecondary: PendingSecondaryWindow,
   newWindow: BrowserWindow,
-  details: Electron.DidCreateWindowDetails,
   owner: WebContents,
   baseUrl?: string): void {
+
+  // TODO: something is weird about default sizing of secondary windows; need to figure it out,
+  // for now set a reasonable size
+  newWindow.setSize(800, 600);
+  newWindow.setPosition(100, 100);
 
   const window = new SecondaryWindow(
     pendingSecondary.showToolbar,
@@ -106,12 +100,4 @@ export function configureSecondaryWindow(
   if (pendingSecondary.name) {
     appState().windowTracker.addWindow(pendingSecondary.name, window);
   }
-
-  window.window.loadURL(details.url)
-    .then(() => {
-      window.window.show();
-    })
-    .catch((reason) => {
-      logger().logErrorMessage(reason);
-    });
 }

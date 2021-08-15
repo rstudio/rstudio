@@ -251,15 +251,15 @@ export class Application implements AppState {
       }
 
       if (pendingWindow.type === 'satellite') {
-        configureSatelliteWindow(pendingWindow, newWindow, owner, details);
+        configureSatelliteWindow(pendingWindow, newWindow, owner);
       } else {
-        configureSecondaryWindow(pendingWindow, newWindow, details, owner, baseUrl);
+        configureSecondaryWindow(pendingWindow, newWindow, owner, baseUrl);
       }
     } else {
       // No pending window, make it a generic secondary window
       configureSecondaryWindow(
         { type: 'secondary', name: '', allowExternalNavigate: false, showToolbar: true },
-        newWindow, details, owner, baseUrl);
+        newWindow, owner, baseUrl);
     }
   }
 }
