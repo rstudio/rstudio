@@ -13,11 +13,13 @@
  *
  */
 
+import { WebContents } from 'electron';
 import { FilePath } from '../core/file-path';
 
 import { DesktopActivation } from './activation-overlay';
 import { Application } from './application';
 import { GwtCallback } from './gwt-callback';
+import { PendingWindow } from './pending-window';
 import { WindowTracker } from './window-tracker';
 
 /**
@@ -38,6 +40,8 @@ export interface AppState {
   scratchTempDir(defaultPath: FilePath): FilePath;
   sessionStartDelaySeconds: number;
   sessionEarlyExitCode: number;
+  prepareForWindow(pendingWindow: PendingWindow): void;
+  createWindow(details: Electron.HandlerDetails, webContents: WebContents, baseUrl?: string): void;
 }
 
 let rstudio: AppState | null = null;

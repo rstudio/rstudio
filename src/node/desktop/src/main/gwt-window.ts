@@ -91,6 +91,6 @@ export abstract class GwtWindow extends DesktopBrowserWindow {
 
   private setWindowZoomLevel(zoomLevel: number): void {
     DesktopOptions().setZoomLevel(zoomLevel);
-    this.webView.webContents.setZoomFactor(zoomLevel);
+    this.window.webContents.setZoomFactor(zoomLevel);
   }
 }

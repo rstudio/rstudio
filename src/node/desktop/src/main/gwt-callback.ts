@@ -26,7 +26,6 @@ import { logger } from '../core/logger';
 import { FilePath } from '../core/file-path';
 import { isCentOS } from '../core/system';
 
-import { PendingWindow } from './pending-window';
 import { MainWindow } from './main-window';
 import { GwtWindow } from './gwt-window';
 import { openMinimalWindow } from './minimal-window';
@@ -54,8 +53,10 @@ export class GwtCallback extends EventEmitter {
   constructor(public mainWindow: MainWindow, public isRemoteDesktop: boolean) {
     super();
     this.owners.add(mainWindow);
+
     ipcMain.on('desktop_browse_url', (event, url: string) => {
-      GwtCallback.unimpl('desktop_browser_url');
+      // TODO: review if we need additional validation of URL
+      void shell.openExternal(url);
     });
 
     ipcMain.handle('desktop_get_open_file_name', async (event, caption: string, label: string,
@@ -271,12 +272,24 @@ export class GwtCallback extends EventEmitter {
     ipcMain.handle('desktop_prepare_for_satellite_window', (event, name: string, x: number,
       y: number, width: number, height: number
     ) => {
-      this.mainWindow.prepareForWindow(new PendingWindow(name, x, y, width, height));
+      appState().prepareForWindow({
+        type: 'satellite',
+        name: name,
+        mainWindow: this.mainWindow,
+        screenX: x, screenY: y, width: width, height: height,
+        allowExternalNavigate: this.mainWindow.isRemoteDesktop
+      });
     });
 
     ipcMain.handle('desktop_prepare_for_named_window', (event, name: string,
-      allowExternalNavigate: boolean, showToolbar: boolean) => {
-      console.log(`prepare_for_named_window ${name}`);
+      allowExternalNavigate: boolean, showToolbar: boolean
+    ) => {
+      appState().prepareForWindow({
+        type: 'secondary',
+        name: name,
+        allowExternalNavigate: allowExternalNavigate,
+        showToolbar: showToolbar
+      });
     });
 
     ipcMain.on('desktop_close_named_window', (event, name: string) => {

@@ -14,7 +14,6 @@
  */
 
 import { BrowserWindow, dialog, Menu, session } from 'electron';
-import path from 'path';
 import { ChildProcess } from 'child_process';
 
 import { logger } from '../core/logger';
@@ -23,7 +22,6 @@ import { Err } from '../core/err';
 
 import { GwtCallback, PendingQuit } from './gwt-callback';
 import { MenuCallback, showPlaceholderMenu } from './menu-callback';
-import { PendingWindow } from './pending-window';
 import { RCommandEvaluator } from './r-command-evaluator';
 import { SessionLauncher } from './session-launcher';
 import { ApplicationLaunch } from './application-launch';
@@ -60,7 +58,6 @@ export class MainWindow extends GwtWindow {
   quitConfirmed = false;
   geometrySaved = false;
   workbenchInitialized = false;
-  pendingWindows = new Array<PendingWindow>();
 
   private sessionProcess?: ChildProcess;
   private isErrorDisplayed = false;
@@ -125,19 +122,19 @@ export class MainWindow extends GwtWindow {
     // connect(webView(), &WebView::urlChanged,
     //         this, &MainWindow::onUrlChanged);
    
-    this.webView.webContents.on('did-finish-load', () => {
+    this.window.webContents.on('did-finish-load', () => {
       if (!this.mainFailLoad) {
         this.onLoadFinished(true);
       } else {
         this.mainFailLoad = false;
       }
     });
-    this.webView.webContents.on('did-fail-load', () => {
+    this.window.webContents.on('did-fail-load', () => {
       this.mainFailLoad = true;
       this.onLoadFinished(false);
     });
 
-    this.webView.webContents.on('did-finish-load', () => {
+    this.window.webContents.on('did-finish-load', () => {
       this.menuCallback.cleanUpActions();
     });
 
@@ -247,21 +244,9 @@ export class MainWindow extends GwtWindow {
       callback({ requestHeaders: details.requestHeaders});
     });
 
-    this.window.webContents.on('new-window',
-      (event, url /*, frameName, disposition, options, additionalFeatures, referrer, postBody*/) => {
-
-        event.preventDefault();
-
-        // check if we have a satellite window waiting to come up
-        const pendingWindow = this.pendingWindows.pop();
-        if (pendingWindow) {
-          const newWindow = this.createWindow(pendingWindow.width, pendingWindow.height);
-          void newWindow.loadURL(url);
-          newWindow.webContents.openDevTools();
-        }
-      });
-
-    void this.window.loadURL(url);
+    this.window.loadURL(url).catch((reason) => {
+      logger().logErrorMessage(`Failed to load ${url}: ${reason}`);
+    });
   }
 
   quit(): void {
@@ -388,26 +373,6 @@ export class MainWindow extends GwtWindow {
     return appState().gwtCallback?.collectPendingQuitRequest() ?? PendingQuit.PendingQuitNone;
   }
 
-  createWindow(width: number, height: number): BrowserWindow {
-    return new BrowserWindow({
-      width: width,
-      height: height,
-      // https://github.com/electron/electron/blob/master/docs/faq.md#the-font-looks-blurry-what-is-this-and-what-can-i-do
-      backgroundColor: '#fff', 
-      webPreferences: {
-        enableRemoteModule: false,
-        nodeIntegration: false,
-        contextIsolation: true,
-        additionalArguments: ['desktop|desktopInfo'],
-        preload: path.join(__dirname, '../renderer/preload.js'),
-      },
-    });
-  }
-
-  prepareForWindow(pendingWindow: PendingWindow): void {
-    this.pendingWindows.push(pendingWindow);
-  }
-
   onActivated(): void {
     // intentionally left blank
   }
@@ -417,7 +382,7 @@ export class MainWindow extends GwtWindow {
       return;
     }
     reloadCount++;
-    this.loadUrl(this.webView.baseUrl ?? '');
+    this.loadUrl(this.baseUrl ?? '');
   }
 
   onLoadFinished(ok: boolean): void {
@@ -433,7 +398,7 @@ export class MainWindow extends GwtWindow {
         // session is still initializing, and then reload the page.
         const vars = new Map<string, string>();
         this.loadHtml(renderTemplateFile(appState().resourcesPath().completePath('html/loading.html'), vars));
-        waitForUrlWithTimeout(this.webView.baseUrl ?? '', reloadWaitDuration, reloadWaitDuration, 10)
+        waitForUrlWithTimeout(this.baseUrl ?? '', reloadWaitDuration, reloadWaitDuration, 10)
           .then((error: Err) => {
             if (error) {
               logger().logError(error);
@@ -458,7 +423,7 @@ export class MainWindow extends GwtWindow {
     }
 
     const vars = new Map<string, string>([
-      ['url', this.webView.baseUrl ?? '']
+      ['url', this.baseUrl ?? '']
     ]);
 
     this.loadHtml(
