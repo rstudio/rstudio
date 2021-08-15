@@ -91,7 +91,8 @@ export function configureSecondaryWindow(
     baseUrl,
     undefined,
     owner,
-    pendingSecondary.allowExternalNavigate);
+    pendingSecondary.allowExternalNavigate,
+    newWindow);
 
   // TODO
   // allow for Ctrl + W to close window (NOTE: Ctrl means Meta on macOS)

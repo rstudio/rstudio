@@ -90,7 +90,7 @@ export class DesktopBrowserWindow extends EventEmitter {
     });
 
     this.window.webContents.on('did-create-window', (newWindow, details) => {
-      appState().windowCreated(details, newWindow, this.window.webContents);
+      appState().windowCreated(details, newWindow, this.window.webContents, this.baseUrl);
     });
 
     this.window.webContents.on('will-navigate', (event, url) => {
