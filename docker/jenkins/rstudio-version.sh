@@ -60,7 +60,7 @@ if [[ $DEBUG = false ]]; then
 fi
 
 if [ -e "RELEASE_VERSION" ]; then
-    MAJOR_VERSION="$(cat RELEASE_VERSION | tr -d ' ')"
+    MAJOR_VERSION="$(cat RELEASE_VERSION | tr -d '[:space:]')"
 else
     MAJOR_VERSION="$(date -u '+%Y-%m')"
 fi
