@@ -6,7 +6,7 @@ properties([
                               artifactNumToKeepStr: '',
                               daysToKeepStr: '',
                               numToKeepStr: '100')),
-    parameters([string(name: 'RSTUDIO_VERSION_MINOR', defaultValue: '0', description: 'RStudio Minor Version'),
+    parameters([string(name: 'RSTUDIO_VERSION_PATCH', defaultValue: '0', description: 'RStudio Patch Version'),
                 string(name: 'SLACK_CHANNEL', defaultValue: '#ide-builds', description: 'Slack channel to publish build message.'),
                 string(name: 'OS_FILTER', defaultValue: '', description: 'Pattern to limit builds by matching OS'),
                 string(name: 'ARCH_FILTER', defaultValue: '', description: 'Pattern to limit builds by matching ARCH'),
@@ -16,12 +16,7 @@ properties([
 
 def compile_package(os, type, flavor, variant) {
   // start with major, minor, and patch versions
-  def envVars = "RSTUDIO_VERSION_MAJOR=${rstudioVersionMajor} RSTUDIO_VERSION_MINOR=${rstudioVersionMinor} RSTUDIO_VERSION_PATCH=${rstudioVersionPatch}"
-
-  // add version suffix if present
-  if (rstudioVersionSuffix != 0) {
-   envVars = "${envVars} RSTUDIO_VERSION_SUFFIX=${rstudioVersionSuffix}"
-  }
+  def envVars = "RSTUDIO_VERSION_MAJOR=${rstudioVersionMajor} RSTUDIO_VERSION_MINOR=${rstudioVersionMinor} RSTUDIO_VERSION_PATCH=${rstudioVersionPatch} RSTUDIO_VERSION_SUFFIX=${rstudioVersionSuffix}"
 
   // add OS that the package was built for
   envVars = "${envVars} PACKAGE_OS=\"${os}\""
@@ -210,13 +205,8 @@ try {
                 container = pullBuildPush(image_name: 'jenkins/ide', dockerfile: "docker/jenkins/Dockerfile.versioning", image_tag: "rstudio-versioning", build_args: jenkins_user_build_args())
                 container.inside() {
                     stage('bump version') {
-                        def FLOWER = sh (
-                          script: "cat RELEASE | tr ' ' '-'",
-                          returnStdout: true
-                        ).trim().toLowerCase()
-
                         def rstudioVersion = sh (
-                          script: "docker/jenkins/rstudio-version.sh bump ${FLOWER} ${params.RSTUDIO_VERSION_MINOR}",
+                          script: "docker/jenkins/rstudio-version.sh bump ${params.RSTUDIO_VERSION_MINOR}",
                           returnStdout: true
                         ).trim()
                         echo "RStudio build version: ${rstudioVersion}"
@@ -227,12 +217,12 @@ try {
                         rstudioVersionMinor = components[1]
 
                         // extract patch and suffix if present
-                        def patch = components[2].split('-')
+                        def patch = components[2].split('[-+]')
                         rstudioVersionPatch = patch[0]
-                        if (patch.length > 1)
-                            rstudioVersionSuffix = patch[1]
+                        if (patch.length > 2)
+                            rstudioVersionSuffix = '-' + patch[1] + '+' + patch[2]
                         else
-                            rstudioVersionSuffix = 0
+                            rstudioVersionSuffix = '+' + patch[1]
 
                         // update slack message to include build version
                         messagePrefix = "Jenkins ${env.JOB_NAME} build: <${env.BUILD_URL}display/redirect|${env.BUILD_DISPLAY_NAME}>, version: ${rstudioVersion}"
