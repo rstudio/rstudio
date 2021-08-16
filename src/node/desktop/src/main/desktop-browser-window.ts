@@ -20,9 +20,10 @@ import os from 'os';
 import path from 'path';
 
 import { EventEmitter } from 'stream';
+import { URL } from 'url';
 import { logger } from '../core/logger';
 import { appState } from './app-state';
-import { executeJavaScript } from './utils';
+import { executeJavaScript, isSafeHost } from './utils';
 
 /**
  * Base class for browser-based windows. Subclasses include GwtWindow, SecondaryWindow,
@@ -42,16 +43,6 @@ export class DesktopBrowserWindow extends EventEmitter {
   // 'did-finish-load'; use this bool to differentiate
   private failLoad = false;
 
-
-  /**
-   * @param adjustTitle Automatically set window title to match web page title
-   * @param name  Internal window name (or an empty string)
-   * @param baseUrl 
-   * @param parent 
-   * @param opener 
-   * @param allowExternalNavigate 
-   * @param addApiKeys
-   */
   constructor(
     private showToolbar: boolean,
     private adjustTitle: boolean,
@@ -60,36 +51,91 @@ export class DesktopBrowserWindow extends EventEmitter {
     private parent?: DesktopBrowserWindow,
     private opener?: WebContents,
     private allowExternalNavigate = false,
-    addApiKeys: string[] = []
+    addApiKeys: string[] = [],
+    existingWindow?: BrowserWindow
   ) {
     super();
     const apiKeys = [['desktopInfo', ...addApiKeys].join('|')];
-    this.window = new BrowserWindow({
-      // https://github.com/electron/electron/blob/master/docs/faq.md#the-font-looks-blurry-what-is-this-and-what-can-i-do
-      backgroundColor: '#fff', 
-      webPreferences: {
-        enableRemoteModule: false,
-        nodeIntegration: false,
-        contextIsolation: true,
-        additionalArguments: apiKeys,
-        preload: path.join(__dirname, '../renderer/preload.js'),
-      },
-      show: false
-    });
+    if (existingWindow) {
+      this.window = existingWindow;
+    } else {
+      this.window = new BrowserWindow({
+        // https://github.com/electron/electron/blob/master/docs/faq.md#the-font-looks-blurry-what-is-this-and-what-can-i-do
+        backgroundColor: '#fff',
+        webPreferences: {
+          enableRemoteModule: false,
+          nodeIntegration: false,
+          contextIsolation: true,
+          sandbox: false,
+          nativeWindowOpen: true,
+          additionalArguments: apiKeys,
+          preload: path.join(__dirname, '../renderer/preload.js'),
+        },
+        show: false
+      });
+
+      // Uncomment to have all windows show dev tools by default
+      // this.window.webContents.openDevTools();
+
+    }
 
     this.window.webContents.on('before-input-event', (event, input) => {
       this.keyPressEvent(event, input);
     });
 
     this.window.webContents.setWindowOpenHandler((details) => {
-      appState().createWindow(details, this.window.webContents, this.baseUrl);
-      return { action: 'deny' };
+      // check if this is target="_blank" from an IDE window
+      if (this.baseUrl && (details.disposition === 'foreground-tab' || details.disposition === 'background-tab')) {
+        // TODO: validation/restrictions on the URLs?
+        void shell.openExternal(details.url);
+        return { action: 'deny' };
+      }
+
+      // proceed with window creation; we'll associate the created BrowserWindow with our 
+      // window wrapper type upon receipt of 'did-create-window' below
+      return { action: 'allow' };
+    });
+
+    this.window.webContents.on('did-create-window', (newWindow, details) => {
+      appState().windowCreated(details, newWindow, this.window.webContents, this.baseUrl);
     });
 
     this.window.webContents.on('will-navigate', (event, url) => {
-      if (!this.allowExternalNavigate) {
+
+      // TODO: this is a partial implementation of DesktopWebPage.cpp::acceptNavigationRequest;
+      // all the other details need to be implemented
+
+      let targetUrl: URL;
+      try {
+        targetUrl = new URL(url);
+      } catch (err) {
+        // malformed URL will cause exception
+        logger().logError(err);
         event.preventDefault();
-        void shell.openExternal(url);
+        return;
+      }
+
+      // determine if this is a local request (handle internally only if local)
+      const host = targetUrl.hostname;
+      const isLocal = host === 'localhost' || host == '127.0.0.1' || host == '::1';
+      if (isLocal) {
+        return;
+      }
+
+      if (!this.allowExternalNavigate) {
+        try {
+          const targetUrl: URL = new URL(url);
+          if (!isSafeHost(targetUrl.host)) {
+            // when not allowing external navigation, open an external browser
+            // to view the URL
+            event.preventDefault();
+            void shell.openExternal(url);
+          }
+        } catch (err) {
+          // malformed URL will cause exception
+          logger().logError(err);
+          event.preventDefault();
+        }
       }
     });
 

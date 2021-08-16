@@ -355,3 +355,22 @@ export function getDpiZoomScaling(): number {
   // apply a custom scale -- but more testing is warranted
   return 1.0;
 }
+
+/**
+ * Determine if given host is considered safe to load in an IDE window.
+ */
+export function isSafeHost(host: string): boolean {
+  const safeHosts = [
+    '.youtube.com',
+    '.vimeo.com',
+    '.c9.ms',
+    '.google.com'
+  ];
+
+  for (const safeHost of safeHosts) {
+    if (host.endsWith(safeHost)) {
+      return true;
+    }
+  }
+  return false;
+}
