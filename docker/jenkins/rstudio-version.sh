@@ -58,7 +58,12 @@ function log() {
 
 function buildType() {
     if [ -e "$RSTUDIO_ROOT_DIR/BUILDTYPE" ]; then
-        echo "$(cat $RSTUDIO_ROOT_DIR/BUILDTYPE | tr '[ ]' '-' | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')"
+        BUILD_TYPE="$(cat $RSTUDIO_ROOT_DIR/BUILDTYPE | tr '[ ]' '-' | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')"
+        if [[ -n $BUILD_TYPE && $BUILD_TYPE != "release" ]]; then
+            echo "-${BUILD_TYPE}"
+        else
+            echo ""
+        fi
     else
         echo "The $RSTUDIO_ROOT_DIR/BUILDTYPE file does not exist. A build version could not be generated" >&2
         exit 1
@@ -87,7 +92,7 @@ if [[ $DEBUG = false ]]; then
     EXTRA_CP_ARGS=--quiet
 fi
 
-VERSION="$(calver).${PATCH}"
+VERSION="$(calver).${PATCH}$(buildType)"
 
 # get historical open source patch versions from AWS; this file is a CSV that
 # contains each open source commit and the patch version associated with it
