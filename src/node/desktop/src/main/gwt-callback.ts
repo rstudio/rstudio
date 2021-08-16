@@ -31,6 +31,7 @@ import { GwtWindow } from './gwt-window';
 import { openMinimalWindow } from './minimal-window';
 import { appState } from './app-state';
 import { filterFromQFileDialogFilter, resolveAliasedPath } from './utils';
+import { userHomePath } from '../core/user';
 
 export enum PendingQuit {
   PendingQuitNone,
@@ -96,9 +97,12 @@ export class GwtCallback extends EventEmitter {
       dir: string, defaultExtension: string, forceDefaultExtension: boolean,
       focusOwner: boolean
     ) => {
+
+      const resolvedDir = FilePath.resolveAliasedPathSync(dir, userHomePath()).toString();
+
       const saveDialogOptions: SaveDialogOptions = {
         title: caption,
-        defaultPath: dir,
+        defaultPath: resolvedDir,
         buttonLabel: label
       };
 

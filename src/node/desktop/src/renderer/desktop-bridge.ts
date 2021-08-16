@@ -78,16 +78,19 @@ export function getDesktopBridge() {
           if (result.canceled as boolean) {
             callback('');
           } else {
+            if (defaultExtension.length !== 0) {
 
-            // Add default extension, if it's missing
-            const fp = new FilePath(result.filePath);
-            if ((fp.getExtension().length == 0) ||
-               (forceDefaultExtension &&
-               (fp.getExtension() !== defaultExtension))) {
-              callback(fp.getStem() + defaultExtension);
-            } else {
-              callback(result.filePath);
+              // Add default extension, if it's missing
+              const fp = new FilePath(result.filePath);
+              if ((fp.getExtension().length == 0) ||
+                (forceDefaultExtension &&
+                (fp.getExtension() !== defaultExtension))) {
+                callback(fp.getStem() + defaultExtension);
+                return;
+              } 
             }
+
+            callback(result.filePath);
           }
         })
         .catch(error => reportIpcError('getSaveFileName', error));
