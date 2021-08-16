@@ -18,6 +18,7 @@ import { BrowserWindow, WebContents } from 'electron';
 import { GwtWindow } from './gwt-window';
 import { MainWindow } from './main-window';
 import { appState } from './app-state';
+import { DesktopBrowserWindow } from './desktop-browser-window';
 
 export class SatelliteWindow extends GwtWindow {
   constructor(
@@ -29,6 +30,8 @@ export class SatelliteWindow extends GwtWindow {
     super(false, true, name, undefined, undefined, opener,
       mainWindow.isRemoteDesktop, ['desktop'], existingWindow);
     appState().gwtCallback?.registerOwner(this);
+
+    this.on(DesktopBrowserWindow.CLOSE_WINDOW_SHORTCUT, this.onCloseWindowShortcut.bind(this));
   }
 
   onActivated(): void {

@@ -286,7 +286,6 @@ export class DesktopBrowserWindow extends EventEmitter {
       if (input.meta && input.key.toLowerCase() === 'w') {
         // on macOS, intercept Cmd+W and emit the window close signal
         this.emit(DesktopBrowserWindow.CLOSE_WINDOW_SHORTCUT);
-        event.preventDefault();
       }
     }
   }

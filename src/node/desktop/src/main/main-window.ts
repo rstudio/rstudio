@@ -31,6 +31,7 @@ import { DesktopOptions } from './desktop-options';
 import { RemoteDesktopSessionLauncher } from './remote-desktop-session-launcher-overlay';
 import { CloseServerSessions } from './session-servers-overlay';
 import { waitForUrlWithTimeout } from './utils';
+import { DesktopBrowserWindow } from './desktop-browser-window';
 
 export function closeAllSatellites(mainWindow: BrowserWindow): void {
   const topLevels = BrowserWindow.getAllWindows();
@@ -116,8 +117,7 @@ export class MainWindow extends GwtWindow {
       this.onSessionQuit();
     });
 
-    // connect(webView(), SIGNAL(onCloseWindowShortcut()),
-    //         this, SLOT(onCloseWindowShortcut()));
+    this.on(DesktopBrowserWindow.CLOSE_WINDOW_SHORTCUT, this.onCloseWindowShortcut.bind(this));
 
     // connect(webView(), &WebView::urlChanged,
     //         this, &MainWindow::onUrlChanged);

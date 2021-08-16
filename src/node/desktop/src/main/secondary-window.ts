@@ -29,5 +29,11 @@ export class SecondaryWindow extends DesktopBrowserWindow {
   ) {
     super(showToolbar, true, name, baseUrl, parent, opener,
       allowExternalNavigate, undefined, existingWindow);
+
+    this.on(DesktopBrowserWindow.CLOSE_WINDOW_SHORTCUT, this.onCloseWindowShortcut.bind(this));
+  }
+
+  onCloseWindowShortcut(): void {
+    this.window.close();
   }
 }
