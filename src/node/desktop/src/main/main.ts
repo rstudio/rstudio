@@ -59,6 +59,7 @@ class RStudioMain {
     }
 
     await app.whenReady();
+
     if (!parseStatus(await rstudio.run())) {
       return;
     }

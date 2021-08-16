@@ -42,19 +42,23 @@
     "uuid": "^8.3.2"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "yarn run compile && yarn run copy-files",
     "clean": "ts-node scripts/clean.ts",
-    "watch": "tsc -w",
+    "compile": "tsc",
+    "copy-files": "ts-node scripts/copy-files.ts",
+    "launch": "electron --trace-warnings ./dist/src/main/main.js",
     "package": "yarn run clean && yarn run build && electron-packager ./ --prune --package-manager=yarn --out=./package --overwrite --ignore tsconfig.tsbuildinfo",
-    "win-package": "yarn run package && ts-node scripts/package-helper",
     "lint": "eslint ./src ./test",
-    "start": "yarn run build && electron --trace-warnings ./dist/src/main/main.js",
-    "start-diag": "yarn run build && electron --trace-warnings ./dist/src/main/main.js --run-diagnostics",
+    "package": "yarn run build && electron-packager ./ --prune --package-manager=yarn --out=./package --overwrite --ignore tsconfig.tsbuildinfo",
     "show-version": "yarn run build && electron ./dist/src/main/main.js --version-json",
+    "start-diag": "yarn run build && yarn run launch --run-diagnostics",
+    "start": "yarn run build && yarn run launch",
     "test": "electron-mocha -c --config ./test/unit/mocharc.json",
     "testcover": "nyc electron-mocha -c --config ./test/unit/mocharc.json",
-    "testwip": "electron-mocha -c -g WIP --config ./test/unit/mocharc.json",
     "testint": "mocha -c --config ./test/int/mocharc.json",
-    "testintwip": "mocha -c -g WIP  --config ./test/int/mocharc.json"
+    "testintwip": "mocha -c -g WIP  --config ./test/int/mocharc.json",
+    "testwip": "electron-mocha -c -g WIP --config ./test/unit/mocharc.json",
+    "watch": "tsc -w",
+    "win-package": "yarn run package && ts-node scripts/package-helper"
   }
 }

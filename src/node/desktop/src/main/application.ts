@@ -26,11 +26,11 @@ import { augmentCommandLineArguments, getComponentVersions, removeStaleOptionsLo
 import { exitFailure, exitSuccess, run, ProgramStatus } from './program-status';
 import { ApplicationLaunch } from './application-launch';
 import { AppState } from './app-state';
-import { prepareEnvironment } from './detect-r';
 import { SessionLauncher } from './session-launcher';
 import { DesktopActivation } from './activation-overlay';
 import { WindowTracker } from './window-tracker';
 import { GwtCallback } from './gwt-callback';
+import { prepareEnvironment, promptUserForR } from './detect-r';
 import { PendingWindow } from './pending-window';
 import { configureSatelliteWindow, configureSecondaryWindow } from './window-utils';
 
@@ -69,6 +69,7 @@ export class Application implements AppState {
    * Startup code run before app 'ready' event.
    */
   async beforeAppReady(): Promise<ProgramStatus> {
+
     const status = this.initCommandLine(process.argv);
     if (status.exit) {
       return status;
@@ -139,13 +140,34 @@ export class Application implements AppState {
       }
     }
 
-    const error = prepareEnvironment();
-    if (error) {
+    // on Windows, ask the user what version of R they'd like to use
+    if (process.platform === 'win32') {
+
+      const [path, preflightError] = await promptUserForR();
+      if (preflightError) {
+        dialog.showErrorBox('Error Finding R', 'RStudio failed to find any R installations on the system.');
+        console.log(preflightError);
+        return exitFailure();
+      }
+
+      // if no path was selected, bail (implies dialog was canceled)
+      if (path == null) {
+        return exitFailure();
+      }
+
+    }
+
+    // prepare the R environment
+    const prepareError = prepareEnvironment();
+    if (prepareError) {
+      dialog.showErrorBox('Error Finding R', 'RStudio failed to find any R installations on the system.');
+      console.log(prepareError);
       return exitFailure();
     }
 
     // TODO: desktop pro session handling
     // TODO: 'file/project' file open handling (e.g. launch by double-clicking a .R or .Rproj file)
+    // TODO: select 32bit session for 32bit R on Windows
 
     // launch a local session
     this.sessionLauncher = new SessionLauncher(this.sessionPath, confPath, new FilePath(), this.appLaunch);
