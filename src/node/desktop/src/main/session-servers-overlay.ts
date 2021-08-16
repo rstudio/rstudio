@@ -1,5 +1,5 @@
 /*
- * XTermLinkProvider.java
+ * session-servers-overlay.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -12,17 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.terminal.xterm;
 
-import jsinterop.annotations.JsPackage;
-import jsinterop.annotations.JsType;
-
-/**
- * A custom link provider.
- * https://github.com/xtermjs/xterm.js/blob/4.7.0/typings/xterm.d.ts
- */
-@JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
-public class XTermLinkProvider
-{
-   // not currently used, intentionally left blank
-}
+export type SessionLocation = 'Ask' | 'Locally' | 'Server';
+export type CloseServerSessions = 'Ask' | 'Always' | 'Never';
+export type ConfigSource = 'Admin' | 'User';

@@ -21,7 +21,8 @@
 
 ### RStudio Workbench
 
-* Load-balancing configuration is now automatic and doesn't require editing config files (Pro #2167)
+* Load-balancing configuration is now automatic, stored in the internal database, and doesn't require editing config files. Added supporting `rstudio-server list-nodes` command to show users the node's status according to the database. (Pro #2167)
+* Added `rstudio-server delete-node` command to allow users to remove a load-balancing node from the database (Pro #2800)
 * Added AWS Cognito support to OpenID integration (Pro #2313)
 * Add file uploads and downloads to session audit log (Pro #2226)
 * RStudio Workbench can now run without root access in a single-user mode (Pro #9496)
@@ -29,6 +30,7 @@
 * Use separate database schema for open source RStudio Server instances (`rstudio-os`) and RStudio Workbench instances (`rstudio`) to avoid conflicts (Pro #2725)
 * Prevent user preferences from setting CRAN repos when `allow-cran-repos-edit=0` (Pro #1301)
 * Ensure that improperly configured `launcher-sessions-callback-address` values can't hang user sessions (Pro #2532)
+* Support username aliases, where two usernames map to the same uid (Pro #2736)
 
 ### Bugfixes
 
@@ -51,6 +53,8 @@
 * Fixed issue where adjacent links in the Visual Editor could merge into a single link (#8471)
 * Fixed Issue where items deleted from a local Zotero Collection would still appear in the Visual Editor's Insert Citation dialog.
 * Fixed issue where Console width was computed incorrectly with some custom fonts (#8696)
+* Fixed two 502 errors with load balancing: quick session restart, and failover for non-launcher sessions (Pro #2696)
+* Fixed problem with backspace in terminal causing incorrect display (#9249)
 
 ### Misc
 
@@ -62,7 +66,6 @@
 * Support highlight of 'css' and 'asis' chunks in R Markdown documents (#4821)
 * Improved ordering of completion results within `library()` calls (#9293)
 * Syntax support for embedded knitr chunks (#9579)
-* Added support for publishing Quarto documents and websites (#9556)
 * Add option to synchronize the Files pane with the current working directory in R (#4615)
 * Add new *Set Working Directory* command to context menu for source files (#6781)
 * Local background jobs can now be replayed (#5548)
@@ -73,3 +76,5 @@
 * RStudio no longer treats R objects containing null external pointers specially when building Environment pane (#5546)
 * Make Cmd+Shift+0 the shortcut for restarting session on MacOS (#7695)
 * Update Plumber file template for Plumber 1.0 (#9402)
+* Support creating supplemental groups when create-container-user=1 (Pro #2276)
+* RStudio addins installed within `tools:::R_user_dir(<pkg>, "config")` are now discovered by RStudio. (#9648)

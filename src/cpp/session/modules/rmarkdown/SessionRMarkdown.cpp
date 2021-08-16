@@ -1227,9 +1227,14 @@ Error terminateRenderRmd(const json::JsonRpcRequest& request,
       return error;
 
    if (isRenderRunning())
+   {
+      module_context::clearViewerCurrentUrl();
+
       s_pCurrentRender_->terminateProcess(
                normal ? renderTerminateNormal :
                         renderTerminateAbnormal);
+
+   }
 
    return Success();
 }

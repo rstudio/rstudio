@@ -45,6 +45,7 @@ import org.rstudio.studio.client.common.compile.CompileOutputBufferWithHighlight
 import org.rstudio.studio.client.common.compile.CompilePanel;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
+import org.rstudio.studio.client.quarto.QuartoHelper;
 import org.rstudio.studio.client.quarto.model.QuartoConfig;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -131,7 +132,7 @@ public class BuildPane extends WorkbenchPane
       toolbar.addLeftSeparator();
       
       // quarto gets serve site
-      if (quarto)
+      if (quarto && QuartoHelper.isQuartoWebsiteConfig(quartoConfig))
       {
          toolbar.addLeftWidget(commands_.serveQuartoSite().createToolbarButton());
          toolbar.addLeftSeparator();

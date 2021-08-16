@@ -32,6 +32,7 @@ import org.rstudio.studio.client.panmirror.format.PanmirrorHugoExtensions;
 import org.rstudio.studio.client.panmirror.format.PanmirrorRmdExtensions;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorPandocFormatConfig;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUIToolsFormat;
+import org.rstudio.studio.client.quarto.QuartoHelper;
 import org.rstudio.studio.client.rmarkdown.model.YamlFrontMatter;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.BlogdownConfig;
@@ -189,6 +190,12 @@ public class VisualModePanmirrorFormat
    public boolean isQuartoDocument()
    {
       return target_.getExtendedFileType() == SourceDocument.XT_QUARTO_DOCUMENT;
+   }
+   
+   public boolean isQuartoBookDocument()
+   {
+      return isQuartoDocument() && 
+             QuartoHelper.isQuartoBookDoc(docUpdateSentinel_.getPath(), sessionInfo_.getQuartoConfig());
    }
    
    

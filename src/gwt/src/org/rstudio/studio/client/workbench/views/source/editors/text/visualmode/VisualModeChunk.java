@@ -496,6 +496,7 @@ public class VisualModeChunk
          break;
       case "js":
       case "javascript":
+      case "ojs":
          editor.setFileType(FileTypeRegistry.JS);
          break;
       case "tex":

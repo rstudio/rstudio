@@ -32,7 +32,7 @@ import { DesktopActivation } from './activation-overlay';
 import { EXIT_FAILURE } from './program-status';
 import { closeAllSatellites, MainWindow } from './main-window';
 import { PendingQuit } from './gwt-callback';
-import { finalPlatformInitialize, getCurrentlyUniqueFolderName, userLogPath } from './utils';
+import { finalPlatformInitialize, getCurrentlyUniqueFolderName, userLogPath, waitForUrlWithTimeout } from './utils';
 import { productInfo } from './product-info';
 import { DesktopOptions } from './desktop-options';
 
@@ -101,6 +101,7 @@ export class SessionLauncher {
   static launcherToken = generateShortenedUuid();
   sessionStdout: string[] = [];
   sessionStderr: string[] = [];
+  private nextSessionUrl?: string;
 
   constructor(
     private sessionPath: FilePath,
@@ -179,9 +180,6 @@ export class SessionLauncher {
     //                       SIGNAL(openFileRequest(QString)),
     //                       pMainWindow_,
     //                       SLOT(openFileInRStudio(QString)));
-    // pMainWindow_->connect(pRSessionProcess_,
-    //                       SIGNAL(finished(int,QProcess::ExitStatus)),
-    //                       this, SLOT(onRSessionExited(int,QProcess::ExitStatus)));
     // pMainWindow_->connect(&activation(),
     //                       SIGNAL(licenseLost(QString)),
     //                       pMainWindow_,
@@ -412,35 +410,30 @@ export class SessionLauncher {
 
     // update the main window's reference to the process object
     this.mainWindow?.setSessionProcess(this.sessionProcess);
-
-    // TODO REVIEW, still needed?
-    // connect to quit event
-    // this.mainWindow?.connect(pRSessionProcess_,
-    //   SIGNAL(finished(int, QProcess:: ExitStatus)),
-    //   this,
-    //   SLOT(onRSessionExited(int, QProcess:: ExitStatus)));
-    //
     if (reload) {
-      logger().logErrorMessage('reloading a session not yet fully implemented');
-      // TODO: this mechanism, once recreated, might also be usable for dealing with the
-      // initial loading retries, per: https://github.com/rstudio/rstudio/issues/9627
-      //     const error = core::waitWithTimeout(
-      //              boost::bind(serverReady, host.toStdString(), port.toStdString()),
-      //              50,
-      //              25,
-      //              10);
-      //     if (error)
-      //        LOG_ERROR(error);
-      
-    //     nextSessionUrl_ = url;
-    //     QTimer::singleShot(0, this, SLOT(onReloadFrameForNextSession()));
+      waitForUrlWithTimeout(launchContext.url, 50, 25, 10)
+        .then((error: Err) => {
+          if (error) {
+            logger().logError(error);
+          }
+        })
+        .catch((error) => {
+          logger().logError(error);
+        })
+        .finally(() => {
+          this.nextSessionUrl = launchContext.url;
+          setImmediate(this.onReloadFrameForNextSession.bind(this));
+        });
     }
 
     return success();
   }
 
   onReloadFrameForNextSession(): void {
-    // TODO
+    if (this.nextSessionUrl) {
+      this.mainWindow?.loadUrl(this.nextSessionUrl);
+      this.nextSessionUrl = undefined;
+    }
   }
 
   private onLaunchFirstSession(): void {

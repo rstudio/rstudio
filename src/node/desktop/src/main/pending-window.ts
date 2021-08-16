@@ -13,19 +13,24 @@
  *
  */
 
-export class PendingWindow {
-  isSatellite = true;
-  allowExternalNavigate = false; // for RDP
-  showToolbar = false;
+import { MainWindow } from './main-window';
 
-  constructor(public name: string,
-              public x: number,
-              public y: number,
-              public width: number,
-              public height: number) {
-  }
-
-  get isEmpty(): boolean {
-    return !this.name;
-  }
+export interface PendingSatelliteWindow {
+  type: 'satellite';
+  name: string;
+  mainWindow: MainWindow;
+  screenX: number;
+  screenY: number;
+  width: number;
+  height: number;
+  allowExternalNavigate: boolean;
 }
+
+export interface PendingSecondaryWindow {
+  type: 'secondary';
+  name: string;
+  allowExternalNavigate: boolean;
+  showToolbar: boolean;
+}
+
+export type PendingWindow = PendingSatelliteWindow | PendingSecondaryWindow;

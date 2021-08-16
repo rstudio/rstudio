@@ -40,6 +40,7 @@ import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarkerList;
+import org.rstudio.studio.client.quarto.QuartoHelper;
 import org.rstudio.studio.client.quarto.model.QuartoConfig;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -343,7 +344,7 @@ public class BuildPresenter extends BasePresenter
    
    void onServeQuartoSite()
    {
-      quartoServeBook(null);
+      quartoServe(null);
    }
 
    void onBuildSourcePackage()
@@ -418,13 +419,13 @@ public class BuildPresenter extends BasePresenter
          {
             startQuartoBookBuild();
          }
-         else if (isQuartoSubProject(config))
+         else if (isQuartoSubProject(config) || !QuartoHelper.isQuartoWebsiteConfig(config))
          {
             executeBuild(type, "");
          }
          else 
          {
-            quartoServeBook("default");
+            quartoServe("default");
          }
       }
       else
@@ -540,7 +541,7 @@ public class BuildPresenter extends BasePresenter
       // of pdf, epub, etc. will occur based on normal build pane output scanning)
       String bookType = view_.getBookType();
       if (shouldRenderAndServeBook(bookType))
-         quartoServeBook(bookType);
+         quartoServe(bookType);
       else
          executeBuild("build-all", view_.getBookType());
    }
@@ -577,9 +578,11 @@ public class BuildPresenter extends BasePresenter
       return !config.project_dir.equals(workbenchContext_.getActiveProjectDir().getPath());
    }
    
-   private void quartoServeBook(String bookType)
+   private void quartoServe(String type)
    {
-      server_.quartoServe(bookType, new SimpleRequestCallback<Void>("Quarto Serve Error"));
+      source_.withSaveFilesBeforeCommand(() -> {
+         server_.quartoServe(type, new SimpleRequestCallback<Void>("Quarto Serve Error"));
+      }, () -> {}, "Quarto");
    }
 
    private String devtoolsLoadAllPath_ = null;

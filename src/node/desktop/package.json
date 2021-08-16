@@ -30,6 +30,7 @@
     "mocha": "^8.4.0",
     "nyc": "^15.1.0",
     "playwright": "^1.12.3",
+    "recursive-copy": "^2.0.13",
     "sinon": "^11.1.1",
     "ts-node": "^10.0.0",
     "typescript": "^4.3.5"
@@ -46,6 +47,7 @@
     "compile": "tsc",
     "copy-files": "ts-node scripts/copy-files.ts",
     "launch": "electron --trace-warnings ./dist/src/main/main.js",
+    "package": "yarn run clean && yarn run build && electron-packager ./ --prune --package-manager=yarn --out=./package --overwrite --ignore tsconfig.tsbuildinfo",
     "lint": "eslint ./src ./test",
     "package": "yarn run build && electron-packager ./ --prune --package-manager=yarn --out=./package --overwrite --ignore tsconfig.tsbuildinfo",
     "show-version": "yarn run build && electron ./dist/src/main/main.js --version-json",
@@ -56,6 +58,7 @@
     "testint": "mocha -c --config ./test/int/mocharc.json",
     "testintwip": "mocha -c -g WIP  --config ./test/int/mocharc.json",
     "testwip": "electron-mocha -c -g WIP --config ./test/unit/mocharc.json",
-    "watch": "tsc -w"
+    "watch": "tsc -w",
+    "win-package": "yarn run package && ts-node scripts/package-helper"
   }
 }

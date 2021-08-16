@@ -38,3 +38,7 @@ export function info(message: string): string {
 export function warn(message: string): string {
   return '\x1b[1m\x1b[31m[W]\x1b[0m ' + message;
 }
+
+export function getProgramFilesWindows(): string {
+  return process.env['PROGRAMFILES'];
+}

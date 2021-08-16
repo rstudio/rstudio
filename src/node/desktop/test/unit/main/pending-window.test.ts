@@ -15,22 +15,54 @@
 
 import { describe } from 'mocha';
 import { assert } from 'chai';
+import sinon from 'sinon';
+import { createSinonStubInstance } from '../unit-utils';
 
 import { PendingWindow } from '../../../src/main/pending-window';
+import { MainWindow } from '../../../src/main/main-window';
+
 
 describe('PendingWindow', () => {
-  it('can be constructed', () => {
-    const name = 'foo';
-    const x = 1;
-    const y = 2;
-    const width = 3;
-    const height = 4;
-    const pw = new PendingWindow(name, x, y, width, height);
-    assert.equal(pw.name, name);
-    assert.equal(pw.x, x);
-    assert.equal(pw.y, y);
-    assert.equal(pw.width, width);
-    assert.equal(pw.height, height);
-    assert.isFalse(pw.isEmpty);
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  it('PendingWindow can be either Satellite or Secondary', () => {
+    const mainWindowStub = createSinonStubInstance(MainWindow);
+    const pendingWindows: Array<PendingWindow> = [];
+    pendingWindows.push({
+      type: 'satellite',
+      name: 'sputnik',
+      mainWindow: mainWindowStub,
+      screenX: 1, screenY: 2, width: 3, height: 4,
+      allowExternalNavigate: false
+    });
+
+    pendingWindows.push({
+      type: 'secondary',
+      name: 'moon',
+      allowExternalNavigate: false,
+      showToolbar: true
+    });
+
+    let foundSatellite = false;
+    let foundSecondary = false;
+    for (const pending of pendingWindows) {
+      switch (pending.type) {
+      case 'satellite':
+        assert.deepEqual(pending.name, 'sputnik');
+        assert.equal(pending.width, 3);
+        foundSatellite = true;
+        break;
+      case 'secondary':
+        assert.deepEqual(pending.name, 'moon');
+        assert.isTrue(pending.showToolbar);
+        foundSecondary = true;
+        break;
+      }
+    }
+
+    assert.isTrue(foundSatellite);
+    assert.isTrue(foundSecondary);
   });
 });
