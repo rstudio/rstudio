@@ -153,7 +153,9 @@ export class DesktopBrowserWindow extends EventEmitter {
       this.failLoad = true;
       this.finishLoading(false);
     });
-    this.window.on('close', this.closeEvent.bind(this));
+    this.window.on('close', (event: Electron.Event) => {
+      this.closeEvent(event);
+    });
     this.window.on('closed', () => {
       this.emit(DesktopBrowserWindow.WINDOW_DESTROYED);
     });
@@ -190,10 +192,6 @@ export class DesktopBrowserWindow extends EventEmitter {
         logger().logError(error);
       });
     }
-
-    // forward the close event to the page
-    // TODO
-    // webPage()->event(event);
   }
 
   adjustWindowTitle(title: string, explicitSet: boolean): void {
