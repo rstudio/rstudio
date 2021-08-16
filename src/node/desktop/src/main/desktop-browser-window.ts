@@ -91,13 +91,13 @@ export class DesktopBrowserWindow extends EventEmitter {
         return { action: 'deny' };
       }
 
-      // proceed with window creation; we'll associate the created BrowserWindow with our 
-      // window wrapper type upon receipt of 'did-create-window' below
-      return { action: 'allow' };
+      // configure window creation; we'll associate the resulting BrowserWindow with our 
+      // window wrapper type via 'did-create-window' below
+      return appState().windowOpening();
     });
 
-    this.window.webContents.on('did-create-window', (newWindow, details) => {
-      appState().windowCreated(details, newWindow, this.window.webContents, this.baseUrl);
+    this.window.webContents.on('did-create-window', (newWindow) => {
+      appState().windowCreated(newWindow, this.window.webContents, this.baseUrl);
     });
 
     this.window.webContents.on('will-navigate', (event, url) => {
@@ -153,7 +153,9 @@ export class DesktopBrowserWindow extends EventEmitter {
       this.failLoad = true;
       this.finishLoading(false);
     });
-    this.window.on('close', this.closeEvent.bind(this));
+    this.window.on('close', (event: Electron.Event) => {
+      this.closeEvent(event);
+    });
     this.window.on('closed', () => {
       this.emit(DesktopBrowserWindow.WINDOW_DESTROYED);
     });
@@ -190,10 +192,6 @@ export class DesktopBrowserWindow extends EventEmitter {
         logger().logError(error);
       });
     }
-
-    // forward the close event to the page
-    // TODO
-    // webPage()->event(event);
   }
 
   adjustWindowTitle(title: string, explicitSet: boolean): void {
@@ -286,7 +284,6 @@ export class DesktopBrowserWindow extends EventEmitter {
       if (input.meta && input.key.toLowerCase() === 'w') {
         // on macOS, intercept Cmd+W and emit the window close signal
         this.emit(DesktopBrowserWindow.CLOSE_WINDOW_SHORTCUT);
-        event.preventDefault();
       }
     }
   }

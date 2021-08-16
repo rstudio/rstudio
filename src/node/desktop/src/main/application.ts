@@ -13,7 +13,7 @@
  *
  */
 
-import { app, BrowserWindow, dialog, WebContents } from 'electron';
+import { app, BrowserWindow, dialog, WebContents, screen } from 'electron';
 
 import { getenv, setenv } from '../core/environment';
 import { FilePath } from '../core/file-path';
@@ -251,11 +251,27 @@ export class Application implements AppState {
     this.pendingWindows.push(pendingWindow);
   }
 
+  windowOpening(): { action: 'deny' } | { action: 'allow', overrideBrowserWindowOptions?: Electron.BrowserWindowConstructorOptions | undefined } {
+
+    // no additional config if pending window is a satellite
+    for (const pendingWindow of this.pendingWindows) {
+      if (pendingWindow.type === 'satellite') {
+        return { action: 'allow' };
+      }
+      break;
+    }
+
+    // determine size for secondary window
+    const primaryDisplay = screen.getPrimaryDisplay();
+    const width = Math.max(500, Math.min(850, primaryDisplay.workAreaSize.width));
+    const height = Math.max(500, Math.min(1100, primaryDisplay.workAreaSize.height));
+    return { action: 'allow', overrideBrowserWindowOptions: { width: width, height: height } };
+  }
+
   /**
    * Configures new Secondary or Satellite window
    */
   windowCreated(
-    details: Electron.DidCreateWindowDetails,
     newWindow: BrowserWindow,
     owner: WebContents,
     baseUrl?: string): void {

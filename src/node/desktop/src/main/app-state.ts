@@ -41,7 +41,8 @@ export interface AppState {
   sessionStartDelaySeconds: number;
   sessionEarlyExitCode: number;
   prepareForWindow(pendingWindow: PendingWindow): void;
-  windowCreated(details: Electron.DidCreateWindowDetails, newWindow: BrowserWindow, owner: WebContents, baseUrl?: string): void;
+  windowOpening(): { action: 'deny' } | { action: 'allow', overrideBrowserWindowOptions?: Electron.BrowserWindowConstructorOptions | undefined };
+  windowCreated(newWindow: BrowserWindow, owner: WebContents, baseUrl?: string): void;
 }
 
 let rstudio: AppState | null = null;
