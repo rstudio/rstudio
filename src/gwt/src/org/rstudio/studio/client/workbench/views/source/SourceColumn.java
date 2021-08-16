@@ -747,10 +747,13 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
       // manage save and save all
       manageSaveCommands(active);
-
-
+     
+      
       // manage R Markdown commands
       manageRMarkdownCommands(active);
+      
+      // manage run document command
+      manageRunDocumentCommand(active);
 
       // manage multi-tab commands
       manageMultiTabCommands(active);
@@ -903,6 +906,56 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       getSourceCommand(commands_.editRmdFormatOptions()).setEnabled(false);
       getSourceCommand(commands_.editRmdFormatOptions()).setVisible(active && rmdCommandsAvailable, rmdCommandsAvailable, rmdCommandsAvailable);
       getSourceCommand(commands_.editRmdFormatOptions()).setEnabled(active && rmdCommandsAvailable, rmdCommandsAvailable,rmdCommandsAvailable);
+   }
+   
+   public EditingTarget shinyRunDocumentEditor(String serverSrcFile)
+   {
+      String appDir = FileSystemItem.createFile(serverSrcFile).getParentPathString();
+      for (int i=0; i<editors_.size(); i++)
+      {
+         EditingTarget editor = editors_.get(i);
+         if (editor.getPath() != null && 
+             FileSystemItem.createFile(editor.getPath()).getParentPathString() == appDir)
+         {
+            if (editor.getExtendedFileType() == SourceDocument.XT_SHINY_DOCUMENT)
+            {
+               return editor;
+            }
+            else if (editor.getExtendedFileType() == SourceDocument.XT_QUARTO_DOCUMENT &&
+                     editor.isShinyPrerenderedDoc())
+            {
+               return editor;
+            }
+         }  
+      }
+      return null;
+   }
+   
+   private void manageRunDocumentCommand(boolean active)
+   {
+      boolean runDocFromServerR = false;
+      if (active)
+      {
+         String activePath = activeEditor_ != null ? activeEditor_.getPath() : null;
+         if (activePath != null)
+         {
+            boolean isServerR = activePath.endsWith("server.R") || activePath.endsWith("global.R");
+            if (isServerR)
+            {
+               runDocFromServerR = shinyRunDocumentEditor(activePath) != null;
+            }
+         } 
+      }
+      getSourceCommand(commands_.runDocumentFromServerDotR()).setVisible(active && runDocFromServerR);
+      if (activeEditor_ != null && activeEditor_.getTextFileType() != null)
+      {
+         getSourceCommand(commands_.compileNotebook()).setVisible(
+            active && activeEditor_.getTextFileType().canCompileNotebook() && !runDocFromServerR
+         );
+         getSourceCommand(commands_.knitDocument()).setVisible(
+               active && activeEditor_.getTextFileType().canKnitToHTML() && !runDocFromServerR
+         );
+      }
    }
 
    private void manageSynctexCommands(boolean active)

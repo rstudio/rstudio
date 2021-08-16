@@ -286,6 +286,8 @@ public class TextEditingTarget implements
       void manageCommandUI();
 
       void addVisualModeFindReplaceButton(ToolbarButton findReplaceButton);
+      
+      SourceColumn getSourceColumn();
    }
 
    private class SaveProgressIndicator implements ProgressIndicator
@@ -2559,7 +2561,7 @@ public class TextEditingTarget implements
       }
       
    }
-
+   
    @Override
    public CommandPaletteEntryProvider getPaletteEntryProvider()
    {
@@ -3470,7 +3472,23 @@ public class TextEditingTarget implements
    {
       return extendedType_;
    }
-
+   
+   @Override
+   public boolean isShinyPrerenderedDoc()
+   {
+      try
+      {
+         String yaml = getRmdFrontMatter();
+         if (yaml == null)
+            return false;
+         return rmarkdownHelper_.isRuntimeShinyPrerendered(yaml);
+      }
+      catch(Exception e)
+      {
+         Debug.log(e.getMessage());
+         return false;
+      }
+   }
    public HasValue<String> getName()
    {
       return name_;
@@ -6574,6 +6592,51 @@ public class TextEditingTarget implements
    {
       renderRmd();
    }
+   
+   @Handler
+   void onRunDocumentFromServerDotR()
+   {
+      SourceColumn column = view_.getSourceColumn();
+      EditingTarget runTarget = column.shinyRunDocumentEditor(docUpdateSentinel_.getPath());
+      if (runTarget != null)
+      {
+         Command renderCommand = new Command()
+         {
+            @Override
+            public void execute()
+            { 
+               rmarkdownHelper_.renderRMarkdown(
+                     runTarget.getPath(),
+                     1,
+                     null,
+                     "UTF-8",
+                     null,
+                     false,
+                     RmdOutput.TYPE_SHINY,
+                     false,
+                     null,
+                     null);
+            }
+         };
+         
+         final Command saveCommand = new Command()
+         {
+            @Override
+            public void execute()
+            {
+               saveThenExecute(null, true, renderCommand);
+            }
+         };
+
+         // save before rendering if the document is dirty or has never been saved;
+         // otherwise render directly
+         Command command =
+               docUpdateSentinel_.getPath() == null || dirtyState_.getValue() ?
+                     saveCommand : renderCommand;
+         command.execute();
+         
+      }
+   }
 
    @Handler
    void onPreviewHTML()
@@ -6814,22 +6877,6 @@ public class TextEditingTarget implements
          if (yaml == null)
             return false;
          return rmarkdownHelper_.isRuntimeShiny(yaml);
-      }
-      catch(Exception e)
-      {
-         Debug.log(e.getMessage());
-         return false;
-      }
-   }
-
-   private boolean isShinyPrerenderedDoc()
-   {
-      try
-      {
-         String yaml = getRmdFrontMatter();
-         if (yaml == null)
-            return false;
-         return rmarkdownHelper_.isRuntimeShinyPrerendered(yaml);
       }
       catch(Exception e)
       {

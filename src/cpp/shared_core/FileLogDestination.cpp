@@ -218,6 +218,11 @@ struct FileLogDestination::Impl
 #else
       LogOptions.getDirectory().ensureDirectory();
 #endif
+
+      // initialize LogFile path here - this ensures that it is set properly
+      // in case we attempt to chown the file (due to permissions changing) before
+      // attempting to write to the log file for the first time during this process run
+      verifyLogFilePath();
    }
 
    ~Impl()
@@ -562,6 +567,12 @@ void FileLogDestination::writeLog(LogLevel in_logLevel, const std::string& in_me
    {
       boost::lock_guard<boost::mutex> lock(m_impl->Mutex);
 
+#ifndef _WIN32
+         // First write to syslog if configured
+         if (in_logLevel <= LogLevel::WARN && m_impl->SyslogDest)
+            m_impl->SyslogDest->writeLog(in_logLevel, in_message);
+#endif
+
       // Check to make sure path to file is valid. If not, log nothing.
       if (!m_impl->verifyLogFilePath())
          return;
@@ -595,12 +606,6 @@ void FileLogDestination::writeLog(LogLevel in_logLevel, const std::string& in_me
       }
 
       m_impl->closeLogFile();
-
-#ifndef _WIN32
-      // Finally, send warn and error to syslog if configured
-      if (in_logLevel <= LogLevel::WARN && m_impl->SyslogDest)
-         m_impl->SyslogDest->writeLog(in_logLevel, in_message);
-#endif
    }
    catch (...)
    {

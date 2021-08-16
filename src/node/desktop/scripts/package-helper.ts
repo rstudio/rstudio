@@ -61,15 +61,17 @@ async function packageWin32(): Promise<number> {
   }
   console.log(info(`Using RStudio binaries found at: ${rstudioInstallDir}`));
 
-  const resourceDest = path.join(packageDir, 'resources/app');
+  const appDest = path.join(packageDir, 'resources/app');
 
   console.log(info('Copying binary files'));
   await copy(
-    path.join(rstudioInstallDir, 'bin'), path.join(resourceDest, 'bin'), {
+    path.join(rstudioInstallDir, 'bin'), path.join(appDest, 'bin'), {
     filter: [
       '**/*',
       '!Qt5*',
+      '!QtWebEngineProcess.exe',
       '!resources/*',
+      '!translations/*',
       '!rstudio.exe',
       '!d3dcompiler_47.dll',
       '!libEGL.dll',
@@ -78,11 +80,13 @@ async function packageWin32(): Promise<number> {
   });
 
   console.log(info('Copying R resources'));
-  await copy(path.join(rstudioInstallDir, 'R'), path.join(resourceDest, 'R'));
-  console.log(info('Copying misc resources'));
-  await copy(path.join(rstudioInstallDir, 'resources'), resourceDest, { filter: ['**/*', '!html/*'] });
+  await copy(path.join(rstudioInstallDir, 'R'), path.join(appDest, 'R'));
   console.log(info('Copying www files'));
-  await copy(path.join(rstudioInstallDir, 'www'), path.join(resourceDest, 'www'));
+  await copy(path.join(rstudioInstallDir, 'www'), path.join(appDest, 'www'));
+  console.log(info('Copying www-symbolmaps files'));
+  await copy(path.join(rstudioInstallDir, 'www-symbolmaps'), path.join(appDest, 'www-symbolmaps'));
+  console.log(info('Copying misc resources'));
+  await copy(path.join(rstudioInstallDir, 'resources'), path.join(appDest, 'resources'), { filter: ['**/*', '!html/*'] });
 
   return 0;
 }

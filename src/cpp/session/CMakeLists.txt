@@ -19,7 +19,7 @@ add_subdirectory(workers)
 
 # verify that install-dictionaries, install-mathjax, install-pandoc,
 # and install-rmarkdown have been run as required
-set(PANDOC_VERSION "2.14.1" CACHE INTERNAL "Pandoc version")
+set(PANDOC_VERSION "2.14.0.3" CACHE INTERNAL "Pandoc version")
 
 if(WIN32)
    set(RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR "${RSTUDIO_DEPENDENCIES_DIR}/common/dictionaries")

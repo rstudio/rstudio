@@ -14,15 +14,14 @@
  */
 
 import { BrowserWindow, dialog, Menu, session } from 'electron';
-import path from 'path';
 import { ChildProcess } from 'child_process';
 
 import { logger } from '../core/logger';
 import { renderTemplateFile } from '../core/template-filter';
+import { Err } from '../core/err';
 
 import { GwtCallback, PendingQuit } from './gwt-callback';
 import { MenuCallback, showPlaceholderMenu } from './menu-callback';
-import { PendingWindow } from './pending-window';
 import { RCommandEvaluator } from './r-command-evaluator';
 import { SessionLauncher } from './session-launcher';
 import { ApplicationLaunch } from './application-launch';
@@ -30,6 +29,8 @@ import { GwtWindow } from './gwt-window';
 import { appState } from './app-state';
 import { DesktopOptions } from './desktop-options';
 import { RemoteDesktopSessionLauncher } from './remote-desktop-session-launcher-overlay';
+import { CloseServerSessions } from './session-servers-overlay';
+import { waitForUrlWithTimeout } from './utils';
 
 export function closeAllSatellites(mainWindow: BrowserWindow): void {
   const topLevels = BrowserWindow.getAllWindows();
@@ -42,9 +43,6 @@ export function closeAllSatellites(mainWindow: BrowserWindow): void {
 
 // number of times we've tried to reload in startup
 let reloadCount = 0;
-
-// maximum number of times to try reloading
-const maxReloadCount = 10;
 
 // amount of time to wait before each reload, in milliseconds
 const reloadWaitDuration = 200;
@@ -60,7 +58,6 @@ export class MainWindow extends GwtWindow {
   quitConfirmed = false;
   geometrySaved = false;
   workbenchInitialized = false;
-  pendingWindows = new Array<PendingWindow>();
 
   private sessionProcess?: ChildProcess;
   private isErrorDisplayed = false;
@@ -125,19 +122,19 @@ export class MainWindow extends GwtWindow {
     // connect(webView(), &WebView::urlChanged,
     //         this, &MainWindow::onUrlChanged);
    
-    this.webView.webContents.on('did-finish-load', () => {
+    this.window.webContents.on('did-finish-load', () => {
       if (!this.mainFailLoad) {
         this.onLoadFinished(true);
       } else {
         this.mainFailLoad = false;
       }
     });
-    this.webView.webContents.on('did-fail-load', () => {
+    this.window.webContents.on('did-fail-load', () => {
       this.mainFailLoad = true;
       this.onLoadFinished(false);
     });
 
-    this.webView.webContents.on('did-finish-load', () => {
+    this.window.webContents.on('did-finish-load', () => {
       this.menuCallback.cleanUpActions();
     });
 
@@ -247,21 +244,9 @@ export class MainWindow extends GwtWindow {
       callback({ requestHeaders: details.requestHeaders});
     });
 
-    this.window.webContents.on('new-window',
-      (event, url /*, frameName, disposition, options, additionalFeatures, referrer, postBody*/) => {
-
-        event.preventDefault();
-
-        // check if we have a satellite window waiting to come up
-        const pendingWindow = this.pendingWindows.pop();
-        if (pendingWindow) {
-          const newWindow = this.createWindow(pendingWindow.width, pendingWindow.height);
-          void newWindow.loadURL(url);
-          newWindow.webContents.openDevTools();
-        }
-      });
-
-    void this.window.loadURL(url);
+    this.window.loadURL(url).catch((reason) => {
+      logger().logErrorMessage(`Failed to load ${url}: ${reason}`);
+    });
   }
 
   quit(): void {
@@ -325,7 +310,6 @@ export class MainWindow extends GwtWindow {
     // }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   closeEvent(event: Electron.Event): void {
     if (process.platform === 'win32') {
       // TODO
@@ -345,76 +329,48 @@ export class MainWindow extends GwtWindow {
       this.geometrySaved = true;
     }
 
-    // CloseServerSessions close = sessionServerSettings().closeServerSessionsOnExit();
+    const close: CloseServerSessions = 'Always'; // TODO sessionServerSettings().closeServerSessionsOnExit();
 
-    // if (this.quitConfirmed || (!this.isRemoteDesktop && !this.sessionProcess) ||
-    //   (!this.isRemoteDesktop && this.sessionProcess -> state() != QProcess:: Running)) {
+    if (this.quitConfirmed || (!this.isRemoteDesktop && !this.sessionProcess) ||
+      (!this.isRemoteDesktop && (!this.sessionProcess || this.sessionProcess.exitCode !== null))) {
 
-    //   closeAllSatellites(this.window);
-    //   pEvent->accept();
-    //   return;
-    // }
+      closeAllSatellites(this.window);
+      return;
+    }
 
-    // auto quit = [this]() {
-    //   closeAllSatellites(this);
-    //   this->quit();
-    // };
+    const quit = () => {
+      closeAllSatellites(this.window);
+      this.quit();
+    };
 
-    // pEvent->ignore();
-    // webPage()->runJavaScript(
-    //         QStringLiteral("!!window.desktopHooks"),
-    //         [=](QVariant hasQuitR) {
+    event.preventDefault();
+    this.executeJavaScript('!!window.desktopHooks')
+      .then((hasQuitR: boolean) => {
+        if (!hasQuitR) {
+          logger().logErrorMessage('Main window closed unexpectedly');
 
-    //   if (!hasQuitR.toBool()) {
-    //      LOG_ERROR_MESSAGE("Main window closed unexpectedly");
-
-    //      // exit to avoid user having to kill/force-close the application
-    //      quit();
-    //   } else {
-    //      if (!isRemoteDesktop_ ||
-    //          close == CloseServerSessions::Always) {
-    //         webPage()->runJavaScript(
-    //                  QStringLiteral("window.desktopHooks.quitR()"),
-    //                  [=](QVariant ignored) {
-    //            quitConfirmed_ = true;
-    //         });
-    //      }
-    //      else if (close == CloseServerSessions::Never) {
-    //         quit();
-    //      }
-    //      else {
-    //         webPage()->runJavaScript(
-    //                  QStringLiteral("window.desktopHooks.promptToQuitR()"),
-    //                  [=](QVariant ignored) {
-    //            quitConfirmed_ = true;
-    //         });
-    //      }
-    //   }
-    // });
+          // exit to avoid user having to kill/force-close the application
+          quit();
+        } else {
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+          if (!this.isRemoteDesktop || close === 'Always') {
+            this.executeJavaScript('window.desktopHooks.quitR()')
+              .then(() => this.quitConfirmed = true)
+              .catch(logger().logError);
+          } else if (close === 'Never') {
+            quit();
+          } else {
+            this.executeJavaScript('window.desktopHooks.promptToQuitR()')
+              .then(() => this.quitConfirmed = true)
+              .catch(logger().logError);
+          }
+        }
+      })
+      .catch(logger().logError);
   }
  
   collectPendingQuitRequest(): PendingQuit {
     return appState().gwtCallback?.collectPendingQuitRequest() ?? PendingQuit.PendingQuitNone;
-  }
-
-  createWindow(width: number, height: number): BrowserWindow {
-    return new BrowserWindow({
-      width: width,
-      height: height,
-      // https://github.com/electron/electron/blob/master/docs/faq.md#the-font-looks-blurry-what-is-this-and-what-can-i-do
-      backgroundColor: '#fff', 
-      webPreferences: {
-        enableRemoteModule: false,
-        nodeIntegration: false,
-        contextIsolation: true,
-        additionalArguments: ['desktop|desktopInfo'],
-        preload: path.join(__dirname, '../renderer/preload.js'),
-      },
-    });
-  }
-
-  prepareForWindow(pendingWindow: PendingWindow): void {
-    this.pendingWindows.push(pendingWindow);
   }
 
   onActivated(): void {
@@ -426,7 +382,7 @@ export class MainWindow extends GwtWindow {
       return;
     }
     reloadCount++;
-    this.loadUrl(this.webView.baseUrl ?? '');
+    this.loadUrl(this.baseUrl ?? '');
   }
 
   onLoadFinished(ok: boolean): void {
@@ -436,13 +392,24 @@ export class MainWindow extends GwtWindow {
       // the session failed to launch and we're already showing
       // an error page to the user; nothing else to do here.
     } else {
-      if (reloadCount < maxReloadCount) {
+      if (reloadCount === 0) {
         // the load failed, but we haven't yet received word that the
         // session has failed to load. let the user know that the R
         // session is still initializing, and then reload the page.
         const vars = new Map<string, string>();
         this.loadHtml(renderTemplateFile(appState().resourcesPath().completePath('html/loading.html'), vars));
-        setTimeout(this.reload.bind(this), reloadWaitDuration * reloadCount);
+        waitForUrlWithTimeout(this.baseUrl ?? '', reloadWaitDuration, reloadWaitDuration, 10)
+          .then((error: Err) => {
+            if (error) {
+              logger().logError(error);
+            }
+          })
+          .catch((error) => {
+            logger().logError(error);
+          })
+          .finally(() => {
+            this.reload();
+          });
       } else {
         reloadCount = 0;
         this.onLoadFailed();
@@ -456,7 +423,7 @@ export class MainWindow extends GwtWindow {
     }
 
     const vars = new Map<string, string>([
-      ['url', this.webView.baseUrl ?? '']
+      ['url', this.baseUrl ?? '']
     ]);
 
     this.loadHtml(

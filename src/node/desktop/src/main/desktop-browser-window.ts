@@ -13,16 +13,17 @@
  *
  */
 
-import { BrowserWindow, WebContents } from 'electron';
+import { BrowserWindow, shell, WebContents } from 'electron';
 
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
 import { EventEmitter } from 'stream';
+import { URL } from 'url';
 import { logger } from '../core/logger';
-import { executeJavaScript } from './utils';
-import { WebView } from './web-view';
+import { appState } from './app-state';
+import { executeJavaScript, isSafeHost } from './utils';
 
 /**
  * Base class for browser-based windows. Subclasses include GwtWindow, SecondaryWindow,
@@ -33,62 +34,122 @@ import { WebView } from './web-view';
  */
 export class DesktopBrowserWindow extends EventEmitter {
   static WINDOW_DESTROYED = 'desktop-browser-window_destroyed';
+  static CLOSE_WINDOW_SHORTCUT = 'desktop-browser-close_window_shortcut';
 
   window: BrowserWindow;
-  webView: WebView;
-
   private tempDirs: string[] = [];
 
   // if loading fails and emits `did-fail-load` it will be followed by a 
   // 'did-finish-load'; use this bool to differentiate
   private failLoad = false;
 
-  /**
-   * @param adjustTitle Automatically set window title to match web page title
-   * @param name  Internal window name (or an empty string)
-   * @param baseUrl 
-   * @param parent 
-   * @param opener 
-   * @param allowExternalNavigate 
-   * @param addApiKeys
-   */
   constructor(
     private showToolbar: boolean,
     private adjustTitle: boolean,
     protected name: string,
-    private baseUrl?: string,
+    readonly baseUrl?: string,
     private parent?: DesktopBrowserWindow,
     private opener?: WebContents,
     private allowExternalNavigate = false,
-    addApiKeys: string[] = []
+    addApiKeys: string[] = [],
+    existingWindow?: BrowserWindow
   ) {
     super();
     const apiKeys = [['desktopInfo', ...addApiKeys].join('|')];
-    this.window = new BrowserWindow({
-      // https://github.com/electron/electron/blob/master/docs/faq.md#the-font-looks-blurry-what-is-this-and-what-can-i-do
-      backgroundColor: '#fff', 
-      webPreferences: {
-        enableRemoteModule: false,
-        nodeIntegration: false,
-        contextIsolation: true,
-        additionalArguments: apiKeys,
-        preload: path.join(__dirname, '../renderer/preload.js'),
-      },
-      show: false
+    if (existingWindow) {
+      this.window = existingWindow;
+    } else {
+      this.window = new BrowserWindow({
+        // https://github.com/electron/electron/blob/master/docs/faq.md#the-font-looks-blurry-what-is-this-and-what-can-i-do
+        backgroundColor: '#fff',
+        webPreferences: {
+          enableRemoteModule: false,
+          nodeIntegration: false,
+          contextIsolation: true,
+          sandbox: false,
+          nativeWindowOpen: true,
+          additionalArguments: apiKeys,
+          preload: path.join(__dirname, '../renderer/preload.js'),
+        },
+        show: false
+      });
+
+      // Uncomment to have all windows show dev tools by default
+      // this.window.webContents.openDevTools();
+
+    }
+
+    this.window.webContents.on('before-input-event', (event, input) => {
+      this.keyPressEvent(event, input);
     });
 
-    this.webView = new WebView(this.window.webContents, baseUrl, allowExternalNavigate);
-    this.webView.webContents.on('page-title-updated', (event, title, explicitSet) => {
+    this.window.webContents.setWindowOpenHandler((details) => {
+      // check if this is target="_blank" from an IDE window
+      if (this.baseUrl && (details.disposition === 'foreground-tab' || details.disposition === 'background-tab')) {
+        // TODO: validation/restrictions on the URLs?
+        void shell.openExternal(details.url);
+        return { action: 'deny' };
+      }
+
+      // proceed with window creation; we'll associate the created BrowserWindow with our 
+      // window wrapper type upon receipt of 'did-create-window' below
+      return { action: 'allow' };
+    });
+
+    this.window.webContents.on('did-create-window', (newWindow, details) => {
+      appState().windowCreated(details, newWindow, this.window.webContents, this.baseUrl);
+    });
+
+    this.window.webContents.on('will-navigate', (event, url) => {
+
+      // TODO: this is a partial implementation of DesktopWebPage.cpp::acceptNavigationRequest;
+      // all the other details need to be implemented
+
+      let targetUrl: URL;
+      try {
+        targetUrl = new URL(url);
+      } catch (err) {
+        // malformed URL will cause exception
+        logger().logError(err);
+        event.preventDefault();
+        return;
+      }
+
+      // determine if this is a local request (handle internally only if local)
+      const host = targetUrl.hostname;
+      const isLocal = host === 'localhost' || host == '127.0.0.1' || host == '::1';
+      if (isLocal) {
+        return;
+      }
+
+      if (!this.allowExternalNavigate) {
+        try {
+          const targetUrl: URL = new URL(url);
+          if (!isSafeHost(targetUrl.host)) {
+            // when not allowing external navigation, open an external browser
+            // to view the URL
+            event.preventDefault();
+            void shell.openExternal(url);
+          }
+        } catch (err) {
+          // malformed URL will cause exception
+          logger().logError(err);
+          event.preventDefault();
+        }
+      }
+    });
+
+    this.window.webContents.on('page-title-updated', (event, title, explicitSet) => {
       this.adjustWindowTitle(title, explicitSet);
     });
-    this.webView.webContents.on('did-finish-load', () => {
+    this.window.webContents.on('did-finish-load', () => {
       if (!this.failLoad) {
         this.finishLoading(true);
       } else {
         this.failLoad = false;
       }
     });
-    this.webView.webContents.on('did-fail-load', () => {
+    this.window.webContents.on('did-fail-load', () => {
       this.failLoad = true;
       this.finishLoading(false);
     });
@@ -100,7 +161,7 @@ export class DesktopBrowserWindow extends EventEmitter {
     // set zoom factor
     // TODO: double zoomLevel = options().zoomLevel();
     const zoomLevel = 1.0;
-    this.webView.webContents.setZoomFactor(zoomLevel);
+    this.window.webContents.setZoomFactor(zoomLevel);
 
     if (this.showToolbar) {
       logger().logDebug('toolbar NYI');
@@ -143,7 +204,7 @@ export class DesktopBrowserWindow extends EventEmitter {
 
   syncWindowTitle(): void {
     if (this.adjustTitle) {
-      this.window.setTitle(this.webView.webContents.getTitle());
+      this.window.setTitle(this.window.webContents.getTitle());
     }
   }
 
@@ -181,7 +242,7 @@ export class DesktopBrowserWindow extends EventEmitter {
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async executeJavaScript(cmd: string): Promise<any> {
-    return executeJavaScript(this.webView.webContents, cmd);
+    return executeJavaScript(this.window.webContents, cmd);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -217,6 +278,16 @@ export class DesktopBrowserWindow extends EventEmitter {
         logger().logDebug(`Failed to delete ${this.tempDirs[i]}`);
       }
       i--;
+    }
+  }
+
+  keyPressEvent(event: Electron.Event, input: Electron.Input): void {
+    if (process.platform === 'darwin') {
+      if (input.meta && input.key.toLowerCase() === 'w') {
+        // on macOS, intercept Cmd+W and emit the window close signal
+        this.emit(DesktopBrowserWindow.CLOSE_WINDOW_SHORTCUT);
+        event.preventDefault();
+      }
     }
   }
 }

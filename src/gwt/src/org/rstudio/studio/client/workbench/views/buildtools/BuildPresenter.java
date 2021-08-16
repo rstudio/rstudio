@@ -580,7 +580,9 @@ public class BuildPresenter extends BasePresenter
    
    private void quartoServe(String type)
    {
-      server_.quartoServe(type, new SimpleRequestCallback<Void>("Quarto Serve Error"));
+      source_.withSaveFilesBeforeCommand(() -> {
+         server_.quartoServe(type, new SimpleRequestCallback<Void>("Quarto Serve Error"));
+      }, () -> {}, "Quarto");
    }
 
    private String devtoolsLoadAllPath_ = null;

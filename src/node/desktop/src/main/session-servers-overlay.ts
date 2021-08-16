@@ -1,5 +1,5 @@
 /*
- * web-view.test.ts
+ * session-servers-overlay.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -13,16 +13,6 @@
  *
  */
 
-import { describe } from 'mocha';
-import { assert } from 'chai';
-
-import { WebView } from '../../../src/main/web-view';
-import { BrowserWindow } from 'electron';
-
-describe('WebView', () => {
-  it('can be created', () => {
-    const window = new BrowserWindow({ show: false });
-    const webView = new WebView(window.webContents);
-    assert.isObject(webView);
-  });
-});
+export type SessionLocation = 'Ask' | 'Locally' | 'Server';
+export type CloseServerSessions = 'Ask' | 'Always' | 'Never';
+export type ConfigSource = 'Admin' | 'User';

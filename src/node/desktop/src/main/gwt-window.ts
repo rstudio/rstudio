@@ -13,7 +13,7 @@
  *
  */
 
-import { WebContents } from 'electron';
+import { BrowserWindow, WebContents } from 'electron';
 import { logger } from '../core/logger';
 
 import { nextHighest, nextLowest } from '../core/array-utils';
@@ -38,9 +38,11 @@ export abstract class GwtWindow extends DesktopBrowserWindow {
     parent?: DesktopBrowserWindow,
     opener?: WebContents,
     isRemoteDesktop = false,
-    addedCallbacks: string[] = []
+    addedCallbacks: string[] = [],
+    existingWindow?: BrowserWindow
   ) {
-    super(showToolbar, adjustTitle, name, baseUrl, parent, opener, isRemoteDesktop, addedCallbacks);
+    super(showToolbar, adjustTitle, name, baseUrl, parent,
+      opener, isRemoteDesktop, addedCallbacks, existingWindow);
 
     this.window.on('focus', this.onActivated.bind(this));
   }
@@ -91,6 +93,6 @@ export abstract class GwtWindow extends DesktopBrowserWindow {
 
   private setWindowZoomLevel(zoomLevel: number): void {
     DesktopOptions().setZoomLevel(zoomLevel);
-    this.webView.webContents.setZoomFactor(zoomLevel);
+    this.window.webContents.setZoomFactor(zoomLevel);
   }
 }

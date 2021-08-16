@@ -478,6 +478,11 @@ RowsetIterator Rowset::end()
    return RowsetIterator();
 }
 
+size_t Rowset::columnCount() const
+{
+   return row_.size();
+}
+
 Connection::Connection(const soci::backend_factory& factory,
                        const std::string& connectionStr) :
    session_(factory, connectionStr)
@@ -914,22 +919,28 @@ Error SchemaUpdater::isSchemaVersionPresent(bool* pIsPresent)
 
 Error SchemaUpdater::getSchemaTableColumnCount(int* pColumnCount)
 {
-   std::string queryStr;
+   int columnCount = 0;
+   Error error;
    if (connection_->driverName() == SQLITE_DRIVER)
    {
-      queryStr = std::string("SELECT COUNT(*) FROM PRAGMA_TABLE_INFO('") + SCHEMA_TABLE + "')";
+      Query query = connection_->query(std::string("SELECT * FROM ") + SCHEMA_TABLE);
+      Rowset rows;
+      error = connection_->execute(query, rows);
+      columnCount = rows.columnCount();
    }
    else
    {
-      queryStr = std::string("SELECT COUNT(*) FROM information_schema.columns WHERE table_name='") + SCHEMA_TABLE +
-                 "' AND table_schema = current_schema";
+      Query query = connection_->query(std::string("SELECT COUNT(1) FROM information_schema.columns WHERE table_name='") + SCHEMA_TABLE +
+                 "' AND table_schema = current_schema")
+                 .withOutput(columnCount);
+      error = connection_->execute(query);
    }
 
-   int columnCount = 0;
-   Query query = connection_->query(queryStr).withOutput(columnCount);
-   Error error = connection_->execute(query);
    if (error)
-      return error;
+   {
+      error.addProperty("query", connection_->session().get_last_query());
+      return error;   
+   }
 
    *pColumnCount = columnCount;
    return Success();
@@ -945,7 +956,10 @@ bool SchemaUpdater::parseVersionOfFile(const FilePath& file, SchemaVersion* pVer
    boost::split(split, fileStem, boost::is_any_of("_"));
    if (split.size() != 3)
    {
-      LOG_WARNING_MESSAGE("Unrecognized file in the db folder, it will be skipped: " + file.getAbsolutePath());
+     if (split.size() == 2)
+         LOG_DEBUG_MESSAGE("Not applying sql schema file from previous release: " + file.getAbsolutePath());
+     else
+         LOG_DEBUG_MESSAGE("Not applying unrecognized sql schema file: " + file.getAbsolutePath());
       return false;
    }
 
@@ -1083,8 +1097,6 @@ Error SchemaUpdater::createSchema()
 
 Error SchemaUpdater::updateToVersion(const SchemaVersion& maxVersion)
 {
-
-
    // create a transaction to perform the following steps:
    // 1. Check the current database schema version
    // 2. Check if we need to update

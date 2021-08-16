@@ -123,6 +123,8 @@ class Rowset
 public:
    RowsetIterator begin();
    RowsetIterator end();
+   
+   size_t columnCount() const;
 
 private:
    friend class Connection;
