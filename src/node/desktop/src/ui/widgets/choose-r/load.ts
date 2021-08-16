@@ -36,13 +36,13 @@ radioButtons.forEach((radioButton) => {
 });
 
 // set up callbacks for OK + Cancel buttons
-const buttonOk = document.getElementById('button-ok')! as HTMLButtonElement;
+const buttonOk = document.getElementById('button-ok') as HTMLButtonElement;
 const buttonCancel = document.getElementById('button-cancel') as HTMLButtonElement;
 const buttonBrowse = document.getElementById('button-browse') as HTMLButtonElement;
 
 buttonOk.addEventListener('click', () => {
 
-  const useDefault32Radio = document.getElementById('use-default-32')! as HTMLInputElement;
+  const useDefault32Radio = document.getElementById('use-default-32') as HTMLInputElement;
   if (useDefault32Radio.checked) {
     window.callbacks.useDefault32bit();
     window.close();
