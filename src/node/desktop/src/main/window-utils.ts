@@ -74,11 +74,6 @@ export function configureSecondaryWindow(
   owner: WebContents,
   baseUrl?: string): void {
 
-  // TODO: something is weird about default sizing of secondary windows; need to figure it out,
-  // for now set a reasonable size
-  newWindow.setSize(800, 600);
-  newWindow.setPosition(100, 100);
-
   const window = new SecondaryWindow(
     pendingSecondary.showToolbar,
     pendingSecondary.name,
