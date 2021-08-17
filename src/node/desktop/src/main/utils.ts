@@ -374,3 +374,19 @@ export function isSafeHost(host: string): boolean {
   }
   return false;
 }
+
+export function initializeLang(): void {
+  if (process.platform === 'darwin') {
+    // TODO: port full language detection, see initializeLang() in DesktopUtilsMac.mm
+
+    let lang = getenv('LANG');
+
+    // None of the above worked. Just hard code it.
+    if (!lang) {
+      lang = 'en_US.UTF-8';
+    }
+
+    setenv('LANG', lang);
+    setenv('LC_CTYPE', lang);
+  }
+}

@@ -21,7 +21,7 @@ import { generateRandomPort } from '../core/system';
 import { logger, enableDiagnosticsOutput } from '../core/logger';
 
 import { productInfo } from './product-info';
-import { findComponents, initializeSharedSecret, raiseAndActivateWindow } from './utils';
+import { findComponents, initializeLang, initializeSharedSecret, raiseAndActivateWindow } from './utils';
 import { augmentCommandLineArguments, getComponentVersions, removeStaleOptionsLockfile } from './utils';
 import { exitFailure, exitSuccess, run, ProgramStatus } from './program-status';
 import { ApplicationLaunch } from './application-launch';
@@ -122,6 +122,8 @@ export class Application implements AppState {
         return exitFailure();
       }
     }
+
+    initializeLang();
 
     // switch for setting a session start delay in seconds (used for testing, troubleshooting)
     if (app.commandLine.hasSwitch(kDelaySessionSeconds)) {
