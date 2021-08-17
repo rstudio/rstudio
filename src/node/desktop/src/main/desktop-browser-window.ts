@@ -71,7 +71,8 @@ export class DesktopBrowserWindow extends EventEmitter {
           additionalArguments: apiKeys,
           preload: path.join(__dirname, '../renderer/preload.js'),
         },
-        show: false
+        show: false,
+        acceptFirstMouse: true
       });
 
       // Uncomment to have all windows show dev tools by default
