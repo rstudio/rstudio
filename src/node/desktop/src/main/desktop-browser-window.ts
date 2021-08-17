@@ -14,6 +14,7 @@
  */
 
 import { BrowserWindow, shell, WebContents } from 'electron';
+import { IpcMainEvent } from 'electron/main';
 
 import fs from 'fs';
 import os from 'os';
@@ -23,6 +24,7 @@ import { EventEmitter } from 'stream';
 import { URL } from 'url';
 import { logger } from '../core/logger';
 import { appState } from './app-state';
+import { showContextMenu } from './context-menu';
 import { executeJavaScript, isSafeHost } from './utils';
 
 /**
@@ -72,6 +74,11 @@ export class DesktopBrowserWindow extends EventEmitter {
           preload: path.join(__dirname, '../renderer/preload.js'),
         },
         show: false
+      });
+
+      // register context menu (right click) handler
+      this.window.webContents.on('context-menu', (event, params) => {
+        showContextMenu(event as IpcMainEvent, params);
       });
 
       // Uncomment to have all windows show dev tools by default
