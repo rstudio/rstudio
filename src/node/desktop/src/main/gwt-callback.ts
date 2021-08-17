@@ -17,7 +17,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-empty-function */
 
-import { ipcMain, dialog, BrowserWindow, webFrameMain, shell } from 'electron';
+import { ipcMain, dialog, BrowserWindow, webFrameMain, shell, screen } from 'electron';
 import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions } from 'electron/main';
 
 import EventEmitter from 'events';
@@ -197,11 +197,22 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.handle('desktop_get_cursor_position', () => {
-      GwtCallback.unimpl('desktop_get_cursor_position');
-      return {x: 20, y: 20};
+      const cursorPos = screen.getCursorScreenPoint();
+      return {x: cursorPos.x, y: cursorPos.y};
     });
 
     ipcMain.handle('desktop_does_window_exist_at_cursor_position', () => {
+      const cursorPos = screen.getCursorScreenPoint();
+      const windows = BrowserWindow.getAllWindows();
+      for (const window of windows) {
+        if (window.isVisible()) {
+          const windowPos = window.getBounds();
+          if ((cursorPos.x >= windowPos.x && cursorPos.x <= (windowPos.x + windowPos.width)) &&
+            (cursorPos.y >= windowPos.y && cursorPos.y <= (windowPos.y + windowPos.height))) {
+            return true;
+          }
+        }
+      }
       return false;
     });
 
