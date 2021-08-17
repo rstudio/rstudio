@@ -312,24 +312,6 @@ export function getDesktopBridge() {
         .catch(error => reportIpcError('showMessageBox', error));
     },
 
-    promptForText: (title: string,
-      caption: string,
-      defaultValue: string,
-      type: number,
-      rememberPasswordPrompt: boolean,
-      rememberByDefault: boolean,
-      selectionStart: number,
-      selectionLength: number,
-      okButtonCaption: string,
-      callback: VoidCallback<string>) => {
-      ipcRenderer
-        .invoke('desktop_prompt_for_text', title, caption, defaultValue, type,
-          rememberPasswordPrompt, rememberByDefault,
-          selectionStart, selectionLength, okButtonCaption)
-        .then(text => callback(text))
-        .catch(error => reportIpcError('promptForText', error));
-    },
-
     bringMainFrameToFront: () => {
       ipcRenderer.send('desktop_bring_main_frame_to_front');
     },

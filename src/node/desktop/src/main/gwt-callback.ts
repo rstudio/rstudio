@@ -354,13 +354,6 @@ export class GwtCallback extends EventEmitter {
       }
     });
 
-    ipcMain.handle('desktop_prompt_for_text', (event, title, caption, defaultValue, type, 
-      rememberPasswordPrompt, rememberByDefault,
-      selectionStart, selectionLength, okButtonCaption) => {
-      GwtCallback.unimpl('desktop_prompt_for_text');
-      return ''; 
-    });
-
     ipcMain.on('desktop_bring_main_frame_to_front', () => {
     });
 

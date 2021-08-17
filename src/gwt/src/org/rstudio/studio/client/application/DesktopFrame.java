@@ -26,10 +26,7 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.user.client.Command;
 
 /**
- * This is an interface straight through to a C++ object that lives
- * in the Qt desktop frame.
- * 
- * String arguments must not be null.
+ * This is an interface to callbacks registered by the desktop frame.
  */
 @BaseExpression("$wnd.desktop")
 public interface DesktopFrame extends JavaScriptPassthrough
