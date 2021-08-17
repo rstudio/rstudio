@@ -349,6 +349,17 @@ SEXP rs_rstudioEdition()
 // get version
 SEXP rs_rstudioVersion()
 {
+   std::string processedVersion = RSTUDIO_VERSION;
+   processedVersion = boost::regex_replace(processedVersion, boost::regex("(?:-[a-zA-Z]*)?\\+"), ".");
+   boost::replace_all(processedVersion, "pro", "");
+
+   r::sexp::Protect rProtect;
+   return r::sexp::create(processedVersion, &rProtect);
+}
+
+// get long form version
+SEXP rs_rstudioLongVersion()
+{
    r::sexp::Protect rProtect;
    return r::sexp::create(std::string(RSTUDIO_VERSION), &rProtect);
 }
@@ -2989,6 +3000,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_rstudioEdition);
    RS_REGISTER_CALL_METHOD(rs_rstudioProgramMode);
    RS_REGISTER_CALL_METHOD(rs_rstudioVersion);
+   RS_REGISTER_CALL_METHOD(rs_rstudioLongVersion);
    RS_REGISTER_CALL_METHOD(rs_rstudioReleaseName);
    RS_REGISTER_CALL_METHOD(rs_sessionModulePath);
    RS_REGISTER_CALL_METHOD(rs_setPersistentValue);
