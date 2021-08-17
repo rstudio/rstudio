@@ -32,6 +32,7 @@ import { openMinimalWindow } from './minimal-window';
 import { appState } from './app-state';
 import { filterFromQFileDialogFilter, resolveAliasedPath } from './utils';
 import { userHomePath } from '../core/user';
+import { activateWindow } from './window-utils';
 
 export enum PendingQuit {
   PendingQuitNone,
@@ -277,11 +278,14 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_activate_minimal_window', (event, name: string) => {
-      GwtCallback.unimpl('desktop_activate_minimal_window');
+      // we can only activate named windows
+      if (name && name !== '_blank') {
+        activateWindow(name);
+      }
     });
 
     ipcMain.on('desktop_activate_satellite_window', (event, name: string) => {
-      console.log(`activate_satellite_window ${name}`);
+      activateWindow(name);
     });
 
     ipcMain.handle('desktop_prepare_for_satellite_window', (event, name: string, x: number,

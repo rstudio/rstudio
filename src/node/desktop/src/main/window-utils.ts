@@ -18,7 +18,7 @@ import { appState } from './app-state';
 import { PendingSatelliteWindow, PendingSecondaryWindow } from './pending-window';
 import { SatelliteWindow } from './satellite-window';
 import { SecondaryWindow } from './secondary-window';
-import { getDpiZoomScaling } from './utils';
+import { getDpiZoomScaling, raiseAndActivateWindow } from './utils';
 
 export function configureSatelliteWindow(
   pendingSatellite: PendingSatelliteWindow,
@@ -95,4 +95,14 @@ export function configureSecondaryWindow(
   if (pendingSecondary.name) {
     appState().windowTracker.addWindow(pendingSecondary.name, window);
   }
+}
+
+export function activateWindow(name: string): void {
+  const allWindows = BrowserWindow.getAllWindows();
+  for (const win of allWindows) {
+    if (win.webContents.mainFrame.name === name) {
+      raiseAndActivateWindow(win);
+      return;
+    }
+  } 
 }

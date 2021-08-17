@@ -346,6 +346,7 @@ export function raiseAndActivateWindow(window: BrowserWindow): void {
   if (window.isMinimized()) {
     window.restore();
   }
+  window.moveTop();
   window.focus();
 }
 
