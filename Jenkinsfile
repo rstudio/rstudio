@@ -210,19 +210,21 @@ try {
                           returnStdout: true
                         ).trim()
                         echo "RStudio build version: ${rstudioVersion}"
-                        def components = rstudioVersion.split('\\.')
 
-                        // extract major / minor version
-                        rstudioVersionMajor = components[0]
-                        rstudioVersionMinor = components[1]
+                        // Split on [-+] first to avoid having to worry about splitting out .pro<n>
+                        def version = rstudioVersion.split('[-+]')
 
-                        // extract patch and suffix if present
-                        def patch = components[2].split('[-+]')
-                        rstudioVersionPatch = patch[0]
-                        if (patch.length > 2)
-                            rstudioVersionSuffix = '-' + patch[1] + '+' + patch[2]
+                        // extract major / minor /patch version
+                        def majorComponents = version[0].split('\\.')
+                        rstudioVersionMajor = majorComponents[0]
+                        rstudioVersionMinor = majorComponents[1]
+                        rstudioVersionPatch = majorComponents[2]
+
+                        // Extract suffix
+                        if (version.length > 2)
+                            rstudioVersionSuffix = '-' + version[1] + '+' + version[2]
                         else
-                            rstudioVersionSuffix = '+' + patch[1]
+                            rstudioVersionSuffix = '+' + version[1]
 
                         // update slack message to include build version
                         messagePrefix = "Jenkins ${env.JOB_NAME} build: <${env.BUILD_URL}display/redirect|${env.BUILD_DISPLAY_NAME}>, version: ${rstudioVersion}"
