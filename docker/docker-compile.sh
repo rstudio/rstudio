@@ -105,7 +105,7 @@ if [ -n "$VERSION" ]; then
     # determine major and minor versions
     ENV="RSTUDIO_VERSION_MAJOR=${FIRST_HALF[0]} RSTUDIO_VERSION_MINOR=${FIRST_HALF[1]} RSTUDIO_VERSION_PATCH=${FIRST_HALF[2]}"
 
-    # supply suffix if embedded in patch
+    # supply suffix
     if [[ ${#SPLIT[@]} -gt 2 ]]; then
         ENV="$ENV RSTUDIO_VERSION_SUFFIX=-${SPLIT[1]}+${SPLIT[2]}"
     else
