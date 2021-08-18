@@ -13,8 +13,8 @@
  *
  */
 
-import { BrowserWindow, clipboard, dialog, Menu, nativeImage, webContents } from 'electron';
-import path = require('path');
+import { BrowserWindow, clipboard, dialog, Menu } from 'electron';
+import path from 'path';
 
 type ContextMenuItem = Electron.MenuItem | Electron.MenuItemConstructorOptions;
 
