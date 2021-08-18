@@ -349,12 +349,17 @@ SEXP rs_rstudioEdition()
 // get version
 SEXP rs_rstudioVersion()
 {
-   std::string processedVersion = RSTUDIO_VERSION;
-   processedVersion = boost::regex_replace(processedVersion, boost::regex("(?:-[a-zA-Z]*)?\\+"), ".");
-   boost::replace_all(processedVersion, "pro", "");
+   std::string numericVersion(RSTUDIO_VERSION_MAJOR);
+   numericVersion.append(".")
+      .append(RSTUDIO_VERSION_MINOR).append(".")
+      .append(RSTUDIO_VERSION_PATCH).append(".")
+      .append(boost::regex_replace(
+         std::string(RSTUDIO_VERSION_SUFFIX),
+         boost::regex("[a-zA-Z\\-+]"),
+         ""));
 
    r::sexp::Protect rProtect;
-   return r::sexp::create(processedVersion, &rProtect);
+   return r::sexp::create(numericVersion, &rProtect);
 }
 
 // get long form version
