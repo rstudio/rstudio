@@ -137,6 +137,7 @@
   info$edition <- .Call("rs_rstudioEdition", PACKAGE = "(embedding)")
   info$version <- .Call("rs_rstudioVersion", PACKAGE = "(embedding)")
   info$version <- base::package_version(info$version)
+  info$long_version <- .Call("rs_rstudioLongVersion", PACKAGE = "(embedding)")
   info$release_name <- .Call("rs_rstudioReleaseName", PACKAGE = "(embedding)")
   info
 })

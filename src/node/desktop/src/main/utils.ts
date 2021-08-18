@@ -128,7 +128,7 @@ function findBuildRoot(): string {
   for (let dir = process.cwd(); dir !== path.dirname(dir); dir = path.dirname(dir))
   {
     // check for release file
-    const releaseFile = path.join(dir, 'RELEASE');
+    const releaseFile = path.join(dir, 'version', 'RELEASE');
     if (existsSync(releaseFile)) {
       return findBuildRootImpl(dir);
     }
