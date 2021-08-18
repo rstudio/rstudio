@@ -58,8 +58,8 @@ function log() {
 
 function buildType() {
     if [ -e "$RSTUDIO_ROOT_DIR/BUILDTYPE" ]; then
-        BUILD_TYPE="$(cat $RSTUDIO_ROOT_DIR/BUILDTYPE | tr '[ ]' '-' | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')"
-        if [[ -n $BUILD_TYPE && $BUILD_TYPE != "release" ]]; then
+        BUILD_TYPE="$(cat "$RSTUDIO_ROOT_DIR/BUILDTYPE" | tr '[ ]' '-' | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')"
+        if [[ -n "$BUILD_TYPE" && "$BUILD_TYPE" != "release" ]]; then
             echo "-${BUILD_TYPE}"
         else
             echo ""
@@ -72,7 +72,7 @@ function buildType() {
 
 function flower() {
     if [ -e "$RSTUDIO_ROOT_DIR/RELEASE" ]; then
-        echo "$(cat $RSTUDIO_ROOT_DIR/RELEASE | tr '[ ]' '-' | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')"
+        echo "$(cat "$RSTUDIO_ROOT_DIR/RELEASE" | tr '[ ]' '-' | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')"
     else
         echo "The $RSTUDIO_ROOT_DIR/RELEASE file does not exist. A build version could not be generated" >&2
         exit 1
@@ -81,7 +81,7 @@ function flower() {
 
 function calver() {
     if [ -e "$RSTUDIO_ROOT_DIR/CALENDAR_VERSION" ]; then
-        echo "$(cat $RSTUDIO_ROOT_DIR/CALENDAR_VERSION | tr -d '[:space:]')"
+        echo "$(cat "$RSTUDIO_ROOT_DIR/CALENDAR_VERSION" | tr -d '[:space:]')"
     else
         echo "The $RSTUDIO_ROOT_DIR/CALENDAR_VERSION file does not exist. A build version could not be generated" >&2
         exit 1
@@ -101,7 +101,7 @@ aws s3 cp s3://rstudio-ide-build/version/$(flower)/oss-patch.csv /tmp/oss-patch.
 if [[ -e "$RSTUDIO_ROOT_DIR/upstream/VERSION" ]]; then
     # only one upstream commit (RStudio Pro, which is downstream)
     PRO=true
-    COMMITS=$(cat $RSTUDIO_ROOT_DIR/upstream/VERSION)
+    COMMITS=$(cat "$RSTUDIO_ROOT_DIR/upstream/VERSION")
 else
     # no upstream commit; retrieve the most recent 100 commits in this repo and
     # format as a bash array (we need to work backwards until we find one in
