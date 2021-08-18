@@ -57,33 +57,33 @@ function log() {
 }
 
 function buildType() {
-    if [ -e "$RSTUDIO_ROOT_DIR/BUILDTYPE" ]; then
-        BUILD_TYPE="$(cat "$RSTUDIO_ROOT_DIR/BUILDTYPE" | tr '[ ]' '-' | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')"
+    if [ -e "$RSTUDIO_ROOT_DIR/version/BUILDTYPE" ]; then
+        BUILD_TYPE="$(cat "$RSTUDIO_ROOT_DIR/version/BUILDTYPE" | tr '[ ]' '-' | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')"
         if [[ -n "$BUILD_TYPE" && "$BUILD_TYPE" != "release" ]]; then
             echo "-${BUILD_TYPE}"
         else
             echo ""
         fi
     else
-        echo "The $RSTUDIO_ROOT_DIR/BUILDTYPE file does not exist. A build version could not be generated" >&2
+        echo "The $RSTUDIO_ROOT_DIR/version/BUILDTYPE file does not exist. A build version could not be generated" >&2
         exit 1
     fi
 }
 
 function flower() {
-    if [ -e "$RSTUDIO_ROOT_DIR/RELEASE" ]; then
-        echo "$(cat "$RSTUDIO_ROOT_DIR/RELEASE" | tr '[ ]' '-' | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')"
+    if [ -e "$RSTUDIO_ROOT_DIR/version/RELEASE" ]; then
+        echo "$(cat "$RSTUDIO_ROOT_DIR/version/RELEASE" | tr '[ ]' '-' | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')"
     else
-        echo "The $RSTUDIO_ROOT_DIR/RELEASE file does not exist. A build version could not be generated" >&2
+        echo "The $RSTUDIO_ROOT_DIR/version/RELEASE file does not exist. A build version could not be generated" >&2
         exit 1
     fi
 }
 
 function calver() {
-    if [ -e "$RSTUDIO_ROOT_DIR/CALENDAR_VERSION" ]; then
-        echo "$(cat "$RSTUDIO_ROOT_DIR/CALENDAR_VERSION" | tr -d '[:space:]')"
+    if [ -e "$RSTUDIO_ROOT_DIR/version/CALENDAR_VERSION" ]; then
+        echo "$(cat "$RSTUDIO_ROOT_DIR/version/CALENDAR_VERSION" | tr -d '[:space:]')"
     else
-        echo "The $RSTUDIO_ROOT_DIR/CALENDAR_VERSION file does not exist. A build version could not be generated" >&2
+        echo "The $RSTUDIO_ROOT_DIR/version/CALENDAR_VERSION file does not exist. A build version could not be generated" >&2
         exit 1
     fi
 }

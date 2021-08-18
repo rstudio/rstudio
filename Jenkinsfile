@@ -71,7 +71,7 @@ def s3_upload(type, flavor, os, arch) {
   packageFile = renamedFile
 
   def buildType = sh (
-    script: "cat BUILDTYPE",
+    script: "cat version/BUILDTYPE",
     returnStdout: true
   ).trim().toLowerCase()
 

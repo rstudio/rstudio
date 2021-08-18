@@ -99,7 +99,7 @@ pipeline {
           ).trim()
 
           def buildType = sh (
-            script: "cat BUILDTYPE",
+            script: "cat version/BUILDTYPE",
             returnStdout: true
           ).trim().toLowerCase()
 
