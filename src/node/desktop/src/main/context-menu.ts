@@ -115,7 +115,7 @@ function showContextMenuImageTemplate(event: Electron.IpcMainEvent, params: Elec
 
 function showContextMenuTextTemplate(event: Electron.IpcMainEvent, params: Electron.ContextMenuParams): ContextMenuItem[] {
 
-  // We would like to just alwaus use the already-existing roles for clipboard
+  // We would like to just always use the already-existing roles for clipboard
   // actions, but https://www.electronjs.org/docs/api/menu-item has:
   //
   // When specifying a role on macOS, label and accelerator are the only options

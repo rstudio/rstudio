@@ -54,7 +54,7 @@ export class DesktopBrowserWindow extends EventEmitter {
     private opener?: WebContents,
     private allowExternalNavigate = false,
     addApiKeys: string[] = [],
-    existingWindow?: BrowserWindow
+    existingWindow?: BrowserWindow // attach to this window instead of creating a new one
   ) {
     super();
     const apiKeys = [['desktopInfo', ...addApiKeys].join('|')];
@@ -77,15 +77,15 @@ export class DesktopBrowserWindow extends EventEmitter {
         acceptFirstMouse: true
       });
 
-      // register context menu (right click) handler
-      this.window.webContents.on('context-menu', (event, params) => {
-        showContextMenu(event as IpcMainEvent, params);
-      });
-
       // Uncomment to have all windows show dev tools by default
       // this.window.webContents.openDevTools();
 
     }
+
+    // register context menu (right click) handler
+    this.window.webContents.on('context-menu', (event, params) => {
+      showContextMenu(event as IpcMainEvent, params);
+    });
 
     this.window.webContents.on('before-input-event', (event, input) => {
       this.keyPressEvent(event, input);
