@@ -27,6 +27,10 @@ export function getPackageOutputDir(): string {
   return path.join(getProjectRootDir(), 'package');
 }
 
+export function getForgeOutputDir(): string {
+  return path.join(getProjectRootDir(), 'out');
+}
+
 export function section(message: string): string {
   return '\x1b[1m\x1b[36m==>\x1b[39m ' + message + '\x1b[0m';
 }
