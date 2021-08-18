@@ -525,15 +525,11 @@ public class Files
       ArrayList<FileSystemItem> selectedFiles = view_.getSelectedFiles();
 
       // validation: some selection exists
-      if  (selectedFiles.size() == 0)
-         return;
-
-      // validation: no more than one file selected
-      if  (selectedFiles.size() > 1)
+      if (selectedFiles.size() != 1)
       {
          globalDisplay_.showErrorMessage(
-                           "Invalid Selection",
-                           "Please select only one file to rename");
+               "Invalid Selection",
+               "Please select a single file to rename.");
          return;
       }
 
@@ -786,6 +782,7 @@ public class Files
       // guard for reentrancy
       if (renaming_)
          return;
+      
       renaming_ = true;
 
       // prompt for new file name then execute the rename
