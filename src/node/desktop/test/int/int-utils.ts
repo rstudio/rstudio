@@ -42,7 +42,7 @@ function getLaunchArgs(extraArgs?: string[]): LaunchArgs {
   if (!fs.existsSync(entryPoint)) {
     // otherwise try the dev build
     isPackaged = false;
-    entryPoint = path.join(__dirname, '../../dist/src/main/main.js');
+    entryPoint = path.join(__dirname, '../../.webpack/main/index.js');
     cwd = path.join(__dirname, '../..');
   }
 

@@ -42,8 +42,8 @@ export const kTempCookiesOption = '--use-temp-cookies';
 export const kVersion = '--version';
 export const kVersionJson = '--version-json';
 export const kLogLevel = 'log-level';
-export const kDelaySessionSeconds = 'session-delay-seconds';
-export const kSessionExitCode = 'session-exit-code';
+export const kDelaySession = 'session-delay';
+export const kSessionExit = 'session-exit';
 
 /**
  * The RStudio application
@@ -126,20 +126,14 @@ export class Application implements AppState {
     initializeLang();
 
     // switch for setting a session start delay in seconds (used for testing, troubleshooting)
-    if (app.commandLine.hasSwitch(kDelaySessionSeconds)) {
-      const delay = parseInt(app.commandLine.getSwitchValue(kDelaySessionSeconds), 10);
-      if (!isNaN(delay) && delay > 0) {
-        this.sessionStartDelaySeconds = delay;
-      }
+    if (app.commandLine.hasSwitch(kDelaySession)) {
+      this.sessionStartDelaySeconds = 10;
     }
 
-    // switch for forcing rsession to exit immediately with given exit code (testing, troubleshooting)
+    // switch for forcing rsession to exit immediately with non-zero exit code
     // (will happen after session start delay above, if also specified)
-    if (app.commandLine.hasSwitch(kSessionExitCode)) {
-      const exitCode = parseInt(app.commandLine.getSwitchValue(kSessionExitCode), 0);
-      if (!isNaN(exitCode) && exitCode !== 0) {
-        this.sessionEarlyExitCode = exitCode;
-      }
+    if (app.commandLine.hasSwitch(kSessionExit)) {
+      this.sessionEarlyExitCode = 1;
     }
 
     // on Windows, ask the user what version of R they'd like to use
@@ -216,8 +210,11 @@ export class Application implements AppState {
 
   resourcesPath(): FilePath {
     if (app.isPackaged) {
+      console.log('~~~~~~~~~~~~~~~PACKAGED~~~~~~~~~~~~~');
       return new FilePath(app.getAppPath());
     } else {
+      console.log('~~~~~~~~~~~~~~~NOT PACKAGED~~~~~~~~~~~~~');
+      const appPath = app.getAppPath();
       return new FilePath(app.getAppPath()).completePath('../../..');
     }
   }

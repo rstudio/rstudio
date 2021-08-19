@@ -25,7 +25,7 @@ describe('Startup With Failing RSession', () => {
 
   beforeEach(async () => {
     // tell the rsession to immediately terminate with exit code of 1
-    electronApp = await launch(['--session-exit-code=1']);
+    electronApp = await launch(['--session-exit']);
     window = await electronApp.firstWindow();
     window.setDefaultTimeout(5000);
   });
@@ -34,7 +34,7 @@ describe('Startup With Failing RSession', () => {
     await electronApp.close();
   });
 
-  it('Shows launch failure page if session fails to launch', async function () {
+  it('WIP Shows launch failure page if session fails to launch', async function () {
     // check that page is loaded with H1 containing "Error Starting R"
     const h1 = await window.innerText('h1');
     assert.equal(h1, 'Error Starting R');
