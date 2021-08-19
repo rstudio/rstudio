@@ -210,11 +210,8 @@ export class Application implements AppState {
 
   resourcesPath(): FilePath {
     if (app.isPackaged) {
-      console.log('~~~~~~~~~~~~~~~PACKAGED~~~~~~~~~~~~~');
       return new FilePath(app.getAppPath());
     } else {
-      console.log('~~~~~~~~~~~~~~~NOT PACKAGED~~~~~~~~~~~~~');
-      const appPath = app.getAppPath();
       return new FilePath(app.getAppPath()).completePath('../../..');
     }
   }
