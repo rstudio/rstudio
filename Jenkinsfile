@@ -206,7 +206,7 @@ try {
                 container.inside() {
                     stage('bump version') {
                         def rstudioVersion = sh (
-                          script: "docker/jenkins/rstudio-version.sh bump ${params.RSTUDIO_VERSION_MINOR}",
+                          script: "docker/jenkins/rstudio-version.sh bump ${params.RSTUDIO_VERSION_PATCH}",
                           returnStdout: true
                         ).trim()
                         echo "RStudio build version: ${rstudioVersion}"
