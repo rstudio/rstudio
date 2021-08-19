@@ -67,6 +67,11 @@
                   "preload": {
                     "js": "./src/renderer/preload.ts"
                   }
+                },
+                {
+                  "html": "./src/ui/loading/loading.html",
+                  "js": "./src/ui/loading/loading.ts",
+                  "name": "loading_window"
                 }
               ]
             }
