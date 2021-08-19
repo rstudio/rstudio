@@ -384,7 +384,7 @@ try {
               stage('upload') {
 
                 def buildDest = "s3://rstudio-ide-build/desktop/windows"
-                def packageName = "RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix{"
+                def packageName = "RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
 
                 // windows docker container cannot reach instance-metadata endpoint. supply credentials at upload.
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'jenkins-aws']]) {
