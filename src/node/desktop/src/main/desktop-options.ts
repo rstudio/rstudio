@@ -32,6 +32,8 @@ const kTempAuthCookies = 'Session.TempAuthCookies';
 const kIgnoredUpdateVersions = 'General.IgnoredUpdateVersions';
 const kClipboardMonitoring = 'General.ClipboardMonitoring';
 
+const kRenderingEngine = 'Display.RenderingEngine';
+
 const kRBinDir = 'Platform.Windows.RBinDir';
 const kPreferR64 = 'Platform.Windows.PreferR64';
 
@@ -242,7 +244,15 @@ export class DesktopOptionsImpl {
   public clipboardMonitoring(): boolean {
     return this.config.get(kClipboardMonitoring);
   }
+
+  public setRenderingEngine(engine: string): void {
+    this.config.set(kRenderingEngine, engine);
+  }
   
+  public renderingEngine(): string {
+    return this.config.get(kRenderingEngine) || 'auto';
+  }
+
   // Windows-only option
   public setRBinDir(rBinDir: string): void {
     if (process.platform !== 'win32') {
