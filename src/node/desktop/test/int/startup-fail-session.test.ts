@@ -34,7 +34,7 @@ describe('Startup With Failing RSession', () => {
     await electronApp.close();
   });
 
-  it('WIP Shows launch failure page if session fails to launch', async function () {
+  it('Shows launch failure page if session fails to launch', async function () {
     // check that page is loaded with H1 containing "Error Starting R"
     const h1 = await window.innerText('h1');
     assert.equal(h1, 'Error Starting R');
