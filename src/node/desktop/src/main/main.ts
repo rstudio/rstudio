@@ -22,6 +22,12 @@ import { Application, kLogLevel } from './application';
 import { setApplication } from './app-state';
 import { parseStatus } from './program-status';
 
+// Handle creating/removing shortcuts on Windows when installing/uninstalling.
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+if (require('electron-squirrel-startup') as boolean) {
+  app.quit();
+}
+
 /**
  * RStudio entrypoint
  */
