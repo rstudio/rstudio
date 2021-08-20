@@ -401,9 +401,7 @@ export class MainWindow extends GwtWindow {
         // the load failed, but we haven't yet received word that the
         // session has failed to load. let the user know that the R
         // session is still initializing, and then reload the page.
-//        const vars = new Map<string, string>();
         this.loadUrl(LOADING_WINDOW_WEBPACK_ENTRY);
-//        this.loadHtml(renderTemplateFile(appState().resourcesPath().completePath('html/loading.html'), vars));
         waitForUrlWithTimeout(this.baseUrl ?? '', reloadWaitDuration, reloadWaitDuration, 10)
           .then((error: Err) => {
             if (error) {
