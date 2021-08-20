@@ -130,7 +130,10 @@
    </replace-with>
    <replace-with class="org.rstudio.studio.client.common.impl.DesktopTextInput">
       <when-type-is class="org.rstudio.studio.client.common.TextInput"/>
-      <when-property-is name="rstudio.electron" value="false"/>
+      <all>
+         <when-property-is name="rstudio.desktop" value="true"/>
+         <when-property-is name="rstudio.electron" value="false"/>
+      </all>
    </replace-with>
 
    <!-- define permutations for emulated and native stack modes -->
