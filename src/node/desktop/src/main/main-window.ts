@@ -17,7 +17,6 @@ import { BrowserWindow, dialog, Menu, session } from 'electron';
 import { ChildProcess } from 'child_process';
 
 import { logger } from '../core/logger';
-import { renderTemplateFile } from '../core/template-filter';
 import { Err } from '../core/err';
 
 import { GwtCallback, PendingQuit } from './gwt-callback';
@@ -46,6 +45,7 @@ export function closeAllSatellites(mainWindow: BrowserWindow): void {
 // plugin that tells the Electron app where to look for the Webpack-bundled app code (depending on
 // whether you're running in development or production).
 declare const LOADING_WINDOW_WEBPACK_ENTRY: string;
+declare const CONNECT_WINDOW_WEBPACK_ENTRY: string;
 
 // number of times we've tried to reload in startup
 let reloadCount = 0;
@@ -387,9 +387,7 @@ export class MainWindow extends GwtWindow {
       return;
     }
     reloadCount++;
-    this.loadUrl(this.baseUrl ?? '').catch((reason) => {
-      logger().logErrorMessage(`Failed to load ${this.baseUrl}: ${reason}`);
-    });
+    this.loadUrl(this.baseUrl ?? '').catch(logger().logError);
   }
 
   onLoadFinished(ok: boolean): void {
@@ -403,9 +401,7 @@ export class MainWindow extends GwtWindow {
         // the load failed, but we haven't yet received word that the
         // session has failed to load. let the user know that the R
         // session is still initializing, and then reload the page.
-        this.loadUrl(LOADING_WINDOW_WEBPACK_ENTRY).catch((reason) => {
-          logger().logErrorMessage(`Failed to load ${LOADING_WINDOW_WEBPACK_ENTRY}: ${reason}`);
-        });
+        this.loadUrl(LOADING_WINDOW_WEBPACK_ENTRY).catch(logger().logError);
         waitForUrlWithTimeout(this.baseUrl ?? '', reloadWaitDuration, reloadWaitDuration, 10)
           .then((error: Err) => {
             if (error) {
@@ -430,12 +426,15 @@ export class MainWindow extends GwtWindow {
       return;
     }
 
-    const vars = new Map<string, string>([
-      ['url', this.baseUrl ?? '']
-    ]);
+    if (!this.baseUrl) {
+      logger().logErrorMessage('Unexpected undefined baseUrl in main window');
+      return;
+    }
 
-    this.loadHtml(
-      renderTemplateFile(appState().resourcesPath().completePath('html/connect.html'), vars));
+    const vars = new Map<string, string>();
+    vars.set('url', this.baseUrl);
+    this.window.webContents.send('set-error-details', vars);
+    this.loadUrl(CONNECT_WINDOW_WEBPACK_ENTRY).catch(logger().logError);
   }
 
   setErrorDisplayed(): void {

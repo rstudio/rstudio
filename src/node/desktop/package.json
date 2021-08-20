@@ -76,6 +76,11 @@
                   "html": "./src/ui/error/error.html",
                   "js": "./src/ui/error/error.ts",
                   "name": "error_window"
+                },
+                {
+                  "html": "./src/ui/connect/connect.html",
+                  "js": "./src/ui/connect/connect.ts",
+                  "name": "connect_window"
                 }
               ]
             }

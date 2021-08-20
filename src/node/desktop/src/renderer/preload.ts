@@ -60,7 +60,8 @@ let pageData: Map<string, string> | undefined = undefined;
 
 /**
  * Receive extra page data from main process. Only set when about to load
- * the error.html page shown when session fails to load correctly.
+ * the error.html or connect.html pages shown when session is slow to load or 
+ * fails to load correctly.
  */
 ipcRenderer.on('set-error-details', (event, data: Map<string, string>) => {
   pageData = data;

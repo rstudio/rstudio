@@ -36,6 +36,14 @@
                 text-decoration: none;
             }
         </style>
+        <script>
+            // When the page loads, inject the retry URL
+            window.addEventListener("load", function() {
+                try {
+                    document.getElementById('retry_url').href = window.desktopErrorInfo.getVar('url');
+                } catch(err) { console.err(err); }
+            });
+        </script>
     </head>
     <body>
         <div style="float: right; width: 144px; height: 112px; position: relative; margin-left: 20px;">
@@ -84,7 +92,7 @@
           <a href="https://www.rstudio.org/links/troubleshooting_startup">Troubleshooting RStudio Startup</a>
         </p>
         <p style="text-align: center; margin-top: 50px;">
-            <a href="#url#" class="reload">
+            <a id="retry_url" href="https://microsoft.com" class="reload">
                 Retry
             </a>
         </p>

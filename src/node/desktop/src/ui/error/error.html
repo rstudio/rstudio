@@ -108,6 +108,7 @@
                 try {
                     document.getElementById(varName).innerHTML = window.desktopErrorInfo.getVar(varName);
                 } catch (err) {
+                    console.error(err);
                 }
             };
 
@@ -115,6 +116,7 @@
                 try {
                     report.value = report.value.replace('#' + varName + '#', window.desktopErrorInfo.getVar('!' + varName));
                 } catch (err) {
+                    console.error(err);
                 }
             };
 

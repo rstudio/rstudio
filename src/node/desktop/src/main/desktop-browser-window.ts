@@ -16,8 +16,6 @@
 import { BrowserWindow, shell, WebContents } from 'electron';
 import { IpcMainEvent } from 'electron/main';
 
-import fs from 'fs';
-import os from 'os';
 import path from 'path';
 
 import { EventEmitter } from 'stream';
@@ -45,7 +43,6 @@ export class DesktopBrowserWindow extends EventEmitter {
   static CLOSE_WINDOW_SHORTCUT = 'desktop-browser-close_window_shortcut';
 
   window: BrowserWindow;
-  private tempDirs: string[] = [];
 
   // if loading fails and emits `did-fail-load` it will be followed by a 
   // 'did-finish-load'; use this bool to differentiate
@@ -93,7 +90,7 @@ export class DesktopBrowserWindow extends EventEmitter {
       });
 
       // Uncomment to have all windows show dev tools by default
-      // this.window.webContents.openDevTools();
+      this.window.webContents.openDevTools();
 
     }
 
@@ -242,7 +239,6 @@ export class DesktopBrowserWindow extends EventEmitter {
       this.executeJavaScript(cmd).catch((error) => {
         logger().logError(error);
       });
-      this.cleanupTmpFiles(false);
     }
   }
 
@@ -269,37 +265,6 @@ export class DesktopBrowserWindow extends EventEmitter {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   setViewerUrl(url: string): void {
     // TODO: in the Qt version this is implemented in webPage()
-  }
-
-  loadHtml(html: string): void {
-    const prefix = path.join(os.tmpdir(), 'rstudioTmpPage');
-    const uniqueDir = fs.mkdtempSync(prefix);
-    const uniqueFile = path.join(uniqueDir, 'tmp.html');
-    fs.writeFileSync(uniqueFile, html);
-    this.window.loadFile(uniqueFile).catch(logger().logError);
-
-    // Track the temporary directory for later cleanup; can't delete
-    // while it is loaded
-    this.tempDirs.push(uniqueDir);
-  }
-
-  /**
-   * Cleanup pages written to temp dir by loadHtml method.
-   * 
-   * @param keepLast don't delete most recently loaded tmpfile (can't delete the currently
-   * loaded page)
-   */
-  cleanupTmpFiles(keepLast: boolean): void {
-    let i = keepLast ? this.tempDirs.length - 2 : this.tempDirs.length - 1;
-    while ( i >= 0) {
-      try {
-        fs.rmSync(this.tempDirs[i], { force: true, recursive: true });
-        this.tempDirs.pop();
-      } catch (err) {
-        logger().logDebug(`Failed to delete ${this.tempDirs[i]}`);
-      }
-      i--;
-    }
   }
 
   keyPressEvent(event: Electron.Event, input: Electron.Input): void {
