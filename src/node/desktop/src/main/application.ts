@@ -127,7 +127,7 @@ export class Application implements AppState {
 
     // switch for setting a session start delay in seconds (used for testing, troubleshooting)
     if (app.commandLine.hasSwitch(kDelaySession)) {
-      this.sessionStartDelaySeconds = 30;
+      this.sessionStartDelaySeconds = 5;
     }
 
     // switch for forcing rsession to exit immediately with non-zero exit code

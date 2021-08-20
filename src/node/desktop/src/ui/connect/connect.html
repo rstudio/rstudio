@@ -40,7 +40,7 @@
             // When the page loads, inject the retry URL
             window.addEventListener("load", function() {
                 try {
-                    document.getElementById('retry_url').href = window.desktopErrorInfo.getVar('url');
+                    document.getElementById('retry_url').href = window.desktopErrorInfo.getVar('!url');
                 } catch(err) { console.err(err); }
             });
         </script>
