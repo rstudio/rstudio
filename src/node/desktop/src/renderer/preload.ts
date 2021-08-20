@@ -12,9 +12,9 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-import { contextBridge } from 'electron';
+import { contextBridge, ipcRenderer } from 'electron';
 
-import { removeDups } from '../core/string-utils';
+import { htmlEscape, jsLiteralEscape, removeDups } from '../core/string-utils';
 
 import { getDesktopInfoBridge } from './desktop-info-bridge';
 import { getMenuBridge } from './menu-bridge';
@@ -54,3 +54,55 @@ for (const apiKey of apiKeys) {
     console.error(`Preload ignoring unsupported apiKey: ${apiKey}`);
   }
 }
+
+// Info used by the "session failed to load" error page (error.html)
+let pageData: Map<string, string> | undefined = undefined;
+
+/**
+ * Receive extra page data from main process. Only set when about to load
+ * the error.html page shown when session fails to load correctly.
+ */
+ipcRenderer.on('set-error-details', (event, data: Map<string, string>) => {
+  pageData = data;
+});
+
+interface ErrorCallbacks {
+  getVar(varName: string): string;
+}
+
+const errorCallbacks: ErrorCallbacks = {
+  getVar: (varName) => {
+    if (!pageData) {
+      return 'ERROR DATA NOT AVAILABLE';
+    }
+    if (!varName) {
+      return 'NO PROPERTY PROVIDED';
+    }
+    if (varName) {
+      // If varName starts with ! then raw value is returned; if it starts with ' then
+      // JS literal escaping will be used; no prefix then the returned value will be
+      // HTML escaped
+      let prefix = '';
+      if (varName.startsWith('!')) {
+        prefix = '!';
+        varName = varName.slice(1);
+      } else if (varName.startsWith('\'')) {
+        prefix = '\'';
+        varName = varName.slice(1);
+      }
+      const result = pageData.get(varName);
+      if (result) {
+        if (prefix === '!') {
+          return result;
+        } else if (prefix === '\'') {
+          return jsLiteralEscape(result);
+        } else {
+          return htmlEscape(result, true);
+        }
+      }
+    }
+    return 'MISSING VALUE';
+  }
+};
+
+contextBridge.exposeInMainWorld('desktopErrorInfo', errorCallbacks);

@@ -13,4 +13,4 @@
  *
  */
 
-console.log('👋 This message is being logged by "loading.js", included via webpack');
+// Placeholder required by Webpack / Electron-Forge

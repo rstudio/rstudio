@@ -239,7 +239,7 @@ export class MainWindow extends GwtWindow {
   //   quitConfirmed_ = true;
   // }
 
-  loadUrl(url: string): void {
+  async loadUrl(url: string): Promise<void> {
     // pass along the shared secret with every request
     const filter = {
       urls: [`${url}/*`]
@@ -387,7 +387,9 @@ export class MainWindow extends GwtWindow {
       return;
     }
     reloadCount++;
-    this.loadUrl(this.baseUrl ?? '');
+    this.loadUrl(this.baseUrl ?? '').catch((reason) => {
+      logger().logErrorMessage(`Failed to load ${this.baseUrl}: ${reason}`);
+    });
   }
 
   onLoadFinished(ok: boolean): void {
@@ -401,7 +403,9 @@ export class MainWindow extends GwtWindow {
         // the load failed, but we haven't yet received word that the
         // session has failed to load. let the user know that the R
         // session is still initializing, and then reload the page.
-        this.loadUrl(LOADING_WINDOW_WEBPACK_ENTRY);
+        this.loadUrl(LOADING_WINDOW_WEBPACK_ENTRY).catch((reason) => {
+          logger().logErrorMessage(`Failed to load ${LOADING_WINDOW_WEBPACK_ENTRY}: ${reason}`);
+        });
         waitForUrlWithTimeout(this.baseUrl ?? '', reloadWaitDuration, reloadWaitDuration, 10)
           .then((error: Err) => {
             if (error) {

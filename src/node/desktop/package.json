@@ -71,6 +71,11 @@
                   "html": "./src/ui/loading/loading.html",
                   "js": "./src/ui/loading/loading.ts",
                   "name": "loading_window"
+                },
+                {
+                  "html": "./src/ui/error/error.html",
+                  "js": "./src/ui/error/error.ts",
+                  "name": "error_window"
                 }
               ]
             }
