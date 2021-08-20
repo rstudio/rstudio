@@ -22,7 +22,7 @@
 
 #include <core/http/Cookie.hpp>
 
-#define kCSRFTokenHeader "X-CSRF-Token"
+#define kCSRFTokenHeader "X-RS-CSRF-Token"
 #define kCSRFTokenCookie "csrf-token"
 
 namespace rstudio {
