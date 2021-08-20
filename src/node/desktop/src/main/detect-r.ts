@@ -15,15 +15,16 @@
 
 import path from 'path';
 
-import { execSync } from 'child_process';
+import { execSync, spawnSync } from 'child_process';
 import { dialog } from 'electron';
 import { existsSync } from 'fs';
 import { EOL } from 'os';
 
-import { Environment, getenv, setVars } from '../core/environment';
+import { Environment, getenv, setenv, setVars } from '../core/environment';
 import { Expected, ok, err } from '../core/expected';
 import { logger } from '../core/logger';
 import { Err, success } from '../core/err';
+import { ChooseRModalWindow } from '..//ui/widgets/choose-r';
 
 let kLdLibraryPathVariable : string;
 if (process.platform === 'darwin') {
@@ -52,6 +53,38 @@ function executeCommand(command: string): Expected<string> {
   } catch (error) {
     return err(error);
   }
+
+}
+
+export async function promptUserForR(): Promise<Expected<string | null>> {
+
+  // nothing to do if RSTUDIO_WHICH_R is set
+  const rstudioWhichR = getenv('RSTUDIO_WHICH_R');
+  if (rstudioWhichR) {
+    return ok(rstudioWhichR);
+  }
+
+  // discover available R installations
+  const rInstalls = findRInstallationsWin32();
+  if (rInstalls.length === 0) {
+    return err();
+  }
+
+  // ask the user what version of R they'd like to use
+  const dialog = new ChooseRModalWindow(rInstalls);
+  const [path, error] = await dialog.showModal();
+  if (error) {
+    return err(error);
+  }
+
+  // if path is null, the operation was cancelled
+  if (path == null) {
+    return ok(null);
+  }
+
+  // set RSTUDIO_WHICH_R to signal which version of R to be used
+  setenv('RSTUDIO_WHICH_R', path);
+  return ok(path);
 
 }
 
@@ -105,14 +138,11 @@ function prepareEnvironmentImpl(): Err {
 function detectREnvironment(): Expected<REnvironment> {
 
   // scan for R
-  const [RLocation, scanError] = scanForR();
+  const [R, scanError] = scanForR();
   if (scanError) {
     showRNotFoundError();
     return err(scanError);
   }
-
-  // normalize separators
-  const R = path.normalize(RLocation);
 
   // generate small script for querying information about R
   const rQueryScript = String.raw`writeLines(c(
@@ -124,10 +154,14 @@ function detectREnvironment(): Expected<REnvironment> {
   Sys.getenv("${kLdLibraryPathVariable}")
 ))`;
 
-  const rQueryResult = execSync(`${R} --vanilla -s`, {
+  const result = spawnSync(R, ['--vanilla', '-s'], {
     encoding: 'utf-8',
     input: rQueryScript,
   });
+  
+  if (result.error) {
+    return err(result.error);
+  }
 
   // unwrap query results
   const [
@@ -137,10 +171,10 @@ function detectREnvironment(): Expected<REnvironment> {
     rIncludeDir,
     rShareDir,
     rLdLibraryPath,
-  ] = rQueryResult.split(EOL);
+  ] = result.stdout.split(EOL);
 
   // put it all together
-  const result = {
+  return ok({
     rScriptPath: R,
     version: rVersion,
     envVars: {
@@ -150,11 +184,7 @@ function detectREnvironment(): Expected<REnvironment> {
       R_SHARE_DIR:   rShareDir,
     },
     ldLibraryPath: rLdLibraryPath,
-  };
-
-  logger().logDebug(JSON.stringify(result, null, 2));
-
-  return ok(result);
+  });
 
 }
 
@@ -207,6 +237,40 @@ function scanForRPosix(): Expected<string> {
   // nothing found
   return err();
 
+}
+
+function findRInstallationsWin32() {
+
+  const rInstallations : string[] = [];
+
+  // list all installed versions from registry
+  const keyName = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\R-Core';
+  const regQueryCommand = `reg query ${keyName} /s /v InstallPath`;
+  const [output, error] = executeCommand(regQueryCommand);
+  if (error) {
+    logger().logError(error);
+    return rInstallations;
+  }
+
+  // parse the actual path from the output
+  const lines = output.split(EOL);
+  for (const line of lines) {
+    const match = /^\s*InstallPath\s*REG_SZ\s*(.*)$/.exec(line);
+    if (match != null) {
+      const rInstallation = match[1];
+      if (isValidInstallationWin32(rInstallation)) {
+        rInstallations.push(rInstallation);
+      }
+    }
+  }
+
+  return rInstallations;
+
+}
+
+function isValidInstallationWin32(installPath: string): boolean {
+  const rBinPath = path.normalize(`${installPath}/bin/R.exe`);
+  return existsSync(rBinPath);
 }
 
 function findDefaultInstallPathWin32(version: string): string {
@@ -265,4 +329,12 @@ function scanForRWin32(): Expected<string> {
   logger().logDebug('Failed to discover R');
   return err();
 
+}
+
+export function findDefault32Bit(): string {
+  return findDefaultInstallPathWin32('R');
+}
+
+export function findDefault64Bit(): string {
+  return findDefaultInstallPathWin32('R64');
 }

@@ -13,6 +13,7 @@
  *
  */
 
+import { jsLiteralEscape } from '../core/string-utils';
 import { MainWindow } from './main-window';
 
 export class RCommandEvaluator {
@@ -22,15 +23,12 @@ export class RCommandEvaluator {
     RCommandEvaluator.window = window;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   static evaluate(rCmd: string): void {
     if (RCommandEvaluator.window === null) {
       return;
     }
 
-    //rCmd = core::string_utils::jsLiteralEscape(rCmd);
-    //std::string js = "window.desktopHooks.evaluateRCmd(\"" + rCmd + "\")";
-    //window_->webPage()->runJavaScript(QString::fromStdString(js));
-    console.log('RCommandEvaluator.evaluate NYI');
+    rCmd = jsLiteralEscape(rCmd);
+    this.window?.executeJavaScript(`window.desktopHooks.evaluateRCmd("${rCmd}")`);
   }
 }

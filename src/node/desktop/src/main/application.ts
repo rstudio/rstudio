@@ -13,7 +13,7 @@
  *
  */
 
-import { app, dialog, shell, WebContents } from 'electron';
+import { app, BrowserWindow, dialog, WebContents, screen } from 'electron';
 
 import { getenv, setenv } from '../core/environment';
 import { FilePath } from '../core/file-path';
@@ -21,18 +21,18 @@ import { generateRandomPort } from '../core/system';
 import { logger, enableDiagnosticsOutput } from '../core/logger';
 
 import { productInfo } from './product-info';
-import { findComponents, initializeSharedSecret, raiseAndActivateWindow } from './utils';
+import { findComponents, initializeLang, initializeSharedSecret, raiseAndActivateWindow } from './utils';
 import { augmentCommandLineArguments, getComponentVersions, removeStaleOptionsLockfile } from './utils';
 import { exitFailure, exitSuccess, run, ProgramStatus } from './program-status';
 import { ApplicationLaunch } from './application-launch';
 import { AppState } from './app-state';
-import { prepareEnvironment } from './detect-r';
 import { SessionLauncher } from './session-launcher';
 import { DesktopActivation } from './activation-overlay';
 import { WindowTracker } from './window-tracker';
 import { GwtCallback } from './gwt-callback';
+import { prepareEnvironment, promptUserForR } from './detect-r';
 import { PendingWindow } from './pending-window';
-import { createSatelliteWindow, createSecondaryWindow } from './window-utils';
+import { configureSatelliteWindow, configureSecondaryWindow } from './window-utils';
 
 // RStudio command-line switches
 export const kRunDiagnosticsOption = '--run-diagnostics';
@@ -69,6 +69,7 @@ export class Application implements AppState {
    * Startup code run before app 'ready' event.
    */
   async beforeAppReady(): Promise<ProgramStatus> {
+
     const status = this.initCommandLine(process.argv);
     if (status.exit) {
       return status;
@@ -122,6 +123,8 @@ export class Application implements AppState {
       }
     }
 
+    initializeLang();
+
     // switch for setting a session start delay in seconds (used for testing, troubleshooting)
     if (app.commandLine.hasSwitch(kDelaySessionSeconds)) {
       const delay = parseInt(app.commandLine.getSwitchValue(kDelaySessionSeconds), 10);
@@ -139,13 +142,34 @@ export class Application implements AppState {
       }
     }
 
-    const error = prepareEnvironment();
-    if (error) {
+    // on Windows, ask the user what version of R they'd like to use
+    if (process.platform === 'win32') {
+
+      const [path, preflightError] = await promptUserForR();
+      if (preflightError) {
+        dialog.showErrorBox('Error Finding R', 'RStudio failed to find any R installations on the system.');
+        console.log(preflightError);
+        return exitFailure();
+      }
+
+      // if no path was selected, bail (implies dialog was canceled)
+      if (path == null) {
+        return exitFailure();
+      }
+
+    }
+
+    // prepare the R environment
+    const prepareError = prepareEnvironment();
+    if (prepareError) {
+      dialog.showErrorBox('Error Finding R', 'RStudio failed to find any R installations on the system.');
+      console.log(prepareError);
       return exitFailure();
     }
 
     // TODO: desktop pro session handling
     // TODO: 'file/project' file open handling (e.g. launch by double-clicking a .R or .Rproj file)
+    // TODO: select 32bit session for 32bit R on Windows
 
     // launch a local session
     this.sessionLauncher = new SessionLauncher(this.sessionPath, confPath, new FilePath(), this.appLaunch);
@@ -229,17 +253,30 @@ export class Application implements AppState {
     this.pendingWindows.push(pendingWindow);
   }
 
-  /**
-   * Creates external (web browser), Secondary, or Satellite windows.
-   */
-  createWindow(details: Electron.HandlerDetails, webContents: WebContents, baseUrl?: string): void {
+  windowOpening(): { action: 'deny' } | { action: 'allow', overrideBrowserWindowOptions?: Electron.BrowserWindowConstructorOptions | undefined } {
 
-    // check if this is target="_blank" from an IDE window
-    if (baseUrl && (details.disposition === 'foreground-tab' || details.disposition === 'background-tab')) {
-      // TODO: validation/restrictions on the URLs?
-      void shell.openExternal(details.url);
-      return;
+    // no additional config if pending window is a satellite
+    for (const pendingWindow of this.pendingWindows) {
+      if (pendingWindow.type === 'satellite') {
+        return { action: 'allow' };
+      }
+      break;
     }
+
+    // determine size for secondary window
+    const primaryDisplay = screen.getPrimaryDisplay();
+    const width = Math.max(500, Math.min(850, primaryDisplay.workAreaSize.width));
+    const height = Math.max(500, Math.min(1100, primaryDisplay.workAreaSize.height));
+    return { action: 'allow', overrideBrowserWindowOptions: { width: width, height: height } };
+  }
+
+  /**
+   * Configures new Secondary or Satellite window
+   */
+  windowCreated(
+    newWindow: BrowserWindow,
+    owner: WebContents,
+    baseUrl?: string): void {
 
     // check if we have a pending window waiting to come up
     const pendingWindow = this.pendingWindows.shift();
@@ -254,15 +291,15 @@ export class Application implements AppState {
       }
 
       if (pendingWindow.type === 'satellite') {
-        createSatelliteWindow(webContents, pendingWindow, details);
+        configureSatelliteWindow(pendingWindow, newWindow, owner);
       } else {
-        createSecondaryWindow(webContents, pendingWindow, details, baseUrl);
+        configureSecondaryWindow(pendingWindow, newWindow, owner, baseUrl);
       }
     } else {
-      // No pending window, create a generic secondary window
-      createSecondaryWindow(
-        webContents,
+      // No pending window, make it a generic secondary window
+      configureSecondaryWindow(
         { type: 'secondary', name: '', allowExternalNavigate: false, showToolbar: true },
-        details, baseUrl);
+        newWindow, owner, baseUrl);
     }
-  }}
+  }
+}

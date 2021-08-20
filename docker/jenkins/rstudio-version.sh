@@ -33,17 +33,18 @@
 # abort on error
 set -e
 
+RSTUDIO_ROOT_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/../..)"
+
 if [[ "$#" -lt 2 ]]; then
     # TODO: add "set" command to move forward 
-    echo "Usage: rstudio-version.sh [get|bump] [flower] [patch] [debug]"
+    echo "Usage: rstudio-version.sh [get|bump] [patch] [debug]"
     exit 1
 fi
 
 # read arguments
 ACTION=$1
-FLOWER="$(echo $2 | tr ' ' '-' | tr '[:upper:]' '[:lower:]')"
-PATCH=$3
-if [[ "$4" == "debug" ]]; then
+PATCH=$2
+if [[ "$3" == "debug" ]]; then
     DEBUG=true
 else
     DEBUG=false
@@ -55,21 +56,52 @@ function log() {
     fi
 }
 
+function buildType() {
+    if [ -e "$RSTUDIO_ROOT_DIR/version/BUILDTYPE" ]; then
+        BUILD_TYPE="$(cat "$RSTUDIO_ROOT_DIR/version/BUILDTYPE" | tr '[ ]' '-' | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')"
+        if [[ -n "$BUILD_TYPE" && "$BUILD_TYPE" != "release" ]]; then
+            echo "-${BUILD_TYPE}"
+        else
+            echo ""
+        fi
+    else
+        echo "The $RSTUDIO_ROOT_DIR/version/BUILDTYPE file does not exist. A build version could not be generated" >&2
+        exit 1
+    fi
+}
+
+function flower() {
+    if [ -e "$RSTUDIO_ROOT_DIR/version/RELEASE" ]; then
+        echo "$(cat "$RSTUDIO_ROOT_DIR/version/RELEASE" | tr '[ ]' '-' | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')"
+    else
+        echo "The $RSTUDIO_ROOT_DIR/version/RELEASE file does not exist. A build version could not be generated" >&2
+        exit 1
+    fi
+}
+
+function calver() {
+    if [ -e "$RSTUDIO_ROOT_DIR/version/CALENDAR_VERSION" ]; then
+        echo "$(cat "$RSTUDIO_ROOT_DIR/version/CALENDAR_VERSION" | tr -d '[:space:]')"
+    else
+        echo "The $RSTUDIO_ROOT_DIR/version/CALENDAR_VERSION file does not exist. A build version could not be generated" >&2
+        exit 1
+    fi
+}
+
 if [[ $DEBUG = false ]]; then
     EXTRA_CP_ARGS=--quiet
 fi
 
-MAJOR_VERSION="$(date -u '+%Y-%m')"
-VERSION="${MAJOR_VERSION}.${PATCH}"
+VERSION="$(calver).${PATCH}$(buildType)"
 
 # get historical open source patch versions from AWS; this file is a CSV that
 # contains each open source commit and the patch version associated with it
-aws s3 cp s3://rstudio-ide-build/version/$FLOWER/oss-patch.csv /tmp/oss-patch.csv $EXTRA_CP_ARGS
+aws s3 cp s3://rstudio-ide-build/version/$(flower)/oss-patch.csv /tmp/oss-patch.csv $EXTRA_CP_ARGS
 
-if [[ -e "upstream/VERSION" ]]; then
+if [[ -e "$RSTUDIO_ROOT_DIR/upstream/VERSION" ]]; then
     # only one upstream commit (RStudio Pro, which is downstream)
     PRO=true
-    COMMITS=$(cat upstream/VERSION)
+    COMMITS=$(cat "$RSTUDIO_ROOT_DIR/upstream/VERSION")
 else
     # no upstream commit; retrieve the most recent 100 commits in this repo and
     # format as a bash array (we need to work backwards until we find one in
@@ -116,7 +148,7 @@ fi
 # for pro, we need to determine the version suffix as well
 if [[ $PRO = true ]]; then
     SUFFIX=0
-    aws s3 cp s3://rstudio-ide-build/version/$FLOWER/pro-suffix.csv /tmp/pro-suffix.csv --quiet
+    aws s3 cp s3://rstudio-ide-build/version/$(flower)/pro-suffix.csv /tmp/pro-suffix.csv --quiet
     while read PRO_SUFFIX; do
         ENTRY=(${PRO_SUFFIX//,/ })
         ENTRY_BUILD_NO=${ENTRY[0]}
@@ -133,9 +165,9 @@ fi
 case "$ACTION" in
     get)
     if [[ $OPEN_SOURCE = true ]]; then
-        echo "$VERSION.$BUILD_NO"
+        echo "$VERSION+$BUILD_NO"
     elif [[ $PRO = true ]]; then
-        echo "$VERSION.$BUILD_NO-$SUFFIX"
+        echo "$VERSION+$BUILD_NO.pro$SUFFIX"
     fi
     ;;
     
@@ -148,15 +180,15 @@ case "$ACTION" in
 
         # don't bump open source version if HEAD is already versioned
         if [ "$BUILD_NO_INDEX" == "0" ]; then
-            log "Not bumping version (HEAD is at $VERSION.$BUILD_NO)"
-            echo "$VERSION.$BUILD_NO"
+            log "Not bumping version (HEAD is at $VERSION+$BUILD_NO)"
+            echo "$VERSION+$BUILD_NO"
             exit 0
         fi
 
         # increment to highest observed patch release
         BUILD_NO=$(($MAX_BUILD_NO+1))
 
-        OSS_VERSION="$VERSION.$BUILD_NO"
+        OSS_VERSION="$VERSION+$BUILD_NO"
 
         log "Creating new patch release $OSS_VERSION"
 
@@ -174,7 +206,7 @@ case "$ACTION" in
             echo "Push updated patch history to S3 and git"
         else
             # upload to s3
-            aws s3 cp /tmp/oss-updated.csv s3://rstudio-ide-build/version/$FLOWER/oss-patch.csv --quiet
+            aws s3 cp /tmp/oss-updated.csv s3://rstudio-ide-build/version/$(flower)/oss-patch.csv --quiet
 
             # tag the release on git (TODO: need Jenkins creds to do this)
             # git tag "v$OSS_VERSION"
@@ -189,7 +221,7 @@ case "$ACTION" in
         # increment to highest observed suffix
         SUFFIX=$(($SUFFIX+1))
 
-        PRO_VERSION="$VERSION.$BUILD_NO-$SUFFIX"
+        PRO_VERSION="$VERSION+$BUILD_NO.pro$SUFFIX"
 
         log "Creating new Pro patch release $PRO_VERSION"
         
@@ -202,7 +234,7 @@ case "$ACTION" in
         if [[ $DEBUG = true ]]; then
             echo "Push updated suffix to S3 and git"
         else
-            aws s3 cp /tmp/pro-updated.csv s3://rstudio-ide-build/version/$FLOWER/pro-suffix.csv $EXTRA_CP_ARGS
+            aws s3 cp /tmp/pro-updated.csv s3://rstudio-ide-build/version/$(flower)/pro-suffix.csv $EXTRA_CP_ARGS
 
             # tag the release on git (TODO: need Jenkins creds to do this)
             # git tag "v$PRO_VERSION-pro"

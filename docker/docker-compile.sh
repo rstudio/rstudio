@@ -99,17 +99,17 @@ else
 fi
 
 if [ -n "$VERSION" ]; then
-    SPLIT=(${VERSION//\./ })
-    PATCH="${SPLIT[2]}"
-    # determine major and minor versions
-    ENV="RSTUDIO_VERSION_MAJOR=${SPLIT[0]} RSTUDIO_VERSION_MINOR=${SPLIT[1]}"
+    SPLIT=(${VERSION//[-+]/ })
+    FIRST_HALF=(${SPLIT[0]//\./ })
 
-    # supply suffix if embedded in patch
-    if [[ $PATCH == *"-"* ]]; then
-        PATCH=(${PATCH//-/ })
-        ENV="$ENV RSTUDIO_VERSION_PATCH=${PATCH[0]} RSTUDIO_VERSION_SUFFIX=${PATCH[1]}"
+    # determine major and minor versions
+    ENV="RSTUDIO_VERSION_MAJOR=${FIRST_HALF[0]} RSTUDIO_VERSION_MINOR=${FIRST_HALF[1]} RSTUDIO_VERSION_PATCH=${FIRST_HALF[2]}"
+
+    # supply suffix
+    if [[ ${#SPLIT[@]} -gt 2 ]]; then
+        ENV="$ENV RSTUDIO_VERSION_SUFFIX=-${SPLIT[1]}+${SPLIT[2]}"
     else
-        ENV="$ENV RSTUDIO_VERSION_PATCH=$PATCH"
+        ENV="$ENV RSTUDIO_VERSION_SUFFIX=+${SPLIT[1]}"
     fi
 fi
 

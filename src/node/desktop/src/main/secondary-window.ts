@@ -14,7 +14,7 @@
  *
  */
 
-import { WebContents } from 'electron';
+import { BrowserWindow, WebContents } from 'electron';
 import { DesktopBrowserWindow } from './desktop-browser-window';
 
 export class SecondaryWindow extends DesktopBrowserWindow {
@@ -24,8 +24,16 @@ export class SecondaryWindow extends DesktopBrowserWindow {
     baseUrl?: string,
     parent?: DesktopBrowserWindow,
     opener?: WebContents,
-    allowExternalNavigate = false
+    allowExternalNavigate = false,
+    existingWindow?: BrowserWindow
   ) {
-    super(showToolbar, true, name, baseUrl, parent, opener, allowExternalNavigate);
+    super(showToolbar, true, name, baseUrl, parent, opener,
+      allowExternalNavigate, undefined, existingWindow);
+
+    this.on(DesktopBrowserWindow.CLOSE_WINDOW_SHORTCUT, this.onCloseWindowShortcut.bind(this));
+  }
+
+  onCloseWindowShortcut(): void {
+    this.window.close();
   }
 }

@@ -78,16 +78,19 @@ export function getDesktopBridge() {
           if (result.canceled as boolean) {
             callback('');
           } else {
+            if (defaultExtension.length !== 0) {
 
-            // Add default extension, if it's missing
-            const fp = new FilePath(result.filePath);
-            if ((fp.getExtension().length == 0) ||
-               (forceDefaultExtension &&
-               (fp.getExtension() !== defaultExtension))) {
-              callback(fp.getStem() + defaultExtension);
-            } else {
-              callback(result.filePath);
+              // Add default extension, if it's missing
+              const fp = new FilePath(result.filePath);
+              if ((fp.getExtension().length == 0) ||
+                (forceDefaultExtension &&
+                (fp.getExtension() !== defaultExtension))) {
+                callback(fp.getStem() + defaultExtension);
+                return;
+              } 
             }
+
+            callback(result.filePath);
           }
         })
         .catch(error => reportIpcError('getSaveFileName', error));
@@ -307,24 +310,6 @@ export function getDesktopBridge() {
         .invoke('desktop_show_message_box', type, caption, message, buttons, defaultButton, cancelButton)
         .then(result => callback(result.response))
         .catch(error => reportIpcError('showMessageBox', error));
-    },
-
-    promptForText: (title: string,
-      caption: string,
-      defaultValue: string,
-      type: number,
-      rememberPasswordPrompt: boolean,
-      rememberByDefault: boolean,
-      selectionStart: number,
-      selectionLength: number,
-      okButtonCaption: string,
-      callback: VoidCallback<string>) => {
-      ipcRenderer
-        .invoke('desktop_prompt_for_text', title, caption, defaultValue, type,
-          rememberPasswordPrompt, rememberByDefault,
-          selectionStart, selectionLength, okButtonCaption)
-        .then(text => callback(text))
-        .catch(error => reportIpcError('promptForText', error));
     },
 
     bringMainFrameToFront: () => {

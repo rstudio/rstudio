@@ -128,7 +128,7 @@ function findBuildRoot(): string {
   for (let dir = process.cwd(); dir !== path.dirname(dir); dir = path.dirname(dir))
   {
     // check for release file
-    const releaseFile = path.join(dir, 'RELEASE');
+    const releaseFile = path.join(dir, 'version', 'RELEASE');
     if (existsSync(releaseFile)) {
       return findBuildRootImpl(dir);
     }
@@ -346,6 +346,7 @@ export function raiseAndActivateWindow(window: BrowserWindow): void {
   if (window.isMinimized()) {
     window.restore();
   }
+  window.moveTop();
   window.focus();
 }
 
@@ -354,4 +355,39 @@ export function getDpiZoomScaling(): number {
   // scales in most scenarios, we no longer need to detect and
   // apply a custom scale -- but more testing is warranted
   return 1.0;
+}
+
+/**
+ * Determine if given host is considered safe to load in an IDE window.
+ */
+export function isSafeHost(host: string): boolean {
+  const safeHosts = [
+    '.youtube.com',
+    '.vimeo.com',
+    '.c9.ms',
+    '.google.com'
+  ];
+
+  for (const safeHost of safeHosts) {
+    if (host.endsWith(safeHost)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+export function initializeLang(): void {
+  if (process.platform === 'darwin') {
+    // TODO: port full language detection, see initializeLang() in DesktopUtilsMac.mm
+
+    let lang = getenv('LANG');
+
+    // None of the above worked. Just hard code it.
+    if (!lang) {
+      lang = 'en_US.UTF-8';
+    }
+
+    setenv('LANG', lang);
+    setenv('LC_CTYPE', lang);
+  }
 }

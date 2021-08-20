@@ -17,7 +17,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-empty-function */
 
-import { ipcMain, dialog, BrowserWindow, webFrameMain, shell } from 'electron';
+import { ipcMain, dialog, BrowserWindow, webFrameMain, shell, screen } from 'electron';
 import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions } from 'electron/main';
 
 import EventEmitter from 'events';
@@ -31,6 +31,8 @@ import { GwtWindow } from './gwt-window';
 import { openMinimalWindow } from './minimal-window';
 import { appState } from './app-state';
 import { filterFromQFileDialogFilter, resolveAliasedPath } from './utils';
+import { userHomePath } from '../core/user';
+import { activateWindow } from './window-utils';
 
 export enum PendingQuit {
   PendingQuitNone,
@@ -96,9 +98,12 @@ export class GwtCallback extends EventEmitter {
       dir: string, defaultExtension: string, forceDefaultExtension: boolean,
       focusOwner: boolean
     ) => {
+
+      const resolvedDir = FilePath.resolveAliasedPathSync(dir, userHomePath()).toString();
+
       const saveDialogOptions: SaveDialogOptions = {
         title: caption,
-        defaultPath: dir,
+        defaultPath: resolvedDir,
         buttonLabel: label
       };
 
@@ -193,11 +198,22 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.handle('desktop_get_cursor_position', () => {
-      GwtCallback.unimpl('desktop_get_cursor_position');
-      return {x: 20, y: 20};
+      const cursorPos = screen.getCursorScreenPoint();
+      return {x: cursorPos.x, y: cursorPos.y};
     });
 
     ipcMain.handle('desktop_does_window_exist_at_cursor_position', () => {
+      const cursorPos = screen.getCursorScreenPoint();
+      const windows = BrowserWindow.getAllWindows();
+      for (const window of windows) {
+        if (window.isVisible()) {
+          const windowPos = window.getBounds();
+          if ((cursorPos.x >= windowPos.x && cursorPos.x <= (windowPos.x + windowPos.width)) &&
+            (cursorPos.y >= windowPos.y && cursorPos.y <= (windowPos.y + windowPos.height))) {
+            return true;
+          }
+        }
+      }
       return false;
     });
 
@@ -262,11 +278,14 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_activate_minimal_window', (event, name: string) => {
-      GwtCallback.unimpl('desktop_activate_minimal_window');
+      // we can only activate named windows
+      if (name && name !== '_blank') {
+        activateWindow(name);
+      }
     });
 
     ipcMain.on('desktop_activate_satellite_window', (event, name: string) => {
-      console.log(`activate_satellite_window ${name}`);
+      activateWindow(name);
     });
 
     ipcMain.handle('desktop_prepare_for_satellite_window', (event, name: string, x: number,
@@ -337,13 +356,6 @@ export class GwtCallback extends EventEmitter {
       } else {
         return dialog.showMessageBox(openDialogOptions);
       }
-    });
-
-    ipcMain.handle('desktop_prompt_for_text', (event, title, caption, defaultValue, type, 
-      rememberPasswordPrompt, rememberByDefault,
-      selectionStart, selectionLength, okButtonCaption) => {
-      GwtCallback.unimpl('desktop_prompt_for_text');
-      return ''; 
     });
 
     ipcMain.on('desktop_bring_main_frame_to_front', () => {

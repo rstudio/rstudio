@@ -8,7 +8,10 @@
     "baseUrl": ".",
     "paths": {
       "*": ["node_modules/*"]
-    }
+    },
+    "lib": [
+      "DOM",
+    ],
   },
   "include": [
     "src/**/*",

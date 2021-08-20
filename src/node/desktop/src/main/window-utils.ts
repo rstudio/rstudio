@@ -13,18 +13,17 @@
  *
  */
 
-import { WebContents } from 'electron';
-import { logger } from '../core/logger';
+import { BrowserWindow, WebContents } from 'electron';
 import { appState } from './app-state';
 import { PendingSatelliteWindow, PendingSecondaryWindow } from './pending-window';
 import { SatelliteWindow } from './satellite-window';
 import { SecondaryWindow } from './secondary-window';
-import { getDpiZoomScaling } from './utils';
+import { getDpiZoomScaling, raiseAndActivateWindow } from './utils';
 
-export function createSatelliteWindow(
-  webContents: WebContents,
+export function configureSatelliteWindow(
   pendingSatellite: PendingSatelliteWindow,
-  details: Electron.HandlerDetails): void {
+  newWindow: BrowserWindow,
+  owner: WebContents): void {
 
   // get width and height, and adjust for high DPI
   const dpiZoomScaling = getDpiZoomScaling();
@@ -33,8 +32,7 @@ export function createSatelliteWindow(
   const x = pendingSatellite.screenX;
   const y = pendingSatellite.screenY;
 
-  // create and size
-  const window = new SatelliteWindow(pendingSatellite.mainWindow, pendingSatellite.name, webContents);
+  const window = new SatelliteWindow(pendingSatellite.mainWindow, pendingSatellite.name, owner, newWindow);
   window.window.setSize(width, height);
 
   if (x >= 0 && y >= 0) {
@@ -68,20 +66,12 @@ export function createSatelliteWindow(
   if (pendingSatellite.name) {
     appState().windowTracker.addWindow(pendingSatellite.name, window);
   }
-
-  window.window.loadURL(details.url)
-    .then(() => {
-      window.window.show();
-    })
-    .catch((reason) => {
-      logger().logErrorMessage(reason);
-    });
 }
 
-export function createSecondaryWindow(
-  webContents: WebContents,
+export function configureSecondaryWindow(
   pendingSecondary: PendingSecondaryWindow,
-  details: Electron.HandlerDetails,
+  newWindow: BrowserWindow,
+  owner: WebContents,
   baseUrl?: string): void {
 
   const window = new SecondaryWindow(
@@ -89,8 +79,9 @@ export function createSecondaryWindow(
     pendingSecondary.name,
     baseUrl,
     undefined,
-    webContents,
-    pendingSecondary.allowExternalNavigate);
+    owner,
+    pendingSecondary.allowExternalNavigate,
+    newWindow);
 
   // TODO
   // allow for Ctrl + W to close window (NOTE: Ctrl means Meta on macOS)
@@ -104,12 +95,14 @@ export function createSecondaryWindow(
   if (pendingSecondary.name) {
     appState().windowTracker.addWindow(pendingSecondary.name, window);
   }
+}
 
-  window.window.loadURL(details.url)
-    .then(() => {
-      window.window.show();
-    })
-    .catch((reason) => {
-      logger().logErrorMessage(reason);
-    });
+export function activateWindow(name: string): void {
+  const allWindows = BrowserWindow.getAllWindows();
+  for (const win of allWindows) {
+    if (win.webContents.mainFrame.name === name) {
+      raiseAndActivateWindow(win);
+      return;
+    }
+  } 
 }
