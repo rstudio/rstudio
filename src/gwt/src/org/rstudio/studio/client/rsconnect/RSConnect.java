@@ -392,6 +392,13 @@ public class RSConnect implements SessionInitEvent.Handler,
             publishAsStatic(input);
          }
       }
+      else if (input.isQuarto() && input.isShiny())
+      {
+         RSConnectActionEvent deployEvent = 
+            RSConnectActionEvent.DeployAppEvent(
+             event.getPath(),  RSConnect.CONTENT_TYPE_DOCUMENT, event.getFromPrevious());
+         publishAsCode(deployEvent, null, true);
+      }
       else if (input.isWebsiteContentType() ||
                (input.getContentType() == CONTENT_TYPE_DOCUMENT && input.isWebsiteRmd()))
       {
