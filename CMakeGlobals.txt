@@ -193,7 +193,7 @@ if(NOT DEFINED RSTUDIO_VERIFY_R_VERSION)
    endif()
 endif()
 
-set(PANDOC_VERSION "2.14.0.3" CACHE INTERNAL "Pandoc version")
+set(PANDOC_VERSION "2.14.2" CACHE INTERNAL "Pandoc version")
 
 # install freedesktop integration files if we are installing into /usr
 if(NOT DEFINED RSTUDIO_INSTALL_FREEDESKTOP)
