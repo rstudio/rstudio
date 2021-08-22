@@ -60,13 +60,17 @@ cmake -G "Ninja" ^
       ..\..\.. || goto :error
 cmake --build . --config %CMAKE_BUILD_TYPE% -- %MAKEFLAGS% || goto :error
 
-move "%PKG_TEMP_DIR%\*.exe" "%PACKAGE_DIR%\%BUILD_DIR%"
-move "%PKG_TEMP_DIR%\*.zip" "%PACKAGE_DIR%\%BUILD_DIR%"
-
 cd ..
 
 REM perform 32-bit build and install it into the 64-bit tree
 call make-install-win32.bat "%PACKAGE_DIR%\%BUILD_DIR%\src\cpp\session" %1 || goto :error
+
+echo "Before moving files in %PKG_TEMP_DIR%:"
+dir "%PKG_TEMP_DIR%"
+move "%PKG_TEMP_DIR%\*.exe" "%PACKAGE_DIR%\%BUILD_DIR%"
+move "%PKG_TEMP_DIR%\*.zip" "%PACKAGE_DIR%\%BUILD_DIR%"
+echo "After moving files to %PACKAGE_DIR%\%BUILD_DIR%:"
+dir "%PACKAGE_DIR%\%BUILD_DIR%"
 
 REM create packages
 cd "%BUILD_DIR%"
