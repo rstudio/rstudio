@@ -56,7 +56,7 @@ for (const apiKey of apiKeys) {
 }
 
 // Info used by the "session failed to load" error page (error.html)
-let pageData: Map<string, string> | undefined = undefined;
+let errorPageData: Map<string, string> | undefined = undefined;
 
 /**
  * Receive extra page data from main process. Only set when about to load
@@ -64,7 +64,7 @@ let pageData: Map<string, string> | undefined = undefined;
  * fails to load correctly.
  */
 ipcRenderer.on('set-error-details', (event, data: Map<string, string>) => {
-  pageData = data;
+  errorPageData = data;
 });
 
 interface ErrorCallbacks {
@@ -73,7 +73,7 @@ interface ErrorCallbacks {
 
 const errorCallbacks: ErrorCallbacks = {
   getVar: (varName) => {
-    if (!pageData) {
+    if (!errorPageData) {
       return 'ERROR DATA NOT AVAILABLE';
     }
     if (!varName) {
@@ -91,7 +91,7 @@ const errorCallbacks: ErrorCallbacks = {
         prefix = '\'';
         varName = varName.slice(1);
       }
-      const result = pageData.get(varName);
+      const result = errorPageData.get(varName);
       if (result) {
         if (prefix === '!') {
           return result;

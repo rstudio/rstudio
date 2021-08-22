@@ -426,13 +426,8 @@ export class MainWindow extends GwtWindow {
       return;
     }
 
-    if (!this.baseUrl) {
-      logger().logErrorMessage('Unexpected undefined baseUrl in main window');
-      return;
-    }
-
     const vars = new Map<string, string>();
-    vars.set('url', this.baseUrl);
+    vars.set('retry_url', this.baseUrl ?? '');
     this.window.webContents.send('set-error-details', vars);
     this.loadUrl(CONNECT_WINDOW_WEBPACK_ENTRY).catch(logger().logError);
   }
