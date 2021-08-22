@@ -90,7 +90,7 @@ export class DesktopBrowserWindow extends EventEmitter {
       });
 
       // Uncomment to have all windows show dev tools by default
-      this.window.webContents.openDevTools();
+      // this.window.webContents.openDevTools();
 
     }
 

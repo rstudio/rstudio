@@ -23,7 +23,7 @@ try {
   fs.rmSync(getPackageOutputDir(), { recursive: true, force: true });
   console.log(section(`Cleaning ${getForgeOutputDir()}`));
   fs.rmSync(getForgeOutputDir(), { recursive: true, force: true });
-   process.exit(0);
+  process.exit(0);
 } catch (error) {
   console.error(error);
   process.exit(1);
