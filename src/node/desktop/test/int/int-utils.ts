@@ -14,7 +14,6 @@
  */
 import { ElectronApplication, _electron } from 'playwright';
 import path from 'path';
-import fs from 'fs';
 import util from 'util';
 
 interface LaunchArgs {
@@ -25,43 +24,16 @@ interface LaunchArgs {
 
 // Find path to RStudio entrypoint
 function getLaunchArgs(extraArgs?: string[]): LaunchArgs {
-  // use the package build if it exists
-  let isPackaged = true;
   const result: LaunchArgs = {};
-  let entryPoint = '';
-  let executable = '';
-  let cwd = '';
+
+  if (extraArgs) {
+    result.args = extraArgs;
+  }
 
   if (process.platform === 'darwin') {
-    entryPoint = path.join(__dirname, '../../package/RStudio-darwin-x64/RStudio.app/Contents/Resources/app/dist/src/main/main.js');
-    cwd = path.join(__dirname, '../../package/RStudio-darwin-x64/');
+    result.executablePath = path.join(__dirname, '../../out/RStudio-darwin-x64/RStudio.app/Contents/MacOS/RStudio');
   } else {
     // TODO -- other platforms!
-  }
-
-  if (!fs.existsSync(entryPoint)) {
-    // otherwise try the dev build
-    isPackaged = false;
-    entryPoint = path.join(__dirname, '../../.webpack/main/index.js');
-    cwd = path.join(__dirname, '../..');
-  }
-
-  result.args = [entryPoint];
-  if (extraArgs) {
-    result.args = result.args.concat(extraArgs);
-  }
-  result.cwd = cwd;
-
-  if (isPackaged) {
-    if (process.platform === 'darwin') {
-      executable = path.join(__dirname, '../../package/RStudio-darwin-x64/RStudio.app/Contents/MacOS/RStudio');
-    } else {
-      // TODO -- other platforms!
-    }
-  }
-
-  if (executable) {
-    result.executablePath = executable;
   }
 
   return result;
