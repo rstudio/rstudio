@@ -65,18 +65,18 @@ cd ..
 REM perform 32-bit build and install it into the 64-bit tree
 call make-install-win32.bat "%PACKAGE_DIR%\%BUILD_DIR%\src\cpp\session" %1 || goto :error
 
+REM create packages
+cd "%BUILD_DIR%"
+if not "%1" == "quick" cpack -C "%CMAKE_BUILD_TYPE%" -G NSIS
+if "%CMAKE_BUILD_TYPE%" == "RelWithDebInfo" cpack -C "%CMAKE_BUILD_TYPE%" -G ZIP
+cd ..
+
 echo "Before moving files in %PKG_TEMP_DIR%:"
 dir "%PKG_TEMP_DIR%"
 move "%PKG_TEMP_DIR%\*.exe" "%PACKAGE_DIR%\%BUILD_DIR%"
 move "%PKG_TEMP_DIR%\*.zip" "%PACKAGE_DIR%\%BUILD_DIR%"
 echo "After moving files to %PACKAGE_DIR%\%BUILD_DIR%:"
 dir "%PACKAGE_DIR%\%BUILD_DIR%"
-
-REM create packages
-cd "%BUILD_DIR%"
-if not "%1" == "quick" cpack -C "%CMAKE_BUILD_TYPE%" -G NSIS
-if "%CMAKE_BUILD_TYPE%" == "RelWithDebInfo" cpack -C "%CMAKE_BUILD_TYPE%" -G ZIP
-cd ..
 
 REM emit NSIS error output if present
 if exist "%PKG_TEMP_DIR%\_CPack_Packages\win64\NSIS\NSISOutput.log" type "%PKG_TEMP_DIR%\_CPack_Packages\win64\NSIS\NSISOutput.log"
