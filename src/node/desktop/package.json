@@ -74,6 +74,14 @@
                   "html": "./src/ui/connect/connect.html",
                   "js": "./src/ui/connect/connect.ts",
                   "name": "connect_window"
+                },
+                {
+                  "html": "./src/ui/widgets/choose-r/ui.html",
+                  "js": "./src/ui/widgets/choose-r/load.ts",
+                  "preload": {
+                    "js": "./src/ui/widgets/choose-r/preload.ts"
+                  },
+                  "name": "choose_r"
                 }
               ]
             }

@@ -14,17 +14,19 @@
  */
 
 import { dialog, ipcMain } from 'electron';
-import path from 'path';
 import { findDefault32Bit, findDefault64Bit } from '../../main/detect-r';
 import { logger } from '../../core/logger';
 import { ModalDialog } from '../modal-dialog';
+
+declare const CHOOSE_R_WEBPACK_ENTRY: string;
+declare const CHOOSE_R_PRELOAD_WEBPACK_ENTRY: string;
 
 export class ChooseRModalWindow extends ModalDialog<string | null> {
 
   private rInstalls: string[];
 
   constructor(rInstalls: string[]) {
-    super(path.join(__dirname, 'choose-r'));
+    super(CHOOSE_R_WEBPACK_ENTRY, CHOOSE_R_PRELOAD_WEBPACK_ENTRY);
     this.rInstalls = rInstalls;
   }
 
