@@ -310,7 +310,7 @@ export class SessionLauncher {
     vars.set('log_file', logFile);
     vars.set('log_content', logContent);
 
-    this.mainWindow?.window.webContents.send('set-error-details', vars);
+    appState().gwtCallback?.setErrorPageInfo(vars);
     this.mainWindow?.loadUrl(ERROR_WINDOW_WEBPACK_ENTRY)
       .then(() => {
         if (this.mainWindow) {

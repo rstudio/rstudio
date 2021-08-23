@@ -106,7 +106,9 @@
 
             var replaceVar = function(varName) {
                 try {
-                    document.getElementById(varName).innerHTML = window.desktopErrorInfo.getVar(varName);
+                    window.desktop.getStartupErrorInfo(varName, (result) => {
+                        document.getElementById(varName).innerHTML = result;
+                    });
                 } catch (err) {
                     console.error(err);
                 }
@@ -114,12 +116,13 @@
 
             var replaceReportVar = function(report, varName) {
                 try {
-                    report.value = report.value.replace('#' + varName + '#', window.desktopErrorInfo.getVar('!' + varName));
+                    window.desktop.getStartupErrorInfo('!' + varName, (result) => {
+                        report.value = report.value.replace('#' + varName + '#', result);
+                    });
                 } catch (err) {
                     console.error(err);
                 }
             };
-
 
             // When the page loads, inject the local user agent into the version information
             window.addEventListener("load", function() {
