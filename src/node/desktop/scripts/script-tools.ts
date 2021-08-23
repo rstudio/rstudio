@@ -24,10 +24,6 @@ export function getBuildOutputDir(): string {
 }
 
 export function getPackageOutputDir(): string {
-  return path.join(getProjectRootDir(), 'package');
-}
-
-export function getForgeOutputDir(): string {
   return path.join(getProjectRootDir(), 'out');
 }
 

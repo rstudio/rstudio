@@ -14,15 +14,13 @@
  */
 
 import fs from 'fs';
-import { getBuildOutputDir, getPackageOutputDir, getForgeOutputDir, section, info, warn } from './script-tools';
+import { getBuildOutputDir, getPackageOutputDir, section, info, warn } from './script-tools';
 
 try {
   console.log(section(`Cleaning ${getBuildOutputDir()}`));
   fs.rmSync(getBuildOutputDir(), { recursive: true, force: true });
   console.log(section(`Cleaning ${getPackageOutputDir()}`));
   fs.rmSync(getPackageOutputDir(), { recursive: true, force: true });
-  console.log(section(`Cleaning ${getForgeOutputDir()}`));
-  fs.rmSync(getForgeOutputDir(), { recursive: true, force: true });
   process.exit(0);
 } catch (error) {
   console.error(error);
