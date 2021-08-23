@@ -151,7 +151,7 @@
             "source": false
         },
         "packrat": {
-            "version": "0.4.8-1",
+            "version": "0.7.0",
             "location": "cran",
             "source": true
         },
