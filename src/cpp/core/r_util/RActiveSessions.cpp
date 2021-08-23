@@ -26,6 +26,8 @@
 
 #include <core/r_util/RSessionContext.hpp>
 
+#include <shared_core/SafeConvert.hpp>
+
 #define kSessionDirPrefix "session-"
 
 using namespace boost::placeholders;
@@ -34,41 +36,31 @@ namespace rstudio {
 namespace core {
 namespace r_util {
 
-namespace {
-
-
-} // anonymous namespace
-
-
-void ActiveSession::writeProperty(const std::string& name,
-                                 const std::string& value) const
+Error LegacySessionStorage::readProperty(const std::string& name, std::string* pValue)
 {
-   FilePath propertyFile = propertiesPath_.completeChildPath(name);
-   Error error = core::writeStringToFile(propertyFile, value);
-   if (error)
-      LOG_ERROR(error);
-}
+   const std::string& legacyName = getLegacyName(name);
 
-std::string ActiveSession::readProperty(const std::string& name) const
-{
    using namespace rstudio::core;
-   FilePath readPath = propertiesPath_.completeChildPath(name);
+   *pValue = "";
+
+   FilePath readPath = location_.completeChildPath(name);
    if (readPath.exists())
    {
-      std::string value;
-      Error error = core::readStringFromFile(readPath, &value);
+      Error error = core::readStringFromFile(readPath, pValue);
       if (error)
-      {
-         LOG_ERROR(error);
-         return std::string();
-      }
-      return boost::algorithm::trim_copy(value);
+         return error;
+
+      boost::algorithm::trim(*pValue);
    }
-   else
-   {
-      return std::string();
-   }
+
+   return Success();
 }
+
+Error LegacySessionStorage::writeProperty(const std::string& name, const std::string& value)
+{
+   FilePath propertyFile = location_.completeChildPath(name);
+   return core::writeStringToFile(propertyFile, value);
+} 
 
 Error ActiveSessions::create(const std::string& project,
                              const std::string& workingDir,
@@ -92,7 +84,7 @@ Error ActiveSessions::create(const std::string& project,
       return error;
 
    // write initial settings
-   ActiveSession activeSession(id, dir);
+   ActiveSession activeSession(storage_, id, dir);
    activeSession.setProject(project);
    activeSession.setWorkingDir(workingDir);
    activeSession.setInitial(initial);
@@ -181,17 +173,19 @@ boost::shared_ptr<ActiveSession> ActiveSessions::get(const std::string& id) cons
 {
    FilePath scratchPath = storagePath_.completeChildPath(kSessionDirPrefix + id);
    if (scratchPath.exists())
-      return boost::shared_ptr<ActiveSession>(new ActiveSession(id,
+      return boost::shared_ptr<ActiveSession>(new ActiveSession(storage_,
+                                                                id,
                                                                 scratchPath));
    else
-      return emptySession(id);
+      return emptySession(storage_, id);
 }
 
 
 boost::shared_ptr<ActiveSession> ActiveSessions::emptySession(
-      const std::string& id)
+   std::shared_ptr<IActiveSessionStorage> storage, 
+   const std::string& id)
 {
-   return boost::shared_ptr<ActiveSession>(new ActiveSession(id));
+   return boost::shared_ptr<ActiveSession>(new ActiveSession(storage, id));
 }
 
 std::vector<boost::shared_ptr<GlobalActiveSession> >
@@ -243,14 +237,15 @@ void notifyCountChanged(boost::shared_ptr<ActiveSessions> pSessions,
 
 } // anonymous namespace
 
-void trackActiveSessionCount(const FilePath& rootStoragePath,
+void trackActiveSessionCount(std::shared_ptr<IActiveSessionStorage> storage,
+                             const FilePath& rootStoragePath,
                              const FilePath& userHomePath,
                              bool projectSharingEnabled,
                              boost::function<void(size_t)> onCountChanged)
 {
 
    boost::shared_ptr<ActiveSessions> pSessions(
-                                          new ActiveSessions(rootStoragePath));
+                                          new ActiveSessions(storage, rootStoragePath));
 
    core::system::file_monitor::Callbacks cb;
    cb.onRegistered = boost::bind(notifyCountChanged,
