@@ -25,7 +25,7 @@ import EventEmitter from 'events';
 import { logger } from '../core/logger';
 import { FilePath } from '../core/file-path';
 import { isCentOS } from '../core/system';
-import { htmlEscape, jsLiteralEscape } from '../core/string-utils';
+import { resolveTemplateVar } from '../core/template-filter';
 
 import { MainWindow } from './main-window';
 import { GwtWindow } from './gwt-window';
@@ -673,33 +673,7 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.handle('desktop_startup_error_info', async (event, varName: string) => {
-      if (!varName) {
-        return 'NO PROPERTY PROVIDED';
-      }
-      if (varName) {
-      // If varName starts with ! then raw value is returned; if it starts with ' then
-      // JS literal escaping will be used; no prefix then the returned value will be
-      // HTML escaped
-        let prefix = '';
-        if (varName.startsWith('!')) {
-          prefix = '!';
-          varName = varName.slice(1);
-        } else if (varName.startsWith('\'')) {
-          prefix = '\'';
-          varName = varName.slice(1);
-        }
-        const result = this.errorPageData.get(varName);
-        if (result) {
-          if (prefix === '!') {
-            return result;
-          } else if (prefix === '\'') {
-            return jsLiteralEscape(result);
-          } else {
-            return htmlEscape(result, true);
-          }
-        }
-      }
-      return 'MISSING VALUE';
+      return resolveTemplateVar(varName, this.errorPageData);
     });
   }
 
