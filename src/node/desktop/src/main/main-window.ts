@@ -428,7 +428,7 @@ export class MainWindow extends GwtWindow {
 
     const vars = new Map<string, string>();
     vars.set('retry_url', this.baseUrl ?? '');
-    this.window.webContents.send('set-error-details', vars);
+    appState().gwtCallback?.setErrorPageInfo(vars);
     this.loadUrl(CONNECT_WINDOW_WEBPACK_ENTRY).catch(logger().logError);
   }
 

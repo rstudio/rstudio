@@ -25,6 +25,7 @@ import EventEmitter from 'events';
 import { logger } from '../core/logger';
 import { FilePath } from '../core/file-path';
 import { isCentOS } from '../core/system';
+import { htmlEscape, jsLiteralEscape } from '../core/string-utils';
 
 import { MainWindow } from './main-window';
 import { GwtWindow } from './gwt-window';
@@ -51,6 +52,9 @@ export class GwtCallback extends EventEmitter {
 
   pendingQuit: number = PendingQuit.PendingQuitNone;
   private owners = new Set<GwtWindow>();
+
+  // Info used by the "session failed to load" error page (error.html)
+  errorPageData = new Map<string, string>();
 
   constructor(public mainWindow: MainWindow, public isRemoteDesktop: boolean) {
     super();
@@ -667,6 +671,36 @@ export class GwtCallback extends EventEmitter {
       GwtCallback.unimpl('desktop_get_proxy_port_number');
       return -1;
     });
+
+    ipcMain.handle('desktop_startup_error_info', async (event, varName: string) => {
+      if (!varName) {
+        return 'NO PROPERTY PROVIDED';
+      }
+      if (varName) {
+      // If varName starts with ! then raw value is returned; if it starts with ' then
+      // JS literal escaping will be used; no prefix then the returned value will be
+      // HTML escaped
+        let prefix = '';
+        if (varName.startsWith('!')) {
+          prefix = '!';
+          varName = varName.slice(1);
+        } else if (varName.startsWith('\'')) {
+          prefix = '\'';
+          varName = varName.slice(1);
+        }
+        const result = this.errorPageData.get(varName);
+        if (result) {
+          if (prefix === '!') {
+            return result;
+          } else if (prefix === '\'') {
+            return jsLiteralEscape(result);
+          } else {
+            return htmlEscape(result, true);
+          }
+        }
+      }
+      return 'MISSING VALUE';
+    });
   }
 
   setRemoteDesktop(isRemoteDesktop: boolean): void {
@@ -752,5 +786,9 @@ export class GwtCallback extends EventEmitter {
     const err = new Error(`Received callback ${message} from unknown window`);
     logger().logError(err);
     throw err;
+  }
+
+  setErrorPageInfo(info: Map<string, string>): void {
+    this.errorPageData = info;
   }
 }
