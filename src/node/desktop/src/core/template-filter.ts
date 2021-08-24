@@ -13,9 +13,6 @@
  *
  */
 
-import fs from 'fs';
-
-import { FilePath } from './file-path';
 import { htmlEscape, jsLiteralEscape } from './string-utils';
 
 // Add variables to templates using #foo# syntax. All values will be
@@ -24,24 +21,32 @@ import { htmlEscape, jsLiteralEscape } from './string-utils';
 // literal escaping will be used instead of HTML escaping (i.e. the value
 // will be prepared for inserting into a JavaScript string literal).
 
-export function renderTemplateFile(templateFile: FilePath, vars: Map<string, string>): string {
-  const contents = fs.readFileSync(templateFile.getAbsolutePath(), 'utf-8');
-  return renderTemplateString(contents, vars);
-}
-
-export function renderTemplateString(template: string, vars: Map<string, string>): string {
-  return template.replace(/#([!\\']?)([A-Za-z0-9_-]+)#/g, (match, prefix, varName) => {
-    const substitute = vars.get(varName);
-    if (substitute) {
-      if (prefix === '!') {
-        return substitute;
-      } else if (prefix === '\'') {
-        return jsLiteralEscape(substitute);
-      } else {
-        return htmlEscape(substitute, true);
-      }
-    } else {
-      return 'MISSING VALUE';
+export function resolveTemplateVar(varName: string, vars: Map<string, string>): string {
+  if (!varName) {
+    return 'NO PROPERTY PROVIDED';
+  }
+  if (varName) {
+    // If varName starts with ! then raw value is returned; if it starts with ' then
+    // JS literal escaping will be used; no prefix then the returned value will be
+    // HTML escaped
+    let prefix = '';
+    if (varName.startsWith('!')) {
+      prefix = '!';
+      varName = varName.slice(1);
+    } else if (varName.startsWith('\'')) {
+      prefix = '\'';
+      varName = varName.slice(1);
     }
-  });
-}
+    const result = vars.get(varName);
+    if (result) {
+      if (prefix === '!') {
+        return result;
+      } else if (prefix === '\'') {
+        return jsLiteralEscape(result);
+      } else {
+        return htmlEscape(result, true);
+      }
+    }
+  }
+  return 'MISSING VALUE';
+} 

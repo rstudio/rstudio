@@ -83,6 +83,15 @@
                 // Fill in the user agent
                 report.value = report.value.replace("user_agent", navigator.userAgent);
 
+                // Replace all variables
+                replaceReportVar(report, 'version');
+                replaceReportVar(report, 'launch_failed');
+                replaceReportVar(report, 'exit_code');
+                replaceReportVar(report, 'process_error');
+                replaceReportVar(report, 'process_output');
+                replaceReportVar(report, 'log_file');
+                replaceReportVar(report, 'log_content');
+
                 // Select all the text in the report
                 report.focus();
                 report.select();
@@ -95,14 +104,41 @@
                 }
             };
 
+            var replaceVar = function(varName) {
+                try {
+                    window.desktop.getStartupErrorInfo(varName, (result) => {
+                        document.getElementById(varName).innerHTML = result;
+                    });
+                } catch (err) {
+                    console.error(err);
+                }
+            };
+
+            var replaceReportVar = function(report, varName) {
+                try {
+                    window.desktop.getStartupErrorInfo('!' + varName, (result) => {
+                        report.value = report.value.replace('#' + varName + '#', result);
+                    });
+                } catch (err) {
+                    console.error(err);
+                }
+            };
+
             // When the page loads, inject the local user agent into the version information
             window.addEventListener("load", function() {
+                replaceVar('version');
                 var ver = document.getElementById("version");
                 if (ver) {
                     ver.innerText += "\n\n" + navigator.userAgent;
                 }
-
+                replaceVar('launch_failed');
+                replaceVar('exit_code');
+                replaceVar('process_error');
+                replaceVar('process_output');
+                replaceVar('log_file');
+                replaceVar('log_content');
             });
+
         </script>
     </head>
     <body>
@@ -134,20 +170,20 @@
             The R session failed to start.
         </p>
         <h2>RStudio Version</h2>
-        <code id="version">#version#</code>
+        <code id="version"></code>
         <h2>Error Message</h2>
-        <code>#launch_failed#</code>
+        <code id="launch_failed"></code>
         <h2>Process Output</h2>
         <p>
-          The R session process exited with code <strong>#exit_code#</strong>.
+          The R session process exited with code <strong><span id="exit_code"></span></strong>.
         </p>
         <h3>Errors</h3>
-        <code class="error">#process_error#</code>
+        <code id="process_error" class="error"></code>
         <h3>Output</h3>
-        <code class="output">#process_output#</code>
+        <code id="process_output" class="output"></code>
         <h2>Recent Log</h2>
-        <em>#log_file#</em>
-        <code>#log_content#</code>
+        <em id="log_file"></em>
+        <code id="log_content"></code>
         <h2>Next Steps</h2>
         <p>
             R can fail to start up for many reasons. The following may help you resolve the problem:

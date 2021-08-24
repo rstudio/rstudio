@@ -25,7 +25,7 @@ describe('Startup With Failing RSession', () => {
 
   beforeEach(async () => {
     // tell the rsession to immediately terminate with exit code of 1
-    electronApp = await launch(['--session-exit-code=1']);
+    electronApp = await launch(['--session-exit']);
     window = await electronApp.firstWindow();
     window.setDefaultTimeout(5000);
   });

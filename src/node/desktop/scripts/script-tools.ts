@@ -24,7 +24,7 @@ export function getBuildOutputDir(): string {
 }
 
 export function getPackageOutputDir(): string {
-  return path.join(getProjectRootDir(), 'package');
+  return path.join(getProjectRootDir(), 'out');
 }
 
 export function section(message: string): string {

@@ -130,7 +130,10 @@ temp/
 # electron-packager output
 package/
 
-# plantuml exports
-out/docs/
+# Webpack
+.webpack/
+
+# Electron-Forge
+out/
 
 # End of https://www.toptal.com/developers/gitignore/api/node

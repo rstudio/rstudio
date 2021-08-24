@@ -25,6 +25,7 @@ import EventEmitter from 'events';
 import { logger } from '../core/logger';
 import { FilePath } from '../core/file-path';
 import { isCentOS } from '../core/system';
+import { resolveTemplateVar } from '../core/template-filter';
 
 import { MainWindow } from './main-window';
 import { GwtWindow } from './gwt-window';
@@ -51,6 +52,9 @@ export class GwtCallback extends EventEmitter {
 
   pendingQuit: number = PendingQuit.PendingQuitNone;
   private owners = new Set<GwtWindow>();
+
+  // Info used by the "session failed to load" error page (error.html)
+  errorPageData = new Map<string, string>();
 
   constructor(public mainWindow: MainWindow, public isRemoteDesktop: boolean) {
     super();
@@ -667,6 +671,10 @@ export class GwtCallback extends EventEmitter {
       GwtCallback.unimpl('desktop_get_proxy_port_number');
       return -1;
     });
+
+    ipcMain.handle('desktop_startup_error_info', async (event, varName: string) => {
+      return resolveTemplateVar(varName, this.errorPageData);
+    });
   }
 
   setRemoteDesktop(isRemoteDesktop: boolean): void {
@@ -752,5 +760,9 @@ export class GwtCallback extends EventEmitter {
     const err = new Error(`Received callback ${message} from unknown window`);
     logger().logError(err);
     throw err;
+  }
+
+  setErrorPageInfo(info: Map<string, string>): void {
+    this.errorPageData = info;
   }
 }
