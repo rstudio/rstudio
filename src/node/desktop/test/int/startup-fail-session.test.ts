@@ -17,7 +17,7 @@ import { describe } from 'mocha';
 import { assert } from 'chai';
 import { ElectronApplication, Page } from 'playwright';
 
-import { launch, setTimeoutPromise } from './int-utils';
+import { launch } from './int-utils';
 
 describe('Startup With Failing RSession', () => {
   let electronApp: ElectronApplication;
@@ -36,7 +36,6 @@ describe('Startup With Failing RSession', () => {
 
   it('Shows launch failure page if session fails to launch', async function () {
     // check that page is loaded with H1 containing "Error Starting R"
-    await setTimeoutPromise(2000); // TODO: yuck, find a better way to do this
     const h1 = await window.innerText('h1');
     assert.equal(h1, 'Error Starting R');
   });
