@@ -32,6 +32,8 @@ function getLaunchArgs(extraArgs?: string[]): LaunchArgs {
 
   if (process.platform === 'darwin') {
     result.executablePath = path.join(__dirname, '../../out/RStudio-darwin-x64/RStudio.app/Contents/MacOS/RStudio');
+  } else if (process.platform === 'win32') {
+    result.executablePath = path.join(__dirname, '../../out/RStudio-win32-x64/RStudio.exe');
   } else {
     // TODO -- other platforms!
   }
