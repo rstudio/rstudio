@@ -19,7 +19,7 @@ import { ElectronApplication, Page } from 'playwright';
 
 import { launch, setTimeoutPromise } from './int-utils';
 
-describe('WIP Startup With Failing RSession', () => {
+describe('Startup With Failing RSession', () => {
   let electronApp: ElectronApplication;
   let window: Page;
 
