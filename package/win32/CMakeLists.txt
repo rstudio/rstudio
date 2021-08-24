@@ -26,6 +26,10 @@ set(CPACK_PACKAGE_INSTALL_REGISTRY_KEY "RStudio")
 set(CPACK_PACKAGE_EXECUTABLES "rstudio" "RStudio")
 set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY 0)
 
+# To keep pathnames from getting too long, use a temp directory
+file(MAKE_DIRECTORY  "c:\\\\temp\\\\ide-build")
+set(CPACK_PACKAGE_DIRECTORY "c:\\\\temp\\\\ide-build")
+
 # registry keys
 set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
    WriteRegStr HKLM 'Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\App Paths\\\\rstudio.exe' '' '$INSTDIR\\\\bin\\\\rstudio.exe'

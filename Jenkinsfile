@@ -76,9 +76,6 @@ def s3_upload(type, flavor, os, arch) {
   ).trim().toLowerCase()
 
   def buildDest =  "s3://rstudio-ide-build/${flavor}/${os}/${arch}/"
-  if (buildType != "daily") {
-    buildDest =  "s3://rstudio-ide-build-internal/${buildType}/${flavor}/${os}/${arch}/"
-  }
 
   // copy installer to s3
   sh "aws s3 cp ${buildFolder}/${packageFile} ${buildDest}"
