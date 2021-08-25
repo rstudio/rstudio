@@ -840,6 +840,13 @@
    gsub("([\\-\\[\\]\\{\\}\\(\\)\\*\\+\\?\\.\\,\\\\\\^\\$\\|\\#\\s])", "\\\\\\1", regex, perl = TRUE)
 })
 
+# Escapes HTML entities in a character vector (text); "attribute" is a boolean indicating whether
+# additional characters specific to HTML attributes should be escaped (newlines).
+.rs.addFunction("htmlEscape", function(text, attribute = FALSE)
+{
+   .Call("rs_htmlEscape", text, attribute, PACKAGE = "(embedding)")
+})
+
 .rs.addFunction("objectsOnSearchPath", function(token = "",
                                                 caseInsensitive = FALSE,
                                                 excludeGlobalEnv = FALSE)
