@@ -22,7 +22,9 @@
   },
   "config": {
     "forge": {
-      "packagerConfig": {},
+      "packagerConfig": {
+        "icon": "./resources/icons/RStudio"
+      },
       "makers": [
         {
           "name": "@electron-forge/maker-squirrel",
