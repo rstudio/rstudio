@@ -171,6 +171,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
    if (options.programMode() == kSessionProgramModeServer && 
        !core::http::validateCSRFHeaders(ptrConnection->request()))
    {
+      LOG_WARNING_MESSAGE("Client init request to " + ptrConnection->request().uri() + 
+            " has missing or mismatched " kCSRFTokenCookie " cookie or " kCSRFTokenHeader " header");
       ptrConnection->sendJsonRpcError(Error(json::errc::Unauthorized, ERROR_LOCATION));
       return;
    }
