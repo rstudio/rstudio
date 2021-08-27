@@ -250,6 +250,31 @@ public abstract class
 
    // Files
    public abstract AppCommand newFolder();
+   // ---
+   public abstract AppCommand touchSourceDoc();
+   public abstract AppCommand touchRNotebook();
+   public abstract AppCommand touchTextDoc();
+   public abstract AppCommand touchCDoc();
+   public abstract AppCommand touchCppDoc();
+   public abstract AppCommand touchHeaderDoc();
+   public abstract AppCommand touchMarkdownDoc();
+   public abstract AppCommand touchPythonDoc();
+   public abstract AppCommand touchShellDoc();
+   public abstract AppCommand touchStanDoc();
+   public abstract AppCommand touchHtmlDoc();
+   public abstract AppCommand touchJavaScriptDoc();
+   public abstract AppCommand touchCssDoc();
+   public abstract AppCommand touchD3Doc();
+   public abstract AppCommand touchSweaveDoc();
+   public abstract AppCommand touchRMarkdownDoc();
+   public abstract AppCommand touchQuartoDoc();
+   public abstract AppCommand touchRShinyApp();
+   public abstract AppCommand touchRHTMLDoc();
+   public abstract AppCommand touchRDocumentationDoc();
+   public abstract AppCommand touchRPresentationDoc();
+   public abstract AppCommand touchSqlDoc();
+   public abstract AppCommand touchRPlumberDoc();
+   // ---
    public abstract AppCommand uploadFile();
    public abstract AppCommand copyFile();
    public abstract AppCommand copyFileTo();

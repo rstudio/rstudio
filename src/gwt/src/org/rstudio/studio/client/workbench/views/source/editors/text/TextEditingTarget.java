@@ -2968,9 +2968,17 @@ public class TextEditingTarget implements
             });
    }
 
-   private void saveNewFile(final String suggestedPath,
+   public void saveNewFile(final String suggestedPath,
                             String encodingOverride,
                             final Command executeOnSuccess)
+   {
+      saveNewFile(suggestedPath, encodingOverride, executeOnSuccess, null);
+   }
+
+   public void saveNewFile(final String suggestedPath,
+                            String encodingOverride,
+                            final Command executeOnSuccess,
+                            final Command executeOnCancel)
    {
       withEncodingRequiredUnlessAscii(
             encodingOverride,
@@ -2980,7 +2988,8 @@ public class TextEditingTarget implements
                {
                   saveNewFileWithEncoding(suggestedPath,
                                           encoding,
-                                          executeOnSuccess);
+                                          executeOnSuccess,
+                                          executeOnCancel);
                }
             });
    }
@@ -3070,6 +3079,14 @@ public class TextEditingTarget implements
                                         final String encoding,
                                         final Command executeOnSuccess)
    {
+      saveNewFileWithEncoding(suggestedPath, encoding, executeOnSuccess, null);
+   }
+
+   private void saveNewFileWithEncoding(String suggestedPath,
+                                        final String encoding,
+                                        final Command executeOnSuccess,
+                                        final Command executeOnCancel)
+   {
       view_.ensureVisible();
 
       FileSystemItem fsi;
@@ -3093,6 +3110,10 @@ public class TextEditingTarget implements
                   if (saveItem == null)
                   {
                      isSaving_ = false;
+                     if (executeOnCancel != null)
+                     {
+                        executeOnCancel.execute();
+                     }
                      return;
                   }
 

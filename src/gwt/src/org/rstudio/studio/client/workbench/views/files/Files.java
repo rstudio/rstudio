@@ -14,14 +14,18 @@
  */
 package org.rstudio.studio.client.workbench.views.files;
 
+import java.util.ArrayList;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.ColumnSortInfo;
 import org.rstudio.core.client.command.CommandBinder;
@@ -29,17 +33,26 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
-import org.rstudio.core.client.widget.*;
+import org.rstudio.core.client.widget.Operation;
+import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ProgressOperation;
+import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.fileexport.FileExport;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.filetypes.events.OpenFileInBrowserEvent;
 import org.rstudio.studio.client.common.filetypes.events.RenameSourceFileEvent;
 import org.rstudio.studio.client.events.RStudioApiRequestEvent;
-import org.rstudio.studio.client.server.*;
+import org.rstudio.studio.client.server.ServerDataSource;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -54,15 +67,19 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportPresenter;
-import org.rstudio.studio.client.workbench.views.files.events.*;
+import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
+import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
+import org.rstudio.studio.client.workbench.views.files.events.ShowFolderEvent;
 import org.rstudio.studio.client.workbench.views.files.model.DirectoryListing;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.files.model.PendingFileUpload;
+import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
+import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.events.SourcePathChangedEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.CreateNewTerminalEvent;
-
-import java.util.ArrayList;
 
 public class Files
       extends BasePresenter
@@ -153,6 +170,8 @@ public class Files
                 FileTypeRegistry fileTypeRegistry,
                 ConsoleDispatcher consoleDispatcher,
                 WorkbenchContext workbenchContext,
+                DependencyManager dependencyManager,
+                SourceColumnManager columnManager,
                 DataImportPresenter dataImportPresenter)
    {
       super(view);
@@ -171,6 +190,8 @@ public class Files
       pFilesUpload_ = pFilesUpload;
       pFileExport_ = pFileExport;
       pPrefs_ = pPrefs;
+      dependencyManager_ = dependencyManager;
+      columnManager_ = columnManager;
       dataImportPresenter_ = dataImportPresenter;
 
       ((Binder)GWT.create(Binder.class)).bind(commands, this);
@@ -381,6 +402,124 @@ public class Files
                         new VoidServerRequestCallback(progress));
                }
             });
+   }
+   
+   private CommandWithArg<EditingTarget> onNewSourceDoc(TextFileType fileType) 
+   {
+      return new CommandWithArg<EditingTarget>()
+      {
+         @Override
+         public void execute(EditingTarget target)
+         {
+            if (target instanceof TextEditingTarget)
+            {
+               ((TextEditingTarget) target).saveNewFile(
+                  getDefaultFileName(fileType).getPath(),
+                  "",
+                  null,
+                  new Command() {
+                     @Override
+                     public void execute()
+                     {
+                        // clean up the new tab
+                        // ...this is a 100% hack
+                        CloseEvent.fire(target, null);
+                     }
+                  });
+            }
+         }
+      };
+   }
+
+   @Handler
+   void onTouchSourceDoc() {
+      touchFile(FileTypeRegistry.R);
+   }
+
+   @Handler
+   void onTouchRNotebook() {
+
+      final TextFileType fileType = FileTypeRegistry.RMARKDOWN;
+
+      dependencyManager_.withRMarkdown("R Notebook",
+         "Create R Notebook", new CommandWithArg<Boolean>()
+         {
+            @Override
+            public void execute(Boolean succeeded)
+            {
+               if (!succeeded)
+               {
+                  globalDisplay_.showErrorMessage("Notebook Creation Failed",
+                        "One or more packages required for R Notebook " +
+                        "creation were not installed.");
+                  return;
+               }
+
+               columnManager_.newSourceDocWithTemplate(
+                     fileType,
+                     getDefaultFileName(fileType).getName(),
+                     "notebook.Rmd",
+                     Position.create(3, 0),
+                     onNewSourceDoc(fileType)
+                     );
+            }
+         });
+   }
+
+   @Handler
+   void onTouchRMarkdownDoc() {
+      SessionInfo sessionInfo = session_.getSessionInfo();
+      boolean useRMarkdownV2 = sessionInfo.getRMarkdownPackageAvailable();
+
+      if (useRMarkdownV2)
+         columnManager_.newRMarkdownV2Doc();
+      else
+         columnManager_.newRMarkdownV1Doc();
+   }
+
+   @Handler
+   void onTouchQuartoDoc() {
+      touchFile(FileTypeRegistry.QUARTO);
+   }
+
+   @Handler
+   void onTouchTextDoc() {
+      touchFile(FileTypeRegistry.TEXT);
+   }
+
+   @Handler
+   void onTouchCppDoc() {
+      touchFile(FileTypeRegistry.CPP);
+   }
+
+   @Handler
+   void onTouchPythonDoc() {
+      touchFile(FileTypeRegistry.PYTHON);
+   }
+
+   @Handler
+   void onTouchSqlDoc() {
+      touchFile(FileTypeRegistry.SQL);
+   }
+
+   @Handler
+   void onTouchStanDoc() {
+      touchFile(FileTypeRegistry.STAN);
+   }
+
+   @Handler
+   void onTouchD3Doc() {
+      touchFile(FileTypeRegistry.JS);
+   }
+
+   @Handler
+   void onTouchSweaveDoc() {
+      touchFile(FileTypeRegistry.SWEAVE);
+   }
+
+   @Handler
+   void onTouchRHTMLDoc() {
+      touchFile(FileTypeRegistry.RHTML);
    }
 
    void onUploadFile()
@@ -777,13 +916,87 @@ public class Files
       }
    }
 
+   // generate a filename based on the file type and currentPath_ variable
+   private FileSystemItem getDefaultFileName(TextFileType fileType) 
+   {
+      String defaultExt = fileType.getDefaultExtension();
+
+      // extension has a '.' at the start, so remove that in the default name
+      String newFileDefaultName = "Untitled" + defaultExt.toUpperCase().substring(1) + defaultExt;
+      String path = currentPath_.completePath(newFileDefaultName);
+      FileSystemItem newTempFile = FileSystemItem.createFile(path);
+      return newTempFile;
+   }
+   
+   private void touchFile(final TextFileType fileType)
+   {
+      // prepare default information about the new file
+      FileSystemItem newTempFile = getDefaultFileName(fileType);
+      String formattedExt = fileType.getDefaultExtension().toUpperCase().substring(1);
+      
+      // guard for reentrancy
+      if (inputPending_)
+         return;
+      
+      inputPending_ = true;
+
+      // prompt for new file name then execute the operation
+      globalDisplay_.promptForText("Create a New " + formattedExt + " File in Current Directory",
+                                   "Please enter the new file name:",
+                                   newTempFile.getName(),
+                                   0,
+                                   newTempFile.getStem().length(),
+                                   null,
+                                   new ProgressOperationWithInput<String>()
+      {
+         public void execute(String input, final ProgressIndicator progress)
+         {
+            // no longer waiting for user to input
+            inputPending_ = false;
+
+            progress.onProgress("Creating file...");
+
+            String path = currentPath_.completePath(input);
+            final FileSystemItem newFile = FileSystemItem.createFile(path);
+
+            // execute on the server
+            server_.touchFile(newFile, new VoidServerRequestCallback(progress)
+            {
+               @Override
+               protected void onSuccess()
+               {
+                  // if we were successful, refresh list and open in source editor
+                  onRefreshFiles();
+                  fileTypeRegistry_.openFile(newFile);
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  String errCaption = "File Creation Failed";
+                  String errMsg =
+                     "A new " + fileType.getDefaultExtension() + " file was unable to be created." +
+                     "The server failed with the following error: \n\n" +
+                     error.getMessage();
+                  globalDisplay_.showErrorMessage(errCaption, errMsg);
+               }
+            });
+         }
+      },
+      () ->
+      {
+         // clear pending input flag when operation is canceled
+         inputPending_ = false;
+      });
+   }
+
    private void renameFile(FileSystemItem file)
    {
       // guard for reentrancy
-      if (renaming_)
+      if (inputPending_)
          return;
       
-      renaming_ = true;
+      inputPending_ = true;
 
       // prompt for new file name then execute the rename
       globalDisplay_.promptForText("Rename File",
@@ -796,8 +1009,8 @@ public class Files
         public void execute(String input,
                             final ProgressIndicator progress)
         {
-            // no longer waiting fo user to rename
-            renaming_ = false;
+            // no longer waiting for user to rename
+            inputPending_ = false;
 
             progress.onProgress("Renaming file...");
 
@@ -810,7 +1023,7 @@ public class Files
             // clear selection
             view_.selectNone();
 
-            // pre-emptively rename in the UI then fallback to refreshing
+            // preemptively rename in the UI then fallback to refreshing
             // the view if there is an error
             view_.renameFile(file, target);
 
@@ -841,8 +1054,13 @@ public class Files
       () ->
       {
          // clear rename flag when operation is canceled
-         renaming_ = false;
+         inputPending_ = false;
       });
+   }
+   
+   public FileSystemItem getCurrentPath()
+   {
+      return currentPath_;
    }
 
    // data source for listing files on the current path which can
@@ -882,5 +1100,8 @@ public class Files
    private static final String KEY_SORT_ORDER = "sortOrder";
    private JsArray<ColumnSortInfo> columnSortOrder_ = null;
    private DataImportPresenter dataImportPresenter_;
-   private boolean renaming_ = false;
+   private boolean inputPending_ = false;
+
+   private final DependencyManager dependencyManager_;
+   private final SourceColumnManager columnManager_;
 }

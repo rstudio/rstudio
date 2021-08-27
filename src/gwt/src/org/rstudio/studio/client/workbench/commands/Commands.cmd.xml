@@ -2334,6 +2334,126 @@ well as menu structures (for main menu and popup menus).
         context="files"
         desc="Create a new folder"/>
 
+   <cmd id="touchSourceDoc"
+        label="Create a New R script in current directory"
+        buttonLabel=""
+        menuLabel="_R Script"
+        desc="Create a new R script in current directory"/>
+
+   <cmd id="touchRNotebook"
+        menuLabel="R _Notebook"
+        desc="Create a new R Markdown notebook in current directory" />
+
+   <cmd id="touchTextDoc"
+        menuLabel="_Text File"
+        desc="Create a new text file in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchCDoc"
+        menuLabel="_C File"
+        desc="Create a new C file in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchCppDoc"
+        menuLabel="_C++ File"
+        desc="Create a new C++ file in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchHeaderDoc"
+        menuLabel="_Header File"
+        desc="Create a new header file in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchMarkdownDoc"
+        menuLabel="_Markdown File"
+        desc="Create a new Markdown document in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchPythonDoc"
+        menuLabel="_Python Script"
+        desc="Create a new Python script in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchShellDoc"
+        menuLabel="_Shell Script"
+        desc="Create a new shell script in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchStanDoc"
+        menuLabel="_Stan File"
+        desc="Create a new Stan program in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchHtmlDoc"
+        menuLabel="_HTML File"
+        desc="Create a new HTML file in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchJavaScriptDoc"
+        menuLabel="_JavaScript File"
+        desc="Create a new JavaScript file in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchCssDoc"
+        menuLabel="_CSS File"
+        desc="Create a new CSS file in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchD3Doc"
+        menuLabel="_D3 Script"
+        desc="Create a new D3 script in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchRPlumberDoc"
+        menuLabel="Plumber _API..."
+        desc="Create a new Plumber API in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchSweaveDoc"
+        menuLabel="R _Sweave"
+        desc="Create a new R Sweave document in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchRMarkdownDoc"
+        menuLabel="R _Markdown..."
+        desc="Create a new R Markdown document in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchQuartoDoc"
+        menuLabel="_Quarto Doc..."
+        desc="Create a new Quarto document in current directory"
+        rebindable="false"/>
+        
+   <cmd id="serveQuartoSite"
+        menuLabel="_Serve Site"
+        desc="Run development server for Quarto site in current directory"
+        rebindable="false"/>      
+
+   <cmd id="touchRShinyApp"
+        menuLabel="Shiny _Web App..."
+        desc="Create a new Shiny web application in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchRHTMLDoc"
+        menuLabel="R _HTML"
+        desc="Create a new R HTML document in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchRPresentationDoc"
+        menuLabel="R _Presentation"
+        desc="Create a new R presentation in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchRDocumentationDoc"
+        menuLabel="R Doc_umentation..."
+        desc="Create a new Rd documentation file in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchSqlDoc"
+        menuLabel="SQ_L Script"
+        desc="Create a new SQL script in current directory"
+        rebindable="false"/>
+
    <cmd id="uploadFile"
         label="Upload Files..."
         menuLabel="Upload Files..."

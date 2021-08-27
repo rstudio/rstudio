@@ -74,6 +74,10 @@ public interface FilesServerOperations
    void renameFile(FileSystemItem file,
                    FileSystemItem targetFile,
                    ServerRequestCallback<Void> serverRequestCallback);
+   
+   // touch file
+   void touchFile(FileSystemItem newFile,
+                  ServerRequestCallback<Void> requestCallback);
 
 
    String getFileUrl(FileSystemItem file);
