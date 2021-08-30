@@ -14,6 +14,7 @@
  */
 
 import { getenv } from './environment';
+import { safeError } from './err';
 import { Logger, LogLevel, logLevel, showDiagnosticsOutput } from './logger';
 
 /**
@@ -21,9 +22,10 @@ import { Logger, LogLevel, logLevel, showDiagnosticsOutput } from './logger';
  */
 export class ConsoleLogger implements Logger {
 
-  logError(err: Error): void {
+  logError(err: unknown): void {
     if (logLevel() >= LogLevel.ERR) {
-      console.log(err);
+      const safeErr = safeError(err);
+      console.log(safeErr);
     }
   }
 

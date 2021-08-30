@@ -18,7 +18,7 @@ import fsPromises from 'fs/promises';
 
 import { logger } from './logger';
 import path from 'path';
-import { Err, success } from './err';
+import { Err, success, safeError } from './err';
 import { userHomePath } from './user';
 import { err, Expected, ok } from './expected';
 
@@ -109,7 +109,7 @@ export class FilePath {
     const p = filePath;
     try {
       return fs.existsSync(p);
-    } catch (err) {
+    } catch (err: unknown) {
       logger().logError(err);
       return false;
     }
@@ -141,7 +141,7 @@ export class FilePath {
     try {
       await fsPromises.access(p);
       return true;
-    } catch (err) {
+    } catch (err: unknown) {
       logger().logError(err);
       return false;
     }
@@ -199,7 +199,7 @@ export class FilePath {
   static safeCurrentPathSync(revertToPath: FilePath): FilePath {
     try {
       return new FilePath(process.cwd());
-    } catch (err) {
+    } catch (err: unknown) {
       logger().logError(err);
     }
 
@@ -226,7 +226,7 @@ export class FilePath {
   static async safeCurrentPath(revertToPath: FilePath): Promise<FilePath> {
     try {
       return new FilePath(process.cwd());
-    } catch (err) {
+    } catch (err: unknown) {
       logger().logError(err);
     }
 
@@ -325,8 +325,9 @@ export class FilePath {
       }
 
       return ok(childPath);
-    } catch (e) {
-      return err(new FilePathError(e.message, this.getAbsolutePath()));
+    } catch (e: unknown) {
+      const error = safeError(e);
+      return err(new FilePathError(error.message, this.getAbsolutePath()));
     }
   }
 
@@ -337,7 +338,7 @@ export class FilePath {
   completePath(stem: string): FilePath {
     try {
       return new FilePath(normalizeSeparators(path.resolve(this.path, stem)));
-    } catch (err) {
+    } catch (err: unknown) {
       logger().logError(err);
       return this;
     }
@@ -371,8 +372,8 @@ export class FilePath {
 
     try {
       fs.mkdirSync(targetDirectory, { recursive: true });
-    } catch (err) {
-      return err;
+    } catch (err: unknown) {
+      return safeError(err);
     }
     return success();
   }
@@ -390,8 +391,8 @@ export class FilePath {
 
     try {
       await fsPromises.mkdir(targetDirectory, { recursive: true });
-    } catch (err) {
-      return err;
+    } catch (err: unknown) {
+      return safeError(err);
     }
     return success();
   }
@@ -431,7 +432,7 @@ export class FilePath {
   existsSync(): boolean {
     try {
       return !this.isEmpty() && fs.existsSync(this.path);
-    } catch (err) {
+    } catch (err: unknown) {
       logger().logError(err);
       return false;
     }
@@ -461,7 +462,7 @@ export class FilePath {
       }
       await fsPromises.access(this.path);
       return true;
-    } catch (err) {
+    } catch (err: unknown) {
       logger().logError(err);
       return false;
     }
@@ -492,7 +493,7 @@ export class FilePath {
 
     try {
       return normalizeSeparators(fs.realpathSync(this.path));
-    } catch (err) {
+    } catch (err: unknown) {
       logger().logError(err);
     }
     return '';
@@ -510,7 +511,7 @@ export class FilePath {
 
     try {
       return await fsPromises.realpath(this.path);
-    } catch (err) {
+    } catch (err: unknown) {
       logger().logError(err);
     }
 
@@ -533,8 +534,8 @@ export class FilePath {
       for (const file of files) {
         filePaths.push(this.completeChildPath(file));
       }
-    } catch (err) {
-      return err;
+    } catch (err: unknown) {
+      return safeError(err);
     } finally {
       if (dir) {
         dir.closeSync();
@@ -788,8 +789,8 @@ export class FilePath {
     try {
       process.chdir(this.path);
       return success();
-    } catch (err) {
-      return err;
+    } catch (err: unknown) {
+      return safeError(err);
     }
   }
 
@@ -829,8 +830,8 @@ export class FilePath {
   async remove(): Promise<Err> {
     try {
       await fsPromises.rm(this.path, { recursive: true });
-    } catch (err) {
-      return err;
+    } catch (err: unknown) {
+      return safeError(err);
     }
     return success();
   }
@@ -841,8 +842,8 @@ export class FilePath {
   async removeIfExists(): Promise<Err> {
     try {
       await fsPromises.rm(this.path, { force: true, recursive: true });
-    } catch (err) {
-      return err;
+    } catch (err: unknown) {
+      return safeError(err);
     }
     return success();
   }
@@ -853,8 +854,8 @@ export class FilePath {
   removeSync(): Err {
     try {
       fs.rmSync(this.path, { recursive: true });
-    } catch (err) {
-      return err;
+    } catch (err: unknown) {
+      return safeError(err);
     }
     return success();
   }
@@ -865,8 +866,8 @@ export class FilePath {
   removeIfExistsSync(): Err {
     try {
       fs.rmSync(this.path, { force: true, recursive: true });
-    } catch (err) {
-      return err;
+    } catch (err: unknown) {
+      return safeError(err);
     }
     return success();
   }
