@@ -1,4 +1,5 @@
 .eslintrc.js
+forge.config.js
 scripts/
 webpack.main.config.js
 webpack.plugins.js
