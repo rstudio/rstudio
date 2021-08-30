@@ -16,7 +16,7 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 
-import { Err, isFailure, isSuccessful, success } from '../../../src/core/err';
+import { Err, isFailure, isSuccessful, safeError, success } from '../../../src/core/err';
 
 function beSuccessful(): Err {
   return success();
@@ -24,6 +24,12 @@ function beSuccessful(): Err {
 
 function beUnsuccessful(): Err {
   return new Error('Some error');
+}
+
+class MyError extends Error {
+  constructor(message: string) {
+    super(message);
+  }
 }
 
 describe('Err', () => {
@@ -50,5 +56,30 @@ describe('Err', () => {
   it('isFailure returns false for success', () => {
     const result: Err = success();
     assert.isFalse(isFailure(result));
+  });
+  it('safeError returns unknown error Error for unsupported error type', () => {
+    const bogusErr = 3; // pretend somebody did "throw 3;"
+    const err = safeError(bogusErr);
+    assert.deepEqual(err.message, 'unknown error');
+  });
+  it('safeError returns received Error', () => {
+    const realErr = new Error('hello');
+    const err = safeError(realErr);
+    assert.deepEqual(err.message, 'hello');
+  });
+  it('safeError returns received Error subclass', () => {
+    const realErr = new MyError('hello world');
+    const err = safeError(realErr);
+    assert.deepEqual(err.message, 'hello world');
+  });
+  it('safeError returns unknown error for null', () => {
+    const bogusErr = null;
+    const err = safeError(bogusErr);
+    assert.deepEqual(err.message, 'unknown error');
+  });
+  it('safeError returns unknown error for undefined', () => {
+    const bogusErr = undefined;
+    const err = safeError(bogusErr);
+    assert.deepEqual(err.message, 'unknown error');
   });
 });
