@@ -41,6 +41,7 @@ module.exports = {
     "@typescript-eslint/promise-function-async": ["warn"],
     "@typescript-eslint/require-array-sort-compare": ["error"],
     "@typescript-eslint/return-await": ["warn"],
+    "@typescript-eslint/no-implicit-any-catch": ["error"],
 
     "@typescript-eslint/strict-boolean-expressions": [
       "error", {

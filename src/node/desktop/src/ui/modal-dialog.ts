@@ -15,6 +15,7 @@
 
 import { BrowserWindow } from 'electron';
 import { err, Expected, ok } from '../core/expected';
+import { safeError } from '../core/err';
 
 export abstract class ModalDialog<T> extends BrowserWindow {
 
@@ -51,8 +52,8 @@ export abstract class ModalDialog<T> extends BrowserWindow {
     try {
       const result = await this.showModalImpl();
       return ok(result);
-    } catch (error) {
-      return err(error);
+    } catch (error: unknown) {
+      return err(safeError(error));
     }
 
   }

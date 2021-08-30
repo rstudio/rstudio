@@ -23,7 +23,7 @@ import { EOL } from 'os';
 import { Environment, getenv, setenv, setVars } from '../core/environment';
 import { Expected, ok, err } from '../core/expected';
 import { logger } from '../core/logger';
-import { Err, success } from '../core/err';
+import { Err, success, safeError } from '../core/err';
 import { ChooseRModalWindow } from '..//ui/widgets/choose-r';
 
 let kLdLibraryPathVariable : string;
@@ -50,8 +50,8 @@ function executeCommand(command: string): Expected<string> {
   try {
     const output = execSync(command, { encoding: 'utf-8' });
     return ok(output.trim());
-  } catch (error) {
-    return err(error);
+  } catch (error: unknown) {
+    return err(safeError(error));
   }
 
 }
@@ -99,9 +99,9 @@ export function prepareEnvironment(): Err {
 
   try {
     return prepareEnvironmentImpl();
-  } catch (error) {
+  } catch (error: unknown) {
     logger().logError(error);
-    return error;
+    return safeError(error);
   }
 
 }

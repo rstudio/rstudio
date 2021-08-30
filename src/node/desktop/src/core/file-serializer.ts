@@ -15,6 +15,7 @@
 
 import lineReader from 'line-reader';
 import { err, Expected, ok } from './expected';
+import { safeError } from './err';
 
 import { FilePath } from './file-path';
 
@@ -53,8 +54,8 @@ export async function readStringArrayFromFile(
         result.push(line);
       }
     });
-  } catch (error) {
-    return err(error);
+  } catch (error: unknown) {
+    return err(safeError(error));
   }
   return ok(result);
 }

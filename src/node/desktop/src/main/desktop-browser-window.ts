@@ -68,7 +68,7 @@ export class DesktopBrowserWindow extends EventEmitter {
       let preload: string;
       try {
         preload = MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY;
-      } catch (err) {
+      } catch (err: unknown) {
         // manually specify preload (necessary when running unit tests)
         preload = path.join(__dirname, '../renderer/preload.js');
       }
@@ -128,7 +128,7 @@ export class DesktopBrowserWindow extends EventEmitter {
       let targetUrl: URL;
       try {
         targetUrl = new URL(url);
-      } catch (err) {
+      } catch (err: unknown) {
         // malformed URL will cause exception
         logger().logError(err);
         event.preventDefault();
@@ -151,7 +151,7 @@ export class DesktopBrowserWindow extends EventEmitter {
             event.preventDefault();
             void shell.openExternal(url);
           }
-        } catch (err) {
+        } catch (err: unknown) {
           // malformed URL will cause exception
           logger().logError(err);
           event.preventDefault();
