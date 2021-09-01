@@ -175,6 +175,11 @@ pushd ..\..\src\gwt\panmirror\src\editor
 call yarn install
 popd
 
+pushd ..\..\src\node\desktop
+set PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+call yarn install
+popd
+
 
 call install-packages.cmd
 

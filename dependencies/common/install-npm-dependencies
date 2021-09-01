@@ -21,7 +21,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 section "Installing NPM"
 
 # variables that control download + installation process
-NODE_VERSION="14.17.5"
+NODE_VERSION=${RSTUDIO_NODE_VERSION}
 NODE_ROOT="node"
 NODE_SUBDIR="${NODE_ROOT}/${NODE_VERSION}"
 NODE_BASE_URL="https://nodejs.org/dist/v${NODE_VERSION}/"
@@ -101,6 +101,11 @@ fi
 PATH=${INSTALL_PATH} yarn config set ignore-engines true
 PATH=${INSTALL_PATH} yarn install
 
+popd
+
+# Electron desktop dependencies
+pushd ../../src/node/desktop
+PATH=${INSTALL_PATH} PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn install
 popd
 
 
