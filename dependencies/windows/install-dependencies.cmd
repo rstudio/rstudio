@@ -2,6 +2,8 @@
 
 setlocal
 
+call ..\tools\rstudio-tools.cmd
+
 set PATH=%CD%\tools;%PATH%
 
 set WGET_ARGS=-c --no-check-certificate
@@ -28,7 +30,7 @@ set LIBCLANG_VERSION=5.0.2
 set LIBCLANG_NAME=libclang-windows-%LIBCLANG_VERSION%
 set LIBCLANG_FILE=%LIBCLANG_NAME%.zip
 
-set NODE_VERSION=14.17.5
+set NODE_VERSION=%RSTUDIO_NODE_VERSION%
 set NODE_ROOT=node
 set NODE_SUBDIR=%NODE_ROOT%\%NODE_VERSION%
 set NODE_BASE_URL=https://nodejs.org/dist/v%NODE_VERSION%/
