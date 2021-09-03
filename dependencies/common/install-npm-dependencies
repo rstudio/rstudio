@@ -103,9 +103,3 @@ PATH=${INSTALL_PATH} yarn install
 
 popd
 
-# Electron desktop dependencies
-pushd ../../src/node/desktop
-PATH=${INSTALL_PATH} PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn install
-popd
-
-
