@@ -17,7 +17,3 @@ cmake_minimum_required(VERSION 3.4.3)
 if(RSTUDIO_DESKTOP AND (NOT RSTUDIO_SESSION_WIN32))
    add_subdirectory(desktop)
 endif()
-
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMakeOverlay.txt")
-   include(CMakeOverlay.txt)
-endif()

@@ -29,30 +29,13 @@ endif()
 if(ELECTRON_BUILD)
    message(STATUS "Configured to build ELECTRON")
 
-   if(NOT DEFINED RSTUDIO_NODE_VERSION)
-      set(RSTUDIO_NODE_VERSION "14.17.5")
-   endif()
-   if(DEFINED ENV{RSTUDIO_NODE_VERSION})
-      set(RSTUDIO_NODE_VERSION $ENV{RSTUDIO_NODE_VERSION})
-   endif()
-
-   # prefer specific node.js version installed via dependency scripts
-   find_program(NODEJS node NO_DEFAULT_PATH PATH_SUFFIXES "bin"
-      PATHS "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/../../../dependencies/common/node/${RSTUDIO_NODE_VERSION}")
-
-   if(NOT NODEJS)
-      # fall back on any available node.js
-      find_program(NODEJS NAMES node)
-   endif()
-
-   if(NODEJS)
-      message(STATUS "Using node.js: ${NODEJS}")
-   else()
-      message(FATAL_ERROR "node.js not found (required to build ELECTRON)")
-   endif()
-
-   if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMakeOverlay.txt")
-      include(CMakeOverlay.txt)
-   endif()
+   # build Electron Desktop with node.js
+   add_custom_target(electron_build ALL)
+   add_custom_command(
+      TARGET electron_build
+      POST_BUILD
+      WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+      COMMAND
+         ${NODEJS}
+         "make")
 endif()

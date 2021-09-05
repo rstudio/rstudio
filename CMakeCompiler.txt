@@ -113,3 +113,25 @@ if(WIN32)
   set(CMAKE_COLOR_MAKEFILE OFF)
 endif()
 
+if(NOT DEFINED RSTUDIO_NODE_VERSION)
+   set(RSTUDIO_NODE_VERSION "14.17.5")
+endif()
+if(DEFINED ENV{RSTUDIO_NODE_VERSION})
+   set(RSTUDIO_NODE_VERSION $ENV{RSTUDIO_NODE_VERSION})
+endif()
+
+# prefer specific node.js version installed via dependency scripts
+find_program(NODEJS node NO_DEFAULT_PATH PATH_SUFFIXES "bin"
+   PATHS "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}"
+         "${CMAKE_CURRENT_SOURCE_DIR}/dependencies/common/node/${RSTUDIO_NODE_VERSION}")
+
+if(NOT NODEJS)
+   # fall back on any available node.js
+   find_program(NODEJS NAMES node)
+endif()
+
+if(NODEJS)
+   message(STATUS "Using node.js: ${NODEJS}")
+else()
+   message(FATAL_ERROR "node.js not found (required)")
+endif()
