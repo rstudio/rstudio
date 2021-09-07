@@ -218,7 +218,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    public void previewQuarto(String url, QuartoNavigate quartoNav)
    {
       rmdPreviewParams_ = null;
-      navigate(url, quartoNav.isWebsite());
+      navigate(url, false);
       publishButton_.setManuallyHidden(false);
       if (quartoNav.isWebsite())
          publishButton_.setQuartoSitePreview();
