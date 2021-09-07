@@ -20,7 +20,7 @@ import fs from 'fs';
 import { logger } from '../core/logger';
 import { FilePath } from '../core/file-path';
 import { generateShortenedUuid, localPeer } from '../core/system';
-import { Err, success } from '../core/err';
+import { Err, safeError, success } from '../core/err';
 import { getenv, setenv, unsetenv } from '../core/environment';
 import { readStringArrayFromFile } from '../core/file-serializer';
 import { kRStudioInitialProject } from '../core/r-user-data';
@@ -151,8 +151,8 @@ export class SessionLauncher {
     // launch the process
     try {
       this.sessionProcess = this.launchSession(launchContext.argList);
-    } catch (err) {
-      return err;
+    } catch (err: unknown) {
+      return safeError(err);
     }
 
     logger().logDiagnostic( `\nR session launched, attempting to connect on port ${launchContext.port}...`);
@@ -304,7 +304,7 @@ export class SessionLauncher {
     let [logFile, logContent] = ['', ''];
     try {
       [logFile, logContent] = await this.getRecentSessionLogs();
-    } catch (error) {
+    } catch (error: unknown) {
       logger().logError(error);
     }
     vars.set('log_file', logFile);
@@ -419,8 +419,8 @@ export class SessionLauncher {
     // launch the process
     try {
       this.sessionProcess = this.launchSession(launchContext.argList);
-    } catch (err) {
-      return err;
+    } catch (err: unknown) {
+      return safeError(err);
     }
 
     // update the main window's reference to the process object
@@ -531,7 +531,7 @@ export class SessionLauncher {
     if (abendLog.existsSync()) {
       try {
         contents = fs.readFileSync(abendLog.getAbsolutePath(), 'utf8');
-      } catch (error) {
+      } catch (error: unknown) {
         logger().logError(error);
       } finally {
         abendLog.removeIfExistsSync();

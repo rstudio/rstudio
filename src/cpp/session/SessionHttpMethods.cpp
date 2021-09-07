@@ -140,6 +140,8 @@ bool parseAndValidateJsonRpcConnection(
    if (options().programMode() == kSessionProgramModeServer && 
        !core::http::validateCSRFHeaders(ptrConnection->request()))
    {
+      LOG_WARNING_MESSAGE("RPC request to '" + ptrConnection->request().uri() + "' has missing or "
+            "mismatched " kCSRFTokenCookie " cookie or " kCSRFTokenHeader " header");
       ptrConnection->sendJsonRpcError(Error(json::errc::Unauthorized, ERROR_LOCATION));
       return false;
    }

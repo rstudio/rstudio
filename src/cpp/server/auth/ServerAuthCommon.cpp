@@ -119,6 +119,7 @@ void signIn(const core::http::Request& request,
                                               pResponse);
    // add the token to the sign-in form
    variables["csrf_token"] = csrfToken;
+   variables["csrf_token_meta"] = kCSRFTokenCookie;
 
    loadLoginPage(request, pResponse, templatePath, formAction, variables);
 }

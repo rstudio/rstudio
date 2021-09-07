@@ -78,7 +78,7 @@ export class Application implements AppState {
     // attempt to remove stale lockfiles, as they can impede application startup
     try {
       removeStaleOptionsLockfile();
-    } catch (error) {
+    } catch (error: unknown) {
       logger().logError(error);
       return exitFailure();
     }

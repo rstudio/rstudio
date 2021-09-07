@@ -27,6 +27,10 @@ export function getPackageOutputDir(): string {
   return path.join(getProjectRootDir(), 'out');
 }
 
+export function getPlatformPackageOutputDir(): string {
+  return path.join(getPackageOutputDir(), `RStudio-${process.platform}-x64`);
+}
+
 export function section(message: string): string {
   return '\x1b[1m\x1b[36m==>\x1b[39m ' + message + '\x1b[0m';
 }

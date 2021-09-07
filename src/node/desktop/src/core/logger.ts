@@ -27,7 +27,7 @@ export enum LogLevel {
 }
 
 export interface Logger {
-  logError(err: Error): void;
+  logError(err: unknown): void;
   logErrorMessage(message: string): void;
   logWarning(warning: string): void;
   logInfo(message: string): void;
@@ -45,7 +45,7 @@ export interface LogOptions {
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-empty-function */
 export class NullLogger implements Logger {
-  logError(err: Error): void {
+  logError(err: unknown): void {
   }
   logErrorMessage(message: string): void {
   }
