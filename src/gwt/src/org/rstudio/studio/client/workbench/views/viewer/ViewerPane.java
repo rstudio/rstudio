@@ -363,7 +363,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
 
          viewerUrl = URIUtils.addQueryParam(viewerUrl,
                                             "host",
-                                            htmlMessageListener_.getOriginDomain());
+                                            HtmlMessageListener.getOriginDomain());
 
          frame_.setUrl(viewerUrl);
       }

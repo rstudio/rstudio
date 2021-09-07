@@ -63,6 +63,15 @@ public class HtmlMessageListener
       });
    }
 
+   public native static String getOrigin() /*-{
+     return $wnd.location.origin;
+   }-*/;
+   
+   public static String getOriginDomain()
+   {
+      return getDomainFromUrl(getOrigin());
+   }
+   
    private static String getDomainFromUrl(String url)
    {
       RegExp reg = RegExp.compile("https?://[^/]+");
@@ -75,9 +84,6 @@ public class HtmlMessageListener
       return "";
    }
 
-   private native static String getOrigin() /*-{
-     return $wnd.location.origin;
-   }-*/;
 
    public void setUrl(String url)
    {
@@ -164,10 +170,6 @@ public class HtmlMessageListener
       }, origin);
    }-*/;
 
-   public String getOriginDomain()
-   {
-      return getDomainFromUrl(getOrigin());
-   }
 
    public void allowOpenOnLoad()
    {
