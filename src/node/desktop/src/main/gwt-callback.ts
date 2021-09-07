@@ -573,7 +573,7 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_set_shiny_dialog_url', (event, url) => {
-      GwtCallback.unimpl('desktop_set_shiny_dialog_url');
+      this.getSender('desktop_set_shiny_dialog_url', event.processId, event.frameId).setShinyDialogUrl(url);
     });
 
     ipcMain.handle('desktop_get_scrolling_compensation_type', () => {

@@ -16,10 +16,12 @@
 
 import { BrowserWindow, shell } from 'electron';
 import { URL } from 'url';
+import { appState } from './app-state';
 
 export class UrlVerifier {
   
   private safeHosts: string[];
+  private safePorts: string[];
 
   constructor(
     private window: BrowserWindow,
@@ -41,6 +43,12 @@ export class UrlVerifier {
     //     http::URL url(server.url());
     //     safeHosts_.push_back(url.hostname());
     // }
+
+    this.safePorts = [
+      String(appState().port),
+      '9876',
+      '3000'
+    ];
   }
 
   public acceptNavigationRequest(origUrl: string, allowExternalNavigate: boolean): boolean {
@@ -48,7 +56,7 @@ export class UrlVerifier {
     let url: URL;
     try {
       url = new URL(origUrl);
-    } catch (err) {
+    } catch (err: unknown) {
       // malformed URL will cause exception
       return false;
     }
@@ -73,8 +81,7 @@ export class UrlVerifier {
     }// TODO get chromiumDevtoolsPort programatically?
 
     if (isLocal &&
-      ['/recompile',
-        '/rstudio'].some((element) => {return url.pathname.startsWith(element);})) {
+      this.safePorts.includes(url.port)) {
       return true;
     }
   

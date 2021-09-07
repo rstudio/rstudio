@@ -103,6 +103,8 @@ export class DesktopBrowserWindow extends EventEmitter {
         logger().logDebug('Navigation request made, but denied, for: ' + details.url);
         callback( {cancel: true} );
       }
+      // console.log(this.urlVerify.acceptNavigationRequest(details.url, allowExternalNavigate) + ': ' + details.url);
+      // callback({cancel: false});
     });
 
     // register context menu (right click) handler
@@ -135,16 +137,6 @@ export class DesktopBrowserWindow extends EventEmitter {
 
       // TODO: this is a partial implementation of DesktopWebPage.cpp::acceptNavigationRequest;
       // all the other details need to be implemented
-
-      let targetUrl: URL;
-      try {
-        targetUrl = new URL(url);
-      } catch (err: unknown) {
-        // malformed URL will cause exception
-        logger().logError(err);
-        event.preventDefault();
-        return;
-      }
 
       if (this.urlVerify.acceptNavigationRequest(url, allowExternalNavigate)) {
         return;
@@ -261,6 +253,10 @@ export class DesktopBrowserWindow extends EventEmitter {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   setViewerUrl(url: string): void {
     this.urlVerify.setViewerUrl(url);
+  }
+
+  setShinyDialogUrl(url:string): void {
+    this.urlVerify.setShinyDialogUrl(url);
   }
 
   keyPressEvent(event: Electron.Event, input: Electron.Input): void {
