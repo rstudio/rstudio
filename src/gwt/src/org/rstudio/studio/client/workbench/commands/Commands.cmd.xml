@@ -2409,6 +2409,16 @@ well as menu structures (for main menu and popup menus).
         context="files"
         rebindable="false"/>
 
+   <cmd id="openFilesInSinglePane"
+        label="Open Selected in Source Pane"
+        context="files"
+        rebindable="false"/>
+
+   <cmd id="openEachFileInColumns"
+        label="Open Each File in New Columns"
+        context="files"
+        rebindable="false"/>
+
    <cmd id="showFolder"
         label="Show Folder in New Window"
         visible="false"

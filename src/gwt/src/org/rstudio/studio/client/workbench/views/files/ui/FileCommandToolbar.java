@@ -51,6 +51,9 @@ public class FileCommandToolbar extends Toolbar
       moreMenu.addItem(commands.moveFiles().createMenuItem(false));
       moreMenu.addItem(commands.copyFilesPaneCurrentDirectory().createMenuItem(false));
       moreMenu.addSeparator();
+      moreMenu.addItem(commands.openFilesInSinglePane().createMenuItem(false));
+      moreMenu.addItem(commands.openEachFileInColumns().createMenuItem(false));
+      moreMenu.addSeparator();
       moreMenu.addItem(commands.exportFiles().createMenuItem(false));
       moreMenu.addSeparator();
       moreMenu.addItem(commands.setAsWorkingDir().createMenuItem(false));

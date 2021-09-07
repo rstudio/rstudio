@@ -31,6 +31,7 @@ import com.google.inject.name.Named;
 
 import elemental2.dom.DomGlobal;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.MathUtil;
@@ -43,6 +44,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.ManageLayoutCommandsEvent;
 import org.rstudio.core.client.events.WindowEnsureVisibleEvent;
 import org.rstudio.core.client.events.WindowStateChangeEvent;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.layout.DualWindowLayoutPanel;
 import org.rstudio.core.client.layout.LogicalWindow;
@@ -56,6 +58,7 @@ import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.ZoomPaneEvent;
 import org.rstudio.studio.client.workbench.model.ClientState;
@@ -74,6 +77,7 @@ import org.rstudio.studio.client.workbench.views.source.SourceColumn;
 import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 import org.rstudio.studio.client.workbench.views.source.SourceColumnManager.ColumnName;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
+import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 import java.util.ArrayList;
@@ -216,6 +220,7 @@ public class PaneManager
                       Commands commands,
                       UserPrefs userPrefs,
                       @Named("Console") final Widget consolePane,
+                      FileTypeRegistry fileTypeRegistry,
                       Source source,
                       SourceColumnManager sourceColumnManager,
                       @Named("History") final WorkbenchTab historyTab,
@@ -249,6 +254,7 @@ public class PaneManager
       commands_ = commands;
       userPrefs_ = userPrefs;
       consolePane_ = (ConsolePane)consolePane;
+      fileTypeRegistry_ = fileTypeRegistry;
       source_ = source;
       sourceColumnManager_ = sourceColumnManager;
       historyTab_ = historyTab;
@@ -730,6 +736,40 @@ public class PaneManager
          Command onCompleted = () -> column.decrementNewTabPending();
          source_.openSourceDoc(onCancelled, onCompleted);
       }
+   }
+
+   public void openFileInNewColumn(FileSystemItem targetFile, Command onOpen)
+   {
+      if (targetFile != null && validateNewColumnRequest())
+      {
+         ColumnName name = createSourceColumn();
+         SourceColumn column = sourceColumnManager_.getByName(name.getName());
+         column.incrementNewTabPending();
+         panel_.addLeftWidget(
+               createSourceColumnWindow(
+                  name.getName(),
+                  name.getAccessibleName()
+                  )
+               );
+         sourceColumnManager_.openFile(
+               targetFile, 
+               fileTypeRegistry_.getTextTypeForFile(targetFile),
+               column,
+               new CommandWithArg<EditingTarget>() {
+                  @Override
+                  public void execute(EditingTarget target)
+                  {
+                     column.decrementNewTabPending();
+                     if (onOpen != null) 
+                        onOpen.execute();
+                  }
+               });
+      }
+   }
+
+   public void openFileInNewColumn(FileSystemItem targetFile) 
+   {
+      openFileInNewColumn(targetFile, null);
    }
 
    private boolean validateNewColumnRequest()
@@ -1970,6 +2010,7 @@ public class PaneManager
    private final WorkbenchTab compilePdfTab_;
    private final WorkbenchTab sourceCppTab_;
    private final ConsolePane consolePane_;
+   private final FileTypeRegistry fileTypeRegistry_;
    private final Source source_;
    private final SourceColumnManager sourceColumnManager_;
    private final WorkbenchTab historyTab_;

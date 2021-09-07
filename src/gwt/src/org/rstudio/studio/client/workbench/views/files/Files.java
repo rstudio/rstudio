@@ -22,6 +22,11 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
+import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.SerializedCommand;
+import org.rstudio.core.client.ParallelCommandList;
+import org.rstudio.core.client.ResultCallback;
+import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.ColumnSortInfo;
 import org.rstudio.core.client.command.CommandBinder;
@@ -30,12 +35,16 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.*;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.ConsoleDispatcher;
+import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.fileexport.FileExport;
+import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.filetypes.events.OpenFileInBrowserEvent;
 import org.rstudio.studio.client.common.filetypes.events.RenameSourceFileEvent;
 import org.rstudio.studio.client.events.RStudioApiRequestEvent;
@@ -51,6 +60,7 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportPresenter;
@@ -59,10 +69,13 @@ import org.rstudio.studio.client.workbench.views.files.model.DirectoryListing;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.files.model.PendingFileUpload;
+import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 import org.rstudio.studio.client.workbench.views.source.events.SourcePathChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.model.SourceDocumentResult;
 import org.rstudio.studio.client.workbench.views.terminal.events.CreateNewTerminalEvent;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class Files
       extends BasePresenter
@@ -153,6 +166,7 @@ public class Files
                 FileTypeRegistry fileTypeRegistry,
                 ConsoleDispatcher consoleDispatcher,
                 WorkbenchContext workbenchContext,
+                PaneManager paneManager,
                 DataImportPresenter dataImportPresenter)
    {
       super(view);
@@ -171,6 +185,7 @@ public class Files
       pFilesUpload_ = pFilesUpload;
       pFileExport_ = pFileExport;
       pPrefs_ = pPrefs;
+      paneManager_ = paneManager;
       dataImportPresenter_ = dataImportPresenter;
 
       ((Binder)GWT.create(Binder.class)).bind(commands, this);
@@ -608,6 +623,176 @@ public class Files
    }
 
    @Handler
+   void onOpenFilesInSinglePane()
+   {
+      final ArrayList<FileSystemItem> selectedFiles = view_.getSelectedFiles();
+      final SourceColumnManager mgr = RStudioGinjector.INSTANCE.getSourceColumnManager();
+
+      for (FileSystemItem item : selectedFiles) 
+      {
+         if (!item.isDirectory())
+         {
+            mgr.openFile(item);
+         }
+      }
+
+      view_.selectNone();
+   }
+
+   // the purpose of this function is specifically to pre-screen selected files for the following:
+   //  - the file must NOT be a directory
+   //  - the file must NOT already be open in a source editor 
+   //  - if the file is an RNotebook, then make sure that only ONE .RMarkdown file is opened for editing 
+   private void getUnopenedSelectedFiles(final CommandWithArg<List<FileSystemItem>> onCompleted)
+   {
+      final SourceColumnManager mgr = RStudioGinjector.INSTANCE.getSourceColumnManager();
+      final ArrayList<String> selectedFilePaths = new ArrayList<>(); 
+
+      // Use parallelCommandList to execute these requests as fast as possible in parallel, asynchronously
+      ParallelCommandList commandList = new ParallelCommandList(new Command()
+            {
+               @Override
+               public void execute() 
+               {
+                  final ArrayList<FileSystemItem> selectedFiles = new ArrayList<>(); 
+                  selectedFilePaths.forEach((String path) -> {
+                     selectedFiles.add(FileSystemItem.createFile(path));
+                  });
+                  onCompleted.execute(selectedFiles);
+               }
+            });
+
+
+      final List<FileSystemItem> notebooks = new ArrayList<>();
+
+      // pre-process to make sure there aren't any directories, and that already-open files do not count
+      // towards the column limit
+      for (FileSystemItem item : view_.getSelectedFiles()) 
+      {
+         if (!item.isDirectory() && !mgr.openFileAlreadyOpen(item, null))
+         {
+            TextFileType fileType = fileTypeRegistry_.getTextTypeForFile(item);
+            if (fileType.isRNotebook())
+               notebooks.add(item);
+            else
+               selectedFilePaths.add(item.getPath());
+         }
+      }
+
+      for (FileSystemItem notebook : notebooks)
+      {
+         commandList.addCommand(new SerializedCommand()
+               {
+                  @Override
+                  public void onExecute(final Command continuation)
+                  {
+                     final String rnbPath = notebook.getPath();
+                     final String rmdPath = FilePathUtils.filePathSansExtension(rnbPath) + ".Rmd";
+
+                     mgr.extractRmdFile(
+                           notebook,
+                           new ResultCallback<SourceDocumentResult, ServerError>()
+                           {
+                              @Override
+                              public void onSuccess(SourceDocumentResult doc)
+                              {
+                                 // this means the operation succeeded; add ONLY the Rmd file to the list
+                                 // if it is not already open in a source editor
+                                 final FileSystemItem rmdFile = FileSystemItem.createFile(rmdPath);
+                                 if (!selectedFilePaths.contains(rmdPath) 
+                                       && !mgr.openFileAlreadyOpen(rmdFile, null))
+                                    selectedFilePaths.add(rmdPath);
+
+                                 continuation.execute();
+                              }
+
+                              @Override
+                              public void onFailure(ServerError error)
+                              {
+                                 // fail silently?
+                                 continuation.execute();
+                              }
+                           });
+                  }
+               });
+      }
+
+      commandList.run();
+   }
+
+   @Handler
+   void onOpenEachFileInColumns()
+   {
+      getUnopenedSelectedFiles(new CommandWithArg<List<FileSystemItem>>()
+      {
+         @Override
+         public void execute(List<FileSystemItem> selectedFiles)
+         {
+            final SourceColumnManager mgr = RStudioGinjector.INSTANCE.getSourceColumnManager();
+
+            if (selectedFiles.size() == 0)
+            {
+               view_.selectNone();
+               return;
+            }
+
+            // only open available:
+            // get the current number of remaining columns available
+            // all of the remaining files that cannot fit will be dumped into the the last-opened column
+            // there is a +1 here because the columnList includes the "non-additional" source pane
+            final int columnsRemaining = PaneManager.MAX_COLUMN_COUNT - mgr.getColumnList().size() + 1; 
+
+            // if there aren't any remaining cols then just open the files anyway and see what happens
+            if (columnsRemaining <= 0) 
+            {
+               onOpenFilesInSinglePane();
+               return;
+            }
+
+            final List<FileSystemItem> openInColumns = 
+               selectedFiles.subList(0, Math.min(selectedFiles.size(), columnsRemaining));
+
+            // open these asynchronously IN-ORDER
+            SerializedCommandQueue openCommands = new SerializedCommandQueue();
+
+            for (FileSystemItem item : openInColumns)
+            {
+               openCommands.addCommand(new SerializedCommand()
+                     {
+                        @Override
+                        public void onExecute(final Command continuation)
+                        {
+                           paneManager_.openFileInNewColumn(item, continuation);
+                        }
+                     });
+            }
+
+            // open the remaining selected files in whichever column happens to be active at that point
+            openCommands.addCommand(new SerializedCommand()
+                  {
+                     @Override
+                     public void onExecute(final Command continuation)
+                     {
+                        if (columnsRemaining < selectedFiles.size()) 
+                        {
+                           final List<FileSystemItem> openRegular = selectedFiles.subList(columnsRemaining, selectedFiles.size());
+
+                           for (FileSystemItem item : openRegular) 
+                           {
+                              mgr.openFile(item);
+                           }
+                        }
+                        continuation.execute();
+                     }
+                  });
+
+            openCommands.run();
+            view_.selectNone();
+         }
+      });
+   }
+
+   @Handler
    void onSetAsWorkingDir()
    {
       consoleDispatcher_.executeSetWd(currentPath_, true);
@@ -883,4 +1068,6 @@ public class Files
    private JsArray<ColumnSortInfo> columnSortOrder_ = null;
    private DataImportPresenter dataImportPresenter_;
    private boolean renaming_ = false;
+
+   private final PaneManager paneManager_;
 }

@@ -119,6 +119,13 @@ public class FilePathToolbar extends Composite
       CheckBoxHiddenLabel selectAllCheckBox = new CheckBoxHiddenLabel("Select all files",
                                                                       ElementIds.FP_SELECT_ALL);
       selectAllCheckBox.addStyleDependentName("FilesSelectAll");
+      
+      // TODO: there needs to be some way to two-way couple the selection state
+      // with the selection in the files list itself.  
+      
+      // For example: if every file is checked manually by the user, then this
+      // check box should automatically check itself. The same should apply
+      // when the user manually de-selects a single item in the list.
       selectAllCheckBox.addValueChangeHandler(new ValueChangeHandler<Boolean>(){
 
          public void onValueChange(ValueChangeEvent<Boolean> event)
