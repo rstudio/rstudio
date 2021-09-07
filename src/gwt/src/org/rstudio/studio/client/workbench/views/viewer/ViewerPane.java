@@ -62,6 +62,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       globalDisplay_ = globalDisplay;
       server_ = server;
       htmlMessageListener_ = htmlMessageListener;
+      quartoMessageBus_ = new QuartoMessageBus();
       ensureWidget();
    }
 
@@ -172,6 +173,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    @Override
    public void navigate(String url)
    {
+      quartoMessageBus_.setQuartoUrl(null);
       htmlMessageListener_.setUrl(url);
       navigate(url, false);
 
@@ -219,6 +221,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    {
       rmdPreviewParams_ = null;
       navigate(url, false);
+      quartoMessageBus_.setQuartoUrl(url);
       publishButton_.setManuallyHidden(false);
       if (quartoNav.isWebsite())
          publishButton_.setQuartoSitePreview();
@@ -255,6 +258,10 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
           !rmdPreviewParams_.isShinyDocument())
       {
          globalDisplay_.showHtmlFile(rmdPreviewParams_.getOutputFile());
+      }
+      else if (quartoMessageBus_.getQuartoUrl() != null)
+      {
+         globalDisplay_.openWindow(quartoMessageBus_.getQuartoUrl());
       }
       else if (frame_ != null &&
           frame_.getIFrame().getCurrentUrl() != null &&
@@ -402,4 +409,5 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    private Widget exportButtonSeparator_;
 
    private HtmlMessageListener htmlMessageListener_;
+   private QuartoMessageBus quartoMessageBus_;
 }
