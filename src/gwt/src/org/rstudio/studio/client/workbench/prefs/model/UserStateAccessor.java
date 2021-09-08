@@ -522,7 +522,7 @@ public class UserStateAccessor extends Prefs
          "quarto_website_sync_editor",
          "Quarto Website Sync Editor", 
          "Sync source editor to Quarto website preview navigation.", 
-         true);
+         false);
    }
 
    public void syncPrefs(String layer, JsObject source)

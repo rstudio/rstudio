@@ -3235,6 +3235,11 @@ well as menu structures (for main menu and popup menus).
         desc="Refresh viewer"
         rebindable="false"
         context="viewer"/>
+        
+   <cmd id="viewerEditSource"
+        desc="Edit source file"
+        rebindable="false"
+        context="viewer"/>
 
    <cmd id="viewerSaveAllAndRefresh"
         desc="Save source files and refresh viewer"

@@ -244,7 +244,7 @@
         },
         "quarto_website_sync_editor": {
             "type": "boolean",
-            "default": true,
+            "default": false,
             "title": "Quarto Website Sync Editor",
             "description": "Sync source editor to Quarto website preview navigation."
         }

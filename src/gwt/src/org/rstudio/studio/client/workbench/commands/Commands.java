@@ -524,6 +524,7 @@ public abstract class
    public abstract AppCommand viewerSaveAsImage();
    public abstract AppCommand viewerSaveAsWebPage();
    public abstract AppCommand viewerCopyToClipboard();
+   public abstract AppCommand viewerEditSource();
 
    // Application
    public abstract AppCommand newSession();
