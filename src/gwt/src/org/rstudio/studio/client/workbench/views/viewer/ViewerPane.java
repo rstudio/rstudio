@@ -14,8 +14,10 @@ package org.rstudio.studio.client.workbench.views.viewer;
 
 import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import org.rstudio.core.client.HtmlMessageListener;
 import org.rstudio.core.client.CommandWithArg;
@@ -44,6 +46,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigatedEvent;
 import org.rstudio.studio.client.workbench.views.viewer.model.ViewerServerOperations;
@@ -55,12 +58,14 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
                      GlobalDisplay globalDisplay,
                      EventBus events,
                      ViewerServerOperations server,
+                     Provider<UserState> pUserState,
                      HtmlMessageListener htmlMessageListener)
    {
       super("Viewer", events);
       commands_ = commands;
       globalDisplay_ = globalDisplay;
       server_ = server;
+      pUserState_ = pUserState;
       htmlMessageListener_ = htmlMessageListener;
       quartoMessageBus_ = new QuartoMessageBus();
       ensureWidget();
@@ -112,6 +117,15 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
 
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(commands_.viewerStop().createToolbarButton());
+      
+      toolbar_.addLeftSeparator();
+      toolbar_.addLeftWidget(quartoSyncEditor_ = new CheckBox("Sync Editor"));
+      quartoSyncEditor_.setVisible(false);
+      quartoSyncEditor_.setValue(pUserState_.get().quartoWebsiteSyncEditor().getValue());
+      quartoSyncEditor_.addValueChangeHandler(event -> {
+         pUserState_.get().quartoWebsiteSyncEditor().setGlobalValue(event.getValue());
+         pUserState_.get().writeState();
+      });
 
       // add publish button
       publishButton_ = new RSConnectPublishButton(
@@ -173,7 +187,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    @Override
    public void navigate(String url)
    {
-      quartoMessageBus_.setQuartoUrl(null);
+      manageQuartoUI(null);
       htmlMessageListener_.setUrl(url);
       navigate(url, false);
 
@@ -221,7 +235,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    {
       rmdPreviewParams_ = null;
       navigate(url, false);
-      quartoMessageBus_.setQuartoUrl(url);
+      manageQuartoUI(url, quartoNav.isWebsite());
       publishButton_.setManuallyHidden(false);
       if (quartoNav.isWebsite())
          publishButton_.setQuartoSitePreview();
@@ -318,6 +332,16 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       publishButton_.setShowCaption(width > 500);
    }
    
+   private void manageQuartoUI(String url)
+   {
+      manageQuartoUI(url, false);
+   }
+   private void manageQuartoUI(String url, boolean website)
+   {
+      quartoMessageBus_.setQuartoUrl(url, website);
+      quartoSyncEditor_.setVisible(url != null && website);
+   }
+   
    private String urlWithoutHash(String url)
    {
       if (!StringUtil.isNullOrEmpty(url))
@@ -399,10 +423,12 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    private RmdPreviewParams rmdPreviewParams_;
    private final Commands commands_;
    private final GlobalDisplay globalDisplay_;
+   private final Provider<UserState> pUserState_;
    private final ViewerServerOperations server_;
 
    private Toolbar toolbar_;
 
+   private CheckBox quartoSyncEditor_;
    private RSConnectPublishButton publishButton_;
 
    private ToolbarMenuButton exportButton_;

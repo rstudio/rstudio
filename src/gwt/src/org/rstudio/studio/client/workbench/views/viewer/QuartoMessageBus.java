@@ -15,12 +15,16 @@
 package org.rstudio.studio.client.workbench.views.viewer;
 
 
-import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.FilePosition;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import jsinterop.annotations.JsType;
 
@@ -45,12 +49,16 @@ public class QuartoMessageBus
    }
    
    @Inject
-   private void initialize(ApplicationServerOperations server)
+   private void initialize(ApplicationServerOperations server,
+                           Provider<UserState> pUserState,
+                           FileTypeRegistry fileTypeRegistry)
    {
       server_ = server;
+      pUserState_ = pUserState;
+      fileTypeRegistry_ = fileTypeRegistry;
    }
    
-   public void setQuartoUrl(String url)
+   public void setQuartoUrl(String url, boolean website)
    {
       if (url != null)
       {
@@ -64,6 +72,7 @@ public class QuartoMessageBus
             url = url.substring(0, paramsLoc);
       }
       quartoUrl_ = url;
+      quartoWebsite_ = website;
    }
    
    public String getQuartoUrl()
@@ -99,7 +108,7 @@ public class QuartoMessageBus
       if (message.type == "navigate") 
       {
          // record current navigation url
-         setQuartoUrl(message.href);
+         setQuartoUrl(message.href, quartoWebsite_);
          
          // let quarto know we can handle devhost requests
          postQuartoMessage("devhost-init", null);
@@ -107,17 +116,20 @@ public class QuartoMessageBus
       } 
       else if (message.type == "navigate-src") 
       {
-         
-         
+         if (quartoWebsite_ &&
+             pUserState_.get().quartoWebsiteSyncEditor().getValue())
+         {
+            fileTypeRegistry_.editFile(FileSystemItem.createFile(message.file));
+         }
       } 
       else if (message.type == "openfile") 
       {
-         
-        
-         
+         fileTypeRegistry_.editFile(
+           FileSystemItem.createFile(message.file),
+           FilePosition.create(message.line, message.column),
+           message.highlight
+         );
       }
-      
-      
    }
    
    private void postQuartoMessage(String type, JavaScriptObject data)
@@ -134,10 +146,13 @@ public class QuartoMessageBus
    }-*/;
    
    private ApplicationServerOperations server_;
+   private Provider<UserState> pUserState_;
+   private FileTypeRegistry fileTypeRegistry_;
    
    private JavaScriptObject quartoSource_ = null;
    private String quartoOrigin_ = null;
    private String quartoUrl_ = null;
+   private boolean quartoWebsite_ = false;
    
    
 }

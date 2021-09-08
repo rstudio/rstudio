@@ -513,6 +513,18 @@ public class UserStateAccessor extends Prefs
          "");
    }
 
+   /**
+    * Sync source editor to Quarto website preview navigation.
+    */
+   public PrefValue<Boolean> quartoWebsiteSyncEditor()
+   {
+      return bool(
+         "quarto_website_sync_editor",
+         "Quarto Website Sync Editor", 
+         "Sync source editor to Quarto website preview navigation.", 
+         true);
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("context_id"))
@@ -563,6 +575,8 @@ public class UserStateAccessor extends Prefs
          zoteroApiKey().setValue(layer, source.getString("zotero_api_key"));
       if (source.hasKey("zotero_data_dir"))
          zoteroDataDir().setValue(layer, source.getString("zotero_data_dir"));
+      if (source.hasKey("quarto_website_sync_editor"))
+         quartoWebsiteSyncEditor().setValue(layer, source.getBool("quarto_website_sync_editor"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -591,6 +605,7 @@ public class UserStateAccessor extends Prefs
       prefs.add(zoteroUseBetterBibtex());
       prefs.add(zoteroApiKey());
       prefs.add(zoteroDataDir());
+      prefs.add(quartoWebsiteSyncEditor());
       return prefs;
    }
    
