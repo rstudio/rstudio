@@ -32,8 +32,11 @@ public class QuartoMessageBus
    {
       public String type;
       public String href;
+      public String file;
+      public int line;
+      public int column;
+      public boolean highlight;
    }
-
 
    public QuartoMessageBus()
    {
@@ -83,7 +86,7 @@ public class QuartoMessageBus
    }-*/;
 
    private void onMessage(JavaScriptObject source, String origin, QuartoMessage message) 
-   {
+   {    
       // check to see if the message originated from the same origin
       if (quartoUrl_ == null || !quartoUrl_.startsWith(origin))
          return;
@@ -93,10 +96,42 @@ public class QuartoMessageBus
       quartoOrigin_ = origin;
      
       // dispatch message
-      if (message.type == "navigate") {
+      if (message.type == "navigate") 
+      {
+         // record current navigation url
          setQuartoUrl(message.href);
+         
+         // let quarto know we can handle devhost requests
+         postQuartoMessage("devhost-init", null);
+        
       } 
+      else if (message.type == "navigate-src") 
+      {
+         
+         
+      } 
+      else if (message.type == "openfile") 
+      {
+         
+        
+         
+      }
+      
+      
    }
+   
+   private void postQuartoMessage(String type, JavaScriptObject data)
+   {
+      postQuartoMessage(quartoSource_, quartoOrigin_, type, data);
+   }
+   
+   private native static void postQuartoMessage(JavaScriptObject source, String origin, 
+                                                String type, JavaScriptObject data) /*-{
+      source.postMessage({
+         type: type,
+         data: data
+      }, origin);
+   }-*/;
    
    private ApplicationServerOperations server_;
    
