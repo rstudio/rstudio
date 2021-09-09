@@ -83,6 +83,16 @@ public class QuartoConnection
       return url_ != null && website_;
    }
    
+   public void navigateBack()
+   {
+      postQuartoMessage("goback", null);
+   }
+   
+   public void navigateForward()
+   {
+      postQuartoMessage("goforward", null);
+   }
+   
 
    public HandlerRegistration addQuartoNavigationHandler(
                                  QuartoNavigationEvent.Handler handler)

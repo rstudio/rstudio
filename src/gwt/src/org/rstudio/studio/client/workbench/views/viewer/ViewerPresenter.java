@@ -619,9 +619,9 @@ public class ViewerPresenter extends BasePresenter
          boolean website = quartoNav.isWebsite();
          commands_.viewerClearAll().setVisible(false);
          commands_.viewerBack().setEnabled(website);
-         commands_.viewerBack().setVisible(false);
+         commands_.viewerBack().setVisible(website);
          commands_.viewerForward().setEnabled(website);
-         commands_.viewerForward().setVisible(false);
+         commands_.viewerForward().setVisible(website);
          commands_.viewerEditSource().setVisible(quartoNav.getSourceFile() != null);
       }
       else

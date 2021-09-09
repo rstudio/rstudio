@@ -363,15 +363,14 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    @Override
    public void navigateForward()
    {
-      Debug.logToRConsole("quato nav forward");
+      quartoConnection_.navigateForward();
       
    }
 
    @Override
    public void navigateBack()
    {
-      Debug.logToRConsole("quato nav back");
-      
+     quartoConnection_.navigateBack();
    }
    
    
