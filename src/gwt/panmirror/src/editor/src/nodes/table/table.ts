@@ -67,7 +67,8 @@ const extension = (context: ExtensionContext): Extension | null => {
     !pandocExtensions.grid_tables &&
     !pandocExtensions.pipe_tables &&
     !pandocExtensions.simple_tables &&
-    !pandocExtensions.multiline_tables
+    !pandocExtensions.multiline_tables &&
+    !pandocExtensions.raw_html
   ) {
     return null;
   }

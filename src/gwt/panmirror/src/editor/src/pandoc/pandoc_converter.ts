@@ -14,6 +14,7 @@
  */
 
 import { Schema, Node as ProsemirrorNode } from 'prosemirror-model';
+import { findChildren } from 'prosemirror-utils';
 
 import {
   PandocServer,
@@ -102,7 +103,8 @@ export class PandocConverter {
     const autoIds = format.extensions.gfm_auto_identifiers ? 'gfm_auto_identifiers' : 'auto_identifiers';
     const targetFormat = adjustedFormat(
       format.fullName,
-      ['raw_html', 'raw_attribute', 'backtick_code_blocks', autoIds],
+      ['raw_html', 'raw_attribute', 'backtick_code_blocks', autoIds, 
+      'grid_tables', 'pipe_tables', 'multiline_tables', 'simple_tables'],
       ['smart'],
     );
 
@@ -172,7 +174,7 @@ export class PandocConverter {
     ); // always disable
 
     // disable selected format options
-    format = pandocFormatWith(format, disabledFormatOptions(format, doc), '');
+    format = pandocFormatWith(format, disabledFormatOptions(format, pandocFormat, doc), '');
 
     // prepare pandoc options
     let pandocOptions: string[] = [];
@@ -223,7 +225,7 @@ function adjustedFormat(format: string, extensions: string[], disabled: string[]
   return newFormat;
 }
 
-function disabledFormatOptions(format: string, doc: ProsemirrorNode) {
+function disabledFormatOptions(format: string, pandocFormat: PandocFormat, doc: ProsemirrorNode) {
   // (prefer pipe and grid tables). users can still force the availability of these by
   // adding those format flags but all known markdown variants that support tables also
   // support pipe tables so this seems unlikely to ever be required.
@@ -231,7 +233,8 @@ function disabledFormatOptions(format: string, doc: ProsemirrorNode) {
 
   // if there are tables with inline R code then disable grid tables (as the inline
   // R code will mess up the column boundaries)
-  if (haveTableCellsWithInlineRcode(doc)) {
+  if (haveTableCellsWithInlineRcode(doc) || 
+     (!haveMultiBlockTableCells(doc) && pandocFormat.extensions.pipe_tables)) {
     disabledTableTypes += '-grid_tables';
   }
 
@@ -244,6 +247,12 @@ function disabledFormatOptions(format: string, doc: ProsemirrorNode) {
 
   // return
   return disabledTableTypes;
+}
+
+function haveMultiBlockTableCells(doc: ProsemirrorNode) {
+  const schema = doc.type.schema;
+  const isTableCell = (node: ProsemirrorNode) => node.type === schema.nodes.table_cell || node.type === schema.nodes.table_header;
+  return findChildren(doc, isTableCell).some(cell => cell.node.childCount > 1);
 }
 
 function wrapOptions(options: PandocWriterOptions) {
