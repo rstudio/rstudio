@@ -27,4 +27,4 @@ CREATE TABLE revoked_cookie(
 /* Index to be used for sorting revoked cookies by expiration */
 CREATE INDEX revoked_cookie_expiration_index ON revoked_cookie(expiration);
 
-INSERT INTO schema_version VALUES ('20210712182145921760944', 'Ghost Orchid');
+INSERT INTO schema_version  (current_version, release_name) VALUES ('20210712182145921760944', 'Ghost Orchid');

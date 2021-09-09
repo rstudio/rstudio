@@ -157,7 +157,7 @@ Error writeRevokedCookieToDatabase(const RevokedCookie& cookie,
    if (!connection)
       connection = server_core::database::getConnection();
 
-   Query query = connection->query("INSERT INTO revoked_cookie VALUES (:exp, :dat)")
+   Query query = connection->query("INSERT INTO revoked_cookie (expiration, cookie_data) VALUES (:exp, :dat)")
          .withInput(expiration)
          .withInput(cookie.cookie);
 
