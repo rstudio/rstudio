@@ -391,6 +391,11 @@ try {
                   bat "aws s3 cp package\\win32\\build\\${packageName}-RelWithDebInfo.exe ${buildDest}/${packageName}.exe"
                   bat "aws s3 cp package\\win32\\build\\${packageName}-RelWithDebInfo.zip ${buildDest}/${packageName}.zip"
                 }
+
+                // update daily build redirect
+                withCredentials([file(credentialsId: 'www-rstudio-org-pem', variable: 'wwwRstudioOrgPem')]) {
+                  sh "docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/desktop/windows/${packageName}.exe ${wwwRstudioOrgPem}"
+                }
               }
             }
           }
