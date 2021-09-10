@@ -23,7 +23,6 @@ import com.google.inject.Provider;
 
 import org.rstudio.core.client.HtmlMessageListener;
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.URIConstants;

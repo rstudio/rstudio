@@ -28,9 +28,6 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
-import jsinterop.annotations.JsType;
-
-
 public class QuartoConnection
 { 
    public QuartoConnection()
@@ -163,16 +160,6 @@ public class QuartoConnection
       }, origin);
    }-*/;
    
-   @JsType
-   public class QuartoMessage
-   {
-      public String type;
-      public String href;
-      public String file;
-      public int line;
-      public int column;
-      public boolean highlight;
-   }
    
    private ApplicationServerOperations server_;
    private Provider<UserState> pUserState_;
