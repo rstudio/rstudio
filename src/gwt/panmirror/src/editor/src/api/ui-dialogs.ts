@@ -33,6 +33,7 @@ export interface EditorDialogs {
   editDiv: DivAttrEditorFn;
   editRawInline: RawFormatEditorFn;
   editRawBlock: RawFormatEditorFn;
+  editMath: MathEditorFn;
   insertTable: InsertTableFn;
   insertCite: InsertCiteFn;
   htmlDialog: EditorHTMLDialogFn;
@@ -94,6 +95,8 @@ export type CodeBlockEditorFn = (
 ) => Promise<CodeBlockEditResult | null>;
 
 export type ListEditorFn = (list: ListProps, capabilities: ListCapabilities) => Promise<ListEditResult | null>;
+
+export type MathEditorFn = (id: string) => Promise<string | null>;
 
 export type RawFormatEditorFn = (raw: RawFormatProps, outputFormats: string[]) => Promise<RawFormatResult | null>;
 

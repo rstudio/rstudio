@@ -570,7 +570,13 @@ public class ElementIds
    public static String getVisualMdInsertCiteCreateBib() { return getElementId(VISUAL_MD_LIST_INSERT_CITE_CREATE_BIB); }
    public final static String VISUAL_MD_LIST_INSERT_CITE_CREATE_BIB_TYPE = "visual_md_insert_cite_create_bib_type";
    public static String getVisualMdInsertCiteCreateBibType() { return getElementId(VISUAL_MD_LIST_INSERT_CITE_CREATE_BIB_TYPE); }
-
+   public final static String VISUAL_MD_MATH_ID_LABEL1 = "visual_md_math_id_label1";
+   public static String getVisualMdMathIdLabel1() { return getElementId(VISUAL_MD_MATH_ID_LABEL1); }
+   public final static String VISUAL_MD_MATH_ID_LABEL2 = "visual_md_math_id_label2";
+   public static String getVisualMdMathIdLabel2() { return getElementId(VISUAL_MD_MATH_ID_LABEL2); }
+   public final static String VISUAL_MD_MATH_ID = "visual_md_math_id";
+   public static String getVisualMdMathId() { return getElementId(VISUAL_MD_MATH_ID); }
+  
    public final static String VISUAL_MD_LIST_TIGHT = "visual_md_ordered_list_tight";
    public final static String VISUAL_MD_IMAGE_TAB_IMAGE = "visual_md_image_tab_image";
    public final static String VISUAL_MD_IMAGE_WIDTH = "visual_md_image_width";

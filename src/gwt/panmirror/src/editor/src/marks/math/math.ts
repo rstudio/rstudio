@@ -23,7 +23,7 @@ import { PandocTokenType, PandocToken, PandocOutput } from '../../api/pandoc';
 import { BaseKey } from '../../api/basekeys';
 import { markIsActive, getMarkAttrs } from '../../api/mark';
 import { kCodeText } from '../../api/code';
-import { kMathContent, kMathType, delimiterForType, MathType } from '../../api/math';
+import { kMathContent, kMathType, delimiterForType, MathType, kMathId } from '../../api/math';
 import { MarkInputRuleFilter } from '../../api/input_rule';
 
 import { InsertInlineMathCommand, InsertDisplayMathCommand, insertMath } from './math-commands';
@@ -34,6 +34,7 @@ import { mathViewPlugins } from './math-view';
 
 import './math-styles.css';
 import { kPasteTransaction } from '../../api/transaction';
+import { kQuartoDocType } from '../../api/format';
 
 const kInlineMathPattern = '\\$[^ ].*?[^\\ ]?\\$';
 const kInlineMathRegex = new RegExp(kInlineMathPattern);
@@ -61,6 +62,7 @@ const extension = (context: ExtensionContext): Extension | null => {
         spec: {
           attrs: {
             type: {},
+            id: { default: null }
           },
           inclusive: false,
           excludes: 'formatting',
@@ -96,6 +98,7 @@ const extension = (context: ExtensionContext): Extension | null => {
               getAttrs: (tok: PandocToken) => {
                 return {
                   type: tok.c[kMathType].t,
+                  id: tok.c[kMathId] || null
                 };
               },
               getText: (tok: PandocToken) => {
@@ -163,6 +166,10 @@ const extension = (context: ExtensionContext): Extension | null => {
                       );
                       output.write(mathText);
                     });
+                    // write id if we have it
+                    if (mark.attrs.id) {
+                      output.writeRawMarkdown(` {#${mark.attrs.id}}`);
+                    }
                   }
                 } else {
                   // user removed the delimiter so write the content literally. when it round trips
@@ -172,6 +179,63 @@ const extension = (context: ExtensionContext): Extension | null => {
               }
             },
           },
+          // filter for picking out id for quarto crossref
+          tokensFilter: format.docTypes.includes(kQuartoDocType) ? (tokens: PandocToken[]) => {
+            const pendingTokens: PandocToken[] = [];
+            const filteredTokens: PandocToken[] = [];
+
+            const clearPendingTokens = () => {
+              pendingTokens.splice(0, pendingTokens.length);
+            };
+
+            const flushPendingTokens = () => {
+              filteredTokens.push(...pendingTokens);
+              clearPendingTokens();
+            };
+
+            for (const token of tokens) {
+              switch(token.t) {
+                case PandocTokenType.Math: 
+                  flushPendingTokens();
+                  if (token.c[kMathType].t === PandocTokenType.DisplayMath) {
+                    pendingTokens.push(token);
+                  } else {
+                    filteredTokens.push(token);
+                  }
+                  break;
+                case PandocTokenType.Space:
+                  if (pendingTokens.length > 0) {
+                    pendingTokens.push(token);
+                  } else {
+                    filteredTokens.push(token);
+                  }
+                  break;
+                case PandocTokenType.Str:
+                  if (pendingTokens.length > 0) {
+                    const match = (token.c as string).match(/{#(eq-[^ }]+)}/);
+                    if (match) {
+                      const mathToken = pendingTokens[0];
+                      mathToken.c[kMathId] = match[1];
+                      clearPendingTokens();
+                      filteredTokens.push(mathToken);
+                    } else {
+                      flushPendingTokens();
+                      filteredTokens.push(token);
+                    }
+                  } else {
+                    filteredTokens.push(token);
+                  }
+                  break;
+                default:
+                  flushPendingTokens();
+                  filteredTokens.push(token);
+                  break;
+              }
+            }
+            flushPendingTokens();
+
+            return filteredTokens;
+          } : undefined
         },
       },
     ],
@@ -257,7 +321,7 @@ const extension = (context: ExtensionContext): Extension | null => {
       ];
       if (math) {
         plugins.push(new MathPopupPlugin(ui, math, events, false));
-        plugins.push(...mathViewPlugins(schema, ui, math));
+        plugins.push(...mathViewPlugins(schema, format, ui, math));
       }
       return plugins;
     },

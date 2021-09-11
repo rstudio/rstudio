@@ -247,6 +247,17 @@ public class PanmirrorDialogs {
       );
    }
    
+   public Promise<String> editMath(String id) 
+   {
+      return new Promise<>((ResolveCallbackFn<String> resolve, RejectCallbackFn reject) -> {
+         PanmirrorEditMathDialog dialog = new PanmirrorEditMathDialog(id, (result) -> {
+           resolve.onInvoke(result);
+         });
+         dialog.showModal(false);
+         
+      });
+   }
+   
    public Promise<PanmirrorInsertTableResult> insertTable(PanmirrorTableCapabilities capabilities)
    {
       return new Promise<>(

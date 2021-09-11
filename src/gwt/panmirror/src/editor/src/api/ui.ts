@@ -14,7 +14,6 @@
  */
 
 import { SkinTone } from './emoji';
-import { EditorRmdChunk } from './rmd';
 import { XRef } from './xref';
 
 import { EditorUIImages } from './ui-images';

@@ -19,6 +19,9 @@ import { PandocToken } from './pandoc';
 export const kMathType = 0;
 export const kMathContent = 1;
 
+// additional field we stick into the AST for quarto crossref ids
+export const kMathId = 2;
+
 export enum MathType {
   Inline = 'InlineMath',
   Display = 'DisplayMath',
