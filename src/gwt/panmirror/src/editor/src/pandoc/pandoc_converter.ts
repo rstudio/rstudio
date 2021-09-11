@@ -94,8 +94,13 @@ export class PandocConverter {
     // that's how preprocessors hoist content through pandoc into our prosemirror token parser.
     // we always need to read with auto_identifiers so we can catch any auto-generated ids
     // required to fulfill links inside the document (we will strip out heading ids that
-    // aren't explicit or a link target using the heading_ids returned with the ast). we also
-    // disable 'smart' b/c that causes pandoc to insert non-breaking spaces before selected
+    // aren't explicit or a link target using the heading_ids returned with the ast). 
+    //
+    // we always read all forms of tables (since they can always be written back out as raw_html)
+    //
+    // we also always read math (since it can always be output as 'asciimath')
+    //
+    // we  disable 'smart' b/c that causes pandoc to insert non-breaking spaces before selected
     // abbreviations like e.g. rather, we do our own implementation of 'smart' when we read
     // PandocTokenType.Str from the ast
 
@@ -104,7 +109,8 @@ export class PandocConverter {
     const targetFormat = adjustedFormat(
       format.fullName,
       ['raw_html', 'raw_attribute', 'backtick_code_blocks', autoIds, 
-      'grid_tables', 'pipe_tables', 'multiline_tables', 'simple_tables'],
+      'grid_tables', 'pipe_tables', 'multiline_tables', 'simple_tables',
+      'tex_math_dollars'],
       ['smart'],
     );
 

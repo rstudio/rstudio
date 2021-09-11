@@ -43,11 +43,10 @@ const kSingleLineDisplayMathPattern = '\\$\\$[^\n]*?\\$\\$';
 const kSingleLineDisplayMathRegex = new RegExp(kSingleLineDisplayMathPattern);
 
 const extension = (context: ExtensionContext): Extension | null => {
-  const { pandocExtensions, ui, format, math, events } = context;
+  const {  ui, format, math, events } = context;
 
-  if (!pandocExtensions.tex_math_dollars) {
-    return null;
-  }
+  // note that we always enable math (harmless as worst case it is 
+  // simply output as ascii math by pandoc) so no check is made here
 
   // special blogdown handling for markdown renderers that don't support math
   const blogdownMathInCode = format.rmdExtensions.blogdownMathInCode;
