@@ -54,8 +54,11 @@ HTACCESS=$(mktemp)
 echo "Fetching .htaccess for update..."
 scp -o StrictHostKeyChecking=no -i $IDENTITY www-data@rstudio.org:/srv/www/rstudio.org/public_html/download/latest/daily/.htaccess $HTACCESS
 
-# remove existing redirect
-sed -i.bak "s/${FLAVOR}\/${OS}\/${LATEST} .*/${FLAVOR}\/${OS}\/${LATEST} ${URL//\//\\/}/" $HTACCESS
+# .htaccess expects URL encoded URLs so replace the + with %2B
+ENC_URL=`echo $URL | sed -e 's/+/%2B/'`
+
+# replace existing redirect
+sed -i.bak "s/${FLAVOR}\/${OS}\/${LATEST} .*/${FLAVOR}\/${OS}\/${LATEST} ${ENC_URL//\//\\/}/" $HTACCESS
 
 # copy it back up
 echo "Uploading new .htaccess..."

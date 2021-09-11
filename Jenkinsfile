@@ -388,6 +388,7 @@ try {
                   bat "aws s3 cp package\\win32\\build\\${packageName}-RelWithDebInfo.exe ${buildDest}/${packageName}.exe"
                   bat "aws s3 cp package\\win32\\build\\${packageName}-RelWithDebInfo.zip ${buildDest}/${packageName}.zip"
                 }
+
               }
             }
           }
@@ -410,6 +411,12 @@ try {
         if (env.JOB_NAME == 'IDE/pro-pipeline/master') {
           trigger_external_build('IDE/qa-autotest')
           trigger_external_build('IDE/qa-automation')
+        }
+
+        // update daily links for desktop windows
+        withCredentials([file(credentialsId: 'www-rstudio-org-pem', variable: 'wwwRstudioOrgPem')]) {
+          def packageName = "RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
+          sh "docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/desktop/windows/${packageName}.exe ${wwwRstudioOrgPem}"
         }
 
         slackSend channel: params.get('SLACK_CHANNEL', '#ide-builds'), color: 'good', message: "${messagePrefix} passed (${currentBuild.result})"
