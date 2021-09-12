@@ -55,7 +55,7 @@ const extension: Extension = {
   ],
 
   commands: (schema: Schema) => {
-    return [new MarkCommand(EditorCommandId.Underline, kPlatformMac ? ['Mod-u'] : [], schema.marks.underline)];
+    return [new MarkCommand(EditorCommandId.Underline, ['Mod-u'], schema.marks.underline)];
   },
 };
 
