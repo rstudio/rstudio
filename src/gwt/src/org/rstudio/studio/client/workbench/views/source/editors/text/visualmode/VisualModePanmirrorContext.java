@@ -133,10 +133,7 @@ public class VisualModePanmirrorContext
       uiContext.mapPathToResource = path -> {
          FileSystemItem resourceDir = FileSystemItem.createDir(uiContext.getDefaultResourceDir.get());
          FileSystemItem file = FileSystemItem.createFile(path);
-         Debug.logToConsole(resourceDir.getPath());
-         Debug.logToConsole(file.getPath());
          String resourcePath = file.getPathRelativeTo(resourceDir);
-         Debug.logToConsole(resourcePath);
          if (resourcePath != null)
          {
             return resourcePath;
@@ -235,23 +232,33 @@ public class VisualModePanmirrorContext
             for (int i=0; i<imageUris.length(); i++)
             {
                String uri = imageUris.get(i);
+               Debug.logToRConsole(uri);
                if (isValidURL(uri))
                {
+                  Debug.logToRConsole("resolved: " + uri);
                   resolvedUris.push(uri);
                }
                else
                {
+                  Debug.logToRConsole("mapping: " + uri);
                   String path = uiContext.mapPathToResource.map(uri);
                   if (path != null)
+                  {
+                     Debug.logToRConsole("mapped: " + path);
                      resolvedUris.push(path);
+                  }
                   else
+                  {
+                     Debug.logToRConsole("unmapped: " + path);
                      unresolvedUris.push(uri);
+                  }
                }
             }
 
             // import unresolved uris
             if (unresolvedUris.length() > 0)
             {
+               Debug.logToRConsole("importing unresolved uris");
                FileSystemItem resourceDir = FileSystemItem.createDir(uiContext.getDefaultResourceDir.get());
                String imagesDir = resourceDir.completePath("images");
                server_.rmdImportImages(unresolvedUris, imagesDir, new SimpleRequestCallback<JsArrayString>() {
