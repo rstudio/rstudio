@@ -21,7 +21,6 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.XRef;
@@ -232,24 +231,19 @@ public class VisualModePanmirrorContext
             for (int i=0; i<imageUris.length(); i++)
             {
                String uri = imageUris.get(i);
-               Debug.logToRConsole(uri);
-               if (isValidURL(uri))
+               if (isHttpURL(uri))
                {
-                  Debug.logToRConsole("resolved: " + uri);
                   resolvedUris.push(uri);
                }
                else
                {
-                  Debug.logToRConsole("mapping: " + uri);
                   String path = uiContext.mapPathToResource.map(uri);
                   if (path != null)
                   {
-                     Debug.logToRConsole("mapped: " + path);
                      resolvedUris.push(path);
                   }
                   else
                   {
-                     Debug.logToRConsole("unmapped: " + path);
                      unresolvedUris.push(uri);
                   }
                }
@@ -258,7 +252,6 @@ public class VisualModePanmirrorContext
             // import unresolved uris
             if (unresolvedUris.length() > 0)
             {
-               Debug.logToRConsole("importing unresolved uris");
                FileSystemItem resourceDir = FileSystemItem.createDir(uiContext.getDefaultResourceDir.get());
                String imagesDir = resourceDir.completePath("images");
                server_.rmdImportImages(unresolvedUris, imagesDir, new SimpleRequestCallback<JsArrayString>() {
@@ -291,9 +284,10 @@ public class VisualModePanmirrorContext
       return uiContext;
    }
 
-   private native boolean isValidURL(String url)  /*-{
+   private native boolean isHttpURL(String url)  /*-{
       try {
-         new URL(url);
+         url = new URL(url);
+         return url.protocol === "http:" || url.protocol === "https:";
       } catch (_) {
          return false;
       }
