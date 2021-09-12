@@ -19,7 +19,7 @@ import { PandocOutput, PandocToken, ProsemirrorWriter, PandocTokenType } from '.
 
 import { fragmentWithCheck, tokensWithChecked } from './list-checked';
 import { ListNumberDelim, ListNumberStyle } from './list';
-import { ListCapabilities } from '../../api/list';
+import { ListCapabilities, isList } from '../../api/list';
 
 const LIST_ATTRIBS = 0;
 const LIST_CHILDREN = 1;
@@ -159,9 +159,12 @@ function listNodeOptions(node: ProsemirrorNode, capabilities: ListCapabilities):
   };
 
   // if it's tight see if we need to override b/c of multiple blocks
+  // (allow case of [paragraph,list] which is just a nested list)
   node.forEach(item => {
     if (options.tight && item.childCount > 1) {
-      options.tight = false;
+      if (item.childCount > 2 || !isList(item.child(1)) ) {
+        options.tight = false;
+      }
     }
   });
 
