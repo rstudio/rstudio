@@ -826,6 +826,8 @@ public class VisualMode implements VisualModeEditorSync,
          commands_.runSelectionAsJob(),
          commands_.runSelectionAsLauncherJob(),
          commands_.sendToTerminal(),
+         commands_.yankAfterCursor(),
+         commands_.yankBeforeCursor()
       };
 
       for (AppCommand command : commands)
