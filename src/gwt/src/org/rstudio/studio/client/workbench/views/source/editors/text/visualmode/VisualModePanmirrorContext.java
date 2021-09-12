@@ -21,6 +21,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.XRef;
@@ -132,7 +133,10 @@ public class VisualModePanmirrorContext
       uiContext.mapPathToResource = path -> {
          FileSystemItem resourceDir = FileSystemItem.createDir(uiContext.getDefaultResourceDir.get());
          FileSystemItem file = FileSystemItem.createFile(path);
+         Debug.logToConsole(resourceDir.getPath());
+         Debug.logToConsole(file.getPath());
          String resourcePath = file.getPathRelativeTo(resourceDir);
+         Debug.logToConsole(resourcePath);
          if (resourcePath != null)
          {
             return resourcePath;
