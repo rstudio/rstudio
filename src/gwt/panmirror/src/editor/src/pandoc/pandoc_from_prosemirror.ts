@@ -233,11 +233,9 @@ class PandocWriter implements PandocOutput {
               .replace(/—/g, '---')
               .replace(/–/g, '--')
               .replace(/…/g, '...');
+              textRun = fancyQuotesToSimple(textRun);
           }
-
-          // we explicitly don't want fancy quotes in the editor
-          textRun = fancyQuotesToSimple(textRun);
-
+       
           this.writeToken(PandocTokenType.Str, textRun);
           textRun = '';
         }
