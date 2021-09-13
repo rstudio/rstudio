@@ -2637,6 +2637,19 @@ core::Error UserPrefValues::setVisualMarkdownEditingShowMargin(bool val)
 }
 
 /**
+ * Whether to show line numbers in the code editors used in visual mode
+ */
+bool UserPrefValues::visualMarkdownCodeEditorLineNumbers()
+{
+   return readPref<bool>("visual_markdown_code_editor_line_numbers");
+}
+
+core::Error UserPrefValues::setVisualMarkdownCodeEditorLineNumbers(bool val)
+{
+   return writePref("visual_markdown_code_editor_line_numbers", val);
+}
+
+/**
  * The default visual editing mode font size, in points
  */
 int UserPrefValues::visualMarkdownEditingFontSizePoints()
@@ -3139,6 +3152,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kVisualMarkdownEditingMaxContentWidth,
       kVisualMarkdownEditingShowDocOutline,
       kVisualMarkdownEditingShowMargin,
+      kVisualMarkdownCodeEditorLineNumbers,
       kVisualMarkdownEditingFontSizePoints,
       kVisualMarkdownCodeEditor,
       kZoteroLibraries,
