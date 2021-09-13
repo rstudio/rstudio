@@ -129,6 +129,7 @@ if [ "$NOTARIZATION_STATUS" == "success" ]; then
     xcrun stapler staple $1
 else
     echo "Notarization failed."
+    cat $XCRUN_RESULT
     exit 1
 fi
 
