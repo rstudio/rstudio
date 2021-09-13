@@ -20,9 +20,11 @@ import { InputRule } from 'prosemirror-inputrules';
 
 import { Extension, ExtensionContext } from '../../api/extension';
 import { PandocTokenType, PandocToken, PandocOutput } from '../../api/pandoc';
-import { BaseKey } from '../../api/basekeys';
-import { markIsActive, getMarkAttrs } from '../../api/mark';
+import { BaseKey, BaseKeyBinding } from '../../api/basekeys';
+import { markIsActive } from '../../api/mark';
 import { kCodeText } from '../../api/code';
+import { kPasteTransaction } from '../../api/transaction';
+import { kQuartoDocType } from '../../api/format';
 import { kMathContent, kMathType, delimiterForType, MathType, kMathId } from '../../api/math';
 import { MarkInputRuleFilter } from '../../api/input_rule';
 
@@ -31,10 +33,9 @@ import { mathAppendMarkTransaction } from './math-transaction';
 import { mathHighlightPlugin } from './math-highlight';
 import { MathPopupPlugin } from './math-popup';
 import { mathViewPlugins } from './math-view';
+import { displayMathNewline, inlineMathNav } from './math-keys';
 
 import './math-styles.css';
-import { kPasteTransaction } from '../../api/transaction';
-import { kQuartoDocType } from '../../api/format';
 
 const kInlineMathPattern = '\\$[^ ].*?[^\\ ]?\\$';
 const kInlineMathRegex = new RegExp(kInlineMathPattern);
@@ -240,11 +241,14 @@ const extension = (context: ExtensionContext): Extension | null => {
     ],
 
     baseKeys: (_schema: Schema) => {
+      const keys: BaseKeyBinding[] = [
+        { key: BaseKey.Home, command: inlineMathNav(true) },
+        { key: BaseKey.End, command: inlineMathNav(false) }
+      ];
       if (!singleLineDisplayMath) {
-        return [{ key: BaseKey.Enter, command: displayMathNewline() }];
-      } else {
-        return [];
-      }
+        keys.push({ key: BaseKey.Enter, command: displayMathNewline });
+      } 
+      return keys;
     },
 
     inputRules: (schema: Schema, filter: MarkInputRuleFilter) => {
@@ -354,31 +358,5 @@ function handlePasteIntoMath() {
   };
 }
 
-// enable insertion of newlines
-function displayMathNewline() {
-  return (state: EditorState, dispatch?: (tr: Transaction) => void) => {
-    // display math mark must be active
-
-    if (!displayMathIsActive(state)) {
-      return false;
-    }
-
-    // insert a newline
-    if (dispatch) {
-      const tr = state.tr;
-      tr.insertText('\n');
-      dispatch(tr);
-    }
-    return true;
-  };
-}
-
-function displayMathIsActive(state: EditorState) {
-  const schema = state.schema;
-  return (
-    markIsActive(state, schema.marks.math) &&
-    getMarkAttrs(state.doc, state.selection, schema.marks.math).type === MathType.Display
-  );
-}
 
 export default extension;
