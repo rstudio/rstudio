@@ -267,7 +267,7 @@ const extension = (context: ExtensionContext): Extension => {
       const commands = [
         new ListCommand(
           EditorCommandId.BulletList,
-          kPlatformMac ? ['Shift-Mod-8'] : [],
+          [],
           schema.nodes.bullet_list,
           schema.nodes.list_item,
           bulletListOmniInsert(ui),
@@ -275,7 +275,7 @@ const extension = (context: ExtensionContext): Extension => {
         ),
         new ListCommand(
           EditorCommandId.OrderedList,
-          kPlatformMac ? ['Shift-Mod-7'] : [],
+          [],
           schema.nodes.ordered_list,
           schema.nodes.list_item,
           orderedListOmniInsert(ui),
