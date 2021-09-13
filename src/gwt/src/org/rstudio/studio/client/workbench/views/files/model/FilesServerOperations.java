@@ -75,7 +75,6 @@ public interface FilesServerOperations
                    FileSystemItem targetFile,
                    ServerRequestCallback<Void> serverRequestCallback);
    
-   // touch file
    void touchFile(FileSystemItem newFile,
                   ServerRequestCallback<Void> requestCallback);
 

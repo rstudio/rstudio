@@ -39,16 +39,14 @@ public class FileCommandToolbar extends Toolbar
       addLeftWidget(commands.newFolder().createToolbarButton());
       addLeftSeparator();
       
-      // New File Menu
+      // New Blank File Menu
       ToolbarPopupMenu newFileMenu = new ToolbarPopupMenu();
       newFileMenu.addItem(commands.touchSourceDoc().createMenuItem(false));
       newFileMenu.addSeparator();
-      newFileMenu.addItem(commands.touchRNotebook().createMenuItem(false));
       newFileMenu.addItem(commands.touchRMarkdownDoc().createMenuItem(false));
       newFileMenu.addItem(commands.touchQuartoDoc().createMenuItem(false));
       newFileMenu.addSeparator();
-      // these two commands will automatically set up files and folders,
-      // so they do not need touch commands
+      // these two commands will automatically set up files and folders, so they do not need touch commands
       newFileMenu.addItem(commands.newRShinyApp().createMenuItem(false));
       newFileMenu.addItem(commands.newRPlumberDoc().createMenuItem(false));
       newFileMenu.addSeparator();
@@ -63,8 +61,8 @@ public class FileCommandToolbar extends Toolbar
       newFileMenu.addItem(commands.touchRHTMLDoc().createMenuItem(false));
 
       ToolbarMenuButton newFileButton = new ToolbarMenuButton(
-            "Create File",
-            "Create a new empty file in current directory",
+            "New Blank File",
+            "Create a new blank file in current directory",
             new ImageResource2x(icons.stock_new2x()),
             newFileMenu);
       ElementIds.assignElementId(newFileButton, ElementIds.MB_FILES_TOUCH_FILE);

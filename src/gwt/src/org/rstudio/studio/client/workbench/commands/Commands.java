@@ -252,7 +252,6 @@ public abstract class
    public abstract AppCommand newFolder();
    // ---
    public abstract AppCommand touchSourceDoc();
-   public abstract AppCommand touchRNotebook();
    public abstract AppCommand touchTextDoc();
    public abstract AppCommand touchCDoc();
    public abstract AppCommand touchCppDoc();
@@ -270,10 +269,7 @@ public abstract class
    public abstract AppCommand touchQuartoDoc();
    public abstract AppCommand touchRShinyApp();
    public abstract AppCommand touchRHTMLDoc();
-   public abstract AppCommand touchRDocumentationDoc();
-   public abstract AppCommand touchRPresentationDoc();
    public abstract AppCommand touchSqlDoc();
-   public abstract AppCommand touchRPlumberDoc();
    // ---
    public abstract AppCommand uploadFile();
    public abstract AppCommand copyFile();
