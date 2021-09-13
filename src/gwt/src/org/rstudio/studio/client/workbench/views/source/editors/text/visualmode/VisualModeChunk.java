@@ -252,9 +252,6 @@ public class VisualModeChunk
       chunkEditor.setMaxLines(1000);
       chunkEditor.setMinLines(1);
 
-      // Turn off line numbers as they're not helpful in chunks
-      chunkEditor.getRenderer().setShowGutter(false);
-      
       chunk_ = chunk;
    }
    
