@@ -19,6 +19,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Event;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -213,6 +215,21 @@ public class VisualModeChunk
             executeSelection();
          });
       };
+
+      DOM.sinkEvents(host_, Event.ONMOUSEOVER | Event.ONMOUSEOUT);
+      DOM.setEventListener(host_, evt ->
+      {
+         switch(evt.getTypeInt())
+         {
+            case Event.ONMOUSEOVER:
+               collapse_.getElement().getStyle().setOpacity(1);
+               break;
+
+            case Event.ONMOUSEOUT:
+               collapse_.getElement().getStyle().setOpacity(0);
+               break;
+         }
+      });
       
       // Register pref handlers, so that the new editor instance responds to
       // changes in preference values

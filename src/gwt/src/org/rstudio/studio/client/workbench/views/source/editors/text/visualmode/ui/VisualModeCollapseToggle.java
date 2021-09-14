@@ -47,7 +47,7 @@ public class VisualModeCollapseToggle extends Composite
       style.setPadding(4, Style.Unit.PX);
       style.setCursor(Style.Cursor.POINTER);
       style.setProperty("transform", initial ? "rotate(0deg)" : "rotate(-90deg)");
-      style.setProperty("transitionProperty", "transform");
+      style.setProperty("transitionProperty", "transform, opacity");
       style.setProperty("transitionDuration", "0.2s");
 
       DOM.sinkEvents(image.getElement(), Event.ONCLICK);
