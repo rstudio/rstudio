@@ -49,7 +49,7 @@ public class PanmirrorInsertTabsetDialog extends ModalDialog<PanmirrorInsertTabs
       // tabs tab
       VerticalTabPanel tabsTab = new VerticalTabPanel(ElementIds.VISUAL_MD_INSERT_TABSET_TABS);
       tabsTab.addStyleName(RES.styles().dialog());
-      tabsTab.add(new FormLabel("Tab names (provide at least two):"));
+      tabsTab.add(new FormLabel("Tab names:"));
       tabs_.add(addTabCaptionInput(tabsTab, 1, true, false));
       tabs_.add(addTabCaptionInput(tabsTab, 2, true, false));
       tabs_.add(addTabCaptionInput(tabsTab, 3, false));
@@ -126,7 +126,7 @@ public class PanmirrorInsertTabsetDialog extends ModalDialog<PanmirrorInsertTabs
    {
       TextBox textBox = PanmirrorDialogsUtil.addTextBox(tabsTab, ElementIds.VISUAL_MD_INSERT_TABSET_TAB + "_" + index, "");
       if (placeholder)
-         DomUtils.setPlaceholder(textBox, "(Tab " + index + (!required ? "- Optional" : "") + ")");
+         DomUtils.setPlaceholder(textBox, "(Tab " + index + (!required ? " - Optional" : "") + ")");
       return textBox;
    }
 
