@@ -157,7 +157,7 @@ public class VisualModeChunk
       host_.getStyle().setPosition(com.google.gwt.dom.client.Style.Position.RELATIVE);
 
       // add the collapse toggle
-      collapse_ = new VisualModeCollapseToggle();
+      collapse_ = new VisualModeCollapseToggle(true);
       host_.appendChild(collapse_.getElement());
 
       // add the editor

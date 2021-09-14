@@ -18,8 +18,11 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Image;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.ImageResource2x;
 
 public class VisualModeCollapseToggle extends Composite
@@ -30,15 +33,33 @@ public class VisualModeCollapseToggle extends Composite
       ImageResource expand2x();
    }
 
-   public VisualModeCollapseToggle()
+   public VisualModeCollapseToggle(boolean expanded)
    {
+      expanded_ = expanded;
+
       CollapseImages images = GWT.create(CollapseImages.class);
       Image image = new Image(new ImageResource2x(images.expand2x()));
       Style style = image.getElement().getStyle();
       style.setPosition(Style.Position.ABSOLUTE);
-      style.setTop(4, Style.Unit.PX);
-      style.setLeft(-16, Style.Unit.PX);
+      style.setTop(0, Style.Unit.PX);
+      style.setLeft(-20, Style.Unit.PX);
+      style.setPadding(4, Style.Unit.PX);
+      style.setCursor(Style.Cursor.POINTER);
+      style.setProperty("transform", expanded_ ? "rotate(0deg)" : "rotate(-90deg)");
+      style.setProperty("transitionProperty", "transform");
+      style.setProperty("transitionDuration", "0.2s");
+
+      DOM.sinkEvents(image.getElement(), Event.ONCLICK);
+      DOM.setEventListener(image.getElement(), evt ->
+      {
+         expanded_ = !expanded_;
+
+         style.setProperty("transform", expanded_ ?
+            "rotate(0deg)" : "rotate(-90deg)");
+      });
 
       initWidget(image);
    }
+
+   boolean expanded_;
 }
