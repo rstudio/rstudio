@@ -57,8 +57,17 @@ scp -o StrictHostKeyChecking=no -i $IDENTITY www-data@rstudio.org:/srv/www/rstud
 # .htaccess expects URL encoded URLs so replace the + with %2B
 ENC_URL=`echo $URL | sed -e 's/+/%2B/'`
 
-# replace existing redirect
-sed -i.bak "s/${FLAVOR}\/${OS}\/${LATEST} .*/${FLAVOR}\/${OS}\/${LATEST} ${ENC_URL//\//\\/}/" $HTACCESS
+if grep "/${FLAVOR}/${OS}/${LATEST}" $HTACCESS > /dev/null ; then
+
+   # replace existing redirect
+   sed -i.bak "s/${FLAVOR}\/${OS}\/${LATEST} .*/${FLAVOR}\/${OS}\/${LATEST} ${ENC_URL//\//\\/}/" $HTACCESS
+
+   echo "Updated daily URL https://rstudio.org/download/latest/daily/${FLAVOR}/${OS}/${LATEST} to ${ENC_URL}"
+else
+   echo "  - daily URL - not found - appending new entry:"
+   echo "Redirect 302 /download/latest/daily/${FLAVOR}/${OS}/${LATEST} ${ENC_URL}"
+   echo "Redirect 302 /download/latest/daily/${FLAVOR}/${OS}/${LATEST} ${ENC_URL}" >> $HTACCESS
+fi
 
 # copy it back up
 echo "Uploading new .htaccess..."
