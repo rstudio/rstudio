@@ -21,6 +21,7 @@ import java.util.Map;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -602,14 +603,24 @@ public class VisualModeChunk
       // the parent document, then executing row 2 in the chunk means executing
       // row 14 in the parent.
       //
-      // Consider: Do we need to adjust the column, too? (For chunks indented in
-      // the parent document, such as inside a list)
-      int offset = scope_.getPreamble().getRow();
+      // Compute the row offset from the position of the chunk in the editor.
+      int offsetRow = scope_.getPreamble().getRow();
+
       selectionRange.getStart().setRow(
-            selectionRange.getStart().getRow() + offset);
+         selectionRange.getStart().getRow() + offsetRow);
       selectionRange.getEnd().setRow(
-            selectionRange.getEnd().getRow() + offset);
-      
+         selectionRange.getEnd().getRow() + offsetRow);
+
+      // Compute the column offset by examining the size of the leading whitespace
+      // (if any) present in the chunk preamble. This handles a case wherein the chunk
+      // is indented in the parent editor, such as inside a list.
+      String chunkPreamble = parent_.getTextForRange(Range.create(offsetRow, 0, offsetRow + 1, 0));
+      int offsetCol = chunkPreamble.length() - StringUtil.trimLeft(chunkPreamble).length();
+      selectionRange.getStart().setColumn(
+         selectionRange.getStart().getColumn() + offsetCol);
+      selectionRange.getEnd().setColumn(
+         selectionRange.getEnd().getColumn() + offsetCol);
+
       // Execute selection in the parent
       parent_.setSelectionRange(selectionRange);
 
@@ -626,11 +637,15 @@ public class VisualModeChunk
             return;
 
          // Reverse the offset adjustment and apply selection to the nested
-         // editor
+         // editor.
          postExecution.getStart().setRow(
-               postExecution.getStart().getRow() - offset);
+               postExecution.getStart().getRow() - offsetRow);
          postExecution.getEnd().setRow(
-               postExecution.getEnd().getRow() - offset);
+               postExecution.getEnd().getRow() - offsetRow);
+         postExecution.getStart().setColumn(
+            postExecution.getStart().getColumn() - offsetCol);
+         postExecution.getEnd().setColumn(
+            postExecution.getEnd().getColumn() - offsetCol);
          editor_.setSelectionRange(postExecution);
       });
    }
