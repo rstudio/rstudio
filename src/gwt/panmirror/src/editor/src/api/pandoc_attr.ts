@@ -68,6 +68,15 @@ export function pandocAttrFrom(attrs: any) {
   return pandocAttr;
 }
 
+export function pandocAttrHasClass(attrs: any, predicate: (str: string) => boolean) {
+  if (Array.isArray(attrs.classes)) {
+    const classes = attrs.classes as string[];
+    return classes.some(clz => predicate(clz));
+  } else {
+    return false;
+  }
+}
+
 export function pandocAttrInSpec(spec: NodeSpec | MarkSpec) {
   const keys = Object.keys((spec.attrs as object) || {});
   return keys.includes('id') && keys.includes('classes') && keys.includes('keyvalue');

@@ -75,7 +75,7 @@ export type YesNoMessageFn = (
 
 export type AttrEditorFn = (attr: AttrProps, idHint?: string) => Promise<AttrEditResult | null>;
 
-export type DivAttrEditorFn = (attr: AttrProps, removeEnabled: boolean) => Promise<AttrEditResult | null>;
+export type DivAttrEditorFn = (props: DivEditProps, removeEnabled: boolean) => Promise<DivEditResult | null>;
 
 export type LinkEditorFn = (
   link: LinkProps,
@@ -116,6 +116,22 @@ export interface AttrProps {
 export interface AttrEditResult {
   readonly action: 'edit' | 'remove';
   readonly attr: AttrProps;
+}
+
+export interface DivEditProps {
+  attr: AttrProps;
+  callout?: CalloutProps;
+}
+
+export interface DivEditResult extends DivEditProps {
+  readonly action: "edit" | "remove";
+}
+
+export interface CalloutProps {
+  type: "note" | "tip" | "important" | "caution" | "warning";
+  appearance: "default" | "simple" | "minimal";
+  icon: boolean;
+  caption: string;
 }
 
 export interface LinkProps extends AttrProps {

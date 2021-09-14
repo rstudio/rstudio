@@ -604,6 +604,10 @@ public class ElementIds
    public final static String VISUAL_MD_INSERT_TABSET_TABS = "visual_md_insert_tabset_tabs";
    public final static String VISUAL_MD_INSERT_TABSET_ATTRIBUTES = "visual_md_insert_tabset_attributes";
    public final static String VISUAL_MD_INSERT_TABSET_TAB = "visual_md_insert_tabset_tab";
+   public final static String VISUAL_MD_DIV_TAB_ATTRIBUTES = "visual_md_div_tab_attributes";
+   public final static String VISUAL_MD_DIV_REMOVE_BUTTON = "visual_md_div_remove_button";
+
+
 
 
    // ProgressDialog

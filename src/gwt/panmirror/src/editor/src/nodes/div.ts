@@ -29,6 +29,7 @@ import {
   pandocAttrFrom,
   pandocAttrAvailable,
   PandocAttr,
+  pandocAttrHasClass,
 } from '../api/pandoc_attr';
 import { PandocOutput, PandocTokenType, PandocToken } from '../api/pandoc';
 import { ProsemirrorCommand, EditorCommandId, toggleWrap } from '../api/command';
@@ -204,12 +205,16 @@ class DivCommand extends ProsemirrorCommand {
 
 async function editDiv(ui: EditorUI, state: EditorState, dispatch: (tr: Transaction) => void, div: ContentNodeWithPos) {
   const attr = pandocAttrFrom(div.node.attrs);
-  const result = await ui.dialogs.editDiv(attr, pandocAttrAvailable(attr));
+  const callout = pandocAttrHasClass(attr, clz => clz.startsWith("callout-"));
+    
+  // TODO: if this is a callout then cleave up the props
+
+  const result = await ui.dialogs.editDiv({ attr }, pandocAttrAvailable(attr));
+   
   if (result) {
     const tr = state.tr;
     if (result.action === 'edit') {
       tr.setNodeMarkup(div.pos, div.node.type, result.attr);
-      dispatch(tr);
     } else if (result.action === 'remove') {
       const fromPos = tr.doc.resolve(div.pos + 1);
       const toPos = tr.doc.resolve(div.pos + div.node.nodeSize - 1);
@@ -220,17 +225,24 @@ async function editDiv(ui: EditorUI, state: EditorState, dispatch: (tr: Transact
           tr.lift(nodeRange, targetLiftDepth);
         }
       }
-      dispatch(tr);
     }
+    // TODO: if this is a callout then deal w/ caption changes
+    // TODO: if the caption changed than insert/update it as necessary
+    // (similar to link we don't touch it if it hasn't changed, which preseves markdown)
+    dispatch(tr);
   }
 }
 
-async function createDiv(ui: EditorUI, state: EditorState, dispatch: (tr: Transaction) => void) {
-  const result = await ui.dialogs.editDiv({}, false);
+async function createDiv(ui: EditorUI, state: EditorState, dispatch: (tr: Transaction) => void, 
+                         insertFn?: (tr: Transaction, div: ContentNodeWithPos) => void) {
+  const result = await ui.dialogs.editDiv({ attr: {} }, false);
   if (result) {
     wrapIn(state.schema.nodes.div)(state, (tr: Transaction) => {
       const div = findParentNodeOfType(state.schema.nodes.div)(tr.selection)!;
-      tr.setNodeMarkup(div.pos, div.node.type, result.attr);
+      tr.setNodeMarkup(div.pos, div.node.type, result.attr);   
+      if (insertFn) {
+        insertFn(tr, div);
+      } 
       dispatch(tr);
     });
   }
