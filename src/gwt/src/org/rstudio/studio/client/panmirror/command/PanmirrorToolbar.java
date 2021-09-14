@@ -77,8 +77,6 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       
       insertWidgets_ = addWidgetGroup(
          addLeftButton(PanmirrorCommands.Link),
-         addLeftButton(PanmirrorCommands.Citation),
-         addLeftSeparator(),
          addLeftButton(PanmirrorCommands.Image),
          addLeftSeparator()
       );
@@ -91,6 +89,14 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       
       PanmirrorToolbarMenu insertMenu = new PanmirrorToolbarMenu(commands_, menus_.insert);
       addLeftTextMenu(new ToolbarMenuButton("Insert", "Insert", null, insertMenu, false)); 
+      
+      if (menus_.reference.length > 0)
+      {
+         addLeftSeparator();
+         PanmirrorToolbarMenu referenceMenu = new PanmirrorToolbarMenu(commands_, menus_.reference);
+         addLeftTextMenu(new ToolbarMenuButton("Reference", "Reference", null, referenceMenu, false)); 
+        
+      }
       
       if (haveAnyOf(PanmirrorCommands.TableInsertTable)) 
       {
@@ -151,9 +157,9 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       if (width == 0)
          return;
          
-      formatWidgets_.setVisible(width > 475);
-      blockWidgets_.setVisible(width > 555);
-      insertWidgets_.setVisible(width > 610);
+      formatWidgets_.setVisible(width > 490);
+      blockWidgets_.setVisible(width > 570);
+      insertWidgets_.setVisible(width > 625);
       
    }
    

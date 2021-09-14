@@ -16,11 +16,11 @@
 import { EditorMenuItem, EditorUI } from '../api/ui';
 import { tableMenu } from '../api/table';
 import { EditorCommandId, EditorCommand } from '../api/command';
-import { Editor } from './editor';
 
 export interface EditorMenus {
   format: EditorMenuItem[];
   insert: EditorMenuItem[];
+  reference: EditorMenuItem[];
   table: EditorMenuItem[];
 }
 
@@ -28,6 +28,7 @@ export function editorMenus(ui: EditorUI, commands: EditorCommand[]) {
   return {
     format: formatMenu(ui, commands),
     insert: insertMenu(ui, commands),
+    reference: haveReferenceMenu(commands) ? referenceMenu(ui, commands) : [],
     table: tableMenu(true, ui),
   };
 }
@@ -123,16 +124,25 @@ function insertMenu(ui: EditorUI, commands: EditorCommand[]) {
         ]
       : []),
     { separator: true },
-    { command: EditorCommandId.Citation },
-    { command: EditorCommandId.CrossReference },
-    { command: EditorCommandId.Footnote },
-    { separator: true },
     { command: EditorCommandId.Image },
     { command: EditorCommandId.Link },
     { command: EditorCommandId.HorizontalRule },
+    { separator: true },
+    ...(haveAnyOf(commands, EditorCommandId.InlineMath, EditorCommandId.DisplayMath)
+    ? [
+        {
+          text: ui.context.translateText('LaTeX Math'),
+          subMenu: {
+            items: [
+              { command: EditorCommandId.InlineMath },
+              { command: EditorCommandId.DisplayMath },
+            ],
+          },
+        },
+      ]
+    : []),
     ...(haveAnyOf(commands, EditorCommandId.DefinitionList)
       ? [
-          { separator: true },
           {
             text: ui.context.translateText('Definition'),
             subMenu: {
@@ -146,10 +156,6 @@ function insertMenu(ui: EditorUI, commands: EditorCommand[]) {
           },
         ]
       : []),
-    { separator: true },
-    { command: EditorCommandId.InlineMath },
-    { command: EditorCommandId.DisplayMath },
-    { separator: true },
     {
       text: ui.context.translateText('Special Characters'),
       subMenu: {
@@ -176,6 +182,22 @@ function insertMenu(ui: EditorUI, commands: EditorCommand[]) {
     { separator: true },
     { command: EditorCommandId.HTMLComment },
   ];
+}
+
+function referenceMenu(ui: EditorUI, commands: EditorCommand[]) {
+  return [
+    { command: EditorCommandId.Citation },
+    { command: EditorCommandId.CrossReference },
+    { command: EditorCommandId.Footnote },
+  ];
+}
+
+function haveReferenceMenu(commands: EditorCommand[]) {
+  return haveAnyOf(commands, 
+    EditorCommandId.Citation,
+    EditorCommandId.CrossReference,
+    EditorCommandId.Footnote
+  );
 }
 
 function haveAnyOf(commands: EditorCommand[], ...ids: EditorCommandId[]) {
