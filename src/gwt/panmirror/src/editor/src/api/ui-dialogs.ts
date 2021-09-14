@@ -35,6 +35,7 @@ export interface EditorDialogs {
   editRawBlock: RawFormatEditorFn;
   editMath: MathEditorFn;
   insertTable: InsertTableFn;
+  insertTabset: InsertTabsetFn;
   insertCite: InsertCiteFn;
   htmlDialog: EditorHTMLDialogFn;
 }
@@ -104,6 +105,8 @@ export type InsertTableFn = (capabilities: TableCapabilities) => Promise<InsertT
 
 export type InsertCiteFn = (props: InsertCiteProps) => Promise<InsertCiteResult | null>;
 
+export type InsertTabsetFn = () => Promise<InsertTabsetResult | null>;
+
 export interface AttrProps {
   readonly id?: string;
   readonly classes?: string[];
@@ -162,6 +165,11 @@ export interface InsertTableResult {
   cols: number;
   header: boolean;
   caption?: string;
+}
+
+export interface InsertTabsetResult {
+  tabs: string[];
+  attr: AttrProps;
 }
 
 export interface InsertCiteProps {

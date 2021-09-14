@@ -601,6 +601,10 @@ public class ElementIds
    public final static String VISUAL_MD_CODE_BLOCK_LANG_LABEL1 = "visual_md_code_block_lang_label1";
    public final static String VISUAL_MD_CODE_BLOCK_LANG_LABEL2 = "visual_md_code_block_lang_label2";
    public final static String VISUAL_MD_CODE_BLOCK_LANG = "visual_md_code_block_tab_lang";
+   public final static String VISUAL_MD_INSERT_TABSET_TABS = "visual_md_insert_tabset_tabs";
+   public final static String VISUAL_MD_INSERT_TABSET_ATTRIBUTES = "visual_md_insert_tabset_attributes";
+   public final static String VISUAL_MD_INSERT_TABSET_TAB = "visual_md_insert_tabset_tab";
+
 
    // ProgressDialog
    public final static String PROGRESS_TITLE_LABEL = "progress_title_label";

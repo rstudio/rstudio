@@ -28,6 +28,7 @@ import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorImageProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertCiteProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertCiteResult;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertTableResult;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertTabsetResult;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorLinkCapabilities;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorLinkEditResult;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorLinkProps;
@@ -264,6 +265,18 @@ public class PanmirrorDialogs {
          (ResolveCallbackFn<PanmirrorInsertTableResult> resolve, RejectCallbackFn reject) -> {  
             PanmirrorInsertTableDialog dialog = new PanmirrorInsertTableDialog(capabilities, (result) -> {
                resolve.onInvoke(result);
+            });
+            dialog.showModal(false);
+         }
+      );
+   }
+   
+   public Promise<PanmirrorInsertTabsetResult> insertTabset()
+   {
+      return new Promise<>(
+         (ResolveCallbackFn<PanmirrorInsertTabsetResult> resolve, RejectCallbackFn reject) -> { 
+            PanmirrorInsertTabsetDialog dialog = new PanmirrorInsertTabsetDialog((result) -> {
+              resolve.onInvoke(result);
             });
             dialog.showModal(false);
          }

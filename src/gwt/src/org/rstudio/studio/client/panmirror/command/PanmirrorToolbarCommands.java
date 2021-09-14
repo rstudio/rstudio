@@ -138,6 +138,7 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntryProvider
       add(PanmirrorCommands.EnDash, "Insert:::En Dash (–)");
       add(PanmirrorCommands.NonBreakingSpace, "Insert:::Non-Breaking Space");
       add(PanmirrorCommands.HardLineBreak, "Insert:::Hard Line Break");
+      add(PanmirrorCommands.Tabset, "Insert:::Tabset...");
       
       // outline
       add(PanmirrorCommands.GoToNextSection, "Go to Next Section");

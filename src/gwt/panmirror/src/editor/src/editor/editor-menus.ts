@@ -126,6 +126,7 @@ function insertMenu(ui: EditorUI, commands: EditorCommand[]) {
     { separator: true },
     { command: EditorCommandId.Image },
     { command: EditorCommandId.Link },
+    { command: EditorCommandId.Shortcode },
     { command: EditorCommandId.HorizontalRule },
     { separator: true },
     ...(haveAnyOf(commands, EditorCommandId.InlineMath, EditorCommandId.DisplayMath)
@@ -174,11 +175,15 @@ function insertMenu(ui: EditorUI, commands: EditorCommand[]) {
     },
     { separator: true },
     { command: EditorCommandId.ParagraphInsert },
-    { command: EditorCommandId.CodeBlockFormat },
     { command: EditorCommandId.InsertDiv },
-    { command: EditorCommandId.YamlMetadata },
+    ...(haveAnyOf(commands, EditorCommandId.Tabset)
+     ? [
+      { separator: true },
+      { command: EditorCommandId.Tabset },
+     ] : []),
     { separator: true },
-    { command: EditorCommandId.Shortcode },
+    { command: EditorCommandId.CodeBlockFormat },
+    { command: EditorCommandId.YamlMetadata },
     { separator: true },
     { command: EditorCommandId.HTMLComment },
   ];

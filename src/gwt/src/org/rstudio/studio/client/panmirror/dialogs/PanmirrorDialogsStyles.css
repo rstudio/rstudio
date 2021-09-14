@@ -109,6 +109,11 @@
    height: 295px;
 }
 
+.insertTabsetDialogTabs {
+   width: 380px;
+   height: 295px;
+}
+
 .hrefSelect {
    width: 98%;
 }
