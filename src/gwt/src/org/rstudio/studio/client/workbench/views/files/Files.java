@@ -42,7 +42,6 @@ import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.fileexport.FileExport;
-import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.filetypes.events.OpenFileInBrowserEvent;
@@ -639,10 +638,16 @@ public class Files
       view_.selectNone();
    }
 
-   // the purpose of this function is specifically to pre-screen selected files for the following:
-   //  - the file must NOT be a directory
-   //  - the file must NOT already be open in a source editor 
-   //  - if the file is an RNotebook, then make sure that only ONE .RMarkdown file is opened for editing 
+   /**
+   * the purpose of this function is specifically to pre-screen selected files for the following:
+   *  - the file must NOT be a directory
+   *  - the file must NOT already be open in a source editor 
+   *  - if the file is an RNotebook (.nb[.html]), then make sure that only ONE .RMarkdown (.Rmd) 
+   *    file is selected
+   *
+   * @param onCompleted a callback passed {@code <List<FileSystemItem>>}, which is the screened 
+   *                    list of selected files
+   */
    private void getUnopenedSelectedFiles(final CommandWithArg<List<FileSystemItem>> onCompleted)
    {
       final SourceColumnManager mgr = RStudioGinjector.INSTANCE.getSourceColumnManager();
@@ -650,23 +655,23 @@ public class Files
 
       // Use parallelCommandList to execute these requests as fast as possible in parallel, asynchronously
       ParallelCommandList commandList = new ParallelCommandList(new Command()
-            {
-               @Override
-               public void execute() 
-               {
-                  final ArrayList<FileSystemItem> selectedFiles = new ArrayList<>(); 
-                  selectedFilePaths.forEach((String path) -> {
-                     selectedFiles.add(FileSystemItem.createFile(path));
-                  });
-                  onCompleted.execute(selectedFiles);
-               }
+      {
+         @Override
+         public void execute() 
+         {
+            final ArrayList<FileSystemItem> selectedFiles = new ArrayList<>(); 
+            selectedFilePaths.forEach((String path) -> {
+               selectedFiles.add(FileSystemItem.createFile(path));
             });
+            onCompleted.execute(selectedFiles);
+         }
+      });
 
 
       final List<FileSystemItem> notebooks = new ArrayList<>();
 
       // pre-process to make sure there aren't any directories, and that already-open files do not count
-      // towards the column limit
+      // towards the column limit. Take notebooks out for additional processing.
       for (FileSystemItem item : view_.getSelectedFiles()) 
       {
          if (!item.isDirectory() && !mgr.openFileAlreadyOpen(item, null))
@@ -682,39 +687,39 @@ public class Files
       for (FileSystemItem notebook : notebooks)
       {
          commandList.addCommand(new SerializedCommand()
-               {
-                  @Override
-                  public void onExecute(final Command continuation)
-                  {
-                     final String rnbPath = notebook.getPath();
-                     final String rmdPath = FilePathUtils.filePathSansExtension(rnbPath) + ".Rmd";
+         {
+            @Override
+            public void onExecute(final Command continuation)
+            {
+               final String rnbPath = notebook.getPath();
+               final String rmdPath = FilePathUtils.filePathSansExtension(rnbPath) + ".Rmd";
 
-                     mgr.extractRmdFile(
-                           notebook,
-                           new ResultCallback<SourceDocumentResult, ServerError>()
-                           {
-                              @Override
-                              public void onSuccess(SourceDocumentResult doc)
-                              {
-                                 // this means the operation succeeded; add ONLY the Rmd file to the list
-                                 // if it is not already open in a source editor
-                                 final FileSystemItem rmdFile = FileSystemItem.createFile(rmdPath);
-                                 if (!selectedFilePaths.contains(rmdPath) 
-                                       && !mgr.openFileAlreadyOpen(rmdFile, null))
-                                    selectedFilePaths.add(rmdPath);
+               mgr.extractRmdFile(
+                     notebook,
+                     new ResultCallback<SourceDocumentResult, ServerError>()
+                     {
+                        @Override
+                        public void onSuccess(SourceDocumentResult doc)
+                        {
+                           // this means the operation succeeded; add ONLY the Rmd file to the list
+                           // if it is not already open in a source editor
+                           final FileSystemItem rmdFile = FileSystemItem.createFile(rmdPath);
+                           if (!selectedFilePaths.contains(rmdPath)  &&
+                               !mgr.openFileAlreadyOpen(rmdFile, null))
+                              selectedFilePaths.add(rmdPath);
 
-                                 continuation.execute();
-                              }
+                           continuation.execute();
+                        }
 
-                              @Override
-                              public void onFailure(ServerError error)
-                              {
-                                 // fail silently?
-                                 continuation.execute();
-                              }
-                           });
-                  }
-               });
+                        @Override
+                        public void onFailure(ServerError error)
+                        {
+                           // fail silently?
+                           continuation.execute();
+                        }
+                     });
+            }
+         });
       }
 
       commandList.run();
@@ -758,33 +763,33 @@ public class Files
             for (FileSystemItem item : openInColumns)
             {
                openCommands.addCommand(new SerializedCommand()
-                     {
-                        @Override
-                        public void onExecute(final Command continuation)
-                        {
-                           paneManager_.openFileInNewColumn(item, continuation);
-                        }
-                     });
+               {
+                  @Override
+                  public void onExecute(final Command continuation)
+                  {
+                     paneManager_.openFileInNewColumn(item, continuation);
+                  }
+               });
             }
 
             // open the remaining selected files in whichever column happens to be active at that point
             openCommands.addCommand(new SerializedCommand()
+            {
+               @Override
+               public void onExecute(final Command continuation)
+               {
+                  if (columnsRemaining < selectedFiles.size()) 
                   {
-                     @Override
-                     public void onExecute(final Command continuation)
-                     {
-                        if (columnsRemaining < selectedFiles.size()) 
-                        {
-                           final List<FileSystemItem> openRegular = selectedFiles.subList(columnsRemaining, selectedFiles.size());
+                     final List<FileSystemItem> openRegular = selectedFiles.subList(columnsRemaining, selectedFiles.size());
 
-                           for (FileSystemItem item : openRegular) 
-                           {
-                              mgr.openFile(item);
-                           }
-                        }
-                        continuation.execute();
+                     for (FileSystemItem item : openRegular) 
+                     {
+                        mgr.openFile(item);
                      }
-                  });
+                  }
+                  continuation.execute();
+               }
+            });
 
             openCommands.run();
             view_.selectNone();

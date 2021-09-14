@@ -755,15 +755,16 @@ public class PaneManager
                targetFile, 
                fileTypeRegistry_.getTextTypeForFile(targetFile),
                column,
-               new CommandWithArg<EditingTarget>() {
-                  @Override
-                  public void execute(EditingTarget target)
+               new CommandWithArg<EditingTarget>() 
                   {
-                     column.decrementNewTabPending();
-                     if (onOpen != null) 
-                        onOpen.execute();
-                  }
-               });
+                     @Override
+                     public void execute(EditingTarget target)
+                     {
+                        column.decrementNewTabPending();
+                        if (onOpen != null) 
+                           onOpen.execute();
+                     }
+                  });
       }
    }
 
