@@ -24,6 +24,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Image;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.studio.client.common.Value;
 
 public class VisualModeCollapseToggle extends Composite
 {
@@ -33,9 +34,9 @@ public class VisualModeCollapseToggle extends Composite
       ImageResource expand2x();
    }
 
-   public VisualModeCollapseToggle(boolean expanded)
+   public VisualModeCollapseToggle(boolean initial)
    {
-      expanded_ = expanded;
+      expanded = new Value<Boolean>(initial);
 
       CollapseImages images = GWT.create(CollapseImages.class);
       Image image = new Image(new ImageResource2x(images.expand2x()));
@@ -45,21 +46,24 @@ public class VisualModeCollapseToggle extends Composite
       style.setLeft(-20, Style.Unit.PX);
       style.setPadding(4, Style.Unit.PX);
       style.setCursor(Style.Cursor.POINTER);
-      style.setProperty("transform", expanded_ ? "rotate(0deg)" : "rotate(-90deg)");
+      style.setProperty("transform", initial ? "rotate(0deg)" : "rotate(-90deg)");
       style.setProperty("transitionProperty", "transform");
       style.setProperty("transitionDuration", "0.2s");
 
       DOM.sinkEvents(image.getElement(), Event.ONCLICK);
       DOM.setEventListener(image.getElement(), evt ->
       {
-         expanded_ = !expanded_;
+         expanded.setValue(!expanded.getValue(), true);
+      });
 
-         style.setProperty("transform", expanded_ ?
+      expanded.addValueChangeHandler(evt ->
+      {
+         style.setProperty("transform", evt.getValue() ?
             "rotate(0deg)" : "rotate(-90deg)");
       });
 
       initWidget(image);
    }
 
-   boolean expanded_;
+   public Value<Boolean> expanded;
 }
