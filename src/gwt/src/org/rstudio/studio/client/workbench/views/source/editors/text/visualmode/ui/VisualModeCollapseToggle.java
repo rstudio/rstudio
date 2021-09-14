@@ -1,0 +1,44 @@
+/*
+ * VisualModeCollapseToggle.java
+ *
+ * Copyright (C) 2021 by RStudio, PBC
+ *
+ * Unless you have received this program directly from RStudio pursuant
+ * to the terms of a commercial license agreement with RStudio, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.ui;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.Image;
+import org.rstudio.core.client.resources.ImageResource2x;
+
+public class VisualModeCollapseToggle extends Composite
+{
+   public interface CollapseImages extends ClientBundle
+   {
+      @Source("expand_2x.png")
+      ImageResource expand2x();
+   }
+
+   public VisualModeCollapseToggle()
+   {
+      CollapseImages images = GWT.create(CollapseImages.class);
+      Image image = new Image(new ImageResource2x(images.expand2x()));
+      Style style = image.getElement().getStyle();
+      style.setPosition(Style.Position.ABSOLUTE);
+      style.setTop(4, Style.Unit.PX);
+      style.setLeft(-16, Style.Unit.PX);
+
+      initWidget(image);
+   }
+}

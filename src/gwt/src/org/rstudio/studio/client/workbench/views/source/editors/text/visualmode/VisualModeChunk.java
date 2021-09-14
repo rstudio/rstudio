@@ -47,6 +47,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkCo
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualMode.SyncType;
+import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.ui.VisualModeCollapseToggle;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions;
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
@@ -152,8 +153,14 @@ public class VisualModeChunk
 
       // Provide the editor's container element
       host_ = Document.get().createDivElement();
-      host_.appendChild(chunkEditor.getContainer());
       host_.getStyle().setPosition(com.google.gwt.dom.client.Style.Position.RELATIVE);
+
+      // add the collapse toggle
+      collapse_ = new VisualModeCollapseToggle();
+      host_.appendChild(collapse_.getElement());
+
+      // add the editor
+      host_.appendChild(chunkEditor.getContainer());
 
       // Create an element to host all of the execution status widgets
       // (VisualModeChunkRowState).
@@ -699,6 +706,7 @@ public class VisualModeChunk
    private final ArrayList<HandlerRegistration> releaseOnDismiss_;
    private final VisualModeEditorSync sync_;
    private final EditingTargetCodeExecution codeExecution_;
+   private final VisualModeCollapseToggle collapse_;
    private final Map<Integer,VisualModeChunkRowState> rowState_;
    private final TextEditingTarget target_;
    private final int markdownIndex_;
