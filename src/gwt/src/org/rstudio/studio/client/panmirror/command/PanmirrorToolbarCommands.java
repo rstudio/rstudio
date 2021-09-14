@@ -117,7 +117,7 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntryProvider
       add(PanmirrorCommands.OmniInsert, "Any...", icons.OMNI);
       add(PanmirrorCommands.Link, "Link...", icons.LINK);
       add(PanmirrorCommands.RemoveLink, "Remove Link");
-      add(PanmirrorCommands.Image, "Image...", icons.IMAGE);
+      add(PanmirrorCommands.Image, "Figure / Image...", icons.IMAGE);
       add(PanmirrorCommands.Footnote, "Footnote");
       add(PanmirrorCommands.HorizontalRule, "Horizontal Rule");
       add(PanmirrorCommands.ParagraphInsert, "Paragraph");
