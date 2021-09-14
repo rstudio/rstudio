@@ -489,6 +489,29 @@ core::Error renameFile(const core::json::JsonRpcRequest& request,
    return Success();
 }
 
+// IN: String newPath
+core::Error touchFile(const core::json::JsonRpcRequest& request,
+                       json::JsonRpcResponse* pResponse)
+{
+   // read params
+   std::string newPath;
+   Error error = json::readParams(request.params, &newPath);
+   if (error)
+      return error;
+
+   // if the destination already exists then send back file exists
+   FilePath destPath = module_context::resolveAliasedPath(newPath);
+   if (destPath.exists())
+      return fileExistsError(ERROR_LOCATION);
+   
+   // attempt to create the file
+   Error touchError = destPath.ensureFile();
+   if (touchError)
+      return touchError;
+   
+   return Success();
+}
+
 void handleFilesRequest(const http::Request& request, 
                         http::Response* pResponse)
 {   
@@ -1380,6 +1403,7 @@ Error initialize()
       (bind(registerRpcMethod, "copy_file", copyFile))
       (bind(registerRpcMethod, "move_files", moveFiles))
       (bind(registerRpcMethod, "rename_file", renameFile))
+      (bind(registerRpcMethod, "touch_file", touchFile))
       (bind(registerUriHandler, "/files", handleFilesRequest))
       (bind(registerUploadHandler, "/upload", handleFileUploadRequestAsync))
       (bind(registerUriHandler, "/export", handleFileExportRequest))
