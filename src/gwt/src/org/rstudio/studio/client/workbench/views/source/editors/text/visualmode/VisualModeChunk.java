@@ -157,6 +157,10 @@ public class VisualModeChunk
 
       // add the collapse toggle
       collapse_ = new VisualModeCollapseToggle(true);
+      releaseOnDismiss_.add(collapse_.expanded.addValueChangeHandler(evt ->
+      {
+         host_.getStyle().setOpacity(evt.getValue() ? 1 : 0.5);
+      }));
       host_.appendChild(collapse_.getElement());
 
       // add the editor
