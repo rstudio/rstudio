@@ -277,13 +277,6 @@
   dependencies:
     "@types/prosemirror-model" "*"
 
-"@types/prosemirror-transform@^1.1.4":
-  version "1.1.4"
-  resolved "https://registry.yarnpkg.com/@types/prosemirror-transform/-/prosemirror-transform-1.1.4.tgz#c3565e81b2ef3ce3254e6927d6f63eb8d7bb20d0"
-  integrity sha512-HP1PauvkqSgDquZut8HaLOTUDQ6jja/LAy4OA7tTS1XG7wqRnX3gLUyEj0mD6vFd4y8BPkNddNdOh/BeGHlUjg==
-  dependencies:
-    "@types/prosemirror-model" "*"
-
 "@types/prosemirror-view@*":
   version "1.11.2"
   resolved "https://registry.yarnpkg.com/@types/prosemirror-view/-/prosemirror-view-1.11.2.tgz#58af5dcb7de20b7de874de99147552d5627209a1"
