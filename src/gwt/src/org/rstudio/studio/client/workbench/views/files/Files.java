@@ -36,6 +36,7 @@ import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.fileexport.FileExport;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.filetypes.events.OpenFileInBrowserEvent;
 import org.rstudio.studio.client.common.filetypes.events.RenameSourceFileEvent;
 import org.rstudio.studio.client.events.RStudioApiRequestEvent;
@@ -59,6 +60,7 @@ import org.rstudio.studio.client.workbench.views.files.model.DirectoryListing;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.files.model.PendingFileUpload;
+import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 import org.rstudio.studio.client.workbench.views.source.events.SourcePathChangedEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.CreateNewTerminalEvent;
 
@@ -153,6 +155,7 @@ public class Files
                 FileTypeRegistry fileTypeRegistry,
                 ConsoleDispatcher consoleDispatcher,
                 WorkbenchContext workbenchContext,
+                SourceColumnManager columnManager,
                 DataImportPresenter dataImportPresenter)
    {
       super(view);
@@ -171,6 +174,7 @@ public class Files
       pFilesUpload_ = pFilesUpload;
       pFileExport_ = pFileExport;
       pPrefs_ = pPrefs;
+      columnManager_ = columnManager;
       dataImportPresenter_ = dataImportPresenter;
 
       ((Binder)GWT.create(Binder.class)).bind(commands, this);
@@ -381,6 +385,61 @@ public class Files
                         new VoidServerRequestCallback(progress));
                }
             });
+   }
+   
+   @Handler
+   void onTouchSourceDoc() {
+      touchFile(FileTypeRegistry.R);
+   }
+
+   @Handler
+   void onTouchRMarkdownDoc() {
+      touchFile(FileTypeRegistry.RMARKDOWN);
+   }
+
+   @Handler
+   void onTouchQuartoDoc() {
+      touchFile(FileTypeRegistry.QUARTO);
+   }
+
+   @Handler
+   void onTouchTextDoc() {
+      touchFile(FileTypeRegistry.TEXT);
+   }
+
+   @Handler
+   void onTouchCppDoc() {
+      touchFile(FileTypeRegistry.CPP);
+   }
+
+   @Handler
+   void onTouchPythonDoc() {
+      touchFile(FileTypeRegistry.PYTHON);
+   }
+
+   @Handler
+   void onTouchSqlDoc() {
+      touchFile(FileTypeRegistry.SQL);
+   }
+
+   @Handler
+   void onTouchStanDoc() {
+      touchFile(FileTypeRegistry.STAN);
+   }
+
+   @Handler
+   void onTouchD3Doc() {
+      touchFile(FileTypeRegistry.JS);
+   }
+
+   @Handler
+   void onTouchSweaveDoc() {
+      touchFile(FileTypeRegistry.SWEAVE);
+   }
+
+   @Handler
+   void onTouchRHTMLDoc() {
+      touchFile(FileTypeRegistry.RHTML);
    }
 
    void onUploadFile()
@@ -777,13 +836,88 @@ public class Files
       }
    }
 
+   // generate a filename based on the file type and currentPath_ variable
+   private FileSystemItem getDefaultFileName(TextFileType fileType) 
+   {
+      String defaultExt = fileType.getDefaultExtension();
+
+      // extension has a '.' at the start, so remove that in the default name
+      String newFileDefaultName = "Untitled" + defaultExt.toUpperCase().substring(1) + defaultExt;
+      String path = currentPath_.completePath(newFileDefaultName);
+      FileSystemItem newTempFile = FileSystemItem.createFile(path);
+      return newTempFile;
+   }
+   
+   private void touchFile(final TextFileType fileType)
+   {
+      // prepare default information about the new file
+      FileSystemItem newTempFile = getDefaultFileName(fileType);
+      String formattedExt = fileType.getDefaultExtension().toUpperCase().substring(1);
+      
+      // guard for reentrancy
+      if (inputPending_)
+         return;
+      
+      inputPending_ = true;
+
+      // prompt for new file name then execute the operation
+      globalDisplay_.promptForText("Create a New " + formattedExt + " File in Current Directory",
+                                   "Please enter the new file name:",
+                                   newTempFile.getName(),
+                                   0,
+                                   newTempFile.getStem().length(),
+                                   null,
+                                   new ProgressOperationWithInput<String>()
+      {
+         public void execute(final String input, final ProgressIndicator progress)
+         {
+            // no longer waiting for user to input
+            inputPending_ = false;
+
+            progress.onProgress("Creating file...");
+
+            String path = currentPath_.completePath(input);
+            final FileSystemItem newFile = FileSystemItem.createFile(path);
+
+            // execute on the server
+            server_.touchFile(newFile, new VoidServerRequestCallback(progress)
+            {
+               @Override
+               protected void onSuccess()
+               {
+                  // if we were successful, refresh list and open in source editor
+                  onRefreshFiles();
+                  fileTypeRegistry_.openFile(newFile);
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  String errCaption = "Blank File Creation Failed";
+                  String errMsg =
+                     "A blank " + fileType.getDefaultExtension() + " file named \"" + input + "\" was unable to be created.\n\n" +
+                     "The server failed with the following error: \n" +
+                     error.getUserMessage();
+                  globalDisplay_.showErrorMessage(errCaption, errMsg);
+                  progress.onCompleted();
+               }
+            });
+         }
+      },
+      () ->
+      {
+         // clear pending input flag when operation is canceled
+         inputPending_ = false;
+      });
+   }
+
    private void renameFile(FileSystemItem file)
    {
       // guard for reentrancy
-      if (renaming_)
+      if (inputPending_)
          return;
       
-      renaming_ = true;
+      inputPending_ = true;
 
       // prompt for new file name then execute the rename
       globalDisplay_.promptForText("Rename File",
@@ -796,8 +930,8 @@ public class Files
         public void execute(String input,
                             final ProgressIndicator progress)
         {
-            // no longer waiting fo user to rename
-            renaming_ = false;
+            // no longer waiting for user to rename
+            inputPending_ = false;
 
             progress.onProgress("Renaming file...");
 
@@ -810,7 +944,7 @@ public class Files
             // clear selection
             view_.selectNone();
 
-            // pre-emptively rename in the UI then fallback to refreshing
+            // preemptively rename in the UI then fallback to refreshing
             // the view if there is an error
             view_.renameFile(file, target);
 
@@ -841,7 +975,7 @@ public class Files
       () ->
       {
          // clear rename flag when operation is canceled
-         renaming_ = false;
+         inputPending_ = false;
       });
    }
 
@@ -882,5 +1016,7 @@ public class Files
    private static final String KEY_SORT_ORDER = "sortOrder";
    private JsArray<ColumnSortInfo> columnSortOrder_ = null;
    private DataImportPresenter dataImportPresenter_;
-   private boolean renaming_ = false;
+   private boolean inputPending_ = false;
+
+   private final SourceColumnManager columnManager_;
 }

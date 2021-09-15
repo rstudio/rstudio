@@ -439,6 +439,8 @@ public class ElementIds
    // FileCommandToolbar
    public final static String MB_FILES_MORE = "mb_files_more";
    public static String getMbFilesMore() { return getElementId(MB_FILES_MORE); }
+   public final static String MB_FILES_TOUCH_FILE = "mb_files_touch_file";
+   public static String getMbFilesTouchFile() { return getElementId(MB_FILES_TOUCH_FILE); }
 
    // PlotsToolbar
    public final static String MB_PLOTS_EXPORT = "mb_plots_export";

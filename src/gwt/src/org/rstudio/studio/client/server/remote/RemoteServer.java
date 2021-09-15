@@ -1591,6 +1591,15 @@ public class RemoteServer implements Server
 
       sendRequest(RPC_SCOPE, RENAME_FILE, paramArray, requestCallback);
    }
+   
+   public void touchFile(FileSystemItem newFile, 
+                          ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray paramArray = new JSONArray();
+      paramArray.set(0, new JSONString(newFile.getPath()));
+      
+      sendRequest(RPC_SCOPE, TOUCH_FILE, paramArray, requestCallback);
+   }
 
    // This method should be rarely used; we generally don't want to expose
    // non-aliased paths to other parts of the client codebase
@@ -6579,6 +6588,7 @@ public class RemoteServer implements Server
    private static final String COPY_FILE = "copy_file";
    private static final String MOVE_FILES = "move_files";
    private static final String RENAME_FILE = "rename_file";
+   private static final String TOUCH_FILE = "touch_file";
    private static final String COMPLETE_UPLOAD = "complete_upload";
 
    private static final String NEXT_PLOT = "next_plot";
