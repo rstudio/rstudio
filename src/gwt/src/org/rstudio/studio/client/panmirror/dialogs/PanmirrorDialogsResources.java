@@ -53,6 +53,7 @@ public interface PanmirrorDialogsResources extends ClientBundle
       String numericSizeInput();
       String unitsSelectInput();
       String insertTabsetDialogTabs();
+      String divDialogTabs();
    }
 
    @Source("PanmirrorDialogsStyles.css")

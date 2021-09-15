@@ -24,6 +24,7 @@ import { kQuartoDocType } from "../api/format";
 import { EditorCommandId, ProsemirrorCommand, toggleWrap } from "../api/command";
 import { EditorUI } from "../api/ui";
 import { OmniInsertGroup } from "../api/omni_insert";
+import { pandocAttrEnsureClass } from "../api/pandoc_attr";
 
 const extension = (context: ExtensionContext): Extension | null => {
   const { pandocExtensions, format, ui } = context;
@@ -62,12 +63,8 @@ function insertTabsetCommandFn(ui: EditorUI) {
             const div = findParentNodeOfType(state.schema.nodes.div)(tr.selection)!;
 
             // ensure that .panel-tabset is the first class then set attributes
-            const kPanelTabset = "panel-tabset";
-            const attr = {
-              ...result.attr,
-              classes: [kPanelTabset].concat((result.attr.classes || []).filter(clz => clz !== kPanelTabset))
-            };
-            tr.setNodeMarkup(div.pos, div.node.type, attr);
+            pandocAttrEnsureClass(result.attr, "panel-tabset");
+            tr.setNodeMarkup(div.pos, div.node.type, result.attr);
            
             // insert tabset
             const tabset: ProsemirrorNode[] = result.tabs.flatMap(tab => {

@@ -1018,5 +1018,6 @@ public class Files
    private DataImportPresenter dataImportPresenter_;
    private boolean inputPending_ = false;
 
+   @SuppressWarnings("unused")
    private final SourceColumnManager columnManager_;
 }

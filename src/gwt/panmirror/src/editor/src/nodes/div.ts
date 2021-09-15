@@ -30,6 +30,11 @@ import {
   pandocAttrAvailable,
   PandocAttr,
   pandocAttrHasClass,
+  pandocAttrRemoveClass,
+  pandocAttrGetKeyvalue,
+  pandocAttrRemoveKeyvalue,
+  pandocAttrEnsureClass,
+  pandocAttrSetKeyvalue,
 } from '../api/pandoc_attr';
 import { PandocOutput, PandocTokenType, PandocToken } from '../api/pandoc';
 import { ProsemirrorCommand, EditorCommandId, toggleWrap } from '../api/command';
@@ -37,10 +42,11 @@ import { EditorUI } from '../api/ui';
 import { OmniInsertGroup, OmniInsert } from '../api/omni_insert';
 import { markIsActive } from '../api/mark';
 import { BaseKey } from '../api/basekeys';
-import { attrInputToProps } from '../api/ui-dialogs';
+import { attrInputToProps, CalloutProps } from '../api/ui-dialogs';
 
 import './div-styles.css';
 import { createDiv } from '../api/div';
+import { readSync } from 'fs';
 
 const DIV_ATTR = 0;
 const DIV_CHILDREN = 1;
@@ -206,23 +212,83 @@ class DivCommand extends ProsemirrorCommand {
 
 async function editDiv(ui: EditorUI, state: EditorState, dispatch: (tr: Transaction) => void, div: ContentNodeWithPos) {
   const attr = pandocAttrFrom(div.node.attrs);
-  const callout = pandocAttrHasClass(attr, clz => clz.startsWith("callout-"));
+
+  // extract callout props
+  let callout: CalloutProps | undefined;
+  const calloutType = pandocAttrRemoveClass(attr, clz => clz.startsWith("callout-"));
+  if (calloutType) {
+    let calloutAppearance = pandocAttrGetKeyvalue(attr, "appearance") as string | undefined;
+    if (calloutAppearance) {
+      pandocAttrRemoveKeyvalue(attr, "appearance");
+    } else {
+      calloutAppearance = "default";
+    }
+    let calloutIcon = true;
+    if (pandocAttrGetKeyvalue(attr, "icon") === "false") {
+      calloutIcon = false;
+      pandocAttrRemoveKeyvalue(attr, "icon");
+    }
+    let calloutCaption = "";
+    if (div.node.firstChild?.type === state.schema.nodes.heading) {
+      calloutCaption = div.node.firstChild?.textContent || "";
+    }
+    callout = {
+      type: calloutType.replace(/^callout-/, ""),
+      appearance: calloutAppearance,
+      icon: calloutIcon,
+      caption: calloutCaption
+    };
+  }
     
-  // TODO: if this is a callout then cleave up the props
-
-
-  const result = await ui.dialogs.editDiv({ attr }, pandocAttrAvailable(attr));
+  // edit div
+  const result = await ui.dialogs.editDiv({ attr, callout }, pandocAttrAvailable(attr) || !!callout);
    
   if (result) {
     const tr = state.tr;
     if (result.action === 'edit') {
-      tr.setNodeMarkup(div.pos, div.node.type, result.attr);
+      
+      // start with raw attributes
+      const resultAttr = result.attr;
 
-      // share code 
+      // apply callout attributes if we have them
+      if (result.callout) {
+        pandocAttrEnsureClass(resultAttr, `callout-${result.callout.type}`);
+        if (result.callout.appearance !== "default") {
+          pandocAttrSetKeyvalue(resultAttr, "appearance", result.callout.appearance);
+        }
+        if (result.callout.icon !== true) {
+          pandocAttrSetKeyvalue(resultAttr, "icon", "false");
+        }
+      }
 
-      // TODO: if this is a callout then deal w/ caption changes
-      // TODO: if the caption changed than insert/update it as necessary
-      // (similar to link we don't touch it if it hasn't changed, which preseves markdown)
+      // set node markup
+      tr.setNodeMarkup(div.pos, div.node.type, resultAttr);
+
+      // set caption if it's different
+      if (result.callout && (callout?.caption !== result.callout?.caption)) {
+        if (div.node.firstChild?.type === state.schema.nodes.heading) {
+          if (result.callout?.caption) {
+            tr.replaceRangeWith(
+              div.start, 
+              div.start + div.node.firstChild?.nodeSize!, 
+              state.schema.nodes.heading.create(
+                { level: 2 },
+                state.schema.text(result.callout?.caption)
+              )
+            );
+          } else {
+            tr.deleteRange(div.start, div.start + div.node.firstChild?.nodeSize!);
+          }
+        } else if (result.callout?.caption) {
+          tr.insert(
+            div.start, 
+            state.schema.nodes.heading.create(
+              { level: 2 }, 
+              state.schema.text(result.callout?.caption)
+            )
+          );
+        }
+      }
 
     } else if (result.action === 'remove') {
       const fromPos = tr.doc.resolve(div.pos + 1);

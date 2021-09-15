@@ -20,15 +20,21 @@ package org.rstudio.studio.client.panmirror.dialogs;
 import com.google.gwt.aria.client.Roles;
 
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.theme.VerticalTabPanel;
+import org.rstudio.core.client.widget.FormCheckBox;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorCalloutProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorDivEditProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorDivEditResult;
 
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 
@@ -74,15 +80,51 @@ public class PanmirrorEditDivDialog extends ModalDialog<PanmirrorDivEditResult>
       
       if (props.callout != null)
       {
-       
-         mainWidget_ = attributesTab;
+         VerticalTabPanel calloutTab = new VerticalTabPanel(ElementIds.VISUAL_MD_DIV_TAB_CALLOUT);
+         
+         // type
+         calloutType_ = new SelectWidget(
+            "Callout type: ", 
+            new String[]{"note", "tip", "important", "caution", "warning"}
+         );
+         calloutType_.setValue(props.callout.type);
+         calloutTab.add(calloutType_);
+         
+         // appearance
+         calloutAppearance_ = new SelectWidget(
+           "Appearance: ",
+           new String[] {"default", "simple", "minimal"}
+         );
+         calloutAppearance_.setValue(props.callout.appearance);
+         calloutTab.add(calloutAppearance_);
+         
+         // caption
+         calloutCaption_  = PanmirrorDialogsUtil.addTextBox(
+            calloutTab, 
+            ElementIds.VISUAL_MD_DIV_CALLOUT_CAPTION, 
+            "Caption",
+            props.callout.caption
+         );
+         DomUtils.setPlaceholder(calloutCaption_, "(Optional)");
+         
+         // icon
+         calloutCheckBox_ = new FormCheckBox("Display icon", ElementIds.VISUAL_MD_DIV_CALLOUT_ICON);
+         calloutCheckBox_.setValue(props.callout.icon);
+         calloutTab.add(calloutCheckBox_);
+         
+         DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("Div");
+         tabPanel.addStyleName(RES.styles().divDialogTabs());
+         tabPanel.add(calloutTab, "Callout", calloutTab.getBasePanelId());
+         tabPanel.add(attributesTab, "Attributes", attributesTab.getBasePanelId());
+         tabPanel.selectTab(0);
+
+         mainWidget_ = tabPanel;
+      
       }
       else 
       {
          mainWidget_ = attributesTab;
-      }
-
-      
+      } 
    }
 
    @Override
@@ -104,10 +146,10 @@ public class PanmirrorEditDivDialog extends ModalDialog<PanmirrorDivEditResult>
       result.attr = editAttr_.getAttr();
       result.action = "edit";
       result.callout = new PanmirrorCalloutProps();
-      result.callout.type = "note";
-      result.callout.appearance = "default";
-      result.callout.icon = true;
-      result.callout.caption = "";
+      result.callout.type = calloutType_.getValue();
+      result.callout.appearance = calloutAppearance_.getValue();
+      result.callout.icon = calloutCheckBox_.getValue();
+      result.callout.caption = calloutCaption_.getText().trim();
       return result;
    }
 
@@ -124,5 +166,9 @@ public class PanmirrorEditDivDialog extends ModalDialog<PanmirrorDivEditResult>
    private Widget mainWidget_;
 
    private PanmirrorEditAttrWidget editAttr_;
+   private SelectWidget calloutType_;
+   private SelectWidget calloutAppearance_;
+   private TextBox calloutCaption_;
+   private CheckBox calloutCheckBox_;
 
 }

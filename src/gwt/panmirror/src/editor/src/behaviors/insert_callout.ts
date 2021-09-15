@@ -15,6 +15,7 @@
 
 import { EditorState, Transaction } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
+import { setTextSelection } from "prosemirror-utils";
 
 import { ExtensionContext, Extension } from "../api/extension";
 import { kQuartoDocType } from "../api/format";
@@ -22,8 +23,7 @@ import { EditorCommandId, ProsemirrorCommand, toggleWrap } from "../api/command"
 import { EditorUI } from "../api/ui";
 import { OmniInsertGroup } from "../api/omni_insert";
 import { createDiv } from "../api/div";
-import { pandocAttrHasClass } from "../api/pandoc_attr";
-import { setTextSelection } from "prosemirror-utils";
+import { pandocAttrEnsureClass } from "../api/pandoc_attr";
 
 const extension = (context: ExtensionContext): Extension | null => {
   const { pandocExtensions, format, ui } = context;
@@ -67,11 +67,8 @@ function insertCalloutCommandFn(ui: EditorUI) {
         };
         await createDiv(ui, state, dispatch, props, (result, tr, div) => {
           // set div props from callout
-          const calloutClass = `callout-${props.callout.type}`;
-          const attr = {
-            ...result.attr,
-            classes: [calloutClass].concat((result.attr.classes || []).filter(clz => clz !== calloutClass))
-          };
+          const attr = result.attr as any;
+          pandocAttrEnsureClass(attr, `callout-${props.callout.type}`);
           attr.keyvalue = attr.keyvalue || [];
           if (result.callout?.appearance !== "default") {
             attr.keyvalue.push(["appearance", props.callout.appearance]);
