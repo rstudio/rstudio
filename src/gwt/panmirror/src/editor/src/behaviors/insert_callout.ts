@@ -14,9 +14,6 @@
  */
 
 import { EditorState, Transaction } from "prosemirror-state";
-import { Node as ProsemirrorNode } from 'prosemirror-model';
-import { wrapIn } from "prosemirror-commands";
-import { findParentNodeOfType, setTextSelection } from "prosemirror-utils";
 import { EditorView } from "prosemirror-view";
 
 import { ExtensionContext, Extension } from "../api/extension";
@@ -24,6 +21,7 @@ import { kQuartoDocType } from "../api/format";
 import { EditorCommandId, ProsemirrorCommand, toggleWrap } from "../api/command";
 import { EditorUI } from "../api/ui";
 import { OmniInsertGroup } from "../api/omni_insert";
+import { createDiv } from "../api/div";
 
 const extension = (context: ExtensionContext): Extension | null => {
   const { pandocExtensions, format, ui } = context;
@@ -34,9 +32,9 @@ const extension = (context: ExtensionContext): Extension | null => {
 
   return {
     commands: () => [
-      new ProsemirrorCommand(EditorCommandId.Tabset, [], insertTabsetCommandFn(ui), {
-        name: ui.context.translateText('Tabset'),
-        description: ui.context.translateText('Content divided into tabs'),
+      new ProsemirrorCommand(EditorCommandId.Callout, [], insertCalloutCommandFn(ui), {
+        name: ui.context.translateText('Callout'),
+        description: ui.context.translateText('Content framed for special emphasis'),
         group: OmniInsertGroup.Content,
         priority: 2,
         image: () => ui.images.omni_insert?.generic!,
@@ -45,7 +43,7 @@ const extension = (context: ExtensionContext): Extension | null => {
   };
 };
 
-function insertTabsetCommandFn(ui: EditorUI) {
+function insertCalloutCommandFn(ui: EditorUI) {
   return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
     
     const schema = state.schema;
@@ -53,8 +51,21 @@ function insertTabsetCommandFn(ui: EditorUI) {
       return false;
     }
 
-    async function asyncInsertTabset() {
+    async function asyncInsertCallout() {
       if (dispatch) {
+        const props = {
+          attr: {},
+          /*
+          callout: {
+            type: ""
+          }
+          */
+        };
+        const result = await createDiv(ui, state, dispatch, props, (tr, div) => {
+          //
+        });
+        
+        /*
         const result = await ui.dialogs.insertTabset();
         if (result) {
           wrapIn(state.schema.nodes.div)(state, (tr: Transaction) => {
@@ -88,12 +99,14 @@ function insertTabsetCommandFn(ui: EditorUI) {
             dispatch(tr);
           });
         }
+        */
         if (view) {
           view.focus();
         }
+        
       }
     }
-    asyncInsertTabset();
+    asyncInsertCallout();
 
     return true;
   };

@@ -78,6 +78,7 @@ import beahviorInsertSpecialCharacters from '../behaviors/insert_symbol/insert_s
 import behaviorNbsp from '../behaviors/nbsp';
 import behaviorRemoveSection from '../behaviors/remove_section';
 import behaviorInsertTabset from '../behaviors/insert_tabset';
+import behaviorInsertCallout from '../behaviors/insert_callout';
 
 // marks
 import markStrikeout from '../marks/strikeout';
@@ -159,6 +160,7 @@ export function initExtensions(context: ExtensionContext, extensions?: readonly 
     behaviorInsertSymbolEmoji,
     beahviorInsertSpecialCharacters,
     behaviorInsertTabset,
+    behaviorInsertCallout,
     behaviorNbsp,
     behaviorRemoveSection,
 

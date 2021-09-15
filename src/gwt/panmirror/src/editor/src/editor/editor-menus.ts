@@ -28,7 +28,7 @@ export function editorMenus(ui: EditorUI, commands: EditorCommand[]) {
   return {
     format: formatMenu(ui, commands),
     insert: insertMenu(ui, commands),
-    reference: haveReferenceMenu(commands) ? referenceMenu(ui, commands) : [],
+    reference: haveReferenceMenu(commands) ? referenceMenu() : [],
     table: tableMenu(true, ui),
   };
 }
@@ -180,6 +180,7 @@ function insertMenu(ui: EditorUI, commands: EditorCommand[]) {
      ? [
       { separator: true },
       { command: EditorCommandId.Tabset },
+      { command: EditorCommandId.Callout },
      ] : []),
     { separator: true },
     { command: EditorCommandId.CodeBlockFormat },
@@ -189,7 +190,7 @@ function insertMenu(ui: EditorUI, commands: EditorCommand[]) {
   ];
 }
 
-function referenceMenu(ui: EditorUI, commands: EditorCommand[]) {
+function referenceMenu() {
   return [
     { command: EditorCommandId.Citation },
     { command: EditorCommandId.CrossReference },

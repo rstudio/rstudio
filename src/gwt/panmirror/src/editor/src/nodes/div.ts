@@ -40,6 +40,7 @@ import { BaseKey } from '../api/basekeys';
 import { attrInputToProps } from '../api/ui-dialogs';
 
 import './div-styles.css';
+import { createDiv } from '../api/div';
 
 const DIV_ATTR = 0;
 const DIV_CHILDREN = 1;
@@ -230,21 +231,6 @@ async function editDiv(ui: EditorUI, state: EditorState, dispatch: (tr: Transact
     // TODO: if the caption changed than insert/update it as necessary
     // (similar to link we don't touch it if it hasn't changed, which preseves markdown)
     dispatch(tr);
-  }
-}
-
-async function createDiv(ui: EditorUI, state: EditorState, dispatch: (tr: Transaction) => void, 
-                         insertFn?: (tr: Transaction, div: ContentNodeWithPos) => void) {
-  const result = await ui.dialogs.editDiv({ attr: {} }, false);
-  if (result) {
-    wrapIn(state.schema.nodes.div)(state, (tr: Transaction) => {
-      const div = findParentNodeOfType(state.schema.nodes.div)(tr.selection)!;
-      tr.setNodeMarkup(div.pos, div.node.type, result.attr);   
-      if (insertFn) {
-        insertFn(tr, div);
-      } 
-      dispatch(tr);
-    });
   }
 }
 

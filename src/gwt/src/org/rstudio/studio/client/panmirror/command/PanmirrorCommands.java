@@ -101,6 +101,7 @@ public class PanmirrorCommands
    public static final String NonBreakingSpace = "CF6428AB-F36E-446C-8661-2781B2CD1169";
    public static final String HardLineBreak = "3606FF87-866C-4729-8F3F-D065388FC339";
    public static final String Tabset = "7327AF95-3EA7-42C8-8C42-D4CB0D15CAE4";
+   public static final String Callout = "DC86C28A-0140-4EB5-A745-2C1EFA55C94D";
    
    // raw
    public static final String TexInline = "CFE8E9E5-93BA-4FFA-9A77-BA7EFC373864";
