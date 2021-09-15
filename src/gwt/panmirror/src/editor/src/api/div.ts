@@ -18,11 +18,11 @@ import { wrapIn } from "prosemirror-commands";
 import { ContentNodeWithPos, findParentNodeOfType } from "prosemirror-utils";
 
 import { EditorUI } from "./ui";
-import { DivEditProps } from "./ui-dialogs";
+import { DivEditProps, DivEditResult } from "./ui-dialogs";
 
 export async function createDiv(ui: EditorUI, state: EditorState, dispatch: (tr: Transaction) => void, 
                                 props?: DivEditProps,
-                                insertFn?: (tr: Transaction, div: ContentNodeWithPos) => void) {
+                                insertFn?: (result: DivEditResult, tr: Transaction, div: ContentNodeWithPos) => void) {
   props = props || { attr: {} };
   const result = await ui.dialogs.editDiv(props, false);
   if (result) {
@@ -30,7 +30,7 @@ export async function createDiv(ui: EditorUI, state: EditorState, dispatch: (tr:
       const div = findParentNodeOfType(state.schema.nodes.div)(tr.selection)!;
       tr.setNodeMarkup(div.pos, div.node.type, result.attr);   
       if (insertFn) {
-        insertFn(tr, div);
+        insertFn(result, tr, div);
       } 
       dispatch(tr);
     });

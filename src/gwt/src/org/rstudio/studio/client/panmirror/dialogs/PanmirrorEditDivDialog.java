@@ -24,6 +24,7 @@ import org.rstudio.core.client.theme.VerticalTabPanel;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorCalloutProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorDivEditProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorDivEditResult;
 
@@ -73,7 +74,8 @@ public class PanmirrorEditDivDialog extends ModalDialog<PanmirrorDivEditResult>
       
       if (props.callout != null)
       {
-         
+       
+         mainWidget_ = attributesTab;
       }
       else 
       {
@@ -101,7 +103,11 @@ public class PanmirrorEditDivDialog extends ModalDialog<PanmirrorDivEditResult>
       PanmirrorDivEditResult result = new PanmirrorDivEditResult();
       result.attr = editAttr_.getAttr();
       result.action = "edit";
-      result.callout = null;
+      result.callout = new PanmirrorCalloutProps();
+      result.callout.type = "note";
+      result.callout.appearance = "default";
+      result.callout.icon = true;
+      result.callout.caption = "";
       return result;
    }
 

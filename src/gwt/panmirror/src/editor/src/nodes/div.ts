@@ -210,12 +210,20 @@ async function editDiv(ui: EditorUI, state: EditorState, dispatch: (tr: Transact
     
   // TODO: if this is a callout then cleave up the props
 
+
   const result = await ui.dialogs.editDiv({ attr }, pandocAttrAvailable(attr));
    
   if (result) {
     const tr = state.tr;
     if (result.action === 'edit') {
       tr.setNodeMarkup(div.pos, div.node.type, result.attr);
+
+      // share code 
+
+      // TODO: if this is a callout then deal w/ caption changes
+      // TODO: if the caption changed than insert/update it as necessary
+      // (similar to link we don't touch it if it hasn't changed, which preseves markdown)
+
     } else if (result.action === 'remove') {
       const fromPos = tr.doc.resolve(div.pos + 1);
       const toPos = tr.doc.resolve(div.pos + div.node.nodeSize - 1);
@@ -227,9 +235,7 @@ async function editDiv(ui: EditorUI, state: EditorState, dispatch: (tr: Transact
         }
       }
     }
-    // TODO: if this is a callout then deal w/ caption changes
-    // TODO: if the caption changed than insert/update it as necessary
-    // (similar to link we don't touch it if it hasn't changed, which preseves markdown)
+    
     dispatch(tr);
   }
 }

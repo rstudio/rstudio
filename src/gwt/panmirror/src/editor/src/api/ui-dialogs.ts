@@ -128,8 +128,8 @@ export interface DivEditResult extends DivEditProps {
 }
 
 export interface CalloutProps {
-  type: "note" | "tip" | "important" | "caution" | "warning";
-  appearance: "default" | "simple" | "minimal";
+  type: string;
+  appearance: string;
   icon: boolean;
   caption: string;
 }

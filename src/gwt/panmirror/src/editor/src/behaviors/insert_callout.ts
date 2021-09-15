@@ -22,6 +22,8 @@ import { EditorCommandId, ProsemirrorCommand, toggleWrap } from "../api/command"
 import { EditorUI } from "../api/ui";
 import { OmniInsertGroup } from "../api/omni_insert";
 import { createDiv } from "../api/div";
+import { pandocAttrHasClass } from "../api/pandoc_attr";
+import { setTextSelection } from "prosemirror-utils";
 
 const extension = (context: ExtensionContext): Extension | null => {
   const { pandocExtensions, format, ui } = context;
@@ -53,53 +55,45 @@ function insertCalloutCommandFn(ui: EditorUI) {
 
     async function asyncInsertCallout() {
       if (dispatch) {
+        // default 
         const props = {
           attr: {},
-          /*
           callout: {
-            type: ""
+            type: "note",
+            appearance: "default",
+            icon: false,
+            caption: ""
           }
-          */
         };
-        const result = await createDiv(ui, state, dispatch, props, (tr, div) => {
-          //
+        await createDiv(ui, state, dispatch, props, (result, tr, div) => {
+          // set div props from callout
+          const calloutClass = `callout-${props.callout.type}`;
+          const attr = {
+            ...result.attr,
+            classes: [calloutClass].concat((result.attr.classes || []).filter(clz => clz !== calloutClass))
+          };
+          attr.keyvalue = attr.keyvalue || [];
+          if (result.callout?.appearance !== "default") {
+            attr.keyvalue.push(["appearance", props.callout.appearance]);
+          }
+          if (result.callout?.icon === false) {
+            attr.keyvalue.push(["icon", "false"]);
+          }
+          tr.setNodeMarkup(div.pos, div.node.type, attr);
+
+          // insert caption if one is specified
+          if (result.callout?.caption) {
+            const calloutContent = [
+              schema.nodes.heading.create(
+                { level: 2 },
+                schema.text(result.callout?.caption)
+              ),
+              schema.nodes.paragraph.create()
+            ];
+            tr.replaceWith(div.start, div.start + 1, calloutContent);
+            setTextSelection(div.start + calloutContent[0].nodeSize)(tr);
+          }
         });
-        
-        /*
-        const result = await ui.dialogs.insertTabset();
-        if (result) {
-          wrapIn(state.schema.nodes.div)(state, (tr: Transaction) => {
-            // locate inserted div
-            const div = findParentNodeOfType(state.schema.nodes.div)(tr.selection)!;
-
-            // ensure that .panel-tabset is the first class then set attributes
-            const kPanelTabset = "panel-tabset";
-            const attr = {
-              ...result.attr,
-              classes: [kPanelTabset].concat((result.attr.classes || []).filter(clz => clz !== kPanelTabset))
-            };
-            tr.setNodeMarkup(div.pos, div.node.type, attr);
-           
-            // insert tabset
-            const tabset: ProsemirrorNode[] = result.tabs.flatMap(tab => {
-              return [
-                schema.nodes.heading.create(
-                  { level: 2 },
-                  schema.text(tab)
-                ),
-                schema.nodes.paragraph.create()
-              ];
-            });
-            tr.replaceWith(div.start, div.start + 1, tabset);
-
-            // set selection
-            setTextSelection(div.start + tabset[0].nodeSize)(tr);
-
-            // dispatch
-            dispatch(tr);
-          });
-        }
-        */
         if (view) {
           view.focus();
         }
