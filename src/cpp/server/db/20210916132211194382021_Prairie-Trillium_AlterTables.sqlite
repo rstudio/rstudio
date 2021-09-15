@@ -1,31 +1,3 @@
-/* Stores the version of the schema. */
-CREATE TABLE schema_version(
-   /* The date at which this schema version was created. */
-   current_version text NOT NULL,
-
-   /* The name of the release to which this version of the schema belongs. */
-   release_name text NOT NULL
-);
-
-LOCK schema_version IN ACCESS EXCLUSIVE MODE;
-
-/* Stores revoked auth cookies - cookies that are not yet expired, but
-   have been invalidated due to a user signing out. These cookies will
-   not be allowed to be used again for sign-in purposes.
-*/
-CREATE TABLE revoked_cookie(
-   /* The expiration date string at which this cookie expires. Derivative of the CookieData,
-      used for sorting purposes
-   */
-   expiration text NOT NULL,
-   
-   /* The actual cookie data */
-   cookie_data text NOT NULL,
-
-   /* Primary key is the actual cookie data itself (no duplicate cookies can be issued) */
-   PRIMARY KEY (cookie_data)
-);
-
 /* Stores users of RStudio Server */
 CREATE TABLE licensed_users(
 
@@ -45,11 +17,7 @@ CREATE TABLE licensed_users(
    user_id integer NOT NULL DEFAULT -1,
 
    /* Auto incrementing ID for each user for internal FK relationships. */
-   id integer NOT NULL,
-
-   /* Add Primary Key */
-   PRIMARY KEY(id)
-
+   id integer PRIMARY KEY
 );
 
 /* Stores metadata about actvie sessions */ 
@@ -103,13 +71,11 @@ CREATE TABLE active_session_metadata(
    PRIMARY KEY (session_id),
    
    /* User entries should not be deleted, but if they are, remove all of that user's sessions */
-   CONSTRAINT fk_user
-      FOREIGN KEY (user_id) 
-         REFERENCES licensed_users(id) 
-         ON DELETE CASCADE
+   FOREIGN KEY (user_id) REFERENCES licensed_users(id) ON DELETE CASCADE
 );
 
-/* Index to be used for sorting revoked cookies by expiration */
-CREATE INDEX revoked_cookie_expiration_index ON revoked_cookie(expiration);
+/* Remove old schema version */
+DELETE FROM schema_version;
 
+/* Update the version to the latest after all alter statements are applied. */
 INSERT INTO schema_version (current_version, release_name) VALUES ('20210916132211194382021', 'Prairie Trillium');
