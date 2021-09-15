@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import org.rstudio.core.client.CommandWithArg;
@@ -156,24 +157,29 @@ public class VisualModeChunk
       // Provide the editor's container element
       host_ = Document.get().createDivElement();
       host_.getStyle().setPosition(com.google.gwt.dom.client.Style.Position.RELATIVE);
+      host_.getStyle().setProperty("transitionProperty", "height");
+      host_.getStyle().setProperty("transitionDuration", "0.5s");
 
       // add the collapse toggle
       collapse_ = new VisualModeCollapseToggle(true);
-      releaseOnDismiss_.add(collapse_.expanded.addValueChangeHandler(evt ->
-      {
-         host_.getStyle().setOpacity(evt.getValue() ? 1 : 0.5);
-      }));
       host_.appendChild(collapse_.getElement());
 
+
       // add the editor
-      host_.appendChild(chunkEditor.getContainer());
+      editorHost_ = Document.get().createDivElement();
+      editorHost_.getStyle().setPosition(com.google.gwt.dom.client.Style.Position.RELATIVE);
+      editorHost_.getStyle().setOverflow(Style.Overflow.HIDDEN);
+      editorHost_.getStyle().setProperty("transitionDuration", "0.5s");
+      editorHost_.getStyle().setProperty("transitionProperty", "height");
+      host_.appendChild(editorHost_);
+      editorHost_.appendChild(chunkEditor.getContainer());
 
       // Create an element to host all of the execution status widgets
       // (VisualModeChunkRowState).
       execHost_ = Document.get().createDivElement();
       execHost_.getStyle().setProperty("position", "absolute");
       execHost_.getStyle().setProperty("top", "3px");
-      host_.appendChild(execHost_);
+      editorHost_.appendChild(execHost_);
       
       if (output != null)
       {
@@ -183,7 +189,7 @@ public class VisualModeChunk
             setOutputWidget(output.getOutputWidget());
          }
       }
-      host_.appendChild(outputHost_);
+      editorHost_.appendChild(outputHost_);
       
       // Create the chunk toolbar
       if (scope_ != null)
@@ -267,7 +273,20 @@ public class VisualModeChunk
             cmd.execute();
          }
       };
-      
+
+      // Hook up event handler for expand/collapse
+      releaseOnDismiss_.add(collapse_.expanded.addValueChangeHandler(evt ->
+      {
+         if (evt.getValue())
+         {
+            editorHost_.getStyle().clearHeight();
+         }
+         else
+         {
+            editorHost_.getStyle().setHeight(17, Style.Unit.PX);
+         }
+      }));
+
       // Prevent tab from advancing into editor
       chunkEditor.getTextInputElement().setTabIndex(-1);
 
@@ -720,6 +739,7 @@ public class VisualModeChunk
    private final DivElement outputHost_;
    private final DivElement host_;
    private final DivElement execHost_;
+   private final DivElement editorHost_;
    private final PanmirrorUIChunkEditor chunk_;
    private final AceEditor editor_;
    private final DocDisplay parent_;
