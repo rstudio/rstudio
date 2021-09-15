@@ -120,7 +120,7 @@ const kFields: Fuse.FuseOptionKeyObject[] = [
   { name: 'id', weight: 30 },
   { name: 'author.family', weight: 15 },
   { name: 'author.literal', weight: 15 },
-  { name: 'issued', weight: 15 },
+  { name: 'issued.raw', weight: 15 },
   { name: 'title', weight: 15 },
   { name: 'author.given', weight: 10 },
   { name: 'providerKey', weight: 0.01 },
