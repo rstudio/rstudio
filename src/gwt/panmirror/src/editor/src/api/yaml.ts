@@ -105,9 +105,10 @@ export function firstYamlBlock(code: string): { [key: string]: any } | null {
   }
 }
 
-export function parseYaml(yamlCode: string) {
+export function parseYaml(yamlCode: string) : unknown {
   try {
-    const yamlParsed = yaml.safeLoad(yamlCode, {
+    
+    const yamlParsed = yaml.load(yamlCode, {
       onWarning: logException,
     });
     return yamlParsed;
@@ -119,7 +120,7 @@ export function parseYaml(yamlCode: string) {
 
 export function toYamlCode(obj: any): string | null {
   try {
-    const yamlCode = yaml.safeDump(obj);
+    const yamlCode = yaml.dump(obj);
     return yamlCode;
   } catch (e) {
     logException(e);
