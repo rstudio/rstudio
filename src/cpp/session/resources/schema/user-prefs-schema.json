@@ -1352,7 +1352,7 @@
         },
         "visual_markdown_code_editor_line_numbers": {
             "type": "boolean",
-            "default": true,
+            "default": false,
             "title": "Show line numbers in visual mode code blocks",
             "description": "Whether to show line numbers in the code editors used in visual mode"
         },
