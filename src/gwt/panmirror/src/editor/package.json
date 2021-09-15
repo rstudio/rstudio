@@ -19,7 +19,6 @@
     "@types/prosemirror-keymap": "^1.0.4",
     "@types/prosemirror-schema-list": "^1.0.3",
     "@types/prosemirror-tables": "^0.9.1",
-    "@types/prosemirror-transform": "^1.1.4",
     "@types/react": "^17.0.20",
     "@types/react-dom": "^17.0.9",
     "@types/react-window": "^1.8.5",
