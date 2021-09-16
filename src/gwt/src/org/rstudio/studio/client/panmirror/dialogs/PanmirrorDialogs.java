@@ -225,7 +225,7 @@ public class PanmirrorDialogs {
    {
      return new Promise<>(
        (ResolveCallbackFn<PanmirrorDivEditResult> resolve, RejectCallbackFn reject) -> {
-          PanmirrorEditDivDialog dialog = new PanmirrorEditDivDialog("Div Attributes", removeEnabled, attr, (result) -> {
+          PanmirrorEditDivDialog dialog = new PanmirrorEditDivDialog(removeEnabled, attr, (result) -> {
              resolve.onInvoke(result);
           });
           dialog.showModal(false);
