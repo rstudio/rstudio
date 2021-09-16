@@ -21,10 +21,17 @@ import jsinterop.annotations.JsType;
 public class PanmirrorUIChunks
 {
    public CreateChunkEditor createChunkEditor;
+   public SetChunksExpanded setChunksExpanded;
 
    @JsFunction
    public interface CreateChunkEditor
    {
       PanmirrorUIChunkEditor create(String type, int position, PanmirrorUIChunkCallbacks callbacks);
+   }
+
+   @JsFunction
+   public interface SetChunksExpanded
+   {
+      void setExpanded(boolean expanded);
    }
 }
