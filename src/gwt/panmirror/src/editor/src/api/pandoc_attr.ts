@@ -29,6 +29,7 @@ export const kHeightAttrib = 'height';
 export const kStyleAttrib = 'style';
 export const kAlignAttrib = 'align';
 export const kFigAlignAttrib = 'fig-align';
+export const kFigEnvAttrib = 'fig-env';
 
 export const kCodeBlockAttr = 0;
 export const kCodeBlockText = 1;

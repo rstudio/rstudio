@@ -236,7 +236,17 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
       advancedTab.addStyleName(RES.styles().dialog());
       advancedTab.addStyleName(RES.styles().imageDialogTab());
 
+      if (props.env != null)
+      {
+         env_ = PanmirrorDialogsUtil.addTextBox(advancedTab, ElementIds.VISUAL_MD_IMAGE_ENV, "LaTeX environment:",props.env);
+         DomUtils.disableSpellcheck(env_);
+      }
+      else
+      {
+         env_ = null;
+      }
       title_ = PanmirrorDialogsUtil.addTextBox(advancedTab, ElementIds.VISUAL_MD_IMAGE_TITLE, "Title attribute:", props.title);
+
       tabPanel.add(advancedTab, "Advanced", advancedTab.getBasePanelId());
       
       
@@ -288,6 +298,8 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
          result.align = "center";
       else if (alignRight_.getValue())
          result.align = "right";
+      if (env_ != null)
+         result.env = env_.getText().trim();
       result.width = widthProp_;
       result.height = heightProp_;
       result.units = unitsProp_;
@@ -497,6 +509,7 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
    private final TextBox title_;
    private final TextBox alt_;
    private final TextBox linkTo_;
+   private final TextBox env_;
    private final RadioButton alignDefault;
    private final RadioButton alignLeft_;
    private final RadioButton alignCenter_;

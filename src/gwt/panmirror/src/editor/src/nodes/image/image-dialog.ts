@@ -22,7 +22,7 @@ import { ImageProps } from '../../api/ui-dialogs';
 import { extractSizeStyles, kPercentUnit, kPixelUnit } from '../../api/css';
 import { ImageType, ImageDimensions, isNaturalAspectRatio } from '../../api/image';
 import { kWidthAttrib, kHeightAttrib, pandocAttrRemoveKeyvalue, 
-         pandocAttrGetKeyvalue, pandocAttrSetKeyvalue, kFigAlignAttrib } from '../../api/pandoc_attr';
+         pandocAttrGetKeyvalue, pandocAttrSetKeyvalue, kFigAlignAttrib, kFigEnvAttrib } from '../../api/pandoc_attr';
          import { EditorFormat, kQuartoDocType } from '../../api/format';
 
 import { imagePropsWithSizes, hasPercentWidth } from './image-util';
@@ -80,14 +80,20 @@ export async function imageDialog(
   // determine the type
   const type = nodeType === view.state.schema.nodes.image ? ImageType.Image : ImageType.Figure;
 
-  // if we are editing alignment then remove fig-align from attributes
-  const imageAlignment = (type === ImageType.Figure) && 
-                          editorFormat.docTypes.includes(kQuartoDocType) && 
-                          imageAttributes;
-  if (imageAlignment) {
+  // if this is a quarto figure then remove fig-align and fig-env from attributes
+  const quartoFigure = (type === ImageType.Figure) && 
+                        editorFormat.docTypes.includes(kQuartoDocType) && 
+                         imageAttributes;
+  if (quartoFigure) {
+    // fig-align
     image.align = pandocAttrGetKeyvalue(image, kFigAlignAttrib) || "default";
     pandocAttrRemoveKeyvalue(image, kFigAlignAttrib);
+    // fig env
+    image.env = pandocAttrGetKeyvalue(image, kFigEnvAttrib) || "";
+    pandocAttrRemoveKeyvalue(image, kFigEnvAttrib);
   }
+
+  // if we are editing fig-env then remove fig-env from attributes
 
   const result = await editorUI.dialogs.editImage(image, dims, imageAttributes);
   if (result) {
@@ -103,11 +109,20 @@ export async function imageDialog(
     }
 
     // if we have align then move into keyvalue
-    if (result.align) {
-      if (result.align === "default") {
-        pandocAttrRemoveKeyvalue(result, kFigAlignAttrib);
+    if (quartoFigure) {
+      // fig-align
+      if (result.align) {
+        if (result.align === "default") {
+          pandocAttrRemoveKeyvalue(result, kFigAlignAttrib);
+        } else {
+          pandocAttrSetKeyvalue(result, kFigAlignAttrib, result.align);
+        }
+      }
+      // fig-env
+      if (result.env) {
+        pandocAttrSetKeyvalue(result, kFigEnvAttrib, result.env);
       } else {
-        pandocAttrSetKeyvalue(result, kFigAlignAttrib, result.align);
+        pandocAttrRemoveKeyvalue(result, kFigEnvAttrib);
       }
     }
 
