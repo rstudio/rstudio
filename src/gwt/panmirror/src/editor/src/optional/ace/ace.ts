@@ -297,6 +297,11 @@ export class AceNodeView implements NodeView {
       }
     }
 
+    // Ensure that the chunk is expanded if it contains find markers (so user can see search results)
+    if (this.chunk && this.findMarkers.length > 0) {
+      this.chunk.setExpanded(true);
+    }
+
     return true;
   }
 

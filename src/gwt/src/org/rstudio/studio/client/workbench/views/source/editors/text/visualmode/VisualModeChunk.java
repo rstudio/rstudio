@@ -301,6 +301,16 @@ public class VisualModeChunk
          }
       };
 
+      // Register callback to be invoked by the editor when it needs to trigger
+      // its own expansion state (e.g. when it needs to reveal find results)
+      chunk.setExpanded = (boolean expanded) ->
+      {
+         if (collapse_.expanded.getValue() != expanded)
+         {
+            collapse_.expanded.setValue(expanded, true);
+         }
+      };
+
       // Hook up event handler for expand/collapse
       releaseOnDismiss_.add(collapse_.expanded.addValueChangeHandler(evt ->
       {
