@@ -182,12 +182,14 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
          imageTab.add(sizePanel);
       }
 
-      // title and alt
-      title_ = PanmirrorDialogsUtil.addTextBox(imageTab, ElementIds.VISUAL_MD_IMAGE_TITLE, "Title/Tooltip:", props.title);
-      alt_ = PanmirrorDialogsUtil.addTextBox(imageTab, ElementIds.VISUAL_MD_IMAGE_ALT, "Caption/Alt:", props.alt);
-
+      // caption/alt
+      alt_ = PanmirrorDialogsUtil.addTextBox(imageTab, ElementIds.VISUAL_MD_IMAGE_ALT, "Caption:", props.alt);
+    
       // linkto
-      linkTo_ = PanmirrorDialogsUtil.addTextBox(imageTab,  ElementIds.VISUAL_MD_IMAGE_LINK_TO, "Link To:", props.linkTo);
+      linkTo_ = PanmirrorDialogsUtil.addTextBox(imageTab,  ElementIds.VISUAL_MD_IMAGE_LINK_TO, "Link to:", props.linkTo);
+      
+      // title
+      title_ = PanmirrorDialogsUtil.addTextBox(imageTab, ElementIds.VISUAL_MD_IMAGE_TITLE, "Title attribute:", props.title);
 
       // standard pandoc attributes
       editAttr_ =  new PanmirrorEditAttrWidget();
