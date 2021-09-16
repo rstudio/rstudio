@@ -702,7 +702,7 @@ public class Files
          {
             if (errors.size() > 0)
             {
-               String caption = "Error Opening Files in Columns";
+               String caption = "Error Opening Files";
                String errorMsg = errors.size() + " RNotebook files were unable to be processed and opened.";
                errorMsg += "\n\nErrors:";
                for (String err : errors) 
