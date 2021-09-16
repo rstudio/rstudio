@@ -61,7 +61,7 @@ function insertCalloutCommandFn(ui: EditorUI) {
           callout: {
             type: "note",
             appearance: "default",
-            icon: false,
+            icon: true,
             caption: ""
           }
         };
