@@ -241,6 +241,12 @@
             "default": "",
             "title": "Zotero Data Directory",
             "description": "Directory containing Zotero data files" 
+        },
+        "quarto_website_sync_editor": {
+            "type": "boolean",
+            "default": false,
+            "title": "Quarto Website Sync Editor",
+            "description": "Sync source editor to Quarto website preview navigation."
         }
     }
 }

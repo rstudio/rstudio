@@ -1,0 +1,33 @@
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'
+             xmlns:rw="urn:import:org.rstudio.core.client.widget">
+
+   <ui:with field="res" type="org.rstudio.studio.client.panmirror.dialogs.PanmirrorDialogsResources" />
+   <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
+   <ui:style>
+   
+   .editAttr {
+      width: 100%;
+   }
+
+   </ui:style>
+
+   <g:VerticalPanel styleName="{res.styles.dialog}">
+      
+      <g:HorizontalPanel styleName="{style.editAttr}" ui:field="idPanel_">
+         <g:cell horizontalAlignment="ALIGN_LEFT">
+            <g:HorizontalPanel>
+               <rw:FormLabel elementId="{ElementIds.getVisualMdMathIdLabel1}" text="ID"/>
+               <rw:FormLabel elementId="{ElementIds.getVisualMdMathIdLabel2}" text="(e.g. #eq-lorenz)" styleName="{res.styles.inlineInfoLabel}"/>
+            </g:HorizontalPanel>
+         </g:cell> 
+      </g:HorizontalPanel>
+      <rw:FormTextBox 
+         elementId="{ElementIds.getVisualMdMathId}" 
+         styleName="{res.styles.fullWidth} {res.styles.spaced}"
+         ui:field="id_"
+      />
+     
+   </g:VerticalPanel>
+
+</ui:UiBinder>

@@ -94,6 +94,8 @@ import rChunkImage from './images/omni_insert/r_chunk.png';
 import rChunkDarkImage from './images/omni_insert/r_chunk_dark.png';
 import rcppChunkImage from './images/omni_insert/rcpp_chunk.png';
 import rcppChunkDarkImage from './images/omni_insert/rcpp_chunk_dark.png';
+import tabsetImage from './images/omni_insert/tabset.png';
+import tabsetDarkImage from './images/omni_insert/tabset_dark.png';
 
 import articleImage from './images/citations/article.png';
 import articleDarkImage from './images/citations/article_dark.png';
@@ -236,6 +238,8 @@ export function defaultEditorUIImages(): EditorUIImages {
       r_chunk_dark: rChunkDarkImage,
       rcpp_chunk: rcppChunkImage,
       rcpp_chunk_dark: rcppChunkDarkImage,
+      tabset: tabsetImage,
+      tabset_dark: tabsetDarkImage
     },
     citations: {
       article: articleImage,

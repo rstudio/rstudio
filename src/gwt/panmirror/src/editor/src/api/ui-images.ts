@@ -93,6 +93,8 @@ export interface EditorUIImages {
     r_chunk_dark?: string;
     rcpp_chunk?: string;
     rcpp_chunk_dark?: string;
+    tabset?: string;
+    tabset_dark?: string;
   };
   citations?: {
     article?: string;

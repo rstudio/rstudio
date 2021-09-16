@@ -30,13 +30,33 @@
             "location": "cran",
             "source": false
         },
+        "bslib": {
+            "version": "0.2.2",
+            "location": "cran",
+            "source": false
+        },
         "base64enc": {
             "version": "0.1-3",
             "location": "cran",
             "source": false
         },
+        "checkmate": {
+            "version": "1.0",
+            "location": "cran",
+            "source": false
+        },
         "crayon": {
             "version": "1.3.4",
+            "location": "cran",
+            "source": false
+        },
+        "cachem": {
+            "version": "1.0.0",
+            "location": "cran",
+            "source": false
+        },
+        "commonmark": {
+            "version": "1.7",
             "location": "cran",
             "source": false
         },
@@ -51,7 +71,7 @@
             "source": false
         },
         "digest": {
-            "version": "0.6",
+            "version": "0.6.25",
             "location": "cran",
             "source": false
         },
@@ -60,8 +80,18 @@
             "location": "cran",
             "source": false
         },
+        "ellipsis": {
+            "version": "0.1.0",
+            "location": "cran",
+            "source": false
+        },
+        "fastmap": {
+            "version": "1.1.0",
+            "location": "cran",
+            "source": false
+        },
         "glue": {
-            "version": "1.3.0",
+            "version": "1.3.2",
             "location": "cran",
             "source": false
         },
@@ -76,7 +106,7 @@
             "source": false
         },
         "htmltools": {
-            "version": "0.3.6",
+            "version": "0.5.1",
             "location": "cran",
             "source": false
         },
@@ -86,12 +116,17 @@
             "source": true
         },
         "httpuv": {
-            "version": "1.3.3",
+            "version": "1.5.2",
             "location": "cran",
             "source": false
         },
         "jsonlite": {
             "version": "0.9.19",
+            "location": "cran",
+            "source": false
+        },
+        "jquerylib": {
+            "version": "0.1.1",
             "location": "cran",
             "source": false
         },
@@ -106,12 +141,17 @@
             "source": false
         },
         "later": {
-            "version": "0.7.2",
+            "version": "1.0.0",
             "location": "cran",
             "source": false
         },
         "learnr": {
             "version": "0.10.1",
+            "location": "cran",
+            "source": false
+        },
+        "lifecycle": {
+            "version": "0.2.0",
             "location": "cran",
             "source": false
         },
@@ -171,7 +211,7 @@
             "source": false
         },
         "promises": {
-            "version": "1.0.1",
+            "version": "1.1.0",
             "location": "cran",
             "source": false
         },
@@ -182,6 +222,11 @@
         },
         "ragg": {
             "version": "0.1.5",
+            "location": "cran",
+            "source": false
+        },
+        "rappdirs": {
+            "version": "0.3.0",
             "location": "cran",
             "source": false
         },
@@ -211,7 +256,7 @@
             "source": false
         },
         "rlang": {
-            "version": "0.2.2",
+            "version": "0.4.9",
             "location": "cran",
             "source": false
         },
@@ -222,6 +267,11 @@
         },
         "roxygen2": {
             "version": "6.0.1",
+            "location": "cran",
+            "source": false
+        },
+        "rprojroot": {
+            "version": "1.0",
             "location": "cran",
             "source": false
         },
@@ -241,7 +291,7 @@
             "source": false
         },
         "shiny": {
-            "version": "1.2.0",
+            "version": "1.6.0",
             "location": "cran",
             "source": true
         },
@@ -275,8 +325,13 @@
             "location": "cran",
             "source": false
         },
+        "withr": {
+            "version": "1.0.0",
+            "location": "cran",
+            "source": false
+        },
         "xfun": {
-            "version": "0.15",
+            "version": "0.21",
             "location": "cran",
             "source": false
         },
@@ -362,6 +417,7 @@
                 "glue",
                 "highr",
                 "htmltools",
+                "jquerylib",
                 "jsonlite",
                 "knitr",
                 "magrittr",
@@ -385,20 +441,27 @@
         "shiny": {
             "description": "Shiny",
             "packages": [
-                "Rcpp",
-                "httpuv",
-                "mime",
-                "jsonlite",
-                "xtable",
-                "digest",
                 "R6",
-                "sourcetools",
-                "htmltools",
-                "promises",
+                "bslib",
+                "cachem",
+                "commonmark",
                 "crayon",
-                "rlang",
+                "digest",
+                "ellipsis", 
+                "fastmap",
+                "glue",
+                "htmltools",
+                "httpuv",
+                "jsonlite",
                 "later",
-                "shiny"
+                "lifecycle",
+                "mime",
+                "promises",
+                "rlang",
+                "shiny",
+                "sourcetools",
+                "withr",
+                "xtable"
             ]
         },
         "reticulate": {
@@ -533,8 +596,22 @@
         "tutorial": {
             "description": "RStudio Tutorials",
             "packages": [
+                "checkmate",
+                "ellipsis",
+                "evaluate",
+                "fastmap",
+                "htmltools",
+                "htmlwidgets",
+                "jsonlite",
+                "knitr",
                 "learnr",
-                "rstudioapi"
+                "markdown",
+                "rappdirs",
+                "renv",
+                "rprojroot",
+                "rstudioapi",
+                "shiny",
+                "withr"
             ]
         }
     }

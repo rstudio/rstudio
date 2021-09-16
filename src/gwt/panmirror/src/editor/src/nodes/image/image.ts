@@ -325,7 +325,7 @@ export function imageCommand(editorUI: EditorUI, imageAttributes: boolean) {
 
 function imageOmniInsert(ui: EditorUI) {
   return {
-    name: ui.context.translateText('Image...'),
+    name: ui.context.translateText('Figure / Image...'),
     description: ui.context.translateText('Figure or inline image'),
     group: OmniInsertGroup.Content,
     priority: 10,

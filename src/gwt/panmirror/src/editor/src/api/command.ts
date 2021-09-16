@@ -112,6 +112,8 @@ export enum EditorCommandId {
   EnDash = 'C32AFE32-0E57-4A16-9C39-88EB1D82B8B4',
   NonBreakingSpace = 'CF6428AB-F36E-446C-8661-2781B2CD1169',
   HardLineBreak = '3606FF87-866C-4729-8F3F-D065388FC339',
+  Tabset = '7327AF95-3EA7-42C8-8C42-D4CB0D15CAE4',
+  Callout = 'DC86C28A-0140-4EB5-A745-2C1EFA55C94D',
 
   // raw
   TexInline = 'CFE8E9E5-93BA-4FFA-9A77-BA7EFC373864',
@@ -338,10 +340,9 @@ export function toggleBlockType(type: NodeType, toggletype: NodeType, attrs = {}
     // if the type has pandoc attrs then see if we can transfer from the existing node
     let pandocAttr: any = {};
     if (pandocAttrInSpec(type.spec)) {
-      const predicate = (n: ProsemirrorNode) => pandocAttrAvailable(n.attrs);
-      const node = findParentNode(predicate)(state.selection);
-      if (node) {
-        pandocAttr = pandocAttrFrom(node.node.attrs);
+      const parentNode = state.selection.$anchor.node();
+      if (parentNode && pandocAttrAvailable(parentNode.attrs)) {
+        pandocAttr = pandocAttrFrom(parentNode.attrs);
       }
     }
 

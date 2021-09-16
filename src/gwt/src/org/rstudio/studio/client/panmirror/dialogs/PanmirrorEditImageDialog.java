@@ -56,7 +56,7 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
                                    PanmirrorUIContext uiContext,
                                    OperationWithInput<PanmirrorImageProps> operation)
    {
-      super("Image", Roles.getDialogRole(), operation, () -> {
+      super("Figure / Image", Roles.getDialogRole(), operation, () -> {
          // cancel returns null
          operation.execute(null);
       });

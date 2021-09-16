@@ -231,7 +231,7 @@ public class VisualModePanmirrorContext
             for (int i=0; i<imageUris.length(); i++)
             {
                String uri = imageUris.get(i);
-               if (isValidURL(uri))
+               if (isHttpURL(uri))
                {
                   resolvedUris.push(uri);
                }
@@ -239,9 +239,13 @@ public class VisualModePanmirrorContext
                {
                   String path = uiContext.mapPathToResource.map(uri);
                   if (path != null)
+                  {
                      resolvedUris.push(path);
+                  }
                   else
+                  {
                      unresolvedUris.push(uri);
+                  }
                }
             }
 
@@ -280,9 +284,10 @@ public class VisualModePanmirrorContext
       return uiContext;
    }
 
-   private native boolean isValidURL(String url)  /*-{
+   private native boolean isHttpURL(String url)  /*-{
       try {
-         new URL(url);
+         url = new URL(url);
+         return url.protocol === "http:" || url.protocol === "https:";
       } catch (_) {
          return false;
       }

@@ -1,5 +1,5 @@
 /*
- * div-styles.css
+ * PanmirrorInsertTabsetResult.java
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -13,17 +13,21 @@
  *
  */
 
- 
-.ProseMirror .pm-div {
-  position: relative;
+
+package org.rstudio.studio.client.panmirror.dialogs.model;
+
+import jsinterop.annotations.JsType;
+
+@JsType
+public class PanmirrorInsertTabsetResult
+{
+   public PanmirrorInsertTabsetResult()
+   {
+      this.tabs = new String[] {};
+      this.attr = new PanmirrorAttrProps();
+   }
+   public String[] tabs;
+   public PanmirrorAttrProps attr;
 }
-
-.ProseMirror .pm-div[class*="callout-"] .pm-heading {
-  font-size: 1.2em !important;
-  margin-top: 0.25em;
-  margin-bottom: 0.5em;
-}
-
-
 
 

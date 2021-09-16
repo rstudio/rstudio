@@ -68,6 +68,73 @@ export function pandocAttrFrom(attrs: any) {
   return pandocAttr;
 }
 
+export function pandocAttrEnsureClass(attr: any, name: string) {
+  attr.classes = [name].concat((attr.classes || []).filter((clz: string) => clz !== name));
+}
+
+export function pandocAttrRemoveClass(attr: any, predicate: (str: string) => boolean) : string | undefined {
+  let foundClass: string | undefined;
+  if (Array.isArray(attr.classes)) {
+    const classes: string[] = [];
+    for (const clz of attr.classes) {
+      if (predicate(clz)) {
+        foundClass = clz;
+      } else {
+        classes.push(clz);
+      }
+    }
+    attr.classes = classes;
+    return foundClass;
+   
+  } else {
+    return undefined;
+  }
+}
+
+export function pandocAttrHasClass(attrs: any, predicate: (str: string) => boolean) {
+  if (Array.isArray(attrs.classes)) {
+    const classes = attrs.classes as string[];
+    return classes.some(clz => predicate(clz));
+  } else {
+    return false;
+  }
+}
+
+export function pandocAttrGetKeyvalue(attr: any, key: string) {
+  if (attr.keyvalue) {
+    const entry = attr.keyvalue.find((keyval: string[]) => keyval[0] === key);
+    if (entry) {
+      return entry[1];
+    } else {
+      return undefined;
+    }
+  } else {
+    return undefined;
+  }
+}
+
+export function pandocAttrSetKeyvalue(attr: any, key: string, value: string) {
+  const keyvalue = [...(attr.keyvalue || [])] as string[][];
+  let add = true;
+  for (const entry of keyvalue) {
+    if (entry[0] === key) {
+      entry[1] = value;
+      add = false;
+      break;
+    }
+  }
+  if (add) {
+    keyvalue.push([key, value]);
+  }
+  attr.keyvalue = keyvalue;
+}
+
+export function pandocAttrRemoveKeyvalue(attr: any, key: string) {
+  if (attr.keyvalue) {
+    attr.keyvalue = attr.keyvalue.filter((entry: string[]) => entry[0] !== key);
+  }
+}
+
 export function pandocAttrInSpec(spec: NodeSpec | MarkSpec) {
   const keys = Object.keys((spec.attrs as object) || {});
   return keys.includes('id') && keys.includes('classes') && keys.includes('keyvalue');

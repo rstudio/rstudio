@@ -439,6 +439,8 @@ public class ElementIds
    // FileCommandToolbar
    public final static String MB_FILES_MORE = "mb_files_more";
    public static String getMbFilesMore() { return getElementId(MB_FILES_MORE); }
+   public final static String MB_FILES_TOUCH_FILE = "mb_files_touch_file";
+   public static String getMbFilesTouchFile() { return getElementId(MB_FILES_TOUCH_FILE); }
 
    // PlotsToolbar
    public final static String MB_PLOTS_EXPORT = "mb_plots_export";
@@ -570,7 +572,13 @@ public class ElementIds
    public static String getVisualMdInsertCiteCreateBib() { return getElementId(VISUAL_MD_LIST_INSERT_CITE_CREATE_BIB); }
    public final static String VISUAL_MD_LIST_INSERT_CITE_CREATE_BIB_TYPE = "visual_md_insert_cite_create_bib_type";
    public static String getVisualMdInsertCiteCreateBibType() { return getElementId(VISUAL_MD_LIST_INSERT_CITE_CREATE_BIB_TYPE); }
-
+   public final static String VISUAL_MD_MATH_ID_LABEL1 = "visual_md_math_id_label1";
+   public static String getVisualMdMathIdLabel1() { return getElementId(VISUAL_MD_MATH_ID_LABEL1); }
+   public final static String VISUAL_MD_MATH_ID_LABEL2 = "visual_md_math_id_label2";
+   public static String getVisualMdMathIdLabel2() { return getElementId(VISUAL_MD_MATH_ID_LABEL2); }
+   public final static String VISUAL_MD_MATH_ID = "visual_md_math_id";
+   public static String getVisualMdMathId() { return getElementId(VISUAL_MD_MATH_ID); }
+  
    public final static String VISUAL_MD_LIST_TIGHT = "visual_md_ordered_list_tight";
    public final static String VISUAL_MD_IMAGE_TAB_IMAGE = "visual_md_image_tab_image";
    public final static String VISUAL_MD_IMAGE_WIDTH = "visual_md_image_width";
@@ -595,6 +603,14 @@ public class ElementIds
    public final static String VISUAL_MD_CODE_BLOCK_LANG_LABEL1 = "visual_md_code_block_lang_label1";
    public final static String VISUAL_MD_CODE_BLOCK_LANG_LABEL2 = "visual_md_code_block_lang_label2";
    public final static String VISUAL_MD_CODE_BLOCK_LANG = "visual_md_code_block_tab_lang";
+   public final static String VISUAL_MD_INSERT_TABSET_TABS = "visual_md_insert_tabset_tabs";
+   public final static String VISUAL_MD_INSERT_TABSET_ATTRIBUTES = "visual_md_insert_tabset_attributes";
+   public final static String VISUAL_MD_INSERT_TABSET_TAB = "visual_md_insert_tabset_tab";
+   public final static String VISUAL_MD_CALLOUT_TAB_CALLOUT = "visual_md_callout_tab_callout";
+   public final static String VISUAL_MD_CALLOUT_TAB_ATTRIBUTES = "visual_md_callout_tab_attributes";
+   public final static String VISUAL_MD_CALLOUT_CAPTION = "visual_md_callout_caption";
+   public final static String VISUAL_MD_CALLOUT_ICON = "visual_md_callout_icon";
+   public final static String VISUAL_MD_CALLOUT_REMOVE_BUTTON = "visual_md_callout_remove_button";
 
    // ProgressDialog
    public final static String PROGRESS_TITLE_LABEL = "progress_title_label";
