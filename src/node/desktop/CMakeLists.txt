@@ -14,7 +14,7 @@
 #
 
 cmake_minimum_required(VERSION 3.4.3)
-project (RSTUDIO_ELECTRON)
+project(ELECTRON_DESKTOP)
 
 # allow opt in / out of ELECTRON build
 # mainly for faster iteration in builds
