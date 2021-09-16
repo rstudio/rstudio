@@ -190,13 +190,6 @@
     "@types/prosemirror-state" "*"
     "@types/prosemirror-view" "*"
 
-"@types/prosemirror-dev-tools@^3.0.2":
-  version "3.0.2"
-  resolved "https://registry.yarnpkg.com/@types/prosemirror-dev-tools/-/prosemirror-dev-tools-3.0.2.tgz#d0b69ae129755504158095a46d8f94086c309f42"
-  integrity sha512-lZiu4pZ3JfZKdWJDj6e1Gy28Ee3wIH3bOoAG432B7PuEPaV+S5oRMsZMdiuolNyD3T4XylJxAE3ARFxAAT+Jkg==
-  dependencies:
-    "@types/prosemirror-view" "*"
-
 "@types/prosemirror-dropcursor@^1.0.3":
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/@types/prosemirror-dropcursor/-/prosemirror-dropcursor-1.0.3.tgz#49250849b8a0b86e8c29eb1ba70a463e53e46947"
@@ -274,13 +267,6 @@
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/@types/prosemirror-transform/-/prosemirror-transform-1.1.1.tgz#5a0de16e8e0123b4c3d9559235e19f39cee85e5c"
   integrity sha512-yYCYSoiRH+Wcbl8GJc0PFCzeyMzNQ1vL2xrHHSXZuNcIlH75VoiKrZFeZ6BS9cl8mYXjZrlmdBe8YOxYvyKM6A==
-  dependencies:
-    "@types/prosemirror-model" "*"
-
-"@types/prosemirror-transform@^1.1.4":
-  version "1.1.4"
-  resolved "https://registry.yarnpkg.com/@types/prosemirror-transform/-/prosemirror-transform-1.1.4.tgz#c3565e81b2ef3ce3254e6927d6f63eb8d7bb20d0"
-  integrity sha512-HP1PauvkqSgDquZut8HaLOTUDQ6jja/LAy4OA7tTS1XG7wqRnX3gLUyEj0mD6vFd4y8BPkNddNdOh/BeGHlUjg==
   dependencies:
     "@types/prosemirror-model" "*"
 

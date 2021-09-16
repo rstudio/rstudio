@@ -139,6 +139,7 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntryProvider
       add(PanmirrorCommands.NonBreakingSpace, "Insert:::Non-Breaking Space");
       add(PanmirrorCommands.HardLineBreak, "Insert:::Hard Line Break");
       add(PanmirrorCommands.Tabset, "Insert:::Tabset...");
+      add(PanmirrorCommands.Callout, "Insert:::Callout...");
       
       // outline
       add(PanmirrorCommands.GoToNextSection, "Go to Next Section");

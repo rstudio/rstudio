@@ -224,6 +224,11 @@ public class TextEditingTargetPrefsHelper
                {
                   docDisplay.setShowPrintMargin(arg);
                }));
+         releaseOnDismiss.add(prefs.visualMarkdownCodeEditorLineNumbers().bind(
+            (arg) ->
+            {
+               docDisplay.setShowLineNumbers(arg);
+            }));
       }
    }
 }

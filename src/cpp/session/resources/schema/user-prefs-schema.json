@@ -1350,6 +1350,12 @@
             "title": "Show margin in visual mode code blocks",
             "description": "Whether to show the margin guide in the visual mode code blocks."
         },
+        "visual_markdown_code_editor_line_numbers": {
+            "type": "boolean",
+            "default": false,
+            "title": "Show line numbers in visual mode code blocks",
+            "description": "Whether to show line numbers in the code editors used in visual mode"
+        },
         "visual_markdown_editing_font_size_points": {
             "type": "integer",
             "default": 0,

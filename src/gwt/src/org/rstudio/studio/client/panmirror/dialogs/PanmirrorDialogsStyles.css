@@ -114,6 +114,12 @@
    height: 295px;
 }
 
+.divDialogTabs {
+   width: 380px;
+   height: 280px;
+}
+
+
 .hrefSelect {
    width: 98%;
 }

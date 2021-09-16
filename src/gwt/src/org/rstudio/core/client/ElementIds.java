@@ -606,7 +606,11 @@ public class ElementIds
    public final static String VISUAL_MD_INSERT_TABSET_TABS = "visual_md_insert_tabset_tabs";
    public final static String VISUAL_MD_INSERT_TABSET_ATTRIBUTES = "visual_md_insert_tabset_attributes";
    public final static String VISUAL_MD_INSERT_TABSET_TAB = "visual_md_insert_tabset_tab";
-
+   public final static String VISUAL_MD_CALLOUT_TAB_CALLOUT = "visual_md_callout_tab_callout";
+   public final static String VISUAL_MD_CALLOUT_TAB_ATTRIBUTES = "visual_md_callout_tab_attributes";
+   public final static String VISUAL_MD_CALLOUT_CAPTION = "visual_md_callout_caption";
+   public final static String VISUAL_MD_CALLOUT_ICON = "visual_md_callout_icon";
+   public final static String VISUAL_MD_CALLOUT_REMOVE_BUTTON = "visual_md_callout_remove_button";
 
    // ProgressDialog
    public final static String PROGRESS_TITLE_LABEL = "progress_title_label";
