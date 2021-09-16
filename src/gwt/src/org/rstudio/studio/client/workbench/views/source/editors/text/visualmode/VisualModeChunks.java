@@ -72,6 +72,15 @@ public class VisualModeChunks implements ChunkDefinition.Provider
          return chunk.getEditor();
          
       };
+      chunks.setChunksExpanded = (expanded ->
+      {
+         // Go through each chunk and set its expansion state to match the one provided
+         for (VisualModeChunk chunk: chunks_)
+         {
+            chunk.setExpanded(expanded);
+         }
+      });
+
       return chunks;
    }
    

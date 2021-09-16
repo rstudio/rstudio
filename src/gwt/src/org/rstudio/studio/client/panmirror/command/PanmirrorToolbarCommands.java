@@ -84,6 +84,8 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntryProvider
       add(PanmirrorCommands.RcppCodeChunk, "Rcpp");
       add(PanmirrorCommands.SQLCodeChunk, "SQL");
       add(PanmirrorCommands.StanCodeChunk, "Stan");
+      add(PanmirrorCommands.ExpandAllChunks, "Expand All Chunks");
+      add(PanmirrorCommands.CollapseAllChunks, "Collapse All Chunks");
 
       // lists
       add(PanmirrorCommands.BulletList, "Bulleted List", Roles.getMenuitemcheckboxRole(), icons.BULLET_LIST);

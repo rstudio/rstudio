@@ -30,6 +30,8 @@ import { RmdChunkImagePreviewPlugin } from './rmd_chunk-image';
 import { rmdChunkBlockCapsuleFilter } from './rmd_chunk-capsule';
 
 import './rmd_chunk-styles.css';
+import { EditorState, Transaction } from 'prosemirror-state';
+import { EditorView } from 'prosemirror-view';
 
 const extension = (context: ExtensionContext): Extension | null => {
   const { ui, options, format } = context;
@@ -106,6 +108,8 @@ const extension = (context: ExtensionContext): Extension | null => {
         new SQLChunkCommand(ui),
         new D3ChunkCommand(ui),
         new StanChunkCommand(ui),
+        new ExpandAllChunksCommand(ui),
+        new CollapseAllChunksCommand(ui)
       ];
       return commands;
     },
@@ -217,6 +221,35 @@ class StanChunkCommand extends RmdChunkCommand {
       0,
       17,
     );
+  }
+}
+
+class ChunkExpansionCommand extends ProsemirrorCommand {
+  constructor(
+    ui: EditorUI,
+    id: EditorCommandId,
+    keymap: string[],
+    expand: boolean
+  ) {
+    super(id, keymap, (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => 
+    {
+      if (dispatch) {
+        ui.chunks.setChunksExpanded(expand);
+      }
+      return true;
+    });
+  }
+}
+
+class ExpandAllChunksCommand extends ChunkExpansionCommand {
+  constructor(ui: EditorUI) {
+    super(ui, EditorCommandId.ExpandAllChunks, [], true);
+  }
+}
+
+class CollapseAllChunksCommand extends ChunkExpansionCommand {
+  constructor(ui: EditorUI) {
+    super(ui, EditorCommandId.CollapseAllChunks, [], false);
   }
 }
 

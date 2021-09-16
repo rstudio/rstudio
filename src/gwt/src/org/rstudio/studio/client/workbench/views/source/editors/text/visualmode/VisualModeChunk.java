@@ -29,7 +29,6 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.theme.ThemeFonts;
-import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
@@ -305,7 +304,7 @@ public class VisualModeChunk
       // Hook up event handler for expand/collapse
       releaseOnDismiss_.add(collapse_.expanded.addValueChangeHandler(evt ->
       {
-         setExpanded(evt.getValue());
+         setChunkExpanded(evt.getValue());
       }));
 
       // Prevent tab from advancing into editor
@@ -548,6 +547,21 @@ public class VisualModeChunk
    {
       return markdownIndex_;
    }
+
+   /**
+    * Sets the expansion state of the chunk. When collapsed, a chunk, and any output
+    * it contains, is reduced to a one-line summary that can be expanded to reveal
+    * the full chunk.
+    *
+    * @param expanded
+    */
+   public void setExpanded(boolean expanded)
+   {
+      if (expanded != collapse_.expanded.getValue())
+      {
+         collapse_.expanded.setValue(expanded, true);
+      }
+   }
    
    private void setMode(AceEditor editor, String mode)
    {
@@ -761,7 +775,7 @@ public class VisualModeChunk
       };
    }
 
-   private void setExpanded(boolean expanded)
+   private void setChunkExpanded(boolean expanded)
    {
       if (expanded)
       {
