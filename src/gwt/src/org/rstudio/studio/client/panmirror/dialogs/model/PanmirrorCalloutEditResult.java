@@ -1,5 +1,5 @@
 /*
- * PanmirrorDivEditProps.java
+ * PanmirrorCalloutEditResult.java
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -19,9 +19,11 @@ package org.rstudio.studio.client.panmirror.dialogs.model;
 import jsinterop.annotations.JsType;
 
 @JsType
-public class PanmirrorDivEditProps extends PanmirrorAttrProps
+public class PanmirrorCalloutEditResult 
 {
+   public String action;
    public PanmirrorAttrProps attr;
    public PanmirrorCalloutProps callout;
 }
+
 

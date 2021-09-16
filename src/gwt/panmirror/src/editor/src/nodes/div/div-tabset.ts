@@ -1,5 +1,5 @@
 /*
- * insert_tabset.ts
+ * div-tabset.ts
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -19,32 +19,21 @@ import { wrapIn } from "prosemirror-commands";
 import { findParentNodeOfType, setTextSelection } from "prosemirror-utils";
 import { EditorView } from "prosemirror-view";
 
-import { ExtensionContext, Extension } from "../api/extension";
-import { kQuartoDocType } from "../api/format";
-import { EditorCommandId, ProsemirrorCommand, toggleWrap } from "../api/command";
-import { EditorUI } from "../api/ui";
-import { OmniInsertGroup } from "../api/omni_insert";
-import { pandocAttrEnsureClass } from "../api/pandoc_attr";
+import { EditorCommandId, ProsemirrorCommand, toggleWrap } from "../../api/command";
+import { EditorUI } from "../../api/ui";
+import { OmniInsertGroup } from "../../api/omni_insert";
+import { pandocAttrEnsureClass } from "../../api/pandoc_attr";
 
-const extension = (context: ExtensionContext): Extension | null => {
-  const { pandocExtensions, format, ui } = context;
 
-  if (!format.docTypes.includes(kQuartoDocType) || !pandocExtensions.fenced_divs) {
-    return null;
-  }
-
-  return {
-    commands: () => [
-      new ProsemirrorCommand(EditorCommandId.Tabset, [], insertTabsetCommandFn(ui), {
-        name: ui.context.translateText('Tabset'),
-        description: ui.context.translateText('Content divided into tabs'),
-        group: OmniInsertGroup.Content,
-        priority: 2,
-        image: () => ui.images.omni_insert?.generic!,
-      }),
-    ]
-  };
-};
+export function insertTabsetCommand(ui: EditorUI) {
+  return new ProsemirrorCommand(EditorCommandId.Tabset, [], insertTabsetCommandFn(ui), {
+    name: ui.context.translateText('Tabset'),
+    description: ui.context.translateText('Content divided into tabs'),
+    group: OmniInsertGroup.Content,
+    priority: 2,
+    image: () => ui.images.omni_insert?.generic!,
+  });
+}
 
 function insertTabsetCommandFn(ui: EditorUI) {
   return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
@@ -96,6 +85,5 @@ function insertTabsetCommandFn(ui: EditorUI) {
   };
 }
 
-export default extension;
 
 

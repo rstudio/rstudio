@@ -31,6 +31,7 @@ export interface EditorDialogs {
   editAttr: AttrEditorFn;
   editSpan: AttrEditorFn;
   editDiv: DivAttrEditorFn;
+  editCallout: CalloutEditorFn;
   editRawInline: RawFormatEditorFn;
   editRawBlock: RawFormatEditorFn;
   editMath: MathEditorFn;
@@ -75,7 +76,9 @@ export type YesNoMessageFn = (
 
 export type AttrEditorFn = (attr: AttrProps, idHint?: string) => Promise<AttrEditResult | null>;
 
-export type DivAttrEditorFn = (props: DivEditProps, removeEnabled: boolean) => Promise<DivEditResult | null>;
+export type DivAttrEditorFn = (attr: AttrProps, removeEnabled: boolean) => Promise<AttrEditResult | null>;
+
+export type CalloutEditorFn = (props: CalloutEditProps, removeEnabled: boolean) => Promise<CalloutEditResult | null>;
 
 export type LinkEditorFn = (
   link: LinkProps,
@@ -118,12 +121,12 @@ export interface AttrEditResult {
   readonly attr: AttrProps;
 }
 
-export interface DivEditProps {
+export interface CalloutEditProps {
   attr: AttrProps;
-  callout?: CalloutProps;
+  callout: CalloutProps;
 }
 
-export interface DivEditResult extends DivEditProps {
+export interface CalloutEditResult extends CalloutEditProps {
   readonly action: "edit" | "remove";
 }
 

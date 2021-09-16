@@ -77,8 +77,6 @@ import behaviorInsertSymbolEmoji from '../behaviors/insert_symbol/insert_symbol-
 import beahviorInsertSpecialCharacters from '../behaviors/insert_symbol/insert_special_characters';
 import behaviorNbsp from '../behaviors/nbsp';
 import behaviorRemoveSection from '../behaviors/remove_section';
-import behaviorInsertTabset from '../behaviors/insert_tabset';
-import behaviorInsertCallout from '../behaviors/insert_callout';
 
 // marks
 import markStrikeout from '../marks/strikeout';
@@ -103,7 +101,7 @@ import nodeFootnote from '../nodes/footnote/footnote';
 import nodeRawBlock from '../nodes/raw_block';
 import nodeYamlMetadata from '../nodes/yaml_metadata/yaml_metadata';
 import nodeRmdCodeChunk from '../nodes/rmd_chunk/rmd_chunk';
-import nodeDiv from '../nodes/div';
+import nodeDiv from '../nodes/div/div';
 import nodeLineBlock from '../nodes/line_block';
 import nodeTable from '../nodes/table/table';
 import nodeDefinitionList from '../nodes/definition_list/definition_list';
@@ -159,8 +157,6 @@ export function initExtensions(context: ExtensionContext, extensions?: readonly 
     behaviorInsertSymbol,
     behaviorInsertSymbolEmoji,
     beahviorInsertSpecialCharacters,
-    behaviorInsertTabset,
-    behaviorInsertCallout,
     behaviorNbsp,
     behaviorRemoveSection,
 

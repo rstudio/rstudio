@@ -1,5 +1,5 @@
 /*
- * PanmirrorEditDivDialog.java
+ * PanmirrorEditCalloutDialog.java
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -30,8 +30,8 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorCalloutProps;
-import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorDivEditProps;
-import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorDivEditResult;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorCalloutEditProps;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorCalloutEditResult;
 
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.CheckBox;
@@ -40,13 +40,13 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 
-public class PanmirrorEditDivDialog extends ModalDialog<PanmirrorDivEditResult>
+public class PanmirrorEditCalloutDialog extends ModalDialog<PanmirrorCalloutEditResult>
 {
-   public PanmirrorEditDivDialog(boolean removeEnabled,
-                                 PanmirrorDivEditProps props, 
-                                 OperationWithInput<PanmirrorDivEditResult> operation)
+   public PanmirrorEditCalloutDialog(boolean removeEnabled,
+                                     PanmirrorCalloutEditProps props, 
+                                     OperationWithInput<PanmirrorCalloutEditResult> operation)
    {
-      super(props.callout != null ? "Callout" : "Div", Roles.getDialogRole(), operation, () -> {
+      super("Callout", Roles.getDialogRole(), operation, () -> {
          // cancel returns null
          operation.execute(null);
       });
@@ -55,7 +55,7 @@ public class PanmirrorEditDivDialog extends ModalDialog<PanmirrorDivEditResult>
       {
          ThemedButton removeAttributesButton = new ThemedButton("Unwrap Div");
          removeAttributesButton.addClickHandler((event) -> {
-            PanmirrorDivEditResult result = collectInput();
+            PanmirrorCalloutEditResult result = collectInput();
             result.action = "remove";
             validateAndGo(result, new Command()
             {
@@ -69,75 +69,67 @@ public class PanmirrorEditDivDialog extends ModalDialog<PanmirrorDivEditResult>
                }
             });
          });
-         addLeftButton(removeAttributesButton, ElementIds.VISUAL_MD_DIV_REMOVE_BUTTON);
+         addLeftButton(removeAttributesButton, ElementIds.VISUAL_MD_CALLOUT_REMOVE_BUTTON);
       }
       
       // create attributes editor and tab
       editAttr_ =  new PanmirrorEditAttrWidget();
       editAttr_.setAttr(props.attr, null);
-      VerticalTabPanel attributesTab = new VerticalTabPanel(ElementIds.VISUAL_MD_DIV_TAB_ATTRIBUTES);
+      VerticalTabPanel attributesTab = new VerticalTabPanel(ElementIds.VISUAL_MD_CALLOUT_TAB_ATTRIBUTES);
       attributesTab.addStyleName(RES.styles().dialog());
       attributesTab.add(editAttr_);
       
-      if (props.callout != null)
-      {
-         VerticalTabPanel calloutTab = new VerticalTabPanel(ElementIds.VISUAL_MD_DIV_TAB_CALLOUT);
-         calloutTab.addStyleName(RES.styles().dialog());
-         
-         HorizontalPanel calloutPanel = new HorizontalPanel();
-         calloutPanel.getElement().getStyle().setMarginTop(10, Unit.PX);
-         
-         // type
-         calloutType_ = new SelectWidget(
-            "Type: ", 
-            new String[]{"note", "tip", "important", "caution", "warning"}
-         );
-         calloutType_.setValue(props.callout.type);
-         calloutType_.getLabel().getElement().getStyle().setMarginLeft(0, Unit.PX);
-         calloutType_.getElement().getStyle().setMarginRight(10, Unit.PX);
-
-         calloutPanel.add(calloutType_);
-         
-         
-         // appearance
-         calloutAppearance_ = new SelectWidget(
-           "Appearance: ",
-           new String[] {"default", "simple", "minimal"}
-         );
-         calloutAppearance_.setValue(props.callout.appearance);
-         calloutAppearance_.getElement().getStyle().setMarginRight(10, Unit.PX);
-         calloutPanel.add(calloutAppearance_);
-         
-         calloutCheckBox_ = new FormCheckBox("Show icon", ElementIds.VISUAL_MD_DIV_CALLOUT_ICON);
-         calloutCheckBox_.setValue(props.callout.icon);
-         calloutPanel.add(calloutCheckBox_);
-         
-         calloutTab.add(calloutPanel);
-         
-         // caption
-         calloutCaption_  = PanmirrorDialogsUtil.addTextBox(
-            calloutTab, 
-            ElementIds.VISUAL_MD_DIV_CALLOUT_CAPTION, 
-            "Caption:",
-            props.callout.caption
-         );
-         DomUtils.setPlaceholder(calloutCaption_, "(Optional)");
-         
-   
-         
-         DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("Div");
-         tabPanel.addStyleName(RES.styles().divDialogTabs());
-         tabPanel.add(calloutTab, "Callout", calloutTab.getBasePanelId());
-         tabPanel.add(attributesTab, "Attributes", attributesTab.getBasePanelId());
-         tabPanel.selectTab(0);
-
-         mainWidget_ = tabPanel;
+      VerticalTabPanel calloutTab = new VerticalTabPanel(ElementIds.VISUAL_MD_CALLOUT_TAB_CALLOUT);
+      calloutTab.addStyleName(RES.styles().dialog());
       
-      }
-      else 
-      {
-         mainWidget_ = attributesTab;
-      } 
+      HorizontalPanel calloutPanel = new HorizontalPanel();
+      calloutPanel.getElement().getStyle().setMarginTop(10, Unit.PX);
+      
+      // type
+      calloutType_ = new SelectWidget(
+         "Type: ", 
+         new String[]{"note", "tip", "important", "caution", "warning"}
+      );
+      calloutType_.setValue(props.callout.type);
+      calloutType_.getLabel().getElement().getStyle().setMarginLeft(0, Unit.PX);
+      calloutType_.getElement().getStyle().setMarginRight(10, Unit.PX);
+
+      calloutPanel.add(calloutType_);
+      
+      
+      // appearance
+      calloutAppearance_ = new SelectWidget(
+        "Appearance: ",
+        new String[] {"default", "simple", "minimal"}
+      );
+      calloutAppearance_.setValue(props.callout.appearance);
+      calloutAppearance_.getElement().getStyle().setMarginRight(10, Unit.PX);
+      calloutPanel.add(calloutAppearance_);
+      
+      calloutCheckBox_ = new FormCheckBox("Show icon", ElementIds.VISUAL_MD_CALLOUT_ICON);
+      calloutCheckBox_.setValue(props.callout.icon);
+      calloutPanel.add(calloutCheckBox_);
+      
+      calloutTab.add(calloutPanel);
+      
+      // caption
+      calloutCaption_  = PanmirrorDialogsUtil.addTextBox(
+         calloutTab, 
+         ElementIds.VISUAL_MD_CALLOUT_CAPTION, 
+         "Caption:",
+         props.callout.caption
+      );
+      DomUtils.setPlaceholder(calloutCaption_, "(Optional)");
+      
+
+      
+      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("Div");
+      tabPanel.addStyleName(RES.styles().divDialogTabs());
+      tabPanel.add(calloutTab, "Callout", calloutTab.getBasePanelId());
+      tabPanel.add(attributesTab, "Attributes", attributesTab.getBasePanelId());
+      tabPanel.selectTab(0);
+
+      mainWidget_ = tabPanel;
    }
 
    @Override
@@ -149,16 +141,13 @@ public class PanmirrorEditDivDialog extends ModalDialog<PanmirrorDivEditResult>
    @Override
    public void focusInitialControl()
    {
-      if (calloutType_ != null)
-         calloutType_.getListBox().setFocus(true);
-      else
-         editAttr_.setFocus();
+      calloutType_.getListBox().setFocus(true);  
    }
 
    @Override
-   protected PanmirrorDivEditResult collectInput()
+   protected PanmirrorCalloutEditResult collectInput()
    {
-      PanmirrorDivEditResult result = new PanmirrorDivEditResult();
+      PanmirrorCalloutEditResult result = new PanmirrorCalloutEditResult();
       result.attr = editAttr_.getAttr();
       result.action = "edit";
       result.callout = new PanmirrorCalloutProps();
@@ -171,7 +160,7 @@ public class PanmirrorEditDivDialog extends ModalDialog<PanmirrorDivEditResult>
 
 
    @Override
-   protected boolean validate(PanmirrorDivEditResult input)
+   protected boolean validate(PanmirrorCalloutEditResult input)
    {
       return true;
    }

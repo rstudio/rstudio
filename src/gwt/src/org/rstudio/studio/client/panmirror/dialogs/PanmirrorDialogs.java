@@ -22,8 +22,8 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorCodeBlockProps;
-import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorDivEditProps;
-import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorDivEditResult;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorCalloutEditProps;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorCalloutEditResult;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorImageDimensions;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrEditResult;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorImageProps;
@@ -208,6 +208,11 @@ public class PanmirrorDialogs {
       return editPanmirrorAttr("Span Attributes", "Unwrap Span", null, attr);
    }
    
+   public Promise<PanmirrorAttrEditResult> editDiv(PanmirrorAttrProps attr, boolean removeEnabled)
+   {
+      return editPanmirrorAttr("Div Attributes", removeEnabled ? "Unwrap Div" : null, null, attr);
+   }
+   
 
    private Promise<PanmirrorAttrEditResult> editPanmirrorAttr(String caption, String removeButtonCaption, String idHint, PanmirrorAttrProps attr) 
    {
@@ -221,11 +226,13 @@ public class PanmirrorDialogs {
       );
    }
    
-   public Promise<PanmirrorDivEditResult> editDiv(PanmirrorDivEditProps attr, boolean removeEnabled)
+  
+   
+   public Promise<PanmirrorCalloutEditResult> editCallout(PanmirrorCalloutEditProps attr, boolean removeEnabled)
    {
      return new Promise<>(
-       (ResolveCallbackFn<PanmirrorDivEditResult> resolve, RejectCallbackFn reject) -> {
-          PanmirrorEditDivDialog dialog = new PanmirrorEditDivDialog(removeEnabled, attr, (result) -> {
+       (ResolveCallbackFn<PanmirrorCalloutEditResult> resolve, RejectCallbackFn reject) -> {
+          PanmirrorEditCalloutDialog dialog = new PanmirrorEditCalloutDialog(removeEnabled, attr, (result) -> {
              resolve.onInvoke(result);
           });
           dialog.showModal(false);
