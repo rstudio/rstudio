@@ -22,11 +22,14 @@ import java.util.Map;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.ui.Label;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.core.client.theme.ThemeFonts;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
@@ -47,6 +50,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor.E
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChunkHeaderParser;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextPanmirrorUi;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
@@ -165,6 +169,18 @@ public class VisualModeChunk
       collapse_ = new VisualModeCollapseToggle(true);
       host_.appendChild(collapse_.getElement());
 
+      // add the summary label
+      summary_ = new Label("Code ");
+      summary_.setStyleName(ThemeFonts.getFixedWidthClass(), true);
+      Style summary = summary_.getElement().getStyle();
+      summary.setPosition(Style.Position.ABSOLUTE);
+      summary.setTextAlign(Style.TextAlign.RIGHT);
+      summary.setTop(0, Style.Unit.PX);
+      summary.setRight(3, Style.Unit.PX);
+      summary.setOpacity(0.5);
+      summary.setFontSize(12, Style.Unit.PX);
+      summary_.setVisible(false);
+      host_.appendChild(summary_.getElement());
 
       // add the editor
       editorHost_ = Document.get().createDivElement();
@@ -753,6 +769,7 @@ public class VisualModeChunk
          if (toolbar_ != null)
          {
             toolbar_.getToolbar().setVisible(true);
+            summary_.setVisible(false);
          }
       }
       else
@@ -761,8 +778,71 @@ public class VisualModeChunk
          if (toolbar_ != null)
          {
             toolbar_.getToolbar().setVisible(false);
+            summary_.setText(createSummary());
+            summary_.setVisible(true);
          }
       }
+   }
+
+   /**
+    * Creates a one-line summary of a chunk's contents, to be displayed when the chunk is collapsed.
+    *
+    * @return A string summarizing the chunk.
+    */
+   private String createSummary()
+   {
+      // Get the entire contents of the chunk in a single string, including the header
+      String contents = editor_.getCode();
+
+      // Line counter
+      int lines = 0;
+
+      // We're mostly interested in the language and label; establish defaults
+      String engine = "R";
+      String label = "Code";
+
+      // Quarto chunks use this syntax, which must be parsed separately
+      String quartoLabel = "#| label:";
+
+      // Iterate over each line in the chunk
+      for (String line: StringUtil.getLineIterator(contents))
+      {
+         if (lines == 0)
+         {
+            // This is the first line in the chunk (its header). Parse it, reintroducing
+            // the backticks since they aren't present in the embedded editor.
+            Map<String, String> options = RChunkHeaderParser.parse("```" + line);
+
+            // Check for the "engine" (language) option; extract it if specified
+            String optionEngine = options.get("engine");
+            if (!StringUtil.isNullOrEmpty(optionEngine))
+            {
+               engine = StringUtil.capitalize(StringUtil.stringValue(optionEngine));
+            }
+
+            // Check for the "label" option; the parser is smart enough to synthesize
+            // this from the various ways of specifying Knitr labels
+            String labelEngine = options.get("label");
+            if (!StringUtil.isNullOrEmpty(labelEngine))
+            {
+               label = StringUtil.stringValue(labelEngine);
+            }
+         }
+         else
+         {
+            // If this is the magic comment indicating a Quarto label, extract the label
+            if (line.startsWith(quartoLabel))
+            {
+               label = line.substring(quartoLabel.length()).trim();
+            }
+         }
+         lines++;
+      }
+
+      // Subtract one from the line counter so we don't count the chunk header as a line of code
+      lines--;
+
+      return label + " (" + engine + ", " + lines + " line" + (lines > 1 ? "s" : "") + ")";
    }
 
    private ChunkDefinition def_;
@@ -784,6 +864,7 @@ public class VisualModeChunk
    private final VisualModeEditorSync sync_;
    private final EditingTargetCodeExecution codeExecution_;
    private final VisualModeCollapseToggle collapse_;
+   private final Label summary_;
    private final Map<Integer,VisualModeChunkRowState> rowState_;
    private final TextEditingTarget target_;
    private final int markdownIndex_;
