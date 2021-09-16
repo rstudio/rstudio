@@ -54,11 +54,12 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
 {
    public PanmirrorEditImageDialog(PanmirrorImageProps props,
                                    PanmirrorImageDimensions dims,
+                                   boolean figure,
                                    boolean editAttributes,
                                    PanmirrorUIContext uiContext,
                                    OperationWithInput<PanmirrorImageProps> operation)
    {
-      super("Figure / Image", Roles.getDialogRole(), operation, () -> {
+      super(figure ? "Figure" : "Image", Roles.getDialogRole(), operation, () -> {
          // cancel returns null
          operation.execute(null);
       });
@@ -210,7 +211,16 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
       }
 
       // caption/alt
-      caption_ = PanmirrorDialogsUtil.addTextBox(imageTab, ElementIds.VISUAL_MD_IMAGE_ALT, "Caption:", props.caption);
+      caption_ = PanmirrorDialogsUtil.addTextBox(imageTab, ElementIds.VISUAL_MD_IMAGE_CAPTION, "Caption:", props.caption);
+      
+      if (props.alt != null)
+      {
+         alt_ = PanmirrorDialogsUtil.addTextBox(imageTab, ElementIds.VISUAL_MD_IMAGE_CAPTION, "Alternative text:", props.alt);
+      }
+      else
+      {
+         alt_ = null;
+      }
     
       // linkto
       linkTo_ = PanmirrorDialogsUtil.addTextBox(imageTab,  ElementIds.VISUAL_MD_IMAGE_LINK_TO, "Link to:", props.linkTo);
@@ -300,6 +310,8 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
          result.align = "right";
       if (env_ != null)
          result.env = env_.getText().trim();
+      if (alt_ != null)
+         result.alt = alt_.getText().trim();
       result.width = widthProp_;
       result.height = heightProp_;
       result.units = unitsProp_;
@@ -508,6 +520,7 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
    private final CheckBox lockRatio_;
    private final TextBox title_;
    private final TextBox caption_;
+   private final TextBox alt_;
    private final TextBox linkTo_;
    private final TextBox env_;
    private final RadioButton alignDefault;

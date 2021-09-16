@@ -585,6 +585,7 @@ public class ElementIds
    public final static String VISUAL_MD_IMAGE_UNITS = "visual_md_image_units";
    public final static String VISUAL_MD_IMAGE_LOCK_RATIO = "visual_md_image_lock_ratio";
    public final static String VISUAL_MD_IMAGE_TITLE = "visual_md_image_title";
+   public final static String VISUAL_MD_IMAGE_CAPTION = "visual_md_image_caption";
    public final static String VISUAL_MD_IMAGE_ALT = "visual_md_image_alt";
    public final static String VISUAL_MD_IMAGE_LINK_TO = "visual_md_image_link_to";
    public final static String VISUAL_MD_IMAGE_ENV = "visual_md_image_env";

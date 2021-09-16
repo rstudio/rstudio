@@ -89,6 +89,7 @@ export type LinkEditorFn = (
 export type ImageEditorFn = (
   image: ImageProps,
   dims: ImageDimensions | null,
+  figure: boolean,
   editAttributes: boolean,
 ) => Promise<ImageEditResult | null>;
 
@@ -154,6 +155,7 @@ export interface ImageProps extends AttrProps {
   src: string | null;
   title?: string;
   caption?: string;
+  alt?: string;
   align?: string;
   env?: string;
   linkTo?: string;

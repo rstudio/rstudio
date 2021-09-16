@@ -160,11 +160,12 @@ public class PanmirrorDialogs {
       );
    }
    
-   public Promise<PanmirrorImageProps> editImage(PanmirrorImageProps image, PanmirrorImageDimensions dims, boolean editAttributes)
+   public Promise<PanmirrorImageProps> editImage(PanmirrorImageProps image, PanmirrorImageDimensions dims, 
+                                                 boolean figure, boolean editAttributes)
    {
       return new Promise<>(
          (ResolveCallbackFn<PanmirrorImageProps> resolve, RejectCallbackFn reject) -> {  
-            PanmirrorEditImageDialog dialog = new PanmirrorEditImageDialog(image, dims, editAttributes, uiContext_,
+            PanmirrorEditImageDialog dialog = new PanmirrorEditImageDialog(image, dims, figure, editAttributes, uiContext_,
                (result) -> { resolve.onInvoke(result); }
             );
             dialog.showModal(false);

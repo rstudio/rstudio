@@ -22,7 +22,8 @@ import { ImageProps } from '../../api/ui-dialogs';
 import { extractSizeStyles, kPercentUnit, kPixelUnit } from '../../api/css';
 import { ImageType, ImageDimensions, isNaturalAspectRatio } from '../../api/image';
 import { kWidthAttrib, kHeightAttrib, pandocAttrRemoveKeyvalue, 
-         pandocAttrGetKeyvalue, pandocAttrSetKeyvalue, kFigAlignAttrib, kFigEnvAttrib } from '../../api/pandoc_attr';
+         pandocAttrGetKeyvalue, pandocAttrSetKeyvalue, 
+         kFigAlignAttrib, kFigEnvAttrib, kFigAltAttrib } from '../../api/pandoc_attr';
          import { EditorFormat, kQuartoDocType } from '../../api/format';
 
 import { imagePropsWithSizes, hasPercentWidth } from './image-util';
@@ -85,6 +86,9 @@ export async function imageDialog(
                         editorFormat.docTypes.includes(kQuartoDocType) && 
                          imageAttributes;
   if (quartoFigure) {
+    // fig-alt
+    image.alt = pandocAttrGetKeyvalue(image, kFigAltAttrib) || "";
+    pandocAttrRemoveKeyvalue(image, kFigAltAttrib);
     // fig-align
     image.align = pandocAttrGetKeyvalue(image, kFigAlignAttrib) || "default";
     pandocAttrRemoveKeyvalue(image, kFigAlignAttrib);
@@ -93,7 +97,9 @@ export async function imageDialog(
     pandocAttrRemoveKeyvalue(image, kFigEnvAttrib);
   }
 
-  const result = await editorUI.dialogs.editImage(image, dims, imageAttributes);
+  const result = await editorUI.dialogs.editImage(
+    image, dims, type === ImageType.Figure, imageAttributes
+  );
   if (result) {
     // since captions support inline formatting (and the dialog doesn't) we only want 
     // to update the content if the alt/caption actually changed (as it will blow away
@@ -108,12 +114,18 @@ export async function imageDialog(
 
     // if we have align then move into keyvalue
     if (quartoFigure) {
+      // fig-alt
+      if (result.alt) {
+        pandocAttrSetKeyvalue(result, kFigAltAttrib, result.alt);
+      } else {
+        pandocAttrRemoveKeyvalue(result, kFigAltAttrib);
+      }
       // fig-align
       if (result.align) {
-        if (result.align === "default") {
-          pandocAttrRemoveKeyvalue(result, kFigAlignAttrib);
-        } else {
+        if (result.align !== "default") {
           pandocAttrSetKeyvalue(result, kFigAlignAttrib, result.align);
+        } else {
+          pandocAttrRemoveKeyvalue(result, kFigAlignAttrib);
         }
       }
       // fig-env
