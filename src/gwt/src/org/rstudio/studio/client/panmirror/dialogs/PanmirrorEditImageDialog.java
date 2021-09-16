@@ -210,7 +210,7 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
       }
 
       // caption/alt
-      alt_ = PanmirrorDialogsUtil.addTextBox(imageTab, ElementIds.VISUAL_MD_IMAGE_ALT, "Caption:", props.alt);
+      caption_ = PanmirrorDialogsUtil.addTextBox(imageTab, ElementIds.VISUAL_MD_IMAGE_ALT, "Caption:", props.caption);
     
       // linkto
       linkTo_ = PanmirrorDialogsUtil.addTextBox(imageTab,  ElementIds.VISUAL_MD_IMAGE_LINK_TO, "Link to:", props.linkTo);
@@ -288,7 +288,7 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
       PanmirrorImageProps result = new PanmirrorImageProps();
       result.src = url_.getTextBox().getValue().trim();
       result.title = title_.getValue().trim();
-      result.alt = alt_.getValue().trim();
+      result.caption = caption_.getValue().trim();
       result.linkTo = linkTo_.getValue().trim();
       if (alignDefault.getValue())
          result.align = "default";
@@ -507,7 +507,7 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
    private final ListBox units_;
    private final CheckBox lockRatio_;
    private final TextBox title_;
-   private final TextBox alt_;
+   private final TextBox caption_;
    private final TextBox linkTo_;
    private final TextBox env_;
    private final RadioButton alignDefault;

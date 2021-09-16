@@ -210,7 +210,7 @@ function imagesToFiguresTransform(tr: Transform) {
         }
 
         // figure content
-        const content = attrs.alt ? Fragment.from(schema.text(attrs.alt)) : Fragment.empty;
+        const content = attrs.caption ? Fragment.from(schema.text(attrs.caption)) : Fragment.empty;
 
         // replace image with figure
         const figure = schema.nodes.figure.createAndFill(attrs, content);

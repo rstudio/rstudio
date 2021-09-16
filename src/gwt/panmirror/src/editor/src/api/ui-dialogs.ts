@@ -153,7 +153,7 @@ export interface LinkEditResult {
 export interface ImageProps extends AttrProps {
   src: string | null;
   title?: string;
-  alt?: string;
+  caption?: string;
   align?: string;
   env?: string;
   linkTo?: string;

@@ -48,7 +48,7 @@ export async function imageDialog(
     // base attributess
     image = {
       ...(node.attrs as ImageProps),
-      alt: nodeType === schema.nodes.figure ? node.textContent : node.attrs.alt,
+      caption: nodeType === schema.nodes.figure ? node.textContent : node.attrs.caption,
     };
 
     // move width and height out of style and into keyvalue if necessary
@@ -93,16 +93,14 @@ export async function imageDialog(
     pandocAttrRemoveKeyvalue(image, kFigEnvAttrib);
   }
 
-  // if we are editing fig-env then remove fig-env from attributes
-
   const result = await editorUI.dialogs.editImage(image, dims, imageAttributes);
   if (result) {
-    // figures treat 'alt' as their content (the caption), but since captions support
-    // inline formatting (and the dialog doesn't) we only want to update the
-    // content if the alt/caption actually changed (as it will blow away formatting)
-    if (type === ImageType.Figure && image.alt !== result.alt) {
-      if (result.alt) {
-        content = Fragment.from(view.state.schema.text(result.alt));
+    // since captions support inline formatting (and the dialog doesn't) we only want 
+    // to update the content if the alt/caption actually changed (as it will blow away
+    // formatting)
+    if (type === ImageType.Figure && image.caption !== result.caption) {
+      if (result.caption) {
+        content = Fragment.from(view.state.schema.text(result.caption));
       } else {
         content = Fragment.empty;
       }

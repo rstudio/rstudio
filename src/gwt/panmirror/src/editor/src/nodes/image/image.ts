@@ -129,13 +129,13 @@ export function pandocImageHandler(figure: boolean, imageAttributes: boolean) {
     const attrs = {
       src: decodeURI(target[TARGET_URL]),
       title: readPandocTitle(target[TARGET_TITLE]),
-      alt: '',
+      caption: '',
       ...(imageAttributes ? pandocAttrReadAST(tok, IMAGE_ATTR) : {}),
     };
 
     // add alt as plain text if it's not a figure
     if (!figure) {
-      attrs.alt = stringifyTokens(tok.c[IMAGE_ALT]);
+      attrs.caption = stringifyTokens(tok.c[IMAGE_ALT]);
     }
 
     // read image and (if appropriate) children
@@ -161,7 +161,7 @@ export function imagePandocOutputWriter(figure: boolean, ui: EditorUI) {
           if (figure) {
             output.writeInlines(node.content);
           } else {
-            output.writeText(node.attrs.alt);
+            output.writeText(node.attrs.caption);
           }
         });
         output.write([encodeURI(node.attrs.src), node.attrs.title || '']);
@@ -234,9 +234,9 @@ export function imageDOMAttributes(
   if (title) {
     attr.title = title;
   }
-  const alt = node.attrs.alt || node.textContent;
-  if (alt) {
-    attr.alt = alt;
+  const caption = node.attrs.caption || node.textContent;
+  if (caption) {
+    attr.alt = caption;
   }
 
   return {
@@ -249,7 +249,7 @@ export function imageNodeAttrsSpec(linkTo: boolean, imageAttributes: boolean) {
   return {
     src: {},
     title: { default: null },
-    alt: { default: null },
+    caption: { default: null },
     raw: { default: false },
     ...(linkTo ? { linkTo: { default: null } } : {}),
     ...(imageAttributes ? pandocAttrSpec : {}),
@@ -260,7 +260,7 @@ export function imageAttrsFromDOM(el: Element, imageAttributes: boolean, forceAt
   const attrs: { [key: string]: string | null } = {
     src: el.getAttribute('src') || null,
     title: el.getAttribute('title') || null,
-    alt: el.getAttribute('alt') || null,
+    caption: el.getAttribute('alt') || null,
   };
   return {
     ...attrs,
