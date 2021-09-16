@@ -21,7 +21,9 @@ import { EditorUI } from '../../api/ui';
 import { ImageProps } from '../../api/ui-dialogs';
 import { extractSizeStyles, kPercentUnit, kPixelUnit } from '../../api/css';
 import { ImageType, ImageDimensions, isNaturalAspectRatio } from '../../api/image';
-import { kWidthAttrib, kHeightAttrib } from '../../api/pandoc_attr';
+import { kWidthAttrib, kHeightAttrib, pandocAttrRemoveKeyvalue, 
+         pandocAttrGetKeyvalue, pandocAttrSetKeyvalue, kFigAlignAttrib } from '../../api/pandoc_attr';
+         import { EditorFormat, kQuartoDocType } from '../../api/format';
 
 import { imagePropsWithSizes, hasPercentWidth } from './image-util';
 
@@ -31,6 +33,7 @@ export async function imageDialog(
   nodeType: NodeType,
   view: EditorView,
   editorUI: EditorUI,
+  editorFormat: EditorFormat,
   imageAttributes: boolean,
 ) {
   // alias schema
@@ -77,7 +80,15 @@ export async function imageDialog(
   // determine the type
   const type = nodeType === view.state.schema.nodes.image ? ImageType.Image : ImageType.Figure;
 
-  // edit the image
+  // if we are editing alignment then remove fig-align from attributes
+  const imageAlignment = (type === ImageType.Figure) && 
+                          editorFormat.docTypes.includes(kQuartoDocType) && 
+                          imageAttributes;
+  if (imageAlignment) {
+    image.align = pandocAttrGetKeyvalue(image, kFigAlignAttrib) || "default";
+    pandocAttrRemoveKeyvalue(image, kFigAlignAttrib);
+  }
+
   const result = await editorUI.dialogs.editImage(image, dims, imageAttributes);
   if (result) {
     // figures treat 'alt' as their content (the caption), but since captions support
@@ -88,6 +99,15 @@ export async function imageDialog(
         content = Fragment.from(view.state.schema.text(result.alt));
       } else {
         content = Fragment.empty;
+      }
+    }
+
+    // if we have align then move into keyvalue
+    if (result.align) {
+      if (result.align === "default") {
+        pandocAttrRemoveKeyvalue(result, kFigAlignAttrib);
+      } else {
+        pandocAttrSetKeyvalue(result, kFigAlignAttrib, result.align);
       }
     }
 

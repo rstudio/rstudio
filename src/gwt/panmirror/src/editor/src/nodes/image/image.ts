@@ -40,6 +40,7 @@ import { EditorUI } from '../../api/ui';
 import { ImageDimensions } from '../../api/image';
 import { asHTMLTag } from '../../api/html';
 import { OmniInsertGroup } from '../../api/omni_insert';
+import { EditorFormat } from '../../api/format';
 
 import { imageDialog } from './image-dialog';
 import { imageDimensionsFromImg, imageContainerWidth, inlineHTMLIsImage } from './image-util';
@@ -56,7 +57,7 @@ const IMAGE_ALT = 1;
 const IMAGE_TARGET = 2;
 
 const extension = (context: ExtensionContext): Extension => {
-  const { pandocExtensions, ui, events } = context;
+  const { pandocExtensions, ui, events, format } = context;
 
   const imageAttr = imageAttributesAvailable(pandocExtensions);
 
@@ -95,7 +96,7 @@ const extension = (context: ExtensionContext): Extension => {
         attr_edit: () => ({
           type: (schema: Schema) => schema.nodes.image,
           noDecorator: true,
-          editFn: () => imageCommand(ui, imageAttr),
+          editFn: () => imageCommand(ui, format, imageAttr),
         }),
       },
     ],
@@ -105,7 +106,7 @@ const extension = (context: ExtensionContext): Extension => {
         new ProsemirrorCommand(
           EditorCommandId.Image,
           ['Shift-Mod-i'],
-          imageCommand(ui, imageAttr),
+          imageCommand(ui, format, imageAttr),
           imageOmniInsert(ui),
         ),
       ];
@@ -115,7 +116,7 @@ const extension = (context: ExtensionContext): Extension => {
       return [
         imageTextSelectionPlugin(),
         imageEventsPlugin(ui),
-        ...imageNodeViewPlugins('image', ui, events, pandocExtensions),
+        ...imageNodeViewPlugins('image', ui, format, events, pandocExtensions),
       ];
     },
   };
@@ -277,7 +278,7 @@ export function imageAttrsFromHTML(html: string) {
   }
 }
 
-export function imageCommand(editorUI: EditorUI, imageAttributes: boolean) {
+export function imageCommand(editorUI: EditorUI, editorFormat: EditorFormat, imageAttributes: boolean) {
   return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
     const schema = state.schema;
 
@@ -316,7 +317,7 @@ export function imageCommand(editorUI: EditorUI, imageAttributes: boolean) {
       }
 
       // show dialog
-      imageDialog(node, imgDimensions, nodeType, view, editorUI, imageAttributes);
+      imageDialog(node, imgDimensions, nodeType, view, editorUI, editorFormat, imageAttributes);
     }
 
     return true;

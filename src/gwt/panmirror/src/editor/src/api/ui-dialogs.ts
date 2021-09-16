@@ -154,6 +154,7 @@ export interface ImageProps extends AttrProps {
   src: string | null;
   title?: string;
   alt?: string;
+  align?: string;
   linkTo?: string;
   width?: number;
   height?: number;

@@ -22,6 +22,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.theme.VerticalTabPanel;
 import org.rstudio.core.client.widget.FormLabel;
+import org.rstudio.core.client.widget.HorizontalRadioPanel;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.NumericTextBox;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -43,6 +44,7 @@ import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.Panel;
+import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -79,6 +81,8 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
       // image tab
       VerticalTabPanel imageTab = new VerticalTabPanel(ElementIds.VISUAL_MD_IMAGE_TAB_IMAGE);
       imageTab.addStyleName(RES.styles().dialog());
+      imageTab.addStyleName(RES.styles().imageDialogTab());
+
 
       // panel for size controls (won't be added if this is an insert or !editAttributes)
       HorizontalPanel sizePanel = new HorizontalPanel();
@@ -181,6 +185,29 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
       {
          imageTab.add(sizePanel);
       }
+      
+      // alignment
+      alignDefault = new RadioButton("align", "Default");
+      alignLeft_ = new RadioButton("align", "Left");
+      alignCenter_ = new RadioButton("align", "Center");
+      alignRight_ = new RadioButton("align", "Right");
+      if (props.align != null)
+      {
+         alignDefault.setValue(true);   
+         if (props.align.equals("left"))
+            alignLeft_.setValue(true);
+         else if (props.align.equals("center"))
+            alignCenter_.setValue(true);
+         else if (props.align.equals("right"))
+            alignRight_.setValue(true);
+         HorizontalRadioPanel panel = new HorizontalRadioPanel("Alignment", false);
+         panel.addStyleName(RES.styles().alignmentPanel());
+         panel.add(alignDefault);
+         panel.add(alignLeft_);
+         panel.add(alignCenter_);
+         panel.add(alignRight_);
+         imageTab.add(panel);
+      }
 
       // caption/alt
       alt_ = PanmirrorDialogsUtil.addTextBox(imageTab, ElementIds.VISUAL_MD_IMAGE_ALT, "Caption:", props.alt);
@@ -188,30 +215,35 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
       // linkto
       linkTo_ = PanmirrorDialogsUtil.addTextBox(imageTab,  ElementIds.VISUAL_MD_IMAGE_LINK_TO, "Link to:", props.linkTo);
       
-      // title
-      title_ = PanmirrorDialogsUtil.addTextBox(imageTab, ElementIds.VISUAL_MD_IMAGE_TITLE, "Title attribute:", props.title);
-
       // standard pandoc attributes
       editAttr_ =  new PanmirrorEditAttrWidget();
       editAttr_.setAttr(props, null);
+     
+      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("Image");
+      tabPanel.addStyleName(RES.styles().imageDialogTabs());
+      tabPanel.add(imageTab, "Image", imageTab.getBasePanelId());
+      
       if (editAttributes)
       {
          VerticalTabPanel attributesTab = new VerticalTabPanel(ElementIds.VISUAL_MD_IMAGE_TAB_ATTRIBUTES);
          attributesTab.addStyleName(RES.styles().dialog());
+         attributesTab.addStyleName(RES.styles().imageDialogTab());
          attributesTab.add(editAttr_);
-
-         DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("Image");
-         tabPanel.addStyleName(RES.styles().imageDialogTabs());
-         tabPanel.add(imageTab, "Image", imageTab.getBasePanelId());
          tabPanel.add(attributesTab, "Attributes", attributesTab.getBasePanelId());
-         tabPanel.selectTab(0);
+      }
+     
+      VerticalTabPanel advancedTab = new VerticalTabPanel(ElementIds.VISUAL_MD_IMAGE_TAB_ADVANCED);
+      advancedTab.addStyleName(RES.styles().dialog());
+      advancedTab.addStyleName(RES.styles().imageDialogTab());
 
-         mainWidget_ = tabPanel;
-      }
-      else
-      {
-         mainWidget_ = imageTab;
-      }
+      title_ = PanmirrorDialogsUtil.addTextBox(advancedTab, ElementIds.VISUAL_MD_IMAGE_TITLE, "Title attribute:", props.title);
+      tabPanel.add(advancedTab, "Advanced", advancedTab.getBasePanelId());
+      
+      
+      tabPanel.selectTab(0);
+
+      mainWidget_ = tabPanel;
+      
    }
    
    @Inject
@@ -248,6 +280,14 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
       result.title = title_.getValue().trim();
       result.alt = alt_.getValue().trim();
       result.linkTo = linkTo_.getValue().trim();
+      if (alignDefault.getValue())
+         result.align = "default";
+      else if (alignLeft_.getValue())
+         result.align = "left";
+      else if (alignCenter_.getValue())
+         result.align = "center";
+      else if (alignRight_.getValue())
+         result.align = "right";
       result.width = widthProp_;
       result.height = heightProp_;
       result.units = unitsProp_;
@@ -457,6 +497,10 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
    private final TextBox title_;
    private final TextBox alt_;
    private final TextBox linkTo_;
+   private final RadioButton alignDefault;
+   private final RadioButton alignLeft_;
+   private final RadioButton alignCenter_;
+   private final RadioButton alignRight_;
    private final PanmirrorEditAttrWidget editAttr_;
 
    private static final String WIDTH = "width";

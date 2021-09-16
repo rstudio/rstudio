@@ -580,7 +580,6 @@ public class ElementIds
    public static String getVisualMdMathId() { return getElementId(VISUAL_MD_MATH_ID); }
   
    public final static String VISUAL_MD_LIST_TIGHT = "visual_md_ordered_list_tight";
-   public final static String VISUAL_MD_IMAGE_TAB_IMAGE = "visual_md_image_tab_image";
    public final static String VISUAL_MD_IMAGE_WIDTH = "visual_md_image_width";
    public final static String VISUAL_MD_IMAGE_HEIGHT = "visual_md_image_height";
    public final static String VISUAL_MD_IMAGE_UNITS = "visual_md_image_units";
@@ -588,7 +587,10 @@ public class ElementIds
    public final static String VISUAL_MD_IMAGE_TITLE = "visual_md_image_title";
    public final static String VISUAL_MD_IMAGE_ALT = "visual_md_image_alt";
    public final static String VISUAL_MD_IMAGE_LINK_TO = "visual_md_image_link_to";
+   public final static String VISUAL_MD_IMAGE_TAB_IMAGE = "visual_md_image_tab_image";
    public final static String VISUAL_MD_IMAGE_TAB_ATTRIBUTES = "visual_md_image_tab_attributes";
+   public final static String VISUAL_MD_IMAGE_TAB_ADVANCED = "visual_md_image_tab_advanced";
+
    public final static String VISUAL_MD_LINK_REMOVE_LINK_BUTTON = "visual_md_link_remove_link_button";
    public final static String VISUAL_MD_LINK_TAB_LINK = "visual_md_link_tab_link";
    public final static String VISUAL_MD_LINK_TYPE = "visual_md_link_type";

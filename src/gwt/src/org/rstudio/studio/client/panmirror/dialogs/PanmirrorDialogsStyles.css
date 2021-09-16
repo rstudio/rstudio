@@ -1,4 +1,4 @@
-@external gwt-Label, gwt-TextBox, suggestPopupMiddleCenter, rstudio-themes-dark, rstudio-ImageButton;
+@external gwt-Label, gwt-TextBox, gwt-RadioButton, suggestPopupMiddleCenter, rstudio-themes-dark, rstudio-ImageButton;
 
 @eval THEME_DARKGREY_MENU_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyMenuBorder;
 
@@ -104,9 +104,13 @@
    height: 280px;
 }
 
+.imageDialogTab {
+  width: 400px;
+}
+
 .imageDialogTabs {
-   width: 380px;
-   height: 295px;
+   width: 400px;
+   height: 340px;
 }
 
 .insertTabsetDialogTabs {
@@ -119,6 +123,18 @@
    height: 280px;
 }
 
+
+.alignmentPanel {
+  border-style: solid;
+  border-width: 1px;
+  margin-left: 0;
+  margin-top: 4px;
+  margin-bottom: 10px;
+}
+
+.alignmentPanel .gwt-RadioButton {
+  margin-right: 12px;
+}
 
 .hrefSelect {
    width: 98%;
