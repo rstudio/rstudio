@@ -239,7 +239,16 @@ public class VisualModeChunk
                break;
          }
       });
-      
+
+      // Ensure that the editor expands when it gets focus
+      releaseOnDismiss_.add(editor_.addFocusHandler((evt) ->
+      {
+         if (!collapse_.expanded.getValue())
+         {
+            collapse_.expanded.setValue(true, true);
+         }
+      }));
+
       // Register pref handlers, so that the new editor instance responds to
       // changes in preference values
       TextEditingTargetPrefsHelper.registerPrefs(
@@ -280,14 +289,7 @@ public class VisualModeChunk
       // Hook up event handler for expand/collapse
       releaseOnDismiss_.add(collapse_.expanded.addValueChangeHandler(evt ->
       {
-         if (evt.getValue())
-         {
-            editorHost_.getStyle().clearHeight();
-         }
-         else
-         {
-            editorHost_.getStyle().setHeight(17, Style.Unit.PX);
-         }
+         setExpanded(evt.getValue());
       }));
 
       // Prevent tab from advancing into editor
@@ -742,7 +744,27 @@ public class VisualModeChunk
          }
       };
    }
-   
+
+   private void setExpanded(boolean expanded)
+   {
+      if (expanded)
+      {
+         editorHost_.getStyle().clearHeight();
+         if (toolbar_ != null)
+         {
+            toolbar_.getToolbar().setVisible(true);
+         }
+      }
+      else
+      {
+         editorHost_.getStyle().setHeight(20, Style.Unit.PX);
+         if (toolbar_ != null)
+         {
+            toolbar_.getToolbar().setVisible(false);
+         }
+      }
+   }
+
    private ChunkDefinition def_;
    private ChunkOutputWidget widget_;
    private Scope scope_;
