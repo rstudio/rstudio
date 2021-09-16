@@ -179,7 +179,7 @@ public class VisualModeChunk
       execHost_ = Document.get().createDivElement();
       execHost_.getStyle().setProperty("position", "absolute");
       execHost_.getStyle().setProperty("top", "3px");
-      editorHost_.appendChild(execHost_);
+      host_.appendChild(execHost_);
       
       if (output != null)
       {
