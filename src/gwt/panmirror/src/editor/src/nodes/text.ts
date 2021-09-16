@@ -22,8 +22,10 @@ import { kQuoteType, QuoteType, kQuoteChildren, fancyQuotesToSimple } from '../a
 const extension = (context: ExtensionContext) => {
   const readText = (text: string) => {
     // we explicitly don't want fancy quotes in the editor
-    text = fancyQuotesToSimple(text);
-
+    if (context.pandocExtensions.smart) {
+      text = fancyQuotesToSimple(text);
+    }
+  
     if (context.pandocExtensions.smart) {
       return text
         .replace(/---/g, '—')

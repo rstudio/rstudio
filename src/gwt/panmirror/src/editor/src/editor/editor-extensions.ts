@@ -101,7 +101,7 @@ import nodeFootnote from '../nodes/footnote/footnote';
 import nodeRawBlock from '../nodes/raw_block';
 import nodeYamlMetadata from '../nodes/yaml_metadata/yaml_metadata';
 import nodeRmdCodeChunk from '../nodes/rmd_chunk/rmd_chunk';
-import nodeDiv from '../nodes/div';
+import nodeDiv from '../nodes/div/div';
 import nodeLineBlock from '../nodes/line_block';
 import nodeTable from '../nodes/table/table';
 import nodeDefinitionList from '../nodes/definition_list/definition_list';

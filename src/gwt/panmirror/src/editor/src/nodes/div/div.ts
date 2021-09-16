@@ -14,13 +14,13 @@
  */
 
 import { Node as ProsemirrorNode, Schema, DOMOutputSpec, ResolvedPos } from 'prosemirror-model';
-import { EditorState, Transaction, Plugin, PluginKey, NodeSelection, TextSelection } from 'prosemirror-state';
+import { EditorState, Transaction, Plugin, PluginKey, TextSelection } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { findParentNodeOfType, ContentNodeWithPos } from 'prosemirror-utils';
 import { wrapIn } from 'prosemirror-commands';
 import { liftTarget } from 'prosemirror-transform';
 
-import { ExtensionContext, Extension } from '../api/extension';
+import { ExtensionContext, Extension } from '../../api/extension';
 import {
   pandocAttrSpec,
   pandocAttrToDomAttr,
@@ -29,14 +29,19 @@ import {
   pandocAttrFrom,
   pandocAttrAvailable,
   PandocAttr,
-} from '../api/pandoc_attr';
-import { PandocOutput, PandocTokenType, PandocToken } from '../api/pandoc';
-import { ProsemirrorCommand, EditorCommandId, toggleWrap } from '../api/command';
-import { EditorUI } from '../api/ui';
-import { OmniInsertGroup, OmniInsert } from '../api/omni_insert';
-import { markIsActive } from '../api/mark';
-import { BaseKey } from '../api/basekeys';
-import { attrInputToProps } from '../api/ui-dialogs';
+  pandocAttrHasClass,
+} from '../../api/pandoc_attr';
+import { PandocOutput, PandocTokenType, PandocToken } from '../../api/pandoc';
+import { ProsemirrorCommand, EditorCommandId, toggleWrap } from '../../api/command';
+import { EditorUI } from '../../api/ui';
+import { OmniInsertGroup, OmniInsert } from '../../api/omni_insert';
+import { markIsActive } from '../../api/mark';
+import { BaseKey } from '../../api/basekeys';
+import { attrInputToProps } from '../../api/ui-dialogs';
+import { kQuartoDocType } from '../../api/format';
+
+import { insertCalloutCommand, editCalloutDiv } from './div-callout';
+import { insertTabsetCommand } from './div-tabset';
 
 import './div-styles.css';
 
@@ -44,7 +49,7 @@ const DIV_ATTR = 0;
 const DIV_CHILDREN = 1;
 
 const extension = (context: ExtensionContext) : Extension | null => {
-  const { pandocExtensions, ui } = context;
+  const { pandocExtensions, format, ui } = context;
 
   if (!pandocExtensions.fenced_divs && !pandocExtensions.native_divs) {
     return null;
@@ -124,7 +129,7 @@ const extension = (context: ExtensionContext) : Extension | null => {
     },
 
     commands: () => {
-      return [
+      const cmds = [
         // turn current block into a div
         new DivCommand(EditorCommandId.Div, ui, true),
 
@@ -137,6 +142,16 @@ const extension = (context: ExtensionContext) : Extension | null => {
           image: () => (ui.prefs.darkMode() ? ui.images.omni_insert?.div_dark! : ui.images.omni_insert?.div!),
         }),
       ];
+
+      // quarto div commands
+      if (format.docTypes.includes(kQuartoDocType)) {
+        cmds.push(
+          insertCalloutCommand(ui),
+          insertTabsetCommand(ui)
+        );
+      }
+
+      return cmds;
     },
 
     plugins: (schema: Schema) => {
@@ -163,6 +178,19 @@ const extension = (context: ExtensionContext) : Extension | null => {
   };
 };
 
+export function removeDiv(state: EditorState, dispatch: (tr: Transaction) => void, div: ContentNodeWithPos) {
+  const tr = state.tr;
+  const fromPos = tr.doc.resolve(div.pos + 1);
+  const toPos = tr.doc.resolve(div.pos + div.node.nodeSize - 1);
+  const nodeRange = fromPos.blockRange(toPos);
+  if (nodeRange) {
+    const targetLiftDepth = liftTarget(nodeRange);
+    if (targetLiftDepth || targetLiftDepth === 0) {
+      tr.lift(nodeRange, targetLiftDepth);
+    }
+  }
+  dispatch(tr);
+}
 
 function divCommand(ui: EditorUI, allowEdit: boolean) {
   return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
@@ -181,7 +209,12 @@ function divCommand(ui: EditorUI, allowEdit: boolean) {
         // div or a subset of an existing div means create new one
         const editMode = div && (state.selection.empty || isFullDivSelection(div, state));
         if (editMode) {
-          await editDiv(ui, state, dispatch, div!);
+          const attr = pandocAttrFrom(div!.node.attrs);
+          if (pandocAttrHasClass(attr, (clz) => clz.startsWith("callout-"))) {
+            await editCalloutDiv(ui, state, dispatch, div!);
+          } else {
+            await editDiv(ui, state, dispatch, div!);
+          }
         } else {
           await createDiv(ui, state, dispatch);
         }
@@ -202,29 +235,6 @@ class DivCommand extends ProsemirrorCommand {
   }
 }
 
-async function editDiv(ui: EditorUI, state: EditorState, dispatch: (tr: Transaction) => void, div: ContentNodeWithPos) {
-  const attr = pandocAttrFrom(div.node.attrs);
-  const result = await ui.dialogs.editDiv(attr, pandocAttrAvailable(attr));
-  if (result) {
-    const tr = state.tr;
-    if (result.action === 'edit') {
-      tr.setNodeMarkup(div.pos, div.node.type, result.attr);
-      dispatch(tr);
-    } else if (result.action === 'remove') {
-      const fromPos = tr.doc.resolve(div.pos + 1);
-      const toPos = tr.doc.resolve(div.pos + div.node.nodeSize - 1);
-      const nodeRange = fromPos.blockRange(toPos);
-      if (nodeRange) {
-        const targetLiftDepth = liftTarget(nodeRange);
-        if (targetLiftDepth || targetLiftDepth === 0) {
-          tr.lift(nodeRange, targetLiftDepth);
-        }
-      }
-      dispatch(tr);
-    }
-  }
-}
-
 async function createDiv(ui: EditorUI, state: EditorState, dispatch: (tr: Transaction) => void) {
   const result = await ui.dialogs.editDiv({}, false);
   if (result) {
@@ -235,6 +245,21 @@ async function createDiv(ui: EditorUI, state: EditorState, dispatch: (tr: Transa
     });
   }
 }
+
+async function editDiv(ui: EditorUI, state: EditorState, dispatch: (tr: Transaction) => void, div: ContentNodeWithPos) {
+  const attr = pandocAttrFrom(div.node.attrs);
+  const result = await ui.dialogs.editDiv(attr, pandocAttrAvailable(attr));
+  if (result) {
+    if (result.action === 'edit') {
+      const tr = state.tr;
+      tr.setNodeMarkup(div.pos, div.node.type, result.attr);
+      dispatch(tr);
+    } else if (result.action === 'remove') {
+      removeDiv(state, dispatch, div);
+    }
+  }
+}
+
 
 function isFullDivSelection(div: ContentNodeWithPos, state: EditorState) {
   const divStart = div.pos;

@@ -2846,6 +2846,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to show line numbers in the code editors used in visual mode
+    */
+   public PrefValue<Boolean> visualMarkdownCodeEditorLineNumbers()
+   {
+      return bool(
+         "visual_markdown_code_editor_line_numbers",
+         "Show line numbers in visual mode code blocks", 
+         "Whether to show line numbers in the code editors used in visual mode", 
+         true);
+   }
+
+   /**
     * The default visual editing mode font size, in points
     */
    public PrefValue<Integer> visualMarkdownEditingFontSizePoints()
@@ -3575,6 +3587,8 @@ public class UserPrefsAccessor extends Prefs
          visualMarkdownEditingShowDocOutline().setValue(layer, source.getBool("visual_markdown_editing_show_doc_outline"));
       if (source.hasKey("visual_markdown_editing_show_margin"))
          visualMarkdownEditingShowMargin().setValue(layer, source.getBool("visual_markdown_editing_show_margin"));
+      if (source.hasKey("visual_markdown_code_editor_line_numbers"))
+         visualMarkdownCodeEditorLineNumbers().setValue(layer, source.getBool("visual_markdown_code_editor_line_numbers"));
       if (source.hasKey("visual_markdown_editing_font_size_points"))
          visualMarkdownEditingFontSizePoints().setValue(layer, source.getInteger("visual_markdown_editing_font_size_points"));
       if (source.hasKey("visual_markdown_code_editor"))
@@ -3826,6 +3840,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(visualMarkdownEditingMaxContentWidth());
       prefs.add(visualMarkdownEditingShowDocOutline());
       prefs.add(visualMarkdownEditingShowMargin());
+      prefs.add(visualMarkdownCodeEditorLineNumbers());
       prefs.add(visualMarkdownEditingFontSizePoints());
       prefs.add(visualMarkdownCodeEditor());
       prefs.add(zoteroLibraries());

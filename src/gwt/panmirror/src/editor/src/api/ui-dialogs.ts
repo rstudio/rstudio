@@ -31,10 +31,12 @@ export interface EditorDialogs {
   editAttr: AttrEditorFn;
   editSpan: AttrEditorFn;
   editDiv: DivAttrEditorFn;
+  editCallout: CalloutEditorFn;
   editRawInline: RawFormatEditorFn;
   editRawBlock: RawFormatEditorFn;
   editMath: MathEditorFn;
   insertTable: InsertTableFn;
+  insertTabset: InsertTabsetFn;
   insertCite: InsertCiteFn;
   htmlDialog: EditorHTMLDialogFn;
 }
@@ -76,6 +78,8 @@ export type AttrEditorFn = (attr: AttrProps, idHint?: string) => Promise<AttrEdi
 
 export type DivAttrEditorFn = (attr: AttrProps, removeEnabled: boolean) => Promise<AttrEditResult | null>;
 
+export type CalloutEditorFn = (props: CalloutEditProps, removeEnabled: boolean) => Promise<CalloutEditResult | null>;
+
 export type LinkEditorFn = (
   link: LinkProps,
   targets: LinkTargets,
@@ -85,6 +89,7 @@ export type LinkEditorFn = (
 export type ImageEditorFn = (
   image: ImageProps,
   dims: ImageDimensions | null,
+  figure: boolean,
   editAttributes: boolean,
 ) => Promise<ImageEditResult | null>;
 
@@ -104,6 +109,8 @@ export type InsertTableFn = (capabilities: TableCapabilities) => Promise<InsertT
 
 export type InsertCiteFn = (props: InsertCiteProps) => Promise<InsertCiteResult | null>;
 
+export type InsertTabsetFn = () => Promise<InsertTabsetResult | null>;
+
 export interface AttrProps {
   readonly id?: string;
   readonly classes?: string[];
@@ -113,6 +120,22 @@ export interface AttrProps {
 export interface AttrEditResult {
   readonly action: 'edit' | 'remove';
   readonly attr: AttrProps;
+}
+
+export interface CalloutEditProps {
+  attr: AttrProps;
+  callout: CalloutProps;
+}
+
+export interface CalloutEditResult extends CalloutEditProps {
+  readonly action: "edit" | "remove";
+}
+
+export interface CalloutProps {
+  type: string;
+  appearance: string;
+  icon: boolean;
+  caption: string;
 }
 
 export interface LinkProps extends AttrProps {
@@ -131,7 +154,10 @@ export interface LinkEditResult {
 export interface ImageProps extends AttrProps {
   src: string | null;
   title?: string;
+  caption?: string;
   alt?: string;
+  align?: string;
+  env?: string;
   linkTo?: string;
   width?: number;
   height?: number;
@@ -162,6 +188,11 @@ export interface InsertTableResult {
   cols: number;
   header: boolean;
   caption?: string;
+}
+
+export interface InsertTabsetResult {
+  tabs: string[];
+  attr: AttrProps;
 }
 
 export interface InsertCiteProps {

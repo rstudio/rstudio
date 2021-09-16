@@ -39,6 +39,7 @@ public class PanmirrorImageChooser extends TextBoxWithButton {
    {
       super("Image (File or URL):", "", "Browse...", null, TextBoxButtonId.CHOOSE_IMAGE, false, null);
       PanmirrorDialogsUtil.setFullWidthStyles(this);
+      disableSpellcheck();
       
       addClickHandler(new ClickHandler() {
 

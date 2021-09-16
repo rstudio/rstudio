@@ -149,11 +149,22 @@ const extension = (context: ExtensionContext): Extension | null => {
                   // remove delimiter
                   mathText = mathText.substr(delimiter.length, mathText.length - 2 * delimiter.length);
 
-                  // trim inline math
+                
                   if (mark.attrs.type === MathType.Inline) {
+                    // trim inline math
                     mathText = mathText.trim();
+                  } else if (mark.attrs.type === MathType.Display) {
+                    // remove blank lines from display math (but preserve enclosing whitespace)
+                    const beginMatch = mathText.match(/^\s*/);
+                    const begin = beginMatch ? beginMatch[0].replace(/\n{2,}/g, "\n") : '';
+                    const endMatch = mathText.match(/\s*$/);
+                    const end = endMatch ? endMatch[0].replace(/\n{2,}/g, "\n") : '';
+                    mathText = begin + mathText.trim()
+                      .split("\n")
+                      .filter(line => line.trim().length > 0)
+                      .join("\n") + end;
                   }
-
+                  
                   // if it's just whitespace then it's not actually math (we allow this state
                   // in the editor because it's the natural starting place for new equations)
                   if (mathText.length === 0) {
