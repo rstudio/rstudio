@@ -621,29 +621,13 @@ public class Files
       DomUtils.copyCodeToClipboard(currentPath_.getPath());
    }
 
-   @Handler
-   void onOpenFilesInSinglePane()
-   {
-      final ArrayList<FileSystemItem> selectedFiles = view_.getSelectedFiles();
-      final SourceColumnManager mgr = RStudioGinjector.INSTANCE.getSourceColumnManager();
-
-      for (FileSystemItem item : selectedFiles) 
-      {
-         if (!item.isDirectory())
-         {
-            mgr.openFile(item);
-         }
-      }
-
-      view_.selectNone();
-   }
-
    /**
    * the purpose of this function is specifically to pre-screen selected files for the following:
    *  - the file must NOT be a directory
    *  - the file must NOT already be open in a source editor 
    *  - if the file is an RNotebook (.nb[.html]), then make sure that only ONE .RMarkdown (.Rmd) 
    *    file is selected
+   *  - aggregate any errors encountered opening RNotebooks and display them at once
    *
    * @param onCompleted a callback passed {@code <List<FileSystemItem>>}, which is the screened 
    *                    list of selected files
@@ -653,12 +637,26 @@ public class Files
       final SourceColumnManager mgr = RStudioGinjector.INSTANCE.getSourceColumnManager();
       final ArrayList<String> selectedFilePaths = new ArrayList<>(); 
 
+      final List<String> errors = new ArrayList<>();
+
       // Use parallelCommandList to execute these requests as fast as possible in parallel, asynchronously
       ParallelCommandList commandList = new ParallelCommandList(new Command()
       {
          @Override
          public void execute() 
          {
+            if (errors.size() > 0)
+            {
+               String caption = "Error Opening Files in Columns";
+               String errorMsg = errors.size() + " RNotebook files were unable to be processed and opened.";
+               errorMsg += "\n\nErrors:";
+               for (String err : errors) 
+               {
+                  errorMsg += "\n" + err;
+               }
+               globalDisplay_.showErrorMessage(caption, errorMsg);
+               return;
+            }
             final ArrayList<FileSystemItem> selectedFiles = new ArrayList<>(); 
             selectedFilePaths.forEach((String path) -> {
                selectedFiles.add(FileSystemItem.createFile(path));
@@ -714,7 +712,9 @@ public class Files
                         @Override
                         public void onFailure(ServerError error)
                         {
-                           // fail silently?
+                           String message = "\"" + notebook.getName() + "\" failed to open\n" +
+                              error.getUserMessage() + "\n";
+                           errors.add(message);
                            continuation.execute();
                         }
                      });
@@ -724,6 +724,33 @@ public class Files
 
       commandList.run();
    }
+
+   @Handler
+   void onOpenFilesInSinglePane()
+   {
+      // getUnopenedSelectedFiles aggregates RNotebook errors together, so use
+      // it to get the selected files instead. Otherwise any RNotebook-related
+      // opening errors stack over each other unpleasantly
+      getUnopenedSelectedFiles(new CommandWithArg<List<FileSystemItem>>()
+      {
+         @Override
+         public void execute(List<FileSystemItem> selectedFiles)
+         {
+            final SourceColumnManager mgr = RStudioGinjector.INSTANCE.getSourceColumnManager();
+
+            for (FileSystemItem item : selectedFiles) 
+            {
+               if (!item.isDirectory())
+               {
+                  mgr.openFile(item);
+               }
+            }
+
+            view_.selectNone();
+         }
+      });
+   }
+
 
    @Handler
    void onOpenEachFileInColumns()
@@ -750,7 +777,10 @@ public class Files
             // if there aren't any remaining cols then just open the files anyway and see what happens
             if (columnsRemaining <= 0) 
             {
-               onOpenFilesInSinglePane();
+               for (FileSystemItem item : selectedFiles) 
+               {
+                  mgr.openFile(item);
+               }
                return;
             }
 
