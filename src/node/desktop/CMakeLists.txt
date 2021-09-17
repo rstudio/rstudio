@@ -16,26 +16,16 @@
 cmake_minimum_required(VERSION 3.4.3)
 project(ELECTRON_DESKTOP)
 
-# allow opt in / out of ELECTRON build
-# mainly for faster iteration in builds
-if(NOT DEFINED ELECTRON_BUILD)
-   set(ELECTRON_BUILD Yes)
-endif()
+# ensure yarn and node are on the path
+set(MODIFIED_PATH "${NODEJS_PATH}:${YARN_PATH}:$ENV{PATH}")
 
-if(DEFINED ENV{ELECTRON_BUILD})
-   set(ELECTRON_BUILD $ENV{ELECTRON_BUILD})
-endif()
-
-if(ELECTRON_BUILD)
-   message(STATUS "Configured to build ELECTRON")
-
-   # build Electron Desktop with node.js
-   add_custom_target(electron_build ALL)
-   add_custom_command(
-      TARGET electron_build
-      POST_BUILD
-      WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-      COMMAND
-         ${NODEJS}
-         "make")
-endif()
+# install Electron dependencies; actual building of the standalone Electron app
+# happens as a post-cmake step using "yarn make"
+add_custom_target(electron_build ALL)
+add_custom_command(
+   TARGET electron_build
+   POST_BUILD
+   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+   COMMAND ${CMAKE_COMMAND} -E env PATH="${NODEJS_PATH}:${YARN_PATH}:$ENV{PATH}" PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+      ${YARN}
+      "install")

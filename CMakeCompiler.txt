@@ -155,8 +155,5 @@ else()
    message(FATAL_ERROR "yarn not found (required)")
 endif()
 
-# ensure yarn and node are on the path
 get_filename_component(NODEJS_PATH ${NODEJS} DIRECTORY CACHE)
 get_filename_component(YARN_PATH ${YARN} DIRECTORY CACHE)
-message(STATUS "Adding to path: ${NODEJS_PATH}:${YARN_PATH}")
-set(ENV{PATH} "${NODEJS_PATH}:${YARN_PATH}:$ENV{PATH}")

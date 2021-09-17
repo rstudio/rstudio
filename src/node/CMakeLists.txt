@@ -14,6 +14,6 @@
 # set minimum version
 cmake_minimum_required(VERSION 3.4.3)
 
-if(RSTUDIO_DESKTOP AND (NOT RSTUDIO_SESSION_WIN32))
+if(RSTUDIO_ELECTRON)
    add_subdirectory(desktop)
 endif()
