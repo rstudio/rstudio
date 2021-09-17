@@ -21,6 +21,9 @@ import java.util.Map;
 
 import com.google.gwt.aria.client.ExpandedValue;
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.ParagraphElement;
+import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
@@ -172,17 +175,16 @@ public class VisualModeChunk
       host_.appendChild(collapse_.getElement());
 
       // add the summary label
-      summary_ = new Label("Code ");
-      summary_.setStyleName(ThemeFonts.getFixedWidthClass(), true);
-      Style summary = summary_.getElement().getStyle();
+      summary_ = Document.get().createDivElement();
+      summary_.setClassName(ThemeFonts.getFixedWidthClass());
+      Style summary = summary_.getStyle();
       summary.setPosition(Style.Position.ABSOLUTE);
       summary.setTextAlign(Style.TextAlign.RIGHT);
       summary.setTop(1, Style.Unit.PX);
       summary.setLeft(5, Style.Unit.PX);
-      summary.setOpacity(0.6);
       summary.setFontSize(12, Style.Unit.PX);
-      summary_.setVisible(false);
-      host_.appendChild(summary_.getElement());
+      summary.setDisplay(Style.Display.NONE);
+      host_.appendChild(summary_);
 
       // add the editor
       editorHost_ = Document.get().createDivElement();
@@ -803,7 +805,8 @@ public class VisualModeChunk
          {
             toolbar_.getToolbar().setVisible(true);
          }
-         summary_.setVisible(false);
+         summary_.setInnerHTML("");
+         summary_.getStyle().setDisplay(Style.Display.NONE);
          execHost_.getStyle().setDisplay(Style.Display.BLOCK);
          Roles.getRegionRole().setAriaExpandedState(host_, ExpandedValue.TRUE);
       }
@@ -815,8 +818,8 @@ public class VisualModeChunk
          {
             toolbar_.getToolbar().setVisible(false);
          }
-         summary_.setText(createSummary());
-         summary_.setVisible(true);
+         summary_.appendChild(createSummary());
+         summary_.getStyle().setDisplay(Style.Display.BLOCK);
          execHost_.getStyle().setDisplay(Style.Display.NONE);
          A11y.setARIANotExpanded(host_);
       }
@@ -825,10 +828,12 @@ public class VisualModeChunk
    /**
     * Creates a one-line summary of a chunk's contents, to be displayed when the chunk is collapsed.
     *
-    * @return A string summarizing the chunk.
+    * @return An HTML element summarizing the chunk.
     */
-   private String createSummary()
+   private Element createSummary()
    {
+      ParagraphElement p = Document.get().createPElement();
+
       // Get the entire contents of the chunk in a single string, including the header
       String contents = editor_.getCode();
 
@@ -837,7 +842,7 @@ public class VisualModeChunk
 
       // We're mostly interested in the language and label; establish defaults
       String engine = "R";
-      String label = "Code";
+      String label = "";
 
       // Use the chunk label from the definition as a default, if it exists
       if (def_ != null)
@@ -892,7 +897,20 @@ public class VisualModeChunk
          lines++;
       }
 
-      String summary = label + ": " + engine + ", " + lines + " line" + (lines > 1 ? "s" : "");
+      String summary = "";
+
+      // Start with the label (if we found one); this is rendered at full opacity for emphasis
+      if (!StringUtil.isNullOrEmpty(label))
+      {
+         SpanElement spanLabel = Document.get().createSpanElement();
+         spanLabel.setInnerText(label + "");
+         spanLabel.getStyle().setOpacity(1);
+         p.appendChild(spanLabel);
+         summary += ": ";
+      }
+
+      // Summarize engine and line count
+      summary += engine + ", " + lines + " line" + (lines > 1 ? "s" : "");
 
       // Indicate whether output is also collapsed inside the fold
       if (widget_ != null && widget_.isVisible())
@@ -900,7 +918,12 @@ public class VisualModeChunk
          summary += " + output";
       }
 
-      return summary;
+      SpanElement spanSummary = Document.get().createSpanElement();
+      spanSummary.setInnerText(summary);
+      spanSummary.getStyle().setOpacity(0.6);
+      p.appendChild(spanSummary);
+
+      return p;
    }
 
    private ChunkDefinition def_;
@@ -922,7 +945,7 @@ public class VisualModeChunk
    private final VisualModeEditorSync sync_;
    private final EditingTargetCodeExecution codeExecution_;
    private final VisualModeCollapseToggle collapse_;
-   private final Label summary_;
+   private final DivElement summary_;
    private final Map<Integer,VisualModeChunkRowState> rowState_;
    private final TextEditingTarget target_;
    private final int markdownIndex_;
