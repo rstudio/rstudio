@@ -19,13 +19,21 @@ project(ELECTRON_DESKTOP)
 # ensure yarn and node are on the path
 set(MODIFIED_PATH "${NODEJS_PATH}:${YARN_PATH}:$ENV{PATH}")
 
-# install Electron dependencies; actual building of the standalone Electron app
-# happens as a post-cmake step using "yarn make"
 add_custom_target(electron_build ALL)
+add_dependencies(electron_build gwt_build rsession diagnostics)
+
+add_custom_command(
+   TARGET electron_build
+   PRE_BUILD
+   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+   COMMAND ${CMAKE_COMMAND} -E env PATH="${NODEJS_PATH}:${YARN_PATH}:$ENV{PATH}" PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+      ${YARN}
+      "install")
+
 add_custom_command(
    TARGET electron_build
    POST_BUILD
    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
    COMMAND ${CMAKE_COMMAND} -E env PATH="${NODEJS_PATH}:${YARN_PATH}:$ENV{PATH}" PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
       ${YARN}
-      "install")
+      "make")

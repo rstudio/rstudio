@@ -14,6 +14,8 @@
 # set minimum version
 cmake_minimum_required(VERSION 3.4.3)
 
-if(RSTUDIO_ELECTRON)
+# don't add electron for development mode (since faster to work
+# iteratively using "yarn start" and so forth)
+if(RSTUDIO_ELECTRON AND (NOT RSTUDIO_DEVELOPMENT))
    add_subdirectory(desktop)
 endif()
