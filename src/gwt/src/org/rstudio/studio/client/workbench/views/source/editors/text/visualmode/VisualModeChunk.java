@@ -19,6 +19,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.google.gwt.aria.client.ExpandedValue;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
@@ -26,6 +28,7 @@ import com.google.gwt.user.client.ui.Label;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.theme.ThemeFonts;
@@ -785,6 +788,11 @@ public class VisualModeChunk
       };
    }
 
+   /**
+    * Sets the expansion state of the entire code chunk (code and output).
+    *
+    * @param expanded Whether the chunk is to be expanded.
+    */
    private void setChunkExpanded(boolean expanded)
    {
       if (expanded)
@@ -797,6 +805,7 @@ public class VisualModeChunk
          }
          summary_.setVisible(false);
          execHost_.getStyle().setDisplay(Style.Display.BLOCK);
+         Roles.getRegionRole().setAriaExpandedState(host_, ExpandedValue.TRUE);
       }
       else
       {
@@ -809,6 +818,7 @@ public class VisualModeChunk
          summary_.setText(createSummary());
          summary_.setVisible(true);
          execHost_.getStyle().setDisplay(Style.Display.NONE);
+         A11y.setARIANotExpanded(host_);
       }
    }
 
@@ -884,6 +894,7 @@ public class VisualModeChunk
 
       String summary = label + ": " + engine + ", " + lines + " line" + (lines > 1 ? "s" : "");
 
+      // Indicate whether output is also collapsed inside the fold
       if (widget_ != null && widget_.isVisible())
       {
          summary += " + output";

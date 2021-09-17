@@ -24,6 +24,7 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Image;
+import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.common.Value;
@@ -50,18 +51,24 @@ public class VisualModeCollapseToggle extends Composite
 
    public VisualModeCollapseToggle(boolean initial)
    {
+      // Host element that contains all the collapse/toggle UI
       HTMLPanel host = new HTMLPanel("");
+
+      // Initialize value that contains the expansion state.
       expanded = new Value<Boolean>(initial);
 
+      // Initialize CSS and image resources.
       CollapseImages images = GWT.create(CollapseImages.class);
       images.collapseStyles().ensureInjected();
 
-      // Create expander tool
+      // Create expander tool; this is a small triangle like ">" that toggles
+      // the expansion state of the chunk.
       toggle_ = new Image(new ImageResource2x(images.expand2x()));
       toggle_.setStyleName(images.collapseStyles().toggle(), true);
       Style style = toggle_.getElement().getStyle();
-      style.setProperty("transform", initial ? "rotate(0deg)" : "rotate(-90deg)");
+      host.add(toggle_);
 
+      // Toggle expansion state on/off on click.
       DOM.sinkEvents(toggle_.getElement(), Event.ONCLICK);
       DOM.setEventListener(toggle_.getElement(), evt ->
       {
@@ -69,29 +76,52 @@ public class VisualModeCollapseToggle extends Composite
       });
       setShowToggle(false);
 
-      host.add(toggle_);
+      // Create decorative image to show that the chunk is in a collapsed state.
+      collapsed_ = new Image(new ImageResource2x(images.collapsed2x()));
+      collapsed_.setStyleName(images.collapseStyles().collapsed(), true);
+      A11y.setDecorativeImage(collapsed_.getElement());
+      host.add(collapsed_);
 
-      Image collapsed = new Image(new ImageResource2x(images.collapsed2x()));
-      collapsed.setVisible(!initial);
-      collapsed.setStyleName(images.collapseStyles().collapsed(), true);
-      host.add(collapsed);
-
+      // Set initial expansion state and listen for changes
+      setExpanded(initial);
       expanded.addValueChangeHandler(evt ->
       {
-         style.setProperty("transform", evt.getValue() ?
-            "rotate(0deg)" : "rotate(-90deg)");
-         collapsed.setVisible(!evt.getValue());
+         setExpanded(evt.getValue());
       });
 
       initWidget(host);
    }
 
+   /**
+    * Sets the visibility of the collapse toggle.
+    *
+    * @param show Whether to show the collapse toggle
+    */
    public void setShowToggle(boolean show)
    {
       toggle_.getElement().getStyle().setOpacity(show ? 1 : 0);
    }
 
+   /**
+    * Sets the expansion state.
+    *
+    * @param expanded Whether to show as expanded
+    */
+   private void setExpanded(boolean expanded)
+   {
+      // Rotate arrow to point right when collapsed
+      toggle_.getElement().getStyle().setProperty("transform", expanded ?
+         "rotate(0deg)" : "rotate(-90deg)");
+
+      // Show collapse hint when collapsed
+      collapsed_.setVisible(!expanded);
+
+      // Change hint text.
+      toggle_.setAltText((expanded ? "Collapse" : "Expand") + " code chunk");
+   }
+
    public Value<Boolean> expanded;
 
    private Image toggle_;
+   private Image collapsed_;
 }
