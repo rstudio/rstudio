@@ -794,8 +794,8 @@ public class VisualModeChunk
          if (toolbar_ != null)
          {
             toolbar_.getToolbar().setVisible(true);
-            summary_.setVisible(false);
          }
+         summary_.setVisible(false);
       }
       else
       {
@@ -804,9 +804,9 @@ public class VisualModeChunk
          if (toolbar_ != null)
          {
             toolbar_.getToolbar().setVisible(false);
-            summary_.setText(createSummary());
-            summary_.setVisible(true);
          }
+         summary_.setText(createSummary());
+         summary_.setVisible(true);
       }
    }
 
@@ -841,23 +841,32 @@ public class VisualModeChunk
       {
          if (lines == 0)
          {
-            // This is the first line in the chunk (its header). Parse it, reintroducing
-            // the backticks since they aren't present in the embedded editor.
-            Map<String, String> options = RChunkHeaderParser.parse("```" + line);
-
-            // Check for the "engine" (language) option; extract it if specified
-            String optionEngine = options.get("engine");
-            if (!StringUtil.isNullOrEmpty(optionEngine))
+            if (StringUtil.equals(line.trim(), "---"))
             {
-               engine = StringUtil.capitalize(StringUtil.stringValue(optionEngine));
+               // Special case for the YAML header
+               engine = "YAML";
+               label = "Metadata";
             }
-
-            // Check for the "label" option; the parser is smart enough to synthesize
-            // this from the various ways of specifying Knitr labels
-            String labelEngine = options.get("label");
-            if (!StringUtil.isNullOrEmpty(labelEngine))
+            else
             {
-               label = StringUtil.stringValue(labelEngine);
+               // This is the first line in the chunk (its header). Parse it, reintroducing
+               // the backticks since they aren't present in the embedded editor.
+               Map<String, String> options = RChunkHeaderParser.parse("```" + line);
+
+               // Check for the "engine" (language) option; extract it if specified
+               String optionEngine = options.get("engine");
+               if (!StringUtil.isNullOrEmpty(optionEngine))
+               {
+                  engine = StringUtil.capitalize(StringUtil.stringValue(optionEngine));
+               }
+
+               // Check for the "label" option; the parser is smart enough to synthesize
+               // this from the various ways of specifying Knitr labels
+               String labelEngine = options.get("label");
+               if (!StringUtil.isNullOrEmpty(labelEngine))
+               {
+                  label = StringUtil.stringValue(labelEngine);
+               }
             }
          }
          else
@@ -870,9 +879,6 @@ public class VisualModeChunk
          }
          lines++;
       }
-
-      // Subtract one from the line counter so we don't count the chunk header as a line of code
-      lines--;
 
       return label + ": " + engine + ", " + lines + " line" + (lines > 1 ? "s" : "");
    }
