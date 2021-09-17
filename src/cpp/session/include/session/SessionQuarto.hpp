@@ -49,6 +49,7 @@ struct QuartoConfig
    std::string project_output_dir;
    std::vector<std::string> project_formats;
    std::vector<std::string> project_bibliographies;
+   std::string project_editor;
 };
 
 QuartoConfig quartoConfig(bool refresh = false);
@@ -78,7 +79,8 @@ void readQuartoProjectConfig(const core::FilePath& configFile,
                              std::string* pType,
                              std::string* pOutputDir = nullptr,
                              std::vector<std::string>* pFormats = nullptr,
-                             std::vector<std::string>* pBibliographies = nullptr);
+                             std::vector<std::string>* pBibliographies = nullptr,
+                             std::string* pEditor = nullptr);
 
 core::json::Value quartoXRefIndex();
 
