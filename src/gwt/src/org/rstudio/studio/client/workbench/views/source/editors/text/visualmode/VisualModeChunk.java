@@ -174,9 +174,9 @@ public class VisualModeChunk
       Style summary = summary_.getElement().getStyle();
       summary.setPosition(Style.Position.ABSOLUTE);
       summary.setTextAlign(Style.TextAlign.RIGHT);
-      summary.setTop(0, Style.Unit.PX);
-      summary.setRight(3, Style.Unit.PX);
-      summary.setOpacity(0.5);
+      summary.setTop(1, Style.Unit.PX);
+      summary.setLeft(5, Style.Unit.PX);
+      summary.setOpacity(0.6);
       summary.setFontSize(12, Style.Unit.PX);
       summary_.setVisible(false);
       host_.appendChild(summary_.getElement());
@@ -790,6 +790,7 @@ public class VisualModeChunk
       if (expanded)
       {
          editorHost_.getStyle().clearHeight();
+         host_.removeClassName("pm-ace-collapsed");
          if (toolbar_ != null)
          {
             toolbar_.getToolbar().setVisible(true);
@@ -799,6 +800,7 @@ public class VisualModeChunk
       else
       {
          editorHost_.getStyle().setHeight(20, Style.Unit.PX);
+         host_.addClassName("pm-ace-collapsed");
          if (toolbar_ != null)
          {
             toolbar_.getToolbar().setVisible(false);
@@ -824,6 +826,12 @@ public class VisualModeChunk
       // We're mostly interested in the language and label; establish defaults
       String engine = "R";
       String label = "Code";
+
+      // Use the chunk label from the definition as a default, if it exists
+      if (def_ != null)
+      {
+         label = def_.getChunkLabel();
+      }
 
       // Quarto chunks use this syntax, which must be parsed separately
       String quartoLabel = "#| label:";
@@ -866,7 +874,7 @@ public class VisualModeChunk
       // Subtract one from the line counter so we don't count the chunk header as a line of code
       lines--;
 
-      return label + " (" + engine + ", " + lines + " line" + (lines > 1 ? "s" : "") + ")";
+      return label + ": " + engine + ", " + lines + " line" + (lines > 1 ? "s" : "");
    }
 
    private ChunkDefinition def_;
