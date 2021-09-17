@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
@@ -32,6 +33,14 @@ public class VisualModeCollapseToggle extends Composite
    {
       @Source("expand_2x.png")
       ImageResource expand2x();
+
+      @Source("CollapseToggle.css")
+      Styles collapseStyles();
+   }
+
+   static interface Styles extends CssResource
+   {
+      String toggle();
    }
 
    public VisualModeCollapseToggle(boolean initial)
@@ -40,15 +49,10 @@ public class VisualModeCollapseToggle extends Composite
 
       CollapseImages images = GWT.create(CollapseImages.class);
       Image image = new Image(new ImageResource2x(images.expand2x()));
+      images.collapseStyles().ensureInjected();
+      image.setStyleName(images.collapseStyles().toggle(), true);
       Style style = image.getElement().getStyle();
-      style.setPosition(Style.Position.ABSOLUTE);
-      style.setTop(0, Style.Unit.PX);
-      style.setLeft(-20, Style.Unit.PX);
-      style.setPadding(4, Style.Unit.PX);
-      style.setCursor(Style.Cursor.POINTER);
       style.setProperty("transform", initial ? "rotate(0deg)" : "rotate(-90deg)");
-      style.setProperty("transitionProperty", "transform, opacity");
-      style.setProperty("transitionDuration", "0.2s");
 
       DOM.sinkEvents(image.getElement(), Event.ONCLICK);
       DOM.setEventListener(image.getElement(), evt ->
