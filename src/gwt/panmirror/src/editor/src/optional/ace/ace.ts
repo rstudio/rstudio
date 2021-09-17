@@ -478,6 +478,7 @@ export class AceNodeView implements NodeView {
       getPos: () => this.getPos(),
       scrollIntoView: ele => this.scrollIntoView(ele),
       scrollCursorIntoView: () => this.scrollCursorIntoView(),
+      getTextContent: () => { return this.node.textContent; }
     });
 
     // populate initial contents
