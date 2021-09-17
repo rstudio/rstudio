@@ -17,8 +17,11 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Timer;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunks;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
@@ -36,7 +39,8 @@ public class VisualModeChunks implements ChunkDefinition.Provider
 {
    public VisualModeChunks(DocUpdateSentinel sentinel,
                            DocDisplay display,
-                           TextEditingTarget target, 
+                           TextEditingTarget target,
+                           final ArrayList<HandlerRegistration> releaseOnDismiss,
                            VisualModeEditorSync sync)
    {
       target_ = target;
@@ -44,6 +48,20 @@ public class VisualModeChunks implements ChunkDefinition.Provider
       parent_ = display;
       sync_ = sync;
       chunks_ = new ArrayList<>();
+
+      // Timer to auto-save the collapsed state of visual mode chunks
+      saveCollapseTimer_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            saveCollapseState();
+         }
+      };
+
+      // Load initial collapsed chunk state from doc property bag
+      loadCollapsedState(
+         sentinel_.getProperty(TextEditingTarget.RMD_VISUAL_MODE_COLLAPSED_CHUNKS));
    }
 
    public PanmirrorUIChunks uiChunks()
@@ -57,9 +75,17 @@ public class VisualModeChunks implements ChunkDefinition.Provider
             Debug.logToConsole("Unknown chunk editor type: " + type);
             return null;
          }
-         
+
+         // Read expansion state from document property
+         boolean expanded = true;
+         int pos = callbacks.getPos.getVisualPosition();
+         if (collapsedChunkPos_.contains(pos))
+         {
+            expanded = false;
+         }
+
          VisualModeChunk chunk = new VisualModeChunk(
-               index, callbacks, sentinel_, target_, sync_);
+               index, expanded, callbacks, sentinel_, target_, sync_);
 
          // Add the chunk to our index, and remove it when the underlying chunk
          // is removed in Prosemirror
@@ -79,6 +105,12 @@ public class VisualModeChunks implements ChunkDefinition.Provider
          {
             chunk.setExpanded(expanded);
          }
+      });
+
+      // Save the collapse state of the visual mode chunks.
+      target_.getDocDisplay().addValueChangeHandler(evt ->
+      {
+         nudgeSaveCollapseState();
       });
 
       return chunks;
@@ -281,9 +313,83 @@ public class VisualModeChunks implements ChunkDefinition.Provider
       command.execute(null);
    }
 
+   /**
+    * Nudges the timer that saves the expansion state of each code chunk.
+    */
+   public void nudgeSaveCollapseState()
+   {
+      if (saveCollapseTimer_.isRunning())
+      {
+         saveCollapseTimer_.cancel();
+      }
+      saveCollapseTimer_.schedule(1000);
+   }
+
+   /**
+    * Saves the expansion state of all chunks as a document property.
+    */
+   private void saveCollapseState()
+   {
+      ArrayList<Integer> positions = new ArrayList<Integer>();
+
+      // Loop over each chunk and make a list of those that are collapsed.
+      for (VisualModeChunk chunk : chunks_)
+      {
+         if (!chunk.getExpanded())
+         {
+            positions.add(chunk.getVisualPosition());
+         }
+      }
+
+      // Convert to a string and bail out if nothing has changed.
+      String val = StringUtil.join(positions, ",");
+      if (val == collapseState_)
+      {
+         return;
+      }
+
+      // Write the new state to a document property.
+      collapseState_ = val;
+      sentinel_.setProperty(TextEditingTarget.RMD_VISUAL_MODE_COLLAPSED_CHUNKS, val);
+   }
+
+   /**
+    * Load the collapse state of all chunks from a document property value.
+    *
+    * @param state The expansion state, a comma-delimited string of positions.
+    */
+   private void loadCollapsedState(String state)
+   {
+      Debug.devlog("loading collapsed chunk values: " + state);
+      collapsedChunkPos_ = new ArrayList<>();
+      if (StringUtil.isNullOrEmpty(state))
+      {
+         // No chunks collapsed
+         return;
+      }
+
+      // Split value to form array of collapsed chunks
+      String[] positions = state.split(",");
+      for (String pos: positions)
+      {
+         int position = StringUtil.parseInt(pos, -1);
+         if (position >= 0)
+         {
+            collapsedChunkPos_.add(position);
+         }
+      }
+
+      // Save current collapsed state to avoid unnecessary RPCs
+      collapseState_ = state;
+   }
+
+
    private final VisualModeEditorSync sync_;
    private final List<VisualModeChunk> chunks_;
    private final DocUpdateSentinel sentinel_;
    private final DocDisplay parent_;
    private final TextEditingTarget target_;
+   private final Timer saveCollapseTimer_;
+   private ArrayList<Integer> collapsedChunkPos_;
+   private String collapseState_;
 }

@@ -27,7 +27,6 @@ import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.ui.Label;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
@@ -80,6 +79,7 @@ import jsinterop.base.Js;
 public class VisualModeChunk
 {
    public VisualModeChunk(int index,
+                          boolean isExpanded,
                           PanmirrorUIChunkCallbacks chunkCallbacks,
                           DocUpdateSentinel sentinel,
                           TextEditingTarget target,
@@ -97,7 +97,7 @@ public class VisualModeChunk
       outputHost_ = Document.get().createDivElement();
       outputHost_.getStyle().setPosition(com.google.gwt.dom.client.Style.Position.RELATIVE);
 
-      ChunkOutputUi output = null; 
+      ChunkOutputUi output = null;
       if (index > 0)
       {
          Position pos = parent_.positionFromIndex(index);
@@ -171,7 +171,7 @@ public class VisualModeChunk
       host_.getStyle().setProperty("transitionDuration", "0.5s");
 
       // add the collapse toggle
-      collapse_ = new VisualModeCollapseToggle(true);
+      collapse_ = new VisualModeCollapseToggle(isExpanded);
       host_.appendChild(collapse_.getElement());
 
       // add the summary label
@@ -317,6 +317,7 @@ public class VisualModeChunk
       };
 
       // Hook up event handler for expand/collapse
+      setChunkExpanded(isExpanded);
       releaseOnDismiss_.add(collapse_.expanded.addValueChangeHandler(evt ->
       {
          setChunkExpanded(evt.getValue());
@@ -577,6 +578,16 @@ public class VisualModeChunk
          collapse_.expanded.setValue(expanded, true);
       }
    }
+
+   /**
+    * Gets the current expansion state of the chunk.
+    *
+    * @return The current expansion state; true if expanded, false otherwise
+    */
+   public boolean getExpanded()
+   {
+      return collapse_.expanded.getValue();
+   }
    
    private void setMode(AceEditor editor, String mode)
    {
@@ -823,6 +834,7 @@ public class VisualModeChunk
          execHost_.getStyle().setDisplay(Style.Display.NONE);
          A11y.setARIANotExpanded(host_);
       }
+      target_.getVisualMode().nudgeSaveCollapseState();
    }
 
    /**
@@ -835,7 +847,7 @@ public class VisualModeChunk
       ParagraphElement p = Document.get().createPElement();
 
       // Get the entire contents of the chunk in a single string, including the header
-      String contents = editor_.getCode();
+      String contents = chunkCallbacks_.getTextContent.getTextContent();
 
       // Line counter
       int lines = 0;

@@ -219,6 +219,7 @@ public class TextEditingTarget implements
 
    public static final String RMD_VISUAL_MODE = "rmdVisualMode";
    public static final String RMD_VISUAL_MODE_WRAP_CONFIGURED = "rmdVisualWrapConfigured";
+   public static final String RMD_VISUAL_MODE_COLLAPSED_CHUNKS = "rmdVisualCollapsedChunks";
 
    public static final String SOFT_WRAP_LINES = "softWrapLines";
    public static final String USE_RAINBOW_PARENS = "useRainbowParens";
