@@ -23,6 +23,7 @@ import { PandocExtensions, imageAttributesAvailable } from '../../api/pandoc';
 import { isElementVisible } from '../../api/dom';
 import { EditorEvents } from '../../api/events';
 import { ResizeEvent } from '../../api/event-types';
+import { EditorFormat } from '../../api/format';
 
 import { imageDialog } from './image-dialog';
 import {
@@ -39,6 +40,7 @@ import './image-styles.css';
 export function imageNodeViewPlugins(
   type: string,
   ui: EditorUI,
+  format: EditorFormat,
   events: EditorEvents,
   pandocExtensions: PandocExtensions,
 ): Plugin[] {
@@ -48,7 +50,7 @@ export function imageNodeViewPlugins(
       props: {
         nodeViews: {
           [type]: (node: ProsemirrorNode, view: EditorView, getPos: boolean | (() => number)) => {
-            return new ImageNodeView(node, view, getPos as () => number, ui, events, pandocExtensions);
+            return new ImageNodeView(node, view, getPos as () => number, ui, format, events, pandocExtensions);
           },
         },
       },
@@ -63,6 +65,7 @@ class ImageNodeView implements NodeView {
   private readonly view: EditorView;
   private readonly getPos: () => number;
   private readonly editorUI: EditorUI;
+  private readonly editorFormat: EditorFormat;
   private readonly imageAttributes: boolean;
   private readonly implicitFigures: boolean;
 
@@ -86,6 +89,7 @@ class ImageNodeView implements NodeView {
     view: EditorView,
     getPos: () => number,
     editorUI: EditorUI,
+    editorFormat: EditorFormat,
     editorEvents: EditorEvents,
     pandocExtensions: PandocExtensions,
   ) {
@@ -100,6 +104,7 @@ class ImageNodeView implements NodeView {
     this.imageAttributes = imageAttributesAvailable(pandocExtensions);
     this.implicitFigures = pandocExtensions.implicit_figures;
     this.editorUI = editorUI;
+    this.editorFormat = editorFormat;
     this.resizeUI = null;
     this.imgBroken = false;
 
@@ -119,6 +124,7 @@ class ImageNodeView implements NodeView {
         this.node.type,
         this.view,
         editorUI,
+        editorFormat,
         this.imageAttributes,
       );
     };
@@ -328,7 +334,8 @@ class ImageNodeView implements NodeView {
     if (this.imageAttributes && !this.imgBroken && isResizeUICompatible(this.img!)) {
       const imageNode = () => ({ pos: this.getPos(), node: this.node });
       const imgContainerWidth = () => this.containerWidth();
-      this.resizeUI = attachResizeUI(imageNode, this.dom, this.img!, imgContainerWidth, this.view, this.editorUI);
+      this.resizeUI = attachResizeUI(imageNode, this.dom, this.img!, imgContainerWidth, 
+                                     this.view, this.editorUI, this.editorFormat);
     }
   }
 
