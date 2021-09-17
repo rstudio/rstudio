@@ -80,7 +80,7 @@
 /*
  * Hide the first line when the editor is collapsed
  */
-.pm-ace-first-line-meta .pm-ace-collapsed .ace_text-layer .ace_line_group:first-child,
-.pm-ace-first-line-meta .pm-ace-collapsed .ace_text-layer .ace_line_group:first-child span {
+.pm-ace-collapsed .ace_text-layer .ace_line_group:first-child,
+.pm-ace-collapsed .ace_text-layer .ace_line_group:first-child span {
   display: none;
 }
