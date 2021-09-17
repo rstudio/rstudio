@@ -25,7 +25,20 @@
     transition-duration: 0.2s;
 }
 
-.editor_dark .toggle
+.collapsed
+{
+    position: absolute;
+    top: 0px;
+    right: 10px;
+    padding: 0px;
+    cursor: pointer;
+    transition-property: filter;
+    transition-duration: 0.2s;
+    opacity: 0.7;
+}
+
+.editor_dark .toggle,
+.editor_dark .collapsed
 {
     filter: invert(1);
 }
