@@ -239,18 +239,17 @@ public class VisualModeChunk
       };
 
       // Hide the collapser initially, then show it when the mouse enters/leaves
-      collapse_.getElement().getStyle().setOpacity(0);
       DOM.sinkEvents(host_, Event.ONMOUSEOVER | Event.ONMOUSEOUT);
       DOM.setEventListener(host_, evt ->
       {
          switch(evt.getTypeInt())
          {
             case Event.ONMOUSEOVER:
-               collapse_.getElement().getStyle().setOpacity(1);
+               collapse_.setShowToggle(true);
                break;
 
             case Event.ONMOUSEOUT:
-               collapse_.getElement().getStyle().setOpacity(0);
+               collapse_.setShowToggle(false);
                break;
          }
       });

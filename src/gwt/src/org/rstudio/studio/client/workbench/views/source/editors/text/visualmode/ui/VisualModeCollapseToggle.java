@@ -22,6 +22,7 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Image;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -34,6 +35,9 @@ public class VisualModeCollapseToggle extends Composite
       @Source("expand_2x.png")
       ImageResource expand2x();
 
+      @Source("collapsed_2x.png")
+      ImageResource collapsed2x();
+
       @Source("CollapseToggle.css")
       Styles collapseStyles();
    }
@@ -41,33 +45,53 @@ public class VisualModeCollapseToggle extends Composite
    static interface Styles extends CssResource
    {
       String toggle();
+      String collapsed();
    }
 
    public VisualModeCollapseToggle(boolean initial)
    {
+      HTMLPanel host = new HTMLPanel("");
       expanded = new Value<Boolean>(initial);
 
       CollapseImages images = GWT.create(CollapseImages.class);
-      Image image = new Image(new ImageResource2x(images.expand2x()));
       images.collapseStyles().ensureInjected();
-      image.setStyleName(images.collapseStyles().toggle(), true);
-      Style style = image.getElement().getStyle();
+
+      // Create expander tool
+      toggle_ = new Image(new ImageResource2x(images.expand2x()));
+      toggle_.setStyleName(images.collapseStyles().toggle(), true);
+      Style style = toggle_.getElement().getStyle();
       style.setProperty("transform", initial ? "rotate(0deg)" : "rotate(-90deg)");
 
-      DOM.sinkEvents(image.getElement(), Event.ONCLICK);
-      DOM.setEventListener(image.getElement(), evt ->
+      DOM.sinkEvents(toggle_.getElement(), Event.ONCLICK);
+      DOM.setEventListener(toggle_.getElement(), evt ->
       {
          expanded.setValue(!expanded.getValue(), true);
       });
+      setShowToggle(false);
+
+      host.add(toggle_);
+
+      Image collapsed = new Image(new ImageResource2x(images.collapsed2x()));
+      collapsed.setVisible(!initial);
+      collapsed.setStyleName(images.collapseStyles().collapsed(), true);
+      host.add(collapsed);
 
       expanded.addValueChangeHandler(evt ->
       {
          style.setProperty("transform", evt.getValue() ?
             "rotate(0deg)" : "rotate(-90deg)");
+         collapsed.setVisible(!evt.getValue());
       });
 
-      initWidget(image);
+      initWidget(host);
+   }
+
+   public void setShowToggle(boolean show)
+   {
+      toggle_.getElement().getStyle().setOpacity(show ? 1 : 0);
    }
 
    public Value<Boolean> expanded;
+
+   private Image toggle_;
 }
