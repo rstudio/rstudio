@@ -639,7 +639,7 @@ else()
       add_subdirectory(session)
 
       # configure desktop files
-      if(RSTUDIO_DESKTOP)
+      if(RSTUDIO_DESKTOP OR RSTUDIO_ELECTRON)
          configure_file(conf/rdesktop-dev.conf ${CMAKE_CURRENT_BINARY_DIR}/conf/rdesktop-dev.conf)
          if(NOT WIN32)
             if(NOT APPLE)
