@@ -195,6 +195,7 @@ public class VisualModeChunk
       execHost_ = Document.get().createDivElement();
       execHost_.getStyle().setProperty("position", "absolute");
       execHost_.getStyle().setProperty("top", "3px");
+      execHost_.getStyle().setProperty("left", "-2px");
       host_.appendChild(execHost_);
       
       if (output != null)
@@ -795,6 +796,7 @@ public class VisualModeChunk
             toolbar_.getToolbar().setVisible(true);
          }
          summary_.setVisible(false);
+         execHost_.getStyle().setDisplay(Style.Display.BLOCK);
       }
       else
       {
@@ -806,6 +808,7 @@ public class VisualModeChunk
          }
          summary_.setText(createSummary());
          summary_.setVisible(true);
+         execHost_.getStyle().setDisplay(Style.Display.NONE);
       }
    }
 
@@ -879,7 +882,14 @@ public class VisualModeChunk
          lines++;
       }
 
-      return label + ": " + engine + ", " + lines + " line" + (lines > 1 ? "s" : "");
+      String summary = label + ": " + engine + ", " + lines + " line" + (lines > 1 ? "s" : "");
+
+      if (widget_ != null && widget_.isVisible())
+      {
+         summary += " + output";
+      }
+
+      return summary;
    }
 
    private ChunkDefinition def_;
