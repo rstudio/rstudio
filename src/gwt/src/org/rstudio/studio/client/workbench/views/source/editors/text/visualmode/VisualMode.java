@@ -1010,6 +1010,11 @@ public class VisualMode implements VisualModeEditorSync,
       return visualModeChunks_.getChunkDefs();
    }
 
+   /**
+    * Nudges the timer that runs to save the collapsed state of visual mode chunks.
+    * This is heavily debounced since it changes frequently (chunk position is
+    * used as an index key)
+    */
    public void nudgeSaveCollapseState()
    {
       visualModeChunks_.nudgeSaveCollapseState();

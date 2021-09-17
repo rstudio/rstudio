@@ -20,6 +20,10 @@
   padding-bottom: 3px;
 }
 
+.pm-ace-editor.pm-ace-has-output {
+  padding-bottom: 0px;
+}
+
 .ProseMirror .pm-ace-toolbar {
   position: absolute;
   right: 0;

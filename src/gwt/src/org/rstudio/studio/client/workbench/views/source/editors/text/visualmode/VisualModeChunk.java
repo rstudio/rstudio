@@ -413,6 +413,9 @@ public class VisualModeChunk
          // Append the given output widget
          widget_ = widget;
          outputHost_.appendChild(widget.getElement());
+
+         // Add output decoration to host if necessary
+         syncOutputClass();
       }
    }
    
@@ -478,6 +481,7 @@ public class VisualModeChunk
    public void removeWidget()
    {
       outputHost_.setInnerHTML("");
+      host_.getParentElement().removeClassName("pm-ace-has-output");
    }
    
    /**
@@ -834,7 +838,12 @@ public class VisualModeChunk
          execHost_.getStyle().setDisplay(Style.Display.NONE);
          A11y.setARIANotExpanded(host_);
       }
+
+      // Nudge the collapse state timer so that this change is saved
       target_.getVisualMode().nudgeSaveCollapseState();
+
+      // Adjust padding to compensate for collapse state
+      syncOutputClass();
    }
 
    /**
@@ -936,6 +945,30 @@ public class VisualModeChunk
       p.appendChild(spanSummary);
 
       return p;
+   }
+
+   /**
+    * Synchronize the CSS class indicating whether we have output with the output element.
+    */
+   private void syncOutputClass()
+   {
+      // Skip if we aren't yet fully instantiated
+      if (host_ == null || host_.getParentElement() == null)
+      {
+         return;
+      }
+
+      String outputClass = "pm-ace-has-output";
+      if (getExpanded() && widget_ != null && widget_.isVisible())
+      {
+         // We have output (and are expanded); add the CSS decoration
+         host_.getParentElement().addClassName(outputClass);
+      }
+      else
+      {
+         // We don't have output; remove it
+         host_.getParentElement().removeClassName(outputClass);
+      }
    }
 
    private ChunkDefinition def_;
