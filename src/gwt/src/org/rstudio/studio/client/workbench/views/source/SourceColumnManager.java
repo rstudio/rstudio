@@ -2360,7 +2360,10 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                public void onResponseReceived(SourceDocument document)
                {
                   // apply (dynamic) doc property defaults
-                  SourceColumn.applyDocPropertyDefaults(document, false, userPrefs_);
+                  SourceColumn.applyDocPropertyDefaults(
+                     document, false, 
+                     userPrefs_, session_.getSessionInfo()
+                  );
 
                   // if we are opening for a source navigation then we
                   // need to force Rmds into source mode

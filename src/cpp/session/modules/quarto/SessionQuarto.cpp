@@ -765,7 +765,8 @@ QuartoConfig quartoConfig(bool refresh)
                                     &s_quartoConfig.project_type,
                                     &s_quartoConfig.project_output_dir,
                                     &s_quartoConfig.project_formats,
-                                    &s_quartoConfig.project_bibliographies);
+                                    &s_quartoConfig.project_bibliographies,
+                                    &s_quartoConfig.project_editor);
 
             // provide default output dirs
             if (s_quartoConfig.project_output_dir.length() == 0)
@@ -807,6 +808,7 @@ json::Object quartoConfigJSON(bool refresh)
    quartoConfigJSON["project_type"] = config.project_type;
    quartoConfigJSON["project_output_dir"] = config.project_output_dir;
    quartoConfigJSON["project_formats"] = json::toJsonArray(config.project_formats);
+   quartoConfigJSON["project_editor"] = config.project_editor;
    return quartoConfigJSON;
 }
 
@@ -859,7 +861,8 @@ void readQuartoProjectConfig(const FilePath& configFile,
                              std::string* pType,
                              std::string* pOutputDir,
                              std::vector<std::string>* pFormats,
-                             std::vector<std::string>* pBibliographies)
+                             std::vector<std::string>* pBibliographies,
+                             std::string* pEditor)
 {
    // read the config
    std::string configText;
@@ -919,6 +922,27 @@ void readQuartoProjectConfig(const FilePath& configFile,
                   for (auto formatIt = node.begin(); formatIt != node.end(); ++formatIt)
                   {
                      pBibliographies->push_back(formatIt->as<std::string>());
+                  }
+               }
+            }
+            else if (key == "editor" && pEditor != nullptr)
+            {
+               auto node = it->second;
+               if (node.Type() == YAML::NodeType::Scalar)
+               {
+                  *pEditor = node.as<std::string>();
+               }
+               else if (node.Type() == YAML::NodeType::Map)
+               {
+                  for (auto editorId = node.begin(); editorId != node.end(); ++editorId)
+                  {
+                     if ((editorId->first.as<std::string>() == "type" || editorId->first.as<std::string>() == "mode") &&
+                         editorId->second.Type() == YAML::NodeType::Scalar)
+                     {
+                        std::string value = editorId->second.as<std::string>();
+                        if (value == "visual" || value == "source")
+                           *pEditor = value;
+                     }
                   }
                }
             }

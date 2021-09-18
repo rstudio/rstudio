@@ -50,7 +50,7 @@ public class QuartoHelper
    }
    
    
-   private static boolean isWithinQuartoProjectDir(String qmd, QuartoConfig config)
+   public static boolean isWithinQuartoProjectDir(String qmd, QuartoConfig config)
    {
       FileSystemItem projectDir = FileSystemItem.createDir(config.project_dir);
       FileSystemItem qmdFile = FileSystemItem.createFile(qmd);
