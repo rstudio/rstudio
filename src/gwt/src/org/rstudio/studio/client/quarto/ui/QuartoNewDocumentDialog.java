@@ -56,7 +56,7 @@ public class QuartoNewDocumentDialog extends ModalDialog<QuartoNewDocumentDialog
 {
    // extends JavaScriptObject for easy serialization (as client state)
    public static class Result extends JavaScriptObject
-   {
+   {   
       protected Result() {}
 
       public static final Result createDefault()

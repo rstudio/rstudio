@@ -78,7 +78,9 @@ public class QuartoNewDocument
       ArrayList<String> lines = new ArrayList<String>();
       lines.add("---");
       lines.add("title: \"" + result.getTitle() + "\"");
-      boolean simpleFormat = !result.getFormat().equals("html") && 
+      if (!StringUtil.isNullOrEmpty(result.getAuthor()))
+         lines.add("author: \"" + result.getAuthor() + "\"");
+      boolean simpleFormat = (!result.getFormat().equals("html") || result.getTheme() == "default") && 
                              !result.getTableOfContents() && 
                              !result.getNumberSections();
       if (simpleFormat)
@@ -89,7 +91,7 @@ public class QuartoNewDocument
       {
          lines.add("format:");
          lines.add("  " + result.getFormat() + ":");
-         if (result.getFormat().equals("html"))
+         if (result.getFormat().equals("html") && result.getTheme() != "default")
             lines.add("    theme: " + result.getTheme());
          if (result.getTableOfContents())
             lines.add("    toc: true");
