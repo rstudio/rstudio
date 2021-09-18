@@ -127,8 +127,17 @@ then
    exit 1
 fi
 
-case "${arch}" in *arm64*)  build_arm64=1  ;; esac
-case "${arch}" in *x86_64*) build_x86_64=1 ;; esac
+if [ "${rstudio_target}" = "Electron" ]
+then
+   # Electron toolchain does its own packaging as part of build, doesn't use cpack
+   build_package=0
+
+   # At the moment only support building Electron for Intel
+   build_x86_64=1
+else
+   case "${arch}" in *arm64*)  build_arm64=1  ;; esac
+   case "${arch}" in *x86_64*) build_x86_64=1 ;; esac
+fi
 
 if [ "${clean}" = "1" ]; then
 
@@ -233,7 +242,7 @@ if [ -n "${build_arm64}" ]; then
       -DCMAKE_BUILD_TYPE=RelWithDebInfo                     \
       -DCMAKE_OSX_DEPLOYMENT_TARGET="10.12"                 \
       -DRSESSION_ALTERNATE_BUILD=1                          \
-      -DRSTUDIO_TARGET=Desktop                              \
+      -DRSTUDIO_TARGET=${rstudio_target}                    \
       -DRSTUDIO_PACKAGE_BUILD=1                             \
       -DRSTUDIO_CRASHPAD_ENABLED=0                          \
       -DRSTUDIO_TOOLS_ROOT="${RSTUDIO_TOOLS_ROOT}/../arm64" \
