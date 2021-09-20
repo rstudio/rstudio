@@ -2854,8 +2854,31 @@ public class UserPrefsAccessor extends Prefs
          "visual_markdown_code_editor_line_numbers",
          "Show line numbers in visual mode code blocks", 
          "Whether to show line numbers in the code editors used in visual mode", 
-         true);
+         false);
    }
+
+   /**
+    * The keybindings to use in the code editors embedded in the visual editor for R Markdown documents.
+    */
+   public PrefValue<String> visualMarkdownCodeEditorKeybindings()
+   {
+      return enumeration(
+         "visual_markdown_code_editor_keybindings",
+         "Keybinding set for visual mode code blocks", 
+         "The keybindings to use in the code editors embedded in the visual editor for R Markdown documents.", 
+         new String[] {
+            VISUAL_MARKDOWN_CODE_EDITOR_KEYBINDINGS_DEFAULT,
+            VISUAL_MARKDOWN_CODE_EDITOR_KEYBINDINGS_VIM,
+            VISUAL_MARKDOWN_CODE_EDITOR_KEYBINDINGS_EMACS,
+            VISUAL_MARKDOWN_CODE_EDITOR_KEYBINDINGS_SUBLIME
+         },
+         "default");
+   }
+
+   public final static String VISUAL_MARKDOWN_CODE_EDITOR_KEYBINDINGS_DEFAULT = "default";
+   public final static String VISUAL_MARKDOWN_CODE_EDITOR_KEYBINDINGS_VIM = "vim";
+   public final static String VISUAL_MARKDOWN_CODE_EDITOR_KEYBINDINGS_EMACS = "emacs";
+   public final static String VISUAL_MARKDOWN_CODE_EDITOR_KEYBINDINGS_SUBLIME = "sublime";
 
    /**
     * The default visual editing mode font size, in points
@@ -3589,6 +3612,8 @@ public class UserPrefsAccessor extends Prefs
          visualMarkdownEditingShowMargin().setValue(layer, source.getBool("visual_markdown_editing_show_margin"));
       if (source.hasKey("visual_markdown_code_editor_line_numbers"))
          visualMarkdownCodeEditorLineNumbers().setValue(layer, source.getBool("visual_markdown_code_editor_line_numbers"));
+      if (source.hasKey("visual_markdown_code_editor_keybindings"))
+         visualMarkdownCodeEditorKeybindings().setValue(layer, source.getString("visual_markdown_code_editor_keybindings"));
       if (source.hasKey("visual_markdown_editing_font_size_points"))
          visualMarkdownEditingFontSizePoints().setValue(layer, source.getInteger("visual_markdown_editing_font_size_points"));
       if (source.hasKey("visual_markdown_code_editor"))
@@ -3841,6 +3866,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(visualMarkdownEditingShowDocOutline());
       prefs.add(visualMarkdownEditingShowMargin());
       prefs.add(visualMarkdownCodeEditorLineNumbers());
+      prefs.add(visualMarkdownCodeEditorKeybindings());
       prefs.add(visualMarkdownEditingFontSizePoints());
       prefs.add(visualMarkdownCodeEditor());
       prefs.add(zoteroLibraries());

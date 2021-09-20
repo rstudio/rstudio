@@ -557,18 +557,7 @@ public class EditingPreferencesPane extends PreferencesPane
       String editorMode = editorMode_.getValue();
 
       prefs_.editorKeybindings().setGlobalValue(editorMode);
-      boolean isVim = editorMode == UserPrefs.EDITOR_KEYBINDINGS_VIM;
-      boolean isEmacs = editorMode == UserPrefs.EDITOR_KEYBINDINGS_EMACS;
-      boolean isSublime = editorMode == UserPrefs.EDITOR_KEYBINDINGS_SUBLIME;
-
-      if (isVim)
-         ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_VIM);
-      else if (isEmacs)
-         ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_EMACS);
-      else if (isSublime)
-         ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_SUBLIME);
-      else
-         ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_DEFAULT);
+      ShortcutManager.INSTANCE.setEditorMode(ShortcutManager.editorModeFromPref(editorMode));
 
       prefs_.foldStyle().setGlobalValue(foldMode_.getValue());
       prefs_.surroundSelection().setGlobalValue(delimiterSurroundWidget_.getValue());

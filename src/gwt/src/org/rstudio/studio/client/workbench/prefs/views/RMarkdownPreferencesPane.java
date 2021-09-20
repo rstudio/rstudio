@@ -235,9 +235,29 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       lessSpaced(visualEditorShowLineNumbers);
       visualModeOptions.add(visualEditorShowLineNumbers);
 
+      // editor keybindings
+      visualModeKeybindings_ = new SelectWidget(
+         "Keybindings in code blocks:",
+         new String[] {
+            "Default",
+            "Vim",
+            "Emacs",
+            "Sublime Text"
+         },
+         new String[] {
+            UserPrefs.VISUAL_MARKDOWN_CODE_EDITOR_KEYBINDINGS_DEFAULT,
+            UserPrefs.VISUAL_MARKDOWN_CODE_EDITOR_KEYBINDINGS_VIM,
+            UserPrefs.VISUAL_MARKDOWN_CODE_EDITOR_KEYBINDINGS_EMACS,
+            UserPrefs.VISUAL_MARKDOWN_CODE_EDITOR_KEYBINDINGS_SUBLIME,
+         },
+         false,
+         true,
+         false);
+      lessSpaced(visualModeKeybindings_);
+
       // content width
       visualModeContentWidth_ = numericPref(
-            "Editor content width (px):",
+         "Editor content width (px):",
             100,
             NumericValueWidget.NoMaximum,
             prefs_.visualMarkdownEditingMaxContentWidth(),
@@ -507,6 +527,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       latexPreviewWidget_.setValue(prefs_.latexPreviewOnCursorIdle().getValue());
       if (knitWorkingDir_ != null)
          knitWorkingDir_.setValue(prefs_.knitWorkingDir().getValue());
+      visualModeKeybindings_.setValue(prefs_.visualMarkdownCodeEditorKeybindings().getValue());
       
       visualModeWrap_.setValue(prefs.visualMarkdownEditingWrap().getGlobalValue());
       visualModeReferences_.setValue(prefs.visualMarkdownEditingReferencesLocation().getGlobalValue());
@@ -551,6 +572,9 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       
       prefs_.visualMarkdownEditingReferencesLocation().setGlobalValue(
             visualModeReferences_.getValue());
+
+      prefs_.visualMarkdownCodeEditorKeybindings().setGlobalValue(
+            visualModeKeybindings_.getValue());
 
       if (knitWorkingDir_ != null)
       {
@@ -600,6 +624,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    private final SelectWidget docOutlineDisplay_;
    private final SelectWidget latexPreviewWidget_;
    private final SelectWidget knitWorkingDir_;
+   private final SelectWidget visualModeKeybindings_;
 
    private final SelectWidget visualModeFontSize_;
    private final NumericValueWidget visualModeContentWidth_;

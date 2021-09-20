@@ -349,6 +349,11 @@ namespace prefs {
 #define kVisualMarkdownEditingShowDocOutline "visual_markdown_editing_show_doc_outline"
 #define kVisualMarkdownEditingShowMargin "visual_markdown_editing_show_margin"
 #define kVisualMarkdownCodeEditorLineNumbers "visual_markdown_code_editor_line_numbers"
+#define kVisualMarkdownCodeEditorKeybindings "visual_markdown_code_editor_keybindings"
+#define kVisualMarkdownCodeEditorKeybindingsDefault "default"
+#define kVisualMarkdownCodeEditorKeybindingsVim "vim"
+#define kVisualMarkdownCodeEditorKeybindingsEmacs "emacs"
+#define kVisualMarkdownCodeEditorKeybindingsSublime "sublime"
 #define kVisualMarkdownEditingFontSizePoints "visual_markdown_editing_font_size_points"
 #define kVisualMarkdownCodeEditor "visual_markdown_code_editor"
 #define kVisualMarkdownCodeEditorAce "ace"
@@ -1607,6 +1612,12 @@ public:
     */
    bool visualMarkdownCodeEditorLineNumbers();
    core::Error setVisualMarkdownCodeEditorLineNumbers(bool val);
+
+   /**
+    * The keybindings to use in the code editors embedded in the visual editor for R Markdown documents.
+    */
+   std::string visualMarkdownCodeEditorKeybindings();
+   core::Error setVisualMarkdownCodeEditorKeybindings(std::string val);
 
    /**
     * The default visual editing mode font size, in points

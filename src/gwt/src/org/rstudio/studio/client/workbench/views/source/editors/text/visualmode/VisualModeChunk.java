@@ -31,6 +31,7 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.a11y.A11y;
+import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.theme.ThemeFonts;
@@ -143,14 +144,23 @@ public class VisualModeChunk
       
       // Track activation state and notify visual mode
       releaseOnDismiss_.add(editor_.addFocusHandler((evt) ->
-      { 
-         active_ = true; 
+      {
+         active_ = true;
          target_.getVisualMode().setActiveEditor(editor_);
+
+         // Temporarily adjust the global keybindings to account for the keybinding set inside this
+         // embedded editor
+         ShortcutManager.INSTANCE.setEditorModeOverlay(
+            ShortcutManager.editorModeFromPref(
+               RStudioGinjector.INSTANCE.getUserPrefs().visualMarkdownCodeEditorKeybindings().getValue()));
       }));
       releaseOnDismiss_.add(editor_.addBlurHandler((evt) ->
       {
          active_ = false;
          target_.getVisualMode().setActiveEditor(null);
+
+         // Clear global keybinding overlay
+         ShortcutManager.INSTANCE.setEditorModeOverlay(null);
       }));
 
       // Track UI pref for tab behavior. Note that this can't be a lambda because Ace has trouble with lambda bindings.

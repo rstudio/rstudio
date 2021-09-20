@@ -2650,6 +2650,19 @@ core::Error UserPrefValues::setVisualMarkdownCodeEditorLineNumbers(bool val)
 }
 
 /**
+ * The keybindings to use in the code editors embedded in the visual editor for R Markdown documents.
+ */
+std::string UserPrefValues::visualMarkdownCodeEditorKeybindings()
+{
+   return readPref<std::string>("visual_markdown_code_editor_keybindings");
+}
+
+core::Error UserPrefValues::setVisualMarkdownCodeEditorKeybindings(std::string val)
+{
+   return writePref("visual_markdown_code_editor_keybindings", val);
+}
+
+/**
  * The default visual editing mode font size, in points
  */
 int UserPrefValues::visualMarkdownEditingFontSizePoints()
@@ -3153,6 +3166,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kVisualMarkdownEditingShowDocOutline,
       kVisualMarkdownEditingShowMargin,
       kVisualMarkdownCodeEditorLineNumbers,
+      kVisualMarkdownCodeEditorKeybindings,
       kVisualMarkdownEditingFontSizePoints,
       kVisualMarkdownCodeEditor,
       kZoteroLibraries,

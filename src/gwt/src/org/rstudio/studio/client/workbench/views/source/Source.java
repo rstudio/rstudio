@@ -528,14 +528,10 @@ public class Source implements InsertSourceEvent.Handler,
       // sync UI prefs with shortcut manager
       userPrefs_ = RStudioGinjector.INSTANCE.getUserPrefs();
 
-      if (userPrefs_.editorKeybindings().getValue() == UserPrefs.EDITOR_KEYBINDINGS_VIM)
-         ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_VIM);
-      else if (userPrefs_.editorKeybindings().getValue() == UserPrefs.EDITOR_KEYBINDINGS_EMACS)
-         ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_EMACS);
-      else if (userPrefs_.editorKeybindings().getValue() == UserPrefs.EDITOR_KEYBINDINGS_SUBLIME)
-         ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_SUBLIME);
-      else
-         ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_DEFAULT);
+      // propagate keybindings to global shortcut manager
+      ShortcutManager.INSTANCE.setEditorMode(
+         ShortcutManager.editorModeFromPref(
+            userPrefs_.editorKeybindings().getValue()));
 
       initialized_ = true;
 

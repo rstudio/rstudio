@@ -1356,6 +1356,13 @@
             "title": "Show line numbers in visual mode code blocks",
             "description": "Whether to show line numbers in the code editors used in visual mode"
         },
+        "visual_markdown_code_editor_keybindings": {
+            "type": "string",
+            "enum": ["default", "vim", "emacs", "sublime"],
+            "default": "default",
+            "title": "Keybinding set for visual mode code blocks",
+            "description": "The keybindings to use in the code editors embedded in the visual editor for R Markdown documents."
+        },
         "visual_markdown_editing_font_size_points": {
             "type": "integer",
             "default": 0,

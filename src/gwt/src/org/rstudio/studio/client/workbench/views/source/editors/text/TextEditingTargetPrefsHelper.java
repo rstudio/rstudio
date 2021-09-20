@@ -229,6 +229,16 @@ public class TextEditingTargetPrefsHelper
             {
                docDisplay.setShowLineNumbers(arg);
             }));
+         releaseOnDismiss.add(prefs.visualMarkdownCodeEditorKeybindings().bind(
+            (arg) ->
+            {
+               docDisplay.setUseVimMode(arg == UserPrefs.EDITOR_KEYBINDINGS_VIM);
+            }));
+         releaseOnDismiss.add(prefs.visualMarkdownCodeEditorKeybindings().bind(
+            (arg) ->
+            {
+               docDisplay.setUseEmacsKeybindings(arg == UserPrefs.EDITOR_KEYBINDINGS_EMACS);
+            }));
       }
    }
 }

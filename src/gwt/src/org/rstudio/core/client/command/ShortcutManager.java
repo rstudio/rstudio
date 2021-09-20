@@ -41,6 +41,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.commands.RStudioCommandExecutedFromShortcutEvent;
 import org.rstudio.studio.client.workbench.commands.ReportShortcutBindingEvent;
 import org.rstudio.studio.client.workbench.events.ShowWarningBarEvent;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceKeyboardActivityEvent;
@@ -336,14 +337,68 @@ public class ShortcutManager implements NativePreviewHandler,
       }
    }
 
+   /**
+    * Sets the primary editor mode; used to change which shortcuts are active to avoid
+    * conflicts with the editor mode's keybindings.
+    *
+    * @param editorMode The primary editor mode.
+    */
    public void setEditorMode(int editorMode)
    {
       editorMode_ = editorMode;
    }
 
+   /**
+    * Overlays a transient editor mode over the primary mode. Used in visual mode to
+    * temporarily adjust keybindings while the cursor is inside an embedded editor.
+    *
+    * @param editorMode The editor mode to overlay.
+    */
+   public void setEditorModeOverlay(Integer editorMode)
+   {
+      editorModeOverlay_ = editorMode;
+   }
+
+   /**
+    * Clears a previously set transient editor mode.
+    */
+   public void clearEditorModeOverlay()
+   {
+      editorModeOverlay_ = null;
+   }
+
+   /**
+    * Gets the current editor mode (keybindings).
+    *
+    * @return The editor mode, as an integer
+    */
    public int getEditorMode()
    {
-      return editorMode_;
+      // Use the primary mode if we have no current overlay
+      if (editorModeOverlay_ == null)
+      {
+         return editorMode_;
+      }
+
+      // Return the overlay mode
+      return editorModeOverlay_;
+   }
+
+   /**
+    * Returns the KeyboardShortcut editor mode value of a preference string.
+    *
+    * @param pref A preference string, such as "vim"
+    * @return An editor mode, such as MODE_VIM
+    */
+   public static int editorModeFromPref(String pref)
+   {
+      if (StringUtil.equals(pref, UserPrefs.EDITOR_KEYBINDINGS_VIM))
+         return KeyboardShortcut.MODE_VIM;
+      else if (StringUtil.equals(pref, UserPrefs.EDITOR_KEYBINDINGS_EMACS))
+         return KeyboardShortcut.MODE_EMACS;
+      else if (StringUtil.equals(pref, UserPrefs.EDITOR_KEYBINDINGS_SUBLIME))
+         return KeyboardShortcut.MODE_SUBLIME;
+      return KeyboardShortcut.MODE_DEFAULT;
    }
 
    public List<ShortcutInfo> getActiveShortcutInfo()
@@ -359,7 +414,7 @@ public class ShortcutManager implements NativePreviewHandler,
          if (encounteredShortcuts.contains(object.getDescription()))
             continue;
 
-         boolean isEnabled = (object.getDisableModes() & editorMode_) == 0;
+         boolean isEnabled = (object.getDisableModes() & getEditorMode()) == 0;
          if (isEnabled)
          {
             encounteredShortcuts.add(object.getDescription());
@@ -466,7 +521,7 @@ public class ShortcutManager implements NativePreviewHandler,
 
       // we handle `Ctrl+L` for the sublime mode here
       // because it is conflicted with `consoleClear`
-      if (editorMode_ == KeyboardShortcut.MODE_SUBLIME)
+      if (getEditorMode() == KeyboardShortcut.MODE_SUBLIME)
       {
          if (keyCombination.getKeyCode() == KeyCodes.KEY_L &&
              keyCombination.getModifier() == KeyboardShortcut.CTRL)
@@ -818,6 +873,7 @@ public class ShortcutManager implements NativePreviewHandler,
 
    private int disableCount_ = 0;
    private int editorMode_ = KeyboardShortcut.MODE_DEFAULT;
+   private Integer editorModeOverlay_ = null;
 
    private final KeySequence keyBuffer_;
    private final IgnoredKeysMap<KeyCombination> ignoredKeys_;
