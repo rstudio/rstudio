@@ -493,7 +493,7 @@ public class VisualModeChunk
    }
 
    /**
-    * Removes the output widget, if any, from the
+    * Removes the output widget, if any, from the chunk.
     */
    public void removeWidget()
    {
@@ -830,28 +830,44 @@ public class VisualModeChunk
    {
       if (expanded)
       {
+         // Clear height restriction
          editorHost_.getStyle().clearHeight();
          host_.removeClassName("pm-ace-collapsed");
+
+         // Show chunk toolbar, if we have one
          if (toolbar_ != null)
          {
             toolbar_.getToolbar().setVisible(true);
          }
+
+         // Clear summary and hide it (will be repopulated on collapse)
          summary_.setInnerHTML("");
          summary_.getStyle().setDisplay(Style.Display.NONE);
+
+         // Show execution status again
          execHost_.getStyle().setDisplay(Style.Display.BLOCK);
+
          Roles.getRegionRole().setAriaExpandedState(host_, ExpandedValue.TRUE);
       }
       else
       {
+         // Restrict height of editor
          editorHost_.getStyle().setHeight(20, Style.Unit.PX);
          host_.addClassName("pm-ace-collapsed");
+
+         // Hide chunk toolbar, if we have one
          if (toolbar_ != null)
          {
             toolbar_.getToolbar().setVisible(false);
          }
+
+         // Create and show the summary text
          summary_.appendChild(createSummary());
          summary_.getStyle().setDisplay(Style.Display.BLOCK);
+
+         // Hide the execution status (this aligns visually with the expanded chunk)
          execHost_.getStyle().setDisplay(Style.Display.NONE);
+
          A11y.setARIANotExpanded(host_);
       }
 
