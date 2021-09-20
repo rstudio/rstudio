@@ -210,6 +210,12 @@ public class VisualModeChunk
          {
             setOutputWidget(output.getOutputWidget());
          }
+         Scheduler.get().scheduleDeferred(() ->
+         {
+            // Perform the initial sync of the output class
+            // (deferred so DOM attach happens first)
+            syncOutputClass();
+         });
       }
       editorHost_.appendChild(outputHost_);
       
@@ -412,6 +418,14 @@ public class VisualModeChunk
 
          // Append the given output widget
          widget_ = widget;
+
+         // Ensure that when the widget's visibility changes we set the appropriate
+         // CSS class on the host
+         releaseOnDismiss_.add(widget.addVisibleChangeHandler((evt) ->
+         {
+            syncOutputClass();
+         }));
+
          outputHost_.appendChild(widget.getElement());
 
          // Add output decoration to host if necessary
@@ -477,11 +491,13 @@ public class VisualModeChunk
    {
       setOutputWidget(widget_);
    }
-   
+
+   /**
+    * Removes the output widget, if any, from the
+    */
    public void removeWidget()
    {
       outputHost_.setInnerHTML("");
-      host_.getParentElement().removeClassName("pm-ace-has-output");
    }
    
    /**
@@ -949,6 +965,8 @@ public class VisualModeChunk
 
    /**
     * Synchronize the CSS class indicating whether we have output with the output element.
+    * When there's visible output the host needs to use less padding, so this must be
+    * synchronized whenever visibility of the output element changes.
     */
    private void syncOutputClass()
    {
