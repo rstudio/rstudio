@@ -769,6 +769,33 @@ public class DocUpdateSentinel
                }
             });
    }
+   
+   public static void modifyProperties(SourceServerOperations server,
+                                       SourceDocument document,
+                                       final HashMap<String, String> properties,
+                                       final ProgressIndicator progress)
+   {
+      server.modifyDocumentProperties(
+            document.getId(),
+            properties,
+            new ServerRequestCallback<Void>()
+            {
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+                  if (progress != null)
+                     progress.onError(error.getUserMessage());
+               }
+
+               @Override
+               public void onResponseReceived(Void response)
+               {
+                  if (progress != null)
+                     progress.onCompleted();
+               }
+            });
+   }
 
    public void modifyProperties(final HashMap<String, String> properties)
    {

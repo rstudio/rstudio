@@ -27,4 +27,7 @@ public class QuartoConstants
    public final static String ENGINE_KNITR = "knitr";
    public final static String ENGINE_JUPYTER = "jupyter";
    
+   public final static String EDITOR_VISUAL = "visual";
+   public final static String EDITOR_SOURCE = "source";
+   
 }

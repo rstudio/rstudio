@@ -27,6 +27,7 @@ import org.rstudio.studio.client.quarto.model.QuartoCapabilities;
 import org.rstudio.studio.client.quarto.model.QuartoConstants;
 import org.rstudio.studio.client.quarto.model.QuartoJupyterKernel;
 import org.rstudio.studio.client.quarto.model.QuartoNewProjectOptions;
+import org.rstudio.studio.client.quarto.ui.QuartoVisualEditorCheckBox;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
@@ -99,6 +100,8 @@ public class NewQuartoProjectPage extends NewDirectoryPage
       
       
       kernelSelect_ = new SelectWidget("Kernel:");
+      kernelSelect_.getElement().addClassName(
+            NewProjectResources.INSTANCE.styles().quartoEngineSelect());
       panel.add(kernelSelect_);
       
       addWidget(panel);
@@ -108,6 +111,7 @@ public class NewQuartoProjectPage extends NewDirectoryPage
    @Override
    protected void onAddBottomWidgets()
    {
+      // venv
       venvPanel_ = new HorizontalPanel();
       chkUseVenv_ = new CheckBox("Use venv with packages: ");
       ElementIds.assignElementId(chkUseVenv_,
@@ -122,6 +126,12 @@ public class NewQuartoProjectPage extends NewDirectoryPage
          ElementIds.idWithPrefix(getTitle(), ElementIds.NEW_PROJECT_VENV_PACKAGES));
       venvPanel_.add(txtVenvPackages_);
       addWidget(venvPanel_);
+      
+      // visual editor
+      chkVisualEditor_ = new QuartoVisualEditorCheckBox();
+      addSpacer();
+      addWidget(chkVisualEditor_);
+      
    }
    
    @Override 
@@ -156,6 +166,8 @@ public class NewQuartoProjectPage extends NewDirectoryPage
       chkUseVenv_.setValue(canUseVenv() && !StringUtil.isNullOrEmpty(lastOptions_.getVenv()));
       txtVenvPackages_.setValue(lastOptions_.getPackages());
       
+      chkVisualEditor_.setValue(lastOptions_.getEditor().equals(QuartoConstants.EDITOR_VISUAL));
+      
       manageControls();
       
    }
@@ -185,7 +197,8 @@ public class NewQuartoProjectPage extends NewDirectoryPage
             engineSelect_.getValue(), 
             kernelSelect_.getValue(), 
             chkUseVenv_.getValue() ? "venv" : "",
-            txtVenvPackages_.getText().trim()
+            txtVenvPackages_.getText().trim(),
+            chkVisualEditor_.getValue() ? QuartoConstants.EDITOR_VISUAL : ""
       );
       
       return lastOptions_;
@@ -204,6 +217,7 @@ public class NewQuartoProjectPage extends NewDirectoryPage
    private CheckBox chkUseVenv_;
    private TextBox txtVenvPackages_;
    private HorizontalPanel venvPanel_;
+   private QuartoVisualEditorCheckBox chkVisualEditor_;
    private Session session_;
    private QuartoCapabilities quartoCaps_ = null;
 
@@ -213,7 +227,7 @@ public class NewQuartoProjectPage extends NewDirectoryPage
       public ClientStateValue()
       {
          super("quarto",
-               "new-project",
+               "quarto-new-proj",
                ClientState.PERSISTENT,
                session_.getSessionInfo().getClientState(),
                false);
@@ -229,7 +243,8 @@ public class NewQuartoProjectPage extends NewDirectoryPage
                         value.getString("engine"),
                         value.getString("kernel"),
                         value.getString("venv"),
-                        value.getString("packages")
+                        value.getString("packages"),
+                        value.getString("editor")
                   );
       }
  

@@ -85,6 +85,7 @@ public interface NewProjectResources extends ClientBundle
       String vcsNotInstalledWidget();
       String vcsHelpLink();
       String newProjectDirectoryName();
+      String newProjectGitInit();
       String codeFilesListButton();
       String codeFilesListBox();
       String invalidPkgName();
