@@ -186,6 +186,7 @@
    </target>
 
    <target name="desktop" description="Run desktop development mode">
+      <antcall target="generate-i18n"/>
       <antcall target="codeserver">
          <param name="gwt.main.module" value="org.rstudio.studio.RStudioDesktopSuperDevMode"/>
          <param name="panmirror.target" value="ide-dev"/>
@@ -193,6 +194,7 @@
    </target>
 
    <target name="devmode" description="Run server development mode">
+      <antcall target="generate-i18n"/>
       <antcall target="codeserver">
          <param name="gwt.main.module" value="org.rstudio.studio.RStudioSuperDevMode"/>
          <param name="panmirror.target" value="ide-dev"/>
