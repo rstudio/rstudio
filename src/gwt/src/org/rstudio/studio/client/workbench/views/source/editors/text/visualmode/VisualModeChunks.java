@@ -360,7 +360,6 @@ public class VisualModeChunks implements ChunkDefinition.Provider
     */
    private void loadCollapsedState(String state)
    {
-      Debug.devlog("loading collapsed chunk values: " + state);
       collapsedChunkPos_ = new ArrayList<>();
       if (StringUtil.isNullOrEmpty(state))
       {
