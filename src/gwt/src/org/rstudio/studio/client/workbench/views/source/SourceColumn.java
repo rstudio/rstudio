@@ -74,7 +74,9 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceNavigation;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map.Entry;
 import java.util.Set;
 
 public class SourceColumn implements BeforeShowEvent.Handler,
@@ -1075,7 +1077,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
                {
                   // apply (dynamic) doc property defaults
                   SourceColumn.applyDocPropertyDefaults(
-                     newDoc, true, 
+                     server_, newDoc, true, 
                      userPrefs_, pSession_.get().getSessionInfo()
                   );
 
@@ -1280,7 +1282,8 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       fireDocTabsChanged();
    }
 
-   public static void applyDocPropertyDefaults(SourceDocument document, 
+   public static void applyDocPropertyDefaults(SourceServerOperations server,
+                                               SourceDocument document, 
                                                boolean newDoc, 
                                                UserPrefs userPrefs,
                                                SessionInfo sessionInfo)
@@ -1307,20 +1310,23 @@ public class SourceColumn implements BeforeShowEvent.Handler,
             
             if (mode != null)
             {
-               document.getProperties().setString(
-                     TextEditingTarget.RMD_VISUAL_MODE,
-                     mode == kEditorVisual 
-                        ? DocUpdateSentinel.PROPERTY_TRUE
-                        : DocUpdateSentinel.PROPERTY_FALSE
-                  );
+               HashMap<String,String> props = new HashMap<String,String>();
+               props.put(TextEditingTarget.RMD_VISUAL_MODE,
+                  mode == kEditorVisual 
+                     ? DocUpdateSentinel.PROPERTY_TRUE
+                     : DocUpdateSentinel.PROPERTY_FALSE);
                if (mode == kEditorVisual)
                {
-                  // don't ever prompt for line wrapping config b/c this
-                  // document started out in visual mode
-                  document.getProperties().setString(
-                        TextEditingTarget.RMD_VISUAL_MODE_WRAP_CONFIGURED,
-                        DocUpdateSentinel.PROPERTY_TRUE
-                     ); 
+                  props.put(TextEditingTarget.RMD_VISUAL_MODE_WRAP_CONFIGURED,
+                            DocUpdateSentinel.PROPERTY_TRUE);
+               }
+               // write to server
+               DocUpdateSentinel.modifyProperties(server, document, props, null);
+               
+               // write in memory
+               for (Entry<String, String> entry : props.entrySet())
+               {
+                  document.getProperties().setString(entry.getKey(), entry.getValue());
                }
             }
          }

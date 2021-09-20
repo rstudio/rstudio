@@ -2361,7 +2361,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                {
                   // apply (dynamic) doc property defaults
                   SourceColumn.applyDocPropertyDefaults(
-                     document, false, 
+                     server_, document, false, 
                      userPrefs_, session_.getSessionInfo()
                   );
 

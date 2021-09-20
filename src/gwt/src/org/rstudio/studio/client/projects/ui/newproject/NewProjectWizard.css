@@ -16,12 +16,17 @@
 }
 
 .wizardSpacer {
-   height: 7px;
+   height: 6px;
 }
 
 
 .newProjectDirectoryName {
    width: 100%;
+}
+
+.newProjectGitInit {
+	display: inline-block;
+   margin-top: 7px;
 }
 
 .codeFilesListButton {
@@ -68,7 +73,9 @@
 
 .quartoEngineSelect {
    margin-right: 8px;
+   margin-bottom: 5px;
 }
+
 
 .quartoVenvPackages[type="text"] {
   font-family: fixedWidthFont;
