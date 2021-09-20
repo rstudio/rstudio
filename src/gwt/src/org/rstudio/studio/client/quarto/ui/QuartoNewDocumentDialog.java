@@ -28,6 +28,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.quarto.model.QuartoCapabilities;
+import org.rstudio.studio.client.quarto.model.QuartoConfig;
 import org.rstudio.studio.client.quarto.model.QuartoConstants;
 import org.rstudio.studio.client.quarto.model.QuartoJupyterKernel;
 import org.rstudio.studio.client.workbench.model.ClientState;
@@ -45,6 +46,7 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HTMLTable.RowFormatter;
 import com.google.inject.Inject;
+
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
@@ -61,7 +63,8 @@ public class QuartoNewDocumentDialog extends ModalDialog<QuartoNewDocumentDialog
 
       public static final Result createDefault()
       {
-         return create("", "", "html", "default", false, false, "knitr", "python3", "python");
+         return create("", "", "html", "default", false, false, "knitr", "python3", "python", 
+                      QuartoConstants.EDITOR_VISUAL);
       }
 
       public static final native Result create(String title,
@@ -72,7 +75,8 @@ public class QuartoNewDocumentDialog extends ModalDialog<QuartoNewDocumentDialog
                                                boolean numberSections,
                                                String engine,
                                                String kernel,
-                                               String language)
+                                               String language,
+                                               String editor)
       /*-{
          return {
             "title": title,
@@ -83,7 +87,8 @@ public class QuartoNewDocumentDialog extends ModalDialog<QuartoNewDocumentDialog
             "numberSections": numberSections,
             "engine": engine,
             "kernel": kernel,
-            "language": language
+            "language": language,
+            "editor": editor
          };
       }-*/;
 
@@ -96,6 +101,7 @@ public class QuartoNewDocumentDialog extends ModalDialog<QuartoNewDocumentDialog
       public final native String getEngine() /*-{ return this["engine"]; }-*/;
       public final native String getKernel() /*-{ return this["kernel"]; }-*/;
       public final native String getLanguage() /*-{ return this["language"]; }-*/;
+      public final native String getEditor() /*-{ return this["editor"] || "visual" ; }-*/;
    }
    
    public QuartoNewDocumentDialog(QuartoCapabilities caps,
@@ -162,8 +168,19 @@ public class QuartoNewDocumentDialog extends ModalDialog<QuartoNewDocumentDialog
       kernelSelect_ = createListBox(kernelDisplayNames, kernelNames);
       setListBoxValue(kernelSelect_, lastResult_.getKernel());
       
+      Label editorLabel = createLabel("Editor:");
+      editorCheckBox_ = new QuartoVisualEditorCheckBox();
+      
+      // use project default if available, otherwise use last result
+      QuartoConfig config = session_.getSessionInfo().getQuartoConfig();
+      String editor = config.project_editor;
+      if (StringUtil.isNullOrEmpty(editor))
+         editor = lastResult_.getEditor();
+      editorCheckBox_.setValue(editor.equals(QuartoConstants.EDITOR_VISUAL));
+      
+      
       // Add them to parent
-      grid_ = new LayoutGrid(7, 2);
+      grid_ = new LayoutGrid(8, 2);
       grid_.setCellPadding(2);
       grid_.addStyleName(RES.styles().grid());
       grid_.setWidget(ROW_TITLE, 0, titleLabel);
@@ -186,11 +203,15 @@ public class QuartoNewDocumentDialog extends ModalDialog<QuartoNewDocumentDialog
       grid_.setWidget(ROW_KERNEL, 0, kernelLabel);
       grid_.setWidget(ROW_KERNEL, 1, kernelSelect_);
       
+      grid_.setWidget(ROW_EDITOR, 0, editorLabel);
+      grid_.setWidget(ROW_EDITOR, 1, editorCheckBox_);
+      
      
       // tweak some row spacing
       RowFormatter rowFmt = grid_.getRowFormatter();
-      rowFmt.addStyleName(ROW_AUTHOR, RES.styles().spacedRow());
-      rowFmt.addStyleName(ROW_OPTIONS, RES.styles().spacedRow());
+      rowFmt.addStyleName(ROW_FORMAT, RES.styles().spacedRow());
+      rowFmt.addStyleName(ROW_ENGINE, RES.styles().spacedRow());
+      rowFmt.addStyleName(ROW_EDITOR, RES.styles().spacedRow());
       
       mainPanel_.add(grid_);
       
@@ -247,6 +268,7 @@ public class QuartoNewDocumentDialog extends ModalDialog<QuartoNewDocumentDialog
       Boolean number = numberSectionsCheckBox_.getValue();
       String engine = engineSelect_.getSelectedValue();
       String kernel = kernelSelect_.getSelectedValue();
+      String editor = editorCheckBox_.getValue() ? QuartoConstants.EDITOR_VISUAL : QuartoConstants.EDITOR_SOURCE;
       
       // determine language
       String language = null;
@@ -268,8 +290,8 @@ public class QuartoNewDocumentDialog extends ModalDialog<QuartoNewDocumentDialog
       }
      
       // result
-      lastResult_ =  Result.create(title, author, format, theme, toc, number, engine, kernel, language);
-      return Result.create(title, author, format, theme, toc, number, engine, kernel, language);
+      lastResult_ =  Result.create(title, author, format, theme, toc, number, engine, kernel, language, editor);
+      return Result.create(title, author, format, theme, toc, number, engine, kernel, language, editor);
    }
 
    @Override
@@ -281,7 +303,14 @@ public class QuartoNewDocumentDialog extends ModalDialog<QuartoNewDocumentDialog
    private void manageControls()
    {
       RowFormatter rowFmt = grid_.getRowFormatter();
-      rowFmt.setVisible(ROW_THEME, formatSelect_.getSelectedValue().equals(QuartoConstants.FORMAT_HTML));
+      // for now we set ROW_THEME and ROW_OPTIONS to hidden so we can make room for 
+      // the visual mode options (don't want the dialog to have too many options)
+      // may at some point want to bring these back behind an "advanced" toggle 
+      // rowFmt.setVisible(ROW_THEME, formatSelect_.getSelectedValue().equals(QuartoConstants.FORMAT_HTML));
+      rowFmt.setVisible(ROW_THEME, false);
+      rowFmt.setVisible(ROW_OPTIONS, false);
+      
+      // kernel only shows for jupyter
       rowFmt.setVisible(ROW_KERNEL, engineSelect_.getSelectedValue().equals(QuartoConstants.ENGINE_JUPYTER));
    }
    
@@ -359,7 +388,7 @@ public class QuartoNewDocumentDialog extends ModalDialog<QuartoNewDocumentDialog
       public QuartoNewDocumentClientState()
       {
          super("quarto",
-               "quarto-new-document",
+               "quarto-new-doc",
                ClientState.PERSISTENT,
                session_.getSessionInfo().getClientState(),
                false);
@@ -379,7 +408,8 @@ public class QuartoNewDocumentDialog extends ModalDialog<QuartoNewDocumentDialog
                         value.getBoolean("numberSections"),
                         value.getString("engine"),
                         value.getString("kernel"),
-                        value.getString("language")
+                        value.getString("language"),
+                        value.getString("editor")
                         );
       }
  
@@ -405,6 +435,7 @@ public class QuartoNewDocumentDialog extends ModalDialog<QuartoNewDocumentDialog
    private final int ROW_OPTIONS = 4;
    private final int ROW_ENGINE = 5;
    private final int ROW_KERNEL = 6;
+   private final int ROW_EDITOR = 7;
    
    private final TextBox titleTextBox_;
    private final TextBox authorTextBox_;
@@ -414,6 +445,7 @@ public class QuartoNewDocumentDialog extends ModalDialog<QuartoNewDocumentDialog
    private final CheckBox numberSectionsCheckBox_;
    private final ListBox engineSelect_;
    private final ListBox kernelSelect_;
+   private QuartoVisualEditorCheckBox editorCheckBox_;
    
    private final LayoutGrid grid_;
    private final VerticalPanel mainPanel_;

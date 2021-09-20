@@ -18,7 +18,10 @@ import com.google.gwt.dom.client.ButtonElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.FocusWidget;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -30,6 +33,8 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.Image;
+
+import elemental2.dom.URL;
 
 public class HelpButton extends FocusWidget
                         implements HasClickHandlers
@@ -65,6 +70,17 @@ public class HelpButton extends FocusWidget
       style.setMarginLeft(4, Unit.PX);
       return helpButton;
    }
+   
+   public static HorizontalPanel checkBoxWithHelp(CheckBox checkBox, HelpButton helpButton)
+   {
+      HorizontalPanel panel = new HorizontalPanel();
+      panel.add(checkBox);
+      Style helpStyle = helpButton.getElement().getStyle();
+      helpStyle.setMarginTop(1, Unit.PX);
+      helpStyle.setMarginLeft(6, Unit.PX);
+      panel.add(helpButton);
+      return panel;
+   }
 
    /**
     * @param rstudioLinkName
@@ -84,6 +100,22 @@ public class HelpButton extends FocusWidget
                      final boolean includeVersionInfo,
                      final String title)
    {
+      this(title, event -> {
+         GlobalDisplay globalDisplay = RStudioGinjector.INSTANCE.getGlobalDisplay();
+         globalDisplay.openRStudioLink(rstudioLinkName, includeVersionInfo);
+      });
+   }
+   
+   public HelpButton(final URL url, final String title)
+   {
+      this(title, event -> {
+         GlobalDisplay globalDisplay = RStudioGinjector.INSTANCE.getGlobalDisplay();
+         globalDisplay.openWindow(url.toString());
+      });
+   }
+   
+   public HelpButton(String title, ClickHandler handler)
+   {
       ButtonElement button = Document.get().createPushButtonElement();
       button.setClassName("rstudio-HelpButton");
 
@@ -91,14 +123,11 @@ public class HelpButton extends FocusWidget
       helpImage.getElement().getStyle().setCursor(Cursor.POINTER);
       helpImage.setAltText(title);
       button.insertFirst(helpImage.getElement());
-
-      addClickHandler(event -> {
-         GlobalDisplay globalDisplay = RStudioGinjector.INSTANCE.getGlobalDisplay();
-         globalDisplay.openRStudioLink(rstudioLinkName, includeVersionInfo);
-      });
-
       setElement(button);
+      
+      addClickHandler(handler);
    }
+   
 
    public HandlerRegistration addClickHandler(ClickHandler handler)
    {
