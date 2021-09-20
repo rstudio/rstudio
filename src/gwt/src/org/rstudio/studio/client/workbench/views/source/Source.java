@@ -100,6 +100,7 @@ import org.rstudio.studio.client.events.ReplaceRangesEvent;
 import org.rstudio.studio.client.events.ReplaceRangesEvent.ReplacementData;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
+import org.rstudio.studio.client.quarto.QuartoHelper;
 import org.rstudio.studio.client.quarto.QuartoNewDocument;
 import org.rstudio.studio.client.events.SetSelectionRangesEvent;
 import org.rstudio.studio.client.server.ServerError;
@@ -1097,9 +1098,19 @@ public class Source implements InsertSourceEvent.Handler,
    @Handler
    public void onNewQuartoDoc()
    {
-      new QuartoNewDocument().newDocument((contents) -> {
+      // if we are in a quarto website or book project just create a 
+      // blank document with only a title
+      if (QuartoHelper.isQuartoWebsiteConfig(session_.getSessionInfo().getQuartoConfig()))
+      {
+         String contents = "---\ntitle: \"Untitled\"\n---\n\n";
          columnManager_.newDoc(FileTypeRegistry.QUARTO, contents, null);
-      });
+      }
+      else
+      {
+         new QuartoNewDocument().newDocument((contents) -> {
+            columnManager_.newDoc(FileTypeRegistry.QUARTO, contents, null);
+         });
+      }
    }
    
 
