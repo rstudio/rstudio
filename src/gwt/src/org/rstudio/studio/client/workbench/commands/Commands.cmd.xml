@@ -2711,7 +2711,7 @@ Changes that do not require rebuilding the interfaces/properties files:
 
    <cmd id="historyDismissContext"
         label="Dismiss History Context"
-        buttonLabel="&#x00AB; Back"
+        buttonLabel="Back"
         context="history"
         rebindable="false"/>
 

@@ -2181,7 +2181,7 @@ public interface CmdConstants extends Constants {
     // historyDismissContext
     @DefaultStringValue("Dismiss History Context") // $NON-NLS-1$
     String historyDismissContextLabel();
-    @DefaultStringValue("« Back") // $NON-NLS-1$
+    @DefaultStringValue("Back") // $NON-NLS-1$
     String historyDismissContextButtonLabel();
     
     // nextPlot
