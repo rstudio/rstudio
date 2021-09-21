@@ -28,12 +28,17 @@ public class YamlFrontMatter
 {
    // front matter can end with ... rather than ---; see spec:
    // http://www.yaml.org/spec/1.2/spec.html#id2760395
-   private static RegExp frontMatterBegin = RegExp.compile("^---\\s*$", "gm");
-   private static RegExp frontMatterEnd = RegExp.compile("^(---|\\.\\.\\.)\\s*$", "gm");
-   
+   //
+   // note that these can't be statically initialized as fully compiled
+   // regexes due to state reuse
+   private static String frontMatterBeginRegex = "^---\\s*$";
+   private static String frontMatterEndRegex = "^(---|\\.\\.\\.)\\s*$";
+
    public static Range getFrontMatterRange(DocDisplay display)
    {
-     
+      RegExp frontMatterBegin = RegExp.compile(frontMatterBeginRegex, "gm");
+      RegExp frontMatterEnd = RegExp.compile(frontMatterEndRegex, "gm");
+
       Position begin = null;
       Position end = null;
       
@@ -78,6 +83,9 @@ public class YamlFrontMatter
    
    public static String getFrontMatter(String document)
    {
+      RegExp frontMatterBegin = RegExp.compile(frontMatterBeginRegex, "gm");
+      RegExp frontMatterEnd = RegExp.compile(frontMatterEndRegex, "gm");
+
       ArrayList<String> frontMatter = new ArrayList<String>();
       for (String line : StringUtil.getLineIterator(document))
       {
