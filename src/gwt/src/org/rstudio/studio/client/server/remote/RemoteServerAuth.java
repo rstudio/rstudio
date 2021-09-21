@@ -176,7 +176,7 @@ class RemoteServerAuth
          {
             // parse the results
             String results = event.getResults();
-            RpcResponse response = RpcResponse.parse(event.getResults());
+            RpcResponse response = RpcResponse.parseUnsafe(event.getResults());
             if (response != null)
             {
                logEntry.logResponse(ResponseType.Normal, results);
