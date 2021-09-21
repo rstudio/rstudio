@@ -909,12 +909,6 @@ public class VisualModeChunk
       String engine = "R";
       String label = "";
 
-      // Use the chunk label from the definition as a default, if it exists
-      if (def_ != null)
-      {
-         label = def_.getChunkLabel();
-      }
-
       // Quarto chunks use this syntax, which must be parsed separately
       String quartoLabel = "#| label:";
 
