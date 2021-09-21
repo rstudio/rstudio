@@ -3456,15 +3456,17 @@ public class TextEditingTarget implements
          return;
       }
 
-      
       view_.adaptToExtendedFileType(extendedType);
+
+      // save new extended type (updateRmdFormat below reads it)
+      extendedType_ = extendedType;
+
       if (extendedType.startsWith(SourceDocument.XT_RMARKDOWN_PREFIX) ||
           extendedType.equals(SourceDocument.XT_QUARTO_DOCUMENT))
       {
          updateRmdFormat();
       }
-      extendedType_ = extendedType;
-      
+
       quartoHelper_.manageCommands();
    }
 
