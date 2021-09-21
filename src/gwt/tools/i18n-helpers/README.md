@@ -36,31 +36,25 @@ For example, below shows a "dev" locale where menus and commands have i18n suppo
 
 # Tools
 
+The following tools are included to help with i18n development:
+
 ## create_dev_locale.sh
 
-Useful for debugging i18n and visually confirming what is/is not i18n-enabled by creating `*_dev.properties` files from existing `*_en.properties` files.  The script copies the English properties files and prefixes their texts with `@`. 
+Useful for debugging i18n and visually confirming what is/is not i18n-enabled by creating `*_dev.properties` files from
+existing `*_en.properties` files.  The script copies the English properties files and prefixes their texts with `@`.
 
 Run this script from `/src/gwt/src` with syntax `./create_dev_locale.sh`
 
-The following tools are included to help with i18n development:
-
-* TODO: Comment about "dev" locale.  Anything else for workflow?
-
-# Tools
-
-## create_dev_locale.sh
-
-Useful for debugging i18n and visually confirming what is/is not i18n-enabled.  Creates a `_dev.properties` locale by copying all `*_en.properties` files and prepending their texts with `@`.  Using the dev locale makes it easy to visually spot what is/is not enabled for i18n when using RStudio
-
-Run this script from `/src/gwt/src`
-
-## commands.cmd.xml
+## commands_xml_to_i18n.py
 
 ### Summary
 
 Auto-generates java interfaces and properties files for all commands and menus defined with `Commands.cmd.xml` using 
-the English text in that file.  This script must be run whenever `Commands.cmd.xml` is edited.  Usage below shows 
-creation of English and "dev" locales, as discussed above for `create_dev_locale.sh`
+the English text in that file.  This script must be run whenever `Commands.cmd.xml` is edited, and is automatically
+executed whenever chages to this file are detected and the `build`, `desktop`, or `devmode` ant targets are triggered.
+
+Usage below shows how to trigger the scripts manually (instead of via ant buildfile targets) for the creation of English
+and "dev" locales, as discussed above for `create_dev_locale.sh`
 
 TODO: Mention shortcuts
 
