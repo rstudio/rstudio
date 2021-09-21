@@ -261,18 +261,20 @@ public class VisualModeChunk
                break;
 
             case Event.ONMOUSEOUT:
-               collapse_.setShowToggle(false);
+               if (!editor_.isFocused())
+                  collapse_.setShowToggle(false);
                break;
          }
       });
-
+      
       // Ensure that the editor expands when it gets focus
       releaseOnDismiss_.add(editor_.addFocusHandler((evt) ->
       {
-         if (!collapse_.expanded.getValue())
-         {
-            collapse_.expanded.setValue(true, true);
-         }
+         collapse_.setShowToggle(true);
+      }));
+      releaseOnDismiss_.add(editor_.addBlurHandler((evt) ->
+      {
+         collapse_.setShowToggle(false);
       }));
 
       // Register pref handlers, so that the new editor instance responds to
@@ -320,6 +322,10 @@ public class VisualModeChunk
          {
             collapse_.expanded.setValue(expanded, true);
          }
+      };
+      
+      chunk.getExpanded = () -> {
+         return collapse_.expanded.getValue();
       };
 
       // Hook up event handler for expand/collapse
@@ -846,11 +852,14 @@ public class VisualModeChunk
 
          // Show execution status again
          execHost_.getStyle().setDisplay(Style.Display.BLOCK);
+         
+         // set to writeable
+         editor_.setReadOnly(false);
 
          Roles.getRegionRole().setAriaExpandedState(host_, ExpandedValue.TRUE);
       }
       else
-      {
+      {  
          // Restrict height of editor
          editorHost_.getStyle().setHeight(20, Style.Unit.PX);
          host_.addClassName("pm-ace-collapsed");
@@ -867,6 +876,9 @@ public class VisualModeChunk
 
          // Hide the execution status (this aligns visually with the expanded chunk)
          execHost_.getStyle().setDisplay(Style.Display.NONE);
+         
+         // set to readonly
+         editor_.setReadOnly(true);
 
          A11y.setARIANotExpanded(host_);
       }

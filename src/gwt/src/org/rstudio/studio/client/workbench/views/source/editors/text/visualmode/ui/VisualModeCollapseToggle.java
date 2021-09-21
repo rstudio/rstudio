@@ -25,7 +25,6 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Image;
 import org.rstudio.core.client.a11y.A11y;
-import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.common.Value;
 
@@ -65,6 +64,7 @@ public class VisualModeCollapseToggle extends Composite
       // the expansion state of the chunk.
       toggle_ = new Image(new ImageResource2x(images.expand2x()));
       toggle_.setStyleName(images.collapseStyles().toggle(), true);
+      @SuppressWarnings("unused")
       Style style = toggle_.getElement().getStyle();
       host.add(toggle_);
 
