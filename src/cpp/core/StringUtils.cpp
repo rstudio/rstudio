@@ -455,6 +455,20 @@ std::string jsonLiteralEscape(const std::string& str)
 
    return escape(escapes, subs, str);
 }
+
+// Escapes possible HTML inside JSON strings. Generally not necessary unless there is a chance
+// the JSON could be misconstrued by the browser as HTML.
+std::string jsonHtmlEscape(const std::string& str)
+{
+   std::string escapes = "<>";
+   std::map<char, std::string> subs;
+
+   subs['<'] = "\\u003c"; // JSON unicode character encoding
+   subs['>'] = "\\u003e"; // JSON unicode character encoding
+
+   return escape(escapes, subs, str);
+}
+
 // The str that is passed in should INCLUDE the " " around the value!
 // (Sorry this is inconsistent with jsonLiteralEscape, but it's more efficient
 // than adding double-quotes in this function)
