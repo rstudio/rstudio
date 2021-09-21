@@ -108,7 +108,7 @@ void detectQuartoInstallation()
             contents = "99.9.9";
          }
 
-         const Version kQuartoRequiredVersion("0.2.144");
+         const Version kQuartoRequiredVersion("0.2.159");
          boost::algorithm::trim(contents);
          Version quartoVersion(contents);
          if (quartoVersion >= kQuartoRequiredVersion)
@@ -603,8 +603,8 @@ Error quartoCreateProject(const json::JsonRpcRequest& request,
       }
    }
 
-   // visual editor (optional, works only for 0.2.157 or higher)
-   if (!editor.empty() && haveRequiredQuartoVersion("0.2.157"))
+   // visual editor (optional)
+   if (!editor.empty())
    {
       args.push_back("--editor");
       args.push_back(editor);
