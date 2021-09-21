@@ -1138,7 +1138,19 @@ bool handleFileUploadRequestAsync(const http::Request& request,
    json::Object uploadJson;
    uploadJson["token"] = uploadTokenJson;
    uploadJson["overwrites"] = overwritesJson;
-   json::setJsonRpcResult(uploadJson, &response);
+
+   // write the JSON result, escaping HTML since the client requires text/html
+   // (see below)
+   json::JsonRpcResponse uploadResponse;
+   uploadResponse.setResult(uploadJson);
+   std::stringstream uploadResult;
+   uploadResponse.write(uploadResult);
+   Error error = response.setBody(string_utils::jsonHtmlEscape(uploadResult.str()));
+   if (error)
+   {
+      writeError(error);
+      return false;
+   }
 
    // response content type must always be text/html to be handled
    // properly by the browser/gwt on the client side
