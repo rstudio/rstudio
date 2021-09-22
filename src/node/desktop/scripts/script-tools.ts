@@ -13,6 +13,8 @@
  *
  */
 
+import { startsWith } from 'core-js/core/string';
+import { fstat, promises } from 'fs';
 import path from 'path';
 
 export function getProjectRootDir(): string {
@@ -45,4 +47,13 @@ export function warn(message: string): string {
 
 export function getProgramFilesWindows(): string {
   return process.env['PROGRAMFILES'];
+}
+
+export async function isDirectory(path): Promise<boolean> {
+  try {
+    const stats = await promises.stat(path);
+    return stats.isDirectory();
+  } catch (err) {
+    return false;
+  }
 }

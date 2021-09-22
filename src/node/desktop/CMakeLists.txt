@@ -34,6 +34,23 @@ add_custom_command(
    TARGET electron_build
    POST_BUILD
    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-   COMMAND ${CMAKE_COMMAND} -E env PATH="${NODEJS_PATH}:${YARN_PATH}:$ENV{PATH}" PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+   COMMAND ${CMAKE_COMMAND} -E env PATH="${NODEJS_PATH}:${YARN_PATH}:$ENV{PATH}" 
       ${YARN}
-      "make")
+      "package")
+
+#add_custom_target(electron_make ALL)
+#add_dependencies(electron_make electron_build)
+#add_custom_command(
+#   TARGET electron_make
+#   PRE_BUILD
+#   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+#   COMMAND ${CMAKE_COMMAND} -E env PATH="${NODEJS_PATH}:${YARN_PATH}:$ENV{PATH}" PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+#      ${YARN}
+#      "")
+#add_custom_command(
+#   TARGET electron_make
+#   POST_BUILD
+#   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+#   COMMAND ${CMAKE_COMMAND} -E env PATH="${NODEJS_PATH}:${YARN_PATH}:$ENV{PATH}" PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+#      ${YARN}
+#      "package")
