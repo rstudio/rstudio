@@ -73,7 +73,7 @@ export function xrefCompletionHandler(ui: EditorUI, server: XRefServer): Complet
 }
 
 class FuseIndex {
-  private fuse: Fuse<XRef, Fuse.IFuseOptions<XRef>>;
+  private fuse: Fuse<XRef>;
 
   private keys: Fuse.FuseOptionKeyObject[] = [
     { name: 'id', weight: 20 },
