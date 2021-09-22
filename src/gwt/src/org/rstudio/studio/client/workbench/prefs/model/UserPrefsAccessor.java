@@ -449,9 +449,9 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "auto_detect_indentation",
-         "Autodetect indentation in files", 
+         "Auto-detect indentation in files", 
          "Whether to automatically detect indentation settings from file contents.", 
-         true);
+         false);
    }
 
    /**
@@ -1155,7 +1155,7 @@ public class UserPrefsAccessor extends Prefs
          "limit_visible_console",
          "Limit visible console output", 
          "Whether to only show a limited window of the total console output", 
-         true);
+         false);
    }
 
    /**
@@ -1299,18 +1299,6 @@ public class UserPrefsAccessor extends Prefs
          "source_with_echo",
          "Source with echo by default", 
          "Whether to echo R code when sourcing it.", 
-         false);
-   }
-
-   /**
-    * Whether to initialize new projects with a Git repo by default.
-    */
-   public PrefValue<Boolean> newProjectGitInit()
-   {
-      return bool(
-         "new_project_git_init",
-         "Initialize new projects with Git", 
-         "Whether to initialize new projects with a Git repo by default.", 
          false);
    }
 
@@ -2070,24 +2058,24 @@ public class UserPrefsAccessor extends Prefs
          new String[] {
             BUSY_DETECTION_ALWAYS,
             BUSY_DETECTION_NEVER,
-            BUSY_DETECTION_WHITELIST
+            BUSY_DETECTION_LIST
          },
          "always");
    }
 
    public final static String BUSY_DETECTION_ALWAYS = "always";
    public final static String BUSY_DETECTION_NEVER = "never";
-   public final static String BUSY_DETECTION_WHITELIST = "whitelist";
+   public final static String BUSY_DETECTION_LIST = "list";
 
    /**
-    * A whitelist of apps that should not be considered busy in the Terminal.
+    * A list of apps that should not be considered busy in the Terminal.
     */
-   public PrefValue<JsArrayString> busyWhitelist()
+   public PrefValue<JsArrayString> busyExclusionList()
    {
       return object(
-         "busy_whitelist",
+         "busy_exclusion_list",
          "", 
-         "A whitelist of apps that should not be considered busy in the Terminal.", 
+         "A list of apps that should not be considered busy in the Terminal.", 
          JsArrayUtil.createStringArray("tmux", "screen"));
    }
 
@@ -2220,6 +2208,18 @@ public class UserPrefsAccessor extends Prefs
          "new_proj_git_init",
          "Create a Git repo in new projects", 
          "Whether a git repo should be initialized inside new projects by default.", 
+         false);
+   }
+
+   /**
+    * Whether an renv environment should be created inside new projects by default.
+    */
+   public PrefValue<Boolean> newProjUseRenv()
+   {
+      return bool(
+         "new_proj_use_renv",
+         "Create an renv environment in new projects", 
+         "Whether an renv environment should be created inside new projects by default.", 
          false);
    }
 
@@ -2846,6 +2846,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to show line numbers in the code editors used in visual mode
+    */
+   public PrefValue<Boolean> visualMarkdownCodeEditorLineNumbers()
+   {
+      return bool(
+         "visual_markdown_code_editor_line_numbers",
+         "Show line numbers in visual mode code blocks", 
+         "Whether to show line numbers in the code editors used in visual mode", 
+         true);
+   }
+
+   /**
     * The default visual editing mode font size, in points
     */
    public PrefValue<Integer> visualMarkdownEditingFontSizePoints()
@@ -3147,6 +3159,30 @@ public class UserPrefsAccessor extends Prefs
          false);
    }
 
+   /**
+    * When enabled, if the active project contains a Python virtual environment, then RStudio will automatically activate this environment on startup.
+    */
+   public PrefValue<Boolean> pythonProjectEnvironmentAutomaticActivate()
+   {
+      return bool(
+         "python_project_environment_automatic_activate",
+         "Automatically activate project Python environments", 
+         "When enabled, if the active project contains a Python virtual environment, then RStudio will automatically activate this environment on startup.", 
+         true);
+   }
+
+   /**
+    * When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further.
+    */
+   public PrefValue<Boolean> checkNullExternalPointers()
+   {
+      return bool(
+         "check_null_external_pointers",
+         "Check values in the Environment pane for null external pointers", 
+         "When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further.", 
+         false);
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -3329,8 +3365,6 @@ public class UserPrefsAccessor extends Prefs
          defaultProjectLocation().setValue(layer, source.getString("default_project_location"));
       if (source.hasKey("source_with_echo"))
          sourceWithEcho().setValue(layer, source.getBool("source_with_echo"));
-      if (source.hasKey("new_project_git_init"))
-         newProjectGitInit().setValue(layer, source.getBool("new_project_git_init"));
       if (source.hasKey("default_sweave_engine"))
          defaultSweaveEngine().setValue(layer, source.getString("default_sweave_engine"));
       if (source.hasKey("default_latex_program"))
@@ -3441,8 +3475,8 @@ public class UserPrefsAccessor extends Prefs
          launcherJobsSort().setValue(layer, source.getString("launcher_jobs_sort"));
       if (source.hasKey("busy_detection"))
          busyDetection().setValue(layer, source.getString("busy_detection"));
-      if (source.hasKey("busy_whitelist"))
-         busyWhitelist().setValue(layer, source.getObject("busy_whitelist"));
+      if (source.hasKey("busy_exclusion_list"))
+         busyExclusionList().setValue(layer, source.getObject("busy_exclusion_list"));
       if (source.hasKey("knit_working_dir"))
          knitWorkingDir().setValue(layer, source.getString("knit_working_dir"));
       if (source.hasKey("doc_outline_show"))
@@ -3459,6 +3493,8 @@ public class UserPrefsAccessor extends Prefs
          consoleDoubleClickSelect().setValue(layer, source.getBool("console_double_click_select"));
       if (source.hasKey("new_proj_git_init"))
          newProjGitInit().setValue(layer, source.getBool("new_proj_git_init"));
+      if (source.hasKey("new_proj_use_renv"))
+         newProjUseRenv().setValue(layer, source.getBool("new_proj_use_renv"));
       if (source.hasKey("root_document"))
          rootDocument().setValue(layer, source.getString("root_document"));
       if (source.hasKey("show_user_home_page"))
@@ -3551,6 +3587,8 @@ public class UserPrefsAccessor extends Prefs
          visualMarkdownEditingShowDocOutline().setValue(layer, source.getBool("visual_markdown_editing_show_doc_outline"));
       if (source.hasKey("visual_markdown_editing_show_margin"))
          visualMarkdownEditingShowMargin().setValue(layer, source.getBool("visual_markdown_editing_show_margin"));
+      if (source.hasKey("visual_markdown_code_editor_line_numbers"))
+         visualMarkdownCodeEditorLineNumbers().setValue(layer, source.getBool("visual_markdown_code_editor_line_numbers"));
       if (source.hasKey("visual_markdown_editing_font_size_points"))
          visualMarkdownEditingFontSizePoints().setValue(layer, source.getInteger("visual_markdown_editing_font_size_points"));
       if (source.hasKey("visual_markdown_code_editor"))
@@ -3593,6 +3631,10 @@ public class UserPrefsAccessor extends Prefs
          terminalPythonIntegration().setValue(layer, source.getBool("terminal_python_integration"));
       if (source.hasKey("session_protocol_debug"))
          sessionProtocolDebug().setValue(layer, source.getBool("session_protocol_debug"));
+      if (source.hasKey("python_project_environment_automatic_activate"))
+         pythonProjectEnvironmentAutomaticActivate().setValue(layer, source.getBool("python_project_environment_automatic_activate"));
+      if (source.hasKey("check_null_external_pointers"))
+         checkNullExternalPointers().setValue(layer, source.getBool("check_null_external_pointers"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -3687,7 +3729,6 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(toolbarVisible());
       prefs.add(defaultProjectLocation());
       prefs.add(sourceWithEcho());
-      prefs.add(newProjectGitInit());
       prefs.add(defaultSweaveEngine());
       prefs.add(defaultLatexProgram());
       prefs.add(useRoxygen());
@@ -3743,7 +3784,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(showLauncherJobsTab());
       prefs.add(launcherJobsSort());
       prefs.add(busyDetection());
-      prefs.add(busyWhitelist());
+      prefs.add(busyExclusionList());
       prefs.add(knitWorkingDir());
       prefs.add(docOutlineShow());
       prefs.add(latexPreviewOnCursorIdle());
@@ -3752,6 +3793,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(gitDiffIgnoreWhitespace());
       prefs.add(consoleDoubleClickSelect());
       prefs.add(newProjGitInit());
+      prefs.add(newProjUseRenv());
       prefs.add(rootDocument());
       prefs.add(showUserHomePage());
       prefs.add(reuseSessionsForProjectLinks());
@@ -3798,6 +3840,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(visualMarkdownEditingMaxContentWidth());
       prefs.add(visualMarkdownEditingShowDocOutline());
       prefs.add(visualMarkdownEditingShowMargin());
+      prefs.add(visualMarkdownCodeEditorLineNumbers());
       prefs.add(visualMarkdownEditingFontSizePoints());
       prefs.add(visualMarkdownCodeEditor());
       prefs.add(zoteroLibraries());
@@ -3819,6 +3862,8 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(memoryQueryIntervalSeconds());
       prefs.add(terminalPythonIntegration());
       prefs.add(sessionProtocolDebug());
+      prefs.add(pythonProjectEnvironmentAutomaticActivate());
+      prefs.add(checkNullExternalPointers());
       return prefs;
    }
    

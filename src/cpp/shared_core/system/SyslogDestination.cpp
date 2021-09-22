@@ -79,8 +79,12 @@ struct SyslogDestination::Impl
 
 PRIVATE_IMPL_DELETER_IMPL(SyslogDestination);
 
-SyslogDestination::SyslogDestination(log::LogLevel in_logLevel, const std::string& in_programId) :
-   ILogDestination(in_logLevel),
+SyslogDestination::SyslogDestination(const std::string& in_id,
+                                     log::LogLevel in_logLevel,
+                                     log::LogMessageFormatType in_formatType,
+                                     const std::string& in_programId,
+                                     bool in_reloadable) :
+   ILogDestination(in_id, in_logLevel, in_formatType, in_reloadable),
    m_impl(new Impl(in_programId))
 {
    // Open the system log. Don't set a mask because filtering is done at a higher level.
@@ -99,18 +103,7 @@ SyslogDestination::~SyslogDestination()
    }
 }
 
-unsigned int SyslogDestination::getSyslogId()
-{
-   // We use 0 for std::err and 1 for syslog.
-   return 1;
-}
-
-unsigned int SyslogDestination::getId() const
-{
-   return getSyslogId();
-}
-
-void SyslogDestination::reload()
+void SyslogDestination::refresh(const log::RefreshParams&)
 {
    // Close and re-open the log.
    ::closelog();
@@ -125,13 +118,9 @@ void SyslogDestination::writeLog(
    if (in_logLevel > m_logLevel)
       return;
 
-   // Don't allow newlines in syslog messages since they delimit distinct log entries. Strip trailing whitespace first.
-   std::string forSyslog = boost::algorithm::trim_right_copy(in_message);
-   boost::algorithm::replace_all(forSyslog, "\n", "|||");
-
-   // Also remove the leading date and program ID, since those are set by syslog directly.
-   forSyslog = boost::regex_replace(forSyslog, boost::regex("^[^\\]]*\\]\\s"), "");
-   ::syslog(logLevelToLogPriority(in_logLevel), "%s", forSyslog.c_str());
+   // Remove the leading date and program ID, since those are set by syslog directly.
+   std::string message = boost::regex_replace(in_message, boost::regex("^[^\\]]*\\]\\s"), "");
+   ::syslog(logLevelToLogPriority(in_logLevel), "%s", message.c_str());
 
    // Also log to stderr if there is a tty attached.
    if (::isatty(STDERR_FILENO) == 1)

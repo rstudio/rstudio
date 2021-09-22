@@ -25,8 +25,31 @@ public class RpcResponse extends JavaScriptObject
    {
       
    }
-   
-   public final static RpcResponse parse(String json) 
+
+   /**
+    * Parses an RPC response from a JSON string; uses eval() if necessary. Not for use on strings that
+    * may contain untrusted input.
+    *
+    * @param json The string to parse
+    * @return An RpcResponse parsed from the string
+    */
+   public final static RpcResponse parseUnsafe(String json)
+   {
+      return parse(json, false);
+   }
+
+   /**
+    * Parses an RPC response from a JSON string; will not use eval().
+    *
+    * @param json The string to parse
+    * @return An RpcResponse parsed from the string
+    */
+   public final static RpcResponse parseStrict(String json)
+   {
+      return parse(json, true);
+   }
+
+   private final static RpcResponse parse(String json, boolean strict)
    {      
       try
       {
@@ -37,19 +60,26 @@ public class RpcResponse extends JavaScriptObject
       }
       catch(Exception e)
       {
-         try
+         if (strict)
          {
-            // there are some cases where json emitted by our 
-            // server isn't parsable by parseStrict (for example,
-            // see bug #3025). for these situations we call 
-            // parseLenient (which in turn calls eval)
-            @SuppressWarnings("deprecation")
-            JSONValue val = JSONParser.parseLenient(json);
-            return val.isObject().getJavaScriptObject().cast();
-         }
-         catch(Exception e2)
-         {
+            // in strict mode, don't try eval
             return null;
+         }
+         else
+         {
+            try
+            {
+               // there are some cases where json emitted by our server isn't parsable by 
+               // parseStrict. for these situations we call parseLenient
+               // (which in turn calls eval)
+               @SuppressWarnings("deprecation")
+               JSONValue val = JSONParser.parseLenient(json);
+               return val.isObject().getJavaScriptObject().cast();
+            }
+            catch (Exception e2)
+            {
+               return null;
+            }
          }
       }
    }

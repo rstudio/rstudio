@@ -53,6 +53,9 @@ public class RegexUtil
    public static final Pattern RE_RMARKDOWN_CHUNK_BEGIN =
          Pattern.create("^\\s*```\\{(.*?)\\}\\s*$", "");
    
+   public static final Pattern RE_RMARKDOWN_ENGINE_NAME =
+         Pattern.create("^\\w+", "");
+   
    public static final Pattern RE_RMARKDOWN_CHUNK_END =
          Pattern.create("^\\s*```\\s*$", "");
    

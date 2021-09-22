@@ -76,14 +76,16 @@ void AsyncRProcess::start(const char* rCommand,
 
    // args
    std::vector<std::string> args;
-   args.push_back("--slave");
+
    if (rOptions & R_PROCESS_VANILLA)
       args.push_back("--vanilla");
+
    if (rOptions & R_PROCESS_NO_RDATA)
    {
       args.push_back("--no-save");
       args.push_back("--no-restore");
    }
+
 
    // for windows we need to forward setInternet2
 #ifdef _WIN32
@@ -91,6 +93,7 @@ void AsyncRProcess::start(const char* rCommand,
       args.push_back("--internet2");
 #endif
 
+   args.push_back("-s");
    args.push_back("-e");
    
    bool needsQuote = false;
@@ -273,6 +276,11 @@ void AsyncRProcess::onProcessCompleted(int exitStatus)
    markCompleted();
    ipcRequests_.removeIfExists();
    ipcResponse_.removeIfExists();
+
+   // we've terminated, so clear termination flag (this instance can be re-used if the process is
+   // started again)
+   terminationRequested_ = false;
+
    onCompleted(exitStatus);
 }
 

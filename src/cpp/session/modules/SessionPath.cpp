@@ -138,6 +138,14 @@ Error initialize()
    if (optLocalBinPath.exists())
       addToPathIfNecessary(optLocalBinPath.getAbsolutePath(), &parts);
 
+   // check for user installation of quarto
+   FilePath quartoBin = module_context::userHomePath()
+         .completeChildPath("Applications")
+         .completeChildPath("quarto")
+         .completeChildPath("bin");
+   if (quartoBin.exists())
+      addToPathIfNecessary(quartoBin.getAbsolutePath(), &parts);
+
    // set the path
    core::system::setenv("PATH", core::algorithm::join(parts, ":"));
 

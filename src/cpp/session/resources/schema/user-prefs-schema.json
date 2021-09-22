@@ -230,8 +230,8 @@
         },
         "auto_detect_indentation": {
             "type": "boolean",
-            "default": true,
-            "title": "Autodetect indentation in files",
+            "default": false,
+            "title": "Auto-detect indentation in files",
             "description": "Whether to automatically detect indentation settings from file contents."
         },
         "show_margin": {
@@ -559,7 +559,7 @@
         },
         "limit_visible_console": {
             "type": "boolean",
-            "default": true,
+            "default": false,
             "title": "Limit visible console output",
             "description": "Whether to only show a limited window of the total console output"
         },
@@ -634,12 +634,6 @@
             "default": false,
             "title": "Source with echo by default",
             "description": "Whether to echo R code when sourcing it."
-        },
-        "new_project_git_init": {
-            "type": "boolean",
-            "default": false,
-            "title": "Initialize new projects with Git",
-            "description": "Whether to initialize new projects with a Git repo by default."
         },
         "default_sweave_engine": {
             "type": "string",
@@ -999,14 +993,14 @@
         },
         "busy_detection": {
             "type": "string",
-            "enum": ["always", "never", "whitelist"],
+            "enum": ["always", "never", "list"],
             "default": "always",
             "description": "How to detect busy status in the Terminal."
         },
-        "busy_whitelist": {
+        "busy_exclusion_list": {
             "type": "array",
             "default": ["tmux", "screen"],
-            "description": "A whitelist of apps that should not be considered busy in the Terminal."
+            "description": "A list of apps that should not be considered busy in the Terminal."
         },
         "knit_working_dir": {
             "type": "string",
@@ -1059,6 +1053,12 @@
             "default": false,
             "title": "Create a Git repo in new projects",
             "description": "Whether a git repo should be initialized inside new projects by default."
+        },
+        "new_proj_use_renv": {
+            "type": "boolean",
+            "default": false,
+            "title": "Create an renv environment in new projects",
+            "description": "Whether an renv environment should be created inside new projects by default."
         },
         "root_document": {
             "type": "string",
@@ -1350,6 +1350,12 @@
             "title": "Show margin in visual mode code blocks",
             "description": "Whether to show the margin guide in the visual mode code blocks."
         },
+        "visual_markdown_code_editor_line_numbers": {
+            "type": "boolean",
+            "default": false,
+            "title": "Show line numbers in visual mode code blocks",
+            "description": "Whether to show line numbers in the code editors used in visual mode"
+        },
         "visual_markdown_editing_font_size_points": {
             "type": "integer",
             "default": 0,
@@ -1508,6 +1514,18 @@
         "session_protocol_debug": {
             "description": "Enable session protocol debug logging showing all session requests and events",
             "title": "Session protocol debug logging",
+            "type": "boolean",
+            "default": false
+        },
+        "python_project_environment_automatic_activate": {
+            "description": "When enabled, if the active project contains a Python virtual environment, then RStudio will automatically activate this environment on startup.",
+            "title": "Automatically activate project Python environments",
+            "type": "boolean",
+            "default": true
+        },
+        "check_null_external_pointers": {
+            "description": "When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further.",
+            "title": "Check values in the Environment pane for null external pointers",
             "type": "boolean",
             "default": false
         }

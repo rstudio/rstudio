@@ -122,6 +122,9 @@ public:
    // .rstudio or .rstudio-desktop)
    const core::FilePath& externalStoragePath() const { return storagePath_; }
 
+   // Paths to python virtual environments at the top level of the project
+   const std::vector<core::FilePath>& pythonEnvs() const { return pythonEnvs_; }
+
    core::FilePath oldScratchPath() const;
    core::FilePath websitePath() const;
 
@@ -246,6 +249,7 @@ private:
    core::FilePath scratchPath_;
    core::FilePath sharedScratchPath_;
    core::FilePath storagePath_;
+   std::vector<core::FilePath> pythonEnvs_;
    core::r_util::RProjectConfig config_;
    std::string defaultEncoding_;
    core::FilePath buildTargetPath_;
@@ -262,6 +266,8 @@ private:
 };
 
 ProjectContext& projectContext();
+
+void addFirstRunDocs(const core::FilePath& projectFilePath, const std::vector<std::string>& docs);
 
 core::json::Array websiteOutputFormatsJson();
 

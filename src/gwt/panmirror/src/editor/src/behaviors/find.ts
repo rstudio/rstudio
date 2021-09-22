@@ -201,7 +201,12 @@ class FindPlugin extends Plugin<DecorationSet> {
       if (dispatch) {
         const tr = state.tr;
         const selectionMarks = tr.selection.$from.marksAcross(tr.selection.$to);
-        tr.replaceSelectionWith(state.schema.text(text, selectionMarks), false);
+        if (text.length > 0) {
+          tr.replaceSelectionWith(state.schema.text(text, selectionMarks), false);
+        } else {
+          tr.deleteSelection();
+        }
+       
         this.withResultUpdates(() => {
           dispatch(tr);
         });

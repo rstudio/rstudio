@@ -70,6 +70,7 @@
 #include <session/SessionOptions.hpp>
 #include <session/SessionPackageProvidedExtension.hpp>
 #include <session/SessionPersistentState.hpp>
+#include <session/SessionQuarto.hpp>
 #include <session/projects/SessionProjectSharing.hpp>
 #include <session/prefs/UserPrefs.hpp>
 #include <session/prefs/UserState.hpp>
@@ -170,6 +171,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
    if (options.programMode() == kSessionProgramModeServer && 
        !core::http::validateCSRFHeaders(ptrConnection->request()))
    {
+      LOG_WARNING_MESSAGE("Client init request to " + ptrConnection->request().uri() + 
+            " has missing or mismatched " kCSRFTokenCookie " cookie or " kCSRFTokenHeader " header");
       ptrConnection->sendJsonRpcError(Error(json::errc::Unauthorized, ERROR_LOCATION));
       return;
    }
@@ -384,7 +387,12 @@ void handleClientInit(const boost::function<void()>& initFunction,
    if (projects::projectContext().hasProject())
    {
       std::string type = projects::projectContext().config().buildType;
+      if ((type == r_util::kBuildTypeNone) && quarto::quartoConfig().is_project)
+      {
+         type = r_util::kBuildTypeQuarto;
+      }
       sessionInfo["build_tools_type"] = type;
+
 
       sessionInfo["build_tools_bookdown_website"] =
                               module_context::isBookdownWebsite();
@@ -420,6 +428,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["blogdown_config"] = modules::rmarkdown::blogdown::blogdownConfig();
    sessionInfo["is_bookdown_project"] = module_context::isBookdownProject();
    sessionInfo["is_distill_project"] = module_context::isDistillProject();
+
+   sessionInfo["quarto_config"] = quarto::quartoConfigJSON();
    
    sessionInfo["graphics_backends"] = modules::graphics::supportedBackends();
 

@@ -15,7 +15,9 @@ if(NOT RSTUDIO_SESSION_WIN32)
            DESTINATION "${RSTUDIO_INSTALL_BIN}/msys_ssh")
 endif()
 
-set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}${RSTUDIO_PACKAGE_SUFFIX}${CPACK_PACKAGE_VERSION}")
+set(RSTUDIO_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}")
+
+set(CPACK_PACKAGE_FILE_NAME "${RSTUDIO_PACKAGE_FILE_NAME}${RSTUDIO_PACKAGE_SUFFIX}${CPACK_PACKAGE_VERSION}")
 if(NOT ${CMAKE_BUILD_TYPE} STREQUAL "Release")
    set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}-${CMAKE_BUILD_TYPE}")
 endif()
@@ -23,6 +25,10 @@ set(CPACK_NSIS_INSTALLED_ICON_NAME "bin\\\\rstudio.exe")
 set(CPACK_PACKAGE_INSTALL_REGISTRY_KEY "RStudio")
 set(CPACK_PACKAGE_EXECUTABLES "rstudio" "RStudio")
 set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY 0)
+
+# To keep pathnames from getting too long, use a temp directory
+file(MAKE_DIRECTORY  "c:\\\\temp\\\\ide-build")
+set(CPACK_PACKAGE_DIRECTORY "c:\\\\temp\\\\ide-build")
 
 # registry keys
 set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
@@ -37,6 +43,7 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
    WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.Rnw' ''
    WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.Rmd' ''
    WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.Rmarkdown' ''
+   WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.qmd' ''
    WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.Rhtml' ''
    WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.Rpres' ''
    WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.Rproj' ''
@@ -49,6 +56,7 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
    WriteRegStr HKCR '.Rnw\\\\OpenWithList\\\\rstudio.exe' '' ''
    WriteRegStr HKCR '.Rmd\\\\OpenWithList\\\\rstudio.exe' '' ''
    WriteRegStr HKCR '.Rmarkdown\\\\OpenWithList\\\\rstudio.exe' '' ''
+   WriteRegStr HKCR '.qmd\\\\OpenWithList\\\\rstudio.exe' '' ''
    WriteRegStr HKCR '.Rhtml\\\\OpenWithList\\\\rstudio.exe' '' ''
    WriteRegStr HKCR '.Rpres\\\\OpenWithList\\\\rstudio.exe' '' ''
    WriteRegStr HKCR '.Rproj\\\\OpenWithList\\\\rstudio.exe' '' ''
@@ -84,6 +92,7 @@ set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "
    DeleteRegKey HKCR '.Rnw\\\\OpenWithList\\\\rstudio.exe'
    DeleteRegKey HKCR '.Rmd\\\\OpenWithList\\\\rstudio.exe'
    DeleteRegKey HKCR '.Rmarkdown\\\\OpenWithList\\\\rstudio.exe'
+   DeleteRegKey HKCR '.qmd\\\\OpenWithList\\\\rstudio.exe'
    DeleteRegKey HKCR '.Rhtml\\\\OpenWithList\\\\rstudio.exe'
    DeleteRegKey HKCR '.Rpres\\\\OpenWithList\\\\rstudio.exe'
    DeleteRegKey HKCR '.Rproj\\\\OpenWithList\\\\rstudio.exe'

@@ -34,6 +34,7 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.theme.VerticalTabPanel;
 import org.rstudio.core.client.widget.FormLabel;
+import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.InfoBar;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.TextBoxWithButton;
@@ -82,18 +83,9 @@ public class PackagesPreferencesPane extends PreferencesPane
             cranMirror_ = cranMirror;
             cranMirrorTextBox_.setText(cranMirror_.getDisplay());
 
-            if (cranMirror_.getHost().equals("Custom"))
-            {
-               cranMirrorTextBox_.setText(cranMirror_.getURL());
-            }
-            else
-            {
-               cranMirrorTextBox_.setText(cranMirror_.getDisplay());
-            }
-
             secondaryReposWidget_.setCranRepoUrl(
                   cranMirror_.getURL(),
-                  cranMirror_.getHost().equals("Custom")
+                  cranMirror_.isCustom()
             );
          });
       };
@@ -148,8 +140,9 @@ public class PackagesPreferencesPane extends PreferencesPane
 
       useSecurePackageDownload_ = new CheckBox(
             "Use secure download method for HTTP");
-      HorizontalPanel secureDownloadPanel = checkBoxWithHelp(
-                        useSecurePackageDownload_, "secure_download", "Help on secure package downloads for R");
+      HorizontalPanel secureDownloadPanel = HelpButton.checkBoxWithHelp(
+                        useSecurePackageDownload_, 
+                        new HelpButton("secure_download", "Help on secure package downloads for R"));
       lessSpaced(secureDownloadPanel);
       management.add(secureDownloadPanel);
 
@@ -247,17 +240,10 @@ public class PackagesPreferencesPane extends PreferencesPane
 
          secondaryReposWidget_.setCranRepoUrl(
             cranMirror_.getURL(),
-            cranMirror_.getHost().equals("Custom")
+            cranMirror_.isCustom()
          );
 
-         if (cranMirror_.getHost().equals("Custom"))
-         {
-            cranMirrorTextBox_.setText(cranMirror_.getURL());
-         }
-         else
-         {
-            cranMirrorTextBox_.setText(cranMirror_.getDisplay());
-         }
+         cranMirrorTextBox_.setText(cranMirror_.getDisplay());
 
          cranMirrorStored_ = cranMirrorTextBox_.getTextBox().getText();
 
@@ -373,8 +359,7 @@ public class PackagesPreferencesPane extends PreferencesPane
          {
             cranMirror_.setURL(mirrorTextValue);
 
-            cranMirror_.setHost("Custom");
-            cranMirror_.setName("Custom");
+            cranMirror_.setAsCustom();
          }
       }
 

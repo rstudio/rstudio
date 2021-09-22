@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.workbench.views.environment.view;
 
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.HasWidgets;
 import org.rstudio.core.client.widget.MiniPieWidget;
 import org.rstudio.studio.client.workbench.views.environment.model.MemoryUsage;
 

@@ -53,6 +53,7 @@ public class AppCommandPaletteSource implements CommandPaletteEntryProvider
       // high-usage commands.
       sorted.add(commands_.newSourceDoc().getId());
       sorted.add(commands_.newRMarkdownDoc().getId());
+      sorted.add(commands_.newQuartoDoc().getId());
       sorted.add(commands_.newRNotebook().getId());
       sorted.add(commands_.newRShinyApp().getId());
       sorted.add(commands_.newTerminal().getId());

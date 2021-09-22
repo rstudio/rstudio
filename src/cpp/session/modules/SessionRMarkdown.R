@@ -159,17 +159,21 @@
   haveQuarto <- function() {
     nzchar(Sys.which("quarto"))
   }
-  
+
   isQuartoDoc <- function() {
-     # plain markdown file w/ "jupyter" metdata
-     (.rs.endsWith(file, ".md") && !is.null(yamlFrontMatter[["jupyter"]])) ||
+     # .qmd file
+     .rs.endsWith(file, ".qmd") ||
      # file with "format" yaml and no "output" yaml
-     (is.null(yamlFrontMatter[["output"]]) && !is.null(yamlFrontMatter[["format"]]))
+     (is.null(yamlFrontMatter[["output"]]) && !is.null(yamlFrontMatter[["format"]])) ||
+     # quarto extended type
+     identical(.Call("rs_detectExtendedType", file), "quarto-document") ||
+     # plain markdown file w/ "jupyter" metdata
+     (.rs.endsWith(file, ".md") && !is.null(yamlFrontMatter[["jupyter"]]))
   }
 
   if (is.character(yamlFrontMatter[["knit"]]))
     yamlFrontMatter[["knit"]][[1]]
-  else if (isQuartoDoc() && haveQuarto())
+  else if (haveQuarto() && isQuartoDoc())
      "quarto render"
   else if (!is.null(yamlFrontMatter$runtime) &&
            grepl('^shiny', yamlFrontMatter$runtime)) {
@@ -237,8 +241,9 @@
    current <- fileExists && 
       file.info(outputPath)$mtime >= file.info(target)$mtime
    
+   # return named list and alias paths (this data goes to the client)
    list(
-      output_file = .rs.scalar(outputPath),
+      output_file = .rs.scalar(.rs.createAliasedPath(outputPath)),
       is_current  = .rs.scalar(current),
       output_file_exists = .rs.scalar(fileExists)
    )
@@ -250,7 +255,8 @@
 
 # given a path to a folder on disk, return information about the R Markdown
 # template in that folder.
-.rs.addFunction("getTemplateYamlFile", function(path) {
+.rs.addFunction("getTemplateYamlFile", function(path)
+{
    # check for required files
    templateYaml <- file.path(path, "template.yaml")
    skeletonPath <- file.path(path, "skeleton")
@@ -260,11 +266,13 @@
          return(NULL)
    }
 
-   if (!file.exists(file.path(skeletonPath, "skeleton.Rmd")))
+   # validate that a skeleton.Rmd file exists
+   paths <- file.path(skeletonPath, c("skeleton.rmd", "skeleton.Rmd"))
+   if (!any(file.exists(paths)))
       return(NULL)
 
    # will need to enforce create_dir if there are multiple files in /skeleton/
-   multiFile = length(list.files(skeletonPath)) > 1 
+   multiFile <- length(list.files(skeletonPath)) > 1
 
    # return metadata; we won't parse until the client requests template files
    list(
@@ -272,7 +280,6 @@
       multi_file    = .rs.scalar(multiFile)
    )
 })
-
 
 .rs.addFunction("evaluateRmdParams", function(contents) {
 

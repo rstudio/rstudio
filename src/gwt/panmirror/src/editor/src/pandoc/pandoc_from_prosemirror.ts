@@ -233,11 +233,9 @@ class PandocWriter implements PandocOutput {
               .replace(/—/g, '---')
               .replace(/–/g, '--')
               .replace(/…/g, '...');
+              textRun = fancyQuotesToSimple(textRun);
           }
-
-          // we explicitly don't want fancy quotes in the editor
-          textRun = fancyQuotesToSimple(textRun);
-
+       
           this.writeToken(PandocTokenType.Str, textRun);
           textRun = '';
         }
@@ -344,7 +342,9 @@ class PandocWriter implements PandocOutput {
         // inner iteration to find nodes that have this mark
         while (currentChild < fragment.childCount) {
           next = nextNode();
-          if (mark.type.isInSet(next.marks)) {
+          // If the next node shares the same mark with the current node
+          // then add this next node node as a child of the current node
+          if (next.marks.some(nextMark => nextMark.eq(mark))) {
             markedNodes.push(next.node);
           } else {
             // no mark found, "put back" the node

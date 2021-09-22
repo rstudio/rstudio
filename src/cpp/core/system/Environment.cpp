@@ -20,6 +20,8 @@
 
 #include <core/Algorithm.hpp>
 
+#include <core/Log.hpp>
+
 #include <boost/bind/bind.hpp>
 
 #ifdef _WIN32
@@ -167,6 +169,32 @@ std::string expandEnvVars(const Options& environment, const std::string& str)
       result = boost::regex_replace(result, reBraceVar, pair.second);
    }
    return result;
+}
+
+void forwardEnvVars(const std::vector<std::string>& vars, Options* pEnvironment)
+{
+   // forward specified environment variables
+   for (const std::string& envVar : vars)
+   {
+      // only forward value if non-empty; avoid overwriting a previously set
+      // value with an empty one
+      std::string val = core::system::getenv(envVar);
+      if (!val.empty())
+      {
+         // warn if we're changing values; we typically are forwarding values in
+         // order to ensure a consistent view of configuration and state across
+         // RStudio processes, which merits overwriting, but it's also hard to
+         // imagine that these vars would be set unintentionally in the existing
+         // environment.
+         std::string oldVal = core::system::getenv(*pEnvironment, envVar);
+         if (!oldVal.empty() && oldVal != val)
+         {
+             LOG_WARNING_MESSAGE("Overriding " + std::string(envVar) +
+                                 ": '" + oldVal + "' => '" + val + "'");
+         }
+         core::system::setenv(pEnvironment, envVar, val);
+      }
+   }
 }
 
 } // namespace system

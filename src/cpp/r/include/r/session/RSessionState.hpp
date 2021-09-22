@@ -44,7 +44,7 @@ bool save(const core::FilePath& statePath,
           bool serverMode,
           bool excludePackages,
           bool disableSaveCompression,
-          const std::string& envVarSaveBlacklist);
+          const std::string& ephemeralEnvVars);
 
 bool saveMinimal(const core::FilePath& statePath,
                  bool saveGlobalEnvironment);

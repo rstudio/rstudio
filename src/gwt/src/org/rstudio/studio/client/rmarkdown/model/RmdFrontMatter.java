@@ -83,6 +83,15 @@ public class RmdFrontMatter extends JavaScriptObject
       else
          return Object.getOwnPropertyNames(this.output);
    }-*/;
+   
+   public final native JsArrayString getQuartoFormatList() /*-{
+      if (typeof this.format === "undefined")
+         return [ "html" ];
+      if (typeof this.format === "string")
+         return [ this.format ];
+      else
+         return Object.getOwnPropertyNames(this.format);
+   }-*/;
 
    public final native RmdFrontMatterOutputOptions getOutputOption(
          String format) /*-{
@@ -157,11 +166,14 @@ public class RmdFrontMatter extends JavaScriptObject
    }
    
    public final static String OUTPUT_KEY = "output";
+   public final static String FORMAT_KEY = "format";
    public final static String RUNTIME_KEY = "runtime";
+   public final static String SERVER_KEY = "server";
    public final static String KNIT_KEY = "knit";
 
    public final static String DEFAULT_FORMAT = "default";
    public final static String SHINY_RUNTIME = "shiny";
    public final static String SHINY_PRERENDERED_RUNTIME = "shiny_prerendered";
+   public final static String SHINY_RMD_RUNTIME = "shinyrmd";
    public final static String FRONTMATTER_SEPARATOR = "---\n";
 }

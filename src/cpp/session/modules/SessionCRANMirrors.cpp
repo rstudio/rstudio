@@ -26,6 +26,7 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionAsyncRProcess.hpp>
+#include <session/SessionOptions.hpp>
 #include <session/prefs/UserPrefs.hpp>
 
 using namespace rstudio::core;
@@ -252,6 +253,12 @@ void onUserSettingsChanged(const std::string& layer, const std::string& pref)
 {
    if (pref != kCranMirror)
       return;
+
+   if (!options().allowCRANReposEdit() && layer == kUserPrefsUserLayer)
+   {
+      // if admin has disallowed CRAN mirror editing, ignore this change
+      return;
+   }
 
    // extract the CRAN mirror option
    auto mirror = prefs::userPrefs().getCRANMirror();

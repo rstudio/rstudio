@@ -41,6 +41,11 @@
       return window.navigator.userAgent.indexOf("RStudio Remote Desktop") > 0 ? "true" : "false";
    ]]></property-provider>
 
+   <define-property name="rstudio.electron" values="true,false"/>
+   <property-provider name="rstudio.electron"><![CDATA[
+      return window.navigator.userAgent.indexOf("Electron") > 0 ? "true" : "false";
+   ]]></property-provider>
+
    <set-property name="user.agent" value="safari">
       <when-property-is name="rstudio.desktop" value="true"/>
    </set-property>
@@ -125,7 +130,10 @@
    </replace-with>
    <replace-with class="org.rstudio.studio.client.common.impl.DesktopTextInput">
       <when-type-is class="org.rstudio.studio.client.common.TextInput"/>
-      <when-property-is name="rstudio.desktop" value="true"/>
+      <all>
+         <when-property-is name="rstudio.desktop" value="true"/>
+         <when-property-is name="rstudio.electron" value="false"/>
+      </all>
    </replace-with>
 
    <!-- define permutations for emulated and native stack modes -->
@@ -137,4 +145,15 @@
 
    <!-- work around incompatibility between GWT 2.8 and Gin 2.1.2 -->
    <set-configuration-property name="gin.classloading.exceptedPackages" value="com.google.gwt.core.client"/>
+
+   <!-- internationalization -->
+   <inherits name="com.google.gwt.i18n.I18N"/>
+   <set-configuration-property name="locale.useragent" value="Y"/>
+   <!-- Set order of precidence for locale settings -->
+   <set-configuration-property name="locale.searchorder" value="queryparam,cookie,useragent,meta"/>
+   <!-- Set only locale and default locale to en to ensure English content only -->
+   <extend-property name="locale" values="en"/>
+   <set-property name="locale" value="en"/>
+   <set-property-fallback name="locale" value="en"/>
+
 </module>

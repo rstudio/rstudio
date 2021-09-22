@@ -421,13 +421,13 @@ Error ChildProcess::terminate()
    }
 }
 
-bool ChildProcess::hasNonWhitelistSubprocess() const
+bool ChildProcess::hasNonIgnoredSubprocess() const
 {
    // base class doesn't support subprocess-checking; override to implement
    return true;
 }
 
-bool ChildProcess::hasWhitelistSubprocess() const
+bool ChildProcess::hasIgnoredSubprocess() const
 {
    // base class doesn't support subprocess-checking; override to implement
    return false;
@@ -980,18 +980,18 @@ Error AsyncChildProcess::terminate()
    return ChildProcess::terminate();
 }
 
-bool AsyncChildProcess::hasNonWhitelistSubprocess() const
+bool AsyncChildProcess::hasNonIgnoredSubprocess() const
 {
    if (pAsyncImpl_->pSubprocPoll_)
-      return pAsyncImpl_->pSubprocPoll_->hasNonWhitelistSubprocess();
+      return pAsyncImpl_->pSubprocPoll_->hasNonIgnoredSubprocess();
    else
       return true;
 }
 
-bool AsyncChildProcess::hasWhitelistSubprocess() const
+bool AsyncChildProcess::hasIgnoredSubprocess() const
 {
    if (pAsyncImpl_->pSubprocPoll_)
-      return pAsyncImpl_->pSubprocPoll_->hasWhitelistSubprocess();
+      return pAsyncImpl_->pSubprocPoll_->hasIgnoredSubprocess();
    else
       return false;
 }
@@ -1032,7 +1032,7 @@ void AsyncChildProcess::poll()
          pImpl_->pid,
          kResetRecentDelay, kCheckSubprocDelay, kCheckCwdDelay,
          options().reportHasSubprocs ? core::system::getSubprocesses : nullptr,
-         options().subprocWhitelist,
+         options().ignoredSubprocs,
          options().trackCwd ? core::system::currentWorkingDir : nullptr));
 
       if (callbacks_.onStarted)
@@ -1146,8 +1146,8 @@ void AsyncChildProcess::poll()
    {
       if (callbacks_.onHasSubprocs)
       {
-         callbacks_.onHasSubprocs(hasNonWhitelistSubprocess(),
-                                  hasWhitelistSubprocess());
+         callbacks_.onHasSubprocs(hasNonIgnoredSubprocess(),
+                                  hasIgnoredSubprocess());
       }
       if (callbacks_.reportCwd)
       {
@@ -1642,14 +1642,14 @@ Error AsioAsyncChildProcess::terminate()
    return error;
 }
 
-bool AsioAsyncChildProcess::hasNonWhitelistSubprocess() const
+bool AsioAsyncChildProcess::hasNonIgnoredSubprocess() const
 {
-   return AsyncChildProcess::hasNonWhitelistSubprocess();
+   return AsyncChildProcess::hasNonIgnoredSubprocess();
 }
 
-bool AsioAsyncChildProcess::hasWhitelistSubprocess() const
+bool AsioAsyncChildProcess::hasIgnoredSubprocess() const
 {
-   return AsyncChildProcess::hasWhitelistSubprocess();
+   return AsyncChildProcess::hasIgnoredSubprocess();
 }
 
 core::FilePath AsioAsyncChildProcess::getCwd() const
@@ -1761,6 +1761,45 @@ Error forkAndRunPrivileged(const boost::function<int(void)>& func)
    if (error)
       return error;
    return forkAndRunImpl(func, rootUser);
+}
+
+Error sendSignalToSpecifiedChildProcesses(const std::set<std::string>& procNames,
+                                          int signal)
+{
+   std::vector<ProcessInfo> procs;
+   Error error = getChildProcesses(&procs);
+   if (error)
+      return error;
+
+   std::vector<pid_t> pidsToKill;
+   for (const auto& proc : procs)
+   {
+      if (procNames.count(proc.exe) != 0)
+         pidsToKill.push_back(proc.pid);
+   }
+
+   auto sendSig = [=]()
+   {
+      // must only use async signal safe code in this function!
+      int err = 0;
+
+      for (size_t i = 0; i < pidsToKill.size(); ++i)
+      {
+         if (::kill(pidsToKill.at(i), signal) == -1)
+         {
+            if (errno != ESRCH)
+               err = errno;
+         }
+      }
+
+      return err;
+   };
+
+   error = forkAndRunPrivileged(sendSig);
+   if (error)
+      return error;
+
+   return Success();
 }
 
 } // namespace system

@@ -20,6 +20,31 @@ set +H
 PKG_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${PKG_DIR}/../../dependencies/tools/rstudio-tools.sh"
 
+# used to ensure JAVA_HOME points at a version of Java compatible
+# with the version of GWT sources we use for compilation
+set-java-home () {
+   if [ -d "$1" ]; then
+      _OLD_JAVA_HOME="${JAVA_HOME}"
+      JAVA_HOME="$1"
+      export JAVA_HOME
+   fi
+}
+
+restore-java-home () {
+   if [ -n "${_OLD_JAVA_HOME}" ]; then
+      JAVA_HOME="${_OLD_JAVA_HOME}"
+      unset _OLD_JAVA_HOME
+   fi
+}
+
+# ensure JAVA_HOME restored on exit if necessary
+on-exit () {
+   restore-java-home
+}
+
+trap on-exit EXIT
+
+# build / install directories
 GWT_SRC_DIR="${PKG_DIR}/../../src/gwt"
 
 BUILD_DIR_X86_64="${PKG_DIR}/build"
@@ -35,12 +60,7 @@ RSTUDIO_VERSION_ARRAY=(
    "${RSTUDIO_VERSION_PATCH-9}"
 )
 
-RSTUDIO_VERSION_FULL=$(IFS="."; echo "${RSTUDIO_VERSION_ARRAY[*]}")
-
-# include Pro version suffix if provided
-if [ -n "${RSTUDIO_VERSION_SUFFIX}" ] && [ "${RSTUDIO_VERSION_SUFFIX}" != "0" ]; then
-   RSTUDIO_VERSION_FULL+="-${RSTUDIO_VERSION_SUFFIX}"
-fi
+RSTUDIO_VERSION_FULL=$(IFS="."; echo "${RSTUDIO_VERSION_ARRAY[*]}")"${RSTUDIO_VERSION_SUFFIX}"
 
 # build bundle name (handle Pro builds as well)
 if [ -f "${PKG_DIR}/CMakeOverlay.txt" ]; then
@@ -127,7 +147,6 @@ else
    MAKEFLAGS="${MAKEFLAGS} -j$(sysctl -n hw.ncpu)"
 fi
 
-
 # perform an x86_64 build
 if [ -n "${build_x86_64}" ]; then
 
@@ -140,6 +159,10 @@ if [ -n "${build_x86_64}" ]; then
    CMAKE="${CMAKE_X86_64:-/usr/local/bin/cmake}"
    info "Using CMake '${CMAKE}' for x86_64 build"
 
+   # set up JAVA_HOME if necessary
+   set-java-home "${HOME}/homebrew/x86_64/opt/openjdk@11"
+
+   # prepare for build
    mkdir -p "${BUILD_DIR_X86_64}"
    mkdir -p "${BUILD_DIR_X86_64}/gwt"
 
@@ -169,6 +192,9 @@ if [ -n "${build_x86_64}" ]; then
    arch -x86_64 "${CMAKE}" --build . --target all -- ${MAKEFLAGS}
    info "Done!"
 
+   # restore JAVA_HOME
+   restore-java-home
+
 fi
 
 # perform an arm64 build
@@ -183,7 +209,13 @@ if [ -n "${build_arm64}" ]; then
    CMAKE="${CMAKE_ARM64:-/opt/homebrew/bin/cmake}"
    info "Using CMake '${CMAKE}' for arm64 build"
 
+   # set up JAVA_HOME if necessary
+   set-java-home "${HOME}/homebrew/arm64/opt/openjdk@11"
+
+   # prepare for build
    mkdir -p "${BUILD_DIR_ARM64}"
+   mkdir -p "${BUILD_DIR_ARM64}/gwt"
+
    cd "${BUILD_DIR_ARM64}"
    rm -f CMakeCache.txt
    rm -rf build/_CPack_Packages
@@ -206,6 +238,9 @@ if [ -n "${build_arm64}" ]; then
    arch -arm64 "${CMAKE}" --build . --target all -- ${MAKEFLAGS}
    info "Done!"
 
+   # restore JAVA_HOME
+   restore-java-home
+
 fi
 
 
@@ -223,9 +258,13 @@ if [ "${build_package}" = "1" ]; then
    rm -rf "${INSTALL_DIR}"
    mkdir -p "${INSTALL_DIR}"
 
-   # install target
-   cd "${BUILD_DIR_X86_64}"
+   # set up JAVA_HOME (strictly speaking, shouldn't be necessary
+   # at this step but we set it just in case we need to invoke
+   # ant or gwtc)
+   set-java-home "${HOME}/homebrew/arm64/opt/openjdk@11"
 
+   # perform install
+   cd "${BUILD_DIR_X86_64}"
    "${CMAKE}" --build . --target install
 
    if [ "${build_dmg}" = "1" ]; then
@@ -253,6 +292,9 @@ if [ "${build_package}" = "1" ]; then
       mv "${RSTUDIO_BUNDLE_NAME}.dmg" "${BUILD_DIR_X86_64}/"
 
    fi
+
+   # clean up JAVA_HOME
+   restore-java-home
 
    info "Done!"
 

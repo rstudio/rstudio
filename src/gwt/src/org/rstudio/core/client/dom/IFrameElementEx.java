@@ -14,7 +14,6 @@
  */
 package org.rstudio.core.client.dom;
 
-import org.rstudio.core.client.BrowseCap;
 
 import com.google.gwt.dom.client.IFrameElement;
 

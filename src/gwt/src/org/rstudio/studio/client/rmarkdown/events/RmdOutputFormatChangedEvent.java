@@ -24,15 +24,26 @@ public class RmdOutputFormatChangedEvent extends GwtEvent<RmdOutputFormatChanged
    {
       void onRmdOutputFormatChanged(RmdOutputFormatChangedEvent event);
    }
-
+   
    public RmdOutputFormatChangedEvent(String format)
    {
+      this(format, false);
+   }
+
+   public RmdOutputFormatChangedEvent(String format, boolean isQuarto)
+   {
       format_ = format;
+      isQuarto_ = isQuarto;
    }
 
    public String getFormat()
    {
       return format_;
+   }
+   
+   public boolean isQuarto()
+   {
+      return isQuarto_;
    }
 
    @Override
@@ -48,6 +59,7 @@ public class RmdOutputFormatChangedEvent extends GwtEvent<RmdOutputFormatChanged
    }
 
    private final String format_;
+   private final boolean isQuarto_;
 
    public static final Type<Handler> TYPE = new Type<>();
 }

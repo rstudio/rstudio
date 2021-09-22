@@ -200,26 +200,26 @@ protected:
       ("restrict-directory-view",
       value<bool>(&restrictDirectoryView_)->default_value(false),
       "Indicates whether or not to restrict the directories that can be viewed within the IDE.")
-      ("directory-view-whitelist",
-      value<std::string>(&directoryViewWhitelist_)->default_value(std::string()),
+      ("directory-view-allow-list",
+      value<std::string>(&directoryViewAllowList_)->default_value(std::string()),
       "Specifies a list of directories exempt from directory view restrictions, separated by a colon character (:).")
-      (kSessionEnvVarSaveBlacklist,
-      value<std::string>(&envVarSaveBlacklist_)->default_value(std::string()),
+      (kSessionEphemeralEnvVars,
+      value<std::string>(&ephemeralEnvVars_)->default_value(std::string()),
       "Specifies a list of environment variables that will not be saved when sessions suspend, separated by a colon character (:).")
       (kSessionSuspendOnIncompleteStatement,
       value<bool>(&suspendOnIncompleteStatement_)->default_value(false),
       "Specifies whether the session should be allowed to suspend when a user has entered a partial R statement.")
       (kSessionAsyncRpcEnabled,
-      value<bool>(&asyncRpcEnabled_)->default_value(false),
+      value<bool>(&asyncRpcEnabled_)->default_value(true),
       "Enables async responses to rpc requests to prevent connection logjams in the browser, allowing interrupt of busy sessions")
       (kSessionAsyncRpcTimeoutMs,
-      value<int>(&asyncRpcTimeoutMs_)->default_value(1000),
+      value<int>(&asyncRpcTimeoutMs_)->default_value(200),
       "Duration in millis before requests are converted to async - i.e. how fast will the server free up connections when it's busy")
       (kSessionHandleOfflineEnabled,
-      value<bool>(&handleOfflineEnabled_)->default_value(false),
+      value<bool>(&handleOfflineEnabled_)->default_value(true),
       "Enables offline request handling. When the R session is busy, some requests are allowed to run")
       (kSessionHandleOfflineTimeoutMs,
-      value<int>(&handleOfflineTimeoutMs_)->default_value(5000),
+      value<int>(&handleOfflineTimeoutMs_)->default_value(200),
       "Duration in millis before requests that can be handled offline are processed by the offline handler thread.");
 
    pAllow->add_options()
@@ -395,12 +395,9 @@ protected:
 
    pMisc->add_options();
 
-   FilePath defaultConfigPath = core::system::xdg::systemConfigFile("rsession.conf");
+   FilePath defaultConfigPath = core::system::xdg::findSystemConfigFile("rsession configuration", "rsession.conf");
    std::string configFile = defaultConfigPath.exists() ?
       defaultConfigPath.getAbsolutePath() : "";
-   if (!configFile.empty())
-      LOG_INFO_MESSAGE("Reading rsession configuration from " + configFile);
-
    return program_options::OptionsDescription("rsession", configFile);
 }
 
@@ -445,8 +442,8 @@ public:
    bool useSecureCookies() const { return useSecureCookies_; }
    rstudio::core::http::Cookie::SameSite sameSite() const { return sameSite_; }
    bool restrictDirectoryView() const { return restrictDirectoryView_; }
-   std::string directoryViewWhitelist() const { return directoryViewWhitelist_; }
-   std::string envVarSaveBlacklist() const { return envVarSaveBlacklist_; }
+   std::string directoryViewAllowList() const { return directoryViewAllowList_; }
+   std::string ephemeralEnvVars() const { return ephemeralEnvVars_; }
    bool suspendOnIncompleteStatement() const { return suspendOnIncompleteStatement_; }
    bool asyncRpcEnabled() const { return asyncRpcEnabled_; }
    int asyncRpcTimeoutMs() const { return asyncRpcTimeoutMs_; }
@@ -546,8 +543,8 @@ protected:
    bool useSecureCookies_;
    rstudio::core::http::Cookie::SameSite sameSite_;
    bool restrictDirectoryView_;
-   std::string directoryViewWhitelist_;
-   std::string envVarSaveBlacklist_;
+   std::string directoryViewAllowList_;
+   std::string ephemeralEnvVars_;
    bool suspendOnIncompleteStatement_;
    bool asyncRpcEnabled_;
    int asyncRpcTimeoutMs_;

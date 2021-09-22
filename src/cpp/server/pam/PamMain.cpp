@@ -58,7 +58,7 @@ int main(int argc, char * const argv[])
    { 
       // initialize log
       core::log::setProgramId("rserver-pam");
-      core::system::initializeSystemLog("rserver-pam", core::log::LogLevel::WARN);
+      core::system::initializeLog("rserver-pam", core::log::LogLevel::WARN);
 
       // ignore SIGPIPE
       Error error = core::system::ignoreSignal(core::system::SigPipe);

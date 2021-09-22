@@ -125,6 +125,9 @@ bool isPdfLatexInstalled();
 // is the file a text file
 bool isTextFile(const core::FilePath& targetPath);
 
+// edit a file
+void editFile(const core::FilePath& targetPath, int lineNumber = -1);
+
 // find the location of the R script
 core::Error rBinDir(core::FilePath* pRBinDirPath);
 core::Error rScriptPath(core::FilePath* pRScriptPath);
@@ -328,32 +331,29 @@ struct firstNonEmpty
 // session events
 struct Events : boost::noncopyable
 {
-   RSTUDIO_BOOST_SIGNAL<void (core::json::Object*)> onSessionInfo;
-   RSTUDIO_BOOST_SIGNAL<void ()>                    onClientInit;
-   RSTUDIO_BOOST_SIGNAL<void ()>                    onBeforeExecute;
-   RSTUDIO_BOOST_SIGNAL<void(const std::string&)>   onConsolePrompt;
-   RSTUDIO_BOOST_SIGNAL<void(const std::string&)>   onConsoleInput;
-   RSTUDIO_BOOST_SIGNAL<void(const std::string&, const std::string&)>  
-                                             onActiveConsoleChanged;
-   RSTUDIO_BOOST_SIGNAL<void (ConsoleOutputType, const std::string&)>
-                                             onConsoleOutput;
-   RSTUDIO_BOOST_SIGNAL<void()>                     onUserInterrupt;
-   RSTUDIO_BOOST_SIGNAL<void (ChangeSource)>        onDetectChanges;
-   RSTUDIO_BOOST_SIGNAL<void (core::FilePath)>      onSourceEditorFileSaved;
-   RSTUDIO_BOOST_SIGNAL<void(bool)>                 onDeferredInit;
-   RSTUDIO_BOOST_SIGNAL<void(bool)>                 afterSessionInitHook;
-   RSTUDIO_BOOST_SIGNAL<void(bool)>                 onBackgroundProcessing;
-   RSTUDIO_BOOST_SIGNAL<void(bool)>                 onShutdown;
-   RSTUDIO_BOOST_SIGNAL<void ()>                    onQuit;
-   RSTUDIO_BOOST_SIGNAL<void ()>                    onDestroyed;
-   RSTUDIO_BOOST_SIGNAL<void (const std::vector<std::string>&)>
-                                             onLibPathsChanged;
-   RSTUDIO_BOOST_SIGNAL<void (const std::string&)>  onPackageLoaded;
-   RSTUDIO_BOOST_SIGNAL<void ()>                    onPackageLibraryMutated;
-   RSTUDIO_BOOST_SIGNAL<void ()>                    onPreferencesSaved;
-   RSTUDIO_BOOST_SIGNAL<void (const core::DistributedEvent&)>
-                                             onDistributedEvent;
-   RSTUDIO_BOOST_SIGNAL<void (core::FilePath)>      onPermissionsChanged;
+   RSTUDIO_BOOST_SIGNAL<void(core::json::Object*)>                    onSessionInfo;
+   RSTUDIO_BOOST_SIGNAL<void()>                                       onClientInit;
+   RSTUDIO_BOOST_SIGNAL<void()>                                       onInitComplete;
+   RSTUDIO_BOOST_SIGNAL<void(bool)>                                   onDeferredInit;
+   RSTUDIO_BOOST_SIGNAL<void(bool)>                                   afterSessionInitHook;
+   RSTUDIO_BOOST_SIGNAL<void()>                                       onBeforeExecute;
+   RSTUDIO_BOOST_SIGNAL<void(const std::string&)>                     onConsolePrompt;
+   RSTUDIO_BOOST_SIGNAL<void(const std::string&)>                     onConsoleInput;
+   RSTUDIO_BOOST_SIGNAL<void(const std::string&, const std::string&)> onActiveConsoleChanged;
+   RSTUDIO_BOOST_SIGNAL<void(ConsoleOutputType, const std::string&)>  onConsoleOutput;
+   RSTUDIO_BOOST_SIGNAL<void()>                                       onUserInterrupt;
+   RSTUDIO_BOOST_SIGNAL<void(ChangeSource)>                           onDetectChanges;
+   RSTUDIO_BOOST_SIGNAL<void(core::FilePath)>                         onSourceEditorFileSaved;
+   RSTUDIO_BOOST_SIGNAL<void(bool)>                                   onBackgroundProcessing;
+   RSTUDIO_BOOST_SIGNAL<void(const std::vector<std::string>&)>        onLibPathsChanged;
+   RSTUDIO_BOOST_SIGNAL<void(const std::string&)>                     onPackageLoaded;
+   RSTUDIO_BOOST_SIGNAL<void()>                                       onPackageLibraryMutated;
+   RSTUDIO_BOOST_SIGNAL<void()>                                       onPreferencesSaved;
+   RSTUDIO_BOOST_SIGNAL<void(const core::DistributedEvent&)>          onDistributedEvent;
+   RSTUDIO_BOOST_SIGNAL<void(core::FilePath)>                         onPermissionsChanged;
+   RSTUDIO_BOOST_SIGNAL<void(bool)>                                   onShutdown;
+   RSTUDIO_BOOST_SIGNAL<void()>                                       onQuit;
+   RSTUDIO_BOOST_SIGNAL<void()>                                       onDestroyed;
 
    // signal for detecting extended type of documents
    RSTUDIO_BOOST_SIGNAL<std::string(boost::shared_ptr<source_database::SourceDocument>),
@@ -755,6 +755,37 @@ private:
 
 void addViewerHistoryEntry(const ViewerHistoryEntry& entry);
 
+struct QuartoNavigate
+{
+   QuartoNavigate() : website(false) {}
+   bool empty() const { return !website && source.empty(); }
+   static QuartoNavigate navWebsite()
+   {
+      QuartoNavigate nav;
+      nav.website = true;
+      return nav;
+   }
+   static QuartoNavigate navDoc(const std::string& source, const std::string& output)
+   {
+      QuartoNavigate nav;
+      nav.website = false;
+      nav.source = source;
+      nav.output = output;
+      return nav;
+   }
+   bool website;
+   std::string source;
+   std::string output;
+};
+
+
+void viewer(const std::string& url,
+            int height = 0, // pass 0 for no height change, // pass -1 for maximize
+            const QuartoNavigate& quartoNav = QuartoNavigate());
+
+void clearViewerCurrentUrl();
+std::string viewerCurrentUrl(bool mapped = true);
+
 core::Error recursiveCopyDirectory(const core::FilePath& fromDir,
                                    const core::FilePath& toDir);
 
@@ -784,8 +815,19 @@ bool isUserFile(const core::FilePath& filePath);
 struct SourceMarker
 {
    enum Type {
-      Error = 0, Warning = 1, Box = 2, Info = 3, Style = 4, Usage = 5
+      Error   = 0,
+      Warning = 1,
+      Box     = 2,
+      Info    = 3,
+      Style   = 4, 
+      Usage   = 5,
+      Empty   = 99
    };
+
+   SourceMarker()
+      : type(Empty)
+   {
+   }
 
    SourceMarker(Type type,
                 const core::FilePath& path,
@@ -793,9 +835,18 @@ struct SourceMarker
                 int column,
                 const core::html_utils::HTML& message,
                 bool showErrorList)
-      : type(type), path(path), line(line), column(column), message(message),
+      : type(type),
+        path(path),
+        line(line),
+        column(column),
+        message(message),
         showErrorList(showErrorList)
    {
+   }
+   
+   explicit operator bool() const
+   {
+      return type != Empty;
    }
 
    Type type;
@@ -864,7 +915,7 @@ std::vector<std::string> bookdownZoteroCollections();
 core::json::Value bookdownXRefIndex();
 core::FilePath bookdownCSL();
 
-core::FilePath extractOutputFileCreated(const core::FilePath& inputFile,
+core::FilePath extractOutputFileCreated(const core::FilePath& inputDir,
                                         const std::string& output);
 
 bool isPathViewAllowed(const core::FilePath& path);
@@ -874,6 +925,19 @@ void onBackgroundProcessing(bool isIdle);
 void initializeConsoleCtrlHandler();
 
 bool isPythonReplActive();
+
+
+core::Error perFilePathStorage(const std::string& scope,
+                               const core::FilePath& filePath,
+                               bool directory,
+                               core::FilePath* pStorage);
+
+// returns -1 if no error was found in the output
+int jupyterErrorLineNumber(const std::vector<std::string>& srcLines,
+                           const std::string& output);
+
+std::vector<core::FilePath> ignoreContentDirs();
+bool isIgnoredContent(const core::FilePath& filePath, const std::vector<core::FilePath>& ignoreDirs);
 
 std::string getActiveLanguage();
 core::Error adaptToLanguage(const std::string& language);

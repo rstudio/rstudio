@@ -94,7 +94,7 @@ public class WarningBar extends Composite
 
    public void setText(String value)
    {
-      label_.setInnerText(value);
+      label_.setInnerHTML(value);
 
       // Give screen reader time to process page to improve chance it will notice the live region
       Timers.singleShot(AriaLiveService.UI_ANNOUNCEMENT_DELAY, () -> live_.setInnerText(value));

@@ -551,12 +551,16 @@ public class TextEditingTargetRMarkdownHelper
 
    public boolean isRuntimeShinyPrerendered(String yaml)
    {
-      return getRuntime(yaml) == RmdFrontMatter.SHINY_PRERENDERED_RUNTIME;
+      String runtime = getRuntime(yaml);
+      return runtime == RmdFrontMatter.SHINY_PRERENDERED_RUNTIME ||
+             runtime == RmdFrontMatter.SHINY_RMD_RUNTIME ||
+             getIsShinyServer(yaml);
    }
 
    public boolean isRuntimeShiny(String yaml)
    {
-      return getRuntime(yaml).startsWith(RmdFrontMatter.SHINY_RUNTIME);
+      return getRuntime(yaml).startsWith(RmdFrontMatter.SHINY_RUNTIME) ||
+             isRuntimeShinyPrerendered(yaml);
    }
 
    private String getRuntime(String yaml)
@@ -577,6 +581,37 @@ public class TextEditingTargetRMarkdownHelper
          Debug.log("Warning: Exception thrown while parsing YAML:\n" + yaml);
       }
       return "";
+   }
+   
+   private boolean getIsShinyServer(String yaml)
+   {
+      // This is in the editor load path, so guard against exceptions and log
+      // any we find without bringing down the editor.
+      try
+      {
+         YamlTree tree = new YamlTree(yaml);
+
+         if (tree.getKeyValue(RmdFrontMatter.KNIT_KEY).length() > 0)
+            return false;
+
+         if (tree.getChildValue(RmdFrontMatter.SERVER_KEY, "type") == "shiny")
+         {
+            return true;
+         }
+         else if (tree.getKeyValue(RmdFrontMatter.SERVER_KEY) == "shiny")
+         {
+            return true;
+         }
+         else
+         {
+            return false;
+         }
+      }
+      catch (Exception e)
+      {
+         Debug.log("Warning: Exception thrown while parsing YAML:\n" + yaml);
+      }
+      return false;
    }
 
    public String getCustomKnit(String yaml)
@@ -625,6 +660,18 @@ public class TextEditingTargetRMarkdownHelper
                setOutputFormat(arg.getFrontMatter(), format, onCompleted);
          }
       });
+   }
+   
+   public String setOuartoOutputFormat(String yaml,  String format)
+   {
+      YamlTree tree = new YamlTree(yaml);
+      List<String> formats = getQuartoOutputFormats(tree);
+      if (formats != null && formats.contains(format))
+      {
+         tree.reorder(Arrays.asList(format));
+         return tree.toString();
+      }
+      return null;
    }
 
    public void createDraftFromTemplate(final RmdChosenTemplate template)
@@ -1051,10 +1098,21 @@ public class TextEditingTargetRMarkdownHelper
 
    public static List<String> getOutputFormats(String yaml)
    {
+      return getOutputFormats(yaml, RmdFrontMatter.OUTPUT_KEY);
+   }
+
+   public static List<String> getQuartoOutputFormats(String yaml)
+   {
+      return getOutputFormats(yaml, RmdFrontMatter.FORMAT_KEY);
+   }
+   
+   
+   public static List<String> getOutputFormats(String yaml, String outputKey)
+   {
       try
       {
          YamlTree tree = new YamlTree(yaml);
-         return getOutputFormats(tree);
+         return getOutputFormats(tree, outputKey);
       }
       catch (Exception e)
       {
@@ -1062,15 +1120,31 @@ public class TextEditingTargetRMarkdownHelper
       }
       return null;
    }
+   
 
-   private static List<String> getOutputFormats(YamlTree tree)
+   private static List<String> getOutputFormats(YamlTree tree, String outputKey)
    {
-      List<String> outputs = tree.getChildKeys(RmdFrontMatter.OUTPUT_KEY);
+      List<String> outputs = tree.getChildKeys(outputKey);
+      
       if (outputs == null)
          return null;
       if (outputs.isEmpty())
-         outputs.add(tree.getKeyValue(RmdFrontMatter.OUTPUT_KEY));
+         outputs.add(tree.getKeyValue(outputKey));
+      
+      // filter commented out outputs
+      outputs.removeIf(output -> output.startsWith("#"));
+      
       return outputs;
+   }
+   
+   private static List<String> getOutputFormats(YamlTree tree)
+   {
+      return getOutputFormats(tree, RmdFrontMatter.OUTPUT_KEY);
+   }
+   
+   private static List<String> getQuartoOutputFormats(YamlTree tree)
+   {
+      return getOutputFormats(tree, RmdFrontMatter.FORMAT_KEY);
    }
 
    public void showNewRMarkdownDialog(

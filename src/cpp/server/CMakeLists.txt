@@ -29,6 +29,7 @@ set(SERVER_SOURCE_FILES
    ServerEnvVars.cpp
    ServerInit.cpp
    ServerLoginPages.cpp
+   ServerLogVars.cpp
    ServerMainOverlay.cpp
    ServerMeta.cpp
    ServerOffline.cpp

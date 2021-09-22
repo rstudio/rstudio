@@ -43,15 +43,17 @@ import com.google.inject.Provider;
 
 public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOptions>
 {
+   // Numerical order of this enum must match visual order of the
+   // project preferences dialog panes.
    public static final int GENERAL    = 0;
    public static final int EDITING    = 1;
    public static final int R_MARKDOWN = 2;
-   public static final int SWEAVE     = 3;
-   public static final int SPELLING   = 4;
-   public static final int BUILD      = 5;
-   public static final int VCS        = 6;
-   public static final int RENV       = 7;
-   public static final int PYTHON     = 8;
+   public static final int PYTHON     = 3;
+   public static final int SWEAVE     = 4;
+   public static final int SPELLING   = 5;
+   public static final int BUILD      = 6;
+   public static final int VCS        = 7;
+   public static final int RENV       = 8;
    public static final int SHARING    = 9;
 
    @Inject
@@ -80,13 +82,13 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
             panes(
                   general,
                   editing,
-                  rMarkdown, 
+                  rMarkdown,
+                  python,
                   compilePdf,
                   spelling,
                   build,
                   source,
                   renv,
-                  python,
                   sharing));
 
       pSession_ = session;
@@ -136,7 +138,7 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                 // update project ui prefs
                 RProjectConfig config = options.getConfig();
                 UserPrefs uiPrefs = pUIPrefs_.get();
-                
+
                 uiPrefs.useSpacesForTab().setProjectValue(
                                            config.getUseSpacesForTab());
                 uiPrefs.numSpacesForTab().setProjectValue(
@@ -155,7 +157,7 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                                            config.getRootDocument());
                 uiPrefs.useRoxygen().setProjectValue(
                                            config.hasPackageRoxygenize());
-                
+
                 // markdown prefs (if they are set to defaults then remove the project prefs, otherwise forward them on)
                 if (!config.getMarkdownWrap().equals(RProjectConfig.MARKDOWN_WRAP_DEFAULT))
                 {
@@ -175,13 +177,13 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                    uiPrefs.visualMarkdownEditingCanonical().setProjectValue(config.getMarkdownCanonical() == RProjectConfig.YES_VALUE);
                 else
                    uiPrefs.visualMarkdownEditingCanonical().removeProjectValue(true);
-                
+
                 // zotero prefs (remove if set to defaults)
                 if (config.getZoteroLibraries() != null)
                    uiPrefs.zoteroLibraries().setProjectValue(config.getZoteroLibraries());
                 else
                    uiPrefs.zoteroLibraries().removeProjectValue(true);
-                
+
                 // propagate spelling prefs
                 if (!config.getSpellingDictionary().isEmpty())
                    uiPrefs.spellingDictionaryLanguage().setProjectValue(config.getSpellingDictionary());
@@ -193,7 +195,7 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
 
                 if (onCompleted != null)
                    onCompleted.execute();
-                
+
                 handleRestart(
                       pGlobalDisplay_.get(),
                       pQuit_.get(),
@@ -221,7 +223,7 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
 
       pEventBus_.get().fireEvent(new SendToConsoleEvent(renvAction, true, true));
    }
-   
+
    @SafeVarargs
    private static final List<PreferencesDialogPaneBase<RProjectOptions>> panes(
       PreferencesDialogPaneBase<RProjectOptions>... paneList)

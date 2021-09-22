@@ -29,8 +29,8 @@
     "ms-vscode.cmake-tools",
     "twxs.cmake",
     "vscjava.vscode-java-pack",
-    "ms-azuretools.vscode-docker",
-    "dbaeumer.vscode-eslint"
+    "dbaeumer.vscode-eslint",
+    "waderyan.nodejs-extension-pack"
   ],
 
   "forwardPorts": [

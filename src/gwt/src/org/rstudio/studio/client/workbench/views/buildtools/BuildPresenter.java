@@ -40,13 +40,19 @@ import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarkerList;
+import org.rstudio.studio.client.quarto.QuartoHelper;
+import org.rstudio.studio.client.quarto.model.QuartoConfig;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.ClientInitState;
+import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
 import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.model.PrefLayer;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -66,6 +72,8 @@ import org.rstudio.studio.client.workbench.views.terminal.TerminalHelper;
 
 public class BuildPresenter extends BasePresenter
 {
+  
+   
    public interface Display extends WorkbenchView
    {
       void buildStarted();
@@ -81,8 +89,14 @@ public class BuildPresenter extends BasePresenter
                       String buildType);
       void buildCompleted();
 
+      
       HasSelectionCommitHandlers<CodeNavigationTarget> errorList();
 
+      String getBookType();
+      void setBookType(String type);
+      void onBookTypeChanged(Command onChanged);
+      
+      
       HasSelectionCommitHandlers<String> buildSubType();
 
       HasClickHandlers stopButton();
@@ -250,6 +264,10 @@ public class BuildPresenter extends BasePresenter
       {
          startBuild("build-all", event.getSelectedItem());
       });
+      view_.onBookTypeChanged(() -> {
+         startQuartoBookBuild();
+      });
+   
 
       view_.stopButton().addClickHandler(new ClickHandler() {
          @Override
@@ -258,6 +276,24 @@ public class BuildPresenter extends BasePresenter
             commands.stopBuild().execute();
          }
       });
+      
+      SessionInfo sessionInfo = session.getSessionInfo();
+      ClientInitState clientState = sessionInfo.getClientState();
+
+      new StringStateValue(MODULE_BUILD, QUARTO_BOOK_TYPE, ClientState.PROJECT_PERSISTENT, clientState) {
+         @Override
+         protected void onInit(String value)
+         {
+            value = value != null ? value : "all";
+            view_.setBookType(value);
+         }
+         @Override
+         protected String getValue()
+         {
+            return view_.getBookType();
+         }
+      };
+
    }
 
    public void initialize(BuildState buildState)
@@ -304,6 +340,11 @@ public class BuildPresenter extends BasePresenter
             sendLoadCommandToConsole("devtools::load_all(\"" + loadAllPath + "\")");
          });
       }, () -> {}, "Build");
+   }
+   
+   void onServeQuartoSite()
+   {
+      quartoServe(null);
    }
 
    void onBuildSourcePackage()
@@ -369,15 +410,35 @@ public class BuildPresenter extends BasePresenter
             }
           });
       }
+      else if (subType.isEmpty() && 
+               session_.getSessionInfo().getBuildToolsType() == SessionInfo.BUILD_TOOLS_QUARTO)
+      {
+         // books get a render and serve if the target is html
+         QuartoConfig config = session_.getSessionInfo().getQuartoConfig();
+         if (config.project_type.equals(SessionInfo.QUARTO_PROJECT_TYPE_BOOK))
+         {
+            startQuartoBookBuild();
+         }
+         else if (isQuartoSubProject(config) || !QuartoHelper.isQuartoWebsiteConfig(config))
+         {
+            executeBuild(type, "");
+         }
+         else 
+         {
+            quartoServe("default");
+         }
+      }
       else
       {
          executeBuild(type, subType);
       }
    }
 
+
    private void executeBuild(final String type, final String subType)
    {
-      if (type != "build-all" && type != "rebuild-all")
+      if ((type != "build-all" && type != "rebuild-all") ||
+            session_.getSessionInfo().getBuildToolsType() == SessionInfo.BUILD_TOOLS_QUARTO)
       {
          executeBuildNoBusyCheck(type, subType);
          return;
@@ -472,6 +533,57 @@ public class BuildPresenter extends BasePresenter
       }
 
    }
+   
+   private void startQuartoBookBuild()
+   {
+      // if the type is "html" or the type is "all" and there is an html format
+      // then kickoff a render and serve, otherwise do a normal render (preview
+      // of pdf, epub, etc. will occur based on normal build pane output scanning)
+      String bookType = view_.getBookType();
+      if (shouldRenderAndServeBook(bookType))
+         quartoServe(bookType);
+      else
+         executeBuild("build-all", view_.getBookType());
+   }
+   
+   private boolean shouldRenderAndServeBook(String bookType)
+   {
+      // don't do a serve if this is a sub-project (as that might cause an over-render)
+      QuartoConfig config = session_.getSessionInfo().getQuartoConfig();
+      if (isQuartoSubProject(config)) {
+         return false;
+      }
+      
+      
+      if (bookType.startsWith("html"))
+      {
+         return true;
+      }
+      else if (bookType == "all")
+      {
+         for (int i=0; i<config.project_formats.length; i++) 
+         {
+            if (config.project_formats[i].startsWith("html"))
+               return true;
+         }
+      }
+     
+      // fallthrough
+      return false;
+      
+   }
+   
+   private boolean isQuartoSubProject(QuartoConfig config)
+   {
+      return !config.project_dir.equals(workbenchContext_.getActiveProjectDir().getPath());
+   }
+   
+   private void quartoServe(String type)
+   {
+      source_.withSaveFilesBeforeCommand(() -> {
+         server_.quartoServe(type, new SimpleRequestCallback<Void>("Quarto Serve Error"));
+      }, () -> {}, "Quarto");
+   }
 
    private String devtoolsLoadAllPath_ = null;
 
@@ -489,4 +601,7 @@ public class BuildPresenter extends BasePresenter
    private final WorkbenchContext workbenchContext_;
    private final TerminalHelper terminalHelper_;
    private final Provider<JobManager> pJobManager_;
+   
+   private static final String MODULE_BUILD = "build-pane";
+   private static final String QUARTO_BOOK_TYPE = "quarto-book-type";
 }

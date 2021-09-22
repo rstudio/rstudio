@@ -91,6 +91,7 @@ namespace prefs {
 #define kZoteroUseBetterBibtex "zotero_use_better_bibtex"
 #define kZoteroApiKey "zotero_api_key"
 #define kZoteroDataDir "zotero_data_dir"
+#define kQuartoWebsiteSyncEditor "quarto_website_sync_editor"
 
 class UserStateValues: public Preferences
 {
@@ -239,6 +240,12 @@ public:
     */
    std::string zoteroDataDir();
    core::Error setZoteroDataDir(std::string val);
+
+   /**
+    * Sync source editor to Quarto website preview navigation.
+    */
+   bool quartoWebsiteSyncEditor();
+   core::Error setQuartoWebsiteSyncEditor(bool val);
 
 };
 

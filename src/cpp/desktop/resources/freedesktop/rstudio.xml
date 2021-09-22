@@ -23,6 +23,12 @@
     <glob pattern="*.Rtex"/>
     <glob pattern="*.rtex"/>
   </mime-type>
+  
+  <mime-type type="text/x-quarto-markdown">
+    <sub-class-of type="text/plain"/>
+    <comment>Quarto Markdown File</comment>
+    <glob pattern="*.qmd"/>
+  </mime-type>
 
   <mime-type type="text/x-r-markdown">
     <sub-class-of type="text/plain"/>

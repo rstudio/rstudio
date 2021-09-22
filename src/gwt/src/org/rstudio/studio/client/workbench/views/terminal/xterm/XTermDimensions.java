@@ -16,16 +16,14 @@
 package org.rstudio.studio.client.workbench.views.terminal.xterm;
 
 import jsinterop.annotations.JsPackage;
-import jsinterop.annotations.JsProperty;
 import jsinterop.annotations.JsType;
 
 /**
  * Size of xterm in rows and columns of text.
- * https://github.com/xtermjs/xterm.js/blob/4.7.0/addons/xterm-addon-fit/typings/xterm-addon-fit.d.ts
  */
 @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
 public class XTermDimensions
 {
-   @JsProperty public native int getCols();
-   @JsProperty public native int getRows();
+   public int cols;
+   public int rows;
 }

@@ -27,8 +27,6 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.regex.Pattern;
-import org.rstudio.core.client.widget.ModalDialog;
-import org.rstudio.core.client.widget.ModalPopupPanel;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
@@ -89,7 +87,6 @@ import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentSe
 import org.rstudio.studio.client.workbench.views.environment.model.MemoryUsageReport;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentClientState;
-import org.rstudio.studio.client.workbench.views.environment.view.MemoryUsageSummary;
 import org.rstudio.studio.client.workbench.views.environment.view.MemoryUsageSummaryDialog;
 import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserFinishedEvent;
@@ -236,7 +233,11 @@ public class EnvironmentPresenter extends BasePresenter
          @Override
          public void onEnvironmentObjectAssigned(EnvironmentObjectAssignedEvent event)
          {
-            view_.addObject(event.getObjectInfo());
+            // ignore changes in R environment when Python is active in Environment pane
+            if (StringUtil.equalsIgnoreCase(view_.getActiveLanguage(), "R"))
+            {
+               view_.addObject(event.getObjectInfo());
+            }
          }
       });
 
@@ -246,7 +247,11 @@ public class EnvironmentPresenter extends BasePresenter
          @Override
          public void onEnvironmentObjectRemoved(EnvironmentObjectRemovedEvent event)
          {
-            view_.removeObject(event.getObjectName());
+            // ignore changes in R environment when Python is active in Environment pane
+            if (StringUtil.equalsIgnoreCase(view_.getActiveLanguage(), "R"))
+            {
+               view_.removeObject(event.getObjectName());
+            }
          }
       });
 

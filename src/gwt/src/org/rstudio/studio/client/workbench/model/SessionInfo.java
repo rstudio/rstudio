@@ -26,6 +26,7 @@ import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.debugging.model.ErrorManagerState;
 import org.rstudio.studio.client.common.dependencies.model.DependencyList;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
+import org.rstudio.studio.client.quarto.model.QuartoConfig;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.prefs.model.PrefLayer;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -320,6 +321,7 @@ public class SessionInfo extends JavaScriptObject
    public final static String BUILD_TOOLS_MAKEFILE = "Makefile";
    public final static String BUILD_TOOLS_WEBSITE = "Website";
    public final static String BUILD_TOOLS_CUSTOM = "Custom";
+   public final static String BUILD_TOOLS_QUARTO = "Quarto";
 
    public final native String getBuildToolsType() /*-{
       return this.build_tools_type;
@@ -343,6 +345,14 @@ public class SessionInfo extends JavaScriptObject
 
    public final native boolean getIsDistillProject() /*-{
       return this.is_distill_project;
+   }-*/;
+   
+   public final static String QUARTO_PROJECT_TYPE_SITE = "site";
+   public final static String QUARTO_PROJECT_TYPE_BOOK = "book";
+
+   
+   public final native QuartoConfig getQuartoConfig() /*-{
+      return this.quarto_config;
    }-*/;
 
    public final native boolean getHasPackageSrcDir() /*-{

@@ -1063,6 +1063,12 @@ const characters: { [key: number]: CharacterMap } = {
     character: '‐',
     latex: '-',
   },
+  8209: {
+    id: 'U2011',
+    decimal: 8209,
+    character: '‑',
+    latex: '\\nobreakdash-'
+  },
   8211: {
     id: 'U02013',
     decimal: 8211,

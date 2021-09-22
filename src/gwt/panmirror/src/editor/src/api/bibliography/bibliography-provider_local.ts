@@ -192,10 +192,10 @@ function bibliographyFilesFromDoc(parsedYamls: ParsedYaml[]): string[] | undefin
       Array.isArray(bibliographyFiles) &&
       bibliographyFiles.every(bibliographyFile => typeof bibliographyFile === 'string')
     ) {
-      return bibliographyFiles;
-    } else {
+      return bibliographyFiles as string[];
+    } else if (typeof bibliographyFiles === "string") {
       // A single bibliography
-      return [bibliographyFiles];
+      return [bibliographyFiles as string];
     }
   }
   return undefined;

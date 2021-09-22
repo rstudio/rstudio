@@ -158,7 +158,8 @@ std::vector<r_util::RVersion> RVersionsScanner::getRVersions()
 
    // read additional user-specified R home directories
    std::vector<r_util::RVersion> rEntries;
-   FilePath userRDirsPath = core::system::xdg::systemConfigFile("r-versions");
+   FilePath userRDirsPath = core::system::xdg::findSystemConfigFile(
+         "R version metadata", "r-versions");
    if (userRDirsPath.exists())
    {
       std::string contents;

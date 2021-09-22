@@ -181,6 +181,7 @@
 #include "modules/rmarkdown/SessionRMarkdown.hpp"
 #include "modules/rmarkdown/SessionRmdNotebook.hpp"
 #include "modules/rmarkdown/SessionBookdown.hpp"
+#include "modules/quarto/SessionQuarto.hpp"
 #include "modules/shiny/SessionShiny.hpp"
 #include "modules/sql/SessionSql.hpp"
 #include "modules/stan/SessionStan.hpp"
@@ -237,6 +238,12 @@ using namespace rsession::client_events;
 // forward-declare overlay methods
 namespace rstudio {
 namespace session {
+
+namespace {
+
+std::string s_fallbackLibraryPath;
+
+} // end anonymous namespace
 
 bool disableExecuteRprofile()
 {
@@ -458,6 +465,7 @@ void exitEarly(int status)
 {
    stopMonitorWorkerThread();
    FileLock::cleanUp();
+   FilePath(s_fallbackLibraryPath).removeIfExists();
    ::exit(status);
 }
 
@@ -559,6 +567,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::cran_mirrors::initialize)
       (modules::profiler::initialize)
       (modules::viewer::initialize)
+      (modules::quarto::initialize)
       (modules::rmarkdown::initialize)
       (modules::rmarkdown::notebook::initialize)
       (modules::rmarkdown::templates::initialize)
@@ -659,13 +668,6 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       exitEarly(exitCode);
    }
 
-   // run unit tests
-   if (rsession::options().runTests())
-   {
-      int result = tests::run();
-      exitEarly(result);
-   }
-
    // register all of the json rpc methods implemented in R
    json::JsonRpcMethods rMethods;
    error = rstudio::r::json::getRpcMethods(&rMethods);
@@ -689,8 +691,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    using namespace rsession::client_events;
    if (rsession::persistentState().hadAbend() && !options().standalone())
    {
-      LOG_ERROR_MESSAGE("session hadabend");
-
+      LOG_ERROR_MESSAGE("The previous R session terminated abnormally");
       ClientEvent abendWarningEvent(kAbendWarning);
       rsession::clientEventQueue().add(abendWarningEvent);
    }
@@ -735,7 +736,10 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    // set flag indicating we had an abnormal end (if this doesn't get
    // unset by the time we launch again then we didn't terminate normally
    // i.e. either the process dying unexpectedly or a call to R_Suicide)
-   rsession::persistentState().setAbend(true);
+   if (!rsession::options().runTests())
+   {
+      rsession::persistentState().setAbend(true);
+   }
 
    // begin session
    using namespace module_context;
@@ -746,6 +750,11 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
 
    // success!
    return Success();
+}
+
+void rInitComplete()
+{
+   module_context::events().onInitComplete();
 }
 
 void notifyIfRVersionChanged()
@@ -1292,6 +1301,17 @@ void rSerialization(int action, const FilePath& targetPath)
    rsession::clientEventQueue().add(event);
 }
 
+void rRunTests()
+{
+   // run tests
+   int status = tests::run();
+   
+   // try to clean up session
+   rCleanup(true);
+   
+   // exit if we haven't already
+   exitEarly(status);
+}
 
 void ensureRProfile()
 {
@@ -1734,10 +1754,13 @@ void initMonitorClient()
 } // anonymous namespace
 
 // run session
-int main (int argc, char * const argv[])
+int main(int argc, char * const argv[])
 {
    try
    {
+      // save fallback library path
+      s_fallbackLibraryPath = core::system::getenv("RSTUDIO_FALLBACK_LIBRARY_PATH");
+      
       // sleep on startup if requested (mainly for debugging)
       std::string sleepOnStartup = core::system::getenv("RSTUDIO_SESSION_SLEEP_ON_STARTUP");
       if (!sleepOnStartup.empty())
@@ -1749,12 +1772,23 @@ int main (int argc, char * const argv[])
          }
       }
 
+      // terminate immediately with given exit code (for testing/debugging)
+      std::string exitOnStartup = core::system::getenv("RSTUDIO_SESSION_EXIT_ON_STARTUP");
+      if (!exitOnStartup.empty())
+      {
+         int exitCode = core::safe_convert::stringTo<int>(exitOnStartup, EXIT_FAILURE);
+
+         std::cerr << "RSession terminating with exit code " << exitCode << " as requested.\n";
+         std::cout << "RSession will now exit.\n";
+         return core::safe_convert::stringTo<int>(exitOnStartup, EXIT_FAILURE);
+      }
+
       // initialize log so we capture all errors including ones which occur
       // reading the config file (if we are in desktop mode then the log
       // will get re-initialized below)
       std::string programId = "rsession-" + core::system::username();
       core::log::setProgramId(programId);
-      core::system::initializeSystemLog(programId, core::log::LogLevel::WARN);
+      core::system::initializeLog(programId, core::log::LogLevel::WARN);
 
       // ignore SIGPIPE
       Error error = core::system::ignoreSignal(core::system::SigPipe);
@@ -1838,7 +1872,10 @@ int main (int argc, char * const argv[])
       // reflect stderr logging
       if (options.logStderr())
          log::addLogDestination(
-            std::shared_ptr<log::ILogDestination>(new log::StderrLogDestination(log::LogLevel::WARN)));
+            std::shared_ptr<log::ILogDestination>(new log::StderrLogDestination(
+                                                     core::system::generateShortenedUuid(),
+                                                     log::LogLevel::WARN,
+                                                     log::LogMessageFormatType::PRETTY)));
 
       // initialize monitor but stop its thread on exit
       initMonitorClient();
@@ -1852,7 +1889,7 @@ int main (int argc, char * const argv[])
       if (!options.standalone() && !options.verifyInstallation())
       {
          core::log::addLogDestination(
-            monitor::client().createLogDestination(log::LogLevel::WARN, options.programIdentity()));
+            monitor::client().createLogDestination(core::system::generateShortenedUuid(), log::LogLevel::WARN, options.programIdentity()));
       }
 
       // initialize file lock config
@@ -1886,7 +1923,7 @@ int main (int argc, char * const argv[])
       // Mirror the R getOptions("width") value in an environment variable
       core::system::setenv("RSTUDIO_CONSOLE_WIDTH",
                safe_convert::numberToString(rstudio::r::options::kDefaultWidth));
-
+ 
       // set the rstudio user identity environment variable (can differ from
       // username in debug configurations). this is provided so that
       // rpostback knows what local stream to connect back to
@@ -2105,23 +2142,29 @@ int main (int argc, char * const argv[])
       if (!desktopMode) // ignore r-libs-user in desktop mode
          rOptions.rLibsUser = options.rLibsUser();
 
+      // name of the source of the CRAN repo value (for logging)
+      std::string source;
+
       // CRAN repos configuration follows; order of precedence is:
       //
-      // 1. The user's personal preferences file (rstudio-prefs.json) or system-level version of
-      //    same
-      // 2. The repo settings specified in the loaded version of R
-      // 3. The session's repo settings (in rsession.conf/repos.conf)
-      // 4. The server's repo settings
-      // 5. The default repo settings from the preferences schema (user-prefs-schema.json)
-      // 6. If all else fails, cran.rstudio.com
+      // 1. The user's personal preferences file (rstudio-prefs.json), if CRAN repo editing is
+      //    permitted by policy
+      // 2. The system-wide preferences file (rstudio-prefs.json)
+      // 3. The repo settings specified in the loaded version of R
+      // 4. The session's repo settings (in rsession.conf/repos.conf)
+      // 5. The server's repo settings
+      // 6. The default repo settings from the preferences schema (user-prefs-schema.json)
+      // 7. If all else fails, cran.rstudio.com
       std::string layerName;
       auto val = prefs::userPrefs().readValue(kCranMirror, &layerName);
-      if (val && (layerName == kUserPrefsUserLayer ||
+      if (val && ((options.allowCRANReposEdit() && layerName == kUserPrefsUserLayer) ||
                   layerName == kUserPrefsSystemLayer))
       {
-         // There is a user-scoped value, so use it
+         // If we got here, either (a) there is a user value and the user is allowed to set their
+         // own CRAN repos, or (b) there's a system value, which we always respect
          rOptions.rCRANUrl = prefs::userPrefs().getCRANMirror().url;
          rOptions.rCRANSecondary = prefs::userPrefs().getCRANMirror().secondary;
+         source = layerName + "-level preference file";
       }
       else if (!core::system::getenv("RSTUDIO_R_REPO").empty())
       {
@@ -2134,34 +2177,43 @@ int main (int argc, char * const argv[])
          {
             std::string reposConfig = Options::parseReposConfig(reposFile);
             loadCranRepos(reposConfig, &rOptions);
+            source = reposFile.getAbsolutePath() + " via RSTUDIO_R_REPO environment variable";
          }
          else
          {
             rOptions.rCRANUrl = repo;
+            source = "RSTUDIO_R_REPO environment variable";
          }
       }
       else if (!options.rCRANMultipleRepos().empty())
       {
          // repo was specified in a repos file
          loadCranRepos(options.rCRANMultipleRepos(), &rOptions);
+         source = "repos file";
       }
       else if (!options.rCRANUrl().empty())
       {
          // Global server option
          rOptions.rCRANUrl = options.rCRANUrl();
+         source = "global session option";
       }
       else if (val && layerName == kUserPrefsDefaultLayer)
       {
          // If we found defaults in the prefs schema, use them.
          rOptions.rCRANUrl = prefs::userPrefs().getCRANMirror().url;
          rOptions.rCRANSecondary = prefs::userPrefs().getCRANMirror().secondary;
+         source = "preference defaults";
       }
       else
       {
          // Hard-coded repo of last resort so we don't wind up without a repo setting (users will
          // not be able to install packages without one)
          rOptions.rCRANUrl = "https://cran.rstudio.com/";
+         source = "hard-coded default";
       }
+
+      LOG_INFO_MESSAGE("Set CRAN URL for session to '" + rOptions.rCRANUrl + "' (source: " +
+            source + ")");
 
       rOptions.useInternet2 = prefs::userPrefs().useInternet2();
       rOptions.rCompatibleGraphicsEngineVersion =
@@ -2189,6 +2241,7 @@ int main (int argc, char * const argv[])
       // r callbacks
       rstudio::r::session::RCallbacks rCallbacks;
       rCallbacks.init = rInit;
+      rCallbacks.initComplete = rInitComplete;
       rCallbacks.consoleRead = console_input::rConsoleRead;
       rCallbacks.editFile = rEditFile;
       rCallbacks.showFile = rShowFile;
@@ -2209,6 +2262,10 @@ int main (int argc, char * const argv[])
       rCallbacks.showHelp = rShowHelp;
       rCallbacks.showMessage = rShowMessage;
       rCallbacks.serialization = rSerialization;
+      
+      // set test callback if enabled
+      if (options.runTests())
+         rCallbacks.runTests = rRunTests;
 
       // run r (does not return, terminates process using exit)
       error = rstudio::r::session::run(rOptions, rCallbacks);

@@ -310,6 +310,19 @@ test_context("RTokenizer")
       expect_true(rTokens.at(0).isType(RToken::STRING));
    }
    
+   test_that("escapes within symbol names are handled")
+   {
+      RTokens rTokens(L"`a \\` b`");
+      expect_true(rTokens.size() == 1);
+      expect_true(rTokens.at(0).isType(RToken::ID));
+   }
+   
+   test_that("knitr chunk embeds are handled")
+   {
+      RTokens rTokens(L"<<chunk>>");
+      expect_true(rTokens.size() == 1);
+   }
+   
 }
 
 } // namespace r_util

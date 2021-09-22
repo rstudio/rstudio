@@ -151,6 +151,7 @@ import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobOutputEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobRefreshEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobUpdatedEvent;
+import org.rstudio.studio.client.workbench.views.jobs.events.JobsActivateEvent;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobState;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobUpdate;
 import org.rstudio.studio.client.workbench.views.output.data.events.DataOutputCompletedEvent;
@@ -356,8 +357,8 @@ public class ClientEventDispatcher
          }
          else if (type == ClientEvent.FileEdit)
          {
-            FileSystemItem file = event.getData();
-            eventBus_.dispatchEvent(new FileEditEvent(file));
+            FileEditEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new FileEditEvent(data));
          }
          else if (type == ClientEvent.ShowContent)
          {
@@ -1100,6 +1101,16 @@ public class ClientEventDispatcher
          {
             JsArrayString commands = event.getData();
             eventBus_.dispatchEvent(new CommandCallbacksChangedEvent(commands));
+         }
+         else if (type == ClientEvent.ConsoleActivate)
+         {
+            boolean focusWindow = event.<Bool>getData().getValue();
+            eventBus_.dispatchEvent(new ConsoleActivateEvent(focusWindow));
+         }
+         else if (type == ClientEvent.JobsActivate)
+         {
+            JobsActivateEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new JobsActivateEvent(data));
          }
          else
          {

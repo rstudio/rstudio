@@ -134,6 +134,9 @@ export interface EditorSetMarkdownResult {
   // unrecoginized pandoc tokens
   unrecognized: string[];
 
+  // example lists?
+  example_lists: boolean;
+
   // unparsed meta
   unparsed_meta: { [key: string]: any };
 
@@ -485,7 +488,7 @@ export class Editor {
   ): Promise<EditorSetMarkdownResult> {
     // get the result
     const result = await this.pandocConverter.toProsemirror(markdown, this.pandocFormat);
-    const { doc, line_wrapping, unrecognized, unparsed_meta } = result;
+    const { doc, line_wrapping, unrecognized, example_lists, unparsed_meta } = result;
 
     // if we are preserving history but the existing doc is empty then create a new state
     // (resets the undo stack so that the initial setting of the document can't be undone)
@@ -515,7 +518,7 @@ export class Editor {
         // eat exceptions that might result from an invalid position
         try {
           setTextSelection(loc.pos)(tr);
-        } catch(e) {
+        } catch (e) {
           // do-nothing, this error can happen and shouldn't result in 
           // a failure to setMarkdown
         }
@@ -545,6 +548,7 @@ export class Editor {
       canonical,
       line_wrapping,
       unrecognized,
+      example_lists,
       unparsed_meta,
       location
     };
@@ -704,7 +708,7 @@ export class Editor {
 
   public navigate(type: NavigationType, location: string, recordCurrent = true, animate = false) {
     // perform navigation
-    const nav = navigateTo(this.view, type, location, animate);
+    const nav = navigateTo(this.view, this.format, type, location, animate);
 
     // emit event
     if (nav !== null) {

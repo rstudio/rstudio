@@ -67,9 +67,6 @@ export function texLength(text: string) {
   }
 }
 
-export function isSingleLineTex(tex: string) {
-  return tex.trimRight().split('\n').length === 1;
-}
 
 const LetterRegex = /[A-Za-z]/;
 function isLetter(ch: string) {

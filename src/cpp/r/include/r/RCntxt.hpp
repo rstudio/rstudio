@@ -45,17 +45,12 @@ public:
    RCntxt();
    explicit RCntxt(void *rawCntxt);
    bool operator==(const RCntxt& other) const;
+   bool operator!=(const RCntxt& other) const;
 
    // safe coercion to boolean
-   typedef void (*unspecified_bool_type)();
-   static void unspecified_bool_true() {};
-   operator unspecified_bool_type() const 
-   { 
-      return pCntxt_ ? unspecified_bool_true : 0;
-   }
-   bool operator!() const
+   explicit operator bool() const
    {
-      return !pCntxt_;
+      return pCntxt_ != nullptr;
    }
 
    // utility/accessor functions

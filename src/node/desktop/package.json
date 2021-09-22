@@ -1,93 +1,72 @@
 {
-  "name": "rstudio-desktop",
+  "name": "rstudio",
   "productName": "RStudio",
-  "version": "1.0.0",
-  "description": "RStudio IDE",
-  "main": ".webpack/main",
-  "scripts": {
-    "start": "electron-forge start",
-    "package": "electron-forge package",
-    "make": "electron-forge make",
-    "publish": "electron-forge publish",
-    "lint": "eslint --ext .ts .",
-    "test": "mocha --require ts-node/register"
-  },
+  "version": "0.0.1",
+  "description": "RStudio",
+  "main": "./.webpack/main",
+  "repository": "https://github.com/rstudio/rstudio",
+  "author": "RStudio PBC",
   "license": "AGPL-3.0-only",
-  "config": {
-    "forge": {
-      "packagerConfig": {},
-      "makers": [
-        {
-          "name": "@electron-forge/maker-squirrel",
-          "config": {
-            "name": "desktop"
-          }
-        },
-        {
-          "name": "@electron-forge/maker-zip",
-          "platforms": [
-            "darwin"
-          ]
-        },
-        {
-          "name": "@electron-forge/maker-deb",
-          "config": {}
-        },
-        {
-          "name": "@electron-forge/maker-rpm",
-          "config": {}
-        }
-      ],
-      "plugins": [
-        [
-          "@electron-forge/plugin-webpack",
-          {
-            "mainConfig": "./webpack.main.config.js",
-            "renderer": {
-              "config": "./webpack.renderer.config.js",
-              "entryPoints": [
-                {
-                  "html": "./src/index.html",
-                  "js": "./src/renderer.ts",
-                  "name": "main_window"
-                }
-              ]
-            }
-          }
-        ]
-      ]
-    }
+  "scripts": {
+    "clean": "ts-node scripts/clean.ts",
+    "package": "electron-forge package",
+    "lint": "eslint ./src ./test",
+    "start": "electron-forge start",
+    "test": "electron-mocha -c --config ./test/unit/mocharc.json",
+    "testcover": "nyc electron-mocha -c --config ./test/unit/mocharc.json",
+    "testint": "mocha -c --config ./test/int/mocharc.json",
+    "testintwip": "mocha -c -g WIP  --config ./test/int/mocharc.json",
+    "testwip": "electron-mocha -c -g WIP --config ./test/unit/mocharc.json",
+    "win-package": "yarn run package && ts-node scripts/package-helper",
+    "make": "electron-forge make"
   },
+  "config": {
+    "forge": "./forge.config.js"
+   },
   "devDependencies": {
-    "@babel/cli": "^7.13.10",
-    "@babel/core": "^7.13.10",
-    "@babel/node": "^7.13.10",
-    "@babel/preset-env": "^7.13.10",
-    "@babel/register": "^7.13.8",
-    "@electron-forge/cli": "^6.0.0-beta.54",
-    "@electron-forge/maker-deb": "^6.0.0-beta.54",
-    "@electron-forge/maker-rpm": "^6.0.0-beta.54",
-    "@electron-forge/maker-squirrel": "^6.0.0-beta.54",
-    "@electron-forge/maker-zip": "^6.0.0-beta.54",
-    "@electron-forge/plugin-webpack": "6.0.0-beta.54",
-    "@marshallofsound/webpack-asset-relocator-loader": "^0.5.0",
-    "@typescript-eslint/eslint-plugin": "^4.0.1",
-    "@typescript-eslint/parser": "^4.0.1",
-    "chai": "^4.3.3",
-    "css-loader": "^4.2.1",
-    "electron": "12.0.0",
-    "eslint": "^7.6.0",
-    "eslint-plugin-import": "^2.20.0",
-    "fork-ts-checker-webpack-plugin": "^5.0.14",
-    "mocha": "^8.3.1",
-    "node-loader": "^1.0.1",
-    "nodemon": "^2.0.7",
-    "style-loader": "^1.2.1",
-    "ts-loader": "^8.0.2",
-    "ts-node": "^9.1.1",
-    "typescript": "^4.0.2"
+    "@electron-forge/cli": "^6.0.0-beta.60",
+    "@electron-forge/maker-deb": "^6.0.0-beta.60",
+    "@electron-forge/maker-rpm": "^6.0.0-beta.60",
+    "@electron-forge/maker-squirrel": "^6.0.0-beta.60",
+    "@electron-forge/maker-zip": "^6.0.0-beta.60",
+    "@electron-forge/plugin-webpack": "6.0.0-beta.60",
+    "@vercel/webpack-asset-relocator-loader": "1.7.0",
+    "@tsconfig/node14": "^1.0.0",
+    "@types/chai": "^4.2.18",
+    "@types/crc": "^3.4.0",
+    "@types/line-reader": "^0.0.34",
+    "@types/mocha": "^8.2.2",
+    "@types/node": "^15.14.0",
+    "@types/sinon": "^10.0.2",
+    "@types/uuid": "^8.3.0",
+    "@typescript-eslint/eslint-plugin": "^4.28.5",
+    "@typescript-eslint/parser": "^4.28.5",
+    "chai": "^4.3.4",
+    "css-loader": "^6.0.0",
+    "electron": "^13.2.3",
+    "electron-mocha": "^10.0.0",
+    "eslint": "^7.31.0",
+    "eslint-config-standard": "^16.0.3",
+    "eslint-plugin-import": "^2.23.3",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^5.1.0",
+    "fork-ts-checker-webpack-plugin": "^6.0.1",
+    "mocha": "^8.4.0",
+    "node-loader": "^2.0.0",
+    "nyc": "^15.1.0",
+    "playwright": "^1.12.3",
+    "recursive-copy": "^2.0.13",
+    "sinon": "^11.1.1",
+    "style-loader": "^3.0.0",
+    "ts-loader": "^9.2.2",
+    "ts-node": "^10.0.0",
+    "typescript": "^4.3.5"
   },
   "dependencies": {
-    "electron-squirrel-startup": "^1.0.0"
+    "crc": "^3.8.0",
+    "electron-squirrel-startup": "^1.0.0",
+    "electron-store": "^8.0.0",
+    "line-reader": "^0.4.0",
+    "uuid": "^8.3.2"
   }
 }

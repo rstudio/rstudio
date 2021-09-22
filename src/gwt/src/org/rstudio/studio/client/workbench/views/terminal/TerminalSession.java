@@ -171,24 +171,24 @@ public class TerminalSession extends XTermWidget
             addHandlerRegistration(addXTermTitleHandler(TerminalSession.this));
             addHandlerRegistration(eventBus_.addHandler(SessionSerializationEvent.TYPE, TerminalSession.this));
             addHandlerRegistration(eventBus_.addHandler(ThemeChangedEvent.TYPE, TerminalSession.this));
-            addHandlerRegistration(uiPrefs_.blinkingCursor().bind(arg -> updateOption("cursorBlink", arg)));
+            addHandlerRegistration(uiPrefs_.blinkingCursor().bind(arg -> updateBooleanOption("cursorBlink", arg)));
             addHandlerRegistration(uiPrefs_.tabKeyMoveFocus().bind(arg -> setTabMovesFocus(arg)));
             addHandlerRegistration(uiPrefs_.terminalBellStyle().bind(arg ->
             {
                // don't enable bell if we aren't done loading, don't want beeps if reloading
                // previous output containing '\a'
                if (haveLoadedBuffer_)
-                  updateOption("bellStyle", arg);
+                  updateStringOption("bellStyle", arg);
             }));
             addHandlerRegistration(uiPrefs_.terminalRenderer().bind(arg ->
             {
-               updateOption("rendererType", arg);
+               updateStringOption("rendererType", arg);
                onResize();
             }));
             addHandlerRegistration(uiPrefs_.fontSizePoints().bind(arg ->
             {
-               updateOption("fontSize", XTermTheme.adjustFontSize(arg));
-               updateOption("lineHeight", XTermTheme.computeLineHeight());
+               updateDoubleOption("fontSize", XTermTheme.adjustFontSize(arg));
+               updateDoubleOption("lineHeight", XTermTheme.computeLineHeight());
                onResize();
             }));
 
@@ -934,7 +934,7 @@ public class TerminalSession extends XTermWidget
          @Override
          public void run()
          {
-            updateOption("bellStyle", uiPrefs_.terminalBellStyle().getValue());
+            updateStringOption("bellStyle", uiPrefs_.terminalBellStyle().getValue());
          }
       }.schedule(500);
       reloading_ = false;

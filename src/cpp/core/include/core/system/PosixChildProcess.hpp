@@ -16,6 +16,8 @@
 #ifndef CORE_SYSTEM_POSIX_CHILD_PROCESS_HPP
 #define CORE_SYSTEM_POSIX_CHILD_PROCESS_HPP
 
+#include <set>
+
 #include <boost/asio/io_service.hpp>
 
 #include <core/system/ChildProcess.hpp>
@@ -67,8 +69,8 @@ public:
 
    virtual Error terminate();
 
-   virtual bool hasNonWhitelistSubprocess() const;
-   virtual bool hasWhitelistSubprocess() const;
+   virtual bool hasNonIgnoredSubprocess() const;
+   virtual bool hasIgnoredSubprocess() const;
    virtual core::FilePath getCwd() const;
    virtual bool hasRecentOutput() const;
 
@@ -89,6 +91,10 @@ Error forkAndRun(const boost::function<int(void)>& func,
 // running as root requires the caller's real user id to be root
 // if this is not the case, the method will be run as the calling user
 Error forkAndRunPrivileged(const boost::function<int(void)>& func);
+
+// sends a signal to all child processes with the specified process name
+Error sendSignalToSpecifiedChildProcesses(const std::set<std::string>& procNames,
+                                          int signal);
 
 } // namespace system
 } // namespace core

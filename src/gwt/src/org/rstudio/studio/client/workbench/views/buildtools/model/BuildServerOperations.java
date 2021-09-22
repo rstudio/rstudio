@@ -15,10 +15,11 @@
 
 package org.rstudio.studio.client.workbench.views.buildtools.model;
 
+import org.rstudio.studio.client.quarto.model.QuartoServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.source.model.CppCapabilities;
 
-public interface BuildServerOperations
+public interface BuildServerOperations extends QuartoServerOperations
 {
    // check if we can build C/C++ code
    void getCppCapabilities(

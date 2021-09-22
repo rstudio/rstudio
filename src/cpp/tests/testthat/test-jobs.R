@@ -149,3 +149,68 @@ test_that("job tags can be set and retrieved", {
    expect_true(sum(job[["tags"]] == theTags) == length(theTags))
 })
 
+test_that("script jobs run and can be replayed", {
+   # helper function to wait for a job to finish running
+   wait_for_job <- function(id) {
+      tries <- 0
+
+      # wait 1/10th of a second before first query (have observed timing failures if we don't)
+      Sys.sleep(0.1)
+
+      # wait for the job to finish
+      repeat {
+         state <- .rs.tryCatch(.Call("rs_getJobState", id, PACKAGE = "(embedding)"))
+         if (identical(state, NULL)) {
+            stop("Job ", id, " does not exist.")
+         } else if (identical(state, "running") || identical(state, "idle")) {
+            # don't wait more than 5s for a job to finish (so we don't hang the test in pathological
+            # cases)
+            tries <- tries + 1
+            if (tries > 50) {
+               stop("Giving up on job ", id, " after 5 seconds (state: ", state, ")")
+               break
+            }
+
+            # wait 1/10th of a second before querying again (don't busy loop)
+            Sys.sleep(0.1)
+
+            # force background processing (needed so the process supervisor notices that the process
+            # has exited and marks the job as completed)
+            .Call("rs_performBackgroundProcessing", FALSE, PACKAGE = "(embedding)")
+         } else {
+            # stop waiting 
+            break
+         }
+      }
+   }
+
+   # tell the script job which file to create by creating a global variable
+   the_file <- tempfile(pattern = "test", fileext = ".txt")
+   assign("the_file", the_file, envir = globalenv())
+
+   # run the script job
+   job_id <- .rs.api.runScriptJob(
+      path = file.path(getwd(), "resources", "script-jobs", "create-file.R"),
+      name = "Test Job",
+      importEnv = TRUE)
+
+   # wait for the script job to finish running
+   wait_for_job(job_id)
+   expect_true(file.exists(the_file))
+
+   # clean up the file it made and verify that it's gone
+   unlink(the_file)
+   expect_false(file.exists(the_file))
+
+   # now replay the job to put the file back
+   .rs.api.executeJobAction(job_id, "replay")
+   wait_for_job(job_id)
+
+   # it should be back
+   expect_true(file.exists(the_file))
+
+   # clean it up one last time
+   unlink(the_file)
+})
+
+

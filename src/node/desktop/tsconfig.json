@@ -1,20 +1,27 @@
 {
+  "extends": "@tsconfig/node14/tsconfig.json",
   "compilerOptions": {
-    "allowJs": true,
-    "module": "commonjs",
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "noImplicitAny": true,
+    "incremental": true,
     "sourceMap": true,
-    "baseUrl": ".",
     "outDir": "dist",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
+    "removeComments": true,
+    "baseUrl": ".",
+    "strict": true,
     "paths": {
       "*": ["node_modules/*"]
-    }
+    },
+    "lib": [
+      "DOM",
+    ],
   },
   "include": [
-    "src/**/*"
-  ]
+    "src/**/*",
+    "test/**/*"
+  ],
+  "exclude": [
+    "node_modules"
+  ],
+  "ts-node": {
+    "transpileOnly": true
+  }
 }

@@ -38,6 +38,7 @@
 
 #include <r/RExec.hpp>
 #include <r/RErrorCategory.hpp>
+#include <r/RUtil.hpp>
 
 // clean out global definitions of TRUE and FALSE so we can
 // use the Rboolean variations of them
@@ -917,7 +918,7 @@ Error extract(SEXP valueSEXP, std::set<std::string>* pSet, bool asUtf8)
    return Success();
 }
 
-Error extract(SEXP valueSEXP, std::map< std::string, std::set<std::string> >* pMap, bool asUtf8)
+Error extract(SEXP valueSEXP, std::map<std::string, std::set<std::string>>* pMap, bool asUtf8)
 {
    if (TYPEOF(valueSEXP) != VECSXP)
       return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
@@ -940,6 +941,22 @@ Error extract(SEXP valueSEXP, std::map< std::string, std::set<std::string> >* pM
       pMap->operator [](name) = contents;
    }
    
+   return Success();
+}
+
+Error extract(SEXP valueSEXP, FilePath* pFilePath)
+{
+   // extract result (require UTF-8)
+   std::string path;
+   Error error = extract(valueSEXP, &path, true);
+   if (error)
+      return error;
+   
+   // expand aliased paths
+   path = r::util::expandFileName(path);
+   
+   // return path
+   *pFilePath = FilePath(path);
    return Success();
 }
 

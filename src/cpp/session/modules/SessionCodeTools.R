@@ -540,7 +540,7 @@
    if (is.character(name) && (length(name) != 1 || name == ""))
       return(NULL)
    
-   # Don't evaluate any functions -- blacklist any 'name' that contains a paren
+   # Don't evaluate any functions -- skip any 'name' that contains a paren
    if (is.character(name) && regexpr("(", name, fixed = TRUE) > 0)
       return(FALSE)
    
@@ -840,6 +840,13 @@
    gsub("([\\-\\[\\]\\{\\}\\(\\)\\*\\+\\?\\.\\,\\\\\\^\\$\\|\\#\\s])", "\\\\\\1", regex, perl = TRUE)
 })
 
+# Escapes HTML entities in a character vector (text); "attribute" is a boolean indicating whether
+# additional characters specific to HTML attributes should be escaped (newlines).
+.rs.addFunction("htmlEscape", function(text, attribute = FALSE)
+{
+   .Call("rs_htmlEscape", text, attribute, PACKAGE = "(embedding)")
+})
+
 .rs.addFunction("objectsOnSearchPath", function(token = "",
                                                 caseInsensitive = FALSE,
                                                 excludeGlobalEnv = FALSE)
@@ -946,6 +953,7 @@
    
    # interleave super classes after the corresponding original classes
    classes <- unlist(lapply(class(object), classAndSuper), recursive = TRUE)
+   
    # either remove or add an explicit (=non-mode) list/environment class
    classes <- if (excludeBaseClasses)
       setdiff(classes, c("list", "environment"))
@@ -954,12 +962,24 @@
    
    for (class in classes)
    {
-      method <- utils::getS3method(
-         f = ".DollarNames",
-         class = class,
-         envir = envir,
-         optional = TRUE
-      )
+      # support older getS3method() definitions (without envir)
+      method <- if ("envir" %in% names(formals(utils::getS3method)))
+      {
+         utils::getS3method(
+            f = ".DollarNames",
+            class = class,
+            optional = TRUE,
+            envir = envir
+         )
+      }
+      else
+      {
+         utils::getS3method(
+            f = ".DollarNames",
+            class = class,
+            optional = TRUE
+         )
+      }
       
       if (!is.null(method))
          return(method)
@@ -2068,9 +2088,24 @@
  
 })
 
-.rs.addFunction("deparse", function(object)
+# like deparse(), but always deparsed to a length-one character vector
+.rs.addFunction("deparse", function(object,
+                                    width.cutoff = 500L,
+                                    nlines       = -1L,
+                                    collapse     = " ")
 {
-   paste(deparse(object, width.cutoff = 500L), collapse = " ")
+   # deparse the call
+   deparsed <- deparse(
+      expr         = object,
+      width.cutoff = width.cutoff,
+      nlines       = nlines
+   )
+   
+   # un-escape our inline R objects
+   deparsed <- gsub("`<(.*?)>`", "<\\1>", deparsed, perl = TRUE)
+   
+   # paste to return as length-one character vector
+   paste(deparsed, collapse = collapse)
 })
 
 .rs.addFunction("ensureScalarCharacter", function(object)
@@ -2214,7 +2249,9 @@
       # https://bugs.r-project.org/bugzilla3/show_bug.cgi?id=17484
       # https://github.com/rstudio/rstudio/issues/3658
       #
-      Sys.setlocale()
+      if (getRversion() < "3.5.2")
+         Sys.setlocale()
+      
       return(character())
 
    }
@@ -2276,10 +2313,13 @@
 
          # check for runtime: shiny or parameters (requires the Shiny R package)
          runtime <- front[["runtime"]]
+         server <- front[["server"]]
          params  <- front[["params"]]
          if (identical(runtime, "shiny") || 
              identical(runtime, "shinyrmd") ||
              identical(runtime, "shiny_prerendered") ||
+             identical(server, "shiny") ||
+             (is.list(server) && identical(server[["type"]], "shiny")) ||
              !is.null(params))
          {
             discoveries[["shiny"]] <- TRUE

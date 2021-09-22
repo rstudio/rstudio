@@ -20,6 +20,10 @@
   padding-bottom: 3px;
 }
 
+.pm-ace-editor.pm-ace-has-output {
+  padding-bottom: 0px;
+}
+
 .ProseMirror .pm-ace-toolbar {
   position: absolute;
   right: 0;
@@ -75,4 +79,12 @@
   margin-bottom: 0px;
   margin-left: 4px;
   line-height: 145%;
+}
+
+/*
+ * Hide the first line when the editor is collapsed
+ */
+.pm-ace-collapsed .ace_text-layer .ace_line_group:first-child,
+.pm-ace-collapsed .ace_text-layer .ace_line_group:first-child span {
+  display: none;
 }

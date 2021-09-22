@@ -52,6 +52,8 @@
 #include <r/RRoutines.hpp>
 #include <r/RErrorCategory.hpp>
 
+#include <monitor/MonitorClient.hpp>
+
 #include <session/SessionClientEvent.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
@@ -484,6 +486,29 @@ core::Error renameFile(const core::json::JsonRpcRequest& request,
    if (error)
       LOG_ERROR(error);
 
+   return Success();
+}
+
+// IN: String newPath
+core::Error touchFile(const core::json::JsonRpcRequest& request,
+                       json::JsonRpcResponse* pResponse)
+{
+   // read params
+   std::string newPath;
+   Error error = json::readParams(request.params, &newPath);
+   if (error)
+      return error;
+
+   // if the destination already exists then send back file exists
+   FilePath destPath = module_context::resolveAliasedPath(newPath);
+   if (destPath.exists())
+      return fileExistsError(ERROR_LOCATION);
+   
+   // attempt to create the file
+   Error touchError = destPath.ensureFile();
+   if (touchError)
+      return touchError;
+   
    return Success();
 }
 
@@ -1113,11 +1138,27 @@ bool handleFileUploadRequestAsync(const http::Request& request,
    json::Object uploadJson;
    uploadJson["token"] = uploadTokenJson;
    uploadJson["overwrites"] = overwritesJson;
-   json::setJsonRpcResult(uploadJson, &response);
+
+   // write the JSON result, escaping HTML since the client requires text/html
+   // (see below)
+   json::JsonRpcResponse uploadResponse;
+   uploadResponse.setResult(uploadJson);
+   std::stringstream uploadResult;
+   uploadResponse.write(uploadResult);
+   Error error = response.setBody(string_utils::jsonHtmlEscape(uploadResult.str()));
+   if (error)
+   {
+      writeError(error);
+      return false;
+   }
 
    // response content type must always be text/html to be handled
    // properly by the browser/gwt on the client side
    response.setContentType("text/html");
+
+   // let the monitor client know we've started an upload
+   using namespace monitor;
+   client().logEvent(Event(kSessionScope, kSessionUploadEvent, pUploadState->fileName));
 
    cont(&response);
    cleanupState();
@@ -1211,6 +1252,13 @@ void handleMultipleFileExportRequest(const http::Request& request,
       pResponse->setError(error);
       return;
    }
+
+   for (std::string f: files)
+   {
+      // let the monitor client know the user has downloaded this file
+      using namespace monitor;
+      client().logEvent(Event(kSessionScope, kSessionDownloadEvent, f));
+   }
    
    // return attachment
    setAttachmentResponse(request, name, tempZipFilePath, pResponse);
@@ -1239,6 +1287,10 @@ void handleFileExportRequest(const http::Request& request,
          return;
       }
       
+      // let the monitor client know the user has downloaded this file
+      using namespace monitor;
+      client().logEvent(Event(kSessionScope, kSessionDownloadEvent, file));
+
       // download as attachment
       setAttachmentResponse(request, name, filePath, pResponse);
    }
@@ -1363,6 +1415,7 @@ Error initialize()
       (bind(registerRpcMethod, "copy_file", copyFile))
       (bind(registerRpcMethod, "move_files", moveFiles))
       (bind(registerRpcMethod, "rename_file", renameFile))
+      (bind(registerRpcMethod, "touch_file", touchFile))
       (bind(registerUriHandler, "/files", handleFilesRequest))
       (bind(registerUploadHandler, "/upload", handleFileUploadRequestAsync))
       (bind(registerUriHandler, "/export", handleFileExportRequest))

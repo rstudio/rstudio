@@ -1194,19 +1194,6 @@ core::Error UserPrefValues::setSourceWithEcho(bool val)
 }
 
 /**
- * Whether to initialize new projects with a Git repo by default.
- */
-bool UserPrefValues::newProjectGitInit()
-{
-   return readPref<bool>("new_project_git_init");
-}
-
-core::Error UserPrefValues::setNewProjectGitInit(bool val)
-{
-   return writePref("new_project_git_init", val);
-}
-
-/**
  * The default engine to use when processing Sweave documents.
  */
 std::string UserPrefValues::defaultSweaveEngine()
@@ -1922,16 +1909,16 @@ core::Error UserPrefValues::setBusyDetection(std::string val)
 }
 
 /**
- * A whitelist of apps that should not be considered busy in the Terminal.
+ * A list of apps that should not be considered busy in the Terminal.
  */
-core::json::Array UserPrefValues::busyWhitelist()
+core::json::Array UserPrefValues::busyExclusionList()
 {
-   return readPref<core::json::Array>("busy_whitelist");
+   return readPref<core::json::Array>("busy_exclusion_list");
 }
 
-core::Error UserPrefValues::setBusyWhitelist(core::json::Array val)
+core::Error UserPrefValues::setBusyExclusionList(core::json::Array val)
 {
-   return writePref("busy_whitelist", val);
+   return writePref("busy_exclusion_list", val);
 }
 
 /**
@@ -2036,6 +2023,19 @@ bool UserPrefValues::newProjGitInit()
 core::Error UserPrefValues::setNewProjGitInit(bool val)
 {
    return writePref("new_proj_git_init", val);
+}
+
+/**
+ * Whether an renv environment should be created inside new projects by default.
+ */
+bool UserPrefValues::newProjUseRenv()
+{
+   return readPref<bool>("new_proj_use_renv");
+}
+
+core::Error UserPrefValues::setNewProjUseRenv(bool val)
+{
+   return writePref("new_proj_use_renv", val);
 }
 
 /**
@@ -2637,6 +2637,19 @@ core::Error UserPrefValues::setVisualMarkdownEditingShowMargin(bool val)
 }
 
 /**
+ * Whether to show line numbers in the code editors used in visual mode
+ */
+bool UserPrefValues::visualMarkdownCodeEditorLineNumbers()
+{
+   return readPref<bool>("visual_markdown_code_editor_line_numbers");
+}
+
+core::Error UserPrefValues::setVisualMarkdownCodeEditorLineNumbers(bool val)
+{
+   return writePref("visual_markdown_code_editor_line_numbers", val);
+}
+
+/**
  * The default visual editing mode font size, in points
  */
 int UserPrefValues::visualMarkdownEditingFontSizePoints()
@@ -2909,6 +2922,32 @@ core::Error UserPrefValues::setSessionProtocolDebug(bool val)
    return writePref("session_protocol_debug", val);
 }
 
+/**
+ * When enabled, if the active project contains a Python virtual environment, then RStudio will automatically activate this environment on startup.
+ */
+bool UserPrefValues::pythonProjectEnvironmentAutomaticActivate()
+{
+   return readPref<bool>("python_project_environment_automatic_activate");
+}
+
+core::Error UserPrefValues::setPythonProjectEnvironmentAutomaticActivate(bool val)
+{
+   return writePref("python_project_environment_automatic_activate", val);
+}
+
+/**
+ * When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further.
+ */
+bool UserPrefValues::checkNullExternalPointers()
+{
+   return readPref<bool>("check_null_external_pointers");
+}
+
+core::Error UserPrefValues::setCheckNullExternalPointers(bool val)
+{
+   return writePref("check_null_external_pointers", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -3002,7 +3041,6 @@ std::vector<std::string> UserPrefValues::allKeys()
       kToolbarVisible,
       kDefaultProjectLocation,
       kSourceWithEcho,
-      kNewProjectGitInit,
       kDefaultSweaveEngine,
       kDefaultLatexProgram,
       kUseRoxygen,
@@ -3058,7 +3096,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kShowLauncherJobsTab,
       kLauncherJobsSort,
       kBusyDetection,
-      kBusyWhitelist,
+      kBusyExclusionList,
       kKnitWorkingDir,
       kDocOutlineShow,
       kLatexPreviewOnCursorIdle,
@@ -3067,6 +3105,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kGitDiffIgnoreWhitespace,
       kConsoleDoubleClickSelect,
       kNewProjGitInit,
+      kNewProjUseRenv,
       kRootDocument,
       kShowUserHomePage,
       kReuseSessionsForProjectLinks,
@@ -3113,6 +3152,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kVisualMarkdownEditingMaxContentWidth,
       kVisualMarkdownEditingShowDocOutline,
       kVisualMarkdownEditingShowMargin,
+      kVisualMarkdownCodeEditorLineNumbers,
       kVisualMarkdownEditingFontSizePoints,
       kVisualMarkdownCodeEditor,
       kZoteroLibraries,
@@ -3134,6 +3174,8 @@ std::vector<std::string> UserPrefValues::allKeys()
       kMemoryQueryIntervalSeconds,
       kTerminalPythonIntegration,
       kSessionProtocolDebug,
+      kPythonProjectEnvironmentAutomaticActivate,
+      kCheckNullExternalPointers,
    });
 }
    

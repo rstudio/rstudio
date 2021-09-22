@@ -877,7 +877,7 @@ public class RSConnectDeploy extends Composite
                      source_.getWebsiteDir() :
                   source_.getDeployFile() : 
             source_.getDeployDir();
-                  
+
       // getDeploymentFiles fails if we don't give it a source -- this should
       // never happen, but if it does this error message will be more useful
       if (StringUtil.isNullOrEmpty(fileSource))
@@ -893,6 +893,7 @@ public class RSConnectDeploy extends Composite
       server_.getDeploymentFiles(
             fileSource,
             asMultipleRmd_,
+            source_.isQuarto() ? source_.getSourceFile() : "",
             new ServerRequestCallback<RSConnectDeploymentFiles>()
             {
                @Override 
@@ -995,7 +996,7 @@ public class RSConnectDeploy extends Composite
                         display_.showMessage(GlobalDisplay.MSG_INFO, 
                               "Cannot Add File", 
                               "Only files in the same folder as the " +
-                              "document (" + sourceDir + ") or one of its " +
+                              "document (" + sourceDir.getPath() + ") or one of its " +
                               "sub-folders may be added.");
                         return;
                      }
@@ -1093,7 +1094,8 @@ public class RSConnectDeploy extends Composite
 
             setUnsanitizedAppName(appTitle);
          }
-         else if (contentType_ == RSConnect.CONTENT_TYPE_WEBSITE)
+         else if (contentType_ == RSConnect.CONTENT_TYPE_WEBSITE ||
+            contentType_ == RSConnect.CONTENT_TYPE_QUARTO_WEBSITE)
          {
             setUnsanitizedAppName(FilePathUtils.fileNameSansExtension(
                   source_.getWebsiteDir()));
@@ -1107,7 +1109,8 @@ public class RSConnectDeploy extends Composite
          illustration = new ImageResource2x(RESOURCES.publishPlotIllustration2x());
       else if (contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT)
          illustration = new ImageResource2x(RESOURCES.publishRmdIllustration2x());
-      else if (contentType_ == RSConnect.CONTENT_TYPE_HTML || contentType_ == RSConnect.CONTENT_TYPE_WEBSITE)
+      else if (contentType_ == RSConnect.CONTENT_TYPE_HTML || contentType_ == RSConnect.CONTENT_TYPE_WEBSITE ||
+               contentType_ == RSConnect.CONTENT_TYPE_QUARTO_WEBSITE)
          illustration = new ImageResource2x(RESOURCES.publishHTMLIllustration2x());
       else if (contentType_ == RSConnect.CONTENT_TYPE_PRES)
          illustration = new ImageResource2x(RESOURCES.publishPresentationIllustration2x());

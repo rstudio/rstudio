@@ -88,8 +88,11 @@ import org.rstudio.studio.client.projects.model.ProjectTemplateRegistryProvider;
 import org.rstudio.studio.client.projects.ui.newproject.CodeFilesList;
 import org.rstudio.studio.client.projects.ui.newproject.NewDirectoryPage;
 import org.rstudio.studio.client.projects.ui.newproject.NewPackagePage;
+import org.rstudio.studio.client.projects.ui.newproject.NewQuartoProjectPage;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesPane;
 import org.rstudio.studio.client.projects.ui.prefs.buildtools.BuildToolsPackagePanel;
+import org.rstudio.studio.client.quarto.QuartoNewDocument;
+import org.rstudio.studio.client.quarto.ui.QuartoNewDocumentDialog;
 import org.rstudio.studio.client.rmarkdown.RmdOutputSatellite;
 import org.rstudio.studio.client.rmarkdown.ui.RmdOutputFramePane;
 import org.rstudio.studio.client.rmarkdown.ui.RmdOutputFrameSatellite;
@@ -169,6 +172,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCompilePdfHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCppHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPresentationHelper;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetQuartoHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceBackgroundHighlighter;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorBackgroundLinkHighlighter;
@@ -192,6 +196,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeMarkdownWriter;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeNavigation;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNCommandHandler;
+import org.rstudio.studio.client.workbench.views.viewer.quarto.QuartoConnection;
 import org.rstudio.studio.client.workbench.views.environment.ClearAllDialog;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImport;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportDialog;
@@ -237,6 +242,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(TextEditingTargetSqlHelper sqlHelper);
    void injectMembers(TextEditingTargetChunks chunks);
    void injectMembers(TextEditingTargetPackageDependencyHelper packageDependencyHelper);
+   void injectMembers(TextEditingTargetQuartoHelper quartoHelper);
    void injectMembers(EditingTargetCodeExecution codeExecution);
    void injectMembers(LocalRepositoriesWidget localRepositoriesWidget);
    void injectMembers(CppCompletionRequest request);
@@ -340,6 +346,11 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(SourceColumnManager columnManager);
    void injectMembers(PythonPreferencesPaneBase<?> pane);
    void injectMembers(ConsoleInterpreterVersion version);
+   void injectMembers(QuartoNewDocument quartoNewDocument);
+   void injectMembers(QuartoNewDocumentDialog quartoNewDocumentDialog);
+   void injectMembers(NewQuartoProjectPage newProjectPage);
+   void injectMembers(QuartoConnection quartoMessageBus);
+
 
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

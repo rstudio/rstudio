@@ -115,8 +115,15 @@ generateRmd <- function (optionsJson, overlayOptionsJson) {
       stop(sprintf("No outputDocFile specified for %s config", configFile))
    }
    
-   rmd <- sprintf("## %s\n", configFile)
-   
+   # header for Quarto file
+   rmd <- paste("---",
+                paste0("title: \"", configFile, "\""),
+                "aliases:",
+                paste0("\t- /rstudio-configuration-1.html#", configFile),
+                "---",
+                "",
+                sep = "\n")
+
    docDescription <- metadata$docDescription
    if (is.null(docDescription)) {
       docDescription <- 
@@ -498,11 +505,9 @@ generateProgramOptions <- function (optionsJson, overlayOptionsJson) {
    binary <- str_replace(configFile, fixed(".conf"), "")
    buildOptions <- paste0(buildOptions,
                           "\n\n",
-                          sprintf("   FilePath defaultConfigPath = core::system::xdg::systemConfigFile(\"%s\");\n", configFile),
+                          sprintf("   FilePath defaultConfigPath = core::system::xdg::findSystemConfigFile(\"%s configuration\", \"%s\");\n", binary, configFile),
                           "   std::string configFile = defaultConfigPath.exists() ?\n",
                           "      defaultConfigPath.getAbsolutePath() : \"\";\n",
-                          "   if (!configFile.empty())\n",
-                          sprintf("      LOG_INFO_MESSAGE(\"Reading %s configuration from \" + configFile);\n\n", binary),
                           sprintf("   return program_options::OptionsDescription(\"%s\", configFile);", binary))
    
    # close out the buildOptions function

@@ -154,5 +154,8 @@ options(profvis.keep_output = TRUE)
 # indicate that we're not in a notebook by default
 options(rstudio.notebook.executing = FALSE)
 
+# avoid exceedingly-large deparsed line output
+.rs.setOptionDefault("deparse.max.lines", 20L)
+
 # provide a custom HTTP user agent
 .rs.initHttpUserAgent()

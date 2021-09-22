@@ -6,8 +6,7 @@ properties([
                               artifactNumToKeepStr: '',
                               daysToKeepStr: '',
                               numToKeepStr: '100')),
-    parameters([string(name: 'RSTUDIO_VERSION_MAJOR', defaultValue: '1', description: 'RStudio Major Version'),
-                string(name: 'RSTUDIO_VERSION_MINOR', defaultValue: '5', description: 'RStudio Minor Version'),
+    parameters([string(name: 'RSTUDIO_VERSION_PATCH', defaultValue: '0', description: 'RStudio Patch Version'),
                 string(name: 'SLACK_CHANNEL', defaultValue: '#ide-builds', description: 'Slack channel to publish build message.'),
                 string(name: 'OS_FILTER', defaultValue: '', description: 'Pattern to limit builds by matching OS'),
                 string(name: 'ARCH_FILTER', defaultValue: '', description: 'Pattern to limit builds by matching ARCH'),
@@ -17,12 +16,7 @@ properties([
 
 def compile_package(os, type, flavor, variant) {
   // start with major, minor, and patch versions
-  def envVars = "RSTUDIO_VERSION_MAJOR=${rstudioVersionMajor} RSTUDIO_VERSION_MINOR=${rstudioVersionMinor} RSTUDIO_VERSION_PATCH=${rstudioVersionPatch}"
-
-  // add version suffix if present
-  if (rstudioVersionSuffix != 0) {
-   envVars = "${envVars} RSTUDIO_VERSION_SUFFIX=${rstudioVersionSuffix}"
-  }
+  def envVars = "RSTUDIO_VERSION_MAJOR=${rstudioVersionMajor} RSTUDIO_VERSION_MINOR=${rstudioVersionMinor} RSTUDIO_VERSION_PATCH=${rstudioVersionPatch} RSTUDIO_VERSION_SUFFIX=${rstudioVersionSuffix}"
 
   // add OS that the package was built for
   envVars = "${envVars} PACKAGE_OS=\"${os}\""
@@ -41,13 +35,13 @@ def compile_package(os, type, flavor, variant) {
   }
 }
 
-def run_tests(type, flavor, variant) {
+def run_tests(os, type, flavor) {
   try {
     // attempt to run ant (gwt) unit tests
     sh "cd package/linux/build-${flavor.capitalize()}-${type}/src/gwt && ./gwt-unit-tests.sh"
   } catch(err) {
     // mark build as unstable if it fails unit tests
-    currentBuild.result = "UNSTABLE"
+    unstable("GWT unit tests failed (${flavor.capitalize()} ${type} on ${os})")
   }
 
 
@@ -55,7 +49,7 @@ def run_tests(type, flavor, variant) {
     // attempt to run cpp unit tests
     sh "cd package/linux/build-${flavor.capitalize()}-${type}/src/cpp && ./rstudio-tests"
   } catch(err) {
-    currentBuild.result = "UNSTABLE"
+    unstable("C++ unit tests failed (${flavor.capitalize()} ${type} on ${os})")
   }
 }
 
@@ -76,8 +70,15 @@ def s3_upload(type, flavor, os, arch) {
   sh "mv ${buildFolder}/${packageFile} ${buildFolder}/${renamedFile}"
   packageFile = renamedFile
 
+  def buildType = sh (
+    script: "cat version/BUILDTYPE",
+    returnStdout: true
+  ).trim().toLowerCase()
+
+  def buildDest =  "s3://rstudio-ide-build/${flavor}/${os}/${arch}/"
+
   // copy installer to s3
-  sh "aws s3 cp ${buildFolder}/${packageFile} s3://rstudio-ide-build/${flavor}/${os}/${arch}/"
+  sh "aws s3 cp ${buildFolder}/${packageFile} ${buildDest}"
 
   // add installer-less tarball if desktop
   if (flavor == "desktop") {
@@ -94,12 +95,17 @@ def s3_upload(type, flavor, os, arch) {
     sh "mv ${buildFolder}/_CPack_Packages/Linux/${type}/${tarballFile} ${buildFolder}/_CPack_Packages/Linux/${type}/${renamedTarballFile}"
     tarballFile = renamedTarballFile
 
-    sh "aws s3 cp ${buildFolder}/_CPack_Packages/Linux/${type}/${tarballFile} s3://rstudio-ide-build/${flavor}/${os}/${arch}/"
+    sh "aws s3 cp ${buildFolder}/_CPack_Packages/Linux/${type}/${tarballFile} ${buildDest}"
   }
 
   // update daily build redirect
   withCredentials([file(credentialsId: 'www-rstudio-org-pem', variable: 'wwwRstudioOrgPem')]) {
     sh "docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${arch}/${packageFile} ${wwwRstudioOrgPem}"
+    // for the last linux build, on OS only we also update windows to avoid the need for publish-daily-binary.bat
+    if (flavor == "desktop" && os == "centos8") {
+       def packageName = "RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
+       sh "docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/desktop/windows/${packageName}.exe ${wwwRstudioOrgPem}"
+    }
   }
 }
 
@@ -176,6 +182,7 @@ def trigger_external_build(build_name, wait = false) {
 messagePrefix = "Jenkins ${env.JOB_NAME} build: <${env.BUILD_URL}display/redirect|${env.BUILD_DISPLAY_NAME}>"
 
 try {
+
     timestamps {
         def containers = [
           [os: 'opensuse',   arch: 'x86_64', flavor: 'server',  variant: '',    package_os: 'OpenSUSE'],
@@ -201,23 +208,25 @@ try {
                 container.inside() {
                     stage('bump version') {
                         def rstudioVersion = sh (
-                          script: "docker/jenkins/rstudio-version.sh bump ${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}",
+                          script: "docker/jenkins/rstudio-version.sh bump ${params.RSTUDIO_VERSION_PATCH}",
                           returnStdout: true
                         ).trim()
                         echo "RStudio build version: ${rstudioVersion}"
-                        def components = rstudioVersion.split('\\.')
 
-                        // extract major / minor version
-                        rstudioVersionMajor = components[0]
-                        rstudioVersionMinor = components[1]
+                        // Split on [-+] first to avoid having to worry about splitting out .pro<n>
+                        def version = rstudioVersion.split('[-+]')
 
-                        // extract patch and suffix if present
-                        def patch = components[2].split('-')
-                        rstudioVersionPatch = patch[0]
-                        if (patch.length > 1)
-                            rstudioVersionSuffix = patch[1]
+                        // extract major / minor /patch version
+                        def majorComponents = version[0].split('\\.')
+                        rstudioVersionMajor = majorComponents[0]
+                        rstudioVersionMinor = majorComponents[1]
+                        rstudioVersionPatch = majorComponents[2]
+
+                        // Extract suffix
+                        if (version.length > 2)
+                            rstudioVersionSuffix = '-' + version[1] + '+' + version[2]
                         else
-                            rstudioVersionSuffix = 0
+                            rstudioVersionSuffix = '+' + version[1]
 
                         // update slack message to include build version
                         messagePrefix = "Jenkins ${env.JOB_NAME} build: <${env.BUILD_URL}display/redirect|${env.BUILD_DISPLAY_NAME}>, version: ${rstudioVersion}"
@@ -312,7 +321,7 @@ try {
                                 compile_package(current_container.package_os, get_type_from_os(current_container.os), current_container.flavor, current_container.variant)
                             }
                             stage('run tests') {
-                                run_tests(get_type_from_os(current_container.os), current_container.flavor, current_container.variant)
+                                run_tests(current_container.os, get_type_from_os(current_container.os), current_container.flavor)
                             }
                             stage('sentry upload') {
                                 sentry_upload(get_type_from_os(current_container.os), current_container.flavor)
@@ -342,7 +351,7 @@ try {
                 }
               }
               stage('build'){
-                def env = "set \"RSTUDIO_VERSION_MAJOR=${rstudioVersionMajor}\" && set \"RSTUDIO_VERSION_MINOR=${rstudioVersionMinor}\" && set \"RSTUDIO_VERSION_PATCH=${rstudioVersionPatch}\""
+                def env = "set \"RSTUDIO_VERSION_MAJOR=${rstudioVersionMajor}\" && set \"RSTUDIO_VERSION_MINOR=${rstudioVersionMinor}\" && set \"RSTUDIO_VERSION_PATCH=${rstudioVersionPatch}\" && set \"RSTUDIO_VERSION_SUFFIX=${rstudioVersionSuffix}\""
                 bat "cd package/win32 && ${env} && set \"PACKAGE_OS=Windows\" && make-package.bat clean && cd ../.."
               }
               stage('tests'){
@@ -354,9 +363,13 @@ try {
                 }
               }
               stage('sign') {
+
+                def packageName = "RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}-RelWithDebInfo"
+
                 withCredentials([file(credentialsId: 'ide-windows-signing-pfx', variable: 'pfx-file'), string(credentialsId: 'ide-pfx-passphrase', variable: 'pfx-passphrase')]) {
-                  bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.17134.0\\x86\\signtool\" sign /f %pfx-file% /p %pfx-passphrase% /v /ac package\\win32\\cert\\After_10-10-10_MSCV-VSClass3.cer /n \"RStudio, Inc.\" /t http://timestamp.digicert.com  package\\win32\\build\\RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}-RelWithDebInfo.exe"
-                  bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.17134.0\\x86\\signtool\" verify /v /kp package\\win32\\build\\RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}-RelWithDebInfo.exe"
+                  bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.17134.0\\x86\\signtool\" sign /f %pfx-file% /p %pfx-passphrase% /v /debug /n \"RStudio PBC\" /t http://timestamp.digicert.com  package\\win32\\build\\${packageName}.exe"
+
+                  bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.17134.0\\x86\\signtool\" verify /v /pa package\\win32\\build\\${packageName}.exe"
                 }
               }
               stage('upload debug symbols') {
@@ -372,11 +385,16 @@ try {
                 }
               }
               stage('upload') {
+
+                def buildDest = "s3://rstudio-ide-build/desktop/windows"
+                def packageName = "RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
+
                 // windows docker container cannot reach instance-metadata endpoint. supply credentials at upload.
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'jenkins-aws']]) {
-                  bat "aws s3 cp package\\win32\\build\\RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}-RelWithDebInfo.exe s3://rstudio-ide-build/desktop/windows/RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}.exe"
-                  bat "aws s3 cp package\\win32\\build\\RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}-RelWithDebInfo.zip s3://rstudio-ide-build/desktop/windows/RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}.zip"
+                  bat "aws s3 cp package\\win32\\build\\${packageName}-RelWithDebInfo.exe ${buildDest}/${packageName}.exe"
+                  bat "aws s3 cp package\\win32\\build\\${packageName}-RelWithDebInfo.zip ${buildDest}/${packageName}.zip"
                 }
+
               }
             }
           }
@@ -408,4 +426,3 @@ try {
    slackSend channel: params.get('SLACK_CHANNEL', '#ide-builds'), color: 'bad', message: "${messagePrefix} failed: ${err}"
    error("failed: ${err}")
 }
-

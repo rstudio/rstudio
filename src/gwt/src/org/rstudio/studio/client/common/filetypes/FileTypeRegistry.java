@@ -101,17 +101,19 @@ public class FileTypeRegistry
 
    public static final RWebContentFileType RMARKDOWN =
          new RWebContentFileType("r_markdown", "R Markdown", EditorLanguage.LANG_RMARKDOWN,
-                              ".Rmd", new ImageResource2x(ICONS.iconRmarkdown2x()), true);
+                              ".Rmd", new ImageResource2x(ICONS.iconRmarkdown2x()), true, true, true);
 
    public static final RWebContentFileType RNOTEBOOK =
          new RWebContentFileType("r_notebook", "R Notebook", EditorLanguage.LANG_RMARKDOWN,
                                  ".nb.html", new ImageResource2x(ICONS.iconRnotebook2x()), true);
+   
+   public static final QuartoFileType QUARTO = new QuartoFileType();
 
    public static final RWebContentFileType RPRESENTATION = new RPresentationFileType();
 
    public static final WebContentFileType MARKDOWN =
       new WebContentFileType("markdown", "Markdown", EditorLanguage.LANG_MARKDOWN,
-                           ".md", new ImageResource2x(ICONS.iconMarkdown2x()), true);
+                           ".md", new ImageResource2x(ICONS.iconMarkdown2x()), true, true);
 
 
    public static final RWebContentFileType RHTML =
@@ -120,7 +122,7 @@ public class FileTypeRegistry
 
    public static final WebContentFileType HTML =
          new WebContentFileType("html", "HTML", EditorLanguage.LANG_HTML,
-                              ".html", new ImageResource2x(ICONS.iconHTML2x()), false);
+                              ".html", new ImageResource2x(ICONS.iconHTML2x()), false, true);
 
    public static final TextFileType CSS =
          new TextFileType("css", "CSS", EditorLanguage.LANG_CSS, ".css",
@@ -383,8 +385,10 @@ public class FileTypeRegistry
       register("*.scss", SCSS, new ImageResource2x(icons.iconScss2x()));
       register("*.js", JS, new ImageResource2x(icons.iconJavascript2x()));
       register("*.ts", JS, new ImageResource2x(icons.iconJavascript2x()));
+      register("*.ojs", JS, new ImageResource2x(icons.iconJavascript2x()));
       register("*.json", JSON, new ImageResource2x(icons.iconJavascript2x()));
       register("*.rmd", RMARKDOWN, new ImageResource2x(icons.iconRmarkdown2x()));
+      register("*.qmd", QUARTO, new ImageResource2x(icons.iconQuarto2x()));
       register("*.rmarkdown", RMARKDOWN, new ImageResource2x(icons.iconRmarkdown2x()));
       register("*.nb.html", RNOTEBOOK, new ImageResource2x(icons.iconRnotebook2x()));
       register("*.rpres", RPRESENTATION, new ImageResource2x(icons.iconRpresentation2x()));

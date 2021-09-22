@@ -45,6 +45,7 @@ import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.zoom.ZoomUtils;
 import org.rstudio.studio.client.plumber.events.PlumberAPIStatusEvent;
 import org.rstudio.studio.client.plumber.model.PlumberAPIParams;
+import org.rstudio.studio.client.quarto.model.QuartoNavigate;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -88,12 +89,20 @@ public class ViewerPresenter extends BasePresenter
       void previewRmd(RmdPreviewParams params);
       void previewShiny(ShinyApplicationParams params);
       void previewPlumber(PlumberAPIParams params);
+      void previewQuarto(String url, QuartoNavigate quartoNav);
       HandlerRegistration addLoadHandler(LoadHandler handler);
       String getUrl();
       String getTitle();
       void popout();
       void refresh();
+      void editSource();
       Size getViewerFrameSize();
+      
+      // view can take over navigation
+      boolean hasNavigationHandlers();
+      void navigateForward();
+      void navigateBack();
+      
    }
 
    @Inject
@@ -191,7 +200,12 @@ public class ViewerPresenter extends BasePresenter
          else if (ensureHeight > 0)
             display_.ensureHeight(ensureHeight);
 
-         navigate(event.getURL());
+         
+         QuartoNavigate quartoNav = event.getQuartoNavigate();
+         if (quartoNav != null)
+            navigateQuarto(event.getURL(), quartoNav);
+         else
+            navigate(event.getURL());
 
          if (event.isHTMLWidget())
             updateZoomWindow(display_.getUrl());
@@ -299,13 +313,19 @@ public class ViewerPresenter extends BasePresenter
    @Handler
    public void onViewerBack()
    {
-      server_.viewerBack(new VoidServerRequestCallback());
+      if (display_.hasNavigationHandlers())
+         display_.navigateBack();
+      else
+         server_.viewerBack(new VoidServerRequestCallback());
    }
 
    @Handler
    public void onViewerForward()
    {
-      server_.viewerForward(new VoidServerRequestCallback());
+      if (display_.hasNavigationHandlers())
+         display_.navigateForward();
+      else
+         server_.viewerForward(new VoidServerRequestCallback());
    }
 
    @Handler
@@ -488,12 +508,25 @@ public class ViewerPresenter extends BasePresenter
    {
       stop(true);
    }
+   
+   @Handler
+   public void onViewerEditSource()
+   {
+      display_.editSource();
+   }
 
    private void navigate(String url)
    {
       if (Desktop.hasDesktopFrame())
          Desktop.getFrame().setViewerUrl(StringUtil.notNull(url));
       display_.navigate(url);
+   }
+
+   private void navigateQuarto(String url, QuartoNavigate quartoNav)
+   {
+      if (Desktop.hasDesktopFrame())
+         Desktop.getFrame().setViewerUrl(StringUtil.notNull(url));
+      display_.previewQuarto(url, quartoNav);
    }
 
    private void updateZoomWindow(String url)
@@ -558,7 +591,7 @@ public class ViewerPresenter extends BasePresenter
 
    private void manageCommands(boolean enable)
    {
-      manageCommands(enable, false, false, false);
+      manageCommands(enable, false, false, false, null);
    }
 
    private void manageCommands(boolean enable, ViewerNavigateEvent event)
@@ -566,23 +599,42 @@ public class ViewerPresenter extends BasePresenter
       manageCommands(enable,
                      event.isHTMLWidget(),
                      event.getHasNext(),
-                     event.getHasPrevious());
+                     event.getHasPrevious(),
+                     event.getQuartoNavigate());
    }
 
    private void manageCommands(boolean enable,
                                boolean isHTMLWidget,
                                boolean hasNext,
-                               boolean hasPrevious)
+                               boolean hasPrevious,
+                               QuartoNavigate quartoNav)
    {
       commands_.viewerPopout().setEnabled(enable);
       commands_.viewerRefresh().setEnabled(enable);
       commands_.viewerClear().setEnabled(enable);
-      commands_.viewerClearAll().setEnabled(enable);
+      
 
-      commands_.viewerBack().setEnabled(hasPrevious);
-      commands_.viewerBack().setVisible(isHTMLWidget);
-      commands_.viewerForward().setEnabled(hasNext);
-      commands_.viewerForward().setVisible(isHTMLWidget);
+      if (quartoNav != null)
+      {
+         boolean website = quartoNav.isWebsite();
+         commands_.viewerClearAll().setVisible(false);
+         commands_.viewerBack().setEnabled(website);
+         commands_.viewerBack().setVisible(website);
+         commands_.viewerForward().setEnabled(website);
+         commands_.viewerForward().setVisible(website);
+         commands_.viewerEditSource().setVisible(quartoNav.getSourceFile() != null);
+      }
+      else
+      {
+         commands_.viewerClearAll().setVisible(true);
+         commands_.viewerClearAll().setEnabled(enable); 
+         commands_.viewerBack().setEnabled(hasPrevious);
+         commands_.viewerBack().setVisible(isHTMLWidget);
+         commands_.viewerForward().setEnabled(hasNext);
+         commands_.viewerForward().setVisible(isHTMLWidget);
+         commands_.viewerEditSource().setVisible(false);
+      }
+      
       commands_.viewerZoom().setEnabled(enable);
       commands_.viewerZoom().setVisible(isHTMLWidget);
 

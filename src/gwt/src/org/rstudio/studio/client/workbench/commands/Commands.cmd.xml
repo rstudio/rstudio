@@ -47,8 +47,9 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="newSourceDoc"/>
             <separator/>
             <cmd refid="newRNotebook"/>
-            <separator/>
             <cmd refid="newRMarkdownDoc"/>
+            <cmd refid="newQuartoDoc"/>
+            <separator/>
             <cmd refid="newRShinyApp"/>
             <cmd refid="newRPlumberDoc"/>
             <separator/>
@@ -142,9 +143,11 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="saveAllSourceDocs"/>
          <separator/>
          <cmd refid="knitDocument"/>
+         <cmd refid="quartoRenderDocument"/>
          <cmd refid="previewHTML"/>
          <cmd refid="compilePDF"/>
          <cmd refid="compileNotebook"/>
+         <cmd refid="runDocumentFromServerDotR"/>
          <separator/>
          <cmd refid="rsconnectDeploy"/>
          <separator/>
@@ -403,6 +406,8 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="rebuildAll"/>
          <cmd refid="cleanAll"/>
          <separator/>
+         <cmd refid="serveQuartoSite"/>
+         <separator/>
          <cmd refid="testPackage"/>
          <separator/>
          <cmd refid="checkPackage"/>
@@ -515,6 +520,7 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="helpKeyboardShortcuts"/>
          <cmd refid="modifyKeyboardShortcuts"/>
+         <cmd refid="editCodeSnippets"/>
          <cmd refid="showCommandPalette"/>
          <separator/>
          <cmd refid="projectOptions"/>
@@ -802,9 +808,13 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="compilePDF" value="Ctrl+Shift+K" disableModes="sublime"/>
          <shortcut refid="previewHTML" value="Ctrl+Shift+K" disableModes="sublime"/>
          <shortcut refid="knitDocument" value="Ctrl+Shift+K" disableModes="sublime"/>
+         <shortcut refid="quartoRenderDocument" value="Ctrl+Shift+K" disableModes="sublime"/>
+         <shortcut refid="runDocumentFromServerDotR" value="Ctrl+Shift+K" disableModes="sublime"/>
          <shortcut refid="compilePDF" value="Meta+Shift+K" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="previewHTML" value="Meta+Shift+K" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="knitDocument" value="Meta+Shift+K" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="quartoRenderDocument" value="Meta+Shift+K" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="runDocumentFromServerDotR" value="Meta+Shift+K" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="buildAll" value="Cmd+Shift+B"/>
          <shortcut refid="devtoolsLoadAll" value="Cmd+Shift+L" disableModes="sublime"/>
          <shortcut refid="devtoolsLoadAll" value="Ctrl+Shift+L" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
@@ -854,7 +864,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut value="Tab|Ctrl+Space" title="Complete Code" />
          <shortcut refid="quitSession" value="Cmd+Q" if="org.rstudio.studio.client.application.Desktop.isDesktop()"/>
          <shortcut refid="restartR" value="Meta+Shift+0" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         <shortcut refid="restartR" value="Cmd+Shift+F10"/>
+         <shortcut refid="restartR" value="Cmd+Shift+F10" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="previousPlot" value="Cmd+Shift+PageUp" />
          <shortcut refid="nextPlot" value="Cmd+Shift+PageDown" />
          <shortcut refid="previousPlot" value="Cmd+Alt+F11" />
@@ -1092,6 +1102,16 @@ well as menu structures (for main menu and popup menus).
         desc="Create a new R Markdown document"
         rebindable="false"/>
 
+   <cmd id="newQuartoDoc"
+        menuLabel="_Quarto Doc..."
+        desc="Create a new Quarto document"
+        rebindable="false"/>
+        
+   <cmd id="serveQuartoSite"
+        menuLabel="_Serve Site"
+        desc="Run development server for Quarto site"
+        rebindable="false"/>      
+
    <cmd id="newRShinyApp"
         menuLabel="Shiny _Web App..."
         desc="Create a new Shiny web application"
@@ -1113,7 +1133,7 @@ well as menu structures (for main menu and popup menus).
         rebindable="false"/>
 
    <cmd id="newSqlDoc"
-        menuLabel="S_QL Script"
+        menuLabel="SQ_L Script"
         desc="Create a new SQL script"
         rebindable="false"/>
 
@@ -2018,6 +2038,11 @@ well as menu structures (for main menu and popup menus).
         buttonLabel=""
         menuLabel="Source with _Echo"
         desc="Source the contents of the active document (with echo)"/>
+        
+   <cmd id="runDocumentFromServerDotR"
+        buttonLabel="Run Document"
+        menuLabel="Run _Document"
+        desc="Run the interactive document"/>
 
    <cmd id="commentUncomment"
         label="Comment / Uncomment Selection"
@@ -2213,6 +2238,13 @@ well as menu structures (for main menu and popup menus).
         desc="Knit the current document"
         context="r"/>
 
+   <cmd id="quartoRenderDocument"
+        label="Render Current Document"
+        buttonLabel="Render"
+        menuLabel="_Render Document"
+        desc="Render the current document"
+        context="r"/>
+
    <cmd id="previewHTML"
         label="Preview Document as HTML"
         buttonLabel="Preview"
@@ -2302,6 +2334,102 @@ well as menu structures (for main menu and popup menus).
         context="files"
         desc="Create a new folder"/>
 
+   <cmd id="touchSourceDoc"
+        label="Create a Blank R script in current directory"
+        buttonLabel=""
+        menuLabel="_R Script"
+        desc="Create a blank R script in current directory"/>
+
+   <cmd id="touchTextDoc"
+        menuLabel="_Text File"
+        desc="Create a blank text file in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchCDoc"
+        menuLabel="_C File"
+        desc="Create a blank C file in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchCppDoc"
+        menuLabel="_C++ File"
+        desc="Create a blank C++ file in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchHeaderDoc"
+        menuLabel="_Header File"
+        desc="Create a blank header file in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchMarkdownDoc"
+        menuLabel="_Markdown File"
+        desc="Create a blank Markdown document in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchPythonDoc"
+        menuLabel="_Python Script"
+        desc="Create a blank Python script in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchShellDoc"
+        menuLabel="_Shell Script"
+        desc="Create a blank shell script in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchStanDoc"
+        menuLabel="_Stan File"
+        desc="Create a blank Stan program in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchHtmlDoc"
+        menuLabel="_HTML File"
+        desc="Create a blank HTML file in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchJavaScriptDoc"
+        menuLabel="_JavaScript File"
+        desc="Create a blank JavaScript file in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchCssDoc"
+        menuLabel="_CSS File"
+        desc="Create a blank CSS file in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchD3Doc"
+        menuLabel="_D3 Script"
+        desc="Create a blank D3 script in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchSweaveDoc"
+        menuLabel="R _Sweave"
+        desc="Create a blank R Sweave document in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchRMarkdownDoc"
+        menuLabel="R _Markdown..."
+        desc="Create a blank R Markdown document in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchQuartoDoc"
+        menuLabel="_Quarto Doc..."
+        desc="Create a blank Quarto document in current directory"
+        rebindable="false"/>
+        
+   <cmd id="serveQuartoSite"
+        menuLabel="_Serve Site"
+        desc="Run development server for Quarto site in current directory"
+        rebindable="false"/>      
+
+   <cmd id="touchRHTMLDoc"
+        menuLabel="R _HTML"
+        desc="Create a blank R HTML document in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchSqlDoc"
+        menuLabel="SQ_L Script"
+        desc="Create a new SQL script in current directory"
+        rebindable="false"/>
+
    <cmd id="uploadFile"
         label="Upload Files..."
         menuLabel="Upload Files..."
@@ -2374,6 +2502,16 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="copyFilesPaneCurrentDirectory"
         label="Copy Folder Path to Clipboard"
+        context="files"
+        rebindable="false"/>
+
+   <cmd id="openFilesInSinglePane"
+        label="Open Selected in Source Pane"
+        context="files"
+        rebindable="false"/>
+
+   <cmd id="openEachFileInColumns"
+        label="Open Each File in New Columns"
         context="files"
         rebindable="false"/>
 
@@ -2780,12 +2918,6 @@ well as menu structures (for main menu and popup menus).
         windowMode="main"/>
 
    <cmd id="importDatasetFromSAV"
-        label="Import Dataset from SAV..."
-        menuLabel="From _SAV..."
-        context="import"
-        windowMode="main"/>
-
-   <cmd id="importDatasetFromSAV"
         label="Import Dataset from SPSS..."
         menuLabel="From _SPSS..."
         context="import"
@@ -3076,6 +3208,11 @@ well as menu structures (for main menu and popup menus).
         desc="Modify keyboard shortcuts"
         windowMode="main"/>
 
+   <cmd id="editCodeSnippets"
+        menuLabel="_Edit Code Snippets..."
+        desc="Edit code snippets"
+        windowMode="main"/>
+
    <cmd id="checkForUpdates"
         label="Check for RStudio Updates"
         menuLabel="Check for _Updates"
@@ -3202,6 +3339,11 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="viewerRefresh"
         desc="Refresh viewer"
+        rebindable="false"
+        context="viewer"/>
+        
+   <cmd id="viewerEditSource"
+        desc="Edit source file"
         rebindable="false"
         context="viewer"/>
 

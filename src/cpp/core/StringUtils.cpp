@@ -15,6 +15,8 @@
 
 #include <core/StringUtils.hpp>
 
+#include <stdarg.h>
+
 #include <algorithm>
 #include <map>
 #include <ostream>
@@ -453,6 +455,20 @@ std::string jsonLiteralEscape(const std::string& str)
 
    return escape(escapes, subs, str);
 }
+
+// Escapes possible HTML inside JSON strings. Generally not necessary unless there is a chance
+// the JSON could be misconstrued by the browser as HTML.
+std::string jsonHtmlEscape(const std::string& str)
+{
+   std::string escapes = "<>";
+   std::map<char, std::string> subs;
+
+   subs['<'] = "\\u003c"; // JSON unicode character encoding
+   subs['>'] = "\\u003e"; // JSON unicode character encoding
+
+   return escape(escapes, subs, str);
+}
+
 // The str that is passed in should INCLUDE the " " around the value!
 // (Sorry this is inconsistent with jsonLiteralEscape, but it's more efficient
 // than adding double-quotes in this function)
@@ -797,6 +813,44 @@ std::string formatDouble(const double d, const int precision)
    out.precision(precision);
    out << d;
    return out.str();
+}
+
+std::string sprintf(const char* fmt, ...)
+{
+   // note: the semantics for vsnprintf are slightly awkward... when vsnprintf
+   // is called with a null pointer, it returns the number of characters that
+   // would be written, not including the null terminator. however, when called
+   // with a buffer, vsnprintf will write a maximum of n - 1 characters, and
+   // will always write a null terminator at the end! so we need to ensure we
+   // add 1 character to the size returned by vsnprintf(nullptr) to get the
+   // full size of the C string we want to generate
+   std::size_t n = 0;
+   {
+      va_list args;
+      va_start(args, fmt);
+      n = std::vsnprintf(nullptr, 0, fmt, args);
+      va_end(args);
+   }
+   
+   if (n == 0)
+   {
+      return std::string();
+   }
+   
+   // allocate buffer of required size
+   // (include space for null pointer)
+   std::vector<char> buffer(n + 1);
+   
+   // write formatted string to buffer
+   {
+      va_list args;
+      va_start(args, fmt);
+      std::vsnprintf(&buffer[0], buffer.size(), fmt, args);
+      va_end(args);
+   }
+   
+   // return as string
+   return std::string(&buffer[0], n);
 }
 
 } // namespace string_utils

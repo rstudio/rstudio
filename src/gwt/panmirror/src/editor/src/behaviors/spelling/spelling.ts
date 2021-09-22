@@ -94,6 +94,12 @@ function excludeWord(doc: ProsemirrorNode, from: number, to: number, excluded: M
     return true;
   }
 
+  // is it in a code block
+  const $from = doc.resolve(from);
+  if ($from.parent.isBlock && $from.parent.type.spec.code) {
+    return true;
+  }
+
   // it is in a link mark where the link text is a url?
   const schema = doc.type.schema;
   if (schema.marks.link && doc.rangeHasMark(from, to, schema.marks.link)) {

@@ -9,3 +9,5 @@ war/
 javac.*
 /*.log
 
+# ignore development properties file
+*_dev.properties

@@ -47,13 +47,13 @@
   ; RSTUDIO CHANGE - Add version info
   ;
   ;Version info
-  VIProductVersion "@CPACK_PACKAGE_VERSION_MAJOR@.@CPACK_PACKAGE_VERSION_MINOR@.@CPACK_PACKAGE_VERSION_PATCH@.0"
+  VIProductVersion "@CPACK_PACKAGE_VERSION_MAJOR_NUMERIC@.@CPACK_PACKAGE_VERSION_MINOR@.@CPACK_PACKAGE_VERSION_PATCH@.0"
   VIAddVersionKey ProductVersion "@CPACK_PACKAGE_VERSION_MAJOR@.@CPACK_PACKAGE_VERSION_MINOR@.@CPACK_PACKAGE_VERSION_PATCH@.0"
   VIAddVersionKey ProductName "RStudio"
   VIAddVersionKey CompanyName "RStudio, PBC"
   VIAddVersionKey FileDescription "RStudio"
   VIAddVersionKey InternalName "RStudio"
-  VIAddVersionKey LegalCopyright "Copyright (C) 2021 by RStudio, PBC"
+  VIAddVersionKey LegalCopyright "Copyright (C) @CPACK_COPYRIGHT_YEAR@ by RStudio, PBC"
   VIAddVersionKey LegalTrademarks "RStudio (TM) is a trademark of RStudio, PBC"
 
   ;

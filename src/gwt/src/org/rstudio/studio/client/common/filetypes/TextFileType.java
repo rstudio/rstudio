@@ -211,7 +211,8 @@ public class TextFileType extends EditableFileType
    
    public boolean isRmd()
    {
-      return FileTypeRegistry.RMARKDOWN.getTypeId().equals(getTypeId());
+      return FileTypeRegistry.RMARKDOWN.getTypeId().equals(getTypeId()) ||
+             isQuartoMarkdown();
    }
    
    public boolean isRhtml()
@@ -244,7 +245,13 @@ public class TextFileType extends EditableFileType
    public boolean isMarkdown()
    {
       return FileTypeRegistry.RMARKDOWN.getTypeId().equals(getTypeId()) ||
+             isQuartoMarkdown() ||
              FileTypeRegistry.MARKDOWN.getTypeId().equals(getTypeId());
+   }
+   
+   public boolean isQuartoMarkdown()
+   {
+      return FileTypeRegistry.QUARTO.getTypeId().equals(getTypeId());
    }
    
    public boolean isPlainMarkdown()
@@ -387,6 +394,7 @@ public class TextFileType extends EditableFileType
          results.add(commands.notebookExpandAllOutput());
          results.add(commands.executeSetupChunk());
       }
+    
       if (canKnitToHTML() || canCompileNotebook())
       {
          results.add(commands.knitDocument());
@@ -394,6 +402,10 @@ public class TextFileType extends EditableFileType
       if (canPreviewHTML())
       {
          results.add(commands.previewHTML());
+      }
+      if (canKnitToHTML() || canPreviewHTML())
+      {
+         results.add(commands.quartoRenderDocument());
       }
       if (canCompilePDF())
       {
@@ -451,6 +463,7 @@ public class TextFileType extends EditableFileType
          results.add(commands.sourceAsJob());
          results.add(commands.runSelectionAsJob());
          results.add(commands.runSelectionAsLauncherJob());
+         results.add(commands.runDocumentFromServerDotR());
       }
 
       results.add(commands.sendToTerminal());

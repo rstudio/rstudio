@@ -91,6 +91,10 @@ bool parseEnvVar(const std::string envVar, Option* pEnvVar);
 // /bob/foo when USER=bob
 std::string expandEnvVars(const Options& environment, const std::string& str);
 
+// forwards environment variables specified as a vector of strings from the current environment
+// to the desired environment object
+void forwardEnvVars(const std::vector<std::string>& vars, Options* pEnvironment);
+
 // set an environment variable in some scope (overridding and
 // later restoring a previously-set environment variable)
 class EnvironmentScope : boost::noncopyable

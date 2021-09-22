@@ -19,7 +19,6 @@ add_subdirectory(workers)
 
 # verify that install-dictionaries, install-mathjax, install-pandoc,
 # and install-rmarkdown have been run as required
-set(PANDOC_VERSION "2.11.4" CACHE INTERNAL "Pandoc version")
 
 if(WIN32)
    set(RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR "${RSTUDIO_DEPENDENCIES_DIR}/common/dictionaries")
@@ -48,12 +47,19 @@ else()
 
 endif()
 
-foreach(DEP "${RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR}"
-            "${RSTUDIO_DEPENDENCIES_MATHJAX_DIR}"
-            "${RSTUDIO_DEPENDENCIES_PANDOC_DIR}")
-   if(NOT EXISTS "${DEP}")
-      message(FATAL_ERROR "${DEP} not found (re-run install-dependencies script to install")
+# validate our dependencies exist
+foreach(VAR RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR
+            RSTUDIO_DEPENDENCIES_MATHJAX_DIR
+            RSTUDIO_DEPENDENCIES_PANDOC_DIR)
+
+   # validate existence
+   if(NOT EXISTS "${${VAR}}")
+      message(FATAL_ERROR "${${VAR}} not found (re-run install-dependencies script to install")
    endif()
+
+   # cache variables so they can be seen by configure_file
+   set("${VAR}" "${${VAR}}" CACHE INTERNAL "")
+   
 endforeach()
 
 # verify embedded packages are available
@@ -111,6 +117,7 @@ set(SESSION_SOURCE_FILES
    SessionOptionsOverlay.cpp
    SessionPandoc.cpp
    SessionPasswordManager.cpp
+   SessionPerFilePathStorage.cpp
    SessionPersistentState.cpp
    SessionPostback.cpp
    SessionSSH.cpp
@@ -269,6 +276,11 @@ set(SESSION_SOURCE_FILES
    modules/rmarkdown/NotebookWorkingDir.cpp
    modules/rmarkdown/RMarkdownPresentation.cpp
    modules/rmarkdown/RMarkdownTemplates.cpp
+   modules/quarto/SessionQuarto.cpp
+   modules/quarto/SessionQuartoJob.cpp
+   modules/quarto/SessionQuartoPreview.cpp
+   modules/quarto/SessionQuartoServe.cpp
+   modules/quarto/SessionQuartoXRefs.cpp
    modules/shiny/SessionShiny.cpp
    modules/shiny/ShinyAsyncJob.cpp
    modules/sql/SessionSql.cpp

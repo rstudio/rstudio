@@ -169,7 +169,6 @@ namespace prefs {
 #define kToolbarVisible "toolbar_visible"
 #define kDefaultProjectLocation "default_project_location"
 #define kSourceWithEcho "source_with_echo"
-#define kNewProjectGitInit "new_project_git_init"
 #define kDefaultSweaveEngine "default_sweave_engine"
 #define kDefaultLatexProgram "default_latex_program"
 #define kUseRoxygen "use_roxygen"
@@ -260,8 +259,8 @@ namespace prefs {
 #define kBusyDetection "busy_detection"
 #define kBusyDetectionAlways "always"
 #define kBusyDetectionNever "never"
-#define kBusyDetectionWhitelist "whitelist"
-#define kBusyWhitelist "busy_whitelist"
+#define kBusyDetectionList "list"
+#define kBusyExclusionList "busy_exclusion_list"
 #define kKnitWorkingDir "knit_working_dir"
 #define kKnitWorkingDirDefault "default"
 #define kKnitWorkingDirCurrent "current"
@@ -282,6 +281,7 @@ namespace prefs {
 #define kGitDiffIgnoreWhitespace "git_diff_ignore_whitespace"
 #define kConsoleDoubleClickSelect "console_double_click_select"
 #define kNewProjGitInit "new_proj_git_init"
+#define kNewProjUseRenv "new_proj_use_renv"
 #define kRootDocument "root_document"
 #define kShowUserHomePage "show_user_home_page"
 #define kShowUserHomePageAlways "always"
@@ -348,6 +348,7 @@ namespace prefs {
 #define kVisualMarkdownEditingMaxContentWidth "visual_markdown_editing_max_content_width"
 #define kVisualMarkdownEditingShowDocOutline "visual_markdown_editing_show_doc_outline"
 #define kVisualMarkdownEditingShowMargin "visual_markdown_editing_show_margin"
+#define kVisualMarkdownCodeEditorLineNumbers "visual_markdown_code_editor_line_numbers"
 #define kVisualMarkdownEditingFontSizePoints "visual_markdown_editing_font_size_points"
 #define kVisualMarkdownCodeEditor "visual_markdown_code_editor"
 #define kVisualMarkdownCodeEditorAce "ace"
@@ -388,6 +389,8 @@ namespace prefs {
 #define kMemoryQueryIntervalSeconds "memory_query_interval_seconds"
 #define kTerminalPythonIntegration "terminal_python_integration"
 #define kSessionProtocolDebug "session_protocol_debug"
+#define kPythonProjectEnvironmentAutomaticActivate "python_project_environment_automatic_activate"
+#define kCheckNullExternalPointers "check_null_external_pointers"
 
 class UserPrefValues: public Preferences
 {
@@ -934,12 +937,6 @@ public:
    core::Error setSourceWithEcho(bool val);
 
    /**
-    * Whether to initialize new projects with a Git repo by default.
-    */
-   bool newProjectGitInit();
-   core::Error setNewProjectGitInit(bool val);
-
-   /**
     * The default engine to use when processing Sweave documents.
     */
    std::string defaultSweaveEngine();
@@ -1270,10 +1267,10 @@ public:
    core::Error setBusyDetection(std::string val);
 
    /**
-    * A whitelist of apps that should not be considered busy in the Terminal.
+    * A list of apps that should not be considered busy in the Terminal.
     */
-   core::json::Array busyWhitelist();
-   core::Error setBusyWhitelist(core::json::Array val);
+   core::json::Array busyExclusionList();
+   core::Error setBusyExclusionList(core::json::Array val);
 
    /**
     * The working directory to use when knitting R Markdown documents.
@@ -1322,6 +1319,12 @@ public:
     */
    bool newProjGitInit();
    core::Error setNewProjGitInit(bool val);
+
+   /**
+    * Whether an renv environment should be created inside new projects by default.
+    */
+   bool newProjUseRenv();
+   core::Error setNewProjUseRenv(bool val);
 
    /**
     * The root document to use when compiling PDF documents.
@@ -1600,6 +1603,12 @@ public:
    core::Error setVisualMarkdownEditingShowMargin(bool val);
 
    /**
+    * Whether to show line numbers in the code editors used in visual mode
+    */
+   bool visualMarkdownCodeEditorLineNumbers();
+   core::Error setVisualMarkdownCodeEditorLineNumbers(bool val);
+
+   /**
     * The default visual editing mode font size, in points
     */
    int visualMarkdownEditingFontSizePoints();
@@ -1724,6 +1733,18 @@ public:
     */
    bool sessionProtocolDebug();
    core::Error setSessionProtocolDebug(bool val);
+
+   /**
+    * When enabled, if the active project contains a Python virtual environment, then RStudio will automatically activate this environment on startup.
+    */
+   bool pythonProjectEnvironmentAutomaticActivate();
+   core::Error setPythonProjectEnvironmentAutomaticActivate(bool val);
+
+   /**
+    * When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further.
+    */
+   bool checkNullExternalPointers();
+   core::Error setCheckNullExternalPointers(bool val);
 
 };
 

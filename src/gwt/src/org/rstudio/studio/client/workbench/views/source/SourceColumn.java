@@ -22,6 +22,8 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
+
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.ResultCallback;
@@ -44,11 +46,17 @@ import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.synctex.events.SynctexStatusChangedEvent;
+import org.rstudio.studio.client.quarto.QuartoHelper;
+import org.rstudio.studio.client.quarto.model.QuartoConfig;
+import org.rstudio.studio.client.rmarkdown.model.YamlFrontMatter;
+import org.rstudio.studio.client.rmarkdown.model.YamlTree;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
+import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.SessionUtils;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -66,7 +74,9 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceNavigation;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map.Entry;
 import java.util.Set;
 
 public class SourceColumn implements BeforeShowEvent.Handler,
@@ -91,6 +101,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
                           EventBus events,
                           UserPrefs userPrefs,
                           EditingTargetSource editingTargetSource,
+                          Provider<Session> pSession,
                           RemoteFileSystemContext fileContext,
                           SourceServerOperations sourceServerOperations)
    {
@@ -100,6 +111,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       events_ = events;
       userPrefs_ = userPrefs;
       editingTargetSource_ = editingTargetSource;
+      pSession_ = pSession;
       fileContext_ = fileContext;
       server_ = sourceServerOperations;
    }
@@ -123,7 +135,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
       events_.addHandler(FileTypeChangedEvent.TYPE, event -> manageCommands(false));
       events_.addHandler(SourceOnSaveChangedEvent.TYPE, event -> manageSaveCommands(isActive()));
-      events_.addHandler(SynctexStatusChangedEvent.TYPE, event -> manageSaveCommands(isActive()));
+      events_.addHandler(SynctexStatusChangedEvent.TYPE, event -> manageSynctexCommands(isActive()));
 
       initialized_ = true;
    }
@@ -747,10 +759,13 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
       // manage save and save all
       manageSaveCommands(active);
-
-
+     
+      
       // manage R Markdown commands
       manageRMarkdownCommands(active);
+      
+      // manage run document command
+      manageRunDocumentCommand(active);
 
       // manage multi-tab commands
       manageMultiTabCommands(active);
@@ -861,6 +876,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
                  (getNextActiveEditor().getExtendedFileType() != null &&
                     (getNextActiveEditor().getExtendedFileType().startsWith(SourceDocument.XT_SHINY_PREFIX) ||
                      getNextActiveEditor().getExtendedFileType().startsWith(SourceDocument.XT_RMARKDOWN_PREFIX) ||
+                     getNextActiveEditor().getExtendedFileType().equals(SourceDocument.XT_QUARTO_DOCUMENT) ||
                      getNextActiveEditor().getExtendedFileType() == SourceDocument.XT_PLUMBER_API));
       boolean cmdEnabled = rsCommandsAvailable && active;
 
@@ -902,6 +918,56 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       getSourceCommand(commands_.editRmdFormatOptions()).setEnabled(false);
       getSourceCommand(commands_.editRmdFormatOptions()).setVisible(active && rmdCommandsAvailable, rmdCommandsAvailable, rmdCommandsAvailable);
       getSourceCommand(commands_.editRmdFormatOptions()).setEnabled(active && rmdCommandsAvailable, rmdCommandsAvailable,rmdCommandsAvailable);
+   }
+   
+   public EditingTarget shinyRunDocumentEditor(String serverSrcFile)
+   {
+      String appDir = FileSystemItem.createFile(serverSrcFile).getParentPathString();
+      for (int i=0; i<editors_.size(); i++)
+      {
+         EditingTarget editor = editors_.get(i);
+         if (editor.getPath() != null && 
+             FileSystemItem.createFile(editor.getPath()).getParentPathString() == appDir)
+         {
+            if (editor.getExtendedFileType() == SourceDocument.XT_SHINY_DOCUMENT)
+            {
+               return editor;
+            }
+            else if (editor.getExtendedFileType() == SourceDocument.XT_QUARTO_DOCUMENT &&
+                     editor.isShinyPrerenderedDoc())
+            {
+               return editor;
+            }
+         }  
+      }
+      return null;
+   }
+   
+   private void manageRunDocumentCommand(boolean active)
+   {
+      boolean runDocFromServerR = false;
+      if (active)
+      {
+         String activePath = activeEditor_ != null ? activeEditor_.getPath() : null;
+         if (activePath != null)
+         {
+            boolean isServerR = activePath.endsWith("server.R") || activePath.endsWith("global.R");
+            if (isServerR)
+            {
+               runDocFromServerR = shinyRunDocumentEditor(activePath) != null;
+            }
+         } 
+      }
+      getSourceCommand(commands_.runDocumentFromServerDotR()).setVisible(active && runDocFromServerR);
+      if (activeEditor_ != null && activeEditor_.getTextFileType() != null)
+      {
+         getSourceCommand(commands_.compileNotebook()).setVisible(
+            active && activeEditor_.getTextFileType().canCompileNotebook() && !runDocFromServerR
+         );
+         getSourceCommand(commands_.knitDocument()).setVisible(
+               active && activeEditor_.getTextFileType().canKnitToHTML() && !runDocFromServerR
+         );
+      }
    }
 
    private void manageSynctexCommands(boolean active)
@@ -1010,7 +1076,10 @@ public class SourceColumn implements BeforeShowEvent.Handler,
                public void onResponseReceived(SourceDocument newDoc)
                {
                   // apply (dynamic) doc property defaults
-                  SourceColumn.applyDocPropertyDefaults(newDoc, true, userPrefs_);
+                  SourceColumn.applyDocPropertyDefaults(
+                     server_, newDoc, true, 
+                     userPrefs_, pSession_.get().getSessionInfo()
+                  );
 
                   EditingTarget target = addTab(newDoc, Source.OPEN_INTERACTIVE);
 
@@ -1213,33 +1282,121 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       fireDocTabsChanged();
    }
 
-   public static void applyDocPropertyDefaults(SourceDocument document, boolean newDoc, UserPrefs userPrefs)
+   public static void applyDocPropertyDefaults(SourceServerOperations server,
+                                               SourceDocument document, 
+                                               boolean newDoc, 
+                                               UserPrefs userPrefs,
+                                               SessionInfo sessionInfo)
    {
       // ensure this is a text file
       FileTypeRegistry registry = RStudioGinjector.INSTANCE.getFileTypeRegistry();
       FileType type = EditingTargetSource.getTypeFromDocument(registry, document);
       if (type instanceof TextFileType)
       {
+         // see if we should be using visual mode by default fr markdown files
          TextFileType textFile = (TextFileType)type;
-
-         // respect visual editing default for new markdown docs
-         if (textFile.isMarkdown() &&
-             newDoc &&
-             userPrefs.visualMarkdownEditingIsDefault().getValue())
-         {
-            document.getProperties().setString(
-                  TextEditingTarget.RMD_VISUAL_MODE,
-                  DocUpdateSentinel.PROPERTY_TRUE
-               );
-            // don't ever prompt for line wrapping config b/c this
-            // document started out in visual mode
-            document.getProperties().setString(
-                  TextEditingTarget.RMD_VISUAL_MODE_WRAP_CONFIGURED,
-                  DocUpdateSentinel.PROPERTY_TRUE
-               );
-
+         if (textFile.isMarkdown())
+         {   
+            // default if there are no file or project level modes established
+            String mode = null;
+            String docMode = documentEditorMode(document);
+            String projectMode = projectEditorMode(document, sessionInfo);
+            if (docMode != null)
+               mode = docMode;
+            else if (projectMode != null)
+               mode = projectMode;
+            else if (newDoc && userPrefs.visualMarkdownEditingIsDefault().getValue())
+               mode = kEditorVisual;
+            
+            if (mode != null)
+            {
+               HashMap<String,String> props = new HashMap<String,String>();
+               props.put(TextEditingTarget.RMD_VISUAL_MODE,
+                  mode == kEditorVisual 
+                     ? DocUpdateSentinel.PROPERTY_TRUE
+                     : DocUpdateSentinel.PROPERTY_FALSE);
+               if (mode == kEditorVisual)
+               {
+                  props.put(TextEditingTarget.RMD_VISUAL_MODE_WRAP_CONFIGURED,
+                            DocUpdateSentinel.PROPERTY_TRUE);
+               }
+               // write to server
+               DocUpdateSentinel.modifyProperties(server, document, props, null);
+               
+               // write in memory
+               for (Entry<String, String> entry : props.entrySet())
+               {
+                  document.getProperties().setString(entry.getKey(), entry.getValue());
+               }
+            }
          }
       }
+   }
+   
+   
+   private static String projectEditorMode(SourceDocument document, SessionInfo sessionInfo)
+   {
+      QuartoConfig config = sessionInfo.getQuartoConfig();
+      String editor = config.project_editor;
+      if (StringUtil.isNullOrEmpty(editor))
+         editor = null;
+      
+      if (document.getPath() != null)
+      {
+         if (QuartoHelper.isWithinQuartoProjectDir(document.getPath(), config))
+            return asEditorMode(editor);
+         else
+            return null;
+      }
+      else
+      {
+         return editor;
+      }
+   }
+   
+   private static String documentEditorMode(SourceDocument document)
+   {
+      try
+      {  
+         String yaml = YamlFrontMatter.getFrontMatter(document.getContents());
+         if (yaml != null)
+         {
+            YamlTree yamlTree = new YamlTree(yaml);
+            String editor = yamlTree.getChildValue("editor", "type");
+            if (!StringUtil.isNullOrEmpty(asEditorMode(editor)))
+            {
+               return editor.trim();
+            } 
+            editor = yamlTree.getChildValue("editor", "mode");
+            if (!StringUtil.isNullOrEmpty(asEditorMode(editor)))
+            {
+               return editor.trim();
+            } 
+            editor = yamlTree.getKeyValue("editor");
+            if (!StringUtil.isNullOrEmpty(asEditorMode(editor)))
+            {
+               return editor.trim();
+            }  
+           
+         }
+      }
+      catch(Exception ex)
+      {
+         Debug.logException(ex);
+      }
+      
+      return null;
+   }
+   
+   private final static String kEditorVisual = "visual";
+   private final static String kEditorSource = "source";
+   
+   private static String asEditorMode(String mode)
+   {
+      if (mode == kEditorVisual || mode == kEditorSource)
+         return mode;
+      else
+         return null;
    }
 
    private void closeTabIndex(int idx, boolean closeDocument)
@@ -1308,6 +1465,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
    private EventBus events_;
    private UserPrefs userPrefs_;
    private EditingTargetSource editingTargetSource_;
+   private Provider<Session> pSession_;
 
    private SourceColumnManager manager_;
 

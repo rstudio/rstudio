@@ -78,7 +78,6 @@ public class TextEditingTargetSpelling extends SpellingContext
         docDisplay_.getLength(docDisplay_.getLastVisibleRow()))));
 
       HashMap<String, ArrayList<SpellingDoc.WordRange>> wordsInRanges = new HashMap<>();
-      int checkedRanges = 0;
 
       for (SpellingDoc.WordRange wordRange : wordSource)
       {
@@ -98,7 +97,6 @@ public class TextEditingTargetSpelling extends SpellingContext
          }
          list.add(wordRange);
          wordsInRanges.put(word, list);
-         checkedRanges++;
       }
 
       spellChecker().checkWords(new ArrayList<>(wordsInRanges.keySet()), new ServerRequestCallback<SpellCheckerResult>()

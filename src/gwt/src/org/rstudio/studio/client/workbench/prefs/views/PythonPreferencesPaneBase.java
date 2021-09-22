@@ -22,6 +22,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.prefs.PreferencesDialogPaneBase;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.InfoBar;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -35,15 +36,18 @@ import org.rstudio.studio.client.workbench.prefs.views.python.PythonInterpreterL
 import org.rstudio.studio.client.workbench.prefs.views.python.PythonInterpreterSelectionDialog;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.inject.Inject;
@@ -51,11 +55,10 @@ import com.google.inject.Inject;
 public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPaneBase<T>
 {
    public PythonPreferencesPaneBase(String width,
-                                    String placeholderText)
+                                    String placeholderText,
+                                    boolean isProjectOptions)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
-      
-      placeholderText_ = placeholderText;
       
       add(headerLabel("Python"));
       
@@ -67,10 +70,12 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
       
       tbPythonInterpreter_ = new TextBoxWithButton(
             "Python interpreter:",
-            placeholderText_,
-            "Select...",
             null,
+            placeholderText,
+            "Select...",
+            new HelpButton("using_python", "Using Python in RStudio"),
             ElementIds.TextBoxButtonId.PYTHON_PATH,
+            true,
             true,
             new ClickHandler()
             {
@@ -94,7 +99,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
                                        @Override
                                        public void execute(PythonInterpreter input)
                                        {
-                                          String path = input.getPath();
+                                          String path = input == null ? "" : input.getPath();
                                           tbPythonInterpreter_.setText(path);
                                        }
                                     });
@@ -116,6 +121,8 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
                }
             });
       
+      tbPythonInterpreter_.useNativePlaceholder();
+      
       tbPythonInterpreter_.addValueChangeHandler((ValueChangeEvent<String> event) ->
       {
          updateDescription();
@@ -129,6 +136,14 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
             event.preventDefault();
             tbPythonInterpreter_.blur();
          }
+         else if (event.getNativeKeyCode() == KeyCodes.KEY_ESCAPE)
+         {
+            event.stopPropagation();
+            event.preventDefault();
+            if (lastValue_ != null)
+               tbPythonInterpreter_.setText(lastValue_);
+            tbPythonInterpreter_.blur();
+         }
       }, KeyDownEvent.getType());
       
       tbPythonInterpreter_.addDomHandler((BlurEvent event) ->
@@ -136,16 +151,37 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
          updateDescription();
       }, BlurEvent.getType());
       
-      tbPythonInterpreter_.getTextBox().getElement().addClassName(
-            ModalDialogBase.ALLOW_ENTER_KEY_CLASS);
+      // save the contents of the text box on focus
+      // (we'll restore the value if the user blurs via the Escape key)
+      tbPythonInterpreter_.getTextBox().addFocusHandler((FocusEvent event) ->
+      {
+         lastValue_ = tbPythonInterpreter_.getText();
+      });
+      
+      Element tbEl = tbPythonInterpreter_.getTextBox().getElement();
+      tbEl.addClassName(ModalDialogBase.ALLOW_ENTER_KEY_CLASS);
+      tbEl.addClassName(ModalDialogBase.ALLOW_ESCAPE_KEY_CLASS);
       
       tbPythonInterpreter_.setWidth(width);
-      tbPythonInterpreter_.setText(placeholderText_);
       tbPythonInterpreter_.setReadOnly(false);
       add(spaced(tbPythonInterpreter_));
       
-      add(container_);
+      add(interpreterDescription_);
       
+      if (!isProjectOptions)
+      {
+         cbAutoUseProjectInterpreter_ =
+               new CheckBox("Automatically activate project-local Python environments");
+         
+         cbAutoUseProjectInterpreter_.setValue(
+               prefs_.pythonProjectEnvironmentAutomaticActivate().getGlobalValue());
+         
+         cbAutoUseProjectInterpreter_.getElement().setTitle(
+               "When enabled, RStudio will automatically find and activate a " +
+               "Python environment located within the project root directory (if any).");
+
+         add(lessSpaced(cbAutoUseProjectInterpreter_));
+      }
    }
    
    @Inject
@@ -162,7 +198,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
    
    protected void clearDescription()
    {
-      container_.setWidget(new FlowPanel());
+      interpreterDescription_.setWidget(new FlowPanel());
    }
    
    protected void updateDescription()
@@ -189,14 +225,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
       // reset to default when empty
       if (StringUtil.isNullOrEmpty(path))
       {
-         tbPythonInterpreter_.setText(placeholderText_);
-         clearDescription();
-         return;
-      }
-      
-      // clear description when using default
-      if (StringUtil.equals(path, placeholderText_))
-      {
+         tbPythonInterpreter_.setText("");
          clearDescription();
          return;
       }
@@ -227,11 +256,11 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
       {
          String reason = info.getInvalidReason();
          if (StringUtil.isNullOrEmpty(reason))
-            reason = "The selected Python interpreter appears to be invalid.";
+            reason = "The selected Python interpreter does not appear to be valid.";
          
          InfoBar bar = new InfoBar(InfoBar.WARNING);
          bar.setText(reason);
-         container_.setWidget(bar);
+         interpreterDescription_.setWidget(bar);
       }
       else
       {
@@ -258,7 +287,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
          }
          
          ui.getPath().setText("[" + type + "]");
-         container_.setWidget(ui);
+         interpreterDescription_.setWidget(ui);
       }
    }
    
@@ -273,9 +302,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
       
       // nothing to do if the user hasn't changed the configured Python
       String requestedPath = tbPythonInterpreter_.getText();
-      boolean isSet =
-            !StringUtil.isNullOrEmpty(requestedPath) &&
-            !StringUtil.equals(requestedPath, placeholderText_);
+      boolean isSet = !StringUtil.isNullOrEmpty(requestedPath);
       
       if (!isSet)
       {
@@ -347,10 +374,8 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
    {
       RestartRequirement requirement = new RestartRequirement();
       
-      // read current Python path (normalize placeholder text if set)
+      // read current Python path
       String newValue = tbPythonInterpreter_.getText().trim();
-      if (StringUtil.equals(newValue, placeholderText_))
-         newValue = "";
       
       // for project preferences, use project-relative path to interpreter
       if (isProjectPrefs)
@@ -408,11 +433,11 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
       Styles styles();
    }
 
-   protected final String placeholderText_;
-   
    protected final InfoBar mismatchWarningBar_;
    protected final TextBoxWithButton tbPythonInterpreter_;
-   protected final SimplePanel container_ = new SimplePanel();
+   protected final SimplePanel interpreterDescription_ = new SimplePanel();
+   
+   protected CheckBox cbAutoUseProjectInterpreter_;
    
    protected String initialPythonPath_;
    protected PythonInterpreter interpreter_;
@@ -423,6 +448,8 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
    protected PythonServerOperations server_;
    protected Session session_;
    protected UserPrefs prefs_;
+   
+   private String lastValue_ = null;
    
    
    protected static Resources RES = GWT.create(Resources.class);

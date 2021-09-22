@@ -32,7 +32,7 @@ if(APPLE)
       get_filename_component(_LIBR_LIBRARIES_DIR "${_LIBR_LIBRARIES}" PATH)
       set(LIBR_EXECUTABLE "${_LIBR_LIBRARIES_DIR}/../bin/R")
       execute_process(
-         COMMAND ${LIBR_EXECUTABLE} "--slave" "--vanilla" "-e" "cat(R.home())"
+         COMMAND ${LIBR_EXECUTABLE} "--vanilla" "-s" "-e" "cat(R.home())"
                    OUTPUT_VARIABLE LIBR_HOME
       )
       set(LIBR_HOME ${LIBR_HOME} CACHE PATH "R home directory")
@@ -57,7 +57,7 @@ else()
       # ask R for the home path
       if(NOT LIBR_HOME)
          execute_process(
-            COMMAND ${LIBR_EXECUTABLE} "--slave" "--vanilla" "-e" "cat(R.home())"
+            COMMAND ${LIBR_EXECUTABLE} "--vanilla" "-s" "-e" "cat(R.home())"
                       OUTPUT_VARIABLE LIBR_HOME
          )
          if(LIBR_HOME)
@@ -68,7 +68,7 @@ else()
       # ask R for the include dir
       if(NOT LIBR_INCLUDE_DIRS)
          execute_process(
-            COMMAND ${LIBR_EXECUTABLE} "--slave" "--no-save" "-e" "cat(R.home('include'))"
+            COMMAND ${LIBR_EXECUTABLE} "--no-save" "-s" "-e" "cat(R.home('include'))"
             OUTPUT_VARIABLE LIBR_INCLUDE_DIRS
          )
          if(LIBR_INCLUDE_DIRS)
@@ -79,7 +79,7 @@ else()
       # ask R for the doc dir
       if(NOT LIBR_DOC_DIR)
          execute_process(
-            COMMAND ${LIBR_EXECUTABLE} "--slave" "--no-save" "-e" "cat(R.home('doc'))"
+            COMMAND ${LIBR_EXECUTABLE} "--no-save" "-s" "-e" "cat(R.home('doc'))"
             OUTPUT_VARIABLE LIBR_DOC_DIR
          )
          if(LIBR_DOC_DIR)
@@ -90,7 +90,7 @@ else()
       # ask R for the lib dir
       if(NOT LIBR_LIB_DIR)
          execute_process(
-            COMMAND ${LIBR_EXECUTABLE} "--slave" "--no-save" "-e" "cat(R.home('lib'))"
+            COMMAND ${LIBR_EXECUTABLE} "--no-save" "-s" "-e" "cat(R.home('lib'))"
             OUTPUT_VARIABLE LIBR_LIB_DIR
          )
       endif()
@@ -109,6 +109,11 @@ else()
          # print message if not found
          if(NOT LIBR_HOME)
             message(STATUS "Unable to locate R home (not written to registry)")
+         endif()
+
+         # make sure path exists
+         if (NOT EXISTS "${LIBR_HOME}")
+            message(STATUS "Path to R found in registry '${LIBR_HOME}' doesn't exist")
          endif()
 
       endif()
