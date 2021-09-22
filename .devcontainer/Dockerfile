@@ -135,8 +135,6 @@ RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-yaml-cpp
 # Qt SDK
 COPY ./dependencies/common/install-qt.sh /opt/rstudio-tools/dependencies/linux
 COPY ./dependencies/linux/install-qt-linux /opt/rstudio-tools/dependencies/linux
-RUN export QT_VERSION=5.12.8 && \
-    cd /opt/rstudio-tools/dependencies/linux && /bin/bash ./install-qt-linux
 
 # Create the user
 RUN groupadd --gid $USER_GID $USERNAME \

@@ -6,9 +6,14 @@ You can get started with development very quickly with Visual Studio Code amd Do
 
 * Install Docker.
 * Install VS Code and install the "Remote - Containers" extension in VS Code.
-* Configure your Docker resources to give sufficient resources to the
-  containers. For example, if you have sufficuent resources, you may consider allocating
+* Mac Users: Configure your Docker resources to give sufficient resources to the
+  containers. For example, if you have sufficient resources, you should consider allocating
   8 CPUs and 6+GB RAM.
+
+## Fork Repo
+
+External contributors must fork the RStudio repo. When the `rstudio/rstudio` repo is mentioned
+below, please replace it with the address of your forked repo.
 
 ## Open Project in VS Code
 
@@ -56,3 +61,16 @@ git clone https://github.com/rstudio/rstudio.git
 
 For SSH, you must be running an SSH agent. Simply add your SSH key to the SSH agent
 with `ssh-add ~/.ssh/<my-key>`.
+
+### Building RStudio
+
+From the Active Kit selector in the VS Code status bar, select the GCC toolkit, then click the `Build` button.
+You can choose what to build with the Build Target selector next to the `Build` button.
+
+### Running RStudio
+
+TBD
+
+### Debugging
+
+TBD
