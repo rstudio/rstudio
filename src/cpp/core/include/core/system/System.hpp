@@ -178,6 +178,8 @@ void initializeLogConfigReload();
 Error initLog();
 Error reinitLog();
 
+void ttyCheck(const std::string& destination);
+
 void initFileLogDestination(const log::LogLevel level, const FilePath defaultLogDir);
 
 // exit
