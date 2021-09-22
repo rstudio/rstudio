@@ -29,12 +29,19 @@
 {
     position: absolute;
     top: 0px;
-    right: 15px;
-    padding: 0px;
+    right: 0px;
+    padding-left: 15px;
+    padding-right: 15px;
     cursor: pointer;
-    transition-property: filter;
+    transition-property: filter, opacity;
     transition-duration: 0.2s;
+    z-index: 1;
     opacity: 0.5;
+}
+
+.collapsed:hover
+{
+    opacity: 0.7;
 }
 
 .editor_dark .toggle,
