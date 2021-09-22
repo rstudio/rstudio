@@ -150,7 +150,6 @@ function xrefCompletions(ui: EditorUI, server: XRefServer, index: FuseIndex) {
         completions: async () => {
           const docPath = ui.context.getDocumentPath();
           if (docPath) {
-            // NOTE: don't need the withSavedDocument for quarto
             await ui.context.withSavedDocument();
             const xrefs = await server.indexForFile(docPath);
             index.update(xrefs.refs);
