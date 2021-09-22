@@ -144,7 +144,7 @@ public class RpcRequest
                         Debug.log("Response: " + responseText);
                      requestLogEntry_.logResponse(ResponseType.Normal,
                                                  responseText);
-                     rpcResponse = RpcResponse.parse(responseText);
+                     rpcResponse = RpcResponse.parseUnsafe(responseText);
                      
                      // response received and validated, process it!
                      requestCallback.onResponseReceived(enclosingRequest, 

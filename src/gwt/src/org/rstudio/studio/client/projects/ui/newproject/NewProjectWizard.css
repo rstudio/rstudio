@@ -16,7 +16,7 @@
 }
 
 .wizardSpacer {
-   height: 7px;
+   height: 6px;
 }
 
 
@@ -68,7 +68,9 @@
 
 .quartoEngineSelect {
    margin-right: 8px;
+   margin-bottom: 5px;
 }
+
 
 .quartoVenvPackages[type="text"] {
   font-family: fixedWidthFont;

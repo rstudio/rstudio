@@ -127,7 +127,7 @@ public class VisualMode implements VisualModeEditorSync,
       
       // create peer helpers
       visualModeFormat_ = new VisualModePanmirrorFormat(docUpdateSentinel_, docDisplay_, target_, view_);
-      visualModeChunks_ = new VisualModeChunks(docUpdateSentinel_, docDisplay_, target_, this);
+      visualModeChunks_ = new VisualModeChunks(docUpdateSentinel_, docDisplay_, target_, releaseOnDismiss, this);
       visualModeLocation_ = new VisualModeEditingLocation(docUpdateSentinel_, docDisplay_);
       visualModeWriterOptions_ = new VisualModeMarkdownWriter(docUpdateSentinel_, visualModeFormat_);
       visualModeNavigation_ = new VisualModeNavigation(navigationContext_);
@@ -1008,6 +1008,16 @@ public class VisualMode implements VisualModeEditorSync,
    public JsArray<ChunkDefinition> getChunkDefs()
    {
       return visualModeChunks_.getChunkDefs();
+   }
+
+   /**
+    * Nudges the timer that runs to save the collapsed state of visual mode chunks.
+    * This is heavily debounced since it changes frequently (chunk position is
+    * used as an index key)
+    */
+   public void nudgeSaveCollapseState()
+   {
+      visualModeChunks_.nudgeSaveCollapseState();
    }
    
    public ChunkDefinition getChunkDefAtRow(int row)

@@ -25,11 +25,18 @@ public class PanmirrorUIChunkCallbacks
    public ScrollIntoView scrollIntoView;
    public ScrollCursorIntoView scrollCursorIntoView;
    public GetVisualPosition getPos;
+   public GetTextContent getTextContent;
 
    @JsFunction
    public interface GetVisualPosition
    {
       int getVisualPosition();
+   }
+
+   @JsFunction
+   public interface GetTextContent
+   {
+      String getTextContent();
    }
 
    @JsFunction

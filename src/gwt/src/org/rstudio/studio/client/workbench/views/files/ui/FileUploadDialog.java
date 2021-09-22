@@ -85,6 +85,8 @@ public class FileUploadDialog extends HtmlFormModalDialog<PendingFileUpload>
    @Override
    protected void setFormPanelEncodingAndMethod(FormPanel formPanel)
    {
+      // NOTE: FormPanel is technically the wrong GWT abstraction to use here because it presumes a response
+      // type of text/html, whereas our file upload endpoint actually returns JSON (coerced to HTML).
       formPanel.setEncoding(FormPanel.ENCODING_MULTIPART);
       formPanel.setMethod(FormPanel.METHOD_POST);
    }
@@ -92,7 +94,8 @@ public class FileUploadDialog extends HtmlFormModalDialog<PendingFileUpload>
    @Override
    protected PendingFileUpload parseResults(String results) throws Exception
    {
-      RpcResponse response = RpcResponse.parse(results);
+      // Use strict parsing mode here since the results object contains untrusted file/path names
+      RpcResponse response = RpcResponse.parseStrict(results);
       if (response == null)
          throw new Exception("Unexpected response from server");
       

@@ -153,6 +153,12 @@ test_context("Comment extraction")
       expect_true(jsLiteralEscape("'goodbye'") == "\\'goodbye\\'");
       expect_true(jsLiteralEscape("</script>") == "\\074/script>");
    }
+
+   test_that("HTML tags in JSON are escaped")
+   {
+      expect_true(jsonHtmlEscape("<h1>") == "\\u003ch1\\u003e");
+      expect_true(jsonHtmlEscape("<script>alert!") == "\\u003cscript\\u003ealert!");
+   }
 }
 
 test_context("String formatting")

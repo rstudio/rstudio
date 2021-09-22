@@ -38,11 +38,15 @@ export interface EditorUIChunkCallbacks {
   getPos: () => number;
   scrollIntoView: (ele: HTMLElement) => void;
   scrollCursorIntoView: () => void;
+  getTextContent: () => string;
 }
 
 export interface EditorUIChunks {
   // create a code chunk editor
   createChunkEditor: (type: string, index: number, callbacks: EditorUIChunkCallbacks) => ChunkEditor;
+
+  // expand or collapse all chunk editors
+  setChunksExpanded: (expanded: boolean) => void;
 }
 
 export interface ChunkEditor {
@@ -51,6 +55,7 @@ export interface ChunkEditor {
   executeSelection(): void;
   element: HTMLElement;
   destroy(): void;
+  setExpanded(expanded: boolean): void;
 }
 
 export interface EditorUIContext {

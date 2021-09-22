@@ -219,6 +219,7 @@ public class TextEditingTarget implements
 
    public static final String RMD_VISUAL_MODE = "rmdVisualMode";
    public static final String RMD_VISUAL_MODE_WRAP_CONFIGURED = "rmdVisualWrapConfigured";
+   public static final String RMD_VISUAL_MODE_COLLAPSED_CHUNKS = "rmdVisualCollapsedChunks";
 
    public static final String SOFT_WRAP_LINES = "softWrapLines";
    public static final String USE_RAINBOW_PARENS = "useRainbowParens";
@@ -3455,15 +3456,17 @@ public class TextEditingTarget implements
          return;
       }
 
-      
       view_.adaptToExtendedFileType(extendedType);
+
+      // save new extended type (updateRmdFormat below reads it)
+      extendedType_ = extendedType;
+
       if (extendedType.startsWith(SourceDocument.XT_RMARKDOWN_PREFIX) ||
           extendedType.equals(SourceDocument.XT_QUARTO_DOCUMENT))
       {
          updateRmdFormat();
       }
-      extendedType_ = extendedType;
-      
+
       quartoHelper_.manageCommands();
    }
 

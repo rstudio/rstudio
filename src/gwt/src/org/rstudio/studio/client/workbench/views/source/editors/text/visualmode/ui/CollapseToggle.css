@@ -1,5 +1,5 @@
 /*
- * PanmirrorUIChunks.java
+ * CollapseToggle.css
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -12,26 +12,33 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.panmirror.ui;
+@external editor_dark;
 
-import jsinterop.annotations.JsFunction;
-import jsinterop.annotations.JsType;
-
-@JsType
-public class PanmirrorUIChunks
+.toggle
 {
-   public CreateChunkEditor createChunkEditor;
-   public SetChunksExpanded setChunksExpanded;
+    position: absolute;
+    top: 0px;
+    left: -20px;
+    padding: 4px;
+    cursor: pointer;
+    transition-property: transform, opacity, filter;
+    transition-duration: 0.2s;
+}
 
-   @JsFunction
-   public interface CreateChunkEditor
-   {
-      PanmirrorUIChunkEditor create(String type, int position, PanmirrorUIChunkCallbacks callbacks);
-   }
+.collapsed
+{
+    position: absolute;
+    top: 0px;
+    right: 15px;
+    padding: 0px;
+    cursor: pointer;
+    transition-property: filter;
+    transition-duration: 0.2s;
+    opacity: 0.5;
+}
 
-   @JsFunction
-   public interface SetChunksExpanded
-   {
-      void setExpanded(boolean expanded);
-   }
+.editor_dark .toggle,
+.editor_dark .collapsed
+{
+    filter: invert(1);
 }

@@ -66,6 +66,11 @@ const char * const kQuartoXt = "quarto-document";
 FilePath s_quartoPath;
 std::string s_quartoVersion;
 
+bool haveRequiredQuartoVersion(const std::string& version)
+{
+   return Version(s_quartoVersion) >= Version(version);
+}
+
 void detectQuartoInstallation()
 {
    // reset
@@ -103,7 +108,7 @@ void detectQuartoInstallation()
             contents = "99.9.9";
          }
 
-         const Version kQuartoRequiredVersion("0.2.144");
+         const Version kQuartoRequiredVersion("0.2.159");
          boost::algorithm::trim(contents);
          Version quartoVersion(contents);
          if (quartoVersion >= kQuartoRequiredVersion)
@@ -524,13 +529,14 @@ Error quartoCreateProject(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   std::string type, engine, kernel, venv, packages;
+   std::string type, engine, kernel, venv, packages, editor;
    error = json::readObject(projectOptionsJson,
                             "type", type,
                             "engine", engine,
                             "kernel", kernel,
                             "venv", venv,
-                            "packages", packages);
+                            "packages", packages,
+                            "editor", editor);
    if (error)
    {
       LOG_ERROR(error);
@@ -595,6 +601,13 @@ Error quartoCreateProject(const json::JsonRpcRequest& request,
                                  boost::algorithm::is_any_of(", "));
          args.push_back(boost::algorithm::join(pkgVector, ","));
       }
+   }
+
+   // visual editor (optional)
+   if (!editor.empty())
+   {
+      args.push_back("--editor");
+      args.push_back(editor);
    }
 
    // create the console process
