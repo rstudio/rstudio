@@ -21,9 +21,12 @@ import java.util.Map;
 
 import com.google.gwt.aria.client.ExpandedValue;
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import org.rstudio.core.client.CommandWithArg;
@@ -77,6 +80,22 @@ import jsinterop.base.Js;
  */
 public class VisualModeChunk
 {
+   public interface ChunkStyle extends ClientBundle
+   {
+      @Source("VisualModeChunk.css")
+      VisualModeChunk.Styles style();
+   }
+
+   public interface Styles extends CssResource
+   {
+      String host();
+      String exec();
+      String summary();
+      String editor();
+      String editorHost();
+      String toolbar();
+   }
+
    public VisualModeChunk(int index,
                           boolean isExpanded,
                           PanmirrorUIChunkCallbacks chunkCallbacks,
@@ -91,6 +110,11 @@ public class VisualModeChunk
       target_ = target;
       active_ = false;
       markdownIndex_ = index;
+
+      // Instantiate CSS style
+      ChunkStyle style = GWT.create(ChunkStyle.class);
+      style_ = style.style();
+      style_.ensureInjected();
 
       // Create an element to host all of the chunk output.
       outputHost_ = Document.get().createDivElement();
@@ -165,9 +189,8 @@ public class VisualModeChunk
 
       // Provide the editor's container element
       host_ = Document.get().createDivElement();
-      host_.getStyle().setPosition(com.google.gwt.dom.client.Style.Position.RELATIVE);
-      host_.getStyle().setProperty("transitionProperty", "height");
-      host_.getStyle().setProperty("transitionDuration", "0.5s");
+      host_.setClassName(style_.host());
+      host_.setTabIndex(0);
 
       // add the collapse toggle
       collapse_ = new VisualModeCollapseToggle(isExpanded);
@@ -175,32 +198,21 @@ public class VisualModeChunk
 
       // add the summary label
       summary_ = Document.get().createDivElement();
-      summary_.setClassName(ThemeFonts.getFixedWidthClass());
-      Style summary = summary_.getStyle();
-      summary.setPosition(Style.Position.RELATIVE);
-      summary.setTop(1, Style.Unit.PX);
-      summary.setLeft(5, Style.Unit.PX);
-      summary.setMarginBottom(5, Style.Unit.PX);
-      summary.setFontSize(12, Style.Unit.PX);
-      summary.setDisplay(Style.Display.NONE);
+      summary_.setClassName(ThemeFonts.getFixedWidthClass() + " " + style_.summary());
       host_.appendChild(summary_);
 
       // add the editor
       editorHost_ = Document.get().createDivElement();
-      editorHost_.getStyle().setPosition(com.google.gwt.dom.client.Style.Position.RELATIVE);
-      editorHost_.getStyle().setOverflow(Style.Overflow.HIDDEN);
-      editorHost_.getStyle().setProperty("transitionDuration", "0.5s");
-      editorHost_.getStyle().setProperty("transitionProperty", "height");
+      editorHost_.setClassName(style_.editorHost());
       host_.appendChild(editorHost_);
       editorContainer_ = chunkEditor.getContainer();
+      editorContainer_.addClassName(style_.editor());
       editorHost_.appendChild(editorContainer_);
 
       // Create an element to host all of the execution status widgets
       // (VisualModeChunkRowState).
       execHost_ = Document.get().createDivElement();
-      execHost_.getStyle().setProperty("position", "absolute");
-      execHost_.getStyle().setProperty("top", "3px");
-      execHost_.getStyle().setProperty("left", "-2px");
+      execHost_.setClassName(style_.exec());
       host_.appendChild(execHost_);
       
       if (output != null)
@@ -781,11 +793,18 @@ public class VisualModeChunk
          editor_.setSelectionRange(postExecution);
       });
    }
-   
+
+   /**
+    * Create the chunk toolbar, which hosts the execution controls (play chunk, etc.)
+    */
    private void createToolbar()
    {
       toolbar_ = new ChunkContextPanmirrorUi(target_, 
             scope_, editor_, false, sync_);
+      if (toolbar_.getElement() != null)
+      {
+         toolbar_.getElement().addClassName(style_.toolbar());
+      }
       host_.appendChild(toolbar_.getToolbar().getElement());
    }
    
@@ -840,46 +859,23 @@ public class VisualModeChunk
       {
          host_.removeClassName("pm-ace-collapsed");
 
-         // Show chunk toolbar, if we have one
-         if (toolbar_ != null)
-         {
-            toolbar_.getToolbar().setVisible(true);
-         }
-
          // Clear summary and hide it (will be repopulated on collapse)
          summary_.setInnerHTML("");
-         summary_.getStyle().setDisplay(Style.Display.NONE);
 
-         // Show execution status again
-         execHost_.getStyle().setDisplay(Style.Display.BLOCK);
-         
          // set to writeable
          editor_.setReadOnly(false);
-         editorContainer_.getStyle().setDisplay(Style.Display.BLOCK);
 
          Roles.getRegionRole().setAriaExpandedState(host_, ExpandedValue.TRUE);
       }
       else
       {  
-         // Restrict height of editor
          host_.addClassName("pm-ace-collapsed");
-
-         // Hide chunk toolbar, if we have one
-         if (toolbar_ != null)
-         {
-            toolbar_.getToolbar().setVisible(false);
-         }
 
          // Create and show the summary text
          summary_.appendChild(createSummary());
-         summary_.getStyle().setDisplay(Style.Display.BLOCK);
-
-         // Hide the execution status (this aligns visually with the expanded chunk)
-         execHost_.getStyle().setDisplay(Style.Display.NONE);
 
          // Set to readonly
          editor_.setReadOnly(true);
-         editorContainer_.getStyle().setDisplay(Style.Display.NONE);
 
          A11y.setARIANotExpanded(host_);
       }
@@ -1018,6 +1014,7 @@ public class VisualModeChunk
    private ChunkContextPanmirrorUi toolbar_;
    private boolean active_;
    private PanmirrorUIChunkCallbacks chunkCallbacks_;
+   private Styles style_;
 
    private final DivElement outputHost_;
    private final DivElement host_;
