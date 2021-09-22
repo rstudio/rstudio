@@ -968,12 +968,6 @@ public class VisualModeChunk
       // Summarize engine and line count
       summary += engine + ", " + lines + " line" + (lines > 1 ? "s" : "");
 
-      // Indicate whether output is also collapsed inside the fold
-      if (widget_ != null && widget_.isVisible())
-      {
-         summary += " + output";
-      }
-
       SpanElement spanSummary = Document.get().createSpanElement();
       spanSummary.setInnerText(summary);
       spanSummary.getStyle().setOpacity(0.6);

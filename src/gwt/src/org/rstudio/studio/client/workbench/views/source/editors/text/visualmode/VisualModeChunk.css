@@ -56,13 +56,16 @@
     overflow: hidden;
 }
 
+/*
+ * Style for editor itself (Ace instance)
+ */
 .editor
 {
     display: block;
 }
 
 /*
- * Show/hide state when chunk code is collaped
+ * Show/hide affected UI elements when chunk code is collaped
  */
 .pm-ace-collapsed .exec,
 .pm-ace-collapsed .editor,
