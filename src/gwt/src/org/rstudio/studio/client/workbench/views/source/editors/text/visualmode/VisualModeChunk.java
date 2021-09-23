@@ -22,6 +22,7 @@ import java.util.Map;
 import com.google.gwt.aria.client.ExpandedValue;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.ParagraphElement;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.dom.client.Style;
@@ -50,6 +51,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCompilePdfHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPrefsHelper;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetQuartoHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor.EditorBehavior;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -67,6 +69,8 @@ import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionConte
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 
@@ -140,6 +144,18 @@ public class VisualModeChunk
       // Ensure word wrap mode is on (avoid horizontal scrollbars in embedded
       // editors)
       editor_.setUseWrapMode(true);
+      
+    
+      // Special comment continuation
+      releaseOnDismiss_.add(editor_.addKeyDownHandler(new KeyDownHandler()
+      {
+         public void onKeyDown(KeyDownEvent event)
+         {
+            NativeEvent ne = event.getNativeEvent();
+            TextEditingTargetQuartoHelper.continueSpecialCommentOnNewline(editor_, ne);
+         }
+      }
+      ));
       
       // Track activation state and notify visual mode
       releaseOnDismiss_.add(editor_.addFocusHandler((evt) ->

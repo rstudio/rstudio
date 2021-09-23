@@ -25,7 +25,6 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Image;
 import org.rstudio.core.client.a11y.A11y;
-import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.common.Value;
 
