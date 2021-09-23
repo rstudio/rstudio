@@ -43,7 +43,7 @@ export interface EditorUIChunkCallbacks {
 
 export interface EditorUIChunks {
   // create a code chunk editor
-  createChunkEditor: (type: string, index: number, callbacks: EditorUIChunkCallbacks) => ChunkEditor;
+  createChunkEditor: (type: string, element: Element, index: number, callbacks: EditorUIChunkCallbacks) => ChunkEditor;
 
   // expand or collapse all chunk editors
   setChunksExpanded: (expanded: boolean) => void;

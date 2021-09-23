@@ -517,7 +517,7 @@ export class AceNodeView implements NodeView {
     }
 
     // call host factory to instantiate editor
-    this.chunk = this.ui.chunks.createChunkEditor('ace', this.node.attrs.md_index, {
+    this.chunk = this.ui.chunks.createChunkEditor('ace', this.dom, this.node.attrs.md_index, {
       getPos: () => this.getPos(),
       scrollIntoView: ele => this.scrollIntoView(ele),
       scrollCursorIntoView: () => this.scrollCursorIntoView(),
@@ -598,6 +598,11 @@ export class AceNodeView implements NodeView {
       name: 'rightEscape',
       bindKey: 'Right',
       exec: () => {
+        // if the chunk is currently collapsed, the right arrow should open it up
+        if (this.chunk && !this.chunk.getExpanded()) {
+          this.chunk.setExpanded(true);
+          return;
+        }
         this.arrowMaybeEscape('char', 1, 'gotoright');
       },
       readOnly: true

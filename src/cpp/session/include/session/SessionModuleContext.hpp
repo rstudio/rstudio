@@ -50,6 +50,8 @@ namespace core {
    namespace system {
       class ProcessSupervisor;
       struct ProcessResult;
+      struct ProcessOptions;
+
    }
    namespace shell_utils {
       class ShellCommand;
@@ -947,10 +949,20 @@ core::Error adaptToLanguage(const std::string& language);
 std::string pandocPath();
 std::string pandocCiteprocPath();
 
+core::Error runPandoc(const std::string& pandocPath,
+                      const std::vector<std::string>& args,
+                      const std::string& input,
+                      core::system::ProcessOptions options,
+                      core::system::ProcessResult* pResult);
 core::Error runPandoc(const std::vector<std::string>& args,
                       const std::string& input,
                       core::system::ProcessResult* pResult);
 
+core::Error runPandocAsync(const std::string& pandocPath,
+                           const std::vector<std::string>& args,
+                           const std::string&input,
+                           core::system::ProcessOptions options,
+                           const boost::function<void(const core::system::ProcessResult&)>& onCompleted);
 core::Error runPandocAsync(const std::vector<std::string>& args,
                            const std::string& input,
                            const boost::function<void(const core::system::ProcessResult&)>& onCompleted);
