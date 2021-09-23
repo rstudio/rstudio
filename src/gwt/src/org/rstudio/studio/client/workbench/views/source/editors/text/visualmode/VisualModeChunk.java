@@ -116,6 +116,8 @@ public class VisualModeChunk
       target_ = target;
       active_ = false;
       markdownIndex_ = index;
+      releaseOnDismiss_ = new ArrayList<>();
+      destroyHandlers_ = new ArrayList<>();
 
       // Instantiate CSS style
       ChunkStyle style = GWT.create(ChunkStyle.class);
@@ -145,8 +147,6 @@ public class VisualModeChunk
 
       PanmirrorUIChunkEditor chunk = new PanmirrorUIChunkEditor();
       
-      releaseOnDismiss_ = new ArrayList<>();
-      destroyHandlers_ = new ArrayList<>();
       rowState_ = new HashMap<>();
 
       // Create a new AceEditor instance and allow access to the underlying
