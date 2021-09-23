@@ -57,7 +57,6 @@ export interface ChunkEditor {
   destroy(): void;
   setExpanded(expanded: boolean): void;
   getExpanded(): boolean;
-  select(): void;
 }
 
 export interface EditorUIContext {
