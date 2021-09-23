@@ -21,6 +21,7 @@
 #include <shared_core/json/Json.hpp>
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/PerformanceTimer.hpp>
 #include <core/system/FileScanner.hpp>
 #include <core/system/Process.hpp>
 #include <core/json/JsonRpc.hpp>
@@ -51,6 +52,9 @@ const char * const kId = "id";
 const char * const kSuffix = "suffix";
 const char * const kTitle = "title";
 
+const char * const kFigType = "fig";
+const char * const kTblType = "tbl";
+
 
 FilePath quartoCrossrefDir(const FilePath& projectDir)
 {
@@ -60,18 +64,25 @@ FilePath quartoCrossrefDir(const FilePath& projectDir)
 }
 
 
-json::Array readXRefIndex(const FilePath& indexPath, const std::string& filename)
+json::Array readXRefIndex(const FilePath& indexPath, const std::string& filename, bool* pExists = nullptr)
 {
-   // read the index as a string
+   // default to not exists
+   if (pExists)
+   {
+      *pExists = false;
+   }
+
+   // tolerate a missing index
+   if (!indexPath.exists())
+       return json::Array();
+
+   // read the index as a string (tolerate empty file)
    std::string index;
    Error error = core::readStringFromFile(indexPath, &index);
    if (error)
    {
       LOG_ERROR(error);
-      return json::Array();
    }
-
-   // tolerate an empty file
    if (boost::algorithm::trim_copy(index).empty())
       return json::Array();
 
@@ -109,10 +120,15 @@ json::Array readXRefIndex(const FilePath& indexPath, const std::string& filename
       }
    }
 
+   if (pExists)
+   {
+      *pExists = true;
+   }
+
    return xrefs;
 }
 
-json::Array sourceDatabaseXRefIndex(const FilePath& srcPath, const std::string& filename)
+json::Array indexSourceFile(const std::string& contents, const std::string& filename)
 {
    QuartoConfig config = quartoConfig();
 
@@ -145,7 +161,101 @@ json::Array sourceDatabaseXRefIndex(const FilePath& srcPath, const std::string& 
       }
    }
 
-   json::Array xrefIndex;
+   // create index
+   core::system::ProcessOptions options;
+   options.workingDir = xrefIndexingDir;
+   core::system::Options env;
+   core::system::environment(&env);
+   core::system::setenv(&env,
+      "QUARTO_FILTER_PARAMS",
+      "{ \"crossref-index-file\": \"index.json\", \"crossref-input-type\": \"qmd\" }"
+   );
+   options.environment = env;
+   std::vector<std::string> args;
+   args.push_back("--from");
+   args.push_back("markdown");
+   args.push_back("--to");
+   args.push_back("native");
+   args.push_back("--defaults");
+   args.push_back("defaults.yml");
+   core::system::ProcessResult result;
+
+   Error error = module_context::runPandoc(
+      FilePath(config.bin_path).completeChildPath("pandoc").getAbsolutePath(),
+      args,
+      contents,
+      options,
+      &result
+   );
+   if (!error)
+   {
+      if (result.exitStatus == EXIT_SUCCESS)
+      {
+         return readXRefIndex(FilePath(xrefIndexingDir).completeChildPath("index.json"), filename);
+      }
+      else
+      {
+         LOG_ERROR_MESSAGE(result.stdErr);
+      }
+   }
+   else
+   {
+      LOG_ERROR(error);
+   }
+
+   return json::Array();
+}
+
+
+json::Array indexSourceFile(const FilePath& srcFile, const std::string& filename)
+{
+   // keep a cache of previously indexed src files -- use it if the cached index
+   // has content and its modification time is after the src file modification time
+   const char * const kQuartoCrossrefSrcFileIndexes = "quarto-crossref-qmd";
+   FilePath srcFileIndex;
+   Error error = perFilePathStorage(kQuartoCrossrefSrcFileIndexes, srcFile, false, &srcFileIndex);
+   if (!error)
+   {
+      if (srcFileIndex.getLastWriteTime() > srcFile.getLastWriteTime())
+      {
+         bool exists = false;
+         json::Array xrefs = readXRefIndex(srcFileIndex, filename, &exists);
+         if (exists)
+            return xrefs;
+      }
+   }
+   else
+   {
+      LOG_ERROR(error);
+   }
+
+   // index source file
+   std::string contents;
+   error = readStringFromFile(srcFile, &contents);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return json::Array();
+   }
+   json::Array xrefs = indexSourceFile(contents, filename);
+
+   // write to cache if we have one
+   if (!srcFileIndex.isEmpty())
+   {
+      json::Object indexJson;
+      indexJson["entries"] = xrefs;
+      error = writeStringToFile(srcFileIndex, indexJson.writeFormatted());
+      if (error)
+         LOG_ERROR(error);
+   }
+
+   return xrefs;
+}
+
+
+boost::optional<std::string> unsavedSrcFileContents(const FilePath& srcPath)
+{
+   // see if this file is currently in the source database (ignore errors as it might not be there)
    std::string id;
    Error error = source_database::getId(srcPath, &id);
    if (!error)
@@ -154,47 +264,8 @@ json::Array sourceDatabaseXRefIndex(const FilePath& srcPath, const std::string& 
       Error error = source_database::get(id, pDoc);
       if (!error)
       {
-         // create index
-         core::system::ProcessOptions options;
-         options.workingDir = xrefIndexingDir;
-         core::system::Options env;
-         core::system::environment(&env);
-         core::system::setenv(&env,
-            "QUARTO_FILTER_PARAMS",
-            "{ \"crossref-index-file\": \"index.json\", \"crossref-input-type\": \"qmd\" }"
-         );
-         options.environment = env;
-         std::vector<std::string> args;
-         args.push_back("--from");
-         args.push_back("markdown");
-         args.push_back("--to");
-         args.push_back("native");
-         args.push_back("--defaults");
-         args.push_back("defaults.yml");
-         core::system::ProcessResult result;
-         error = module_context::runPandoc(
-            FilePath(config.bin_path).completePath("pandoc").getAbsolutePath(),
-            args,
-            pDoc->contents(),
-            options,
-            &result
-         );
-         if (!error)
-         {
-            if (result.exitStatus == EXIT_SUCCESS)
-            {
-               return readXRefIndex(FilePath(xrefIndexingDir).completePath("index.json"), filename);
-            }
-            else
-            {
-               LOG_ERROR_MESSAGE(result.stdErr);
-            }
-         }
-         else
-         {
-            LOG_ERROR(error);
-         }
-
+         if (pDoc->dirty())
+            return pDoc->contents();
       }
       else
       {
@@ -205,86 +276,65 @@ json::Array sourceDatabaseXRefIndex(const FilePath& srcPath, const std::string& 
    {
       LOG_ERROR(error);
    }
-
-
-   return xrefIndex;
-}
-
-void onSourceDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
-{
-   // ignore if the file doesn't have a path
-   if (pDoc->path().empty())
-      return;
-
-   // update unsaved
-   FileInfo fileInfo(module_context::resolveAliasedPath(pDoc->path()));
-
-
-}
-
-void onSourceDocRemoved(const std::string&, const std::string& path)
-{
-   // ignore if the file has no path
-   if (path.empty())
-      return;
-
-   // remove from unsaved if it's a bookdown rmd
-   FileInfo fileInfo(module_context::resolveAliasedPath(path));
-
-}
-
-void onAllSourceDocsRemoved()
-{
-
+   return boost::optional<std::string>();
 }
 
 
-void onDeferredInit(bool)
+json::Array resolvedXRefIndex(const FilePath& renderedIndexPath, const FilePath& srcPath, const std::string& filename)
 {
-   // book vs. standalone doc (bookdown doesn't do any source db monitoring
-   // for standalone files -- possibly b/c crossrefs aren't supported in
-   // standalone files -- need some resolution for this
+   // read any rendered xref index we have on disk. this will either be the definitive
+   // list of xrefs (in the case where there are no subsequent in-memory or on disk
+   // updates to the srcPath) or will be used as a supplement to discover xrefs created
+   // by computations (e.g. subfigures)
+   json::Array renderedXrefs = readXRefIndex(renderedIndexPath, filename);
 
-   // TODO: need to check whether this is a quarto document or not
-   // (or if its already in) and in that case keep an in-memory
-   // cache of crossrefs for that document. should do this work
-   // either incrementally or asynchronously (or both)
+   // see if we can get some srcXrefs as the baseline
+   json::Value srcXrefs;
 
-   // could also consider doing the whole file monitoring bit
-   // and keeping the index on disk (incremental file change handler)
+   // is there unsaved src file contents for this file?
+   auto unsaved = unsavedSrcFileContents(srcPath);
+   if (unsaved.has_value())
+   {
+      srcXrefs = indexSourceFile(unsaved.get(), filename);
+   }
+   // otherwise, check to see if the src file is more recent than the renderedIndexPath
+   else if ((srcPath.getLastWriteTime() > renderedIndexPath.getLastWriteTime()) ||
+            !renderedIndexPath.exists())
+   {
+      srcXrefs = indexSourceFile(srcPath, filename);
+   }
 
-
-   // index docs
-   std::vector<boost::shared_ptr<source_database::SourceDocument> > pDocs;
-   Error error = source_database::list(&pDocs);
-   if (error)
-      LOG_ERROR(error);
-   std::for_each(pDocs.begin(), pDocs.end(), onSourceDocUpdated);
-
-   // hookup source doc events
-   source_database::events().onDocUpdated.connect(onSourceDocUpdated);
-   source_database::events().onDocRemoved.connect(onSourceDocRemoved);
-   source_database::events().onRemoveAll.connect(onAllSourceDocsRemoved);
-
-   // here is where bookdown had a file monitor that crawled everything
-   // incrementally at the outset (which allowed it to only care about
-   // unsaved files in the editor
-}
-
-
-
-json::Array readXRefIndex(const FilePath& indexPath, const FilePath& srcPath, const std::string& filename)
-{
-   // read the xref index we have on disk
-   json::Array xrefs = readXRefIndex(indexPath, filename);
-   if (xrefs.getSize() == 0)
+   // if we have src xrefs, use those as the baseline then supplement w/ computational refs
+   if (srcXrefs.isArray())
+   {
+      json::Array xrefs = srcXrefs.getArray();
+      std::copy_if(renderedXrefs.begin(), renderedXrefs.end(), std::back_inserter(xrefs),
+                   [&xrefs](json::Value xrefValue) {
+         json::Object xref = xrefValue.getObject();
+         std::string type = xref[kType].getString();
+         std::string id = xref[kId].getString();
+         std::string suffix = xref[kSuffix].getString();
+         if ((type == kFigType || type == kTblType) && !suffix.empty())
+         {
+            auto it = std::find_if(xrefs.begin(), xrefs.end(), [type, id](json::Value srcXrefValue) {
+              json::Object srcXref = srcXrefValue.getObject();
+              return srcXref[kType].getString() == type &&
+                     srcXref[kId].getString() == id &&
+                     srcXref[kSuffix].getString().empty();
+            });
+            return it != xrefs.end();
+         }
+         else
+         {
+            return false;
+         }
+      });
       return xrefs;
-
-   // check for xrefs in the source database that we don't know about
-   // TODO: merging/replacement strategy
-   json::Array srcDBIndex = sourceDatabaseXRefIndex(srcPath, filename);
-
-   return xrefs;
+   }
+   else
+   {
+      return renderedXrefs;
+   }
 }
 
 json::Array readProjectXRefIndex(const FilePath& indexPath, const FilePath& srcPath, std::string filename)
@@ -317,7 +367,7 @@ json::Array readProjectXRefIndex(const FilePath& indexPath, const FilePath& srcP
       }
       if (!mostRecentIndex.isEmpty())
       {
-         return readXRefIndex(mostRecentIndex, srcPath, filename);
+         return resolvedXRefIndex(mostRecentIndex, srcPath, filename);
       }
       else
       {
@@ -448,10 +498,9 @@ Error xrefIndexForFile(const FilePath& filePath, json::Object& indexJson)
          LOG_ERROR(error);
          return error;
       }
-      if (indexPath.exists())
-      {
-         indexJson[kRefs] = readXRefIndex(indexPath, filePath, filePath.getFilename());
-      }
+
+      indexJson[kRefs] = resolvedXRefIndex(indexPath, filePath, filePath.getFilename());
+
    }
    return Success();
 }
@@ -527,10 +576,6 @@ Error quartoXRefForId(const json::JsonRpcRequest& request,
 
 Error initialize()
 {
-   // deferred init (build xref file index)
-   module_context::events().onDeferredInit.connect(onDeferredInit);
-
-
    // register rpc functions
    ExecBlock initBlock;
    initBlock.addFunctions()
