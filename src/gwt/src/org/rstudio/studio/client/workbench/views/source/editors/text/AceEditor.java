@@ -891,7 +891,8 @@ public class AceEditor implements DocDisplay,
                }
                
                // Yaml completion manager
-               if (fileType_.isYaml() || fileType_.isRmd())
+               if (fileType_.isYaml() || fileType_.isRmd() || 
+                   (behavior_ == EditorBehavior.AceBehaviorEmbedded && (fileType_.isR() || fileType_.isPython())))
                {
                   managers.put(DocumentMode.Mode.YAML, YamlCompletionManager.create(
                        editor, 
