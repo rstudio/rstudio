@@ -244,10 +244,10 @@ void ttyCheck(const std::string& destination)
    // When running in a TTY, log some information about why we're logging to the TTY
    // in addition to file/syslog.
    if (stderrIsTerminal())
-      std::cerr << "Logging configuration loaded from '"
-                << s_logOptions->getLogConfigFile().getAbsolutePath()
-                << "'. Logging to '" << destination << "'. "
-                << "Displaying this message since a TTY was detected.\n";
+      std::cerr << "TTY detected. Printing informational message about logging configuration. "
+                << "Logging configuration loaded from '"
+                << s_logOptions->getLogConfigFile().getAbsolutePath() << "'. "
+                << "Logging to '" << destination << "'.\n";
 }
 
 log::LoggerType loggerType(const std::string& in_sectionName)
