@@ -80,14 +80,3 @@
   margin-left: 4px;
   line-height: 145%;
 }
-
-/*
- * Governs appearance when chunk is collapsed but nonetheless has focus
- */
-.pm-ace-collapsed.pm-ace-focused {
-  border: 1px dashed #505050 !important;
-}
-
-.editor_dark .pm-ace-collapsed.pm-ace-focused {
-  border: 1px dashed #F0F0F0 !important;
-}
