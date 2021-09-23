@@ -7404,7 +7404,11 @@ public class TextEditingTarget implements
    @Handler
    void onFold()
    {
-      if (useScopeTreeFolding())
+      if (visualMode_.isActivated())
+      {
+         visualMode_.fold();
+      }
+      else if (useScopeTreeFolding())
       {
          Range range = Range.fromPoints(docDisplay_.getSelectionStart(),
                                         docDisplay_.getSelectionEnd());
@@ -7436,7 +7440,11 @@ public class TextEditingTarget implements
    @Handler
    void onUnfold()
    {
-      if (useScopeTreeFolding())
+      if (visualMode_.isActivated())
+      {
+         visualMode_.unfold();
+      }
+      else if (useScopeTreeFolding())
       {
          Range range = Range.fromPoints(docDisplay_.getSelectionStart(),
                                         docDisplay_.getSelectionEnd());
@@ -7500,7 +7508,6 @@ public class TextEditingTarget implements
          else
          {
             // If selection, unfold the selection
-
             docDisplay_.unfold(range);
          }
       }
@@ -7514,7 +7521,11 @@ public class TextEditingTarget implements
    @Handler
    void onFoldAll()
    {
-      if (useScopeTreeFolding())
+      if (visualMode_.isActivated())
+      {
+         visualMode_.foldAll();
+      }
+      else  if (useScopeTreeFolding())
       {
          // Fold all except anonymous braces
          HashSet<Integer> rowsFolded = new HashSet<>();
@@ -7534,12 +7545,17 @@ public class TextEditingTarget implements
       {
          docDisplay_.foldAll();
       }
+       
    }
 
    @Handler
    void onUnfoldAll()
    {
-      if (useScopeTreeFolding())
+      if (visualMode_.isActivated())
+      {
+         visualMode_.unfoldAll();
+      }
+      else  if (useScopeTreeFolding())
       {
          for (AceFold f : JsUtil.asIterable(docDisplay_.getFolds()))
             docDisplay_.unfold(f);
