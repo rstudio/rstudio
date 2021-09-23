@@ -124,6 +124,8 @@ public class PanmirrorCommands
    public static final String StanCodeChunk = "65D33344-CBE9-438C-B337-A538F8D7FCE5";
    public static final String ExpandAllChunks = "B217913B-67C9-457F-B766-7FCCB502F611";
    public static final String CollapseAllChunks = "9907A864-D707-4410-93A4-07871A8C43A6";
+   public static final String ExpandChunk = "0226518C-559A-4BFC-A5BD-244BEE8175AA";
+   public static final String CollapseChunk = "4AFBBC0C-A6DA-4019-B85F-374636E349C3";
    
    // outline
    public static final String GoToNextSection = "AE827BDA-96F8-4E84-8030-298D98386765";

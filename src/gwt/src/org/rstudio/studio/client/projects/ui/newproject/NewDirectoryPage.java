@@ -117,28 +117,35 @@ public class NewDirectoryPage extends NewProjectWizardPage
             txtProjectName_);
       addWidget(newProjectParent_);
       
+      onAddMiddleWidgets();
+      
       // if git is available then add git init
       UserPrefs userPrefs = RStudioGinjector.INSTANCE.getUserPrefs();
       SessionInfo sessionInfo = 
          RStudioGinjector.INSTANCE.getSession().getSessionInfo();
       
+      HorizontalPanel optionsPanel = null;
+      if (getOptionsSideBySide())
+         optionsPanel = new HorizontalPanel();
+      
       chkGitInit_ = new CheckBox("Create a git repository");
       chkGitInit_.addStyleName(styles.wizardCheckbox());
-      chkGitInit_.addStyleName(styles.newProjectGitInit());
       ElementIds.assignElementId(chkGitInit_,
          ElementIds.idSafeString(getTitle()) + "_" + ElementIds.NEW_PROJECT_GIT_REPO);
       if (sessionInfo.isVcsAvailable(VCSConstants.GIT_ID))
       {  
          chkGitInit_.setValue(userPrefs.newProjGitInit().getValue());
          chkGitInit_.getElement().getStyle().setMarginRight(7, Unit.PX);
-         addWidget(chkGitInit_);
+         if (optionsPanel != null)
+         {
+            optionsPanel.add(chkGitInit_);
+         }
+         else
+         {
+            addSpacer();
+            addWidget(chkGitInit_);
+         }
       }
-      
-      onAddMiddleWidgets();
-      
-      HorizontalPanel optionsPanel = null;
-      if (getOptionsSideBySide())
-         optionsPanel = new HorizontalPanel();
       
       // Initialize project with renv
       chkRenvInit_ = new CheckBox("Use renv with this project");

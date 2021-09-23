@@ -73,7 +73,7 @@ export function xrefCompletionHandler(ui: EditorUI, server: XRefServer): Complet
 }
 
 class FuseIndex {
-  private fuse: Fuse<XRef, Fuse.IFuseOptions<XRef>>;
+  private fuse: Fuse<XRef>;
 
   private keys: Fuse.FuseOptionKeyObject[] = [
     { name: 'id', weight: 20 },
@@ -150,7 +150,6 @@ function xrefCompletions(ui: EditorUI, server: XRefServer, index: FuseIndex) {
         completions: async () => {
           const docPath = ui.context.getDocumentPath();
           if (docPath) {
-            // NOTE: don't need the withSavedDocument for quarto
             await ui.context.withSavedDocument();
             const xrefs = await server.indexForFile(docPath);
             index.update(xrefs.refs);

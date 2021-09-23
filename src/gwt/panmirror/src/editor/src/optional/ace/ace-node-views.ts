@@ -39,6 +39,10 @@ export class AceNodeViews {
     }
   }
 
+  public activeNodeView() : AceNodeView | undefined {
+    return this.nodeViews.find(view => view.isFocused());
+  }
+
   public handleClick(view: EditorView, event: Event): boolean {
     // alias to mouseEvent
     const mouseEvent = event as MouseEvent;

@@ -21,10 +21,12 @@ import java.util.Map;
 
 import com.google.gwt.aria.client.ExpandedValue;
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.ParagraphElement;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.SpanElement;
-import com.google.gwt.dom.client.Style;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import org.rstudio.core.client.CommandWithArg;
@@ -51,6 +53,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCompilePdfHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPrefsHelper;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetQuartoHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor.EditorBehavior;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -68,6 +71,8 @@ import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionConte
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 
@@ -79,13 +84,32 @@ import jsinterop.base.Js;
  */
 public class VisualModeChunk
 {
-   public VisualModeChunk(int index,
+   public interface ChunkStyle extends ClientBundle
+   {
+      @Source("VisualModeChunk.css")
+      VisualModeChunk.Styles style();
+   }
+
+   public interface Styles extends CssResource
+   {
+      String host();
+      String exec();
+      String summary();
+      String editor();
+      String editorHost();
+      String chunkHost();
+      String toolbar();
+   }
+
+   public VisualModeChunk(Element element,
+                          int index,
                           boolean isExpanded,
                           PanmirrorUIChunkCallbacks chunkCallbacks,
                           DocUpdateSentinel sentinel,
                           TextEditingTarget target,
                           VisualModeEditorSync sync)
    {
+      element_ = element;
       chunkCallbacks_ = chunkCallbacks;
       sync_ = sync;
       codeExecution_ = target.getCodeExecutor();
@@ -93,6 +117,13 @@ public class VisualModeChunk
       target_ = target;
       active_ = false;
       markdownIndex_ = index;
+      releaseOnDismiss_ = new ArrayList<>();
+      destroyHandlers_ = new ArrayList<>();
+
+      // Instantiate CSS style
+      ChunkStyle style = GWT.create(ChunkStyle.class);
+      style_ = style.style();
+      style_.ensureInjected();
 
       // Create an element to host all of the chunk output.
       outputHost_ = Document.get().createDivElement();
@@ -117,8 +148,6 @@ public class VisualModeChunk
 
       PanmirrorUIChunkEditor chunk = new PanmirrorUIChunkEditor();
       
-      releaseOnDismiss_ = new ArrayList<>();
-      destroyHandlers_ = new ArrayList<>();
       rowState_ = new HashMap<>();
 
       // Create a new AceEditor instance and allow access to the underlying
@@ -141,6 +170,18 @@ public class VisualModeChunk
       // Ensure word wrap mode is on (avoid horizontal scrollbars in embedded
       // editors)
       editor_.setUseWrapMode(true);
+      
+    
+      // Special comment continuation
+      releaseOnDismiss_.add(editor_.addKeyDownHandler(new KeyDownHandler()
+      {
+         public void onKeyDown(KeyDownEvent event)
+         {
+            NativeEvent ne = event.getNativeEvent();
+            TextEditingTargetQuartoHelper.continueSpecialCommentOnNewline(editor_, ne);
+         }
+      }
+      ));
       
       // Track activation state and notify visual mode
       releaseOnDismiss_.add(editor_.addFocusHandler((evt) ->
@@ -176,9 +217,8 @@ public class VisualModeChunk
 
       // Provide the editor's container element
       host_ = Document.get().createDivElement();
-      host_.getStyle().setPosition(com.google.gwt.dom.client.Style.Position.RELATIVE);
-      host_.getStyle().setProperty("transitionProperty", "height");
-      host_.getStyle().setProperty("transitionDuration", "0.5s");
+      host_.setClassName(style_.host());
+      host_.setTabIndex(0);
 
       // add the collapse toggle
       collapse_ = new VisualModeCollapseToggle(isExpanded);
@@ -186,31 +226,26 @@ public class VisualModeChunk
 
       // add the summary label
       summary_ = Document.get().createDivElement();
-      summary_.setClassName(ThemeFonts.getFixedWidthClass());
-      Style summary = summary_.getStyle();
-      summary.setPosition(Style.Position.ABSOLUTE);
-      summary.setTextAlign(Style.TextAlign.RIGHT);
-      summary.setTop(1, Style.Unit.PX);
-      summary.setLeft(5, Style.Unit.PX);
-      summary.setFontSize(12, Style.Unit.PX);
-      summary.setDisplay(Style.Display.NONE);
+      summary_.setClassName(ThemeFonts.getFixedWidthClass() + " " + style_.summary());
       host_.appendChild(summary_);
+
+      // add the chunk (contains the editor and the output, if any)
+      chunkHost_ = Document.get().createDivElement();
+      chunkHost_.setClassName(style_.chunkHost());
+      host_.appendChild(chunkHost_);
 
       // add the editor
       editorHost_ = Document.get().createDivElement();
-      editorHost_.getStyle().setPosition(com.google.gwt.dom.client.Style.Position.RELATIVE);
-      editorHost_.getStyle().setOverflow(Style.Overflow.HIDDEN);
-      editorHost_.getStyle().setProperty("transitionDuration", "0.5s");
-      editorHost_.getStyle().setProperty("transitionProperty", "height");
-      host_.appendChild(editorHost_);
-      editorHost_.appendChild(chunkEditor.getContainer());
+      editorHost_.setClassName(style_.editorHost());
+      editorContainer_ = chunkEditor.getContainer();
+      editorContainer_.addClassName(style_.editor());
+      editorHost_.appendChild(editorContainer_);
+      chunkHost_.appendChild(editorHost_);
 
       // Create an element to host all of the execution status widgets
       // (VisualModeChunkRowState).
       execHost_ = Document.get().createDivElement();
-      execHost_.getStyle().setProperty("position", "absolute");
-      execHost_.getStyle().setProperty("top", "3px");
-      execHost_.getStyle().setProperty("left", "-2px");
+      execHost_.setClassName(style_.exec());
       host_.appendChild(execHost_);
       
       if (output != null)
@@ -227,8 +262,8 @@ public class VisualModeChunk
             syncOutputClass();
          });
       }
-      editorHost_.appendChild(outputHost_);
-      
+      chunkHost_.appendChild(outputHost_);
+
       // Create the chunk toolbar
       if (scope_ != null)
       {
@@ -260,29 +295,49 @@ public class VisualModeChunk
          });
       };
 
-      // Hide the collapser initially, then show it when the mouse enters/leaves
-      DOM.sinkEvents(host_, Event.ONMOUSEOVER | Event.ONMOUSEOUT);
+      DOM.sinkEvents(host_, Event.ONMOUSEOVER | Event.ONMOUSEOUT | Event.ONCLICK | Event.ONFOCUS);
       DOM.setEventListener(host_, evt ->
       {
          switch(evt.getTypeInt())
          {
             case Event.ONMOUSEOVER:
+               // Show toggle on mouse over
                collapse_.setShowToggle(true);
                break;
 
             case Event.ONMOUSEOUT:
-               collapse_.setShowToggle(false);
+               // Hide toggle on mouse out (if editor isn't focused)
+               if (!editor_.isFocused())
+                  collapse_.setShowToggle(false);
+               break;
+
+            case Event.ONFOCUS:
+            case Event.ONCLICK:
+               // Activate editor if focused/clicked while collapsed
+               if (!getExpanded())
+               {
+                  editor_.focus();
+               }
                break;
          }
       });
-
+      
       // Ensure that the editor expands when it gets focus
       releaseOnDismiss_.add(editor_.addFocusHandler((evt) ->
       {
-         if (!collapse_.expanded.getValue())
+         if (element_ != null)
          {
-            collapse_.expanded.setValue(true, true);
+            element_.addClassName("pm-ace-focused");
          }
+         collapse_.setShowToggle(true);
+      }));
+      releaseOnDismiss_.add(editor_.addBlurHandler((evt) ->
+      {
+         if (element_ != null)
+         {
+            element_.removeClassName("pm-ace-focused");
+         }
+         collapse_.setShowToggle(false);
       }));
 
       // Register pref handlers, so that the new editor instance responds to
@@ -330,6 +385,11 @@ public class VisualModeChunk
          {
             collapse_.expanded.setValue(expanded, true);
          }
+      };
+
+      chunk.getExpanded = () ->
+      {
+         return collapse_.expanded.getValue();
       };
 
       // Hook up event handler for expand/collapse
@@ -783,11 +843,18 @@ public class VisualModeChunk
          editor_.setSelectionRange(postExecution);
       });
    }
-   
+
+   /**
+    * Create the chunk toolbar, which hosts the execution controls (play chunk, etc.)
+    */
    private void createToolbar()
    {
       toolbar_ = new ChunkContextPanmirrorUi(target_, 
             scope_, editor_, false, sync_);
+      if (toolbar_.getElement() != null)
+      {
+         toolbar_.getElement().addClassName(style_.toolbar());
+      }
       host_.appendChild(toolbar_.getToolbar().getElement());
    }
    
@@ -832,7 +899,7 @@ public class VisualModeChunk
    }
 
    /**
-    * Sets the expansion state of the entire code chunk (code and output).
+    * Sets the expansion state of the code chunk
     *
     * @param expanded Whether the chunk is to be expanded.
     */
@@ -840,43 +907,31 @@ public class VisualModeChunk
    {
       if (expanded)
       {
-         // Clear height restriction
-         editorHost_.getStyle().clearHeight();
-         host_.removeClassName("pm-ace-collapsed");
-
-         // Show chunk toolbar, if we have one
-         if (toolbar_ != null)
+         if (element_ != null)
          {
-            toolbar_.getToolbar().setVisible(true);
+            element_.removeClassName("pm-ace-collapsed");
          }
 
          // Clear summary and hide it (will be repopulated on collapse)
          summary_.setInnerHTML("");
-         summary_.getStyle().setDisplay(Style.Display.NONE);
 
-         // Show execution status again
-         execHost_.getStyle().setDisplay(Style.Display.BLOCK);
+         // set to writeable
+         editor_.setReadOnly(false);
 
          Roles.getRegionRole().setAriaExpandedState(host_, ExpandedValue.TRUE);
       }
       else
       {
-         // Restrict height of editor
-         editorHost_.getStyle().setHeight(20, Style.Unit.PX);
-         host_.addClassName("pm-ace-collapsed");
-
-         // Hide chunk toolbar, if we have one
-         if (toolbar_ != null)
+         if (element_ != null)
          {
-            toolbar_.getToolbar().setVisible(false);
+            element_.addClassName("pm-ace-collapsed");
          }
 
          // Create and show the summary text
          summary_.appendChild(createSummary());
-         summary_.getStyle().setDisplay(Style.Display.BLOCK);
 
-         // Hide the execution status (this aligns visually with the expanded chunk)
-         execHost_.getStyle().setDisplay(Style.Display.NONE);
+         // Set to readonly
+         editor_.setReadOnly(true);
 
          A11y.setARIANotExpanded(host_);
       }
@@ -895,7 +950,7 @@ public class VisualModeChunk
     */
    private Element createSummary()
    {
-      ParagraphElement p = Document.get().createPElement();
+      DivElement wrapper = Document.get().createDivElement();
 
       // Get the entire contents of the chunk in a single string, including the header
       String contents = chunkCallbacks_.getTextContent.getTextContent();
@@ -906,12 +961,6 @@ public class VisualModeChunk
       // We're mostly interested in the language and label; establish defaults
       String engine = "R";
       String label = "";
-
-      // Use the chunk label from the definition as a default, if it exists
-      if (def_ != null)
-      {
-         label = def_.getChunkLabel();
-      }
 
       // Quarto chunks use this syntax, which must be parsed separately
       String quartoLabel = "#| label:";
@@ -968,25 +1017,19 @@ public class VisualModeChunk
          SpanElement spanLabel = Document.get().createSpanElement();
          spanLabel.setInnerText(label + "");
          spanLabel.getStyle().setOpacity(1);
-         p.appendChild(spanLabel);
+         wrapper.appendChild(spanLabel);
          summary += ": ";
       }
 
       // Summarize engine and line count
       summary += engine + ", " + lines + " line" + (lines > 1 ? "s" : "");
 
-      // Indicate whether output is also collapsed inside the fold
-      if (widget_ != null && widget_.isVisible())
-      {
-         summary += " + output";
-      }
-
       SpanElement spanSummary = Document.get().createSpanElement();
       spanSummary.setInnerText(summary);
       spanSummary.getStyle().setOpacity(0.6);
-      p.appendChild(spanSummary);
+      wrapper.appendChild(spanSummary);
 
-      return p;
+      return wrapper;
    }
 
    /**
@@ -997,7 +1040,7 @@ public class VisualModeChunk
    private void syncOutputClass()
    {
       // Skip if we aren't yet fully instantiated
-      if (host_ == null || host_.getParentElement() == null)
+      if (host_ == null || element_ == null)
       {
          return;
       }
@@ -1006,12 +1049,12 @@ public class VisualModeChunk
       if (getExpanded() && widget_ != null && widget_.isVisible())
       {
          // We have output (and are expanded); add the CSS decoration
-         host_.getParentElement().addClassName(outputClass);
+         element_.addClassName(outputClass);
       }
       else
       {
          // We don't have output; remove it
-         host_.getParentElement().removeClassName(outputClass);
+         element_.removeClassName(outputClass);
       }
    }
 
@@ -1021,13 +1064,17 @@ public class VisualModeChunk
    private ChunkContextPanmirrorUi toolbar_;
    private boolean active_;
    private PanmirrorUIChunkCallbacks chunkCallbacks_;
+   private Styles style_;
 
+   private final Element element_;
    private final DivElement outputHost_;
    private final DivElement host_;
    private final DivElement execHost_;
+   private final DivElement chunkHost_;
    private final DivElement editorHost_;
    private final PanmirrorUIChunkEditor chunk_;
    private final AceEditor editor_;
+   private final Element editorContainer_;
    private final DocDisplay parent_;
    private final List<Command> destroyHandlers_;
    private final ArrayList<HandlerRegistration> releaseOnDismiss_;

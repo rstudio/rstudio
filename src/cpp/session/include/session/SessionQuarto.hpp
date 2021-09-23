@@ -39,10 +39,11 @@ extern const char* const kQuartoProjectBook;
 
 struct QuartoConfig
 {
-   QuartoConfig() : empty(true), installed(false), is_project(false) {}
-   bool empty;
+   QuartoConfig() : installed(false), is_project(false) {}
    bool installed;
    std::string version;
+   std::string bin_path;
+   std::string resources_path;
    bool is_project;
    std::string project_type;
    std::string project_dir;
