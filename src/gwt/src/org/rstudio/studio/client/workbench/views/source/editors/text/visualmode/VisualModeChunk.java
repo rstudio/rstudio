@@ -96,13 +96,15 @@ public class VisualModeChunk
       String toolbar();
    }
 
-   public VisualModeChunk(int index,
+   public VisualModeChunk(Element element,
+                          int index,
                           boolean isExpanded,
                           PanmirrorUIChunkCallbacks chunkCallbacks,
                           DocUpdateSentinel sentinel,
                           TextEditingTarget target,
                           VisualModeEditorSync sync)
    {
+      element_ = element;
       chunkCallbacks_ = chunkCallbacks;
       sync_ = sync;
       codeExecution_ = target.getCodeExecutor();
@@ -287,17 +289,17 @@ public class VisualModeChunk
       // Ensure that the editor expands when it gets focus
       releaseOnDismiss_.add(editor_.addFocusHandler((evt) ->
       {
-         if (host_.getParentElement() != null)
+         if (element_ != null)
          {
-            host_.getParentElement().addClassName("pm-ace-focused");
+            element_.addClassName("pm-ace-focused");
          }
          collapse_.setShowToggle(true);
       }));
       releaseOnDismiss_.add(editor_.addBlurHandler((evt) ->
       {
-         if (host_.getParentElement() != null)
+         if (element_ != null)
          {
-            host_.getParentElement().removeClassName("pm-ace-focused");
+            element_.removeClassName("pm-ace-focused");
          }
          collapse_.setShowToggle(false);
       }));
@@ -861,7 +863,7 @@ public class VisualModeChunk
    }
 
    /**
-    * Sets the expansion state of the entire code chunk (code and output).
+    * Sets the expansion state of the code chunk
     *
     * @param expanded Whether the chunk is to be expanded.
     */
@@ -869,9 +871,9 @@ public class VisualModeChunk
    {
       if (expanded)
       {
-         if (host_.getParentElement() != null)
+         if (element_ != null)
          {
-            host_.getParentElement().removeClassName("pm-ace-collapsed");
+            element_.removeClassName("pm-ace-collapsed");
          }
 
          // Clear summary and hide it (will be repopulated on collapse)
@@ -884,9 +886,9 @@ public class VisualModeChunk
       }
       else
       {
-         if (host_.getParentElement() != null)
+         if (element_ != null)
          {
-            host_.getParentElement().addClassName("pm-ace-collapsed");
+            element_.addClassName("pm-ace-collapsed");
          }
 
          // Create and show the summary text
@@ -1002,7 +1004,7 @@ public class VisualModeChunk
    private void syncOutputClass()
    {
       // Skip if we aren't yet fully instantiated
-      if (host_ == null || host_.getParentElement() == null)
+      if (host_ == null || element_ == null)
       {
          return;
       }
@@ -1011,12 +1013,12 @@ public class VisualModeChunk
       if (getExpanded() && widget_ != null && widget_.isVisible())
       {
          // We have output (and are expanded); add the CSS decoration
-         host_.getParentElement().addClassName(outputClass);
+         element_.addClassName(outputClass);
       }
       else
       {
          // We don't have output; remove it
-         host_.getParentElement().removeClassName(outputClass);
+         element_.removeClassName(outputClass);
       }
    }
 
@@ -1028,6 +1030,7 @@ public class VisualModeChunk
    private PanmirrorUIChunkCallbacks chunkCallbacks_;
    private Styles style_;
 
+   private final Element element_;
    private final DivElement outputHost_;
    private final DivElement host_;
    private final DivElement execHost_;
