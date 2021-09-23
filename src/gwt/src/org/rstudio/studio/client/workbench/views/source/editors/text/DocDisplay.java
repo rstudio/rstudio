@@ -263,7 +263,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void ensureCursorVisible();
    void scrollCursorIntoViewIfNecessary();
    void scrollCursorIntoViewIfNecessary(int rowsAround);
-   boolean isCursorInSingleLineString();
+   boolean isCursorInSingleLineString(boolean allowInComment);
 
    void gotoPageDown();
    void gotoPageUp();

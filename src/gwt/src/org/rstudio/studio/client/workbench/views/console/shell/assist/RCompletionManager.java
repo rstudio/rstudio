@@ -634,7 +634,7 @@ public class RCompletionManager implements CompletionManager
       int cursorColumn = cursorPos.getColumn();
       
       // Don't auto-popup when the cursor is within a string
-      if (docDisplay_.isCursorInSingleLineString())
+      if (docDisplay_.isCursorInSingleLineString(false))
          return false;
       
       // Don't auto-popup if there is a character following the cursor
@@ -740,7 +740,7 @@ public class RCompletionManager implements CompletionManager
             return false;
          
          // Bail if we're in a single-line string
-         if (docDisplay_.isCursorInSingleLineString())
+         if (docDisplay_.isCursorInSingleLineString(false))
             return false;
          
          // if there's a selection, bail

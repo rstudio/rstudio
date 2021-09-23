@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.console.shell.assist;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
@@ -271,8 +272,8 @@ public abstract class CompletionManagerBase
       Token token = docDisplay_.getTokenAt(docDisplay_.getCursorPosition());
       if (token != null)
       {
-         // don't complete within comments
-         if (token.hasType("comment"))
+         // don't complete within comments if requested
+         if (!allowInComment() && token.hasType("comment"))
             return false;
 
          // don't complete within multi-line strings
@@ -626,7 +627,7 @@ public abstract class CompletionManagerBase
    }
    
    protected boolean canAutoPopup(char ch, int lookbackLimit)
-   {
+   {  
       String codeComplete = userPrefs_.codeCompletion().getValue();
       
       if (isTriggerCharacter(ch) && !StringUtil.equals(codeComplete, UserPrefs.CODE_COMPLETION_MANUAL))
@@ -638,7 +639,7 @@ public abstract class CompletionManagerBase
       if (docDisplay_.isVimModeOn() && !docDisplay_.isVimInInsertMode())
          return false;
       
-      if (docDisplay_.isCursorInSingleLineString())
+      if (docDisplay_.isCursorInSingleLineString(allowInComment()))
          return false;
       
       if (!isBoundaryCharacter(docDisplay_.getCharacterAtCursor()))
@@ -653,16 +654,25 @@ public abstract class CompletionManagerBase
             !isBoundaryCharacter(ch);
             
       if (!canAutoPopup)
+      {
          return false;
+      }
       
       for (int i = 0; i < lookbackLimit; i++)
       {
          int index = cursorColumn - i - 1;
          if (isBoundaryCharacter(StringUtil.charAt(currentLine, index)))
+         {
             return false;
+         }
       }
       
       return true;
+   }
+   
+   protected boolean allowInComment()
+   {
+      return false;
    }
    
    private void onSelection(String completionToken,

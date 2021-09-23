@@ -96,6 +96,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.PythonComp
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.SqlCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.StanCompletionManager;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.YamlCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
@@ -887,6 +888,17 @@ public class AceEditor implements DocDisplay,
                         new CompletionPopupPanel(),
                         server_,
                         context_));
+               }
+               
+               // Yaml completion manager
+               if (fileType_.isYaml() || fileType_.isRmd())
+               {
+                  managers.put(DocumentMode.Mode.YAML, YamlCompletionManager.create(
+                       editor, 
+                       new CompletionPopupPanel(), 
+                       server_, 
+                       context_
+                  ));
                }
             }
          };
@@ -2872,9 +2884,9 @@ public class AceEditor implements DocDisplay,
    }
 
    @Override
-   public boolean isCursorInSingleLineString()
+   public boolean isCursorInSingleLineString(boolean allowInComment)
    {
-      return StringUtil.isEndOfLineInRStringState(getCurrentLineUpToCursor());
+      return StringUtil.isEndOfLineInRStringState(getCurrentLineUpToCursor(), allowInComment);
    }
 
    public void gotoPageUp()
