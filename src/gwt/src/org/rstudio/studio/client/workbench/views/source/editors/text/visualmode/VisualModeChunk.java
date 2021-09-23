@@ -287,12 +287,18 @@ public class VisualModeChunk
       // Ensure that the editor expands when it gets focus
       releaseOnDismiss_.add(editor_.addFocusHandler((evt) ->
       {
-         Debug.devlog("chunk editor got focus");
+         if (host_.getParentElement() != null)
+         {
+            host_.getParentElement().addClassName("pm-ace-focused");
+         }
          collapse_.setShowToggle(true);
       }));
       releaseOnDismiss_.add(editor_.addBlurHandler((evt) ->
       {
-         Debug.devlog("chunk editor lost focus");
+         if (host_.getParentElement() != null)
+         {
+            host_.getParentElement().removeClassName("pm-ace-focused");
+         }
          collapse_.setShowToggle(false);
       }));
 
@@ -863,7 +869,10 @@ public class VisualModeChunk
    {
       if (expanded)
       {
-         host_.removeClassName("pm-ace-collapsed");
+         if (host_.getParentElement() != null)
+         {
+            host_.getParentElement().removeClassName("pm-ace-collapsed");
+         }
 
          // Clear summary and hide it (will be repopulated on collapse)
          summary_.setInnerHTML("");
@@ -874,8 +883,11 @@ public class VisualModeChunk
          Roles.getRegionRole().setAriaExpandedState(host_, ExpandedValue.TRUE);
       }
       else
-      {  
-         host_.addClassName("pm-ace-collapsed");
+      {
+         if (host_.getParentElement() != null)
+         {
+            host_.getParentElement().addClassName("pm-ace-collapsed");
+         }
 
          // Create and show the summary text
          summary_.appendChild(createSummary());

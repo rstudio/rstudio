@@ -82,9 +82,12 @@
 }
 
 /*
- * Hide the first line when the editor is collapsed
+ * Governs appearance when chunk is collapsed but nonetheless has focus
  */
-.pm-ace-collapsed .ace_text-layer .ace_line_group:first-child,
-.pm-ace-collapsed .ace_text-layer .ace_line_group:first-child span {
-  display: none;
+.pm-ace-collapsed.pm-ace-focused {
+  border: 1px dashed #505050 !important;
+}
+
+.editor_dark .pm-ace-collapsed.pm-ace-focused {
+  border: 1px dashed #F0F0F0 !important;
 }
