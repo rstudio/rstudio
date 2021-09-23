@@ -269,19 +269,29 @@ public class VisualModeChunk
          });
       };
 
-      // Hide the collapser initially, then show it when the mouse enters/leaves
-      DOM.sinkEvents(host_, Event.ONMOUSEOVER | Event.ONMOUSEOUT);
+      DOM.sinkEvents(host_, Event.ONMOUSEOVER | Event.ONMOUSEOUT | Event.ONCLICK | Event.ONFOCUS);
       DOM.setEventListener(host_, evt ->
       {
          switch(evt.getTypeInt())
          {
             case Event.ONMOUSEOVER:
+               // Show toggle on mouse over
                collapse_.setShowToggle(true);
                break;
 
             case Event.ONMOUSEOUT:
+               // Hide toggle on mouse out (if editor isn't focused)
                if (!editor_.isFocused())
                   collapse_.setShowToggle(false);
+               break;
+
+            case Event.ONFOCUS:
+            case Event.ONCLICK:
+               // Activate editor if focused/clicked while collapsed
+               if (!getExpanded())
+               {
+                  editor_.focus();
+               }
                break;
          }
       });
