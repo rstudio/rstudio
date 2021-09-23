@@ -92,6 +92,7 @@ public class VisualModeChunk
       String summary();
       String editor();
       String editorHost();
+      String chunkHost();
       String toolbar();
    }
 
@@ -200,13 +201,18 @@ public class VisualModeChunk
       summary_.setClassName(ThemeFonts.getFixedWidthClass() + " " + style_.summary());
       host_.appendChild(summary_);
 
+      // add the chunk (contains the editor and the output, if any)
+      chunkHost_ = Document.get().createDivElement();
+      chunkHost_.setClassName(style_.chunkHost());
+      host_.appendChild(chunkHost_);
+
       // add the editor
       editorHost_ = Document.get().createDivElement();
       editorHost_.setClassName(style_.editorHost());
-      host_.appendChild(editorHost_);
       editorContainer_ = chunkEditor.getContainer();
       editorContainer_.addClassName(style_.editor());
       editorHost_.appendChild(editorContainer_);
+      chunkHost_.appendChild(editorHost_);
 
       // Create an element to host all of the execution status widgets
       // (VisualModeChunkRowState).
@@ -228,7 +234,7 @@ public class VisualModeChunk
             syncOutputClass();
          });
       }
-      editorHost_.appendChild(outputHost_);
+      chunkHost_.appendChild(outputHost_);
       
       // Create the chunk toolbar
       if (scope_ != null)
@@ -337,7 +343,8 @@ public class VisualModeChunk
          }
       };
       
-      chunk.getExpanded = () -> {
+      chunk.getExpanded = () ->
+      {
          return collapse_.expanded.getValue();
       };
 
@@ -1012,6 +1019,7 @@ public class VisualModeChunk
    private final DivElement outputHost_;
    private final DivElement host_;
    private final DivElement execHost_;
+   private final DivElement chunkHost_;
    private final DivElement editorHost_;
    private final PanmirrorUIChunkEditor chunk_;
    private final AceEditor editor_;

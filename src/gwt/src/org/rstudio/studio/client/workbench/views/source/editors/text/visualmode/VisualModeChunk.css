@@ -48,9 +48,9 @@
 }
 
 /*
- * Style for editor host (wraps Ace editor instance)
+ * Style for chunk host (wraps Ace editor instance and output)
  */
-.editorHost
+.chunkHost
 {
     position: relative;
     overflow: hidden;
@@ -68,10 +68,14 @@
  * Show/hide affected UI elements when chunk code is collaped
  */
 .pm-ace-collapsed .exec,
-.pm-ace-collapsed .editor,
 .pm-ace-collapsed .toolbar
 {
     display: none;
+}
+
+.pm-ace-collapsed .editorHost
+{
+    height: 0px;
 }
 
 .pm-ace-collapsed .summary
