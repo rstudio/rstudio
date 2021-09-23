@@ -116,7 +116,7 @@ export function goToOutlineCommand(dir: 'next' | 'previous', targetType: 'chunk'
       }
       const target = outline.find(nodeWithPos => {
         // if we are only targeting chunks, do not navigate to other types, and vice versa
-        let isChunk = nodeWithPos.node.type === state.schema.nodes.rmd_chunk;
+        const isChunk = nodeWithPos.node.type === state.schema.nodes.rmd_chunk;
         if (isChunk !== (targetType === 'chunk')) {
           return false;
         }
