@@ -618,7 +618,7 @@ public class Files
       final ArrayList<FileSystemItem> selectedFiles = view_.getSelectedFiles();
 
       // validation: some selection exists
-      String message = "Are you sure you want to delete ";
+      String message = "Are you sure you want to permanently delete ";
       if (selectedFiles.size() == 0)
       {
          return;
@@ -631,7 +631,7 @@ public class Files
       {
          message += "the " + selectedFiles.size() + " selected files";
       }
-      message += "?";
+      message += "?\n\nThis cannot be undone.";
 
 
       // validation -- not prohibited move of public folder
