@@ -262,6 +262,23 @@ void LogOptions::initProfile()
 
 Error LogOptions::read()
 {
+   FilePath optionsFile = getLogConfigFile();
+
+   // if the options file does not exist, that's fine - we'll just use default values
+   if (!optionsFile.exists())
+      return Success();
+
+   Error error = profile_.load(optionsFile);
+   if (error)
+      return error;
+
+   setLowestLogLevel();
+
+   return Success();
+}
+
+FilePath LogOptions::getLogConfigFile() {
+
    // look for config file in a specific environment variable
    FilePath optionsFile(core::system::getenv(kLogConfEnvVar));
    if (!optionsFile.exists())
@@ -274,19 +291,9 @@ Error LogOptions::read()
       if (!optionsFile.exists())
             optionsFile = core::system::xdg::systemConfigFile(kLogConfFile);
    #endif
-
-      // if the options file does not exist, that's fine - we'll just use default values
-      if (!optionsFile.exists())
-         return Success();
    }
 
-   Error error = profile_.load(optionsFile);
-   if (error)
-      return error;
-
-   setLowestLogLevel();
-
-   return Success();
+   return optionsFile;
 }
 
 void LogOptions::setLowestLogLevel()
