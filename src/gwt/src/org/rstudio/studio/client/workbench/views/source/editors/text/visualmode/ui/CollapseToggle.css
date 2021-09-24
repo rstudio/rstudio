@@ -28,7 +28,7 @@
 .collapsed
 {
     position: absolute;
-    top: 0px;
+    top: 3px;
     right: 0px;
     padding-left: 15px;
     padding-right: 15px;
@@ -37,6 +37,8 @@
     transition-duration: 0.2s;
     z-index: 1;
     opacity: 0.5;
+    width: 14px;
+    height: 14px;
 }
 
 .collapsed:hover
