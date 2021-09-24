@@ -34,7 +34,8 @@ export class UrlVerifier {
       '.youtube.com',
       '.vimeo.com',
       '.c9.ms',
-      '.google.com'
+      '.google.com',
+      '.r-project.org'
     ];
 
     //TODO
@@ -44,6 +45,7 @@ export class UrlVerifier {
     //     safeHosts_.push_back(url.hostname());
     // }
 
+    // TODO safer/programatic way to get these values?
     this.safePorts = [
       String(appState().port),
       '9876',
@@ -76,9 +78,11 @@ export class UrlVerifier {
     }
   
     const isLocal = this.isUrlLocal(url);
+
+    // TODO get chromiumDevtoolsPort programatically?
     if (isLocal && url.port === '5858') {
       return true;
-    }// TODO get chromiumDevtoolsPort programatically?
+    }
 
     if (isLocal &&
       this.safePorts.includes(url.port)) {
@@ -113,7 +117,7 @@ export class UrlVerifier {
     }
     // allow viewer urls to be handled internally by Qt. note that the client is responsible for 
     // ensuring that non-local viewer urls are appropriately sandboxed.
-    else if (this.viewerUrl?.length &&
+    if (this.viewerUrl?.length &&
             origUrl.startsWith(this.viewerUrl))
     {
       return true;

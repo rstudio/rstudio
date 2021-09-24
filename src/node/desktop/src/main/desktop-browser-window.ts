@@ -250,12 +250,15 @@ export class DesktopBrowserWindow extends EventEmitter {
     return executeJavaScript(this.window.webContents, cmd);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  setTutorialUrl(url: string): void {
+    this.urlVerify.setTutorialUrl(url);
+  }
+
   setViewerUrl(url: string): void {
     this.urlVerify.setViewerUrl(url);
   }
 
-  setShinyDialogUrl(url:string): void {
+  setShinyDialogUrl(url: string): void {
     this.urlVerify.setShinyDialogUrl(url);
   }
 
