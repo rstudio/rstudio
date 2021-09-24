@@ -14,15 +14,24 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
-import org.rstudio.core.client.Debug;
+import java.util.ArrayList;
+import java.util.Collections;
+
+import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
+import org.rstudio.studio.client.common.codetools.Completions;
+import org.rstudio.studio.client.common.codetools.RCompletionType;
+import org.rstudio.studio.client.common.filetypes.DocumentMode;
+import org.rstudio.studio.client.common.filetypes.DocumentMode.Mode;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor.EditorBehavior;
 import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 
 public class YamlCompletionManager extends CompletionManagerBase
                                        implements CompletionManager
+                                       
 {
    // Use a funstructor to create an instance in order to ensure toggleHandlers()
    // is invoked after the object is fully instantiated
@@ -45,9 +54,9 @@ public class YamlCompletionManager extends CompletionManagerBase
                                     CompletionContext context)
    {
       super(popup, docDisplay, server, context);
-      
       context_ = context;
    }
+  
 
    @Override
    public void goToHelp()
@@ -59,6 +68,7 @@ public class YamlCompletionManager extends CompletionManagerBase
    public void goToDefinition()
    {
       // NYI
+     
    }
    
    @Override
@@ -68,16 +78,76 @@ public class YamlCompletionManager extends CompletionManagerBase
    }
 
    @Override
-   public boolean getCompletions(String line, CompletionRequestContext context)
-   {
+   public boolean getCompletions(String ln, CompletionRequestContext context)
+   {  
+      // do we have a source
+      YamlCompletionSource source = null;
+      for (int i=0; i<sources_.length; i++) 
+      {
+         if (sources_[i].isActive(context_))
+         {
+            source = sources_[i];
+            break;
+         }
+      }
+      if (source == null)
+         return false;
+     
+   
+      // determine location (file | front-matter | cell)
+      String location = null;
+      if (DocumentMode.getModeForCursorPosition(docDisplay_) == Mode.YAML)
+      {
+         if (docDisplay_.getFileType().isRmd() ||
+             (docDisplay_.getEditorBehavior() == EditorBehavior.AceBehaviorEmbedded))
+         {
+            location = "front-matter";
+         }
+         else
+         {
+            location = "file";
+         }
+      }
+      else
+      {
+         location = "cell";
+      }
+      
+      // determine code and cursor position
       Position pos = docDisplay_.getCursorPosition();
+      String line = docDisplay_.getLine(pos.getRow());
       String code = docDisplay_.getCode();
       
-      // context.onResponseReceived([]);
-            
-      Debug.logToRConsole("requesting yaml completions");
+      // call for completions
+      source.getCompletions(location, line, code, pos, result -> {
+         
+         ArrayList<String> values = new ArrayList<String>();
+         ArrayList<String> descriptions = new ArrayList<String>();
+         for (int i=0; i<result.completions.getLength(); i++)
+         {
+            values.add(result.completions.getAt(i).value);
+            descriptions.add(result.completions.getAt(i).description);
+         }
+         
+         Completions response = Completions.createCompletions(
+               result.token,
+               JsUtil.toJsArrayString(values),
+               JsUtil.toJsArrayString(new ArrayList<>(result.completions.length)),
+               JsUtil.toJsArrayBoolean(new ArrayList<>(result.completions.length)),
+               JsUtil.toJsArrayInteger(Collections.nCopies(result.completions.length, RCompletionType.YAML)),
+               JsUtil.toJsArrayString(descriptions),
+               "",
+               true,
+               true,
+               true,
+               null,
+               null);
+         context.onResponseReceived(response); 
+      });
       
-      return false;
+      
+      // will return completions
+      return true;
    }
    
    @Override
@@ -85,6 +155,11 @@ public class YamlCompletionManager extends CompletionManagerBase
    {
       return true;
    }
+   
 
    private final CompletionContext context_;
+   
+   private final YamlCompletionSource[] sources_ = new YamlCompletionSource[] {
+      new YamlCompletionSourceQuarto()
+   };
 }

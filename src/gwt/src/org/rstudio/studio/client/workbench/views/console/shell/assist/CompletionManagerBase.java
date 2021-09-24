@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.views.console.shell.assist;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
@@ -822,6 +821,8 @@ public abstract class CompletionManagerBase
    {
       if (completion.type == RCompletionType.SNIPPET)
          popup_.displaySnippetHelp(snippets_.getSnippetContents(completion.name));
+      else if (completion.type == RCompletionType.YAML)
+         popup_.displayYAMLHelp(completion.name, completion.meta);
       else
          helpStrategy_.showHelp(completion, popup_);
    }

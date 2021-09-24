@@ -768,6 +768,11 @@ public class AceEditor implements DocDisplay,
    {
       behavior_ = behavior;
    }
+   
+   public EditorBehavior getEditorBehavior()
+   {
+      return behavior_;
+   }
 
    @Override
    public void setRnwCompletionContext(RnwCompletionContext rnwContext)

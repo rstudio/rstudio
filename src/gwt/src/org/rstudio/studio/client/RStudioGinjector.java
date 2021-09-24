@@ -136,6 +136,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.Completion
 import org.rstudio.studio.client.workbench.views.console.shell.assist.HelpStrategy;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PythonCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.YamlCompletionSourceQuarto;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobsPresenterEventHandlersImpl;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobManager;
 import org.rstudio.studio.client.workbench.views.jobs.view.JobItemFactory;
@@ -350,6 +351,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(QuartoNewDocumentDialog quartoNewDocumentDialog);
    void injectMembers(NewQuartoProjectPage newProjectPage);
    void injectMembers(QuartoConnection quartoMessageBus);
+   void injectMembers(YamlCompletionSourceQuarto yamlCompletionSourceQuarto);
 
 
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
