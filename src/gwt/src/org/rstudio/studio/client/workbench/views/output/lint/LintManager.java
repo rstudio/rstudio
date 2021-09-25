@@ -315,7 +315,8 @@ public class LintManager
                      return;
                   
                   // if this is an rmd file then also look for yaml lint
-                  if (docDisplay_.getFileType().isRmd())
+                  if (docDisplay_.getFileType().isRmd() && 
+                      userPrefs_.showDiagnosticsYaml().getValue())
                   {
                      yamlLinter_.getLint(yamlLint -> {
                         JsArray<LintItem> allLint = JsArray.createArray().cast();
