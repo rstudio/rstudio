@@ -88,6 +88,9 @@ public class LintManager
       if (type.isR() || type.isRnw() || type.isRpres() || type.isMarkdown())
          return userPrefs_.showDiagnosticsR().getValue() || userPrefs_.realTimeSpellchecking().getValue();
       
+      if (type.isYaml())
+         return userPrefs_.showDiagnosticsYaml().getValue();
+      
       return false;
    }
 
@@ -227,6 +230,8 @@ public class LintManager
          performCppLintServerRequest(context);
       else if (userPrefs_.showDiagnosticsR().getValue() && (target_.getTextFileType().isR() || target_.getTextFileType().isRmd()))
          performRLintServerRequest(context);
+      else if (userPrefs_.showDiagnosticsYaml().getValue() && (target_.getTextFileType().isYaml()))
+         performYamlLintRequest(context);
       else if (userPrefs_.realTimeSpellchecking().getValue())
          showLint(context, JsArray.createArray().cast());
    }
@@ -316,6 +321,11 @@ public class LintManager
                   Debug.logError(error);
                }
             });
+   }
+   
+   private void performYamlLintRequest(final LintContext context)
+   {
+      
    }
    
    private void showLint(LintContext context, JsArray<LintItem> lint)
