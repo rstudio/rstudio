@@ -248,6 +248,7 @@ void httpServerAddHandlers()
    uri_handlers::add("/fonts", secureAsyncHttpHandler(proxyContentRequest));
    uri_handlers::add("/python", secureAsyncHttpHandler(proxyContentRequest));
    uri_handlers::add("/tutorial", secureAsyncHttpHandler(proxyContentRequest));
+   uri_handlers::add("/quarto", secureAsyncHttpHandler(proxyContentRequest));
 
    // content handlers which might be accessed outside the context of the
    // workbench get secure + authentication when required

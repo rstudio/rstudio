@@ -19,30 +19,15 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 
-import elemental2.core.JsArray;
-import jsinterop.annotations.JsType;
+import elemental2.core.JsObject;
 
 public interface YamlCompletionSource
 {
-   @JsType
-   public static class Result
-   {
-      String token;
-      JsArray<Completion> completions;
-   }
-   
-   @JsType 
-   public static class Completion
-   {
-      String value;
-      String description;
-   }
-   
    public static final String LOCATION_FILE = "file";
    public static final String LOCATION_FRONT_MATTER = "front-matter";
    public static final String LOCATION_CELL = "cell";
    
    boolean isActive(CompletionContext context);
    
-   void getCompletions(String location, String line, String code, Position pos, CommandWithArg<Result> results);
+   void getCompletions(String location, String line, String code, Position pos, CommandWithArg<JsObject> results);
 }

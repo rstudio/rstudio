@@ -16,6 +16,8 @@
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -27,7 +29,14 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 import com.google.inject.Inject;
 
-import elemental2.core.JsArray;
+import elemental2.core.JsObject;
+import elemental2.promise.IThenable;
+import elemental2.promise.Promise;
+import elemental2.promise.IThenable.ThenOnFulfilledCallbackFn;
+import elemental2.promise.IThenable.ThenOnRejectedCallbackFn;
+import jsinterop.annotations.JsOverlay;
+import jsinterop.annotations.JsPackage;
+import jsinterop.annotations.JsType;
 
 
 public class YamlCompletionSourceQuarto implements YamlCompletionSource
@@ -61,34 +70,57 @@ public class YamlCompletionSourceQuarto implements YamlCompletionSource
    }
 
    @Override
-   public void getCompletions(String loccation, String line, String code, Position pos,
-                              CommandWithArg<Result> ready)
+   public void getCompletions(String location, String line, String code, Position pos,
+                              CommandWithArg<JsObject> ready)
    {
-      // find a space in the line
-      int spacePos = line.lastIndexOf(" ");
-      String token = spacePos != -1 ? line.substring(spacePos + 1) : line;
-      
-      JsArray<Completion> completions = new JsArray<Completion>();
-      
-      /*
-      Completion completion1 = new Completion();
-      completion1.value = token + "foo";
-      completion1.description = "docs on foo";
-      completions.push(completion1);
-      
-      Completion completion2 = new Completion();
-      completion2.value = token + "bar";
-      completion2.description = "docs on <b>bar</b>";
-      completions.push(completion2);
-      */
-      
-      Result result = new Result();
-      result.token = token;
-      result.completions = completions;
-      
-      ready.execute(result);
-      
+      QuartoEditorToolsYaml.load(() -> {
+         QuartoEditorToolsYaml.getCompletions(location, line, code, pos).then(
+               new ThenOnFulfilledCallbackFn<JsObject,JsObject>() {
+            
+            @Override
+            public IThenable<JsObject> onInvoke(JsObject result)
+            {
+               ready.execute(result);
+               return null;
+            }
+         },
+         new ThenOnRejectedCallbackFn<JsObject>() {
+            
+            @Override
+            public IThenable<JsObject> onInvoke(Object error)
+            {
+               Debug.logObject(error);
+               return null;
+            }
+         });
+         
+      });   
    } 
    
    private QuartoConfig config_;
+}
+
+@JsType(isNative = true, namespace = JsPackage.GLOBAL)
+class QuartoEditorToolsYaml
+{
+   @JsOverlay
+   public static void load(ExternalJavaScriptLoader.Callback onLoaded) 
+   {    
+      yamlToolsLoader.addCallback(onLoaded);
+   }
+   
+   @JsOverlay
+   public static boolean isLoaded() 
+   {
+      return yamlToolsLoader.isLoaded();
+   }
+   
+   public static native Promise<JsObject> getCompletions(String location, 
+                                                         String line, 
+                                                         String code, 
+                                                         Position pos);
+ 
+   @JsOverlay
+   private static final ExternalJavaScriptLoader yamlToolsLoader =
+     new ExternalJavaScriptLoader("quarto/resources/editor/tools/yaml/yaml.js");
 }

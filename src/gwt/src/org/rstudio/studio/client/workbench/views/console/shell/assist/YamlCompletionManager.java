@@ -29,6 +29,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionC
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 
+import jsinterop.base.Js;
+
 public class YamlCompletionManager extends CompletionManagerBase
                                        implements CompletionManager
                                        
@@ -119,22 +121,24 @@ public class YamlCompletionManager extends CompletionManagerBase
       String code = docDisplay_.getCode();
       
       // call for completions
-      source.getCompletions(location, line, code, pos, result -> {
+      source.getCompletions(location, line, code, pos, (res) -> {
+         
+         YamlCompletionResult result = Js.uncheckedCast(res);
          
          ArrayList<String> values = new ArrayList<String>();
          ArrayList<String> descriptions = new ArrayList<String>();
-         for (int i=0; i<result.completions.getLength(); i++)
+         for (int i=0; i<result.getCompletions().length(); i++)
          {
-            values.add(result.completions.getAt(i).value);
-            descriptions.add(result.completions.getAt(i).description);
+            values.add(result.getCompletions().get(i).getValue());
+            descriptions.add(result.getCompletions().get(i).getDescription());
          }
          
          Completions response = Completions.createCompletions(
-               result.token,
+               result.getToken(),
                JsUtil.toJsArrayString(values),
-               JsUtil.toJsArrayString(new ArrayList<>(result.completions.length)),
-               JsUtil.toJsArrayBoolean(new ArrayList<>(result.completions.length)),
-               JsUtil.toJsArrayInteger(Collections.nCopies(result.completions.length, RCompletionType.YAML)),
+               JsUtil.toJsArrayString(new ArrayList<>(result.getCompletions().length())),
+               JsUtil.toJsArrayBoolean(new ArrayList<>(result.getCompletions().length())),
+               JsUtil.toJsArrayInteger(Collections.nCopies(result.getCompletions().length(), RCompletionType.YAML)),
                JsUtil.toJsArrayString(descriptions),
                "",
                true,

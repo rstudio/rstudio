@@ -279,6 +279,7 @@ set(SESSION_SOURCE_FILES
    modules/quarto/SessionQuarto.cpp
    modules/quarto/SessionQuartoJob.cpp
    modules/quarto/SessionQuartoPreview.cpp
+   modules/quarto/SessionQuartoResources.cpp
    modules/quarto/SessionQuartoServe.cpp
    modules/quarto/SessionQuartoXRefs.cpp
    modules/shiny/SessionShiny.cpp
