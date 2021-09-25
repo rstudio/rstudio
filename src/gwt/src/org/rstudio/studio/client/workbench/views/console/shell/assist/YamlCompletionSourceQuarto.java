@@ -24,7 +24,6 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.quarto.model.QuartoConfig;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionContext;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 import com.google.inject.Inject;
@@ -70,30 +69,39 @@ public class YamlCompletionSourceQuarto implements YamlCompletionSource
    }
 
    @Override
-   public void getCompletions(String location, String line, String code, Position pos,
+   public void getCompletions(YamlCompletionParams params,
                               CommandWithArg<JsObject> ready)
    {
+      
       QuartoEditorToolsYaml.load(() -> {
-         QuartoEditorToolsYaml.getCompletions(location, line, code, pos).then(
-               new ThenOnFulfilledCallbackFn<JsObject,JsObject>() {
-            
-            @Override
-            public IThenable<JsObject> onInvoke(JsObject result)
-            {
-               ready.execute(result);
-               return null;
-            }
-         },
-         new ThenOnRejectedCallbackFn<JsObject>() {
-            
-            @Override
-            public IThenable<JsObject> onInvoke(Object error)
-            {
-               Debug.log(error.toString());
-               ready.execute(null);
-               return null;
-            }
-         });
+         try
+         {
+            QuartoEditorToolsYaml.getCompletions(params).then(
+                  new ThenOnFulfilledCallbackFn<JsObject,JsObject>() {
+               
+               @Override
+               public IThenable<JsObject> onInvoke(JsObject result)
+               {
+                  ready.execute(result);
+                  return null;
+               }
+            },
+            new ThenOnRejectedCallbackFn<JsObject>() {
+               
+               @Override
+               public IThenable<JsObject> onInvoke(Object error)
+               {
+                  Debug.log(error.toString());
+                  ready.execute(null);
+                  return null;
+               }
+            });
+         }
+         catch(Exception ex)
+         {
+            Debug.logException(ex);
+            ready.execute(null);
+         }
          
       });   
    } 
@@ -116,10 +124,7 @@ class QuartoEditorToolsYaml
       return yamlToolsLoader.isLoaded();
    }
    
-   public static native Promise<JsObject> getCompletions(String location, 
-                                                         String line, 
-                                                         String code, 
-                                                         Position pos);
+   public static native Promise<JsObject> getCompletions(YamlCompletionParams params);
  
    @JsOverlay
    private static final ExternalJavaScriptLoader yamlToolsLoader =

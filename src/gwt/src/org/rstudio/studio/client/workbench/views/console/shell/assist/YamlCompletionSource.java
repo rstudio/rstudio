@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionContext;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 
 import elemental2.core.JsObject;
 
@@ -29,5 +28,5 @@ public interface YamlCompletionSource
    
    boolean isActive(CompletionContext context);
    
-   void getCompletions(String location, String line, String code, Position pos, CommandWithArg<JsObject> results);
+   void getCompletions(YamlCompletionParams params, CommandWithArg<JsObject> results);
 }
