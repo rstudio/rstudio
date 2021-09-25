@@ -89,7 +89,8 @@ public class YamlCompletionSourceQuarto implements YamlCompletionSource
             @Override
             public IThenable<JsObject> onInvoke(Object error)
             {
-               Debug.logObject(error);
+               Debug.log(error.toString());
+               ready.execute(null);
                return null;
             }
          });

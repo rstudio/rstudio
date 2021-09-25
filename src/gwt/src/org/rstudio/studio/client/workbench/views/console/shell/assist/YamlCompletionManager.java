@@ -122,32 +122,45 @@ public class YamlCompletionManager extends CompletionManagerBase
       // call for completions
       source.getCompletions(location, line, code, pos, (res) -> {
          
-         YamlCompletionResult result = Js.uncheckedCast(res);
-         
+         // default "empty" completion response
+         String token = "";
+         boolean cacheable = false;
+         boolean suggestOnAccept = false;
          ArrayList<String> values = new ArrayList<String>();
          ArrayList<String> descriptions = new ArrayList<String>();
-         for (int i=0; i<result.getCompletions().length(); i++)
-         {
-            values.add(result.getCompletions().get(i).getValue());
-            descriptions.add(result.getCompletions().get(i).getDescription());
-         }
          
+         // fill from result if we got one
+         if (res != null)
+         {
+            YamlCompletionResult result = Js.uncheckedCast(res);
+            token = result.getToken();
+            for (int i=0; i<result.getCompletions().length(); i++)
+            {
+               values.add(result.getCompletions().get(i).getValue());
+               descriptions.add(result.getCompletions().get(i).getDescription());
+            }
+            cacheable = result.getCacheable();
+            suggestOnAccept = result.getSuggestOnAccept();
+         }
+          
+         // create and send back response
          Completions response = Completions.createCompletions(
-               result.getToken(),
+               token,
                JsUtil.toJsArrayString(values),
-               JsUtil.toJsArrayString(new ArrayList<>(result.getCompletions().length())),
-               JsUtil.toJsArrayBoolean(new ArrayList<>(result.getCompletions().length())),
-               JsUtil.toJsArrayInteger(Collections.nCopies(result.getCompletions().length(), RCompletionType.YAML)),
+               JsUtil.toJsArrayString(new ArrayList<>(values.size())),
+               JsUtil.toJsArrayBoolean(new ArrayList<>(values.size())),
+               JsUtil.toJsArrayInteger(Collections.nCopies(values.size(), RCompletionType.YAML)),
                JsUtil.toJsArrayString(descriptions),
                "",
                true,
                true,
                true,
                null,
-               null);
+               null);         
+         response.setCacheable(cacheable);
+         response.setSuggestOnAccept(suggestOnAccept);
          context.onResponseReceived(response); 
       });
-      
       
       // will return completions
       return true;

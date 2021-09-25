@@ -234,6 +234,7 @@ public abstract class CompletionManagerBase
       Position tokenPos = docDisplay_.getSelectionStart().movedLeft(token.length());
       Rectangle tokenBounds = docDisplay_.getPositionBounds(tokenPos);
       completionToken_ = token;
+      suggestOnAccept_ = completions.getSuggestOnAccept();
       popup_.showCompletionValues(
             results,
             new PopupPositioner(tokenBounds, popup_),
@@ -364,15 +365,21 @@ public abstract class CompletionManagerBase
    protected void onCompletionInserted(QualifiedName completion)
    {
       int type = completion.type;
-      if (!RCompletionType.isFunctionType(type))
-         return;
-      
-      boolean insertParensAfterCompletion =
-            RCompletionType.isFunctionType(type) &&
-            userPrefs_.insertParensAfterFunctionCompletion().getValue();
-      
-      if (insertParensAfterCompletion)
-         docDisplay_.moveCursorBackward();
+      if (RCompletionType.isFunctionType(type))
+      {
+         boolean insertParensAfterCompletion =
+               RCompletionType.isFunctionType(type) &&
+               userPrefs_.insertParensAfterFunctionCompletion().getValue();
+         
+         if (insertParensAfterCompletion)
+            docDisplay_.moveCursorBackward();
+      }
+            
+      // suggest on accept
+      if (suggestOnAccept_)
+      {
+         Scheduler.get().scheduleDeferred(() -> beginSuggest(true, true, false));
+      }
    }
    
    // Subclasses can override depending on what characters are typically
@@ -689,7 +696,7 @@ public abstract class CompletionManagerBase
          snippets_.applySnippet(completionToken, completion.name);
       }
       else
-      {
+      {   
          String value = onCompletionSelected(completion);
          
          // compute an appropriate offset for completion --
@@ -1002,6 +1009,7 @@ public abstract class CompletionManagerBase
    private String completionToken_;
    private String snippetToken_;
    private boolean ignoreNextBlur_;
+   private boolean suggestOnAccept_ = false;
    
    private CompletionRequestContext.Data contextData_;
    private HelpStrategy helpStrategy_;

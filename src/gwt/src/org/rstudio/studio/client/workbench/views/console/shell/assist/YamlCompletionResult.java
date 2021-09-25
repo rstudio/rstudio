@@ -32,5 +32,13 @@ public class YamlCompletionResult extends JavaScriptObject
       return this.completions;
    }-*/;
    
+   public native final boolean getCacheable() /*-{
+      return this.cacheable;
+   }-*/;
+   
+   public native final boolean getSuggestOnAccept() /*-{
+      return this.suggest_on_accept;
+   }-*/;
+   
 }
 
