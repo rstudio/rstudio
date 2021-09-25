@@ -21,12 +21,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionC
 import elemental2.core.JsObject;
 
 public interface YamlCompletionSource
-{
-   public static final String LOCATION_FILE = "file";
-   public static final String LOCATION_FRONT_MATTER = "front-matter";
-   public static final String LOCATION_CELL = "cell";
-   
-   boolean isActive(CompletionContext context);
-   
+{ 
+   boolean isActive(CompletionContext context);  
    void getCompletions(YamlEditorContext params, CommandWithArg<JsObject> results);
 }

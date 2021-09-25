@@ -107,16 +107,16 @@ public class YamlCompletionManager extends CompletionManagerBase
          if (docDisplay_.getFileType().isRmd() ||
              (docDisplay_.getEditorBehavior() == EditorBehavior.AceBehaviorEmbedded))
          {
-            location = "front-matter";
+            location = YamlEditorContext.LOCATION_FRONT_MATTER;
          }
          else
          {
-            location = "file";
+            location = YamlEditorContext.LOCATION_FILE;
          }
       }
       else
       {
-         location = "cell";
+         location = YamlEditorContext.LOCATION_CELL;
       }
       
       // determine code and cursor position

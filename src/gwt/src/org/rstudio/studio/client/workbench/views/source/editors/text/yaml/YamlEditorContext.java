@@ -21,6 +21,10 @@ import com.google.gwt.core.client.JavaScriptObject;
 
 public class YamlEditorContext extends JavaScriptObject
 {
+   public static final String LOCATION_FILE = "file";
+   public static final String LOCATION_FRONT_MATTER = "front-matter";
+   public static final String LOCATION_CELL = "cell";
+   
    protected YamlEditorContext()
    {
    }
