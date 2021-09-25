@@ -124,8 +124,8 @@ public class YamlCompletionManager extends CompletionManagerBase
       String code = docDisplay_.getCode();
       
       // call for completions
-      YamlCompletionParams params = YamlCompletionParams.create(location, line, code, pos);
-      source.getCompletions(params, (res) -> {
+      YamlEditorContext editorContext = YamlEditorContext.create(location, line, code, pos);
+      source.getCompletions(editorContext, (res) -> {
          
          // default "empty" completion response
          String token = "";

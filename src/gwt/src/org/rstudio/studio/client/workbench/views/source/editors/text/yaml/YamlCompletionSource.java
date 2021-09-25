@@ -28,5 +28,5 @@ public interface YamlCompletionSource
    
    boolean isActive(CompletionContext context);
    
-   void getCompletions(YamlCompletionParams params, CommandWithArg<JsObject> results);
+   void getCompletions(YamlEditorContext params, CommandWithArg<JsObject> results);
 }

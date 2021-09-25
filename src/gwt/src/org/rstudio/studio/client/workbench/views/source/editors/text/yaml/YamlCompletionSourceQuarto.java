@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.yaml;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -30,12 +29,8 @@ import com.google.inject.Inject;
 
 import elemental2.core.JsObject;
 import elemental2.promise.IThenable;
-import elemental2.promise.Promise;
 import elemental2.promise.IThenable.ThenOnFulfilledCallbackFn;
 import elemental2.promise.IThenable.ThenOnRejectedCallbackFn;
-import jsinterop.annotations.JsOverlay;
-import jsinterop.annotations.JsPackage;
-import jsinterop.annotations.JsType;
 
 
 public class YamlCompletionSourceQuarto implements YamlCompletionSource
@@ -69,14 +64,14 @@ public class YamlCompletionSourceQuarto implements YamlCompletionSource
    }
 
    @Override
-   public void getCompletions(YamlCompletionParams params,
+   public void getCompletions(YamlEditorContext params,
                               CommandWithArg<JsObject> ready)
    {
       
-      QuartoEditorToolsYaml.load(() -> {
+      YamlEditorToolsQuarto.load(() -> {
          try
          {
-            QuartoEditorToolsYaml.getCompletions(params).then(
+            YamlEditorToolsQuarto.getCompletions(params).then(
                   new ThenOnFulfilledCallbackFn<JsObject,JsObject>() {
                
                @Override
@@ -107,26 +102,4 @@ public class YamlCompletionSourceQuarto implements YamlCompletionSource
    } 
    
    private QuartoConfig config_;
-}
-
-@JsType(isNative = true, namespace = JsPackage.GLOBAL)
-class QuartoEditorToolsYaml
-{
-   @JsOverlay
-   public static void load(ExternalJavaScriptLoader.Callback onLoaded) 
-   {    
-      yamlToolsLoader.addCallback(onLoaded);
-   }
-   
-   @JsOverlay
-   public static boolean isLoaded() 
-   {
-      return yamlToolsLoader.isLoaded();
-   }
-   
-   public static native Promise<JsObject> getCompletions(YamlCompletionParams params);
- 
-   @JsOverlay
-   private static final ExternalJavaScriptLoader yamlToolsLoader =
-     new ExternalJavaScriptLoader("quarto/resources/editor/tools/yaml/yaml.js");
 }

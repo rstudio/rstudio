@@ -1,5 +1,5 @@
 /*
- * YamlCompletionParams.java
+ * YamlEditorContext.java
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -19,13 +19,13 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-public class YamlCompletionParams extends JavaScriptObject
+public class YamlEditorContext extends JavaScriptObject
 {
-   protected YamlCompletionParams()
+   protected YamlEditorContext()
    {
    }
    
-   public static native YamlCompletionParams create(
+   public static native YamlEditorContext create(
       String location, String line, String code, Position position) /*-{
       return { 
          location: location,
