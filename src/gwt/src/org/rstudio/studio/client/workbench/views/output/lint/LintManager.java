@@ -313,8 +313,23 @@ public class LintManager
                {
                   if (context.token.isInvalid())
                      return;
-
-                  showLint(context, lint);
+                  
+                  // if this is an rmd file then also look for yaml lint
+                  if (docDisplay_.getFileType().isRmd())
+                  {
+                     yamlLinter_.getLint(yamlLint -> {
+                        JsArray<LintItem> allLint = JsArray.createArray().cast();
+                        for (int i = 0; i < lint.length(); i++)
+                           allLint.push(lint.get(i));
+                        for (int i = 0; i < yamlLint.length(); i++)
+                           allLint.push(yamlLint.get(i));
+                        showLint(context, allLint);
+                     });
+                  }
+                  else
+                  {
+                     showLint(context, lint);
+                  }
                }
 
                @Override

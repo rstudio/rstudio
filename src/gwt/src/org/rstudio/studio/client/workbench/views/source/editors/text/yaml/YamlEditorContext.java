@@ -25,18 +25,18 @@ import com.google.gwt.core.client.JavaScriptObject;
 
 public class YamlEditorContext extends JavaScriptObject
 {
-   public static final String LOCATION_FILE = "file";
-   public static final String LOCATION_FRONT_MATTER = "front-matter";
-   public static final String LOCATION_CELL = "cell";
+   public static final String FILETYPE_YAML = "yaml";
+   public static final String FILETYPE_MARKDOWN = "markdown";
+   public static final String FILETYPE_SCRIPT = "script";
    
    protected YamlEditorContext()
    {
    }
    
    public static native YamlEditorContext create(
-      String location, String line, String code, Position position) /*-{
+      String filetype, String line, String code, Position position) /*-{
       return { 
-         location: location,
+         filetype: filetype,
          line: line, 
          code: code,
          position: position
@@ -45,35 +45,40 @@ public class YamlEditorContext extends JavaScriptObject
    
    public static YamlEditorContext fromDocDisplay(DocDisplay docDisplay)
    {
-      // determine location (file | front-matter | cell)
-      String location = null;
-      if (DocumentMode.getModeForCursorPosition(docDisplay) == Mode.YAML)
+      // determine file type
+      String filetype = null;
+      
+      // yaml source file
+      if (docDisplay.getFileType().isYaml())
       {
-         if (docDisplay.getFileType().isRmd() ||
-             (docDisplay.getEditorBehavior() == EditorBehavior.AceBehaviorEmbedded))
-         {
-            location = YamlEditorContext.LOCATION_FRONT_MATTER;
-         }
-         else
-         {
-            location = YamlEditorContext.LOCATION_FILE;
-         }
+         filetype = FILETYPE_YAML;
       }
-      else
+      // code chunk embedded in visual editor is either yaml or a script (i.e.
+      // R or Python code that might have yaml in its comments)
+      else if (docDisplay.getEditorBehavior() == EditorBehavior.AceBehaviorEmbedded)
       {
-         location = YamlEditorContext.LOCATION_CELL;
+         if (DocumentMode.getModeForCursorPosition(docDisplay) == Mode.YAML)
+            filetype = FILETYPE_YAML;
+         else
+            filetype = FILETYPE_SCRIPT;
+      }
+      // otherwise we consider this markdown (i.e. a mixed mode document that 
+      // may have embedded yaml front matter and embedded code chunks
+      else 
+      {
+         filetype = FILETYPE_MARKDOWN;
       }
       
       return create(
-        location,
+        filetype,
         docDisplay.getCurrentLineUpToCursor(),
         docDisplay.getCode(),
         docDisplay.getCursorPosition()
       );
    }
    
-   public native final String getLocation() /*-{
-      return this.location;
+   public native final String getFiletype() /*-{
+      return this.filetype;
    }-*/;
    
    public native final String getLine() /*-{
