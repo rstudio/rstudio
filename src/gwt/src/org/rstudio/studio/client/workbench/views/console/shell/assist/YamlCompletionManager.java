@@ -80,9 +80,9 @@ public class YamlCompletionManager extends CompletionManagerBase
    }
 
    @Override
-   public boolean getCompletions(String ln, CompletionRequestContext context)
+   public boolean getCompletions(String line, CompletionRequestContext context)
    {  
-      // do we have a source
+      // do we have a source that can handle this context
       YamlCompletionSource source = null;
       for (int i=0; i<sources_.length; i++) 
       {
@@ -117,7 +117,6 @@ public class YamlCompletionManager extends CompletionManagerBase
       
       // determine code and cursor position
       Position pos = docDisplay_.getCursorPosition();
-      String line = docDisplay_.getLine(pos.getRow());
       String code = docDisplay_.getCode();
       
       // call for completions
