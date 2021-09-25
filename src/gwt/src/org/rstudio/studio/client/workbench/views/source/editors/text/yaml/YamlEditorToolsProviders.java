@@ -1,5 +1,5 @@
 /*
- * YamlCompletionSource.java
+ * YamlEditorToolsProviders.java
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -15,13 +15,21 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text.yaml;
 
-import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionContext;
 
-import elemental2.core.JsObject;
-
-public interface YamlCompletionSource
+public class YamlEditorToolsProviders
 { 
-   boolean isActive(CompletionContext context);  
-   void getCompletions(YamlEditorContext params, CommandWithArg<JsObject> results);
+   public YamlEditorToolsProvider getActiveProvider(String path, String extendedType)
+   {
+      for (int i=0; i<providers_.length; i++) 
+      {
+         if (providers_[i].isActive(path, extendedType))
+            return providers_[i];
+      }
+      return null;
+   }
+   
+   private final YamlEditorToolsProvider[] providers_ = new YamlEditorToolsProvider[] {
+      new YamlEditorToolsProviderQuarto()
+   };
 }
+

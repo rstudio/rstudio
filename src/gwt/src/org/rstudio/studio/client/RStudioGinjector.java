@@ -193,7 +193,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeConfirm;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModePanmirrorFormat;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeSpelling;
-import org.rstudio.studio.client.workbench.views.source.editors.text.yaml.YamlCompletionSourceQuarto;
+import org.rstudio.studio.client.workbench.views.source.editors.text.yaml.YamlEditorToolsProviderQuarto;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeMarkdownWriter;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeNavigation;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNCommandHandler;
@@ -351,7 +351,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(QuartoNewDocumentDialog quartoNewDocumentDialog);
    void injectMembers(NewQuartoProjectPage newProjectPage);
    void injectMembers(QuartoConnection quartoMessageBus);
-   void injectMembers(YamlCompletionSourceQuarto yamlCompletionSourceQuarto);
+   void injectMembers(YamlEditorToolsProviderQuarto yamlCompletionSourceQuarto);
 
 
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);

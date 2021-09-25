@@ -15,6 +15,10 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text.yaml;
 
+import org.rstudio.studio.client.common.filetypes.DocumentMode;
+import org.rstudio.studio.client.common.filetypes.DocumentMode.Mode;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor.EditorBehavior;
+import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -38,6 +42,35 @@ public class YamlEditorContext extends JavaScriptObject
          position: position
       };
    }-*/;
+   
+   public static YamlEditorContext fromDocDisplay(DocDisplay docDisplay)
+   {
+      // determine location (file | front-matter | cell)
+      String location = null;
+      if (DocumentMode.getModeForCursorPosition(docDisplay) == Mode.YAML)
+      {
+         if (docDisplay.getFileType().isRmd() ||
+             (docDisplay.getEditorBehavior() == EditorBehavior.AceBehaviorEmbedded))
+         {
+            location = YamlEditorContext.LOCATION_FRONT_MATTER;
+         }
+         else
+         {
+            location = YamlEditorContext.LOCATION_FILE;
+         }
+      }
+      else
+      {
+         location = YamlEditorContext.LOCATION_CELL;
+      }
+      
+      return create(
+        location,
+        docDisplay.getCurrentLineUpToCursor(),
+        docDisplay.getCode(),
+        docDisplay.getCursorPosition()
+      );
+   }
    
    public native final String getLocation() /*-{
       return this.location;

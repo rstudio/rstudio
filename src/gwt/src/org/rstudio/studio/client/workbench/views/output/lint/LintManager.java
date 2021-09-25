@@ -35,6 +35,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionOperation;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionRequest;
+import org.rstudio.studio.client.workbench.views.source.editors.text.yaml.YamlDocumentLinter;
 import org.rstudio.studio.client.workbench.views.source.model.CppDiagnostic;
 
 import com.google.gwt.core.client.JsArray;
@@ -101,6 +102,7 @@ public class LintManager
       target_ = target;
       cppCompletionContext_ = cppCompletionContext;
       docDisplay_ = target.getDocDisplay();
+      yamlLinter_ = new YamlDocumentLinter(target_, docDisplay_);
       showMarkers_ = false;
       explicit_ = false;
       invalidation_ = new Invalidation();
@@ -325,7 +327,9 @@ public class LintManager
    
    private void performYamlLintRequest(final LintContext context)
    {
-      
+      yamlLinter_.getLint(lint -> {
+         showLint(context, lint);
+      });
    }
    
    private void showLint(LintContext context, JsArray<LintItem> lint)
@@ -426,6 +430,7 @@ public class LintManager
    private UserPrefs userPrefs_;
    private EventBus eventBus_;
    private final CppCompletionContext cppCompletionContext_;
+   private final YamlDocumentLinter yamlLinter_;
    
    static {
       LintResources.INSTANCE.styles().ensureInjected();

@@ -21,17 +21,13 @@ import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
-import org.rstudio.studio.client.common.filetypes.DocumentMode;
-import org.rstudio.studio.client.common.filetypes.DocumentMode.Mode;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManagerBase;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionPopupDisplay;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequestContext;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
-import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor.EditorBehavior;
 import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 
 import jsinterop.base.Js;
 
@@ -62,7 +58,6 @@ public class YamlCompletionManager extends CompletionManagerBase
       super(popup, docDisplay, server, context);
       context_ = context;
    }
-  
 
    @Override
    public void goToHelp()
@@ -86,46 +81,16 @@ public class YamlCompletionManager extends CompletionManagerBase
    @Override
    public boolean getCompletions(String line, CompletionRequestContext context)
    {  
-      // do we have a source that can handle this context
-      YamlCompletionSource source = null;
-      for (int i=0; i<sources_.length; i++) 
-      {
-         if (sources_[i].isActive(context_))
-         {
-            source = sources_[i];
-            break;
-         }
-      }
-      if (source == null)
+      // do we have a provider that can handle this context
+      YamlEditorToolsProvider provider = providers_.getActiveProvider(
+         context_.getPath(), context_.getExtendedFileType()
+      );
+      if (provider == null)
          return false;
-     
-   
-      // determine location (file | front-matter | cell)
-      String location = null;
-      if (DocumentMode.getModeForCursorPosition(docDisplay_) == Mode.YAML)
-      {
-         if (docDisplay_.getFileType().isRmd() ||
-             (docDisplay_.getEditorBehavior() == EditorBehavior.AceBehaviorEmbedded))
-         {
-            location = YamlEditorContext.LOCATION_FRONT_MATTER;
-         }
-         else
-         {
-            location = YamlEditorContext.LOCATION_FILE;
-         }
-      }
-      else
-      {
-         location = YamlEditorContext.LOCATION_CELL;
-      }
-      
-      // determine code and cursor position
-      Position pos = docDisplay_.getCursorPosition();
-      String code = docDisplay_.getCode();
       
       // call for completions
-      YamlEditorContext editorContext = YamlEditorContext.create(location, line, code, pos);
-      source.getCompletions(editorContext, (res) -> {
+      YamlEditorContext editorContext = YamlEditorContext.fromDocDisplay(docDisplay_);
+      provider.getCompletions(editorContext, (res) -> {
          
          // default "empty" completion response
          String token = "";
@@ -177,10 +142,8 @@ public class YamlCompletionManager extends CompletionManagerBase
       return true;
    }
    
+   private final YamlEditorToolsProviders providers_ = new YamlEditorToolsProviders();
 
    private final CompletionContext context_;
-   
-   private final YamlCompletionSource[] sources_ = new YamlCompletionSource[] {
-      new YamlCompletionSourceQuarto()
-   };
+
 }
